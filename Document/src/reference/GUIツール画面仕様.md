@@ -16,7 +16,7 @@
 #### アプリケーション設定
 
 チーム全体に適用される設定を構成します。
-この設定は `nijo.xml あああ` に保存されます。
+この設定は `nijo.xml` に保存されます。
 
 ::: danger TODO
 ここに [GeneratedProjectOptions](../../../Nijo/CodeGenerating/GeneratedProjectOptions.cs) から自動生成されるドキュメントへのリンクを張る
