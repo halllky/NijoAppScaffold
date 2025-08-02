@@ -1,7 +1,8 @@
 import { defineConfig } from 'vitepress'
+import { withMermaid } from 'vitepress-plugin-mermaid'
 
 // https://vitepress.dev/reference/site-config
-export default defineConfig({
+export default withMermaid({
   title: "Nijo Application Builder",
   description: "スキーマ駆動型アプリケーション生成フレームワーク",
 
@@ -35,21 +36,25 @@ export default defineConfig({
         text: '🛠️ How-to Guides',
         collapsed: false,
         items: [
-          { text: 'ハウツーガイド概要', link: '/how-to-guides/' }
+          { text: 'ハウツーガイド概要', link: '/how-to-guides/' },
+          { text: 'プロジェクト適用判断', link: '/how-to-guides/project-evaluation' }
         ]
       },
       {
         text: '📖 Reference',
         collapsed: false,
         items: [
-          { text: 'リファレンス概要', link: '/reference/' }
+          { text: 'リファレンス概要', link: '/reference/' },
+          { text: 'モデル技術仕様', link: '/reference/models-specification' }
         ]
       },
       {
         text: '💡 Explanation',
         collapsed: false,
         items: [
-          { text: '設計思想概要', link: '/explanation/' }
+          { text: '設計思想概要', link: '/explanation/' },
+          { text: 'モデル間の協調による アプリケーション構成', link: '/explanation/models-overview' },
+          { text: 'モデル設計思想と開発手法比較', link: '/explanation/model-design-philosophy' }
         ]
       }
     ],
