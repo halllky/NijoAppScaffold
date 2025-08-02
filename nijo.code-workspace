@@ -130,7 +130,7 @@
       },
       {
         "label": "Nijo: ドキュメントのデバッグ",
-        "command": "npm run docs:dev",
+        "command": ".\\task\\DEBUG.bat",
         "type": "shell",
         "problemMatcher": [],
         "options": {
@@ -139,7 +139,7 @@
       },
       {
         "label": "Nijo: ドキュメントのビルド",
-        "command": ".\\RELEASE_DOCUMENT.bat",
+        "command": ".\\task\\RELEASE.bat",
         "type": "shell",
         "problemMatcher": [],
         "options": {

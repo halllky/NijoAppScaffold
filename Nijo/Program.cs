@@ -159,6 +159,17 @@ namespace Nijo {
             runUiService.SetHandler(RunUiService, path, port);
             rootCommand.AddCommand(runUiService);
 
+            // リファレンスドキュメント生成
+            var outOption = new Option<string>(
+                ["-o", "--out"],
+                description: "出力先ディレクトリのパス");
+            var generateReference = new Command(
+                name: "generate-reference",
+                description: "各モデルで利用可能なNodeOptionのHelpTextを.mdファイルとして出力します。")
+                { outOption };
+            generateReference.SetHandler(GenerateReference, outOption);
+            rootCommand.AddCommand(generateReference);
+
             return rootCommand;
         }
 
@@ -421,6 +432,71 @@ namespace Nijo {
             RenderOptionsMd("DataModel.Options.md", new DataModel());
             RenderOptionsMd("QueryModel.Options.md", new QueryModel());
             RenderOptionsMd("CommandModel.Options.md", new CommandModel());
+        }
+
+        /// <summary>
+        /// 各モデルで利用可能なNodeOptionのHelpTextを.mdファイルとして出力します。
+        /// </summary>
+        private static void GenerateReference(string outPath) {
+            var logger = ILoggerExtension.CreateConsoleLogger();
+            var rule = SchemaParseRule.Default();
+
+            // 出力ディレクトリが存在しない場合は作成（親ディレクトリも含めて作成）
+            var outDirFullPath = Path.Combine(Directory.GetCurrentDirectory(), outPath);
+            if (!Directory.Exists(outDirFullPath)) {
+                Directory.CreateDirectory(outDirFullPath);
+                logger.LogInformation("出力ディレクトリを作成しました: {outPath}", outDirFullPath);
+            } else {
+                // 既存のディレクトリ内の古い.mdファイルを削除
+                var existingFiles = Directory.GetFiles(outDirFullPath, "*.md");
+                foreach (var file in existingFiles) {
+                    File.Delete(file);
+                    logger.LogInformation("古いファイルを削除しました: {file}", file);
+                }
+            }
+
+            // 各モデルで利用可能なNodeOptionを取得
+            var models = Assembly
+                .GetExecutingAssembly()
+                .GetTypes()
+                .Where(t => typeof(IModel).IsAssignableFrom(t) && !t.IsAbstract)
+                .Select(t => (IModel)Activator.CreateInstance(t)!)
+                .ToArray();
+
+            // Models.mdファイルを生成（全モデルの内容を一元化）
+            var modelsContent = $$"""
+                # NodeOption リファレンス
+
+                各モデルで利用可能なNodeOptionの詳細です。
+
+                {{models.SelectTextTemplate(model => $$"""
+                ## {{model.GetType().Name}}
+
+                |  | XML属性名 | 説明 |
+                | :-- | :-- | :-- |
+                {{rule.GetAvailableOptionsFor(model).SelectTextTemplate(opt => $$"""
+                | {{opt.DisplayName}} | `{{opt.AttributeName}}` | {{opt.HelpText.ReplaceLineEndings("<br />")}} |
+                """)}}
+
+                """)}}
+                """;
+
+            var modelsPath = Path.Combine(outDirFullPath, "Models.md");
+            File.WriteAllText(modelsPath, modelsContent, new UTF8Encoding(false, false));
+            logger.LogInformation("Models.mdファイルを生成しました: {modelsPath}", modelsPath);
+
+            // index.mdファイルを生成
+            var indexContent = $$"""
+                # NodeOption リファレンス
+
+                各モデルで利用可能なNodeOptionの詳細については、[Models.md](./Models.md)を参照してください。
+                """;
+
+            var indexPath = Path.Combine(outDirFullPath, "index.md");
+            File.WriteAllText(indexPath, indexContent, new UTF8Encoding(false, false));
+            logger.LogInformation("インデックスファイルを生成しました: {indexPath}", indexPath);
+
+            logger.LogInformation("リファレンスドキュメントの生成が完了しました。");
         }
 
         /// <summary>
