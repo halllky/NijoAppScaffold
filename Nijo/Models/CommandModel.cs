@@ -25,7 +25,7 @@ namespace Nijo.Models {
             // 引数の物理名チェック
             var expectedParameterName = $"{rootAggregateName}{CommandModelExtensions.PARAMETER_PHYSICAL_NAME}";
             var correctParameterElement = rootAggregateElement
-                .Elements()
+                .ElementsWithoutMemo()
                 .FirstOrDefault(e => context.GetPhysicalName(e) == expectedParameterName);
             if (correctParameterElement == null) {
                 addError(rootAggregateElement, $"引数の物理名「{expectedParameterName}」を持つ子集約が見つかりません。");
@@ -36,7 +36,7 @@ namespace Nijo.Models {
             // 戻り値の物理名チェック
             var expectedReturnValueName = $"{rootAggregateName}{CommandModelExtensions.RETURN_VALUE_PHYSICAL_NAME}";
             var correctReturnValueElement = rootAggregateElement
-                .Elements()
+                .ElementsWithoutMemo()
                 .FirstOrDefault(e => context.GetPhysicalName(e) == expectedReturnValueName);
             if (correctReturnValueElement == null) {
                 addError(rootAggregateElement, $"戻り値の物理名「{expectedReturnValueName}」を持つ子集約が見つかりません。");
@@ -62,7 +62,7 @@ namespace Nijo.Models {
                             el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILDREN);
 
             foreach (var aggregate in allAggregates) {
-                var membersWithKey = aggregate.Elements()
+                var membersWithKey = aggregate.ElementsWithoutMemo()
                     .Where(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null).ToList();
 
                 if (membersWithKey.Any()) {
@@ -94,8 +94,8 @@ namespace Nijo.Models {
                 }
 
                 // 自身のツリーの集約を参照していないかチェック
-                var rootElement = refElement.AncestorsAndSelf().Last(e => e.Parent == e.Document?.Root);
-                var refToRoot = refTo.AncestorsAndSelf().Last(e => e.Parent == e.Document?.Root);
+                var rootElement = refElement.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
+                var refToRoot = refTo.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
 
                 if (rootElement == refToRoot) {
                     addError(refElement, "自身のツリーの集約を参照することはできません。");

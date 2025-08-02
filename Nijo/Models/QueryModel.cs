@@ -24,7 +24,7 @@ namespace Nijo.Models {
             var childAggregates = rootAggregateElement.Descendants()
                 .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILD);
             foreach (var childAggregate in childAggregates) {
-                var membersWithKey = childAggregate.Elements()
+                var membersWithKey = childAggregate.ElementsWithoutMemo()
                     .Where(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null).ToList();
                 if (membersWithKey.Any()) {
                     addError(childAggregate, "クエリモデルの子集約には主キー属性を付与することができません。");
@@ -38,7 +38,7 @@ namespace Nijo.Models {
             var childrenAggregates = rootAggregateElement.Descendants()
                 .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILDREN);
             foreach (var childrenAggregate in childrenAggregates) {
-                var membersWithKey = childrenAggregate.Elements()
+                var membersWithKey = childrenAggregate.ElementsWithoutMemo()
                     .Where(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null).ToList();
                 if (membersWithKey.Any()) {
                     addError(childrenAggregate, "クエリモデルの子配列には主キー属性を付与することができません。");
@@ -72,8 +72,8 @@ namespace Nijo.Models {
                 }
 
                 // 自身のツリーの集約を参照していないかチェック
-                var rootElement = refElement.AncestorsAndSelf().Last(e => e.Parent == e.Document?.Root);
-                var refToRoot = refTo.AncestorsAndSelf().Last(e => e.Parent == e.Document?.Root);
+                var rootElement = refElement.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
+                var refToRoot = refTo.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
 
                 if (rootElement == refToRoot) {
                     addError(refElement, "自身のツリーの集約を参照することはできません。");
@@ -125,10 +125,10 @@ namespace Nijo.Models {
                     if (refTo == null) continue;
 
                     // 参照先のルート要素
-                    var refToRoot = refTo.AncestorsAndSelf().Last(e => e.Parent == e.Document?.Root);
+                    var refToRoot = refTo.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
 
                     // 自身のツリー内の参照はスキップ
-                    var currentRoot = element.AncestorsAndSelf().Last(e => e.Parent == e.Document?.Root);
+                    var currentRoot = element.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
                     if (refToRoot == currentRoot) continue;
 
                     if (HasCircular(refToRoot)) {

@@ -44,6 +44,9 @@ public class SchemaParseContext {
     internal const string NODE_TYPE_CHILDREN = "children";
     internal const string NODE_TYPE_REFTO = "ref-to";
 
+    /// <summary>メモ。スキーマ定義やコード自動生成には影響しない単なる備考。</summary>
+    internal const string NODE_TYPE_MEMO = "-";
+
     /// <summary>
     /// 物理名。スキーマ内での物理名の衝突を考慮した値を返す。
     /// </summary>
@@ -66,7 +69,7 @@ public class SchemaParseContext {
                 .Any();
             if (duplicates) {
                 // 「（直近の親のPhysicalName）の（LocalName）」
-                return GetPhysicalName(xElement.Parent!) + "の" + xElement.Name.LocalName;
+                return GetPhysicalName(xElement.GetParentWithoutMemo()!) + "の" + xElement.Name.LocalName;
             }
         }
 
@@ -114,9 +117,10 @@ public class SchemaParseContext {
         }
 
         // 親がenumなら静的区分の値
-        if (xElement.Parent != null
-         && xElement.Parent.Parent == Document.Root
-         && xElement.Parent.Attribute(ATTR_NODE_TYPE)?.Value == EnumDefParser.SCHEMA_NAME) {
+        var xElementParent = xElement.GetParentWithoutMemo();
+        if (xElementParent != null
+            && xElementParent.GetParentWithoutMemo() == Document.Root
+            && xElementParent.Attribute(ATTR_NODE_TYPE)?.Value == EnumDefParser.SCHEMA_NAME) {
             return E_NodeType.StaticEnumValue;
         }
 
@@ -124,6 +128,11 @@ public class SchemaParseContext {
         var type = xElement.Attribute(ATTR_NODE_TYPE);
         if (type == null) {
             return E_NodeType.Unknown;
+        }
+
+        // メモ
+        if (type.Value == NODE_TYPE_MEMO) {
+            return E_NodeType.Memo;
         }
 
         // RefTo
@@ -143,7 +152,7 @@ public class SchemaParseContext {
     internal static bool TryGetAggregateNodeType(XElement xElement, [NotNullWhen(true)] out E_NodeType? nodeType) {
 
         // ルート要素直下に定義されている場合はルート集約
-        if (xElement.Parent == xElement.Document?.Root) {
+        if (xElement.GetParentWithoutMemo() == xElement.Document?.Root) {
             nodeType = E_NodeType.RootAggregate;
             return true;
         }
@@ -219,7 +228,7 @@ public class SchemaParseContext {
     /// 指定されたモデルのうち、ルート集約、Child、Childrenを列挙します。
     /// </summary>
     internal IEnumerable<XElement> EnumerateModelElements(string modelSchemaName) {
-        foreach (var rootElement in Document.Root?.Elements() ?? []) {
+        foreach (var rootElement in Document.Root?.ElementsWithoutMemo() ?? []) {
             if (rootElement.Attribute(ATTR_NODE_TYPE)?.Value != modelSchemaName) continue;
 
             yield return rootElement;
@@ -241,7 +250,7 @@ public class SchemaParseContext {
     /// <returns></returns>
     internal IReadOnlyDictionary<string, ValueMemberTypes.StaticEnumMember> GetStaticEnumMembers() {
         return Document.Root
-            ?.Elements()
+            ?.ElementsWithoutMemo()
             .Where(el => el.Attribute(ATTR_NODE_TYPE)?.Value == EnumDefParser.SCHEMA_NAME)
             .ToDictionary(GetPhysicalName, el => new ValueMemberTypes.StaticEnumMember(el, this))
             ?? [];
@@ -253,7 +262,7 @@ public class SchemaParseContext {
     /// <returns></returns>
     internal IReadOnlyDictionary<string, ValueMemberTypes.ValueObjectMember> GetValueObjectMembers() {
         return Document.Root
-            ?.Elements()
+            ?.ElementsWithoutMemo()
             .Where(el => el.Attribute(ATTR_NODE_TYPE)?.Value == ValueObjectModel.SCHEMA_NAME)
             .ToDictionary(GetPhysicalName, el => new ValueMemberTypes.ValueObjectMember(el, this))
             ?? [];
@@ -349,7 +358,7 @@ public class SchemaParseContext {
         var attributeErrors = new List<(XElement, string AttributeName, string ErrorMessage)>();
 
         // ルート集約の物理名の衝突チェック
-        var rootAggregates = xDocument.Root?.Elements() ?? [];
+        var rootAggregates = xDocument.Root?.ElementsWithoutMemo() ?? [];
         var rootPhysicalNames = new Dictionary<string, XElement>();
 
         foreach (var root in rootAggregates) {
@@ -380,8 +389,9 @@ public class SchemaParseContext {
             var typeAttrValue = el.Attribute(ATTR_NODE_TYPE)?.Value ?? string.Empty;
 
             // 同じ親のメンバー同士での物理名の重複チェック
-            if (el.Parent != null && el.Parent != el.Document?.Root) {
-                var siblings = el.Parent.Elements().ToList();
+            var elParent = el.GetParentWithoutMemo();
+            if (elParent != null && elParent != el.Document?.Root) {
+                var siblings = elParent.ElementsWithoutMemo().ToList();
                 var siblingPhysicalNames = new Dictionary<string, XElement>();
 
                 foreach (var sibling in siblings) {
@@ -396,6 +406,10 @@ public class SchemaParseContext {
 
             // ノードの種類に基づくチェック
             switch (nodeType) {
+                // メモ。チェック不要
+                case E_NodeType.Memo:
+                    break;
+
                 // ノードの種類が不明な場合
                 case E_NodeType.Unknown:
                     if (string.IsNullOrEmpty(typeAttrValue)) {
@@ -419,7 +433,7 @@ public class SchemaParseContext {
                 // Child
                 case E_NodeType.ChildAggregate:
                     // 主キー属性のチェック
-                    if (el.Elements().Any(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null)) {
+                    if (el.ElementsWithoutMemo().Any(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null)) {
                         if (TryGetModel(el, out var childModel) && childModel is DataModel) {
                             errorsList.Add((el, $"データモデルの子集約には主キー属性を付与することができません。"));
                         }
@@ -430,7 +444,7 @@ public class SchemaParseContext {
                 case E_NodeType.ChildrenAggregate:
                     // データモデルの子配列は必ず1個以上の主キーが必要
                     if (TryGetModel(el, out var childrenModel) && childrenModel is DataModel) {
-                        if (el.Elements().All(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) == null)) {
+                        if (el.ElementsWithoutMemo().All(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) == null)) {
                             errorsList.Add((el, "データモデルの子配列は必ず1個以上の主キーを持たなければなりません。"));
                         }
                     }
@@ -525,8 +539,8 @@ public class SchemaParseContext {
         }
 
         // 自身のツリーの集約を参照していないかチェック
-        var rootElement = refElement.AncestorsAndSelf().Last(e => e.Parent == e.Document?.Root);
-        var refToRoot = refTo.AncestorsAndSelf().Last(e => e.Parent == e.Document?.Root);
+        var rootElement = refElement.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
+        var refToRoot = refTo.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
 
         if (rootElement == refToRoot) {
             errorMessage = "自身のツリーの集約を参照することはできません。";
@@ -653,7 +667,7 @@ public class SchemaParseContext {
     /// 要素のルート集約要素を返します
     /// </summary>
     internal XElement GetRootAggregateElement(XElement element) {
-        return element.AncestorsAndSelf().Last(e => e.Parent == e.Document?.Root);
+        return element.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
     }
 
     /// <summary>
@@ -663,5 +677,40 @@ public class SchemaParseContext {
         var rootElement = GetRootAggregateElement(element);
         var gdqmAttr = rootElement.Attribute(BasicNodeOptions.GenerateDefaultQueryModel.AttributeName)?.Value;
         return !string.IsNullOrEmpty(gdqmAttr) && gdqmAttr.Equals("True", StringComparison.OrdinalIgnoreCase);
+    }
+}
+
+internal static class SchemaParseContextExtensions {
+    /// <summary>
+    /// 親要素を返します。親要素がメモの場合、さらにその親要素を返します。
+    /// </summary>
+    internal static XElement? GetParentWithoutMemo(this XElement? element) {
+        if (element == null) return null;
+
+        var parent = element.Parent;
+        while (parent != null && parent.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_MEMO) {
+            parent = parent.Parent;
+        }
+        return parent;
+    }
+    /// <summary>
+    /// メモを除いた子要素を列挙します。
+    /// メモが子要素を持っている場合、あたかもメモ要素が存在しなかったものとみなして
+    /// その子要素を列挙します。
+    /// </summary>
+    internal static IEnumerable<XElement> ElementsWithoutMemo(this XElement element) {
+        return Enumerate(element);
+
+        static IEnumerable<XElement> Enumerate(XElement owner) {
+            foreach (var el in owner.Elements()) {
+                if (el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_MEMO) {
+                    foreach (var el2 in Enumerate(el)) {
+                        yield return el2;
+                    }
+                } else {
+                    yield return el;
+                }
+            }
+        }
     }
 }

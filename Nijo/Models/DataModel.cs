@@ -27,10 +27,10 @@ namespace Nijo.Models {
             // ルートとChildrenはキー必須
             var rootAndChildren = rootAggregateElement
                 .DescendantsAndSelf()
-                .Where(el => el.Parent == el.Document?.Root
+                .Where(el => el.GetParentWithoutMemo() == el.Document?.Root
                           || el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILDREN);
             foreach (var el in rootAndChildren) {
-                if (el.Elements().All(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) == null)) {
+                if (el.ElementsWithoutMemo().All(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) == null)) {
                     addError(el, "キーが指定されていません。");
                 }
             }
@@ -40,7 +40,7 @@ namespace Nijo.Models {
                 .Descendants()
                 .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILD);
             foreach (var child in childAggregates) {
-                var membersWithKey = child.Elements().Where(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null).ToList();
+                var membersWithKey = child.ElementsWithoutMemo().Where(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null).ToList();
                 if (membersWithKey.Count != 0) {
                     addError(child, "データモデルの子集約には主キー属性を付与することができません。");
                     foreach (var member in membersWithKey) {
@@ -78,10 +78,10 @@ namespace Nijo.Models {
                 if (targetElement == null) continue;
 
                 // 参照元の最上位ルート集約
-                var sourceRoot = refElement.AncestorsAndSelf().Last(e => e.Parent == e.Document?.Root);
+                var sourceRoot = refElement.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
 
                 // 参照先の最上位ルート集約
-                var targetRoot = targetElement.AncestorsAndSelf().Last(e => e.Parent == e.Document?.Root);
+                var targetRoot = targetElement.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
 
                 // 自身のツリー内なら無視
                 if (sourceRoot == targetRoot) continue;

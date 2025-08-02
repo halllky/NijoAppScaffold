@@ -64,7 +64,7 @@ namespace Nijo.ImmutableSchema {
         /// </list>
         /// </summary>
         public IEnumerable<IAggregateMember> GetMembers() {
-            foreach (var el in _xElement.Elements()) {
+            foreach (var el in _xElement.ElementsWithoutMemo()) {
                 // パスの巻き戻しの場合（この集約の1つ前がこの集約の子、かつその子を列挙しようとしている場合）
                 // 新たにインスタンスを作るのでなく1つ前のインスタンスをそのまま使う
                 if (el == PreviousNode?.XElement) {
@@ -125,15 +125,15 @@ namespace Nijo.ImmutableSchema {
         /// </summary>
         public AggregateBase? GetParent() {
             // この集約がルート集約の場合
-            if (_xElement.Parent == _xElement.Document?.Root) return null;
+            if (_xElement.GetParentWithoutMemo() == _xElement.Document?.Root) return null;
 
             // 1つ前の集約が親の場合
-            if (PreviousNode is AggregateBase agg && agg._xElement == _xElement.Parent) {
+            if (PreviousNode is AggregateBase agg && agg._xElement == _xElement.GetParentWithoutMemo()) {
                 return agg;
             }
 
             // 子から親に辿る場合
-            return _ctx.ToAggregateBase(_xElement.Parent ?? throw new InvalidOperationException(), this);
+            return _ctx.ToAggregateBase(_xElement.GetParentWithoutMemo() ?? throw new InvalidOperationException(), this);
         }
 
         /// <summary>
@@ -219,14 +219,14 @@ namespace Nijo.ImmutableSchema {
         /// この集約が引数の集約の親か否かを返します。
         /// </summary>
         public bool IsParentOf(AggregateBase aggregate) {
-            return aggregate._xElement.Parent == _xElement;
+            return aggregate._xElement.GetParentWithoutMemo() == _xElement;
         }
         /// <summary>
         /// この集約が引数の集約の子か否かを返します。
         /// （<see cref="ChildAggregate"/> または <see cref="ChildrenAggregate"/> のいずれでもtrue）
         /// </summary>
         public bool IsChildOf(AggregateBase aggregate) {
-            return _xElement.Parent == aggregate._xElement;
+            return _xElement.GetParentWithoutMemo() == aggregate._xElement;
         }
         /// <summary>
         /// この集約が引数の集約の祖先か否かを返します。
@@ -323,9 +323,14 @@ namespace Nijo.ImmutableSchema {
             : base(xElement, ctx, previous) { }
 
         public decimal Order => _xElement.ElementsBeforeSelf().Count();
-        public AggregateBase Owner => _xElement.Parent == PreviousNode?.XElement
-            ? (AggregateBase?)PreviousNode ?? throw new InvalidOperationException() // パスの巻き戻しの場合
-            : _ctx.ToAggregateBase(_xElement.Parent ?? throw new InvalidOperationException(), this);
+        public AggregateBase Owner {
+            get {
+                var parent = _xElement.GetParentWithoutMemo();
+                return parent == PreviousNode?.XElement
+                    ? (AggregateBase?)PreviousNode ?? throw new InvalidOperationException() // パスの巻き戻しの場合
+                    : _ctx.ToAggregateBase(parent ?? throw new InvalidOperationException(), this);
+            }
+        }
 
         /// <summary>【廃止予定】画面上で追加削除されるタイミングが親と異なるかどうか</summary>
         public bool HasLifeCycle => true || _xElement.Attribute(BasicNodeOptions.HasLifeCycle.AttributeName) != null;
@@ -345,9 +350,14 @@ namespace Nijo.ImmutableSchema {
             : base(xElement, ctx, previous) { }
 
         public decimal Order => _xElement.ElementsBeforeSelf().Count();
-        public AggregateBase Owner => _xElement.Parent == PreviousNode?.XElement
-            ? (AggregateBase?)PreviousNode ?? throw new InvalidOperationException() // パスの巻き戻しの場合
-            : _ctx.ToAggregateBase(_xElement.Parent ?? throw new InvalidOperationException(), this);
+        public AggregateBase Owner {
+            get {
+                var parent = _xElement.GetParentWithoutMemo();
+                return parent == PreviousNode?.XElement
+                    ? (AggregateBase?)PreviousNode ?? throw new InvalidOperationException() // パスの巻き戻しの場合
+                    : _ctx.ToAggregateBase(parent ?? throw new InvalidOperationException(), this);
+            }
+        }
         AggregateBase IRelationalMember.MemberAggregate => this;
 
         public override AggregateBase AsEntry() {
@@ -361,7 +371,11 @@ namespace Nijo.ImmutableSchema {
         /// </summary>
         public string GetLoopVarName(string alpha = "x") {
             // 深さ。ルート集約直下のChildrenのとき0になる
-            var depth = _xElement.Ancestors().Count() - 2;
+            var depth = _xElement
+                .Ancestors()
+                // メモ型は親としてカウントしない
+                .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value != SchemaParseContext.NODE_TYPE_MEMO)
+                .Count() - 2;
 
             return depth == 0 ? alpha : (alpha + depth);
         }

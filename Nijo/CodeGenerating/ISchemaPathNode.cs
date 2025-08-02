@@ -1,4 +1,5 @@
 using Nijo.ImmutableSchema;
+using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -92,16 +93,16 @@ namespace Nijo.CodeGenerating {
             XElement current = element;
 
             // XMLルート要素まで遡る
-            while (current.Parent != null) {
-                current = current.Parent;
+            while (current.GetParentWithoutMemo() != null) {
+                current = current.GetParentWithoutMemo()!;
             }
 
             // XMLルート要素から、targetElementが属する直下の要素を見つける
             XElement xmlRoot = current;
             XElement? ancestor = element;
 
-            while (ancestor.Parent != xmlRoot) {
-                ancestor = ancestor.Parent;
+            while (ancestor.GetParentWithoutMemo() != xmlRoot) {
+                ancestor = ancestor.GetParentWithoutMemo();
                 if (ancestor == null)
                     return null;
             }
@@ -126,7 +127,7 @@ namespace Nijo.CodeGenerating {
             order++;
 
             // 子要素を深さ優先で探索
-            foreach (XElement child in currentElement.Elements()) {
+            foreach (XElement child in currentElement.ElementsWithoutMemo()) {
                 int result = FindElementOrder(child, targetElement, ref order);
                 if (result != -1) {
                     return result;

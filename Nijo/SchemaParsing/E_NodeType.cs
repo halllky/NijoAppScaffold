@@ -35,6 +35,9 @@ public enum E_NodeType {
     /// <summary>静的区分の値</summary>
     StaticEnumValue = 1 << 9,
 
+    /// <summary>メモ。スキーマ定義やコード自動生成には影響しない単なる備考。</summary>
+    Memo = 1 << 10,
+
     /// <summary>
     /// 未知の値
     /// </summary>

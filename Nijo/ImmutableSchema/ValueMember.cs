@@ -30,9 +30,14 @@ namespace Nijo.ImmutableSchema {
         public decimal Order => XElement.ElementsBeforeSelf().Count();
         public string GetComment(E_CsTs csts) => _ctx.GetComment(XElement, csts);
 
-        public AggregateBase Owner => XElement.Parent == PreviousNode?.XElement
-            ? (AggregateBase?)PreviousNode ?? throw new InvalidOperationException() // パスの巻き戻しの場合
-            : _ctx.ToAggregateBase(XElement.Parent ?? throw new InvalidOperationException(), this);
+        public AggregateBase Owner {
+            get {
+                var parent = XElement.GetParentWithoutMemo();
+                return parent == PreviousNode?.XElement
+                    ? (AggregateBase?)PreviousNode ?? throw new InvalidOperationException() // パスの巻き戻しの場合
+                    : _ctx.ToAggregateBase(parent ?? throw new InvalidOperationException(), this);
+            }
+        }
 
         /// <summary>
         /// この属性の型

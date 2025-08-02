@@ -3,7 +3,7 @@ import useEvent from "react-use-event-hook"
 import { GraphView, GraphViewRef, } from "../../layout"
 import { Node as CyNode, Edge as CyEdge } from "../../layout/GraphView/DataSource"
 import { CytoscapeDataSet } from "../../layout/GraphView/Cy"
-import { asTree, ATTR_IS_KEY, ATTR_TYPE, ModelPageForm, TYPE_CHILD, TYPE_CHILDREN, TYPE_COMMAND_MODEL, TYPE_DATA_MODEL, TYPE_QUERY_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, XmlElementItem } from "./types"
+import { asTree, ATTR_IS_KEY, ATTR_TYPE, ModelPageForm, TYPE_CHILD, TYPE_CHILDREN, TYPE_COMMAND_MODEL, TYPE_DATA_MODEL, TYPE_MEMO, TYPE_QUERY_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, XmlElementItem } from "./types"
 import { MentionUtil } from "../UI"
 import { findRefToTarget } from "./findRefToTarget"
 import * as AutoLayout from "../../layout/GraphView/Cy.AutoLayout"
@@ -188,7 +188,18 @@ const createSchemaDefinitionDataSet = (xmlElementTrees: ModelPageForm[], onlyRoo
       if (onlyRoot) {
         if (owner.indent !== 0) return;
       } else {
-        if (owner.indent !== 0 && type !== TYPE_CHILD && type !== TYPE_CHILDREN) return;
+        // メモ要素の場合は無視して子要素を処理
+        if (type === TYPE_MEMO) {
+          for (const child of treeHelper.getChildren(owner)) {
+            addMembersRecursively(child, parentId)
+          }
+          return;
+        }
+
+        // 処理対象外
+        if (owner.indent !== 0 && type !== TYPE_CHILD && type !== TYPE_CHILDREN) {
+          return;
+        }
       }
 
       // ダイアグラムノードを追加

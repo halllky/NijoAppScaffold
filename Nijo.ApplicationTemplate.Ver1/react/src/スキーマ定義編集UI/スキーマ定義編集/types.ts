@@ -96,6 +96,7 @@ export const TYPE_STATIC_ENUM_MODEL = 'enum'
 export const TYPE_VALUE_OBJECT_MODEL = 'value-object'
 export const TYPE_CHILD = 'child'
 export const TYPE_CHILDREN = 'children'
+export const TYPE_MEMO = '-'
 
 // ---------------------------------
 
