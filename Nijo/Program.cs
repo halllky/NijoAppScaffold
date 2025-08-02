@@ -465,36 +465,39 @@ namespace Nijo {
 
             // Models.mdファイルを生成（全モデルの内容を一元化）
             var modelsContent = $$"""
-                # NodeOption リファレンス
+                ---
+                title: nijo.xml 仕様 - オプション項目
+                outline: [2, 4]  # `##` , `###` の見出しをページ内ナビゲーションに表示
+                ---
 
-                各モデルで利用可能なNodeOptionの詳細です。
+                # nijo.xml 仕様 - オプション項目
+
+                ## アプリケーション単位
+
+                執筆中
+
+                ## 属性単位
+
+                各集約およびその属性に適用されるオプション
 
                 {{models.SelectTextTemplate(model => $$"""
-                ## {{model.GetType().Name}}
+                ### {{model.GetType().Name}}
 
-                |  | XML属性名 | 説明 |
-                | :-- | :-- | :-- |
                 {{rule.GetAvailableOptionsFor(model).SelectTextTemplate(opt => $$"""
-                | {{opt.DisplayName}} | `{{opt.AttributeName}}` | {{opt.HelpText.ReplaceLineEndings("<br />")}} |
+                #### {{opt.AttributeName}}
+
+                {{opt.DisplayName}}。
+
+                {{opt.HelpText}}
+
                 """)}}
 
                 """)}}
                 """;
 
-            var modelsPath = Path.Combine(outDirFullPath, "Models.md");
+            var modelsPath = Path.Combine(outDirFullPath, "ModelOptions.md");
             File.WriteAllText(modelsPath, modelsContent, new UTF8Encoding(false, false));
-            logger.LogInformation("Models.mdファイルを生成しました: {modelsPath}", modelsPath);
-
-            // index.mdファイルを生成
-            var indexContent = $$"""
-                # NodeOption リファレンス
-
-                各モデルで利用可能なNodeOptionの詳細については、[Models.md](./Models.md)を参照してください。
-                """;
-
-            var indexPath = Path.Combine(outDirFullPath, "index.md");
-            File.WriteAllText(indexPath, indexContent, new UTF8Encoding(false, false));
-            logger.LogInformation("インデックスファイルを生成しました: {indexPath}", indexPath);
+            logger.LogInformation("ModelOptions.mdファイルを生成しました: {modelsPath}", modelsPath);
 
             logger.LogInformation("リファレンスドキュメントの生成が完了しました。");
         }
