@@ -23,6 +23,15 @@ namespace Nijo.ValueMemberTypes {
         string IValueMemberType.TsTypeName => "number";
         string IValueMemberType.DisplayName => "シーケンス型";
 
+        string IValueMemberType.RenderSpecificationMarkdown() {
+            return $$"""
+                自動採番される整数値を格納する型です。
+                データベース側で自動的に連番が付与されます。
+                主キーや管理番号など、一意性が必要な数値データに適しています。
+                検索時の挙動は範囲検索（以上・以下）が可能です。
+                """;
+        }
+
         void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
             // シーケンス型の検証
             // シーケンス型は通常データベース側で自動的に値が設定されるため、特別な検証は不要です

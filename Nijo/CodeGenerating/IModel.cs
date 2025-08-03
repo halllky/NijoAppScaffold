@@ -19,9 +19,15 @@ namespace Nijo.CodeGenerating {
         string SchemaName { get; }
 
         /// <summary>
+        /// モデルの指定内容の検証の仕様のドキュメントを生成します。
+        /// 見出しは不要。もし見出しを付ける場合は `####` を使用してください。
+        /// </summary>
+        string RenderModelValidateSpecificationMarkdown();
+
+        /// <summary>
         /// モデルの指定内容の検証を行ないます。
         /// </summary>
-        public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError);
+        void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError);
 
         /// <summary>
         /// ルート集約1個と対応するソースコードを生成します。
@@ -33,5 +39,9 @@ namespace Nijo.CodeGenerating {
         /// </summary>
         void GenerateCode(CodeRenderingContext ctx);
 
+        /// <summary>
+        /// このモデルの属性または子孫集約の <see cref="SchemaParseContext.ATTR_NODE_TYPE"/> 属性の仕様を生成します。
+        /// </summary>
+        string RenderTypeAttributeSpecificationMarkdown();
     }
 }

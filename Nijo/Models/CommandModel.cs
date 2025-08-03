@@ -14,6 +14,37 @@ namespace Nijo.Models {
     internal class CommandModel : IModel {
         public string SchemaName => "command-model";
 
+        public string RenderModelValidateSpecificationMarkdown() {
+            return $$"""
+                #### 引数型、戻り値型
+
+                ルート集約直下には
+                `{コマンド名}{{CommandModelExtensions.PARAMETER_PHYSICAL_NAME}}` と
+                `{コマンド名}{{CommandModelExtensions.RETURN_VALUE_PHYSICAL_NAME}}`
+                という名前の集約が定義される必要があります。
+
+                ルート集約直下にこの2つ以外の属性を定義することはできません。
+
+                この2つの集約はいずれも {{SchemaParseContext.NODE_TYPE_CHILD}} 型である必要があります。
+
+                #### その他制約事項
+
+                - `{{SchemaParseContext.NODE_TYPE_REFTO}}` 属性の仕様
+                  - コマンドモデルは、クエリモデル、またはクエリモデルを生成するデータモデルのみ参照できます。
+                  - 自身のツリーの集約を参照することはできません
+                  - コマンドモデルからクエリモデルを外部参照する場合、`{{BasicNodeOptions.RefToObject.AttributeName}}` の指定が必須です。
+                - コマンドモデルの集約には主キー属性を定義できません
+                """;
+        }
+
+        public string RenderTypeAttributeSpecificationMarkdown() {
+            return $$"""
+                - 入れ子になった子集約 {{SchemaParseContext.NODE_TYPE_CHILD}} を定義できます。
+                - 子配列 {{SchemaParseContext.NODE_TYPE_CHILDREN}} を定義できます。
+                - その他メンバーに定義できる属性については [属性種類定義](./{{ValueObjectTypesMd.FILE_NAME}}) を参照してください。
+                """;
+        }
+
         public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
             // コマンドモデルの物理名を取得
             var rootAggregateName = context.GetPhysicalName(rootAggregateElement);

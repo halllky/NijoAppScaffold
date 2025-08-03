@@ -25,6 +25,14 @@ internal class BoolMember : IValueMemberType {
     UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.MemberConstraintBase;
     string IValueMemberType.DisplayName => "真偽値型";
 
+    string IValueMemberType.RenderSpecificationMarkdown() {
+        return $$"""
+            真（true）または偽（false）の値を格納する型です。
+            フラグ、有効/無効、完了/未完了などの二値データに適しています。
+            検索時の挙動は真のみ、偽のみの条件指定が可能です。
+            """;
+    }
+
     void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
         // 真偽値型の検証
         // 真偽値型の場合は特別な検証は必要ありません

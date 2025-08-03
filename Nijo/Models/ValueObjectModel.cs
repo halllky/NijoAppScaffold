@@ -21,6 +21,17 @@ namespace Nijo.Models {
 
         public string SchemaName => SCHEMA_NAME;
 
+        public string RenderModelValidateSpecificationMarkdown() {
+            return """
+                値オブジェクトモデルはメンバーを持つことができません。
+                """;
+        }
+
+        public string RenderTypeAttributeSpecificationMarkdown() {
+            // メンバーを持てないので特に記載することがない
+            return string.Empty;
+        }
+
         public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
             // 特に検証ロジックなし
         }

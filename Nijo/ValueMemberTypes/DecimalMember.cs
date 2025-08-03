@@ -25,6 +25,14 @@ internal class DecimalMember : IValueMemberType {
     UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.NumberMemberConstraint;
     string IValueMemberType.DisplayName => "実数型";
 
+    string IValueMemberType.RenderSpecificationMarkdown() {
+        return $$"""
+            小数点を含む数値を格納する型です。
+            金額、重量、割合などの精密な数値データに適しています。
+            検索時の挙動は範囲検索（以上・以下）が可能です。
+            """;
+    }
+
     void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
         // 実数型の検証
         // 必要に応じて最小値や最大値、小数点以下の桁数などの制約を検証するコードをここに追加できます

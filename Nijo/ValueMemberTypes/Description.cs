@@ -23,6 +23,14 @@ namespace Nijo.ValueMemberTypes {
         UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.StringMemberConstraint;
         string IValueMemberType.DisplayName => "文章型";
 
+        string IValueMemberType.RenderSpecificationMarkdown() {
+            return $$"""
+                改行を含む長い文章を格納する型です。
+                備考、説明、コメントなどの文章データに適しています。
+                検索時の挙動は部分一致検索が可能です。
+                """;
+        }
+
         void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
             // 文章型の検証
             // 必要に応じて最大長などの制約を検証するコードをここに追加できます

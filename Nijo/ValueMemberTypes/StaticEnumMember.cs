@@ -38,6 +38,16 @@ namespace Nijo.ValueMemberTypes {
         public string TsTypeName => $"EnumDefs.{_parser.TsTypeName}";
         public string DisplayName => "列挙型";
 
+        string IValueMemberType.RenderSpecificationMarkdown() {
+            return $$"""
+                事前に定義された選択肢から値を選択する型です。
+                ステータス、カテゴリ、区分などの固定選択肢データに適しています。
+                検索時は複数の選択肢を同時に指定できます。
+
+                予め nijo.xml で区分の種類を `{{EnumDefParser.SCHEMA_NAME}}` モデルとして定義しておく必要があります。
+                """;
+        }
+
         ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => new() {
             FilterCsTypeName = _parser.CsSearchConditionClassName,
             FilterTsTypeName = _parser.RenderTsSearchConditionType(),

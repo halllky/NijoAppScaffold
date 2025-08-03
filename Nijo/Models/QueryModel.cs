@@ -19,6 +19,29 @@ namespace Nijo.Models {
         internal const string NODE_TYPE = "query-model";
         public string SchemaName => NODE_TYPE;
 
+        public string RenderModelValidateSpecificationMarkdown() {
+            return $$"""
+                #### 主キー属性 `{{BasicNodeOptions.IsKey.AttributeName}}` について
+
+                QueryModel の主キー属性はルート集約にのみ指定できます。
+                これが使用されるのはWebの詳細画面のURLのキー項目の指定のみのためです。
+
+                #### 外部参照 `{{SchemaParseContext.NODE_TYPE_REFTO}}` について
+
+                - QueryModel から参照できるのは、 QueryModel または QueryModel を生成する DataModel の集約のみです。
+                - 自身のツリーの集約を参照することはできません。
+                - 循環参照を定義することはできません。
+                """;
+        }
+
+        public string RenderTypeAttributeSpecificationMarkdown() {
+            return $$"""
+                - 入れ子になった子集約 {{SchemaParseContext.NODE_TYPE_CHILD}} を定義できます。
+                - 子配列 {{SchemaParseContext.NODE_TYPE_CHILDREN}} を定義できます。
+                - その他メンバーに定義できる属性については [属性種類定義](./{{ValueObjectTypesMd.FILE_NAME}}) を参照してください。
+                """;
+        }
+
         public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
             // 子集約には主キー属性を付与できない
             var childAggregates = rootAggregateElement.Descendants()

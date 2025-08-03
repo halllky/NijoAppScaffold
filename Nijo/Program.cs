@@ -463,41 +463,16 @@ namespace Nijo {
                 .Select(t => (IModel)Activator.CreateInstance(t)!)
                 .ToArray();
 
-            // Models.mdファイルを生成（全モデルの内容を一元化）
-            var modelsContent = $$"""
-                ---
-                title: nijo.xml 仕様 - オプション項目
-                outline: [2, 4]  # `##` , `###` の見出しをページ内ナビゲーションに表示
-                ---
+            var modelsPath = Path.Combine(outDirFullPath, ModelsMd.FILE_NAME);
+            File.WriteAllText(modelsPath, ModelsMd.Render(models, rule), new UTF8Encoding(false, false));
+            logger.LogInformation("Models.mdファイルを生成しました: {modelsPath}", modelsPath);
 
-                # nijo.xml 仕様 - オプション項目
-
-                ## アプリケーション単位
-
-                執筆中
-
-                ## 属性単位
-
-                各集約およびその属性に適用されるオプション
-
-                {{models.SelectTextTemplate(model => $$"""
-                ### {{model.GetType().Name}}
-
-                {{rule.GetAvailableOptionsFor(model).SelectTextTemplate(opt => $$"""
-                #### {{opt.AttributeName}}
-
-                {{opt.DisplayName}}。
-
-                {{opt.HelpText}}
-
-                """)}}
-
-                """)}}
-                """;
-
-            var modelsPath = Path.Combine(outDirFullPath, "ModelOptions.md");
-            File.WriteAllText(modelsPath, modelsContent, new UTF8Encoding(false, false));
-            logger.LogInformation("ModelOptions.mdファイルを生成しました: {modelsPath}", modelsPath);
+            // 値メンバー型のドキュメントを生成
+            var schemaContext = new SchemaParseContext(new XDocument(), rule);
+            var valueMemberTypes = schemaContext.GetValueMemberTypes().ToArray();
+            var valueMemberTypesPath = Path.Combine(outDirFullPath, ValueObjectTypesMd.FILE_NAME);
+            File.WriteAllText(valueMemberTypesPath, ValueObjectTypesMd.Render(valueMemberTypes), new UTF8Encoding(false, false));
+            logger.LogInformation("ValueMemberTypes.mdファイルを生成しました: {valueMemberTypesPath}", valueMemberTypesPath);
 
             logger.LogInformation("リファレンスドキュメントの生成が完了しました。");
         }

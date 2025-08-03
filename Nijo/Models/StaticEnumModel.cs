@@ -18,6 +18,20 @@ namespace Nijo.Models {
     internal class StaticEnumModel : IModel {
         public string SchemaName => EnumDefParser.SCHEMA_NAME;
 
+        public string RenderModelValidateSpecificationMarkdown() {
+            return $$"""
+                - 各値要素には `{{StaticEnumValueDef.ATTR_KEY}}` 属性が必須です。
+                - `{{StaticEnumValueDef.ATTR_KEY}}` 属性の値は整数値である必要があります。
+                - `{{StaticEnumValueDef.ATTR_KEY}}` 値に重複があってはなりません。
+                """;
+        }
+
+        public string RenderTypeAttributeSpecificationMarkdown() {
+            return $$"""
+                各値要素に {{SchemaParseContext.ATTR_NODE_TYPE}} 属性を指定することはできません。
+                """;
+        }
+
         public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
             // キー（key属性）のバリデーション
             var enumValues = rootAggregateElement.ElementsWithoutMemo().ToList();

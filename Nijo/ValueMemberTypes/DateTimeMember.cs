@@ -25,6 +25,13 @@ internal class DateTimeMember : IValueMemberType {
     UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.MemberConstraintBase;
     string IValueMemberType.DisplayName => "日付時刻";
 
+    string IValueMemberType.RenderSpecificationMarkdown() {
+        return $$"""
+            日付と時刻を格納する型です。
+            検索時の挙動は期間検索（開始日時〜終了日時）が可能です。
+            """;
+    }
+
     void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
         // 日付時刻型の検証
         // 必要に応じて日付範囲の制約などを検証するコードをここに追加できます

@@ -19,6 +19,12 @@ namespace Nijo.ImmutableSchema {
         /// UI上の表示名
         /// </summary>
         string DisplayName { get; }
+        /// <summary>
+        /// この型の仕様をレンダリングする。ドキュメント用。
+        /// 技術的詳細は含めず、この型がアプリケーションのユーザー目線でどのようなものかを記載するに留めること。
+        /// また、基本的に見出しを含めず、本文のみの記載とする。やむを得ず見出しを含める場合は `###` 以降を使用すること。
+        /// </summary>
+        string RenderSpecificationMarkdown();
         #endregion Ui
 
 

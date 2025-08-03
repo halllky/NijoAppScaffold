@@ -24,6 +24,14 @@ internal class Word : IValueMemberType {
     UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.StringMemberConstraint;
     string IValueMemberType.DisplayName => "単語型";
 
+    string IValueMemberType.RenderSpecificationMarkdown() {
+        return $$"""
+            文字列を格納する型です。
+            名前などの、改行を含まない文字列データに適しています。
+            検索時の挙動は完全一致・部分一致・前方一致・後方一致から選択可能です。
+            """;
+    }
+
     void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
         // 特に追加の検証はありません。
         // 必要に応じて、属性の最大長や最小長などの制約を検証するコードをここに追加できます。

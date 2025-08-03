@@ -25,6 +25,14 @@ internal class ByteArrayMember : IValueMemberType {
     public UiConstraint.E_Type UiConstraintType => UiConstraint.E_Type.MemberConstraintBase;
     public string DisplayName => "バイト配列";
 
+    string IValueMemberType.RenderSpecificationMarkdown() {
+        return $$"""
+            バイナリデータを格納する型です。
+            ファイル、画像、暗号化データなどのバイナリ情報に適しています。
+            DataModelでのみ定義できます。
+            """;
+    }
+
     void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
         // バイト配列型はDataModelにしか定義できない
         var isNotDataModel = context.TryGetModel(element, out var model) && model is not DataModel;

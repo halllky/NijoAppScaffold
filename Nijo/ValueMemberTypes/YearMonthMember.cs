@@ -25,6 +25,15 @@ internal class YearMonthMember : IValueMemberType {
     UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.NumberMemberConstraint;
     string IValueMemberType.DisplayName => "年月型";
 
+    string IValueMemberType.RenderSpecificationMarkdown() {
+        return $$"""
+            西暦と月から成る年月（YYYY/MM形式）を格納する型です。
+            契約期間、有効期限、統計期間などの年月データに適しています。
+            日付は含まれません。
+            検索時の挙動は期間検索（開始年月〜終了年月）が可能です。
+            """;
+    }
+
     void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
         // 年月型の検証
         // 必要に応じて年月の範囲制約などを検証するコードをここに追加できます

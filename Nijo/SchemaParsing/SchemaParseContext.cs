@@ -345,6 +345,15 @@ public class SchemaParseContext {
 
     #region 検証
     /// <summary>
+    /// <see cref="TryBuildSchema"/> の仕様をレンダリングする。ドキュメント用。
+    /// </summary>
+    internal static string RenderValidationSpecificationMarkdown() {
+        return $$"""
+            - 複数のルート集約の間で物理名が重複していてはいけません。
+            - 同じ親に属するメンバーで同じ物理名が重複していてはいけません。
+            """;
+    }
+    /// <summary>
     /// XMLドキュメントがスキーマ定義として不正な状態を持たないかを検証し、
     /// 検証に成功した場合はアプリケーションスキーマのインスタンスを返します。
     /// </summary>

@@ -25,6 +25,14 @@ internal class IntMember : IValueMemberType {
     UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.NumberMemberConstraint;
     string IValueMemberType.DisplayName => "整数型";
 
+    string IValueMemberType.RenderSpecificationMarkdown() {
+        return $$"""
+            整数値を格納する型です。
+            数量、回数、順序番号などの数値データに適しています。
+            検索時の挙動は範囲検索（以上・以下）が可能です。
+            """;
+    }
+
     void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
         // 整数型の検証
         // 必要に応じて最小値や最大値の制約を検証するコードをここに追加できます

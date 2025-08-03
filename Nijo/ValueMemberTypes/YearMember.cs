@@ -25,6 +25,14 @@ internal class YearMember : IValueMemberType {
     UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.NumberMemberConstraint;
     string IValueMemberType.DisplayName => "年";
 
+    string IValueMemberType.RenderSpecificationMarkdown() {
+        return $$"""
+            西暦年（4桁の整数）を格納する型です。
+            生年、設立年、開始年などの年データに適しています。
+            検索時の挙動は範囲検索（開始年〜終了年）が可能です。
+            """;
+    }
+
     void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
         // 年型の検証
         // 必要に応じて年の範囲制約などを検証するコードをここに追加できます
