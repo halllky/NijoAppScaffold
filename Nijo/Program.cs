@@ -38,7 +38,7 @@ namespace Nijo {
                 e.Cancel = true;
             };
 
-            var rootCommand = DefineCommand(cancellationTokenSource);
+            var rootCommand = DefineCommand();
 
             var parser = new CommandLineBuilder(rootCommand)
                 .UseDefaults()
@@ -59,7 +59,7 @@ namespace Nijo {
             return await parser.InvokeAsync(args);
         }
 
-        private static RootCommand DefineCommand(CancellationTokenSource cancellationTokenSource) {
+        private static RootCommand DefineCommand() {
             var rootCommand = new RootCommand("nijo");
 
             // ---------------------------------------------------
@@ -435,7 +435,7 @@ namespace Nijo {
         }
 
         /// <summary>
-        /// 各モデルで利用可能なNodeOptionのHelpTextを.mdファイルとして出力します。
+        /// Nijo自体のドキュメント生成
         /// </summary>
         private static void GenerateReference(string outPath) {
             var logger = ILoggerExtension.CreateConsoleLogger();
@@ -473,6 +473,12 @@ namespace Nijo {
             var valueMemberTypesPath = Path.Combine(outDirFullPath, ValueObjectTypesMd.FILE_NAME);
             File.WriteAllText(valueMemberTypesPath, ValueObjectTypesMd.Render(valueMemberTypes), new UTF8Encoding(false, false));
             logger.LogInformation("ValueMemberTypes.mdファイルを生成しました: {valueMemberTypesPath}", valueMemberTypesPath);
+
+            // CLIのドキュメントを生成
+            var rootCommand = DefineCommand();
+            var cliDocPath = Path.Combine(outDirFullPath, CliDocumentMd.FILE_NAME);
+            File.WriteAllText(cliDocPath, CliDocumentMd.Render(rootCommand), new UTF8Encoding(false, false));
+            logger.LogInformation("CLI.mdファイルを生成しました: {cliDocPath}", cliDocPath);
 
             logger.LogInformation("リファレンスドキュメントの生成が完了しました。");
         }
