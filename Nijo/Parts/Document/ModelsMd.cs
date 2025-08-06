@@ -14,7 +14,7 @@ internal class ModelsMd {
         return $$"""
             ---
             title: nijo.xml 仕様 - モデル定義
-            outline: [2, 4]  # `##` , `###` の見出しをページ内ナビゲーションに表示
+            outline: [2, 3]  # `##` , `###` の見出しをページ内ナビゲーションに表示
             ---
 
             # nijo.xml 仕様 - モデル定義

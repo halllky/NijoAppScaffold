@@ -17,7 +17,7 @@ internal class CliDocumentMd {
         sb.AppendLine("""
             ---
             title: コマンドライン API
-            outline: [2,2]  # `##` の見出しをページ内ナビゲーションに表示
+            outline: [2, 2]  # `##` の見出しをページ内ナビゲーションに表示
             ---
 
             # コマンドライン API
