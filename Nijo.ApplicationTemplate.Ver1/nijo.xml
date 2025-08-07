@@ -442,4 +442,61 @@
     <納品書 DisplayName="納品書" key="4" UniqueId="252bf549-e97e-46fa-af83-f8319e6cd99b" />
     <その他 DisplayName="その他" key="5" UniqueId="6bcdc8d4-6ce0-4c41-8950-4203f90b5fc9" />
   </document_type>
+  <!-- ログインユーザー情報の構造体定義 -->
+  <ログインユーザー情報 LatinName="Login User Information" Type="structure-model" UniqueId="e8f20d1d-9f4e-4f9c-9f4e-1d9f4e9f4e1d">
+    <!-- ユーザー基本情報 -->
+    <ユーザーID Type="word" UniqueId="1d9f4e9f-4e1d-9f4e-1d9f-4e9f4e1d9f4e" />
+    <表示名 Type="word" UniqueId="4e1d9f4e-9f4e-1d9f-4e9f-4e1d9f4e1d9f" />
+    <メールアドレス Type="word" UniqueId="9f4e1d9f-4e1d-9f4e-1d9f-4e1d9f4e1d9f" />
+    <最終ログイン日時 Type="datetime" UniqueId="e1d9f4e1-d9f4-e1d9-f4e1-d9f4e1d9f4e1" />
+
+    <!-- 所属情報（1対1） -->
+    <所属情報 Type="child" UniqueId="d9f4e1d9-f4e1-d9f4-e1d9-f4e1d9f4e1d9">
+      <診療科コード Type="word" UniqueId="f4e1d9f4-e1d9-f4e1-d9f4-e1d9f4e1d9f4" />
+      <診療科名 Type="word" UniqueId="e1d9f4e1-d9f4-e1d9-f4e1-d9f4e1d9f4e1" />
+      <役職 Type="position_type" UniqueId="1d9f4e1d-9f4e-1d9f-4e1d-9f4e1d9f4e1d" />
+      <入職日 Type="date" UniqueId="9f4e1d9f-4e1d-9f4e-1d9f-4e1d9f4e1d9f4" />
+    </所属情報>
+
+    <!-- 権限情報（1対多） -->
+    <権限一覧 Type="children" UniqueId="4e1d9f4e-1d9f-4e1d-9f4e-1d9f4e1d9f4e">
+      <権限コード Type="word" UniqueId="1d9f4e1d-9f4e-1d9f-4e1d-9f4e1d9f4e1d" />
+      <権限名 Type="word" UniqueId="9f4e1d9f-4e1d-9f4e-1d9f-4e1d9f4e1d9f4" />
+      <有効期限 Type="date" UniqueId="4e1d9f4e-1d9f-4e1d-9f4e-1d9f4e1d9f4e" />
+      <!-- 権限に紐づく操作（1対多） -->
+      <操作一覧 Type="children" UniqueId="1d9f4e1d-9f4e-1d9f-4e1d-9f4e1d9f4e1d">
+        <操作コード Type="word" UniqueId="9f4e1d9f-4e1d-9f4e-1d9f-4e1d9f4e1d9f4" />
+        <操作名 Type="word" UniqueId="4e1d9f4e-1d9f-4e1d-9f4e-1d9f4e1d9f4e" />
+        <説明 Type="description" UniqueId="1d9f4e1d-9f4e-1d9f-4e1d-9f4e1d9f4e1d" />
+      </操作一覧>
+    </権限一覧>
+
+    <!-- セッション情報（1対1） -->
+    <セッション情報 Type="child" UniqueId="9f4e1d9f-4e1d-9f4e-1d9f-4e1d9f4e1d9f">
+      <セッションID Type="word" UniqueId="4e1d9f4e-1d9f-4e1d-9f4e-1d9f4e1d9f4e" />
+      <発行日時 Type="datetime" UniqueId="1d9f4e1d-9f4e-1d9f-4e1d-9f4e1d9f4e1d" />
+      <有効期限 Type="datetime" UniqueId="9f4e1d9f-4e1d-9f4e-1d9f-4e1d9f4e1d9f4" />
+      <!-- アクセス履歴（1対多） -->
+      <アクセス履歴 Type="children" UniqueId="4e1d9f4e-1d9f-4e1d-9f4e-1d9f4e1d9f4e">
+        <アクセス日時 Type="datetime" UniqueId="1d9f4e1d-9f4e-1d9f-4e1d-9f4e1d9f4e1d" />
+        <アクセスURL Type="word" UniqueId="9f4e1d9f-4e1d-9f4e-1d9f-4e1d9f4e1d9f4" />
+        <IPアドレス Type="word" UniqueId="4e1d9f4e-1d9f-4e1d-9f4e-1d9f4e1d9f4e" />
+        <ユーザーエージェント Type="word" UniqueId="1d9f4e1d-9f4e-1d9f-4e1d-9f4e1d9f4e1d" />
+      </アクセス履歴>
+    </セッション情報>
+
+    <!-- 設定情報（1対1） -->
+    <設定情報 Type="child" UniqueId="9f4e1d9f-4e1d-9f4e-1d9f-4e1d9f4e1d9f4">
+      <言語設定 Type="word" UniqueId="4e1d9f4e-1d9f-4e1d-9f4e-1d9f4e1d9f4e" />
+      <タイムゾーン Type="word" UniqueId="1d9f4e1d-9f4e-1d9f-4e1d-9f4e1d9f4e1d" />
+      <!-- 通知設定（1対多） -->
+      <通知設定一覧 Type="children" UniqueId="9f4e1d9f-4e1d-9f4e-1d9f-4e1d9f4e1d9f4">
+        <通知種別 Type="word" UniqueId="4e1d9f4e-1d9f-4e1d-9f4e-1d9f4e1d9f4e" />
+        <メール通知 Type="word" UniqueId="1d9f4e1d-9f4e-1d9f-4e1d-9f4e1d9f4e1d" />
+        <プッシュ通知 Type="word" UniqueId="9f4e1d9f-4e1d-9f4e-1d9f-4e1d9f4e1d9f4" />
+      </通知設定一覧>
+    </設定情報>
+  </ログインユーザー情報>
+
+  <!-- value-objectタイプの定義 -->
 </NijoApplicationBuilder>

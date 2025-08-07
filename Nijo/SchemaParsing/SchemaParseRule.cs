@@ -42,6 +42,7 @@ public class SchemaParseRule {
             new CommandModel(),
             new StaticEnumModel(),
             new ValueObjectModel(),
+            new StructureModel(),
         };
         var valueMemberTypes = new IValueMemberType[] {
             new ValueMemberTypes.Word(),

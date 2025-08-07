@@ -432,6 +432,7 @@ namespace Nijo {
             RenderOptionsMd("DataModel.Options.md", new DataModel());
             RenderOptionsMd("QueryModel.Options.md", new QueryModel());
             RenderOptionsMd("CommandModel.Options.md", new CommandModel());
+            RenderOptionsMd("StructureModel.Options.md", new StructureModel());
         }
 
         /// <summary>
