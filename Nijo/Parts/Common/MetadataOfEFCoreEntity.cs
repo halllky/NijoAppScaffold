@@ -44,6 +44,11 @@ internal class MetadataOfEFCoreEntity : IMultiAggregateSourceFile {
             .OrderByDataFlow()
             .Select(agg => new EFCoreEntity(agg));
 
+        var staticContainers = _rootAggregates
+            .OrderByDataFlow()
+            .Select(agg => new Container(agg))
+            .ToArray();
+
         return new SourceFile {
             FileName = "MetadataOfEFCoreEntity.cs",
             Contents = $$"""
@@ -56,6 +61,19 @@ internal class MetadataOfEFCoreEntity : IMultiAggregateSourceFile {
                 /// DataModelのメタデータ
                 /// </summary>
                 public class MetadataOfEFCoreEntity {
+                {{staticContainers.SelectTextTemplate(container => $$"""
+                    public {{container.CsClassName}} {{container.PhysicalName}} => _cache_{{container.PhysicalName}} ??= new();
+                """)}}
+
+                {{staticContainers.SelectTextTemplate(container => $$"""
+                    private {{container.CsClassName}}? _cache_{{container.PhysicalName}};
+                """)}}
+                {{staticContainers.SelectTextTemplate(container => $$"""
+
+
+                    {{WithIndent(container.RenderCSharpRecursively(), "    ")}}
+                """)}}
+
                     /// <summary>
                     /// データフローの上流から順番にデータモデルの集約を列挙する。
                     /// </summary>
@@ -344,4 +362,168 @@ internal class MetadataOfEFCoreEntity : IMultiAggregateSourceFile {
                 """,
         };
     }
+
+
+    /// <summary>
+    /// コンテナ。集約ごとの静的アクセスのレンダリング用（EFCore版）。
+    /// </summary>
+    private class Container {
+        internal Container(AggregateBase aggregate) {
+            _aggregate = aggregate;
+        }
+        private readonly AggregateBase _aggregate;
+
+        internal string PhysicalName => _aggregate.PhysicalName;
+        internal string CsClassName => $"{_aggregate.PhysicalName}Metadata";
+
+        internal IEnumerable<IMetadataMember> GetMembers() {
+            // 値メンバー
+            foreach (var column in new EFCoreEntity(_aggregate).GetColumns()) {
+                var type = column switch {
+                    EFCoreEntity.OwnColumnMember => "own-column",
+                    EFCoreEntity.ParentKeyMember => "parent-key",
+                    EFCoreEntity.RefKeyMember refTo => refTo.IsParentKey ? "ref-parent-key" : "ref-key",
+                    _ => throw new InvalidOperationException(),
+                };
+                var enumType = column.Member.Type is StaticEnumMember staticEnumMember
+                    ? staticEnumMember.Definition.TsTypeName
+                    : null;
+
+                string? refToRelationName;
+                string? refToAggregatePath;
+                string? refToColumnName;
+                if (column is EFCoreEntity.RefKeyMember refKeyMember) {
+                    refToRelationName = refKeyMember.RefEntry.DisplayName;
+                    refToAggregatePath = refKeyMember.RefEntry.RefTo.EnumerateThisAndAncestors().Select(a => a.PhysicalName).Join("/");
+                    var mappingKey = column.Member.ToMappingKey();
+                    var refToColumns = new EFCoreEntity(refKeyMember.RefEntry.RefTo).GetColumns();
+                    refToColumnName = refToColumns.First(c => c.Member.ToMappingKey() == mappingKey).DbName;
+                } else {
+                    refToRelationName = null;
+                    refToAggregatePath = null;
+                    refToColumnName = null;
+                }
+
+                var data = new ValueMemberData(
+                    type,
+                    column.PhysicalName,
+                    column.DisplayName,
+                    column.DbName,
+                    column.Member.GetComment(E_CsTs.CSharp),
+                    column.Member.Type.SchemaTypeName,
+                    enumType,
+                    column.IsKey,
+                    !column.IsKey && !column.Member.IsRequired,
+                    refToRelationName,
+                    refToAggregatePath,
+                    refToColumnName
+                );
+                yield return new MetadataValueMember(data);
+            }
+            // 子集約
+            foreach (var member in _aggregate.GetMembers()) {
+                if (member is ChildAggregate child) {
+                    yield return new MetadataDescendantMember(child);
+                } else if (member is ChildrenAggregate children) {
+                    yield return new MetadataDescendantMember(children);
+                }
+            }
+        }
+
+        internal string RenderCSharpRecursively() {
+            var thisAndDescendants = _aggregate
+                .EnumerateThisAndDescendants()
+                .Select(agg => new Container(agg));
+
+            return $$"""
+                #region {{_aggregate.DisplayName}}
+                {{thisAndDescendants.SelectTextTemplate(metadata => $$"""
+                {{Render(metadata)}}
+                """)}}
+                #endregion {{_aggregate.DisplayName}}
+                """;
+
+            static string Render(Container metadata) {
+                var members = metadata.GetMembers().ToArray();
+                return $$"""
+                    public class {{metadata.CsClassName}} {
+                    {{members.SelectTextTemplate(m => $$"""
+                        {{WithIndent(m.RenderCSharp(), "    ")}}
+                    """)}}
+                    }
+                    """;
+            }
+        }
+    }
+
+    #region メンバー(Renderers)
+    private interface IMetadataMember {
+        string PhysicalName { get; }
+        string RenderCSharp();
+    }
+
+    private record ValueMemberData(
+        string Type,
+        string PhysicalName,
+        string DisplayName,
+        string ColumnName,
+        string Description,
+        string TypeName,
+        string? EnumType,
+        bool IsPrimaryKey,
+        bool IsNullable,
+        string? RefToRelationName,
+        string? RefToAggregatePath,
+        string? RefToColumnName
+    );
+
+    private class MetadataValueMember : IMetadataMember {
+        internal MetadataValueMember(ValueMemberData data) {
+            _data = data;
+        }
+        private readonly ValueMemberData _data;
+
+        public string PhysicalName => _data.PhysicalName;
+
+        public string RenderCSharp() {
+            var enumType = _data.EnumType != null ? $"\"{_data.EnumType.Replace("\"", "\\\"")}\"" : "null";
+            var refToRelationName = _data.RefToRelationName != null ? $"\"{_data.RefToRelationName.Replace("\"", "\\\"")}\"" : "null";
+            var refToAggregatePath = _data.RefToAggregatePath != null ? $"\"{_data.RefToAggregatePath.Replace("\"", "\\\"")}\"" : "null";
+            var refToColumnName = _data.RefToColumnName != null ? $"\"{_data.RefToColumnName.Replace("\"", "\\\"")}\"" : "null";
+
+            return $$"""
+                public ValueMember {{PhysicalName}} { get; } = new() {
+                    Type = "{{_data.Type}}",
+                    PhysicalName = "{{_data.PhysicalName}}",
+                    DisplayName = "{{_data.DisplayName.Replace("\"", "\\\"")}}",
+                    ColumnName = "{{_data.ColumnName}}",
+                    Description = "{{_data.Description.Replace("\"", "\\\"")}}",
+                    TypeName = "{{_data.TypeName}}",
+                    EnumType = {{enumType}},
+                    IsPrimaryKey = {{(_data.IsPrimaryKey ? "true" : "false")}},
+                    IsNullable = {{(_data.IsNullable ? "true" : "false")}},
+                    RefToRelationName = {{refToRelationName}},
+                    RefToAggregatePath = {{refToAggregatePath}},
+                    RefToColumnName = {{refToColumnName}},
+                };
+                """;
+        }
+    }
+
+    private class MetadataDescendantMember : IMetadataMember {
+        internal MetadataDescendantMember(ChildAggregate child) { _aggregate = child; }
+        internal MetadataDescendantMember(ChildrenAggregate children) { _aggregate = children; }
+        private readonly AggregateBase _aggregate;
+        public string PhysicalName => _aggregate.PhysicalName;
+
+        public string RenderCSharp() {
+            var desc = new Container(_aggregate);
+            var privateField = $"_cache_{PhysicalName}";
+            return $$"""
+                public {{desc.CsClassName}} {{PhysicalName}} => {{privateField}} ??= new();
+                private {{desc.CsClassName}}? {{privateField}};
+                """;
+        }
+    }
+    #endregion メンバー(Renderers)
 }
