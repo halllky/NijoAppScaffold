@@ -64,7 +64,7 @@ public class QueryEditorServerApi : ControllerBase {
 
     [HttpGet("get-table-metadata")]
     public IActionResult GetTableMetadata() {
-        var data = MetadataForDataPreview.EnumerateDataModelsOrderByDataFlow();
+        var data = MetadataOfEFCoreEntity.EnumerateDataModelsOrderByDataFlow();
 
         // カスタムJsonConverterを使用してポリモーフィックシリアライゼーションを実現
         var options = new JsonSerializerOptions {
@@ -79,12 +79,12 @@ public class QueryEditorServerApi : ControllerBase {
     /// <summary>
     /// IAggregateMemberのポリモーフィックシリアライゼーション用のカスタムコンバーター
     /// </summary>
-    private class AggregateMemberConverter : JsonConverter<MetadataForDataPreview.IAggregateMember> {
-        public override MetadataForDataPreview.IAggregateMember Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+    private class AggregateMemberConverter : JsonConverter<MetadataOfEFCoreEntity.IAggregateMember> {
+        public override MetadataOfEFCoreEntity.IAggregateMember Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
             throw new NotImplementedException("デシリアライゼーションは実装していません");
         }
 
-        public override void Write(Utf8JsonWriter writer, MetadataForDataPreview.IAggregateMember value, JsonSerializerOptions options) {
+        public override void Write(Utf8JsonWriter writer, MetadataOfEFCoreEntity.IAggregateMember value, JsonSerializerOptions options) {
             // 実際の型でシリアライゼーションを行う
             JsonSerializer.Serialize(writer, value, value.GetType(), options);
         }

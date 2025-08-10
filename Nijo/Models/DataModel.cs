@@ -300,7 +300,7 @@ namespace Nijo.Models {
             }
 
             // メタデータ
-            ctx.Use<MetadataForDataPreview>().Register(rootAggregate);
+            ctx.Use<MetadataOfEFCoreEntity>().Register(rootAggregate);
 
             aggregateFile.ExecuteRendering(ctx);
         }

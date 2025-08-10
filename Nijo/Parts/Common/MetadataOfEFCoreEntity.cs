@@ -10,12 +10,13 @@ using Nijo.ValueMemberTypes;
 namespace Nijo.Parts.Common;
 
 /// <summary>
-/// nijo ui のデータプレビューのためのDataModelのメタデータ
+/// EFCoreのEntityのメタデータ。
+/// 自動生成後のプロジェクトで動的にDB構造の情報を取り扱いときに使用する。
 /// </summary>
-internal class MetadataForDataPreview : IMultiAggregateSourceFile {
+internal class MetadataOfEFCoreEntity : IMultiAggregateSourceFile {
 
     private readonly List<RootAggregate> _rootAggregates = new();
-    internal MetadataForDataPreview Register(RootAggregate rootAggregate) {
+    internal MetadataOfEFCoreEntity Register(RootAggregate rootAggregate) {
         _rootAggregates.Add(rootAggregate);
         return this;
     }
@@ -44,7 +45,7 @@ internal class MetadataForDataPreview : IMultiAggregateSourceFile {
             .Select(agg => new EFCoreEntity(agg));
 
         return new SourceFile {
-            FileName = "DataModelMetadata.cs",
+            FileName = "MetadataOfEFCoreEntity.cs",
             Contents = $$"""
                 using System.Collections.Generic;
                 using System.Text.Json.Serialization;
@@ -54,7 +55,7 @@ internal class MetadataForDataPreview : IMultiAggregateSourceFile {
                 /// <summary>
                 /// DataModelのメタデータ
                 /// </summary>
-                public class MetadataForDataPreview {
+                public class MetadataOfEFCoreEntity {
                     /// <summary>
                     /// データフローの上流から順番にデータモデルの集約を列挙する。
                     /// </summary>
@@ -264,10 +265,10 @@ internal class MetadataForDataPreview : IMultiAggregateSourceFile {
     /// </summary>
     private static SourceFile RenderTypeScriptType() {
         return new SourceFile {
-            FileName = "data-model-metadata.ts",
+            FileName = "metadata-of-efcore-entity.ts",
             Contents = $$"""
                 /** DataModelのメタデータ */
-                export namespace DataModelMetadata {
+                export namespace MetadataOfEFCoreEntity {
 
                   /** 集約 */
                   export type Aggregate = {
