@@ -26,8 +26,8 @@ internal class Metadata : IMultiAggregateSourceFile {
         }
     }
 
-    internal const string CS_CLASSNAME = "Metadata";
-    internal const string TS_TYPENAME = "Metadata";
+    internal const string CS_CLASSNAME = "MetadataOfApplicationSchema";
+    internal const string TS_TYPENAME = "MetadataOfApplicationSchema";
 
     internal const string VALUE_MEMBER_METADATA_CS = "ValueMemberMetadata";
     internal const string VALUE_MEMBER_METADATA_TS = "ValueMemberMetadata";
@@ -57,7 +57,7 @@ internal class Metadata : IMultiAggregateSourceFile {
             .ToArray();
 
         return new SourceFile {
-            FileName = "Metadata.cs",
+            FileName = "MetadataOfApplicationSchema.cs",
             Contents = $$"""
                 namespace {{ctx.Config.RootNamespace}};
 
@@ -117,7 +117,7 @@ internal class Metadata : IMultiAggregateSourceFile {
             : characterTypes.Select(type => $"'{type.Replace("'", "\\'")}'").Join(" | ");
 
         return new SourceFile {
-            FileName = "metadata.ts",
+            FileName = "metadata-of-application-schema.ts",
             Contents = $$"""
                 /**
                  * スキーマ定義で指定されたメンバー毎の属性（必須か否か、文字列の最大桁数、など）を
