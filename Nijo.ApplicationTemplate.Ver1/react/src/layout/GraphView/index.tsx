@@ -175,10 +175,16 @@ export const GraphView = forwardRef<GraphViewRef, GraphViewProps>((props, ref) =
             cy.add({ data: newEdge, group: 'edges' });
           }
         } else {
-          // 既存エッジのデータを更新 (もしエッジのデータにlabel以外の変更がありうるなら)
+          // 既存エッジのデータを更新
           const existingEdge = existingEdgesMap.get(key);
-          if (existingEdge.data('label') !== (newEdge.label ?? '')) { // 簡単のためlabelのみ比較
+          if (existingEdge.data('label') !== (newEdge.label ?? '')) {
             existingEdge.data('label', newEdge.label ?? '');
+          }
+          if (existingEdge.data('sourceEndLabel') !== (newEdge.sourceEndLabel ?? '')) {
+            existingEdge.data('sourceEndLabel', newEdge.sourceEndLabel ?? '');
+          }
+          if (existingEdge.data('targetEndLabel') !== (newEdge.targetEndLabel ?? '')) {
+            existingEdge.data('targetEndLabel', newEdge.targetEndLabel ?? '');
           }
         }
       }

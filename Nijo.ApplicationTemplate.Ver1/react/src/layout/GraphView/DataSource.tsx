@@ -33,6 +33,10 @@ export type Edge = {
   label?: string
   'line-color'?: string
   'line-style'?: 'solid' | 'dashed' | 'dotted'
+  /** エッジの始点のラベル */
+  sourceEndLabel?: string
+  /** エッジの終点のラベル */
+  targetEndLabel?: string
 }
 
 export const createEmptyDataSet = (): DataSet => ({

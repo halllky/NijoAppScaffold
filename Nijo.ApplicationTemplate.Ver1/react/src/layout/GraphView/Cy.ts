@@ -570,6 +570,10 @@ const getStyleSheet = (): cytoscape.CytoscapeOptions['style'] => {
       'target-arrow-shape': 'triangle',
       'curve-style': 'bezier',
       'width': '1px',
+      'source-label': (edge: cytoscape.EdgeSingular) => edge.data('sourceEndLabel') ?? '',
+      'target-label': (edge: cytoscape.EdgeSingular) => edge.data('targetEndLabel') ?? '',
+      'source-text-margin-y': -10,
+      'target-text-margin-y': -10,
     },
   }, {
     selector: 'edge:selected',
@@ -581,6 +585,10 @@ const getStyleSheet = (): cytoscape.CytoscapeOptions['style'] => {
       'source-arrow-color': '#FF4F02',
       'target-arrow-color': '#FF4F02',
       'width': '2px',
+      'source-label': (edge: cytoscape.EdgeSingular) => edge.data('sourceEndLabel') ?? '',
+      'target-label': (edge: cytoscape.EdgeSingular) => edge.data('targetEndLabel') ?? '',
+      'source-text-margin-y': -10,
+      'target-text-margin-y': -10,
     },
   }]
 }
