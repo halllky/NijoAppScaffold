@@ -77,9 +77,9 @@ internal class MetadataOfEFCoreEntity : IMultiAggregateSourceFile {
                     /// <summary>
                     /// データフローの上流から順番にデータモデルの集約を列挙する。
                     /// </summary>
-                    public static IEnumerable<Aggregate> EnumerateDataModelsOrderByDataFlow() {
-                {{efCoreEntities.SelectTextTemplate(agg => $$"""
-                        yield return {{WithIndent(RenderAggregate(agg), "        ")}};
+                    public IEnumerable<Aggregate> EnumerateDataModelsOrderByDataFlow() {
+                {{staticContainers.SelectTextTemplate(container => $$"""
+                        yield return {{container.PhysicalName}}.ToAggregate();
                 """)}}
                     }
 
@@ -203,9 +203,7 @@ internal class MetadataOfEFCoreEntity : IMultiAggregateSourceFile {
                     TableName = "{{entity.Aggregate.DbName}}",
                     Description = "{{entity.Aggregate.GetComment(E_CsTs.CSharp).Replace("\"", "\\\"")}}",
                     Members = new List<IAggregateMember> {
-                {{RenderMembers(entity).OrderBy(x => x.Order).SelectTextTemplate(x => $$"""
-                        {{WithIndent(x.SourceCode, "        ")}},
-                """)}}
+                        {{RenderMembers(entity).OrderBy(x => x.Order).SelectTextTemplate(x => WithIndent(x.SourceCode, "        ") + ",")}}
                     },
                 }
                 """;
@@ -445,11 +443,38 @@ internal class MetadataOfEFCoreEntity : IMultiAggregateSourceFile {
 
             static string Render(Container metadata) {
                 var members = metadata.GetMembers().ToArray();
+                var type = metadata._aggregate switch {
+                    RootAggregate => "root",
+                    ChildAggregate => "child",
+                    ChildrenAggregate => "children",
+                    _ => throw new InvalidOperationException(),
+                };
+                var path = metadata._aggregate.EnumerateThisAndAncestors().Select(a => a.PhysicalName).Join("/");
+                var parentPath = metadata._aggregate is RootAggregate
+                    ? "null"
+                    : metadata._aggregate.EnumerateAncestors().Select(a => a.PhysicalName).Join("/");
+
                 return $$"""
                     public class {{metadata.CsClassName}} {
                     {{members.SelectTextTemplate(m => $$"""
                         {{WithIndent(m.RenderCSharp(), "    ")}}
                     """)}}
+                        public Aggregate ToAggregate() {
+                            return new Aggregate {
+                                Type = "{{type}}",
+                                Path = "{{path}}",
+                                ParentAggregatePath = "{{parentPath}}",
+                                PhysicalName = "{{metadata._aggregate.PhysicalName}}",
+                                DisplayName = "{{metadata._aggregate.DisplayName.Replace("\"", "\\\"")}}",
+                                TableName = "{{metadata._aggregate.DbName}}",
+                                Description = "{{metadata._aggregate.GetComment(E_CsTs.CSharp).Replace("\"", "\\\"")}}",
+                                Members = new List<IAggregateMember> {
+                    {{members.SelectTextTemplate(m => $$"""
+                                    {{WithIndent(m.RenderCSharpAsListItemForToAggregate(), "            ")}},
+                    """)}}
+                                },
+                            };
+                        }
                     }
                     """;
             }
@@ -460,6 +485,7 @@ internal class MetadataOfEFCoreEntity : IMultiAggregateSourceFile {
     private interface IMetadataMember {
         string PhysicalName { get; }
         string RenderCSharp();
+        string RenderCSharpAsListItemForToAggregate();
     }
 
     private record ValueMemberData(
@@ -508,6 +534,10 @@ internal class MetadataOfEFCoreEntity : IMultiAggregateSourceFile {
                 };
                 """;
         }
+
+        public string RenderCSharpAsListItemForToAggregate() {
+            return PhysicalName;
+        }
     }
 
     private class MetadataDescendantMember : IMetadataMember {
@@ -523,6 +553,10 @@ internal class MetadataOfEFCoreEntity : IMultiAggregateSourceFile {
                 public {{desc.CsClassName}} {{PhysicalName}} => {{privateField}} ??= new();
                 private {{desc.CsClassName}}? {{privateField}};
                 """;
+        }
+
+        public string RenderCSharpAsListItemForToAggregate() {
+            return $"{PhysicalName}.ToAggregate()";
         }
     }
     #endregion メンバー(Renderers)

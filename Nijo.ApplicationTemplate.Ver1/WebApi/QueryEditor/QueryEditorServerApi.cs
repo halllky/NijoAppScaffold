@@ -64,7 +64,7 @@ public class QueryEditorServerApi : ControllerBase {
 
     [HttpGet("get-table-metadata")]
     public IActionResult GetTableMetadata() {
-        var data = MetadataOfEFCoreEntity.EnumerateDataModelsOrderByDataFlow();
+        var data = new MetadataOfEFCoreEntity().EnumerateDataModelsOrderByDataFlow();
 
         // カスタムJsonConverterを使用してポリモーフィックシリアライゼーションを実現
         var options = new JsonSerializerOptions {
