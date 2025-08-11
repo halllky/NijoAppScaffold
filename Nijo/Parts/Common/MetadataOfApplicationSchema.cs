@@ -50,7 +50,13 @@ internal class Metadata : IMultiAggregateSourceFile {
     }
 
     private SourceFile RenderCSharp(CodeRenderingContext ctx) {
-        var root = _aggregates
+        var all = _aggregates
+            .OrderBy(agg => agg.GetRoot().GetIndexOfDataFlow())
+            .ThenBy(agg => agg.GetOrderInTree())
+            .Select(agg => new Container(agg))
+            .ToArray();
+        var roots = _aggregates
+            .Where(agg => agg is RootAggregate)
             .OrderBy(agg => agg.GetRoot().GetIndexOfDataFlow())
             .ThenBy(agg => agg.GetOrderInTree())
             .Select(agg => new Container(agg))
@@ -59,6 +65,9 @@ internal class Metadata : IMultiAggregateSourceFile {
         return new SourceFile {
             FileName = "MetadataOfApplicationSchema.cs",
             Contents = $$"""
+                using System.Collections.Generic;
+                using System.Text.Json.Serialization;
+
                 namespace {{ctx.Config.RootNamespace}};
 
                 /// <summary>
@@ -68,18 +77,62 @@ internal class Metadata : IMultiAggregateSourceFile {
                 /// </summary>
                 public sealed class {{CS_CLASSNAME}} {
 
-                {{root.SelectTextTemplate(container => $$"""
+                {{all.SelectTextTemplate(container => $$"""
                     public {{container.CsClassName}} {{container.PhysicalName}} => _cache_{{container.PhysicalName}} ??= new();
                 """)}}
 
-                {{root.SelectTextTemplate(container => $$"""
+                {{all.SelectTextTemplate(container => $$"""
                     private {{container.CsClassName}}? _cache_{{container.PhysicalName}};
                 """)}}
-                {{root.SelectTextTemplate(container => $$"""
+                {{all.SelectTextTemplate(container => $$"""
 
 
                     {{WithIndent(container.RenderCSharpRecursively(), "    ")}}
                 """)}}
+
+                    /// <summary>
+                    /// ルート集約を列挙する。
+                    /// </summary>
+                    public IEnumerable<Aggregate> EnumerateRootAggregates() {
+                {{roots.SelectTextTemplate(container => $$"""
+                        yield return {{container.PhysicalName}}.ToAggregate();
+                """)}}
+                    }
+
+                    #region 型
+                    /// <summary>
+                    /// 集約（アプリケーションスキーマ）
+                    /// </summary>
+                    public class Aggregate : IAggregateMember {
+                        [JsonPropertyName("type")]
+                        public string Type => "aggregate";
+                        [JsonPropertyName("physicalName")]
+                        public required string PhysicalName { get; set; }
+                        [JsonPropertyName("displayName")]
+                        public required string DisplayName { get; set; }
+                        [JsonPropertyName("description")]
+                        public required string Description { get; set; }
+                        [JsonPropertyName("members")]
+                        public required List<IAggregateMember> Members { get; set; }
+                    }
+                    /// <summary>
+                    /// 集約のメンバー
+                    /// </summary>
+                    public interface IAggregateMember {
+                        string Type { get; }
+                    }
+                    /// <summary>
+                    /// 値メンバー（アプリケーションスキーマの属性定義）
+                    /// </summary>
+                    public class ValueMember : IAggregateMember {
+                        [JsonPropertyName("type")]
+                        public string Type => "value";
+                        [JsonPropertyName("physicalName")]
+                        public required string PhysicalName { get; set; }
+                        [JsonPropertyName("metadata")]
+                        public required {{VALUE_MEMBER_METADATA_CS}} Metadata { get; set; }
+                    }
+                    #endregion 型
                 }
 
 
@@ -193,11 +246,24 @@ internal class Metadata : IMultiAggregateSourceFile {
 
             static string Render(Container metadata) {
                 var members = metadata.GetMembers().ToArray();
+                var description = metadata._aggregate.GetComment(E_CsTs.CSharp).Replace("\"", "\\\"");
                 return $$"""
                     public class {{metadata.CsClassName}} {
                     {{members.SelectTextTemplate(m => $$"""
                         {{WithIndent(m.RenderCSharp(), "    ")}}
                     """)}}
+                        public Aggregate ToAggregate() {
+                            return new Aggregate {
+                                PhysicalName = "{{metadata._aggregate.PhysicalName}}",
+                                DisplayName = "{{metadata._aggregate.DisplayName.Replace("\"", "\\\"")}}",
+                                Description = "{{description}}",
+                                Members = new List<IAggregateMember> {
+                    {{members.SelectTextTemplate(m => $$"""
+                                    {{WithIndent(m.RenderCSharpAsListItemForToAggregate(), "                ")}} ,
+                    """)}}
+                                },
+                            };
+                        }
                     }
                     """;
             }
@@ -226,6 +292,7 @@ internal class Metadata : IMultiAggregateSourceFile {
         string PhysicalName { get; }
         string RenderCSharp();
         string RenderTypeScript();
+        string RenderCSharpAsListItemForToAggregate();
     }
     internal class MetadataValueMember : IMetadataMember {
         internal MetadataValueMember(ValueMember vm) {
@@ -286,6 +353,15 @@ internal class Metadata : IMultiAggregateSourceFile {
                 },
                 """;
         }
+
+        public string RenderCSharpAsListItemForToAggregate() {
+            return $$"""
+                new ValueMember {
+                    PhysicalName = "{{_vm.PhysicalName}}",
+                    Metadata = {{_vm.PhysicalName}},
+                }
+                """;
+        }
     }
 
     internal class MetadataDescendantMember : IMetadataMember {
@@ -314,6 +390,10 @@ internal class Metadata : IMultiAggregateSourceFile {
             return $$"""
                 {{PhysicalName}}: ({{desc.RenderTypeScriptBody()}}),
                 """;
+        }
+
+        public string RenderCSharpAsListItemForToAggregate() {
+            return $"{PhysicalName}.ToAggregate()";
         }
     }
     #endregion メンバー
