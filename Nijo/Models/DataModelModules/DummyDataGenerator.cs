@@ -113,7 +113,7 @@ namespace Nijo.Models.DataModelModules {
 
                         #region 型ごとの標準ダミー値の生成ロジック
                     {{ctx.SchemaParser.GetValueMemberTypes().SelectTextTemplate(type => $$"""
-                        protected virtual {{type.CsDomainTypeName}}? GetRandom{{type.TypePhysicalName}}({{DUMMY_DATA_GENERATE_CONTEXT}} context, {{Metadata.VALUE_MEMBER_METADATA_CS}} member) {
+                        protected virtual {{type.CsDomainTypeName}}? GetRandom{{type.TypePhysicalName}}({{DUMMY_DATA_GENERATE_CONTEXT}} context, {{Metadata.CS_CLASSNAME}}.{{Metadata.VALUE_MEMBER_METADATA_CS}} member) {
                             {{WithIndent(type.RenderCreateDummyDataValueBody(ctx), "        ")}}
                         }
                     """)}}

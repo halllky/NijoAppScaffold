@@ -6,7 +6,7 @@ namespace MyApp.Core;
 /// 標準のダミーデータ生成処理をカスタマイズしたい場合はここで適宜オーバーライドする。
 /// </summary>
 public class OverridedDummyDataGenerator : DummyDataGenerator {
-    protected override string? GetRandomWord(DummyDataGenerateContext context, ValueMemberMetadata member) {
+    protected override string? GetRandomWord(DummyDataGenerateContext context, MetadataOfApplicationSchema.ValueMemberMetadata member) {
         if (member.IsKey) {
             return base.GetRandomWord(context, member);
 

@@ -99,7 +99,7 @@ internal class Metadata : IMultiAggregateSourceFile {
                 """)}}
                     }
 
-                    #region 型
+                    #region 型（JSON用）
                     /// <summary>
                     /// 集約（アプリケーションスキーマ）
                     /// </summary>
@@ -132,26 +132,25 @@ internal class Metadata : IMultiAggregateSourceFile {
                         [JsonPropertyName("metadata")]
                         public required {{VALUE_MEMBER_METADATA_CS}} Metadata { get; set; }
                     }
-                    #endregion 型
-                }
+                    #endregion 型（JSON用）
 
-
-                /// <inheritdoc cref="{{CS_CLASSNAME}}"/>
-                public sealed class {{VALUE_MEMBER_METADATA_CS}} {
-                    /// <summary>表示用名称</summary>
-                    public required string DisplayName { get; init; }
-                    /// <summary>キーか否か</summary>
-                    public bool IsKey { get; init; }
-                    /// <summary>必須か否か</summary>
-                    public bool Required { get; init; }
-                    /// <summary>最大長。文字列型の項目にのみ有効。バイト数でなく文字数でカウントする</summary>
-                    public int? MaxLength { get; init; }
-                    /// <summary>この値がとることのできる文字種。文字列型の項目にのみ有効。未指定の場合は制約なし</summary>
-                    public {{CharacterType.ENUM_NAME}}? CharacterType { get; init; }
-                    /// <summary>整数部と小数部をあわせた桁数。数値型の項目にのみ有効。</summary>
-                    public int? TotalDigit { get; init; }
-                    /// <summary>小数部桁数。数値型の項目にのみ有効。</summary>
-                    public int? DecimalPlace { get; init; }
+                    /// <inheritdoc cref="{{CS_CLASSNAME}}"/>
+                    public sealed class {{VALUE_MEMBER_METADATA_CS}} {
+                        /// <summary>表示用名称</summary>
+                        public required string DisplayName { get; init; }
+                        /// <summary>キーか否か</summary>
+                        public bool IsKey { get; init; }
+                        /// <summary>必須か否か</summary>
+                        public bool Required { get; init; }
+                        /// <summary>最大長。文字列型の項目にのみ有効。バイト数でなく文字数でカウントする</summary>
+                        public int? MaxLength { get; init; }
+                        /// <summary>この値がとることのできる文字種。文字列型の項目にのみ有効。未指定の場合は制約なし</summary>
+                        public {{CharacterType.ENUM_NAME}}? CharacterType { get; init; }
+                        /// <summary>整数部と小数部をあわせた桁数。数値型の項目にのみ有効。</summary>
+                        public int? TotalDigit { get; init; }
+                        /// <summary>小数部桁数。数値型の項目にのみ有効。</summary>
+                        public int? DecimalPlace { get; init; }
+                    }
                 }
                 """,
         };
