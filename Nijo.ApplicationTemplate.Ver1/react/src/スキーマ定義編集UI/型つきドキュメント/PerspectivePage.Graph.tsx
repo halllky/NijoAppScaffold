@@ -61,6 +61,7 @@ export const PerspectivePageGraph = ({
           source: sourceId,
           target: targetId,
           label: Array.from(mention.relations).join(','),
+          targetEndShape: 'triangle',
         } satisfies Layout.Edge)
 
         // 参照先が他のページのエンティティの場合、

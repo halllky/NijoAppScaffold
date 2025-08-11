@@ -324,6 +324,7 @@ const createSchemaDefinitionDataSet = (xmlElementTrees: ModelPageForm[], onlyRoo
       label,
       'line-color': lineColor,
       'line-style': group.isMention ? 'dashed' : 'solid',
+      targetEndShape: 'triangle',
     } satisfies CyEdge)
   })
 

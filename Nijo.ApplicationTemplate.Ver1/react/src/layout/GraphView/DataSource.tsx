@@ -1,3 +1,4 @@
+import cytoscape from 'cytoscape'
 import React from 'react'
 
 export type DataSet = {
@@ -37,6 +38,10 @@ export type Edge = {
   sourceEndLabel?: string
   /** エッジの終点のラベル */
   targetEndLabel?: string
+  /** エッジの始点の形状 */
+  sourceEndShape?: cytoscape.Css.ArrowShape
+  /** エッジの終点の形状 */
+  targetEndShape?: cytoscape.Css.ArrowShape
 }
 
 export const createEmptyDataSet = (): DataSet => ({
