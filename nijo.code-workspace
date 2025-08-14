@@ -145,6 +145,17 @@
         "options": {
           "cwd": "${workspaceFolder:NijoApplicationBuilder}/Document"
         },
+      },
+      {
+        "label": "Nijo: UIコンポーネントのデバッグ",
+        "command": "npm run dev:ui-debugging",
+        "type": "shell",
+        "problemMatcher": [
+          "$tsc-watch"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Nijo.ApplicationTemplate.Ver1/react"
+        },
       }
     ]
   }

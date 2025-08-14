@@ -1,4 +1,5 @@
 export * from "./DiagramView"
+export * from "./DynamicForm"
 export * from "./EditableGrid"
 export * from "./EditableGrid/types"
 export * from "./EditableGrid/useCellTypes"

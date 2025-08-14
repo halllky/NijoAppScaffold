@@ -92,9 +92,12 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
   {
     text: {
       renderForm: ({ useFormReturn: { register }, name }) => (
-        <input type="text" {...register(name)} />
+        <input type="text" {...register(name)} className="border border-gray-700 px-1 py-px" />
       ),
-      getGridColumnDef: ({ cellType }) => cellType.text("", ""),
+      getGridColumnDef: ({ member, cellType }) => {
+        return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
+        })
+      },
     },
   }]
 }
