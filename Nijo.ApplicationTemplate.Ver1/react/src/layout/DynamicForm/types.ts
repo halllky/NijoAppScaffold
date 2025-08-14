@@ -1,0 +1,175 @@
+import React from "react"
+import * as ReactHookForm from "react-hook-form"
+import { ColumnDefFactories, EditableGridColumnDef } from "../EditableGrid"
+
+/** DynamicFormのprops */
+export type DynamicFormProps = {
+  /** データ構造の定義 */
+  root: MemberOwner
+  /** 値メンバーの種類定義 */
+  membersTypes: ValueMemberDefinitionMap
+  /** フォームのデフォルト値 */
+  defaultValues?: DynamicFormValues
+  /** ルート要素に適用される。スタイルの微調整に用いる。 */
+  className?: string
+}
+
+/** DynamicFormのref */
+export type DynamicFormRef = {
+  /** react-hook-form の useForm の戻り値。最新の値の取得などに使用する。 */
+  useFormReturn: ReactHookForm.UseFormReturn<DynamicFormValues>
+}
+
+// ----------------------------------------------
+
+/** フォームの値 */
+export type DynamicFormValues = Record<string, unknown>
+
+/** ルートオブジェクト、ネストされたオブジェクト、配列、のいずれか */
+export type MemberOwner = {
+  /** メンバー */
+  members: Member[]
+}
+
+// ----------------------------------------------
+// メンバー
+
+/** DynamicFormのメンバー */
+export type Member =
+  | SectionMember
+  | ArrayMember
+  | ValueMember
+  | NoneMember
+
+/** どのメンバーも共通して保持する情報 */
+export type MemberBase = {
+  /**
+   * 主にhtmlのname属性の構築に用いられるメンバー名。
+   * 内部的にはルートオブジェクトからメンバーまでのパスがピリオドで連結されていく。
+   */
+  physicalName: string
+  /** 画面上に表示する名称。未指定の場合はphysicalNameが使用される。 */
+  displayName?: string
+}
+
+/** ネストされたセクション */
+export type SectionMember = MemberBase & MemberOwner & {
+  /** このメンバーがネストされたセクションであることを示す。 */
+  isSection: true
+  /** フォームのレンダリングコンポーネント。未指定の場合は既定のレンダリングコンポーネントが使用される。 */
+  render?: FormRenderer
+  /** フォームのラベル部分に追加のカスタマイズUIを表示したい場合に使用する。 */
+  renderFormLabel?: FormRenderer
+
+  isArray?: never
+  type?: never
+}
+
+/** 配列 */
+export type ArrayMember = MemberBase & MemberOwner & {
+  /** このメンバーが配列であることを示す。 */
+  isArray: true
+  /** 新しいアイテムを作成するための関数。 */
+  onCreateNewItem: () => DynamicFormValues
+  /** フォームのレンダリングコンポーネント。未指定の場合は既定のレンダリングコンポーネントが使用される。 */
+  render?: FormRenderer
+  /** フォームのラベル部分に追加のカスタマイズUIを表示したい場合に使用する。 */
+  renderFormLabel?: FormRenderer
+
+  isSection?: never
+  type?: never
+}
+
+/** 値メンバー */
+export type ValueMember = MemberBase & {
+  /**
+   * このメンバーの型。
+   * DynamicFormを呼び出す側で定義した型のうちから選ぶ必要がある。
+  */
+  type: string
+  /** フォームのラベル部分に追加のカスタマイズUIを表示したい場合に使用する。 */
+  renderFormLabel?: (props: FormRendererProps) => React.ReactNode
+  /** フォームのレンダリングコンポーネント。未指定の場合は既定のレンダリングコンポーネントが使用される。 */
+  renderForm?: ValueMemberFormRenderer
+  /** グリッドの列定義。未指定の場合は既定の列定義が使用される。 */
+  getGridColumnDef?: GetGridColumnDefFunction
+
+  isArray?: never
+  isSection?: never
+}
+
+/** 特定のプロパティとバインドされないメンバー */
+export type NoneMember = Omit<MemberBase, "physicalName"> & {
+  physicalName?: never
+  isArray?: never
+  isSection?: never
+  type?: never
+  /** フォームのレンダリングコンポーネント */
+  renderForm: FormRenderer
+  /** グリッドの列定義 */
+  getGridColumnDef: (props: Omit<GetGridColumnDefFunctionProps, "name" | "member">) => GridColumnDef
+}
+
+// ----------------------------------------------
+// 値メンバーの型定義
+
+/**
+ * 値メンバーの型定義のマップ。
+ * キーは `DynamicFormValueMember` のtypeに対応する。
+ */
+export type ValueMemberDefinitionMap = Record<string, ValueMemberDefinition>
+
+/** 値メンバーの型定義 */
+export type ValueMemberDefinition = {
+  /** フォームのレンダリングコンポーネント */
+  renderForm: ValueMemberFormRenderer
+  /** グリッドの列定義 */
+  getGridColumnDef: GetGridColumnDefFunction
+}
+
+// ----------------------------------------------
+// フォーム
+
+/** メンバーのフォームのレンダリングコンポーネント */
+export type FormRenderer = (props: FormRendererProps) => React.ReactNode
+/** 値メンバーのフォームのレンダリングコンポーネント */
+export type ValueMemberFormRenderer = (props: ValueMemberFormRendererProps) => React.ReactNode
+
+/** メンバーのフォームのレンダリングコンポーネントの引数 */
+export type FormRendererProps = {
+  /** react-hook-form の useForm の戻り値。最新の値の取得などに使用する。 */
+  useFormReturn: ReactHookForm.UseFormReturn<DynamicFormValues>
+  /** ルートオブジェクトからこのメンバーまでのパス */
+  name: string
+  /** メンバーを保持するオブジェクトのメタデータ */
+  owner: MemberOwner
+}
+
+/** 値メンバーのフォームのレンダリングコンポーネントの引数 */
+export type ValueMemberFormRendererProps = FormRendererProps & {
+  /** メンバーのメタデータ */
+  member: ValueMember
+  /** このメンバーの型定義 */
+  typeDef: ValueMemberDefinition
+}
+
+// ----------------------------------------------
+// グリッド
+
+/** 値メンバーのグリッドの列定義を取得するための関数 */
+export type GetGridColumnDefFunction = (props: GetGridColumnDefFunctionProps) => GridColumnDef
+
+/** グリッドの列定義を取得するための関数の引数 */
+export type GetGridColumnDefFunctionProps = {
+  /** ルートオブジェクトからこのメンバーまでのパス */
+  name: string
+  /** メンバーのメタデータ */
+  member: ValueMember
+  /** メンバーを保持するオブジェクトのメタデータ */
+  owner: MemberOwner
+  /** グリッドの列定義を作成するためのヘルパー関数 */
+  cellType: ColumnDefFactories<ReactHookForm.FieldValues>
+}
+
+/** グリッドの列定義 */
+export type GridColumnDef = EditableGridColumnDef<ReactHookForm.FieldValues>
