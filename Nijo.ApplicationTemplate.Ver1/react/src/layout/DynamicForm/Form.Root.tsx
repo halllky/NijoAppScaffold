@@ -1,6 +1,5 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
-import { VForm2 } from "../VForm2"
 import { DynamicFormProps, DynamicFormRef } from "./types"
 import { DynamicFormContext, DynamicFormContextValue } from "./DynamicFormContext"
 import { countFormDepth } from "./helpers"
@@ -30,16 +29,16 @@ export const DynamicForm = React.forwardRef<DynamicFormRef, DynamicFormProps>((p
     }
   }, [props.root, props.membersTypes, useFormReturn])
 
-  // フォームの深さ
-  const formDepth = React.useMemo(() => {
-    return countFormDepth(props.root)
-  }, [props.root])
+  // ラベル列の横幅
+  const gridStyle: React.CSSProperties = React.useMemo(() => ({
+    gridTemplateColumns: `${(countFormDepth(props.root) * 4) + (props.labelWidthPx ?? 120)}px 1fr`,
+  }), [props.root, props.labelWidthPx])
 
   return (
     <DynamicFormContext.Provider value={contextValue}>
-      <VForm2.Root estimatedLabelWidth="10rem" maxDepth={formDepth} className={props.className}>
+      <div className={`grid ${props.className ?? ''}`} style={gridStyle}>
         <MembersGroupByBreakPoint owner={props.root} ancestorsPath="" />
-      </VForm2.Root>
+      </div>
     </DynamicFormContext.Provider>
   )
 })

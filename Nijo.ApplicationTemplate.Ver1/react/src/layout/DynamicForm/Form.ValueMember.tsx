@@ -1,7 +1,7 @@
 import * as React from "react"
-import { VForm2 } from "../VForm2"
 import { DynamicFormContext } from "./DynamicFormContext"
 import { MemberOwner, ValueMember, ValueMemberDefinition, ValueMemberFormRendererProps } from "./types"
+import { DynamicFormLabel } from "./layout"
 
 /**
  * 値メンバーのレンダリング。
@@ -29,32 +29,36 @@ export const FormValueMember = ({ member, owner, ancestorsPath }: {
   }
 
   return (
-    <VForm2.Item label={(
-      <>
-        <VForm2.LabelText>
+    <>
+      {/* ラベル */}
+      <div className={`pr-1 py-px ${member.fullWidth ? 'col-span-full' : 'text-right'}`}>
+        <DynamicFormLabel>
           {member.displayName ?? member.physicalName}
-        </VForm2.LabelText>
+        </DynamicFormLabel>
 
         {/* ラベルの脇に追加のコンポーネントがある場合はレンダリング */}
         {member.renderFormLabel?.(rendererProps)}
-      </>
-    )}>
-      {/* 定義情報が無い場合はエラー */}
-      {typeDef === undefined && (
-        <span className="text-rose-600">
-          エラー！ {member.type} 型の定義が見つかりません
-        </span>
-      )}
+      </div>
 
-      {/* このメンバー個別のレンダリングが指定されている場合は優先 */}
-      {typeDef && member.renderForm && (
-        member.renderForm(rendererProps)
-      )}
+      {/* 値 */}
+      <div className={`py-px ${member.fullWidth ? 'col-span-full' : ''}`}>
+        {/* 定義情報が無い場合はエラー */}
+        {typeDef === undefined && (
+          <span className="text-rose-600">
+            エラー！ {member.type} 型の定義が見つかりません
+          </span>
+        )}
 
-      {/* 型定義に従ったレンダリング */}
-      {typeDef && !member.renderForm && (
-        typeDef.renderForm(rendererProps)
-      )}
-    </VForm2.Item>
+        {/* このメンバー個別のレンダリングが指定されている場合は優先 */}
+        {typeDef && member.renderFormValue && (
+          member.renderFormValue(rendererProps)
+        )}
+
+        {/* 型定義に従ったレンダリング */}
+        {typeDef && !member.renderFormValue && (
+          typeDef.renderForm(rendererProps)
+        )}
+      </div>
+    </>
   )
 }

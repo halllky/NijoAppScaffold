@@ -1,11 +1,12 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
+import * as Icon from "@heroicons/react/24/outline"
 import { DynamicFormContext } from "./DynamicFormContext"
-import { ArrayMember, FormRendererProps, MemberOwner } from "./types"
-import { VForm2 } from "../VForm2"
+import { ArrayFormRendererProps, ArrayMember, FormRendererProps, MemberOwner } from "./types"
 import { MembersGroupByBreakPoint } from "./Form.Members"
 import { IconButton } from "../../input"
 import useEvent from "react-use-event-hook"
+import { DynamicFormLabel, DynamicFormSpacer } from "./layout"
 
 /**
  * 配列を縦並びのフォームで表示する。
@@ -21,15 +22,17 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
 
   // useFieldArray
   const arrayMemberPath = `${ancestorsPath}.${array.physicalName}`
-  const { fields, append, remove } = ReactHookForm.useFieldArray({
+  const useFieldArrayReturn = ReactHookForm.useFieldArray({
     control: useFormReturn.control,
     name: arrayMemberPath,
   })
+  const { fields, append, remove } = useFieldArrayReturn
 
   // レンダリング処理の引数
-  const rendererProps: FormRendererProps = {
+  const rendererProps: ArrayFormRendererProps = {
     name: arrayMemberPath,
     useFormReturn,
+    useFieldArrayReturn,
     owner,
   }
 
@@ -39,46 +42,63 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
     append(newItem)
   })
 
+  // レンダリング処理が明示されている場合はそれが優先
+  if (array.render) {
+    return (
+      <div className="col-span-full">
+        {array.render(rendererProps)}
+      </div>
+
+    )
+  }
+
+  // 既定のレンダリング
   return (
-    <VForm2.Indent label={(
-      <>
-        <VForm2.LabelText>
+    <>
+      {/* ヘッダ */}
+      <div className="flex flex-wrap items-center gap-1 col-span-full">
+        <DynamicFormLabel>
           {array.displayName ?? array.physicalName}
-        </VForm2.LabelText>
+        </DynamicFormLabel>
 
         {/* ラベルの脇に追加のコンポーネントがある場合はレンダリング */}
         {array.renderFormLabel?.(rendererProps)}
-      </>
-    )}>
+      </div>
 
-      {/* レンダリング処理が明示されている場合はそれが優先 */}
-      {array.render ? (
-        array.render(rendererProps)
-      ) : (
-        // 既定のレンダリング
-        <>
-          {fields.map((field, index) => (
-            <VForm2.Indent key={field.id} label={(
-              <>
-                <VForm2.LabelText>
-                  {`${index + 1}`}
-                </VForm2.LabelText>
-                <IconButton outline onClick={() => remove(index)}>
-                  削除
-                </IconButton>
-              </>
-            )}>
-              <MembersGroupByBreakPoint
-                owner={array}
-                ancestorsPath={`${arrayMemberPath}.${index}`}
-              />
-            </VForm2.Indent>
-          ))}
-          <IconButton outline onClick={handleAppend}>
-            追加
-          </IconButton>
-        </>
-      )}
-    </VForm2.Indent>
+      {/* 要素一覧 */}
+      {fields.map((field, index) => (
+        <React.Fragment key={field.id}>
+
+          {/* 境界線 */}
+          <DynamicFormSpacer />
+
+          {/* 要素のヘッダ */}
+          <div className="col-span-full flex flex-wrap items-center gap-1 py-px">
+            <DynamicFormLabel>
+              {`${index + 1}`}
+            </DynamicFormLabel>
+            <IconButton icon={Icon.TrashIcon} outline mini onClick={() => remove(index)}>
+              削除
+            </IconButton>
+          </div>
+
+          {/* 要素のメンバー */}
+          <div className="grid grid-cols-[subgrid] col-span-full border border-gray-300 px-1">
+            <MembersGroupByBreakPoint
+              owner={array}
+              ancestorsPath={`${arrayMemberPath}.${index}`}
+            />
+          </div>
+        </React.Fragment>
+      ))}
+
+      {/* 追加ボタン */}
+      <DynamicFormSpacer />
+      <div className="col-span-full">
+        <IconButton icon={Icon.PlusCircleIcon} outline mini onClick={handleAppend}>
+          追加
+        </IconButton>
+      </div>
+    </>
   )
 }

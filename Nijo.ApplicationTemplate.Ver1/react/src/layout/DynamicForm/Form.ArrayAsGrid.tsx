@@ -1,11 +1,12 @@
 import React from "react"
 import useEvent from "react-use-event-hook"
 import * as ReactHookForm from "react-hook-form"
+import * as Icon from "@heroicons/react/24/outline"
 import { IconButton } from "../../input"
-import { VForm2 } from "../VForm2"
 import { DynamicFormContext } from "./DynamicFormContext"
-import { ArrayMember, FormRendererProps, MemberOwner, ValueMemberDefinitionMap } from "./types"
+import { ArrayFormRendererProps, ArrayMember, FormRendererProps, MemberOwner, ValueMemberDefinitionMap } from "./types"
 import { EditableGrid, EditableGridColumnDef, EditableGridRef, GetColumnDefsFunction, RowChangeEvent } from "../EditableGrid"
+import { DynamicFormLabel } from "./layout"
 
 /**
  * 配列をグリッドで表示する。
@@ -21,19 +22,21 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
 
   // useFieldArray
   const arrayMemberPath = `${ancestorsPath}.${array.physicalName}`
-  const { fields, append, remove, update } = ReactHookForm.useFieldArray({
+  const useFieldArrayReturn = ReactHookForm.useFieldArray({
     control: useFormReturn.control,
     name: arrayMemberPath,
   })
+  const { fields, append, remove, update } = useFieldArrayReturn
 
   // EditableGrid
   const gridRef = React.useRef<EditableGridRef<ReactHookForm.FieldValues>>(null)
   const getColumnDefs = useGetColumnDefs(array, arrayMemberPath, membersTypes)
 
   // レンダリング処理の引数
-  const rendererProps: FormRendererProps = {
+  const rendererProps: ArrayFormRendererProps = {
     name: arrayMemberPath,
     useFormReturn,
+    useFieldArrayReturn,
     owner,
   }
 
@@ -62,23 +65,29 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
   })
 
   return (
-    <VForm2.Item wideLabelValue label={(
-      <>
-        <VForm2.LabelText>
+    <>
+      {/* グリッド名、追加ボタン等 */}
+      <div className="col-span-full flex flex-wrap items-center gap-1 pt-1">
+        <DynamicFormLabel>
           {array.displayName ?? array.physicalName}
-        </VForm2.LabelText>
+        </DynamicFormLabel>
+
+        {/* ラベルの脇に追加のコンポーネントがある場合はレンダリング */}
         {array.renderFormLabel?.(rendererProps)}
-        <IconButton outline onClick={handleAdd}>追加</IconButton>
-        <IconButton outline onClick={handleDelete}>削除</IconButton>
-      </>
-    )}>
+
+        <IconButton icon={Icon.PlusCircleIcon} outline mini onClick={handleAdd}>追加</IconButton>
+        <IconButton icon={Icon.TrashIcon} outline mini onClick={handleDelete}>削除</IconButton>
+      </div>
+
+      {/* グリッド */}
       <EditableGrid
         ref={gridRef}
         getColumnDefs={getColumnDefs}
         rows={fields}
         onChangeRow={handleChangeRow}
+        className="col-span-full min-h-32 my-1 resize-y border border-gray-300"
       />
-    </VForm2.Item>
+    </>
   )
 }
 

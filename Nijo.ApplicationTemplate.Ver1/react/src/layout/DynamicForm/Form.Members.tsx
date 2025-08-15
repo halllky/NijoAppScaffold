@@ -1,11 +1,11 @@
 import React from "react"
-import { VForm2 } from "../VForm2"
-import { Member, MemberOwner } from "./types"
+import { Member, MemberOwner, ValueMember } from "./types"
 import { hasArray } from "./helpers"
 import { FormValueMember } from "./Form.ValueMember"
 import { FormSection } from "./Form.Section"
 import { FormArrayAsForm } from "./Form.ArrayAsForm"
 import { FormArrayAsGrid } from "./Form.ArrayAsGrid"
+import { DynamicFormSpacer } from "./layout"
 
 /**
  * メンバーをAutoColumnの単位にグルーピングしてレンダリングする。
@@ -18,15 +18,15 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
   // メンバーを折り返しの単位でグルーピングする
   const groups = React.useMemo(() => {
     return owner.members.reduce((acc, member) => {
-      // Child, Children は横幅いっぱいとる
-      if (member.isSection || member.isArray) {
+      // Child, Children, fullWidth指定のメンバーは横幅いっぱいとる
+      if (member.isSection || member.isArray || (member as ValueMember).fullWidth) {
         acc.push({ members: [member], fullWidth: true })
         return acc
       }
 
       // それ以外はグルーピングする
       const lastGroup = acc[acc.length - 1]
-      if (lastGroup === undefined) {
+      if (lastGroup === undefined || lastGroup.fullWidth) {
         acc.push({ members: [member], fullWidth: false })
       } else {
         lastGroup.members.push(member)
@@ -37,24 +37,33 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
 
   return (
     <>
-      {groups.map(({ members, fullWidth }, index) => fullWidth ? (
-        <MemberComponent
-          key={index}
-          ancestorsPath={ancestorsPath}
-          member={members[0]}
-          owner={owner}
-        />
-      ) : (
-        <VForm2.AutoColumn key={index} childrenCount={members.length}>
-          {members.map((member) => (
+      {groups.map(({ members, fullWidth }, groupIndex) => (
+        <React.Fragment key={groupIndex}>
+
+          {/* グルーピングの境界線 */}
+          {groupIndex > 0 && (
+            <DynamicFormSpacer />
+          )}
+
+          {/* グリッドや子フォームなど横幅いっぱいとるもの */}
+          {fullWidth && (
             <MemberComponent
-              key={member.physicalName}
+              ancestorsPath={ancestorsPath}
+              member={members[0]}
+              owner={owner}
+            />
+          )}
+
+          {/* ラベルと値のペアの羅列 */}
+          {!fullWidth && members.map((member, memberIndex) => (
+            <MemberComponent
+              key={memberIndex}
               ancestorsPath={ancestorsPath}
               member={member}
               owner={owner}
             />
           ))}
-        </VForm2.AutoColumn>
+        </React.Fragment>
       ))}
     </>
   )

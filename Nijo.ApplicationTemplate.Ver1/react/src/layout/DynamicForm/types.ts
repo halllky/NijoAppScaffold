@@ -10,6 +10,8 @@ export type DynamicFormProps = {
   membersTypes: ValueMemberDefinitionMap
   /** フォームのデフォルト値 */
   defaultValues?: DynamicFormValues
+  /** ラベル列の幅。未指定の場合は既定の幅が使用される。 */
+  labelWidthPx?: number
   /** ルート要素に適用される。スタイルの微調整に用いる。 */
   className?: string
 }
@@ -58,7 +60,7 @@ export type SectionMember = MemberBase & MemberOwner & {
   isSection: true
   /** フォームのレンダリングコンポーネント。未指定の場合は既定のレンダリングコンポーネントが使用される。 */
   render?: FormRenderer
-  /** フォームのラベル部分に追加のカスタマイズUIを表示したい場合に使用する。 */
+  /** フォームのラベル部分に追加のカスタマイズUIを表示したい場合に使用する。 `render` が指定されている場合は無視される。 */
   renderFormLabel?: FormRenderer
 
   isArray?: never
@@ -72,9 +74,9 @@ export type ArrayMember = MemberBase & MemberOwner & {
   /** 新しいアイテムを作成するための関数。 */
   onCreateNewItem: () => DynamicFormValues
   /** フォームのレンダリングコンポーネント。未指定の場合は既定のレンダリングコンポーネントが使用される。 */
-  render?: FormRenderer
-  /** フォームのラベル部分に追加のカスタマイズUIを表示したい場合に使用する。 */
-  renderFormLabel?: FormRenderer
+  render?: ArrayFormRenderer
+  /** フォームのラベル部分に追加のカスタマイズUIを表示したい場合に使用する。 `render` が指定されている場合は無視される。 */
+  renderFormLabel?: ArrayFormRenderer
 
   isSection?: never
   type?: never
@@ -88,11 +90,13 @@ export type ValueMember = MemberBase & {
   */
   type: string
   /** フォームのラベル部分に追加のカスタマイズUIを表示したい場合に使用する。 */
-  renderFormLabel?: (props: FormRendererProps) => React.ReactNode
+  renderFormLabel?: ValueMemberFormRenderer
   /** フォームのレンダリングコンポーネント。未指定の場合は既定のレンダリングコンポーネントが使用される。 */
-  renderForm?: ValueMemberFormRenderer
+  renderFormValue?: ValueMemberFormRenderer
   /** グリッドの列定義。未指定の場合は既定の列定義が使用される。 */
   getGridColumnDef?: GetGridColumnDefFunction
+  /** このメンバーを横幅いっぱいにするかどうか。 */
+  fullWidth?: boolean
 
   isArray?: never
   isSection?: never
@@ -132,6 +136,8 @@ export type ValueMemberDefinition = {
 
 /** メンバーのフォームのレンダリングコンポーネント */
 export type FormRenderer = (props: FormRendererProps) => React.ReactNode
+/** 配列のフォームのレンダリングコンポーネント */
+export type ArrayFormRenderer = (props: ArrayFormRendererProps) => React.ReactNode
 /** 値メンバーのフォームのレンダリングコンポーネント */
 export type ValueMemberFormRenderer = (props: ValueMemberFormRendererProps) => React.ReactNode
 
@@ -143,6 +149,12 @@ export type FormRendererProps = {
   name: string
   /** メンバーを保持するオブジェクトのメタデータ */
   owner: MemberOwner
+}
+
+/** 配列のフォームのレンダリングコンポーネントの引数 */
+export type ArrayFormRendererProps = FormRendererProps & {
+  /** react-hook-form の useFieldArray の戻り値。 */
+  useFieldArrayReturn: ReactHookForm.UseFieldArrayReturn<ReactHookForm.FieldValues, ReactHookForm.FieldArrayPath<ReactHookForm.FieldValues>, "id">
 }
 
 /** 値メンバーのフォームのレンダリングコンポーネントの引数 */
