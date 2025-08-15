@@ -28,7 +28,7 @@ export const FormSection = ({ member: section, owner, ancestorsPath }: {
   // レンダリング処理が明示されている場合はそれが優先
   if (section.render) {
     return (
-      <div className="grid grid-cols-[subgrid] col-span-full">
+      <div className="col-span-full">
         {section.render(rendererProps)}
       </div>
     )
@@ -49,7 +49,7 @@ export const FormSection = ({ member: section, owner, ancestorsPath }: {
       </div>
 
       {/* メンバー */}
-      <div className="col-span-full grid grid-cols-[subgrid] border border-gray-300 px-1">
+      <div className="col-span-full grid grid-cols-[subgrid] border border-gray-300 p-1">
         <MembersGroupByBreakPoint
           ancestorsPath={sectionMemberPath}
           owner={section}

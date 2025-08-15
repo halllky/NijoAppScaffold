@@ -2,6 +2,12 @@ import * as React from "react"
 import * as ReactRouter from "react-router-dom"
 import DynamicFormDebugging from "./DynamicFormDebugging"
 import _001_セクションと配列の基本的組み合わせ from "../layout/DynamicForm/__tests__/001_セクションと配列の基本的組み合わせ"
+import _002_値メンバーの各種型 from "../layout/DynamicForm/__tests__/002_値メンバーの各種型"
+import _003_カスタムレンダリング from "../layout/DynamicForm/__tests__/003_カスタムレンダリング"
+import _004_NoneMember from "../layout/DynamicForm/__tests__/004_NoneMember"
+import _005_複雑なネスト構造 from "../layout/DynamicForm/__tests__/005_複雑なネスト構造"
+import _006_空データ構造 from "../layout/DynamicForm/__tests__/006_空データ構造"
+import _007_グリッド機能 from "../layout/DynamicForm/__tests__/007_グリッド機能"
 
 export default function () {
 
@@ -65,6 +71,36 @@ export const getDebuggingPages = (): { groupName: string, links: (ReactRouter.Ro
         path: '/dynamic-form/001',
         label: '001_セクションと配列の基本的組み合わせ',
         element: <DynamicFormDebugging getSchema={_001_セクションと配列の基本的組み合わせ} />,
+      },
+      {
+        path: '/dynamic-form/002',
+        label: '002_値メンバーの各種型',
+        element: <DynamicFormDebugging getSchema={_002_値メンバーの各種型} />,
+      },
+      {
+        path: '/dynamic-form/003',
+        label: '003_カスタムレンダリング',
+        element: <DynamicFormDebugging getSchema={_003_カスタムレンダリング} />,
+      },
+      {
+        path: '/dynamic-form/004',
+        label: '004_NoneMember',
+        element: <DynamicFormDebugging getSchema={_004_NoneMember} />,
+      },
+      {
+        path: '/dynamic-form/005',
+        label: '005_複雑なネスト構造',
+        element: <DynamicFormDebugging getSchema={_005_複雑なネスト構造} />,
+      },
+      {
+        path: '/dynamic-form/006',
+        label: '006_空データ構造',
+        element: <DynamicFormDebugging getSchema={_006_空データ構造} />,
+      },
+      {
+        path: '/dynamic-form/007',
+        label: '007_グリッド機能',
+        element: <DynamicFormDebugging getSchema={_007_グリッド機能} />,
       },
     ],
   }

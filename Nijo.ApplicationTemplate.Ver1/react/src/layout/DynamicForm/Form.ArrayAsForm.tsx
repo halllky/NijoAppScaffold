@@ -83,7 +83,7 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
           </div>
 
           {/* 要素のメンバー */}
-          <div className="grid grid-cols-[subgrid] col-span-full border border-gray-300 px-1">
+          <div className="grid grid-cols-[subgrid] col-span-full border border-gray-300 p-1">
             <MembersGroupByBreakPoint
               owner={array}
               ancestorsPath={`${arrayMemberPath}.${index}`}
