@@ -7,62 +7,64 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
   return [{
     members: [
       // レベル1: 基本情報セクション
+      // ※ オブジェクト直下のプロパティだけでなく
+      //    オブジェクト直下の "values" オブジェクトの中にある
+      //    プロパティも展開されることを確認する
       {
         physicalName: "basicInfo",
         displayName: "基本情報",
         isSection: true,
         members: [
           {
-            physicalName: "name",
+            physicalName: "values.name",
             displayName: "名前",
             type: "text",
           },
           {
-            physicalName: "email",
+            physicalName: "values.email",
             displayName: "メールアドレス",
             type: "text",
           },
 
-          // レベル2: 住所セクション（ネスト）
+          // レベル2: 住所セクション（物理名なしネスト）
+          // ※ UI上は個別のセクションに分かれるがデータ上は同じオブジェクトであるパターン
           {
-            physicalName: "address",
             displayName: "住所",
             isSection: true,
             members: [
               {
-                physicalName: "zipCode",
+                physicalName: "values.zipCode",
                 displayName: "郵便番号",
                 type: "text",
               },
               {
-                physicalName: "prefecture",
+                physicalName: "values.prefecture",
                 displayName: "都道府県",
                 type: "text",
               },
               {
-                physicalName: "city",
+                physicalName: "values.city",
                 displayName: "市区町村",
                 type: "text",
               },
 
-              // レベル3: 詳細住所セクション（さらにネスト）
+              // レベル3: 詳細住所セクション（レベル2と同じ観点）
               {
-                physicalName: "detail",
                 displayName: "詳細住所",
                 isSection: true,
                 members: [
                   {
-                    physicalName: "street",
+                    physicalName: "values.street",
                     displayName: "番地",
                     type: "text",
                   },
                   {
-                    physicalName: "building",
+                    physicalName: "values.building",
                     displayName: "建物名",
                     type: "text",
                   },
                   {
-                    physicalName: "room",
+                    physicalName: "values.room",
                     displayName: "部屋番号",
                     type: "text",
                   },

@@ -67,7 +67,7 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
   return (
     <>
       {/* グリッド名、追加ボタン等 */}
-      <div className="col-span-full flex flex-wrap items-center gap-1 pt-1">
+      <div className="col-span-full flex flex-wrap items-center gap-1 py-1">
         <DynamicFormLabel>
           {array.displayName ?? array.physicalName}
         </DynamicFormLabel>
@@ -85,7 +85,7 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
         getColumnDefs={getColumnDefs}
         rows={fields}
         onChangeRow={handleChangeRow}
-        className="col-span-full min-h-32 my-1 resize-y border border-gray-300"
+        className="col-span-full min-h-32 resize-y border border-gray-300"
       />
     </>
   )
@@ -105,7 +105,7 @@ const useGetColumnDefs = (
       for (const m of owner.members) {
         if (m.isSection) {
           // 子セクションのメンバーも再帰的に列定義を作成する
-          pushRecursive(m, `${path}.${m.physicalName}`)
+          pushRecursive(m, m.physicalName ? `${path}.${m.physicalName}` : path)
 
         } else if (m.isArray) {
           continue // グリッドで配列を表示することはできない

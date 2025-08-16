@@ -43,21 +43,17 @@ export type Member =
   | ValueMember
   | NoneMember
 
-/** どのメンバーも共通して保持する情報 */
-export type MemberBase = {
+/** ネストされたセクション */
+export type SectionMember = MemberOwner & {
+  /** このメンバーがネストされたセクションであることを示す。 */
+  isSection: true
   /**
    * 主にhtmlのname属性の構築に用いられるメンバー名。
    * 内部的にはルートオブジェクトからメンバーまでのパスがピリオドで連結されていく。
    */
-  physicalName: string
+  physicalName?: string
   /** 画面上に表示する名称。未指定の場合はphysicalNameが使用される。 */
   displayName?: string
-}
-
-/** ネストされたセクション */
-export type SectionMember = MemberBase & MemberOwner & {
-  /** このメンバーがネストされたセクションであることを示す。 */
-  isSection: true
   /** フォームのレンダリングコンポーネント。未指定の場合は既定のレンダリングコンポーネントが使用される。 */
   render?: FormRenderer
   /** フォームのラベル部分に追加のカスタマイズUIを表示したい場合に使用する。 `render` が指定されている場合は無視される。 */
@@ -68,9 +64,16 @@ export type SectionMember = MemberBase & MemberOwner & {
 }
 
 /** 配列 */
-export type ArrayMember = MemberBase & MemberOwner & {
+export type ArrayMember = MemberOwner & {
   /** このメンバーが配列であることを示す。 */
   isArray: true
+  /**
+   * 主にhtmlのname属性の構築に用いられるメンバー名。
+   * 内部的にはルートオブジェクトからメンバーまでのパスがピリオドで連結されていく。
+   */
+  physicalName: string
+  /** 画面上に表示する名称。未指定の場合はphysicalNameが使用される。 */
+  displayName?: string
   /** 新しいアイテムを作成するための関数。 */
   onCreateNewItem: () => DynamicFormValues
   /** フォームのレンダリングコンポーネント。未指定の場合は既定のレンダリングコンポーネントが使用される。 */
@@ -83,12 +86,19 @@ export type ArrayMember = MemberBase & MemberOwner & {
 }
 
 /** 値メンバー */
-export type ValueMember = MemberBase & {
+export type ValueMember = {
   /**
    * このメンバーの型。
    * DynamicFormを呼び出す側で定義した型のうちから選ぶ必要がある。
   */
   type: string
+  /**
+   * 主にhtmlのname属性の構築に用いられるメンバー名。
+   * 内部的にはルートオブジェクトからメンバーまでのパスがピリオドで連結されていく。
+   */
+  physicalName: string
+  /** 画面上に表示する名称。未指定の場合はphysicalNameが使用される。 */
+  displayName?: string
   /** フォームのラベル部分に追加のカスタマイズUIを表示したい場合に使用する。 */
   renderFormLabel?: ValueMemberFormRenderer
   /** フォームのレンダリングコンポーネント。未指定の場合は既定のレンダリングコンポーネントが使用される。 */
@@ -103,11 +113,13 @@ export type ValueMember = MemberBase & {
 }
 
 /** 特定のプロパティとバインドされないメンバー */
-export type NoneMember = Omit<MemberBase, "physicalName"> & {
+export type NoneMember = {
   physicalName?: never
   isArray?: never
   isSection?: never
   type?: never
+  /** 画面上に表示する名称。未指定の場合はphysicalNameが使用される。 */
+  displayName?: string
   /** フォームのレンダリングコンポーネント */
   renderForm: FormRenderer
   /** グリッドの列定義 */
