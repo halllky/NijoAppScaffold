@@ -1,42 +1,150 @@
-import React from "react";
-import { MemberOwner, ValueMemberDefinitionMap } from "../types";
+import { MemberOwner, ValueMember } from "../types";
 
 /**
  * 様々な値メンバー型（text, number, date, boolean, other）を確認するためのテストデータ。
  */
-export default function (): [MemberOwner, ValueMemberDefinitionMap] {
-  return [{
+export default function (): MemberOwner {
+
+  // 複数回使いまわすUIレンダリング定義
+  const UI_TEXT = (physicalName: string): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <input
+        type="text"
+        {...register(name)}
+        className="border border-gray-300 px-2 py-1 rounded"
+        placeholder="テキストを入力してください"
+      />
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.text(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 150,
+      })
+    },
+  })
+
+  const UI_NUMBER = (physicalName: string): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <input
+        type="number"
+        {...register(name, { valueAsNumber: true })}
+        className="border border-gray-300 px-2 py-1 rounded"
+        placeholder="数値を入力してください"
+      />
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.number(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 120,
+      })
+    },
+  })
+
+  const UI_DATE = (physicalName: string): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <input
+        type="date"
+        {...register(name)}
+        className="border border-gray-300 px-2 py-1 rounded"
+      />
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.date(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 140,
+      })
+    },
+  })
+
+  const UI_BOOLEAN = (physicalName: string): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <label className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          {...register(name)}
+          className="rounded"
+        />
+        <span>チェックする</span>
+      </label>
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.boolean(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 80,
+      })
+    },
+  })
+
+  const UI_SELECT = (physicalName: string): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <select
+        {...register(name)}
+        className="border border-gray-300 px-2 py-1 rounded"
+      >
+        <option value="">選択してください</option>
+        <option value="option1">選択肢1</option>
+        <option value="option2">選択肢2</option>
+        <option value="option3">選択肢3</option>
+      </select>
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.text(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 130,
+        getOptions: () => [
+          { value: "option1", label: "選択肢1" },
+          { value: "option2", label: "選択肢2" },
+          { value: "option3", label: "選択肢3" },
+        ]
+      })
+    },
+  })
+
+  const UI_TEXTAREA = (physicalName: string): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <textarea
+        {...register(name)}
+        className="border border-gray-300 px-2 py-1 rounded min-h-20"
+        placeholder="複数行のテキストを入力してください"
+        rows={3}
+      />
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.text(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 200,
+        editorOverflow: 'vertical',
+      })
+    },
+  })
+
+  // データ構造定義
+  return {
     members: [
       // 基本的な値メンバー
       {
         physicalName: "textMember",
         displayName: "テキストメンバー",
-        type: "text",
+        ...UI_TEXT("textMember"),
       },
       {
         physicalName: "numberMember",
         displayName: "数値メンバー",
-        type: "number",
+        ...UI_NUMBER("numberMember"),
       },
       {
         physicalName: "dateMember",
         displayName: "日付メンバー",
-        type: "date",
+        ...UI_DATE("dateMember"),
       },
       {
         physicalName: "booleanMember",
         displayName: "真偽値メンバー",
-        type: "boolean",
+        ...UI_BOOLEAN("booleanMember"),
       },
       {
         physicalName: "selectMember",
         displayName: "選択メンバー",
-        type: "select",
+        ...UI_SELECT("selectMember"),
       },
       {
         physicalName: "textareaMember",
         displayName: "テキストエリアメンバー",
-        type: "textarea",
+        ...UI_TEXTAREA("textareaMember"),
       },
 
       // セクション内の様々な型
@@ -48,17 +156,17 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "nestedText",
             displayName: "ネストされたテキスト",
-            type: "text",
+            ...UI_TEXT("nestedText"),
           },
           {
             physicalName: "nestedNumber",
             displayName: "ネストされた数値",
-            type: "number",
+            ...UI_NUMBER("nestedNumber"),
           },
           {
             physicalName: "nestedBoolean",
             displayName: "ネストされた真偽値",
-            type: "boolean",
+            ...UI_BOOLEAN("nestedBoolean"),
           },
         ],
       },
@@ -78,134 +186,25 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "arrayText",
             displayName: "配列テキスト",
-            type: "text",
+            ...UI_TEXT("arrayText"),
           },
           {
             physicalName: "arrayNumber",
             displayName: "配列数値",
-            type: "number",
+            ...UI_NUMBER("arrayNumber"),
           },
           {
             physicalName: "arrayDate",
             displayName: "配列日付",
-            type: "date",
+            ...UI_DATE("arrayDate"),
           },
           {
             physicalName: "arrayBoolean",
             displayName: "配列真偽値",
-            type: "boolean",
+            ...UI_BOOLEAN("arrayBoolean"),
           },
         ],
       },
     ],
-  },
-
-  // メンバー種類定義
-  {
-    text: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <input
-          type="text"
-          {...register(name)}
-          className="border border-gray-300 px-2 py-1 rounded"
-          placeholder="テキストを入力してください"
-        />
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 150,
-        })
-      },
-    },
-
-    number: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <input
-          type="number"
-          {...register(name, { valueAsNumber: true })}
-          className="border border-gray-300 px-2 py-1 rounded"
-          placeholder="数値を入力してください"
-        />
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.number(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 120,
-        })
-      },
-    },
-
-    date: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <input
-          type="date"
-          {...register(name)}
-          className="border border-gray-300 px-2 py-1 rounded"
-        />
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.date(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 140,
-        })
-      },
-    },
-
-    boolean: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            {...register(name)}
-            className="rounded"
-          />
-          <span>チェックする</span>
-        </label>
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.boolean(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 80,
-        })
-      },
-    },
-
-    select: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <select
-          {...register(name)}
-          className="border border-gray-300 px-2 py-1 rounded"
-        >
-          <option value="">選択してください</option>
-          <option value="option1">選択肢1</option>
-          <option value="option2">選択肢2</option>
-          <option value="option3">選択肢3</option>
-        </select>
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 130,
-          getOptions: () => [
-            { value: "option1", label: "選択肢1" },
-            { value: "option2", label: "選択肢2" },
-            { value: "option3", label: "選択肢3" },
-          ]
-        })
-      },
-    },
-
-    textarea: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <textarea
-          {...register(name)}
-          className="border border-gray-300 px-2 py-1 rounded min-h-20"
-          placeholder="複数行のテキストを入力してください"
-          rows={3}
-        />
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 200,
-          editorOverflow: 'vertical',
-        })
-      },
-    },
-  }]
+  }
 }

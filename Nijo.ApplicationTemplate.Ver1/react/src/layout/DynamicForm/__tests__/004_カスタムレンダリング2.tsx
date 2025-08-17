@@ -1,24 +1,41 @@
 import React from "react";
 import * as ReactHookForm from "react-hook-form";
-import { MemberOwner, ValueMemberDefinitionMap } from "../types";
+import { MemberOwner, ValueMember } from "../types";
 
 /**
- * NoneMember（特定のプロパティとバインドされないメンバー）を確認するためのテストデータ。
+ * カスタムレンダリングを確認するためのテストデータ。
  */
-export default function (): [MemberOwner, ValueMemberDefinitionMap] {
-  return [{
+export default function (): MemberOwner {
+
+  // 複数回使いまわすUIレンダリング定義
+  const UI_TEXT = (physicalName: string): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <input
+        type="text"
+        {...register(name)}
+        className="border border-gray-300 px-2 py-1 rounded w-full"
+      />
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.text(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 150,
+      })
+    },
+  })
+
+  // データ構造定義
+  return {
     members: [
       // 通常のテキストメンバー（比較用）
       {
         physicalName: "normalText",
         displayName: "通常のテキスト",
-        type: "text",
+        ...UI_TEXT("normalText"),
       },
 
       // 静的な説明文を表示するNoneMember
       {
-        displayName: "説明文",
-        renderForm: () => (
+        renderFormValue: () => (
           <div className="bg-blue-50 border border-blue-200 rounded p-3">
             <h4 className="text-blue-800 font-semibold mb-2">📋 重要な説明</h4>
             <p className="text-blue-700 text-sm">
@@ -31,7 +48,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
       // ボタンを表示するNoneMember
       {
         displayName: "アクションボタン",
-        renderForm: ({ useFormReturn }) => (
+        renderFormValue: ({ useFormReturn }) => (
           <div className="flex gap-2">
             <button
               type="button"
@@ -57,7 +74,8 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
       // カスタムレイアウトのNoneMember
       {
         displayName: "カスタムレイアウト",
-        renderForm: ({ useFormReturn: { control } }) => {
+        fullWidth: true,
+        renderFormValue: ({ useFormReturn: { control } }) => {
           const normalTextValue = ReactHookForm.useWatch({ name: "normalText", control });
           return (
             <div className="border-2 border-purple-300 rounded-lg p-4 bg-purple-50">
@@ -85,14 +103,14 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "sectionText",
             displayName: "セクション内テキスト",
-            type: "text",
+            ...UI_TEXT("sectionText"),
           },
 
           // セクション内の区切り線
           {
             displayName: "区切り線",
             fullWidth: true,
-            renderForm: () => (
+            renderFormValue: () => (
               <hr className="border-gray-300 my-4" />
             ),
           },
@@ -100,7 +118,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "sectionText2",
             displayName: "セクション内テキスト2",
-            type: "text",
+            ...UI_TEXT("sectionText2"),
           },
         ],
       },
@@ -115,7 +133,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "item",
             displayName: "アイテム",
-            type: "text",
+            ...UI_TEXT("item"),
           },
 
           // 配列内の情報表示
@@ -133,23 +151,5 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
         ],
       },
     ],
-  },
-
-  // メンバー種類定義
-  {
-    text: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <input
-          type="text"
-          {...register(name)}
-          className="border border-gray-300 px-2 py-1 rounded w-full"
-        />
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 150,
-        })
-      },
-    },
-  }]
+  }
 }

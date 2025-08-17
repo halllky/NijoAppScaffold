@@ -4,7 +4,7 @@ import * as ReactHookForm from "react-hook-form"
 import * as Icon from "@heroicons/react/24/outline"
 import { IconButton } from "../../input"
 import { DynamicFormContext } from "./DynamicFormContext"
-import { ArrayFormRendererProps, ArrayMember, FormRendererProps, MemberOwner, ValueMemberDefinitionMap } from "./types"
+import { ArrayFormRendererProps, ArrayMember, MemberOwner } from "./types"
 import { EditableGrid, EditableGridColumnDef, EditableGridRef, GetColumnDefsFunction, RowChangeEvent } from "../EditableGrid"
 import { DynamicFormLabel } from "./layout"
 
@@ -18,7 +18,7 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
 }) => {
 
   // 定義情報など
-  const { useFormReturn, props: { membersTypes } } = React.useContext(DynamicFormContext)
+  const { useFormReturn } = React.useContext(DynamicFormContext)
 
   // useFieldArray
   const arrayMemberPath = `${ancestorsPath}.${array.physicalName}`
@@ -30,7 +30,7 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
 
   // EditableGrid
   const gridRef = React.useRef<EditableGridRef<ReactHookForm.FieldValues>>(null)
-  const getColumnDefs = useGetColumnDefs(array, arrayMemberPath, membersTypes)
+  const getColumnDefs = useGetColumnDefs(array, arrayMemberPath)
 
   // レンダリング処理の引数
   const rendererProps: ArrayFormRendererProps = {
@@ -96,7 +96,6 @@ const useGetColumnDefs = (
   array: ArrayMember,
   /** ルートオブジェクトから **配列までの** パス */
   arrayPath: string,
-  membersTypes: ValueMemberDefinitionMap
 ): GetColumnDefsFunction<ReactHookForm.FieldValues> => {
   return React.useCallback(cellType => {
     const columns: EditableGridColumnDef<ReactHookForm.FieldValues>[] = []
@@ -110,35 +109,13 @@ const useGetColumnDefs = (
         } else if (m.isArray) {
           continue // グリッドで配列を表示することはできない
 
-        } else if (m.type !== undefined) {
-          const typeDef = membersTypes[m.type]
-
-          // 型定義が無い場合はエラー
-          if (!typeDef) {
-            columns.push(cellType.other(m.displayName ?? m.physicalName, {
-              renderCell: () => (
-                <span className="text-rose-600">
-                  エラー！ {m.type} 型の定義が見つかりません
-                </span>
-              ),
-            }))
-            continue
-          }
-
-          columns.push(typeDef.getGridColumnDef({
-            name: `${arrayPath}.${m.physicalName}`,
-            member: m,
-            owner: array,
+        } else if (m.getGridColumnDef) {
+          columns.push(m.getGridColumnDef({
             cellType,
+            owner,
+            member: m,
+            name: m.physicalName ? `${arrayPath}.${m.physicalName}` : arrayPath,
           }))
-        } else {
-          // None Member
-          if (m.getGridColumnDef) {
-            columns.push(m.getGridColumnDef({
-              cellType,
-              owner,
-            }))
-          }
         }
       }
     }

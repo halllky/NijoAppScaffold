@@ -1,11 +1,133 @@
 import React from "react";
-import { MemberOwner, ValueMemberDefinitionMap } from "../types";
+import { MemberOwner, ValueMember } from "../types";
 
 /**
  * グリッド機能（getGridColumnDef等）を確認するためのテストデータ。
  */
-export default function (): [MemberOwner, ValueMemberDefinitionMap] {
-  return [{
+export default function (): MemberOwner {
+
+  // 複数回使いまわすUIレンダリング定義
+  const UI_TEXT = (physicalName: string): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <input
+        type="text"
+        {...register(name)}
+        className="border border-gray-300 px-2 py-1 rounded w-full"
+      />
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.text(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 150,
+      })
+    },
+  })
+
+  const UI_NUMBER = (physicalName: string): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <input
+        type="number"
+        {...register(name, { valueAsNumber: true })}
+        className="border border-gray-300 px-2 py-1 rounded w-full"
+      />
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.number(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 120,
+      })
+    },
+  })
+
+  const UI_EMAIL = (physicalName: string): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <input
+        type="email"
+        {...register(name)}
+        className="border border-gray-300 px-2 py-1 rounded w-full"
+        placeholder="example@domain.com"
+      />
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.text(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 180,
+      })
+    },
+  })
+
+  const UI_BOOLEAN = (physicalName: string): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <label className="flex items-center gap-2">
+        <input type="checkbox" {...register(name)} />
+        <span>有効</span>
+      </label>
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.boolean(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 80,
+      })
+    },
+  })
+
+  const UI_DATE = (physicalName: string): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <input
+        type="date"
+        {...register(name)}
+        className="border border-gray-300 px-2 py-1 rounded w-full"
+      />
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.date(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 140,
+      })
+    },
+  })
+
+  const UI_TEXTAREA = (physicalName: string): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <textarea
+        {...register(name)}
+        className="border border-gray-300 px-2 py-1 rounded w-full"
+        rows={3}
+      />
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.text(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 200,
+        editorOverflow: 'vertical',
+      })
+    },
+  })
+
+  const UI_SELECT = (physicalName: string, options?: { value: string, label: string }[]): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <select
+        {...register(name)}
+        className="border border-gray-300 px-2 py-1 rounded w-full"
+      >
+        <option value="">選択してください</option>
+        {options ? options.map(option => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        )) : (
+          <>
+            <option value="draft">下書き</option>
+            <option value="review">レビュー中</option>
+            <option value="approved">承認済み</option>
+            <option value="published">公開済み</option>
+          </>
+        )}
+      </select>
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.text(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 130,
+      })
+    },
+  })
+
+  // データ構造定義
+  return {
     members: [
       // 基本的なグリッド表示用の配列
       {
@@ -24,32 +146,32 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "name",
             displayName: "名前",
-            type: "text",
+            ...UI_TEXT("name"),
           },
           {
             physicalName: "age",
             displayName: "年齢",
-            type: "number",
+            ...UI_NUMBER("age"),
           },
           {
             physicalName: "email",
             displayName: "メールアドレス",
-            type: "email",
+            ...UI_EMAIL("email"),
           },
           {
             physicalName: "isActive",
             displayName: "アクティブ",
-            type: "boolean",
+            ...UI_BOOLEAN("isActive"),
           },
           {
             physicalName: "joinDate",
             displayName: "入社日",
-            type: "date",
+            ...UI_DATE("joinDate"),
           },
           {
             physicalName: "notes",
             displayName: "備考",
-            type: "textarea",
+            ...UI_TEXTAREA("notes"),
           },
         ],
       },
@@ -69,9 +191,15 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "product",
             displayName: "商品名",
-            type: "text",
+            renderFormValue: ({ useFormReturn: { register }, name }) => (
+              <input
+                type="text"
+                {...register(name)}
+                className="border border-gray-300 px-2 py-1 rounded w-full"
+              />
+            ),
             getGridColumnDef: ({ member, cellType }) => {
-              return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
+              return cellType.text("product", member.displayName ?? "product", {
                 defaultWidth: 200,
                 required: true,
                 isFixed: true, // 固定列
@@ -81,9 +209,19 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "price",
             displayName: "価格",
-            type: "currency",
+            renderFormValue: ({ useFormReturn: { register }, name }) => (
+              <div className="flex items-center">
+                <span className="text-gray-500 mr-1">¥</span>
+                <input
+                  type="number"
+                  {...register(name, { valueAsNumber: true })}
+                  className="border border-gray-300 px-2 py-1 rounded w-full"
+                  min="0"
+                />
+              </div>
+            ),
             getGridColumnDef: ({ member, cellType }) => {
-              return cellType.number(member.physicalName, member.displayName ?? member.physicalName, {
+              return cellType.number("price", member.displayName ?? "price", {
                 defaultWidth: 120,
                 required: true,
                 renderCell: (context) => (
@@ -97,9 +235,20 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "category",
             displayName: "カテゴリ",
-            type: "select",
+            renderFormValue: ({ useFormReturn: { register }, name }) => (
+              <select
+                {...register(name)}
+                className="border border-gray-300 px-2 py-1 rounded w-full"
+              >
+                <option value="">選択してください</option>
+                <option value="electronics">家電</option>
+                <option value="clothing">衣類</option>
+                <option value="food">食品</option>
+                <option value="books">書籍</option>
+              </select>
+            ),
             getGridColumnDef: ({ member, cellType }) => {
-              return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
+              return cellType.text("category", member.displayName ?? "category", {
                 defaultWidth: 140,
                 getOptions: () => [
                   { value: "electronics", label: "家電" },
@@ -113,9 +262,14 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "inStock",
             displayName: "在庫あり",
-            type: "boolean",
+            renderFormValue: ({ useFormReturn: { register }, name }) => (
+              <label className="flex items-center gap-2">
+                <input type="checkbox" {...register(name)} />
+                <span>有効</span>
+              </label>
+            ),
             getGridColumnDef: ({ member, cellType }) => {
-              return cellType.boolean(member.physicalName, member.displayName ?? member.physicalName, {
+              return cellType.boolean("inStock", member.displayName ?? "inStock", {
                 defaultWidth: 100,
                 renderCell: (context) => (
                   <div className="text-center">
@@ -147,9 +301,16 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "id",
             displayName: "ID",
-            type: "readonly",
+            renderFormValue: ({ useFormReturn: { watch }, name }) => {
+              const value = watch(name);
+              return (
+                <div className="bg-gray-100 px-2 py-1 rounded text-gray-600">
+                  {String(value || '')}
+                </div>
+              );
+            },
             getGridColumnDef: ({ member, cellType }) => {
-              return cellType.number(member.physicalName, member.displayName ?? member.physicalName, {
+              return cellType.number("id", member.displayName ?? "id", {
                 defaultWidth: 80,
                 isReadOnly: true,
                 renderCell: (context) => (
@@ -163,19 +324,26 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "name",
             displayName: "名前",
-            type: "text",
+            ...UI_TEXT("name"),
           },
           {
             physicalName: "status",
             displayName: "ステータス",
-            type: "select",
+            ...UI_SELECT("status"),
           },
           {
             physicalName: "createdAt",
             displayName: "作成日",
-            type: "readonly",
+            renderFormValue: ({ useFormReturn: { watch }, name }) => {
+              const value = watch(name);
+              return (
+                <div className="bg-gray-100 px-2 py-1 rounded text-gray-600">
+                  {String(value || '')}
+                </div>
+              );
+            },
             getGridColumnDef: ({ member, cellType }) => {
-              return cellType.date(member.physicalName, member.displayName ?? member.physicalName, {
+              return cellType.date("createdAt", member.displayName ?? "createdAt", {
                 defaultWidth: 120,
                 isReadOnly: true,
               })
@@ -198,14 +366,20 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "visibleData",
             displayName: "表示データ",
-            type: "text",
+            ...UI_TEXT("visibleData"),
           },
           {
             physicalName: "hiddenData",
             displayName: "非表示データ",
-            type: "text",
+            renderFormValue: ({ useFormReturn: { register }, name }) => (
+              <input
+                type="text"
+                {...register(name)}
+                className="border border-gray-300 px-2 py-1 rounded w-full"
+              />
+            ),
             getGridColumnDef: ({ member, cellType }) => {
-              return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
+              return cellType.text("hiddenData", member.displayName ?? "hiddenData", {
                 invisible: true, // 非表示
               })
             },
@@ -213,9 +387,16 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "internalId",
             displayName: "内部ID",
-            type: "readonly",
+            renderFormValue: ({ useFormReturn: { watch }, name }) => {
+              const value = watch(name);
+              return (
+                <div className="bg-gray-100 px-2 py-1 rounded text-gray-600">
+                  {String(value || '')}
+                </div>
+              );
+            },
             getGridColumnDef: ({ member, cellType }) => {
-              return cellType.number(member.physicalName, member.displayName ?? member.physicalName, {
+              return cellType.number("internalId", member.displayName ?? "internalId", {
                 invisible: true, // 非表示
               })
             },
@@ -239,9 +420,15 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "task",
             displayName: "タスク",
-            type: "text",
+            renderFormValue: ({ useFormReturn: { register }, name }) => (
+              <input
+                type="text"
+                {...register(name)}
+                className="border border-gray-300 px-2 py-1 rounded w-full"
+              />
+            ),
             getGridColumnDef: ({ member, cellType }) => {
-              return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
+              return cellType.text("task", member.displayName ?? "task", {
                 defaultWidth: 200,
                 editorOverflow: 'vertical',
               })
@@ -250,9 +437,20 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "priority",
             displayName: "優先度",
-            type: "select",
+            renderFormValue: ({ useFormReturn: { register }, name }) => (
+              <select
+                {...register(name)}
+                className="border border-gray-300 px-2 py-1 rounded w-full"
+              >
+                <option value="">選択してください</option>
+                <option value="low">低</option>
+                <option value="medium">中</option>
+                <option value="high">高</option>
+                <option value="urgent">緊急</option>
+              </select>
+            ),
             getGridColumnDef: ({ member, cellType }) => {
-              return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
+              return cellType.text("priority", member.displayName ?? "priority", {
                 defaultWidth: 100,
                 getOptions: () => [
                   { value: "low", label: "低" },
@@ -283,14 +481,30 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "dueDate",
             displayName: "期限",
-            type: "date",
+            ...UI_DATE("dueDate"),
           },
           {
             physicalName: "progress",
             displayName: "進捗",
-            type: "progress",
+            renderFormValue: ({ useFormReturn: { register, watch }, name }) => {
+              const value = watch(name) as number || 0;
+              return (
+                <div>
+                  <input
+                    type="range"
+                    {...register(name, { valueAsNumber: true })}
+                    min="0"
+                    max="100"
+                    className="w-full"
+                  />
+                  <div className="text-center text-sm text-gray-600 mt-1">
+                    {value}%
+                  </div>
+                </div>
+              );
+            },
             getGridColumnDef: ({ member, cellType }) => {
-              return cellType.number(member.physicalName, member.displayName ?? member.physicalName, {
+              return cellType.number("progress", member.displayName ?? "progress", {
                 defaultWidth: 120,
                 renderCell: (context) => {
                   const value = Number(context.getValue()) || 0;
@@ -314,9 +528,20 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "assignee",
             displayName: "担当者",
-            type: "select",
+            renderFormValue: ({ useFormReturn: { register }, name }) => (
+              <select
+                {...register(name)}
+                className="border border-gray-300 px-2 py-1 rounded w-full"
+              >
+                <option value="">選択してください</option>
+                <option value="user1">田中太郎</option>
+                <option value="user2">佐藤花子</option>
+                <option value="user3">鈴木一郎</option>
+                <option value="user4">高橋美咲</option>
+              </select>
+            ),
             getGridColumnDef: ({ member, cellType }) => {
-              return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
+              return cellType.text("assignee", member.displayName ?? "assignee", {
                 defaultWidth: 130,
                 getOptions: () => [
                   { value: "user1", label: "田中太郎" },
@@ -330,180 +555,5 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
         ],
       },
     ],
-  },
-
-  // メンバー種類定義
-  {
-    text: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <input
-          type="text"
-          {...register(name)}
-          className="border border-gray-300 px-2 py-1 rounded w-full"
-        />
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 150,
-        })
-      },
-    },
-
-    number: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <input
-          type="number"
-          {...register(name, { valueAsNumber: true })}
-          className="border border-gray-300 px-2 py-1 rounded w-full"
-        />
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.number(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 120,
-        })
-      },
-    },
-
-    email: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <input
-          type="email"
-          {...register(name)}
-          className="border border-gray-300 px-2 py-1 rounded w-full"
-          placeholder="example@domain.com"
-        />
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 180,
-        })
-      },
-    },
-
-    boolean: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <label className="flex items-center gap-2">
-          <input type="checkbox" {...register(name)} />
-          <span>有効</span>
-        </label>
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.boolean(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 80,
-        })
-      },
-    },
-
-    date: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <input
-          type="date"
-          {...register(name)}
-          className="border border-gray-300 px-2 py-1 rounded w-full"
-        />
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.date(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 140,
-        })
-      },
-    },
-
-    textarea: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <textarea
-          {...register(name)}
-          className="border border-gray-300 px-2 py-1 rounded w-full"
-          rows={3}
-        />
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 200,
-          editorOverflow: 'vertical',
-        })
-      },
-    },
-
-    currency: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <div className="flex items-center">
-          <span className="text-gray-500 mr-1">¥</span>
-          <input
-            type="number"
-            {...register(name, { valueAsNumber: true })}
-            className="border border-gray-300 px-2 py-1 rounded w-full"
-            min="0"
-          />
-        </div>
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.number(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 120,
-        })
-      },
-    },
-
-    select: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <select
-          {...register(name)}
-          className="border border-gray-300 px-2 py-1 rounded w-full"
-        >
-          <option value="">選択してください</option>
-          <option value="draft">下書き</option>
-          <option value="review">レビュー中</option>
-          <option value="approved">承認済み</option>
-          <option value="published">公開済み</option>
-        </select>
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 130,
-        })
-      },
-    },
-
-    readonly: {
-      renderForm: ({ useFormReturn: { watch }, name }) => {
-        const value = watch(name);
-        return (
-          <div className="bg-gray-100 px-2 py-1 rounded text-gray-600">
-            {String(value || '')}
-          </div>
-        );
-      },
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 120,
-          isReadOnly: true,
-        })
-      },
-    },
-
-    progress: {
-      renderForm: ({ useFormReturn: { register, watch }, name }) => {
-        const value = watch(name) as number || 0;
-        return (
-          <div>
-            <input
-              type="range"
-              {...register(name, { valueAsNumber: true })}
-              min="0"
-              max="100"
-              className="w-full"
-            />
-            <div className="text-center text-sm text-gray-600 mt-1">
-              {value}%
-            </div>
-          </div>
-        );
-      },
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.number(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 120,
-        })
-      },
-    },
-  }]
+  }
 }

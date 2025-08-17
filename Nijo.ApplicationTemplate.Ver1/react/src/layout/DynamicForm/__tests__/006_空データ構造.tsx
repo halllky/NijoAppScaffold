@@ -1,16 +1,51 @@
-import { MemberOwner, ValueMemberDefinitionMap } from "../types";
+import { MemberOwner, ValueMember } from "../types";
 
 /**
  * 空データ構造（空配列、空セクション等）のエッジケースを確認するためのテストデータ。
  */
-export default function (): [MemberOwner, ValueMemberDefinitionMap] {
-  return [{
+export default function (): MemberOwner {
+
+  // 複数回使いまわすUIレンダリング定義
+  const UI_TEXT = (physicalName: string): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <input
+        type="text"
+        {...register(name)}
+        className="border border-gray-300 px-2 py-1 rounded w-full"
+        placeholder="テキストを入力してください"
+      />
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.text(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 150,
+      })
+    },
+  })
+
+  const UI_NUMBER = (physicalName: string): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <input
+        type="number"
+        {...register(name, { valueAsNumber: true })}
+        className="border border-gray-300 px-2 py-1 rounded w-full"
+        placeholder="数値を入力してください"
+      />
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.number(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 120,
+      })
+    },
+  })
+
+  // データ構造定義
+  return {
     members: [
       // 通常のメンバー（比較用）
       {
         physicalName: "normalMember",
         displayName: "通常のメンバー",
-        type: "text",
+        ...UI_TEXT("normalMember"),
       },
 
       // 空のセクション
@@ -39,7 +74,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "singleMember",
             displayName: "単一メンバー",
-            type: "text",
+            ...UI_TEXT("singleMember"),
           },
         ],
       },
@@ -54,7 +89,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "singleItem",
             displayName: "単一アイテム",
-            type: "text",
+            ...UI_TEXT("singleItem"),
           },
         ],
       },
@@ -68,7 +103,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "outerMember",
             displayName: "外側メンバー",
-            type: "text",
+            ...UI_TEXT("outerMember"),
           },
           // 内側の空セクション
           {
@@ -80,7 +115,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "anotherOuterMember",
             displayName: "もう一つの外側メンバー",
-            type: "text",
+            ...UI_TEXT("anotherOuterMember"),
           },
         ],
       },
@@ -94,7 +129,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "sectionMember",
             displayName: "セクションメンバー",
-            type: "text",
+            ...UI_TEXT("sectionMember"),
           },
           // 内側の空配列
           {
@@ -121,7 +156,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "text",
             displayName: "テキスト",
-            type: "text",
+            ...UI_TEXT("text"),
           },
           // 配列内の空セクション
           {
@@ -150,7 +185,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "level1Text",
             displayName: "レベル1テキスト",
-            type: "text",
+            ...UI_TEXT("level1Text"),
           },
           {
             physicalName: "level2Section",
@@ -160,7 +195,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
               {
                 physicalName: "level2Text",
                 displayName: "レベル2テキスト",
-                type: "text",
+                ...UI_TEXT("level2Text"),
               },
               // レベル3の空セクション
               {
@@ -193,7 +228,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "item",
             displayName: "アイテム",
-            type: "text",
+            ...UI_TEXT("item"),
           },
         ],
       },
@@ -212,55 +247,20 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "text",
             displayName: "テキスト（undefined初期値）",
-            type: "text",
+            ...UI_TEXT("text"),
           },
           {
             physicalName: "number",
             displayName: "数値（null初期値）",
-            type: "number",
+            ...UI_NUMBER("number"),
           },
           {
             physicalName: "emptyString",
             displayName: "空文字初期値",
-            type: "text",
+            ...UI_TEXT("emptyString"),
           },
         ],
       },
     ],
-  },
-
-  // メンバー種類定義
-  {
-    text: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <input
-          type="text"
-          {...register(name)}
-          className="border border-gray-300 px-2 py-1 rounded w-full"
-          placeholder="テキストを入力してください"
-        />
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 150,
-        })
-      },
-    },
-
-    number: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <input
-          type="number"
-          {...register(name, { valueAsNumber: true })}
-          className="border border-gray-300 px-2 py-1 rounded w-full"
-          placeholder="数値を入力してください"
-        />
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.number(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 120,
-        })
-      },
-    },
-  }]
+  }
 }

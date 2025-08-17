@@ -5,7 +5,7 @@ import { DynamicFormProps } from "./types"
 /** フォーム内部で使用するコンテキスト */
 export type DynamicFormContextValue = {
   /** フォームのプロパティ */
-  props: Pick<DynamicFormProps, "root" | "membersTypes">
+  props: Pick<DynamicFormProps, "root">
   /** react-hook-form の useForm の戻り値 */
   useFormReturn: ReactHookForm.UseFormReturn<ReactHookForm.FieldValues>
 }

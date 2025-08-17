@@ -11,7 +11,7 @@ test("セクション, 配列 の組み合わせ", async () => {
   const user = userEvent.setup()
 
   // データ構造定義
-  const [root, membersTypes] = _001_セクションと配列の基本的組み合わせ()
+  const root = _001_セクションと配列の基本的組み合わせ()
 
   // デフォルト値
   const defaultValues = {
@@ -36,7 +36,6 @@ test("セクション, 配列 の組み合わせ", async () => {
       <DynamicForm
         ref={ref}
         root={root}
-        membersTypes={membersTypes}
         defaultValues={defaultValues}
       />
     </ContextProviders>

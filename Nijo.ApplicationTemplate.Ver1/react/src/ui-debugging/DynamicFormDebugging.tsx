@@ -1,14 +1,13 @@
 import React from "react";
-import { DynamicForm, ValueMemberDefinitionMap, MemberOwner, DynamicFormRef } from "../layout";
+import { DynamicForm, MemberOwner, DynamicFormRef } from "../layout";
 import { Allotment, LayoutPriority } from "allotment";
 
 export default function DynamicFormDebugging({ getSchema }: {
-  getSchema: () => [MemberOwner, ValueMemberDefinitionMap]
+  getSchema: () => MemberOwner
 }) {
   // スキーマ定義
   const schema = React.useMemo(() => {
-    const [root, membersTypes] = getSchema()
-    return { root, membersTypes }
+    return getSchema()
   }, [getSchema])
 
   // 定期的に値をJSONにして表示
@@ -33,7 +32,7 @@ export default function DynamicFormDebugging({ getSchema }: {
         <div className="h-full overflow-y-scroll">
           <DynamicForm
             ref={formRef}
-            {...schema}
+            root={schema}
           />
         </div>
       </Allotment.Pane>

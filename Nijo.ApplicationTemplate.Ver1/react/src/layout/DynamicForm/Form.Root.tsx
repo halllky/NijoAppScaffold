@@ -22,12 +22,12 @@ export const DynamicForm = React.forwardRef<DynamicFormRef, DynamicFormProps>((p
 
   // コンテキスト
   const contextValue: DynamicFormContextValue = React.useMemo(() => {
-    const { root, membersTypes } = props
+    const { root } = props
     return {
-      props: { root, membersTypes },
+      props: { root },
       useFormReturn,
     }
-  }, [props.root, props.membersTypes, useFormReturn])
+  }, [props.root, useFormReturn])
 
   // ラベル列の横幅
   const gridStyle: React.CSSProperties = React.useMemo(() => ({

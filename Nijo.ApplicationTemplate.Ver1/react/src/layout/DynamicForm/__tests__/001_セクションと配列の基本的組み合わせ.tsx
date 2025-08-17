@@ -1,10 +1,23 @@
-import { MemberOwner, ValueMemberDefinitionMap } from "../types";
+import { MemberOwner, ValueMember } from "../types";
 
 /**
  * セクションと配列の基本的な組み合わせを確認するためのテストデータ。
  */
-export default function (): [MemberOwner, ValueMemberDefinitionMap] {
-  return [{
+export default function (): MemberOwner {
+
+  // 複数回使いまわすUIレンダリング定義
+  const UI_TEXT = (physicalName: string): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <input type="text" {...register(name)} className="border border-gray-700 px-1 py-px" />
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.text(physicalName, member.displayName ?? physicalName, {
+      })
+    },
+  })
+
+  // データ構造定義
+  return {
     members: [
       // セクション1
       {
@@ -22,7 +35,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
               {
                 physicalName: "member1",
                 displayName: "メンバー1",
-                type: "text",
+                ...UI_TEXT("member1"),
               },
             ],
           },
@@ -37,7 +50,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
               {
                 physicalName: "member2",
                 displayName: "メンバー2",
-                type: "text",
+                ...UI_TEXT("member2"),
               },
             ],
           },
@@ -63,7 +76,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
               {
                 physicalName: "member3",
                 displayName: "メンバー3",
-                type: "text",
+                ...UI_TEXT("member3"),
               },
             ],
           },
@@ -78,26 +91,12 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
               {
                 physicalName: "member4",
                 displayName: "メンバー4",
-                type: "text",
+                ...UI_TEXT("member4"),
               },
             ],
           },
         ],
       },
     ],
-  },
-
-  // メンバー種類定義。
-  // このデータ構造ではセクションと配列の基本的な形を確認するため必要最低限のメンバー種類定義のみ。
-  {
-    text: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <input type="text" {...register(name)} className="border border-gray-700 px-1 py-px" />
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
-        })
-      },
-    },
-  }]
+  }
 }

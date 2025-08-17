@@ -8,16 +8,19 @@
 ## 基本的な形
 
 ```ts
-import { MemberOwner, ValueMemberDefinitionMap } from "../types";
+import { MemberOwner, ValueMember } from "../types";
 
 /** ここにテストデータの意図や説明 */
-export default function (): [MemberOwner, ValueMemberDefinitionMap] {
-  return [{
+export default function (): MemberOwner {
+
+  // 使いまわすUIレンダラーがある場合は事前に定義
+  const UI_TEXT = (physicalName: string): Partial<ValueMember> => ({
+    // ここにデータ種類定義
+  })
+  const UI_NUMBER = ...
+
+  return {
     members: [/* ここにデータ構造定義 */],
-  }, {
-    aaa: {/* ここにデータ種類定義 */},
-    bbb: {/* ここにデータ種類定義 */},
-    ccc: {/* ここにデータ種類定義 */},
-  }]
+  }
 }
 ```

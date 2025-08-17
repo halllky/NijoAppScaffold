@@ -6,8 +6,6 @@ import { ColumnDefFactories, EditableGridColumnDef } from "../EditableGrid"
 export type DynamicFormProps = {
   /** データ構造の定義 */
   root: MemberOwner
-  /** 値メンバーの種類定義 */
-  membersTypes: ValueMemberDefinitionMap
   /** フォームのデフォルト値 */
   defaultValues?: DynamicFormValues
   /** ラベル列の幅。未指定の場合は既定の幅が使用される。 */
@@ -41,7 +39,6 @@ export type Member =
   | SectionMember
   | ArrayMember
   | ValueMember
-  | NoneMember
 
 /** ネストされたセクション */
 export type SectionMember = MemberOwner & {
@@ -88,66 +85,28 @@ export type ArrayMember = MemberOwner & {
 /** 値メンバー */
 export type ValueMember = {
   /**
-   * このメンバーの型。
-   * DynamicFormを呼び出す側で定義した型のうちから選ぶ必要がある。
-  */
-  type: string
-  /**
    * 主にhtmlのname属性の構築に用いられるメンバー名。
    * 内部的にはルートオブジェクトからメンバーまでのパスがピリオドで連結されていく。
    */
-  physicalName: string
+  physicalName?: string
   /** 画面上に表示する名称。未指定の場合はphysicalNameが使用される。 */
   displayName?: string
   /** フォームのラベル部分に追加のカスタマイズUIを表示したい場合に使用する。 */
   renderFormLabel?: ValueMemberFormRenderer
-  /** フォームのレンダリングコンポーネント。未指定の場合は既定のレンダリングコンポーネントが使用される。 */
+  /** 値部分のレンダリングコンポーネント。未指定の場合は何も表示されなくなる。 */
   renderFormValue?: ValueMemberFormRenderer
-  /** グリッドの列定義。未指定の場合は既定の列定義が使用される。 */
+  /** グリッドの列定義。未指定の場合はグリッドに表示されなくなる。 */
   getGridColumnDef?: GetGridColumnDefFunction
   /** このメンバーを横幅いっぱいにするかどうか。 */
   fullWidth?: boolean
+  /** ラベルを表示しない。 */
+  noLabel?: boolean
 
   isArray?: never
   isSection?: never
-}
-
-/** 特定のプロパティとバインドされないメンバー */
-export type NoneMember = {
-  physicalName?: never
-  isArray?: never
-  isSection?: never
-  type?: never
-  /** 画面上に表示する名称。未指定の場合はphysicalNameが使用される。 */
-  displayName?: string
-  /** 横幅いっぱいとるかどうか。このメンバーがフォームに表示される際にのみ参照される。 */
-  fullWidth?: boolean
-  /** フォームのレンダリングコンポーネント */
-  renderForm?: NoneMemberFormRenderer
-  /** グリッドの列定義 */
-  getGridColumnDef?: (props: Omit<GetGridColumnDefFunctionProps, "name" | "member">) => GridColumnDef
 }
 
 //#endregion メンバー
-
-// ----------------------------------------------
-//#region 値メンバーの型定義
-
-/**
- * 値メンバーの型定義のマップ。
- * キーは `DynamicFormValueMember` のtypeに対応する。
-*/
-export type ValueMemberDefinitionMap = Record<string, ValueMemberDefinition>
-
-/** 値メンバーの型定義 */
-export type ValueMemberDefinition = {
-  /** フォームのレンダリングコンポーネント */
-  renderForm: ValueMemberFormRenderer
-  /** グリッドの列定義 */
-  getGridColumnDef: GetGridColumnDefFunction
-}
-
-//#endregion 値メンバーの型定義
 
 // ----------------------------------------------
 //#region フォームのカスタマイザー
@@ -158,8 +117,6 @@ export type SectionFormRenderer = (props: SectionFormRendererProps) => React.Rea
 export type ArrayFormRenderer = (props: ArrayFormRendererProps) => React.ReactNode
 /** 値メンバーのフォームのレンダリングコンポーネント */
 export type ValueMemberFormRenderer = (props: ValueMemberFormRendererProps) => React.ReactNode
-/** 特定のプロパティとバインドされないメンバーのレンダリングコンポーネント */
-export type NoneMemberFormRenderer = (props: NoneMemberFormRendererProps) => React.ReactNode
 
 /** メンバーのフォームのレンダリングコンポーネントの引数 */
 export type FormRendererProps = {
@@ -186,13 +143,6 @@ export type ArrayFormRendererProps = FormRendererProps & {
 export type ValueMemberFormRendererProps = FormRendererProps & {
   /** ルートオブジェクトからこのメンバーまでのパス */
   name: string
-  /** このメンバーの型定義 */
-  typeDef: ValueMemberDefinition
-}
-
-export type NoneMemberFormRendererProps = FormRendererProps & {
-  /** ルートオブジェクトからこのメンバーのオーナーまでのパス */
-  ancestorsPath: string
 }
 
 //#endregion フォームのカスタマイザー

@@ -1,10 +1,137 @@
-import { MemberOwner, ValueMemberDefinitionMap } from "../types";
+import { MemberOwner, ValueMember } from "../types";
 
 /**
  * 複雑なネスト構造（深いネスト、配列とセクションの複雑な組み合わせ）を確認するためのテストデータ。
  */
-export default function (): [MemberOwner, ValueMemberDefinitionMap] {
-  return [{
+export default function (): MemberOwner {
+
+  // 複数回使いまわすUIレンダリング定義
+  const UI_TEXT = (physicalName: string): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <input
+        type="text"
+        {...register(name)}
+        className="border border-gray-300 px-2 py-1 rounded w-full text-sm"
+      />
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.text(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 120,
+      })
+    },
+  })
+
+  const UI_SELECT = (physicalName: string, options?: { value: string, label: string }[]): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => {
+      // フィールド名に応じて異なる選択肢を提供
+      const getOptions = () => {
+        if (options) return [{ value: "", label: "選択してください" }, ...options];
+
+        if (name.includes('type')) {
+          return [
+            { value: "", label: "選択してください" },
+            { value: "phone", label: "電話" },
+            { value: "email", label: "メール" },
+            { value: "chat", label: "チャット" },
+          ];
+        }
+        if (name.includes('priority')) {
+          return [
+            { value: "", label: "選択してください" },
+            { value: "high", label: "高" },
+            { value: "medium", label: "中" },
+            { value: "low", label: "低" },
+          ];
+        }
+        if (name.includes('status')) {
+          return [
+            { value: "", label: "選択してください" },
+            { value: "planning", label: "計画中" },
+            { value: "active", label: "進行中" },
+            { value: "completed", label: "完了" },
+            { value: "suspended", label: "中断" },
+          ];
+        }
+        if (name.includes('day')) {
+          return [
+            { value: "", label: "選択してください" },
+            { value: "monday", label: "月曜日" },
+            { value: "tuesday", label: "火曜日" },
+            { value: "wednesday", label: "水曜日" },
+            { value: "thursday", label: "木曜日" },
+            { value: "friday", label: "金曜日" },
+            { value: "saturday", label: "土曜日" },
+            { value: "sunday", label: "日曜日" },
+          ];
+        }
+        if (name.includes('level')) {
+          return [
+            { value: "", label: "選択してください" },
+            { value: "beginner", label: "初心者" },
+            { value: "intermediate", label: "中級者" },
+            { value: "advanced", label: "上級者" },
+            { value: "expert", label: "エキスパート" },
+          ];
+        }
+        return [
+          { value: "", label: "選択してください" },
+          { value: "option1", label: "選択肢1" },
+          { value: "option2", label: "選択肢2" },
+        ];
+      };
+
+      return (
+        <select
+          {...register(name)}
+          className="border border-gray-300 px-2 py-1 rounded w-full text-sm"
+        >
+          {getOptions().map(option => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      );
+    },
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.text(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 100,
+      })
+    },
+  })
+
+  const UI_TEXTAREA = (physicalName: string): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <textarea
+        {...register(name)}
+        className="border border-gray-300 px-2 py-1 rounded w-full text-sm"
+        rows={2}
+      />
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.text(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 150,
+      })
+    },
+  })
+
+  const UI_DATE = (physicalName: string): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <input
+        type="date"
+        {...register(name)}
+        className="border border-gray-300 px-2 py-1 rounded w-full text-sm"
+      />
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.date(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 120,
+      })
+    },
+  })
+
+  // データ構造定義
+  return {
     members: [
       // レベル1: 基本情報セクション
       // ※ オブジェクト直下のプロパティだけでなく
@@ -18,12 +145,12 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "values.name",
             displayName: "名前",
-            type: "text",
+            ...UI_TEXT("values.name"),
           },
           {
             physicalName: "values.email",
             displayName: "メールアドレス",
-            type: "text",
+            ...UI_TEXT("values.email"),
           },
 
           // レベル2: 住所セクション（物理名なしネスト）
@@ -35,17 +162,17 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
               {
                 physicalName: "values.zipCode",
                 displayName: "郵便番号",
-                type: "text",
+                ...UI_TEXT("values.zipCode"),
               },
               {
                 physicalName: "values.prefecture",
                 displayName: "都道府県",
-                type: "text",
+                ...UI_TEXT("values.prefecture"),
               },
               {
                 physicalName: "values.city",
                 displayName: "市区町村",
-                type: "text",
+                ...UI_TEXT("values.city"),
               },
 
               // レベル3: 詳細住所セクション（レベル2と同じ観点）
@@ -56,17 +183,17 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
                   {
                     physicalName: "values.street",
                     displayName: "番地",
-                    type: "text",
+                    ...UI_TEXT("values.street"),
                   },
                   {
                     physicalName: "values.building",
                     displayName: "建物名",
-                    type: "text",
+                    ...UI_TEXT("values.building"),
                   },
                   {
                     physicalName: "values.room",
                     displayName: "部屋番号",
-                    type: "text",
+                    ...UI_TEXT("values.room"),
                   },
                 ],
               },
@@ -93,12 +220,12 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "type",
             displayName: "連絡手段",
-            type: "select",
+            ...UI_SELECT("type"),
           },
           {
             physicalName: "value",
             displayName: "連絡先",
-            type: "text",
+            ...UI_TEXT("value"),
           },
 
           // レベル2: 配列内のセクション
@@ -110,12 +237,12 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
               {
                 physicalName: "priority",
                 displayName: "優先度",
-                type: "select",
+                ...UI_SELECT("priority"),
               },
               {
                 physicalName: "notes",
                 displayName: "備考",
-                type: "textarea",
+                ...UI_TEXTAREA("notes"),
               },
 
               // レベル3: セクション内の配列（配列→セクション→配列のネスト）
@@ -128,12 +255,12 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
                   {
                     physicalName: "day",
                     displayName: "曜日",
-                    type: "select",
+                    ...UI_SELECT("day"),
                   },
                   {
                     physicalName: "time",
                     displayName: "時間帯",
-                    type: "text",
+                    ...UI_TEXT("time"),
                   },
                 ],
               },
@@ -160,12 +287,12 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "name",
             displayName: "プロジェクト名",
-            type: "text",
+            ...UI_TEXT("name"),
           },
           {
             physicalName: "status",
             displayName: "ステータス",
-            type: "select",
+            ...UI_SELECT("status"),
           },
 
           // レベル2: チーム情報セクション
@@ -177,7 +304,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
               {
                 physicalName: "leader",
                 displayName: "リーダー",
-                type: "text",
+                ...UI_TEXT("leader"),
               },
 
               // レベル3: メンバー配列
@@ -190,12 +317,12 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
                   {
                     physicalName: "name",
                     displayName: "名前",
-                    type: "text",
+                    ...UI_TEXT("name"),
                   },
                   {
                     physicalName: "role",
                     displayName: "役割",
-                    type: "text",
+                    ...UI_TEXT("role"),
                   },
 
                   // レベル4: スキル配列（配列→セクション→配列→配列のネスト）
@@ -208,12 +335,12 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
                       {
                         physicalName: "name",
                         displayName: "スキル名",
-                        type: "text",
+                        ...UI_TEXT("name"),
                       },
                       {
                         physicalName: "level",
                         displayName: "レベル",
-                        type: "select",
+                        ...UI_SELECT("level"),
                       },
                     ],
                   },
@@ -230,7 +357,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
                   {
                     physicalName: "date",
                     displayName: "日付",
-                    type: "date",
+                    ...UI_DATE("date"),
                   },
 
                   // レベル4: アジェンダセクション
@@ -249,12 +376,12 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
                           {
                             physicalName: "title",
                             displayName: "議題名",
-                            type: "text",
+                            ...UI_TEXT("title"),
                           },
                           {
                             physicalName: "priority",
                             displayName: "優先度",
-                            type: "select",
+                            ...UI_SELECT("priority"),
                           },
                         ],
                       },
@@ -267,130 +394,5 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
         ],
       },
     ],
-  },
-
-  // メンバー種類定義
-  {
-    text: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <input
-          type="text"
-          {...register(name)}
-          className="border border-gray-300 px-2 py-1 rounded w-full text-sm"
-        />
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 120,
-        })
-      },
-    },
-
-    select: {
-      renderForm: ({ useFormReturn: { register }, name }) => {
-        // フィールド名に応じて異なる選択肢を提供
-        const getOptions = () => {
-          if (name.includes('type')) {
-            return [
-              { value: "", label: "選択してください" },
-              { value: "phone", label: "電話" },
-              { value: "email", label: "メール" },
-              { value: "chat", label: "チャット" },
-            ];
-          }
-          if (name.includes('priority')) {
-            return [
-              { value: "", label: "選択してください" },
-              { value: "high", label: "高" },
-              { value: "medium", label: "中" },
-              { value: "low", label: "低" },
-            ];
-          }
-          if (name.includes('status')) {
-            return [
-              { value: "", label: "選択してください" },
-              { value: "planning", label: "計画中" },
-              { value: "active", label: "進行中" },
-              { value: "completed", label: "完了" },
-              { value: "suspended", label: "中断" },
-            ];
-          }
-          if (name.includes('day')) {
-            return [
-              { value: "", label: "選択してください" },
-              { value: "monday", label: "月曜日" },
-              { value: "tuesday", label: "火曜日" },
-              { value: "wednesday", label: "水曜日" },
-              { value: "thursday", label: "木曜日" },
-              { value: "friday", label: "金曜日" },
-              { value: "saturday", label: "土曜日" },
-              { value: "sunday", label: "日曜日" },
-            ];
-          }
-          if (name.includes('level')) {
-            return [
-              { value: "", label: "選択してください" },
-              { value: "beginner", label: "初心者" },
-              { value: "intermediate", label: "中級者" },
-              { value: "advanced", label: "上級者" },
-              { value: "expert", label: "エキスパート" },
-            ];
-          }
-          return [
-            { value: "", label: "選択してください" },
-            { value: "option1", label: "選択肢1" },
-            { value: "option2", label: "選択肢2" },
-          ];
-        };
-
-        return (
-          <select
-            {...register(name)}
-            className="border border-gray-300 px-2 py-1 rounded w-full text-sm"
-          >
-            {getOptions().map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        );
-      },
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 100,
-        })
-      },
-    },
-
-    textarea: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <textarea
-          {...register(name)}
-          className="border border-gray-300 px-2 py-1 rounded w-full text-sm"
-          rows={2}
-        />
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 150,
-        })
-      },
-    },
-
-    date: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <input
-          type="date"
-          {...register(name)}
-          className="border border-gray-300 px-2 py-1 rounded w-full text-sm"
-        />
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.date(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 120,
-        })
-      },
-    },
-  }]
+  }
 }

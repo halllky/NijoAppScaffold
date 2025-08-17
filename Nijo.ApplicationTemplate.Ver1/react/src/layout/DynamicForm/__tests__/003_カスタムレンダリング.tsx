@@ -1,17 +1,34 @@
 import React from "react";
-import { MemberOwner, ValueMemberDefinitionMap } from "../types";
+import { MemberOwner, ValueMember } from "../types";
 
 /**
  * カスタムレンダリング機能（renderForm, renderFormLabel等）を確認するためのテストデータ。
  */
-export default function (): [MemberOwner, ValueMemberDefinitionMap] {
-  return [{
+export default function (): MemberOwner {
+
+  // 複数回使いまわすUIレンダリング定義
+  const UI_TEXT = (physicalName: string): Partial<ValueMember> => ({
+    renderFormValue: ({ useFormReturn: { register }, name }) => (
+      <input
+        type="text"
+        {...register(name)}
+        className="border border-gray-300 px-2 py-1 rounded w-full"
+      />
+    ),
+    getGridColumnDef: ({ member, cellType }) => {
+      return cellType.text(physicalName, member.displayName ?? physicalName, {
+        defaultWidth: 150,
+      })
+    },
+  })
+
+  // データ構造定義
+  return {
     members: [
       // カスタムラベルレンダリングを持つ値メンバー
       {
         physicalName: "customLabelMember",
         displayName: "カスタムラベルメンバー",
-        type: "text",
         fullWidth: true,
         renderFormLabel: ({ name }) => (
           <div className="flex items-center gap-2">
@@ -19,13 +36,13 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
             <span className="text-xs text-gray-500">({name})</span>
           </div>
         ),
+        ...UI_TEXT("customLabelMember"),
       },
 
       // カスタムフォームレンダリングを持つ値メンバー
       {
         physicalName: "customFormMember",
         displayName: "カスタムフォームメンバー",
-        type: "text",
         renderFormValue: ({ useFormReturn: { register, watch }, name }) => {
           const value = watch(name);
           return (
@@ -42,14 +59,19 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
             </div>
           );
         },
+        getGridColumnDef: ({ member, cellType }) => {
+          return cellType.text("customFormMember", member.displayName ?? "customFormMember", {
+            defaultWidth: 150,
+          })
+        },
       },
 
       // フルワイドオプションの値メンバー
       {
         physicalName: "fullWidthMember",
         displayName: "フルワイドメンバー",
-        type: "text",
         fullWidth: true,
+        ...UI_TEXT("fullWidthMember"),
       },
 
       // カスタムレンダリングを持つセクション
@@ -75,12 +97,12 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "nestedMember1",
             displayName: "ネストメンバー1",
-            type: "text",
+            ...UI_TEXT("nestedMember1"),
           },
           {
             physicalName: "nestedMember2",
             displayName: "ネストメンバー2",
-            type: "text",
+            ...UI_TEXT("nestedMember2"),
           },
         ],
       },
@@ -100,7 +122,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "sectionMember1",
             displayName: "セクションメンバー1",
-            type: "text",
+            ...UI_TEXT("sectionMember1"),
           },
         ],
       },
@@ -137,7 +159,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "arrayItem",
             displayName: "配列アイテム",
-            type: "text",
+            ...UI_TEXT("arrayItem"),
           },
         ],
       },
@@ -163,28 +185,10 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           {
             physicalName: "item",
             displayName: "アイテム",
-            type: "text",
+            ...UI_TEXT("item"),
           },
         ],
       },
     ],
-  },
-
-  // メンバー種類定義
-  {
-    text: {
-      renderForm: ({ useFormReturn: { register }, name }) => (
-        <input
-          type="text"
-          {...register(name)}
-          className="border border-gray-300 px-2 py-1 rounded w-full"
-        />
-      ),
-      getGridColumnDef: ({ member, cellType }) => {
-        return cellType.text(member.physicalName, member.displayName ?? member.physicalName, {
-          defaultWidth: 150,
-        })
-      },
-    },
-  }]
+  }
 }
