@@ -34,7 +34,7 @@ export type MemberOwner = {
 }
 
 // ----------------------------------------------
-// メンバー
+//#region メンバー
 
 /** DynamicFormのメンバー */
 export type Member =
@@ -128,13 +128,15 @@ export type NoneMember = {
   getGridColumnDef?: (props: Omit<GetGridColumnDefFunctionProps, "name" | "member">) => GridColumnDef
 }
 
+//#endregion メンバー
+
 // ----------------------------------------------
-// 値メンバーの型定義
+//#region 値メンバーの型定義
 
 /**
  * 値メンバーの型定義のマップ。
  * キーは `DynamicFormValueMember` のtypeに対応する。
- */
+*/
 export type ValueMemberDefinitionMap = Record<string, ValueMemberDefinition>
 
 /** 値メンバーの型定義 */
@@ -145,8 +147,10 @@ export type ValueMemberDefinition = {
   getGridColumnDef: GetGridColumnDefFunction
 }
 
+//#endregion 値メンバーの型定義
+
 // ----------------------------------------------
-// フォームのカスタマイザー
+//#region フォームのカスタマイザー
 
 /** セクションメンバーのフォームのレンダリングコンポーネント */
 export type SectionFormRenderer = (props: SectionFormRendererProps) => React.ReactNode
@@ -191,8 +195,9 @@ export type NoneMemberFormRendererProps = FormRendererProps & {
   ancestorsPath: string
 }
 
+//#endregion フォームのカスタマイザー
 // ----------------------------------------------
-// グリッド
+//#region グリッド
 
 /** 値メンバーのグリッドの列定義を取得するための関数 */
 export type GetGridColumnDefFunction = (props: GetGridColumnDefFunctionProps) => GridColumnDef
@@ -211,3 +216,5 @@ export type GetGridColumnDefFunctionProps = {
 
 /** グリッドの列定義 */
 export type GridColumnDef = EditableGridColumnDef<ReactHookForm.FieldValues>
+
+//#endregion グリッド
