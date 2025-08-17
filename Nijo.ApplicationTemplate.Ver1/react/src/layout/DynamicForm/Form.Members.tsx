@@ -63,16 +63,27 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
         return group
       }
 
-      const totalMembers = group.members.length
-      const halfPoint = Math.ceil(totalMembers / 2)
+      // 折り返し位置を決定
+      const breakIndex = group.members.findIndex((memberWithPos, index) => {
+        const member = memberWithPos.member
+        // ValueMemberでbreakAfterが指定されている場合
+        return !member.isSection && !member.isArray && member.breakAfter
+      })
+
+      // breakAfterが指定されている場合はその位置+1で、そうでなければ従来通り半分で折り返し
+      // 注意: 同一グループ内で複数のメンバーにbreakAfterが設定されている場合、
+      // 最初に見つかったbreakAfterの位置でのみ折り返しが行われ、それ以降のbreakAfterは無視される
+      const splitPoint = breakIndex >= 0 ? breakIndex + 1 : Math.ceil(group.members.length / 2)
 
       return {
         ...group,
         members: group.members.map((memberWithPos, index) => {
-          // 前半は左側（1-2列目）、後半は右側（3-4列目）
-          const isLeftSide = index < halfPoint
+          // 分割点より前は左側（1-2列目）、後は右側（3-4列目）
+          const isLeftSide = index < splitPoint
           const columnStart = isLeftSide ? 1 : 3
-          const rowStart = isLeftSide ? index + 1 : (index - halfPoint) + 1
+
+          // 左側の行番号、右側の行番号を別々に計算
+          const rowStart = isLeftSide ? index + 1 : (index - splitPoint) + 1
 
           return {
             member: memberWithPos.member,

@@ -103,6 +103,13 @@ export type ValueMember = {
   fullWidth?: boolean
   /** ラベルを表示しない。 */
   noLabel?: boolean
+  /**
+   * このメンバーの後で右側の列に折り返すかどうか。
+   * 未指定の場合は項目数を2で割った位置で折り返す。
+   * `fullWidth` が `true` の場合は無視される。
+   * 同じグループ内で複数指定された場合、2番目以降の指定は無視される。
+   */
+  breakAfter?: boolean
 
   isArray?: never
   isSection?: never
