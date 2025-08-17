@@ -13,9 +13,9 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
         displayName: "カスタムラベルメンバー",
         type: "text",
         fullWidth: true,
-        renderFormLabel: ({ name, member }) => (
+        renderFormLabel: ({ name }) => (
           <div className="flex items-center gap-2">
-            <span className="text-blue-600 font-bold">📝 {member.displayName}</span>
+            <span className="text-blue-600 font-bold">📝 カスタムラベルメンバー</span>
             <span className="text-xs text-gray-500">({name})</span>
           </div>
         ),
@@ -26,7 +26,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
         physicalName: "customFormMember",
         displayName: "カスタムフォームメンバー",
         type: "text",
-        renderFormValue: ({ useFormReturn: { register, watch }, name, member }) => {
+        renderFormValue: ({ useFormReturn: { register, watch }, name }) => {
           const value = watch(name);
           return (
             <div className="border border-blue-300 rounded p-2">
@@ -34,7 +34,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
                 type="text"
                 {...register(name)}
                 className="w-full border-none outline-none"
-                placeholder={`${member.displayName}を入力してください`}
+                placeholder="カスタムフォームメンバーを入力してください"
               />
               <div className="text-xs text-gray-500 mt-1">
                 現在の値: {String(value || '（未入力）')}

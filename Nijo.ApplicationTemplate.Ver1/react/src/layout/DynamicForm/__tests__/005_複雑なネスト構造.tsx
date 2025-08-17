@@ -287,7 +287,7 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
     },
 
     select: {
-      renderForm: ({ useFormReturn: { register }, name, member }) => {
+      renderForm: ({ useFormReturn: { register }, name }) => {
         // フィールド名に応じて異なる選択肢を提供
         const getOptions = () => {
           if (name.includes('type')) {

@@ -1,6 +1,6 @@
 import React from "react"
 import { MembersGroupByBreakPoint } from "./Form.Members"
-import { FormRendererProps, MemberOwner, SectionMember } from "./types"
+import { MemberOwner, SectionFormRendererProps, SectionMember } from "./types"
 import { DynamicFormContext } from "./DynamicFormContext"
 import { DynamicFormLabel } from "./layout"
 
@@ -19,7 +19,7 @@ export const FormSection = ({ member: section, owner, ancestorsPath }: {
   const sectionMemberPath = section.physicalName ? `${ancestorsPath}.${section.physicalName}` : ancestorsPath
 
   // レンダリング処理の引数
-  const rendererProps: FormRendererProps = {
+  const rendererProps: SectionFormRendererProps = {
     name: sectionMemberPath,
     useFormReturn,
     owner,

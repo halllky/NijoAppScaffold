@@ -21,7 +21,6 @@ export const FormValueMember = ({ member, owner, ancestorsPath }: {
 
   // レンダリング処理の引数
   const rendererProps: ValueMemberFormRendererProps = {
-    member,
     owner,
     name: ancestorsPath ? `${ancestorsPath}.${member.physicalName}` : member.physicalName,
     useFormReturn: useFormReturn,

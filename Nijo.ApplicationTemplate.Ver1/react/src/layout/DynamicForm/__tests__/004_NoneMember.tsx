@@ -1,4 +1,5 @@
 import React from "react";
+import * as ReactHookForm from "react-hook-form";
 import { MemberOwner, ValueMemberDefinitionMap } from "../types";
 
 /**
@@ -25,14 +26,6 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
             </p>
           </div>
         ),
-        getGridColumnDef: ({ cellType }) => cellType.other("説明", {
-          renderCell: () => (
-            <div className="text-blue-600 text-xs">
-              📋 説明文
-            </div>
-          ),
-          defaultWidth: 100,
-        }),
       },
 
       // ボタンを表示するNoneMember
@@ -59,27 +52,13 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
             </button>
           </div>
         ),
-        getGridColumnDef: ({ cellType }) => cellType.other("アクション", {
-          renderCell: (context) => (
-            <div className="flex gap-1">
-              <button
-                type="button"
-                onClick={() => alert(`行データ: ${JSON.stringify(context.row.original)}`)}
-                className="bg-blue-500 text-white px-2 py-1 rounded text-xs"
-              >
-                詳細
-              </button>
-            </div>
-          ),
-          defaultWidth: 80,
-        }),
       },
 
       // カスタムレイアウトのNoneMember
       {
         displayName: "カスタムレイアウト",
-        renderForm: ({ useFormReturn: { watch } }) => {
-          const normalTextValue = watch("normalText");
+        renderForm: ({ useFormReturn: { control } }) => {
+          const normalTextValue = ReactHookForm.useWatch({ name: "normalText", control });
           return (
             <div className="border-2 border-purple-300 rounded-lg p-4 bg-purple-50">
               <h4 className="text-purple-800 font-semibold mb-2">🎨 動的コンテンツ</h4>
@@ -95,14 +74,6 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
             </div>
           );
         },
-        getGridColumnDef: ({ cellType }) => cellType.other("カスタム", {
-          renderCell: (context) => (
-            <div className="text-purple-600 text-xs">
-              🎨 {context.row.original.normalText || '空'}
-            </div>
-          ),
-          defaultWidth: 120,
-        }),
       },
 
       // セクション内のNoneMember
@@ -120,17 +91,10 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           // セクション内の区切り線
           {
             displayName: "区切り線",
+            fullWidth: true,
             renderForm: () => (
               <hr className="border-gray-300 my-4" />
             ),
-            getGridColumnDef: ({ cellType }) => cellType.other("区切り", {
-              renderCell: () => (
-                <div className="text-gray-400 text-xs">
-                  ─
-                </div>
-              ),
-              defaultWidth: 50,
-            }),
           },
 
           {
@@ -157,16 +121,6 @@ export default function (): [MemberOwner, ValueMemberDefinitionMap] {
           // 配列内の情報表示
           {
             displayName: "行情報",
-            renderForm: ({ name }) => {
-              // nameから行インデックスを取得
-              const pathParts = name.split('.');
-              const index = pathParts[pathParts.length - 1];
-              return (
-                <div className="text-xs text-gray-500 italic">
-                  行番号: {index}
-                </div>
-              );
-            },
             getGridColumnDef: ({ cellType }) => cellType.other("行情報", {
               renderCell: (context) => (
                 <div className="text-gray-500 text-xs">

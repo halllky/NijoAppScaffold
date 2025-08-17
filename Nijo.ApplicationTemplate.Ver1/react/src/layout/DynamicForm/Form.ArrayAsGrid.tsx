@@ -110,7 +110,7 @@ const useGetColumnDefs = (
         } else if (m.isArray) {
           continue // グリッドで配列を表示することはできない
 
-        } else if (m.type) {
+        } else if (m.type !== undefined) {
           const typeDef = membersTypes[m.type]
 
           // 型定義が無い場合はエラー
@@ -131,6 +131,14 @@ const useGetColumnDefs = (
             owner: array,
             cellType,
           }))
+        } else {
+          // None Member
+          if (m.getGridColumnDef) {
+            columns.push(m.getGridColumnDef({
+              cellType,
+              owner,
+            }))
+          }
         }
       }
     }

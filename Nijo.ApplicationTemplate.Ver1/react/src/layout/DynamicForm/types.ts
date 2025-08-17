@@ -55,9 +55,9 @@ export type SectionMember = MemberOwner & {
   /** 画面上に表示する名称。未指定の場合はphysicalNameが使用される。 */
   displayName?: string
   /** フォームのレンダリングコンポーネント。未指定の場合は既定のレンダリングコンポーネントが使用される。 */
-  render?: FormRenderer
+  render?: SectionFormRenderer
   /** フォームのラベル部分に追加のカスタマイズUIを表示したい場合に使用する。 `render` が指定されている場合は無視される。 */
-  renderFormLabel?: FormRenderer
+  renderFormLabel?: SectionFormRenderer
 
   isArray?: never
   type?: never
@@ -120,10 +120,12 @@ export type NoneMember = {
   type?: never
   /** 画面上に表示する名称。未指定の場合はphysicalNameが使用される。 */
   displayName?: string
+  /** 横幅いっぱいとるかどうか。このメンバーがフォームに表示される際にのみ参照される。 */
+  fullWidth?: boolean
   /** フォームのレンダリングコンポーネント */
-  renderForm: FormRenderer
+  renderForm?: NoneMemberFormRenderer
   /** グリッドの列定義 */
-  getGridColumnDef: (props: Omit<GetGridColumnDefFunctionProps, "name" | "member">) => GridColumnDef
+  getGridColumnDef?: (props: Omit<GetGridColumnDefFunctionProps, "name" | "member">) => GridColumnDef
 }
 
 // ----------------------------------------------
@@ -144,37 +146,49 @@ export type ValueMemberDefinition = {
 }
 
 // ----------------------------------------------
-// フォーム
+// フォームのカスタマイザー
 
-/** メンバーのフォームのレンダリングコンポーネント */
-export type FormRenderer = (props: FormRendererProps) => React.ReactNode
+/** セクションメンバーのフォームのレンダリングコンポーネント */
+export type SectionFormRenderer = (props: SectionFormRendererProps) => React.ReactNode
 /** 配列のフォームのレンダリングコンポーネント */
 export type ArrayFormRenderer = (props: ArrayFormRendererProps) => React.ReactNode
 /** 値メンバーのフォームのレンダリングコンポーネント */
 export type ValueMemberFormRenderer = (props: ValueMemberFormRendererProps) => React.ReactNode
+/** 特定のプロパティとバインドされないメンバーのレンダリングコンポーネント */
+export type NoneMemberFormRenderer = (props: NoneMemberFormRendererProps) => React.ReactNode
 
 /** メンバーのフォームのレンダリングコンポーネントの引数 */
 export type FormRendererProps = {
   /** react-hook-form の useForm の戻り値。最新の値の取得などに使用する。 */
   useFormReturn: ReactHookForm.UseFormReturn<DynamicFormValues>
-  /** ルートオブジェクトからこのメンバーまでのパス */
-  name: string
   /** メンバーを保持するオブジェクトのメタデータ */
   owner: MemberOwner
 }
 
+export type SectionFormRendererProps = FormRendererProps & {
+  /** ルートオブジェクトからこのメンバーまでのパス */
+  name: string
+}
+
 /** 配列のフォームのレンダリングコンポーネントの引数 */
 export type ArrayFormRendererProps = FormRendererProps & {
+  /** ルートオブジェクトからこのメンバーまでのパス */
+  name: string
   /** react-hook-form の useFieldArray の戻り値。 */
   useFieldArrayReturn: ReactHookForm.UseFieldArrayReturn<ReactHookForm.FieldValues, ReactHookForm.FieldArrayPath<ReactHookForm.FieldValues>, "id">
 }
 
 /** 値メンバーのフォームのレンダリングコンポーネントの引数 */
 export type ValueMemberFormRendererProps = FormRendererProps & {
-  /** メンバーのメタデータ */
-  member: ValueMember
+  /** ルートオブジェクトからこのメンバーまでのパス */
+  name: string
   /** このメンバーの型定義 */
   typeDef: ValueMemberDefinition
+}
+
+export type NoneMemberFormRendererProps = FormRendererProps & {
+  /** ルートオブジェクトからこのメンバーのオーナーまでのパス */
+  ancestorsPath: string
 }
 
 // ----------------------------------------------

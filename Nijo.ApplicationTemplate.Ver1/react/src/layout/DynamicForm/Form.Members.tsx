@@ -1,11 +1,12 @@
 import React from "react"
-import { Member, MemberOwner, ValueMember } from "./types"
+import { Member, MemberOwner, NoneMember, ValueMember } from "./types"
 import { hasArray } from "./helpers"
 import { FormValueMember } from "./Form.ValueMember"
 import { FormSection } from "./Form.Section"
 import { FormArrayAsForm } from "./Form.ArrayAsForm"
 import { FormArrayAsGrid } from "./Form.ArrayAsGrid"
 import { DynamicFormSpacer } from "./layout"
+import { FormNone } from "./Form.None"
 
 /**
  * メンバーをAutoColumnの単位にグルーピングしてレンダリングする。
@@ -19,7 +20,7 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
   const groups = React.useMemo(() => {
     return owner.members.reduce((acc, member) => {
       // Child, Children, fullWidth指定のメンバーは横幅いっぱいとる
-      if (member.isSection || member.isArray || (member as ValueMember).fullWidth) {
+      if (member.isSection || member.isArray || (member as ValueMember | NoneMember).fullWidth) {
         acc.push({ members: [member], fullWidth: true })
         return acc
       }
@@ -111,9 +112,17 @@ const MemberComponent = ({ owner, member, ancestorsPath }: {
   }
 
   // 一般ValueMember
-  if (member.type) {
+  if (member.type !== undefined) {
     return (
       <FormValueMember
+        member={member}
+        owner={owner}
+        ancestorsPath={ancestorsPath}
+      />
+    )
+  } else {
+    return (
+      <FormNone
         member={member}
         owner={owner}
         ancestorsPath={ancestorsPath}
