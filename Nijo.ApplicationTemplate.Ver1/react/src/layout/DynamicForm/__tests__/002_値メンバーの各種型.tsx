@@ -96,10 +96,11 @@ export default function (): MemberOwner {
   })
 
   const UI_TEXTAREA = (physicalName: string): Partial<ValueMember> => ({
+    fullWidth: true,
     renderFormValue: ({ useFormReturn: { register }, name }) => (
       <textarea
         {...register(name)}
-        className="border border-gray-300 px-2 py-1 rounded min-h-20"
+        className="border border-gray-300 px-2 py-1 rounded w-full"
         placeholder="複数行のテキストを入力してください"
         rows={3}
       />

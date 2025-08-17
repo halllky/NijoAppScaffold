@@ -14,7 +14,7 @@ export const FormValueMember = ({ member, owner, ancestorsPath }: {
   ancestorsPath: string
 }) => {
   // 定義情報など
-  const { useFormReturn } = React.useContext(DynamicFormContext)
+  const { useFormReturn, isWideLayout } = React.useContext(DynamicFormContext)
 
   // レンダリング処理の引数
   const rendererProps: ValueMemberFormRendererProps = {
@@ -23,11 +23,27 @@ export const FormValueMember = ({ member, owner, ancestorsPath }: {
     useFormReturn: useFormReturn,
   }
 
+  // スタイルクラス
+  let valueDivClassName = 'py-px'
+  let labelDivClassName = 'pr-1 py-px'
+
+  if (member.fullWidth) {
+    // 横幅いっぱいの場合は常にcol-span-full
+    valueDivClassName += ' col-span-full'
+    labelDivClassName += ' col-span-full'
+  } else if (member.noLabel) {
+    // ラベルなしの場合は2列占有
+    valueDivClassName += ' col-span-2'
+  } else {
+    // 通常のフィールドは2列レイアウトでも4列レイアウトでもラベル1列・値1列
+    labelDivClassName += ' text-right'
+  }
+
   return (
     <>
       {/* ラベル */}
       {!member.noLabel && (
-        <div className={`pr-1 py-px ${member.fullWidth ? 'col-span-full' : 'text-right'}`}>
+        <div className={labelDivClassName}>
           <DynamicFormLabel>
             {member.displayName ?? member.physicalName}
           </DynamicFormLabel>
@@ -38,7 +54,7 @@ export const FormValueMember = ({ member, owner, ancestorsPath }: {
       )}
 
       {/* 値 */}
-      <div className={`py-px ${member.fullWidth || member.noLabel ? 'col-span-full' : ''}`}>
+      <div className={valueDivClassName}>
         {member.renderFormValue?.(rendererProps)}
       </div>
     </>
