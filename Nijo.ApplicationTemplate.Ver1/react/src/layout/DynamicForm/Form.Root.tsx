@@ -3,7 +3,7 @@ import * as ReactHookForm from "react-hook-form"
 import { DynamicFormProps, DynamicFormRef } from "./types"
 import { DynamicFormContext, DynamicFormContextValue } from "./DynamicFormContext"
 import { MembersGroupByBreakPoint } from "./Form.Members"
-import ResponsiveForm from "../ResponsiveForm"
+import FormLayout from "../FormLayout"
 
 /**
  * 扱うデータ構造が動的に決まるフォーム。
@@ -31,10 +31,10 @@ export const DynamicForm = React.forwardRef<DynamicFormRef, DynamicFormProps>(({
   }), [root, useFormReturn])
 
   return (
-    <ResponsiveForm.Container {...responsiveFormProps}>
+    <FormLayout.Root {...responsiveFormProps}>
       <DynamicFormContext.Provider value={contextValue}>
         <MembersGroupByBreakPoint owner={root} ancestorsPath="" />
       </DynamicFormContext.Provider>
-    </ResponsiveForm.Container>
+    </FormLayout.Root>
   )
 })

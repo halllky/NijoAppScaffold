@@ -6,7 +6,7 @@ import { IconButton } from "../../input"
 import { DynamicFormContext } from "./DynamicFormContext"
 import { ArrayFormRendererProps, ArrayMember, MemberOwner } from "./types"
 import { EditableGrid, EditableGridColumnDef, EditableGridRef, GetColumnDefsFunction, RowChangeEvent } from "../EditableGrid"
-import ResponsiveForm from "../ResponsiveForm"
+import FormLayout from "../FormLayout"
 
 /**
  * 配列をグリッドで表示する。
@@ -65,8 +65,8 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
   })
 
   return (
-    <ResponsiveForm.Item
-      fullWidth
+    <FormLayout.Item
+      vertical
       label={array.displayName ?? array.physicalName}
       labelEnd={(
         <>
@@ -85,7 +85,7 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
         onChangeRow={handleChangeRow}
         className="min-h-32 resize-y border border-gray-300"
       />
-    </ResponsiveForm.Item>
+    </FormLayout.Item>
   )
 }
 

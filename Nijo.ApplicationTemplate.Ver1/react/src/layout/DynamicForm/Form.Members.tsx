@@ -5,8 +5,8 @@ import { FormValueMember } from "./Form.ValueMember"
 import { FormSection } from "./Form.Section"
 import { FormArrayAsForm } from "./Form.ArrayAsForm"
 import { FormArrayAsGrid } from "./Form.ArrayAsGrid"
-import ResponsiveForm from "../ResponsiveForm"
-import { ResponsiveFormContext } from "../ResponsiveForm/ResponsiveFormContext"
+import FormLayout from "../FormLayout"
+import { FormLayoutContext } from "../FormLayout/ResponsiveFormContext"
 
 /**
  * メンバーをAutoColumnの単位にグルーピングしてレンダリングする。
@@ -16,7 +16,7 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
   /** ルートオブジェクトからownerまでのパス */
   ancestorsPath: string
 }) => {
-  const { isWideLayout } = React.useContext(ResponsiveFormContext)
+  const { isWideLayout } = React.useContext(FormLayoutContext)
 
   // メンバーを折り返しの単位でグルーピングする
   const groups = React.useMemo(() => {
@@ -68,17 +68,38 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
 
   return (
     <>
-      {groups.flatMap(g => g.members.map(m => ({ member: m, fullWidth: g.fullWidth }))).map(({ member, fullWidth }, index) => (
-        <ResponsiveForm.Item
-          key={index}
-          fullWidth={fullWidth}
-        >
-          <MemberComponent
-            ancestorsPath={ancestorsPath}
-            member={member}
-            owner={owner}
-          />
-        </ResponsiveForm.Item>
+      {groups.map(({ members, fullWidth }, groupIndex) => fullWidth ? (
+        // FormLayout.Item は各々の MemberComponent で処理
+        <MemberComponent
+          key={groupIndex}
+          ancestorsPath={ancestorsPath}
+          member={members[0]}
+          owner={owner}
+        />
+      ) : (
+        // membersを半分に割って2つのColumnに配置
+        <FormLayout.ColumnGroup key={groupIndex}>
+          <FormLayout.Column>
+            {members.slice(0, Math.ceil(members.length / 2)).map((member, index) => (
+              <MemberComponent
+                key={index}
+                ancestorsPath={ancestorsPath}
+                member={member}
+                owner={owner}
+              />
+            ))}
+          </FormLayout.Column>
+          <FormLayout.Column>
+            {members.slice(Math.ceil(members.length / 2)).map((member, index) => (
+              <MemberComponent
+                key={index}
+                ancestorsPath={ancestorsPath}
+                member={member}
+                owner={owner}
+              />
+            ))}
+          </FormLayout.Column>
+        </FormLayout.ColumnGroup>
       ))}
     </>
   )

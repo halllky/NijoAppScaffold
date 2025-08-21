@@ -6,7 +6,7 @@ import { ArrayFormRendererProps, ArrayMember, MemberOwner } from "./types"
 import { MembersGroupByBreakPoint } from "./Form.Members"
 import { IconButton } from "../../input"
 import useEvent from "react-use-event-hook"
-import ResponsiveForm from "../ResponsiveForm"
+import FormLayout from "../FormLayout"
 
 /**
  * 配列を縦並びのフォームで表示する。
@@ -54,16 +54,15 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
 
   // 既定のレンダリング
   return (
-    <ResponsiveForm.Section
-      fullWidth
+    <FormLayout.ItemGroup
       label={array.displayName ?? array.physicalName}
       labelEnd={array.renderFormLabel?.(rendererProps)}
     >
       {/* 要素一覧 */}
       {fields.map((field, index) => (
-        <ResponsiveForm.Item
+        <FormLayout.Item
           key={field.id}
-          fullWidth
+          vertical
           label={`${index + 1}`}
           labelEnd={(
             <IconButton icon={Icon.TrashIcon} outline mini onClick={() => remove(index)}>
@@ -75,15 +74,15 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
             owner={array}
             ancestorsPath={`${arrayMemberPath}.${index}`}
           />
-        </ResponsiveForm.Item>
+        </FormLayout.Item>
       ))}
 
       {/* 追加ボタン */}
-      <ResponsiveForm.Item fullWidth>
+      <FormLayout.Item vertical>
         <IconButton icon={Icon.PlusCircleIcon} outline mini onClick={handleAppend}>
           追加
         </IconButton>
-      </ResponsiveForm.Item>
-    </ResponsiveForm.Section>
+      </FormLayout.Item>
+    </FormLayout.ItemGroup>
   )
 }

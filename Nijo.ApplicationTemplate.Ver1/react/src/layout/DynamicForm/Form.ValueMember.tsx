@@ -1,7 +1,7 @@
 import * as React from "react"
 import { DynamicFormContext } from "./DynamicFormContext"
 import { MemberOwner, ValueMember, ValueMemberFormRendererProps } from "./types"
-import ResponsiveForm from "../ResponsiveForm"
+import FormLayout from "../FormLayout"
 
 /**
  * 値メンバーのレンダリング。
@@ -24,11 +24,11 @@ export const FormValueMember = ({ member, owner, ancestorsPath }: {
   }
 
   return (
-    <ResponsiveForm.Item
+    <FormLayout.Item
       label={member.noLabel ? undefined : (member.displayName ?? member.physicalName)}
       labelEnd={member.noLabel ? undefined : member.renderFormLabel?.(rendererProps)}
     >
       {member.renderFormValue?.(rendererProps)}
-    </ResponsiveForm.Item>
+    </FormLayout.Item>
   )
 }

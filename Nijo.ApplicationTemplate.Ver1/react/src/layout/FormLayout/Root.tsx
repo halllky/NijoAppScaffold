@@ -1,6 +1,5 @@
 import React from "react"
-import { ResponsiveFormContext, ResponsiveFormContextValue } from "./ResponsiveFormContext"
-import { toLayoutedChildren } from "./toLayoutedChildren"
+import { FormLayoutContext, FormLayoutContextValue } from "./ResponsiveFormContext"
 
 /** レスポンシブフォームのプロパティ */
 export type ResponsiveFormProps = {
@@ -16,8 +15,8 @@ export type ResponsiveFormProps = {
   children?: React.ReactNode
 }
 
-/** 1段組み、2段組みを自動的に切り替えるレスポンシブフォーム */
-export const Container = (props: ResponsiveFormProps) => {
+/** レスポンシブフォームのもっとも外側に配置されるコンテナ */
+export const Root = (props: ResponsiveFormProps) => {
 
   // レスポンシブレイアウト用の状態管理
   const [containerWidth, setContainerWidth] = React.useState<number>(0)
@@ -38,16 +37,6 @@ export const Container = (props: ResponsiveFormProps) => {
     return () => resizeObserver.disconnect()
   }, [])
 
-  // 1段組みか2段組みかを判定する
-  const isWideLayout = React.useMemo(() => {
-    const labelWidth = props.labelWidthPx ?? 120
-    const valueWidth = props.valueWidthPx ?? 200
-    // 2段組みレイアウトには2組分（ラベル+値）×2の幅が必要。
-    // 16はだいたいのマージンの幅。
-    const breakpoint = (labelWidth + valueWidth) * 2 + 16
-    return containerWidth >= breakpoint
-  }, [containerWidth, props.labelWidthPx, props.valueWidthPx])
-
   // レスポンシブレイアウト用の計算
   const { labelWidth, valueWidth } = React.useMemo(() => {
     const labelWidth = props.labelWidthPx ?? 120
@@ -55,8 +44,16 @@ export const Container = (props: ResponsiveFormProps) => {
     return { labelWidth, valueWidth }
   }, [props.labelWidthPx, props.valueWidthPx])
 
+  // 1段組みか2段組みかを判定する
+  const isWideLayout = React.useMemo(() => {
+    // 2段組みレイアウトには2組分（ラベル+値）×2の幅が必要。
+    // 16はだいたいのマージンの幅。
+    const breakpoint = (labelWidth + valueWidth) * 2 + 16
+    return containerWidth >= breakpoint
+  }, [containerWidth, labelWidth, valueWidth])
+
   // コンテキスト
-  const contextValue: ResponsiveFormContextValue = React.useMemo(() => ({
+  const contextValue: FormLayoutContextValue = React.useMemo(() => ({
     isWideLayout,
     labelWidth,
     valueWidth,
@@ -65,13 +62,13 @@ export const Container = (props: ResponsiveFormProps) => {
 
 
   return (
-    <ResponsiveFormContext.Provider value={contextValue}>
+    <FormLayoutContext.Provider value={contextValue}>
       <div
         ref={containerRef}
-        className={`flex flex-col items-stretch ${props.className ?? ''}`}
+        className={`flex flex-col gap-1 items-stretch ${props.className ?? ''}`}
       >
-        {toLayoutedChildren(props.children, isWideLayout, labelWidth, valueWidth)}
+        {props.children}
       </div>
-    </ResponsiveFormContext.Provider>
+    </FormLayoutContext.Provider>
   )
 }

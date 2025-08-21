@@ -1,7 +1,7 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
 import { ColumnDefFactories, EditableGridColumnDef } from "../EditableGrid"
-import { ResponsiveFormProps } from "../ResponsiveForm"
+import { ResponsiveFormProps } from "../FormLayout"
 
 /** DynamicFormのprops */
 export type DynamicFormProps = ResponsiveFormProps & {

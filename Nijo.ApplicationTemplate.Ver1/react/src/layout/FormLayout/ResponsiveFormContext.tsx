@@ -1,7 +1,7 @@
 import React from "react"
 
 /** フォーム内部で使用するコンテキスト */
-export type ResponsiveFormContextValue = {
+export type FormLayoutContextValue = {
   /** 4列レイアウトかどうか */
   isWideLayout: boolean
   /** ラベル列の幅 */
@@ -12,9 +12,12 @@ export type ResponsiveFormContextValue = {
 }
 
 /** フォーム内部で使用するコンテキスト */
-export const ResponsiveFormContext = React.createContext<ResponsiveFormContextValue>({
+export const FormLayoutContext = React.createContext<FormLayoutContextValue>({
   isWideLayout: false,
   labelWidth: 120,
   valueWidth: 200,
   labelAlign: 'right',
 })
+
+/** Column の中にあるかどうかを子孫コンポーネント側が知るためのコンテキスト */
+export const IsInColumnContext = React.createContext<boolean>(false)

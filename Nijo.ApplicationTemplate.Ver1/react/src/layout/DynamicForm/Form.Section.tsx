@@ -2,7 +2,7 @@ import React from "react"
 import { MembersGroupByBreakPoint } from "./Form.Members"
 import { MemberOwner, SectionFormRendererProps, SectionMember } from "./types"
 import { DynamicFormContext } from "./DynamicFormContext"
-import ResponsiveForm from "../ResponsiveForm"
+import FormLayout from "../FormLayout"
 
 /**
  * セクションのレンダリング。
@@ -36,8 +36,8 @@ export const FormSection = ({ member: section, owner, ancestorsPath }: {
 
   // 既定のレンダリング
   return (
-    <ResponsiveForm.Item
-      fullWidth
+    <FormLayout.Item
+      vertical
       label={section.displayName ?? section.physicalName}
       labelEnd={section.renderFormLabel?.(rendererProps)}
     >
@@ -45,6 +45,6 @@ export const FormSection = ({ member: section, owner, ancestorsPath }: {
         ancestorsPath={sectionMemberPath}
         owner={section}
       />
-    </ResponsiveForm.Item>
+    </FormLayout.Item>
   )
 }
