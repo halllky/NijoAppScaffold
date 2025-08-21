@@ -6,7 +6,7 @@ import { IconButton } from "../../input"
 import { DynamicFormContext } from "./DynamicFormContext"
 import { ArrayFormRendererProps, ArrayMember, MemberOwner } from "./types"
 import { EditableGrid, EditableGridColumnDef, EditableGridRef, GetColumnDefsFunction, RowChangeEvent } from "../EditableGrid"
-import { DynamicFormLabel } from "./layout"
+import ResponsiveForm from "../ResponsiveForm"
 
 /**
  * 配列をグリッドで表示する。
@@ -68,9 +68,9 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
     <>
       {/* グリッド名、追加ボタン等 */}
       <div className="col-span-full flex flex-wrap items-center gap-1 py-1">
-        <DynamicFormLabel>
+        <ResponsiveForm.Label>
           {array.displayName ?? array.physicalName}
-        </DynamicFormLabel>
+        </ResponsiveForm.Label>
 
         {/* ラベルの脇に追加のコンポーネントがある場合はレンダリング */}
         {array.renderFormLabel?.(rendererProps)}

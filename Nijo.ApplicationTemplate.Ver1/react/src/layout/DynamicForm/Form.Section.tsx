@@ -2,7 +2,7 @@ import React from "react"
 import { MembersGroupByBreakPoint } from "./Form.Members"
 import { MemberOwner, SectionFormRendererProps, SectionMember } from "./types"
 import { DynamicFormContext } from "./DynamicFormContext"
-import { DynamicFormLabel } from "./layout"
+import ResponsiveForm from "../ResponsiveForm"
 
 /**
  * セクションのレンダリング。
@@ -40,9 +40,9 @@ export const FormSection = ({ member: section, owner, ancestorsPath }: {
 
       {/* ヘッダ */}
       <div className="col-span-full flex flex-wrap items-center gap-1">
-        <DynamicFormLabel>
+        <ResponsiveForm.Label>
           {section.displayName ?? section.physicalName}
-        </DynamicFormLabel>
+        </ResponsiveForm.Label>
 
         {/* ラベルの脇に追加のコンポーネントがある場合はレンダリング */}
         {section.renderFormLabel?.(rendererProps)}

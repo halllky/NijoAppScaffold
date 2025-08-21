@@ -6,7 +6,7 @@ import { ArrayFormRendererProps, ArrayMember, FormRendererProps, MemberOwner } f
 import { MembersGroupByBreakPoint } from "./Form.Members"
 import { IconButton } from "../../input"
 import useEvent from "react-use-event-hook"
-import { DynamicFormLabel, DynamicFormSpacer } from "./layout"
+import ResponsiveForm from "../ResponsiveForm"
 
 /**
  * 配列を縦並びのフォームで表示する。
@@ -57,9 +57,9 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
     <>
       {/* ヘッダ */}
       <div className="flex flex-wrap items-center gap-1 col-span-full">
-        <DynamicFormLabel>
+        <ResponsiveForm.Label>
           {array.displayName ?? array.physicalName}
-        </DynamicFormLabel>
+        </ResponsiveForm.Label>
 
         {/* ラベルの脇に追加のコンポーネントがある場合はレンダリング */}
         {array.renderFormLabel?.(rendererProps)}
@@ -70,13 +70,13 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
         <React.Fragment key={field.id}>
 
           {/* 境界線 */}
-          <DynamicFormSpacer />
+          <ResponsiveForm.Spacer />
 
           {/* 要素のヘッダ */}
           <div className="col-span-full flex flex-wrap items-center gap-1 py-px">
-            <DynamicFormLabel>
+            <ResponsiveForm.Label>
               {`${index + 1}`}
-            </DynamicFormLabel>
+            </ResponsiveForm.Label>
             <IconButton icon={Icon.TrashIcon} outline mini onClick={() => remove(index)}>
               削除
             </IconButton>
@@ -93,7 +93,7 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
       ))}
 
       {/* 追加ボタン */}
-      <DynamicFormSpacer />
+      <ResponsiveForm.Spacer />
       <div className="col-span-full">
         <IconButton icon={Icon.PlusCircleIcon} outline mini onClick={handleAppend}>
           追加

@@ -8,6 +8,8 @@ import _004_カスタムレンダリング2 from "../layout/DynamicForm/__tests_
 import _005_複雑なネスト構造 from "../layout/DynamicForm/__tests__/005_複雑なネスト構造"
 import _006_空データ構造 from "../layout/DynamicForm/__tests__/006_空データ構造"
 import _007_グリッド機能 from "../layout/DynamicForm/__tests__/007_グリッド機能"
+import ResponsiveForm実験 from "./ResponsiveForm実験"
+import ResponsiveFormTest_01_基本形 from "./ResponsiveFormTest_01_基本形"
 
 export default function () {
 
@@ -64,6 +66,21 @@ export default function () {
 // -------------------------------------
 
 export const getDebuggingPages = (): { groupName: string, links: (ReactRouter.RouteObject & { label: string })[] }[] => [
+  {
+    groupName: 'ResponsiveFormのデバッグ',
+    links: [
+      {
+        path: '/responsive-form/000',
+        label: 'どういうdivがレンダリングされればいいかの検討の残骸',
+        element: <ResponsiveForm実験 />,
+      },
+      {
+        path: '/responsive-form/001',
+        label: 'ResponsiveFormの基本形',
+        element: <ResponsiveFormTest_01_基本形 />,
+      },
+    ],
+  },
   {
     groupName: 'DynamicFormのデバッグ',
     links: [

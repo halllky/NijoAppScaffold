@@ -5,8 +5,8 @@ import { FormValueMember } from "./Form.ValueMember"
 import { FormSection } from "./Form.Section"
 import { FormArrayAsForm } from "./Form.ArrayAsForm"
 import { FormArrayAsGrid } from "./Form.ArrayAsGrid"
-import { DynamicFormSpacer } from "./layout"
-import { DynamicFormContext } from "./DynamicFormContext"
+import ResponsiveForm from "../ResponsiveForm"
+import { ResponsiveFormContext } from "../ResponsiveForm/ResponsiveFormContext"
 
 /**
  * メンバーをAutoColumnの単位にグルーピングしてレンダリングする。
@@ -16,7 +16,7 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
   /** ルートオブジェクトからownerまでのパス */
   ancestorsPath: string
 }) => {
-  const { isWideLayout } = React.useContext(DynamicFormContext)
+  const { isWideLayout } = React.useContext(ResponsiveFormContext)
 
   // メンバーを折り返しの単位でグルーピングする
   const groups = React.useMemo(() => {
@@ -104,7 +104,7 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
 
           {/* グルーピングの境界線 */}
           {groupIndex > 0 && (
-            <DynamicFormSpacer />
+            <ResponsiveForm.Spacer />
           )}
 
           {/* グリッドや子フォームなど横幅いっぱいとるもの */}

@@ -1,7 +1,7 @@
 import React from "react"
 
 /** 既定のレンダリングで用いられるラベル */
-export const DynamicFormLabel = ({
+export const Label = ({
   children,
   className,
   ...rest
@@ -16,12 +16,5 @@ export const DynamicFormLabel = ({
         {"\u200b"}
       </span>
     </span>
-  )
-}
-
-/** グルーピングの境界線 */
-export const DynamicFormSpacer = () => {
-  return (
-    <div className="col-span-full h-4" />
   )
 }

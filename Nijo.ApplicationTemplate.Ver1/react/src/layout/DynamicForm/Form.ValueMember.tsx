@@ -1,7 +1,7 @@
 import * as React from "react"
 import { DynamicFormContext } from "./DynamicFormContext"
 import { MemberOwner, ValueMember, ValueMemberFormRendererProps } from "./types"
-import { DynamicFormLabel } from "./layout"
+import ResponsiveForm from "../ResponsiveForm"
 
 /**
  * 値メンバーのレンダリング。
@@ -18,7 +18,7 @@ export const FormValueMember = ({ member, owner, ancestorsPath, gridColumn, grid
   gridRow?: number
 }) => {
   // 定義情報など
-  const { useFormReturn, isWideLayout } = React.useContext(DynamicFormContext)
+  const { useFormReturn } = React.useContext(DynamicFormContext)
 
   // レンダリング処理の引数
   const rendererProps: ValueMemberFormRendererProps = {
@@ -62,9 +62,9 @@ export const FormValueMember = ({ member, owner, ancestorsPath, gridColumn, grid
       {/* ラベル */}
       {!member.noLabel && (
         <div className={labelDivClassName} style={labelDivStyle}>
-          <DynamicFormLabel>
+          <ResponsiveForm.Label>
             {member.displayName ?? member.physicalName}
-          </DynamicFormLabel>
+          </ResponsiveForm.Label>
 
           {/* ラベルの脇に追加のコンポーネントがある場合はレンダリング */}
           {member.renderFormLabel?.(rendererProps)}

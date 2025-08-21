@@ -1,19 +1,14 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
 import { ColumnDefFactories, EditableGridColumnDef } from "../EditableGrid"
+import { ResponsiveFormProps } from "../ResponsiveForm"
 
 /** DynamicFormのprops */
-export type DynamicFormProps = {
+export type DynamicFormProps = ResponsiveFormProps & {
   /** データ構造の定義 */
   root: MemberOwner
   /** フォームのデフォルト値 */
   defaultValues?: DynamicFormValues
-  /** ラベル列の幅。未指定の場合は既定の幅が使用される。 */
-  labelWidthPx?: number
-  /** 値列の幅。レスポンシブレイアウトの判定に使用される。 */
-  valueWidthPx?: number
-  /** ルート要素に適用される。スタイルの微調整に用いる。 */
-  className?: string
 }
 
 /** DynamicFormのref */
