@@ -1,5 +1,5 @@
 import React from "react"
-import { Member, MemberOwner, ValueMember } from "./types"
+import { Member, MemberOwner } from "./types"
 import { hasArray } from "./helpers"
 import { FormValueMember } from "./Form.ValueMember"
 import { FormSection } from "./Form.Section"
@@ -23,18 +23,14 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
     // 最初に基本的なグルーピングを行う
     type MemberGroup = {
       /** グリッド配置情報とメンバーの組 */
-      members: {
-        member: Member
-        /** グリッド配置情報（4列レイアウト時に使用） */
-        gridPosition?: { gridColumn: number, gridRow: number }
-      }[]
+      members: Member[]
       fullWidth: boolean
     }
     const baseGroups = owner.members.reduce((acc, member) => {
       // Child, Children, fullWidth指定のメンバーは横幅いっぱいとる
       if (member.isSection || member.isArray || member.fullWidth) {
         acc.push({
-          members: [{ member, gridPosition: undefined }],
+          members: [member],
           fullWidth: true
         })
         return acc
@@ -44,11 +40,11 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
       const lastGroup = acc[acc.length - 1]
       if (lastGroup === undefined || lastGroup.fullWidth) {
         acc.push({
-          members: [{ member, gridPosition: undefined }],
+          members: [member],
           fullWidth: false
         })
       } else {
-        lastGroup.members.push({ member, gridPosition: undefined })
+        lastGroup.members.push(member)
       }
       return acc
     }, [] as MemberGroup[])
@@ -63,73 +59,26 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
         return group
       }
 
-      // 折り返し位置を決定
-      const breakIndex = group.members.findIndex((memberWithPos, index) => {
-        const member = memberWithPos.member
-        // ValueMemberでbreakAfterが指定されている場合
-        return !member.isSection && !member.isArray && member.breakAfter
-      })
-
-      // breakAfterが指定されている場合はその位置+1で、そうでなければ従来通り半分で折り返し
-      // 注意: 同一グループ内で複数のメンバーにbreakAfterが設定されている場合、
-      // 最初に見つかったbreakAfterの位置でのみ折り返しが行われ、それ以降のbreakAfterは無視される
-      const splitPoint = breakIndex >= 0 ? breakIndex + 1 : Math.ceil(group.members.length / 2)
-
       return {
         ...group,
-        members: group.members.map((memberWithPos, index) => {
-          // 分割点より前は左側（1-2列目）、後は右側（3-4列目）
-          const isLeftSide = index < splitPoint
-          const columnStart = isLeftSide ? 1 : 3
-
-          // 左側の行番号、右側の行番号を別々に計算
-          const rowStart = isLeftSide ? index + 1 : (index - splitPoint) + 1
-
-          return {
-            member: memberWithPos.member,
-            gridPosition: {
-              gridColumn: columnStart,
-              gridRow: rowStart,
-            },
-          }
-        }),
+        members: group.members,
       }
     })
   }, [owner.members, isWideLayout])
 
   return (
     <>
-      {groups.map(({ members, fullWidth }, groupIndex) => (
-        <React.Fragment key={groupIndex}>
-
-          {/* グルーピングの境界線 */}
-          {groupIndex > 0 && (
-            <ResponsiveForm.Spacer />
-          )}
-
-          {/* グリッドや子フォームなど横幅いっぱいとるもの */}
-          {fullWidth && (
-            <MemberComponent
-              ancestorsPath={ancestorsPath}
-              member={members[0].member}
-              owner={owner}
-              gridColumn={undefined}
-              gridRow={undefined}
-            />
-          )}
-
-          {/* ラベルと値のペアの羅列 */}
-          {!fullWidth && members.map((memberWithPos, memberIndex) => (
-            <MemberComponent
-              key={memberIndex}
-              ancestorsPath={ancestorsPath}
-              member={memberWithPos.member}
-              owner={owner}
-              gridColumn={memberWithPos.gridPosition?.gridColumn}
-              gridRow={memberWithPos.gridPosition?.gridRow}
-            />
-          ))}
-        </React.Fragment>
+      {groups.flatMap(g => g.members.map(m => ({ member: m, fullWidth: g.fullWidth }))).map(({ member, fullWidth }, index) => (
+        <ResponsiveForm.Item
+          key={index}
+          fullWidth={fullWidth}
+        >
+          <MemberComponent
+            ancestorsPath={ancestorsPath}
+            member={member}
+            owner={owner}
+          />
+        </ResponsiveForm.Item>
       ))}
     </>
   )
@@ -137,17 +86,13 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
 
 
 /** VForm2のラベルと値の組 */
-const MemberComponent = ({ owner, member, ancestorsPath, gridColumn, gridRow }: {
+const MemberComponent = ({ owner, member, ancestorsPath }: {
   /** ルートオブジェクトからこのメンバーまでのパス */
   ancestorsPath: string
   /** メンバー */
   member: Member
   /** メンバーを保持するオブジェクトのメタデータ */
   owner: MemberOwner
-  /** 4列レイアウト時のgrid-column指定 */
-  gridColumn?: number
-  /** 4列レイアウト時のgrid-row指定 */
-  gridRow?: number
 }): React.ReactNode => {
 
   // セクション
@@ -186,8 +131,6 @@ const MemberComponent = ({ owner, member, ancestorsPath, gridColumn, gridRow }: 
       member={member}
       owner={owner}
       ancestorsPath={ancestorsPath}
-      gridColumn={gridColumn}
-      gridRow={gridRow}
     />
   )
 

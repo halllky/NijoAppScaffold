@@ -49,22 +49,11 @@ export const Container = (props: ResponsiveFormProps) => {
   }, [containerWidth, props.labelWidthPx, props.valueWidthPx])
 
   // レスポンシブレイアウト用の計算
-  const { labelWidth, valueWidth, gridStyle } = React.useMemo(() => {
+  const { labelWidth, valueWidth } = React.useMemo(() => {
     const labelWidth = props.labelWidthPx ?? 120
     const valueWidth = props.valueWidthPx ?? 200
-
-    const gridStyle: React.CSSProperties = isWideLayout
-      ? {
-        // 4列レイアウト: ラベル、値、ラベル、値
-        gridTemplateColumns: `${labelWidth}px ${valueWidth}px ${labelWidth}px 1fr`,
-      }
-      : {
-        // 2列レイアウト: ラベル、値
-        gridTemplateColumns: `${labelWidth}px 1fr`,
-      }
-
-    return { labelWidth, valueWidth, gridStyle }
-  }, [props.labelWidthPx, props.valueWidthPx, isWideLayout])
+    return { labelWidth, valueWidth }
+  }, [props.labelWidthPx, props.valueWidthPx])
 
   // コンテキスト
   const contextValue: ResponsiveFormContextValue = React.useMemo(() => ({
@@ -80,7 +69,6 @@ export const Container = (props: ResponsiveFormProps) => {
       <div
         ref={containerRef}
         className={`flex flex-col items-stretch ${props.className ?? ''}`}
-        style={gridStyle}
       >
         {toLayoutedChildren(props.children, isWideLayout, labelWidth, valueWidth)}
       </div>

@@ -44,7 +44,7 @@ export const toLayoutedChildren = (
     second?: React.ReactElement[]
   }
 
-  const groupedChildren = React.Children.toArray(children).reduce((groups, child) => {
+  const groupedChildren = flattenChildren(children).reduce((groups, child) => {
     // 未知の要素
     if (!React.isValidElement(child)) {
       groups.push({ type: 'fullwidth', child })
@@ -178,4 +178,66 @@ const renderNonFullWidthChild = (array: React.ReactElement[]): React.ReactNode =
       )}
     </React.Fragment>
   ))
+}
+
+/**
+ * React要素ツリーを再帰的に展開し、中継コンポーネントも含めて完全にフラット化する
+ */
+const flattenChildren = (children: React.ReactNode): React.ReactNode[] => {
+  const result: React.ReactNode[] = []
+
+  const addToResult = (node: React.ReactNode) => {
+    if (node === null || node === undefined || typeof node === 'boolean') {
+      return
+    }
+
+    if (Array.isArray(node)) {
+      node.forEach(addToResult)
+      return
+    }
+
+    if (!React.isValidElement(node)) {
+      result.push(node)
+      return
+    }
+
+    // Fragment の場合は子要素を展開
+    if (node.type === React.Fragment) {
+      const fragmentProps = node.props as { children?: React.ReactNode }
+      addToResult(fragmentProps.children)
+      return
+    }
+
+    // 既知のResponsiveForm要素の場合は直接追加
+    if (node.type === Item || node.type === Section || node.type === BreakPoint || node.type === Spacer) {
+      result.push(node)
+      return
+    }
+
+    // 関数コンポーネント（中継コンポーネント）の場合
+    if (typeof node.type === 'function') {
+      try {
+        // 関数コンポーネントを実行して結果を取得
+        const componentResult = (node.type as React.FunctionComponent<any>)(node.props)
+
+        // 結果を再帰的に処理
+        addToResult(componentResult as React.ReactNode)
+        return
+      } catch (error) {
+        // 関数コンポーネントの実行に失敗した場合（hooksなどを使用している場合）
+        // 元の要素をそのまま追加（fallback）
+        console.warn('Failed to render intermediate component:', error)
+        result.push(node)
+        return
+      }
+    }
+
+    // その他の要素（未知の要素など）は直接追加
+    result.push(node)
+  }
+
+  // React.Childrenを使って安全に配列化してから処理
+  React.Children.forEach(children, addToResult)
+
+  return result
 }

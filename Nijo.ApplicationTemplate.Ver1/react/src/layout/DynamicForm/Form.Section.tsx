@@ -36,25 +36,15 @@ export const FormSection = ({ member: section, owner, ancestorsPath }: {
 
   // 既定のレンダリング
   return (
-    <React.Fragment>
-
-      {/* ヘッダ */}
-      <div className="col-span-full flex flex-wrap items-center gap-1">
-        <ResponsiveForm.Label>
-          {section.displayName ?? section.physicalName}
-        </ResponsiveForm.Label>
-
-        {/* ラベルの脇に追加のコンポーネントがある場合はレンダリング */}
-        {section.renderFormLabel?.(rendererProps)}
-      </div>
-
-      {/* メンバー */}
-      <div className="col-span-full grid grid-cols-[subgrid] border border-gray-300 p-1">
-        <MembersGroupByBreakPoint
-          ancestorsPath={sectionMemberPath}
-          owner={section}
-        />
-      </div>
-    </React.Fragment>
+    <ResponsiveForm.Item
+      fullWidth
+      label={section.displayName ?? section.physicalName}
+      labelEnd={section.renderFormLabel?.(rendererProps)}
+    >
+      <MembersGroupByBreakPoint
+        ancestorsPath={sectionMemberPath}
+        owner={section}
+      />
+    </ResponsiveForm.Item>
   )
 }

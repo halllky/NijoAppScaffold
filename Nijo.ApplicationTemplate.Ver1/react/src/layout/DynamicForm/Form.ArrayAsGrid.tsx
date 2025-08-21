@@ -65,29 +65,27 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
   })
 
   return (
-    <>
-      {/* グリッド名、追加ボタン等 */}
-      <div className="col-span-full flex flex-wrap items-center gap-1 py-1">
-        <ResponsiveForm.Label>
-          {array.displayName ?? array.physicalName}
-        </ResponsiveForm.Label>
+    <ResponsiveForm.Item
+      fullWidth
+      label={array.displayName ?? array.physicalName}
+      labelEnd={(
+        <>
+          {/* ラベルの脇に追加のコンポーネントがある場合はレンダリング */}
+          {array.renderFormLabel?.(rendererProps)}
 
-        {/* ラベルの脇に追加のコンポーネントがある場合はレンダリング */}
-        {array.renderFormLabel?.(rendererProps)}
-
-        <IconButton icon={Icon.PlusCircleIcon} outline mini onClick={handleAdd}>追加</IconButton>
-        <IconButton icon={Icon.TrashIcon} outline mini onClick={handleDelete}>削除</IconButton>
-      </div>
-
-      {/* グリッド */}
+          <IconButton icon={Icon.PlusCircleIcon} outline mini onClick={handleAdd}>追加</IconButton>
+          <IconButton icon={Icon.TrashIcon} outline mini onClick={handleDelete}>削除</IconButton>
+        </>
+      )}
+    >
       <EditableGrid
         ref={gridRef}
         getColumnDefs={getColumnDefs}
         rows={fields}
         onChangeRow={handleChangeRow}
-        className="col-span-full min-h-32 resize-y border border-gray-300"
+        className="min-h-32 resize-y border border-gray-300"
       />
-    </>
+    </ResponsiveForm.Item>
   )
 }
 
