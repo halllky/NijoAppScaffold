@@ -37,7 +37,7 @@ export const FormSection = ({ member: section, owner, ancestorsPath }: {
   // 既定のレンダリング
   return (
     <FormLayout.Item
-      vertical
+      fullWidth
       label={section.displayName ?? section.physicalName}
       labelEnd={section.renderFormLabel?.(rendererProps)}
     >

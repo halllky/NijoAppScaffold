@@ -22,7 +22,7 @@ export default function FormLayoutComponentsTest() {
         </FormLayout.Item>
 
         {/* Root直下のItem - vertical */}
-        <FormLayout.Item label="Root直下のItem（vertical）" vertical>
+        <FormLayout.Item label="Root直下のItem（vertical）" fullWidth>
           <input type="text" className="border w-full" placeholder="vertical指定で下に配置" />
         </FormLayout.Item>
 
@@ -49,20 +49,20 @@ export default function FormLayoutComponentsTest() {
         </h2>
 
         {/* Root直下のItemGroup */}
-        <FormLayout.ItemGroup label="Root直下のItemGroup">
+        <FormLayout.ItemGroupInResponsiveColumn label="Root直下のItemGroup">
           <FormLayout.Item label="グループ内Item1">
             <input type="text" className="border w-full" />
           </FormLayout.Item>
           <FormLayout.Item label="グループ内Item2">
             <input type="text" className="border w-full" />
           </FormLayout.Item>
-          <FormLayout.Item label="グループ内vertical Item" vertical>
+          <FormLayout.Item label="グループ内vertical Item" fullWidth>
             <textarea className="border w-full h-16" placeholder="グループ内のvertical要素" />
           </FormLayout.Item>
-        </FormLayout.ItemGroup>
+        </FormLayout.ItemGroupInResponsiveColumn>
 
         {/* labelEnd付きのItemGroup */}
-        <FormLayout.ItemGroup
+        <FormLayout.ItemGroupInResponsiveColumn
           label="labelEnd付きItemGroup"
           labelEnd={<button className="ml-2 px-2 py-1 bg-blue-500 text-white text-xs rounded">編集</button>}
         >
@@ -76,17 +76,17 @@ export default function FormLayoutComponentsTest() {
               <option>オプション2</option>
             </select>
           </FormLayout.Item>
-        </FormLayout.ItemGroup>
+        </FormLayout.ItemGroupInResponsiveColumn>
 
         {/* ラベルなしのItemGroup */}
-        <FormLayout.ItemGroup>
+        < FormLayout.ItemGroupInResponsiveColumn>
           <FormLayout.Item label="ラベルなしグループ内Item1">
             <input type="text" className="border w-full" />
           </FormLayout.Item>
           <FormLayout.Item label="ラベルなしグループ内Item2">
             <input type="text" className="border w-full" />
           </FormLayout.Item>
-        </FormLayout.ItemGroup>
+        </FormLayout.ItemGroupInResponsiveColumn>
 
         <FormLayout.Separator />
 
@@ -98,50 +98,50 @@ export default function FormLayoutComponentsTest() {
         </h2>
 
         {/* 基本的なColumnGroup（レスポンシブ） */}
-        <FormLayout.ColumnGroup label="基本的なColumnGroup（レスポンシブ）">
-          <FormLayout.Column>
+        <FormLayout.ResponsiveColumnGroup label="基本的なColumnGroup（レスポンシブ）">
+          <FormLayout.ResponsiveColumn>
             <FormLayout.Item label="左カラムItem1">
               <input type="text" className="border w-full" />
             </FormLayout.Item>
             <FormLayout.Item label="左カラムItem2">
               <input type="text" className="border w-full" />
             </FormLayout.Item>
-          </FormLayout.Column>
-          <FormLayout.Column>
+          </FormLayout.ResponsiveColumn>
+          <FormLayout.ResponsiveColumn>
             <FormLayout.Item label="右カラムItem1">
               <input type="text" className="border w-full" />
             </FormLayout.Item>
             <FormLayout.Item label="右カラムItem2">
               <input type="text" className="border w-full" />
             </FormLayout.Item>
-          </FormLayout.Column>
-        </FormLayout.ColumnGroup>
+          </FormLayout.ResponsiveColumn>
+        </FormLayout.ResponsiveColumnGroup>
 
         {/* 3つのColumnを持つColumnGroup */}
-        <FormLayout.ColumnGroup label="3カラムのColumnGroup">
-          <FormLayout.Column>
+        <FormLayout.ResponsiveColumnGroup label="3カラムのColumnGroup">
+          <FormLayout.ResponsiveColumn>
             <FormLayout.Item label="第1カラム">
               <input type="text" className="border w-full" />
             </FormLayout.Item>
-          </FormLayout.Column>
-          <FormLayout.Column>
+          </FormLayout.ResponsiveColumn>
+          <FormLayout.ResponsiveColumn>
             <FormLayout.Item label="第2カラム">
               <input type="text" className="border w-full" />
             </FormLayout.Item>
-          </FormLayout.Column>
-          <FormLayout.Column>
+          </FormLayout.ResponsiveColumn>
+          <FormLayout.ResponsiveColumn>
             <FormLayout.Item label="第3カラム">
               <input type="text" className="border w-full" />
             </FormLayout.Item>
-          </FormLayout.Column>
-        </FormLayout.ColumnGroup>
+          </FormLayout.ResponsiveColumn>
+        </FormLayout.ResponsiveColumnGroup>
 
         {/* labelEnd付きのColumnGroup */}
-        <FormLayout.ColumnGroup
+        <FormLayout.ResponsiveColumnGroup
           label="labelEnd付きColumnGroup"
           labelEnd={<span className="ml-2 text-sm text-gray-500">（オプション項目）</span>}
         >
-          <FormLayout.Column>
+          <FormLayout.ResponsiveColumn>
             <FormLayout.Item label="オプション1">
               <input type="checkbox" className="mr-2" />
               <span>チェックボックス</span>
@@ -150,8 +150,8 @@ export default function FormLayoutComponentsTest() {
               <input type="radio" name="radio1" className="mr-2" />
               <span>ラジオボタン1</span>
             </FormLayout.Item>
-          </FormLayout.Column>
-          <FormLayout.Column>
+          </FormLayout.ResponsiveColumn>
+          <FormLayout.ResponsiveColumn>
             <FormLayout.Item label="オプション3">
               <input type="radio" name="radio1" className="mr-2" />
               <span>ラジオボタン2</span>
@@ -159,22 +159,22 @@ export default function FormLayoutComponentsTest() {
             <FormLayout.Item label="オプション4">
               <input type="range" className="w-full" />
             </FormLayout.Item>
-          </FormLayout.Column>
-        </FormLayout.ColumnGroup>
+          </FormLayout.ResponsiveColumn>
+        </FormLayout.ResponsiveColumnGroup>
 
         {/* ラベルなしのColumnGroup */}
-        <FormLayout.ColumnGroup>
-          <FormLayout.Column>
+        <FormLayout.ResponsiveColumnGroup>
+          <FormLayout.ResponsiveColumn>
             <FormLayout.Item label="ラベルなしグループ項目1">
               <input type="text" className="border w-full" />
             </FormLayout.Item>
-          </FormLayout.Column>
-          <FormLayout.Column>
+          </FormLayout.ResponsiveColumn>
+          <FormLayout.ResponsiveColumn>
             <FormLayout.Item label="ラベルなしグループ項目2">
               <input type="text" className="border w-full" />
             </FormLayout.Item>
-          </FormLayout.Column>
-        </FormLayout.ColumnGroup>
+          </FormLayout.ResponsiveColumn>
+        </FormLayout.ResponsiveColumnGroup>
 
         <FormLayout.Separator />
 
@@ -185,31 +185,31 @@ export default function FormLayoutComponentsTest() {
           4. Column コンポーネントのパターン
         </h2>
 
-        <FormLayout.ColumnGroup label="Column内の様々なパターン">
-          <FormLayout.Column>
+        <FormLayout.ResponsiveColumnGroup label="Column内の様々なパターン">
+          <FormLayout.ResponsiveColumn>
             <FormLayout.Item label="通常Item">
               <input type="text" className="border w-full" />
             </FormLayout.Item>
-            <FormLayout.Item label="vertical Item" vertical>
+            <FormLayout.Item label="vertical Item" fullWidth>
               <textarea className="border w-full h-16" placeholder="vertical指定" />
             </FormLayout.Item>
 
             {/* Column内のItemGroup */}
-            <FormLayout.ItemGroup label="Column内のItemGroup">
+            <FormLayout.ItemGroupInResponsiveColumn label="Column内のItemGroup">
               <FormLayout.Item label="ネストされたItem1">
                 <input type="text" className="border w-full" />
               </FormLayout.Item>
               <FormLayout.Item label="ネストされたItem2">
                 <input type="text" className="border w-full" />
               </FormLayout.Item>
-            </FormLayout.ItemGroup>
-          </FormLayout.Column>
+            </FormLayout.ItemGroupInResponsiveColumn>
+          </FormLayout.ResponsiveColumn>
 
-          <FormLayout.Column className="bg-gray-50 p-2 rounded">
+          <FormLayout.ResponsiveColumn className="bg-gray-50 p-2 rounded">
             <FormLayout.Item label="カスタムスタイルColumn">
               <input type="text" className="border w-full" placeholder="Column className指定" />
             </FormLayout.Item>
-            <FormLayout.Item label="複数の入力要素" vertical>
+            <FormLayout.Item label="複数の入力要素" fullWidth>
               <div className="space-y-2">
                 <input type="text" className="border w-full" placeholder="入力1" />
                 <input type="text" className="border w-full" placeholder="入力2" />
@@ -219,8 +219,8 @@ export default function FormLayoutComponentsTest() {
                 </select>
               </div>
             </FormLayout.Item>
-          </FormLayout.Column>
-        </FormLayout.ColumnGroup>
+          </FormLayout.ResponsiveColumn>
+        </FormLayout.ResponsiveColumnGroup >
 
         <FormLayout.Separator />
 
@@ -251,31 +251,31 @@ export default function FormLayoutComponentsTest() {
         </h2>
 
         {/* 複雑な組み合わせ */}
-        <FormLayout.ColumnGroup label="複雑な組み合わせパターン">
-          <FormLayout.Column>
+        <FormLayout.ResponsiveColumnGroup label="複雑な組み合わせパターン">
+          <FormLayout.ResponsiveColumn>
             <FormLayout.Item label="基本情報">
               <input type="text" className="border w-full" placeholder="名前" />
             </FormLayout.Item>
 
-            <FormLayout.ItemGroup label="連絡先情報">
+            <FormLayout.ItemGroupInResponsiveColumn label="連絡先情報">
               <FormLayout.Item label="メールアドレス">
                 <input type="email" className="border w-full" />
               </FormLayout.Item>
               <FormLayout.Item label="電話番号">
                 <input type="tel" className="border w-full" />
               </FormLayout.Item>
-              <FormLayout.Item label="住所" vertical>
+              <FormLayout.Item label="住所" fullWidth>
                 <textarea className="border w-full h-20" placeholder="住所を入力してください" />
               </FormLayout.Item>
-            </FormLayout.ItemGroup>
-          </FormLayout.Column>
+            </FormLayout.ItemGroupInResponsiveColumn>
+          </FormLayout.ResponsiveColumn>
 
-          <FormLayout.Column>
+          <FormLayout.ResponsiveColumn>
             <FormLayout.Item label="年齢">
               <input type="number" className="border w-full" />
             </FormLayout.Item>
 
-            <FormLayout.ItemGroup
+            <FormLayout.ItemGroupInResponsiveColumn
               label="設定項目"
               labelEnd={<span className="text-xs text-gray-500">（任意）</span>}
             >
@@ -298,14 +298,14 @@ export default function FormLayoutComponentsTest() {
                   <option>非公開</option>
                 </select>
               </FormLayout.Item>
-            </FormLayout.ItemGroup>
-          </FormLayout.Column>
-        </FormLayout.ColumnGroup>
+            </FormLayout.ItemGroupInResponsiveColumn>
+          </FormLayout.ResponsiveColumn >
+        </FormLayout.ResponsiveColumnGroup >
 
         <FormLayout.Separator />
 
         {/* レスポンシブ動作確認用 */}
-        <FormLayout.Item label="レスポンシブテスト説明" vertical>
+        <FormLayout.Item label="レスポンシブテスト説明" fullWidth>
           <div className="bg-yellow-50 p-3 border border-yellow-200 rounded">
             <p className="text-sm">
               ⭐ <strong>レスポンシブ動作の確認方法：</strong><br />
@@ -323,7 +323,7 @@ export default function FormLayoutComponentsTest() {
           </p>
         </div>
 
-      </FormLayout.Root>
-    </div>
+      </FormLayout.Root >
+    </div >
   )
 }

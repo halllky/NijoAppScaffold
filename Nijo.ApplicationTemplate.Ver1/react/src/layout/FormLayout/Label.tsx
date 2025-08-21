@@ -1,18 +1,25 @@
 import React from "react"
 
+export type LabelProps = {
+  /** ラベルのテキスト */
+  children?: React.ReactNode
+  /** ラベルのクラス名 */
+  className?: string
+}
+
 /** 既定のレンダリングで用いられるラベル */
-export const Label = ({
-  children,
-  className,
-  ...rest
-}: React.HTMLAttributes<HTMLSpanElement>) => {
+export const Label = ({ children, className }: LabelProps) => {
 
   return (
-    <span className={`text-sm text-gray-500 select-none ${className ?? ''}`} {...rest}>
+    <span className={className} style={{
+      fontSize: '0.75rem',
+      color: '#575757',
+      userSelect: 'none',
+    }}>
       {children}
 
       {/* 高さ調整用のゼロ幅スペース */}
-      <span className="text-base">
+      <span style={{ fontSize: '1rem' }}>
         {"\u200b"}
       </span>
     </span>

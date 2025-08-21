@@ -1,22 +1,27 @@
 import React from "react"
+import { Label, LabelProps } from "./Label"
 
 /** フォーム内部で使用するコンテキスト */
 export type FormLayoutContextValue = {
-  /** 4列レイアウトかどうか */
-  isWideLayout: boolean
+  /** `ResponsiveColumn` の受け入れ可能列数。2以上の整数 */
+  columnCount: number
   /** ラベル列の幅 */
   labelWidth: number
   /** 値列の幅 */
   valueWidth: number
+  /** ラベルの位置 */
   labelAlign: 'left' | 'right'
+  /** ラベルのコンポーネント */
+  LabelComponent: React.ElementType<LabelProps>
 }
 
 /** フォーム内部で使用するコンテキスト */
 export const FormLayoutContext = React.createContext<FormLayoutContextValue>({
-  isWideLayout: false,
+  columnCount: 2,
   labelWidth: 120,
   valueWidth: 200,
   labelAlign: 'right',
+  LabelComponent: Label,
 })
 
 /** Column の中にあるかどうかを子孫コンポーネント側が知るためのコンテキスト */

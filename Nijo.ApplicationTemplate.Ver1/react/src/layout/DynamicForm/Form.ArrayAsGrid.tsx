@@ -66,7 +66,7 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
 
   return (
     <FormLayout.Item
-      vertical
+      fullWidth
       label={array.displayName ?? array.physicalName}
       labelEnd={(
         <>

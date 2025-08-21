@@ -54,7 +54,7 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
 
   // 既定のレンダリング
   return (
-    <FormLayout.ItemGroup
+    <FormLayout.ItemGroupInResponsiveColumn
       label={array.displayName ?? array.physicalName}
       labelEnd={array.renderFormLabel?.(rendererProps)}
     >
@@ -62,7 +62,7 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
       {fields.map((field, index) => (
         <FormLayout.Item
           key={field.id}
-          vertical
+          fullWidth
           label={`${index + 1}`}
           labelEnd={(
             <IconButton icon={Icon.TrashIcon} outline mini onClick={() => remove(index)}>
@@ -78,11 +78,11 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
       ))}
 
       {/* 追加ボタン */}
-      <FormLayout.Item vertical>
+      <FormLayout.Item fullWidth>
         <IconButton icon={Icon.PlusCircleIcon} outline mini onClick={handleAppend}>
           追加
         </IconButton>
       </FormLayout.Item>
-    </FormLayout.ItemGroup>
+    </FormLayout.ItemGroupInResponsiveColumn>
   )
 }

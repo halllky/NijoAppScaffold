@@ -1,5 +1,6 @@
 import React from "react"
-import { FormLayoutContext, FormLayoutContextValue } from "./ResponsiveFormContext"
+import { FormLayoutContext, FormLayoutContextValue } from "./internal-context"
+import { Label, LabelProps } from "./Label"
 
 /** レスポンシブフォームのプロパティ */
 export type ResponsiveFormProps = {
@@ -11,6 +12,8 @@ export type ResponsiveFormProps = {
   className?: string
   /** ラベルのテキストの位置。デフォルトは右寄せ。 */
   labelAlign?: 'left' | 'right'
+  /** ラベルのコンポーネント。未指定の場合は既定のコンポーネントが使用される。 */
+  labelComponent?: React.ElementType<LabelProps>
   /** 子要素 */
   children?: React.ReactNode
 }
@@ -26,6 +29,9 @@ export const Root = (props: ResponsiveFormProps) => {
   React.useEffect(() => {
     const container = containerRef.current
     if (!container) return
+
+    // 初期幅を即時反映（ResizeObserver の初回発火を待たない）
+    setContainerWidth(container.getBoundingClientRect().width)
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
@@ -44,28 +50,40 @@ export const Root = (props: ResponsiveFormProps) => {
     return { labelWidth, valueWidth }
   }, [props.labelWidthPx, props.valueWidthPx])
 
-  // 1段組みか2段組みかを判定する
-  const isWideLayout = React.useMemo(() => {
-    // 2段組みレイアウトには2組分（ラベル+値）×2の幅が必要。
-    // 16はだいたいのマージンの幅。
-    const breakpoint = (labelWidth + valueWidth) * 2 + 16
-    return containerWidth >= breakpoint
+  // 何段組みまで可能かを判定する
+  const columnCount = React.useMemo(() => {
+    // ラベル+値の1ユニットと、列間ギャップ（概算）を考慮して収まる列数を算出
+    // 列間ギャップを g、ユニット幅を w、コンテナ幅を W とすると、
+    //   W >= col*w + (col-1)*g  <=>  W + g >= col*(w + g)
+    // よって  col = floor((W + g) / (w + g))
+    const gapPx = 8
+    const unitWidth = labelWidth + valueWidth
+    const cols = Math.floor((containerWidth + gapPx) / (unitWidth + gapPx))
+    return Math.max(1, cols)
   }, [containerWidth, labelWidth, valueWidth])
 
   // コンテキスト
   const contextValue: FormLayoutContextValue = React.useMemo(() => ({
-    isWideLayout,
+    columnCount,
     labelWidth,
     valueWidth,
     labelAlign: props.labelAlign ?? 'right',
-  }), [isWideLayout, labelWidth, valueWidth, props.labelAlign])
+    LabelComponent: props.labelComponent ?? Label,
+  }), [columnCount, labelWidth, valueWidth, props.labelAlign, props.labelComponent])
 
+  const style: React.CSSProperties = React.useMemo(() => ({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+    alignItems: 'stretch',
+  }), [])
 
   return (
     <FormLayoutContext.Provider value={contextValue}>
       <div
         ref={containerRef}
-        className={`flex flex-col gap-1 items-stretch ${props.className ?? ''}`}
+        className={props.className}
+        style={style}
       >
         {props.children}
       </div>

@@ -6,7 +6,7 @@ import { FormSection } from "./Form.Section"
 import { FormArrayAsForm } from "./Form.ArrayAsForm"
 import { FormArrayAsGrid } from "./Form.ArrayAsGrid"
 import FormLayout from "../FormLayout"
-import { FormLayoutContext } from "../FormLayout/ResponsiveFormContext"
+import { FormLayoutContext } from "../FormLayout/internal-context"
 
 /**
  * メンバーをAutoColumnの単位にグルーピングしてレンダリングする。
@@ -16,7 +16,7 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
   /** ルートオブジェクトからownerまでのパス */
   ancestorsPath: string
 }) => {
-  const { isWideLayout } = React.useContext(FormLayoutContext)
+  const { columnCount } = React.useContext(FormLayoutContext)
 
   // メンバーを折り返しの単位でグルーピングする
   const groups = React.useMemo(() => {
@@ -50,7 +50,7 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
     }, [] as MemberGroup[])
 
     // 4列レイアウトの場合、fullWidthでないメンバーに配置情報を追加
-    if (!isWideLayout) {
+    if (columnCount === 1) {
       return baseGroups
     }
 
@@ -64,7 +64,7 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
         members: group.members,
       }
     })
-  }, [owner.members, isWideLayout])
+  }, [owner.members, columnCount])
 
   return (
     <>
@@ -78,8 +78,8 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
         />
       ) : (
         // membersを半分に割って2つのColumnに配置
-        <FormLayout.ColumnGroup key={groupIndex}>
-          <FormLayout.Column>
+        <FormLayout.ResponsiveColumnGroup key={groupIndex}>
+          <FormLayout.ResponsiveColumn>
             {members.slice(0, Math.ceil(members.length / 2)).map((member, index) => (
               <MemberComponent
                 key={index}
@@ -88,8 +88,8 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
                 owner={owner}
               />
             ))}
-          </FormLayout.Column>
-          <FormLayout.Column>
+          </FormLayout.ResponsiveColumn>
+          <FormLayout.ResponsiveColumn>
             {members.slice(Math.ceil(members.length / 2)).map((member, index) => (
               <MemberComponent
                 key={index}
@@ -98,8 +98,8 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
                 owner={owner}
               />
             ))}
-          </FormLayout.Column>
-        </FormLayout.ColumnGroup>
+          </FormLayout.ResponsiveColumn>
+        </FormLayout.ResponsiveColumnGroup>
       ))}
     </>
   )
