@@ -54,35 +54,40 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
 
   // 既定のレンダリング
   return (
-    <FormLayout.ItemGroupInResponsiveColumn
-      label={array.displayName ?? array.physicalName}
-      labelEnd={array.renderFormLabel?.(rendererProps)}
-    >
+    <>
       {/* 要素一覧 */}
       {fields.map((field, index) => (
-        <FormLayout.Item
-          key={field.id}
-          fullWidth
-          label={`${index + 1}`}
-          labelEnd={(
-            <IconButton icon={Icon.TrashIcon} outline mini onClick={() => remove(index)}>
-              削除
-            </IconButton>
+        <React.Fragment key={field.id}>
+          {index > 0 && (
+            <FormLayout.Separator />
           )}
-        >
-          <MembersGroupByBreakPoint
-            owner={array}
-            ancestorsPath={`${arrayMemberPath}.${index}`}
-          />
-        </FormLayout.Item>
+
+          <FormLayout.Item
+            fullWidth
+            label={`${array.displayName ?? array.physicalName} ${index + 1}`}
+            labelEnd={(
+              <>
+                {array.renderFormLabel?.(rendererProps)}
+                <IconButton icon={Icon.TrashIcon} outline mini onClick={() => remove(index)}>
+                  削除
+                </IconButton>
+              </>
+            )}
+          >
+            <MembersGroupByBreakPoint
+              owner={array}
+              ancestorsPath={`${arrayMemberPath}.${index}`}
+            />
+          </FormLayout.Item>
+        </React.Fragment>
       ))}
 
       {/* 追加ボタン */}
       <FormLayout.Item fullWidth>
         <IconButton icon={Icon.PlusCircleIcon} outline mini onClick={handleAppend}>
-          追加
+          {array.displayName ?? array.physicalName} を追加
         </IconButton>
       </FormLayout.Item>
-    </FormLayout.ItemGroupInResponsiveColumn>
+    </>
   )
 }

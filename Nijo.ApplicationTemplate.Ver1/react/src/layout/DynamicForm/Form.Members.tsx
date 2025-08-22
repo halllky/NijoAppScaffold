@@ -66,19 +66,22 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
     })
   }, [owner.members, columnCount])
 
-  return (
-    <>
-      {groups.map(({ members, fullWidth }, groupIndex) => fullWidth ? (
+  return groups.map(({ members, fullWidth }, groupIndex) => (
+    <React.Fragment key={groupIndex}>
+      {groupIndex > 0 && (
+        <FormLayout.Separator />
+      )}
+
+      {fullWidth ? (
         // FormLayout.Item は各々の MemberComponent で処理
         <MemberComponent
-          key={groupIndex}
           ancestorsPath={ancestorsPath}
           member={members[0]}
           owner={owner}
         />
       ) : (
         // membersを半分に割って2つのColumnに配置
-        <FormLayout.ResponsiveColumnGroup key={groupIndex}>
+        <FormLayout.ResponsiveColumnGroup>
           <FormLayout.ResponsiveColumn>
             {members.slice(0, Math.ceil(members.length / 2)).map((member, index) => (
               <MemberComponent
@@ -100,9 +103,9 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
             ))}
           </FormLayout.ResponsiveColumn>
         </FormLayout.ResponsiveColumnGroup>
-      ))}
-    </>
-  )
+      )}
+    </React.Fragment>
+  ))
 }
 
 
