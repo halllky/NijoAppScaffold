@@ -1,4 +1,4 @@
-import { Label, type LabelProps } from "./Label"
+import { type LabelProps, DefaultLabel } from "./DefaultLabel"
 import { Root, type ResponsiveFormProps } from "./Root"
 import { Separator } from "./Separator"
 import { Item, type ItemProps } from "./Item"
@@ -13,7 +13,7 @@ export default {
   Separator,
   Item,
   ItemGroupInResponsiveColumn,
-  Label,
+  DefaultLabel,
 }
 
 export type {

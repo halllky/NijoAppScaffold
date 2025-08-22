@@ -1,5 +1,4 @@
 import React from "react"
-import { Label } from "./Label"
 import { FormLayoutContext } from "./internal-context"
 
 import "./ResponsiveColumnGroup.css"
@@ -20,7 +19,7 @@ export type ColumnGroupProps = {
  */
 export const ResponsiveColumnGroup = (props: ColumnGroupProps) => {
 
-  const { columnCount } = React.useContext(FormLayoutContext)
+  const { columnCount, LabelComponent } = React.useContext(FormLayoutContext)
 
   return (
     <div style={{
@@ -37,7 +36,7 @@ export const ResponsiveColumnGroup = (props: ColumnGroupProps) => {
           gap: '4px',
         }}>
           {props.label && (
-            <Label>{props.label}</Label>
+            <LabelComponent>{props.label}</LabelComponent>
           )}
           {props.labelEnd}
         </div>

@@ -1,6 +1,6 @@
 import React from "react"
 import { FormLayoutContext, FormLayoutContextValue } from "./internal-context"
-import { Label, LabelProps } from "./Label"
+import { DefaultLabel, LabelProps } from "./DefaultLabel"
 
 /** レスポンシブフォームのプロパティ */
 export type ResponsiveFormProps = {
@@ -68,7 +68,7 @@ export const Root = (props: ResponsiveFormProps) => {
     labelWidth,
     valueWidth,
     labelAlign: props.labelAlign ?? 'right',
-    LabelComponent: props.labelComponent ?? Label,
+    LabelComponent: props.labelComponent ?? DefaultLabel,
   }), [columnCount, labelWidth, valueWidth, props.labelAlign, props.labelComponent])
 
   const style: React.CSSProperties = React.useMemo(() => ({

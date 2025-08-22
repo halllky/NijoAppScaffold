@@ -1,5 +1,5 @@
 import React from "react"
-import { Label, LabelProps } from "./Label"
+import { DefaultLabel, LabelProps } from "./DefaultLabel"
 
 /** フォーム内部で使用するコンテキスト */
 export type FormLayoutContextValue = {
@@ -21,7 +21,7 @@ export const FormLayoutContext = React.createContext<FormLayoutContextValue>({
   labelWidth: 120,
   valueWidth: 200,
   labelAlign: 'right',
-  LabelComponent: Label,
+  LabelComponent: DefaultLabel,
 })
 
 /** Column の中にあるかどうかを子孫コンポーネント側が知るためのコンテキスト */

@@ -8,11 +8,10 @@ export type LabelProps = {
 }
 
 /** 既定のレンダリングで用いられるラベル */
-export const Label = ({ children, className }: LabelProps) => {
+export const DefaultLabel = ({ children, className }: LabelProps) => {
 
   return (
     <span className={className} style={{
-      fontSize: '0.75rem',
       color: '#575757',
       userSelect: 'none',
     }}>

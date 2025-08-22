@@ -303,7 +303,7 @@ export const MultiView = ({ rootAggregatePhysicalName, metadata, schema }: {
           <form onSubmit={e => {
             form.handleSubmit(executeSearch)(e);
           }} className="h-full overflow-y-auto p-4">
-            <FormLayout.Label>検索条件</FormLayout.Label>
+            <FormLayout.DefaultLabel>検索条件</FormLayout.DefaultLabel>
             <ReflectionForm
               mode="search-condition"
               metadataPhysicalName={rootAggregatePhysicalName}
