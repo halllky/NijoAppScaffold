@@ -29,7 +29,11 @@ export const ReflectionForm = ({ mode, metadataPhysicalName, metadata, schema, f
 
   return (
     <ReflectionFormContext.Provider value={formContextValue}>
-      <FormLayout.Root>
+      <FormLayout.Root
+        valueWidthPx={mode === "search-condition"
+          ? 340 // 日付の範囲検索ぐらいの幅
+          : 240}
+      >
         <MemberComponentsGroupedByBreakPoint owner={metadata} ancestorsPath="" />
       </FormLayout.Root>
     </ReflectionFormContext.Provider>
@@ -84,39 +88,51 @@ const MemberComponentsGroupedByBreakPoint = ({ owner, ancestorsPath }: {
 
   return (
     <>
-      {groups.map((group, index) => group.fullWidth ? (
-        <MemberComponent
-          key={index}
-          ancestorsPath={ancestorsPath}
-          memberName={group.physicalName}
-          member={group.member}
-        />
-      ) : (
-        <FormLayout.ResponsiveColumnGroup key={index}>
-          {/* 左列 */}
-          <FormLayout.ResponsiveColumn>
-            {group.firstColumn.map((member) => (
-              <MemberComponent
-                key={member.physicalName}
-                ancestorsPath={ancestorsPath}
-                memberName={member.physicalName}
-                member={member.member}
-              />
-            ))}
-          </FormLayout.ResponsiveColumn>
+      {groups.map((group, index) => (
+        <React.Fragment key={index}>
 
-          {/* 右列 */}
-          <FormLayout.ResponsiveColumn>
-            {group.secondColumn.map((member) => (
-              <MemberComponent
-                key={member.physicalName}
-                ancestorsPath={ancestorsPath}
-                memberName={member.physicalName}
-                member={member.member}
-              />
-            ))}
-          </FormLayout.ResponsiveColumn>
-        </FormLayout.ResponsiveColumnGroup>
+          {index > 0 && (
+            <FormLayout.Separator />
+          )}
+
+          {group.fullWidth ? (
+            // 横幅いっぱいとるグループ
+            <MemberComponent
+              ancestorsPath={ancestorsPath}
+              memberName={group.physicalName}
+              member={group.member}
+            />
+          ) : (
+            // 折り返しが発生するグループ
+            <FormLayout.ResponsiveColumnGroup>
+              {/* 左列 */}
+              <FormLayout.ResponsiveColumn>
+                {group.firstColumn.map((member) => (
+                  <MemberComponent
+                    key={member.physicalName}
+                    ancestorsPath={ancestorsPath}
+                    memberName={member.physicalName}
+                    member={member.member}
+                  />
+                ))}
+              </FormLayout.ResponsiveColumn>
+
+              {/* 右列 */}
+              {group.secondColumn.length > 0 && (
+                <FormLayout.ResponsiveColumn>
+                  {group.secondColumn.map((member) => (
+                    <MemberComponent
+                      key={member.physicalName}
+                      ancestorsPath={ancestorsPath}
+                      memberName={member.physicalName}
+                      member={member.member}
+                    />
+                  ))}
+                </FormLayout.ResponsiveColumn>
+              )}
+            </FormLayout.ResponsiveColumnGroup>
+          )}
+        </React.Fragment>
       ))}
     </>
   )

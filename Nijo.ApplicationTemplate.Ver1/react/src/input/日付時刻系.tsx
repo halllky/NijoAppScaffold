@@ -31,7 +31,7 @@ export const DateInput = <
             type={props.yearMonth ? 'month' : 'date'}
             {...field}
             value={field.value ?? ''}
-            className="bg-white border border-gray-300 p-1"
+            className="bg-white border border-gray-300 px-1"
             onBlur={(e) => {
               // フォーカスアウト時にノーマライズとバリデーションを発火
               if (clientSideValidator && clientSideValidator.validate) {

@@ -2,6 +2,7 @@ import React from "react"
 import { FormLayoutContext } from "./internal-context"
 
 import "./ResponsiveColumnGroup.css"
+import { LabelRenderer } from "./internal-label-renderer"
 
 export type ColumnGroupProps = {
   /** ラベル */
@@ -19,7 +20,7 @@ export type ColumnGroupProps = {
  */
 export const ResponsiveColumnGroup = (props: ColumnGroupProps) => {
 
-  const { columnCount, LabelComponent } = React.useContext(FormLayoutContext)
+  const { columnCount } = React.useContext(FormLayoutContext)
 
   return (
     <div style={{
@@ -29,17 +30,10 @@ export const ResponsiveColumnGroup = (props: ColumnGroupProps) => {
     }}>
       {/* ラベル */}
       {(props.label || props.labelEnd) && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '4px',
-        }}>
-          {props.label && (
-            <LabelComponent>{props.label}</LabelComponent>
-          )}
-          {props.labelEnd}
-        </div>
+        <LabelRenderer
+          label={props.label}
+          labelEnd={props.labelEnd}
+        />
       )}
 
       {/* コンテンツ */}

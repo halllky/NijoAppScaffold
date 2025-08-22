@@ -23,7 +23,7 @@ export const Word = <
             {...field}
             value={field.value ?? ''}
             readOnly={props.readOnly}
-            className="bg-white border border-gray-300 p-1"
+            className="bg-white border border-gray-300 px-1"
           />
           <FieldErrorView name={props.name} />
         </div>
@@ -79,7 +79,7 @@ export const NumberInput = <
             type="number"
             {...field}
             value={field.value ?? ''}
-            className="bg-white border border-gray-300 p-1"
+            className="bg-white border border-gray-300 px-1"
             onBlur={(e) => {
               // フォーカスアウト時にノーマライズとバリデーションを発火
               if (clientSideValidator && clientSideValidator.validate) {

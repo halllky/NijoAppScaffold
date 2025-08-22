@@ -14,14 +14,19 @@ export const LabelRenderer = ({ label, labelEnd, style }: {
     <div style={{
       ...style,
       display: 'flex',
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      gap: '4px',
+      alignItems: 'start',
     }}>
-      {label && (
-        <LabelComponent>{label}</LabelComponent>
-      )}
-      {labelEnd}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '4px',
+      }}>
+        {label && (
+          <LabelComponent>{label}</LabelComponent>
+        )}
+        {labelEnd}
+      </div>
     </div>
   )
 }
