@@ -4,48 +4,45 @@ import { ColumnDefFactories, EditableGridColumnDef } from "../EditableGrid"
 import { ResponsiveFormProps } from "../FormLayout"
 
 /** DynamicFormのprops */
-export type DynamicFormProps = ResponsiveFormProps & {
+export type DynamicFormProps<TRoot extends ReactHookForm.FieldValues = ReactHookForm.FieldValues> = ResponsiveFormProps & {
   /** データ構造の定義 */
-  root: MemberOwner
+  root: MemberOwner<TRoot>
   /** フォームのデフォルト値 */
-  defaultValues?: DynamicFormValues
+  defaultValues?: ReactHookForm.DefaultValues<TRoot>
 }
 
 /** DynamicFormのref */
-export type DynamicFormRef = {
+export type DynamicFormRef<TRoot extends ReactHookForm.FieldValues = ReactHookForm.FieldValues> = {
   /** react-hook-form の useForm の戻り値。最新の値の取得などに使用する。 */
-  useFormReturn: ReactHookForm.UseFormReturn<DynamicFormValues>
+  useFormReturn: ReactHookForm.UseFormReturn<TRoot>
 }
 
 // ----------------------------------------------
 
-/** フォームの値 */
-export type DynamicFormValues = Record<string, unknown>
-
 /** ルートオブジェクト、ネストされたオブジェクト、配列、のいずれか */
-export type MemberOwner = {
+export type MemberOwner<TOwner extends ReactHookForm.FieldValues = ReactHookForm.FieldValues> = {
   /** メンバー */
-  members: Member[]
+  members: Member<TOwner>[]
 }
 
 // ----------------------------------------------
 //#region メンバー
 
 /** DynamicFormのメンバー */
-export type Member =
-  | SectionMember
-  | ArrayMember
-  | ValueMember
+export type Member<TOwner extends ReactHookForm.FieldValues = ReactHookForm.FieldValues> =
+  | SectionMember<TOwner>
+  | ArrayMember<TOwner>
+  | ValueMember<TOwner>
 
 /** ネストされたセクション */
-export type SectionMember = MemberOwner & {
+export type SectionMember<TOwner extends ReactHookForm.FieldValues = ReactHookForm.FieldValues> = MemberOwner<any> & {
   /** このメンバーがネストされたセクションであることを示す。 */
   isSection: true
   /**
    * 主にhtmlのname属性の構築に用いられるメンバー名。
    * 内部的にはルートオブジェクトからメンバーまでのパスがピリオドで連結されていく。
    */
-  physicalName?: string
+  physicalName?: ReactHookForm.Path<TOwner>
   /** 画面上に表示する名称。未指定の場合はphysicalNameが使用される。 */
   displayName?: string
   /** フォームのレンダリングコンポーネント。未指定の場合は既定のレンダリングコンポーネントが使用される。 */
@@ -54,38 +51,36 @@ export type SectionMember = MemberOwner & {
   renderFormLabel?: SectionFormRenderer
 
   isArray?: never
-  type?: never
 }
 
 /** 配列 */
-export type ArrayMember = MemberOwner & {
+export type ArrayMember<TOwner extends ReactHookForm.FieldValues = ReactHookForm.FieldValues> = MemberOwner<any> & {
   /** このメンバーが配列であることを示す。 */
   isArray: true
   /**
    * 主にhtmlのname属性の構築に用いられるメンバー名。
    * 内部的にはルートオブジェクトからメンバーまでのパスがピリオドで連結されていく。
    */
-  physicalName: string
+  physicalName: ReactHookForm.Path<TOwner>
   /** 画面上に表示する名称。未指定の場合はphysicalNameが使用される。 */
   displayName?: string
   /** 新しいアイテムを作成するための関数。 */
-  onCreateNewItem: () => DynamicFormValues
+  onCreateNewItem: () => ReactHookForm.FieldValues
   /** フォームのレンダリングコンポーネント。未指定の場合は既定のレンダリングコンポーネントが使用される。 */
   render?: ArrayFormRenderer
   /** フォームのラベル部分に追加のカスタマイズUIを表示したい場合に使用する。 `render` が指定されている場合は無視される。 */
   renderFormLabel?: ArrayFormRenderer
 
   isSection?: never
-  type?: never
 }
 
 /** 値メンバー */
-export type ValueMember = {
+export type ValueMember<TOwner extends ReactHookForm.FieldValues = ReactHookForm.FieldValues> = {
   /**
    * 主にhtmlのname属性の構築に用いられるメンバー名。
    * 内部的にはルートオブジェクトからメンバーまでのパスがピリオドで連結されていく。
    */
-  physicalName?: string
+  physicalName?: ReactHookForm.Path<TOwner>
   /** 画面上に表示する名称。未指定の場合はphysicalNameが使用される。 */
   displayName?: string
   /** フォームのラベル部分に追加のカスタマイズUIを表示したい場合に使用する。 */
@@ -125,7 +120,7 @@ export type ValueMemberFormRenderer = (props: ValueMemberFormRendererProps) => R
 /** メンバーのフォームのレンダリングコンポーネントの引数 */
 export type FormRendererProps = {
   /** react-hook-form の useForm の戻り値。最新の値の取得などに使用する。 */
-  useFormReturn: ReactHookForm.UseFormReturn<DynamicFormValues>
+  useFormReturn: ReactHookForm.UseFormReturn<ReactHookForm.FieldValues>
   /** メンバーを保持するオブジェクトのメタデータ */
   owner: MemberOwner
 }
