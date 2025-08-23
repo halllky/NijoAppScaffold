@@ -27,7 +27,7 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
     }
     const baseGroups = owner.members.reduce((acc, member) => {
       // Child, Children, fullWidth指定のメンバーは横幅いっぱいとる
-      if (member.isSection || member.isArray || member.fullWidth) {
+      if (member.type === 'section' || member.type === 'array' || member.fullWidth) {
         acc.push({
           members: [member],
           fullWidth: true
@@ -119,7 +119,7 @@ const MemberComponent = ({ owner, member, ancestorsPath }: {
 }): React.ReactNode => {
 
   // セクション
-  if (member.isSection) {
+  if (member.type === 'section') {
     return (
       <FormSection
         member={member}
@@ -130,7 +130,7 @@ const MemberComponent = ({ owner, member, ancestorsPath }: {
   }
 
   // 配列
-  if (member.isArray) {
+  if (member.type === 'array') {
     return hasArray(member) ? (
       // このメンバーの子孫（直下の子ではなく子孫再帰的に）にさらに配列が含まれるのでフォームのリスト
       <FormArrayAsForm
@@ -165,10 +165,10 @@ const MemberComponent = ({ owner, member, ancestorsPath }: {
 const hasArray = (owner: MemberOwner): boolean => {
   const checkRecursive = (o: MemberOwner): boolean => {
     return o.members.some(member => {
-      if (member.isArray) {
+      if (member.type === 'array') {
         return true
       }
-      if (member.isSection) {
+      if (member.type === 'section') {
         return checkRecursive(member)
       }
       return false

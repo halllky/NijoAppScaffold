@@ -23,13 +23,13 @@ export default function (): MemberOwner {
       {
         physicalName: "section1",
         displayName: "セクション1",
-        isSection: true,
+        type: 'section',
         members: [
           // セクション1-1
           {
             physicalName: "section1_1",
             displayName: "セクション1-1",
-            isSection: true,
+            type: 'section',
             members: [
               // text型のメンバー1
               {
@@ -43,7 +43,7 @@ export default function (): MemberOwner {
           {
             physicalName: "array1_2",
             displayName: "配列1-2",
-            isArray: true,
+            type: 'array',
             onCreateNewItem: () => ({ member2: "" }),
             members: [
               // text型のメンバー2
@@ -60,7 +60,7 @@ export default function (): MemberOwner {
       {
         physicalName: "array2",
         displayName: "配列2",
-        isArray: true,
+        type: 'array',
         onCreateNewItem: () => ({
           section2_1: { member3: "" },
           array2_2: [{ member4: "" }]
@@ -70,7 +70,7 @@ export default function (): MemberOwner {
           {
             physicalName: "section2_1",
             displayName: "セクション2-1",
-            isSection: true,
+            type: 'section',
             members: [
               // text型のメンバー3
               {
@@ -84,7 +84,7 @@ export default function (): MemberOwner {
           {
             physicalName: "array2_2",
             displayName: "配列2-2",
-            isArray: true,
+            type: 'array',
             onCreateNewItem: () => ({ member4: "" }),
             members: [
               // text型のメンバー4

@@ -100,11 +100,11 @@ const useGetColumnDefs = (
 
     const pushRecursive = (owner: MemberOwner, path: string) => {
       for (const m of owner.members) {
-        if (m.isSection) {
+        if (m.type === 'section') {
           // 子セクションのメンバーも再帰的に列定義を作成する
           pushRecursive(m, m.physicalName ? `${path}.${m.physicalName}` : path)
 
-        } else if (m.isArray) {
+        } else if (m.type === 'array') {
           continue // グリッドで配列を表示することはできない
 
         } else if (m.getGridColumnDef) {

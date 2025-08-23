@@ -152,7 +152,7 @@ export default function (): MemberOwner {
       {
         physicalName: "typeSection",
         displayName: "型のセクション",
-        isSection: true,
+        type: 'section',
         members: [
           {
             physicalName: "nestedText",
@@ -176,7 +176,7 @@ export default function (): MemberOwner {
       {
         physicalName: "typeArray",
         displayName: "型の配列",
-        isArray: true,
+        type: 'array',
         onCreateNewItem: () => ({
           arrayText: "",
           arrayNumber: 0,

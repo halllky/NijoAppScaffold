@@ -36,8 +36,7 @@ export type Member<TOwner extends ReactHookForm.FieldValues = ReactHookForm.Fiel
 
 /** ネストされたセクション */
 export type SectionMember<TOwner extends ReactHookForm.FieldValues = ReactHookForm.FieldValues> = MemberOwner<any> & {
-  /** このメンバーがネストされたセクションであることを示す。 */
-  isSection: true
+  type: 'section'
   /**
    * 主にhtmlのname属性の構築に用いられるメンバー名。
    * 内部的にはルートオブジェクトからメンバーまでのパスがピリオドで連結されていく。
@@ -49,14 +48,11 @@ export type SectionMember<TOwner extends ReactHookForm.FieldValues = ReactHookFo
   render?: SectionFormRenderer
   /** フォームのラベル部分に追加のカスタマイズUIを表示したい場合に使用する。 `render` が指定されている場合は無視される。 */
   renderFormLabel?: SectionFormRenderer
-
-  isArray?: never
 }
 
 /** 配列 */
 export type ArrayMember<TOwner extends ReactHookForm.FieldValues = ReactHookForm.FieldValues> = MemberOwner<any> & {
-  /** このメンバーが配列であることを示す。 */
-  isArray: true
+  type: 'array'
   /**
    * 主にhtmlのname属性の構築に用いられるメンバー名。
    * 内部的にはルートオブジェクトからメンバーまでのパスがピリオドで連結されていく。
@@ -70,12 +66,11 @@ export type ArrayMember<TOwner extends ReactHookForm.FieldValues = ReactHookForm
   render?: ArrayFormRenderer
   /** フォームのラベル部分に追加のカスタマイズUIを表示したい場合に使用する。 `render` が指定されている場合は無視される。 */
   renderFormLabel?: ArrayFormRenderer
-
-  isSection?: never
 }
 
 /** 値メンバー */
 export type ValueMember<TOwner extends ReactHookForm.FieldValues = ReactHookForm.FieldValues> = {
+  type?: never
   /**
    * 主にhtmlのname属性の構築に用いられるメンバー名。
    * 内部的にはルートオブジェクトからメンバーまでのパスがピリオドで連結されていく。
@@ -93,16 +88,6 @@ export type ValueMember<TOwner extends ReactHookForm.FieldValues = ReactHookForm
   fullWidth?: boolean
   /** ラベルを表示しない。 */
   noLabel?: boolean
-  /**
-   * このメンバーの後で右側の列に折り返すかどうか。
-   * 未指定の場合は項目数を2で割った位置で折り返す。
-   * `fullWidth` が `true` の場合は無視される。
-   * 同じグループ内で複数指定された場合、2番目以降の指定は無視される。
-   */
-  breakAfter?: boolean
-
-  isArray?: never
-  isSection?: never
 }
 
 //#endregion メンバー

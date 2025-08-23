@@ -52,7 +52,7 @@ export default function (): MemberOwner {
       {
         physicalName: "emptySection",
         displayName: "空のセクション",
-        isSection: true,
+        type: 'section',
         members: [],
       },
 
@@ -60,7 +60,7 @@ export default function (): MemberOwner {
       {
         physicalName: "emptyArray",
         displayName: "空の配列",
-        isArray: true,
+        type: 'array',
         onCreateNewItem: () => ({ item: "" }),
         members: [],
       },
@@ -69,7 +69,7 @@ export default function (): MemberOwner {
       {
         physicalName: "singleMemberSection",
         displayName: "単一メンバーセクション",
-        isSection: true,
+        type: 'section',
         members: [
           {
             physicalName: "singleMember",
@@ -83,7 +83,7 @@ export default function (): MemberOwner {
       {
         physicalName: "singleMemberArray",
         displayName: "単一メンバー配列",
-        isArray: true,
+        type: 'array',
         onCreateNewItem: () => ({ singleItem: "" }),
         members: [
           {
@@ -98,7 +98,7 @@ export default function (): MemberOwner {
       {
         physicalName: "nestedEmptySection",
         displayName: "ネストした空のセクション",
-        isSection: true,
+        type: 'section',
         members: [
           {
             physicalName: "outerMember",
@@ -109,7 +109,7 @@ export default function (): MemberOwner {
           {
             physicalName: "innerEmptySection",
             displayName: "内側の空セクション",
-            isSection: true,
+            type: 'section',
             members: [],
           },
           {
@@ -124,7 +124,7 @@ export default function (): MemberOwner {
       {
         physicalName: "nestedEmptyArray",
         displayName: "ネストした空の配列",
-        isSection: true,
+        type: 'section',
         members: [
           {
             physicalName: "sectionMember",
@@ -135,7 +135,7 @@ export default function (): MemberOwner {
           {
             physicalName: "innerEmptyArray",
             displayName: "内側の空配列",
-            isArray: true,
+            type: 'array',
             onCreateNewItem: () => ({}),
             members: [],
           },
@@ -146,7 +146,7 @@ export default function (): MemberOwner {
       {
         physicalName: "arrayWithEmptyMembers",
         displayName: "空メンバーを含む配列",
-        isArray: true,
+        type: 'array',
         onCreateNewItem: () => ({
           text: "",
           emptySection: {},
@@ -162,14 +162,14 @@ export default function (): MemberOwner {
           {
             physicalName: "emptySection",
             displayName: "配列内空セクション",
-            isSection: true,
+            type: 'section',
             members: [],
           },
           // 配列内の空配列
           {
             physicalName: "emptyArray",
             displayName: "配列内空配列",
-            isArray: true,
+            type: 'array',
             onCreateNewItem: () => ({}),
             members: [],
           },
@@ -180,7 +180,7 @@ export default function (): MemberOwner {
       {
         physicalName: "multiLevelEmpty",
         displayName: "複数レベルの空ネスト",
-        isSection: true,
+        type: 'section',
         members: [
           {
             physicalName: "level1Text",
@@ -190,7 +190,7 @@ export default function (): MemberOwner {
           {
             physicalName: "level2Section",
             displayName: "レベル2セクション",
-            isSection: true,
+            type: 'section',
             members: [
               {
                 physicalName: "level2Text",
@@ -201,14 +201,14 @@ export default function (): MemberOwner {
               {
                 physicalName: "level3EmptySection",
                 displayName: "レベル3空セクション",
-                isSection: true,
+                type: 'section',
                 members: [],
               },
               // レベル3の空配列
               {
                 physicalName: "level3EmptyArray",
                 displayName: "レベル3空配列",
-                isArray: true,
+                type: 'array',
                 onCreateNewItem: () => ({}),
                 members: [],
               },
@@ -221,7 +221,7 @@ export default function (): MemberOwner {
       {
         physicalName: "invalidNewItemArray",
         displayName: "無効な新規アイテム配列",
-        isArray: true,
+        type: 'array',
         // 空オブジェクトを返すonCreateNewItem
         onCreateNewItem: () => ({}),
         members: [
@@ -237,7 +237,7 @@ export default function (): MemberOwner {
       {
         physicalName: "nullishNewItemArray",
         displayName: "null可能性配列",
-        isArray: true,
+        type: 'array',
         onCreateNewItem: () => ({
           text: undefined,
           number: null,

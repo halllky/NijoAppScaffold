@@ -98,7 +98,7 @@ export default function (): MemberOwner {
       {
         physicalName: "sectionWithNone",
         displayName: "NoneMemberを含むセクション",
-        isSection: true,
+        type: 'section',
         members: [
           {
             physicalName: "sectionText",
@@ -127,7 +127,7 @@ export default function (): MemberOwner {
       {
         physicalName: "arrayWithNone",
         displayName: "NoneMemberを含む配列",
-        isArray: true,
+        type: 'array',
         onCreateNewItem: () => ({ item: "" }),
         members: [
           {

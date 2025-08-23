@@ -140,7 +140,7 @@ export default function (): MemberOwner {
       {
         physicalName: "basicInfo",
         displayName: "基本情報",
-        isSection: true,
+        type: 'section',
         members: [
           {
             physicalName: "values.name",
@@ -157,7 +157,7 @@ export default function (): MemberOwner {
           // ※ UI上は個別のセクションに分かれるがデータ上は同じオブジェクトであるパターン
           {
             displayName: "住所",
-            isSection: true,
+            type: 'section',
             members: [
               {
                 physicalName: "values.zipCode",
@@ -178,7 +178,7 @@ export default function (): MemberOwner {
               // レベル3: 詳細住所セクション（レベル2と同じ観点）
               {
                 displayName: "詳細住所",
-                isSection: true,
+                type: 'section',
                 members: [
                   {
                     physicalName: "values.street",
@@ -206,7 +206,7 @@ export default function (): MemberOwner {
       {
         physicalName: "contacts",
         displayName: "連絡先リスト",
-        isArray: true,
+        type: 'array',
         onCreateNewItem: () => ({
           type: "",
           value: "",
@@ -232,7 +232,7 @@ export default function (): MemberOwner {
           {
             physicalName: "details",
             displayName: "詳細設定",
-            isSection: true,
+            type: 'section',
             members: [
               {
                 physicalName: "priority",
@@ -249,7 +249,7 @@ export default function (): MemberOwner {
               {
                 physicalName: "schedule",
                 displayName: "連絡可能時間",
-                isArray: true,
+                type: 'array',
                 onCreateNewItem: () => ({ day: "", time: "" }),
                 members: [
                   {
@@ -273,7 +273,7 @@ export default function (): MemberOwner {
       {
         physicalName: "projects",
         displayName: "プロジェクト",
-        isArray: true,
+        type: 'array',
         onCreateNewItem: () => ({
           name: "",
           status: "",
@@ -299,7 +299,7 @@ export default function (): MemberOwner {
           {
             physicalName: "team",
             displayName: "チーム情報",
-            isSection: true,
+            type: 'section',
             members: [
               {
                 physicalName: "leader",
@@ -311,7 +311,7 @@ export default function (): MemberOwner {
               {
                 physicalName: "members",
                 displayName: "メンバー",
-                isArray: true,
+                type: 'array',
                 onCreateNewItem: () => ({ name: "", role: "", skills: [{ name: "", level: "" }] }),
                 members: [
                   {
@@ -329,7 +329,7 @@ export default function (): MemberOwner {
                   {
                     physicalName: "skills",
                     displayName: "スキル",
-                    isArray: true,
+                    type: 'array',
                     onCreateNewItem: () => ({ name: "", level: "" }),
                     members: [
                       {
@@ -351,7 +351,7 @@ export default function (): MemberOwner {
               {
                 physicalName: "meetings",
                 displayName: "ミーティング",
-                isArray: true,
+                type: 'array',
                 onCreateNewItem: () => ({ date: "", agenda: { topics: [{ title: "", priority: "" }] } }),
                 members: [
                   {
@@ -364,13 +364,13 @@ export default function (): MemberOwner {
                   {
                     physicalName: "agenda",
                     displayName: "アジェンダ",
-                    isSection: true,
+                    type: 'section',
                     members: [
                       // レベル5: トピック配列（最も深いネスト）
                       {
                         physicalName: "topics",
                         displayName: "議題",
-                        isArray: true,
+                        type: 'array',
                         onCreateNewItem: () => ({ title: "", priority: "" }),
                         members: [
                           {

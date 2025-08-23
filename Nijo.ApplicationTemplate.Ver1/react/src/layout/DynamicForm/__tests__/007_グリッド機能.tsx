@@ -133,7 +133,7 @@ export default function (): MemberOwner {
       {
         physicalName: "basicGrid",
         displayName: "基本グリッド",
-        isArray: true,
+        type: 'array',
         onCreateNewItem: () => ({
           name: "",
           age: 0,
@@ -180,7 +180,7 @@ export default function (): MemberOwner {
       {
         physicalName: "customGrid",
         displayName: "カスタムグリッド",
-        isArray: true,
+        type: 'array',
         onCreateNewItem: () => ({
           product: "",
           price: 0,
@@ -290,7 +290,7 @@ export default function (): MemberOwner {
       {
         physicalName: "readOnlyGrid",
         displayName: "読み取り専用グリッド",
-        isArray: true,
+        type: 'array',
         onCreateNewItem: () => ({
           id: Math.floor(Math.random() * 10000),
           name: "",
@@ -356,7 +356,7 @@ export default function (): MemberOwner {
       {
         physicalName: "hiddenColumnGrid",
         displayName: "非表示列グリッド",
-        isArray: true,
+        type: 'array',
         onCreateNewItem: () => ({
           visibleData: "",
           hiddenData: "hidden",
@@ -408,7 +408,7 @@ export default function (): MemberOwner {
       {
         physicalName: "advancedEditGrid",
         displayName: "高度編集グリッド",
-        isArray: true,
+        type: 'array',
         onCreateNewItem: () => ({
           task: "",
           priority: "",

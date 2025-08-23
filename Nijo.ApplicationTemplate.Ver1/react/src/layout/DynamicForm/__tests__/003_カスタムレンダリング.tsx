@@ -78,7 +78,7 @@ export default function (): MemberOwner {
       {
         physicalName: "customSection",
         displayName: "カスタムセクション",
-        isSection: true,
+        type: 'section',
         render: ({ useFormReturn, name, owner }) => (
           <div className="border-2 border-purple-300 rounded-lg p-4 bg-purple-50">
             <h3 className="text-lg font-bold text-purple-800 mb-3">
@@ -111,7 +111,7 @@ export default function (): MemberOwner {
       {
         physicalName: "customLabelSection",
         displayName: "カスタムラベルセクション",
-        isSection: true,
+        type: 'section',
         renderFormLabel: ({ name, owner }) => (
           <div className="flex items-center gap-2 bg-green-100 px-3 py-2 rounded">
             <span className="text-green-800 font-semibold">🏷️ カスタムラベルセクション</span>
@@ -131,7 +131,7 @@ export default function (): MemberOwner {
       {
         physicalName: "customArray",
         displayName: "カスタム配列",
-        isArray: true,
+        type: 'array',
         onCreateNewItem: () => ({ arrayItem: "" }),
         render: ({ useFormReturn, name, useFieldArrayReturn }) => (
           <div className="border-2 border-orange-300 rounded-lg p-4 bg-orange-50">
@@ -168,7 +168,7 @@ export default function (): MemberOwner {
       {
         physicalName: "customLabelArray",
         displayName: "カスタムラベル配列",
-        isArray: true,
+        type: 'array',
         onCreateNewItem: () => ({ item: "" }),
         renderFormLabel: ({ name, useFieldArrayReturn }) => (
           <div className="flex items-center justify-between bg-red-100 px-3 py-2 rounded">
