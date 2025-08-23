@@ -1,6 +1,5 @@
 import React from "react"
 import { Member, MemberOwner } from "./types"
-import { hasArray } from "./helpers"
 import { FormValueMember } from "./Form.ValueMember"
 import { FormSection } from "./Form.Section"
 import { FormArrayAsForm } from "./Form.ArrayAsForm"
@@ -158,4 +157,22 @@ const MemberComponent = ({ owner, member, ancestorsPath }: {
     />
   )
 
+}
+
+/**
+ * 子孫に配列が含まれるかを返す
+ */
+const hasArray = (owner: MemberOwner): boolean => {
+  const checkRecursive = (o: MemberOwner): boolean => {
+    return o.members.some(member => {
+      if (member.isArray) {
+        return true
+      }
+      if (member.isSection) {
+        return checkRecursive(member)
+      }
+      return false
+    })
+  }
+  return checkRecursive(owner)
 }
