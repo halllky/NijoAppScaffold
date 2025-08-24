@@ -1,5 +1,5 @@
 import { type LabelProps, DefaultLabel } from "./DefaultLabel"
-import { Root, type ResponsiveFormProps } from "./Root"
+import { Root, type FormLayoutProps } from "./Root"
 import { Separator } from "./Separator"
 import { Field, type FieldProps } from "./Field"
 import { Section, type SectionProps } from "./Section"
@@ -15,7 +15,7 @@ export default {
 }
 
 export type {
-  ResponsiveFormProps,
+  FormLayoutProps,
   SectionProps,
   FieldProps,
   LabelProps,

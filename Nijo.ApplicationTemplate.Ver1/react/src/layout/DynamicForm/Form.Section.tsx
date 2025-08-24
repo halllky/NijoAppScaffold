@@ -36,15 +36,15 @@ export const FormSection = ({ member: section, owner, ancestorsPath }: {
 
   // 既定のレンダリング
   return (
-    <FormLayout.Field
-      fullWidth
-      label={section.displayName ?? section.physicalName}
+    <FormLayout.Section
+      border
+      label={section.displayName}
       labelEnd={section.renderFormLabel?.(rendererProps)}
     >
       <MembersGroupByBreakPoint
         ancestorsPath={sectionMemberPath}
         owner={section}
       />
-    </FormLayout.Field>
+    </FormLayout.Section>
   )
 }

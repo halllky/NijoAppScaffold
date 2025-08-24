@@ -1,10 +1,10 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
 import { ColumnDefFactories, EditableGridColumnDef } from "../EditableGrid"
-import { ResponsiveFormProps } from "../FormLayout"
+import { FormLayoutProps } from "../FormLayout"
 
 /** DynamicFormのprops */
-export type DynamicFormProps<TRoot extends ReactHookForm.FieldValues = ReactHookForm.FieldValues> = ResponsiveFormProps & {
+export type DynamicFormProps<TRoot extends ReactHookForm.FieldValues = ReactHookForm.FieldValues> = FormLayoutProps & {
   /** データ構造の定義 */
   root: MemberOwner<TRoot>
   /** フォームのデフォルト値 */

@@ -58,13 +58,9 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
       {/* 要素一覧 */}
       {fields.map((field, index) => (
         <React.Fragment key={field.id}>
-          {index > 0 && (
-            <FormLayout.Separator />
-          )}
-
-          <FormLayout.Field
-            fullWidth
-            label={`${array.displayName ?? array.physicalName} ${index + 1}`}
+          <FormLayout.Section
+            border
+            label={`${array.displayName} ${index + 1}`}
             labelEnd={(
               <>
                 {array.renderFormLabel?.(rendererProps)}
@@ -78,14 +74,16 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
               owner={array}
               ancestorsPath={`${arrayMemberPath}.${index}`}
             />
-          </FormLayout.Field>
+          </FormLayout.Section>
+
+          <FormLayout.Spacer />
         </React.Fragment>
       ))}
 
       {/* 追加ボタン */}
       <FormLayout.Field fullWidth>
         <IconButton icon={Icon.PlusCircleIcon} outline mini onClick={handleAppend}>
-          {array.displayName ?? array.physicalName} を追加
+          {array.displayName} を追加
         </IconButton>
       </FormLayout.Field>
     </>

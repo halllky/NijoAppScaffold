@@ -1,9 +1,9 @@
 import React from "react";
-import { DynamicForm, MemberOwner, DynamicFormRef } from "../layout";
+import { DynamicForm, DynamicFormProps, DynamicFormRef } from "../layout";
 import { Allotment, LayoutPriority } from "allotment";
 
 export default function DynamicFormDebugging({ getSchema }: {
-  getSchema: () => MemberOwner
+  getSchema: () => DynamicFormProps
 }) {
   // スキーマ定義
   const schema = React.useMemo(() => {
@@ -32,7 +32,7 @@ export default function DynamicFormDebugging({ getSchema }: {
         <div className="h-full overflow-y-scroll">
           <DynamicForm
             ref={formRef}
-            root={schema}
+            {...schema}
           />
         </div>
       </Allotment.Pane>

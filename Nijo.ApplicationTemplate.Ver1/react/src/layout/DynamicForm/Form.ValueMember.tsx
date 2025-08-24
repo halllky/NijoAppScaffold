@@ -25,7 +25,7 @@ export const FormValueMember = ({ member, owner, ancestorsPath }: {
 
   return (
     <FormLayout.Field
-      label={member.noLabel ? undefined : (member.displayName ?? member.physicalName)}
+      label={member.noLabel ? undefined : (member.displayName)}
       labelEnd={member.noLabel ? undefined : member.renderFormLabel?.(rendererProps)}
     >
       {member.renderFormValue?.(rendererProps)}

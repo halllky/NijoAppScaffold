@@ -68,7 +68,7 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
   return groups.map(({ members, fullWidth }, groupIndex) => (
     <React.Fragment key={groupIndex}>
       {groupIndex > 0 && (
-        <FormLayout.Separator />
+        <FormLayout.Spacer />
       )}
 
       {fullWidth ? (
@@ -80,7 +80,7 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
         />
       ) : (
         // membersを半分に割って2つのColumnに配置
-        <FormLayout.Section>
+        <FormLayout.Section responsive>
           <FormLayout.Section>
             {members.slice(0, Math.ceil(members.length / 2)).map((member, index) => (
               <MemberComponent

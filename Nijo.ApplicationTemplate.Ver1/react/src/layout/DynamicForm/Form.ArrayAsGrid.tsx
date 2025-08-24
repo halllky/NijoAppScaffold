@@ -67,7 +67,7 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
   return (
     <FormLayout.Field
       fullWidth
-      label={array.displayName ?? array.physicalName}
+      label={array.displayName}
       labelEnd={(
         <>
           {/* ラベルの脇に追加のコンポーネントがある場合はレンダリング */}

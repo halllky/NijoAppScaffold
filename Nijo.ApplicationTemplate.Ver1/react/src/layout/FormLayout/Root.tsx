@@ -3,8 +3,8 @@ import { FormLayoutContext, FormLayoutContextValue, RecentParentContext } from "
 import { DefaultLabel, LabelProps } from "./DefaultLabel"
 import { Section } from "./Section"
 
-/** レスポンシブフォームのプロパティ */
-export type ResponsiveFormProps = {
+/** フォームレイアウトのプロパティ */
+export type FormLayoutProps = {
   /** ラベル列の幅。未指定の場合は既定の幅が使用される。 */
   labelWidthPx?: number
   /** 値列の幅。レスポンシブレイアウトの判定に使用される。 */
@@ -20,7 +20,7 @@ export type ResponsiveFormProps = {
 }
 
 /** FormLayoutのルートコンテナ */
-export const Root = (props: ResponsiveFormProps) => {
+export const Root = (props: FormLayoutProps) => {
 
   // レスポンシブレイアウト用の状態管理
   const [containerWidth, setContainerWidth] = React.useState<number>(0)

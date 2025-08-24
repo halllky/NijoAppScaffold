@@ -1,9 +1,9 @@
-import { MemberOwner, ValueMember } from "../types";
+import { DynamicFormProps, ValueMember } from "../types";
 
 /**
  * 空データ構造（空配列、空セクション等）のエッジケースを確認するためのテストデータ。
  */
-export default function (): MemberOwner {
+export default function (): DynamicFormProps {
 
   // 複数回使いまわすUIレンダリング定義
   const UI_TEXT = (physicalName: string): Partial<ValueMember> => ({
@@ -40,227 +40,229 @@ export default function (): MemberOwner {
 
   // データ構造定義
   return {
-    members: [
-      // 通常のメンバー（比較用）
-      {
-        physicalName: "normalMember",
-        displayName: "通常のメンバー",
-        ...UI_TEXT("normalMember"),
-      },
+    root: {
+      members: [
+        // 通常のメンバー（比較用）
+        {
+          physicalName: "normalMember",
+          displayName: "通常のメンバー",
+          ...UI_TEXT("normalMember"),
+        },
 
-      // 空のセクション
-      {
-        physicalName: "emptySection",
-        displayName: "空のセクション",
-        type: 'section',
-        members: [],
-      },
+        // 空のセクション
+        {
+          physicalName: "emptySection",
+          displayName: "空のセクション",
+          type: 'section',
+          members: [],
+        },
 
-      // 空の配列
-      {
-        physicalName: "emptyArray",
-        displayName: "空の配列",
-        type: 'array',
-        onCreateNewItem: () => ({ item: "" }),
-        members: [],
-      },
+        // 空の配列
+        {
+          physicalName: "emptyArray",
+          displayName: "空の配列",
+          type: 'array',
+          onCreateNewItem: () => ({ item: "" }),
+          members: [],
+        },
 
-      // メンバーが1つだけのセクション
-      {
-        physicalName: "singleMemberSection",
-        displayName: "単一メンバーセクション",
-        type: 'section',
-        members: [
-          {
-            physicalName: "singleMember",
-            displayName: "単一メンバー",
-            ...UI_TEXT("singleMember"),
-          },
-        ],
-      },
+        // メンバーが1つだけのセクション
+        {
+          physicalName: "singleMemberSection",
+          displayName: "単一メンバーセクション",
+          type: 'section',
+          members: [
+            {
+              physicalName: "singleMember",
+              displayName: "単一メンバー",
+              ...UI_TEXT("singleMember"),
+            },
+          ],
+        },
 
-      // メンバーが1つだけの配列
-      {
-        physicalName: "singleMemberArray",
-        displayName: "単一メンバー配列",
-        type: 'array',
-        onCreateNewItem: () => ({ singleItem: "" }),
-        members: [
-          {
-            physicalName: "singleItem",
-            displayName: "単一アイテム",
-            ...UI_TEXT("singleItem"),
-          },
-        ],
-      },
+        // メンバーが1つだけの配列
+        {
+          physicalName: "singleMemberArray",
+          displayName: "単一メンバー配列",
+          type: 'array',
+          onCreateNewItem: () => ({ singleItem: "" }),
+          members: [
+            {
+              physicalName: "singleItem",
+              displayName: "単一アイテム",
+              ...UI_TEXT("singleItem"),
+            },
+          ],
+        },
 
-      // ネストした空のセクション
-      {
-        physicalName: "nestedEmptySection",
-        displayName: "ネストした空のセクション",
-        type: 'section',
-        members: [
-          {
-            physicalName: "outerMember",
-            displayName: "外側メンバー",
-            ...UI_TEXT("outerMember"),
-          },
-          // 内側の空セクション
-          {
-            physicalName: "innerEmptySection",
-            displayName: "内側の空セクション",
-            type: 'section',
-            members: [],
-          },
-          {
-            physicalName: "anotherOuterMember",
-            displayName: "もう一つの外側メンバー",
-            ...UI_TEXT("anotherOuterMember"),
-          },
-        ],
-      },
+        // ネストした空のセクション
+        {
+          physicalName: "nestedEmptySection",
+          displayName: "ネストした空のセクション",
+          type: 'section',
+          members: [
+            {
+              physicalName: "outerMember",
+              displayName: "外側メンバー",
+              ...UI_TEXT("outerMember"),
+            },
+            // 内側の空セクション
+            {
+              physicalName: "innerEmptySection",
+              displayName: "内側の空セクション",
+              type: 'section',
+              members: [],
+            },
+            {
+              physicalName: "anotherOuterMember",
+              displayName: "もう一つの外側メンバー",
+              ...UI_TEXT("anotherOuterMember"),
+            },
+          ],
+        },
 
-      // ネストした空の配列
-      {
-        physicalName: "nestedEmptyArray",
-        displayName: "ネストした空の配列",
-        type: 'section',
-        members: [
-          {
-            physicalName: "sectionMember",
-            displayName: "セクションメンバー",
-            ...UI_TEXT("sectionMember"),
-          },
-          // 内側の空配列
-          {
-            physicalName: "innerEmptyArray",
-            displayName: "内側の空配列",
-            type: 'array',
-            onCreateNewItem: () => ({}),
-            members: [],
-          },
-        ],
-      },
+        // ネストした空の配列
+        {
+          physicalName: "nestedEmptyArray",
+          displayName: "ネストした空の配列",
+          type: 'section',
+          members: [
+            {
+              physicalName: "sectionMember",
+              displayName: "セクションメンバー",
+              ...UI_TEXT("sectionMember"),
+            },
+            // 内側の空配列
+            {
+              physicalName: "innerEmptyArray",
+              displayName: "内側の空配列",
+              type: 'array',
+              onCreateNewItem: () => ({}),
+              members: [],
+            },
+          ],
+        },
 
-      // 空セクションと空配列を含む配列
-      {
-        physicalName: "arrayWithEmptyMembers",
-        displayName: "空メンバーを含む配列",
-        type: 'array',
-        onCreateNewItem: () => ({
-          text: "",
-          emptySection: {},
-          emptyArray: []
-        }),
-        members: [
-          {
-            physicalName: "text",
-            displayName: "テキスト",
-            ...UI_TEXT("text"),
-          },
-          // 配列内の空セクション
-          {
-            physicalName: "emptySection",
-            displayName: "配列内空セクション",
-            type: 'section',
-            members: [],
-          },
-          // 配列内の空配列
-          {
-            physicalName: "emptyArray",
-            displayName: "配列内空配列",
-            type: 'array',
-            onCreateNewItem: () => ({}),
-            members: [],
-          },
-        ],
-      },
+        // 空セクションと空配列を含む配列
+        {
+          physicalName: "arrayWithEmptyMembers",
+          displayName: "空メンバーを含む配列",
+          type: 'array',
+          onCreateNewItem: () => ({
+            text: "",
+            emptySection: {},
+            emptyArray: []
+          }),
+          members: [
+            {
+              physicalName: "text",
+              displayName: "テキスト",
+              ...UI_TEXT("text"),
+            },
+            // 配列内の空セクション
+            {
+              physicalName: "emptySection",
+              displayName: "配列内空セクション",
+              type: 'section',
+              members: [],
+            },
+            // 配列内の空配列
+            {
+              physicalName: "emptyArray",
+              displayName: "配列内空配列",
+              type: 'array',
+              onCreateNewItem: () => ({}),
+              members: [],
+            },
+          ],
+        },
 
-      // 複数レベルの空のネスト
-      {
-        physicalName: "multiLevelEmpty",
-        displayName: "複数レベルの空ネスト",
-        type: 'section',
-        members: [
-          {
-            physicalName: "level1Text",
-            displayName: "レベル1テキスト",
-            ...UI_TEXT("level1Text"),
-          },
-          {
-            physicalName: "level2Section",
-            displayName: "レベル2セクション",
-            type: 'section',
-            members: [
-              {
-                physicalName: "level2Text",
-                displayName: "レベル2テキスト",
-                ...UI_TEXT("level2Text"),
-              },
-              // レベル3の空セクション
-              {
-                physicalName: "level3EmptySection",
-                displayName: "レベル3空セクション",
-                type: 'section',
-                members: [],
-              },
-              // レベル3の空配列
-              {
-                physicalName: "level3EmptyArray",
-                displayName: "レベル3空配列",
-                type: 'array',
-                onCreateNewItem: () => ({}),
-                members: [],
-              },
-            ],
-          },
-        ],
-      },
+        // 複数レベルの空のネスト
+        {
+          physicalName: "multiLevelEmpty",
+          displayName: "複数レベルの空ネスト",
+          type: 'section',
+          members: [
+            {
+              physicalName: "level1Text",
+              displayName: "レベル1テキスト",
+              ...UI_TEXT("level1Text"),
+            },
+            {
+              physicalName: "level2Section",
+              displayName: "レベル2セクション",
+              type: 'section',
+              members: [
+                {
+                  physicalName: "level2Text",
+                  displayName: "レベル2テキスト",
+                  ...UI_TEXT("level2Text"),
+                },
+                // レベル3の空セクション
+                {
+                  physicalName: "level3EmptySection",
+                  displayName: "レベル3空セクション",
+                  type: 'section',
+                  members: [],
+                },
+                // レベル3の空配列
+                {
+                  physicalName: "level3EmptyArray",
+                  displayName: "レベル3空配列",
+                  type: 'array',
+                  onCreateNewItem: () => ({}),
+                  members: [],
+                },
+              ],
+            },
+          ],
+        },
 
-      // 無効なonCreateNewItem関数のテスト
-      {
-        physicalName: "invalidNewItemArray",
-        displayName: "無効な新規アイテム配列",
-        type: 'array',
-        // 空オブジェクトを返すonCreateNewItem
-        onCreateNewItem: () => ({}),
-        members: [
-          {
-            physicalName: "item",
-            displayName: "アイテム",
-            ...UI_TEXT("item"),
-          },
-        ],
-      },
+        // 無効なonCreateNewItem関数のテスト
+        {
+          physicalName: "invalidNewItemArray",
+          displayName: "無効な新規アイテム配列",
+          type: 'array',
+          // 空オブジェクトを返すonCreateNewItem
+          onCreateNewItem: () => ({}),
+          members: [
+            {
+              physicalName: "item",
+              displayName: "アイテム",
+              ...UI_TEXT("item"),
+            },
+          ],
+        },
 
-      // null/undefinedを含む可能性のあるonCreateNewItem
-      {
-        physicalName: "nullishNewItemArray",
-        displayName: "null可能性配列",
-        type: 'array',
-        onCreateNewItem: () => ({
-          text: undefined,
-          number: null,
-          emptyString: "",
-        }),
-        members: [
-          {
-            physicalName: "text",
-            displayName: "テキスト（undefined初期値）",
-            ...UI_TEXT("text"),
-          },
-          {
-            physicalName: "number",
-            displayName: "数値（null初期値）",
-            ...UI_NUMBER("number"),
-          },
-          {
-            physicalName: "emptyString",
-            displayName: "空文字初期値",
-            ...UI_TEXT("emptyString"),
-          },
-        ],
-      },
-    ],
+        // null/undefinedを含む可能性のあるonCreateNewItem
+        {
+          physicalName: "nullishNewItemArray",
+          displayName: "null可能性配列",
+          type: 'array',
+          onCreateNewItem: () => ({
+            text: undefined,
+            number: null,
+            emptyString: "",
+          }),
+          members: [
+            {
+              physicalName: "text",
+              displayName: "テキスト（undefined初期値）",
+              ...UI_TEXT("text"),
+            },
+            {
+              physicalName: "number",
+              displayName: "数値（null初期値）",
+              ...UI_NUMBER("number"),
+            },
+            {
+              physicalName: "emptyString",
+              displayName: "空文字初期値",
+              ...UI_TEXT("emptyString"),
+            },
+          ],
+        },
+      ],
+    },
   }
 }
