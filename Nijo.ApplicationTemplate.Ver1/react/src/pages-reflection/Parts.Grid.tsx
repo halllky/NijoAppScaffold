@@ -43,7 +43,7 @@ export const ReflectionGridInSingleView = ({ ownerPhysicalName, owner, ancestors
   })
 
   return (
-    <FormLayout.Item
+    <FormLayout.Field
       fullWidth
       label={owner.displayName}
       labelEnd={(
@@ -60,7 +60,7 @@ export const ReflectionGridInSingleView = ({ ownerPhysicalName, owner, ancestors
         onChangeRow={handleChangeRow}
         className={`min-h-48 ${className ?? ''}`}
       />
-    </FormLayout.Item>
+    </FormLayout.Field>
 
   )
 }

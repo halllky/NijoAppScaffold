@@ -2,7 +2,7 @@ import React from "react"
 import { RecentParentContext, FormLayoutContext } from "./internal-context"
 import { LabelRenderer } from "./internal-label-renderer"
 
-export type ItemProps = {
+export type FieldProps = {
   /** 通常はラベルが左、値が右に表示されるが、これをtrueにするとラベルと値を縦に並べ、横幅いっぱいに表示する。 */
   fullWidth?: boolean
   /** ラベル */
@@ -12,8 +12,10 @@ export type ItemProps = {
   children?: React.ReactNode
 }
 
-/** コンテンツ */
-export const Item = (props: ItemProps): React.ReactNode => {
+/**
+ * フォームのフィールド
+ */
+export const Field = (props: FieldProps): React.ReactNode => {
   const { labelAlign, labelWidth } = React.useContext(FormLayoutContext)
   const parent = React.useContext(RecentParentContext)
 

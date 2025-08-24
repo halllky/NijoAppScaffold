@@ -24,11 +24,11 @@ export const FormValueMember = ({ member, owner, ancestorsPath }: {
   }
 
   return (
-    <FormLayout.Item
+    <FormLayout.Field
       label={member.noLabel ? undefined : (member.displayName ?? member.physicalName)}
       labelEnd={member.noLabel ? undefined : member.renderFormLabel?.(rendererProps)}
     >
       {member.renderFormValue?.(rendererProps)}
-    </FormLayout.Item>
+    </FormLayout.Field>
   )
 }

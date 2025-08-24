@@ -62,7 +62,7 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
             <FormLayout.Separator />
           )}
 
-          <FormLayout.Item
+          <FormLayout.Field
             fullWidth
             label={`${array.displayName ?? array.physicalName} ${index + 1}`}
             labelEnd={(
@@ -78,16 +78,16 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
               owner={array}
               ancestorsPath={`${arrayMemberPath}.${index}`}
             />
-          </FormLayout.Item>
+          </FormLayout.Field>
         </React.Fragment>
       ))}
 
       {/* 追加ボタン */}
-      <FormLayout.Item fullWidth>
+      <FormLayout.Field fullWidth>
         <IconButton icon={Icon.PlusCircleIcon} outline mini onClick={handleAppend}>
           {array.displayName ?? array.physicalName} を追加
         </IconButton>
-      </FormLayout.Item>
+      </FormLayout.Field>
     </>
   )
 }

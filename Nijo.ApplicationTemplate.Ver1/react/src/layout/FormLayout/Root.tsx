@@ -1,7 +1,7 @@
 import React from "react"
 import { FormLayoutContext, FormLayoutContextValue, RecentParentContext } from "./internal-context"
 import { DefaultLabel, LabelProps } from "./DefaultLabel"
-import { Group } from "./Group"
+import { Section } from "./Section"
 
 /** レスポンシブフォームのプロパティ */
 export type ResponsiveFormProps = {
@@ -75,9 +75,9 @@ export const Root = (props: ResponsiveFormProps) => {
 
   return (
     <FormLayoutContext.Provider value={contextValue}>
-      <Group ref={containerRef} className={props.className}>
+      <Section ref={containerRef} className={props.className}>
         {props.children}
-      </Group>
+      </Section>
     </FormLayoutContext.Provider>
   )
 }

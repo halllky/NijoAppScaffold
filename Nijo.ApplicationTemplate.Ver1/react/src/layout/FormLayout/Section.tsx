@@ -1,10 +1,10 @@
 import React from "react"
 import { BorderPaddingContext, FormLayoutContext, RecentParentContext } from "./internal-context"
 
-import "./Group.css"
+import "./Section.css"
 import { LabelRenderer } from "./internal-label-renderer"
 
-export type GroupProps = {
+export type SectionProps = {
   /** ラベル */
   label?: string
   /** ラベルの後ろに挿入される */
@@ -25,7 +25,7 @@ export type GroupProps = {
 /**
  * 複数のItemまたはColumnを囲むグループ。
  */
-export const Group = React.forwardRef<HTMLDivElement, GroupProps>((props, ref) => {
+export const Section = React.forwardRef<HTMLDivElement, SectionProps>((props, ref) => {
 
   const parent = React.useContext(RecentParentContext)
   const ancestorBorderPadding = React.useContext(BorderPaddingContext)
@@ -59,7 +59,7 @@ export const Group = React.forwardRef<HTMLDivElement, GroupProps>((props, ref) =
             )}
 
             {/* コンテンツ */}
-            <div className="responsive-column-group" style={{
+            <div className="form-layout-section-responsive-column-group" style={{
               display: 'flex',
               gap: '4px',
               alignItems: 'start',

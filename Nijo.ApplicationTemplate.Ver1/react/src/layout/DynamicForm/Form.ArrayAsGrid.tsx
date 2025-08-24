@@ -65,7 +65,7 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
   })
 
   return (
-    <FormLayout.Item
+    <FormLayout.Field
       fullWidth
       label={array.displayName ?? array.physicalName}
       labelEnd={(
@@ -85,7 +85,7 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
         onChangeRow={handleChangeRow}
         className="min-h-32 resize-y border border-gray-300"
       />
-    </FormLayout.Item>
+    </FormLayout.Field>
   )
 }
 

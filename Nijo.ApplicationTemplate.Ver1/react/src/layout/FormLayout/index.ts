@@ -1,22 +1,22 @@
 import { type LabelProps, DefaultLabel } from "./DefaultLabel"
 import { Root, type ResponsiveFormProps } from "./Root"
 import { Separator } from "./Separator"
-import { Item, type ItemProps } from "./Item"
-import { Group, type GroupProps } from "./Group"
+import { Field, type FieldProps } from "./Field"
+import { Section, type SectionProps } from "./Section"
 import { Spacer } from "./Spacer"
 
 export default {
   Root,
-  Group,
+  Section,
   Separator,
   Spacer,
-  Item,
+  Field,
   DefaultLabel,
 }
 
 export type {
   ResponsiveFormProps,
-  GroupProps,
-  ItemProps,
+  SectionProps,
+  FieldProps,
   LabelProps,
 }

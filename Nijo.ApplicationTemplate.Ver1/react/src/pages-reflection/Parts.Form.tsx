@@ -104,9 +104,9 @@ const MemberComponentsGroupedByBreakPoint = ({ owner, ancestorsPath }: {
             />
           ) : (
             // 折り返しが発生するグループ
-            <FormLayout.Group>
+            <FormLayout.Section>
               {/* 左列 */}
-              <FormLayout.Group>
+              <FormLayout.Section>
                 {group.firstColumn.map((member) => (
                   <MemberComponent
                     key={member.physicalName}
@@ -115,11 +115,11 @@ const MemberComponentsGroupedByBreakPoint = ({ owner, ancestorsPath }: {
                     member={member.member}
                   />
                 ))}
-              </FormLayout.Group>
+              </FormLayout.Section>
 
               {/* 右列 */}
               {group.secondColumn.length > 0 && (
-                <FormLayout.Group>
+                <FormLayout.Section>
                   {group.secondColumn.map((member) => (
                     <MemberComponent
                       key={member.physicalName}
@@ -128,9 +128,9 @@ const MemberComponentsGroupedByBreakPoint = ({ owner, ancestorsPath }: {
                       member={member.member}
                     />
                   ))}
-                </FormLayout.Group>
+                </FormLayout.Section>
               )}
-            </FormLayout.Group>
+            </FormLayout.Section>
           )}
         </React.Fragment>
       ))}
@@ -161,12 +161,12 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
   // Child
   if (member.type === "ChildAggregate") {
     return (
-      <FormLayout.Item fullWidth label={member.displayName}>
+      <FormLayout.Field fullWidth label={member.displayName}>
         <MemberComponentsGroupedByBreakPoint
           ancestorsPath={ancestorsPath ? `${ancestorsPath}.${memberName}` : memberName}
           owner={member}
         />
-      </FormLayout.Item>
+      </FormLayout.Field>
     )
   }
 
@@ -191,12 +191,12 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
     // 子孫にChildrenがいるならばフォームのリスト
     if (hasChildren || mode === "search-condition") {
       return (
-        <FormLayout.Item fullWidth label={member.displayName}>
+        <FormLayout.Field fullWidth label={member.displayName}>
           <MemberComponentsGroupedByBreakPoint
             ancestorsPath={ancestorsPath ? `${ancestorsPath}.${memberName}` : memberName}
             owner={member}
           />
-        </FormLayout.Item>
+        </FormLayout.Field>
       )
     }
 
@@ -219,7 +219,7 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
   // 外部参照
   if (member.type === "ref-to") {
     return (
-      <FormLayout.Item
+      <FormLayout.Field
         label={member.displayName}
         labelEnd={member.required && mode === "single-view" && (
           <Layout.RequiredChip />
@@ -238,7 +238,7 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
             control={control}
           />
         )}
-      </FormLayout.Item>
+      </FormLayout.Field>
     )
   }
 
@@ -248,7 +248,7 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
     // 単語
     if (member.type === "word") {
       return (
-        <FormLayout.Item
+        <FormLayout.Field
           label={member.displayName}
           labelEnd={member.required && mode === "single-view" && (
             <Layout.RequiredChip />
@@ -258,14 +258,14 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
             control={control}
             name={valuesMemberPath}
           />
-        </FormLayout.Item>
+        </FormLayout.Field>
       )
     }
 
     // 文章
     if (member.type === "description") {
       return mode === "single-view" ? (
-        <FormLayout.Item
+        <FormLayout.Field
           label={member.displayName}
           labelEnd={member.required && mode === "single-view" && (
             <Layout.RequiredChip />
@@ -275,22 +275,22 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
             control={control}
             name={valuesMemberPath}
           />
-        </FormLayout.Item>
+        </FormLayout.Field>
       ) : (
         // 部分一致検索なので、入力欄はWord型と同じ
-        <FormLayout.Item label={member.displayName}>
+        <FormLayout.Field label={member.displayName}>
           <Input.Word
             control={control}
             name={valuesMemberPath}
           />
-        </FormLayout.Item>
+        </FormLayout.Field>
       )
     }
 
     // 数値
     if (member.type === "int" || member.type === "decimal") {
       return mode === "single-view" ? (
-        <FormLayout.Item
+        <FormLayout.Field
           label={member.displayName}
           labelEnd={member.required && (
             <Layout.RequiredChip />
@@ -300,10 +300,10 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
             control={control}
             name={valuesMemberPath}
           />
-        </FormLayout.Item>
+        </FormLayout.Field>
       ) : (
         // 範囲検索
-        <FormLayout.Item label={member.displayName}>
+        <FormLayout.Field label={member.displayName}>
           <div className="flex flex-wrap items-center gap-1">
             <Input.NumberInput
               control={control}
@@ -317,14 +317,14 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
               className="max-w-24"
             />
           </div>
-        </FormLayout.Item>
+        </FormLayout.Field>
       )
     }
 
     // 年月、日付、日付時刻
     if (member.type === "yearmonth" || member.type === "date" || member.type === "datetime") {
       return mode === "single-view" ? (
-        <FormLayout.Item
+        <FormLayout.Field
           label={member.displayName}
           labelEnd={member.required && (
             <Layout.RequiredChip />
@@ -335,10 +335,10 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
             name={valuesMemberPath}
             yearMonth={member.type === "yearmonth"}
           />
-        </FormLayout.Item>
+        </FormLayout.Field>
       ) : (
         // 範囲検索
-        <FormLayout.Item label={member.displayName}>
+        <FormLayout.Field label={member.displayName}>
           <div className="flex flex-wrap items-center gap-1">
             <Input.DateInput
               control={control}
@@ -354,14 +354,14 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
               className="max-w-40"
             />
           </div>
-        </FormLayout.Item>
+        </FormLayout.Field>
       )
     }
 
     // チェックボックス
     if (member.type === "bool") {
       return mode === "single-view" ? (
-        <FormLayout.Item
+        <FormLayout.Field
           label={member.displayName}
           labelEnd={member.required && (
             <Layout.RequiredChip />
@@ -371,10 +371,10 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
             control={control}
             name={valuesMemberPath}
           />
-        </FormLayout.Item>
+        </FormLayout.Field>
       ) : (
         // 検索条件
-        <FormLayout.Item label={member.displayName}>
+        <FormLayout.Field label={member.displayName}>
           <div className="flex flex-wrap gap-x-2 gap-y-1">
             <Input.CheckBox
               control={control}
@@ -389,14 +389,14 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
               Falseのみ
             </Input.CheckBox>
           </div>
-        </FormLayout.Item>
+        </FormLayout.Field>
       )
     }
 
     return (
-      <FormLayout.Item label={member.displayName}>
+      <FormLayout.Field label={member.displayName}>
         TODO
-      </FormLayout.Item>
+      </FormLayout.Field>
     )
   }
 
@@ -405,7 +405,7 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
     const enumValues = EnumDefs.EnumValueMap[member.enumType]()
 
     return mode === "single-view" ? (
-      <FormLayout.Item
+      <FormLayout.Field
         label={member.displayName}
         labelEnd={member.required && (
           <Layout.RequiredChip />
@@ -416,10 +416,10 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
           control={control}
           name={valuesMemberPath}
         />
-      </FormLayout.Item>
+      </FormLayout.Field>
     ) : (
       // 検索条件
-      <FormLayout.Item label={member.displayName}>
+      <FormLayout.Field label={member.displayName}>
         <div className="flex flex-wrap gap-x-2 gap-y-1">
           {enumValues.map((value) => (
             <Input.CheckBox
@@ -431,14 +431,14 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
             </Input.CheckBox>
           ))}
         </div>
-      </FormLayout.Item>
+      </FormLayout.Field>
     )
   }
 
   // 値オブジェクト（UIは単語型のそれに倣う）
   if (member.valueObjectType !== undefined) {
     return (
-      <FormLayout.Item
+      <FormLayout.Field
         label={member.displayName}
         labelEnd={member.required && mode === "single-view" && (
           <Layout.RequiredChip />
@@ -448,7 +448,7 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
           control={control}
           name={valuesMemberPath}
         />
-      </FormLayout.Item>
+      </FormLayout.Field>
     )
   }
 }

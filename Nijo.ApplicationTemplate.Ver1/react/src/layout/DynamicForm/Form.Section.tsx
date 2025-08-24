@@ -36,7 +36,7 @@ export const FormSection = ({ member: section, owner, ancestorsPath }: {
 
   // 既定のレンダリング
   return (
-    <FormLayout.Item
+    <FormLayout.Field
       fullWidth
       label={section.displayName ?? section.physicalName}
       labelEnd={section.renderFormLabel?.(rendererProps)}
@@ -45,6 +45,6 @@ export const FormSection = ({ member: section, owner, ancestorsPath }: {
         ancestorsPath={sectionMemberPath}
         owner={section}
       />
-    </FormLayout.Item>
+    </FormLayout.Field>
   )
 }

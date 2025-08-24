@@ -1,11 +1,11 @@
 /* レスポンシブコンテナの中の要素は最後の要素だけ伸縮させる */
-.responsive-column-group>*:not(:last-child) {
+.form-layout-section-responsive-column-group>*:not(:last-child) {
   flex-shrink: 0;
   flex-grow: 0;
 }
 
 /* レスポンシブコンテナの中の要素は最後の要素だけ伸縮させる */
-.responsive-column-group>*:last-child {
+.form-layout-section-responsive-column-group>*:last-child {
   flex-shrink: 1;
   flex-grow: 1;
 }
