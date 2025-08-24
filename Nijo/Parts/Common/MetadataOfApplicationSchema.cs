@@ -32,6 +32,10 @@ internal class Metadata : IMultiAggregateSourceFile {
     internal const string VALUE_MEMBER_METADATA_CS = "ValueMemberMetadata";
     internal const string VALUE_MEMBER_METADATA_TS = "ValueMemberMetadata";
 
+    internal const string FOR_REFLECTION_AGGREGATE_CS = "AggregateForReflection";
+    internal const string FOR_REFLECTION_AGGREGATE_MEMBER_CS = "IAggregateMemberForReflection";
+    internal const string FOR_REFLECTION_VALUE_MEMBER_CS = "ValueMemberForReflection";
+
     void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
         // 特になし
     }
@@ -93,17 +97,17 @@ internal class Metadata : IMultiAggregateSourceFile {
                     /// <summary>
                     /// ルート集約を列挙する。
                     /// </summary>
-                    public IEnumerable<Aggregate> EnumerateRootAggregates() {
+                    public IEnumerable<{{FOR_REFLECTION_AGGREGATE_CS}}> EnumerateRootAggregates() {
                 {{roots.SelectTextTemplate(container => $$"""
                         yield return {{container.PhysicalName}}.ToAggregate();
                 """)}}
                     }
 
-                    #region 型（JSON用）
+                    #region 型（リフレクション用）
                     /// <summary>
                     /// 集約（アプリケーションスキーマ）
                     /// </summary>
-                    public class Aggregate : IAggregateMember {
+                    public class {{FOR_REFLECTION_AGGREGATE_CS}} : {{FOR_REFLECTION_AGGREGATE_MEMBER_CS}} {
                         [JsonPropertyName("type")]
                         public string Type => "aggregate";
                         [JsonPropertyName("physicalName")]
@@ -113,18 +117,18 @@ internal class Metadata : IMultiAggregateSourceFile {
                         [JsonPropertyName("description")]
                         public required string Description { get; set; }
                         [JsonPropertyName("members")]
-                        public required List<IAggregateMember> Members { get; set; }
+                        public required List<{{FOR_REFLECTION_AGGREGATE_MEMBER_CS}}> Members { get; set; }
                     }
                     /// <summary>
                     /// 集約のメンバー
                     /// </summary>
-                    public interface IAggregateMember {
+                    public interface {{FOR_REFLECTION_AGGREGATE_MEMBER_CS}} {
                         string Type { get; }
                     }
                     /// <summary>
                     /// 値メンバー（アプリケーションスキーマの属性定義）
                     /// </summary>
-                    public class ValueMember : IAggregateMember {
+                    public class {{FOR_REFLECTION_VALUE_MEMBER_CS}} : {{FOR_REFLECTION_AGGREGATE_MEMBER_CS}} {
                         [JsonPropertyName("type")]
                         public string Type => "value";
                         [JsonPropertyName("physicalName")]
@@ -132,7 +136,7 @@ internal class Metadata : IMultiAggregateSourceFile {
                         [JsonPropertyName("metadata")]
                         public required {{VALUE_MEMBER_METADATA_CS}} Metadata { get; set; }
                     }
-                    #endregion 型（JSON用）
+                    #endregion 型（リフレクション用）
 
                     /// <inheritdoc cref="{{CS_CLASSNAME}}"/>
                     public sealed class {{VALUE_MEMBER_METADATA_CS}} {
@@ -251,12 +255,12 @@ internal class Metadata : IMultiAggregateSourceFile {
                     {{members.SelectTextTemplate(m => $$"""
                         {{WithIndent(m.RenderCSharp(), "    ")}}
                     """)}}
-                        public Aggregate ToAggregate() {
-                            return new Aggregate {
+                        public {{FOR_REFLECTION_AGGREGATE_CS}} ToAggregate() {
+                            return new {{FOR_REFLECTION_AGGREGATE_CS}} {
                                 PhysicalName = "{{metadata._aggregate.PhysicalName}}",
                                 DisplayName = "{{metadata._aggregate.DisplayName.Replace("\"", "\\\"")}}",
                                 Description = "{{description}}",
-                                Members = new List<IAggregateMember> {
+                                Members = new List<{{FOR_REFLECTION_AGGREGATE_MEMBER_CS}}> {
                     {{members.SelectTextTemplate(m => $$"""
                                     {{WithIndent(m.RenderCSharpAsListItemForToAggregate(), "                ")}} ,
                     """)}}
@@ -355,7 +359,7 @@ internal class Metadata : IMultiAggregateSourceFile {
 
         public string RenderCSharpAsListItemForToAggregate() {
             return $$"""
-                new ValueMember {
+                new {{FOR_REFLECTION_VALUE_MEMBER_CS}} {
                     PhysicalName = "{{_vm.PhysicalName}}",
                     Metadata = {{_vm.PhysicalName}},
                 }
