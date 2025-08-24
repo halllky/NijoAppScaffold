@@ -9,7 +9,7 @@ export default function (): DynamicFormProps {
 
   // 複数回使いまわすUIレンダリング定義
   const UI_TEXT = (physicalName: string): Partial<ValueMember> => ({
-    renderFormValue: ({ useFormReturn: { register }, name }) => (
+    contents: ({ useFormReturn: { register }, name }) => (
       <input
         type="text"
         {...register(name)}
@@ -17,7 +17,7 @@ export default function (): DynamicFormProps {
       />
     ),
     getGridColumnDef: ({ member, cellType }) => {
-      return cellType.text(physicalName, member.displayName ?? physicalName, {
+      return cellType.text(physicalName, typeof member.label === 'string' ? member.label : physicalName, {
         defaultWidth: 150,
       })
     },
@@ -31,13 +31,13 @@ export default function (): DynamicFormProps {
         // 通常のテキストメンバー（比較用）
         {
           physicalName: "normalText",
-          displayName: "通常のテキスト",
+          label: "通常のテキスト",
           ...UI_TEXT("normalText"),
         },
 
         // 静的な説明文を表示するNoneMember
         {
-          renderFormValue: () => (
+          contents: () => (
             <div className="bg-blue-50 border border-blue-200 rounded p-3">
               <h4 className="text-blue-800 font-semibold mb-2">📋 重要な説明</h4>
               <p className="text-blue-700 text-sm">
@@ -49,8 +49,8 @@ export default function (): DynamicFormProps {
 
         // ボタンを表示するNoneMember
         {
-          displayName: "アクションボタン",
-          renderFormValue: ({ useFormReturn }) => (
+          label: "アクションボタン",
+          contents: ({ useFormReturn }) => (
             <div className="flex gap-2">
               <button
                 type="button"
@@ -75,9 +75,9 @@ export default function (): DynamicFormProps {
 
         // カスタムレイアウトのNoneMember
         {
-          displayName: "カスタムレイアウト",
+          label: "カスタムレイアウト",
           fullWidth: true,
-          renderFormValue: ({ useFormReturn: { control } }) => {
+          contents: ({ useFormReturn: { control } }) => {
             const normalTextValue = ReactHookForm.useWatch({ name: "normalText", control });
             return (
               <div className="border-2 border-purple-300 rounded-lg p-4 bg-purple-50">
@@ -99,27 +99,27 @@ export default function (): DynamicFormProps {
         // セクション内のNoneMember
         {
           physicalName: "sectionWithNone",
-          displayName: "NoneMemberを含むセクション",
+          label: "NoneMemberを含むセクション",
           type: 'section',
           members: [
             {
               physicalName: "sectionText",
-              displayName: "セクション内テキスト",
+              label: "セクション内テキスト",
               ...UI_TEXT("sectionText"),
             },
 
             // セクション内の区切り線
             {
-              displayName: "区切り線",
+              label: "区切り線",
               fullWidth: true,
-              renderFormValue: () => (
+              contents: () => (
                 <hr className="border-gray-300 my-4" />
               ),
             },
 
             {
               physicalName: "sectionText2",
-              displayName: "セクション内テキスト2",
+              label: "セクション内テキスト2",
               ...UI_TEXT("sectionText2"),
             },
           ],
@@ -128,19 +128,19 @@ export default function (): DynamicFormProps {
         // 配列内のNoneMember
         {
           physicalName: "arrayWithNone",
-          displayName: "NoneMemberを含む配列",
+          arrayLabel: "NoneMemberを含む配列",
           type: 'array',
           onCreateNewItem: () => ({ item: "" }),
           members: [
             {
               physicalName: "item",
-              displayName: "アイテム",
+              label: "アイテム",
               ...UI_TEXT("item"),
             },
 
             // 配列内の情報表示
             {
-              displayName: "行情報",
+              label: "行情報",
               getGridColumnDef: ({ cellType }) => cellType.other("行情報", {
                 renderCell: (context) => (
                   <div className="text-gray-500 text-xs">

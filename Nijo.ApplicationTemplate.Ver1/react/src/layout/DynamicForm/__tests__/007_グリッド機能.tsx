@@ -8,7 +8,7 @@ export default function (): DynamicFormProps {
 
   // 複数回使いまわすUIレンダリング定義
   const UI_TEXT = (physicalName: string): Partial<ValueMember> => ({
-    renderFormValue: ({ useFormReturn: { register }, name }) => (
+    contents: ({ useFormReturn: { register }, name }) => (
       <input
         type="text"
         {...register(name)}
@@ -16,14 +16,14 @@ export default function (): DynamicFormProps {
       />
     ),
     getGridColumnDef: ({ member, cellType }) => {
-      return cellType.text(physicalName, member.displayName ?? physicalName, {
+      return cellType.text(physicalName, typeof member.label === 'string' ? member.label : physicalName, {
         defaultWidth: 150,
       })
     },
   })
 
   const UI_NUMBER = (physicalName: string): Partial<ValueMember> => ({
-    renderFormValue: ({ useFormReturn: { register }, name }) => (
+    contents: ({ useFormReturn: { register }, name }) => (
       <input
         type="number"
         {...register(name, { valueAsNumber: true })}
@@ -31,14 +31,14 @@ export default function (): DynamicFormProps {
       />
     ),
     getGridColumnDef: ({ member, cellType }) => {
-      return cellType.number(physicalName, member.displayName ?? physicalName, {
+      return cellType.number(physicalName, typeof member.label === 'string' ? member.label : physicalName, {
         defaultWidth: 120,
       })
     },
   })
 
   const UI_EMAIL = (physicalName: string): Partial<ValueMember> => ({
-    renderFormValue: ({ useFormReturn: { register }, name }) => (
+    contents: ({ useFormReturn: { register }, name }) => (
       <input
         type="email"
         {...register(name)}
@@ -47,28 +47,28 @@ export default function (): DynamicFormProps {
       />
     ),
     getGridColumnDef: ({ member, cellType }) => {
-      return cellType.text(physicalName, member.displayName ?? physicalName, {
+      return cellType.text(physicalName, typeof member.label === 'string' ? member.label : physicalName, {
         defaultWidth: 180,
       })
     },
   })
 
   const UI_BOOLEAN = (physicalName: string): Partial<ValueMember> => ({
-    renderFormValue: ({ useFormReturn: { register }, name }) => (
+    contents: ({ useFormReturn: { register }, name }) => (
       <label className="flex items-center gap-2">
         <input type="checkbox" {...register(name)} />
         <span>有効</span>
       </label>
     ),
     getGridColumnDef: ({ member, cellType }) => {
-      return cellType.boolean(physicalName, member.displayName ?? physicalName, {
+      return cellType.boolean(physicalName, typeof member.label === 'string' ? member.label : physicalName, {
         defaultWidth: 80,
       })
     },
   })
 
   const UI_DATE = (physicalName: string): Partial<ValueMember> => ({
-    renderFormValue: ({ useFormReturn: { register }, name }) => (
+    contents: ({ useFormReturn: { register }, name }) => (
       <input
         type="date"
         {...register(name)}
@@ -76,14 +76,14 @@ export default function (): DynamicFormProps {
       />
     ),
     getGridColumnDef: ({ member, cellType }) => {
-      return cellType.date(physicalName, member.displayName ?? physicalName, {
+      return cellType.date(physicalName, typeof member.label === 'string' ? member.label : physicalName, {
         defaultWidth: 140,
       })
     },
   })
 
   const UI_TEXTAREA = (physicalName: string): Partial<ValueMember> => ({
-    renderFormValue: ({ useFormReturn: { register }, name }) => (
+    contents: ({ useFormReturn: { register }, name }) => (
       <textarea
         {...register(name)}
         className="border border-gray-300 px-2 py-1 rounded w-full"
@@ -91,7 +91,7 @@ export default function (): DynamicFormProps {
       />
     ),
     getGridColumnDef: ({ member, cellType }) => {
-      return cellType.text(physicalName, member.displayName ?? physicalName, {
+      return cellType.text(physicalName, typeof member.label === 'string' ? member.label : physicalName, {
         defaultWidth: 200,
         editorOverflow: 'vertical',
       })
@@ -99,7 +99,7 @@ export default function (): DynamicFormProps {
   })
 
   const UI_SELECT = (physicalName: string, options?: { value: string, label: string }[]): Partial<ValueMember> => ({
-    renderFormValue: ({ useFormReturn: { register }, name }) => (
+    contents: ({ useFormReturn: { register }, name }) => (
       <select
         {...register(name)}
         className="border border-gray-300 px-2 py-1 rounded w-full"
@@ -120,7 +120,7 @@ export default function (): DynamicFormProps {
       </select>
     ),
     getGridColumnDef: ({ member, cellType }) => {
-      return cellType.text(physicalName, member.displayName ?? physicalName, {
+      return cellType.text(physicalName, typeof member.label === 'string' ? member.label : physicalName, {
         defaultWidth: 130,
       })
     },
@@ -133,7 +133,7 @@ export default function (): DynamicFormProps {
         // 基本的なグリッド表示用の配列
         {
           physicalName: "basicGrid",
-          displayName: "基本グリッド",
+          arrayLabel: "基本グリッド",
           type: 'array',
           onCreateNewItem: () => ({
             name: "",
@@ -146,32 +146,32 @@ export default function (): DynamicFormProps {
           members: [
             {
               physicalName: "name",
-              displayName: "名前",
+              label: "名前",
               ...UI_TEXT("name"),
             },
             {
               physicalName: "age",
-              displayName: "年齢",
+              label: "年齢",
               ...UI_NUMBER("age"),
             },
             {
               physicalName: "email",
-              displayName: "メールアドレス",
+              label: "メールアドレス",
               ...UI_EMAIL("email"),
             },
             {
               physicalName: "isActive",
-              displayName: "アクティブ",
+              label: "アクティブ",
               ...UI_BOOLEAN("isActive"),
             },
             {
               physicalName: "joinDate",
-              displayName: "入社日",
+              label: "入社日",
               ...UI_DATE("joinDate"),
             },
             {
               physicalName: "notes",
-              displayName: "備考",
+              label: "備考",
               ...UI_TEXTAREA("notes"),
             },
           ],
@@ -180,7 +180,7 @@ export default function (): DynamicFormProps {
         // カスタムグリッド列定義を持つ配列
         {
           physicalName: "customGrid",
-          displayName: "カスタムグリッド",
+          arrayLabel: "カスタムグリッド",
           type: 'array',
           onCreateNewItem: () => ({
             product: "",
@@ -191,8 +191,8 @@ export default function (): DynamicFormProps {
           members: [
             {
               physicalName: "product",
-              displayName: "商品名",
-              renderFormValue: ({ useFormReturn: { register }, name }) => (
+              label: "商品名",
+              contents: ({ useFormReturn: { register }, name }) => (
                 <input
                   type="text"
                   {...register(name)}
@@ -200,7 +200,7 @@ export default function (): DynamicFormProps {
                 />
               ),
               getGridColumnDef: ({ member, cellType }) => {
-                return cellType.text("product", member.displayName ?? "product", {
+                return cellType.text("product", typeof member.label === 'string' ? member.label : "product", {
                   defaultWidth: 200,
                   required: true,
                   isFixed: true, // 固定列
@@ -209,8 +209,8 @@ export default function (): DynamicFormProps {
             },
             {
               physicalName: "price",
-              displayName: "価格",
-              renderFormValue: ({ useFormReturn: { register }, name }) => (
+              label: "価格",
+              contents: ({ useFormReturn: { register }, name }) => (
                 <div className="flex items-center">
                   <span className="text-gray-500 mr-1">¥</span>
                   <input
@@ -222,7 +222,7 @@ export default function (): DynamicFormProps {
                 </div>
               ),
               getGridColumnDef: ({ member, cellType }) => {
-                return cellType.number("price", member.displayName ?? "price", {
+                return cellType.number("price", typeof member.label === 'string' ? member.label : "price", {
                   defaultWidth: 120,
                   required: true,
                   renderCell: (context) => (
@@ -235,8 +235,8 @@ export default function (): DynamicFormProps {
             },
             {
               physicalName: "category",
-              displayName: "カテゴリ",
-              renderFormValue: ({ useFormReturn: { register }, name }) => (
+              label: "カテゴリ",
+              contents: ({ useFormReturn: { register }, name }) => (
                 <select
                   {...register(name)}
                   className="border border-gray-300 px-2 py-1 rounded w-full"
@@ -249,7 +249,7 @@ export default function (): DynamicFormProps {
                 </select>
               ),
               getGridColumnDef: ({ member, cellType }) => {
-                return cellType.text("category", member.displayName ?? "category", {
+                return cellType.text("category", typeof member.label === 'string' ? member.label : "category", {
                   defaultWidth: 140,
                   getOptions: () => [
                     { value: "electronics", label: "家電" },
@@ -262,15 +262,15 @@ export default function (): DynamicFormProps {
             },
             {
               physicalName: "inStock",
-              displayName: "在庫あり",
-              renderFormValue: ({ useFormReturn: { register }, name }) => (
+              label: "在庫あり",
+              contents: ({ useFormReturn: { register }, name }) => (
                 <label className="flex items-center gap-2">
                   <input type="checkbox" {...register(name)} />
                   <span>有効</span>
                 </label>
               ),
               getGridColumnDef: ({ member, cellType }) => {
-                return cellType.boolean("inStock", member.displayName ?? "inStock", {
+                return cellType.boolean("inStock", typeof member.label === 'string' ? member.label : "inStock", {
                   defaultWidth: 100,
                   renderCell: (context) => (
                     <div className="text-center">
@@ -290,7 +290,7 @@ export default function (): DynamicFormProps {
         // 読み取り専用列を含むグリッド
         {
           physicalName: "readOnlyGrid",
-          displayName: "読み取り専用グリッド",
+          arrayLabel: "読み取り専用グリッド",
           type: 'array',
           onCreateNewItem: () => ({
             id: Math.floor(Math.random() * 10000),
@@ -301,8 +301,8 @@ export default function (): DynamicFormProps {
           members: [
             {
               physicalName: "id",
-              displayName: "ID",
-              renderFormValue: ({ useFormReturn: { watch }, name }) => {
+              label: "ID",
+              contents: ({ useFormReturn: { watch }, name }) => {
                 const value = watch(name);
                 return (
                   <div className="bg-gray-100 px-2 py-1 rounded text-gray-600">
@@ -311,7 +311,7 @@ export default function (): DynamicFormProps {
                 );
               },
               getGridColumnDef: ({ member, cellType }) => {
-                return cellType.number("id", member.displayName ?? "id", {
+                return cellType.number("id", typeof member.label === 'string' ? member.label : "id", {
                   defaultWidth: 80,
                   isReadOnly: true,
                   renderCell: (context) => (
@@ -324,18 +324,18 @@ export default function (): DynamicFormProps {
             },
             {
               physicalName: "name",
-              displayName: "名前",
+              label: "名前",
               ...UI_TEXT("name"),
             },
             {
               physicalName: "status",
-              displayName: "ステータス",
+              label: "ステータス",
               ...UI_SELECT("status"),
             },
             {
               physicalName: "createdAt",
-              displayName: "作成日",
-              renderFormValue: ({ useFormReturn: { watch }, name }) => {
+              label: "作成日",
+              contents: ({ useFormReturn: { watch }, name }) => {
                 const value = watch(name);
                 return (
                   <div className="bg-gray-100 px-2 py-1 rounded text-gray-600">
@@ -344,7 +344,7 @@ export default function (): DynamicFormProps {
                 );
               },
               getGridColumnDef: ({ member, cellType }) => {
-                return cellType.date("createdAt", member.displayName ?? "createdAt", {
+                return cellType.date("createdAt", typeof member.label === 'string' ? member.label : "createdAt", {
                   defaultWidth: 120,
                   isReadOnly: true,
                 })
@@ -356,7 +356,7 @@ export default function (): DynamicFormProps {
         // 非表示列を含むグリッド
         {
           physicalName: "hiddenColumnGrid",
-          displayName: "非表示列グリッド",
+          arrayLabel: "非表示列グリッド",
           type: 'array',
           onCreateNewItem: () => ({
             visibleData: "",
@@ -366,13 +366,13 @@ export default function (): DynamicFormProps {
           members: [
             {
               physicalName: "visibleData",
-              displayName: "表示データ",
+              label: "表示データ",
               ...UI_TEXT("visibleData"),
             },
             {
               physicalName: "hiddenData",
-              displayName: "非表示データ",
-              renderFormValue: ({ useFormReturn: { register }, name }) => (
+              label: "非表示データ",
+              contents: ({ useFormReturn: { register }, name }) => (
                 <input
                   type="text"
                   {...register(name)}
@@ -380,15 +380,15 @@ export default function (): DynamicFormProps {
                 />
               ),
               getGridColumnDef: ({ member, cellType }) => {
-                return cellType.text("hiddenData", member.displayName ?? "hiddenData", {
+                return cellType.text("hiddenData", typeof member.label === 'string' ? member.label : "hiddenData", {
                   invisible: true, // 非表示
                 })
               },
             },
             {
               physicalName: "internalId",
-              displayName: "内部ID",
-              renderFormValue: ({ useFormReturn: { watch }, name }) => {
+              label: "内部ID",
+              contents: ({ useFormReturn: { watch }, name }) => {
                 const value = watch(name);
                 return (
                   <div className="bg-gray-100 px-2 py-1 rounded text-gray-600">
@@ -397,7 +397,7 @@ export default function (): DynamicFormProps {
                 );
               },
               getGridColumnDef: ({ member, cellType }) => {
-                return cellType.number("internalId", member.displayName ?? "internalId", {
+                return cellType.number("internalId", typeof member.label === 'string' ? member.label : "internalId", {
                   invisible: true, // 非表示
                 })
               },
@@ -408,7 +408,7 @@ export default function (): DynamicFormProps {
         // 複雑な編集機能を持つグリッド
         {
           physicalName: "advancedEditGrid",
-          displayName: "高度編集グリッド",
+          arrayLabel: "高度編集グリッド",
           type: 'array',
           onCreateNewItem: () => ({
             task: "",
@@ -420,8 +420,8 @@ export default function (): DynamicFormProps {
           members: [
             {
               physicalName: "task",
-              displayName: "タスク",
-              renderFormValue: ({ useFormReturn: { register }, name }) => (
+              label: "タスク",
+              contents: ({ useFormReturn: { register }, name }) => (
                 <input
                   type="text"
                   {...register(name)}
@@ -429,7 +429,7 @@ export default function (): DynamicFormProps {
                 />
               ),
               getGridColumnDef: ({ member, cellType }) => {
-                return cellType.text("task", member.displayName ?? "task", {
+                return cellType.text("task", typeof member.label === 'string' ? member.label : "task", {
                   defaultWidth: 200,
                   editorOverflow: 'vertical',
                 })
@@ -437,8 +437,8 @@ export default function (): DynamicFormProps {
             },
             {
               physicalName: "priority",
-              displayName: "優先度",
-              renderFormValue: ({ useFormReturn: { register }, name }) => (
+              label: "優先度",
+              contents: ({ useFormReturn: { register }, name }) => (
                 <select
                   {...register(name)}
                   className="border border-gray-300 px-2 py-1 rounded w-full"
@@ -451,7 +451,7 @@ export default function (): DynamicFormProps {
                 </select>
               ),
               getGridColumnDef: ({ member, cellType }) => {
-                return cellType.text("priority", member.displayName ?? "priority", {
+                return cellType.text("priority", typeof member.label === 'string' ? member.label : "priority", {
                   defaultWidth: 100,
                   getOptions: () => [
                     { value: "low", label: "低" },
@@ -481,13 +481,13 @@ export default function (): DynamicFormProps {
             },
             {
               physicalName: "dueDate",
-              displayName: "期限",
+              label: "期限",
               ...UI_DATE("dueDate"),
             },
             {
               physicalName: "progress",
-              displayName: "進捗",
-              renderFormValue: ({ useFormReturn: { register, watch }, name }) => {
+              label: "進捗",
+              contents: ({ useFormReturn: { register, watch }, name }) => {
                 const value = watch(name) as number || 0;
                 return (
                   <div>
@@ -505,7 +505,7 @@ export default function (): DynamicFormProps {
                 );
               },
               getGridColumnDef: ({ member, cellType }) => {
-                return cellType.number("progress", member.displayName ?? "progress", {
+                return cellType.number("progress", typeof member.label === 'string' ? member.label : "progress", {
                   defaultWidth: 120,
                   renderCell: (context) => {
                     const value = Number(context.getValue()) || 0;
@@ -528,8 +528,8 @@ export default function (): DynamicFormProps {
             },
             {
               physicalName: "assignee",
-              displayName: "担当者",
-              renderFormValue: ({ useFormReturn: { register }, name }) => (
+              label: "担当者",
+              contents: ({ useFormReturn: { register }, name }) => (
                 <select
                   {...register(name)}
                   className="border border-gray-300 px-2 py-1 rounded w-full"
@@ -542,7 +542,7 @@ export default function (): DynamicFormProps {
                 </select>
               ),
               getGridColumnDef: ({ member, cellType }) => {
-                return cellType.text("assignee", member.displayName ?? "assignee", {
+                return cellType.text("assignee", typeof member.label === 'string' ? member.label : "assignee", {
                   defaultWidth: 130,
                   getOptions: () => [
                     { value: "user1", label: "田中太郎" },

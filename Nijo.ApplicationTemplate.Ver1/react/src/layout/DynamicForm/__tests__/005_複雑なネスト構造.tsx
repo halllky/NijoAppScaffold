@@ -7,7 +7,7 @@ export default function (): DynamicFormProps {
 
   // 複数回使いまわすUIレンダリング定義
   const UI_TEXT = (physicalName: string): Partial<ValueMember> => ({
-    renderFormValue: ({ useFormReturn: { register }, name }) => (
+    contents: ({ useFormReturn: { register }, name }) => (
       <input
         type="text"
         {...register(name)}
@@ -15,14 +15,14 @@ export default function (): DynamicFormProps {
       />
     ),
     getGridColumnDef: ({ member, cellType }) => {
-      return cellType.text(physicalName, member.displayName ?? physicalName, {
+      return cellType.text(physicalName, typeof member.label === 'string' ? member.label : physicalName, {
         defaultWidth: 120,
       })
     },
   })
 
   const UI_SELECT = (physicalName: string, options?: { value: string, label: string }[]): Partial<ValueMember> => ({
-    renderFormValue: ({ useFormReturn: { register }, name }) => {
+    contents: ({ useFormReturn: { register }, name }) => {
       // フィールド名に応じて異なる選択肢を提供
       const getOptions = () => {
         if (options) return [{ value: "", label: "選択してください" }, ...options];
@@ -94,14 +94,14 @@ export default function (): DynamicFormProps {
       );
     },
     getGridColumnDef: ({ member, cellType }) => {
-      return cellType.text(physicalName, member.displayName ?? physicalName, {
+      return cellType.text(physicalName, typeof member.label === 'string' ? member.label : physicalName, {
         defaultWidth: 100,
       })
     },
   })
 
   const UI_TEXTAREA = (physicalName: string): Partial<ValueMember> => ({
-    renderFormValue: ({ useFormReturn: { register }, name }) => (
+    contents: ({ useFormReturn: { register }, name }) => (
       <textarea
         {...register(name)}
         className="border border-gray-300 px-2 py-1 rounded w-full text-sm"
@@ -109,14 +109,14 @@ export default function (): DynamicFormProps {
       />
     ),
     getGridColumnDef: ({ member, cellType }) => {
-      return cellType.text(physicalName, member.displayName ?? physicalName, {
+      return cellType.text(physicalName, typeof member.label === 'string' ? member.label : physicalName, {
         defaultWidth: 150,
       })
     },
   })
 
   const UI_DATE = (physicalName: string): Partial<ValueMember> => ({
-    renderFormValue: ({ useFormReturn: { register }, name }) => (
+    contents: ({ useFormReturn: { register }, name }) => (
       <input
         type="date"
         {...register(name)}
@@ -124,7 +124,7 @@ export default function (): DynamicFormProps {
       />
     ),
     getGridColumnDef: ({ member, cellType }) => {
-      return cellType.date(physicalName, member.displayName ?? physicalName, {
+      return cellType.date(physicalName, typeof member.label === 'string' ? member.label : physicalName, {
         defaultWidth: 120,
       })
     },
@@ -140,60 +140,60 @@ export default function (): DynamicFormProps {
         //    プロパティも展開されることを確認する
         {
           physicalName: "basicInfo",
-          displayName: "基本情報",
+          label: "基本情報",
           type: 'section',
           members: [
             {
               physicalName: "values.name",
-              displayName: "名前",
+              label: "名前",
               ...UI_TEXT("values.name"),
             },
             {
               physicalName: "values.email",
-              displayName: "メールアドレス",
+              label: "メールアドレス",
               ...UI_TEXT("values.email"),
             },
 
             // レベル2: 住所セクション（物理名なしネスト）
             // ※ UI上は個別のセクションに分かれるがデータ上は同じオブジェクトであるパターン
             {
-              displayName: "住所",
+              label: "住所",
               type: 'section',
               members: [
                 {
                   physicalName: "values.zipCode",
-                  displayName: "郵便番号",
+                  label: "郵便番号",
                   ...UI_TEXT("values.zipCode"),
                 },
                 {
                   physicalName: "values.prefecture",
-                  displayName: "都道府県",
+                  label: "都道府県",
                   ...UI_TEXT("values.prefecture"),
                 },
                 {
                   physicalName: "values.city",
-                  displayName: "市区町村",
+                  label: "市区町村",
                   ...UI_TEXT("values.city"),
                 },
 
                 // レベル3: 詳細住所セクション（レベル2と同じ観点）
                 {
-                  displayName: "詳細住所",
+                  label: "詳細住所",
                   type: 'section',
                   members: [
                     {
                       physicalName: "values.street",
-                      displayName: "番地",
+                      label: "番地",
                       ...UI_TEXT("values.street"),
                     },
                     {
                       physicalName: "values.building",
-                      displayName: "建物名",
+                      label: "建物名",
                       ...UI_TEXT("values.building"),
                     },
                     {
                       physicalName: "values.room",
-                      displayName: "部屋番号",
+                      label: "部屋番号",
                       ...UI_TEXT("values.room"),
                     },
                   ],
@@ -206,7 +206,7 @@ export default function (): DynamicFormProps {
         // レベル1: 連絡先配列
         {
           physicalName: "contacts",
-          displayName: "連絡先リスト",
+          arrayLabel: "連絡先リスト",
           type: 'array',
           onCreateNewItem: () => ({
             type: "",
@@ -220,47 +220,47 @@ export default function (): DynamicFormProps {
           members: [
             {
               physicalName: "type",
-              displayName: "連絡手段",
+              label: "連絡手段",
               ...UI_SELECT("type"),
             },
             {
               physicalName: "value",
-              displayName: "連絡先",
+              label: "連絡先",
               ...UI_TEXT("value"),
             },
 
             // レベル2: 配列内のセクション
             {
               physicalName: "details",
-              displayName: "詳細設定",
+              label: "詳細設定",
               type: 'section',
               members: [
                 {
                   physicalName: "priority",
-                  displayName: "優先度",
+                  label: "優先度",
                   ...UI_SELECT("priority"),
                 },
                 {
                   physicalName: "notes",
-                  displayName: "備考",
+                  label: "備考",
                   ...UI_TEXTAREA("notes"),
                 },
 
                 // レベル3: セクション内の配列（配列→セクション→配列のネスト）
                 {
                   physicalName: "schedule",
-                  displayName: "連絡可能時間",
+                  arrayLabel: "連絡可能時間",
                   type: 'array',
                   onCreateNewItem: () => ({ day: "", time: "" }),
                   members: [
                     {
                       physicalName: "day",
-                      displayName: "曜日",
+                      label: "曜日",
                       ...UI_SELECT("day"),
                     },
                     {
                       physicalName: "time",
-                      displayName: "時間帯",
+                      label: "時間帯",
                       ...UI_TEXT("time"),
                     },
                   ],
@@ -273,7 +273,7 @@ export default function (): DynamicFormProps {
         // レベル1: プロジェクト配列（より複雑なネスト）
         {
           physicalName: "projects",
-          displayName: "プロジェクト",
+          arrayLabel: "プロジェクト",
           type: 'array',
           onCreateNewItem: () => ({
             name: "",
@@ -287,60 +287,60 @@ export default function (): DynamicFormProps {
           members: [
             {
               physicalName: "name",
-              displayName: "プロジェクト名",
+              label: "プロジェクト名",
               ...UI_TEXT("name"),
             },
             {
               physicalName: "status",
-              displayName: "ステータス",
+              label: "ステータス",
               ...UI_SELECT("status"),
             },
 
             // レベル2: チーム情報セクション
             {
               physicalName: "team",
-              displayName: "チーム情報",
+              label: "チーム情報",
               type: 'section',
               members: [
                 {
                   physicalName: "leader",
-                  displayName: "リーダー",
+                  label: "リーダー",
                   ...UI_TEXT("leader"),
                 },
 
                 // レベル3: メンバー配列
                 {
                   physicalName: "members",
-                  displayName: "メンバー",
+                  arrayLabel: "メンバー",
                   type: 'array',
                   onCreateNewItem: () => ({ name: "", role: "", skills: [{ name: "", level: "" }] }),
                   members: [
                     {
                       physicalName: "name",
-                      displayName: "名前",
+                      label: "名前",
                       ...UI_TEXT("name"),
                     },
                     {
                       physicalName: "role",
-                      displayName: "役割",
+                      label: "役割",
                       ...UI_TEXT("role"),
                     },
 
                     // レベル4: スキル配列（配列→セクション→配列→配列のネスト）
                     {
                       physicalName: "skills",
-                      displayName: "スキル",
+                      arrayLabel: "スキル",
                       type: 'array',
                       onCreateNewItem: () => ({ name: "", level: "" }),
                       members: [
                         {
                           physicalName: "name",
-                          displayName: "スキル名",
+                          label: "スキル名",
                           ...UI_TEXT("name"),
                         },
                         {
                           physicalName: "level",
-                          displayName: "レベル",
+                          label: "レベル",
                           ...UI_SELECT("level"),
                         },
                       ],
@@ -351,37 +351,37 @@ export default function (): DynamicFormProps {
                 // レベル3: ミーティング配列
                 {
                   physicalName: "meetings",
-                  displayName: "ミーティング",
+                  arrayLabel: "ミーティング",
                   type: 'array',
                   onCreateNewItem: () => ({ date: "", agenda: { topics: [{ title: "", priority: "" }] } }),
                   members: [
                     {
                       physicalName: "date",
-                      displayName: "日付",
+                      label: "日付",
                       ...UI_DATE("date"),
                     },
 
                     // レベル4: アジェンダセクション
                     {
                       physicalName: "agenda",
-                      displayName: "アジェンダ",
+                      label: "アジェンダ",
                       type: 'section',
                       members: [
                         // レベル5: トピック配列（最も深いネスト）
                         {
                           physicalName: "topics",
-                          displayName: "議題",
+                          arrayLabel: "議題",
                           type: 'array',
                           onCreateNewItem: () => ({ title: "", priority: "" }),
                           members: [
                             {
                               physicalName: "title",
-                              displayName: "議題名",
+                              label: "議題名",
                               ...UI_TEXT("title"),
                             },
                             {
                               physicalName: "priority",
-                              displayName: "優先度",
+                              label: "優先度",
                               ...UI_SELECT("priority"),
                             },
                           ],

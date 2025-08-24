@@ -25,10 +25,11 @@ export const FormValueMember = ({ member, owner, ancestorsPath }: {
 
   return (
     <FormLayout.Field
-      label={member.noLabel ? undefined : (member.displayName)}
-      labelEnd={member.noLabel ? undefined : member.renderFormLabel?.(rendererProps)}
+      label={typeof member.label === 'string' ? member.label : undefined}
+      labelEnd={typeof member.label === 'function' ? member.label(rendererProps) : undefined}
+      fullWidth={member.fullWidth}
     >
-      {member.renderFormValue?.(rendererProps)}
+      {member.contents?.(rendererProps)}
     </FormLayout.Field>
   )
 }

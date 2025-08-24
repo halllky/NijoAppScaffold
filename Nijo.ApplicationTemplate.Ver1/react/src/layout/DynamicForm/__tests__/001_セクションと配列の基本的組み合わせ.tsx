@@ -7,11 +7,11 @@ export default function (): DynamicFormProps {
 
   // 複数回使いまわすUIレンダリング定義
   const UI_TEXT = (physicalName: string): Partial<ValueMember> => ({
-    renderFormValue: ({ useFormReturn: { register }, name }) => (
+    contents: ({ useFormReturn: { register }, name }) => (
       <input type="text" {...register(name)} className="border border-gray-700 px-1 py-px" />
     ),
     getGridColumnDef: ({ member, cellType }) => {
-      return cellType.text(physicalName, member.displayName ?? physicalName, {
+      return cellType.text(physicalName, typeof member.label === 'string' ? member.label : physicalName, {
       })
     },
   })
@@ -23,19 +23,19 @@ export default function (): DynamicFormProps {
         // セクション1
         {
           physicalName: "section1",
-          displayName: "セクション1",
+          label: "セクション1",
           type: 'section',
           members: [
             // セクション1-1
             {
               physicalName: "section1_1",
-              displayName: "セクション1-1",
+              label: "セクション1-1",
               type: 'section',
               members: [
                 // text型のメンバー1
                 {
                   physicalName: "member1",
-                  displayName: "メンバー1",
+                  label: "メンバー1",
                   ...UI_TEXT("member1"),
                 },
               ],
@@ -43,14 +43,14 @@ export default function (): DynamicFormProps {
             // 配列1-2
             {
               physicalName: "array1_2",
-              displayName: "配列1-2",
+              arrayLabel: "配列1-2",
               type: 'array',
               onCreateNewItem: () => ({ member2: "" }),
               members: [
                 // text型のメンバー2
                 {
                   physicalName: "member2",
-                  displayName: "メンバー2",
+                  label: "メンバー2",
                   ...UI_TEXT("member2"),
                 },
               ],
@@ -60,7 +60,8 @@ export default function (): DynamicFormProps {
         // 配列2
         {
           physicalName: "array2",
-          displayName: "配列2",
+          arrayLabel: "配列2",
+          itemLabel: ({ itemIndex }) => <span className="font-bold text-gray-500">配列2 No.{itemIndex + 1}</span>,
           type: 'array',
           onCreateNewItem: () => ({
             section2_1: { member3: "" },
@@ -70,13 +71,13 @@ export default function (): DynamicFormProps {
             // セクション2-1
             {
               physicalName: "section2_1",
-              displayName: "セクション2-1",
+              label: "セクション2-1",
               type: 'section',
               members: [
                 // text型のメンバー3
                 {
                   physicalName: "member3",
-                  displayName: "メンバー3",
+                  label: "メンバー3",
                   ...UI_TEXT("member3"),
                 },
               ],
@@ -84,14 +85,14 @@ export default function (): DynamicFormProps {
             // 配列2-2
             {
               physicalName: "array2_2",
-              displayName: "配列2-2",
+              arrayLabel: "配列2-2",
               type: 'array',
               onCreateNewItem: () => ({ member4: "" }),
               members: [
                 // text型のメンバー4
                 {
                   physicalName: "member4",
-                  displayName: "メンバー4",
+                  label: "メンバー4",
                   ...UI_TEXT("member4"),
                 },
               ],

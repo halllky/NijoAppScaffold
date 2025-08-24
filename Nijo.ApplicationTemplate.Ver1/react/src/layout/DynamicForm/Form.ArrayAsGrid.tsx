@@ -42,6 +42,7 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
 
   // 追加
   const handleAdd = useEvent(() => {
+    if (!array.onCreateNewItem) return;
     const newItem = array.onCreateNewItem()
     append(newItem)
   })
@@ -67,13 +68,15 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
   return (
     <FormLayout.Field
       fullWidth
-      label={array.displayName}
+      label={typeof array.arrayLabel === 'string' ? array.arrayLabel : undefined}
       labelEnd={(
         <>
           {/* ラベルの脇に追加のコンポーネントがある場合はレンダリング */}
-          {array.renderFormLabel?.(rendererProps)}
+          {typeof array.arrayLabel === 'function' ? array.arrayLabel(rendererProps) : undefined}
 
-          <IconButton icon={Icon.PlusCircleIcon} outline mini onClick={handleAdd}>追加</IconButton>
+          {array.onCreateNewItem && (
+            <IconButton icon={Icon.PlusCircleIcon} outline mini onClick={handleAdd}>追加</IconButton>
+          )}
           <IconButton icon={Icon.TrashIcon} outline mini onClick={handleDelete}>削除</IconButton>
         </>
       )}

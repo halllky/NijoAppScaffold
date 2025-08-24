@@ -38,16 +38,14 @@ export type Member<TOwner extends ReactHookForm.FieldValues = ReactHookForm.Fiel
 export type SectionMember<TOwner extends ReactHookForm.FieldValues = ReactHookForm.FieldValues> = MemberOwner<any> & {
   type: 'section'
   /**
-   * 主にhtmlのname属性の構築に用いられるメンバー名。
-   * 内部的にはルートオブジェクトからメンバーまでのパスがピリオドで連結されていく。
+   * このセクションのオーナーからこのセクションまでのパス。
+   * 未指定の場合、このセクションはデータ構造に影響を与えない外観だけのコンテナという位置づけになる。
    */
   physicalName?: ReactHookForm.Path<TOwner>
-  /** 画面上に表示する名称。未指定の場合はphysicalNameが使用される。 */
-  displayName?: string
-  /** フォームのレンダリングコンポーネント。未指定の場合は既定のレンダリングコンポーネントが使用される。 */
-  render?: SectionFormRenderer
-  /** フォームのラベル部分に追加のカスタマイズUIを表示したい場合に使用する。 `render` が指定されている場合は無視される。 */
-  renderFormLabel?: SectionFormRenderer
+  /** フォームのラベル部分 */
+  label?: string | CustomSectionRenderer
+  /** コンテンツを丸ごとカスタマイズしたい場合は指定 */
+  contents?: CustomSectionRenderer
 }
 
 /** 配列 */
@@ -58,36 +56,29 @@ export type ArrayMember<TOwner extends ReactHookForm.FieldValues = ReactHookForm
    * 内部的にはルートオブジェクトからメンバーまでのパスがピリオドで連結されていく。
    */
   physicalName: ReactHookForm.Path<TOwner>
-  /** 画面上に表示する名称。未指定の場合はphysicalNameが使用される。 */
-  displayName?: string
-  /** 新しいアイテムを作成するための関数。 */
-  onCreateNewItem: () => ReactHookForm.FieldValues
-  /** フォームのレンダリングコンポーネント。未指定の場合は既定のレンダリングコンポーネントが使用される。 */
-  render?: ArrayFormRenderer
-  /** フォームのラベル部分に追加のカスタマイズUIを表示したい場合に使用する。 `render` が指定されている場合は無視される。 */
-  renderFormLabel?: ArrayFormRenderer
+  /** 配列全体に対するラベル */
+  arrayLabel?: string | CustomArrayRenderer
+  /** 配列の各アイテムのラベル部分。この配列がグリッドとしてレンダリングされる場合は無視される。 */
+  itemLabel?: string | CustomArrayItemRenderer
+  /** コンテンツを丸ごとカスタマイズしたい場合は指定 */
+  contents?: CustomArrayRenderer
+  /** 新しいアイテムを作成するための関数。未指定の場合は既定のレンダリングで追加ボタンが表示されない。 */
+  onCreateNewItem?: () => ReactHookForm.FieldValues
 }
 
 /** 値メンバー */
 export type ValueMember<TOwner extends ReactHookForm.FieldValues = ReactHookForm.FieldValues> = {
   type?: never
-  /**
-   * 主にhtmlのname属性の構築に用いられるメンバー名。
-   * 内部的にはルートオブジェクトからメンバーまでのパスがピリオドで連結されていく。
-   */
+  /** このフィールドのオーナーからこの値メンバーまでのパス */
   physicalName?: ReactHookForm.Path<TOwner>
-  /** 画面上に表示する名称。未指定の場合はphysicalNameが使用される。 */
-  displayName?: string
-  /** フォームのラベル部分に追加のカスタマイズUIを表示したい場合に使用する。 */
-  renderFormLabel?: ValueMemberFormRenderer
+  /** フォームのラベル部分 */
+  label?: string | CustomValueRenderer
   /** 値部分のレンダリングコンポーネント。未指定の場合は何も表示されなくなる。 */
-  renderFormValue?: ValueMemberFormRenderer
+  contents?: CustomValueRenderer
   /** グリッドの列定義。未指定の場合はグリッドに表示されなくなる。 */
   getGridColumnDef?: GetGridColumnDefFunction
   /** このメンバーを横幅いっぱいにするかどうか。 */
   fullWidth?: boolean
-  /** ラベルを表示しない。 */
-  noLabel?: boolean
 }
 
 //#endregion メンバー
@@ -95,12 +86,12 @@ export type ValueMember<TOwner extends ReactHookForm.FieldValues = ReactHookForm
 // ----------------------------------------------
 //#region フォームのカスタマイザー
 
-/** セクションメンバーのフォームのレンダリングコンポーネント */
-export type SectionFormRenderer = (props: SectionFormRendererProps) => React.ReactNode
-/** 配列のフォームのレンダリングコンポーネント */
-export type ArrayFormRenderer = (props: ArrayFormRendererProps) => React.ReactNode
-/** 値メンバーのフォームのレンダリングコンポーネント */
-export type ValueMemberFormRenderer = (props: ValueMemberFormRendererProps) => React.ReactNode
+// 各種レンダリング関数
+export type CustomRenderer<T extends FormRendererProps> = (props: T) => React.ReactNode
+export type CustomSectionRenderer = CustomRenderer<SectionFormRendererProps>
+export type CustomArrayRenderer = CustomRenderer<ArrayFormRendererProps>
+export type CustomArrayItemRenderer = CustomRenderer<ArrayFormItemRendererProps>
+export type CustomValueRenderer = CustomRenderer<ValueMemberFormRendererProps>
 
 /** メンバーのフォームのレンダリングコンポーネントの引数 */
 export type FormRendererProps = {
@@ -110,6 +101,7 @@ export type FormRendererProps = {
   owner: MemberOwner
 }
 
+/** セクションのフォームのレンダリングコンポーネントの引数 */
 export type SectionFormRendererProps = FormRendererProps & {
   /** ルートオブジェクトからこのメンバーまでのパス */
   name: string
@@ -117,10 +109,17 @@ export type SectionFormRendererProps = FormRendererProps & {
 
 /** 配列のフォームのレンダリングコンポーネントの引数 */
 export type ArrayFormRendererProps = FormRendererProps & {
-  /** ルートオブジェクトからこのメンバーまでのパス */
+  /** ルートオブジェクトからこの配列までのパス */
   name: string
   /** react-hook-form の useFieldArray の戻り値。 */
   useFieldArrayReturn: ReactHookForm.UseFieldArrayReturn<ReactHookForm.FieldValues, ReactHookForm.FieldArrayPath<ReactHookForm.FieldValues>, "id">
+}
+
+export type ArrayFormItemRendererProps = ArrayFormRendererProps & {
+  /** ルートオブジェクトからこの配列のアイテムまでのパス */
+  itemName: string
+  /** 配列のアイテムのインデックス */
+  itemIndex: number
 }
 
 /** 値メンバーのフォームのレンダリングコンポーネントの引数 */

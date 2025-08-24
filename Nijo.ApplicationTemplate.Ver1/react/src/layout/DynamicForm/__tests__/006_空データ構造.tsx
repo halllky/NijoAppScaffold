@@ -7,7 +7,7 @@ export default function (): DynamicFormProps {
 
   // 複数回使いまわすUIレンダリング定義
   const UI_TEXT = (physicalName: string): Partial<ValueMember> => ({
-    renderFormValue: ({ useFormReturn: { register }, name }) => (
+    contents: ({ useFormReturn: { register }, name }) => (
       <input
         type="text"
         {...register(name)}
@@ -16,14 +16,14 @@ export default function (): DynamicFormProps {
       />
     ),
     getGridColumnDef: ({ member, cellType }) => {
-      return cellType.text(physicalName, member.displayName ?? physicalName, {
+      return cellType.text(physicalName, typeof member.label === 'string' ? member.label : physicalName, {
         defaultWidth: 150,
       })
     },
   })
 
   const UI_NUMBER = (physicalName: string): Partial<ValueMember> => ({
-    renderFormValue: ({ useFormReturn: { register }, name }) => (
+    contents: ({ useFormReturn: { register }, name }) => (
       <input
         type="number"
         {...register(name, { valueAsNumber: true })}
@@ -32,7 +32,7 @@ export default function (): DynamicFormProps {
       />
     ),
     getGridColumnDef: ({ member, cellType }) => {
-      return cellType.number(physicalName, member.displayName ?? physicalName, {
+      return cellType.number(physicalName, typeof member.label === 'string' ? member.label : physicalName, {
         defaultWidth: 120,
       })
     },
@@ -45,14 +45,14 @@ export default function (): DynamicFormProps {
         // 通常のメンバー（比較用）
         {
           physicalName: "normalMember",
-          displayName: "通常のメンバー",
+          label: "通常のメンバー",
           ...UI_TEXT("normalMember"),
         },
 
         // 空のセクション
         {
           physicalName: "emptySection",
-          displayName: "空のセクション",
+          label: "空のセクション",
           type: 'section',
           members: [],
         },
@@ -60,7 +60,7 @@ export default function (): DynamicFormProps {
         // 空の配列
         {
           physicalName: "emptyArray",
-          displayName: "空の配列",
+          arrayLabel: "空の配列",
           type: 'array',
           onCreateNewItem: () => ({ item: "" }),
           members: [],
@@ -69,12 +69,12 @@ export default function (): DynamicFormProps {
         // メンバーが1つだけのセクション
         {
           physicalName: "singleMemberSection",
-          displayName: "単一メンバーセクション",
+          label: "単一メンバーセクション",
           type: 'section',
           members: [
             {
               physicalName: "singleMember",
-              displayName: "単一メンバー",
+              label: "単一メンバー",
               ...UI_TEXT("singleMember"),
             },
           ],
@@ -83,13 +83,13 @@ export default function (): DynamicFormProps {
         // メンバーが1つだけの配列
         {
           physicalName: "singleMemberArray",
-          displayName: "単一メンバー配列",
+          arrayLabel: "単一メンバー配列",
           type: 'array',
           onCreateNewItem: () => ({ singleItem: "" }),
           members: [
             {
               physicalName: "singleItem",
-              displayName: "単一アイテム",
+              label: "単一アイテム",
               ...UI_TEXT("singleItem"),
             },
           ],
@@ -98,24 +98,24 @@ export default function (): DynamicFormProps {
         // ネストした空のセクション
         {
           physicalName: "nestedEmptySection",
-          displayName: "ネストした空のセクション",
+          label: "ネストした空のセクション",
           type: 'section',
           members: [
             {
               physicalName: "outerMember",
-              displayName: "外側メンバー",
+              label: "外側メンバー",
               ...UI_TEXT("outerMember"),
             },
             // 内側の空セクション
             {
               physicalName: "innerEmptySection",
-              displayName: "内側の空セクション",
+              label: "内側の空セクション",
               type: 'section',
               members: [],
             },
             {
               physicalName: "anotherOuterMember",
-              displayName: "もう一つの外側メンバー",
+              label: "もう一つの外側メンバー",
               ...UI_TEXT("anotherOuterMember"),
             },
           ],
@@ -124,18 +124,18 @@ export default function (): DynamicFormProps {
         // ネストした空の配列
         {
           physicalName: "nestedEmptyArray",
-          displayName: "ネストした空の配列",
+          label: "ネストした空の配列",
           type: 'section',
           members: [
             {
               physicalName: "sectionMember",
-              displayName: "セクションメンバー",
+              label: "セクションメンバー",
               ...UI_TEXT("sectionMember"),
             },
             // 内側の空配列
             {
               physicalName: "innerEmptyArray",
-              displayName: "内側の空配列",
+              arrayLabel: "内側の空配列",
               type: 'array',
               onCreateNewItem: () => ({}),
               members: [],
@@ -146,7 +146,7 @@ export default function (): DynamicFormProps {
         // 空セクションと空配列を含む配列
         {
           physicalName: "arrayWithEmptyMembers",
-          displayName: "空メンバーを含む配列",
+          arrayLabel: "空メンバーを含む配列",
           type: 'array',
           onCreateNewItem: () => ({
             text: "",
@@ -156,20 +156,20 @@ export default function (): DynamicFormProps {
           members: [
             {
               physicalName: "text",
-              displayName: "テキスト",
+              label: "テキスト",
               ...UI_TEXT("text"),
             },
             // 配列内の空セクション
             {
               physicalName: "emptySection",
-              displayName: "配列内空セクション",
+              label: "配列内空セクション",
               type: 'section',
               members: [],
             },
             // 配列内の空配列
             {
               physicalName: "emptyArray",
-              displayName: "配列内空配列",
+              arrayLabel: "配列内空配列",
               type: 'array',
               onCreateNewItem: () => ({}),
               members: [],
@@ -180,35 +180,35 @@ export default function (): DynamicFormProps {
         // 複数レベルの空のネスト
         {
           physicalName: "multiLevelEmpty",
-          displayName: "複数レベルの空ネスト",
+          label: "複数レベルの空ネスト",
           type: 'section',
           members: [
             {
               physicalName: "level1Text",
-              displayName: "レベル1テキスト",
+              label: "レベル1テキスト",
               ...UI_TEXT("level1Text"),
             },
             {
               physicalName: "level2Section",
-              displayName: "レベル2セクション",
+              label: "レベル2セクション",
               type: 'section',
               members: [
                 {
                   physicalName: "level2Text",
-                  displayName: "レベル2テキスト",
+                  label: "レベル2テキスト",
                   ...UI_TEXT("level2Text"),
                 },
                 // レベル3の空セクション
                 {
                   physicalName: "level3EmptySection",
-                  displayName: "レベル3空セクション",
+                  label: "レベル3空セクション",
                   type: 'section',
                   members: [],
                 },
                 // レベル3の空配列
                 {
                   physicalName: "level3EmptyArray",
-                  displayName: "レベル3空配列",
+                  arrayLabel: "レベル3空配列",
                   type: 'array',
                   onCreateNewItem: () => ({}),
                   members: [],
@@ -221,14 +221,14 @@ export default function (): DynamicFormProps {
         // 無効なonCreateNewItem関数のテスト
         {
           physicalName: "invalidNewItemArray",
-          displayName: "無効な新規アイテム配列",
+          arrayLabel: "無効な新規アイテム配列",
           type: 'array',
           // 空オブジェクトを返すonCreateNewItem
           onCreateNewItem: () => ({}),
           members: [
             {
               physicalName: "item",
-              displayName: "アイテム",
+              label: "アイテム",
               ...UI_TEXT("item"),
             },
           ],
@@ -237,7 +237,7 @@ export default function (): DynamicFormProps {
         // null/undefinedを含む可能性のあるonCreateNewItem
         {
           physicalName: "nullishNewItemArray",
-          displayName: "null可能性配列",
+          arrayLabel: "null可能性配列",
           type: 'array',
           onCreateNewItem: () => ({
             text: undefined,
@@ -247,17 +247,17 @@ export default function (): DynamicFormProps {
           members: [
             {
               physicalName: "text",
-              displayName: "テキスト（undefined初期値）",
+              label: "テキスト（undefined初期値）",
               ...UI_TEXT("text"),
             },
             {
               physicalName: "number",
-              displayName: "数値（null初期値）",
+              label: "数値（null初期値）",
               ...UI_NUMBER("number"),
             },
             {
               physicalName: "emptyString",
-              displayName: "空文字初期値",
+              label: "空文字初期値",
               ...UI_TEXT("emptyString"),
             },
           ],

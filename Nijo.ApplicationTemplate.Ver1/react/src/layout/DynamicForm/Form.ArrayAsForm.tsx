@@ -38,42 +38,51 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
 
   // 追加
   const handleAppend = useEvent(() => {
+    if (!array.onCreateNewItem) return;
     const newItem = array.onCreateNewItem()
     append(newItem)
   })
 
-  // レンダリング処理が明示されている場合はそれが優先
-  if (array.render) {
-    return (
-      <div className="col-span-full">
-        {array.render(rendererProps)}
-      </div>
-
-    )
-  }
-
-  // 既定のレンダリング
   return (
     <>
+      {array.arrayLabel && (
+        <FormLayout.Field
+          fullWidth
+          label={typeof array.arrayLabel === 'string' ? array.arrayLabel : undefined}
+          labelEnd={typeof array.arrayLabel === 'function' ? array.arrayLabel(rendererProps) : undefined}
+        />
+      )}
+
       {/* 要素一覧 */}
       {fields.map((field, index) => (
         <React.Fragment key={field.id}>
           <FormLayout.Section
             border
-            label={`${array.displayName} ${index + 1}`}
+            label={typeof array.itemLabel === 'string'
+              ? `${array.itemLabel} ${index + 1}`
+              : undefined}
             labelEnd={(
               <>
-                {array.renderFormLabel?.(rendererProps)}
+                {typeof array.itemLabel === 'function' ? array.itemLabel({
+                  ...rendererProps,
+                  itemName: `${arrayMemberPath}.${index}`,
+                  itemIndex: index,
+                }) : undefined}
                 <IconButton icon={Icon.TrashIcon} outline mini onClick={() => remove(index)}>
                   削除
                 </IconButton>
               </>
             )}
           >
-            <MembersGroupByBreakPoint
-              owner={array}
-              ancestorsPath={`${arrayMemberPath}.${index}`}
-            />
+
+            {array.contents ? (
+              array.contents(rendererProps)
+            ) : (
+              <MembersGroupByBreakPoint
+                owner={array}
+                ancestorsPath={`${arrayMemberPath}.${index}`}
+              />
+            )}
           </FormLayout.Section>
 
           <FormLayout.Spacer />
@@ -81,11 +90,13 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
       ))}
 
       {/* 追加ボタン */}
-      <FormLayout.Field fullWidth>
-        <IconButton icon={Icon.PlusCircleIcon} outline mini onClick={handleAppend}>
-          {array.displayName} を追加
-        </IconButton>
-      </FormLayout.Field>
+      {array.onCreateNewItem && (
+        <FormLayout.Field fullWidth>
+          <IconButton icon={Icon.PlusCircleIcon} outline mini onClick={handleAppend}>
+            {typeof array.arrayLabel === 'string' ? `${array.arrayLabel} を追加` : '追加'}
+          </IconButton>
+        </FormLayout.Field>
+      )}
     </>
   )
 }

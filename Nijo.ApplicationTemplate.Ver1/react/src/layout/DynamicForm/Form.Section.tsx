@@ -25,26 +25,21 @@ export const FormSection = ({ member: section, owner, ancestorsPath }: {
     owner,
   }
 
-  // レンダリング処理が明示されている場合はそれが優先
-  if (section.render) {
-    return (
-      <div className="col-span-full">
-        {section.render(rendererProps)}
-      </div>
-    )
-  }
-
   // 既定のレンダリング
   return (
     <FormLayout.Section
       border
-      label={section.displayName}
-      labelEnd={section.renderFormLabel?.(rendererProps)}
+      label={typeof section.label === 'string' ? section.label : undefined}
+      labelEnd={typeof section.label === 'function' ? section.label(rendererProps) : undefined}
     >
-      <MembersGroupByBreakPoint
-        ancestorsPath={sectionMemberPath}
-        owner={section}
-      />
+      {section.contents ? (
+        section.contents(rendererProps)
+      ) : (
+        <MembersGroupByBreakPoint
+          ancestorsPath={sectionMemberPath}
+          owner={section}
+        />
+      )}
     </FormLayout.Section>
   )
 }
