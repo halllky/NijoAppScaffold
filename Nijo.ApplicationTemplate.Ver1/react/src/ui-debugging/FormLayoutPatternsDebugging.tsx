@@ -412,10 +412,9 @@ const Badge = ({ children }: { children: React.ReactNode }) => (
 
 const CustomLabel = ({ children, className }: LabelProps) => (
   <span className={className} style={{
-    color: '#135',
-    background: '#e8f3ff',
-    border: '1px solid #9cc4ff',
-    borderRadius: '4px',
+    color: '#f34af3',
+    fontWeight: 'bold',
+    textDecoration: 'underline',
     padding: '0 6px',
   }}>{children}</span>
 )
