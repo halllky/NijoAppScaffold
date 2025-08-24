@@ -24,5 +24,20 @@ export const FormLayoutContext = React.createContext<FormLayoutContextValue>({
   LabelComponent: DefaultLabel,
 })
 
-/** Column の中にあるかどうかを子孫コンポーネント側が知るためのコンテキスト */
-export const IsInColumnContext = React.createContext<boolean>(false)
+/**
+ * 直近の親がどれかを子コンポーネント側が知るためのコンテキスト。
+ * 親によってCSSが異なるため。
+ */
+export const RecentParentContext = React.createContext<
+  | undefined
+  | '2-cols-grid'
+  | 'responsive-container'
+  | 'item'
+>(undefined)
+
+/**
+ * 直近の親が枠線を表示するかどうかを子コンポーネント側が知るためのコンテキスト。
+ * 祖先の枠のパディングの累計がこのコンテキストに設定される。
+ * 枠があるとパディングの分だけ subgrid の幅が小さくなるので子側で補正する必要がある。
+ */
+export const BorderPaddingContext = React.createContext<number>(0)

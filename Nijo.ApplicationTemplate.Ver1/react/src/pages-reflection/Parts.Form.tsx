@@ -104,9 +104,9 @@ const MemberComponentsGroupedByBreakPoint = ({ owner, ancestorsPath }: {
             />
           ) : (
             // 折り返しが発生するグループ
-            <FormLayout.ResponsiveColumnGroup>
+            <FormLayout.Group>
               {/* 左列 */}
-              <FormLayout.ResponsiveColumn>
+              <FormLayout.Group>
                 {group.firstColumn.map((member) => (
                   <MemberComponent
                     key={member.physicalName}
@@ -115,11 +115,11 @@ const MemberComponentsGroupedByBreakPoint = ({ owner, ancestorsPath }: {
                     member={member.member}
                   />
                 ))}
-              </FormLayout.ResponsiveColumn>
+              </FormLayout.Group>
 
               {/* 右列 */}
               {group.secondColumn.length > 0 && (
-                <FormLayout.ResponsiveColumn>
+                <FormLayout.Group>
                   {group.secondColumn.map((member) => (
                     <MemberComponent
                       key={member.physicalName}
@@ -128,9 +128,9 @@ const MemberComponentsGroupedByBreakPoint = ({ owner, ancestorsPath }: {
                       member={member.member}
                     />
                   ))}
-                </FormLayout.ResponsiveColumn>
+                </FormLayout.Group>
               )}
-            </FormLayout.ResponsiveColumnGroup>
+            </FormLayout.Group>
           )}
         </React.Fragment>
       ))}

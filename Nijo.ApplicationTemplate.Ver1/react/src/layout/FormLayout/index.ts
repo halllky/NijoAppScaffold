@@ -2,24 +2,21 @@ import { type LabelProps, DefaultLabel } from "./DefaultLabel"
 import { Root, type ResponsiveFormProps } from "./Root"
 import { Separator } from "./Separator"
 import { Item, type ItemProps } from "./Item"
-import { ResponsiveColumnGroup, type ColumnGroupProps } from "./ResponsiveColumnGroup"
-import { ResponsiveColumn } from "./ResponsiveColumn"
-import { ItemGroupInResponsiveColumn, type ItemGroupProps } from "./ItemGroupInResponsiveColumn"
+import { Group, type GroupProps } from "./Group"
+import { Spacer } from "./Spacer"
 
 export default {
   Root,
-  ResponsiveColumnGroup,
-  ResponsiveColumn,
+  Group,
   Separator,
+  Spacer,
   Item,
-  ItemGroupInResponsiveColumn,
   DefaultLabel,
 }
 
 export type {
   ResponsiveFormProps,
-  ColumnGroupProps,
+  GroupProps,
   ItemProps,
-  ItemGroupProps,
   LabelProps,
 }

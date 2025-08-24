@@ -1,6 +1,7 @@
 import React from "react"
-import { FormLayoutContext, FormLayoutContextValue } from "./internal-context"
+import { FormLayoutContext, FormLayoutContextValue, RecentParentContext } from "./internal-context"
 import { DefaultLabel, LabelProps } from "./DefaultLabel"
+import { Group } from "./Group"
 
 /** レスポンシブフォームのプロパティ */
 export type ResponsiveFormProps = {
@@ -18,7 +19,7 @@ export type ResponsiveFormProps = {
   children?: React.ReactNode
 }
 
-/** レスポンシブフォームのもっとも外側に配置されるコンテナ */
+/** FormLayoutのルートコンテナ */
 export const Root = (props: ResponsiveFormProps) => {
 
   // レスポンシブレイアウト用の状態管理
@@ -57,8 +58,9 @@ export const Root = (props: ResponsiveFormProps) => {
     //   W >= col*w + (col-1)*g  <=>  W + g >= col*(w + g)
     // よって  col = floor((W + g) / (w + g))
     const gapPx = 8
+    const paddingZakkuri = 24 // 一般的な使い方だとだいたいこのぐらいのパディングが入る
     const unitWidth = labelWidth + valueWidth
-    const cols = Math.floor((containerWidth + gapPx) / (unitWidth + gapPx))
+    const cols = Math.floor((containerWidth + gapPx) / (unitWidth + gapPx + paddingZakkuri))
     return Math.max(1, cols)
   }, [containerWidth, labelWidth, valueWidth])
 
@@ -71,22 +73,11 @@ export const Root = (props: ResponsiveFormProps) => {
     LabelComponent: props.labelComponent ?? DefaultLabel,
   }), [columnCount, labelWidth, valueWidth, props.labelAlign, props.labelComponent])
 
-  const style: React.CSSProperties = React.useMemo(() => ({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-    alignItems: 'stretch',
-  }), [])
-
   return (
     <FormLayoutContext.Provider value={contextValue}>
-      <div
-        ref={containerRef}
-        className={props.className}
-        style={style}
-      >
+      <Group ref={containerRef} className={props.className}>
         {props.children}
-      </div>
+      </Group>
     </FormLayoutContext.Provider>
   )
 }

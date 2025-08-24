@@ -80,8 +80,8 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
         />
       ) : (
         // membersを半分に割って2つのColumnに配置
-        <FormLayout.ResponsiveColumnGroup>
-          <FormLayout.ResponsiveColumn>
+        <FormLayout.Group>
+          <FormLayout.Group>
             {members.slice(0, Math.ceil(members.length / 2)).map((member, index) => (
               <MemberComponent
                 key={index}
@@ -90,8 +90,8 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
                 owner={owner}
               />
             ))}
-          </FormLayout.ResponsiveColumn>
-          <FormLayout.ResponsiveColumn>
+          </FormLayout.Group>
+          <FormLayout.Group>
             {members.slice(Math.ceil(members.length / 2)).map((member, index) => (
               <MemberComponent
                 key={index}
@@ -100,8 +100,8 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
                 owner={owner}
               />
             ))}
-          </FormLayout.ResponsiveColumn>
-        </FormLayout.ResponsiveColumnGroup>
+          </FormLayout.Group>
+        </FormLayout.Group>
       )}
     </React.Fragment>
   ))

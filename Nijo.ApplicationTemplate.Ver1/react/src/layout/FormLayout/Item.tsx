@@ -1,9 +1,9 @@
 import React from "react"
-import { IsInColumnContext, FormLayoutContext } from "./internal-context"
+import { RecentParentContext, FormLayoutContext } from "./internal-context"
 import { LabelRenderer } from "./internal-label-renderer"
 
 export type ItemProps = {
-  /** 値を横幅いっぱい表示する */
+  /** 通常はラベルが左、値が右に表示されるが、これをtrueにするとラベルと値を縦に並べ、横幅いっぱいに表示する。 */
   fullWidth?: boolean
   /** ラベル */
   label?: string
@@ -12,54 +12,106 @@ export type ItemProps = {
   children?: React.ReactNode
 }
 
-/**
- * ラベルと値の組。
- */
+/** コンテンツ */
 export const Item = (props: ItemProps): React.ReactNode => {
   const { labelAlign, labelWidth } = React.useContext(FormLayoutContext)
-  const isInColumn = React.useContext(IsInColumnContext)
+  const parent = React.useContext(RecentParentContext)
 
-  // Column の外にある場合は CSS Grid の考慮をここで行なう
-  if (!isInColumn) {
-
-    // ラベルなし
-    if (!props.label && !props.labelEnd) {
-      return (
-        <div>
-          {props.children}
-        </div>
-      )
-    }
-
-    // 値を横幅いっぱい表示するケース
-    if (props.fullWidth) {
-      return (
-        <>
+  // Group(レスポンシブコンテナ) の中にある場合
+  if (parent === 'responsive-container') {
+    return (
+      <RecentParentContext.Provider value="item">
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '4px',
+        }}>
           {/* ラベル */}
-          <LabelRenderer
-            label={props.label}
-            labelEnd={props.labelEnd}
-          />
+          {(props.label || props.labelEnd) && (
+            <LabelRenderer
+              label={props.label}
+              labelEnd={props.labelEnd}
+            />
+          )}
           {/* コンテンツ */}
           <div>
             {props.children}
           </div>
-        </>
-      )
-    }
+        </div>
+      </RecentParentContext.Provider>
+    )
+  }
 
-    // 値をラベルの右に表示するケース
+  // Group (display: grid) の中にある場合は CSS Grid が適用されているので React Fragment の中にdivを2つ並べる
+  if (parent === '2-cols-grid') {
+
+    const fullWidth = props.fullWidth || !props.label && !props.labelEnd
+
     return (
+      <RecentParentContext.Provider value="item">
+        {/* ラベル */}
+        {(props.label || props.labelEnd) && (
+          <LabelRenderer
+            label={props.label}
+            labelEnd={props.labelEnd}
+            alignRight={!fullWidth && labelAlign === 'right'}
+            style={{
+              gridColumn: fullWidth ? 'span 2' : undefined,
+            }}
+          />
+        )}
+        {/* コンテンツ */}
+        <div style={{ gridColumn: fullWidth ? 'span 2' : undefined }}>
+          {props.children}
+        </div>
+      </RecentParentContext.Provider>
+    )
+  }
+
+  // ************ 以下、 Item の中に Item がある特殊ケース **************
+  // ※ 推奨されない使い方なのである程度それっぽく表示できていればよい
+
+  // ラベルなし
+  if (!props.label && !props.labelEnd) {
+    return (
+      <RecentParentContext.Provider value="item">
+        <div>
+          {props.children}
+        </div>
+      </RecentParentContext.Provider>
+    )
+  }
+
+  // 値を横幅いっぱい表示するケース
+  if (props.fullWidth) {
+    return (
+      <RecentParentContext.Provider value="item">
+        {/* ラベル */}
+        <LabelRenderer
+          label={props.label}
+          labelEnd={props.labelEnd}
+        />
+        {/* コンテンツ */}
+        <div>
+          {props.children}
+        </div>
+      </RecentParentContext.Provider>
+    )
+  }
+
+  // 値をラベルの右に表示するケース
+  return (
+    <RecentParentContext.Provider value="item">
       <div style={{
         display: 'grid',
         gridTemplateColumns: `${labelWidth}px 1fr`,
-        gap: '4px',
       }}>
         {/* ラベル */}
         <LabelRenderer
           label={props.label}
           labelEnd={props.labelEnd}
-          style={{ justifyContent: labelAlign === 'right' ? 'flex-end' : undefined }}
+          alignRight={labelAlign === 'right'}
+          style={{ padding: '0 4px' }}
         />
 
         {/* コンテンツ */}
@@ -67,27 +119,6 @@ export const Item = (props: ItemProps): React.ReactNode => {
           {props.children}
         </div>
       </div>
-    )
-  }
-
-  // Column の中にある場合は CSS Grid が適用されているので React Fragment の中にdivを2つ並べる
-  return (
-    <>
-      {/* ラベル */}
-      {(props.label || props.labelEnd) && (
-        <LabelRenderer
-          label={props.label}
-          labelEnd={props.labelEnd}
-          style={{
-            gridColumn: props.fullWidth ? 'span 2' : undefined,
-            justifyContent: !props.fullWidth && labelAlign === 'right' ? 'flex-end' : undefined,
-          }}
-        />
-      )}
-      {/* コンテンツ */}
-      <div style={{ gridColumn: props.fullWidth ? 'span 2' : undefined }}>
-        {props.children}
-      </div>
-    </>
+    </RecentParentContext.Provider>
   )
 }
