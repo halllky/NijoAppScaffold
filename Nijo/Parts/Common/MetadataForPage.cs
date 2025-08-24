@@ -14,6 +14,8 @@ namespace Nijo.Parts.Common;
 /// <summary>
 /// 画面の自動生成のためのメタデータ。
 /// <see cref="Metadata"/> と役割が相当部分重複している。
+///
+/// ※ こちらはC#側のモジュールが生成されない。
 /// </summary>
 internal class MetadataForPage : IMultiAggregateSourceFile {
 

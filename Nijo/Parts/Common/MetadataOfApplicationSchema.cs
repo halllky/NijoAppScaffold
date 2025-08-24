@@ -14,6 +14,8 @@ namespace Nijo.Parts.Common;
 /// <summary>
 /// スキーマ定義で指定されたメンバー毎の属性（必須か否か、文字列の最大桁数、など）を
 /// 生成された後のカスタマイズ処理で参照したいときに使う構造体。
+///
+/// ※ refが無い、すべての属性を定義しているわけではない、など、情報が足りていない。
 /// </summary>
 internal class Metadata : IMultiAggregateSourceFile {
 
