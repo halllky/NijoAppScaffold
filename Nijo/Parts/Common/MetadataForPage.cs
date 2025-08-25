@@ -2,12 +2,14 @@ using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Util.DotnetEx;
 using Nijo.ValueMemberTypes;
+using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace Nijo.Parts.Common;
 
@@ -54,11 +56,11 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
                 /** 画面の自動生成のためのメタデータ */
                 export namespace MetadataForPage {
-                  {{WithIndent(StructureMetadata.RenderType(), "  ")}}
+                  {{WithIndent(StructureMetadata.RenderType(ctx), "  ")}}
 
                   {{WithIndent(ValueMetadata.RenderType(ctx), "  ")}}
 
-                  {{WithIndent(RefMetadata.RenderType(), "  ")}}
+                  {{WithIndent(RefMetadata.RenderType(ctx), "  ")}}
 
                   /** 画面の自動生成のためのメタデータ取得関数 */
                   export const getAll = (): { [k in {{CommandQueryMappings.QUERY_MODEL_TYPE}}]: {{StructureMetadata.TYPE_NAME}} } => ({
@@ -102,10 +104,9 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
             var body = $$"""
                 {
-                  displayName: '{{_aggregate.DisplayName.Replace("'", "\\'")}}',
                   type: '{{type}}',
-                {{If(_aggregate is RootAggregate root && root.IsReadOnly, () => $$"""
-                  isReadOnly: true,
+                {{RenderNodeOptions(_aggregate.XElement, ctx).SelectTextTemplate(source => $$"""
+                  {{WithIndent(source, "  ")}}
                 """)}}
                   members: {
                 {{_aggregate.GetMembers().SelectTextTemplate(m => $$"""
@@ -129,18 +130,18 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
         internal const string TYPE_NAME = "StructureMetadata";
         internal const string TYPE_MEMBER = "StructureMetadataMember";
 
-        internal static string RenderType() {
+        internal static string RenderType(CodeRenderingContext ctx) {
+
             return $$"""
                 /** 構造体のメタデータ */
                 export type {{TYPE_NAME}} = {
-                  /** 表示用名称 */
-                  displayName: string
                   /** 集約の種類 */
                   type: 'RootAggregate' | 'ChildAggregate' | 'ChildrenAggregate'
                   /** この構造体のメンバー */
                   members: { [key: string]: {{TYPE_MEMBER}} }
-                  /** 読み取り専用の集約か否か。ルート集約でのみ定義される。 */
-                  isReadOnly?: boolean
+                {{RenderNodeOptionTypes(ctx).SelectTextTemplate(source => $$"""
+                  {{WithIndent(source, "  ")}}
+                """)}}
                   isKey?: never
                 }
 
@@ -169,25 +170,9 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
             return $$"""
                 '{{_vm.PhysicalName}}': {
-                  displayName: '{{_vm.DisplayName.Replace("'", "\\'")}}',
                   {{typeProp}}: '{{_vm.Type.SchemaTypeName}}',
-                {{If(_vm.IsKey, () => $$"""
-                  isKey: true,
-                """)}}
-                {{If(_vm.IsRequired, () => $$"""
-                  required: true,
-                """)}}
-                {{If(_vm.CharacterType != null, () => $$"""
-                  characterType: '{{_vm.CharacterType}}',
-                """)}}
-                {{If(_vm.MaxLength != null, () => $$"""
-                  maxLength: {{_vm.MaxLength}},
-                """)}}
-                {{If(_vm.TotalDigit != null, () => $$"""
-                  totalDigit: {{_vm.TotalDigit}},
-                """)}}
-                {{If(_vm.DecimalPlace != null, () => $$"""
-                  decimalPlace: {{_vm.DecimalPlace}},
+                {{RenderNodeOptions(_vm.XElement, ctx).SelectTextTemplate(source => $$"""
+                  {{WithIndent(source, "  ")}}
                 """)}}
                 }
                 """;
@@ -209,26 +194,15 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
             return $$"""
                 /** 値のメタデータ */
                 export type {{TYPE_NAME}} = {
-                  /** 表示用名称 */
-                  displayName: string
                   /** 値の型名。enum, value-ojbect の場合は undefined になる */
                   type?: {{ctx.SchemaParser.ValueMemberTypes.Select(t => $"'{t.SchemaTypeName}'").Join(" | ")}}
                   /** 列挙体の型名。このメンバーが列挙体の場合のみ */
                   enumType?: keyof EnumDefs.{{EnumFile.TS_TYPE_MAP}}
                   /** 値オブジェクトの型名。このメンバーが値オブジェクトの場合のみ */
                   valueObjectType?: {{valueObjectLiteral}}
-                  /** キーか否か */
-                  isKey?: boolean
-                  /** 必須か否か */
-                  required?: boolean
-                  /** 最大長。文字列型の項目にのみ有効。バイト数でなく文字数でカウントする */
-                  maxLength?: number
-                  /** この値がとることのできる文字種。文字列型の項目にのみ有効。未指定の場合は制約なし */
-                  characterType?: {{charTypeLiteral}}
-                  /** 整数部と小数部をあわせた桁数。数値型の項目にのみ有効。 */
-                  totalDigit?: number
-                  /** 小数部桁数。数値型の項目にのみ有効。 */
-                  decimalPlace?: number
+                {{RenderNodeOptionTypes(ctx).SelectTextTemplate(source => $$"""
+                  {{WithIndent(source, "  ")}}
+                """)}}
                 }
                 """;
         }
@@ -246,14 +220,10 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
             return $$"""
                 '{{_refTo.PhysicalName}}': {
-                  displayName: '{{_refTo.DisplayName.Replace("\'", "\\\'")}}',
                   type: 'ref-to',
                   refTo: '{{_refTo.RefTo.RefEntryName}}',
-                {{If(_refTo.IsKey, () => $$"""
-                  isKey: true,
-                """)}}
-                {{If(_refTo.IsRequired, () => $$"""
-                  required: true,
+                {{RenderNodeOptions(_refTo.XElement, ctx).SelectTextTemplate(source => $$"""
+                  {{WithIndent(source, "  ")}}
                 """)}}
                 }
                 """;
@@ -261,20 +231,17 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
         internal const string TYPE_NAME = "RefMetadata";
 
-        internal static string RenderType() {
+        internal static string RenderType(CodeRenderingContext ctx) {
             return $$"""
                 /** 外部参照のメタデータ */
                 export type {{TYPE_NAME}} = {
-                  /** 表示用名称 */
-                  displayName: string
                   /** 型 */
                   type: 'ref-to'
                   /** 参照先。参照先が子孫集約の場合はルート集約からのパスのスラッシュ区切り */
                   refTo: {{CommandQueryMappings.REFERED_QUERY_MODEL_TYPE}}
-                  /** キーか否か */
-                  isKey?: boolean
-                  /** 必須か否か */
-                  required?: boolean
+                {{RenderNodeOptionTypes(ctx).SelectTextTemplate(source => $$"""
+                  {{WithIndent(source, "  ")}}
+                """)}}
                 }
                 """;
         }
@@ -287,4 +254,101 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
     internal interface ITypeScriptModule {
         string Render(CodeRenderingContext ctx);
     }
+
+
+    #region オプション項目の動的レンダリング
+    /// <summary>
+    /// XElementで定義されたNodeOptionをTypeScriptのオブジェクトプロパティとしてレンダリングします。
+    /// </summary>
+    /// <param name="xElement">XML要素</param>
+    /// <param name="ctx">レンダリングコンテキスト</param>
+    /// <returns>TypeScriptのプロパティ定義文字列</returns>
+    internal static IEnumerable<string> RenderNodeOptions(XElement xElement, CodeRenderingContext ctx) {
+        var options = ctx.SchemaParser.GetOptions(xElement);
+
+        // DisplayName だけは未定義の場合は物理名を採用する。
+        // メタデータを用いたカスタマイズ処理でDisplayNameの使用頻度が高いため。
+        if (!options.Any(o => o.AttributeName == BasicNodeOptions.DisplayName.AttributeName)) {
+            yield return $$"""
+                {{ToCamelCase(BasicNodeOptions.DisplayName.AttributeName)}}: '{{ctx.SchemaParser.GetPhysicalName(xElement)}}',
+                """;
+        }
+
+        foreach (var option in options) {
+            var attributeValue = xElement.Attribute(option.AttributeName)?.Value;
+
+            // フィルタリング: 未定義の値、falseの真偽値、空文字の文字列をスキップ。
+            if (option.Type == E_NodeOptionType.Boolean) {
+                if (!bool.TryParse(attributeValue, out var boolValue) || !boolValue) {
+                    continue;
+                }
+            }
+            if (option.Type == E_NodeOptionType.String && string.IsNullOrEmpty(attributeValue)) {
+                continue;
+            }
+
+            // TypeScriptプロパティ名を生成（camelCaseに変換）
+            var propName = ToCamelCase(option.AttributeName);
+
+            // TypeScriptの値をレンダリング
+            var tsValue = option.Type == E_NodeOptionType.Boolean
+                ? "true"
+                : $"'{attributeValue?.Replace("'", "\\'")}'";
+
+            yield return $$"""
+                {{propName}}: {{tsValue}},
+                """;
+        }
+    }
+
+    /// <summary>
+    /// 文字列をcamelCaseに変換します
+    /// </summary>
+    private static string ToCamelCase(string input) {
+        if (string.IsNullOrEmpty(input)) return input;
+        if (input.Length == 1) return input.ToLowerInvariant();
+        return char.ToLowerInvariant(input[0]) + input.Substring(1);
+    }
+
+    /// <summary>
+    /// TypeScript型定義で使用するNodeOptionの型情報を動的に生成します
+    /// </summary>
+    internal static IEnumerable<string> RenderNodeOptionTypes(CodeRenderingContext ctx) {
+        var nodeOptions = GetAllNodeOptions();
+
+        foreach (var option in nodeOptions) {
+            var propName = ToCamelCase(option.AttributeName);
+
+            // CharacterTypeの場合は特別な型を生成
+            string tsType;
+            if (option.AttributeName == "CharacterType") {
+                var characterTypes = ctx.GetCharacterTypes().ToArray();
+                tsType = characterTypes.Length == 0
+                    ? "never"
+                    : characterTypes.Select(type => $"'{type.Replace("'", "\\'")}'").Join(" | ");
+            } else {
+                tsType = option.Type == E_NodeOptionType.Boolean ? "boolean" : "string";
+            }
+
+            yield return $$"""
+                /** {{option.DisplayName}} */
+                {{propName}}?: {{tsType}}
+                """;
+        }
+    }
+
+    /// <summary>
+    /// BasicNodeOptionsクラスからすべてのNodeOptionをリフレクションで取得します
+    /// </summary>
+    private static IEnumerable<NodeOption> GetAllNodeOptions() {
+        var basicNodeOptionsType = typeof(BasicNodeOptions);
+        var nodeOptionType = typeof(NodeOption);
+
+        return basicNodeOptionsType
+            .GetFields(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)
+            .Where(field => field.FieldType == nodeOptionType)
+            .Select(field => (NodeOption)field.GetValue(null)!)
+            .Where(option => option != null);
+    }
+    #endregion オプション項目の動的レンダリング
 }
