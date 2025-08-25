@@ -19,6 +19,11 @@ namespace Nijo.Util.DotnetEx {
         }
         public static string ToUrlSafe(this string str) => System.Web.HttpUtility.UrlEncode(str);
         public static string ToKebabCase(this string str) => str.ToLower().Replace(" ", "-");
+        public static string ToCamelCase(this string input) {
+            if (string.IsNullOrEmpty(input)) return input;
+            if (input.Length == 1) return input.ToLowerInvariant();
+            return char.ToLowerInvariant(input[0]) + input.Substring(1);
+        }
         public static string ToHashedString(this string str) {
             byte[] stringBytes = System.Text.Encoding.UTF8.GetBytes(str);
             byte[] hashedBytes = System.Security.Cryptography.MD5.Create().ComputeHash(stringBytes);

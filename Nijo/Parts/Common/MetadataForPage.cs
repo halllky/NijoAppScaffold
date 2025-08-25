@@ -269,13 +269,13 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
         // メタデータを用いたカスタマイズ処理でDisplayNameの使用頻度が高いため。
         if (!options.Any(o => o.AttributeName == BasicNodeOptions.DisplayName.AttributeName)) {
             yield return $$"""
-                {{ToCamelCase(BasicNodeOptions.DisplayName.AttributeName)}}: '{{ctx.SchemaParser.GetPhysicalName(xElement)}}',
+                {{BasicNodeOptions.DisplayName.AttributeName.ToCamelCase()}}: '{{ctx.SchemaParser.GetPhysicalName(xElement)}}',
                 """;
         }
 
         // コメントがある場合はレンダリング
         var comment = ctx.SchemaParser.GetComment(xElement, E_CsTs.TypeScript);
-        if (!string.IsNullOrEmpty(comment)) {
+        if (!string.IsNullOrWhiteSpace(comment)) {
             yield return $$"""
                 comment: '{{comment.Replace("'", "\\'")}}',
                 """;
@@ -284,18 +284,13 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
         foreach (var option in options) {
             var attributeValue = xElement.Attribute(option.AttributeName)?.Value;
 
-            // フィルタリング: 未定義の値、falseの真偽値、空文字の文字列をスキップ。
-            if (option.Type == E_NodeOptionType.Boolean) {
-                if (!bool.TryParse(attributeValue, out var boolValue) || !boolValue) {
-                    continue;
-                }
-            }
-            if (option.Type == E_NodeOptionType.String && string.IsNullOrEmpty(attributeValue)) {
+            // フィルタリング: 空文字の文字列をスキップ
+            if (option.Type == E_NodeOptionType.String && string.IsNullOrWhiteSpace(attributeValue)) {
                 continue;
             }
 
             // TypeScriptプロパティ名を生成（camelCaseに変換）
-            var propName = ToCamelCase(option.AttributeName);
+            var propName = option.AttributeName.ToCamelCase();
 
             // TypeScriptの値をレンダリング
             var tsValue = option.Type == E_NodeOptionType.Boolean
@@ -306,15 +301,6 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 {{propName}}: {{tsValue}},
                 """;
         }
-    }
-
-    /// <summary>
-    /// 文字列をcamelCaseに変換します
-    /// </summary>
-    private static string ToCamelCase(string input) {
-        if (string.IsNullOrEmpty(input)) return input;
-        if (input.Length == 1) return input.ToLowerInvariant();
-        return char.ToLowerInvariant(input[0]) + input.Substring(1);
     }
 
     /// <summary>
@@ -330,11 +316,10 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
             """;
 
         foreach (var option in nodeOptions) {
-            var propName = ToCamelCase(option.AttributeName);
 
             // CharacterTypeの場合は特別な型を生成
             string tsType;
-            if (option.AttributeName == "CharacterType") {
+            if (option.AttributeName == BasicNodeOptions.CharacterType.AttributeName) {
                 var characterTypes = ctx.GetCharacterTypes().ToArray();
                 tsType = characterTypes.Length == 0
                     ? "never"
@@ -348,7 +333,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
             yield return $$"""
                 /** {{option.DisplayName}} */
-                {{propName}}{{(isOptional ? "?" : "")}}: {{tsType}}
+                {{option.AttributeName.ToCamelCase()}}{{(isOptional ? "?" : "")}}: {{tsType}}
                 """;
         }
     }
