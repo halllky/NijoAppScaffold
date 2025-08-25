@@ -186,6 +186,12 @@ public class SchemaParseContext {
     public IEnumerable<NodeOption> GetAvailableOptionsFor(IModel model) {
         return _rule.GetAvailableOptionsFor(model);
     }
+    /// <summary>
+    /// このルールで定義されているすべてのNodeOptionを返します。
+    /// </summary>
+    public IEnumerable<NodeOption> GetAllNodeOptions() {
+        return _rule.NodeOptions;
+    }
     #endregion オプション属性
 
 

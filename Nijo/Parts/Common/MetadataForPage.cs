@@ -307,7 +307,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
     /// TypeScript型定義で使用するNodeOptionの型情報を動的に生成します
     /// </summary>
     internal static IEnumerable<string> RenderNodeOptionTypes(CodeRenderingContext ctx) {
-        var nodeOptions = GetAllNodeOptions();
+        var nodeOptions = ctx.SchemaParser.GetAllNodeOptions();
 
         // コメント用の型定義を追加
         yield return $$"""
@@ -338,18 +338,6 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
         }
     }
 
-    /// <summary>
-    /// BasicNodeOptionsクラスからすべてのNodeOptionをリフレクションで取得します
-    /// </summary>
-    private static IEnumerable<NodeOption> GetAllNodeOptions() {
-        var basicNodeOptionsType = typeof(BasicNodeOptions);
-        var nodeOptionType = typeof(NodeOption);
 
-        return basicNodeOptionsType
-            .GetFields(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)
-            .Where(field => field.FieldType == nodeOptionType)
-            .Select(field => (NodeOption)field.GetValue(null)!)
-            .Where(option => option != null);
-    }
     #endregion オプション項目の動的レンダリング
 }
