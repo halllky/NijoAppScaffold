@@ -142,7 +142,6 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 {{RenderNodeOptionTypes(ctx).SelectTextTemplate(source => $$"""
                   {{WithIndent(source, "  ")}}
                 """)}}
-                  isKey?: never
                 }
 
                 /** 構造体のメタデータのメンバー */
@@ -274,6 +273,14 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 """;
         }
 
+        // コメントがある場合はレンダリング
+        var comment = ctx.SchemaParser.GetComment(xElement, E_CsTs.TypeScript);
+        if (!string.IsNullOrEmpty(comment)) {
+            yield return $$"""
+                comment: '{{comment.Replace("'", "\\'")}}',
+                """;
+        }
+
         foreach (var option in options) {
             var attributeValue = xElement.Attribute(option.AttributeName)?.Value;
 
@@ -315,6 +322,12 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
     /// </summary>
     internal static IEnumerable<string> RenderNodeOptionTypes(CodeRenderingContext ctx) {
         var nodeOptions = GetAllNodeOptions();
+
+        // コメント用の型定義を追加
+        yield return $$"""
+            /** XMLコメント */
+            comment?: string
+            """;
 
         foreach (var option in nodeOptions) {
             var propName = ToCamelCase(option.AttributeName);
