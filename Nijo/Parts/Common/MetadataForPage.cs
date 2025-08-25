@@ -343,9 +343,12 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 tsType = option.Type == E_NodeOptionType.Boolean ? "boolean" : "string";
             }
 
+            // DisplayName だけは必ずレンダリングされる
+            var isOptional = option.AttributeName != BasicNodeOptions.DisplayName.AttributeName;
+
             yield return $$"""
                 /** {{option.DisplayName}} */
-                {{propName}}?: {{tsType}}
+                {{propName}}{{(isOptional ? "?" : "")}}: {{tsType}}
                 """;
         }
     }

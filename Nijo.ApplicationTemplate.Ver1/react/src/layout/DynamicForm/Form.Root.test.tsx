@@ -35,8 +35,8 @@ test("セクション, 配列 の組み合わせ", async () => {
     <ContextProviders>
       <DynamicForm
         ref={ref}
-        root={root}
         defaultValues={defaultValues}
+        {...root}
       />
     </ContextProviders>
   )

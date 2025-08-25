@@ -221,7 +221,7 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
     return (
       <FormLayout.Field
         label={member.displayName}
-        labelEnd={member.required && mode === "single-view" && (
+        labelEnd={member.isRequired && mode === "single-view" && (
           <Layout.RequiredChip />
         )}
       >
@@ -250,7 +250,7 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
       return (
         <FormLayout.Field
           label={member.displayName}
-          labelEnd={member.required && mode === "single-view" && (
+          labelEnd={member.isRequired && mode === "single-view" && (
             <Layout.RequiredChip />
           )}
         >
@@ -267,7 +267,7 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
       return mode === "single-view" ? (
         <FormLayout.Field
           label={member.displayName}
-          labelEnd={member.required && mode === "single-view" && (
+          labelEnd={member.isRequired && mode === "single-view" && (
             <Layout.RequiredChip />
           )}
         >
@@ -292,7 +292,7 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
       return mode === "single-view" ? (
         <FormLayout.Field
           label={member.displayName}
-          labelEnd={member.required && (
+          labelEnd={member.isRequired && (
             <Layout.RequiredChip />
           )}
         >
@@ -326,7 +326,7 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
       return mode === "single-view" ? (
         <FormLayout.Field
           label={member.displayName}
-          labelEnd={member.required && (
+          labelEnd={member.isRequired && (
             <Layout.RequiredChip />
           )}
         >
@@ -363,7 +363,7 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
       return mode === "single-view" ? (
         <FormLayout.Field
           label={member.displayName}
-          labelEnd={member.required && (
+          labelEnd={member.isRequired && (
             <Layout.RequiredChip />
           )}
         >
@@ -407,7 +407,7 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
     return mode === "single-view" ? (
       <FormLayout.Field
         label={member.displayName}
-        labelEnd={member.required && (
+        labelEnd={member.isRequired && (
           <Layout.RequiredChip />
         )}
       >
@@ -440,7 +440,7 @@ const MemberComponent = ({ memberName, member, ancestorsPath }: {
     return (
       <FormLayout.Field
         label={member.displayName}
-        labelEnd={member.required && mode === "single-view" && (
+        labelEnd={member.isRequired && mode === "single-view" && (
           <Layout.RequiredChip />
         )}
       >

@@ -30,11 +30,15 @@ export const getSchema = (metadata: { [key: string]: MetadataForPage.StructureMe
     const keys: MetadataForPage.ValueMetadata[] = []
     for (const member of Object.values(structureMetadata.members)) {
       if (!member.isKey) continue
+      if (member.type === 'RootAggregate') continue
+      if (member.type === 'ChildAggregate') continue
+      if (member.type === 'ChildrenAggregate') continue
       if (member.type === 'ref-to') {
         keys.push(...enumerateKeyVMs(findRefTo(member.refTo)))
-      } else {
-        keys.push(member)
+        continue
       }
+      // TypeScriptの型推論が効かないので、asを使用して型を明示する
+      keys.push(member as MetadataForPage.ValueMetadata)
     }
     return keys
   }
