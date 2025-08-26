@@ -478,7 +478,8 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
                     handleMouseMove={handleMouseMove}
                     cellEditorRef={cellEditorRef}
                     showHorizontalBorder={props.showHorizontalBorder}
-                    columnSizing={columnSizing?.[cell.column.id]}
+                    columnWidth={cell.column.getSize()}
+                    columnStart={cell.column.getStart()}
                   />
                 ))}
               </tr>
@@ -534,7 +535,8 @@ type MemorizedBodyCellProps<TRow extends ReactHookForm.FieldValues> = {
   handleMouseMove: (rowIndex: number, colIndex: number) => void,
   cellEditorRef: React.RefObject<CellEditorRef<TRow> | null>,
   showHorizontalBorder: boolean | undefined,
-  columnSizing: number | null | undefined,
+  columnWidth: number,
+  columnStart: number,
   onChangeRow: unknown,
 }
 
@@ -551,6 +553,8 @@ const MemorizedBodyCell = React.memo(<TRow extends ReactHookForm.FieldValues>({
   handleMouseMove,
   cellEditorRef,
   showHorizontalBorder,
+  columnWidth,
+  columnStart,
   ...props
 }: MemorizedBodyCellProps<TRow>) => {
 
@@ -580,8 +584,8 @@ const MemorizedBodyCell = React.memo(<TRow extends ReactHookForm.FieldValues>({
       key={cell.id}
       className={dataColumnClassName}
       style={{
-        width: cell.column.getSize(),
-        left: cellMeta?.originalColDef?.isFixed ? `${cell.column.getStart()}px` : undefined,
+        width: columnWidth,
+        left: cellMeta?.originalColDef?.isFixed ? `${columnStart}px` : undefined,
       }}
       onClick={(e) => {
         const visibleDataColumns = tableRef.current?.getVisibleLeafColumns() ?? []
@@ -617,7 +621,7 @@ const MemorizedBodyCell = React.memo(<TRow extends ReactHookForm.FieldValues>({
       <div
         className={`flex select-none truncate border-gray-200 ${showHorizontalBorder ? 'border-b' : ''} ${cellMeta?.originalColDef?.isFixed ? 'border-r' : ''}`}
         style={{
-          width: cell.column.getSize(),
+          width: columnWidth,
           minHeight: ESTIMATED_ROW_HEIGHT, // 動的行高さ対応: heightの代わりにminHeightを使用
         }}
       >
@@ -633,7 +637,14 @@ const MemorizedBodyCell = React.memo(<TRow extends ReactHookForm.FieldValues>({
   // cellは毎回新しいインスタンスに生まれ変わるので、それ以外のpropsが変わったときのみ再レンダリングする
   const { cell, ...prevRest } = prevProps
   const { cell: _, ...nextRest } = nextProps
-  for (const key in prevRest) {
+
+  // キーの数が違う場合は再レンダリング
+  const prevKeys = Object.keys(prevRest)
+  const nextKeys = Object.keys(nextRest)
+  if (prevKeys.length !== nextKeys.length) return false
+
+  // 全てのキーで値を比較
+  for (const key of prevKeys) {
     if (!Object.is(prevRest[key as keyof typeof prevRest], nextRest[key as keyof typeof nextRest])) return false
   }
   return true
