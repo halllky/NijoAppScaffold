@@ -73,6 +73,7 @@ public class SchemaParseRule {
             BasicNodeOptions.TotalDigit,
             BasicNodeOptions.DecimalPlace,
             BasicNodeOptions.SequenceName,
+            BasicNodeOptions.UserHelpText,
         };
         return new() {
             Models = models,

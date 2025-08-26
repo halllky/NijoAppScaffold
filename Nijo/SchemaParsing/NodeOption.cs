@@ -448,5 +448,22 @@ internal static class BasicNodeOptions {
             return model is DataModel;
         },
     };
+
+    internal static NodeOption UserHelpText = new() {
+        AttributeName = "UserHelpText",
+        DisplayName = "ユーザー向け説明文",
+        Type = E_NodeOptionType.String,
+        HelpText = $$"""
+            アプリケーションのエンドユーザーに向けた説明文を指定します。
+            画面上でユーザーに表示し、項目の入力方法や意味を説明するために使用してください。
+            改行を含めることができます。
+            """,
+        Validate = ctx => {
+            // 特に制約なし（改行も許可）
+        },
+        IsAvailableModelMembers = model => {
+            return true;
+        },
+    };
     #endregion ValueMember用
 }
