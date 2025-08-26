@@ -95,15 +95,11 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
   }, [columnSizing])
 
   // チェックボックス表示判定
-  const getShouldShowCheckBox = useCallback((rowIndex: number): boolean => {
+  const getShouldShowCheckBox = useCallback((rowIndex: number, row: TRow): boolean => {
     if (!showCheckBox) return false;
     if (showCheckBox === true) return true;
-    if (typeof showCheckBox === 'function' && rowIndex >= 0 && rowIndex < rows.length) {
-      const row = tableRef.current?.getRow(rowIndex.toString())?.original
-      if (row) return showCheckBox(row, rowIndex);
-    }
-    return false;
-  }, [showCheckBox, tableRef]);
+    return showCheckBox(row, rowIndex);
+  }, [showCheckBox]);
 
   // 行単位の編集可否の判定
   const getIsReadOnly = useCallback((rowIndex: number): boolean => {
@@ -531,7 +527,7 @@ type MemorizedBodyCellProps<TRow extends ReactHookForm.FieldValues> = {
   cell: Cell<TRow, unknown>,
   rowIndex: number,
   tableRef: React.RefObject<Table<TRow> | null>,
-  getShouldShowCheckBox: (rowIndex: number) => boolean,
+  getShouldShowCheckBox: (rowIndex: number, row: TRow) => boolean,
   checkedRows: Set<number>,
   handleToggleRow: (rowIndex: number, checked: boolean) => void,
   handleCellClick: (e: React.MouseEvent<HTMLTableCellElement>, rowIndex: number, colIndex: number) => void,
@@ -574,11 +570,11 @@ const MemorizedBodyCell = React.memo(<TRow extends ReactHookForm.FieldValues>({
         className="flex bg-gray-100 align-middle text-center sticky left-0"
         style={{ width: cell.column.getSize() }}
       >
-        <div
+        <label
           className="h-full flex justify-center items-center border-r border-gray-200"
           style={{ width: cell.column.getSize(), height: ESTIMATED_ROW_HEIGHT }}
         >
-          {getShouldShowCheckBox(rowIndex) && (
+          {getShouldShowCheckBox(rowIndex, cell.row.original) && (
             <input
               type="checkbox"
               checked={checkedRows.has(rowIndex)}
@@ -586,7 +582,7 @@ const MemorizedBodyCell = React.memo(<TRow extends ReactHookForm.FieldValues>({
               aria-label={`行${rowIndex + 1}を選択`}
             />
           )}
-        </div>
+        </label>
       </td>
     );
   }
