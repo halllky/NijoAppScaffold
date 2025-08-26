@@ -249,7 +249,7 @@ export const MultiView = <TQueryModel extends QueryModelType>(
                 <tr className="bg-gray-50">
                   {columnDefs.map((column, index) => (
                     <th key={index} className="border p-1 text-left">
-                      {column.header}
+                      {typeof column.header === 'string' ? column.header : undefined}
                     </th>
                   ))}
                 </tr>
