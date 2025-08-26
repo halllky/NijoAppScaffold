@@ -9,7 +9,6 @@ import _004_カスタムレンダリング2 from "../layout/DynamicForm/__tests_
 import _005_複雑なネスト構造 from "../layout/DynamicForm/__tests__/005_複雑なネスト構造"
 import _006_空データ構造 from "../layout/DynamicForm/__tests__/006_空データ構造"
 import _007_グリッド機能 from "../layout/DynamicForm/__tests__/007_グリッド機能"
-import FormLayoutComponentsTest_Extended from "./FormLayoutComponentsTest_Extended"
 import FormLayoutPatternsDebugging from "./FormLayoutPatternsDebugging"
 import { QueryModelLoadView } from "../query-command-debugger/QueryModelLoadView"
 
@@ -71,11 +70,6 @@ export const getDebuggingPages = (): { groupName: string, links: (ReactRouter.Ro
   {
     groupName: 'FormLayoutのデバッグ',
     links: [
-      {
-        path: '/form-layout/000',
-        label: 'FormLayoutコンポーネントのパターン網羅テスト',
-        element: <FormLayoutComponentsTest_Extended />,
-      },
       {
         path: '/form-layout/001',
         label: 'FormLayout レイアウト構造パターン集',
