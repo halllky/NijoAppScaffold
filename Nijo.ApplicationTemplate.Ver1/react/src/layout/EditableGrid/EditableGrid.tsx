@@ -75,8 +75,49 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
   // 列定義の取得
   const cellType = useCellTypes<TRow>(props.onChangeRow)
   const columnDefs = React.useMemo(() => {
-    return getColumnDefs(cellType)
-  }, [getColumnDefs, cellType])
+    const columns = getColumnDefs(cellType)
+
+    // チェックボックス列を追加
+    if (showCheckBox) {
+      columns.unshift({
+        columnId: ROW_HEADER_COLUMN_ID,
+        enableResizing: false,
+        isFixed: true,
+        header: ctx => (
+          <div
+            className="w-full flex justify-center items-center sticky"
+            onClick={e => e.stopPropagation()}
+          >
+            {showCheckBox && (
+              <input
+                type="checkbox"
+                checked={ctx.table.getIsAllRowsSelected()}
+                onChange={ctx.table.getToggleAllRowsSelectedHandler()}
+                aria-label="全行選択"
+              />
+            )}
+          </div>
+        ),
+        renderCell: ctx => (
+          <label
+            className="h-full flex justify-center items-center bg-gray-100"
+            style={{ width: ctx.column.getSize(), height: ESTIMATED_ROW_HEIGHT }}
+          >
+            {getShouldShowCheckBox(ctx.row.index, ctx.row.original) && (
+              <input
+                type="checkbox"
+                checked={ctx.row.getIsSelected()}
+                onChange={ctx.row.getToggleSelectedHandler()}
+                aria-label={`行${ctx.row.index + 1}を選択`}
+              />
+            )}
+          </label>
+        ),
+      })
+    }
+
+    return columns
+  }, [getColumnDefs, cellType, showCheckBox])
 
   // table インスタンスへの参照を保持 (コールバック内で最新の table を参照するため)
   const tableRef = useRef<ReturnType<typeof useReactTable<TRow>> | null>(null);
@@ -156,14 +197,10 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
   const {
     activeCell,
     selectedRange,
-    checkedRows,
-    allRowsChecked,
     anchorCellRef,
     setActiveCell,
     setSelectedRange,
     handleCellClick,
-    handleToggleAllRows,
-    handleToggleRow,
     selectRows
   } = useSelection(
     rows.length,
@@ -204,37 +241,21 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
   // テーブル定義
   const columnHelper = createColumnHelper<TRow>();
   const columns = useMemo(() => {
-    // 行ヘッダー（チェックボックス列）
-    const rowHeaderColumn = columnHelper.display({
-      id: ROW_HEADER_COLUMN_ID,
-      enableResizing: false,
-      meta: {
-        isRowHeader: true,
-        originalColDef: undefined,
-      } satisfies ColumnMetadataInternal<TRow>,
-    });
-
-    // 列ヘッダーとデータ列
-    const dataColumns = columnDefs
-      .map((colDef: EditableGridColumnDef<TRow>, colIndex: number) => {
-        const accessor = (row: TRow) => colDef.fieldPath
-          ? getValueByPath(row, colDef.fieldPath)
-          : undefined
-        const tableColumnDef = columnHelper.accessor(accessor, {
-          id: colDef.columnId ?? `col-${colIndex}`,
-          size: colDef.defaultWidth ?? DEFAULT_COLUMN_WIDTH,
-          enableResizing: colDef.enableResizing ?? true,
-          meta: {
-            originalColDef: colDef,
-            isRowHeader: false,
-          } satisfies ColumnMetadataInternal<TRow>,
-        });
-        return tableColumnDef;
+    return columnDefs.map((colDef, colIndex) => {
+      const accessor = (row: TRow) => colDef.fieldPath
+        ? getValueByPath(row, colDef.fieldPath)
+        : undefined
+      const tableColumnDef = columnHelper.accessor(accessor, {
+        id: colDef.columnId ?? `col-${colIndex}`,
+        size: colDef.defaultWidth ?? DEFAULT_COLUMN_WIDTH,
+        enableResizing: colDef.enableResizing ?? true,
+        meta: {
+          originalColDef: colDef,
+        } satisfies ColumnMetadataInternal<TRow>,
       });
-
-    const generatedColumns = showCheckBox ? [rowHeaderColumn, ...dataColumns] : dataColumns;
-    return generatedColumns;
-  }, [columnDefs, showCheckBox, allRowsChecked, handleToggleAllRows, columnHelper, cellType]);
+      return tableColumnDef;
+    })
+  }, [columnDefs, columnHelper]);
 
   const table = useReactTable({
     data: rows,
@@ -277,9 +298,9 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
   // ref用の公開メソッド
   useImperativeHandle(ref, () => ({
     // チェックボックスで選択されている行
-    getCheckedRows: () => Array.from(checkedRows).map(rowIndex => ({
-      row: rows[rowIndex],
-      rowIndex,
+    getCheckedRows: () => table.getFilteredSelectedRowModel().rows.map(row => ({
+      row: row.original,
+      rowIndex: row.index,
     })),
     // セルの範囲選択に含まれる行
     getSelectedRows: () => {
@@ -299,7 +320,7 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
       }
     },
     getSelectedRange: () => selectedRange ?? undefined,
-  }), [checkedRows, rows, columnDefs, selectRows, activeCell, selectedRange]);
+  }), [table, rows, columnDefs, selectRows, activeCell, selectedRange]);
 
   // 初期状態設定
   useEffect(() => {
@@ -376,11 +397,9 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
               {headerGroup.headers.map(header => {
                 const headerMeta = header.column.columnDef.meta as ColumnMetadataInternal<TRow> | undefined
                 const isFixedColumn = !!headerMeta?.originalColDef?.isFixed;
-                const isRowHeader = !!headerMeta?.isRowHeader;
 
                 let className = 'flex bg-gray-100 relative text-left select-none border-b border-r border-gray-200'
-                if (isRowHeader) className += ' sticky z-20'
-                else if (isFixedColumn) className += ' sticky z-10'
+                if (isFixedColumn) className += ' sticky z-10'
 
                 return (
                   <th
@@ -389,33 +408,15 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
                     style={{
                       width: header.getSize(),
                       height: ESTIMATED_ROW_HEIGHT,
-                      left: (isRowHeader || isFixedColumn) ? `${header.getStart()}px` : undefined,
+                      left: isFixedColumn ? `${header.getStart()}px` : undefined,
                     }}
                   >
-                    {isRowHeader && (
-                      <div
-                        className="w-full flex justify-center items-center sticky"
-                        onClick={e => e.stopPropagation()}
-                      >
-                        {showCheckBox && (
-                          <input
-                            type="checkbox"
-                            checked={allRowsChecked}
-                            onChange={(e) => handleToggleAllRows(e.target.checked)}
-                            aria-label="全行選択"
-                          />
-                        )}
-                      </div>
-                    )}
-
-                    {!isRowHeader && typeof headerMeta?.originalColDef?.header === 'string' && (
+                    {typeof headerMeta?.originalColDef?.header === 'string' ? (
                       <div className="w-full pl-1 text-gray-700 font-normal truncate select-none">
                         {headerMeta?.originalColDef?.header === '' ? '\u00A0' : headerMeta?.originalColDef?.header}
                       </div>
-                    )}
-
-                    {!isRowHeader && typeof headerMeta?.originalColDef?.header !== 'string' && (
-                      headerMeta?.originalColDef?.header
+                    ) : (
+                      headerMeta?.originalColDef?.header?.(header.getContext())
                     )}
 
                     {/* 列幅を変更できる場合はサイズ変更ハンドラを設定 */}
@@ -469,8 +470,7 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
                     tableRef={tableRef}
                     onChangeRow={props.onChangeRow}
                     getShouldShowCheckBox={getShouldShowCheckBox}
-                    checkedRows={checkedRows}
-                    handleToggleRow={handleToggleRow}
+                    isSelected={row.getIsSelected()}
                     handleCellClick={handleCellClick}
                     getIsReadOnly={getIsReadOnly}
                     isDragging={isDragging}
@@ -526,10 +526,9 @@ type MemorizedBodyCellProps<TRow extends ReactHookForm.FieldValues> = {
   rowIndex: number,
   tableRef: React.RefObject<Table<TRow> | null>,
   getShouldShowCheckBox: (rowIndex: number, row: TRow) => boolean,
-  checkedRows: Set<number>,
-  handleToggleRow: (rowIndex: number, checked: boolean) => void,
   handleCellClick: (e: React.MouseEvent<HTMLTableCellElement>, rowIndex: number, colIndex: number) => void,
   getIsReadOnly: (rowIndex: number) => boolean,
+  isSelected: boolean,
   isDragging: boolean,
   handleMouseDown: (e: React.MouseEvent<HTMLTableCellElement>, rowIndex: number, colIndex: number) => void,
   handleMouseMove: (rowIndex: number, colIndex: number) => void,
@@ -545,8 +544,6 @@ const MemorizedBodyCell = React.memo(<TRow extends ReactHookForm.FieldValues>({
   rowIndex,
   tableRef,
   getShouldShowCheckBox,
-  checkedRows,
-  handleToggleRow,
   handleCellClick,
   getIsReadOnly,
   isDragging,
@@ -557,33 +554,7 @@ const MemorizedBodyCell = React.memo(<TRow extends ReactHookForm.FieldValues>({
   ...props
 }: MemorizedBodyCellProps<TRow>) => {
 
-  // 行ヘッダー列を除いた可視列の配列を取得し、その中でのインデックスを colIndex とする
   const cellMeta = cell.column.columnDef.meta as ColumnMetadataInternal<TRow> | undefined;
-
-  // 行選択チェックボックス列
-  if (cellMeta?.isRowHeader) {
-    return (
-      <td
-        key={cell.id}
-        className="flex bg-gray-100 align-middle text-center sticky left-0"
-        style={{ width: cell.column.getSize() }}
-      >
-        <label
-          className="h-full flex justify-center items-center border-r border-gray-200"
-          style={{ width: cell.column.getSize(), height: ESTIMATED_ROW_HEIGHT }}
-        >
-          {getShouldShowCheckBox(rowIndex, cell.row.original) && (
-            <input
-              type="checkbox"
-              checked={checkedRows.has(rowIndex)}
-              onChange={(e) => handleToggleRow(rowIndex, e.target.checked)}
-              aria-label={`行${rowIndex + 1}を選択`}
-            />
-          )}
-        </label>
-      </td>
-    );
-  }
 
   // データ列
   let dataColumnClassName = 'flex outline-none align-middle'
@@ -672,7 +643,6 @@ const MemorizedBodyCell = React.memo(<TRow extends ReactHookForm.FieldValues>({
 
 /** このフォルダ内部でのみ使用。外部から使われる想定はない */
 export type ColumnMetadataInternal<TRow extends ReactHookForm.FieldValues> = {
-  isRowHeader: boolean | undefined
   originalColDef: EditableGridColumnDef<TRow> | undefined
 }
 

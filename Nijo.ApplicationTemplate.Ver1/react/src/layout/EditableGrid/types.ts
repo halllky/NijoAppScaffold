@@ -1,7 +1,7 @@
 import * as React from "react"
 import type * as ReactHookForm from 'react-hook-form'
 import type { ColumnDefFactories } from './useCellTypes'
-import { CellContext } from "@tanstack/react-table"
+import { CellContext, HeaderContext } from "@tanstack/react-table"
 
 /** EditableGridのプロパティ */
 export type EditableGridProps<TRow extends ReactHookForm.FieldValues> = {
@@ -105,7 +105,7 @@ export type GetColumnDefsFunction<TRow extends ReactHookForm.FieldValues> = (cel
 /** EditableGridの列定義 */
 export type EditableGridColumnDef<TRow extends ReactHookForm.FieldValues> = EditableGridColumnDefOptions<TRow> & {
   /** 列ヘッダ */
-  header?: React.ReactNode
+  header?: string | ((ctx: HeaderContext<TRow, unknown>) => React.ReactNode)
   /** react-hook-formのフィールドパス。フォームのルートからではなく行データのルートからのパスを指定する。 */
   fieldPath?: ReactHookForm.Path<TRow>
 }

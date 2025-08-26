@@ -4,17 +4,11 @@ import { CellPosition, CellSelectionRange } from ".";
 export interface UseSelectionReturn {
   activeCell: CellPosition | null;
   selectedRange: CellSelectionRange | null;
-  /** 行頭のチェックボックスで選択されている行のインデックスの集合 */
-  checkedRows: Set<number>;
-  /** 全ての行がチェックボックスで選択されているかどうか */
-  allRowsChecked: boolean;
   /** 範囲選択のアンカーセル */
   anchorCellRef: React.RefObject<CellPosition | null>;
   setActiveCell: (cell: CellPosition | null) => void;
   setSelectedRange: (range: CellSelectionRange | null) => void;
   handleCellClick: (event: React.MouseEvent, rowIndex: number, colIndex: number) => void;
-  handleToggleAllRows: (checked: boolean) => void;
-  handleToggleRow: (rowIndex: number, checked: boolean) => void;
   selectRows: (startRowIndex: number, endRowIndex: number) => void;
 }
 
@@ -26,38 +20,9 @@ export function useSelection(
   // 選択状態の管理
   const [activeCell, setActiveCell_useState] = useState<CellPosition | null>(null);
   const [selectedRange, setSelectedRange] = useState<CellSelectionRange | null>(null);
-  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
-  const [allRowsSelected, setAllRowsSelected] = useState(false);
 
   const activeCellRef = useRef<CellPosition | null>(null);
   const anchorCellRef = useRef<CellPosition | null>(null);
-
-  // 全行選択トグルのハンドラ
-  const handleToggleAllRows = useCallback((checked: boolean) => {
-    if (checked) {
-      const allIndices = new Set(Array.from({ length: totalRows }, (_, i) => i));
-      setSelectedRows(allIndices);
-      setAllRowsSelected(true);
-    } else {
-      setSelectedRows(new Set());
-      setAllRowsSelected(false);
-    }
-  }, [totalRows]);
-
-  // 行選択トグルのハンドラ
-  const handleToggleRow = useCallback((rowIndex: number, checked: boolean) => {
-    setSelectedRows(prev => {
-      const newSelectedRows = new Set(prev);
-      if (checked) {
-        newSelectedRows.add(rowIndex);
-      } else {
-        newSelectedRows.delete(rowIndex);
-      }
-
-      setAllRowsSelected(newSelectedRows.size === totalRows);
-      return newSelectedRows;
-    });
-  }, [totalRows]);
 
   // セルクリックハンドラ
   const handleCellClick = useCallback((event: React.MouseEvent, rowIndex: number, colIndex: number) => {
@@ -94,9 +59,7 @@ export function useSelection(
       newSelectedRows.add(i);
     }
     setActiveCell({ rowIndex: min, colIndex: 0 });
-    setSelectedRows(newSelectedRows);
     setSelectedRange({ startCol: 0, endCol: totalColumns - 1, startRow: min, endRow: max });
-    setAllRowsSelected(newSelectedRows.size === totalRows);
     anchorCellRef.current = { rowIndex: min, colIndex: 0 };
   }, [totalRows, totalColumns, anchorCellRef]);
 
@@ -117,8 +80,6 @@ export function useSelection(
     if (totalRows === 0 || totalColumns === 0) {
       setActiveCell_useState(null);
       setSelectedRange(null);
-      setSelectedRows(new Set());
-      setAllRowsSelected(false);
       activeCellRef.current = null;
       anchorCellRef.current = null;
       return;
@@ -169,15 +130,6 @@ export function useSelection(
       return prevRange;
     });
 
-    // チェック済み行が範囲外の場合は調整
-    setSelectedRows(prevSelected => {
-      const filtered = new Set(Array.from(prevSelected).filter(rowIndex => rowIndex < totalRows));
-      if (filtered.size !== prevSelected.size) {
-        setAllRowsSelected(filtered.size === totalRows);
-        return filtered;
-      }
-      return prevSelected;
-    });
   }, [totalRows, totalColumns, onActiveCellChanged]);
 
   const setActiveCell = useCallback((cell: CellPosition | null) => {
@@ -189,14 +141,10 @@ export function useSelection(
   return {
     activeCell,
     selectedRange,
-    checkedRows: selectedRows,
-    allRowsChecked: allRowsSelected,
     anchorCellRef,
     setActiveCell,
     setSelectedRange,
     handleCellClick,
-    handleToggleAllRows,
-    handleToggleRow,
     selectRows
   };
 }

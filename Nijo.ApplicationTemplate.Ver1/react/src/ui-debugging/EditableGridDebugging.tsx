@@ -1,6 +1,9 @@
 import * as React from "react"
 import * as ReactHookForm from "react-hook-form"
 import { EditableGrid, EditableGridRef } from "../layout/EditableGrid"
+import { GetColumnDefsFunction, RowChangeEvent } from "../layout/EditableGrid/types"
+import type { ColumnDefFactories } from "../layout/EditableGrid/useCellTypes"
+import { CellContext, HeaderContext } from "@tanstack/react-table"
 
 // テスト用のデータ型定義
 type BasicRowData = {
@@ -106,7 +109,7 @@ function BasicGridSection() {
     }
   ])
 
-  const getColumnDefs = React.useCallback((cellType: any) => [
+  const getColumnDefs: GetColumnDefsFunction<BasicRowData> = React.useCallback((cellType) => [
     cellType.number('id', 'ID', { defaultWidth: 80, isReadOnly: true }),
     cellType.text('name', '名前', { defaultWidth: 150, required: true }),
     cellType.number('age', '年齢', { defaultWidth: 100 }),
@@ -129,9 +132,9 @@ function BasicGridSection() {
     cellType.number('progress', '進捗', { defaultWidth: 100 })
   ], [])
 
-  const handleRowChange = React.useCallback((e: any) => {
+  const handleRowChange: RowChangeEvent<BasicRowData> = React.useCallback((e) => {
     const newRows = [...rows]
-    e.changedRows.forEach((changedRow: any) => {
+    e.changedRows.forEach((changedRow) => {
       newRows[changedRow.rowIndex] = changedRow.newRow
     })
     setRows(newRows)
@@ -227,7 +230,7 @@ function AdvancedGridSection() {
     }
   ])
 
-  const getColumnDefs = React.useCallback((cellType: any) => [
+  const getColumnDefs: GetColumnDefsFunction<ProductRowData> = React.useCallback((cellType) => [
     cellType.number('id', 'ID', {
       defaultWidth: 80,
       isFixed: true,
@@ -240,7 +243,7 @@ function AdvancedGridSection() {
     }),
     cellType.number('price', '価格', {
       defaultWidth: 120,
-      renderCell: (context: any) => (
+      renderCell: (context: CellContext<ProductRowData, unknown>) => (
         <div className="text-right font-mono">
           ¥{Number(context.getValue()).toLocaleString()}
         </div>
@@ -257,7 +260,7 @@ function AdvancedGridSection() {
     }),
     cellType.boolean('inStock', '在庫あり', {
       defaultWidth: 100,
-      renderCell: (context: any) => (
+      renderCell: (context: CellContext<ProductRowData, unknown>) => (
         <div className="text-center">
           {context.getValue() ? (
             <span className="text-green-600 font-bold">✓ あり</span>
@@ -273,9 +276,9 @@ function AdvancedGridSection() {
     })
   ], [])
 
-  const handleRowChange = React.useCallback((e: any) => {
+  const handleRowChange: RowChangeEvent<ProductRowData> = React.useCallback((e) => {
     const newRows = [...rows]
-    e.changedRows.forEach((changedRow: any) => {
+    e.changedRows.forEach((changedRow) => {
       newRows[changedRow.rowIndex] = changedRow.newRow
     })
     setRows(newRows)
@@ -361,7 +364,7 @@ function ReadOnlyGridSection() {
 
   const [isGridReadOnly, setIsGridReadOnly] = React.useState(false)
 
-  const getColumnDefs = React.useCallback((cellType: any) => [
+  const getColumnDefs: GetColumnDefsFunction<BasicRowData> = React.useCallback((cellType) => [
     cellType.number('id', 'ID', { defaultWidth: 80, isReadOnly: true }),
     cellType.text('name', '名前', { defaultWidth: 150 }),
     cellType.number('age', '年齢', { defaultWidth: 100 }),
@@ -447,20 +450,20 @@ function CustomRenderingSection() {
     }
   ])
 
-  const getColumnDefs = React.useCallback((cellType: any) => [
+  const getColumnDefs: GetColumnDefsFunction<BasicRowData> = React.useCallback((cellType) => [
     {
       ...cellType.text('name', '名前', {
         defaultWidth: 150,
-        renderCell: (context: any) => (
+        renderCell: (context: CellContext<BasicRowData, unknown>) => (
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-              {context.getValue()?.charAt(0) || '?'}
+              {context.getValue()?.toString().charAt(0) || '?'}
             </div>
-            <span>{context.getValue()}</span>
+            <span>{context.getValue() as string}</span>
           </div>
         )
       }),
-      header: (
+      header: ctx => (
         <div className="flex items-center gap-2 text-blue-700">
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
@@ -478,7 +481,7 @@ function CustomRenderingSection() {
           return <span className={`font-semibold ${color}`}>{age}歳</span>
         }
       }),
-      header: (
+      header: ctx => (
         <div className="flex items-center text-green-700">
           <span className="text-lg">🎂</span>
           <span className="text-xs font-medium">年齢</span>
@@ -515,7 +518,7 @@ function CustomRenderingSection() {
           )
         }
       }),
-      header: (
+      header: ctx => (
         <div className="flex items-center justify-center">
           <div className="bg-gradient-to-r from-red-500 to-yellow-500 text-white px-2 py-1 rounded text-xs font-bold">
             ⚡ 優先度
@@ -547,7 +550,7 @@ function CustomRenderingSection() {
           )
         }
       }),
-      header: (
+      header: ctx => (
         <div className="flex gap-1">
           <div className="flex items-center justify-center gap-1 text-purple-700">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -571,7 +574,7 @@ function CustomRenderingSection() {
           </div>
         )
       }),
-      header: (
+      header: ctx => (
         <div className="text-center">
           <div className="inline-flex items-center gap-1 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -629,7 +632,7 @@ function KeyboardTestSection() {
   const [keyboardEvents, setKeyboardEvents] = React.useState<string[]>([])
   const gridRef = React.useRef<EditableGridRef<BasicRowData>>(null)
 
-  const getColumnDefs = React.useCallback((cellType: any) => [
+  const getColumnDefs: GetColumnDefsFunction<BasicRowData> = React.useCallback((cellType) => [
     cellType.text('name', '名前', { defaultWidth: 150 }),
     cellType.number('age', '年齢', { defaultWidth: 100 }),
     cellType.text('email', 'メール', { defaultWidth: 200 }),
@@ -730,8 +733,7 @@ function SelectionTestSection() {
     { id: 4, name: "高橋美咲", age: 32, email: "takahashi@example.com", isActive: true, joinDate: "2023-05-10", notes: "", category: "hr", progress: 60 }
   ])
 
-  const [rowSelection, setRowSelection] = React.useState<Record<string, boolean>>({})
-  const [selectionInfo, setSelectionInfo] = React.useState<string>('')
+  const [currentSelectionInfo, setCurrentSelectionInfo] = React.useState<string>('')
   const gridRef = React.useRef<EditableGridRef<BasicRowData>>(null)
 
   const getColumnDefs = React.useCallback((cellType: any) => [
@@ -750,27 +752,6 @@ function SelectionTestSection() {
     setRows(newRows)
   }, [rows])
 
-  const handleRowSelectionChange = React.useCallback((updater: React.SetStateAction<Record<string, boolean>>) => {
-    setRowSelection(updater)
-
-    // 選択情報を更新
-    const newSelection = typeof updater === 'function' ? updater(rowSelection) : updater
-    const selectedKeys = Object.keys(newSelection).filter(key => newSelection[key])
-    setSelectionInfo(`選択された行: ${selectedKeys.length}件 (${selectedKeys.join(', ')})`)
-  }, [rowSelection])
-
-  const selectAllRows = () => {
-    const allSelected = rows.reduce((acc, _, index) => {
-      acc[index.toString()] = true
-      return acc
-    }, {} as Record<string, boolean>)
-    setRowSelection(allSelected)
-  }
-
-  const clearSelection = () => {
-    setRowSelection({})
-  }
-
   const selectSpecificRows = () => {
     if (gridRef.current) {
       gridRef.current.selectRow(1, 2) // 2行目から3行目を選択
@@ -783,6 +764,24 @@ function SelectionTestSection() {
       const checked = gridRef.current.getCheckedRows()
       console.log('選択された行（範囲選択）:', selected)
       console.log('チェックされた行（チェックボックス）:', checked)
+
+      // 現在の選択状態を表示用に更新
+      const checkedIndices = checked.map(item => item.rowIndex)
+      const selectedIndices = selected.map(item => item.rowIndex)
+
+      let info = ''
+      if (checkedIndices.length > 0) {
+        info += `チェック選択: ${checkedIndices.length}件 (${checkedIndices.join(', ')}行目)`
+      }
+      if (selectedIndices.length > 0) {
+        if (info) info += ' | '
+        info += `範囲選択: ${selectedIndices.length}件 (${selectedIndices.join(', ')}行目)`
+      }
+      if (!info) {
+        info = '選択なし'
+      }
+
+      setCurrentSelectionInfo(info)
     }
   }
 
@@ -791,18 +790,6 @@ function SelectionTestSection() {
       <h2 className="text-xl font-semibold">行選択機能テスト</h2>
 
       <div className="flex gap-2 flex-wrap">
-        <button
-          onClick={selectAllRows}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          全て選択
-        </button>
-        <button
-          onClick={clearSelection}
-          className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-        >
-          選択解除
-        </button>
         <button
           onClick={selectSpecificRows}
           className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
@@ -813,13 +800,13 @@ function SelectionTestSection() {
           onClick={getSelectedRowsInfo}
           className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
         >
-          選択情報をコンソールに出力
+          選択情報を確認・表示
         </button>
       </div>
 
-      {selectionInfo && (
+      {currentSelectionInfo && (
         <div className="p-2 bg-blue-50 border border-blue-200 rounded text-sm">
-          {selectionInfo}
+          {currentSelectionInfo}
         </div>
       )}
 
@@ -830,8 +817,6 @@ function SelectionTestSection() {
           getColumnDefs={getColumnDefs}
           onChangeRow={handleRowChange}
           showCheckBox={true}
-          rowSelection={rowSelection}
-          onRowSelectionChange={handleRowSelectionChange}
           className="w-full"
         />
       </div>
@@ -839,12 +824,14 @@ function SelectionTestSection() {
       <div className="text-sm text-gray-600">
         <p>💡 テスト項目:</p>
         <ul className="list-disc list-inside ml-4">
-          <li>チェックボックスによる行選択</li>
-          <li>プログラムによる行選択</li>
-          <li>複数行の範囲選択</li>
-          <li>選択状態の取得</li>
-          <li>選択イベントのハンドリング</li>
+          <li>チェックボックスによる行選択（EditableGrid内部で管理）</li>
+          <li>プログラムによる行選択（refを通した操作）</li>
+          <li>複数行の範囲選択（マウスドラッグ）</li>
+          <li>選択状態の取得（refを通した情報取得）</li>
         </ul>
+        <p className="mt-2 text-xs text-gray-500">
+          💡 Tips: チェックボックスをクリックしてから「選択情報を確認・表示」ボタンを押すと、選択状態が表示されます。
+        </p>
       </div>
     </div>
   )
