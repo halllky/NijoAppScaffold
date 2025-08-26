@@ -55,6 +55,7 @@ export const Section = React.forwardRef<HTMLDivElement, SectionProps>((props, re
               <LabelRenderer
                 label={props.label}
                 labelEnd={props.labelEnd}
+                align="full"
               />
             )}
 
@@ -95,6 +96,7 @@ export const Section = React.forwardRef<HTMLDivElement, SectionProps>((props, re
               label={props.label}
               labelEnd={props.labelEnd}
               style={{ gridColumn: 'span 2' }}
+              align="full"
             />
           )}
 

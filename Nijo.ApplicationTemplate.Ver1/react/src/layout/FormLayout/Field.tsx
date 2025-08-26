@@ -19,7 +19,8 @@ export const Field = (props: FieldProps): React.ReactNode => {
   const { labelAlign, labelWidth } = React.useContext(FormLayoutContext)
   const parent = React.useContext(RecentParentContext)
 
-  // Group(レスポンシブコンテナ) の中にある場合
+  // Group(レスポンシブコンテナ) の中にある場合。
+  // 親が display: flex で子は横並びになっている。
   if (parent === 'responsive-container') {
     return (
       <RecentParentContext.Provider value="item">
@@ -33,6 +34,7 @@ export const Field = (props: FieldProps): React.ReactNode => {
             <LabelRenderer
               label={props.label}
               labelEnd={props.labelEnd}
+              align="full"
             />
           )}
           {/* コンテンツ */}
@@ -56,7 +58,9 @@ export const Field = (props: FieldProps): React.ReactNode => {
           <LabelRenderer
             label={props.label}
             labelEnd={props.labelEnd}
-            alignRight={!fullWidth && labelAlign === 'right'}
+            align={fullWidth
+              ? 'full'
+              : (labelAlign === 'right' ? 'right' : undefined)}
             style={{
               gridColumn: fullWidth ? 'span 2' : undefined,
             }}
@@ -92,6 +96,7 @@ export const Field = (props: FieldProps): React.ReactNode => {
         <LabelRenderer
           label={props.label}
           labelEnd={props.labelEnd}
+          align="full"
         />
         {/* コンテンツ */}
         <div>
@@ -112,7 +117,7 @@ export const Field = (props: FieldProps): React.ReactNode => {
         <LabelRenderer
           label={props.label}
           labelEnd={props.labelEnd}
-          alignRight={labelAlign === 'right'}
+          align={labelAlign === 'right' ? 'right' : undefined}
           style={{ padding: '0 4px' }}
         />
 

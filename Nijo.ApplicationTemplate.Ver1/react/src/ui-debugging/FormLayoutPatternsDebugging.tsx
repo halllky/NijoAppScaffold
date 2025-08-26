@@ -391,6 +391,10 @@ export default function FormLayoutPatternsDebugging() {
         </FormLayout.Root>
       </DemoBox>
 
+      {/* === labelEnd 大量要素テスト（全LabelRendererケース網羅） === */}
+
+      <LabelEndTest />
+
     </div>
   )
 }
@@ -471,3 +475,145 @@ const Select = (props: React.SelectHTMLAttributes<HTMLSelectElement>) => (
     background: '#fff',
   }} />
 )
+
+// -----------------------------
+// labelEnd 大量要素テスト
+
+const LabelEndTest = () => {
+
+  const [type, setType] = React.useState<'少なめ' | '中ぐらい' | '多め'>('少なめ')
+
+  return (<>
+    <DemoBox title="labelEnd に大量の要素が配置されたときにレイアウトが問題ないか" selfStretch>
+      <FormLayout.Root>
+        <FormLayout.Field fullWidth>
+          <div className="flex gap-4 items-center">
+            <label className="flex gap-1 items-center">
+              <input type="radio" name="type" value="少なめ" checked={type === '少なめ'} onChange={() => setType('少なめ')} />
+              少なめ
+            </label>
+            <label className="flex gap-1 items-center">
+              <input type="radio" name="type" value="中ぐらい" checked={type === '中ぐらい'} onChange={() => setType('中ぐらい')} />
+              中ぐらい
+            </label>
+            <label className="flex gap-1 items-center">
+              <input type="radio" name="type" value="多め" checked={type === '多め'} onChange={() => setType('多め')} />
+              多め
+            </label>
+          </div>
+        </FormLayout.Field>
+
+        <FormLayout.Separator />
+
+        <FormLayout.Section label="responsive container" responsive>
+          <FormLayout.Field
+            label="ケース1: Field の responsive-container 内"
+            labelEnd={<LargeLabelEndButtons type={type} />}
+          >
+            <Input placeholder="responsive-container内のField" />
+          </FormLayout.Field>
+        </FormLayout.Section>
+
+        <FormLayout.Section label="2-cols-grid" border>
+          <FormLayout.Field
+            label="ケース2: Field の 2-cols-grid 内"
+            labelEnd={<LargeLabelEndButtons type={type} />}
+          >
+            <Input placeholder="2-cols-grid内のField" />
+          </FormLayout.Field>
+
+          <FormLayout.Field
+            label="ケース3: Field の fullWidth"
+            labelEnd={<LargeLabelEndButtons type={type} />}
+            fullWidth
+          >
+            <Input placeholder="fullWidthのField" />
+          </FormLayout.Field>
+        </FormLayout.Section>
+
+        <FormLayout.Field label="ケース4: Field の通常ケース（Item内Item）">
+          <FormLayout.Field
+            label="大量labelEnd"
+            labelEnd={<LargeLabelEndButtons type={type} />}
+          >
+            <Input placeholder="Field通常ケース" />
+          </FormLayout.Field>
+        </FormLayout.Field>
+      </FormLayout.Root>
+    </DemoBox>
+
+    <DemoBox title="labelEnd 大量要素テスト: Section responsive + 2-cols-grid" selfStretch>
+      <FormLayout.Root>
+        <FormLayout.Section
+          label="ケース5: Section の responsive"
+          labelEnd={<LargeLabelEndButtons type={type} />}
+          responsive
+          border
+        >
+          <FormLayout.Field label="項目1"><Input /></FormLayout.Field>
+          <FormLayout.Field label="項目2"><Input /></FormLayout.Field>
+          <FormLayout.Field label="項目3"><Input /></FormLayout.Field>
+        </FormLayout.Section>
+
+        <FormLayout.Section
+          label="ケース6: Section の通常（2-cols-grid）"
+          labelEnd={<LargeLabelEndButtons type={type} />}
+          border
+        >
+          <FormLayout.Field label="項目A"><Input /></FormLayout.Field>
+          <FormLayout.Field label="項目B"><Input /></FormLayout.Field>
+          <FormLayout.Field label="項目C"><Input /></FormLayout.Field>
+        </FormLayout.Section>
+      </FormLayout.Root>
+    </DemoBox>
+  </>)
+}
+
+/** labelEnd に配置するボタン群 */
+const LargeLabelEndButtons = ({ type }: {
+  type: '少なめ' | '中ぐらい' | '多め'
+}) => {
+  if (type === '少なめ') return (
+    <>
+      <div className="flex-1"></div>
+      <button type="button" className="px-1 border border-blue-500 text-blue-500">編集</button>
+      <button type="button" className="px-1 border border-blue-500 text-blue-500">削除</button>
+    </>
+  )
+
+  if (type === '中ぐらい') return (
+    <>
+      <div className="flex-1"></div>
+      <button type="button" className="px-1 border border-blue-500 text-blue-500">編集</button>
+      <button type="button" className="px-1 border border-blue-500 text-blue-500">複写</button>
+      <button type="button" className="px-1 border border-orange-500 text-orange-500">印刷</button>
+      <button type="button" className="px-1 border border-orange-500 text-orange-500">メール</button>
+      <div className="basis-4"></div>
+      <button type="button" className="px-1 border border-blue-500 text-blue-500">削除</button>
+      <button type="button" className="px-1 border border-green-500 text-green-500">保存</button>
+    </>
+  )
+
+  return (
+    <>
+      <div className="flex-1"></div>
+      <button type="button" className="px-1 border border-blue-500 text-blue-500">新規</button>
+      <button type="button" className="px-1 border border-blue-500 text-blue-500">編集</button>
+      <button type="button" className="px-1 border border-blue-500 text-blue-500">複写</button>
+      <button type="button" className="px-1 border border-blue-500 text-blue-500">移動</button>
+      <button type="button" className="px-1 border border-red-500 text-red-500">削除</button>
+      <div className="basis-6"></div>
+      <button type="button" className="px-1 border border-green-500 text-green-500">保存</button>
+      <button type="button" className="px-1 border border-green-500 text-green-500">確定</button>
+      <div className="basis-6"></div>
+      <button type="button" className="px-1 border border-orange-500 text-orange-500">印刷</button>
+      <button type="button" className="px-1 border border-orange-500 text-orange-500">プレビュー</button>
+      <button type="button" className="px-1 border border-orange-500 text-orange-500">メール</button>
+      <button type="button" className="px-1 border border-orange-500 text-orange-500">エクスポート</button>
+      <div className="basis-4"></div>
+      <button type="button" className="px-1 border border-gray-500 text-gray-500">キャンセル</button>
+      <button type="button" className="px-1 border border-gray-500 text-gray-500">閉じる</button>
+    </>
+  )
+
+}
