@@ -281,9 +281,43 @@ function AdvancedGridSection() {
     setRows(newRows)
   }, [rows])
 
+  const addRow = () => {
+    const newRow: ProductRowData = {
+      id: Math.max(...rows.map(r => r.id), 0) + 1,
+      productName: "",
+      price: 0,
+      category: "",
+      inStock: true,
+      description: ""
+    }
+    setRows([...rows, newRow])
+  }
+
+  const removeLastRow = () => {
+    if (rows.length > 0) {
+      setRows(rows.slice(0, -1))
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-xl font-semibold">高度な機能テスト</h2>
+
+      <div className="flex gap-2">
+        <button
+          onClick={addRow}
+          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+        >
+          商品を追加
+        </button>
+        <button
+          onClick={removeLastRow}
+          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          disabled={rows.length === 0}
+        >
+          最後の商品を削除
+        </button>
+      </div>
 
       <div className="border border-gray-300 rounded">
         <EditableGrid
@@ -291,7 +325,7 @@ function AdvancedGridSection() {
           getColumnDefs={getColumnDefs}
           onChangeRow={handleRowChange}
           showCheckBox={true}
-          className="w-full"
+          className="w-full h-64"
         />
       </div>
 
@@ -302,6 +336,7 @@ function AdvancedGridSection() {
           <li>カスタムセルレンダリング（価格と在庫）</li>
           <li>オプション付きセル</li>
           <li>エディタオーバーフロー</li>
+          <li>行の追加・削除機能</li>
         </ul>
       </div>
     </div>

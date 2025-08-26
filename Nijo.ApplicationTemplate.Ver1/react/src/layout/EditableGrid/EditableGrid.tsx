@@ -594,6 +594,8 @@ const MemorizedBodyCell = React.memo(<TRow extends ReactHookForm.FieldValues>({
       && cellMeta.originalColDef.isReadOnly(cell.row.original, cell.row.index))
   if (!cellIsReadOnly) {
     dataColumnClassName += ` bg-white`
+  } else if (cellMeta?.originalColDef?.isFixed) {
+    dataColumnClassName += ' bg-gray-200'
   }
 
   // z-indexをつけるとボディ列が列ヘッダより手前にきてしまうので設定しない
