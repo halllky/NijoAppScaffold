@@ -378,7 +378,7 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
                 const isFixedColumn = !!headerMeta?.originalColDef?.isFixed;
                 const isRowHeader = !!headerMeta?.isRowHeader;
 
-                let className = 'flex bg-gray-100 relative text-left select-none'
+                let className = 'flex bg-gray-100 relative text-left select-none border-b border-r border-gray-200'
                 if (isRowHeader) className += ' sticky z-20'
                 else if (isFixedColumn) className += ' sticky z-10'
 
@@ -388,17 +388,14 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
                     className={className}
                     style={{
                       width: header.getSize(),
+                      height: ESTIMATED_ROW_HEIGHT,
                       left: (isRowHeader || isFixedColumn) ? `${header.getStart()}px` : undefined,
                     }}
                   >
-                    {isRowHeader ? (
+                    {isRowHeader && (
                       <div
-                        className="flex justify-center items-center border-b border-r border-gray-200 sticky"
+                        className="w-full flex justify-center items-center sticky"
                         onClick={e => e.stopPropagation()}
-                        style={{
-                          width: header.getSize(),
-                          height: ESTIMATED_ROW_HEIGHT,
-                        }}
                       >
                         {showCheckBox && (
                           <input
@@ -409,15 +406,16 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
                           />
                         )}
                       </div>
-                    ) : (
-                      <div
-                        className="flex pl-1 border-b border-r border-gray-200 text-gray-700 font-normal select-none"
-                        style={{ width: header.getSize() }}
-                      >
-                        <span className="truncate">
-                          {headerMeta?.originalColDef?.header === '' ? '\u00A0' : headerMeta?.originalColDef?.header}
-                        </span>
+                    )}
+
+                    {!isRowHeader && typeof headerMeta?.originalColDef?.header === 'string' && (
+                      <div className="w-full pl-1 text-gray-700 font-normal truncate select-none">
+                        {headerMeta?.originalColDef?.header === '' ? '\u00A0' : headerMeta?.originalColDef?.header}
                       </div>
+                    )}
+
+                    {!isRowHeader && typeof headerMeta?.originalColDef?.header !== 'string' && (
+                      headerMeta?.originalColDef?.header
                     )}
 
                     {/* 列幅を変更できる場合はサイズ変更ハンドラを設定 */}

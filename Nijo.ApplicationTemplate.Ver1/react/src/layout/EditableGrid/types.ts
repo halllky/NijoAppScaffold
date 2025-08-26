@@ -104,8 +104,8 @@ export type GetColumnDefsFunction<TRow extends ReactHookForm.FieldValues> = (cel
 
 /** EditableGridの列定義 */
 export type EditableGridColumnDef<TRow extends ReactHookForm.FieldValues> = EditableGridColumnDefOptions<TRow> & {
-  /** 列ヘッダに表示する文字列 */
-  header: string
+  /** 列ヘッダ */
+  header?: React.ReactNode
   /** react-hook-formのフィールドパス。フォームのルートからではなく行データのルートからのパスを指定する。 */
   fieldPath?: ReactHookForm.Path<TRow>
 }

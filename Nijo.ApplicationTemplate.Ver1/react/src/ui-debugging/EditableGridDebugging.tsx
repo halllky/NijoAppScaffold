@@ -186,7 +186,7 @@ function BasicGridSection() {
           onChangeRow={handleRowChange}
           onActiveCellChanged={(cell) => console.log('アクティブセルが変更されました:', cell)}
           showCheckBox={true}
-          className="w-full"
+          className="w-full h-64"
           showHorizontalBorder={true}
         />
       </div>
@@ -413,88 +413,138 @@ function CustomRenderingSection() {
   ])
 
   const getColumnDefs = React.useCallback((cellType: any) => [
-    cellType.text('name', '名前', {
-      defaultWidth: 150,
-      renderCell: (context: any) => (
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-            {context.getValue()?.charAt(0) || '?'}
+    {
+      ...cellType.text('name', '名前', {
+        defaultWidth: 150,
+        renderCell: (context: any) => (
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+              {context.getValue()?.charAt(0) || '?'}
+            </div>
+            <span>{context.getValue()}</span>
           </div>
-          <span>{context.getValue()}</span>
+        )
+      }),
+      header: (
+        <div className="flex items-center gap-2 text-blue-700">
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+          </svg>
+          <span className="font-semibold">👤 名前</span>
         </div>
       )
-    }),
-    cellType.number('age', '年齢', {
-      defaultWidth: 100,
-      renderCell: (context: any) => {
-        const age = context.getValue() as number
-        const color = age >= 30 ? 'text-purple-600' : 'text-green-600'
-        return <span className={`font-semibold ${color}`}>{age}歳</span>
-      }
-    }),
-    cellType.text('category', '優先度', {
-      defaultWidth: 120,
-      getOptions: () => [
-        { value: 'low', label: '低' },
-        { value: 'medium', label: '中' },
-        { value: 'high', label: '高' },
-        { value: 'urgent', label: '緊急' }
-      ],
-      renderCell: (context: any) => {
-        const value = context.getValue() as string
-        const styles = {
-          low: 'bg-gray-100 text-gray-700',
-          medium: 'bg-blue-100 text-blue-700',
-          high: 'bg-orange-100 text-orange-700',
-          urgent: 'bg-red-100 text-red-700'
+    },
+    {
+      ...cellType.number('age', '年齢', {
+        defaultWidth: 100,
+        renderCell: (context: any) => {
+          const age = context.getValue() as number
+          const color = age >= 30 ? 'text-purple-600' : 'text-green-600'
+          return <span className={`font-semibold ${color}`}>{age}歳</span>
         }
-        const labels = {
-          low: '低',
-          medium: '中',
-          high: '高',
-          urgent: '緊急'
+      }),
+      header: (
+        <div className="flex items-center text-green-700">
+          <span className="text-lg">🎂</span>
+          <span className="text-xs font-medium">年齢</span>
+        </div>
+      )
+    },
+    {
+      ...cellType.text('category', '優先度', {
+        defaultWidth: 120,
+        getOptions: () => [
+          { value: 'low', label: '低' },
+          { value: 'medium', label: '中' },
+          { value: 'high', label: '高' },
+          { value: 'urgent', label: '緊急' }
+        ],
+        renderCell: (context: any) => {
+          const value = context.getValue() as string
+          const styles = {
+            low: 'bg-gray-100 text-gray-700',
+            medium: 'bg-blue-100 text-blue-700',
+            high: 'bg-orange-100 text-orange-700',
+            urgent: 'bg-red-100 text-red-700'
+          }
+          const labels = {
+            low: '低',
+            medium: '中',
+            high: '高',
+            urgent: '緊急'
+          }
+          return (
+            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${styles[value as keyof typeof styles] || styles.low}`}>
+              {labels[value as keyof typeof labels] || value}
+            </span>
+          )
         }
-        return (
-          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${styles[value as keyof typeof styles] || styles.low}`}>
-            {labels[value as keyof typeof labels] || value}
-          </span>
-        )
-      }
-    }),
-    cellType.number('progress', '進捗', {
-      defaultWidth: 150,
-      renderCell: (context: any) => {
-        const value = Number(context.getValue()) || 0
-        return (
-          <div className="w-full">
-            <div className="flex justify-between text-xs mb-1">
-              <span>{value}%</span>
-              <span className={value >= 80 ? 'text-green-600' : value >= 50 ? 'text-yellow-600' : 'text-red-600'}>
-                {value >= 80 ? '良好' : value >= 50 ? '普通' : '要改善'}
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className={`h-2 rounded-full transition-all ${value >= 80 ? 'bg-green-500' : value >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                  }`}
-                style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
-              />
-            </div>
-          </div>
-        )
-      }
-    }),
-    cellType.boolean('isActive', 'ステータス', {
-      defaultWidth: 100,
-      renderCell: (context: any) => (
+      }),
+      header: (
         <div className="flex items-center justify-center">
-          <div className={`w-3 h-3 rounded-full ${context.getValue() ? 'bg-green-500' : 'bg-gray-400'}`} />
-          <span className="ml-2 text-sm">
-            {context.getValue() ? 'アクティブ' : '非アクティブ'}
-          </span>
+          <div className="bg-gradient-to-r from-red-500 to-yellow-500 text-white px-2 py-1 rounded text-xs font-bold">
+            ⚡ 優先度
+          </div>
         </div>
       )
-    })
+    },
+    {
+      ...cellType.number('progress', '進捗', {
+        defaultWidth: 150,
+        renderCell: (context: any) => {
+          const value = Number(context.getValue()) || 0
+          return (
+            <div className="w-full">
+              <div className="flex justify-between text-xs mb-1">
+                <span>{value}%</span>
+                <span className={value >= 80 ? 'text-green-600' : value >= 50 ? 'text-yellow-600' : 'text-red-600'}>
+                  {value >= 80 ? '良好' : value >= 50 ? '普通' : '要改善'}
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className={`h-2 rounded-full transition-all ${value >= 80 ? 'bg-green-500' : value >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                    }`}
+                  style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+                />
+              </div>
+            </div>
+          )
+        }
+      }),
+      header: (
+        <div className="flex gap-1">
+          <div className="flex items-center justify-center gap-1 text-purple-700">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            <span className="font-semibold">進捗</span>
+          </div>
+          <div className="text-xs text-gray-500 mt-1">Completion</div>
+        </div>
+      )
+    },
+    {
+      ...cellType.boolean('isActive', 'ステータス', {
+        defaultWidth: 100,
+        renderCell: (context: any) => (
+          <div className="flex items-center justify-center">
+            <div className={`w-3 h-3 rounded-full ${context.getValue() ? 'bg-green-500' : 'bg-gray-400'}`} />
+            <span className="ml-2 text-sm">
+              {context.getValue() ? 'アクティブ' : '非アクティブ'}
+            </span>
+          </div>
+        )
+      }),
+      header: (
+        <div className="text-center">
+          <div className="inline-flex items-center gap-1 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="font-medium">ステータス</span>
+          </div>
+        </div>
+      )
+    }
   ], [])
 
   const handleRowChange = React.useCallback((e: any) => {
@@ -521,6 +571,7 @@ function CustomRenderingSection() {
       <div className="text-sm text-gray-600">
         <p>💡 テスト項目:</p>
         <ul className="list-disc list-inside ml-4">
+          <li>カスタム列ヘッダーレンダリング（アイコン、絵文字、グラデーション、アニメーション）</li>
           <li>アバター付き名前表示</li>
           <li>条件付きスタイル（年齢）</li>
           <li>優先度バッジ表示</li>
