@@ -6,7 +6,7 @@ export const LabelRenderer = ({ label, labelEnd, style, align }: {
   label?: string
   labelEnd?: React.ReactNode
   style?: React.CSSProperties
-  align?: 'right' | 'full'
+  align?: 'right' | 'full' | 'left'
 }) => {
 
   const { LabelComponent } = React.useContext(FormLayoutContext)

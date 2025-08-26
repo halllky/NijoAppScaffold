@@ -38,16 +38,23 @@ export default function FormLayoutPatternsDebugging() {
         <div className="flex flex-col gap-4">
           <div className="flex-1">
             <h4 className="mb-2 text-sm font-bold">左寄せ</h4>
-            <FormLayout.Root labelAlign="left">
+            <FormLayout.Root labelWidthPx={160} labelAlign="left">
               <FormLayout.Field label="会社名"><Input /></FormLayout.Field>
               <FormLayout.Field label="部署"><Input /></FormLayout.Field>
             </FormLayout.Root>
           </div>
           <div className="flex-1">
             <h4 className="mb-2 text-sm font-bold">右寄せ(デフォルト)</h4>
-            <FormLayout.Root labelAlign="right">
+            <FormLayout.Root labelWidthPx={160} labelAlign="right">
               <FormLayout.Field label="会社名"><Input /></FormLayout.Field>
               <FormLayout.Field label="部署"><Input /></FormLayout.Field>
+            </FormLayout.Root>
+          </div>
+          <div className="flex-1">
+            <h4 className="mb-2 text-sm font-bold">Fieldレベルでの個別指定</h4>
+            <FormLayout.Root labelWidthPx={160}>
+              <FormLayout.Field label="会社名(左寄せ)" labelAlign="left"><Input /></FormLayout.Field>
+              <FormLayout.Field label="部署(右寄せ)" labelAlign="right"><Input /></FormLayout.Field>
             </FormLayout.Root>
           </div>
         </div>

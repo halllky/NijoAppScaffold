@@ -9,6 +9,8 @@ export type FieldProps = {
   label?: string
   /** ラベルの後ろに挿入される */
   labelEnd?: React.ReactNode
+  /** ラベルの位置。未指定の場合はフォームのルートで指定された値が適用される */
+  labelAlign?: 'left' | 'right'
   children?: React.ReactNode
 }
 
@@ -16,7 +18,7 @@ export type FieldProps = {
  * フォームのフィールド
  */
 export const Field = (props: FieldProps): React.ReactNode => {
-  const { labelAlign, labelWidth } = React.useContext(FormLayoutContext)
+  const ctx = React.useContext(FormLayoutContext)
   const parent = React.useContext(RecentParentContext)
 
   // Group(レスポンシブコンテナ) の中にある場合。
@@ -60,7 +62,7 @@ export const Field = (props: FieldProps): React.ReactNode => {
             labelEnd={props.labelEnd}
             align={fullWidth
               ? 'full'
-              : (labelAlign === 'right' ? 'right' : undefined)}
+              : (props.labelAlign ?? ctx.labelAlign)}
             style={{
               gridColumn: fullWidth ? 'span 2' : undefined,
             }}
@@ -111,13 +113,13 @@ export const Field = (props: FieldProps): React.ReactNode => {
     <RecentParentContext.Provider value="item">
       <div style={{
         display: 'grid',
-        gridTemplateColumns: `${labelWidth}px 1fr`,
+        gridTemplateColumns: `${ctx.labelWidth}px 1fr`,
       }}>
         {/* ラベル */}
         <LabelRenderer
           label={props.label}
           labelEnd={props.labelEnd}
-          align={labelAlign === 'right' ? 'right' : undefined}
+          align={props.labelAlign ?? ctx.labelAlign}
           style={{ padding: '0 4px' }}
         />
 
