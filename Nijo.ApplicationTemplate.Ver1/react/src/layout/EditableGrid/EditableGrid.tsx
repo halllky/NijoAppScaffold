@@ -1,19 +1,16 @@
 import * as React from "react";
 import { useRef, useState, useCallback, useEffect, useImperativeHandle, useMemo } from "react";
-import { EditableGridProps, EditableGridRef, EditableGridColumnDef, EditableGridColumnDefRenderCell, CellPosition, EditableGridAutoSaveStoragedValueInternal } from "./types";
+import { EditableGridProps, EditableGridRef, EditableGridColumnDef, CellPosition, EditableGridAutoSaveStoragedValueInternal } from "./types";
 import {
   createColumnHelper,
   getCoreRowModel,
   useReactTable,
-  flexRender,
   ColumnSizingState,
-  OnChangeFn,
   Cell,
   Table
 } from '@tanstack/react-table';
 import {
   useVirtualizer,
-  notUndefined
 } from '@tanstack/react-virtual';
 import { useCellTypes } from "./useCellTypes";
 import type * as ReactHookForm from 'react-hook-form';
