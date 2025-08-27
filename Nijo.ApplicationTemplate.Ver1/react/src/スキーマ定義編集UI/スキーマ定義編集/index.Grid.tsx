@@ -4,7 +4,7 @@ import * as ReactTable from "@tanstack/react-table"
 import * as Icon from "@heroicons/react/24/solid"
 import * as Input from "../../input"
 import * as Layout from "../../layout"
-import { SchemaDefinitionGlobalState, ATTR_TYPE, XmlElementAttribute, XmlElementItem, ATTR_IS_KEY, TYPE_DATA_MODEL } from "./types"
+import { SchemaDefinitionGlobalState, ATTR_TYPE, XmlElementAttribute, XmlElementItem, ATTR_IS_KEY, TYPE_DATA_MODEL, ATTR_USER_HELP_TEXT } from "./types"
 import * as UI from '../UI'
 import useEvent from "react-use-event-hook"
 import { UUID } from "uuidjs"
@@ -60,10 +60,13 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
       // rootModelTypeに対応する属性のみをフィルタリング
       if (!rootModelType || !attrDef.availableModels.includes(rootModelType)) continue;
 
-      // 主要な列のみ表示の場合、DataModelのキー以外の属性は表示しない
-      if (showLessColumns && (rootModelType !== TYPE_DATA_MODEL || attrDef.attributeName !== ATTR_IS_KEY)) continue;
+      // すべての属性を表示する設定の場合か、主要な属性の場合のみ表示
+      if (!showLessColumns
+        || (rootModelType === TYPE_DATA_MODEL && attrDef.attributeName === ATTR_IS_KEY)
+        || attrDef.attributeName === ATTR_USER_HELP_TEXT) {
 
-      columns.push(createAttributeCell(attrDef, cellType, getValidationResult))
+        columns.push(createAttributeCell(attrDef, cellType, getValidationResult))
+      }
     }
 
     // コメント
