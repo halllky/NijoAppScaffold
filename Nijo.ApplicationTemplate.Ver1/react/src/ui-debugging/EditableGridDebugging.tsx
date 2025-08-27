@@ -44,6 +44,7 @@ export default function EditableGridDebugging() {
           { id: 'custom', label: 'カスタムレンダリング' },
           { id: 'keyboard', label: 'キーボード操作' },
           { id: 'selection', label: '行選択機能' },
+          { id: 'mixed-groups', label: '列グループ混在' },
         ].map(section => (
           <button
             key={section.id}
@@ -66,6 +67,7 @@ export default function EditableGridDebugging() {
         {activeSection === 'custom' && <CustomRenderingSection />}
         {activeSection === 'keyboard' && <KeyboardTestSection />}
         {activeSection === 'selection' && <SelectionTestSection />}
+        {activeSection === 'mixed-groups' && <MixedGroupsTestSection />}
       </div>
     </div>
   )
@@ -110,16 +112,35 @@ function BasicGridSection() {
   ])
 
   const getColumnDefs: GetColumnDefsFunction<BasicRowData> = React.useCallback((cellType) => [
+    // グループ化されていない列（単独列）
     cellType.number('id', 'ID', { defaultWidth: 80, isReadOnly: true }),
-    cellType.text('name', '名前', { defaultWidth: 150, required: true }),
-    cellType.number('age', '年齢', { defaultWidth: 100 }),
-    cellType.text('email', 'メールアドレス', { defaultWidth: 200 }),
+
+    // 個人情報グループ
+    {
+      header: "個人情報",
+      columns: [
+        cellType.text('name', '名前', { defaultWidth: 150, required: true }),
+        cellType.number('age', '年齢', { defaultWidth: 100 }),
+        cellType.text('email', 'メールアドレス', { defaultWidth: 200 })
+      ]
+    },
+
+    // グループ化されていない列（単独列）
     cellType.boolean('isActive', 'アクティブ', { defaultWidth: 100 }),
-    cellType.date('joinDate', '入社日', { defaultWidth: 140 }),
-    cellType.text('notes', '備考', {
-      defaultWidth: 200,
-      editorOverflow: 'vertical' as const
-    }),
+
+    // 日付・備考グループ
+    {
+      header: "詳細情報",
+      columns: [
+        cellType.date('joinDate', '入社日', { defaultWidth: 140 }),
+        cellType.text('notes', '備考', {
+          defaultWidth: 200,
+          editorOverflow: 'vertical' as const
+        })
+      ]
+    },
+
+    // グループ化されていない列（単独列）
     cellType.text('category', 'カテゴリ', {
       defaultWidth: 130,
       getOptions: () => [
@@ -129,6 +150,8 @@ function BasicGridSection() {
         { value: 'hr', label: '人事' }
       ]
     }),
+
+    // グループ化されていない列（単独列）
     cellType.number('progress', '進捗', { defaultWidth: 100 })
   ], [])
 
@@ -197,6 +220,7 @@ function BasicGridSection() {
       <div className="text-sm text-gray-600">
         <p>💡 テスト項目:</p>
         <ul className="list-disc list-inside ml-4">
+          <li>列グループ化と単独列の混在パターン</li>
           <li>各種セル型（テキスト、数値、日付、真偽値）の編集</li>
           <li>必須マーク表示</li>
           <li>読み取り専用セル</li>
@@ -231,49 +255,67 @@ function AdvancedGridSection() {
   ])
 
   const getColumnDefs: GetColumnDefsFunction<ProductRowData> = React.useCallback((cellType) => [
-    cellType.number('id', 'ID', {
-      defaultWidth: 80,
-      isFixed: true,
-      isReadOnly: true
-    }),
-    cellType.text('productName', '商品名', {
-      defaultWidth: 200,
-      required: true,
-      isFixed: true
-    }),
-    cellType.number('price', '価格', {
-      defaultWidth: 120,
-      renderCell: (context: CellContext<ProductRowData, unknown>) => (
-        <div className="text-right font-mono">
-          ¥{Number(context.getValue()).toLocaleString()}
-        </div>
-      )
-    }),
-    cellType.text('category', 'カテゴリ', {
-      defaultWidth: 140,
-      getOptions: () => [
-        { value: 'electronics', label: '家電' },
-        { value: 'clothing', label: '衣類' },
-        { value: 'food', label: '食品' },
-        { value: 'books', label: '書籍' }
+    // 基本情報グループ
+    {
+      header: "基本情報",
+      columns: [
+        cellType.number('id', 'ID', {
+          defaultWidth: 80,
+          isFixed: true,
+          isReadOnly: true
+        }),
+        cellType.text('productName', '商品名', {
+          defaultWidth: 200,
+          required: true,
+          isFixed: true
+        })
       ]
-    }),
-    cellType.boolean('inStock', '在庫あり', {
-      defaultWidth: 100,
-      renderCell: (context: CellContext<ProductRowData, unknown>) => (
-        <div className="text-center">
-          {context.getValue() ? (
-            <span className="text-green-600 font-bold">✓ あり</span>
-          ) : (
-            <span className="text-red-600">✗ なし</span>
-          )}
-        </div>
-      )
-    }),
-    cellType.text('description', '説明', {
-      defaultWidth: 250,
-      editorOverflow: 'vertical' as const
-    })
+    },
+    // 価格・在庫グループ
+    {
+      header: "価格・在庫",
+      columns: [
+        cellType.number('price', '価格', {
+          defaultWidth: 120,
+          renderCell: (context: CellContext<ProductRowData, unknown>) => (
+            <div className="text-right font-mono">
+              ¥{Number(context.getValue()).toLocaleString()}
+            </div>
+          )
+        }),
+        cellType.boolean('inStock', '在庫あり', {
+          defaultWidth: 100,
+          renderCell: (context: CellContext<ProductRowData, unknown>) => (
+            <div className="text-center">
+              {context.getValue() ? (
+                <span className="text-green-600 font-bold">✓ あり</span>
+              ) : (
+                <span className="text-red-600">✗ なし</span>
+              )}
+            </div>
+          )
+        })
+      ]
+    },
+    // 分類・詳細グループ
+    {
+      header: "分類・詳細",
+      columns: [
+        cellType.text('category', 'カテゴリ', {
+          defaultWidth: 140,
+          getOptions: () => [
+            { value: 'electronics', label: '家電' },
+            { value: 'clothing', label: '衣類' },
+            { value: 'food', label: '食品' },
+            { value: 'books', label: '書籍' }
+          ]
+        }),
+        cellType.text('description', '説明', {
+          defaultWidth: 250,
+          editorOverflow: 'vertical' as const
+        })
+      ]
+    }
   ], [])
 
   const handleRowChange: RowChangeEvent<ProductRowData> = React.useCallback((e) => {
@@ -335,6 +377,7 @@ function AdvancedGridSection() {
       <div className="text-sm text-gray-600">
         <p>💡 テスト項目:</p>
         <ul className="list-disc list-inside ml-4">
+          <li>列グループ化（基本情報、価格・在庫、分類・詳細）</li>
           <li>固定列（IDと商品名）</li>
           <li>カスタムセルレンダリング（価格と在庫）</li>
           <li>オプション付きセル</li>
@@ -451,137 +494,133 @@ function CustomRenderingSection() {
   ])
 
   const getColumnDefs: GetColumnDefsFunction<BasicRowData> = React.useCallback((cellType) => [
+    // 個人情報グループ
     {
-      ...cellType.text('name', '名前', {
-        defaultWidth: 150,
-        renderCell: (context: CellContext<BasicRowData, unknown>) => (
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-              {context.getValue()?.toString().charAt(0) || '?'}
-            </div>
-            <span>{context.getValue() as string}</span>
-          </div>
-        )
-      }),
       header: ctx => (
-        <div className="flex items-center gap-2 text-blue-700">
+        <div className="flex items-center gap-2 text-blue-700 bg-blue-50 px-2 py-1 rounded">
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
           </svg>
-          <span className="font-semibold">👤 名前</span>
+          <span className="font-semibold">👤 個人情報</span>
         </div>
-      )
-    },
-    {
-      ...cellType.number('age', '年齢', {
-        defaultWidth: 100,
-        renderCell: (context: any) => {
-          const age = context.getValue() as number
-          const color = age >= 30 ? 'text-purple-600' : 'text-green-600'
-          return <span className={`font-semibold ${color}`}>{age}歳</span>
+      ),
+      columns: [
+        {
+          ...cellType.text('name', '名前', {
+            defaultWidth: 150,
+            renderCell: (context: CellContext<BasicRowData, unknown>) => (
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                  {context.getValue()?.toString().charAt(0) || '?'}
+                </div>
+                <span>{context.getValue() as string}</span>
+              </div>
+            )
+          })
+        },
+        {
+          ...cellType.number('age', '年齢', {
+            defaultWidth: 100,
+            renderCell: (context: any) => {
+              const age = context.getValue() as number
+              const color = age >= 30 ? 'text-purple-600' : 'text-green-600'
+              return <span className={`font-semibold ${color}`}>{age}歳</span>
+            }
+          })
         }
-      }),
-      header: ctx => (
-        <div className="flex items-center text-green-700">
-          <span className="text-lg">🎂</span>
-          <span className="text-xs font-medium">年齢</span>
-        </div>
-      )
+      ]
     },
+    // 優先度・進捗グループ
     {
-      ...cellType.text('category', '優先度', {
-        defaultWidth: 120,
-        getOptions: () => [
-          { value: 'low', label: '低' },
-          { value: 'medium', label: '中' },
-          { value: 'high', label: '高' },
-          { value: 'urgent', label: '緊急' }
-        ],
-        renderCell: (context: any) => {
-          const value = context.getValue() as string
-          const styles = {
-            low: 'bg-gray-100 text-gray-700',
-            medium: 'bg-blue-100 text-blue-700',
-            high: 'bg-orange-100 text-orange-700',
-            urgent: 'bg-red-100 text-red-700'
-          }
-          const labels = {
-            low: '低',
-            medium: '中',
-            high: '高',
-            urgent: '緊急'
-          }
-          return (
-            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${styles[value as keyof typeof styles] || styles.low}`}>
-              {labels[value as keyof typeof labels] || value}
-            </span>
-          )
-        }
-      }),
       header: ctx => (
-        <div className="flex items-center justify-center">
-          <div className="bg-gradient-to-r from-red-500 to-yellow-500 text-white px-2 py-1 rounded text-xs font-bold">
-            ⚡ 優先度
-          </div>
+        <div className="flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded text-xs font-bold">
+          📊 進捗管理
         </div>
-      )
-    },
-    {
-      ...cellType.number('progress', '進捗', {
-        defaultWidth: 150,
-        renderCell: (context: any) => {
-          const value = Number(context.getValue()) || 0
-          return (
-            <div className="w-full">
-              <div className="flex justify-between text-xs mb-1">
-                <span>{value}%</span>
-                <span className={value >= 80 ? 'text-green-600' : value >= 50 ? 'text-yellow-600' : 'text-red-600'}>
-                  {value >= 80 ? '良好' : value >= 50 ? '普通' : '要改善'}
+      ),
+      columns: [
+        {
+          ...cellType.text('category', '優先度', {
+            defaultWidth: 120,
+            getOptions: () => [
+              { value: 'low', label: '低' },
+              { value: 'medium', label: '中' },
+              { value: 'high', label: '高' },
+              { value: 'urgent', label: '緊急' }
+            ],
+            renderCell: (context: any) => {
+              const value = context.getValue() as string
+              const styles = {
+                low: 'bg-gray-100 text-gray-700',
+                medium: 'bg-blue-100 text-blue-700',
+                high: 'bg-orange-100 text-orange-700',
+                urgent: 'bg-red-100 text-red-700'
+              }
+              const labels = {
+                low: '低',
+                medium: '中',
+                high: '高',
+                urgent: '緊急'
+              }
+              return (
+                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${styles[value as keyof typeof styles] || styles.low}`}>
+                  {labels[value as keyof typeof labels] || value}
                 </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className={`h-2 rounded-full transition-all ${value >= 80 ? 'bg-green-500' : value >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                    }`}
-                  style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
-                />
-              </div>
-            </div>
-          )
+              )
+            }
+          })
+        },
+        {
+          ...cellType.number('progress', '進捗', {
+            defaultWidth: 150,
+            renderCell: (context: any) => {
+              const value = Number(context.getValue()) || 0
+              return (
+                <div className="w-full">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span>{value}%</span>
+                    <span className={value >= 80 ? 'text-green-600' : value >= 50 ? 'text-yellow-600' : 'text-red-600'}>
+                      {value >= 80 ? '良好' : value >= 50 ? '普通' : '要改善'}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all ${value >= 80 ? 'bg-green-500' : value >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                        }`}
+                      style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+                    />
+                  </div>
+                </div>
+              )
+            }
+          })
         }
-      }),
-      header: ctx => (
-        <div className="flex gap-1">
-          <div className="flex items-center justify-center gap-1 text-purple-700">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            <span className="font-semibold">進捗</span>
-          </div>
-          <div className="text-xs text-gray-500 mt-1">Completion</div>
-        </div>
-      )
+      ]
     },
+    // ステータスグループ
     {
-      ...cellType.boolean('isActive', 'ステータス', {
-        defaultWidth: 100,
-        renderCell: (context: any) => (
-          <div className="flex items-center justify-center">
-            <div className={`w-3 h-3 rounded-full ${context.getValue() ? 'bg-green-500' : 'bg-gray-400'}`} />
-            <span className="ml-2 text-sm">
-              {context.getValue() ? 'アクティブ' : '非アクティブ'}
-            </span>
-          </div>
-        )
-      }),
       header: ctx => (
         <div className="text-center">
           <div className="inline-flex items-center gap-1 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="font-medium">ステータス</span>
+            <span className="font-medium">ステータス管理</span>
           </div>
         </div>
-      )
+      ),
+      columns: [
+        {
+          ...cellType.boolean('isActive', 'ステータス', {
+            defaultWidth: 100,
+            renderCell: (context: any) => (
+              <div className="flex items-center justify-center">
+                <div className={`w-3 h-3 rounded-full ${context.getValue() ? 'bg-green-500' : 'bg-gray-400'}`} />
+                <span className="ml-2 text-sm">
+                  {context.getValue() ? 'アクティブ' : '非アクティブ'}
+                </span>
+              </div>
+            )
+          })
+        }
+      ]
     }
   ], [])
 
@@ -609,6 +648,7 @@ function CustomRenderingSection() {
       <div className="text-sm text-gray-600">
         <p>💡 テスト項目:</p>
         <ul className="list-disc list-inside ml-4">
+          <li>列グループ化（個人情報、進捗管理、ステータス管理）</li>
           <li>カスタム列ヘッダーレンダリング（アイコン、絵文字、グラデーション、アニメーション）</li>
           <li>アバター付き名前表示</li>
           <li>条件付きスタイル（年齢）</li>
@@ -831,6 +871,221 @@ function SelectionTestSection() {
         </ul>
         <p className="mt-2 text-xs text-gray-500">
           💡 Tips: チェックボックスをクリックしてから「選択情報を確認・表示」ボタンを押すと、選択状態が表示されます。
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// 列グループ混在テストセクション
+function MixedGroupsTestSection() {
+  const [rows, setRows] = React.useState<BasicRowData[]>([
+    {
+      id: 1,
+      name: "田中太郎",
+      age: 30,
+      email: "tanaka@example.com",
+      isActive: true,
+      joinDate: "2023-01-15",
+      notes: "複雑な列グループ構成のテスト",
+      category: "high",
+      progress: 75
+    },
+    {
+      id: 2,
+      name: "佐藤花子",
+      age: 28,
+      email: "sato@example.com",
+      isActive: false,
+      joinDate: "2023-03-20",
+      notes: "グループ化と単独列の混在パターン",
+      category: "medium",
+      progress: 90
+    }
+  ])
+
+  const getColumnDefs: GetColumnDefsFunction<BasicRowData> = React.useCallback((cellType) => [
+    // 単独列（グループ化なし）
+    cellType.number('id', 'ID', {
+      defaultWidth: 80,
+      isReadOnly: true,
+      isFixed: true
+    }),
+
+    // 個人基本情報グループ
+    {
+      header: "基本情報",
+      columns: [
+        cellType.text('name', '名前', { defaultWidth: 150, required: true }),
+        cellType.number('age', '年齢', { defaultWidth: 100 })
+      ]
+    },
+
+    // 単独列（グループ化なし）
+    cellType.text('email', 'メールアドレス', {
+      defaultWidth: 200,
+      renderCell: (context: any) => (
+        <div className="text-blue-600 hover:text-blue-800">
+          {context.getValue() as string}
+        </div>
+      )
+    }),
+
+    // 単独列（グループ化なし）
+    cellType.boolean('isActive', 'アクティブ', {
+      defaultWidth: 100,
+      renderCell: (context: any) => (
+        <div className="text-center">
+          <span className={`px-2 py-1 rounded text-xs font-semibold ${context.getValue() ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+            }`}>
+            {context.getValue() ? 'アクティブ' : '非アクティブ'}
+          </span>
+        </div>
+      )
+    }),
+
+    // 詳細情報グループ
+    {
+      header: "詳細情報",
+      columns: [
+        cellType.date('joinDate', '入社日', { defaultWidth: 140 }),
+        cellType.text('notes', '備考', {
+          defaultWidth: 200,
+          editorOverflow: 'vertical' as const
+        })
+      ]
+    },
+
+    // 単独列（グループ化なし）
+    cellType.text('category', '優先度', {
+      defaultWidth: 120,
+      getOptions: () => [
+        { value: 'low', label: '低' },
+        { value: 'medium', label: '中' },
+        { value: 'high', label: '高' },
+        { value: 'urgent', label: '緊急' }
+      ],
+      renderCell: (context: any) => {
+        const value = context.getValue() as string
+        const styles = {
+          low: 'bg-gray-100 text-gray-700',
+          medium: 'bg-blue-100 text-blue-700',
+          high: 'bg-orange-100 text-orange-700',
+          urgent: 'bg-red-100 text-red-700'
+        }
+        const labels = {
+          low: '低',
+          medium: '中',
+          high: '高',
+          urgent: '緊急'
+        }
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${styles[value as keyof typeof styles] || styles.low}`}>
+            {labels[value as keyof typeof labels] || value}
+          </span>
+        )
+      }
+    }),
+
+    // 単独列（グループ化なし）
+    cellType.number('progress', '進捗', {
+      defaultWidth: 150,
+      renderCell: (context: any) => {
+        const value = Number(context.getValue()) || 0
+        return (
+          <div className="w-full">
+            <div className="flex justify-between text-xs mb-1">
+              <span>{value}%</span>
+              <span className={value >= 80 ? 'text-green-600' : value >= 50 ? 'text-yellow-600' : 'text-red-600'}>
+                {value >= 80 ? '良好' : value >= 50 ? '普通' : '要改善'}
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className={`h-2 rounded-full transition-all ${value >= 80 ? 'bg-green-500' : value >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+              />
+            </div>
+          </div>
+        )
+      }
+    })
+  ], [])
+
+  const handleRowChange = React.useCallback((e: any) => {
+    const newRows = [...rows]
+    e.changedRows.forEach((changedRow: any) => {
+      newRows[changedRow.rowIndex] = changedRow.newRow
+    })
+    setRows(newRows)
+  }, [rows])
+
+  const addRow = () => {
+    const newRow: BasicRowData = {
+      id: Math.max(...rows.map(r => r.id), 0) + 1,
+      name: "",
+      age: 25,
+      email: "",
+      isActive: true,
+      joinDate: new Date().toISOString().split('T')[0],
+      notes: "",
+      category: "",
+      progress: 0
+    }
+    setRows([...rows, newRow])
+  }
+
+  const removeLastRow = () => {
+    if (rows.length > 0) {
+      setRows(rows.slice(0, -1))
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <h2 className="text-xl font-semibold">列グループ混在テスト</h2>
+
+      <div className="flex gap-2">
+        <button
+          onClick={addRow}
+          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+        >
+          行を追加
+        </button>
+        <button
+          onClick={removeLastRow}
+          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          disabled={rows.length === 0}
+        >
+          最後の行を削除
+        </button>
+      </div>
+
+      <div className="border border-gray-300 rounded">
+        <EditableGrid
+          rows={rows}
+          getColumnDefs={getColumnDefs}
+          onChangeRow={handleRowChange}
+          showCheckBox={true}
+          className="w-full h-64"
+          showHorizontalBorder={true}
+        />
+      </div>
+
+      <div className="text-sm text-gray-600">
+        <p>💡 テスト項目:</p>
+        <ul className="list-disc list-inside ml-4">
+          <li>列グループと単独列の混在表示</li>
+          <li>グループ化された列のヘッダー表示</li>
+          <li>単独列のヘッダー表示</li>
+          <li>固定列（ID列）の動作</li>
+          <li>カスタムレンダリング（メール、アクティブ、優先度、進捗）</li>
+          <li>オプション付きセル（優先度列）</li>
+          <li>エディタオーバーフロー（備考列）</li>
+          <li>行の追加・削除機能</li>
+        </ul>
+        <p className="mt-2 text-xs text-gray-500">
+          💡 Tips: このパターンでは、グループ化された列と単独列が混在しており、ヘッダーの表示が1段と2段が混在します。
         </p>
       </div>
     </div>

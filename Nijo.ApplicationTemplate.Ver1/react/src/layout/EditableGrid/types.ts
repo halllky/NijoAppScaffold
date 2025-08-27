@@ -99,8 +99,21 @@ export interface CellSelectionRange {
  *
  * @param cellType セル型定義ヘルパー関数の一覧。
  */
-export type GetColumnDefsFunction<TRow extends ReactHookForm.FieldValues> = (cellType: ColumnDefFactories<TRow>) => EditableGridColumnDef<TRow>[]
+export type GetColumnDefsFunction<TRow extends ReactHookForm.FieldValues> = (
+  cellType: ColumnDefFactories<TRow>
+) => (EditableGridColumnDef<TRow> | EditableGridColumnDefGroup<TRow>)[]
 
+/** EditableGridの列定義（グループ化された列定義） */
+export type EditableGridColumnDefGroup<TRow extends ReactHookForm.FieldValues> = {
+  /** 列のID。列幅等の保存や復元をする場合は明示的な指定を推奨。未指定の場合は `col-${index}` という形式のIDが自動生成される。 */
+  columnId?: string
+  /** グループヘッダ */
+  header?: string | ((ctx: HeaderContext<TRow, unknown>) => React.ReactNode)
+  /** グループ化された列定義 */
+  columns: EditableGridColumnDef<TRow>[]
+  /** 列が非表示になるかどうか */
+  invisible?: boolean
+}
 
 /** EditableGridの列定義 */
 export type EditableGridColumnDef<TRow extends ReactHookForm.FieldValues> = EditableGridColumnDefOptions<TRow> & {

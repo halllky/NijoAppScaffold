@@ -271,7 +271,7 @@ export const MultiView = <TQueryModel extends QueryModelType>(
                   searchResults.map((row, rowIndex) => (
                     <tr key={rowIndex} className="border-b hover:bg-gray-50">
                       {columnDefs.map((column, colIndex) => {
-                        const fieldPath = column.fieldPath || '';
+                        const fieldPath = ('fieldPath' in column) ? column.fieldPath : '';
                         const value = ReactHookForm.get(row, fieldPath);
 
                         return (

@@ -7,7 +7,8 @@ import {
   useReactTable,
   ColumnSizingState,
   Cell,
-  Table
+  Table,
+  ColumnDef
 } from '@tanstack/react-table';
 import {
   useVirtualizer,
@@ -239,23 +240,64 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
   });
 
   // テーブル定義
-  const columnHelper = createColumnHelper<TRow>();
-  const columns = useMemo(() => {
-    return columnDefs.map((colDef, colIndex) => {
+  const [columns, hasHeaderGroup, estimatedRowHeight] = useMemo(() => {
+    // EditableGrid の列定義を tanstack の列定義に変換する関数
+    const columnHelper = createColumnHelper<TRow>();
+    const toTanstackTableAccessorColumn = (
+      colDef: EditableGridColumnDef<TRow>,
+      colIndex: number,
+      colIndex2: number | undefined,
+      isGroupedColumn: boolean
+    ): ColumnDef<TRow, unknown> => {
       const accessor = (row: TRow) => colDef.fieldPath
         ? getValueByPath(row, colDef.fieldPath)
         : undefined
-      const tableColumnDef = columnHelper.accessor(accessor, {
-        id: colDef.columnId ?? `col-${colIndex}`,
+      return columnHelper.accessor(accessor, {
+        id: colDef.columnId ?? (colIndex2 === undefined
+          ? `col-${colIndex}`
+          : `col-${colIndex}-${colIndex2}`),
         size: colDef.defaultWidth ?? DEFAULT_COLUMN_WIDTH,
         enableResizing: colDef.enableResizing ?? true,
         meta: {
           originalColDef: colDef,
+          isGroupedColumn,
         } satisfies ColumnMetadataInternal<TRow>,
       });
-      return tableColumnDef;
-    })
-  }, [columnDefs, columnHelper]);
+    }
+
+    // tanstack の列定義を作成する
+    const columns: ColumnDef<TRow, unknown>[] = []
+    let hasHeaderGroup = false
+
+    for (let colIndex = 0; colIndex < columnDefs.length; colIndex++) {
+      const colDef = columnDefs[colIndex];
+      if ('columns' in colDef) {
+        // 列グループの場合
+        hasHeaderGroup = true
+        columns.push(columnHelper.group({
+          id: colDef.columnId ?? `group-${colIndex}`,
+          columns: colDef.columns.map((col, ix2) => toTanstackTableAccessorColumn(col, colIndex, ix2, true)),
+          meta: {
+            originalColDef: {
+              columnId: colDef.columnId,
+              header: colDef.header,
+              isFixed: colDef.columns.some(col => col.isFixed),
+            },
+            isGroupedColumn: true,
+          } satisfies ColumnMetadataInternal<TRow>,
+        }))
+      } else {
+        // グループ化されない列の場合
+        columns.push(toTanstackTableAccessorColumn(colDef, colIndex, undefined, false))
+      }
+    }
+    return [
+      columns,
+      hasHeaderGroup,
+      // ヘッダグループがあれば2段、なければ1段分の高さ
+      hasHeaderGroup ? ESTIMATED_ROW_HEIGHT * 2 : ESTIMATED_ROW_HEIGHT,
+    ]
+  }, [columnDefs]);
 
   const table = useReactTable({
     data: rows,
@@ -266,10 +308,13 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
       columnVisibility: {
         [ROW_HEADER_COLUMN_ID]: showCheckBox !== undefined && showCheckBox !== false,
         ...Object.fromEntries(
-          columnDefs.map((colDef, i) => [
-            colDef.columnId ?? `col-${i}`,
-            !colDef.invisible
-          ])
+          columnDefs.flatMap((colDef, ix) => {
+            if ('columns' in colDef) {
+              return colDef.columns.map((col, ix2) => [col.columnId ?? `col-${ix}-${ix2}`, !col.invisible])
+            } else {
+              return [[colDef.columnId ?? `col-${ix}`, !colDef.invisible]]
+            }
+          })
         ),
       },
     },
@@ -293,7 +338,7 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
   const virtualItems = rowVirtualizer.getVirtualItems();
 
   // ピクセル数取得関数
-  const getPixel = useGetPixel(tableRef, tableContainerRef, rowVirtualizer, ESTIMATED_ROW_HEIGHT, columnSizing)
+  const getPixel = useGetPixel(tableRef, tableContainerRef, rowVirtualizer, estimatedRowHeight, columnSizing)
 
   // ref用の公開メソッド
   useImperativeHandle(ref, () => ({
@@ -392,18 +437,28 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
 
         {/* 列ヘッダ */}
         <thead className="grid sticky top-0 z-10 grid-header-group">
-          {table.getHeaderGroups().map(headerGroup => (
+          {table.getHeaderGroups().map((headerGroup, headerGroupIndex) => (
             <tr key={headerGroup.id} className="flex w-full">
               {headerGroup.headers.map(header => {
                 const headerMeta = header.column.columnDef.meta as ColumnMetadataInternal<TRow> | undefined
                 const isFixedColumn = !!headerMeta?.originalColDef?.isFixed;
 
+                // 列グループの有無が混在しているテーブルにおいて、このheaderがグループでない列か否か
+                const isNonGroupedUpperHeader = hasHeaderGroup
+                  && !headerMeta?.isGroupedColumn
+                  && headerGroupIndex === 0
+                const isNonGroupedLowerHeader = hasHeaderGroup
+                  && !headerMeta?.isGroupedColumn
+                  && headerGroupIndex === 1
+
                 let className = 'flex bg-gray-100 relative text-left select-none border-b border-r border-gray-200'
                 if (isFixedColumn) className += ' sticky z-10'
+                if (isNonGroupedUpperHeader) className += ' border-b-transparent'
 
                 return (
                   <th
                     key={header.id}
+                    colSpan={header.colSpan}
                     className={className}
                     style={{
                       width: header.getSize(),
@@ -411,13 +466,17 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
                       left: isFixedColumn ? `${header.getStart()}px` : undefined,
                     }}
                   >
-                    {typeof headerMeta?.originalColDef?.header === 'string' ? (
-                      <div className="w-full pl-1 text-gray-700 font-normal truncate select-none">
-                        {headerMeta?.originalColDef?.header === '' ? '\u00A0' : headerMeta?.originalColDef?.header}
-                      </div>
-                    ) : (
-                      headerMeta?.originalColDef?.header?.(header.getContext())
-                    )}
+                    {isNonGroupedLowerHeader
+                      ? undefined
+                      : (typeof headerMeta?.originalColDef?.header === 'string' ? (
+                        <div className="w-full pl-1 text-gray-700 font-normal truncate select-none">
+                          {headerMeta?.originalColDef?.header === ''
+                            ? '\u00A0' // ヘッダ行の高さ保持のため
+                            : headerMeta?.originalColDef?.header}
+                        </div>
+                      ) : (
+                        headerMeta?.originalColDef?.header?.(header.getContext())
+                      ))}
 
                     {/* 列幅を変更できる場合はサイズ変更ハンドラを設定 */}
                     {header.column.getCanResize() && (
@@ -655,6 +714,7 @@ const MemorizedBodyCell = React.memo(<TRow extends ReactHookForm.FieldValues>({
 /** このフォルダ内部でのみ使用。外部から使われる想定はない */
 export type ColumnMetadataInternal<TRow extends ReactHookForm.FieldValues> = {
   originalColDef: EditableGridColumnDef<TRow> | undefined
+  isGroupedColumn: boolean
 }
 
 /** 行ヘッダー列のID */
