@@ -293,7 +293,7 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
   const virtualItems = rowVirtualizer.getVirtualItems();
 
   // ピクセル数取得関数
-  const getPixel = useGetPixel(tableRef, rowVirtualizer, ESTIMATED_ROW_HEIGHT, columnSizing)
+  const getPixel = useGetPixel(tableRef, tableContainerRef, rowVirtualizer, ESTIMATED_ROW_HEIGHT, columnSizing)
 
   // ref用の公開メソッド
   useImperativeHandle(ref, () => ({

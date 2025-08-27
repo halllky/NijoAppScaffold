@@ -390,8 +390,9 @@ export type GetPixelFunction = (args
 ) => number
 
 // x,y座標を返す関数
-export const useGetPixel = <TRow,>(
+export const useGetPixel = <TRow extends ReactHookForm.FieldValues,>(
   tableRef: React.RefObject<RT.Table<TRow> | null>,
+  tableContainerRef: React.RefObject<HTMLDivElement | null>,
   rowVirtualizer: Virtualizer<HTMLDivElement, Element>,
   estimatedRowHeight: number,
   /** 依存配列にのみ使用。列幅が変わったときは当然再計算が必要 */
@@ -400,10 +401,13 @@ export const useGetPixel = <TRow,>(
   return React.useCallback(args => {
     // 左右のpxを導出するのに必要な情報はtableRefが持っている
     if (args.position === 'left' || args.position === 'right') {
-      const colsByIndex = tableRef.current?.getAllColumns().map(col => ({
+      const visibleColumns = tableRef.current?.getVisibleLeafColumns() ?? []
+      const colsByIndex = visibleColumns.map(col => ({
         index: col.getIndex(),
         size: col.getSize(),
+        isFixed: (col.columnDef.meta as ColumnMetadataInternal<TRow> | undefined)?.originalColDef?.isFixed ?? false,
       }))
+
       const loopEnd = args.position === 'left'
         ? args.colIndex
         : args.colIndex + 1
@@ -412,6 +416,13 @@ export const useGetPixel = <TRow,>(
       for (let i = 0; i < loopEnd; i++) {
         sum += colsByIndex?.find(col => col.index === i)?.size ?? 0
       }
+
+      // 対象列がisFixedの場合、スクロール量を加味する
+      const targetColumnData = colsByIndex?.find(col => col.index === args.colIndex)
+      if (targetColumnData?.isFixed && tableContainerRef.current) {
+        sum += tableContainerRef.current.scrollLeft
+      }
+
       return sum
     }
 
@@ -430,6 +441,6 @@ export const useGetPixel = <TRow,>(
     } else {
       return (args.rowIndex + 1) * estimatedRowHeight + theadHeight
     }
-  }, [tableRef, rowVirtualizer, estimatedRowHeight, columnSizingState])
+  }, [tableRef, tableContainerRef, rowVirtualizer, estimatedRowHeight, columnSizingState])
 
 }
