@@ -83,9 +83,39 @@ export const getDebuggingPages = (): { groupName: string, links: (ReactRouter.Ro
     links: [
       {
         path: '/editable-grid/001',
-        label: 'EditableGrid 機能テスト',
-        element: <EditableGridDebugging />,
-      }
+        label: 'EditableGrid 基本機能',
+        element: <EditableGridDebugging mode="basic" />,
+      },
+      {
+        path: '/editable-grid/002',
+        label: 'EditableGrid 高度な機能',
+        element: <EditableGridDebugging mode="advanced" />,
+      },
+      {
+        path: '/editable-grid/003',
+        label: 'EditableGrid 読み取り専用',
+        element: <EditableGridDebugging mode="readonly" />,
+      },
+      {
+        path: '/editable-grid/004',
+        label: 'EditableGrid カスタムレンダリング',
+        element: <EditableGridDebugging mode="custom" />,
+      },
+      {
+        path: '/editable-grid/005',
+        label: 'EditableGrid キーボード操作',
+        element: <EditableGridDebugging mode="keyboard" />,
+      },
+      {
+        path: '/editable-grid/006',
+        label: 'EditableGrid 行選択機能',
+        element: <EditableGridDebugging mode="selection" />,
+      },
+      {
+        path: '/editable-grid/007',
+        label: 'EditableGrid 列グループ混在',
+        element: <EditableGridDebugging mode="mixed-groups" />,
+      },
     ],
   },
   {

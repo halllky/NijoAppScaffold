@@ -27,47 +27,19 @@ type ProductRowData = {
   description: string
 }
 
-export default function EditableGridDebugging() {
-  const [activeSection, setActiveSection] = React.useState<string>('basic')
-
+export default function EditableGridDebugging({ mode }: {
+  mode: 'basic' | 'advanced' | 'readonly' | 'custom' | 'keyboard' | 'selection' | 'mixed-groups'
+}) {
   return (
     <div className="w-full h-full flex flex-col gap-4 p-4">
-
-      <h1 className="text-2xl font-bold">EditableGrid デバッグ画面</h1>
-
-      {/* ナビゲーション */}
-      <div className="flex gap-2 border-b border-gray-300 pb-2">
-        {[
-          { id: 'basic', label: '基本機能' },
-          { id: 'advanced', label: '高度な機能' },
-          { id: 'readonly', label: '読み取り専用' },
-          { id: 'custom', label: 'カスタムレンダリング' },
-          { id: 'keyboard', label: 'キーボード操作' },
-          { id: 'selection', label: '行選択機能' },
-          { id: 'mixed-groups', label: '列グループ混在' },
-        ].map(section => (
-          <button
-            key={section.id}
-            onClick={() => setActiveSection(section.id)}
-            className={`px-4 py-2 rounded ${activeSection === section.id
-              ? 'bg-blue-500 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-          >
-            {section.label}
-          </button>
-        ))}
-      </div>
-
-      {/* コンテンツエリア */}
       <div className="flex-1 overflow-auto">
-        {activeSection === 'basic' && <BasicGridSection />}
-        {activeSection === 'advanced' && <AdvancedGridSection />}
-        {activeSection === 'readonly' && <ReadOnlyGridSection />}
-        {activeSection === 'custom' && <CustomRenderingSection />}
-        {activeSection === 'keyboard' && <KeyboardTestSection />}
-        {activeSection === 'selection' && <SelectionTestSection />}
-        {activeSection === 'mixed-groups' && <MixedGroupsTestSection />}
+        {mode === 'basic' && <BasicGridSection />}
+        {mode === 'advanced' && <AdvancedGridSection />}
+        {mode === 'readonly' && <ReadOnlyGridSection />}
+        {mode === 'custom' && <CustomRenderingSection />}
+        {mode === 'keyboard' && <KeyboardTestSection />}
+        {mode === 'selection' && <SelectionTestSection />}
+        {mode === 'mixed-groups' && <MixedGroupsTestSection />}
       </div>
     </div>
   )
