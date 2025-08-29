@@ -39,9 +39,11 @@ export const useCopyPaste = <TRow extends ReactHookForm.FieldValues,>({
     e.preventDefault();
     e.stopPropagation();
 
+    // 平坦化された列定義を取得（列グルーピングに対応）
     const columnDefs = tableRef.current
       ?.getAllLeafColumns()
       .map(col => (col.columnDef.meta as ColumnMetadataInternal<TRow> | undefined)?.originalColDef)
+      .filter(colDef => colDef !== undefined)
       ?? []
 
     // 選択範囲内のセルの値を取得
@@ -92,9 +94,11 @@ export const useCopyPaste = <TRow extends ReactHookForm.FieldValues,>({
     const rows = tableRef.current?.getRowModel().rows.map(row => row.original) ?? []
     if (rows.length === 0) return;
 
+    // 平坦化された列定義を取得（列グルーピングに対応）
     const columnDefs = tableRef.current
       ?.getAllLeafColumns()
       .map(col => (col.columnDef.meta as ColumnMetadataInternal<TRow> | undefined)?.originalColDef)
+      .filter((colDef): colDef is EditableGridColumnDef<TRow> => colDef !== undefined)
       ?? []
 
     // セルの値をまとめてクリアしたい場合があるので、

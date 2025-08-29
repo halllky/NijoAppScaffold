@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useRef, useState, useCallback, useEffect, useImperativeHandle, useMemo } from "react";
-import { EditableGridProps, EditableGridRef, EditableGridColumnDef, CellPosition, EditableGridAutoSaveStoragedValueInternal } from "./types";
+import { EditableGridProps, EditableGridRef, EditableGridColumnDef, EditableGridColumnDefGroup, CellPosition, EditableGridAutoSaveStoragedValueInternal } from "./types";
 import {
   createColumnHelper,
   getCoreRowModel,
@@ -29,6 +29,25 @@ import { useCopyPaste } from "./EditableGrid.useCopyPaste";
 // CSS
 import { CellEditor, CellEditorRef, DefaultEditor, useGetPixel } from "./EditableGrid.CellEditor";
 import { ActiveCell } from "./EditableGrid.ActiveCell";
+
+/**
+ * グループ化された列定義を平坦化する関数
+ * @param columnDefs 列定義配列（グループ化された列とそうでない列が混在）
+ * @returns 平坦化された列定義配列
+ */
+function flattenColumnDefs<TRow extends ReactHookForm.FieldValues>(
+  columnDefs: (EditableGridColumnDef<TRow> | EditableGridColumnDefGroup<TRow>)[]
+): EditableGridColumnDef<TRow>[] {
+  return columnDefs.flatMap((colDef) => {
+    if ('columns' in colDef) {
+      // グループ化された列の場合、その中の列定義を展開
+      return colDef.columns;
+    } else {
+      // 単独列の場合、そのまま返す
+      return [colDef];
+    }
+  });
+}
 
 /**
  * 編集可能なグリッドを表示するコンポーネント
@@ -75,7 +94,7 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
 
   // 列定義の取得
   const cellType = useCellTypes<TRow>(props.onChangeRow)
-  const columnDefs = React.useMemo(() => {
+  const [columnDefs, flatColumnDefs] = React.useMemo(() => {
     const columns = getColumnDefs(cellType)
 
     // チェックボックス列を追加
@@ -117,7 +136,7 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
       })
     }
 
-    return columns
+    return [columns, flattenColumnDefs(columns)]
   }, [getColumnDefs, cellType, showCheckBox])
 
   // table インスタンスへの参照を保持 (コールバック内で最新の table を参照するため)
@@ -192,7 +211,7 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
 
     // セルが選択されたあとに発火されるコールバック
     propsOnActiveCellChanged?.(cell)
-  }, [cellEditorRef, rows, columnDefs, tableRef, propsOnActiveCellChanged, isEditing])
+  }, [cellEditorRef, rows, flatColumnDefs, tableRef, propsOnActiveCellChanged, isEditing])
 
   // 選択状態
   const {
@@ -205,7 +224,7 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
     selectRows
   } = useSelection(
     rows.length,
-    columnDefs.filter(cd => !cd.invisible).length,
+    flatColumnDefs.filter(colDef => !colDef.invisible).length,
     onActiveCellChanged
   )
 
@@ -361,15 +380,17 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
         rowIndex: activeCell.rowIndex,
         colIndex: activeCell.colIndex,
         getRow: () => rows[activeCell.rowIndex],
-        getColumnDef: () => columnDefs[activeCell.colIndex],
+
+        // 平坦化された列定義から取得（列グルーピング対応済み）
+        getColumnDef: () => flatColumnDefs[activeCell.colIndex],
       }
     },
     getSelectedRange: () => selectedRange ?? undefined,
-  }), [table, rows, columnDefs, selectRows, activeCell, selectedRange]);
+  }), [table, rows, flatColumnDefs, selectRows, activeCell, selectedRange]);
 
   // 初期状態設定
   useEffect(() => {
-    if (rows.length > 0 && columnDefs.length > 0 && !activeCell) {
+    if (rows.length > 0 && flatColumnDefs.length > 0 && !activeCell) {
       setActiveCell({ rowIndex: 0, colIndex: 0 });
       setSelectedRange({
         startRow: 0,
@@ -378,7 +399,7 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
         endCol: 0
       });
     }
-  }, [rows, columnDefs, activeCell, setActiveCell, setSelectedRange]);
+  }, [rows, flatColumnDefs, activeCell, setActiveCell, setSelectedRange]);
 
   // キーボード操作のセットアップ
   const handleKeyDown = useGridKeyboard({
