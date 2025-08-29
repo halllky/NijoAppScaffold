@@ -139,10 +139,12 @@ export type EditableGridColumnDefOptions<TRow extends ReactHookForm.FieldValues>
   invisible?: boolean
   /** 列が固定されるかどうか */
   isFixed?: boolean
-  /** セルのレンダリング処理をカスタマイズする関数。 */
+  /**
+   * セルのレンダリング処理をカスタマイズする関数。
+   * パフォーマンスのためにテーブルのボディセルはメモ化されてレンダリングされるため、
+   * **この関数の中で React Hook を使用することはできない。**
+   */
   renderCell?: EditableGridColumnDefRenderCell<TRow>
-  /** @deprecated このオプションは廃止されました。 `isReadOnly` を使用してください。 */
-  editable?: boolean
 
   /** 編集開始時に呼び出される関数 */
   onStartEditing?: EditableGridColumnDefOnStartEditing<TRow>
