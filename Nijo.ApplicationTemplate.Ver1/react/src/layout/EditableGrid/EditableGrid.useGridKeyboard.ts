@@ -274,10 +274,11 @@ export function useGridKeyboard<TRow extends ReactHookForm.FieldValues>({
         break;
       case 'Tab':
         e.preventDefault();
-        // 次のセルに移動
+        // 次のセルに移動（チェックボックス列はスキップ）
+        const minColIndex = showCheckBox ? 1 : 0; // チェックボックス列がある場合は1から、ない場合は0から
         if (e.shiftKey) {
           // 前のセル
-          if (colIndex > 0) {
+          if (colIndex > minColIndex) {
             setActiveCell({ rowIndex, colIndex: colIndex - 1 });
             scrollHorizontal(colIndex - 1);
             setSelectedRange({
@@ -309,14 +310,14 @@ export function useGridKeyboard<TRow extends ReactHookForm.FieldValues>({
               endCol: colIndex + 1
             });
           } else if (rowIndex < rowCount - 1) {
-            // 次の行の最初のセル
-            setActiveCell({ rowIndex: rowIndex + 1, colIndex: 0 });
+            // 次の行の最初のセル（チェックボックス列はスキップ）
+            setActiveCell({ rowIndex: rowIndex + 1, colIndex: minColIndex });
             rowVirtualizer.scrollToIndex(rowIndex + 1, { align: 'center' });
             setSelectedRange({
               startRow: rowIndex + 1,
-              startCol: 0,
+              startCol: minColIndex,
               endRow: rowIndex + 1,
-              endCol: 0
+              endCol: minColIndex
             });
           }
         }

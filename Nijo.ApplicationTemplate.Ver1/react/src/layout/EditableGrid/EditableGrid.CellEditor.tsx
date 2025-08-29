@@ -68,7 +68,7 @@ export const CellEditor = React.forwardRef(<T extends ReactHookForm.FieldValues>
   const editorTextareaRef = React.useRef<CellEditorTextareaRef>(null)
 
   React.useEffect(() => {
-    if (caretCell) {
+    if (caretCell && isFocused) {
       // 表示列を取得
       const visibleDataColumns = api.getVisibleLeafColumns()
       const columnDef = (visibleDataColumns[caretCell.colIndex]?.columnDef.meta as ColumnMetadataInternal<T> | undefined)?.originalColDef
@@ -99,7 +99,7 @@ export const CellEditor = React.forwardRef(<T extends ReactHookForm.FieldValues>
     } else {
       setCaretCellEditingInfo(undefined)
     }
-  }, [caretCell, api, containerRef, getPixel])
+  }, [caretCell, isFocused, api, containerRef, getPixel])
   React.useEffect(() => {
     if (caretCellEditingInfo) editorTextareaRef.current?.focus({ preventScroll: true })
   }, [caretCellEditingInfo])

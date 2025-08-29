@@ -121,7 +121,7 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
         renderCell: ctx => (
           <label
             className="h-full flex justify-center items-center bg-gray-100"
-            style={{ width: ctx.column.getSize(), height: ESTIMATED_ROW_HEIGHT }}
+            style={{ width: ctx.column.getSize() }}
           >
             {getShouldShowCheckBox(ctx.row.index, ctx.row.original) && (
               <input
@@ -390,16 +390,18 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
 
   // 初期状態設定
   useEffect(() => {
-    if (rows.length > 0 && flatColumnDefs.length > 0 && !activeCell) {
-      setActiveCell({ rowIndex: 0, colIndex: 0 });
+    if (isFocused && rows.length > 0 && flatColumnDefs.length > 0 && !activeCell) {
+      // チェックボックス列がある場合は最初のデータ列（colIndex=1）を選択
+      const initialColIndex = showCheckBox ? 1 : 0;
+      setActiveCell({ rowIndex: 0, colIndex: initialColIndex });
       setSelectedRange({
         startRow: 0,
-        startCol: 0,
+        startCol: initialColIndex,
         endRow: 0,
-        endCol: 0
+        endCol: initialColIndex
       });
     }
-  }, [rows, flatColumnDefs, activeCell, setActiveCell, setSelectedRange]);
+  }, [isFocused, rows, flatColumnDefs, activeCell, showCheckBox]);
 
   // キーボード操作のセットアップ
   const handleKeyDown = useGridKeyboard({
