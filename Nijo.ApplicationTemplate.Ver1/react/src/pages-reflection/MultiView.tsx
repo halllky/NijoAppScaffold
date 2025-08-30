@@ -16,6 +16,7 @@ import { UUID } from "uuidjs"
 import dayjs from "dayjs"
 import customParseFormat from 'dayjs/plugin/customParseFormat'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+import { PageFrame, PageFrameTitle } from "./Parts.PageFrame"
 dayjs.extend(customParseFormat)
 
 // 検索条件の型 (TSearchConditionの具体的な型は呼び出し元で解決される)
@@ -278,12 +279,12 @@ export const MultiView = ({ rootAggregatePhysicalName, metadata, schema }: {
   })
 
   return (
-    <Layout.PageFrame
+    <PageFrame
       headerContent={(
         <>
-          <Layout.PageFrameTitle>
+          <PageFrameTitle>
             {metadata.displayName}
-          </Layout.PageFrameTitle>
+          </PageFrameTitle>
           <div className="flex-1"></div>
           <Input.IconButton
             onClick={form.handleSubmit(executeSearch)}
@@ -329,6 +330,6 @@ export const MultiView = ({ rootAggregatePhysicalName, metadata, schema }: {
           )}
         </Panel>
       </PanelGroup>
-    </Layout.PageFrame>
+    </PageFrame>
   )
 }

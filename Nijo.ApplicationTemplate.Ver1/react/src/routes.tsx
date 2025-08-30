@@ -1,6 +1,6 @@
 import React from "react"
 import * as ReactRouter from "react-router-dom"
-import MainLayout from "./layout/MainLayout"
+import MainLayout from "./pages-reflection/MainLayout"
 import { getReflectionPages } from "./pages-reflection"
 import { NijoUi } from "./スキーマ定義編集UI/NijoUi"
 import { NijoUiDebugMenu } from "./スキーマ定義編集UI/デバッグメニュー/DebugMenu"

@@ -108,7 +108,7 @@ export const MembersGroupByBreakPoint = ({ owner, ancestorsPath }: {
 }
 
 
-/** VForm2のラベルと値の組 */
+/** フォームのラベルと値の組 */
 const MemberComponent = ({ owner, member, ancestorsPath }: {
   /** ルートオブジェクトからこのメンバーまでのパス */
   ancestorsPath: string

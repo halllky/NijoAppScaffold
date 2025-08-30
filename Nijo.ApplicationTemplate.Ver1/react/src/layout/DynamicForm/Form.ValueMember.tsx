@@ -5,7 +5,7 @@ import FormLayout from "../FormLayout"
 
 /**
  * 値メンバーのレンダリング。
- * VForm2のラベルと値の組を表示する。
+ * フォームのラベルと値の組を表示する。
  */
 export const FormValueMember = ({ member, owner, ancestorsPath }: {
   member: ValueMember
