@@ -18,6 +18,8 @@ export type Node = {
   'color:container'?: string
   tags?: NodeTag[]
   members?: string[]
+  /** ノードをマウスドラッグで動かせるかどうか。デフォルトはtrue */
+  locked?: boolean
 }
 
 /** ノードの右肩に表示するタグ */

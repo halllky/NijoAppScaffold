@@ -26,13 +26,49 @@ public class ApplicationStateAndSchemaGraphViewState {
     /// </summary>
     [JsonPropertyName("applicationState")]
     public ApplicationState ApplicationState { get; set; } = new();
+
+    #region スキーマ定義グラフの見た目の状態
     /// <summary>
     /// スキーマ定義グラフの見た目の状態。
     /// nullの場合は保存をスキップする。
     /// </summary>
     [JsonPropertyName("schemaGraphViewState")]
-    [JsonConverter(typeof(SortedJsonConverter))]
-    public JsonObject? SchemaGraphViewState { get; set; }
+    public SchemaGraphViewStateTypeByViewMode? SchemaGraphViewState { get; set; }
+
+    /// <summary>
+    /// グラフのモードごとの外観状態
+    /// </summary>
+    public class SchemaGraphViewStateTypeByViewMode {
+        public const string KEY_ER_DIAGRAM = "erDiagram";
+        public const string KEY_SCHEMA_DEFINITION = "schemaDefinition";
+
+        [JsonPropertyName(KEY_ER_DIAGRAM)]
+        public SchemaGraphViewStateType ErDiagram { get; set; } = new();
+        [JsonPropertyName(KEY_SCHEMA_DEFINITION)]
+        public SchemaGraphViewStateType SchemaDefinition { get; set; } = new();
+    }
+    /// <summary>
+    /// GraphView のプロパティとして設定されることになるデータ
+    /// </summary>
+    public class SchemaGraphViewStateType {
+        public const string KEY_NODES = "nodes";
+        public const string KEY_EDGES = "edges";
+        public const string KEY_NODE_POSITIONS = "nodePositions";
+        public const string KEY_PARENT_MAP = "parentMap";
+
+        [JsonPropertyName(KEY_NODES)]
+        [JsonConverter(typeof(SortedJsonConverter))]
+        public JsonObject Nodes { get; set; } = new();
+        [JsonPropertyName(KEY_EDGES)]
+        [JsonConverter(typeof(SortedJsonArrayConverter))]
+        public JsonArray Edges { get; set; } = new();
+        [JsonPropertyName(KEY_NODE_POSITIONS)]
+        [JsonConverter(typeof(SortedJsonConverter))]
+        public JsonObject NodePositions { get; set; } = new();
+        [JsonPropertyName(KEY_PARENT_MAP)]
+        [JsonConverter(typeof(SortedJsonConverter))]
+        public JsonObject ParentMap { get; set; } = new();
+    }
 
     /// <summary>
     /// JSONシリアライズ時にキーを昇順にソートして、保存内容を固定するためのカスタムJsonConverter
@@ -59,7 +95,6 @@ public class ApplicationStateAndSchemaGraphViewState {
             writer.WriteEndObject();
         }
     }
-
     /// <summary>
     /// JsonArrayの要素を安定化するためのカスタムJsonConverter
     /// </summary>
@@ -80,6 +115,7 @@ public class ApplicationStateAndSchemaGraphViewState {
             writer.WriteEndArray();
         }
     }
+    #endregion スキーマ定義グラフの見た目の状態
 }
 
 /// <summary>

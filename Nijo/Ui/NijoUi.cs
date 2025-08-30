@@ -163,7 +163,7 @@ public class NijoUi {
 
                 // SchemaGraphViewStateの保存（nullでない場合のみ）
                 if (schemaGraphViewState != null) {
-                    var viewStatePath = Path.Combine(Path.GetDirectoryName(_project.SchemaXmlPath)!, "nijo.viewState.json");
+                    var viewStatePath = _project.ViewStateJsonPath;
                     var jsonOptions = new JsonSerializerOptions {
                         WriteIndented = true,
                         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,

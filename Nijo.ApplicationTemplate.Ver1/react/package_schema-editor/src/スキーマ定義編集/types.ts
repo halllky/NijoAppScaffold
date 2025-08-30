@@ -1,3 +1,16 @@
+import { GraphViewProps } from "@nijo/ui-components/layout"
+import { CytoscapeDataSet, ViewState } from "@nijo/ui-components/layout/GraphView/Cy"
+
+/**
+ * ER図とスキーマ定義グラフのデータセット。
+ * 自動生成後のアプリケーションのデバッグメニューで永続化された状態が参照される。
+ */
+export type AppSchemaDefinitionGraphDataSet = {
+  [key in 'erDiagram' | 'schemaDefinition']: CytoscapeDataSet & {
+    parentMap: GraphViewProps['parentMap']
+    nodePositions: ViewState['nodePositions']
+  }
+}
 
 /** スキーマ定義編集におけるアプリケーション全体の状態 */
 export type SchemaDefinitionGlobalState = {

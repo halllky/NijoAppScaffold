@@ -118,7 +118,11 @@ export const GraphView = forwardRef<GraphViewRef, GraphViewProps>((props, ref) =
           }
         } else if (!existingNode) {
           // 新しいノードを追加
-          cy.add({ data: nodeDataForCy, group: 'nodes' });
+          cy.add({
+            data: nodeDataForCy,
+            group: 'nodes',
+            grabbable: !nodeDataForCy.locked,
+          });
         }
 
         // タグがある場合はタグ専用のノードを作成
@@ -135,7 +139,10 @@ export const GraphView = forwardRef<GraphViewRef, GraphViewProps>((props, ref) =
               'background-color': tag['background-color'] || '#FF6B35',
               'border-color': tag['background-color'] || '#FF6B35',
             }
-            cy.add({ data: tagNodeData })
+            cy.add({
+              data: tagNodeData,
+              grabbable: !newNode.locked,
+            })
           })
         }
 
@@ -151,7 +158,10 @@ export const GraphView = forwardRef<GraphViewRef, GraphViewProps>((props, ref) =
               parentNodeId: newNode.id,
               'border-color': newNode['border-color'],
             }
-            cy.add({ data: memberNodeData })
+            cy.add({
+              data: memberNodeData,
+              grabbable: !newNode.locked,
+            })
           })
         }
       }

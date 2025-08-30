@@ -143,7 +143,9 @@ export const useCytoscape = (props: GraphViewProps): CytoscapeHookType => {
     try {
       cy.startBatch()
       const viewStateBeforeQuery = collectViewState()
+
       cy.elements().remove()
+
       const nodeIds = new Set(Object.keys(dataSet.nodes))
       const ensureNodeExists = (id: string) => {
         if (nodeIds.has(id)) return
@@ -151,6 +153,7 @@ export const useCytoscape = (props: GraphViewProps): CytoscapeHookType => {
         const label = id
         cy.add({ data: { id, label } })
       }
+
       const nodesWithDepth = Object.entries(dataSet.nodes).reduce((arr, [id, node]) => {
         let depth = 0
         let parentId = node.parent
@@ -163,6 +166,7 @@ export const useCytoscape = (props: GraphViewProps): CytoscapeHookType => {
         arr.push({ id, node, depth })
         return arr
       }, [] as { id: string, node: DS.Node, depth: number }[])
+
       nodesWithDepth.sort((a, b) => {
         if (a.depth < b.depth) return -1
         if (a.depth > b.depth) return 1
@@ -170,7 +174,10 @@ export const useCytoscape = (props: GraphViewProps): CytoscapeHookType => {
       })
       for (const { id, node } of nodesWithDepth) {
         if (node.parent) ensureNodeExists(node.parent)
-        cy.add({ data: node })
+        cy.add({
+          data: node,
+          grabbable: !node.locked,
+        })
 
         // タグがある場合はタグ専用の子ノードを作成
         if (node.tags && node.tags.length > 0) {
@@ -186,7 +193,10 @@ export const useCytoscape = (props: GraphViewProps): CytoscapeHookType => {
               'background-color': tag['background-color'] || '#FF6B35',
               'border-color': tag['background-color'] || '#FF6B35',
             }
-            cy.add({ data: tagNodeData })
+            cy.add({
+              data: tagNodeData,
+              grabbable: !node.locked,
+            })
           })
         }
 
@@ -201,7 +211,10 @@ export const useCytoscape = (props: GraphViewProps): CytoscapeHookType => {
               memberIndex: index,
               parentNodeId: id,
             }
-            cy.add({ data: memberNodeData })
+            cy.add({
+              data: memberNodeData,
+              grabbable: !node.locked,
+            })
           })
         }
       }

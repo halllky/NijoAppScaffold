@@ -1,8 +1,7 @@
 import React from "react"
 import useEvent from "react-use-event-hook"
 import { SERVER_DOMAIN } from "../main"
-import { SchemaDefinitionGlobalState } from "./types"
-import { AppSchemaDefinitionGraphDataSet } from "./index.Graph"
+import { AppSchemaDefinitionGraphDataSet, SchemaDefinitionGlobalState } from "./types"
 
 /**
  * サーバーに問い合わせて nijo.xml の読み込み、保存を行う。

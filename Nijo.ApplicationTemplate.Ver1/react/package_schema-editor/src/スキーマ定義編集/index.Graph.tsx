@@ -3,7 +3,7 @@ import useEvent from "react-use-event-hook"
 import { GraphView, GraphViewProps, GraphViewRef, } from "@nijo/ui-components/layout"
 import { Node as CyNode, Edge as CyEdge } from "@nijo/ui-components/layout/GraphView/DataSource"
 import { CytoscapeDataSet, ViewState } from "@nijo/ui-components/layout/GraphView/Cy"
-import { asTree, ATTR_IS_KEY, ATTR_TYPE, ModelPageForm, TYPE_CHILD, TYPE_CHILDREN, TYPE_COMMAND_MODEL, TYPE_DATA_MODEL, TYPE_MEMO, TYPE_QUERY_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, XmlElementItem } from "./types"
+import { AppSchemaDefinitionGraphDataSet, asTree, ATTR_IS_KEY, ATTR_TYPE, ModelPageForm, TYPE_CHILD, TYPE_CHILDREN, TYPE_COMMAND_MODEL, TYPE_DATA_MODEL, TYPE_MEMO, TYPE_QUERY_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, XmlElementItem } from "./types"
 import { MentionUtil } from "../UI"
 import { findRefToTarget } from "./findRefToTarget"
 import * as AutoLayout from "@nijo/ui-components/layout/GraphView/Cy.AutoLayout"
@@ -20,17 +20,6 @@ type AppSchemaDefinitionGraphProps = {
 export type AppSchemaDefinitionGraphRef = {
   /** 現在のグラフのデータセットを取得する */
   getCurrentGraphDataSet: () => AppSchemaDefinitionGraphDataSet
-}
-
-/**
- * ER図とスキーマ定義グラフのデータセット。
- * 自動生成後のアプリケーションのデバッグメニューで永続化された状態が参照される。
- */
-export type AppSchemaDefinitionGraphDataSet = {
-  [key in 'erDiagram' | 'schemaDefinition']: CytoscapeDataSet & {
-    parentMap: GraphViewProps['parentMap']
-    nodePositions: ViewState['nodePositions']
-  }
 }
 
 /**
@@ -111,18 +100,22 @@ export const AppSchemaDefinitionGraph = React.forwardRef<AppSchemaDefinitionGrap
 
   // グラフの状態をファイルに永続化するためのref
   React.useImperativeHandle(ref, () => ({
-    getCurrentGraphDataSet: () => ({
-      erDiagram: {
-        ...createERDiagramDataSet(xmlElementTrees),
-        nodePositions: getSavedLayout('er').nodePositions ?? {},
-        parentMap: Object.fromEntries(Object.entries(dataSet.nodes).filter(([, node]) => node.parent).map(([id, node]) => [id, node.parent!])),
-      },
-      schemaDefinition: {
-        ...createSchemaDefinitionDataSet(xmlElementTrees, onlyRoot),
-        nodePositions: getSavedLayout('schema').nodePositions ?? {},
-        parentMap: Object.fromEntries(Object.entries(dataSet.nodes).filter(([, node]) => node.parent).map(([id, node]) => [id, node.parent!])),
-      },
-    }),
+    getCurrentGraphDataSet: () => {
+      const er = createERDiagramDataSet(xmlElementTrees)
+      const schema = createSchemaDefinitionDataSet(xmlElementTrees, onlyRoot)
+      return {
+        erDiagram: {
+          ...er,
+          nodePositions: getSavedLayout('er').nodePositions ?? {},
+          parentMap: Object.fromEntries(Object.entries(er.nodes).filter(([, node]) => node.parent).map(([id, node]) => [id, node.parent!])),
+        },
+        schemaDefinition: {
+          ...schema,
+          nodePositions: getSavedLayout('schema').nodePositions ?? {},
+          parentMap: Object.fromEntries(Object.entries(schema.nodes).filter(([, node]) => node.parent).map(([id, node]) => [id, node.parent!])),
+        },
+      }
+    },
   }), [xmlElementTrees, onlyRoot])
 
   return (
