@@ -10,7 +10,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@nijo/ui-components': path.resolve(__dirname, '../../ui-components/src'),
+      '@nijo/ui-components': path.resolve(__dirname, '../package_ui-components/src'),
     },
   },
   build: {

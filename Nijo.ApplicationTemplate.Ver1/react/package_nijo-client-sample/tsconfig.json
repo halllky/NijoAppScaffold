@@ -24,10 +24,10 @@
     "baseUrl": ".",
     "paths": {
       "@nijo/ui-components": [
-        "../../ui-components/src"
+        "../package_ui-components/src"
       ],
       "@nijo/ui-components/*": [
-        "../../ui-components/src/*"
+        "../package_ui-components/src/*"
       ]
     }
   },

@@ -1,5 +1,5 @@
 {
-  "name": "schema-editor",
+  "name": "@nijo/schema-editor",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
@@ -7,7 +7,7 @@
     "build": "tsc && vite build"
   },
   "dependencies": {
-    "@nijo/ui-components": "workspace:*",
+    "@nijo/ui-components": "workspace:package_ui-components",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "@heroicons/react": "^2.2.0",
