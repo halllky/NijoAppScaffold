@@ -12,6 +12,9 @@
     },
     {
       "path": "./package_schema-editor"
+    },
+    {
+      "path": "./tsconfig.node.json"
     }
   ]
 }
