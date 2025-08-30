@@ -104,7 +104,9 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
             var body = $$"""
                 {
+                  uniqueId: '{{_aggregate.XElement.Attribute(nameof(Ui.XmlElementItem.UniqueId))?.Value.Replace("'", "\\'")}}',
                   type: '{{type}}',
+                  model: '{{_aggregate.GetRoot().Model.SchemaName}}',
                 {{RenderNodeOptions(_aggregate.XElement, ctx).SelectTextTemplate(source => $$"""
                   {{WithIndent(source, "  ")}}
                 """)}}
@@ -132,11 +134,19 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
         internal static string RenderType(CodeRenderingContext ctx) {
 
+            var modelNames = ctx.SchemaParser.Models
+                .Select(m => $"'{m.Key}'")
+                .ToArray();
+
             return $$"""
                 /** 構造体のメタデータ */
                 export type {{TYPE_NAME}} = {
+                  /** XMLスキーマ上でこの要素を示す一意なID */
+                  uniqueId: string
                   /** 集約の種類 */
                   type: 'RootAggregate' | 'ChildAggregate' | 'ChildrenAggregate'
+                  /** この集約のモデル。子孫集約の場合も値が入る。 */
+                  model: {{(modelNames.Length == 0 ? "never" : modelNames.Join(" | "))}}
                   /** この構造体のメンバー */
                   members: { [key: string]: {{TYPE_MEMBER}} }
                 {{RenderNodeOptionTypes(ctx).SelectTextTemplate(source => $$"""
@@ -169,6 +179,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
             return $$"""
                 '{{_vm.PhysicalName}}': {
+                  uniqueId: '{{_vm.XElement.Attribute(nameof(Ui.XmlElementItem.UniqueId))?.Value.Replace("'", "\\'")}}',
                   {{typeProp}}: '{{_vm.Type.SchemaTypeName}}',
                 {{RenderNodeOptions(_vm.XElement, ctx).SelectTextTemplate(source => $$"""
                   {{WithIndent(source, "  ")}}
@@ -193,6 +204,8 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
             return $$"""
                 /** 値のメタデータ */
                 export type {{TYPE_NAME}} = {
+                  /** XMLスキーマ上でこの要素を示す一意なID */
+                  uniqueId: string
                   /** 値の型名。enum, value-ojbect の場合は undefined になる */
                   type?: {{ctx.SchemaParser.ValueMemberTypes.Select(t => $"'{t.SchemaTypeName}'").Join(" | ")}}
                   /** 列挙体の型名。このメンバーが列挙体の場合のみ */
@@ -219,6 +232,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
             return $$"""
                 '{{_refTo.PhysicalName}}': {
+                  uniqueId: '{{_refTo.XElement.Attribute(nameof(Ui.XmlElementItem.UniqueId))?.Value.Replace("'", "\\'")}}',
                   type: 'ref-to',
                   refTo: '{{_refTo.RefTo.RefEntryName}}',
                 {{RenderNodeOptions(_refTo.XElement, ctx).SelectTextTemplate(source => $$"""
@@ -234,6 +248,8 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
             return $$"""
                 /** 外部参照のメタデータ */
                 export type {{TYPE_NAME}} = {
+                  /** XMLスキーマ上でこの要素を示す一意なID */
+                  uniqueId: string
                   /** 型 */
                   type: 'ref-to'
                   /** 参照先。参照先が子孫集約の場合はルート集約からのパスのスラッシュ区切り */
@@ -263,6 +279,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
     /// <param name="ctx">レンダリングコンテキスト</param>
     /// <returns>TypeScriptのプロパティ定義文字列</returns>
     internal static IEnumerable<string> RenderNodeOptions(XElement xElement, CodeRenderingContext ctx) {
+
         var options = ctx.SchemaParser.GetOptions(xElement);
 
         // DisplayName だけは未定義の場合は物理名を採用する。
