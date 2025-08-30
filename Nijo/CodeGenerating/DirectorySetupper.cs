@@ -29,7 +29,7 @@ namespace Nijo.CodeGenerating {
                 System.IO.Directory.CreateDirectory(fullpath);
             _ctx.Handle(fullpath);
 
-            fn(new DirectorySetupper(_ctx, System.IO.Path.Combine(Path, relativePath)));
+            fn(new DirectorySetupper(_ctx, fullpath));
         }
 
         public void Generate(SourceFile sourceFile) {

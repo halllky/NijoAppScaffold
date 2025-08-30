@@ -16,5 +16,5 @@ set "FRONTEND_ROOT=%TEMPLATE_PROJECT%\react"
 dotnet build %BACKEDN_PROJECT% 
  
 start %BACKEDN_EXE% run-ui-service %TEMPLATE_PROJECT% --port 8081 
-start npm run dev:nijo-ui --prefix %FRONTEND_ROOT% 
-start http://localhost:5173/nijo-ui/ 
+start npm run dev:schema-editor --prefix %FRONTEND_ROOT% 
+start http://localhost:5176/nijo-ui/ 

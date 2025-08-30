@@ -65,7 +65,7 @@ public class NijoUi {
             const string RESOURCE_NAME = "Nijo.GuiWebAppHtml.index.html";
 
             using var stream = assembly.GetManifestResourceStream(RESOURCE_NAME)
-                ?? throw new InvalidOperationException($"htmlファイルが見つかりません。{assembly.GetName().Name}のビルド前に 'npm run build:nijo-ui' が実行されたか確認してください。");
+                ?? throw new InvalidOperationException($"htmlファイルが見つかりません。{assembly.GetName().Name}のビルド前に 'npm run build:schema-editor' が実行されたか確認してください。");
 
             using var reader = new StreamReader(stream);
             var html = await reader.ReadToEndAsync();

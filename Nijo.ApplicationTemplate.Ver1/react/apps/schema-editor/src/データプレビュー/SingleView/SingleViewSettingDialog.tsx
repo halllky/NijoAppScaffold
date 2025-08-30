@@ -1,0 +1,289 @@
+import React from "react"
+import * as ReactHookForm from "react-hook-form"
+import * as Icon from "@heroicons/react/24/outline"
+import * as Input from "@nijo/ui-components/input"
+import * as Layout from "@nijo/ui-components/layout"
+import { TableMetadataHelper } from "../types"
+import { MetadataOfEFCoreEntity } from "../metadata-of-efcore-entity"
+import useEvent from "react-use-event-hook"
+import { EditorDesignByAgggregate } from "../types"
+import * as UI from "../../UI"
+
+export type DbTableSingleEditViewSettingsProps = {
+  rootAggregate: MetadataOfEFCoreEntity.Aggregate
+  tableMetadataHelper: TableMetadataHelper
+  initialSettings: SingleViewSettingFormData
+  onApply: (updatedSettings: SingleViewSettingFormData) => void
+  onCancel: () => void
+}
+
+/**
+ * フォーム用の型定義。
+ * SingleViewの場合は一度にその集約ツリーのすべての集約が編集対象になる。
+ */
+export type SingleViewSettingFormData = {
+  [aggregatePath: string]: EditorDesignByAgggregate
+}
+
+/**
+ * SinlgeViewの表示設定を編集するダイアログ
+ */
+export const DbTableSingleEditViewSettings = ({
+  rootAggregate,
+  tableMetadataHelper,
+  initialSettings,
+  onApply,
+  onCancel,
+}: DbTableSingleEditViewSettingsProps) => {
+
+  // 集約ツリーの全メンバーを取得
+  const allMembers = React.useMemo(() => {
+    const result: {
+      aggregate: MetadataOfEFCoreEntity.Aggregate
+      members: {
+        member: MetadataOfEFCoreEntity.AggregateMember
+        memberKey: string
+      }[]
+    }[] = []
+
+    const collectMembers = (agg: MetadataOfEFCoreEntity.Aggregate) => {
+      const resultMembers: {
+        member: MetadataOfEFCoreEntity.AggregateMember
+        memberKey: string
+      }[] = []
+      result.push({
+        aggregate: agg,
+        members: resultMembers,
+      })
+
+      for (const member of agg.members) {
+        if (member.type === 'own-column') {
+          resultMembers.push({
+            member,
+            memberKey: member.columnName,
+          })
+        } else if (member.type === 'ref-key' || member.type === 'ref-parent-key') {
+          if (!member.refToRelationName) continue;
+
+          const sameKey = resultMembers.find(m => m.memberKey === member.refToRelationName)
+          if (sameKey) {
+            continue
+          } else {
+            resultMembers.push({
+              member,
+              memberKey: member.refToRelationName,
+            })
+          }
+
+        } else if (member.type === 'child' || member.type === 'children') {
+          collectMembers(member as MetadataOfEFCoreEntity.Aggregate)
+        }
+      }
+    }
+
+    collectMembers(rootAggregate)
+    const descendants = tableMetadataHelper.enumerateDescendants(rootAggregate)
+    for (const desc of descendants) {
+      collectMembers(desc)
+    }
+
+    return result
+  }, [rootAggregate, tableMetadataHelper])
+
+  const formMethods = ReactHookForm.useForm<SingleViewSettingFormData>({
+    defaultValues: initialSettings,
+  })
+  const { register, handleSubmit, control, setValue, formState: { isDirty } } = formMethods
+
+  // キャンセル
+  const handleCancel = useEvent(() => {
+    onCancel()
+  })
+
+  return (
+    <UI.SettingDialog
+      isDirty={isDirty}
+      onApply={handleSubmit(onApply)}
+      onCancel={handleCancel}
+      title={`表示設定 - ${rootAggregate.displayName}`}
+      className="w-[90vw] max-w-4xl h-[90vh]"
+    >
+      <ReactHookForm.FormProvider {...formMethods}>
+        <form onSubmit={handleSubmit(onApply)} className="flex flex-col h-full">
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
+            {/* 基本設定 */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-medium text-gray-700">基本設定</h2>
+              <div className="flex items-center gap-2">
+                <label className="w-48 text-sm text-gray-500">ラベルの横幅</label>
+                <input
+                  type="text"
+                  {...register(`${rootAggregate.path}.singleViewLabelWidth`)}
+                  className="basis-24 w-24 px-2 py-1 border border-gray-400"
+                  placeholder="10em"
+                />
+                <span className="flex-1 text-xs text-gray-500">
+                  ※「10rem」などCSSの属性値で定義してください。
+                </span>
+              </div>
+            </div>
+
+            <hr className="border-gray-200" />
+
+            {/* メンバー設定 */}
+            {allMembers.length > 0 && (
+              <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
+                {allMembers.map(({ members, aggregate: owner }, index) => (
+                  <React.Fragment key={index}>
+                    <h2 className="col-span-2 font-bold text-gray-700 mt-4">
+                      {owner.path}
+                    </h2>
+                    {members.map(({ member, memberKey }, memberIndex) => (
+                      <React.Fragment key={memberKey}>
+                        {memberIndex > 0 && <hr className="border-gray-200 col-span-2 ml-8" />}
+                        <MemberSettingRow
+                          aggregatePath={owner.path}
+                          memberKey={memberKey}
+                          member={member}
+                          tableMetadataHelper={tableMetadataHelper}
+                          control={control}
+                          setValue={setValue}
+                        />
+                      </React.Fragment>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </div>
+            )}
+          </div>
+        </form>
+      </ReactHookForm.FormProvider>
+    </UI.SettingDialog>
+  )
+}
+
+/**
+ * 各メンバーの設定行
+ */
+const MemberSettingRow = ({
+  aggregatePath,
+  memberKey,
+  member,
+  tableMetadataHelper,
+  control,
+  setValue,
+}: {
+  aggregatePath: string
+  memberKey: string
+  member: MetadataOfEFCoreEntity.AggregateMember
+  tableMetadataHelper: TableMetadataHelper
+  control: ReactHookForm.Control<SingleViewSettingFormData>
+  setValue: ReactHookForm.UseFormSetValue<SingleViewSettingFormData>
+}) => {
+  const memberSetting = ReactHookForm.useWatch({ control, name: `${aggregatePath}.membersDesign.${memberKey}` })
+
+  // 参照先テーブルの情報を取得
+  const refToAggregate = React.useMemo(() => {
+    if (member.type !== 'ref-key' && member.type !== 'ref-parent-key' || !member.refToAggregatePath) return null
+    return tableMetadataHelper.allAggregates().find(a => a.path === member.refToAggregatePath)
+  }, [member, tableMetadataHelper])
+
+  // 参照先テーブルのカラム一覧（外部キー以外）
+  const refToColumns = React.useMemo(() => {
+    if (!refToAggregate) return []
+    return refToAggregate.members.filter((m): m is MetadataOfEFCoreEntity.AggregateMember =>
+      m.type === 'own-column' || m.type === 'parent-key' || m.type === 'ref-key' || m.type === 'ref-parent-key'
+    )
+  }, [refToAggregate])
+
+  const handleCheckboxChange = useEvent((columnName: string, checked: boolean) => {
+    const currentColumns = memberSetting?.singleViewRefDisplayColumnNames || []
+    const newColumns = checked
+      ? [...currentColumns, columnName]
+      : currentColumns.filter(c => c !== columnName)
+
+    setValue(`${aggregatePath}.membersDesign.${memberKey}.singleViewRefDisplayColumnNames`, newColumns, { shouldDirty: true })
+  })
+
+  return (
+    <>
+      <div className="flex items-start gap-2 ml-8">
+        <span className="font-medium text-sm">
+          {(member.type === 'ref-key' || member.type === 'ref-parent-key')
+            ? member.refToRelationName
+            : member.columnName}
+        </span>
+        <span className="text-xs text-gray-500 bg-gray-100 px-1 py-px rounded">
+          {member.type}
+        </span>
+      </div>
+
+      {(member.type === 'own-column' || member.type === 'parent-key') && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-500">表示名</label>
+            <input
+              type="text"
+              value={memberSetting?.displayName ?? ''}
+              onChange={e => {
+                setValue(`${aggregatePath}.membersDesign.${memberKey}.displayName`, e.target.value, { shouldDirty: true })
+              }}
+              className="w-48 px-1 py-px border border-gray-400"
+              placeholder={member.columnName}
+            />
+          </div>
+        </div>
+      )}
+
+      {(member.type === 'ref-key' || member.type === 'ref-parent-key') && (
+        <div className="space-y-4">
+          <table className="table-fixed justify-self-start text-sm border-spacing-y-1 border-separate">
+            <thead>
+              <tr>
+                <th className="text-left font-normal border-b border-gray-300"></th>
+                <th className="text-left font-normal border-b border-gray-300 pr-2">表示する</th>
+                <th className="text-left font-normal border-b border-gray-300 pr-2">表示名</th>
+              </tr>
+            </thead>
+            <tbody>
+              {refToColumns.map(col => (
+                <tr key={col.columnName}>
+                  <td>
+                    <div className="flex items-center gap-1 pl-px pr-4">
+                      {col.columnName}
+                      {col.isPrimaryKey && (
+                        <span className="text-xs text-gray-500 bg-gray-100 px-1 py-px rounded">PK</span>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={col.isPrimaryKey || memberSetting?.singleViewRefDisplayColumnNames?.includes(col.columnName) || false}
+                      onChange={(e) => handleCheckboxChange(col.columnName, e.target.checked)}
+                      disabled={col.isPrimaryKey}
+                      className="rounded"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="text"
+                      value={memberSetting?.singleViewRefDisplayColumnNamesDisplayNames?.[col.columnName] ?? ''}
+                      onChange={e => {
+                        const newDisplayNames = { ...memberSetting?.singleViewRefDisplayColumnNamesDisplayNames }
+                        newDisplayNames[col.columnName] = e.target.value
+                        setValue(`${aggregatePath}.membersDesign.${memberKey}.singleViewRefDisplayColumnNamesDisplayNames`, newDisplayNames, { shouldDirty: true })
+                      }}
+                      className="w-48 px-1 py-px border border-gray-400"
+                      placeholder={col.columnName}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
+  )
+}

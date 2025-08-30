@@ -36,7 +36,7 @@ if not exist "%APP_TEMPLATE_ZIP%" (
   exit /b 1 
 ) 
 
-call npm run build:nijo-ui --prefix %FRONTEND_ROOT% 
+call npm run build:schema-editor --prefix %FRONTEND_ROOT% 
  
 if not "%errorlevel%"=="0" ( 
   @echo ビルドに失敗しました。 
