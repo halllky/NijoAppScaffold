@@ -45,6 +45,19 @@ export const useLayoutSaving = (displayMode: DisplayMode) => {
     return null;
   }, [forceUpdate, displayMode, getLayoutKey]);
 
+  const getSavedLayout = React.useCallback((type: 'schema' | 'er'): DiagramLayoutSettings => {
+    const items = type === 'schema'
+      ? localStorage.getItem(LOCAL_STORAGE_KEY_SCHEMA)
+      : localStorage.getItem(LOCAL_STORAGE_KEY_ER);
+    if (!items) return { onlyRoot: false };
+    try {
+      return JSON.parse(items) as DiagramLayoutSettings;
+    } catch (error) {
+      console.error("Failed to parse saved layout settings:", error);
+      return { onlyRoot: false };
+    }
+  }, []);
+
   const savedViewState: Partial<ViewState> | undefined = React.useMemo(() => {
     if (!savedLayout) return undefined;
     return {
@@ -132,5 +145,7 @@ export const useLayoutSaving = (displayMode: DisplayMode) => {
     saveDisplayMode,
     /** 保存されたdisplayModeを取得する */
     getSavedDisplayMode,
+    /** 保存されたレイアウト設定を取得する */
+    getSavedLayout,
   }
 }

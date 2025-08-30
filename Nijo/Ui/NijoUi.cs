@@ -16,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Nijo.CodeGenerating;
 using Nijo.SchemaParsing;
+using System.Text.Json;
 
 namespace Nijo.Ui;
 
@@ -131,12 +132,17 @@ public class NijoUi {
         // nijo.xmlの保存
         app.MapPost("/save", async context => {
             try {
+                // ApplicationStateAndSchemaGraphViewStateを受け取る
+                var applicationStateAndSchemaGraphViewState = await context.Request.ReadFromJsonAsync<ApplicationStateAndSchemaGraphViewState>()
+                    ?? throw new Exception("applicationStateAndSchemaGraphViewState is null");
+
+                var applicationState = applicationStateAndSchemaGraphViewState.ApplicationState;
+                var schemaGraphViewState = applicationStateAndSchemaGraphViewState.SchemaGraphViewState;
+
                 // バリデーションをかける。
                 // XMLとして破綻していたらエラーにするが、スキーマ定義としてエラーがあるかどうかは見ない。
                 // 作業中の一時保存のケースがあるため。
                 var originalXDocument = XDocument.Load(_project.SchemaXmlPath);
-                var applicationState = await context.Request.ReadFromJsonAsync<ApplicationState>()
-                    ?? throw new Exception("applicationState is null");
                 var errors = new List<string>();
                 if (!applicationState.TryConvertToXDocument(originalXDocument, errors, out var xDocument, out var _)) {
                     context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
@@ -145,7 +151,7 @@ public class NijoUi {
                     return;
                 }
 
-                // 保存
+                // nijo.xmlの保存
                 SortXmlAttributes(xDocument);
                 using (var writer = XmlWriter.Create(_project.SchemaXmlPath, new() {
                     Indent = true,
@@ -153,6 +159,21 @@ public class NijoUi {
                     NewLineChars = "\n",
                 })) {
                     xDocument.Save(writer);
+                }
+
+                // SchemaGraphViewStateの保存（nullでない場合のみ）
+                if (schemaGraphViewState != null) {
+                    var viewStatePath = Path.Combine(Path.GetDirectoryName(_project.SchemaXmlPath)!, "nijo.viewState.json");
+                    var jsonOptions = new JsonSerializerOptions {
+                        WriteIndented = true,
+                        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                        Converters = {
+                            new SortedJsonConverter(),
+                            new SortedJsonArrayConverter()
+                        }
+                    };
+                    var jsonString = JsonSerializer.Serialize(schemaGraphViewState, jsonOptions);
+                    await File.WriteAllTextAsync(viewStatePath, jsonString, new UTF8Encoding(false, false));
                 }
 
                 context.Response.StatusCode = (int)HttpStatusCode.OK;

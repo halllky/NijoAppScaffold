@@ -2,6 +2,7 @@ import React from "react"
 import useEvent from "react-use-event-hook"
 import { SERVER_DOMAIN } from "../main"
 import { SchemaDefinitionGlobalState } from "./types"
+import { AppSchemaDefinitionGraphDataSet } from "./index.Graph"
 
 /**
  * サーバーに問い合わせて nijo.xml の読み込み、保存を行う。
@@ -34,12 +35,18 @@ export const useSaveLoad = () => {
   }, [reloadSchema])
 
   // 保存処理
-  const saveSchema = useEvent(async (valuesToSave: SchemaDefinitionGlobalState): Promise<{ ok: boolean, error?: string }> => {
+  const saveSchema = useEvent(async (
+    applicationState: SchemaDefinitionGlobalState,
+    schemaGraphViewState: AppSchemaDefinitionGraphDataSet | null,
+  ): Promise<{ ok: boolean, error?: string }> => {
     try {
       const response = await fetch(`${SERVER_DOMAIN}/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(valuesToSave),
+        body: JSON.stringify({
+          applicationState,
+          schemaGraphViewState,
+        }),
       })
       if (!response.ok) {
         const bodyText = await response.text()

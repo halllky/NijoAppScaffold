@@ -17,7 +17,7 @@ import { UUID } from "uuidjs"
 import { PageFrame } from "../PageFrame"
 import { useValidation } from "./useValidation"
 import NijoUiErrorMessagePane from "./index.ErrorMessage"
-import { AppSchemaDefinitionGraph } from "./index.Graph"
+import { AppSchemaDefinitionGraph, AppSchemaDefinitionGraphDataSet, AppSchemaDefinitionGraphRef } from "./index.Graph"
 import { useSaveLoad } from "./useSaveLoad"
 
 export const NijoUiAggregateDiagram = () => {
@@ -56,13 +56,14 @@ export const NijoUiAggregateDiagram = () => {
 
 const AfterLoaded = ({ formDefaultValues, executeSave }: {
   formDefaultValues: SchemaDefinitionGlobalState
-  executeSave: (values: SchemaDefinitionGlobalState) => Promise<{ ok: boolean, error?: string }>
+  executeSave: (applicationState: SchemaDefinitionGlobalState, schemaGraphViewState: AppSchemaDefinitionGraphDataSet | null) => Promise<{ ok: boolean, error?: string }>
 }) => {
   const formMethods = ReactHookForm.useForm<SchemaDefinitionGlobalState>({
     defaultValues: formDefaultValues,
   })
   const { getValues, control, formState: { isDirty } } = formMethods
   const xmlElementTrees = getValues("xmlElementTrees")
+  const graphDataRef = React.useRef<AppSchemaDefinitionGraphRef>(null)
   const graphViewRef = React.useRef<GraphViewRef>(null)
 
   // 属性定義
@@ -140,7 +141,7 @@ const AfterLoaded = ({ formDefaultValues, executeSave }: {
     setSaveError(undefined)
     setNowSaving(true)
     const currentValues = getValues()
-    const result = await executeSave(currentValues)
+    const result = await executeSave(currentValues, graphDataRef.current?.getCurrentGraphDataSet() ?? null)
     if (result.ok) {
       setSaveButtonText('保存しました。')
       formMethods.reset(currentValues)
@@ -196,6 +197,7 @@ const AfterLoaded = ({ formDefaultValues, executeSave }: {
       <PanelGroup className="flex-1" direction={editableGridPosition}>
         <Panel className="border border-gray-300">
           <AppSchemaDefinitionGraph
+            ref={graphDataRef}
             xmlElementTrees={xmlElementTrees}
             graphViewRef={graphViewRef}
             handleSelectionChange={handleSelectionChange}

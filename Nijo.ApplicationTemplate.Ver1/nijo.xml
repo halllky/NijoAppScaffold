@@ -449,7 +449,6 @@
     <表示名 Type="word" UniqueId="4e1d9f4e-9f4e-1d9f-4e9f-4e1d9f4e1d9f" />
     <メールアドレス Type="word" UniqueId="9f4e1d9f-4e1d-9f4e-1d9f-4e1d9f4e1d9f" />
     <最終ログイン日時 Type="datetime" UniqueId="e1d9f4e1-d9f4-e1d9-f4e1-d9f4e1d9f4e1" />
-
     <!-- 所属情報（1対1） -->
     <所属情報 Type="child" UniqueId="d9f4e1d9-f4e1-d9f4-e1d9-f4e1d9f4e1d9">
       <診療科コード Type="word" UniqueId="f4e1d9f4-e1d9-f4e1-d9f4-e1d9f4e1d9f4" />
@@ -457,7 +456,6 @@
       <役職 Type="position_type" UniqueId="1d9f4e1d-9f4e-1d9f-4e1d-9f4e1d9f4e1d" />
       <入職日 Type="date" UniqueId="9f4e1d9f-4e1d-9f4e-1d9f-4e1d9f4e1d9f4" />
     </所属情報>
-
     <!-- 権限情報（1対多） -->
     <権限一覧 Type="children" UniqueId="4e1d9f4e-1d9f-4e1d-9f4e-1d9f4e1d9f4e">
       <権限コード Type="word" UniqueId="1d9f4e1d-9f4e-1d9f-4e1d-9f4e1d9f4e1d" />
@@ -470,7 +468,6 @@
         <説明 Type="description" UniqueId="1d9f4e1d-9f4e-1d9f-4e1d-9f4e1d9f4e1d" />
       </操作一覧>
     </権限一覧>
-
     <!-- セッション情報（1対1） -->
     <セッション情報 Type="child" UniqueId="9f4e1d9f-4e1d-9f4e-1d9f-4e1d9f4e1d9f">
       <セッションID Type="word" UniqueId="4e1d9f4e-1d9f-4e1d-9f4e-1d9f4e1d9f4e" />
@@ -484,7 +481,6 @@
         <ユーザーエージェント Type="word" UniqueId="1d9f4e1d-9f4e-1d9f-4e1d-9f4e1d9f4e1d" />
       </アクセス履歴>
     </セッション情報>
-
     <!-- 設定情報（1対1） -->
     <設定情報 Type="child" UniqueId="9f4e1d9f-4e1d-9f4e-1d9f-4e1d9f4e1d9f4">
       <言語設定 Type="word" UniqueId="4e1d9f4e-1d9f-4e1d-9f4e-1d9f4e1d9f4e" />
@@ -497,6 +493,4 @@
       </通知設定一覧>
     </設定情報>
   </ログインユーザー情報>
-
-  <!-- value-objectタイプの定義 -->
 </NijoApplicationBuilder>

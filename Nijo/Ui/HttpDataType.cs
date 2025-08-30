@@ -6,14 +6,81 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Xml;
 using System.Xml.Linq;
 
 namespace Nijo.Ui;
 
+/// <summary>
+/// JSONシリアライズ時にキーを昇順にソートして、保存内容を固定するためのカスタムJsonConverter
+/// </summary>
+public class SortedJsonConverter : JsonConverter<JsonObject> {
+    public override JsonObject Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+        // 通常の読み込み処理
+        return JsonSerializer.Deserialize<JsonObject>(ref reader, options) ?? new JsonObject();
+    }
+
+    public override void Write(Utf8JsonWriter writer, JsonObject value, JsonSerializerOptions options) {
+        // キーを昇順にソートして書き込み
+        var sortedProperties = value
+            .OrderBy(kvp => kvp.Key)
+            .ToList();
+
+        writer.WriteStartObject();
+
+        foreach (var property in sortedProperties) {
+            writer.WritePropertyName(property.Key);
+            JsonSerializer.Serialize(writer, property.Value, options);
+        }
+
+        writer.WriteEndObject();
+    }
+}
+
+/// <summary>
+/// JsonArrayの要素を安定化するためのカスタムJsonConverter
+/// </summary>
+public class SortedJsonArrayConverter : JsonConverter<JsonArray> {
+    public override JsonArray Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+        // 通常の読み込み処理
+        return JsonSerializer.Deserialize<JsonArray>(ref reader, options) ?? new JsonArray();
+    }
+
+    public override void Write(Utf8JsonWriter writer, JsonArray value, JsonSerializerOptions options) {
+        // 配列の要素を順序を保って書き込み
+        writer.WriteStartArray();
+
+        foreach (var item in value) {
+            JsonSerializer.Serialize(writer, item, options);
+        }
+
+        writer.WriteEndArray();
+    }
+}
+
 // HTTPリクエスト・レスポンスに使うため、下記で定義されている各種データクラスと合わせたデータ構造を定義する
 // haldoc\Nijo.ApplicationTemplate.Ver1\react\src\debug-rooms\スキーマ定義編集UIの試作\types.ts
+
+/// <summary>
+/// アプリケーション全体の状態と、スキーマ定義グラフの見た目の状態をまとめたもの
+/// </summary>
+public class ApplicationStateAndSchemaGraphViewState {
+    /// <summary>
+    /// アプリケーション全体の状態
+    /// </summary>
+    [JsonPropertyName("applicationState")]
+    public ApplicationState ApplicationState { get; set; } = new();
+    /// <summary>
+    /// スキーマ定義グラフの見た目の状態。
+    /// nullの場合は保存をスキップする。
+    /// </summary>
+    [JsonPropertyName("schemaGraphViewState")]
+    [JsonConverter(typeof(SortedJsonConverter))]
+    public JsonObject? SchemaGraphViewState { get; set; }
+}
 
 /// <summary>
 /// アプリケーション全体の状態

@@ -58,7 +58,7 @@ export const 区分定義 = () => {
 const AfterLoaded = ({ formDefaultValues, reloadSchema, executeSave }: {
   formDefaultValues: SchemaDefinitionGlobalState
   reloadSchema: () => Promise<void>
-  executeSave: (values: SchemaDefinitionGlobalState) => Promise<{ ok: boolean, error?: string }>
+  executeSave: (values: SchemaDefinitionGlobalState, _: null) => Promise<{ ok: boolean, error?: string }>
 }) => {
 
   const formMethods = ReactHookForm.useForm<{
@@ -178,7 +178,7 @@ const AfterLoaded = ({ formDefaultValues, reloadSchema, executeSave }: {
     setSaveError(undefined)
     setNowSaving(true)
     const currentValues = getFullSchema()
-    const result = await executeSave(currentValues)
+    const result = await executeSave(currentValues, null)
     if (result.ok) {
       await reloadSchema()
       setSaveButtonText('保存しました。')

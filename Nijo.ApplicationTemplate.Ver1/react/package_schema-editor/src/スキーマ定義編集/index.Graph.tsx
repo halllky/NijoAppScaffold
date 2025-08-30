@@ -1,8 +1,8 @@
 import React from "react"
 import useEvent from "react-use-event-hook"
-import { GraphView, GraphViewRef, } from "@nijo/ui-components/layout"
+import { GraphView, GraphViewProps, GraphViewRef, } from "@nijo/ui-components/layout"
 import { Node as CyNode, Edge as CyEdge } from "@nijo/ui-components/layout/GraphView/DataSource"
-import { CytoscapeDataSet } from "@nijo/ui-components/layout/GraphView/Cy"
+import { CytoscapeDataSet, ViewState } from "@nijo/ui-components/layout/GraphView/Cy"
 import { asTree, ATTR_IS_KEY, ATTR_TYPE, ModelPageForm, TYPE_CHILD, TYPE_CHILDREN, TYPE_COMMAND_MODEL, TYPE_DATA_MODEL, TYPE_MEMO, TYPE_QUERY_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, XmlElementItem } from "./types"
 import { MentionUtil } from "../UI"
 import { findRefToTarget } from "./findRefToTarget"
@@ -11,15 +11,36 @@ import * as Input from "@nijo/ui-components/input"
 import { useLayoutSaving, DisplayMode, LOCAL_STORAGE_KEY_DISPLAY_MODE } from './index.Graph.useLayoutSaving'
 import cytoscape from "cytoscape"
 
-export const AppSchemaDefinitionGraph = ({
-  xmlElementTrees,
-  graphViewRef,
-  handleSelectionChange,
-}: {
+type AppSchemaDefinitionGraphProps = {
   xmlElementTrees: ModelPageForm[]
   graphViewRef: React.RefObject<GraphViewRef | null>
   handleSelectionChange: (event: cytoscape.EventObject) => void
-}) => {
+}
+
+export type AppSchemaDefinitionGraphRef = {
+  /** 現在のグラフのデータセットを取得する */
+  getCurrentGraphDataSet: () => AppSchemaDefinitionGraphDataSet
+}
+
+/**
+ * ER図とスキーマ定義グラフのデータセット。
+ * 自動生成後のアプリケーションのデバッグメニューで永続化された状態が参照される。
+ */
+export type AppSchemaDefinitionGraphDataSet = {
+  [key in 'erDiagram' | 'schemaDefinition']: CytoscapeDataSet & {
+    parentMap: GraphViewProps['parentMap']
+    nodePositions: ViewState['nodePositions']
+  }
+}
+
+/**
+ * スキーマ定義グラフ
+ */
+export const AppSchemaDefinitionGraph = React.forwardRef<AppSchemaDefinitionGraphRef, AppSchemaDefinitionGraphProps>(({
+  xmlElementTrees,
+  graphViewRef,
+  handleSelectionChange,
+}, ref) => {
 
   // displayModeの初期値を保存された値から取得
   const [displayMode, setDisplayMode] = React.useState<DisplayMode>(() => {
@@ -28,7 +49,7 @@ export const AppSchemaDefinitionGraph = ({
   })
 
   // レイアウト保存機能（displayModeに応じて）
-  const { triggerSaveLayout, clearSavedLayout, savedOnlyRoot, savedViewState, saveDisplayMode } = useLayoutSaving(displayMode)
+  const { triggerSaveLayout, clearSavedLayout, savedOnlyRoot, savedViewState, saveDisplayMode, getSavedLayout } = useLayoutSaving(displayMode)
   const handleDisplayModeChange = useEvent((e: React.ChangeEvent<HTMLSelectElement>) => {
     const newMode = e.target.value as DisplayMode
     setDisplayMode(newMode)
@@ -88,6 +109,22 @@ export const AppSchemaDefinitionGraph = ({
     }
   }, [xmlElementTrees, onlyRoot, displayMode])
 
+  // グラフの状態をファイルに永続化するためのref
+  React.useImperativeHandle(ref, () => ({
+    getCurrentGraphDataSet: () => ({
+      erDiagram: {
+        ...createERDiagramDataSet(xmlElementTrees),
+        nodePositions: getSavedLayout('er').nodePositions ?? {},
+        parentMap: Object.fromEntries(Object.entries(dataSet.nodes).filter(([, node]) => node.parent).map(([id, node]) => [id, node.parent!])),
+      },
+      schemaDefinition: {
+        ...createSchemaDefinitionDataSet(xmlElementTrees, onlyRoot),
+        nodePositions: getSavedLayout('schema').nodePositions ?? {},
+        parentMap: Object.fromEntries(Object.entries(dataSet.nodes).filter(([, node]) => node.parent).map(([id, node]) => [id, node.parent!])),
+      },
+    }),
+  }), [xmlElementTrees, onlyRoot])
+
   return (
     <div className="h-full relative">
       <GraphView
@@ -131,7 +168,7 @@ export const AppSchemaDefinitionGraph = ({
       </div>
     </div>
   )
-}
+})
 
 // ---------------------------------------------
 
