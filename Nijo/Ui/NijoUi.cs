@@ -168,8 +168,8 @@ public class NijoUi {
                         WriteIndented = true,
                         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
                         Converters = {
-                            new SortedJsonConverter(),
-                            new SortedJsonArrayConverter()
+                            new ApplicationStateAndSchemaGraphViewState.SortedJsonConverter(),
+                            new ApplicationStateAndSchemaGraphViewState.SortedJsonArrayConverter()
                         }
                     };
                     var jsonString = JsonSerializer.Serialize(schemaGraphViewState, jsonOptions);
