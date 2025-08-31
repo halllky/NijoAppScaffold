@@ -214,6 +214,21 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
     propsOnActiveCellChanged?.(cell)
   }, [cellEditorRef, rows, flatColumnDefs, tableRef, propsOnActiveCellChanged, isEditing])
 
+  // グリッドにフォーカスが当たっているかの判定。
+  // セル内部で createPortal が使われている場合、DOMではフォーカス外であっても
+  // 仮想DOMとしては onFocus や onBlur がグリッドのコンテナまで伝播するので、
+  // isFocused だけではなく document.activeElement も参照する。
+  const [isFocused, setIsFocused] = useState(false);
+  const isGridActive = React.useMemo((): boolean => {
+    return isFocused && tableContainerRef.current?.contains(document.activeElement) === true
+  }, [isFocused, tableContainerRef])
+  const handleFocus = useEvent(() => {
+    setIsFocused(true);
+  })
+  const handleBlur = useCallback(() => {
+    setIsFocused(false);
+  }, []);
+
   // 選択状態
   const {
     activeCell,
@@ -226,6 +241,8 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
   } = useSelection(
     rows.length,
     flatColumnDefs.filter(colDef => !colDef.invisible).length,
+    showCheckBox !== undefined,
+    isGridActive,
     onActiveCellChanged
   )
 
@@ -415,35 +432,6 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
     table,
     getPixel,
   });
-
-  // グリッドにフォーカスが当たっているかの判定。
-  // セル内部で createPortal が使われている場合、DOMではフォーカス外であっても
-  // 仮想DOMとしては onFocus や onBlur がグリッドのコンテナまで伝播するので、
-  // isFocused だけではなく document.activeElement も参照する。
-  const [isFocused, setIsFocused] = useState(false);
-  const isGridActive = React.useMemo((): boolean => {
-    return isFocused && tableContainerRef.current?.contains(document.activeElement) === true
-  }, [isFocused, tableContainerRef])
-  const handleFocus = useEvent(() => {
-    setIsFocused(true);
-})
-  const handleBlur = useCallback(() => {
-    setIsFocused(false);
-  }, []);
-
-    // フォーカスイン時、アクティブセルが無ければ最初のセルを選択
-React.useEffect(() => {
-    if (isGridActive && !activeCell && rows.length > 0 && flatColumnDefs.length > 0) {
-      const initialColIndex = showCheckBox ? 1 : 0;
-      setActiveCell({ rowIndex: 0, colIndex: initialColIndex });
-      setSelectedRange({
-        startRow: 0,
-        startCol: initialColIndex,
-        endRow: 0,
-        endCol: initialColIndex
-      });
-    }
-    }, [isGridActive])
 
   return (
     <div

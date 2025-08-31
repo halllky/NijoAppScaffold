@@ -15,6 +15,8 @@ export interface UseSelectionReturn {
 export function useSelection(
   totalRows: number,
   totalColumns: number,
+  showCheckBox: boolean,
+  isGridActive: boolean,
   onActiveCellChanged: (cell: CellPosition | null) => void,
 ): UseSelectionReturn {
   // 選択状態の管理
@@ -62,6 +64,20 @@ export function useSelection(
     setSelectedRange({ startCol: 0, endCol: totalColumns - 1, startRow: min, endRow: max });
     anchorCellRef.current = { rowIndex: min, colIndex: 0 };
   }, [totalRows, totalColumns, anchorCellRef]);
+
+  // フォーカスイン時、アクティブセルが無ければ最初のセルを選択
+  useEffect(() => {
+    if (isGridActive && !activeCell && totalRows > 0 && totalColumns > 0) {
+      const initialColIndex = showCheckBox ? 1 : 0;
+      setActiveCell({ rowIndex: 0, colIndex: initialColIndex });
+      setSelectedRange({
+        startRow: 0,
+        startCol: initialColIndex,
+        endRow: 0,
+        endCol: initialColIndex
+      });
+    }
+  }, [isGridActive])
 
   // 初期選択状態の設定（オプション）
   useEffect(() => {
