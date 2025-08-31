@@ -229,9 +229,6 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
     onActiveCellChanged
   )
 
-  // フォーカス状態の管理
-  const [isFocused, setIsFocused] = useState(false);
-
   // コピー＆ペースト機能
   const { handleCopy, handlePaste, setStringValuesToSelectedRange } = useCopyPaste({
     tableRef,
@@ -419,12 +416,24 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
     getPixel,
   });
 
-  // フォーカス制御のハンドラ
+  // グリッドにフォーカスが当たっているかの判定。
+  // セル内部で createPortal が使われている場合、DOMではフォーカス外であっても
+  // 仮想DOMとしては onFocus や onBlur がグリッドのコンテナまで伝播するので、
+  // isFocused だけではなく document.activeElement も参照する。
+  const [isFocused, setIsFocused] = useState(false);
+  const isGridActive = React.useMemo((): boolean => {
+    return isFocused && tableContainerRef.current?.contains(document.activeElement) === true
+  }, [isFocused, tableContainerRef])
   const handleFocus = useEvent(() => {
     setIsFocused(true);
+})
+  const handleBlur = useCallback(() => {
+    setIsFocused(false);
+  }, []);
 
-    // アクティブセルが無ければ最初のセルを選択
-    if (!activeCell && rows.length > 0 && flatColumnDefs.length > 0) {
+    // フォーカスイン時、アクティブセルが無ければ最初のセルを選択
+React.useEffect(() => {
+    if (isGridActive && !activeCell && rows.length > 0 && flatColumnDefs.length > 0) {
       const initialColIndex = showCheckBox ? 1 : 0;
       setActiveCell({ rowIndex: 0, colIndex: initialColIndex });
       setSelectedRange({
@@ -434,11 +443,7 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
         endCol: initialColIndex
       });
     }
-  })
-
-  const handleBlur = useCallback(() => {
-    setIsFocused(false);
-  }, []);
+    }, [isGridActive])
 
   return (
     <div
@@ -581,7 +586,7 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
         anchorCellRef={anchorCellRef}
         selectedRange={selectedRange}
         getPixel={getPixel}
-        isFocused={isFocused}
+        isGridActive={isGridActive}
       />
 
       <CellEditor
@@ -592,7 +597,7 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
         getPixel={getPixel}
         onChangeEditing={handleChangeEditing}
         onChangeRow={props.onChangeRow}
-        isFocused={isFocused}
+        isGridActive={isGridActive}
         getIsReadOnly={getIsReadOnly}
       />
 

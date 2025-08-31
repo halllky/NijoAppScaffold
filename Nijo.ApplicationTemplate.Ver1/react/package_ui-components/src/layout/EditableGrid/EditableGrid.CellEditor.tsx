@@ -19,12 +19,12 @@ export type CellEditorProps<T extends ReactHookForm.FieldValues> = {
   getIsReadOnly: (rowIndex: number) => boolean
   onChangeEditing: (editing: boolean) => void
   onChangeRow: EditableGridProps<T>['onChangeRow']
-  isFocused: boolean
+  isGridActive: boolean
 }
 
 /** CellEditorのref */
 export type CellEditorRef<T> = {
-    setEditorInitialValue: (value: string | undefined) => void
+  setEditorInitialValue: (value: string | undefined) => void
   startEditing: (cell: RT.Cell<T, unknown>) => void
   textarea: CellEditorTextareaRef | null
 }
@@ -45,7 +45,7 @@ export const CellEditor = React.forwardRef(<T extends ReactHookForm.FieldValues>
   getIsReadOnly,
   onChangeEditing,
   onChangeRow,
-  isFocused,
+  isGridActive,
 }: CellEditorProps<T>,
   ref: React.ForwardedRef<CellEditorRef<T>>
 ) => {
@@ -68,7 +68,7 @@ export const CellEditor = React.forwardRef(<T extends ReactHookForm.FieldValues>
 
   // エディタの位置を更新する
   React.useEffect(() => {
-    if (!caretCell || !isFocused) {
+    if (!caretCell || !isGridActive) {
       setCaretCellEditingInfo(undefined)
       return
     }
@@ -98,14 +98,20 @@ export const CellEditor = React.forwardRef(<T extends ReactHookForm.FieldValues>
         containerRef.current.style.minWidth = `${right - left}px`
       }
     }
-  }, [caretCell, isFocused, api, containerRef, getPixel])
+  }, [caretCell, isGridActive, api, containerRef, getPixel])
 
   React.useEffect(() => {
-    if (caretCellEditingInfo) editorTextareaRef.current?.focus({ preventScroll: true })
-  }, [caretCellEditingInfo])
+    if (caretCellEditingInfo && isGridActive) {
+      editorTextareaRef.current?.focus({ preventScroll: true })
+    }
+  }, [caretCellEditingInfo, isGridActive])
 
   /** 編集開始 */
   const startEditing = useEvent((cell: RT.Cell<T, unknown>) => {
+
+    // このグリッドがアクティブでない場合は編集開始しない
+    if (!isGridActive) return;
+
     const columnDef = (cell.column.columnDef.meta as ColumnMetadataInternal<T>)?.originalColDef
     // 値が編集されてもコミットできないので編集開始しない
     if (!onChangeRow) {
@@ -233,8 +239,8 @@ export const CellEditor = React.forwardRef(<T extends ReactHookForm.FieldValues>
   // イベント
   const { isComposing: isImeOpen } = useIME()
   const handleKeyDown: React.KeyboardEventHandler<HTMLLabelElement> = useEvent(e => {
+    // 編集を確定させる
     if (editingCellInfo) {
-      // 編集を確定させる
       if (e.key === 'Enter' || e.key === 'Tab') {
         if (isImeOpen) return // IMEが開いているときのEnterやTabでは編集終了しないようにする
 
@@ -264,24 +270,20 @@ export const CellEditor = React.forwardRef(<T extends ReactHookForm.FieldValues>
           e.stopPropagation()
         }
       }
-    } else {
-      // フォーカスが当たっていないグリッドでは新しい編集を開始しない
-      if (!isFocused) return;
+    }
+    // 編集を始める
+    else if (caretCell && (
+      e.key === 'F2'
 
-      // 編集を始める
-      if (caretCell && (
-        e.key === 'F2'
-
-        // クイック編集（編集モードでない状態でいきなり文字入力して編集を開始する）
-        || isImeOpen
-        || e.key === 'Process' // IMEが開いている場合のkeyはこれになる
-        || !e.ctrlKey && !e.metaKey && e.key.length === 1 /*文字や数字や記号の場合*/
-      )) {
-        const row = api.getCoreRowModel().flatRows[caretCell.rowIndex]
-        const cell = row.getAllCells()[caretCell.colIndex]
-        if (cell) startEditing(cell)
-        return
-      }
+      // クイック編集（編集モードでない状態でいきなり文字入力して編集を開始する）
+      || isImeOpen
+      || e.key === 'Process' // IMEが開いている場合のkeyはこれになる
+      || !e.ctrlKey && !e.metaKey && e.key.length === 1 /*文字や数字や記号の場合*/
+    )) {
+      const row = api.getCoreRowModel().flatRows[caretCell.rowIndex]
+      const cell = row.getAllCells()[caretCell.colIndex]
+      if (cell) startEditing(cell)
+      return
     }
   })
 
@@ -293,7 +295,7 @@ export const CellEditor = React.forwardRef(<T extends ReactHookForm.FieldValues>
   }, [commitEditing, editingCellInfo])
 
   React.useImperativeHandle(ref, () => ({
-        setEditorInitialValue: setUnComittedText,
+    setEditorInitialValue: setUnComittedText,
     startEditing,
     textarea: editorTextareaRef.current,
   }), [startEditing, editorTextareaRef, setUnComittedText])

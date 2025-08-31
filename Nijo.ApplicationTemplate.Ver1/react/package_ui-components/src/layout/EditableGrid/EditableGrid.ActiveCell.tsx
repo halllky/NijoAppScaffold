@@ -2,11 +2,11 @@ import React from "react";
 import { GetPixelFunction } from "./EditableGrid.CellEditor";
 import { CellPosition, CellSelectionRange } from "./types";
 
-export const ActiveCell = ({ anchorCellRef, selectedRange, getPixel, isFocused }: {
+export const ActiveCell = ({ anchorCellRef, selectedRange, getPixel, isGridActive }: {
   anchorCellRef: React.RefObject<CellPosition | null>
   selectedRange: CellSelectionRange | null
   getPixel: GetPixelFunction
-  isFocused: boolean
+  isGridActive: boolean
 }) => {
   const containerRef = React.useRef<HTMLDivElement>(null)
   const leftRef = React.useRef<HTMLDivElement>(null)
@@ -15,7 +15,7 @@ export const ActiveCell = ({ anchorCellRef, selectedRange, getPixel, isFocused }
   const belowRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
-    if (selectedRange && containerRef.current && isFocused) {
+    if (selectedRange && containerRef.current && isGridActive) {
       const left = getPixel({ position: 'left', colIndex: selectedRange.startCol })
       const right = getPixel({ position: 'right', colIndex: selectedRange.endCol })
       const top = getPixel({ position: 'top', rowIndex: selectedRange.startRow })
@@ -63,10 +63,10 @@ export const ActiveCell = ({ anchorCellRef, selectedRange, getPixel, isFocused }
         }
       }
     }
-  }, [selectedRange, getPixel, isFocused])
+  }, [selectedRange, getPixel, isGridActive])
 
   // フォーカスが当たっていない場合は何も表示しない
-  if (!isFocused) {
+  if (!isGridActive) {
     return null;
   }
 
