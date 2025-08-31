@@ -24,8 +24,7 @@ export type CellEditorProps<T extends ReactHookForm.FieldValues> = {
 
 /** CellEditorのref */
 export type CellEditorRef<T> = {
-  focus: () => void
-  setEditorInitialValue: (value: string | undefined) => void
+    setEditorInitialValue: (value: string | undefined) => void
   startEditing: (cell: RT.Cell<T, unknown>) => void
   textarea: CellEditorTextareaRef | null
 }
@@ -294,8 +293,7 @@ export const CellEditor = React.forwardRef(<T extends ReactHookForm.FieldValues>
   }, [commitEditing, editingCellInfo])
 
   React.useImperativeHandle(ref, () => ({
-    focus: () => editorTextareaRef.current?.focus({ preventScroll: true }),
-    setEditorInitialValue: setUnComittedText,
+        setEditorInitialValue: setUnComittedText,
     startEditing,
     textarea: editorTextareaRef.current,
   }), [startEditing, editorTextareaRef, setUnComittedText])
