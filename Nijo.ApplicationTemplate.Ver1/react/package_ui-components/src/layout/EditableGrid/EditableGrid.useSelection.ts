@@ -23,7 +23,6 @@ export function useSelection(
   const [activeCell, setActiveCell_useState] = useState<CellPosition | null>(null);
   const [selectedRange, setSelectedRange] = useState<CellSelectionRange | null>(null);
 
-  const activeCellRef = useRef<CellPosition | null>(null);
   const anchorCellRef = useRef<CellPosition | null>(null);
 
   // セルマウスダウンハンドラ
@@ -79,14 +78,6 @@ export function useSelection(
     }
   }, [isGridActive])
 
-  // 初期選択状態の設定（オプション）
-  useEffect(() => {
-    if (activeCellRef.current) {
-      setActiveCell_useState(activeCellRef.current);
-      anchorCellRef.current = activeCellRef.current;
-    }
-  }, []);
-
   // データ範囲の変更に応じて選択状態を調整
   useEffect(() => {
     const maxRowIndex = Math.max(0, totalRows - 1);
@@ -96,20 +87,17 @@ export function useSelection(
     if (totalRows === 0 || totalColumns === 0) {
       setActiveCell_useState(null);
       setSelectedRange(null);
-      activeCellRef.current = null;
       anchorCellRef.current = null;
       return;
     }
 
     // アクティブセルが範囲外の場合は調整
-    if (activeCellRef.current) {
-      const currentActive = activeCellRef.current;
-      if (currentActive.rowIndex > maxRowIndex || currentActive.colIndex > maxColIndex) {
+    if (activeCell) {
+      if (activeCell.rowIndex > maxRowIndex || activeCell.colIndex > maxColIndex) {
         const adjustedActiveCell = {
-          rowIndex: Math.min(currentActive.rowIndex, maxRowIndex),
-          colIndex: Math.min(currentActive.colIndex, maxColIndex)
+          rowIndex: Math.min(activeCell.rowIndex, maxRowIndex),
+          colIndex: Math.min(activeCell.colIndex, maxColIndex)
         };
-        activeCellRef.current = adjustedActiveCell;
         setActiveCell_useState(adjustedActiveCell);
         onActiveCellChanged(adjustedActiveCell);
       }
@@ -149,7 +137,6 @@ export function useSelection(
   }, [totalRows, totalColumns, onActiveCellChanged]);
 
   const setActiveCell = useCallback((cell: CellPosition | null) => {
-    activeCellRef.current = cell;
     setActiveCell_useState(cell);
     onActiveCellChanged(cell);
   }, [setActiveCell_useState, onActiveCellChanged]);
