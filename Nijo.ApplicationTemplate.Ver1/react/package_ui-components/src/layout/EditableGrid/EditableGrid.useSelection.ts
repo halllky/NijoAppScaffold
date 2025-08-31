@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { CellPosition, CellSelectionRange } from ".";
+import useEvent from "react-use-event-hook";
 
 export interface UseSelectionReturn {
   activeCell: CellPosition | null;
@@ -9,6 +10,7 @@ export interface UseSelectionReturn {
   setActiveCell: (cell: CellPosition | null) => void;
   setSelectedRange: (range: CellSelectionRange | null) => void;
   handleMouseDown: (event: React.MouseEvent, rowIndex: number, colIndex: number) => void;
+  handleMouseEnter: (rowIndex: number, colIndex: number) => void;
   selectRows: (startRowIndex: number, endRowIndex: number) => void;
 }
 
@@ -34,6 +36,9 @@ export function useSelection(
   // Shiftキーを押しながら範囲選択したときの、選択開始の最初のセルのこと。
   // 選択されているセルが単一の場合は、アクティブセルと同じ。
   const anchorCellRef = useRef<CellPosition | null>(null);
+
+  // ドラッグ選択中かどうか
+  const [isDragging, setIsDragging] = useState(false);
 
   //#endregion 状態
 
@@ -69,7 +74,38 @@ export function useSelection(
     if (!event.shiftKey) {
       anchorCellRef.current = currentCell;
     }
+
+    // ドラッグ開始
+    setIsDragging(true)
   }, [anchorCellRef]);
+
+  // mouse enter
+  const handleMouseEnter = useEvent((rowIndex: number, colIndex: number) => {
+    if (isDragging && anchorCellRef.current) {
+      // アクティブセルを更新
+      setActiveCell_useState({ rowIndex, colIndex });
+      onActiveCellChanged({ rowIndex, colIndex });
+
+      // 選択範囲を更新
+      setSelectedRange({
+        startRow: Math.min(anchorCellRef.current.rowIndex, rowIndex),
+        startCol: Math.min(anchorCellRef.current.colIndex, colIndex),
+        endRow: Math.max(anchorCellRef.current.rowIndex, rowIndex),
+        endCol: Math.max(anchorCellRef.current.colIndex, colIndex)
+      });
+    }
+  })
+
+  // mouse up
+  useEffect(() => {
+    const handleMouseUp = () => {
+      setIsDragging(false)
+    }
+    document.addEventListener('mouseup', handleMouseUp)
+    return () => {
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [])
 
   //#endregion マウスハンドラ
 
@@ -183,6 +219,7 @@ export function useSelection(
     setActiveCell,
     setSelectedRange,
     handleMouseDown,
+    handleMouseEnter,
     selectRows
   };
 }

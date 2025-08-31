@@ -24,7 +24,6 @@ import { EmptyDataMessage } from "./EditableGrid.EmptyDataMessage";
 // カスタムフックのインポート
 import { useSelection } from "./EditableGrid.useSelection";
 import { useGridKeyboard } from "./EditableGrid.useGridKeyboard";
-import { useDragSelection } from "./EditableGrid.useDragSelection";
 import { useCopyPaste } from "./EditableGrid.useCopyPaste";
 
 // CSS
@@ -237,6 +236,7 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
     setActiveCell,
     setSelectedRange,
     handleMouseDown,
+    handleMouseEnter,
     selectRows
   } = useSelection(
     rows.length,
@@ -256,18 +256,6 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
     getIsReadOnly,
     props
   });
-
-  // ドラッグ選択機能
-  const {
-    isDragging,
-    handleMouseDown_DragSelection,
-    handleMouseMove
-  } = useDragSelection(setActiveCell, setSelectedRange, anchorCellRef)
-
-  const handleMouseDown_Combined = useCallback((e: React.MouseEvent<HTMLTableCellElement>, rowIndex: number, colIndex: number) => {
-    handleMouseDown_DragSelection(e, rowIndex, colIndex);
-    handleMouseDown(e, rowIndex, colIndex);
-  }, [handleMouseDown_DragSelection, handleMouseDown])
 
   // 仮想化設定
   const rowVirtualizer = useVirtualizer({
@@ -550,9 +538,8 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
                     getShouldShowCheckBox={getShouldShowCheckBox}
                     isSelected={row.getIsSelected()}
                     getIsReadOnly={getIsReadOnly}
-                    isDragging={isDragging}
-                    handleMouseDown={handleMouseDown_Combined}
-                    handleMouseMove={handleMouseMove}
+                    handleMouseDown={handleMouseDown}
+                    handleMouseEnter={handleMouseEnter}
                     cellEditorRef={cellEditorRef}
                     showHorizontalBorder={props.showHorizontalBorder}
                     columnWidth={cell.column.getSize()}
@@ -606,9 +593,8 @@ type MemorizedBodyCellProps<TRow extends ReactHookForm.FieldValues> = {
   getShouldShowCheckBox: (rowIndex: number, row: TRow) => boolean,
   getIsReadOnly: (rowIndex: number) => boolean,
   isSelected: boolean,
-  isDragging: boolean,
   handleMouseDown: (e: React.MouseEvent<HTMLTableCellElement>, rowIndex: number, colIndex: number) => void,
-  handleMouseMove: (rowIndex: number, colIndex: number) => void,
+  handleMouseEnter: (rowIndex: number, colIndex: number) => void,
   cellEditorRef: React.RefObject<CellEditorRef<TRow> | null>,
   showHorizontalBorder: boolean | undefined,
   columnWidth: number,
@@ -623,9 +609,8 @@ const MemorizedBodyCell = React.memo(<TRow extends ReactHookForm.FieldValues>({
   tableRef,
   getShouldShowCheckBox,
   getIsReadOnly,
-  isDragging,
   handleMouseDown,
-  handleMouseMove,
+  handleMouseEnter,
   cellEditorRef,
   showHorizontalBorder,
   columnWidth,
@@ -675,13 +660,10 @@ const MemorizedBodyCell = React.memo(<TRow extends ReactHookForm.FieldValues>({
         }
       }}
       onMouseEnter={() => {
-        // ドラッグ中のときのみ範囲選択を更新
-        if (isDragging) {
-          const visibleDataColumns = tableRef.current?.getVisibleLeafColumns() ?? []
-          const colIndex = visibleDataColumns.findIndex(c => c.id === cell.column.id);
-          if (cell.column.id !== ROW_HEADER_COLUMN_ID && colIndex !== -1) {
-            handleMouseMove(rowIndex, colIndex);
-          }
+        const visibleDataColumns = tableRef.current?.getVisibleLeafColumns() ?? []
+        const colIndex = visibleDataColumns.findIndex(c => c.id === cell.column.id);
+        if (cell.column.id !== ROW_HEADER_COLUMN_ID && colIndex !== -1) {
+          handleMouseEnter(rowIndex, colIndex);
         }
       }}
       tabIndex={0}
