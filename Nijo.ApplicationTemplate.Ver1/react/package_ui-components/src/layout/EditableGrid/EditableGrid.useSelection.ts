@@ -19,6 +19,9 @@ export function useSelection(
   isGridActive: boolean,
   onActiveCellChanged: (cell: CellPosition | null) => void,
 ): UseSelectionReturn {
+
+  //#region 状態
+
   // アクティブセル。
   // キー操作で選択範囲が伸縮するときの先端の位置。
   const [activeCell, setActiveCell_useState] = useState<CellPosition | null>(null);
@@ -32,11 +35,18 @@ export function useSelection(
   // 選択されているセルが単一の場合は、アクティブセルと同じ。
   const anchorCellRef = useRef<CellPosition | null>(null);
 
-  // セルマウスダウンハンドラ
+  //#endregion 状態
+
+  // ----------------------------------------
+
+  //#region マウスハンドラ
+
+  // mouse down
   const handleMouseDown = useCallback((event: React.MouseEvent, rowIndex: number, colIndex: number) => {
     const currentCell = { rowIndex, colIndex };
 
     if (event.shiftKey && anchorCellRef.current) {
+      // 範囲選択の選択範囲を拡張
       setActiveCell(currentCell);
       setSelectedRange({
         startRow: Math.min(anchorCellRef.current.rowIndex, currentCell.rowIndex),
@@ -45,6 +55,7 @@ export function useSelection(
         endCol: Math.max(anchorCellRef.current.colIndex, currentCell.colIndex)
       });
     } else {
+      // 単一のセルを選択
       setActiveCell(currentCell);
       setSelectedRange({
         startRow: currentCell.rowIndex,
@@ -53,23 +64,18 @@ export function useSelection(
         endCol: currentCell.colIndex
       });
     }
+
+    // 単一のセルを選択した場合は、アンカーセルを更新
     if (!event.shiftKey) {
       anchorCellRef.current = currentCell;
     }
   }, [anchorCellRef]);
 
-  // 行範囲選択
-  const selectRows = useCallback((startRowIndex: number, endRowIndex: number) => {
-    const newSelectedRows = new Set<number>();
-    const min = Math.max(0, Math.min(startRowIndex, endRowIndex));
-    const max = Math.min(totalRows - 1, Math.max(startRowIndex, endRowIndex));
-    for (let i = min; i <= max; i++) {
-      newSelectedRows.add(i);
-    }
-    setActiveCell({ rowIndex: min, colIndex: 0 });
-    setSelectedRange({ startCol: 0, endCol: totalColumns - 1, startRow: min, endRow: max });
-    anchorCellRef.current = { rowIndex: min, colIndex: 0 };
-  }, [totalRows, totalColumns, anchorCellRef]);
+  //#endregion マウスハンドラ
+
+  // ----------------------------------------
+
+  //#region 選択範囲の強制補正
 
   // フォーカスイン時、アクティブセルが無ければ最初のセルを選択
   useEffect(() => {
@@ -143,10 +149,32 @@ export function useSelection(
 
   }, [totalRows, totalColumns, onActiveCellChanged]);
 
+  //#endregion 選択範囲の強制補正
+
+  // ----------------------------------------
+
+  //#region 外部公開
+
+  // 行範囲選択
+  const selectRows = useCallback((startRowIndex: number, endRowIndex: number) => {
+    const newSelectedRows = new Set<number>();
+    const min = Math.max(0, Math.min(startRowIndex, endRowIndex));
+    const max = Math.min(totalRows - 1, Math.max(startRowIndex, endRowIndex));
+    for (let i = min; i <= max; i++) {
+      newSelectedRows.add(i);
+    }
+    setActiveCell({ rowIndex: min, colIndex: 0 });
+    setSelectedRange({ startCol: 0, endCol: totalColumns - 1, startRow: min, endRow: max });
+    anchorCellRef.current = { rowIndex: min, colIndex: 0 };
+  }, [totalRows, totalColumns, anchorCellRef]);
+
+  // キーボード操作のためのアクティブセル更新関数
   const setActiveCell = useCallback((cell: CellPosition | null) => {
     setActiveCell_useState(cell);
     onActiveCellChanged(cell);
   }, [setActiveCell_useState, onActiveCellChanged]);
+
+  //#endregion 外部公開
 
   return {
     activeCell,
