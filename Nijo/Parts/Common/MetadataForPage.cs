@@ -206,7 +206,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 export type {{TYPE_NAME}} = {
                   /** XMLスキーマ上でこの要素を示す一意なID */
                   uniqueId: string
-                  /** 値の型名。enum, value-ojbect の場合は undefined になる */
+                  /** 値の型名。このメンバーが enum または value-ojbect の場合は undefined になる */
                   type?: {{ctx.SchemaParser.ValueMemberTypes.Select(t => $"'{t.SchemaTypeName}'").Join(" | ")}}
                   /** 列挙体の型名。このメンバーが列挙体の場合のみ */
                   enumType?: keyof EnumDefs.{{EnumFile.TS_TYPE_MAP}}
@@ -326,7 +326,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
     internal static IEnumerable<string> RenderNodeOptionTypes(CodeRenderingContext ctx) {
         var nodeOptions = ctx.SchemaParser.GetAllNodeOptions();
 
-        // コメント用の型定義を追加
+        // コメントはXMLの属性ではないので別途宣言している
         yield return $$"""
             /** XMLコメント */
             comment?: string
