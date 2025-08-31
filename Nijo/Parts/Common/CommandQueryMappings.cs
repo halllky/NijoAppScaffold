@@ -18,6 +18,10 @@ namespace Nijo.Parts.Common {
     internal class CommandQueryMappings : IMultiAggregateSourceFile {
 
         /// <summary>
+        /// JavaScript用: DataModelの型名のリテラル型
+        /// </summary>
+        internal const string DATA_MODEL_TYPE = "DataModelType";
+        /// <summary>
         /// JavaScript用: QueryModelの型名のリテラル型
         /// </summary>
         internal const string QUERY_MODEL_TYPE = "QueryModelType";
@@ -169,7 +173,17 @@ namespace Nijo.Parts.Common {
                     import { {{x.Modules.Join(", ")}} } from "{{x.ImportFrom}}"
                     """)}}
 
-                    //#region Command,Queryの種類の一覧
+                    //#region Data,Command,Queryの種類の一覧
+
+                    /** DataModelの種類の一覧。ルート集約のみ。 */
+                    export type {{DATA_MODEL_TYPE}}
+                    {{If(dataModelsOrderByDataFlow.Length == 0, () => $$"""
+                      = never
+                    """).Else(() => $$"""
+                    {{dataModelsOrderByDataFlow.SelectTextTemplate((agg, i) => $$"""
+                      {{(i == 0 ? "=" : "|")}} '{{agg.PhysicalName}}'
+                    """)}}
+                    """)}}
 
                     /** QueryModelの種類の一覧。ルート集約のみ。 */
                     export type {{QUERY_MODEL_TYPE}}
@@ -221,6 +235,13 @@ namespace Nijo.Parts.Common {
                     """)}}
                     """)}}
 
+                    /** DataModelの種類の一覧を文字列として返します。 */
+                    export const getDataModelTypeList = (): {{DATA_MODEL_TYPE}}[] => [
+                    {{dataModelsOrderByDataFlow.SelectTextTemplate((agg, i) => $$"""
+                      '{{agg.PhysicalName}}',
+                    """)}}
+                    ]
+
                     /** QueryModelの種類の一覧を文字列として返します。 */
                     export const getQueryModelTypeList = (): {{QUERY_MODEL_TYPE}}[] => [
                     {{queryModelsOrderByDataFlow.SelectTextTemplate((agg, i) => $$"""
@@ -234,7 +255,7 @@ namespace Nijo.Parts.Common {
                       '{{agg.PhysicalName}}',
                     """)}}
                     ]
-                    //#endregion Command,Queryの種類の一覧
+                    //#endregion Data,Command,Queryの種類の一覧
 
 
                     //#region DisplayData
