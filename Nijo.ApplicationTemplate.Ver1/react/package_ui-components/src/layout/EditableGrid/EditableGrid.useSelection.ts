@@ -8,7 +8,7 @@ export interface UseSelectionReturn {
   anchorCellRef: React.RefObject<CellPosition | null>;
   setActiveCell: (cell: CellPosition | null) => void;
   setSelectedRange: (range: CellSelectionRange | null) => void;
-  handleCellClick: (event: React.MouseEvent, rowIndex: number, colIndex: number) => void;
+  handleMouseDown: (event: React.MouseEvent, rowIndex: number, colIndex: number) => void;
   selectRows: (startRowIndex: number, endRowIndex: number) => void;
 }
 
@@ -26,8 +26,8 @@ export function useSelection(
   const activeCellRef = useRef<CellPosition | null>(null);
   const anchorCellRef = useRef<CellPosition | null>(null);
 
-  // セルクリックハンドラ
-  const handleCellClick = useCallback((event: React.MouseEvent, rowIndex: number, colIndex: number) => {
+  // セルマウスダウンハンドラ
+  const handleMouseDown = useCallback((event: React.MouseEvent, rowIndex: number, colIndex: number) => {
     const currentCell = { rowIndex, colIndex };
 
     if (event.shiftKey && anchorCellRef.current) {
@@ -160,7 +160,7 @@ export function useSelection(
     anchorCellRef,
     setActiveCell,
     setSelectedRange,
-    handleCellClick,
+    handleMouseDown,
     selectRows
   };
 }

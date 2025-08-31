@@ -141,8 +141,8 @@ export type EditableGridColumnDefOptions<TRow extends ReactHookForm.FieldValues>
   isFixed?: boolean
   /**
    * セルのレンダリング処理をカスタマイズする関数。
-   * パフォーマンスのためにテーブルのボディセルはメモ化されてレンダリングされるため、
-   * **この関数の中で React Hook を使用することはできない。**
+   * セルの中にボタンを配置するなど、セル選択を防ぎたい要素がある場合、
+   * mouseDown イベントの stopPropagation を呼び出し、イベントの伝播を防ぐこと。
    */
   renderCell?: EditableGridColumnDefRenderCell<TRow>
 

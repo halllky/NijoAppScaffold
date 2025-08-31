@@ -69,9 +69,7 @@ export default function EditableGridHookTest() {
           const [isDialogOpen, setIsDialogOpen] = React.useState(false)
 
           const handleOpenDialog = React.useCallback(() => {
-            // console.log('ダイアログを開くボタンがクリックされました')
             setIsDialogOpen(true)
-            // console.log('isDialogOpenをtrueに設定しました')
           }, [])
 
           const handleCloseDialog = React.useCallback(() => {
@@ -93,7 +91,8 @@ export default function EditableGridHookTest() {
             <div className="flex items-center gap-2 px-1">
               <button
                 onClick={handleOpenDialog}
-                className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded"
+                onMouseDown={e => e.stopPropagation()} // セル選択されてしまうのを防ぐ
+                className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded cursor-pointer"
                 title="商品を検索"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,6 +109,7 @@ export default function EditableGridHookTest() {
                 isOpen={isDialogOpen}
                 onClose={handleCloseDialog}
                 onSelect={handleItemSelect}
+                onMouseDown={e => e.stopPropagation()} // セル選択されてしまうのを防ぐ
                 currentItemId={ctx.row.original.item?.itemId}
               />
             </div>
@@ -198,7 +198,8 @@ export default function EditableGridHookTest() {
 }
 
 // 商品検索ダイアログのコンポーネント
-const ItemSearchDialog = ({ isOpen, onClose, onSelect, currentItemId }: {
+const ItemSearchDialog = ({ isOpen, onClose, onSelect, onMouseDown, currentItemId }: {
+  onMouseDown: React.MouseEventHandler<HTMLDivElement>
   isOpen: boolean
   onClose: () => void
   onSelect: (item: { itemId: string; itemName: string }) => void
@@ -283,7 +284,10 @@ const ItemSearchDialog = ({ isOpen, onClose, onSelect, currentItemId }: {
   if (!isOpen) return null
 
   return createPortal(
-    <div className="fixed inset-0 flex items-center bg-black/25 justify-center z-50">
+    <div
+      onMouseDown={onMouseDown}
+      className="fixed inset-0 flex items-center bg-black/25 justify-center z-50"
+    >
       <div className="bg-white rounded-lg shadow-xl w-96 max-h-96 flex flex-col">
         {/* ヘッダー */}
         <div className="flex items-center justify-between p-4 border-b">

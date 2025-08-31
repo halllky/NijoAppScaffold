@@ -3,7 +3,7 @@ import { CellPosition, CellSelectionRange } from ".";
 
 export interface UseDragSelectionReturn {
   isDragging: boolean;
-  handleMouseDown: (event: React.MouseEvent, rowIndex: number, colIndex: number) => void;
+  handleMouseDown_DragSelection: (event: React.MouseEvent, rowIndex: number, colIndex: number) => void;
   handleMouseMove: (rowIndex: number, colIndex: number) => void;
 }
 
@@ -15,7 +15,7 @@ export function useDragSelection(
   const [isDragging, setIsDragging] = useState(false);
 
   // マウスダウンハンドラ
-  const handleMouseDown = useCallback((event: React.MouseEvent, rowIndex: number, colIndex: number) => {
+  const handleMouseDown_DragSelection = useCallback((event: React.MouseEvent, rowIndex: number, colIndex: number) => {
     const newCell: CellPosition = { rowIndex, colIndex };
     if (event.shiftKey) {
       setActiveCell(newCell);
@@ -69,7 +69,7 @@ export function useDragSelection(
 
   return {
     isDragging,
-    handleMouseDown,
+    handleMouseDown_DragSelection,
     handleMouseMove
   };
 }

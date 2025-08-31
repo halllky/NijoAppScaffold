@@ -236,7 +236,7 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
     anchorCellRef,
     setActiveCell,
     setSelectedRange,
-    handleCellClick,
+    handleMouseDown,
     selectRows
   } = useSelection(
     rows.length,
@@ -260,9 +260,14 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
   // ドラッグ選択機能
   const {
     isDragging,
-    handleMouseDown,
+    handleMouseDown_DragSelection,
     handleMouseMove
   } = useDragSelection(setActiveCell, setSelectedRange, anchorCellRef)
+
+  const handleMouseDown_Combined = useCallback((e: React.MouseEvent<HTMLTableCellElement>, rowIndex: number, colIndex: number) => {
+    handleMouseDown_DragSelection(e, rowIndex, colIndex);
+    handleMouseDown(e, rowIndex, colIndex);
+  }, [handleMouseDown_DragSelection, handleMouseDown])
 
   // 仮想化設定
   const rowVirtualizer = useVirtualizer({
@@ -544,10 +549,9 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
                     onChangeRow={props.onChangeRow}
                     getShouldShowCheckBox={getShouldShowCheckBox}
                     isSelected={row.getIsSelected()}
-                    handleCellClick={handleCellClick}
                     getIsReadOnly={getIsReadOnly}
                     isDragging={isDragging}
-                    handleMouseDown={handleMouseDown}
+                    handleMouseDown={handleMouseDown_Combined}
                     handleMouseMove={handleMouseMove}
                     cellEditorRef={cellEditorRef}
                     showHorizontalBorder={props.showHorizontalBorder}
@@ -600,7 +604,6 @@ type MemorizedBodyCellProps<TRow extends ReactHookForm.FieldValues> = {
   rowIndex: number,
   tableRef: React.RefObject<Table<TRow> | null>,
   getShouldShowCheckBox: (rowIndex: number, row: TRow) => boolean,
-  handleCellClick: (e: React.MouseEvent<HTMLTableCellElement>, rowIndex: number, colIndex: number) => void,
   getIsReadOnly: (rowIndex: number) => boolean,
   isSelected: boolean,
   isDragging: boolean,
@@ -619,7 +622,6 @@ const MemorizedBodyCell = React.memo(<TRow extends ReactHookForm.FieldValues>({
   rowIndex,
   tableRef,
   getShouldShowCheckBox,
-  handleCellClick,
   getIsReadOnly,
   isDragging,
   handleMouseDown,
@@ -659,13 +661,6 @@ const MemorizedBodyCell = React.memo(<TRow extends ReactHookForm.FieldValues>({
       style={{
         width: columnWidth,
         left: cellMeta?.originalColDef?.isFixed ? `${columnStart}px` : undefined,
-      }}
-      onClick={(e) => {
-        const visibleDataColumns = tableRef.current?.getVisibleLeafColumns() ?? []
-        const colIndex = visibleDataColumns.findIndex(c => c.id === cell.column.id);
-        if (cell.column.id !== ROW_HEADER_COLUMN_ID && colIndex !== -1) {
-          handleCellClick(e, rowIndex, colIndex);
-        }
       }}
       onDoubleClick={() => {
         if (!getIsReadOnly(rowIndex) && cellEditorRef.current) {
