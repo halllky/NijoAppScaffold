@@ -283,6 +283,7 @@ namespace Nijo.Models {
 
             // 定数: メタデータ
             ctx.Use<Metadata>().Add(rootAggregate);
+            ctx.Use<MetadataForPage>().Add(rootAggregate);
 
             // カスタムロジック用モジュール
             ctx.Use<CommandQueryMappings>().AddDataModel(rootAggregate);

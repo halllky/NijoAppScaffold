@@ -187,6 +187,7 @@ namespace Nijo.Models {
             ctx.Use<Metadata>()
                 .Add(rootAggregate.GetCommandModelParameterChild())
                 .Add(rootAggregate.GetCommandModelReturnValueChild());
+            ctx.Use<MetadataForPage>().Add(rootAggregate);
 
             aggregateFile.ExecuteRendering(ctx);
         }
