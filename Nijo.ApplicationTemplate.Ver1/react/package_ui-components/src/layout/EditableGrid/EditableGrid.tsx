@@ -1,5 +1,6 @@
 import * as React from "react";
-import { useRef, useState, useCallback, useEffect, useImperativeHandle, useMemo } from "react";
+import useEvent from "react-use-event-hook";
+import { useRef, useState, useCallback, useImperativeHandle, useMemo } from "react";
 import { EditableGridProps, EditableGridRef, EditableGridColumnDef, EditableGridColumnDefGroup, CellPosition, EditableGridAutoSaveStoragedValueInternal } from "./types";
 import {
   createColumnHelper,
@@ -388,21 +389,6 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
     getSelectedRange: () => selectedRange ?? undefined,
   }), [table, rows, flatColumnDefs, selectRows, activeCell, selectedRange]);
 
-  // 初期状態設定
-  useEffect(() => {
-    if (isFocused && rows.length > 0 && flatColumnDefs.length > 0 && !activeCell) {
-      // チェックボックス列がある場合は最初のデータ列（colIndex=1）を選択
-      const initialColIndex = showCheckBox ? 1 : 0;
-      setActiveCell({ rowIndex: 0, colIndex: initialColIndex });
-      setSelectedRange({
-        startRow: 0,
-        startCol: initialColIndex,
-        endRow: 0,
-        endCol: initialColIndex
-      });
-    }
-  }, [isFocused, rows, flatColumnDefs, activeCell, showCheckBox]);
-
   // キーボード操作のセットアップ
   const handleKeyDown = useGridKeyboard({
     propsKeyDown: props.onKeyDown,
@@ -434,9 +420,21 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
   });
 
   // フォーカス制御のハンドラ
-  const handleFocus = useCallback(() => {
+  const handleFocus = useEvent(() => {
     setIsFocused(true);
-  }, []);
+
+    // アクティブセルが無ければ最初のセルを選択
+    if (!activeCell && rows.length > 0 && flatColumnDefs.length > 0) {
+      const initialColIndex = showCheckBox ? 1 : 0;
+      setActiveCell({ rowIndex: 0, colIndex: initialColIndex });
+      setSelectedRange({
+        startRow: 0,
+        startCol: initialColIndex,
+        endRow: 0,
+        endCol: initialColIndex
+      });
+    }
+  })
 
   const handleBlur = useCallback(() => {
     setIsFocused(false);
