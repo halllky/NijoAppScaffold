@@ -10,6 +10,7 @@ import _006_空データ構造 from "@nijo/ui-components/layout/DynamicForm/__te
 import _007_グリッド機能 from "@nijo/ui-components/layout/DynamicForm/__tests__/007_グリッド機能"
 import FormLayoutPatternsDebugging from "./FormLayoutPatternsDebugging"
 import EditableGridDebugging from "./EditableGridDebugging"
+import EditableGridHookTest from "./EditableGridHookTest"
 
 export default function () {
 
@@ -113,6 +114,11 @@ export const getDebuggingPages = (): { groupName: string, links: (ReactRouter.Ro
         path: '/editable-grid/007',
         label: 'EditableGrid 列グループ混在',
         element: <EditableGridDebugging mode="mixed-groups" />,
+      },
+      {
+        path: '/editable-grid/008',
+        label: 'EditableGrid フック使用テスト',
+        element: <EditableGridHookTest />,
       },
     ],
   },
