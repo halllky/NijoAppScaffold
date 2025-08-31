@@ -221,9 +221,6 @@ namespace Nijo.Parts.Common {
                     """)}}
                     """)}}
 
-                    /** CommandModel, QuerModel の種類の一覧 */
-                    export type CommandOrQueryModelType = {{QUERY_MODEL_TYPE}} | {{COMMAND_MODEL_TYPE}}
-
                     /** QueryModelの種類の一覧を文字列として返します。 */
                     export const getQueryModelTypeList = (): {{QUERY_MODEL_TYPE}}[] => [
                     {{queryModelsOrderByDataFlow.SelectTextTemplate((agg, i) => $$"""
@@ -236,12 +233,6 @@ namespace Nijo.Parts.Common {
                     {{commandModelsOrderByDataFlow.SelectTextTemplate((agg, i) => $$"""
                       '{{agg.PhysicalName}}',
                     """)}}
-                    ]
-
-                    /** CommandModel, QuerModel の種類の一覧を文字列として返します。 */
-                    export const getCommandOrQueryModelTypeList = (): CommandOrQueryModelType[] => [
-                      ...getQueryModelTypeList(),
-                      ...getCommandModelTypeList(),
                     ]
                     //#endregion Command,Queryの種類の一覧
 
