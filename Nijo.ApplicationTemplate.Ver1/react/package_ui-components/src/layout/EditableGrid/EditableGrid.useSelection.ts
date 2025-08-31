@@ -19,10 +19,17 @@ export function useSelection(
   isGridActive: boolean,
   onActiveCellChanged: (cell: CellPosition | null) => void,
 ): UseSelectionReturn {
-  // 選択状態の管理
+  // アクティブセル。
+  // キー操作で選択範囲が伸縮するときの先端の位置。
   const [activeCell, setActiveCell_useState] = useState<CellPosition | null>(null);
+
+  // 選択範囲。アクティブセルとアンカーセルから成る矩形範囲。
+  // 選択されているセルが単一の場合は、アクティブセル、アンカーセルの範囲と一致する。
   const [selectedRange, setSelectedRange] = useState<CellSelectionRange | null>(null);
 
+  // アンカーセル。
+  // Shiftキーを押しながら範囲選択したときの、選択開始の最初のセルのこと。
+  // 選択されているセルが単一の場合は、アクティブセルと同じ。
   const anchorCellRef = useRef<CellPosition | null>(null);
 
   // セルマウスダウンハンドラ
