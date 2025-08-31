@@ -67,39 +67,40 @@ export const CellEditor = React.forwardRef(<T extends ReactHookForm.FieldValues>
   const containerRef = React.useRef<HTMLLabelElement>(null)
   const editorTextareaRef = React.useRef<CellEditorTextareaRef>(null)
 
+  // エディタの位置を更新する
   React.useEffect(() => {
-    if (caretCell && isFocused) {
-      // 表示列を取得
-      const visibleDataColumns = api.getVisibleLeafColumns()
-      const columnDef = (visibleDataColumns[caretCell.colIndex]?.columnDef.meta as ColumnMetadataInternal<T> | undefined)?.originalColDef
-      setCaretCellEditingInfo(columnDef)
-
-      // エディタを編集対象セルの位置に移動させる
-      if (containerRef.current) {
-        const left = getPixel({ position: 'left', colIndex: caretCell.colIndex })
-        const right = getPixel({ position: 'right', colIndex: caretCell.colIndex })
-        const top = getPixel({ position: 'top', rowIndex: caretCell.rowIndex })
-        const bottom = getPixel({ position: 'bottom', rowIndex: caretCell.rowIndex })
-        containerRef.current.style.left = `${left}px`
-        containerRef.current.style.top = `${top}px`
-        containerRef.current.style.minHeight = `${bottom - top}px`
-
-        // min-width で設定した場合、エディタの中の文字がオーバーフローしたときに横方向に延伸する。
-        // width で指定した場合は縦方向。
-        if (columnDef?.editorOverflow === 'vertical') {
-          containerRef.current.style.width = `${right - left}px`
-          containerRef.current.style.minWidth = ''
-        } else {
-          containerRef.current.style.width = ''
-          containerRef.current.style.minWidth = `${right - left}px`
-        }
-      }
-      // 前のセルで入力した値をクリアする
-      // setUnComittedText('')
-    } else {
+    if (!caretCell || !isFocused) {
       setCaretCellEditingInfo(undefined)
+      return
+    }
+
+    // 表示列を取得
+    const visibleDataColumns = api.getVisibleLeafColumns()
+    const columnDef = (visibleDataColumns[caretCell.colIndex]?.columnDef.meta as ColumnMetadataInternal<T> | undefined)?.originalColDef
+    setCaretCellEditingInfo(columnDef)
+
+    // エディタを編集対象セルの位置に移動させる
+    if (containerRef.current) {
+      const left = getPixel({ position: 'left', colIndex: caretCell.colIndex })
+      const right = getPixel({ position: 'right', colIndex: caretCell.colIndex })
+      const top = getPixel({ position: 'top', rowIndex: caretCell.rowIndex })
+      const bottom = getPixel({ position: 'bottom', rowIndex: caretCell.rowIndex })
+      containerRef.current.style.left = `${left}px`
+      containerRef.current.style.top = `${top}px`
+      containerRef.current.style.minHeight = `${bottom - top}px`
+
+      // min-width で設定した場合、エディタの中の文字がオーバーフローしたときに横方向に延伸する。
+      // width で指定した場合は縦方向。
+      if (columnDef?.editorOverflow === 'vertical') {
+        containerRef.current.style.width = `${right - left}px`
+        containerRef.current.style.minWidth = ''
+      } else {
+        containerRef.current.style.width = ''
+        containerRef.current.style.minWidth = `${right - left}px`
+      }
     }
   }, [caretCell, isFocused, api, containerRef, getPixel])
+
   React.useEffect(() => {
     if (caretCellEditingInfo) editorTextareaRef.current?.focus({ preventScroll: true })
   }, [caretCellEditingInfo])
