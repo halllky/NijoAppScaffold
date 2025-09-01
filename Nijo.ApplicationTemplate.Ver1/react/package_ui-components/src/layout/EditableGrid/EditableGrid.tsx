@@ -531,6 +531,7 @@ export const EditableGrid = React.forwardRef(<TRow extends ReactHookForm.FieldVa
                 {row.getVisibleCells().map(cell => (
                   <MemorizedBodyCell<TRow>
                     key={cell.id}
+                    rowInstance={cell.row.original}
                     cell={cell}
                     rowIndex={row.index}
                     tableRef={tableRef}
@@ -600,6 +601,13 @@ type MemorizedBodyCellProps<TRow extends ReactHookForm.FieldValues> = {
   columnWidth: number,
   columnStart: number,
   onChangeRow: unknown,
+  /**
+   * 行が更新されたら必ず再レンダリングする。
+   *
+   * ※ react hook form の useFieldArray の仕様上、updateが走った際は全ての行のインスタンスが更新される。
+   * そのため、この実装だと常に再レンダリングが走ってしまうようになってしまっている。要修正。
+   */
+  rowInstance: TRow,
 }
 
 /** メモ化されたtdセル */
