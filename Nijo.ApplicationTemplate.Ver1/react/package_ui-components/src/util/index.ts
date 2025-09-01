@@ -1,3 +1,4 @@
+export * from './decimal'
 export * from './tsv-util'
 export * from './useCtrlS'
 export * from './useOutsideClick'
