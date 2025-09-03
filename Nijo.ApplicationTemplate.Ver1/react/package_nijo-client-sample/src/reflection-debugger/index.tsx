@@ -4,6 +4,7 @@ import SchemaGraph from './SchemaGraph';
 import React from 'react';
 import RootAggregateView, { RootAggregateViewProps } from './RootAggregateView';
 import { buildMetadataAndHelper, MetadataContext } from './MetadataContext';
+import { UnhandledMessage, UnhandledMessageContextProvider } from '../util';
 
 /**
  * スキーマ定義をもとにしたデバッグビュー
@@ -25,24 +26,32 @@ export default function ({ className }: {
 
   return (
     <MetadataContext.Provider value={metadataContextValue}>
-      <Allotment
-        proportionalLayout={false}
-        className={`relative flex flex-col ${className ?? ''}`}
-      >
-        <Allotment.Pane
-          minSize={40}
-          priority={LayoutPriority.High}
-        >
-          <SchemaGraph
-            onSelectedRootAggregateChange={setSelectedRootAggregateId}
-            className="h-full w-full"
-          />
-        </Allotment.Pane>
+      <UnhandledMessageContextProvider>
+        <div className={`flex flex-col gap-px ${className ?? ''}`}>
 
-        <Allotment.Pane minSize={40} className="p-1">
-          <RootAggregateView {...detailPaneProps} />
-        </Allotment.Pane>
-      </Allotment>
+          {/* エラーメッセージ */}
+          <UnhandledMessage />
+
+          <Allotment
+            proportionalLayout={false}
+            className="flex-1"
+          >
+            <Allotment.Pane
+              minSize={40}
+              priority={LayoutPriority.High}
+            >
+              <SchemaGraph
+                onSelectedRootAggregateChange={setSelectedRootAggregateId}
+                className="h-full w-full"
+              />
+            </Allotment.Pane>
+
+            <Allotment.Pane minSize={40} className="flex flex-col gap-1 p-1">
+              <RootAggregateView className="flex-1" {...detailPaneProps} />
+            </Allotment.Pane>
+          </Allotment>
+        </div>
+      </UnhandledMessageContextProvider>
     </MetadataContext.Provider>
   )
 }

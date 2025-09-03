@@ -1,6 +1,6 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
-import { useMsgContext } from "./useMsgContext"
+import { useUnhandledMessage } from "./useUnhandledMessageContext"
 import { useToastContext } from "./useToastContext"
 import { UUID } from "uuidjs"
 
@@ -9,7 +9,7 @@ import { UUID } from "uuidjs"
  * GETリクエストと、ComplexPost（ASP.NET Core 側のPresentationContextの仕組みと統合されたPOSTリクエスト）の2種類のリクエストをサポートする。
  */
 export const useHttpRequest = () => {
-  const msgContext = useMsgContext()
+  const msgContext = useUnhandledMessage()
   const toastContext = useToastContext()
 
   /** GETリクエストを行なう。 */

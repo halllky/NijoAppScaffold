@@ -1,6 +1,6 @@
 export * from "./useClientSideValidator"
 export * from "./useFormEx"
-export * from "./useMsgContext"
+export * from "./useUnhandledMessageContext"
 export * from "./useHttpRequest"
 export * from "./useToastContext"
 export * from "./useOutsideClick"
