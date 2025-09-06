@@ -109,6 +109,7 @@ function convertMembersToDynamicFormMembers(
 
       // 検索ダイアログで対象を選択
       const isDisplayData = ownerModel === 'query-model' || ownerModel === 'data-model'
+
       result.push({
         physicalName: memberName,
         label: member.displayName,
@@ -141,7 +142,7 @@ function convertMembersToDynamicFormMembers(
     } else {
       // ValueMetadataの場合
       const valueMember = member as MetadataForPage.ValueMetadata
-      const isDisplayData = ownerModel === 'query-model' || ownerModel === 'data-model'
+      const isDisplayData = (ownerModel === 'query-model' || ownerModel === 'data-model') && !isSearchCondition
       result.push(convertValueMetadataToValueMember(valueMember, memberName, isSearchCondition, isDisplayData))
     }
   }
@@ -223,30 +224,34 @@ const VALUE_MEMBER_INPUT = (
   switch (type) {
     case 'word':
       return {
-        contents: ({ useFormReturn, name }) => (
+        contents: ({ useFormReturn, name, isReadOnly }) => (
           <Input.Word
             control={useFormReturn.control}
             name={name}
+            readOnly={isReadOnly}
           />
         ),
-        getGridColumnDef: ({ member, cellType, pathFromRow }) => {
+        getGridColumnDef: ({ member, cellType, pathFromRow, isReadOnly }) => {
           return cellType.text(pathFromRow, typeof member.label === 'string' ? member.label : member.physicalName || '', {
             defaultWidth: 150,
+            isReadOnly,
           })
         }
       }
     case 'description':
       return {
-        contents: ({ useFormReturn, name }) => (
+        contents: ({ useFormReturn, name, isReadOnly }) => (
           <Input.Description
             control={useFormReturn.control}
             name={name}
+            readOnly={isReadOnly}
           />
         ),
-        getGridColumnDef: ({ member, cellType, pathFromRow }) => {
+        getGridColumnDef: ({ member, cellType, pathFromRow, isReadOnly }) => {
           return cellType.text(pathFromRow, typeof member.label === 'string' ? member.label : member.physicalName || '', {
             defaultWidth: 200,
             editorOverflow: 'vertical',
+            isReadOnly,
           })
         }
       }
@@ -254,28 +259,32 @@ const VALUE_MEMBER_INPUT = (
     case 'decimal':
       return {
         contents: isSearchCondition
-          ? ({ useFormReturn, name }) => (
+          ? ({ useFormReturn, name, isReadOnly }) => (
             <div className="flex flex-wrap gap-1">
               <Input.NumberInput
                 control={useFormReturn.control}
                 name={`${name}.from`}
+                readOnly={isReadOnly}
               />
               <span>～</span>
               <Input.NumberInput
                 control={useFormReturn.control}
                 name={`${name}.to`}
+                readOnly={isReadOnly}
               />
             </div>
           )
-          : ({ useFormReturn, name }) => (
+          : ({ useFormReturn, name, isReadOnly }) => (
             <Input.NumberInput
               control={useFormReturn.control}
               name={name}
+              readOnly={isReadOnly}
             />
           ),
-        getGridColumnDef: ({ member, pathFromRow }) => ({
+        getGridColumnDef: ({ member, pathFromRow, isReadOnly }) => ({
           fieldPath: pathFromRow,
           header: typeof member.label === 'string' ? member.label : undefined,
+          isReadOnly,
           onStartEditing: ctx => {
             const value: string | number | null | undefined = ReactHookForm.get(ctx.row, member.physicalName!)
             ctx.setEditorInitialValue(asDecimalSafety(value)?.toFixed() ?? '')
@@ -298,59 +307,67 @@ const VALUE_MEMBER_INPUT = (
     case 'datetime':
       return {
         contents: isSearchCondition
-          ? ({ useFormReturn, name }) => (
+          ? ({ useFormReturn, name, isReadOnly }) => (
             <div className="flex flex-wrap gap-1">
               <Input.DateInput
                 control={useFormReturn.control}
                 name={`${name}.from`}
                 yearMonth={type === 'yearmonth'}
+                readOnly={isReadOnly}
               />
               <span>～</span>
               <Input.DateInput
                 control={useFormReturn.control}
                 name={`${name}.to`}
                 yearMonth={type === 'yearmonth'}
+                readOnly={isReadOnly}
               />
             </div>
           )
-          : ({ useFormReturn, name }) => (
+          : ({ useFormReturn, name, isReadOnly }) => (
             <Input.DateInput
               control={useFormReturn.control}
               name={name}
               yearMonth={type === 'yearmonth'}
+              readOnly={isReadOnly}
             />
           ),
-        getGridColumnDef: ({ member, cellType, pathFromRow }) => {
+        getGridColumnDef: ({ member, cellType, pathFromRow, isReadOnly }) => {
           return cellType.date(pathFromRow, typeof member.label === 'string' ? member.label : member.physicalName || '', {
+            isReadOnly,
             defaultWidth: 140,
           })
         }
       }
     case 'bool':
       return {
-        contents: ({ useFormReturn, name }) => (
+        contents: ({ useFormReturn, name, isReadOnly }) => (
           <Input.CheckBox
             control={useFormReturn.control}
             name={name}
+            readOnly={isReadOnly}
           />
         ),
-        getGridColumnDef: ({ member, cellType, pathFromRow }) => {
+        getGridColumnDef: ({ member, cellType, pathFromRow, isReadOnly }) => {
           return cellType.boolean(pathFromRow, typeof member.label === 'string' ? member.label : member.physicalName || '', {
+            isReadOnly,
             defaultWidth: 80,
           })
         }
       }
     default:
       return {
-        contents: ({ useFormReturn, name }) => (
+        contents: ({ useFormReturn, name, isReadOnly }) => (
           <Input.Word
             control={useFormReturn.control}
             name={name}
+            readOnly={isReadOnly}
           />
         ),
-        getGridColumnDef: ({ member, cellType, pathFromRow }) => {
+        getGridColumnDef: ({ member, cellType, pathFromRow, isReadOnly }) => {
           return cellType.text(pathFromRow, typeof member.label === 'string' ? member.label : member.physicalName || '', {
             defaultWidth: 150,
+            isReadOnly,
           })
         }
       }

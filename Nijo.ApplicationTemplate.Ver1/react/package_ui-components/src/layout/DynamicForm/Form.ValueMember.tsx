@@ -14,13 +14,14 @@ export const FormValueMember = ({ member, owner, ancestorsPath }: {
   ancestorsPath: string
 }) => {
   // 定義情報など
-  const { useFormReturn } = React.useContext(DynamicFormContext)
+  const { useFormReturn, props } = React.useContext(DynamicFormContext)
 
   // レンダリング処理の引数
   const rendererProps: ValueMemberFormRendererProps = {
     owner,
     name: (ancestorsPath ? `${ancestorsPath}.${member.physicalName}` : member.physicalName) ?? '',
     useFormReturn: useFormReturn,
+    isReadOnly: props.isReadOnly ?? false,
   }
 
   return (

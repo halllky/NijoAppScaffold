@@ -9,12 +9,16 @@ export type DynamicFormProps<TRoot extends ReactHookForm.FieldValues = ReactHook
   root: MemberOwner<TRoot>
   /** フォームのデフォルト値 */
   defaultValues?: ReactHookForm.DefaultValues<TRoot>
+  /** フォームを読み取り専用にするかどうか */
+  isReadOnly?: boolean
 }
 
 /** DynamicFormのref */
 export type DynamicFormRef<TRoot extends ReactHookForm.FieldValues = ReactHookForm.FieldValues> = {
   /** react-hook-form の useForm の戻り値。最新の値の取得などに使用する。 */
   useFormReturn: ReactHookForm.UseFormReturn<TRoot>
+  /** フォーム定義をコンソール出力する（デバッグ用） */
+  consoleLog: () => void
 }
 
 // ----------------------------------------------
@@ -99,6 +103,8 @@ export type FormRendererProps = {
   useFormReturn: ReactHookForm.UseFormReturn<ReactHookForm.FieldValues>
   /** メンバーを保持するオブジェクトのメタデータ */
   owner: MemberOwner
+  /** フォームが読み取り専用かどうか */
+  isReadOnly: boolean
 }
 
 /** セクションのフォームのレンダリングコンポーネントの引数 */
@@ -147,6 +153,8 @@ export type GetGridColumnDefFunctionProps = {
   owner: MemberOwner
   /** グリッドの列定義を作成するためのヘルパー関数 */
   cellType: ColumnDefFactories<ReactHookForm.FieldValues>
+  /** フォームが読み取り専用かどうか */
+  isReadOnly: boolean
 }
 
 /** グリッドの列定義 */

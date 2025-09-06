@@ -18,7 +18,7 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
 }) => {
 
   // 定義情報など
-  const { useFormReturn } = React.useContext(DynamicFormContext)
+  const { useFormReturn, props } = React.useContext(DynamicFormContext)
 
   // useFieldArray
   const arrayMemberPath = `${ancestorsPath}.${array.physicalName}`
@@ -30,7 +30,7 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
 
   // EditableGrid
   const gridRef = React.useRef<EditableGridRef<ReactHookForm.FieldValues>>(null)
-  const getColumnDefs = useGetColumnDefs(array, arrayMemberPath)
+  const getColumnDefs = useGetColumnDefs(array, arrayMemberPath, props.isReadOnly ?? false)
 
   // レンダリング処理の引数
   const rendererProps: ArrayFormRendererProps = {
@@ -38,6 +38,7 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
     useFormReturn,
     useFieldArrayReturn,
     owner,
+    isReadOnly: props.isReadOnly ?? false,
   }
 
   // 追加
@@ -74,10 +75,12 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
           {/* ラベルの脇に追加のコンポーネントがある場合はレンダリング */}
           {typeof array.arrayLabel === 'function' ? array.arrayLabel(rendererProps) : undefined}
 
-          {array.onCreateNewItem && (
+          {array.onCreateNewItem && !props.isReadOnly && (
             <IconButton icon={Icon.PlusCircleIcon} outline mini onClick={handleAdd}>追加</IconButton>
           )}
-          <IconButton icon={Icon.TrashIcon} outline mini onClick={handleDelete}>削除</IconButton>
+          {!props.isReadOnly && (
+            <IconButton icon={Icon.TrashIcon} outline mini onClick={handleDelete}>削除</IconButton>
+          )}
         </>
       )}
     >
@@ -97,6 +100,8 @@ const useGetColumnDefs = (
   array: ArrayMember,
   /** ルートオブジェクトから **配列までの** パス */
   arrayPath: string,
+  /** フォームが読み取り専用かどうか */
+  isReadOnly: boolean,
 ): GetColumnDefsFunction<ReactHookForm.FieldValues> => {
   return React.useCallback(cellType => {
     const columns: [colGroup: string[], def: EditableGridColumnDef<ReactHookForm.FieldValues>][] = []
@@ -133,6 +138,7 @@ const useGetColumnDefs = (
             pathFromRow: m.physicalName
               ? [...ownerPathFromRow, m.physicalName].join('.')
               : ownerPathFromRow.join('.'),
+            isReadOnly,
           })])
         }
       }
@@ -161,5 +167,5 @@ const useGetColumnDefs = (
     }, [] as (EditableGridColumnDefGroup<ReactHookForm.FieldValues> | EditableGridColumnDef<ReactHookForm.FieldValues>)[])
 
     return groupedColumns
-  }, [array])
+  }, [array, isReadOnly])
 }

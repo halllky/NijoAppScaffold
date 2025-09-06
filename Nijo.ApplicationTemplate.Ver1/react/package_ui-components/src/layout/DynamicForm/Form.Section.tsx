@@ -15,7 +15,7 @@ export const FormSection = ({ member: section, owner, ancestorsPath }: {
 }) => {
 
   // 定義情報など
-  const { useFormReturn } = React.useContext(DynamicFormContext)
+  const { useFormReturn, props } = React.useContext(DynamicFormContext)
   const sectionMemberPath = section.physicalName ? `${ancestorsPath}.${section.physicalName}` : ancestorsPath
 
   // レンダリング処理の引数
@@ -23,6 +23,7 @@ export const FormSection = ({ member: section, owner, ancestorsPath }: {
     name: sectionMemberPath,
     useFormReturn,
     owner,
+    isReadOnly: props.isReadOnly ?? false,
   }
 
   // 既定のレンダリング

@@ -63,6 +63,14 @@ export default function ({
       >
         <h2 className="font-bold select-none">
           {title}
+
+          {/* デバッグ用 */}
+          <button type="button"
+            onClick={() => parameterFormRef.current?.consoleLog()}
+            className="ml-2 border px-1 py-0.5"
+          >
+            console.log
+          </button>
         </h2>
 
         <div className="flex-1 overflow-y-auto bg-gray-100 p-1 border border-gray-300">
@@ -115,6 +123,7 @@ export default function ({
                   key={selectedHistoryId}
                   root={returnValueFormSchema}
                   defaultValues={commandHistory.find(history => history.id === selectedHistoryId)?.returnValue}
+                  isReadOnly
                   className="w-full"
                 />
               )}

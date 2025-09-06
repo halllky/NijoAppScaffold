@@ -23,7 +23,7 @@ export const Word = <
             {...field}
             value={field.value ?? ''}
             readOnly={props.readOnly}
-            className="bg-white border border-gray-300 px-1"
+            className={`px-1 border ${props.readOnly ? 'border-transparent' : 'bg-white border-gray-300'}`}
           />
           <FieldErrorView name={props.name} />
         </div>
@@ -49,7 +49,8 @@ export const Description = <
           <textarea
             {...field}
             value={field.value ?? ''}
-            className="bg-white border border-gray-300 p-1"
+            className={`p-1 border ${props.readOnly ? 'border-transparent' : 'bg-white border-gray-300'}`}
+            readOnly={props.readOnly}
             placeholder={props.placeholder}
           />
           <FieldErrorView name={props.name} />
@@ -79,7 +80,8 @@ export const NumberInput = <
             type="number"
             {...field}
             value={field.value ?? ''}
-            className="bg-white border border-gray-300 px-1"
+            readOnly={props.readOnly}
+            className={`px-1 border ${props.readOnly ? 'border-transparent' : 'bg-white border-gray-300'}`}
             onBlur={(e) => {
               // フォーカスアウト時にノーマライズとバリデーションを発火
               if (clientSideValidator && clientSideValidator.validate) {

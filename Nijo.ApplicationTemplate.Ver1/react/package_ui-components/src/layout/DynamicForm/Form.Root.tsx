@@ -1,6 +1,6 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
-import { DynamicFormProps, DynamicFormRef } from "./types"
+import { DynamicFormProps, DynamicFormRef, SectionMember } from "./types"
 import { DynamicFormContext, DynamicFormContextValue } from "./DynamicFormContext"
 import { MembersGroupByBreakPoint } from "./Form.Members"
 import FormLayout from "../FormLayout"
@@ -11,6 +11,7 @@ import FormLayout from "../FormLayout"
 export const DynamicForm = React.forwardRef<DynamicFormRef, DynamicFormProps>(({
   root,
   defaultValues,
+  isReadOnly,
   ...responsiveFormProps
 }, ref) => {
 
@@ -22,18 +23,22 @@ export const DynamicForm = React.forwardRef<DynamicFormRef, DynamicFormProps>(({
   // ref
   React.useImperativeHandle(ref, () => ({
     useFormReturn,
-  }), [useFormReturn])
+    consoleLog: () => console.log(root),
+  }), [useFormReturn, root])
 
   // コンテキスト
   const contextValue: DynamicFormContextValue = React.useMemo(() => ({
-    props: { root },
+    props: { root, isReadOnly },
     useFormReturn,
-  }), [root, useFormReturn])
+  }), [root, isReadOnly, useFormReturn])
 
   return (
     <FormLayout.Root {...responsiveFormProps}>
       <DynamicFormContext.Provider value={contextValue}>
-        <MembersGroupByBreakPoint owner={root} ancestorsPath="" />
+        <MembersGroupByBreakPoint
+          owner={root}
+          ancestorsPath={(root as SectionMember).physicalName ?? ''}
+        />
       </DynamicFormContext.Provider>
     </FormLayout.Root>
   )

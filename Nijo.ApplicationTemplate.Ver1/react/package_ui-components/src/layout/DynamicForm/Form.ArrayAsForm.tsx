@@ -18,7 +18,7 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
 }) => {
 
   // 定義情報など
-  const { useFormReturn } = React.useContext(DynamicFormContext)
+  const { useFormReturn, props } = React.useContext(DynamicFormContext)
 
   // useFieldArray
   const arrayMemberPath = `${ancestorsPath}.${array.physicalName}`
@@ -34,6 +34,7 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
     useFormReturn,
     useFieldArrayReturn,
     owner,
+    isReadOnly: props.isReadOnly ?? false,
   }
 
   // 追加
@@ -68,9 +69,11 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
                   itemName: `${arrayMemberPath}.${index}`,
                   itemIndex: index,
                 }) : undefined}
-                <IconButton icon={Icon.TrashIcon} outline mini onClick={() => remove(index)}>
-                  削除
-                </IconButton>
+                {!props.isReadOnly && (
+                  <IconButton icon={Icon.TrashIcon} outline mini onClick={() => remove(index)}>
+                    削除
+                  </IconButton>
+                )}
               </>
             )}
           >
@@ -90,7 +93,7 @@ export const FormArrayAsForm = ({ member: array, owner, ancestorsPath }: {
       ))}
 
       {/* 追加ボタン */}
-      {array.onCreateNewItem && (
+      {array.onCreateNewItem && !props.isReadOnly && (
         <FormLayout.Field fullWidth>
           <IconButton icon={Icon.PlusCircleIcon} outline mini onClick={handleAppend}>
             {typeof array.arrayLabel === 'string' ? `${array.arrayLabel} を追加` : '追加'}
