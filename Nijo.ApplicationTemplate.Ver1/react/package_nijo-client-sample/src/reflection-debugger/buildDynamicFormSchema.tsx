@@ -108,6 +108,7 @@ function convertMembersToDynamicFormMembers(
       }
 
       // 検索ダイアログで対象を選択
+      const isDisplayData = ownerModel === 'query-model' || ownerModel === 'data-model'
       result.push({
         physicalName: memberName,
         label: member.displayName,
@@ -118,14 +119,14 @@ function convertMembersToDynamicFormMembers(
           </Input.IconButton>
         ),
         getGridColumnDef: ({ member }) => ({
-          fieldPath: member.physicalName,
+          fieldPath: isDisplayData ? `values.${member.physicalName}` : member.physicalName,
           header: typeof member.label === 'string' ? member.label : undefined,
           onStartEditing: ctx => {
-            ctx.setEditorInitialValue(ReactHookForm.get(ctx.row, member.physicalName!))
+            ctx.setEditorInitialValue(ReactHookForm.get(ctx.row, isDisplayData ? `values.${member.physicalName}` : member.physicalName!))
           },
           onEndEditing: ctx => {
             const clone = window.structuredClone(ctx.row)
-            ReactHookForm.set(clone, member.physicalName!, ctx.value)
+            ReactHookForm.set(clone, isDisplayData ? `values.${member.physicalName}` : member.physicalName!, ctx.value)
             ctx.setEditedRow(clone)
           },
           renderCell: ctx => (
@@ -140,7 +141,8 @@ function convertMembersToDynamicFormMembers(
     } else {
       // ValueMetadataの場合
       const valueMember = member as MetadataForPage.ValueMetadata
-      result.push(convertValueMetadataToValueMember(valueMember, memberName, isSearchCondition))
+      const isDisplayData = ownerModel === 'query-model' || ownerModel === 'data-model'
+      result.push(convertValueMetadataToValueMember(valueMember, memberName, isSearchCondition, isDisplayData))
     }
   }
 
@@ -154,9 +156,10 @@ function convertValueMetadataToValueMember(
   member: MetadataForPage.ValueMetadata,
   memberName: string,
   isSearchCondition: boolean,
+  isDisplayData: boolean,
 ): DynamicForm.ValueMember {
   const baseMember: DynamicForm.ValueMember = {
-    physicalName: memberName,
+    physicalName: isDisplayData ? `values.${memberName}` : memberName,
     label: member.displayName,
     fullWidth: false
   }

@@ -23,17 +23,28 @@ export default function (props: RootAggregateViewProps) {
 
   // Data Model
   if (rootAggregate.model === 'data-model') {
-    return (
-      <div className={props.className}>
-        TODO: ここに {rootAggregate.displayName} のダミーデータ編集機能を表示
-      </div>
-    )
+    if (rootAggregate.generateDefaultQueryModel) {
+      return (
+        <QueryModelView
+          key={props.selectedRootAggregateId}
+          rootAggregateType={rootAggregatePhysicalName as QueryModelType}
+          className={props.className}
+        />
+      )
+    } else {
+      return (
+        <div className={props.className}>
+          TODO: ここに {rootAggregate.displayName} のダミーデータ編集機能を表示
+        </div>
+      )
+    }
   }
 
   // Query Model
   if (rootAggregate.model === 'query-model') {
     return (
       <QueryModelView
+        key={props.selectedRootAggregateId}
         rootAggregateType={rootAggregatePhysicalName as QueryModelType}
         className={props.className}
       />
@@ -44,6 +55,7 @@ export default function (props: RootAggregateViewProps) {
   if (rootAggregate.model === 'command-model') {
     return (
       <CommandModelView
+        key={props.selectedRootAggregateId}
         rootAggregateType={rootAggregatePhysicalName as CommandModelType}
         className={props.className}
       />
