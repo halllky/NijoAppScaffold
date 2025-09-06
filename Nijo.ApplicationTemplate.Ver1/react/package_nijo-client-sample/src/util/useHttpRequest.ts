@@ -29,7 +29,7 @@ export const useHttpRequest = () => {
         },
       })
       if (!response.ok) {
-        msgContext.error(handleUnknownResponse(response))
+        msgContext.error(await toDisplayErrorText(response))
         return undefined
       }
       const json = await response.json() as TReturnValue
@@ -57,7 +57,7 @@ export const useHttpRequest = () => {
         body: JSON.stringify(requestBody),
       })
       if (!response.ok) {
-        msgContext.error(handleUnknownResponse(response))
+        msgContext.error(await toDisplayErrorText(response))
         return undefined
       }
       const json = await response.json() as TReturnValue
@@ -122,7 +122,7 @@ export const useHttpRequest = () => {
         // ここで言うエラーは、必須入力漏れなどのエラーが発生したことを示すものではなく、
         // サーバーからの応答が無い、サーバー側で復旧不可のエラーが発生した、などといったものを示す。
         if (!response.ok) {
-          msgContext.error(handleUnknownResponse(response))
+          msgContext.error(await toDisplayErrorText(response))
           return undefined
         }
 
@@ -135,7 +135,7 @@ export const useHttpRequest = () => {
         }
 
         // レスポンスのエラー詳細情報フィールドに値がある場合はそれを表示
-        if (json.detail) {
+        if (json.detail && Object.keys(json.detail).length > 0) {
           if (options?.handleDetailMessage) {
             options.handleDetailMessage(json.detail)
           } else {
@@ -181,6 +181,7 @@ const getBackendUrl = (subDirectory: string) => {
   if (import.meta.env.DEV) {
     // ポートは ASP.NET Core の launchSettings.json で指定しているポート
     const backendApi = import.meta.env.VITE_BACKEND_API
+      ?? 'https://localhost:7098' // TODO: ちゃんと仕組みを作る
     const backendApiWithLastSlash = backendApi.endsWith('/') ? backendApi : (backendApi + '/')
     return `${backendApiWithLastSlash}${subDirectoryWithoutFirstSlash}`
   } else {
@@ -205,11 +206,29 @@ const handleUnknownError = (error: unknown): string => {
 /**
  * 未知のレスポンスを、画面上に表示できる文字列に変換する。
  */
-const handleUnknownResponse = (response: Response): string => {
+const toDisplayErrorText = async (response: Response): Promise<string> => {
+  // ok の場合はここに来ないはず
   if (response.ok) {
     return '不明なエラーが発生しました'
-  } else {
-    return response.statusText
+  }
+
+  try {
+    const bodyText = await response.clone().text()
+    try {
+      const json: unknown = JSON.parse(bodyText)
+
+      if (typeof json === 'string') {
+        return json
+      } else if (typeof (json as { message: string }).message === 'string') {
+        return (json as { message: string }).message
+      } else {
+        return bodyText
+      }
+    } catch {
+      return bodyText
+    }
+  } catch (error) {
+    return `HTTP ${response.status} ${response.statusText}`
   }
 }
 

@@ -15,7 +15,7 @@ export default function ({ rootAggregateType, className }: {
   className?: string
 }) {
 
-  const { metadata } = React.useContext(MetadataContext)
+  const helper = React.useContext(MetadataContext)
   const { complexPost } = useHttpRequest()
   const searchConditionFormRef = React.useRef<DynamicFormRef>(null)
 
@@ -27,17 +27,17 @@ export default function ({ rootAggregateType, className }: {
 
   // 自動生成されたメタデータをもとにした検索条件の入力フォーム定義
   const searchConditionFormSchema = React.useMemo(() => {
-    const searchConditionMetadata = metadata[rootAggregateType]
+    const searchConditionMetadata = helper.metadata[rootAggregateType]
     if (!searchConditionMetadata) throw new Error(`${rootAggregateType}SearchCondition が見つかりません`)
-    return buildDynamicFormSchema(searchConditionMetadata as MetadataForPage.StructureMetadata)
-  }, [rootAggregateType, metadata])
+    return buildDynamicFormSchema(searchConditionMetadata, 'query-model', true, helper)
+  }, [rootAggregateType, helper])
 
   // 自動生成されたメタデータをもとにした検索結果の表示フォーム定義
   const displayDataFormSchema = React.useMemo(() => {
-    const displayDataMetadata = metadata[rootAggregateType]
+    const displayDataMetadata = helper.metadata[rootAggregateType]
     if (!displayDataMetadata) throw new Error(`${rootAggregateType}DisplayData が見つかりません`)
-    return buildDynamicFormSchema(displayDataMetadata as MetadataForPage.StructureMetadata)
-  }, [rootAggregateType, metadata])
+    return buildDynamicFormSchema(displayDataMetadata, 'query-model', false, helper)
+  }, [rootAggregateType, helper])
 
   // 検索実行
   const executeSearch = React.useCallback(async () => {

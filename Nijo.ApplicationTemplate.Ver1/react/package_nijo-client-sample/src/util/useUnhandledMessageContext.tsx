@@ -18,10 +18,19 @@ export const UnhandledMessageContextProvider = (props: { children: React.ReactNo
   const [displayMessages, setDisplayMessages] = React.useState<UnhandledMessageItem[]>(() => [])
 
   const outerContextValue = React.useMemo((): UnhandledMessageContextType => ({
-    error: (msg: string) => setDisplayMessages(prev => [...prev, { id: UUID.generate(), msg, type: 'error' }]),
+    error: (msg: string) => {
+      console.error(msg)
+      setDisplayMessages(prev => [...prev, { id: UUID.generate(), msg, type: 'error' }])
+    },
     warn: (msg: string) => setDisplayMessages(prev => [...prev, { id: UUID.generate(), msg, type: 'warn' }]),
     info: (msg: string) => setDisplayMessages(prev => [...prev, { id: UUID.generate(), msg, type: 'info' }]),
-    clear: (deleteIdList?: string[]) => setDisplayMessages(prev => prev.filter(msg => !deleteIdList?.includes(msg.id))),
+    clear: (deleteIdList?: string[]) => {
+      if (deleteIdList && deleteIdList.length > 0) {
+        setDisplayMessages(prev => prev.filter(msg => !deleteIdList.includes(msg.id)))
+      } else {
+        setDisplayMessages([])
+      }
+    },
   }), [setDisplayMessages])
 
   return (
@@ -71,16 +80,18 @@ export const UnhandledMessage = (props: {
 
   return (
     <div className={`${props.className ?? ''} flex flex-col`}>
-      {groupedMessages.map((msg, index) => (
-        <div key={index} className={`${getInlineMessageClassName(msg.type)} flex flex-wrap px-1`}>
-          {msg.msg}
-          {msg.idList.length > 1 && ` (${msg.idList.length} 件)`}
-          <div className="flex-1"></div>
-          <button type="button" className="text-sm cursor-pointer" title="削除" onClick={() => clear(msg.idList)}>
-            <XMarkIcon className="w-4 h-4" />
-          </button>
-        </div>
-      ))}
+      <ul className="flex-1 flex flex-col gap-px overflow-y-auto max-h-40">
+        {groupedMessages.map((msg, index) => (
+          <li key={index} className={`${getInlineMessageClassName(msg.type)} flex flex-wrap px-1`}>
+            {msg.msg}
+            {msg.idList.length > 1 && ` (${msg.idList.length} 件)`}
+            <div className="flex-1"></div>
+            <button type="button" className="text-sm cursor-pointer" title="削除" onClick={() => clear(msg.idList)}>
+              <XMarkIcon className="w-4 h-4" />
+            </button>
+          </li>
+        ))}
+      </ul>
 
       {groupedMessages.length > 1 && (
         <div className="flex justify-start gap-2">

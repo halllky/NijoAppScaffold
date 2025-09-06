@@ -8,16 +8,53 @@ export const buildMetadataAndHelper = () => {
   const metadata = MetadataForPage.getAll()
 
   // ルート集約のマッピング
-  const rootAggregatesByUniqueId = new Map<string, [rootAggregatePhysicalName: string, rootAggregateMetadata: MetadataForPage.StructureMetadata]>()
+  const rootAggregatesByUniqueId = new Map<string, [rootAggregatePhysicalName: string, rootAggregateMetadata: MetadataForPage.RootAggregateMetadata]>()
   for (const [physicalName, element] of Object.entries(metadata)) {
     if (element.type === 'RootAggregate') {
       rootAggregatesByUniqueId.set(element.uniqueId, [physicalName, element])
     }
   }
 
+  // ルート集約、Child, Children。
+  // 子孫集約はルートからのスラッシュ区切り
+  const allAggregatesByPath = new Map<string, {
+    refToRootMetadata: MetadataForPage.RootAggregateMetadata
+    refToMetadata: MetadataForPage.StructureMetadata
+  }>()
+  const addAggregateToPathRecursively = (
+    rootAggregate: MetadataForPage.RootAggregateMetadata,
+    path: string,
+    aggregate: MetadataForPage.StructureMetadata
+  ) => {
+    for (const [physicalName, element] of Object.entries(aggregate.members)) {
+      if (element.type !== 'ChildAggregate' && element.type !== 'ChildrenAggregate') continue
+      allAggregatesByPath.set(path ? `${path}/${physicalName}` : physicalName, {
+        refToRootMetadata: rootAggregate,
+        refToMetadata: element
+      })
+      addAggregateToPathRecursively(rootAggregate, path ? `${path}/${physicalName}` : physicalName, element)
+    }
+  }
+  for (const [physicalName, element] of Object.entries(metadata)) {
+    allAggregatesByPath.set(physicalName, {
+      refToRootMetadata: element,
+      refToMetadata: element
+    })
+    addAggregateToPathRecursively(element, physicalName, element)
+  }
+
   // 参照先のメタデータを取得する
-  const getRefTo = (refMember: MetadataForPage.RefMetadata): MetadataForPage.StructureMetadata => {
-    throw new Error("Not implemented")
+  const getRefTo = (refMember: MetadataForPage.RefMetadata): {
+    refToMetadata: MetadataForPage.StructureMetadata
+    refToRootMetadata: MetadataForPage.RootAggregateMetadata
+  } => {
+    const path = refMember.refTo.replace(/^ref-to:/, '')
+    const refTo = allAggregatesByPath.get(path)
+    if (!refTo) {
+      console.error(allAggregatesByPath)
+      throw new Error(`${refMember.refTo} の参照先が見つかりません`)
+    }
+    return refTo
   }
 
   // 主キーを列挙する
@@ -36,10 +73,16 @@ export const buildMetadataAndHelper = () => {
   }
 }
 
+/** メタデータのモデル型 */
+export type MetadataModelType = MetadataForPage.StructureMetadata["model"]
+
+/** メタデータの値メンバーの型 */
+export type MetadaValueMemberType = Exclude<MetadataForPage.ValueMetadata["type"], undefined>
+
 // ---------------------------------
 // 各コンポーネントに公開するもの
 
-type MetadataContextType = ReturnType<typeof buildMetadataAndHelper>
+export type MetadataContextType = ReturnType<typeof buildMetadataAndHelper>
 
 /** 自動生成されたメタデータとヘルパー関数を提供する */
 export const MetadataContext = React.createContext<MetadataContextType>({

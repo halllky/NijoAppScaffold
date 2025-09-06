@@ -63,7 +63,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                   {{WithIndent(RefMetadata.RenderType(ctx), "  ")}}
 
                   /** 画面の自動生成のためのメタデータ取得関数 */
-                  export const getAll = (): { [k in ( {{CommandQueryMappings.DATA_MODEL_TYPE}} | {{CommandQueryMappings.QUERY_MODEL_TYPE}} | {{CommandQueryMappings.COMMAND_MODEL_TYPE}})]: {{StructureMetadata.TYPE_NAME}} } => ({
+                  export const getAll = (): { [k in ( {{CommandQueryMappings.DATA_MODEL_TYPE}} | {{CommandQueryMappings.QUERY_MODEL_TYPE}} | {{CommandQueryMappings.COMMAND_MODEL_TYPE}})]: {{StructureMetadata.TYPE_ROOT_AGGREGATE_NAME}} } => ({
                 {{entriesOrderByDataFlow.SelectTextTemplate(entry => $$"""
                     {{WithIndent(entry.Render(ctx), "    ")}}
                 """)}}
@@ -130,6 +130,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
         }
 
         internal const string TYPE_NAME = "StructureMetadata";
+        internal const string TYPE_ROOT_AGGREGATE_NAME = "RootAggregateMetadata";
         internal const string TYPE_MEMBER = "StructureMetadataMember";
 
         internal static string RenderType(CodeRenderingContext ctx) {
@@ -153,6 +154,9 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                   {{WithIndent(source, "  ")}}
                 """)}}
                 }
+
+                /** ルート集約のメタデータ */
+                export type {{TYPE_ROOT_AGGREGATE_NAME}} = {{TYPE_NAME}} & { type: 'RootAggregate' }
 
                 /** 構造体のメタデータのメンバー */
                 export type {{TYPE_MEMBER}} = {{TYPE_NAME}} | {{ValueMetadata.TYPE_NAME}} | {{RefMetadata.TYPE_NAME}}

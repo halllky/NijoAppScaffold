@@ -112,6 +112,8 @@ public partial class OverridedApplicationConfigure : DefaultConfiguration {
         base.EditDefaultJsonSerializerOptions(option);
 
         // 型ごとのシリアライズ設定
+        option.Converters.Add(new Int32Converter());
+        option.Converters.Add(new DecimalConverter());
         option.Converters.Add(new DateTimeConverter());
         option.Converters.Add(new DateOnlyConverter());
         option.Converters.Add(new YearMonthJsonConverter());
@@ -124,6 +126,64 @@ public partial class OverridedApplicationConfigure : DefaultConfiguration {
         option.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 
         return option;
+    }
+    /// <summary>
+    /// 整数。クライアント側ではstring型。
+    /// </summary>
+    private class Int32Converter : JsonConverter<int?> {
+        public override int? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+            if (reader.TokenType == JsonTokenType.Null) {
+                return null;
+
+            } else if (reader.TokenType == JsonTokenType.String) {
+                var strValue = reader.GetString();
+                if (string.IsNullOrWhiteSpace(strValue)) {
+                    return null;
+                }
+                return int.Parse(strValue);
+
+            } else if (reader.TokenType == JsonTokenType.Number) {
+                return reader.GetInt32();
+            }
+
+            throw new JsonException($"不正な整数形式です: {reader.GetString()}");
+        }
+        public override void Write(Utf8JsonWriter writer, int? value, JsonSerializerOptions options) {
+            if (value == null) {
+                writer.WriteNullValue();
+            } else {
+                writer.WriteStringValue(value.Value.ToString());
+            }
+        }
+    }
+    /// <summary>
+    /// 実数。クライアント側ではstring型。
+    /// </summary>
+    private class DecimalConverter : JsonConverter<decimal?> {
+        public override decimal? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+            if (reader.TokenType == JsonTokenType.Null) {
+                return null;
+
+            } else if (reader.TokenType == JsonTokenType.String) {
+                var strValue = reader.GetString();
+                if (string.IsNullOrWhiteSpace(strValue)) {
+                    return null;
+                }
+                return decimal.Parse(strValue);
+
+            } else if (reader.TokenType == JsonTokenType.Number) {
+                return reader.GetDecimal();
+            }
+
+            throw new JsonException($"不正な実数形式です: {reader.GetString()}");
+        }
+        public override void Write(Utf8JsonWriter writer, decimal? value, JsonSerializerOptions options) {
+            if (value == null) {
+                writer.WriteNullValue();
+            } else {
+                writer.WriteStringValue(value.Value.ToString());
+            }
+        }
     }
     /// <summary>
     /// 日付時刻。ISO8601形式でシリアライズする。空文字はnullとみなす

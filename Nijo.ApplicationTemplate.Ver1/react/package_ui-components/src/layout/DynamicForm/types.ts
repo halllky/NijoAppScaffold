@@ -137,8 +137,10 @@ export type GetGridColumnDefFunction = (props: GetGridColumnDefFunctionProps) =>
 
 /** グリッドの列定義を取得するための関数の引数 */
 export type GetGridColumnDefFunctionProps = {
-  /** ルートオブジェクトからこのメンバーまでのパス */
-  name: string
+  /** ルートオブジェクトから配列までのパス */
+  arrayPath: string
+  /** 配列の行オブジェクトからこのメンバーまでのパス */
+  pathFromRow: string
   /** メンバーのメタデータ */
   member: ValueMember
   /** メンバーを保持するオブジェクトのメタデータ */

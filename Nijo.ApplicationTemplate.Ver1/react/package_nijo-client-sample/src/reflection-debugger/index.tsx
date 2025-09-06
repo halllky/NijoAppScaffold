@@ -29,13 +29,12 @@ export default function ({ className }: {
       <UnhandledMessageContextProvider>
         <div className={`flex flex-col gap-px ${className ?? ''}`}>
 
-          {/* エラーメッセージ */}
-          <UnhandledMessage />
-
           <Allotment
             proportionalLayout={false}
+            separator={false}
             className="flex-1"
           >
+            {/* グラフ */}
             <Allotment.Pane
               minSize={40}
               priority={LayoutPriority.High}
@@ -46,10 +45,15 @@ export default function ({ className }: {
               />
             </Allotment.Pane>
 
-            <Allotment.Pane minSize={40} className="flex flex-col gap-1 p-1">
+            {/* ルート集約の詳細 */}
+            <Allotment.Pane minSize={40} className="flex flex-col gap-1 py-1 pl-1">
               <RootAggregateView className="flex-1" {...detailPaneProps} />
             </Allotment.Pane>
           </Allotment>
+
+          {/* エラーメッセージ */}
+          <UnhandledMessage />
+
         </div>
       </UnhandledMessageContextProvider>
     </MetadataContext.Provider>

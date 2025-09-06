@@ -5,7 +5,7 @@ import * as Icon from "@heroicons/react/24/outline"
 import { IconButton } from "../../input"
 import { DynamicFormContext } from "./DynamicFormContext"
 import { ArrayFormRendererProps, ArrayMember, MemberOwner } from "./types"
-import { EditableGrid, EditableGridColumnDef, EditableGridRef, GetColumnDefsFunction, RowChangeEvent } from "../EditableGrid"
+import { EditableGrid, EditableGridColumnDef, EditableGridColumnDefGroup, EditableGridRef, GetColumnDefsFunction, RowChangeEvent } from "../EditableGrid"
 import FormLayout from "../FormLayout"
 
 /**
@@ -99,29 +99,67 @@ const useGetColumnDefs = (
   arrayPath: string,
 ): GetColumnDefsFunction<ReactHookForm.FieldValues> => {
   return React.useCallback(cellType => {
-    const columns: EditableGridColumnDef<ReactHookForm.FieldValues>[] = []
+    const columns: [colGroup: string[], def: EditableGridColumnDef<ReactHookForm.FieldValues>][] = []
 
-    const pushRecursive = (owner: MemberOwner, path: string) => {
+    const pushRecursive = (
+      /** 列のグループの **画面表示用の** 名前 */
+      colGroup: string[],
+      /** メンバーのオーナー */
+      owner: MemberOwner,
+      /** 行のオブジェクトからメンバーのオーナーまでのパス */
+      ownerPathFromRow: string[],
+    ) => {
       for (const m of owner.members) {
         if (m.type === 'section') {
           // 子セクションのメンバーも再帰的に列定義を作成する
-          pushRecursive(m, m.physicalName ? `${path}.${m.physicalName}` : path)
+          pushRecursive(
+            [...colGroup, typeof m.label === 'string' ? m.label : m.physicalName ?? ''],
+            m,
+            m.physicalName
+              ? [...ownerPathFromRow, m.physicalName]
+              : ownerPathFromRow,
+          )
 
         } else if (m.type === 'array') {
           continue // グリッドで配列を表示することはできない
 
         } else if (m.getGridColumnDef) {
-          columns.push(m.getGridColumnDef({
+
+          columns.push([colGroup, m.getGridColumnDef({
             cellType,
             owner,
             member: m,
-            name: m.physicalName ? `${arrayPath}.${m.physicalName}` : arrayPath,
-          }))
+            arrayPath,
+            pathFromRow: m.physicalName
+              ? [...ownerPathFromRow, m.physicalName].join('.')
+              : ownerPathFromRow.join('.'),
+          })])
         }
       }
     }
 
-    pushRecursive(array, arrayPath)
-    return columns
+    // 列定義を再帰的に作成する
+    pushRecursive([], array, [])
+
+    // グループ化して返す
+    const groupedColumns = columns.reduce((acc, [colGroup, def]) => {
+      const groupHeader = colGroup.join('.')
+      const last = acc.length === 0 ? null : acc[acc.length - 1]
+      if (groupHeader) {
+        if (last?.header === groupHeader) {
+          // 1つ前のグループに追加
+          (last as EditableGridColumnDefGroup<ReactHookForm.FieldValues>).columns.push(def)
+        } else {
+          // 新しいグループを作成
+          acc.push({ header: groupHeader, columns: [def] })
+        }
+      } else {
+        // グループ化されない列
+        acc.push(def)
+      }
+      return acc
+    }, [] as (EditableGridColumnDefGroup<ReactHookForm.FieldValues> | EditableGridColumnDef<ReactHookForm.FieldValues>)[])
+
+    return groupedColumns
   }, [array])
 }

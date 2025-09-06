@@ -65,7 +65,7 @@ export default function ({
   })
 
   return (
-    <div className={`relative flex flex-col ${className ?? ''}`}>
+    <div className={`relative flex flex-col border border-gray-300 ${className ?? ''}`}>
       {/* グラフ */}
       <GraphView
         key={selectedViewMode}
