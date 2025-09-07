@@ -61,12 +61,12 @@ export const SingleView = <
       })
 
       // 0件または2件以上の場合はエラー
-      if (!response || response.currentPageItems.length === 0) {
+      if (!response.ok || response.returnValue.currentPageItems.length === 0) {
         setErrorMessage("データが見つかりません")
-      } else if (response.currentPageItems.length >= 2) {
+      } else if (response.returnValue.currentPageItems.length >= 2) {
         setErrorMessage("データが複数見つかりました")
       } else {
-        setDefaultValues(response.currentPageItems[0] as ReactHookForm.DefaultValues<TDisplayData>)
+        setDefaultValues(response.returnValue.currentPageItems[0] as ReactHookForm.DefaultValues<TDisplayData>)
       }
     } catch (error) {
       setErrorMessage("データの読み込みに失敗しました")

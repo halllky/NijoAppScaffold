@@ -68,6 +68,8 @@ export type ArrayMember<TOwner extends ReactHookForm.FieldValues = ReactHookForm
   contents?: CustomArrayRenderer
   /** 新しいアイテムを作成するための関数。未指定の場合は既定のレンダリングで追加ボタンが表示されない。 */
   onCreateNewItem?: () => ReactHookForm.FieldValues
+  /** 子孫に配列が含まれていようが問答無用でグリッド表示する */
+  showAsGridForce?: boolean
 }
 
 /** 値メンバー */

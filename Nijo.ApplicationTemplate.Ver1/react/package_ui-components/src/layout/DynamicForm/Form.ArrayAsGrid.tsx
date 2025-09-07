@@ -30,7 +30,7 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
 
   // EditableGrid
   const gridRef = React.useRef<EditableGridRef<ReactHookForm.FieldValues>>(null)
-  const getColumnDefs = useGetColumnDefs(array, arrayMemberPath, props.isReadOnly ?? false)
+  const getColumnDefs = useDynamicFormColumnDefs(array, arrayMemberPath, props.isReadOnly ?? false)
 
   // レンダリング処理の引数
   const rendererProps: ArrayFormRendererProps = {
@@ -96,7 +96,7 @@ export const FormArrayAsGrid = ({ member: array, owner, ancestorsPath }: {
 }
 
 /** 列定義を組み立てる */
-const useGetColumnDefs = (
+export const useDynamicFormColumnDefs = (
   array: ArrayMember,
   /** ルートオブジェクトから **配列までの** パス */
   arrayPath: string,

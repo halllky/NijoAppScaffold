@@ -325,6 +325,16 @@ partial class OverridedApplicationService {
 
     public override Task<簡易診療登録ReturnValue> Execute(簡易診療登録Parameter parameter, IPresentationContext<簡易診療登録ParameterMessages> context) {
         // TODO: 簡易診療登録コマンドの処理を実装してください。
-        return Task.FromResult(new 簡易診療登録ReturnValue());
+        return Task.FromResult(new 簡易診療登録ReturnValue() {
+            処理結果 = $$"""
+                パラメータの{{nameof(parameter.患者ID)}}は{{parameter.患者ID}}でした。
+                パラメータの{{nameof(parameter.使用機器一覧)}}の内容は以下です。
+                {{string.Join(Environment.NewLine, parameter.使用機器一覧.Select((x, i) => $$"""
+                {{(i + 1):000}}: 機器ID: {{x.機器ID}}
+                     使用数量: {{x.使用数量}}
+                """))}}
+                """,
+            診療番号 = $"TEST-{DateTime.Now:yyyyMMddHHmmss}",
+        });
     }
 }

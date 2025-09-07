@@ -252,9 +252,9 @@ export const MultiView = ({ rootAggregatePhysicalName, metadata, schema }: {
       requestBody
     ).then(response => {
       if (!isActive) return;
-      if (response) {
-        setCurrentPageItems(response.currentPageItems)
-        setTotalCount(response.totalCount)
+      if (response.ok) {
+        setCurrentPageItems(response.returnValue.currentPageItems)
+        setTotalCount(response.returnValue.totalCount)
       } else {
         setCurrentPageItems([])
         setTotalCount(undefined)

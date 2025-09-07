@@ -1,6 +1,5 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
-import { useUnhandledMessage } from "./useUnhandledMessageContext"
 import { useToastContext } from "./useToastContext"
 import { UUID } from "uuidjs"
 
@@ -9,7 +8,6 @@ import { UUID } from "uuidjs"
  * GETリクエストと、ComplexPost（ASP.NET Core 側のPresentationContextの仕組みと統合されたPOSTリクエスト）の2種類のリクエストをサポートする。
  */
 export const useHttpRequest = () => {
-  const msgContext = useUnhandledMessage()
   const toastContext = useToastContext()
 
   /** GETリクエストを行なう。 */
@@ -18,7 +16,7 @@ export const useHttpRequest = () => {
     subDirectory: string,
     /** クエリパラメーター */
     searchParams: URLSearchParams
-  ): Promise<TReturnValue | undefined> => {
+  ): Promise<HttpRequestResult<TReturnValue, { error: string }>> => {
 
     try {
       const url = getBackendUrl(subDirectory) + '?' + searchParams.toString()
@@ -29,15 +27,17 @@ export const useHttpRequest = () => {
         },
       })
       if (!response.ok) {
-        msgContext.error(await toDisplayErrorText(response))
-        return undefined
+        return { ok: false, error: await toDisplayErrorText(response) }
       }
+
+      // 正常終了
       const json = await response.json() as TReturnValue
-      return json
+      return { ok: true, returnValue: json }
+
     } catch (error) {
-      msgContext.error(handleUnknownError(error))
+      return { ok: false, error: handleUnknownError(error) }
     }
-  }, [msgContext])
+  }, [])
 
   /** POSTリクエストを行なう。 */
   const post = React.useCallback(async <TReturnValue = unknown, TRequestBody = unknown>(
@@ -45,7 +45,7 @@ export const useHttpRequest = () => {
     subDirectory: string,
     /** リクエストボディ */
     requestBody: TRequestBody,
-  ): Promise<TReturnValue | undefined> => {
+  ): Promise<HttpRequestResult<TReturnValue, { error: string }>> => {
 
     try {
       const url = getBackendUrl(subDirectory)
@@ -57,15 +57,17 @@ export const useHttpRequest = () => {
         body: JSON.stringify(requestBody),
       })
       if (!response.ok) {
-        msgContext.error(await toDisplayErrorText(response))
-        return undefined
+        return { ok: false, error: await toDisplayErrorText(response) }
       }
+
+      // 正常終了
       const json = await response.json() as TReturnValue
-      return json
+      return { ok: true, returnValue: json }
+
     } catch (error) {
-      msgContext.error(handleUnknownError(error))
+      return { ok: false, error: handleUnknownError(error) }
     }
-  }, [msgContext])
+  }, [])
 
   /** ComplexPost（ASP.NET Core 側のPresentationContextの仕組みと統合されたPOSTリクエスト） */
   const complexPost = React.useCallback(async <TReturnValue = unknown, TRequestBody = unknown>(
@@ -75,7 +77,7 @@ export const useHttpRequest = () => {
     requestBody: TRequestBody,
     /** オプション */
     options?: ComplexPostOptions,
-  ): Promise<TReturnValue | undefined> => {
+  ): Promise<HttpRequestResult<TReturnValue, CompolexPostError>> => {
     try {
       // 添付ファイルを処理する。
       // リクエスト全体は Content-Type: multipart/form-data で送信する。
@@ -122,8 +124,11 @@ export const useHttpRequest = () => {
         // ここで言うエラーは、必須入力漏れなどのエラーが発生したことを示すものではなく、
         // サーバーからの応答が無い、サーバー側で復旧不可のエラーが発生した、などといったものを示す。
         if (!response.ok) {
-          msgContext.error(await toDisplayErrorText(response))
-          return undefined
+          return {
+            ok: false,
+            type: 'unknown',
+            message: await toDisplayErrorText(response),
+          }
         }
 
         // HTTPステータスコードが200-299の場合はレスポンスをJSONとしてパースする
@@ -139,8 +144,11 @@ export const useHttpRequest = () => {
           if (options?.handleDetailMessage) {
             options.handleDetailMessage(json.detail)
           } else {
-            // `オブジェクトパス: メッセージ, メッセージ, ...` という形式に変換する
-            msgContext.error(toFlattenStringList(json.detail).join('\n'))
+            return {
+              ok: false,
+              type: 'detail',
+              detail: json.detail,
+            }
           }
         }
 
@@ -152,22 +160,57 @@ export const useHttpRequest = () => {
             continue
           } else {
             // 承諾されなかった場合はリクエストを中止
-            return undefined
+            return { ok: false, type: 'canceled' }
           }
         }
 
-        return json.returnValue
+        return { ok: true, returnValue: json.returnValue }
       }
 
     } catch (error) {
-      msgContext.error(handleUnknownError(error))
+      return { ok: false, type: 'unknown', message: handleUnknownError(error) }
     }
-  }, [msgContext, toastContext])
+  }, [toastContext])
 
-  return { get, post, complexPost }
+  return {
+    /**
+     * GETリクエストを行なう。
+     * エラーが発生した場合は戻り値として返され、例外は送出されない。
+     */
+    get,
+    /**
+     * POSTリクエストを行なう。
+     * エラーが発生した場合は戻り値として返され、例外は送出されない。
+     */
+    post,
+    /**
+     * ComplexPost（ASP.NET Core 側のPresentationContextの仕組みと統合されたPOSTリクエスト）を行なう。
+     * エラーが発生した場合は戻り値として返され、例外は送出されない。
+     */
+    complexPost,
+  }
 }
 
 // --------------------------------------------
+
+/** HTTPリクエストの結果 */
+export type HttpRequestResult<TSuccess, TError> = {
+  ok: true
+  returnValue: TSuccess
+} | {
+  ok: false
+} & TError
+
+/** ComplexPostのエラー */
+export type CompolexPostError = {
+  type: 'canceled'
+} | {
+  type: 'detail'
+  detail: DetailMessagesContainer
+} | {
+  type: 'unknown'
+  message: string
+}
 
 /**
  * バックエンドのURLを取得する。
@@ -282,11 +325,11 @@ export type DetailMessage = {
 }
 
 /**
- * オブジェクトを展開してstringの配列にする。
+ * エラーメッセージのオブジェクトを展開してstringの配列にする。
  * 例えば * `{ aaa: { '1': { bbb: { error: ['エラー1'] } } } }` というオブジェクトを
  * `['aaa.1.bbb.error: エラー1']` に変換する。
  */
-const toFlattenStringList = (detail: DetailMessagesContainer): string[] => {
+export const toFlattenStringList = (detail: DetailMessagesContainer): string[] => {
   const result: string[] = []
   const collectMessagesRecursively = (path: string[], messages: DetailMessagesContainer | DetailMessage) => {
     for (const [key, value] of Object.entries(messages)) {

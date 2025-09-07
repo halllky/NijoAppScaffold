@@ -210,7 +210,7 @@
       </使用機器一覧>
     </簡易診療登録Parameter>
     <簡易診療登録ReturnValue Type="child" UniqueId="84698423-0012-40d2-9722-29a88b92c583">
-      <処理結果 Type="word" UniqueId="99a4a801-3058-4d76-9971-3041d386e68d" />
+      <処理結果 Type="description" UniqueId="99a4a801-3058-4d76-9971-3041d386e68d" />
       <診療番号 Type="word" UniqueId="32fd284a-a305-4083-bb9b-ba4a88d6ff3c" />
     </簡易診療登録ReturnValue>
   </簡易診療登録>

@@ -131,7 +131,7 @@ const MemberComponent = ({ owner, member, ancestorsPath }: {
 
   // 配列
   if (member.type === 'array') {
-    return hasArray(member) ? (
+    return !member.showAsGridForce && hasArray(member) ? (
       // このメンバーの子孫（直下の子ではなく子孫再帰的に）にさらに配列が含まれるのでフォームのリスト
       <FormArrayAsForm
         member={member}
