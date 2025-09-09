@@ -94,12 +94,12 @@ function App() {
             <p className="text-xs">
               以下に見えるのはデバッグ用のツールです。
               このツールは以下の機能を提供します。
-              <ul className="list-disc pl-4">
-                <li>Query Model : 実際に一覧検索機能を実行する</li>
-                <li>Command Model : 実際にコマンドを実行する</li>
-                <li>Data Model : データベースの各テーブルの内容表示。既定の Query Model を生成する Data Model の場合は、それに加えて実際に一覧検索機能を実行する機能。</li>
-              </ul>
             </p>
+            <ul className="text-xs list-disc pl-4">
+              <li>Query Model : 実際に一覧検索機能を実行する</li>
+              <li>Command Model : 実際にコマンドを実行する</li>
+              <li>Data Model : データベースの各テーブルの内容表示。既定の Query Model を生成する Data Model の場合は、それに加えて実際に一覧検索機能を実行する機能。</li>
+            </ul>
             <ReflectionDebugger className="flex-1 border-2 border-orange-500" />
           </>
         )}
