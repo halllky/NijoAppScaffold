@@ -466,4 +466,88 @@ internal static class BasicNodeOptions {
         },
     };
     #endregion ValueMember用
+
+
+    #region ConstantModel用
+    internal static NodeOption ConstantType = new() {
+        AttributeName = "ConstantType",
+        DisplayName = "定数の型",
+        Type = E_NodeOptionType.String,
+        HelpText = $$"""
+            定数の型を指定します。
+            string（文字列）、int（整数）、decimal（小数）、template（テンプレート文字列）、child（ネストされた定数グループ）のいずれかを指定してください。
+            """,
+        Validate = ctx => {
+            var validTypes = new[] { "string", "int", "decimal", "template", "child" };
+            if (!validTypes.Contains(ctx.Value)) {
+                ctx.AddError($"type属性の値「{ctx.Value}」は無効です。string, int, decimal, template, child のいずれかを指定してください。");
+                return;
+            }
+
+            // child型の場合はConstantValue属性は不要
+            if (ctx.Value == "child") {
+                return; // child型の場合は追加のバリデーション不要
+            }
+
+            // 型に応じた値の妥当性チェック
+            var valueAttr = ctx.XElement.Attribute(ConstantValue.AttributeName);
+            if (valueAttr == null) {
+                ctx.AddError("ConstantValue属性が必須です。");
+                return;
+            }
+
+            switch (ctx.Value) {
+                case "int":
+                    if (!int.TryParse(valueAttr.Value, out _)) {
+                        ctx.AddError($"int型の値「{valueAttr.Value}」は有効な整数ではありません。");
+                    }
+                    break;
+                case "decimal":
+                    if (!decimal.TryParse(valueAttr.Value, out _)) {
+                        ctx.AddError($"decimal型の値「{valueAttr.Value}」は有効な小数ではありません。");
+                    }
+                    break;
+                case "template":
+                    // テンプレート型の場合、プレースホルダーは自動判定されるため追加チェックは不要
+                    break;
+            }
+        },
+        IsAvailableModelMembers = model => {
+            return model is ConstantModel;
+        },
+    };
+
+    internal static NodeOption ConstantValue = new() {
+        AttributeName = "ConstantValue",
+        DisplayName = "定数の値",
+        Type = E_NodeOptionType.String,
+        HelpText = $$"""
+            定数の値を指定します。
+            型に応じて適切な形式で指定してください。
+            """,
+        Validate = ctx => {
+            // 値の妥当性チェックはConstantTypeで実施
+        },
+        IsAvailableModelMembers = model => {
+            return model is ConstantModel;
+        },
+    };
+
+    internal static NodeOption TemplateParams = new() {
+        AttributeName = "TemplateParams",
+        DisplayName = "【廃止予定】テンプレートパラメータ",
+        Type = E_NodeOptionType.String,
+        HelpText = $$"""
+            【廃止予定】テンプレート文字列の引数名をカンマ区切りで指定します。
+            現在は{0}, {1}, ... から自動的に引数が判定されるため、この属性は不要です。
+            """,
+        Validate = ctx => {
+            // 廃止予定の警告
+            ctx.AddError("TemplateParams属性は廃止予定です。テンプレート文字列の引数は{0}, {1}, ...から自動的に判定されます。");
+        },
+        IsAvailableModelMembers = model => {
+            return false; // 使用不可にする
+        },
+    };
+    #endregion ConstantModel用
 }

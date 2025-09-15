@@ -427,6 +427,12 @@ public class SchemaParseContext {
 
                 // ノードの種類が不明な場合
                 case E_NodeType.Unknown:
+                    // ConstantModelの場合はType属性未指定でもエラーにしない（ConstantTypeで判定しているため）
+                    if (TryGetModel(el, out var constantModel) && constantModel is ConstantModel) {
+                        // ConstantModelの定数要素はType属性未指定でも許可
+                        break;
+                    }
+
                     if (string.IsNullOrEmpty(typeAttrValue)) {
                         attributeErrors.Add((el, ATTR_NODE_TYPE, $"ノードの種類が不明です。{ATTR_NODE_TYPE}属性が指定されているか確認してください。"));
                     } else {
