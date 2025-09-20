@@ -168,7 +168,6 @@ namespace Nijo {
         public string WebapiProjectRoot => Path.Combine(ProjectRoot, "webapi");
         public string ReactProjectRoot => Path.Combine(ProjectRoot, "react");
         public string UnitTestProjectRoot => Path.Combine(ProjectRoot, "Test");
-        public string DocumentRoot => Path.Combine(ProjectRoot, "Document");
 
         /// <summary>
         /// このプロジェクトのソースコード自動生成設定を返します。
