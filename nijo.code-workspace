@@ -90,18 +90,6 @@
         "problemMatcher": []
       },
       {
-        "label": "Nijo: 「自動テストで作成されたプロジェクト」のコンパイルエラーチェック",
-        "command": ".\\build-and-error-check.bat",
-        "type": "shell",
-        "args": [
-          "generate",
-        ],
-        "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/自動テストで作成されたプロジェクト"
-        },
-        "problemMatcher": []
-      },
-      {
         "label": "Nijo: スキーマ定義編集UIのデバッグ実行を開始する",
         "command": ".\\TASK_DEBUG.bat",
         "type": "shell",
@@ -164,6 +152,15 @@
         "options": {
           "cwd": "${workspaceFolder:NijoApplicationBuilder}/Nijo.ApplicationTemplate.Ver1/react"
         }
+      },
+      {
+        "label": "Nijo: テンプレの集約定義に依存しないソースを各デモにコピー",
+        "command": ".\\テンプレの集約定義に依存しないソースを各デモにコピー.bat",
+        "type": "shell",
+        "options": {
+          "cwd": "${workspaceFolder:NijoApplicationBuilder}/demo"
+        },
+        "problemMatcher": []
       }
     ]
   }
