@@ -1,39 +1,49 @@
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// Controller の設定
+builder.Services.AddControllers(options => {
+    // 全エンドポイントに共通して適用される ActionFilter の設定
+    options.Filters.Add<MyApp.WebApi.Base.LoggingActionFilter>();   // ログ出力
+    options.Filters.Add<MyApp.WebApi.Base.GlobalExceptionFilter>(); // グローバル例外ハンドリング
+});
 
 // swagger。デバッグのためにこのアプリで定義されているエンドポイントを一覧する
 builder.Services.AddSwaggerGen();
 
-// NijoApplicationBuilderの設定
+// アプリケーションサービス層のDI設定
 var appConfig = new MyApp.OverridedApplicationConfigure();
 appConfig.ConfigureServices(builder.Services);
-builder.Services.AddScoped<MyApp.DefaultConfigurationInWebApi, MyApp.WebApi.Base.ConfigurationInWebApi>();
 
-// JSONシリアライズ設定
+// HTTPリクエスト・レスポンスで使われるJSONシリアライズ設定を上記DI設定のそれに合わせる
 builder.Services.ConfigureHttpJsonOptions(options => {
     appConfig.EditDefaultJsonSerializerOptions(options.SerializerOptions);
 });
+
+// 自動生成されたエンドポイントのリクエスト・レスポンス処理の設定
+builder.Services.AddScoped<MyApp.DefaultConfigurationInWebApi, MyApp.WebApi.Base.ConfigurationInWebApi>();
 
 // --------------------------------
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment()) {
-    app.MapOpenApi();
-
     // swagger。デバッグのためにこのアプリで定義されているエンドポイントを一覧する
     app.UseSwagger();
     app.UseSwaggerUI();
+
+    // 開発時専用エラーページ
+    app.UseDeveloperExceptionPage();
+
+} else {
+    app.UseHsts();
+
+    // 本番環境では client フォルダのソースは1個の JavaScript ファイルにバンドルされて静的ファイルとして配信される
+    app.UseStaticFiles();
 }
+
+app.MapDefaultControllerRoute();
 
 app.UseHttpsRedirection();
+app.UseCors();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary) {
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

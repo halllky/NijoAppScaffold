@@ -18,7 +18,7 @@ if errorlevel 1 (
  
 @rem ------------------------------------ 
 @rem Install Node.js packages if not installed 
-pushd %~dp0client 
+pushd %~dp0..\\client 
 if not exist node_modules ( 
     echo 'node_modules' is not installed. Would you like to install it? 
     choice /c yn 
@@ -40,8 +40,8 @@ popd
  
 @rem ------------------------------------ 
 @rem Launch ASP.NET Core Web API (in background) 
-pushd %~dp0webapi 
-start "ASP.NET Core API" cmd /c "dotnet run --launch-profile http & pause" 
+pushd %~dp0..\\WebApi 
+start "ASP.NET Core API" cmd /c "dotnet watch --launch-profile http & pause" 
 popd 
  
 @rem ------------------------------------ 

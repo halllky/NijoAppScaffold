@@ -1,3 +1,5 @@
+#if DEBUG
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,3 +52,5 @@ public class DummyDataTsvOutput : IDummyDataOutput {
         await _textWriter.FlushAsync();
     }
 }
+
+#endif

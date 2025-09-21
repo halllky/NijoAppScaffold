@@ -1,4 +1,4 @@
-
+#if DEBUG
 namespace MyApp;
 
 /// <summary>
@@ -20,3 +20,4 @@ public class OverridedDummyDataGenerator : DummyDataGenerator {
     }
 }
 
+#endif

@@ -74,6 +74,12 @@ namespace Nijo.Models.DataModelModules {
                         /// ダミーデータ作成処理を実行します。
                         /// 現在登録されているデータは全て削除されます。
                         /// </summary>
+                    {{If(rootAggregatesOrderByDataFlow.Length == 0, () => $$"""
+                        public Task {{GENERATE_ASYNC}}({{I_DUMMY_DATA_OUTPUT}} dummyDataOutput, {{DUMMY_DATA_GENERATE_OPTIONS}}? options = null) {
+                            // Data Model の集約が定義されていないので何もしない
+                            return Task.CompletedTask;
+                        }
+                    """).Else(() => $$"""
                         public async Task {{GENERATE_ASYNC}}({{I_DUMMY_DATA_OUTPUT}} dummyDataOutput, {{DUMMY_DATA_GENERATE_OPTIONS}}? options = null) {
 
                             // ランダム値採番等のコンテキスト
@@ -95,6 +101,7 @@ namespace Nijo.Models.DataModelModules {
                             {{WithIndent(RenderOutputting(rootAggregate), "        ")}}
                     """)}}
                         }
+                    """)}}
 
 
                         #region ルート集約毎のパターン作成処理

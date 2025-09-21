@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,6 +10,12 @@ namespace MyApp;
 /// 実行時設定。 appsettings.json から読み込まれた設定値を使う。
 /// </summary>
 public class RuntimeSetting {
+
+    /// <summary>
+    /// appsettings.json には NLog の設定なども含まれているので
+    /// どのセクションがこのクラスで定義されている項目と対応するかを表すセクション名
+    /// </summary>
+    public const string MY_APP_SECTION = "MyApp";
 
     /// <summary>
     /// NLogのログ出力先ディレクトリ

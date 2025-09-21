@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
@@ -23,12 +23,16 @@ namespace MyApp;
 /// </summary>
 public partial class OverridedApplicationConfigure : DefaultConfiguration {
 
+    /// <summary>
+    /// DI設定
+    /// </summary>
     public override void ConfigureServices(IServiceCollection services) {
         // 自動生成される設定処理はすべて行なう
         base.ConfigureServices(services);
 
-        // アプリケーションサービスをDIコンテナに登録
+        // アプリケーションサービスとこの設定クラスをDIコンテナに登録
         services.AddTransient<DefaultConfiguration, OverridedApplicationConfigure>();
+        services.AddScoped<OverridedApplicationConfigure>();
         services.AddScoped<OverridedApplicationService>();
 
         // 実行時設定ファイルの読み込み設定
@@ -38,7 +42,7 @@ public partial class OverridedApplicationConfigure : DefaultConfiguration {
                 .AddJsonFile("appsettings.json", false)
                 .AddJsonFile("appsettings.Development.json", true) // 後にAddされたファイルが優先される
                 .Build()
-                .GetSection("Nijo")
+                .GetSection(RuntimeSetting.MY_APP_SECTION)
                 .Bind(settings);
             return settings;
         });

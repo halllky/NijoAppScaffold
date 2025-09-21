@@ -11,7 +11,7 @@
  * そのため JavaScript と C# が同じ環境で動作しているため、単に自身（/）を指定する。
  */
 const ASP_NET_CORE_BASE_URL = import.meta.env.DEV
-  ? 'http://localhost:5273/'
+  ? 'http://localhost:5290/'
   : '/'
 
 /**

@@ -262,6 +262,7 @@ namespace Nijo {
 
             // スキーマ定義にかかわらず必ず生成されるモジュールの登録
             ctx.Use<ApplicationService>();
+            ctx.Use<EnumFile>();
             ctx.Use<Metadata>();
             ctx.Use<MetadataOfEFCoreEntity>();
             ctx.Use<MetadataForPage>();
