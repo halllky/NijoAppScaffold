@@ -114,6 +114,9 @@ namespace Nijo.Parts.CSharp {
                 FileName = "DefaultConfiguration.cs",
                 Contents = $$"""
                     using Microsoft.Extensions.DependencyInjection;
+                    using System.Text.Json;
+                    using System.Text.Json.Nodes;
+                    using System.Text.Json.Serialization;
                     using NLog;
 
                     namespace {{ctx.Config.RootNamespace}};

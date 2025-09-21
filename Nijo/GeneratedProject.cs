@@ -260,6 +260,15 @@ namespace Nijo {
                 }
             });
 
+            // スキーマ定義にかかわらず必ず生成されるモジュールの登録
+            ctx.Use<ApplicationService>();
+            ctx.Use<JsonUtil>();
+            ctx.Use<MessageContainer.BaseClass>();
+            ctx.Use<CommandQueryMappings>();
+            ctx.Use<DbContextClass>();
+            ctx.Use<Models.QueryModelModules.QueryModelUnitTest>();
+            AspNetController.RegisterWebapiConfiguration(ctx);
+
             // IMultiAggregateSourceFile が別の IMultiAggregateSourceFile に依存することがあるので、
             // すべて漏らさず確実に依存関係を登録させる。
             // ソース自動生成中で一度でも登場した IMultiAggregateSourceFile それぞれ必ず1回ずつ依存関係登録メソッドを呼ぶ
@@ -280,11 +289,6 @@ namespace Nijo {
             foreach (var vmType in parseContext.GetValueMemberTypes()) {
                 vmType.RegisterDependencies(ctx);
             }
-
-            // スキーマ定義にかかわらず必ず生成されるモジュールの登録
-            ctx.Use<ApplicationService>();
-            ctx.Use<JsonUtil>();
-            AspNetController.RegisterWebapiConfiguration(ctx);
 
             // 以降は IMultiAggregateSourceFile の新規登録不可
             ctx.StopUseMultiAggregateSourceFiles();

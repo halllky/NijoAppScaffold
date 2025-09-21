@@ -27,23 +27,37 @@ public class ViewStateTypes {
     /// ViewStateTypes.tsファイルをレンダリングする
     /// </summary>
     public static SourceFile RenderViewStateTypes(CodeRenderingContext ctx) {
+
+        // ダイアグラムの種類の一覧（複数のダイアグラムの状態が1か所に保存されるので）
+        var dataKey = new[] {
+            $"'{SchemaGraphViewStateTypeByViewMode.KEY_ER_DIAGRAM}'",
+            $"'{SchemaGraphViewStateTypeByViewMode.KEY_SCHEMA_DEFINITION}'",
+        };
+
+        // デフォルト値
+        string viewStateJsonContent = $$"""
+            {
+            {{dataKey.SelectTextTemplate(key => $$"""
+              {{key}}: {
+                nodes: {},
+                edges: [],
+                nodePositions: {},
+                parentMap: {},
+              },
+            """)}}
+            }
+            """;
+
         // 自動生成時点のnijo.viewState.jsonの内容を読み込む
         var viewStateJsonPath = ctx.Project.ViewStateJsonPath;
-        string viewStateJsonContent = "{}"; // デフォルト値
 
         if (File.Exists(viewStateJsonPath)) {
             try {
                 viewStateJsonContent = File.ReadAllText(viewStateJsonPath);
             } catch (Exception) {
-                // ファイル読み込みに失敗した場合は空のオブジェクトを使用
-                viewStateJsonContent = "{}";
+                // ファイル読み込みに失敗した場合はデフォルト値のまま
             }
         }
-
-        var dataKey = new[] {
-            $"'{SchemaGraphViewStateTypeByViewMode.KEY_ER_DIAGRAM}'",
-            $"'{SchemaGraphViewStateTypeByViewMode.KEY_SCHEMA_DEFINITION}'",
-        };
 
         const string RETURN_TYPE = "GetNijoXmlViewStateReturnType";
 

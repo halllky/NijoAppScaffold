@@ -35,11 +35,6 @@ namespace Nijo.Parts.CSharp {
         }
 
         private SourceFile RenderDeclaring(CodeRenderingContext ctx) {
-
-            var generateDbContext = ctx.Schema
-                .GetRootAggregates()
-                .Any(root => root.Model is Models.DataModel);
-
             return new SourceFile {
                 FileName = "ApplicationService.cs",
                 Contents = $$"""
@@ -58,11 +53,9 @@ namespace Nijo.Parts.CSharp {
 
                         public IServiceProvider ServiceProvider { get; }
 
-                    {{If(generateDbContext, () => $$"""
                         private {{ctx.Config.DbContextName}}? _dbContext;
                         public {{ctx.Config.DbContextName}} DbContext => _dbContext ??= ServiceProvider.GetRequiredService<{{ctx.Config.DbContextName}}>();
 
-                    """)}}
                         /// <summary>
                         /// ログ出力はこのプロパティを通して行われる想定
                         /// </summary>
