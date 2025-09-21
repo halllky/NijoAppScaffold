@@ -28,7 +28,14 @@ export async function callAspNetCoreApiAsync(endpoint: string, init: RequestInit
     ? `${ASP_NET_CORE_BASE_URL}${endpoint.slice(1)}`
     : `${ASP_NET_CORE_BASE_URL}${endpoint}`
   return await fetch(url, {
-    // credentials: 'include', // 認証用のCookieを付加する場合は指定する
+    // 認証用のCookieを付加する場合は指定する
+    // credentials: 'include',
+
+    // 開発環境では CORS を許可する。ASP.NET Core のサーバーを呼ぶため。
+    // より安全にする場合はクライアント側でこのオプションを指定するのをやめ、
+    // ASP.NET Core 側で Vite からのリクエストを許可するようにする。
+    mode: import.meta.env.DEV ? 'cors' : undefined,
+
     ...init,
   })
 }

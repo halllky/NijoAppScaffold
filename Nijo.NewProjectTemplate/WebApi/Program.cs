@@ -10,6 +10,18 @@ builder.Services.AddControllers(options => {
 // swagger。デバッグのためにこのアプリで定義されているエンドポイントを一覧する
 builder.Services.AddSwaggerGen();
 
+// CORS設定
+builder.Services.AddCors(options => {
+    // 開発環境ではViteからのリクエストを許可
+    if (builder.Environment.IsDevelopment()) {
+        options.AddDefaultPolicy(policy => {
+            policy.AllowAnyOrigin()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        });
+    }
+});
+
 // アプリケーションサービス層のDI設定
 var appConfig = new MyApp.OverridedApplicationConfigure();
 appConfig.ConfigureServices(builder.Services);
@@ -35,15 +47,19 @@ if (app.Environment.IsDevelopment()) {
     app.UseDeveloperExceptionPage();
 
 } else {
-    app.UseHsts();
+    // セキュリティの設定が必要なら追加
+    // app.UseHsts();
 
     // 本番環境では client フォルダのソースは1個の JavaScript ファイルにバンドルされて静的ファイルとして配信される
     app.UseStaticFiles();
 }
 
+// CORSミドルウェアを追加
+app.UseCors();
+
 app.MapDefaultControllerRoute();
 
-app.UseHttpsRedirection();
-app.UseCors();
+// セキュリティの設定が必要なら追加
+// app.UseHttpsRedirection();
 
 app.Run();
