@@ -67,7 +67,7 @@ if %CHANGES_EXIST% neq 0 (
 @rem マイグレーションの名前をユーザーに入力させる 
 
 echo. 
-set /p MIGRATION_NAME="マイグレーション名を入力してください: " 
+set /p MIGRATION_NAME="マイグレーション名を入力してください。DB定義更新SQLはファイル名の昇順で適用されます。適用されるべき順番になるように名前をつけてください。: " 
 if "%MIGRATION_NAME%"=="" ( 
     echo マイグレーション名が入力されませんでした。 
     exit /b 1 
@@ -113,9 +113,11 @@ if errorlevel 1 (
 ) 
  
 echo マイグレーションスクリプトが %MIGRATION_SCRIPT_DIR%\%MIGRATION_NAME%.sql に生成されました。 
+echo データの破壊が起きるようなSQLになっていないかなど慎重に確認してください。 
+echo 完了したら何かキーを押してください... 
+pause 
  
 @rem ------------------------------------ 
 @rem Exit 
 echo. 
-echo 処理が完了しました。 
 exit /b 0 
