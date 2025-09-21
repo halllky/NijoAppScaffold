@@ -6,13 +6,13 @@ chcp 65001
  
 dotnet --version 
 if errorlevel 1 ( 
-    echo 'dotnet' is not installed. Please install it from Official Site. 
+    echo 'dotnet' がインストールされていません。公式サイトからインストールしてください。 
     exit /b 1 
 ) 
  
 call npm --version 
 if errorlevel 1 ( 
-    echo 'npm' is not installed. Please install it from Official Site. 
+    echo 'npm' がインストールされていません。公式サイトからインストールしてください。 
     exit /b 1 
 ) 
  
@@ -20,7 +20,7 @@ if errorlevel 1 (
 @rem Install Node.js packages if not installed 
 pushd %~dp0..\\client 
 if not exist node_modules ( 
-    echo 'node_modules' is not installed. Would you like to install it? 
+    echo node_modules （このアプリで使用しているNode.jsの各種ライブラリ）がインストールされていません。インストールしますか？ 
     choice /c yn 
     if errorlevel 2 ( 
         exit /b 1 
@@ -28,7 +28,7 @@ if not exist node_modules (
     call npm ci 
  
     if not errorlevel 0 ( 
-        echo Failed to install Node.js packages. Please try again. 
+        echo Node.jsの各種ライブラリのインストールに失敗しました。再度実行してください。 
         exit /b 1 
     ) 
 ) 

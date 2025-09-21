@@ -24,22 +24,21 @@ for /f "delims=" %%i in ('git status --porcelain 2^>nul') do (
  
 dotnet --version 
 if errorlevel 1 ( 
-    echo 'dotnet' is not installed. Please install it from Official Site. 
+    echo 'dotnet' がインストールされていません。公式サイトからインストールしてください。 
     pause 
     exit /b 1 
 ) 
  
 call npm --version 
 if errorlevel 1 ( 
-    echo 'npm' is not installed. Please install it from Official Site. 
+    echo 'npm' がインストールされていません。公式サイトからインストールしてください。 
     pause 
     exit /b 1 
 ) 
  
 where nijo >nul 2>&1 
 if errorlevel 1 ( 
-    echo 'nijo' is not installed or path is not set. 
-    echo Please install it from Official Site. 
+    echo 'nijo' がインストールされていないかパスが通っていません。公式サイトからインストールしてください。 
     pause 
     exit /b 1 
 ) 
