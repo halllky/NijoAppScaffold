@@ -16,6 +16,25 @@ if errorlevel 1 (
     exit /b 1 
 ) 
  
+where nijo >nul 2>&1 
+if errorlevel 1 ( 
+    echo 'nijo' がインストールされていないかパスが通っていません。公式サイトからインストールしてください。 
+    pause 
+    exit /b 1 
+) 
+ 
+@rem ------------------------------------ 
+@rem ソースコード自動生成処理のかけなおし 
+pushd %~dp0.. 
+ 
+nijo generate 
+if not "%errorlevel%"=="0" ( 
+    echo ソースコード自動生成処理でエラーが発生しました。ビルドを中断します。 
+    pause 
+    exit /b 1 
+) 
+popd 
+ 
 @rem ------------------------------------ 
 @rem Install Node.js packages if not installed 
 pushd %~dp0..\\client 

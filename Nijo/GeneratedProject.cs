@@ -26,6 +26,11 @@ namespace Nijo {
         private const string NIJO_XML = "nijo.xml";
 
         /// <summary>
+        /// 新規アプリのテンプレート。リリースビルド時にzip化されてこのexeのリソースとして埋め込まれる。
+        /// </summary>
+        private const string NEW_PROJECT_TEMPLATE_ZIP_NAME = "Nijo.NewProjectTemplate.zip";
+
+        /// <summary>
         /// 新しいNijoApplicationBuilderプロジェクトを作成します。
         /// </summary>
         /// <param name="projectRoot">プロジェクトのルートディレクトリの絶対パス。</param>
@@ -45,8 +50,7 @@ namespace Nijo {
                 // git archive したアプリケーションテンプレートを展開する。
                 // アプリケーションテンプレートは埋め込みリソースになっている。
                 var assembly = Assembly.GetExecutingAssembly();
-                const string RESOURCE_NAME = "Nijo.ApplicationTemplate.Ver1.zip";
-                using (var stream = assembly.GetManifestResourceStream(RESOURCE_NAME)) {
+                using (var stream = assembly.GetManifestResourceStream(NEW_PROJECT_TEMPLATE_ZIP_NAME)) {
                     if (stream == null) {
                         project = null;
                         error = "アプリケーションテンプレートのリソースが見つかりません。" +
@@ -74,9 +78,8 @@ namespace Nijo {
         /// </summary>
         /// <param name="projectRoot">プロジェクトのルートディレクトリの絶対パス。</param>
         /// <param name="logger">ロガー。</param>
-        /// <param name="skipNpmCi">trueの場合、npm ciコマンドをスキップします。</param>
         /// <returns>成功した場合は true、エラーメッセージ付きで失敗した場合は false。</returns>
-        public static async Task<(bool Success, string? ErrorMessage)> CreatePhysicalProjectAndInstallDependenciesAsync(string projectRoot, ILogger logger, bool skipNpmCi = false) {
+        public static (bool Success, string? ErrorMessage) CreatePhysicalProjectAndInstallDependenciesAsync(string projectRoot, ILogger logger) {
             try {
                 Directory.CreateDirectory(projectRoot);
 
@@ -84,8 +87,7 @@ namespace Nijo {
                 // アプリケーションテンプレートは埋め込みリソースになっている。
                 // リポジトリのルートにある release.bat でビルドしたときのみ埋め込まれる。
                 var assembly = Assembly.GetExecutingAssembly();
-                const string RESOURCE_NAME = "Nijo.ApplicationTemplate.Ver1.zip";
-                using (var stream = assembly.GetManifestResourceStream(RESOURCE_NAME)) {
+                using (var stream = assembly.GetManifestResourceStream(NEW_PROJECT_TEMPLATE_ZIP_NAME)) {
                     if (stream == null) {
                         return (false,
                             "アプリケーションテンプレートのリソースが見つかりません。" +
@@ -95,28 +97,6 @@ namespace Nijo {
 
                     using var archive = new ZipArchive(stream);
                     archive.ExtractToDirectory(projectRoot);
-                }
-
-                // npm ciをスキップするかどうかチェック
-                if (!skipNpmCi) {
-                    // npm ci
-                    var npmCiResult = await ProcessExtension.ExecuteProcessAsync(startInfo => {
-                        startInfo.FileName = "npm.cmd";
-                        startInfo.Arguments = "ci";
-                        startInfo.WorkingDirectory = Path.Combine(projectRoot, "react");
-                    }, (std, line) => {
-                        if (std == ProcessExtension.E_STD.StdOut) {
-                            logger.LogInformation(line);
-                        } else {
-                            logger.LogError(line);
-                        }
-                    });
-
-                    if (npmCiResult != 0) {
-                        return (false, "npm ci に失敗しました。");
-                    }
-                } else {
-                    logger.LogInformation("npm ciをスキップしました。");
                 }
 
                 return (true, null);

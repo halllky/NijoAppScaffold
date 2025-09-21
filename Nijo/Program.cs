@@ -96,11 +96,6 @@ namespace Nijo {
                 ["-p", "--port"],
                 description: "GUI用のサービスが実行されるポートを明示的に指定します。");
 
-            // npm ciをスキップするオプションを追加
-            var skipNpmCi = new Option<bool>(
-                ["--skip-npm-ci"],
-                description: "npm ciコマンドの実行をスキップします。");
-
             // ---------------------------------------------------
             // ** コマンド **
 
@@ -108,8 +103,8 @@ namespace Nijo {
             var newProject = new Command(
                 name: "new",
                 description: "新規プロジェクトを作成します。")
-                { path, skipNpmCi };
-            newProject.SetHandler(NewProject, path, skipNpmCi);
+                { path };
+            newProject.SetHandler(NewProject, path);
             rootCommand.AddCommand(newProject);
 
             // 検証
@@ -178,8 +173,7 @@ namespace Nijo {
         /// 新規プロジェクトを作成します。
         /// </summary>
         /// <param name="path">対象フォルダまでの相対パス</param>
-        /// <param name="skipNpmCi">npm ciコマンドをスキップする場合はtrue</param>
-        private static async Task NewProject(string? path, bool skipNpmCi) {
+        private static void NewProject(string? path) {
             var projectRoot = path == null
                 ? Directory.GetCurrentDirectory()
                 : Path.Combine(Directory.GetCurrentDirectory(), path);
@@ -190,11 +184,7 @@ namespace Nijo {
                 return;
             }
 
-            if (skipNpmCi) {
-                logger.LogInformation("npm ciコマンドをスキップします。");
-            }
-
-            var (success, errorMessage) = await GeneratedProject.CreatePhysicalProjectAndInstallDependenciesAsync(projectRoot, logger, skipNpmCi);
+            var (success, errorMessage) = GeneratedProject.CreatePhysicalProjectAndInstallDependenciesAsync(projectRoot, logger);
 
             if (success) {
                 logger.LogInformation("プロジェクトの作成が完了しました: {projectRoot}", projectRoot);

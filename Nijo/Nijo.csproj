@@ -56,8 +56,8 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="..\temp_release\Nijo.ApplicationTemplate.Ver1.zip" Condition="Exists('..\temp_release\Nijo.ApplicationTemplate.Ver1.zip')">
-      <LogicalName>Nijo.ApplicationTemplate.Ver1.zip</LogicalName>
+    <EmbeddedResource Include="..\temp_release\Nijo.NewProjectTemplate.zip" Condition="Exists('..\temp_release\Nijo.NewProjectTemplate.zip')">
+      <LogicalName>Nijo.NewProjectTemplate.zip</LogicalName>
     </EmbeddedResource>
 
     <EmbeddedResource Include="$(ProjectDir)..\Nijo.IntegrationTest\DataPatterns\012_スカラメンバー網羅.xml" LinkBase="NewProjectDefaultXml" />

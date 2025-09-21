@@ -6,8 +6,8 @@ setlocal enabledelayedexpansion
  
 set "NIJO_ROOT=%~dp0" 
 set "PROJECT_ROOT=%NIJO_ROOT%自動テストで作成されたプロジェクト" 
-set "APP_TEMPLATE_DIR=%NIJO_ROOT%Nijo.ApplicationTemplate.Ver1" 
-set "APP_TEMPLATE_ZIP=%NIJO_ROOT%temp_release\Nijo.ApplicationTemplate.Ver1.zip" 
+set "APP_TEMPLATE_DIR=%NIJO_ROOT%Nijo.NewProjectTemplate" 
+set "APP_TEMPLATE_ZIP=%NIJO_ROOT%temp_release\Nijo.NewProjectTemplate.zip" 
  
 @rem gitでコミットされていない変更が1個以上ある場合は確認。y以外は中断 
 if not "%1"=="TEST" ( 
@@ -61,7 +61,7 @@ mkdir "%NIJO_ROOT%temp_release"
 if exist "%APP_TEMPLATE_ZIP%" ( 
   del "%APP_TEMPLATE_ZIP%" 
 ) 
-git archive HEAD:Nijo.ApplicationTemplate.Ver1 --format=zip -o "%APP_TEMPLATE_ZIP%" 
+git archive HEAD:Nijo.NewProjectTemplate --format=zip -o "%APP_TEMPLATE_ZIP%" 
 if not exist "%APP_TEMPLATE_ZIP%" ( 
   @echo アプリケーションテンプレートの圧縮に失敗しました。 
   exit /b 1 
