@@ -43,6 +43,7 @@ public class SchemaParseRule {
             new StaticEnumModel(),
             new ValueObjectModel(),
             new StructureModel(),
+            new ConstantModel(),
         };
         var valueMemberTypes = new IValueMemberType[] {
             new ValueMemberTypes.Word(),
@@ -74,6 +75,8 @@ public class SchemaParseRule {
             BasicNodeOptions.DecimalPlace,
             BasicNodeOptions.SequenceName,
             BasicNodeOptions.UserHelpText,
+            BasicNodeOptions.ConstantType,
+            BasicNodeOptions.ConstantValue,
         };
         return new() {
             Models = models,

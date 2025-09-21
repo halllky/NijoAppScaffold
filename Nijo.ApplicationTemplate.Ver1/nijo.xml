@@ -493,4 +493,71 @@
       </通知設定一覧>
     </設定情報>
   </ログインユーザー情報>
+  <!-- アプリケーション設定の定数定義 -->
+  <ApplicationSettings Type="constant-model" DisplayName="アプリケーション設定" UniqueId="const-app-settings-001">
+    <!-- クライアント側のトップページの表示に利用。 -->
+    <AppName ConstantType="string" ConstantValue="医療機器管理システム" DisplayName="アプリケーション名" UniqueId="const-app-name-001" />
+    <!-- csprojファイルのバージョン番号と合わせること。 -->
+    <Version ConstantType="string" ConstantValue="1.0.0" DisplayName="バージョン" UniqueId="const-version-001" />
+    <MaxRetryCount ConstantType="int" ConstantValue="3" DisplayName="最大リトライ回数" UniqueId="const-max-retry-001" />
+    <TimeoutSeconds ConstantType="decimal" ConstantValue="30.5" DisplayName="タイムアウト秒数" UniqueId="const-timeout-001" />
+
+    <Database ConstantType="child" DisplayName="データベース設定" UniqueId="const-db-group-001">
+      <ConnectionTimeout ConstantType="int" ConstantValue="30" DisplayName="接続タイムアウト" UniqueId="const-db-conn-timeout-001" />
+      <CommandTimeout ConstantType="int" ConstantValue="60" DisplayName="コマンドタイムアウト" UniqueId="const-db-cmd-timeout-001" />
+      <MaxConnections ConstantType="int" ConstantValue="100" DisplayName="最大接続数" UniqueId="const-db-max-conn-001" />
+    </Database>
+
+    <Messages ConstantType="child" DisplayName="メッセージ" UniqueId="const-msg-group-001">
+      <Success ConstantType="template" ConstantValue="正常に処理されました" DisplayName="成功メッセージ" UniqueId="const-msg-success-001" />
+      <!-- コロンの後ろには開発者向けの情報ではなくアプリケーションのユーザーに向けた文字にすること。 -->
+      <Error ConstantType="template" ConstantValue="エラーが発生しました: {0}" DisplayName="エラーメッセージ" UniqueId="const-msg-error-001" />
+      <!-- プレースホルダーが複数ある場合のテスト -->
+      <ValidationError ConstantType="template" ConstantValue="{0}フィールドで{1}エラーが発生しました。詳細: {2}" DisplayName="バリデーションエラー" UniqueId="const-msg-validation-001" />
+      <!-- プレースホルダーが0個の場合のテスト -->
+      <SystemMaintenance ConstantType="template" ConstantValue="システムメンテナンス中です。しばらくお待ちください。" DisplayName="メンテナンスメッセージ" UniqueId="const-msg-maintenance-001" />
+    </Messages>
+
+    <API ConstantType="child" DisplayName="API設定" UniqueId="const-api-group-001">
+      <BaseUrl ConstantType="string" ConstantValue="https://api.example-medical-test.local.example.com" DisplayName="APIベースURL" UniqueId="const-api-base-url-001" />
+      <!-- 特殊文字のテスト -->
+      <AuthHeader ConstantType="template" ConstantValue="Bearer {0}" DisplayName="認証ヘッダー" UniqueId="const-api-auth-header-001" />
+      <!-- 引用符を含む文字列のテスト -->
+      <JsonFormat ConstantType="template" ConstantValue="{&quot;message&quot;: &quot;{0}&quot;, &quot;timestamp&quot;: &quot;{1}&quot;}" DisplayName="JSONフォーマット" UniqueId="const-api-json-format-001" />
+    </API>
+
+    <UI ConstantType="child" DisplayName="UI設定" UniqueId="const-ui-group-001">
+      <PageSize ConstantType="int" ConstantValue="20" DisplayName="ページサイズ" UniqueId="const-ui-page-size-001" />
+      <MaxFileSize ConstantType="decimal" ConstantValue="10.5" DisplayName="最大ファイルサイズ(MB)" UniqueId="const-ui-max-file-size-001" />
+
+      <Colors ConstantType="child" DisplayName="カラー設定" UniqueId="const-ui-colors-group-001">
+        <Primary ConstantType="string" ConstantValue="#007bff" DisplayName="プライマリカラー" UniqueId="const-ui-color-primary-001" />
+        <Secondary ConstantType="string" ConstantValue="#6c757d" DisplayName="セカンダリカラー" UniqueId="const-ui-color-secondary-001" />
+        <Success ConstantType="string" ConstantValue="#28a745" DisplayName="成功カラー" UniqueId="const-ui-color-success-001" />
+        <Warning ConstantType="string" ConstantValue="#ffc107" DisplayName="警告カラー" UniqueId="const-ui-color-warning-001" />
+        <Error ConstantType="string" ConstantValue="#dc3545" DisplayName="エラーカラー" UniqueId="const-ui-color-error-001" />
+      </Colors>
+    </UI>
+  </ApplicationSettings>
+
+  <!-- システムメッセージの定数定義 -->
+  <SystemMessages Type="constant-model" DisplayName="システムメッセージ" UniqueId="const-system-messages-001">
+    <!-- 患者管理関連 -->
+    <PatientNotFound ConstantType="template" ConstantValue="患者ID「{0}」が見つかりません" DisplayName="患者未発見エラー" UniqueId="const-patient-not-found-001" />
+    <PatientRegistered ConstantType="template" ConstantValue="患者「{0}」を正常に登録しました" DisplayName="患者登録完了" UniqueId="const-patient-registered-001" />
+
+    <!-- 機器管理関連 -->
+    <EquipmentMaintenance ConstantType="template" ConstantValue="機器「{0}」のメンテナンスが必要です。最終点検日: {1}" DisplayName="機器メンテナンス通知" UniqueId="const-equipment-maintenance-001" />
+    <StockAlert ConstantType="template" ConstantValue="在庫不足: {0}の残り数量が{1}個です" DisplayName="在庫アラート" UniqueId="const-stock-alert-001" />
+
+    <!-- 予約関連 -->
+    <ReservationConfirmed ConstantType="template" ConstantValue="予約を確定しました。予約番号: {0}、日時: {1}" DisplayName="予約確認" UniqueId="const-reservation-confirmed-001" />
+    <ReservationCancelled ConstantType="string" ConstantValue="予約がキャンセルされました" DisplayName="予約キャンセル" UniqueId="const-reservation-cancelled-001" />
+
+    <!-- バックティック（`）を含むテンプレート文字列のテスト -->
+    <ScriptTemplate ConstantType="template" ConstantValue="console.log(`患者ID: ${patientId}, 名前: {0}`);" DisplayName="スクリプトテンプレート" UniqueId="const-script-template-001" />
+
+    <!-- ダブルクォート（"）を含むテンプレート文字列のテスト -->
+    <JsonTemplate ConstantType="template" ConstantValue="{&quot;patientName&quot;: &quot;{0}&quot;, &quot;status&quot;: &quot;active&quot;}" DisplayName="JSONテンプレート" UniqueId="const-json-template-001" />
+  </SystemMessages>
 </NijoApplicationBuilder>
