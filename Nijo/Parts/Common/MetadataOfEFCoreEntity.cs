@@ -78,6 +78,9 @@ internal class MetadataOfEFCoreEntity : IMultiAggregateSourceFile {
                     /// データフローの上流から順番にデータモデルの集約を列挙する。
                     /// </summary>
                     public IEnumerable<Aggregate> EnumerateDataModelsOrderByDataFlow() {
+                {{If(staticContainers.Length == 0, () => $$"""
+                        yield break;
+                """)}}
                 {{staticContainers.SelectTextTemplate(container => $$"""
                         yield return {{container.PhysicalName}}.ToAggregate();
                 """)}}

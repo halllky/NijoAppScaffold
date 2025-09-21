@@ -262,12 +262,20 @@ namespace Nijo {
 
             // スキーマ定義にかかわらず必ず生成されるモジュールの登録
             ctx.Use<ApplicationService>();
+            ctx.Use<Metadata>();
+            ctx.Use<MetadataOfEFCoreEntity>();
+            ctx.Use<MetadataForPage>();
+
+            // スキーマ定義にかかわらず必ず生成されるモジュールの登録: Query, Command モデル由来のもの
             ctx.Use<JsonUtil>();
             ctx.Use<MessageContainer.BaseClass>();
             ctx.Use<CommandQueryMappings>();
-            ctx.Use<DbContextClass>();
             ctx.Use<Models.QueryModelModules.QueryModelUnitTest>();
             AspNetController.RegisterWebapiConfiguration(ctx);
+
+            // スキーマ定義にかかわらず必ず生成されるモジュールの登録: DataModel 由来のもの
+            ctx.Use<DbContextClass>();
+            ctx.Use<Models.DataModelModules.DummyDataGenerator>();
 
             // IMultiAggregateSourceFile が別の IMultiAggregateSourceFile に依存することがあるので、
             // すべて漏らさず確実に依存関係を登録させる。

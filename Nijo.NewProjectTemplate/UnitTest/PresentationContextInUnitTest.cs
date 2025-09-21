@@ -1,11 +1,11 @@
-﻿using MyApp;
+using MyApp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MyApp.Test;
+namespace MyApp.UnitTest;
 
 /// <summary>
 /// <see cref="IPresentationContext"/> のユニットテスト用の実装

@@ -100,6 +100,9 @@ internal class Metadata : IMultiAggregateSourceFile {
                     /// ルート集約を列挙する。
                     /// </summary>
                     public IEnumerable<{{FOR_REFLECTION_AGGREGATE_CS}}> EnumerateRootAggregates() {
+                {{If(roots.Length == 0, () => $$"""
+                        yield break;
+                """)}}
                 {{roots.SelectTextTemplate(container => $$"""
                         yield return {{container.PhysicalName}}.ToAggregate();
                 """)}}
