@@ -26,7 +26,15 @@ public partial class OverridedApplicationConfigure : DefaultConfiguration {
     /// <summary>
     /// DI設定
     /// </summary>
-    public override void ConfigureServices(IServiceCollection services) {
+    public override void ConfigureServices(IServiceCollection services) => ConfigureServicesPrivate(services, null);
+    /// <summary>
+    /// DI設定。appsettings.json がカレントディレクトリ以外にある場合はこちらのオーバーロードを使用すること。
+    /// </summary>
+    public void ConfigureServices(IServiceCollection services, string basePath) => ConfigureServicesPrivate(services, basePath);
+    /// <summary>
+    /// DI設定
+    /// </summary>
+    private void ConfigureServicesPrivate(IServiceCollection services, string? basePath) {
         // 自動生成される設定処理はすべて行なう
         base.ConfigureServices(services);
 
@@ -38,7 +46,13 @@ public partial class OverridedApplicationConfigure : DefaultConfiguration {
         // 実行時設定ファイルの読み込み設定
         services.AddTransient(provider => {
             var settings = new RuntimeSetting();
-            new ConfigurationBuilder()
+            var builder = new ConfigurationBuilder();
+
+            if (basePath != null) {
+                if (!Path.IsPathRooted(basePath)) throw new ArgumentException($"{nameof(basePath)}は絶対パスで指定してください。");
+                builder.SetBasePath(basePath);
+            }
+            builder
                 .AddJsonFile("appsettings.json", false)
                 .AddJsonFile("appsettings.Development.json", true) // 後にAddされたファイルが優先される
                 .Build()

@@ -107,10 +107,10 @@ public class TestUtilImpl {
 
             var settings = new RuntimeSetting();
 
-            // appsettings.json から読み取る設定を適用
+            // appsettings.json から読み取る設定を適用。WebApiのそれを流用する
             var builder = new ConfigurationBuilder();
-            builder.SetBasePath(solutionRoot)
-                .AddJsonFile("appsettings.json", false)
+            builder.SetBasePath(Path.Combine(solutionRoot, "WebApi"))
+                .AddJsonFile("appsettings.json", true)
                 .AddJsonFile("appsettings.Development.json", true) // 後にAddされたファイルが優先される
                 .Build()
                 .GetSection(RuntimeSetting.MY_APP_SECTION)
