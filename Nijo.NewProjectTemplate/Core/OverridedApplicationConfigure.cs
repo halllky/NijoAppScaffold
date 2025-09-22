@@ -75,7 +75,11 @@ public partial class OverridedApplicationConfigure : DefaultConfiguration {
         // SQLiteを使用する
         var settings = services.GetRequiredService<RuntimeSetting>();
         var connStr = settings.GetCurrentProfile().ConnStr;
-        options.UseSqlite(connStr);
+        options.UseSqlite(connStr, builder => {
+            // マイグレーションファイルが生成されるアセンブリを指定する。
+            // 既定では DbContext が宣言されているプロジェクトになる。
+            builder.MigrationsAssembly(typeof(OverridedApplicationConfigure).Assembly.FullName);
+        });
 
         // 自動生成される登録更新処理は変更追跡オフが前提
         options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
