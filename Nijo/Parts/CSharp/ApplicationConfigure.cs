@@ -22,7 +22,6 @@ namespace Nijo.Parts.CSharp {
         private readonly List<Func<string, string>> _coreConfigureServices = [];
         private readonly List<string> _coreMethods = [];
         private readonly List<string> _webapi = [];
-        private readonly List<Func<string, string>> _addControllers = [];
 
         /// <summary>
         /// ConfigureServicesに生成されるソースコード。
@@ -53,15 +52,6 @@ namespace Nijo.Parts.CSharp {
         public ApplicationConfigure AddWebapiMethod(string abstractMethod) {
             lock (_lock) {
                 _webapi.Add(abstractMethod);
-                return this;
-            }
-        }
-        /// <summary>
-        /// AddControllersの中にレンダリングされるソース。引数はオプション変数の名前
-        /// </summary>
-        public ApplicationConfigure AddControllers(Func<string, string> render) {
-            lock (_lock) {
-                _addControllers.Add(render);
                 return this;
             }
         }
@@ -161,49 +151,6 @@ namespace Nijo.Parts.CSharp {
 
                     namespace {{_ctx.Config.RootNamespace}};
                     public abstract class {{ABSTRACT_CLASS_WEBAPI}} {
-
-                        /// <summary>
-                        /// <see cref="WebApplicationBuilder"/> に対する初期設定を行ないます。
-                        /// </summary>
-                        public virtual void InitWebHostBuilder(WebApplicationBuilder builder) {
-
-                            // HTMLのエンコーディングをUTF-8にする(日本語のHTMLエンコード防止)
-                            builder.Services.Configure<Microsoft.Extensions.WebEncoders.WebEncoderOptions>(options => {
-                                options.TextEncoderSettings = new System.Text.Encodings.Web.TextEncoderSettings(System.Text.Unicode.UnicodeRanges.All);
-                            });
-
-                            // npm start で実行されるポートがASP.NETのそれと別なので
-                            builder.Services.AddCors(options => {
-                                options.AddDefaultPolicy(builder => {
-                                    builder.WithOrigins("{{_ctx.Config.ReactDebuggingUrl.TrimEnd('/')}}")
-                                        .AllowAnyMethod()
-                                        .AllowAnyHeader()
-                                        .AllowCredentials();
-                                });
-                            });
-
-                            builder.Services.AddControllers(option => {
-                                // エラーハンドリング
-                                // TODO ver.1: option.Filters.Add<ここでExceptionFilterを登録>();
-                    {{_addControllers.Select(render => $$"""
-
-                                {{WithIndent(render("option"), "            ")}}
-                    """).OrderBy(source => source).SelectTextTemplate(source => source)}}
-
-                            }).AddJsonOptions(option => {
-                                // JSON日本語設定
-                                option.JsonSerializerOptions.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
-                                option.JsonSerializerOptions.PropertyNamingPolicy = null;
-                            });
-                        }
-
-                        /// <summary>
-                        /// <see cref="WebApplication"/> に対する初期設定を行ないます。
-                        /// </summary>
-                        public virtual void InitWebApplication(WebApplication app) {
-                            // AddCorsの設定をするならこちらも必要
-                            app.UseCors();
-                        }
                     {{_webapi.OrderBy(source => source).SelectTextTemplate(sourceCode => $$"""
 
                         {{WithIndent(sourceCode, "    ")}}

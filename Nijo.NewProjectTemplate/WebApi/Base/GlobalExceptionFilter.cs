@@ -8,6 +8,8 @@ namespace MyApp.WebApi.Base;
 
 /// <summary>
 /// 一般例外発生時のハンドリング処理。
+/// これを設定しておくことで、各アクションの中で try-catch を書かなくても、
+/// 一律で適切なログ出力やレスポンスのハンドリングを行なえる。
 /// </summary>
 public class GlobalExceptionFilter : IAsyncExceptionFilter {
     private readonly NLog.Logger _logger;
