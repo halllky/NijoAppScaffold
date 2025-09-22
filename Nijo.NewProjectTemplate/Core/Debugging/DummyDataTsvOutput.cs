@@ -10,7 +10,8 @@ using System.Threading.Tasks;
 namespace MyApp.Debugging;
 
 /// <summary>
-/// ダミーデータをTSV出力する。
+/// <see cref="IDummyDataOutput"/> のシンプルな実装。
+/// ダミーデータ生成処理でエラーが出た時の確認などのためにダミーデータをTSV出力する。
 /// </summary>
 public class DummyDataTsvOutput : IDummyDataOutput {
     public DummyDataTsvOutput(TextWriter textWriter) {

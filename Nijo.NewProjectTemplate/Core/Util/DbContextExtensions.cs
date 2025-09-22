@@ -35,8 +35,8 @@ public static class DbContextExtensions {
 
         // 各SQLファイルを実行
         foreach (var sqlFile in sqlFiles) {
-            // ファイルの内容を読み込む（エンコード：BOMなしUTF-8）
-            string sql = await File.ReadAllTextAsync(sqlFile, new UTF8Encoding(false));
+            // ファイルの内容を読み込む（エンコード：BOMありUTF-8）
+            string sql = await File.ReadAllTextAsync(sqlFile, new UTF8Encoding(true));
 
             // SQLを実行
             await context.Database.ExecuteSqlRawAsync(sql);
