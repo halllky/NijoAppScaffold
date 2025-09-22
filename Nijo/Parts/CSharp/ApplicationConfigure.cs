@@ -123,10 +123,10 @@ namespace Nijo.Parts.CSharp {
                         /// このメソッドをオーバーライドするときは必ずbaseを呼び出すこと。
                         /// </summary>
                         public virtual void ConfigureServices(IServiceCollection services) {
-                    {{coreConfigureServices.Select(render => $$"""
+                    {{coreConfigureServices.OrderBy(source => source).SelectTextTemplate(render => $$"""
 
                             {{WithIndent(render("services"), "        ")}}
-                    """).OrderBy(source => source).SelectTextTemplate(source => source)}}
+                    """)}}
                         }
                         #endregion DI設定
 
