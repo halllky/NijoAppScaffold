@@ -46,14 +46,19 @@ public class SchemaParseRule {
             new ConstantModel(),
         };
         var valueMemberTypes = new IValueMemberType[] {
+            // 文字列系
             new ValueMemberTypes.Word(),
+            new ValueMemberTypes.Description(),
+            // 数値系
             new ValueMemberTypes.IntMember(),
+            new ValueMemberTypes.DecimalMember(),
+            new ValueMemberTypes.SequenceMember(),
+            // 日付系
             new ValueMemberTypes.DateTimeMember(),
             new ValueMemberTypes.DateMember(),
             new ValueMemberTypes.YearMonthMember(),
             new ValueMemberTypes.YearMember(),
-            new ValueMemberTypes.Description(),
-            new ValueMemberTypes.DecimalMember(),
+            // その他
             new ValueMemberTypes.BoolMember(),
             new ValueMemberTypes.ByteArrayMember(),
         };
