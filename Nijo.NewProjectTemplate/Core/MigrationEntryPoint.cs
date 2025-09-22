@@ -7,7 +7,7 @@ namespace MyApp;
 /// Entity Framework Core のデザインタイム用 DbContext ファクトリ。
 /// dotnet-ef コマンドがマイグレーション処理を行う際に使用される。
 /// </summary>
-public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<MyDbContext> {
+public class MigrationEntryPoint : IDesignTimeDbContextFactory<MyDbContext> {
     public MyDbContext CreateDbContext(string[] args) {
 
         // DI コンテナの構築。appsettings.json は WebApi のものを流用する
