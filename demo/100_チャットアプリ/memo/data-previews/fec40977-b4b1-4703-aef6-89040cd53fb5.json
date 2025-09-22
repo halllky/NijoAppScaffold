@@ -1,0 +1,24 @@
+{
+  "id": "fec40977-b4b1-4703-aef6-89040cd53fb5",
+  "title": "クエリエディタ",
+  "items": [
+    {
+      "id": "dac02eb8-5ed7-4b7c-8caf-9a1a751dd02a",
+      "title": "不具合",
+      "type": "dbTableSingleEditor",
+      "rootTableName": "不具合",
+      "rootItemKey": [
+        "KEY_0000000000_031UH"
+      ],
+      "isSettingCollapsed": false,
+      "layout": {
+        "x": 0,
+        "y": 0,
+        "width": 640,
+        "height": 200
+      },
+      "use-field-array-id": "ec687b56-673d-4cef-8eff-e020eff78e30"
+    }
+  ],
+  "comments": []
+}
