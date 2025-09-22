@@ -26,6 +26,10 @@ namespace Nijo.CodeGenerating {
     /// <see cref="IMultiAggregateSourceFile"/> の状態を管理する
     /// </summary>
     public interface IMultiAggregateSourceFileManager {
+        /// <summary>
+        /// スキーマ定義
+        /// </summary>
+        ImmutableSchema.ApplicationSchema Schema { get; }
         /// <inheritdoc cref="GeneratedProjectOptions"/>
         GeneratedProjectOptions Config { get; }
         /// <summary>

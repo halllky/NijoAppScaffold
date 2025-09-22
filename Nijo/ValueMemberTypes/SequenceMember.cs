@@ -47,7 +47,31 @@ namespace Nijo.ValueMemberTypes {
         UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.NumberMemberConstraint;
 
         void IValueMemberType.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
-            // 特になし
+            // シーケンスが1個以上定義されている場合、シーケンス採番の構文をユーザーに定義させる
+            var hasSequence = ctx.Schema
+                .GetRootAggregates()
+                .Where(root => root.Model is Models.DataModel)
+                .SelectMany(root => root.EnumerateThisAndDescendants())
+                .SelectMany(agg => agg.GetMembers())
+                .Any(member => member is ValueMember vm && vm.Type is SequenceMember);
+            if (hasSequence) {
+                ctx.Use<ApplicationConfigure>().AddCoreMethod(
+                    $$"""
+                    /// <summary>
+                    /// EFCoreのモデル定義処理で呼ばれます。
+                    /// シーケンス採番の構文を定義してください。
+                    /// <code>
+                    /// // SQL Server の場合
+                    /// property.HasDefaultValueSql($"NEXT VALUE FOR {sequenceName}");
+                    /// // Oracle の場合
+                    /// property.HasDefaultValueSql($"NEXTVAL('{sequenceName}')");
+                    /// // SQLite の場合
+                    /// property.HasAnnotation("Sqlite:Autoincrement", true);
+                    /// </code>
+                    /// </summary>
+                    protected abstract void {{CONFIGURE_MEMBER}}(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<int?> property, string sequenceName);
+                    """);
+            }
         }
         void IValueMemberType.RenderStaticSources(CodeRenderingContext ctx) {
             // 特になし
@@ -62,7 +86,11 @@ namespace Nijo.ValueMemberTypes {
         }
 
         #region 採番処理
-        internal const string SET_METHOD = "GenerateAndSetSequenceValue";
+        /// <summary>
+        /// <see cref="ApplicationConfigure"/> で使用するメソッド名。
+        /// 具体的なシーケンス設定方法はRDBMSにより異なるため、自動生成はせずにユーザーに定義させる。
+        /// </summary>
+        internal const string CONFIGURE_MEMBER = "ConfigureSequenceMember";
         #endregion 採番処理
     }
 }

@@ -181,9 +181,6 @@ namespace Nijo.Models.DataModelModules {
             var keys = columns
                 .Where(col => col.IsKey)
                 .ToArray();
-            var sequences = columns
-                .Where(col => col.Member.Type is SequenceMember)
-                .ToArray();
 
             var navigations = GetNavigationProperties().ToArray();
             var navigationsForDeclaring = navigations
@@ -294,6 +291,10 @@ namespace Nijo.Models.DataModelModules {
                 """)}}
                             .IsRequired({{(col.IsKey || col.Member.IsRequired ? "true" : "false")}})
                             .HasColumnOrder({{ix}});
+                {{If(col.Member.Type is SequenceMember, () => $$"""                
+                        {{SequenceMember.CONFIGURE_MEMBER}}(entity.Property(e => e.{{col.PhysicalName}}), "{{col.Member.SequenceName}}");
+
+                """)}}
                 """)}}
                         entity.Property(e => e.{{CREATED_AT}})
                             .HasColumnName("{{ctx.Config.CreatedAtDbColumnName.Replace("\"", "\\\"")}}")

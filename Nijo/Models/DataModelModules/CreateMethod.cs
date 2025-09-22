@@ -39,11 +39,6 @@ namespace Nijo.Models.DataModelModules {
                 })
                 .ToArray();
 
-            var hasSequence = _rootAggregate
-                .EnumerateThisAndDescendants()
-                .SelectMany(agg => agg.GetMembers())
-                .Any(member => member is ValueMember vm && vm.Type is SequenceMember);
-
             return $$"""
                 #region 新規登録処理
                 /// <summary>
@@ -82,11 +77,6 @@ namespace Nijo.Models.DataModelModules {
 
                     if (DbContext.Database.CurrentTransaction == null) throw new InvalidOperationException("トランザクションが開始されていません。");
 
-                {{If(hasSequence, () => $$"""
-                    // シーケンス項目
-                    {{SequenceMember.SET_METHOD}}(dbEntity);
-
-                """)}}
                     // 更新実行
                     const string SAVE_POINT = "SAVE_POINT"; // 更新後処理でエラーが発生した場合はこのデータの更新のみロールバックする
                     await DbContext.Database.CurrentTransaction.CreateSavepointAsync(SAVE_POINT);
