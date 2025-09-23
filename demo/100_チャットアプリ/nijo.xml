@@ -16,7 +16,7 @@
     <!--メッセージ初回作成時以降は変更不可-->
     <チャンネル直下か Type="bool" UniqueId="f2a41639-b503-4d8a-b8af-ec5f064a4428" />
     <!--チャンネル直下のメッセージのみ指定可能-->
-    <返信先メッセージSEQ Type="word" UniqueId="d89c82d2-6396-45b4-b51e-be2e1f772c60" />
+    <返信先メッセージSEQ Type="int" UniqueId="d89c82d2-6396-45b4-b51e-be2e1f772c60" />
     <編集済みか Type="bool" UniqueId="cd990ea6-2faa-4dcc-b7bf-6470e0294a5c" />
   </メッセージ>
   <アカウントView Type="query-model" UniqueId="e7d73abf-894e-4f0c-b090-5d3745988ff2">
@@ -24,7 +24,7 @@
     <アカウント名 Type="word" UniqueId="3c3ccdf3-bf82-438f-b58d-702a143a5e9e" />
   </アカウントView>
   <メッセージView Type="query-model" UniqueId="e52d5d28-434c-4994-a575-bfcf898b1fc1">
-    <メッセージSEQ Type="word" UniqueId="15a6bbf1-6013-45d8-a5a9-e3a33a83c53b" />
+    <メッセージSEQ Type="int" UniqueId="15a6bbf1-6013-45d8-a5a9-e3a33a83c53b" />
     <本文 Type="description" UniqueId="d8340509-bf1c-42a1-a60b-4b27593e4d76" />
     <記載者 Type="ref-to:アカウントView" UniqueId="f56e2609-62c4-47ea-8ebf-52500accaec9" />
     <チャンネル直下か Type="bool" UniqueId="8a034d11-a3a6-4c0a-ad8d-cc325b3a27db" />

@@ -9,7 +9,8 @@
 # 開発者個人設定
 appsettings.Development.json
 
-# SQLiteのコミット前の状態が保存される一時ファイル
+# SQLite
+*.sqlite3
 *.sqlite3-shm
 *.sqlite3-wal
 
