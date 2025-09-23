@@ -61,17 +61,25 @@ namespace Nijo.ValueMemberTypes {
                     $$"""
                     /// <summary>
                     /// EFCoreのモデル定義処理で呼ばれます。
-                    /// シーケンス採番の構文を定義してください。
+                    /// シーケンス作成定義、採番構文定義をしてください。
                     /// <code>
                     /// // SQL Server の場合
+                    /// modelBuilder.HasSequence<int>(sequenceName).StartsAt(1).IncrementsBy(1);
                     /// property.HasDefaultValueSql($"NEXT VALUE FOR {sequenceName}");
+                    ///
                     /// // Oracle の場合
+                    /// modelBuilder.HasSequence<int>(sequenceName).StartsAt(1).IncrementsBy(1);
                     /// property.HasDefaultValueSql($"NEXTVAL('{sequenceName}')");
-                    /// // SQLite の場合
+                    ///
+                    /// // SQLite の場合（SQLiteにはシーケンスがないため、AUTO_INCREMENTを使用）
                     /// property.HasAnnotation("Sqlite:Autoincrement", true);
                     /// </code>
                     /// </summary>
-                    protected abstract void {{CONFIGURE_MEMBER}}(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<int?> property, string sequenceName);
+                    protected abstract void {{CONFIGURE_MEMBER}}(
+                        Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder,
+                        Microsoft.EntityFrameworkCore.Metadata.Builders.EntityTypeBuilder entity,
+                        Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<int?> property,
+                        string sequenceName);
                     """);
             }
         }
