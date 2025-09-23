@@ -33,8 +33,10 @@ namespace Nijo.ValueMemberTypes {
         }
 
         void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
-            // シーケンス型の検証
-            // シーケンス型は通常データベース側で自動的に値が設定されるため、特別な検証は不要です
+            var sequenceName = element.Attribute(BasicNodeOptions.SequenceName.AttributeName);
+            if (sequenceName is null || string.IsNullOrWhiteSpace(sequenceName.Value)) {
+                addError(element, "シーケンス名が指定されていません。");
+            }
         }
 
         ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => new() {
