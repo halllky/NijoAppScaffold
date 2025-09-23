@@ -12,6 +12,7 @@ set "MIGRATION_SCRIPT_DIR=%~dp0..\Core\MigrationsScript"
 dotnet-ef --version 
 if errorlevel 1 ( 
     echo 'dotnet' がインストールされていません。公式サイトからインストールしてください。 
+    pause 
     exit /b 1 
 ) 
  
@@ -58,6 +59,7 @@ if %CHANGES_EXIST% neq 0 (
     choice /c yn /m "マイグレーションを続行しますか？" 
     if errorlevel 2 ( 
         echo マイグレーションをキャンセルしました。 
+        pause 
         exit /b 0 
     ) 
 ) 
@@ -69,6 +71,7 @@ echo.
 set /p MIGRATION_NAME="マイグレーション名を入力してください。DB定義更新SQLはファイル名の昇順で適用されます。適用されるべき順番になるように名前をつけてください。: " 
 if "%MIGRATION_NAME%"=="" ( 
     echo マイグレーション名が入力されませんでした。 
+    pause 
     exit /b 1 
 ) 
 
@@ -83,6 +86,7 @@ if not exist %MIGRATION_DIR% (
 dotnet ef migrations add "%MIGRATION_NAME%" --project %TARGET_PROJECT% --startup-project %STARTUP_PROJECT% --output-dir %MIGRATION_DIR% 
 if errorlevel 1 ( 
     echo マイグレーションの追加に失敗しました。 
+    pause 
     exit /b 1 
 ) 
 
@@ -108,6 +112,7 @@ if not exist %MIGRATION_SCRIPT_DIR% (
 dotnet ef migrations script --project %TARGET_PROJECT% --startup-project %STARTUP_PROJECT% --output %MIGRATION_SCRIPT_DIR%\%MIGRATION_NAME%.sql 
 if errorlevel 1 ( 
     echo マイグレーションスクリプトの生成に失敗しました。 
+    pause 
     exit /b 1 
 ) 
  

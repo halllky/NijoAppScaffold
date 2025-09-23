@@ -7,12 +7,14 @@ chcp 65001
 dotnet --version 
 if errorlevel 1 ( 
     echo 'dotnet' がインストールされていません。公式サイトからインストールしてください。 
+    pause 
     exit /b 1 
 ) 
  
 call npm --version 
 if errorlevel 1 ( 
     echo 'npm' がインストールされていません。公式サイトからインストールしてください。 
+    pause 
     exit /b 1 
 ) 
  
@@ -47,7 +49,8 @@ if not exist node_modules (
     call npm ci 
  
     if not errorlevel 0 ( 
-        echo Node.jsの各種ライブラリのインストールに失敗しました。再度実行してください。 
+        echo Node.jsの各種ライブラリのインストールに失敗しました。 
+        pause 
         exit /b 1 
     ) 
 ) 
