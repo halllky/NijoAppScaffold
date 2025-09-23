@@ -9,7 +9,7 @@
     <チャンネル名 IsRequired="True" Type="word" UniqueId="9f8c48f8-bd8e-4d13-a0e2-00c6918a9859" />
   </チャンネル>
   <メッセージ Type="data-model" UniqueId="7237cbb2-a241-471e-a678-fba61f2dafab">
-    <メッセージSEQ IsKey="True" Type="sequence" UniqueId="1103d98f-b4d8-4eef-8fa6-60f6ec00ed1d" />
+    <メッセージSEQ IsKey="True" SequenceName="MSG_SEQ" Type="sequence" UniqueId="1103d98f-b4d8-4eef-8fa6-60f6ec00ed1d" />
     <本文 Type="description" UniqueId="15b2fa8e-239c-49c3-b2e4-28c9a593078a" />
     <記載者 Type="ref-to:アカウント" UniqueId="1f898d6e-47cb-4104-8581-f5495ca33b9f" />
     <チャンネル Type="ref-to:チャンネル" UniqueId="4c53ff2a-a7bd-4f85-b1d4-8968e379b19f" />
