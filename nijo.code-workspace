@@ -41,7 +41,7 @@
     "version": "2.0.0",
     "tasks": [
       {
-        "label": "Nijo: テンプレプロジェクトのコード自動生成をかけなおす",
+        "label": "Nijo > テンプレプロジェクト：コード自動生成をかけなおす",
         "command": ".\\run-nijo-exe.bat",
         "type": "shell",
         "args": [
@@ -53,7 +53,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Nijo: テンプレプロジェクトのデバッグ実行を開始する",
+        "label": "Nijo > テンプレプロジェクト：デバッグ",
         "command": ".\\run-nijo-exe.bat",
         "type": "shell",
         "args": [
@@ -65,7 +65,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Nijo: テンプレプロジェクトのデバッグ実行を開始する（コード自動生成スキップ）",
+        "label": "Nijo > テンプレプロジェクト：デバッグ（コード自動生成スキップ）",
         "command": ".\\run-nijo-exe.bat",
         "type": "shell",
         "args": [
@@ -90,7 +90,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Nijo: スキーマ定義編集UIのデバッグ実行を開始する",
+        "label": "Nijo > スキーマ定義編集UI：デバッグ",
         "command": ".\\TASK_DEBUG.bat",
         "type": "shell",
         "problemMatcher": [],
@@ -99,7 +99,7 @@
         },
       },
       {
-        "label": "Nijo: スキーマ定義編集UIのビルドおよび発行を行う",
+        "label": "Nijo > スキーマ定義編集UI：リリース",
         "command": ".\\TASK_PUBLISH.bat",
         "type": "shell",
         "problemMatcher": [],
@@ -108,7 +108,7 @@
         },
       },
       {
-        "label": "Nijo: リリースモジュール作成",
+        "label": "Nijo > リリース",
         "command": ".\\release.bat",
         "type": "shell",
         "problemMatcher": [],
@@ -117,7 +117,7 @@
         },
       },
       {
-        "label": "Nijo: ドキュメントのデバッグ",
+        "label": "Nijo > ドキュメント：デバッグ",
         "command": ".\\task\\DEBUG.bat",
         "type": "shell",
         "problemMatcher": [],
@@ -126,7 +126,7 @@
         },
       },
       {
-        "label": "Nijo: ドキュメントのビルド",
+        "label": "Nijo > ドキュメント：リリース",
         "command": ".\\task\\RELEASE.bat",
         "type": "shell",
         "problemMatcher": [],
@@ -135,7 +135,7 @@
         },
       },
       {
-        "label": "Nijo: UIコンポーネントのデバッグ",
+        "label": "Nijo > 標準UIコンポーネント：デバッグ",
         "command": "npm run dev:ui-components-debug",
         "type": "shell",
         "problemMatcher": [
@@ -146,21 +146,33 @@
         },
       },
       {
-        "label": "Nijo: スキーマエディタのデバッグ",
-        "command": "npm run dev:schema-editor",
-        "type": "shell",
-        "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Nijo.ApplicationTemplate.Ver1/react"
-        }
-      },
-      {
-        "label": "Nijo: テンプレの集約定義に依存しないソースを各デモにコピー",
-        "command": ".\\テンプレの集約定義に依存しないソースを各デモにコピー.bat",
+        "label": "Nijo > デモ：ソース最新化",
+        "command": ".\\ソース最新化.bat",
         "type": "shell",
         "options": {
           "cwd": "${workspaceFolder:NijoApplicationBuilder}/demo"
         },
         "problemMatcher": []
+      },
+      {
+        "label": "Nijo > デモ：デバッグ",
+        "type": "shell",
+        "command": ".\\${input:demoFolder}\\Task\\DEBUG.bat",
+        "options": {
+          "cwd": "${workspaceFolder:NijoApplicationBuilder}/demo"
+        },
+        "problemMatcher": []
+      }
+    ],
+    "inputs": [
+      {
+        "id": "demoFolder",
+        "description": "デモを選択してください",
+        "type": "pickString",
+        "options": [
+          // demo 直下のフォルダの名前をここに記載
+          "100_チャットアプリ"
+        ]
       }
     ]
   }
