@@ -7,13 +7,6 @@
     "build": "tsc && vite build"
   },
   "dependencies": {
-    "@nijo/ui-components": "file:../package_ui-components",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "@heroicons/react": "^2.2.0",
-    "react-use-event-hook": "^0.9.6"
-  },
-  "devDependencies": {
-    "vite-plugin-singlefile": "^2.2.0"
+    "@nijo/ui-components": "file:../package_ui-components"
   }
 }
