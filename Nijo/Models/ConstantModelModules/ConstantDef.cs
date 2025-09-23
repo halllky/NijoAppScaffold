@@ -14,13 +14,11 @@ namespace Nijo.Models.ConstantModelModules {
     /// 定数定義
     /// </summary>
     internal class ConstantDef {
-        internal ConstantDef(ConstantDefParser parser, RootAggregate rootAggregate) {
+        internal ConstantDef(ConstantDefParser parser) {
             _parser = parser;
-            _rootAggregate = rootAggregate;
         }
 
         private readonly ConstantDefParser _parser;
-        private readonly RootAggregate _rootAggregate;
 
         internal string DisplayName => _parser.DisplayName;
         internal string CsClassName => _parser.CsClassName;
@@ -37,25 +35,20 @@ namespace Nijo.Models.ConstantModelModules {
             var rootConstants = constants.Where(c => !c.Path.Contains('.')).ToList();
             var rootGroups = groups.Where(g => !g.Path.Contains('.')).ToList();
 
-            var xmlComment = ctx.SchemaParser.GetComment(_parser.Element, E_CsTs.CSharp);
-            var commentLines = new List<string>();
-            commentLines.Add("/// <summary>");
-            commentLines.Add($"/// {DisplayName}");
-            if (!string.IsNullOrEmpty(xmlComment)) {
-                foreach (var line in xmlComment.Split(new[] { "\\r\\n" }, StringSplitOptions.None)) {
-                    commentLines.Add($"/// {line.Trim()}");
-                }
-            }
-            commentLines.Add("/// </summary>");
-            var classComment = string.Join("\n", commentLines);
+            var xmlComment = ctx.SchemaParser.GetCommentLines(_parser.RootAggregateElement);
 
             return $$"""
                 namespace {{ctx.Config.RootNamespace}};
 
-                {{classComment}}
+                /// <summary>
+                /// {{DisplayName}}
+                {{xmlComment.SelectTextTemplate(line => $$"""
+                /// {{line}}
+                """)}}
+                /// </summary>
                 public static class {{CsClassName}} {
                 {{rootConstants.Where(c => c.Type != "template").SelectTextTemplate(constant => $$"""
-                    {{WithIndent(RenderCSharpConstant(constant), "    ")}}
+                    {{WithIndent(RenderCSharpConstant(constant, ctx), "    ")}}
                 """)}}
                 {{rootConstants.Where(c => c.Type == "template").SelectTextTemplate(constant => $$"""
                     {{WithIndent(constant.RenderCSharpTemplateFunction(), "    ")}}
@@ -67,7 +60,7 @@ namespace Nijo.Models.ConstantModelModules {
                 """;
         }
 
-        private IEnumerable<string> RenderCSharpNestedClass(ConstantGroupDef group, List<ConstantValueDef> allConstants, List<ConstantGroupDef> allGroups, CodeRenderingContext ctx) {
+        private string RenderCSharpNestedClass(ConstantGroupDef group, List<ConstantValueDef> allConstants, List<ConstantGroupDef> allGroups, CodeRenderingContext ctx) {
             // このグループ内の定数を生成
             var groupConstants = allConstants.Where(c => c.Path.StartsWith(group.Path + ".") &&
                                                         c.Path.Substring(group.Path.Length + 1).IndexOf('.') == -1).ToList();
@@ -76,20 +69,18 @@ namespace Nijo.Models.ConstantModelModules {
             var childGroups = allGroups.Where(g => g.Path.StartsWith(group.Path + ".") &&
                                                    g.Path.Substring(group.Path.Length + 1).IndexOf('.') == -1).ToList();
 
-            var xmlComment = ctx.SchemaParser.GetComment(group.Element, E_CsTs.CSharp);
-            yield return "/// <summary>";
-            yield return $"/// {group.DisplayName}";
-            if (!string.IsNullOrEmpty(xmlComment)) {
-                foreach (var line in xmlComment.Split(new[] { "\\r\\n" }, StringSplitOptions.None)) {
-                    yield return $"/// {line.Trim()}";
-                }
-            }
-            yield return "/// </summary>";
+            var xmlComment = ctx.SchemaParser.GetCommentLines(group.Element);
 
-            yield return $$"""
+            return $$"""
+                /// <summary>
+                /// {{group.DisplayName}}
+                {{xmlComment.SelectTextTemplate(line => $$"""
+                /// {{line}}
+                """)}}
+                /// </summary>
                 public static class {{group.Name}} {
                 {{groupConstants.Where(c => c.Type != "template").SelectTextTemplate(constant => $$"""
-                    {{WithIndent(RenderCSharpConstant(constant), "    ")}}
+                    {{WithIndent(RenderCSharpConstant(constant, ctx), "    ")}}
                 """)}}
                 {{groupConstants.Where(c => c.Type == "template").SelectTextTemplate(constant => $$"""
                     {{WithIndent(constant.RenderCSharpTemplateFunction(), "    ")}}
@@ -101,7 +92,7 @@ namespace Nijo.Models.ConstantModelModules {
                 """;
         }
 
-        private string GetCSharpType(string constantType) {
+        private static string GetCSharpType(string constantType) {
             return constantType switch {
                 "int" => "int",
                 "decimal" => "decimal",
@@ -120,20 +111,15 @@ namespace Nijo.Models.ConstantModelModules {
             var rootConstants = constants.Where(c => !c.Path.Contains('.')).ToList();
             var rootGroups = groups.Where(g => !g.Path.Contains('.')).ToList();
 
-            var xmlComment = ctx.SchemaParser.GetComment(_parser.Element, E_CsTs.TypeScript);
-            var commentLines = new List<string>();
-            commentLines.Add("/**");
-            commentLines.Add($" * {DisplayName}");
-            if (!string.IsNullOrEmpty(xmlComment)) {
-                foreach (var line in xmlComment.Split(new[] { "\\n" }, StringSplitOptions.None)) {
-                    commentLines.Add($" * {line.Trim()}");
-                }
-            }
-            commentLines.Add(" */");
-            var classComment = string.Join("\n", commentLines);
+            var xmlComment = ctx.SchemaParser.GetCommentLines(_parser.RootAggregateElement);
 
             var contents = $$"""
-                {{classComment}}
+                /**
+                 * {{DisplayName}}
+                {{xmlComment.SelectTextTemplate(line => $$"""
+                 * {{line}}
+                """)}}
+                 */
                 export const {{TsConstantsName}} = {
                 {{rootConstants.Where(c => c.Type != "template").SelectTextTemplate(constant => $$"""
                   {{WithIndent(RenderTypeScriptConstant(constant, ctx), "  ")}}
@@ -153,7 +139,7 @@ namespace Nijo.Models.ConstantModelModules {
             };
         }
 
-        private IEnumerable<string> RenderTypeScriptNestedObject(ConstantGroupDef group, List<ConstantValueDef> allConstants, List<ConstantGroupDef> allGroups, CodeRenderingContext ctx) {
+        private string RenderTypeScriptNestedObject(ConstantGroupDef group, List<ConstantValueDef> allConstants, List<ConstantGroupDef> allGroups, CodeRenderingContext ctx) {
             // このグループ内の定数を生成
             var groupConstants = allConstants.Where(c => c.Path.StartsWith(group.Path + ".") &&
                                                         c.Path.Substring(group.Path.Length + 1).IndexOf('.') == -1).ToList();
@@ -162,16 +148,15 @@ namespace Nijo.Models.ConstantModelModules {
             var childGroups = allGroups.Where(g => g.Path.StartsWith(group.Path + ".") &&
                                                    g.Path.Substring(group.Path.Length + 1).IndexOf('.') == -1).ToList();
 
-            var xmlComment = ctx.SchemaParser.GetComment(group.Element, E_CsTs.TypeScript);
-            yield return $"/** {group.DisplayName}";
-            if (!string.IsNullOrEmpty(xmlComment)) {
-                foreach (var line in xmlComment.Split(new[] { "\\n" }, StringSplitOptions.None)) {
-                    yield return $" * {line.Trim()}";
-                }
-            }
-            yield return " */";
+            var xmlComment = ctx.SchemaParser.GetCommentLines(group.Element);
 
-            yield return $$"""
+            return $$"""
+                /**
+                 * {{group.DisplayName}}
+                {{xmlComment.SelectTextTemplate(line => $$"""
+                 * {{line}}
+                """)}}
+                 */
                 {{WithIndent(group.Name, "")}}: {
                 {{groupConstants.Where(c => c.Type != "template").SelectTextTemplate(constant => $$"""
                   {{WithIndent(RenderTypeScriptConstant(constant, ctx), "  ")}}
@@ -189,17 +174,16 @@ namespace Nijo.Models.ConstantModelModules {
         /// <summary>
         /// C#の定数を生成（XMLコメント対応）
         /// </summary>
-        private IEnumerable<string> RenderCSharpConstant(ConstantValueDef constant) {
-            yield return "/// <summary>";
-            yield return $"/// {constant.DisplayName}";
-            if (!string.IsNullOrEmpty(constant.XmlComment)) {
-                foreach (var line in constant.XmlComment.Split('\n')) {
-                    yield return $"/// {line.Trim()}";
-                }
-            }
-            yield return "/// </summary>";
+        private string RenderCSharpConstant(ConstantValueDef constant, CodeRenderingContext ctx) {
+            var xmlComment = ctx.SchemaParser.GetCommentLines(constant.Element);
 
-            yield return $$"""
+            return $$"""
+                /// <summary>
+                /// {{constant.DisplayName}}
+                {{xmlComment.SelectTextTemplate(line => $$"""
+                /// {{line}}
+                """)}}
+                /// </summary>
                 public const {{GetCSharpType(constant.Type)}} {{constant.CsConstantName}} = {{constant.GetCSharpValue()}};
                 """;
         }
@@ -207,17 +191,16 @@ namespace Nijo.Models.ConstantModelModules {
         /// <summary>
         /// TypeScriptの定数を生成（JSDoc対応）
         /// </summary>
-        private IEnumerable<string> RenderTypeScriptConstant(ConstantValueDef constant, CodeRenderingContext ctx) {
-            var xmlComment = ctx.SchemaParser.GetComment(constant.Element, E_CsTs.TypeScript);
-            yield return $"/** {constant.DisplayName}";
-            if (!string.IsNullOrEmpty(xmlComment)) {
-                foreach (var line in xmlComment.Split('\n')) {
-                    yield return $" * {line.Trim()}";
-                }
-            }
-            yield return " */";
+        private string RenderTypeScriptConstant(ConstantValueDef constant, CodeRenderingContext ctx) {
+            var xmlComment = ctx.SchemaParser.GetCommentLines(constant.Element);
 
-            yield return $$"""
+            return $$"""
+                /**
+                 * {{constant.DisplayName}}
+                {{xmlComment.SelectTextTemplate(line => $$"""
+                 * {{line}}
+                """)}}
+                 */
                 {{constant.TsConstantName}}: {{constant.GetTypeScriptValue()}},
                 """;
         }

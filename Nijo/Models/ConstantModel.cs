@@ -68,18 +68,18 @@ namespace Nijo.Models {
 
         public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
             ValidateConstants(rootAggregateElement, addError);
-        }
 
-        private void ValidateConstants(XElement element, Action<XElement, string> addError) {
-            foreach (var constantElement in element.ElementsWithoutMemo()) {
-                var constantType = constantElement.Attribute(BasicNodeOptions.ConstantType.AttributeName)?.Value;
+            void ValidateConstants(XElement element, Action<XElement, string> addError) {
+                foreach (var constantElement in element.ElementsWithoutMemo()) {
+                    var constantType = constantElement.Attribute(BasicNodeOptions.ConstantType.AttributeName)?.Value;
 
-                if (constantType == "child") {
-                    // 子要素（ネストされた定数グループ）の場合は再帰的にバリデーション
-                    ValidateConstants(constantElement, addError);
-                } else {
-                    // 定数要素のバリデーション
-                    ValidateConstantElement(constantElement, addError);
+                    if (constantType == "child") {
+                        // 子要素（ネストされた定数グループ）の場合は再帰的にバリデーション
+                        ValidateConstants(constantElement, addError);
+                    } else {
+                        // 定数要素のバリデーション
+                        ValidateConstantElement(constantElement, addError);
+                    }
                 }
             }
         }
@@ -102,7 +102,7 @@ namespace Nijo.Models {
             var parser = new ConstantDefParser(((ISchemaPathNode)rootAggregate).XElement, ctx.SchemaParser);
 
             // データ型: 定数クラス
-            var constantDef = new ConstantDef(parser, rootAggregate);
+            var constantDef = new ConstantDef(parser);
 
             // C#定数クラスの生成
             ctx.CoreLibrary(dir => {

@@ -103,6 +103,15 @@ public class SchemaParseContext {
         var lineEnding = csts == E_CsTs.CSharp ? "\\r\\n" : "\\n";
         return rawText.Replace("\r\n", lineEnding).Replace("\n", lineEnding);
     }
+    /// <summary>
+    /// このXElementの直前にXCommentがあればそのテキストを改行コードを1行ずつ返します。
+    /// </summary>
+    internal IEnumerable<string> GetCommentLines(XElement xElement) {
+        var rawText = xElement.PreviousNode is XComment comment ? comment.Value.Trim() : string.Empty;
+        return rawText
+            .ReplaceLineEndings(Environment.NewLine)
+            .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+    }
 
 
     /// <summary>

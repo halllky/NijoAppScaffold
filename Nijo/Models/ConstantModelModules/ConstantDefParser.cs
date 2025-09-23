@@ -14,27 +14,27 @@ namespace Nijo.Models.ConstantModelModules;
 /// 定数定義のパーサー
 /// </summary>
 internal class ConstantDefParser {
-    internal ConstantDefParser(XElement element, SchemaParseContext schemaParser) {
-        _element = element;
+    internal ConstantDefParser(XElement rootAggregateElement, SchemaParseContext schemaParser) {
+        _rootAggregateElement = rootAggregateElement;
         _schemaParser = schemaParser;
-        DisplayName = element.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? element.Name.LocalName;
-        PhysicalName = _schemaParser.GetPhysicalName(element);
+        DisplayName = rootAggregateElement.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? rootAggregateElement.Name.LocalName;
+        PhysicalName = _schemaParser.GetPhysicalName(rootAggregateElement);
     }
 
-    private readonly XElement _element;
+    private readonly XElement _rootAggregateElement;
     private readonly SchemaParseContext _schemaParser;
 
     internal string DisplayName { get; }
     internal string PhysicalName { get; }
     internal string CsClassName => PhysicalName;
     internal string TsConstantsName => PhysicalName;
-    internal XElement Element => _element;
+    internal XElement RootAggregateElement => _rootAggregateElement;
 
     /// <summary>
     /// 定数定義を取得する
     /// </summary>
     internal IEnumerable<ConstantValueDef> GetConstants() {
-        return GetConstantsRecursive(_element, string.Empty);
+        return GetConstantsRecursive(_rootAggregateElement, string.Empty);
     }
 
     private IEnumerable<ConstantValueDef> GetConstantsRecursive(XElement element, string parentPath) {
@@ -60,7 +60,7 @@ internal class ConstantDefParser {
     /// ネストされた定数グループを取得する
     /// </summary>
     internal IEnumerable<ConstantGroupDef> GetConstantGroups() {
-        return GetConstantGroupsRecursive(_element, string.Empty);
+        return GetConstantGroupsRecursive(_rootAggregateElement, string.Empty);
     }
 
     private IEnumerable<ConstantGroupDef> GetConstantGroupsRecursive(XElement element, string parentPath) {

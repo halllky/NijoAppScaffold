@@ -1,3 +1,4 @@
+using Nijo.CodeGenerating;
 using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
@@ -31,7 +32,7 @@ namespace Nijo.Models.ConstantModelModules {
             }
 
             // XMLコメントを取得
-            XmlComment = _schemaParser.GetComment(element, CodeGenerating.E_CsTs.CSharp).Replace("\\r\\n", "\n");
+            XmlCommentLines = _schemaParser.GetCommentLines(element).ToArray();
         }
 
         private readonly XElement _element;
@@ -44,7 +45,7 @@ namespace Nijo.Models.ConstantModelModules {
         internal string Value { get; }
         internal string[] TemplateParams { get; }
         internal string DisplayName { get; }
-        internal string XmlComment { get; }
+        internal string[] XmlCommentLines { get; }
 
         /// <summary>
         /// C#用の定数名を取得（ドキュメントに合わせて元の名前をそのまま使用）
@@ -92,20 +93,13 @@ namespace Nijo.Models.ConstantModelModules {
             var formatString = EscapeCSharpString(Value);
             var formatArgs = string.Join(", ", TemplateParams.Select((_, i) => $"arg{i}"));
 
-            var commentLines = new List<string>();
-            commentLines.Add($"/// <summary>");
-            commentLines.Add($"/// {DisplayName}");
-            if (!string.IsNullOrEmpty(XmlComment)) {
-                foreach (var line in XmlComment.Split('\n')) {
-                    commentLines.Add($"/// {line.Trim()}");
-                }
-            }
-            commentLines.Add($"/// </summary>");
-
-            var comment = string.Join("\n", commentLines);
-
             return $$"""
-                {{comment}}
+                /// <summary>
+                /// {{DisplayName}}
+                {{XmlCommentLines.SelectTextTemplate(line => $$"""
+                /// {{line}}
+                """)}}
+                /// </summary>
                 public static string {{CsConstantName}}({{parameters}}) => $"{{formatString}}";
                 """;
         }
@@ -119,21 +113,14 @@ namespace Nijo.Models.ConstantModelModules {
             var parameters = string.Join(", ", TemplateParams.Select((p, i) => $"arg{i}: string"));
             var templateString = EscapeTypeScriptTemplate(Value);
 
-            var commentLines = new List<string>();
-            commentLines.Add($"  /**");
-            commentLines.Add($"   * {DisplayName}");
-            if (!string.IsNullOrEmpty(XmlComment)) {
-                foreach (var line in XmlComment.Split('\n')) {
-                    commentLines.Add($"   * {line.Trim()}");
-                }
-            }
-            commentLines.Add($"   */");
-
-            var comment = string.Join("\n", commentLines);
-
             return $$"""
-                {{comment}}
-                  {{TsConstantName}}: ({{parameters}}): string => `{{templateString}}`,
+                /**
+                 * {{DisplayName}}
+                {{XmlCommentLines.SelectTextTemplate(line => $$"""
+                 * {{line}}
+                """)}}
+                 */
+                {{TsConstantName}}: ({{parameters}}): string => `{{templateString}}`,
                 """;
         }
 
