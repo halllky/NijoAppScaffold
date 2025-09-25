@@ -22,7 +22,7 @@ namespace Nijo.Models.QueryModelModules {
         /// 検索条件オブジェクトのエントリー。
         /// フィルタ、ソート、ページングの属性を持つ。
         /// </summary>
-        internal class Entry : IInstancePropertyOwnerMetadata, IPresentationLayerStructure {
+        internal class Entry : IInstancePropertyOwnerMetadata, ICreatablePresentationLayerStructure {
             internal Entry(RootAggregate entryAggregate) {
                 _entryAggregate = entryAggregate;
                 FilterRoot = new Filter(_entryAggregate);
@@ -49,6 +49,9 @@ namespace Nijo.Models.QueryModelModules {
             internal const string TAKE_CS = "Take";
             internal const string TAKE_TS = "take";
 
+            IEnumerable<IInstancePropertyMetadata> IPresentationLayerStructure.GetMembers() {
+                return ((IInstancePropertyOwnerMetadata)this).GetMembers();
+            }
             IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() {
                 yield return FilterRoot;
             }
@@ -186,14 +189,19 @@ namespace Nijo.Models.QueryModelModules {
             internal string RenderNewObjectFunction() {
                 return $$"""
                     /** {{_entryAggregate.DisplayName}}の検索条件クラスの空オブジェクトを作成して返します。 */
-                    export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({
+                    export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({{RenderTsNewObjectFunctionBody()}})
+                    """;
+            }
+            public string RenderTsNewObjectFunctionBody() {
+                return $$"""
+                    {
                       {{FILTER_TS}}: {
                         {{WithIndent(FilterRoot.RenderNewObjectFunctionMemberLiteral(), "    ")}}
                       },
                       {{SORT_TS}}: [],
                       {{SKIP_TS}}: undefined,
                       {{TAKE_TS}}: undefined,
-                    })
+                    }
                     """;
             }
             #endregion TypeScript側のオブジェクト新規作成関数

@@ -12,7 +12,7 @@ namespace Nijo.Models.QueryModelModules {
     /// <summary>
     /// ReadModelの画面表示用データ
     /// </summary>
-    internal class DisplayData : IInstancePropertyOwnerMetadata, IPresentationLayerStructure {
+    internal class DisplayData : IInstancePropertyOwnerMetadata, ICreatablePresentationLayerStructure {
 
         internal DisplayData(AggregateBase aggregate) {
             Aggregate = aggregate;
@@ -110,6 +110,9 @@ namespace Nijo.Models.QueryModelModules {
             }
         }
 
+        IEnumerable<IInstancePropertyMetadata> IPresentationLayerStructure.GetMembers() {
+            return ((IInstancePropertyOwnerMetadata)this).GetMembers();
+        }
         IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() {
             yield return Values;
 
@@ -499,7 +502,12 @@ namespace Nijo.Models.QueryModelModules {
         private string RenderTypeScriptObjectCreationFunction(CodeRenderingContext ctx) {
             return $$"""
                 /** {{Aggregate.DisplayName}}の画面表示用データの新しいインスタンスを作成します。 */
-                export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({
+                export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({{RenderTsNewObjectFunctionBody()}})
+                """;
+        }
+        public string RenderTsNewObjectFunctionBody() {
+            return $$"""
+                {
                   {{VALUES_TS}}: {
                 {{Values.GetMembers().SelectTextTemplate(m => $$"""
                     {{m.GetPropertyName(E_CsTs.TypeScript)}}: {{m.RenderNewObjectCreation()}},
@@ -517,7 +525,7 @@ namespace Nijo.Models.QueryModelModules {
                 {{GetChildMembers().SelectTextTemplate(c => $$"""
                   {{c.PhysicalName}}: {{c.RenderNewObjectCreation()}},
                 """)}}
-                })
+                }
                 """;
         }
         #endregion TypeScript新規オブジェクト作成関数

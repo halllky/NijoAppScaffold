@@ -319,7 +319,7 @@ namespace Nijo.ImmutableSchema {
         /// このCommandModelの引数の構造体を返します。
         /// このルート集約がCommandModelでない場合は例外。
         /// </summary>
-        public IPresentationLayerStructure? GetParameterStructure() {
+        public ICreatablePresentationLayerStructure? GetParameterStructure() {
             if (Model is not Models.CommandModel) throw new InvalidOperationException($"{PhysicalName}はCommandModelでない");
             var parameter = XElement.Attribute(BasicNodeOptions.Parameter.AttributeName);
             return parameter == null ? null : GetTargetStructure(parameter);
@@ -328,13 +328,13 @@ namespace Nijo.ImmutableSchema {
         /// このCommandModelの戻り値の構造体を返します。
         /// このルート集約がCommandModelでない場合は例外。
         /// </summary>
-        public IPresentationLayerStructure? GetReturnValueStructure() {
+        public ICreatablePresentationLayerStructure? GetReturnValueStructure() {
             if (Model is not Models.CommandModel) throw new InvalidOperationException($"{PhysicalName}はCommandModelでない");
             var returnValue = XElement.Attribute(BasicNodeOptions.ReturnValue.AttributeName);
             return returnValue == null ? null : GetTargetStructure(returnValue);
         }
 
-        private IPresentationLayerStructure GetTargetStructure(XAttribute attribute) {
+        private ICreatablePresentationLayerStructure GetTargetStructure(XAttribute attribute) {
             var splitted = attribute.Value.Split(':');
             var targetPhysicalName = splitted[0];
             var targetXElement = _ctx.Document.Root?.Element(targetPhysicalName)

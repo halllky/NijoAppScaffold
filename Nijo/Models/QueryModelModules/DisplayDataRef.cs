@@ -172,6 +172,10 @@ namespace Nijo.Models.QueryModelModules {
             string IPresentationLayerStructure.CsClassName => CsClassName;
             public string TsTypeName => $"{base.Aggregate.PhysicalName}RefTarget";
 
+            IEnumerable<IInstancePropertyMetadata> IPresentationLayerStructure.GetMembers() {
+                return GetMembers();
+            }
+
             #region TypeScript側オブジェクト新規作成関数
             public string TsNewObjectFunction => $"createNew{TsTypeName}";
 
@@ -190,11 +194,15 @@ namespace Nijo.Models.QueryModelModules {
                     /**
                      * {{base.Aggregate.DisplayName}}が他の集約から外部参照されるときのオブジェクトを新規作成します。
                      */
-                    export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({
-                      {{WithIndent(RenderMembersRecursively(this), "  ")}}
-                    })
+                    export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({{RenderTsNewObjectFunctionBody()}})
                     """;
-
+            }
+            public string RenderTsNewObjectFunctionBody() {
+                return $$"""
+                    {
+                      {{WithIndent(RenderMembersRecursively(this), "  ")}}
+                    }
+                    """;
                 static IEnumerable<string> RenderMembersRecursively(RefDisplayDataMemberContainer obj) {
                     foreach (var member in obj.GetMembers()) {
                         if (member is RefDisplayDataValueMember vm) {

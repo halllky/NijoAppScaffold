@@ -20,6 +20,7 @@ namespace Nijo.Models {
                 #### 外部参照 `{{SchemaParseContext.NODE_TYPE_REFTO}}` について
 
                 - StructureModel から参照できるのは、クエリモデル、`{{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}}`属性が付与されたデータモデル、または他のStructureModelの集約のみです。
+                - SearchCondition を参照する場合、ルート集約の検索条件オブジェクトのみ参照可能です。
                 - 自身のツリーの集約を参照することはできません。
                 - クエリモデルを参照する場合、`{{BasicNodeOptions.RefToObject.AttributeName}}`属性の指定が必須です。
 
@@ -82,13 +83,23 @@ namespace Nijo.Models {
                 }
 
                 // クエリモデルまたはGDQMデータモデルを参照する場合はRefToObjectの指定が必須
-                if ((isQueryModel || isGDQM) && refElement.Attribute(BasicNodeOptions.RefToObject.AttributeName) == null) {
+                var refToObject = refElement.Attribute(BasicNodeOptions.RefToObject.AttributeName);
+                if ((isQueryModel || isGDQM) && refToObject == null) {
                     addError(refElement, $"StructureModelからクエリモデルを外部参照する場合、{BasicNodeOptions.RefToObject.AttributeName}属性を指定する必要があります。");
-                } else if ((isQueryModel || isGDQM) && refElement.Attribute(BasicNodeOptions.RefToObject.AttributeName) != null) {
-                    var refToObject = refElement.Attribute(BasicNodeOptions.RefToObject.AttributeName)?.Value;
-                    if (refToObject != BasicNodeOptions.REF_TO_OBJECT_DISPLAY_DATA && refToObject != BasicNodeOptions.REF_TO_OBJECT_SEARCH_CONDITION) {
-                        addError(refElement, $"{BasicNodeOptions.RefToObject.AttributeName}属性の値は「{BasicNodeOptions.REF_TO_OBJECT_DISPLAY_DATA}」または「{BasicNodeOptions.REF_TO_OBJECT_SEARCH_CONDITION}」である必要があります。");
-                    }
+                }
+
+                // RefToObjectの値が不正かチェック
+                if ((isQueryModel || isGDQM)
+                        && refToObject != null
+                        && refToObject.Value != BasicNodeOptions.REF_TO_OBJECT_DISPLAY_DATA
+                        && refToObject.Value != BasicNodeOptions.REF_TO_OBJECT_SEARCH_CONDITION) {
+                    addError(refElement, $"{BasicNodeOptions.RefToObject.AttributeName}属性の値は「{BasicNodeOptions.REF_TO_OBJECT_DISPLAY_DATA}」または「{BasicNodeOptions.REF_TO_OBJECT_SEARCH_CONDITION}」である必要があります。");
+                }
+
+                // 検索条件を参照する場合はルート集約のみ参照可能
+                if (refToObject?.Value == BasicNodeOptions.REF_TO_OBJECT_SEARCH_CONDITION
+                        && refTo != refToRoot) {
+                    addError(refElement, $"検索条件を参照する場合はルート集約のみ指定可能です。");
                 }
 
                 // StructureModelを参照する場合はRefToObjectの指定は不要（指定されていても無視）
@@ -117,28 +128,28 @@ namespace Nijo.Models {
         /// <summary>
         /// C#/TS の構造体定義をレンダリングするためのヘルパ。
         /// </summary>
-        internal class StructureType : IInstancePropertyOwnerMetadata, IPresentationLayerStructure {
-            internal StructureType(AggregateBase aggregate) {
-                Aggregate = aggregate;
-            }
+        internal class StructureType : IInstancePropertyOwnerMetadata, ICreatablePresentationLayerStructure {
+            internal StructureType(RootAggregate aggregate) { Aggregate = aggregate; }
+            protected StructureType(AggregateBase aggregate) { Aggregate = aggregate; }
             internal AggregateBase Aggregate { get; }
 
-            public string CsClassName => Aggregate is RootAggregate root
-                ? root.PhysicalName
-                : $"{Aggregate.GetRoot().PhysicalName}Structure_{Aggregate.PhysicalName}";
-            public string TsTypeName => Aggregate is RootAggregate root
-                ? root.PhysicalName
-                : $"{Aggregate.GetRoot().PhysicalName}Structure_{Aggregate.PhysicalName}";
+            public virtual string CsClassName => Aggregate.PhysicalName;
+            public virtual string TsTypeName => Aggregate.PhysicalName;
 
             /// <summary>
             /// TypeScriptの新規オブジェクト作成関数の名前
             /// </summary>
             public string TsNewObjectFunction => $"createNew{TsTypeName}";
 
+            IEnumerable<IInstancePropertyMetadata> IPresentationLayerStructure.GetMembers() {
+                return ((IInstancePropertyOwnerMetadata)this).GetMembers();
+            }
             IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() {
                 foreach (var m in Aggregate.GetMembers()) {
                     if (m is ValueMember vm) {
                         yield return new StructureValueMember(vm);
+                    } else if (m is RefToMember refTo) {
+                        yield return new StructureRefToMember(refTo);
                     } else if (m is ChildAggregate child) {
                         yield return new StructureDescendantMember(child);
                     } else if (m is ChildrenAggregate children) {
@@ -156,13 +167,14 @@ namespace Nijo.Models {
             }
 
             internal static string RenderCSharpRecursively(RootAggregate rootAggregate, CodeRenderingContext ctx) {
-                var tree = rootAggregate
-                    .EnumerateThisAndDescendants()
-                    .Select(agg => new StructureType(agg));
+                var descendants = rootAggregate
+                    .EnumerateDescendants()
+                    .Select(agg => new StructureDescendantMember(agg));
 
                 return $$"""
                     #region 構造体定義
-                    {{tree.SelectTextTemplate(node => $$"""
+                    {{new StructureType(rootAggregate).RenderCSharpDeclaring(ctx)}}
+                    {{descendants.SelectTextTemplate(node => $$"""
                     {{node.RenderCSharpDeclaring(ctx)}}
                     """)}}
                     #endregion 構造体定義
@@ -173,13 +185,14 @@ namespace Nijo.Models {
             /// TypeScript新規オブジェクト作成関数を再帰的にレンダリングします。
             /// </summary>
             internal static string RenderTsNewObjectFunctionRecursively(RootAggregate rootAggregate, CodeRenderingContext ctx) {
-                var tree = rootAggregate
-                    .EnumerateThisAndDescendants()
-                    .Select(agg => new StructureType(agg));
+                var descendants = rootAggregate
+                    .EnumerateDescendants()
+                    .Select(agg => new StructureDescendantMember(agg));
 
                 return $$"""
                     //#region 構造体新規作成用関数
-                    {{tree.SelectTextTemplate(node => $$"""
+                    {{new StructureType(rootAggregate).RenderTypeScriptObjectCreationFunction(ctx)}}
+                    {{descendants.SelectTextTemplate(node => $$"""
                     {{node.RenderTypeScriptObjectCreationFunction(ctx)}}
                     """)}}
                     //#endregion 構造体新規作成用関数
@@ -190,28 +203,36 @@ namespace Nijo.Models {
             /// TypeScript新規オブジェクト作成関数をレンダリングします。
             /// </summary>
             private string RenderTypeScriptObjectCreationFunction(CodeRenderingContext ctx) {
-                var members = ((IInstancePropertyOwnerMetadata)this).GetMembers().ToArray();
-
                 return $$"""
                     /** {{Aggregate.DisplayName}}の構造体の新しいインスタンスを作成します。 */
-                    export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({
-                    {{members.SelectTextTemplate(member => $$"""
-                      {{WithIndent(RenderMemberTsNewObjectCreation(member, ctx), "  ")}}
-                    """)}}
-                    })
+                    export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({{RenderTsNewObjectFunctionBody()}})
                     """;
-
-                static string RenderMemberTsNewObjectCreation(IInstancePropertyMetadata member, CodeRenderingContext ctx) {
+            }
+            public string RenderTsNewObjectFunctionBody() {
+                return $$"""
+                    {
+                    {{((IInstancePropertyOwnerMetadata)this).GetMembers().SelectTextTemplate(member => $$"""
+                      {{WithIndent(RenderMemberTsNewObjectCreation(member), "  ")}}
+                    """)}}
+                    }
+                    """;
+                static string RenderMemberTsNewObjectCreation(IInstancePropertyMetadata member) {
                     if (member is IInstanceValuePropertyMetadata v) {
                         return $$"""
                             {{member.GetPropertyName(E_CsTs.TypeScript)}}: undefined,
                             """;
+                    } else if (member is StructureRefToMember refTo) {
+                        return $$"""
+                            {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{refTo.GetTargetStructure().TsNewObjectFunction}}(),
+                            """;
+                    } else if (member is StructureDescendantMember s) {
+                        var initializer = s.IsArray ? "[]" : $"{s.RenderTsNewObjectFunctionBody()}";
+                        return $$"""
+                            {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{initializer}},
+                            """;
+                    } else {
+                        throw new NotImplementedException();
                     }
-                    var s = (StructureDescendantMember)member;
-                    var initializer = s.IsArray ? "[]" : $"{s.TsNewObjectFunction}()";
-                    return $$"""
-                        {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{initializer}},
-                        """;
                 }
             }
 
@@ -234,26 +255,33 @@ namespace Nijo.Models {
                         return $$"""
                             public {{v.Type.CsDomainTypeName}}? {{member.GetPropertyName(E_CsTs.CSharp)}} { get; set; }
                             """;
+                    } else if (member is StructureRefToMember refTo) {
+                        return $$"""
+                            public {{refTo.GetTargetStructure().CsClassName}} {{member.GetPropertyName(E_CsTs.CSharp)}} { get; set; } = new();
+                            """;
+                    } else if (member is StructureDescendantMember s) {
+                        var csType = s.Aggregate is ChildrenAggregate
+                            ? $"List<{s.CsClassName}>"
+                            : s.CsClassName;
+                        var initializer = s.Aggregate is ChildrenAggregate ? "new()" : "new()";
+                        return $$"""
+                            public {{csType}} {{member.GetPropertyName(E_CsTs.CSharp)}} { get; set; } = {{initializer}};
+                            """;
+                    } else {
+                        throw new NotImplementedException();
                     }
-                    var s = (StructureDescendantMember)member;
-                    var csType = s.Aggregate is ChildrenAggregate
-                        ? $"List<{s.CsType}>"
-                        : s.CsType;
-                    var initializer = s.Aggregate is ChildrenAggregate ? "new()" : "new()";
-                    return $$"""
-                        public {{csType}} {{member.GetPropertyName(E_CsTs.CSharp)}} { get; set; } = {{initializer}};
-                        """;
                 }
             }
 
             internal static string RenderTypeScriptRecursively(RootAggregate rootAggregate, CodeRenderingContext ctx) {
-                var tree = rootAggregate
-                    .EnumerateThisAndDescendants()
-                    .Select(agg => new StructureType(agg));
+                var descendants = rootAggregate
+                    .EnumerateDescendants()
+                    .Select(agg => new StructureDescendantMember(agg));
 
                 return $$"""
                     //#region 構造体定義
-                    {{tree.SelectTextTemplate(node => $$"""
+                    {{new StructureType(rootAggregate).RenderTypeScriptType(ctx)}}
+                    {{descendants.SelectTextTemplate(node => $$"""
                     {{node.RenderTypeScriptType(ctx)}}
                     """)}}
                     //#endregion 構造体定義
@@ -277,16 +305,24 @@ namespace Nijo.Models {
                         return $$"""
                             {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{v.Type.TsTypeName}} | undefined
                             """;
+                    } else if (member is StructureRefToMember refTo) {
+                        return $$"""
+                            {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{refTo.GetTargetStructure().TsTypeName}}
+                            """;
+                    } else if (member is StructureDescendantMember s) {
+                        return $$"""
+                            {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{s.TsTypeName}}{{(s.IsArray ? "[]" : "")}}
+                            """;
+                    } else {
+                        throw new NotImplementedException();
                     }
-                    var s = (StructureDescendantMember)member;
-                    var arraySuffix = s.Aggregate is ChildrenAggregate ? "[]" : string.Empty;
-                    return $$"""
-                        {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{s.TsTypeName}}{{arraySuffix}}
-                        """;
                 }
             }
         }
 
+        /// <summary>
+        /// 構造体モデルの値メンバー
+        /// </summary>
         private class StructureValueMember : IInstanceValuePropertyMetadata {
             internal StructureValueMember(ValueMember vm) { _vm = vm; }
             private readonly ValueMember _vm;
@@ -296,36 +332,55 @@ namespace Nijo.Models {
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => _vm.PhysicalName;
         }
 
-        internal class StructureDescendantMember : IInstanceStructurePropertyMetadata {
-            internal StructureDescendantMember(AggregateBase aggregate) { Aggregate = aggregate; }
-            internal AggregateBase Aggregate { get; }
+        /// <summary>
+        /// 構造体モデルの ref-to メンバー
+        /// </summary>
+        internal class StructureRefToMember : IInstanceStructurePropertyMetadata {
+            internal StructureRefToMember(RefToMember refToMember) {
+                _refToMember = refToMember;
+            }
+            private readonly RefToMember _refToMember;
 
-            internal string CsType => $"{Aggregate.GetRoot().PhysicalName}Structure_{Aggregate.PhysicalName}";
-            internal string TsTypeName => $"{Aggregate.GetRoot().PhysicalName}Structure_{Aggregate.PhysicalName}";
+            internal ICreatablePresentationLayerStructure GetTargetStructure() {
+                return _refToMember.RefToObject switch {
+                    RefToMember.E_RefToObject.DisplayData => new QueryModelModules.DisplayData(_refToMember.RefTo),
+                    RefToMember.E_RefToObject.SearchCondition => new QueryModelModules.SearchCondition.Entry((RootAggregate)_refToMember.RefTo),
+                    _ => _refToMember.RefTo is RootAggregate root
+                        ? new StructureType(root)
+                        : new StructureDescendantMember(_refToMember.RefTo),
+                };
+            }
 
-            /// <summary>
-            /// TypeScriptの新規オブジェクト作成関数の名前
-            /// </summary>
-            internal string TsNewObjectFunction => $"createNew{TsTypeName}";
-
-            public bool IsArray => Aggregate is ChildrenAggregate;
-            public string GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp ? CsType : TsTypeName;
-
-            ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Aggregate;
-            string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => Aggregate.PhysicalName;
+            ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => _refToMember;
+            bool IInstanceStructurePropertyMetadata.IsArray => false;
+            string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => _refToMember.PhysicalName;
+            string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) {
+                return csts == E_CsTs.CSharp
+                    ? GetTargetStructure().CsClassName
+                    : GetTargetStructure().TsTypeName;
+            }
             IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() {
-                foreach (var m in Aggregate.GetMembers()) {
-                    if (m is ValueMember vm) {
-                        yield return new StructureValueMember(vm);
-                    } else if (m is ChildAggregate child) {
-                        yield return new StructureDescendantMember(child);
-                    } else if (m is ChildrenAggregate children) {
-                        yield return new StructureDescendantMember(children);
-                    } else {
-                        throw new NotImplementedException();
-                    }
+                return GetTargetStructure().GetMembers();
+            }
+        }
+
+        /// <summary>
+        /// 構造体モデルの Child, Children メンバー
+        /// </summary>
+        internal class StructureDescendantMember : StructureType, IInstanceStructurePropertyMetadata {
+            internal StructureDescendantMember(AggregateBase aggregate) : base(aggregate) {
+                if (aggregate is not ChildAggregate && aggregate is not ChildrenAggregate) {
+                    throw new ArgumentException("aggregate must be ChildAggregate or ChildrenAggregate");
                 }
             }
+
+            public override string CsClassName => $"{Aggregate.GetRoot().PhysicalName}Structure_{Aggregate.PhysicalName}";
+            public override string TsTypeName => $"{Aggregate.GetRoot().PhysicalName}Structure_{Aggregate.PhysicalName}";
+
+            public bool IsArray => Aggregate is ChildrenAggregate;
+            string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp ? CsClassName : TsTypeName;
+            ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Aggregate;
+            string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => Aggregate.PhysicalName;
         }
     }
 }
