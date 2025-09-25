@@ -143,6 +143,8 @@ namespace Nijo.Models {
                         yield return new StructureDescendantMember(child);
                     } else if (m is ChildrenAggregate children) {
                         yield return new StructureDescendantMember(children);
+                    } else {
+                        throw new NotImplementedException();
                     }
                 }
             }
@@ -319,6 +321,8 @@ namespace Nijo.Models {
                         yield return new StructureDescendantMember(child);
                     } else if (m is ChildrenAggregate children) {
                         yield return new StructureDescendantMember(children);
+                    } else {
+                        throw new NotImplementedException();
                     }
                 }
             }
