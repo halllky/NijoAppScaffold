@@ -17,7 +17,14 @@ namespace Nijo.Models {
 
         public string RenderModelValidateSpecificationMarkdown() {
             return $$"""
-                - 外部参照（`{{SchemaParseContext.NODE_TYPE_REFTO}}`）は使用できません。
+                #### 外部参照 `{{SchemaParseContext.NODE_TYPE_REFTO}}` について
+
+                - StructureModel から参照できるのは、クエリモデル、`{{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}}`属性が付与されたデータモデル、または他のStructureModelの集約のみです。
+                - 自身のツリーの集約を参照することはできません。
+                - クエリモデルを参照する場合、`{{BasicNodeOptions.RefToObject.AttributeName}}`属性の指定が必須です。
+
+                #### その他制約事項
+
                 - 主キー属性（`{{BasicNodeOptions.IsKey.AttributeName}}`）には特別な意味はありません。
                 """;
         }
@@ -31,13 +38,60 @@ namespace Nijo.Models {
         }
 
         public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
-            // StructureModel では外部参照は禁止
+            // 外部参照のチェック
+            ValidateRefTo(rootAggregateElement, context, addError);
+        }
+
+        /// <summary>
+        /// StructureModelの外部参照をチェックします
+        /// </summary>
+        private void ValidateRefTo(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
+            // 自身を起点とするすべての外部参照を取得
             var refElements = rootAggregateElement
-                .DescendantsAndSelf()
+                .Descendants()
                 .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value?.StartsWith(SchemaParseContext.NODE_TYPE_REFTO + ":") == true)
                 .ToList();
-            foreach (var el in refElements) {
-                addError(el, $"StructureModelでは{SchemaParseContext.NODE_TYPE_REFTO}を使用できません。");
+
+            if (!refElements.Any()) return;
+
+            foreach (var refElement in refElements) {
+                var refTo = context.FindRefTo(refElement);
+                if (refTo == null) {
+                    addError(refElement, $"参照先の要素が見つかりません: {refElement.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value}");
+                    continue;
+                }
+
+                // 自身のツリーの集約を参照していないかチェック
+                var rootElement = context.GetRootAggregateElement(refElement);
+                var refToRoot = context.GetRootAggregateElement(refTo);
+
+                if (rootElement == refToRoot) {
+                    addError(refElement, "自身のツリーの集約を参照することはできません。");
+                    continue;
+                }
+
+                // 参照先がクエリモデル、GDQMデータモデル、またはStructureModelか確認
+                var refToType = refToRoot.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
+                var isQueryModel = refToType == QueryModel.NODE_TYPE;
+                var isGDQM = context.HasGenerateDefaultQueryModelAttribute(refToRoot);
+                var isStructureModel = refToType == SCHEMA_NAME;
+
+                if (!isQueryModel && !isGDQM && !isStructureModel) {
+                    addError(refElement, $"StructureModelの集約からは、クエリモデル、{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデル、またはStructureModelの集約しか参照できません。");
+                    continue;
+                }
+
+                // クエリモデルまたはGDQMデータモデルを参照する場合はRefToObjectの指定が必須
+                if ((isQueryModel || isGDQM) && refElement.Attribute(BasicNodeOptions.RefToObject.AttributeName) == null) {
+                    addError(refElement, $"StructureModelからクエリモデルを外部参照する場合、{BasicNodeOptions.RefToObject.AttributeName}属性を指定する必要があります。");
+                } else if ((isQueryModel || isGDQM) && refElement.Attribute(BasicNodeOptions.RefToObject.AttributeName) != null) {
+                    var refToObject = refElement.Attribute(BasicNodeOptions.RefToObject.AttributeName)?.Value;
+                    if (refToObject != BasicNodeOptions.REF_TO_OBJECT_DISPLAY_DATA && refToObject != BasicNodeOptions.REF_TO_OBJECT_SEARCH_CONDITION) {
+                        addError(refElement, $"{BasicNodeOptions.RefToObject.AttributeName}属性の値は「{BasicNodeOptions.REF_TO_OBJECT_DISPLAY_DATA}」または「{BasicNodeOptions.REF_TO_OBJECT_SEARCH_CONDITION}」である必要があります。");
+                    }
+                }
+
+                // StructureModelを参照する場合はRefToObjectの指定は不要（指定されていても無視）
             }
         }
 

@@ -619,6 +619,24 @@ public class SchemaParseContext {
                     errorMessage = $"コマンドモデルからクエリモデルを外部参照する場合、{BasicNodeOptions.RefToObject.AttributeName}属性を指定する必要があります。";
                     return false;
                 }
+            } else if (model is StructureModel) {
+                // StructureModelからはクエリモデル、GDQMデータモデル、またはStructureModelの集約しか参照できない
+                if (TryGetModel(refTo, out var refToModel)) {
+                    var isQueryModel = refToModel is QueryModel;
+                    var isGDQM = HasGenerateDefaultQueryModelAttribute(refTo);
+                    var isStructureModel = refToModel is StructureModel;
+
+                    if (!isQueryModel && !isGDQM && !isStructureModel) {
+                        errorMessage = $"StructureModelの集約からはクエリモデル、{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデル、またはStructureModelの集約しか参照できません。";
+                        return false;
+                    }
+
+                    // クエリモデルまたはGDQMデータモデルを参照する場合はRefToObjectの指定が必須
+                    if ((isQueryModel || isGDQM) && refElement.Attribute(BasicNodeOptions.RefToObject.AttributeName) == null) {
+                        errorMessage = $"StructureModelからクエリモデルを外部参照する場合、{BasicNodeOptions.RefToObject.AttributeName}属性を指定する必要があります。";
+                        return false;
+                    }
+                }
             }
         }
 

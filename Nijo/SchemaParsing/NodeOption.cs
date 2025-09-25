@@ -305,7 +305,7 @@ internal static class BasicNodeOptions {
         DisplayName = "参照先オブジェクト",
         Type = E_NodeOptionType.String,
         HelpText = $$"""
-            CommandModelはQueryModelの検索条件か画面表示用データのいずれかしか参照できない。
+            CommandModelまたはStructureModelはQueryModelの検索条件か画面表示用データのいずれかしか参照できない。
             その2種のうちどちらを参照するかの指定。
             "{{REF_TO_OBJECT_DISPLAY_DATA}}"か"{{REF_TO_OBJECT_SEARCH_CONDITION}}"のみ指定可能。
             """,
@@ -314,20 +314,21 @@ internal static class BasicNodeOptions {
                 ctx.AddError($"{REF_TO_OBJECT_DISPLAY_DATA}か{REF_TO_OBJECT_SEARCH_CONDITION}のみ指定可能です。");
             }
 
-            // コマンドモデルでの外部参照の場合のみ許可
+            // 外部参照の場合のみ許可
             if (ctx.NodeType != E_NodeType.Ref) {
                 ctx.AddError("このオプションは外部参照（ref-to）にのみ指定できます。");
                 return;
             }
 
             if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model)) {
-                if (model is not CommandModel) {
-                    ctx.AddError("このオプションはコマンドモデルの外部参照にのみ指定できます。");
+                if (model is not CommandModel && model is not StructureModel) {
+                    ctx.AddError("このオプションはコマンドモデルまたはStructureModelの外部参照にのみ指定できます。");
                 }
             }
         },
         IsAvailableModelMembers = model => {
             if (model is CommandModel) return true;
+            if (model is StructureModel) return true;
             return false;
         },
     };
