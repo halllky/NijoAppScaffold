@@ -165,11 +165,12 @@ namespace Nijo.Models.QueryModelModules {
         /// <summary>
         /// エントリー。エントリーが子孫要素になる場合もある。
         /// </summary>
-        internal class Entry : RefDisplayDataMemberContainer {
+        internal class Entry : RefDisplayDataMemberContainer, IPresentationLayerStructure {
             internal Entry(AggregateBase aggregate) : base(aggregate) { }
 
             internal override string CsClassName => $"{base.Aggregate.PhysicalName}RefTarget";
-            internal string TsTypeName => $"{base.Aggregate.PhysicalName}RefTarget";
+            string IPresentationLayerStructure.CsClassName => CsClassName;
+            public string TsTypeName => $"{base.Aggregate.PhysicalName}RefTarget";
 
             #region TypeScript側オブジェクト新規作成関数
             public string TsNewObjectFunction => $"createNew{TsTypeName}";

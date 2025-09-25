@@ -151,19 +151,6 @@ namespace Nijo.Parts.Common {
 
                 imports.Add(($"./{rootAggregate.PhysicalName}", modules.ToArray()));
             }
-            foreach (var rootAggregate in commandModelsOrderByDataFlow) {
-                var param = new ParameterOrReturnValue(rootAggregate, ParameterOrReturnValue.E_Type.Parameter);
-                var returnType = new ParameterOrReturnValue(rootAggregate, ParameterOrReturnValue.E_Type.ReturnValue);
-
-                imports.Add((
-                    $"./{rootAggregate.PhysicalName}",
-                    new[] {
-                        param.TsTypeName,
-                        param.TsNewObjectFunction,
-                        returnType.TsTypeName,
-                        returnType.TsNewObjectFunction,
-                    }));
-            }
 
             return new SourceFile {
                 FileName = "index.ts",
@@ -350,13 +337,13 @@ namespace Nijo.Parts.Common {
                       /** Commandパラメータ型一覧 */
                       export interface TypeMap {
                     {{commandModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                        '{{agg.PhysicalName}}': {{new ParameterOrReturnValue(agg, ParameterOrReturnValue.E_Type.Parameter).TsTypeName}}
+                        '{{agg.PhysicalName}}': {{agg.GetParameterStructure()?.TsTypeName ?? "Record<string, never> // 引数なし"}}
                     """)}}
                       }
                       /** Commandパラメータ新規作成関数 */
                       export const create: { [K in {{COMMAND_MODEL_TYPE}}]: (() => TypeMap[K]) } = {
                     {{commandModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                        '{{agg.PhysicalName}}': {{new ParameterOrReturnValue(agg, ParameterOrReturnValue.E_Type.Parameter).TsNewObjectFunction}},
+                        '{{agg.PhysicalName}}': {{agg.GetParameterStructure()?.TsNewObjectFunction ?? "() => ({}) // 引数なし"}},
                     """)}}
                       }
                     }
@@ -369,13 +356,13 @@ namespace Nijo.Parts.Common {
                       /** Command戻り値型一覧 */
                       export interface TypeMap {
                     {{commandModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                        '{{agg.PhysicalName}}': {{new ParameterOrReturnValue(agg, ParameterOrReturnValue.E_Type.ReturnValue).TsTypeName}}
+                        '{{agg.PhysicalName}}': {{agg.GetReturnValueStructure()?.TsTypeName ?? "Record<string, never> // 戻り値なし"}}
                     """)}}
                       }
                       /** Command戻り値新規作成関数 */
                       export const create: { [K in {{COMMAND_MODEL_TYPE}}]: (() => TypeMap[K]) } = {
                     {{commandModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                        '{{agg.PhysicalName}}': {{new ParameterOrReturnValue(agg, ParameterOrReturnValue.E_Type.ReturnValue).TsNewObjectFunction}},
+                        '{{agg.PhysicalName}}': {{agg.GetReturnValueStructure()?.TsNewObjectFunction ?? "() => ({}) // 戻り値なし"}},
                     """)}}
                       }
                     }

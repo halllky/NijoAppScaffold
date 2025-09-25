@@ -220,9 +220,8 @@ public static class ApplicationSchemaExtensions {
             yield return new DisplayData(rootAggregate);
             yield return new DisplayDataRef.Entry(rootAggregate);
         }
-        if (rootAggregate.Model is CommandModel) {
-            yield return new ParameterOrReturnValue(rootAggregate, ParameterOrReturnValue.E_Type.Parameter);
-            yield return new ParameterOrReturnValue(rootAggregate, ParameterOrReturnValue.E_Type.ReturnValue);
+        if (rootAggregate.Model is StructureModel) {
+            yield return new StructureModel.StructureType(rootAggregate);
         }
     }
 }

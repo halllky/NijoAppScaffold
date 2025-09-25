@@ -21,6 +21,7 @@ export const COLUMN_ID_COMMENT = ':comment:'
 
 /**
  * Data, Query, Command のルート集約1件を表示・編集するページ。
+ * Command Model の場合はメンバーを直接グリッドで定義するのではなく、Parameter属性とReturnValue属性で引数と戻り値の型を選択します。
  */
 export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidationResult, trigger, attributeDefs, showLessColumns, className }: {
   rootAggregateIndex: number

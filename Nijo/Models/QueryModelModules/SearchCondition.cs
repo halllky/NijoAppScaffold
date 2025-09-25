@@ -22,7 +22,7 @@ namespace Nijo.Models.QueryModelModules {
         /// 検索条件オブジェクトのエントリー。
         /// フィルタ、ソート、ページングの属性を持つ。
         /// </summary>
-        internal class Entry : IInstancePropertyOwnerMetadata {
+        internal class Entry : IInstancePropertyOwnerMetadata, IPresentationLayerStructure {
             internal Entry(RootAggregate entryAggregate) {
                 _entryAggregate = entryAggregate;
                 FilterRoot = new Filter(_entryAggregate);
@@ -31,6 +31,8 @@ namespace Nijo.Models.QueryModelModules {
 
             internal virtual string CsClassName => $"{_entryAggregate.PhysicalName}SearchCondition";
             internal virtual string TsTypeName => $"{_entryAggregate.PhysicalName}SearchCondition";
+            string IPresentationLayerStructure.CsClassName => CsClassName;
+            string IPresentationLayerStructure.TsTypeName => TsTypeName;
 
             /// <summary>フィルタリング</summary>
             internal Filter FilterRoot { get; }
@@ -180,7 +182,7 @@ namespace Nijo.Models.QueryModelModules {
             /// <summary>
             /// TypeScriptの新規オブジェクト作成関数の名前
             /// </summary>
-            internal string TsNewObjectFunction => $"createNew{TsTypeName}";
+            public string TsNewObjectFunction => $"createNew{TsTypeName}";
             internal string RenderNewObjectFunction() {
                 return $$"""
                     /** {{_entryAggregate.DisplayName}}の検索条件クラスの空オブジェクトを作成して返します。 */

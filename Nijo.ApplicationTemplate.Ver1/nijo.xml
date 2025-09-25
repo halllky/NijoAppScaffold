@@ -200,61 +200,59 @@
     </PL>
   </診療収益分析>
   <!-- シンプルなCommandModelの構造。 @[診療履歴](696c1fb8-79e6-4150-bf7a-0d7ac70a49aa) への登録を行う。-->
-  <簡易診療登録 LatinName="Simple Treatment Registration" Type="command-model" UniqueId="4d167764-687c-4db8-9f3f-13fe7d287b73">
-    <簡易診療登録Parameter Type="child" UniqueId="d34cea5d-f605-4b35-afa6-f8c67ddc9ffc">
-      <患者ID IsRequired="True" Type="word" UniqueId="034870c8-6f85-44ea-8a65-72e127cadfc3" />
-      <使用機器一覧 Type="children" UniqueId="88d6b47c-bf37-4210-8bb6-8514b62527e0">
-        <!--@[医療機器マスタ](8d569c4e-e43a-45be-b1f2-e2ce0ea98dcc)と対応する。-->
-        <機器ID Type="word" UniqueId="319c869c-00e5-4fcf-9672-24ae63b504ac" />
-        <使用数量 IsRequired="True" Type="int" UniqueId="c0112f71-6b22-481c-9e3d-c729cf4c0d15" />
-      </使用機器一覧>
-    </簡易診療登録Parameter>
-    <簡易診療登録ReturnValue Type="child" UniqueId="84698423-0012-40d2-9722-29a88b92c583">
-      <処理結果 Type="description" UniqueId="99a4a801-3058-4d76-9971-3041d386e68d" />
-      <診療番号 Type="word" UniqueId="32fd284a-a305-4083-bb9b-ba4a88d6ff3c" />
-    </簡易診療登録ReturnValue>
-  </簡易診療登録>
+  <簡易診療登録 LatinName="Simple Treatment Registration" ReturnValue="簡易診療登録ReturnValue" Parameter="簡易診療登録Parameter" Type="command-model" UniqueId="4d167764-687c-4db8-9f3f-13fe7d287b73"/>
+  <簡易診療登録Parameter Type="structure-model" UniqueId="d34cea5d-f605-4b35-afa6-f8c67ddc9ffc">
+    <患者ID IsRequired="True" Type="word" UniqueId="034870c8-6f85-44ea-8a65-72e127cadfc3" />
+    <使用機器一覧 Type="children" UniqueId="88d6b47c-bf37-4210-8bb6-8514b62527e0">
+      <!--@[医療機器マスタ](8d569c4e-e43a-45be-b1f2-e2ce0ea98dcc)と対応する。-->
+      <機器ID Type="word" UniqueId="319c869c-00e5-4fcf-9672-24ae63b504ac" />
+      <使用数量 IsRequired="True" Type="int" UniqueId="c0112f71-6b22-481c-9e3d-c729cf4c0d15" />
+    </使用機器一覧>
+  </簡易診療登録Parameter>
+  <簡易診療登録ReturnValue Type="structure-model" UniqueId="84698423-0012-40d2-9722-29a88b92c583">
+    <処理結果 Type="description" UniqueId="99a4a801-3058-4d76-9971-3041d386e68d" />
+    <診療番号 Type="word" UniqueId="32fd284a-a305-4083-bb9b-ba4a88d6ff3c" />
+  </簡易診療登録ReturnValue>
   <!-- コマンドモデル -->
-  <医療機器管理 LatinName="Medical Equipment Management" Type="command-model" UniqueId="394d98d6-d461-4873-a6a0-9de128fbe1cc">
-    <医療機器管理Parameter Type="child" UniqueId="76755f0b-6020-4d24-bdcc-d4a3120bfef0">
-      <担当者 RefToObject="SearchCondition" Type="ref-to:医療従事者マスタ" UniqueId="23a0757a-4b84-43a0-bbbb-c7ed6a78e44a" />
-      <診療科 RefToObject="SearchCondition" Type="ref-to:診療科マスタ" UniqueId="d1291d11-0638-4960-a043-3ec2926ae4ed" />
-      <管理理由 Type="word" UniqueId="4f6f3af0-0930-4df4-b5e5-32081e32fc6f" />
-      <実施日時 Type="datetime" UniqueId="14e0c14e-6cfb-4270-82bf-09824e54b83b" />
-      <管理機器リスト Type="children" UniqueId="50ea93fd-83fb-4b0a-8c89-fbd0ebf2bcd6">
-        <医療機器 RefToObject="SearchCondition" Type="ref-to:医療機器マスタ" UniqueId="db8fb20d-49e2-45ca-be78-8aab442b047a" />
-        <保管庫 RefToObject="SearchCondition" Type="ref-to:保管庫マスタ" UniqueId="82aa1f13-1657-4c7d-bb91-be1066072660" />
-        <現在数量 Type="int" UniqueId="4b1421b9-67ad-4af1-a216-c8dfd61e8819" />
-        <管理後数量 Type="int" UniqueId="2eeae516-8eb2-480e-97e3-9b1ac3691d1d" />
-        <過去履歴 RefToObject="DisplayData" Type="ref-to:医療機器マスタ/在庫情報/在庫状況履歴" UniqueId="c8ce4f9f-889f-4762-b51d-aeabf3eae59a" />
-      </管理機器リスト>
-      <権限確認 Type="child" UniqueId="8355a525-a6c3-4d5a-93de-9dc995c6e2f4">
-        <権限レベル RefToObject="DisplayData" Type="ref-to:医療従事者マスタ/権限" UniqueId="2c6c0e75-04ca-407e-b984-5bbb00d3e03a" />
-        <承認者 RefToObject="SearchCondition" Type="ref-to:医療従事者マスタ" UniqueId="16acdb81-2c06-4c90-85d5-d42d460fbd3e" />
-      </権限確認>
-      <診療データ RefToObject="SearchCondition" Type="ref-to:診療収益分析" UniqueId="632b0c5b-524d-47c9-a8e3-72ab6d60f83a" />
-    </医療機器管理Parameter>
-    <医療機器管理ReturnValue Type="child" UniqueId="e906b965-c7a7-4605-9491-0af60db4f4bf">
-      <処理結果 Type="word" UniqueId="aed43ae3-3027-4188-bb29-69108c0162c9" />
-      <処理日時 Type="datetime" UniqueId="00d440e0-5411-48b9-a23b-13b6006cb335" />
-      <管理済み機器リスト Type="children" UniqueId="3af20d66-9401-481f-b743-8701b5ba780e">
-        <医療機器 RefToObject="DisplayData" Type="ref-to:医療機器マスタ" UniqueId="473fbdf6-050e-48d2-a80f-172917a4fca5" />
-        <保管庫 RefToObject="DisplayData" Type="ref-to:保管庫マスタ" UniqueId="57dc1e2b-2562-4262-82f4-caea041e1984" />
-        <管理前数量 Type="int" UniqueId="235d842e-8fc3-4b0a-9ea3-c7e42abb372d" />
-        <管理後数量 Type="int" UniqueId="39015ef7-9149-4485-848f-25995d76b173" />
-        <差分 Type="int" UniqueId="b5bc2e95-6f9e-40a9-93eb-846f8cc16fb4" />
-      </管理済み機器リスト>
-      <エラー情報 Type="child" UniqueId="1b56be9f-d3cc-4af7-bfcb-a152f58038c7">
-        <エラーコード Type="word" UniqueId="528c3dc6-54da-4cf4-a848-47e10c69808a" />
-        <エラーメッセージ Type="description" UniqueId="82fb9ad3-2d8e-4e3c-bb56-5e61d09e1b65" />
-      </エラー情報>
-      <承認情報 Type="child" UniqueId="eaccfe35-ebcd-4461-b29c-e5573a9a844a">
-        <承認者 RefToObject="DisplayData" Type="ref-to:医療従事者マスタ" UniqueId="4e5383b7-2bfd-452f-abed-a20ca576f85e" />
-        <承認日時 Type="datetime" UniqueId="ef8a45bf-3fc2-4700-8155-1679f3649edb" />
-        <コメント Type="description" UniqueId="316a91eb-5728-4c2b-86e7-9a6759b1c9d1" />
-      </承認情報>
-    </医療機器管理ReturnValue>
-  </医療機器管理>
+  <医療機器管理 LatinName="Medical Equipment Management" ReturnValue="医療機器管理ReturnValue" Parameter="医療機器管理Parameter" Type="command-model" UniqueId="394d98d6-d461-4873-a6a0-9de128fbe1cc" />
+  <医療機器管理Parameter Type="structure-model" UniqueId="76755f0b-6020-4d24-bdcc-d4a3120bfef0">
+    <担当者 Type="ref-to:医療従事者マスタ" RefToObject="SearchCondition" UniqueId="23a0757a-4b84-43a0-bbbb-c7ed6a78e44a" />
+    <診療科 Type="ref-to:診療科マスタ" RefToObject="SearchCondition" UniqueId="d1291d11-0638-4960-a043-3ec2926ae4ed" />
+    <管理理由 Type="word" UniqueId="4f6f3af0-0930-4df4-b5e5-32081e32fc6f" />
+    <実施日時 Type="datetime" UniqueId="14e0c14e-6cfb-4270-82bf-09824e54b83b" />
+    <管理機器リスト Type="children" UniqueId="50ea93fd-83fb-4b0a-8c89-fbd0ebf2bcd6">
+      <医療機器 Type="ref-to:医療機器マスタ" RefToObject="SearchCondition" UniqueId="db8fb20d-49e2-45ca-be78-8aab442b047a" />
+      <保管庫 Type="ref-to:保管庫マスタ" RefToObject="SearchCondition" UniqueId="82aa1f13-1657-4c7d-bb91-be1066072660" />
+      <現在数量 Type="int" UniqueId="4b1421b9-67ad-4af1-a216-c8dfd61e8819" />
+      <管理後数量 Type="int" UniqueId="2eeae516-8eb2-480e-97e3-9b1ac3691d1d" />
+      <過去履歴 Type="ref-to:医療機器マスタ/在庫情報/在庫状況履歴" RefToObject="DisplayData" UniqueId="c8ce4f9f-889f-4762-b51d-aeabf3eae59a" />
+    </管理機器リスト>
+    <権限確認 Type="child" UniqueId="8355a525-a6c3-4d5a-93de-9dc995c6e2f4">
+      <権限レベル Type="ref-to:医療従事者マスタ/権限" RefToObject="DisplayData" UniqueId="2c6c0e75-04ca-407e-b984-5bbb00d3e03a" />
+      <承認者 Type="ref-to:医療従事者マスタ" RefToObject="SearchCondition" UniqueId="16acdb81-2c06-4c90-85d5-d42d460fbd3e" />
+    </権限確認>
+    <診療データ Type="ref-to:診療収益分析" RefToObject="SearchCondition" UniqueId="632b0c5b-524d-47c9-a8e3-72ab6d60f83a" />
+  </医療機器管理Parameter>
+  <医療機器管理ReturnValue Type="structure-model" UniqueId="e906b965-c7a7-4605-9491-0af60db4f4bf">
+    <処理結果 Type="word" UniqueId="aed43ae3-3027-4188-bb29-69108c0162c9" />
+    <処理日時 Type="datetime" UniqueId="00d440e0-5411-48b9-a23b-13b6006cb335" />
+    <管理済み機器リスト Type="children" UniqueId="3af20d66-9401-481f-b743-8701b5ba780e">
+      <医療機器 Type="ref-to:医療機器マスタ" RefToObject="DisplayData" UniqueId="473fbdf6-050e-48d2-a80f-172917a4fca5" />
+      <保管庫 Type="ref-to:保管庫マスタ" RefToObject="DisplayData" UniqueId="57dc1e2b-2562-4262-82f4-caea041e1984" />
+      <管理前数量 Type="int" UniqueId="235d842e-8fc3-4b0a-9ea3-c7e42abb372d" />
+      <管理後数量 Type="int" UniqueId="39015ef7-9149-4485-848f-25995d76b173" />
+      <差分 Type="int" UniqueId="b5bc2e95-6f9e-40a9-93eb-846f8cc16fb4" />
+    </管理済み機器リスト>
+    <エラー情報 Type="child" UniqueId="1b56be9f-d3cc-4af7-bfcb-a152f58038c7">
+      <エラーコード Type="word" UniqueId="528c3dc6-54da-4cf4-a848-47e10c69808a" />
+      <エラーメッセージ Type="description" UniqueId="82fb9ad3-2d8e-4e3c-bb56-5e61d09e1b65" />
+    </エラー情報>
+    <承認情報 Type="child" UniqueId="eaccfe35-ebcd-4461-b29c-e5573a9a844a">
+      <承認者 Type="ref-to:医療従事者マスタ" RefToObject="DisplayData" UniqueId="4e5383b7-2bfd-452f-abed-a20ca576f85e" />
+      <承認日時 Type="datetime" UniqueId="ef8a45bf-3fc2-4700-8155-1679f3649edb" />
+      <コメント Type="description" UniqueId="316a91eb-5728-4c2b-86e7-9a6759b1c9d1" />
+    </承認情報>
+  </医療機器管理ReturnValue>
   <!-- 部署と医療従事者の年度ごとの所属関係（year型の使用） -->
   <診療科 DbName="BUSHO" GenerateDefaultQueryModel="True" LatinName="Medical Department" Type="data-model" UniqueId="8977ab28-8f27-4acf-882a-61eea645aeba">
     <診療科コード DbName="BUSHO_CD" IsKey="True" IsRequired="True" MaxLength="10" Type="word" UniqueId="5b72589a-8727-44b2-ab2b-22b5ed4acaed" />

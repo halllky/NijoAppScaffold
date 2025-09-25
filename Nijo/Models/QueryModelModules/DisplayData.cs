@@ -12,7 +12,7 @@ namespace Nijo.Models.QueryModelModules {
     /// <summary>
     /// ReadModelの画面表示用データ
     /// </summary>
-    internal class DisplayData : IInstancePropertyOwnerMetadata {
+    internal class DisplayData : IInstancePropertyOwnerMetadata, IPresentationLayerStructure {
 
         internal DisplayData(AggregateBase aggregate) {
             Aggregate = aggregate;
@@ -21,11 +21,11 @@ namespace Nijo.Models.QueryModelModules {
 
 
         /// <summary>C#クラス名</summary>
-        internal string CsClassName => $"{Aggregate.PhysicalName}DisplayData";
+        public string CsClassName => $"{Aggregate.PhysicalName}DisplayData";
         /// <summary>C#クラス名（values）</summary>
         internal string CsValuesClassName => $"{Aggregate.PhysicalName}DisplayDataValues";
         /// <summary>TypeScript型名</summary>
-        internal string TsTypeName => $"{Aggregate.PhysicalName}DisplayData";
+        public string TsTypeName => $"{Aggregate.PhysicalName}DisplayData";
 
         /// <summary>画面上で独自の追加削除のライフサイクルを持つかどうか</summary>
         internal virtual bool HasLifeCycle => true;
@@ -476,7 +476,7 @@ namespace Nijo.Models.QueryModelModules {
         /// <summary>
         /// TypeScriptの新規オブジェクト作成関数の名前
         /// </summary>
-        internal string TsNewObjectFunction => $"createNew{TsTypeName}";
+        public string TsNewObjectFunction => $"createNew{TsTypeName}";
 
         internal static string RenderTsNewObjectFunctionRecursively(RootAggregate rootAggregate, CodeRenderingContext ctx) {
             var tree = rootAggregate

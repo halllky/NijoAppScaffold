@@ -313,6 +313,48 @@ namespace Nijo.ImmutableSchema {
         public bool GenerateDefaultQueryModel => XElement.Attribute(BasicNodeOptions.GenerateDefaultQueryModel.AttributeName) != null;
         public bool GenerateBatchUpdateCommand => XElement.Attribute(BasicNodeOptions.GenerateBatchUpdateCommand.AttributeName) != null;
         #endregion DataModelと全く同じ型のQueryModel, CommandModel を生成するかどうか
+
+        #region このCommandModelの引数・戻り値の集約を返す
+        /// <summary>
+        /// このCommandModelの引数の構造体を返します。
+        /// このルート集約がCommandModelでない場合は例外。
+        /// </summary>
+        public IPresentationLayerStructure? GetParameterStructure() {
+            if (Model is not Models.CommandModel) throw new InvalidOperationException($"{PhysicalName}はCommandModelでない");
+            var parameter = XElement.Attribute(BasicNodeOptions.Parameter.AttributeName);
+            return parameter == null ? null : GetTargetStructure(parameter);
+        }
+        /// <summary>
+        /// このCommandModelの戻り値の構造体を返します。
+        /// このルート集約がCommandModelでない場合は例外。
+        /// </summary>
+        public IPresentationLayerStructure? GetReturnValueStructure() {
+            if (Model is not Models.CommandModel) throw new InvalidOperationException($"{PhysicalName}はCommandModelでない");
+            var returnValue = XElement.Attribute(BasicNodeOptions.ReturnValue.AttributeName);
+            return returnValue == null ? null : GetTargetStructure(returnValue);
+        }
+
+        private IPresentationLayerStructure GetTargetStructure(XAttribute attribute) {
+            var splitted = attribute.Value.Split(':');
+            var targetPhysicalName = splitted[0];
+            var targetXElement = _ctx.Document.Root?.Element(targetPhysicalName)
+                ?? throw new InvalidOperationException($"対象の集約が見つかりません: {targetPhysicalName}");
+
+            var targetRootAggregate = (RootAggregate)_ctx.ToAggregateBase(targetXElement, null);
+            if (splitted.Length == 1) {
+                return new Models.StructureModel.StructureType(targetRootAggregate);
+
+            } else if (splitted[1] == BasicNodeOptions.REF_TO_OBJECT_DISPLAY_DATA) {
+                return new Models.QueryModelModules.DisplayData(targetRootAggregate);
+
+            } else if (splitted[1] == BasicNodeOptions.REF_TO_OBJECT_SEARCH_CONDITION) {
+                return new Models.QueryModelModules.SearchCondition.Entry(targetRootAggregate);
+
+            } else {
+                throw new InvalidOperationException($"不正な参照先の種類: {splitted[1]}");
+            }
+        }
+        #endregion このCommandModelの引数・戻り値の集約を返す
     }
 
     /// <summary>

@@ -102,6 +102,8 @@ export const ATTR_IS_KEY = 'IsKey' as XmlElementAttributeName
 export const ATTR_DISPLAY_NAME = 'DisplayName' as XmlElementAttributeName
 export const ATTR_STATIC_ENUM_VALUE = 'Key' as XmlElementAttributeName
 export const ATTR_USER_HELP_TEXT = 'UserHelpText' as XmlElementAttributeName
+export const ATTR_PARAMETER = 'Parameter' as XmlElementAttributeName
+export const ATTR_RETURN_VALUE = 'ReturnValue' as XmlElementAttributeName
 
 export const TYPE_DATA_MODEL = 'data-model'
 export const TYPE_QUERY_MODEL = 'query-model'

@@ -297,6 +297,113 @@ internal static class BasicNodeOptions {
 
 
     #region CommandModel用
+    internal static NodeOption Parameter = new() {
+        AttributeName = "Parameter",
+        DisplayName = "コマンドモデルの引数の型",
+        Type = E_NodeOptionType.String,
+        HelpText = $$"""
+            コマンドモデルの引数の型を指定します。
+            以下のいずれかを指定できます：
+            - 構造体モデルのルート集約名
+            - クエリモデルのルート集約名 + ":{{REF_TO_OBJECT_DISPLAY_DATA}}" または ":{{REF_TO_OBJECT_SEARCH_CONDITION}}"
+            指定しなかった場合は引数なしのコマンドとみなされます。
+            """,
+        Validate = ctx => {
+            // コマンドモデルのルート集約のみ許可
+            if (ctx.NodeType != E_NodeType.RootAggregate) {
+                ctx.AddError("このオプションはルート集約にのみ指定できます。");
+                return;
+            }
+
+            if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model) && model is not CommandModel) {
+                ctx.AddError("このオプションはコマンドモデルにのみ指定できます。");
+                return;
+            }
+
+            // 値未指定は不正
+            var splitted = ctx.Value.Split(':', StringSplitOptions.RemoveEmptyEntries);
+            var targetPhysicalName = splitted.FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(targetPhysicalName)) {
+                ctx.AddError("参照先が未指定です。");
+                return;
+            }
+
+            // コロンが含まれるならその後ろは DisplayData または SearchCondition のみ
+            var targetType = splitted.Skip(1).FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(targetType) &&
+                targetType != REF_TO_OBJECT_DISPLAY_DATA &&
+                targetType != REF_TO_OBJECT_SEARCH_CONDITION) {
+                ctx.AddError($"参照先の種類は {REF_TO_OBJECT_DISPLAY_DATA} または {REF_TO_OBJECT_SEARCH_CONDITION} のみ指定できます。");
+                return;
+            }
+
+            // 参照先の存在確認
+            var targetElement = ctx.SchemaParseContext.Document.Root?.Element(targetPhysicalName);
+            if (targetElement == null) {
+                ctx.AddError($"参照先の集約が見つかりません。物理名: {targetPhysicalName}");
+                return;
+            }
+        },
+        IsAvailableModelMembers = model => {
+            return model is CommandModel;
+        },
+    };
+
+    internal static NodeOption ReturnValue = new() {
+        AttributeName = "ReturnValue",
+        DisplayName = "コマンドモデルの戻り値の型",
+        Type = E_NodeOptionType.String,
+        HelpText = $$"""
+            コマンドモデルの戻り値の型を指定します。
+            以下のいずれかを指定できます：
+            - 構造体モデルのルート集約名
+            - クエリモデルのルート集約名 + ":{{REF_TO_OBJECT_DISPLAY_DATA}}" または ":{{REF_TO_OBJECT_SEARCH_CONDITION}}"
+            指定しなかった場合は戻り値なしのコマンドとみなされます。
+            """,
+        Validate = ctx => {
+            // コマンドモデルのルート集約のみ許可
+            if (ctx.NodeType != E_NodeType.RootAggregate) {
+                ctx.AddError("このオプションはルート集約にのみ指定できます。");
+                return;
+            }
+
+            if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model) && model is not CommandModel) {
+                ctx.AddError("このオプションはコマンドモデルにのみ指定できます。");
+                return;
+            }
+
+            // 値未指定は不正
+            var splitted = ctx.Value.Split(':', StringSplitOptions.RemoveEmptyEntries);
+            var targetPhysicalName = splitted.FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(targetPhysicalName)) {
+                ctx.AddError("参照先が未指定です。");
+                return;
+            }
+
+            // コロンが含まれるならその後ろは DisplayData または SearchCondition のみ
+            var targetType = splitted.Skip(1).FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(targetType) &&
+                targetType != REF_TO_OBJECT_DISPLAY_DATA &&
+                targetType != REF_TO_OBJECT_SEARCH_CONDITION) {
+                ctx.AddError($"参照先の種類は {REF_TO_OBJECT_DISPLAY_DATA} または {REF_TO_OBJECT_SEARCH_CONDITION} のみ指定できます。");
+                return;
+            }
+
+            // 参照先の存在確認
+            var targetElement = ctx.SchemaParseContext.Document.Root?.Element(targetPhysicalName);
+            if (targetElement == null) {
+                ctx.AddError($"参照先の集約が見つかりません。物理名: {targetPhysicalName}");
+                return;
+            }
+        },
+        IsAvailableModelMembers = model => {
+            return model is CommandModel;
+        },
+    };
+    #endregion CommandModel用
+
+
+    #region StructureModel用
     internal const string REF_TO_OBJECT_DISPLAY_DATA = "DisplayData";
     internal const string REF_TO_OBJECT_SEARCH_CONDITION = "SearchCondition";
 
@@ -332,7 +439,7 @@ internal static class BasicNodeOptions {
             return false;
         },
     };
-    #endregion CommandModel用
+    #endregion StructureModel用
 
 
     #region StaticEnumModel用

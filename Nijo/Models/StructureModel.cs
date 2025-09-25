@@ -104,6 +104,9 @@ namespace Nijo.Models {
             // TypeScript 型定義（ルートと子孫）
             aggregateFile.AddTypeScriptTypeDef(StructureType.RenderTypeScriptRecursively(rootAggregate, ctx));
 
+            // TypeScript 新規オブジェクト作成関数（ルートと子孫）
+            aggregateFile.AddTypeScriptTypeDef(StructureType.RenderTsNewObjectFunctionRecursively(rootAggregate, ctx));
+
             aggregateFile.ExecuteRendering(ctx);
         }
 
@@ -114,18 +117,23 @@ namespace Nijo.Models {
         /// <summary>
         /// C#/TS の構造体定義をレンダリングするためのヘルパ。
         /// </summary>
-        private class StructureType : IInstancePropertyOwnerMetadata {
+        internal class StructureType : IInstancePropertyOwnerMetadata, IPresentationLayerStructure {
             internal StructureType(AggregateBase aggregate) {
                 Aggregate = aggregate;
             }
             internal AggregateBase Aggregate { get; }
 
-            internal string CsClassName => Aggregate is RootAggregate root
-                ? $"{root.PhysicalName}Structure"
+            public string CsClassName => Aggregate is RootAggregate root
+                ? root.PhysicalName
                 : $"{Aggregate.GetRoot().PhysicalName}Structure_{Aggregate.PhysicalName}";
-            internal string TsTypeName => Aggregate is RootAggregate root
-                ? $"{root.PhysicalName}Structure"
+            public string TsTypeName => Aggregate is RootAggregate root
+                ? root.PhysicalName
                 : $"{Aggregate.GetRoot().PhysicalName}Structure_{Aggregate.PhysicalName}";
+
+            /// <summary>
+            /// TypeScriptの新規オブジェクト作成関数の名前
+            /// </summary>
+            public string TsNewObjectFunction => $"createNew{TsTypeName}";
 
             IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() {
                 foreach (var m in Aggregate.GetMembers()) {
@@ -157,6 +165,52 @@ namespace Nijo.Models {
                     """)}}
                     #endregion 構造体定義
                     """;
+            }
+
+            /// <summary>
+            /// TypeScript新規オブジェクト作成関数を再帰的にレンダリングします。
+            /// </summary>
+            internal static string RenderTsNewObjectFunctionRecursively(RootAggregate rootAggregate, CodeRenderingContext ctx) {
+                var tree = rootAggregate
+                    .EnumerateThisAndDescendants()
+                    .Select(agg => new StructureType(agg));
+
+                return $$"""
+                    //#region 構造体新規作成用関数
+                    {{tree.SelectTextTemplate(node => $$"""
+                    {{node.RenderTypeScriptObjectCreationFunction(ctx)}}
+                    """)}}
+                    //#endregion 構造体新規作成用関数
+                    """;
+            }
+
+            /// <summary>
+            /// TypeScript新規オブジェクト作成関数をレンダリングします。
+            /// </summary>
+            private string RenderTypeScriptObjectCreationFunction(CodeRenderingContext ctx) {
+                var members = ((IInstancePropertyOwnerMetadata)this).GetMembers().ToArray();
+
+                return $$"""
+                    /** {{Aggregate.DisplayName}}の構造体の新しいインスタンスを作成します。 */
+                    export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({
+                    {{members.SelectTextTemplate(member => $$"""
+                      {{WithIndent(RenderMemberTsNewObjectCreation(member, ctx), "  ")}}
+                    """)}}
+                    })
+                    """;
+
+                static string RenderMemberTsNewObjectCreation(IInstancePropertyMetadata member, CodeRenderingContext ctx) {
+                    if (member is IInstanceValuePropertyMetadata v) {
+                        return $$"""
+                            {{member.GetPropertyName(E_CsTs.TypeScript)}}: undefined,
+                            """;
+                    }
+                    var s = (StructureDescendantMember)member;
+                    var initializer = s.IsArray ? "[]" : $"{s.TsNewObjectFunction}()";
+                    return $$"""
+                        {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{initializer}},
+                        """;
+                }
             }
 
             internal string RenderCSharpDeclaring(CodeRenderingContext ctx) {
@@ -240,12 +294,17 @@ namespace Nijo.Models {
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => _vm.PhysicalName;
         }
 
-        private class StructureDescendantMember : IInstanceStructurePropertyMetadata {
+        internal class StructureDescendantMember : IInstanceStructurePropertyMetadata {
             internal StructureDescendantMember(AggregateBase aggregate) { Aggregate = aggregate; }
             internal AggregateBase Aggregate { get; }
 
             internal string CsType => $"{Aggregate.GetRoot().PhysicalName}Structure_{Aggregate.PhysicalName}";
             internal string TsTypeName => $"{Aggregate.GetRoot().PhysicalName}Structure_{Aggregate.PhysicalName}";
+
+            /// <summary>
+            /// TypeScriptの新規オブジェクト作成関数の名前
+            /// </summary>
+            internal string TsNewObjectFunction => $"createNew{TsTypeName}";
 
             public bool IsArray => Aggregate is ChildrenAggregate;
             public string GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp ? CsType : TsTypeName;
