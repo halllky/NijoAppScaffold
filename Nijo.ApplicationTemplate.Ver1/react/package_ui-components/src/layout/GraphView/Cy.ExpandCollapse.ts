@@ -31,9 +31,9 @@ const collapse = (cy: cytoscape.Core | undefined, nodes: cytoscape.NodeCollectio
 const expand = (cy: cytoscape.Core | undefined, nodes: cytoscape.NodeCollection) => {
   if (!cy) return
   cy.batch(() => {
-    const descendantsToBeShown: cytoscape.NodeSingular[] = []
-    const descendantsStillHidden: cytoscape.NodeSingular[] = []
-    const summaryEdgesToBeRemoved: cytoscape.EdgeSingular[] = []
+    const descendantsToBeShown = cy.collection()
+    const descendantsStillHidden = cy.collection()
+    const summaryEdgesToBeRemoved = cy.collection()
 
     for (const node of nodes) {
       // ひらく必要が無いノードはスキップ
@@ -41,28 +41,27 @@ const expand = (cy: cytoscape.Core | undefined, nodes: cytoscape.NodeCollection)
 
       // ひらかれるノードの操作
       node.removeData(IS_COLLAPSED)
-      summaryEdgesToBeRemoved.push(...node.connectedEdges(`[${SUMMARISE}]`))
+      summaryEdgesToBeRemoved.merge(node.connectedEdges(`[${SUMMARISE}]`))
 
       // ひらかれるノードの子孫ノードの操作
       for (const descendant of node.descendants()) {
         if (descendant.ancestors(`[${IS_COLLAPSED}]`).length === 0) {
-          descendantsToBeShown.push(descendant)
+          descendantsToBeShown.merge(descendant)
         } else {
-          descendantsStillHidden.push(descendant)
+          descendantsStillHidden.merge(descendant)
         }
       }
     }
 
     // 新たに表示されるノードに接続するサマリーエッジ
-    const virtualEdges = cy
-      .collection(descendantsToBeShown)
+    const virtualEdges = descendantsToBeShown
       .union(descendantsStillHidden)
       .connectedEdges()
       .map(edge => getVirtualEdge(edge, cy))
 
     // 更新
-    cy.remove(cy.collection(summaryEdgesToBeRemoved))
-    cy.collection(descendantsToBeShown).style('display', '')
+    cy.remove(summaryEdgesToBeRemoved)
+    descendantsToBeShown.style('display', '')
     for (const edge of virtualEdges) {
       if (!edge) continue
       if (cy.hasElementWithId(edge.id())) continue
