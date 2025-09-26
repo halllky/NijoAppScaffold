@@ -43,6 +43,23 @@ export default {
     }),
   },
 
+  // シーケンス型
+  sequence: {
+    contents: ({ useFormReturn: { register }, name }) => (
+      <input
+        type="number"
+        {...register(name, { valueAsNumber: true })}
+        className="border border-gray-300 px-2 py-1 rounded"
+        placeholder="数値を入力してください"
+      />
+    ),
+    getGridColumnDef: ({ member, cellType }) => cellType.number(
+      member.physicalName ?? '',
+      typeof member.label === 'string' ? member.label : '', {
+      defaultWidth: 120,
+    }),
+  },
+
   // 日時型
   datetime: {
     contents: ({ useFormReturn: { register }, name }) => (
