@@ -32,6 +32,7 @@ namespace Nijo.Models.QueryModelModules {
                         ? new SearchConditionMessageContainer(rm.MemberAggregate)
                         : null,
                     CsType = null,
+                    IsArray = m is IRelationalMember rm2 && rm2.MemberAggregate is ChildrenAggregate,
                 });
         }
 
@@ -40,6 +41,7 @@ namespace Nijo.Models.QueryModelModules {
             public required string DisplayName { get; init; }
             public required MessageContainer? NestedObject { get; init; }
             public required string? CsType { get; init; }
+            public required bool IsArray { get; init; }
         }
 
         internal static string RenderCSharpRecursively(RootAggregate rootAggregate) {

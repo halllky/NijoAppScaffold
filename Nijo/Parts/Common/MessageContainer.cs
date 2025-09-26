@@ -61,7 +61,7 @@ namespace Nijo.Parts.Common {
                 {{members.SelectTextTemplate(m => $$"""
                 {{If(m.NestedObject == null, () => $$"""
                         this.{{m.PhysicalName}} = new {{CONCRETE_CLASS}}([.. path, "{{m.PhysicalName}}"]);
-                """).ElseIf(m.NestedObject?._aggregate is not ChildrenAggregate, () => $$"""
+                """).ElseIf(!m.IsArray, () => $$"""
                         this.{{m.PhysicalName}} = new {{m.NestedObject?.CsClassName}}([.. path, "{{m.PhysicalName}}"]);
                 """).Else(() => $$"""
                         this.{{m.PhysicalName}} = new {{CONCRETE_CLASS_LIST}}<{{m.NestedObject?.CsClassName}}>([.. path, "{{m.PhysicalName}}"], rowIndex => {
@@ -75,7 +75,7 @@ namespace Nijo.Parts.Common {
                     /// <summary>{{m.DisplayName}}に対して発生したメッセージの入れ物</summary>
                 {{If(m.NestedObject == null, () => $$"""
                     public {{m.CsType ?? INTERFACE}} {{m.PhysicalName}} { get; }
-                """).ElseIf(m.NestedObject?._aggregate is not ChildrenAggregate, () => $$"""
+                """).ElseIf(!m.IsArray, () => $$"""
                     public {{m.CsType ?? m.NestedObject?.CsClassName}} {{m.PhysicalName}} { get; }
                 """).Else(() => $$"""
                     public {{m.CsType ?? $"{INTERFACE_LIST}<{m.NestedObject?.CsClassName}>"}} {{m.PhysicalName}} { get; }
@@ -112,7 +112,7 @@ namespace Nijo.Parts.Common {
                             {{member.PhysicalName}}?: Util.{{TS_CONTAINER}}
                             """;
 
-                    } else if (member.NestedObject._aggregate is not ChildrenAggregate children) {
+                    } else if (!member.IsArray) {
                         yield return $$"""
                             {{member.PhysicalName}}?: {
                               {{WithIndent(RenderBody(member.NestedObject), "  ")}}
@@ -472,6 +472,8 @@ namespace Nijo.Parts.Common {
             MessageContainer? NestedObject { get; }
             /// <summary>未指定の場合はデフォルトの型になる</summary>
             string? CsType { get; }
+            /// <summary>このメンバーをリストとしてレンダリングするか否か</summary>
+            bool IsArray { get; }
         }
         #endregion メンバー
     }

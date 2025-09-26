@@ -36,6 +36,7 @@ internal class DisplayDataMessageContainer : MessageContainer {
                 DisplayName = member.DisplayName,
                 NestedObject = null,
                 CsType = null,
+                IsArray = false,
             };
         }
         foreach (var member in displayData.GetChildMembers()) {
@@ -44,6 +45,7 @@ internal class DisplayDataMessageContainer : MessageContainer {
                 DisplayName = member.DisplayName,
                 NestedObject = new DisplayDataMessageContainer(member.Aggregate),
                 CsType = null,
+                IsArray = member.Aggregate is ChildrenAggregate,
             };
         }
     }
@@ -83,6 +85,7 @@ internal class DisplayDataMessageContainer : MessageContainer {
         public required string DisplayName { get; init; }
         public required DisplayDataMessageContainer? NestedObject { get; init; }
         public required string? CsType { get; init; }
+        public required bool IsArray { get; init; }
 
         MessageContainer? IMessageContainerMember.NestedObject => NestedObject;
     }

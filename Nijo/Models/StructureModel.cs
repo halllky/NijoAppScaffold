@@ -124,6 +124,7 @@ namespace Nijo.Models {
             if (rootAggregate.EnumerateCommandModelsRefferingAsParameter().Any()) {
                 var messageContainer = new StructureTypeMessageContainer(rootAggregate);
                 aggregateFile.AddCSharpClass(StructureTypeMessageContainer.RenderCSharpRecursively(rootAggregate), "Class_MessageContainer");
+                aggregateFile.AddTypeScriptTypeDef(messageContainer.RenderTypeScript());
                 ctx.Use<Parts.Common.MessageContainer.BaseClass>().Register(messageContainer.CsClassName, messageContainer.CsClassName);
             }
 
@@ -339,7 +340,7 @@ namespace Nijo.Models {
         /// <summary>
         /// 構造体モデルの値メンバー
         /// </summary>
-        private class StructureValueMember : IInstanceValuePropertyMetadata {
+        internal class StructureValueMember : IInstanceValuePropertyMetadata {
             internal StructureValueMember(ValueMember vm) { _vm = vm; }
             private readonly ValueMember _vm;
 
@@ -390,8 +391,8 @@ namespace Nijo.Models {
                 }
             }
 
-            public override string CsClassName => $"{Aggregate.GetRoot().PhysicalName}Structure_{Aggregate.PhysicalName}";
-            public override string TsTypeName => $"{Aggregate.GetRoot().PhysicalName}Structure_{Aggregate.PhysicalName}";
+            public override string CsClassName => $"{Aggregate.GetRoot().PhysicalName}_{Aggregate.PhysicalName}";
+            public override string TsTypeName => $"{Aggregate.GetRoot().PhysicalName}_{Aggregate.PhysicalName}";
 
             public bool IsArray => Aggregate is ChildrenAggregate;
             string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp ? CsClassName : TsTypeName;

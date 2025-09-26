@@ -23,26 +23,46 @@ namespace Nijo.Models.StructureModelModules {
             var structureType = _aggregate is RootAggregate root
                 ? new StructureModel.StructureType(root)
                 : new StructureModel.StructureDescendantMember(_aggregate);
-            foreach (var member in ((IInstancePropertyOwnerMetadata)structureType).GetMembers()) {
-                if (member is IInstanceValuePropertyMetadata) {
-                    yield return new ContainerMemberImpl {
-                        PhysicalName = member.GetPropertyName(E_CsTs.CSharp),
-                        DisplayName = member.DisplayName,
-                        NestedObject = null,
-                        CsType = null,
-                    };
-                } else if (member is IInstanceStructurePropertyMetadata structMember) {
-                    // RefToMemberやDescendantMemberの場合
-                    var nestedObject = structMember is StructureModel.StructureDescendantMember descendant
-                        ? new StructureTypeMessageContainer(descendant.Aggregate)
-                        : null;
 
-                    yield return new ContainerMemberImpl {
-                        PhysicalName = member.GetPropertyName(E_CsTs.CSharp),
-                        DisplayName = member.DisplayName,
-                        NestedObject = nestedObject,
-                        CsType = null,
-                    };
+            foreach (var member in ((IInstancePropertyOwnerMetadata)structureType).GetMembers()) {
+                switch (member) {
+                    case StructureModel.StructureValueMember valueMember:
+                        yield return new ContainerMemberImpl {
+                            PhysicalName = member.GetPropertyName(E_CsTs.CSharp),
+                            DisplayName = member.DisplayName,
+                            NestedObject = null,
+                            CsType = null,
+                            IsArray = false,
+                        };
+                        break;
+                    case StructureModel.StructureRefToMember refToMember:
+                        var targetStructure = refToMember.GetTargetStructure();
+                        MessageContainer targetMessage = targetStructure switch {
+                            QueryModelModules.DisplayData disp => new QueryModelModules.DisplayDataMessageContainer(disp.Aggregate),
+                            QueryModelModules.SearchCondition.Entry sc => new QueryModelModules.SearchConditionMessageContainer(sc.EntryAggregate),
+                            StructureModel.StructureType str => new StructureTypeMessageContainer(str.Aggregate),
+                            _ => throw new NotImplementedException(),
+                        };
+                        yield return new ContainerMemberImpl {
+                            PhysicalName = member.GetPropertyName(E_CsTs.CSharp),
+                            DisplayName = member.DisplayName,
+                            NestedObject = targetMessage,
+                            CsType = targetMessage.CsClassName,
+                            IsArray = false,
+                        };
+                        break;
+                    case StructureModel.StructureDescendantMember descendantMember:
+                        var nestedObject = new StructureTypeMessageContainer(descendantMember.Aggregate);
+                        yield return new ContainerMemberImpl {
+                            PhysicalName = member.GetPropertyName(E_CsTs.CSharp),
+                            DisplayName = member.DisplayName,
+                            NestedObject = nestedObject,
+                            CsType = null,
+                            IsArray = descendantMember.IsArray,
+                        };
+                        break;
+                    default:
+                        throw new NotImplementedException();
                 }
             }
         }
@@ -65,10 +85,9 @@ namespace Nijo.Models.StructureModelModules {
         private class ContainerMemberImpl : IMessageContainerMember {
             public required string PhysicalName { get; init; }
             public required string DisplayName { get; init; }
-            public required StructureTypeMessageContainer? NestedObject { get; init; }
+            public required MessageContainer? NestedObject { get; init; }
             public required string? CsType { get; init; }
-
-            MessageContainer? IMessageContainerMember.NestedObject => NestedObject;
+            public required bool IsArray { get; init; }
         }
     }
 }

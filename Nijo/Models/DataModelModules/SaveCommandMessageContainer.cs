@@ -31,7 +31,7 @@ namespace Nijo.Models.DataModelModules {
                 .Select(m => new MessageContainerMemberImpl {
                     PhysicalName = m.PhysicalName,
                     DisplayName = m.DisplayName,
-                    NestedObjectIsArray = m.Member is ChildrenAggregate,
+                    IsArray = m.Member is ChildrenAggregate,
                     NestedObject = m.Member switch {
                         ChildAggregate child => new SaveCommandMessageContainer(child),
                         ChildrenAggregate children => new SaveCommandMessageContainer(children),
@@ -74,7 +74,7 @@ namespace Nijo.Models.DataModelModules {
                     /// <summary>{{m.DisplayName}}に対して発生したメッセージの入れ物</summary>
                 {{If(m.NestedObject == null, () => $$"""
                     {{INTERFACE}} {{m.PhysicalName}} { get; }
-                """).ElseIf(m.NestedObjectIsArray, () => $$"""
+                """).ElseIf(m.IsArray, () => $$"""
                     {{INTERFACE_LIST}}<{{m.NestedObject?.InterfaceName}}> {{m.PhysicalName}} { get; }
                 """).Else(() => $$"""
                     {{m.NestedObject?.InterfaceName}} {{m.PhysicalName}} { get; }
@@ -88,7 +88,7 @@ namespace Nijo.Models.DataModelModules {
         private class MessageContainerMemberImpl : IMessageContainerMember {
             public required string PhysicalName { get; set; }
             public required string DisplayName { get; set; }
-            public required bool NestedObjectIsArray { get; set; }
+            public required bool IsArray { get; set; }
             public required SaveCommandMessageContainer? NestedObject { get; set; }
             MessageContainer? IMessageContainerMember.NestedObject => NestedObject;
             public string? CsType { get; set; }

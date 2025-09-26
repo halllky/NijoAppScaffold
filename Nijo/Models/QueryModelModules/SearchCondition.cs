@@ -28,6 +28,7 @@ namespace Nijo.Models.QueryModelModules {
                 FilterRoot = new Filter(_entryAggregate);
             }
             private readonly RootAggregate _entryAggregate;
+            internal RootAggregate EntryAggregate => _entryAggregate;
 
             internal virtual string CsClassName => $"{_entryAggregate.PhysicalName}SearchCondition";
             internal virtual string TsTypeName => $"{_entryAggregate.PhysicalName}SearchCondition";
