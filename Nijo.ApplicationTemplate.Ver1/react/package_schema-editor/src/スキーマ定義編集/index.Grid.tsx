@@ -4,7 +4,8 @@ import * as ReactTable from "@tanstack/react-table"
 import * as Icon from "@heroicons/react/24/solid"
 import * as Input from "@nijo/ui-components/input"
 import * as Layout from "@nijo/ui-components/layout"
-import { SchemaDefinitionGlobalState, ATTR_TYPE, XmlElementAttribute, XmlElementItem, ATTR_IS_KEY, TYPE_DATA_MODEL, ATTR_USER_HELP_TEXT } from "./types"
+import FormLayout from "@nijo/ui-components/layout/FormLayout"
+import { SchemaDefinitionGlobalState, ATTR_TYPE, XmlElementAttribute, XmlElementItem, ATTR_IS_KEY, TYPE_DATA_MODEL, ATTR_USER_HELP_TEXT, TYPE_COMMAND_MODEL, TYPE_QUERY_MODEL, TYPE_CHILD, TYPE_CHILDREN } from "./types"
 import * as UI from '../UI'
 import useEvent from "react-use-event-hook"
 import { UUID } from "uuidjs"
@@ -12,6 +13,7 @@ import { TYPE_COLUMN_DEF } from "./getAttrTypeColumnDef"
 import { GetValidationResultFunction, ValidationTriggerFunction } from "./useValidation"
 import { CellEditorWithMention } from "./CellEditorWithMention"
 import { usePersonalSettings } from "../PersonalSettings"
+import { MentionInputWrapper } from "../UI/MentionInputWrapper"
 
 // スキーマ定義データを提供するContext
 export const SchemaDefinitionContext = React.createContext<SchemaDefinitionGlobalState | null>(null)
@@ -19,11 +21,7 @@ export const SchemaDefinitionContext = React.createContext<SchemaDefinitionGloba
 /** コメント列のID */
 export const COLUMN_ID_COMMENT = ':comment:'
 
-/**
- * Data, Query, Command のルート集約1件を表示・編集するページ。
- * Command Model の場合はメンバーを直接グリッドで定義するのではなく、Parameter属性とReturnValue属性で引数と戻り値の型を選択します。
- */
-export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidationResult, trigger, attributeDefs, showLessColumns, className }: {
+type PageRootAggregateProps = {
   rootAggregateIndex: number
   formMethods: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
   getValidationResult: GetValidationResultFunction
@@ -32,7 +30,186 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
   /** 名前、Type、キー、コメントのみを表示する */
   showLessColumns: boolean
   className?: string
-}) => {
+}
+
+/**
+ * Data, Query, Command のルート集約1件を表示・編集するページ。
+ * Command Model の場合はメンバーを直接グリッドで定義するのではなく、Parameter属性とReturnValue属性で引数と戻り値の型を選択します。
+ */
+export const PageRootAggregate = ((props: PageRootAggregateProps) => {
+
+  const rootModelType = ReactHookForm.useWatch({
+    control: props.formMethods.control,
+    name: `xmlElementTrees.${props.rootAggregateIndex}.xmlElements.0.attributes.${ATTR_TYPE}`,
+  })
+
+  if (rootModelType === TYPE_COMMAND_MODEL) {
+    return <PageRootAggregate_CommandModel {...props} />
+  } else {
+    return <PageRootAggregate_OtherModels {...props} />
+  }
+})
+
+/**
+ * CommandModel の編集ビュー
+ */
+const PageRootAggregate_CommandModel = ({ rootAggregateIndex, formMethods, getValidationResult, trigger, attributeDefs, showLessColumns, className }: PageRootAggregateProps) => {
+  const { control, watch } = formMethods
+
+  // スキーマ定義全体のデータを取得（メンション機能で使用）
+  const schemaDefinitionData = watch()
+
+  // ルート集約（最初の要素）を取得
+  const rootElement = ReactHookForm.useWatch({
+    control,
+    name: `xmlElementTrees.${rootAggregateIndex}.xmlElements.0`,
+  })
+
+  // LocalNameの更新
+  const handleLocalNameChange = useEvent((value: string) => {
+    formMethods.setValue(`xmlElementTrees.${rootAggregateIndex}.xmlElements.0.localName`, value)
+    trigger()
+  })
+
+  // 属性の更新
+  const handleAttributeChange = useEvent((attributeName: string, value: string) => {
+    const currentElement = formMethods.getValues(`xmlElementTrees.${rootAggregateIndex}.xmlElements.0`)
+    const updatedAttributes = { ...currentElement.attributes }
+
+    if (value.trim() === '') {
+      delete updatedAttributes[attributeName as keyof typeof updatedAttributes]
+    } else {
+      updatedAttributes[attributeName as keyof typeof updatedAttributes] = value
+    }
+
+    formMethods.setValue(`xmlElementTrees.${rootAggregateIndex}.xmlElements.0.attributes`, updatedAttributes)
+    trigger()
+  })
+
+  // メンション候補データを取得する関数
+  const getSuggestions: Parameters<typeof MentionInputWrapper>[0]['getSuggestions'] = React.useCallback(async (query, callback) => {
+    if (!schemaDefinitionData) {
+      callback([])
+      return
+    }
+
+    // 全てのXML要素を収集
+    const allElements: XmlElementItem[] = []
+    for (const tree of schemaDefinitionData.xmlElementTrees) {
+      allElements.push(...tree.xmlElements)
+    }
+
+    // ルート集約、child、childrenのみに制限
+    const targetElements = allElements.filter(el => {
+      const type = el.attributes[ATTR_TYPE]
+
+      // ルート集約（インデント0かつTypeがdata-model、query-model、command-modelのいずれか）
+      if (el.indent === 0 && (type === TYPE_DATA_MODEL || type === TYPE_QUERY_MODEL || type === TYPE_COMMAND_MODEL)) return true
+
+      // child または children
+      if (type === TYPE_CHILD || type === TYPE_CHILDREN) return true
+
+      return false
+    })
+
+    // クエリに基づいてフィルタリング
+    const filtered = targetElements.filter(el => {
+      const localName = el.localName || ''
+      return localName.toLowerCase().includes(query.toLowerCase())
+    })
+
+    // 提案リストを作成
+    const suggestions = filtered.map(el => ({
+      id: el.uniqueId,
+      display: el.localName || '(名前なし)',
+    }))
+
+    callback(suggestions)
+  }, [schemaDefinitionData])
+
+  if (!rootElement) {
+    return <div>データが見つかりません</div>
+  }
+
+  // エラー情報を取得
+  const validation = getValidationResult(rootElement.uniqueId)
+
+  return (
+    <SchemaDefinitionContext.Provider value={schemaDefinitionData}>
+      <div className={`flex flex-col gap-1 ${className ?? ''}`}>
+        <FormLayout.Root labelWidthPx={220}>
+          <FormLayout.Section border>
+            {/* LocalName */}
+            <FormLayout.Field fullWidth>
+              <input
+                type="text"
+                value={rootElement.localName || ''}
+                onChange={e => handleLocalNameChange(e.target.value)}
+                className={`w-full px-1 py-px border font-bold ${validation?._own?.length > 0 ? 'border-amber-500 bg-amber-50' : 'border-gray-300'}`}
+                placeholder="CommandModelの名前を入力"
+              />
+            </FormLayout.Field>
+
+            {/* Type属性 */}
+            <FormLayout.Field label={TYPE_COLUMN_DEF.displayName}>
+              <input
+                type="text"
+                value={rootElement.attributes[ATTR_TYPE] || ''}
+                onChange={e => handleAttributeChange(ATTR_TYPE, e.target.value)}
+                className={`w-full px-1 py-px border ${validation?.[ATTR_TYPE]?.length > 0 ? 'border-amber-500 bg-amber-50' : 'border-gray-300'}`}
+                placeholder={TYPE_COLUMN_DEF.displayName}
+              />
+            </FormLayout.Field>
+
+            {/* その他の属性 */}
+            {Array.from(attributeDefs.values()).map(attrDef => {
+              // Typeは既に表示しているのでスキップ
+              if (attrDef.attributeName === ATTR_TYPE) return null;
+
+              // CommandModelに対応する属性のみをフィルタリング
+              if (!attrDef.availableModels.includes(TYPE_COMMAND_MODEL)) return null;
+
+              const hasError = validation?.[attrDef.attributeName]?.length > 0
+
+              return (
+                <FormLayout.Field key={attrDef.attributeName} label={attrDef.displayName}>
+                  <input
+                    type="text"
+                    value={rootElement.attributes[attrDef.attributeName] || ''}
+                    onChange={e => handleAttributeChange(attrDef.attributeName, e.target.value)}
+                    className={`w-full px-1 py-px border ${hasError ? 'border-amber-500 bg-amber-50' : 'border-gray-300'}`}
+                    placeholder={attrDef.displayName}
+                  />
+                </FormLayout.Field>
+              )
+            })}
+
+            {/* コメント */}
+            <FormLayout.Field label="コメント" fullWidth>
+              <MentionInputWrapper
+                value={rootElement.comment || ''}
+                onChange={value => {
+                  const currentElement = formMethods.getValues(`xmlElementTrees.${rootAggregateIndex}.xmlElements.0`)
+                  const updatedElement = { ...currentElement, comment: value }
+                  formMethods.setValue(`xmlElementTrees.${rootAggregateIndex}.xmlElements.0`, updatedElement)
+                  trigger()
+                }}
+                getSuggestions={getSuggestions}
+                className="w-full min-h-[80px] p-px border border-gray-300 resize-y"
+                placeholder="コメントを入力（@でメンション可能）"
+              />
+            </FormLayout.Field>
+          </FormLayout.Section>
+        </FormLayout.Root>
+      </div>
+    </SchemaDefinitionContext.Provider>
+  )
+}
+
+/**
+ * CommandModel以外の編集ビュー
+ */
+const PageRootAggregate_OtherModels = ({ rootAggregateIndex, formMethods, getValidationResult, trigger, attributeDefs, showLessColumns, className }: PageRootAggregateProps) => {
   const gridRef = React.useRef<Layout.EditableGridRef<GridRowType>>(null)
   const { control, watch } = formMethods
   const { fields, insert, remove, update, move } = ReactHookForm.useFieldArray({ control, name: `xmlElementTrees.${rootAggregateIndex}.xmlElements` })

@@ -3,7 +3,7 @@ import useEvent from "react-use-event-hook"
 import { GraphView, GraphViewProps, GraphViewRef, } from "@nijo/ui-components/layout"
 import { Node as CyNode, Edge as CyEdge } from "@nijo/ui-components/layout/GraphView/DataSource"
 import { CytoscapeDataSet, ViewState } from "@nijo/ui-components/layout/GraphView/Cy"
-import { AppSchemaDefinitionGraphDataSet, asTree, ATTR_IS_KEY, ATTR_TYPE, ModelPageForm, TYPE_CHILD, TYPE_CHILDREN, TYPE_COMMAND_MODEL, TYPE_DATA_MODEL, TYPE_MEMO, TYPE_QUERY_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, XmlElementItem } from "./types"
+import { AppSchemaDefinitionGraphDataSet, asTree, ATTR_IS_KEY, ATTR_PARAMETER, ATTR_RETURN_VALUE, ATTR_TYPE, ModelPageForm, TYPE_CHILD, TYPE_CHILDREN, TYPE_COMMAND_MODEL, TYPE_DATA_MODEL, TYPE_MEMO, TYPE_QUERY_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, XmlElementItem } from "./types"
 import { MentionUtil } from "../UI"
 import { findRefToTarget } from "./findRefToTarget"
 import * as AutoLayout from "@nijo/ui-components/layout/GraphView/Cy.AutoLayout"
@@ -268,6 +268,55 @@ const createSchemaDefinitionDataSet = (xmlElementTrees: ModelPageForm[], onlyRoo
               sourceModel: model,
               isMention: true,
             })
+          }
+        }
+      }
+
+      // TYPE_COMMAND_MODELの場合、ATTR_PARAMETERとATTR_RETURN_VALUE属性で定義されている物理名のノードにエッジを追加
+      if (model === TYPE_COMMAND_MODEL) {
+        // Parameter属性の処理
+        const parameterValue = owner.attributes[ATTR_PARAMETER]
+        if (parameterValue) {
+          // 物理名に基づいてターゲット要素を検索
+          const targetElement = Array.from(elementIdMap.values()).find(({ element }) =>
+            element.localName === parameterValue
+          )
+          if (targetElement) {
+            const targetUniqueId = onlyRoot
+              ? targetElement.rootElement.uniqueId
+              : targetElement.element.uniqueId
+
+            if (owner.uniqueId !== targetUniqueId) {
+              edges.push({
+                source: owner.uniqueId,
+                target: targetUniqueId,
+                label: '引数',
+                sourceModel: model,
+              })
+            }
+          }
+        }
+
+        // ReturnValue属性の処理
+        const returnValue = owner.attributes[ATTR_RETURN_VALUE]
+        if (returnValue) {
+          // 物理名に基づいてターゲット要素を検索
+          const targetElement = Array.from(elementIdMap.values()).find(({ element }) =>
+            element.localName === returnValue
+          )
+          if (targetElement) {
+            const targetUniqueId = onlyRoot
+              ? targetElement.rootElement.uniqueId
+              : targetElement.element.uniqueId
+
+            if (owner.uniqueId !== targetUniqueId) {
+              edges.push({
+                source: owner.uniqueId,
+                target: targetUniqueId,
+                label: '戻り値',
+                sourceModel: model,
+              })
+            }
           }
         }
       }
