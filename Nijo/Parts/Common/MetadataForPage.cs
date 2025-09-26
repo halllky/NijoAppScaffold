@@ -51,7 +51,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
             FileName = "metadata-for-page.ts",
             Contents = $$"""
 
-                import { {{CommandQueryMappings.DATA_MODEL_TYPE}}, {{CommandQueryMappings.QUERY_MODEL_TYPE}}, {{CommandQueryMappings.COMMAND_MODEL_TYPE}}, {{CommandQueryMappings.REFERED_QUERY_MODEL_TYPE}} } from ".."
+                import { {{CommandQueryMappings.DATA_MODEL_TYPE}}, {{CommandQueryMappings.QUERY_MODEL_TYPE}}, {{CommandQueryMappings.COMMAND_MODEL_TYPE}}, {{CommandQueryMappings.STRUCTURE_MODEL_TYPE}}, {{CommandQueryMappings.REFERED_QUERY_MODEL_TYPE}} } from ".."
                 import * as EnumDefs from "../enum-defs"
 
                 /** 画面の自動生成のためのメタデータ */
@@ -63,7 +63,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                   {{WithIndent(RefMetadata.RenderType(ctx), "  ")}}
 
                   /** 画面の自動生成のためのメタデータ取得関数 */
-                  export const getAll = (): { [k in ( {{CommandQueryMappings.DATA_MODEL_TYPE}} | {{CommandQueryMappings.QUERY_MODEL_TYPE}} | {{CommandQueryMappings.COMMAND_MODEL_TYPE}})]: {{StructureMetadata.TYPE_ROOT_AGGREGATE_NAME}} } => ({
+                  export const getAll = (): { [k in ( {{CommandQueryMappings.DATA_MODEL_TYPE}} | {{CommandQueryMappings.QUERY_MODEL_TYPE}} | {{CommandQueryMappings.COMMAND_MODEL_TYPE}} | {{CommandQueryMappings.STRUCTURE_MODEL_TYPE}})]: {{StructureMetadata.TYPE_ROOT_AGGREGATE_NAME}} } => ({
                 {{entriesOrderByDataFlow.SelectTextTemplate(entry => $$"""
                     {{WithIndent(entry.Render(ctx), "    ")}}
                 """)}}

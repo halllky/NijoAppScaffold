@@ -1,6 +1,7 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.SchemaParsing;
+using Nijo.Models.StructureModelModules;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -117,6 +118,21 @@ namespace Nijo.Models {
 
             // TypeScript 新規オブジェクト作成関数（ルートと子孫）
             aggregateFile.AddTypeScriptTypeDef(StructureType.RenderTsNewObjectFunctionRecursively(rootAggregate, ctx));
+
+            // この構造体がいずれかのコマンドモデルの引数として参照されている場合、
+            // メッセージストラクチャーの定義をレンダリングする
+            if (rootAggregate.EnumerateCommandModelsRefferingAsParameter().Any()) {
+                var messageContainer = new StructureTypeMessageContainer(rootAggregate);
+                aggregateFile.AddCSharpClass(StructureTypeMessageContainer.RenderCSharpRecursively(rootAggregate), "Class_MessageContainer");
+                ctx.Use<Parts.Common.MessageContainer.BaseClass>().Register(messageContainer.CsClassName, messageContainer.CsClassName);
+            }
+
+            // TypeScriptのマッピングファイルへの登録
+            ctx.Use<Parts.Common.CommandQueryMappings>().AddStructureModel(rootAggregate);
+
+            // 定数: メタデータ
+            ctx.Use<Parts.Common.Metadata>().Add(rootAggregate);
+            ctx.Use<Parts.Common.MetadataForPage>().Add(rootAggregate);
 
             aggregateFile.ExecuteRendering(ctx);
         }

@@ -110,7 +110,7 @@ namespace Nijo.Models {
                 var targetModel = context.Document.Root?.ElementsWithoutMemo()
                     .FirstOrDefault(e => context.GetPhysicalName(e) == modelName);
                 if (targetModel == null) {
-                    addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」が見つかりません。");
+                    addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」が見つからないか、ルート集約ではありません。");
                     return;
                 }
 

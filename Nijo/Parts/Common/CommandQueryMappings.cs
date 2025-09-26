@@ -43,6 +43,10 @@ namespace Nijo.Parts.Common {
         /// </summary>
         internal const string COMMAND_MODEL_TYPE = "CommandModelType";
         /// <summary>
+        /// JavaScript用: StructureModelの型名のリテラル型
+        /// </summary>
+        internal const string STRUCTURE_MODEL_TYPE = "StructureModelType";
+        /// <summary>
         /// C#用: QueryModel, CommandModelの種類を表すenum
         /// </summary>
         internal const string E_COMMAND_QUERY_TYPE = "E_CommandQueryType";
@@ -51,6 +55,7 @@ namespace Nijo.Parts.Common {
         private readonly List<RootAggregate> _queryModels = [];
         private readonly List<RootAggregate> _commandModels = [];
         private readonly List<RootAggregate> _dataModels = [];
+        private readonly List<RootAggregate> _structureModels = [];
 
         void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
             // 特になし
@@ -95,6 +100,7 @@ namespace Nijo.Parts.Common {
             var dataModelsOrderByDataFlow = _dataModels.OrderByDataFlow().ToArray();
             var queryModelsOrderByDataFlow = _queryModels.OrderByDataFlow().ToArray();
             var commandModelsOrderByDataFlow = _commandModels.OrderByDataFlow().ToArray();
+            var structureModelsOrderByDataFlow = _structureModels.OrderByDataFlow().ToArray();
 
             // QueryModelのルート集約だけでなくツリー全部
             var queryModelAggregateTypes = queryModelsOrderByDataFlow
@@ -149,6 +155,14 @@ namespace Nijo.Parts.Common {
                     }
                 }
 
+                imports.Add(($"./{rootAggregate.PhysicalName}", modules.ToArray()));
+            }
+            foreach (var rootAggregate in structureModelsOrderByDataFlow) {
+                var structureRoot = new Models.StructureModel.StructureType(rootAggregate);
+                var modules = new List<string> {
+                    structureRoot.TsTypeName,
+                    structureRoot.TsNewObjectFunction,
+                };
                 imports.Add(($"./{rootAggregate.PhysicalName}", modules.ToArray()));
             }
 
@@ -222,6 +236,16 @@ namespace Nijo.Parts.Common {
                     """)}}
                     """)}}
 
+                    /** StructureModelの種類の一覧 */
+                    export type {{STRUCTURE_MODEL_TYPE}}
+                    {{If(structureModelsOrderByDataFlow.Length == 0, () => $$"""
+                      = never
+                    """).Else(() => $$"""
+                    {{structureModelsOrderByDataFlow.SelectTextTemplate((agg, i) => $$"""
+                      {{(i == 0 ? "=" : "|")}} '{{agg.PhysicalName}}'
+                    """)}}
+                    """)}}
+
                     /** DataModelの種類の一覧を文字列として返します。 */
                     export const getDataModelTypeList = (): {{DATA_MODEL_TYPE}}[] => [
                     {{dataModelsOrderByDataFlow.SelectTextTemplate((agg, i) => $$"""
@@ -239,6 +263,13 @@ namespace Nijo.Parts.Common {
                     /** CommandModelの種類の一覧を文字列として返します。 */
                     export const getCommandModelTypeList = (): {{COMMAND_MODEL_TYPE}}[] => [
                     {{commandModelsOrderByDataFlow.SelectTextTemplate((agg, i) => $$"""
+                      '{{agg.PhysicalName}}',
+                    """)}}
+                    ]
+
+                    /** StructureModelの種類の一覧を文字列として返します。 */
+                    export const getStructureModelTypeList = (): {{STRUCTURE_MODEL_TYPE}}[] => [
+                    {{structureModelsOrderByDataFlow.SelectTextTemplate((agg, i) => $$"""
                       '{{agg.PhysicalName}}',
                     """)}}
                     ]
@@ -399,6 +430,25 @@ namespace Nijo.Parts.Common {
                     //#endregion DataModel一括更新
 
 
+                    //#region StructureModel
+                    /** StructureModel */
+                    export namespace StructureModel {
+                      /** StructureModel型一覧 */
+                      export interface TypeMap {
+                    {{structureModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
+                        '{{agg.PhysicalName}}': {{new Models.StructureModel.StructureType(agg).TsTypeName}}
+                    """)}}
+                      }
+                      /** StructureModel新規作成関数 */
+                      export const create: { [K in {{STRUCTURE_MODEL_TYPE}}]: (() => TypeMap[K]) } = {
+                    {{structureModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
+                        '{{agg.PhysicalName}}': {{new Models.StructureModel.StructureType(agg).TsNewObjectFunction}},
+                    """)}}
+                      }
+                    }
+                    //#endregion StructureModel
+
+
                     //#region 画面遷移用フック（MultiView）
                     // TODO ver.1
                     //#endregion 画面遷移用フック（MultiView）
@@ -441,6 +491,12 @@ namespace Nijo.Parts.Common {
         internal CommandQueryMappings AddDataModel(RootAggregate rootAggregate) {
             lock (_lock) {
                 _dataModels.Add(rootAggregate);
+                return this;
+            }
+        }
+        internal CommandQueryMappings AddStructureModel(RootAggregate rootAggregate) {
+            lock (_lock) {
+                _structureModels.Add(rootAggregate);
                 return this;
             }
         }

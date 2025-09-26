@@ -334,6 +334,32 @@ namespace Nijo.ImmutableSchema {
             return returnValue == null ? null : GetTargetStructure(returnValue);
         }
 
+        /// <summary>
+        /// このルート集約をBasicNodeOptions.Parameterに指定しているコマンドモデルを列挙します。
+        /// </summary>
+        public IEnumerable<RootAggregate> EnumerateCommandModelsRefferingAsParameter() {
+            foreach (var rootElement in _ctx.Document.Root?.ElementsWithoutMemo() ?? []) {
+                // コマンドモデルのみを対象とする
+                if (!_ctx.TryGetModel(rootElement, out var model) || model is not Models.CommandModel) {
+                    continue;
+                }
+
+                var parameterAttr = rootElement.Attribute(BasicNodeOptions.Parameter.AttributeName);
+                if (parameterAttr == null) {
+                    continue;
+                }
+
+                // Parameter属性の値を解析
+                var splitted = parameterAttr.Value.Split(':');
+                var parameterTargetName = splitted[0];
+
+                // このルート集約がParameter属性で指定されている場合
+                if (parameterTargetName == PhysicalName) {
+                    yield return (RootAggregate)_ctx.ToAggregateBase(rootElement, null);
+                }
+            }
+        }
+
         private ICreatablePresentationLayerStructure GetTargetStructure(XAttribute attribute) {
             var splitted = attribute.Value.Split(':');
             var targetPhysicalName = splitted[0];
