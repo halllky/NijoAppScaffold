@@ -102,6 +102,18 @@ echo 完了したら何かキーを押してください...
 pause 
 
 @rem ------------------------------------ 
+@rem 直近のマイグレーションを取得（差分生成のため）
+
+echo. 
+echo 直近のマイグレーションを確認中... 
+set "PREVIOUS_MIGRATION=" 
+for /F %%i in ('dotnet ef migrations list --project %TARGET_PROJECT% --startup-project %STARTUP_PROJECT% --no-build') do @set "PREVIOUS_MIGRATION=%%i" 
+
+if "%PREVIOUS_MIGRATION%"=="No" ( 
+    set "PREVIOUS_MIGRATION=" 
+) 
+
+@rem ------------------------------------ 
 @rem マイグレーションスクリプトを作成 
 
 echo. 
@@ -109,7 +121,7 @@ echo マイグレーションスクリプトを生成中...
 if not exist %MIGRATION_SCRIPT_DIR% ( 
     mkdir %MIGRATION_SCRIPT_DIR% 
 ) 
-dotnet ef migrations script --project %TARGET_PROJECT% --startup-project %STARTUP_PROJECT% --output %MIGRATION_SCRIPT_DIR%\%MIGRATION_NAME%.sql 
+dotnet ef migrations script %PREVIOUS_MIGRATION% --project %TARGET_PROJECT% --startup-project %STARTUP_PROJECT% --output %MIGRATION_SCRIPT_DIR%\%MIGRATION_NAME%.sql 
 if errorlevel 1 ( 
     echo マイグレーションスクリプトの生成に失敗しました。 
     pause 

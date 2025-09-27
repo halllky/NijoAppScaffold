@@ -15,9 +15,10 @@ builder.Services.AddCors(options => {
     // 開発環境ではViteからのリクエストを許可
     if (builder.Environment.IsDevelopment()) {
         options.AddDefaultPolicy(policy => {
-            policy.AllowAnyOrigin()
+            policy.WithOrigins("http://localhost:5173") // Vite のデフォルトポート
                   .AllowAnyMethod()
-                  .AllowAnyHeader();
+                  .AllowAnyHeader()
+                  .AllowCredentials(); // このデモではCookie認証を使用しているので
         });
     }
 });

@@ -4,6 +4,7 @@ import "./App.css"
 import スレッド詳細画面 from "./pages/スレッド詳細画面"
 import チャンネル画面 from "./pages/チャンネル画面"
 import サイドメニュー from "./pages/サイドメニュー"
+import デバッグメニュー from "./pages/デバッグメニュー"
 
 // ホーム画面コンポーネント
 function ホーム画面() {
@@ -23,6 +24,7 @@ function ホーム画面() {
       <p style={{ fontSize: '16px' }}>
         左のサイドメニューからチャンネルを選択してください
       </p>
+      <デバッグメニュー />
     </div>
   )
 }

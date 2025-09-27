@@ -3,6 +3,7 @@
   <アカウント Type="data-model" UniqueId="b9c4a5f3-d8c3-4552-91a7-815f739064d0">
     <アカウントID IsKey="True" Type="word" UniqueId="8667d11a-86e3-40de-a1b2-efa6b1c16cb7" />
     <アカウント名 IsRequired="True" Type="word" UniqueId="df0098f8-8edb-4302-9690-a10d2729fb8d" />
+    <パスワード Type="word" UniqueId="448fa01f-65d0-4a36-8ce4-fe385650eff4" />
   </アカウント>
   <チャンネル Type="data-model" UniqueId="930f1bf7-0e10-41bd-904e-dcb052588c2e">
     <チャンネルID IsKey="True" Type="word" UniqueId="4647f5d2-02be-4a66-a45f-1926c0652b6d" />

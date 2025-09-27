@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -14,7 +15,11 @@ partial class OverridedApplicationService {
     /// アカウントの画面表示用データをデータベースのどの項目から取得するかの定義
     /// </summary>
     protected override IQueryable<アカウントViewSearchResult> CreateQuerySource(アカウントViewSearchCondition searchCondition, IPresentationContext<アカウントViewSearchConditionMessages> context) {
-        throw new NotImplementedException();
+        return DbContext.アカウントDbSet.Select(e => new アカウントViewSearchResult {
+            アカウントID = e.アカウントID,
+            アカウント名 = e.アカウント名,
+            Version = (int)e.Version!,
+        });
     }
     #endregion アカウント
 
@@ -26,19 +31,58 @@ partial class OverridedApplicationService {
         return DbContext.チャンネルDbSet.Select(e => new チャンネル画面SearchResult {
             チャンネルID = e.チャンネルID,
             チャンネル名 = e.チャンネル名,
-            メッセージ一覧 = e.RefFromメッセージ_チャンネル.Select(x => new メッセージ一覧SearchResult {
-                メッセージ_メッセージSEQ = x.メッセージSEQ,
-                メッセージ_本文 = x.本文,
-                メッセージ_チャンネル直下か = x.チャンネル直下か,
-                メッセージ_編集済みか = x.編集済みか,
-                メッセージ_記載者_アカウントID = x.記載者_アカウントID,
-                メッセージ_記載者_アカウント名 = x.記載者!.アカウント名,
-            }).ToList(),
+            メッセージ一覧 = e.RefFromメッセージ_チャンネル
+                .Where(x => x.チャンネル直下か == true) // チャンネル直下のメッセージのみ表示
+                .OrderBy(x => x.CreatedAt) // 作成日時の昇順で並ぶ
+                .Select(x => new メッセージ一覧SearchResult {
+                    メッセージ_メッセージSEQ = x.メッセージSEQ,
+                    メッセージ_本文 = x.本文,
+                    メッセージ_チャンネル直下か = x.チャンネル直下か,
+                    メッセージ_編集済みか = x.編集済みか,
+                    メッセージ_記載者_アカウントID = x.記載者_アカウントID,
+                    メッセージ_記載者_アカウント名 = x.記載者!.アカウント名,
+                }).ToList(),
             Version = (int)e.Version!,
         });
     }
-    public override Task<メッセージ追加読み込みReturnValue> Execute(メッセージ追加読み込みParameter param, IPresentationContext<メッセージ追加読み込みParameterMessages> context) {
-        throw new NotImplementedException();
+
+    public override async Task<メッセージ追加読み込みReturnValue> Execute(メッセージ追加読み込みParameter param, IPresentationContext<メッセージ追加読み込みParameterMessages> context) {
+        // このシーケンスより古いメッセージN件を読み込む
+        var messages = await DbContext.メッセージDbSet
+            .Where(m => m.メッセージSEQ < param.前メッセージSEQ && m.チャンネル直下か == true)
+            .OrderByDescending(m => m.メッセージSEQ) // 新しい順で取得してから
+            .Take(param.読み込み件数 ?? 20) // 件数制限
+            .Select(m => new メッセージViewSearchResult {
+                メッセージSEQ = m.メッセージSEQ,
+                本文 = m.本文,
+                記載者_アカウントID = m.記載者_アカウントID,
+                記載者_アカウント名 = m.記載者!.アカウント名,
+                チャンネル直下か = m.チャンネル直下か,
+                編集済みか = m.編集済みか,
+                Version = (int)m.Version!,
+            })
+            .ToListAsync();
+
+        return new メッセージ追加読み込みReturnValue {
+            読み込み結果 = messages.Select(m => new メッセージ追加読み込みReturnValue_読み込み結果 {
+                メッセージ = new() {
+                    Values = new() {
+                        メッセージSEQ = m.メッセージSEQ,
+                        本文 = m.本文,
+                        記載者 = new() {
+                            アカウントID = m.記載者_アカウントID,
+                            アカウント名 = m.記載者_アカウント名,
+                        },
+                        チャンネル直下か = m.チャンネル直下か,
+                        編集済みか = m.編集済みか,
+                    },
+                    ExistsInDatabase = true,
+                    WillBeChanged = false,
+                    WillBeDeleted = false,
+                    Version = m.Version,
+                },
+            }).ToList(),
+        };
     }
     #endregion チャンネル
 
@@ -47,7 +91,29 @@ partial class OverridedApplicationService {
     /// スレッドの画面表示用データをデータベースのどの項目から取得するかの定義
     /// </summary>
     protected override IQueryable<スレッド詳細SearchResult> CreateQuerySource(スレッド詳細SearchCondition searchCondition, IPresentationContext<スレッド詳細SearchConditionMessages> context) {
-        throw new NotImplementedException();
+        return DbContext.メッセージDbSet
+            .Where(m => m.チャンネル直下か == true) // チャンネル直下のメッセージを基準とする
+            .Select(e => new スレッド詳細SearchResult {
+                // チャンネル直下のメッセージ
+                チャンネル直下のメッセージ_メッセージSEQ = e.メッセージSEQ,
+                チャンネル直下のメッセージ_本文 = e.本文,
+                チャンネル直下のメッセージ_記載者_アカウントID = e.記載者_アカウントID,
+                チャンネル直下のメッセージ_記載者_アカウント名 = e.記載者!.アカウント名,
+                チャンネル直下のメッセージ_チャンネル直下か = e.チャンネル直下か,
+                チャンネル直下のメッセージ_編集済みか = e.編集済みか,
+                // 返信一覧：同じ返信先のメッセージをすべて表示する
+                返信一覧 = DbContext.メッセージDbSet
+                    .Where(r => r.返信先メッセージSEQ == e.メッセージSEQ)
+                    .Select(r => new 返信一覧SearchResult {
+                        メッセージ_メッセージSEQ = r.メッセージSEQ,
+                        メッセージ_本文 = r.本文,
+                        メッセージ_記載者_アカウントID = r.記載者_アカウントID,
+                        メッセージ_記載者_アカウント名 = r.記載者!.アカウント名,
+                        メッセージ_チャンネル直下か = r.チャンネル直下か,
+                        メッセージ_編集済みか = r.編集済みか,
+                    }).ToList(),
+                Version = (int)e.Version!,
+            });
     }
     #endregion スレッド
 
@@ -56,13 +122,59 @@ partial class OverridedApplicationService {
     /// メッセージの画面表示用データをデータベースのどの項目から取得するかの定義
     /// </summary>
     protected override IQueryable<メッセージViewSearchResult> CreateQuerySource(メッセージViewSearchCondition searchCondition, IPresentationContext<メッセージViewSearchConditionMessages> context) {
-        throw new NotImplementedException();
+        return DbContext.メッセージDbSet.Select(e => new メッセージViewSearchResult {
+            メッセージSEQ = e.メッセージSEQ,
+            本文 = e.本文,
+            記載者_アカウントID = e.記載者_アカウントID,
+            記載者_アカウント名 = e.記載者!.アカウント名,
+            チャンネル直下か = e.チャンネル直下か,
+            編集済みか = e.編集済みか,
+            Version = (int)e.Version!,
+        });
     }
-    public override Task<object> Execute(新規投稿Parameter param, IPresentationContext<新規投稿ParameterMessages> context) {
-        throw new NotImplementedException();
+
+    public override async Task<object> Execute(新規投稿Parameter param, IPresentationContext<新規投稿ParameterMessages> context) {
+        // 自動生成されたメソッドを使用してメッセージを作成
+        var createCommand = new メッセージCreateCommand {
+            本文 = param.本文,
+            記載者 = new アカウントKey { アカウントID = "dummy_user" }, // 実際のアプリケーションでは認証情報から取得
+            チャンネル = new チャンネルKey { チャンネルID = param.チャンネルID },
+            チャンネル直下か = param.返信先メッセージSEQ == null, // NULLならチャンネル直下
+            返信先メッセージSEQ = param.返信先メッセージSEQ,
+            編集済みか = false,
+        };
+
+        var messages = new メッセージSaveCommandMessages(["メッセージ"]);
+        await CreateメッセージAsync(createCommand, messages, context);
+
+        if (messages.HasError()) {
+            throw new InvalidOperationException($"メッセージ作成でエラーが発生しました: {messages.GetAllMessages()}");
+        }
+
+        return new { Success = true };
     }
-    public override Task<object> Execute(メッセージViewDisplayData param, IPresentationContext<メッセージViewDisplayDataMessages> context) {
-        throw new NotImplementedException();
+
+    /// <summary>
+    /// 既存メッセージ編集
+    /// </summary>
+    public override async Task<object> Execute(メッセージViewDisplayData param, IPresentationContext<メッセージViewDisplayDataMessages> context) {
+        // 自動生成されたメソッドを使用してメッセージを更新
+        var entity = await DbContext.メッセージDbSet.FindAsync(param.Values.メッセージSEQ)
+            ?? throw new InvalidOperationException($"メッセージが見つかりません。メッセージSEQ: {param.Values.メッセージSEQ}");
+
+        var updateCommand = メッセージUpdateCommand.FromDbEntity(entity);
+        updateCommand.本文 = param.Values.本文;
+        updateCommand.編集済みか = true;
+        updateCommand.Version = param.Version;
+
+        var messages = new メッセージSaveCommandMessages(["メッセージ"]);
+        await UpdateメッセージAsync(updateCommand, messages, context);
+
+        if (messages.HasError()) {
+            throw new InvalidOperationException($"メッセージ更新でエラーが発生しました: {messages.GetAllMessages()}");
+        }
+
+        return new { Success = true };
     }
     #endregion メッセージ
 

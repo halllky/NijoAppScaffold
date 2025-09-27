@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace MyApp.Migrations
 {
     /// <inheritdoc />
-    public partial class _00001_Init2 : Migration
+    public partial class _00000_Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,6 +17,7 @@ namespace MyApp.Migrations
                 {
                     アカウントID = table.Column<string>(type: "TEXT", nullable: false),
                     アカウント名 = table.Column<string>(type: "TEXT", nullable: false),
+                    パスワード = table.Column<string>(type: "TEXT", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     CreateUser = table.Column<string>(type: "TEXT", nullable: true),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
@@ -55,7 +56,7 @@ namespace MyApp.Migrations
                     記載者_アカウントID = table.Column<string>(type: "TEXT", nullable: true),
                     チャンネル_チャンネルID = table.Column<string>(type: "TEXT", nullable: true),
                     チャンネル直下か = table.Column<bool>(type: "INTEGER", nullable: true),
-                    返信先メッセージSEQ = table.Column<string>(type: "TEXT", nullable: true),
+                    返信先メッセージSEQ = table.Column<int>(type: "INTEGER", nullable: true),
                     編集済みか = table.Column<bool>(type: "INTEGER", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     CreateUser = table.Column<string>(type: "TEXT", nullable: true),

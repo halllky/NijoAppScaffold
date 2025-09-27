@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.IO;
@@ -5,21 +6,34 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MyApp.Util;
+namespace MyApp.Debugging;
 
 /// <summary>
 /// DbContextの拡張メソッド
 /// </summary>
 public static class DbContextExtensions {
     /// <summary>
-    /// データベースを作成し、指定されたフォルダ内のSQLスクリプトを実行します
+    /// データベースを作成し、指定されたフォルダ内のSQLスクリプトを実行します。
+    /// マイグレーションSQLが事前にファイルとして存在していることを前提としています。
+    /// マイグレーションSQLはTaskフォルダにある「ADD_MIGRATION.bat」を実行して作成してください（Windowsの場合）。
     /// </summary>
     /// <param name="context">DbContextのインスタンス</param>
     /// <param name="runtimeSetting">実行時設定</param>
     /// <returns>データベースが新規作成されたかどうか</returns>
     public static async Task<bool> EnsureCreatedAsyncEx<T>(this T context, RuntimeSetting runtimeSetting) where T : DbContext {
-        // データベースを作成
-        bool created = await context.Database.EnsureCreatedAsync();
+        // データベースファイルの存在確認と作成（テーブルは作成しない）
+        // デモでは SQLite を前提としているので、以下は SQLite 専用の処理である点に注意。
+        var created = false;
+        var connectionString = new SqliteConnectionStringBuilder(context.Database.GetConnectionString());
+        if (connectionString.DataSource is null) {
+            throw new InvalidOperationException("設定ファイルでSQLiteのファイルパスが指定されていません。");
+        }
+
+        if (!File.Exists(connectionString.DataSource)) {
+            // 空のデータベースファイルを作成。
+            // SQLiteでは0バイトのファイルがあればデータベースとして認識される。
+            File.WriteAllBytes(connectionString.DataSource, new byte[0]);
+        }
 
         // SQLスクリプトのフォルダパスを取得
         string scriptFolder = Path.GetFullPath(runtimeSetting.MigrationsScriptFolder);

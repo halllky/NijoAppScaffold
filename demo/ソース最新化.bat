@@ -41,13 +41,13 @@ exit /b
  
 :COPY_REACT 
 @rem React 
-copy "%SOURCE_ROOT%\client\src\callAspNetCoreApiAsync.ts" "%TARGET_ROOT%\client\src\callAspNetCoreApiAsync.ts" 
+@rem copy "%SOURCE_ROOT%\client\src\callAspNetCoreApiAsync.ts" "%TARGET_ROOT%\client\src\callAspNetCoreApiAsync.ts" 
+copy "%SOURCE_ROOT%\client\src\callComplexPostEndpointAsync.ts" "%TARGET_ROOT%\client\src\callComplexPostEndpointAsync.ts" 
 exit /b 
  
 :COPY_CORE 
 @rem Core 
 robocopy "%SOURCE_ROOT%\Core\Debugging" "%TARGET_ROOT%\Core\Debugging" /MIR /XA:SH 
-robocopy "%SOURCE_ROOT%\Core\Util" "%TARGET_ROOT%\Core\Util" /MIR /XA:SH 
 copy "%SOURCE_ROOT%\Core\OverridedApplicationConfigure.cs" "%TARGET_ROOT%\Core\OverridedApplicationConfigure.cs" 
 copy "%SOURCE_ROOT%\Core\OverridedApplicationService.cs" "%TARGET_ROOT%\Core\OverridedApplicationService.cs" 
 copy "%SOURCE_ROOT%\Core\MigrationEntryPoint.cs" "%TARGET_ROOT%\Core\MigrationEntryPoint.cs" 
@@ -60,7 +60,7 @@ exit /b
 :COPY_WEBAPI 
 @rem WebApi 
 robocopy "%SOURCE_ROOT%\WebApi\Base" "%TARGET_ROOT%\WebApi\Base" /MIR /XA:SH 
-copy "%SOURCE_ROOT%\WebApi\Program.cs" "%TARGET_ROOT%\WebApi\Program.cs" 
+@rem copy "%SOURCE_ROOT%\WebApi\Program.cs" "%TARGET_ROOT%\WebApi\Program.cs" 
 copy "%SOURCE_ROOT%\WebApi\Properties\launchSettings.json" "%TARGET_ROOT%\WebApi\Properties\launchSettings.json" 
 copy "%SOURCE_ROOT%\WebApi\Properties\PublishProfiles\本番用ビルド.xml" "%TARGET_ROOT%\WebApi\Properties\PublishProfiles\本番用ビルド.xml" 
 exit /b 

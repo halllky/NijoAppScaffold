@@ -11,8 +11,8 @@ using MyApp;
 namespace MyApp.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    [Migration("20250923002832_00001_Init2")]
-    partial class _00001_Init2
+    [Migration("20250927065230_00000_Init")]
+    partial class _00000_Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -30,34 +30,39 @@ namespace MyApp.Migrations
                     b.Property<string>("CreateUser")
                         .HasColumnType("TEXT")
                         .HasColumnName("CreateUser")
-                        .HasColumnOrder(3);
+                        .HasColumnOrder(4);
 
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("TEXT")
                         .HasColumnName("CreatedAt")
-                        .HasColumnOrder(2);
+                        .HasColumnOrder(3);
 
                     b.Property<string>("UpdateUser")
                         .HasColumnType("TEXT")
                         .HasColumnName("UpdateUser")
-                        .HasColumnOrder(5);
+                        .HasColumnOrder(6);
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT")
                         .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(4);
+                        .HasColumnOrder(5);
 
                     b.Property<int>("Version")
                         .IsConcurrencyToken()
                         .HasColumnType("INTEGER")
                         .HasColumnName("Version")
-                        .HasColumnOrder(6);
+                        .HasColumnOrder(7);
 
                     b.Property<string>("アカウント名")
                         .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("アカウント名")
                         .HasColumnOrder(1);
+
+                    b.Property<string>("パスワード")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("パスワード")
+                        .HasColumnOrder(2);
 
                     b.HasKey("アカウントID")
                         .HasName("PK_アカウント");
@@ -170,8 +175,8 @@ namespace MyApp.Migrations
                         .HasColumnName("記載者_アカウントID")
                         .HasColumnOrder(2);
 
-                    b.Property<string>("返信先メッセージSEQ")
-                        .HasColumnType("TEXT")
+                    b.Property<int?>("返信先メッセージSEQ")
+                        .HasColumnType("INTEGER")
                         .HasColumnName("返信先メッセージSEQ")
                         .HasColumnOrder(5);
 

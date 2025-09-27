@@ -163,6 +163,15 @@
           "cwd": "${workspaceFolder:NijoApplicationBuilder}/demo"
         },
         "problemMatcher": []
+      },
+      {
+        "label": "Nijo > デモ：マイグレーション",
+        "type": "shell",
+        "command": ".\\${input:demoFolder}\\Task\\ADD_MIGRATION.bat",
+        "options": {
+          "cwd": "${workspaceFolder:NijoApplicationBuilder}/demo"
+        },
+        "problemMatcher": []
       }
     ],
     "inputs": [
