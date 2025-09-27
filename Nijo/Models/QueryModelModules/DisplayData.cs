@@ -39,20 +39,6 @@ namespace Nijo.Models.QueryModelModules {
         /// <summary>値クラス名</summary>
         internal string ValueCsClassName => $"{CsClassName}Values";
 
-        /// <summary>メッセージ用構造体 C#クラス名</summary>
-        internal string MessageDataCsClassName => $"{CsClassName}Messages";
-
-        /// <summary>読み取り専用か否かが格納されるプロパティの名前（C#）</summary>
-        internal const string READONLY_CS = "ReadOnly";
-        /// <summary>読み取り専用か否かが格納されるプロパティの名前（TypeScript）</summary>
-        internal const string READONLY_TS = "readOnly";
-        /// <summary>全項目が読み取り専用か否か（C#）</summary>
-        internal const string ALL_READONLY_CS = "AllReadOnly";
-        /// <summary>全項目が読み取り専用か否か（TypeScript）</summary>
-        internal const string ALL_READONLY_TS = "allReadOnly";
-        /// <summary>メッセージ用構造体 C#クラス名</summary>
-        internal string ReadOnlyDataCsClassName => $"{CsClassName}ReadOnly";
-
         /// <summary>
         /// 通常、保存時に追加・更新・削除のどの処理となるかは
         /// <see cref="EXISTS_IN_DB_TS"/>, <see cref="WILL_BE_CHANGED_TS"/>, <see cref="WILL_BE_DELETED_TS"/>
@@ -194,10 +180,6 @@ namespace Nijo.Models.QueryModelModules {
                     [JsonPropertyName("{{VERSION_TS}}")]
                     public int? {{VERSION_CS}} { get; set; }
                 """)}}
-
-                    /// <summary>どの項目が読み取り専用か</summary>
-                    [JsonPropertyName("{{READONLY_TS}}")]
-                    public {{ReadOnlyDataCsClassName}} {{READONLY_CS}} { get; set; } = new();
                 {{If(shouldGenerateSaveCommandMethods, () => $$"""
 
                     {{WithIndent(RenderConvertingToSaveCommand(), "    ")}}
@@ -210,19 +192,6 @@ namespace Nijo.Models.QueryModelModules {
                 public partial class {{CsValuesClassName}} {
                 {{Values.GetMembers().SelectTextTemplate(m => $$"""
                     {{WithIndent(m.RenderCsDeclaration(), "    ")}}
-                """)}}
-                }
-
-                /// <summary>
-                /// <see cref="{{CsClassName}}/> の{{READONLY_CS}}の型
-                /// </summary>
-                public partial class {{ReadOnlyDataCsClassName}} {
-                    /// <summary>{{Aggregate.DisplayName}}全体が読み取り専用か否か</summary>
-                    [JsonPropertyName("{{ALL_READONLY_TS}}")]
-                    public bool {{ALL_READONLY_CS}} { get; set; }
-                {{Values.GetMembers().SelectTextTemplate(member => $$"""
-                    /// <summary>{{member.DisplayName}}が読み取り専用か否か</summary>
-                    public bool {{member.GetPropertyName(E_CsTs.CSharp)}} { get; set; }
                 """)}}
                 }
                 """;
@@ -255,15 +224,6 @@ namespace Nijo.Models.QueryModelModules {
                   /** 楽観排他制御用のバージョニング情報 */
                   {{VERSION_TS}}: number | undefined
                 """)}}
-                  /** どの項目が読み取り専用か */
-                  {{READONLY_TS}}: {
-                    /** {{Aggregate.DisplayName}}全体が読み取り専用か否か */
-                    {{ALL_READONLY_TS}}?: boolean
-                {{Values.GetMembers().SelectTextTemplate(member => $$"""
-                    /** {{member.DisplayName}}が読み取り専用か否か */
-                    {{member.GetPropertyName(E_CsTs.TypeScript)}}?: boolean
-                """)}}
-                  }
                 }
                 """;
         }
@@ -521,7 +481,6 @@ namespace Nijo.Models.QueryModelModules {
                 {{If(HasVersion, () => $$"""
                   {{VERSION_TS}}: undefined,
                 """)}}
-                  {{READONLY_TS}}: {},
                 {{GetChildMembers().SelectTextTemplate(c => $$"""
                   {{c.PhysicalName}}: {{c.RenderNewObjectCreation()}},
                 """)}}

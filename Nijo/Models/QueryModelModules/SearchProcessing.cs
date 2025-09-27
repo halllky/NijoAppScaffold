@@ -35,7 +35,6 @@ namespace Nijo.Models.QueryModelModules {
         internal const string APPEND_ORDERBY_CLAUSE = "AppendOrderByClause";
         private const string ON_AFTER_LOADED = "OnAfterLoaded";
         private string ToDisplayData => $"To{_rootAggregate.PhysicalName}DisplayDataAsync";
-        private const string SET_KEYS_READONLY = "SetKeysReadOnly";
 
 
         #region TypeScript用
@@ -168,11 +167,6 @@ namespace Nijo.Models.QueryModelModules {
                     // 読み取り専用項目の設定や、C#上での追加情報の付加など、任意のカスタマイズ処理
                     var currentPageItems = {{ON_AFTER_LOADED}}(loaded, searchCondition, context).ToArray();
 
-                    // 主キー項目を読み取り専用にする。UI上で主キーが変更されるとあらゆる処理がうまくいかなくなる
-                    foreach (var displayData in currentPageItems) {
-                        {{SET_KEYS_READONLY}}(displayData);
-                    }
-
                     return new() {
                         {{SearchProcessingReturn.CURRENT_PAGE_ITEMS_CS}} = currentPageItems,
                         {{SearchProcessingReturn.TOTAL_COUNT_CS}} = totalCount,
@@ -199,12 +193,6 @@ namespace Nijo.Models.QueryModelModules {
                 protected virtual IEnumerable<{{displayData.CsClassName}}> {{ON_AFTER_LOADED}}(IEnumerable<{{displayData.CsClassName}}> currentPageItems, {{searchCondition.CsClassName}} searchCondition, {{PresentationContext.INTERFACE}}<{{searchConditionMessage.CsClassName}}> context) {
                     // 読み込み後処理がある場合はここで実装してください。
                     return currentPageItems;
-                }
-                /// <summary>
-                /// {{_rootAggregate.DisplayName}}の画面表示データの主キー項目を読み取り専用にする
-                /// </summary>
-                protected virtual void {{SET_KEYS_READONLY}}({{displayData.CsClassName}} displayData) {
-                    // TODO ver.1
                 }
                 #endregion 検索
                 """;
