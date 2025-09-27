@@ -310,8 +310,6 @@ namespace Nijo.Models {
             // メッセージ
             UpdateMethod.RegisterCommonParts(ctx);
             BatchUpdate.RegisterCommonParts(ctx);
-
-            // TODO ver.1: 追加更新削除区分のenum(C#)
         }
     }
 }

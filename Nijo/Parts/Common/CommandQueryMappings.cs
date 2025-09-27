@@ -449,29 +449,9 @@ namespace Nijo.Parts.Common {
                     //#endregion StructureModel
 
 
-                    //#region 画面遷移用フック（MultiView）
-                    // TODO ver.1
-                    //#endregion 画面遷移用フック（MultiView）
-
-                    //#region 画面遷移用フック（SingleView）
-                    // TODO ver.1
-                    //#endregion 画面遷移用フック（SingleView）
-
-                    //#region URLから検索条件オブジェクトへの変換
-                    // TODO ver.1
-                    //#endregion URLから検索条件オブジェクトへの変換
-
-                    //#region 検索条件オブジェクトからURLへの変換
-                    // TODO ver.1
-                    //#endregion 検索条件オブジェクトからURLへの変換
-
                     //#region ディープイコール関数
                     // TODO ver.1
                     //#endregion ディープイコール関数
-
-                    //#region UI制約型一覧
-                    // TODO ver.1
-                    //#endregion UI制約型一覧
                     """,
             };
         }
