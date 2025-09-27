@@ -158,7 +158,7 @@ namespace Nijo.Parts.Common {
                 imports.Add(($"./{rootAggregate.PhysicalName}", modules.ToArray()));
             }
             foreach (var rootAggregate in structureModelsOrderByDataFlow) {
-                var structureRoot = new Models.StructureModel.StructureType(rootAggregate);
+                var structureRoot = new Models.StructureModelModules.StructureType(rootAggregate);
                 var modules = new List<string> {
                     structureRoot.TsTypeName,
                     structureRoot.TsNewObjectFunction,
@@ -436,13 +436,13 @@ namespace Nijo.Parts.Common {
                       /** StructureModel型一覧 */
                       export interface TypeMap {
                     {{structureModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                        '{{agg.PhysicalName}}': {{new Models.StructureModel.StructureType(agg).TsTypeName}}
+                        '{{agg.PhysicalName}}': {{new Models.StructureModelModules.StructureType(agg).TsTypeName}}
                     """)}}
                       }
                       /** StructureModel新規作成関数 */
                       export const create: { [K in {{STRUCTURE_MODEL_TYPE}}]: (() => TypeMap[K]) } = {
                     {{structureModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                        '{{agg.PhysicalName}}': {{new Models.StructureModel.StructureType(agg).TsNewObjectFunction}},
+                        '{{agg.PhysicalName}}': {{new Models.StructureModelModules.StructureType(agg).TsNewObjectFunction}},
                     """)}}
                       }
                     }

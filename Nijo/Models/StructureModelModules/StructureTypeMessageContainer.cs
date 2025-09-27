@@ -21,12 +21,12 @@ namespace Nijo.Models.StructureModelModules {
 
         protected override IEnumerable<IMessageContainerMember> GetMembers() {
             var structureType = _aggregate is RootAggregate root
-                ? new StructureModel.StructureType(root)
-                : new StructureModel.StructureDescendantMember(_aggregate);
+                ? new StructureType(root)
+                : new StructureDescendantMember(_aggregate);
 
             foreach (var member in ((IInstancePropertyOwnerMetadata)structureType).GetMembers()) {
                 switch (member) {
-                    case StructureModel.StructureValueMember valueMember:
+                    case StructureValueMember valueMember:
                         yield return new ContainerMemberImpl {
                             PhysicalName = member.GetPropertyName(E_CsTs.CSharp),
                             DisplayName = member.DisplayName,
@@ -35,12 +35,12 @@ namespace Nijo.Models.StructureModelModules {
                             IsArray = false,
                         };
                         break;
-                    case StructureModel.StructureRefToMember refToMember:
+                    case StructureRefToMember refToMember:
                         var targetStructure = refToMember.GetTargetStructure();
                         MessageContainer targetMessage = targetStructure switch {
                             QueryModelModules.DisplayData disp => new QueryModelModules.DisplayDataMessageContainer(disp.Aggregate),
                             QueryModelModules.SearchCondition.Entry sc => new QueryModelModules.SearchConditionMessageContainer(sc.EntryAggregate),
-                            StructureModel.StructureType str => new StructureTypeMessageContainer(str.Aggregate),
+                            StructureType str => new StructureTypeMessageContainer(str.Aggregate),
                             _ => throw new NotImplementedException(),
                         };
                         yield return new ContainerMemberImpl {
@@ -51,7 +51,7 @@ namespace Nijo.Models.StructureModelModules {
                             IsArray = false,
                         };
                         break;
-                    case StructureModel.StructureDescendantMember descendantMember:
+                    case StructureDescendantMember descendantMember:
                         var nestedObject = new StructureTypeMessageContainer(descendantMember.Aggregate);
                         yield return new ContainerMemberImpl {
                             PhysicalName = member.GetPropertyName(E_CsTs.CSharp),

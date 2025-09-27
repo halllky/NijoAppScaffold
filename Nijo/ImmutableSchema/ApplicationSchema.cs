@@ -221,7 +221,7 @@ public static class ApplicationSchemaExtensions {
             yield return new DisplayDataRef.Entry(rootAggregate);
         }
         if (rootAggregate.Model is StructureModel) {
-            yield return new StructureModel.StructureType(rootAggregate);
+            yield return new Models.StructureModelModules.StructureType(rootAggregate);
         }
     }
 }
