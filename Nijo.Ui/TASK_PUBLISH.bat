@@ -13,8 +13,8 @@ setlocal
 set "NIJO_ROOT=%~dp0.." 
 set "WINFORMS_PROJECT=%NIJO_ROOT%\Nijo.Ui" 
 set "PUBLISH_FOLDER=%WINFORMS_PROJECT%\bin\Release\net9.0-windows\publish" 
-set "FRONTEND_ROOT=%NIJO_ROOT%\Nijo.ApplicationTemplate.Ver1\react" 
-set "APP_TEMPLATE_ZIP=%NIJO_ROOT%\temp_release\Nijo.ApplicationTemplate.Ver1.zip" 
+set "FRONTEND_ROOT=%NIJO_ROOT%\Nijo.ApplicationTemplate.Ver1\react\package_schema-editor" 
+set "APP_TEMPLATE_ZIP=%NIJO_ROOT%\temp_release\Nijo.NewProjectTemplate.zip" 
 
 @echo アプリケーションテンプレートを圧縮します: %APP_TEMPLATE_ZIP% 
 @echo NIJO_ROOT: %NIJO_ROOT%
@@ -25,7 +25,7 @@ if exist "%APP_TEMPLATE_ZIP%" (
 ) 
 @echo git archiveコマンドを実行します...
 pushd "%NIJO_ROOT%"
-git archive HEAD:Nijo.ApplicationTemplate.Ver1 --format=zip -o "%APP_TEMPLATE_ZIP%"
+git archive HEAD:Nijo.NewProjectTemplate --format=zip -o "%APP_TEMPLATE_ZIP%"
 popd 
 if not "%errorlevel%"=="0" ( 
   @echo アプリケーションテンプレートの圧縮に失敗しました。 
@@ -36,8 +36,10 @@ if not exist "%APP_TEMPLATE_ZIP%" (
   exit /b 1 
 ) 
 
-call npm run build:schema-editor --prefix %FRONTEND_ROOT% 
- 
+pushd %FRONTEND_ROOT% 
+call npm run build 
+popd 
+
 if not "%errorlevel%"=="0" ( 
   @echo ビルドに失敗しました。 
   exit /b 1 
