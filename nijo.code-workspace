@@ -35,7 +35,8 @@
     "[xml]": {
       "files.trimFinalNewlines": false
     },
-    "omnisharp.enableEditorConfigSupport": true
+    "omnisharp.enableEditorConfigSupport": true,
+    "typescript.tsdk": "node_modules\\typescript\\lib"
   },
   "tasks": {
     "version": "2.0.0",
