@@ -17,8 +17,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Core\MyApp.csproj" />
-    <ProjectReference Include="..\WebApi\MyApp.WebApi.csproj" />
+    <ProjectReference Include="..\Core\Demo100.csproj" />
+    <ProjectReference Include="..\WebApi\Demo100.WebApi.csproj" />
   </ItemGroup>
 
   <ItemGroup>
