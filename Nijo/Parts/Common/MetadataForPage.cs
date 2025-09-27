@@ -257,7 +257,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                   /** 型 */
                   type: 'ref-to'
                   /** 参照先。参照先が子孫集約の場合はルート集約からのパスのスラッシュ区切り */
-                  refTo: {{CommandQueryMappings.REFERED_QUERY_MODEL_TYPE}}
+                  refTo: `ref-to:${string}`
                 {{RenderNodeOptionTypes(ctx).SelectTextTemplate(source => $$"""
                   {{WithIndent(source, "  ")}}
                 """)}}
