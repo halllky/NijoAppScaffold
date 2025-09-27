@@ -69,4 +69,10 @@
     <返信先メッセージSEQ Type="int" UniqueId="52058f04-9e2d-4fc2-ad6e-9eabb11ea3e3" />
   </新規投稿Parameter>
   <既存メッセージ編集 Parameter="メッセージView:DisplayData" Type="command-model" UniqueId="71b983b6-7a79-4844-988f-fe35479d9f2c" />
+  <ログイン Parameter="ログインParameter" ReturnValue="アカウントView:DisplayData" Type="command-model" UniqueId="eaa2ac01-8afd-4f30-92e3-82fea7e152a3" />
+  <ログアウト Type="command-model" UniqueId="4c3071fb-686d-4d18-82db-32ddc0c9d518" />
+  <ログインParameter Type="structure-model" UniqueId="93448dcb-00c1-4525-9619-5ac0cbb6cb66">
+    <ユーザーID Type="word" UniqueId="5902668b-8eec-4a42-8765-77c60f3a2d74" />
+    <パスワード Type="word" UniqueId="aeeea585-7985-4777-9180-fcdb4317c2d9" />
+  </ログインParameter>
 </NijoApplicationBuilder>

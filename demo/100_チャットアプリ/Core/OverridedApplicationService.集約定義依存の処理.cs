@@ -12,6 +12,18 @@ partial class OverridedApplicationService {
 
     #region アカウント
     /// <summary>
+    /// ログイン
+    /// </summary>
+    public override Task<アカウントViewDisplayData> Execute(ログインParameter param, IPresentationContext<ログインParameterMessages> context) {
+        throw new NotImplementedException();
+    }
+    /// <summary>
+    /// ログアウト
+    /// </summary>
+    public override Task<object> Execute(object param, IPresentationContext<MessageContainer> context) {
+        throw new NotImplementedException();
+    }
+    /// <summary>
     /// アカウントの画面表示用データをデータベースのどの項目から取得するかの定義
     /// </summary>
     protected override IQueryable<アカウントViewSearchResult> CreateQuerySource(アカウントViewSearchCondition searchCondition, IPresentationContext<アカウントViewSearchConditionMessages> context) {

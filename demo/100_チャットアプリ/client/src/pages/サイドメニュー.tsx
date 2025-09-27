@@ -30,16 +30,14 @@ export default function サイドメニュー() {
         searchCondition
       )
 
-      if (result.ok) {
+      if (result.type === "ok") {
         setChannels(result.returnValue.currentPageItems)
+      } else if (result.type === 'error') {
+        setError('チャンネル一覧の取得に失敗しました')
+      } else if (result.type === 'unknown') {
+        setError(result.message)
       } else {
-        if (result.type === 'detail') {
-          setError('チャンネル一覧の取得に失敗しました')
-        } else if (result.type === 'unknown') {
-          setError(result.message)
-        } else {
-          setError('チャンネル一覧の取得がキャンセルされました')
-        }
+        setError('チャンネル一覧の取得がキャンセルされました')
       }
     } catch (err) {
       setError('チャンネル一覧の取得中にエラーが発生しました')
