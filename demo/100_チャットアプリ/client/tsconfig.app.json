@@ -20,8 +20,8 @@
     "jsx": "react-jsx",
     /* Linting */
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     /* 一般的にはtrueが推奨される。自動生成されるソースコードで namespace のかわりに import * as を使うソースをレンダリングするようにすればtrueにできる */
     "erasableSyntaxOnly": false,
     "noFallthroughCasesInSwitch": true,
