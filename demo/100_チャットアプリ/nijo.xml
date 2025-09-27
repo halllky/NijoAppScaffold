@@ -49,31 +49,23 @@
       <メッセージ Type="ref-to:メッセージView" UniqueId="0acc3aab-5879-43e2-86e9-330b782db883" />
     </返信一覧>
   </スレッド詳細>
-  <メッセージ追加読み込み Type="command-model" UniqueId="73f8b412-e89e-4a88-af65-c631110464fe">
-    <メッセージ追加読み込みParameter Type="child" UniqueId="c90cd36e-07cf-4bf4-8c83-b9a0404d679d">
-      <!--このシーケンスより古いメッセージN件を読み込む-->
-      <前メッセージSEQ Type="int" UniqueId="8b50bfbd-6e33-40e0-9833-a89e80936f09" />
-      <読み込み件数 Type="int" UniqueId="9e45e4c4-b0db-4b03-8115-63934cc47c2a" />
-    </メッセージ追加読み込みParameter>
-    <メッセージ追加読み込みReturnValue Type="child" UniqueId="c5f21493-5f74-4b42-8b35-be3d667586b2">
-      <読み込み結果 Type="children" UniqueId="da573a68-d916-417d-ba03-e9f16ec4a439">
-        <メッセージ RefToObject="DisplayData" Type="ref-to:メッセージView" UniqueId="65ace615-205a-418b-9c0c-ea25e294d455" />
-      </読み込み結果>
-    </メッセージ追加読み込みReturnValue>
-  </メッセージ追加読み込み>
-  <新規投稿 Type="command-model" UniqueId="c1a916c0-dc83-4544-a5ef-50aedbc42faf">
-    <新規投稿Parameter Type="child" UniqueId="1ccb60f5-e76d-47a2-9979-b7df948b24d6">
-      <本文 IsRequired="True" Type="description" UniqueId="2db8ce1d-cedb-456f-aad2-1d088448c118" />
-      <チャンネルID IsRequired="True" Type="word" UniqueId="fb51aa05-c20a-40e7-91f7-10391dc8a678" />
-      <!--NULLならチャンネル直下-->
-      <返信先メッセージSEQ Type="int" UniqueId="52058f04-9e2d-4fc2-ad6e-9eabb11ea3e3" />
-    </新規投稿Parameter>
-    <新規投稿ReturnValue Type="child" UniqueId="09f8fec3-2ab9-45d5-86e1-8ebb28823b2c" />
-  </新規投稿>
-  <既存メッセージ編集 Type="command-model" UniqueId="71b983b6-7a79-4844-988f-fe35479d9f2c">
-    <既存メッセージ編集Parameter Type="child" UniqueId="e636f9f2-f924-4d55-9454-03bc70038add">
-      <メッセージ RefToObject="DisplayData" Type="ref-to:メッセージView" UniqueId="78d127e3-32b5-49fb-85f9-1f2bb369bd08" />
-    </既存メッセージ編集Parameter>
-    <既存メッセージ編集ReturnValue Type="child" UniqueId="1d41cf6c-db4a-4915-8e3f-22cded3402f3" />
-  </既存メッセージ編集>
+  <メッセージ追加読み込み Parameter="メッセージ追加読み込みParameter" ReturnValue="メッセージ追加読み込みReturnValue" Type="command-model" UniqueId="73f8b412-e89e-4a88-af65-c631110464fe" />
+  <メッセージ追加読み込みParameter Type="structure-model" UniqueId="c90cd36e-07cf-4bf4-8c83-b9a0404d679d">
+    <!--このシーケンスより古いメッセージN件を読み込む-->
+    <前メッセージSEQ Type="int" UniqueId="8b50bfbd-6e33-40e0-9833-a89e80936f09" />
+    <読み込み件数 Type="int" UniqueId="9e45e4c4-b0db-4b03-8115-63934cc47c2a" />
+  </メッセージ追加読み込みParameter>
+  <メッセージ追加読み込みReturnValue Type="structure-model" UniqueId="c5f21493-5f74-4b42-8b35-be3d667586b2">
+    <読み込み結果 Type="children" UniqueId="da573a68-d916-417d-ba03-e9f16ec4a439">
+      <メッセージ RefToObject="DisplayData" Type="ref-to:メッセージView" UniqueId="65ace615-205a-418b-9c0c-ea25e294d455" />
+    </読み込み結果>
+  </メッセージ追加読み込みReturnValue>
+  <新規メッセージ投稿 Parameter="新規投稿Parameter" Type="command-model" UniqueId="c1a916c0-dc83-4544-a5ef-50aedbc42faf" />
+  <新規投稿Parameter Type="structure-model" UniqueId="1ccb60f5-e76d-47a2-9979-b7df948b24d6">
+    <本文 IsRequired="True" Type="description" UniqueId="2db8ce1d-cedb-456f-aad2-1d088448c118" />
+    <チャンネルID IsRequired="True" Type="word" UniqueId="fb51aa05-c20a-40e7-91f7-10391dc8a678" />
+    <!--NULLならチャンネル直下-->
+    <返信先メッセージSEQ Type="int" UniqueId="52058f04-9e2d-4fc2-ad6e-9eabb11ea3e3" />
+  </新規投稿Parameter>
+  <既存メッセージ編集 Parameter="メッセージView:DisplayData" Type="command-model" UniqueId="71b983b6-7a79-4844-988f-fe35479d9f2c" />
 </NijoApplicationBuilder>

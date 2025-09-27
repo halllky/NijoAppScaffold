@@ -275,7 +275,8 @@ const createSchemaDefinitionDataSet = (xmlElementTrees: ModelPageForm[], onlyRoo
       // TYPE_COMMAND_MODELの場合、ATTR_PARAMETERとATTR_RETURN_VALUE属性で定義されている物理名のノードにエッジを追加
       if (model === TYPE_COMMAND_MODEL) {
         // Parameter属性の処理
-        const parameterValue = owner.attributes[ATTR_PARAMETER]
+        // ※QueryModelを参照する場合は「xxxxx:DisplayData」のようにコロンの前が物理名
+        const parameterValue = owner.attributes[ATTR_PARAMETER]?.split(':')[0]
         if (parameterValue) {
           // 物理名に基づいてターゲット要素を検索
           const targetElement = Array.from(elementIdMap.values()).find(({ element }) =>
@@ -298,7 +299,8 @@ const createSchemaDefinitionDataSet = (xmlElementTrees: ModelPageForm[], onlyRoo
         }
 
         // ReturnValue属性の処理
-        const returnValue = owner.attributes[ATTR_RETURN_VALUE]
+        // ※QueryModelを参照する場合は「xxxxx:DisplayData」のようにコロンの前が物理名
+        const returnValue = owner.attributes[ATTR_RETURN_VALUE]?.split(':')[0]
         if (returnValue) {
           // 物理名に基づいてターゲット要素を検索
           const targetElement = Array.from(elementIdMap.values()).find(({ element }) =>

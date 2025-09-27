@@ -393,7 +393,7 @@ namespace Nijo.Parts.Common {
                       /** Command戻り値新規作成関数 */
                       export const create: { [K in {{COMMAND_MODEL_TYPE}}]: (() => TypeMap[K]) } = {
                     {{commandModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                        '{{agg.PhysicalName}}': {{agg.GetReturnValueStructure()?.TsNewObjectFunction ?? "() => ({}) // 戻り値なし"}},
+                        '{{agg.PhysicalName}}': {{agg.GetReturnValueStructure()?.TsNewObjectFunction ?? "() => ({ /* 戻り値なし */ })"}},
                     """)}}
                       }
                     }

@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -58,10 +58,10 @@ partial class OverridedApplicationService {
     protected override IQueryable<メッセージViewSearchResult> CreateQuerySource(メッセージViewSearchCondition searchCondition, IPresentationContext<メッセージViewSearchConditionMessages> context) {
         throw new NotImplementedException();
     }
-    public override Task<新規投稿ReturnValue> Execute(新規投稿Parameter param, IPresentationContext<新規投稿ParameterMessages> context) {
+    public override Task<object> Execute(新規投稿Parameter param, IPresentationContext<新規投稿ParameterMessages> context) {
         throw new NotImplementedException();
     }
-    public override Task<既存メッセージ編集ReturnValue> Execute(既存メッセージ編集Parameter param, IPresentationContext<既存メッセージ編集ParameterMessages> context) {
+    public override Task<object> Execute(メッセージViewDisplayData param, IPresentationContext<メッセージViewDisplayDataMessages> context) {
         throw new NotImplementedException();
     }
     #endregion メッセージ

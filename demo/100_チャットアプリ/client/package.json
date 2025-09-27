@@ -8,6 +8,6 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "tsc": "tsc --noEmit"
+    "tsc": "tsc -b --noEmit"
   }
 }
