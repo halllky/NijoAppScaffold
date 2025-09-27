@@ -86,7 +86,7 @@ namespace Nijo.Models.QueryModelModules {
         internal const string GET_SAVE_TYPE = "GetSaveType";
 
         public const string TO_CREATE_COMMAND = "ToCreateCommand";
-        public const string TO_UPDATE_COMMAND = "ToUpdateCommand";
+        public const string ASSIGN_TO_UPDATE_COMMAND = "AssignToUpdateCommand";
         public const string TO_DELETE_COMMAND = "ToDeleteCommand";
 
         /// <summary>
@@ -603,30 +603,29 @@ namespace Nijo.Models.QueryModelModules {
                 /// </summary>
                 public {{createCommand.CsClassNameCreate}} {{TO_CREATE_COMMAND}}() {
                     return new {{createCommand.CsClassNameCreate}} {
-                        {{WithIndent(RenderBody(createCommand, right, dict), "        ")}}
+                        {{WithIndent(EnumerateMemberes(false, createCommand, right, dict), "        ")}}
                     };
                 }
                 /// <summary>
-                /// このインスタンスを <see cref="{{udpateCommand.CsClassName}}"/> に変換します。
+                /// このインスタンスの値を <see cref="{{udpateCommand.CsClassName}}"/> に割り当てる処理を返します。
                 /// </summary>
-                public {{udpateCommand.CsClassNameUpdate}} {{TO_UPDATE_COMMAND}}() {
-                    return new {{udpateCommand.CsClassNameUpdate}} {
-                        {{WithIndent(RenderBody(udpateCommand, right, dict), "        ")}}
-                        {{SaveCommand.VERSION}} = this.{{VERSION_CS}},
-                    };
+                public void {{ASSIGN_TO_UPDATE_COMMAND}}({{udpateCommand.CsClassNameUpdate}} command) {
+                    {{WithIndent(EnumerateMemberes(true, udpateCommand, right, dict), "    ")}}
                 }
                 /// <summary>
                 /// このインスタンスを <see cref="{{deleteCommand.CsClassName}}"/> に変換します。
                 /// </summary>
                 public {{deleteCommand.CsClassNameDelete}} {{TO_DELETE_COMMAND}}() {
                     return new {{deleteCommand.CsClassNameDelete}} {
-                        {{WithIndent(RenderBody(deleteCommand, right, dict), "        ")}}
+                        {{WithIndent(EnumerateMemberes(false, deleteCommand, right, dict), "        ")}}
                         {{SaveCommand.VERSION}} = this.{{VERSION_CS}},
                     };
                 }
                 """;
 
-            static IEnumerable<string> RenderBody(IInstancePropertyOwnerMetadata left, IInstancePropertyOwner right, IReadOnlyDictionary<SchemaNodeIdentity, IInstanceProperty> rigthMembers) {
+            static IEnumerable<string> EnumerateMemberes(bool leftIsVariable, IInstancePropertyOwnerMetadata left, IInstancePropertyOwner right, IReadOnlyDictionary<SchemaNodeIdentity, IInstanceProperty> rigthMembers) {
+                var start = leftIsVariable ? "command." : "";
+                var end = leftIsVariable ? ";" : ",";
 
                 foreach (var member in left.GetMembers()) {
                     if (member is IInstanceValuePropertyMetadata vp) {
@@ -634,7 +633,7 @@ namespace Nijo.Models.QueryModelModules {
                             ? $"{source.Root.Name}.{source.GetPathFromInstance().Select(p => p.Metadata.GetPropertyName(E_CsTs.CSharp)).Join("?.")}"
                             : "null";
                         yield return $$"""
-                            {{member.GetPropertyName(E_CsTs.CSharp)}} = {{rightPath}},
+                            {{start}}{{member.GetPropertyName(E_CsTs.CSharp)}} = {{rightPath}}{{end}}
                             """;
 
                     } else if (member is IInstanceStructurePropertyMetadata sp) {
@@ -652,16 +651,16 @@ namespace Nijo.Models.QueryModelModules {
                             }
 
                             yield return $$"""
-                                {{member.GetPropertyName(E_CsTs.CSharp)}} = {{arrayPath}}?.Select({{loopVar.Name}} => new {{sp.GetTypeName(E_CsTs.CSharp)}}() {
-                                    {{WithIndent(RenderBody(sp, loopVar, dict2), "    ")}}
-                                }).ToList() ?? [],
+                                {{start}}{{member.GetPropertyName(E_CsTs.CSharp)}} = {{arrayPath}}?.Select({{loopVar.Name}} => new {{sp.GetTypeName(E_CsTs.CSharp)}}() {
+                                    {{WithIndent(EnumerateMemberes(false, sp, loopVar, dict2), "    ")}}
+                                }).ToList() ?? []{{end}}
                                 """;
 
                         } else {
                             yield return $$"""
-                                {{member.GetPropertyName(E_CsTs.CSharp)}} = new() {
-                                    {{WithIndent(RenderBody(sp, right, rigthMembers), "    ")}}
-                                },
+                                {{start}}{{member.GetPropertyName(E_CsTs.CSharp)}} = new() {
+                                    {{WithIndent(EnumerateMemberes(false, sp, right, rigthMembers), "    ")}}
+                                }{{end}}
                                 """;
                         }
 

@@ -39,8 +39,8 @@ namespace Nijo.Models.DataModelModules {
                 .Select((vm, i) => {
                     var fullpath = vm.GetPathFromEntry().ToArray();
                     return new {
-                        TempVarName = $"searchKey{i + 1}",
-                        vm.PhysicalName,
+                        ArgVarType = vm.Type,
+                        ArgVarName = vm.PhysicalName,
                         vm.DisplayName,
                         VmType = vm.Type,
                         LogTemplate = $"{vm.DisplayName.Replace("\"", "\\\"")}: {{key{i}}}",
@@ -61,45 +61,54 @@ namespace Nijo.Models.DataModelModules {
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の更新を実行します。
                 /// </summary>
-                public virtual async Task {{MethodName}}({{command.CsClassNameUpdate}} command, {{messages.InterfaceName}} messages, {{PresentationContext.INTERFACE}} context) {
-
+                {{keys.SelectTextTemplate(k => $$"""
+                /// <param name="{{k.ArgVarName}}">{{k.DisplayName}}。nullの場合はエラー。</param>
+                """)}}
+                /// <param name="version">バージョン。nullの場合はエラー。</param>
+                /// <param name="updater">更新関数。引数は更新前の値。この関数の中で更新したいプロパティを書き換えてください。</param>
+                /// <param name="messages">エラー等のメッセージのコンテナ</param>
+                /// <param name="context">コンテキスト</param>
+                public virtual async Task {{MethodName}}({{keys.Select(k => $"{k.ArgVarType.CsDomainTypeName}? {k.ArgVarName}").Join(", ")}}, int? version, Action<{{command.CsClassNameUpdate}}> updater, {{messages.InterfaceName}} messages, {{PresentationContext.INTERFACE}} context) {
                     // 更新に必要な項目が空の場合は処理中断
                     var keyIsEmpty = false;
                 {{keys.SelectTextTemplate(vm => $$"""
-                    if (command.{{vm.SaveCommandFullPath.Join("?.")}} == null) {
+                    if ({{vm.ArgVarName}} == null) {
                         keyIsEmpty = true;
                         messages.{{vm.SaveCommandMessageFullPath.Join(".")}}.AddError({{MsgFactory.MSG}}.{{ERR_KEY_IS_EMPTY}}("{{vm.DisplayName.Replace("\"", "\\\"")}}"));
                     }
                 """)}}
+                    if (version == null) {
+                        keyIsEmpty = true;
+                        messages.AddError({{MsgFactory.MSG}}.{{ERR_KEY_IS_EMPTY}}("{{SaveCommand.VERSION}}"));
+                    }
                     if (keyIsEmpty) {
-                        Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で主キー空エラーが発生したデータ: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                        Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で主キーが空 ({{keys.Select((vm, i) => $"{vm.ArgVarName}: {{{i}}}").Join(", ")}}, {{SaveCommand.VERSION}}:{{$"{{{keys.Length}}}"}})", {{keys.Select(vm => vm.ArgVarName).Join(", ")}}, version);
                         return;
                     }
 
                     // 更新前データ取得
-                {{keys.SelectTextTemplate(vm => $$"""
-                    var {{vm.TempVarName}} = {{vm.VmType.RenderCastToPrimitiveType()}}command.{{vm.SaveCommandFullPath.Join("!.")}};
-                """)}}
-
                     var beforeDbEntity = DbContext.{{dbEntity.DbSetName}}
                         .AsNoTracking()
                 {{dbEntity.RenderInclude().SelectTextTemplate(source => $$"""
                         {{source}}
                 """)}}
                         .SingleOrDefault(e {{WithIndent(keys.SelectTextTemplate((vm, i) => $$"""
-                                           {{(i == 0 ? "=>" : "&&")}} {{vm.SingleOrDefaultLeft}} == {{vm.TempVarName}}
+                                           {{(i == 0 ? "=>" : "&&")}} {{vm.SingleOrDefaultLeft}} == {{vm.ArgVarType.RenderCastToPrimitiveType()}}{{vm.ArgVarName}}
                                            """), "                           ")}});
 
                     if (beforeDbEntity == null) {
                         messages.AddError({{MsgFactory.MSG}}.{{ERR_DATA_NOT_FOUND}}());
-                        Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で更新対象が見つからないエラーが発生したデータ: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                        Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で更新対象が見つからないエラーが発生したデータ: {{keys.Select((vm, i) => $"{vm.ArgVarName}: {{{i}}}").Join(", ")}}", {{keys.Select(vm => vm.ArgVarName).Join(", ")}});
                         return;
                     }
 
+                    // 値の書き換え
+                    var command = {{command.CsClassNameUpdate}}.{{SaveCommand.FROM_DBENTITY}}(beforeDbEntity);
+                    updater(command);
                     var afterDbEntity = command.{{SaveCommand.TO_DBENTITY}}();
 
                     // 自動的に登録される項目
-                    afterDbEntity.{{EFCoreEntity.VERSION}}++;
+                    afterDbEntity.{{EFCoreEntity.VERSION}} = version + 1;
                     afterDbEntity.{{EFCoreEntity.CREATED_AT}} = beforeDbEntity.{{EFCoreEntity.CREATED_AT}};
                     afterDbEntity.{{EFCoreEntity.UPDATED_AT}} = {{ApplicationService.CURRENT_TIME}};
                     afterDbEntity.{{EFCoreEntity.CREATE_USER}} = beforeDbEntity.{{EFCoreEntity.CREATE_USER}};
@@ -133,7 +142,7 @@ namespace Nijo.Models.DataModelModules {
                     try {
                         var entry = DbContext.Entry(afterDbEntity);
                         entry.State = EntityState.Modified;
-                        entry.Property(e => e.{{EFCoreEntity.VERSION}}).OriginalValue = command.{{SaveCommand.VERSION}};
+                        entry.Property(e => e.{{EFCoreEntity.VERSION}}).OriginalValue = version;
 
                 {{RenderDescendantAttaching(_rootAggregate).SelectTextTemplate(source => $$"""
                         {{WithIndent(source, "        ")}}
@@ -222,17 +231,17 @@ namespace Nijo.Models.DataModelModules {
         internal static void RegisterCommonParts(CodeRenderingContext ctx) {
             ctx.Use<MsgFactory>()
                 .AddMessage(ERR_ID_UNKNOWN,
-                            "登録/更新/削除のタイミングでRDBMS上で何らかのエラーが生じた場合のメッセージ",
-                            "登録処理でエラーが発生しました: {0}")
+                    "登録/更新/削除のタイミングでRDBMS上で何らかのエラーが生じた場合のメッセージ",
+                    "登録処理でエラーが発生しました: {0}")
                 .AddMessage(ERR_KEY_IS_EMPTY,
-                            "更新または削除で対象の主キーが指定されていない場合のメッセージ",
-                            "{0}が空です。")
+                    "更新または削除で対象の主キーが指定されていない場合のメッセージ",
+                    "{0}が空です。")
                 .AddMessage(ERR_DATA_NOT_FOUND,
-                            "更新対象・削除対象のデータがデータベース上で見つからなかったときのメッセージ",
-                            "更新対象のデータが見つかりません。")
+                    "更新対象・削除対象のデータがデータベース上で見つからなかったときのメッセージ",
+                    "更新対象のデータが見つかりません。")
                 .AddMessage(ERR_CONCURRENCY,
-                            "楽観排他制御に引っかかったときのメッセージ",
-                            "ほかのユーザーが更新しました。");
+                    "楽観排他制御に引っかかったときのメッセージ",
+                    "ほかのユーザーが更新しました。");
         }
 
         /// <summary>

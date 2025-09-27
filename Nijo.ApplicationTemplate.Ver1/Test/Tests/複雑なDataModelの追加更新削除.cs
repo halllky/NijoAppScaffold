@@ -108,13 +108,12 @@ partial class DB接続あり_更新あり {
             var warehouse1 = scope.App.DbContext.保管庫マスタDbSet.OrderBy(x => x.保管庫ID).First();
             var employee1 = scope.App.DbContext.医療従事者マスタDbSet.OrderBy(x => x.医療従事者ID).First();
 
-            await scope.App.Update医療機器マスタAsync(new() {
-                機器ID = "MED001",
-                機器名 = "テスト医療機器1-更新",
-                単価 = 1500,
-                機器分類 = new() { 機器分類ID = category1.機器分類ID },
-                供給業者 = new() { 供給業者ID = supplier1.供給業者ID },
-                機器詳細 = new() {
+            await scope.App.Update医療機器マスタAsync("MED001", 0, data => {
+                data.機器名 = "テスト医療機器1-更新";
+                data.単価 = 1500;
+                data.機器分類 = new() { 機器分類ID = category1.機器分類ID };
+                data.供給業者 = new() { 供給業者ID = supplier1.供給業者ID };
+                data.機器詳細 = new() {
                     機器説明 = "テスト医療機器の説明文-更新",
                     機器仕様 = new() {
                         重量 = 600,
@@ -131,8 +130,8 @@ partial class DB接続あり_更新あり {
                             数量 = 2
                         }
                     }
-                },
-                在庫情報 = new List<在庫情報UpdateCommand> {
+                };
+                data.在庫情報 = new List<在庫情報UpdateCommand> {
                     new() {
                         保管庫 = new() { 保管庫ID = warehouse1.保管庫ID },
                         在庫数 = 150,
@@ -154,8 +153,7 @@ partial class DB接続あり_更新あり {
                             }
                         }
                     }
-                },
-                Version = 0
+                };
             }, scope.PresentationContext.Messages, scope.PresentationContext);
             await tran.CommitAsync();
         }
@@ -191,13 +189,12 @@ partial class DB接続あり_更新あり {
             var supplier1 = scope.App.DbContext.供給業者マスタDbSet.OrderBy(x => x.供給業者ID).First();
             var warehouse1 = scope.App.DbContext.保管庫マスタDbSet.OrderBy(x => x.保管庫ID).First();
 
-            await scope.App.Update医療機器マスタAsync(new() {
-                機器ID = "MED001",
-                機器名 = "テスト医療機器1-更新",
-                単価 = 1500,
-                機器分類 = new() { 機器分類ID = category1.機器分類ID },
-                供給業者 = new() { 供給業者ID = supplier1.供給業者ID },
-                機器詳細 = new() {
+            await scope.App.Update医療機器マスタAsync("MED001", 1, data => {
+                data.機器名 = "テスト医療機器1-更新";
+                data.単価 = 1500;
+                data.機器分類 = new() { 機器分類ID = category1.機器分類ID };
+                data.供給業者 = new() { 供給業者ID = supplier1.供給業者ID };
+                data.機器詳細 = new() {
                     機器説明 = "テスト医療機器の説明文-更新",
                     機器仕様 = new() {
                         重量 = 600,
@@ -210,16 +207,15 @@ partial class DB接続あり_更新あり {
                             数量 = 2
                         }
                     }
-                },
-                在庫情報 = new List<在庫情報UpdateCommand> {
+                };
+                data.在庫情報 = new List<在庫情報UpdateCommand> {
                     new() {
                         保管庫 = new() { 保管庫ID = warehouse1.保管庫ID },
                         在庫数 = 150,
                         棚卸日時 = DateTime.Now,
                         在庫状況履歴 = new List<在庫状況履歴UpdateCommand>() // 履歴を空にして削除
                     }
-                },
-                Version = 1
+                };
             }, scope.PresentationContext.Messages, scope.PresentationContext);
             await tran.CommitAsync();
         }
@@ -246,13 +242,12 @@ partial class DB接続あり_更新あり {
             var warehouse1 = scope.App.DbContext.保管庫マスタDbSet.OrderBy(x => x.保管庫ID).First();
             var employee1 = scope.App.DbContext.医療従事者マスタDbSet.OrderBy(x => x.医療従事者ID).First();
 
-            await scope.App.Update医療機器マスタAsync(new() {
-                機器ID = "MED001",
-                機器名 = "テスト医療機器1-更新",
-                単価 = 1500,
-                機器分類 = new() { 機器分類ID = category1.機器分類ID },
-                供給業者 = new() { 供給業者ID = supplier1.供給業者ID },
-                機器詳細 = new() {
+            await scope.App.Update医療機器マスタAsync("MED001", 2, data => {
+                data.機器名 = "テスト医療機器1-更新";
+                data.単価 = 1500;
+                data.機器分類 = new() { 機器分類ID = category1.機器分類ID };
+                data.供給業者 = new() { 供給業者ID = supplier1.供給業者ID };
+                data.機器詳細 = new() {
                     機器説明 = "テスト医療機器の説明文-更新",
                     機器仕様 = new() {
                         重量 = 600,
@@ -269,8 +264,8 @@ partial class DB接続あり_更新あり {
                             数量 = 2
                         }
                     }
-                },
-                在庫情報 = new List<在庫情報UpdateCommand> {
+                };
+                data.在庫情報 = new List<在庫情報UpdateCommand> {
                     new() {
                         保管庫 = new() { 保管庫ID = warehouse1.保管庫ID },
                         在庫数 = 150,
@@ -285,8 +280,7 @@ partial class DB接続あり_更新あり {
                             },
                         },
                     },
-                },
-                Version = 2
+                };
             }, scope.PresentationContext.Messages, scope.PresentationContext);
             await tran.CommitAsync();
         }
@@ -316,15 +310,13 @@ partial class DB接続あり_更新あり {
             var category1 = scope.App.DbContext.機器分類マスタDbSet.OrderBy(x => x.機器分類ID).First();
             var supplier1 = scope.App.DbContext.供給業者マスタDbSet.OrderBy(x => x.供給業者ID).First();
 
-            await scope.App.Update医療機器マスタAsync(new() {
-                機器ID = "MED001",
-                機器名 = "テスト医療機器1-更新",
-                単価 = 1500,
-                機器分類 = new() { 機器分類ID = category1.機器分類ID },
-                供給業者 = new() { 供給業者ID = supplier1.供給業者ID },
-                機器詳細 = null, // 機器詳細を削除
-                在庫情報 = new List<在庫情報UpdateCommand>(), // 在庫情報を空にして削除
-                Version = 3
+            await scope.App.Update医療機器マスタAsync("MED001", 3, data => {
+                data.機器名 = "テスト医療機器1-更新";
+                data.単価 = 1500;
+                data.機器分類 = new() { 機器分類ID = category1.機器分類ID };
+                data.供給業者 = new() { 供給業者ID = supplier1.供給業者ID };
+                data.機器詳細 = null; // 機器詳細を削除
+                data.在庫情報 = new List<在庫情報UpdateCommand>(); // 在庫情報を空にして削除
             }, scope.PresentationContext.Messages, scope.PresentationContext);
             await tran.CommitAsync();
         }

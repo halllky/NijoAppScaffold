@@ -84,6 +84,13 @@ namespace Nijo.Models.DataModelModules {
             var udpateCommand = new SaveCommand(_rootAggregate, SaveCommand.E_Type.Update);
             var deleteCommand = new SaveCommand(_rootAggregate, SaveCommand.E_Type.Delete);
 
+            // Updateの主キー
+            var ownKeys = _rootAggregate.GetKeyVMs().ToHashSet();
+            var primaryKeys = new Variable("displayData", displayData)
+                .Create1To1PropertiesRecursively()
+                .Where(prop => prop.Metadata is DisplayData.DisplayDataValueMember vm && ownKeys.Contains(vm.Member)
+                            || prop.Metadata is DisplayDataRef.RefDisplayDataValueMember refVm && ownKeys.Contains(refVm.Member));
+
             return $$"""
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}}の画面表示用データの一括更新を行ないます。
@@ -116,8 +123,14 @@ namespace Nijo.Models.DataModelModules {
 
                         } else if (displayData.WillBeChanged) {
                             // 更新
-                            var updateCommand = displayData.{{DisplayData.TO_UPDATE_COMMAND}}();
-                            await {{updateMethod.MethodName}}(updateCommand, context.Messages[i], context);
+                            await {{updateMethod.MethodName}}(
+                {{primaryKeys.SelectTextTemplate(prop => $$"""
+                                {{prop.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")}},
+                """)}}
+                                displayData.{{DisplayData.VERSION_CS}},
+                                displayData.{{DisplayData.ASSIGN_TO_UPDATE_COMMAND}},
+                                context.Messages[i],
+                                context);
 
                         } else {
                             // 変更なし

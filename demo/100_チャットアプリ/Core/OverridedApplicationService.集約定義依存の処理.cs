@@ -171,16 +171,11 @@ partial class OverridedApplicationService {
     /// </summary>
     public override async Task<object> Execute既存メッセージ編集(メッセージViewDisplayData param, IPresentationContext<メッセージViewDisplayDataMessages> context) {
         // 自動生成されたメソッドを使用してメッセージを更新
-        var entity = await DbContext.メッセージDbSet.FindAsync(param.Values.メッセージSEQ)
-            ?? throw new InvalidOperationException($"メッセージが見つかりません。メッセージSEQ: {param.Values.メッセージSEQ}");
-
-        var updateCommand = メッセージUpdateCommand.FromDbEntity(entity);
-        updateCommand.本文 = param.Values.本文;
-        updateCommand.編集済みか = true;
-        updateCommand.Version = param.Version;
-
         var messages = new メッセージSaveCommandMessages(["メッセージ"]);
-        await UpdateメッセージAsync(updateCommand, messages, context);
+        await UpdateメッセージAsync(param.Values.メッセージSEQ, param.Version, data => {
+            data.本文 = param.Values.本文;
+            data.編集済みか = true;
+        }, messages, context);
 
         if (messages.HasError()) {
             throw new InvalidOperationException($"メッセージ更新でエラーが発生しました: {messages.GetAllMessages()}");

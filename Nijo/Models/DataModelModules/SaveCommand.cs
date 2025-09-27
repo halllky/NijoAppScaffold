@@ -35,6 +35,9 @@ namespace Nijo.Models.DataModelModules {
         internal string CsClassNameUpdate => CsClassName;
         internal string CsClassNameDelete => CsClassName;
 
+        /// <summary>
+        /// 楽観排他のバージョン。Deleteの場合のみ使用。（Updateの場合はコマンドのプロパティとしてではなく更新処理の引数で渡す）
+        /// </summary>
         internal const string VERSION = "Version";
         internal const string TO_DBENTITY = "ToDbEntity";
         internal const string FROM_DBENTITY = "FromDbEntity";
@@ -151,9 +154,6 @@ namespace Nijo.Models.DataModelModules {
                     {{WithIndent(m.RenderDeclaring(), "    ")}}
                 """)}}
                 {{If(Aggregate is RootAggregate, () => $$"""
-                    /// <summary>楽観排他制御用のバージョン</summary>
-                    public required int? {{VERSION}} { get; set; }
-
                     {{WithIndent(RenderToDbEntity(isCreate: false), "    ")}}
 
                     /// <summary>
@@ -361,7 +361,9 @@ namespace Nijo.Models.DataModelModules {
                 public {{efCoreEntity.CsClassName}} {{TO_DBENTITY}}() {
                     return new {{efCoreEntity.CsClassName}} {
                         {{WithIndent(RenderToDbEntityBody(efCoreEntity, rootInstance, rightDictOfRootInstance), "        ")}}
-                        {{EFCoreEntity.VERSION}} = {{(isCreate ? "0" : $"{rootInstance.Name}.{VERSION}")}},
+                {{If(isCreate, () => $$"""
+                        {{EFCoreEntity.VERSION}} = 0,
+                """)}}
                     };
                 }
                 """;
