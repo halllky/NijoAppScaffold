@@ -222,10 +222,11 @@ internal static class BasicNodeOptions {
     };
     internal static NodeOption GenerateBatchUpdateCommand = new() {
         AttributeName = "GenerateBatchUpdateCommand",
-        DisplayName = "DataModelと全く同じ型のQueryModelの一括更新用のWebエンドポイント・Reactフック・アプリケーションサービスを生成するかどうか",
+        DisplayName = "DataModelと全く同じ型のQueryModelの一括更新用のWebエンドポイント・アプリケーションサービスを生成するかどうか",
         Type = E_NodeOptionType.Boolean,
         HelpText = $$"""
             標準の更新ロジックで一括更新処理を生成する場合に指定。
+            DataModel、かつ、それとまったく同じ形のQueryModelが生成される場合にのみ指定可能。
             """,
         Validate = ctx => {
             // このオプションを使用するためにはGenerateDefaultQueryModelの指定が必須
