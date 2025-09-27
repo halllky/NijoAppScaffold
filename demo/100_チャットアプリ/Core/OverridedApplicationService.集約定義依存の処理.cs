@@ -14,13 +14,13 @@ partial class OverridedApplicationService {
     /// <summary>
     /// ログイン
     /// </summary>
-    public override Task<アカウントViewDisplayData> Execute(ログインParameter param, IPresentationContext<ログインParameterMessages> context) {
+    public override Task<アカウントViewDisplayData> Executeログイン(ログインParameter param, IPresentationContext<ログインParameterMessages> context) {
         throw new NotImplementedException();
     }
     /// <summary>
     /// ログアウト
     /// </summary>
-    public override Task<object> Execute(object param, IPresentationContext<MessageContainer> context) {
+    public override Task<object> Executeログアウト(object param, IPresentationContext<MessageContainer> context) {
         throw new NotImplementedException();
     }
     /// <summary>
@@ -58,7 +58,7 @@ partial class OverridedApplicationService {
         });
     }
 
-    public override async Task<メッセージ追加読み込みReturnValue> Execute(メッセージ追加読み込みParameter param, IPresentationContext<メッセージ追加読み込みParameterMessages> context) {
+    public override async Task<メッセージ追加読み込みReturnValue> Executeメッセージ追加読み込み(メッセージ追加読み込みParameter param, IPresentationContext<メッセージ追加読み込みParameterMessages> context) {
         // このシーケンスより古いメッセージN件を読み込む
         var messages = await DbContext.メッセージDbSet
             .Where(m => m.メッセージSEQ < param.前メッセージSEQ && m.チャンネル直下か == true)
@@ -145,7 +145,7 @@ partial class OverridedApplicationService {
         });
     }
 
-    public override async Task<object> Execute(新規投稿Parameter param, IPresentationContext<新規投稿ParameterMessages> context) {
+    public override async Task<object> Execute新規メッセージ投稿(新規投稿Parameter param, IPresentationContext<新規投稿ParameterMessages> context) {
         // 自動生成されたメソッドを使用してメッセージを作成
         var createCommand = new メッセージCreateCommand {
             本文 = param.本文,
@@ -169,7 +169,7 @@ partial class OverridedApplicationService {
     /// <summary>
     /// 既存メッセージ編集
     /// </summary>
-    public override async Task<object> Execute(メッセージViewDisplayData param, IPresentationContext<メッセージViewDisplayDataMessages> context) {
+    public override async Task<object> Execute既存メッセージ編集(メッセージViewDisplayData param, IPresentationContext<メッセージViewDisplayDataMessages> context) {
         // 自動生成されたメソッドを使用してメッセージを更新
         var entity = await DbContext.メッセージDbSet.FindAsync(param.Values.メッセージSEQ)
             ?? throw new InvalidOperationException($"メッセージが見つかりません。メッセージSEQ: {param.Values.メッセージSEQ}");

@@ -318,12 +318,12 @@ partial class OverridedApplicationService {
         });
     }
 
-    public override Task<医療機器管理ReturnValue> Execute(医療機器管理Parameter parameter, IPresentationContext<医療機器管理ParameterMessages> context) {
+    public override Task<医療機器管理ReturnValue> Execute医療機器管理(医療機器管理Parameter parameter, IPresentationContext<医療機器管理ParameterMessages> context) {
         // TODO: 医療機器管理コマンドの処理を実装してください。
         return Task.FromResult(new 医療機器管理ReturnValue());
     }
 
-    public override Task<簡易診療登録ReturnValue> Execute(簡易診療登録Parameter parameter, IPresentationContext<簡易診療登録ParameterMessages> context) {
+    public override Task<簡易診療登録ReturnValue> Execute簡易診療登録(簡易診療登録Parameter parameter, IPresentationContext<簡易診療登録ParameterMessages> context) {
         // TODO: 簡易診療登録コマンドの処理を実装してください。
         return Task.FromResult(new 簡易診療登録ReturnValue() {
             処理結果 = $$"""

@@ -19,7 +19,7 @@ namespace Nijo.Models.CommandModelModules {
 
 
         private const string CONTROLLER_ACTION_EXECUTE = "execute";
-        private const string EXECUTE_METHOD = "Execute";
+        private string ExecuteMethodName => $"Execute{_rootAggregate.PhysicalName}";
 
 
         #region TypeScript用
@@ -83,7 +83,7 @@ namespace Nijo.Models.CommandModelModules {
                 public async Task<IActionResult> Execute(
                     [ModelBinder(BinderType = typeof({{AspNetController.COMPLEX_REQUEST_BODY_BINDER}}<{{paramTypeName}}>))] {{paramTypeName}} {{AspNetController.DATA}},
                     [ModelBinder(BinderType = typeof({{AspNetController.PRESENTATION_CONTEXT_BINDER}}<{{paramMessageTypeName}}>))] {{PresentationContext.INTERFACE}}<{{paramMessageTypeName}}> {{AspNetController.CONTEXT}}) {
-                    var returnValue = await _applicationService.{{EXECUTE_METHOD}}(data, context);
+                    var returnValue = await _applicationService.{{ExecuteMethodName}}(data, context);
                     return _webConfigure.{{AspNetController.TO_ACTION_RESULT}}(returnValue, context);
                 }
                 """;
@@ -108,7 +108,7 @@ namespace Nijo.Models.CommandModelModules {
                 /// </summary>
                 /// <param name="param">処理パラメータ</param>
                 /// <param name="context">実行時コンテキスト。エラーメッセージを保持したり、起動時オプションを持っていたりする。</param>
-                public abstract Task<{{returnTypeName}}> {{EXECUTE_METHOD}}({{paramTypeName}} param, {{PresentationContext.INTERFACE}}<{{paramMessageTypeName}}> context);
+                public abstract Task<{{returnTypeName}}> {{ExecuteMethodName}}({{paramTypeName}} param, {{PresentationContext.INTERFACE}}<{{paramMessageTypeName}}> context);
                 """;
         }
     }
