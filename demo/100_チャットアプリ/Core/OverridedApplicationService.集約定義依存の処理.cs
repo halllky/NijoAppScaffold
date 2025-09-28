@@ -226,14 +226,16 @@ partial class OverridedApplicationService {
     /// </summary>
     public override async Task<object> Execute既存メッセージ編集(メッセージViewDisplayData param, IPresentationContext<メッセージViewDisplayDataMessages> context) {
         // 自動生成されたメソッドを使用してメッセージを更新
-        var messages = new メッセージSaveCommandMessages(["メッセージ"]);
+        var messages = new メッセージSaveCommandMessages([]);
         await UpdateメッセージAsync(param.Values.メッセージSEQ, param.Version, data => {
             data.本文 = param.Values.本文;
             data.編集済みか = true;
         }, messages, context);
 
+        // エラーメッセージはメッセージのコンテナに含めて画面側に返す
         if (messages.HasError()) {
-            throw new InvalidOperationException($"メッセージ更新でエラーが発生しました: {messages.GetAllMessages()}");
+            messages.TransferToRootOf(context.Messages);
+            return new { Success = false };
         }
 
         return new { Success = true };
