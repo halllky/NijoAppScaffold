@@ -32,3 +32,24 @@ partial class MessageContainer {
         }
     }
 }
+
+/// <summary>
+/// アカウントDbEntityの拡張
+/// </summary>
+partial class アカウントDbEntity {
+    /// <summary>
+    /// パスワードをハッシュ化して設定する
+    /// </summary>
+    public void SetPassword(string plainPassword) {
+        パスワードハッシュ = System.Text.Encoding.UTF8.GetBytes(BCrypt.Net.BCrypt.HashPassword(plainPassword));
+    }
+
+    /// <summary>
+    /// パスワードを検証する
+    /// </summary>
+    public bool VerifyPassword(string plainPassword) {
+        if (パスワードハッシュ == null) return false;
+        var hashedPassword = System.Text.Encoding.UTF8.GetString(パスワードハッシュ);
+        return BCrypt.Net.BCrypt.Verify(plainPassword, hashedPassword);
+    }
+}

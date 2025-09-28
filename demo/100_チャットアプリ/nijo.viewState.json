@@ -32,7 +32,8 @@
         "members": [
           "アカウントID (PK)",
           "アカウント名",
-          "パスワード"
+          "パスワード",
+          "パスワードハッシュ"
         ],
         "background-color": "#ea580c",
         "border-color": "#ea580c"

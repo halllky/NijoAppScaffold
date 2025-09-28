@@ -5,6 +5,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
 
 namespace MyApp;
 
@@ -14,14 +17,66 @@ partial class OverridedApplicationService {
     /// <summary>
     /// ログイン
     /// </summary>
-    public override Task<アカウントViewDisplayData> Executeログイン(ログインParameter param, IPresentationContext<ログインParameterMessages> context) {
-        throw new NotImplementedException();
+    public override async Task<アカウントViewDisplayData> Executeログイン(ログインParameter param, IPresentationContext<ログインParameterMessages> context) {
+        // パラメータ検証
+        if (string.IsNullOrWhiteSpace(param.ユーザーID)) {
+            context.Messages.ユーザーID.AddError("ユーザーIDを入力してください。");
+        }
+        if (string.IsNullOrWhiteSpace(param.パスワード)) {
+            context.Messages.パスワード.AddError("パスワードを入力してください。");
+        }
+        if (context.Messages.HasError()) {
+            throw new InvalidOperationException("入力エラーがあります。");
+        }
+
+        // ユーザー認証
+        var user = await DbContext.アカウントDbSet
+            .FirstOrDefaultAsync(u => u.アカウントID == param.ユーザーID);
+
+        if (user == null || !user.VerifyPassword(param.パスワード!)) {
+            context.Messages.AddError("ユーザーIDまたはパスワードが正しくありません。");
+            throw new InvalidOperationException("認証に失敗しました。");
+        }
+
+        // Cookie認証のClaimsを作成
+        var claims = new List<Claim> {
+            new Claim(ClaimTypes.NameIdentifier, user.アカウントID!),
+            new Claim(ClaimTypes.Name, user.アカウント名!),
+        };
+
+        var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
+        var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+        // HttpContextからサインイン
+        var httpContext = ServiceProvider.GetService<IHttpContextAccessor>()?.HttpContext;
+        if (httpContext != null) {
+            await httpContext.SignInAsync("Cookies", claimsPrincipal);
+        }
+
+        // レスポンス用のデータを作成
+        return new アカウントViewDisplayData {
+            Values = new() {
+                アカウントID = user.アカウントID,
+                アカウント名 = user.アカウント名,
+            },
+            ExistsInDatabase = true,
+            WillBeChanged = false,
+            WillBeDeleted = false,
+            Version = (int)user.Version!,
+        };
     }
+
     /// <summary>
     /// ログアウト
     /// </summary>
-    public override Task<object> Executeログアウト(object param, IPresentationContext<MessageContainer> context) {
-        throw new NotImplementedException();
+    public override async Task<object> Executeログアウト(object param, IPresentationContext<MessageContainer> context) {
+        // HttpContextからサインアウト
+        var httpContext = ServiceProvider.GetService<IHttpContextAccessor>()?.HttpContext;
+        if (httpContext != null) {
+            await httpContext.SignOutAsync("Cookies");
+        }
+
+        return new { Success = true };
     }
     /// <summary>
     /// アカウントの画面表示用データをデータベースのどの項目から取得するかの定義
