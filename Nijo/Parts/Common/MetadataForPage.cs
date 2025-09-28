@@ -82,7 +82,13 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
     private SourceFile RenderCSharp(CodeRenderingContext ctx) {
         var entriesOrderByDataFlow = _entries
             .OrderBy(agg => agg.GetRoot().GetIndexOfDataFlow())
-            .Select(aggregate => (IMetadataEntity)new AggregateMetadata(aggregate));
+            .Select(aggregate => new {
+                Entry = new AggregateMetadata(aggregate),
+                Tree = aggregate
+                    .EnumerateThisAndDescendants()
+                    .Select(m => new AggregateMetadata(m)),
+            })
+            .ToArray();
 
         return new SourceFile {
             FileName = "MetadataForPage.cs",
@@ -105,11 +111,20 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                     /// <summary>
                     /// 画面の自動生成のためのメタデータ取得関数
                     /// </summary>
-                    public static Dictionary<string, {{AggregateMetadata.TYPE_ROOT_AGGREGATE_NAME}}> GetAll() => new() {
-                {{entriesOrderByDataFlow.SelectTextTemplate(entry => $$"""
-                        { "{{entry.PhysicalName}}", {{WithIndent(entry.RenderCSharpNewStatement(ctx), "        ")}} },
+                    public static Dictionary<string, {{AggregateMetadata.TYPE_NAME}}> GetAll() => new() {
+                {{entriesOrderByDataFlow.SelectTextTemplate(e => $$"""
+                        { "{{e.Entry.PhysicalName}}", {{e.Entry.PhysicalName}} },
                 """)}}
                     };
+
+                {{entriesOrderByDataFlow.SelectTextTemplate(e => $$"""
+                    #region {{e.Entry.PhysicalName}}
+                    public static {{e.Entry.CSharpTypeName}} {{e.Entry.PhysicalName}} => {{WithIndent(e.Entry.RenderCSharpNewStatement(ctx), "    ")}};
+                {{e.Tree.SelectTextTemplate(agg => $$"""
+                    {{WithIndent(agg.RenderCSharpMemberClass(ctx), "    ")}}
+                """)}}
+                    #endregion {{e.Entry.PhysicalName}}
+                """)}}
                 }
                 """,
         };
@@ -124,7 +139,9 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
         }
         private readonly AggregateBase _aggregate;
 
-        string IMetadataEntity.PhysicalName => _aggregate.PhysicalName;
+        public string PhysicalName => _aggregate.PhysicalName;
+        public string CSharpTypeName => $"{TYPE_NAME}<{MemberClassName}>";
+        public string MemberClassName => $"{_aggregate.PhysicalName}MetadataMembers";
 
         string IMetadataEntity.RenderTypeScriptMetadataObject(CodeRenderingContext ctx) {
             var type = _aggregate switch {
@@ -151,7 +168,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 """;
         }
 
-        string IMetadataEntity.RenderCSharpNewStatement(CodeRenderingContext ctx) {
+        public string RenderCSharpNewStatement(CodeRenderingContext ctx) {
             var type = _aggregate switch {
                 RootAggregate => "RootAggregate",
                 ChildAggregate => "ChildAggregate",
@@ -160,23 +177,39 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
             };
 
             return $$"""
-                new {{(_aggregate is RootAggregate ? TYPE_ROOT_AGGREGATE_NAME : TYPE_NAME)}} {
+                new {{CSharpTypeName}} {
                     UniqueId = "{{_aggregate.XElement.Attribute(nameof(Ui.XmlElementItem.UniqueId))?.Value.Replace("\"", "\\\"")}}",
                     Type = "{{type}}",
                     Model = E_ModelType.{{_aggregate.GetRoot().Model.SchemaName.KebabCaseToPascalCase()}},
                 {{RenderNodeOptionsCs(_aggregate.XElement, ctx).SelectTextTemplate(source => $$"""
                     {{WithIndent(source, "    ")}}
                 """)}}
-                    Members = new Dictionary<string, {{TYPE_MEMBER}}> {
+                    Members = new {{MemberClassName}}(),
+                }
+                """;
+        }
+        /// <summary>メタデータのメンバークラス定義をレンダリングする</summary>
+        internal string RenderCSharpMemberClass(CodeRenderingContext ctx) {
+            return $$"""
+                public sealed class {{MemberClassName}} : {{I_AGGREGATE_METADATA_MEMBER}} {
                 {{_aggregate.GetMembers().Select(IMetadataEntity.GetImpl).SelectTextTemplate(m => $$"""
-                        { "{{m.PhysicalName}}", {{WithIndent(m.RenderCSharpNewStatement(ctx), "        ")}} },
+                    public {{m.CSharpTypeName}} {{m.PhysicalName}} => {{WithIndent(m.RenderCSharpNewStatement(ctx), "    ")}};
                 """)}}
+
+                    public Dictionary<string, {{TYPE_MEMBER}}> AsDictionary() {
+                        return new() {
+                {{_aggregate.GetMembers().Select(IMetadataEntity.GetImpl).SelectTextTemplate(m => $$"""
+                            { "{{m.PhysicalName}}", {{m.PhysicalName}} },
+                """)}}
+                        };
                     }
                 }
                 """;
         }
+        internal const string I_AGGREGATE_METADATA_MEMBER = "IAggregateMetadataMember";
 
         internal const string TYPE_NAME = "StructureMetadata";
+        /// <summary>TypeScript側でのみ使用</summary>
         internal const string TYPE_ROOT_AGGREGATE_NAME = "RootAggregateMetadata";
         internal const string TYPE_MEMBER = "StructureMetadataMember";
 
@@ -217,14 +250,28 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 /// </summary>
                 public class {{TYPE_NAME}} : {{TYPE_MEMBER}} {
                     /// <summary>集約の種類</summary>
-                    public string Type { get; set; } = string.Empty;
+                    public required string Type { get; init; }
                     /// <summary>この集約のモデル。子孫集約の場合も値が入る。</summary>
-                    public E_ModelType Model { get; set; }
-                    /// <summary>この構造体のメンバー</summary>
-                    public Dictionary<string, {{TYPE_MEMBER}}> Members { get; set; } = new();
+                    public E_ModelType Model { get; init; }
                 {{RenderNodeOptionTypesCs(ctx).SelectTextTemplate(source => $$"""
                     {{WithIndent(source, "    ")}}
                 """)}}
+
+                    /// <summary>この構造体のメンバー</summary>
+                    public virtual Dictionary<string, {{TYPE_MEMBER}}> GetMembers() => [];
+                }
+                /// <inheritdoc cref="{{TYPE_NAME}}"/>
+                public class {{TYPE_NAME}}<TMembers> : {{TYPE_NAME}} where TMembers : {{I_AGGREGATE_METADATA_MEMBER}} {
+                    /// <summary>この構造体のメンバー</summary>
+                    public required TMembers Members { get; init; }
+                    public override Dictionary<string, {{TYPE_MEMBER}}> GetMembers() => Members.AsDictionary();
+                }
+
+                /// <summary>
+                /// 構造体のメタデータのメンバー定義部分
+                /// </summary>
+                public interface {{I_AGGREGATE_METADATA_MEMBER}} {
+                    Dictionary<string, {{TYPE_MEMBER}}> AsDictionary();
                 }
 
                 /// <summary>
@@ -237,17 +284,11 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 }
 
                 /// <summary>
-                /// ルート集約のメタデータ
-                /// </summary>
-                public class {{TYPE_ROOT_AGGREGATE_NAME}} : {{TYPE_NAME}} {
-                }
-
-                /// <summary>
                 /// 構造体のメタデータのメンバー
                 /// </summary>
                 public abstract class {{TYPE_MEMBER}} {
                     /// <summary>XMLスキーマ上でこの要素を示す一意なID</summary>
-                    public string UniqueId { get; set; } = string.Empty;
+                    public required string UniqueId { get; init; }
                 }
                 """;
         }
@@ -262,6 +303,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
         private readonly ValueMember _vm;
 
         string IMetadataEntity.PhysicalName => _vm.PhysicalName;
+        string IMetadataEntity.CSharpTypeName => TYPE_NAME;
 
         string IMetadataEntity.RenderTypeScriptMetadataObject(CodeRenderingContext ctx) {
 
@@ -341,11 +383,11 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 /// </summary>
                 public class {{TYPE_NAME}} : {{AggregateMetadata.TYPE_MEMBER}} {
                     /// <summary>値の型名。このメンバーが enum または value-ojbect の場合は null になる</summary>
-                    public string? Type { get; set; }
+                    public string? Type { get; init; }
                     /// <summary>列挙体の型名。このメンバーが列挙体の場合のみ</summary>
-                    public string? EnumType { get; set; }
+                    public string? EnumType { get; init; }
                     /// <summary>値オブジェクトの型名。このメンバーが値オブジェクトの場合のみ</summary>
-                    public string? ValueObjectType { get; set; }
+                    public string? ValueObjectType { get; init; }
                 {{RenderNodeOptionTypesCs(ctx).SelectTextTemplate(source => $$"""
                     {{WithIndent(source, "    ")}}
                 """)}}
@@ -363,6 +405,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
         private readonly RefToMember _refTo;
 
         string IMetadataEntity.PhysicalName => _refTo.PhysicalName;
+        string IMetadataEntity.CSharpTypeName => TYPE_NAME;
 
         string IMetadataEntity.RenderTypeScriptMetadataObject(CodeRenderingContext ctx) {
 
@@ -417,9 +460,9 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 /// </summary>
                 public class {{TYPE_NAME}} : {{AggregateMetadata.TYPE_MEMBER}} {
                     /// <summary>型</summary>
-                    public string Type { get; set; } = string.Empty;
+                    public required string Type { get; init; }
                     /// <summary>参照先。参照先が子孫集約の場合はルート集約からのパスのスラッシュ区切り</summary>
-                    public string RefTo { get; set; } = string.Empty;
+                    public required string RefTo { get; init; }
                 {{RenderNodeOptionTypesCs(ctx).SelectTextTemplate(source => $$"""
                     {{WithIndent(source, "    ")}}
                 """)}}
@@ -435,6 +478,8 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
     internal interface IMetadataEntity {
         /// <summary>物理名</summary>
         string PhysicalName { get; }
+        /// <summary>C#の型名</summary>
+        string CSharpTypeName { get; }
         /// <summary>メタデータのキーと値を格納するJavaScriptオブジェクトをレンダリングする</summary>
         string RenderTypeScriptMetadataObject(CodeRenderingContext ctx);
         /// <summary>メタデータのキーと値を格納するC#のnewステートメントをレンダリングする</summary>
@@ -590,7 +635,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
         // コメントはXMLの属性ではないので別途宣言している
         yield return $$"""
             /// <summary>XMLコメント</summary>
-            public string? Comment { get; set; }
+            public string? Comment { get; init; }
             """;
 
         foreach (var option in nodeOptions) {
@@ -605,7 +650,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
             yield return $$"""
                 /// <summary>{{option.DisplayName}}</summary>
-                public {{csType}}{{nullableModifier}} {{option.AttributeName}} { get; set; }{{defaultValue}}
+                public {{csType}}{{nullableModifier}} {{option.AttributeName}} { get; init; }{{defaultValue}}
                 """;
         }
     }
