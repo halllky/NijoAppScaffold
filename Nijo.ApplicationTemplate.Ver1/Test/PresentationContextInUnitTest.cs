@@ -30,11 +30,6 @@ internal class PresentationContextInUnitTest : IPresentationContext {
     public bool HasConfirm() {
         return Confirms.Count > 0;
     }
-
-    public IPresentationContext<TMessageRoot> Cast<TMessageRoot>() where TMessageRoot : IMessageContainer {
-        return new PresentationContextInUnitTest<TMessageRoot>((TMessageRoot)Messages, Options);
-    }
-
 }
 
 /// <inheritdoc cref="PresentationContextInUnitTest"/>

@@ -45,12 +45,6 @@ namespace Nijo.Parts.CSharp {
                         /// 「～しますがよろしいですか？」などの確認メッセージが発生しているかどうかを返します。
                         /// </summary>
                         bool HasConfirm();
-
-                        /// <summary>
-                        /// キャストします。
-                        /// メッセージコンテナの型が実際の型と異なる場合は例外を投げます。
-                        /// </summary>
-                        {{INTERFACE}}<TMessageRoot> Cast<TMessageRoot>() where TMessageRoot : {{MessageContainer.INTERFACE}};
                     }
 
                     /// <inheritdoc cref="{{INTERFACE}}"/>
