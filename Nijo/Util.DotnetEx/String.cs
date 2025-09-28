@@ -24,6 +24,13 @@ namespace Nijo.Util.DotnetEx {
             if (input.Length == 1) return input.ToLowerInvariant();
             return char.ToLowerInvariant(input[0]) + input.Substring(1);
         }
+        /// <summary>
+        /// aaa-bbb-ccc => AaaBbbCcc
+        /// </summary>
+        public static string KebabCaseToPascalCase(this string str) {
+            if (string.IsNullOrEmpty(str)) return str;
+            return str.Split('-').Select(s => char.ToUpperInvariant(s[0]) + s.Substring(1)).Join("");
+        }
         public static string ToHashedString(this string str) {
             byte[] stringBytes = System.Text.Encoding.UTF8.GetBytes(str);
             byte[] hashedBytes = System.Security.Cryptography.MD5.Create().ComputeHash(stringBytes);

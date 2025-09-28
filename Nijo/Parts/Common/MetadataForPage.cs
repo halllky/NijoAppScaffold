@@ -21,9 +21,9 @@ namespace Nijo.Parts.Common;
 /// </summary>
 internal class MetadataForPage : IMultiAggregateSourceFile {
 
-    private readonly List<AggregateBase> _entries = new();
+    private readonly List<RootAggregate> _entries = new();
     private readonly Lock _lock = new();
-    internal MetadataForPage Add(AggregateBase aggregate) {
+    internal MetadataForPage Add(RootAggregate aggregate) {
         lock (_lock) {
             _entries.Add(aggregate);
             return this;
@@ -51,7 +51,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
     private SourceFile RenderTypeScript(CodeRenderingContext ctx) {
         var entriesOrderByDataFlow = _entries
             .OrderBy(agg => agg.GetRoot().GetIndexOfDataFlow())
-            .Select(aggregate => (ITypeScriptOrCsharpModule)new StructureMetadata(aggregate, isEntry: true));
+            .Select(aggregate => (IMetadataEntity)new AggregateMetadata(aggregate));
 
         return new SourceFile {
             FileName = "metadata-for-page.ts",
@@ -62,16 +62,16 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
                 /** 画面の自動生成のためのメタデータ */
                 export namespace MetadataForPage {
-                  {{WithIndent(StructureMetadata.RenderTypeScriptType(ctx), "  ")}}
+                  {{WithIndent(AggregateMetadata.RenderTypeScriptType(ctx), "  ")}}
 
                   {{WithIndent(ValueMetadata.RenderTypeScriptType(ctx), "  ")}}
 
                   {{WithIndent(RefMetadata.RenderTypeScriptType(ctx), "  ")}}
 
                   /** 画面の自動生成のためのメタデータ取得関数 */
-                  export const getAll = (): { [k in ( {{CommandQueryMappings.DATA_MODEL_TYPE}} | {{CommandQueryMappings.QUERY_MODEL_TYPE}} | {{CommandQueryMappings.COMMAND_MODEL_TYPE}} | {{CommandQueryMappings.STRUCTURE_MODEL_TYPE}})]: {{StructureMetadata.TYPE_ROOT_AGGREGATE_NAME}} } => ({
+                  export const getAll = (): { [k in ( {{CommandQueryMappings.DATA_MODEL_TYPE}} | {{CommandQueryMappings.QUERY_MODEL_TYPE}} | {{CommandQueryMappings.COMMAND_MODEL_TYPE}} | {{CommandQueryMappings.STRUCTURE_MODEL_TYPE}})]: {{AggregateMetadata.TYPE_ROOT_AGGREGATE_NAME}} } => ({
                 {{entriesOrderByDataFlow.SelectTextTemplate(entry => $$"""
-                    {{WithIndent(entry.RenderTypeScript(ctx), "    ")}}
+                    '{{entry.PhysicalName}}': {{WithIndent(entry.RenderTypeScriptMetadataObject(ctx), "    ")}},
                 """)}}
                   })
                 }
@@ -82,7 +82,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
     private SourceFile RenderCSharp(CodeRenderingContext ctx) {
         var entriesOrderByDataFlow = _entries
             .OrderBy(agg => agg.GetRoot().GetIndexOfDataFlow())
-            .Select(aggregate => (ITypeScriptOrCsharpModule)new StructureMetadata(aggregate, isEntry: true));
+            .Select(aggregate => (IMetadataEntity)new AggregateMetadata(aggregate));
 
         return new SourceFile {
             FileName = "MetadataForPage.cs",
@@ -96,7 +96,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 /// 画面の自動生成のためのメタデータ
                 /// </summary>
                 public static class MetadataForPage {
-                    {{WithIndent(StructureMetadata.RenderCSharpType(ctx), "    ")}}
+                    {{WithIndent(AggregateMetadata.RenderCSharpType(ctx), "    ")}}
 
                     {{WithIndent(ValueMetadata.RenderCSharpType(ctx), "    ")}}
 
@@ -105,9 +105,9 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                     /// <summary>
                     /// 画面の自動生成のためのメタデータ取得関数
                     /// </summary>
-                    public static Dictionary<string, {{StructureMetadata.TYPE_ROOT_AGGREGATE_NAME}}> GetAll() => new() {
+                    public static Dictionary<string, {{AggregateMetadata.TYPE_ROOT_AGGREGATE_NAME}}> GetAll() => new() {
                 {{entriesOrderByDataFlow.SelectTextTemplate(entry => $$"""
-                        {{WithIndent(entry.RenderCSharp(ctx), "        ")}}
+                        { "{{entry.PhysicalName}}", {{WithIndent(entry.RenderCSharpNewStatement(ctx), "        ")}} },
                 """)}}
                     };
                 }
@@ -116,17 +116,17 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
     }
 
     /// <summary>
-    /// 構造体のメタデータ
+    /// ルート, Child, Children のメタデータ
     /// </summary>
-    internal class StructureMetadata : ITypeScriptOrCsharpModule {
-        internal StructureMetadata(AggregateBase aggregate, bool isEntry) {
+    internal class AggregateMetadata : IMetadataEntity {
+        internal AggregateMetadata(AggregateBase aggregate) {
             _aggregate = aggregate;
-            _isEntry = isEntry;
         }
         private readonly AggregateBase _aggregate;
-        private readonly bool _isEntry;
 
-        string ITypeScriptOrCsharpModule.RenderTypeScript(CodeRenderingContext ctx) {
+        string IMetadataEntity.PhysicalName => _aggregate.PhysicalName;
+
+        string IMetadataEntity.RenderTypeScriptMetadataObject(CodeRenderingContext ctx) {
             var type = _aggregate switch {
                 RootAggregate => "RootAggregate",
                 ChildAggregate => "ChildAggregate",
@@ -134,17 +134,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 _ => throw new NotImplementedException(),
             };
 
-            static ITypeScriptOrCsharpModule GetImpl(IAggregateMember member) {
-                return member switch {
-                    ValueMember vm => new ValueMetadata(vm),
-                    RefToMember rm => new RefMetadata(rm),
-                    ChildAggregate child => new StructureMetadata(child, isEntry: false),
-                    ChildrenAggregate children => new StructureMetadata(children, isEntry: false),
-                    _ => throw new NotImplementedException(),
-                };
-            }
-
-            var body = $$"""
+            return $$"""
                 {
                   uniqueId: '{{_aggregate.XElement.Attribute(nameof(Ui.XmlElementItem.UniqueId))?.Value.Replace("'", "\\'")}}',
                   type: '{{type}}',
@@ -153,25 +143,15 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                   {{WithIndent(source, "  ")}}
                 """)}}
                   members: {
-                {{_aggregate.GetMembers().SelectTextTemplate(m => $$"""
-                    {{WithIndent(GetImpl(m).RenderTypeScript(ctx), "    ")}},
+                {{_aggregate.GetMembers().Select(IMetadataEntity.GetImpl).SelectTextTemplate(m => $$"""
+                    '{{m.PhysicalName}}': {{WithIndent(m.RenderTypeScriptMetadataObject(ctx), "    ")}},
                 """)}}
                   },
                 }
                 """;
-
-            if (_isEntry) {
-                return $$"""
-                    '{{_aggregate.PhysicalName}}': {{body}},
-                    """;
-            } else {
-                return $$"""
-                    '{{_aggregate.PhysicalName}}': {{body}}
-                    """;
-            }
         }
 
-        string ITypeScriptOrCsharpModule.RenderCSharp(CodeRenderingContext ctx) {
+        string IMetadataEntity.RenderCSharpNewStatement(CodeRenderingContext ctx) {
             var type = _aggregate switch {
                 RootAggregate => "RootAggregate",
                 ChildAggregate => "ChildAggregate",
@@ -179,39 +159,21 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 _ => throw new NotImplementedException(),
             };
 
-            static ITypeScriptOrCsharpModule GetImpl(IAggregateMember member) {
-                return member switch {
-                    ValueMember vm => new ValueMetadata(vm),
-                    RefToMember rm => new RefMetadata(rm),
-                    ChildAggregate child => new StructureMetadata(child, isEntry: false),
-                    ChildrenAggregate children => new StructureMetadata(children, isEntry: false),
-                    _ => throw new NotImplementedException(),
-                };
-            }
-
-            var body = $$"""
+            return $$"""
                 new {{(_aggregate is RootAggregate ? TYPE_ROOT_AGGREGATE_NAME : TYPE_NAME)}} {
                     UniqueId = "{{_aggregate.XElement.Attribute(nameof(Ui.XmlElementItem.UniqueId))?.Value.Replace("\"", "\\\"")}}",
                     Type = "{{type}}",
-                    Model = "{{_aggregate.GetRoot().Model.SchemaName}}",
+                    Model = E_ModelType.{{_aggregate.GetRoot().Model.SchemaName.KebabCaseToPascalCase()}},
                 {{RenderNodeOptionsCs(_aggregate.XElement, ctx).SelectTextTemplate(source => $$"""
                     {{WithIndent(source, "    ")}}
                 """)}}
                     Members = new Dictionary<string, {{TYPE_MEMBER}}> {
-                {{_aggregate.GetMembers().SelectTextTemplate(m => $$"""
-                        { "{{m.PhysicalName}}", {{WithIndent(GetImpl(m).RenderCSharp(ctx), "        ")}} },
+                {{_aggregate.GetMembers().Select(IMetadataEntity.GetImpl).SelectTextTemplate(m => $$"""
+                        { "{{m.PhysicalName}}", {{WithIndent(m.RenderCSharpNewStatement(ctx), "        ")}} },
                 """)}}
                     }
                 }
                 """;
-
-            if (_isEntry) {
-                return $$"""
-                    { "{{_aggregate.PhysicalName}}", {{body}} },
-                    """;
-            } else {
-                return body;
-            }
         }
 
         internal const string TYPE_NAME = "StructureMetadata";
@@ -249,10 +211,6 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
         }
 
         internal static string RenderCSharpType(CodeRenderingContext ctx) {
-            var modelNames = ctx.SchemaParser.Models
-                .Select(m => $"\"{m.Key}\"")
-                .ToArray();
-
             return $$"""
                 /// <summary>
                 /// 構造体のメタデータ
@@ -261,11 +219,20 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                     /// <summary>集約の種類</summary>
                     public string Type { get; set; } = string.Empty;
                     /// <summary>この集約のモデル。子孫集約の場合も値が入る。</summary>
-                    public string Model { get; set; } = string.Empty;
+                    public E_ModelType Model { get; set; }
                     /// <summary>この構造体のメンバー</summary>
                     public Dictionary<string, {{TYPE_MEMBER}}> Members { get; set; } = new();
                 {{RenderNodeOptionTypesCs(ctx).SelectTextTemplate(source => $$"""
                     {{WithIndent(source, "    ")}}
+                """)}}
+                }
+
+                /// <summary>
+                /// スキーマ定義で使用可能なモデルの種類
+                /// </summary>
+                public enum E_ModelType {
+                {{ctx.SchemaParser.Models.SelectTextTemplate(m => $$"""
+                    {{m.Key.KebabCaseToPascalCase()}},
                 """)}}
                 }
 
@@ -288,13 +255,15 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
     /// <summary>
     /// 値のメタデータ
     /// </summary>
-    internal class ValueMetadata : ITypeScriptOrCsharpModule {
+    internal class ValueMetadata : IMetadataEntity {
         internal ValueMetadata(ValueMember vm) {
             _vm = vm;
         }
         private readonly ValueMember _vm;
 
-        string ITypeScriptOrCsharpModule.RenderTypeScript(CodeRenderingContext ctx) {
+        string IMetadataEntity.PhysicalName => _vm.PhysicalName;
+
+        string IMetadataEntity.RenderTypeScriptMetadataObject(CodeRenderingContext ctx) {
 
             // 型は enum, value-object の場合はそれぞれ別の名前のプロパティで定義
             var typeProp = _vm.Type switch {
@@ -304,7 +273,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
             };
 
             return $$"""
-                '{{_vm.PhysicalName}}': {
+                {
                   uniqueId: '{{_vm.XElement.Attribute(nameof(Ui.XmlElementItem.UniqueId))?.Value.Replace("'", "\\'")}}',
                   {{typeProp}}: '{{_vm.Type.SchemaTypeName}}',
                 {{RenderNodeOptions(_vm.XElement, ctx).SelectTextTemplate(source => $$"""
@@ -314,7 +283,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 """;
         }
 
-        string ITypeScriptOrCsharpModule.RenderCSharp(CodeRenderingContext ctx) {
+        string IMetadataEntity.RenderCSharpNewStatement(CodeRenderingContext ctx) {
             var typeValue = _vm.Type switch {
                 StaticEnumMember => $"EnumType = \"{_vm.Type.SchemaTypeName}\"",
                 ValueObjectMember => $"ValueObjectType = \"{_vm.Type.SchemaTypeName}\"",
@@ -370,7 +339,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 /// <summary>
                 /// 値のメタデータ
                 /// </summary>
-                public class {{TYPE_NAME}} : {{StructureMetadata.TYPE_MEMBER}} {
+                public class {{TYPE_NAME}} : {{AggregateMetadata.TYPE_MEMBER}} {
                     /// <summary>値の型名。このメンバーが enum または value-ojbect の場合は null になる</summary>
                     public string? Type { get; set; }
                     /// <summary>列挙体の型名。このメンバーが列挙体の場合のみ</summary>
@@ -387,16 +356,18 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
     /// <summary>
     /// 外部参照のメタデータ
     /// </summary>
-    internal class RefMetadata : ITypeScriptOrCsharpModule {
+    internal class RefMetadata : IMetadataEntity {
         internal RefMetadata(RefToMember refTo) {
             _refTo = refTo;
         }
         private readonly RefToMember _refTo;
 
-        string ITypeScriptOrCsharpModule.RenderTypeScript(CodeRenderingContext ctx) {
+        string IMetadataEntity.PhysicalName => _refTo.PhysicalName;
+
+        string IMetadataEntity.RenderTypeScriptMetadataObject(CodeRenderingContext ctx) {
 
             return $$"""
-                '{{_refTo.PhysicalName}}': {
+                {
                   uniqueId: '{{_refTo.XElement.Attribute(nameof(Ui.XmlElementItem.UniqueId))?.Value.Replace("'", "\\'")}}',
                   type: 'ref-to',
                   refTo: '{{_refTo.RefTo.RefEntryName}}',
@@ -407,7 +378,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 """;
         }
 
-        string ITypeScriptOrCsharpModule.RenderCSharp(CodeRenderingContext ctx) {
+        string IMetadataEntity.RenderCSharpNewStatement(CodeRenderingContext ctx) {
             return $$"""
                 new {{TYPE_NAME}} {
                     UniqueId = "{{_refTo.XElement.Attribute(nameof(Ui.XmlElementItem.UniqueId))?.Value.Replace("\"", "\\\"")}}",
@@ -444,7 +415,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 /// <summary>
                 /// 外部参照のメタデータ
                 /// </summary>
-                public class {{TYPE_NAME}} : {{StructureMetadata.TYPE_MEMBER}} {
+                public class {{TYPE_NAME}} : {{AggregateMetadata.TYPE_MEMBER}} {
                     /// <summary>型</summary>
                     public string Type { get; set; } = string.Empty;
                     /// <summary>参照先。参照先が子孫集約の場合はルート集約からのパスのスラッシュ区切り</summary>
@@ -459,11 +430,25 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
 
     /// <summary>
-    /// TypeScriptまたはC#の構造体
+    /// 構造体 or 値 or 外部参照 のメタデータの実体
     /// </summary>
-    internal interface ITypeScriptOrCsharpModule {
-        string RenderTypeScript(CodeRenderingContext ctx);
-        string RenderCSharp(CodeRenderingContext ctx);
+    internal interface IMetadataEntity {
+        /// <summary>物理名</summary>
+        string PhysicalName { get; }
+        /// <summary>メタデータのキーと値を格納するJavaScriptオブジェクトをレンダリングする</summary>
+        string RenderTypeScriptMetadataObject(CodeRenderingContext ctx);
+        /// <summary>メタデータのキーと値を格納するC#のnewステートメントをレンダリングする</summary>
+        string RenderCSharpNewStatement(CodeRenderingContext ctx);
+
+        static IMetadataEntity GetImpl(IAggregateMember member) {
+            return member switch {
+                ValueMember vm => new ValueMetadata(vm),
+                RefToMember rm => new RefMetadata(rm),
+                ChildAggregate child => new AggregateMetadata(child),
+                ChildrenAggregate children => new AggregateMetadata(children),
+                _ => throw new NotImplementedException(),
+            };
+        }
     }
 
 
