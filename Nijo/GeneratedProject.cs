@@ -251,7 +251,6 @@ namespace Nijo {
             ctx.Use<JsonUtil>();
             ctx.Use<MessageContainer.BaseClass>();
             ctx.Use<CommandQueryMappings>();
-            ctx.Use<Models.QueryModelModules.QueryModelUnitTest>();
             AspNetController.RegisterWebapiConfiguration(ctx);
 
             // スキーマ定義にかかわらず必ず生成されるモジュールの登録: DataModel 由来のもの
