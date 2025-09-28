@@ -50,7 +50,7 @@ internal class ConfigurationInWebApi : DefaultConfigurationInWebApi {
 
         // コンテキスト引数を作成
         IPresentationContext<TMessageRoot> presentationContext = new PresentationContextInWebApi<TMessageRoot>(
-            MessageContainer.GetDefaultClass<TMessageRoot>([]),
+            new PresentationMessageContext(),
             presentationContextOptions);
 
         return Task.FromResult(presentationContext);
@@ -87,7 +87,7 @@ internal class ConfigurationInWebApi : DefaultConfigurationInWebApi {
             confirms.Add(text);
         }
         responseBody["confirms"] = confirms;
-        responseBody["detail"] = ctx.Messages.ToJsonObject();
+        responseBody["detail"] = ctx.MessageContext.ToJsonObject();
         responseBody["toastMessage"] = ctx.ToastMessage; // ソースコード自動生成と関係ない独自処理
 
         // ステータスコード。

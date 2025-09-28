@@ -9,12 +9,14 @@ namespace MyApp.WebApi.Base;
 public class PresentationContextInWebApi<TMessageRoot> : IPresentationContext<TMessageRoot>
     where TMessageRoot : IMessageContainer {
 
-    internal PresentationContextInWebApi(TMessageRoot messageRoot, IPresentationContextOptions options) {
-        Messages = messageRoot;
+    internal PresentationContextInWebApi(PresentationMessageContext messageContext, IPresentationContextOptions options) {
+        MessageContext = messageContext;
+        Messages = MessageContainer.GetDefaultClass<TMessageRoot>([], messageContext);
         Options = options;
     }
 
-    public TMessageRoot Messages { get; }
+    internal PresentationMessageContext MessageContext { get; } // メッセージの格納先
+    public TMessageRoot Messages { get; } // メッセージ設定用ヘルパー
     IMessageContainer IPresentationContext.Messages => Messages;
 
     public IPresentationContextOptions Options { get; }

@@ -57,16 +57,16 @@ namespace Nijo.Parts.Common {
                 /// {{_aggregate.DisplayName}} のデータ構造と対応したメッセージの入れ物
                 /// </summary>
                 public class {{CsClassName}} : {{impl.Join(", ")}} {
-                    public {{CsClassName}}(IEnumerable<string> path) : base(path) {
+                    public {{CsClassName}}(IEnumerable<string> path, PresentationMessageContext context) : base(path, context) {
                 {{members.SelectTextTemplate(m => $$"""
                 {{If(m.NestedObject == null, () => $$"""
-                        this.{{m.PhysicalName}} = new {{CONCRETE_CLASS}}([.. path, "{{m.PhysicalName}}"]);
+                        this.{{m.PhysicalName}} = new {{CONCRETE_CLASS}}([.. path, "{{m.PhysicalName}}"], context);
                 """).ElseIf(!m.IsArray, () => $$"""
-                        this.{{m.PhysicalName}} = new {{m.NestedObject?.CsClassName}}([.. path, "{{m.PhysicalName}}"]);
+                        this.{{m.PhysicalName}} = new {{m.NestedObject?.CsClassName}}([.. path, "{{m.PhysicalName}}"], context);
                 """).Else(() => $$"""
                         this.{{m.PhysicalName}} = new {{CONCRETE_CLASS_LIST}}<{{m.NestedObject?.CsClassName}}>([.. path, "{{m.PhysicalName}}"], rowIndex => {
-                            return new {{m.NestedObject?.CsClassName}}([.. path, "{{m.PhysicalName}}", rowIndex.ToString()]);
-                        });
+                            return new {{m.NestedObject?.CsClassName}}([.. path, "{{m.PhysicalName}}", rowIndex.ToString()], context);
+                        }, context);
                 """)}}
                 """)}}
                     }
@@ -82,16 +82,6 @@ namespace Nijo.Parts.Common {
                 """)}}
                 """)}}
                     {{WithIndent(RenderCSharpAdditionalSource(), "    ")}}
-
-                    public override IEnumerable<IMessageContainer> EnumerateChildren() {
-                {{If(members.Length == 0, () => $$"""
-                        yield break;
-                """).Else(() => $$"""
-                {{members.SelectTextTemplate(m => $$"""
-                        yield return {{m.PhysicalName}};
-                """)}}
-                """)}}
-                    }
                 }
                 """;
         }
@@ -146,6 +136,7 @@ namespace Nijo.Parts.Common {
         private const string TS_ERROR = "error";
         private const string TS_WARN = "warn";
         private const string TS_INFO = "info";
+        private const string TS_CHILDREN = "children";
 
         internal class BaseClass : IMultiAggregateSourceFile {
 
@@ -198,14 +189,167 @@ namespace Nijo.Parts.Common {
 
                         namespace {{ctx.Config.RootNamespace}};
 
+                        /// <summary>
+                        /// ユーザーの画面入力や外部システムからのデータ連携でエラーが起きた際、
+                        /// どの項目でエラー等が発生したかの明示が要求されることがしばしばある。
+                        /// このクラスは、エラー・警告・インフォメーションのメッセージを、
+                        /// それがどの項目で発生したかの情報と紐づけて保持する。
+                        /// </summary>
+                        public sealed partial class PresentationMessageContext {
+
+                            /// <summary>内部用データ保持クラス</summary>
+                            private class MessageContainerStructure {
+                                public Dictionary<char, List<string>> Messages { get; } = new() {
+                                    [MESSAGE_TYPE_ERROR] = [], // エラー
+                                    [MESSAGE_TYPE_WARN] = [],  // 警告
+                                    [MESSAGE_TYPE_INFO] = [],  // インフォメーション
+                                };
+                                public Dictionary<string, MessageContainerStructure> Children { get; } = [];
+                            }
+
+                            private const char MESSAGE_TYPE_ERROR = 'e';
+                            private const char MESSAGE_TYPE_WARN = 'w';
+                            private const char MESSAGE_TYPE_INFO = 'i';
+
+                            private readonly MessageContainerStructure _root = new();
+
+                            public void AddError(IEnumerable<string> path, string message) {
+                                AddMessagePrivate(_root, MESSAGE_TYPE_ERROR, path.ToArray(), message);
+                            }
+                            public void AddWarn(IEnumerable<string> path, string message) {
+                                AddMessagePrivate(_root, MESSAGE_TYPE_WARN, path.ToArray(), message);
+                            }
+                            public void AddInfo(IEnumerable<string> path, string message) {
+                                AddMessagePrivate(_root, MESSAGE_TYPE_INFO, path.ToArray(), message);
+                            }
+                            private static void AddMessagePrivate(MessageContainerStructure current, char messageType, string[] path, string message) {
+                                if (path.Length == 0) {
+                                    current.Messages[messageType].Add(message);
+                                } else {
+                                    if (!current.Children.TryGetValue(path[0], out var child)) {
+                                        child = new MessageContainerStructure();
+                                        current.Children[path[0]] = child;
+                                    }
+                                    AddMessagePrivate(child, messageType, path.Skip(1).ToArray(), message);
+                                }
+                            }
+
+                            /// <summary>
+                            /// エラーメッセージが1件以上あるかどうかを返します。
+                            /// </summary>
+                            public bool HasError() {
+                                return HasError([]);
+                            }
+                            /// <summary>
+                            /// 指定したパスまたはそれ以下のエラーメッセージが1件以上あるかどうかを返します。
+                            /// </summary>
+                            /// <param name="path">オブジェクトルートから該当のインスタンスまでのパス</param>
+                            public bool HasError(IEnumerable<string> path) {
+                                var target = _root;
+                                foreach (var p in path) {
+                                    if (!target.Children.TryGetValue(p, out target)) return false;
+                                }
+                                return HasErrorPrivate(target);
+
+                                static bool HasErrorPrivate(MessageContainerStructure current) {
+                                    if (current.Messages.TryGetValue(MESSAGE_TYPE_ERROR, out var errors) && errors.Count > 0) {
+                                        return true;
+                                    }
+                                    foreach (var child in current.Children.Values) {
+                                        if (HasErrorPrivate(child)) return true;
+                                    }
+                                    return false;
+                                }
+                            }
+
+                            /// <summary>
+                            /// このインスタンスをJsonNode型に変換します。
+                            /// <list type="bullet">
+                            /// <item>このメソッドは、このオブジェクトおよび子孫オブジェクトが持っているメッセージを再帰的に集め、以下のようなJSONオブジェクトに変換します。</item>
+                            /// <item>メッセージコンテナは、エラー、警告、インフォメーションの3種類のメッセージを、それぞれ配列として持ちます。</item>
+                            /// <item>エラーだけ持っているなど、一部の種類のメッセージのみ持っている場合、他の種類の配列は配列自体が存在しなくなります。</item>
+                            /// <item>子要素は children という名前のオブジェクトにまとめて格納されます。</item>
+                            /// <item>
+                            /// 3種類のメッセージのいずれも持っていない項目のプロパティは存在しません。
+                            /// 例えば以下のオブジェクトで「項目A」「項目B」以外に「項目X」が存在するが、Xにはメッセージが発生していない場合、Xのプロパティは存在しません。
+                            /// </item>
+                            /// <item>ネストされたオブジェクトのメッセージも生成されます。（下記「子オブジェクトのメッセージ」）</item>
+                            /// <item>
+                            /// 配列は、配列インデックスをキーとしたオブジェクトになります。（下記「子配列のメッセージ」）
+                            /// 配列インデックスか否かは、 children 直下のオブジェクトのキーが半角整数のみから成るか否かで判定できます。
+                            /// </item>
+                            /// </list>
+                            /// <code>
+                            /// {
+                            ///   "{{TS_ERROR}}": ["xxxがエラーです"],
+                            ///   "{{TS_CHILDREN}}": {
+                            ///     "項目A": { "{{TS_ERROR}}": ["xxxがエラーです"], "{{TS_WARN}}": ["xxxという警告があります"], "{{TS_INFO}}": ["xxxという情報があります"] },
+                            ///     "項目B": { "{{TS_ERROR}}": ["xxxがエラーです", "yyyがエラーです"], "{{TS_WARN}}": ["xxxという警告があります"], "{{TS_INFO}}": ["xxxという情報があります"] },
+                            ///     "子オブジェクトのメッセージ": {
+                            ///       "{{TS_CHILDREN}}": {
+                            ///         "項目C": { "{{TS_ERROR}}": ["xxxがエラーです"] },
+                            ///         "項目D": { "{{TS_ERROR}}": ["xxxがエラーです"] },
+                            ///       },
+                            ///     },
+                            ///     "子配列のメッセージ": {
+                            ///       "{{TS_ERROR}}": ["xxxがエラーです"],
+                            ///       "{{TS_CHILDREN}}": {
+                            ///         "1": {
+                            ///           "{{TS_CHILDREN}}": {
+                            ///             "項目E": { "{{TS_ERROR}}": ["xxxがエラーです"] },
+                            ///           },
+                            ///         },
+                            ///         "5": {
+                            ///           "{{TS_ERROR}}": ["xxxがエラーです"],
+                            ///           "{{TS_CHILDREN}}": {
+                            ///             "項目E": { "{{TS_ERROR}}": ["xxxがエラーです"] },
+                            ///           },
+                            ///         },
+                            ///       },
+                            ///     }
+                            ///   }
+                            /// }
+                            /// </code>
+                            /// </summary>
+                            public JsonObject ToJsonObject() {
+                                return ToJsonObjectPrivate(_root) ?? [];
+
+                                static JsonObject? ToJsonObjectPrivate(MessageContainerStructure current) {
+                                    var result = new JsonObject();
+
+                                    if (current.Messages.TryGetValue(MESSAGE_TYPE_ERROR, out var errors) && errors.Count > 0) {
+                                        var strArray = new JsonArray();
+                                        foreach (var str in errors) strArray.Add(str);
+                                        result["{{TS_ERROR}}"] = strArray;
+                                    }
+                                    if (current.Messages.TryGetValue(MESSAGE_TYPE_WARN, out var warns) && warns.Count > 0) {
+                                        var strArray = new JsonArray();
+                                        foreach (var str in warns) strArray.Add(str);
+                                        result["{{TS_WARN}}"] = strArray;
+                                    }
+                                    if (current.Messages.TryGetValue(MESSAGE_TYPE_INFO, out var infos) && infos.Count > 0) {
+                                        var strArray = new JsonArray();
+                                        foreach (var str in infos) strArray.Add(str);
+                                        result["{{TS_INFO}}"] = strArray;
+                                    }
+
+                                    var children = new JsonObject();
+                                    foreach (var child in current.Children) {
+                                        var childJson = ToJsonObjectPrivate(child.Value);
+                                        if (childJson != null) children[child.Key] = childJson;
+                                    }
+                                    if (children.Count > 0) result["{{TS_CHILDREN}}"] = children;
+
+                                    return result.Count == 0 ? null : result;
+                                }
+                            }
+                        }
+
                         #region インターフェース
                         /// <summary>
                         /// 登録処理などで生じたエラーメッセージなどをHTTPレスポンスとして返すまでの入れ物
                         /// </summary>
                         public interface {{INTERFACE}} {
-                            /// <summary>このインスタンスの親要素に対するメンバー名。</summary>
-                            string? ThisMemberName { get; }
-
                             /// <summary>エラーメッセージを付加します。</summary>
                             void AddError(string message);
                             /// <summary>警告メッセージを付加します。</summary>
@@ -215,22 +359,6 @@ namespace Nijo.Parts.Common {
 
                             /// <summary>このインスタンスまたはこのインスタンスの子孫が1件以上エラーを持っているか否かを返します。</summary>
                             bool HasError();
-                            /// <summary>このインスタンスの直近の子を列挙します。</summary>
-                            IEnumerable<{{INTERFACE}}> EnumerateChildren();
-
-                            /// <summary>このインスタンスの子孫を列挙します。</summary>
-                            public IEnumerable<{{INTERFACE}}> EnumerateDescendants() {
-                                foreach (var child in EnumerateChildren()) {
-                                    yield return child;
-
-                                    foreach (var desc in child.EnumerateDescendants()) {
-                                        yield return desc;
-                                    }
-                                }
-                            }
-
-                            /// <summary>このインスタンスをJsonNode型に変換します。</summary>
-                            JsonObject ToJsonObject();
                         }
                         /// <summary>
                         /// 登録処理などで生じたエラーメッセージなどをHTTPレスポンスとして返すまでの入れ物の配列
@@ -245,142 +373,50 @@ namespace Nijo.Parts.Common {
                         public partial class {{CONCRETE_CLASS}} : {{INTERFACE}} {
                             /// <inheritdoc cref="{{INTERFACE}}">
                             /// <param name="path">オブジェクトルートからこのインスタンスまでのパス</param>
-                            public {{CONCRETE_CLASS}}(IEnumerable<string> path) {
+                            public {{CONCRETE_CLASS}}(IEnumerable<string> path, PresentationMessageContext context) {
                                 _path = path;
+                                _context = context;
                             }
                             private readonly IEnumerable<string> _path;
-
-                            /// <summary>このインスタンスの親要素に対するメンバー名。</summary>
-                            public string? ThisMemberName => _path.LastOrDefault();
-
-                            private readonly List<string> _errors = new();
-                            private readonly List<string> _warnings = new();
-                            private readonly List<string> _informations = new();
+                            private readonly PresentationMessageContext _context;
 
                             /// <summary>エラーメッセージを付加します。</summary>
                             public virtual void AddError(string message) {
-                                _errors.Add(message);
+                                _context.AddError(_path, message);
                             }
                             /// <summary>警告メッセージを付加します。</summary>
                             public virtual void AddWarn(string message) {
-                                _warnings.Add(message);
+                                _context.AddWarn(_path, message);
                             }
                             /// <summary>インフォメーションメッセージを付加します。</summary>
                             public virtual void AddInfo(string message) {
-                                _informations.Add(message);
+                                _context.AddInfo(_path, message);
                             }
 
                             /// <summary>このインスタンスまたはこのインスタンスの子孫が1件以上エラーを持っているか否かを返します。</summary>
                             public bool HasError() {
-                                if (_errors.Count > 0) return true;
-                                if ((({{INTERFACE}})this).EnumerateDescendants().Any(container => container.HasError())) return true;
-                                return false;
-                            }
-
-                            /// <summary>このインスタンスの直近の子を列挙します。</summary>
-                            public virtual IEnumerable<{{INTERFACE}}> EnumerateChildren() {
-                                yield break;
+                                return _context.HasError(_path);
                             }
 
                             /// <summary>
-                            /// このインスタンスをJsonNode型に変換します。
-                            /// <list type="bullet">
-                            /// <item>このメソッドは、このオブジェクトおよび子孫オブジェクトが持っているメッセージを再帰的に集め、以下のようなJSONオブジェクトに変換します。</item>
-                            /// <item>メッセージコンテナは、エラー、警告、インフォメーションの3種類のメッセージを、それぞれ配列として持ちます。</item>
-                            /// <item>エラーだけ持っているなど、一部の種類のメッセージのみ持っている場合、他の種類の配列は配列自体が存在しなくなります。</item>
-                            /// <item>
-                            /// 3種類のメッセージのいずれも持っていない項目のプロパティは存在しません。
-                            /// 例えば以下のオブジェクトで「項目A」「項目B」以外に「項目X」が存在するが、Xにはメッセージが発生していない場合、Xのプロパティは存在しません。
-                            /// </item>
-                            /// <item>ネストされたオブジェクトのメッセージも生成されます。（下記「子オブジェクトのメッセージ」）</item>
-                            /// <item>配列は、配列インデックスをキーとしたオブジェクトになります。（下記「子配列のメッセージ」）</item>
-                            /// </list>
-                            /// <code>
-                            /// {
-                            ///   "{{TS_ERROR}}": ["xxxがエラーです"],
-                            ///   "項目A": { "{{TS_ERROR}}": ["xxxがエラーです"], "{{TS_WARN}}": ["xxxという警告があります"], "{{TS_INFO}}": ["xxxという情報があります"] },
-                            ///   "項目B": { "{{TS_ERROR}}": ["xxxがエラーです", "yyyがエラーです"], "{{TS_WARN}}": ["xxxという警告があります"], "{{TS_INFO}}": ["xxxという情報があります"] },
-                            ///   "子オブジェクトのメッセージ": {
-                            ///     "項目C": { "{{TS_ERROR}}": ["xxxがエラーです"] },
-                            ///     "項目D": { "{{TS_ERROR}}": ["xxxがエラーです"] },
-                            ///   },
-                            ///   "子配列のメッセージ": {
-                            ///     "{{TS_ERROR}}": ["xxxがエラーです"],
-                            ///     "1": {
-                            ///       "項目E": { "{{TS_ERROR}}": ["xxxがエラーです"] },
-                            ///     },
-                            ///     "5": {
-                            ///       "{{TS_ERROR}}": ["xxxがエラーです"],
-                            ///       "項目E": { "{{TS_ERROR}}": ["xxxがエラーです"] },
-                            ///     }
-                            ///   }
-                            /// }
-                            /// </code>
+                            /// このインスタンスを指定した型にキャストして返します。
                             /// </summary>
-                            public JsonObject ToJsonObject() {
-                                // 結果となるJSONオブジェクトを作成
-                                var result = new JsonObject();
-
-                                // 自分自身のメッセージを処理
-                                bool hasMessages = false;
-
-                                // エラーメッセージを追加
-                                if (_errors.Count > 0) {
-                                    var jsonArray = new JsonArray();
-                                    foreach (var error in _errors) {
-                                        jsonArray.Add(error);
-                                    }
-                                    result["{{TS_ERROR}}"] = jsonArray;
-                                    hasMessages = true;
-                                }
-
-                                // 警告メッセージを追加
-                                if (_warnings.Count > 0) {
-                                    var jsonArray = new JsonArray();
-                                    foreach (var warning in _warnings) {
-                                        jsonArray.Add(warning);
-                                    }
-                                    result["{{TS_WARN}}"] = jsonArray;
-                                    hasMessages = true;
-                                }
-
-                                // 情報メッセージを追加
-                                if (_informations.Count > 0) {
-                                    var jsonArray = new JsonArray();
-                                    foreach (var info in _informations) {
-                                        jsonArray.Add(info);
-                                    }
-                                    result["{{TS_INFO}}"] = jsonArray;
-                                    hasMessages = true;
-                                }
-
-                                // 子要素を処理
-                                var children = EnumerateChildren().ToList();
-                                foreach (var child in children) {
-                                    var childJson = child.ToJsonObject();
-
-                                    // メッセージがある場合のみ追加
-                                    if (childJson.Count > 0) {
-                                        result[child.ThisMemberName!] = childJson;
-                                        hasMessages = true;
-                                    }
-                                }
-
-                                return hasMessages ? result : new JsonObject();
+                            public T Cast<T>() where T : {{INTERFACE}} {
+                                return GetDefaultClass<T>(_path, _context);
                             }
 
                             /// <summary>
                             /// 引数のメッセージのコンテナの形と対応する既定のインスタンスを作成して返します。
                             /// </summary>
-                            public static T GetDefaultClass<T>(IEnumerable<string> path) where T : {{INTERFACE}} {
-                                return (T)GetDefaultClass(typeof(T), path);
+                            public static T GetDefaultClass<T>(IEnumerable<string> path, PresentationMessageContext context) where T : {{INTERFACE}} {
+                                return (T)GetDefaultClass(typeof(T), path, context);
                             }
                             /// <summary>
                             /// 引数のメッセージのコンテナの形と対応する既定のインスタンスを作成して返します。
                             /// </summary>
-                            public static {{INTERFACE}} GetDefaultClass(Type type, IEnumerable<string> path) {
+                            public static {{INTERFACE}} GetDefaultClass(Type type, IEnumerable<string> path, PresentationMessageContext context) {
                         {{registered.OrderBy(kv => kv.Key).SelectTextTemplate(kv => $$"""
-                                if (type == typeof({{kv.Key}})) return new {{kv.Value}}(path);
+                                if (type == typeof({{kv.Key}})) return new {{kv.Value}}(path, context);
                         """)}}
 
                                 // メッセージのリストの場合
@@ -389,7 +425,7 @@ namespace Nijo.Parts.Common {
                                     var itemType = type.GetGenericArguments()[0];
 
                         {{registered.OrderBy(kv => kv.Key).SelectTextTemplate(kv => $$"""
-                                    if (itemType == typeof({{kv.Key}})) return new {{CONCRETE_CLASS_LIST}}<{{kv.Key}}>(path, index => new {{kv.Value}}([.. path, index.ToString()]));
+                                    if (itemType == typeof({{kv.Key}})) return new {{CONCRETE_CLASS_LIST}}<{{kv.Key}}>(path, index => new {{kv.Value}}([.. path, index.ToString()], context), context);
                         """)}}
                                 }
 
@@ -399,7 +435,7 @@ namespace Nijo.Parts.Common {
 
                         /// <inheritdoc cref="{{INTERFACE_LIST}}"/>
                         public partial class {{CONCRETE_CLASS_LIST}}<T> : {{CONCRETE_CLASS}}, {{INTERFACE_LIST}}<T> where T : {{INTERFACE}} {
-                            public {{CONCRETE_CLASS_LIST}}(IEnumerable<string> path, Func<int, T> createItem) : base(path) {
+                            public {{CONCRETE_CLASS_LIST}}(IEnumerable<string> path, Func<int, T> createItem, PresentationMessageContext context) : base(path, context) {
                                 _createItem = createItem;
                             }
 
@@ -435,10 +471,6 @@ namespace Nijo.Parts.Common {
                             IEnumerator IEnumerable.GetEnumerator() {
                                 return GetEnumerator();
                             }
-
-                            public override IEnumerable<{{INTERFACE}}> EnumerateChildren() {
-                                return this.Cast<{{INTERFACE}}>();
-                            }
                         }
                         #endregion 具象クラス
                         """,
@@ -456,6 +488,10 @@ namespace Nijo.Parts.Common {
                           {{TS_WARN}}?: string[]
                           /** インフォメーション */
                           {{TS_INFO}}?: string[]
+                          /** 子要素 */
+                          {{TS_CHILDREN}}?: {
+                            [key: string]: {{TS_CONTAINER}}
+                          }
                         }
                         """,
                 };
