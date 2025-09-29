@@ -190,7 +190,6 @@ namespace Nijo.Models {
             // データ型: 検索条件メッセージ
             var searchConditionMessages = new SearchConditionMessageContainer(rootAggregate);
             aggregateFile.AddCSharpClass(SearchConditionMessageContainer.RenderCSharpRecursively(rootAggregate), "Class_SearchConditionMessage");
-            aggregateFile.AddTypeScriptTypeDef(searchConditionMessages.RenderTypeScript()); // ちなみに子孫集約はルート集約の中にレンダリングされる
             ctx.Use<MessageContainer.BaseClass>().Register(searchConditionMessages.CsClassName, searchConditionMessages.CsClassName);
 
             // 処理: 検索条件クラスのURL変換
@@ -225,7 +224,6 @@ namespace Nijo.Models {
             // データ型: 画面表示用型メッセージ
             var displayDataMessages = new DisplayDataMessageContainer(rootAggregate);
             aggregateFile.AddCSharpClass(DisplayDataMessageContainer.RenderCSharpRecursively(rootAggregate), "Class_DisplayDataMessage");
-            aggregateFile.AddTypeScriptTypeDef(displayDataMessages.RenderTypeScript()); // ちなみに子孫集約はルート集約の中にレンダリングされる
             ctx.Use<MessageContainer.BaseClass>().Register(displayDataMessages.CsClassName, displayDataMessages.CsClassName);
 
             // 検索処理

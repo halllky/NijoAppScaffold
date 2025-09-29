@@ -85,42 +85,6 @@ namespace Nijo.Parts.CSharp {
                 }
                 """;
         }
-        internal string RenderTypeScript() {
-            var members = GetMembers().ToArray();
-
-            return $$"""
-                /** {{_aggregate.DisplayName}} のデータ構造と対応したメッセージの入れ物 */
-                export type {{TsTypeName}} = {
-                  {{WithIndent(RenderBody(this), "  ")}}
-                }
-                """;
-
-            static IEnumerable<string> RenderBody(MessageContainer message) {
-                foreach (var member in message.GetMembers()) {
-                    if (member.NestedObject == null) {
-                        yield return $$"""
-                            {{member.PhysicalName}}?: Util.{{TS_CONTAINER}}
-                            """;
-
-                    } else if (!member.IsArray) {
-                        yield return $$"""
-                            {{member.PhysicalName}}?: {
-                              {{WithIndent(RenderBody(member.NestedObject), "  ")}}
-                            }
-                            """;
-
-                    } else {
-                        yield return $$"""
-                            {{member.PhysicalName}}?: {
-                              [key: `${number}`]: {
-                                {{WithIndent(RenderBody(member.NestedObject), "    ")}}
-                              }
-                            }
-                            """;
-                    }
-                }
-            }
-        }
 
 
         #region 基底クラス
@@ -133,12 +97,6 @@ namespace Nijo.Parts.CSharp {
 
         /// <summary>既定のクラスを探して返すstaticメソッド</summary>
         internal const string GET_DEFAULT_CLASS = "GetDefaultClass";
-
-        internal const string TS_CONTAINER = "MessageContainer";
-        private const string TS_ERROR = "error";
-        private const string TS_WARN = "warn";
-        private const string TS_INFO = "info";
-        private const string TS_CHILDREN = "children";
 
         internal class BaseClass : IMultiAggregateSourceFile {
 

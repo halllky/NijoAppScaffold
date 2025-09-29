@@ -124,7 +124,6 @@ namespace Nijo.Models {
             if (rootAggregate.EnumerateCommandModelsRefferingAsParameter().Any()) {
                 var messageContainer = new StructureTypeMessageContainer(rootAggregate);
                 aggregateFile.AddCSharpClass(StructureTypeMessageContainer.RenderCSharpRecursively(rootAggregate), "Class_MessageContainer");
-                aggregateFile.AddTypeScriptTypeDef(messageContainer.RenderTypeScript());
                 ctx.Use<Parts.CSharp.MessageContainer.BaseClass>().Register(messageContainer.CsClassName, messageContainer.CsClassName);
             }
 
