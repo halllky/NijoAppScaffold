@@ -47,7 +47,7 @@ namespace Nijo.Parts.Common {
         }
 
         internal string RenderCSharp() {
-            var impl = new List<string>() { CONCRETE_CLASS };
+            var impl = new List<string>() { SETTER_CLASS };
             impl.AddRange(GetCsClassImplements());
 
             var members = GetMembers().ToArray();
@@ -60,11 +60,11 @@ namespace Nijo.Parts.Common {
                     public {{CsClassName}}(IEnumerable<string> path, PresentationMessageContext context) : base(path, context) {
                 {{members.SelectTextTemplate(m => $$"""
                 {{If(m.NestedObject == null, () => $$"""
-                        this.{{m.PhysicalName}} = new {{CONCRETE_CLASS}}([.. path, "{{m.PhysicalName}}"], context);
+                        this.{{m.PhysicalName}} = new {{SETTER_CLASS}}([.. path, "{{m.PhysicalName}}"], context);
                 """).ElseIf(!m.IsArray, () => $$"""
                         this.{{m.PhysicalName}} = new {{m.NestedObject?.CsClassName}}([.. path, "{{m.PhysicalName}}"], context);
                 """).Else(() => $$"""
-                        this.{{m.PhysicalName}} = new {{CONCRETE_CLASS_LIST}}<{{m.NestedObject?.CsClassName}}>([.. path, "{{m.PhysicalName}}"], rowIndex => {
+                        this.{{m.PhysicalName}} = new {{SETTER_CONCRETE_CLASS_LIST}}<{{m.NestedObject?.CsClassName}}>([.. path, "{{m.PhysicalName}}"], rowIndex => {
                             return new {{m.NestedObject?.CsClassName}}([.. path, "{{m.PhysicalName}}", rowIndex.ToString()], context);
                         }, context);
                 """)}}
@@ -74,11 +74,11 @@ namespace Nijo.Parts.Common {
                 {{members.SelectTextTemplate(m => $$"""
                     /// <summary>{{m.DisplayName}}に対して発生したメッセージの入れ物</summary>
                 {{If(m.NestedObject == null, () => $$"""
-                    public {{m.CsType ?? INTERFACE}} {{m.PhysicalName}} { get; }
+                    public {{m.CsType ?? SETTER_INTERFACE}} {{m.PhysicalName}} { get; }
                 """).ElseIf(!m.IsArray, () => $$"""
                     public {{m.CsType ?? m.NestedObject?.CsClassName}} {{m.PhysicalName}} { get; }
                 """).Else(() => $$"""
-                    public {{m.CsType ?? $"{INTERFACE_LIST}<{m.NestedObject?.CsClassName}>"}} {{m.PhysicalName}} { get; }
+                    public {{m.CsType ?? $"{SETTER_INTERFACE_LIST}<{m.NestedObject?.CsClassName}>"}} {{m.PhysicalName}} { get; }
                 """)}}
                 """)}}
                     {{WithIndent(RenderCSharpAdditionalSource(), "    ")}}
@@ -126,10 +126,10 @@ namespace Nijo.Parts.Common {
         #region 基底クラス
         private const string CONTEXT_CLASS = "PresentationMessageContext";
 
-        internal const string INTERFACE = "IMessageContainer";
-        internal const string INTERFACE_LIST = "IMessageContainerList";
-        internal const string CONCRETE_CLASS = "MessageContainer";
-        internal const string CONCRETE_CLASS_LIST = "MessageContainerList";
+        internal const string SETTER_INTERFACE = "IMessageSetter";
+        internal const string SETTER_INTERFACE_LIST = "IMessageSetterList";
+        internal const string SETTER_CLASS = "MessageSetter";
+        internal const string SETTER_CONCRETE_CLASS_LIST = "MessageSetterList";
 
         /// <summary>既定のクラスを探して返すstaticメソッド</summary>
         internal const string GET_DEFAULT_CLASS = "GetDefaultClass";
@@ -178,8 +178,8 @@ namespace Nijo.Parts.Common {
             /// </summary>
             private SourceFile RenderCSharpBaseClass(CodeRenderingContext ctx) {
                 var registered = new Dictionary<string, string>(_registered) {
-                    { INTERFACE, CONCRETE_CLASS },
-                    { CONCRETE_CLASS, CONCRETE_CLASS },
+                    { SETTER_INTERFACE, SETTER_CLASS },
+                    { SETTER_CLASS, SETTER_CLASS },
                 };
 
                 return new SourceFile {
@@ -315,9 +315,9 @@ namespace Nijo.Parts.Common {
 
                         #region インターフェース
                         /// <summary>
-                        /// 登録処理などで生じたエラーメッセージなどをHTTPレスポンスとして返すまでの入れ物
+                        /// <see cref="{{CONTEXT_CLASS}}"/> へのメッセージ設定を容易にするためのヘルパー
                         /// </summary>
-                        public interface {{INTERFACE}} {
+                        public interface {{SETTER_INTERFACE}} {
                             /// <summary>
                             /// メッセージ本体が格納されているオブジェクト。
                             /// 現在発生しているメッセージはこのオブジェクトを通じて取得してください。
@@ -334,20 +334,18 @@ namespace Nijo.Parts.Common {
                             /// <summary>このインスタンスまたはこのインスタンスの子孫が1件以上エラーを持っているか否かを返します。</summary>
                             bool HasError();
                         }
-                        /// <summary>
-                        /// 登録処理などで生じたエラーメッセージなどをHTTPレスポンスとして返すまでの入れ物の配列
-                        /// </summary>
-                        public interface {{INTERFACE_LIST}}<out T> : {{INTERFACE}}, IReadOnlyList<T> where T : {{INTERFACE}} {
+                        /// <inheritdoc cref="{{SETTER_INTERFACE}}">
+                        public interface {{SETTER_INTERFACE_LIST}}<out T> : {{SETTER_INTERFACE}}, IReadOnlyList<T> where T : {{SETTER_INTERFACE}} {
                         }
                         #endregion インターフェース
 
 
                         #region 具象クラス
-                        /// <inheritdoc cref="{{INTERFACE}}">
-                        public partial class {{CONCRETE_CLASS}} : {{INTERFACE}} {
-                            /// <inheritdoc cref="{{INTERFACE}}">
+                        /// <inheritdoc cref="{{SETTER_INTERFACE}}">
+                        public partial class {{SETTER_CLASS}} : {{SETTER_INTERFACE}} {
+                            /// <inheritdoc cref="{{SETTER_INTERFACE}}">
                             /// <param name="path">オブジェクトルートからこのインスタンスまでのパス</param>
-                            public {{CONCRETE_CLASS}}(IEnumerable<string> path, {{CONTEXT_CLASS}} underlyingContext) {
+                            public {{SETTER_CLASS}}(IEnumerable<string> path, {{CONTEXT_CLASS}} underlyingContext) {
                                 _path = path;
                                 UnderlyingContext = underlyingContext;
                             }
@@ -375,31 +373,31 @@ namespace Nijo.Parts.Common {
                             /// <summary>
                             /// このインスタンスを指定した型にキャストして返します。
                             /// </summary>
-                            public T As<T>() where T : {{INTERFACE}} {
+                            public T As<T>() where T : {{SETTER_INTERFACE}} {
                                 return GetDefaultClass<T>(_path, UnderlyingContext);
                             }
 
                             /// <summary>
                             /// 引数のメッセージのコンテナの形と対応する既定のインスタンスを作成して返します。
                             /// </summary>
-                            public static T GetDefaultClass<T>(IEnumerable<string> path, {{CONTEXT_CLASS}} context) where T : {{INTERFACE}} {
+                            public static T GetDefaultClass<T>(IEnumerable<string> path, {{CONTEXT_CLASS}} context) where T : {{SETTER_INTERFACE}} {
                                 return (T)GetDefaultClass(typeof(T), path, context);
                             }
                             /// <summary>
                             /// 引数のメッセージのコンテナの形と対応する既定のインスタンスを作成して返します。
                             /// </summary>
-                            public static {{INTERFACE}} GetDefaultClass(Type type, IEnumerable<string> path, {{CONTEXT_CLASS}} context) {
+                            public static {{SETTER_INTERFACE}} GetDefaultClass(Type type, IEnumerable<string> path, {{CONTEXT_CLASS}} context) {
                         {{registered.OrderBy(kv => kv.Key).SelectTextTemplate(kv => $$"""
                                 if (type == typeof({{kv.Key}})) return new {{kv.Value}}(path, context);
                         """)}}
 
                                 // メッセージのリストの場合
-                                if (type.IsGenericType && (type.GetGenericTypeDefinition() == typeof({{INTERFACE_LIST}}<>)
-                                                        || type.GetGenericTypeDefinition() == typeof({{CONCRETE_CLASS_LIST}}<>))) {
+                                if (type.IsGenericType && (type.GetGenericTypeDefinition() == typeof({{SETTER_INTERFACE_LIST}}<>)
+                                                        || type.GetGenericTypeDefinition() == typeof({{SETTER_CONCRETE_CLASS_LIST}}<>))) {
                                     var itemType = type.GetGenericArguments()[0];
 
                         {{registered.OrderBy(kv => kv.Key).SelectTextTemplate(kv => $$"""
-                                    if (itemType == typeof({{kv.Key}})) return new {{CONCRETE_CLASS_LIST}}<{{kv.Key}}>(path, index => new {{kv.Value}}([.. path, index.ToString()], context), context);
+                                    if (itemType == typeof({{kv.Key}})) return new {{SETTER_CONCRETE_CLASS_LIST}}<{{kv.Key}}>(path, index => new {{kv.Value}}([.. path, index.ToString()], context), context);
                         """)}}
                                 }
 
@@ -407,9 +405,9 @@ namespace Nijo.Parts.Common {
                             }
                         }
 
-                        /// <inheritdoc cref="{{INTERFACE_LIST}}"/>
-                        public partial class {{CONCRETE_CLASS_LIST}}<T> : {{CONCRETE_CLASS}}, {{INTERFACE_LIST}}<T> where T : {{INTERFACE}} {
-                            public {{CONCRETE_CLASS_LIST}}(IEnumerable<string> path, Func<int, T> createItem, {{CONTEXT_CLASS}} context) : base(path, context) {
+                        /// <inheritdoc cref="{{SETTER_INTERFACE_LIST}}"/>
+                        public partial class {{SETTER_CONCRETE_CLASS_LIST}}<T> : {{SETTER_CLASS}}, {{SETTER_INTERFACE_LIST}}<T> where T : {{SETTER_INTERFACE}} {
+                            public {{SETTER_CONCRETE_CLASS_LIST}}(IEnumerable<string> path, Func<int, T> createItem, {{CONTEXT_CLASS}} context) : base(path, context) {
                                 _createItem = createItem;
                             }
 
@@ -451,6 +449,7 @@ namespace Nijo.Parts.Common {
                 };
             }
             private static SourceFile RenderTypeScriptBaseFile() {
+                // TODO: どこからも参照されていない
                 return new SourceFile {
                     FileName = "message-container.ts",
                     Contents = $$"""

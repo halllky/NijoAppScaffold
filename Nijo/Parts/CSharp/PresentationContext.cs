@@ -34,7 +34,7 @@ namespace Nijo.Parts.CSharp {
                         /// <summary>
                         /// パラメータの各値に対するメッセージ。エラーや警告など。
                         /// </summary>
-                        {{MessageContainer.INTERFACE}} Messages { get; }
+                        {{MessageContainer.SETTER_INTERFACE}} Messages { get; }
 
                         /// <summary>
                         /// 「～しますがよろしいですか？」などの確認メッセージを追加します。
@@ -49,7 +49,7 @@ namespace Nijo.Parts.CSharp {
 
                     /// <inheritdoc cref="{{INTERFACE}}"/>
                     /// <typeparam name="TMessageRoot">パラメータのメッセージ型</typeparam>
-                    public interface {{INTERFACE}}<TMessageRoot> : {{INTERFACE}} where TMessageRoot : {{MessageContainer.INTERFACE}} {
+                    public interface {{INTERFACE}}<TMessageRoot> : {{INTERFACE}} where TMessageRoot : {{MessageContainer.SETTER_INTERFACE}} {
                         /// <summary>
                         /// パラメータの各値に対するメッセージ。エラーや警告など。
                         /// </summary>

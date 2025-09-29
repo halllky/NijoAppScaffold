@@ -7,7 +7,7 @@ namespace MyApp.WebApi.Base;
 /// webapiにおける <see cref="IPresentationContext"/> のデフォルトの実装
 /// </summary>
 public class PresentationContextInWebApi<TMessageRoot> : IPresentationContext<TMessageRoot>
-    where TMessageRoot : IMessageContainer {
+    where TMessageRoot : IMessageSetter {
 
     internal PresentationContextInWebApi(TMessageRoot messageRoot, IPresentationContextOptions options) {
         Messages = messageRoot;
@@ -15,7 +15,7 @@ public class PresentationContextInWebApi<TMessageRoot> : IPresentationContext<TM
     }
 
     public TMessageRoot Messages { get; }
-    IMessageContainer IPresentationContext.Messages => Messages;
+    IMessageSetter IPresentationContext.Messages => Messages;
 
     public IPresentationContextOptions Options { get; }
 

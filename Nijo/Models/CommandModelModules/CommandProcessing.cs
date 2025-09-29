@@ -72,7 +72,7 @@ namespace Nijo.Models.CommandModelModules {
                 StructureModelModules.StructureType structureType => new StructureModelModules.StructureTypeMessageContainer(structureType.Aggregate).CsClassName,
                 QueryModelModules.DisplayData displayData => new QueryModelModules.DisplayDataMessageContainer(displayData.Aggregate).CsClassName,
                 QueryModelModules.SearchCondition.Entry searchCondition => new QueryModelModules.SearchConditionMessageContainer(searchCondition.EntryAggregate).CsClassName,
-                _ => MessageContainer.CONCRETE_CLASS,
+                _ => MessageContainer.SETTER_CLASS,
             };
 
             return $$"""
@@ -99,7 +99,7 @@ namespace Nijo.Models.CommandModelModules {
                 StructureModelModules.StructureType structureType => new StructureModelModules.StructureTypeMessageContainer(structureType.Aggregate).CsClassName,
                 QueryModelModules.DisplayData displayData => new QueryModelModules.DisplayDataMessageContainer(displayData.Aggregate).CsClassName,
                 QueryModelModules.SearchCondition.Entry searchCondition => new QueryModelModules.SearchConditionMessageContainer(searchCondition.EntryAggregate).CsClassName,
-                _ => MessageContainer.CONCRETE_CLASS,
+                _ => MessageContainer.SETTER_CLASS,
             };
 
             return $$"""

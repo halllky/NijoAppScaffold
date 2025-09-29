@@ -69,7 +69,7 @@ partial class OverridedApplicationService {
     /// <summary>
     /// ログアウト
     /// </summary>
-    public override async Task<object> Executeログアウト(object param, IPresentationContext<MessageContainer> context) {
+    public override async Task<object> Executeログアウト(object param, IPresentationContext<MessageSetter> context) {
         // HttpContextからサインアウト
         var httpContext = ServiceProvider.GetService<IHttpContextAccessor>()?.HttpContext;
         if (httpContext != null) {

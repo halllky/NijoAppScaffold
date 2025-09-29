@@ -39,7 +39,7 @@ namespace Nijo.Models.DataModelModules {
                     },
                     CsType = m.Member switch {
                         ChildAggregate child => new SaveCommandMessageContainer(child).InterfaceName,
-                        ChildrenAggregate children => $"{INTERFACE_LIST}<{new SaveCommandMessageContainer(children).InterfaceName}>",
+                        ChildrenAggregate children => $"{SETTER_INTERFACE_LIST}<{new SaveCommandMessageContainer(children).InterfaceName}>",
                         _ => null,
                     },
                 });
@@ -69,13 +69,13 @@ namespace Nijo.Models.DataModelModules {
                 /// <summary>
                 /// {{_aggregate.DisplayName}} のデータ構造と対応したメッセージの入れ物
                 /// </summary>
-                public interface {{InterfaceName}} : {{INTERFACE}} {
+                public interface {{InterfaceName}} : {{SETTER_INTERFACE}} {
                 {{GetMembers().Cast<MessageContainerMemberImpl>().SelectTextTemplate(m => $$"""
                     /// <summary>{{m.DisplayName}}に対して発生したメッセージの入れ物</summary>
                 {{If(m.NestedObject == null, () => $$"""
-                    {{INTERFACE}} {{m.PhysicalName}} { get; }
+                    {{SETTER_INTERFACE}} {{m.PhysicalName}} { get; }
                 """).ElseIf(m.IsArray, () => $$"""
-                    {{INTERFACE_LIST}}<{{m.NestedObject?.InterfaceName}}> {{m.PhysicalName}} { get; }
+                    {{SETTER_INTERFACE_LIST}}<{{m.NestedObject?.InterfaceName}}> {{m.PhysicalName}} { get; }
                 """).Else(() => $$"""
                     {{m.NestedObject?.InterfaceName}} {{m.PhysicalName}} { get; }
                 """)}}

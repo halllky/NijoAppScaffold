@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using MyApp.UnitTest;
-using MyApp.Debugging;
+using MyApp.Core;
+using MyApp.Core.Util;
+using MyApp.Test;
 
 namespace MyApp;
 
@@ -21,16 +21,7 @@ public class TestUtilImpl {
 
     [OneTimeSetUp]
     public void Setup() {
-        Instance = new() {
-            BaseWorkDirectory = Path.GetFullPath(Path.Combine(
-                TestContext.CurrentContext.WorkDirectory, // net9.0
-                "..", // Debug
-                "..", // bin
-                "..", // UnitTest
-                "..", // MyApp.sln があるフォルダ
-                $"UnitTest.Log",
-                $"テスト結果_{DateTime.Now:yyyyMMddHHmmss}_{Guid.NewGuid().ToString().Substring(0, 8)}"))
-        };
+        Instance = new();
 
         // カレントディレクトリをワークフォルダに移動
         Directory.CreateDirectory(Instance.BaseWorkDirectory);
@@ -50,25 +41,38 @@ public class TestUtilImpl {
     /// このコンストラクタはNUnitのランナーまたはこのクラス内部でのみ呼ばれる想定です。
     /// 各テストケースからは <see cref="Instance"/> を参照してください。
     /// </summary>
-    public TestUtilImpl() { }
+    public TestUtilImpl() {
+        // "TestContext.CurrentContext.WorkDirectory" は bin/Debug/net9.0
+        var baseWorkDirectory = Path.GetFullPath(Path.Combine(
+            TestContext.CurrentContext.WorkDirectory,
+            "..", // net9.0
+            "..", // Debug
+            "..", // bin
+            "..", // Test
+            $"Test.Log",
+            $"テスト結果_{DateTime.Now:yyyyMMddHHmmss}_{Guid.NewGuid().ToString().Substring(0, 8)}"));
+
+        BaseWorkDirectory = baseWorkDirectory;
+    }
 
     /// <summary>
     /// テスト実行全体で共有されるログのベースディレクトリ。
     /// テスト実行1回ごとに異なるフォルダが出力される。
     /// </summary>
-    private string BaseWorkDirectory { get; set; } = "";
+    private string BaseWorkDirectory { get; }
 
-    public TestScopeImpl<TMessageRoot> CreateScope<TMessageRoot>(string testCaseName, Action<IServiceCollection>? configureServices = null, IPresentationContextOptions? options = null) where TMessageRoot : IMessageContainer {
+    public TestScopeImpl<TMessageRoot> CreateScope<TMessageRoot>(string testCaseName, Action<IServiceCollection>? configureServices = null, IPresentationContextOptions? options = null) where TMessageRoot : IMessageSetter {
         var (currentTestWorkDirectory, provider) = SetupEnvironments(testCaseName, configureServices);
-        var messageRoot = MessageContainer.GetDefaultClass<TMessageRoot>([], new PresentationMessageContext());
+        var messageContext = new PresentationMessageContext();
+        var messageRoot = MessageSetter.GetDefaultClass<TMessageRoot>([], messageContext);
         var contextOptions = options ?? new PresentationContextOptionsImpl();
-        var presentationContext = new PresentationContextInUnitTest<TMessageRoot>(messageRoot, contextOptions);
+        var presentationContext = new PresentationContextInUnitTest<TMessageRoot>(messageContext, messageRoot, contextOptions);
 
         return new TestScopeImpl<TMessageRoot>(provider, presentationContext, currentTestWorkDirectory);
     }
 
     public TestScopeImpl CreateScope(string testCaseName, Action<IServiceCollection>? configureServices = null, IPresentationContextOptions? options = null) {
-        return CreateScope(testCaseName, typeof(MessageContainer), configureServices, options);
+        return CreateScope(testCaseName, typeof(MessageSetter), configureServices, options);
     }
 
     public TestScopeImpl CreateScope(string testCaseName, Type messageRootType, Action<IServiceCollection>? configureServices = null, IPresentationContextOptions? options = null) {
@@ -100,28 +104,14 @@ public class TestUtilImpl {
 
         // DI機構: 実行時設定
         services.AddScoped(provider => {
-            var solutionRoot = Path.Combine(
-                Instance.BaseWorkDirectory,
-                "..",  // UnitTest.Log
-                ".."); // MyApp.sln があるフォルダ
-
             var settings = new RuntimeSetting();
-
-            // appsettings.json から読み取る設定を適用。WebApiのそれを流用する
-            var builder = new ConfigurationBuilder();
-            builder.SetBasePath(Path.Combine(solutionRoot, "WebApi"))
-                .AddJsonFile("appsettings.json", true)
-                .AddJsonFile("appsettings.Development.json", true) // 後にAddされたファイルが優先される
-                .Build()
-                .GetSection(RuntimeSetting.MY_APP_SECTION)
-                .Bind(settings);
-
-            // ユニットテスト実行毎のログフォルダに出力されるべき項目の書き換え
             settings.LogDirectory = currentTestWorkDirectory; // テストケースごとのディレクトリ
             settings.CurrentDbProfileName = "SQLITE001";
             settings.MigrationsScriptFolder = Path.Combine(
-                solutionRoot,
-                "Core",
+                Directory.GetCurrentDirectory(), // テストケース名のフォルダの1個上
+                "..", // Test.Log
+                "..", // プロジェクトルート
+                "Core.AutoGenerated",
                 "MigrationsScript");
 
             var dbFileName = $"./{testCaseName}/UNITTEST.sqlite3";
@@ -177,7 +167,7 @@ public class TestScopeImpl {
 }
 
 /// <inheritdoc cref="TestScopeImpl"/>
-public class TestScopeImpl<TMessage> : TestScopeImpl where TMessage : IMessageContainer {
+public class TestScopeImpl<TMessage> : TestScopeImpl where TMessage : IMessageSetter {
     internal TestScopeImpl(IServiceProvider serviceProvider, IPresentationContext<TMessage> presentationContext, string workDirectory)
         : base(serviceProvider, presentationContext, workDirectory) { }
 

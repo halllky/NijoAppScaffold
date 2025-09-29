@@ -58,9 +58,9 @@ public class TestUtilImpl {
     /// </summary>
     private string BaseWorkDirectory { get; set; } = "";
 
-    public TestScopeImpl<TMessageRoot> CreateScope<TMessageRoot>(string testCaseName, Action<IServiceCollection>? configureServices = null, IPresentationContextOptions? options = null) where TMessageRoot : IMessageContainer {
+    public TestScopeImpl<TMessageRoot> CreateScope<TMessageRoot>(string testCaseName, Action<IServiceCollection>? configureServices = null, IPresentationContextOptions? options = null) where TMessageRoot : IMessageSetter {
         var (currentTestWorkDirectory, provider) = SetupEnvironments(testCaseName, configureServices);
-        var messageRoot = MessageContainer.GetDefaultClass<TMessageRoot>([], new PresentationMessageContext());
+        var messageRoot = MessageSetter.GetDefaultClass<TMessageRoot>([], new PresentationMessageContext());
         var contextOptions = options ?? new PresentationContextOptionsImpl();
         var presentationContext = new PresentationContextInUnitTest<TMessageRoot>(messageRoot, contextOptions);
 
@@ -68,7 +68,7 @@ public class TestUtilImpl {
     }
 
     public TestScopeImpl CreateScope(string testCaseName, Action<IServiceCollection>? configureServices = null, IPresentationContextOptions? options = null) {
-        return CreateScope(testCaseName, typeof(MessageContainer), configureServices, options);
+        return CreateScope(testCaseName, typeof(MessageSetter), configureServices, options);
     }
 
     public TestScopeImpl CreateScope(string testCaseName, Type messageRootType, Action<IServiceCollection>? configureServices = null, IPresentationContextOptions? options = null) {
@@ -177,7 +177,7 @@ public class TestScopeImpl {
 }
 
 /// <inheritdoc cref="TestScopeImpl"/>
-public class TestScopeImpl<TMessage> : TestScopeImpl where TMessage : IMessageContainer {
+public class TestScopeImpl<TMessage> : TestScopeImpl where TMessage : IMessageSetter {
     internal TestScopeImpl(IServiceProvider serviceProvider, IPresentationContext<TMessage> presentationContext, string workDirectory)
         : base(serviceProvider, presentationContext, workDirectory) { }
 

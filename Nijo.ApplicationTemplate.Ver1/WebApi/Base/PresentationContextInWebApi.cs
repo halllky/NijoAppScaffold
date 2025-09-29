@@ -7,17 +7,17 @@ namespace MyApp.WebApi.Base;
 /// webapiにおける <see cref="IPresentationContext"/> のデフォルトの実装
 /// </summary>
 public class PresentationContextInWebApi<TMessageRoot> : IPresentationContext<TMessageRoot>
-    where TMessageRoot : IMessageContainer {
+    where TMessageRoot : IMessageSetter {
 
     internal PresentationContextInWebApi(PresentationMessageContext messageContext, IPresentationContextOptions options) {
         MessageContext = messageContext;
-        Messages = MessageContainer.GetDefaultClass<TMessageRoot>([], messageContext);
+        Messages = MessageSetter.GetDefaultClass<TMessageRoot>([], messageContext);
         Options = options;
     }
 
     internal PresentationMessageContext MessageContext { get; } // メッセージの格納先
     public TMessageRoot Messages { get; } // メッセージ設定用ヘルパー
-    IMessageContainer IPresentationContext.Messages => Messages;
+    IMessageSetter IPresentationContext.Messages => Messages;
 
     public IPresentationContextOptions Options { get; }
 
@@ -52,7 +52,7 @@ public static class PresentationContextExtensions {
     /// <summary>
     /// トーストメッセージを付加します。
     /// </summary>
-    public static void SetToastMessage<T>(this IPresentationContext<T> presentationContext, string text) where T : IMessageContainer {
+    public static void SetToastMessage<T>(this IPresentationContext<T> presentationContext, string text) where T : IMessageSetter {
         if (presentationContext is not PresentationContextInWebApi<T> instance) {
             throw new InvalidOperationException($"インスタンス {presentationContext} は {nameof(PresentationContextInWebApi<T>)} 型ではありません。");
         }

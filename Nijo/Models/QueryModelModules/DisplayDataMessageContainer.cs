@@ -67,7 +67,7 @@ internal class DisplayDataMessageContainer : MessageContainer {
                 return new {
                     member.PhysicalName,
                     InterfaceName = memberAggregate is ChildrenAggregate
-                        ? $"{INTERFACE_LIST}<{childMsgContainer.InterfaceName}>"
+                        ? $"{SETTER_INTERFACE_LIST}<{childMsgContainer.InterfaceName}>"
                         : childMsgContainer.InterfaceName,
                 };
             });

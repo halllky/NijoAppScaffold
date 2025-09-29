@@ -43,9 +43,6 @@ public partial class OverridedApplicationConfigure : DefaultConfiguration {
         services.AddScoped<OverridedApplicationConfigure>();
         services.AddScoped<OverridedApplicationService>();
 
-        // HttpContextAccessorを登録（Cookie認証で必要）
-        services.AddHttpContextAccessor();
-
         // 実行時設定ファイルの読み込み設定
         services.AddTransient(provider => {
             var settings = new RuntimeSetting();

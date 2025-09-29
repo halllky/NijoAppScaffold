@@ -33,7 +33,7 @@ internal class ConfigurationInWebApi : DefaultConfigurationInWebApi {
 
         // コンテキスト引数を作成
         IPresentationContext<TMessageRoot> presentationContext = new PresentationContextInWebApi<TMessageRoot>(
-            MessageContainer.GetDefaultClass<TMessageRoot>([], new PresentationMessageContext()),
+            MessageSetter.GetDefaultClass<TMessageRoot>([], new PresentationMessageContext()),
             presentationContextOptions);
 
         return Task.FromResult(presentationContext);
