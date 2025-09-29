@@ -125,7 +125,7 @@ namespace Nijo.Models {
                 var messageContainer = new StructureTypeMessageContainer(rootAggregate);
                 aggregateFile.AddCSharpClass(StructureTypeMessageContainer.RenderCSharpRecursively(rootAggregate), "Class_MessageContainer");
                 aggregateFile.AddTypeScriptTypeDef(messageContainer.RenderTypeScript());
-                ctx.Use<Parts.Common.MessageContainer.BaseClass>().Register(messageContainer.CsClassName, messageContainer.CsClassName);
+                ctx.Use<Parts.CSharp.MessageContainer.BaseClass>().Register(messageContainer.CsClassName, messageContainer.CsClassName);
             }
 
             // TypeScriptのマッピングファイルへの登録

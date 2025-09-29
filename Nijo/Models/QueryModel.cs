@@ -2,6 +2,7 @@ using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Models.QueryModelModules;
 using Nijo.Parts.Common;
+using Nijo.Parts.CSharp;
 using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
