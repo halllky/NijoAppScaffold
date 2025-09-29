@@ -350,6 +350,12 @@ namespace Nijo.Parts.Common {
                         /// 登録処理などで生じたエラーメッセージなどをHTTPレスポンスとして返すまでの入れ物
                         /// </summary>
                         public interface {{INTERFACE}} {
+                            /// <summary>
+                            /// メッセージ本体が格納されているオブジェクト。
+                            /// 現在発生しているメッセージはこのオブジェクトを通じて取得してください。
+                            /// </summary>
+                            PresentationMessageContext Root { get; }
+
                             /// <summary>エラーメッセージを付加します。</summary>
                             void AddError(string message);
                             /// <summary>警告メッセージを付加します。</summary>
@@ -373,36 +379,36 @@ namespace Nijo.Parts.Common {
                         public partial class {{CONCRETE_CLASS}} : {{INTERFACE}} {
                             /// <inheritdoc cref="{{INTERFACE}}">
                             /// <param name="path">オブジェクトルートからこのインスタンスまでのパス</param>
-                            public {{CONCRETE_CLASS}}(IEnumerable<string> path, PresentationMessageContext context) {
+                            public {{CONCRETE_CLASS}}(IEnumerable<string> path, PresentationMessageContext root) {
                                 _path = path;
-                                _context = context;
+                                Root = root;
                             }
                             private readonly IEnumerable<string> _path;
-                            private readonly PresentationMessageContext _context;
+                            public PresentationMessageContext Root { get; }
 
                             /// <summary>エラーメッセージを付加します。</summary>
                             public virtual void AddError(string message) {
-                                _context.AddError(_path, message);
+                                Root.AddError(_path, message);
                             }
                             /// <summary>警告メッセージを付加します。</summary>
                             public virtual void AddWarn(string message) {
-                                _context.AddWarn(_path, message);
+                                Root.AddWarn(_path, message);
                             }
                             /// <summary>インフォメーションメッセージを付加します。</summary>
                             public virtual void AddInfo(string message) {
-                                _context.AddInfo(_path, message);
+                                Root.AddInfo(_path, message);
                             }
 
                             /// <summary>このインスタンスまたはこのインスタンスの子孫が1件以上エラーを持っているか否かを返します。</summary>
                             public bool HasError() {
-                                return _context.HasError(_path);
+                                return Root.HasError(_path);
                             }
 
                             /// <summary>
                             /// このインスタンスを指定した型にキャストして返します。
                             /// </summary>
                             public T Cast<T>() where T : {{INTERFACE}} {
-                                return GetDefaultClass<T>(_path, _context);
+                                return GetDefaultClass<T>(_path, Root);
                             }
 
                             /// <summary>
