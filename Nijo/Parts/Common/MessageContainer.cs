@@ -197,34 +197,40 @@ namespace Nijo.Parts.Common {
                         /// </summary>
                         public sealed partial class PresentationMessageContext {
 
+                            /// <summary>メッセージの種類</summary>
+                            public enum E_MessageType {
+                                Error,
+                                Warn,
+                                Info,
+                            }
                             /// <summary>内部用データ保持クラス</summary>
                             private class MessageContainerStructure {
-                                public Dictionary<char, List<string>> Messages { get; } = new() {
-                                    [MESSAGE_TYPE_ERROR] = [], // エラー
-                                    [MESSAGE_TYPE_WARN] = [],  // 警告
-                                    [MESSAGE_TYPE_INFO] = [],  // インフォメーション
-                                };
+                                public List<string> Errors { get; } = [];
+                                public List<string> Warns { get; } = [];
+                                public List<string> Infos { get; } = [];
                                 public Dictionary<string, MessageContainerStructure> Children { get; } = [];
                             }
-
-                            private const char MESSAGE_TYPE_ERROR = 'e';
-                            private const char MESSAGE_TYPE_WARN = 'w';
-                            private const char MESSAGE_TYPE_INFO = 'i';
 
                             private readonly MessageContainerStructure _root = new();
 
                             public void AddError(IEnumerable<string> path, string message) {
-                                AddMessagePrivate(_root, MESSAGE_TYPE_ERROR, path.ToArray(), message);
+                                AddMessagePrivate(_root, E_MessageType.Error, path.ToArray(), message);
                             }
                             public void AddWarn(IEnumerable<string> path, string message) {
-                                AddMessagePrivate(_root, MESSAGE_TYPE_WARN, path.ToArray(), message);
+                                AddMessagePrivate(_root, E_MessageType.Warn, path.ToArray(), message);
                             }
                             public void AddInfo(IEnumerable<string> path, string message) {
-                                AddMessagePrivate(_root, MESSAGE_TYPE_INFO, path.ToArray(), message);
+                                AddMessagePrivate(_root, E_MessageType.Info, path.ToArray(), message);
                             }
-                            private static void AddMessagePrivate(MessageContainerStructure current, char messageType, string[] path, string message) {
+                            private static void AddMessagePrivate(MessageContainerStructure current, E_MessageType messageType, string[] path, string message) {
                                 if (path.Length == 0) {
-                                    current.Messages[messageType].Add(message);
+                                    var list = messageType switch {
+                                        E_MessageType.Error => current.Errors,
+                                        E_MessageType.Warn => current.Warns,
+                                        E_MessageType.Info => current.Infos,
+                                        _ => throw new InvalidOperationException($"不明なメッセージ種類: {messageType}"),
+                                    };
+                                    list.Add(message);
                                 } else {
                                     if (!current.Children.TryGetValue(path[0], out var child)) {
                                         child = new MessageContainerStructure();
@@ -252,7 +258,7 @@ namespace Nijo.Parts.Common {
                                 return HasErrorPrivate(target);
 
                                 static bool HasErrorPrivate(MessageContainerStructure current) {
-                                    if (current.Messages.TryGetValue(MESSAGE_TYPE_ERROR, out var errors) && errors.Count > 0) {
+                                    if (current.Errors.Count > 0) {
                                         return true;
                                     }
                                     foreach (var child in current.Children.Values) {
@@ -317,19 +323,19 @@ namespace Nijo.Parts.Common {
                                 static JsonObject? ToJsonObjectPrivate(MessageContainerStructure current) {
                                     var result = new JsonObject();
 
-                                    if (current.Messages.TryGetValue(MESSAGE_TYPE_ERROR, out var errors) && errors.Count > 0) {
+                                    if (current.Errors.Count > 0) {
                                         var strArray = new JsonArray();
-                                        foreach (var str in errors) strArray.Add(str);
+                                        foreach (var str in current.Errors) strArray.Add(str);
                                         result["{{TS_ERROR}}"] = strArray;
                                     }
-                                    if (current.Messages.TryGetValue(MESSAGE_TYPE_WARN, out var warns) && warns.Count > 0) {
+                                    if (current.Warns.Count > 0) {
                                         var strArray = new JsonArray();
-                                        foreach (var str in warns) strArray.Add(str);
+                                        foreach (var str in current.Warns) strArray.Add(str);
                                         result["{{TS_WARN}}"] = strArray;
                                     }
-                                    if (current.Messages.TryGetValue(MESSAGE_TYPE_INFO, out var infos) && infos.Count > 0) {
+                                    if (current.Infos.Count > 0) {
                                         var strArray = new JsonArray();
-                                        foreach (var str in infos) strArray.Add(str);
+                                        foreach (var str in current.Infos) strArray.Add(str);
                                         result["{{TS_INFO}}"] = strArray;
                                     }
 
