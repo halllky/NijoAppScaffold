@@ -87,7 +87,7 @@ internal class ConfigurationInWebApi : DefaultConfigurationInWebApi {
             confirms.Add(text);
         }
         responseBody["confirms"] = confirms;
-        responseBody["detail"] = ctx.MessageContext.ToJsonObject();
+        responseBody["detail"] = ctx.MessageContext.Root.ToJsonObject();
         responseBody["toastMessage"] = ctx.ToastMessage; // ソースコード自動生成と関係ない独自処理
 
         // ステータスコード。

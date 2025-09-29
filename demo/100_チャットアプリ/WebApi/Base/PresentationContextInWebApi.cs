@@ -30,13 +30,6 @@ public class PresentationContextInWebApi<TMessageRoot> : IPresentationContext<TM
         return Confirms.Count > 0;
     }
     #endregion 確認メッセージ
-
-    IPresentationContext<TMessageRoot1> IPresentationContext.Cast<TMessageRoot1>() {
-        throw new NotImplementedException(
-            "WebでCastが必要になるケースは想定外" +
-            "（登録更新や検索で発生したエラーを適切に画面上の特定の項目に転送しなければならないので、" +
-            "画面のQueryModelやCommandModelは必ず登録更新処理のメッセージコンテナの型を実装しているはず）");
-    }
 }
 
 /// <summary>

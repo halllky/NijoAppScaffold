@@ -211,11 +211,11 @@ partial class OverridedApplicationService {
             編集済みか = false,
         };
 
-        var messages = new メッセージSaveCommandMessages(["メッセージ"]);
+        var messages = context.Messages.As<メッセージSaveCommandMessages>();
         await CreateメッセージAsync(createCommand, messages, context);
 
         if (messages.HasError()) {
-            throw new InvalidOperationException($"メッセージ作成でエラーが発生しました: {messages.GetAllMessages()}");
+            throw new InvalidOperationException($"メッセージ作成でエラーが発生しました: {context.Messages.UnderlyingContext.Root.GetAllMessages()}");
         }
 
         return new { Success = true };
@@ -226,7 +226,7 @@ partial class OverridedApplicationService {
     /// </summary>
     public override async Task<object> Execute既存メッセージ編集(メッセージViewDisplayData param, IPresentationContext<メッセージViewDisplayDataMessages> context) {
         // 自動生成されたメソッドを使用してメッセージを更新
-        var messages = new メッセージSaveCommandMessages([]);
+        var messages = context.Messages.As<メッセージSaveCommandMessages>();
         await UpdateメッセージAsync(param.Values.メッセージSEQ, param.Version, data => {
             data.本文 = param.Values.本文;
             data.編集済みか = true;
@@ -234,7 +234,6 @@ partial class OverridedApplicationService {
 
         // エラーメッセージはメッセージのコンテナに含めて画面側に返す
         if (messages.HasError()) {
-            messages.TransferToRootOf(context.Messages);
             return new { Success = false };
         }
 

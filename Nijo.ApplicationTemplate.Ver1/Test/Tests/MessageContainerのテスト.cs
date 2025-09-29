@@ -28,7 +28,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = context.ToJsonObject();
+        var json = context.Root.ToJsonObject();
 
         // ---------------------
         // Assert
@@ -68,7 +68,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = context.ToJsonObject();
+        var json = context.Root.ToJsonObject();
 
         // ---------------------
         // Assert
@@ -90,7 +90,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act & Assert
-        Assert.That(context.HasError(), Is.True);
+        Assert.That(context.Root.HasError(), Is.True);
     }
 
     [Test]
@@ -106,7 +106,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = context.ToJsonObject();
+        var json = context.Root.ToJsonObject();
         Logout(json);
 
         // ---------------------
@@ -153,7 +153,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = context.ToJsonObject();
+        var json = context.Root.ToJsonObject();
         Logout(json);
 
         // ---------------------
@@ -188,7 +188,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = context.ToJsonObject();
+        var json = context.Root.ToJsonObject();
         Logout(json);
 
         // ---------------------
@@ -228,7 +228,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = context.ToJsonObject();
+        var json = context.Root.ToJsonObject();
         Logout(json);
 
         // ---------------------
