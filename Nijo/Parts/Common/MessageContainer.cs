@@ -124,6 +124,8 @@ namespace Nijo.Parts.Common {
 
 
         #region 基底クラス
+        private const string CONTEXT_CLASS = "PresentationMessageContext";
+
         internal const string INTERFACE = "IMessageContainer";
         internal const string INTERFACE_LIST = "IMessageContainerList";
         internal const string CONCRETE_CLASS = "MessageContainer";
@@ -195,7 +197,28 @@ namespace Nijo.Parts.Common {
                         /// このクラスは、エラー・警告・インフォメーションのメッセージを、
                         /// それがどの項目で発生したかの情報と紐づけて保持する。
                         /// </summary>
-                        public sealed partial class PresentationMessageContext {
+                        public sealed class {{CONTEXT_CLASS}} {
+
+                            #region 外部公開API
+                            /// <summary>
+                            /// ルートメッセージコンテナを取得します。
+                            /// 追加されたメッセージはすべてこのオブジェクトから取得できます。
+                            /// </summary>
+                            public IReadOnlyMessageContainer Root => _root;
+
+                            /// <summary>エラーメッセージを追加します。</summary>
+                            public void AddError(IEnumerable<string> path, string message) {
+                                Get(path.ToArray()).Errors.Add(message);
+                            }
+                            /// <summary>警告メッセージを追加します。</summary>
+                            public void AddWarn(IEnumerable<string> path, string message) {
+                                Get(path.ToArray()).Warns.Add(message);
+                            }
+                            /// <summary>インフォメーションメッセージを追加します。</summary>
+                            public void AddInfo(IEnumerable<string> path, string message) {
+                                Get(path.ToArray()).Infos.Add(message);
+                            }
+                            #endregion 外部公開API
 
                             #region 内部状態
                             /// <summary>メッセージの実体はすべてこのオブジェクトが持つ</summary>
@@ -265,27 +288,6 @@ namespace Nijo.Parts.Common {
                                 }
                             }
                             #endregion 内部状態
-
-                            #region 外部公開API
-                            /// <summary>
-                            /// ルートメッセージコンテナを取得します。
-                            /// 追加されたメッセージはすべてこのオブジェクトから取得できます。
-                            /// </summary>
-                            public IReadOnlyMessageContainer Root => _root;
-
-                            /// <summary>エラーメッセージを追加します。</summary>
-                            public void AddError(IEnumerable<string> path, string message) {
-                                Get(path.ToArray()).Errors.Add(message);
-                            }
-                            /// <summary>警告メッセージを追加します。</summary>
-                            public void AddWarn(IEnumerable<string> path, string message) {
-                                Get(path.ToArray()).Warns.Add(message);
-                            }
-                            /// <summary>インフォメーションメッセージを追加します。</summary>
-                            public void AddInfo(IEnumerable<string> path, string message) {
-                                Get(path.ToArray()).Infos.Add(message);
-                            }
-                            #endregion 外部公開API
                         }
 
                         /// <summary>現時点で追加されているメッセージの読み取り専用インターフェース</summary>
@@ -320,7 +322,7 @@ namespace Nijo.Parts.Common {
                             /// メッセージ本体が格納されているオブジェクト。
                             /// 現在発生しているメッセージはこのオブジェクトを通じて取得してください。
                             /// </summary>
-                            PresentationMessageContext UnderlyingContext { get; }
+                            {{CONTEXT_CLASS}} UnderlyingContext { get; }
 
                             /// <summary>エラーメッセージを付加します。</summary>
                             void AddError(string message);
@@ -345,12 +347,12 @@ namespace Nijo.Parts.Common {
                         public partial class {{CONCRETE_CLASS}} : {{INTERFACE}} {
                             /// <inheritdoc cref="{{INTERFACE}}">
                             /// <param name="path">オブジェクトルートからこのインスタンスまでのパス</param>
-                            public {{CONCRETE_CLASS}}(IEnumerable<string> path, PresentationMessageContext underlyingContext) {
+                            public {{CONCRETE_CLASS}}(IEnumerable<string> path, {{CONTEXT_CLASS}} underlyingContext) {
                                 _path = path;
                                 UnderlyingContext = underlyingContext;
                             }
                             private readonly IEnumerable<string> _path;
-                            public PresentationMessageContext UnderlyingContext { get; }
+                            public {{CONTEXT_CLASS}} UnderlyingContext { get; }
 
                             /// <summary>エラーメッセージを付加します。</summary>
                             public virtual void AddError(string message) {
@@ -380,13 +382,13 @@ namespace Nijo.Parts.Common {
                             /// <summary>
                             /// 引数のメッセージのコンテナの形と対応する既定のインスタンスを作成して返します。
                             /// </summary>
-                            public static T GetDefaultClass<T>(IEnumerable<string> path, PresentationMessageContext context) where T : {{INTERFACE}} {
+                            public static T GetDefaultClass<T>(IEnumerable<string> path, {{CONTEXT_CLASS}} context) where T : {{INTERFACE}} {
                                 return (T)GetDefaultClass(typeof(T), path, context);
                             }
                             /// <summary>
                             /// 引数のメッセージのコンテナの形と対応する既定のインスタンスを作成して返します。
                             /// </summary>
-                            public static {{INTERFACE}} GetDefaultClass(Type type, IEnumerable<string> path, PresentationMessageContext context) {
+                            public static {{INTERFACE}} GetDefaultClass(Type type, IEnumerable<string> path, {{CONTEXT_CLASS}} context) {
                         {{registered.OrderBy(kv => kv.Key).SelectTextTemplate(kv => $$"""
                                 if (type == typeof({{kv.Key}})) return new {{kv.Value}}(path, context);
                         """)}}
@@ -407,7 +409,7 @@ namespace Nijo.Parts.Common {
 
                         /// <inheritdoc cref="{{INTERFACE_LIST}}"/>
                         public partial class {{CONCRETE_CLASS_LIST}}<T> : {{CONCRETE_CLASS}}, {{INTERFACE_LIST}}<T> where T : {{INTERFACE}} {
-                            public {{CONCRETE_CLASS_LIST}}(IEnumerable<string> path, Func<int, T> createItem, PresentationMessageContext context) : base(path, context) {
+                            public {{CONCRETE_CLASS_LIST}}(IEnumerable<string> path, Func<int, T> createItem, {{CONTEXT_CLASS}} context) : base(path, context) {
                                 _createItem = createItem;
                             }
 
