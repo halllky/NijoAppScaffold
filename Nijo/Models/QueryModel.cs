@@ -203,7 +203,7 @@ namespace Nijo.Models {
             aggregateFile.AddCSharpClass(SearchResult.RenderTree(rootAggregate), "Class_SearchResult");
 
             // データ型: 画面表示用型 DisplayData
-            // - 定義(CS, TS): 値 + 状態(existsInDB, willBeChanged, willBeDeleted) + ReadOnly(画面の自動生成の一機能と位置づけるべきかも)
+            // - 定義(CS, TS): 値 + 状態(existsInDB, willBeChanged, willBeDeleted)
             // - ディープイコール関数
             // - UIの制約定義オブジェクト（文字種、maxlength, 桁, required）
             // - TS側オブジェクト作成関数
