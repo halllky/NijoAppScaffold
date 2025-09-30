@@ -115,8 +115,8 @@
 //        var presentationContextOptions = new PresentationContextOptions {
 //            IgnoreConfirm = blnIgnoreConfirm,
 //        };
-//        // TMessageRoot のデフォルトインスタンスを取得する処理は GetDefaultClass を使う想定
-//        var messages = MessageContainer.GetDefaultClass<TMessageRoot>([]);
+//        // TMessageRoot のデフォルトインスタンスを取得する処理は GetImpl を使う想定
+//        var messages = MessageContainer.GetImpl<TMessageRoot>([]);
 //        var presentationContext = new PresentationContextInWebApi<TMessageRoot>(messages, presentationContextOptions);
 
 //        bindingContext.Result = ModelBindingResult.Success(presentationContext);

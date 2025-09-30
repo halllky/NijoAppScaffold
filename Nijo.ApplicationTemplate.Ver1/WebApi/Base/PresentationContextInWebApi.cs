@@ -11,7 +11,7 @@ public class PresentationContextInWebApi<TMessageRoot> : IPresentationContext<TM
 
     internal PresentationContextInWebApi(MessageContainer messageContext, IPresentationContextOptions options) {
         MessageContext = messageContext;
-        Messages = MessageSetter.GetDefaultClass<TMessageRoot>([], messageContext);
+        Messages = MessageSetter.GetImpl<TMessageRoot>([], messageContext);
         Options = options;
     }
 

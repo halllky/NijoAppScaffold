@@ -103,14 +103,14 @@ namespace Nijo.Parts.CSharp {
         internal const string SETTER_CONCRETE_CLASS_LIST = "MessageSetterList";
 
         /// <summary>既定のクラスを探して返すstaticメソッド</summary>
-        internal const string GET_DEFAULT_CLASS = "GetDefaultClass";
+        internal const string GET_IMPL = "GetImpl";
 
         internal class BaseClass : IMultiAggregateSourceFile {
 
             private readonly Dictionary<string, string> _registered = new();
             private readonly Lock _lock = new();
             /// <summary>
-            /// <see cref="GET_DEFAULT_CLASS"/> の内容を登録する。
+            /// <see cref="GET_IMPL"/> の内容を登録する。
             /// </summary>
             /// <param name="interfaceName"></param>
             /// <param name="concreteClassName"></param>
@@ -334,19 +334,19 @@ namespace Nijo.Parts.CSharp {
                             /// このインスタンスを指定した型にキャストして返します。
                             /// </summary>
                             public T As<T>() where T : {{SETTER_INTERFACE}} {
-                                return {{GET_DEFAULT_CLASS}}<T>(_path, UnderlyingContext);
+                                return {{GET_IMPL}}<T>(_path, UnderlyingContext);
                             }
 
                             /// <summary>
                             /// 引数のメッセージのコンテナの形と対応する既定のインスタンスを作成して返します。
                             /// </summary>
-                            public static T {{GET_DEFAULT_CLASS}}<T>(IEnumerable<string> path, {{CONTEXT_CLASS}} context) where T : {{SETTER_INTERFACE}} {
-                                return (T){{GET_DEFAULT_CLASS}}(typeof(T), path, context);
+                            public static T {{GET_IMPL}}<T>(IEnumerable<string> path, {{CONTEXT_CLASS}} context) where T : {{SETTER_INTERFACE}} {
+                                return (T){{GET_IMPL}}(typeof(T), path, context);
                             }
                             /// <summary>
                             /// 引数のメッセージのコンテナの形と対応する既定のインスタンスを作成して返します。
                             /// </summary>
-                            public static {{SETTER_INTERFACE}} {{GET_DEFAULT_CLASS}}(Type type, IEnumerable<string> path, {{CONTEXT_CLASS}} context) {
+                            public static {{SETTER_INTERFACE}} {{GET_IMPL}}(Type type, IEnumerable<string> path, {{CONTEXT_CLASS}} context) {
                         {{registered.OrderBy(kv => kv.Key).SelectTextTemplate(kv => $$"""
                                 if (type == typeof({{kv.Key}})) return new {{kv.Value}}(path, context);
                         """)}}
