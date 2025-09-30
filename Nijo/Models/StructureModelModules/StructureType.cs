@@ -226,6 +226,7 @@ internal class StructureRefToMember : IInstanceStructurePropertyMetadata {
         return _refToMember.RefToObject switch {
             RefToMember.E_RefToObject.DisplayData => new QueryModelModules.DisplayData(_refToMember.RefTo),
             RefToMember.E_RefToObject.SearchCondition => new QueryModelModules.SearchCondition.Entry(_refToMember.RefTo.GetRoot()),
+            RefToMember.E_RefToObject.RefTarget => new QueryModelModules.DisplayDataRef.Entry(_refToMember.RefTo),
             _ => _refToMember.RefTo is RootAggregate root
                 ? new StructureType(root)
                 : new StructureDescendantMember(_refToMember.RefTo),

@@ -225,7 +225,7 @@
       <保管庫 RefToObject="SearchCondition" Type="ref-to:保管庫マスタ" UniqueId="82aa1f13-1657-4c7d-bb91-be1066072660" />
       <現在数量 Type="int" UniqueId="4b1421b9-67ad-4af1-a216-c8dfd61e8819" />
       <管理後数量 Type="int" UniqueId="2eeae516-8eb2-480e-97e3-9b1ac3691d1d" />
-      <過去履歴 RefToObject="DisplayData" Type="ref-to:医療機器マスタ/在庫情報/在庫状況履歴" UniqueId="c8ce4f9f-889f-4762-b51d-aeabf3eae59a" />
+      <過去履歴 RefToObject="RefTarget" Type="ref-to:医療機器マスタ/在庫情報/在庫状況履歴" UniqueId="c8ce4f9f-889f-4762-b51d-aeabf3eae59a" />
     </管理機器リスト>
     <権限確認 Type="child" UniqueId="8355a525-a6c3-4d5a-93de-9dc995c6e2f4">
       <権限レベル RefToObject="DisplayData" Type="ref-to:医療従事者マスタ/権限" UniqueId="2c6c0e75-04ca-407e-b984-5bbb00d3e03a" />

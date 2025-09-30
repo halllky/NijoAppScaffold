@@ -37,9 +37,10 @@ namespace Nijo.Models.StructureModelModules {
                         break;
                     case StructureRefToMember refToMember:
                         var targetStructure = refToMember.GetTargetStructure();
-                        MessageContainer.Setter targetMessage = targetStructure switch {
+                        MessageContainer.Setter? targetMessage = targetStructure switch {
                             QueryModelModules.DisplayData disp => new QueryModelModules.DisplayDataMessageContainer(disp.Aggregate),
                             QueryModelModules.SearchCondition.Entry sc => new QueryModelModules.SearchConditionMessageContainer(sc.EntryAggregate),
+                            QueryModelModules.DisplayDataRef.Entry => null, // 子孫要素が無いので
                             StructureType str => new StructureTypeMessageContainer(str.Aggregate),
                             _ => throw new NotImplementedException(),
                         };
@@ -47,7 +48,7 @@ namespace Nijo.Models.StructureModelModules {
                             PhysicalName = member.GetPropertyName(E_CsTs.CSharp),
                             DisplayName = member.DisplayName,
                             NestedObject = targetMessage,
-                            CsType = targetMessage.CsClassName,
+                            CsType = targetMessage?.CsClassName,
                             IsArray = false,
                         };
                         break;

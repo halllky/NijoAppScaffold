@@ -306,7 +306,7 @@ internal static class BasicNodeOptions {
             コマンドモデルの引数の型を指定します。
             以下のいずれかを指定できます：
             - 構造体モデルのルート集約名
-            - クエリモデルのルート集約名 + ":{{REF_TO_OBJECT_DISPLAY_DATA}}" または ":{{REF_TO_OBJECT_SEARCH_CONDITION}}"
+            - クエリモデルのルート集約名 + {{string.Join(" または ", StructureRefToAvailable.Keys)}}
             指定しなかった場合は引数なしのコマンドとみなされます。
             """,
         Validate = ctx => {
@@ -332,9 +332,8 @@ internal static class BasicNodeOptions {
             // コロンが含まれるならその後ろは DisplayData または SearchCondition のみ
             var targetType = splitted.Skip(1).FirstOrDefault();
             if (!string.IsNullOrWhiteSpace(targetType) &&
-                targetType != REF_TO_OBJECT_DISPLAY_DATA &&
-                targetType != REF_TO_OBJECT_SEARCH_CONDITION) {
-                ctx.AddError($"参照先の種類は {REF_TO_OBJECT_DISPLAY_DATA} または {REF_TO_OBJECT_SEARCH_CONDITION} のみ指定できます。");
+                !StructureRefToAvailable.ContainsKey(targetType)) {
+                ctx.AddError($"参照先の種類は {string.Join(" または ", StructureRefToAvailable.Keys)} のみ指定できます。");
                 return;
             }
 
@@ -358,7 +357,7 @@ internal static class BasicNodeOptions {
             コマンドモデルの戻り値の型を指定します。
             以下のいずれかを指定できます：
             - 構造体モデルのルート集約名
-            - クエリモデルのルート集約名 + ":{{REF_TO_OBJECT_DISPLAY_DATA}}" または ":{{REF_TO_OBJECT_SEARCH_CONDITION}}"
+            - クエリモデルのルート集約名 + {{string.Join(" または ", StructureRefToAvailable.Keys.Select(key => $":{key}"))}}
             指定しなかった場合は戻り値なしのコマンドとみなされます。
             """,
         Validate = ctx => {
@@ -384,9 +383,8 @@ internal static class BasicNodeOptions {
             // コロンが含まれるならその後ろは DisplayData または SearchCondition のみ
             var targetType = splitted.Skip(1).FirstOrDefault();
             if (!string.IsNullOrWhiteSpace(targetType) &&
-                targetType != REF_TO_OBJECT_DISPLAY_DATA &&
-                targetType != REF_TO_OBJECT_SEARCH_CONDITION) {
-                ctx.AddError($"参照先の種類は {REF_TO_OBJECT_DISPLAY_DATA} または {REF_TO_OBJECT_SEARCH_CONDITION} のみ指定できます。");
+                !StructureRefToAvailable.ContainsKey(targetType)) {
+                ctx.AddError($"参照先の種類は {string.Join(" または ", StructureRefToAvailable.Keys)} のみ指定できます。");
                 return;
             }
 
@@ -407,19 +405,26 @@ internal static class BasicNodeOptions {
     #region StructureModel用
     internal const string REF_TO_OBJECT_DISPLAY_DATA = "DisplayData";
     internal const string REF_TO_OBJECT_SEARCH_CONDITION = "SearchCondition";
+    internal const string REF_TO_OBJECT_REF_TARGET = "RefTarget";
+
+    internal static Dictionary<string, Func<ImmutableSchema.AggregateBase, ICreatablePresentationLayerStructure>> StructureRefToAvailable => new() {
+        { REF_TO_OBJECT_DISPLAY_DATA, (aggregate) => new Models.QueryModelModules.DisplayData(aggregate) },
+        { REF_TO_OBJECT_SEARCH_CONDITION, (aggregate) => new Models.QueryModelModules.SearchCondition.Entry(aggregate.GetRoot()) },
+        { REF_TO_OBJECT_REF_TARGET, (aggregate) => new Models.QueryModelModules.DisplayDataRef.Entry(aggregate) },
+    };
 
     internal static NodeOption RefToObject = new() {
         AttributeName = "RefToObject",
         DisplayName = "参照先オブジェクト",
         Type = E_NodeOptionType.String,
         HelpText = $$"""
-            CommandModelまたはStructureModelはQueryModelの検索条件か画面表示用データのいずれかしか参照できない。
-            その2種のうちどちらを参照するかの指定。
-            "{{REF_TO_OBJECT_DISPLAY_DATA}}"か"{{REF_TO_OBJECT_SEARCH_CONDITION}}"のみ指定可能。
+            CommandModelまたはStructureModelはQueryModelの検索条件、画面表示用データ、外部参照のいずれかしか参照できない。
+            その3種のうちどちらを参照するかの指定。
+            {{string.Join(", ", StructureRefToAvailable.Keys.Select(key => $"\"{key}\""))}}のみ指定可能。
             """,
         Validate = ctx => {
-            if (ctx.Value != REF_TO_OBJECT_DISPLAY_DATA && ctx.Value != REF_TO_OBJECT_SEARCH_CONDITION) {
-                ctx.AddError($"{REF_TO_OBJECT_DISPLAY_DATA}か{REF_TO_OBJECT_SEARCH_CONDITION}のみ指定可能です。");
+            if (!StructureRefToAvailable.ContainsKey(ctx.Value)) {
+                ctx.AddError($"{string.Join(" または ", StructureRefToAvailable.Keys)}のみ指定可能です。");
             }
 
             // 外部参照の場合のみ許可

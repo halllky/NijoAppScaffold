@@ -165,7 +165,7 @@ namespace Nijo.Models.QueryModelModules {
         /// <summary>
         /// エントリー。エントリーが子孫要素になる場合もある。
         /// </summary>
-        internal class Entry : RefDisplayDataMemberContainer, IPresentationLayerStructure {
+        internal class Entry : RefDisplayDataMemberContainer, IPresentationLayerStructure, ICreatablePresentationLayerStructure {
             internal Entry(AggregateBase aggregate) : base(aggregate) { }
 
             internal override string CsClassName => $"{base.Aggregate.PhysicalName}RefTarget";

@@ -66,6 +66,7 @@ namespace Nijo.ImmutableSchema {
         public E_RefToObject? RefToObject => XElement.Attribute(BasicNodeOptions.RefToObject.AttributeName)?.Value switch {
             BasicNodeOptions.REF_TO_OBJECT_SEARCH_CONDITION => E_RefToObject.SearchCondition,
             BasicNodeOptions.REF_TO_OBJECT_DISPLAY_DATA => E_RefToObject.DisplayData,
+            BasicNodeOptions.REF_TO_OBJECT_REF_TARGET => E_RefToObject.RefTarget,
             null => null,
             _ => throw new InvalidOperationException(),
         };
@@ -73,6 +74,7 @@ namespace Nijo.ImmutableSchema {
         public enum E_RefToObject {
             SearchCondition,
             DisplayData,
+            RefTarget,
         }
         #endregion モデル毎に定義される属性
 

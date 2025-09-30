@@ -23,8 +23,9 @@ namespace Nijo.Models {
 
                 * 何も指定しない（引数なし・戻り値なし）
                 * 構造体モデルのルート集約名
-                * クエリモデルのルート集約名:{{BasicNodeOptions.REF_TO_OBJECT_DISPLAY_DATA}}
-                * クエリモデルのルート集約名:{{BasicNodeOptions.REF_TO_OBJECT_SEARCH_CONDITION}}
+                {{BasicNodeOptions.StructureRefToAvailable.Keys.SelectTextTemplate(key => $$"""
+                * クエリモデルのルート集約名:{{key}}
+                """)}}
 
                 #### その他制約事項
 
@@ -133,8 +134,8 @@ namespace Nijo.Models {
                     }
 
                     // RefToObjectの値チェック
-                    if (refToObject != BasicNodeOptions.REF_TO_OBJECT_DISPLAY_DATA && refToObject != BasicNodeOptions.REF_TO_OBJECT_SEARCH_CONDITION) {
-                        addError(rootAggregateElement, $"{attributeName}属性のRefToObject指定「{refToObject}」は無効です。「{BasicNodeOptions.REF_TO_OBJECT_DISPLAY_DATA}」または「{BasicNodeOptions.REF_TO_OBJECT_SEARCH_CONDITION}」を指定してください。");
+                    if (!BasicNodeOptions.StructureRefToAvailable.ContainsKey(refToObject)) {
+                        addError(rootAggregateElement, $"{attributeName}属性のRefToObject指定「{refToObject}」は無効です。{string.Join(" または ", BasicNodeOptions.StructureRefToAvailable.Keys)}のいずれかを指定してください。");
                     }
                 }
             } catch (ArgumentException ex) {

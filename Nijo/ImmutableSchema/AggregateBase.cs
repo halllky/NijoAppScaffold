@@ -370,11 +370,8 @@ namespace Nijo.ImmutableSchema {
             if (splitted.Length == 1) {
                 return new Models.StructureModelModules.StructureType(targetRootAggregate);
 
-            } else if (splitted[1] == BasicNodeOptions.REF_TO_OBJECT_DISPLAY_DATA) {
-                return new Models.QueryModelModules.DisplayData(targetRootAggregate);
-
-            } else if (splitted[1] == BasicNodeOptions.REF_TO_OBJECT_SEARCH_CONDITION) {
-                return new Models.QueryModelModules.SearchCondition.Entry(targetRootAggregate);
+            } else if (BasicNodeOptions.StructureRefToAvailable.TryGetValue(splitted[1], out var factory)) {
+                return factory(targetRootAggregate);
 
             } else {
                 throw new InvalidOperationException($"不正な参照先の種類: {splitted[1]}");
