@@ -63,7 +63,7 @@ public class TestUtilImpl {
 
     public TestScopeImpl<TMessageRoot> CreateScope<TMessageRoot>(string testCaseName, Action<IServiceCollection>? configureServices = null, IPresentationContextOptions? options = null) where TMessageRoot : IMessageSetter {
         var (currentTestWorkDirectory, provider) = SetupEnvironments(testCaseName, configureServices);
-        var messageContext = new PresentationMessageContext();
+        var messageContext = new MessageContainer();
         var messageRoot = MessageSetter.GetDefaultClass<TMessageRoot>([], messageContext);
         var contextOptions = options ?? new PresentationContextOptionsImpl();
         var presentationContext = new PresentationContextInUnitTest<TMessageRoot>(messageContext, messageRoot, contextOptions);

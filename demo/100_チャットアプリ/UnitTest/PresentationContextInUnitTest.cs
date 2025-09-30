@@ -12,7 +12,7 @@ namespace MyApp.UnitTest;
 /// </summary>
 internal class PresentationContextInUnitTest : IPresentationContext {
     internal PresentationContextInUnitTest(Type messageRootType, IPresentationContextOptions options) {
-        Messages = MessageSetter.GetDefaultClass(messageRootType, [], new PresentationMessageContext());
+        Messages = MessageSetter.GetDefaultClass(messageRootType, [], new MessageContainer());
         Options = options;
     }
     protected PresentationContextInUnitTest(IMessageSetter messageRoot, IPresentationContextOptions options) {

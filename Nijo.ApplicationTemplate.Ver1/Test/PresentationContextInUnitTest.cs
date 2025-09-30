@@ -12,11 +12,11 @@ namespace MyApp.Test;
 /// </summary>
 internal class PresentationContextInUnitTest : IPresentationContext {
     internal PresentationContextInUnitTest(Type messageRootType, IPresentationContextOptions options) {
-        MessageContext = new PresentationMessageContext();
+        MessageContext = new MessageContainer();
         Messages = MessageSetter.GetDefaultClass(messageRootType, [], MessageContext);
         Options = options;
     }
-    protected PresentationContextInUnitTest(PresentationMessageContext messageContext, IMessageSetter messageRoot, IPresentationContextOptions options) {
+    protected PresentationContextInUnitTest(MessageContainer messageContext, IMessageSetter messageRoot, IPresentationContextOptions options) {
         MessageContext = messageContext;
         Messages = messageRoot;
         Options = options;
@@ -24,7 +24,7 @@ internal class PresentationContextInUnitTest : IPresentationContext {
 
     public IPresentationContextOptions Options { get; }
     public IMessageSetter Messages { get; } // メッセージ設定用ヘルパー
-    public PresentationMessageContext MessageContext { get; } // メッセージの格納先
+    public MessageContainer MessageContext { get; } // メッセージの格納先
     public List<string> Confirms { get; private set; } = [];
 
     public void AddConfirm(string text) {
@@ -38,7 +38,7 @@ internal class PresentationContextInUnitTest : IPresentationContext {
 /// <inheritdoc cref="PresentationContextInUnitTest"/>
 internal class PresentationContextInUnitTest<TMessage> : PresentationContextInUnitTest, IPresentationContext<TMessage> where TMessage : IMessageSetter {
     internal PresentationContextInUnitTest(
-        PresentationMessageContext messageContext,
+        MessageContainer messageContext,
         TMessage messageRoot,
         IPresentationContextOptions options) : base(messageContext, messageRoot, options) { }
 

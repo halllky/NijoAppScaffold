@@ -17,7 +17,7 @@ internal class MessageContainerのテスト {
     [Test]
     public void ToJsonObjectの基本的なテスト() {
         // パスを意味のある値で初期化
-        var context = new PresentationMessageContext();
+        var context = new MessageContainer();
         var container = new 医療機器マスタSaveCommandMessages(new List<string> { }, context);
 
         // ---------------------
@@ -62,7 +62,7 @@ internal class MessageContainerのテスト {
     public void メッセージがないときのJSONは空になること() {
         // ---------------------
         // Arrange
-        var context = new PresentationMessageContext();
+        var context = new MessageContainer();
         var container = new 医療機器マスタSaveCommandMessages(new List<string> { "医療機器マスタ" }, context);
         // メッセージを追加しない
 
@@ -79,7 +79,7 @@ internal class MessageContainerのテスト {
     public void HasErrorで子孫のエラーが検出できること() {
         // ---------------------
         // Arrange
-        var context = new PresentationMessageContext();
+        var context = new MessageContainer();
         var container = new 医療機器マスタSaveCommandMessages(new List<string> { "医療機器マスタ" }, context);
 
         // 直接コンテナにエラーを追加
@@ -97,7 +97,7 @@ internal class MessageContainerのテスト {
     public void 異なる添字の配列要素にメッセージがある場合() {
         // ---------------------
         // Arrange
-        var context = new PresentationMessageContext();
+        var context = new MessageContainer();
         var container = new 医療機器マスタSaveCommandMessages(new List<string> { "ルート", "医療機器" }, context);
 
         // 不連続なインデックスにメッセージを追加
@@ -143,7 +143,7 @@ internal class MessageContainerのテスト {
     public void 複数種類のメッセージをひとつのプロパティに追加できること() {
         // ---------------------
         // Arrange
-        var context = new PresentationMessageContext();
+        var context = new MessageContainer();
         var container = new 医療機器マスタSaveCommandMessages(new List<string> { }, context);
 
         // エラー・警告・情報の3種類すべてをひとつのプロパティに追加
@@ -178,7 +178,7 @@ internal class MessageContainerのテスト {
     public void 複数のエラーメッセージを同じプロパティに追加できること() {
         // ---------------------
         // Arrange
-        var context = new PresentationMessageContext();
+        var context = new MessageContainer();
         var container = new 医療機器マスタSaveCommandMessages(new List<string> { }, context);
 
         // 複数のエラーメッセージを同じプロパティに追加
@@ -211,7 +211,7 @@ internal class MessageContainerのテスト {
     public void 様々な階層のオブジェクトにメッセージを追加できること() {
         // ---------------------
         // Arrange
-        var context = new PresentationMessageContext();
+        var context = new MessageContainer();
         var container = new 医療機器マスタSaveCommandMessages(new List<string> { }, context);
 
         // ルートオブジェクトにメッセージ追加

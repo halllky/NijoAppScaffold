@@ -16,79 +16,86 @@ namespace Nijo.Parts.CSharp {
     /// <code>インスタンス.プロパティ名.AddError(メッセージ)</code> のように直感的に書ける、
     /// 無駄なペイロードを避けるためにメッセージが無いときはJSON化されない、といった性質を持つ。
     /// </summary>
-    internal abstract class MessageContainer {
-
-        protected MessageContainer(AggregateBase aggregate) {
-            _aggregate = aggregate;
-        }
-        protected readonly AggregateBase _aggregate;
-
-        internal virtual string CsClassName => $"{_aggregate.PhysicalName}Messages";
-        internal virtual string TsTypeName => $"{_aggregate.PhysicalName}Messages";
+    internal static class MessageContainer {
 
         /// <summary>
-        /// C#クラスが何らかの基底クラスやインターフェースを実装するなら使う
+        /// <see cref="MessageContainer"/> へのメッセージの追加を
+        /// 直感的に書けるようにするためのヘルパークラスのレンダリングをおこなう。
         /// </summary>
-        /// <returns></returns>
-        protected virtual IEnumerable<string> GetCsClassImplements() {
-            yield break;
-        }
+        internal abstract class Setter {
 
-        /// <summary>
-        /// このクラスに定義されるメンバーを列挙する。
-        /// </summary>
-        protected abstract IEnumerable<IMessageContainerMember> GetMembers();
+            protected Setter(AggregateBase aggregate) {
+                _aggregate = aggregate;
+            }
+            protected readonly AggregateBase _aggregate;
 
-        /// <summary>
-        /// C#のクラス定義に追加で何かレンダリングが必要なコードがあればこれをオーバーライドして記載
-        /// </summary>
-        protected virtual string RenderCSharpAdditionalSource() {
-            return SKIP_MARKER;
-        }
+            internal virtual string CsClassName => $"{_aggregate.PhysicalName}Messages";
+            internal virtual string TsTypeName => $"{_aggregate.PhysicalName}Messages";
 
-        internal string RenderCSharp() {
-            var impl = new List<string>() { SETTER_CLASS };
-            impl.AddRange(GetCsClassImplements());
+            /// <summary>
+            /// C#クラスが何らかの基底クラスやインターフェースを実装するなら使う
+            /// </summary>
+            /// <returns></returns>
+            protected virtual IEnumerable<string> GetCsClassImplements() {
+                yield break;
+            }
 
-            var members = GetMembers().ToArray();
+            /// <summary>
+            /// このクラスに定義されるメンバーを列挙する。
+            /// </summary>
+            protected abstract IEnumerable<IMember> GetMembers();
 
-            return $$"""
-                /// <summary>
-                /// {{_aggregate.DisplayName}} のデータ構造と対応したメッセージの入れ物
-                /// </summary>
-                public class {{CsClassName}} : {{impl.Join(", ")}} {
-                    public {{CsClassName}}(IEnumerable<string> path, PresentationMessageContext context) : base(path, context) {
-                {{members.SelectTextTemplate(m => $$"""
-                {{If(m.NestedObject == null, () => $$"""
-                        this.{{m.PhysicalName}} = new {{SETTER_CLASS}}([.. path, "{{m.PhysicalName}}"], context);
-                """).ElseIf(!m.IsArray, () => $$"""
-                        this.{{m.PhysicalName}} = new {{m.NestedObject?.CsClassName}}([.. path, "{{m.PhysicalName}}"], context);
-                """).Else(() => $$"""
-                        this.{{m.PhysicalName}} = new {{SETTER_CONCRETE_CLASS_LIST}}<{{m.NestedObject?.CsClassName}}>([.. path, "{{m.PhysicalName}}"], rowIndex => {
-                            return new {{m.NestedObject?.CsClassName}}([.. path, "{{m.PhysicalName}}", rowIndex.ToString()], context);
-                        }, context);
-                """)}}
-                """)}}
+            /// <summary>
+            /// C#のクラス定義に追加で何かレンダリングが必要なコードがあればこれをオーバーライドして記載
+            /// </summary>
+            protected virtual string RenderCSharpAdditionalSource() {
+                return SKIP_MARKER;
+            }
+
+            internal string RenderCSharp() {
+                var impl = new List<string>() { SETTER_CLASS };
+                impl.AddRange(GetCsClassImplements());
+
+                var members = GetMembers().ToArray();
+
+                return $$"""
+                    /// <summary>
+                    /// {{_aggregate.DisplayName}} のデータ構造と対応したメッセージの入れ物
+                    /// </summary>
+                    public class {{CsClassName}} : {{impl.Join(", ")}} {
+                        public {{CsClassName}}(IEnumerable<string> path, {{CONTEXT_CLASS}} context) : base(path, context) {
+                    {{members.SelectTextTemplate(m => $$"""
+                    {{If(m.NestedObject == null, () => $$"""
+                            this.{{m.PhysicalName}} = new {{SETTER_CLASS}}([.. path, "{{m.PhysicalName}}"], context);
+                    """).ElseIf(!m.IsArray, () => $$"""
+                            this.{{m.PhysicalName}} = new {{m.NestedObject?.CsClassName}}([.. path, "{{m.PhysicalName}}"], context);
+                    """).Else(() => $$"""
+                            this.{{m.PhysicalName}} = new {{SETTER_CONCRETE_CLASS_LIST}}<{{m.NestedObject?.CsClassName}}>([.. path, "{{m.PhysicalName}}"], rowIndex => {
+                                return new {{m.NestedObject?.CsClassName}}([.. path, "{{m.PhysicalName}}", rowIndex.ToString()], context);
+                            }, context);
+                    """)}}
+                    """)}}
+                        }
+
+                    {{members.SelectTextTemplate(m => $$"""
+                        /// <summary>{{m.DisplayName}}に対して発生したメッセージの入れ物</summary>
+                    {{If(m.NestedObject == null, () => $$"""
+                        public {{m.CsType ?? SETTER_INTERFACE}} {{m.PhysicalName}} { get; }
+                    """).ElseIf(!m.IsArray, () => $$"""
+                        public {{m.CsType ?? m.NestedObject?.CsClassName}} {{m.PhysicalName}} { get; }
+                    """).Else(() => $$"""
+                        public {{m.CsType ?? $"{SETTER_INTERFACE_LIST}<{m.NestedObject?.CsClassName}>"}} {{m.PhysicalName}} { get; }
+                    """)}}
+                    """)}}
+                        {{WithIndent(RenderCSharpAdditionalSource(), "    ")}}
                     }
-
-                {{members.SelectTextTemplate(m => $$"""
-                    /// <summary>{{m.DisplayName}}に対して発生したメッセージの入れ物</summary>
-                {{If(m.NestedObject == null, () => $$"""
-                    public {{m.CsType ?? SETTER_INTERFACE}} {{m.PhysicalName}} { get; }
-                """).ElseIf(!m.IsArray, () => $$"""
-                    public {{m.CsType ?? m.NestedObject?.CsClassName}} {{m.PhysicalName}} { get; }
-                """).Else(() => $$"""
-                    public {{m.CsType ?? $"{SETTER_INTERFACE_LIST}<{m.NestedObject?.CsClassName}>"}} {{m.PhysicalName}} { get; }
-                """)}}
-                """)}}
-                    {{WithIndent(RenderCSharpAdditionalSource(), "    ")}}
-                }
-                """;
+                    """;
+            }
         }
 
 
         #region 基底クラス
-        private const string CONTEXT_CLASS = "PresentationMessageContext";
+        private const string CONTEXT_CLASS = "MessageContainer";
 
         internal const string SETTER_INTERFACE = "IMessageSetter";
         internal const string SETTER_INTERFACE_LIST = "IMessageSetterList";
@@ -406,11 +413,14 @@ namespace Nijo.Parts.CSharp {
 
 
         #region メンバー
-        internal interface IMessageContainerMember {
+        /// <summary>
+        /// <see cref="Setter"/> のメンバーを表すインターフェース。
+        /// </summary>
+        internal interface IMember {
             string PhysicalName { get; }
             string DisplayName { get; }
             /// <summary>ChildまたはChildren</summary>
-            MessageContainer? NestedObject { get; }
+            Setter? NestedObject { get; }
             /// <summary>未指定の場合はデフォルトの型になる</summary>
             string? CsType { get; }
             /// <summary>このメンバーをリストとしてレンダリングするか否か</summary>

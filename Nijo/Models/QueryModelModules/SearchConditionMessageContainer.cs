@@ -12,7 +12,7 @@ namespace Nijo.Models.QueryModelModules {
     /// <summary>
     /// <see cref="SearchCondition.Entry"/> のデータ構造と対応するメッセージの入れ物
     /// </summary>
-    internal class SearchConditionMessageContainer : MessageContainer {
+    internal class SearchConditionMessageContainer : MessageContainer.Setter {
         public SearchConditionMessageContainer(AggregateBase aggregate) : base(aggregate) {
             _filter = new SearchCondition.Filter(aggregate);
         }
@@ -22,7 +22,7 @@ namespace Nijo.Models.QueryModelModules {
         internal override string CsClassName => $"{_aggregate.PhysicalName}SearchConditionMessages";
         internal override string TsTypeName => $"{_aggregate.PhysicalName}SearchConditionMessages";
 
-        protected override IEnumerable<IMessageContainerMember> GetMembers() {
+        protected override IEnumerable<MessageContainer.IMember> GetMembers() {
             return _filter
                 .GetOwnMembers()
                 .Select(m => new ContainerMemberImpl {
@@ -36,10 +36,10 @@ namespace Nijo.Models.QueryModelModules {
                 });
         }
 
-        private class ContainerMemberImpl : IMessageContainerMember {
+        private class ContainerMemberImpl : MessageContainer.IMember {
             public required string PhysicalName { get; init; }
             public required string DisplayName { get; init; }
-            public required MessageContainer? NestedObject { get; init; }
+            public required MessageContainer.Setter? NestedObject { get; init; }
             public required string? CsType { get; init; }
             public required bool IsArray { get; init; }
         }

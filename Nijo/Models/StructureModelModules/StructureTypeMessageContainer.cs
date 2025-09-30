@@ -12,14 +12,14 @@ namespace Nijo.Models.StructureModelModules {
     /// <see cref="StructureModel.StructureType"/> の形と一致するメッセージの入れ物。
     /// この構造体がいずれかのコマンドモデルの引数に指定されている場合のみレンダリングされる。
     /// </summary>
-    internal class StructureTypeMessageContainer : MessageContainer {
+    internal class StructureTypeMessageContainer : MessageContainer.Setter {
         public StructureTypeMessageContainer(AggregateBase aggregate) : base(aggregate) {
         }
 
         internal override string CsClassName => $"{_aggregate.PhysicalName}Messages";
         internal override string TsTypeName => $"{_aggregate.PhysicalName}Messages";
 
-        protected override IEnumerable<IMessageContainerMember> GetMembers() {
+        protected override IEnumerable<MessageContainer.IMember> GetMembers() {
             var structureType = _aggregate is RootAggregate root
                 ? new StructureType(root)
                 : new StructureDescendantMember(_aggregate);
@@ -37,7 +37,7 @@ namespace Nijo.Models.StructureModelModules {
                         break;
                     case StructureRefToMember refToMember:
                         var targetStructure = refToMember.GetTargetStructure();
-                        MessageContainer targetMessage = targetStructure switch {
+                        MessageContainer.Setter targetMessage = targetStructure switch {
                             QueryModelModules.DisplayData disp => new QueryModelModules.DisplayDataMessageContainer(disp.Aggregate),
                             QueryModelModules.SearchCondition.Entry sc => new QueryModelModules.SearchConditionMessageContainer(sc.EntryAggregate),
                             StructureType str => new StructureTypeMessageContainer(str.Aggregate),
@@ -82,10 +82,10 @@ namespace Nijo.Models.StructureModelModules {
                 """;
         }
 
-        private class ContainerMemberImpl : IMessageContainerMember {
+        private class ContainerMemberImpl : MessageContainer.IMember {
             public required string PhysicalName { get; init; }
             public required string DisplayName { get; init; }
-            public required MessageContainer? NestedObject { get; init; }
+            public required MessageContainer.Setter? NestedObject { get; init; }
             public required string? CsType { get; init; }
             public required bool IsArray { get; init; }
         }

@@ -13,7 +13,7 @@ namespace Nijo.Models.QueryModelModules;
 /// <summary>
 /// <see cref="DisplayData"/> の形と一致するメッセージの入れ物
 /// </summary>
-internal class DisplayDataMessageContainer : MessageContainer {
+internal class DisplayDataMessageContainer : MessageContainer.Setter {
     public DisplayDataMessageContainer(AggregateBase aggregate) : base(aggregate) {
     }
 
@@ -28,7 +28,7 @@ internal class DisplayDataMessageContainer : MessageContainer {
         }
     }
 
-    protected override IEnumerable<IMessageContainerMember> GetMembers() {
+    protected override IEnumerable<MessageContainer.IMember> GetMembers() {
         var displayData = new DisplayData(_aggregate);
         foreach (var member in displayData.Values.GetMembers()) {
             yield return new ContainerMemberImpl {
@@ -67,7 +67,7 @@ internal class DisplayDataMessageContainer : MessageContainer {
                 return new {
                     member.PhysicalName,
                     InterfaceName = memberAggregate is ChildrenAggregate
-                        ? $"{SETTER_INTERFACE_LIST}<{childMsgContainer.InterfaceName}>"
+                        ? $"{MessageContainer.SETTER_INTERFACE_LIST}<{childMsgContainer.InterfaceName}>"
                         : childMsgContainer.InterfaceName,
                 };
             });
@@ -80,14 +80,14 @@ internal class DisplayDataMessageContainer : MessageContainer {
             """;
     }
 
-    private class ContainerMemberImpl : IMessageContainerMember {
+    private class ContainerMemberImpl : MessageContainer.IMember {
         public required string PhysicalName { get; init; }
         public required string DisplayName { get; init; }
         public required DisplayDataMessageContainer? NestedObject { get; init; }
         public required string? CsType { get; init; }
         public required bool IsArray { get; init; }
 
-        MessageContainer? IMessageContainerMember.NestedObject => NestedObject;
+        MessageContainer.Setter? MessageContainer.IMember.NestedObject => NestedObject;
     }
 
     internal static string RenderCSharpRecursively(RootAggregate rootAggregate) {
