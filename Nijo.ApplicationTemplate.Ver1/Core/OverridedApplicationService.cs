@@ -337,4 +337,9 @@ partial class OverridedApplicationService {
             診療番号 = $"TEST-{DateTime.Now:yyyyMMddHHmmss}",
         });
     }
+
+    // 引数戻り値ともに無いコマンドモデル
+    public override Task<object> Executeアプリケーション死活監視(object param, IPresentationContext<MessageSetter> context) {
+        throw new NotImplementedException();
+    }
 }

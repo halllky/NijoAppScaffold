@@ -286,7 +286,7 @@ namespace Nijo {
                 var config = project.GetConfig();
                 using var launcher = new Runtime.GeneratedProjectLauncher(
                     project.WebapiProjectRoot,
-                    project.ReactProjectRoot,
+                    Path.Combine(project.ReactProjectRoot, ".."),
                     new Uri(config.DotnetDebuggingUrl),
                     new Uri(config.ReactDebuggingUrl),
                     logger);
