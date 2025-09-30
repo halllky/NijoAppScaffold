@@ -334,19 +334,19 @@ namespace Nijo.Parts.CSharp {
                             /// このインスタンスを指定した型にキャストして返します。
                             /// </summary>
                             public T As<T>() where T : {{SETTER_INTERFACE}} {
-                                return GetDefaultClass<T>(_path, UnderlyingContext);
+                                return {{GET_DEFAULT_CLASS}}<T>(_path, UnderlyingContext);
                             }
 
                             /// <summary>
                             /// 引数のメッセージのコンテナの形と対応する既定のインスタンスを作成して返します。
                             /// </summary>
-                            public static T GetDefaultClass<T>(IEnumerable<string> path, {{CONTEXT_CLASS}} context) where T : {{SETTER_INTERFACE}} {
-                                return (T)GetDefaultClass(typeof(T), path, context);
+                            public static T {{GET_DEFAULT_CLASS}}<T>(IEnumerable<string> path, {{CONTEXT_CLASS}} context) where T : {{SETTER_INTERFACE}} {
+                                return (T){{GET_DEFAULT_CLASS}}(typeof(T), path, context);
                             }
                             /// <summary>
                             /// 引数のメッセージのコンテナの形と対応する既定のインスタンスを作成して返します。
                             /// </summary>
-                            public static {{SETTER_INTERFACE}} GetDefaultClass(Type type, IEnumerable<string> path, {{CONTEXT_CLASS}} context) {
+                            public static {{SETTER_INTERFACE}} {{GET_DEFAULT_CLASS}}(Type type, IEnumerable<string> path, {{CONTEXT_CLASS}} context) {
                         {{registered.OrderBy(kv => kv.Key).SelectTextTemplate(kv => $$"""
                                 if (type == typeof({{kv.Key}})) return new {{kv.Value}}(path, context);
                         """)}}
