@@ -599,8 +599,10 @@ internal static class BasicNodeOptions {
             }
 
             // 型に応じた値の妥当性チェック
-            var valueAttr = ctx.XElement.Attribute(ConstantValue.AttributeName);
-            if (valueAttr == null) {
+            var valueAttr = ConstantValue == null
+                ? throw new Exception("ありえない")
+                : ctx.XElement.Attribute(ConstantValue.AttributeName);
+            if (valueAttr is null) {
                 ctx.AddError("ConstantValue属性が必須です。");
                 return;
             }
