@@ -36,8 +36,6 @@ namespace Nijo.Models.QueryModelModules {
         internal const string VALUES_CS = "Values";
         /// <summary>値が格納されるプロパティの名前（TypeScript）</summary>
         internal const string VALUES_TS = "values";
-        /// <summary>値クラス名</summary>
-        internal string ValueCsClassName => $"{CsClassName}Values";
 
         /// <summary>
         /// 通常、保存時に追加・更新・削除のどの処理となるかは
@@ -244,7 +242,7 @@ namespace Nijo.Models.QueryModelModules {
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => csts == E_CsTs.CSharp ? VALUES_CS : VALUES_TS;
             bool IInstanceStructurePropertyMetadata.IsArray => false;
             string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp
-                ? new DisplayData(_aggregate).ValueCsClassName
+                ? new DisplayData(_aggregate).CsValuesClassName
                 : throw new InvalidOperationException("この分岐にくることは無いはず");
 
             IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => GetMembers();
