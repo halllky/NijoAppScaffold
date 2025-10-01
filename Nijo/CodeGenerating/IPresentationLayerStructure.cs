@@ -5,6 +5,8 @@ namespace Nijo.CodeGenerating;
 
 /// <summary>
 /// C# と TypeScript の両方で登場する構造体。
+///
+/// <see cref="Nijo.Parts.Common.PlainPresentationObject"/> と役割重複。
 /// </summary>
 public interface IPresentationLayerStructure {
     /// <summary>C#クラス名</summary>

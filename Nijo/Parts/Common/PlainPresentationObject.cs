@@ -8,6 +8,8 @@ namespace Nijo.Parts.Common;
 /// <summary>
 /// ユーザーが閲覧する画面上に登場するオブジェクトのうち、
 /// スキーマ定義のデータ構造そのままのデータ構造がレンダリングされるもの。
+///
+/// <see cref="IPresentationLayerStructure"/> と役割重複。
 /// </summary>
 internal abstract class PlainPresentationObject : IInstancePropertyOwnerMetadata {
 
