@@ -13,7 +13,7 @@ namespace Nijo.Models.QueryModelModules {
     /// <summary>
     /// ReadModelの画面表示用データ
     /// </summary>
-    internal class DisplayData : PresentationObject {
+    internal class DisplayData : EditablePresentationObject {
 
         internal DisplayData(AggregateBase aggregate) : base(aggregate) { }
 
@@ -36,8 +36,8 @@ namespace Nijo.Models.QueryModelModules {
                 .EnumerateThisAndDescendants()
                 .Select(agg => agg switch {
                     RootAggregate root => new DisplayData(root),
-                    ChildAggregate child => new PresentationObjectChildDescendant(child),
-                    ChildrenAggregate children => new PresentationObjectChildrenDescendant(children),
+                    ChildAggregate child => new EditablePresentationObjectChildDescendant(child),
+                    ChildrenAggregate children => new EditablePresentationObjectChildrenDescendant(children),
                     _ => throw new InvalidOperationException(),
                 });
 
@@ -54,8 +54,8 @@ namespace Nijo.Models.QueryModelModules {
                 .EnumerateThisAndDescendants()
                 .Select(agg => agg switch {
                     RootAggregate root => new DisplayData(root),
-                    ChildAggregate child => new PresentationObjectChildDescendant(child),
-                    ChildrenAggregate children => new PresentationObjectChildrenDescendant(children),
+                    ChildAggregate child => new EditablePresentationObjectChildDescendant(child),
+                    ChildrenAggregate children => new EditablePresentationObjectChildrenDescendant(children),
                     _ => throw new InvalidOperationException(),
                 });
 

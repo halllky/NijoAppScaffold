@@ -88,7 +88,7 @@ namespace Nijo.Models.DataModelModules {
             var ownKeys = _rootAggregate.GetKeyVMs().ToHashSet();
             var primaryKeys = new Variable("displayData", displayData)
                 .Create1To1PropertiesRecursively()
-                .Where(prop => prop.Metadata is DisplayData.PresentationObjectValueMember vm && ownKeys.Contains(vm.Member)
+                .Where(prop => prop.Metadata is DisplayData.EditablePresentationObjectValueMember vm && ownKeys.Contains(vm.Member)
                             || prop.Metadata is DisplayDataRef.RefDisplayDataValueMember refVm && ownKeys.Contains(refVm.Member));
 
             return $$"""

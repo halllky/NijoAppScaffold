@@ -17,7 +17,7 @@ namespace Nijo.Parts.Common;
 /// <item>（TODO: あとで実装する）インスタンスごとのユニークなID</item>
 /// </list>
 /// </summary>
-internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICreatablePresentationLayerStructure {
+internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetadata, ICreatablePresentationLayerStructure {
 
     /// <summary>値が格納されるプロパティの名前（C#）</summary>
     internal const string VALUES_CS = "Values";
@@ -48,7 +48,7 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
     internal const string ASSIGN_TO_UPDATE_COMMAND = "AssignToUpdateCommand";
     internal const string TO_DELETE_COMMAND = "ToDeleteCommand";
 
-    protected PresentationObject(AggregateBase aggregate) {
+    protected EditablePresentationObject(AggregateBase aggregate) {
         Aggregate = aggregate;
     }
     internal AggregateBase Aggregate { get; }
@@ -79,13 +79,13 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
     /// <summary>
     /// 子要素を列挙する。
     /// </summary>
-    internal IEnumerable<PresentationObjectDescendant> GetChildMembers() {
+    internal IEnumerable<EditablePresentationObjectDescendant> GetChildMembers() {
         foreach (var member in Aggregate.GetMembers()) {
             if (member is ChildAggregate child) {
-                yield return new PresentationObjectChildDescendant(child);
+                yield return new EditablePresentationObjectChildDescendant(child);
 
             } else if (member is ChildrenAggregate children) {
-                yield return new PresentationObjectChildrenDescendant(children);
+                yield return new EditablePresentationObjectChildrenDescendant(children);
 
             }
         }
@@ -201,13 +201,13 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
 
         IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => GetMembers();
 
-        internal IEnumerable<IPresentationObjectMemberInValues> GetMembers() {
+        internal IEnumerable<IEditablePresentationObjectMemberInValues> GetMembers() {
             foreach (var member in _aggregate.GetMembers()) {
                 if (member is ValueMember vm) {
-                    yield return new PresentationObjectValueMember(vm);
+                    yield return new EditablePresentationObjectValueMember(vm);
 
                 } else if (member is RefToMember refTo) {
-                    yield return new PresentationObjectRefMember(refTo);
+                    yield return new EditablePresentationObjectRefMember(refTo);
 
                 }
             }
@@ -216,7 +216,7 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
     /// <summary>
     /// Valuesオブジェクトの中のメンバー
     /// </summary>
-    internal interface IPresentationObjectMemberInValues : IUiConstraintValue, IInstancePropertyMetadata {
+    internal interface IEditablePresentationObjectMemberInValues : IUiConstraintValue, IInstancePropertyMetadata {
         UiConstraint.E_Type UiConstraintType { get; }
 
         string RenderCsDeclaration();
@@ -227,8 +227,8 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
     /// <summary>
     /// Valuesオブジェクトの中のValueMember
     /// </summary>
-    internal class PresentationObjectValueMember : IPresentationObjectMemberInValues, IInstanceValuePropertyMetadata {
-        internal PresentationObjectValueMember(ValueMember vm) {
+    internal class EditablePresentationObjectValueMember : IEditablePresentationObjectMemberInValues, IInstanceValuePropertyMetadata {
+        internal EditablePresentationObjectValueMember(ValueMember vm) {
             Member = vm;
         }
         internal ValueMember Member { get; }
@@ -266,8 +266,8 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
     /// <summary>
     /// Valuesオブジェクトの中のRefTo
     /// </summary>
-    internal class PresentationObjectRefMember : IPresentationObjectMemberInValues, IInstanceStructurePropertyMetadata {
-        internal PresentationObjectRefMember(RefToMember refTo) {
+    internal class EditablePresentationObjectRefMember : IEditablePresentationObjectMemberInValues, IInstanceStructurePropertyMetadata {
+        internal EditablePresentationObjectRefMember(RefToMember refTo) {
             Member = refTo;
             RefEntry = new DisplayDataRef.Entry(refTo.RefTo);
         }
@@ -328,7 +328,7 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
             }
             """;
 
-        static string RenderMembers(PresentationObject obj) {
+        static string RenderMembers(EditablePresentationObject obj) {
             return $$"""
                 {{VALUES_TS}}: {
                 {{obj.Values.GetMembers().SelectTextTemplate(m => $$"""
@@ -353,7 +353,7 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
             }
             """;
 
-        static string RenderMembers(PresentationObject obj) {
+        static string RenderMembers(EditablePresentationObject obj) {
             return $$"""
                 {{VALUES_TS}}: {
                 {{obj.Values.GetMembers().SelectTextTemplate(m => $$"""
@@ -398,8 +398,8 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
             .EnumerateThisAndDescendants()
             .Select(agg => agg switch {
                 RootAggregate root => new DisplayData(root), // TODO: DisplayData への参照が生じている
-                ChildAggregate child => new PresentationObjectChildDescendant(child),
-                ChildrenAggregate children => new PresentationObjectChildrenDescendant(children),
+                ChildAggregate child => new EditablePresentationObjectChildDescendant(child),
+                ChildrenAggregate children => new EditablePresentationObjectChildrenDescendant(children),
                 _ => throw new InvalidOperationException(),
             });
 
@@ -443,8 +443,8 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
 
 
     #region Valuesの外に定義されるメンバー（Child, Children）
-    internal abstract class PresentationObjectDescendant : DisplayData { // TODO: DisplayData への参照が生じている
-        internal PresentationObjectDescendant(AggregateBase aggregate) : base(aggregate) { }
+    internal abstract class EditablePresentationObjectDescendant : DisplayData { // TODO: DisplayData への参照が生じている
+        internal EditablePresentationObjectDescendant(AggregateBase aggregate) : base(aggregate) { }
 
         internal string PhysicalName => Aggregate.PhysicalName;
         internal string DisplayName => Aggregate.DisplayName;
@@ -454,8 +454,8 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
         internal abstract string RenderNewObjectCreation();
     }
 
-    internal class PresentationObjectChildDescendant : PresentationObjectDescendant, IInstanceStructurePropertyMetadata {
-        internal PresentationObjectChildDescendant(ChildAggregate child) : base(child) {
+    internal class EditablePresentationObjectChildDescendant : EditablePresentationObjectDescendant, IInstanceStructurePropertyMetadata {
+        internal EditablePresentationObjectChildDescendant(ChildAggregate child) : base(child) {
             _child = child;
         }
         private readonly ChildAggregate _child;
@@ -474,8 +474,8 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
         string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp ? CsClassName : TsTypeName;
     }
 
-    internal class PresentationObjectChildrenDescendant : PresentationObjectDescendant, IInstanceStructurePropertyMetadata {
-        internal PresentationObjectChildrenDescendant(ChildrenAggregate children) : base(children) {
+    internal class EditablePresentationObjectChildrenDescendant : EditablePresentationObjectDescendant, IInstanceStructurePropertyMetadata {
+        internal EditablePresentationObjectChildrenDescendant(ChildrenAggregate children) : base(children) {
             ChildrenAggregate = children;
         }
 
