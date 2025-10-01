@@ -36,8 +36,8 @@ namespace Nijo.Models.QueryModelModules {
                 .EnumerateThisAndDescendants()
                 .Select(agg => agg switch {
                     RootAggregate root => new DisplayData(root),
-                    ChildAggregate child => new DisplayDataChildDescendant(child),
-                    ChildrenAggregate children => new DisplayDataChildrenDescendant(children),
+                    ChildAggregate child => new PresentationObjectChildDescendant(child),
+                    ChildrenAggregate children => new PresentationObjectChildrenDescendant(children),
                     _ => throw new InvalidOperationException(),
                 });
 
@@ -54,8 +54,8 @@ namespace Nijo.Models.QueryModelModules {
                 .EnumerateThisAndDescendants()
                 .Select(agg => agg switch {
                     RootAggregate root => new DisplayData(root),
-                    ChildAggregate child => new DisplayDataChildDescendant(child),
-                    ChildrenAggregate children => new DisplayDataChildrenDescendant(children),
+                    ChildAggregate child => new PresentationObjectChildDescendant(child),
+                    ChildrenAggregate children => new PresentationObjectChildrenDescendant(children),
                     _ => throw new InvalidOperationException(),
                 });
 

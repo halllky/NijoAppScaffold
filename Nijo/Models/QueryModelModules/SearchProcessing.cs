@@ -474,14 +474,14 @@ namespace Nijo.Models.QueryModelModules {
                     .ToDictionary(x => x.Metadata.SchemaPathNode.ToMappingKey());
 
                 foreach (var member in left.Values.GetMembers()) {
-                    if (member is DisplayData.DisplayDataValueMember vm) {
+                    if (member is DisplayData.PresentationObjectValueMember vm) {
                         var right = rightMembers[vm.Member.ToMappingKey()];
 
                         yield return $$"""
                             {{member.GetPropertyName(E_CsTs.CSharp)}} = {{vm.Member.Type.RenderCastToDomainType()}}{{right.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")}},
                             """;
 
-                    } else if (member is DisplayData.DisplayDataRefMember refTo) {
+                    } else if (member is DisplayData.PresentationObjectRefMember refTo) {
                         yield return $$"""
                             {{member.GetPropertyName(E_CsTs.CSharp)}} = new() {
                                 {{WithIndent(RenderRefMember(refTo.RefEntry, rightInstance, rightMembers), "    ")}}
@@ -529,7 +529,7 @@ namespace Nijo.Models.QueryModelModules {
                 }
             }
 
-            static string RenderDescendantMember(DisplayData.DisplayDataDescendant displayData, IInstancePropertyOwner rightInstance) {
+            static string RenderDescendantMember(DisplayData.PresentationObjectDescendant displayData, IInstancePropertyOwner rightInstance) {
                 if (displayData.Aggregate is ChildAggregate child) {
 
                     return $$"""

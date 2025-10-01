@@ -79,13 +79,13 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
     /// <summary>
     /// 子要素を列挙する。
     /// </summary>
-    internal IEnumerable<DisplayDataDescendant> GetChildMembers() {
+    internal IEnumerable<PresentationObjectDescendant> GetChildMembers() {
         foreach (var member in Aggregate.GetMembers()) {
             if (member is ChildAggregate child) {
-                yield return new DisplayDataChildDescendant(child);
+                yield return new PresentationObjectChildDescendant(child);
 
             } else if (member is ChildrenAggregate children) {
-                yield return new DisplayDataChildrenDescendant(children);
+                yield return new PresentationObjectChildrenDescendant(children);
 
             }
         }
@@ -195,18 +195,19 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
         string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => csts == E_CsTs.CSharp ? VALUES_CS : VALUES_TS;
         bool IInstanceStructurePropertyMetadata.IsArray => false;
         string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp
+            // TODO: ここのDisplayDataは何？
             ? new DisplayData(_aggregate).CsValuesClassName
             : throw new InvalidOperationException("この分岐にくることは無いはず");
 
         IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => GetMembers();
 
-        internal IEnumerable<IDisplayDataMemberInValues> GetMembers() {
+        internal IEnumerable<IPresentationObjectMemberInValues> GetMembers() {
             foreach (var member in _aggregate.GetMembers()) {
                 if (member is ValueMember vm) {
-                    yield return new DisplayDataValueMember(vm);
+                    yield return new PresentationObjectValueMember(vm);
 
                 } else if (member is RefToMember refTo) {
-                    yield return new DisplayDataRefMember(refTo);
+                    yield return new PresentationObjectRefMember(refTo);
 
                 }
             }
@@ -215,7 +216,7 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
     /// <summary>
     /// Valuesオブジェクトの中のメンバー
     /// </summary>
-    internal interface IDisplayDataMemberInValues : IUiConstraintValue, IInstancePropertyMetadata {
+    internal interface IPresentationObjectMemberInValues : IUiConstraintValue, IInstancePropertyMetadata {
         UiConstraint.E_Type UiConstraintType { get; }
 
         string RenderCsDeclaration();
@@ -226,8 +227,8 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
     /// <summary>
     /// Valuesオブジェクトの中のValueMember
     /// </summary>
-    internal class DisplayDataValueMember : IDisplayDataMemberInValues, IInstanceValuePropertyMetadata {
-        internal DisplayDataValueMember(ValueMember vm) {
+    internal class PresentationObjectValueMember : IPresentationObjectMemberInValues, IInstanceValuePropertyMetadata {
+        internal PresentationObjectValueMember(ValueMember vm) {
             Member = vm;
         }
         internal ValueMember Member { get; }
@@ -265,13 +266,13 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
     /// <summary>
     /// Valuesオブジェクトの中のRefTo
     /// </summary>
-    internal class DisplayDataRefMember : IDisplayDataMemberInValues, IInstanceStructurePropertyMetadata {
-        internal DisplayDataRefMember(RefToMember refTo) {
+    internal class PresentationObjectRefMember : IPresentationObjectMemberInValues, IInstanceStructurePropertyMetadata {
+        internal PresentationObjectRefMember(RefToMember refTo) {
             Member = refTo;
             RefEntry = new DisplayDataRef.Entry(refTo.RefTo);
         }
         internal RefToMember Member { get; }
-        internal DisplayDataRef.Entry RefEntry;
+        internal DisplayDataRef.Entry RefEntry; // TODO: DisplayDataRef の位置づけも整理する
 
         public string PropertyName => Member.PhysicalName;
         public string DisplayName => Member.DisplayName;
@@ -327,14 +328,14 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
             }
             """;
 
-        static string RenderMembers(PresentationObject displayData) {
+        static string RenderMembers(PresentationObject obj) {
             return $$"""
                 {{VALUES_TS}}: {
-                {{displayData.Values.GetMembers().SelectTextTemplate(m => $$"""
+                {{obj.Values.GetMembers().SelectTextTemplate(m => $$"""
                   {{m.GetPropertyName(E_CsTs.TypeScript)}}: Util.{{m.UiConstraintType}}
                 """)}}
                 }
-                {{displayData.GetChildMembers().SelectTextTemplate(desc => $$"""
+                {{obj.GetChildMembers().SelectTextTemplate(desc => $$"""
                 {{desc.PhysicalName}}: {
                   {{WithIndent(RenderMembers(desc), "  ")}}
                 }
@@ -352,10 +353,10 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
             }
             """;
 
-        static string RenderMembers(PresentationObject displayData) {
+        static string RenderMembers(PresentationObject obj) {
             return $$"""
                 {{VALUES_TS}}: {
-                {{displayData.Values.GetMembers().SelectTextTemplate(m => $$"""
+                {{obj.Values.GetMembers().SelectTextTemplate(m => $$"""
                   {{m.GetPropertyName(E_CsTs.TypeScript)}}: {
                 {{If(m.IsRequired, () => $$"""
                     {{UiConstraint.MEMBER_REQUIRED}}: true,
@@ -375,7 +376,7 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
                   },
                 """)}}
                 },
-                {{displayData.GetChildMembers().SelectTextTemplate(desc => $$"""
+                {{obj.GetChildMembers().SelectTextTemplate(desc => $$"""
                 {{desc.PhysicalName}}: {
                   {{WithIndent(RenderMembers(desc), "  ")}}
                 },
@@ -396,9 +397,9 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
         var tree = rootAggregate
             .EnumerateThisAndDescendants()
             .Select(agg => agg switch {
-                RootAggregate root => new DisplayData(root),
-                ChildAggregate child => new DisplayDataChildDescendant(child),
-                ChildrenAggregate children => new DisplayDataChildrenDescendant(children),
+                RootAggregate root => new DisplayData(root), // TODO: DisplayData への参照が生じている
+                ChildAggregate child => new PresentationObjectChildDescendant(child),
+                ChildrenAggregate children => new PresentationObjectChildrenDescendant(children),
                 _ => throw new InvalidOperationException(),
             });
 
@@ -442,8 +443,8 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
 
 
     #region Valuesの外に定義されるメンバー（Child, Children）
-    internal abstract class DisplayDataDescendant : DisplayData {
-        internal DisplayDataDescendant(AggregateBase aggregate) : base(aggregate) { }
+    internal abstract class PresentationObjectDescendant : DisplayData { // TODO: DisplayData への参照が生じている
+        internal PresentationObjectDescendant(AggregateBase aggregate) : base(aggregate) { }
 
         internal string PhysicalName => Aggregate.PhysicalName;
         internal string DisplayName => Aggregate.DisplayName;
@@ -453,8 +454,8 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
         internal abstract string RenderNewObjectCreation();
     }
 
-    internal class DisplayDataChildDescendant : DisplayDataDescendant, IInstanceStructurePropertyMetadata {
-        internal DisplayDataChildDescendant(ChildAggregate child) : base(child) {
+    internal class PresentationObjectChildDescendant : PresentationObjectDescendant, IInstanceStructurePropertyMetadata {
+        internal PresentationObjectChildDescendant(ChildAggregate child) : base(child) {
             _child = child;
         }
         private readonly ChildAggregate _child;
@@ -473,8 +474,8 @@ internal abstract class PresentationObject : IInstancePropertyOwnerMetadata, ICr
         string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp ? CsClassName : TsTypeName;
     }
 
-    internal class DisplayDataChildrenDescendant : DisplayDataDescendant, IInstanceStructurePropertyMetadata {
-        internal DisplayDataChildrenDescendant(ChildrenAggregate children) : base(children) {
+    internal class PresentationObjectChildrenDescendant : PresentationObjectDescendant, IInstanceStructurePropertyMetadata {
+        internal PresentationObjectChildrenDescendant(ChildrenAggregate children) : base(children) {
             ChildrenAggregate = children;
         }
 
