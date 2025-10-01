@@ -334,7 +334,7 @@ namespace Nijo.Models.QueryModelModules {
                                 """;
 
                         } else {
-                            var childrenMetadata = (DisplayDataRef.RefDisplayDataMemberContainer)sp.Metadata;
+                            var childrenMetadata = (DisplayDataRef.PlainPresentationObject)sp.Metadata;
                             var left = new Variable("newステートメントなので変数名なし", childrenMetadata);
 
                             yield return $$"""
