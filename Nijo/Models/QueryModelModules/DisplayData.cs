@@ -37,15 +37,6 @@ namespace Nijo.Models.QueryModelModules {
         /// <summary>値が格納されるプロパティの名前（TypeScript）</summary>
         internal const string VALUES_TS = "values";
 
-        /// <summary>
-        /// 通常、保存時に追加・更新・削除のどの処理となるかは
-        /// <see cref="EXISTS_IN_DB_TS"/>, <see cref="WILL_BE_CHANGED_TS"/>, <see cref="WILL_BE_DELETED_TS"/>
-        /// から計算されるが、強制的に追加または更新または削除いずれかの処理を走らせたい場合に指定されるプロパティ
-        /// </summary>
-        internal const string ADD_MOD_DEL_CS = "AddModDel";
-        /// <inheritdoc cref="ADD_MOD_DEL_CS"/>
-        internal const string ADD_MOD_DEL_TS = "addModDel";
-
         /// <summary>このデータがDBに保存済みかどうか（C#）。つまり新規作成のときはfalse, 閲覧・更新・削除のときはtrue</summary>
         internal const string EXISTS_IN_DB_CS = "ExistsInDatabase";
         /// <summary>このデータがDBに保存済みかどうか（TypeScript）。つまり新規作成のときはfalse, 閲覧・更新・削除のときはtrue</summary>
@@ -65,9 +56,6 @@ namespace Nijo.Models.QueryModelModules {
         internal const string VERSION_CS = "Version";
         /// <summary>楽観排他制御用のバージョニング情報をもつプロパティの名前（TypeScript側）</summary>
         internal const string VERSION_TS = "version";
-
-        /// <summary>追加・更新・削除のいずれかの区分を返すメソッドの名前</summary>
-        internal const string GET_SAVE_TYPE = "GetSaveType";
 
         public const string TO_CREATE_COMMAND = "ToCreateCommand";
         public const string ASSIGN_TO_UPDATE_COMMAND = "AssignToUpdateCommand";
