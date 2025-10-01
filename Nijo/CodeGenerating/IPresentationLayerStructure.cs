@@ -13,8 +13,6 @@ public interface IPresentationLayerStructure {
     string TsTypeName { get; }
     /// <summary>構造体のメンバーを取得します。</summary>
     IEnumerable<IInstancePropertyMetadata> GetMembers();
-    /// <summary>TypeScriptの新規オブジェクト作成関数のリテラル部分をレンダリングします。</summary>
-    string RenderTsNewObjectFunctionBody();
 }
 
 /// <summary>
@@ -23,4 +21,6 @@ public interface IPresentationLayerStructure {
 public interface ICreatablePresentationLayerStructure : IPresentationLayerStructure {
     /// <summary>TypeScriptの新規オブジェクト作成関数の名前</summary>
     string TsNewObjectFunction { get; }
+    /// <summary>TypeScriptの新規オブジェクト作成関数のリテラル部分をレンダリングします。</summary>
+    string RenderTsNewObjectFunctionBody();
 }
