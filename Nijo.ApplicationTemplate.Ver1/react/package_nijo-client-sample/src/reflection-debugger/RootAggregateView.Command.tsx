@@ -19,20 +19,22 @@ export default function ({ rootAggregateType, className }: {
 
   // 自動生成されたメタデータをもとにした引数の入力フォーム定義
   const parameterFormSchema = React.useMemo(() => {
+    const root = helper.metadata[rootAggregateType]
     const parameter = Object
-      .entries(helper.metadata[rootAggregateType].members)
-      .find(([name]) => name === `${rootAggregateType}Parameter`)?.[1]
-    if (!parameter) throw new Error(`${rootAggregateType}Parameter が見つかりません`) // ありえないが念のため
-    return buildDynamicFormSchema(parameter as MetadataForPage.StructureMetadata, 'command-model', false, helper)
+      .entries(helper.metadata)
+      .find(([name]) => name === root.parameter)?.[1]
+    if (!parameter) throw new Error(`${root.parameter} が見つかりません`) // ありえないが念のため
+    return buildDynamicFormSchema(parameter as MetadataForPage.StructureMetadata, 'structure-model', false, helper)
   }, [rootAggregateType, helper])
 
   // 自動生成されたメタデータをもとにした戻り値の入力フォーム定義
   const returnValueFormSchema = React.useMemo(() => {
+    const root = helper.metadata[rootAggregateType]
     const returnValue = Object
-      .entries(helper.metadata[rootAggregateType].members)
-      .find(([name]) => name === `${rootAggregateType}ReturnValue`)?.[1]
-    if (!returnValue) throw new Error(`${rootAggregateType}ReturnValue が見つかりません`) // ありえないが念のため
-    return buildDynamicFormSchema(returnValue as MetadataForPage.StructureMetadata, 'command-model', false, helper)
+      .entries(helper.metadata)
+      .find(([name]) => name === root.returnValue)?.[1]
+    if (!returnValue) throw new Error(`${root.returnValue} が見つかりません`) // ありえないが念のため
+    return buildDynamicFormSchema(returnValue as MetadataForPage.StructureMetadata, 'structure-model', false, helper)
   }, [rootAggregateType, helper])
 
   // 履歴表示コンポーネント
