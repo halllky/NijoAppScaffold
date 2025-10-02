@@ -17,7 +17,6 @@ public class PresentationContextInWebApi<TMessageRoot> : IPresentationContext<TM
 
     internal MessageContainer MessageContext { get; } // メッセージの格納先
     public TMessageRoot Messages { get; } // メッセージ設定用ヘルパー
-    IMessageSetter IPresentationContext.Messages => Messages;
 
     public IPresentationContextOptions Options { get; }
 
@@ -39,6 +38,20 @@ public class PresentationContextInWebApi<TMessageRoot> : IPresentationContext<TM
         return Confirms.Count > 0;
     }
     #endregion 確認メッセージ
+}
+
+/// <summary>
+/// webapiにおける <see cref="IPresentationContextWithReturnValue{TReturnValue, TMessageRoot}"/> のデフォルトの実装
+/// </summary>
+public class PresentationContextInWebApi<TReturnValue, TMessageRoot> : PresentationContextInWebApi<TMessageRoot>, IPresentationContextWithReturnValue<TReturnValue, TMessageRoot>
+    where TMessageRoot : IMessageSetter
+    where TReturnValue : new() {
+
+    internal PresentationContextInWebApi(MessageContainer messageContext, IPresentationContextOptions options) : base(messageContext, options) {
+        ReturnValue = new TReturnValue();
+    }
+
+    public TReturnValue ReturnValue { get; set; }
 }
 
 /// <summary>

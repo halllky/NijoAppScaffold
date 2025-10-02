@@ -318,28 +318,28 @@ partial class OverridedApplicationService {
         });
     }
 
-    public override Task<医療機器管理ReturnValue> Execute医療機器管理(医療機器管理ParameterDisplayData parameter, IPresentationContext<医療機器管理ParameterMessages> context) {
+    public override Task Execute医療機器管理(医療機器管理ParameterDisplayData parameter, IPresentationContextWithReturnValue<医療機器管理ReturnValue, 医療機器管理ParameterMessages> context) {
         // TODO: 医療機器管理コマンドの処理を実装してください。
         return Task.FromResult(new 医療機器管理ReturnValue());
     }
 
-    public override Task<簡易診療登録ReturnValue> Execute簡易診療登録(簡易診療登録ParameterDisplayData parameter, IPresentationContext<簡易診療登録ParameterMessages> context) {
-        // TODO: 簡易診療登録コマンドの処理を実装してください。
-        return Task.FromResult(new 簡易診療登録ReturnValue() {
-            処理結果 = $$"""
-                パラメータの{{nameof(parameter.Values.患者ID)}}は{{parameter.Values.患者ID}}でした。
-                パラメータの{{nameof(parameter.使用機器一覧)}}の内容は以下です。
-                {{string.Join(Environment.NewLine, parameter.使用機器一覧.Select((x, i) => $$"""
-                {{(i + 1):000}}: 機器ID: {{x.Values.機器ID}}
-                     使用数量: {{x.Values.使用数量}}
-                """))}}
-                """,
-            診療番号 = $"TEST-{DateTime.Now:yyyyMMddHHmmss}",
-        });
+    public override Task Execute簡易診療登録(簡易診療登録ParameterDisplayData parameter, IPresentationContextWithReturnValue<簡易診療登録ReturnValue, 簡易診療登録ParameterMessages> context) {
+
+        context.ReturnValue.処理結果 = $$"""
+            パラメータの{{nameof(parameter.Values.患者ID)}}は{{parameter.Values.患者ID}}でした。
+            パラメータの{{nameof(parameter.使用機器一覧)}}の内容は以下です。
+            {{string.Join(Environment.NewLine, parameter.使用機器一覧.Select((x, i) => $$"""
+            {{(i + 1):000}}: 機器ID: {{x.Values.機器ID}}
+                使用数量: {{x.Values.使用数量}}
+            """))}}
+            """;
+        context.ReturnValue.診療番号 = $"TEST-{DateTime.Now:yyyyMMddHHmmss}";
+
+        return Task.CompletedTask;
     }
 
     // 引数戻り値ともに無いコマンドモデル
-    public override Task<object> Executeアプリケーション死活監視(object param, IPresentationContext<MessageSetter> context) {
+    public override Task Executeアプリケーション死活監視(IPresentationContext<MessageSetter> context) {
         throw new NotImplementedException();
     }
 }

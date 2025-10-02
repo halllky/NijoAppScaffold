@@ -42,5 +42,16 @@ internal class PresentationContextInUnitTest<TMessage> : PresentationContextInUn
     internal PresentationContextInUnitTest(TMessage messageRoot, IPresentationContextOptions options) : base(messageRoot, options) { }
 
     public new TMessage Messages => (TMessage)base.Messages;
-    IMessageSetter IPresentationContext.Messages => Messages;
+}
+
+/// <inheritdoc cref="PresentationContextInUnitTest"/>
+internal class PresentationContextInUnitTest<TReturnValue, TMessage> : PresentationContextInUnitTest<TMessage>, IPresentationContextWithReturnValue<TReturnValue, TMessage>
+    where TMessage : IMessageSetter
+    where TReturnValue : new() {
+
+    internal PresentationContextInUnitTest(TMessage messageRoot, IPresentationContextOptions options) : base(messageRoot, options) {
+        ReturnValue = new TReturnValue();
+    }
+
+    public TReturnValue ReturnValue { get; set; }
 }

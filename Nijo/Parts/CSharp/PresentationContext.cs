@@ -14,6 +14,7 @@ namespace Nijo.Parts.CSharp {
     internal class PresentationContext {
 
         internal const string INTERFACE = "IPresentationContext";
+        internal const string INTERFACE_WITH_RETURN_VALUE = "IPresentationContextWithReturnValue";
         internal const string OPTIONS = "IPresentationContextOptions";
 
         internal static SourceFile RenderStaticCore(CodeRenderingContext ctx) {
@@ -32,11 +33,6 @@ namespace Nijo.Parts.CSharp {
                         {{OPTIONS}} Options { get; }
 
                         /// <summary>
-                        /// パラメータの各値に対するメッセージ。エラーや警告など。
-                        /// </summary>
-                        {{MessageContainer.SETTER_INTERFACE}} Messages { get; }
-
-                        /// <summary>
                         /// 「～しますがよろしいですか？」などの確認メッセージを追加します。
                         /// </summary>
                         void AddConfirm(string text);
@@ -53,7 +49,31 @@ namespace Nijo.Parts.CSharp {
                         /// <summary>
                         /// パラメータの各値に対するメッセージ。エラーや警告など。
                         /// </summary>
-                        new TMessageRoot Messages { get; }
+                        TMessageRoot Messages { get; }
+                    }
+
+                    /// <inheritdoc cref="{{INTERFACE}}"/>
+                    /// <typeparam name="TReturnValue">戻り値の型</typeparam>
+                    public interface {{INTERFACE_WITH_RETURN_VALUE}}<TReturnValue> : {{INTERFACE}}
+                        where TReturnValue : new() {
+
+                        /// <summary>
+                        /// 画面側に返す戻り値を取得または設定します。
+                        /// </summary>
+                        TReturnValue ReturnValue { get; set; }
+                    }
+
+                    /// <inheritdoc cref="{{INTERFACE}}"/>
+                    /// <typeparam name="TReturnValue">戻り値の型</typeparam>
+                    /// <typeparam name="TMessageRoot">パラメータのメッセージ型</typeparam>
+                    public interface {{INTERFACE_WITH_RETURN_VALUE}}<TReturnValue, TMessageRoot> : {{INTERFACE}}<TMessageRoot>
+                        where TMessageRoot : {{MessageContainer.SETTER_INTERFACE}}
+                        where TReturnValue : new() {
+
+                        /// <summary>
+                        /// 画面側に返す戻り値を取得または設定します。
+                        /// </summary>
+                        TReturnValue ReturnValue { get; set; }
                     }
 
                     /// <summary>

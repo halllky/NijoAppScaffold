@@ -17,25 +17,25 @@ partial class OverridedApplicationService {
     /// <summary>
     /// ログイン
     /// </summary>
-    public override async Task<アカウントViewDisplayData> Executeログイン(ログインParameter param, IPresentationContext<ログインParameterMessages> context) {
+    public override async Task Executeログイン(ログインParameterDisplayData param, IPresentationContextWithReturnValue<アカウントViewDisplayData, ログインParameterMessages> context) {
         // パラメータ検証
-        if (string.IsNullOrWhiteSpace(param.ユーザーID)) {
+        if (string.IsNullOrWhiteSpace(param.Values.ユーザーID)) {
             context.Messages.ユーザーID.AddError("ユーザーIDを入力してください。");
         }
-        if (string.IsNullOrWhiteSpace(param.パスワード)) {
+        if (string.IsNullOrWhiteSpace(param.Values.パスワード)) {
             context.Messages.パスワード.AddError("パスワードを入力してください。");
         }
         if (context.Messages.HasError()) {
-            throw new InvalidOperationException("入力エラーがあります。");
+            return;
         }
 
         // ユーザー認証
         var user = await DbContext.アカウントDbSet
-            .FirstOrDefaultAsync(u => u.アカウントID == param.ユーザーID);
+            .FirstOrDefaultAsync(u => u.アカウントID == param.Values.ユーザーID);
 
-        if (user == null || !user.VerifyPassword(param.パスワード!)) {
+        if (user == null || !user.VerifyPassword(param.Values.パスワード!)) {
             context.Messages.AddError("ユーザーIDまたはパスワードが正しくありません。");
-            throw new InvalidOperationException("認証に失敗しました。");
+            return;
         }
 
         // Cookie認証のClaimsを作成
@@ -54,7 +54,7 @@ partial class OverridedApplicationService {
         }
 
         // レスポンス用のデータを作成
-        return new アカウントViewDisplayData {
+        context.ReturnValue = new アカウントViewDisplayData {
             Values = new() {
                 アカウントID = user.アカウントID,
                 アカウント名 = user.アカウント名,
@@ -69,14 +69,12 @@ partial class OverridedApplicationService {
     /// <summary>
     /// ログアウト
     /// </summary>
-    public override async Task<object> Executeログアウト(object param, IPresentationContext<MessageSetter> context) {
+    public override async Task Executeログアウト(IPresentationContext<MessageSetter> context) {
         // HttpContextからサインアウト
         var httpContext = ServiceProvider.GetService<IHttpContextAccessor>()?.HttpContext;
         if (httpContext != null) {
             await httpContext.SignOutAsync("Cookies");
         }
-
-        return new { Success = true };
     }
     /// <summary>
     /// アカウントの画面表示用データをデータベースのどの項目から取得するかの定義
@@ -113,12 +111,12 @@ partial class OverridedApplicationService {
         });
     }
 
-    public override async Task<メッセージ追加読み込みReturnValue> Executeメッセージ追加読み込み(メッセージ追加読み込みParameter param, IPresentationContext<メッセージ追加読み込みParameterMessages> context) {
+    public override async Task Executeメッセージ追加読み込み(メッセージ追加読み込みParameterDisplayData param, IPresentationContextWithReturnValue<メッセージ追加読み込みReturnValue, メッセージ追加読み込みParameterMessages> context) {
         // このシーケンスより古いメッセージN件を読み込む
         var messages = await DbContext.メッセージDbSet
-            .Where(m => m.メッセージSEQ < param.前メッセージSEQ && m.チャンネル直下か == true)
+            .Where(m => m.メッセージSEQ < param.Values.前メッセージSEQ && m.チャンネル直下か == true)
             .OrderByDescending(m => m.メッセージSEQ) // 新しい順で取得してから
-            .Take(param.読み込み件数 ?? 20) // 件数制限
+            .Take(param.Values.読み込み件数 ?? 20) // 件数制限
             .Select(m => new メッセージViewSearchResult {
                 メッセージSEQ = m.メッセージSEQ,
                 本文 = m.本文,
@@ -130,7 +128,7 @@ partial class OverridedApplicationService {
             })
             .ToListAsync();
 
-        return new メッセージ追加読み込みReturnValue {
+        context.ReturnValue = new メッセージ追加読み込みReturnValue {
             読み込み結果 = messages.Select(m => new メッセージ追加読み込みReturnValue_読み込み結果 {
                 メッセージ = new() {
                     Values = new() {
@@ -200,14 +198,17 @@ partial class OverridedApplicationService {
         });
     }
 
-    public override async Task<object> Execute新規メッセージ投稿(新規投稿Parameter param, IPresentationContext<新規投稿ParameterMessages> context) {
+    public override async Task Execute新規メッセージ投稿(新規投稿ParameterDisplayData param, IPresentationContext<新規投稿ParameterMessages> context) {
+
+        using var transaction = await DbContext.Database.BeginTransactionAsync();
+
         // 自動生成されたメソッドを使用してメッセージを作成
         var createCommand = new メッセージCreateCommand {
-            本文 = param.本文,
+            本文 = param.Values.本文,
             記載者 = new アカウントKey { アカウントID = "dummy_user" }, // 実際のアプリケーションでは認証情報から取得
-            チャンネル = new チャンネルKey { チャンネルID = param.チャンネルID },
-            チャンネル直下か = param.返信先メッセージSEQ == null, // NULLならチャンネル直下
-            返信先メッセージSEQ = param.返信先メッセージSEQ,
+            チャンネル = new チャンネルKey { チャンネルID = param.Values.チャンネルID },
+            チャンネル直下か = param.Values.返信先メッセージSEQ == null, // NULLならチャンネル直下
+            返信先メッセージSEQ = param.Values.返信先メッセージSEQ,
             編集済みか = false,
         };
 
@@ -215,16 +216,20 @@ partial class OverridedApplicationService {
         await CreateメッセージAsync(createCommand, messages, context);
 
         if (messages.HasError()) {
-            throw new InvalidOperationException($"メッセージ作成でエラーが発生しました: {context.Messages.UnderlyingContext.Root.GetAllMessages()}");
+            return;
         }
 
-        return new { Success = true };
+        // エラーがなければコミット
+        await transaction.CommitAsync();
     }
 
     /// <summary>
     /// 既存メッセージ編集
     /// </summary>
-    public override async Task<object> Execute既存メッセージ編集(メッセージViewDisplayData param, IPresentationContext<メッセージViewDisplayDataMessages> context) {
+    public override async Task Execute既存メッセージ編集(メッセージViewDisplayData param, IPresentationContext<メッセージViewDisplayDataMessages> context) {
+
+        using var transaction = await DbContext.Database.BeginTransactionAsync();
+
         // 自動生成されたメソッドを使用してメッセージを更新
         var messages = context.Messages.As<メッセージSaveCommandMessages>();
         await UpdateメッセージAsync(param.Values.メッセージSEQ, param.Version, data => {
@@ -234,10 +239,11 @@ partial class OverridedApplicationService {
 
         // エラーメッセージはメッセージのコンテナに含めて画面側に返す
         if (messages.HasError()) {
-            return new { Success = false };
+            return;
         }
 
-        return new { Success = true };
+        // エラーがなければコミット
+        await transaction.CommitAsync();
     }
     #endregion メッセージ
 
