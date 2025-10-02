@@ -144,6 +144,32 @@ namespace Nijo.Models.DataModelModules {
         }
         private string RenderUpdateCommandDeclaring(CodeRenderingContext ctx) {
             var efCoreEntity = new EFCoreEntity(Aggregate);
+            var right = new Variable("dbEntity", efCoreEntity);
+            Dictionary<SchemaNodeIdentity, IInstanceProperty> dict;
+            try {
+                dict = right
+                    .Create1To1PropertiesRecursively()
+                    .GroupBy(x => x.Metadata.SchemaPathNode.ToMappingKey())
+                    .Select(group => new {
+                        group.Key,
+                        // 外部キーのカラムは、参照元自身のプロパティと、ナビゲーションプロパティで辿った先の
+                        // 参照先エンティティのプロパティで重複するキーが登場するので、
+                        // パスが最も短いもの（= 参照元自身のプロパティ）を選択する
+                        Value = group.OrderBy(x => x.GetPathFromInstance().Count()).First(),
+                    })
+                    .ToDictionary(x => x.Key, x => x.Value);
+            } catch (Exception ex) {
+                Console.WriteLine($$"""
+                    ★★★★★★★★★★★★★★★★★★★★★
+                    {{ex.Message}}
+                    ★★★★★★★★★★★★★★★★★★★★★
+                    {{right.Create1To1PropertiesRecursively().Take(1000).SelectTextTemplate(prop => $$"""
+                    {{prop.Metadata.SchemaPathNode.ToMappingKey()}}	{{prop.GetPathFromInstance().Select(p => p.Metadata.GetPropertyName(E_CsTs.CSharp)).Join(".")}}
+                    """)}}
+                    ★★★★★★★★★★★★★★★★★★★★★
+                    """);
+                throw;
+            }
 
             return $$"""
                 /// <summary>
@@ -160,11 +186,56 @@ namespace Nijo.Models.DataModelModules {
                     /// Entity Framework Core のエンティティからこのクラスのインスタンスを作成します。
                     /// </summary>
                     public static {{CsClassNameUpdate}} {{FROM_DBENTITY}}({{efCoreEntity.CsClassName}} dbEntity) {
-                        throw new NotImplementedException(); // TODO ver.1
+                        return new() {
+                            {{WithIndent(EnumerateMembers(this, right, dict), "            ")}}
+                        };
                     }
                 """)}}
                 }
                 """;
+
+            static IEnumerable<string> EnumerateMembers(IInstancePropertyOwnerMetadata left, IInstancePropertyOwner right, IReadOnlyDictionary<SchemaNodeIdentity, IInstanceProperty> rigthMembers) {
+                foreach (var member in left.GetMembers()) {
+                    if (member is IInstanceValuePropertyMetadata vp) {
+                        var rightPath = rigthMembers.TryGetValue(member.SchemaPathNode.ToMappingKey(), out var source)
+                            ? $"{source.Root.Name}.{source.GetPathFromInstance().Select(p => p.Metadata.GetPropertyName(E_CsTs.CSharp)).Join("?.")}"
+                            : "null";
+                        yield return $$"""
+                            {{member.GetPropertyName(E_CsTs.CSharp)}} = {{vp.Type.RenderCastToDomainType()}}{{rightPath}},
+                            """;
+
+                    } else if (member is IInstanceStructurePropertyMetadata sp) {
+
+                        if (sp.IsArray) {
+                            var arrayPath = rigthMembers.TryGetValue(sp.SchemaPathNode.ToMappingKey(), out var source)
+                                ? $"{source.Root.Name}.{source.GetPathFromInstance().Select(p => p.Metadata.GetPropertyName(E_CsTs.CSharp)).Join("?.")}"
+                              : throw new InvalidOperationException($"右辺にChildrenのXElementが無い: {sp.DisplayName}");
+
+                            // 辞書に、ラムダ式内部で右辺に使用できるプロパティを加える
+                            var dict2 = new Dictionary<SchemaNodeIdentity, IInstanceProperty>(rigthMembers);
+                            var loopVar = new Variable(((ChildrenAggregate)sp.SchemaPathNode).GetLoopVarName(), (IInstancePropertyOwnerMetadata)source.Metadata);
+                            foreach (var descendant in loopVar.Create1To1PropertiesRecursively()) {
+                                var key = descendant.Metadata.SchemaPathNode.ToMappingKey();
+                                if (dict2.ContainsKey(key)) continue;
+                                dict2.Add(key, descendant);
+                            }
+
+                            yield return $$"""
+                                {{member.GetPropertyName(E_CsTs.CSharp)}} = {{arrayPath}}?.Select({{loopVar.Name}} => new {{sp.GetTypeName(E_CsTs.CSharp)}}() {
+                                    {{WithIndent(EnumerateMembers(sp, loopVar, dict2), "    ")}}
+                                }).ToList() ?? [],
+                                """;
+
+                        } else {
+                            yield return $$"""
+                                {{member.GetPropertyName(E_CsTs.CSharp)}} = new() {
+                                    {{WithIndent(EnumerateMembers(sp, right, rigthMembers), "    ")}}
+                                },
+                                """;
+                        }
+                    }
+                }
+            }
         }
         #endregion UPDATE
 
