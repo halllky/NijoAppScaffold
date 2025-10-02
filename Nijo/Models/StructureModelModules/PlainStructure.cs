@@ -7,11 +7,12 @@ using Nijo.ImmutableSchema;
 namespace Nijo.Models.StructureModelModules;
 
 /// <summary>
-/// C#/TS で共通のデータ構造をもつ構造体
+/// C#/TS で共通のデータ構造をもつ構造体。
+/// スキーマ定義通りのシンプルな構造。
 /// </summary>
-internal class StructureType : IInstancePropertyOwnerMetadata, ICreatablePresentationLayerStructure {
-    internal StructureType(RootAggregate aggregate) { Aggregate = aggregate; }
-    protected StructureType(AggregateBase aggregate) { Aggregate = aggregate; }
+internal class PlainStructure : IInstancePropertyOwnerMetadata, ICreatablePresentationLayerStructure {
+    internal PlainStructure(RootAggregate aggregate) { Aggregate = aggregate; }
+    protected PlainStructure(AggregateBase aggregate) { Aggregate = aggregate; }
     internal AggregateBase Aggregate { get; }
 
     public virtual string CsClassName => Aggregate.PhysicalName;
@@ -54,7 +55,7 @@ internal class StructureType : IInstancePropertyOwnerMetadata, ICreatablePresent
 
         return $$"""
                     #region 構造体定義
-                    {{new StructureType(rootAggregate).RenderCSharpDeclaring(ctx)}}
+                    {{new PlainStructure(rootAggregate).RenderCSharpDeclaring(ctx)}}
                     {{descendants.SelectTextTemplate(node => $$"""
                     {{node.RenderCSharpDeclaring(ctx)}}
                     """)}}
@@ -72,7 +73,7 @@ internal class StructureType : IInstancePropertyOwnerMetadata, ICreatablePresent
 
         return $$"""
                     //#region 構造体新規作成用関数
-                    {{new StructureType(rootAggregate).RenderTypeScriptObjectCreationFunction(ctx)}}
+                    {{new PlainStructure(rootAggregate).RenderTypeScriptObjectCreationFunction(ctx)}}
                     {{descendants.SelectTextTemplate(node => $$"""
                     {{node.RenderTypeScriptObjectCreationFunction(ctx)}}
                     """)}}
@@ -161,7 +162,7 @@ internal class StructureType : IInstancePropertyOwnerMetadata, ICreatablePresent
 
         return $$"""
                     //#region 構造体定義
-                    {{new StructureType(rootAggregate).RenderTypeScriptType(ctx)}}
+                    {{new PlainStructure(rootAggregate).RenderTypeScriptType(ctx)}}
                     {{descendants.SelectTextTemplate(node => $$"""
                     {{node.RenderTypeScriptType(ctx)}}
                     """)}}
@@ -228,7 +229,7 @@ internal class StructureRefToMember : IInstanceStructurePropertyMetadata {
             RefToMember.E_RefToObject.SearchCondition => new QueryModelModules.SearchCondition.Entry(_refToMember.RefTo.GetRoot()),
             RefToMember.E_RefToObject.RefTarget => new QueryModelModules.DisplayDataRef.Entry(_refToMember.RefTo),
             _ => _refToMember.RefTo is RootAggregate root
-                ? new StructureType(root)
+                ? new PlainStructure(root)
                 : new StructureDescendantMember(_refToMember.RefTo),
         };
     }
@@ -249,7 +250,7 @@ internal class StructureRefToMember : IInstanceStructurePropertyMetadata {
 /// <summary>
 /// 構造体モデルの Child, Children メンバー
 /// </summary>
-internal class StructureDescendantMember : StructureType, IInstanceStructurePropertyMetadata {
+internal class StructureDescendantMember : PlainStructure, IInstanceStructurePropertyMetadata {
     internal StructureDescendantMember(AggregateBase aggregate) : base(aggregate) {
         if (aggregate is not ChildAggregate && aggregate is not ChildrenAggregate) {
             throw new ArgumentException("aggregate must be ChildAggregate or ChildrenAggregate");

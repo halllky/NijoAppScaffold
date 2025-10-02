@@ -9,15 +9,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
-namespace Nijo.Parts.Common
-{
+namespace Nijo.Parts.Common {
     /// <summary>
     /// カスタマイズ用のマッピングモジュール。
     /// JavaScript向けには、QueryModelやCommandModelの種類を表す文字列をキーにしてそれと対応するオブジェクトや関数を返すマッピング定義。
     /// C#向けには、QueryModelやCommandModelの種類を表すenum。
     /// </summary>
-    internal class CommandQueryMappings : IMultiAggregateSourceFile
-    {
+    internal class CommandQueryMappings : IMultiAggregateSourceFile {
 
         /// <summary>
         /// JavaScript用: DataModelの型名のリテラル型
@@ -59,32 +57,25 @@ namespace Nijo.Parts.Common
         private readonly List<RootAggregate> _dataModels = [];
         private readonly List<RootAggregate> _structureModels = [];
 
-        void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx)
-        {
+        void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
             // 特になし
         }
 
-        void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx)
-        {
-            ctx.CoreLibrary(dir =>
-            {
-                dir.Directory("Util", utilDir =>
-                {
+        void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
+            ctx.CoreLibrary(dir => {
+                dir.Directory("Util", utilDir => {
                     utilDir.Generate(RenderCSharp(ctx));
                 });
             });
-            ctx.ReactProject(dir =>
-            {
+            ctx.ReactProject(dir => {
                 dir.Generate(RenderTypeScript(ctx));
             });
         }
 
-        private SourceFile RenderCSharp(CodeRenderingContext ctx)
-        {
+        private SourceFile RenderCSharp(CodeRenderingContext ctx) {
             var values = _queryModels.Concat(_commandModels).OrderByDataFlow();
 
-            return new SourceFile
-            {
+            return new SourceFile {
                 FileName = "E_CommandQueryType.cs",
                 Contents = $$"""
                     using System.ComponentModel.DataAnnotations;
@@ -104,8 +95,7 @@ namespace Nijo.Parts.Common
             };
         }
 
-        private SourceFile RenderTypeScript(CodeRenderingContext ctx)
-        {
+        private SourceFile RenderTypeScript(CodeRenderingContext ctx) {
 
             var dataModelsOrderByDataFlow = _dataModels.OrderByDataFlow().ToArray();
             var queryModelsOrderByDataFlow = _queryModels.OrderByDataFlow().ToArray();
@@ -126,16 +116,14 @@ namespace Nijo.Parts.Common
 
             // Ref関連モジュールは他の集約から参照されているもののみ使用可能
             var referedRefEntires = new Dictionary<RootAggregate, DisplayDataRef.Entry[]>();
-            foreach (var rootAggregate in queryModelsOrderByDataFlow)
-            {
+            foreach (var rootAggregate in queryModelsOrderByDataFlow) {
                 var (refEntries, _) = DisplayDataRef.GetReferedMembersRecursively(rootAggregate);
                 referedRefEntires[rootAggregate] = refEntries;
             }
 
             // import {} from "..." で他ファイルからインポートするモジュールを決める
             var imports = new List<(string ImportFrom, string[] Modules)>();
-            foreach (var rootAggregate in queryModelsOrderByDataFlow)
-            {
+            foreach (var rootAggregate in queryModelsOrderByDataFlow) {
                 var searchCondition = new SearchCondition.Entry(rootAggregate);
                 var displayData = new DisplayData(rootAggregate);
 
@@ -151,18 +139,15 @@ namespace Nijo.Parts.Common
                 };
 
                 // 子孫集約のモジュール
-                foreach (var child in rootAggregate.EnumerateDescendants())
-                {
+                foreach (var child in rootAggregate.EnumerateDescendants()) {
                     var childDisplayData = new DisplayData(child);
                     modules.Add(childDisplayData.TsTypeName);
                     modules.Add(childDisplayData.TsNewObjectFunction);
                 }
 
                 // Ref関連モジュールは他から参照されているもののみを追加
-                if (referedRefEntires.TryGetValue(rootAggregate, out var refEntries))
-                {
-                    foreach (var entry in refEntries)
-                    {
+                if (referedRefEntires.TryGetValue(rootAggregate, out var refEntries)) {
+                    foreach (var entry in refEntries) {
                         modules.Add(entry.TsTypeName);
                         modules.Add(entry.TsNewObjectFunction);
                         modules.Add(entry.PkExtractFunctionName);
@@ -172,9 +157,8 @@ namespace Nijo.Parts.Common
 
                 imports.Add(($"./{rootAggregate.PhysicalName}", modules.ToArray()));
             }
-            foreach (var rootAggregate in structureModelsOrderByDataFlow)
-            {
-                var structureRoot = new Models.StructureModelModules.StructureType(rootAggregate);
+            foreach (var rootAggregate in structureModelsOrderByDataFlow) {
+                var structureRoot = new Models.StructureModelModules.PlainStructure(rootAggregate);
                 var modules = new List<string> {
                     structureRoot.TsTypeName,
                     structureRoot.TsNewObjectFunction,
@@ -182,8 +166,7 @@ namespace Nijo.Parts.Common
                 imports.Add(($"./{rootAggregate.PhysicalName}", modules.ToArray()));
             }
 
-            return new SourceFile
-            {
+            return new SourceFile {
                 FileName = "index.ts",
                 Contents = $$"""
                     import * as Util from "./util"
@@ -453,13 +436,13 @@ namespace Nijo.Parts.Common
                       /** StructureModel型一覧 */
                       export interface TypeMap {
                     {{structureModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                        '{{agg.PhysicalName}}': {{new Models.StructureModelModules.StructureType(agg).TsTypeName}}
+                        '{{agg.PhysicalName}}': {{new Models.StructureModelModules.PlainStructure(agg).TsTypeName}}
                     """)}}
                       }
                       /** StructureModel新規作成関数 */
                       export const create: { [K in {{STRUCTURE_MODEL_TYPE}}]: (() => TypeMap[K]) } = {
                     {{structureModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                        '{{agg.PhysicalName}}': {{new Models.StructureModelModules.StructureType(agg).TsNewObjectFunction}},
+                        '{{agg.PhysicalName}}': {{new Models.StructureModelModules.PlainStructure(agg).TsNewObjectFunction}},
                     """)}}
                       }
                     }
@@ -473,34 +456,26 @@ namespace Nijo.Parts.Common
             };
         }
 
-        internal CommandQueryMappings AddQueryModel(RootAggregate rootAggregate)
-        {
-            lock (_lock)
-            {
+        internal CommandQueryMappings AddQueryModel(RootAggregate rootAggregate) {
+            lock (_lock) {
                 _queryModels.Add(rootAggregate);
                 return this;
             }
         }
-        internal CommandQueryMappings AddCommandModel(RootAggregate rootAggregate)
-        {
-            lock (_lock)
-            {
+        internal CommandQueryMappings AddCommandModel(RootAggregate rootAggregate) {
+            lock (_lock) {
                 _commandModels.Add(rootAggregate);
                 return this;
             }
         }
-        internal CommandQueryMappings AddDataModel(RootAggregate rootAggregate)
-        {
-            lock (_lock)
-            {
+        internal CommandQueryMappings AddDataModel(RootAggregate rootAggregate) {
+            lock (_lock) {
                 _dataModels.Add(rootAggregate);
                 return this;
             }
         }
-        internal CommandQueryMappings AddStructureModel(RootAggregate rootAggregate)
-        {
-            lock (_lock)
-            {
+        internal CommandQueryMappings AddStructureModel(RootAggregate rootAggregate) {
+            lock (_lock) {
                 _structureModels.Add(rootAggregate);
                 return this;
             }

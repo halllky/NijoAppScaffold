@@ -9,22 +9,22 @@ using System.Threading.Tasks;
 
 namespace Nijo.Models.StructureModelModules {
     /// <summary>
-    /// <see cref="StructureModel.StructureType"/> の形と一致するメッセージの入れ物。
+    /// <see cref="StructureModel.StructureDisplayData"/> の形と一致するメッセージの入れ物。
     /// この構造体がいずれかのコマンドモデルの引数に指定されている場合のみレンダリングされる。
     /// </summary>
-    internal class StructureTypeMessageContainer : MessageContainer.Setter {
-        public StructureTypeMessageContainer(AggregateBase aggregate) : base(aggregate) {
+    internal class StructureDisplayDataMessageContainer : MessageContainer.Setter {
+        public StructureDisplayDataMessageContainer(AggregateBase aggregate) : base(aggregate) {
         }
 
         internal override string CsClassName => $"{_aggregate.PhysicalName}Messages";
         internal override string TsTypeName => $"{_aggregate.PhysicalName}Messages";
 
         protected override IEnumerable<MessageContainer.IMember> GetMembers() {
-            var structureType = _aggregate is RootAggregate root
-                ? new StructureType(root)
+            var plainStructure = _aggregate is RootAggregate root
+                ? new PlainStructure(root)
                 : new StructureDescendantMember(_aggregate);
 
-            foreach (var member in ((IInstancePropertyOwnerMetadata)structureType).GetMembers()) {
+            foreach (var member in ((IInstancePropertyOwnerMetadata)plainStructure).GetMembers()) {
                 switch (member) {
                     case StructureValueMember valueMember:
                         yield return new ContainerMemberImpl {
@@ -41,7 +41,7 @@ namespace Nijo.Models.StructureModelModules {
                             QueryModelModules.DisplayData disp => new QueryModelModules.DisplayDataMessageContainer(disp.Aggregate),
                             QueryModelModules.SearchCondition.Entry sc => new QueryModelModules.SearchConditionMessageContainer(sc.EntryAggregate),
                             QueryModelModules.DisplayDataRef.Entry => null, // 子孫要素が無いので
-                            StructureType str => new StructureTypeMessageContainer(str.Aggregate),
+                            PlainStructure str => new StructureDisplayDataMessageContainer(str.Aggregate),
                             _ => throw new NotImplementedException(),
                         };
                         yield return new ContainerMemberImpl {
@@ -53,7 +53,7 @@ namespace Nijo.Models.StructureModelModules {
                         };
                         break;
                     case StructureDescendantMember descendantMember:
-                        var nestedObject = new StructureTypeMessageContainer(descendantMember.Aggregate);
+                        var nestedObject = new StructureDisplayDataMessageContainer(descendantMember.Aggregate);
                         yield return new ContainerMemberImpl {
                             PhysicalName = member.GetPropertyName(E_CsTs.CSharp),
                             DisplayName = member.DisplayName,
@@ -71,7 +71,7 @@ namespace Nijo.Models.StructureModelModules {
         internal static string RenderCSharpRecursively(RootAggregate rootAggregate) {
             var tree = rootAggregate
                 .EnumerateThisAndDescendants()
-                .Select(agg => new StructureTypeMessageContainer(agg))
+                .Select(agg => new StructureDisplayDataMessageContainer(agg))
                 .ToArray();
 
             return $$"""

@@ -368,7 +368,7 @@ namespace Nijo.ImmutableSchema {
 
             var targetRootAggregate = (RootAggregate)_ctx.ToAggregateBase(targetXElement, null);
             if (splitted.Length == 1) {
-                return new Models.StructureModelModules.StructureType(targetRootAggregate);
+                return new Models.StructureModelModules.PlainStructure(targetRootAggregate);
 
             } else if (BasicNodeOptions.StructureRefToAvailable.TryGetValue(splitted[1], out var factory)) {
                 return factory(targetRootAggregate);

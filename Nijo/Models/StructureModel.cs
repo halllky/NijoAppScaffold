@@ -110,19 +110,19 @@ namespace Nijo.Models {
             var aggregateFile = new SourceFileByAggregate(rootAggregate);
 
             // C# クラス定義（ルートと子孫）
-            aggregateFile.AddCSharpClass(StructureType.RenderCSharpRecursively(rootAggregate, ctx), "Class_Structure");
+            aggregateFile.AddCSharpClass(PlainStructure.RenderCSharpRecursively(rootAggregate, ctx), "Class_Structure");
 
             // TypeScript 型定義（ルートと子孫）
-            aggregateFile.AddTypeScriptTypeDef(StructureType.RenderTypeScriptRecursively(rootAggregate, ctx));
+            aggregateFile.AddTypeScriptTypeDef(PlainStructure.RenderTypeScriptRecursively(rootAggregate, ctx));
 
             // TypeScript 新規オブジェクト作成関数（ルートと子孫）
-            aggregateFile.AddTypeScriptTypeDef(StructureType.RenderTsNewObjectFunctionRecursively(rootAggregate, ctx));
+            aggregateFile.AddTypeScriptTypeDef(PlainStructure.RenderTsNewObjectFunctionRecursively(rootAggregate, ctx));
 
             // この構造体がいずれかのコマンドモデルの引数として参照されている場合、
             // メッセージストラクチャーの定義をレンダリングする
             if (rootAggregate.EnumerateCommandModelsRefferingAsParameter().Any()) {
-                var messageContainer = new StructureTypeMessageContainer(rootAggregate);
-                aggregateFile.AddCSharpClass(StructureTypeMessageContainer.RenderCSharpRecursively(rootAggregate), "Class_MessageContainer");
+                var messageContainer = new StructureDisplayDataMessageContainer(rootAggregate);
+                aggregateFile.AddCSharpClass(StructureDisplayDataMessageContainer.RenderCSharpRecursively(rootAggregate), "Class_MessageContainer");
                 ctx.Use<Parts.CSharp.MessageContainer.BaseClass>().Register(messageContainer.CsClassName, messageContainer.CsClassName);
             }
 

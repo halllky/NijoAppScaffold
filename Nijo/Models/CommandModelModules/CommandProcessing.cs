@@ -69,7 +69,7 @@ namespace Nijo.Models.CommandModelModules {
 
             var paramTypeName = paramStructure?.CsClassName ?? "object";
             var paramMessageTypeName = paramStructure switch {
-                StructureModelModules.StructureType structureType => new StructureModelModules.StructureTypeMessageContainer(structureType.Aggregate).CsClassName,
+                StructureModelModules.PlainStructure plainStructure => new StructureModelModules.StructureDisplayDataMessageContainer(plainStructure.Aggregate).CsClassName,
                 QueryModelModules.DisplayData displayData => new QueryModelModules.DisplayDataMessageContainer(displayData.Aggregate).CsClassName,
                 QueryModelModules.SearchCondition.Entry searchCondition => new QueryModelModules.SearchConditionMessageContainer(searchCondition.EntryAggregate).CsClassName,
                 _ => MessageContainer.SETTER_CLASS,
@@ -96,7 +96,7 @@ namespace Nijo.Models.CommandModelModules {
             var paramTypeName = paramStructure?.CsClassName ?? "object";
             var returnTypeName = returnStructure?.CsClassName ?? "object";
             var paramMessageTypeName = paramStructure switch {
-                StructureModelModules.StructureType structureType => new StructureModelModules.StructureTypeMessageContainer(structureType.Aggregate).CsClassName,
+                StructureModelModules.PlainStructure plainStructure => new StructureModelModules.StructureDisplayDataMessageContainer(plainStructure.Aggregate).CsClassName,
                 QueryModelModules.DisplayData displayData => new QueryModelModules.DisplayDataMessageContainer(displayData.Aggregate).CsClassName,
                 QueryModelModules.SearchCondition.Entry searchCondition => new QueryModelModules.SearchConditionMessageContainer(searchCondition.EntryAggregate).CsClassName,
                 _ => MessageContainer.SETTER_CLASS,
