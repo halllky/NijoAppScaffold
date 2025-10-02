@@ -488,7 +488,7 @@ namespace Nijo.Models.QueryModelModules {
                             },
                             """;
 
-                        static IEnumerable<string> RenderRefMember(PlainPresentationObject left, IInstancePropertyOwner rightInstance, IReadOnlyDictionary<SchemaNodeIdentity, IInstanceProperty> rightMembers) {
+                        static IEnumerable<string> RenderRefMember(DisplayDataRef.DisplayDataRefBase left, IInstancePropertyOwner rightInstance, IReadOnlyDictionary<SchemaNodeIdentity, IInstanceProperty> rightMembers) {
                             foreach (var member in left.GetMembers()) {
                                 if (member is DisplayDataRef.RefDisplayDataValueMember vm) {
                                     var property = rightMembers.GetValueOrDefault(vm.Member.ToMappingKey());
@@ -514,7 +514,7 @@ namespace Nijo.Models.QueryModelModules {
                                         }).ToList(),
                                         """;
 
-                                } else if (member is PlainPresentationObject container) {
+                                } else if (member is DisplayDataRef.DisplayDataRefBase container) {
                                     yield return $$"""
                                         {{member.PhysicalName}} = new() {
                                             {{WithIndent(RenderRefMember(container, rightInstance, rightMembers), "    ")}}

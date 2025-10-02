@@ -300,7 +300,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
             return $"{RefEntry.TsNewObjectFunction}()";
         }
 
-        internal IEnumerable<PlainPresentationObject.IMember> GetMembers() {
+        internal IEnumerable<IPresentationLayerStructure.IMember> GetMembers() {
             return RefEntry.GetMembers();
         }
 

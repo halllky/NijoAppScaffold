@@ -17,11 +17,11 @@ namespace Nijo.Models.QueryModelModules {
         /// その集約が他のどの集約からも参照されていない場合はレンダリングしないため、
         /// そのツリー内部で他の集約から参照されているもののみを集めるメソッド。
         /// </summary>
-        internal static (Entry[] Entries, PlainPresentationObject[] NotEntries) GetReferedMembersRecursively(RootAggregate rootAggregate) {
+        internal static (Entry[] Entries, DisplayDataRefBase[] NotEntries) GetReferedMembersRecursively(RootAggregate rootAggregate) {
 
             // ほかの集約から参照されている集約のエントリーと、その祖先・子孫を再帰的に列挙する。
             var entries = new List<Entry>();
-            var notEntries = new Dictionary<(AggregateBase Agg, ISchemaPathNode? Prev), PlainPresentationObject>();
+            var notEntries = new Dictionary<(AggregateBase Agg, ISchemaPathNode? Prev), DisplayDataRefBase>();
             foreach (var agg in rootAggregate.EnumerateThisAndDescendants()) {
                 if (!agg.GetRefFroms().Any()) continue;
 
@@ -109,16 +109,17 @@ namespace Nijo.Models.QueryModelModules {
         /// <summary>
         /// エントリー、Child, Children, Parent の基底クラス
         /// </summary>
-        internal abstract class DisplayDataRefBase : PlainPresentationObject {
+        internal abstract class DisplayDataRefBase : IPresentationLayerStructure, IInstancePropertyOwnerMetadata {
             internal DisplayDataRefBase(AggregateBase aggregate) { Aggregate = aggregate; }
 
             internal AggregateBase Aggregate { get; private set; }
 
-            internal override string GetDescription() {
-                return $"{((AggregateBase)Aggregate.GetEntry()).DisplayName}が他の集約から外部参照されるときの{Aggregate.DisplayName}の型";
-            }
+            public abstract string CsClassName { get; }
+            public abstract string TsTypeName { get; }
 
-            internal override IEnumerable<IMember> GetMembers() {
+            IEnumerable<IInstancePropertyMetadata> IPresentationLayerStructure.GetMembers() => GetMembers();
+            IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => GetMembers();
+            public IEnumerable<IPresentationLayerStructure.IMember> GetMembers() {
                 var parent = Aggregate.GetParent();
                 if (parent != null && Aggregate.PreviousNode != (ISchemaPathNode)parent) {
                     yield return new RefDisplayDataParentMember(parent);
@@ -143,21 +144,30 @@ namespace Nijo.Models.QueryModelModules {
                     }
                 }
             }
+
+            internal string RenderCsClass(CodeRenderingContext ctx) {
+                return $$"""
+                    /// <summary>
+                    /// {{((AggregateBase)Aggregate.GetEntry()).DisplayName}}が他の集約から外部参照されるときの{{Aggregate.DisplayName}}の型
+                    /// </summary>
+                    public partial class {{CsClassName}} {
+                    {{GetMembers().SelectTextTemplate(member => $$"""
+                        {{WithIndent(member.RenderDeclaringCSharp(), "    ")}}
+                    """)}}
+                    }
+                    """;
+            }
         }
 
         /// <summary>
         /// エントリー。エントリーが子孫要素になる場合もある。
         /// </summary>
-        internal class Entry : DisplayDataRefBase, IPresentationLayerStructure, ICreatablePresentationLayerStructure {
+        internal class Entry : DisplayDataRefBase, ICreatablePresentationLayerStructure {
             internal Entry(AggregateBase aggregate) : base(aggregate) { }
 
-            internal override string CsClassName => $"{base.Aggregate.PhysicalName}RefTarget";
+            public override string CsClassName => $"{base.Aggregate.PhysicalName}RefTarget";
+            public override string TsTypeName => $"{base.Aggregate.PhysicalName}RefTarget";
             string IPresentationLayerStructure.CsClassName => CsClassName;
-            public string TsTypeName => $"{base.Aggregate.PhysicalName}RefTarget";
-
-            IEnumerable<IInstancePropertyMetadata> IPresentationLayerStructure.GetMembers() {
-                return GetMembers();
-            }
 
             #region TypeScript側オブジェクト新規作成関数
             public string TsNewObjectFunction => $"createNew{TsTypeName}";
@@ -165,9 +175,7 @@ namespace Nijo.Models.QueryModelModules {
             internal string RenderTypeScriptTypeDef(CodeRenderingContext ctx) {
                 return $$"""
                     /**
-                    {{GetDescription().Split(Environment.NewLine).SelectTextTemplate(line => $$"""
-                     * {{line}}
-                    """)}}
+                     * {{((AggregateBase)Aggregate.GetEntry()).DisplayName}}が他の集約から外部参照されるときの{{Aggregate.DisplayName}}の型
                      */
                     export type {{TsTypeName}} = {
                     {{GetMembers().SelectTextTemplate(member => $$"""
@@ -188,7 +196,7 @@ namespace Nijo.Models.QueryModelModules {
                       {{WithIndent(RenderMembersRecursively(this), "  ")}}
                     }
                     """;
-                static IEnumerable<string> RenderMembersRecursively(PlainPresentationObject obj) {
+                static IEnumerable<string> RenderMembersRecursively(DisplayDataRefBase obj) {
                     foreach (var member in obj.GetMembers()) {
                         if (member is RefDisplayDataValueMember vm) {
                             yield return $$"""
@@ -200,7 +208,7 @@ namespace Nijo.Models.QueryModelModules {
                                 {{member.PhysicalName}}: [],
                                 """;
 
-                        } else if (member is PlainPresentationObject container) {
+                        } else if (member is DisplayDataRefBase container) {
                             yield return $$"""
                                 {{member.PhysicalName}}: {
                                   {{WithIndent(RenderMembersRecursively(container), "  ")}}
@@ -266,7 +274,7 @@ namespace Nijo.Models.QueryModelModules {
         /// <summary>
         /// ValueMember
         /// </summary>
-        internal class RefDisplayDataValueMember : PlainPresentationObject.IMember, IInstanceValuePropertyMetadata {
+        internal class RefDisplayDataValueMember : IPresentationLayerStructure.IMember, IInstanceValuePropertyMetadata {
             internal RefDisplayDataValueMember(ValueMember member) {
                 Member = member;
             }
@@ -280,13 +288,13 @@ namespace Nijo.Models.QueryModelModules {
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
 
-            string PlainPresentationObject.IMember.RenderDeclaringCSharp() {
+            string IPresentationLayerStructure.IMember.RenderDeclaringCSharp() {
                 return $$"""
                     public {{GetTypeName(E_CsTs.CSharp)}}? {{PhysicalName}} { get; set; }
                     """;
             }
 
-            string PlainPresentationObject.IMember.RenderDeclaringTypeScript() {
+            string IPresentationLayerStructure.IMember.RenderDeclaringTypeScript() {
                 return $$"""
                     {{PhysicalName}}?: {{Member.Type.TsTypeName}}
                     """;
@@ -296,7 +304,7 @@ namespace Nijo.Models.QueryModelModules {
         /// <summary>
         /// Ref
         /// </summary>
-        internal class RefDisplayDataRefToMember : Entry, PlainPresentationObject.IMember, IInstanceStructurePropertyMetadata {
+        internal class RefDisplayDataRefToMember : Entry, IPresentationLayerStructure.IMember, IInstanceStructurePropertyMetadata {
             internal RefDisplayDataRefToMember(RefToMember member) : base(member.RefTo) {
                 _member = member;
             }
@@ -310,13 +318,13 @@ namespace Nijo.Models.QueryModelModules {
             bool IInstanceStructurePropertyMetadata.IsArray => false;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
 
-            string IMember.RenderDeclaringCSharp() {
+            string IPresentationLayerStructure.IMember.RenderDeclaringCSharp() {
                 return $$"""
                     public {{GetTypeName(E_CsTs.CSharp)}} {{PhysicalName}} { get; set; } = new();
                     """;
             }
 
-            string IMember.RenderDeclaringTypeScript() {
+            string IPresentationLayerStructure.IMember.RenderDeclaringTypeScript() {
                 var refTo = new Entry(_member.RefTo);
 
                 return $$"""
@@ -328,7 +336,7 @@ namespace Nijo.Models.QueryModelModules {
         /// <summary>
         /// Child
         /// </summary>
-        internal class RefDisplayDataChildMember : DisplayDataRefBase, PlainPresentationObject.IMember, IInstanceStructurePropertyMetadata {
+        internal class RefDisplayDataChildMember : DisplayDataRefBase, IPresentationLayerStructure.IMember, IInstanceStructurePropertyMetadata {
             internal RefDisplayDataChildMember(ChildAggregate member) : base(member) {
                 _member = member;
             }
@@ -339,19 +347,20 @@ namespace Nijo.Models.QueryModelModules {
             public string GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp
                 ? $"{_member.PhysicalName}RefTargetVia{_member.PreviousNode!.XElement.Name.LocalName.ToCSharpSafe()}"
                 : $"{_member.PhysicalName}RefTargetVia{_member.PreviousNode!.XElement.Name.LocalName.ToCSharpSafe()}";
-            internal override string CsClassName => GetTypeName(E_CsTs.CSharp);
+            public override string CsClassName => GetTypeName(E_CsTs.CSharp);
+            public override string TsTypeName => throw new InvalidOperationException("このオブジェクトはTSの名前つきの型ではない");
 
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => _member;
             bool IInstanceStructurePropertyMetadata.IsArray => false;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
 
-            string IMember.RenderDeclaringCSharp() {
+            string IPresentationLayerStructure.IMember.RenderDeclaringCSharp() {
                 return $$"""
                     public {{GetTypeName(E_CsTs.CSharp)}} {{PhysicalName}} { get; set; } = new();
                     """;
             }
 
-            string IMember.RenderDeclaringTypeScript() {
+            string IPresentationLayerStructure.IMember.RenderDeclaringTypeScript() {
                 return $$"""
                     {{PhysicalName}}: {
                     {{GetMembers().SelectTextTemplate(member => $$"""
@@ -367,7 +376,7 @@ namespace Nijo.Models.QueryModelModules {
         /// 参照先のChildrenを生成すると検索処理のSQLが複雑になりすぎて発行できないことがあるので
         /// オプションで明示的に生成するよう指定が無い限りは生成されない
         /// </summary>
-        internal class RefDisplayDataChildrenMember : DisplayDataRefBase, PlainPresentationObject.IMember, IInstanceStructurePropertyMetadata {
+        internal class RefDisplayDataChildrenMember : DisplayDataRefBase, IPresentationLayerStructure.IMember, IInstanceStructurePropertyMetadata {
             internal RefDisplayDataChildrenMember(ChildrenAggregate member) : base(member) {
                 ChildrenAggregate = member;
             }
@@ -376,19 +385,20 @@ namespace Nijo.Models.QueryModelModules {
             public string PhysicalName => ChildrenAggregate.PhysicalName;
             public string DisplayName => ChildrenAggregate.DisplayName;
             public string GetTypeName(E_CsTs csts) => $"{ChildrenAggregate.PhysicalName}RefTargetVia{ChildrenAggregate.PreviousNode!.XElement.Name.LocalName.ToCSharpSafe()}";
-            internal override string CsClassName => GetTypeName(E_CsTs.CSharp);
+            public override string CsClassName => GetTypeName(E_CsTs.CSharp);
+            public override string TsTypeName => throw new InvalidOperationException("このオブジェクトはTSの名前つきの型ではない");
 
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => ChildrenAggregate;
             bool IInstanceStructurePropertyMetadata.IsArray => true;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
 
-            string IMember.RenderDeclaringCSharp() {
+            string IPresentationLayerStructure.IMember.RenderDeclaringCSharp() {
                 return $$"""
                     public List<{{GetTypeName(E_CsTs.CSharp)}}> {{PhysicalName}} { get; set; } = [];
                     """;
             }
 
-            string IMember.RenderDeclaringTypeScript() {
+            string IPresentationLayerStructure.IMember.RenderDeclaringTypeScript() {
                 return $$"""
                     {{PhysicalName}}: {
                     {{GetMembers().SelectTextTemplate(member => $$"""
@@ -402,7 +412,7 @@ namespace Nijo.Models.QueryModelModules {
         /// <summary>
         /// Parent
         /// </summary>
-        internal class RefDisplayDataParentMember : DisplayDataRefBase, PlainPresentationObject.IMember, IInstanceStructurePropertyMetadata {
+        internal class RefDisplayDataParentMember : DisplayDataRefBase, IPresentationLayerStructure.IMember, IInstanceStructurePropertyMetadata {
             internal RefDisplayDataParentMember(AggregateBase parent) : base(parent) {
                 _parent = parent;
             }
@@ -411,19 +421,20 @@ namespace Nijo.Models.QueryModelModules {
             public string PhysicalName => "Parent";
             public string DisplayName => _parent.DisplayName;
             public string GetTypeName(E_CsTs csts) => $"{_parent.PhysicalName}RefTargetVia{_parent.PreviousNode!.XElement.Name.LocalName.ToCSharpSafe()}";
-            internal override string CsClassName => GetTypeName(E_CsTs.CSharp);
+            public override string CsClassName => GetTypeName(E_CsTs.CSharp);
+            public override string TsTypeName => throw new InvalidOperationException("このオブジェクトはTSの名前つきの型ではない");
 
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => _parent;
             bool IInstanceStructurePropertyMetadata.IsArray => false;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
 
-            string IMember.RenderDeclaringCSharp() {
+            string IPresentationLayerStructure.IMember.RenderDeclaringCSharp() {
                 return $$"""
                     public {{GetTypeName(E_CsTs.CSharp)}} {{PhysicalName}} { get; set; } = new();
                     """;
             }
 
-            string IMember.RenderDeclaringTypeScript() {
+            string IPresentationLayerStructure.IMember.RenderDeclaringTypeScript() {
                 return $$"""
                     {{PhysicalName}}: {
                     {{GetMembers().SelectTextTemplate(member => $$"""
