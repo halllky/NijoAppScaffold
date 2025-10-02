@@ -467,24 +467,28 @@ namespace Nijo.Models.QueryModelModules {
                 }
             }
 
-            static IEnumerable<string> RenderValueMembers(DisplayData left, IInstancePropertyOwner rightInstance) {
+            static IEnumerable<string> RenderValueMembers(EditablePresentationObject left, IInstancePropertyOwner rightInstance) {
                 // 右辺
                 var rightMembers = rightInstance
                     .CreatePropertiesRecursively()
                     .ToDictionary(x => x.Metadata.SchemaPathNode.ToMappingKey());
 
                 foreach (var member in left.Values.GetMembers()) {
-                    if (member is DisplayData.EditablePresentationObjectValueMember vm) {
+                    if (member is EditablePresentationObject.EditablePresentationObjectValueMember vm) {
                         var right = rightMembers[vm.Member.ToMappingKey()];
 
                         yield return $$"""
                             {{member.GetPropertyName(E_CsTs.CSharp)}} = {{vm.Member.Type.RenderCastToDomainType()}}{{right.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")}},
                             """;
 
-                    } else if (member is DisplayData.EditablePresentationObjectRefMember refTo) {
+                    } else if (member is EditablePresentationObject.EditablePresentationObjectRefMember refTo) {
+                        if (refTo.RefEntry is not DisplayDataRef.DisplayDataRefBase displayDataRef) {
+                            throw new InvalidOperationException("この分岐にくることは無い");
+                        }
+
                         yield return $$"""
                             {{member.GetPropertyName(E_CsTs.CSharp)}} = new() {
-                                {{WithIndent(RenderRefMember(refTo.RefEntry, rightInstance, rightMembers), "    ")}}
+                                {{WithIndent(RenderRefMember(displayDataRef, rightInstance, rightMembers), "    ")}}
                             },
                             """;
 
@@ -529,20 +533,20 @@ namespace Nijo.Models.QueryModelModules {
                 }
             }
 
-            static string RenderDescendantMember(DisplayData.EditablePresentationObjectDescendant displayData, IInstancePropertyOwner rightInstance) {
+            static string RenderDescendantMember(EditablePresentationObject.EditablePresentationObjectDescendant displayData, IInstancePropertyOwner rightInstance) {
                 if (displayData.Aggregate is ChildAggregate child) {
 
                     return $$"""
                         {{displayData.PhysicalName}} = new() {
-                            {{DisplayData.VALUES_CS}} = new() {
+                            {{EditablePresentationObject.VALUES_CS}} = new() {
                                 {{WithIndent(RenderValueMembers(displayData, rightInstance), "        ")}}
                             },
                         {{displayData.GetChildMembers().SelectTextTemplate(child => $$"""
                             {{WithIndent(RenderDescendantMember(child, rightInstance), "    ")}}
                         """)}}
-                            {{DisplayData.EXISTS_IN_DB_CS}} = true,
-                            {{DisplayData.WILL_BE_CHANGED_CS}} = false,
-                            {{DisplayData.WILL_BE_DELETED_CS}} = false,
+                            {{EditablePresentationObject.EXISTS_IN_DB_CS}} = true,
+                            {{EditablePresentationObject.WILL_BE_CHANGED_CS}} = false,
+                            {{EditablePresentationObject.WILL_BE_DELETED_CS}} = false,
                         },
                         """;
 
@@ -556,15 +560,15 @@ namespace Nijo.Models.QueryModelModules {
 
                     return $$"""
                         {{displayData.PhysicalName}} = {{rightArray.GetJoinedPathFromInstance(E_CsTs.CSharp, "!.")}}.Select({{loopVar.Name}} => new {{displayData.CsClassName}} {
-                            {{DisplayData.VALUES_CS}} = new() {
+                            {{EditablePresentationObject.VALUES_CS}} = new() {
                                 {{WithIndent(RenderValueMembers(displayData, loopVar), "        ")}}
                             },
                         {{displayData.GetChildMembers().SelectTextTemplate(child => $$"""
                             {{WithIndent(RenderDescendantMember(child, loopVar), "    ")}}
                         """)}}
-                            {{DisplayData.EXISTS_IN_DB_CS}} = true,
-                            {{DisplayData.WILL_BE_CHANGED_CS}} = false,
-                            {{DisplayData.WILL_BE_DELETED_CS}} = false,
+                            {{EditablePresentationObject.EXISTS_IN_DB_CS}} = true,
+                            {{EditablePresentationObject.WILL_BE_CHANGED_CS}} = false,
+                            {{EditablePresentationObject.WILL_BE_DELETED_CS}} = false,
                         }).ToList(),
                         """;
 

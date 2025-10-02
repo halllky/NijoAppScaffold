@@ -19,8 +19,6 @@ namespace Nijo.Models.QueryModelModules {
 
         /// <summary>C#クラス名</summary>
         internal override string CsClassName => $"{Aggregate.PhysicalName}DisplayData";
-        /// <summary>C#クラス名（values）</summary>
-        internal override string CsValuesClassName => $"{Aggregate.PhysicalName}DisplayDataValues";
         /// <summary>TypeScript型名</summary>
         internal override string TsTypeName => $"{Aggregate.PhysicalName}DisplayData";
 
@@ -34,7 +32,7 @@ namespace Nijo.Models.QueryModelModules {
         internal static string RenderCSharpRecursively(RootAggregate rootAggregate, CodeRenderingContext ctx) {
             var tree = rootAggregate
                 .EnumerateThisAndDescendants()
-                .Select(agg => agg switch {
+                .Select<AggregateBase, EditablePresentationObject>(agg => agg switch {
                     RootAggregate root => new DisplayData(root),
                     ChildAggregate child => new EditablePresentationObjectChildDescendant(child),
                     ChildrenAggregate children => new EditablePresentationObjectChildrenDescendant(children),
@@ -52,7 +50,7 @@ namespace Nijo.Models.QueryModelModules {
         internal static string RenderTypeScriptRecursively(RootAggregate rootAggregate, CodeRenderingContext ctx) {
             var tree = rootAggregate
                 .EnumerateThisAndDescendants()
-                .Select(agg => agg switch {
+                .Select<AggregateBase, EditablePresentationObject>(agg => agg switch {
                     RootAggregate root => new DisplayData(root),
                     ChildAggregate child => new EditablePresentationObjectChildDescendant(child),
                     ChildrenAggregate children => new EditablePresentationObjectChildrenDescendant(children),

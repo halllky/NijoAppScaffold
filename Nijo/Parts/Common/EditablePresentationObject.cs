@@ -9,13 +9,7 @@ namespace Nijo.Parts.Common;
 
 /// <summary>
 /// ユーザーが画面上で編集するオブジェクトをレンダリングするための基底クラス。
-/// ユーザーが編集するという特徴から、以下の情報がレンダリングされる。
-///
-/// <list type="bullet">
-/// <item>保存時に新規追加・更新・削除・変更なしのどの処理が実行されるかを表すフラグ</item>
-/// <item>（TODO: あとで実装する）どの項目にどういったエラーメッセージ等が発生しているか</item>
-/// <item>（TODO: あとで実装する）インスタンスごとのユニークなID</item>
-/// </list>
+/// ユーザーが編集するという特徴から、保存時に新規追加・更新・削除・変更なしのどの処理が実行されるかを表すフラグなどが含まれる。
 /// </summary>
 internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetadata, ICreatablePresentationLayerStructure {
 
@@ -57,7 +51,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
     internal abstract string CsClassName { get; }
     string IPresentationLayerStructure.CsClassName => CsClassName;
     /// <summary>C#クラス名（values）</summary>
-    internal abstract string CsValuesClassName { get; }
+    internal string CsValuesClassName => $"{CsClassName}Values";
     /// <summary>TypeScript型名</summary>
     internal abstract string TsTypeName { get; }
     string IPresentationLayerStructure.TsTypeName => TsTypeName;
@@ -73,7 +67,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
     /// <summary>
     /// 子孫要素でなく自身のメンバーはこのオブジェクトの中に列挙される
     /// </summary>
-    internal ValuesContainer Values => _values ??= new ValuesContainer(Aggregate);
+    internal ValuesContainer Values => _values ??= new ValuesContainer(this);
     private ValuesContainer? _values;
 
     /// <summary>
@@ -103,7 +97,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
     }
 
     #region レンダリング
-    protected string RenderCSharpDeclaring(CodeRenderingContext ctx) {
+    internal string RenderCSharpDeclaring(CodeRenderingContext ctx) {
 
         return $$"""
             /// <summary>
@@ -148,7 +142,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
             """;
     }
 
-    protected string RenderTypeScriptType(CodeRenderingContext ctx) {
+    internal string RenderTypeScriptType(CodeRenderingContext ctx) {
         return $$"""
             /** {{Aggregate.DisplayName}}の画面表示用データ。 */
             export type {{TsTypeName}} = {
@@ -186,23 +180,22 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
     /// Valuesオブジェクトそのもの
     /// </summary>
     internal class ValuesContainer : IInstanceStructurePropertyMetadata {
-        public ValuesContainer(AggregateBase aggregate) {
-            _aggregate = aggregate;
+        public ValuesContainer(EditablePresentationObject owner) {
+            _owner = owner;
         }
-        private readonly AggregateBase _aggregate;
+        private readonly EditablePresentationObject _owner;
 
         ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => ISchemaPathNode.Empty;
         string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => csts == E_CsTs.CSharp ? VALUES_CS : VALUES_TS;
         bool IInstanceStructurePropertyMetadata.IsArray => false;
         string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp
-            // TODO: ここのDisplayDataは何？
-            ? new DisplayData(_aggregate).CsValuesClassName
+            ? _owner.CsValuesClassName
             : throw new InvalidOperationException("この分岐にくることは無いはず");
 
         IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => GetMembers();
 
         internal IEnumerable<IEditablePresentationObjectMemberInValues> GetMembers() {
-            foreach (var member in _aggregate.GetMembers()) {
+            foreach (var member in _owner.Aggregate.GetMembers()) {
                 if (member is ValueMember vm) {
                     yield return new EditablePresentationObjectValueMember(vm);
 
@@ -269,10 +262,28 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
     internal class EditablePresentationObjectRefMember : IEditablePresentationObjectMemberInValues, IInstanceStructurePropertyMetadata {
         internal EditablePresentationObjectRefMember(RefToMember refTo) {
             Member = refTo;
-            RefEntry = new DisplayDataRef.Entry(refTo.RefTo);
+
+            if (refTo.Owner.GetRoot().Model is Models.QueryModel || refTo.RefTo.GetRoot().Model is Models.DataModel) {
+                // Query => Query
+                RefEntry = new DisplayDataRef.Entry(refTo.RefTo);
+
+            } else if (refTo.RefTo.GetRoot().Model is Models.StructureModel) {
+                // Structure => Structure
+                if (refTo.RefTo is not RootAggregate refToRoot) throw new InvalidOperationException("ありえない");
+                RefEntry = new Models.StructureModelModules.PlainStructure(refToRoot);
+
+            } else {
+                // Structure => Query
+                RefEntry = refTo.RefToObject switch {
+                    RefToMember.E_RefToObject.SearchCondition => new SearchCondition.Entry((RootAggregate)refTo.RefTo),
+                    RefToMember.E_RefToObject.DisplayData => new DisplayData(refTo.RefTo),
+                    RefToMember.E_RefToObject.RefTarget => new DisplayDataRef.Entry(refTo.RefTo),
+                    _ => throw new NotImplementedException("ありえない"),
+                };
+            }
         }
         internal RefToMember Member { get; }
-        internal DisplayDataRef.Entry RefEntry; // TODO: DisplayDataRef の位置づけも整理する
+        internal ICreatablePresentationLayerStructure RefEntry { get; }
 
         public string PropertyName => Member.PhysicalName;
         public string DisplayName => Member.DisplayName;
@@ -300,17 +311,13 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
             return $"{RefEntry.TsNewObjectFunction}()";
         }
 
-        internal IEnumerable<IPresentationLayerStructure.IMember> GetMembers() {
-            return RefEntry.GetMembers();
-        }
-
         ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
         bool IInstanceStructurePropertyMetadata.IsArray => false;
         string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PropertyName;
         string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp
             ? RefEntry.CsClassName
             : RefEntry.TsTypeName;
-        IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => GetMembers();
+        IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => RefEntry.GetMembers();
     }
     #endregion Values
 
@@ -393,15 +400,14 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
     /// </summary>
     public string TsNewObjectFunction => $"createNew{TsTypeName}";
 
-    internal static string RenderTsNewObjectFunctionRecursively(RootAggregate rootAggregate, CodeRenderingContext ctx) {
-        var tree = rootAggregate
-            .EnumerateThisAndDescendants()
-            .Select(agg => agg switch {
-                RootAggregate root => new DisplayData(root), // TODO: DisplayData への参照が生じている
-                ChildAggregate child => new EditablePresentationObjectChildDescendant(child),
-                ChildrenAggregate children => new EditablePresentationObjectChildrenDescendant(children),
-                _ => throw new InvalidOperationException(),
-            });
+    internal static string RenderTsNewObjectFunctionRecursively(EditablePresentationObject root, CodeRenderingContext ctx) {
+        var tree = new List<EditablePresentationObject>();
+        tree.Add(root);
+        tree.AddRange(root.Aggregate.EnumerateDescendants().Select<AggregateBase, EditablePresentationObject>(agg => agg switch {
+            ChildAggregate child => new EditablePresentationObjectChildDescendant(child),
+            ChildrenAggregate children => new EditablePresentationObjectChildrenDescendant(children),
+            _ => throw new InvalidOperationException(),
+        }));
 
         return $$"""
             //#region 画面表示用データ新規作成用関数
@@ -443,13 +449,17 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
 
 
     #region Valuesの外に定義されるメンバー（Child, Children）
-    internal abstract class EditablePresentationObjectDescendant : DisplayData { // TODO: DisplayData への参照が生じている
+    internal abstract class EditablePresentationObjectDescendant : EditablePresentationObject {
         internal EditablePresentationObjectDescendant(AggregateBase aggregate) : base(aggregate) { }
 
         internal string PhysicalName => Aggregate.PhysicalName;
         internal string DisplayName => Aggregate.DisplayName;
+        internal override string CsClassName => $"{Aggregate.PhysicalName}DisplayData";
+        internal override string TsTypeName => $"{Aggregate.PhysicalName}DisplayData";
         internal abstract string CsClassNameAsMember { get; }
         internal abstract string TsTypeNameAsMember { get; }
+        internal override bool HasLifeCycle => true;
+        internal override bool HasVersion => Aggregate is RootAggregate;
 
         internal abstract string RenderNewObjectCreation();
     }
