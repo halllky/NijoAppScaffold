@@ -87,27 +87,27 @@ namespace Nijo.Models.QueryModelModules {
                 /// </summary>
                 public {{createCommand.CsClassNameCreate}} {{TO_CREATE_COMMAND}}() {
                     return new {{createCommand.CsClassNameCreate}} {
-                        {{WithIndent(EnumerateMemberes(false, createCommand, right, dict), "        ")}}
+                        {{WithIndent(EnumerateMembers(false, createCommand, right, dict), "        ")}}
                     };
                 }
                 /// <summary>
                 /// このインスタンスの値を <see cref="{{udpateCommand.CsClassName}}"/> に割り当てる処理を返します。
                 /// </summary>
                 public void {{ASSIGN_TO_UPDATE_COMMAND}}({{udpateCommand.CsClassNameUpdate}} command) {
-                    {{WithIndent(EnumerateMemberes(true, udpateCommand, right, dict), "    ")}}
+                    {{WithIndent(EnumerateMembers(true, udpateCommand, right, dict), "    ")}}
                 }
                 /// <summary>
                 /// このインスタンスを <see cref="{{deleteCommand.CsClassName}}"/> に変換します。
                 /// </summary>
                 public {{deleteCommand.CsClassNameDelete}} {{TO_DELETE_COMMAND}}() {
                     return new {{deleteCommand.CsClassNameDelete}} {
-                        {{WithIndent(EnumerateMemberes(false, deleteCommand, right, dict), "        ")}}
+                        {{WithIndent(EnumerateMembers(false, deleteCommand, right, dict), "        ")}}
                         {{SaveCommand.VERSION}} = this.{{VERSION_CS}},
                     };
                 }
                 """;
 
-            static IEnumerable<string> EnumerateMemberes(bool leftIsVariable, IInstancePropertyOwnerMetadata left, IInstancePropertyOwner right, IReadOnlyDictionary<SchemaNodeIdentity, IInstanceProperty> rigthMembers) {
+            static IEnumerable<string> EnumerateMembers(bool leftIsVariable, IInstancePropertyOwnerMetadata left, IInstancePropertyOwner right, IReadOnlyDictionary<SchemaNodeIdentity, IInstanceProperty> rigthMembers) {
                 var start = leftIsVariable ? "command." : "";
                 var end = leftIsVariable ? ";" : ",";
 
@@ -136,14 +136,14 @@ namespace Nijo.Models.QueryModelModules {
 
                             yield return $$"""
                                 {{start}}{{member.GetPropertyName(E_CsTs.CSharp)}} = {{arrayPath}}?.Select({{loopVar.Name}} => new {{sp.GetTypeName(E_CsTs.CSharp)}}() {
-                                    {{WithIndent(EnumerateMemberes(false, sp, loopVar, dict2), "    ")}}
+                                    {{WithIndent(EnumerateMembers(false, sp, loopVar, dict2), "    ")}}
                                 }).ToList() ?? []{{end}}
                                 """;
 
                         } else {
                             yield return $$"""
                                 {{start}}{{member.GetPropertyName(E_CsTs.CSharp)}} = new() {
-                                    {{WithIndent(EnumerateMemberes(false, sp, right, rigthMembers), "    ")}}
+                                    {{WithIndent(EnumerateMembers(false, sp, right, rigthMembers), "    ")}}
                                 }{{end}}
                                 """;
                         }
