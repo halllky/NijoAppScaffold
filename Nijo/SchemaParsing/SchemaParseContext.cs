@@ -397,7 +397,8 @@ public class SchemaParseContext {
         // 同じテーブル名を複数の集約で定義することはできない
         var tableNameGroups = xDocument.Root
             ?.Descendants()
-            .Where(el => GetNodeType(el).HasFlag(E_NodeType.Aggregate))
+            .Where(el => GetNodeType(el).HasFlag(E_NodeType.Aggregate)
+                      && TryGetModel(el, out var model) && model is DataModel)
             .GroupBy(el => GetDbName(el))
             ?? [];
         foreach (var group in tableNameGroups) {
