@@ -322,7 +322,7 @@ namespace Nijo.ImmutableSchema {
         public ICreatablePresentationLayerStructure? GetParameterStructure() {
             if (Model is not Models.CommandModel) throw new InvalidOperationException($"{PhysicalName}はCommandModelでない");
             var parameter = XElement.Attribute(BasicNodeOptions.Parameter.AttributeName);
-            return parameter == null ? null : GetTargetStructure(parameter);
+            return parameter == null ? null : GetTargetStructure(parameter, true);
         }
         /// <summary>
         /// このCommandModelの戻り値の構造体を返します。
@@ -331,7 +331,7 @@ namespace Nijo.ImmutableSchema {
         public ICreatablePresentationLayerStructure? GetReturnValueStructure() {
             if (Model is not Models.CommandModel) throw new InvalidOperationException($"{PhysicalName}はCommandModelでない");
             var returnValue = XElement.Attribute(BasicNodeOptions.ReturnValue.AttributeName);
-            return returnValue == null ? null : GetTargetStructure(returnValue);
+            return returnValue == null ? null : GetTargetStructure(returnValue, false);
         }
 
         /// <summary>
@@ -360,7 +360,7 @@ namespace Nijo.ImmutableSchema {
             }
         }
 
-        private ICreatablePresentationLayerStructure GetTargetStructure(XAttribute attribute) {
+        private ICreatablePresentationLayerStructure GetTargetStructure(XAttribute attribute, bool isParameter) {
             var splitted = attribute.Value.Split(':');
             var targetPhysicalName = splitted[0];
             var targetXElement = _ctx.Document.Root?.Element(targetPhysicalName)
@@ -368,7 +368,9 @@ namespace Nijo.ImmutableSchema {
 
             var targetRootAggregate = (RootAggregate)_ctx.ToAggregateBase(targetXElement, null);
             if (splitted.Length == 1) {
-                return new Models.StructureModelModules.PlainStructure(targetRootAggregate);
+                return isParameter
+                    ? new Models.StructureModelModules.StructureDisplayData(targetRootAggregate)
+                    : new Models.StructureModelModules.PlainStructure(targetRootAggregate);
 
             } else if (BasicNodeOptions.StructureRefToAvailable.TryGetValue(splitted[1], out var factory)) {
                 return factory(targetRootAggregate);

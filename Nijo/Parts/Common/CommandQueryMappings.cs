@@ -47,6 +47,10 @@ namespace Nijo.Parts.Common {
         /// </summary>
         internal const string STRUCTURE_MODEL_TYPE = "StructureModelType";
         /// <summary>
+        /// JavaScript用: StructureModelの編集用データの型名のリテラル型
+        /// </summary>
+        internal const string STRUCTURE_MODEL_DISPLAY_DATA_TYPE = "StructureModelDisplayDataType";
+        /// <summary>
         /// C#用: QueryModel, CommandModelの種類を表すenum
         /// </summary>
         internal const string E_COMMAND_QUERY_TYPE = "E_CommandQueryType";
@@ -114,6 +118,11 @@ namespace Nijo.Parts.Common {
                 .Where(root => root.GenerateBatchUpdateCommand)
                 .ToArray();
 
+            // CommandModel のパラメータに指定されている StructureModel の型名
+            var parameterStructureModels = structureModelsOrderByDataFlow
+                .Where(x => x.EnumerateCommandModelsRefferingAsParameter().Any())
+                .ToArray();
+
             // Ref関連モジュールは他の集約から参照されているもののみ使用可能
             var referedRefEntires = new Dictionary<RootAggregate, DisplayDataRef.Entry[]>();
             foreach (var rootAggregate in queryModelsOrderByDataFlow) {
@@ -159,10 +168,15 @@ namespace Nijo.Parts.Common {
             }
             foreach (var rootAggregate in structureModelsOrderByDataFlow) {
                 var structureRoot = new Models.StructureModelModules.PlainStructure(rootAggregate);
+                var structureDisplayData = new Models.StructureModelModules.StructureDisplayData(rootAggregate);
                 var modules = new List<string> {
                     structureRoot.TsTypeName,
                     structureRoot.TsNewObjectFunction,
                 };
+                if (parameterStructureModels.Contains(rootAggregate)) {
+                    modules.Add(structureDisplayData.TsTypeName);
+                    modules.Add(structureDisplayData.TsNewObjectFunction);
+                }
                 imports.Add(($"./{rootAggregate.PhysicalName}", modules.ToArray()));
             }
 
@@ -242,6 +256,16 @@ namespace Nijo.Parts.Common {
                       = never
                     """).Else(() => $$"""
                     {{structureModelsOrderByDataFlow.SelectTextTemplate((agg, i) => $$"""
+                      {{(i == 0 ? "=" : "|")}} '{{agg.PhysicalName}}'
+                    """)}}
+                    """)}}
+
+                    /** StructureModelの編集用データの種類の一覧 */
+                    export type {{STRUCTURE_MODEL_DISPLAY_DATA_TYPE}}
+                    {{If(parameterStructureModels.Length == 0, () => $$"""
+                      = never
+                    """).Else(() => $$"""
+                    {{parameterStructureModels.SelectTextTemplate((agg, i) => $$"""
                       {{(i == 0 ? "=" : "|")}} '{{agg.PhysicalName}}'
                     """)}}
                     """)}}
@@ -443,6 +467,21 @@ namespace Nijo.Parts.Common {
                       export const create: { [K in {{STRUCTURE_MODEL_TYPE}}]: (() => TypeMap[K]) } = {
                     {{structureModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
                         '{{agg.PhysicalName}}': {{new Models.StructureModelModules.PlainStructure(agg).TsNewObjectFunction}},
+                    """)}}
+                      }
+                    }
+                    /** StructureModel（編集用） */
+                    export namespace StructureModelDisplayData {
+                      /** StructureModel型一覧 */
+                      export interface TypeMap {
+                    {{parameterStructureModels.SelectTextTemplate(agg => $$"""
+                        '{{agg.PhysicalName}}': {{new Models.StructureModelModules.StructureDisplayData(agg).TsTypeName}}
+                    """)}}
+                      }
+                      /** StructureModel新規作成関数 */
+                      export const create: { [K in {{STRUCTURE_MODEL_DISPLAY_DATA_TYPE}}]: (() => TypeMap[K]) } = {
+                    {{parameterStructureModels.SelectTextTemplate(agg => $$"""
+                        '{{agg.PhysicalName}}': {{new Models.StructureModelModules.StructureDisplayData(agg).TsNewObjectFunction}},
                     """)}}
                       }
                     }

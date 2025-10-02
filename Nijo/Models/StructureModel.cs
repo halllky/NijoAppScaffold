@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
+using Nijo.Parts.Common;
 
 namespace Nijo.Models {
     /// <summary>
@@ -119,19 +120,28 @@ namespace Nijo.Models {
             aggregateFile.AddTypeScriptTypeDef(PlainStructure.RenderTsNewObjectFunctionRecursively(rootAggregate, ctx));
 
             // この構造体がいずれかのコマンドモデルの引数として参照されている場合、
-            // メッセージストラクチャーの定義をレンダリングする
+            // プレゼンテーション層での編集用のオブジェクト等を生成する。
             if (rootAggregate.EnumerateCommandModelsRefferingAsParameter().Any()) {
+                // 画面表示用データ
+                var displayData = new StructureDisplayData(rootAggregate);
+                aggregateFile.AddCSharpClass(StructureDisplayData.RenderCSharpRecursively(rootAggregate, ctx), "Class_DisplayData");
+                aggregateFile.AddTypeScriptTypeDef(StructureDisplayData.RenderTypeScriptRecursively(rootAggregate, ctx));
+                aggregateFile.AddTypeScriptTypeDef(displayData.RenderUiConstraintType(ctx));
+                aggregateFile.AddTypeScriptTypeDef(displayData.RenderUiConstraintValue(ctx));
+                aggregateFile.AddTypeScriptFunction(EditablePresentationObject.RenderTsNewObjectFunctionRecursively(displayData, ctx));
+
+                // メッセージコンテナ
                 var messageContainer = new StructureDisplayDataMessageContainer(rootAggregate);
-                aggregateFile.AddCSharpClass(StructureDisplayDataMessageContainer.RenderCSharpRecursively(rootAggregate), "Class_MessageContainer");
+                aggregateFile.AddCSharpClass(StructureDisplayDataMessageContainer.RenderCSharpRecursively(rootAggregate), "Class_DisplayDataMessage");
                 ctx.Use<Parts.CSharp.MessageContainer.BaseClass>().Register(messageContainer.CsClassName, messageContainer.CsClassName);
             }
 
             // TypeScriptのマッピングファイルへの登録
-            ctx.Use<Parts.Common.CommandQueryMappings>().AddStructureModel(rootAggregate);
+            ctx.Use<CommandQueryMappings>().AddStructureModel(rootAggregate);
 
             // 定数: メタデータ
-            ctx.Use<Parts.Common.Metadata>().Add(rootAggregate);
-            ctx.Use<Parts.Common.MetadataForPage>().Add(rootAggregate);
+            ctx.Use<Metadata>().Add(rootAggregate);
+            ctx.Use<MetadataForPage>().Add(rootAggregate);
 
             aggregateFile.ExecuteRendering(ctx);
         }
