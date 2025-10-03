@@ -69,7 +69,7 @@ exit /b
 @rem UnitTest 
 copy "%SOURCE_ROOT%\UnitTest\PresentationContextInUnitTest.cs" "%TARGET_ROOT%\UnitTest\PresentationContextInUnitTest.cs" 
 copy "%SOURCE_ROOT%\UnitTest\TestUtilImpl.cs" "%TARGET_ROOT%\UnitTest\TestUtilImpl.cs" 
-robocopy "%SOURCE_ROOT%\UnitTest\Tests" "%TARGET_ROOT%\UnitTest\Tests" /MIR /XA:SH 
+robocopy "%SOURCE_ROOT%\UnitTest\Tests" "%TARGET_ROOT%\UnitTest\Tests" /E /XA:SH
 exit /b 
  
 :COPY_TASK 
