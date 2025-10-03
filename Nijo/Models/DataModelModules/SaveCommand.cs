@@ -145,31 +145,17 @@ namespace Nijo.Models.DataModelModules {
         private string RenderUpdateCommandDeclaring(CodeRenderingContext ctx) {
             var efCoreEntity = new EFCoreEntity(Aggregate);
             var right = new Variable("dbEntity", efCoreEntity);
-            Dictionary<SchemaNodeIdentity, IInstanceProperty> dict;
-            try {
-                dict = right
-                    .Create1To1PropertiesRecursively()
-                    .GroupBy(x => x.Metadata.SchemaPathNode.ToMappingKey())
-                    .Select(group => new {
-                        group.Key,
-                        // 外部キーのカラムは、参照元自身のプロパティと、ナビゲーションプロパティで辿った先の
-                        // 参照先エンティティのプロパティで重複するキーが登場するので、
-                        // パスが最も短いもの（= 参照元自身のプロパティ）を選択する
-                        Value = group.OrderBy(x => x.GetPathFromInstance().Count()).First(),
-                    })
-                    .ToDictionary(x => x.Key, x => x.Value);
-            } catch (Exception ex) {
-                Console.WriteLine($$"""
-                    ★★★★★★★★★★★★★★★★★★★★★
-                    {{ex.Message}}
-                    ★★★★★★★★★★★★★★★★★★★★★
-                    {{right.Create1To1PropertiesRecursively().Take(1000).SelectTextTemplate(prop => $$"""
-                    {{prop.Metadata.SchemaPathNode.ToMappingKey()}}	{{prop.GetPathFromInstance().Select(p => p.Metadata.GetPropertyName(E_CsTs.CSharp)).Join(".")}}
-                    """)}}
-                    ★★★★★★★★★★★★★★★★★★★★★
-                    """);
-                throw;
-            }
+            var dict = right
+                 .Create1To1PropertiesRecursively()
+                 .GroupBy(x => x.Metadata.SchemaPathNode.ToMappingKey())
+                 .Select(group => new {
+                     group.Key,
+                     // 外部キーのカラムは、参照元自身のプロパティと、ナビゲーションプロパティで辿った先の
+                     // 参照先エンティティのプロパティで重複するキーが登場するので、
+                     // パスが最も短いもの（= 参照元自身のプロパティ）を選択する
+                     Value = group.OrderBy(x => x.GetPathFromInstance().Count()).First(),
+                 })
+                 .ToDictionary(x => x.Key, x => x.Value);
 
             return $$"""
                 /// <summary>
@@ -216,7 +202,10 @@ namespace Nijo.Models.DataModelModules {
                             var loopVar = new Variable(((ChildrenAggregate)sp.SchemaPathNode).GetLoopVarName(), (IInstancePropertyOwnerMetadata)source.Metadata);
                             foreach (var descendant in loopVar.Create1To1PropertiesRecursively()) {
                                 var key = descendant.Metadata.SchemaPathNode.ToMappingKey();
+
+                                // dictの宣言箇所のコメントと同じ理由により重複が発生しうるのでその場合はスキップ
                                 if (dict2.ContainsKey(key)) continue;
+
                                 dict2.Add(key, descendant);
                             }
 
