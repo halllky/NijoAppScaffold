@@ -5,6 +5,7 @@
   "type": "module",
   "workspaces": [
     "demo/100_チャットアプリ/client",
+    "demo/200_複雑なパターン/client",
     "Document",
     "Nijo.NewProjectTemplate/client",
     "Nijo.ApplicationTemplate.Ver1/react/package_nijo-client-sample",
