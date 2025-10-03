@@ -22,6 +22,10 @@ internal class PresentationContextInUnitTest : IPresentationContext {
         return Confirms.Count > 0;
     }
 
+    public bool HasError() {
+        return Messages.UnderlyingContext.Root.HasError();
+    }
+
     public IPresentationContext<T> As<T>() where T : IMessageSetter {
         return new PresentationContextInUnitTest<T> {
             Messages = Messages.As<T>(),

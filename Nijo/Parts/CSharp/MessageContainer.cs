@@ -291,9 +291,6 @@ namespace Nijo.Parts.CSharp {
                             /// <summary>インフォメーションメッセージを付加します。</summary>
                             void AddInfo(string message);
 
-                            /// <summary>このインスタンスまたはこのインスタンスの子孫が1件以上エラーを持っているか否かを返します。</summary>
-                            bool HasError();
-
                             /// <summary>
                             /// このインスタンスを、メッセージコンテナを持つ型にキャストします。
                             /// このインスタンスが持っているメッセージはすべて引き継がれます。
@@ -329,11 +326,6 @@ namespace Nijo.Parts.CSharp {
                             /// <summary>インフォメーションメッセージを付加します。</summary>
                             public virtual void AddInfo(string message) {
                                 UnderlyingContext.AddInfo(_path, message);
-                            }
-
-                            /// <summary>このインスタンスまたはこのインスタンスの子孫が1件以上エラーを持っているか否かを返します。</summary>
-                            public bool HasError() {
-                                return UnderlyingContext.Root.Find(_path)?.Errors.Any() == true;
                             }
 
                             /// <summary>

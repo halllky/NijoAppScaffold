@@ -25,7 +25,7 @@ partial class OverridedApplicationService {
         if (string.IsNullOrWhiteSpace(param.Values.パスワード)) {
             context.Messages.パスワード.AddError("パスワードを入力してください。");
         }
-        if (context.Messages.HasError()) {
+        if (context.HasError()) {
             return;
         }
 
@@ -214,7 +214,7 @@ partial class OverridedApplicationService {
 
         await CreateメッセージAsync(createCommand, context);
 
-        if (context.Messages.HasError()) {
+        if (context.HasError()) {
             return;
         }
 
@@ -236,7 +236,7 @@ partial class OverridedApplicationService {
         }, context);
 
         // エラーメッセージはメッセージのコンテナに含めて画面側に返す
-        if (context.Messages.HasError()) {
+        if (context.HasError()) {
             return;
         }
 

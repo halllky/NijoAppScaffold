@@ -144,7 +144,7 @@ namespace Nijo.Models.DataModelModules {
                     }
 
                     // 1件でもエラーがあればロールバック
-                    if (context.Messages.HasError()) {
+                    if (context.HasError()) {
                         await tran!.RollbackAsync();
                         return false;
                     } else {

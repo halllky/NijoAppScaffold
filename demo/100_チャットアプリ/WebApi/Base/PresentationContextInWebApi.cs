@@ -24,6 +24,10 @@ public class PresentationContextInWebApi<TMessageRoot> : IPresentationContext<TM
     }
     #endregion 確認メッセージ
 
+    public bool HasError() {
+        return Messages.UnderlyingContext.Root.HasError();
+    }
+
     public IPresentationContext<T> As<T>() where T : IMessageSetter {
         return new PresentationContextInWebApi<T> {
             Messages = Messages.As<T>(),

@@ -4,6 +4,9 @@ namespace MyApp.Core;
 
 public static class MessageContainerExtension {
 
+    /// <summary>
+    /// このオブジェクトおよび子孫オブジェクトが持っているメッセージのうち、エラーが1件以上あるかどうかを返します。
+    /// </summary>
     public static bool HasError(this IReadOnlyMessageContainer messageContainer) {
         return messageContainer.DescendantsAndSelf().Any(c => c.Errors.Any());
     }

@@ -111,7 +111,7 @@ internal class ConfigurationInWebApi : DefaultConfigurationInWebApi {
         // ステータスコード。
         // `useHttpRequest.tsx` でレスポンスを受け取ったあとの処理と整合性がとれている必要がある
         var objectResult = new ObjectResult(JsonSerializer.Serialize(responseBody, jsonOptions));
-        if (ctx.Messages.HasError() || !ctx.Options.IgnoreConfirm && ctx.HasConfirm()) {
+        if (ctx.HasError() || !ctx.Options.IgnoreConfirm && ctx.HasConfirm()) {
             objectResult.StatusCode = (int)HttpStatusCode.Accepted;
 
         } else {

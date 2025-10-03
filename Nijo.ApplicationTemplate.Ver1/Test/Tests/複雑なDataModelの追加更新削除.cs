@@ -88,7 +88,7 @@ partial class DB接続あり_更新あり {
 
         Assert.Multiple(() => {
             // エラーが無いことを確認
-            Assert.That(scope.PresentationContext.Messages.HasError(), Is.False);
+            Assert.That(scope.PresentationContext.HasError(), Is.False);
 
             // 3テーブルともに登録されていることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
@@ -160,7 +160,7 @@ partial class DB接続あり_更新あり {
 
         Assert.Multiple(() => {
             // エラーが無いことを確認
-            Assert.That(scope.PresentationContext.Messages.HasError(), Is.False);
+            Assert.That(scope.PresentationContext.HasError(), Is.False);
 
             // 3テーブルともに新しい値に更新されていることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
@@ -222,7 +222,7 @@ partial class DB接続あり_更新あり {
 
         Assert.Multiple(() => {
             // エラーが無いことを確認
-            Assert.That(scope.PresentationContext.Messages.HasError(), Is.False);
+            Assert.That(scope.PresentationContext.HasError(), Is.False);
 
             // ルートと子が影響なし、孫が消えていることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
@@ -287,7 +287,7 @@ partial class DB接続あり_更新あり {
 
         Assert.Multiple(() => {
             // エラーが無いことを確認
-            Assert.That(scope.PresentationContext.Messages.HasError(), Is.False);
+            Assert.That(scope.PresentationContext.HasError(), Is.False);
 
             // 3テーブルすべてデータがあることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
@@ -323,7 +323,7 @@ partial class DB接続あり_更新あり {
 
         Assert.Multiple(() => {
             // エラーが無いことを確認
-            Assert.That(scope.PresentationContext.Messages.HasError(), Is.False);
+            Assert.That(scope.PresentationContext.HasError(), Is.False);
 
             // ルートだけデータが残っていることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));

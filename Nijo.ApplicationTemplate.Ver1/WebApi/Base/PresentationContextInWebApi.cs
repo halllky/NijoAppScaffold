@@ -13,7 +13,6 @@ public class PresentationContextInWebApi<TMessageRoot> : IPresentationContext<TM
 
     public required IPresentationContextOptions Options { get; init; }
 
-
     /// <summary>
     /// トーストメッセージ。
     /// UIに依存するため自動生成とは関係ない、カスタマイズ属性。
@@ -32,6 +31,9 @@ public class PresentationContextInWebApi<TMessageRoot> : IPresentationContext<TM
     }
     #endregion 確認メッセージ
 
+    public bool HasError() {
+        return Messages.UnderlyingContext.Root.HasError();
+    }
 
     public IPresentationContext<T> As<T>() where T : IMessageSetter {
         return new PresentationContextInWebApi<T> {

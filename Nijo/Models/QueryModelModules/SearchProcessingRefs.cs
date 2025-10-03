@@ -108,7 +108,7 @@ namespace Nijo.Models.QueryModelModules {
                     [ModelBinder(BinderType = typeof({{AspNetController.PRESENTATION_CONTEXT_BINDER}}<{{searchConditionMessage.CsClassName}}>))] {{PresentationContext.INTERFACE}}<{{searchConditionMessage.CsClassName}}> {{AspNetController.CONTEXT}}) {
                     // エラーチェック
                     _applicationService.{{ValidateMethod}}(data, context);
-                    if (context.Messages.HasError() || (!context.Options.IgnoreConfirm && context.HasConfirm())) {
+                    if (context.HasError() || (!context.Options.IgnoreConfirm && context.HasConfirm())) {
                         return _webConfigure.{{AspNetController.TO_ACTION_RESULT}}(null, context);
                     }
 

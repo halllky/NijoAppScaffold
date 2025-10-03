@@ -3,6 +3,14 @@ using System.Text.Json.Nodes;
 namespace MyApp;
 
 public static class MessageContainerExtension {
+
+    /// <summary>
+    /// このオブジェクトおよび子孫オブジェクトが持っているメッセージのうち、エラーが1件以上あるかどうかを返します。
+    /// </summary>
+    public static bool HasError(this IReadOnlyMessageContainer messageContainer) {
+        return messageContainer.DescendantsAndSelf().Any(c => c.Errors.Any());
+    }
+
     /// <summary>
     /// このオブジェクトおよび子孫オブジェクトが持っているメッセージを再帰的に列挙します。
     /// メッセージは、パスとメッセージの組み合わせで返されます。

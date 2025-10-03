@@ -43,6 +43,11 @@ namespace Nijo.Parts.CSharp {
                         bool HasConfirm();
 
                         /// <summary>
+                        /// このコンテキストでエラーが発生しているかどうかを返します。
+                        /// </summary>
+                        bool HasError();
+
+                        /// <summary>
                         /// このインスタンスを、メッセージコンテナを持つ型にキャストします。
                         /// このインスタンスが持つ情報はすべて引き継がれます。
                         /// </summary>
