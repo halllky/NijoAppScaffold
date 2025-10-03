@@ -9,16 +9,9 @@ namespace MyApp.WebApi.Base;
 public class PresentationContextInWebApi<TMessageRoot> : IPresentationContext<TMessageRoot>
     where TMessageRoot : IMessageSetter {
 
-    internal PresentationContextInWebApi(MessageContainer messageContext, IPresentationContextOptions options) {
-        MessageContext = messageContext;
-        Messages = MessageSetter.GetImpl<TMessageRoot>([], messageContext);
-        Options = options;
-    }
+    public required TMessageRoot Messages { get; init; } // メッセージ設定用ヘルパー
 
-    internal MessageContainer MessageContext { get; } // メッセージの格納先
-    public TMessageRoot Messages { get; } // メッセージ設定用ヘルパー
-
-    public IPresentationContextOptions Options { get; }
+    public required IPresentationContextOptions Options { get; init; }
 
 
     /// <summary>
@@ -29,7 +22,7 @@ public class PresentationContextInWebApi<TMessageRoot> : IPresentationContext<TM
 
 
     #region 確認メッセージ
-    internal List<string> Confirms { get; } = [];
+    public required List<string> Confirms { get; init; }
 
     public void AddConfirm(string text) {
         Confirms.Add(text);
@@ -38,6 +31,16 @@ public class PresentationContextInWebApi<TMessageRoot> : IPresentationContext<TM
         return Confirms.Count > 0;
     }
     #endregion 確認メッセージ
+
+
+    public IPresentationContext<T> As<T>() where T : IMessageSetter {
+        return new PresentationContextInWebApi<T> {
+            Messages = Messages.As<T>(),
+            Options = Options,
+            ToastMessage = ToastMessage,
+            Confirms = Confirms,
+        };
+    }
 }
 
 /// <summary>
@@ -47,11 +50,7 @@ public class PresentationContextInWebApi<TReturnValue, TMessageRoot> : Presentat
     where TMessageRoot : IMessageSetter
     where TReturnValue : new() {
 
-    internal PresentationContextInWebApi(MessageContainer messageContext, IPresentationContextOptions options) : base(messageContext, options) {
-        ReturnValue = new TReturnValue();
-    }
-
-    public TReturnValue ReturnValue { get; set; }
+    public TReturnValue ReturnValue { get; set; } = new();
 }
 
 /// <summary>

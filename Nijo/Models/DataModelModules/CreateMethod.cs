@@ -44,8 +44,15 @@ namespace Nijo.Models.DataModelModules {
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の新規登録を実行します。
                 /// </summary>
-                public virtual async Task {{MethodName}}({{command.CsClassNameCreate}} command, {{messages.InterfaceName}} messages, {{PresentationContext.INTERFACE}} context) {
+                /// <param name="command">新規登録するデータ</param>
+                /// <param name="context">コンテキスト</param>
+                /// <param name="messageOwner">
+                /// エラーメッセージを特定の位置に付加したい場合は指定する。
+                /// nullの場合はコンテキストのルートに付加される。
+                /// </param>
+                public virtual async Task {{MethodName}}({{command.CsClassNameCreate}} command, {{PresentationContext.INTERFACE}} context, {{MessageContainer.SETTER_INTERFACE}}? messageOwner = null) {
                     var dbEntity = command.{{SaveCommand.TO_DBENTITY}}();
+                    var messages = messageOwner?.As<{{messages.InterfaceName}}>() ?? context.As<{{messages.InterfaceName}}>().Messages;
 
                     // 自動的に登録される項目
                     dbEntity.{{EFCoreEntity.VERSION}} = 0;
@@ -55,15 +62,16 @@ namespace Nijo.Models.DataModelModules {
                     dbEntity.{{EFCoreEntity.UPDATE_USER}} = {{ApplicationService.CURRENT_USER}};
 
                     // 更新前処理。入力検証や自動補完項目の設定を行なう。
-                    {{CheckRequired.METHOD_NAME}}(dbEntity, messages);
-                    {{CheckMaxLength.METHOD_NAME}}(dbEntity, messages);
-                    {{CheckCharacterType.METHOD_NAME}}(dbEntity, messages);
-                    {{CheckDigitsAndScales.METHOD_NAME}}(dbEntity, messages);
-                    {{DynamicEnum.METHOD_NAME}}(dbEntity, messages);
-                    {{OnBeforeMethodName}}(command, messages, context);
+                    var hasError = false;
+                    if (!{{ValidateRequired.METHOD_NAME}}(dbEntity, messages)) hasError = true;
+                    if (!{{ValidateMaxLength.METHOD_NAME}}(dbEntity, messages)) hasError = true;
+                    if (!{{ValidateCharacterType.METHOD_NAME}}(dbEntity, messages)) hasError = true;
+                    if (!{{ValidateDigitsAndScales.METHOD_NAME}}(dbEntity, messages)) hasError = true;
+                    if (!{{ValidateDynamicEnumType.METHOD_NAME}}(dbEntity, messages)) hasError = true;
+                    if (!{{OnBeforeMethodName}}(command, messages, context)) hasError = true;
 
                     // エラーがある場合は処理中断
-                    if (messages.HasError()) {
+                    if (hasError) {
                         // 単なる必須入力漏れなどでもエラーログが出過ぎてしまうのを防ぐため、
                         // IgnoreConfirmがtrueのとき（==更新を確定するつもりのとき）のみ内容をログ出力する
                         if (context.Options.IgnoreConfirm) {
@@ -126,10 +134,11 @@ namespace Nijo.Models.DataModelModules {
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の新規登録の確定前に実行される処理。
                 /// 自動生成されないエラーチェックはここで実装する。
-                /// エラーがあった場合、第2引数のメッセージにエラー内容を格納する。
                 /// </summary>
-                public virtual void {{OnBeforeMethodName}}({{command.CsClassNameCreate}} command, {{messages.InterfaceName}} messages, {{PresentationContext.INTERFACE}} context) {
+                /// <returns>正常ならtrue、エラーがあった場合はfalseを返す。</returns>
+                public virtual bool {{OnBeforeMethodName}}({{command.CsClassNameCreate}} command, {{messages.InterfaceName}} messages, {{PresentationContext.INTERFACE}} context) {
                     // このメソッドをオーバーライドして処理を実装してください。
+                    return true;
                 }
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の新規登録のSQL発行後、コミット前に実行される処理。

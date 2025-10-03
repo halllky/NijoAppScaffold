@@ -114,12 +114,12 @@ namespace Nijo.Models.DataModelModules {
                         if (!displayData.ExistsInDatabase) {
                             // 追加
                             var createCommand = displayData.{{DisplayData.TO_CREATE_COMMAND}}();
-                            await {{createMethod.MethodName}}(createCommand, context.Messages[i], context);
+                            await {{createMethod.MethodName}}(createCommand, context, context.Messages[i]);
 
                         } else if (displayData.WillBeDeleted) {
                             // 削除
                             var deleteCommand = displayData.{{DisplayData.TO_DELETE_COMMAND}}();
-                            await {{deleteMethod.MethodName}}(deleteCommand, context.Messages[i], context);
+                            await {{deleteMethod.MethodName}}(deleteCommand, context, context.Messages[i]);
 
                         } else if (displayData.WillBeChanged) {
                             // 更新
@@ -129,8 +129,8 @@ namespace Nijo.Models.DataModelModules {
                 """)}}
                                 displayData.{{DisplayData.VERSION_CS}},
                                 displayData.{{DisplayData.ASSIGN_TO_UPDATE_COMMAND}},
-                                context.Messages[i],
-                                context);
+                                context,
+                                context.Messages[i]);
 
                         } else {
                             // 変更なし

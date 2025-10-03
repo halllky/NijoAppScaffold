@@ -6,11 +6,11 @@ using System;
 
 namespace Nijo.Models.DataModelModules {
     /// <summary>
-    /// 文字列最大長チェック
+    /// 必須入力チェック
     /// </summary>
-    internal static class CheckMaxLength {
+    internal static class ValidateRequired {
 
-        internal const string METHOD_NAME = "CheckMaxLength";
+        internal const string METHOD_NAME = "ValidateRequired";
 
         internal static string Render(RootAggregate rootAggregate, CodeRenderingContext ctx) {
             var efCoreEntity = new EFCoreEntity(rootAggregate);
@@ -18,10 +18,12 @@ namespace Nijo.Models.DataModelModules {
 
             return $$"""
                 /// <summary>
-                /// 文字列最大長チェック処理。違反する項目があった場合はその旨が第2引数のオブジェクト内に追記されます。
+                /// 必須チェック処理。空の項目があった場合はその旨が第2引数のオブジェクト内に追記されます。
+                /// エラーがあった場合はfalseを返します。
                 /// </summary>
-                protected virtual void {{METHOD_NAME}}({{efCoreEntity.CsClassName}} dbEntity, {{messages.InterfaceName}} messages) {
+                protected virtual bool {{METHOD_NAME}}({{efCoreEntity.CsClassName}} dbEntity, {{messages.InterfaceName}} messages) {
                     // TODO ver.1
+                    return true;
                 }
                 """;
         }

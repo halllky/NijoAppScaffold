@@ -269,11 +269,11 @@ namespace Nijo.Models {
             // 処理: 自動生成されるバリデーションエラーチェック
             aggregateFile.AddAppSrvMethod($$"""
                 #region 自動生成されるバリデーション処理
-                {{CheckRequired.Render(rootAggregate, ctx)}}
-                {{CheckMaxLength.Render(rootAggregate, ctx)}}
-                {{CheckCharacterType.Render(rootAggregate, ctx)}}
-                {{CheckDigitsAndScales.Render(rootAggregate, ctx)}}
-                {{DynamicEnum.RenderAppSrvCheckMethod(rootAggregate, ctx)}}
+                {{ValidateRequired.Render(rootAggregate, ctx)}}
+                {{ValidateMaxLength.Render(rootAggregate, ctx)}}
+                {{ValidateCharacterType.Render(rootAggregate, ctx)}}
+                {{ValidateDigitsAndScales.Render(rootAggregate, ctx)}}
+                {{ValidateDynamicEnumType.RenderAppSrvCheckMethod(rootAggregate, ctx)}}
                 #endregion 自動生成されるバリデーション処理
                 """, "バリデーション処理");
 

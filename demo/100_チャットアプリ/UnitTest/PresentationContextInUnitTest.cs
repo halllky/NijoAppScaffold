@@ -11,18 +11,9 @@ namespace MyApp.UnitTest;
 /// <see cref="IPresentationContext"/> のユニットテスト用の実装
 /// </summary>
 internal class PresentationContextInUnitTest : IPresentationContext {
-    internal PresentationContextInUnitTest(Type messageRootType, IPresentationContextOptions options) {
-        Messages = MessageSetter.GetImpl(messageRootType, [], new MessageContainer());
-        Options = options;
-    }
-    protected PresentationContextInUnitTest(IMessageSetter messageRoot, IPresentationContextOptions options) {
-        Messages = messageRoot;
-        Options = options;
-    }
-
-    public IPresentationContextOptions Options { get; }
-    public IMessageSetter Messages { get; }
-    public List<string> Confirms { get; private set; } = [];
+    public required IPresentationContextOptions Options { get; init; }
+    public required IMessageSetter Messages { get; init; }
+    public required List<string> Confirms { get; init; }
 
     public void AddConfirm(string text) {
         Confirms.Add(text);
@@ -31,17 +22,19 @@ internal class PresentationContextInUnitTest : IPresentationContext {
         return Confirms.Count > 0;
     }
 
-    public IPresentationContext<TMessageRoot> Cast<TMessageRoot>() where TMessageRoot : IMessageSetter {
-        return new PresentationContextInUnitTest<TMessageRoot>((TMessageRoot)Messages, Options);
+    public IPresentationContext<T> As<T>() where T : IMessageSetter {
+        return new PresentationContextInUnitTest<T> {
+            Messages = Messages.As<T>(),
+            Options = Options,
+            Confirms = Confirms,
+        };
     }
 
 }
 
 /// <inheritdoc cref="PresentationContextInUnitTest"/>
 internal class PresentationContextInUnitTest<TMessage> : PresentationContextInUnitTest, IPresentationContext<TMessage> where TMessage : IMessageSetter {
-    internal PresentationContextInUnitTest(TMessage messageRoot, IPresentationContextOptions options) : base(messageRoot, options) { }
-
-    public new TMessage Messages => (TMessage)base.Messages;
+    TMessage IPresentationContext<TMessage>.Messages => (TMessage)Messages;
 }
 
 /// <inheritdoc cref="PresentationContextInUnitTest"/>
@@ -49,9 +42,5 @@ internal class PresentationContextInUnitTest<TReturnValue, TMessage> : Presentat
     where TMessage : IMessageSetter
     where TReturnValue : new() {
 
-    internal PresentationContextInUnitTest(TMessage messageRoot, IPresentationContextOptions options) : base(messageRoot, options) {
-        ReturnValue = new TReturnValue();
-    }
-
-    public TReturnValue ReturnValue { get; set; }
+    public TReturnValue ReturnValue { get; set; } = new();
 }

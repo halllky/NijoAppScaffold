@@ -59,7 +59,14 @@ namespace Nijo.Models.DataModelModules {
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の物理削除を実行します。
                 /// </summary>
-                public virtual async Task {{MethodName}}({{command.CsClassNameDelete}} command, {{messages.InterfaceName}} messages, {{PresentationContext.INTERFACE}} context) {
+                /// <param name="command">削除するデータ</param>
+                /// <param name="context">コンテキスト</param>
+                /// <param name="messageOwner">
+                /// エラーメッセージを特定の位置に付加したい場合は指定する。
+                /// nullの場合はコンテキストのルートに付加される。
+                /// </param>
+                public virtual async Task {{MethodName}}({{command.CsClassNameDelete}} command, {{PresentationContext.INTERFACE}} context, {{MessageContainer.SETTER_INTERFACE}}? messageOwner = null) {
+                    var messages = messageOwner?.As<{{messages.InterfaceName}}>() ?? context.As<{{messages.InterfaceName}}>().Messages;
 
                     // 削除に必要な項目が空の場合は処理中断
                     var keyIsEmpty = false;
@@ -95,10 +102,11 @@ namespace Nijo.Models.DataModelModules {
                     }
 
                     // 更新前処理。入力検証を行なう。
-                    {{OnBeforeMethodName}}(command, dbEntity, messages, context);
+                    var hasError = false;
+                    if (!{{OnBeforeMethodName}}(command, dbEntity, messages, context)) hasError = true;
 
                     // エラーがある場合は処理中断
-                    if (messages.HasError()) {
+                    if (hasError) {
                         // 単なる必須入力漏れなどでもエラーログが出過ぎてしまうのを防ぐため、
                         // IgnoreConfirmがtrueのとき（==更新を確定するつもりのとき）のみ内容をログ出力する
                         if (context.Options.IgnoreConfirm) {
@@ -171,10 +179,11 @@ namespace Nijo.Models.DataModelModules {
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の物理削除の確定前に実行される処理。
                 /// 自動生成されないエラーチェックはここで実装する。
-                /// エラーがあった場合、第3引数のメッセージにエラー内容を格納する。
                 /// </summary>
-                public virtual void {{OnBeforeMethodName}}({{command.CsClassNameDelete}} command, {{dbEntity.CsClassName}} oldValue, {{messages.InterfaceName}} messages, {{PresentationContext.INTERFACE}} context) {
+                /// <returns>正常ならtrue、エラーがあった場合はfalseを返す。</returns>
+                public virtual bool {{OnBeforeMethodName}}({{command.CsClassNameDelete}} command, {{dbEntity.CsClassName}} oldValue, {{messages.InterfaceName}} messages, {{PresentationContext.INTERFACE}} context) {
                     // このメソッドをオーバーライドして処理を実装してください。
+                    return true;
                 }
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の物理削除のSQL発行後、コミット前に実行される処理。

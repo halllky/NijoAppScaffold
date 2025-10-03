@@ -8,9 +8,9 @@ namespace Nijo.Models.DataModelModules {
     /// <summary>
     /// 動的列挙型
     /// </summary>
-    internal static class DynamicEnum {
+    internal static class ValidateDynamicEnumType {
 
-        internal const string METHOD_NAME = "CheckDynamicEnumType";
+        internal const string METHOD_NAME = "ValidateDynamicEnumType";
 
         internal static string RenderAppSrvCheckMethod(RootAggregate rootAggregate, CodeRenderingContext ctx) {
             var efCoreEntity = new EFCoreEntity(rootAggregate);
@@ -19,9 +19,11 @@ namespace Nijo.Models.DataModelModules {
             return $$"""
                 /// <summary>
                 /// 異なる種類の区分値が登録されないかのチェック処理。違反する項目があった場合はその旨が第2引数のオブジェクト内に追記されます。
+                /// エラーがあった場合はfalseを返します。
                 /// </summary>
-                protected virtual void {{METHOD_NAME}}({{efCoreEntity.CsClassName}} dbEntity, {{messages.InterfaceName}} messages) {
+                protected virtual bool {{METHOD_NAME}}({{efCoreEntity.CsClassName}} dbEntity, {{messages.InterfaceName}} messages) {
                     // TODO ver.1
+                    return true;
                 }
                 """;
         }

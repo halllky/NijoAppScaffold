@@ -66,9 +66,22 @@ namespace Nijo.Models.DataModelModules {
                 """)}}
                 /// <param name="version">バージョン。nullの場合はエラー。</param>
                 /// <param name="updater">更新関数。引数は更新前の値。この関数の中で更新したいプロパティを書き換えてください。</param>
-                /// <param name="messages">エラー等のメッセージのコンテナ</param>
                 /// <param name="context">コンテキスト</param>
-                public virtual async Task {{MethodName}}({{keys.Select(k => $"{k.ArgVarType.CsDomainTypeName}? {k.ArgVarName}").Join(", ")}}, int? version, Action<{{command.CsClassNameUpdate}}> updater, {{messages.InterfaceName}} messages, {{PresentationContext.INTERFACE}} context) {
+                /// <param name="messageOwner">
+                /// エラーメッセージを特定の位置に付加したい場合は指定する。
+                /// nullの場合はコンテキストのルートに付加される。
+                /// </param>
+                public virtual async Task {{MethodName}}(
+                {{keys.SelectTextTemplate(k => $$"""
+                    {{k.ArgVarType.CsDomainTypeName}}? {{k.ArgVarName}},
+                """)}}
+                    int? version,
+                    Action<{{command.CsClassNameUpdate}}> updater,
+                    {{PresentationContext.INTERFACE}} context,
+                    {{MessageContainer.SETTER_INTERFACE}}? messageOwner = null) {
+
+                    var messages = messageOwner?.As<{{messages.InterfaceName}}>() ?? context.As<{{messages.InterfaceName}}>().Messages;
+
                     // 更新に必要な項目が空の場合は処理中断
                     var keyIsEmpty = false;
                 {{keys.SelectTextTemplate(vm => $$"""
@@ -115,15 +128,16 @@ namespace Nijo.Models.DataModelModules {
                     afterDbEntity.{{EFCoreEntity.UPDATE_USER}} = {{ApplicationService.CURRENT_USER}};
 
                     // 更新前処理。入力検証や自動補完項目の設定を行なう。
-                    {{CheckRequired.METHOD_NAME}}(afterDbEntity, messages);
-                    {{CheckMaxLength.METHOD_NAME}}(afterDbEntity, messages);
-                    {{CheckCharacterType.METHOD_NAME}}(afterDbEntity, messages);
-                    {{CheckDigitsAndScales.METHOD_NAME}}(afterDbEntity, messages);
-                    {{DynamicEnum.METHOD_NAME}}(afterDbEntity, messages);
-                    {{OnBeforeMethodName}}(command, beforeDbEntity, messages, context);
+                    var hasError = false;
+                    if (!{{ValidateRequired.METHOD_NAME}}(afterDbEntity, messages)) hasError = true;
+                    if (!{{ValidateMaxLength.METHOD_NAME}}(afterDbEntity, messages)) hasError = true;
+                    if (!{{ValidateCharacterType.METHOD_NAME}}(afterDbEntity, messages)) hasError = true;
+                    if (!{{ValidateDigitsAndScales.METHOD_NAME}}(afterDbEntity, messages)) hasError = true;
+                    if (!{{ValidateDynamicEnumType.METHOD_NAME}}(afterDbEntity, messages)) hasError = true;
+                    if (!{{OnBeforeMethodName}}(command, beforeDbEntity, messages, context)) hasError = true;
 
                     // エラーがある場合は処理中断
-                    if (messages.HasError()) {
+                    if (hasError) {
                         // 単なる必須入力漏れなどでもエラーログが出過ぎてしまうのを防ぐため、
                         // IgnoreConfirmがtrueのとき（==更新を確定するつもりのとき）のみ内容をログ出力する
                         if (context.Options.IgnoreConfirm) {
@@ -199,10 +213,11 @@ namespace Nijo.Models.DataModelModules {
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の更新の確定前に実行される処理。
                 /// 自動生成されないエラーチェックはここで実装する。
-                /// エラーがあった場合、第3引数のメッセージにエラー内容を格納する。
                 /// </summary>
-                public virtual void {{OnBeforeMethodName}}({{command.CsClassNameUpdate}} command, {{dbEntity.CsClassName}} oldValue, {{messages.InterfaceName}} messages, {{PresentationContext.INTERFACE}} context) {
+                /// <returns>正常ならtrue、エラーがあった場合はfalseを返す。</returns>
+                public virtual bool {{OnBeforeMethodName}}({{command.CsClassNameUpdate}} command, {{dbEntity.CsClassName}} oldValue, {{messages.InterfaceName}} messages, {{PresentationContext.INTERFACE}} context) {
                     // このメソッドをオーバーライドして処理を実装してください。
+                    return true;
                 }
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の更新のSQL発行後、コミット前に実行される処理。

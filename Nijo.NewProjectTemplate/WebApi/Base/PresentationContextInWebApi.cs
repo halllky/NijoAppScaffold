@@ -9,18 +9,12 @@ namespace MyApp.WebApi.Base;
 public class PresentationContextInWebApi<TMessageRoot> : IPresentationContext<TMessageRoot>
     where TMessageRoot : IMessageSetter {
 
-    internal PresentationContextInWebApi(TMessageRoot messageRoot, IPresentationContextOptions options) {
-        Messages = messageRoot;
-        Options = options;
-    }
-
-    public TMessageRoot Messages { get; }
-
-    public IPresentationContextOptions Options { get; }
+    public required TMessageRoot Messages { get; init; }
+    public required IPresentationContextOptions Options { get; init; }
 
 
     #region 確認メッセージ
-    internal List<string> Confirms { get; } = [];
+    public required List<string> Confirms { get; init; }
 
     public void AddConfirm(string text) {
         Confirms.Add(text);
@@ -29,6 +23,14 @@ public class PresentationContextInWebApi<TMessageRoot> : IPresentationContext<TM
         return Confirms.Count > 0;
     }
     #endregion 確認メッセージ
+
+    public IPresentationContext<T> As<T>() where T : IMessageSetter {
+        return new PresentationContextInWebApi<T> {
+            Messages = Messages.As<T>(),
+            Options = Options,
+            Confirms = Confirms,
+        };
+    }
 }
 
 /// <summary>
@@ -38,11 +40,7 @@ public class PresentationContextInWebApi<TReturnValue, TMessageRoot> : Presentat
     where TMessageRoot : IMessageSetter
     where TReturnValue : new() {
 
-    internal PresentationContextInWebApi(TMessageRoot messageRoot, IPresentationContextOptions options) : base(messageRoot, options) {
-        ReturnValue = new TReturnValue();
-    }
-
-    public TReturnValue ReturnValue { get; set; }
+    public TReturnValue ReturnValue { get; set; } = new();
 }
 
 /// <summary>

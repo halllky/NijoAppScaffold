@@ -293,6 +293,12 @@ namespace Nijo.Parts.CSharp {
 
                             /// <summary>このインスタンスまたはこのインスタンスの子孫が1件以上エラーを持っているか否かを返します。</summary>
                             bool HasError();
+
+                            /// <summary>
+                            /// このインスタンスを、メッセージコンテナを持つ型にキャストします。
+                            /// このインスタンスが持っているメッセージはすべて引き継がれます。
+                            /// </summary>
+                            TMessage As<TMessage>() where TMessage : {{SETTER_INTERFACE}};
                         }
                         /// <inheritdoc cref="{{SETTER_INTERFACE}}">
                         public interface {{SETTER_INTERFACE_LIST}}<out T> : {{SETTER_INTERFACE}}, IReadOnlyList<T> where T : {{SETTER_INTERFACE}} {

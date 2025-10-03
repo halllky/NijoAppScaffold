@@ -62,7 +62,11 @@ public class TestUtilImpl {
         var (currentTestWorkDirectory, provider) = SetupEnvironments(testCaseName, configureServices);
         var messageRoot = MessageSetter.GetImpl<TMessageRoot>([], new MessageContainer());
         var contextOptions = options ?? new PresentationContextOptionsImpl();
-        var presentationContext = new PresentationContextInUnitTest<TMessageRoot>(messageRoot, contextOptions);
+        var presentationContext = new PresentationContextInUnitTest<TMessageRoot> {
+            Messages = messageRoot,
+            Options = contextOptions,
+            Confirms = [],
+        };
 
         return new TestScopeImpl<TMessageRoot>(provider, presentationContext, currentTestWorkDirectory);
     }
@@ -74,7 +78,11 @@ public class TestUtilImpl {
     public TestScopeImpl CreateScope(string testCaseName, Type messageRootType, Action<IServiceCollection>? configureServices = null, IPresentationContextOptions? options = null) {
         var (currentTestWorkDirectory, provider) = SetupEnvironments(testCaseName, configureServices);
         var contextOptions = options ?? new PresentationContextOptionsImpl();
-        var presentationContext = new PresentationContextInUnitTest(messageRootType, contextOptions);
+        var presentationContext = new PresentationContextInUnitTest {
+            Messages = MessageSetter.GetImpl(messageRootType, [], new MessageContainer()),
+            Options = contextOptions,
+            Confirms = [],
+        };
 
         return new TestScopeImpl(provider, presentationContext, currentTestWorkDirectory);
     }

@@ -212,10 +212,9 @@ partial class OverridedApplicationService {
             編集済みか = false,
         };
 
-        var messages = context.Messages.As<メッセージSaveCommandMessages>();
-        await CreateメッセージAsync(createCommand, messages, context);
+        await CreateメッセージAsync(createCommand, context);
 
-        if (messages.HasError()) {
+        if (context.Messages.HasError()) {
             return;
         }
 
@@ -231,14 +230,13 @@ partial class OverridedApplicationService {
         using var transaction = await DbContext.Database.BeginTransactionAsync();
 
         // 自動生成されたメソッドを使用してメッセージを更新
-        var messages = context.Messages.As<メッセージSaveCommandMessages>();
         await UpdateメッセージAsync(param.Values.メッセージSEQ, param.Version, data => {
             data.本文 = param.Values.本文;
             data.編集済みか = true;
-        }, messages, context);
+        }, context);
 
         // エラーメッセージはメッセージのコンテナに含めて画面側に返す
-        if (messages.HasError()) {
+        if (context.Messages.HasError()) {
             return;
         }
 
