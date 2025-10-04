@@ -11,7 +11,8 @@ import useQueryEditorServerApi from "../データプレビュー/useQueryEditorS
 import { BACKEND_URL } from "../データプレビュー"
 
 export const NijoUiDebugMenu = () => {
-  const { [NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR]: projectDir } = ReactRouter.useParams()
+  const [searchParams] = ReactRouter.useSearchParams()
+  const projectDir = searchParams.get(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR)
   const [debugState, setDebugState] = useState<DebugProcessState>()
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string>()
@@ -61,7 +62,7 @@ export const NijoUiDebugMenu = () => {
     if (anyCommandProcessing) return
     setDebugState(state => ({ ...state, consoleOut: '' }))
     setStartNpmDebuggingProcessing(true)
-    const response = await fetch(`${SERVER_DOMAIN}/api/${projectDir}/start-npm-debugging`, {
+    const response = await fetch(`${SERVER_DOMAIN}/api/start-npm-debugging?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
       method: 'POST',
     })
     if (!response.ok) {
@@ -77,7 +78,7 @@ export const NijoUiDebugMenu = () => {
     if (anyCommandProcessing) return
     setDebugState(state => ({ ...state, consoleOut: '' }))
     setStartDotnetDebuggingProcessing(true)
-    const response = await fetch(`${SERVER_DOMAIN}/api/${projectDir}/start-dotnet-debugging`, {
+    const response = await fetch(`${SERVER_DOMAIN}/api/start-dotnet-debugging?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
       method: 'POST',
     })
     if (!response.ok) {
@@ -93,7 +94,7 @@ export const NijoUiDebugMenu = () => {
     if (anyCommandProcessing) return
     setDebugState(state => ({ ...state, consoleOut: '' }))
     setStopNpmDebuggingProcessing(true)
-    const response = await fetch(`${SERVER_DOMAIN}/api/${projectDir}/stop-npm-debugging`, {
+    const response = await fetch(`${SERVER_DOMAIN}/api/stop-npm-debugging?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
       method: 'POST',
     })
     if (!response.ok) {
@@ -109,7 +110,7 @@ export const NijoUiDebugMenu = () => {
     if (anyCommandProcessing) return
     setDebugState(state => ({ ...state, consoleOut: '' }))
     setStopDotnetDebuggingProcessing(true)
-    const response = await fetch(`${SERVER_DOMAIN}/api/${projectDir}/stop-dotnet-debugging`, {
+    const response = await fetch(`${SERVER_DOMAIN}/api/stop-dotnet-debugging?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
       method: 'POST',
     })
     if (!response.ok) {
@@ -129,7 +130,7 @@ export const NijoUiDebugMenu = () => {
     setRegenerateError(undefined)
 
     try {
-      const response = await fetch(`${SERVER_DOMAIN}/api/${projectDir}/generate`, {
+      const response = await fetch(`${SERVER_DOMAIN}/api/generate?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
         method: 'POST',
       })
       if (!response.ok) {

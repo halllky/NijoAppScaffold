@@ -1,5 +1,6 @@
 import React from "react"
 import useEvent from "react-use-event-hook"
+import * as ReactRouter from "react-router-dom"
 import * as ReactHookForm from "react-hook-form"
 import * as Input from "@nijo/ui-components/input"
 import * as Layout from "@nijo/ui-components/layout"
@@ -56,6 +57,7 @@ const AfterLoaded = ({ formDefaultValues, executeSave }: {
   formDefaultValues: SchemaDefinitionGlobalState
   executeSave: (applicationState: SchemaDefinitionGlobalState, schemaGraphViewState: AppSchemaDefinitionGraphDataSet | null) => Promise<{ ok: boolean, error?: string }>
 }) => {
+  const navigate = ReactRouter.useNavigate()
   const formMethods = ReactHookForm.useForm<SchemaDefinitionGlobalState>({
     defaultValues: formDefaultValues,
   })
@@ -153,14 +155,26 @@ const AfterLoaded = ({ formDefaultValues, executeSave }: {
   })
   Util.useCtrlS(handleSave)
 
+  // プロジェクトを閉じる
+  const handleCloseProject = useEvent(() => {
+    if (isDirty) {
+      if (!confirm('保存していない変更があります。プロジェクトを閉じてもよろしいですか？')) {
+        return
+      }
+    }
+    navigate('/')
+  })
+
   return (
     <PageFrame
       title="ソースコード自動生成設定"
       shouldBlock={isDirty}
       headerComponent={(
         <>
+          <Input.IconButton icon={Icon.XMarkIcon} outline onClick={handleCloseProject}>
+            プロジェクトを閉じる
+          </Input.IconButton>
           <div className="basis-4"></div>
-
           <div className="basis-4"></div>
           <label>
             <input type="checkbox" checked={showLessColumns} onChange={handleShowLessColumnsChange} />

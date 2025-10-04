@@ -43,11 +43,11 @@
     "tasks": [
       {
         "label": "Nijo > GUIデバッグ",
-        "command": ".\\Task\\Nijo - GUIデバッグ.bat",
+        "command": ".\\Task\\NijoServeデバッグ.bat",
         "type": "shell",
         "problemMatcher": [],
         "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Nijo.Ui"
+          "cwd": "${workspaceFolder:NijoApplicationBuilder}"
         },
       },
       {

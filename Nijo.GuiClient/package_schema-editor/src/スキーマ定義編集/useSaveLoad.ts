@@ -11,14 +11,15 @@ import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../main"
 export const useSaveLoad = () => {
   const [schema, setSchema] = React.useState<SchemaDefinitionGlobalState>()
   const [loadError, setLoadError] = React.useState<string>()
-  const { [NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR]: projectDir } = ReactRouter.useParams()
+  const [searchParams] = ReactRouter.useSearchParams()
+  const projectDir = searchParams.get(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR)
 
   // 画面初期表示時、サーバーからスキーマ情報を読み込む
   const reloadSchema = useEvent(async () => {
     setLoadError(undefined)
     setSchema(undefined)
     try {
-      const schemaResponse = await fetch(`${SERVER_DOMAIN}/api/${projectDir}/load`)
+      const schemaResponse = await fetch(`${SERVER_DOMAIN}/api/load?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`)
 
       if (!schemaResponse.ok) {
         const body = await schemaResponse.text();
@@ -42,7 +43,7 @@ export const useSaveLoad = () => {
     schemaGraphViewState: AppSchemaDefinitionGraphDataSet | null,
   ): Promise<{ ok: boolean, error?: string }> => {
     try {
-      const response = await fetch(`${SERVER_DOMAIN}/api/${projectDir}/save`, {
+      const response = await fetch(`${SERVER_DOMAIN}/api/save?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

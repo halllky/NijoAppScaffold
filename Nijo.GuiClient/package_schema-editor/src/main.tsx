@@ -12,6 +12,7 @@ import { 区分定義 } from './スキーマ定義編集/区分定義.tsx'
 import { NijoUiDebugMenu } from './デバッグメニュー/DebugMenu.tsx'
 import { PerspectivePage } from './型つきドキュメント/PerspectivePage.tsx'
 import { DataPreview } from './データプレビュー/index.tsx'
+import { ProjectSelector } from './ProjectSelector.tsx'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -44,6 +45,9 @@ export type RouteObjectWithSideMenuSetting = ReactRouter.RouteObject & {
 export const getRouterForNijoUi = (): RouteObjectWithSideMenuSetting[] => {
   return [{
     path: '/',
+    element: <ProjectSelector />,
+  }, {
+    path: `/project`,
     element: (
       <Util.IMEProvider>
         <Util.CtrlSProvider>
@@ -52,23 +56,22 @@ export const getRouterForNijoUi = (): RouteObjectWithSideMenuSetting[] => {
       </Util.IMEProvider>
     ),
     children: [{
-      path: `:${NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR}`,
       index: true,
       element: <NijoUiAggregateDiagram />,
     }, {
-      path: `:${NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR}/enum-definition`,
+      path: `enum-definition`,
       element: <区分定義 />,
     }, {
-      path: `:${NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR}/debug-menu`,
+      path: `debug-menu`,
       element: <NijoUiDebugMenu />,
     }, {
-      path: `:${NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR}/typed-doc/perspective/:${NIJOUI_CLIENT_ROUTE_PARAMS.PERSPECTIVE_ID}`,
+      path: `typed-doc/perspective/:${NIJOUI_CLIENT_ROUTE_PARAMS.PERSPECTIVE_ID}`,
       element: <PerspectivePage />,
     }, {
-      path: `:${NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR}/data-preview/:dataPreviewId`,
+      path: `data-preview/:dataPreviewId`,
       element: <DataPreview />,
     }, {
-      path: `:${NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR}/*`,
+      path: `*`,
       element: <div>Not Found</div>,
     }]
   }]
@@ -76,8 +79,8 @@ export const getRouterForNijoUi = (): RouteObjectWithSideMenuSetting[] => {
 
 /** WindowsForms埋め込みアプリまたはそのデバッグ用のルーティングパラメーター */
 export const NIJOUI_CLIENT_ROUTE_PARAMS = {
-  /** nijo.xmlがあるディレクトリがURLエンコードされたもの */
-  PROJECT_DIR: 'projectDir',
+  /** nijo.xmlがあるディレクトリ（クエリパラメータ）。C#側と合わせる必要あり */
+  QUERY_PROJECT_DIR: 'pj',
   /** @deprecated */
   AGGREGATE_ID: 'aggregateId',
   OUTLINER_ID: 'outlinerId',
@@ -89,7 +92,8 @@ export const NIJOUI_CLIENT_ROUTE_PARAMS = {
 
 /** WindowsForms埋め込みアプリまたはそのデバッグ用のナビゲーション用URLを取得する。 */
 export const useNavigationUrl = () => {
-  const { [NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR]: projectDir } = ReactRouter.useParams()
+  const [searchParams] = ReactRouter.useSearchParams()
+  const projectDir = searchParams.get(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR)
 
   return React.useCallback((arg?:
     // { aggregateId?: string, page?: never } | // 未使用
@@ -102,20 +106,22 @@ export const useNavigationUrl = () => {
     { aggregateId?: never, page: 'schema-enum-definition' } |
     { aggregateId?: never, page: 'data-preview', dataPreviewId: string }
   ): string => {
+    const params = new URLSearchParams()
+    if (projectDir) params.set(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR, projectDir)
+
     if (arg?.page === 'top-page') {
       return `/`
     } else if (arg?.page === 'debug-menu') {
-      return `/${projectDir}/debug-menu`
+      return `/project/debug-menu?${params.toString()}`
     } else if (arg?.page === 'typed-document-perspective') {
-      const searchParams = new URLSearchParams()
-      if (arg.focusEntityId) searchParams.set(NIJOUI_CLIENT_ROUTE_PARAMS.FOCUS_ENTITY_ID, arg.focusEntityId)
-      return `/${projectDir}/typed-doc/perspective/${arg.perspectiveId}?${searchParams.toString()}`
+      if (arg.focusEntityId) params.set(NIJOUI_CLIENT_ROUTE_PARAMS.FOCUS_ENTITY_ID, arg.focusEntityId)
+      return `/project/typed-doc/perspective/${arg.perspectiveId}?${params.toString()}`
     } else if (arg?.page === 'schema') {
-      return `/${projectDir}`
+      return `/project?${params.toString()}`
     } else if (arg?.page === 'schema-enum-definition') {
-      return `/${projectDir}/enum-definition`
+      return `/project/enum-definition?${params.toString()}`
     } else if (arg?.page === 'data-preview') {
-      return `/${projectDir}/data-preview/${arg.dataPreviewId}`
+      return `/project/data-preview/${arg.dataPreviewId}?${params.toString()}`
     } else {
       throw new Error(`不正なページ: ${(arg as { page: string } | undefined)?.page}`)
     }

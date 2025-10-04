@@ -36,11 +36,11 @@ internal class DebugTools {
 
         app.MapGet("/debug-state", DebugState);
 
-        app.MapPost($"/api/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/start-npm-debugging", StartNpmDebugging);
-        app.MapPost($"/api/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/stop-npm-debugging", StopNpmDebugging);
+        app.MapPost("/api/start-npm-debugging", StartNpmDebugging);
+        app.MapPost("/api/stop-npm-debugging", StopNpmDebugging);
 
-        app.MapPost($"/api/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/start-dotnet-debugging", StartDotnetDebugging);
-        app.MapPost($"/api/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/stop-dotnet-debugging", StopDotnetDebugging);
+        app.MapPost("/api/start-dotnet-debugging", StartDotnetDebugging);
+        app.MapPost("/api/stop-dotnet-debugging", StopDotnetDebugging);
     }
 
     /// <summary>

@@ -12,9 +12,9 @@ set "BACKEDN_PROJECT=%NIJO_ROOT%\Nijo"
 set "DEMO_200=%NIJO_ROOT%\demo\200_複雑なパターン" 
 set "FRONTEND_ROOT=%NIJO_ROOT%\Nijo.GuiClient\package_schema-editor" 
  
-start dotnet run --project %BACKEDN_PROJECT% -- serve --port 8081 
+start cmd /k "dotnet watch --project %BACKEDN_PROJECT% -- serve --port 8081" 
  
 pushd %FRONTEND_ROOT% 
 start npm run dev 
-start http://localhost:5176/nijo-ui/ 
+start http://localhost:5176/ 
 popd 

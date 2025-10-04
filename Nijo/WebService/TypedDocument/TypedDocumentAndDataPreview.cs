@@ -49,12 +49,12 @@ internal class TypedDocumentAndDataPreview {
     }
 
     internal void ConfigureWebApplication(WebApplication app) {
-        app.MapGet($"/api/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/typed-document/load-settings", LoadSettings);
-        app.MapPost($"/api/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/typed-document/save-settings", SaveSettings);
-        app.MapGet($"/api/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/typed-document/load", LoadTypedDocument);
-        app.MapPost($"/api/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/typed-document/save", SaveTypedDocument);
-        app.MapGet($"/api/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/data-preview/load", LoadDataPreview);
-        app.MapPost($"/api/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/data-preview/save", SaveDataPreview);
+        app.MapGet("/api/typed-document/load-settings", LoadSettings);
+        app.MapPost("/api/typed-document/save-settings", SaveSettings);
+        app.MapGet("/api/typed-document/load", LoadTypedDocument);
+        app.MapPost("/api/typed-document/save", SaveTypedDocument);
+        app.MapGet("/api/data-preview/load", LoadDataPreview);
+        app.MapPost("/api/data-preview/save", SaveDataPreview);
     }
 
     /// <summary>

@@ -11,9 +11,10 @@ namespace Nijo.WebService.Common;
 internal static class ProjectHelper {
 
     /// <summary>
-    /// URLパラメータ名: プロジェクトディレクトリ
+    /// クエリパラメータ名: プロジェクトディレクトリ
+    /// ※React側と合わせる必要あり
     /// </summary>
-    internal const string PROJECT_DIR_PARAMETER = "projectDir";
+    private const string PROJECT_DIR_PARAMETER = "pj";
 
     /// <summary>
     /// HttpContextからプロジェクトディレクトリを取得し、GeneratedProjectを作成します。
@@ -22,10 +23,10 @@ internal static class ProjectHelper {
     /// <param name="context">HttpContext</param>
     /// <returns>成功した場合はGeneratedProject、失敗した場合はnull（エラーレスポンスは既に送信済み）</returns>
     internal static async Task<GeneratedProject?> GetProjectAndSetResponseIfErrorAsync(HttpContext context) {
-        var projectDir = context.Request.RouteValues[PROJECT_DIR_PARAMETER]?.ToString();
-        if (string.IsNullOrEmpty(projectDir)) {
+        // クエリパラメータから取得
+        if (!HttpResponseHelper.TryGetQueryParameter(context, PROJECT_DIR_PARAMETER, out var projectDir)) {
             context.Response.StatusCode = 400;
-            await HttpResponseHelper.WriteErrorResponseAsync(context, 400, "projectDir parameter is required", context.RequestAborted);
+            await HttpResponseHelper.WriteErrorResponseAsync(context, 400, $"{PROJECT_DIR_PARAMETER} query parameter is required", context.RequestAborted);
             return null;
         }
 

@@ -17,7 +17,8 @@ export const useValidation = (
   // 独特な形をしているのでReact Hook Formのエラーとは別に管理する。
   const [validationResult, setValidationResult] = React.useState<ValidationResult>({})
 
-  const { [NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR]: projectDir } = ReactRouter.useParams()
+  const [searchParams] = ReactRouter.useSearchParams()
+  const projectDir = searchParams.get(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR)
 
   // 入力検証を実行する。
   const trigger: ValidationTriggerFunction = useEvent(async () => {
@@ -29,7 +30,7 @@ export const useValidation = (
     }, 1000)
 
     // サーバーに問い合わせ。ステータスコード202ならエラーあり。200ならエラーなしなのでエラーをクリアする。
-    const result = await fetch(`${SERVER_DOMAIN}/api/${projectDir}/validate`, {
+    const result = await fetch(`${SERVER_DOMAIN}/api/validate?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
