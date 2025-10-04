@@ -16,7 +16,7 @@ import { CommentView } from "./CommentView/CommentView"
 import { DiagramItemLayout } from "@nijo/ui-components/layout/DiagramView/types"
 import { SingleView } from "./SingleView/SingleView"
 import { DbRecordSelectorDialog, DbRecordSelectorDialogProps } from "./parts/DbRecordSelectorDialog"
-import { SERVER_DOMAIN } from "../main"
+import { SERVER_DOMAIN, NIJOUI_CLIENT_ROUTE_PARAMS } from "../main"
 import { SERVER_API_TYPE_INFO, SERVER_URL_SUBDIRECTORY } from "../型つきドキュメント/TypedDocumentContext"
 import { PageFrame } from "../PageFrame"
 import { DataPreviewGlobalContext } from "./DataPreviewGlobalContext"
@@ -31,6 +31,7 @@ export const BACKEND_URL = "https://localhost:7098"
  */
 export const DataPreview = () => {
   const { dataPreviewId } = ReactRouter.useParams()
+  const { [NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR]: projectDir } = ReactRouter.useParams()
   const { getTableMetadata } = useQueryEditorServerApi(BACKEND_URL)
   const [loadError, setLoadError] = React.useState<string>()
   const [tableMetadataHelper, setTableMetadataHelper] = React.useState<TableMetadataHelper>()
@@ -56,7 +57,7 @@ export const DataPreview = () => {
 
       // サーバーからデータを読み込む
       const QUERY_KEY = "dataPreviewId" satisfies keyof SERVER_API_TYPE_INFO[typeof SERVER_URL_SUBDIRECTORY.LOAD_DATA_PREVIEW]["query"]
-      const response = await fetch(`${SERVER_DOMAIN}${SERVER_URL_SUBDIRECTORY.LOAD_DATA_PREVIEW}?${QUERY_KEY}=${dataPreviewId}`, {
+      const response = await fetch(`${SERVER_DOMAIN}/api/${projectDir}${SERVER_URL_SUBDIRECTORY.LOAD_DATA_PREVIEW}?${QUERY_KEY}=${dataPreviewId}`, {
         method: 'GET',
       })
       if (!response.ok) {
@@ -72,7 +73,7 @@ export const DataPreview = () => {
   // サーバーに保存
   const [saveError, setSaveError] = React.useState<string>()
   const handleSave = useEvent(async (data: QueryEditor) => {
-    const response = await fetch(`${SERVER_DOMAIN}${SERVER_URL_SUBDIRECTORY.SAVE_DATA_PREVIEW}`, {
+    const response = await fetch(`${SERVER_DOMAIN}/api/${projectDir}${SERVER_URL_SUBDIRECTORY.SAVE_DATA_PREVIEW}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

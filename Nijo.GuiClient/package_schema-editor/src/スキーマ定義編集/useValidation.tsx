@@ -1,7 +1,8 @@
 import React from "react"
 import useEvent from "react-use-event-hook"
+import * as ReactRouter from "react-router-dom"
 import { asTree, SchemaDefinitionGlobalState } from "./types"
-import { SERVER_DOMAIN } from "../main"
+import { SERVER_DOMAIN, NIJOUI_CLIENT_ROUTE_PARAMS } from "../main"
 
 /** スキーマ定義のバリデーション機能 */
 export const useValidation = (
@@ -16,6 +17,8 @@ export const useValidation = (
   // 独特な形をしているのでReact Hook Formのエラーとは別に管理する。
   const [validationResult, setValidationResult] = React.useState<ValidationResult>({})
 
+  const { [NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR]: projectDir } = ReactRouter.useParams()
+
   // 入力検証を実行する。
   const trigger: ValidationTriggerFunction = useEvent(async () => {
     // 最後にリクエストした時間から一定時間以内はリクエストをしない
@@ -26,7 +29,7 @@ export const useValidation = (
     }, 1000)
 
     // サーバーに問い合わせ。ステータスコード202ならエラーあり。200ならエラーなしなのでエラーをクリアする。
-    const result = await fetch(`${SERVER_DOMAIN}/validate`, {
+    const result = await fetch(`${SERVER_DOMAIN}/api/${projectDir}/validate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -4,13 +4,14 @@ import * as Icon from "@heroicons/react/24/outline"
 import * as Input from "@nijo/ui-components/input"
 import * as Layout from "@nijo/ui-components/layout"
 import { DebugProcessState } from "../スキーマ定義編集/types"
-import { SERVER_DOMAIN } from "../main"
+import { SERVER_DOMAIN, NIJOUI_CLIENT_ROUTE_PARAMS } from "../main"
 import useEvent from "react-use-event-hook"
 import { PageFrame } from "../PageFrame"
 import useQueryEditorServerApi from "../データプレビュー/useQueryEditorServerApi"
 import { BACKEND_URL } from "../データプレビュー"
 
 export const NijoUiDebugMenu = () => {
+  const { [NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR]: projectDir } = ReactRouter.useParams()
   const [debugState, setDebugState] = useState<DebugProcessState>()
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string>()
@@ -60,7 +61,7 @@ export const NijoUiDebugMenu = () => {
     if (anyCommandProcessing) return
     setDebugState(state => ({ ...state, consoleOut: '' }))
     setStartNpmDebuggingProcessing(true)
-    const response = await fetch(`${SERVER_DOMAIN}/start-npm-debugging`, {
+    const response = await fetch(`${SERVER_DOMAIN}/api/${projectDir}/start-npm-debugging`, {
       method: 'POST',
     })
     if (!response.ok) {
@@ -76,7 +77,7 @@ export const NijoUiDebugMenu = () => {
     if (anyCommandProcessing) return
     setDebugState(state => ({ ...state, consoleOut: '' }))
     setStartDotnetDebuggingProcessing(true)
-    const response = await fetch(`${SERVER_DOMAIN}/start-dotnet-debugging`, {
+    const response = await fetch(`${SERVER_DOMAIN}/api/${projectDir}/start-dotnet-debugging`, {
       method: 'POST',
     })
     if (!response.ok) {
@@ -92,7 +93,7 @@ export const NijoUiDebugMenu = () => {
     if (anyCommandProcessing) return
     setDebugState(state => ({ ...state, consoleOut: '' }))
     setStopNpmDebuggingProcessing(true)
-    const response = await fetch(`${SERVER_DOMAIN}/stop-npm-debugging`, {
+    const response = await fetch(`${SERVER_DOMAIN}/api/${projectDir}/stop-npm-debugging`, {
       method: 'POST',
     })
     if (!response.ok) {
@@ -108,7 +109,7 @@ export const NijoUiDebugMenu = () => {
     if (anyCommandProcessing) return
     setDebugState(state => ({ ...state, consoleOut: '' }))
     setStopDotnetDebuggingProcessing(true)
-    const response = await fetch(`${SERVER_DOMAIN}/stop-dotnet-debugging`, {
+    const response = await fetch(`${SERVER_DOMAIN}/api/${projectDir}/stop-dotnet-debugging`, {
       method: 'POST',
     })
     if (!response.ok) {
@@ -128,7 +129,7 @@ export const NijoUiDebugMenu = () => {
     setRegenerateError(undefined)
 
     try {
-      const response = await fetch(`${SERVER_DOMAIN}/generate`, {
+      const response = await fetch(`${SERVER_DOMAIN}/api/${projectDir}/generate`, {
         method: 'POST',
       })
       if (!response.ok) {

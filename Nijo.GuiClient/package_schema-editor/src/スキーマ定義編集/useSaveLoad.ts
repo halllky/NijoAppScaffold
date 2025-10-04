@@ -1,7 +1,9 @@
 import React from "react"
 import useEvent from "react-use-event-hook"
+import * as ReactRouter from "react-router-dom"
 import { SERVER_DOMAIN } from "../main"
 import { AppSchemaDefinitionGraphDataSet, SchemaDefinitionGlobalState } from "./types"
+import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../main"
 
 /**
  * サーバーに問い合わせて nijo.xml の読み込み、保存を行う。
@@ -9,13 +11,14 @@ import { AppSchemaDefinitionGraphDataSet, SchemaDefinitionGlobalState } from "./
 export const useSaveLoad = () => {
   const [schema, setSchema] = React.useState<SchemaDefinitionGlobalState>()
   const [loadError, setLoadError] = React.useState<string>()
+  const { [NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR]: projectDir } = ReactRouter.useParams()
 
   // 画面初期表示時、サーバーからスキーマ情報を読み込む
   const reloadSchema = useEvent(async () => {
     setLoadError(undefined)
     setSchema(undefined)
     try {
-      const schemaResponse = await fetch(`${SERVER_DOMAIN}/load`)
+      const schemaResponse = await fetch(`${SERVER_DOMAIN}/api/${projectDir}/load`)
 
       if (!schemaResponse.ok) {
         const body = await schemaResponse.text();
@@ -39,7 +42,7 @@ export const useSaveLoad = () => {
     schemaGraphViewState: AppSchemaDefinitionGraphDataSet | null,
   ): Promise<{ ok: boolean, error?: string }> => {
     try {
-      const response = await fetch(`${SERVER_DOMAIN}/save`, {
+      const response = await fetch(`${SERVER_DOMAIN}/api/${projectDir}/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

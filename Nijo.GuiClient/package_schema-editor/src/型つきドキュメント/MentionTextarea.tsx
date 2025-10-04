@@ -4,7 +4,7 @@ import * as ReactMention from 'react-mentions';
 import { NijoUiOutletContextType } from '../types';
 import { Entity, EntityAttribute, Perspective } from './types';
 import useEvent from 'react-use-event-hook';
-import { getNavigationUrl } from '../main';
+import { useNavigationUrl } from '../main';
 import { MentionInputWrapper, ReadOnlyMentionText, MentionUtil } from '../UI';
 
 export type MentionTextareaProps = {
@@ -22,6 +22,7 @@ export type MentionTextareaProps = {
 const MentionReadOnlyRenderer: React.FC<{ value?: string; className?: string }> = ({ value, className }) => {
   const { typedDoc: { appSettings, loadPerspectivePageData } } = ReactRouter.useOutletContext<NijoUiOutletContextType>()
   const navigate = ReactRouter.useNavigate()
+  const getNavigationUrl = useNavigationUrl()
 
   // メンション部分をクリックしたときの処理
   const handleClickMention = useEvent(async (part: MentionUtil.StringPart) => {

@@ -54,10 +54,10 @@ public class NijoWebServiceBuilder {
 
         // スキーマ編集エンドポイント
         var schemaHandlers = new SchemaEndpointHandlers();
-        app.MapGet($"/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/load", schemaHandlers.HandleLoadSchema);
-        app.MapPost($"/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/validate", schemaHandlers.HandleValidateSchema);
-        app.MapPost($"/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/save", schemaHandlers.HandleSaveSchema);
-        app.MapPost($"/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/generate", schemaHandlers.HandleGenerateCode);
+        app.MapGet($"/api/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/load", schemaHandlers.HandleLoadSchema);
+        app.MapPost($"/api/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/validate", schemaHandlers.HandleValidateSchema);
+        app.MapPost($"/api/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/save", schemaHandlers.HandleSaveSchema);
+        app.MapPost($"/api/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/generate", schemaHandlers.HandleGenerateCode);
 
         // デバッグ用ツール
         new DebugTools().ConfigureWebApplication(app);

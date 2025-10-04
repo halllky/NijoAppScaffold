@@ -43,7 +43,7 @@ export type RouteObjectWithSideMenuSetting = ReactRouter.RouteObject & {
 /** WindowsForms埋め込みアプリまたはそのデバッグ用のルーティング */
 export const getRouterForNijoUi = (): RouteObjectWithSideMenuSetting[] => {
   return [{
-    path: '/nijo-ui',
+    path: '/',
     element: (
       <Util.IMEProvider>
         <Util.CtrlSProvider>
@@ -52,26 +52,23 @@ export const getRouterForNijoUi = (): RouteObjectWithSideMenuSetting[] => {
       </Util.IMEProvider>
     ),
     children: [{
-      path: '',
+      path: `:${NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR}`,
       index: true,
-      element: <div></div>,
-    }, {
-      path: `schema`,
       element: <NijoUiAggregateDiagram />,
     }, {
-      path: `enum-definition`,
+      path: `:${NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR}/enum-definition`,
       element: <区分定義 />,
     }, {
-      path: 'debug-menu',
+      path: `:${NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR}/debug-menu`,
       element: <NijoUiDebugMenu />,
     }, {
-      path: `typed-doc/perspective/:${NIJOUI_CLIENT_ROUTE_PARAMS.PERSPECTIVE_ID}`,
+      path: `:${NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR}/typed-doc/perspective/:${NIJOUI_CLIENT_ROUTE_PARAMS.PERSPECTIVE_ID}`,
       element: <PerspectivePage />,
     }, {
-      path: 'data-preview/:dataPreviewId',
+      path: `:${NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR}/data-preview/:dataPreviewId`,
       element: <DataPreview />,
     }, {
-      path: '*',
+      path: `:${NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR}/*`,
       element: <div>Not Found</div>,
     }]
   }]
@@ -79,6 +76,8 @@ export const getRouterForNijoUi = (): RouteObjectWithSideMenuSetting[] => {
 
 /** WindowsForms埋め込みアプリまたはそのデバッグ用のルーティングパラメーター */
 export const NIJOUI_CLIENT_ROUTE_PARAMS = {
+  /** nijo.xmlがあるディレクトリがURLエンコードされたもの */
+  PROJECT_DIR: 'projectDir',
   /** @deprecated */
   AGGREGATE_ID: 'aggregateId',
   OUTLINER_ID: 'outlinerId',
@@ -89,38 +88,38 @@ export const NIJOUI_CLIENT_ROUTE_PARAMS = {
 }
 
 /** WindowsForms埋め込みアプリまたはそのデバッグ用のナビゲーション用URLを取得する。 */
-export const getNavigationUrl = (arg?:
-  { aggregateId?: string, page?: never } |
-  { aggregateId?: never, page: 'top-page' } |
-  { aggregateId?: never, page: 'debug-menu' } |
-  { aggregateId?: never, page: 'outliner', outlinerId: string } |
-  { aggregateId?: never, page: 'typed-document-entity', entityTypeId: string } |
-  { aggregateId?: never, page: 'typed-document-perspective', perspectiveId: string, focusEntityId?: string } |
-  { aggregateId?: never, page: 'schema' } |
-  { aggregateId?: never, page: 'schema-enum-definition' } |
-  { aggregateId?: never, page: 'data-preview', dataPreviewId: string }
-): string => {
-  if (arg?.page === 'top-page') {
-    return '/nijo-ui'
-  } else if (arg?.page === 'debug-menu') {
-    return '/nijo-ui/debug-menu'
-  } else if (arg?.page === 'outliner') {
-    return `/nijo-ui/outliner/${arg.outlinerId}`
-  } else if (arg?.page === 'typed-document-entity') {
-    return `/nijo-ui/typed-doc/entity-type/${arg.entityTypeId}`
-  } else if (arg?.page === 'typed-document-perspective') {
-    const searchParams = new URLSearchParams()
-    if (arg.focusEntityId) searchParams.set(NIJOUI_CLIENT_ROUTE_PARAMS.FOCUS_ENTITY_ID, arg.focusEntityId)
-    return `/nijo-ui/typed-doc/perspective/${arg.perspectiveId}?${searchParams.toString()}`
-  } else if (arg?.page === 'schema') {
-    return `/nijo-ui/schema/`
-  } else if (arg?.page === 'schema-enum-definition') {
-    return `/nijo-ui/enum-definition`
-  } else if (arg?.page === 'data-preview') {
-    return `/nijo-ui/data-preview/${arg.dataPreviewId}`
-  } else {
-    return `/nijo-ui/schema/${arg?.aggregateId ?? ''}`
-  }
+export const useNavigationUrl = () => {
+  const { [NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR]: projectDir } = ReactRouter.useParams()
+
+  return React.useCallback((arg?:
+    // { aggregateId?: string, page?: never } | // 未使用
+    { aggregateId?: never, page: 'top-page' } |
+    { aggregateId?: never, page: 'debug-menu' } |
+    // { aggregateId?: never, page: 'outliner', outlinerId: string } | // 未使用
+    // { aggregateId?: never, page: 'typed-document-entity', entityTypeId: string } | // 未使用
+    { aggregateId?: never, page: 'typed-document-perspective', perspectiveId: string, focusEntityId?: string } |
+    { aggregateId?: never, page: 'schema' } |
+    { aggregateId?: never, page: 'schema-enum-definition' } |
+    { aggregateId?: never, page: 'data-preview', dataPreviewId: string }
+  ): string => {
+    if (arg?.page === 'top-page') {
+      return `/`
+    } else if (arg?.page === 'debug-menu') {
+      return `/${projectDir}/debug-menu`
+    } else if (arg?.page === 'typed-document-perspective') {
+      const searchParams = new URLSearchParams()
+      if (arg.focusEntityId) searchParams.set(NIJOUI_CLIENT_ROUTE_PARAMS.FOCUS_ENTITY_ID, arg.focusEntityId)
+      return `/${projectDir}/typed-doc/perspective/${arg.perspectiveId}?${searchParams.toString()}`
+    } else if (arg?.page === 'schema') {
+      return `/${projectDir}`
+    } else if (arg?.page === 'schema-enum-definition') {
+      return `/${projectDir}/enum-definition`
+    } else if (arg?.page === 'data-preview') {
+      return `/${projectDir}/data-preview/${arg.dataPreviewId}`
+    } else {
+      throw new Error(`不正なページ: ${(arg as { page: string } | undefined)?.page}`)
+    }
+  }, [projectDir])
 }
 
 /** WindowsForms埋め込みアプリまたはそのデバッグ用のデバッグ用サーバーのURL */

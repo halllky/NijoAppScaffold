@@ -1,8 +1,9 @@
 import * as React from "react"
 import useEvent from "react-use-event-hook"
+import * as ReactRouter from "react-router-dom"
 import { Perspective, TypedDocumentContextType } from "./types"
 import { AppSettingsForDisplay, AppSettingsForSave } from "../types"
-import { SERVER_DOMAIN } from "../main"
+import { SERVER_DOMAIN, NIJOUI_CLIENT_ROUTE_PARAMS } from "../main"
 import { QueryEditor } from "../データプレビュー/types"
 import { DATA_PREVIEW_LOCALSTORAGE_KEY, GET_DEFAULT_DATA } from "../データプレビュー"
 
@@ -71,6 +72,7 @@ export type SERVER_API_TYPE_INFO = {
 export const useTypedDocumentContextProvider = (): TypedDocumentContextType => {
 
   const [isReady, setIsReady] = React.useState(false)
+  const { [NIJOUI_CLIENT_ROUTE_PARAMS.PROJECT_DIR]: projectDir } = ReactRouter.useParams()
   const [appSettings, setAppSettings] = React.useState<AppSettingsForDisplay>({
     applicationName: "",
     entityTypeList: [],
@@ -90,7 +92,7 @@ export const useTypedDocumentContextProvider = (): TypedDocumentContextType => {
 
   const loadAppSettings = React.useCallback(async () => {
     try {
-      const response = await fetch(`${SERVER_DOMAIN}${SERVER_URL_SUBDIRECTORY.LOAD_SETTINGS}`, {
+      const response = await fetch(`${SERVER_DOMAIN}/api/${projectDir}${SERVER_URL_SUBDIRECTORY.LOAD_SETTINGS}`, {
         method: 'GET',
       })
       if (!response.ok) {
@@ -112,7 +114,7 @@ export const useTypedDocumentContextProvider = (): TypedDocumentContextType => {
             id: dataPreivew.id,
             title: dataPreivew.title,
           }]
-          await fetch(`${SERVER_DOMAIN}${SERVER_URL_SUBDIRECTORY.SAVE_DATA_PREVIEW}`, {
+          await fetch(`${SERVER_DOMAIN}/api/${projectDir}${SERVER_URL_SUBDIRECTORY.SAVE_DATA_PREVIEW}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -134,12 +136,12 @@ export const useTypedDocumentContextProvider = (): TypedDocumentContextType => {
         dataPreviewList: [],
       }
     }
-  }, [])
+  }, [projectDir])
 
   const saveAppSettings: TypedDocumentContextType["saveAppSettings"] = useEvent(async settings => {
     try {
       const body: SERVER_API_TYPE_INFO[typeof SERVER_URL_SUBDIRECTORY.SAVE_SETTINGS]["body"] = settings
-      const response = await fetch(`${SERVER_DOMAIN}${SERVER_URL_SUBDIRECTORY.SAVE_SETTINGS}`, {
+      const response = await fetch(`${SERVER_DOMAIN}/api/${projectDir}${SERVER_URL_SUBDIRECTORY.SAVE_SETTINGS}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -165,7 +167,7 @@ export const useTypedDocumentContextProvider = (): TypedDocumentContextType => {
   const createPerspective: TypedDocumentContextType["createPerspective"] = useEvent(async newPerspective => {
     try {
       const body: SERVER_API_TYPE_INFO[typeof SERVER_URL_SUBDIRECTORY.SAVE_TYPED_DOCUMENT]["body"] = newPerspective
-      const response = await fetch(`${SERVER_DOMAIN}${SERVER_URL_SUBDIRECTORY.SAVE_TYPED_DOCUMENT}`, {
+      const response = await fetch(`${SERVER_DOMAIN}/api/${projectDir}${SERVER_URL_SUBDIRECTORY.SAVE_TYPED_DOCUMENT}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -186,7 +188,7 @@ export const useTypedDocumentContextProvider = (): TypedDocumentContextType => {
   const loadPerspectivePageData: TypedDocumentContextType["loadPerspectivePageData"] = useEvent(async perspectiveId => {
     try {
       const QUERY_KEY = "typeId" satisfies keyof SERVER_API_TYPE_INFO[typeof SERVER_URL_SUBDIRECTORY.LOAD_TYPED_DOCUMENT]["query"]
-      const response = await fetch(`${SERVER_DOMAIN}${SERVER_URL_SUBDIRECTORY.LOAD_TYPED_DOCUMENT}?${QUERY_KEY}=${perspectiveId}`, {
+      const response = await fetch(`${SERVER_DOMAIN}/api/${projectDir}${SERVER_URL_SUBDIRECTORY.LOAD_TYPED_DOCUMENT}?${QUERY_KEY}=${perspectiveId}`, {
         method: 'GET',
       })
       if (!response.ok) {
@@ -206,7 +208,7 @@ export const useTypedDocumentContextProvider = (): TypedDocumentContextType => {
   const savePerspective: TypedDocumentContextType["savePerspective"] = useEvent(async data => {
     try {
       const body: SERVER_API_TYPE_INFO[typeof SERVER_URL_SUBDIRECTORY.SAVE_TYPED_DOCUMENT]["body"] = data.perspective
-      const response = await fetch(`${SERVER_DOMAIN}${SERVER_URL_SUBDIRECTORY.SAVE_TYPED_DOCUMENT}`, {
+      const response = await fetch(`${SERVER_DOMAIN}/api/${projectDir}${SERVER_URL_SUBDIRECTORY.SAVE_TYPED_DOCUMENT}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

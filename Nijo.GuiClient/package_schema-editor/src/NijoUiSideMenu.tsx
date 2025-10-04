@@ -8,7 +8,7 @@ import { UUID } from "uuidjs";
 import * as Input from "@nijo/ui-components/input"
 import * as Layout from "@nijo/ui-components/layout"
 import * as Icon from "@heroicons/react/24/solid"
-import { getNavigationUrl } from "./main";
+import { useNavigationUrl } from "./main";
 import { AppSettingsEditDialog, AppSettingsEditDialogProps } from "./AppSettingsEditDialog";
 import { PersonalSettingsEditDialog } from "./PersonalSettings";
 
@@ -78,6 +78,8 @@ export const NijoUiSideMenu = ({ outletContext }: {
   const handleClosePersonalSettingsDialog = useEvent(() => {
     setOpenPersonalSettingsDialog(false)
   })
+
+  const getNavigationUrl = useNavigationUrl()
 
   return (
     <>
