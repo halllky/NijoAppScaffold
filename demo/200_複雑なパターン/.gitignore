@@ -7,6 +7,7 @@
 
 # リリースモジュール
 /ReleaseModules
+/client/dist
 
 # .NETの開発者個人設定
 appsettings.Development.json

@@ -50,7 +50,7 @@ export default function ({ rootAggregateType, className }: {
       parameterFormSchema={parameterFormSchema}
       onSelectedHistoryChanged={setSelectedHistory}
       localStorageUniqueKey={helper.metadata[rootAggregateType].uniqueId}
-      executionEndPoint={ExecuteFeature.Endpoint[rootAggregateType]}
+      rootAggregateType={rootAggregateType}
       className={className}
     >
       {selectedHistory && (

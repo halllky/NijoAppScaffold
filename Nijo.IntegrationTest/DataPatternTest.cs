@@ -86,19 +86,7 @@ public class DataPatternTest {
             """.Replace("\r\n", "\n"), new UTF8Encoding(false, false));
 
         // テンプレートプロジェクトでしか使わないソースを削除（ユニットテスト）
-        Directory.Delete(Path.Combine(testProjectDir, "Test", "Tests"), true);
-
-        // テンプレートプロジェクトでしか使わないソースを削除（画面）
-        foreach (var dir in Directory.GetDirectories(Path.Combine(testProjectDir, "react", "package_nijo-client-sample", "src", "pages"))) {
-            Directory.Delete(dir, true);
-        }
-        // テンプレートプロジェクトでしか使わないソースを削除（ルーティング。pages/index.tsx）
-        File.WriteAllText(Path.Combine(testProjectDir, "react", "package_nijo-client-sample", "src", "pages", "index.tsx"), $$"""
-            /** 画面のルーティング設定 */
-            export default function (): never[] {
-              return []
-            }
-            """.Replace("\r\n", "\n"), new UTF8Encoding(false, false));
+        Directory.Delete(Path.Combine(testProjectDir, "UnitTest", "Tests"), true);
     }
 
     //public static IEnumerable<TestCaseData> TestCase_各種中間出力ダンプ => GetXmlFilePaths("各種中間出力ダンプ");

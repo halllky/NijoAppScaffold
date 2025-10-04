@@ -18,7 +18,7 @@ if %errorlevel% neq 0 (
 %NIJO_EXE_PATH% generate "%SOURCE_ROOT%"  
  
 @rem デモフォルダをループし全デモフォルダに対して処理を行う 
-for /d %%d in ("%~dp0\*") do ( 
+for /d %%d in ("%~dp0\..\demo\*") do ( 
  
     set "TARGET_ROOT=%%d" 
  

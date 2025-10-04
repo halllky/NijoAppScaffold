@@ -85,7 +85,7 @@ export default function ({ rootAggregateType, className }: {
       parameterFormSchema={searchConditionFormSchema}
       onSelectedHistoryChanged={setSelectedHistory}
       localStorageUniqueKey={helper.metadata[rootAggregateType].uniqueId}
-      executionEndPoint={LoadFeature.Endpoint[rootAggregateType]}
+      rootAggregateType={rootAggregateType}
       className={className}
     >
       {selectedHistory && (

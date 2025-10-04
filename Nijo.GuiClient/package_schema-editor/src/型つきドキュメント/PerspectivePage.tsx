@@ -232,7 +232,7 @@ export const AfterLoaded = React.forwardRef<AfterLoadedRef, AfterLoadedProps>(({
 
   // パネルのサイズを保存する
   const panelStorage = React.useMemo<PanelGroupStorage>(() => ({
-    getItem: (key: string) => getValues(`perspective.resizablePaneState.${key}`),
+    getItem: (key: string) => getValues(`perspective.resizablePaneState.${key}`) ?? null,
     setItem: (key: string, value: string) => setValue(`perspective.resizablePaneState.${key}`, value),
   }), [getValues, setValue]);
 

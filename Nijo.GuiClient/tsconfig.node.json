@@ -21,7 +21,6 @@
     "noUncheckedSideEffectImports": true
   },
   "include": [
-    "./package_nijo-client-sample/vite.config.ts",
     "./package_schema-editor/vite.config.ts",
     "./package_ui-components/vite.config.ts",
     "./package_ui-components-debug/vite.config.ts"
