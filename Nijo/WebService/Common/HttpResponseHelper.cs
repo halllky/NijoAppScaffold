@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
-namespace Nijo.WebService;
+namespace Nijo.WebService.Common;
 
 /// <summary>
 /// HTTPレスポンスの共通処理を提供する

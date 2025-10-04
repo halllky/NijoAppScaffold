@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Nijo.Util.DotnetEx;
 
-namespace Nijo.WebService;
+namespace Nijo.WebService.Debugging;
 
 /// <summary>
 /// デバッグプロセスの設定

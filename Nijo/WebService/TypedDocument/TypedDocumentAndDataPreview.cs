@@ -7,8 +7,9 @@ using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using System;
 using System.Text.Json;
+using Nijo.WebService.Common;
 
-namespace Nijo.WebService;
+namespace Nijo.WebService.TypedDocument;
 
 /// <summary>
 /// 型つきドキュメントとデータプレビューに関するサービスを提供する。
@@ -244,3 +245,4 @@ internal class TypedDocumentAndDataPreview {
         }
     }
 }
+

@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Xml.Linq;
 
-namespace Nijo.WebService;
+namespace Nijo.WebService.SchemaEditor;
 
 /// <summary>
 /// XML処理のヘルパーメソッド

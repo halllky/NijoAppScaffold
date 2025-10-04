@@ -12,8 +12,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Reflection;
+using Nijo.WebService.Common;
 
-namespace Nijo.WebService;
+namespace Nijo.WebService.Debugging;
 
 /// <summary>
 /// Windows Form のUI上から、自動生成されたあとのアプリケーションのデバッグを開始したり終了したりする操作を提供する。
@@ -391,3 +392,4 @@ public class DebugProcessState {
     [JsonPropertyName("consoleOut")]
     public string ConsoleOut { get; set; } = string.Empty;
 }
+

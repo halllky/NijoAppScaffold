@@ -13,8 +13,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Nijo.CodeGenerating;
 using Nijo.SchemaParsing;
+using Nijo.WebService.Common;
 
-namespace Nijo.WebService;
+namespace Nijo.WebService.SchemaEditor;
 
 /// <summary>
 /// スキーマ関連のエンドポイントハンドラ

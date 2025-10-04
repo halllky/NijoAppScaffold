@@ -9,7 +9,7 @@ using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Nijo.WebService;
+namespace Nijo.WebService.Common;
 
 /// <summary>
 /// ファイル操作を安全に行うための共通サービス

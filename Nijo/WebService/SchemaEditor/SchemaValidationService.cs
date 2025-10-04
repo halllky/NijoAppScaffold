@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 using System.Xml.Linq;
 using Nijo.SchemaParsing;
 
-namespace Nijo.WebService;
+namespace Nijo.WebService.SchemaEditor;
 
 /// <summary>
 /// スキーマのバリデーション処理を提供する
