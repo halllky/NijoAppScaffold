@@ -18,15 +18,15 @@ using Nijo.CodeGenerating;
 using Nijo.SchemaParsing;
 using System.Text.Json;
 
-namespace Nijo.Ui;
+namespace Nijo.WebService;
 
 /// <summary>
 /// スキーマ定義をGUIで編集するアプリケーションのために、
 /// nijo.xml を読み込んだり、バリデーションを行ったり、XMLファイルの保存を行ったりする。
 /// </summary>
-public class NijoUi {
+public class NijoWebServiceBuilder {
 
-    public NijoUi(GeneratedProject project) {
+    public NijoWebServiceBuilder(GeneratedProject project) {
         _project = project;
     }
     private readonly GeneratedProject _project;
@@ -207,7 +207,7 @@ public class NijoUi {
                 var renderingOptions = new CodeRenderingOptions { AllowNotImplemented = false };
 
                 // コード生成処理を実行
-                var logger = context.RequestServices.GetRequiredService<ILogger<NijoUi>>();
+                var logger = context.RequestServices.GetRequiredService<ILogger<NijoWebServiceBuilder>>();
                 if (_project.GenerateCode(generationParseContext, renderingOptions, logger)) {
                     // 成功応答
                     context.Response.StatusCode = (int)HttpStatusCode.OK;
@@ -231,7 +231,7 @@ public class NijoUi {
         new DebugTools(_project).ConfigureWebApplication(app);
 
         // 型つきアウトライナー用エンドポイント
-        new TypedOutliner(_project).ConfigureWebApplication(app);
+        new TypedDocumentAndDataPreview(_project).ConfigureWebApplication(app);
 
         // 上位のいずれにも該当しないエンドポイントへのリクエストはReact画面にリダイレクト
         app.MapGet("/{*path}", context => {

@@ -12,7 +12,7 @@ using System.Text.Json.Serialization;
 using System.Xml;
 using System.Xml.Linq;
 
-namespace Nijo.Ui;
+namespace Nijo.WebService;
 
 // HTTPリクエスト・レスポンスに使うため、TypeScript側と合わせたデータ構造を定義する
 

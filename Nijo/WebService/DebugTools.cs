@@ -13,7 +13,7 @@ using System.IO;
 using System.Text.Json;
 using System.Reflection;
 
-namespace Nijo.Ui;
+namespace Nijo.WebService;
 
 /// <summary>
 /// Windows Form のUI上から、自動生成されたあとのアプリケーションのデバッグを開始したり終了したりする操作を提供する。

@@ -490,7 +490,7 @@ namespace Nijo {
             }
 
             // サービス内容定義
-            var nijoUi = new Ui.NijoUi(project);
+            var nijoUi = new WebService.NijoWebServiceBuilder(project);
             var app = nijoUi.BuildWebApplication(logger);
 
             // 起動

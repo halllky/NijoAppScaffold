@@ -10,9 +10,12 @@ using System;
 using System.Text.Encodings.Web;
 using System.Text.Json.Nodes;
 
-namespace Nijo.Ui;
+namespace Nijo.WebService;
 
-internal class TypedOutliner {
+/// <summary>
+/// 型つきドキュメントとデータプレビューに関するサービスを提供する。
+/// </summary>
+internal class TypedDocumentAndDataPreview {
     private readonly GeneratedProject _project;
     private static readonly JsonSerializerOptions _jsonSerializerOptions = new() {
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -22,7 +25,7 @@ internal class TypedOutliner {
         ReadCommentHandling = JsonCommentHandling.Skip, // コメントを無視
     };
 
-    internal TypedOutliner(GeneratedProject project) {
+    internal TypedDocumentAndDataPreview(GeneratedProject project) {
         _project = project;
     }
 

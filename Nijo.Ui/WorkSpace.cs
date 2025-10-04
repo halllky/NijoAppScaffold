@@ -28,7 +28,7 @@ namespace Nijo.Ui {
 
             // Webサイトを開始し、WebView2 にその画面を表示する
             if (_project != null) {
-                var nijoUi = new NijoUi(_project);
+                var nijoUi = new WebService.NijoWebServiceBuilder(_project);
                 var logger = new TestLogger();
                 _webApplication = nijoUi.BuildWebApplication(logger);
 
