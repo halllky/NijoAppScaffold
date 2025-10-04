@@ -13,7 +13,7 @@ setlocal
 set "NIJO_ROOT=%~dp0.." 
 set "WINFORMS_PROJECT=%NIJO_ROOT%\Nijo.Ui" 
 set "PUBLISH_FOLDER=%WINFORMS_PROJECT%\bin\Release\net9.0-windows\publish" 
-set "FRONTEND_ROOT=%NIJO_ROOT%\Nijo.ApplicationTemplate.Ver1\react\package_schema-editor" 
+set "FRONTEND_ROOT=%NIJO_ROOT%\Nijo.GuiClient\package_schema-editor" 
 set "APP_TEMPLATE_ZIP=%NIJO_ROOT%\temp_release\Nijo.NewProjectTemplate.zip" 
 
 @echo アプリケーションテンプレートを圧縮します: %APP_TEMPLATE_ZIP% 

@@ -55,7 +55,7 @@ public class DataPatternTest {
         // テストプロジェクトディレクトリの準備
         var workspaceRoot = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", ".."));
         var testProjectDir = Path.Combine(workspaceRoot, "..", TEST_PROJECT_DIR);
-        var templateProjectDir = Path.Combine(workspaceRoot, "..", "Nijo.ApplicationTemplate.Ver1");
+        var templateProjectDir = Path.Combine(workspaceRoot, "..", "Nijo.NewProjectTemplate");
 
         // 既存のテストプロジェクトを削除
         if (Directory.Exists(testProjectDir)) {

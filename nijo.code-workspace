@@ -88,13 +88,13 @@
       },
       {
         "label": "Nijo > 標準UIコンポーネント：デバッグ",
-        "command": "npm run dev:ui-components-debug",
+        "command": "npm run dev",
         "type": "shell",
         "problemMatcher": [
           "$tsc-watch"
         ],
         "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Nijo.ApplicationTemplate.Ver1/react"
+          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Nijo.GuiClient/package_ui-components-debug"
         },
       },
       {

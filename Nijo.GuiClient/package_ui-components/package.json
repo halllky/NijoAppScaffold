@@ -6,6 +6,7 @@
   "types": "src/index.ts",
   "scripts": {
     "dev": "vite",
+    "tsc": "tsc --noEmit",
     "build": "tsc && vite build",
     "test": "vitest",
     "test:run": "vitest run",

@@ -20,7 +20,8 @@ public class テンプレプロジェクトのテスト {
             "..", // bin
             "..", // Nijo.IntegrationTest
             "..", // プロジェクトルート
-            "Nijo.ApplicationTemplate.Ver1"));
+            "demo",
+            "200_複雑なパターン"));
 
         if (!GeneratedProject.TryOpen(workspaceRoot, out var project, out var error)) {
             Assert.Fail($"プロジェクトフォルダを開くのに失敗しました: {error}");

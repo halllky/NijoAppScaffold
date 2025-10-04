@@ -6,7 +6,7 @@ using NUnit.Framework;
 
 /// <summary>
 /// ユニットテストの中で結果確認のために「自動テストで作成されたプロジェクト」フォルダに生成されるプロジェクト。
-/// 「Nijo.ApplicationTemplate.Ver1」プロジェクトをコピーして作成する。
+/// 「Nijo.NewProjectTemplate」プロジェクトをコピーして作成する。
 /// </summary>
 internal class 自動テストで作成されたプロジェクト : IDisposable {
 
@@ -68,7 +68,7 @@ internal class 自動テストで作成されたプロジェクト : IDisposable
         if (instance == null) throw new Exception("使用可能なテストプロジェクトがありません。");
 
         // テンプレートプロジェクトから全ファイルコピー
-        var templateProjectDir = Path.Combine(workspaceRoot, "..", "Nijo.ApplicationTemplate.Ver1");
+        var templateProjectDir = Path.Combine(workspaceRoot, "..", "Nijo.NewProjectTemplate");
         Nijo.Util.DotnetEx.DirectoryHelper.CopyDirectoryRecursively(templateProjectDir, instance.ProjectRoot);
 
         // テンプレートプロジェクトの集約定義に依存するソースを削除
