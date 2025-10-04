@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace Nijo.WebService.SchemaEditor;
 
 /// <summary>
-/// Model定義画面のデータ型定義
+/// ルート集約1個分の編集画面のデータ型定義
 /// </summary>
 public class ModelPageForm {
     [JsonPropertyName("xmlElements")]

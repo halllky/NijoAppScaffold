@@ -6,7 +6,8 @@ using Nijo.SchemaParsing;
 namespace Nijo.WebService.SchemaEditor;
 
 /// <summary>
-/// <see cref="Nijo.ImmutableSchema.IValueMemberType"/> に同じ。
+/// <see cref="Nijo.ImmutableSchema.IValueMemberType"/> の
+/// スキーマ定義編集画面GUI上でのデータ構造
 /// </summary>
 public class ValueMemberType {
     [JsonPropertyName("schemaTypeName")]

@@ -18,7 +18,7 @@ using Nijo.WebService.Common;
 namespace Nijo.WebService.SchemaEditor;
 
 /// <summary>
-/// スキーマ関連のエンドポイントハンドラ
+/// スキーマ編集関連のエンドポイントハンドラ
 /// </summary>
 internal class SchemaEndpointHandlers {
     private readonly GeneratedProject _project;

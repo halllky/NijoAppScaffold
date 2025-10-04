@@ -6,7 +6,8 @@ using System.Xml.Linq;
 namespace Nijo.WebService.SchemaEditor;
 
 /// <summary>
-/// アプリケーション全体の状態
+/// スキーマ定義全体の情報。
+/// データの持ち方こそ違うがデータの範囲は nijo.xml 1個分と対応する。
 /// </summary>
 public class ApplicationState {
     [JsonPropertyName("applicationName")]

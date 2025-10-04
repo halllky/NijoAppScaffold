@@ -7,7 +7,7 @@ using System.Text.Json.Nodes;
 namespace Nijo.WebService.SchemaEditor;
 
 /// <summary>
-/// アプリケーション全体の状態と、スキーマ定義グラフの見た目の状態をまとめたもの
+/// <see cref="SchemaEditor.ApplicationState"/> と <see cref="SchemaGraphViewStateTypeByViewMode"/> の組
 /// </summary>
 public class ApplicationStateAndSchemaGraphViewState {
     /// <summary>

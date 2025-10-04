@@ -6,7 +6,8 @@ using Nijo.SchemaParsing;
 namespace Nijo.WebService.SchemaEditor;
 
 /// <summary>
-/// XML要素の属性の種類定義
+/// nijo.xml のXML要素1個に定義できる属性。
+/// ほぼ <see cref="Nijo.SchemaParsing.NodeOption"/> とだいたい同じ。
 /// </summary>
 public class XmlElementAttribute {
     [JsonPropertyName("attributeName")]
