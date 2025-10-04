@@ -4,7 +4,7 @@ chcp 65001
 @echo off 
 setlocal enabledelayedexpansion 
  
-set "NIJO_ROOT=%~dp0" 
+set "NIJO_ROOT=%~dp0..\" 
 set "APP_TEMPLATE_DIR=%NIJO_ROOT%Nijo.NewProjectTemplate" 
 set "APP_TEMPLATE_ZIP=%NIJO_ROOT%temp_release\Nijo.NewProjectTemplate.zip" 
  
@@ -72,12 +72,15 @@ dotnet publish %NIJO_ROOT%Nijo\Nijo.csproj -p:PublishProfile=FOR_GITHUB_RELEASE_
  
 @rem 圧縮 
 if not "%1"=="TEST" ( 
-  powershell /c "Compress-Archive -Path %NIJO_ROOT%Nijo\bin\Release\net9.0\publish-win\* -DestinationPath release-%RELEASE_VERSION%-win.zip" 
-  powershell /c "Compress-Archive -Path %NIJO_ROOT%Nijo\bin\Release\net9.0\publish-osx\* -DestinationPath release-%RELEASE_VERSION%-osx.zip" 
+  powershell /c "Compress-Archive -Path %NIJO_ROOT%Nijo\bin\Release\net9.0\publish-win\* -DestinationPath %NIJO_ROOT%temp_release\release-%RELEASE_VERSION%-win.zip" 
+  powershell /c "Compress-Archive -Path %NIJO_ROOT%Nijo\bin\Release\net9.0\publish-osx\* -DestinationPath %NIJO_ROOT%temp_release\release-%RELEASE_VERSION%-osx.zip" 
 ) 
+ 
+@rem 掃除 
+del "%APP_TEMPLATE_ZIP%" 
  
 @rem 手作業でやらなければいけないことを表示 
 @echo リリース %RELEASE_VERSION% を作成しました。 
- 
 @echo GitHubのReleaseページにアップロードしてください。 
  
+explorer "%NIJO_ROOT%temp_release" 

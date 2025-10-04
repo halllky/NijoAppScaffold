@@ -61,7 +61,7 @@
       },
       {
         "label": "Nijo > リリース",
-        "command": ".\\release.bat",
+        "command": ".\\Task\\Nijoリリース.bat",
         "type": "shell",
         "problemMatcher": [],
         "options": {
