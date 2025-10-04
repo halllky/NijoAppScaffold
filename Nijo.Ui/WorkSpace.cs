@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using System.Windows.Forms;
 using Microsoft.AspNetCore.Builder;
 
@@ -28,14 +29,14 @@ namespace Nijo.Ui {
 
             // Webサイトを開始し、WebView2 にその画面を表示する
             if (_project != null) {
-                var nijoUi = new WebService.NijoWebServiceBuilder(_project);
+                var nijoUi = new WebService.NijoWebServiceBuilder();
                 var logger = new TestLogger();
                 _webApplication = nijoUi.BuildWebApplication(logger);
 
                 var baseUri = new Uri(@"https://localhost:8081");
                 _ = _webApplication.RunAsync(baseUri.ToString());
 
-                webView.Source = new Uri(baseUri, "/nijo-ui");
+                webView.Source = new Uri(baseUri, $"/nijo-ui/{HttpUtility.UrlEncode(_project.ProjectRoot)}");
             }
         }
 

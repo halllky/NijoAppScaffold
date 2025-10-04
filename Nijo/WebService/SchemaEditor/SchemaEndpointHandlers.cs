@@ -21,29 +21,40 @@ namespace Nijo.WebService.SchemaEditor;
 /// スキーマ編集関連のエンドポイントハンドラ
 /// </summary>
 internal class SchemaEndpointHandlers {
-    private readonly GeneratedProject _project;
 
-    internal SchemaEndpointHandlers(GeneratedProject project) {
-        _project = project;
+    internal SchemaEndpointHandlers() {
     }
 
     /// <summary>
     /// 画面初期表示時データ読み込み処理
     /// </summary>
     internal async Task HandleLoadSchema(HttpContext context) {
-        var xDocument = XDocument.Load(_project.SchemaXmlPath);
-        var rule = SchemaParseRule.Default();
+        try {
+            var project = await ProjectHelper.GetProjectAndSetResponseIfErrorAsync(context);
+            if (project == null) {
+                return;
+            }
 
-        var response = new ApplicationState {
-            ApplicationName = xDocument.Root?.Name.LocalName ?? "",
-            XmlElementTrees = xDocument.Root?.Elements().Select(root => new ModelPageForm {
-                XmlElements = XmlElementItem.FromXElement(root).ToList(),
-            }).ToList() ?? [],
-            ValueMemberTypes = ValueMemberType.FromSchemaParseRule(rule),
-            AttributeDefs = XmlElementAttribute.FromSchemaParseRule(rule),
-        };
+            var xDocument = XDocument.Load(project.SchemaXmlPath);
+            var rule = SchemaParseRule.Default();
 
-        await HttpResponseHelper.WriteJsonResponseAsync(context, response, cancellationToken: context.RequestAborted);
+            var response = new ApplicationState {
+                ApplicationName = xDocument.Root?.Name.LocalName ?? "",
+                XmlElementTrees = xDocument.Root?.Elements().Select(root => new ModelPageForm {
+                    XmlElements = XmlElementItem.FromXElement(root).ToList(),
+                }).ToList() ?? [],
+                ValueMemberTypes = ValueMemberType.FromSchemaParseRule(rule),
+                AttributeDefs = XmlElementAttribute.FromSchemaParseRule(rule),
+            };
+
+            await HttpResponseHelper.WriteJsonResponseAsync(context, response, cancellationToken: context.RequestAborted);
+        } catch (Exception ex) {
+            await HttpResponseHelper.WriteErrorResponseAsync(
+                context,
+                (int)HttpStatusCode.InternalServerError,
+                ex.Message,
+                context.RequestAborted);
+        }
     }
 
     /// <summary>
@@ -51,7 +62,12 @@ internal class SchemaEndpointHandlers {
     /// </summary>
     internal async Task HandleValidateSchema(HttpContext context) {
         try {
-            var originalXDocument = XDocument.Load(_project.SchemaXmlPath);
+            var project = await ProjectHelper.GetProjectAndSetResponseIfErrorAsync(context);
+            if (project == null) {
+                return;
+            }
+
+            var originalXDocument = XDocument.Load(project.SchemaXmlPath);
             var applicationState = await context.Request.ReadFromJsonAsync<ApplicationState>(context.RequestAborted)
                 ?? throw new Exception("applicationState is null");
 
@@ -88,6 +104,11 @@ internal class SchemaEndpointHandlers {
     /// </summary>
     internal async Task HandleSaveSchema(HttpContext context) {
         try {
+            var project = await ProjectHelper.GetProjectAndSetResponseIfErrorAsync(context);
+            if (project == null) {
+                return;
+            }
+
             var applicationStateAndSchemaGraphViewState = await context.Request.ReadFromJsonAsync<ApplicationStateAndSchemaGraphViewState>(context.RequestAborted)
                 ?? throw new Exception("applicationStateAndSchemaGraphViewState is null");
 
@@ -95,7 +116,7 @@ internal class SchemaEndpointHandlers {
             var schemaGraphViewState = applicationStateAndSchemaGraphViewState.SchemaGraphViewState;
 
             // XMLとして正しいか検証（スキーマ定義としてのエラーは見ない。作業中の一時保存のケースがあるため）
-            var originalXDocument = XDocument.Load(_project.SchemaXmlPath);
+            var originalXDocument = XDocument.Load(project.SchemaXmlPath);
             if (!SchemaValidationService.TryValidateAsXml(applicationState, originalXDocument, out var xDocument, out var _, out var errors)) {
                 context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
                 await HttpResponseHelper.WriteJsonResponseAsync(context, errors, cancellationToken: context.RequestAborted);
@@ -104,7 +125,7 @@ internal class SchemaEndpointHandlers {
 
             // nijo.xmlの保存
             XmlHelper.SortXmlAttributes(xDocument);
-            using (var writer = XmlWriter.Create(_project.SchemaXmlPath, new XmlWriterSettings {
+            using (var writer = XmlWriter.Create(project.SchemaXmlPath, new XmlWriterSettings {
                 Indent = true,
                 Encoding = new UTF8Encoding(false, false),
                 NewLineChars = "\n",
@@ -114,7 +135,7 @@ internal class SchemaEndpointHandlers {
 
             // SchemaGraphViewStateの保存（nullでない場合のみ）
             if (schemaGraphViewState != null) {
-                var viewStatePath = _project.ViewStateJsonPath;
+                var viewStatePath = project.ViewStateJsonPath;
                 var jsonOptions = new JsonSerializerOptions {
                     WriteIndented = true,
                     Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -143,7 +164,12 @@ internal class SchemaEndpointHandlers {
     /// </summary>
     internal async Task HandleGenerateCode(HttpContext context) {
         try {
-            var xDocumentToSave = XDocument.Load(_project.SchemaXmlPath);
+            var project = await ProjectHelper.GetProjectAndSetResponseIfErrorAsync(context);
+            if (project == null) {
+                return;
+            }
+
+            var xDocumentToSave = XDocument.Load(project.SchemaXmlPath);
             var rule = SchemaParseRule.Default();
 
             // バリデーション (validate相当)
@@ -159,7 +185,7 @@ internal class SchemaEndpointHandlers {
             var renderingOptions = new CodeRenderingOptions { AllowNotImplemented = false };
 
             var logger = context.RequestServices.GetRequiredService<ILogger<NijoWebServiceBuilder>>();
-            if (_project.GenerateCode(generationParseContext, renderingOptions, logger)) {
+            if (project.GenerateCode(generationParseContext, renderingOptions, logger)) {
                 await HttpResponseHelper.WriteJsonResponseAsync(
                     context,
                     "Code generation successful.",

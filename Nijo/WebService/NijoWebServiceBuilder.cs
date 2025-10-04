@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Nijo.WebService.Common;
 using Nijo.WebService.Debugging;
 using Nijo.WebService.SchemaEditor;
 using Nijo.WebService.TypedDocument;
@@ -19,11 +20,8 @@ namespace Nijo.WebService;
 /// </summary>
 public class NijoWebServiceBuilder {
 
-    public NijoWebServiceBuilder(GeneratedProject? project) {
-        _project = project;
+    public NijoWebServiceBuilder() {
     }
-    // 削除予定
-    private readonly GeneratedProject? _project;
 
     /// <summary>
     /// Reactアプリケーションからのリクエストを受け取るWebサーバーを設定して返す
@@ -52,24 +50,24 @@ public class NijoWebServiceBuilder {
         app.UseCors(CORS_POLICY_NAME);
 
         // React.js のビルド後html（js, css がすべて1つのhtmlファイル内にバンドルされているもの）を返す。
-        app.MapGet("/nijo-ui", ServeReactHtml);
+        app.MapGet("/", ServeReactHtml);
 
         // スキーマ編集エンドポイント
-        var schemaHandlers = new SchemaEndpointHandlers(_project);
-        app.MapGet("/load", schemaHandlers.HandleLoadSchema);
-        app.MapPost("/validate", schemaHandlers.HandleValidateSchema);
-        app.MapPost("/save", schemaHandlers.HandleSaveSchema);
-        app.MapPost("/generate", schemaHandlers.HandleGenerateCode);
+        var schemaHandlers = new SchemaEndpointHandlers();
+        app.MapGet($"/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/load", schemaHandlers.HandleLoadSchema);
+        app.MapPost($"/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/validate", schemaHandlers.HandleValidateSchema);
+        app.MapPost($"/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/save", schemaHandlers.HandleSaveSchema);
+        app.MapPost($"/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/generate", schemaHandlers.HandleGenerateCode);
 
         // デバッグ用ツール
-        new DebugTools(_project).ConfigureWebApplication(app);
+        new DebugTools().ConfigureWebApplication(app);
 
         // 型つきアウトライナー用エンドポイント
-        new TypedDocumentAndDataPreview(_project).ConfigureWebApplication(app);
+        new TypedDocumentAndDataPreview().ConfigureWebApplication(app);
 
         // 上位のいずれにも該当しないエンドポイントへのリクエストはReact画面にリダイレクト
         app.MapGet("/{*path}", context => {
-            context.Response.Redirect("/nijo-ui");
+            context.Response.Redirect("/");
             return Task.CompletedTask;
         });
 

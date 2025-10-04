@@ -15,10 +15,8 @@ namespace Nijo.WebService.TypedDocument;
 /// 型つきドキュメントとデータプレビューに関するサービスを提供する。
 /// </summary>
 internal class TypedDocumentAndDataPreview {
-    private readonly GeneratedProject _project;
 
-    internal TypedDocumentAndDataPreview(GeneratedProject project) {
-        _project = project;
+    internal TypedDocumentAndDataPreview() {
     }
 
     private const string SETTINGS_FILE_NAME = "settings.json";
@@ -29,34 +27,34 @@ internal class TypedDocumentAndDataPreview {
     private const string ATTRIBUTE_NAME_NAME = "name";
     private const string ATTRIBUTE_NAME_DATA_PREVIEW_ID = "id";
 
-    private string GetMemoDirectoryPath() {
-        var memoDir = Path.Combine(_project.ProjectRoot, MEMO_DIRECTORY_NAME);
+    private string GetMemoDirectoryPath(string projectRoot) {
+        var memoDir = Path.Combine(projectRoot, MEMO_DIRECTORY_NAME);
         if (!Directory.Exists(memoDir)) {
             Directory.CreateDirectory(memoDir);
         }
         return memoDir;
     }
 
-    private string GetSettingsFilePath() {
-        return Path.Combine(GetMemoDirectoryPath(), SETTINGS_FILE_NAME);
+    private string GetSettingsFilePath(string projectRoot) {
+        return Path.Combine(GetMemoDirectoryPath(projectRoot), SETTINGS_FILE_NAME);
     }
-    private string GetMemoFilePath(string entityId) {
+    private string GetMemoFilePath(string projectRoot, string entityId) {
         FileStorageService.ThrowIfInvalidFileIdentifier(entityId, nameof(entityId));
-        return Path.Combine(GetMemoDirectoryPath(), DOCUMENTS_DIRECTORY_NAME, $"{entityId}.json");
+        return Path.Combine(GetMemoDirectoryPath(projectRoot), DOCUMENTS_DIRECTORY_NAME, $"{entityId}.json");
     }
 
-    private string GetDataPreviewFilePath(string dataPreviewId) {
+    private string GetDataPreviewFilePath(string projectRoot, string dataPreviewId) {
         FileStorageService.ThrowIfInvalidFileIdentifier(dataPreviewId, nameof(dataPreviewId));
-        return Path.Combine(GetMemoDirectoryPath(), DATA_PREVIEW_DIRECTORY_NAME, $"{dataPreviewId}.json");
+        return Path.Combine(GetMemoDirectoryPath(projectRoot), DATA_PREVIEW_DIRECTORY_NAME, $"{dataPreviewId}.json");
     }
 
     internal void ConfigureWebApplication(WebApplication app) {
-        app.MapGet("/typed-document/load-settings", LoadSettings);
-        app.MapPost("/typed-document/save-settings", SaveSettings);
-        app.MapGet("/typed-document/load", LoadTypedDocument);
-        app.MapPost("/typed-document/save", SaveTypedDocument);
-        app.MapGet("/data-preview/load", LoadDataPreview);
-        app.MapPost("/data-preview/save", SaveDataPreview);
+        app.MapGet($"/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/typed-document/load-settings", LoadSettings);
+        app.MapPost($"/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/typed-document/save-settings", SaveSettings);
+        app.MapGet($"/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/typed-document/load", LoadTypedDocument);
+        app.MapPost($"/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/typed-document/save", SaveTypedDocument);
+        app.MapGet($"/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/data-preview/load", LoadDataPreview);
+        app.MapPost($"/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/data-preview/save", SaveDataPreview);
     }
 
     /// <summary>
@@ -65,14 +63,20 @@ internal class TypedDocumentAndDataPreview {
     /// アプリケーション名や、エンティティ種類の並べ方の順番は、設定ファイルの内容を読み込んで取得する。
     /// </summary>
     private async Task LoadSettings(HttpContext context) {
-        var memoDir = GetMemoDirectoryPath();
+        var project = await ProjectHelper.GetProjectAndSetResponseIfErrorAsync(context);
+        if (project == null) {
+            return;
+        }
+
+        var projectRoot = project.ProjectRoot;
+        var memoDir = GetMemoDirectoryPath(projectRoot);
 
         var appSettingsForDisplay = new JsonObject();
         var entityTypeOrder = new List<string>(); // 型つきドキュメントの順番
         var dataPreviewOrder = new List<string>(); // データプレビューの順番
 
         // settings.json
-        var settingsFilePath = GetSettingsFilePath();
+        var settingsFilePath = GetSettingsFilePath(projectRoot);
         var settingsData = await FileStorageService.LoadJsonAsync(settingsFilePath, context.RequestAborted);
         if (settingsData != null) {
             appSettingsForDisplay["applicationName"] = settingsData.TryGetPropertyValue("applicationName", out var applicationName)
@@ -87,7 +91,7 @@ internal class TypedDocumentAndDataPreview {
         }
 
         // 型つきドキュメントの一覧
-        var typedDocumentDirectory = Path.Combine(GetMemoDirectoryPath(), DOCUMENTS_DIRECTORY_NAME);
+        var typedDocumentDirectory = Path.Combine(GetMemoDirectoryPath(projectRoot), DOCUMENTS_DIRECTORY_NAME);
         var entityTypeList = await FileStorageService.ListJsonFilesAsync(
             typedDocumentDirectory,
             (fileName, data) => new JsonObject {
@@ -98,7 +102,7 @@ internal class TypedDocumentAndDataPreview {
             context.RequestAborted);
 
         // データプレビューの一覧
-        var dataPreviewDirectory = Path.Combine(GetMemoDirectoryPath(), DATA_PREVIEW_DIRECTORY_NAME);
+        var dataPreviewDirectory = Path.Combine(GetMemoDirectoryPath(projectRoot), DATA_PREVIEW_DIRECTORY_NAME);
         var dataPreviewList = await FileStorageService.ListJsonFilesAsync(
             dataPreviewDirectory,
             (fileName, data) => new JsonObject {
@@ -143,23 +147,37 @@ internal class TypedDocumentAndDataPreview {
     }
 
     private async Task SaveSettings(HttpContext context) {
+        var project = await ProjectHelper.GetProjectAndSetResponseIfErrorAsync(context);
+        if (project == null) {
+            return;
+        }
+
+        var projectRoot = project.ProjectRoot;
+
         var data = await context.Request.ReadFromJsonAsync<JsonObject>(FileStorageService.JsonOptions, context.RequestAborted);
         if (data == null) {
             await HttpResponseHelper.WriteBadRequestAsync(context, "Request body is empty.", context.RequestAborted);
             return;
         }
 
-        var filePath = GetSettingsFilePath();
+        var filePath = GetSettingsFilePath(projectRoot);
         await FileStorageService.SaveJsonAsync(filePath, data, context.RequestAborted);
     }
 
     private async Task LoadTypedDocument(HttpContext context) {
+        var project = await ProjectHelper.GetProjectAndSetResponseIfErrorAsync(context);
+        if (project == null) {
+            return;
+        }
+
+        var projectRoot = project.ProjectRoot;
+
         if (!HttpResponseHelper.TryGetQueryParameter(context, "typeId", out var typeId)) {
             await HttpResponseHelper.WriteBadRequestAsync(context, "Query parameter 'typeId' is required.", context.RequestAborted);
             return;
         }
 
-        var filePath = GetMemoFilePath(typeId);
+        var filePath = GetMemoFilePath(projectRoot, typeId);
         var data = await FileStorageService.LoadJsonAsync(filePath, context.RequestAborted);
 
         if (data == null) {
@@ -171,6 +189,13 @@ internal class TypedDocumentAndDataPreview {
     }
 
     private async Task SaveTypedDocument(HttpContext context) {
+        var project = await ProjectHelper.GetProjectAndSetResponseIfErrorAsync(context);
+        if (project == null) {
+            return;
+        }
+
+        var projectRoot = project.ProjectRoot;
+
         JsonObject? data;
         try {
             data = await context.Request.ReadFromJsonAsync<JsonObject>(FileStorageService.JsonOptions, context.RequestAborted);
@@ -191,7 +216,7 @@ internal class TypedDocumentAndDataPreview {
         }
 
         try {
-            var filePath = GetMemoFilePath(entityId);
+            var filePath = GetMemoFilePath(projectRoot, entityId);
             await FileStorageService.SaveJsonAsync(filePath, data, context.RequestAborted);
             await HttpResponseHelper.WriteSuccessMessageAsync(context, "Data saved successfully.", context.RequestAborted);
         } catch (Exception ex) {
@@ -200,12 +225,19 @@ internal class TypedDocumentAndDataPreview {
     }
 
     private async Task LoadDataPreview(HttpContext context) {
+        var project = await ProjectHelper.GetProjectAndSetResponseIfErrorAsync(context);
+        if (project == null) {
+            return;
+        }
+
+        var projectRoot = project.ProjectRoot;
+
         if (!HttpResponseHelper.TryGetQueryParameter(context, "dataPreviewId", out var dataPreviewId)) {
             await HttpResponseHelper.WriteBadRequestAsync(context, "Query parameter 'dataPreviewId' is required.", context.RequestAborted);
             return;
         }
 
-        var filePath = GetDataPreviewFilePath(dataPreviewId);
+        var filePath = GetDataPreviewFilePath(projectRoot, dataPreviewId);
         var data = await FileStorageService.LoadJsonAsync(filePath, context.RequestAborted);
 
         if (data == null) {
@@ -217,6 +249,13 @@ internal class TypedDocumentAndDataPreview {
     }
 
     private async Task SaveDataPreview(HttpContext context) {
+        var project = await ProjectHelper.GetProjectAndSetResponseIfErrorAsync(context);
+        if (project == null) {
+            return;
+        }
+
+        var projectRoot = project.ProjectRoot;
+
         JsonObject? data;
         try {
             data = await context.Request.ReadFromJsonAsync<JsonObject>(FileStorageService.JsonOptions, context.RequestAborted);
@@ -237,7 +276,7 @@ internal class TypedDocumentAndDataPreview {
         }
 
         try {
-            var filePath = GetDataPreviewFilePath(dataPreviewId);
+            var filePath = GetDataPreviewFilePath(projectRoot, dataPreviewId);
             await FileStorageService.SaveJsonAsync(filePath, data, context.RequestAborted);
             await HttpResponseHelper.WriteSuccessMessageAsync(context, "Data saved successfully.", context.RequestAborted);
         } catch (Exception ex) {

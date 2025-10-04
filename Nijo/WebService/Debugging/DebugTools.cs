@@ -21,10 +21,8 @@ namespace Nijo.WebService.Debugging;
 /// </summary>
 internal class DebugTools {
 
-    internal DebugTools(GeneratedProject project) {
-        _project = project;
+    internal DebugTools() {
     }
-    private readonly GeneratedProject _project;
 
     // とりあえずポート決め打ち
     private const string NPM_PORT = "5173";
@@ -38,11 +36,11 @@ internal class DebugTools {
 
         app.MapGet("/debug-state", DebugState);
 
-        app.MapPost("/start-npm-debugging", StartNpmDebugging);
-        app.MapPost("/stop-npm-debugging", StopNpmDebugging);
+        app.MapPost($"/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/start-npm-debugging", StartNpmDebugging);
+        app.MapPost($"/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/stop-npm-debugging", StopNpmDebugging);
 
-        app.MapPost("/start-dotnet-debugging", StartDotnetDebugging);
-        app.MapPost("/stop-dotnet-debugging", StopDotnetDebugging);
+        app.MapPost($"/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/start-dotnet-debugging", StartDotnetDebugging);
+        app.MapPost($"/{{{ProjectHelper.PROJECT_DIR_PARAMETER}}}/stop-dotnet-debugging", StopDotnetDebugging);
     }
 
     /// <summary>
@@ -58,6 +56,11 @@ internal class DebugTools {
     /// npm run devを別プロセスで開始する。既に開始されている場合は何もしない。
     /// </summary>
     private async Task StartNpmDebugging(HttpContext context) {
+        var project = await ProjectHelper.GetProjectAndSetResponseIfErrorAsync(context);
+        if (project == null) {
+            return;
+        }
+
         var state = await CheckDebugState();
 
         // 既に起動している場合は何もしない
@@ -69,7 +72,7 @@ internal class DebugTools {
 
         var config = new ProcessConfig {
             ProcessName = "npm run dev",
-            WorkingDirectory = _project.ReactProjectRoot,
+            WorkingDirectory = project.ReactProjectRoot,
             Port = NPM_PORT,
             LaunchCommand = "call npm run dev",
             ProcessExecutableName = "node.exe",
@@ -109,6 +112,11 @@ internal class DebugTools {
     /// dotnet runを別プロセスで開始する。既に開始されている場合は何もしない。
     /// </summary>
     private async Task StartDotnetDebugging(HttpContext context) {
+        var project = await ProjectHelper.GetProjectAndSetResponseIfErrorAsync(context);
+        if (project == null) {
+            return;
+        }
+
         var state = await CheckDebugState();
 
         // 既に起動している場合は何もしない
@@ -120,7 +128,7 @@ internal class DebugTools {
 
         var config = new ProcessConfig {
             ProcessName = "dotnet run",
-            WorkingDirectory = _project.WebapiProjectRoot,
+            WorkingDirectory = project.WebapiProjectRoot,
             Port = DOTNET_PORT,
             LaunchCommand = "call dotnet run --launch-profile https",
             ProcessExecutableName = "WebApi.exe",

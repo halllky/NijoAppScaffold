@@ -481,7 +481,7 @@ namespace Nijo {
             var logger = ILoggerExtension.CreateConsoleLogger();
 
             // サービス内容定義
-            var nijoUi = new WebService.NijoWebServiceBuilder(null);
+            var nijoUi = new WebService.NijoWebServiceBuilder();
             var app = nijoUi.BuildWebApplication(logger);
 
             // 起動
