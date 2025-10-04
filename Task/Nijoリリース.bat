@@ -66,9 +66,27 @@ if not exist "%APP_TEMPLATE_ZIP%" (
   exit /b 1 
 ) 
  
+@echo フロントエンドのビルドを開始します。 
+pushd %NIJO_ROOT%Nijo.GuiClient\package_schema-editor 
+call npm run build 
+if not "%errorlevel%"=="0" ( 
+  @echo ビルドに失敗しました。 
+  exit /b 1 
+) 
+popd 
+ 
 @echo ビルドを開始します。  
 dotnet publish %NIJO_ROOT%Nijo\Nijo.csproj -p:PublishProfile=FOR_GITHUB_RELEASE_WINDOWS 
+if not "%errorlevel%"=="0" ( 
+  @echo ビルドに失敗しました。 
+  exit /b 1 
+) 
+ 
 dotnet publish %NIJO_ROOT%Nijo\Nijo.csproj -p:PublishProfile=FOR_GITHUB_RELEASE_OSX 
+if not "%errorlevel%"=="0" ( 
+  @echo ビルドに失敗しました。 
+  exit /b 1 
+) 
  
 @rem 圧縮 
 if not "%1"=="TEST" ( 
@@ -84,3 +102,5 @@ del "%APP_TEMPLATE_ZIP%"
 @echo GitHubのReleaseページにアップロードしてください。 
  
 explorer "%NIJO_ROOT%temp_release" 
+ 
+exit /b 0 

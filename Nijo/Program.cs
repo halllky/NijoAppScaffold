@@ -487,6 +487,15 @@ namespace Nijo {
             // 起動
             var url = $"https://localhost:{port ?? 5000}";
             logger.LogInformation("GUI用のサービスを起動します: {url}", url);
+
+            // ブラウザを立ち上げる
+            Process.Start(new ProcessStartInfo {
+                FileName = "cmd",
+                Arguments = $"/c \"start {url}\"",
+                UseShellExecute = true,
+                WindowStyle = ProcessWindowStyle.Hidden,
+            });
+
             await app.RunAsync(url);
         }
     }
