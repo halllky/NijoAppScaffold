@@ -14,6 +14,9 @@ if %errorlevel% neq 0 (
     exit /b 1 
 ) 
  
+@rem テンプレートプロジェクトのソースコード自動生成かけなおし 
+%NIJO_EXE_PATH% generate "%SOURCE_ROOT%"  
+ 
 @rem デモフォルダをループし全デモフォルダに対して処理を行う 
 for /d %%d in ("%~dp0\*") do ( 
  
@@ -31,7 +34,7 @@ for /d %%d in ("%~dp0\*") do (
     call :COPY_TASK 
 ) 
 @echo コピー完了しました 
-exit /b 
+exit /b 0 
  
 @rem **************************************** 
 @rem コピー実行 
