@@ -150,8 +150,8 @@ namespace Nijo {
             var serve = new Command(
                 name: "serve",
                 description: "GUI用のサービスを展開します。")
-                {  port };
-            serve.SetHandler(Serve, port);
+                { path, port };
+            serve.SetHandler(Serve, path, port);
             rootCommand.AddCommand(serve);
 
             // リファレンスドキュメント生成
@@ -477,7 +477,7 @@ namespace Nijo {
         /// <summary>
         /// GUI用のサービスを展開する
         /// </summary>
-        private static async Task Serve(int? port) {
+        private static async Task Serve(string? path, int? port) {
             var logger = ILoggerExtension.CreateConsoleLogger();
 
             // サービス内容定義
@@ -489,9 +489,17 @@ namespace Nijo {
             logger.LogInformation("GUI用のサービスを起動します: {url}", url);
 
             // ブラウザを立ち上げる
+            string browserUrl;
+            if (string.IsNullOrWhiteSpace(path)) {
+                browserUrl = url;
+            } else {
+                var param = System.Web.HttpUtility.ParseQueryString(string.Empty);
+                param.Add(WebService.Common.ProjectHelper.PROJECT_DIR_PARAMETER, path);
+                browserUrl = $"{url}/project?{param}";
+            }
             Process.Start(new ProcessStartInfo {
                 FileName = "cmd",
-                Arguments = $"/c \"start {url}\"",
+                Arguments = $"/c \"start {browserUrl}\"",
                 UseShellExecute = true,
                 WindowStyle = ProcessWindowStyle.Hidden,
             });

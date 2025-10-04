@@ -43,6 +43,7 @@
     "tasks": [
       {
         "label": "Nijo > nijo serve デバッグ",
+        "detail": "nijo serve コマンドで展開されるGUIツール自体のデバッグ",
         "command": ".\\Task\\NijoServeデバッグ.bat",
         "type": "shell",
         "problemMatcher": [],
@@ -52,9 +53,13 @@
       },
       {
         "label": "Nijo > リリース",
+        "detail": "GitHub配置用のzip作成、またはデモの編集用の内部向けリリース",
         "command": ".\\Task\\Nijoリリース.bat",
         "type": "shell",
         "problemMatcher": [],
+        "args": [
+          "${input:releaseType}" // GitHub配置用のzipまで作成するなら1を指定
+        ],
         "options": {
           "cwd": "${workspaceFolder:NijoApplicationBuilder}"
         },
@@ -100,6 +105,7 @@
       },
       {
         "label": "Nijo > デモ > デバッグ",
+        "detail": "特定のデモのソースコード再生成をかけなおしてデバッグ開始",
         "type": "shell",
         "command": ".\\${input:demoFolder}\\Task\\DEBUG.bat",
         "options": {
@@ -108,7 +114,22 @@
         "problemMatcher": []
       },
       {
+        "label": "Nijo > デモ > スキーマ定義編集",
+        "detail": "デモのnijo.xmlを編集する。nijo serve は最後にリリースしたときのものが使われる",
+        "type": "shell",
+        "command": ".\\nijo.exe",
+        "options": {
+          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Nijo/bin/Release/net9.0/publish-win"
+        },
+        "args": [
+          "serve",
+          "${workspaceFolder:NijoApplicationBuilder}/demo/${input:demoFolder}"
+        ],
+        "problemMatcher": []
+      },
+      {
         "label": "Nijo > デモ > マイグレーション",
+        "detail": "特定のデモのマイグレーションSQLを作成",
         "type": "shell",
         "command": ".\\${input:demoFolder}\\Task\\ADD_MIGRATION.bat",
         "options": {
@@ -146,6 +167,21 @@
         "id": "tempDirectoryName",
         "description": "一時フォルダ名を入力してください",
         "type": "promptString"
+      },
+      {
+        "id": "releaseType",
+        "description": "リリースタイプを選択してください",
+        "type": "pickString",
+        "options": [
+          {
+            "label": "GitHub配置用のリリース",
+            "value": "1"
+          },
+          {
+            "label": "内部利用用の発行",
+            "value": "0"
+          }
+        ]
       }
     ]
   }

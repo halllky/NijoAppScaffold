@@ -14,7 +14,7 @@ internal static class ProjectHelper {
     /// クエリパラメータ名: プロジェクトディレクトリ
     /// ※React側と合わせる必要あり
     /// </summary>
-    private const string PROJECT_DIR_PARAMETER = "pj";
+    internal const string PROJECT_DIR_PARAMETER = "pj";
 
     /// <summary>
     /// HttpContextからプロジェクトディレクトリを取得し、GeneratedProjectを作成します。

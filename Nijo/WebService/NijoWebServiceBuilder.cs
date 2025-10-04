@@ -49,9 +49,6 @@ public class NijoWebServiceBuilder {
         app.UseRouting();
         app.UseCors(CORS_POLICY_NAME);
 
-        // React.js のビルド後html（js, css がすべて1つのhtmlファイル内にバンドルされているもの）を返す。
-        app.MapGet("/", ServeReactHtml);
-
         // スキーマ編集エンドポイント
         var schemaHandlers = new SchemaEndpointHandlers();
         app.MapGet("/api/load", schemaHandlers.HandleLoadSchema);
@@ -65,11 +62,9 @@ public class NijoWebServiceBuilder {
         // 型つきアウトライナー用エンドポイント
         new TypedDocumentAndDataPreview().ConfigureWebApplication(app);
 
-        // 上位のいずれにも該当しないエンドポイントへのリクエストはReact画面にリダイレクト
-        app.MapGet("/{*path}", context => {
-            context.Response.Redirect("/");
-            return Task.CompletedTask;
-        });
+        // 上位のいずれにも該当しないエンドポイントへのリクエストは
+        // React.js のビルド後html（js, css がすべて1つのhtmlファイル内にバンドルされているもの）を返す。
+        app.MapGet("/{*path}", ServeReactHtml);
 
         return app;
     }
