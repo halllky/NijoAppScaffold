@@ -42,18 +42,6 @@
     "version": "2.0.0",
     "tasks": [
       {
-        "label": "Nijo: 「自動テストで作成されたプロジェクト」のコード自動生成をかけなおす",
-        "command": ".\\run-nijo-exe.bat",
-        "type": "shell",
-        "args": [
-          "generate",
-        ],
-        "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/自動テストで作成されたプロジェクト"
-        },
-        "problemMatcher": []
-      },
-      {
         "label": "Nijo > スキーマ定義編集UI：デバッグ",
         "command": ".\\TASK_DEBUG.bat",
         "type": "shell",

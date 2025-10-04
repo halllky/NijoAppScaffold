@@ -1,7 +1,6 @@
 /自動テストで作成されたプロジェクト/*
-/プロジェクト新規作成処理のテストで作成されたプロジェクト/*
 /Nijo.IntegrationTest.Log/*
-/Nijo.ApplicationTemplate.Ver1/memo/*
+/demo/200_複雑なパターン/memo/*
 
 # リリース用一時フォルダ
 /temp_release/*

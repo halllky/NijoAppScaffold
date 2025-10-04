@@ -5,7 +5,6 @@ chcp 65001
 setlocal enabledelayedexpansion 
  
 set "NIJO_ROOT=%~dp0" 
-set "PROJECT_ROOT=%NIJO_ROOT%自動テストで作成されたプロジェクト" 
 set "APP_TEMPLATE_DIR=%NIJO_ROOT%Nijo.NewProjectTemplate" 
 set "APP_TEMPLATE_ZIP=%NIJO_ROOT%temp_release\Nijo.NewProjectTemplate.zip" 
  
