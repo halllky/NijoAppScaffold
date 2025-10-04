@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using MyApp.Debugging;
 using System;
 using System.Collections.Generic;
@@ -106,9 +106,9 @@ public static class MetadataBasedTestCases {
             }
 
             // 型を動的に取得
-            var searchConditionType = assembly.GetType($"MyApp.Core.{name}SearchCondition")
+            var searchConditionType = assembly.GetType($"MyApp.{name}SearchCondition")
                 ?? throw new Exception($"SearchConditionTypeが見つかりません: {name}");
-            var messageContainerType = assembly.GetType($"MyApp.Core.{name}SearchConditionMessages")
+            var messageContainerType = assembly.GetType($"MyApp.{name}SearchConditionMessages")
                 ?? throw new Exception($"MessageContainerTypeが見つかりません: {name}");
 
             // 呼び出し処理を定義
@@ -130,7 +130,7 @@ public static class MetadataBasedTestCases {
                     ?? throw new Exception($"LoadAsyncメソッドが見つかりません: {name}");
 
                 // PresentationContextをキャスト
-                var castMethod = typeof(IPresentationContext).GetMethod("Cast")!.MakeGenericMethod(messageContainerType);
+                var castMethod = typeof(IPresentationContext).GetMethod(nameof(IPresentationContext.As))!.MakeGenericMethod(messageContainerType);
                 var castedContext = castMethod.Invoke(presentationContext, null);
 
                 // LoadAsyncを呼び出し
@@ -206,7 +206,7 @@ public static class MetadataBasedTestCases {
                     }
 
                     // PresentationContextをキャスト
-                    var castMethod = typeof(IPresentationContext).GetMethod("Cast")!.MakeGenericMethod(messageContainerType);
+                    var castMethod = typeof(IPresentationContext).GetMethod(nameof(IPresentationContext.As))!.MakeGenericMethod(messageContainerType);
                     var castedContext = castMethod.Invoke(presentationContext, null);
 
                     // LoadRefsメソッドを呼び出し
