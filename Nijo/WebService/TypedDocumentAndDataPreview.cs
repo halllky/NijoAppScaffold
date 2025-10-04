@@ -3,12 +3,10 @@ using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using System;
-using System.Text.Encodings.Web;
-using System.Text.Json.Nodes;
+using System.Text.Json;
 
 namespace Nijo.WebService;
 
@@ -17,13 +15,6 @@ namespace Nijo.WebService;
 /// </summary>
 internal class TypedDocumentAndDataPreview {
     private readonly GeneratedProject _project;
-    private static readonly JsonSerializerOptions _jsonSerializerOptions = new() {
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase, // TypeScript側はキャメルケースのため
-        WriteIndented = true,
-        AllowTrailingCommas = true, // 読み込み時の柔軟性を高める
-        ReadCommentHandling = JsonCommentHandling.Skip, // コメントを無視
-    };
 
     internal TypedDocumentAndDataPreview(GeneratedProject project) {
         _project = project;
@@ -49,38 +40,12 @@ internal class TypedDocumentAndDataPreview {
         return Path.Combine(GetMemoDirectoryPath(), SETTINGS_FILE_NAME);
     }
     private string GetMemoFilePath(string entityId) {
-        if (string.IsNullOrEmpty(entityId)) {
-            throw new ArgumentException("entityId cannot be null or empty.", nameof(entityId));
-        }
-
-        // ファイル名として不正な文字が含まれていないかチェック
-        if (entityId.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) {
-            throw new ArgumentException($"entityId contains invalid characters for a file name: {entityId}", nameof(entityId));
-        }
-
-        // ディレクトリ区切り文字が含まれていないかチェック (ディレクトリトラバーサル対策)
-        if (entityId.Contains(Path.DirectorySeparatorChar) || entityId.Contains(Path.AltDirectorySeparatorChar)) {
-            throw new ArgumentException($"entityId cannot contain directory separator characters: {entityId}", nameof(entityId));
-        }
-
+        FileStorageService.ThrowIfInvalidFileIdentifier(entityId, nameof(entityId));
         return Path.Combine(GetMemoDirectoryPath(), DOCUMENTS_DIRECTORY_NAME, $"{entityId}.json");
     }
 
     private string GetDataPreviewFilePath(string dataPreviewId) {
-        if (string.IsNullOrEmpty(dataPreviewId)) {
-            throw new ArgumentException("dataPreviewId cannot be null or empty.", nameof(dataPreviewId));
-        }
-
-        // ファイル名として不正な文字が含まれていないかチェック
-        if (dataPreviewId.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) {
-            throw new ArgumentException($"dataPreviewId contains invalid characters for a file name: {dataPreviewId}", nameof(dataPreviewId));
-        }
-
-        // ディレクトリ区切り文字が含まれていないかチェック (ディレクトリトラバーサル対策)
-        if (dataPreviewId.Contains(Path.DirectorySeparatorChar) || dataPreviewId.Contains(Path.AltDirectorySeparatorChar)) {
-            throw new ArgumentException($"dataPreviewId cannot contain directory separator characters: {dataPreviewId}", nameof(dataPreviewId));
-        }
-
+        FileStorageService.ThrowIfInvalidFileIdentifier(dataPreviewId, nameof(dataPreviewId));
         return Path.Combine(GetMemoDirectoryPath(), DATA_PREVIEW_DIRECTORY_NAME, $"{dataPreviewId}.json");
     }
 
@@ -104,104 +69,43 @@ internal class TypedDocumentAndDataPreview {
         var appSettingsForDisplay = new JsonObject();
         var entityTypeOrder = new List<string>(); // 型つきドキュメントの順番
         var dataPreviewOrder = new List<string>(); // データプレビューの順番
-        var entityTypeList = new List<JsonObject>(); // 型つきドキュメントの一覧
-        var dataPreviewList = new List<JsonObject>(); // データプレビューの一覧
-
-        if (!Directory.Exists(memoDir)) {
-            context.Response.ContentType = "application/json";
-
-            var jsonArrayEntityTypeList = new JsonArray();
-            var jsonArrayDataPreviewList = new JsonArray();
-            foreach (var entityType in entityTypeList) {
-                jsonArrayEntityTypeList.Add(entityType);
-            }
-            foreach (var dataPreview in dataPreviewList) {
-                jsonArrayDataPreviewList.Add(dataPreview);
-            }
-            var jsonObject = new JsonObject {
-                ["applicationName"] = "",
-                ["entityTypeList"] = jsonArrayEntityTypeList,
-                ["dataPreviewList"] = jsonArrayDataPreviewList,
-            };
-            await context.Response.WriteAsJsonAsync(jsonObject, _jsonSerializerOptions, context.RequestAborted);
-            return;
-        }
 
         // settings.json
         var settingsFilePath = GetSettingsFilePath();
-        if (File.Exists(settingsFilePath)) {
-            var json = await File.ReadAllTextAsync(settingsFilePath, context.RequestAborted);
-            var data = JsonSerializer.Deserialize<JsonObject>(json, _jsonSerializerOptions);
-            if (data != null) {
-                appSettingsForDisplay["applicationName"] = data.TryGetPropertyValue("applicationName", out var applicationName)
-                    ? applicationName?.ToString()
-                    : "";
-                entityTypeOrder = data.TryGetPropertyValue("entityTypeOrder", out var entityTypeOrderJson)
-                    ? entityTypeOrderJson.Deserialize<List<string>>()!
-                    : new List<string>();
-                dataPreviewOrder = data.TryGetPropertyValue("dataPreviewOrder", out var dataPreviewOrderJson)
-                    ? dataPreviewOrderJson.Deserialize<List<string>>()!
-                    : new List<string>();
-            }
+        var settingsData = await FileStorageService.LoadJsonAsync(settingsFilePath, context.RequestAborted);
+        if (settingsData != null) {
+            appSettingsForDisplay["applicationName"] = settingsData.TryGetPropertyValue("applicationName", out var applicationName)
+                ? applicationName?.ToString()
+                : "";
+            entityTypeOrder = settingsData.TryGetPropertyValue("entityTypeOrder", out var entityTypeOrderJson)
+                ? entityTypeOrderJson.Deserialize<List<string>>()!
+                : new List<string>();
+            dataPreviewOrder = settingsData.TryGetPropertyValue("dataPreviewOrder", out var dataPreviewOrderJson)
+                ? dataPreviewOrderJson.Deserialize<List<string>>()!
+                : new List<string>();
         }
 
         // 型つきドキュメントの一覧
         var typedDocumentDirectory = Path.Combine(GetMemoDirectoryPath(), DOCUMENTS_DIRECTORY_NAME);
-        if (Directory.Exists(typedDocumentDirectory)) {
-            foreach (var filePath in Directory.GetFiles(typedDocumentDirectory, "*.json")) {
-                try {
-                    var json = await File.ReadAllTextAsync(filePath, context.RequestAborted);
-                    var data = JsonSerializer.Deserialize<JsonObject>(json, _jsonSerializerOptions);
-                    if (data == null) continue;
-
-                    // ファイル名は "(ドキュメントのUUID).json" となっている。
-                    // クライアント側URLはUUID。
-                    // 画面表示用名称は、JSONファイル中から名前を取得できたらそれを表示、取得できない場合はUUIDを表示する。
-                    var entityId = Path.GetFileNameWithoutExtension(filePath);
-                    var entityName = data[ATTRIBUTE_NAME_NAME]?.ToString() ?? entityId;
-
-                    entityTypeList.Add(new JsonObject {
-                        ["entityTypeId"] = entityId,
-                        ["entityTypeName"] = entityName,
-                    });
-
-                } catch (JsonException ex) {
-                    // JSONのパースに失敗したファイルはログに出力してスキップ (本番ではより詳細なロギングを検討)
-                    Console.WriteLine($"Error deserializing {filePath}: {ex.Message}");
-                } catch (Exception ex) {
-                    // その他の予期せぬエラー
-                    Console.WriteLine($"Error processing file {filePath}: {ex.Message}");
-                }
-            }
-        }
+        var entityTypeList = await FileStorageService.ListJsonFilesAsync(
+            typedDocumentDirectory,
+            (fileName, data) => new JsonObject {
+                ["entityTypeId"] = fileName,
+                ["entityTypeName"] = data[ATTRIBUTE_NAME_NAME]?.ToString() ?? fileName,
+            },
+            Console.WriteLine,
+            context.RequestAborted);
 
         // データプレビューの一覧
         var dataPreviewDirectory = Path.Combine(GetMemoDirectoryPath(), DATA_PREVIEW_DIRECTORY_NAME);
-        if (Directory.Exists(dataPreviewDirectory)) {
-            foreach (var filePath in Directory.GetFiles(dataPreviewDirectory, "*.json")) {
-                try {
-                    var json = await File.ReadAllTextAsync(filePath, context.RequestAborted);
-                    var data = JsonSerializer.Deserialize<JsonObject>(json, _jsonSerializerOptions);
-                    if (data == null) continue;
-
-                    var dataPreviewId = Path.GetFileNameWithoutExtension(filePath);
-                    var dataPreviewName = data.TryGetPropertyValue("title", out var title)
-                        ? title?.ToString()
-                        : dataPreviewId;
-
-                    dataPreviewList.Add(new JsonObject {
-                        ["id"] = dataPreviewId,
-                        ["title"] = dataPreviewName,
-                    });
-                } catch (JsonException ex) {
-                    // JSONのパースに失敗したファイルはログに出力してスキップ (本番ではより詳細なロギングを検討)
-                    Console.WriteLine($"Error deserializing {filePath}: {ex.Message}");
-                } catch (Exception ex) {
-                    // その他の予期せぬエラー
-                    Console.WriteLine($"Error processing file {filePath}: {ex.Message}");
-                }
-            }
-        }
+        var dataPreviewList = await FileStorageService.ListJsonFilesAsync(
+            dataPreviewDirectory,
+            (fileName, data) => new JsonObject {
+                ["id"] = fileName,
+                ["title"] = data.TryGetPropertyValue("title", out var title) ? title?.ToString() : fileName,
+            },
+            Console.WriteLine,
+            context.RequestAborted);
 
         // 設定ファイル未指定の場合
         if (!appSettingsForDisplay.TryGetPropertyValue("applicationName", out var _)) {
@@ -209,7 +113,6 @@ internal class TypedDocumentAndDataPreview {
         }
 
         // エンティティ種類の一覧を、保存された順番で並べ替える。
-        // 設定ファイルで順番が指定されていないエンティティ種類は、配列の末尾に追加する。
         var orderedTypedDocuments = entityTypeList
             .OrderBy(e => {
                 var index = entityTypeOrder.IndexOf(e["entityTypeId"]?.ToString() ?? "");
@@ -223,7 +126,6 @@ internal class TypedDocumentAndDataPreview {
         appSettingsForDisplay["entityTypeList"] = entityTypeListJsonArray;
 
         // データプレビューの一覧を、保存された順番で並べ替える。
-        // 設定ファイルで順番が指定されていないデータプレビューは、配列の末尾に追加する。
         var orderedDataPreviews = dataPreviewList
             .OrderBy(d => {
                 var index = dataPreviewOrder.IndexOf(d["id"]?.ToString() ?? "");
@@ -236,171 +138,109 @@ internal class TypedDocumentAndDataPreview {
         }
         appSettingsForDisplay["dataPreviewList"] = dataPreviewListJsonArray;
 
-        context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(appSettingsForDisplay, _jsonSerializerOptions, context.RequestAborted);
+        await HttpResponseHelper.WriteJsonResponseAsync(context, appSettingsForDisplay, FileStorageService.JsonOptions, context.RequestAborted);
     }
 
     private async Task SaveSettings(HttpContext context) {
-        // HTTPリクエストのデータを読み込む
-        var data = await context.Request.ReadFromJsonAsync<JsonObject>(_jsonSerializerOptions, context.RequestAborted);
+        var data = await context.Request.ReadFromJsonAsync<JsonObject>(FileStorageService.JsonOptions, context.RequestAborted);
         if (data == null) {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            context.Response.ContentType = "text/plain";
-            await context.Response.WriteAsync("Request body is empty.", context.RequestAborted);
+            await HttpResponseHelper.WriteBadRequestAsync(context, "Request body is empty.", context.RequestAborted);
             return;
         }
 
-        // データを保存する
         var filePath = GetSettingsFilePath();
-        var json = JsonSerializer.Serialize(data, _jsonSerializerOptions);
-        await File.WriteAllTextAsync(filePath, json, context.RequestAborted);
+        await FileStorageService.SaveJsonAsync(filePath, data, context.RequestAborted);
     }
 
     private async Task LoadTypedDocument(HttpContext context) {
-        var typeIdValues = context.Request.Query["typeId"];
-        var typeId = typeIdValues.FirstOrDefault();
-
-        if (string.IsNullOrEmpty(typeId)) {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            context.Response.ContentType = "text/plain";
-            await context.Response.WriteAsync("Query parameter 'typeId' is required.", context.RequestAborted);
+        if (!HttpResponseHelper.TryGetQueryParameter(context, "typeId", out var typeId)) {
+            await HttpResponseHelper.WriteBadRequestAsync(context, "Query parameter 'typeId' is required.", context.RequestAborted);
             return;
         }
 
         var filePath = GetMemoFilePath(typeId);
+        var data = await FileStorageService.LoadJsonAsync(filePath, context.RequestAborted);
 
-        if (!File.Exists(filePath)) {
-            context.Response.StatusCode = StatusCodes.Status404NotFound;
-            context.Response.ContentType = "text/plain";
-            await context.Response.WriteAsync("File not found.", context.RequestAborted);
+        if (data == null) {
+            await HttpResponseHelper.WriteNotFoundAsync(context, cancellationToken: context.RequestAborted);
             return;
         }
 
-        var json = await File.ReadAllTextAsync(filePath, context.RequestAborted);
-        var data = JsonSerializer.Deserialize<JsonObject>(json, _jsonSerializerOptions);
-        context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(data, _jsonSerializerOptions, context.RequestAborted);
+        await HttpResponseHelper.WriteJsonResponseAsync(context, data, FileStorageService.JsonOptions, context.RequestAborted);
     }
 
     private async Task SaveTypedDocument(HttpContext context) {
         JsonObject? data;
         try {
-            data = await context.Request.ReadFromJsonAsync<JsonObject>(_jsonSerializerOptions, context.RequestAborted);
+            data = await context.Request.ReadFromJsonAsync<JsonObject>(FileStorageService.JsonOptions, context.RequestAborted);
         } catch (Exception ex) {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            context.Response.ContentType = "text/plain";
-            await context.Response.WriteAsync($"Invalid JSON format: {ex.Message}", context.RequestAborted);
+            await HttpResponseHelper.WriteBadRequestAsync(context, $"Invalid JSON format: {ex.Message}", context.RequestAborted);
             return;
         }
 
         if (data == null) {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            context.Response.ContentType = "text/plain";
-            await context.Response.WriteAsync("Request body is empty.", context.RequestAborted);
+            await HttpResponseHelper.WriteBadRequestAsync(context, "Request body is empty.", context.RequestAborted);
             return;
         }
 
         var entityId = data[ATTRIBUTE_NAME_ID]?.ToString();
         if (string.IsNullOrEmpty(entityId)) {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            context.Response.ContentType = "text/plain";
-            await context.Response.WriteAsync("Request body is empty or 'entityId' is missing.", context.RequestAborted);
+            await HttpResponseHelper.WriteBadRequestAsync(context, "Request body is empty or 'entityId' is missing.", context.RequestAborted);
             return;
         }
-
-        var filePath = GetMemoFilePath(entityId);
-        var json = JsonSerializer.Serialize(data, _jsonSerializerOptions);
 
         try {
-            var directoryPath = Path.GetDirectoryName(filePath);
-            if (directoryPath != null && !Directory.Exists(directoryPath)) {
-                Directory.CreateDirectory(directoryPath);
-            }
-
-            await File.WriteAllTextAsync(filePath, json, context.RequestAborted);
+            var filePath = GetMemoFilePath(entityId);
+            await FileStorageService.SaveJsonAsync(filePath, data, context.RequestAborted);
+            await HttpResponseHelper.WriteSuccessMessageAsync(context, "Data saved successfully.", context.RequestAborted);
         } catch (Exception ex) {
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            context.Response.ContentType = "text/plain";
-            await context.Response.WriteAsync($"Failed to save data: {ex.Message}", context.RequestAborted);
-            return;
+            await HttpResponseHelper.WriteInternalServerErrorAsync(context, $"Failed to save data: {ex.Message}", context.RequestAborted);
         }
-
-        context.Response.StatusCode = StatusCodes.Status200OK;
-        context.Response.ContentType = "text/plain";
-        await context.Response.WriteAsync("Data saved successfully.", context.RequestAborted);
     }
 
     private async Task LoadDataPreview(HttpContext context) {
-        var dataPreviewIdValues = context.Request.Query["dataPreviewId"];
-        var dataPreviewId = dataPreviewIdValues.FirstOrDefault();
-
-        if (string.IsNullOrEmpty(dataPreviewId)) {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            context.Response.ContentType = "text/plain";
-            await context.Response.WriteAsync("Query parameter 'dataPreviewId' is required.", context.RequestAborted);
+        if (!HttpResponseHelper.TryGetQueryParameter(context, "dataPreviewId", out var dataPreviewId)) {
+            await HttpResponseHelper.WriteBadRequestAsync(context, "Query parameter 'dataPreviewId' is required.", context.RequestAborted);
             return;
         }
 
         var filePath = GetDataPreviewFilePath(dataPreviewId);
+        var data = await FileStorageService.LoadJsonAsync(filePath, context.RequestAborted);
 
-        if (!File.Exists(filePath)) {
-            context.Response.StatusCode = StatusCodes.Status404NotFound;
-            context.Response.ContentType = "text/plain";
-            await context.Response.WriteAsync("File not found.", context.RequestAborted);
+        if (data == null) {
+            await HttpResponseHelper.WriteNotFoundAsync(context, cancellationToken: context.RequestAborted);
             return;
         }
 
-        var json = await File.ReadAllTextAsync(filePath, context.RequestAborted);
-        var data = JsonSerializer.Deserialize<JsonObject>(json, _jsonSerializerOptions);
-        context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(data, _jsonSerializerOptions, context.RequestAborted);
+        await HttpResponseHelper.WriteJsonResponseAsync(context, data, FileStorageService.JsonOptions, context.RequestAborted);
     }
 
     private async Task SaveDataPreview(HttpContext context) {
         JsonObject? data;
         try {
-            data = await context.Request.ReadFromJsonAsync<JsonObject>(_jsonSerializerOptions, context.RequestAborted);
+            data = await context.Request.ReadFromJsonAsync<JsonObject>(FileStorageService.JsonOptions, context.RequestAborted);
         } catch (Exception ex) {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            context.Response.ContentType = "text/plain";
-            await context.Response.WriteAsync($"Invalid JSON format: {ex.Message}", context.RequestAborted);
+            await HttpResponseHelper.WriteBadRequestAsync(context, $"Invalid JSON format: {ex.Message}", context.RequestAborted);
             return;
         }
 
         if (data == null) {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            context.Response.ContentType = "text/plain";
-            await context.Response.WriteAsync("Request body is empty.", context.RequestAborted);
+            await HttpResponseHelper.WriteBadRequestAsync(context, "Request body is empty.", context.RequestAborted);
             return;
         }
 
         var dataPreviewId = data[ATTRIBUTE_NAME_DATA_PREVIEW_ID]?.ToString();
         if (string.IsNullOrEmpty(dataPreviewId)) {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            context.Response.ContentType = "text/plain";
-            await context.Response.WriteAsync("Request body is empty or 'dataPreviewId' is missing.", context.RequestAborted);
+            await HttpResponseHelper.WriteBadRequestAsync(context, "Request body is empty or 'dataPreviewId' is missing.", context.RequestAborted);
             return;
         }
-
-        var filePath = GetDataPreviewFilePath(dataPreviewId);
-        var json = JsonSerializer.Serialize(data, _jsonSerializerOptions);
 
         try {
-            var directoryPath = Path.GetDirectoryName(filePath);
-            if (directoryPath != null && !Directory.Exists(directoryPath)) {
-                Directory.CreateDirectory(directoryPath);
-            }
-
-            await File.WriteAllTextAsync(filePath, json, context.RequestAborted);
+            var filePath = GetDataPreviewFilePath(dataPreviewId);
+            await FileStorageService.SaveJsonAsync(filePath, data, context.RequestAborted);
+            await HttpResponseHelper.WriteSuccessMessageAsync(context, "Data saved successfully.", context.RequestAborted);
         } catch (Exception ex) {
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            context.Response.ContentType = "text/plain";
-            await context.Response.WriteAsync($"Failed to save data: {ex.Message}", context.RequestAborted);
-            return;
+            await HttpResponseHelper.WriteInternalServerErrorAsync(context, $"Failed to save data: {ex.Message}", context.RequestAborted);
         }
-
-        context.Response.StatusCode = StatusCodes.Status200OK;
-        context.Response.ContentType = "text/plain";
-        await context.Response.WriteAsync("Data saved successfully.", context.RequestAborted);
     }
 }
