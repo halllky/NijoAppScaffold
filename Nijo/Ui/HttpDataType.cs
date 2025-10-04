@@ -14,8 +14,7 @@ using System.Xml.Linq;
 
 namespace Nijo.Ui;
 
-// HTTPリクエスト・レスポンスに使うため、下記で定義されている各種データクラスと合わせたデータ構造を定義する
-// haldoc\Nijo.ApplicationTemplate.Ver1\react\src\debug-rooms\スキーマ定義編集UIの試作\types.ts
+// HTTPリクエスト・レスポンスに使うため、TypeScript側と合わせたデータ構造を定義する
 
 /// <summary>
 /// アプリケーション全体の状態と、スキーマ定義グラフの見た目の状態をまとめたもの

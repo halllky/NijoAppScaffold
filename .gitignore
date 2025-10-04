@@ -6,6 +6,9 @@
 # リリース用一時フォルダ
 /temp_release/*
 
+# ソース現新比較用一時フォルダ
+/temp_ソース現新比較用/*
+
 # 開発者個人設定
 appsettings.Development.json
 

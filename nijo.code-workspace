@@ -42,43 +42,6 @@
     "version": "2.0.0",
     "tasks": [
       {
-        "label": "Nijo > テンプレプロジェクト：コード自動生成をかけなおす",
-        "command": ".\\run-nijo-exe.bat",
-        "type": "shell",
-        "args": [
-          "generate"
-        ],
-        "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Nijo.ApplicationTemplate.Ver1"
-        },
-        "problemMatcher": []
-      },
-      {
-        "label": "Nijo > テンプレプロジェクト：デバッグ",
-        "command": ".\\run-nijo-exe.bat",
-        "type": "shell",
-        "args": [
-          "run"
-        ],
-        "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Nijo.ApplicationTemplate.Ver1"
-        },
-        "problemMatcher": []
-      },
-      {
-        "label": "Nijo > テンプレプロジェクト：デバッグ（コード自動生成スキップ）",
-        "command": ".\\run-nijo-exe.bat",
-        "type": "shell",
-        "args": [
-          "run",
-          "--no-build"
-        ],
-        "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Nijo.ApplicationTemplate.Ver1"
-        },
-        "problemMatcher": []
-      },
-      {
         "label": "Nijo: 「自動テストで作成されたプロジェクト」のコード自動生成をかけなおす",
         "command": ".\\run-nijo-exe.bat",
         "type": "shell",
@@ -172,6 +135,20 @@
           "cwd": "${workspaceFolder:NijoApplicationBuilder}/demo"
         },
         "problemMatcher": []
+      },
+      {
+        "label": "Nijo > デモ：現新比較",
+        "detail": "比較ツールでの目検に用いるため、自動生成されたソースを一時フォルダにコピー",
+        "type": "shell",
+        "command": ".\\Task\\COPY_AUTOGEN_FILES.bat",
+        "options": {
+          "cwd": "${workspaceFolder:NijoApplicationBuilder}"
+        },
+        "args": [
+          "${workspaceFolder:NijoApplicationBuilder}/demo/${input:demoFolder}",
+          "${input:tempDirectoryName}"
+        ],
+        "problemMatcher": []
       }
     ],
     "inputs": [
@@ -184,6 +161,11 @@
           "100_チャットアプリ",
           "200_複雑なパターン"
         ]
+      },
+      {
+        "id": "tempDirectoryName",
+        "description": "一時フォルダ名を入力してください",
+        "type": "promptString"
       }
     ]
   }

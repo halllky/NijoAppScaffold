@@ -6,9 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using MyApp.Core;
 
-namespace Nijo.ApplicationTemplate.Ver1.WebApi.QueryEditor;
+namespace MyApp.WebApi;
 
 [ApiController]
 [Route("api/query-editor")]
