@@ -128,7 +128,11 @@ export const useNavigationUrl = () => {
   }, [projectDir])
 }
 
-/** WindowsForms埋め込みアプリまたはそのデバッグ用のデバッグ用サーバーのURL */
+/**
+ * WindowsForms埋め込みアプリまたはそのデバッグ用のデバッグ用サーバーのURL。
+ * Nijo/Properties/launchSettings.json のうち
+ * Task/NijoServeデバッグ.bat で指定されているプロファイルのポート番号とあわせること。
+ */
 export const SERVER_DOMAIN = import.meta.env.DEV
   ? 'https://localhost:8081'
   : '';

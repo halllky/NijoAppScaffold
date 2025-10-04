@@ -58,7 +58,7 @@ export const ProjectSelector = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 p-8">
-      <div className="flex flex-col items-center gap-4 p-8 bg-white rounded-lg shadow-md w-full">
+      <div className="max-w-2xl flex flex-col items-center gap-4 p-8 bg-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold">Nijo Application Builder</h1>
 
         <p className="text-gray-600">
@@ -97,11 +97,11 @@ export const ProjectSelector = () => {
               {recentProjects.map((path, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-2 rounded hover:bg-gray-100 cursor-pointer group"
+                  className="flex items-start gap-2 rounded hover:bg-gray-100 cursor-pointer group"
                   onClick={() => handleRecentProjectClick(path)}
                 >
                   <Icon.FolderIcon className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                  <span className="flex-1 text-sm text-gray-700 truncate" title={path}>
+                  <span className="flex-1 text-sm text-gray-700 whitespace-pre-wrap" title={path}>
                     {path}
                   </span>
                   <button

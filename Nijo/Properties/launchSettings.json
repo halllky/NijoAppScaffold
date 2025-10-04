@@ -8,6 +8,10 @@
       "commandName": "Project",
       "commandLineArgs": "generate",
       "workingDirectory": "..\\demo\\200_複雑なパターン"
+    },
+    "DebugServe": {
+      "commandName": "Project",
+      "commandLineArgs": "serve --port 8081 --no-browser"
     }
   }
 }

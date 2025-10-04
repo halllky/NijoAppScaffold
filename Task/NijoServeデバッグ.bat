@@ -7,14 +7,13 @@ chcp 65001
 @echo off 
 setlocal 
  
-set "NIJO_ROOT=%~dp0.." 
-set "BACKEDN_PROJECT=%NIJO_ROOT%\Nijo" 
-set "DEMO_200=%NIJO_ROOT%\demo\200_複雑なパターン" 
-set "FRONTEND_ROOT=%NIJO_ROOT%\Nijo.GuiClient\package_schema-editor" 
+set "BACKEDN_PROJECT=%~dp0..\Nijo" 
+set "FRONTEND_ROOT=%~dp0..\Nijo.GuiClient\package_schema-editor" 
  
-start cmd /k "dotnet watch --project %BACKEDN_PROJECT% -- serve --port 8081" 
+pushd %BACKEDN_PROJECT% 
+start cmd /k "dotnet watch --launch-profile DebugServe" 
+popd 
  
 pushd %FRONTEND_ROOT% 
 start npm run dev 
-start http://localhost:5176/ 
 popd 

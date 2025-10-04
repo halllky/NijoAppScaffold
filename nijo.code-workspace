@@ -115,11 +115,11 @@
       },
       {
         "label": "Nijo > デモ > スキーマ定義編集",
-        "detail": "デモのnijo.xmlを編集する。nijo serve は最後にリリースしたときのものが使われる",
+        "detail": "デモのnijo.xmlを編集する。「Nijo > リリース」で発行したときのものが使われる",
         "type": "shell",
         "command": ".\\nijo.exe",
         "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Nijo/bin/Release/net9.0/publish-win"
+          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Nijo/bin/Release/net9.0"
         },
         "args": [
           "serve",
@@ -178,7 +178,7 @@
             "value": "1"
           },
           {
-            "label": "内部利用用の発行",
+            "label": "「Nijo > デモ > スキーマ定義編集」で使うための発行",
             "value": "0"
           }
         ]
