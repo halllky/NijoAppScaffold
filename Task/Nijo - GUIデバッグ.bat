@@ -9,13 +9,10 @@ setlocal
  
 set "NIJO_ROOT=%~dp0.." 
 set "BACKEDN_PROJECT=%NIJO_ROOT%\Nijo" 
-set "BACKEDN_EXE=%BACKEDN_PROJECT%\bin\Debug\net9.0\nijo.exe" 
 set "DEMO_200=%NIJO_ROOT%\demo\200_複雑なパターン" 
 set "FRONTEND_ROOT=%NIJO_ROOT%\Nijo.GuiClient\package_schema-editor" 
  
-dotnet build %BACKEDN_PROJECT% 
- 
-start %BACKEDN_EXE% run-ui-service %DEMO_200% --port 8081 
+start dotnet run --project %BACKEDN_PROJECT% -- serve --port 8081 
  
 pushd %FRONTEND_ROOT% 
 start npm run dev 

@@ -147,12 +147,12 @@ namespace Nijo {
             rootCommand.AddCommand(generateInternal);
 
             // GUI用のサービスを展開する
-            var runUiService = new Command(
-                name: "run-ui-service",
+            var serve = new Command(
+                name: "serve",
                 description: "GUI用のサービスを展開します。")
-                { path, port };
-            runUiService.SetHandler(RunUiService, path, port);
-            rootCommand.AddCommand(runUiService);
+                {  port };
+            serve.SetHandler(Serve, port);
+            rootCommand.AddCommand(serve);
 
             // リファレンスドキュメント生成
             var outOption = new Option<string>(
@@ -477,20 +477,11 @@ namespace Nijo {
         /// <summary>
         /// GUI用のサービスを展開する
         /// </summary>
-        private static async Task RunUiService(string? path, int? port) {
+        private static async Task Serve(int? port) {
             var logger = ILoggerExtension.CreateConsoleLogger();
 
-            // 既にプロジェクトが存在していることが前提
-            var projectRoot = path == null
-                ? Directory.GetCurrentDirectory()
-                : Path.Combine(Directory.GetCurrentDirectory(), path);
-            if (!GeneratedProject.TryOpen(projectRoot, out var project, out var error)) {
-                logger.LogError(error);
-                return;
-            }
-
             // サービス内容定義
-            var nijoUi = new WebService.NijoWebServiceBuilder(project);
+            var nijoUi = new WebService.NijoWebServiceBuilder(null);
             var app = nijoUi.BuildWebApplication(logger);
 
             // 起動

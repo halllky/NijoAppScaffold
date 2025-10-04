@@ -19,10 +19,11 @@ namespace Nijo.WebService;
 /// </summary>
 public class NijoWebServiceBuilder {
 
-    public NijoWebServiceBuilder(GeneratedProject project) {
+    public NijoWebServiceBuilder(GeneratedProject? project) {
         _project = project;
     }
-    private readonly GeneratedProject _project;
+    // 削除予定
+    private readonly GeneratedProject? _project;
 
     /// <summary>
     /// Reactアプリケーションからのリクエストを受け取るWebサーバーを設定して返す
