@@ -2,10 +2,10 @@ import React from "react"
 import * as ReactMention from 'react-mentions'
 import * as Icon from "@heroicons/react/24/solid"
 import * as Layout from "@nijo/ui-components/layout"
-import { XmlElementItem, ATTR_TYPE, TYPE_DATA_MODEL, TYPE_COMMAND_MODEL, TYPE_QUERY_MODEL, TYPE_CHILD, TYPE_CHILDREN } from "./types"
+import { XmlElementItem, ATTR_TYPE, TYPE_DATA_MODEL, TYPE_COMMAND_MODEL, TYPE_QUERY_MODEL, TYPE_CHILD, TYPE_CHILDREN } from "../types"
 import useEvent from "react-use-event-hook"
-import { SchemaDefinitionContext, COLUMN_ID_COMMENT } from "./index.Grid"
-import { MentionInputWrapper } from "../UI/MentionInputWrapper"
+import { SchemaDefinitionContext, COLUMN_ID_COMMENT } from "./index"
+import { MentionInputWrapper } from "../../UI/MentionInputWrapper"
 
 /**
  * メンションを含むセル編集エディタ（スキーマ定義編集用）。

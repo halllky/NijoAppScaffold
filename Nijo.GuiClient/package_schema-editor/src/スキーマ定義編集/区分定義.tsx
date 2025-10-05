@@ -9,7 +9,7 @@ import { asTree, ATTR_DISPLAY_NAME, ATTR_TYPE, SchemaDefinitionGlobalState, TYPE
 import { useSaveLoad } from "./useSaveLoad"
 import { PageFrame } from "../PageFrame"
 import { useValidation } from "./useValidation"
-import { createAttributeCell, createLocalNameCell, GridRowType } from "./index.Grid"
+import { createAttributeCell, createLocalNameCell, GridRowType } from "./Grid"
 import NijoUiErrorMessagePane from "./index.ErrorMessage"
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels"
 import { UUID } from "uuidjs"

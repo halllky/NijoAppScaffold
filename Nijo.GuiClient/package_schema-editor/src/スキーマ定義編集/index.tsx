@@ -11,7 +11,7 @@ import { AppSchemaDefinitionGraphDataSet, SchemaDefinitionGlobalState } from "./
 import { asTree } from "./types"
 import cytoscape from 'cytoscape'; // cytoscapeの型情報をインポート
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels"
-import { PageRootAggregate } from "./index.Grid"
+import { PageRootAggregate } from "./Grid"
 import { UUID } from "uuidjs"
 import { PageFrame } from "../PageFrame"
 import { useValidation } from "./useValidation"

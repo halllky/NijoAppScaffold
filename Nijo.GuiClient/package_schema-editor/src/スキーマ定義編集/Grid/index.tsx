@@ -5,15 +5,15 @@ import * as Icon from "@heroicons/react/24/solid"
 import * as Input from "@nijo/ui-components/input"
 import * as Layout from "@nijo/ui-components/layout"
 import FormLayout from "@nijo/ui-components/layout/FormLayout"
-import { SchemaDefinitionGlobalState, ATTR_TYPE, XmlElementAttribute, XmlElementItem, ATTR_IS_KEY, TYPE_DATA_MODEL, ATTR_USER_HELP_TEXT, TYPE_COMMAND_MODEL, TYPE_QUERY_MODEL, TYPE_CHILD, TYPE_CHILDREN } from "./types"
-import * as UI from '../UI'
+import { SchemaDefinitionGlobalState, ATTR_TYPE, XmlElementAttribute, XmlElementItem, ATTR_IS_KEY, TYPE_DATA_MODEL, ATTR_USER_HELP_TEXT, TYPE_COMMAND_MODEL, TYPE_QUERY_MODEL, TYPE_CHILD, TYPE_CHILDREN } from "../types"
+import * as UI from '../../UI'
 import useEvent from "react-use-event-hook"
 import { UUID } from "uuidjs"
 import { TYPE_COLUMN_DEF } from "./getAttrTypeColumnDef"
-import { GetValidationResultFunction, ValidationTriggerFunction } from "./useValidation"
+import { GetValidationResultFunction, ValidationTriggerFunction } from "../useValidation"
 import { CellEditorWithMention } from "./CellEditorWithMention"
-import { usePersonalSettings } from "../PersonalSettings"
-import { MentionInputWrapper } from "../UI/MentionInputWrapper"
+import { usePersonalSettings } from "../../PersonalSettings"
+import { MentionInputWrapper } from "../../UI/MentionInputWrapper"
 
 // スキーマ定義データを提供するContext
 export const SchemaDefinitionContext = React.createContext<SchemaDefinitionGlobalState | null>(null)
