@@ -1,0 +1,13 @@
+{
+  "name": "@nijo/schema-editor-v1",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --open",
+    "tsc": "tsc --noEmit",
+    "build": "tsc && vite build"
+  },
+  "dependencies": {
+    "@nijo/ui-components": "file:../package_ui-components"
+  }
+}

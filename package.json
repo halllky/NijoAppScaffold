@@ -9,6 +9,7 @@
     "Document",
     "Nijo.NewProjectTemplate/client",
     "Nijo.GuiClient/package_schema-editor",
+    "Nijo.GuiClient/package_schema-editor-v1",
     "Nijo.GuiClient/package_ui-components",
     "Nijo.GuiClient/package_ui-components-debug"
   ],
