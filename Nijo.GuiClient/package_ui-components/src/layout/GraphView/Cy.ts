@@ -77,6 +77,23 @@ export const useCytoscape = (props: GraphViewProps): CytoscapeHookType => {
         divElement.focus()
       })
 
+      // 方眼紙背景をパンやズームに合わせて更新
+      const updateGridBackground = () => {
+        if (!propsRef.current.showGrid) return
+
+        const zoom = cyInstance.zoom()
+        const pan = cyInstance.pan()
+        const smallGridSize = 20 * zoom
+        const largeGridSize = 100 * zoom
+
+        // x, y軸のゼロ線の位置を計算
+        const zeroX = pan.x
+        const zeroY = pan.y
+
+        divElement.style.backgroundSize = `100% 100%, 100% 100%, ${smallGridSize}px ${smallGridSize}px, ${smallGridSize}px ${smallGridSize}px, ${largeGridSize}px ${largeGridSize}px, ${largeGridSize}px ${largeGridSize}px`
+        divElement.style.backgroundPosition = `${zeroX}px ${zeroY}px, ${zeroX}px ${zeroY}px, ${pan.x % smallGridSize}px ${pan.y % smallGridSize}px, ${pan.x % smallGridSize}px ${pan.y % smallGridSize}px, ${pan.x % largeGridSize}px ${pan.y % largeGridSize}px, ${pan.x % largeGridSize}px ${pan.y % largeGridSize}px`
+      }
+
       // GraphViewのpropsで指定されている各種イベント
       cyInstance.on('dblclick', 'node', event => {
         propsRef.current.onNodeDoubleClick?.(event)
@@ -89,9 +106,11 @@ export const useCytoscape = (props: GraphViewProps): CytoscapeHookType => {
         propsRef.current.onLayoutChange?.(event)
       });
       cyInstance.on('pan', event => {
+        if (propsRef.current.showGrid) updateGridBackground()
         propsRef.current.onLayoutChange?.(event)
       });
       cyInstance.on('zoom', event => {
+        if (propsRef.current.showGrid) updateGridBackground()
         propsRef.current.onLayoutChange?.(event)
       });
       cyInstance.on('select', event => {
@@ -105,7 +124,13 @@ export const useCytoscape = (props: GraphViewProps): CytoscapeHookType => {
       cyInstance.on('layoutstop', () => {
         updateTagPositions(cyInstance)
         updateMemberPositions(cyInstance)
+        if (propsRef.current.showGrid) updateGridBackground()
       });
+
+      // 初期化時にも背景を更新
+      cyInstance.ready(() => {
+        if (propsRef.current.showGrid) updateGridBackground()
+      })
 
       setCy(cyInstance)
 

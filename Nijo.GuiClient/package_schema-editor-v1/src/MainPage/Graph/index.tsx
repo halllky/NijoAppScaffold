@@ -129,6 +129,7 @@ export const AppSchemaDefinitionGraph = React.forwardRef<AppSchemaDefinitionGrap
         layoutLogic={layoutLogic}
         onLayoutChange={handleLayoutChange}
         onSelectionChange={handleSelectionChange}
+        showGrid
         className="h-full"
       />
 
