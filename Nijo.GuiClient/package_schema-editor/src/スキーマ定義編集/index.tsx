@@ -16,7 +16,7 @@ import { UUID } from "uuidjs"
 import { PageFrame } from "../PageFrame"
 import { useValidation } from "./useValidation"
 import NijoUiErrorMessagePane from "./index.ErrorMessage"
-import { AppSchemaDefinitionGraph, AppSchemaDefinitionGraphRef } from "./index.Graph"
+import { AppSchemaDefinitionGraph, AppSchemaDefinitionGraphRef } from "./Graph"
 import { useSaveLoad } from "./useSaveLoad"
 
 export const NijoUiAggregateDiagram = () => {
