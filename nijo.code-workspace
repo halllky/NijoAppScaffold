@@ -47,6 +47,9 @@
         "command": ".\\Task\\NijoServeデバッグ.bat",
         "type": "shell",
         "problemMatcher": [],
+        "args": [
+          "${input:serveUiVersion}" // package_schema-editor または package_schema-editor-v1
+        ],
         "options": {
           "cwd": "${workspaceFolder:NijoApplicationBuilder}"
         },
@@ -161,6 +164,15 @@
           // demo 直下のフォルダの名前をここに記載
           "100_チャットアプリ",
           "200_複雑なパターン"
+        ]
+      },
+      {
+        "id": "serveUiVersion",
+        "description": "nijo serve のバージョンを選択してください",
+        "type": "pickString",
+        "options": [
+          "package_schema-editor",
+          "package_schema-editor-v1"
         ]
       },
       {
