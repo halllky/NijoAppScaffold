@@ -9,7 +9,7 @@ import useEvent from "react-use-event-hook";
  *
  * ここで設定された値は localStorage に保存される。
  */
-export default function PersonalSettingsDialog() {
+export const PersonalSettingsDialog = () => {
 
   // 閉じる場合、1つ前のヒストリーに戻る。
   // このダイアログは独立したルーティングで定義されているため

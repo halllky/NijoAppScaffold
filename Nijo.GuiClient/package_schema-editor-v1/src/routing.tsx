@@ -2,7 +2,7 @@ import * as React from "react"
 import * as ReactRouter from "react-router-dom"
 import MainPage from "./MainPage"
 import useEvent from "react-use-event-hook"
-import PersonalSettingsDialog from "./PersonalSettingsDialog"
+import { PersonalSettingsDialog } from "./PersonalSettings"
 import EnumDefDialog from "./EnumDefDialog"
 
 /** WindowsForms埋め込みアプリまたはそのデバッグ用のルーティング */
