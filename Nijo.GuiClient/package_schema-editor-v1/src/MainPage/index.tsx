@@ -78,14 +78,14 @@ export default function MainPage() {
   )
 
   if (state.type === 'error') return (
-    <div className="flex flex-col gap-2 p-1">
+    <div className="flex flex-col items-start gap-2 p-1">
       <span className="text-rose-600">
         読み込みでエラーが発生しました: {state.error}
       </span>
-      <ReactRouter.Link to="" className="text-sky-600 underline">
+      <ReactRouter.Link to="" className="text-sky-600 underline cursor-pointer">
         プロジェクト選択へ戻る
       </ReactRouter.Link>
-      <button type="button" onClick={handleReload} className="text-sky-600 underline">
+      <button type="button" onClick={handleReload} className="text-sky-600 underline cursor-pointer">
         再読み込み
       </button>
     </div>

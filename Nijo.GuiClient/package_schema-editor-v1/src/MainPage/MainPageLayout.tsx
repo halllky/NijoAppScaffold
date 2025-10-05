@@ -1,13 +1,13 @@
 import React from "react"
 import useEvent from "react-use-event-hook"
 import * as ReactHookForm from "react-hook-form"
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels"
+import { Allotment, LayoutPriority } from "allotment"
 import cytoscape from 'cytoscape'
 import { GraphViewRef } from "@nijo/ui-components/layout/GraphView"
 import { SchemaDefinitionGlobalState, asTree } from "../types"
 import { AppSchemaDefinitionGraph, AppSchemaDefinitionGraphRef } from "./Graph"
 import { PageRootAggregate } from "./Grid"
-import NijoUiErrorMessagePane from "./index.ErrorMessage"
+import NijoUiErrorMessagePane from "./ErrorMessage"
 import { useValidation } from "./useValidation"
 
 export type MainPageLayoutProps = {
@@ -79,23 +79,35 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
   return (
     <div className="h-full flex flex-col">
       {/* ヘッダ */}
+      <div>
+        TODO: ヘッダ
+      </div>
 
-      {/* ボディ */}
-      <PanelGroup className="flex-1" direction={editableGridPosition}>
-        <Panel className="border border-gray-300">
-          <AppSchemaDefinitionGraph
-            ref={graphDataRef}
-            xmlElementTrees={xmlElementTrees}
-            graphViewRef={graphViewRef}
-            handleSelectionChange={handleSelectionChange}
-          />
-        </Panel>
+      <Allotment
+        vertical
+        proportionalLayout={false} // 特定のペインだけ伸縮させる
+        separator={false} // 境界線非表示
+        className="flex-1"
+      >
 
-        <PanelResizeHandle className={editableGridPosition === "horizontal" ? "w-1" : "h-1"} />
+        {/* ボディ */}
+        <Allotment.Pane priority={LayoutPriority.High}>
+          <Allotment
+            proportionalLayout={false} // 特定のペインだけ伸縮させる
+            separator={false} // 境界線非表示
+          >
+            {/* ダイアグラム */}
+            <Allotment.Pane priority={LayoutPriority.High}>
+              <AppSchemaDefinitionGraph
+                ref={graphDataRef}
+                xmlElementTrees={xmlElementTrees}
+                graphViewRef={graphViewRef}
+                handleSelectionChange={handleSelectionChange}
+              />
+            </Allotment.Pane>
 
-        <Panel collapsible minSize={10}>
-          <PanelGroup className="h-full" direction="vertical">
-            <Panel>
+            {/* ルート集約編集ペイン */}
+            <Allotment.Pane preferredSize={240}>
               {selectedRootAggregateIndex !== undefined && (
                 <PageRootAggregate
                   key={selectedRootAggregateIndex} // 選択中のルート集約が変更されたタイミングで再描画
@@ -108,22 +120,22 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
                   className="h-full"
                 />
               )}
-            </Panel>
+            </Allotment.Pane>
 
-            <PanelResizeHandle className="h-1" />
+          </Allotment>
+        </Allotment.Pane>
 
-            <Panel defaultSize={20} minSize={8} collapsible>
-              {/* フッター */}
-              <NijoUiErrorMessagePane
-                getValues={getValues}
-                validationResultList={validationResultList}
-                selectRootAggregate={selectRootAggregate}
-                className="h-full"
-              />
-            </Panel>
-          </PanelGroup>
-        </Panel>
-      </PanelGroup>
+        {/* フッター */}
+        <Allotment.Pane preferredSize={60} snap>
+          <NijoUiErrorMessagePane
+            getValues={getValues}
+            validationResultList={validationResultList}
+            selectRootAggregate={selectRootAggregate}
+            className="h-full"
+          />
+        </Allotment.Pane>
+
+      </Allotment>
     </div>
   )
 }
