@@ -86,12 +86,22 @@ export const useCytoscape = (props: GraphViewProps): CytoscapeHookType => {
         const smallGridSize = 20 * zoom
         const largeGridSize = 100 * zoom
 
-        // x, y軸のゼロ線の位置を計算
-        const zeroX = pan.x
-        const zeroY = pan.y
+        // 方眼紙背景を設定
+        const backgroundImage = `
+          linear-gradient(to right,  rgba(0, 0, 0, 0.10) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(0, 0, 0, 0.10) 1px, transparent 1px),
+          linear-gradient(to right,  rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+          linear-gradient(to right,  rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px)
+        `
 
-        divElement.style.backgroundSize = `100% 100%, 100% 100%, ${smallGridSize}px ${smallGridSize}px, ${smallGridSize}px ${smallGridSize}px, ${largeGridSize}px ${largeGridSize}px, ${largeGridSize}px ${largeGridSize}px`
-        divElement.style.backgroundPosition = `${zeroX}px ${zeroY}px, ${zeroX}px ${zeroY}px, ${pan.x % smallGridSize}px ${pan.y % smallGridSize}px, ${pan.x % smallGridSize}px ${pan.y % smallGridSize}px, ${pan.x % largeGridSize}px ${pan.y % largeGridSize}px, ${pan.x % largeGridSize}px ${pan.y % largeGridSize}px`
+        const backgroundSize = `100% 100%, 100% 100%, ${smallGridSize}px ${smallGridSize}px, ${smallGridSize}px ${smallGridSize}px, ${largeGridSize}px ${largeGridSize}px, ${largeGridSize}px ${largeGridSize}px`
+        const backgroundPosition = `0px 0px, 0px 0px, ${pan.x % smallGridSize}px ${pan.y % smallGridSize}px, ${pan.x % smallGridSize}px ${pan.y % smallGridSize}px, ${pan.x % largeGridSize}px ${pan.y % largeGridSize}px, ${pan.x % largeGridSize}px ${pan.y % largeGridSize}px`
+
+        divElement.style.backgroundImage = backgroundImage
+        divElement.style.backgroundSize = backgroundSize
+        divElement.style.backgroundPosition = backgroundPosition
       }
 
       // GraphViewのpropsで指定されている各種イベント

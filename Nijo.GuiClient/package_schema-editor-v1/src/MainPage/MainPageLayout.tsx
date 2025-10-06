@@ -1,8 +1,11 @@
 import React from "react"
 import useEvent from "react-use-event-hook"
+import * as ReactRouter from "react-router-dom"
 import * as ReactHookForm from "react-hook-form"
+import * as Icon from "@heroicons/react/24/solid"
 import { Allotment, LayoutPriority } from "allotment"
 import cytoscape from 'cytoscape'
+import * as UI from "@nijo/ui-components"
 import { GraphViewRef } from "@nijo/ui-components/layout/GraphView"
 import { SchemaDefinitionGlobalState, asTree } from "../types"
 import { AppSchemaDefinitionGraph, AppSchemaDefinitionGraphRef } from "./Graph"
@@ -29,7 +32,7 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
   const formMethods = ReactHookForm.useForm<SchemaDefinitionGlobalState>({
     defaultValues: props.defaultValues,
   })
-  const { getValues, control } = formMethods
+  const { getValues, control, formState: { isDirty } } = formMethods
   const xmlElementTrees = getValues("xmlElementTrees")
   const graphDataRef = React.useRef<AppSchemaDefinitionGraphRef>(null)
   const graphViewRef = React.useRef<GraphViewRef>(null)
@@ -76,11 +79,25 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
     }
   });
 
+  // 画面離脱時の確認
+  UI.useBlockerEx(isDirty)
+
   return (
     <div className="h-full flex flex-col">
       {/* ヘッダ */}
-      <div>
-        TODO: ヘッダ
+      <div className="flex flex-wrap items-center gap-px p-px">
+        <ReactRouter.Link to="/" title="プロジェクト一覧に戻る">
+          <Icon.ChevronLeftIcon className="w-6 h-6 p-1 text-sky-600" />
+        </ReactRouter.Link>
+
+        <h1 className="font-bold">
+          TODO: プロジェクト名
+        </h1>
+        <UI.IconButton icon={Icon.Cog8ToothIcon} hideText onClick={() => window.alert('未実装！')}>
+          プロジェクト設定
+        </UI.IconButton>
+
+        <div className="basis-2"></div>
       </div>
 
       <Allotment

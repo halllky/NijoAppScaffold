@@ -231,20 +231,6 @@ export const GraphView = forwardRef<GraphViewRef, GraphViewProps>((props, ref) =
         className={`overflow-hidden [&>div>canvas]:left-0 h-full w-full outline-none graph-view-container ${props.className ?? ''}`}
         tabIndex={0}
         onKeyDown={props.handleKeyDown}
-        style={props.showGrid ? {
-          backgroundImage: `
-            linear-gradient(to right,  rgba(128, 128, 128, 0.2) 1px,  transparent 1px),
-            linear-gradient(to bottom, rgba(128, 128, 128, 0.2) 1px,  transparent 1px),
-            linear-gradient(to right,  rgba(128, 128, 128, 0.05) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(128, 128, 128, 0.05) 1px, transparent 1px),
-            linear-gradient(to right,  rgba(128, 128, 128, 0.1) 1px,  transparent 1px),
-            linear-gradient(to bottom, rgba(128, 128, 128, 0.1) 1px,  transparent 1px)
-          `,
-          backgroundSize: '100% 100%, 100% 100%, 20px 20px, 20px 20px, 100px 100px, 100px 100px',
-          backgroundColor: '#fafafa'
-        } : {
-          backgroundColor: '#ffffff'
-        }}
       ></div>
       {props.showNavigator && (
         <Navigator.Component

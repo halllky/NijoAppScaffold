@@ -1,5 +1,6 @@
 import React from "react"
 import useEvent from "react-use-event-hook"
+import * as Icon from "@heroicons/react/24/solid"
 import { GraphView, GraphViewRef, } from "@nijo/ui-components/layout"
 import { CytoscapeDataSet } from "@nijo/ui-components/layout/GraphView/Cy"
 import { AppSchemaDefinitionGraphDataSet, ModelPageForm } from "../../types"
@@ -53,6 +54,8 @@ export const AppSchemaDefinitionGraph = React.forwardRef<AppSchemaDefinitionGrap
   // 整列ロジックの状態
   const [layoutLogic, setLayoutLogic] = React.useState<AutoLayout.LayoutLogicName>('klay');
   const handleAutoLayout = useEvent(() => {
+    if (!window.confirm("現在のノード位置を破棄して自動整列をかけます。よろしいですか？")) return;
+
     // clearSavedLayout は localStorage からすべてのレイアウト情報を削除する。
     clearSavedLayout();
     // その後、現在の layoutLogic でグラフを整列する。
@@ -84,6 +87,11 @@ export const AppSchemaDefinitionGraph = React.forwardRef<AppSchemaDefinitionGrap
     }
   });
 
+  // ルート集約の追加
+  const handleCreateNewRootAggregate = useEvent(() => {
+    // TODO: 新しいルート集約を作成する処理
+    window.alert('未実装！')
+  });
 
   const dataSet: CytoscapeDataSet = React.useMemo(() => {
     if (!xmlElementTrees) return { nodes: {}, edges: [] }
@@ -158,6 +166,9 @@ export const AppSchemaDefinitionGraph = React.forwardRef<AppSchemaDefinitionGrap
             ))}
           </select>
         </div>
+        <Input.IconButton icon={Icon.PlusIcon} outline mini className="bg-white" onClick={handleCreateNewRootAggregate}>
+          ルート集約を追加
+        </Input.IconButton>
       </div>
     </div>
   )

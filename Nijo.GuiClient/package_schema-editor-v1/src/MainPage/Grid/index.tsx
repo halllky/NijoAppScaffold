@@ -50,6 +50,58 @@ export const PageRootAggregate = ((props: PageRootAggregateProps) => {
   }
 })
 
+// -----------------------------
+
+// TODO: Command もそれ以外も同じコンポーネントにまとめる
+//       * ルート集約の属性はグリッドの外に出す
+//       * Command の場合は子孫集約の編集が無いだけという位置づけにする
+
+/**
+ * ヘッダ部分（Command とそれ以外で共通）
+ */
+const Header = ({ children }: {
+  children?: React.ReactNode
+}) => {
+
+  // ルート集約の属性を表示・非表示する
+  const [openDetails, setOpenDetails] = React.useState(false)
+
+  const handleClickDelete = useEvent(() => {
+    window.alert('未実装！')
+  })
+
+  return (
+    <div className="flex flex-wrap gap-1 items-center">
+      <span>
+        <Input.IconButton
+          icon={openDetails ? Icon.ChevronDownIcon : Icon.ChevronRightIcon} hideText
+          onClick={() => setOpenDetails(prev => !prev)}>
+          詳細
+        </Input.IconButton>
+        TODO: ルート集約名（input type="text"）
+      </span>
+
+      {children}
+
+      {/* TODO: ペインの位置をグラフの右にするか下にするかの選択 */}
+      <div className="flex-1"></div>
+      <Input.IconButton outline mini>
+        横
+      </Input.IconButton>
+      <Input.IconButton outline mini>
+        縦
+      </Input.IconButton>
+
+      <div className="basis-1"></div>
+      <Input.IconButton icon={Icon.TrashIcon} hideText onClick={handleClickDelete}>
+        ルート集約を削除する
+      </Input.IconButton>
+    </div>
+  )
+}
+
+// -----------------------------
+
 /**
  * CommandModel の編集ビュー
  */
@@ -137,6 +189,7 @@ const PageRootAggregate_CommandModel = ({ rootAggregateIndex, formMethods, getVa
   return (
     <SchemaDefinitionContext.Provider value={schemaDefinitionData}>
       <div className={`flex flex-col gap-1 ${className ?? ''}`}>
+        <Header />
         <FormLayout.Root labelWidthPx={220}>
           <FormLayout.Section border>
             {/* LocalName */}
@@ -417,8 +470,8 @@ const PageRootAggregate_OtherModels = ({ rootAggregateIndex, formMethods, getVal
   return (
     <SchemaDefinitionContext.Provider value={schemaDefinitionData}>
       <div className={`flex flex-col gap-1 ${className ?? ''}`}>
-        {!personalSettings.hideGridButtons && (
-          <div className="flex flex-wrap gap-1 items-center">
+        <Header>
+          {!personalSettings.hideGridButtons && (<>
             <Input.IconButton outline mini icon={Icon.PlusIcon} onClick={handleInsertRow}>行挿入(Enter)</Input.IconButton>
             <Input.IconButton outline mini icon={Icon.PlusIcon} onClick={handleInsertRowBelow}>下挿入(Ctrl + Enter)</Input.IconButton>
             <Input.IconButton outline mini icon={Icon.TrashIcon} onClick={handleDeleteRow}>行削除(Shift + Delete)</Input.IconButton>
@@ -428,8 +481,8 @@ const PageRootAggregate_OtherModels = ({ rootAggregateIndex, formMethods, getVal
             <Input.IconButton outline mini icon={Icon.ChevronUpIcon} onClick={handleMoveUp}>上に移動(Alt + ↑)</Input.IconButton>
             <Input.IconButton outline mini icon={Icon.ChevronDownIcon} onClick={handleMoveDown}>下に移動(Alt + ↓)</Input.IconButton>
             <div className="flex-1"></div>
-          </div>
-        )}
+          </>)}
+        </Header>
         <div className="flex-1 overflow-y-auto">
           <Layout.EditableGrid
             ref={gridRef}
