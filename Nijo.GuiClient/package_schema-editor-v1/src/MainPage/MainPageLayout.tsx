@@ -68,11 +68,10 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
       setSelectedRootAggregateIndex(undefined);
     } else {
       const aggregateId = selectedNodes[0].id();
-      const tree = xmlElementTrees?.find(tree => tree.xmlElements?.some(el => el.uniqueId === aggregateId));
-      if (!tree) return;
-      const aggregateItem = tree.xmlElements?.find(el => el.uniqueId === aggregateId);
-      if (!aggregateItem) return;
-      const rootAggregateId = asTree(tree.xmlElements).getRoot(aggregateItem)?.uniqueId;
+      const rootAggregateId = xmlElementTrees
+        ?.find(tree => tree.xmlElements?.some(el => el.uniqueId === aggregateId))
+        ?.xmlElements?.[0]
+        ?.uniqueId;
       if (!rootAggregateId) return;
 
       selectRootAggregate(rootAggregateId)
