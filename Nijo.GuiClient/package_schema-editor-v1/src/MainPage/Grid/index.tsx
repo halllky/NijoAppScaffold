@@ -12,7 +12,7 @@ import { UUID } from "uuidjs"
 import { TYPE_COLUMN_DEF } from "./getAttrTypeColumnDef"
 import { GetValidationResultFunction, ValidationTriggerFunction } from "../useValidation"
 import { CellEditorWithMention } from "./CellEditorWithMention"
-import { usePersonalSettings } from "../../PersonalSettings"
+import { usePersonalSettings } from "../../Settings"
 import { MentionInputWrapper } from "../../UI/MentionInputWrapper"
 
 // スキーマ定義データを提供するContext

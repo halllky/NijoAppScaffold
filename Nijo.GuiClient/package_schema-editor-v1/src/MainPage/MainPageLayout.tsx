@@ -12,6 +12,7 @@ import { AppSchemaDefinitionGraph, AppSchemaDefinitionGraphRef } from "./Graph"
 import { PageRootAggregate } from "./Grid"
 import NijoUiErrorMessagePane from "./ErrorMessage"
 import { useValidation } from "./useValidation"
+import { useNijoUiNavigation } from "../routing"
 
 export type MainPageLayoutProps = {
   defaultValues: SchemaDefinitionGlobalState
@@ -78,6 +79,12 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
     }
   });
 
+  // 設定画面
+  const navigateNijoUi = useNijoUiNavigation()
+  const handlePersonalSettingsClick = useEvent(() => {
+    navigateNijoUi('settings')
+  })
+
   // 画面離脱時の確認
   UI.useBlockerEx(isDirty)
 
@@ -92,7 +99,7 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
         <h1 className="font-bold">
           TODO: プロジェクト名
         </h1>
-        <UI.IconButton icon={Icon.Cog8ToothIcon} hideText onClick={() => window.alert('未実装！')}>
+        <UI.IconButton icon={Icon.Cog8ToothIcon} hideText onClick={handlePersonalSettingsClick}>
           プロジェクト設定
         </UI.IconButton>
 
@@ -152,6 +159,9 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
         </Allotment.Pane>
 
       </Allotment>
+
+      {/* ダイアログ表示部分 */}
+      <ReactRouter.Outlet />
     </div>
   )
 }

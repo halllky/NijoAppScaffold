@@ -2,7 +2,7 @@ import * as React from "react"
 import * as ReactRouter from "react-router-dom"
 import MainPage from "./MainPage"
 import useEvent from "react-use-event-hook"
-import { PersonalSettingsDialog } from "./PersonalSettings"
+import { SettingsDialog } from "./Settings"
 import EnumDefDialog from "./EnumDefDialog"
 
 /** WindowsForms埋め込みアプリまたはそのデバッグ用のルーティング */
@@ -14,8 +14,8 @@ export const getRouterForNijoUi = (): ReactRouter.RouteObject[] => {
       path: `enum-definition`,
       element: <EnumDefDialog />,
     }, {
-      path: '/personal-settings',
-      element: <PersonalSettingsDialog />,
+      path: 'settings',
+      element: <SettingsDialog />,
     }, {
       path: `*`,
       element: null,
@@ -29,29 +29,45 @@ export const NIJOUI_CLIENT_ROUTE_PARAMS = {
   QUERY_PROJECT_DIR: 'pj',
 }
 
-/** WindowsForms埋め込みアプリまたはそのデバッグ用のナビゲーション用URLを取得する。 */
-export const useNavigationUrl = () => {
+/** WindowsForms埋め込みアプリまたはそのデバッグ用のナビゲーション処理を取得する。 */
+export const useNijoUiNavigation = () => {
+  const navigate = ReactRouter.useNavigate()
   const [searchParams] = ReactRouter.useSearchParams()
-  const projectDir = searchParams.get(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR)
 
-  return useEvent((arg?:
-    | { page: 'top-page' }
-    | { page: 'schema' }
-    | { page: 'schema-enum-definition' }
-  ): string => {
+  return useEvent((...args:
+    | [to: 'project-selector']
+    | [to: 'project', projectDir: string]
+    | [to: 'schema-enum-definition']
+    | [to: 'settings']
+  ): void => {
+    const [to, argsProjectDir] = args
+
+    // クエリパラメータ
     const params = new URLSearchParams()
-    if (projectDir) params.set(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR, projectDir)
+    const projectDir = searchParams.get(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR)
+    if (argsProjectDir) {
+      // 新しくプロジェクトを開く
+      params.set(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR, argsProjectDir)
 
-    if (arg?.page === 'top-page') {
-      return `/`
+    } else if (projectDir) {
+      // 現在開かれているプロジェクトディレクトリを引き継ぐ
+      params.set(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR, projectDir)
+    }
 
-    } else if (arg?.page === 'schema') {
-      return `/project?${params.toString()}`
+    if (to === 'project-selector') {
+      navigate(`/`)
 
-    } else if (arg?.page === 'schema-enum-definition') {
-      return `/project/enum-definition?${params.toString()}`
+    } else if (to === 'project') {
+      navigate(`/?${params.toString()}`)
+
+    } else if (to === 'schema-enum-definition') {
+      navigate(`/enum-definition?${params.toString()}`)
+
+    } else if (to === 'settings') {
+      navigate(`/settings?${params.toString()}`)
+
     } else {
-      throw new Error(`不正なページ: ${(arg as { page: string } | undefined)?.page}`)
+      throw new Error(`不正なページ: ${to}`)
     }
   })
 }

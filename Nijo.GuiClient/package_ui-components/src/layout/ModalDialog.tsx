@@ -36,7 +36,7 @@ export const ModalDialog = ({ open, onOutsideClick, children, className }: {
       <div className="absolute inset-0 bg-black/25" />
 
       {/* ダイアログ */}
-      <div ref={divRef} className={className}>
+      <div ref={divRef} className={`relative bg-white ${className ?? ''}`}>
         {children}
       </div>
     </div>,
