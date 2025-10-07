@@ -11,12 +11,8 @@ import useEvent from "react-use-event-hook"
 import { UUID } from "uuidjs"
 import { TYPE_COLUMN_DEF } from "./getAttrTypeColumnDef"
 import { GetValidationResultFunction, ValidationTriggerFunction } from "../useValidation"
-import { CellEditorWithMention } from "./CellEditorWithMention"
+import { CellEditorWithMention, MentionCellDataSourceContext, SchemaDefinitionMentionTextarea } from "./CellEditorWithMention"
 import { usePersonalSettings } from "../../Settings"
-import { MentionInputWrapper } from "../../UI/MentionInputWrapper"
-
-// スキーマ定義データを提供するContext
-export const SchemaDefinitionContext = React.createContext<SchemaDefinitionGlobalState | null>(null)
 
 /** コメント列のID */
 export const COLUMN_ID_COMMENT = ':comment:'
@@ -138,47 +134,6 @@ const PageRootAggregate_CommandModel = ({ rootAggregateIndex, formMethods, getVa
     trigger()
   })
 
-  // メンション候補データを取得する関数
-  const getSuggestions: Parameters<typeof MentionInputWrapper>[0]['getSuggestions'] = React.useCallback(async (query, callback) => {
-    if (!schemaDefinitionData) {
-      callback([])
-      return
-    }
-
-    // 全てのXML要素を収集
-    const allElements: XmlElementItem[] = []
-    for (const tree of schemaDefinitionData.xmlElementTrees) {
-      allElements.push(...tree.xmlElements)
-    }
-
-    // ルート集約、child、childrenのみに制限
-    const targetElements = allElements.filter(el => {
-      const type = el.attributes[ATTR_TYPE]
-
-      // ルート集約（インデント0かつTypeがdata-model、query-model、command-modelのいずれか）
-      if (el.indent === 0 && (type === TYPE_DATA_MODEL || type === TYPE_QUERY_MODEL || type === TYPE_COMMAND_MODEL)) return true
-
-      // child または children
-      if (type === TYPE_CHILD || type === TYPE_CHILDREN) return true
-
-      return false
-    })
-
-    // クエリに基づいてフィルタリング
-    const filtered = targetElements.filter(el => {
-      const localName = el.localName || ''
-      return localName.toLowerCase().includes(query.toLowerCase())
-    })
-
-    // 提案リストを作成
-    const suggestions = filtered.map(el => ({
-      id: el.uniqueId,
-      display: el.localName || '(名前なし)',
-    }))
-
-    callback(suggestions)
-  }, [schemaDefinitionData])
-
   if (!rootElement) {
     return <div>データが見つかりません</div>
   }
@@ -187,7 +142,7 @@ const PageRootAggregate_CommandModel = ({ rootAggregateIndex, formMethods, getVa
   const validation = getValidationResult(rootElement.uniqueId)
 
   return (
-    <SchemaDefinitionContext.Provider value={schemaDefinitionData}>
+    <MentionCellDataSourceContext.Provider value={schemaDefinitionData}>
       <div className={`flex flex-col gap-1 ${className ?? ''}`}>
         <Header />
         <FormLayout.Root labelWidthPx={220}>
@@ -239,7 +194,7 @@ const PageRootAggregate_CommandModel = ({ rootAggregateIndex, formMethods, getVa
 
             {/* コメント */}
             <FormLayout.Field label="コメント" fullWidth>
-              <MentionInputWrapper
+              <SchemaDefinitionMentionTextarea
                 value={rootElement.comment || ''}
                 onChange={value => {
                   const currentElement = formMethods.getValues(`xmlElementTrees.${rootAggregateIndex}.xmlElements.0`)
@@ -247,7 +202,6 @@ const PageRootAggregate_CommandModel = ({ rootAggregateIndex, formMethods, getVa
                   formMethods.setValue(`xmlElementTrees.${rootAggregateIndex}.xmlElements.0`, updatedElement)
                   trigger()
                 }}
-                getSuggestions={getSuggestions}
                 className="w-full min-h-[80px] p-px border border-gray-300 resize-y"
                 placeholder="コメントを入力（@でメンション可能）"
               />
@@ -255,7 +209,7 @@ const PageRootAggregate_CommandModel = ({ rootAggregateIndex, formMethods, getVa
           </FormLayout.Section>
         </FormLayout.Root>
       </div>
-    </SchemaDefinitionContext.Provider>
+    </MentionCellDataSourceContext.Provider>
   )
 }
 
@@ -468,7 +422,7 @@ const PageRootAggregate_OtherModels = ({ rootAggregateIndex, formMethods, getVal
   const { personalSettings } = usePersonalSettings()
 
   return (
-    <SchemaDefinitionContext.Provider value={schemaDefinitionData}>
+    <MentionCellDataSourceContext.Provider value={schemaDefinitionData}>
       <div className={`flex flex-col gap-1 ${className ?? ''}`}>
         <Header>
           {!personalSettings.hideGridButtons && (<>
@@ -495,7 +449,7 @@ const PageRootAggregate_OtherModels = ({ rootAggregateIndex, formMethods, getVal
           />
         </div>
       </div>
-    </SchemaDefinitionContext.Provider>
+    </MentionCellDataSourceContext.Provider>
   )
 }
 

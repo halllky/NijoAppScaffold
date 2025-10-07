@@ -2,10 +2,14 @@ import React from "react"
 import * as ReactMention from 'react-mentions'
 import * as Icon from "@heroicons/react/24/solid"
 import * as Layout from "@nijo/ui-components/layout"
-import { XmlElementItem, ATTR_TYPE, TYPE_DATA_MODEL, TYPE_COMMAND_MODEL, TYPE_QUERY_MODEL, TYPE_CHILD, TYPE_CHILDREN } from "../../types"
+import { XmlElementItem, ATTR_TYPE, TYPE_DATA_MODEL, TYPE_COMMAND_MODEL, TYPE_QUERY_MODEL, TYPE_CHILD, TYPE_CHILDREN, SchemaDefinitionGlobalState } from "../../types"
 import useEvent from "react-use-event-hook"
-import { SchemaDefinitionContext, COLUMN_ID_COMMENT } from "./index"
+import { COLUMN_ID_COMMENT } from "./index"
 import { MentionInputWrapper } from "../../UI/MentionInputWrapper"
+
+/** スキーマ定義データを提供するContext */
+export const MentionCellDataSourceContext = React.createContext<SchemaDefinitionGlobalState | null>(null)
+
 
 /**
  * メンションを含むセル編集エディタ（スキーマ定義編集用）。
@@ -56,10 +60,11 @@ export const CellEditorWithMention = React.forwardRef(({
   )
 })
 
+
 /**
  * スキーマ定義編集用メンションテキストエリア
  */
-const SchemaDefinitionMentionTextarea = React.forwardRef(({
+export const SchemaDefinitionMentionTextarea = React.forwardRef(({
   value,
   onChange,
   className,
@@ -71,10 +76,30 @@ const SchemaDefinitionMentionTextarea = React.forwardRef(({
   placeholder?: string
 }, ref: React.Ref<HTMLTextAreaElement>) => {
 
-  // スキーマ定義データを取得
-  const schemaDefinitionData = React.useContext(SchemaDefinitionContext)
+  const schemaDefinitionData = React.useContext(MentionCellDataSourceContext)
+  const getSuggestions = useGetSuggestions(schemaDefinitionData)
 
-  const getSuggestions: ReactMention.DataFunc = React.useCallback(async (query, callback) => {
+  return (
+    <MentionInputWrapper
+      ref={ref}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      className={className}
+      getSuggestions={getSuggestions}
+    />
+  )
+})
+
+
+/**
+ * スキーマ定義データからメンションの候補リストを取得するカスタムフック
+ */
+const useGetSuggestions = (
+  schemaDefinitionData: SchemaDefinitionGlobalState | null | undefined
+): Parameters<typeof MentionInputWrapper>[0]['getSuggestions'] => {
+
+  return React.useCallback(async (query, callback) => {
     if (!schemaDefinitionData) {
       callback([])
       return
@@ -113,15 +138,4 @@ const SchemaDefinitionMentionTextarea = React.forwardRef(({
 
     callback(suggestions)
   }, [schemaDefinitionData])
-
-  return (
-    <MentionInputWrapper
-      ref={ref}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      className={className}
-      getSuggestions={getSuggestions}
-    />
-  )
-})
+}

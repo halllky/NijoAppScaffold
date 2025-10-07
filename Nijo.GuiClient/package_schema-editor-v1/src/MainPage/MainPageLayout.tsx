@@ -53,29 +53,31 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
   // 主要な列のみ表示
   const [showLessColumns, setShowLessColumns] = React.useState(false)
 
-  // EditableGrid表示位置
-  const [editableGridPosition, setEditableGridPosition] = React.useState<"vertical" | "horizontal">("horizontal");
-
   // 選択中のルート集約を画面右側に表示する
+  const [aggPaneVisible, setAggPaneVisible] = React.useState(false)
   const [selectedRootAggregateIndex, setSelectedRootAggregateIndex] = React.useState<number | undefined>(undefined);
   const selectRootAggregate = useEvent((aggregateId: string) => {
     const index = xmlElementTrees?.findIndex(tree => tree.xmlElements?.[0]?.uniqueId === aggregateId)
-    if (index !== undefined && index !== -1) setSelectedRootAggregateIndex(index)
+    if (index === undefined || index === -1) return;
+    setSelectedRootAggregateIndex(index)
+    setAggPaneVisible(true)
   })
 
   const handleSelectionChange = useEvent((event: cytoscape.EventObject) => {
     const selectedNodes = event.cy.nodes().filter(node => node.selected());
     if (selectedNodes.length === 0) {
-      setSelectedRootAggregateIndex(undefined);
+      setSelectedRootAggregateIndex(undefined)
+      setAggPaneVisible(false)
     } else {
       const aggregateId = selectedNodes[0].id();
       const rootAggregateId = xmlElementTrees
         ?.find(tree => tree.xmlElements?.some(el => el.uniqueId === aggregateId))
         ?.xmlElements?.[0]
         ?.uniqueId;
-      if (!rootAggregateId) return;
-
-      selectRootAggregate(rootAggregateId)
+      if (rootAggregateId) {
+        selectRootAggregate(rootAggregateId)
+        setAggPaneVisible(true)
+      }
     }
   });
 
@@ -130,7 +132,7 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
             </Allotment.Pane>
 
             {/* ルート集約編集ペイン */}
-            <Allotment.Pane preferredSize={240}>
+            <Allotment.Pane preferredSize={360} visible={aggPaneVisible}>
               {selectedRootAggregateIndex !== undefined && (
                 <PageRootAggregate
                   key={selectedRootAggregateIndex} // 選択中のルート集約が変更されたタイミングで再描画
@@ -149,7 +151,7 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
         </Allotment.Pane>
 
         {/* フッター */}
-        <Allotment.Pane preferredSize={60} snap>
+        <Allotment.Pane preferredSize={60}>
           <NijoUiErrorMessagePane
             getValues={getValues}
             validationResultList={validationResultList}
