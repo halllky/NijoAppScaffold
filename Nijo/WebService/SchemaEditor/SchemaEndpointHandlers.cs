@@ -127,10 +127,18 @@ internal class SchemaEndpointHandlers {
             XmlHelper.SortXmlAttributes(xDocument);
             using (var writer = XmlWriter.Create(project.SchemaXmlPath, new XmlWriterSettings {
                 Indent = true,
+                NewLineOnAttributes = true,
                 Encoding = new UTF8Encoding(false, false),
                 NewLineChars = "\n",
             })) {
                 xDocument.Save(writer);
+            }
+
+            // ファイル末尾に改行を追加（VSCodeで保存したときの設定にあわせる。
+            // Gitでファイル末尾の改行が都度差分になってしまうのを避けるため）
+            var xmlContent = await File.ReadAllTextAsync(project.SchemaXmlPath, context.RequestAborted);
+            if (!xmlContent.EndsWith("\n")) {
+                await File.WriteAllTextAsync(project.SchemaXmlPath, xmlContent + "\n", new UTF8Encoding(false, false), context.RequestAborted);
             }
 
             // SchemaGraphViewStateの保存（nullでない場合のみ）

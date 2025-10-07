@@ -3,7 +3,6 @@
     "recommendations": [
       "EditorConfig.EditorConfig",
       "yzhang.markdown-all-in-one",
-      "redhat.vscode-xml",
       "bierner.markdown-preview-github-styles",
       "ms-dotnettools.vscode-dotnet-runtime",
       "bierner.markdown-mermaid"
@@ -23,6 +22,11 @@
     "[sql]": {
       "editor.formatOnSave": false
     },
+    "[xml]": {
+      "editor.formatOnSave": false
+    },
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": false,
     "markdown.preview.breaks": true,
     "extensions.ignoreRecommendations": false,
     "workbench.colorCustomizations": {
@@ -30,10 +34,6 @@
       "titleBar.activeForeground": "#cccccc",
       "activityBar.background": "#492818",
       "activityBar.foreground": "#cccccc"
-    },
-    "xml.format.maxLineWidth": 0,
-    "[xml]": {
-      "files.trimFinalNewlines": false
     },
     "omnisharp.enableEditorConfigSupport": true,
     "typescript.tsdk": "node_modules\\typescript\\lib"
