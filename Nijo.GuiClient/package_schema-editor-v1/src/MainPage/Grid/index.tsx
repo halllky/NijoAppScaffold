@@ -95,6 +95,17 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
         {/* ヘッダ（ルート集約名、ルート集約モデル、ペイン操作ボタン） */}
         <div className="flex flex-wrap gap-1 items-center">
 
+          {/* コメント以外の属性の表示・非表示 */}
+          <button
+            type="button"
+            onClick={() => setOpenDetails(prev => !prev)}
+            className="p-px flex justify-start items-center gap-1 text-sm cursor-pointer"
+          >
+            {openDetails
+              ? <Icon.ChevronDoubleDownIcon className="w-4 h-4 inline" />
+              : <Icon.ChevronDoubleRightIcon className="w-4 h-4 inline" />}
+          </button>
+
           {/* LocalName */}
           <input
             type="text"
@@ -129,33 +140,6 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
         {/* ルート集約の属性 */}
         <FormLayout.Root labelWidthPx={132} labelComponent={FormLayoutLabel}>
           <FormLayout.Section>
-            <FormLayout.Field>
-
-              {/* コメント */}
-              <SchemaDefinitionMentionTextarea
-                value={rootElement.comment || ''}
-                onChange={value => {
-                  const currentElement = formMethods.getValues(`xmlElementTrees.${rootAggregateIndex}.xmlElements.0`)
-                  const updatedElement = { ...currentElement, comment: value }
-                  formMethods.setValue(`xmlElementTrees.${rootAggregateIndex}.xmlElements.0`, updatedElement)
-                  trigger()
-                }}
-                className="min-h-[80px] p-px border border-gray-300 resize-y"
-                placeholder="コメントを入力（@でメンション可能）"
-              />
-
-              {/* コメント以外の属性の表示・非表示 */}
-              <button
-                type="button"
-                onClick={() => setOpenDetails(prev => !prev)}
-                className="w-full p-px flex justify-start items-center gap-1 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 cursor-pointer"
-              >
-                {openDetails
-                  ? <Icon.ChevronDownIcon className="w-4 h-4 inline" />
-                  : <Icon.ChevronRightIcon className="w-4 h-4 inline" />}
-                詳細属性
-              </button>
-            </FormLayout.Field>
 
             {openDetails && (
               <>
@@ -194,6 +178,22 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
                 })}
               </>
             )}
+
+            {/* コメント */}
+            <FormLayout.Field>
+              <SchemaDefinitionMentionTextarea
+                value={rootElement.comment || ''}
+                onChange={value => {
+                  const currentElement = formMethods.getValues(`xmlElementTrees.${rootAggregateIndex}.xmlElements.0`)
+                  const updatedElement = { ...currentElement, comment: value }
+                  formMethods.setValue(`xmlElementTrees.${rootAggregateIndex}.xmlElements.0`, updatedElement)
+                  trigger()
+                }}
+                className="min-h-[80px] p-px border border-gray-300 resize-y"
+                placeholder="コメントを入力（@でメンション可能）"
+              />
+            </FormLayout.Field>
+
           </FormLayout.Section>
         </FormLayout.Root>
 
@@ -215,7 +215,8 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
 }
 
 /**
- * グリッド部分を分離したコンポーネント
+ * 子孫集約の編集グリッド。
+ * ルート集約の行はこのグリッドに登場しない。
  */
 const GridSection = ({
   rootAggregateIndex,
@@ -234,6 +235,9 @@ const GridSection = ({
     control,
     name: `xmlElementTrees.${rootAggregateIndex}.xmlElements`
   })
+
+  // ルート集約の行は表示しないので、fieldsの最初の要素を除いた配列を使用する
+  const gridData = React.useMemo(() => fields.slice(1), [fields])
 
   // メンバーグリッドの列定義
   const getColumnDefs: Layout.GetColumnDefsFunction<GridRowType> = React.useCallback(cellType => {
@@ -291,11 +295,9 @@ const GridSection = ({
       // 選択範囲が無い場合はルート集約の直下に1行挿入
       insert(1, { uniqueId: UUID.generate(), indent: 1, localName: '', attributes: {} })
     } else {
-      // 選択範囲がある場合は選択されている行と同じだけの行を選択範囲の前に挿入。
-      // ただしルート集約が選択範囲に含まれる場合はルート集約の下に挿入する
-      const insertPosition = selectedRange.startRow <= 0
-        ? 1 // ルート集約の直下
-        : selectedRange.startRow // 選択範囲の前
+      // 選択範囲がある場合は選択されている行と同じだけの行を選択範囲の前に挿入
+      // グリッドのインデックス + 1 = fieldsのインデックス
+      const insertPosition = selectedRange.startRow + 1
       const indent = fields[insertPosition]?.indent ?? 1
       const insertRows = Array.from({ length: selectedRange.endRow - selectedRange.startRow + 1 }, (_, i) => ({
         uniqueId: UUID.generate(),
@@ -315,7 +317,8 @@ const GridSection = ({
       insert(1, { uniqueId: UUID.generate(), indent: 1, localName: '', attributes: {} })
     } else {
       // 選択範囲がある場合は選択されている行と同じだけの行を選択範囲の下に挿入
-      const insertPosition = selectedRange.endRow + 1
+      // グリッドのインデックス + 1 = fieldsのインデックス
+      const insertPosition = selectedRange.endRow + 2
       const indent = fields[insertPosition]?.indent ?? 1
       const insertRows = Array.from({ length: selectedRange.endRow - selectedRange.startRow + 1 }, (_, i) => ({
         uniqueId: UUID.generate(),
@@ -327,14 +330,14 @@ const GridSection = ({
     }
   })
 
-  // 行削除。selectedRangeに含まれる行を削除する。ただしルート集約は削除しない
+  // 行削除。selectedRangeに含まれる行を削除する
   const handleDeleteRow = useEvent(() => {
     const selectedRange = gridRef.current?.getSelectedRange()
     if (!selectedRange) {
       return
     }
-    let removedIndexes = Array.from({ length: selectedRange.endRow - selectedRange.startRow + 1 }, (_, i) => selectedRange.startRow + i)
-    removedIndexes = removedIndexes.filter(index => index !== 0) // ルート集約は削除しない
+    // グリッドのインデックス + 1 = fieldsのインデックス
+    const removedIndexes = Array.from({ length: selectedRange.endRow - selectedRange.startRow + 1 }, (_, i) => selectedRange.startRow + i + 1)
     remove(removedIndexes)
   })
 
@@ -342,57 +345,58 @@ const GridSection = ({
   const handleMoveUp = useEvent(() => {
     const selectedRows = gridRef.current?.getSelectedRows()
     if (!selectedRows) return
-    if (selectedRows.some(x => x.rowIndex === 0)) return; // ルート集約は移動不可
 
-    const startRow = selectedRows[0].rowIndex
+    // グリッドのインデックス + 1 = fieldsのインデックス
+    const startRow = selectedRows[0].rowIndex + 1
     const endRow = startRow + selectedRows.length - 1
     if (startRow <= 1) return // ルート集約より上には移動できない
 
     // 選択範囲の外側（1つ上）の行を選択範囲の下に移動させる
     move(startRow - 1, endRow)
     // 行選択
-    gridRef.current?.selectRow(startRow - 1, endRow - 1)
+    gridRef.current?.selectRow(selectedRows[0].rowIndex - 1, selectedRows[0].rowIndex + selectedRows.length - 2)
   })
 
   // 選択行を下に移動
   const handleMoveDown = useEvent(() => {
     const selectedRows = gridRef.current?.getSelectedRows()
     if (!selectedRows) return
-    if (selectedRows.some(x => x.rowIndex === 0)) return; // ルート集約は移動不可
 
-    const startRow = selectedRows[0].rowIndex
+    // グリッドのインデックス + 1 = fieldsのインデックス
+    const startRow = selectedRows[0].rowIndex + 1
     const endRow = startRow + selectedRows.length - 1
     if (endRow >= fields.length - 1) return
 
     // 選択範囲の外側（1つ下）の行を選択範囲の上に移動させる
     move(endRow + 1, startRow)
     // 行選択
-    gridRef.current?.selectRow(startRow + 1, endRow + 1)
+    gridRef.current?.selectRow(selectedRows[0].rowIndex + 1, selectedRows[0].rowIndex + selectedRows.length)
   })
 
-  // インデント下げ。選択範囲に含まれる行のインデントを1ずつ減らす。ただしルート集約は0固定、それ以外の要素の最小インデントは1。
+  // インデント下げ。選択範囲に含まれる行のインデントを1ずつ減らす。最小インデントは1。
   const handleIndentDown = useEvent(() => {
     const selectedRows = gridRef.current?.getSelectedRows()
     if (!selectedRows) return
     for (const x of selectedRows) {
-      if (x.rowIndex === 0) continue // ルート集約は0固定
-      update(x.rowIndex, { ...x.row, indent: Math.max(1, x.row.indent - 1) })
+      // グリッドのインデックス + 1 = fieldsのインデックス
+      update(x.rowIndex + 1, { ...x.row, indent: Math.max(1, x.row.indent - 1) })
     }
   })
-  // インデント上げ。選択範囲に含まれる行のインデントを1ずつ増やす。ただしルート集約は0固定
+  // インデント上げ。選択範囲に含まれる行のインデントを1ずつ増やす
   const handleIndentUp = useEvent(() => {
     const selectedRows = gridRef.current?.getSelectedRows()
     if (!selectedRows) return
     for (const x of selectedRows) {
-      if (x.rowIndex === 0) continue // ルート集約は0固定
-      update(x.rowIndex, { ...x.row, indent: x.row.indent + 1 })
+      // グリッドのインデックス + 1 = fieldsのインデックス
+      update(x.rowIndex + 1, { ...x.row, indent: x.row.indent + 1 })
     }
   })
 
   // セル編集 or クリップボード貼り付け
   const handleChangeRow: Layout.RowChangeEvent<GridRowType> = useEvent(e => {
     for (const x of e.changedRows) {
-      update(x.rowIndex, x.newRow)
+      // グリッドのインデックス + 1 = fieldsのインデックス
+      update(x.rowIndex + 1, x.newRow)
     }
     trigger()
   })
@@ -450,7 +454,7 @@ const GridSection = ({
       <div className="flex-1 overflow-y-auto">
         <Layout.EditableGrid
           ref={gridRef}
-          rows={fields}
+          rows={gridData}
           getColumnDefs={getColumnDefs}
           editorComponent={CellEditorWithMention}
           onChangeRow={handleChangeRow}

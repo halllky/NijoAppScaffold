@@ -19,19 +19,16 @@ export const createLocalNameCell = (
     defaultWidth: 220,
     isFixed: true,
     renderCell: (context: ReactTable.CellContext<GridRowType, unknown>) => {
-      const indent = context.row.original.indent
-      const bold = indent === 0 ? 'font-bold' : '' // ルート集約は太字
-
       // エラー情報を取得
       const validation = getValidationResult(context.row.original.uniqueId)
       const hasOwnError = validation?._own?.length > 0
       const bgColor = hasOwnError ? 'bg-amber-300/50' : ''
 
       return (
-        <div className={`flex-1 inline-flex text-left truncate ${bgColor}`}>
+        <div className={`px-1 flex-1 inline-flex text-left truncate ${bgColor}`}>
 
           {/* インデント */}
-          {Array.from({ length: indent }).map((_, i) => (
+          {Array.from({ length: context.row.original.indent - 1 }).map((_, i) => (
             <React.Fragment key={i}>
               {/* インデントのテキスト */}
               <div className="basis-[20px] min-w-[20px] relative leading-none">
@@ -43,7 +40,7 @@ export const createLocalNameCell = (
             </React.Fragment>
           ))}
 
-          <span className={`flex-1 truncate ${bold}`}>
+          <span className="flex-1 truncate">
             {context.cell.getValue() as string}
           </span>
         </div>
