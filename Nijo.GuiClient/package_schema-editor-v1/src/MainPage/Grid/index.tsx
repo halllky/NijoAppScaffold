@@ -3,7 +3,7 @@ import * as ReactHookForm from "react-hook-form"
 import * as Icon from "@heroicons/react/24/solid"
 import * as Input from "@nijo/ui-components/input"
 import * as Layout from "@nijo/ui-components/layout"
-import FormLayout from "@nijo/ui-components/layout/FormLayout"
+import FormLayout, { LabelProps } from "@nijo/ui-components/layout/FormLayout"
 import { SchemaDefinitionGlobalState, ATTR_TYPE, XmlElementAttribute, XmlElementItem, ATTR_IS_KEY, TYPE_DATA_MODEL, ATTR_USER_HELP_TEXT, TYPE_COMMAND_MODEL, TYPE_QUERY_MODEL, TYPE_CHILD, TYPE_CHILDREN } from "../../types"
 import * as UI from '../../UI'
 import useEvent from "react-use-event-hook"
@@ -31,79 +31,12 @@ type PageRootAggregateProps = {
 
 /**
  * Data, Query, Command のルート集約1件を表示・編集するページ。
- * Command Model の場合はメンバーを直接グリッドで定義するのではなく、Parameter属性とReturnValue属性で引数と戻り値の型を選択します。
  */
-export const PageRootAggregate = ((props: PageRootAggregateProps) => {
-
-  const rootModelType = ReactHookForm.useWatch({
-    control: props.formMethods.control,
-    name: `xmlElementTrees.${props.rootAggregateIndex}.xmlElements.0.attributes.${ATTR_TYPE}`,
-  })
-
-  if (rootModelType === TYPE_COMMAND_MODEL) {
-    return <PageRootAggregate_CommandModel {...props} />
-  } else {
-    return <PageRootAggregate_OtherModels {...props} />
-  }
-})
-
-// -----------------------------
-
-// TODO: Command もそれ以外も同じコンポーネントにまとめる
-//       * ルート集約の属性はグリッドの外に出す
-//       * Command の場合は子孫集約の編集が無いだけという位置づけにする
-
-/**
- * ヘッダ部分（Command とそれ以外で共通）
- */
-const Header = ({ children }: {
-  children?: React.ReactNode
-}) => {
-
-  // ルート集約の属性を表示・非表示する
-  const [openDetails, setOpenDetails] = React.useState(false)
-
-  const handleClickDelete = useEvent(() => {
-    window.alert('未実装！')
-  })
-
-  return (
-    <div className="flex flex-wrap gap-1 items-center">
-      <span>
-        <Input.IconButton
-          icon={openDetails ? Icon.ChevronDownIcon : Icon.ChevronRightIcon} hideText
-          onClick={() => setOpenDetails(prev => !prev)}>
-          詳細
-        </Input.IconButton>
-        TODO: ルート集約名（input type="text"）
-      </span>
-
-      {children}
-
-      {/* TODO: ペインの位置をグラフの右にするか下にするかの選択 */}
-      <div className="flex-1"></div>
-      <Input.IconButton outline mini>
-        横
-      </Input.IconButton>
-      <Input.IconButton outline mini>
-        縦
-      </Input.IconButton>
-
-      <div className="basis-1"></div>
-      <Input.IconButton icon={Icon.TrashIcon} hideText onClick={handleClickDelete}>
-        ルート集約を削除する
-      </Input.IconButton>
-    </div>
-  )
-}
-
-// -----------------------------
-
-/**
- * CommandModel の編集ビュー
- */
-const PageRootAggregate_CommandModel = ({ rootAggregateIndex, formMethods, getValidationResult, trigger, attributeDefs, showLessColumns, className }: PageRootAggregateProps) => {
+export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidationResult, trigger, attributeDefs, showLessColumns, className }: PageRootAggregateProps) => {
   const { control, watch } = formMethods
+
+  // グリッドのref（useGridOperationsで使用）
+  const gridRef = React.useRef<Layout.EditableGridRef<GridRowType>>(null)
 
   // スキーマ定義全体のデータを取得（メンション機能で使用）
   const schemaDefinitionData = watch()
@@ -114,13 +47,19 @@ const PageRootAggregate_CommandModel = ({ rootAggregateIndex, formMethods, getVa
     name: `xmlElementTrees.${rootAggregateIndex}.xmlElements.0`,
   })
 
+  // ルート集約のモデルタイプを取得
+  const rootModelType = ReactHookForm.useWatch({
+    control: control,
+    name: `xmlElementTrees.${rootAggregateIndex}.xmlElements.0.attributes.${ATTR_TYPE}`,
+  })
+
   // LocalNameの更新
   const handleLocalNameChange = useEvent((value: string) => {
     formMethods.setValue(`xmlElementTrees.${rootAggregateIndex}.xmlElements.0.localName`, value)
     trigger()
   })
 
-  // 属性の更新
+  // ルート集約の属性の更新
   const handleAttributeChange = useEvent((attributeName: string, value: string) => {
     const currentElement = formMethods.getValues(`xmlElementTrees.${rootAggregateIndex}.xmlElements.0`)
     const updatedAttributes = { ...currentElement.attributes }
@@ -135,6 +74,13 @@ const PageRootAggregate_CommandModel = ({ rootAggregateIndex, formMethods, getVa
     trigger()
   })
 
+  // ルート集約の属性を表示・非表示するフラグ。 CommandModel なら初期は表示
+  const [openDetails, setOpenDetails] = React.useState(rootModelType === TYPE_COMMAND_MODEL)
+
+  const handleClickDelete = useEvent(() => {
+    window.alert('未実装！')
+  })
+
   if (!rootElement) {
     return <div>データが見つかりません</div>
   }
@@ -144,57 +90,48 @@ const PageRootAggregate_CommandModel = ({ rootAggregateIndex, formMethods, getVa
 
   return (
     <MentionCellDataSourceContext.Provider value={schemaDefinitionData}>
-      <div className={`flex flex-col gap-1 ${className ?? ''}`}>
-        <Header />
-        <FormLayout.Root labelWidthPx={220}>
-          <FormLayout.Section border>
-            {/* LocalName */}
-            <FormLayout.Field fullWidth>
-              <input
-                type="text"
-                value={rootElement.localName || ''}
-                onChange={e => handleLocalNameChange(e.target.value)}
-                className={`w-full px-1 py-px border font-bold ${validation?._own?.length > 0 ? 'border-amber-500 bg-amber-50' : 'border-gray-300'}`}
-                placeholder="CommandModelの名前を入力"
-              />
-            </FormLayout.Field>
+      <div className={`flex flex-col gap-1 px-1 ${className ?? ''}`}>
 
-            {/* Type属性 */}
-            <FormLayout.Field label={TYPE_COLUMN_DEF.displayName}>
-              <input
-                type="text"
-                value={rootElement.attributes[ATTR_TYPE] || ''}
-                onChange={e => handleAttributeChange(ATTR_TYPE, e.target.value)}
-                className={`w-full px-1 py-px border ${validation?.[ATTR_TYPE]?.length > 0 ? 'border-amber-500 bg-amber-50' : 'border-gray-300'}`}
-                placeholder={TYPE_COLUMN_DEF.displayName}
-              />
-            </FormLayout.Field>
+        {/* ヘッダ（ルート集約名、ルート集約モデル、ペイン操作ボタン） */}
+        <div className="flex flex-wrap gap-1 items-center">
 
-            {/* その他の属性 */}
-            {Array.from(attributeDefs.values()).map(attrDef => {
-              // Typeは既に表示しているのでスキップ
-              if (attrDef.attributeName === ATTR_TYPE) return null;
+          {/* LocalName */}
+          <input
+            type="text"
+            value={rootElement.localName || ''}
+            onChange={e => handleLocalNameChange(e.target.value)}
+            className={`flex-1 px-1 py-px border font-bold ${validation?._own?.length > 0 ? 'border-amber-500 bg-amber-50' : 'border-gray-300'}`}
+            placeholder="名前を入力"
+          />
 
-              // CommandModelに対応する属性のみをフィルタリング
-              if (!attrDef.availableModels.includes(TYPE_COMMAND_MODEL)) return null;
+          {/* TODO */}
+          <select className="border border-gray-300">
+            <option value="data-model">Data Model</option>
+            <option value="query-model">Query Model</option>
+            <option value="command-model">Command Model</option>
+            <option value="structure-model">Structure Model</option>
+          </select>
 
-              const hasError = validation?.[attrDef.attributeName]?.length > 0
+          {/* TODO: ペインの位置をグラフの右にするか下にするかの選択 */}
+          <Input.IconButton outline mini>
+            横
+          </Input.IconButton>
+          <Input.IconButton outline mini>
+            縦
+          </Input.IconButton>
 
-              return (
-                <FormLayout.Field key={attrDef.attributeName} label={attrDef.displayName}>
-                  <input
-                    type="text"
-                    value={rootElement.attributes[attrDef.attributeName] || ''}
-                    onChange={e => handleAttributeChange(attrDef.attributeName, e.target.value)}
-                    className={`w-full px-1 py-px border ${hasError ? 'border-amber-500 bg-amber-50' : 'border-gray-300'}`}
-                    placeholder={attrDef.displayName}
-                  />
-                </FormLayout.Field>
-              )
-            })}
+          <div className="basis-1"></div>
+          <Input.IconButton icon={Icon.TrashIcon} hideText onClick={handleClickDelete}>
+            ルート集約を削除する
+          </Input.IconButton>
+        </div>
 
-            {/* コメント */}
-            <FormLayout.Field label="コメント" fullWidth>
+        {/* ルート集約の属性 */}
+        <FormLayout.Root labelWidthPx={132} labelComponent={FormLayoutLabel}>
+          <FormLayout.Section>
+            <FormLayout.Field>
+
+              {/* コメント */}
               <SchemaDefinitionMentionTextarea
                 value={rootElement.comment || ''}
                 onChange={value => {
@@ -203,27 +140,100 @@ const PageRootAggregate_CommandModel = ({ rootAggregateIndex, formMethods, getVa
                   formMethods.setValue(`xmlElementTrees.${rootAggregateIndex}.xmlElements.0`, updatedElement)
                   trigger()
                 }}
-                className="w-full min-h-[80px] p-px border border-gray-300 resize-y"
+                className="min-h-[80px] p-px border border-gray-300 resize-y"
                 placeholder="コメントを入力（@でメンション可能）"
               />
+
+              {/* コメント以外の属性の表示・非表示 */}
+              <button
+                type="button"
+                onClick={() => setOpenDetails(prev => !prev)}
+                className="w-full p-px flex justify-start items-center gap-1 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 cursor-pointer"
+              >
+                {openDetails
+                  ? <Icon.ChevronDownIcon className="w-4 h-4 inline" />
+                  : <Icon.ChevronRightIcon className="w-4 h-4 inline" />}
+                詳細属性
+              </button>
             </FormLayout.Field>
+
+            {openDetails && (
+              <>
+                {/* Type属性 */}
+                <FormLayout.Field label={TYPE_COLUMN_DEF.displayName}>
+                  <input
+                    type="text"
+                    value={rootElement.attributes[ATTR_TYPE] || ''}
+                    onChange={e => handleAttributeChange(ATTR_TYPE, e.target.value)}
+                    className={`w-full px-1 py-px border ${validation?.[ATTR_TYPE]?.length > 0 ? 'border-amber-500 bg-amber-50' : 'border-gray-300'}`}
+                    placeholder={TYPE_COLUMN_DEF.displayName}
+                  />
+                </FormLayout.Field>
+
+                {/* その他の属性 */}
+                {Array.from(attributeDefs.values()).map(attrDef => {
+                  // Typeは既に表示しているのでスキップ
+                  if (attrDef.attributeName === ATTR_TYPE) return null;
+
+                  // rootModelTypeに対応する属性のみをフィルタリング
+                  if (!rootModelType || !attrDef.availableModels.includes(rootModelType)) return null;
+
+                  const hasError = validation?.[attrDef.attributeName]?.length > 0
+
+                  return (
+                    <FormLayout.Field key={attrDef.attributeName} label={attrDef.displayName}>
+                      <input
+                        type="text"
+                        value={rootElement.attributes[attrDef.attributeName] || ''}
+                        onChange={e => handleAttributeChange(attrDef.attributeName, e.target.value)}
+                        className={`w-full px-1 py-px border ${hasError ? 'border-amber-500 bg-amber-50' : 'border-gray-300'}`}
+                        placeholder={attrDef.displayName}
+                      />
+                    </FormLayout.Field>
+                  )
+                })}
+              </>
+            )}
           </FormLayout.Section>
         </FormLayout.Root>
+
+        {/* 子孫要素編集グリッド */}
+        {rootModelType !== TYPE_COMMAND_MODEL && (
+          <GridSection
+            rootAggregateIndex={rootAggregateIndex}
+            formMethods={formMethods}
+            getValidationResult={getValidationResult}
+            trigger={trigger}
+            attributeDefs={attributeDefs}
+            showLessColumns={showLessColumns}
+            gridRef={gridRef}
+          />
+        )}
       </div>
     </MentionCellDataSourceContext.Provider>
   )
 }
 
 /**
- * CommandModel以外の編集ビュー
+ * グリッド部分を分離したコンポーネント
  */
-const PageRootAggregate_OtherModels = ({ rootAggregateIndex, formMethods, getValidationResult, trigger, attributeDefs, showLessColumns, className }: PageRootAggregateProps) => {
-  const gridRef = React.useRef<Layout.EditableGridRef<GridRowType>>(null)
-  const { control, watch } = formMethods
-  const { fields, insert, remove, update, move } = ReactHookForm.useFieldArray({ control, name: `xmlElementTrees.${rootAggregateIndex}.xmlElements` })
+const GridSection = ({
+  rootAggregateIndex,
+  formMethods,
+  getValidationResult,
+  trigger,
+  attributeDefs,
+  showLessColumns,
+  gridRef
+}: PageRootAggregateProps & {
+  gridRef: React.RefObject<Layout.EditableGridRef<GridRowType> | null>
+}) => {
 
-  // スキーマ定義全体のデータを取得（メンション機能で使用）
-  const schemaDefinitionData = watch()
+  const { control } = formMethods
+  const { fields, insert, remove, update, move } = ReactHookForm.useFieldArray({
+    control,
+    name: `xmlElementTrees.${rootAggregateIndex}.xmlElements`
+  })
 
   // メンバーグリッドの列定義
   const getColumnDefs: Layout.GetColumnDefsFunction<GridRowType> = React.useCallback(cellType => {
@@ -279,7 +289,7 @@ const PageRootAggregate_OtherModels = ({ rootAggregateIndex, formMethods, getVal
     const selectedRange = gridRef.current?.getSelectedRange()
     if (!selectedRange) {
       // 選択範囲が無い場合はルート集約の直下に1行挿入
-      insert(0, { uniqueId: UUID.generate(), indent: 0, localName: '', attributes: {} })
+      insert(1, { uniqueId: UUID.generate(), indent: 1, localName: '', attributes: {} })
     } else {
       // 選択範囲がある場合は選択されている行と同じだけの行を選択範囲の前に挿入。
       // ただしルート集約が選択範囲に含まれる場合はルート集約の下に挿入する
@@ -302,7 +312,7 @@ const PageRootAggregate_OtherModels = ({ rootAggregateIndex, formMethods, getVal
     const selectedRange = gridRef.current?.getSelectedRange()
     if (!selectedRange) {
       // 選択範囲が無い場合はルート集約の直下に1行挿入
-      insert(0, { uniqueId: UUID.generate(), indent: 0, localName: '', attributes: {} })
+      insert(1, { uniqueId: UUID.generate(), indent: 1, localName: '', attributes: {} })
     } else {
       // 選択範囲がある場合は選択されている行と同じだけの行を選択範囲の下に挿入
       const insertPosition = selectedRange.endRow + 1
@@ -423,33 +433,42 @@ const PageRootAggregate_OtherModels = ({ rootAggregateIndex, formMethods, getVal
   const { personalSettings } = usePersonalSettings()
 
   return (
-    <MentionCellDataSourceContext.Provider value={schemaDefinitionData}>
-      <div className={`flex flex-col gap-1 ${className ?? ''}`}>
-        <Header>
-          {!personalSettings.hideGridButtons && (<>
-            <Input.IconButton outline mini icon={Icon.PlusIcon} onClick={handleInsertRow}>行挿入(Enter)</Input.IconButton>
-            <Input.IconButton outline mini icon={Icon.PlusIcon} onClick={handleInsertRowBelow}>下挿入(Ctrl + Enter)</Input.IconButton>
-            <Input.IconButton outline mini icon={Icon.TrashIcon} onClick={handleDeleteRow}>行削除(Shift + Delete)</Input.IconButton>
-            <div className="basis-2"></div>
-            <Input.IconButton outline mini icon={Icon.ChevronDoubleLeftIcon} onClick={handleIndentDown}>インデント下げ(Shift + Tab)</Input.IconButton>
-            <Input.IconButton outline mini icon={Icon.ChevronDoubleRightIcon} onClick={handleIndentUp}>インデント上げ(Tab)</Input.IconButton>
-            <Input.IconButton outline mini icon={Icon.ChevronUpIcon} onClick={handleMoveUp}>上に移動(Alt + ↑)</Input.IconButton>
-            <Input.IconButton outline mini icon={Icon.ChevronDownIcon} onClick={handleMoveDown}>下に移動(Alt + ↓)</Input.IconButton>
-            <div className="flex-1"></div>
-          </>)}
-        </Header>
-        <div className="flex-1 overflow-y-auto">
-          <Layout.EditableGrid
-            ref={gridRef}
-            rows={fields}
-            getColumnDefs={getColumnDefs}
-            editorComponent={CellEditorWithMention}
-            onChangeRow={handleChangeRow}
-            onKeyDown={handleKeyDown}
-            className="h-full border-y border-l border-gray-300"
-          />
+    <>
+      {!personalSettings.hideGridButtons && (
+        <div className="flex flex-wrap gap-1 items-center">
+          <Input.IconButton outline mini icon={Icon.PlusIcon} onClick={handleInsertRow}>行挿入(Enter)</Input.IconButton>
+          <Input.IconButton outline mini icon={Icon.PlusIcon} onClick={handleInsertRowBelow}>下挿入(Ctrl + Enter)</Input.IconButton>
+          <Input.IconButton outline mini icon={Icon.TrashIcon} onClick={handleDeleteRow}>行削除(Shift + Delete)</Input.IconButton>
+          <div className="basis-2"></div>
+          <Input.IconButton outline mini icon={Icon.ChevronDoubleLeftIcon} onClick={handleIndentDown}>インデント下げ(Shift + Tab)</Input.IconButton>
+          <Input.IconButton outline mini icon={Icon.ChevronDoubleRightIcon} onClick={handleIndentUp}>インデント上げ(Tab)</Input.IconButton>
+          <Input.IconButton outline mini icon={Icon.ChevronUpIcon} onClick={handleMoveUp}>上に移動(Alt + ↑)</Input.IconButton>
+          <Input.IconButton outline mini icon={Icon.ChevronDownIcon} onClick={handleMoveDown}>下に移動(Alt + ↓)</Input.IconButton>
+          <div className="flex-1"></div>
         </div>
+      )}
+      <div className="flex-1 overflow-y-auto">
+        <Layout.EditableGrid
+          ref={gridRef}
+          rows={fields}
+          getColumnDefs={getColumnDefs}
+          editorComponent={CellEditorWithMention}
+          onChangeRow={handleChangeRow}
+          onKeyDown={handleKeyDown}
+          className="h-full border border-gray-300"
+        />
       </div>
-    </MentionCellDataSourceContext.Provider>
+    </>
+  )
+}
+
+
+/** ルート集約の属性名の表示用 */
+const FormLayoutLabel: React.ElementType<LabelProps> = ({ className, ...rest }) => {
+  return (
+    <FormLayout.DefaultLabel
+      {...rest}
+      className={`text-sm ${className ?? ''}`}
+    />
   )
 }
