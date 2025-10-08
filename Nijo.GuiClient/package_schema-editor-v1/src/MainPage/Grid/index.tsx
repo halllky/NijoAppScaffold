@@ -14,6 +14,7 @@ import { MentionCellDataSourceContext, SchemaDefinitionMentionTextarea } from ".
 import { createLocalNameCell, createAttributeCell, GridRowType } from "./Input.CellTypes"
 import { usePersonalSettings } from "../../Settings"
 import { CellEditorWithMention } from "./Input.CellEditor"
+import { ModelTypeSelectorForSchema } from "./ModelTypeSelectorForSchema"
 
 /** コメント列のID */
 export const COLUMN_ID_COMMENT = ':comment:'
@@ -115,13 +116,12 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
             placeholder="名前を入力"
           />
 
-          {/* TODO */}
-          <select className="border border-gray-300">
-            <option value="data-model">Data Model</option>
-            <option value="query-model">Query Model</option>
-            <option value="command-model">Command Model</option>
-            <option value="structure-model">Structure Model</option>
-          </select>
+          {/* モデル種類選択 */}
+          <ModelTypeSelectorForSchema
+            value={rootElement.attributes[ATTR_TYPE] || ''}
+            onChange={value => handleAttributeChange(ATTR_TYPE, value)}
+            className="min-w-[200px]"
+          />
 
           {/* TODO: ペインの位置をグラフの右にするか下にするかの選択 */}
           <Input.IconButton outline mini>
@@ -143,17 +143,6 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
 
             {openDetails && (
               <>
-                {/* Type属性 */}
-                <FormLayout.Field label={TYPE_COLUMN_DEF.displayName}>
-                  <input
-                    type="text"
-                    value={rootElement.attributes[ATTR_TYPE] || ''}
-                    onChange={e => handleAttributeChange(ATTR_TYPE, e.target.value)}
-                    className={`w-full px-1 py-px border ${validation?.[ATTR_TYPE]?.length > 0 ? 'border-amber-500 bg-amber-50' : 'border-gray-300'}`}
-                    placeholder={TYPE_COLUMN_DEF.displayName}
-                  />
-                </FormLayout.Field>
-
                 {/* その他の属性 */}
                 {Array.from(attributeDefs.values()).map(attrDef => {
                   // Typeは既に表示しているのでスキップ
