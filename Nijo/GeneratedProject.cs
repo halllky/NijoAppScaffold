@@ -154,7 +154,7 @@ namespace Nijo {
         public GeneratedProjectOptions GetConfig() {
             if (_configCache == null) {
                 var xDocument = XDocument.Load(SchemaXmlPath);
-                _configCache = new GeneratedProjectOptions(xDocument);
+                _configCache = GeneratedProjectOptions.Parse(xDocument, true);
             }
             return _configCache;
         }

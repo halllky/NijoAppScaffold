@@ -38,6 +38,8 @@ internal class SchemaEndpointHandlers {
             var xDocument = XDocument.Load(project.SchemaXmlPath);
             var rule = SchemaParseRule.Default();
 
+            var projectOptions = GeneratedProjectOptions.Parse(xDocument, false);
+
             var response = new ApplicationState {
                 ApplicationName = xDocument.Root?.Name.LocalName ?? "",
                 XmlElementTrees = xDocument.Root?.Elements().Select(root => new ModelPageForm {
@@ -45,6 +47,8 @@ internal class SchemaEndpointHandlers {
                 }).ToList() ?? [],
                 ValueMemberTypes = ValueMemberType.FromSchemaParseRule(rule),
                 AttributeDefs = XmlElementAttribute.FromSchemaParseRule(rule),
+                ProjectOptions = projectOptions.GetCurrentValues(),
+                ProjectOptionPropertyInfos = GeneratedProjectOptions.GetPropertyInfos().ToList(),
             };
 
             await HttpResponseHelper.WriteJsonResponseAsync(context, response, cancellationToken: context.RequestAborted);
@@ -121,6 +125,23 @@ internal class SchemaEndpointHandlers {
                 context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
                 await HttpResponseHelper.WriteJsonResponseAsync(context, errors, cancellationToken: context.RequestAborted);
                 return;
+            }
+
+            // プロジェクト設定をXMLルート要素の属性として保存
+            if (applicationState.ProjectOptions != null) {
+                var defaultOptions = GeneratedProjectOptions.Parse(null, true);
+                var defaultValues = defaultOptions.GetCurrentValues();
+
+                foreach (var (key, value) in applicationState.ProjectOptions) {
+                    var defaultValue = defaultValues.TryGetValue(key, out var val) ? val : null;
+
+                    if (value != null && !Equals(value, defaultValue)) {
+                        xDocument.Root?.SetAttributeValue(key, value.ToString());
+                    } else {
+                        // デフォルト値と同じ、またはnullの場合は属性を削除
+                        xDocument.Root?.Attribute(key)?.Remove();
+                    }
+                }
             }
 
             // nijo.xmlの保存

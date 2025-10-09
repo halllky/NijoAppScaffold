@@ -13,6 +13,7 @@ import { PageRootAggregate } from "./Grid"
 import NijoUiErrorMessagePane from "./ErrorMessage"
 import { useValidation } from "./useValidation"
 import { useNijoUiNavigation } from "../routing"
+import { MainPageOutletContext } from "./OutletContext"
 
 export type MainPageLayoutProps = {
   defaultValues: SchemaDefinitionGlobalState
@@ -33,6 +34,7 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
   const formMethods = ReactHookForm.useForm<SchemaDefinitionGlobalState>({
     defaultValues: props.defaultValues,
   })
+  const outletContextValue: MainPageOutletContext = formMethods
   const { getValues, control, formState: { isDirty } } = formMethods
   const xmlElementTrees = getValues("xmlElementTrees")
   const graphDataRef = React.useRef<AppSchemaDefinitionGraphRef>(null)
@@ -163,7 +165,7 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
       </Allotment>
 
       {/* ダイアログ表示部分 */}
-      <ReactRouter.Outlet />
+      <ReactRouter.Outlet context={outletContextValue} />
     </div>
   )
 }

@@ -20,6 +20,10 @@ export type SchemaDefinitionGlobalState = {
   attributeDefs: XmlElementAttribute[]
   /** 値メンバーの種類定義。 */
   valueMemberTypes: ValueMemberType[]
+  /** プロジェクト設定の現在値 */
+  projectOptions: ProjectOptions
+  /** プロジェクト設定項目のメタ情報 */
+  projectOptionPropertyInfos: ProjectOptionPropertyInfo[]
 }
 
 /** Model定義画面のデータ型定義 */
@@ -42,6 +46,19 @@ export type ValueMemberType = {
   schemaTypeName: string
   /** この種類の画面表示上名称 */
   typeDisplayName: string
+}
+
+/** プロジェクト設定項目のメタ情報 */
+export type ProjectOptionPropertyInfo = {
+  propertyName: string
+  description: string
+  propertyType: 'string' | 'bool' | 'int'
+  defaultValue?: string | boolean | number
+}
+
+/** プロジェクト設定の値 */
+export type ProjectOptions = {
+  [key: string]: string | boolean | number
 }
 
 // ---------------------------------

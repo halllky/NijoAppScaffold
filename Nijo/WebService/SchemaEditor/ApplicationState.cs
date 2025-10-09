@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using System.Xml.Linq;
+using Nijo.CodeGenerating;
 
 namespace Nijo.WebService.SchemaEditor;
 
@@ -18,6 +19,10 @@ public class ApplicationState {
     public List<XmlElementAttribute> AttributeDefs { get; set; } = [];
     [JsonPropertyName("valueMemberTypes")]
     public List<ValueMemberType> ValueMemberTypes { get; set; } = [];
+    [JsonPropertyName("projectOptions")]
+    public Dictionary<string, object?> ProjectOptions { get; set; } = new();
+    [JsonPropertyName("projectOptionPropertyInfos")]
+    public List<ProjectOptionPropertyInfo> ProjectOptionPropertyInfos { get; set; } = [];
 
     /// <summary>
     /// 新しい <see cref="XDocument"/> インスタンスを構築して返す。

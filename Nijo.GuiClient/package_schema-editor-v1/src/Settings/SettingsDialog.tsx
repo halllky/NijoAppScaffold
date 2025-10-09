@@ -1,6 +1,11 @@
+import React from "react";
+import * as ReactRouter from "react-router-dom";
 import { useBlockerEx } from "@nijo/ui-components";
 import { ModalDialog } from "@nijo/ui-components/layout";
+import FormLayout, { LabelProps } from "@nijo/ui-components/layout/FormLayout";
 import useEvent from "react-use-event-hook";
+import { MainPageOutletContext } from "../MainPage/OutletContext";
+import { ProjectOptionPropertyInfo } from "../types";
 
 /**
  * 個人用設定 + プロジェクト設定ダイアログ。
@@ -34,11 +39,121 @@ export const SettingsDialog = () => {
   return (
     <ModalDialog open
       onOutsideClick={handleClose}
-      className="w-1/2 max-w-3xl p-6"
+      className="w-1/2 max-w-3xl max-h-[80vh] flex flex-col gap-2"
     >
-      {/* 設定項目 */}
 
-      {/* フッター */}
+      <FormLayout.Root
+        labelComponent={FormLayoutLabel}
+        className="flex-1"
+        labelWidthPx={248}
+      >
+
+        <ProjectSettingSection />
+
+      </FormLayout.Root>
+
     </ModalDialog>
+  )
+}
+
+/**
+ * プロジェクト設定セクション
+ */
+const ProjectSettingSection = () => {
+  const { watch, setValue, formState } = ReactRouter.useOutletContext<MainPageOutletContext>()
+
+  const projectOptions = watch('projectOptions') || {}
+  const projectOptionPropertyInfos = watch('projectOptionPropertyInfos') || []
+
+  const handleValueChange = useEvent((propertyName: string, value: string | boolean | number) => {
+    setValue(`projectOptions.${propertyName}` as any, value, { shouldDirty: true })
+  })
+
+  return (
+    <FormLayout.Section label="プロジェクト設定" border>
+      {projectOptionPropertyInfos.map(propInfo => (
+        <ProjectSettingField
+          key={propInfo.propertyName}
+          propertyInfo={propInfo}
+          value={projectOptions[propInfo.propertyName]}
+          onChange={(value) => handleValueChange(propInfo.propertyName, value)}
+        />
+      ))}
+
+      {formState.isDirty && (
+        <div className="text-sm text-gray-600 mt-4">
+          変更があります。保存するにはダイアログを閉じてください。
+        </div>
+      )}
+    </FormLayout.Section>
+  )
+}
+
+/**
+ * 個別の設定項目フィールド
+ */
+const ProjectSettingField: React.FC<{
+  propertyInfo: ProjectOptionPropertyInfo
+  value: string | boolean | number | undefined
+  onChange: (value: string | boolean | number) => void
+}> = ({ propertyInfo, value, onChange }) => {
+
+  const renderInput = () => {
+    switch (propertyInfo.propertyType) {
+      case 'bool':
+        return (
+          <input
+            type="checkbox"
+            checked={Boolean(value)}
+            onChange={(e) => onChange(e.target.checked)}
+            className="h-4 w-4"
+          />
+        )
+      case 'int':
+        return (
+          <input
+            type="number"
+            value={value !== undefined ? Number(value) : ''}
+            onChange={(e) => {
+              const numValue = parseInt(e.target.value);
+              onChange(isNaN(numValue) ? 0 : numValue);
+            }}
+            placeholder={String(propertyInfo.defaultValue || '0')}
+            className="px-1 py-px border border-gray-300"
+          />
+        )
+      default:
+        return (
+          <input
+            type="text"
+            value={String(value || '')}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={String(propertyInfo.defaultValue || '')}
+            className="px-1 py-px border border-gray-300"
+          />
+        )
+    }
+  }
+
+  return (
+    <FormLayout.Field label={propertyInfo.propertyName}>
+      <div className="flex flex-col gap-px">
+        {renderInput()}
+        <span className="mb-2 text-xs text-gray-500">
+          {propertyInfo.description}
+        </span>
+      </div>
+    </FormLayout.Field>
+  )
+}
+
+
+/** ルート集約の属性名の表示用 */
+const FormLayoutLabel: React.ElementType<LabelProps> = ({ className, ...rest }) => {
+  return (
+    <FormLayout.DefaultLabel
+      {...rest}
+      className={`text-sm ${className ?? ''}`}
+    />
   )
 }
