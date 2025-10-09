@@ -14,7 +14,7 @@ import { MentionCellDataSourceContext, SchemaDefinitionMentionTextarea } from ".
 import { createLocalNameCell, createAttributeCell, GridRowType } from "./Input.CellTypes"
 import { usePersonalSettings } from "../../Settings"
 import { CellEditorWithMention } from "./Input.CellEditor"
-import { ModelTypeSelectorForSchema } from "./ModelTypeSelectorForSchema"
+import { ModelTypeSelectorForSchema } from "./Input.ModelTypeSelector"
 
 /** コメント列のID */
 export const COLUMN_ID_COMMENT = ':comment:'
