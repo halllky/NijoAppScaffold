@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Xml;
@@ -164,12 +165,18 @@ namespace Nijo.CodeGenerating {
         /// <summary>
         /// プロジェクト設定の値を辞書として取得する
         /// </summary>
-        internal Dictionary<string, object?> GetCurrentValues() {
-            var result = new Dictionary<string, object?>();
+        internal JsonObject GetCurrentValues() {
+            var result = new JsonObject();
             var properties = typeof(GeneratedProjectOptions).GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
             foreach (var prop in properties) {
-                result[prop.Name] = prop.GetValue(this);
+                var value = prop.GetValue(this);
+                result[prop.Name] = value switch {
+                    string str => str,
+                    bool b => b,
+                    int i => i,
+                    _ => null,
+                };
             }
 
             return result;

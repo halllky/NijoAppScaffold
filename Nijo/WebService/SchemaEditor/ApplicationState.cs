@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Xml.Linq;
 using Nijo.CodeGenerating;
@@ -20,7 +21,7 @@ public class ApplicationState {
     [JsonPropertyName("valueMemberTypes")]
     public List<ValueMemberType> ValueMemberTypes { get; set; } = [];
     [JsonPropertyName("projectOptions")]
-    public Dictionary<string, object?> ProjectOptions { get; set; } = new();
+    public JsonObject ProjectOptions { get; set; } = new();
     [JsonPropertyName("projectOptionPropertyInfos")]
     public List<ProjectOptionPropertyInfo> ProjectOptionPropertyInfos { get; set; } = [];
 

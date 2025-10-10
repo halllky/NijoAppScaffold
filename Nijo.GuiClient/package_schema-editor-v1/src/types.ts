@@ -56,7 +56,10 @@ export type ProjectOptionPropertyInfo = {
   defaultValue?: string | boolean | number
 }
 
-/** プロジェクト設定の値 */
+/**
+ * プロジェクト設定の値。
+ * GeneratedProjectOptions.cs の各プロパティに対応する。
+ */
 export type ProjectOptions = {
   [key: string]: string | boolean | number
 }

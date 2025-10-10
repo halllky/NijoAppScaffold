@@ -14,6 +14,8 @@ import NijoUiErrorMessagePane from "./ErrorMessage"
 import { useValidation } from "./useValidation"
 import { useNijoUiNavigation } from "../routing"
 import { MainPageOutletContext } from "./OutletContext"
+import { saveSchema } from "./useSaveLoad"
+import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../routing"
 
 export type MainPageLayoutProps = {
   defaultValues: SchemaDefinitionGlobalState
@@ -39,6 +41,10 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
   const xmlElementTrees = getValues("xmlElementTrees")
   const graphDataRef = React.useRef<AppSchemaDefinitionGraphRef>(null)
   const graphViewRef = React.useRef<GraphViewRef>(null)
+
+  // プロジェクト情報取得
+  const [searchParams] = ReactRouter.useSearchParams()
+  const projectDir = searchParams.get(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR)
 
   // 属性定義
   const watchedAttributeDefs = ReactHookForm.useWatch({ name: 'attributeDefs', control })
@@ -83,6 +89,29 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
     }
   });
 
+  // 保存処理
+  const [saveButtonText, setSaveButtonText] = React.useState('保存(Ctrl + S)')
+  const [nowSaving, setNowSaving] = React.useState(false)
+  const [saveError, setSaveError] = React.useState<string>()
+  const handleSave = useEvent(async () => {
+    if (nowSaving) return;
+    setSaveError(undefined)
+    setNowSaving(true)
+    const currentValues = getValues()
+    const result = await saveSchema(projectDir, currentValues, graphDataRef.current?.getCurrentGraphDataSet() ?? null)
+    if (result.ok) {
+      setSaveButtonText('保存しました。')
+      formMethods.reset(currentValues)
+      window.setTimeout(() => {
+        setSaveButtonText('保存(Ctrl + S)')
+      }, 2000)
+    } else {
+      setSaveError(result.error)
+    }
+    setNowSaving(false)
+  })
+  UI.useCtrlS(handleSave)
+
   // 設定画面
   const navigateNijoUi = useNijoUiNavigation()
   const handlePersonalSettingsClick = useEvent(() => {
@@ -107,8 +136,18 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
           プロジェクト設定
         </UI.IconButton>
 
+        <div className="flex-1"></div>
+        <div className="basis-36 flex justify-end">
+          <UI.IconButton fill onClick={handleSave} loading={nowSaving}>{saveButtonText}</UI.IconButton>
+        </div>
         <div className="basis-2"></div>
       </div>
+
+      {saveError && (
+        <div className="text-rose-500 text-sm p-2">
+          {saveError}
+        </div>
+      )}
 
       <Allotment
         vertical

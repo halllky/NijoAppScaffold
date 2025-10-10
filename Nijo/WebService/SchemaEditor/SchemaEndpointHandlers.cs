@@ -132,14 +132,39 @@ internal class SchemaEndpointHandlers {
                 var defaultOptions = GeneratedProjectOptions.Parse(null, true);
                 var defaultValues = defaultOptions.GetCurrentValues();
 
+                // クライアント側から送られてきたキーを起点に、XMLへの反映を行う。
+                // デフォルト値と同じ、またはnullの場合は属性を削除する。
                 foreach (var (key, value) in applicationState.ProjectOptions) {
-                    var defaultValue = defaultValues.TryGetValue(key, out var val) ? val : null;
+                    var kind = value?.GetValueKind();
+                    var defaultValue = defaultValues.ContainsKey(key) ? defaultValues[key] : null;
 
-                    if (value != null && !Equals(value, defaultValue)) {
-                        xDocument.Root?.SetAttributeValue(key, value.ToString());
-                    } else {
-                        // デフォルト値と同じ、またはnullの場合は属性を削除
+                    // 空か否か
+                    var isEmpty = value == null
+                        || kind == JsonValueKind.String
+                        && string.IsNullOrWhiteSpace(value.GetValue<string>());
+
+                    // デフォルト値と同じか否か
+                    var isDefault = false;
+                    if (value == null && defaultValue == null) {
+                        isDefault = true;
+                    } else if (value != null && defaultValue != null) {
+                        var valueKind = value.GetValueKind();
+                        var defaultKind = defaultValue.GetValueKind();
+                        if (valueKind == defaultKind) {
+                            isDefault = valueKind switch {
+                                JsonValueKind.String => value.GetValue<string>() == defaultValue.GetValue<string>(),
+                                JsonValueKind.Number => value.GetValue<decimal>() == defaultValue.GetValue<decimal>(),
+                                JsonValueKind.True or JsonValueKind.False => value.GetValue<bool>() == defaultValue.GetValue<bool>(),
+                                JsonValueKind.Null => true,
+                                _ => false
+                            };
+                        }
+                    }
+
+                    if (isEmpty || isDefault) {
                         xDocument.Root?.Attribute(key)?.Remove();
+                    } else {
+                        xDocument.Root?.SetAttributeValue(key, value?.ToString());
                     }
                 }
             }

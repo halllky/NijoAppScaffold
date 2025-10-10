@@ -1,11 +1,12 @@
 import React from "react";
 import * as ReactRouter from "react-router-dom";
+import * as ReactHookForm from "react-hook-form";
 import { useBlockerEx } from "@nijo/ui-components";
 import { ModalDialog } from "@nijo/ui-components/layout";
 import FormLayout, { LabelProps } from "@nijo/ui-components/layout/FormLayout";
 import useEvent from "react-use-event-hook";
 import { MainPageOutletContext } from "../MainPage/OutletContext";
-import { ProjectOptionPropertyInfo } from "../types";
+import { ProjectOptionPropertyInfo, SchemaDefinitionGlobalState } from "../types";
 
 /**
  * 個人用設定 + プロジェクト設定ダイアログ。
@@ -39,7 +40,7 @@ export const SettingsDialog = () => {
   return (
     <ModalDialog open
       onOutsideClick={handleClose}
-      className="w-1/2 max-w-3xl max-h-[80vh] flex flex-col gap-2"
+      className="w-1/2 min-w-xl max-w-3xl max-h-[80vh] flex flex-col gap-2"
     >
 
       <FormLayout.Root
@@ -60,31 +61,17 @@ export const SettingsDialog = () => {
  * プロジェクト設定セクション
  */
 const ProjectSettingSection = () => {
-  const { watch, setValue, formState } = ReactRouter.useOutletContext<MainPageOutletContext>()
-
-  const projectOptions = watch('projectOptions') || {}
-  const projectOptionPropertyInfos = watch('projectOptionPropertyInfos') || []
-
-  const handleValueChange = useEvent((propertyName: string, value: string | boolean | number) => {
-    setValue(`projectOptions.${propertyName}` as any, value, { shouldDirty: true })
-  })
+  const { register, getValues } = ReactRouter.useOutletContext<MainPageOutletContext>()
 
   return (
     <FormLayout.Section label="プロジェクト設定" border>
-      {projectOptionPropertyInfos.map(propInfo => (
+      {getValues('projectOptionPropertyInfos').map((propInfo, index) => (
         <ProjectSettingField
-          key={propInfo.propertyName}
+          key={propInfo?.propertyName || index}
           propertyInfo={propInfo}
-          value={projectOptions[propInfo.propertyName]}
-          onChange={(value) => handleValueChange(propInfo.propertyName, value)}
+          register={register}
         />
       ))}
-
-      {formState.isDirty && (
-        <div className="text-sm text-gray-600 mt-4">
-          変更があります。保存するにはダイアログを閉じてください。
-        </div>
-      )}
     </FormLayout.Section>
   )
 }
@@ -94,51 +81,50 @@ const ProjectSettingSection = () => {
  */
 const ProjectSettingField: React.FC<{
   propertyInfo: ProjectOptionPropertyInfo
-  value: string | boolean | number | undefined
-  onChange: (value: string | boolean | number) => void
-}> = ({ propertyInfo, value, onChange }) => {
+  register: ReactHookForm.UseFormRegister<any>
+}> = ({ propertyInfo, register }) => {
 
-  const renderInput = () => {
-    switch (propertyInfo.propertyType) {
-      case 'bool':
-        return (
-          <input
-            type="checkbox"
-            checked={Boolean(value)}
-            onChange={(e) => onChange(e.target.checked)}
-            className="h-4 w-4"
-          />
-        )
-      case 'int':
-        return (
-          <input
-            type="number"
-            value={value !== undefined ? Number(value) : ''}
-            onChange={(e) => {
-              const numValue = parseInt(e.target.value);
-              onChange(isNaN(numValue) ? 0 : numValue);
-            }}
-            placeholder={String(propertyInfo.defaultValue || '0')}
-            className="px-1 py-px border border-gray-300"
-          />
-        )
-      default:
-        return (
-          <input
-            type="text"
-            value={String(value || '')}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={String(propertyInfo.defaultValue || '')}
-            className="px-1 py-px border border-gray-300"
-          />
-        )
-    }
-  }
+  const fieldName: ReactHookForm.Path<SchemaDefinitionGlobalState> = `projectOptions.${propertyInfo.propertyName}`
 
   return (
     <FormLayout.Field label={propertyInfo.propertyName}>
       <div className="flex flex-col gap-px">
-        {renderInput()}
+        {(() => {
+          switch (propertyInfo.propertyType) {
+            case 'bool':
+              return (
+                <input
+                  type="checkbox"
+                  {...register(fieldName)}
+                  className="h-4 w-4"
+                />
+              )
+            case 'int':
+              return (
+                <input
+                  type="number"
+                  {...register(fieldName, {
+                    valueAsNumber: true,
+                    setValueAs: (value: string) => {
+                      const numValue = parseInt(value);
+                      return isNaN(numValue) ? 0 : numValue;
+                    }
+                  })}
+                  placeholder={String(propertyInfo.defaultValue || '0')}
+                  className="px-1 py-px border border-gray-300"
+                />
+              )
+            default:
+              return (
+                <input
+                  type="text"
+                  {...register(fieldName)}
+                  placeholder={String(propertyInfo.defaultValue || '')}
+                  className="px-1 py-px border border-gray-300"
+                />
+              )
+          }
+        })()}
         <span className="mb-2 text-xs text-gray-500">
           {propertyInfo.description}
         </span>
