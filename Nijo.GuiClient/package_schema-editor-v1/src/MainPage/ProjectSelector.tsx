@@ -3,12 +3,14 @@ import * as ReactRouter from 'react-router-dom'
 import * as Input from '@nijo/ui-components/input'
 import * as Icon from '@heroicons/react/24/solid'
 import { NIJOUI_CLIENT_ROUTE_PARAMS, useNijoUiNavigation } from '../routing'
+import { SettingsDialog } from '../Settings/SettingsDialog'
 
 /**
  * トップページ：プロジェクトフォルダを選択する画面
  */
 export const ProjectSelector = () => {
   const navigateNijoUi = useNijoUiNavigation()
+  const [isOpenSettingDialog, setIsOpenSettingDialog] = React.useState(false)
   const [folderPath, setFolderPath] = React.useState('')
   const [recentProjects, setRecentProjects] = React.useState<string[]>([])
   const [error, setError] = React.useState<string>()
@@ -57,8 +59,8 @@ export const ProjectSelector = () => {
   }, [])
 
   const handlePersonalSettingsClick = React.useCallback(() => {
-    navigateNijoUi('settings')
-  }, [navigateNijoUi])
+    setIsOpenSettingDialog(true)
+  }, [])
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 p-8">
@@ -134,7 +136,9 @@ export const ProjectSelector = () => {
       </div>
 
       {/* ダイアログ表示部分 */}
-      <ReactRouter.Outlet />
+      {isOpenSettingDialog && (
+        <SettingsDialog onClose={() => setIsOpenSettingDialog(false)} />
+      )}
     </div>
   )
 }

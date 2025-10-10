@@ -12,9 +12,10 @@ import { AppSchemaDefinitionGraph, AppSchemaDefinitionGraphRef } from "./Graph"
 import { PageRootAggregate } from "./Grid"
 import NijoUiErrorMessagePane from "./ErrorMessage"
 import { useValidation } from "./useValidation"
-import { useNijoUiNavigation } from "../routing"
 import { MainPageOutletContext } from "./OutletContext"
 import { saveSchema } from "./useSaveLoad"
+import { SettingsDialog } from "../Settings"
+import { EnumDefDialog } from "../EnumDefDialog"
 import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../routing"
 
 export type MainPageLayoutProps = {
@@ -112,10 +113,18 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
   })
   UI.useCtrlS(handleSave)
 
+  // モーダルダイアログ管理
+  const [isOpenSettingDialog, setIsOpenSettingDialog] = React.useState(false)
+  const [isOpenEnumDefDialog, setIsOpenEnumDefDialog] = React.useState(false)
+
   // 設定画面
-  const navigateNijoUi = useNijoUiNavigation()
   const handlePersonalSettingsClick = useEvent(() => {
-    navigateNijoUi('settings')
+    setIsOpenSettingDialog(true)
+  })
+
+  // 列挙型定義画面
+  const handleEnumDefClick = useEvent(() => {
+    setIsOpenEnumDefDialog(true)
   })
 
   // 画面離脱時の確認
@@ -204,7 +213,12 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
       </Allotment>
 
       {/* ダイアログ表示部分 */}
-      <ReactRouter.Outlet context={outletContextValue} />
+      {isOpenSettingDialog && (
+        <SettingsDialog onClose={() => setIsOpenSettingDialog(false)} formMethods={outletContextValue} />
+      )}
+      {isOpenEnumDefDialog && (
+        <EnumDefDialog onClose={() => setIsOpenEnumDefDialog(false)} />
+      )}
     </div>
   )
 }

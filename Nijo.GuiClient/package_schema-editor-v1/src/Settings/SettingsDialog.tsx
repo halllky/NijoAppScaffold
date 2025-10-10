@@ -1,11 +1,9 @@
 import React from "react";
-import * as ReactRouter from "react-router-dom";
 import * as ReactHookForm from "react-hook-form";
 import { useBlockerEx } from "@nijo/ui-components";
 import { ModalDialog } from "@nijo/ui-components/layout";
 import FormLayout, { LabelProps } from "@nijo/ui-components/layout/FormLayout";
 import useEvent from "react-use-event-hook";
-import { MainPageOutletContext } from "../MainPage/OutletContext";
 import { ProjectOptionPropertyInfo, SchemaDefinitionGlobalState } from "../types";
 
 /**
@@ -26,12 +24,13 @@ import { ProjectOptionPropertyInfo, SchemaDefinitionGlobalState } from "../types
  *
  * ここで設定された値は localStorage に保存される。
  */
-export const SettingsDialog = () => {
+export const SettingsDialog: React.FC<{
+  onClose: () => void
+  formMethods?: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
+}> = ({ onClose, formMethods }) => {
 
-  // 閉じる場合、1つ前のヒストリーに戻る。
-  // このダイアログは独立したルーティングで定義されているため
   const handleClose = useEvent(() => {
-    window.history.back()
+    onClose()
   })
 
   // // 閉じるときに確認ダイアログを出す
@@ -49,7 +48,9 @@ export const SettingsDialog = () => {
         labelWidthPx={248}
       >
 
-        <ProjectSettingSection />
+        {formMethods && (
+          <ProjectSettingSection formMethods={formMethods} />
+        )}
 
       </FormLayout.Root>
 
@@ -60,8 +61,9 @@ export const SettingsDialog = () => {
 /**
  * プロジェクト設定セクション
  */
-const ProjectSettingSection = () => {
-  const { register, getValues } = ReactRouter.useOutletContext<MainPageOutletContext>()
+const ProjectSettingSection: React.FC<{
+  formMethods: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
+}> = ({ formMethods: { getValues, register } }) => {
 
   return (
     <FormLayout.Section label="プロジェクト設定" border>

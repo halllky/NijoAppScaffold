@@ -1,15 +1,16 @@
+import React from "react";
 import { ModalDialog } from "@nijo/ui-components/layout";
 import useEvent from "react-use-event-hook";
 
 /**
  * 列挙型定義ダイアログ。
  */
-export default function EnumDefDialog() {
+export const EnumDefDialog: React.FC<{
+  onClose: () => void
+}> = ({ onClose }) => {
 
-  // 閉じる場合、1つ前のヒストリーに戻る。
-  // このダイアログは独立したルーティングで定義されているため
   const handleClose = useEvent(() => {
-    window.history.back()
+    onClose()
   })
 
   return (
