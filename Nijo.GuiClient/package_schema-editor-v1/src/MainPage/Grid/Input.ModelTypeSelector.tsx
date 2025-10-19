@@ -1,5 +1,5 @@
 import React from "react"
-import { TYPE_DATA_MODEL, TYPE_QUERY_MODEL, TYPE_COMMAND_MODEL, TYPE_VALUE_OBJECT_MODEL } from "../../types"
+import { TYPE_DATA_MODEL, TYPE_QUERY_MODEL, TYPE_COMMAND_MODEL, TYPE_STRUCTURE_MODEL } from "../../types"
 import { DropdownSelector } from "@nijo/ui-components"
 
 /** モデル種類の選択肢 */
@@ -27,7 +27,7 @@ const MODEL_TYPE_OPTIONS: ModelTypeOption[] = [
     description: "引数を受け取り戻り値を返す処理。Webサーバー・クライアント間で常に同期された型定義を提供します。"
   },
   {
-    value: TYPE_VALUE_OBJECT_MODEL,
+    value: TYPE_STRUCTURE_MODEL,
     displayName: "Structure Model",
     description: "構造体。Webサーバー・クライアント間で常に同期されているべき構造を定義します。"
   }
