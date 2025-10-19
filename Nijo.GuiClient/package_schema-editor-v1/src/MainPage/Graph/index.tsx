@@ -15,6 +15,7 @@ type AppSchemaDefinitionGraphProps = {
   xmlElementTrees: ModelPageForm[]
   graphViewRef: React.RefObject<GraphViewRef | null>
   handleSelectionChange: (event: cytoscape.EventObject) => void
+  className?: string
 }
 
 export type AppSchemaDefinitionGraphRef = {
@@ -29,6 +30,7 @@ export const AppSchemaDefinitionGraph = React.forwardRef<AppSchemaDefinitionGrap
   xmlElementTrees,
   graphViewRef,
   handleSelectionChange,
+  className,
 }, ref) => {
 
   // displayModeの初期値を保存された値から取得
@@ -126,7 +128,7 @@ export const AppSchemaDefinitionGraph = React.forwardRef<AppSchemaDefinitionGrap
   }), [xmlElementTrees, onlyRoot])
 
   return (
-    <div className="h-full relative">
+    <div className={`h-full relative ${className ?? ''}`}>
       <GraphView
         key={`${displayMode}-${onlyRoot ? 'onlyRoot' : 'all'}`} // モードとフラグが切り替わったタイミングで全部洗い替え
         ref={graphViewRef}

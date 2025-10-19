@@ -188,6 +188,7 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
                 xmlElementTrees={xmlElementTrees}
                 graphViewRef={graphViewRef}
                 handleSelectionChange={handleSelectionChange}
+                className="border-y border-r border-gray-300"
               />
             </Allotment.Pane>
 
