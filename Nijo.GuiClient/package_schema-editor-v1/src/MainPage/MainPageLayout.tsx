@@ -7,7 +7,7 @@ import { Allotment, LayoutPriority } from "allotment"
 import cytoscape from 'cytoscape'
 import * as UI from "@nijo/ui-components"
 import { GraphViewRef } from "@nijo/ui-components/layout/GraphView"
-import { SchemaDefinitionGlobalState, asTree } from "../types"
+import { SchemaDefinitionGlobalState, ATTR_TYPE, TYPE_COMMAND_MODEL, TYPE_DATA_MODEL, TYPE_QUERY_MODEL, TYPE_STRUCTURE_MODEL, XmlElementItem, ModelPageForm } from "../types"
 import { AppSchemaDefinitionGraph, AppSchemaDefinitionGraphRef } from "./Graph"
 import { PageRootAggregate } from "./Grid"
 import NijoUiErrorMessagePane from "./ErrorMessage"
@@ -16,6 +16,8 @@ import { saveSchema } from "./useSaveLoad"
 import { SettingsDialog } from "../Settings"
 import { EnumDefDialog } from "../EnumDefDialog"
 import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../routing"
+import { UUID } from "uuidjs"
+import { CreateRootAggregateDialog, RootAggregateModelType } from "./CreateRootAggregateDialog"
 
 export type MainPageLayoutProps = {
   defaultValues: SchemaDefinitionGlobalState
@@ -115,6 +117,7 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
   // モーダルダイアログ管理
   const [isOpenSettingDialog, setIsOpenSettingDialog] = React.useState(false)
   const [isOpenEnumDefDialog, setIsOpenEnumDefDialog] = React.useState(false)
+  const [isOpenCreateRootAggregateDialog, setIsOpenCreateRootAggregateDialog] = React.useState(false)
 
   // 設定画面
   const handlePersonalSettingsClick = useEvent(() => {
@@ -124,6 +127,40 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
   // 列挙型定義画面
   const handleEnumDefClick = useEvent(() => {
     setIsOpenEnumDefDialog(true)
+  })
+
+  // ルート集約追加ダイアログ
+  const handleRequestCreateRootAggregate = useEvent(() => {
+    setIsOpenCreateRootAggregateDialog(true)
+  })
+
+  const handleCreateRootAggregate = useEvent((params: { localName: string, modelType: RootAggregateModelType }) => {
+    const trimmedName = params.localName.trim()
+    if (!trimmedName) {
+      return
+    }
+
+    const currentTrees = getValues('xmlElementTrees') ?? []
+    const newRootId = UUID.generate()
+
+    const newRootElement: XmlElementItem = {
+      uniqueId: newRootId,
+      indent: 0,
+      localName: trimmedName,
+      attributes: { [ATTR_TYPE]: params.modelType } as XmlElementItem['attributes'],
+    }
+
+    const newTree: ModelPageForm = {
+      xmlElements: [newRootElement],
+    }
+
+    const nextTrees = [...currentTrees, newTree]
+    formMethods.setValue('xmlElementTrees', nextTrees, { shouldDirty: true })
+    void trigger()
+
+    setSelectedRootAggregateIndex(nextTrees.length - 1)
+    setAggPaneVisible(true)
+    setIsOpenCreateRootAggregateDialog(false)
   })
 
   // 画面離脱時の確認
@@ -194,6 +231,7 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
                 xmlElementTrees={xmlElementTrees}
                 graphViewRef={graphViewRef}
                 handleSelectionChange={handleSelectionChange}
+                onRequestCreateRootAggregate={handleRequestCreateRootAggregate}
                 className="border-y border-r border-gray-300"
               />
             </Allotment.Pane>
@@ -240,6 +278,12 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
           getValidationResult={getValidationResult}
           triggerValidation={trigger}
           validationResultList={validationResultList}
+        />
+      )}
+      {isOpenCreateRootAggregateDialog && (
+        <CreateRootAggregateDialog
+          onClose={() => setIsOpenCreateRootAggregateDialog(false)}
+          onCreate={handleCreateRootAggregate}
         />
       )}
     </div>

@@ -16,6 +16,7 @@ type AppSchemaDefinitionGraphProps = {
   graphViewRef: React.RefObject<GraphViewRef | null>
   handleSelectionChange: (event: cytoscape.EventObject) => void
   className?: string
+  onRequestCreateRootAggregate: () => void
 }
 
 export type AppSchemaDefinitionGraphRef = {
@@ -31,6 +32,7 @@ export const AppSchemaDefinitionGraph = React.forwardRef<AppSchemaDefinitionGrap
   graphViewRef,
   handleSelectionChange,
   className,
+  onRequestCreateRootAggregate,
 }, ref) => {
 
   // displayModeの初期値を保存された値から取得
@@ -89,12 +91,6 @@ export const AppSchemaDefinitionGraph = React.forwardRef<AppSchemaDefinitionGrap
     }
   });
 
-  // ルート集約の追加
-  const handleCreateNewRootAggregate = useEvent(() => {
-    // TODO: 新しいルート集約を作成する処理
-    window.alert('未実装！')
-  });
-
   const dataSet: CytoscapeDataSet = React.useMemo(() => {
     if (!xmlElementTrees) return { nodes: {}, edges: [] }
 
@@ -125,7 +121,7 @@ export const AppSchemaDefinitionGraph = React.forwardRef<AppSchemaDefinitionGrap
         },
       }
     },
-  }), [xmlElementTrees, onlyRoot])
+  }), [getSavedLayout, onlyRoot, xmlElementTrees])
 
   return (
     <div className={`h-full relative ${className ?? ''}`}>
@@ -168,7 +164,7 @@ export const AppSchemaDefinitionGraph = React.forwardRef<AppSchemaDefinitionGrap
             ))}
           </select>
         </div>
-        <Input.IconButton icon={Icon.PlusIcon} outline mini className="bg-white" onClick={handleCreateNewRootAggregate}>
+        <Input.IconButton icon={Icon.PlusIcon} outline mini className="bg-white" onClick={onRequestCreateRootAggregate}>
           ルート集約を追加
         </Input.IconButton>
       </div>
