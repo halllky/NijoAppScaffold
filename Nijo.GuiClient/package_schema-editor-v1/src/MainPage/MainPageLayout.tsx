@@ -149,6 +149,12 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
 
         <div className="basis-1"></div>
 
+        <UI.IconButton icon={Icon.Squares2X2Icon} mini onClick={handleEnumDefClick}>
+          区分定義
+        </UI.IconButton>
+
+        <div className="basis-1"></div>
+
         <div className="flex-1"></div>
         <div className="basis-36 flex justify-end">
           <UI.IconButton
@@ -228,7 +234,13 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
         <SettingsDialog onClose={() => setIsOpenSettingDialog(false)} formMethods={formMethods} />
       )}
       {isOpenEnumDefDialog && (
-        <EnumDefDialog onClose={() => setIsOpenEnumDefDialog(false)} />
+        <EnumDefDialog
+          onClose={() => setIsOpenEnumDefDialog(false)}
+          formMethods={formMethods}
+          getValidationResult={getValidationResult}
+          triggerValidation={trigger}
+          validationResultList={validationResultList}
+        />
       )}
     </div>
   )
