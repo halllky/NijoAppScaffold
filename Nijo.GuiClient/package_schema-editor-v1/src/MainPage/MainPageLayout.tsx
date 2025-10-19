@@ -12,7 +12,6 @@ import { AppSchemaDefinitionGraph, AppSchemaDefinitionGraphRef } from "./Graph"
 import { PageRootAggregate } from "./Grid"
 import NijoUiErrorMessagePane from "./ErrorMessage"
 import { useValidation } from "./useValidation"
-import { MainPageOutletContext } from "./OutletContext"
 import { saveSchema } from "./useSaveLoad"
 import { SettingsDialog } from "../Settings"
 import { EnumDefDialog } from "../EnumDefDialog"
@@ -37,9 +36,9 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
   const formMethods = ReactHookForm.useForm<SchemaDefinitionGlobalState>({
     defaultValues: props.defaultValues,
   })
-  const outletContextValue: MainPageOutletContext = formMethods
   const { getValues, control, formState: { isDirty } } = formMethods
-  const xmlElementTrees = getValues("xmlElementTrees")
+  const applicationName = ReactHookForm.useWatch({ name: `${'projectOptions' satisfies keyof SchemaDefinitionGlobalState}.ApplicationName`, control })
+  const xmlElementTrees = ReactHookForm.useWatch({ name: "xmlElementTrees", control })
   const graphDataRef = React.useRef<AppSchemaDefinitionGraphRef>(null)
   const graphViewRef = React.useRef<GraphViewRef>(null)
 
@@ -133,23 +132,34 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
   return (
     <div className="h-full flex flex-col">
       {/* ヘッダ */}
-      <div className="flex flex-wrap items-center gap-px p-px">
+      <div className="flex flex-wrap items-center gap-1 p-1">
         <ReactRouter.Link to="/" title="プロジェクト一覧に戻る">
           <Icon.ChevronLeftIcon className="w-6 h-6 p-1 text-sky-600" />
         </ReactRouter.Link>
 
-        <h1 className="font-bold">
-          TODO: プロジェクト名
-        </h1>
-        <UI.IconButton icon={Icon.Cog8ToothIcon} hideText onClick={handlePersonalSettingsClick}>
-          プロジェクト設定
+        <button type="button"
+          onClick={handlePersonalSettingsClick}
+          className="font-bold cursor-pointer"
+        >
+          {applicationName}
+        </button>
+        <UI.IconButton icon={Icon.Cog8ToothIcon} mini onClick={handlePersonalSettingsClick}>
+          設定
         </UI.IconButton>
+
+        <div className="basis-1"></div>
 
         <div className="flex-1"></div>
         <div className="basis-36 flex justify-end">
-          <UI.IconButton fill onClick={handleSave} loading={nowSaving}>{saveButtonText}</UI.IconButton>
+          <UI.IconButton
+            fill={isDirty}
+            outline={!isDirty}
+            onClick={handleSave}
+            loading={nowSaving}
+          >
+            {saveButtonText}
+          </UI.IconButton>
         </div>
-        <div className="basis-2"></div>
       </div>
 
       {saveError && (
@@ -214,7 +224,7 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
 
       {/* ダイアログ表示部分 */}
       {isOpenSettingDialog && (
-        <SettingsDialog onClose={() => setIsOpenSettingDialog(false)} formMethods={outletContextValue} />
+        <SettingsDialog onClose={() => setIsOpenSettingDialog(false)} formMethods={formMethods} />
       )}
       {isOpenEnumDefDialog && (
         <EnumDefDialog onClose={() => setIsOpenEnumDefDialog(false)} />

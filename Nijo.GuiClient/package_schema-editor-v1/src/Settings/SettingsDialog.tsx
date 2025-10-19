@@ -5,6 +5,8 @@ import { ModalDialog } from "@nijo/ui-components/layout";
 import FormLayout, { LabelProps } from "@nijo/ui-components/layout/FormLayout";
 import useEvent from "react-use-event-hook";
 import { ProjectOptionPropertyInfo, SchemaDefinitionGlobalState } from "../types";
+import { usePersonalSettings } from "./usePersonalSettings";
+import { PersonalSettings } from "./PersonalSettings";
 
 /**
  * 個人用設定 + プロジェクト設定ダイアログ。
@@ -29,6 +31,8 @@ export const SettingsDialog: React.FC<{
   formMethods?: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
 }> = ({ onClose, formMethods }) => {
 
+  const { personalSettings, save } = usePersonalSettings()
+
   const handleClose = useEvent(() => {
     onClose()
   })
@@ -44,13 +48,21 @@ export const SettingsDialog: React.FC<{
 
       <FormLayout.Root
         labelComponent={FormLayoutLabel}
-        className="flex-1"
-        labelWidthPx={248}
+        className="flex-1 p-1"
+        labelWidthPx={188}
       >
 
         {formMethods && (
-          <ProjectSettingSection formMethods={formMethods} />
+          <>
+            <ProjectSettingSection formMethods={formMethods} />
+            <FormLayout.Separator />
+          </>
         )}
+
+        <PersonalSettingSection
+          personalSettings={personalSettings}
+          save={save}
+        />
 
       </FormLayout.Root>
 
@@ -66,7 +78,14 @@ const ProjectSettingSection: React.FC<{
 }> = ({ formMethods: { getValues, register } }) => {
 
   return (
-    <FormLayout.Section label="プロジェクト設定" border>
+    <FormLayout.Section labelEnd={(
+      <div className="flex flex-col">
+        <h2 className="text-lg font-bold">プロジェクト設定</h2>
+        <span className="text-xs text-gray-600">
+          プロジェクト全体に適用される設定項目
+        </span>
+      </div>
+    )}>
       {getValues('projectOptionPropertyInfos').map((propInfo, index) => (
         <ProjectSettingField
           key={propInfo?.propertyName || index}
@@ -89,59 +108,102 @@ const ProjectSettingField: React.FC<{
   const fieldName: ReactHookForm.Path<SchemaDefinitionGlobalState> = `projectOptions.${propertyInfo.propertyName}`
 
   return (
-    <FormLayout.Field label={propertyInfo.propertyName}>
-      <div className="flex flex-col gap-px">
-        {(() => {
-          switch (propertyInfo.propertyType) {
-            case 'bool':
-              return (
-                <input
-                  type="checkbox"
-                  {...register(fieldName)}
-                  className="h-4 w-4"
-                />
-              )
-            case 'int':
-              return (
-                <input
-                  type="number"
-                  {...register(fieldName, {
-                    valueAsNumber: true,
-                    setValueAs: (value: string) => {
-                      const numValue = parseInt(value);
-                      return isNaN(numValue) ? 0 : numValue;
-                    }
-                  })}
-                  placeholder={String(propertyInfo.defaultValue || '0')}
-                  className="px-1 py-px border border-gray-300"
-                />
-              )
-            default:
-              return (
-                <input
-                  type="text"
-                  {...register(fieldName)}
-                  placeholder={String(propertyInfo.defaultValue || '')}
-                  className="px-1 py-px border border-gray-300"
-                />
-              )
-          }
-        })()}
-        <span className="mb-2 text-xs text-gray-500">
-          {propertyInfo.description}
-        </span>
-      </div>
-    </FormLayout.Field>
+    <>
+      <FormLayout.Field label={propertyInfo.propertyName}>
+        <div className="flex flex-col">
+          {(() => {
+            switch (propertyInfo.propertyType) {
+              case 'bool':
+                return (
+                  <input
+                    type="checkbox"
+                    {...register(fieldName)}
+                    className="h-4 w-4"
+                  />
+                )
+              case 'int':
+                return (
+                  <input
+                    type="number"
+                    {...register(fieldName, {
+                      valueAsNumber: true,
+                      setValueAs: (value: string) => {
+                        const numValue = parseInt(value);
+                        return isNaN(numValue) ? 0 : numValue;
+                      }
+                    })}
+                    placeholder={String(propertyInfo.defaultValue || '0')}
+                    className="px-1 py-px border border-gray-500"
+                  />
+                )
+              default:
+                return (
+                  <input
+                    type="text"
+                    {...register(fieldName)}
+                    placeholder={String(propertyInfo.defaultValue || '')}
+                    className="px-1 py-px border border-gray-500"
+                  />
+                )
+            }
+          })()}
+          <span className="mb-2 text-xs text-gray-500">
+            {propertyInfo.description}
+          </span>
+        </div>
+      </FormLayout.Field>
+    </>
   )
 }
 
+
+/**
+ * 個人設定セクション
+ */
+const PersonalSettingSection: React.FC<{
+  personalSettings: PersonalSettings
+  save: <TPath extends ReactHookForm.Path<PersonalSettings>>(
+    path: TPath,
+    value: ReactHookForm.PathValue<PersonalSettings, TPath>
+  ) => void
+}> = ({ personalSettings, save }) => {
+
+  const handleHideGridButtonsChange = useEvent((e: React.ChangeEvent<HTMLInputElement>) => {
+    save('hideGridButtons', e.target.checked)
+  })
+
+  return (
+    <FormLayout.Section labelEnd={(
+      <div className="flex flex-col">
+        <h2 className="text-lg font-bold">個人用設定</h2>
+        <span className="text-xs text-gray-600">
+          自身にのみ適用される設定項目
+        </span>
+      </div>
+    )}>
+      <FormLayout.Field label="hideGridButtons">
+        <div className="flex flex-col gap-px my-2">
+          <input
+            type="checkbox"
+            checked={personalSettings.hideGridButtons ?? false}
+            onChange={handleHideGridButtonsChange}
+            className="h-4 w-4"
+          />
+          <span className="text-xs text-gray-500">
+            グリッドの操作説明ボタンを非表示にする
+          </span>
+        </div>
+      </FormLayout.Field>
+    </FormLayout.Section>
+  )
+}
 
 /** ルート集約の属性名の表示用 */
 const FormLayoutLabel: React.ElementType<LabelProps> = ({ className, ...rest }) => {
   return (
     <FormLayout.DefaultLabel
       {...rest}
-      className={`text-sm ${className ?? ''}`}
+      className={`text-sm break-all ${className ?? ''}`}
     />
   )
 }

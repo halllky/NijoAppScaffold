@@ -3,6 +3,7 @@ import * as ReactRouter from "react-router-dom"
 import ReactDOM from "react-dom/client"
 import * as Util from "@nijo/ui-components/util"
 import { getRouterForNijoUi } from "./routing"
+import { PersonalSettingsProvider } from "./Settings/usePersonalSettings"
 
 import "./main.css"
 import "allotment/dist/style.css"
@@ -19,11 +20,13 @@ function App() {
   }, [])
 
   return (
-    <Util.IMEProvider>
-      <Util.CtrlSProvider>
-        <ReactRouter.RouterProvider router={router} />
-      </Util.CtrlSProvider>
-    </Util.IMEProvider>
+    <PersonalSettingsProvider>
+      <Util.IMEProvider>
+        <Util.CtrlSProvider>
+          <ReactRouter.RouterProvider router={router} />
+        </Util.CtrlSProvider>
+      </Util.IMEProvider>
+    </PersonalSettingsProvider>
   )
 }
 
