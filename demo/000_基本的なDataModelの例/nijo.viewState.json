@@ -1,0 +1,75 @@
+{
+  "erDiagram": {
+    "nodes": {
+      "1956b3f6-a6e5-493c-b87a-e86933c7b45f": {
+        "id": "1956b3f6-a6e5-493c-b87a-e86933c7b45f",
+        "label": "社員",
+        "members": [
+          "社員ID (PK)",
+          "氏名",
+          "所属部署_部署ID"
+        ],
+        "background-color": "#ea580c",
+        "border-color": "#ea580c"
+      },
+      "4c96eb60-249d-414c-8e3e-4b5a981fa8c6": {
+        "id": "4c96eb60-249d-414c-8e3e-4b5a981fa8c6",
+        "label": "部署",
+        "members": [
+          "部署ID (PK)",
+          "部署名"
+        ],
+        "background-color": "#ea580c",
+        "border-color": "#ea580c"
+      }
+    },
+    "edges": [
+      {
+        "source": "1956b3f6-a6e5-493c-b87a-e86933c7b45f",
+        "target": "4c96eb60-249d-414c-8e3e-4b5a981fa8c6",
+        "label": "所属部署",
+        "line-color": "#6c757d",
+        "line-style": "solid"
+      }
+    ],
+    "nodePositions": {},
+    "parentMap": {}
+  },
+  "schemaDefinition": {
+    "nodes": {
+      "1956b3f6-a6e5-493c-b87a-e86933c7b45f": {
+        "id": "1956b3f6-a6e5-493c-b87a-e86933c7b45f",
+        "label": "社員",
+        "background-color": "#ea580c",
+        "border-color": "#ea580c"
+      },
+      "4c96eb60-249d-414c-8e3e-4b5a981fa8c6": {
+        "id": "4c96eb60-249d-414c-8e3e-4b5a981fa8c6",
+        "label": "部署",
+        "background-color": "#ea580c",
+        "border-color": "#ea580c"
+      }
+    },
+    "edges": [
+      {
+        "source": "1956b3f6-a6e5-493c-b87a-e86933c7b45f",
+        "target": "4c96eb60-249d-414c-8e3e-4b5a981fa8c6",
+        "label": "所属部署",
+        "line-color": "#ea580c",
+        "line-style": "solid",
+        "targetEndShape": "triangle"
+      }
+    ],
+    "nodePositions": {
+      "1956b3f6-a6e5-493c-b87a-e86933c7b45f": {
+        "x": 20,
+        "y": 20
+      },
+      "4c96eb60-249d-414c-8e3e-4b5a981fa8c6": {
+        "x": 21,
+        "y": 88
+      }
+    },
+    "parentMap": {}
+  }
+}
