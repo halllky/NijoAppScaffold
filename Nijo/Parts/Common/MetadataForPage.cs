@@ -69,11 +69,11 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                   {{WithIndent(RefMetadata.RenderTypeScriptType(ctx), "  ")}}
 
                   /** 画面の自動生成のためのメタデータ取得関数 */
-                  export const getAll = (): { [k in ( {{CommandQueryMappings.DATA_MODEL_TYPE}} | {{CommandQueryMappings.QUERY_MODEL_TYPE}} | {{CommandQueryMappings.COMMAND_MODEL_TYPE}} | {{CommandQueryMappings.STRUCTURE_MODEL_TYPE}})]: {{AggregateMetadata.TYPE_ROOT_AGGREGATE_NAME}} } => ({
+                  export const getAll = () => ({
                 {{entriesOrderByDataFlow.SelectTextTemplate(entry => $$"""
                     '{{entry.PhysicalName}}': {{WithIndent(entry.RenderTypeScriptMetadataObject(ctx), "    ")}},
                 """)}}
-                  })
+                  }) as const satisfies { [k in ( {{CommandQueryMappings.DATA_MODEL_TYPE}} | {{CommandQueryMappings.QUERY_MODEL_TYPE}} | {{CommandQueryMappings.COMMAND_MODEL_TYPE}} | {{CommandQueryMappings.STRUCTURE_MODEL_TYPE}})]: {{AggregateMetadata.TYPE_ROOT_AGGREGATE_NAME}} }
                 }
                 """,
         };
