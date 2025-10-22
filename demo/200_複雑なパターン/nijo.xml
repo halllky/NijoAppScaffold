@@ -1503,7 +1503,7 @@
         UniqueId="cc452b00-3f73-4acb-9a78-9a02efba743b" />
       <担当者
         DbName="NEXT_STAFF_ID"
-        Type="ref-to:医療従事者マスタ"
+                Type="ref-to:医療従事者マスタ"
         UniqueId="d8c3e934-8fa8-4750-8d10-5dde1af74c93" />
       <内容
         DbName="NEXT_CONTENT"
@@ -1926,10 +1926,14 @@
     MapToView="True"
     Type="data-model"
     UniqueId="view-patient-stats-by-dept-001">
-    <診療科
-      DbName="STORE_ID"
-      Type="ref-to:診療科マスタ"
-      UniqueId="view-pat-stats-dept-001" />
+    <診療科コード
+      DbName="DEPT_CODE"
+      Type="word"
+      UniqueId="view-pat-stats-dept-code-001" />
+    <診療科名
+      DbName="DEPT_NAME"
+      Type="word"
+      UniqueId="view-pat-stats-dept-name-001" />
     <患者総数
       DbName="TOTAL_PATIENTS"
       Type="int"

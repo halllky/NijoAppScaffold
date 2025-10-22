@@ -109,6 +109,26 @@ namespace Nijo.Models {
                 }
             }
 
+            // キーなしのビューからのref-toを禁止
+            // MapToViewが指定されており、かつ自身と子孫のすべてにキーがない場合のみref-toを禁止
+            if (isView) {
+                var hasAnyKey = rootAggregateElement
+                    .DescendantsAndSelf()
+                    .Any(el => el.ElementsWithoutMemo().Any(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null));
+
+                if (!hasAnyKey) {
+                    // 自身と子孫のすべてにキーがない場合、ref-toをチェック
+                    var refToMembers = rootAggregateElement
+                        .Descendants()
+                        .Where(member => member.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value?.StartsWith(SchemaParseContext.NODE_TYPE_REFTO + ":") == true)
+                        .ToList();
+
+                    foreach (var refToMember in refToMembers) {
+                        addError(refToMember, "キーが定義されていないビューからは他の集約を参照(ref-to)できません。EF Coreの制約により、キーレスエンティティからのナビゲーションプロパティはサポートされていません。");
+                    }
+                }
+            }
+
             // 循環参照のチェック（主キーや必須制約による閉路が生じないか）
             ValidateCircularReferences(rootAggregateElement, context, addError);
         }
