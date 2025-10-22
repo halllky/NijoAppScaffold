@@ -74,13 +74,23 @@ namespace Nijo.Models {
         }
 
         public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
-            // ルートとChildrenはキー必須
+            // MapToViewかどうかを確認
+            var isView = rootAggregateElement.Attribute(BasicNodeOptions.MapToView.AttributeName) != null;
+            var hasChildOrChildren = rootAggregateElement
+                .Descendants()
+                .Any(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILD
+                        || el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILDREN);
+
+            // ルートとChildrenはキー必須（ただしビューでChild/Childrenがない場合は除外）
             var rootAndChildren = rootAggregateElement
                 .DescendantsAndSelf()
                 .Where(el => el.GetParentWithoutMemo() == el.Document?.Root
                           || el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILDREN);
             foreach (var el in rootAndChildren) {
-                if (el.ElementsWithoutMemo().All(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) == null)) {
+                var hasKey = el.ElementsWithoutMemo().Any(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null);
+
+                // ビューでChild/Childrenがない場合はキーなしを許容
+                if (!hasKey && !(isView && !hasChildOrChildren && el.GetParentWithoutMemo() == el.Document?.Root)) {
                     addError(el, "キーが指定されていません。");
                 }
             }
@@ -239,47 +249,51 @@ namespace Nijo.Models {
 
         public void GenerateCode(CodeRenderingContext ctx, RootAggregate rootAggregate) {
             var aggregateFile = new SourceFileByAggregate(rootAggregate);
+            var isView = rootAggregate.IsView;
 
             // データ型: EFCore Entity
             var efCoreEntity = new EFCoreEntity(rootAggregate);
             aggregateFile.AddCSharpClass(EFCoreEntity.RenderClassDeclaring(efCoreEntity, ctx), "Class_EFCoreEntity");
             ctx.Use<DbContextClass>().AddEntities(efCoreEntity.EnumerateThisAndDescendants());
 
-            // データ型: SaveCommand
-            aggregateFile.AddCSharpClass(SaveCommand.RenderAll(rootAggregate, ctx), "Class_SaveCommand");
+            // ビューの場合は更新系の処理をスキップ
+            if (!isView) {
+                // データ型: SaveCommand
+                aggregateFile.AddCSharpClass(SaveCommand.RenderAll(rootAggregate, ctx), "Class_SaveCommand");
 
-            // データ型: ほかの集約から参照されるときのキー
+                // データ型: SaveCommandメッセージ
+                var saveCommandMessage = new SaveCommandMessageContainer(rootAggregate);
+                aggregateFile.AddCSharpClass(SaveCommandMessageContainer.RenderTree(rootAggregate), "Class_SaveCommandMessage");
+                ctx.Use<MessageContainer.BaseClass>()
+                    .Register(saveCommandMessage.InterfaceName, saveCommandMessage.CsClassName)
+                    .Register(saveCommandMessage.CsClassName, saveCommandMessage.CsClassName);
+
+                // 処理: 新規登録、更新、削除
+                var create = new CreateMethod(rootAggregate);
+                var update = new UpdateMethod(rootAggregate);
+                var delete = new DeleteMethod(rootAggregate);
+                aggregateFile.AddAppSrvMethod(create.Render(ctx), "新規登録処理");
+                aggregateFile.AddAppSrvMethod(update.Render(ctx), "更新処理");
+                aggregateFile.AddAppSrvMethod(delete.Render(ctx), "物理削除処理");
+
+                // 処理: 自動生成されるバリデーションエラーチェック
+                aggregateFile.AddAppSrvMethod($$"""
+                    #region 自動生成されるバリデーション処理
+                    {{ValidateRequired.Render(rootAggregate, ctx)}}
+                    {{ValidateMaxLength.Render(rootAggregate, ctx)}}
+                    {{ValidateCharacterType.Render(rootAggregate, ctx)}}
+                    {{ValidateDigitsAndScales.Render(rootAggregate, ctx)}}
+                    {{ValidateDynamicEnumType.RenderAppSrvCheckMethod(rootAggregate, ctx)}}
+                    #endregion 自動生成されるバリデーション処理
+                    """, "バリデーション処理");
+
+                // 処理: ダミーデータ作成関数
+                ctx.Use<DummyDataGenerator>()
+                    .Add(rootAggregate);
+            }
+
+            // データ型: ほかの集約から参照されるときのキー（ビューでも必要）
             aggregateFile.AddCSharpClass(KeyClass.KeyClassEntry.RenderClassDeclaringRecursively(rootAggregate, ctx), "Class_KeyClass");
-
-            // データ型: SaveCommandメッセージ
-            var saveCommandMessage = new SaveCommandMessageContainer(rootAggregate);
-            aggregateFile.AddCSharpClass(SaveCommandMessageContainer.RenderTree(rootAggregate), "Class_SaveCommandMessage");
-            ctx.Use<MessageContainer.BaseClass>()
-                .Register(saveCommandMessage.InterfaceName, saveCommandMessage.CsClassName)
-                .Register(saveCommandMessage.CsClassName, saveCommandMessage.CsClassName);
-
-            // 処理: 新規登録、更新、削除
-            var create = new CreateMethod(rootAggregate);
-            var update = new UpdateMethod(rootAggregate);
-            var delete = new DeleteMethod(rootAggregate);
-            aggregateFile.AddAppSrvMethod(create.Render(ctx), "新規登録処理");
-            aggregateFile.AddAppSrvMethod(update.Render(ctx), "更新処理");
-            aggregateFile.AddAppSrvMethod(delete.Render(ctx), "物理削除処理");
-
-            // 処理: 自動生成されるバリデーションエラーチェック
-            aggregateFile.AddAppSrvMethod($$"""
-                #region 自動生成されるバリデーション処理
-                {{ValidateRequired.Render(rootAggregate, ctx)}}
-                {{ValidateMaxLength.Render(rootAggregate, ctx)}}
-                {{ValidateCharacterType.Render(rootAggregate, ctx)}}
-                {{ValidateDigitsAndScales.Render(rootAggregate, ctx)}}
-                {{ValidateDynamicEnumType.RenderAppSrvCheckMethod(rootAggregate, ctx)}}
-                #endregion 自動生成されるバリデーション処理
-                """, "バリデーション処理");
-
-            // 処理: ダミーデータ作成関数
-            ctx.Use<DummyDataGenerator>()
-                .Add(rootAggregate);
 
             // 定数: メタデータ
             ctx.Use<Metadata>().Add(rootAggregate);
@@ -293,8 +307,8 @@ namespace Nijo.Models {
                 QueryModel.GenerateCode(ctx, rootAggregate, aggregateFile);
             }
 
-            // 標準の一括作成コマンド
-            if (rootAggregate.GenerateBatchUpdateCommand) {
+            // 標準の一括作成コマンド（ビューでは生成しない）
+            if (!isView && rootAggregate.GenerateBatchUpdateCommand) {
                 var batchUpdate = new BatchUpdate(rootAggregate);
                 aggregateFile.AddWebapiControllerAction(batchUpdate.RenderControllerAction(ctx));
                 aggregateFile.AddAppSrvMethod(batchUpdate.RenderAppSrvMethod(ctx), "一括更新処理");

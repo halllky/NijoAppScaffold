@@ -250,6 +250,37 @@ internal static class BasicNodeOptions {
             return false;
         },
     };
+    internal static NodeOption MapToView = new() {
+        AttributeName = "MapToView",
+        DisplayName = "ビューへマッピング",
+        Type = E_NodeOptionType.Boolean,
+        HelpText = $$"""
+            この集約をデータベースのビュー(View)にマッピングする場合に指定してください。
+            ビューは読み取り専用のため、新規登録・更新・削除の処理は生成されません。
+            ビュー定義自体はソースコード生成の対象外となり、手動で作成する必要があります。
+            """,
+        Validate = ctx => {
+            // データモデルのルート集約のみ許可
+            if (ctx.NodeType != E_NodeType.RootAggregate) {
+                ctx.AddError("このオプションはルート集約にのみ指定できます。");
+                return;
+            }
+
+            if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model)) {
+                if (model is not DataModel) {
+                    ctx.AddError("このオプションはデータモデルにのみ指定できます。");
+                }
+            }
+
+            // GenerateBatchUpdateCommandとの併用チェック
+            if (ctx.XElement.Attribute(GenerateBatchUpdateCommand.AttributeName)?.Value?.ToLower() == "true") {
+                ctx.AddError("MapToViewとGenerateBatchUpdateCommandを同時に指定することはできません。");
+            }
+        },
+        IsAvailableModelMembers = model => {
+            return model is DataModel;
+        },
+    };
     #endregion DataModel用
 
 

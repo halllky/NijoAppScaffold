@@ -1875,4 +1875,76 @@
   <アプリケーション死活監視
     Type="command-model"
     UniqueId="ef0fb518-440b-4cd1-81e9-707ccab1a63b" />
+  <!-- ビューにマッピングされるデータモデル（キーあり、Childrenあり、ref-toあり、GDQM） -->
+  <機器分類別在庫集計ビュー
+    DbName="V_INVENTORY_BY_CATEGORY"
+    GenerateDefaultQueryModel="True"
+    LatinName="Inventory By Category View"
+    MapToView="True"
+    Type="data-model"
+    UniqueId="view-inventory-by-category-001">
+    <機器分類
+      DbName="CATEGORY_ID"
+      IsKey="True"
+      Type="ref-to:機器分類マスタ"
+      UniqueId="view-inv-cat-category-001" />
+    <在庫合計
+      DbName="TOTAL_STOCK"
+      Type="int"
+      UniqueId="view-inv-cat-total-001" />
+    <機器種別数
+      DbName="PRODUCT_COUNT"
+      Type="int"
+      UniqueId="view-inv-cat-prod-count-001" />
+    <最終更新日時
+      DbName="LAST_UPDATED"
+      Type="datetime"
+      UniqueId="view-inv-cat-last-updated-001" />
+    <保管庫別在庫
+      DbName="WAREHOUSE_INVENTORY"
+      Type="children"
+      UniqueId="view-inv-cat-warehouse-inv-001">
+      <保管庫
+        DbName="WAREHOUSE_ID"
+        IsKey="True"
+        Type="ref-to:保管庫マスタ"
+        UniqueId="view-inv-cat-wh-warehouse-001" />
+      <在庫数
+        DbName="STOCK_QUANTITY"
+        Type="int"
+        UniqueId="view-inv-cat-wh-quantity-001" />
+      <機器数
+        DbName="EQUIPMENT_COUNT"
+        Type="int"
+        UniqueId="view-inv-cat-wh-eq-count-001" />
+    </保管庫別在庫>
+  </機器分類別在庫集計ビュー>
+  <!-- キーなしのビュー（Child/Childrenなし） -->
+  <診療科別患者統計ビュー
+    DbName="V_PATIENT_STATS_BY_DEPT"
+    LatinName="Patient Statistics By Department View"
+    MapToView="True"
+    Type="data-model"
+    UniqueId="view-patient-stats-by-dept-001">
+    <診療科
+      DbName="STORE_ID"
+      Type="ref-to:診療科マスタ"
+      UniqueId="view-pat-stats-dept-001" />
+    <患者総数
+      DbName="TOTAL_PATIENTS"
+      Type="int"
+      UniqueId="view-pat-stats-total-001" />
+    <今月の新規患者数
+      DbName="NEW_PATIENTS_THIS_MONTH"
+      Type="int"
+      UniqueId="view-pat-stats-new-001" />
+    <平均年齢
+      DbName="AVG_AGE"
+      Type="decimal"
+      UniqueId="view-pat-stats-avg-age-001" />
+    <統計日時
+      DbName="STATS_DATETIME"
+      Type="datetime"
+      UniqueId="view-pat-stats-datetime-001" />
+  </診療科別患者統計ビュー>
 </NijoApplicationBuilder>

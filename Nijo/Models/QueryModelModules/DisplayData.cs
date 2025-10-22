@@ -71,6 +71,8 @@ namespace Nijo.Models.QueryModelModules {
         #region SaveCommandへの変換
         protected override string RenderAdditionalMethodToCSharp() {
             if (Aggregate is not RootAggregate root || root.Model is not DataModel) return string.Empty;
+            // ビューの場合はSaveCommandが生成されないため変換メソッドも不要
+            if (root.IsView) return string.Empty;
 
             var createCommand = new SaveCommand(Aggregate, SaveCommand.E_Type.Create);
             var udpateCommand = new SaveCommand(Aggregate, SaveCommand.E_Type.Update);
