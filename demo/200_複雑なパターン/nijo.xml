@@ -1503,7 +1503,7 @@
         UniqueId="cc452b00-3f73-4acb-9a78-9a02efba743b" />
       <担当者
         DbName="NEXT_STAFF_ID"
-                Type="ref-to:医療従事者マスタ"
+        Type="ref-to:医療従事者マスタ"
         UniqueId="d8c3e934-8fa8-4750-8d10-5dde1af74c93" />
       <内容
         DbName="NEXT_CONTENT"
@@ -1871,7 +1871,8 @@
       DisplayName="JSONテンプレート"
       UniqueId="const-json-template-001" />
   </SystemMessages>
-  <!--引数・戻り値ともに存在しないコマンドモデルの例。-->
+  <!--引数・戻り値ともに存在しないコマンドモデルの例。
+\←コメントにバックスラッシュがあるときのテスト-->
   <アプリケーション死活監視
     Type="command-model"
     UniqueId="ef0fb518-440b-4cd1-81e9-707ccab1a63b" />

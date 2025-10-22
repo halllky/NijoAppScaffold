@@ -544,7 +544,8 @@
         "id": "view-patient-stats-by-dept-001",
         "label": "診療科別患者統計ビュー",
         "members": [
-          "診療科_診療科ID",
+          "診療科コード",
+          "診療科名",
           "患者総数",
           "今月の新規患者数",
           "平均年齢",
@@ -909,13 +910,6 @@
         "source": "view-inv-cat-warehouse-inv-001",
         "target": "2e2bbe87-8951-46a1-a838-92c879daa4f0",
         "label": "保管庫",
-        "line-color": "#6c757d",
-        "line-style": "solid"
-      },
-      {
-        "source": "view-patient-stats-by-dept-001",
-        "target": "be9d0172-ba9d-40cf-bd11-4a8c5eaaca8d",
-        "label": "診療科",
         "line-color": "#6c757d",
         "line-style": "solid"
       }
@@ -1677,14 +1671,6 @@
         "line-color": "#ea580c",
         "line-style": "solid",
         "targetEndShape": "triangle"
-      },
-      {
-        "source": "view-patient-stats-by-dept-001",
-        "target": "be9d0172-ba9d-40cf-bd11-4a8c5eaaca8d",
-        "label": "診療科",
-        "line-color": "#ea580c",
-        "line-style": "solid",
-        "targetEndShape": "triangle"
       }
     ],
     "nodePositions": {
@@ -1933,8 +1919,8 @@
         "y": 1060.0000038146973
       },
       "e8f20d1d-9f4e-4f9c-9f4e-1d9f4e9f4e1d": {
-        "x": 680.0000011920929,
-        "y": 565.0000023841858
+        "x": 670.5000011920929,
+        "y": 545.0000023841858
       },
       "e906b965-c7a7-4605-9491-0af60db4f4bf": {
         "x": 1278.000002861023,

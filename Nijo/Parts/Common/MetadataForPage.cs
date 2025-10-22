@@ -520,7 +520,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
         var comment = ctx.SchemaParser.GetComment(xElement, E_CsTs.TypeScript);
         if (!string.IsNullOrWhiteSpace(comment)) {
             yield return $$"""
-                comment: '{{comment.Replace("'", "\\'")}}',
+                comment: '{{comment.Replace("'", "\\'").Replace("\\", "\\\\")}}',
                 """;
         }
 
@@ -538,7 +538,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
             // TypeScriptの値をレンダリング
             var tsValue = option.Type == E_NodeOptionType.Boolean
                 ? "true"
-                : $"'{attributeValue?.Replace("'", "\\'")}'";
+                : $"'{attributeValue?.Replace("'", "\\'").Replace("\\", "\\\\")}'";
 
             yield return $$"""
                 {{propName}}: {{tsValue}},
