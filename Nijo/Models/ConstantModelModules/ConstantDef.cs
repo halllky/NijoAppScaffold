@@ -35,7 +35,7 @@ namespace Nijo.Models.ConstantModelModules {
             var rootConstants = constants.Where(c => !c.Path.Contains('.')).ToList();
             var rootGroups = groups.Where(g => !g.Path.Contains('.')).ToList();
 
-            var xmlComment = ctx.SchemaParser.GetCommentLines(_parser.RootAggregateElement);
+            var xmlComment = ctx.SchemaParser.GetCommentMultiLine(_parser.RootAggregateElement);
 
             return $$"""
                 namespace {{ctx.Config.RootNamespace}};
@@ -69,7 +69,7 @@ namespace Nijo.Models.ConstantModelModules {
             var childGroups = allGroups.Where(g => g.Path.StartsWith(group.Path + ".") &&
                                                    g.Path.Substring(group.Path.Length + 1).IndexOf('.') == -1).ToList();
 
-            var xmlComment = ctx.SchemaParser.GetCommentLines(group.Element);
+            var xmlComment = ctx.SchemaParser.GetCommentMultiLine(group.Element);
 
             return $$"""
                 /// <summary>
@@ -111,7 +111,7 @@ namespace Nijo.Models.ConstantModelModules {
             var rootConstants = constants.Where(c => !c.Path.Contains('.')).ToList();
             var rootGroups = groups.Where(g => !g.Path.Contains('.')).ToList();
 
-            var xmlComment = ctx.SchemaParser.GetCommentLines(_parser.RootAggregateElement);
+            var xmlComment = ctx.SchemaParser.GetCommentMultiLine(_parser.RootAggregateElement);
 
             var contents = $$"""
                 /**
@@ -148,7 +148,7 @@ namespace Nijo.Models.ConstantModelModules {
             var childGroups = allGroups.Where(g => g.Path.StartsWith(group.Path + ".") &&
                                                    g.Path.Substring(group.Path.Length + 1).IndexOf('.') == -1).ToList();
 
-            var xmlComment = ctx.SchemaParser.GetCommentLines(group.Element);
+            var xmlComment = ctx.SchemaParser.GetCommentMultiLine(group.Element);
 
             return $$"""
                 /**
@@ -175,7 +175,7 @@ namespace Nijo.Models.ConstantModelModules {
         /// C#の定数を生成（XMLコメント対応）
         /// </summary>
         private string RenderCSharpConstant(ConstantValueDef constant, CodeRenderingContext ctx) {
-            var xmlComment = ctx.SchemaParser.GetCommentLines(constant.Element);
+            var xmlComment = ctx.SchemaParser.GetCommentMultiLine(constant.Element);
 
             return $$"""
                 /// <summary>
@@ -192,7 +192,7 @@ namespace Nijo.Models.ConstantModelModules {
         /// TypeScriptの定数を生成（JSDoc対応）
         /// </summary>
         private string RenderTypeScriptConstant(ConstantValueDef constant, CodeRenderingContext ctx) {
-            var xmlComment = ctx.SchemaParser.GetCommentLines(constant.Element);
+            var xmlComment = ctx.SchemaParser.GetCommentMultiLine(constant.Element);
 
             return $$"""
                 /**

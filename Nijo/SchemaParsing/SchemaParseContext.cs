@@ -99,7 +99,7 @@ public class SchemaParseContext {
     /// 改行コードは \r\n または \n に置き換えられます。
     /// バックスラッシュとクォート文字は適切にエスケープされます。
     /// </summary>
-    internal string GetComment(XElement xElement, E_CsTs csts) {
+    internal string GetCommentSingleLine(XElement xElement, E_CsTs csts) {
         var rawText = xElement.PreviousNode is XComment comment ? comment.Value.Trim() : string.Empty;
 
         // バックスラッシュとダブルクォートをエスケープ
@@ -117,7 +117,7 @@ public class SchemaParseContext {
     /// <summary>
     /// このXElementの直前にXCommentがあればそのテキストを改行コードを1行ずつ返します。
     /// </summary>
-    internal IEnumerable<string> GetCommentLines(XElement xElement) {
+    internal IEnumerable<string> GetCommentMultiLine(XElement xElement) {
         var rawText = xElement.PreviousNode is XComment comment ? comment.Value.Trim() : string.Empty;
         return rawText
             .ReplaceLineEndings(Environment.NewLine)

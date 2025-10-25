@@ -53,8 +53,8 @@ namespace Nijo.ImmutableSchema {
         /// <summary>
         /// コメント
         /// </summary>
-        [Obsolete("SchemaParseContext.GetCommentを直接使ってください")]
-        public string GetComment(E_CsTs csts) => _ctx.GetComment(XElement, csts);
+        [Obsolete("SchemaParseContext.GetCommentSingleLine または SchemaParseContext.GetCommentMultiLine を直接使ってください")]
+        public string GetComment(E_CsTs csts) => _ctx.GetCommentSingleLine(XElement, csts);
 
         /// <summary>
         /// この集約が持つメンバーを列挙します。
