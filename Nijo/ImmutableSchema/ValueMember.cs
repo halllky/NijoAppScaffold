@@ -28,6 +28,7 @@ namespace Nijo.ImmutableSchema {
         public string DisplayName => _ctx.GetDisplayName(XElement);
         public string DbName => _ctx.GetDbName(XElement);
         public decimal Order => XElement.ElementsBeforeSelf().Count();
+        [Obsolete("SchemaParseContext.GetCommentを直接使ってください")]
         public string GetComment(E_CsTs csts) => _ctx.GetComment(XElement, csts);
 
         public AggregateBase Owner {

@@ -53,6 +53,7 @@ namespace Nijo.ImmutableSchema {
         /// <summary>
         /// コメント
         /// </summary>
+        [Obsolete("SchemaParseContext.GetCommentを直接使ってください")]
         public string GetComment(E_CsTs csts) => _ctx.GetComment(XElement, csts);
 
         /// <summary>

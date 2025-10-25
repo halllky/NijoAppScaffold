@@ -16,8 +16,6 @@ namespace Nijo.Parts.Common;
 /// <summary>
 /// 画面の自動生成のためのメタデータ。
 /// <see cref="Metadata"/> と役割が相当部分重複している。
-///
-/// ※ こちらはC#側のモジュールが生成されない。
 /// </summary>
 internal class MetadataForPage : IMultiAggregateSourceFile {
 
@@ -520,7 +518,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
         var comment = ctx.SchemaParser.GetComment(xElement, E_CsTs.TypeScript);
         if (!string.IsNullOrWhiteSpace(comment)) {
             yield return $$"""
-                comment: '{{comment.Replace("'", "\\'").Replace("\\", "\\\\")}}',
+                comment: '{{comment}}',
                 """;
         }
 
@@ -532,13 +530,13 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 continue;
             }
 
-            // TypeScriptプロパティ名を生成（camelCaseに変換）
+            // TypeScriptプロパティ名を生成(camelCaseに変換)
             var propName = option.AttributeName.ToCamelCase();
 
             // TypeScriptの値をレンダリング
             var tsValue = option.Type == E_NodeOptionType.Boolean
                 ? "true"
-                : $"'{attributeValue?.Replace("'", "\\'").Replace("\\", "\\\\")}'";
+                : $"'{attributeValue?.Replace("\\", "\\\\").Replace("'", "\\'")}'";
 
             yield return $$"""
                 {{propName}}: {{tsValue}},
@@ -568,7 +566,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
         var comment = ctx.SchemaParser.GetComment(xElement, E_CsTs.CSharp);
         if (!string.IsNullOrWhiteSpace(comment)) {
             yield return $$"""
-                Comment = "{{comment.Replace("\"", "\\\"")}}",
+                Comment = "{{comment}}",
                 """;
         }
 
@@ -583,7 +581,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
             // C#の値をレンダリング
             var csValue = option.Type == E_NodeOptionType.Boolean
                 ? "true"
-                : $"\"{attributeValue?.Replace("\"", "\\\"")}\"";
+                : $"\"{attributeValue?.Replace("\\", "\\\\").Replace("\"", "\\\"")}\"";
 
             yield return $$"""
                 {{option.AttributeName}} = {{csValue}},

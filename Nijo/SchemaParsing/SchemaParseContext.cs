@@ -97,11 +97,22 @@ public class SchemaParseContext {
     /// <summary>
     /// このXElementの直前にXCommentがあればそのテキストを返し、なければ空文字列を返します。
     /// 改行コードは \r\n または \n に置き換えられます。
+    /// バックスラッシュとクォート文字は適切にエスケープされます。
     /// </summary>
     internal string GetComment(XElement xElement, E_CsTs csts) {
         var rawText = xElement.PreviousNode is XComment comment ? comment.Value.Trim() : string.Empty;
-        var lineEnding = csts == E_CsTs.CSharp ? "\\r\\n" : "\\n";
-        return rawText.Replace("\r\n", lineEnding).Replace("\n", lineEnding);
+
+        // バックスラッシュとダブルクォートをエスケープ
+        var escaped = csts == E_CsTs.CSharp
+            ? rawText.Replace("\\", "\\\\").Replace("\"", "\\\"")
+            : rawText.Replace("\\", "\\\\").Replace("'", "\\'");
+
+        // 改行コードを置き換え
+        var lineEndingReplaced = csts == E_CsTs.CSharp
+            ? escaped.ReplaceLineEndings("\\r\\n")
+            : escaped.ReplaceLineEndings("\\n");
+
+        return lineEndingReplaced;
     }
     /// <summary>
     /// このXElementの直前にXCommentがあればそのテキストを改行コードを1行ずつ返します。
