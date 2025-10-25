@@ -97,8 +97,10 @@ namespace Nijo.Models.DataModelModules {
                         /// <summary>{{m.DisplayName}}</summary>
                         public required {{m.GetTypeName(E_CsTs.CSharp)}}? {{m.PhysicalName}} { get; set; }
                     """)}}
+                    {{If(!_aggregate.GetRoot().IsView, () => $$"""
 
                         {{WithIndent(RenderCovertFromCreateCommand(), "    ")}}
+                    """)}}
                     }
                     """;
             }
