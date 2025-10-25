@@ -23,6 +23,8 @@ using Nijo.Models.QueryModelModules;
 using Nijo.ImmutableSchema;
 using Nijo.CodeGenerating;
 using Nijo.Models;
+using System.CommandLine.Invocation;
+using System.CommandLine.Binding;
 
 [assembly: InternalsVisibleTo("Nijo.IntegrationTest")]
 
@@ -104,7 +106,7 @@ namespace Nijo {
                 name: "new",
                 description: "新規プロジェクトを作成します。")
                 { path };
-            newProject.SetHandler(NewProject, path);
+            newProject.SetHandler(NewProject(path));
             rootCommand.AddCommand(newProject);
 
             // 検証
@@ -112,7 +114,7 @@ namespace Nijo {
                 name: "validate",
                 description: "スキーマ定義の検証を行ないます。")
                 { path };
-            validate.SetHandler(Validate, path);
+            validate.SetHandler(Validate(path));
             rootCommand.AddCommand(validate);
 
             // コード自動生成
@@ -120,7 +122,7 @@ namespace Nijo {
                 name: "generate",
                 description: "ソースコードの自動生成を実行します。")
                 { path, allowNotImplemented };
-            generate.SetHandler(Generate, path, allowNotImplemented);
+            generate.SetHandler(Generate(path, allowNotImplemented));
             rootCommand.AddCommand(generate);
 
             // デバッグ実行開始
@@ -172,54 +174,72 @@ namespace Nijo {
         /// <summary>
         /// 新規プロジェクトを作成します。
         /// </summary>
-        /// <param name="path">対象フォルダまでの相対パス</param>
-        private static void NewProject(string? path) {
-            var projectRoot = path == null
-                ? Directory.GetCurrentDirectory()
-                : Path.Combine(Directory.GetCurrentDirectory(), path);
-            var logger = ILoggerExtension.CreateConsoleLogger();
+        /// <param name="argPath">対象フォルダまでの相対パス</param>
+        private static Action<InvocationContext> NewProject(Argument<string?> argPath) {
 
-            if (Directory.Exists(projectRoot)) {
-                logger.LogError("既にプロジェクトが存在します: {projectRoot}", projectRoot);
-                return;
-            }
+            return context => {
+                var path = GetValueForHandlerParameter(argPath, context);
 
-            var (success, errorMessage) = GeneratedProject.CreatePhysicalProjectAndInstallDependenciesAsync(projectRoot, logger);
+                var projectRoot = path == null
+                    ? Directory.GetCurrentDirectory()
+                    : Path.Combine(Directory.GetCurrentDirectory(), path);
+                var logger = ILoggerExtension.CreateConsoleLogger();
 
-            if (success) {
-                logger.LogInformation("プロジェクトの作成が完了しました: {projectRoot}", projectRoot);
-            } else {
-                logger.LogError(errorMessage ?? "プロジェクトの作成に失敗しました。");
-                // 作成途中のディレクトリが残っている可能性があるので削除を試みる
                 if (Directory.Exists(projectRoot)) {
-                    try {
-                        Directory.Delete(projectRoot, recursive: true);
-                    } catch (Exception ex) {
-                        logger.LogWarning($"作成失敗したプロジェクトディレクトリの削除に失敗しました: {projectRoot}, {ex.Message}");
-                    }
+                    logger.LogError("既にプロジェクトが存在します: {projectRoot}", projectRoot);
+                    context.ExitCode = 1;
+                    return;
                 }
-            }
+
+                var (success, errorMessage) = GeneratedProject.CreatePhysicalProjectAndInstallDependenciesAsync(projectRoot, logger);
+
+                if (success) {
+                    logger.LogInformation("プロジェクトの作成が完了しました: {projectRoot}", projectRoot);
+                    context.ExitCode = 0;
+                } else {
+                    logger.LogError(errorMessage ?? "プロジェクトの作成に失敗しました。");
+                    // 作成途中のディレクトリが残っている可能性があるので削除を試みる
+                    if (Directory.Exists(projectRoot)) {
+                        try {
+                            Directory.Delete(projectRoot, recursive: true);
+                        } catch (Exception ex) {
+                            logger.LogWarning($"作成失敗したプロジェクトディレクトリの削除に失敗しました: {projectRoot}, {ex.Message}");
+                        }
+                    }
+                    context.ExitCode = 1;
+                }
+            };
         }
 
 
         /// <summary>
         /// スキーマ定義の検証を行ないます。
         /// </summary>
-        /// <param name="path">対象フォルダまでの相対パス</param>
-        private static void Validate(string? path) {
-            var projectRoot = path == null
-                ? Directory.GetCurrentDirectory()
-                : Path.Combine(Directory.GetCurrentDirectory(), path);
-            var logger = ILoggerExtension.CreateConsoleLogger();
+        /// <param name="argPath">対象フォルダまでの相対パス</param>
+        private static Action<InvocationContext> Validate(Argument<string?> argPath) {
 
-            if (!GeneratedProject.TryOpen(projectRoot, out var project, out var error)) {
-                logger.LogError(error);
-                return;
-            }
-            var rule = SchemaParseRule.Default();
-            var parseContext = new SchemaParseContext(XDocument.Load(project.SchemaXmlPath), rule);
+            return context => {
+                var path = GetValueForHandlerParameter(argPath, context);
 
-            project.ValidateSchema(parseContext, logger);
+                var projectRoot = path == null
+                    ? Directory.GetCurrentDirectory()
+                    : Path.Combine(Directory.GetCurrentDirectory(), path);
+                var logger = ILoggerExtension.CreateConsoleLogger();
+
+                if (!GeneratedProject.TryOpen(projectRoot, out var project, out var error)) {
+                    logger.LogError(error);
+                    context.ExitCode = 1;
+                    return;
+                }
+                var rule = SchemaParseRule.Default();
+                var parseContext = new SchemaParseContext(XDocument.Load(project.SchemaXmlPath), rule);
+
+                if (!project.ValidateSchema(parseContext, logger)) {
+                    context.ExitCode = 1;
+                    return;
+                }
+                context.ExitCode = 0;
+            };
         }
 
 
@@ -227,28 +247,35 @@ namespace Nijo {
         /// ソースコードの自動生成を実行します。
         /// </summary>
         /// <param name="path">対象フォルダまでの相対パス</param>
-        private static void Generate(string? path, bool allowNotImplemented) {
-            var projectRoot = path == null
-                ? Directory.GetCurrentDirectory()
-                : Path.Combine(Directory.GetCurrentDirectory(), path);
-            var logger = ILoggerExtension.CreateConsoleLogger();
+        /// <param name="allowNotImplemented">抽象メソッドをabstractでなくvirtualで生成</param>
+        private static Action<InvocationContext> Generate(Argument<string?> argPath, Option<bool> optAllowNotImplemented) {
 
-            if (!GeneratedProject.TryOpen(projectRoot, out var project, out var error)) {
-                logger.LogError(error);
-                Environment.ExitCode = 1;
-                return;
-            }
-            var rule = SchemaParseRule.Default();
-            var parseContext = new SchemaParseContext(XDocument.Load(project.SchemaXmlPath), rule);
-            var renderingOptions = new CodeRenderingOptions {
-                AllowNotImplemented = allowNotImplemented,
+            return context => {
+                var path = GetValueForHandlerParameter(argPath, context);
+                var allowNotImplemented = GetValueForHandlerParameter(optAllowNotImplemented, context);
+
+                var projectRoot = path == null
+                    ? Directory.GetCurrentDirectory()
+                    : Path.Combine(Directory.GetCurrentDirectory(), path);
+                var logger = ILoggerExtension.CreateConsoleLogger();
+
+                if (!GeneratedProject.TryOpen(projectRoot, out var project, out var error)) {
+                    logger.LogError(error);
+                    context.ExitCode = 1;
+                    return;
+                }
+                var rule = SchemaParseRule.Default();
+                var parseContext = new SchemaParseContext(XDocument.Load(project.SchemaXmlPath), rule);
+                var renderingOptions = new CodeRenderingOptions {
+                    AllowNotImplemented = allowNotImplemented,
+                };
+
+                if (project.GenerateCode(parseContext, renderingOptions, logger)) {
+                    context.ExitCode = 0;
+                } else {
+                    context.ExitCode = 1;
+                }
             };
-
-            if (project.GenerateCode(parseContext, renderingOptions, logger)) {
-                Environment.ExitCode = 0;
-            } else {
-                Environment.ExitCode = 1;
-            }
         }
 
 
@@ -507,6 +534,22 @@ namespace Nijo {
             }
 
             await app.RunAsync(url);
+        }
+
+
+        /// <summary>
+        /// CommandLineParser ライブラリのための補助メソッド。
+        /// ハンドラパラメーターに対応する値を取得します。
+        /// </summary>
+        private static T? GetValueForHandlerParameter<T>(IValueDescriptor<T> symbol, InvocationContext context) {
+            if (symbol is IValueSource source && source.TryGetValue(symbol, context.BindingContext, out var ret) && ret is T value)
+                return value;
+
+            return symbol switch {
+                Argument<T> argument => context.ParseResult.GetValueForArgument(argument),
+                Option<T> option => context.ParseResult.GetValueForOption(option),
+                _ => throw new ArgumentOutOfRangeException()
+            };
         }
     }
 }
