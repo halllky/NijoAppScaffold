@@ -204,7 +204,7 @@ internal class MetadataOfEFCoreEntity : IMultiAggregateSourceFile {
                     PhysicalName = "{{entity.Aggregate.PhysicalName}}",
                     DisplayName = "{{entity.Aggregate.DisplayName.Replace("\"", "\\\"")}}",
                     TableName = "{{entity.Aggregate.DbName}}",
-                    Description = "{{entity.Aggregate.GetComment(E_CsTs.CSharp).Replace("\"", "\\\"")}}",
+                    Description = "{{entity.Aggregate.GetComment(E_CsTs.CSharp)}}",
                     Members = new List<IAggregateMember> {
                         {{RenderMembers(entity).OrderBy(x => x.Order).SelectTextTemplate(x => WithIndent(x.SourceCode, "        ") + ",")}}
                     },
@@ -251,7 +251,7 @@ internal class MetadataOfEFCoreEntity : IMultiAggregateSourceFile {
                         PhysicalName = "{{column.PhysicalName}}",
                         DisplayName = "{{column.DisplayName.Replace("\"", "\\\"")}}",
                         ColumnName = "{{column.DbName}}",
-                        Description = "{{column.Member.GetComment(E_CsTs.CSharp).Replace("\"", "\\\"")}}",
+                        Description = "{{column.Member.GetComment(E_CsTs.CSharp)}}",
                         TypeName = "{{column.Member.Type.SchemaTypeName}}",
                         EnumType = {{enumType}},
                         IsPrimaryKey = {{(column.IsKey ? "true" : "false")}},
@@ -470,7 +470,7 @@ internal class MetadataOfEFCoreEntity : IMultiAggregateSourceFile {
                                 PhysicalName = "{{metadata._aggregate.PhysicalName}}",
                                 DisplayName = "{{metadata._aggregate.DisplayName.Replace("\"", "\\\"")}}",
                                 TableName = "{{metadata._aggregate.DbName}}",
-                                Description = "{{metadata._aggregate.GetComment(E_CsTs.CSharp).Replace("\"", "\\\"")}}",
+                                Description = "{{metadata._aggregate.GetComment(E_CsTs.CSharp)}}",
                                 Members = new List<IAggregateMember> {
                     {{members.SelectTextTemplate(m => $$"""
                                     {{WithIndent(m.RenderCSharpAsListItemForToAggregate(), "            ")}},
@@ -526,7 +526,7 @@ internal class MetadataOfEFCoreEntity : IMultiAggregateSourceFile {
                     PhysicalName = "{{_data.PhysicalName}}",
                     DisplayName = "{{_data.DisplayName.Replace("\"", "\\\"")}}",
                     ColumnName = "{{_data.ColumnName}}",
-                    Description = "{{_data.Description.Replace("\"", "\\\"")}}",
+                    Description = "{{_data.Description}}",
                     TypeName = "{{_data.TypeName}}",
                     EnumType = {{enumType}},
                     IsPrimaryKey = {{(_data.IsPrimaryKey ? "true" : "false")}},
