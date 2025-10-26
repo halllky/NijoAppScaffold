@@ -445,7 +445,7 @@ namespace Nijo.Models.DataModelModules {
                 // 子
                 var childAndChildren = left
                     .GetNavigationProperties()
-                    .OfType<EFCoreEntity.NavigationOfParentChild>()
+                    .OfType<NavigationProperty.NavigationOfParentChild>()
                     .Where(nav => nav.Principal.ThisSide == left.Aggregate);
                 foreach (var nav in childAndChildren) {
                     if (nav.Relevant.ThisSide is ChildAggregate child) {

@@ -140,12 +140,12 @@ namespace Nijo.Models.DataModelModules {
 
                         } else if (node is ChildAggregate child) {
                             var parent = (AggregateBase?)node.PreviousNode ?? throw new InvalidOperationException("ありえない");
-                            var nav = new EFCoreEntity.NavigationOfParentChild(parent, child);
+                            var nav = new NavigationProperty.NavigationOfParentChild(parent, child);
                             selected.Add($".Select(e => e.{nav.Principal.OtherSidePhysicalName}).OfType<{nav.Principal.GetOtherSideCsTypeName()}>()");
 
                         } else if (node is ChildrenAggregate children) {
                             var parent = (AggregateBase?)node.PreviousNode ?? throw new InvalidOperationException("ありえない");
-                            var nav = new EFCoreEntity.NavigationOfParentChild(parent, children);
+                            var nav = new NavigationProperty.NavigationOfParentChild(parent, children);
                             selected.Add($".SelectMany(e => e.{nav.Principal.OtherSidePhysicalName})");
                         }
                     }
@@ -192,12 +192,12 @@ namespace Nijo.Models.DataModelModules {
 
                             } else if (node is ChildAggregate child) {
                                 var parent = (AggregateBase?)node.PreviousNode ?? throw new InvalidOperationException("ありえない");
-                                var nav = new EFCoreEntity.NavigationOfParentChild(parent, child);
+                                var nav = new NavigationProperty.NavigationOfParentChild(parent, child);
                                 pathFromRoot.Add($"Select(x => x.{nav.Principal.OtherSidePhysicalName}).OfType<{nav.Principal.GetOtherSideCsTypeName()}>()");
 
                             } else if (node is ChildrenAggregate children) {
                                 var parent = (AggregateBase?)node.PreviousNode ?? throw new InvalidOperationException("ありえない");
-                                var nav = new EFCoreEntity.NavigationOfParentChild(parent, children);
+                                var nav = new NavigationProperty.NavigationOfParentChild(parent, children);
                                 pathFromRoot.Add($"SelectMany(x => x.{nav.Principal.OtherSidePhysicalName})");
                             }
                         }
