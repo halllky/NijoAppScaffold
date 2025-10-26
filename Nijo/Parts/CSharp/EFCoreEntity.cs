@@ -25,6 +25,10 @@ namespace Nijo.Parts.CSharp {
         internal string DbSetName => $"{Aggregate.PhysicalName}DbSet";
 
         /// <summary>
+        /// 作成日時、更新日時、作成者、更新者のカラムを持つかどうか
+        /// </summary>
+        internal bool HasTimestampColumns => true;
+        /// <summary>
         /// 楽観排他用のバージョンを持つかどうか
         /// </summary>
         internal bool HasVersionColumn {

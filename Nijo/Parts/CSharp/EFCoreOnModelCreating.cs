@@ -81,6 +81,7 @@ internal static class EFCoreOnModelCreating {
 
                 """)}}
                 """)}}
+                {{If(entity.HasTimestampColumns, () => $$"""
                         entity.Property(e => e.{{EFCoreEntity.CREATED_AT}})
                             .HasColumnName("{{ctx.Config.CreatedAtDbColumnName.Replace("\"", "\\\"")}}")
                             .IsRequired(false)
@@ -97,6 +98,7 @@ internal static class EFCoreOnModelCreating {
                             .HasColumnName("{{ctx.Config.UpdateUserDbColumnName.Replace("\"", "\\\"")}}")
                             .IsRequired(false)
                             .HasColumnOrder({{columns.Length + 3}});
+                """)}}
                 {{If(entity.HasVersionColumn, () => $$"""
                         entity.Property(e => e.{{EFCoreEntity.VERSION}})
                             .HasColumnName("{{ctx.Config.VersionDbColumnName.Replace("\"", "\\\"")}}")
