@@ -17,7 +17,7 @@ namespace Nijo.Parts.CSharp;
 /// </summary>
 internal static class EFCoreOnModelCreating {
 
-    internal static string RenderOnModelCreating(EFCoreEntity entity, CodeRenderingContext ctx) {
+    internal static string RenderOnModelCreating(IEFCoreEntity entity, CodeRenderingContext ctx) {
         var columns = entity.GetColumns().ToArray();
         var keys = columns
             .Where(col => col.IsKey)
@@ -138,7 +138,7 @@ internal static class EFCoreOnModelCreating {
                 }
                 """;
     }
-    internal static string RenderConfigureAbstractMethod(EFCoreEntity entity) {
+    internal static string RenderConfigureAbstractMethod(IEFCoreEntity entity) {
         return $$"""
                 /// <summary>
                 /// 自動生成されない初期設定がある場合はこのメソッドをオーバーライドして設定してください。
