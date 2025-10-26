@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
-using Nijo.Parts.CSharp;
+using Nijo.Models;
 using Nijo.Util.DotnetEx;
 using Nijo.ValueMemberTypes;
 using System;
@@ -10,7 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Nijo.Models.DataModelModules {
+namespace Nijo.Parts.CSharp {
     /// <summary>
     /// Entity Framework Core のエンティティ
     /// </summary>
@@ -126,10 +126,15 @@ namespace Nijo.Models.DataModelModules {
             }
 
             foreach (var refFrom in Aggregate.GetRefFroms()) {
-                // クエリモデルやコマンドモデルから参照されることがあるが、それらはDBの実体ではないのでナビゲーションプロパティを張らない
-                if (refFrom.Owner.GetRoot().Model is not DataModel) continue;
+                // DBの実体をもたないクエリモデルやコマンドモデルから参照された場合はナビゲーションプロパティを張らない
+                var refFromRoot = refFrom.Owner.GetRoot();
+                var hasDbEntity = refFromRoot.Model is DataModel
+                               || refFromRoot.Model is QueryModel
+                               && refFromRoot.IsView;
 
-                yield return new NavigationOfRef(refFrom);
+                if (hasDbEntity) {
+                    yield return new NavigationOfRef(refFrom);
+                }
             }
         }
 
@@ -475,7 +480,7 @@ namespace Nijo.Models.DataModelModules {
                 IInstancePropertyOwnerMetadata otherSideEfCoreEntity = new EFCoreEntity(OtherSide);
                 foreach (var member in otherSideEfCoreEntity.GetMembers()) {
                     // 無限ループに陥るのでこのインスタンス自身は列挙しない
-                    if (member is PrincipalOrRelevant por && por.OtherSide == this.ThisSide) continue;
+                    if (member is PrincipalOrRelevant por && por.OtherSide == ThisSide) continue;
 
                     // 無限ループに陥るので被参照ナビゲーションプロパティは列挙しない。
                     // IInstancePropertyOwnerMetadata.GetMembers で被参照ナビゲーションプロパティを列挙したい状況もおそらく無いはず……多分

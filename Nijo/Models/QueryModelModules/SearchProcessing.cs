@@ -211,7 +211,7 @@ namespace Nijo.Models.QueryModelModules {
             var newObject = new Variable("※ここの名前は使われないので適当※", searchResult);
 
             // 右辺（変換元）
-            var efCoreEntity = new DataModelModules.EFCoreEntity(_rootAggregate);
+            var efCoreEntity = new EFCoreEntity(_rootAggregate);
             var e = new Variable("e", efCoreEntity);
 
             var rightMembers = new Dictionary<SchemaNodeIdentity, IInstanceProperty>();
@@ -223,7 +223,7 @@ namespace Nijo.Models.QueryModelModules {
                 protected virtual IQueryable<{{searchResult.CsClassName}}> {{CREATE_QUERY_SOURCE}}({{searchCondition.CsClassName}} searchCondition, {{PresentationContext.INTERFACE}}<{{searchConditionMessage.CsClassName}}> context) {
                     return this.DbContext.{{efCoreEntity.DbSetName}}.Select({{e.Name}} => new {{searchResult.CsClassName}} {
                         {{WithIndent(RenderMembers(newObject, rightMembers), "        ")}}
-                        {{SearchResult.VERSION}} = (int){{e.Name}}.{{DataModelModules.EFCoreEntity.VERSION}}!,
+                        {{SearchResult.VERSION}} = (int){{e.Name}}.{{EFCoreEntity.VERSION}}!,
                     });
                 }
                 """;
@@ -245,7 +245,7 @@ namespace Nijo.Models.QueryModelModules {
                                 """;
                         } else {
                             var leftMetadata = (SearchResult.SearchResultChildrenMember)structureProp.Metadata;
-                            var rightMetadata = new DataModelModules.EFCoreEntity(leftMetadata.Aggregate);
+                            var rightMetadata = new EFCoreEntity(leftMetadata.Aggregate);
                             var loopVar = new Variable(((ChildrenAggregate)rightMetadata.Aggregate).GetLoopVarName(), rightMetadata);
 
                             // 辞書に、ラムダ式内部で右辺に使用できるプロパティを加える

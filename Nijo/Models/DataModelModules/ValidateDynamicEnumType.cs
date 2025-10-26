@@ -13,7 +13,7 @@ namespace Nijo.Models.DataModelModules {
         internal const string METHOD_NAME = "ValidateDynamicEnumType";
 
         internal static string RenderAppSrvCheckMethod(RootAggregate rootAggregate, CodeRenderingContext ctx) {
-            var efCoreEntity = new EFCoreEntity(rootAggregate);
+            var efCoreEntity = new Parts.CSharp.EFCoreEntity(rootAggregate);
             var messages = new SaveCommandMessageContainer(rootAggregate);
 
             return $$"""

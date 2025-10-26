@@ -1,6 +1,7 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Models.DataModelModules;
+using Nijo.Parts.CSharp;
 using Nijo.Util.DotnetEx;
 using Nijo.ValueMemberTypes;
 using System;

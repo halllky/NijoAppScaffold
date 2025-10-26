@@ -13,7 +13,7 @@ namespace Nijo.Models.DataModelModules {
         internal const string METHOD_NAME = "ValidateRequired";
 
         internal static string Render(RootAggregate rootAggregate, CodeRenderingContext ctx) {
-            var efCoreEntity = new EFCoreEntity(rootAggregate);
+            var efCoreEntity = new Parts.CSharp.EFCoreEntity(rootAggregate);
             var messages = new SaveCommandMessageContainer(rootAggregate);
 
             return $$"""

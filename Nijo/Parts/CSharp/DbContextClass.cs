@@ -1,5 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.Models.DataModelModules;
 using Nijo.Util.DotnetEx;
 using Nijo.ImmutableSchema;
 using System;
