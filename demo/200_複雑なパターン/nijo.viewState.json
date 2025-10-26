@@ -515,44 +515,6 @@
         ],
         "background-color": "#ea580c",
         "border-color": "#ea580c"
-      },
-      "view-inv-cat-warehouse-inv-001": {
-        "id": "view-inv-cat-warehouse-inv-001",
-        "label": "保管庫別在庫",
-        "members": [
-          "Parent_機器分類 (PK)",
-          "保管庫_保管庫ID (PK)",
-          "在庫数",
-          "機器数"
-        ],
-        "background-color": "#ea580c",
-        "border-color": "#ea580c"
-      },
-      "view-inventory-by-category-001": {
-        "id": "view-inventory-by-category-001",
-        "label": "機器分類別在庫集計ビュー",
-        "members": [
-          "機器分類_機器分類ID (PK)",
-          "在庫合計",
-          "機器種別数",
-          "最終更新日時"
-        ],
-        "background-color": "#ea580c",
-        "border-color": "#ea580c"
-      },
-      "view-patient-stats-by-dept-001": {
-        "id": "view-patient-stats-by-dept-001",
-        "label": "診療科別患者統計ビュー",
-        "members": [
-          "診療科コード",
-          "診療科名",
-          "患者総数",
-          "今月の新規患者数",
-          "平均年齢",
-          "統計日時"
-        ],
-        "background-color": "#ea580c",
-        "border-color": "#ea580c"
       }
     },
     "edges": [
@@ -889,27 +851,6 @@
         "source": "cc087406-5da9-49f6-aec1-95f53040f06e",
         "target": "6822cfa1-31a5-400b-a950-165c2e7a10db",
         "label": "担当者",
-        "line-color": "#6c757d",
-        "line-style": "solid"
-      },
-      {
-        "source": "view-inventory-by-category-001",
-        "target": "a0606f83-9804-4ff7-b219-8699850f784a",
-        "label": "機器分類",
-        "line-color": "#6c757d",
-        "line-style": "solid"
-      },
-      {
-        "source": "view-inv-cat-warehouse-inv-001",
-        "target": "view-inventory-by-category-001",
-        "label": "(Parent)",
-        "line-color": "#6c757d",
-        "line-style": "solid"
-      },
-      {
-        "source": "view-inv-cat-warehouse-inv-001",
-        "target": "2e2bbe87-8951-46a1-a838-92c879daa4f0",
-        "label": "保管庫",
         "line-color": "#6c757d",
         "line-style": "solid"
       }
@@ -1323,20 +1264,20 @@
         "id": "view-inv-cat-warehouse-inv-001",
         "label": "保管庫別在庫",
         "parent": "view-inventory-by-category-001",
-        "background-color": "#ea580c",
-        "border-color": "#ea580c"
+        "background-color": "#059669",
+        "border-color": "#059669"
       },
       "view-inventory-by-category-001": {
         "id": "view-inventory-by-category-001",
         "label": "機器分類別在庫集計ビュー",
-        "background-color": "#ea580c",
-        "border-color": "#ea580c"
+        "background-color": "#059669",
+        "border-color": "#059669"
       },
       "view-patient-stats-by-dept-001": {
         "id": "view-patient-stats-by-dept-001",
         "label": "診療科別患者統計ビュー",
-        "background-color": "#ea580c",
-        "border-color": "#ea580c"
+        "background-color": "#059669",
+        "border-color": "#059669"
       }
     },
     "edges": [
@@ -1660,7 +1601,7 @@
         "source": "view-inventory-by-category-001",
         "target": "a0606f83-9804-4ff7-b219-8699850f784a",
         "label": "機器分類",
-        "line-color": "#ea580c",
+        "line-color": "#059669",
         "line-style": "solid",
         "targetEndShape": "triangle"
       },
@@ -1668,7 +1609,7 @@
         "source": "view-inv-cat-warehouse-inv-001",
         "target": "2e2bbe87-8951-46a1-a838-92c879daa4f0",
         "label": "保管庫",
-        "line-color": "#ea580c",
+        "line-color": "#059669",
         "line-style": "solid",
         "targetEndShape": "triangle"
       }

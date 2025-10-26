@@ -27,7 +27,17 @@ namespace Nijo.Parts.CSharp {
         /// <summary>
         /// 楽観排他用のバージョンを持つかどうか
         /// </summary>
-        private bool HasVersionColumn => Aggregate is RootAggregate;
+        private bool HasVersionColumn {
+            get {
+                // 更新は常にルート集約の単位
+                if (Aggregate is not RootAggregate rootAggregate) return false;
+
+                // QueryModelのビューの場合は読み取り専用のためバージョンカラムは不要
+                if (rootAggregate.Model is QueryModel && rootAggregate.IsView) return false;
+
+                return true;
+            }
+        }
 
         /// <summary>楽観排他制御用のバージョニング用カラムの名前</summary>
         internal const string VERSION = "Version";

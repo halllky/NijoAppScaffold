@@ -44,30 +44,94 @@ namespace Nijo.Models {
         }
 
         public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
-            // 子集約には主キー属性を付与できない
-            var childAggregates = rootAggregateElement.Descendants()
-                .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILD);
-            foreach (var childAggregate in childAggregates) {
-                var membersWithKey = childAggregate.ElementsWithoutMemo()
-                    .Where(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null).ToList();
-                if (membersWithKey.Any()) {
-                    addError(childAggregate, "クエリモデルの子集約には主キー属性を付与することができません。");
-                    foreach (var member in membersWithKey) {
-                        addError(member, "この子集約のメンバーに主キー属性を付与することはできません。");
+            // キーと ref-to のチェック
+            var isView = rootAggregateElement.Attribute(BasicNodeOptions.MapToView.AttributeName) != null;
+
+            if (isView) {
+                // ビューの場合でもChildrenがある場合はキーが必要
+                var hasChildOrChildren = rootAggregateElement
+                    .Descendants()
+                    .Any(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILD
+                            || el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILDREN);
+
+                if (hasChildOrChildren) {
+                    // ルートとChildrenはキー必須
+                    var rootAndChildren = rootAggregateElement
+                        .DescendantsAndSelf()
+                        .Where(el => el.GetParentWithoutMemo() == el.Document?.Root
+                                  || el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILDREN);
+                    foreach (var el in rootAndChildren) {
+                        var hasKey = el.ElementsWithoutMemo().Any(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null);
+
+                        if (!hasKey) {
+                            addError(el, "Child/Childrenがあるビューにマッピングされるクエリモデルにはキーが必要です。");
+                        }
+                    }
+                }
+
+                // キーなしのビューからのref-toを禁止
+                var hasAnyKey = rootAggregateElement
+                    .DescendantsAndSelf()
+                    .Any(el => el.ElementsWithoutMemo().Any(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null));
+
+                if (!hasAnyKey) {
+                    // 自身と子孫のすべてにキーがない場合、ref-toをチェック
+                    var refToMembers = rootAggregateElement
+                        .Descendants()
+                        .Where(member => member.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value?.StartsWith(SchemaParseContext.NODE_TYPE_REFTO + ":") == true)
+                        .ToList();
+
+                    foreach (var refToMember in refToMembers) {
+                        addError(refToMember, "キーが定義されていないビューからは他の集約を参照(ref-to)できません。EF Coreの制約により、キーレスエンティティからのナビゲーションプロパティはサポートされていません。");
+                    }
+                }
+            } else {
+                // MapToViewが指定されていない通常のQueryModelの場合は子集約・子配列への主キー属性を禁止
+                // 子集約には主キー属性を付与できない
+                var childAggregates = rootAggregateElement.Descendants()
+                    .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILD);
+                foreach (var childAggregate in childAggregates) {
+                    var membersWithKey = childAggregate.ElementsWithoutMemo()
+                        .Where(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null).ToList();
+                    if (membersWithKey.Any()) {
+                        addError(childAggregate, "クエリモデルの子集約には主キー属性を付与することができません。");
+                        foreach (var member in membersWithKey) {
+                            addError(member, "この子集約のメンバーに主キー属性を付与することはできません。");
+                        }
+                    }
+                }
+
+                // 子配列には主キー属性を付与できない
+                var childrenAggregates = rootAggregateElement.Descendants()
+                    .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILDREN);
+                foreach (var childrenAggregate in childrenAggregates) {
+                    var membersWithKey = childrenAggregate.ElementsWithoutMemo()
+                        .Where(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null).ToList();
+                    if (membersWithKey.Any()) {
+                        addError(childrenAggregate, "クエリモデルの子配列には主キー属性を付与することができません。");
+                        foreach (var member in membersWithKey) {
+                            addError(member, "この子配列のメンバーに主キー属性を付与することはできません。");
+                        }
                     }
                 }
             }
 
-            // 子配列には主キー属性を付与できない
-            var childrenAggregates = rootAggregateElement.Descendants()
-                .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILDREN);
-            foreach (var childrenAggregate in childrenAggregates) {
-                var membersWithKey = childrenAggregate.ElementsWithoutMemo()
-                    .Where(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null).ToList();
-                if (membersWithKey.Any()) {
-                    addError(childrenAggregate, "クエリモデルの子配列には主キー属性を付与することができません。");
-                    foreach (var member in membersWithKey) {
-                        addError(member, "この子配列のメンバーに主キー属性を付与することはできません。");
+            // MapToViewの場合は外部参照のチェックとキーレスエンティティからのナビゲーションプロパティチェック
+            if (isView) {
+                // キーなしのビューからのref-toを禁止
+                var hasAnyKey = rootAggregateElement
+                    .DescendantsAndSelf()
+                    .Any(el => el.ElementsWithoutMemo().Any(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null));
+
+                if (!hasAnyKey) {
+                    // 自身と子孫のすべてにキーがない場合、ref-toをチェック
+                    var refToMembers = rootAggregateElement
+                        .Descendants()
+                        .Where(member => member.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value?.StartsWith(SchemaParseContext.NODE_TYPE_REFTO + ":") == true)
+                        .ToList();
+
+                    foreach (var refToMember in refToMembers) {
+                        addError(refToMember, "キーが定義されていないビューからは他の集約を参照(ref-to)できません。EF Coreの制約により、キーレスエンティティからのナビゲーションプロパティはサポートされていません。");
                     }
                 }
             }
@@ -169,6 +233,15 @@ namespace Nijo.Models {
 
         public void GenerateCode(CodeRenderingContext ctx, RootAggregate rootAggregate) {
             var aggregateFile = new SourceFileByAggregate(rootAggregate);
+
+            // MapToViewが指定されている場合はEFCoreEntityを生成
+            if (rootAggregate.IsView) {
+                var efCoreEntity = new EFCoreEntity(rootAggregate);
+                aggregateFile.AddCSharpClass(EFCoreEntity.RenderClassDeclaring(efCoreEntity, ctx), "Class_EFCoreEntity");
+                ctx.Use<DbContextClass>().AddEntities(efCoreEntity.EnumerateThisAndDescendants());
+                ctx.Use<MetadataOfEFCoreEntity>().Register(rootAggregate);
+            }
+
             GenerateCode(ctx, rootAggregate, aggregateFile);
             aggregateFile.ExecuteRendering(ctx);
         }

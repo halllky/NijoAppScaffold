@@ -250,41 +250,36 @@ internal static class BasicNodeOptions {
             return false;
         },
     };
+    #endregion DataModel用
+
+
+    #region QueryModel用
     internal static NodeOption MapToView = new() {
         AttributeName = "MapToView",
         DisplayName = "ビューへマッピング",
         Type = E_NodeOptionType.Boolean,
         HelpText = $$"""
             この集約をデータベースのビュー(View)にマッピングする場合に指定してください。
-            ビューは読み取り専用のため、新規登録・更新・削除の処理は生成されません。
+            指定した場合、Entity Framework CoreのToView()を使用してビューにマッピングされるEFCoreEntityが生成されます。
             ビュー定義自体はソースコード生成の対象外となり、手動で作成する必要があります。
             """,
         Validate = ctx => {
-            // データモデルのルート集約のみ許可
+            // クエリモデルのルート集約のみ許可
             if (ctx.NodeType != E_NodeType.RootAggregate) {
                 ctx.AddError("このオプションはルート集約にのみ指定できます。");
                 return;
             }
 
             if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model)) {
-                if (model is not DataModel) {
-                    ctx.AddError("このオプションはデータモデルにのみ指定できます。");
+                if (model is not QueryModel) {
+                    ctx.AddError("このオプションはクエリモデルにのみ指定できます。");
                 }
-            }
-
-            // GenerateBatchUpdateCommandとの併用チェック
-            if (ctx.XElement.Attribute(GenerateBatchUpdateCommand.AttributeName)?.Value?.ToLower() == "true") {
-                ctx.AddError("MapToViewとGenerateBatchUpdateCommandを同時に指定することはできません。");
             }
         },
         IsAvailableModelMembers = model => {
-            return model is DataModel;
+            return model is QueryModel;
         },
     };
-    #endregion DataModel用
-
-
-    #region QueryModel用
     internal static NodeOption IsReadOnly = new() {
         AttributeName = "IsReadOnly",
         DisplayName = "読み取り専用集約",
