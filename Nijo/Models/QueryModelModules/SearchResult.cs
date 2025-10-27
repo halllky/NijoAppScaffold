@@ -112,8 +112,10 @@ namespace Nijo.Models.QueryModelModules {
                 if (!isOutOfEntryTree && aggregate.GetRoot().IsView) {
                     var parent = aggregate.GetParent();
                     if (parent != null) {
-                        foreach (var parentKey in EnumerateParentKeysRecursively(parent, ["Parent"])) {
-                            yield return parentKey;
+                        // 親のキー（祖先のキーも含む）を列挙
+                        // parent.GetKeyVMs() は既に祖先のキーも含んでいるため、再帰的に辿る必要はない
+                        foreach (var vm in parent.GetKeyVMs()) {
+                            yield return new SearchResultValueMember(vm, false, parentKeyPath: ["Parent"]);
                         }
 
                         // 子から親へのナビゲーションプロパティ
@@ -121,22 +123,6 @@ namespace Nijo.Models.QueryModelModules {
                         // aggregateは必ずChildAggregateまたはChildrenAggregateのいずれか(RootAggregateには親がないため)
                         var aggregateAsMember = (IAggregateMember)aggregate;
                         yield return new SearchResultParentOrRefMember(navOfParentChild, aggregateAsMember);
-                    }
-
-                    // 親のキーを再帰的に列挙する
-                    IEnumerable<SearchResultValueMember> EnumerateParentKeysRecursively(AggregateBase parent, IEnumerable<string> path) {
-                        // 親のさらに親
-                        var ancestor = parent.GetParent();
-                        if (ancestor != null) {
-                            foreach (var ancestorKey in EnumerateParentKeysRecursively(ancestor, [.. path, "Parent"])) {
-                                yield return ancestorKey;
-                            }
-                        }
-
-                        // 親のキー
-                        foreach (var vm in parent.GetKeyVMs()) {
-                            yield return new SearchResultValueMember(vm, false, parentKeyPath: path.ToArray());
-                        }
                     }
                 }
 

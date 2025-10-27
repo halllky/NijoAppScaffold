@@ -1,7 +1,7 @@
 CREATE VIEW V_時間帯別収益 AS
 SELECT
-    CAST(STRFTIME('%Y%m', T1.ORDER_DATE) AS INTEGER) AS 診療収益分析_年月,
-    T1."診療科_STORE_ID" AS 診療収益分析_診療科_診療科ID,
+    CAST(STRFTIME('%Y%m', T1.ORDER_DATE) AS INTEGER) AS 年月,
+    T1."診療科_STORE_ID" AS 診療科_STORE_ID,
     SUBSTR('00' || STRFTIME('%H', T1.ORDER_DATE), -2) || ':00-' || SUBSTR('00' || STRFTIME('%H', T1.ORDER_DATE), -2) || ':59' AS 時間帯,
     SUM(T2.SUBTOTAL) AS 診療収益,
     COUNT(T1.ORDER_ID) AS 診療件数,

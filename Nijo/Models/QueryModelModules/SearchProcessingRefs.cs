@@ -220,7 +220,11 @@ namespace Nijo.Models.QueryModelModules {
             var loopVarDict = new Dictionary<AggregateBase, Variable>();
 
             // 右辺の変数に使われる変数を定義する。右辺は集約ルートが起点になる。
-            var rightInstances = CollectInstancesRecursively(sr).ToDictionary(kv => kv.Key, kv => kv.Value);
+            var rightInstances = CollectInstancesRecursively(sr)
+                // ビューにマッピングされる場合、子が親のキーを持つ都合上、同じキーが複数登場するため、最も浅いパスのものを採用する
+                // 例: A.B.C と A.C があった場合、A.C のほうが浅いのでそちらを採用する
+                .GroupBy(kv => kv.Key)
+                .ToDictionary(kv => kv.Key, kv => kv.OrderBy(kv2 => kv2.Value.Count(c => c == '.')).First().Value);
 
             IEnumerable<KeyValuePair<SchemaNodeIdentity, string>> CollectInstancesRecursively(IInstancePropertyOwner currentInstance, IInstancePropertyOwner? ownerArray = null) {
                 var currentSearchResult = (SearchResult)currentInstance.Metadata;
@@ -250,6 +254,9 @@ namespace Nijo.Models.QueryModelModules {
                         foreach (var desc in CollectInstancesRecursively(loopVar, childProperty)) {
                             yield return desc;
                         }
+
+                    } else if (member is SearchResult.SearchResultParentOrRefMember) {
+                        continue; // 変換不要
 
                     } else {
                         throw new NotImplementedException();

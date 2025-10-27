@@ -619,14 +619,18 @@
     </処方薬>
   </診察記録>
   <診療収益分析
+    DbName="V_診療収益分析"
     LatinName="Medical Revenue Analysis"
+    MapToView="True"
     Type="query-model"
     UniqueId="9442b4d0-b48e-45b1-ab23-597ad74b1058">
     <!--例: "2025/04"-->
     <年月
+      IsKey="True"
       Type="yearmonth"
       UniqueId="5b240e6c-fdfa-4450-a313-3ed437d4584e" />
     <診療科
+      IsKey="True"
       Type="ref-to:診療科マスタ"
       UniqueId="81b85306-d103-4404-957e-1394ddb12fb7" />
     <診療収益合計
@@ -645,9 +649,11 @@
         Type="-"
         UniqueId="1e2ab436-7b6e-4aca-83a0-5ce644147e9f">
         <機器分類別収益
+          DbName="V_機器分類別収益"
           Type="children"
           UniqueId="16cd3252-2b14-46e4-9581-15f3a53b298c">
           <機器分類
+            IsKey="True"
             Type="ref-to:機器分類マスタ"
             UniqueId="f0c62ba4-9bf2-4075-948f-e145cb2c1310" />
           <診療収益
@@ -657,6 +663,7 @@
             Type="decimal"
             UniqueId="0447b5a9-c237-40ef-bdfa-8213d37857e2" />
           <機器別収益
+            DbName="V_機器別収益"
             Type="children"
             UniqueId="0fd8848b-3023-43cc-9fba-14759b71403a">
             <追加ボタン
@@ -669,6 +676,7 @@
               Type="-"
               UniqueId="68d4f54d-6850-4a3d-9afc-0a33b562da2b">
               <医療機器
+                IsKey="True"
                 Type="ref-to:医療機器マスタ"
                 UniqueId="7775c94a-1617-46f2-adca-241febab0c2e" />
               <診療収益
@@ -684,6 +692,7 @@
           </機器別収益>
         </機器分類別収益>
         <時間帯別収益
+          DbName="V_時間帯別収益"
           Type="children"
           UniqueId="3440d2f6-d139-46f6-8e75-4c9b6020d05d">
           <追加ボタン
@@ -697,6 +706,7 @@
             UniqueId="36067508-a7ae-4e62-81a6-02e03ff80a8b">
             <!-- 例: "10:00-10:59" -->
             <時間帯
+              IsKey="True"
               Type="word"
               UniqueId="c65d18e5-3f0e-46a2-9faa-4d737b23dee0" />
             <診療収益

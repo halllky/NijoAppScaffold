@@ -1,9 +1,9 @@
 CREATE VIEW V_機器分類別収益 AS
 SELECT
-    CAST(STRFTIME('%Y%m', T1.ORDER_DATE) AS INTEGER) AS 診療収益分析_年月,
-    T1."診療科_STORE_ID" AS 診療収益分析_診療科_診療科ID,
-    T3."機器分類_CATEGORY_ID" AS 機器分類_機器分類ID,
-    T4.CATEGORY_NAME AS 機器分類_機器分類名, -- 機器分類マスタから取得
+    CAST(STRFTIME('%Y%m', T1.ORDER_DATE) AS INTEGER) AS 年月,
+    T1."診療科_STORE_ID" AS 診療科_STORE_ID,
+    T3."機器分類_CATEGORY_ID" AS 機器分類_CATEGORY_ID,
+    T4.CATEGORY_NAME AS 機器分類_CATEGORY_NAME,
     SUM(T2.SUBTOTAL) AS 診療収益,
     CAST(SUM(T2.SUBTOTAL) AS REAL) / NULLIF((
         SELECT SUM(OD_INNER.SUBTOTAL)
