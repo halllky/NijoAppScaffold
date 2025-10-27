@@ -184,7 +184,11 @@ namespace Nijo.Models.QueryModelModules {
                             yield return new SearchResultParentOrRefMember(navOfRef, refTo);
                         }
 
-                        foreach (var srm in GetMembersRecursively(refTo.RefTo, true, refToMember ?? refTo)) {
+                        // 参照先を再帰的に辿る。
+                        // SearchResultからの直接の参照の場合（refToMemberがnull）は、このrefToを渡す。
+                        // 参照先のさらに参照先の場合（refToMemberが設定済み）は、さらに先の参照にはnullを渡す。
+                        var refToMemberForRecursion = refToMember == null ? refTo : null;
+                        foreach (var srm in GetMembersRecursively(refTo.RefTo, true, refToMember: refToMemberForRecursion)) {
                             yield return srm;
                         }
 
@@ -380,7 +384,10 @@ namespace Nijo.Models.QueryModelModules {
             /// <summary>親のキーである場合のパス。例: ["Parent"] または ["Parent", "Parent"]</summary>
             internal string[]? ParentKeyPath { get; }
 
-            /// <summary>参照先のキーである場合の RefToMember</summary>
+            /// <summary>
+            /// 参照先のキーである場合の RefToMember。
+            /// 参照自体がキーである場合のみ設定される（参照先の参照先のキーなどには設定されない）。
+            /// </summary>
             internal RefToMember? RefToMember { get; }
 
             NavigationProperty? ISearchResultMember.NavigationProperty => null;
@@ -409,7 +416,7 @@ namespace Nijo.Models.QueryModelModules {
                 if (ParentKeyPath != null) {
                     return new EFCoreEntity.ParentKeyMember(ValueMember, physicalName, dbName);
                 }
-                // 参照先のキーの場合
+                // 参照先のキーの場合（参照自体がキーである場合のみ外部キーとして扱う）
                 else if (RefToMember != null) {
                     return new EFCoreEntity.RefKeyMember(
                         RefToMember,
@@ -418,12 +425,16 @@ namespace Nijo.Models.QueryModelModules {
                         dbName,
                         isParentKey: false);
                 }
-                // 通常のメンバー
+                // 通常のメンバー（参照先から展開された属性を含む）
                 else {
+                    // 参照先から展開された属性（RefToMemberがnullだが、isOutOfEntryTreeがtrue）の場合、
+                    // その属性が元々キーであってもこのビューではキーにしない
+                    var isKey = IsOutOfEntryTree ? false : (bool?)null;
                     return new EFCoreEntity.OwnColumnMember(
                         ValueMember,
                         physicalName: physicalName,
-                        dbName: dbName);
+                        dbName: dbName,
+                        isKey: isKey);
                 }
             }
         }

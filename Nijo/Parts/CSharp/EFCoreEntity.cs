@@ -278,14 +278,15 @@ namespace Nijo.Parts.CSharp {
             internal OwnColumnMember(
                 ValueMember member,
                 string? physicalName = null,
-                string? dbName = null) {
+                string? dbName = null,
+                bool? isKey = null) {
 
                 Member = member;
                 CsType = member.Type.CsPrimitiveTypeName;
                 PhysicalName = physicalName ?? member.PhysicalName;
                 DisplayName = member.DisplayName;
                 DbName = dbName ?? member.DbName;
-                IsKey = member.IsKey;
+                IsKey = isKey ?? member.IsKey;
             }
             internal override ValueMember Member { get; }
             internal override string CsType { get; }
