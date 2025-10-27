@@ -282,6 +282,26 @@ namespace Nijo.Models.QueryModelModules {
         }
 
 
+        /// <summary>
+        /// 子孫要素をIncludeする式をレンダリングします。
+        /// </summary>
+        internal IEnumerable<string> RenderInclude() {
+            foreach (var agg in Aggregate.EnumerateDescendants()) {
+                var fullPath = agg.GetPathFromEntry().Skip(1).ToArray();
+
+                for (int i = 0; i < fullPath.Length; i++) {
+                    var parent = (AggregateBase?)fullPath[i].PreviousNode ?? throw new InvalidOperationException("ありえない");
+                    var child = (AggregateBase?)fullPath[i] ?? throw new InvalidOperationException("ありえない");
+                    var nav = new NavigationProperty.NavigationOfParentChild(parent, child);
+
+                    yield return i == 0
+                        ? $".Include(e => e!.{nav.Principal.OtherSidePhysicalName})"      // クエリのエンティティ直下の場合はInclude
+                        : $".ThenInclude(e => e!.{nav.Principal.OtherSidePhysicalName})"; // クエリのエンティティ直下でない場合はThenInclude
+                }
+            }
+        }
+
+
         #region メンバー
         internal interface ISearchResultMember : IInstancePropertyMetadata {
             bool IsOutOfEntryTree { get; }

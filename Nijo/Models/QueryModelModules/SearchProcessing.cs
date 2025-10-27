@@ -177,6 +177,8 @@ namespace Nijo.Models.QueryModelModules {
                 /// </summary>
                 {{If(_rootAggregate.Model is DataModel, () => $$"""
                 {{RenderDataModelQuerySource(ctx)}}
+                """).ElseIf(_rootAggregate.IsView, () => $$"""
+                {{RenderQueryModelViewQuerySource(ctx)}}
                 """).ElseIf(ctx.RenderingOptions.AllowNotImplemented, () => $$"""
                 protected virtual IQueryable<{{searchResult.CsClassName}}> {{CREATE_QUERY_SOURCE}}({{searchCondition.CsClassName}} searchCondition, {{PresentationContext.INTERFACE}}<{{searchConditionMessage.CsClassName}}> context) {
                     throw new NotImplementedException("クエリ構造が定義されていません。このメソッドをオーバライドし、{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}の各項目がどのテーブルから取得されるかを定義してください。");
@@ -265,6 +267,22 @@ namespace Nijo.Models.QueryModelModules {
                     }
                 }
             }
+        }
+
+        private string RenderQueryModelViewQuerySource(CodeRenderingContext ctx) {
+            // 引数
+            var searchCondition = new SearchCondition.Entry(_rootAggregate);
+            var searchConditionMessage = new SearchConditionMessageContainer(_rootAggregate);
+
+            // 戻り値
+            var searchResult = new SearchResult(_rootAggregate);
+
+            return $$"""
+                protected virtual IQueryable<{{searchResult.CsClassName}}> {{CREATE_QUERY_SOURCE}}({{searchCondition.CsClassName}} searchCondition, {{PresentationContext.INTERFACE}}<{{searchConditionMessage.CsClassName}}> context) {
+                    return this.DbContext.{{searchResult.DbSetName}}
+                        {{WithIndent(searchResult.RenderInclude(), "        ")}};
+                }
+                """;
         }
 
         /// <summary>
