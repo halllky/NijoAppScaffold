@@ -277,13 +277,26 @@ namespace Nijo.Parts.CSharp {
         internal class OwnColumnMember : EFCoreEntityColumn {
             internal OwnColumnMember(ValueMember member) {
                 Member = member;
+                CsType = member.Type.CsPrimitiveTypeName;
+                PhysicalName = member.PhysicalName;
+                DisplayName = member.DisplayName;
+                DbName = member.DbName;
+                IsKey = member.IsKey;
+            }
+            internal OwnColumnMember(ValueMember member, string physicalName) {
+                Member = member;
+                CsType = member.Type.CsPrimitiveTypeName;
+                PhysicalName = physicalName;
+                DisplayName = member.DisplayName;
+                DbName = member.DbName;
+                IsKey = member.IsKey;
             }
             internal override ValueMember Member { get; }
-            internal override string CsType => Member.Type.CsPrimitiveTypeName;
-            internal override string PhysicalName => Member.PhysicalName;
-            internal override string DisplayName => Member.DisplayName;
-            internal override string DbName => Member.DbName;
-            internal override bool IsKey => Member.IsKey;
+            internal override string CsType { get; }
+            internal override string PhysicalName { get; }
+            internal override string DisplayName { get; }
+            internal override string DbName { get; }
+            internal override bool IsKey { get; }
         }
         /// <summary>
         /// 子テーブルに定義される、親テーブルの主キーを継承したカラム

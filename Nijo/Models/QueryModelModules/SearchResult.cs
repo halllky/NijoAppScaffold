@@ -386,7 +386,7 @@ namespace Nijo.Models.QueryModelModules {
                 }
                 // 通常のメンバー
                 else {
-                    return new EFCoreEntity.OwnColumnMember(ValueMember);
+                    return new EFCoreEntity.OwnColumnMember(ValueMember, physicalName);
                 }
             }
         }
