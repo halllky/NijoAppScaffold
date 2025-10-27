@@ -88,52 +88,22 @@ namespace Nijo.Models.QueryModelModules {
         public IEnumerable<EFCoreEntity.EFCoreEntityColumn> GetColumns() {
             if (!MapToEFCoreEntity) throw new InvalidOperationException("ビューにマッピングされないのにこのメソッドが呼ばれるのはおかしい");
 
-            foreach (var member in GetMembers()) {
-                if (member is SearchResultValueMember valueMember) {
-                    // 親のキーの場合
-                    if (valueMember.ParentKeyPath != null) {
-                        yield return new EFCoreEntity.ParentKeyMember(valueMember.ValueMember, valueMember.ParentKeyPath);
-                    }
-                    // 参照先のキーの場合
-                    else if (valueMember.RefToMember != null) {
-                        yield return new EFCoreEntity.RefKeyMember(
-                            valueMember.RefToMember,
-                            valueMember.ValueMember,
-                            new[] { valueMember.RefToMember.PhysicalName },
-                            isParentKey: false);
-                    }
-                    // 通常のメンバー
-                    else {
-                        yield return new EFCoreEntity.OwnColumnMember(valueMember.ValueMember);
-                    }
-                }
-            }
+            return GetMembers()
+                .OfType<SearchResultValueMember>()
+                .Select(vm => vm.ToEFCoreEntityColumn());
         }
 
         public IEnumerable<NavigationProperty> GetNavigationProperties() {
-            if (!MapToEFCoreEntity) throw new InvalidOperationException("ビューにマッピングされないのにこのメソッドが呼ばれるのはおかしい");
-
-            // 親から子へのナビゲーション
-            foreach (var member in GetMembers()) {
-                if (member is SearchResultChildrenMember childrenMember) {
-                    yield return new NavigationProperty.NavigationOfParentChild(Aggregate, childrenMember.Aggregate);
-                }
-            }
-
-            // 子から親へのナビゲーション
-            var parent = Aggregate.GetParent();
-            if (parent != null) {
-                yield return new NavigationProperty.NavigationOfParentChild(parent, Aggregate);
-            }
-
-            // RefToMemberに対するナビゲーション
-            foreach (var member in Aggregate.GetMembers()) {
-                if (member is RefToMember refTo) {
-                    yield return new NavigationProperty.NavigationOfRef(refTo);
-                }
-            }
+            return GetMembers()
+                .Select(m => m.NavigationProperty)
+                .Where(nav => nav != null)
+                .Cast<NavigationProperty>();
         }
 
+        /// <summary>
+        /// この検索結果型が持つメンバーを列挙。
+        /// ビューにマッピングされないDTOの場合の子配列、およびナビゲーションプロパティを含む。
+        /// </summary>
         internal IEnumerable<ISearchResultMember> GetMembers() {
             return GetMembersRecursively(Aggregate, false, null);
 
@@ -145,6 +115,12 @@ namespace Nijo.Models.QueryModelModules {
                         foreach (var parentKey in EnumerateParentKeysRecursively(parent, ["Parent"])) {
                             yield return parentKey;
                         }
+
+                        // 子から親へのナビゲーションプロパティ
+                        var navOfParentChild = new NavigationProperty.NavigationOfParentChild(parent, aggregate);
+                        // aggregateは必ずChildAggregateまたはChildrenAggregateのいずれか(RootAggregateには親がないため)
+                        var aggregateAsMember = (IAggregateMember)aggregate;
+                        yield return new SearchResultParentOrRefMember(navOfParentChild, aggregateAsMember);
                     }
 
                     // 親のキーを再帰的に列挙する
@@ -201,6 +177,12 @@ namespace Nijo.Models.QueryModelModules {
                         // aggregateが参照先の場合、かつ子から親へ辿られたとき、循環参照を防ぐ
                         if (aggregate.PreviousNode == (ISchemaPathNode)refTo) continue;
 
+                        // RefToMemberに対するナビゲーションプロパティ(ビューにマッピングされる場合のみ)
+                        if (!isOutOfEntryTree && aggregate.GetRoot().IsView) {
+                            var navOfRef = new NavigationProperty.NavigationOfRef(refTo);
+                            yield return new SearchResultParentOrRefMember(navOfRef, refTo);
+                        }
+
                         foreach (var srm in GetMembersRecursively(refTo.RefTo, true, refToMember ?? refTo)) {
                             yield return srm;
                         }
@@ -230,7 +212,14 @@ namespace Nijo.Models.QueryModelModules {
         }
 
         IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() {
-            return GetMembers();
+            foreach (var m in GetMembers()) {
+                if (m is SearchResultParentOrRefMember) {
+                    // 親や参照先のナビゲーションプロパティは OnModelCreating で明示的に参照する場合だけ使うので列挙しない
+                    // ※ ここでナビゲーションプロパティを返すと StackOverflow が発生したがそれを解決する理由が無い
+                } else {
+                    yield return m;
+                }
+            }
         }
 
         internal string RenderTree(CodeRenderingContext ctx) {
@@ -243,22 +232,7 @@ namespace Nijo.Models.QueryModelModules {
             return $$"""
                 #region 検索クエリ型
                 {{tree.SelectTextTemplate(sr => $$"""
-                /// <summary>
-                /// {{sr.Aggregate.DisplayName}}の検索結果型。
-                /// SQLのSELECT句の形と対応する。
-                /// </summary>
-                public partial class {{sr.CsClassName}} {
-                {{sr.GetMembers().SelectTextTemplate(srm => $$"""
-                    {{WithIndent(srm.RenderDeclaration(), "    ")}}
-                """)}}
-                {{If(sr.HasVersionColumn, () => $$"""
-                    /// <summary>
-                    /// 楽観排他制御用のバージョン。
-                    /// null許容でないのは、データベース上に存在する時点で必ずバージョンも存在するため。
-                    /// </summary>
-                    public int {{VERSION}} { get; set; }
-                """)}}
-                }
+                {{RenderAggregate(sr)}}
                 """)}}
                 #endregion 検索クエリ型
                 {{If(root.IsView, () => $$"""
@@ -276,6 +250,35 @@ namespace Nijo.Models.QueryModelModules {
                 #endregion Entity Framework Core エンティティ定義
                 """)}}
                 """;
+
+            static string RenderAggregate(SearchResult sr) {
+                // 視認性のために親と参照先のナビゲーションプロパティを後ろに持っていく
+                var orderedMembers = sr
+                    .GetMembers()
+                    .Select((m, i) => new { Member = m, Index = i })
+                    .OrderBy(x => x.Member is not SearchResultParentOrRefMember ? 0 : 1)
+                    .ThenBy(x => x.Index)
+                    .Select(x => x.Member);
+
+                return $$"""
+                    /// <summary>
+                    /// {{sr.Aggregate.DisplayName}}の検索結果型。
+                    /// SQLのSELECT句の形と対応する。
+                    /// </summary>
+                    public partial class {{sr.CsClassName}} {
+                    {{orderedMembers.SelectTextTemplate(srm => $$"""
+                        {{WithIndent(srm.RenderDeclaration(), "    ")}}
+                    """)}}
+                    {{If(sr.HasVersionColumn, () => $$"""
+                        /// <summary>
+                        /// 楽観排他制御用のバージョン。
+                        /// null許容でないのは、データベース上に存在する時点で必ずバージョンも存在するため。
+                        /// </summary>
+                        public int {{VERSION}} { get; set; }
+                    """)}}
+                    }
+                    """;
+            }
         }
 
 
@@ -284,13 +287,14 @@ namespace Nijo.Models.QueryModelModules {
             bool IsOutOfEntryTree { get; }
             IAggregateMember Member { get; }
             string RenderDeclaration();
+            NavigationProperty? NavigationProperty { get; }
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
 
             /// <summary>
             /// プロパティ名の計算。
             /// 詳細なルールはこのクラスのXMLコメントを参照。
             /// </summary>
-            internal string GetPhysicalName() {
+            internal string GetPhysicalName(bool forDbName = false) {
                 var list = new List<string>();
                 var previousOfPrevious = (ISchemaPathNode?)null;
                 foreach (var node in Member.GetPathFromEntry()) {
@@ -345,6 +349,8 @@ namespace Nijo.Models.QueryModelModules {
             /// <summary>参照先のキーである場合の RefToMember</summary>
             internal RefToMember? RefToMember { get; }
 
+            NavigationProperty? ISearchResultMember.NavigationProperty => null;
+
             public string GetPropertyName(E_CsTs csts) => _physicalName ??= ((ISearchResultMember)this).GetPhysicalName();
             IValueMemberType IInstanceValuePropertyMetadata.Type => ValueMember.Type;
             IAggregateMember ISearchResultMember.Member => ValueMember;
@@ -356,6 +362,32 @@ namespace Nijo.Models.QueryModelModules {
                     /// <summary>{{ValueMember.DisplayName}}</summary>
                     public {{type}}? {{GetPropertyName(E_CsTs.CSharp)}} { get; set; }
                     """;
+            }
+
+            /// <summary>
+            /// EFCoreのカラム定義に変換。ビューにマッピングされる場合のみ有効。
+            /// </summary>
+            internal EFCoreEntity.EFCoreEntityColumn ToEFCoreEntityColumn() {
+                var physicalName = GetPropertyName(E_CsTs.CSharp);
+                var dbName = ((ISearchResultMember)this).GetPhysicalName(true);
+
+                // 親のキーの場合
+                if (ParentKeyPath != null) {
+                    return new EFCoreEntity.ParentKeyMember(ValueMember, physicalName, dbName);
+                }
+                // 参照先のキーの場合
+                else if (RefToMember != null) {
+                    return new EFCoreEntity.RefKeyMember(
+                        RefToMember,
+                        ValueMember,
+                        physicalName,
+                        dbName,
+                        isParentKey: false);
+                }
+                // 通常のメンバー
+                else {
+                    return new EFCoreEntity.OwnColumnMember(ValueMember);
+                }
             }
         }
 
@@ -369,16 +401,82 @@ namespace Nijo.Models.QueryModelModules {
 
             public bool IsOutOfEntryTree { get; }
 
+            NavigationProperty? ISearchResultMember.NavigationProperty => MapToEFCoreEntity
+                ? new NavigationProperty.NavigationOfParentChild(Aggregate.GetParent() ?? throw new InvalidOperationException($"{Aggregate.DisplayName}の親が無い"), Aggregate)
+                : null;
+
             public string GetPropertyName(E_CsTs csts) => _physicalName ??= ((ISearchResultMember)this).GetPhysicalName();
             bool IInstanceStructurePropertyMetadata.IsArray => true;
             string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => CsClassName;
             IAggregateMember ISearchResultMember.Member => Aggregate;
-            IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => GetMembers();
 
             string ISearchResultMember.RenderDeclaration() {
+                // ビューにマッピングされない場合はただのリスト、
+                // ビューにマッピングされる場合はナビゲーションプロパティ
+                if (MapToEFCoreEntity) {
+                    var parent = Aggregate.GetParent() ?? throw new InvalidOperationException($"{Aggregate.DisplayName}の親が無い");
+                    var nav = new NavigationProperty.NavigationOfParentChild(parent, Aggregate);
+                    var p = nav.Principal;
+
+                    return $$"""
+                        /// <summary>{{Aggregate.DisplayName}}</summary>
+                        public virtual {{p.GetOtherSideCsTypeName(true)}} {{p.OtherSidePhysicalName}} { get; set; }{{p.GetInitializerStatement()}}
+                        """;
+
+                } else {
+                    return $$"""
+                        /// <summary>{{Aggregate.DisplayName}}</summary>
+                        public List<{{CsClassName}}> {{GetPropertyName(E_CsTs.CSharp)}} { get; set; } = new();
+                        """;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 親またはRef先へのナビゲーションプロパティを表すメンバー。
+        /// ビューにマッピングされる場合のみ存在する。
+        /// </summary>
+        internal class SearchResultParentOrRefMember : ISearchResultMember {
+            internal SearchResultParentOrRefMember(NavigationProperty navigationProperty, IAggregateMember memberForSchemaPath) {
+                NavigationProperty = navigationProperty;
+                MemberForSchemaPath = memberForSchemaPath;
+            }
+
+            public bool IsOutOfEntryTree => false;
+
+            NavigationProperty? ISearchResultMember.NavigationProperty => NavigationProperty;
+
+            internal NavigationProperty NavigationProperty { get; }
+
+            /// <summary>
+            /// SchemaPathNodeとして機能するためのメンバー。
+            /// 親へのナビゲーションの場合は子の集約自体、RefToMemberへのナビゲーションの場合はRefToMember自体。
+            /// </summary>
+            internal IAggregateMember MemberForSchemaPath { get; }
+
+            IAggregateMember ISearchResultMember.Member => MemberForSchemaPath;
+
+            string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => NavigationProperty switch {
+                NavigationProperty.NavigationOfParentChild parentChild => parentChild.Relevant.OtherSidePhysicalName,
+                NavigationProperty.NavigationOfRef refNav => refNav.Relevant.OtherSidePhysicalName,
+                _ => throw new InvalidOperationException(),
+            };
+
+            string ISearchResultMember.RenderDeclaration() {
+                // ナビゲーションプロパティとしてレンダリング
+                var side = NavigationProperty switch {
+                    NavigationProperty.NavigationOfParentChild parentChild => parentChild.Relevant,
+                    NavigationProperty.NavigationOfRef refNav => refNav.Relevant,
+                    _ => throw new InvalidOperationException(),
+                };
+
+                var typeName = side.GetOtherSideCsTypeName(true);
+                var propName = side.OtherSidePhysicalName;
+                var initializer = side.GetInitializerStatement();
+
                 return $$"""
-                    /// <summary>{{Aggregate.DisplayName}}</summary>
-                    public List<{{CsClassName}}> {{GetPropertyName(E_CsTs.CSharp)}} { get; set; } = new();
+                    /// <summary>{{MemberForSchemaPath.DisplayName}}</summary>
+                    public virtual {{typeName}} {{propName}} { get; set; }{{initializer}}
                     """;
             }
         }

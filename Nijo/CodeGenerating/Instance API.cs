@@ -129,7 +129,7 @@ public static partial class CodeGeneratingHelperExtensions {
         return propertyMetadata switch {
             IInstanceValuePropertyMetadata v => owner.CreateProperty(v),
             IInstanceStructurePropertyMetadata s => owner.CreateProperty(s),
-            _ => throw new InvalidOperationException("上記2種以外はありえない"),
+            _ => throw new InvalidOperationException($"上記2種以外はありえない: {propertyMetadata.GetType().FullName}"),
         };
     }
     /// <summary>

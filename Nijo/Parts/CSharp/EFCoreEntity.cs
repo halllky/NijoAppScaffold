@@ -289,6 +289,11 @@ namespace Nijo.Parts.CSharp {
         /// 子テーブルに定義される、親テーブルの主キーを継承したカラム
         /// </summary>
         internal class ParentKeyMember : EFCoreEntityColumn {
+            internal ParentKeyMember(ValueMember member, string physicalName, string dbName) {
+                Member = member;
+                PhysicalName = physicalName;
+                DbName = dbName;
+            }
             internal ParentKeyMember(ValueMember member, IEnumerable<string> path) {
                 Member = member;
                 PhysicalName = $"{path.Join("_")}_{member.PhysicalName}";
@@ -305,6 +310,13 @@ namespace Nijo.Parts.CSharp {
         /// 外部参照がある場合の、参照先のキーを継承したカラム
         /// </summary>
         internal class RefKeyMember : EFCoreEntityColumn {
+            internal RefKeyMember(RefToMember refEntry, ValueMember member, string physicalName, string dbName, bool isParentKey) {
+                RefEntry = refEntry;
+                Member = member;
+                PhysicalName = physicalName;
+                DbName = dbName;
+                IsParentKey = isParentKey;
+            }
             internal RefKeyMember(RefToMember refEntry, ValueMember member, IEnumerable<string> path, bool isParentKey) {
                 RefEntry = refEntry;
                 Member = member;
