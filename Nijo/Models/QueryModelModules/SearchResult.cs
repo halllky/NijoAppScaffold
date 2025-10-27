@@ -90,7 +90,22 @@ namespace Nijo.Models.QueryModelModules {
 
             foreach (var member in GetMembers()) {
                 if (member is SearchResultValueMember valueMember) {
-                    yield return valueMember.AsEFCoreEntityColumn();
+                    // 親のキーの場合
+                    if (valueMember.ParentKeyPath != null) {
+                        yield return new EFCoreEntity.ParentKeyMember(valueMember.ValueMember, valueMember.ParentKeyPath);
+                    }
+                    // 参照先のキーの場合
+                    else if (valueMember.RefToMember != null) {
+                        yield return new EFCoreEntity.RefKeyMember(
+                            valueMember.RefToMember,
+                            valueMember.ValueMember,
+                            new[] { valueMember.RefToMember.PhysicalName },
+                            isParentKey: false);
+                    }
+                    // 通常のメンバー
+                    else {
+                        yield return new EFCoreEntity.OwnColumnMember(valueMember.ValueMember);
+                    }
                 }
             }
         }
@@ -120,10 +135,10 @@ namespace Nijo.Models.QueryModelModules {
         }
 
         internal IEnumerable<ISearchResultMember> GetMembers() {
-            return GetMembersRecursively(Aggregate, false);
+            return GetMembersRecursively(Aggregate, false, null);
 
-            static IEnumerable<ISearchResultMember> GetMembersRecursively(AggregateBase aggregate, bool isOutOfEntryTree) {
-                // ビューにマッピングされる場合、親のキーを列挙する（JOIN用）
+            static IEnumerable<ISearchResultMember> GetMembersRecursively(AggregateBase aggregate, bool isOutOfEntryTree, RefToMember? refToMember) {
+                // ビューにマッピングされる場合、親のキーを列挙する(JOIN用)
                 if (!isOutOfEntryTree && aggregate.GetRoot().IsView) {
                     var parent = aggregate.GetParent();
                     if (parent != null) {
@@ -144,7 +159,7 @@ namespace Nijo.Models.QueryModelModules {
 
                         // 親のキー
                         foreach (var vm in parent.GetKeyVMs()) {
-                            yield return new SearchResultValueMember(vm, false, path.ToArray());
+                            yield return new SearchResultValueMember(vm, false, parentKeyPath: path.ToArray());
                         }
                     }
                 }
@@ -153,7 +168,7 @@ namespace Nijo.Models.QueryModelModules {
                 if (isOutOfEntryTree) {
                     var parent = aggregate.GetParent();
                     if (parent != null && aggregate.PreviousNode != (ISchemaPathNode)parent) {
-                        foreach (var srm in GetMembersRecursively(parent, true)) {
+                        foreach (var srm in GetMembersRecursively(parent, true, refToMember)) {
                             yield return srm;
                         }
                     }
@@ -161,7 +176,9 @@ namespace Nijo.Models.QueryModelModules {
 
                 foreach (var member in aggregate.GetMembers()) {
                     if (member is ValueMember vm) {
-                        yield return new SearchResultValueMember(vm, isOutOfEntryTree, null);
+                        // 参照先のキーの場合のみrefToMemberを渡す
+                        var refToForThisMember = (refToMember != null && vm.IsKey) ? refToMember : null;
+                        yield return new SearchResultValueMember(vm, isOutOfEntryTree, refToMember: refToForThisMember);
 
                     } else if (member is ChildrenAggregate children) {
                         // aggregateが参照先の場合、かつ子から親へ辿られたとき、循環参照を防ぐ
@@ -176,7 +193,7 @@ namespace Nijo.Models.QueryModelModules {
                         // aggregateが参照先の場合、かつ子から親へ辿られたとき、循環参照を防ぐ
                         if (aggregate.PreviousNode == (ISchemaPathNode)child) continue;
 
-                        foreach (var srm in GetMembersRecursively(child, isOutOfEntryTree)) {
+                        foreach (var srm in GetMembersRecursively(child, isOutOfEntryTree, refToMember)) {
                             yield return srm;
                         }
 
@@ -184,7 +201,7 @@ namespace Nijo.Models.QueryModelModules {
                         // aggregateが参照先の場合、かつ子から親へ辿られたとき、循環参照を防ぐ
                         if (aggregate.PreviousNode == (ISchemaPathNode)refTo) continue;
 
-                        foreach (var srm in GetMembersRecursively(refTo.RefTo, true)) {
+                        foreach (var srm in GetMembersRecursively(refTo.RefTo, true, refToMember ?? refTo)) {
                             yield return srm;
                         }
 
@@ -311,34 +328,24 @@ namespace Nijo.Models.QueryModelModules {
         }
 
         internal class SearchResultValueMember : ISearchResultMember, IInstanceValuePropertyMetadata {
-            internal SearchResultValueMember(ValueMember valueMember, bool isOutOfEntryTree, string[]? parentKeyPath) {
+            internal SearchResultValueMember(ValueMember valueMember, bool isOutOfEntryTree, string[]? parentKeyPath = null, RefToMember? refToMember = null) {
                 ValueMember = valueMember;
                 IsOutOfEntryTree = isOutOfEntryTree;
                 ParentKeyPath = parentKeyPath;
+                RefToMember = refToMember;
             }
             internal ValueMember ValueMember { get; }
             private string? _physicalName;
 
             public bool IsOutOfEntryTree { get; }
 
-            /// <summary>
-            /// 親のキーを表す場合のパス。nullの場合は親のキーではない。
-            /// 例: ["Parent"] または ["Parent", "Parent"]
-            /// </summary>
+            /// <summary>親のキーである場合のパス。例: ["Parent"] または ["Parent", "Parent"]</summary>
             internal string[]? ParentKeyPath { get; }
 
-            public string GetPropertyName(E_CsTs csts) {
-                if (_physicalName != null) return _physicalName;
+            /// <summary>参照先のキーである場合の RefToMember</summary>
+            internal RefToMember? RefToMember { get; }
 
-                // 親のキーの場合は専用の命名規則
-                if (ParentKeyPath != null) {
-                    _physicalName = $"{ParentKeyPath.Join("_")}_{((ISearchResultMember)this).GetPhysicalName()}";
-                } else {
-                    _physicalName = ((ISearchResultMember)this).GetPhysicalName();
-                }
-
-                return _physicalName;
-            }
+            public string GetPropertyName(E_CsTs csts) => _physicalName ??= ((ISearchResultMember)this).GetPhysicalName();
             IValueMemberType IInstanceValuePropertyMetadata.Type => ValueMember.Type;
             IAggregateMember ISearchResultMember.Member => ValueMember;
 
@@ -349,29 +356,6 @@ namespace Nijo.Models.QueryModelModules {
                     /// <summary>{{ValueMember.DisplayName}}</summary>
                     public {{type}}? {{GetPropertyName(E_CsTs.CSharp)}} { get; set; }
                     """;
-            }
-
-            /// <summary>
-            /// このインスタンスを EFCore のカラムとしてのインスタンスに変換します。
-            /// </summary>
-            internal EFCoreEntity.EFCoreEntityColumn AsEFCoreEntityColumn() {
-                return new SearchResultColumn(this);
-            }
-
-            private class SearchResultColumn : EFCoreEntity.EFCoreEntityColumn {
-                private readonly SearchResultValueMember _valueMember;
-
-                internal SearchResultColumn(SearchResultValueMember valueMember) {
-                    _valueMember = valueMember;
-                }
-
-                internal override ValueMember Member => _valueMember.ValueMember;
-                internal override string CsType => _valueMember.ValueMember.Type.CsPrimitiveTypeName;
-                internal override string PhysicalName => _valueMember.GetPropertyName(E_CsTs.CSharp);
-                internal override string DisplayName => _valueMember.ValueMember.DisplayName;
-                internal override string DbName => _valueMember.ValueMember.DbName;
-                // 親のキーの場合は常にキー、それ以外は元のValueMemberのIsKeyに従う
-                internal override bool IsKey => _valueMember.ParentKeyPath != null || _valueMember.ValueMember.IsKey;
             }
         }
 
