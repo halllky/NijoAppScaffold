@@ -1885,7 +1885,7 @@
     Type="data-model"
     UniqueId="view-inventory-by-category-001">
     <機器分類
-      DbName="CATEGORY_ID"
+      DbName="CATEGORY"
       IsKey="True"
       Type="ref-to:機器分類マスタ"
       UniqueId="view-inv-cat-category-001" />
@@ -1906,7 +1906,7 @@
       Type="children"
       UniqueId="view-inv-cat-warehouse-inv-001">
       <保管庫
-        DbName="WAREHOUSE_ID"
+        DbName="WAREHOUSE"
         IsKey="True"
         Type="ref-to:保管庫マスタ"
         UniqueId="view-inv-cat-wh-warehouse-001" />
