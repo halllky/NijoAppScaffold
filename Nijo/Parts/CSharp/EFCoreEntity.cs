@@ -275,20 +275,16 @@ namespace Nijo.Parts.CSharp {
         /// 集約自身に定義されている属性で、テーブルに直接属するカラム
         /// </summary>
         internal class OwnColumnMember : EFCoreEntityColumn {
-            internal OwnColumnMember(ValueMember member) {
+            internal OwnColumnMember(
+                ValueMember member,
+                string? physicalName = null,
+                string? dbName = null) {
+
                 Member = member;
                 CsType = member.Type.CsPrimitiveTypeName;
-                PhysicalName = member.PhysicalName;
+                PhysicalName = physicalName ?? member.PhysicalName;
                 DisplayName = member.DisplayName;
-                DbName = member.DbName;
-                IsKey = member.IsKey;
-            }
-            internal OwnColumnMember(ValueMember member, string physicalName) {
-                Member = member;
-                CsType = member.Type.CsPrimitiveTypeName;
-                PhysicalName = physicalName;
-                DisplayName = member.DisplayName;
-                DbName = member.DbName;
+                DbName = dbName ?? member.DbName;
                 IsKey = member.IsKey;
             }
             internal override ValueMember Member { get; }

@@ -152,8 +152,9 @@ namespace Nijo.Models.QueryModelModules {
 
                 foreach (var member in aggregate.GetMembers()) {
                     if (member is ValueMember vm) {
-                        // 参照先のキーの場合のみrefToMemberを渡す
-                        var refToForThisMember = (refToMember != null && vm.IsKey) ? refToMember : null;
+                        // 参照先の直接のキーメンバーの場合のみrefToMemberを渡す
+                        // （参照先の子要素やRefToMemberのキーは、外部キーではなく単なる属性として展開されるだけ）
+                        var refToForThisMember = (refToMember != null && vm.IsKey && vm.Owner == refToMember.RefTo) ? refToMember : null;
                         yield return new SearchResultValueMember(vm, isOutOfEntryTree, refToMember: refToForThisMember);
 
                     } else if (member is ChildrenAggregate children) {
@@ -317,7 +318,12 @@ namespace Nijo.Models.QueryModelModules {
             internal string GetPhysicalName(bool forDbName = false) {
                 var list = new List<string>();
                 var previousOfPrevious = (ISchemaPathNode?)null;
-                foreach (var node in Member.GetPathFromEntry()) {
+                var isLastNode = false;
+                var nodes = Member.GetPathFromEntry().ToArray();
+
+                for (int i = 0; i < nodes.Length; i++) {
+                    var node = nodes[i];
+                    isLastNode = (i == nodes.Length - 1);
 
                     // エントリーを除外
                     if (node.PreviousNode == null) {
@@ -342,7 +348,15 @@ namespace Nijo.Models.QueryModelModules {
                     if (node.XElement == node.PreviousNode.XElement.GetParentWithoutMemo()) {
                         list.Add("Parent");
                     } else {
-                        list.Add(node.XElement.Name.LocalName);
+                        if (forDbName && isLastNode && node is ValueMember vm) {
+                            // 最後のノード（ValueMember自身）かつDbName計算の場合は、スキーマ定義のDbNameを使用
+                            list.Add(vm.DbName);
+                        } else if (forDbName && node is RefToMember refto) {
+                            // 物理名の途中経路に付されるRefToMemberの場合もDbNameを使用
+                            list.Add(refto.DbName);
+                        } else {
+                            list.Add(node.XElement.Name.LocalName);
+                        }
                     }
 
                     previousOfPrevious = node.PreviousNode;
@@ -406,7 +420,10 @@ namespace Nijo.Models.QueryModelModules {
                 }
                 // 通常のメンバー
                 else {
-                    return new EFCoreEntity.OwnColumnMember(ValueMember, physicalName);
+                    return new EFCoreEntity.OwnColumnMember(
+                        ValueMember,
+                        physicalName: physicalName,
+                        dbName: dbName);
                 }
             }
         }
