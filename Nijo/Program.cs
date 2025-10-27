@@ -178,35 +178,40 @@ namespace Nijo {
         private static Action<InvocationContext> NewProject(Argument<string?> argPath) {
 
             return context => {
-                var path = GetValueForHandlerParameter(argPath, context);
+                try {
+                    var path = GetValueForHandlerParameter(argPath, context);
 
-                var projectRoot = path == null
-                    ? Directory.GetCurrentDirectory()
-                    : Path.Combine(Directory.GetCurrentDirectory(), path);
-                var logger = ILoggerExtension.CreateConsoleLogger();
+                    var projectRoot = path == null
+                        ? Directory.GetCurrentDirectory()
+                        : Path.Combine(Directory.GetCurrentDirectory(), path);
+                    var logger = ILoggerExtension.CreateConsoleLogger();
 
-                if (Directory.Exists(projectRoot)) {
-                    logger.LogError("既にプロジェクトが存在します: {projectRoot}", projectRoot);
-                    context.ExitCode = 1;
-                    return;
-                }
-
-                var (success, errorMessage) = GeneratedProject.CreatePhysicalProjectAndInstallDependenciesAsync(projectRoot, logger);
-
-                if (success) {
-                    logger.LogInformation("プロジェクトの作成が完了しました: {projectRoot}", projectRoot);
-                    context.ExitCode = 0;
-                } else {
-                    logger.LogError(errorMessage ?? "プロジェクトの作成に失敗しました。");
-                    // 作成途中のディレクトリが残っている可能性があるので削除を試みる
                     if (Directory.Exists(projectRoot)) {
-                        try {
-                            Directory.Delete(projectRoot, recursive: true);
-                        } catch (Exception ex) {
-                            logger.LogWarning($"作成失敗したプロジェクトディレクトリの削除に失敗しました: {projectRoot}, {ex.Message}");
-                        }
+                        logger.LogError("既にプロジェクトが存在します: {projectRoot}", projectRoot);
+                        context.ExitCode = 1;
+                        return;
                     }
+
+                    var (success, errorMessage) = GeneratedProject.CreatePhysicalProjectAndInstallDependenciesAsync(projectRoot, logger);
+
+                    if (success) {
+                        logger.LogInformation("プロジェクトの作成が完了しました: {projectRoot}", projectRoot);
+                        context.ExitCode = 0;
+                    } else {
+                        logger.LogError(errorMessage ?? "プロジェクトの作成に失敗しました。");
+                        // 作成途中のディレクトリが残っている可能性があるので削除を試みる
+                        if (Directory.Exists(projectRoot)) {
+                            try {
+                                Directory.Delete(projectRoot, recursive: true);
+                            } catch (Exception ex) {
+                                logger.LogWarning($"作成失敗したプロジェクトディレクトリの削除に失敗しました: {projectRoot}, {ex.Message}");
+                            }
+                        }
+                        context.ExitCode = 1;
+                    }
+                } catch {
                     context.ExitCode = 1;
+                    throw;
                 }
             };
         }
@@ -219,26 +224,31 @@ namespace Nijo {
         private static Action<InvocationContext> Validate(Argument<string?> argPath) {
 
             return context => {
-                var path = GetValueForHandlerParameter(argPath, context);
+                try {
+                    var path = GetValueForHandlerParameter(argPath, context);
 
-                var projectRoot = path == null
-                    ? Directory.GetCurrentDirectory()
-                    : Path.Combine(Directory.GetCurrentDirectory(), path);
-                var logger = ILoggerExtension.CreateConsoleLogger();
+                    var projectRoot = path == null
+                        ? Directory.GetCurrentDirectory()
+                        : Path.Combine(Directory.GetCurrentDirectory(), path);
+                    var logger = ILoggerExtension.CreateConsoleLogger();
 
-                if (!GeneratedProject.TryOpen(projectRoot, out var project, out var error)) {
-                    logger.LogError(error);
+                    if (!GeneratedProject.TryOpen(projectRoot, out var project, out var error)) {
+                        logger.LogError(error);
+                        context.ExitCode = 1;
+                        return;
+                    }
+                    var rule = SchemaParseRule.Default();
+                    var parseContext = new SchemaParseContext(XDocument.Load(project.SchemaXmlPath), rule);
+
+                    if (!project.ValidateSchema(parseContext, logger)) {
+                        context.ExitCode = 1;
+                        return;
+                    }
+                    context.ExitCode = 0;
+                } catch {
                     context.ExitCode = 1;
-                    return;
+                    throw;
                 }
-                var rule = SchemaParseRule.Default();
-                var parseContext = new SchemaParseContext(XDocument.Load(project.SchemaXmlPath), rule);
-
-                if (!project.ValidateSchema(parseContext, logger)) {
-                    context.ExitCode = 1;
-                    return;
-                }
-                context.ExitCode = 0;
             };
         }
 
@@ -251,29 +261,34 @@ namespace Nijo {
         private static Action<InvocationContext> Generate(Argument<string?> argPath, Option<bool> optAllowNotImplemented) {
 
             return context => {
-                var path = GetValueForHandlerParameter(argPath, context);
-                var allowNotImplemented = GetValueForHandlerParameter(optAllowNotImplemented, context);
+                try {
+                    var path = GetValueForHandlerParameter(argPath, context);
+                    var allowNotImplemented = GetValueForHandlerParameter(optAllowNotImplemented, context);
 
-                var projectRoot = path == null
-                    ? Directory.GetCurrentDirectory()
-                    : Path.Combine(Directory.GetCurrentDirectory(), path);
-                var logger = ILoggerExtension.CreateConsoleLogger();
+                    var projectRoot = path == null
+                        ? Directory.GetCurrentDirectory()
+                        : Path.Combine(Directory.GetCurrentDirectory(), path);
+                    var logger = ILoggerExtension.CreateConsoleLogger();
 
-                if (!GeneratedProject.TryOpen(projectRoot, out var project, out var error)) {
-                    logger.LogError(error);
+                    if (!GeneratedProject.TryOpen(projectRoot, out var project, out var error)) {
+                        logger.LogError(error);
+                        context.ExitCode = 1;
+                        return;
+                    }
+                    var rule = SchemaParseRule.Default();
+                    var parseContext = new SchemaParseContext(XDocument.Load(project.SchemaXmlPath), rule);
+                    var renderingOptions = new CodeRenderingOptions {
+                        AllowNotImplemented = allowNotImplemented,
+                    };
+
+                    if (project.GenerateCode(parseContext, renderingOptions, logger)) {
+                        context.ExitCode = 0;
+                    } else {
+                        context.ExitCode = 1;
+                    }
+                } catch {
                     context.ExitCode = 1;
-                    return;
-                }
-                var rule = SchemaParseRule.Default();
-                var parseContext = new SchemaParseContext(XDocument.Load(project.SchemaXmlPath), rule);
-                var renderingOptions = new CodeRenderingOptions {
-                    AllowNotImplemented = allowNotImplemented,
-                };
-
-                if (project.GenerateCode(parseContext, renderingOptions, logger)) {
-                    context.ExitCode = 0;
-                } else {
-                    context.ExitCode = 1;
+                    throw;
                 }
             };
         }
