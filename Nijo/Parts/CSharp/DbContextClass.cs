@@ -15,11 +15,11 @@ namespace Nijo.Parts.CSharp {
         private const string ON_DBCONTEXT_CONFIGURE_CONVENSIONS = "ConfigureConventions";
         private const string ON_DBCONTEXT_CONFIGURING = "OnConfiguringDbContext";
 
-        private readonly List<EFCoreEntity> _efCoreEntities = [];
+        private readonly List<IEFCoreEntity> _efCoreEntities = [];
         private readonly List<string> _configureConversions = [];
         private readonly Lock _lock = new();
 
-        internal DbContextClass AddEntities(IEnumerable<EFCoreEntity> eFCoreEntities) {
+        internal DbContextClass AddEntities(IEnumerable<IEFCoreEntity> eFCoreEntities) {
             lock (_lock) {
                 _efCoreEntities.AddRange(eFCoreEntities);
                 return this;

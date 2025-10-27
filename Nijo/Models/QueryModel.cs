@@ -233,15 +233,6 @@ namespace Nijo.Models {
 
         public void GenerateCode(CodeRenderingContext ctx, RootAggregate rootAggregate) {
             var aggregateFile = new SourceFileByAggregate(rootAggregate);
-
-            // MapToViewが指定されている場合はEFCoreEntityを生成
-            if (rootAggregate.IsView) {
-                var efCoreEntity = new EFCoreEntity(rootAggregate);
-                aggregateFile.AddCSharpClass(EFCoreEntity.RenderClassDeclaring(efCoreEntity, ctx), "Class_EFCoreEntity");
-                ctx.Use<DbContextClass>().AddEntities(efCoreEntity.EnumerateThisAndDescendants());
-                ctx.Use<MetadataOfEFCoreEntity>().Register(rootAggregate);
-            }
-
             GenerateCode(ctx, rootAggregate, aggregateFile);
             aggregateFile.ExecuteRendering(ctx);
         }
@@ -273,7 +264,13 @@ namespace Nijo.Models {
             aggregateFile.AddTypeScriptFunction(urlConversion.ConvertTypeScriptToUrl(ctx));
 
             // データ型: 検索結果クラス
-            aggregateFile.AddCSharpClass(SearchResult.RenderTree(rootAggregate), "Class_SearchResult");
+            // ※ ビューにマッピングされる場合はSearchResultのEFCoreエンティティも生成する
+            var searchResult = new SearchResult(rootAggregate);
+            aggregateFile.AddCSharpClass(searchResult.RenderTree(ctx), "Class_SearchResult");
+            if (rootAggregate.IsView) {
+                ctx.Use<DbContextClass>().AddEntities(searchResult.EnumerateThisAndChildren());
+                ctx.Use<MetadataOfEFCoreEntity>().Register(rootAggregate);
+            }
 
             // データ型: 画面表示用型 DisplayData
             // - 定義(CS, TS): 値 + 状態(existsInDB, willBeChanged, willBeDeleted)

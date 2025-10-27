@@ -280,7 +280,9 @@ namespace Nijo.Models.QueryModelModules {
             var queryVarMemberes = queryVar
                 .CreatePropertiesRecursively()
                 .OfType<InstanceValueProperty>()
-                .ToDictionary(p => p.Metadata.SchemaPathNode.ToMappingKey());
+                .GroupBy(p => p.Metadata.SchemaPathNode.ToMappingKey())
+                // ビューにマッピングされる場合、子が親のキーを持つ都合上、同じキーが複数登場するため、最も浅いパスのものを採用する
+                .ToDictionary(g => g.Key, g => g.OrderBy(x => x.GetPathFromInstance().Count()).First());
             var searchConditionMembers = scVar
                 .CreatePropertiesRecursively()
                 .OfType<InstanceValueProperty>()
@@ -335,7 +337,9 @@ namespace Nijo.Models.QueryModelModules {
             var queryVar = new Variable("e", searchResult);
             var queryVarMembers = queryVar
                 .CreatePropertiesRecursively()
-                .ToDictionary(p => p.Metadata.SchemaPathNode.ToMappingKey());
+                .GroupBy(p => p.Metadata.SchemaPathNode.ToMappingKey())
+                // ビューにマッピングされる場合、子が親のキーを持つ都合上、同じキーが複数登場するため、最も浅いパスのものを採用する
+                .ToDictionary(g => g.Key, g => g.OrderBy(x => x.GetPathFromInstance().Count()).First());
 
             var sortMembers = searchCondition
                 .EnumerateSortMembersRecursively()
@@ -471,7 +475,9 @@ namespace Nijo.Models.QueryModelModules {
                 // 右辺
                 var rightMembers = rightInstance
                     .CreatePropertiesRecursively()
-                    .ToDictionary(x => x.Metadata.SchemaPathNode.ToMappingKey());
+                    // ビューにマッピングされる場合、子が親のキーを持つ都合上、同じキーが複数登場するため、最も浅いパスのものを採用する
+                    .GroupBy(x => x.Metadata.SchemaPathNode.ToMappingKey())
+                    .ToDictionary(g => g.Key, g => g.OrderBy(x => x.GetPathFromInstance().Count()).First());
 
                 foreach (var member in left.Values.GetMembers()) {
                     if (member is EditablePresentationObject.EditablePresentationObjectValueMember vm) {

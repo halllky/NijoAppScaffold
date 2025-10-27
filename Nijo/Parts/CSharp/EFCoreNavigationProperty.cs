@@ -26,6 +26,25 @@ internal abstract class NavigationProperty {
     /// <summary>外部キー項目を列挙</summary>
     internal abstract IEnumerable<EFCoreEntity.EFCoreEntityColumn> GetRelevantForeignKeys();
 
+    /// <summary>
+    /// 集約から適切なインスタンスを取得
+    /// </summary>
+    protected static IEFCoreEntity GetConcreteClass(AggregateBase aggregate) {
+        var root = aggregate.GetRoot();
+        if (root.Model is Models.QueryModel && root.IsView) {
+            // QueryModelのビューの場合はSearchResultを返す
+            if (aggregate is RootAggregate rootAgg) {
+                return new Models.QueryModelModules.SearchResult(rootAgg);
+            } else if (aggregate is ChildrenAggregate children) {
+                return new Models.QueryModelModules.SearchResult.SearchResultChildrenMember(children, false);
+            } else {
+                throw new InvalidOperationException("SearchResultのナビゲーションプロパティの集約が不正です");
+            }
+        }
+        // それ以外はEFCoreEntityを返す
+        return new EFCoreEntity(aggregate);
+    }
+
     public override string ToString() {
         // デバッグ用
         return $"Principal = {Principal.ThisSide}, Relevant = {Relevant.ThisSide}";
@@ -41,10 +60,13 @@ internal abstract class NavigationProperty {
         bool IInstanceStructurePropertyMetadata.IsArray => OtherSideIsMany;
         ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => OtherSide;
         string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => OtherSidePhysicalName;
-        string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => new EFCoreEntity(OtherSide).CsClassName;
+        string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => GetConcreteClass(OtherSide).CsClassName;
         IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() {
-            IInstancePropertyOwnerMetadata otherSideEfCoreEntity = new EFCoreEntity(OtherSide);
-            foreach (var member in otherSideEfCoreEntity.GetMembers()) {
+            var otherSideEfCoreEntity = GetConcreteClass(OtherSide);
+            var otherSideMetadata = otherSideEfCoreEntity as IInstancePropertyOwnerMetadata
+                ?? throw new InvalidOperationException($"インスタンスが必要なインターフェースを実装していません: {otherSideEfCoreEntity.GetType()}");
+
+            foreach (var member in otherSideMetadata.GetMembers()) {
                 // 無限ループに陥るのでこのインスタンス自身は列挙しない
                 if (member is PrincipalOrRelevant por && por.OtherSide == ThisSide) continue;
 
@@ -59,12 +81,13 @@ internal abstract class NavigationProperty {
         /// <summary>C#型名</summary>
         /// <param name="withNullable">末尾にNull許容演算子をつけるかどうか</param>
         internal string GetOtherSideCsTypeName(bool withNullable = false) {
+            var className = GetConcreteClass(OtherSide).CsClassName;
             if (OtherSideIsMany) {
-                return $"ICollection<{new EFCoreEntity(OtherSide).CsClassName}>";
+                return $"ICollection<{className}>";
             } else {
                 return withNullable
-                    ? $"{new EFCoreEntity(OtherSide).CsClassName}?"
-                    : $"{new EFCoreEntity(OtherSide).CsClassName}";
+                    ? $"{className}?"
+                    : className;
             }
         }
         /// <summary>プロパティ初期化式</summary>
@@ -111,7 +134,7 @@ internal abstract class NavigationProperty {
             return $"FK_{Principal.ThisSide.DbName}_{Relevant.ThisSide.DbName}";
         }
         internal override IEnumerable<EFCoreEntity.EFCoreEntityColumn> GetRelevantForeignKeys() {
-            var child = new EFCoreEntity(Relevant.ThisSide);
+            var child = GetConcreteClass(Relevant.ThisSide);
             var childColumns = child.GetColumns();
 
             // 子の主キーのうち、親の主キーのいずれかとマッピングキーが合致するものが親子間の外部キー
@@ -159,7 +182,7 @@ internal abstract class NavigationProperty {
             return $"FK_{Principal.ThisSide.DbName}_{Relevant.ThisSide.DbName}_{hash}";
         }
         internal override IEnumerable<EFCoreEntity.EFCoreEntityColumn> GetRelevantForeignKeys() {
-            var refFrom = new EFCoreEntity(Relevant.ThisSide);
+            var refFrom = GetConcreteClass(Relevant.ThisSide);
             return refFrom
                 .GetColumns()
                 .Where(col => col is EFCoreEntity.RefKeyMember rm
