@@ -6,7 +6,6 @@ import * as Layout from "@nijo/ui-components/layout"
 import * as Input from "@nijo/ui-components/input"
 import { SchemaDefinitionGlobalState, XmlElementItem, XmlElementAttribute, ATTR_TYPE, ATTR_DISPLAY_NAME, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, asTree, ModelPageForm } from "../types"
 import { UUID } from "uuidjs"
-import { usePersonalSettings } from "../Settings"
 import { GetValidationResultFunction, ValidationTriggerFunction, ValidationResultListItem } from "../MainPage/useValidation"
 import ErrorMessagePane from "../MainPage/ErrorMessage"
 
@@ -416,8 +415,6 @@ export const EnumDefDialog: React.FC<EnumDefDialogProps> = ({
     return validationResultList.filter(item => enumElementIds.has(item.id))
   }, [enumElementIds, validationResultList])
 
-  const { personalSettings } = usePersonalSettings()
-
   return (
     <ModalDialog open onOutsideClick={handleClose}>
       <div className="w-[960px] max-w-[95vw] h-[80vh] flex flex-col bg-white rounded shadow-md overflow-hidden">
@@ -432,26 +429,22 @@ export const EnumDefDialog: React.FC<EnumDefDialogProps> = ({
           <section className="flex-[2] min-h-0 flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-1">
               <h2 className="text-sm select-none">静的区分</h2>
-              {!personalSettings.hideGridButtons && (
-                <>
-                  <div className="basis-4"></div>
-                  <Input.IconButton outline mini onClick={handleInsertStaticEnumValue}>
-                    区分値を挿入(Enter)
-                  </Input.IconButton>
-                  <Input.IconButton outline mini onClick={handleInsertStaticEnumValueBelow}>
-                    区分値を下挿入(Ctrl + Enter)
-                  </Input.IconButton>
-                  <Input.IconButton outline mini onClick={handleDeleteStaticEnumValue}>
-                    区分値を削除(Shift + Delete)
-                  </Input.IconButton>
-                  <Input.IconButton outline mini onClick={handleMoveUpStaticEnumValue}>
-                    上移動(Alt + ↑)
-                  </Input.IconButton>
-                  <Input.IconButton outline mini onClick={handleMoveDownStaticEnumValue}>
-                    下移動(Alt + ↓)
-                  </Input.IconButton>
-                </>
-              )}
+              <div className="basis-4"></div>
+              <Input.IconButton outline mini onClick={handleInsertStaticEnumValue}>
+                区分値を挿入(Enter)
+              </Input.IconButton>
+              <Input.IconButton outline mini onClick={handleInsertStaticEnumValueBelow}>
+                区分値を下挿入(Ctrl + Enter)
+              </Input.IconButton>
+              <Input.IconButton outline mini onClick={handleDeleteStaticEnumValue}>
+                区分値を削除(Shift + Delete)
+              </Input.IconButton>
+              <Input.IconButton outline mini onClick={handleMoveUpStaticEnumValue}>
+                上移動(Alt + ↑)
+              </Input.IconButton>
+              <Input.IconButton outline mini onClick={handleMoveDownStaticEnumValue}>
+                下移動(Alt + ↓)
+              </Input.IconButton>
               <div className="basis-4"></div>
               <Input.IconButton outline mini onClick={handleCreateStaticEnum}>
                 新しい種類を作成
@@ -476,17 +469,13 @@ export const EnumDefDialog: React.FC<EnumDefDialogProps> = ({
           <section className="flex-1 min-h-0 flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-1">
               <h2 className="text-sm select-none">値オブジェクト</h2>
-              {!personalSettings.hideGridButtons && (
-                <>
-                  <div className="basis-4"></div>
-                  <Input.IconButton outline mini onClick={handleMoveUpValueObject}>
-                    上移動(Alt + ↑)
-                  </Input.IconButton>
-                  <Input.IconButton outline mini onClick={handleMoveDownValueObject}>
-                    下移動(Alt + ↓)
-                  </Input.IconButton>
-                </>
-              )}
+              <div className="basis-4"></div>
+              <Input.IconButton outline mini onClick={handleMoveUpValueObject}>
+                上移動(Alt + ↑)
+              </Input.IconButton>
+              <Input.IconButton outline mini onClick={handleMoveDownValueObject}>
+                下移動(Alt + ↓)
+              </Input.IconButton>
               <div className="basis-4"></div>
               <Input.IconButton outline mini onClick={handleCreateValueObject}>
                 新しい値オブジェクトを作成
@@ -546,8 +535,11 @@ const createLocalNameColumn = (
       const bgColor = hasOwnError ? "bg-amber-300/50" : ""
 
       return (
-        <div className={`px-1 flex-1 inline-flex text-left truncate ${bgColor}`}>
-          {Array.from({ length: Math.max(row.indent - 1, 0) }).map((_, i) => (
+        <div
+          className={`flex-1 inline-flex text-left truncate ${bgColor}`}
+          style={{ paddingLeft: `${4 + (20 * row.indent)}px` }}
+        >
+          {/* {Array.from({ length: Math.max(row.indent - 1, 0) }).map((_, i) => (
             <React.Fragment key={i}>
               <div className="basis-[20px] min-w-[20px] relative leading-none">
                 {i >= 1 && (
@@ -555,7 +547,7 @@ const createLocalNameColumn = (
                 )}
               </div>
             </React.Fragment>
-          ))}
+          ))} */}
           <span className="flex-1 truncate">{context.cell.getValue() as string}</span>
         </div>
       )
@@ -588,7 +580,7 @@ const createAttributeColumn = (
       const validation = getValidationResult(row.uniqueId)
       const hasError = validation?.[attrDef.attributeName]?.length > 0
       return (
-        <div className={`flex-1 inline-flex text-left truncate ${hasError ? "bg-amber-300/50" : ""}`}>
+        <div className={`flex-1 inline-flex text-left px-1 truncate ${hasError ? "bg-amber-300/50" : ""}`}>
           <span className="flex-1 truncate">{value}</span>
         </div>
       )
