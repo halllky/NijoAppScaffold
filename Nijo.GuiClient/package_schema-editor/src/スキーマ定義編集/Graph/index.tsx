@@ -56,7 +56,6 @@ export const AppSchemaDefinitionGraph = React.forwardRef<AppSchemaDefinitionGrap
     // clearSavedLayout は localStorage からすべてのレイアウト情報を削除する。
     clearSavedLayout();
     // その後、現在の layoutLogic でグラフを整列する。
-    // resetLayout 内部で viewStateApplied フラグもクリアされる。
     graphViewRef.current?.resetLayout();
   });
 

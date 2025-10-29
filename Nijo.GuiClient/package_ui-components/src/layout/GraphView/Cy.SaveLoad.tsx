@@ -68,9 +68,6 @@ export const useViewState = (cy: cytoscape.Core | undefined) => {
     // スクロール位置の復元
     if (viewState.scrollPosition) cy.pan(viewState.scrollPosition)
 
-    // ViewStateが適用されたことを示すフラグを設定
-    cy.data('viewStateApplied', true)
-
   }, [cy])
 
   return {

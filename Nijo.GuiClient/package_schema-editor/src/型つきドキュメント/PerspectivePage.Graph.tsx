@@ -146,9 +146,6 @@ export const PerspectivePageGraph = ({
     const savedViewState = formMethods.getValues("perspective.viewState");
 
     if (savedViewState) {
-      // レイアウト適用フラグを設定（あとでGraphView側でチェックする用）
-      graphViewRef.current?.getCy()?.data('viewStateApplied', true);
-
       graphViewRef.current?.applyViewState(savedViewState);
     } else {
       // 保存されたViewStateがない場合は、初期レイアウトを実行

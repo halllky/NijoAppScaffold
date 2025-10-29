@@ -280,9 +280,6 @@ export const useCytoscape = (props: GraphViewProps): CytoscapeHookType => {
   const resetLayout = useCallback((layoutName: LayoutLogicName) => {
     if (!cy) return;
 
-    // 自動レイアウトを実行する前に、ViewStateが適用されたフラグをクリアする
-    cy.removeData('viewStateApplied');
-
     const layoutConfig = AutoLayout.OPTION_LIST[layoutName];
     if (layoutConfig) {
       // レイアウト対象のノードを取得
