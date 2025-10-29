@@ -8,7 +8,7 @@ import { SchemaDefinitionGlobalState, ATTR_TYPE, XmlElementAttribute, XmlElement
 import * as UI from '../../UI'
 import useEvent from "react-use-event-hook"
 import { UUID } from "uuidjs"
-import { TYPE_COLUMN_DEF } from "./getAttrTypeColumnDef"
+import { TYPE_COLUMN_DEF } from "./getAttrTypeOptions"
 import { GetValidationResultFunction, ValidationTriggerFunction } from "../useValidation"
 import { MentionCellDataSourceContext, SchemaDefinitionMentionTextarea } from "./Input.Mention"
 import { createLocalNameCell, createAttributeCell, GridRowType } from "./Input.CellTypes"
@@ -238,6 +238,20 @@ const GridSection = ({
     // Type
     columns.push(createAttributeCell(TYPE_COLUMN_DEF, cellType, getValidationResult))
 
+    // コメント
+    columns.push(cellType.text('comment', 'コメント', {
+      columnId: COLUMN_ID_COMMENT,
+      defaultWidth: 400,
+      renderCell: context => {
+        const value = context.cell.getValue() as string
+        return (
+          <UI.ReadOnlyMentionText className="px-1 truncate">
+            {value}
+          </UI.ReadOnlyMentionText>
+        )
+      }
+    }))
+
     // Attributes（Type以外）
     // ルート集約のモデルタイプを取得（最初の行のType属性）
     const rootModelType = fields[0]?.attributes[ATTR_TYPE]
@@ -257,22 +271,6 @@ const GridSection = ({
         columns.push(createAttributeCell(attrDef, cellType, getValidationResult))
       }
     }
-
-    // コメント
-    columns.push(cellType.text('comment', 'コメント', {
-      columnId: COLUMN_ID_COMMENT,
-      defaultWidth: 400,
-      renderCell: context => {
-        const value = context.cell.getValue() as string
-        return (
-          <div className="flex-1 inline-flex text-left truncate">
-            <UI.ReadOnlyMentionText className="flex-1 truncate">
-              {value}
-            </UI.ReadOnlyMentionText>
-          </div>
-        )
-      }
-    }))
 
     return columns
   }, [attributeDefs, fields, getValidationResult, showLessColumns])

@@ -32,10 +32,10 @@ export const createLocalNameCell = (
             <React.Fragment key={i}>
               {/* インデントのテキスト */}
               <div className="basis-[20px] min-w-[20px] relative leading-none">
-                {i >= 1 && (
+                {/* {i >= 1 && (
                   // インデントを表す縦線
                   <div className="absolute top-[-1px] bottom-[-1px] left-0 border-l border-gray-300 border-dotted leading-none"></div>
-                )}
+                )} */}
               </div>
             </React.Fragment>
           ))}
@@ -79,7 +79,7 @@ export const createAttributeCell = (
       const hasError = validationResult?.[attrDef.attributeName]?.length > 0
 
       return (
-        <PlainCell className={hasError ? 'bg-amber-300/50' : ''}>
+        <PlainCell className={`px-1 truncate ${hasError ? 'bg-amber-300/50' : ''}`}>
           {value}
         </PlainCell>
       )
