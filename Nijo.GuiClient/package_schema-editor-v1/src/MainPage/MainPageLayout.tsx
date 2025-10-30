@@ -163,6 +163,19 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
     setIsOpenCreateRootAggregateDialog(false)
   })
 
+  // ルート集約削除
+  const handleDeleteRootAggregate = useEvent(() => {
+    if (selectedRootAggregateIndex === undefined) return
+
+    const currentTrees = getValues('xmlElementTrees') ?? []
+    const nextTrees = currentTrees.filter((_, i) => i !== selectedRootAggregateIndex)
+    formMethods.setValue('xmlElementTrees', nextTrees, { shouldDirty: true })
+    void trigger()
+
+    setSelectedRootAggregateIndex(undefined)
+    setAggPaneVisible(false)
+  })
+
   // 画面離脱時の確認
   UI.useBlockerEx(isDirty)
 
@@ -247,6 +260,7 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
                   trigger={trigger}
                   attributeDefs={attributeDefsMap}
                   showLessColumns={showLessColumns}
+                  onDeleteRootAggregate={handleDeleteRootAggregate}
                   className="h-full"
                 />
               )}

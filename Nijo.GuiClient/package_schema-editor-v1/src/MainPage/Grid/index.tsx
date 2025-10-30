@@ -27,13 +27,15 @@ type PageRootAggregateProps = {
   attributeDefs: Map<string, XmlElementAttribute>
   /** 名前、Type、キー、コメントのみを表示する */
   showLessColumns: boolean
+  /** ルート集約を削除するコールバック */
+  onDeleteRootAggregate?: () => void
   className?: string
 }
 
 /**
  * Data, Query, Command のルート集約1件を表示・編集するページ。
  */
-export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidationResult, trigger, attributeDefs, showLessColumns, className }: PageRootAggregateProps) => {
+export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidationResult, trigger, attributeDefs, showLessColumns, onDeleteRootAggregate, className }: PageRootAggregateProps) => {
   const { control, watch } = formMethods
 
   // グリッドのref（useGridOperationsで使用）
@@ -79,7 +81,11 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
   const [openDetails, setOpenDetails] = React.useState(rootModelType === TYPE_COMMAND_MODEL)
 
   const handleClickDelete = useEvent(() => {
-    window.alert('未実装！')
+    const rootAggregateName = rootElement.localName || 'ルート集約'
+
+    if (confirm(`「${rootAggregateName}」を削除しますか？`)) {
+      onDeleteRootAggregate?.()
+    }
   })
 
   if (!rootElement) {
