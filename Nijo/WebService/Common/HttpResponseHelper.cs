@@ -13,7 +13,8 @@ namespace Nijo.WebService.Common;
 internal static class HttpResponseHelper {
 
     /// <summary>
-    /// JSONレスポンスを返す
+    /// JSONレスポンスを返す。
+    /// ステータスコードは呼び出し側で事前に設定する必要がある。
     /// </summary>
     internal static async Task WriteJsonResponseAsync<T>(
         HttpContext context,
@@ -21,7 +22,6 @@ internal static class HttpResponseHelper {
         JsonSerializerOptions? options = null,
         CancellationToken cancellationToken = default) {
 
-        context.Response.StatusCode = StatusCodes.Status200OK;
         context.Response.ContentType = "application/json";
         await context.Response.WriteAsJsonAsync(data, options ?? FileStorageService.JsonOptions, cancellationToken);
     }

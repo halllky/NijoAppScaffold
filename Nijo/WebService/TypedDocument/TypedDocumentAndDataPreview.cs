@@ -143,6 +143,7 @@ internal class TypedDocumentAndDataPreview {
         }
         appSettingsForDisplay["dataPreviewList"] = dataPreviewListJsonArray;
 
+        context.Response.StatusCode = StatusCodes.Status200OK;
         await HttpResponseHelper.WriteJsonResponseAsync(context, appSettingsForDisplay, FileStorageService.JsonOptions, context.RequestAborted);
     }
 
@@ -185,6 +186,7 @@ internal class TypedDocumentAndDataPreview {
             return;
         }
 
+        context.Response.StatusCode = StatusCodes.Status200OK;
         await HttpResponseHelper.WriteJsonResponseAsync(context, data, FileStorageService.JsonOptions, context.RequestAborted);
     }
 
@@ -245,6 +247,7 @@ internal class TypedDocumentAndDataPreview {
             return;
         }
 
+        context.Response.StatusCode = StatusCodes.Status200OK;
         await HttpResponseHelper.WriteJsonResponseAsync(context, data, FileStorageService.JsonOptions, context.RequestAborted);
     }
 

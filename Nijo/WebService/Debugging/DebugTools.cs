@@ -66,6 +66,7 @@ internal class DebugTools {
         // 既に起動している場合は何もしない
         if (state.EstimatedPidOfNodeJs != null) {
             state.ConsoleOut += "npm run devは既に起動済みです。\n";
+            context.Response.StatusCode = StatusCodes.Status200OK;
             await HttpResponseHelper.WriteJsonResponseAsync(context, state, cancellationToken: context.RequestAborted);
             return;
         }
@@ -84,6 +85,7 @@ internal class DebugTools {
             var errorState = await CheckDebugState();
             errorState.ErrorSummary = errorSummary.ToString();
             errorState.ConsoleOut += consoleOut.ToString();
+            context.Response.StatusCode = StatusCodes.Status200OK;
             await HttpResponseHelper.WriteJsonResponseAsync(context, errorState, cancellationToken: context.RequestAborted);
             return;
         }
@@ -105,6 +107,7 @@ internal class DebugTools {
         var stateAfterLaunch = await CheckDebugState();
         stateAfterLaunch.ErrorSummary = errorSummary.ToString();
         stateAfterLaunch.ConsoleOut += consoleOut.ToString();
+        context.Response.StatusCode = StatusCodes.Status200OK;
         await HttpResponseHelper.WriteJsonResponseAsync(context, stateAfterLaunch, cancellationToken: context.RequestAborted);
     }
 
@@ -122,6 +125,7 @@ internal class DebugTools {
         // 既に起動している場合は何もしない
         if (state.EstimatedPidOfAspNetCore != null) {
             state.ConsoleOut += "dotnet runは既に起動済みです。\n";
+            context.Response.StatusCode = StatusCodes.Status200OK;
             await HttpResponseHelper.WriteJsonResponseAsync(context, state, cancellationToken: context.RequestAborted);
             return;
         }
@@ -140,6 +144,7 @@ internal class DebugTools {
             var errorState = await CheckDebugState();
             errorState.ErrorSummary = errorSummary.ToString();
             errorState.ConsoleOut += consoleOut.ToString();
+            context.Response.StatusCode = StatusCodes.Status200OK;
             await HttpResponseHelper.WriteJsonResponseAsync(context, errorState, cancellationToken: context.RequestAborted);
             return;
         }
@@ -161,6 +166,7 @@ internal class DebugTools {
         var stateAfterLaunch = await CheckDebugState();
         stateAfterLaunch.ErrorSummary = errorSummary.ToString();
         stateAfterLaunch.ConsoleOut += consoleOut.ToString();
+        context.Response.StatusCode = StatusCodes.Status200OK;
         await HttpResponseHelper.WriteJsonResponseAsync(context, stateAfterLaunch, cancellationToken: context.RequestAborted);
     }
 
@@ -187,6 +193,7 @@ internal class DebugTools {
         var stateAfterKill = await CheckDebugState();
         stateAfterKill.ErrorSummary = errorSummary.ToString();
         stateAfterKill.ConsoleOut += consoleOut.ToString();
+        context.Response.StatusCode = StatusCodes.Status200OK;
         await HttpResponseHelper.WriteJsonResponseAsync(context, stateAfterKill, cancellationToken: context.RequestAborted);
     }
 
@@ -218,6 +225,7 @@ internal class DebugTools {
         var stateAfterKill = await CheckDebugState();
         stateAfterKill.ErrorSummary = errorSummary.ToString();
         stateAfterKill.ConsoleOut += consoleOut.ToString();
+        context.Response.StatusCode = StatusCodes.Status200OK;
         await HttpResponseHelper.WriteJsonResponseAsync(context, stateAfterKill, cancellationToken: context.RequestAborted);
     }
 

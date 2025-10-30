@@ -51,6 +51,7 @@ internal class SchemaEndpointHandlers {
                 ProjectOptionPropertyInfos = GeneratedProjectOptions.GetPropertyInfos().ToList(),
             };
 
+            context.Response.StatusCode = StatusCodes.Status200OK;
             await HttpResponseHelper.WriteJsonResponseAsync(context, response, cancellationToken: context.RequestAborted);
         } catch (Exception ex) {
             await HttpResponseHelper.WriteErrorResponseAsync(
@@ -240,6 +241,7 @@ internal class SchemaEndpointHandlers {
 
             var logger = context.RequestServices.GetRequiredService<ILogger<NijoWebServiceBuilder>>();
             if (project.GenerateCode(generationParseContext, renderingOptions, logger)) {
+                context.Response.StatusCode = StatusCodes.Status200OK;
                 await HttpResponseHelper.WriteJsonResponseAsync(
                     context,
                     "Code generation successful.",
