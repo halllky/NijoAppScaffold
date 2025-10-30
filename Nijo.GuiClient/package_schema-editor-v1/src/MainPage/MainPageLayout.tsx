@@ -156,7 +156,7 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
 
     const nextTrees = [...currentTrees, newTree]
     formMethods.setValue('xmlElementTrees', nextTrees, { shouldDirty: true })
-    void trigger()
+    trigger()
 
     setSelectedRootAggregateIndex(nextTrees.length - 1)
     setAggPaneVisible(true)
@@ -170,7 +170,7 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
     const currentTrees = getValues('xmlElementTrees') ?? []
     const nextTrees = currentTrees.filter((_, i) => i !== selectedRootAggregateIndex)
     formMethods.setValue('xmlElementTrees', nextTrees, { shouldDirty: true })
-    void trigger()
+    trigger()
 
     setSelectedRootAggregateIndex(undefined)
     setAggPaneVisible(false)
