@@ -10,6 +10,11 @@ export type AppSchemaDefinitionGraphDataSet = {
     parentMap: GraphViewProps['parentMap']
     nodePositions: ViewState['nodePositions']
   }
+} & {
+  /** 表示モード ('schema' | 'er') */
+  displayMode?: 'schema' | 'er'
+  /** ルート集約のみ表示フラグ */
+  onlyRoot?: boolean
 }
 
 /** スキーマ定義編集におけるアプリケーション全体の状態 */
@@ -24,6 +29,8 @@ export type SchemaDefinitionGlobalState = {
   projectOptions: ProjectOptions
   /** プロジェクト設定項目のメタ情報 */
   projectOptionPropertyInfos: ProjectOptionPropertyInfo[]
+  /** グラフのViewState */
+  schemaGraphViewState?: AppSchemaDefinitionGraphDataSet | null
 }
 
 /** Model定義画面のデータ型定義 */

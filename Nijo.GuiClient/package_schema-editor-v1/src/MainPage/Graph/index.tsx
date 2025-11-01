@@ -6,7 +6,7 @@ import { CytoscapeDataSet } from "@nijo/ui-components/layout/GraphView/Cy"
 import { AppSchemaDefinitionGraphDataSet, ModelPageForm } from "../../types"
 import * as AutoLayout from "@nijo/ui-components/layout/GraphView/Cy.AutoLayout"
 import * as Input from "@nijo/ui-components/input"
-import { useLayoutSaving, DisplayMode, LOCAL_STORAGE_KEY_DISPLAY_MODE } from './useLayoutSaving'
+import { useLayoutSaving, DisplayMode } from './useLayoutSaving'
 import cytoscape from "cytoscape"
 import { createSchemaDefinitionDataSet } from "./createSchemaDefinitionDataSet"
 import { createERDiagramDataSet } from "./createERDiagramDataSet"
@@ -17,6 +17,10 @@ type AppSchemaDefinitionGraphProps = {
   handleSelectionChange: (event: cytoscape.EventObject) => void
   className?: string
   onRequestCreateRootAggregate: () => void
+  /** サーバーから読み込んだレイアウト設定 */
+  initialViewState?: AppSchemaDefinitionGraphDataSet | null
+  /** レイアウト変更時のコールバック */
+  onLayoutChange?: (displayMode: DisplayMode, onlyRoot: boolean, event?: cytoscape.EventObject) => void
 }
 
 export type AppSchemaDefinitionGraphRef = {
@@ -33,52 +37,78 @@ export const AppSchemaDefinitionGraph = React.forwardRef<AppSchemaDefinitionGrap
   handleSelectionChange,
   className,
   onRequestCreateRootAggregate,
+  initialViewState,
+  onLayoutChange,
 }, ref) => {
 
   // displayModeの初期値を保存された値から取得
   const [displayMode, setDisplayMode] = React.useState<DisplayMode>(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY_DISPLAY_MODE)
-    return saved === 'er' ? 'er' : 'schema' // デフォルトは'schema'
+    return initialViewState?.displayMode ?? 'schema'
+  })
+
+  // 各モードのノード位置を保持（レイアウト変更時に更新）
+  const [erNodePositions, setErNodePositions] = React.useState<{ [nodeId: string]: { x: number, y: number } }>(() => {
+    return initialViewState?.erDiagram.nodePositions ?? {}
+  })
+  const [schemaNodePositions, setSchemaNodePositions] = React.useState<{ [nodeId: string]: { x: number, y: number } }>(() => {
+    return initialViewState?.schemaDefinition.nodePositions ?? {}
   })
 
   // レイアウト保存機能（displayModeに応じて）
-  const { triggerSaveLayout, clearSavedLayout, savedOnlyRoot, savedViewState, saveDisplayMode, getSavedLayout } = useLayoutSaving(displayMode)
+  const initialViewStateByMode = React.useMemo(() => {
+    if (!initialViewState) return undefined
+    return {
+      schema: {
+        nodePositions: initialViewState.schemaDefinition.nodePositions,
+      },
+      er: {
+        nodePositions: initialViewState.erDiagram.nodePositions,
+      },
+    }
+  }, [initialViewState])
+
+  const { savedOnlyRoot, savedViewState } = useLayoutSaving(displayMode, initialViewStateByMode, initialViewState?.onlyRoot)
+
   const handleDisplayModeChange = useEvent((e: React.ChangeEvent<HTMLSelectElement>) => {
     const newMode = e.target.value as DisplayMode
     setDisplayMode(newMode)
-    saveDisplayMode(newMode)
+    onLayoutChange?.(newMode, onlyRoot)
   })
 
   // ルート集約のみ表示の状態
   const [onlyRoot, setOnlyRoot] = React.useState(savedOnlyRoot ?? false)
   const handleOnlyRootChange = useEvent((e: React.ChangeEvent<HTMLInputElement>) => {
-    setOnlyRoot(e.target.checked)
+    const newOnlyRoot = e.target.checked
+    setOnlyRoot(newOnlyRoot)
+    onLayoutChange?.(displayMode, newOnlyRoot)
   })
 
   // 整列ロジックの状態
   const [layoutLogic, setLayoutLogic] = React.useState<AutoLayout.LayoutLogicName>('klay');
   const handleAutoLayout = useEvent(() => {
     if (!window.confirm("現在のノード位置を破棄して自動整列をかけます。よろしいですか？")) return;
-
-    // clearSavedLayout は localStorage からすべてのレイアウト情報を削除する。
-    clearSavedLayout();
-    // その後、現在の layoutLogic でグラフを整列する。
     graphViewRef.current?.resetLayout();
   });
 
   // レイアウト変更時の処理
-  const handleLayoutChange = useEvent((event: cytoscape.EventObject) => {
+  const handleLayoutChangeInternal = useEvent((event: cytoscape.EventObject) => {
     // ドラッグ、パン、ズーム操作完了時に呼ばれる。
-    // この event には最新のノード位置、ズーム、パン情報が含まれる。
-    triggerSaveLayout(event, onlyRoot);
-  });
+    // 現在のノード位置を取得して保存
+    const currentNodePositions: { [nodeId: string]: { x: number, y: number } } = {}
+    event.cy.nodes().forEach(node => {
+      const pos = node.position()
+      currentNodePositions[node.id()] = { x: pos.x, y: pos.y }
+    })
 
-  // 「ルート集約のみ表示」の状態がユーザー操作または上記の復元処理で変更されたときに実行
-  React.useEffect(() => {
-    // triggerSaveLayout は現在の onlyRoot の値を localStorage に保存する。
-    // ノード位置は localStorage 内の既存のものが維持される（NijoUiAggregateDiagram.StateSaving.ts の実装による）。
-    triggerSaveLayout(undefined, onlyRoot);
-  }, [onlyRoot, triggerSaveLayout]); // onlyRoot または triggerSaveLayout (の参照) が変更されたときに実行
+    // 現在のdisplayModeに応じてstateを更新
+    if (displayMode === 'er') {
+      setErNodePositions(currentNodePositions)
+    } else {
+      setSchemaNodePositions(currentNodePositions)
+    }
+
+    onLayoutChange?.(displayMode, onlyRoot, event);
+  });
 
   // グラフの準備ができたときに呼ばれる処理を拡張
   const handleReadyGraph = useEvent(() => {
@@ -107,20 +137,44 @@ export const AppSchemaDefinitionGraph = React.forwardRef<AppSchemaDefinitionGrap
     getCurrentGraphDataSet: () => {
       const er = createERDiagramDataSet(xmlElementTrees)
       const schema = createSchemaDefinitionDataSet(xmlElementTrees, onlyRoot)
+
+      // 現在のグラフの状態からノード位置を取得
+      const currentNodePositions: { [nodeId: string]: { x: number, y: number } } = {}
+      if (graphViewRef.current) {
+        const cy = graphViewRef.current.getCy()
+        if (cy) {
+          cy.nodes().forEach(node => {
+            const pos = node.position()
+            currentNodePositions[node.id()] = { x: pos.x, y: pos.y }
+          })
+        }
+      }
+
+      // 現在表示されているモードのノード位置は現在の状態から、
+      // 表示されていないモードのノード位置はstateから取得
+      const finalErNodePositions = displayMode === 'er'
+        ? currentNodePositions
+        : erNodePositions
+      const finalSchemaNodePositions = displayMode === 'schema'
+        ? currentNodePositions
+        : schemaNodePositions
+
       return {
         erDiagram: {
           ...er,
-          nodePositions: getSavedLayout('er').nodePositions ?? {},
+          nodePositions: finalErNodePositions,
           parentMap: Object.fromEntries(Object.entries(er.nodes).filter(([, node]) => node.parent).map(([id, node]) => [id, node.parent!])),
         },
         schemaDefinition: {
           ...schema,
-          nodePositions: getSavedLayout('schema').nodePositions ?? {},
+          nodePositions: finalSchemaNodePositions,
           parentMap: Object.fromEntries(Object.entries(schema.nodes).filter(([, node]) => node.parent).map(([id, node]) => [id, node.parent!])),
         },
+        displayMode,
+        onlyRoot,
       }
     },
-  }), [getSavedLayout, onlyRoot, xmlElementTrees])
+  }), [erNodePositions, schemaNodePositions, onlyRoot, xmlElementTrees, displayMode, graphViewRef])
 
   return (
     <div className={`h-full relative ${className ?? ''}`}>
@@ -132,7 +186,7 @@ export const AppSchemaDefinitionGraph = React.forwardRef<AppSchemaDefinitionGrap
         parentMap={Object.fromEntries(Object.entries(dataSet.nodes).filter(([, node]) => node.parent).map(([id, node]) => [id, node.parent!]))} // dataSet.nodesからparentMapを生成
         onReady={handleReadyGraph}
         layoutLogic={layoutLogic}
-        onLayoutChange={handleLayoutChange}
+        onLayoutChange={handleLayoutChangeInternal}
         onSelectionChange={handleSelectionChange}
         showGrid
         className="h-full"

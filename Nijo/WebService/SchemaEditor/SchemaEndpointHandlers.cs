@@ -40,7 +40,7 @@ internal class SchemaEndpointHandlers {
 
             var projectOptions = GeneratedProjectOptions.Parse(xDocument, false);
 
-            var response = new ApplicationState {
+            var applicationState = new ApplicationState {
                 ApplicationName = xDocument.Root?.Name.LocalName ?? "",
                 XmlElementTrees = xDocument.Root?.Elements().Select(root => new ModelPageForm {
                     XmlElements = XmlElementItem.FromXElement(root).ToList(),
@@ -49,6 +49,23 @@ internal class SchemaEndpointHandlers {
                 AttributeDefs = XmlElementAttribute.FromSchemaParseRule(rule),
                 ProjectOptions = projectOptions.GetCurrentValues(),
                 ProjectOptionPropertyInfos = GeneratedProjectOptions.GetPropertyInfos().ToList(),
+            };
+
+            // nijo.viewState.jsonの読み込み
+            ApplicationStateAndSchemaGraphViewState.SchemaGraphViewStateTypeByViewMode? schemaGraphViewState = null;
+            var viewStatePath = project.ViewStateJsonPath;
+            if (File.Exists(viewStatePath)) {
+                try {
+                    var viewStateJson = await File.ReadAllTextAsync(viewStatePath, context.RequestAborted);
+                    schemaGraphViewState = JsonSerializer.Deserialize<ApplicationStateAndSchemaGraphViewState.SchemaGraphViewStateTypeByViewMode>(viewStateJson);
+                } catch (Exception) {
+                    // ファイル読み込みやデシリアライズに失敗した場合はnullのまま
+                }
+            }
+
+            var response = new ApplicationStateAndSchemaGraphViewState {
+                ApplicationState = applicationState,
+                SchemaGraphViewState = schemaGraphViewState,
             };
 
             context.Response.StatusCode = StatusCodes.Status200OK;

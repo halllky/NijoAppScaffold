@@ -9,6 +9,7 @@ import * as UI from "@nijo/ui-components"
 import { GraphViewRef } from "@nijo/ui-components/layout/GraphView"
 import { SchemaDefinitionGlobalState, ATTR_TYPE, TYPE_COMMAND_MODEL, TYPE_DATA_MODEL, TYPE_QUERY_MODEL, TYPE_STRUCTURE_MODEL, XmlElementItem, ModelPageForm } from "../types"
 import { AppSchemaDefinitionGraph, AppSchemaDefinitionGraphRef } from "./Graph"
+import { DisplayMode } from "./Graph/useLayoutSaving"
 import { PageRootAggregate } from "./Grid"
 import NijoUiErrorMessagePane from "./ErrorMessage"
 import { useValidation } from "./useValidation"
@@ -43,6 +44,20 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
   const xmlElementTrees = ReactHookForm.useWatch({ name: "xmlElementTrees", control })
   const graphDataRef = React.useRef<AppSchemaDefinitionGraphRef>(null)
   const graphViewRef = React.useRef<GraphViewRef>(null)
+
+  // レイアウト変更の監視（displayMode, onlyRoot, グラフの位置情報）
+  const [currentDisplayMode, setCurrentDisplayMode] = React.useState<DisplayMode>(
+    props.defaultValues.schemaGraphViewState?.displayMode ?? 'schema'
+  )
+  const [currentOnlyRoot, setCurrentOnlyRoot] = React.useState<boolean>(
+    props.defaultValues.schemaGraphViewState?.onlyRoot ?? false
+  )
+  const handleLayoutChange = useEvent((displayMode: DisplayMode, onlyRoot: boolean, event?: cytoscape.EventObject) => {
+    setCurrentDisplayMode(displayMode)
+    setCurrentOnlyRoot(onlyRoot)
+    // eventがあればノード位置が変更されたことを意味するが、
+    // ここでは保存タイミングで getCurrentGraphDataSet を呼ぶので特に処理は不要
+  })
 
   // プロジェクト情報取得
   const [searchParams] = ReactRouter.useSearchParams()
@@ -245,6 +260,8 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
                 graphViewRef={graphViewRef}
                 handleSelectionChange={handleSelectionChange}
                 onRequestCreateRootAggregate={handleRequestCreateRootAggregate}
+                initialViewState={props.defaultValues.schemaGraphViewState ?? undefined}
+                onLayoutChange={handleLayoutChange}
                 className="border-y border-r border-gray-300"
               />
             </Allotment.Pane>

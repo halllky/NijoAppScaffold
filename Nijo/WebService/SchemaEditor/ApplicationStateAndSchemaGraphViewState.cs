@@ -35,6 +35,18 @@ public class ApplicationStateAndSchemaGraphViewState {
         public SchemaGraphViewStateType ErDiagram { get; set; } = new();
         [JsonPropertyName(KEY_SCHEMA_DEFINITION)]
         public SchemaGraphViewStateType SchemaDefinition { get; set; } = new();
+
+        /// <summary>
+        /// 表示モード ('schema' | 'er')
+        /// </summary>
+        [JsonPropertyName("displayMode")]
+        public string DisplayMode { get; set; } = "schema";
+
+        /// <summary>
+        /// ルート集約のみ表示フラグ
+        /// </summary>
+        [JsonPropertyName("onlyRoot")]
+        public bool OnlyRoot { get; set; } = false;
     }
     /// <summary>
     /// GraphView のプロパティとして設定されることになるデータ

@@ -3,7 +3,7 @@ import { AppSchemaDefinitionGraphDataSet, SchemaDefinitionGlobalState } from "..
 import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../routing"
 
 type LoadSchemaReturn =
-  | { ok: true; schema: SchemaDefinitionGlobalState }
+  | { ok: true; schema: { applicationState: SchemaDefinitionGlobalState, schemaGraphViewState: AppSchemaDefinitionGraphDataSet | null } }
   | { ok: false; error?: string; }
 
 /**
@@ -21,10 +21,16 @@ export const loadSchema = async (projectDir: string | null, signal: AbortSignal)
       throw new Error(`Failed to load schema: ${schemaResponse.status} ${body}`);
     }
 
-    const schemaData: SchemaDefinitionGlobalState = await schemaResponse.json()
+    const responseData: { applicationState: SchemaDefinitionGlobalState, schemaGraphViewState: AppSchemaDefinitionGraphDataSet | null } = await schemaResponse.json()
     if (signal.aborted) return { ok: false }
 
-    return { ok: true, schema: schemaData }
+    // schemaGraphViewStateをapplicationStateに含める
+    const schema: SchemaDefinitionGlobalState = {
+      ...responseData.applicationState,
+      schemaGraphViewState: responseData.schemaGraphViewState,
+    }
+
+    return { ok: true, schema: { applicationState: schema, schemaGraphViewState: responseData.schemaGraphViewState } }
 
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {

@@ -52,7 +52,7 @@ export default function MainPage() {
         setState({ type: 'error', error: result.error ?? '不明なエラー' })
 
       } else {
-        setState({ type: 'loaded', defaultValues: result.schema })
+        setState({ type: 'loaded', defaultValues: result.schema.applicationState })
       }
     }
     fetchSchema()
