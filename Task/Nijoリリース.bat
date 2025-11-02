@@ -66,7 +66,7 @@ if not exist "%APP_TEMPLATE_ZIP%" (
 ) 
  
 @echo フロントエンドのビルドを開始します。 
-pushd %NIJO_ROOT%Nijo.GuiClient\package_schema-editor 
+pushd %NIJO_ROOT%Nijo.GuiClient\package_schema-editor-v1 
 call npm run build 
 if not "%errorlevel%"=="0" ( 
   @echo ビルドに失敗しました。 

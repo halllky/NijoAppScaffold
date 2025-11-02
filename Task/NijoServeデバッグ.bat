@@ -7,15 +7,8 @@ chcp 65001
 @echo off 
 setlocal 
  
-if "%1"=="" ( 
-  echo Usage: %0 ^<serveUiVersion^> 
-  echo. 
-  echo   serveUiVersion: package_schema-editor or package_schema-editor-v1 
-  exit /b 1 
-) 
- 
 set "BACKEDN_PROJECT=%~dp0..\Nijo" 
-set "FRONTEND_ROOT=%~dp0..\Nijo.GuiClient\%1" 
+set "FRONTEND_ROOT=%~dp0..\Nijo.GuiClient\package_schema-editor-v1" 
  
 pushd %BACKEDN_PROJECT% 
 start cmd /k "dotnet watch --launch-profile DebugServe" 

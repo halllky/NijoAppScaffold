@@ -1860,8 +1860,8 @@
         "y": 1060.0000038146973
       },
       "e8f20d1d-9f4e-4f9c-9f4e-1d9f4e9f4e1d": {
-        "x": 670.5000011920929,
-        "y": 545.0000023841858
+        "x": 680.0000011920929,
+        "y": 565.0000023841858
       },
       "e906b965-c7a7-4605-9491-0af60db4f4bf": {
         "x": 1278.000002861023,
@@ -1935,5 +1935,7 @@
       "ff74783f-ae74-433e-bffb-c35fa50a3b3b": "8d569c4e-e43a-45be-b1f2-e2ce0ea98dcc",
       "view-inv-cat-warehouse-inv-001": "view-inventory-by-category-001"
     }
-  }
+  },
+  "displayMode": "schema",
+  "onlyRoot": false
 }

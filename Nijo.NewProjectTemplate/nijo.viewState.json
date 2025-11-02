@@ -10,5 +10,7 @@
     "edges": [],
     "nodePositions": {},
     "parentMap": {}
-  }
+  },
+  "displayMode": "schema",
+  "onlyRoot": false
 }

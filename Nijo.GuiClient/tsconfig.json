@@ -8,7 +8,7 @@
       "path": "./package_ui-components-debug"
     },
     {
-      "path": "./package_schema-editor"
+      "path": "./package_schema-editor-v1"
     },
     {
       "path": "./tsconfig.node.json"

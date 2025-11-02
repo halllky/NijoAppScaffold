@@ -1293,5 +1293,7 @@
       "da573a68-d916-417d-ba03-e9f16ec4a439": "c5f21493-5f74-4b42-8b35-be3d667586b2",
       "f2cbf693-b599-4d34-a714-45a001990e38": "1c3b9db6-c905-486c-beb7-5e80b03d3f63"
     }
-  }
+  },
+  "displayMode": "schema",
+  "onlyRoot": false
 }

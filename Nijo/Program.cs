@@ -538,7 +538,7 @@ namespace Nijo {
                 } else {
                     var param = System.Web.HttpUtility.ParseQueryString(string.Empty);
                     param.Add(WebService.Common.ProjectHelper.PROJECT_DIR_PARAMETER, path);
-                    browserUrl = $"{url}/project?{param}";
+                    browserUrl = $"{url}/?{param}";
                 }
                 Process.Start(new ProcessStartInfo {
                     FileName = "cmd",
