@@ -16,7 +16,6 @@ type AppSchemaDefinitionGraphProps = {
   graphViewRef: React.RefObject<GraphViewRef | null>
   handleSelectionChange: (event: cytoscape.EventObject) => void
   className?: string
-  onRequestCreateRootAggregate: () => void
   /** サーバーから読み込んだレイアウト設定 */
   initialViewState?: AppSchemaDefinitionGraphDataSet | null
   /** レイアウト変更時のコールバック */
@@ -36,7 +35,6 @@ export const AppSchemaDefinitionGraph = React.forwardRef<AppSchemaDefinitionGrap
   graphViewRef,
   handleSelectionChange,
   className,
-  onRequestCreateRootAggregate,
   initialViewState,
   onLayoutChange,
 }, ref) => {
@@ -217,9 +215,6 @@ export const AppSchemaDefinitionGraph = React.forwardRef<AppSchemaDefinitionGrap
             ))}
           </select>
         </div>
-        <Input.IconButton icon={Icon.PlusIcon} outline mini className="bg-white" onClick={onRequestCreateRootAggregate}>
-          ルート集約を追加
-        </Input.IconButton>
       </div>
     </div>
   )

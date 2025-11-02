@@ -235,6 +235,9 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
         <UI.IconButton icon={Icon.Squares2X2Icon} mini onClick={handleEnumDefClick}>
           区分定義
         </UI.IconButton>
+        <UI.IconButton icon={Icon.PlusIcon} mini onClick={handleRequestCreateRootAggregate}>
+          ルート集約を追加
+        </UI.IconButton>
 
         <div className="basis-1"></div>
 
@@ -290,7 +293,6 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
                 xmlElementTrees={xmlElementTrees}
                 graphViewRef={graphViewRef}
                 handleSelectionChange={handleSelectionChange}
-                onRequestCreateRootAggregate={handleRequestCreateRootAggregate}
                 initialViewState={props.defaultValues.schemaGraphViewState ?? undefined}
                 onLayoutChange={handleLayoutChange}
                 className="border-y border-r border-gray-300"

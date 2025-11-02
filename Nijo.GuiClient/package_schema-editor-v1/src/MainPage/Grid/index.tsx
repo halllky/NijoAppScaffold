@@ -154,8 +154,8 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
           </div>
 
           <div className="basis-1"></div>
-          <Input.IconButton icon={Icon.TrashIcon} hideText onClick={handleClickDelete}>
-            ルート集約を削除する
+          <Input.IconButton icon={Icon.TrashIcon} onClick={handleClickDelete} mini>
+            削除
           </Input.IconButton>
         </div>
 
