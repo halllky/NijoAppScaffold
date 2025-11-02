@@ -172,6 +172,10 @@ const PersonalSettingSection: React.FC<{
     save('hideGridButtons', e.target.checked)
   })
 
+  const handleAutoGenerateCodeChange = useEvent((e: React.ChangeEvent<HTMLInputElement>) => {
+    save('autoGenerateCode', e.target.checked)
+  })
+
   return (
     <FormLayout.Section labelEnd={(
       <div className="flex flex-col">
@@ -191,6 +195,19 @@ const PersonalSettingSection: React.FC<{
           />
           <span className="text-xs text-gray-500">
             グリッドの操作説明ボタンを非表示にする
+          </span>
+        </div>
+      </FormLayout.Field>
+      <FormLayout.Field label="autoGenerateCode">
+        <div className="flex flex-col gap-px my-2">
+          <input
+            type="checkbox"
+            checked={personalSettings.autoGenerateCode ?? false}
+            onChange={handleAutoGenerateCodeChange}
+            className="h-4 w-4"
+          />
+          <span className="text-xs text-gray-500">
+            保存時にソースコードの自動生成をかけ直す
           </span>
         </div>
       </FormLayout.Field>

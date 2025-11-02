@@ -19,6 +19,7 @@ import { EnumDefDialog } from "../EnumDefDialog"
 import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../routing"
 import { UUID } from "uuidjs"
 import { CreateRootAggregateDialog, RootAggregateModelType } from "./CreateRootAggregateDialog"
+import { usePersonalSettings } from "../Settings/usePersonalSettings"
 
 export type MainPageLayoutProps = {
   defaultValues: SchemaDefinitionGlobalState
@@ -106,6 +107,9 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
     }
   });
 
+  // 個人設定
+  const { personalSettings, save: savePersonalSettings } = usePersonalSettings()
+
   // 保存処理
   const [saveButtonText, setSaveButtonText] = React.useState('保存(Ctrl + S)')
   const [nowSaving, setNowSaving] = React.useState(false)
@@ -115,7 +119,12 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
     setSaveError(undefined)
     setNowSaving(true)
     const currentValues = getValues()
-    const result = await saveSchema(projectDir, currentValues, graphDataRef.current?.getCurrentGraphDataSet() ?? null)
+    const result = await saveSchema(
+      projectDir,
+      currentValues,
+      graphDataRef.current?.getCurrentGraphDataSet() ?? null,
+      personalSettings.autoGenerateCode ?? false
+    )
     if (result.ok) {
       setSaveButtonText('保存しました。')
       formMethods.reset(currentValues)
@@ -128,6 +137,11 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
     setNowSaving(false)
   })
   UI.useCtrlS(handleSave)
+
+  // コード生成チェックボックスの変更処理
+  const handleAutoGenerateCodeChange = useEvent((e: React.ChangeEvent<HTMLInputElement>) => {
+    savePersonalSettings('autoGenerateCode', e.target.checked)
+  })
 
   // モーダルダイアログ管理
   const [isOpenSettingDialog, setIsOpenSettingDialog] = React.useState(false)
@@ -221,6 +235,17 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
         <div className="basis-1"></div>
 
         <div className="flex-1"></div>
+
+        <label className="flex items-center gap-1 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={personalSettings.autoGenerateCode ?? false}
+            onChange={handleAutoGenerateCodeChange}
+            className="h-4 w-4"
+          />
+          <span className="text-xs select-none">保存時にコード自動生成をかけ直す</span>
+        </label>
+
         <div className="basis-36 flex justify-end">
           <UI.IconButton
             fill={isDirty}

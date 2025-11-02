@@ -2,4 +2,6 @@
 export type PersonalSettings = {
   /** グリッドの操作説明ボタンを非表示にする */
   hideGridButtons?: boolean
+  /** 保存時に自動でコード生成を実行する */
+  autoGenerateCode?: boolean
 }

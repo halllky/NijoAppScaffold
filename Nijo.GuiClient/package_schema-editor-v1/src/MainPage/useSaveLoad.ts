@@ -49,6 +49,7 @@ export const saveSchema = async (
   projectDir: string | null,
   applicationState: SchemaDefinitionGlobalState,
   schemaGraphViewState: AppSchemaDefinitionGraphDataSet | null,
+  generateCode: boolean = false,
 ): Promise<{ ok: boolean, error?: string }> => {
   try {
     const response = await fetch(`${SERVER_DOMAIN}/api/save?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
@@ -70,6 +71,25 @@ export const saveSchema = async (
         return { ok: false, error: `保存に失敗しました (サーバーからの応答が不正です):\n${bodyText}` }
       }
     }
+
+    // コード生成が有効な場合は実行
+    if (generateCode) {
+      try {
+        const generateResponse = await fetch(`${SERVER_DOMAIN}/api/generate?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        })
+        if (!generateResponse.ok) {
+          const bodyText = await generateResponse.text()
+          console.error(bodyText)
+          return { ok: false, error: `コード生成に失敗しました:\n${bodyText}` }
+        }
+      } catch (error) {
+        console.error(error)
+        return { ok: false, error: error instanceof Error ? `コード生成に失敗しました: ${error.message}` : `コード生成に失敗しました: 不明なエラー(${error})` }
+      }
+    }
+
     return { ok: true }
   } catch (error) {
     console.error(error)
