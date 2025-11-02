@@ -4,4 +4,6 @@ export type PersonalSettings = {
   hideGridButtons?: boolean
   /** 保存時に自動でコード生成を実行する */
   autoGenerateCode?: boolean
+  /** ルート集約編集ペインの配置方向 */
+  aggPaneOrientation?: 'horizontal' | 'vertical'
 }

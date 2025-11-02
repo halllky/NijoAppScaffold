@@ -79,9 +79,16 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
   // 主要な列のみ表示
   const [showLessColumns, setShowLessColumns] = React.useState(false)
 
+  // 個人設定
+  const { personalSettings, save: savePersonalSettings } = usePersonalSettings()
+
   // 選択中のルート集約を画面右側に表示する
   const [aggPaneVisible, setAggPaneVisible] = React.useState(false)
   const [selectedRootAggregateIndex, setSelectedRootAggregateIndex] = React.useState<number | undefined>(undefined);
+  const aggPaneOrientation = personalSettings.aggPaneOrientation ?? 'horizontal'
+  const setAggPaneOrientation = React.useCallback((orientation: 'horizontal' | 'vertical') => {
+    savePersonalSettings('aggPaneOrientation', orientation)
+  }, [savePersonalSettings])
   const selectRootAggregate = useEvent((aggregateId: string) => {
     const index = xmlElementTrees?.findIndex(tree => tree.xmlElements?.[0]?.uniqueId === aggregateId)
     if (index === undefined || index === -1) return;
@@ -106,9 +113,6 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
       }
     }
   });
-
-  // 個人設定
-  const { personalSettings, save: savePersonalSettings } = usePersonalSettings()
 
   // 保存処理
   const [saveButtonText, setSaveButtonText] = React.useState('保存(Ctrl + S)')
@@ -274,6 +278,8 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
         {/* ボディ */}
         <Allotment.Pane priority={LayoutPriority.High}>
           <Allotment
+            key={aggPaneOrientation} // 配置方向変更時にAllotmentを再生成してレイアウトをリセット
+            vertical={aggPaneOrientation === 'vertical'}
             proportionalLayout={false} // 特定のペインだけ伸縮させる
             separator={false} // 境界線非表示
           >
@@ -303,6 +309,8 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
                   attributeDefs={attributeDefsMap}
                   showLessColumns={showLessColumns}
                   onDeleteRootAggregate={handleDeleteRootAggregate}
+                  paneOrientation={aggPaneOrientation}
+                  onChangePaneOrientation={setAggPaneOrientation}
                   className="h-full"
                 />
               )}

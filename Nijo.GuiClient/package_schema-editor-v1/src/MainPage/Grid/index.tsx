@@ -29,13 +29,17 @@ type PageRootAggregateProps = {
   showLessColumns: boolean
   /** ルート集約を削除するコールバック */
   onDeleteRootAggregate?: () => void
+  /** ペインの配置方向 */
+  paneOrientation: 'horizontal' | 'vertical'
+  /** ペインの配置方向を変更するコールバック */
+  onChangePaneOrientation: (orientation: 'horizontal' | 'vertical') => void
   className?: string
 }
 
 /**
  * Data, Query, Command のルート集約1件を表示・編集するページ。
  */
-export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidationResult, trigger, attributeDefs, showLessColumns, onDeleteRootAggregate, className }: PageRootAggregateProps) => {
+export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidationResult, trigger, attributeDefs, showLessColumns, onDeleteRootAggregate, paneOrientation, onChangePaneOrientation, className }: PageRootAggregateProps) => {
   const { control, watch } = formMethods
 
   // グリッドのref（useGridOperationsで使用）
@@ -129,13 +133,25 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
             className="min-w-[200px]"
           />
 
-          {/* TODO: ペインの位置をグラフの右にするか下にするかの選択 */}
-          <Input.IconButton outline mini>
-            横
-          </Input.IconButton>
-          <Input.IconButton outline mini>
-            縦
-          </Input.IconButton>
+          {/* ペインの位置をグラフの右にするか下にするかの選択 */}
+          <div className="flex">
+            <Input.IconButton
+              outline={paneOrientation !== 'horizontal'}
+              fill={paneOrientation === 'horizontal'}
+              mini
+              onClick={() => onChangePaneOrientation('horizontal')}
+            >
+              横
+            </Input.IconButton>
+            <Input.IconButton
+              outline={paneOrientation !== 'vertical'}
+              fill={paneOrientation === 'vertical'}
+              mini
+              onClick={() => onChangePaneOrientation('vertical')}
+            >
+              縦
+            </Input.IconButton>
+          </div>
 
           <div className="basis-1"></div>
           <Input.IconButton icon={Icon.TrashIcon} hideText onClick={handleClickDelete}>
@@ -201,6 +217,9 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
             trigger={trigger}
             attributeDefs={attributeDefs}
             showLessColumns={showLessColumns}
+            paneOrientation={paneOrientation}
+            onChangePaneOrientation={onChangePaneOrientation}
+            onDeleteRootAggregate={onDeleteRootAggregate}
             gridRef={gridRef}
           />
         )}
