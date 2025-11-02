@@ -22,6 +22,11 @@ export const CreateRootAggregateDialog: React.FC<CreateRootAggregateDialogProps>
   const [errorMessage, setErrorMessage] = React.useState<string | undefined>(undefined)
 
   const handleClose = useEvent(() => {
+    if (localName.trim() !== "") {
+      if (!window.confirm("入力内容を破棄しますか?")) {
+        return
+      }
+    }
     onClose()
   })
 
@@ -45,7 +50,7 @@ export const CreateRootAggregateDialog: React.FC<CreateRootAggregateDialogProps>
 
   return (
     <ModalDialog open onOutsideClick={handleClose}>
-      <form onSubmit={handleSubmit} className="w-[420px] max-w-[95vw] bg-white rounded shadow-md overflow-hidden flex flex-col">
+      <form onSubmit={handleSubmit} className="w-[420px] max-w-[95vw] bg-white rounded shadow-md flex flex-col">
         <div className="flex items-center gap-2 px-4 py-2 border-b">
           <h1 className="text-base font-semibold flex-1">ルート集約を追加</h1>
           <UI.IconButton outline mini onClick={handleClose}>

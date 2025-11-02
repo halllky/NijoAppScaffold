@@ -17,7 +17,9 @@ export const DropdownSelector: React.FC<DropdownSelectorProps> = ({
 }) => {
   const [isOpen, setIsOpen] = React.useState(false)
   const [highlightedIndex, setHighlightedIndex] = React.useState(0)
+  const [maxHeight, setMaxHeight] = React.useState<number | undefined>(undefined)
   const dropdownRef = React.useRef<HTMLDivElement>(null)
+  const menuRef = React.useRef<HTMLDivElement>(null)
 
   // 現在選択されているオプションを取得
   const selectedIndex = children.findIndex(([optionValue]) => optionValue === value)
@@ -34,6 +36,17 @@ export const DropdownSelector: React.FC<DropdownSelectorProps> = ({
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  // ドロップダウンがブラウザの幅を超えたときにドロップダウンに縦スクロールを発生させるため、
+  // ドロップダウンが開いたときに最大高さを計算
+  React.useEffect(() => {
+    if (isOpen && menuRef.current) {
+      const menuRect = menuRef.current.getBoundingClientRect()
+      const viewportHeight = window.innerHeight
+      const availableHeight = viewportHeight - menuRect.top - 16 // 16px のマージン
+      setMaxHeight(availableHeight)
+    }
+  }, [isOpen])
 
   // キーボード操作
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -67,7 +80,9 @@ export const DropdownSelector: React.FC<DropdownSelectorProps> = ({
     }
   }
 
-  const handleOptionClick = (optionValue: string) => {
+  const handleOptionClick = (optionValue: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
     onChange(optionValue)
     setIsOpen(false)
   }
@@ -96,11 +111,18 @@ export const DropdownSelector: React.FC<DropdownSelectorProps> = ({
 
       {/* ドロップダウンメニュー */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 shadow-lg max-h-96 overflow-y-auto">
+        <div
+          ref={menuRef}
+          className="absolute z-50 w-full mt-1 bg-white border border-gray-300 shadow-lg overflow-y-auto"
+          style={{
+            // 384px は Tailwind の h-96 の高さに相当
+            maxHeight: maxHeight ? `${maxHeight}px` : '384px',
+          }}
+        >
           {children.map(([optionValue, optionLabel, optionRenderer], index) => (
             <div
               key={optionValue}
-              onClick={() => handleOptionClick(optionValue)}
+              onClick={(e) => handleOptionClick(optionValue, e)}
               className={`cursor-pointer border-b border-gray-100 last:border-b-0 ${index === highlightedIndex ? 'bg-blue-50' : 'hover:bg-gray-50'} ${optionValue === value ? 'bg-blue-100' : ''}`}
               onMouseEnter={() => setHighlightedIndex(index)}
             >
