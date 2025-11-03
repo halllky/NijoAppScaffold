@@ -70,6 +70,9 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
     return new Map(watchedAttributeDefs.map(attrDef => [attrDef.attributeName, attrDef]))
   }, [watchedAttributeDefs])
 
+  // 値メンバーの型定義
+  const watchedValueMemberTypes = ReactHookForm.useWatch({ name: 'valueMemberTypes', control })
+
   // 入力検証
   const { getValidationResult, trigger, validationResultList } = useValidation(getValues)
   React.useEffect(() => {
@@ -309,6 +312,7 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
                   getValidationResult={getValidationResult}
                   trigger={trigger}
                   attributeDefs={attributeDefsMap}
+                  valueMemberTypes={watchedValueMemberTypes}
                   showLessColumns={showLessColumns}
                   onDeleteRootAggregate={handleDeleteRootAggregate}
                   paneOrientation={aggPaneOrientation}

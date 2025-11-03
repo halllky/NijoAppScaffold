@@ -14,24 +14,35 @@ public class XmlElementAttribute {
     public string AttributeName { get; set; } = "";
     [JsonPropertyName("displayName")]
     public string DisplayName { get; set; } = "";
-    [JsonPropertyName("availableModels")]
-    public List<string> AvailableModels { get; set; } = new List<string>();
+    [JsonPropertyName("availableElements")]
+    public List<AvailableElement> AvailableElements { get; set; } = new List<AvailableElement>();
+
+    public class AvailableElement {
+        [JsonPropertyName("model")]
+        public string Model { get; set; } = "";
+        [JsonPropertyName("nodeType")]
+        public string NodeType { get; set; } = "";
+    }
 
     internal static List<XmlElementAttribute> FromSchemaParseRule(SchemaParseRule rule) {
-        return rule.NodeOptions.Select(ad => {
-            // 各モデルについて、この属性が使用可能かチェックする
-            var availableModels = new List<string>();
+        return rule.NodeOptions.Select(opt => {
+            // 各モデル × 各ノード種別の組み合わせについて、この属性が使用可能かチェックする
+            var availableElements = new List<AvailableElement>();
             foreach (var model in rule.Models) {
-                // NodeOption.IsAvailableModelMembersがnullの場合は常にtrueと同じ
-                if (ad.IsAvailableModelMembers == null || ad.IsAvailableModelMembers(model)) {
-                    availableModels.Add(model.SchemaName);
+                foreach (var nodeType in System.Enum.GetValues<E_NodeType>()) {
+                    if (opt.IsAvailable(model, nodeType)) {
+                        availableElements.Add(new AvailableElement {
+                            Model = model.SchemaName,
+                            NodeType = nodeType.ToString(),
+                        });
+                    }
                 }
             }
 
             return new XmlElementAttribute {
-                AttributeName = ad.AttributeName,
-                DisplayName = ad.DisplayName,
-                AvailableModels = availableModels,
+                AttributeName = opt.AttributeName,
+                DisplayName = opt.DisplayName,
+                AvailableElements = availableElements,
             };
         }).ToList();
     }

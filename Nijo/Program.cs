@@ -447,7 +447,13 @@ namespace Nijo {
                 "Models"));
             void RenderOptionsMd(string filename, IModel model) {
                 var fullpath = Path.Combine(modelsDir, filename);
-                var availableOptions = rule.GetAvailableOptionsFor(model);
+
+                // 全てのノードタイプで利用可能なオプションを収集
+                var allNodeTypes = Enum.GetValues<E_NodeType>();
+                var availableOptions = allNodeTypes
+                    .SelectMany(nodeType => rule.GetAvailableOptionsFor(model, nodeType))
+                    .Distinct()
+                    .OrderBy(opt => opt.AttributeName);
 
                 File.WriteAllText(fullpath, $$"""
                     # {{model.GetType().Name}}に指定することができるオプション

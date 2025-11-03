@@ -4,7 +4,7 @@ import * as Icon from "@heroicons/react/24/solid"
 import * as Input from "@nijo/ui-components/input"
 import * as Layout from "@nijo/ui-components/layout"
 import FormLayout, { LabelProps } from "@nijo/ui-components/layout/FormLayout"
-import { SchemaDefinitionGlobalState, ATTR_TYPE, XmlElementAttribute, XmlElementItem, ATTR_IS_KEY, TYPE_DATA_MODEL, ATTR_USER_HELP_TEXT, TYPE_COMMAND_MODEL, TYPE_QUERY_MODEL, TYPE_CHILD, TYPE_CHILDREN } from "../../types"
+import { SchemaDefinitionGlobalState, ATTR_TYPE, XmlElementAttribute, XmlElementItem, ATTR_IS_KEY, TYPE_DATA_MODEL, ATTR_USER_HELP_TEXT, TYPE_COMMAND_MODEL, TYPE_QUERY_MODEL, TYPE_CHILD, TYPE_CHILDREN, ValueMemberType, getNodeType, isAttributeAvailable, NODE_TYPE_ROOT_AGGREGATE } from "../../types"
 import * as UI from '../../UI'
 import useEvent from "react-use-event-hook"
 import { UUID } from "uuidjs"
@@ -25,6 +25,7 @@ type PageRootAggregateProps = {
   getValidationResult: GetValidationResultFunction
   trigger: ValidationTriggerFunction
   attributeDefs: Map<string, XmlElementAttribute>
+  valueMemberTypes: ValueMemberType[]
   /** 名前、Type、キー、コメントのみを表示する */
   showLessColumns: boolean
   /** ルート集約を削除するコールバック */
@@ -39,7 +40,7 @@ type PageRootAggregateProps = {
 /**
  * Data, Query, Command のルート集約1件を表示・編集するページ。
  */
-export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidationResult, trigger, attributeDefs, showLessColumns, onDeleteRootAggregate, paneOrientation, onChangePaneOrientation, className }: PageRootAggregateProps) => {
+export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidationResult, trigger, attributeDefs, valueMemberTypes, showLessColumns, onDeleteRootAggregate, paneOrientation, onChangePaneOrientation, className }: PageRootAggregateProps) => {
   const { control, watch } = formMethods
 
   // グリッドのref（useGridOperationsで使用）
@@ -76,8 +77,8 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
       // Typeは既に表示しているのでスキップ
       if (attrDef.attributeName === ATTR_TYPE) return false;
 
-      // rootModelTypeに対応する属性のみをフィルタリング
-      if (!rootModelType || !attrDef.availableModels.includes(rootModelType)) return false;
+      // rootModelTypeとrootNodeTypeに対応する属性のみをフィルタリング
+      if (!rootModelType || !isAttributeAvailable(attrDef, rootModelType, NODE_TYPE_ROOT_AGGREGATE)) return false;
 
       return true;
     })
@@ -227,6 +228,7 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
             getValidationResult={getValidationResult}
             trigger={trigger}
             attributeDefs={attributeDefs}
+            valueMemberTypes={valueMemberTypes}
             showLessColumns={showLessColumns}
             paneOrientation={paneOrientation}
             onChangePaneOrientation={onChangePaneOrientation}
@@ -249,6 +251,7 @@ const GridSection = ({
   getValidationResult,
   trigger,
   attributeDefs,
+  valueMemberTypes,
   showLessColumns,
   gridRef
 }: PageRootAggregateProps & {
@@ -259,6 +262,12 @@ const GridSection = ({
   const { fields, insert, remove, update, move } = ReactHookForm.useFieldArray({
     control,
     name: `xmlElementTrees.${rootAggregateIndex}.xmlElements`
+  })
+
+  // このルート集約に含まれる全要素を取得
+  const allElementsInTree = ReactHookForm.useWatch({
+    control,
+    name: `xmlElementTrees.${rootAggregateIndex}.xmlElements`,
   })
 
   // ルート集約の行は表示しないので、fieldsの最初の要素を除いた配列を使用する
@@ -291,13 +300,15 @@ const GridSection = ({
     // Attributes（Type以外）
     // ルート集約のモデルタイプを取得（最初の行のType属性）
     const rootModelType = fields[0]?.attributes[ATTR_TYPE]
+    // ルート要素のノード種別を判定
+    const rootNodeType = fields[0] && allElementsInTree ? getNodeType(fields[0], allElementsInTree, valueMemberTypes) : undefined
 
     for (const attrDef of Array.from(attributeDefs.values())) {
       // Typeは既に表示しているのでスキップ
       if (attrDef.attributeName === ATTR_TYPE) continue;
 
-      // rootModelTypeに対応する属性のみをフィルタリング
-      if (!rootModelType || !attrDef.availableModels.includes(rootModelType)) continue;
+      // rootModelTypeとrootNodeTypeに対応する属性のみをフィルタリング
+      if (!rootModelType || !rootNodeType || !isAttributeAvailable(attrDef, rootModelType, rootNodeType)) continue;
 
       // すべての属性を表示する設定の場合か、主要な属性の場合のみ表示
       if (!showLessColumns
@@ -309,7 +320,7 @@ const GridSection = ({
     }
 
     return columns
-  }, [attributeDefs, fields, getValidationResult, showLessColumns])
+  }, [attributeDefs, fields, getValidationResult, showLessColumns, allElementsInTree, valueMemberTypes])
 
   // 行挿入
   const handleInsertRow = useEvent(() => {

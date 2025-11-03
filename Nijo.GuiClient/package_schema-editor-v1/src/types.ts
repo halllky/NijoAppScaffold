@@ -98,8 +98,8 @@ export type XmlElementAttribute = {
   attributeName: XmlElementAttributeName
   /** この属性の画面表示上の名称。 */
   displayName: string
-  /** この属性が使用可能なモデルの種類の配列。 */
-  availableModels: string[]
+  /** この属性が使用可能なモデルとノード種別の組み合わせの配列。 */
+  availableElements: { model: string, nodeType: string }[]
 } & (XmlElementStringAttribute | XmlElementBoolAttribute | XmlElementSelectAttribute)
 
 /** XML要素の属性の種類定義（文字列属性） */
@@ -141,6 +141,80 @@ export const TYPE_VALUE_OBJECT_MODEL = 'value-object'
 export const TYPE_CHILD = 'child'
 export const TYPE_CHILDREN = 'children'
 export const TYPE_MEMO = '-'
+
+// ノード種別（C#のE_NodeTypeに対応）
+export const NODE_TYPE_ROOT_AGGREGATE = 'RootAggregate'
+export const NODE_TYPE_CHILD_AGGREGATE = 'ChildAggregate'
+export const NODE_TYPE_CHILDREN_AGGREGATE = 'ChildrenAggregate'
+export const NODE_TYPE_VALUE_MEMBER = 'ValueMember'
+export const NODE_TYPE_REF = 'Ref'
+export const NODE_TYPE_STATIC_ENUM_VALUE = 'StaticEnumValue'
+export const NODE_TYPE_MEMO = 'Memo'
+export const NODE_TYPE_UNKNOWN = 'Unknown'
+
+// ---------------------------------
+
+/**
+ * XML要素のノード種別を判定する。
+ * C#のSchemaParseContext.GetNodeTypeに相当。
+ */
+export const getNodeType = (element: XmlElementItem, allElements: XmlElementItem[], valueMemberTypes: ValueMemberType[]): string => {
+  const tree = asTree(allElements)
+
+  // ルート集約（インデント0）
+  if (element.indent === 0) {
+    return NODE_TYPE_ROOT_AGGREGATE
+  }
+
+  const typeAttr = element.attributes[ATTR_TYPE]
+
+  // メモ
+  if (typeAttr === TYPE_MEMO) {
+    return NODE_TYPE_MEMO
+  }
+
+  // Child
+  if (typeAttr === TYPE_CHILD) {
+    return NODE_TYPE_CHILD_AGGREGATE
+  }
+
+  // Children
+  if (typeAttr === TYPE_CHILDREN) {
+    return NODE_TYPE_CHILDREN_AGGREGATE
+  }
+
+  // RefTo
+  if (typeAttr?.startsWith('ref-to:')) {
+    return NODE_TYPE_REF
+  }
+
+  // 親が静的列挙型なら静的列挙型の値
+  const parent = tree.getParent(element)
+  const rootElement = tree.getRoot(element)
+  if (parent && parent.indent === 0 && rootElement.attributes[ATTR_TYPE] === TYPE_STATIC_ENUM_MODEL) {
+    return NODE_TYPE_STATIC_ENUM_VALUE
+  }
+
+  // ValueMember（値メンバーの種類に該当するか）
+  if (typeAttr && valueMemberTypes.some(vmt => vmt.schemaTypeName === typeAttr)) {
+    return NODE_TYPE_VALUE_MEMBER
+  }
+
+  // enum:... や value-object:... も ValueMember
+  if (typeAttr?.startsWith('enum:') || typeAttr?.startsWith('value-object:')) {
+    return NODE_TYPE_VALUE_MEMBER
+  }
+
+  return NODE_TYPE_UNKNOWN
+}
+
+/**
+ * 指定された属性が、指定されたモデル種別・ノード種別の組み合わせで利用可能かを判定する。
+ */
+export const isAttributeAvailable = (attr: XmlElementAttribute, modelType: string, nodeType: string): boolean => {
+  if (!modelType) return false
+  return attr.availableElements.some(ae => ae.model === modelType && ae.nodeType === nodeType)
+}
 
 // ---------------------------------
 

@@ -4,7 +4,7 @@ import * as ReactHookForm from "react-hook-form"
 import { ModalDialog } from "@nijo/ui-components/layout"
 import * as Layout from "@nijo/ui-components/layout"
 import * as Input from "@nijo/ui-components/input"
-import { SchemaDefinitionGlobalState, XmlElementItem, XmlElementAttribute, ATTR_TYPE, ATTR_DISPLAY_NAME, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, asTree, ModelPageForm } from "../types"
+import { SchemaDefinitionGlobalState, XmlElementItem, XmlElementAttribute, ATTR_TYPE, ATTR_DISPLAY_NAME, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, asTree, ModelPageForm, NODE_TYPE_STATIC_ENUM_VALUE, NODE_TYPE_VALUE_MEMBER, isAttributeAvailable, NODE_TYPE_ROOT_AGGREGATE, XmlElementAttributeName } from "../types"
 import { UUID } from "uuidjs"
 import { GetValidationResultFunction, ValidationTriggerFunction, ValidationResultListItem } from "../MainPage/useValidation"
 import ErrorMessagePane from "../MainPage/ErrorMessage"
@@ -382,13 +382,22 @@ export const EnumDefDialog: React.FC<EnumDefDialogProps> = ({
     return { handled: false }
   })
 
-  const staticEnumAttributeDefs = React.useMemo(() => attributeDefs.filter(attr => attr.attributeName !== ATTR_TYPE && attr.availableModels.includes(TYPE_STATIC_ENUM_MODEL)), [attributeDefs])
-  const valueObjectAttributeDefs = React.useMemo(() => attributeDefs.filter(attr => attr.attributeName !== ATTR_TYPE && attr.availableModels.includes(TYPE_VALUE_OBJECT_MODEL)), [attributeDefs])
-
   const getStaticEnumColumnDefs: Layout.GetColumnDefsFunction<EnumGridRow> = React.useCallback(cellType => {
+
+    // 利用可能な属性（ルート要素に指定可能なもの + 子要素に指定可能なもの）
+    const staticEnumAttributeDefs = new Map<XmlElementAttributeName, XmlElementAttribute>()
+    const rootAvailable = attributeDefs.filter(attr => attr.attributeName !== ATTR_TYPE && isAttributeAvailable(attr, TYPE_STATIC_ENUM_MODEL, NODE_TYPE_ROOT_AGGREGATE))
+    const childAvailable = attributeDefs.filter(attr => attr.attributeName !== ATTR_TYPE && isAttributeAvailable(attr, TYPE_STATIC_ENUM_MODEL, NODE_TYPE_STATIC_ENUM_VALUE))
+    for (const attr of rootAvailable) {
+      staticEnumAttributeDefs.set(attr.attributeName, attr)
+    }
+    for (const attr of childAvailable) {
+      staticEnumAttributeDefs.set(attr.attributeName, attr)
+    }
+
     const columns: Layout.EditableGridColumnDef<EnumGridRow>[] = []
     columns.push(createLocalNameColumn(cellType, getValidationResult))
-    for (const attrDef of staticEnumAttributeDefs) {
+    for (const attrDef of staticEnumAttributeDefs.values()) {
       const column = createAttributeColumn(attrDef, cellType, getValidationResult)
       if (attrDef.attributeName !== ATTR_DISPLAY_NAME) {
         column.isReadOnly = (row) => row.indent === 0
@@ -396,16 +405,28 @@ export const EnumDefDialog: React.FC<EnumDefDialogProps> = ({
       columns.push(column)
     }
     return columns
-  }, [getValidationResult, staticEnumAttributeDefs])
+  }, [getValidationResult, attributeDefs])
 
   const getValueObjectColumnDefs: Layout.GetColumnDefsFunction<EnumGridRow> = React.useCallback(cellType => {
+
+    // 利用可能な属性（ルート要素に指定可能なもの + 子要素に指定可能なもの）
+    const valueObjectAttributeDefs = new Map<XmlElementAttributeName, XmlElementAttribute>()
+    const rootAvailable = attributeDefs.filter(attr => attr.attributeName !== ATTR_TYPE && isAttributeAvailable(attr, TYPE_VALUE_OBJECT_MODEL, NODE_TYPE_ROOT_AGGREGATE))
+    const childAvailable = attributeDefs.filter(attr => attr.attributeName !== ATTR_TYPE && isAttributeAvailable(attr, TYPE_VALUE_OBJECT_MODEL, NODE_TYPE_VALUE_MEMBER))
+    for (const attr of rootAvailable) {
+      valueObjectAttributeDefs.set(attr.attributeName, attr)
+    }
+    for (const attr of childAvailable) {
+      valueObjectAttributeDefs.set(attr.attributeName, attr)
+    }
+
     const columns: Layout.EditableGridColumnDef<EnumGridRow>[] = []
     columns.push(createLocalNameColumn(cellType, getValidationResult))
-    for (const attrDef of valueObjectAttributeDefs) {
+    for (const attrDef of valueObjectAttributeDefs.values()) {
       columns.push(createAttributeColumn(attrDef, cellType, getValidationResult))
     }
     return columns
-  }, [getValidationResult, valueObjectAttributeDefs])
+  }, [getValidationResult, attributeDefs])
 
   const enumElementIds = React.useMemo(() => {
     return new Set([...staticEnumRows, ...valueObjectRows].map(row => row.uniqueId))

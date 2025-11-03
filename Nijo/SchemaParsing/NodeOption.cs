@@ -31,14 +31,15 @@ public class NodeOption {
     /// </summary>
     public required E_NodeOptionType Type { get; init; }
     /// <summary>
-    /// この属性に対する入力検証
+    /// この属性が特定のモデル・ノード種別の組み合わせで利用可能かどうかを判定する。
+    /// GUI上での属性入力欄の活性制御に使用される。
     /// </summary>
-    public required Action<NodeOptionValidateContext> Validate { get; init; }
+    public required Func<IModel, E_NodeType, bool> IsAvailable { get; init; }
     /// <summary>
-    /// あるモデルのメンバーがこの属性を指定することができるかどうか。
-    /// nullの場合は指定可能と判定されます。
+    /// この属性に対する入力検証のうち、IsAvailableでは判定できない複雑な検証。
+    /// 保存時にサーバー側で実行される。
     /// </summary>
-    public required Func<IModel, bool> IsAvailableModelMembers { get; init; }
+    public required Action<NodeOptionValidateContext> ValidateOthers { get; init; }
 }
 
 /// <summary>
@@ -80,12 +81,12 @@ internal static class BasicNodeOptions {
             ソースコード上にあらわれる物理名とは別に表示用名称を設けたい場合に指定してください。
             表示用名称に改行を含めることはできません。
             """,
-        Validate = ctx => {
+        IsAvailable = (model, nodeType) => {
+            return true;
+        },
+        ValidateOthers = ctx => {
             // 改行不可
             if (ctx.Value.Contains('\n')) ctx.AddError("改行を含めることはできません。");
-        },
-        IsAvailableModelMembers = model => {
-            return true;
         },
     };
 
@@ -100,13 +101,12 @@ internal static class BasicNodeOptions {
             ここで指定する値に改行を含めることはできません。
             複数の集約で同じテーブル名を指定することはできません。
             """,
-        Validate = ctx => {
+        IsAvailable = (model, nodeType) => {
+            return model is DataModel;
+        },
+        ValidateOthers = ctx => {
             // 改行不可
             if (ctx.Value.Contains('\n')) ctx.AddError("改行を含めることはできません。");
-        },
-        IsAvailableModelMembers = model => {
-            if (model is DataModel) return true;
-            return false;
         },
     };
 
@@ -119,12 +119,12 @@ internal static class BasicNodeOptions {
             既定では集約を表す一意な文字列から生成されたハッシュ値が用いられます。
             ここで指定する値に改行を含めることはできません。
             """,
-        Validate = ctx => {
+        IsAvailable = (model, nodeType) => {
+            return true;
+        },
+        ValidateOthers = ctx => {
             // 改行不可
             if (ctx.Value.Contains('\n')) ctx.AddError("改行を含めることはできません。");
-        },
-        IsAvailableModelMembers = model => {
-            return true;
         },
     };
 
@@ -142,34 +142,32 @@ internal static class BasicNodeOptions {
             DisplayDataの主キーアサイン関数にのみ影響する。
             （カスタマイズ処理でURLとDisplayDataの間のデータのやり取りに使用する想定）
             """,
-        Validate = ctx => {
-            var nodeType = ctx.SchemaParseContext.GetNodeType(ctx.XElement);
+        IsAvailable = (model, nodeType) => {
+            // コマンドモデルでは使用不可
+            if (model is CommandModel) return false;
 
-            // モデルの種類を判定
-            if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model)) {
-                // コマンドモデルの場合はキー属性を定義できない
-                if (model is CommandModel) {
-                    ctx.AddError("コマンドモデルでは主キー属性を定義できません。");
-                    return;
-                }
-
-                // データモデルの子集約には主キー属性を付与できない
-                if (model is DataModel && nodeType == E_NodeType.ChildAggregate) {
-                    ctx.AddError("データモデルの子集約には主キー属性を付与できません。");
-                    return;
-                }
-
-                // クエリモデルの子集約・子配列には主キー属性を付与できない
-                if (model is QueryModel && (nodeType == E_NodeType.ChildAggregate || nodeType == E_NodeType.ChildrenAggregate)) {
-                    ctx.AddError("クエリモデルの子集約・子配列には主キー属性を付与できません。");
-                    return;
-                }
+            // データモデルの場合
+            if (model is DataModel) {
+                // TODO: 要修正（ValidateOthersのコメントを参照）
+                // 子集約には付与不可
+                if (nodeType == E_NodeType.ChildAggregate) return false;
+                return true;
             }
-        },
-        IsAvailableModelMembers = model => {
-            if (model is DataModel) return true;
-            if (model is QueryModel) return true;
+
+            // クエリモデルの場合
+            if (model is QueryModel) {
+                // TODO: 要修正（ValidateOthersのコメントを参照）
+                // 子集約・子配列には付与不可
+                if (nodeType == E_NodeType.ChildAggregate || nodeType == E_NodeType.ChildrenAggregate) return false;
+                return true;
+            }
+
             return false;
+        },
+        ValidateOthers = ctx => {
+            // TODO: element自体の E_NodeType ではなく、
+            // 親が Child , Children かどうかを見て判定する必要がある。
+            // そのため IsAvailable のTODOの判定処理をこちらに移動させる必要あり
         },
     };
 
@@ -181,14 +179,15 @@ internal static class BasicNodeOptions {
             必須項目であることを表します。
             新規登録処理や更新処理での必須入力チェック処理が自動生成されます。
             """,
-        Validate = ctx => {
-            // 特に制約なし
-        },
-        IsAvailableModelMembers = model => {
+        IsAvailable = (model, nodeType) => {
+            // TODO: ValueMember か RefTo のみ使用可能
             if (model is DataModel) return true;
             if (model is QueryModel) return true;
             if (model is CommandModel) return true;
             return false;
+        },
+        ValidateOthers = ctx => {
+            // 特に制約なし
         },
     };
 
@@ -203,21 +202,12 @@ internal static class BasicNodeOptions {
             それを表示・編集する画面のデータ構造が完全一致する場合、
             この項目を指定するとDataModelと全く同じ型のQueryModelのモジュールが生成される。
             """,
-        Validate = ctx => {
+        IsAvailable = (model, nodeType) => {
             // データモデルのルート集約のみ許可
-            if (ctx.NodeType != E_NodeType.RootAggregate) {
-                ctx.AddError("このオプションはルート集約にのみ指定できます。");
-                return;
-            }
-
-            if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model)) {
-                if (model is not DataModel) {
-                    ctx.AddError("このオプションはデータモデルにのみ指定できます。");
-                }
-            }
+            return model is DataModel && nodeType == E_NodeType.RootAggregate;
         },
-        IsAvailableModelMembers = model => {
-            return model is DataModel;
+        ValidateOthers = ctx => {
+            // IsAvailableで基本的な判定は完了しているため、追加の検証は不要
         },
     };
     internal static NodeOption GenerateBatchUpdateCommand = new() {
@@ -228,26 +218,14 @@ internal static class BasicNodeOptions {
             標準の更新ロジックで一括更新処理を生成する場合に指定。
             DataModel、かつ、それとまったく同じ形のQueryModelが生成される場合にのみ指定可能。
             """,
-        Validate = ctx => {
+        IsAvailable = (model, nodeType) => {
+            return model is DataModel && nodeType == E_NodeType.RootAggregate;
+        },
+        ValidateOthers = ctx => {
             // このオプションを使用するためにはGenerateDefaultQueryModelの指定が必須
             if (ctx.XElement.Attribute(GenerateDefaultQueryModel.AttributeName) == null) {
                 ctx.AddError($"このオプションを使用するためには{GenerateDefaultQueryModel.AttributeName}属性の指定が必須です。");
             }
-
-            // データモデルのルート集約のみ許可
-            if (ctx.NodeType != E_NodeType.RootAggregate) {
-                ctx.AddError("このオプションはルート集約にのみ指定できます。");
-                return;
-            }
-
-            if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model)) {
-                if (!(model is DataModel)) {
-                    ctx.AddError("このオプションはデータモデルにのみ指定できます。");
-                }
-            }
-        },
-        IsAvailableModelMembers = model => {
-            return false;
         },
     };
     #endregion DataModel用
@@ -263,23 +241,15 @@ internal static class BasicNodeOptions {
             指定した場合、Entity Framework CoreのToView()を使用してビューにマッピングされるEFCoreEntityが生成されます。
             ビュー定義自体はソースコード生成の対象外となり、手動で作成する必要があります。
             """,
-        Validate = ctx => {
+        IsAvailable = (model, nodeType) => {
             // クエリモデルのルート集約のみ許可
-            if (ctx.NodeType != E_NodeType.RootAggregate) {
-                ctx.AddError("このオプションはルート集約にのみ指定できます。");
-                return;
-            }
-
-            if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model)) {
-                if (model is not QueryModel) {
-                    ctx.AddError("このオプションはクエリモデルにのみ指定できます。");
-                }
-            }
+            return model is QueryModel && nodeType == E_NodeType.RootAggregate;
         },
-        IsAvailableModelMembers = model => {
-            return model is QueryModel;
+        ValidateOthers = ctx => {
+            // IsAvailableで基本的な判定は完了しているため、追加の検証は不要
         },
     };
+    // TODO: 廃止予定
     internal static NodeOption IsReadOnly = new() {
         AttributeName = "IsReadOnly",
         DisplayName = "読み取り専用集約",
@@ -287,17 +257,11 @@ internal static class BasicNodeOptions {
         HelpText = $$"""
             このQueryModelが読み取り専用かどうか
             """,
-        Validate = ctx => {
-            // クエリモデルのみ許可
-            if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model)) {
-                if (!(model is QueryModel)) {
-                    ctx.AddError("このオプションはクエリモデルにのみ指定できます。");
-                }
-            }
+        IsAvailable = (model, nodeType) => {
+            return model is QueryModel;
         },
-        IsAvailableModelMembers = model => {
-            if (model is QueryModel) return true;
-            return false;
+        ValidateOthers = ctx => {
+            // 特に制約なし
         },
     };
     internal static NodeOption HasLifeCycle = new() {
@@ -307,17 +271,11 @@ internal static class BasicNodeOptions {
         HelpText = $$"""
             【廃止予定】画面上で追加削除されるタイミングが親と異なるかどうか。
             """,
-        Validate = ctx => {
-            // クエリモデルのみ許可
-            if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model)) {
-                if (!(model is QueryModel)) {
-                    ctx.AddError("このオプションはクエリモデルにのみ指定できます。");
-                }
-            }
+        IsAvailable = (model, nodeType) => {
+            return model is QueryModel;
         },
-        IsAvailableModelMembers = model => {
-            if (model is QueryModel) return true;
-            return false;
+        ValidateOthers = ctx => {
+            // 特に制約なし
         },
     };
     #endregion QueryModel用
@@ -330,23 +288,16 @@ internal static class BasicNodeOptions {
         Type = E_NodeOptionType.String,
         HelpText = $$"""
             コマンドモデルの引数の型を指定します。
-            以下のいずれかを指定できます：
+            以下のいずれかを指定できます:
             - 構造体モデルのルート集約名
             - クエリモデルのルート集約名 + {{string.Join(" または ", StructureRefToAvailable.Keys)}}
             指定しなかった場合は引数なしのコマンドとみなされます。
             """,
-        Validate = ctx => {
+        IsAvailable = (model, nodeType) => {
             // コマンドモデルのルート集約のみ許可
-            if (ctx.NodeType != E_NodeType.RootAggregate) {
-                ctx.AddError("このオプションはルート集約にのみ指定できます。");
-                return;
-            }
-
-            if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model) && model is not CommandModel) {
-                ctx.AddError("このオプションはコマンドモデルにのみ指定できます。");
-                return;
-            }
-
+            return model is CommandModel && nodeType == E_NodeType.RootAggregate;
+        },
+        ValidateOthers = ctx => {
             // 値未指定は不正
             var splitted = ctx.Value.Split(':', StringSplitOptions.RemoveEmptyEntries);
             var targetPhysicalName = splitted.FirstOrDefault();
@@ -369,9 +320,6 @@ internal static class BasicNodeOptions {
                 ctx.AddError($"参照先の集約が見つかりません。物理名: {targetPhysicalName}");
                 return;
             }
-        },
-        IsAvailableModelMembers = model => {
-            return model is CommandModel;
         },
     };
 
@@ -381,23 +329,16 @@ internal static class BasicNodeOptions {
         Type = E_NodeOptionType.String,
         HelpText = $$"""
             コマンドモデルの戻り値の型を指定します。
-            以下のいずれかを指定できます：
+            以下のいずれかを指定できます:
             - 構造体モデルのルート集約名
             - クエリモデルのルート集約名 + {{string.Join(" または ", StructureRefToAvailable.Keys.Select(key => $":{key}"))}}
             指定しなかった場合は戻り値なしのコマンドとみなされます。
             """,
-        Validate = ctx => {
+        IsAvailable = (model, nodeType) => {
             // コマンドモデルのルート集約のみ許可
-            if (ctx.NodeType != E_NodeType.RootAggregate) {
-                ctx.AddError("このオプションはルート集約にのみ指定できます。");
-                return;
-            }
-
-            if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model) && model is not CommandModel) {
-                ctx.AddError("このオプションはコマンドモデルにのみ指定できます。");
-                return;
-            }
-
+            return model is CommandModel && nodeType == E_NodeType.RootAggregate;
+        },
+        ValidateOthers = ctx => {
             // 値未指定は不正
             var splitted = ctx.Value.Split(':', StringSplitOptions.RemoveEmptyEntries);
             var targetPhysicalName = splitted.FirstOrDefault();
@@ -420,9 +361,6 @@ internal static class BasicNodeOptions {
                 ctx.AddError($"参照先の集約が見つかりません。物理名: {targetPhysicalName}");
                 return;
             }
-        },
-        IsAvailableModelMembers = model => {
-            return model is CommandModel;
         },
     };
     #endregion CommandModel用
@@ -448,27 +386,15 @@ internal static class BasicNodeOptions {
             その3種のうちどちらを参照するかの指定。
             {{string.Join(", ", StructureRefToAvailable.Keys.Select(key => $"\"{key}\""))}}のみ指定可能。
             """,
-        Validate = ctx => {
+        IsAvailable = (model, nodeType) => {
+            // CommandModelまたはStructureModelの外部参照のみ許可
+            return (model is CommandModel || model is StructureModel)
+                && nodeType == E_NodeType.Ref;
+        },
+        ValidateOthers = ctx => {
             if (!StructureRefToAvailable.ContainsKey(ctx.Value)) {
                 ctx.AddError($"{string.Join(" または ", StructureRefToAvailable.Keys)}のみ指定可能です。");
             }
-
-            // 外部参照の場合のみ許可
-            if (ctx.NodeType != E_NodeType.Ref) {
-                ctx.AddError("このオプションは外部参照（ref-to）にのみ指定できます。");
-                return;
-            }
-
-            if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model)) {
-                if (model is not CommandModel && model is not StructureModel) {
-                    ctx.AddError("このオプションはコマンドモデルまたはStructureModelの外部参照にのみ指定できます。");
-                }
-            }
-        },
-        IsAvailableModelMembers = model => {
-            if (model is CommandModel) return true;
-            if (model is StructureModel) return true;
-            return false;
         },
     };
     #endregion StructureModel用
@@ -483,14 +409,14 @@ internal static class BasicNodeOptions {
             静的列挙型の区分値を指定します。
             C#のenumの値となるため、整数で指定してください。
             """,
-        Validate = ctx => {
+        IsAvailable = (model, nodeType) => {
+            return model is StaticEnumModel;
+        },
+        ValidateOthers = ctx => {
             // 整数値のみ許可
             if (!int.TryParse(ctx.Value, out _)) {
                 ctx.AddError("整数値で指定してください。");
             }
-        },
-        IsAvailableModelMembers = model => {
-            return model is StaticEnumModel;
         },
     };
     #endregion StaticEnumModel用
@@ -504,17 +430,17 @@ internal static class BasicNodeOptions {
         HelpText = $$"""
             文字列項目の最大長。整数で指定してください。
             """,
-        Validate = ctx => {
-            // 整数値のみ許可
-            if (!int.TryParse(ctx.Value, out _)) {
-                ctx.AddError("整数値で指定してください。");
-            }
-        },
-        IsAvailableModelMembers = model => {
+        IsAvailable = (model, nodeType) => {
             if (model is DataModel) return true;
             if (model is QueryModel) return true;
             if (model is CommandModel) return true;
             return false;
+        },
+        ValidateOthers = ctx => {
+            // 整数値のみ許可
+            if (!int.TryParse(ctx.Value, out _)) {
+                ctx.AddError("整数値で指定してください。");
+            }
         },
     };
     internal static NodeOption CharacterType = new() {
@@ -524,14 +450,14 @@ internal static class BasicNodeOptions {
         HelpText = $$"""
             文字種。半角、半角英数、など
             """,
-        Validate = ctx => {
-
-        },
-        IsAvailableModelMembers = model => {
+        IsAvailable = (model, nodeType) => {
             if (model is DataModel) return true;
             if (model is QueryModel) return true;
             if (model is CommandModel) return true;
             return false;
+        },
+        ValidateOthers = ctx => {
+            // 特に制約なし
         },
     };
     internal static NodeOption TotalDigit = new() {
@@ -541,17 +467,17 @@ internal static class BasicNodeOptions {
         HelpText = $$"""
             数値系属性の整数部桁数 + 小数部桁数
             """,
-        Validate = ctx => {
-            // 整数値のみ許可
-            if (!int.TryParse(ctx.Value, out _)) {
-                ctx.AddError("整数値で指定してください。");
-            }
-        },
-        IsAvailableModelMembers = model => {
+        IsAvailable = (model, nodeType) => {
             if (model is DataModel) return true;
             if (model is QueryModel) return true;
             if (model is CommandModel) return true;
             return false;
+        },
+        ValidateOthers = ctx => {
+            // 整数値のみ許可
+            if (!int.TryParse(ctx.Value, out _)) {
+                ctx.AddError("整数値で指定してください。");
+            }
         },
     };
     internal static NodeOption DecimalPlace = new() {
@@ -561,17 +487,17 @@ internal static class BasicNodeOptions {
         HelpText = $$"""
             数値系属性の小数部桁数
             """,
-        Validate = ctx => {
-            // 整数値のみ許可
-            if (!int.TryParse(ctx.Value, out _)) {
-                ctx.AddError("整数値で指定してください。");
-            }
-        },
-        IsAvailableModelMembers = model => {
+        IsAvailable = (model, nodeType) => {
             if (model is DataModel) return true;
             if (model is QueryModel) return true;
             if (model is CommandModel) return true;
             return false;
+        },
+        ValidateOthers = ctx => {
+            // 整数値のみ許可
+            if (!int.TryParse(ctx.Value, out _)) {
+                ctx.AddError("整数値で指定してください。");
+            }
         },
     };
     internal static NodeOption SequenceName = new() {
@@ -581,11 +507,11 @@ internal static class BasicNodeOptions {
         HelpText = $$"""
             シーケンス物理名
             """,
-        Validate = ctx => {
-
-        },
-        IsAvailableModelMembers = model => {
+        IsAvailable = (model, nodeType) => {
             return model is DataModel;
+        },
+        ValidateOthers = ctx => {
+            // 特に制約なし
         },
     };
 
@@ -598,11 +524,11 @@ internal static class BasicNodeOptions {
             画面上でユーザーに表示し、項目の入力方法や意味を説明するために使用してください。
             改行を含めることができます。
             """,
-        Validate = ctx => {
-            // 特に制約なし（改行も許可）
-        },
-        IsAvailableModelMembers = model => {
+        IsAvailable = (model, nodeType) => {
             return true;
+        },
+        ValidateOthers = ctx => {
+            // 特に制約なし（改行も許可）
         },
     };
     #endregion ValueMember用
@@ -617,7 +543,10 @@ internal static class BasicNodeOptions {
             定数の型を指定します。
             string（文字列）、int（整数）、decimal（小数）、template（テンプレート文字列）、child（ネストされた定数グループ）のいずれかを指定してください。
             """,
-        Validate = ctx => {
+        IsAvailable = (model, nodeType) => {
+            return model is ConstantModel;
+        },
+        ValidateOthers = ctx => {
             var validTypes = new[] { "string", "int", "decimal", "template", "child" };
             if (!validTypes.Contains(ctx.Value)) {
                 ctx.AddError($"type属性の値「{ctx.Value}」は無効です。string, int, decimal, template, child のいずれかを指定してください。");
@@ -654,9 +583,6 @@ internal static class BasicNodeOptions {
                     break;
             }
         },
-        IsAvailableModelMembers = model => {
-            return model is ConstantModel;
-        },
     };
 
     internal static NodeOption ConstantValue = new() {
@@ -667,11 +593,11 @@ internal static class BasicNodeOptions {
             定数の値を指定します。
             型に応じて適切な形式で指定してください。
             """,
-        Validate = ctx => {
-            // 値の妥当性チェックはConstantTypeで実施
-        },
-        IsAvailableModelMembers = model => {
+        IsAvailable = (model, nodeType) => {
             return model is ConstantModel;
+        },
+        ValidateOthers = ctx => {
+            // 値の妥当性チェックはConstantTypeで実施
         },
     };
 
@@ -683,12 +609,12 @@ internal static class BasicNodeOptions {
             【廃止予定】テンプレート文字列の引数名をカンマ区切りで指定します。
             現在は{0}, {1}, ... から自動的に引数が判定されるため、この属性は不要です。
             """,
-        Validate = ctx => {
+        IsAvailable = (model, nodeType) => {
+            return false; // 使用不可にする
+        },
+        ValidateOthers = ctx => {
             // 廃止予定の警告
             ctx.AddError("TemplateParams属性は廃止予定です。テンプレート文字列の引数は{0}, {1}, ...から自動的に判定されます。");
-        },
-        IsAvailableModelMembers = model => {
-            return false; // 使用不可にする
         },
     };
     #endregion ConstantModel用

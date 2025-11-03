@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.SchemaParsing;
@@ -42,7 +44,11 @@ internal class ModelsMd {
 
             ### その他オプション
 
-            {{rule.GetAvailableOptionsFor(model).SelectTextTemplate(opt => $$"""
+            {{Enum.GetValues<E_NodeType>()
+                .SelectMany(nodeType => rule.GetAvailableOptionsFor(model, nodeType))
+                .Distinct()
+                .OrderBy(opt => opt.AttributeName)
+                .SelectTextTemplate(opt => $$"""
             #### {{opt.AttributeName}}
 
             {{opt.DisplayName}}。

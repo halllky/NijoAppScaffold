@@ -128,10 +128,9 @@ public class SchemaParseRule {
     }
 
     /// <summary>
-    /// 特定のモデルで使用可能なオプショナル属性を列挙します。
+    /// 特定のモデル・ノード種別の組み合わせで使用可能なオプショナル属性を列挙します。
     /// </summary>
-    public IEnumerable<NodeOption> GetAvailableOptionsFor(IModel model) {
-        return NodeOptions.Where(opt => opt.IsAvailableModelMembers == null
-                                     || opt.IsAvailableModelMembers(model));
+    public IEnumerable<NodeOption> GetAvailableOptionsFor(IModel model, E_NodeType nodeType) {
+        return NodeOptions.Where(opt => opt.IsAvailable(model, nodeType));
     }
 }

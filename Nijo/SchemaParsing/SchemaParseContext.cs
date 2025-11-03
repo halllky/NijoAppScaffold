@@ -203,8 +203,8 @@ public class SchemaParseContext {
         return _rule.NodeOptions.Where(opt => attrs.Contains(opt.AttributeName));
     }
     /// <inheritdoc cref="SchemaParseRule.GetAvailableOptionsFor"/>
-    public IEnumerable<NodeOption> GetAvailableOptionsFor(IModel model) {
-        return _rule.GetAvailableOptionsFor(model);
+    public IEnumerable<NodeOption> GetAvailableOptionsFor(IModel model, E_NodeType nodeType) {
+        return _rule.GetAvailableOptionsFor(model, nodeType);
     }
     /// <summary>
     /// このルールで定義されているすべてのNodeOptionを返します。
@@ -520,7 +520,16 @@ public class SchemaParseContext {
 
             // オプション属性に基づくチェック
             foreach (var opt in GetOptions(el)) {
-                opt.Validate(new() {
+                // モデルとノード種別の組み合わせで利用可能かチェック
+                if (TryGetModel(el, out var optModel)) {
+                    if (!opt.IsAvailable(optModel, nodeType)) {
+                        attributeErrors.Add((el, opt.AttributeName, $"この属性はこの要素には指定できません。"));
+                        continue; // 指定不可な属性なので、それ以上の検証はスキップ
+                    }
+                }
+
+                // 複雑な検証ロジック
+                opt.ValidateOthers(new() {
                     Value = el.Attribute(opt.AttributeName)!.Value,
                     XElement = el,
                     NodeType = nodeType,

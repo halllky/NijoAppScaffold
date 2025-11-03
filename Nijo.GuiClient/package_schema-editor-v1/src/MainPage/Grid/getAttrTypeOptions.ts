@@ -88,10 +88,31 @@ export const getAttrTypeOptions: XmlElementSelectAttributeGetOptionFunction = cu
 }
 
 // Typeの列定義
+// TODO: サーバーから渡されたデータを正とするようにする
 export const TYPE_COLUMN_DEF: XmlElementAttribute = {
   attributeName: ATTR_TYPE,
   displayName: '種類',
   type: 'select',
   getOptions: getAttrTypeOptions,
-  availableModels: ['data-model', 'query-model', 'command-model', 'enum', 'value-object']
+  availableElements: [
+    // すべてのモデル × すべてのノード種別で利用可能
+    // ※ より厳密な制御はサーバー側で行う
+    { model: 'data-model', nodeType: 'RootAggregate' },
+    { model: 'data-model', nodeType: 'ChildAggregate' },
+    { model: 'data-model', nodeType: 'ChildrenAggregate' },
+    { model: 'data-model', nodeType: 'ValueMember' },
+    { model: 'data-model', nodeType: 'Ref' },
+    { model: 'query-model', nodeType: 'RootAggregate' },
+    { model: 'query-model', nodeType: 'ChildAggregate' },
+    { model: 'query-model', nodeType: 'ChildrenAggregate' },
+    { model: 'query-model', nodeType: 'ValueMember' },
+    { model: 'query-model', nodeType: 'Ref' },
+    { model: 'command-model', nodeType: 'RootAggregate' },
+    { model: 'command-model', nodeType: 'ValueMember' },
+    { model: 'command-model', nodeType: 'Ref' },
+    { model: 'enum', nodeType: 'RootAggregate' },
+    { model: 'enum', nodeType: 'StaticEnumValue' },
+    { model: 'value-object', nodeType: 'RootAggregate' },
+    { model: 'value-object', nodeType: 'ValueMember' },
+  ]
 }
