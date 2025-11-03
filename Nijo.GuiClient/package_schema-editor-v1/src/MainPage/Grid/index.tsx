@@ -54,6 +54,9 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
     name: `xmlElementTrees.${rootAggregateIndex}.xmlElements.0`,
   })
 
+  // エラー情報を取得
+  const validation = getValidationResult(rootElement.uniqueId)
+
   // ルート集約のモデルタイプを取得
   const rootModelType = ReactHookForm.useWatch({
     control: control,
@@ -65,6 +68,23 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
     formMethods.setValue(`xmlElementTrees.${rootAggregateIndex}.xmlElements.0.localName`, value)
     trigger()
   })
+
+  // ルート集約に表示する属性のフィルタリング
+  const rootAttributes = Array
+    .from(attributeDefs.values())
+    .filter(attrDef => {
+      // Typeは既に表示しているのでスキップ
+      if (attrDef.attributeName === ATTR_TYPE) return false;
+
+      // rootModelTypeに対応する属性のみをフィルタリング
+      if (!rootModelType || !attrDef.availableModels.includes(rootModelType)) return false;
+
+      return true;
+    })
+    .map(attrDef => ({
+      attrDef,
+      hasError: validation?.[attrDef.attributeName]?.length > 0,
+    }))
 
   // ルート集約の属性の更新
   const handleAttributeChange = useEvent((attributeName: string, value: string) => {
@@ -99,9 +119,6 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
   if (!rootElement) {
     return <div>データが見つかりません</div>
   }
-
-  // エラー情報を取得
-  const validation = getValidationResult(rootElement.uniqueId)
 
   return (
     <MentionCellDataSourceContext.Provider value={schemaDefinitionData}>
@@ -170,27 +187,17 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
             {openDetails && (
               <>
                 {/* その他の属性 */}
-                {Array.from(attributeDefs.values()).map(attrDef => {
-                  // Typeは既に表示しているのでスキップ
-                  if (attrDef.attributeName === ATTR_TYPE) return null;
-
-                  // rootModelTypeに対応する属性のみをフィルタリング
-                  if (!rootModelType || !attrDef.availableModels.includes(rootModelType)) return null;
-
-                  const hasError = validation?.[attrDef.attributeName]?.length > 0
-
-                  return (
-                    <FormLayout.Field key={attrDef.attributeName} label={attrDef.displayName}>
-                      <input
-                        type="text"
-                        value={rootElement.attributes[attrDef.attributeName] || ''}
-                        onChange={e => handleAttributeChange(attrDef.attributeName, e.target.value)}
-                        className={`w-full px-1 py-px border ${hasError ? 'border-amber-500 bg-amber-50' : 'border-gray-300'}`}
-                        placeholder={attrDef.displayName}
-                      />
-                    </FormLayout.Field>
-                  )
-                })}
+                {rootAttributes.map(({ attrDef, hasError }) => (
+                  <FormLayout.Field key={attrDef.attributeName} label={attrDef.displayName}>
+                    <input
+                      type="text"
+                      value={rootElement.attributes[attrDef.attributeName] || ''}
+                      onChange={e => handleAttributeChange(attrDef.attributeName, e.target.value)}
+                      className={`w-full px-1 py-px border ${hasError ? 'border-amber-500 bg-amber-50' : 'border-gray-300'}`}
+                      placeholder={attrDef.displayName}
+                    />
+                  </FormLayout.Field>
+                ))}
               </>
             )}
 
