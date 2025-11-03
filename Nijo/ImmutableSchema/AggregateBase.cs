@@ -303,7 +303,6 @@ namespace Nijo.ImmutableSchema {
         internal RootAggregate(XElement xElement, SchemaParseContext ctx, ISchemaPathNode? previous)
             : base(xElement, ctx, previous) { }
 
-        public bool IsReadOnly => XElement.Attribute(BasicNodeOptions.IsReadOnly.AttributeName) != null;
         public bool IsView => XElement.Attribute(BasicNodeOptions.MapToView.AttributeName) != null;
         public IModel Model => _ctx.TryGetModel(XElement, out var model) ? model : throw new InvalidOperationException("ありえない");
 

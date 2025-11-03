@@ -102,9 +102,17 @@ internal static class BasicNodeOptions {
             複数の集約で同じテーブル名を指定することはできません。
             """,
         IsAvailable = (model, nodeType) => {
-            return model is DataModel;
+            return model is DataModel || model is QueryModel;
         },
         ValidateOthers = ctx => {
+            // QueryModelの場合はビューにマッピングされる場合のみ指定可能
+            if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model) && model is QueryModel) {
+                var root = ctx.SchemaParseContext.GetRootAggregateElement(ctx.XElement);
+                var mapToView = root.Attribute(MapToView!.AttributeName);
+
+                if (mapToView == null) ctx.AddError("ビューにマッピングされない場合は指定できません。");
+            }
+
             // 改行不可
             if (ctx.Value.Contains('\n')) ctx.AddError("改行を含めることはできません。");
         },
@@ -143,31 +151,35 @@ internal static class BasicNodeOptions {
             （カスタマイズ処理でURLとDisplayDataの間のデータのやり取りに使用する想定）
             """,
         IsAvailable = (model, nodeType) => {
-            // コマンドモデルでは使用不可
-            if (model is CommandModel) return false;
-
-            // データモデルの場合
-            if (model is DataModel) {
-                // TODO: 要修正（ValidateOthersのコメントを参照）
-                // 子集約には付与不可
-                if (nodeType == E_NodeType.ChildAggregate) return false;
-                return true;
-            }
-
-            // クエリモデルの場合
-            if (model is QueryModel) {
-                // TODO: 要修正（ValidateOthersのコメントを参照）
-                // 子集約・子配列には付与不可
-                if (nodeType == E_NodeType.ChildAggregate || nodeType == E_NodeType.ChildrenAggregate) return false;
-                return true;
-            }
-
-            return false;
+            return model is DataModel || model is QueryModel;
         },
         ValidateOthers = ctx => {
-            // TODO: element自体の E_NodeType ではなく、
-            // 親が Child , Children かどうかを見て判定する必要がある。
-            // そのため IsAvailable のTODOの判定処理をこちらに移動させる必要あり
+            if (!ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model)) return;
+
+            var owner = ctx.XElement.GetParentWithoutMemo();
+            if (owner == null) return;
+
+            var ownerType = ctx.SchemaParseContext.GetNodeType(owner);
+
+            // データモデルの子集約には付与不可
+            if (model is DataModel && ownerType == E_NodeType.ChildAggregate) {
+                ctx.AddError("データモデルの子集約にはキーを指定できません。");
+            }
+
+            // クエリモデルの子集約には付与不可
+            if (model is QueryModel && ownerType == E_NodeType.ChildAggregate) {
+                ctx.AddError("クエリモデルの子集約にはキーを指定できません。");
+            }
+
+            // クエリモデルの子配列は、ビューにマッピングされない場合は付与不可
+            if (model is QueryModel && ownerType == E_NodeType.ChildrenAggregate) {
+                var root = ctx.SchemaParseContext.GetRootAggregateElement(ctx.XElement);
+                var mapToView = root.Attribute(MapToView!.AttributeName);
+
+                if (mapToView == null) {
+                    ctx.AddError("クエリモデルの子配列で、ビューにマッピングされない場合はキーを指定できません。");
+                }
+            }
         },
     };
 
@@ -180,10 +192,10 @@ internal static class BasicNodeOptions {
             新規登録処理や更新処理での必須入力チェック処理が自動生成されます。
             """,
         IsAvailable = (model, nodeType) => {
-            // TODO: ValueMember か RefTo のみ使用可能
             if (model is DataModel) return true;
             if (model is QueryModel) return true;
             if (model is CommandModel) return true;
+            if (model is StructureModel) return true;
             return false;
         },
         ValidateOthers = ctx => {
@@ -247,21 +259,6 @@ internal static class BasicNodeOptions {
         },
         ValidateOthers = ctx => {
             // IsAvailableで基本的な判定は完了しているため、追加の検証は不要
-        },
-    };
-    // TODO: 廃止予定
-    internal static NodeOption IsReadOnly = new() {
-        AttributeName = "IsReadOnly",
-        DisplayName = "読み取り専用集約",
-        Type = E_NodeOptionType.Boolean,
-        HelpText = $$"""
-            このQueryModelが読み取り専用かどうか
-            """,
-        IsAvailable = (model, nodeType) => {
-            return model is QueryModel;
-        },
-        ValidateOthers = ctx => {
-            // 特に制約なし
         },
     };
     internal static NodeOption HasLifeCycle = new() {

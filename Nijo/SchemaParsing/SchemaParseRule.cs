@@ -71,7 +71,6 @@ public class SchemaParseRule {
             BasicNodeOptions.GenerateDefaultQueryModel,
             BasicNodeOptions.GenerateBatchUpdateCommand,
             BasicNodeOptions.MapToView,
-            BasicNodeOptions.IsReadOnly,
             BasicNodeOptions.Parameter,
             BasicNodeOptions.ReturnValue,
             BasicNodeOptions.RefToObject,
