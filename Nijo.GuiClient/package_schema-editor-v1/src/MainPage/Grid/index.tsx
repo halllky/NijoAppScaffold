@@ -82,7 +82,11 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
   })
 
   // ルート集約の属性を表示・非表示するフラグ。 CommandModel なら初期は表示
-  const [openDetails, setOpenDetails] = React.useState(rootModelType === TYPE_COMMAND_MODEL)
+  const { personalSettings, save } = usePersonalSettings()
+  const openDetails = personalSettings.openDetails ?? (rootModelType === TYPE_COMMAND_MODEL)
+  const toggleOpenDetails = useEvent(() => {
+    save('openDetails', !openDetails)
+  })
 
   const handleClickDelete = useEvent(() => {
     const rootAggregateName = rootElement.localName || 'ルート集約'
@@ -109,7 +113,7 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
           {/* コメント以外の属性の表示・非表示 */}
           <button
             type="button"
-            onClick={() => setOpenDetails(prev => !prev)}
+            onClick={toggleOpenDetails}
             className="p-px flex justify-start items-center gap-1 text-sm cursor-pointer"
           >
             {openDetails

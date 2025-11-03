@@ -6,4 +6,6 @@ export type PersonalSettings = {
   autoGenerateCode?: boolean
   /** ルート集約編集ペインの配置方向 */
   aggPaneOrientation?: 'horizontal' | 'vertical'
+  /** ルート集約の詳細を表示するか */
+  openDetails?: boolean
 }
