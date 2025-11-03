@@ -199,12 +199,15 @@ export const AppSchemaDefinitionGraph = React.forwardRef<AppSchemaDefinitionGrap
             <option value="er">ER図</option>
           </select>
         </div>
-        {displayMode === 'schema' && (
+
+        {/* 不要 */}
+        {/* {displayMode === 'schema' && (
           <label className="flex items-center gap-1">
             <input type="checkbox" checked={onlyRoot} onChange={handleOnlyRootChange} />
             ルート集約のみ表示
           </label>
-        )}
+        )} */}
+
         <div className="flex items-center gap-2">
           <Input.IconButton onClick={handleAutoLayout} outline mini className="bg-white">
             整列
