@@ -78,7 +78,7 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
       if (attrDef.attributeName === ATTR_TYPE) return false;
 
       // rootModelTypeとrootNodeTypeに対応する属性のみをフィルタリング
-      if (!rootModelType || !isAttributeAvailable(attrDef, rootModelType, NODE_TYPE_ROOT_AGGREGATE)) return false;
+      if (!rootModelType || !isAttributeAvailable(attrDef, rootModelType, true)) return false;
 
       return true;
     })
@@ -300,15 +300,13 @@ const GridSection = ({
     // Attributes（Type以外）
     // ルート集約のモデルタイプを取得（最初の行のType属性）
     const rootModelType = fields[0]?.attributes[ATTR_TYPE]
-    // ルート要素のノード種別を判定
-    const rootNodeType = fields[0] && allElementsInTree ? getNodeType(fields[0], allElementsInTree, valueMemberTypes) : undefined
 
     for (const attrDef of Array.from(attributeDefs.values())) {
       // Typeは既に表示しているのでスキップ
       if (attrDef.attributeName === ATTR_TYPE) continue;
 
-      // rootModelTypeとrootNodeTypeに対応する属性のみをフィルタリング
-      if (!rootModelType || !rootNodeType || !isAttributeAvailable(attrDef, rootModelType, rootNodeType)) continue;
+      // rootModelTypeに対応する属性のみをフィルタリング
+      if (!rootModelType || !isAttributeAvailable(attrDef, rootModelType, false)) continue;
 
       // すべての属性を表示する設定の場合か、主要な属性の場合のみ表示
       if (!showLessColumns

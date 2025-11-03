@@ -151,7 +151,10 @@ internal static class BasicNodeOptions {
             （カスタマイズ処理でURLとDisplayDataの間のデータのやり取りに使用する想定）
             """,
         IsAvailable = (model, nodeType) => {
-            return model is DataModel || model is QueryModel;
+            return (model is DataModel
+                 || model is QueryModel)
+                 && (nodeType == E_NodeType.ValueMember
+                  || nodeType == E_NodeType.Ref);
         },
         ValidateOthers = ctx => {
             if (!ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model)) return;
@@ -192,11 +195,12 @@ internal static class BasicNodeOptions {
             新規登録処理や更新処理での必須入力チェック処理が自動生成されます。
             """,
         IsAvailable = (model, nodeType) => {
-            if (model is DataModel) return true;
-            if (model is QueryModel) return true;
-            if (model is CommandModel) return true;
-            if (model is StructureModel) return true;
-            return false;
+            return (model is DataModel
+                 || model is QueryModel
+                 || model is CommandModel
+                 || model is StructureModel)
+                 && (nodeType == E_NodeType.ValueMember
+                  || nodeType == E_NodeType.Ref);
         },
         ValidateOthers = ctx => {
             // 特に制約なし
@@ -428,10 +432,10 @@ internal static class BasicNodeOptions {
             文字列項目の最大長。整数で指定してください。
             """,
         IsAvailable = (model, nodeType) => {
-            if (model is DataModel) return true;
-            if (model is QueryModel) return true;
-            if (model is CommandModel) return true;
-            return false;
+            return (model is DataModel
+                 || model is QueryModel
+                 || model is CommandModel)
+                 && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
             // 整数値のみ許可
@@ -448,10 +452,10 @@ internal static class BasicNodeOptions {
             文字種。半角、半角英数、など
             """,
         IsAvailable = (model, nodeType) => {
-            if (model is DataModel) return true;
-            if (model is QueryModel) return true;
-            if (model is CommandModel) return true;
-            return false;
+            return (model is DataModel
+                 || model is QueryModel
+                 || model is CommandModel)
+                 && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
             // 特に制約なし
@@ -465,10 +469,10 @@ internal static class BasicNodeOptions {
             数値系属性の整数部桁数 + 小数部桁数
             """,
         IsAvailable = (model, nodeType) => {
-            if (model is DataModel) return true;
-            if (model is QueryModel) return true;
-            if (model is CommandModel) return true;
-            return false;
+            return (model is DataModel
+                 || model is QueryModel
+                 || model is CommandModel)
+                 && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
             // 整数値のみ許可
@@ -485,10 +489,10 @@ internal static class BasicNodeOptions {
             数値系属性の小数部桁数
             """,
         IsAvailable = (model, nodeType) => {
-            if (model is DataModel) return true;
-            if (model is QueryModel) return true;
-            if (model is CommandModel) return true;
-            return false;
+            return (model is DataModel
+                 || model is QueryModel
+                 || model is CommandModel)
+                 && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
             // 整数値のみ許可
@@ -505,7 +509,7 @@ internal static class BasicNodeOptions {
             シーケンス物理名
             """,
         IsAvailable = (model, nodeType) => {
-            return model is DataModel;
+            return model is DataModel && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
             // 特に制約なし

@@ -385,19 +385,11 @@ export const EnumDefDialog: React.FC<EnumDefDialogProps> = ({
   const getStaticEnumColumnDefs: Layout.GetColumnDefsFunction<EnumGridRow> = React.useCallback(cellType => {
 
     // 利用可能な属性（ルート要素に指定可能なもの + 子要素に指定可能なもの）
-    const staticEnumAttributeDefs = new Map<XmlElementAttributeName, XmlElementAttribute>()
-    const rootAvailable = attributeDefs.filter(attr => attr.attributeName !== ATTR_TYPE && isAttributeAvailable(attr, TYPE_STATIC_ENUM_MODEL, NODE_TYPE_ROOT_AGGREGATE))
-    const childAvailable = attributeDefs.filter(attr => attr.attributeName !== ATTR_TYPE && isAttributeAvailable(attr, TYPE_STATIC_ENUM_MODEL, NODE_TYPE_STATIC_ENUM_VALUE))
-    for (const attr of rootAvailable) {
-      staticEnumAttributeDefs.set(attr.attributeName, attr)
-    }
-    for (const attr of childAvailable) {
-      staticEnumAttributeDefs.set(attr.attributeName, attr)
-    }
+    const staticEnumAttributeDefs = attributeDefs.filter(attr => attr.attributeName !== ATTR_TYPE && isAttributeAvailable(attr, TYPE_STATIC_ENUM_MODEL, false))
 
     const columns: Layout.EditableGridColumnDef<EnumGridRow>[] = []
     columns.push(createLocalNameColumn(cellType, getValidationResult))
-    for (const attrDef of staticEnumAttributeDefs.values()) {
+    for (const attrDef of staticEnumAttributeDefs) {
       const column = createAttributeColumn(attrDef, cellType, getValidationResult)
       if (attrDef.attributeName !== ATTR_DISPLAY_NAME) {
         column.isReadOnly = (row) => row.indent === 0
@@ -410,19 +402,11 @@ export const EnumDefDialog: React.FC<EnumDefDialogProps> = ({
   const getValueObjectColumnDefs: Layout.GetColumnDefsFunction<EnumGridRow> = React.useCallback(cellType => {
 
     // 利用可能な属性（ルート要素に指定可能なもの + 子要素に指定可能なもの）
-    const valueObjectAttributeDefs = new Map<XmlElementAttributeName, XmlElementAttribute>()
-    const rootAvailable = attributeDefs.filter(attr => attr.attributeName !== ATTR_TYPE && isAttributeAvailable(attr, TYPE_VALUE_OBJECT_MODEL, NODE_TYPE_ROOT_AGGREGATE))
-    const childAvailable = attributeDefs.filter(attr => attr.attributeName !== ATTR_TYPE && isAttributeAvailable(attr, TYPE_VALUE_OBJECT_MODEL, NODE_TYPE_VALUE_MEMBER))
-    for (const attr of rootAvailable) {
-      valueObjectAttributeDefs.set(attr.attributeName, attr)
-    }
-    for (const attr of childAvailable) {
-      valueObjectAttributeDefs.set(attr.attributeName, attr)
-    }
+    const valueObjectAttributeDefs = attributeDefs.filter(attr => attr.attributeName !== ATTR_TYPE && isAttributeAvailable(attr, TYPE_VALUE_OBJECT_MODEL, false))
 
     const columns: Layout.EditableGridColumnDef<EnumGridRow>[] = []
     columns.push(createLocalNameColumn(cellType, getValidationResult))
-    for (const attrDef of valueObjectAttributeDefs.values()) {
+    for (const attrDef of valueObjectAttributeDefs) {
       columns.push(createAttributeColumn(attrDef, cellType, getValidationResult))
     }
     return columns

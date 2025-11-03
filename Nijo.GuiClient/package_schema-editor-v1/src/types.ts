@@ -211,9 +211,9 @@ export const getNodeType = (element: XmlElementItem, allElements: XmlElementItem
 /**
  * 指定された属性が、指定されたモデル種別・ノード種別の組み合わせで利用可能かを判定する。
  */
-export const isAttributeAvailable = (attr: XmlElementAttribute, modelType: string, nodeType: string): boolean => {
+export const isAttributeAvailable = (attr: XmlElementAttribute, modelType: string, onlyRoot: boolean): boolean => {
   if (!modelType) return false
-  return attr.availableElements.some(ae => ae.model === modelType && ae.nodeType === nodeType)
+  return attr.availableElements.some(ae => ae.model === modelType && (!onlyRoot || ae.nodeType === NODE_TYPE_ROOT_AGGREGATE))
 }
 
 // ---------------------------------
