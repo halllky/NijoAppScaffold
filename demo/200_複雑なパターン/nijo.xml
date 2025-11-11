@@ -642,6 +642,10 @@
     <患者単価
       Type="int"
       UniqueId="d8007572-69a6-4902-b155-7127a9c4d8e5" />
+    <増益のみ抽出
+      OnlySearchCondition="True"
+      Type="bool"
+      UniqueId="4532069b-b6e8-447e-9474-c9f455f8c7f3" />
     <PL
       Type="-"
       UniqueId="36d46a36-9a8f-4e44-bf46-b9d7c9df424e">

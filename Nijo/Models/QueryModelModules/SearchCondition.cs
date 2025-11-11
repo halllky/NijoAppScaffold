@@ -163,7 +163,7 @@ namespace Nijo.Models.QueryModelModules {
 
                 static IEnumerable<SortableMember> EnumerateRecursively(AggregateBase aggregate) {
                     foreach (var member in aggregate.GetMembers()) {
-                        if (member is ValueMember vm) {
+                        if (member is ValueMember vm && !vm.OnlySearchCondition) {
                             yield return new SortableMember(vm);
 
                         } else if (member is ChildrenAggregate) {
