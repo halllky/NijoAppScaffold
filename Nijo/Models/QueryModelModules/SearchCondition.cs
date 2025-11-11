@@ -278,7 +278,7 @@ namespace Nijo.Models.QueryModelModules {
             /// </summary>
             internal IEnumerable<IFilterMember> GetOwnMembers() {
                 foreach (var member in _aggregate.GetMembers()) {
-                    if (member is ValueMember vm && vm.Type.SearchBehavior != null) {
+                    if (member is ValueMember vm && (vm.Type.SearchBehavior != null || vm.OnlySearchCondition)) {
                         yield return new FilterValueMember(vm);
 
                     } else if (member is RefToMember refTo) {
@@ -409,25 +409,35 @@ namespace Nijo.Models.QueryModelModules {
         /// </summary>
         internal class FilterValueMember : IFilterMember, IInstanceValuePropertyMetadata {
             internal FilterValueMember(ValueMember member) {
-                if (member.Type.SearchBehavior == null) throw new ArgumentException();
+                if (member.Type.SearchBehavior == null && !member.OnlySearchCondition) throw new ArgumentException();
                 Member = member;
             }
 
             internal ValueMember Member { get; }
             public string DisplayName => Member.DisplayName;
-            internal ValueMemberSearchBehavior SearchBehavior => Member.Type.SearchBehavior!;
+            internal ValueMemberSearchBehavior? SearchBehavior => Member.Type.SearchBehavior;
 
             string IFilterMember.RenderCSharpDeclaring() {
+                var typeName = Member.OnlySearchCondition
+                    ? Member.Type.CsDomainTypeName
+                    : Member.Type.SearchBehavior?.FilterCsTypeName;
                 return $$"""
-                    public {{Member.Type.SearchBehavior?.FilterCsTypeName}}? {{Member.PhysicalName}} { get; set; }
+                    public {{typeName}}? {{Member.PhysicalName}} { get; set; }
                     """;
             }
             string IFilterMember.RenderTypeScriptDeclaring() {
+                var typeName = Member.OnlySearchCondition
+                    ? Member.Type.TsTypeName
+                    : Member.Type.SearchBehavior?.FilterTsTypeName;
                 return $$"""
-                    {{Member.PhysicalName}}?: {{Member.Type.SearchBehavior?.FilterTsTypeName}}
+                    {{Member.PhysicalName}}?: {{typeName}}
                     """;
             }
-            string IFilterMember.RenderTsNewObjectFunctionValue() => Member.Type.SearchBehavior!.RenderTsNewObjectFunctionValue();
+            string IFilterMember.RenderTsNewObjectFunctionValue() {
+                return Member.OnlySearchCondition
+                    ? "undefined"
+                    : SearchBehavior!.RenderTsNewObjectFunctionValue();
+            }
 
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => Member.PhysicalName;

@@ -62,6 +62,8 @@ namespace Nijo.ImmutableSchema {
         public int? DecimalPlace => int.TryParse(XElement.Attribute(BasicNodeOptions.DecimalPlace.AttributeName)?.Value, out var v) ? v : null;
         /// <summary>シーケンス物理名</summary>
         public string? SequenceName => XElement.Attribute(BasicNodeOptions.SequenceName.AttributeName)?.Value;
+        /// <summary>検索条件にのみレンダリングされるか否か</summary>
+        public bool OnlySearchCondition => XElement.Attribute(BasicNodeOptions.OnlySearchCondition.AttributeName) != null;
         #endregion メンバー毎に定義される制約
 
         #region 等価比較

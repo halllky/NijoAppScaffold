@@ -196,7 +196,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
 
         internal IEnumerable<IEditablePresentationObjectMemberInValues> GetMembers() {
             foreach (var member in _owner.Aggregate.GetMembers()) {
-                if (member is ValueMember vm) {
+                if (member is ValueMember vm && !vm.OnlySearchCondition) {
                     yield return new EditablePresentationObjectValueMember(vm);
 
                 } else if (member is RefToMember refTo) {

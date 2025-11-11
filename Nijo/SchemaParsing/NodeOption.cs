@@ -279,6 +279,23 @@ internal static class BasicNodeOptions {
             // 特に制約なし
         },
     };
+    internal static NodeOption OnlySearchCondition = new() {
+        AttributeName = "OnlySearchCondition",
+        DisplayName = "検索条件のみに生成",
+        Type = E_NodeOptionType.Boolean,
+        HelpText = $$"""
+            この属性を検索条件にのみレンダリングし、検索結果にはレンダリングしません。
+            検索条件のみに生成される属性は処理の挙動の指示にのみ使われる想定です。
+            例: 「退職後1年以上経過している人のみ抽出」のような、検索条件の絞り込みにのみ必要な属性。
+            """,
+        IsAvailable = (model, nodeType) => {
+            // QueryModelのValueMemberのみ許可
+            return model is QueryModel && nodeType == E_NodeType.ValueMember;
+        },
+        ValidateOthers = ctx => {
+            // IsAvailableで基本的な判定は完了しているため、追加の検証は不要
+        },
+    };
     #endregion QueryModel用
 
 
