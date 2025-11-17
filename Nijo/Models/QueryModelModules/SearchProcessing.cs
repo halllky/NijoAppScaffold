@@ -321,11 +321,15 @@ namespace Nijo.Models.QueryModelModules {
                 var query = queryVarMemberes.GetValueOrDefault(prop.Metadata.SchemaPathNode.ToMappingKey());
 
                 if (query == null) {
+                    var message = prop.Metadata is SearchCondition.FilterValueMember fvm && fvm.Member.OnlySearchCondition
+                        ? "このメンバーの絞り込み処理は自動生成されません。クエリ定義メソッド内で実装してください。"
+                        : "このメンバーの検索条件は無視されます。";
+
                     // SearchConditionと対応するSearchResultのメンバーが無い場合
                     // （このメンバーが参照先のChildrenの場合）
                     return $$"""
                         // 絞り込み: {{prop.Metadata.DisplayName}}
-                        // このメンバーの検索条件は無視されます。
+                        // {{message}}
 
                         """;
 

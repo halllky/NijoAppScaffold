@@ -138,6 +138,9 @@ namespace Nijo.Models.QueryModelModules {
 
                 foreach (var member in aggregate.GetMembers()) {
                     if (member is ValueMember vm) {
+                        // 検索条件にのみ定義されるメンバーは除外
+                        if (vm.OnlySearchCondition) continue;
+
                         // 参照先の直接のキーメンバーの場合のみrefToMemberを渡す
                         // （参照先の子要素やRefToMemberのキーは、外部キーではなく単なる属性として展開されるだけ）
                         var refToForThisMember = (refToMember != null && vm.IsKey && vm.Owner == refToMember.RefTo) ? refToMember : null;

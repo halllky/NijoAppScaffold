@@ -125,7 +125,7 @@ namespace Nijo.Models.QueryModelModules {
                     yield return new RefDisplayDataParentMember(parent);
                 }
                 foreach (var member in Aggregate.GetMembers()) {
-                    if (member is ValueMember vm) {
+                    if (member is ValueMember vm && !vm.OnlySearchCondition) {
                         yield return new RefDisplayDataValueMember(vm);
 
                     } else if (member is RefToMember refTo && Aggregate.PreviousNode != (ISchemaPathNode)refTo) {

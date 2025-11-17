@@ -88,10 +88,36 @@ partial class OverridedApplicationService {
     }
 
     protected override IQueryable<診療収益分析SearchResult> CreateQuerySource(診療収益分析SearchCondition searchCondition, IPresentationContext<診療収益分析SearchConditionMessages> context) {
-        return DbContext.Set<診療収益分析SearchResult>()
+        IQueryable<診療収益分析SearchResult> query = DbContext
+            .Set<診療収益分析SearchResult>()
             .Include(e => e.機器分類別収益)
             .ThenInclude(e => e.機器別収益)
             .Include(e => e.時間帯別収益);
+
+        // 検索条件にのみ存在するフラグなどによるフィルタリングはここで実装します。
+        if (searchCondition.Filter.増益のみ抽出 == true) {
+
+            // 例:「増益のみ抽出」
+            // 年月が自身の年月のマイナス1であるレコードと自己結合し、
+            // そのうち前の月の同じ診療科の収益と比較して増益しているもののみ抽出
+            var prevMonthData = DbContext
+                .Set<診療収益分析SearchResult>()
+                .Select(x => new {
+                    x.診療科_診療科ID,
+                    NextMonth = x.年月 / 100 == 12 ? (x.年月 / 100 + 1) * 100 + 1 : x.年月 + 1,
+                    x.診療収益合計
+                });
+            query = query
+                .Join(
+                    prevMonthData,
+                    current => new { current.診療科_診療科ID, current.年月 },
+                    prev => new { prev.診療科_診療科ID, 年月 = prev.NextMonth },
+                    (current, prev) => new { current, prev })
+                .Where(joined => joined.current.診療収益合計 > joined.prev.診療収益合計)
+                .Select(joined => joined.current);
+        }
+
+        return query;
     }
 
     protected override IQueryable<医療従事者マスタSearchResult> CreateQuerySource(医療従事者マスタSearchCondition searchCondition, IPresentationContext<医療従事者マスタSearchConditionMessages> context) {
