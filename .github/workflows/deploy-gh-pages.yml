@@ -35,7 +35,7 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: 'Document/package-lock.json'
+          cache-dependency-path: '/package-lock.json'
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -45,7 +45,7 @@ jobs:
         working-directory: Document
       
       - name: Build with VitePress
-        run: npm run docs:build
+        run: npm run build
         working-directory: Document
       
       - name: Upload artifact
