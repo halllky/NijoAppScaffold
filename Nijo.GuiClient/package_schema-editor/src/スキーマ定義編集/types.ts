@@ -246,9 +246,9 @@ export const asTree = <TFlatItem extends { indent: number }>(flat: TFlatItem[]) 
 export type DebugProcessState = {
   /** サーバー側で発生した何らかのエラー */
   errorSummary?: string
-  /** 現在実行中のNijoApplicationBuilderのNode.jsのデバッグプロセスと推測されるPID */
+  /** 現在実行中のNijoAppScaffoldのNode.jsのデバッグプロセスと推測されるPID */
   estimatedPidOfNodeJs?: number
-  /** 現在実行中のNijoApplicationBuilderのASP.NET Coreのデバッグプロセスと推測されるPID */
+  /** 現在実行中のNijoAppScaffoldのASP.NET Coreのデバッグプロセスと推測されるPID */
   estimatedPidOfAspNetCore?: number
   /** Node.jsのプロセス名 */
   nodeJsProcessName?: string

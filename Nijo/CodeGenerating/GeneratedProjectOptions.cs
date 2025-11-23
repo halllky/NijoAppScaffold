@@ -19,7 +19,7 @@ namespace Nijo.CodeGenerating {
     /// </summary>
     public class GeneratedProjectOptions {
 
-        internal const string ROOT_ELEMENT_NAME = "NijoApplicationBuilder";
+        internal const string ROOT_ELEMENT_NAME = "NijoAppScaffold";
 
         /// <summary>
         /// デフォルト値を取得するためのコンストラクタ

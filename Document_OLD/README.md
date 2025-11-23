@@ -1,4 +1,4 @@
-# Nijo Application Builder Documentation
+# Nijo App Scaffold Documentation
 
 VitePressを使用して構築されたドキュメントサイトです。
 
@@ -79,7 +79,7 @@ GitHub Actionsを使用せずに手動でデプロイする場合：
 
 ## 🎯 重要な設定
 
-- **base**: `/NijoApplicationBuilder/` - GitHubリポジトリ名
+- **base**: `/NijoAppScaffold/` - GitHubリポジトリ名
 - **outDir**: `../../../docs` - GitHub Pages の出力先
 - **cleanUrls**: `true` - 拡張子なしのURLを有効化
 

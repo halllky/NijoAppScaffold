@@ -59,7 +59,7 @@ export const ProjectSelector = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 p-8">
       <div className="max-w-2xl flex flex-col items-center gap-4 p-8 bg-white rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold">Nijo Application Builder</h1>
+        <h1 className="text-2xl font-bold">Nijo App Scaffold</h1>
 
         <p className="text-gray-600">
           nijo.xmlファイルが含まれるプロジェクトフォルダのパスを入力してください

@@ -5,7 +5,7 @@ import { callAspNetCoreApiAsync } from './callAspNetCoreApiAsync'
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div>
     <img src="${myAppLogo}" class="logo" alt="MyApp logo" />
-    <h1>Nijo Application Builder Minimum Template (Vite + TypeScript)</h1>
+    <h1>Nijo App Scaffold Minimum Template (Vite + TypeScript)</h1>
     <div class="card">
       <button id="api-button" type="button">ASP.NET Core API 呼び出し</button>
       <div id="api-response" style="white-space: pre-wrap; text-align: left;"></div>

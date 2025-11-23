@@ -67,7 +67,7 @@ export const ProjectSelector = () => {
       <div className="max-w-2xl flex flex-col items-center gap-4 p-8 bg-white rounded-lg shadow-md relative">
 
         <div className="flex items-center justify-center w-full">
-          <h1 className="text-2xl font-bold">Nijo Application Builder</h1>
+          <h1 className="text-2xl font-bold">Nijo App Scaffold</h1>
 
           {/* 個人設定ボタン */}
           <Input.IconButton

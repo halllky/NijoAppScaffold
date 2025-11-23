@@ -1,4 +1,4 @@
-# Nijo Application Builder デモプロジェクト
+# Nijo App Scaffold デモプロジェクト
 
 ## 番号
 

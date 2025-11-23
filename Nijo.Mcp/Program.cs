@@ -33,7 +33,7 @@ await host.RunAsync();
 
 namespace Nijo.Mcp {
     /// <summary>
-    /// AIエージェントがNijoApplicationBuilderを用いたアプリケーションのデバッグや開発を遂行しやすくするための補助ツール。
+    /// AIエージェントがNijoAppScaffoldを用いたアプリケーションのデバッグや開発を遂行しやすくするための補助ツール。
     /// Model Context Protocol を使用している。
     ///
     /// エラーハンドリング: 処理中にで例外が送出された場合、戻り値のstringにその詳細含めすべて返す。

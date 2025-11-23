@@ -3,11 +3,11 @@ import { withMermaid } from 'vitepress-plugin-mermaid'
 
 // https://vitepress.dev/reference/site-config
 export default withMermaid({
-  title: "Nijo Application Builder",
+  title: "Nijo App Scaffold",
   description: "スキーマ駆動型アプリケーション生成フレームワーク",
 
   // GitHub Pages用の設定
-  base: '/NijoApplicationBuilder/',
+  base: '/NijoAppScaffold/',
   outDir: '../../docs',
 
   // 静的ファイルの設定
@@ -66,7 +66,7 @@ export default withMermaid({
     ],
 
     footer: {
-      copyright: 'Copyright © 2025 Nijo Application Builder'
+      copyright: 'Copyright © 2025 Nijo App Scaffold'
     },
 
     search: {

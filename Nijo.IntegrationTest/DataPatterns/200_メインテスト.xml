@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<NijoApplicationBuilder RootNamespace="MyApp.Core">
+<NijoAppScaffold RootNamespace="MyApp.Core">
 
   <!-- GDQM かつ GenerateBatchUpdateCommand のデータモデル -->
   <商品マスタ Type="data-model" GenerateDefaultQueryModel="True" GenerateBatchUpdateCommand="True" LatinName="Product Master">
@@ -374,4 +374,4 @@
     <再診 DisplayName="再診（さいしん）" key="2" />
     <検査 DisplayName="検査（けんさ）" key="3" />
   </reservation_type>
-</NijoApplicationBuilder>
+</NijoAppScaffold>

@@ -24,7 +24,7 @@ public class WorkDirectory : IDisposable {
             "..", // Debug
             "..", // bin
             "..", // Nijo.Mpc
-            "..", // NijoApplicationBuilder
+            "..", // NijoAppScaffold
             "Nijo.Mpc.WorkDirectory"));
         if (!Directory.Exists(directoryPath)) Directory.CreateDirectory(directoryPath);
 

@@ -1,6 +1,6 @@
-# Nijo Application Builder - New Project Template
+# Nijo App Scaffold - New Project Template
 
-これは Nijo Application Builder を用いて作成される新しいプロジェクトのテンプレートです。
+これは Nijo App Scaffold を用いて作成される新しいプロジェクトのテンプレートです。
 このテンプレートには、独立してデバッグ可能な必要最低限の構成のみが含まれ、アプリケーションのユーザーの目線で必要な機能や、開発生産性を上げるためのツールなどは含まれていません。
 
 ## 動作環境

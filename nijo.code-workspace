@@ -10,7 +10,7 @@
   },
   "folders": [
     {
-      "name": "NijoApplicationBuilder",
+      "name": "NijoAppScaffold",
       "path": "."
     }
   ],
@@ -47,7 +47,7 @@
         "type": "shell",
         "problemMatcher": [],
         "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}"
+          "cwd": "${workspaceFolder:NijoAppScaffold}"
         },
         "windows": {
           "command": ".\\Task\\NijoServeデバッグ.bat"
@@ -65,7 +65,7 @@
           "${input:releaseType}" // GitHub配置用のzipまで作成するなら1を指定
         ],
         "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}"
+          "cwd": "${workspaceFolder:NijoAppScaffold}"
         },
         "windows": {
           "command": ".\\Task\\Nijoリリース.bat"
@@ -79,7 +79,7 @@
         "type": "shell",
         "problemMatcher": [],
         "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Document"
+          "cwd": "${workspaceFolder:NijoAppScaffold}/Document"
         },
         "windows": {
           "command": ".\\task\\DEBUG.bat"
@@ -93,7 +93,7 @@
         "type": "shell",
         "problemMatcher": [],
         "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Document"
+          "cwd": "${workspaceFolder:NijoAppScaffold}/Document"
         },
         "windows": {
           "command": ".\\task\\RELEASE.bat"
@@ -110,7 +110,7 @@
           "$tsc-watch"
         ],
         "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Nijo.GuiClient/package_ui-components-debug"
+          "cwd": "${workspaceFolder:NijoAppScaffold}/Nijo.GuiClient/package_ui-components-debug"
         }
       },
       {
@@ -118,7 +118,7 @@
         "detail": "テンプレとデモの自動生成をかけなおし、テンプレの一部ソースを各デモにコピーする",
         "type": "shell",
         "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}"
+          "cwd": "${workspaceFolder:NijoAppScaffold}"
         },
         "problemMatcher": [],
         "windows": {
@@ -133,7 +133,7 @@
         "detail": "特定のデモのソースコード再生成をかけなおしてデバッグ開始",
         "type": "shell",
         "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/demo"
+          "cwd": "${workspaceFolder:NijoAppScaffold}/demo"
         },
         "problemMatcher": [],
         "windows": {
@@ -148,11 +148,11 @@
         "detail": "デモのnijo.xmlを編集する。「Nijo > リリース」で発行したときのものが使われる",
         "type": "shell",
         "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Nijo/bin/Release/net9.0"
+          "cwd": "${workspaceFolder:NijoAppScaffold}/Nijo/bin/Release/net9.0"
         },
         "args": [
           "serve",
-          "${workspaceFolder:NijoApplicationBuilder}/demo/${input:demoFolder}"
+          "${workspaceFolder:NijoAppScaffold}/demo/${input:demoFolder}"
         ],
         "problemMatcher": [],
         "windows": {
@@ -167,7 +167,7 @@
         "detail": "特定のデモのマイグレーションSQLを作成",
         "type": "shell",
         "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/demo"
+          "cwd": "${workspaceFolder:NijoAppScaffold}/demo"
         },
         "problemMatcher": [],
         "windows": {
@@ -182,10 +182,10 @@
         "detail": "比較ツールでの目検に用いるため、自動生成されたソースを一時フォルダにコピー",
         "type": "shell",
         "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}"
+          "cwd": "${workspaceFolder:NijoAppScaffold}"
         },
         "args": [
-          "${workspaceFolder:NijoApplicationBuilder}/demo/${input:demoFolder}",
+          "${workspaceFolder:NijoAppScaffold}/demo/${input:demoFolder}",
           "${input:tempDirectoryName}"
         ],
         "problemMatcher": [],

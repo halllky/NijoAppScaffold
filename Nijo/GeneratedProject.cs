@@ -31,7 +31,7 @@ namespace Nijo {
         private const string NEW_PROJECT_TEMPLATE_ZIP_NAME = "Nijo.NewProjectTemplate.zip";
 
         /// <summary>
-        /// 新しいNijoApplicationBuilderプロジェクトを作成します。
+        /// 新しいNijoAppScaffoldプロジェクトを作成します。
         /// </summary>
         /// <param name="projectRoot">プロジェクトのルートディレクトリの絶対パス。</param>
         /// <param name="project">作成されたプロジェクト。</param>
@@ -107,7 +107,7 @@ namespace Nijo {
         }
 
         /// <summary>
-        /// 既存のNijoApplicationBuilderプロジェクトを開きます。
+        /// 既存のNijoAppScaffoldプロジェクトを開きます。
         /// </summary>
         /// <param name="projectRoot">プロジェクトのルートディレクトリの絶対パス。</param>
         /// <param name="project">開いたプロジェクト。</param>

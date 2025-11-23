@@ -230,7 +230,7 @@ internal class DebugTools {
     }
 
     /// <summary>
-    /// 現在実行中の NijoApplicationBuilder のデバッグ状態を、httpポート番号を基準に調べる。
+    /// 現在実行中の NijoAppScaffold のデバッグ状態を、httpポート番号を基準に調べる。
     /// </summary>
     private static async Task<DebugProcessState> CheckDebugState() {
         var consoleOutputBuilder = new StringBuilder();
@@ -363,7 +363,7 @@ internal class DebugTools {
 }
 
 /// <summary>
-/// 現在実行中のNijoApplicationBuilderのデバッグプロセスの状態。
+/// 現在実行中のNijoAppScaffoldのデバッグプロセスの状態。
 /// このクラスのデータ構造はTypeScript側と合わせる必要あり
 /// </summary>
 public class DebugProcessState {
@@ -373,12 +373,12 @@ public class DebugProcessState {
     [JsonPropertyName("errorSummary")]
     public string? ErrorSummary { get; set; }
     /// <summary>
-    /// 現在実行中のNijoApplicationBuilderのNode.jsのデバッグプロセスと推測されるPID
+    /// 現在実行中のNijoAppScaffoldのNode.jsのデバッグプロセスと推測されるPID
     /// </summary>
     [JsonPropertyName("estimatedPidOfNodeJs")]
     public int? EstimatedPidOfNodeJs { get; set; }
     /// <summary>
-    /// 現在実行中のNijoApplicationBuilderのASP.NET Coreのデバッグプロセスと推測されるPID
+    /// 現在実行中のNijoAppScaffoldのASP.NET Coreのデバッグプロセスと推測されるPID
     /// </summary>
     [JsonPropertyName("estimatedPidOfAspNetCore")]
     public int? EstimatedPidOfAspNetCore { get; set; }

@@ -1,10 +1,10 @@
-# Nijo Application Builder 【開発中 under development】
+# Nijo App Scaffold 【開発中 under development】
 概念データモデルから一般的なエンタープライズ系業務アプリケーションのひな形を自動生成するツール。
 
 ---
 目次 Table of contents
 
-- [Nijo Application Builder 【開発中 under development】](#nijo-application-builder-開発中-under-development)
+- [Nijo App Scaffold 【開発中 under development】](#nijo-app-scaffold-開発中-under-development)
   - [お試し Getting Started](#お試し-getting-started)
   - [概要図 Overview, Usage](#概要図-overview-usage)
     - [1. 概念データモデルを定義する](#1-概念データモデルを定義する)
