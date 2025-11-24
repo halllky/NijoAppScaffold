@@ -30,8 +30,8 @@ const config: Config = {
   // useful metadata like html lang. For example, if your site is Chinese, you
   // may want to replace "en" with "zh-Hans".
   i18n: {
-    defaultLocale: 'en',
-    locales: ['en'],
+    defaultLocale: 'ja',
+    locales: ['ja'],
   },
 
   // フォントに Noto Sans JP を使用
@@ -99,9 +99,9 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'My Site',
+      title: 'Nijo App Scaffold',
       logo: {
-        alt: 'My Site Logo',
+        alt: 'Nijo App Scaffold Logo',
         src: 'img/logo.svg',
       },
       items: [
