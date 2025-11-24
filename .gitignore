@@ -19,7 +19,7 @@ appsettings.Development.json
 # GitHub Pages
 # docs フォルダーはGitHub Actionsが自動生成するため、通常はコミットしない
 # 手動でビルドする場合は、この行をコメントアウトしてdocsフォルダーをコミットする
-docs/
+/docs/
 
 # globs
 Makefile.in
