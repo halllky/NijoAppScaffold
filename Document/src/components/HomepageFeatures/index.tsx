@@ -22,11 +22,11 @@ const FeatureList: FeatureItem[] = [
     ),
   },
   {
-    title: '集約指向モデリング',
+    title: 'スキーマ駆動モデリング',
     // Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
     description: (
       <>
-        「集約(Aggregate)」という単位でデータを捉え、整合性を保証。
+        「モデル(Model)」という単位でデータを捉え、整合性を保証。
         データモデル、クエリモデル、コマンドモデルを定義し、
         堅牢なアプリケーションの土台を構築します。
       </>

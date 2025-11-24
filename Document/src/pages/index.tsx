@@ -18,7 +18,7 @@ function HomepageHeader() {
         </Heading>
         <p className="hero__subtitle">
           複雑な業務を、目に見える形に。<br />
-          集約指向アプリケーション生成フレームワーク
+          スキーマ駆動アプリケーション生成フレームワーク
         </p>
         <div className={styles.buttons}>
           <Link
@@ -36,7 +36,7 @@ export default function Home(): ReactNode {
   const { siteConfig } = useDocusaurusContext();
   return (
     <Layout
-      title={`${siteConfig.title} | 集約指向アプリケーション生成フレームワーク`}
+      title={`${siteConfig.title} | スキーマ駆動アプリケーション生成フレームワーク`}
       description="Nijoは、複雑な業務フローを持つエンタープライズアプリケーションを効率的に開発するための、フルスタック・コード生成フレームワークです。">
       <HomepageHeader />
       <main>
