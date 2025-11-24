@@ -11,13 +11,13 @@ type FeatureItem = {
 
 const FeatureList: FeatureItem[] = [
   {
-    title: '可視化による合意形成',
+    title: '可視化による設計の共有',
     // Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
     description: (
       <>
         専用GUIエディタでデータ構造をグラフ化。
-        エンジニアだけでなく、ドメインエキスパートやPMも交えて、
-        システムの挙動を視覚的に共有・合意できます。
+        複雑なリレーションを可視化することで、
+        エンジニア間での仕様確認や認識合わせをスムーズに行えます。
       </>
     ),
   },
