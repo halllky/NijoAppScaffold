@@ -58,7 +58,7 @@ namespace Nijo.CodeGenerating {
                     """.ReplaceLineEndings(newLine));
             }
 
-            foreach (var line in Contents.Split(Environment.NewLine)) {
+            foreach (var line in Contents.Split(["\r\n", "\n"], StringSplitOptions.None)) {
                 if (line.Contains(SKIP_MARKER)) continue;
                 sw.WriteLine(line);
             }
