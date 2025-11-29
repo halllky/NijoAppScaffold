@@ -34,6 +34,11 @@ const config: Config = {
     locales: ['ja'],
   },
 
+  markdown: {
+    mermaid: true,
+  },
+  themes: ['@docusaurus/theme-mermaid'],
+
   // フォントに Noto Sans JP を使用
   headTags: [
     {
