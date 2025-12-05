@@ -182,8 +182,10 @@ namespace Nijo.ImmutableSchema {
             var ancesotors = XElement
                 .AncestorsAndSelf()
                 .Reverse()
-                // ドキュメントルートも祖先に含まれてしまうので除外
-                .Where(el => el != XElement.Document?.Root);
+                // * ドキュメントルートも祖先に含まれてしまうので除外
+                // * メモ型はカウントしない
+                .Where(el => el != XElement.Document?.Root
+                          && el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value != SchemaParseContext.NODE_TYPE_MEMO);
 
             var prev = (AggregateBase?)null;
 

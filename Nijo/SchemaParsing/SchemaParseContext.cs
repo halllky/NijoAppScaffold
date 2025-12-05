@@ -601,9 +601,12 @@ public class SchemaParseContext {
         // モデルの種類に基づく参照制約チェック
         if (TryGetModel(refElement, out var model)) {
             if (model is DataModel) {
-                // データモデルからはデータモデルの集約しか参照できない
-                if (TryGetModel(refTo, out var refToModel) && !(refToModel is DataModel)) {
-                    errorMessage = "データモデルの集約からはデータモデルの集約しか参照できません。";
+                // データモデルからはデータモデルの集約、
+                // またはビューにマッピングされるクエリモデルしか参照できない
+                if (TryGetModel(refTo, out var refToModel)
+                    && refToModel is not DataModel
+                    && (refToModel is not QueryModel || refToRoot.Attribute(BasicNodeOptions.MapToView.AttributeName) == null)) {
+                    errorMessage = "データモデルの集約からはデータモデルの集約またはビューにマッピングされるクエリモデルしか参照できません。";
                     return false;
                 }
             } else if (model is QueryModel) {

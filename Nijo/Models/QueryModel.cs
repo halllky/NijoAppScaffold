@@ -323,6 +323,17 @@ namespace Nijo.Models {
             aggregateFile.AddAppSrvMethod(SearchProcessingRefs.RenderAppSrvMethodRecursively(rootAggregate, ctx), "参照検索処理");
             aggregateFile.AddWebapiControllerAction(SearchProcessingRefs.RenderAspNetCoreControllerActionRecursively(rootAggregate, ctx));
 
+            // データ型: ほかの集約から参照されるときのキー
+            if (rootAggregate.IsView) {
+                aggregateFile.AddCSharpClass(DataModelModules.KeyClass.KeyClassEntry.RenderClassDeclaringRecursively(rootAggregate, ctx), "Class_KeyClass");
+            }
+
+            // 処理: ダミーデータ作成関数
+            // ※ ほかの集約から参照されている場合、このビューへの参照を解決するために必要
+            if (rootAggregate.IsView) {
+                ctx.Use<DataModelModules.DummyDataGenerator>().Add(rootAggregate);
+            }
+
             // UI用モジュール
             // - DisplayData等のマッピングオブジェクト
             // - React Router のURL定義

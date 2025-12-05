@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MyApp.Debugging;
 
 namespace MyApp.WebApi;
@@ -48,5 +49,28 @@ public class ExampleContoller : ControllerBase {
         await generator.GenerateAsync(descriptor);
 
         return Ok();
+    }
+
+    /// <summary>
+    /// テーブルやビューを組み合わせたLINQ式のSQL発行確認
+    /// </summary>
+    [HttpGet("test-efcore")]
+    public async Task<IActionResult> TestEfCore() {
+        try {
+            var data = await _app.DbContext.社員DbSet
+                .Include(x => x.所属部署)
+                .ThenInclude(x => x!.事業所)
+                .Select(x => new {
+                    ID = x.社員ID,
+                    氏名 = x.氏名,
+                    部署 = x.所属部署 == null ? null : x.所属部署.部署名,
+                    事業所 = x.所属部署 != null && x.所属部署.事業所 != null ? x.所属部署.事業所.事業所名 : null,
+                })
+                .ToArrayAsync();
+
+            return Ok(data);
+        } catch (Exception ex) {
+            return Problem(ex.ToString());
+        }
     }
 }

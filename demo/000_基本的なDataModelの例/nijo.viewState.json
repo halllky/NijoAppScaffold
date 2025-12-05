@@ -17,7 +17,8 @@
         "label": "部署",
         "members": [
           "部署ID (PK)",
-          "部署名"
+          "部署名",
+          "事業所_事業所ID"
         ],
         "background-color": "#ea580c",
         "border-color": "#ea580c"
@@ -28,6 +29,13 @@
         "source": "1956b3f6-a6e5-493c-b87a-e86933c7b45f",
         "target": "4c96eb60-249d-414c-8e3e-4b5a981fa8c6",
         "label": "所属部署",
+        "line-color": "#6c757d",
+        "line-style": "solid"
+      },
+      {
+        "source": "4c96eb60-249d-414c-8e3e-4b5a981fa8c6",
+        "target": "0112870a-b512-4b7c-a464-db9a254a4250",
+        "label": "事業所",
         "line-color": "#6c757d",
         "line-style": "solid"
       }
@@ -950,6 +958,12 @@
   },
   "schemaDefinition": {
     "nodes": {
+      "0112870a-b512-4b7c-a464-db9a254a4250": {
+        "id": "0112870a-b512-4b7c-a464-db9a254a4250",
+        "label": "事業所",
+        "background-color": "#059669",
+        "border-color": "#059669"
+      },
       "1956b3f6-a6e5-493c-b87a-e86933c7b45f": {
         "id": "1956b3f6-a6e5-493c-b87a-e86933c7b45f",
         "label": "社員",
@@ -971,16 +985,28 @@
         "line-color": "#ea580c",
         "line-style": "solid",
         "targetEndShape": "triangle"
+      },
+      {
+        "source": "4c96eb60-249d-414c-8e3e-4b5a981fa8c6",
+        "target": "0112870a-b512-4b7c-a464-db9a254a4250",
+        "label": "事業所",
+        "line-color": "#ea580c",
+        "line-style": "solid",
+        "targetEndShape": "triangle"
       }
     ],
     "nodePositions": {
+      "0112870a-b512-4b7c-a464-db9a254a4250": {
+        "x": 433,
+        "y": 218
+      },
       "1956b3f6-a6e5-493c-b87a-e86933c7b45f": {
-        "x": 24,
-        "y": 24
+        "x": 249,
+        "y": 207
       },
       "4c96eb60-249d-414c-8e3e-4b5a981fa8c6": {
-        "x": 42,
-        "y": 139.00000047683716
+        "x": 301,
+        "y": 319.00000047683716
       }
     },
     "parentMap": {}

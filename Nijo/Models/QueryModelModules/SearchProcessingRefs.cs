@@ -258,6 +258,9 @@ namespace Nijo.Models.QueryModelModules {
                     } else if (member is SearchResult.SearchResultParentOrRefMember) {
                         continue; // 変換不要
 
+                    } else if (member is SearchResult.SearchResultRefFromMember) {
+                        continue; // 変換不要
+
                     } else {
                         throw new NotImplementedException();
                     }

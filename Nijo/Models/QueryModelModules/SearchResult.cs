@@ -105,9 +105,10 @@ namespace Nijo.Models.QueryModelModules {
         /// ビューにマッピングされないDTOの場合の子配列、およびナビゲーションプロパティを含む。
         /// </summary>
         internal IEnumerable<ISearchResultMember> GetMembers() {
+            var entryIsView = Aggregate.GetRoot().IsView;
             return GetMembersRecursively(Aggregate, false, null);
 
-            static IEnumerable<ISearchResultMember> GetMembersRecursively(AggregateBase aggregate, bool isOutOfEntryTree, RefToMember? refToMember) {
+            IEnumerable<ISearchResultMember> GetMembersRecursively(AggregateBase aggregate, bool isOutOfEntryTree, RefToMember? refToMember) {
                 // ビューにマッピングされる場合、親のキーを列挙する(JOIN用)
                 if (!isOutOfEntryTree && aggregate.GetRoot().IsView) {
                     var parent = aggregate.GetParent();
@@ -136,6 +137,7 @@ namespace Nijo.Models.QueryModelModules {
                     }
                 }
 
+                // 自身のメンバーを列挙
                 foreach (var member in aggregate.GetMembers()) {
                     if (member is ValueMember vm) {
                         // 検索条件にのみ定義されるメンバーは除外
@@ -183,6 +185,21 @@ namespace Nijo.Models.QueryModelModules {
 
                     } else {
                         throw new InvalidOperationException($"予期しないメンバー: {member}");
+                    }
+                }
+
+                // ビューにマッピングされる場合、被参照（RefFrom）のナビゲーションプロパティを列挙
+                if (entryIsView) {
+                    foreach (var refFrom in Aggregate.GetRefFroms()) {
+                        // DBの実体をもたないクエリモデルやコマンドモデルから参照された場合はナビゲーションプロパティを張らない
+                        var refFromRoot = refFrom.Owner.GetRoot();
+                        var hasDbEntity = refFromRoot.Model is DataModel
+                                       || refFromRoot.Model is QueryModel
+                                       && refFromRoot.IsView;
+
+                        if (hasDbEntity) {
+                            yield return new SearchResultRefFromMember(refFrom);
+                        }
                     }
                 }
             }
@@ -467,6 +484,47 @@ namespace Nijo.Models.QueryModelModules {
                         """;
                 }
             }
+        }
+
+        /// <summary>
+        /// この検索結果型を参照するほかの集約からのナビゲーションプロパティを表すメンバー。
+        /// ビューにマッピングされる場合のみ存在する。
+        /// </summary>
+        internal class SearchResultRefFromMember : ISearchResultMember, IInstanceStructurePropertyMetadata {
+            internal SearchResultRefFromMember(RefToMember refFrom) {
+                RefFrom = refFrom;
+                NavigationProperty = new NavigationProperty.NavigationOfRef(refFrom);
+            }
+
+            internal RefToMember RefFrom { get; }
+
+            private string RefFromItemTypeName => NavigationProperty.Principal.GetOtherSideCsTypeName(true);
+
+            public bool IsOutOfEntryTree => false;
+
+            public NavigationProperty NavigationProperty { get; }
+
+            IAggregateMember ISearchResultMember.Member => RefFrom;
+
+            string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) {
+                return NavigationProperty.Principal.OtherSidePhysicalName;
+            }
+
+            string ISearchResultMember.RenderDeclaration() {
+                var side = NavigationProperty.Principal;
+                var propName = side.OtherSidePhysicalName;
+                var initializer = side.GetInitializerStatement();
+
+                return $$"""
+                    /// <summary>{{RefFrom.Owner.DisplayName}}</summary>
+                    public virtual {{RefFromItemTypeName}} {{propName}} { get; set; }{{initializer}}
+                    """;
+            }
+
+
+            bool IInstanceStructurePropertyMetadata.IsArray => true;
+            string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => RefFromItemTypeName;
+            IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() { yield break; }
         }
 
         /// <summary>
