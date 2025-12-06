@@ -286,8 +286,8 @@ namespace Nijo.Models.DataModelModules {
                             var refToName = refTo.Member.RefTo.DisplayName.Replace("\"", "\\\"");
 
                             var convertToKeyClass = refTo.Member.RefTo.GetPathFromRoot().Any(agg => agg is ChildrenAggregate)
-                                ? $".SelectMany(x => {keyClass.ClassName}.{KeyClass.KeyClassEntry.FROM_SAVE_COMMAND}(x))"
-                                : $".Select(x => {keyClass.ClassName}.{KeyClass.KeyClassEntry.FROM_SAVE_COMMAND}(x))";
+                                ? $".SelectMany(x => {keyClass.ClassName}.{keyClass.FromCreateCommandOrSearchResult}(x))"
+                                : $".Select(x => {keyClass.ClassName}.{keyClass.FromCreateCommandOrSearchResult}(x))";
 
                             if (refTo.Member.IsKey) {
                                 // refがキーの場合はキー重複を防ぐためインデックス順に振る

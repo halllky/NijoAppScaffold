@@ -1,5 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.Models.QueryModelModules;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -97,25 +98,42 @@ namespace Nijo.Models.DataModelModules {
                         /// <summary>{{m.DisplayName}}</summary>
                         public required {{m.GetTypeName(E_CsTs.CSharp)}}? {{m.PhysicalName}} { get; set; }
                     """)}}
-                    {{If(!_aggregate.GetRoot().IsView, () => $$"""
 
                         {{WithIndent(RenderCovertFromCreateCommand(), "    ")}}
-                    """)}}
                     }
                     """;
             }
 
-            #region FromCreateCommand
-            internal const string FROM_SAVE_COMMAND = "FromCreateCommand";
+            #region FromCreateCommand, FromSearchResult
             /// <summary>
-            /// ルート集約の <see cref="SaveCommand"/> から、このクラスのインスタンス1個または複数個を作成するメソッド。
+            /// ルート集約の <see cref="SaveCommand"/> （ビューの場合は <see cref="SearchResult"/>）から、
+            /// このクラスのインスタンス1個または複数個を作成するメソッド。
             /// このクラスがChildren、または祖先にChildrenが含まれる場合は戻り値が複数になる。
             /// ダミーデータの生成に使用。
             /// </summary>
+            internal string FromCreateCommandOrSearchResult => _aggregate.GetRoot().IsView
+                ? "FromSearchResult"
+                : "FromCreateCommand";
+            /// <inheritdoc cref="FromCreateCommandOrSearchResult"/>
             private string RenderCovertFromCreateCommand() {
                 var root = _aggregate.GetRoot();
-                var rootCreateCommandMetadata = new SaveCommand(root, SaveCommand.E_Type.Create);
-                var arg = new Variable("createCommand", rootCreateCommandMetadata);
+                IInstancePropertyOwnerMetadata rootCreateCommandMetadata;
+                string argClassName;
+                string argVarName;
+                if (root.IsView) {
+                    var searchResult = new SearchResult(root);
+                    rootCreateCommandMetadata = searchResult;
+                    argClassName = searchResult.CsClassName;
+                    argVarName = "searchResult";
+
+                } else {
+                    var createCommand = new SaveCommand(root, SaveCommand.E_Type.Create);
+                    rootCreateCommandMetadata = createCommand;
+                    argClassName = createCommand.CsClassNameCreate;
+                    argVarName = "createCommand";
+                }
+
+                var arg = new Variable(argVarName, rootCreateCommandMetadata);
 
                 // ------------------------------------------
                 // 右辺の変数に使われる変数を定義する。右辺は集約ルートが起点になる。
@@ -124,12 +142,12 @@ namespace Nijo.Models.DataModelModules {
                 var rightInstances = CollectInstancesRecursively(arg).ToDictionary(kv => kv.Key, kv => kv.Value);
 
                 IEnumerable<KeyValuePair<SchemaNodeIdentity, string>> CollectInstancesRecursively(IInstancePropertyOwner currentInstance, IInstancePropertyOwner? ownerArray = null) {
-                    var currentSaveCommand = (SaveCommand)currentInstance.Metadata;
 
                     // ValueMember(Ref先のValueMember含む)
                     var valueMembers = currentInstance
                         .Create1To1PropertiesRecursively()
-                        .Where(p => p.Metadata is SaveCommand.SaveCommandValueMember member && member.IsKey);
+                        .Where(p => p.Metadata is SaveCommand.SaveCommandValueMember member && member.IsKey
+                                 || p.Metadata is SearchResult.SearchResultValueMember srm && srm.ValueMember.IsKey);
                     foreach (var member in valueMembers) {
                         yield return KeyValuePair.Create(
                             member.Metadata.SchemaPathNode.ToMappingKey(),
@@ -137,27 +155,48 @@ namespace Nijo.Models.DataModelModules {
                     }
 
                     // 左辺の集約が表れたら終了（左辺の子孫の集約はそれと対応する右辺の変数を定義しなくてもよい）
-                    if (currentSaveCommand.Aggregate == _aggregate) {
+                    var currentInstanceAggregate = currentInstance.Metadata switch {
+                        SaveCommand sc => sc.Aggregate,
+                        SearchResult sr => sr.Aggregate,
+                        _ => throw new NotImplementedException(),
+                    };
+                    if (currentInstanceAggregate == _aggregate) {
                         thisCreateCommandInstance = currentInstance;
                         thisCreateCommandInstanceOwnerArray = ownerArray;
                         yield break;
                     }
 
                     // Child, Children に対して再帰処理
-                    foreach (var member in currentSaveCommand.GetMembers()) {
-                        if (member is SaveCommand.SaveCommandChildMember child) {
-                            var childProperty = currentInstance.CreateProperty(child);
-                            foreach (var desc in CollectInstancesRecursively(childProperty)) {
-                                yield return desc;
-                            }
+                    if (currentInstance.Metadata is SaveCommand currentSaveCommand) {
+                        foreach (var member in currentSaveCommand.GetMembers()) {
+                            if (member is SaveCommand.SaveCommandChildMember child) {
+                                var childProperty = currentInstance.CreateProperty(child);
+                                foreach (var desc in CollectInstancesRecursively(childProperty)) {
+                                    yield return desc;
+                                }
 
-                        } else if (member is SaveCommand.SaveCommandChildrenMember children) {
-                            var childProperty = currentInstance.CreateProperty(children);
-                            var loopVar = new Variable(children.Aggregate.GetLoopVarName(), children);
-                            foreach (var desc in CollectInstancesRecursively(loopVar, childProperty)) {
-                                yield return desc;
+                            } else if (member is SaveCommand.SaveCommandChildrenMember children) {
+                                var childProperty = currentInstance.CreateProperty(children);
+                                var loopVar = new Variable(children.Aggregate.GetLoopVarName(), children);
+                                foreach (var desc in CollectInstancesRecursively(loopVar, childProperty)) {
+                                    yield return desc;
+                                }
                             }
                         }
+
+                    } else if (currentInstance.Metadata is SearchResult currentSearchResult) {
+                        foreach (var member in currentSearchResult.GetMembers()) {
+                            if (member is SearchResult.SearchResultChildrenMember children) {
+                                var childProperty = currentInstance.CreateProperty(children);
+                                var loopVar = new Variable(children.Aggregate.GetLoopVarName(), children);
+                                foreach (var desc in CollectInstancesRecursively(loopVar, childProperty)) {
+                                    yield return desc;
+                                }
+                            }
+                        }
+
+                    } else {
+                        throw new NotImplementedException();
                     }
                 }
 
@@ -168,9 +207,9 @@ namespace Nijo.Models.DataModelModules {
 
                 return $$"""
                     /// <summary>
-                    /// <see cref="{{rootCreateCommandMetadata.CsClassNameCreate}}"/> を <see cref="{{ClassName}}"> のインスタンス{{(isReturnArray ? "複数個" : "")}}に変換します。
+                    /// <see cref="{{argClassName}}"/> を <see cref="{{ClassName}}"> のインスタンス{{(isReturnArray ? "複数個" : "")}}に変換します。
                     /// </summary>
-                    public static {{returnType}} {{FROM_SAVE_COMMAND}}({{rootCreateCommandMetadata.CsClassNameCreate}} {{arg.Name}}) {
+                    public static {{returnType}} {{FromCreateCommandOrSearchResult}}({{argClassName}} {{arg.Name}}) {
                         {{WithIndent(RenderReturnOrForEach(arg, 0, false), "    ")}}
                     }
                     """;
@@ -180,10 +219,14 @@ namespace Nijo.Models.DataModelModules {
                 // 戻り値のKeyClassのメンバーの一部はそれぞれのChildrenのループ変数から取得する必要があるので、
                 // foreachでレンダリングする。
                 string RenderReturnOrForEach(IInstancePropertyOwner currentInstance, int indexInAncestorArray, bool isInForEach) {
-                    var currentSaveCommand = (SaveCommand)currentInstance.Metadata;
 
                     // 戻り値の集約まで辿りついたので、SaveCommandをKeyClassに変換してreturnする
-                    if (currentSaveCommand.Aggregate == _aggregate) {
+                    var currentInstanceAggregate = currentInstance.Metadata switch {
+                        SaveCommand sc => sc.Aggregate,
+                        SearchResult sr => sr.Aggregate,
+                        _ => throw new NotImplementedException(),
+                    };
+                    if (currentInstanceAggregate == _aggregate) {
                         var @return = isInForEach ? "yield return" : "return";
 
                         return $$"""
@@ -197,7 +240,9 @@ namespace Nijo.Models.DataModelModules {
 
                     // Child
                     if (next is ChildAggregate child) {
-                        var childMetadata = new SaveCommand.SaveCommandChildMember(child, SaveCommand.E_Type.Create);
+                        IInstanceStructurePropertyMetadata childMetadata = root.IsView
+                            ? throw new NotImplementedException("ビューにChildは存在しないはず")
+                            : new SaveCommand.SaveCommandChildMember(child, SaveCommand.E_Type.Create);
                         var childProperty = currentInstance.CreateProperty(childMetadata);
 
                         return $$"""
@@ -207,8 +252,10 @@ namespace Nijo.Models.DataModelModules {
 
                     // Children
                     if (next is ChildrenAggregate children) {
-                        var childMetadata = new SaveCommand.SaveCommandChildrenMember(children, SaveCommand.E_Type.Create);
-                        var childProperty = currentInstance.CreateProperty(childMetadata);
+                        IInstancePropertyOwnerMetadata childMetadata = root.IsView
+                            ? new SearchResult.SearchResultChildrenMember(children, false)
+                            : new SaveCommand.SaveCommandChildrenMember(children, SaveCommand.E_Type.Create);
+                        var childProperty = currentInstance.CreateProperty((IInstanceStructurePropertyMetadata)childMetadata);
                         var loopVar = new Variable(children.GetLoopVarName(), childMetadata);
 
                         return $$"""
@@ -226,8 +273,12 @@ namespace Nijo.Models.DataModelModules {
                     foreach (var member in keyClass.GetOwnMembers()) {
                         if (member is KeyClassValueMember vm) {
                             var path = rightInstances[vm.Member.ToMappingKey()];
+                            var cast = root.IsView
+                                ? vm.Member.Type.RenderCastToDomainType()
+                                : ""; // CreateCommandは元々ドメイン型なのでキャスト不要
+
                             yield return $$"""
-                                {{member.PhysicalName}} = {{path}},
+                                {{member.PhysicalName}} = {{cast}}{{path}},
                                 """;
 
                         } else if (member is KeyClassRefMember rm) {
@@ -250,7 +301,7 @@ namespace Nijo.Models.DataModelModules {
                     }
                 }
             }
-            #endregion FromSaveCommand
+            #endregion FromSaveCommand, FromSearchResult
 
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => _aggregate;
             bool IInstanceStructurePropertyMetadata.IsArray => false;
