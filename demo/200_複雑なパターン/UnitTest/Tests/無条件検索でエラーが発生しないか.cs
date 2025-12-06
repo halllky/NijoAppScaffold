@@ -29,7 +29,7 @@ partial class DB接続あり_更新なし {
 
         var generator = new OverridedDummyDataGenerator();
         var dbDescriptor = new DummyDataDbOutput(scope.App.DbContext);
-        await generator.GenerateAsync(dbDescriptor);
+        await generator.GenerateAsync(dbDescriptor, scope.App.DbContext);
 
         // 無条件検索を実行
         try {

@@ -1,5 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.Models.QueryModelModules;
 using Nijo.Parts.Common;
 using Nijo.Parts.CSharp;
 using Nijo.Util.DotnetEx;
@@ -56,6 +57,7 @@ namespace Nijo.Models.DataModelModules {
             // データフロー順に並び替え
             var rootAggregatesOrderByDataFlow = _rootAggregates
                 .OrderByDataFlow()
+                .Where(agg => !agg.IsView)
                 .ToArray();
 
             return new SourceFile {
@@ -76,30 +78,27 @@ namespace Nijo.Models.DataModelModules {
                         /// 現在登録されているデータは全て削除されます。
                         /// </summary>
                     {{If(rootAggregatesOrderByDataFlow.Length == 0, () => $$"""
-                        public Task {{GENERATE_ASYNC}}({{I_DUMMY_DATA_OUTPUT}} dummyDataOutput, {{DUMMY_DATA_GENERATE_OPTIONS}}? options = null) {
+                        public Task {{GENERATE_ASYNC}}({{I_DUMMY_DATA_OUTPUT}} dummyDataOutput, {{ctx.Config.DbContextName}} dbContext, {{DUMMY_DATA_GENERATE_OPTIONS}}? options = null) {
                             // Data Model の集約が定義されていないので何もしない
                             return Task.CompletedTask;
                         }
                     """).Else(() => $$"""
-                        public async Task {{GENERATE_ASYNC}}({{I_DUMMY_DATA_OUTPUT}} dummyDataOutput, {{DUMMY_DATA_GENERATE_OPTIONS}}? options = null) {
+                        public async Task {{GENERATE_ASYNC}}({{I_DUMMY_DATA_OUTPUT}} dummyDataOutput, {{ctx.Config.DbContextName}} dbContext, {{DUMMY_DATA_GENERATE_OPTIONS}}? options = null) {
 
                             // ランダム値採番等のコンテキスト
                             var context = new {{DUMMY_DATA_GENERATE_CONTEXT}} {
                                 Random = new Random(0),
                                 Metadata = new(),
+                                DbContext = dbContext,
                             };
 
-                            // データフローの順番でダミーデータのパターンを作成
+                            // データフローの順番でダミーデータのパターンを作成・登録
                     {{rootAggregatesOrderByDataFlow.SelectTextTemplate(rootAggregate => $$"""
                             if (options?.{{rootAggregate.PhysicalName}} != false) {
                                 context.{{GeneratedList(rootAggregate)}} = {{CreatePatternMethodName(rootAggregate)}}(context).ToArray();
                                 context.ResetSequence();
+                                {{WithIndent(RenderOutputting(rootAggregate), "            ")}}
                             }
-                    """)}}
-
-                            // データフローの順番で登録実行
-                    {{rootAggregatesOrderByDataFlow.SelectTextTemplate(rootAggregate => $$"""
-                            {{WithIndent(RenderOutputting(rootAggregate), "        ")}}
                     """)}}
                         }
                     """)}}
@@ -388,6 +387,7 @@ namespace Nijo.Models.DataModelModules {
                 FileName = "DummyDataGenerateContext.cs",
                 Contents = $$"""
                     using System;
+                    using Microsoft.EntityFrameworkCore;
 
                     namespace {{ctx.Config.RootNamespace}};
 
@@ -395,6 +395,7 @@ namespace Nijo.Models.DataModelModules {
                     public sealed class {{DUMMY_DATA_GENERATE_CONTEXT}} {
                         public required Random Random { get; init; }
                         public required {{Metadata.CS_CLASSNAME}} Metadata { get; init; }
+                        public required {{ctx.Config.DbContextName}} DbContext { get; init; }
 
                         #region シーケンス
                         private int _sequence = 0;
@@ -421,12 +422,57 @@ namespace Nijo.Models.DataModelModules {
             };
 
             static string RenderGetRefTo(RootAggregate aggregate) {
-                var saveCommand = new SaveCommand(aggregate, SaveCommand.E_Type.Create);
+                var propName = GeneratedList(aggregate);
 
-                return $$"""
-                    /// <summary>このメソッドが呼ばれた時点で作成済みの{{aggregate.DisplayName}}</summary>
-                    public IReadOnlyList<{{saveCommand.CsClassNameCreate}}> {{GeneratedList(aggregate)}} { get; set; } = [];
-                    """;
+                if (aggregate.IsView) {
+                    var className = new SearchResult(aggregate).CsClassName;
+
+                    return $$"""
+                        private IReadOnlyList<{{className}}>? _{{propName}};
+                        /// <summary>このメソッドが呼ばれた時点で作成済みの{{aggregate.DisplayName}}</summary>
+                        public IReadOnlyList<{{className}}> {{propName}} {
+                            get {
+                                if (_{{propName}} == null) {
+                                    _{{propName}} = DbContext.Set<{{className}}>()
+                        {{RenderIncludes(aggregate).SelectTextTemplate(include => $$"""
+                                        {{include}}
+                        """)}}
+                                        .ToArray();
+                                }
+                                return _{{propName}};
+                            }
+                            set {
+                                _{{propName}} = value;
+                            }
+                        }
+                        """;
+
+                    static IEnumerable<string> RenderIncludes(RootAggregate rootAggregate) {
+                        var keyClass = new KeyClass.KeyClassEntry(rootAggregate);
+                        return CollectIncludes(keyClass, "");
+
+                        static IEnumerable<string> CollectIncludes(KeyClass.IKeyClassStructure structure, string parentPath) {
+                            foreach (var member in structure.GetOwnMembers()) {
+                                if (member is KeyClass.KeyClassRefMember rm) {
+                                    var currentPath = string.IsNullOrEmpty(parentPath) ? rm.PhysicalName : $"{parentPath}.{rm.PhysicalName}";
+                                    yield return $".Include(\"{currentPath}\")";
+
+                                    foreach (var childInclude in CollectIncludes(rm.MemberKeyClassEntry, currentPath)) {
+                                        yield return childInclude;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                } else {
+                    var saveCommand = new SaveCommand(aggregate, SaveCommand.E_Type.Create);
+
+                    return $$"""
+                        /// <summary>このメソッドが呼ばれた時点で作成済みの{{aggregate.DisplayName}}</summary>
+                        public IReadOnlyList<{{saveCommand.CsClassNameCreate}}> {{propName}} { get; set; } = [];
+                        """;
+                }
             }
         }
         #endregion コンテキスト
@@ -463,6 +509,7 @@ namespace Nijo.Models.DataModelModules {
             // データフロー順に並び替え
             var rootAggregatesOrderByDataFlow = _rootAggregates
                 .OrderByDataFlow()
+                .Where(agg => !agg.IsView)
                 .ToArray();
 
             return new SourceFile {
@@ -489,6 +536,7 @@ namespace Nijo.Models.DataModelModules {
             // データフロー順に並び替え
             var rootAggregatesOrderByDataFlow = _rootAggregates
                 .OrderByDataFlow()
+                .Where(agg => !agg.IsView)
                 .ToArray();
 
             return new SourceFile {

@@ -48,7 +48,7 @@ public class ExampleContoller : ControllerBase {
         // ダミーデータの生成
         var generator = new OverridedDummyDataGenerator();
         var descriptor = new DummyDataDbOutput(_app.DbContext);
-        await generator.GenerateAsync(descriptor);
+        await generator.GenerateAsync(descriptor, _app.DbContext);
 
         // テスト用アカウントを追加
         await CreateTestAccounts();

@@ -20,14 +20,14 @@ partial class DB接続あり_更新あり {
 
         Assert.DoesNotThrowAsync(async () => {
             try {
-                await generator.GenerateAsync(dbDescriptor);
+                await generator.GenerateAsync(dbDescriptor, scope.App.DbContext);
 
             } catch {
                 // エラーが起きたデータのログ出力
                 using var fs = File.OpenWrite(Path.Combine(scope.WorkDirectory, "作成しようとしたデータ.tsv"));
                 using var sw = new StreamWriter(fs);
                 var tsvDescriptor = new DummyDataTsvOutput(sw);
-                await generator.GenerateAsync(tsvDescriptor);
+                await generator.GenerateAsync(tsvDescriptor, scope.App.DbContext);
 
                 throw;
             }
