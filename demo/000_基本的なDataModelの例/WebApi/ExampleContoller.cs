@@ -57,18 +57,40 @@ public class ExampleContoller : ControllerBase {
     [HttpGet("test-efcore")]
     public async Task<IActionResult> TestEfCore() {
         try {
-            var data = await _app.DbContext.社員DbSet
+            // テーブル起点のクエリ
+            var data1 = await _app.DbContext.社員DbSet
                 .Include(x => x.所属部署)
                 .ThenInclude(x => x!.事業所)
                 .Select(x => new {
                     ID = x.社員ID,
-                    氏名 = x.氏名,
-                    部署 = x.所属部署 == null ? null : x.所属部署.部署名,
-                    事業所 = x.所属部署 != null && x.所属部署.事業所 != null ? x.所属部署.事業所.事業所名 : null,
+                    社員氏名 = x.氏名,
+                    所属部署 = x.所属部署!.部署名,
+                    所属事業所 = x.所属部署!.事業所!.事業所名,
+                })
+                .OrderBy(x => x.ID)
+                .Take(3)
+                .ToArrayAsync();
+
+            // ビュー起点のクエリ
+            var data2 = await _app.DbContext.事業所DbSet
+                .Select(x => new {
+                    x.事業所ID,
+                    x.事業所名,
+                    管轄部署 = x.RefFrom部署_事業所
+                        .Select(y => new {
+                            y.部署ID,
+                            y.部署名,
+                        })
+                        .OrderBy(y => y.部署ID)
+                        .Take(2)
+                        .ToList(),
                 })
                 .ToArrayAsync();
 
-            return Ok(data);
+            return Ok(new {
+                テーブル起点のクエリ結果 = data1,
+                ビュー起点のクエリ結果 = data2,
+            });
         } catch (Exception ex) {
             return Problem(ex.ToString());
         }
