@@ -12,7 +12,9 @@
     "serve": "docusaurus serve",
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "prestart": "node scripts/generate-source-map.js",
+    "prebuild": "node scripts/generate-source-map.js"
   },
   "browserslist": {
     "production": [

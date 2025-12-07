@@ -1,5 +1,6 @@
 # 自動生成されるドキュメント
 /src/pages/reference
+/src/generated
 
 # Dependencies
 /node_modules
