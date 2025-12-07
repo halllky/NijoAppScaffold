@@ -64,14 +64,17 @@
           UniqueId="6b7fb117-5c79-4be5-8546-236d042f16b8">
           <幅
             DbName="WIDTH"
+            TotalDigit="16"
             Type="int"
             UniqueId="b51a7d8f-13b2-4a32-aa0e-399979852802" />
           <高さ
             DbName="HEIGHT"
+            TotalDigit="16"
             Type="int"
             UniqueId="e9ac0a62-cadc-4693-b697-6b93c8abceea" />
           <奥行
             DbName="DEPTH"
+            TotalDigit="16"
             Type="int"
             UniqueId="a857248d-0c32-4927-bfb1-eee007b79dbf" />
         </サイズ>
@@ -568,6 +571,8 @@
       UniqueId="c2359d09-44db-483b-a6cf-b23e610396c4" />
     <体温
       DbName="TEMPERATURE"
+      DecimalPlace="1"
+      TotalDigit="3"
       Type="decimal"
       UniqueId="5fbeb1e1-d862-434a-b878-19bd7e912dc5" />
     <血圧上

@@ -40,6 +40,14 @@ public abstract class ValidatorBase {
     protected abstract ValidateStatement? GetIfStatement(ValueMember vm, IInstanceProperty prop, CodeRenderingContext ctx);
 
     /// <summary>
+    /// 参照項目の妥当性チェック処理のif文の中の式を表す情報を返します。
+    /// null を返した場合、当該項目はチェック対象となりません。
+    /// </summary>
+    /// <param name="refTo">チェック対象の参照項目</param>
+    /// <param name="fkProps">外部キーを構成するプロパティのリスト</param>
+    protected virtual ValidateStatement? GetIfStatement(RefToMember refTo, IEnumerable<IInstanceProperty> fkProps, CodeRenderingContext ctx) => null;
+
+    /// <summary>
     /// 妥当性チェックの条件を表す情報
     /// </summary>
     protected class ValidateStatement {
@@ -62,6 +70,7 @@ public abstract class ValidatorBase {
         var messages = new SaveCommandMessageContainer(rootAggregate);
 
         var arg = new Variable("dbEntity", efCoreEntity);
+        var body = RenderAggregate(efCoreEntity, arg, ["messages"]).ToArray();
 
         return $$"""
             /// <summary>
@@ -69,11 +78,15 @@ public abstract class ValidatorBase {
             /// 1件以上エラーがあった場合はfalseを返します。
             /// </summary>
             protected virtual bool {{MethodName}}({{efCoreEntity.CsClassName}} {{arg.Name}}, {{messages.InterfaceName}} messages) {
+            {{If(body.Length == 0, () => $$"""
+                return true; // 対象項目なし
+            """).Else(() => $$"""
                 var isValid = true;
 
                 {{WithIndent(RenderAggregate(efCoreEntity, arg, ["messages"]), "    ")}}
 
                 return isValid;
+            """)}}
             }
             """;
 
@@ -90,23 +103,55 @@ public abstract class ValidatorBase {
             var ownColumnProps = props
                 .Where(p => p.Metadata is EFCoreEntity.OwnColumnMember)
                 .ToDictionary(p => ((EFCoreEntity.OwnColumnMember)p.Metadata).Member, p => p);
+            // 参照先のキー
+            var refKeyProps = props
+                .Where(p => p.Metadata is EFCoreEntity.RefKeyMember)
+                .GroupBy(p => ((EFCoreEntity.RefKeyMember)p.Metadata).RefEntry)
+                .ToDictionary(g => g.Key, g => g.ToArray());
+            // ナビゲーションプロパティ
+            var navProps = props
+                .Where(p => p.Metadata is NavigationProperty.PrincipalOrRelevant)
+                .ToDictionary(p => ((NavigationProperty.PrincipalOrRelevant)p.Metadata).NavigationProperty, p => p);
+
             foreach (var member in currentEntity.Aggregate.GetMembers()) {
-                if (member is not ValueMember vm) continue;
+                if (member is ValueMember vm) {
+                    // 判定対象の項目でなければスキップ
+                    var prop = ownColumnProps[vm];
+                    var ifStatement = GetIfStatement(vm, prop, ctx);
+                    if (ifStatement == null) continue;
 
-                // 判定対象の項目でなければスキップ
-                var prop = ownColumnProps[vm];
-                var ifStatement = GetIfStatement(vm, prop, ctx);
-                if (ifStatement == null) continue;
+                    string[] errorPath = [.. ownerPath, prop.Metadata.GetPropertyName(E_CsTs.CSharp)];
 
-                string[] errorPath = [.. ownerPath, prop.Metadata.GetPropertyName(E_CsTs.CSharp)];
+                    yield return $$"""
+                        // {{vm.DisplayName}}
+                        if ({{WithIndent(ifStatement.If, "    ")}}) {
+                            {{errorPath.Join(".")}}.AddError({{ifStatement.RenderErrorMessage}});
+                            isValid = false;
+                        }
+                        """;
 
-                yield return $$"""
-                    // {{vm.DisplayName}}
-                    if ({{WithIndent(ifStatement.If, "    ")}}) {
-                        {{errorPath.Join(".")}}.AddError({{ifStatement.RenderErrorMessage}});
-                        isValid = false;
-                    }
-                    """;
+                } else if (member is RefToMember refTo) {
+                    if (!refKeyProps.TryGetValue(refTo, out var fkProps)) throw new InvalidOperationException("外部キー項目が見つかりません。");
+
+                    // 判定対象の項目でなければスキップ
+                    var ifStatement = GetIfStatement(refTo, fkProps, ctx);
+                    if (ifStatement == null) continue;
+
+                    // エラーメッセージのパスはナビゲーションプロパティを使う
+                    var navProp = navProps.Values.Single(p =>
+                        ((NavigationProperty.PrincipalOrRelevant)p.Metadata).NavigationProperty is NavigationProperty.NavigationOfRef nav &&
+                        nav.Relation == refTo);
+
+                    string[] errorPath = [.. ownerPath, navProp.Metadata.GetPropertyName(E_CsTs.CSharp)];
+
+                    yield return $$"""
+                        // {{refTo.DisplayName}}
+                        if ({{WithIndent(ifStatement.If, "    ")}}) {
+                            {{errorPath.Join(".")}}.AddError({{ifStatement.RenderErrorMessage}});
+                            isValid = false;
+                        }
+                        """;
+                }
             }
 
             // 子孫エンティティ
