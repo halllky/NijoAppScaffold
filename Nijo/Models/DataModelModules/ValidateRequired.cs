@@ -8,24 +8,29 @@ namespace Nijo.Models.DataModelModules {
     /// <summary>
     /// 必須入力チェック
     /// </summary>
-    internal static class ValidateRequired {
+    internal class ValidateRequired : ValidatorBase {
 
         internal const string METHOD_NAME = "ValidateRequired";
+        private const string MSG_ID_REQUIRED = "RequiredError";
 
-        internal static string Render(RootAggregate rootAggregate, CodeRenderingContext ctx) {
-            var efCoreEntity = new Parts.CSharp.EFCoreEntity(rootAggregate);
-            var messages = new SaveCommandMessageContainer(rootAggregate);
+        public override string CommentName => "必須入力チェック";
+        public override string MethodName => METHOD_NAME;
+        public override string MsgId => MSG_ID_REQUIRED;
+        public override string MsgTemplate => "{0} を入力してください。";
 
-            return $$"""
-                /// <summary>
-                /// 必須チェック処理。空の項目があった場合はその旨が第2引数のオブジェクト内に追記されます。
-                /// エラーがあった場合はfalseを返します。
-                /// </summary>
-                protected virtual bool {{METHOD_NAME}}({{efCoreEntity.CsClassName}} dbEntity, {{messages.InterfaceName}} messages) {
-                    // TODO ver.1
-                    return true;
-                }
-                """;
+        protected override ValidateStatement? GetIfStatement(ValueMember vm, IInstanceProperty prop, CodeRenderingContext ctx) {
+            if (!vm.IsKey && !vm.IsRequired) return null;
+
+            return new ValidateStatement {
+
+                If = vm.Type.CsPrimitiveTypeName == "string"
+                    ? $"string.IsNullOrWhiteSpace({prop.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")})"
+                    : $"{prop.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")} == null",
+
+                RenderErrorMessage = $$"""
+                    {{MsgFactory.MSG}}.{{MSG_ID_REQUIRED}}("{{vm.DisplayName}}")
+                    """,
+            };
         }
     }
 }

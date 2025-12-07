@@ -268,7 +268,9 @@ namespace Nijo.Models {
             // 処理: 自動生成されるバリデーションエラーチェック
             aggregateFile.AddAppSrvMethod($$"""
                 #region 自動生成されるバリデーション処理
-                {{ValidateRequired.Render(rootAggregate, ctx)}}
+                {{GetValidators().SelectTextTemplate(validator => $$"""
+                {{validator.Render(rootAggregate, ctx)}}
+                """)}}
                 {{ValidateMaxLength.Render(rootAggregate, ctx)}}
                 {{ValidateCharacterType.Render(rootAggregate, ctx)}}
                 {{ValidateDigitsAndScales.Render(rootAggregate, ctx)}}
@@ -309,9 +311,26 @@ namespace Nijo.Models {
         }
 
         public void GenerateCode(CodeRenderingContext ctx) {
-            // メッセージ
+            // メッセージコンテナ
             UpdateMethod.RegisterCommonParts(ctx);
             BatchUpdate.RegisterCommonParts(ctx);
+
+            // バリデーターチェック違反時のメッセージ
+            var msgFactory = ctx.Use<MsgFactory>();
+            foreach (var validator in GetValidators()) {
+                msgFactory.AddMessage(
+                    validator.MsgId,
+                    $"入力エラー時メッセージ（{validator.CommentName}）",
+                    validator.MsgTemplate);
+            }
+        }
+
+        private static IEnumerable<ValidatorBase> GetValidators() {
+            yield return new ValidateRequired();
+            // yield return new ValidateMaxLength();
+            // yield return new ValidateCharacterType();
+            // yield return new ValidateDigitsAndScales();
+            // yield return new ValidateDynamicEnumType();
         }
     }
 }
