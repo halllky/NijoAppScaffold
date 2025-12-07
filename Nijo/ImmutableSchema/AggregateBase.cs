@@ -437,6 +437,7 @@ namespace Nijo.ImmutableSchema {
         /// <summary>
         /// Childrenのメンバーに対するループ処理をレンダリングするとき、
         /// そのループ変数として使うために "x", "x0", "x1", ... という名前を返す。
+        /// 引数に "i" を指定した場合は "i", "j", "k", ... という名前を返す。
         /// 変数は、宣言方法に気を付ければ、同じ深さのChildrenが複数あっても衝突しない名前になる。
         /// </summary>
         public string GetLoopVarName(string alpha = "x") {
@@ -447,7 +448,23 @@ namespace Nijo.ImmutableSchema {
                 .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value != SchemaParseContext.NODE_TYPE_MEMO)
                 .Count() - 2;
 
-            return depth == 0 ? alpha : (alpha + depth);
+            if (depth == 0) {
+                return alpha;
+
+            } else if (alpha == "i") {
+                // i, j, k, ... を返す。
+                // zまで到達した場合は aa, ab, ac, ... とする
+                var index = depth + 8; // 'i'からのオフセット
+                var sb = new StringBuilder();
+                while (index >= 0) {
+                    sb.Insert(0, (char)('a' + (index % 26)));
+                    index = (index / 26) - 1;
+                }
+                return sb.ToString();
+
+            } else {
+                return alpha + depth;
+            }
         }
     }
 }

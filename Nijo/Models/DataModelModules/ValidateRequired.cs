@@ -24,11 +24,11 @@ namespace Nijo.Models.DataModelModules {
             return new ValidateStatement {
 
                 If = vm.Type.CsPrimitiveTypeName == "string"
-                    ? $"string.IsNullOrWhiteSpace({prop.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")})"
-                    : $"{prop.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")} == null",
+                    ? $"string.IsNullOrWhiteSpace({prop.GetJoinedPathFromInstance(E_CsTs.CSharp)})"
+                    : $"{prop.GetJoinedPathFromInstance(E_CsTs.CSharp)} == null",
 
                 RenderErrorMessage = $$"""
-                    {{MsgFactory.MSG}}.{{MSG_ID_REQUIRED}}("{{vm.DisplayName}}")
+                    {{MsgFactory.MSG}}.{{MSG_ID_REQUIRED}}("{{vm.DisplayName.Replace("\"", "\\\"")}}")
                     """,
             };
         }

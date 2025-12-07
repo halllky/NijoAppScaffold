@@ -2,6 +2,7 @@ using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.Common;
 using Nijo.Parts.CSharp;
+using Nijo.Util.DotnetEx;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -70,13 +71,16 @@ public abstract class ValidatorBase {
             protected virtual bool {{MethodName}}({{efCoreEntity.CsClassName}} {{arg.Name}}, {{messages.InterfaceName}} messages) {
                 var isValid = true;
 
-                {{WithIndent(RenderAggregate(efCoreEntity, arg), "    ")}}
+                {{WithIndent(RenderAggregate(efCoreEntity, arg, ["messages"]), "    ")}}
 
                 return isValid;
             }
             """;
 
-        IEnumerable<string> RenderAggregate(EFCoreEntity currentEntity, IInstancePropertyOwner currentInstance) {
+        IEnumerable<string> RenderAggregate(
+            EFCoreEntity currentEntity,
+            IInstancePropertyOwner currentInstance,
+            string[] ownerPath) {
 
             var props = currentInstance
                 .CreateProperties()
@@ -89,14 +93,18 @@ public abstract class ValidatorBase {
             foreach (var member in currentEntity.Aggregate.GetMembers()) {
                 if (member is not ValueMember vm) continue;
 
-                var ifStatement = GetIfStatement(vm, ownColumnProps[vm], ctx);
+                // 判定対象の項目でなければスキップ
+                var prop = ownColumnProps[vm];
+                var ifStatement = GetIfStatement(vm, prop, ctx);
                 if (ifStatement == null) continue;
+
+                string[] errorPath = [.. ownerPath, prop.Metadata.GetPropertyName(E_CsTs.CSharp)];
 
                 yield return $$"""
                     // {{vm.DisplayName}}
                     if ({{WithIndent(ifStatement.If, "    ")}}) {
+                        {{errorPath.Join(".")}}.AddError({{ifStatement.RenderErrorMessage}});
                         isValid = false;
-                        messages.AddError({{ifStatement.RenderErrorMessage}});
                     }
                     """;
             }
@@ -110,18 +118,34 @@ public abstract class ValidatorBase {
                 if (nop.Principal.ThisSide != currentEntity.Aggregate) continue; // 子から親へのナビゲーションを除外
 
                 if (nop.Relevant.ThisSide is ChildAggregate child) {
+                    var childEntity = new EFCoreEntity(child);
                     var childNav = childProps[child];
+                    string[] childErrorPath = [.. ownerPath, childNav.Metadata.GetPropertyName(E_CsTs.CSharp)];
+
+                    var body = RenderAggregate(childEntity, (IInstancePropertyOwner)childNav, childErrorPath).ToArray();
+                    if (body.Length == 0) continue;
+
                     yield return $$"""
-                        if ({{childNav.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")}} != null) {
-                            {{WithIndent(RenderAggregate(new EFCoreEntity(child), (IInstancePropertyOwner)childNav), "    ")}}
+                        if ({{childNav.GetJoinedPathFromInstance(E_CsTs.CSharp)}} != null) {
+                            {{WithIndent(body, "    ")}}
                         }
                         """;
 
                 } else if (nop.Relevant.ThisSide is ChildrenAggregate children) {
+                    var childrenEntity = new EFCoreEntity(children);
                     var childrenNav = childProps[children];
+                    var i = children.GetLoopVarName("i");
+                    var loopItem = new Variable(children.GetLoopVarName("item"), childrenEntity);
+                    string[] childErrorPath = [.. ownerPath, $"{childrenNav.Metadata.GetPropertyName(E_CsTs.CSharp)}[{i}]"];
+
+                    var body = RenderAggregate(childrenEntity, loopItem, childErrorPath).ToArray();
+                    if (body.Length == 0) continue;
+
                     yield return $$"""
-                        foreach (var childEntity in {{childrenNav.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")}} ?? []) {
-                            {{WithIndent(RenderAggregate(new EFCoreEntity(children), (IInstancePropertyOwner)childrenNav), "    ")}}
+                        for (var {{i}} = 0; {{i}} < {{childrenNav.GetJoinedPathFromInstance(E_CsTs.CSharp)}}.Count; {{i}}++) {
+                            var {{loopItem.Name}} = {{childrenNav.GetJoinedPathFromInstance(E_CsTs.CSharp)}}.ElementAt({{i}});
+
+                            {{WithIndent(body, "    ")}}
                         }
                         """;
 
