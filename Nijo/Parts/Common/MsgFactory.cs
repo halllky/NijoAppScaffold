@@ -69,10 +69,8 @@ namespace Nijo.Parts.Common {
             /// テンプレート中に含まれる変数 {0}, {1}, ... の変数名
             /// </summary>
             public IEnumerable<string> GetParameterVarNames() {
-                var match = NumberInsideCurlyBrace().Match(Template);
-                if (!match.Success) yield break;
-
-                for (int i = 0; i < match.Groups.Count; i++) {
+                var matches = NumberInsideCurlyBrace().Matches(Template);
+                for (int i = 0; i < matches.Count; i++) {
                     yield return $"arg{i}";
                 }
             }
