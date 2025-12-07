@@ -323,7 +323,10 @@ namespace Nijo.Models {
             }
         }
 
-        private static IEnumerable<ValidatorBase> GetValidators() {
+        /// <summary>
+        /// データモデルのバリデーターを列挙します。
+        /// </summary>
+        internal static IEnumerable<ValidatorBase> GetValidators() {
             yield return new ValidateRequired();
             yield return new ValidateMaxLength();
             // yield return new ValidateCharacterType();

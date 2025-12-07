@@ -63,10 +63,10 @@ namespace Nijo.Models.DataModelModules {
 
                     // 更新前処理。入力検証や自動補完項目の設定を行なう。
                     var hasError = false;
-                    if (!{{ValidateRequired.METHOD_NAME}}(dbEntity, messages)) hasError = true;
-                    if (!{{ValidateMaxLength.METHOD_NAME}}(dbEntity, messages)) hasError = true;
+                {{DataModel.GetValidators().SelectTextTemplate(validator => $$"""
+                    if (!{{validator.MethodName}}(dbEntity, messages)) hasError = true;
+                """)}}
                     if (!{{ValidateCharacterType.METHOD_NAME}}(dbEntity, messages)) hasError = true;
-                    if (!{{ValidateDigitsAndScales.METHOD_NAME}}(dbEntity, messages)) hasError = true;
                     if (!{{ValidateDynamicEnumType.METHOD_NAME}}(dbEntity, messages)) hasError = true;
                     if (!{{OnBeforeMethodName}}(command, messages, context)) hasError = true;
 
