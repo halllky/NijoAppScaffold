@@ -107,7 +107,7 @@ internal static class BasicNodeOptions {
         ValidateOthers = ctx => {
             // QueryModelの場合はビューにマッピングされる場合のみ指定可能
             if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model) && model is QueryModel) {
-                var root = ctx.SchemaParseContext.GetRootAggregateElement(ctx.XElement);
+                var root = ctx.XElement.GetRootAggregateElement();
                 var mapToView = root.Attribute(MapToView!.AttributeName);
 
                 if (mapToView == null) ctx.AddError("ビューにマッピングされない場合は指定できません。");
@@ -176,7 +176,7 @@ internal static class BasicNodeOptions {
 
             // クエリモデルの子配列は、ビューにマッピングされない場合は付与不可
             if (model is QueryModel && ownerType == E_NodeType.ChildrenAggregate) {
-                var root = ctx.SchemaParseContext.GetRootAggregateElement(ctx.XElement);
+                var root = ctx.XElement.GetRootAggregateElement();
                 var mapToView = root.Attribute(MapToView!.AttributeName);
 
                 if (mapToView == null) {

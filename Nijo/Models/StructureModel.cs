@@ -65,8 +65,8 @@ namespace Nijo.Models {
                 }
 
                 // 自身のツリーの集約を参照していないかチェック
-                var rootElement = context.GetRootAggregateElement(refElement);
-                var refToRoot = context.GetRootAggregateElement(refTo);
+                var rootElement = refElement.GetRootAggregateElement();
+                var refToRoot = refTo.GetRootAggregateElement();
 
                 if (rootElement == refToRoot) {
                     addError(refElement, "自身のツリーの集約を参照することはできません。");
@@ -76,7 +76,7 @@ namespace Nijo.Models {
                 // 参照先がクエリモデル、GDQMデータモデル、またはStructureModelか確認
                 var refToType = refToRoot.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
                 var isQueryModel = refToType == QueryModel.NODE_TYPE;
-                var isGDQM = context.HasGenerateDefaultQueryModelAttribute(refToRoot);
+                var isGDQM = refToRoot.HasGenerateDefaultQueryModelAttribute();
                 var isStructureModel = refToType == SCHEMA_NAME;
 
                 if (!isQueryModel && !isGDQM && !isStructureModel) {

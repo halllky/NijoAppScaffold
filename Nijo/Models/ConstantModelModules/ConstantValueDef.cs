@@ -32,7 +32,7 @@ namespace Nijo.Models.ConstantModelModules {
             }
 
             // XMLコメントを取得
-            XmlCommentLines = _schemaParser.GetCommentMultiLine(element).ToArray();
+            XmlCommentLines = element.GetCommentMultiLine().ToArray();
         }
 
         private readonly XElement _element;

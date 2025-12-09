@@ -515,7 +515,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
         }
 
         // コメントがある場合はレンダリング
-        var comment = ctx.SchemaParser.GetCommentSingleLine(xElement, E_CsTs.TypeScript);
+        var comment = xElement.GetCommentSingleLine(E_CsTs.TypeScript);
         if (!string.IsNullOrWhiteSpace(comment)) {
             yield return $$"""
                 comment: '{{comment}}',
@@ -563,7 +563,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
         }
 
         // コメントがある場合はレンダリング
-        var comment = ctx.SchemaParser.GetCommentSingleLine(xElement, E_CsTs.CSharp);
+        var comment = xElement.GetCommentSingleLine(E_CsTs.CSharp);
         if (!string.IsNullOrWhiteSpace(comment)) {
             yield return $$"""
                 Comment = "{{comment}}",

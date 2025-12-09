@@ -28,7 +28,7 @@ namespace Nijo.Models.StaticEnumModelModules {
         public ISchemaPathNode? PreviousNode { get; }
 
         public string PhysicalName => _ctx.GetPhysicalName(_xElement);
-        public string DisplayName => _ctx.GetDisplayName(_xElement);
+        public string DisplayName => _xElement.GetDisplayName();
         public AggregateBase Owner {
             get {
                 var parent = _xElement.GetParentWithoutMemo();

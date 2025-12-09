@@ -126,7 +126,7 @@ namespace Nijo.Models {
                 } else {
                     // クエリモデルの場合
                     var isQueryModel = targetModelType == QueryModel.NODE_TYPE;
-                    var isGDQM = context.HasGenerateDefaultQueryModelAttribute(targetModel);
+                    var isGDQM = targetModel.HasGenerateDefaultQueryModelAttribute();
 
                     if (!isQueryModel && !isGDQM) {
                         addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」はクエリモデルまたは{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデルではありません。");

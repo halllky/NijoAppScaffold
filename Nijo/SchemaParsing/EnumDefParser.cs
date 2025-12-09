@@ -24,7 +24,7 @@ namespace Nijo.SchemaParsing {
         private readonly XElement _xElement;
         private readonly SchemaParseContext _ctx;
 
-        internal string DisplayName => _ctx.GetDisplayName(_xElement);
+        internal string DisplayName => _xElement.GetDisplayName();
         internal string CsEnumName => _ctx.GetPhysicalName(_xElement);
         internal string TsTypeName => _ctx.GetPhysicalName(_xElement);
 
@@ -32,7 +32,7 @@ namespace Nijo.SchemaParsing {
 
         internal string RenderTsSearchConditionType() {
             return $$"""
-                { {{_xElement.ElementsWithoutMemo().Select(el => $"'{_ctx.GetDisplayName(el).Replace("'", "\\'")}'?: boolean").Join(", ")}} }
+                { {{_xElement.ElementsWithoutMemo().Select(el => $"'{el.GetDisplayName().Replace("'", "\\'")}'?: boolean").Join(", ")}} }
                 """;
         }
 

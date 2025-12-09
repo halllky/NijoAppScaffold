@@ -34,15 +34,15 @@ namespace Nijo.ImmutableSchema {
         /// <summary>
         /// 表示用名称
         /// </summary>
-        public string DisplayName => _ctx.GetDisplayName(XElement);
+        public string DisplayName => XElement.GetDisplayName();
         /// <summary>
         /// データベーステーブル名
         /// </summary>
-        public string DbName => _ctx.GetDbName(XElement);
+        public string DbName => XElement.GetDbName();
         /// <summary>
         /// ラテン語名
         /// </summary>
-        public string LatinName => _ctx.GetLatinName(XElement);
+        public string LatinName => XElement.GetLatinName();
 
         /// <summary>
         /// この集約が参照先エントリーとして参照された場合の名前。
@@ -54,7 +54,7 @@ namespace Nijo.ImmutableSchema {
         /// コメント
         /// </summary>
         [Obsolete("SchemaParseContext.GetCommentSingleLine または SchemaParseContext.GetCommentMultiLine を直接使ってください")]
-        public string GetComment(E_CsTs csts) => _ctx.GetCommentSingleLine(XElement, csts);
+        public string GetComment(E_CsTs csts) => XElement.GetCommentSingleLine(csts);
 
         /// <summary>
         /// この集約が持つメンバーを列挙します。

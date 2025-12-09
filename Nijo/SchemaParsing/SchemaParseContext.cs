@@ -76,53 +76,6 @@ public class SchemaParseContext {
         // それ以外の場合は単純にLocalNameを返す
         return xElement.Name.LocalName;
     }
-    /// <summary>
-    /// 表示名称
-    /// </summary>
-    internal string GetDisplayName(XElement xElement) {
-        return xElement.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? xElement.Name.LocalName;
-    }
-    /// <summary>
-    /// DB名
-    /// </summary>
-    internal string GetDbName(XElement xElement) {
-        return xElement.Attribute(BasicNodeOptions.DbName.AttributeName)?.Value ?? xElement.Name.LocalName;
-    }
-    /// <summary>
-    /// ラテン名
-    /// </summary>
-    internal string GetLatinName(XElement xElement) {
-        return xElement.Attribute(BasicNodeOptions.LatinName.AttributeName)?.Value ?? xElement.Name.LocalName.ToHashedString();
-    }
-    /// <summary>
-    /// このXElementの直前にXCommentがあればそのテキストを返し、なければ空文字列を返します。
-    /// 改行コードは \r\n または \n に置き換えられます。
-    /// バックスラッシュとクォート文字は適切にエスケープされます。
-    /// </summary>
-    internal string GetCommentSingleLine(XElement xElement, E_CsTs csts) {
-        var rawText = xElement.PreviousNode is XComment comment ? comment.Value.Trim() : string.Empty;
-
-        // バックスラッシュとダブルクォートをエスケープ
-        var escaped = csts == E_CsTs.CSharp
-            ? rawText.Replace("\\", "\\\\").Replace("\"", "\\\"")
-            : rawText.Replace("\\", "\\\\").Replace("'", "\\'");
-
-        // 改行コードを置き換え
-        var lineEndingReplaced = csts == E_CsTs.CSharp
-            ? escaped.ReplaceLineEndings("\\r\\n")
-            : escaped.ReplaceLineEndings("\\n");
-
-        return lineEndingReplaced;
-    }
-    /// <summary>
-    /// このXElementの直前にXCommentがあればそのテキストを改行コードを1行ずつ返します。
-    /// </summary>
-    internal IEnumerable<string> GetCommentMultiLine(XElement xElement) {
-        var rawText = xElement.PreviousNode is XComment comment ? comment.Value.Trim() : string.Empty;
-        return rawText
-            .ReplaceLineEndings(Environment.NewLine)
-            .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-    }
 
 
     /// <summary>
@@ -132,7 +85,7 @@ public class SchemaParseContext {
     /// </summary>
     internal E_NodeType GetNodeType(XElement xElement) {
         // ルート集約, Child, Children
-        if (TryGetAggregateNodeType(xElement, out var aggregateNodeType)) {
+        if (xElement.TryGetAggregateNodeType(out var aggregateNodeType)) {
             return aggregateNodeType.Value;
         }
 
@@ -164,32 +117,6 @@ public class SchemaParseContext {
             return E_NodeType.ValueMember;
         }
         return E_NodeType.Unknown;
-    }
-    /// <summary>
-    /// <see cref="GetNodeType(XElement)"/> のロジックのうちルート集約・Child・Childrenの判定には
-    /// <see cref="SchemaParseContext"/> のインスタンスが要らないのでその部分だけ切り出したもの
-    /// </summary>
-    internal static bool TryGetAggregateNodeType(XElement xElement, [NotNullWhen(true)] out E_NodeType? nodeType) {
-
-        // ルート要素直下に定義されている場合はルート集約
-        if (xElement.GetParentWithoutMemo() == xElement.Document?.Root) {
-            nodeType = E_NodeType.RootAggregate;
-            return true;
-        }
-        // Child
-        var type = xElement.Attribute(ATTR_NODE_TYPE);
-        if (type?.Value == NODE_TYPE_CHILD) {
-            nodeType = E_NodeType.ChildAggregate;
-            return true;
-        }
-        // Children
-        if (type?.Value == NODE_TYPE_CHILDREN) {
-            nodeType = E_NodeType.ChildrenAggregate;
-            return true;
-        }
-
-        nodeType = null;
-        return false;
     }
 
 
@@ -410,7 +337,7 @@ public class SchemaParseContext {
             ?.Descendants()
             .Where(el => GetNodeType(el).HasFlag(E_NodeType.Aggregate)
                       && TryGetModel(el, out var model) && model is DataModel)
-            .GroupBy(el => GetDbName(el))
+            .GroupBy(el => el.GetDbName())
             ?? [];
         foreach (var group in tableNameGroups) {
             if (group.Count() == 1) continue;
@@ -613,7 +540,7 @@ public class SchemaParseContext {
                 // クエリモデルからはクエリモデルの集約しか参照できない
                 if (TryGetModel(refTo, out var refToModel) && !(refToModel is QueryModel)) {
                     // GenerateDefaultQueryModelの値をより厳密に検証
-                    var isGDQM = HasGenerateDefaultQueryModelAttribute(refTo);
+                    var isGDQM = refTo.HasGenerateDefaultQueryModelAttribute();
 
                     if (!isGDQM) {
                         errorMessage = $"クエリモデルの集約からはクエリモデルの集約または{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデルしか参照できません。";
@@ -630,7 +557,7 @@ public class SchemaParseContext {
                 // コマンドモデルからはクエリモデルの集約しか参照できない
                 if (TryGetModel(refTo, out var refToModel) && !(refToModel is QueryModel)) {
                     // GenerateDefaultQueryModelの値をより厳密に検証
-                    var isGDQM = HasGenerateDefaultQueryModelAttribute(refTo);
+                    var isGDQM = refTo.HasGenerateDefaultQueryModelAttribute();
 
                     if (!isGDQM) {
                         errorMessage = $"コマンドモデルの集約からはクエリモデルの集約または{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデルしか参照できません。";
@@ -647,7 +574,7 @@ public class SchemaParseContext {
                 // StructureModelからはクエリモデル、GDQMデータモデル、またはStructureModelの集約しか参照できない
                 if (TryGetModel(refTo, out var refToModel)) {
                     var isQueryModel = refToModel is QueryModel;
-                    var isGDQM = HasGenerateDefaultQueryModelAttribute(refTo);
+                    var isGDQM = refTo.HasGenerateDefaultQueryModelAttribute();
                     var isStructureModel = refToModel is StructureModel;
 
                     if (!isQueryModel && !isGDQM && !isStructureModel) {
@@ -733,56 +660,5 @@ public class SchemaParseContext {
             .Where(value => !string.IsNullOrEmpty(value))
             .Distinct()
             .OrderBy(charType => charType);
-    }
-
-    /// <summary>
-    /// 要素のルート集約要素を返します
-    /// </summary>
-    internal XElement GetRootAggregateElement(XElement element) {
-        return element.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
-    }
-
-    /// <summary>
-    /// 要素またはその親のルート集約にGenerateDefaultQueryModel属性が付与されているかを確認します
-    /// </summary>
-    internal bool HasGenerateDefaultQueryModelAttribute(XElement element) {
-        var rootElement = GetRootAggregateElement(element);
-        var gdqmAttr = rootElement.Attribute(BasicNodeOptions.GenerateDefaultQueryModel.AttributeName)?.Value;
-        return !string.IsNullOrEmpty(gdqmAttr) && gdqmAttr.Equals("True", StringComparison.OrdinalIgnoreCase);
-    }
-}
-
-internal static class SchemaParseContextExtensions {
-    /// <summary>
-    /// 親要素を返します。親要素がメモの場合、さらにその親要素を返します。
-    /// </summary>
-    internal static XElement? GetParentWithoutMemo(this XElement? element) {
-        if (element == null) return null;
-
-        var parent = element.Parent;
-        while (parent != null && parent.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_MEMO) {
-            parent = parent.Parent;
-        }
-        return parent;
-    }
-    /// <summary>
-    /// メモを除いた子要素を列挙します。
-    /// メモが子要素を持っている場合、あたかもメモ要素が存在しなかったものとみなして
-    /// その子要素を列挙します。
-    /// </summary>
-    internal static IEnumerable<XElement> ElementsWithoutMemo(this XElement element) {
-        return Enumerate(element);
-
-        static IEnumerable<XElement> Enumerate(XElement owner) {
-            foreach (var el in owner.Elements()) {
-                if (el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_MEMO) {
-                    foreach (var el2 in Enumerate(el)) {
-                        yield return el2;
-                    }
-                } else {
-                    yield return el;
-                }
-            }
-        }
     }
 }
