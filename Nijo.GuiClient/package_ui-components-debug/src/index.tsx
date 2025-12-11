@@ -11,6 +11,7 @@ import _007_グリッド機能 from "@nijo/ui-components/layout/DynamicForm/__te
 import FormLayoutPatternsDebugging from "./FormLayoutPatternsDebugging"
 import EditableGridDebugging from "./EditableGridDebugging"
 import EditableGridHookTest from "./EditableGridHookTest"
+import YearMonthGridのデバッグ from "../../package_ui-components/src/layout/YearMonthGridのデバッグ"
 
 export default function () {
 
@@ -120,6 +121,11 @@ export const getDebuggingPages = (): { groupName: string, links: (ReactRouter.Ro
         label: 'EditableGrid フック使用テスト',
         element: <EditableGridHookTest />,
       },
+      {
+        path: '/calendar-grid/001',
+        label: 'CalendarGrid 基本機能',
+        element: <YearMonthGridのデバッグ />,
+      }
     ],
   },
   {
