@@ -122,8 +122,8 @@ export const getDebuggingPages = (): { groupName: string, links: (ReactRouter.Ro
         element: <EditableGridHookTest />,
       },
       {
-        path: '/calendar-grid/001',
-        label: 'CalendarGrid 基本機能',
+        path: '/year-month-grid/001',
+        label: 'YearMonthGrid 基本機能',
         element: <YearMonthGridのデバッグ />,
       }
     ],

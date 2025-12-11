@@ -1,5 +1,10 @@
-
-import React, { useMemo } from 'react'
+import React, { useMemo } from "react"
+import {
+  useReactTable,
+  getCoreRowModel,
+  createColumnHelper,
+  flexRender,
+} from "@tanstack/react-table"
 
 /** YYYY/MM 形式の文字列 */
 export type YearMonth = `${number}/${number}`
@@ -9,8 +14,10 @@ export type GridProps<TRow extends Row<TItem>, TItem extends BodyItem> = {
   since: YearMonth
   /** 表示範囲の終点 */
   until: YearMonth
+  /** 年月1個分の横幅(px指定) */
+  calendarBodyWidthPx: number
   /** グリッドの各行 */
-  rows?: TRow[]
+  rows: TRow[]
   /** グリッドのボディのアイテムを描画するための関数 */
   renderBodyItem: (props: BodyItemRendererProps<TRow, TItem>) => React.ReactNode
   /** グリッドの左側の固定列を描画するための関数の配列 */
@@ -25,6 +32,8 @@ export type GridProps<TRow extends Row<TItem>, TItem extends BodyItem> = {
   onBodyClick?: (ev: BodyEventArgs<TRow, TItem>) => void
   /** グリッドのボディの何もない部分がダブルクリックされたときのイベントハンドラ */
   onBodyDoubleClick?: (ev: BodyEventArgs<TRow, TItem>) => void
+  /** コンポーネント全体に適用 */
+  className?: string
 }
 
 /** カレンダーの横1行分のオブジェクトが備えるべき属性 */
@@ -34,17 +43,23 @@ export type Row<TItem extends BodyItem> = {
 }
 
 /** カレンダーのボディ部分に表示されるアイテムが備えるべき属性 */
-export type BodyItem =
+export type BodyItem = (
   | { type: 'point', yearMonth: YearMonth }
   | { type: 'range', since: YearMonth, until: YearMonth }
+) & {
+  /** アイテムの高さ(px) */
+  heightPx?: number
+}
 
 // ----------------------------------------
 // イベント引数型
 
 /** カレンダー左右の固定列のレンダリング処理の引数 */
 export type FixedColumnRenderer<TRow extends Row<TItem>, TItem extends BodyItem> = {
-  header: React.ReactNode
+  header?: React.ReactNode
   body: (props: { row: TRow, rowIndex: number }) => React.ReactNode
+  /** 列の幅(px指定) */
+  widthPx?: number
 }
 
 /** ボディ要素レンダリング処理の引数 */
@@ -78,6 +93,7 @@ export function Grid<TRow extends Row<TItem>, TItem extends BodyItem>(props: Gri
   const {
     since,
     until,
+    calendarBodyWidthPx,
     rows,
     renderBodyItem,
     renderLeftColumns,
@@ -86,123 +102,173 @@ export function Grid<TRow extends Row<TItem>, TItem extends BodyItem>(props: Gri
     onBodyItemDoubleClick,
     onBodyClick,
     onBodyDoubleClick,
+    className,
   } = props
 
   const months = useMemo(() => getMonthsList(since, until), [since, until])
-  const yearGroups = useMemo(() => getYearGroups(months), [months])
+
+  const columns = useMemo(() => {
+    const columnHelper = createColumnHelper<TRow>()
+    const leftCols = renderLeftColumns?.map((col, i) =>
+      columnHelper.display({
+        id: `left-${i}`,
+        header: () => col.header,
+        cell: info => col.body({ row: info.row.original, rowIndex: info.row.index }),
+        size: col.widthPx ?? 64,
+        meta: { sticky: 'left' } satisfies ColumnMeta,
+      })
+    ) ?? []
+
+    const bodyCol = columnHelper.display({
+      id: 'body',
+      size: calendarBodyWidthPx * months.length,
+      // 年月ヘッダー（すべての年月を1個の列として扱っている）
+      header: () => (
+        <div className="flex h-full">
+          {months.map(ym => (
+            <div
+              key={ym}
+              className="flex-1 border-l border-gray-200 border-b border-gray-300 text-center text-sm box-border min-w-0 flex items-center justify-center"
+            >
+              {ym}
+            </div>
+          ))}
+        </div>
+      ),
+      // 年月ボディ部分（すべての年月を1個の列として扱っている）
+      cell: info => {
+        const { totalHeight, itemsWithLayout } = calculateRowLayout(info.row.original.bodyItems, months)
+        return (
+          <div className="relative w-full" style={{ height: totalHeight }}>
+            {/* 各年月の背景 */}
+            <div className="absolute inset-0 flex w-full h-full">
+              {months.map(ym => (
+                <div
+                  key={ym}
+                  className="flex-1 border-l border-gray-200 h-full"
+                  onClick={() => onBodyClick?.({ row: info.row.original, rowIndex: info.row.index, yearMonth: ym })}
+                  onDoubleClick={() => onBodyDoubleClick?.({ row: info.row.original, rowIndex: info.row.index, yearMonth: ym })}
+                >
+                </div>
+              ))}
+            </div>
+
+            {/* Items */}
+            {itemsWithLayout.map(({ item, style, startYM }, itemIndex) => (
+              <div
+                key={itemIndex}
+                className="absolute z-10 overflow-hidden whitespace-nowrap"
+                style={style}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onBodyItemClick?.({ row: info.row.original, rowIndex: info.row.index, item: item as TItem, yearMonth: startYM })
+                }}
+                onDoubleClick={(e) => {
+                  e.stopPropagation()
+                  onBodyItemDoubleClick?.({ row: info.row.original, rowIndex: info.row.index, item: item as TItem, yearMonth: startYM })
+                }}
+              >
+                {renderBodyItem({ row: info.row.original, rowIndex: info.row.index, item: item as TItem })}
+              </div>
+            ))}
+          </div>
+        )
+      },
+    })
+
+    const rightCols = renderRightColumns?.map((col, i) =>
+      columnHelper.display({
+        id: `right-${i}`,
+        header: () => col.header,
+        cell: info => col.body({ row: info.row.original, rowIndex: info.row.index }),
+        size: col.widthPx ?? 64,
+        meta: { sticky: 'right' } satisfies ColumnMeta,
+      })
+    ) ?? []
+
+    return [...leftCols, bodyCol, ...rightCols]
+  }, [renderLeftColumns, renderRightColumns, calendarBodyWidthPx, months, onBodyClick, onBodyDoubleClick, onBodyItemClick, onBodyItemDoubleClick, renderBodyItem])
+
+  const table = useReactTable({
+    data: rows,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  })
 
   return (
-    <div style={{ overflow: 'auto', maxWidth: '100%', maxHeight: '100%' }}>
-      <table style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+    <div className={`overflow-auto ${className ?? ''}`}>
+      <table
+        className="border-separate border-spacing-0 table-fixed"
+        style={{ width: table.getTotalSize() }}
+      >
         <thead>
-          {/* Years Header */}
-          <tr>
-            {renderLeftColumns?.map((_, i) => (
-              <th key={`left-header-empty-${i}`} style={{ position: 'sticky', left: 0, zIndex: 3, background: '#f0f0f0', borderBottom: '1px solid #ccc' }} />
-            ))}
-            {yearGroups.map(group => (
-              <th
-                key={group.year}
-                colSpan={group.months.length}
-                style={{ borderLeft: '1px solid #ccc', borderBottom: '1px solid #ccc', textAlign: 'center', background: '#f9f9f9' }}
-              >
-                {group.year}
-              </th>
-            ))}
-            {renderRightColumns?.map((_, i) => (
-              <th key={`right-header-empty-${i}`} style={{ position: 'sticky', right: 0, zIndex: 3, background: '#f0f0f0', borderBottom: '1px solid #ccc' }} />
-            ))}
-          </tr>
-          {/* Months Header */}
-          <tr>
-            {renderLeftColumns?.map((col, i) => (
-              <th key={`left-header-${i}`} style={{ position: 'sticky', left: 0, zIndex: 3, background: '#f0f0f0', borderBottom: '1px solid #ccc', borderRight: '1px solid #ccc' }}>
-                {col.header}
-              </th>
-            ))}
-            {months.map(ym => (
-              <th
-                key={ym}
-                style={{ minWidth: '40px', borderLeft: '1px solid #eee', borderBottom: '1px solid #ccc', textAlign: 'center', fontSize: '0.8em', background: '#fff' }}
-              >
-                {parseYearMonth(ym).month}
-              </th>
-            ))}
-            {renderRightColumns?.map((col, i) => (
-              <th key={`right-header-${i}`} style={{ position: 'sticky', right: 0, zIndex: 3, background: '#f0f0f0', borderBottom: '1px solid #ccc', borderLeft: '1px solid #ccc' }}>
-                {col.header}
-              </th>
-            ))}
-          </tr>
+          {table.getHeaderGroups().map(headerGroup => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map(header => {
+                const isStickyLeft = (header.column.columnDef.meta as ColumnMeta)?.sticky === 'left'
+                const isStickyRight = (header.column.columnDef.meta as ColumnMeta)?.sticky === 'right'
+
+                let style: React.CSSProperties = {
+                  width: header.getSize(),
+                }
+
+                if (isStickyLeft) {
+                  style.position = 'sticky'
+                  style.left = header.getStart()
+                  style.zIndex = 30
+                } else if (isStickyRight) {
+                  style.position = 'sticky'
+                  style.right = table.getTotalSize() - header.getStart() - header.getSize()
+                  style.zIndex = 30
+                }
+
+                return (
+                  <th
+                    key={header.id}
+                    colSpan={header.colSpan}
+                    style={style}
+                    className="p-0 bg-gray-100"
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </th>
+                )
+              })}
+            </tr>
+          ))}
         </thead>
         <tbody>
-          {rows?.map((row, rowIndex) => (
-            <tr key={rowIndex}>
-              {/* Left Fixed Columns */}
-              {renderLeftColumns?.map((col, colIndex) => (
-                <td
-                  key={`left-${rowIndex}-${colIndex}`}
-                  style={{ position: 'sticky', left: 0, zIndex: 2, background: '#fff', borderBottom: '1px solid #eee', borderRight: '1px solid #ccc' }}
-                >
-                  {col.body({ row, rowIndex })}
-                </td>
-              ))}
+          {table.getRowModel().rows.map(row => (
+            <tr key={row.id}>
+              {row.getVisibleCells().map(cell => {
+                const isStickyLeft = (cell.column.columnDef.meta as ColumnMeta)?.sticky === 'left'
+                const isStickyRight = (cell.column.columnDef.meta as ColumnMeta)?.sticky === 'right'
 
-              {/* Timeline Body */}
-              <td colSpan={months.length} style={{ padding: 0, position: 'relative', height: '30px', borderBottom: '1px solid #eee' }}>
-                <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex' }}>
-                  {/* Background Grid */}
-                  {months.map(ym => (
-                    <div
-                      key={ym}
-                      style={{ flex: 1, borderLeft: '1px solid #eee', height: '100%', boxSizing: 'border-box' }}
-                      onClick={() => onBodyClick?.({ row, rowIndex, yearMonth: ym })}
-                      onDoubleClick={() => onBodyDoubleClick?.({ row, rowIndex, yearMonth: ym })}
-                    />
-                  ))}
+                let style: React.CSSProperties = {
+                  width: cell.column.getSize(),
+                }
 
-                  {/* Items */}
-                  {row.bodyItems.map((item, itemIndex) => {
-                    const position = calculateItemPosition(item, months)
-                    if (!position) return null
-                    return (
-                      <div
-                        key={itemIndex}
-                        style={{
-                          position: 'absolute',
-                          left: `${position.left}%`,
-                          width: `${position.width}%`,
-                          top: '2px',
-                          bottom: '2px',
-                          zIndex: 1,
-                          overflow: 'hidden',
-                          whiteSpace: 'nowrap',
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onBodyItemClick?.({ row, rowIndex, item, yearMonth: position.startYM })
-                        }}
-                        onDoubleClick={(e) => {
-                          e.stopPropagation()
-                          onBodyItemDoubleClick?.({ row, rowIndex, item, yearMonth: position.startYM })
-                        }}
-                      >
-                        {renderBodyItem({ row, rowIndex, item })}
-                      </div>
-                    )
-                  })}
-                </div>
-              </td>
+                if (isStickyLeft) {
+                  style.position = 'sticky'
+                  style.left = cell.column.getStart()
+                  style.zIndex = 20
+                } else if (isStickyRight) {
+                  style.position = 'sticky'
+                  style.right = table.getTotalSize() - cell.column.getStart() - cell.column.getSize()
+                  style.zIndex = 20
+                }
 
-              {/* Right Fixed Columns */}
-              {renderRightColumns?.map((col, colIndex) => (
-                <td
-                  key={`right-${rowIndex}-${colIndex}`}
-                  style={{ position: 'sticky', right: 0, zIndex: 2, background: '#fff', borderBottom: '1px solid #eee', borderLeft: '1px solid #ccc' }}
-                >
-                  {col.body({ row, rowIndex })}
-                </td>
-              ))}
+                return (
+                  <td
+                    key={cell.id}
+                    style={style}
+                    className={`relative p-0 border-b border-gray-200 ${isStickyLeft ? 'border-r border-gray-300 bg-white' : ''} ${isStickyRight ? 'border-l border-gray-300 bg-white' : ''}`}
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                )
+              })}
             </tr>
           ))}
         </tbody>
@@ -251,7 +317,7 @@ function getYearGroups(months: YearMonth[]): YearGroup[] {
   return groups
 }
 
-function calculateItemPosition(item: BodyItem, months: YearMonth[]): { left: number, width: number, startYM: YearMonth } | null {
+function calculateItemPosition(item: BodyItem, months: YearMonth[]): { left: number, width: number, startYM: YearMonth, startIdx: number, endIdx: number } | null {
   const firstMonth = months[0]
   const lastMonth = months[months.length - 1]
 
@@ -277,5 +343,80 @@ function calculateItemPosition(item: BodyItem, months: YearMonth[]): { left: num
   const left = startIdx * oneMonthWidth
   const width = (endIdx - startIdx + 1) * oneMonthWidth
 
-  return { left, width, startYM: effectiveStart as YearMonth }
+  return { left, width, startYM: effectiveStart as YearMonth, startIdx, endIdx }
+}
+
+function calculateRowLayout(items: BodyItem[], months: YearMonth[]) {
+  // 1. Calculate horizontal positions for all items
+  const positionedItems = items.map(item => {
+    const pos = calculateItemPosition(item, months)
+    return { item, pos }
+  }).filter((x): x is { item: BodyItem, pos: NonNullable<ReturnType<typeof calculateItemPosition>> } => x.pos !== null)
+
+  // 2. Calculate vertical positions
+  const itemsWithLayout: { item: BodyItem, style: React.CSSProperties, startYM: YearMonth }[] = []
+
+  // Sort by start index
+  positionedItems.sort((a, b) => {
+    if (a.pos.startIdx !== b.pos.startIdx) return a.pos.startIdx - b.pos.startIdx
+    return b.pos.width - a.pos.width
+  })
+
+  const placedRects: { startIdx: number, endIdx: number, top: number, height: number }[] = []
+
+  for (const { item, pos } of positionedItems) {
+    const height = item.heightPx ?? 24 // Default height
+    const gap = 4 // Vertical gap
+
+    let top = 2 // Initial top padding
+
+    // Find a valid top position
+    const horizontalOverlaps = placedRects.filter(r =>
+      Math.max(r.startIdx, pos.startIdx) <= Math.min(r.endIdx, pos.endIdx)
+    )
+
+    const candidates = [2, ...horizontalOverlaps.map(r => r.top + r.height + gap)].sort((a, b) => a - b)
+
+    let bestTop = candidates[0]
+    for (const cand of candidates) {
+      const collision = horizontalOverlaps.some(r =>
+        Math.max(r.top, cand) < Math.min(r.top + r.height, cand + height)
+      )
+      if (!collision) {
+        bestTop = cand
+        break
+      }
+    }
+    top = bestTop
+
+    placedRects.push({
+      startIdx: pos.startIdx,
+      endIdx: pos.endIdx,
+      top,
+      height
+    })
+
+    itemsWithLayout.push({
+      item,
+      startYM: pos.startYM,
+      style: {
+        left: `${pos.left}%`,
+        width: `${pos.width}%`,
+        top: `${top}px`,
+        height: `${height}px`,
+        position: 'absolute',
+        zIndex: 10,
+        overflow: 'hidden',
+        whiteSpace: 'nowrap'
+      }
+    })
+  }
+
+  const totalHeight = Math.max(32, ...placedRects.map(r => r.top + r.height + 2)) // Min height 32 (h-8)
+
+  return { totalHeight, itemsWithLayout }
+}
+
+type ColumnMeta = {
+  sticky?: 'left' | 'right'
 }
