@@ -19,7 +19,7 @@ export default function ({ rootAggregateType, className }: {
 
   // 自動生成されたメタデータをもとにした引数の入力フォーム定義
   const parameterFormSchema = React.useMemo(() => {
-    const root = helper.metadata[rootAggregateType]
+    const root = helper.metadata[rootAggregateType] as MetadataForPage.StructureMetadata
     const parameter = Object
       .entries(helper.metadata)
       .find(([name]) => name === root.parameter)?.[1]
@@ -29,7 +29,7 @@ export default function ({ rootAggregateType, className }: {
 
   // 自動生成されたメタデータをもとにした戻り値の入力フォーム定義
   const returnValueFormSchema = React.useMemo(() => {
-    const root = helper.metadata[rootAggregateType]
+    const root = helper.metadata[rootAggregateType] as MetadataForPage.StructureMetadata
     const returnValue = Object
       .entries(helper.metadata)
       .find(([name]) => name === root.returnValue)?.[1]

@@ -369,7 +369,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
                     {{UiConstraint.MEMBER_REQUIRED}}: true,
                 """)}}
                 {{If(m.CharacterType != null, () => $$"""
-                    {{UiConstraint.MEMBER_CHARACTER_TYPE}}: {{m.CharacterType}},
+                    {{UiConstraint.MEMBER_CHARACTER_TYPE}}: '{{m.CharacterType!.Replace("'", "\\'")}}',
                 """)}}
                 {{If(m.MaxLength != null, () => $$"""
                     {{UiConstraint.MEMBER_MAX_LENGTH}}: {{m.MaxLength}},
