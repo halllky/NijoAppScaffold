@@ -265,6 +265,7 @@ namespace Nijo.CodeGenerating {
                     .OfType<ValueMember>()
                     .Where(vm => vm.CharacterType != null)
                     .Select(vm => vm.CharacterType!)
+                    .Distinct()
                     .ToArray();
             }
         }

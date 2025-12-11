@@ -20,4 +20,16 @@ namespace MyApp;
 
 partial class OverridedApplicationConfigure {
 
+    public override bool ValidateIf半角数字および半角ハイフンのみ(string? value) {
+        if (string.IsNullOrEmpty(value)) {
+            return true;
+        }
+        foreach (char c in value) {
+            if ((c < '0' || c > '9') && c != '-') {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }
