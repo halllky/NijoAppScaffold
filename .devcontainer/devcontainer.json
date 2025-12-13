@@ -23,15 +23,10 @@
 		5001 // .NET default https
 	],
 	// コンテナビルド後に実行するコマンド
-	"postCreateCommand": [
-		// .NET 関連のライブラリをインストールする
-		"dotnet restore",
-		// Node.js 関連のライブラリをインストールする
-		"npm ci",
-		// nijo のコマンドラインツールを使用可能にしておく。
-		// ビルド成果物は Nijo/bin/Debug 以下に配置される。
-		"dotnet build Nijo -c Debug"
-	],
+	// * .NET 関連のライブラリをインストールする
+	// * Node.js 関連のライブラリをインストールする
+	// * nijo のコマンドラインツールを使用可能にしておく。（ビルド成果物は Nijo/bin/Debug 以下に配置される）
+	"postCreateCommand": "dotnet restore && npm ci && dotnet build Nijo -c Debug",
 	// Configure tool-specific properties.
 	"customizations": {
 		"vscode": {
