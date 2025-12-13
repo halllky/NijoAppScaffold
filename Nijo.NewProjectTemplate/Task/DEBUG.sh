@@ -41,7 +41,7 @@ popd > /dev/null
 
 # Start debugging
 # dotnet watch
-osascript -e "tell application \"Terminal\" to do script \"cd \\\"$PROJECT_ROOT/WebApi\\\" && dotnet watch --launch-profile Debug\""
+osascript -e "tell application \"Terminal\" to do script \"cd \\\"$PROJECT_ROOT/WebApi\\\" && dotnet watch --launch-profile http\""
 
 # npm run dev
 osascript -e "tell application \"Terminal\" to do script \"cd \\\"$PROJECT_ROOT/client\\\" && npm run dev\""
