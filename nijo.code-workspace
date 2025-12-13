@@ -3,7 +3,6 @@
     "recommendations": [
       "EditorConfig.EditorConfig",
       "yzhang.markdown-all-in-one",
-      "bierner.markdown-preview-github-styles",
       "ms-dotnettools.vscode-dotnet-runtime",
       "bierner.markdown-mermaid"
     ]
@@ -133,11 +132,15 @@
         "detail": "特定のデモのソースコード再生成をかけなおしてデバッグ開始",
         "type": "shell",
         "options": {
-          "cwd": "${workspaceFolder:NijoAppScaffold}"
+          "cwd": "${workspaceFolder:NijoAppScaffold}/demo"
         },
         "problemMatcher": [],
-        "command": "docker compose --profile ${input:dockerComposeDemoProfileName} up",
-        "dependsOn": "Nijo > ソース最新化"
+        "windows": {
+          "command": ".\\${input:demoFolder}\\Task\\DEBUG.bat"
+        },
+        "osx": {
+          "command": "./${input:demoFolder}/Task/DEBUG.sh"
+        }
       },
       {
         "label": "Nijo > デモ > スキーマ定義編集",
@@ -194,25 +197,6 @@
       }
     ],
     "inputs": [
-      {
-        "id": "dockerComposeDemoProfileName",
-        "description": "デモを選択してください",
-        "type": "pickString",
-        "options": [
-          {
-            "label": "000_基本的なDataModelの例",
-            "value": "demo000"
-          },
-          {
-            "label": "100_チャットアプリ",
-            "value": "demo100"
-          },
-          {
-            "label": "200_複雑なパターン",
-            "value": "demo200"
-          }
-        ]
-      },
       {
         "id": "demoFolder",
         "description": "デモを選択してください",

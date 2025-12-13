@@ -23,8 +23,33 @@ nijo new MyProject
 
 ## ドキュメント
 
-詳細なドキュメント、チュートリアル、APIリファレンスは [Document](./Document) フォルダを参照してください。
+執筆中
 
 ## ライセンス
 
 このプロジェクトは [LICENSE.txt](./LICENSE.txt) の条件の下で提供されています。
+
+## 開発手順
+
+### 環境構築
+
+このプロジェクトは VSCode dev container, Docker を使って開発環境を構築しています。
+Dockerイメージは .NET の公式イメージをベースに、追加で Node.js をインストールしたものを使用しています。
+環境構築は以下の手順で実施してください。
+
+1. VSCode を使えるようにする（公式からダウンロード）
+2. VSCode で拡張機能 [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) をインストールする
+3. Linux仮想環境を使えるようにする
+   * Windows であれば WSL2 を有効化するなど
+   * MacOS であれば colima をインストールするなど
+4. Linux仮想環境上で Git を使えるようにする
+5. Linux仮想環境上で Docker を使えるようにする
+6. Linux仮想環境上でこのGitHubリポジトリをクローンする
+7. VSCode で [ワークスペースファイル](./nijo.code-workspace) を開く
+8. コマンドパレットを開き（Cmd + Shift + P）、"Dev Containers: Reopen in Container" を選択。初回はコンテナイメージのビルドが行われる（数分かかる場合あり）。完了すると、コンテナ内で開発環境が利用可能になる
+
+### デバッグ、リリース
+
+* 基本的にデモプロジェクトを使って動作確認を行なっています。
+  デモプロジェクトのコード自動整形かけ直しやデバッグなどは VSCode の Run Task（ [ワークスペースファイル](./nijo.code-workspace)  の `tasks` セクションで定義された各タスク）から行なっています。
+* リリースも Run Task から行ないます。
