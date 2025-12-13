@@ -13,7 +13,7 @@
 			"configureZshAsDefaultShell": true
 		},
 		// Node.js をインストール
-		"ghcr.io/davzucky/devcontainers-features-wolfi/node:1": {}
+		"ghcr.io/devcontainers/features/node:1": {}
 	},
 	// コンテナ内で展開したWebにホスト側からアクセスするためのポートを指定
 	"forwardPorts": [
