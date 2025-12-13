@@ -16,11 +16,12 @@
    - dependencies, devDependencies を削除。モノレポのルートの設定を援用するので
 4. [VSCode設定ファイル](../nijo.code-workspace) にフォルダ名を追加。VSCode > F1 > Run Task からのデバッグコマンド等で新規追加プロジェクトを選択できるようにする
 5. [モノレポのルートのpackage.json](../package.json) に新規追加プロジェクトのclientフォルダを追加
-6. .NET の整備
+6. [docker-compose.yml](../docker-compose.yml) に新規追加プロジェクトのサービス定義を追加
+7. .NET の整備
    1. エクスプローラーで新たに作成された `MyApp.sln` のファイル名を変更
    2. Visual Studio でそのソリューションに含まれる各プロジェクトの名前を変更
    3. [.NET のソリューション](../nijo.sln) に追加
-7. 一度clientフォルダ直下で `npm run dev` を行い node_modules フォルダを生成しておく。デバッグ開始時に未インストールと判定して npm ci しに行こうとするため
+8. ~~一度clientフォルダ直下で `npm run dev` を行い node_modules フォルダを生成しておく。デバッグ開始時に未インストールと判定して npm ci しに行こうとするため~~ dockerによるデバッグに変更になったため不要
 
 ## デモ編集時
 

@@ -1,0 +1,124 @@
+name: nijo-workspace
+
+# 起動するときはプロファイルを指定すること。
+# 例: docker compose --profile demo000 up
+
+services:
+  # ==========================================
+  # Demo 000: 基本的なDataModelの例
+  # ==========================================
+  demo-000-webapi:
+    profiles: ["demo000"]
+    image: mcr.microsoft.com/dotnet/sdk:9.0
+    ports:
+      - "5290:5290"
+    volumes:
+      - .:/app
+    working_dir: /app/demo/000_基本的なDataModelの例/WebApi
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:5290
+    command: dotnet watch run --no-launch-profile
+    tty: true
+
+  demo-000-client:
+    profiles: ["demo000"]
+    image: node:20
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - node_modules_root:/app/node_modules
+    working_dir: /app/demo/000_基本的なDataModelの例/client
+    command: sh -c "npm install && npm run dev -- --host"
+    tty: true
+
+  # ==========================================
+  # Demo 100: チャットアプリ
+  # ==========================================
+  demo-100-webapi:
+    profiles: ["demo100"]
+    image: mcr.microsoft.com/dotnet/sdk:9.0
+    ports:
+      - "5290:5290"
+    volumes:
+      - .:/app
+    working_dir: /app/demo/100_チャットアプリ/WebApi
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:5290
+    command: dotnet watch run --no-launch-profile
+    tty: true
+
+  demo-100-client:
+    profiles: ["demo100"]
+    image: node:20
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - node_modules_root:/app/node_modules
+    working_dir: /app/demo/100_チャットアプリ/client
+    command: sh -c "npm install && npm run dev -- --host"
+    tty: true
+
+  # ==========================================
+  # Demo 200: 複雑なパターン
+  # ==========================================
+  demo-200-webapi:
+    profiles: ["demo200"]
+    image: mcr.microsoft.com/dotnet/sdk:9.0
+    ports:
+      - "5290:5290"
+    volumes:
+      - .:/app
+    working_dir: /app/demo/200_複雑なパターン/WebApi
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:5290
+    command: dotnet watch run --no-launch-profile
+    tty: true
+
+  demo-200-client:
+    profiles: ["demo200"]
+    image: node:20
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - node_modules_root:/app/node_modules
+    working_dir: /app/demo/200_複雑なパターン/client
+    command: sh -c "npm install && npm run dev -- --host"
+    tty: true
+
+  # ==========================================
+  # New Project Template
+  # ==========================================
+  template-webapi:
+    profiles: ["template"]
+    image: mcr.microsoft.com/dotnet/sdk:9.0
+    ports:
+      - "5290:5290"
+    volumes:
+      - .:/app
+    working_dir: /app/Nijo.NewProjectTemplate/WebApi
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:5290
+    command: dotnet watch run --no-launch-profile
+    tty: true
+
+  template-client:
+    profiles: ["template"]
+    image: node:20
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - node_modules_root:/app/node_modules
+    working_dir: /app/Nijo.NewProjectTemplate/client
+    command: sh -c "npm install && npm run dev -- --host"
+    tty: true
+
+volumes:
+  node_modules_root:

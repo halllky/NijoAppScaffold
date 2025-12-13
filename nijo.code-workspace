@@ -133,15 +133,11 @@
         "detail": "特定のデモのソースコード再生成をかけなおしてデバッグ開始",
         "type": "shell",
         "options": {
-          "cwd": "${workspaceFolder:NijoAppScaffold}/demo"
+          "cwd": "${workspaceFolder:NijoAppScaffold}"
         },
         "problemMatcher": [],
-        "windows": {
-          "command": ".\\${input:demoFolder}\\Task\\DEBUG.bat"
-        },
-        "osx": {
-          "command": "./${input:demoFolder}/Task/DEBUG.sh"
-        }
+        "command": "docker compose --profile ${input:dockerComposeDemoProfileName} up",
+        "dependsOn": "Nijo > ソース最新化"
       },
       {
         "label": "Nijo > デモ > スキーマ定義編集",
@@ -198,6 +194,25 @@
       }
     ],
     "inputs": [
+      {
+        "id": "dockerComposeDemoProfileName",
+        "description": "デモを選択してください",
+        "type": "pickString",
+        "options": [
+          {
+            "label": "000_基本的なDataModelの例",
+            "value": "demo000"
+          },
+          {
+            "label": "100_チャットアプリ",
+            "value": "demo100"
+          },
+          {
+            "label": "200_複雑なパターン",
+            "value": "demo200"
+          }
+        ]
+      },
       {
         "id": "demoFolder",
         "description": "デモを選択してください",
