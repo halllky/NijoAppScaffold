@@ -52,8 +52,12 @@
 			}
 		}
 	},
+	"runArgs": [
+		// メモリ不足を防ぐために、コンテナに割り当てるメモリを増やす（Vite や Docusaurus のビルドでメモリ不足になる場合があるため）
+		"--memory=6g"
+	],
 	"containerEnv": {
-		// Node.js のメモリ上限を 4GB に設定（Vite や VitePress のビルドでメモリ不足になる場合があるため）
+		// Node.js のメモリ上限を 4GB に設定（Vite や Docusaurus のビルドでメモリ不足になる場合があるため）
 		"NODE_OPTIONS": "--max-old-space-size=4096"
 	}
 	// 管理者権限が必要な場合は以下のコメントアウトを外す。現状不要。詳細: https://aka.ms/dev-containers-non-root.

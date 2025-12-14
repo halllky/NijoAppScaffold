@@ -9,7 +9,7 @@ using Nijo.SchemaParsing;
 /// </summary>
 internal class ValueObjectTypesMd {
 
-    internal static string FILE_NAME = "ValueMemberTypes.md";
+    internal static string FILE_NAME_WITHOUT_EXT = "ValueMemberTypes";
 
     internal static string Render(IEnumerable<IValueMemberType> valueMemberTypes) {
         return $$"""

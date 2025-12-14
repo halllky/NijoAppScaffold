@@ -69,7 +69,7 @@ namespace Nijo.Models {
                   親と1対多の子テーブルには `{{SchemaParseContext.NODE_TYPE_CHILDREN}}` を指定してください。
                   子テーブルは常に親テーブルと一緒に更新され、排他制御も親と共有します。
                   親テーブルがDELETEされると子テーブルもカスケードデリートされます。
-                - その他メンバーに定義できる属性については [属性種類定義](./{{ValueObjectTypesMd.FILE_NAME}}) を参照してください。
+                - その他メンバーに定義できる属性については [属性種類定義](/reference/{{ValueObjectTypesMd.FILE_NAME_WITHOUT_EXT}}) を参照してください。
                 """;
         }
 

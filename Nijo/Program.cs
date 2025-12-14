@@ -509,7 +509,7 @@ namespace Nijo {
             // 値メンバー型のドキュメントを生成
             var schemaContext = new SchemaParseContext(new XDocument(), rule);
             var valueMemberTypes = schemaContext.GetValueMemberTypes().ToArray();
-            var valueMemberTypesPath = Path.Combine(outDirFullPath, ValueObjectTypesMd.FILE_NAME);
+            var valueMemberTypesPath = Path.Combine(outDirFullPath, ValueObjectTypesMd.FILE_NAME_WITHOUT_EXT + ".md");
             File.WriteAllText(valueMemberTypesPath, ValueObjectTypesMd.Render(valueMemberTypes), new UTF8Encoding(false, false));
             logger.LogInformation("ValueMemberTypes.mdファイルを生成しました: {valueMemberTypesPath}", valueMemberTypesPath);
 

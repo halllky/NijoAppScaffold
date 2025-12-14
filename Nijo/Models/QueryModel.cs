@@ -39,7 +39,7 @@ namespace Nijo.Models {
             return $$"""
                 - 入れ子になった子集約 {{SchemaParseContext.NODE_TYPE_CHILD}} を定義できます。
                 - 子配列 {{SchemaParseContext.NODE_TYPE_CHILDREN}} を定義できます。
-                - その他メンバーに定義できる属性については [属性種類定義](./{{ValueObjectTypesMd.FILE_NAME}}) を参照してください。
+                - その他メンバーに定義できる属性については [属性種類定義](/reference/{{ValueObjectTypesMd.FILE_NAME_WITHOUT_EXT}}) を参照してください。
                 """;
         }
 
