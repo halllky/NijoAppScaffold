@@ -19,7 +19,7 @@
 	"forwardPorts": [
 		3000, // Document
 		5173, // Vite default
-		5176, // VitePress
+		5176, // Nijo.GuiClient の一部のプロジェクトで使用
 		5290, // デモのWebAPI
 		5000, // .NET default http
 		5001 // .NET default https
