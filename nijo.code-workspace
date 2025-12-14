@@ -109,7 +109,10 @@
         "detail": "特定のデモのソースコード再生成をかけなおしてデバッグ開始",
         "type": "shell",
         "options": {
-          "cwd": "${workspaceFolder:NijoAppScaffold}/demo"
+          "cwd": "${workspaceFolder:NijoAppScaffold}/demo",
+          "env": {
+            "NIJO_CLI_PATH": "${workspaceFolder:NijoAppScaffold}/Nijo/bin/Debug/net9.0/nijo"
+          }
         },
         "problemMatcher": [],
         "command": "./${input:demoFolder}/Task/DEBUG.sh"
@@ -133,7 +136,10 @@
         "detail": "特定のデモのマイグレーションSQLを作成",
         "type": "shell",
         "options": {
-          "cwd": "${workspaceFolder:NijoAppScaffold}/demo"
+          "cwd": "${workspaceFolder:NijoAppScaffold}/demo",
+          "env": {
+            "NIJO_CLI_PATH": "${workspaceFolder:NijoAppScaffold}/Nijo/bin/Debug/net9.0/nijo"
+          }
         },
         "problemMatcher": [],
         "command": "./${input:demoFolder}/Task/ADD_MIGRATION.sh"
