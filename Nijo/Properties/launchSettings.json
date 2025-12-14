@@ -11,7 +11,7 @@
     },
     "DebugServe": {
       "commandName": "Project",
-      "commandLineArgs": "serve --port 8081 --no-browser"
+      "commandLineArgs": "serve --url http://0.0.0.0:5001 --no-browser"
     }
   }
 }

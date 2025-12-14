@@ -1,6 +1,6 @@
 import './style.css'
 import myAppLogo from '/my-app.svg'
-import { callAspNetCoreApiAsync } from './callAspNetCoreApiAsync'
+import { callAspNetCoreApiAsync } from './example/callAspNetCoreApiAsync'
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div>

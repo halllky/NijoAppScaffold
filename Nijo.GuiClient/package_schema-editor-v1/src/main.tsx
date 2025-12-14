@@ -36,5 +36,5 @@ function App() {
  * Task/NijoServeデバッグ.bat で指定されているプロファイルのポート番号とあわせること。
  */
 export const SERVER_DOMAIN = import.meta.env.DEV
-  ? 'https://localhost:8081'
+  ? 'http://localhost:5001'
   : '';

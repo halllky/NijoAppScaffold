@@ -27,8 +27,10 @@ export async function callAspNetCoreApiAsync(endpoint: string, init: RequestInit
     ? `${ASP_NET_CORE_BASE_URL}${endpoint.slice(1)}`
     : `${ASP_NET_CORE_BASE_URL}${endpoint}`
   return await fetch(url, {
-    // このデモではCookie認証を使用しているので、認証用のCookieが付加されるようにする。
-    credentials: 'include',
+    // 認証用のCookieを付加する場合は指定する。
+    // 有効にした場合、サーバー側のCORS設定で AllowCredentials を指定しないとエラーになる。
+    // AllowCredentials を使用する場合は AllowAnyOrigin が使えないので注意。
+    // credentials: 'include',
 
     // 開発環境では CORS を許可する。ASP.NET Core のサーバーを呼ぶため。
     // より安全にする場合はクライアント側でこのオプションを指定するのをやめ、

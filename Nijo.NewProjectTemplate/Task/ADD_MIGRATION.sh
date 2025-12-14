@@ -1,5 +1,7 @@
 #!/bin/bash
 
+NIJO_EXE=/workspaces/NijoAppScaffold/Nijo/bin/Debug/net9.0/nijo
+
 TARGET_PROJECT="Core"
 STARTUP_PROJECT="Core"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -13,14 +15,14 @@ if ! command -v dotnet-ef &> /dev/null; then
     exit 1
 fi
 
-if ! command -v nijo &> /dev/null; then
+if ! command -v "$NIJO_EXE" &> /dev/null; then
     echo "'nijo' がインストールされていないかパスが通っていません。公式サイトからインストールしてください。"
     exit 1
 fi
 
 # ソースコード自動生成処理のかけなおし
 pushd "$PROJECT_ROOT" > /dev/null
-nijo generate
+"$NIJO_EXE" generate
 if [ $? -ne 0 ]; then
     echo "ソースコード自動生成処理でエラーが発生しました。ビルドを中断します。"
     exit 1
@@ -74,7 +76,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # SQLスクリプト生成
-dotnet ef migrations script --project "$TARGET_PROJECT" --startup-project "$STARTUP_PROJECT" --output "$MIGRATION_SCRIPT_DIR/$MIGRATION_NAME.sql" --idempotent
+dotnet ef migrations script --project "$TARGET_PROJECT" --startup-project "$STARTUP_PROJECT" --output "$MIGRATION_SCRIPT_DIR/$MIGRATION_NAME.sql"
 if [ $? -ne 0 ]; then
     echo "SQLスクリプトの生成に失敗しました。"
     exit 1

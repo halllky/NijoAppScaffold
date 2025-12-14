@@ -17,16 +17,19 @@
 	},
 	// コンテナ内で展開したWebにホスト側からアクセスするためのポートを指定
 	"forwardPorts": [
+		3000, // Document
 		5173, // Vite default
 		5176, // VitePress
+		5290, // デモのWebAPI
 		5000, // .NET default http
 		5001 // .NET default https
 	],
 	// コンテナビルド後に実行するコマンド
 	// * .NET 関連のライブラリをインストールする
+	// * デモのマイグレーション用ツール（dotnet-ef）をインストールする
 	// * Node.js 関連のライブラリをインストールする
 	// * nijo のコマンドラインツールを使用可能にしておく。（ビルド成果物は Nijo/bin/Debug 以下に配置される）
-	"postCreateCommand": "dotnet restore && npm ci && dotnet build Nijo -c Debug",
+	"postCreateCommand": "dotnet restore && dotnet tool install --global dotnet-ef --version 9.0.3 && npm ci && ./Task/Nijoリリース.sh 0",
 	// Configure tool-specific properties.
 	"customizations": {
 		"vscode": {
@@ -48,6 +51,10 @@
 				"terminal.integrated.defaultProfile.linux": "zsh"
 			}
 		}
+	},
+	"containerEnv": {
+		// Node.js のメモリ上限を 4GB に設定（Vite や VitePress のビルドでメモリ不足になる場合があるため）
+		"NODE_OPTIONS": "--max-old-space-size=4096"
 	}
 	// 管理者権限が必要な場合は以下のコメントアウトを外す。現状不要。詳細: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"

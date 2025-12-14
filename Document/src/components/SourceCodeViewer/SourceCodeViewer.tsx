@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import CodeBlock from '@theme/CodeBlock';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import { Allotment } from 'allotment';
 import 'allotment/dist/style.css';
-import sourceMap from '../../generated/source-code.json';
+import sourceMap from '../../generated/file-tree.json';
 import { buildFileTree } from './buildFileTree';
 import { SourceMap, TreeNode } from './types';
 import { getLanguage } from './getLanguage';
@@ -39,6 +40,66 @@ export default function SourceCodeViewer({ title, root, includes, height = '600p
 
   // State
   const [activeFile, setActiveFile] = useState<string | null>(null);
+  const [fileContent, setFileContent] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Cache
+  const contentCache = useRef<Record<string, string>>({});
+
+  const baseUrl = useBaseUrl('/');
+
+  // Fetch content
+  useEffect(() => {
+    if (!activeFile) {
+      setFileContent('');
+      return;
+    }
+
+    if (contentCache.current[activeFile]) {
+      setFileContent(contentCache.current[activeFile]);
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setFileContent('');
+
+    // activeFile starts with /, e.g. /demo/folder/file.ts
+    // We want to fetch /source-code/demo/folder/file.ts
+    // useBaseUrl handles the site base URL.
+    // Note: baseUrl usually ends with /
+    const url = `${baseUrl}source-code${activeFile}`;
+
+    let isMounted = true;
+
+    fetch(url)
+      .then(res => {
+        if (!res.ok) throw new Error(`Failed to load file: ${res.statusText}`);
+        return res.text();
+      })
+      .then(text => {
+        if (isMounted) {
+          contentCache.current[activeFile] = text;
+          setFileContent(text);
+          setIsLoading(false);
+        }
+      })
+      .catch(err => {
+        if (isMounted) {
+          console.error(err);
+          setError(err.message);
+          setFileContent(`// Error loading file: ${err.message}`);
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeFile, baseUrl]);
 
   // 初期表示時にすべてのフォルダを展開する
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
@@ -67,7 +128,6 @@ export default function SourceCodeViewer({ title, root, includes, height = '600p
     setExpandedFolders(next);
   };
 
-  const activeFileContent = activeFile ? (files[activeFile]?.code || '// File not found') : '';
   const activeLanguage = activeFile ? getLanguage(activeFile) : 'text';
 
   // Scroll synchronization
@@ -294,7 +354,7 @@ export default function SourceCodeViewer({ title, root, includes, height = '600p
                   showLineNumbers
                   className={styles.sourceCodeViewerBlock}
                 >
-                  {activeFileContent}
+                  {isLoading ? '// Loading...' : (error ? `// Error: ${error}` : fileContent)}
                 </CodeBlock>
               </div>
             </div>

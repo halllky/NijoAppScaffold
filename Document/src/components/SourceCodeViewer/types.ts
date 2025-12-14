@@ -1,4 +1,4 @@
-export type SourceMap = Record<string, { code: string }>;
+export type SourceMap = Record<string, { size: number }>;
 
 export type TreeNode = {
   name: string;

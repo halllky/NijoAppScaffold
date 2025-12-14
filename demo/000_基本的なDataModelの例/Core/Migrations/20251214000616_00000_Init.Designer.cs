@@ -11,8 +11,8 @@ using MyApp;
 namespace Demo000.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    [Migration("20251205230940_00001_Init")]
-    partial class _00001_Init
+    [Migration("20251214000616_00000_Init")]
+    partial class _00000_Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

@@ -7,7 +7,7 @@ using MyApp;
 
 #nullable disable
 
-namespace MyApp.Migrations
+namespace Demo000.Migrations
 {
     [DbContext(typeof(MyDbContext))]
     partial class MyDbContextModelSnapshot : ModelSnapshot

@@ -1,3 +1,5 @@
+// SourceCodeViewer によってドキュメント中に埋め込まれるソースコードのマップを生成するスクリプト
+
 const fs = require('fs');
 const path = require('path');
 
@@ -9,7 +11,8 @@ const SOURCE_ROOTS = [
   },
   // Add other roots if needed
 ];
-const OUTPUT_FILE = path.resolve(__dirname, '../src/generated/source-code.json');
+const OUTPUT_FILE = path.resolve(__dirname, '../src/generated/file-tree.json');
+const STATIC_ROOT = path.resolve(__dirname, '../static/source-code');
 
 // Ignore patterns
 const IGNORE_DIRS = [
@@ -64,7 +67,7 @@ function shouldIgnore(name, isDirectory) {
   return false;
 }
 
-function readDirectory(dir, rootName) {
+function processDirectory(dir, rootName) {
   const result = {};
   let items;
   try {
@@ -88,30 +91,24 @@ function readDirectory(dir, rootName) {
       return;
     }
 
-    // Calculate relative path from the source root, prefixed with rootName
-    // e.g. /demo/000_Basic/README.md
-    // We need to find which root this file belongs to, but here we are inside a recursive function
-    // so we pass the root path down or calculate relative to the current root being processed.
-
-    // Actually, let's make the key relative to the "virtual root" we are building.
-    // If we are processing 'demo', and file is 'demo/README.md', key should be '/demo/README.md'.
-
     if (stat.isDirectory()) {
-      Object.assign(result, readDirectory(fullPath, rootName));
+      Object.assign(result, processDirectory(fullPath, rootName));
     } else {
       try {
-        // Read file content
-        // Limit file size to avoid huge JSON
-        if (stat.size > 1024 * 100) { // 100KB limit
-          console.warn(`Skipping large file ${fullPath} (${stat.size} bytes)`);
-          result[getVirtualPath(fullPath, rootName)] = { code: `// File too large to display (${Math.round(stat.size / 1024)}KB)` };
-          return;
-        }
+        const virtualPath = getVirtualPath(fullPath, rootName);
 
-        const content = fs.readFileSync(fullPath, 'utf-8');
-        result[getVirtualPath(fullPath, rootName)] = { code: content };
+        // Copy file to static directory
+        // virtualPath starts with /, e.g. /demo/folder/file.ts
+        const relativePath = virtualPath.substring(1); // demo/folder/file.ts
+        const destPath = path.join(STATIC_ROOT, relativePath);
+
+        fs.mkdirSync(path.dirname(destPath), { recursive: true });
+        fs.copyFileSync(fullPath, destPath);
+
+        // Store metadata only
+        result[virtualPath] = { size: stat.size };
       } catch (e) {
-        console.warn(`Skipping file ${fullPath}: ${e.message}`);
+        console.warn(`Failed to process file ${fullPath}: ${e.message}`);
       }
     }
   });
@@ -132,6 +129,13 @@ function getVirtualPath(fullPath, rootName) {
 }
 
 function generate() {
+  // Clean static directory
+  if (fs.existsSync(STATIC_ROOT)) {
+    console.log(`Cleaning ${STATIC_ROOT}...`);
+    fs.rmSync(STATIC_ROOT, { recursive: true, force: true });
+  }
+  fs.mkdirSync(STATIC_ROOT, { recursive: true });
+
   const allFiles = {};
 
   SOURCE_ROOTS.forEach(root => {
@@ -140,7 +144,7 @@ function generate() {
       return;
     }
     console.log(`Processing ${root.name} from ${root.path}...`);
-    const files = readDirectory(root.path, root.name);
+    const files = processDirectory(root.path, root.name);
     Object.assign(allFiles, files);
   });
 
@@ -151,7 +155,8 @@ function generate() {
   }
 
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(allFiles, null, 2));
-  console.log(`Generated source map at ${OUTPUT_FILE} with ${Object.keys(allFiles).length} files.`);
+  console.log(`Generated file tree at ${OUTPUT_FILE} with ${Object.keys(allFiles).length} files.`);
+  console.log(`Source files copied to ${STATIC_ROOT}`);
 }
 
 generate();

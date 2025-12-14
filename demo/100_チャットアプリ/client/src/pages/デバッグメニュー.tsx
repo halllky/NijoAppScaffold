@@ -1,5 +1,5 @@
 import React from "react";
-import { callAspNetCoreApiAsync } from "../callAspNetCoreApiAsync";
+import { callAspNetCoreApiAsync } from "../example/callAspNetCoreApiAsync";
 
 /**
  * デバッグメニュー

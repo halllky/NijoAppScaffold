@@ -93,10 +93,10 @@ namespace Nijo {
                 ["-c", "--cancel-file"],
                 description: "デバッグ実行の終了のトリガーは、通常はユーザーからのキー入力ですが、これを指定したときはこのファイルが存在したら終了と判定します。");
 
-            // GUI用のサービスが実行されるポート
-            var port = new Option<int?>(
-                ["-p", "--port"],
-                description: "GUI用のサービスが実行されるポートを明示的に指定します。");
+            // GUI用のサービスが実行されるURL
+            var url = new Option<string?>(
+                ["-u", "--url"],
+                description: "GUI用のサービスが実行されるURLを明示的に指定します。");
 
             // ---------------------------------------------------
             // ** コマンド **
@@ -152,8 +152,8 @@ namespace Nijo {
             var serve = new Command(
                 name: "serve",
                 description: "GUI用のサービスを展開します。")
-                { path, port, noBrowser };
-            serve.SetHandler(Serve, path, port, noBrowser);
+                { path, url, noBrowser };
+            serve.SetHandler(Serve, path, url, noBrowser);
             rootCommand.AddCommand(serve);
 
             // リファレンスドキュメント生成
@@ -525,7 +525,7 @@ namespace Nijo {
         /// <summary>
         /// GUI用のサービスを展開する
         /// </summary>
-        private static async Task Serve(string? path, int? port, bool noBrowser) {
+        private static async Task Serve(string? path, string? optUrl, bool noBrowser) {
             var logger = ILoggerExtension.CreateConsoleLogger();
 
             // サービス内容定義
@@ -533,7 +533,7 @@ namespace Nijo {
             var app = nijoUi.BuildWebApplication(logger);
 
             // 起動
-            var url = $"https://localhost:{port ?? 5000}";
+            var url = optUrl ?? $"http://localhost:5000";
             logger.LogInformation("GUI用のサービスを起動します: {url}", url);
 
             // ブラウザを立ち上げる
@@ -546,11 +546,33 @@ namespace Nijo {
                     param.Add(WebService.Common.ProjectHelper.PROJECT_DIR_PARAMETER, path);
                     browserUrl = $"{url}/?{param}";
                 }
-                Process.Start(new ProcessStartInfo {
-                    FileName = "cmd",
-                    Arguments = $"/c \"start {browserUrl}\"",
-                    UseShellExecute = true,
-                    WindowStyle = ProcessWindowStyle.Hidden,
+
+                app.Lifetime.ApplicationStarted.Register(() => {
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+                        Process.Start(new ProcessStartInfo {
+                            FileName = "cmd",
+                            Arguments = $"/c \"start {browserUrl}\"",
+                            UseShellExecute = true,
+                            WindowStyle = ProcessWindowStyle.Hidden,
+                        });
+                    } else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+                        Process.Start(new ProcessStartInfo {
+                            FileName = "open",
+                            Arguments = browserUrl,
+                            UseShellExecute = true,
+                            WindowStyle = ProcessWindowStyle.Hidden,
+                        });
+                    } else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) && !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BROWSER"))) {
+                        Process.Start(new ProcessStartInfo {
+                            FileName = Environment.GetEnvironmentVariable("BROWSER")!,
+                            Arguments = browserUrl,
+                            UseShellExecute = false,
+                        });
+                    } else {
+                        Console.Error.WriteLine(
+                            $"このOSではブラウザを自動起動できません。" +
+                            $"手動で次のURLを開いてください: {browserUrl}");
+                    }
                 });
             }
 
