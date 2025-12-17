@@ -1,0 +1,12 @@
+{
+  "name": "101-sales-management-system",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5173 --host",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tsc": "tsc --noEmit"
+  }
+}
