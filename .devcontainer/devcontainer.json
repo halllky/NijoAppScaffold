@@ -54,7 +54,7 @@
 	},
 	"runArgs": [
 		// メモリ不足を防ぐために、コンテナに割り当てるメモリを増やす（Vite や Docusaurus のビルドでメモリ不足になる場合があるため）
-		"--memory=6g"
+		"--memory=4g"
 	],
 	"containerEnv": {
 		// Node.js のメモリ上限を 4GB に設定（Vite や Docusaurus のビルドでメモリ不足になる場合があるため）
