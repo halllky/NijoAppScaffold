@@ -1,7 +1,5 @@
 #!/bin/bash
 
-NIJO_EXE=/workspaces/NijoAppScaffold/Nijo/bin/Debug/net9.0/nijo
-
 # Check required tools
 if ! command -v dotnet &> /dev/null; then
     echo "'dotnet' がインストールされていません。公式サイトからインストールしてください。"
@@ -13,7 +11,7 @@ if ! command -v npm &> /dev/null; then
     exit 1
 fi
 
-if ! command -v "$NIJO_EXE" &> /dev/null; then
+if ! command -v "$NIJO_CLI_PATH" &> /dev/null; then
     echo "'nijo' がインストールされていないかパスが通っていません。公式サイトからインストールしてください。"
     exit 1
 fi
@@ -23,7 +21,7 @@ PROJECT_ROOT="$SCRIPT_DIR/.."
 
 # ソースコード自動生成処理のかけなおし
 pushd "$PROJECT_ROOT" > /dev/null
-"$NIJO_EXE" generate
+"$NIJO_CLI_PATH" generate
 if [ $? -ne 0 ]; then
     echo "ソースコード自動生成処理でエラーが発生しました。ビルドを中断します。"
     exit 1

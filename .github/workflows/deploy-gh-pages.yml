@@ -1,4 +1,4 @@
-name: Deploy VitePress to GitHub Pages
+name: Deploy Docusaurus to GitHub Pages
 
 on:
   push:
@@ -35,23 +35,21 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: '/package-lock.json'
+          cache-dependency-path: 'package-lock.json'
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
       
       - name: Install dependencies
         run: npm ci
-        working-directory: Document
       
-      - name: Build with VitePress
-        run: npm run build
-        working-directory: Document
+      - name: Build with Docusaurus
+        run: npm run build --workspace=Document
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs
+          path: Document/build
 
   # Deployment job
   deploy:
