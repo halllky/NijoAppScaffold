@@ -4,6 +4,7 @@ using System.Linq;
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
+using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using Nijo.ValueMemberTypes;
 
@@ -204,7 +205,7 @@ internal class MetadataOfEFCoreEntity : IMultiAggregateSourceFile {
                     PhysicalName = "{{entity.Aggregate.PhysicalName}}",
                     DisplayName = "{{entity.Aggregate.DisplayName.Replace("\"", "\\\"")}}",
                     TableName = "{{entity.Aggregate.DbName}}",
-                    Description = "{{entity.Aggregate.GetComment(E_CsTs.CSharp)}}",
+                    Description = "{{entity.Aggregate.XElement.GetCommentSingleLine(E_CsTs.CSharp)}}",
                     Members = new List<IAggregateMember> {
                         {{RenderMembers(entity).OrderBy(x => x.Order).SelectTextTemplate(x => WithIndent(x.SourceCode, "        ") + ",")}}
                     },
@@ -251,7 +252,7 @@ internal class MetadataOfEFCoreEntity : IMultiAggregateSourceFile {
                         PhysicalName = "{{column.PhysicalName}}",
                         DisplayName = "{{column.DisplayName.Replace("\"", "\\\"")}}",
                         ColumnName = "{{column.DbName}}",
-                        Description = "{{column.Member.GetComment(E_CsTs.CSharp)}}",
+                        Description = "{{column.Member.XElement.GetCommentSingleLine(E_CsTs.CSharp)}}",
                         TypeName = "{{column.Member.Type.SchemaTypeName}}",
                         EnumType = {{enumType}},
                         IsPrimaryKey = {{(column.IsKey ? "true" : "false")}},
@@ -410,7 +411,7 @@ internal class MetadataOfEFCoreEntity : IMultiAggregateSourceFile {
                     column.PhysicalName,
                     column.DisplayName,
                     column.DbName,
-                    column.Member.GetComment(E_CsTs.CSharp),
+                    column.Member.XElement.GetCommentSingleLine(E_CsTs.CSharp),
                     column.Member.Type.SchemaTypeName,
                     enumType,
                     column.IsKey,
@@ -470,7 +471,7 @@ internal class MetadataOfEFCoreEntity : IMultiAggregateSourceFile {
                                 PhysicalName = "{{metadata._aggregate.PhysicalName}}",
                                 DisplayName = "{{metadata._aggregate.DisplayName.Replace("\"", "\\\"")}}",
                                 TableName = "{{metadata._aggregate.DbName}}",
-                                Description = "{{metadata._aggregate.GetComment(E_CsTs.CSharp)}}",
+                                Description = "{{metadata._aggregate.XElement.GetCommentSingleLine(E_CsTs.CSharp)}}",
                                 Members = new List<IAggregateMember> {
                     {{members.SelectTextTemplate(m => $$"""
                                     {{WithIndent(m.RenderCSharpAsListItemForToAggregate(), "            ")}},

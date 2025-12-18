@@ -51,12 +51,6 @@ namespace Nijo.ImmutableSchema {
         public string RefEntryName => $"ref-to:{EnumerateThisAndAncestors().Select(a => a.PhysicalName).Join("/")}";
 
         /// <summary>
-        /// コメント
-        /// </summary>
-        [Obsolete("SchemaParseContext.GetCommentSingleLine または SchemaParseContext.GetCommentMultiLine を直接使ってください")]
-        public string GetComment(E_CsTs csts) => XElement.GetCommentSingleLine(csts);
-
-        /// <summary>
         /// この集約が持つメンバーを列挙します。
         /// <list type="bullet">
         /// <item>親: 列挙しません。</item>

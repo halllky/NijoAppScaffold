@@ -1,6 +1,7 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
+using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -254,7 +255,7 @@ internal class Metadata : IMultiAggregateSourceFile {
 
             static string Render(Container metadata) {
                 var members = metadata.GetMembers().ToArray();
-                var description = metadata._aggregate.GetComment(E_CsTs.CSharp).Replace("\"", "\\\"");
+                var description = metadata._aggregate.XElement.GetCommentSingleLine(E_CsTs.CSharp);
                 return $$"""
                     public class {{metadata.CsClassName}} {
                     {{members.SelectTextTemplate(m => $$"""
