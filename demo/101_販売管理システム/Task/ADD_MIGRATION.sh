@@ -1,7 +1,5 @@
 #!/bin/bash
 
-NIJO_EXE=/workspaces/NijoAppScaffold/Nijo/bin/Debug/net9.0/nijo
-
 TARGET_PROJECT="Core"
 STARTUP_PROJECT="Core"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -15,14 +13,14 @@ if ! command -v dotnet-ef &> /dev/null; then
     exit 1
 fi
 
-if ! command -v "$NIJO_EXE" &> /dev/null; then
+if ! command -v "$NIJO_CLI_PATH" &> /dev/null; then
     echo "'nijo' がインストールされていないかパスが通っていません。公式サイトからインストールしてください。"
     exit 1
 fi
 
 # ソースコード自動生成処理のかけなおし
 pushd "$PROJECT_ROOT" > /dev/null
-"$NIJO_EXE" generate
+"$NIJO_CLI_PATH" generate
 if [ $? -ne 0 ]; then
     echo "ソースコード自動生成処理でエラーが発生しました。ビルドを中断します。"
     exit 1
