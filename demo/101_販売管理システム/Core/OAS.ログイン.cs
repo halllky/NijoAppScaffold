@@ -47,6 +47,7 @@ partial class OverridedApplicationService {
         var sessionKey = Guid.NewGuid().ToString();
 
         // セッション保存
+        using var tran = await DbContext.Database.BeginTransactionAsync();
         await CreateセッションAsync(new() {
             セッションキー = sessionKey,
             ユーザ = new() { 従業員番号 = employee.従業員番号 },
@@ -60,5 +61,7 @@ partial class OverridedApplicationService {
         // クライアントに返す
         var sessionKeyProvider = ServiceProvider.GetRequiredService<ISessionKeyProvider>();
         sessionKeyProvider.ReturnSessionKeyToClient(sessionKey);
+
+        await tran.CommitAsync();
     }
 }

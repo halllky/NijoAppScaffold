@@ -15,7 +15,8 @@ partial class OverridedApplicationService {
             return;
         }
 
-        // DBセッション削除
+        // DBセッション削除。
+        // 楽観排他などきちっとした検証は不要なのでExecuteDeleteAsyncで直接消す。
         await DbContext.セッションDbSet
             .Where(s => s.セッションキー == sessionKey)
             .ExecuteDeleteAsync();

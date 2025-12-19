@@ -64,7 +64,11 @@ namespace Nijo.Models.DataModelModules {
                 {{keys.SelectTextTemplate(k => $$"""
                 /// <param name="{{k.ArgVarName}}">{{k.DisplayName}}。nullの場合はエラー。</param>
                 """)}}
-                /// <param name="version">バージョン。nullの場合はエラー。</param>
+                /// <param name="version">
+                /// 楽観排他制御用のバージョン。
+                /// GUIでの更新の場合は更新時ではなく画面表示時のバージョンを指定してください。
+                /// nullの場合は最新のバージョンに対して更新をかけます。
+                /// </param>
                 /// <param name="updater">更新関数。引数は更新前の値。この関数の中で更新したいプロパティを書き換えてください。</param>
                 /// <param name="context">コンテキスト</param>
                 /// <param name="messageOwner">
@@ -90,10 +94,6 @@ namespace Nijo.Models.DataModelModules {
                         messages.{{vm.SaveCommandMessageFullPath.Join(".")}}.AddError({{MsgFactory.MSG}}.{{ERR_KEY_IS_EMPTY}}("{{vm.DisplayName.Replace("\"", "\\\"")}}"));
                     }
                 """)}}
-                    if (version == null) {
-                        keyIsEmpty = true;
-                        messages.AddError({{MsgFactory.MSG}}.{{ERR_KEY_IS_EMPTY}}("{{SaveCommand.VERSION}}"));
-                    }
                     if (keyIsEmpty) {
                         Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で主キーが空 ({{keys.Select((vm, i) => $"{vm.ArgVarName}: {{{i}}}").Join(", ")}}, {{SaveCommand.VERSION}}:{{$"{{{keys.Length}}}"}})", {{keys.Select(vm => vm.ArgVarName).Join(", ")}}, version);
                         return;
@@ -121,7 +121,7 @@ namespace Nijo.Models.DataModelModules {
                     var afterDbEntity = command.{{SaveCommand.TO_DBENTITY}}();
 
                     // 自動的に登録される項目
-                    afterDbEntity.{{EFCoreEntity.VERSION}} = version + 1;
+                    afterDbEntity.{{EFCoreEntity.VERSION}} = (version ?? beforeDbEntity.{{EFCoreEntity.VERSION}}) + 1;
                     afterDbEntity.{{EFCoreEntity.CREATED_AT}} = beforeDbEntity.{{EFCoreEntity.CREATED_AT}};
                     afterDbEntity.{{EFCoreEntity.UPDATED_AT}} = {{ApplicationService.CURRENT_TIME}};
                     afterDbEntity.{{EFCoreEntity.CREATE_USER}} = beforeDbEntity.{{EFCoreEntity.CREATE_USER}};
@@ -156,7 +156,7 @@ namespace Nijo.Models.DataModelModules {
                     try {
                         var entry = DbContext.Entry(afterDbEntity);
                         entry.State = EntityState.Modified;
-                        entry.Property(e => e.{{EFCoreEntity.VERSION}}).OriginalValue = version;
+                        entry.Property(e => e.{{EFCoreEntity.VERSION}}).OriginalValue = version ?? beforeDbEntity.{{EFCoreEntity.VERSION}};
 
                 {{RenderDescendantAttaching(_rootAggregate).SelectTextTemplate(source => $$"""
                         {{WithIndent(source, "        ")}}
