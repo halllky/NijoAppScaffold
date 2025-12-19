@@ -169,6 +169,9 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
     <パスワード
       Type="bytearray"
       UniqueId="e1d23e41-4dde-4ea3-bdc3-b88a80481786" />
+    <SALT
+      Type="bytearray"
+      UniqueId="eae146ed-8c0f-484c-8b1a-dfc12ab1987d" />
     <!--入荷登録機能を利用することができるか否か。-->
     <入荷担当
       IsRequired="True"
@@ -237,7 +240,8 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       Type="description"
       UniqueId="f8aed3e7-9985-4db4-affe-db366711cfba" />
   </入荷明細>
-  <!--日次で実行される、外部システム（商品管理システム）からデータを受け取ってこのシステムの @[商品](a1b2c3d4-e5f6-4a1b-8c2d-3e4f5a6b7c8d) マスタにマージする処理。任意のタイミングでキックすることも可能。-->
+  <!--日次で実行される、外部システム（商品管理システム）からデータを受け取ってこのシステムの @[商品](a1b2c3d4-e5f6-4a1b-8c2d-3e4f5a6b7c8d) マスタにマージする処理。任意のタイミングでキックすることも可能。
+ASP.NET Core のサービスワーカーとして登録される。-->
   <商品データ取込
     Type="command-model"
     UniqueId="6cb9f1e7-afb0-4197-be66-d9779315026c" />
@@ -566,4 +570,31 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       Type="word"
       UniqueId="ab05211a-883a-4737-8cba-a10e8345df92" />
   </パスワード変更Parameter>
+  <!--ログインのたびに新しいレコードが追加される。
+Webアプリケーションなので明示的にログアウトしない限りはレコードは残り続ける。
+最終ログイン時刻から一定時間が経過したものはクリーンナップで削除される。-->
+  <セッション
+    Type="data-model"
+    UniqueId="72d0c66e-b523-4dd1-b8a0-8384368fe38b">
+    <!--ログインの瞬間にAPサーバーで発番される値。Set-Cookieでクライアント側に返され、以降のHTTPリクエストではCookieのヘッダに挿入される。APサーバーは当該ヘッダとこのテーブルのセッションキーを突合し、ユーザーを識別する。-->
+    <セッションキー
+      IsKey="True"
+      IsRequired="True"
+      Type="word"
+      UniqueId="87580124-2e00-4ce9-8e55-83efc51617a4" />
+    <ユーザ
+      IsRequired="True"
+      Type="ref-to:従業員"
+      UniqueId="82da1cd4-c08e-4297-af1d-e27157ba59b0" />
+    <!--ログインのたびにUPDATEされる-->
+    <最終ログイン日時
+      IsRequired="True"
+      Type="datetime"
+      UniqueId="5d444ec0-10f7-4fbb-8bd1-8331feac1b66" />
+  </セッション>
+  <!--ログの削除、古いセッションキーの削除を行う。
+ASP.NET Core のサービスワーカーとして登録される定期処理。-->
+  <クリーンナップ
+    Type="command-model"
+    UniqueId="eadf411b-2c47-483f-b0a8-fc52c9486adc" />
 </NijoAppScaffold>

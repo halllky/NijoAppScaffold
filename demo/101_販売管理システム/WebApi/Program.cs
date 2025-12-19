@@ -1,4 +1,10 @@
+using MyApp.Core.Authorization;
+using MyApp.WebApi.Authorization;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// HttpContextAccessor の登録 (LoginUserProviderInWebApi で使用)
+builder.Services.AddHttpContextAccessor();
 
 // Controller の設定
 builder.Services.AddControllers(options => {
@@ -25,6 +31,8 @@ builder.Services.AddCors(options => {
 // アプリケーションサービス層のDI設定
 var appConfig = new MyApp.OverridedApplicationConfigure();
 appConfig.ConfigureServices(builder.Services);
+
+builder.Services.AddScoped<ISessionKeyProvider, LoginUserProviderInWebApi>(); // ログインユーザー情報提供サービスをWebApi用に差し替え
 
 // HTTPリクエスト・レスポンスで使われるJSONシリアライズ設定を上記DI設定のそれに合わせる
 builder.Services.ConfigureHttpJsonOptions(options => {
