@@ -1,13 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace MyApp;
 
 partial class OverridedApplicationService {
     public override async Task Executeパスワード変更(パスワード変更ParameterDisplayData param, IPresentationContext<パスワード変更ParameterMessages> context) {
         // ログインチェック
-        if (this.LoginUser == null) {
+        if (LoginUser == null) {
             context.Messages.AddError("ログインしていません。");
             return;
         }
@@ -26,14 +24,8 @@ partial class OverridedApplicationService {
         }
 
         // パスワードのハッシュ化
-        var salt = new byte[32]; // 256 bits
-        using (var rng = RandomNumberGenerator.Create()) {
-            rng.GetBytes(salt);
-        }
-
-        var passwordBytes = Encoding.UTF8.GetBytes(newPassword);
-        using var hmac = new HMACSHA256(salt);
-        var hash = hmac.ComputeHash(passwordBytes);
+        var salt = GenerateSalt();
+        var hash = ComputeHash(newPassword, salt);
 
         // 更新
         using var tran = await DbContext.Database.BeginTransactionAsync();

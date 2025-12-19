@@ -2,8 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MyApp.Core.Authorization;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace MyApp;
 
@@ -34,9 +32,7 @@ partial class OverridedApplicationService {
             return;
         }
 
-        var inputPasswordBytes = Encoding.UTF8.GetBytes(param.Values.パスワード);
-        using var hmac = new HMACSHA256(employee.SALT);
-        var computedHash = hmac.ComputeHash(inputPasswordBytes);
+        var computedHash = ComputeHash(param.Values.パスワード, employee.SALT);
 
         if (!computedHash.SequenceEqual(employee.パスワード)) {
             context.Messages.AddError("従業員番号またはパスワードが間違っています。");
