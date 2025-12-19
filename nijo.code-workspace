@@ -129,7 +129,10 @@
           "${workspaceFolder:NijoAppScaffold}/demo/${input:demoFolder}"
         ],
         "problemMatcher": [],
-        "command": "nijo"
+        "command": "./nijo",
+        "osx": {
+          "command": "nijo"
+        }
       },
       {
         "label": "Nijo > デモ > マイグレーション",
