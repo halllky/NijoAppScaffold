@@ -272,7 +272,8 @@ namespace Nijo.Models.DataModelModules {
                 IEnumerable<string> RenderReturnBodyRecursively(KeyClassEntry keyClass) {
                     foreach (var member in keyClass.GetOwnMembers()) {
                         if (member is KeyClassValueMember vm) {
-                            var path = rightInstances[vm.Member.ToMappingKey()];
+                            var path = rightInstances.GetValueOrDefault(vm.Member.ToMappingKey())
+                                ?? "null"; // TODO: EFCoreEntity ではなく CreateCommand をベースにしているのでシーケンスが分からない
                             var cast = root.IsView
                                 ? vm.Member.Type.RenderCastToDomainType()
                                 : ""; // CreateCommandは元々ドメイン型なのでキャスト不要
