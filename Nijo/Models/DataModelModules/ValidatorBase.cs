@@ -31,6 +31,21 @@ public abstract class ValidatorBase {
     /// </summary>
     public abstract string MsgTemplate { get; }
 
+    #region 追加の引数
+    /// <summary>
+    /// メソッドの第3引数以降がある場合は指定してください。
+    /// </summary>
+    /// <returns></returns>
+    protected virtual IEnumerable<AdditionalArgs> GetAdditionalMethodArgs(RootAggregate rootAggregate) {
+        yield break;
+    }
+    protected class AdditionalArgs {
+        public required string Type { get; init; }
+        public required string Name { get; init; }
+        public required string Comment { get; init; }
+    }
+    #endregion 追加の引数
+    #region バリデーション式本体
     /// <summary>
     /// 項目単位の妥当性チェック処理のif文の中の式を表す情報を返します。
     /// null を返した場合、当該項目はチェック対象となりません。
@@ -61,23 +76,30 @@ public abstract class ValidatorBase {
         /// </summary>
         public required string RenderErrorMessage { get; init; }
     }
+    #endregion バリデーション式本体
 
     /// <summary>
     /// EFCore エンティティとメッセージコンテナを受け取り、妥当性チェックを行うメソッドをレンダリングします。
     /// </summary>
-    internal string Render(RootAggregate rootAggregate, CodeRenderingContext ctx) {
+    internal string RenderDeclaring(RootAggregate rootAggregate, CodeRenderingContext ctx) {
         var efCoreEntity = new EFCoreEntity(rootAggregate);
         var messages = new SaveCommandMessageContainer(rootAggregate);
 
         var arg = new Variable("dbEntity", efCoreEntity);
         var body = RenderAggregate(efCoreEntity, arg, ["messages"]).ToArray();
 
+        var argList = new List<string> {
+            $"{efCoreEntity.CsClassName} {arg.Name}",
+            $"{messages.InterfaceName} messages",
+        };
+        argList.AddRange(GetAdditionalMethodArgs(rootAggregate).Select(a => $"{a.Type} {a.Name}"));
+
         return $$"""
             /// <summary>
             /// {{CommentName}}。違反する項目があった場合はその旨が第2引数のオブジェクト内に追記されます。
             /// 1件以上エラーがあった場合はfalseを返します。
             /// </summary>
-            protected virtual bool {{MethodName}}({{efCoreEntity.CsClassName}} {{arg.Name}}, {{messages.InterfaceName}} messages) {
+            protected virtual bool {{MethodName}}({{argList.Join(", ")}}) {
             {{If(body.Length == 0, () => $$"""
                 return true; // 対象項目なし
             """).Else(() => $$"""
@@ -199,5 +221,11 @@ public abstract class ValidatorBase {
                 }
             }
         }
+    }
+
+    internal virtual string RenderCaller(object caller, RootAggregate rootAggregate, string dbEntityInstanceName, string messageInstanceName) {
+        return $$"""
+            {{MethodName}}({{dbEntityInstanceName}}, {{messageInstanceName}})
+            """;
     }
 }

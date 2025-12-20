@@ -65,7 +65,8 @@ namespace Nijo.Models.DataModelModules {
                 /// エラーメッセージを特定の位置に付加したい場合は指定する。
                 /// nullの場合はコンテキストのルートに付加される。
                 /// </param>
-                public virtual async Task {{MethodName}}({{command.CsClassNameDelete}} command, {{PresentationContext.INTERFACE}} context, {{MessageContainer.SETTER_INTERFACE}}? messageOwner = null) {
+                /// <returns>正常終了したかどうか</returns>
+                public virtual async Task<bool> {{MethodName}}({{command.CsClassNameDelete}} command, {{PresentationContext.INTERFACE}} context, {{MessageContainer.SETTER_INTERFACE}}? messageOwner = null) {
                     var messages = messageOwner?.As<{{messages.InterfaceName}}>() ?? context.As<{{messages.InterfaceName}}>().Messages;
 
                     // 削除に必要な項目が空の場合は処理中断
@@ -78,7 +79,7 @@ namespace Nijo.Models.DataModelModules {
                 """)}}
                     if (keyIsEmpty) {
                         Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除で主キー空エラーが発生したデータ: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
-                        return;
+                        return false;
                     }
 
                     // 削除前データ取得
@@ -98,7 +99,7 @@ namespace Nijo.Models.DataModelModules {
                     if (dbEntity == null) {
                         messages.AddError({{MsgFactory.MSG}}.{{UpdateMethod.ERR_DATA_NOT_FOUND}}());
                         Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除で削除対象が見つからないエラーが発生したデータ: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
-                        return;
+                        return false;
                     }
 
                     // 更新前処理。入力検証を行なう。
@@ -112,12 +113,11 @@ namespace Nijo.Models.DataModelModules {
                         if (context.Options.IgnoreConfirm) {
                             Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除で入力エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
                         }
-                        return;
+                        return false;
                     }
 
                     // 「更新しますか？」の確認メッセージが承認される前の1巡目はエラーチェックのみで処理中断
-                    if (!context.Options.IgnoreConfirm) return;
-
+                    if (!context.Options.IgnoreConfirm) return false;
                     if (DbContext.Database.CurrentTransaction == null) throw new InvalidOperationException("トランザクションが開始されていません。");
 
                     // 削除実行
@@ -149,7 +149,7 @@ namespace Nijo.Models.DataModelModules {
                             Log.Error(ex);
                             Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除でSQL発行時エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
                         }
-                        return;
+                        return false;
                     }
 
                     // 削除後処理
@@ -170,11 +170,13 @@ namespace Nijo.Models.DataModelModules {
                         Log.Error(ex);
                         Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除後エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
                         await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT);
-                        return;
+                        return false;
                     }
 
                     Log.Info("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}データを物理削除しました。（{{keys.Select(x => x.LogTemplate).Join(", ")}}）", {{keys.Select(x => x.DbEntityFullPath).Join(", ")}});
                     Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} 削除パラメータ: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+
+                    return true;
                 }
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の物理削除の確定前に実行される処理。

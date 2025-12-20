@@ -269,7 +269,7 @@ namespace Nijo.Models {
             aggregateFile.AddAppSrvMethod($$"""
                 #region 自動生成されるバリデーション処理
                 {{GetValidators().SelectTextTemplate(validator => $$"""
-                {{validator.Render(rootAggregate, ctx)}}
+                {{validator.RenderDeclaring(rootAggregate, ctx)}}
                 """)}}
                 {{ValidateDynamicEnumType.RenderAppSrvCheckMethod(rootAggregate, ctx)}}
                 #endregion 自動生成されるバリデーション処理
@@ -308,6 +308,13 @@ namespace Nijo.Models {
         }
 
         public void GenerateCode(CodeRenderingContext ctx) {
+            // 保存処理の結果クラス
+            ctx.CoreLibrary(dir => {
+                dir.Directory("Util", utilDir => {
+                    utilDir.Generate(DataModelSaveResult.Render(ctx));
+                });
+            });
+
             // メッセージコンテナ
             UpdateMethod.RegisterCommonParts(ctx);
             BatchUpdate.RegisterCommonParts(ctx);

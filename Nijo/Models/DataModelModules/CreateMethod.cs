@@ -50,7 +50,8 @@ namespace Nijo.Models.DataModelModules {
                 /// エラーメッセージを特定の位置に付加したい場合は指定する。
                 /// nullの場合はコンテキストのルートに付加される。
                 /// </param>
-                public virtual async Task {{MethodName}}({{command.CsClassNameCreate}} command, {{PresentationContext.INTERFACE}} context, {{MessageContainer.SETTER_INTERFACE}}? messageOwner = null) {
+                /// <returns>エラーがあった場合やエラーチェックのみの場合はfalseを、正常終了した場合はtrueと新規登録後のデータを返す。</returns>
+                public virtual async Task<DataModelSaveResult<{{dbEntity.CsClassName}}>> {{MethodName}}({{command.CsClassNameCreate}} command, {{PresentationContext.INTERFACE}} context, {{MessageContainer.SETTER_INTERFACE}}? messageOwner = null) {
                     var dbEntity = command.{{SaveCommand.TO_DBENTITY}}();
                     var messages = messageOwner?.As<{{messages.InterfaceName}}>() ?? context.As<{{messages.InterfaceName}}>().Messages;
 
@@ -64,7 +65,7 @@ namespace Nijo.Models.DataModelModules {
                     // 更新前処理。入力検証や自動補完項目の設定を行なう。
                     var hasError = false;
                 {{DataModel.GetValidators().SelectTextTemplate(validator => $$"""
-                    if (!{{validator.MethodName}}(dbEntity, messages)) hasError = true;
+                    if (!{{validator.RenderCaller(this, _rootAggregate, "dbEntity", "messages")}}) hasError = true;
                 """)}}
                     if (!{{ValidateCharacterType.METHOD_NAME}}(dbEntity, messages)) hasError = true;
                     if (!{{ValidateDynamicEnumType.METHOD_NAME}}(dbEntity, messages)) hasError = true;
@@ -77,12 +78,11 @@ namespace Nijo.Models.DataModelModules {
                         if (context.Options.IgnoreConfirm) {
                             Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}新規作成で入力エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
                         }
-                        return;
+                        return new(false, null);
                     }
 
                     // 「更新しますか？」の確認メッセージが承認される前の1巡目はエラーチェックのみで処理中断
-                    if (!context.Options.IgnoreConfirm) return;
-
+                    if (!context.Options.IgnoreConfirm) return new(false, null);
                     if (DbContext.Database.CurrentTransaction == null) throw new InvalidOperationException("トランザクションが開始されていません。");
 
                     // 更新実行
@@ -104,7 +104,7 @@ namespace Nijo.Models.DataModelModules {
                         messages.AddError({{MsgFactory.MSG}}.{{UpdateMethod.ERR_ID_UNKNOWN}}(ex.Message));
                         Log.Error(ex);
                         Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}新規作成でSQL発行時エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
-                        return;
+                        return new(false, null);
                     }
 
                     // 更新後処理
@@ -125,11 +125,13 @@ namespace Nijo.Models.DataModelModules {
                         Log.Error(ex);
                         Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}新規作成後エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
                         await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT);
-                        return;
+                        return new(false, null);
                     }
 
                     Log.Info("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}データを新規登録しました。（{{keys.Select(x => x.LogTemplate).Join(", ")}}）", {{keys.Select(x => x.DbEntityFullPath).Join(", ")}});
                     Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} 新規登録パラメータ: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+
+                    return new(true, dbEntity);
                 }
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の新規登録の確定前に実行される処理。

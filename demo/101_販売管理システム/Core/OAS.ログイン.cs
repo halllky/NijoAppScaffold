@@ -44,13 +44,13 @@ partial class OverridedApplicationService {
 
         // セッション保存
         using var tran = await DbContext.Database.BeginTransactionAsync();
-        await CreateセッションAsync(new() {
+        var result = await CreateセッションAsync(new() {
             セッションキー = sessionKey,
             ユーザ = new() { 従業員番号 = employee.従業員番号 },
             最終ログイン日時 = CurrentTime,
         }, context);
 
-        if (context.HasError()) {
+        if (!result.Success) {
             return;
         }
 

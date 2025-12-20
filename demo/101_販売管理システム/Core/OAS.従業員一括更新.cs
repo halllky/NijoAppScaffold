@@ -23,6 +23,7 @@ partial class OverridedApplicationService {
 
             var item = param.更新対象従業員一覧[i];
             var message = context.Messages.更新対象従業員一覧[i];
+            bool success;
 
             // フラグ項目をもとに、追加・更新・削除のいずれかを実行する。
             // WillBeChanged や WillBeDeleted はJavaScript側でtrueを設定する処理を記述する必要がある。
@@ -33,7 +34,7 @@ partial class OverridedApplicationService {
                 var hash = ComputeHash(INIT_PASSWORD, salt);
 
                 // 新規追加
-                await Create従業員Async(new() {
+                var result = await Create従業員Async(new() {
                     従業員番号 = item.Values.従業員.Values.従業員番号,
                     氏名 = item.Values.従業員.Values.氏名,
                     入荷担当 = item.Values.従業員.Values.入荷担当,
@@ -43,10 +44,12 @@ partial class OverridedApplicationService {
                     SALT = salt,
                 }, context, message);
 
+                success = result.Success;
+
             } else if (item.WillBeDeleted) {
 
                 // 削除
-                await Delete従業員Async(new() {
+                success = await Delete従業員Async(new() {
                     従業員番号 = item.Values.従業員.Values.従業員番号,
                     Version = item.Values.従業員.Version,
                 }, context, message);
@@ -54,15 +57,21 @@ partial class OverridedApplicationService {
             } else if (item.WillBeChanged) {
 
                 // 更新
-                await Update従業員Async(item.Values.従業員.Values.従業員番号, item.Values.従業員.Version, employee => {
+                var result = await Update従業員Async(item.Values.従業員.Values.従業員番号, item.Values.従業員.Version, employee => {
                     employee.氏名 = item.Values.従業員.Values.氏名;
                     employee.入荷担当 = item.Values.従業員.Values.入荷担当;
                     employee.販売担当 = item.Values.従業員.Values.販売担当;
                     employee.システム管理者 = item.Values.従業員.Values.システム管理者;
                 }, context, message);
+
+                success = result.Success;
+
+            } else {
+                // 変更なし
+                continue;
             }
 
-            if (tran != null && !message.HasError()) {
+            if (tran != null && success) {
                 await tran.CommitAsync();
             }
         }

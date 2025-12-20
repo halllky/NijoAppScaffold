@@ -36,13 +36,15 @@
   <入荷
     Type="data-model"
     UniqueId="e5f6a1b2-c3d4-4e5f-2a6b-7c8d9e0f1a2b">
+    <!--UUID-->
     <入荷ID
       IsKey="True"
-      Type="int"
+      SequenceName="IN_STOCK_SEQ"
+      Type="word"
       UniqueId="f6a1b2c3-d4e5-4f6a-3b7c-8d9e0f1a2b3c" />
     <入荷日時
       IsRequired="True"
-      Type="date"
+      Type="datetime"
       UniqueId="a1b2c3d4-e5f6-4a7b-4c8d-9e0f1a2b3c4d" />
     <担当者
       IsRequired="True"
@@ -153,6 +155,15 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       <数量
         Type="int"
         UniqueId="853acbf2-2764-424e-b60d-5ff066f18b9b" />
+      <仕入単価_税抜
+        Type="decimal"
+        UniqueId="1454146f-856e-4a67-b461-17a4fcd1e19e" />
+      <消費税区分
+        Type="消費税区分"
+        UniqueId="dc5381ce-29b7-4d23-bb9f-473e1625767d" />
+      <備考
+        Type="description"
+        UniqueId="0e829f4a-05b0-4cac-a7cb-a4ab39578532" />
     </入荷商品一覧>
   </入荷詳細>
   <従業員

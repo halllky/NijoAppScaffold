@@ -14,6 +14,7 @@ partial class OverridedApplicationService {
 
             // トランザクションの範囲は商品1件
             using var tran = await DbContext.Database.BeginTransactionAsync();
+            DataModelSaveResult<商品DbEntity> result;
 
             // 外部システムIDで検索
             var entity = await DbContext.商品DbSet
@@ -27,7 +28,7 @@ partial class OverridedApplicationService {
 
             if (entity == null) {
                 // 新規登録
-                await Create商品Async(new 商品CreateCommand {
+                result = await Create商品Async(new 商品CreateCommand {
                     外部システム側ID = item.ExternalId,
                     商品名 = item.Name,
                     売値単価_税抜 = item.Price,
@@ -37,14 +38,14 @@ partial class OverridedApplicationService {
             } else {
                 // 更新
                 // バッチ処理なので楽観排他制御は行わず、現在のバージョンを取得して更新する
-                await Update商品Async(entity.商品SEQ, entity.Version, command => {
+                result = await Update商品Async(entity.商品SEQ, entity.Version, command => {
                     command.商品名 = item.Name;
                     command.売値単価_税抜 = item.Price;
                     command.消費税区分 = taxType;
                 }, context);
             }
 
-            if (!context.HasError()) {
+            if (result.Success) {
                 await tran.CommitAsync();
             }
         }

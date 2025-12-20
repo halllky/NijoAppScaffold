@@ -30,12 +30,12 @@ partial class OverridedApplicationService {
         // 更新
         using var tran = await DbContext.Database.BeginTransactionAsync();
 
-        await Update従業員Async(LoginUser.従業員番号, null, employee => {
+        var result = await Update従業員Async(LoginUser.従業員番号, null, employee => {
             employee.SALT = salt;
             employee.パスワード = hash;
         }, context);
 
-        if (!context.HasError()) {
+        if (result.Success) {
             await tran.CommitAsync();
         }
     }

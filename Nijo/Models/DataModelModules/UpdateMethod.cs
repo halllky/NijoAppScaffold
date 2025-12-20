@@ -75,7 +75,8 @@ namespace Nijo.Models.DataModelModules {
                 /// エラーメッセージを特定の位置に付加したい場合は指定する。
                 /// nullの場合はコンテキストのルートに付加される。
                 /// </param>
-                public virtual async Task {{MethodName}}(
+                /// <returns>エラーがあった場合やエラーチェックのみの場合はfalseを、正常終了した場合はtrueと更新後のデータを返す。</returns>
+                public virtual async Task<DataModelSaveResult<{{dbEntity.CsClassName}}>> {{MethodName}}(
                 {{keys.SelectTextTemplate(k => $$"""
                     {{k.ArgVarType.CsDomainTypeName}}? {{k.ArgVarName}},
                 """)}}
@@ -96,7 +97,7 @@ namespace Nijo.Models.DataModelModules {
                 """)}}
                     if (keyIsEmpty) {
                         Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で主キーが空 ({{keys.Select((vm, i) => $"{vm.ArgVarName}: {{{i}}}").Join(", ")}}, {{SaveCommand.VERSION}}:{{$"{{{keys.Length}}}"}})", {{keys.Select(vm => vm.ArgVarName).Join(", ")}}, version);
-                        return;
+                        return new(false, null);
                     }
 
                     // 更新前データ取得
@@ -112,7 +113,7 @@ namespace Nijo.Models.DataModelModules {
                     if (beforeDbEntity == null) {
                         messages.AddError({{MsgFactory.MSG}}.{{ERR_DATA_NOT_FOUND}}());
                         Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で更新対象が見つからないエラーが発生したデータ: {{keys.Select((vm, i) => $"{vm.ArgVarName}: {{{i}}}").Join(", ")}}", {{keys.Select(vm => vm.ArgVarName).Join(", ")}});
-                        return;
+                        return new(false, null);
                     }
 
                     // 値の書き換え
@@ -130,7 +131,7 @@ namespace Nijo.Models.DataModelModules {
                     // 更新前処理。入力検証や自動補完項目の設定を行なう。
                     var hasError = false;
                 {{DataModel.GetValidators().SelectTextTemplate(validator => $$"""
-                    if (!{{validator.MethodName}}(afterDbEntity, messages)) hasError = true;
+                    if (!{{validator.RenderCaller(this, _rootAggregate, "afterDbEntity", "messages")}}) hasError = true;
                 """)}}
                     if (!{{ValidateCharacterType.METHOD_NAME}}(afterDbEntity, messages)) hasError = true;
                     if (!{{ValidateDynamicEnumType.METHOD_NAME}}(afterDbEntity, messages)) hasError = true;
@@ -143,11 +144,11 @@ namespace Nijo.Models.DataModelModules {
                         if (context.Options.IgnoreConfirm) {
                             Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で入力エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
                         }
-                        return;
+                        return new(false, null);
                     }
 
                     // 「更新しますか？」の確認メッセージが承認される前の1巡目はエラーチェックのみで処理中断
-                    if (!context.Options.IgnoreConfirm) return;
+                    if (!context.Options.IgnoreConfirm) return new(false, null);
 
                     if (DbContext.Database.CurrentTransaction == null) throw new InvalidOperationException("トランザクションが開始されていません。");
 
@@ -183,7 +184,7 @@ namespace Nijo.Models.DataModelModules {
                             Log.Error(ex);
                             Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新でSQL発行時エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
                         }
-                        return;
+                        return new(false, null);
                     }
 
                     // 更新後処理
@@ -204,11 +205,13 @@ namespace Nijo.Models.DataModelModules {
                         Log.Error(ex);
                         Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新後エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
                         await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT);
-                        return;
+                        return new(false, null);
                     }
 
                     Log.Info("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}データを更新しました。（{{keys.Select(x => x.LogTemplate).Join(", ")}}）", {{keys.Select(x => x.DbEntityFullPath).Join(", ")}});
                     Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} 更新パラメータ: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+
+                    return new(true, afterDbEntity);
                 }
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の更新の確定前に実行される処理。
