@@ -57,103 +57,133 @@ partial class OverridedApplicationService {
 
             // 在庫取得
             if (!stockCache.TryGetValue(productId.Value, out var stocksForProduct)) {
-                // 売上（正）の場合はFIFO、取消（負）の場合はLIFOだが、
-                // 両方に対応できるように全件取得してメモリ上でソートする
-                // （データ量が多い場合は非効率だが、デモレベルなら許容）
-                var stocks = await DbContext.入荷明細DbSet
-                    .Include(x => x.入荷)
-                    .Where(x => x.商品_商品SEQ == productId.Value)
-                    .ToListAsync();
-                stocksForProduct = stocks;
+                stocksForProduct = new List<入荷明細DbEntity>();
                 stockCache[productId.Value] = stocksForProduct;
-
-                foreach (var s in stocks) {
-                    if (!currentStockMap.ContainsKey(s.入荷明細ID!)) {
-                        currentStockMap[s.入荷明細ID!] = s.残数量 ?? 0;
-                    }
-                }
             }
 
             var plan = new List<(string StockId, int Deduct)>();
 
             if (quantity > 0) {
                 // 売上：在庫引当 (FIFO)
-                var availableStocks = stocksForProduct
-                    .Where(x => (currentStockMap.ContainsKey(x.入荷明細ID!) ? currentStockMap[x.入荷明細ID!] : 0) > 0)
-                    .OrderBy(x => x.CreatedAt)
-                    .ToList();
-
-                var totalAvailable = availableStocks.Sum(x => currentStockMap.TryGetValue(x.入荷明細ID!, out var value) ? value : 0);
-                if (totalAvailable < quantity) {
-                    message.売上数量.AddError($"在庫不足です。（現在在庫: {totalAvailable}）");
-                    hasError = true;
-                    continue;
-                }
-
                 var needed = quantity.Value;
-                foreach (var stock in availableStocks) {
-                    var currentAmount = currentStockMap.TryGetValue(stock.入荷明細ID!, out var value) ? value : 0;
-                    if (currentAmount <= 0) continue;
 
-                    var deduct = Math.Min(currentAmount, needed);
-                    plan.Add((stock.入荷明細ID!, deduct));
-                    currentStockMap[stock.入荷明細ID!] = currentAmount - deduct;
-                    needed -= deduct;
+                while (needed > 0) {
+                    // メモリ上の在庫から引当可能なものを探す
+                    var availableStocks = stocksForProduct
+                        .Where(x => (currentStockMap.ContainsKey(x.入荷明細ID!) ? currentStockMap[x.入荷明細ID!] : 0) > 0)
+                        .OrderBy(x => x.CreatedAt)
+                        .ToList();
+
+                    foreach (var stock in availableStocks) {
+                        var currentAmount = currentStockMap.TryGetValue(stock.入荷明細ID!, out var value) ? value : 0;
+                        if (currentAmount <= 0) continue;
+
+                        var deduct = Math.Min(currentAmount, needed);
+                        plan.Add((stock.入荷明細ID!, deduct));
+                        currentStockMap[stock.入荷明細ID!] = currentAmount - deduct;
+                        needed -= deduct;
+                        if (needed == 0) break;
+                    }
+
                     if (needed == 0) break;
+
+                    // 不足分をDBから追加取得
+                    var loadedIds = stocksForProduct.Select(x => x.入荷明細ID).ToList();
+                    var newStocks = await DbContext.入荷明細DbSet
+                        .Include(x => x.入荷)
+                        .Where(x => x.商品_商品SEQ == productId.Value)
+                        .Where(x => !loadedIds.Contains(x.入荷明細ID))
+                        .OrderBy(x => x.CreatedAt) // FIFO
+                        .Take(10) // 10件ずつ取得
+                        .ToListAsync();
+
+                    if (newStocks.Count == 0) {
+                        // これ以上在庫がない
+                        var totalAvailable = stocksForProduct.Sum(x => currentStockMap.TryGetValue(x.入荷明細ID!, out var value) ? value : 0);
+                        message.売上数量.AddError($"在庫不足です。（現在在庫: {totalAvailable}）");
+                        hasError = true;
+                        break;
+                    }
+
+                    // キャッシュに追加
+                    foreach (var s in newStocks) {
+                        stocksForProduct.Add(s);
+                        if (!currentStockMap.ContainsKey(s.入荷明細ID!)) {
+                            currentStockMap[s.入荷明細ID!] = s.残数量 ?? 0;
+                        }
+                    }
                 }
             } else {
                 // 取消：在庫戻し (LIFO)
-                // 戻せる量は (入荷数量 - 残数量)
-                var returnableStocks = stocksForProduct
-                    .Where(x => (x.入荷数量 ?? 0) - (currentStockMap.TryGetValue(x.入荷明細ID!, out var value) ? value : 0) > 0)
-                    .OrderByDescending(x => x.CreatedAt) // 最新から
-                    .ToList();
-
-                var totalReturnable = returnableStocks.Sum(x => (x.入荷数量 ?? 0) - (currentStockMap.TryGetValue(x.入荷明細ID!, out var value) ? value : 0));
-                var returnAmount = -quantity.Value; // 正の値に変換
-
-                if (totalReturnable < returnAmount) {
-                    // 戻せる在庫がない（＝過去に売り上げていない）場合はエラー？
-                    // あるいは、整合性が取れないデータとしてエラーにする。
-                    message.売上数量.AddError($"取消可能な在庫引当履歴が不足しています。（取消可能数: {totalReturnable}）");
-                    hasError = true;
-                    continue;
-                }
-
+                var returnAmount = -quantity.Value; // 正の値
                 var needed = returnAmount;
-                foreach (var stock in returnableStocks) {
-                    var currentAmount = currentStockMap.TryGetValue(stock.入荷明細ID!, out var value) ? value : 0;
-                    var maxReturn = (stock.入荷数量 ?? 0) - currentAmount;
-                    if (maxReturn <= 0) continue;
 
-                    var deduct = -Math.Min(maxReturn, needed); // 負の値（在庫を増やす）
-                    plan.Add((stock.入荷明細ID!, deduct));
+                while (needed > 0) {
+                    // メモリ上の在庫から戻し可能なものを探す
+                    var returnableStocks = stocksForProduct
+                        .Where(x => (x.入荷数量 ?? 0) - (currentStockMap.TryGetValue(x.入荷明細ID!, out var value) ? value : 0) > 0)
+                        .OrderByDescending(x => x.CreatedAt) // LIFO
+                        .ToList();
 
-                    currentStockMap[stock.入荷明細ID!] = currentAmount - deduct; // マイナスを引く＝足す
-                    needed += deduct; // neededは正、deductは負なので、残りが減る
+                    foreach (var stock in returnableStocks) {
+                        var currentAmount = currentStockMap.TryGetValue(stock.入荷明細ID!, out var value) ? value : 0;
+                        var maxReturn = (stock.入荷数量 ?? 0) - currentAmount;
+                        if (maxReturn <= 0) continue;
+
+                        var deduct = -Math.Min(maxReturn, needed); // 負の値（在庫を増やす）
+                        plan.Add((stock.入荷明細ID!, deduct));
+
+                        currentStockMap[stock.入荷明細ID!] = currentAmount - deduct; // マイナスを引く＝足す
+                        needed += deduct; // neededは正、deductは負
+                        if (needed == 0) break;
+                    }
+
                     if (needed == 0) break;
+
+                    // 不足分をDBから追加取得
+                    var loadedIds = stocksForProduct.Select(x => x.入荷明細ID).ToList();
+                    var newStocks = await DbContext.入荷明細DbSet
+                        .Include(x => x.入荷)
+                        .Where(x => x.商品_商品SEQ == productId.Value)
+                        .Where(x => !loadedIds.Contains(x.入荷明細ID))
+                        .OrderByDescending(x => x.CreatedAt) // LIFO
+                        .Take(10) // 10件ずつ取得
+                        .ToListAsync();
+
+                    if (newStocks.Count == 0) {
+                        // これ以上戻せる在庫がない
+                        var totalReturnable = stocksForProduct.Sum(x => (x.入荷数量 ?? 0) - (currentStockMap.TryGetValue(x.入荷明細ID!, out var value) ? value : 0));
+                        message.売上数量.AddError($"取消可能な在庫引当履歴が不足しています。（取消可能数: {totalReturnable}）");
+                        hasError = true;
+                        break;
+                    }
+
+                    // キャッシュに追加
+                    foreach (var s in newStocks) {
+                        stocksForProduct.Add(s);
+                        if (!currentStockMap.ContainsKey(s.入荷明細ID!)) {
+                            currentStockMap[s.入荷明細ID!] = s.残数量 ?? 0;
+                        }
+                    }
                 }
             }
+
+            if (hasError) continue;
 
             allocationPlans.Add((detail, plan));
         }
 
         if (hasError) return;
+        if (!context.Options.IgnoreConfirm) return;
 
         // 保存処理
-        using var tran = context.Options.IgnoreConfirm
-            ? await DbContext.Database.BeginTransactionAsync()
-            : null;
+        using var tran = await DbContext.Database.BeginTransactionAsync();
 
         var updateResult = await Update売上Async(param.Values.売上SEQ, null, command => {
             // 備考の更新
             command.備考 = param.Values.備考;
 
             // 新規明細の追加
-            if (command.売上の売上明細 == null) {
-                command.売上の売上明細 = new List<売上の売上明細UpdateCommand>();
-            }
-
             foreach (var (detail, plan) in allocationPlans) {
                 command.売上の売上明細.Add(new() {
                     明細ID = Guid.NewGuid().ToString(),
@@ -173,23 +203,21 @@ partial class OverridedApplicationService {
         if (!updateResult.Success) return;
 
         // 入荷明細の残数量更新
-        if (context.Options.IgnoreConfirm) {
-            foreach (var (detail, plan) in allocationPlans) {
-                foreach (var (stockId, deduct) in plan) {
-                    var stockEntity = stockCache.Values.SelectMany(x => x).FirstOrDefault(x => x.入荷明細ID == stockId);
-                    var version = stockEntity?.Version;
+        foreach (var (detail, plan) in allocationPlans) {
+            foreach (var (stockId, deduct) in plan) {
+                var stockEntity = stockCache.Values.SelectMany(x => x).FirstOrDefault(x => x.入荷明細ID == stockId);
+                var version = stockEntity?.Version;
 
-                    var updateStockResult = await Update入荷明細Async(stockId, version, x => {
-                        x.残数量 -= deduct; // deductが負の場合は残数量が増える
-                    }, context);
+                var updateStockResult = await Update入荷明細Async(stockId, version, x => {
+                    x.残数量 -= deduct; // deductが負の場合は残数量が増える
+                }, context);
 
-                    if (!updateStockResult.Success) {
-                        return;
-                    }
+                if (!updateStockResult.Success) {
+                    return;
                 }
             }
-
-            await tran!.CommitAsync();
         }
+
+        await tran.CommitAsync();
     }
 }
