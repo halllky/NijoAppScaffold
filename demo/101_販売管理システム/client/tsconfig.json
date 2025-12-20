@@ -23,7 +23,13 @@
     /* 一般的にはtrueが推奨される。自動生成されるソースコードで namespace のかわりに import * as を使うソースをレンダリングするようにすればtrueにできる */
     "erasableSyntaxOnly": false,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+    /* React */
+    "jsx": "react-jsx",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    /* Alias */
+    "paths": {}
   },
   "include": [
     "src"
