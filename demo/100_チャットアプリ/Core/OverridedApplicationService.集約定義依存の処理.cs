@@ -111,7 +111,7 @@ partial class OverridedApplicationService {
         });
     }
 
-    public override async Task Executeメッセージ追加読み込み(メッセージ追加読み込みParameterDisplayData param, IPresentationContextWithReturnValue<メッセージ追加読み込みReturnValue, メッセージ追加読み込みParameterMessages> context) {
+    public override async Task Executeメッセージ追加読み込み(メッセージ追加読み込みParameterDisplayData param, IPresentationContextWithReturnValue<メッセージ追加読み込みReturnValueDisplayData, メッセージ追加読み込みParameterMessages> context) {
         // このシーケンスより古いメッセージN件を読み込む
         var messages = await DbContext.メッセージDbSet
             .Where(m => m.メッセージSEQ < param.Values.前メッセージSEQ && m.チャンネル直下か == true)
@@ -128,24 +128,27 @@ partial class OverridedApplicationService {
             })
             .ToListAsync();
 
-        context.ReturnValue = new メッセージ追加読み込みReturnValue {
-            読み込み結果 = messages.Select(m => new メッセージ追加読み込みReturnValue_読み込み結果 {
-                メッセージ = new() {
-                    Values = new() {
-                        メッセージSEQ = m.メッセージSEQ,
-                        本文 = m.本文,
-                        記載者 = new() {
-                            アカウントID = m.記載者_アカウントID,
-                            アカウント名 = m.記載者_アカウント名,
+        context.ReturnValue = new() {
+            読み込み結果 = messages.Select(m => new 読み込み結果DisplayData {
+                Values = new() {
+                    メッセージ = new() {
+                        Values = new() {
+                            メッセージSEQ = m.メッセージSEQ,
+                            本文 = m.本文,
+                            記載者 = new() {
+                                アカウントID = m.記載者_アカウントID,
+                                アカウント名 = m.記載者_アカウント名,
+                            },
+                            チャンネル直下か = m.チャンネル直下か,
+                            編集済みか = m.編集済みか,
                         },
-                        チャンネル直下か = m.チャンネル直下か,
-                        編集済みか = m.編集済みか,
+                        ExistsInDatabase = true,
+                        WillBeChanged = false,
+                        WillBeDeleted = false,
+                        Version = m.Version,
                     },
-                    ExistsInDatabase = true,
-                    WillBeChanged = false,
-                    WillBeDeleted = false,
-                    Version = m.Version,
                 },
+                ExistsInDatabase = true,
             }).ToList(),
         };
     }

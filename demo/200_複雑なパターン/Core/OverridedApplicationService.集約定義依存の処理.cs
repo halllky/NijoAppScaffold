@@ -346,14 +346,14 @@ partial class OverridedApplicationService {
         });
     }
 
-    public override Task Execute医療機器管理(医療機器管理ParameterDisplayData parameter, IPresentationContextWithReturnValue<医療機器管理ReturnValue, 医療機器管理ParameterMessages> context) {
+    public override Task Execute医療機器管理(医療機器管理ParameterDisplayData parameter, IPresentationContextWithReturnValue<医療機器管理ReturnValueDisplayData, 医療機器管理ParameterMessages> context) {
         // TODO: 医療機器管理コマンドの処理を実装してください。
         return Task.FromResult(new 医療機器管理ReturnValue());
     }
 
-    public override Task Execute簡易診療登録(簡易診療登録ParameterDisplayData parameter, IPresentationContextWithReturnValue<簡易診療登録ReturnValue, 簡易診療登録ParameterMessages> context) {
+    public override Task Execute簡易診療登録(簡易診療登録ParameterDisplayData parameter, IPresentationContextWithReturnValue<簡易診療登録ReturnValueDisplayData, 簡易診療登録ParameterMessages> context) {
 
-        context.ReturnValue.処理結果 = $$"""
+        context.ReturnValue.Values.処理結果 = $$"""
             パラメータの{{nameof(parameter.Values.患者ID)}}は{{parameter.Values.患者ID}}でした。
             パラメータの{{nameof(parameter.使用機器一覧)}}の内容は以下です。
             {{string.Join(Environment.NewLine, parameter.使用機器一覧.Select((x, i) => $$"""
@@ -361,8 +361,7 @@ partial class OverridedApplicationService {
                 使用数量: {{x.Values.使用数量}}
             """))}}
             """;
-        context.ReturnValue.診療番号 = $"TEST-{DateTime.Now:yyyyMMddHHmmss}";
-
+        context.ReturnValue.Values.診療番号 = $"TEST-{DateTime.Now:yyyyMMddHHmmss}";
         return Task.CompletedTask;
     }
 

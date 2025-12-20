@@ -119,9 +119,11 @@ namespace Nijo.Models {
             // TypeScript 新規オブジェクト作成関数（ルートと子孫）
             aggregateFile.AddTypeScriptTypeDef(PlainStructure.RenderTsNewObjectFunctionRecursively(rootAggregate, ctx));
 
-            // この構造体がいずれかのコマンドモデルの引数として参照されている場合、
+            // この構造体がいずれかのコマンドモデルの引数or戻り値として参照されている場合、
             // プレゼンテーション層での編集用のオブジェクト等を生成する。
-            if (rootAggregate.EnumerateCommandModelsRefferingAsParameter().Any()) {
+            var refferdAsParameter = rootAggregate.EnumerateCommandModelsRefferingAsParameter().Any();
+            var refferdAsReturnValue = rootAggregate.EnumerateCommandModelsRefferingAsReturnValue().Any();
+            if (refferdAsParameter || refferdAsReturnValue) {
                 // 画面表示用データ
                 var displayData = new StructureDisplayData(rootAggregate);
                 aggregateFile.AddCSharpClass(StructureDisplayData.RenderCSharpRecursively(rootAggregate, ctx), "Class_DisplayData");
@@ -129,7 +131,8 @@ namespace Nijo.Models {
                 aggregateFile.AddTypeScriptTypeDef(displayData.RenderUiConstraintType(ctx));
                 aggregateFile.AddTypeScriptTypeDef(displayData.RenderUiConstraintValue(ctx));
                 aggregateFile.AddTypeScriptFunction(EditablePresentationObject.RenderTsNewObjectFunctionRecursively(displayData, ctx));
-
+            }
+            if (refferdAsParameter) {
                 // メッセージコンテナ
                 var messageContainer = new StructureDisplayDataMessageContainer(rootAggregate);
                 aggregateFile.AddCSharpClass(StructureDisplayDataMessageContainer.RenderCSharpRecursively(rootAggregate), "Class_DisplayDataMessage");

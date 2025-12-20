@@ -400,6 +400,10 @@
         "background-color": "#0284c7",
         "border-color": "#0284c7"
       },
+      "c766195e-c279-4a50-84bb-fcbf46ac9798": {
+        "id": "c766195e-c279-4a50-84bb-fcbf46ac9798",
+        "label": "入荷詳細画面初期表示Parameter"
+      },
       "ca0a28e1-6792-4d8b-ad9e-4a373ba190fc": {
         "id": "ca0a28e1-6792-4d8b-ad9e-4a373ba190fc",
         "label": "パスワード再発行Parameter"
@@ -421,6 +425,12 @@
         "label": "売上一覧",
         "background-color": "#059669",
         "border-color": "#059669"
+      },
+      "d8cff664-d1a8-43c8-ac5e-cc1b2a8fb400": {
+        "id": "d8cff664-d1a8-43c8-ac5e-cc1b2a8fb400",
+        "label": "入荷詳細画面初期表示",
+        "background-color": "#0284c7",
+        "border-color": "#0284c7"
       },
       "da5e2ba7-864b-4d23-852b-1a4c6f525f98": {
         "id": "da5e2ba7-864b-4d23-852b-1a4c6f525f98",
@@ -778,6 +788,22 @@
         "line-color": "#ea580c",
         "line-style": "solid",
         "targetEndShape": "triangle"
+      },
+      {
+        "source": "d8cff664-d1a8-43c8-ac5e-cc1b2a8fb400",
+        "target": "c766195e-c279-4a50-84bb-fcbf46ac9798",
+        "label": "引数",
+        "line-color": "#0284c7",
+        "line-style": "solid",
+        "targetEndShape": "triangle"
+      },
+      {
+        "source": "d8cff664-d1a8-43c8-ac5e-cc1b2a8fb400",
+        "target": "bf2453f1-2a89-4209-ab79-00d526fd15a9",
+        "label": "戻り値",
+        "line-color": "#0284c7",
+        "line-style": "solid",
+        "targetEndShape": "triangle"
       }
     ],
     "nodePositions": {
@@ -901,6 +927,10 @@
         "x": 657.8527709116673,
         "y": -128.9290263363419
       },
+      "c766195e-c279-4a50-84bb-fcbf46ac9798": {
+        "x": 541,
+        "y": 257
+      },
       "ca0a28e1-6792-4d8b-ad9e-4a373ba190fc": {
         "x": 461.95102345035076,
         "y": -84.48363452625439
@@ -916,6 +946,10 @@
       "d0929a1e-1490-42c3-a728-d740c85ff7b7": {
         "x": -80.7020095503566,
         "y": 178.09713781133937
+      },
+      "d8cff664-d1a8-43c8-ac5e-cc1b2a8fb400": {
+        "x": 521,
+        "y": 210
       },
       "da5e2ba7-864b-4d23-852b-1a4c6f525f98": {
         "x": 463,

@@ -357,6 +357,32 @@ namespace Nijo.ImmutableSchema {
             }
         }
 
+        /// <summary>
+        /// このルート集約を <see cref="BasicNodeOptions.ReturnValue"/> に指定しているコマンドモデルを列挙します。
+        /// </summary>
+        public IEnumerable<RootAggregate> EnumerateCommandModelsRefferingAsReturnValue() {
+            foreach (var rootElement in _ctx.Document.Root?.ElementsWithoutMemo() ?? []) {
+                // コマンドモデルのみを対象とする
+                if (!_ctx.TryGetModel(rootElement, out var model) || model is not Models.CommandModel) {
+                    continue;
+                }
+
+                var returnValueAttr = rootElement.Attribute(BasicNodeOptions.ReturnValue.AttributeName);
+                if (returnValueAttr == null) {
+                    continue;
+                }
+
+                // ReturnValue属性の値を解析
+                var splitted = returnValueAttr.Value.Split(':');
+                var returnValueTargetName = splitted[0];
+
+                // このルート集約がReturnValue属性で指定されている場合
+                if (returnValueTargetName == PhysicalName) {
+                    yield return (RootAggregate)_ctx.ToAggregateBase(rootElement, null);
+                }
+            }
+        }
+
         private ICreatablePresentationLayerStructure GetTargetStructure(XAttribute attribute, bool isParameter) {
             var splitted = attribute.Value.Split(':');
             var targetPhysicalName = splitted[0];
@@ -365,9 +391,13 @@ namespace Nijo.ImmutableSchema {
 
             var targetRootAggregate = (RootAggregate)_ctx.ToAggregateBase(targetXElement, null);
             if (splitted.Length == 1) {
-                return isParameter
-                    ? new Models.StructureModelModules.StructureDisplayData(targetRootAggregate)
-                    : new Models.StructureModelModules.PlainStructure(targetRootAggregate);
+                // コマンドモデルの典型的な利用シーンとして「詳細画面の初期表示データ取得」があるので
+                // 戻り値であっても常にDisplayDataを返したほうがよいのか？うーん…
+                // return isParameter
+                //     ? new Models.StructureModelModules.StructureDisplayData(targetRootAggregate)
+                //     : new Models.StructureModelModules.PlainStructure(targetRootAggregate);
+
+                return new Models.StructureModelModules.StructureDisplayData(targetRootAggregate);
 
             } else if (BasicNodeOptions.StructureRefToAvailable.TryGetValue(splitted[1], out var factory)) {
                 return factory(targetRootAggregate);

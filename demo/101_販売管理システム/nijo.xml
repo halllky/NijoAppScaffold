@@ -139,17 +139,24 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       Type="datetime"
       UniqueId="99365fd5-0fca-4bc1-94af-2b4c8a44936a" />
     <担当者
-      RefToObject="DisplayData"
+      RefToObject="RefTarget"
       Type="ref-to:従業員Ref"
       UniqueId="37a8c98a-0d7c-4a59-8898-2958c91710ad" />
     <備考
       Type="description"
       UniqueId="f77e1d87-ff76-4b45-a841-48b37137c19b" />
+    <!--楽観排他用-->
+    <Version
+      Type="int"
+      UniqueId="c09d70de-6d3e-4a97-b578-5f2de2391b2e" />
     <入荷商品一覧
       Type="children"
       UniqueId="b16836d6-f14e-4ac9-87da-ca07546c6d37">
+      <入荷明細ID
+        Type="word"
+        UniqueId="a0b1c2d3-e4f5-6789-0123-456789abcdef" />
       <商品
-        RefToObject="DisplayData"
+        RefToObject="RefTarget"
         Type="ref-to:商品"
         UniqueId="23cd27b4-406d-4e5c-988a-8715fcbd4a4d" />
       <数量
@@ -164,6 +171,10 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       <備考
         Type="description"
         UniqueId="0e829f4a-05b0-4cac-a7cb-a4ab39578532" />
+      <!--楽観排他用-->
+      <Version
+        Type="int"
+        UniqueId="20723b0e-a1c3-4ab5-956c-867f0518aa30" />
     </入荷商品一覧>
   </入荷詳細>
   <従業員
@@ -277,7 +288,7 @@ ASP.NET Core のサービスワーカーとして登録される。-->
     Type="structure-model"
     UniqueId="ca0a28e1-6792-4d8b-ad9e-4a373ba190fc">
     <対象者
-      RefToObject="DisplayData"
+      RefToObject="RefTarget"
       Type="ref-to:従業員Ref"
       UniqueId="c804ad2e-ce78-469c-b58d-447d7561cb86" />
   </パスワード再発行Parameter>
@@ -316,7 +327,7 @@ ASP.NET Core のサービスワーカーとして登録される。-->
       Type="children"
       UniqueId="4f82b721-bd04-4279-8acb-ed14ab690eaf">
       <従業員
-        RefToObject="DisplayData"
+        RefToObject="RefTarget"
         Type="ref-to:従業員マスタ"
         UniqueId="46c347d6-20f0-453b-814f-45093b7923c7" />
     </更新対象従業員一覧>
@@ -344,7 +355,7 @@ ASP.NET Core のサービスワーカーとして登録される。-->
       Type="datetime"
       UniqueId="5fe83afc-073e-490f-932d-5eefad3b0c85" />
     <担当者
-      RefToObject="DisplayData"
+      RefToObject="RefTarget"
       Type="ref-to:従業員Ref"
       UniqueId="c2758cdd-4867-41b6-94db-208ca2559858" />
     <備考
@@ -359,7 +370,7 @@ ASP.NET Core のサービスワーカーとして登録される。-->
         Type="int"
         UniqueId="fe54c1ee-d63b-400c-a950-05adc927f28d" />
       <商品
-        RefToObject="DisplayData"
+        RefToObject="RefTarget"
         Type="ref-to:商品"
         UniqueId="398db3b4-a77e-45a2-881e-cad75af1bb46" />
       <!--新規登録の場合は「売上」で固定。売上修正の場合は「修正」も選べる。-->
@@ -442,7 +453,7 @@ ASP.NET Core のサービスワーカーとして登録される。-->
     Type="structure-model"
     UniqueId="2555dc15-3ed7-48cb-9e78-0e7b09de86a3">
     <商品
-      RefToObject="DisplayData"
+      RefToObject="RefTarget"
       Type="ref-to:商品"
       UniqueId="cb60d0f6-8dcb-4c4a-bc62-31aa338c4034" />
     <増減数
@@ -614,4 +625,16 @@ ASP.NET Core のサービスワーカーとして登録される定期処理。-
   <クリーンナップ
     Type="command-model"
     UniqueId="eadf411b-2c47-483f-b0a8-fc52c9486adc" />
+  <入荷詳細画面初期表示
+    Parameter="入荷詳細画面初期表示Parameter"
+    ReturnValue="入荷詳細"
+    Type="command-model"
+    UniqueId="d8cff664-d1a8-43c8-ac5e-cc1b2a8fb400" />
+  <入荷詳細画面初期表示Parameter
+    Type="structure-model"
+    UniqueId="c766195e-c279-4a50-84bb-fcbf46ac9798">
+    <入荷ID
+      Type="word"
+      UniqueId="feae908b-6766-4d7c-9781-43caebe0feee" />
+  </入荷詳細画面初期表示Parameter>
 </NijoAppScaffold>
