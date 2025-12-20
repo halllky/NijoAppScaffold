@@ -329,6 +329,13 @@ namespace Nijo.Parts.CSharp {
                             }
 
                             /// <summary>
+                            /// この項目に対して現在追加されているメッセージを取得します。
+                            /// </summary>
+                            public IReadOnlyMessageContainer? GetState() {
+                                return UnderlyingContext.Root.Find(_path);
+                            }
+
+                            /// <summary>
                             /// このインスタンスを指定した型にキャストして返します。
                             /// </summary>
                             public T As<T>() where T : {{SETTER_INTERFACE}} {

@@ -27,6 +27,20 @@ public static class MessageContainerExtension {
     }
 
     /// <summary>
+    /// このオブジェクトが持っているメッセージのうち、エラーが1件以上あるかどうかを返します。
+    /// （コンテキスト全体ではなく特定の項目以下でメッセージが発生しているかどうかの判定に使用）
+    /// </summary>
+    /// <param name="messageSetter"></param>
+    /// <returns></returns>
+    public static bool HasError(this MessageSetter messageSetter) {
+        return messageSetter
+            .GetState()
+            ?.DescendantsAndSelf()
+            .Any(c => c.Errors.Any())
+            ?? false;
+    }
+
+    /// <summary>
     /// このオブジェクトおよび子孫オブジェクトが持っているメッセージを再帰的に列挙します。
     /// メッセージは、パスとメッセージの組み合わせで返されます。
     /// パスは、このオブジェクトから子孫オブジェクトまでのパスをピリオドで繋いだものになります。

@@ -167,9 +167,11 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       Type="word"
       UniqueId="292832fb-e8f0-42cc-b121-a7665db9be9e" />
     <パスワード
+      IsRequired="True"
       Type="bytearray"
       UniqueId="e1d23e41-4dde-4ea3-bdc3-b88a80481786" />
     <SALT
+      IsRequired="True"
       Type="bytearray"
       UniqueId="eae146ed-8c0f-484c-8b1a-dfc12ab1987d" />
     <!--入荷登録機能を利用することができるか否か。-->
@@ -184,6 +186,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       UniqueId="4e11fe49-0e17-47a3-8ed5-5356b4f4535b" />
     <!--マスタデータを編集することができるか否か。-->
     <システム管理者
+      IsRequired="True"
       Type="bool"
       UniqueId="7a56056d-0c90-4871-979a-75f86ac07af3" />
   </従業員>

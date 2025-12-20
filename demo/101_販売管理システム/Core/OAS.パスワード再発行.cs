@@ -1,12 +1,13 @@
-using Microsoft.EntityFrameworkCore;
-
 namespace MyApp;
 
 partial class OverridedApplicationService {
 
+    /// <summary>
+    /// 初期パスワード
+    /// </summary>
+    private const string INIT_PASSWORD = "pass";
+
     public override async Task Executeパスワード再発行(パスワード再発行ParameterDisplayData param, IPresentationContext<パスワード再発行ParameterMessages> context) {
-        // 初期パスワード
-        const string INIT_PASSWORD = "pass";
 
         // 権限チェック
         if (LoginUser == null || !LoginUser.Isシステム管理者) {
