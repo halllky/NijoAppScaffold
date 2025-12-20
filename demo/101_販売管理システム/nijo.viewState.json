@@ -11,7 +11,7 @@
           "商品_商品SEQ",
           "増減数",
           "絶対数",
-          "備考"
+          "在庫調整理由"
         ],
         "background-color": "#ea580c",
         "border-color": "#ea580c"
