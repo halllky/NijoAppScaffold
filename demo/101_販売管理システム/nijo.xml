@@ -315,7 +315,7 @@ ASP.NET Core のサービスワーカーとして登録される。-->
       Type="bool"
       UniqueId="e722013b-ba56-4663-9f13-7e85e5c5f44f" />
   </従業員マスタ>
-  <!--@[従業員](659bf33a-c624-4e67-96a9-460809d70995) の更新処理。システム管理者のみ利用可能。-->
+  <!--従業員マスタの一括更新処理。システム管理者のみ利用可能。-->
   <従業員一括更新
     Parameter="従業員一括更新Parameter"
     Type="command-model"
@@ -335,7 +335,26 @@ ASP.NET Core のサービスワーカーとして登録される。-->
   <!--@[売上](f6a1b2c3-d4e5-4f2a-9b3c-4d5e6f7a8b9c) の一覧検索画面のデータ構造。-->
   <売上一覧
     Type="query-model"
-    UniqueId="d0929a1e-1490-42c3-a728-d740c85ff7b7" />
+    UniqueId="d0929a1e-1490-42c3-a728-d740c85ff7b7">
+    <売上SEQ
+      Type="int"
+      UniqueId="90702d06-0234-4726-aa4c-f7d793f86090" />
+    <売上日時
+      Type="datetime"
+      UniqueId="add98550-200d-4a0f-9e65-8ac6bacaeb61" />
+    <担当者
+      Type="ref-to:従業員Ref"
+      UniqueId="ad6a0fd0-996a-4481-b0da-c9eaa0a72cce" />
+    <備考
+      Type="description"
+      UniqueId="2c4ddbb9-7eb6-4ea1-96b9-eb3f2b13a53b" />
+    <売上総額_税込
+      Type="decimal"
+      UniqueId="551e8525-3c9c-4c00-a95e-707d6cc4a452" />
+    <売上数量合計
+      Type="int"
+      UniqueId="beb2ca92-d35c-4ec7-9c0e-2efc3c886f19" />
+  </売上一覧>
   <!--売上データを新規登録する。
 在庫引当計算もこの中で行われる。-->
   <売上新規登録
@@ -411,7 +430,28 @@ ASP.NET Core のサービスワーカーとして登録される。-->
   <!--@[入荷](e5f6a1b2-c3d4-4e5f-2a6b-7c8d9e0f1a2b) の一覧検索画面のデータ構造。-->
   <入荷一覧
     Type="query-model"
-    UniqueId="ca790c30-db44-4439-9452-2a1310a901bb" />
+    UniqueId="ca790c30-db44-4439-9452-2a1310a901bb">
+    <!--UUID-->
+    <入荷ID
+      Type="word"
+      UniqueId="1f7d351c-4779-45fe-91c0-c21dde51c77e" />
+    <入荷日時
+      Type="datetime"
+      UniqueId="b3a66de3-5919-4896-b2c9-a87d321fb4a1" />
+    <担当者
+      Type="ref-to:従業員Ref"
+      UniqueId="c8fde618-5c88-4a6b-8b05-dc5dbc93b032" />
+    <!--備考-->
+    <備考
+      Type="description"
+      UniqueId="06898967-2069-408d-8094-0abf14d93d46" />
+    <明細件数
+      Type="int"
+      UniqueId="47e8ab32-450e-4a0c-997c-d4b4e4627909" />
+    <入荷数量合計
+      Type="int"
+      UniqueId="f91dd3c1-3e02-485c-9d51-00a6d77a8c97" />
+  </入荷一覧>
   <!--@[商品](a1b2c3d4-e5f6-4a1b-8c2d-3e4f5a6b7c8d) の一覧検索画面のデータ構造。 @[入荷明細](a5e5b615-6cc1-4a50-8cc7-fe910dca543b) を参照し、現在の在庫数も一覧する。
 商品マスタはこのシステム上では編集できない。閲覧のみ。-->
   <商品一覧
@@ -427,9 +467,12 @@ ASP.NET Core のサービスワーカーとして登録される。-->
     <商品名
       Type="word"
       UniqueId="446d95d0-c894-4cbc-9f52-4cb316445c55" />
-    <単価
-      Type="int"
+    <売値単価_税抜
+      Type="decimal"
       UniqueId="bfe5c44a-cc36-4136-b22c-ac6425ec9dce" />
+    <消費税区分
+      Type="消費税区分"
+      UniqueId="9f805629-7700-4ffa-802b-897d6e85708c" />
     <在庫数
       Type="int"
       UniqueId="a3cc1a1f-51b5-4fc5-94a4-296f341293e7" />
@@ -541,14 +584,19 @@ ASP.NET Core のサービスワーカーとして登録される。-->
     <事由
       Type="word"
       UniqueId="e508c0a0-abb3-4605-8a44-65eb5d17e904" />
-    <!--売上詳細画面へのリンクに使用-->
-    <売上ID
-      Type="word"
-      UniqueId="37fc3118-a1d1-4ec5-b302-5c13af362b80" />
     <!--入荷詳細画面へのリンクに使用-->
     <入荷ID
       Type="word"
       UniqueId="f657a5d7-c7ac-4851-afa2-c5534e3f4aa8" />
+    <!--在庫調整からの引当の場合はリンク不要なので売上のみ-->
+    <増減履歴引当元売上一覧
+      Type="children"
+      UniqueId="6352e9fa-d872-495c-b3a3-7942e992d19a">
+      <!--売上詳細画面へのリンクに使用-->
+      <売上SEQ
+        Type="int"
+        UniqueId="37fc3118-a1d1-4ec5-b302-5c13af362b80" />
+    </増減履歴引当元売上一覧>
   </商品在庫増減履歴>
   <消費税区分
     Type="enum"
