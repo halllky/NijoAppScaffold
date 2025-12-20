@@ -29,7 +29,7 @@ function P301_商品詳細() {
   const { id } = useParams()
 
   return (
-    <PageBase pageTitle="商品詳細">
+    <PageBase browserTitle="商品詳細">
       <div>商品ID: {id}</div>
     </PageBase>
   )

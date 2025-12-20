@@ -2,19 +2,15 @@ import { ReactNode, useEffect } from "react"
 
 export type PageBaseProps = {
   /** ページタイトル。ブラウザのタイトルバーに表示されます。 */
-  pageTitle?: string
-  /** ヘッダーのタイトルの横に表示するコンテンツ */
+  browserTitle?: string
+  /** ヘッダー */
   header?: ReactNode
-  /** ヘッダーの右側に表示するコンテンツ */
-  headerRight?: ReactNode
   /** コンテンツ */
-  children?: ReactNode
+  contents?: ReactNode
   /** フッター */
   footer?: ReactNode
-  /** ルート要素の追加クラス */
-  className?: string
   /** コンテンツエリアの追加クラス */
-  contentClassName?: string
+  className?: string
 }
 
 /**
@@ -23,39 +19,29 @@ export type PageBaseProps = {
  */
 export function PageBase(props: PageBaseProps) {
   useEffect(() => {
-    if (props.pageTitle) {
-      document.title = props.pageTitle
+    if (props.browserTitle) {
+      document.title = props.browserTitle
     }
-  }, [props.pageTitle])
+  }, [props.browserTitle])
 
   return (
-    <div className={`flex flex-col gap-2 ${props.className ?? ''}`}>
+    <div className="flex flex-col h-full">
 
       {/* ヘッダ */}
-      <header className="flex flex-wrap items-center px-8 py-1 gap-4">
-        <h1 className="text-xl font-bold">
-          {props.pageTitle}
-        </h1>
-        {props.header}
-
-        {props.headerRight && (
-          <>
-            <div className="flex-grow" />
-            <div className="flex gap-2">
-              {props.headerRight}
-            </div>
-          </>
-        )}
-      </header>
+      {props.header && (
+        <header className="flex flex-wrap items-center px-8 py-1 gap-4">
+          {props.header}
+        </header>
+      )}
 
       {/* コンテンツ */}
-      <div className={`flex-grow flex flex-col ${props.contentClassName ?? 'px-8 py-2'}`}>
-        {props.children}
+      <div className={`flex-grow flex flex-col px-8 ${props.className ?? ''}`}>
+        {props.contents}
       </div>
 
       {/* フッター */}
       {props.footer && (
-        <footer className="px-8 py-2 border-t flex items-center justify-between bg-gray-50">
+        <footer className="px-8 py-1 border-t border-gray-300 flex items-center justify-between bg-gray-50">
           {props.footer}
         </footer>
       )}

@@ -1,4 +1,5 @@
 import { createBrowserRouter } from "react-router-dom"
+import { RootLayout } from "./layout/RootLayout"
 import P000 from "./pages/P000_トップページ"
 import P100 from "./pages/P100_売上"
 import P200 from "./pages/P200_入荷"
@@ -9,12 +10,17 @@ import P201 from "./pages/P201_入荷詳細"
 import P301 from "./pages/P301_商品詳細"
 
 export const router = createBrowserRouter([
-  P000,
-  P100,
-  P200,
-  P300,
-  P400,
-  ...P101,
-  ...P201,
-  P301,
+  {
+    element: <RootLayout />,
+    children: [
+      P000,
+      P100,
+      P200,
+      P300,
+      P400,
+      ...P101,
+      ...P201,
+      P301,
+    ],
+  },
 ])

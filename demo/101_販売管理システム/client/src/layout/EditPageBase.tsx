@@ -74,11 +74,10 @@ export function EditPageBase(props: EditPageBaseProps) {
 
   return (
     <PageBase
-      pageTitle={props.pageTitle}
+      browserTitle={props.pageTitle}
       header={props.header?.({ save, saving })}
-      contentClassName="gap-2 px-8 py-2"
-    >
-      {props.children?.({ save, saving })}
-    </PageBase>
+      contents={props.children?.({ save, saving })}
+      className="gap-2 px-8 py-2"
+    />
   )
 }

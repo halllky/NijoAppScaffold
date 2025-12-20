@@ -1,11 +1,14 @@
 import { ReactNode, useCallback, useState } from "react"
-import { Allotment } from "allotment"
-import "allotment/dist/style.css"
+import * as Icon from "@heroicons/react/24/solid"
+import { Allotment, LayoutPriority } from "allotment"
 import { PageBase } from "./PageBase"
+import { PageTitle } from "./PageTitle"
 
 export type SearchPageBaseProps<TItem, TCondition> = {
   /** ページタイトル。ブラウザのタイトルバーに表示されます。 */
   pageTitle?: string
+  /** 検索条件欄のデフォルトサイズ（ピクセル） */
+  searchConditionDefaultSize?: number
   /** 検索処理。検索条件とページング情報を受け取り、結果を返す */
   onSearch: (condition: TCondition, pageIndex: number, pageSize: number) => Promise<{ items: TItem[], totalCount: number }>
   /** ヘッダー部分のページタイトルの横の部分のレイアウト */
@@ -40,6 +43,7 @@ export function SearchPageBase<TItem, TCondition>(props: SearchPageBaseProps<TIt
   const [pageSize, setPageSize] = useState(20)
   const [lastCondition, setLastCondition] = useState<TCondition | undefined>(undefined)
   const [loading, setLoading] = useState(false)
+  const [searchConditionVisible, setSearchConditionVisible] = useState(true)
 
   const executeSearch = useCallback(async (condition: TCondition, page: number, size: number) => {
     try {
@@ -73,12 +77,27 @@ export function SearchPageBase<TItem, TCondition>(props: SearchPageBaseProps<TIt
 
   return (
     <PageBase
-      pageTitle={props.pageTitle}
-      className="h-full"
-      contentClassName="overflow-hidden px-4"
-      header={props.header}
-      headerRight={
+      browserTitle={props.pageTitle}
+      className="overflow-hidden"
+      header={(
         <>
+          {/* ページタイトル */}
+          <button
+            type="button"
+            className="flex-1 flex items-center gap-1 cursor-pointer select-none"
+            onClick={() => setSearchConditionVisible(prev => !prev)}
+          >
+            {searchConditionVisible ? (
+              <Icon.ChevronDownIcon className="w-4 h-4" />
+            ) : (
+              <Icon.ChevronRightIcon className="w-4 h-4" />
+            )}
+            <PageTitle>
+              {props.pageTitle}
+            </PageTitle>
+          </button>
+
+          {/* クリアボタン */}
           <button
             type="button"
             className="px-4 py-1 border border-gray-300 rounded hover:bg-gray-100 text-gray-700"
@@ -93,6 +112,8 @@ export function SearchPageBase<TItem, TCondition>(props: SearchPageBaseProps<TIt
           >
             クリア
           </button>
+
+          {/* 検索ボタン */}
           <button
             type="submit"
             form="search-form"
@@ -102,9 +123,35 @@ export function SearchPageBase<TItem, TCondition>(props: SearchPageBaseProps<TIt
             検索
           </button>
         </>
-      }
-      footer={
+      )}
+      contents={(
+        <Allotment vertical
+          defaultSizes={[props.searchConditionDefaultSize ?? 200, 999]}
+          proportionalLayout={false} // ページサイズ変更時に検索結果欄だけ伸縮するようにするため
+          className="pb-1"
+        >
+
+          {/* 検索条件欄 */}
+          <Allotment.Pane minSize={50} visible={searchConditionVisible}>
+            <div className="h-full overflow-auto bg-white">
+              {props.searchCondition({ search: handleSearch })}
+            </div>
+          </Allotment.Pane>
+
+          {/* 検索結果欄 */}
+          <Allotment.Pane
+            priority={LayoutPriority.High} // ページサイズ変更時に検索結果欄だけ伸縮する
+          >
+            <div className="h-full overflow-auto p-1 border bg-white">
+              {props.searchResult({ items })}
+            </div>
+          </Allotment.Pane>
+
+        </Allotment>
+      )}
+      footer={(
         <>
+          {/* 件数表示 */}
           <div className="text-sm text-gray-600">
             {totalCount > 0 ? (
               <>
@@ -114,6 +161,8 @@ export function SearchPageBase<TItem, TCondition>(props: SearchPageBaseProps<TIt
               <>データなし</>
             )}
           </div>
+
+          {/* ページャー */}
           <div className="flex gap-2 items-center">
             <button
               className="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
@@ -134,20 +183,7 @@ export function SearchPageBase<TItem, TCondition>(props: SearchPageBaseProps<TIt
             </button>
           </div>
         </>
-      }
-    >
-      <Allotment vertical defaultSizes={[100, 300]}>
-        <Allotment.Pane minSize={50} preferredSize={150}>
-          <div className="h-full overflow-auto px-4 py-2 border rounded bg-white">
-            {props.searchCondition({ search: handleSearch })}
-          </div>
-        </Allotment.Pane>
-        <Allotment.Pane>
-          <div className="h-full overflow-auto px-4 py-2 border rounded bg-white mt-2">
-            {props.searchResult({ items })}
-          </div>
-        </Allotment.Pane>
-      </Allotment>
-    </PageBase>
+      )}
+    />
   )
 }

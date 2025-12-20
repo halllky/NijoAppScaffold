@@ -3,13 +3,15 @@ import * as ReactRouter from "react-router"
 import { useNavigate } from "react-router-dom"
 import { SearchPageBase } from "../layout/SearchPageBase"
 
+export const URL = "/uriage"
+
 /**
  * P100_売上 へ遷移するためのフック
  */
 export function useNavigateToP100売上() {
   const navigate = useNavigate()
   return React.useCallback(() => {
-    navigate(`/uriage`)
+    navigate(URL)
   }, [navigate])
 }
 
@@ -17,7 +19,7 @@ export function useNavigateToP100売上() {
  * ルーティング定義
  */
 export default {
-  path: "/uriage",
+  path: URL,
   element: <P100_売上 />,
   loader: undefined,
 } satisfies ReactRouter.RouteObject

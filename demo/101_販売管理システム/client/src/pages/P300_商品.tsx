@@ -3,13 +3,15 @@ import * as ReactRouter from "react-router"
 import { useNavigate } from "react-router-dom"
 import { SearchPageBase } from "../layout/SearchPageBase"
 
+export const URL = "/shohin"
+
 /**
  * P300_商品 へ遷移するためのフック
  */
 export function useNavigateToP300商品() {
   const navigate = useNavigate()
   return React.useCallback(() => {
-    navigate(`/shohin`)
+    navigate(URL)
   }, [navigate])
 }
 
@@ -17,7 +19,7 @@ export function useNavigateToP300商品() {
  * ルーティング定義
  */
 export default {
-  path: "/shohin",
+  path: URL,
   element: <P300_商品 />,
   loader: undefined,
 } satisfies ReactRouter.RouteObject
