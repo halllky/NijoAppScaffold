@@ -263,11 +263,14 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         internal EditablePresentationObjectRefMember(RefToMember refTo) {
             Member = refTo;
 
-            if (refTo.Owner.GetRoot().Model is Models.QueryModel || refTo.RefTo.GetRoot().Model is Models.DataModel) {
+            var ownerModel = refTo.Owner.GetRoot().Model;
+            var refToModel = refTo.RefTo.GetRoot().Model;
+
+            if (ownerModel is Models.QueryModel || refToModel is Models.DataModel) {
                 // Query => Query
                 RefEntry = new DisplayDataRef.Entry(refTo.RefTo);
 
-            } else if (refTo.RefTo.GetRoot().Model is Models.StructureModel) {
+            } else if (refToModel is Models.StructureModel) {
                 // Structure => Structure
                 if (refTo.RefTo is not RootAggregate refToRoot) throw new InvalidOperationException("ありえない");
                 RefEntry = new Models.StructureModelModules.PlainStructure(refToRoot);
