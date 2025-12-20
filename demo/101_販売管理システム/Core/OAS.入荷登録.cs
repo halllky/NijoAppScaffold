@@ -22,7 +22,7 @@ partial class OverridedApplicationService {
         var headerResult = await Create入荷Async(new() {
             入荷ID = newId,
             入荷日時 = param.Values.入荷日時,
-            担当者 = new() { 従業員番号 = param.Values.担当者.Values.従業員番号 },
+            担当者 = new() { 従業員番号 = param.Values.担当者.従業員番号 },
             備考 = param.Values.備考,
         }, context);
 

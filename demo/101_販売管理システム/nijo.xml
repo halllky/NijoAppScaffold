@@ -327,7 +327,7 @@ ASP.NET Core のサービスワーカーとして登録される。-->
       Type="children"
       UniqueId="4f82b721-bd04-4279-8acb-ed14ab690eaf">
       <従業員
-        RefToObject="RefTarget"
+        RefToObject="DisplayData"
         Type="ref-to:従業員マスタ"
         UniqueId="46c347d6-20f0-453b-814f-45093b7923c7" />
     </更新対象従業員一覧>
@@ -386,7 +386,7 @@ ASP.NET Core のサービスワーカーとして登録される。-->
       UniqueId="98b7b6c4-9e74-4330-9bc8-e8594811c0a6">
       <!--UUID。非表示。-->
       <明細ID
-        Type="int"
+        Type="word"
         UniqueId="fe54c1ee-d63b-400c-a950-05adc927f28d" />
       <商品
         RefToObject="RefTarget"

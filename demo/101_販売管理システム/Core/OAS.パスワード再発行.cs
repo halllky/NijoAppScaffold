@@ -20,7 +20,6 @@ partial class OverridedApplicationService {
             context.Messages.対象者.AddError("対象者を選択してください。");
             return;
         }
-        var targetEmployeeId = param.Values.対象者.Values.従業員番号;
 
         // パスワードのハッシュ化
         var salt = GenerateSalt();
@@ -29,7 +28,7 @@ partial class OverridedApplicationService {
         // 更新
         using var tran = await DbContext.Database.BeginTransactionAsync();
 
-        var result = await Update従業員Async(targetEmployeeId, null, employee => {
+        var result = await Update従業員Async(param.Values.対象者.従業員番号, null, employee => {
             employee.SALT = salt;
             employee.パスワード = hash;
         }, context);
