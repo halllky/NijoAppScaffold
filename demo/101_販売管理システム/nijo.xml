@@ -273,6 +273,7 @@ ASP.NET Core のサービスワーカーとして登録される。-->
   <!--パスワード認証でのログイン。-->
   <ログイン
     Parameter="ログインParameter"
+    ReturnValue="ログインユーザー情報"
     Type="command-model"
     UniqueId="af387361-2401-4308-9e04-8e5973f39426" />
   <ログアウト
@@ -685,4 +686,25 @@ ASP.NET Core のサービスワーカーとして登録される定期処理。-
       Type="word"
       UniqueId="feae908b-6766-4d7c-9781-43caebe0feee" />
   </入荷詳細画面初期表示Parameter>
+  <ログインユーザー情報
+    Type="structure-model"
+    UniqueId="f594d8ac-f7ff-44ca-878f-fcbfd1e79ee1">
+    <従業員番号
+      Type="word"
+      UniqueId="c608a333-3561-445b-98e4-033f00baa5d1" />
+    <氏名
+      Type="word"
+      UniqueId="59db479e-8398-429e-928c-53639f6e6f19" />
+    <!--入荷担当またはシステム管理者の場合true-->
+    <入荷機能を利用可能
+      Type="bool"
+      UniqueId="4106ebcf-27da-4886-80ec-2919acdb6877" />
+    <!--販売担当またはシステム管理者の場合true-->
+    <販売機能を利用可能
+      Type="bool"
+      UniqueId="8c487777-69d8-4177-9c0b-0c41277438bb" />
+    <システム管理者
+      Type="bool"
+      UniqueId="72b24b06-ab7e-4267-ac2f-a951cdb6885f" />
+  </ログインユーザー情報>
 </NijoAppScaffold>

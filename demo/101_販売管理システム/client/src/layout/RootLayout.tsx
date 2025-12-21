@@ -9,7 +9,7 @@ import * as P400 from "../pages/P400_従業員"
 import { NowLoading } from "./NowLoading"
 
 /**
- * アプリケーション全体の枠
+ * ログイン後のアプリケーション全体の枠
  */
 export function RootLayout() {
   const navigation = useNavigation()

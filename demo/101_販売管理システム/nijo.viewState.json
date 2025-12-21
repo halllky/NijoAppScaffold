@@ -468,6 +468,10 @@
         "background-color": "#ea580c",
         "border-color": "#ea580c"
       },
+      "f594d8ac-f7ff-44ca-878f-fcbfd1e79ee1": {
+        "id": "f594d8ac-f7ff-44ca-878f-fcbfd1e79ee1",
+        "label": "ログインユーザー情報"
+      },
       "f6a1b2c3-d4e5-4f2a-9b3c-4d5e6f7a8b9c": {
         "id": "f6a1b2c3-d4e5-4f2a-9b3c-4d5e6f7a8b9c",
         "label": "売上",
@@ -582,6 +586,14 @@
         "source": "af387361-2401-4308-9e04-8e5973f39426",
         "target": "a775c249-a449-4700-a33a-262ca6c820f3",
         "label": "引数",
+        "line-color": "#0284c7",
+        "line-style": "solid",
+        "targetEndShape": "triangle"
+      },
+      {
+        "source": "af387361-2401-4308-9e04-8e5973f39426",
+        "target": "f594d8ac-f7ff-44ca-878f-fcbfd1e79ee1",
+        "label": "戻り値",
         "line-color": "#0284c7",
         "line-style": "solid",
         "targetEndShape": "triangle"
@@ -989,6 +1001,10 @@
       "f102d81b-ad4a-4799-a59f-1e41d575f0de": {
         "x": -60.72485129848289,
         "y": 70.47772005060916
+      },
+      "f594d8ac-f7ff-44ca-878f-fcbfd1e79ee1": {
+        "x": 297.0466728361649,
+        "y": -357.0561016919558
       },
       "f6a1b2c3-d4e5-4f2a-9b3c-4d5e6f7a8b9c": {
         "x": -60.72485129848289,

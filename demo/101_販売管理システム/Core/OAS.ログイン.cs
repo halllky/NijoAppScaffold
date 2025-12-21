@@ -6,7 +6,7 @@ using MyApp.Core.Authorization;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task Executeログイン(ログインParameterDisplayData param, IPresentationContext<ログインParameterMessages> context) {
+    public override async Task Executeログイン(ログインParameterDisplayData param, IPresentationContextWithReturnValue<ログインユーザー情報DisplayData, ログインParameterMessages> context) {
         // 入力チェック
         if (string.IsNullOrWhiteSpace(param.Values.従業員番号)) {
             context.Messages.従業員番号.AddError("従業員番号を入力してください。");
@@ -57,6 +57,17 @@ partial class OverridedApplicationService {
         // クライアントに返す
         var sessionKeyProvider = ServiceProvider.GetRequiredService<ISessionKeyProvider>();
         sessionKeyProvider.ReturnSessionKeyToClient(sessionKey);
+
+        // JavaScriptで使うログインユーザー情報
+        context.ReturnValue = new() {
+            Values = new() {
+                従業員番号 = employee.従業員番号,
+                氏名 = employee.氏名,
+                入荷機能を利用可能 = employee.入荷担当 == true || employee.システム管理者 == true,
+                販売機能を利用可能 = employee.販売担当 == true || employee.システム管理者 == true,
+                システム管理者 = employee.システム管理者 == true,
+            },
+        };
 
         await tran.CommitAsync();
     }
