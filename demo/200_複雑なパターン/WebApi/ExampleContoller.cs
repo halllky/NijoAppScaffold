@@ -38,15 +38,20 @@ public class ExampleContoller : ControllerBase {
     /// </summary>
     [HttpPost("destroy-and-recreate-database")]
     public async Task<IActionResult> DestroyAndRecreateDatabase() {
-        // データベースを削除して再作成
-        await _app.DbContext.Database.EnsureDeletedAsync();
-        await _app.DbContext.EnsureCreatedAsyncEx(_app.Settings);
+        try {
+            // データベースを削除して再作成
+            await _app.DbContext.Database.EnsureDeletedAsync();
+            await _app.DbContext.EnsureCreatedAsyncEx(_app.Settings);
 
-        // ダミーデータの生成
-        var generator = new OverridedDummyDataGenerator();
-        var descriptor = new DummyDataDbOutput(_app.DbContext);
-        await generator.GenerateAsync(descriptor, _app.DbContext);
+            // ダミーデータの生成
+            var generator = new OverridedDummyDataGenerator();
+            var descriptor = new DummyDataDbOutput(_app.DbContext);
+            await generator.GenerateAsync(descriptor, _app.DbContext);
 
-        return Ok();
+            return Ok();
+
+        } catch (Exception ex) {
+            return Problem(ex.ToString());
+        }
     }
 }
