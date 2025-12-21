@@ -3,6 +3,7 @@ import * as Icon from "@heroicons/react/24/solid"
 import { Allotment, LayoutPriority } from "allotment"
 import { PageBase } from "./PageBase"
 import { PageTitle } from "./PageTitle"
+import { Button } from "../input/Button"
 
 export type SearchPageBaseProps<TItem, TCondition> = {
   /** ページタイトル。ブラウザのタイトルバーに表示されます。 */
@@ -98,9 +99,7 @@ export function SearchPageBase<TItem, TCondition>(props: SearchPageBaseProps<TIt
           </button>
 
           {/* クリアボタン */}
-          <button
-            type="button"
-            className="px-4 py-1 border border-gray-300 rounded hover:bg-gray-100 text-gray-700"
+          <Button outline
             onClick={() => {
               // form="search-form" を持つ reset ボタンとして振る舞わせる、
               // または利用側が reset イベントをハンドリングすることを期待する
@@ -111,17 +110,12 @@ export function SearchPageBase<TItem, TCondition>(props: SearchPageBaseProps<TIt
             }}
           >
             クリア
-          </button>
+          </Button>
 
           {/* 検索ボタン */}
-          <button
-            type="submit"
-            form="search-form"
-            className="px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 font-bold"
-            disabled={loading}
-          >
+          <Button submit fill form="search-form" disabled={loading}>
             検索
-          </button>
+          </Button>
         </>
       )}
       contents={(
