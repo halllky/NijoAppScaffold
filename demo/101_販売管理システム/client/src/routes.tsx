@@ -8,11 +8,14 @@ import P400 from "./pages/P400_従業員"
 import P101 from "./pages/P101_売上詳細"
 import P201 from "./pages/P201_入荷詳細"
 import P301 from "./pages/P301_商品詳細"
+import UIComponentCatalog from "./debug-rooms/UIコンポーネントカタログ"
 
 export const router = createBrowserRouter([
   {
     element: <RootLayout />,
     children: [
+
+      // 業務画面
       P000,
       P100,
       P200,
@@ -21,6 +24,11 @@ export const router = createBrowserRouter([
       ...P101,
       ...P201,
       P301,
+
+      // デバッグ用画面（開発環境でのみ表示）
+      ...(!import.meta.env.DEV ? [] : [
+        UIComponentCatalog,
+      ]),
     ],
   },
 ])

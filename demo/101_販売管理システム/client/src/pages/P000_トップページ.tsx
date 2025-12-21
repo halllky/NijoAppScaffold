@@ -2,6 +2,7 @@ import React from "react"
 import * as ReactRouter from "react-router"
 import { useNavigate } from "react-router-dom"
 import { PageBase } from "../layout/PageBase"
+import デバッグメニュー from "../debug-rooms/デバッグメニュー"
 
 export const URL = "/"
 
@@ -31,7 +32,13 @@ function P000_トップページ() {
   return (
     <PageBase
       browserTitle="販売管理システム"
-      contents={<div>未実装！</div>}
+      contents={(
+        <div className="py-1">
+          {import.meta.env.DEV && (
+            <デバッグメニュー />
+          )}
+        </div>
+      )}
     />
   )
 }
