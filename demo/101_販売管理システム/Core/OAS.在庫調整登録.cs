@@ -11,11 +11,15 @@ partial class OverridedApplicationService {
             return;
         }
 
-        // 入力チェック
+        // 入力チェック: 商品
+        // ※ 自動生成されたコードでもチェックされるが、商品のキーがないとこのあとの処理が成り立たないので先にチェックする。
         if (param.Values.商品.商品SEQ == null) {
             context.Messages.商品.AddError("商品を選択してください。");
             return;
         }
+
+        // 入力チェック: 増減数・絶対数
+        // ※ 「どちらか片方のみ」というのは自動生成されたコードでは表現できないので、ここでチェックする。
         if (param.Values.増減数 == null && param.Values.絶対数 == null) {
             context.Messages.AddError("増減数または絶対数のいずれかを指定してください。");
             return;
