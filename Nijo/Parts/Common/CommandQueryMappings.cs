@@ -118,9 +118,10 @@ namespace Nijo.Parts.Common {
                 .Where(root => root.GenerateBatchUpdateCommand)
                 .ToArray();
 
-            // CommandModel のパラメータに指定されている StructureModel の型名
+            // CommandModel のパラメータまたは戻り値に指定されている StructureModel の型名
             var parameterStructureModels = structureModelsOrderByDataFlow
-                .Where(x => x.EnumerateCommandModelsRefferingAsParameter().Any())
+                .Where(x => x.EnumerateCommandModelsRefferingAsParameter().Any()
+                         || x.EnumerateCommandModelsRefferingAsReturnValue().Any())
                 .ToArray();
 
             // Ref関連モジュールは他の集約から参照されているもののみ使用可能
