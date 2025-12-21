@@ -3,6 +3,7 @@ import * as ReactRouter from "react-router"
 import { useNavigate } from "react-router-dom"
 import { useForm, Controller } from "react-hook-form"
 import { PageBase } from "../layout/PageBase"
+import { DataTable, DataTableColumn } from "../layout/DataTable"
 import { PageTitle } from "../layout/PageTitle"
 import { FormLabel } from "../layout/FormLabel"
 import { CheckBox } from "../input/CheckBox"
@@ -62,6 +63,22 @@ function UIComponentCatalog() {
   const values = watch()
 
   const [loadingVisible, setLoadingVisible] = useState(false)
+
+  // DataTable example data
+  type TableRow = { id: number, name: string, price: number, category: string }
+  const tableRows: TableRow[] = React.useMemo(() => Array.from({ length: 20 }).flatMap((_, i) => [
+    { id: i * 10 + 1, name: "商品A", price: 1000, category: "食品" },
+    { id: i * 10 + 2, name: "商品B", price: 2500, category: "家電" },
+    { id: i * 10 + 3, name: "商品C", price: 500, category: "雑貨" },
+    { id: i * 10 + 4, name: "商品D", price: 12000, category: "家電" },
+    { id: i * 10 + 5, name: "商品E", price: 300, category: "食品" },
+  ]), [])
+  const tableColumns: DataTableColumn<TableRow>[] = [
+    { header: "ID", render: row => row.id, widthPx: 60 },
+    { header: "商品名", render: row => row.name },
+    { header: "価格", render: row => <div className="text-right">{row.price.toLocaleString()}円</div>, widthPx: 100 },
+    { header: "カテゴリ", render: row => <span className="px-2 py-1 bg-gray-200 rounded text-xs">{row.category}</span>, widthPx: 100 },
+  ]
 
   return (
     <PageBase
@@ -251,6 +268,22 @@ function UIComponentCatalog() {
                     ローディングコンポーネントは親要素(relative)の全面を覆います。
                   </div>
                   {loadingVisible && <NowLoading />}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-bold mb-4 border-b">DataTable</h2>
+            <div className="space-y-2">
+              <div className="p-4 border rounded">
+                <DataTable
+                  rows={tableRows}
+                  columns={tableColumns}
+                  className="w-full max-h-60 resize-x border border-gray-700"
+                />
+                <div className="mt-2 text-sm text-gray-500">
+                  シンプルなテーブルコンポーネント。ヘッダ固定、横スクロール対応。
                 </div>
               </div>
             </div>
