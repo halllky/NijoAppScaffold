@@ -11,6 +11,22 @@
     {
       "name": "NijoAppScaffold",
       "path": "."
+    },
+    {
+      "name": "DEMO 000 基本的なDataModelの例",
+      "path": "demo/000_基本的なDataModelの例"
+    },
+    {
+      "name": "DEMO 100 チャットアプリ",
+      "path": "demo/100_チャットアプリ"
+    },
+    {
+      "name": "DEMO 101 販売管理システム",
+      "path": "demo/101_販売管理システム"
+    },
+    {
+      "name": "DEMO 200 複雑なパターン",
+      "path": "demo/200_複雑なパターン"
     }
   ],
   "settings": {
@@ -196,5 +212,16 @@
         ]
       }
     ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": ".NET Core Attach",
+        "type": "coreclr",
+        "request": "attach"
+      }
+    ],
+    "compounds": []
   }
 }

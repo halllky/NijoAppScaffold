@@ -14,13 +14,14 @@
 3. client の package.json の編集
    - nameを変更
    - dependencies, devDependencies を削除。モノレポのルートの設定を援用するので
-4. [VSCode設定ファイル](../nijo.code-workspace) にフォルダ名を追加。VSCode > F1 > Run Task からのデバッグコマンド等で新規追加プロジェクトを選択できるようにする
-5. [モノレポのルートのpackage.json](../package.json) に新規追加プロジェクトのclientフォルダを追加
-6. .NET の整備 ... 後述※1のコマンドを参考にして、以下のことを行う。
+4. [VSCode設定ファイル](../nijo.code-workspace) の `"id": "demoFolder"` の箇所にフォルダ名を追加。VSCode > F1 > Run Task からのデバッグコマンド等で新規追加プロジェクトを選択できるようにする
+5. [VSCode設定ファイル](../nijo.code-workspace) の `"folders"` に新規追加プロジェクトのフォルダを追加（任意）
+6. [モノレポのルートのpackage.json](../package.json) に新規追加プロジェクトのclientフォルダを追加
+7. .NET の整備 ... 後述※1のコマンドを参考にして、以下のことを行う。
    1. エクスプローラーで新たに作成された `MyApp.sln` のファイル名を変更
    2. そのソリューションに含まれる各プロジェクトの名前を変更
    3. [.NET のソリューション](../nijo.sln) に追加
-7. 一度clientフォルダ直下で `npm run dev` を行い node_modules フォルダを生成しておく。デバッグ開始時に未インストールと判定して npm ci しに行こうとするため
+8. 一度clientフォルダ直下で `npm run dev` を行い node_modules フォルダを生成しておく。デバッグ開始時に未インストールと判定して npm ci しに行こうとするため
 
 ※1: .NET の整備コマンド
 
