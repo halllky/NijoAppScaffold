@@ -11,14 +11,17 @@ import P201 from "./pages/P201_入荷詳細"
 import P301 from "./pages/P301_商品詳細"
 import UIComponentCatalog from "./debug-rooms/UIコンポーネントカタログ"
 import { P001_ログイン } from "./pages/P001_ログイン"
+import { LoginUserProvider } from "./util/useLoginLogout"
 
 export const router = createBrowserRouter([
   {
     element: (
       <DetailMessageContext.Provider>
-        <P001_ログイン>
-          <RootLayout />
-        </P001_ログイン>
+        <LoginUserProvider>
+          <P001_ログイン>
+            <RootLayout />
+          </P001_ログイン>
+        </LoginUserProvider>
       </DetailMessageContext.Provider>
     ),
     children: [

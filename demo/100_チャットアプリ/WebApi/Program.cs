@@ -28,10 +28,10 @@ builder.Services.AddCors(options => {
     // 開発環境ではViteからのリクエストを許可
     if (builder.Environment.IsDevelopment()) {
         options.AddDefaultPolicy(policy => {
-            policy.WithOrigins("http://localhost:5173") // Vite のデフォルトポート
+            policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost") // localhostであればポート問わず許可
                   .AllowAnyMethod()
                   .AllowAnyHeader()
-                  .AllowCredentials(); // このデモではCookie認証を使用しているので
+                  .AllowCredentials(); // クライアント側の credentials: 'include' に対応するために必須
         });
     }
 });

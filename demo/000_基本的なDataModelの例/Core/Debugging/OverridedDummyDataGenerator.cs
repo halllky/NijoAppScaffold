@@ -6,7 +6,7 @@ namespace MyApp;
 /// 標準のダミーデータ生成処理をカスタマイズしたい場合はここで適宜オーバーライドする。
 /// 生成ロジックは nijo.xml の Type="" の種類単位。
 /// </summary>
-public class OverridedDummyDataGenerator : DummyDataGenerator {
+public partial class OverridedDummyDataGenerator : DummyDataGenerator {
 
     // 単語型のダミーデータ生成ロジック
     protected override string? GetRandomWord(DummyDataGenerateContext context, MetadataOfApplicationSchema.ValueMemberMetadata member) {

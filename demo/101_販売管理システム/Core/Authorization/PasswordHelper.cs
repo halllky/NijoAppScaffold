@@ -8,7 +8,7 @@ partial class OverridedApplicationService {
     /// パスワードのハッシュ化に使用するソルトを生成します。
     /// </summary>
     /// <returns></returns>
-    private static byte[] GenerateSalt() {
+    internal static byte[] GenerateSalt() {
         var salt = new byte[32]; // 256 bits
         using (var rng = RandomNumberGenerator.Create()) {
             rng.GetBytes(salt);
@@ -19,7 +19,7 @@ partial class OverridedApplicationService {
     /// <summary>
     /// パスワードをハッシュ化します。
     /// </summary>
-    private static byte[] ComputeHash(string password, byte[] salt) {
+    internal static byte[] ComputeHash(string password, byte[] salt) {
         var passwordBytes = Encoding.UTF8.GetBytes(password);
         using var hmac = new HMACSHA256(salt);
         return hmac.ComputeHash(passwordBytes);

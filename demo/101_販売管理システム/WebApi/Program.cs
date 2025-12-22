@@ -21,9 +21,10 @@ builder.Services.AddCors(options => {
     // 開発環境ではViteからのリクエストを許可
     if (builder.Environment.IsDevelopment()) {
         options.AddDefaultPolicy(policy => {
-            policy.AllowAnyOrigin()
+            policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost") // localhostであればポート問わず許可
                   .AllowAnyMethod()
-                  .AllowAnyHeader();
+                  .AllowAnyHeader()
+                  .AllowCredentials(); // クライアント側の credentials: 'include' に対応するために必須
         });
     }
 });
