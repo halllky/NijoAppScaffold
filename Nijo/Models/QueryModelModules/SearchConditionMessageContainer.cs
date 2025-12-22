@@ -33,6 +33,7 @@ namespace Nijo.Models.QueryModelModules {
                         : null,
                     CsType = null,
                     IsArray = m is IRelationalMember rm2 && rm2.MemberAggregate is ChildrenAggregate,
+                    OwnerIsRoot = _aggregate is RootAggregate,
                 });
         }
 
@@ -42,6 +43,15 @@ namespace Nijo.Models.QueryModelModules {
             public required MessageContainer.Setter? NestedObject { get; init; }
             public required string? CsType { get; init; }
             public required bool IsArray { get; init; }
+            /// <summary>filter直下のオブジェクトか否かの判定</summary>
+            public required bool OwnerIsRoot { get; init; }
+
+            public IEnumerable<string> GetPathSinceParent() {
+                if (OwnerIsRoot) {
+                    yield return SearchCondition.Entry.FILTER_TS;
+                }
+                yield return PhysicalName;
+            }
         }
 
         internal static string RenderCSharpRecursively(RootAggregate rootAggregate) {

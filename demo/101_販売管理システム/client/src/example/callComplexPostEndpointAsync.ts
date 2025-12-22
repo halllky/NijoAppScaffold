@@ -123,13 +123,9 @@ export async function callComplexPostEndpointAsync(
 
       // レスポンスのエラー詳細情報フィールドに値がある場合はそれを表示
       if (json.detail && Object.keys(json.detail).length > 0) {
-        if (options?.handleDetailMessage) {
-          options.handleDetailMessage(json.detail)
-        } else {
-          return {
-            type: 'error',
-            detail: json.detail,
-          }
+        return {
+          type: 'error',
+          detail: json.detail,
         }
       }
 
@@ -162,27 +158,6 @@ export type CompolexPostResult<TSuccess>
   | { type: 'canceled' }
   | { type: 'error', detail: DetailMessagesContainer }
   | { type: 'unknown', message: string }
-
-/**
- * バックエンドのURLを取得する。
- */
-const getBackendUrl = (subDirectory: string) => {
-  // スラッシュ始まりでもそうでなくても受け入れられるようにする
-  const subDirectoryWithoutFirstSlash = subDirectory.startsWith('/')
-    ? subDirectory.slice(1)
-    : subDirectory
-
-  if (import.meta.env.DEV) {
-    // ポートは ASP.NET Core の launchSettings.json で指定しているポート
-    const backendApi = import.meta.env.VITE_BACKEND_API
-      ?? 'https://localhost:7098' // TODO: ちゃんと仕組みを作る
-    const backendApiWithLastSlash = backendApi.endsWith('/') ? backendApi : (backendApi + '/')
-    return `${backendApiWithLastSlash}${subDirectoryWithoutFirstSlash}`
-  } else {
-    // 本番環境ではReactは1個のjsファイルにバンドルされてASP.NET Core と同じオリジンから配信されるので相対パスでよい。
-    return `/${subDirectoryWithoutFirstSlash}`
-  }
-}
 
 /**
  * 未知のエラーを、画面上に表示できる文字列に変換する。
@@ -236,11 +211,6 @@ const IGNORE_CONFIRM = "ignore-confirm"
 export type ComplexPostOptions = {
   /** 確認メッセージを表示しない */
   ignoreConfirm?: true
-  /**
-   * 詳細メッセージのハンドリングを行なう。
-   * 基本的には react-hook-form の `setError` を呼び出す。
-   */
-  handleDetailMessage?: (detail: DetailMessagesContainer) => void
 }
 
 /**
@@ -263,48 +233,58 @@ type PresentationContextResponse<T> = {
  * パラメータの型と同じ構造をもち、フィールドごとにそのフィールドに対するメッセージが格納される。
  */
 export type DetailMessagesContainer = {
-  [key: string]: DetailMessagesContainer | DetailMessage
-}
-
-/**
- * 詳細メッセージの型（フィールド1件分）
- */
-export type DetailMessage = {
   error?: string[]
   warn?: string[]
   info?: string[]
+  children?: { [key: string]: DetailMessagesContainer }
 }
 
 /**
- * エラーメッセージのオブジェクトを展開してstringの配列にする。
- * 例えば * `{ aaa: { '1': { bbb: { error: ['エラー1'] } } } }` というオブジェクトを
- * `['aaa.1.bbb.error: エラー1']` に変換する。
+ * エラー・警告・情報メッセージのオブジェクトを項目単位に変換する。
+ * 例えば以下のオブジェクトは ['aaa.1.bbb: エラー1, 情報1'] に変換される。
+ *
+ * ```
+ * {
+ *   children: {
+ *     aaa: {
+ *       children: {
+ *         '1': {
+ *           children: {
+ *             bbb: {
+ *               error: ['エラー1'],
+ *               info: ['情報1']
+ *             }
+ *           }
+ *         }
+ *       }
+ *     }
+ *   }
+ * }
+ * ```
  */
 export const toFlattenStringList = (detail: DetailMessagesContainer): string[] => {
   const result: string[] = []
-  const collectMessagesRecursively = (path: string[], messages: DetailMessagesContainer | DetailMessage) => {
-    for (const [key, value] of Object.entries(messages)) {
-      if (isDetailMessage(value)) {
-        // error, warn, info を全部まとめて表示
-        const allMessages = [...(value.error ?? []), ...(value.warn ?? []), ...(value.info ?? [])]
-        result.push(`${path.join('.')}.${key}: ${allMessages.join(', ')}`)
+  const collectMessagesRecursively = (path: string[], current: DetailMessagesContainer) => {
+    // error, warn, info を全部まとめて表示
+    const allMessages = [...(current.error ?? []), ...(current.warn ?? []), ...(current.info ?? [])]
+    if (allMessages.length > 0) {
+      const key = path.join('.')
+      if (key === '') {
+        result.push(allMessages.join(', '))
       } else {
-        collectMessagesRecursively([...path, key], value)
+        result.push(`${key}: ${allMessages.join(', ')}`)
+      }
+    }
+
+    // 子要素を再帰的に処理
+    if (current.children) {
+      for (const [key, child] of Object.entries(current.children)) {
+        collectMessagesRecursively([...path, key], child)
       }
     }
   }
   collectMessagesRecursively([], detail)
   return result
-}
-
-/** 詳細メッセージの型かどうかを判定する。 */
-export const isDetailMessage = (value: DetailMessagesContainer | DetailMessage): value is DetailMessage => {
-  // error, warn, info のいずれかのフィールドが存在し、かつそのフィールドの値が配列であるかどうかで判定する
-  if (typeof value !== 'object' || value === null) return false
-  if ('error' in value && Array.isArray(value.error)) return true
-  if ('warn' in value && Array.isArray(value.warn)) return true
-  if ('info' in value && Array.isArray(value.info)) return true
-  return false
 }
 
 /**

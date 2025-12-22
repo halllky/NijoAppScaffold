@@ -92,6 +92,10 @@ namespace Nijo.Models.DataModelModules {
             public required SaveCommandMessageContainer? NestedObject { get; set; }
             MessageContainer.Setter? MessageContainer.IMember.NestedObject => NestedObject;
             public string? CsType { get; set; }
+
+            public IEnumerable<string> GetPathSinceParent() {
+                yield return PhysicalName;
+            }
         }
     }
 }

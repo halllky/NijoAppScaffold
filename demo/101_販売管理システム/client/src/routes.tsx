@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router-dom"
 import { RootLayout } from "./layout/RootLayout"
+import * as DetailMessageContext from "./util/DetailMessageContext"
 import P000 from "./pages/P000_トップページ"
 import P100 from "./pages/P100_売上"
 import P200 from "./pages/P200_入荷"
@@ -14,9 +15,11 @@ import { P001_ログイン } from "./pages/P001_ログイン"
 export const router = createBrowserRouter([
   {
     element: (
-      <P001_ログイン>
-        <RootLayout />
-      </P001_ログイン>
+      <DetailMessageContext.Provider>
+        <P001_ログイン>
+          <RootLayout />
+        </P001_ログイン>
+      </DetailMessageContext.Provider>
     ),
     children: [
 

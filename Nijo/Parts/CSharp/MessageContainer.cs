@@ -66,12 +66,12 @@ namespace Nijo.Parts.CSharp {
                         public {{CsClassName}}(IEnumerable<string> path, {{CONTEXT_CLASS}} context) : base(path, context) {
                     {{members.SelectTextTemplate(m => $$"""
                     {{If(m.NestedObject == null, () => $$"""
-                            this.{{m.PhysicalName}} = new {{SETTER_CLASS}}([.. path, "{{m.PhysicalName}}"], context);
+                            this.{{m.PhysicalName}} = new {{SETTER_CLASS}}([.. path, {{m.GetPathSinceParent().Select(s => $"\"{s}\"").Join(", ")}}], context);
                     """).ElseIf(!m.IsArray, () => $$"""
-                            this.{{m.PhysicalName}} = new {{m.NestedObject?.CsClassName}}([.. path, "{{m.PhysicalName}}"], context);
+                            this.{{m.PhysicalName}} = new {{m.NestedObject?.CsClassName}}([.. path, {{m.GetPathSinceParent().Select(s => $"\"{s}\"").Join(", ")}}], context);
                     """).Else(() => $$"""
-                            this.{{m.PhysicalName}} = new {{SETTER_CONCRETE_CLASS_LIST}}<{{m.NestedObject?.CsClassName}}>([.. path, "{{m.PhysicalName}}"], rowIndex => {
-                                return new {{m.NestedObject?.CsClassName}}([.. path, "{{m.PhysicalName}}", rowIndex.ToString()], context);
+                            this.{{m.PhysicalName}} = new {{SETTER_CONCRETE_CLASS_LIST}}<{{m.NestedObject?.CsClassName}}>([.. path, {{m.GetPathSinceParent().Select(s => $"\"{s}\"").Join(", ")}}], rowIndex => {
+                                return new {{m.NestedObject?.CsClassName}}([.. path, {{m.GetPathSinceParent().Select(s => $"\"{s}\"").Join(", ")}}, rowIndex.ToString()], context);
                             }, context);
                     """)}}
                     """)}}
@@ -430,6 +430,14 @@ namespace Nijo.Parts.CSharp {
             string? CsType { get; }
             /// <summary>このメンバーをリストとしてレンダリングするか否か</summary>
             bool IsArray { get; }
+
+            /// <summary>
+            /// 親オブジェクトからこのメンバーまでのパスを列挙する。
+            /// 例えば DisplayData のValueMemberの場合は ["values", <see cref="PhysicalName"/>]、
+            /// SearchCondition のValueMemberの場合は ["filter", <see cref="PhysicalName"/>]、
+            /// それ以外のプレーンな構造のオブジェクトの場合は単に [<see cref="PhysicalName"/>] となる。
+            /// </summary>
+            IEnumerable<string> GetPathSinceParent();
         }
         #endregion メンバー
     }

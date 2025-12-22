@@ -40,6 +40,7 @@ internal class DisplayDataMessageContainer : MessageContainer.Setter {
                 NestedObject = null,
                 CsType = null,
                 IsArray = false,
+                IsInValuesObject = true,
             };
         }
         foreach (var member in displayData.GetChildMembers()) {
@@ -49,6 +50,7 @@ internal class DisplayDataMessageContainer : MessageContainer.Setter {
                 NestedObject = new DisplayDataMessageContainer(member.Aggregate),
                 CsType = null,
                 IsArray = member.Aggregate is ChildrenAggregate,
+                IsInValuesObject = false,
             };
         }
     }
@@ -93,7 +95,17 @@ internal class DisplayDataMessageContainer : MessageContainer.Setter {
         public required string? CsType { get; init; }
         public required bool IsArray { get; init; }
 
+        /// <summary>このメンバーが Values オブジェクト内のメンバーであるか否か</summary>
+        public required bool IsInValuesObject { get; init; }
+
         MessageContainer.Setter? MessageContainer.IMember.NestedObject => NestedObject;
+
+        public IEnumerable<string> GetPathSinceParent() {
+            if (IsInValuesObject) {
+                yield return Parts.Common.EditablePresentationObject.VALUES_TS;
+            }
+            yield return PhysicalName;
+        }
     }
 
     internal static string RenderCSharpRecursively(RootAggregate rootAggregate) {

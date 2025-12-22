@@ -111,7 +111,7 @@ export default function () {
       const result = await callComplexPostEndpointAsync("メッセージ追加読み込み", parameter)
 
       if (result.type === "ok" && result.returnValue.読み込み結果.length > 0) {
-        const newMessages = result.returnValue.読み込み結果.map(item => item.メッセージ)
+        const newMessages = result.returnValue.読み込み結果.map(item => item.values.メッセージ)
         setMessages(prev => [...newMessages, ...prev])
       } else {
         setHasMoreMessages(false)

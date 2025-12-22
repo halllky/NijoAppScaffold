@@ -157,46 +157,34 @@ export type ComplexPostOptions = {
  * パラメータの型と同じ構造をもち、フィールドごとにそのフィールドに対するメッセージが格納される。
  */
 export type DetailMessagesContainer = {
-  [key: string]: DetailMessagesContainer | DetailMessage
-}
-
-/**
- * 詳細メッセージの型（フィールド1件分）
- */
-export type DetailMessage = {
   error?: string[]
   warn?: string[]
   info?: string[]
+  children?: { [key: string]: DetailMessagesContainer }
 }
 
 /**
  * エラーメッセージのオブジェクトを展開してstringの配列にする。
- * 例えば * `{ aaa: { '1': { bbb: { error: ['エラー1'] } } } }` というオブジェクトを
- * `['aaa.1.bbb.error: エラー1']` に変換する。
+ * エラー、警告、情報の別は無視し、すべてエラーとして扱う。
+ * 例えば * `{ aaa: { '1': { bbb: { error: ['エラー1'], info: ['情報1'] } } } }` というオブジェクトを
+ * [`aaa.1.bbb: エラー1, 情報1`] に変換する。
  */
 export const toFlattenStringList = (detail: DetailMessagesContainer): string[] => {
   const result: string[] = []
-  const collectMessagesRecursively = (path: string[], messages: DetailMessagesContainer | DetailMessage) => {
-    for (const [key, value] of Object.entries(messages)) {
-      if (isDetailMessage(value)) {
-        // error, warn, info を全部まとめて表示
-        const allMessages = [...(value.error ?? []), ...(value.warn ?? []), ...(value.info ?? [])]
-        result.push(`${path.join('.')}.${key}: ${allMessages.join(', ')}`)
-      } else {
+  const collectMessagesRecursively = (path: string[], messages: DetailMessagesContainer) => {
+    // error, warn, info を全部まとめて表示
+    const allMessages = [...(messages.error ?? []), ...(messages.warn ?? []), ...(messages.info ?? [])]
+    if (allMessages.length > 0) {
+      const prefix = path.length === 0 ? '' : `${path.join('.')}: `
+      result.push(`${prefix}${allMessages.join(', ')}`)
+    }
+
+    if (messages.children) {
+      for (const [key, value] of Object.entries(messages.children)) {
         collectMessagesRecursively([...path, key], value)
       }
     }
   }
   collectMessagesRecursively([], detail)
   return result
-}
-
-/** 詳細メッセージの型かどうかを判定する。 */
-export const isDetailMessage = (value: DetailMessagesContainer | DetailMessage): value is DetailMessage => {
-  // error, warn, info のいずれかのフィールドが存在し、かつそのフィールドの値が配列であるかどうかで判定する
-  if (typeof value !== 'object' || value === null) return false
-  if ('error' in value && Array.isArray(value.error)) return true
-  if ('warn' in value && Array.isArray(value.warn)) return true
-  if ('info' in value && Array.isArray(value.info)) return true
-  return false
 }
