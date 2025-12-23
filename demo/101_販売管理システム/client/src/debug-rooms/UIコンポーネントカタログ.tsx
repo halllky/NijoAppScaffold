@@ -202,13 +202,19 @@ function UIComponentCatalog() {
                     <FormLabel>通常</FormLabel>
                     <NumericTextBox
                       {...register("numValue")}
+                      integerDigit={6}
+                      decimalDigit={2}
                     />
                   </div>
                   <div>
                     <FormLabel>3桁カンマ区切り (commaSeparated)</FormLabel>
                     <NumericTextBox
                       commaSeparated
-                      defaultValue="1234567"
+                      defaultValue="1,234,567"
+                      integerDigit={7}
+                      prefix="¥"
+                      suffix="万円"
+                      className="w-40"
                     />
                   </div>
                   <div className="text-sm text-gray-500">Value: {values.numValue}</div>
