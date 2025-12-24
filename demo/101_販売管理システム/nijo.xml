@@ -186,6 +186,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       UniqueId="54613353-339e-479b-8c24-7b89a318a5d8" />
     <氏名
       IsRequired="True"
+      MaxLength="100"
       Type="word"
       UniqueId="292832fb-e8f0-42cc-b121-a7665db9be9e" />
     <パスワード
