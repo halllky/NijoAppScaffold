@@ -1,711 +1,722 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <NijoAppScaffold
-  ApplicationName="デモ101：販売管理システム"
-  RootNamespace="MyApp">
-  <!--入荷・販売の対象となる商品マスタデータ。
+    ApplicationName="デモ101：販売管理システム"
+    RootNamespace="MyApp">
+  <DataStructures>
+    <!--入荷・販売の対象となる商品マスタデータ。
 このシステムで登録せず、外部システムから日次で連携される。-->
-  <商品
-    GenerateDefaultQueryModel="True"
-    Type="data-model"
-    UniqueId="a1b2c3d4-e5f6-4a1b-8c2d-3e4f5a6b7c8d">
-    <!--このシステムにおける識別番号-->
-    <商品SEQ
-      IsKey="True"
-      SequenceName="ITEM_SEQ"
-      Type="sequence"
-      UniqueId="b2c3d4e5-f6a1-4b2c-9d3e-4f5a6b7c8d9e" />
-    <!--外部システム側の識別番号-->
-    <外部システム側ID
-      IsRequired="True"
-      Type="word"
-      UniqueId="f5f225fa-eddd-4cca-ae58-b408e1b34100" />
-    <商品名
-      IsRequired="True"
-      Type="word"
-      UniqueId="c3d4e5f6-a1b2-4c3d-0e4f-5a6b7c8d9e0f" />
-    <!--必須でないのは、キャンペーン用販促商品など価格が存在しない商品があるため。-->
-    <売値単価_税抜
-      Type="decimal"
-      UniqueId="d4e5f6a1-b2c3-4d4e-1f5a-6b7c8d9e0f1a" />
-    <消費税区分
-      Type="消費税区分"
-      UniqueId="1fd1192c-06a3-4aee-b88e-96700d545049" />
-  </商品>
-  <!--入荷1回分の情報。
-どこに入荷したかというロケーションに関する情報は、デモとして複雑になりすぎてしまうのを防ぐため、敢えて持っていない。1つの店舗内部で運用されるシステムの想定として見てほしい。-->
-  <入荷
-    Type="data-model"
-    UniqueId="e5f6a1b2-c3d4-4e5f-2a6b-7c8d9e0f1a2b">
-    <!--UUID-->
-    <入荷ID
-      IsKey="True"
-      SequenceName="IN_STOCK_SEQ"
-      Type="word"
-      UniqueId="f6a1b2c3-d4e5-4f6a-3b7c-8d9e0f1a2b3c" />
-    <入荷日時
-      IsRequired="True"
-      Type="datetime"
-      UniqueId="a1b2c3d4-e5f6-4a7b-4c8d-9e0f1a2b3c4d" />
-    <担当者
-      IsRequired="True"
-      Type="ref-to:従業員"
-      UniqueId="e5f6a1b2-c3d4-4e1f-8a2b-3c4d5e6f7a8b" />
-    <備考
-      Type="description"
-      UniqueId="12de8c59-0dbc-4b62-b049-b1f484c23990" />
-  </入荷>
-  <!--売上1回分のデータ。
-toCの取引のため相手方（顧客）の情報は含んでいない。-->
-  <売上
-    Type="data-model"
-    UniqueId="f6a1b2c3-d4e5-4f2a-9b3c-4d5e6f7a8b9c">
-    <売上SEQ
-      IsKey="True"
-      SequenceName="URIAGE_SEQ"
-      Type="sequence"
-      UniqueId="a1b2c3d4-e5f6-4a3b-0c4d-5e6f7a8b9c0d" />
-    <売上日時
-      IsRequired="True"
-      Type="datetime"
-      UniqueId="b2c3d4e5-f6a1-4b4c-1d5e-6f7a8b9c0d1e" />
-    <担当者
-      IsRequired="True"
-      Type="ref-to:従業員"
-      UniqueId="e5f6a1b2-c3d4-4e7f-4a8b-9c0d1e2f3a4b" />
-    <備考
-      Type="description"
-      UniqueId="7480d37c-3abe-4845-9f6e-604278ad7119" />
-    <!--在庫引当の都合上、一度登録確定した明細は変更や削除ができない。取り消しの場合は新たに取消の区分で明細を追加していく（赤黒伝票方式）。取り消しの場合、元々引当対象になっていた入荷明細ではなく、取り消し時点で最新の入荷明細から消していく。-->
-    <売上明細
-      Type="children"
-      UniqueId="f102d81b-ad4a-4799-a59f-1e41d575f0de">
-      <!--UUID。非表示。-->
-      <明細ID
-        IsKey="True"
-        Type="word"
-        UniqueId="b2c3d4e5-f6a1-4b0c-7d1e-2f3a4b5c6d7e" />
-      <商品
-        IsRequired="True"
-        Type="ref-to:商品"
-        UniqueId="c3d4e5f6-a1b2-4c5d-2e6f-7a8b9c0d1e2f" />
-      <区分
-        IsRequired="True"
-        Type="売上明細区分"
-        UniqueId="98edd12a-643f-41f8-a71c-a60d1a467151" />
-      <!--取消の場合は負の数で登録される。-->
-      <売上数量
-        IsRequired="True"
-        Type="int"
-        UniqueId="d4e5f6a1-b2c3-4d6e-3f7a-8b9c0d1e2f3a" />
-      <!--税込み。丸め処理済み。取消の場合は負の数で登録される。基本的には商品マスタの単価に売上数量を乗じたものだが、登録時に手修正が可能。-->
-      <売上総額_税込
-        IsRequired="True"
-        Type="decimal"
-        UniqueId="f6a1b2c3-d4e5-4f8a-5b9c-0d1e2f3a4b5c" />
-      <備考
-        Type="description"
-        UniqueId="6827257e-edc2-49c4-afa3-dfad6c8e3327" />
-      <!--どの売上がどの入荷の残数を消費したかを紐づける中間テーブル。-->
-      <引当明細
-        Type="children"
-        UniqueId="a1b2c3d4-e5f6-4a9b-6c0d-1e2f3a4b5c6d">
-        <入荷
+    <商品
+        GenerateDefaultQueryModel="True"
+        Type="data-model"
+        UniqueId="a1b2c3d4-e5f6-4a1b-8c2d-3e4f5a6b7c8d">
+      <!--このシステムにおける識別番号-->
+      <商品SEQ
           IsKey="True"
-          Type="ref-to:入荷明細"
-          UniqueId="c3d4e5f6-a1b2-4c1d-8e2f-3a4b5c6d7e8f" />
-        <!--この売上が該当の入荷明細から何個引き当てたか。取消の場合は負の数で登録される。-->
-        <引当数量
+          SequenceName="ITEM_SEQ"
+          Type="sequence"
+          UniqueId="b2c3d4e5-f6a1-4b2c-9d3e-4f5a6b7c8d9e" />
+      <!--外部システム側の識別番号-->
+      <外部システム側ID
           IsRequired="True"
-          Type="int"
-          UniqueId="d4e5f6a1-b2c3-4d2e-9f3a-4b5c6d7e8f9a" />
-      </引当明細>
-    </売上明細>
-  </売上>
-  <!--入荷担当者が主に利用する機能。 @[入荷](e5f6a1b2-c3d4-4e5f-2a6b-7c8d9e0f1a2b) @[入荷明細](a5e5b615-6cc1-4a50-8cc7-fe910dca543b) を更新する。基本的に1日1回利用される。
-一度の入荷で複数の商品を登録する。-->
-  <入荷登録
-    Parameter="入荷詳細"
-    Type="command-model"
-    UniqueId="c2a6e537-f471-4512-ae2b-d4a38017604e" />
-  <!--入荷詳細画面のデータ構造。-->
-  <入荷詳細
-    Type="structure-model"
-    UniqueId="bf2453f1-2a89-4209-ab79-00d526fd15a9">
-    <!--非表示。UUID。自動採番-->
-    <入荷ID
-      Type="word"
-      UniqueId="3e481d8e-1940-4827-a8fa-f19f31c19b43" />
-    <入荷日時
-      Type="datetime"
-      UniqueId="99365fd5-0fca-4bc1-94af-2b4c8a44936a" />
-    <担当者
-      RefToObject="RefTarget"
-      Type="ref-to:従業員Ref"
-      UniqueId="37a8c98a-0d7c-4a59-8898-2958c91710ad" />
-    <備考
-      Type="description"
-      UniqueId="f77e1d87-ff76-4b45-a841-48b37137c19b" />
-    <!--楽観排他用-->
-    <Version
-      Type="int"
-      UniqueId="c09d70de-6d3e-4a97-b578-5f2de2391b2e" />
-    <入荷商品一覧
-      Type="children"
-      UniqueId="b16836d6-f14e-4ac9-87da-ca07546c6d37">
-      <入荷明細ID
-        Type="word"
-        UniqueId="a0b1c2d3-e4f5-6789-0123-456789abcdef" />
-      <商品
-        RefToObject="RefTarget"
-        Type="ref-to:商品"
-        UniqueId="23cd27b4-406d-4e5c-988a-8715fcbd4a4d" />
-      <数量
-        Type="int"
-        UniqueId="853acbf2-2764-424e-b60d-5ff066f18b9b" />
-      <仕入単価_税抜
-        Type="decimal"
-        UniqueId="1454146f-856e-4a67-b461-17a4fcd1e19e" />
+          Type="word"
+          UniqueId="f5f225fa-eddd-4cca-ae58-b408e1b34100" />
+      <商品名
+          IsRequired="True"
+          Type="word"
+          UniqueId="c3d4e5f6-a1b2-4c3d-0e4f-5a6b7c8d9e0f" />
+      <!--必須でないのは、キャンペーン用販促商品など価格が存在しない商品があるため。-->
+      <売値単価_税抜
+          Type="decimal"
+          UniqueId="d4e5f6a1-b2c3-4d4e-1f5a-6b7c8d9e0f1a" />
       <消費税区分
-        Type="消費税区分"
-        UniqueId="dc5381ce-29b7-4d23-bb9f-473e1625767d" />
+          Type="消費税区分"
+          UniqueId="1fd1192c-06a3-4aee-b88e-96700d545049" />
+    </商品>
+    <!--入荷1回分の情報。
+どこに入荷したかというロケーションに関する情報は、デモとして複雑になりすぎてしまうのを防ぐため、敢えて持っていない。1つの店舗内部で運用されるシステムの想定として見てほしい。-->
+    <入荷
+        Type="data-model"
+        UniqueId="e5f6a1b2-c3d4-4e5f-2a6b-7c8d9e0f1a2b">
+      <!--UUID-->
+      <入荷ID
+          IsKey="True"
+          SequenceName="IN_STOCK_SEQ"
+          Type="word"
+          UniqueId="f6a1b2c3-d4e5-4f6a-3b7c-8d9e0f1a2b3c" />
+      <入荷日時
+          IsRequired="True"
+          Type="datetime"
+          UniqueId="a1b2c3d4-e5f6-4a7b-4c8d-9e0f1a2b3c4d" />
+      <担当者
+          IsRequired="True"
+          Type="ref-to:従業員"
+          UniqueId="e5f6a1b2-c3d4-4e1f-8a2b-3c4d5e6f7a8b" />
       <備考
-        Type="description"
-        UniqueId="0e829f4a-05b0-4cac-a7cb-a4ab39578532" />
+          Type="description"
+          UniqueId="12de8c59-0dbc-4b62-b049-b1f484c23990" />
+    </入荷>
+    <!--売上1回分のデータ。
+toCの取引のため相手方（顧客）の情報は含んでいない。-->
+    <売上
+        Type="data-model"
+        UniqueId="f6a1b2c3-d4e5-4f2a-9b3c-4d5e6f7a8b9c">
+      <売上SEQ
+          IsKey="True"
+          SequenceName="URIAGE_SEQ"
+          Type="sequence"
+          UniqueId="a1b2c3d4-e5f6-4a3b-0c4d-5e6f7a8b9c0d" />
+      <売上日時
+          IsRequired="True"
+          Type="datetime"
+          UniqueId="b2c3d4e5-f6a1-4b4c-1d5e-6f7a8b9c0d1e" />
+      <担当者
+          IsRequired="True"
+          Type="ref-to:従業員"
+          UniqueId="e5f6a1b2-c3d4-4e7f-4a8b-9c0d1e2f3a4b" />
+      <備考
+          Type="description"
+          UniqueId="7480d37c-3abe-4845-9f6e-604278ad7119" />
+      <!--在庫引当の都合上、一度登録確定した明細は変更や削除ができない。取り消しの場合は新たに取消の区分で明細を追加していく（赤黒伝票方式）。取り消しの場合、元々引当対象になっていた入荷明細ではなく、取り消し時点で最新の入荷明細から消していく。-->
+      <売上明細
+          Type="children"
+          UniqueId="f102d81b-ad4a-4799-a59f-1e41d575f0de">
+        <!--UUID。非表示。-->
+        <明細ID
+            IsKey="True"
+            Type="word"
+            UniqueId="b2c3d4e5-f6a1-4b0c-7d1e-2f3a4b5c6d7e" />
+        <商品
+            IsRequired="True"
+            Type="ref-to:商品"
+            UniqueId="c3d4e5f6-a1b2-4c5d-2e6f-7a8b9c0d1e2f" />
+        <区分
+            IsRequired="True"
+            Type="売上明細区分"
+            UniqueId="98edd12a-643f-41f8-a71c-a60d1a467151" />
+        <!--取消の場合は負の数で登録される。-->
+        <売上数量
+            IsRequired="True"
+            Type="int"
+            UniqueId="d4e5f6a1-b2c3-4d6e-3f7a-8b9c0d1e2f3a" />
+        <!--税込み。丸め処理済み。取消の場合は負の数で登録される。基本的には商品マスタの単価に売上数量を乗じたものだが、登録時に手修正が可能。-->
+        <売上総額_税込
+            IsRequired="True"
+            Type="decimal"
+            UniqueId="f6a1b2c3-d4e5-4f8a-5b9c-0d1e2f3a4b5c" />
+        <備考
+            Type="description"
+            UniqueId="6827257e-edc2-49c4-afa3-dfad6c8e3327" />
+        <!--どの売上がどの入荷の残数を消費したかを紐づける中間テーブル。-->
+        <引当明細
+            Type="children"
+            UniqueId="a1b2c3d4-e5f6-4a9b-6c0d-1e2f3a4b5c6d">
+          <入荷
+              IsKey="True"
+              Type="ref-to:入荷明細"
+              UniqueId="c3d4e5f6-a1b2-4c1d-8e2f-3a4b5c6d7e8f" />
+          <!--この売上が該当の入荷明細から何個引き当てたか。取消の場合は負の数で登録される。-->
+          <引当数量
+              IsRequired="True"
+              Type="int"
+              UniqueId="d4e5f6a1-b2c3-4d2e-9f3a-4b5c6d7e8f9a" />
+        </引当明細>
+      </売上明細>
+    </売上>
+    <!--入荷詳細画面のデータ構造。-->
+    <入荷詳細
+        Type="structure-model"
+        UniqueId="bf2453f1-2a89-4209-ab79-00d526fd15a9">
+      <!--非表示。UUID。自動採番-->
+      <入荷ID
+          Type="word"
+          UniqueId="3e481d8e-1940-4827-a8fa-f19f31c19b43" />
+      <入荷日時
+          Type="datetime"
+          UniqueId="99365fd5-0fca-4bc1-94af-2b4c8a44936a" />
+      <担当者
+          RefToObject="RefTarget"
+          Type="ref-to:従業員Ref"
+          UniqueId="37a8c98a-0d7c-4a59-8898-2958c91710ad" />
+      <備考
+          Type="description"
+          UniqueId="f77e1d87-ff76-4b45-a841-48b37137c19b" />
       <!--楽観排他用-->
       <Version
-        Type="int"
-        UniqueId="20723b0e-a1c3-4ab5-956c-867f0518aa30" />
-    </入荷商品一覧>
-  </入荷詳細>
-  <従業員
-    Type="data-model"
-    UniqueId="659bf33a-c624-4e67-96a9-460809d70995">
-    <従業員番号
-      IsKey="True"
-      Type="word"
-      UniqueId="54613353-339e-479b-8c24-7b89a318a5d8" />
-    <氏名
-      IsRequired="True"
-      MaxLength="100"
-      Type="word"
-      UniqueId="292832fb-e8f0-42cc-b121-a7665db9be9e" />
-    <パスワード
-      IsRequired="True"
-      Type="bytearray"
-      UniqueId="e1d23e41-4dde-4ea3-bdc3-b88a80481786" />
-    <SALT
-      IsRequired="True"
-      Type="bytearray"
-      UniqueId="eae146ed-8c0f-484c-8b1a-dfc12ab1987d" />
-    <!--入荷登録機能を利用することができるか否か。-->
-    <入荷担当
-      IsRequired="True"
-      Type="bool"
-      UniqueId="ae852331-ecd8-4b0e-8c23-915254a350cc" />
-    <!--販売登録機能を利用することができるか否か。-->
-    <販売担当
-      IsRequired="True"
-      Type="bool"
-      UniqueId="4e11fe49-0e17-47a3-8ed5-5356b4f4535b" />
-    <!--マスタデータを編集することができるか否か。-->
-    <システム管理者
-      IsRequired="True"
-      Type="bool"
-      UniqueId="7a56056d-0c90-4871-979a-75f86ac07af3" />
-  </従業員>
-  <!--画面UI上では @[従業員](659bf33a-c624-4e67-96a9-460809d70995) への参照が各所に登場するところ、アプリケーションのパフォーマンスの最適化のために必要最低限の項目のみ保持した参照用データ。-->
-  <従業員Ref
-    Type="query-model"
-    UniqueId="7e844312-66b4-4693-b8eb-c4d3a4dd2565">
-    <従業員番号
-      Type="word"
-      UniqueId="91f94ec3-0cff-4468-84df-dbba8091f1c8" />
-    <氏名
-      Type="word"
-      UniqueId="5fd0ce8d-d1fc-41cd-9a56-96db91fc7e8b" />
-  </従業員Ref>
-  <!--入荷ごとのレコード。払出時はここから古い順に在庫を減らす。
+          Type="int"
+          UniqueId="c09d70de-6d3e-4a97-b578-5f2de2391b2e" />
+      <入荷商品一覧
+          Type="children"
+          UniqueId="b16836d6-f14e-4ac9-87da-ca07546c6d37">
+        <入荷明細ID
+            Type="word"
+            UniqueId="a0b1c2d3-e4f5-6789-0123-456789abcdef" />
+        <商品
+            RefToObject="RefTarget"
+            Type="ref-to:商品"
+            UniqueId="23cd27b4-406d-4e5c-988a-8715fcbd4a4d" />
+        <数量
+            Type="int"
+            UniqueId="853acbf2-2764-424e-b60d-5ff066f18b9b" />
+        <仕入単価_税抜
+            Type="decimal"
+            UniqueId="1454146f-856e-4a67-b461-17a4fcd1e19e" />
+        <消費税区分
+            Type="消費税区分"
+            UniqueId="dc5381ce-29b7-4d23-bb9f-473e1625767d" />
+        <備考
+            Type="description"
+            UniqueId="0e829f4a-05b0-4cac-a7cb-a4ab39578532" />
+        <!--楽観排他用-->
+        <Version
+            Type="int"
+            UniqueId="20723b0e-a1c3-4ab5-956c-867f0518aa30" />
+      </入荷商品一覧>
+    </入荷詳細>
+    <従業員
+        Type="data-model"
+        UniqueId="659bf33a-c624-4e67-96a9-460809d70995">
+      <従業員番号
+          IsKey="True"
+          Type="word"
+          UniqueId="54613353-339e-479b-8c24-7b89a318a5d8" />
+      <氏名
+          IsRequired="True"
+          MaxLength="100"
+          Type="word"
+          UniqueId="292832fb-e8f0-42cc-b121-a7665db9be9e" />
+      <パスワード
+          IsRequired="True"
+          Type="bytearray"
+          UniqueId="e1d23e41-4dde-4ea3-bdc3-b88a80481786" />
+      <SALT
+          IsRequired="True"
+          Type="bytearray"
+          UniqueId="eae146ed-8c0f-484c-8b1a-dfc12ab1987d" />
+      <!--入荷登録機能を利用することができるか否か。-->
+      <入荷担当
+          IsRequired="True"
+          Type="bool"
+          UniqueId="ae852331-ecd8-4b0e-8c23-915254a350cc" />
+      <!--販売登録機能を利用することができるか否か。-->
+      <販売担当
+          IsRequired="True"
+          Type="bool"
+          UniqueId="4e11fe49-0e17-47a3-8ed5-5356b4f4535b" />
+      <!--マスタデータを編集することができるか否か。-->
+      <システム管理者
+          IsRequired="True"
+          Type="bool"
+          UniqueId="7a56056d-0c90-4871-979a-75f86ac07af3" />
+    </従業員>
+    <!--画面UI上では @[従業員](659bf33a-c624-4e67-96a9-460809d70995) への参照が各所に登場するところ、アプリケーションのパフォーマンスの最適化のために必要最低限の項目のみ保持した参照用データ。-->
+    <従業員Ref
+        Type="query-model"
+        UniqueId="7e844312-66b4-4693-b8eb-c4d3a4dd2565">
+      <従業員番号
+          Type="word"
+          UniqueId="91f94ec3-0cff-4468-84df-dbba8091f1c8" />
+      <氏名
+          Type="word"
+          UniqueId="5fd0ce8d-d1fc-41cd-9a56-96db91fc7e8b" />
+    </従業員Ref>
+    <!--入荷ごとのレコード。払出時はここから古い順に在庫を減らす。
 このテーブルが入荷テーブルとは別のDataModelになっているのがこのシステムの肝。
-もし一緒のDataTableにした場合、複数の売上が、同じタイミングで、同じ入荷の別々の明細を引き当てたとき、入荷の残数量を更新するための排他制御が発生するため、売上の更新が必要以上に失敗するケースが増えてしまう。本当に排他制御にかけられるべきなのは、複数の売上が同じ入荷明細から同時に残数量を減らそうとしたときだけなので、そうなるようにDataModelの境界が区切られている。-->
-  <入荷明細
-    Type="data-model"
-    UniqueId="a5e5b615-6cc1-4a50-8cc7-fe910dca543b">
-    <!--UUID。一度の入荷で同じ商品を複数別々で登録したいケースのためにこちらをキーにしている。-->
-    <入荷明細ID
-      IsKey="True"
-      Type="word"
-      UniqueId="864c005f-e7d8-4195-96e9-699fce212997" />
-    <!--この明細がどの入荷で登録されたか。在庫調整の場合はnull-->
-    <入荷
-      Type="ref-to:入荷"
-      UniqueId="e774bc65-5485-46ca-a6d9-5120a5199911" />
-    <!--この明細がどの在庫調整で登録されたか。入荷登録の場合はnull。※nijoの都合（無限ループ回避）のためref-toでなくwordで定義している。-->
-    <在庫調整
-      Type="word"
-      UniqueId="c556943b-3e21-4ad9-b5b7-cba8b491d54f" />
-    <商品
-      IsRequired="True"
-      Type="ref-to:商品"
-      UniqueId="4857ef87-cd39-40c1-b36d-a8ed8449662a" />
-    <仕入単価_税抜
-      Type="decimal"
-      UniqueId="94e26a29-5a09-4b3c-880f-3965a223ce0c" />
-    <消費税区分
-      Type="消費税区分"
-      UniqueId="9306ec38-6553-41f2-8a2d-62913169bdb3" />
-    <入荷数量
-      IsRequired="True"
-      Type="int"
-      UniqueId="9c25ab54-ac1c-4757-a87b-c33689958053" />
-    <!--0になったら引当不可。入荷登録時に入荷数量と同じ値が設定され、売上登録で引当が発生するたびに減算される。-->
-    <残数量
-      IsRequired="True"
-      Type="int"
-      UniqueId="3c411e94-6efa-4842-9ddd-3969628021b1" />
-    <備考
-      Type="description"
-      UniqueId="f8aed3e7-9985-4db4-affe-db366711cfba" />
-  </入荷明細>
-  <!--日次で実行される、外部システム（商品管理システム）からデータを受け取ってこのシステムの @[商品](a1b2c3d4-e5f6-4a1b-8c2d-3e4f5a6b7c8d) マスタにマージする処理。任意のタイミングでキックすることも可能。
-ASP.NET Core のサービスワーカーとして登録される。-->
-  <商品データ取込
-    Type="command-model"
-    UniqueId="6cb9f1e7-afb0-4197-be66-d9779315026c" />
-  <!--パスワード認証でのログイン。-->
-  <ログイン
-    Parameter="ログインParameter"
-    ReturnValue="ログインユーザー情報"
-    Type="command-model"
-    UniqueId="af387361-2401-4308-9e04-8e5973f39426" />
-  <ログアウト
-    Type="command-model"
-    UniqueId="8877c58b-260a-4de3-a007-ce73d1d222b3" />
-  <!--パスワード紛失の際のため、対象者のパスワードを "pass" に更新する。
-システム管理者のみ使用可能。-->
-  <パスワード再発行
-    Parameter="パスワード再発行Parameter"
-    Type="command-model"
-    UniqueId="abbe87d5-69df-45a0-9166-1b05f08de613" />
-  <パスワード再発行Parameter
-    Type="structure-model"
-    UniqueId="ca0a28e1-6792-4d8b-ad9e-4a373ba190fc">
-    <対象者
-      RefToObject="RefTarget"
-      Type="ref-to:従業員Ref"
-      UniqueId="c804ad2e-ce78-469c-b58d-447d7561cb86" />
-  </パスワード再発行Parameter>
-  <!--@[従業員](659bf33a-c624-4e67-96a9-460809d70995) のマスタ画面表示用データ。-->
-  <従業員マスタ
-    Type="query-model"
-    UniqueId="7508f4ed-a9ba-4c3d-b258-eb328affebdc">
-    <従業員番号
-      Type="word"
-      UniqueId="525a40bd-74c1-4c09-aea1-4cc238e05c59" />
-    <氏名
-      Type="word"
-      UniqueId="3ea7c1ea-ab69-47a5-9821-f9ad112e65e2" />
-    <!--入荷登録機能を利用することができるか否か。-->
-    <入荷担当
-      Type="bool"
-      UniqueId="95c397c0-b584-46ff-bcb6-8ba0128d0027" />
-    <!--販売登録機能を利用することができるか否か。-->
-    <販売担当
-      Type="bool"
-      UniqueId="b8c62684-aa6c-4b94-8934-7782fc447e97" />
-    <!--マスタデータを編集することができるか否か。-->
-    <システム管理者
-      Type="bool"
-      UniqueId="e722013b-ba56-4663-9f13-7e85e5c5f44f" />
-  </従業員マスタ>
-  <!--従業員マスタの一括更新処理。システム管理者のみ利用可能。-->
-  <従業員一括更新
-    Parameter="従業員一括更新Parameter"
-    Type="command-model"
-    UniqueId="5388c52e-2932-4226-bf5b-734ae8a50112" />
-  <従業員一括更新Parameter
-    Type="structure-model"
-    UniqueId="28bf1f9e-8b77-4a78-938d-e29578c44da3">
-    <更新対象従業員一覧
-      Type="children"
-      UniqueId="4f82b721-bd04-4279-8acb-ed14ab690eaf">
-      <従業員
-        RefToObject="DisplayData"
-        Type="ref-to:従業員マスタ"
-        UniqueId="46c347d6-20f0-453b-814f-45093b7923c7" />
-    </更新対象従業員一覧>
-  </従業員一括更新Parameter>
-  <!--@[売上](f6a1b2c3-d4e5-4f2a-9b3c-4d5e6f7a8b9c) の一覧検索画面のデータ構造。-->
-  <売上一覧
-    Type="query-model"
-    UniqueId="d0929a1e-1490-42c3-a728-d740c85ff7b7">
-    <売上SEQ
-      Type="int"
-      UniqueId="90702d06-0234-4726-aa4c-f7d793f86090" />
-    <売上日時
-      Type="datetime"
-      UniqueId="add98550-200d-4a0f-9e65-8ac6bacaeb61" />
-    <担当者
-      Type="ref-to:従業員Ref"
-      UniqueId="ad6a0fd0-996a-4481-b0da-c9eaa0a72cce" />
-    <備考
-      Type="description"
-      UniqueId="2c4ddbb9-7eb6-4ea1-96b9-eb3f2b13a53b" />
-    <売上総額_税込
-      Type="decimal"
-      UniqueId="551e8525-3c9c-4c00-a95e-707d6cc4a452" />
-    <売上数量合計
-      Type="int"
-      UniqueId="beb2ca92-d35c-4ec7-9c0e-2efc3c886f19" />
-  </売上一覧>
-  <!--売上データを新規登録する。
-在庫引当計算もこの中で行われる。-->
-  <売上新規登録
-    Parameter="売上詳細"
-    Type="command-model"
-    UniqueId="e4e427ae-7a2d-468b-864e-6536dbb0a47a" />
-  <!--売上詳細画面のデータ構造。
-@[売上](f6a1b2c3-d4e5-4f2a-9b3c-4d5e6f7a8b9c) DataModel と異なり、入荷明細の引当に関する情報を持っていないのが重要。これはつまり、売上詳細画面を操作するユーザーにとってその商品の在庫引当がどの入荷に対して行われるかは入力項目ではなく、引当はシステム内部で自動的に判定されることを意味する。-->
-  <売上詳細
-    Type="structure-model"
-    UniqueId="2352e942-65b1-47fe-ac3b-0c49bd4e295f">
-    <!--シーケンス。画面上に表示する。-->
-    <売上SEQ
-      Type="int"
-      UniqueId="1067685c-ca3e-424d-82ca-2b8045464fb5" />
-    <売上日時
-      Type="datetime"
-      UniqueId="5fe83afc-073e-490f-932d-5eefad3b0c85" />
-    <担当者
-      RefToObject="RefTarget"
-      Type="ref-to:従業員Ref"
-      UniqueId="c2758cdd-4867-41b6-94db-208ca2559858" />
-    <備考
-      Type="description"
-      UniqueId="b66f5118-fff3-441d-842a-c14a596b44ab" />
-    <!--引当のロジックの都合上、一度更新確定した明細は更新や削除ができない。取消の場合は別で取消の明細を追加していく。-->
-    <売上明細
-      Type="children"
-      UniqueId="98b7b6c4-9e74-4330-9bc8-e8594811c0a6">
-      <!--UUID。非表示。-->
-      <明細ID
-        Type="word"
-        UniqueId="fe54c1ee-d63b-400c-a950-05adc927f28d" />
+    もし一緒のDataTableにした場合、複数の売上が、同じタイミングで、同じ入荷の別々の明細を引き当てたとき、入荷の残数量を更新するための排他制御が発生するため、売上の更新が必要以上に失敗するケースが増えてしまう。本当に排他制御にかけられるべきなのは、複数の売上が同じ入荷明細から同時に残数量を減らそうとしたときだけなので、そうなるようにDataModelの境界が区切られている。-->
+    <入荷明細
+        Type="data-model"
+        UniqueId="a5e5b615-6cc1-4a50-8cc7-fe910dca543b">
+      <!--UUID。一度の入荷で同じ商品を複数別々で登録したいケースのためにこちらをキーにしている。-->
+      <入荷明細ID
+          IsKey="True"
+          Type="word"
+          UniqueId="864c005f-e7d8-4195-96e9-699fce212997" />
+      <!--この明細がどの入荷で登録されたか。在庫調整の場合はnull-->
+      <入荷
+          Type="ref-to:入荷"
+          UniqueId="e774bc65-5485-46ca-a6d9-5120a5199911" />
+      <!--この明細がどの在庫調整で登録されたか。入荷登録の場合はnull。※nijoの都合（無限ループ回避）のためref-toでなくwordで定義している。-->
+      <在庫調整
+          Type="word"
+          UniqueId="c556943b-3e21-4ad9-b5b7-cba8b491d54f" />
       <商品
-        RefToObject="RefTarget"
-        Type="ref-to:商品"
-        UniqueId="398db3b4-a77e-45a2-881e-cad75af1bb46" />
-      <!--新規登録の場合は「売上」で固定。売上修正の場合は「修正」も選べる。-->
-      <区分
-        Type="売上明細区分"
-        UniqueId="8c35dcac-1c74-4535-b2c0-fc5f50a37fdd" />
-      <!--取消の場合は負の数。-->
-      <売上数量
-        Type="int"
-        UniqueId="88781893-d022-4594-bdda-5eedfc3a3eb4" />
-      <!--取消の場合は負の数。丸め処理済みの値。基本的には商品マスタの単価に売上数量を乗じたものだが、登録時に手修正が可能。-->
+          IsRequired="True"
+          Type="ref-to:商品"
+          UniqueId="4857ef87-cd39-40c1-b36d-a8ed8449662a" />
+      <仕入単価_税抜
+          Type="decimal"
+          UniqueId="94e26a29-5a09-4b3c-880f-3965a223ce0c" />
+      <消費税区分
+          Type="消費税区分"
+          UniqueId="9306ec38-6553-41f2-8a2d-62913169bdb3" />
+      <入荷数量
+          IsRequired="True"
+          Type="int"
+          UniqueId="9c25ab54-ac1c-4757-a87b-c33689958053" />
+      <!--0になったら引当不可。入荷登録時に入荷数量と同じ値が設定され、売上登録で引当が発生するたびに減算される。-->
+      <残数量
+          IsRequired="True"
+          Type="int"
+          UniqueId="3c411e94-6efa-4842-9ddd-3969628021b1" />
+      <備考
+          Type="description"
+          UniqueId="f8aed3e7-9985-4db4-affe-db366711cfba" />
+    </入荷明細>
+    <パスワード再発行Parameter
+        Type="structure-model"
+        UniqueId="ca0a28e1-6792-4d8b-ad9e-4a373ba190fc">
+      <対象者
+          RefToObject="RefTarget"
+          Type="ref-to:従業員Ref"
+          UniqueId="c804ad2e-ce78-469c-b58d-447d7561cb86" />
+    </パスワード再発行Parameter>
+    <!--@[従業員](659bf33a-c624-4e67-96a9-460809d70995) のマスタ画面表示用データ。-->
+    <従業員マスタ
+        Type="query-model"
+        UniqueId="7508f4ed-a9ba-4c3d-b258-eb328affebdc">
+      <従業員番号
+          Type="word"
+          UniqueId="525a40bd-74c1-4c09-aea1-4cc238e05c59" />
+      <氏名
+          Type="word"
+          UniqueId="3ea7c1ea-ab69-47a5-9821-f9ad112e65e2" />
+      <!--入荷登録機能を利用することができるか否か。-->
+      <入荷担当
+          Type="bool"
+          UniqueId="95c397c0-b584-46ff-bcb6-8ba0128d0027" />
+      <!--販売登録機能を利用することができるか否か。-->
+      <販売担当
+          Type="bool"
+          UniqueId="b8c62684-aa6c-4b94-8934-7782fc447e97" />
+      <!--マスタデータを編集することができるか否か。-->
+      <システム管理者
+          Type="bool"
+          UniqueId="e722013b-ba56-4663-9f13-7e85e5c5f44f" />
+    </従業員マスタ>
+    <従業員一括更新Parameter
+        Type="structure-model"
+        UniqueId="28bf1f9e-8b77-4a78-938d-e29578c44da3">
+      <更新対象従業員一覧
+          Type="children"
+          UniqueId="4f82b721-bd04-4279-8acb-ed14ab690eaf">
+        <従業員
+            RefToObject="DisplayData"
+            Type="ref-to:従業員マスタ"
+            UniqueId="46c347d6-20f0-453b-814f-45093b7923c7" />
+      </更新対象従業員一覧>
+    </従業員一括更新Parameter>
+    <!--@[売上](f6a1b2c3-d4e5-4f2a-9b3c-4d5e6f7a8b9c) の一覧検索画面のデータ構造。-->
+    <売上一覧
+        Type="query-model"
+        UniqueId="d0929a1e-1490-42c3-a728-d740c85ff7b7">
+      <売上SEQ
+          Type="int"
+          UniqueId="90702d06-0234-4726-aa4c-f7d793f86090" />
+      <売上日時
+          Type="datetime"
+          UniqueId="add98550-200d-4a0f-9e65-8ac6bacaeb61" />
+      <担当者
+          Type="ref-to:従業員Ref"
+          UniqueId="ad6a0fd0-996a-4481-b0da-c9eaa0a72cce" />
+      <備考
+          Type="description"
+          UniqueId="2c4ddbb9-7eb6-4ea1-96b9-eb3f2b13a53b" />
       <売上総額_税込
-        Type="decimal"
-        UniqueId="aa938911-99c2-4e98-b6d1-ed07a16eb255" />
+          Type="decimal"
+          UniqueId="551e8525-3c9c-4c00-a95e-707d6cc4a452" />
+      <売上数量合計
+          Type="int"
+          UniqueId="beb2ca92-d35c-4ec7-9c0e-2efc3c886f19" />
+    </売上一覧>
+    <!--売上詳細画面のデータ構造。
+@[売上](f6a1b2c3-d4e5-4f2a-9b3c-4d5e6f7a8b9c) DataModel と異なり、入荷明細の引当に関する情報を持っていないのが重要。これはつまり、売上詳細画面を操作するユーザーにとってその商品の在庫引当がどの入荷に対して行われるかは入力項目ではなく、引当はシステム内部で自動的に判定されることを意味する。-->
+    <売上詳細
+        Type="structure-model"
+        UniqueId="2352e942-65b1-47fe-ac3b-0c49bd4e295f">
+      <!--シーケンス。画面上に表示する。-->
+      <売上SEQ
+          Type="int"
+          UniqueId="1067685c-ca3e-424d-82ca-2b8045464fb5" />
+      <売上日時
+          Type="datetime"
+          UniqueId="5fe83afc-073e-490f-932d-5eefad3b0c85" />
+      <担当者
+          RefToObject="RefTarget"
+          Type="ref-to:従業員Ref"
+          UniqueId="c2758cdd-4867-41b6-94db-208ca2559858" />
+      <備考
+          Type="description"
+          UniqueId="b66f5118-fff3-441d-842a-c14a596b44ab" />
+      <!--引当のロジックの都合上、一度更新確定した明細は更新や削除ができない。取消の場合は別で取消の明細を追加していく。-->
+      <売上明細
+          Type="children"
+          UniqueId="98b7b6c4-9e74-4330-9bc8-e8594811c0a6">
+        <!--UUID。非表示。-->
+        <明細ID
+            Type="word"
+            UniqueId="fe54c1ee-d63b-400c-a950-05adc927f28d" />
+        <商品
+            RefToObject="RefTarget"
+            Type="ref-to:商品"
+            UniqueId="398db3b4-a77e-45a2-881e-cad75af1bb46" />
+        <!--新規登録の場合は「売上」で固定。売上修正の場合は「修正」も選べる。-->
+        <区分
+            Type="売上明細区分"
+            UniqueId="8c35dcac-1c74-4535-b2c0-fc5f50a37fdd" />
+        <!--取消の場合は負の数。-->
+        <売上数量
+            Type="int"
+            UniqueId="88781893-d022-4594-bdda-5eedfc3a3eb4" />
+        <!--取消の場合は負の数。丸め処理済みの値。基本的には商品マスタの単価に売上数量を乗じたものだが、登録時に手修正が可能。-->
+        <売上総額_税込
+            Type="decimal"
+            UniqueId="aa938911-99c2-4e98-b6d1-ed07a16eb255" />
+        <!--備考-->
+        <備考
+            Type="description"
+            UniqueId="27b13d5a-15b7-439a-8e12-f1343789e8e1" />
+      </売上明細>
+    </売上詳細>
+    <売上詳細画面初期表示Parameter
+        Type="structure-model"
+        UniqueId="0d252a96-0dd0-45eb-af33-e761419117c7">
+      <売上SEQ
+          Type="int"
+          UniqueId="97e17b61-8a10-4378-ae62-9c3c186a8a70" />
+    </売上詳細画面初期表示Parameter>
+    <!--@[入荷](e5f6a1b2-c3d4-4e5f-2a6b-7c8d9e0f1a2b) の一覧検索画面のデータ構造。-->
+    <入荷一覧
+        Type="query-model"
+        UniqueId="ca790c30-db44-4439-9452-2a1310a901bb">
+      <!--UUID-->
+      <入荷ID
+          Type="word"
+          UniqueId="1f7d351c-4779-45fe-91c0-c21dde51c77e" />
+      <入荷日時
+          Type="datetime"
+          UniqueId="b3a66de3-5919-4896-b2c9-a87d321fb4a1" />
+      <担当者
+          Type="ref-to:従業員Ref"
+          UniqueId="c8fde618-5c88-4a6b-8b05-dc5dbc93b032" />
       <!--備考-->
       <備考
-        Type="description"
-        UniqueId="27b13d5a-15b7-439a-8e12-f1343789e8e1" />
-    </売上明細>
-  </売上詳細>
-  <売上詳細画面初期表示
-    Parameter="売上詳細画面初期表示Parameter"
-    ReturnValue="売上詳細"
-    Type="command-model"
-    UniqueId="590f0ad0-92c9-4281-82f7-6f8c0d04de1d" />
-  <売上詳細画面初期表示Parameter
-    Type="structure-model"
-    UniqueId="0d252a96-0dd0-45eb-af33-e761419117c7">
-    <売上SEQ
-      Type="int"
-      UniqueId="97e17b61-8a10-4378-ae62-9c3c186a8a70" />
-  </売上詳細画面初期表示Parameter>
-  <!--一度登録された売上を修正する。-->
-  <売上修正
-    Parameter="売上詳細"
-    Type="command-model"
-    UniqueId="271203a5-7b54-449b-a443-92019f7f1035" />
-  <!--@[入荷](e5f6a1b2-c3d4-4e5f-2a6b-7c8d9e0f1a2b) の一覧検索画面のデータ構造。-->
-  <入荷一覧
-    Type="query-model"
-    UniqueId="ca790c30-db44-4439-9452-2a1310a901bb">
-    <!--UUID-->
-    <入荷ID
-      Type="word"
-      UniqueId="1f7d351c-4779-45fe-91c0-c21dde51c77e" />
-    <入荷日時
-      Type="datetime"
-      UniqueId="b3a66de3-5919-4896-b2c9-a87d321fb4a1" />
-    <担当者
-      Type="ref-to:従業員Ref"
-      UniqueId="c8fde618-5c88-4a6b-8b05-dc5dbc93b032" />
-    <!--備考-->
-    <備考
-      Type="description"
-      UniqueId="06898967-2069-408d-8094-0abf14d93d46" />
-    <明細件数
-      Type="int"
-      UniqueId="47e8ab32-450e-4a0c-997c-d4b4e4627909" />
-    <入荷数量合計
-      Type="int"
-      UniqueId="f91dd3c1-3e02-485c-9d51-00a6d77a8c97" />
-  </入荷一覧>
-  <!--@[商品](a1b2c3d4-e5f6-4a1b-8c2d-3e4f5a6b7c8d) の一覧検索画面のデータ構造。 @[入荷明細](a5e5b615-6cc1-4a50-8cc7-fe910dca543b) を参照し、現在の在庫数も一覧する。
+          Type="description"
+          UniqueId="06898967-2069-408d-8094-0abf14d93d46" />
+      <明細件数
+          Type="int"
+          UniqueId="47e8ab32-450e-4a0c-997c-d4b4e4627909" />
+      <入荷数量合計
+          Type="int"
+          UniqueId="f91dd3c1-3e02-485c-9d51-00a6d77a8c97" />
+    </入荷一覧>
+    <!--@[商品](a1b2c3d4-e5f6-4a1b-8c2d-3e4f5a6b7c8d) の一覧検索画面のデータ構造。 @[入荷明細](a5e5b615-6cc1-4a50-8cc7-fe910dca543b) を参照し、現在の在庫数も一覧する。
 商品マスタはこのシステム上では編集できない。閲覧のみ。-->
-  <商品一覧
-    Type="query-model"
-    UniqueId="cf33b04a-b6a2-4559-b98c-563ddcc76394">
-    <!--非表示-->
-    <商品SEQ
-      Type="int"
-      UniqueId="b583f019-e406-407e-94db-588a6c19dadc" />
-    <外部システム側ID
-      Type="word"
-      UniqueId="643fcd6c-1a53-406f-9d58-576b6eb5a3de" />
-    <商品名
-      Type="word"
-      UniqueId="446d95d0-c894-4cbc-9f52-4cb316445c55" />
-    <売値単価_税抜
-      Type="decimal"
-      UniqueId="bfe5c44a-cc36-4136-b22c-ac6425ec9dce" />
-    <消費税区分
-      Type="消費税区分"
-      UniqueId="9f805629-7700-4ffa-802b-897d6e85708c" />
-    <在庫数
-      Type="int"
-      UniqueId="a3cc1a1f-51b5-4fc5-94a4-296f341293e7" />
-  </商品一覧>
-  <!--入力ミスの修正が主な用途。-->
-  <入荷修正
-    Parameter="入荷詳細"
-    Type="command-model"
-    UniqueId="6eae3b9e-64ab-49a6-bb26-1738a31561c7" />
-  <!--棚卸しによる差異の修正、破損による廃棄、返品の受入などで利用する。
-@[在庫調整](4a1fa98c-1503-4d77-8161-e0e2f5f2fd1d) データを登録し、 @[入荷明細](a5e5b615-6cc1-4a50-8cc7-fe910dca543b) を登録または更新する。
-増加する方向への調整の場合は入荷明細に新しいレコードを追加し、減少する方向への調整の場合は入荷明細の残数量からの引当を行う。
-商品一覧画面、商品詳細画面から呼び出される。-->
-  <在庫調整登録
-    Parameter="在庫調整Parameter"
-    Type="command-model"
-    UniqueId="23aacfdc-c4d5-499f-891e-999542dc5258" />
-  <!--在庫調整の入力パラメータ。
+    <商品一覧
+        Type="query-model"
+        UniqueId="cf33b04a-b6a2-4559-b98c-563ddcc76394">
+      <!--非表示-->
+      <商品SEQ
+          Type="int"
+          UniqueId="b583f019-e406-407e-94db-588a6c19dadc" />
+      <外部システム側ID
+          Type="word"
+          UniqueId="643fcd6c-1a53-406f-9d58-576b6eb5a3de" />
+      <商品名
+          Type="word"
+          UniqueId="446d95d0-c894-4cbc-9f52-4cb316445c55" />
+      <売値単価_税抜
+          Type="decimal"
+          UniqueId="bfe5c44a-cc36-4136-b22c-ac6425ec9dce" />
+      <消費税区分
+          Type="消費税区分"
+          UniqueId="9f805629-7700-4ffa-802b-897d6e85708c" />
+      <在庫数
+          Type="int"
+          UniqueId="a3cc1a1f-51b5-4fc5-94a4-296f341293e7" />
+    </商品一覧>
+    <!--在庫調整の入力パラメータ。
 棚卸など商品の絶対数を正とする場合は絶対数を、返品や破損など増減数で調整する場合は増減数を指定する。-->
-  <在庫調整Parameter
-    Type="structure-model"
-    UniqueId="2555dc15-3ed7-48cb-9e78-0e7b09de86a3">
-    <商品
-      RefToObject="RefTarget"
-      Type="ref-to:商品"
-      UniqueId="cb60d0f6-8dcb-4c4a-bc62-31aa338c4034" />
-    <増減数
-      Type="int"
-      UniqueId="54379682-e77d-4da1-98e4-812ef8d6ad43" />
-    <絶対数
-      Type="int"
-      UniqueId="a54a1771-b626-4353-ba03-7db45e9d4f61" />
-    <在庫調整理由
-      Type="description"
-      UniqueId="53517d58-6e73-4d70-9267-5813bc3bba85" />
-  </在庫調整Parameter>
-  <!--棚卸しによる差異の修正、破損による廃棄、返品の受入など。
+    <在庫調整Parameter
+        Type="structure-model"
+        UniqueId="2555dc15-3ed7-48cb-9e78-0e7b09de86a3">
+      <商品
+          RefToObject="RefTarget"
+          Type="ref-to:商品"
+          UniqueId="cb60d0f6-8dcb-4c4a-bc62-31aa338c4034" />
+      <増減数
+          Type="int"
+          UniqueId="54379682-e77d-4da1-98e4-812ef8d6ad43" />
+      <絶対数
+          Type="int"
+          UniqueId="a54a1771-b626-4353-ba03-7db45e9d4f61" />
+      <在庫調整理由
+          Type="description"
+          UniqueId="53517d58-6e73-4d70-9267-5813bc3bba85" />
+    </在庫調整Parameter>
+    <!--棚卸しによる差異の修正、破損による廃棄、返品の受入など。
 増加方向の調整の場合、このレコードに紐づく新しい入荷明細レコードが生まれる。
 減少方向の調整の場合、入荷明細の残数量からの減算を行い、どの入荷明細から減じたかを記録する引当明細を記録する。-->
-  <在庫調整
-    Type="data-model"
-    UniqueId="4a1fa98c-1503-4d77-8161-e0e2f5f2fd1d">
-    <!--UUID。非表示-->
-    <在庫調整ID
-      IsKey="True"
-      Type="word"
-      UniqueId="5e134d02-1c42-4341-b323-f1f98de697e5" />
-    <在庫調整日時
-      IsRequired="True"
-      Type="date"
-      UniqueId="7120889a-9ee6-40cb-95cb-bd080719c4ef" />
-    <担当者
-      IsRequired="True"
-      Type="ref-to:従業員"
-      UniqueId="655673db-47f8-4933-b0bb-67f145e11e34" />
-    <商品
-      Type="ref-to:商品"
-      UniqueId="66d0893f-9dfb-4f5e-bbd5-984aad2e115e" />
-    <!--登録時パラメータをそのまま記録する。絶対数で調整された場合はnull。-->
-    <増減数
-      Type="int"
-      UniqueId="3eed465f-4a93-4669-ade7-642091359f22" />
-    <!--登録時パラメータをそのまま記録する。増減数で調整された場合はnull。-->
-    <絶対数
-      Type="int"
-      UniqueId="f8e6c5fd-cb01-4757-896a-307bf6f5041c" />
-    <在庫調整理由
-      Type="description"
-      UniqueId="84cbc4e6-f41a-417e-a20a-6d1f6b278b0f" />
-    <!--減少方向への調整の場合に登録される、どの入荷明細からの減算を行なったかの記録。-->
-    <在庫調整引当明細
-      Type="children"
-      UniqueId="93c13d8d-23ba-44d5-b1ca-694c45efeb2b">
-      <入荷明細
-        IsKey="True"
-        Type="ref-to:入荷明細"
-        UniqueId="637d132a-ce39-4162-b97e-13f9868af05d" />
-      <引当数
-        IsRequired="True"
-        Type="int"
-        UniqueId="b4908865-39d1-4e1a-a4cc-bb93cf318778" />
-    </在庫調整引当明細>
-  </在庫調整>
-  <!--商品詳細画面で表示される。
+    <在庫調整
+        Type="data-model"
+        UniqueId="4a1fa98c-1503-4d77-8161-e0e2f5f2fd1d">
+      <!--UUID。非表示-->
+      <在庫調整ID
+          IsKey="True"
+          Type="word"
+          UniqueId="5e134d02-1c42-4341-b323-f1f98de697e5" />
+      <在庫調整日時
+          IsRequired="True"
+          Type="date"
+          UniqueId="7120889a-9ee6-40cb-95cb-bd080719c4ef" />
+      <担当者
+          IsRequired="True"
+          Type="ref-to:従業員"
+          UniqueId="655673db-47f8-4933-b0bb-67f145e11e34" />
+      <商品
+          Type="ref-to:商品"
+          UniqueId="66d0893f-9dfb-4f5e-bbd5-984aad2e115e" />
+      <!--登録時パラメータをそのまま記録する。絶対数で調整された場合はnull。-->
+      <増減数
+          Type="int"
+          UniqueId="3eed465f-4a93-4669-ade7-642091359f22" />
+      <!--登録時パラメータをそのまま記録する。増減数で調整された場合はnull。-->
+      <絶対数
+          Type="int"
+          UniqueId="f8e6c5fd-cb01-4757-896a-307bf6f5041c" />
+      <在庫調整理由
+          Type="description"
+          UniqueId="84cbc4e6-f41a-417e-a20a-6d1f6b278b0f" />
+      <!--減少方向への調整の場合に登録される、どの入荷明細からの減算を行なったかの記録。-->
+      <在庫調整引当明細
+          Type="children"
+          UniqueId="93c13d8d-23ba-44d5-b1ca-694c45efeb2b">
+        <入荷明細
+            IsKey="True"
+            Type="ref-to:入荷明細"
+            UniqueId="637d132a-ce39-4162-b97e-13f9868af05d" />
+        <引当数
+            IsRequired="True"
+            Type="int"
+            UniqueId="b4908865-39d1-4e1a-a4cc-bb93cf318778" />
+      </在庫調整引当明細>
+    </在庫調整>
+    <!--商品詳細画面で表示される。
 その商品の在庫がどう変動したかを新しい順に表示する。-->
-  <商品在庫増減履歴
-    Type="query-model"
-    UniqueId="9604df00-d30a-4033-affd-6d2d625558fa">
-    <!--非表示-->
-    <商品SEQ
-      Type="int"
-      UniqueId="fcfd234d-d0fe-48d5-97d3-a9dd16510e13" />
-    <!--外部システム側ID-->
-    <外部システム側ID
-      Type="word"
-      UniqueId="1ee75f27-4bed-4d90-9b4a-be02f2ee92e7" />
-    <商品名
-      Type="word"
-      UniqueId="201ff093-8a90-4769-b716-a757f8596b64" />
-    <!--いつ変動が起きたか-->
-    <日時
-      Type="datetime"
-      UniqueId="61b8be67-a146-4d37-8efe-a4532885593c" />
-    <!--何個増減したか-->
-    <増減数
-      Type="int"
-      UniqueId="0ce2b819-d092-4203-8ad6-3a489ba1ee18" />
-    <!--入荷、売上による引当、在庫調整など-->
-    <事由
-      Type="word"
-      UniqueId="e508c0a0-abb3-4605-8a44-65eb5d17e904" />
-    <!--入荷詳細画面へのリンクに使用-->
-    <入荷ID
-      Type="word"
-      UniqueId="f657a5d7-c7ac-4851-afa2-c5534e3f4aa8" />
-    <!--在庫調整からの引当の場合はリンク不要なので売上のみ-->
-    <増減履歴引当元売上一覧
-      Type="children"
-      UniqueId="6352e9fa-d872-495c-b3a3-7942e992d19a">
-      <!--売上詳細画面へのリンクに使用-->
-      <売上SEQ
-        Type="int"
-        UniqueId="37fc3118-a1d1-4ec5-b302-5c13af362b80" />
-    </増減履歴引当元売上一覧>
-  </商品在庫増減履歴>
-  <消費税区分
-    Type="enum"
-    UniqueId="e4a132f9-580e-477f-abf3-9359c92a643a">
-    <非課税
-      key="0"
-      UniqueId="c6284100-b3a5-4dd0-b6c7-738f1602357d" />
-    <一般税率
-      key="1"
-      UniqueId="7a2db08d-084e-4b4e-aa2f-3b5ae5af14ac" />
-    <軽減税率
-      key="2"
-      UniqueId="5c03c698-1999-4512-bd36-6e61b394a717" />
-  </消費税区分>
-  <売上明細区分
-    Type="enum"
-    UniqueId="724ac342-ebd2-4a0b-bb75-5bd174cd5f60">
-    <売上
-      key="0"
-      UniqueId="a5fa877b-a9ea-424e-8aa1-f471cbc60a12" />
-    <取消
-      key="1"
-      UniqueId="356f8cd3-25ff-43fa-833f-c234a1d5614f" />
-  </売上明細区分>
-  <ログインParameter
-    Type="structure-model"
-    UniqueId="a775c249-a449-4700-a33a-262ca6c820f3">
-    <従業員番号
-      Type="word"
-      UniqueId="95019350-3caf-4bb1-be14-01351c4eb17d" />
-    <パスワード
-      Type="word"
-      UniqueId="5619b3a0-f402-4bc5-ab03-8edc1baa2a6a" />
-  </ログインParameter>
-  <!--ログインユーザー自身が自分のパスワードを変更する。-->
-  <パスワード変更
-    Parameter="パスワード変更Parameter"
-    Type="command-model"
-    UniqueId="c6feafdf-b973-4196-afa1-111eb9638087" />
-  <パスワード変更Parameter
-    Type="structure-model"
-    UniqueId="da5e2ba7-864b-4d23-852b-1a4c6f525f98">
-    <新しいパスワード
-      Type="word"
-      UniqueId="68322c5b-2976-453b-8e70-a968a946dedf" />
-    <新しいパスワード_確認用
-      Type="word"
-      UniqueId="ab05211a-883a-4737-8cba-a10e8345df92" />
-  </パスワード変更Parameter>
-  <!--ログインのたびに新しいレコードが追加される。
+    <商品在庫増減履歴
+        Type="query-model"
+        UniqueId="9604df00-d30a-4033-affd-6d2d625558fa">
+      <!--非表示-->
+      <商品SEQ
+          Type="int"
+          UniqueId="fcfd234d-d0fe-48d5-97d3-a9dd16510e13" />
+      <!--外部システム側ID-->
+      <外部システム側ID
+          Type="word"
+          UniqueId="1ee75f27-4bed-4d90-9b4a-be02f2ee92e7" />
+      <商品名
+          Type="word"
+          UniqueId="201ff093-8a90-4769-b716-a757f8596b64" />
+      <!--いつ変動が起きたか-->
+      <日時
+          Type="datetime"
+          UniqueId="61b8be67-a146-4d37-8efe-a4532885593c" />
+      <!--何個増減したか-->
+      <増減数
+          Type="int"
+          UniqueId="0ce2b819-d092-4203-8ad6-3a489ba1ee18" />
+      <!--入荷、売上による引当、在庫調整など-->
+      <事由
+          Type="word"
+          UniqueId="e508c0a0-abb3-4605-8a44-65eb5d17e904" />
+      <!--入荷詳細画面へのリンクに使用-->
+      <入荷ID
+          Type="word"
+          UniqueId="f657a5d7-c7ac-4851-afa2-c5534e3f4aa8" />
+      <!--在庫調整からの引当の場合はリンク不要なので売上のみ-->
+      <増減履歴引当元売上一覧
+          Type="children"
+          UniqueId="6352e9fa-d872-495c-b3a3-7942e992d19a">
+        <!--売上詳細画面へのリンクに使用-->
+        <売上SEQ
+            Type="int"
+            UniqueId="37fc3118-a1d1-4ec5-b302-5c13af362b80" />
+      </増減履歴引当元売上一覧>
+    </商品在庫増減履歴>
+    <ログインParameter
+        Type="structure-model"
+        UniqueId="a775c249-a449-4700-a33a-262ca6c820f3">
+      <従業員番号
+          Type="word"
+          UniqueId="95019350-3caf-4bb1-be14-01351c4eb17d" />
+      <パスワード
+          Type="word"
+          UniqueId="5619b3a0-f402-4bc5-ab03-8edc1baa2a6a" />
+    </ログインParameter>
+    <パスワード変更Parameter
+        Type="structure-model"
+        UniqueId="da5e2ba7-864b-4d23-852b-1a4c6f525f98">
+      <新しいパスワード
+          Type="word"
+          UniqueId="68322c5b-2976-453b-8e70-a968a946dedf" />
+      <新しいパスワード_確認用
+          Type="word"
+          UniqueId="ab05211a-883a-4737-8cba-a10e8345df92" />
+    </パスワード変更Parameter>
+    <!--ログインのたびに新しいレコードが追加される。
 Webアプリケーションなので明示的にログアウトしない限りはレコードは残り続ける。
 最終ログイン時刻から一定時間が経過したものはクリーンナップで削除される。-->
-  <セッション
-    Type="data-model"
-    UniqueId="72d0c66e-b523-4dd1-b8a0-8384368fe38b">
-    <!--ログインの瞬間にAPサーバーで発番される値。Set-Cookieでクライアント側に返され、以降のHTTPリクエストではCookieのヘッダに挿入される。APサーバーは当該ヘッダとこのテーブルのセッションキーを突合し、ユーザーを識別する。-->
-    <セッションキー
-      IsKey="True"
-      IsRequired="True"
-      Type="word"
-      UniqueId="87580124-2e00-4ce9-8e55-83efc51617a4" />
-    <ユーザ
-      IsRequired="True"
-      Type="ref-to:従業員"
-      UniqueId="82da1cd4-c08e-4297-af1d-e27157ba59b0" />
-    <!--ログインのたびにUPDATEされる-->
-    <最終ログイン日時
-      IsRequired="True"
-      Type="datetime"
-      UniqueId="5d444ec0-10f7-4fbb-8bd1-8331feac1b66" />
-  </セッション>
-  <!--古いセッションキーの削除を行う。
+    <セッション
+        Type="data-model"
+        UniqueId="72d0c66e-b523-4dd1-b8a0-8384368fe38b">
+      <!--ログインの瞬間にAPサーバーで発番される値。Set-Cookieでクライアント側に返され、以降のHTTPリクエストではCookieのヘッダに挿入される。APサーバーは当該ヘッダとこのテーブルのセッションキーを突合し、ユーザーを識別する。-->
+      <セッションキー
+          IsKey="True"
+          IsRequired="True"
+          Type="word"
+          UniqueId="87580124-2e00-4ce9-8e55-83efc51617a4" />
+      <ユーザ
+          IsRequired="True"
+          Type="ref-to:従業員"
+          UniqueId="82da1cd4-c08e-4297-af1d-e27157ba59b0" />
+      <!--ログインのたびにUPDATEされる-->
+      <最終ログイン日時
+          IsRequired="True"
+          Type="datetime"
+          UniqueId="5d444ec0-10f7-4fbb-8bd1-8331feac1b66" />
+    </セッション>
+    <入荷詳細画面初期表示Parameter
+        Type="structure-model"
+        UniqueId="c766195e-c279-4a50-84bb-fcbf46ac9798">
+      <入荷ID
+          Type="word"
+          UniqueId="feae908b-6766-4d7c-9781-43caebe0feee" />
+    </入荷詳細画面初期表示Parameter>
+    <ログインユーザー情報
+        Type="structure-model"
+        UniqueId="f594d8ac-f7ff-44ca-878f-fcbfd1e79ee1">
+      <従業員番号
+          Type="word"
+          UniqueId="c608a333-3561-445b-98e4-033f00baa5d1" />
+      <氏名
+          Type="word"
+          UniqueId="59db479e-8398-429e-928c-53639f6e6f19" />
+      <!--入荷担当またはシステム管理者の場合true-->
+      <入荷機能を利用可能
+          Type="bool"
+          UniqueId="4106ebcf-27da-4886-80ec-2919acdb6877" />
+      <!--販売担当またはシステム管理者の場合true-->
+      <販売機能を利用可能
+          Type="bool"
+          UniqueId="8c487777-69d8-4177-9c0b-0c41277438bb" />
+      <システム管理者
+          Type="bool"
+          UniqueId="72b24b06-ab7e-4267-ac2f-a951cdb6885f" />
+    </ログインユーザー情報>
+  </DataStructures>
+  <Commands>
+    <!--入荷担当者が主に利用する機能。
+    @[入荷](e5f6a1b2-c3d4-4e5f-2a6b-7c8d9e0f1a2b) @[入荷明細](a5e5b615-6cc1-4a50-8cc7-fe910dca543b)
+    を更新する。基本的に1日1回利用される。
+一度の入荷で複数の商品を登録する。-->
+    <入荷登録
+        Parameter="入荷詳細"
+        Type="command-model"
+        UniqueId="c2a6e537-f471-4512-ae2b-d4a38017604e" />
+    <!--日次で実行される、外部システム（商品管理システム）からデータを受け取ってこのシステムの
+    @[商品](a1b2c3d4-e5f6-4a1b-8c2d-3e4f5a6b7c8d) マスタにマージする処理。任意のタイミングでキックすることも可能。
+ASP.NET Core のサービスワーカーとして登録される。-->
+    <商品データ取込
+        Type="command-model"
+        UniqueId="6cb9f1e7-afb0-4197-be66-d9779315026c" />
+    <!--パスワード認証でのログイン。-->
+    <ログイン
+        Parameter="ログインParameter"
+        ReturnValue="ログインユーザー情報"
+        Type="command-model"
+        UniqueId="af387361-2401-4308-9e04-8e5973f39426" />
+    <ログアウト
+        Type="command-model"
+        UniqueId="8877c58b-260a-4de3-a007-ce73d1d222b3" />
+    <!--パスワード紛失の際のため、対象者のパスワードを
+    "pass" に更新する。
+システム管理者のみ使用可能。-->
+    <パスワード再発行
+        Parameter="パスワード再発行Parameter"
+        Type="command-model"
+        UniqueId="abbe87d5-69df-45a0-9166-1b05f08de613" />
+    <!--従業員マスタの一括更新処理。システム管理者のみ利用可能。-->
+    <従業員一括更新
+        Parameter="従業員一括更新Parameter"
+        Type="command-model"
+        UniqueId="5388c52e-2932-4226-bf5b-734ae8a50112" />
+    <!--売上データを新規登録する。
+在庫引当計算もこの中で行われる。-->
+    <売上新規登録
+        Parameter="売上詳細"
+        Type="command-model"
+        UniqueId="e4e427ae-7a2d-468b-864e-6536dbb0a47a" />
+    <売上詳細画面初期表示
+        Parameter="売上詳細画面初期表示Parameter"
+        ReturnValue="売上詳細"
+        Type="command-model"
+        UniqueId="590f0ad0-92c9-4281-82f7-6f8c0d04de1d" />
+    <!--一度登録された売上を修正する。-->
+    <売上修正
+        Parameter="売上詳細"
+        Type="command-model"
+        UniqueId="271203a5-7b54-449b-a443-92019f7f1035" />
+    <!--入力ミスの修正が主な用途。-->
+    <入荷修正
+        Parameter="入荷詳細"
+        Type="command-model"
+        UniqueId="6eae3b9e-64ab-49a6-bb26-1738a31561c7" />
+    <!--棚卸しによる差異の修正、破損による廃棄、返品の受入などで利用する。
+@[在庫調整](4a1fa98c-1503-4d77-8161-e0e2f5f2fd1d) データを登録し、
+    @[入荷明細](a5e5b615-6cc1-4a50-8cc7-fe910dca543b) を登録または更新する。
+増加する方向への調整の場合は入荷明細に新しいレコードを追加し、減少する方向への調整の場合は入荷明細の残数量からの引当を行う。
+商品一覧画面、商品詳細画面から呼び出される。-->
+    <在庫調整登録
+        Parameter="在庫調整Parameter"
+        Type="command-model"
+        UniqueId="23aacfdc-c4d5-499f-891e-999542dc5258" />
+    <!--ログインユーザー自身が自分のパスワードを変更する。-->
+    <パスワード変更
+        Parameter="パスワード変更Parameter"
+        Type="command-model"
+        UniqueId="c6feafdf-b973-4196-afa1-111eb9638087" />
+    <!--古いセッションキーの削除を行う。
 ASP.NET Core のサービスワーカーとして登録される定期処理。-->
-  <クリーンナップ
-    Type="command-model"
-    UniqueId="eadf411b-2c47-483f-b0a8-fc52c9486adc" />
-  <入荷詳細画面初期表示
-    Parameter="入荷詳細画面初期表示Parameter"
-    ReturnValue="入荷詳細"
-    Type="command-model"
-    UniqueId="d8cff664-d1a8-43c8-ac5e-cc1b2a8fb400" />
-  <入荷詳細画面初期表示Parameter
-    Type="structure-model"
-    UniqueId="c766195e-c279-4a50-84bb-fcbf46ac9798">
-    <入荷ID
-      Type="word"
-      UniqueId="feae908b-6766-4d7c-9781-43caebe0feee" />
-  </入荷詳細画面初期表示Parameter>
-  <ログインユーザー情報
-    Type="structure-model"
-    UniqueId="f594d8ac-f7ff-44ca-878f-fcbfd1e79ee1">
-    <従業員番号
-      Type="word"
-      UniqueId="c608a333-3561-445b-98e4-033f00baa5d1" />
-    <氏名
-      Type="word"
-      UniqueId="59db479e-8398-429e-928c-53639f6e6f19" />
-    <!--入荷担当またはシステム管理者の場合true-->
-    <入荷機能を利用可能
-      Type="bool"
-      UniqueId="4106ebcf-27da-4886-80ec-2919acdb6877" />
-    <!--販売担当またはシステム管理者の場合true-->
-    <販売機能を利用可能
-      Type="bool"
-      UniqueId="8c487777-69d8-4177-9c0b-0c41277438bb" />
-    <システム管理者
-      Type="bool"
-      UniqueId="72b24b06-ab7e-4267-ac2f-a951cdb6885f" />
-  </ログインユーザー情報>
+    <クリーンナップ
+        Type="command-model"
+        UniqueId="eadf411b-2c47-483f-b0a8-fc52c9486adc" />
+    <入荷詳細画面初期表示
+        Parameter="入荷詳細画面初期表示Parameter"
+        ReturnValue="入荷詳細"
+        Type="command-model"
+        UniqueId="d8cff664-d1a8-43c8-ac5e-cc1b2a8fb400" />
+  </Commands>
+  <StaticEnums>
+    <消費税区分
+        Type="enum"
+        UniqueId="e4a132f9-580e-477f-abf3-9359c92a643a">
+      <非課税
+          key="0"
+          UniqueId="c6284100-b3a5-4dd0-b6c7-738f1602357d" />
+      <一般税率
+          key="1"
+          UniqueId="7a2db08d-084e-4b4e-aa2f-3b5ae5af14ac" />
+      <軽減税率
+          key="2"
+          UniqueId="5c03c698-1999-4512-bd36-6e61b394a717" />
+    </消費税区分>
+    <売上明細区分
+        Type="enum"
+        UniqueId="724ac342-ebd2-4a0b-bb75-5bd174cd5f60">
+      <売上
+          key="0"
+          UniqueId="a5fa877b-a9ea-424e-8aa1-f471cbc60a12" />
+      <取消
+          key="1"
+          UniqueId="356f8cd3-25ff-43fa-833f-c234a1d5614f" />
+    </売上明細区分>
+  </StaticEnums>
 </NijoAppScaffold>
