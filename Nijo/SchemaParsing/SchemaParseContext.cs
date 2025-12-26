@@ -168,7 +168,7 @@ public class SchemaParseContext {
     /// XML要素と対応するモデルを返します。
     /// </summary>
     internal bool TryGetModel(XElement xElement, [NotNullWhen(true)] out IModel? model) {
-        var root = xElement.AncestorsAndSelf().Reverse().Skip(1).FirstOrDefault();
+        var root = xElement.GetRootAggregateElement();
         if (root == null) {
             model = null;
             return false;
@@ -285,7 +285,7 @@ public class SchemaParseContext {
     /// </summary>
     internal XElement? FindRefTo(XElement xElement) {
         var type = xElement.Attribute(ATTR_NODE_TYPE) ?? throw new InvalidOperationException();
-        var xPath = type.Value.Split(':')[1];
+        var xPath = $"/*/*/{type.Value.Split(':')[1]}";
         return Document.Root?.XPathSelectElement(xPath);
     }
     /// <summary>
@@ -293,7 +293,7 @@ public class SchemaParseContext {
     /// </summary>
     internal IEnumerable<XElement> FindRefFrom(XElement xElement) {
         // 完全なパスを構築
-        var fullPath = string.Join("/", xElement.AncestorsAndSelf().Reverse().Skip(1).Select(GetPhysicalName));
+        var fullPath = string.Join("/", xElement.AncestorsAndSelf().Reverse().Skip(2).Select(GetPhysicalName));
 
         // 完全なパスによる参照のみを検索
         return Document.XPathSelectElements($"//*[@{ATTR_NODE_TYPE}='{NODE_TYPE_REFTO}:{fullPath}']") ?? [];
@@ -354,7 +354,11 @@ public class SchemaParseContext {
             }
         }
 
-        foreach (var el in xDocument.Root?.Descendants() ?? []) {
+        var targetElements = xDocument.Root
+            ?.Elements()
+            .SelectMany(el => el.Descendants())
+            ?? [];
+        foreach (var el in targetElements) {
 
             var nodeType = GetNodeType(el);
             var typeAttrValue = el.Attribute(ATTR_NODE_TYPE)?.Value ?? string.Empty;
@@ -525,8 +529,8 @@ public class SchemaParseContext {
         }
 
         // 自身のツリーの集約を参照していないかチェック
-        var rootElement = refElement.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo()?.Parent == e.Document?.Root);
-        var refToRoot = refTo.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo()?.Parent == e.Document?.Root);
+        var rootElement = refElement.GetRootAggregateElement();
+        var refToRoot = refTo.GetRootAggregateElement();
 
         if (rootElement == refToRoot) {
             errorMessage = "自身のツリーの集約を参照することはできません。";

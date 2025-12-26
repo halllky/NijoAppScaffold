@@ -300,7 +300,7 @@ namespace Nijo.ImmutableSchema {
             : base(xElement, ctx, previous) { }
 
         public bool IsView => XElement.Attribute(BasicNodeOptions.MapToView.AttributeName) != null;
-        public IModel Model => _ctx.TryGetModel(XElement, out var model) ? model : throw new InvalidOperationException("ありえない");
+        public IModel Model => _ctx.TryGetModel(XElement, out var model) ? model : throw new InvalidOperationException($"ありえない: {XElement}");
 
         public override AggregateBase AsEntry() {
             return new RootAggregate(XElement, _ctx, null);

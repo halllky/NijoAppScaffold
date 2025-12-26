@@ -197,22 +197,20 @@ namespace Nijo.CodeGenerating {
                         })
                         .ToList();
 
-                    // 通し番号
-                    var currentIndex = 0;
-
+                    var indexForDataModels = 0;
                     while (true) {
                         if (rest.Count == 0) break;
 
-                        var next = rest[currentIndex];
+                        var next = rest[indexForDataModels];
 
                         // 参照先集約が未処理ならば後回し
                         var notEnumerated = rest.Where(agg => next.refTargets.Contains(agg.root));
                         if (notEnumerated.Any()) {
                             // 集約間の循環参照が存在するなどの場合は無限ループが発生するので例外。
                             // なお循環参照はスキーマ作成時にエラーとする想定
-                            if (currentIndex + 1 >= rest.Count) throw new InvalidOperationException("集約間のデータの流れを決定できません。");
+                            if (indexForDataModels + 1 >= rest.Count) throw new InvalidOperationException("集約間のデータの流れを決定できません。");
 
-                            currentIndex++;
+                            indexForDataModels++;
                             continue;
                         }
 
@@ -220,7 +218,7 @@ namespace Nijo.CodeGenerating {
                         _rootAggregateOrderCache.Add(next.root, _rootAggregateOrderCache.Count);
 
                         rest.Remove(next);
-                        currentIndex = 0;
+                        indexForDataModels = 0;
                     }
 
                     // 2) DataModel 以外は XML 上の登場順
@@ -242,14 +240,14 @@ namespace Nijo.CodeGenerating {
                         if (root == null) continue;
                         if (_rootAggregateOrderCache.ContainsKey(root)) continue;
 
-                        _rootAggregateOrderCache.Add(root, currentIndex++);
+                        _rootAggregateOrderCache.Add(root, _rootAggregateOrderCache.Count);
                     }
                     foreach (var element in commands) {
                         var root = nonDataRoots.GetValueOrDefault(element);
                         if (root == null) continue;
                         if (_rootAggregateOrderCache.ContainsKey(root)) continue;
 
-                        _rootAggregateOrderCache.Add(root, currentIndex++);
+                        _rootAggregateOrderCache.Add(root, _rootAggregateOrderCache.Count);
                     }
                 }
                 return _rootAggregateOrderCache[rootAggregate];

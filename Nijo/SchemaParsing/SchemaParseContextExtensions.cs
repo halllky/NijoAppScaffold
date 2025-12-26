@@ -122,7 +122,7 @@ internal static class SchemaParseContextExtensions {
     /// 要素のルート集約要素を返します
     /// </summary>
     internal static XElement GetRootAggregateElement(this XElement element) {
-        return element.AncestorsAndSelf().SkipLast(1).Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
+        return element.AncestorsAndSelf().SkipLast(1).Last(e => e.GetParentWithoutMemo()?.Parent == e.Document?.Root);
     }
 
     /// <summary>

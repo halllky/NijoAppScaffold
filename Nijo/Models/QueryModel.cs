@@ -160,8 +160,8 @@ namespace Nijo.Models {
                 }
 
                 // 自身のツリーの集約を参照していないかチェック
-                var rootElement = refElement.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo()?.Parent == e.Document?.Root);
-                var refToRoot = refTo.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo()?.Parent == e.Document?.Root);
+                var rootElement = refElement.GetRootAggregateElement();
+                var refToRoot = refTo.GetRootAggregateElement();
 
                 if (rootElement == refToRoot) {
                     addError(refElement, "自身のツリーの集約を参照することはできません。");
