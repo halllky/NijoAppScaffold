@@ -333,7 +333,10 @@ internal static class BasicNodeOptions {
             }
 
             // 参照先の存在確認
-            var targetElement = ctx.SchemaParseContext.Document.Root?.Element(targetPhysicalName);
+            var targetElement = ctx.SchemaParseContext.Document
+                .Root
+                ?.Element(SchemaParseContext.SECTION_DATA_STRUCTURES)
+                ?.Element(targetPhysicalName);
             if (targetElement == null) {
                 ctx.AddError($"参照先の集約が見つかりません。物理名: {targetPhysicalName}");
                 return;
@@ -374,7 +377,10 @@ internal static class BasicNodeOptions {
             }
 
             // 参照先の存在確認
-            var targetElement = ctx.SchemaParseContext.Document.Root?.Element(targetPhysicalName);
+            var targetElement = ctx.SchemaParseContext.Document
+                .Root
+                ?.Element(SchemaParseContext.SECTION_DATA_STRUCTURES)
+                ?.Element(targetPhysicalName);
             if (targetElement == null) {
                 ctx.AddError($"参照先の集約が見つかりません。物理名: {targetPhysicalName}");
                 return;

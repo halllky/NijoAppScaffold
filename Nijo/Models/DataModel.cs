@@ -77,7 +77,7 @@ namespace Nijo.Models {
             // ルートとChildrenはキー必須
             var rootAndChildren = rootAggregateElement
                 .DescendantsAndSelf()
-                .Where(el => el.GetParentWithoutMemo() == el.Document?.Root
+                .Where(el => el.GetParentWithoutMemo()?.Parent == el.Document?.Root
                           || el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILDREN);
             foreach (var el in rootAndChildren) {
                 var hasKey = el.ElementsWithoutMemo().Any(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null);
@@ -130,10 +130,10 @@ namespace Nijo.Models {
                 if (targetElement == null) continue;
 
                 // 参照元の最上位ルート集約
-                var sourceRoot = refElement.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
+                var sourceRoot = refElement.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo()?.Parent == e.Document?.Root);
 
                 // 参照先の最上位ルート集約
-                var targetRoot = targetElement.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
+                var targetRoot = targetElement.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo()?.Parent == e.Document?.Root);
 
                 // 自身のツリー内なら無視
                 if (sourceRoot == targetRoot) continue;

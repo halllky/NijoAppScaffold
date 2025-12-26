@@ -179,12 +179,12 @@ namespace Nijo.CodeGenerating {
             lock (_orderByDfLock) {
                 if (_rootAggregateOrderCache == null) {
                     _rootAggregateOrderCache = new();
+                    var allRootAggregates = Schema.GetRootAggregates().ToList();
 
                     // 1) DataModel（外部参照の依存関係に基づく順序）
                     // 列挙するたびにこのリストから集約をクリアしていき、
                     // このリストから全ての集約が無くなったら列挙完了
-                    var rest = Schema
-                        .GetRootAggregates()
+                    var rest = allRootAggregates
                         .Where(root => root.Model is Models.DataModel)
                         .Select(root => new {
                             root,
@@ -197,20 +197,22 @@ namespace Nijo.CodeGenerating {
                         })
                         .ToList();
 
-                    var indexForDataModels = 0;
+                    // 通し番号
+                    var currentIndex = 0;
+
                     while (true) {
                         if (rest.Count == 0) break;
 
-                        var next = rest[indexForDataModels];
+                        var next = rest[currentIndex];
 
                         // 参照先集約が未処理ならば後回し
                         var notEnumerated = rest.Where(agg => next.refTargets.Contains(agg.root));
                         if (notEnumerated.Any()) {
                             // 集約間の循環参照が存在するなどの場合は無限ループが発生するので例外。
                             // なお循環参照はスキーマ作成時にエラーとする想定
-                            if (indexForDataModels + 1 >= rest.Count) throw new InvalidOperationException("集約間のデータの流れを決定できません。");
+                            if (currentIndex + 1 >= rest.Count) throw new InvalidOperationException("集約間のデータの流れを決定できません。");
 
-                            indexForDataModels++;
+                            currentIndex++;
                             continue;
                         }
 
@@ -218,28 +220,36 @@ namespace Nijo.CodeGenerating {
                         _rootAggregateOrderCache.Add(next.root, _rootAggregateOrderCache.Count);
 
                         rest.Remove(next);
-                        indexForDataModels = 0;
+                        currentIndex = 0;
                     }
 
-                    // 2) DataModel 以外は XML 上の登場順。インデックスは DataModel の最大値+1 から開始
-                    var allRootElements = SchemaParser.Document.Root?.ElementsWithoutMemo().ToList() ?? new List<XElement>();
-                    var elementOrderIndex = new Dictionary<XElement, int>();
-                    for (var i = 0; i < allRootElements.Count; i++) {
-                        elementOrderIndex[allRootElements[i]] = i;
-                    }
-
-                    var nonDataRoots = Schema
-                        .GetRootAggregates()
+                    // 2) DataModel 以外は XML 上の登場順
+                    var nonDataRoots = allRootAggregates
                         .Where(root => root.Model is not Models.DataModel)
-                        .OrderBy(root => elementOrderIndex.GetValueOrDefault(root.XElement, int.MaxValue))
-                        .ToList();
+                        .ToDictionary(root => root.XElement);
 
-                    var startIndex = _rootAggregateOrderCache.Count; // DataModel の次のインデックス
-                    foreach (var root in nonDataRoots) {
-                        // 未登録のみ追加（保険）
-                        if (!_rootAggregateOrderCache.ContainsKey(root)) {
-                            _rootAggregateOrderCache.Add(root, startIndex++);
-                        }
+                    var dataStrucures = SchemaParser.Document.Root
+                        ?.Element(SchemaParseContext.SECTION_DATA_STRUCTURES)
+                        ?.ElementsWithoutMemo()
+                        ?? [];
+                    var commands = SchemaParser.Document.Root
+                        ?.Element(SchemaParseContext.SECTION_COMMANDS)
+                        ?.ElementsWithoutMemo()
+                        ?? [];
+
+                    foreach (var element in dataStrucures) {
+                        var root = nonDataRoots.GetValueOrDefault(element);
+                        if (root == null) continue;
+                        if (_rootAggregateOrderCache.ContainsKey(root)) continue;
+
+                        _rootAggregateOrderCache.Add(root, currentIndex++);
+                    }
+                    foreach (var element in commands) {
+                        var root = nonDataRoots.GetValueOrDefault(element);
+                        if (root == null) continue;
+                        if (_rootAggregateOrderCache.ContainsKey(root)) continue;
+
+                        _rootAggregateOrderCache.Add(root, currentIndex++);
                     }
                 }
                 return _rootAggregateOrderCache[rootAggregate];

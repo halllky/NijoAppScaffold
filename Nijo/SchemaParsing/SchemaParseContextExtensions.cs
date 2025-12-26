@@ -97,8 +97,8 @@ internal static class SchemaParseContextExtensions {
     /// </summary>
     internal static bool TryGetAggregateNodeType(this XElement xElement, [NotNullWhen(true)] out E_NodeType? nodeType) {
 
-        // ルート要素直下に定義されている場合はルート集約
-        if (xElement.GetParentWithoutMemo() == xElement.Document?.Root) {
+        // ルート要素直下のセクション直下に定義されている場合はルート集約
+        if (xElement.GetParentWithoutMemo()?.Parent == xElement.Document?.Root) {
             nodeType = E_NodeType.RootAggregate;
             return true;
         }
@@ -122,7 +122,7 @@ internal static class SchemaParseContextExtensions {
     /// 要素のルート集約要素を返します
     /// </summary>
     internal static XElement GetRootAggregateElement(this XElement element) {
-        return element.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
+        return element.AncestorsAndSelf().SkipLast(1).Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
     }
 
     /// <summary>

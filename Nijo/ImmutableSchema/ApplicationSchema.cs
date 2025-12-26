@@ -32,7 +32,13 @@ public class ApplicationSchema {
     /// <returns></returns>
     /// <exception cref="NotImplementedException"></exception>
     public IEnumerable<RootAggregate> GetRootAggregates() {
-        foreach (var xElement in _xDocument.Root?.ElementsWithoutMemo() ?? []) {
+        var rootAggregateElements = _xDocument
+            .Root
+            ?.Elements()
+            .SelectMany(el => el.ElementsWithoutMemo())
+            ?? [];
+
+        foreach (var xElement in rootAggregateElements) {
             var aggregate = _parseContext.ToAggregateBase(xElement, null);
             if (aggregate is not RootAggregate rootAggregate) {
                 throw new InvalidOperationException();

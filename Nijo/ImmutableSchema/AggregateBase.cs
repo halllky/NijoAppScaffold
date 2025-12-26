@@ -120,7 +120,7 @@ namespace Nijo.ImmutableSchema {
         /// </summary>
         public AggregateBase? GetParent() {
             // この集約がルート集約の場合
-            if (XElement.GetParentWithoutMemo() == XElement.Document?.Root) return null;
+            if (XElement.GetParentWithoutMemo()?.Parent == XElement.Document?.Root) return null;
 
             // 1つ前の集約が親の場合
             if (PreviousNode is AggregateBase agg && agg.XElement == XElement.GetParentWithoutMemo()) {
@@ -176,10 +176,10 @@ namespace Nijo.ImmutableSchema {
             var ancesotors = XElement
                 .AncestorsAndSelf()
                 .Reverse()
-                // * ドキュメントルートも祖先に含まれてしまうので除外
-                // * メモ型はカウントしない
-                .Where(el => el != XElement.Document?.Root
-                          && el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value != SchemaParseContext.NODE_TYPE_MEMO);
+                // ドキュメントルート、セクションも祖先に含まれてしまうので除外
+                .Skip(2)
+                // メモ型はカウントしない
+                .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value != SchemaParseContext.NODE_TYPE_MEMO);
 
             var prev = (AggregateBase?)null;
 
@@ -335,12 +335,12 @@ namespace Nijo.ImmutableSchema {
         /// このルート集約をBasicNodeOptions.Parameterに指定しているコマンドモデルを列挙します。
         /// </summary>
         public IEnumerable<RootAggregate> EnumerateCommandModelsRefferingAsParameter() {
-            foreach (var rootElement in _ctx.Document.Root?.ElementsWithoutMemo() ?? []) {
-                // コマンドモデルのみを対象とする
-                if (!_ctx.TryGetModel(rootElement, out var model) || model is not Models.CommandModel) {
-                    continue;
-                }
+            var commandModelElements = _ctx.Document.Root
+                ?.Element(SchemaParseContext.SECTION_COMMANDS)
+                ?.ElementsWithoutMemo()
+                ?? [];
 
+            foreach (var rootElement in commandModelElements) {
                 var parameterAttr = rootElement.Attribute(BasicNodeOptions.Parameter.AttributeName);
                 if (parameterAttr == null) {
                     continue;
@@ -361,12 +361,12 @@ namespace Nijo.ImmutableSchema {
         /// このルート集約を <see cref="BasicNodeOptions.ReturnValue"/> に指定しているコマンドモデルを列挙します。
         /// </summary>
         public IEnumerable<RootAggregate> EnumerateCommandModelsRefferingAsReturnValue() {
-            foreach (var rootElement in _ctx.Document.Root?.ElementsWithoutMemo() ?? []) {
-                // コマンドモデルのみを対象とする
-                if (!_ctx.TryGetModel(rootElement, out var model) || model is not Models.CommandModel) {
-                    continue;
-                }
+            var commandModelElements = _ctx.Document.Root
+                ?.Element(SchemaParseContext.SECTION_COMMANDS)
+                ?.ElementsWithoutMemo()
+                ?? [];
 
+            foreach (var rootElement in commandModelElements) {
                 var returnValueAttr = rootElement.Attribute(BasicNodeOptions.ReturnValue.AttributeName);
                 if (returnValueAttr == null) {
                     continue;
@@ -386,7 +386,9 @@ namespace Nijo.ImmutableSchema {
         private ICreatablePresentationLayerStructure GetTargetStructure(XAttribute attribute, bool isParameter) {
             var splitted = attribute.Value.Split(':');
             var targetPhysicalName = splitted[0];
-            var targetXElement = _ctx.Document.Root?.Element(targetPhysicalName)
+            var targetXElement = _ctx.Document.Root
+                ?.Element(SchemaParseContext.SECTION_DATA_STRUCTURES)
+                ?.Element(targetPhysicalName)
                 ?? throw new InvalidOperationException($"対象の集約が見つかりません: {targetPhysicalName}");
 
             var targetRootAggregate = (RootAggregate)_ctx.ToAggregateBase(targetXElement, null);

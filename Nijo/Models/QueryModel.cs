@@ -58,7 +58,7 @@ namespace Nijo.Models {
                     // ルートとChildrenはキー必須
                     var rootAndChildren = rootAggregateElement
                         .DescendantsAndSelf()
-                        .Where(el => el.GetParentWithoutMemo() == el.Document?.Root
+                        .Where(el => el.GetParentWithoutMemo()?.Parent == el.Document?.Root
                                   || el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILDREN);
                     foreach (var el in rootAndChildren) {
                         var hasKey = el.ElementsWithoutMemo().Any(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null);
@@ -160,8 +160,8 @@ namespace Nijo.Models {
                 }
 
                 // 自身のツリーの集約を参照していないかチェック
-                var rootElement = refElement.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
-                var refToRoot = refTo.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
+                var rootElement = refElement.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo()?.Parent == e.Document?.Root);
+                var refToRoot = refTo.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo()?.Parent == e.Document?.Root);
 
                 if (rootElement == refToRoot) {
                     addError(refElement, "自身のツリーの集約を参照することはできません。");
@@ -213,10 +213,10 @@ namespace Nijo.Models {
                     if (refTo == null) continue;
 
                     // 参照先のルート要素
-                    var refToRoot = refTo.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
+                    var refToRoot = refTo.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo()?.Parent == e.Document?.Root);
 
                     // 自身のツリー内の参照はスキップ
-                    var currentRoot = element.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
+                    var currentRoot = element.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo()?.Parent == e.Document?.Root);
                     if (refToRoot == currentRoot) continue;
 
                     if (HasCircular(refToRoot)) {

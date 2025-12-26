@@ -36,6 +36,27 @@ public class SchemaParseContext {
     /// <summary>enum, value-object を除いた値型の一覧</summary>
     public IEnumerable<IValueMemberType> ValueMemberTypes => _rule.ValueMemberTypes;
 
+    /// <summary>
+    /// nijo.xml のルート要素直下の要素のうち、データ構造をもつモデル（Data Model, Query Model, Structure Model）が格納されるXML要素の名前
+    /// </summary>
+    internal const string SECTION_DATA_STRUCTURES = "DataStructures";
+    /// <summary>
+    /// nijo.xml のルート要素直下の要素のうち、 Command Model が格納されるXML要素の名前
+    /// </summary>
+    internal const string SECTION_COMMANDS = "Commands";
+    /// <summary>
+    /// nijo.xml のルート要素直下の要素のうち、静的区分が格納されるXML要素の名前
+    /// </summary>
+    internal const string SECTION_STATIC_ENUMS = "StaticEnums";
+    /// <summary>
+    /// nijo.xml のルート要素直下の要素のうち、値オブジェクトが格納されるXML要素の名前
+    /// </summary>
+    internal const string SECTION_VALUE_OBJECTS = "ValueObjects";
+    /// <summary>
+    /// nijo.xml のルート要素直下の要素のうち、定数が格納されるXML要素の名前
+    /// </summary>
+    internal const string SECTION_CONSTANTS = "Constants";
+
     /// <summary>スキーマ解析では使用しないがスキーマ定義編集GUIで使う</summary>
     internal const string ATTR_UNIQUE_ID = "UniqueId";
     internal const string ATTR_NODE_TYPE = "Type";
@@ -89,11 +110,11 @@ public class SchemaParseContext {
             return aggregateNodeType.Value;
         }
 
-        // 親がenumなら静的区分の値
+        // 親がenumセクションの直下にあるなら静的区分の値
         var xElementParent = xElement.GetParentWithoutMemo();
         if (xElementParent != null
-            && xElementParent.GetParentWithoutMemo() == Document.Root
-            && xElementParent.Attribute(ATTR_NODE_TYPE)?.Value == EnumDefParser.SCHEMA_NAME) {
+            && xElementParent.GetParentWithoutMemo()?.Parent == Document.Root
+            && xElementParent.GetParentWithoutMemo()?.Name.LocalName == SECTION_STATIC_ENUMS) {
             return E_NodeType.StaticEnumValue;
         }
 
@@ -177,22 +198,6 @@ public class SchemaParseContext {
         }
         throw new InvalidOperationException($"集約ではありません: {xElement}");
     }
-    /// <summary>
-    /// 指定されたモデルのうち、ルート集約、Child、Childrenを列挙します。
-    /// </summary>
-    internal IEnumerable<XElement> EnumerateModelElements(string modelSchemaName) {
-        foreach (var rootElement in Document.Root?.ElementsWithoutMemo() ?? []) {
-            if (rootElement.Attribute(ATTR_NODE_TYPE)?.Value != modelSchemaName) continue;
-
-            yield return rootElement;
-
-            // 子孫のうちType="child"またはType="children"の要素を抽出する
-            var descendantChildren = rootElement.XPathSelectElements($"descendant::*[@{ATTR_NODE_TYPE}='{NODE_TYPE_CHILD}' or @{ATTR_NODE_TYPE}='{NODE_TYPE_CHILDREN}']");
-            foreach (var descendantElement in descendantChildren) {
-                yield return descendantElement;
-            }
-        }
-    }
     #endregion Aggregate
 
 
@@ -203,8 +208,8 @@ public class SchemaParseContext {
     /// <returns></returns>
     internal IReadOnlyDictionary<string, ValueMemberTypes.StaticEnumMember> GetStaticEnumMembers() {
         return Document.Root
+            ?.Element(SECTION_STATIC_ENUMS)
             ?.ElementsWithoutMemo()
-            .Where(el => el.Attribute(ATTR_NODE_TYPE)?.Value == EnumDefParser.SCHEMA_NAME)
             .ToDictionary(GetPhysicalName, el => new ValueMemberTypes.StaticEnumMember(el, this))
             ?? [];
     }
@@ -215,8 +220,8 @@ public class SchemaParseContext {
     /// <returns></returns>
     internal IReadOnlyDictionary<string, ValueMemberTypes.ValueObjectMember> GetValueObjectMembers() {
         return Document.Root
+            ?.Element(SECTION_VALUE_OBJECTS)
             ?.ElementsWithoutMemo()
-            .Where(el => el.Attribute(ATTR_NODE_TYPE)?.Value == ValueObjectModel.SCHEMA_NAME)
             .ToDictionary(GetPhysicalName, el => new ValueMemberTypes.ValueObjectMember(el, this))
             ?? [];
     }
@@ -320,7 +325,10 @@ public class SchemaParseContext {
         var attributeErrors = new List<(XElement, string AttributeName, string ErrorMessage)>();
 
         // ルート集約の物理名の衝突チェック
-        var rootAggregates = xDocument.Root?.ElementsWithoutMemo() ?? [];
+        var rootAggregates = xDocument.Root
+            ?.Elements()
+            .SelectMany(el => el.ElementsWithoutMemo())
+            ?? [];
         var rootPhysicalNames = new Dictionary<string, XElement>();
 
         foreach (var root in rootAggregates) {
@@ -353,7 +361,7 @@ public class SchemaParseContext {
 
             // 同じ親のメンバー同士での物理名の重複チェック
             var elParent = el.GetParentWithoutMemo();
-            if (elParent != null && elParent != el.Document?.Root) {
+            if (elParent != null && elParent.Parent != el.Document?.Root) {
                 var siblings = elParent.ElementsWithoutMemo().ToList();
                 var siblingPhysicalNames = new Dictionary<string, XElement>();
 
@@ -517,8 +525,8 @@ public class SchemaParseContext {
         }
 
         // 自身のツリーの集約を参照していないかチェック
-        var rootElement = refElement.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
-        var refToRoot = refTo.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo() == e.Document?.Root);
+        var rootElement = refElement.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo()?.Parent == e.Document?.Root);
+        var refToRoot = refTo.AncestorsAndSelf().Last(e => e.GetParentWithoutMemo()?.Parent == e.Document?.Root);
 
         if (rootElement == refToRoot) {
             errorMessage = "自身のツリーの集約を参照することはできません。";

@@ -108,7 +108,9 @@ namespace Nijo.Models {
                 }
 
                 // 参照先モデルの存在確認
-                var targetModel = context.Document.Root?.ElementsWithoutMemo()
+                var targetModel = context.Document.Root
+                    ?.Element(SchemaParseContext.SECTION_DATA_STRUCTURES)
+                    ?.ElementsWithoutMemo()
                     .FirstOrDefault(e => context.GetPhysicalName(e) == modelName);
                 if (targetModel == null) {
                     addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」が見つからないか、ルート集約ではありません。");
