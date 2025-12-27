@@ -97,8 +97,7 @@ public class SchemaParseContext {
                 // まずXML要素の名前がxElementのXML要素の名前と衝突している要素を絞り込む
                 .XPathSelectElements($"//{xElement.Name.LocalName}")
                 // 自分以外の要素で同じ名前のものがあるかチェック
-                .Where(x => x != xElement)
-                .Any();
+                .Any(x => x != xElement);
             if (duplicates) {
                 // 「（直近の親のPhysicalName）の（LocalName）」
                 return GetPhysicalName(xElement.GetParentWithoutMemo()!) + "の" + xElement.Name.LocalName;
