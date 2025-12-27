@@ -57,6 +57,17 @@ public class SchemaParseContext {
     /// </summary>
     internal const string SECTION_CONSTANTS = "Constants";
 
+    /// <summary>
+    /// nijo.xml のルート要素直下のセクション名を、XMLに記載される順序で列挙する。
+    /// </summary>
+    internal static IEnumerable<string> GetAllSectionNames() {
+        yield return SECTION_DATA_STRUCTURES;
+        yield return SECTION_COMMANDS;
+        yield return SECTION_STATIC_ENUMS;
+        yield return SECTION_VALUE_OBJECTS;
+        yield return SECTION_CONSTANTS;
+    }
+
     /// <summary>スキーマ解析では使用しないがスキーマ定義編集GUIで使う</summary>
     internal const string ATTR_UNIQUE_ID = "UniqueId";
     internal const string ATTR_NODE_TYPE = "Type";

@@ -42,9 +42,13 @@ internal class SchemaEndpointHandlers {
 
             var applicationState = new ApplicationState {
                 ApplicationName = xDocument.Root?.Name.LocalName ?? "",
-                XmlElementTrees = xDocument.Root?.Elements().Select(root => new ModelPageForm {
-                    XmlElements = XmlElementItem.FromXElement(root).ToList(),
-                }).ToList() ?? [],
+                XmlElementTrees = SchemaParseContext.GetAllSectionNames()
+                    .Select(sectionName => xDocument.Root?.Element(sectionName))
+                    .Where(section => section != null)
+                    .SelectMany(section => section!.Elements())
+                    .Select(root => new ModelPageForm {
+                        XmlElements = XmlElementItem.FromXElement(root).ToList(),
+                    }).ToList() ?? [],
                 ValueMemberTypes = ValueMemberType.FromSchemaParseRule(rule),
                 AttributeDefs = XmlElementAttribute.FromSchemaParseRule(rule),
                 ProjectOptions = projectOptions.GetCurrentValues(),

@@ -45,7 +45,7 @@ public class XmlElementItem {
             }
             yield return new XmlElementItem {
                 UniqueId = element.Attribute(SchemaParseContext.ATTR_UNIQUE_ID)?.Value ?? Guid.NewGuid().ToString(),
-                Indent = element.Ancestors().Count() - 1,
+                Indent = element.Ancestors().Count() - 2,
                 LocalName = element.Name.LocalName,
                 Value = element.Value,
                 Attributes = element.Attributes().ToDictionary(a => a.Name.LocalName, a => a.Value),
