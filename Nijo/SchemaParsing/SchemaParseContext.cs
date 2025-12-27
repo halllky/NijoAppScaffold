@@ -296,18 +296,15 @@ public class SchemaParseContext {
     /// </summary>
     internal XElement? FindRefTo(XElement xElement) {
         var type = xElement.Attribute(ATTR_NODE_TYPE) ?? throw new InvalidOperationException();
-        var xPath = $"/*/*/{type.Value.Split(':')[1]}";
+        var xPath = $"//{SECTION_DATA_STRUCTURES}/{type.Value.Split(':')[1]}";
         return Document.Root?.XPathSelectElement(xPath);
     }
     /// <summary>
     /// 引数の集約を参照している集約を探して返します。
     /// </summary>
     internal IEnumerable<XElement> FindRefFrom(XElement xElement) {
-        // 完全なパスを構築
         var fullPath = string.Join("/", xElement.AncestorsAndSelf().Reverse().Skip(2).Select(GetPhysicalName));
-
-        // 完全なパスによる参照のみを検索
-        return Document.XPathSelectElements($"//*[@{ATTR_NODE_TYPE}='{NODE_TYPE_REFTO}:{fullPath}']") ?? [];
+        return Document.XPathSelectElements($"//{SECTION_DATA_STRUCTURES}//*[@{ATTR_NODE_TYPE}='{NODE_TYPE_REFTO}:{fullPath}']") ?? [];
     }
     #endregion RefTo
 

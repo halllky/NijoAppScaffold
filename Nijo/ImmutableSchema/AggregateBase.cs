@@ -471,8 +471,9 @@ namespace Nijo.ImmutableSchema {
             var depth = XElement
                 .Ancestors()
                 // メモ型は親としてカウントしない
-                .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value != SchemaParseContext.NODE_TYPE_MEMO)
-                .Count() - 2;
+                .Count(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value != SchemaParseContext.NODE_TYPE_MEMO)
+                // ドキュメントルート、セクション、ルート集約を除く
+                - 3;
 
             if (depth == 0) {
                 return alpha;
