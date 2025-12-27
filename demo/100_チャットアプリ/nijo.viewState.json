@@ -1155,6 +1155,13 @@
         "targetEndShape": "triangle"
       },
       {
+        "source": "da573a68-d916-417d-ba03-e9f16ec4a439",
+        "target": "e52d5d28-434c-4994-a575-bfcf898b1fc1",
+        "label": "メッセージ",
+        "line-style": "solid",
+        "targetEndShape": "triangle"
+      },
+      {
         "source": "73f8b412-e89e-4a88-af65-c631110464fe",
         "target": "c90cd36e-07cf-4bf4-8c83-b9a0404d679d",
         "label": "引数",
@@ -1167,13 +1174,6 @@
         "target": "c5f21493-5f74-4b42-8b35-be3d667586b2",
         "label": "戻り値",
         "line-color": "#0284c7",
-        "line-style": "solid",
-        "targetEndShape": "triangle"
-      },
-      {
-        "source": "da573a68-d916-417d-ba03-e9f16ec4a439",
-        "target": "e52d5d28-434c-4994-a575-bfcf898b1fc1",
-        "label": "メッセージ",
         "line-style": "solid",
         "targetEndShape": "triangle"
       },

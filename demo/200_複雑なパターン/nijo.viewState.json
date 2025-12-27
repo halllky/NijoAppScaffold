@@ -1402,50 +1402,10 @@
         "targetEndShape": "triangle"
       },
       {
-        "source": "4d167764-687c-4db8-9f3f-13fe7d287b73",
-        "target": "696c1fb8-79e6-4150-bf7a-0d7ac70a49aa",
-        "label": "",
-        "line-color": "#0284c7",
-        "line-style": "dashed",
-        "targetEndShape": "triangle"
-      },
-      {
-        "source": "4d167764-687c-4db8-9f3f-13fe7d287b73",
-        "target": "d34cea5d-f605-4b35-afa6-f8c67ddc9ffc",
-        "label": "引数",
-        "line-color": "#0284c7",
-        "line-style": "solid",
-        "targetEndShape": "triangle"
-      },
-      {
-        "source": "4d167764-687c-4db8-9f3f-13fe7d287b73",
-        "target": "84698423-0012-40d2-9722-29a88b92c583",
-        "label": "戻り値",
-        "line-color": "#0284c7",
-        "line-style": "solid",
-        "targetEndShape": "triangle"
-      },
-      {
         "source": "88d6b47c-bf37-4210-8bb6-8514b62527e0",
         "target": "8d569c4e-e43a-45be-b1f2-e2ce0ea98dcc",
         "label": "",
         "line-style": "dashed",
-        "targetEndShape": "triangle"
-      },
-      {
-        "source": "394d98d6-d461-4873-a6a0-9de128fbe1cc",
-        "target": "76755f0b-6020-4d24-bdcc-d4a3120bfef0",
-        "label": "引数",
-        "line-color": "#0284c7",
-        "line-style": "solid",
-        "targetEndShape": "triangle"
-      },
-      {
-        "source": "394d98d6-d461-4873-a6a0-9de128fbe1cc",
-        "target": "e906b965-c7a7-4605-9491-0af60db4f4bf",
-        "label": "戻り値",
-        "line-color": "#0284c7",
-        "line-style": "solid",
         "targetEndShape": "triangle"
       },
       {
@@ -1610,6 +1570,46 @@
         "target": "2e2bbe87-8951-46a1-a838-92c879daa4f0",
         "label": "保管庫",
         "line-color": "#059669",
+        "line-style": "solid",
+        "targetEndShape": "triangle"
+      },
+      {
+        "source": "4d167764-687c-4db8-9f3f-13fe7d287b73",
+        "target": "696c1fb8-79e6-4150-bf7a-0d7ac70a49aa",
+        "label": "",
+        "line-color": "#0284c7",
+        "line-style": "dashed",
+        "targetEndShape": "triangle"
+      },
+      {
+        "source": "4d167764-687c-4db8-9f3f-13fe7d287b73",
+        "target": "d34cea5d-f605-4b35-afa6-f8c67ddc9ffc",
+        "label": "引数",
+        "line-color": "#0284c7",
+        "line-style": "solid",
+        "targetEndShape": "triangle"
+      },
+      {
+        "source": "4d167764-687c-4db8-9f3f-13fe7d287b73",
+        "target": "84698423-0012-40d2-9722-29a88b92c583",
+        "label": "戻り値",
+        "line-color": "#0284c7",
+        "line-style": "solid",
+        "targetEndShape": "triangle"
+      },
+      {
+        "source": "394d98d6-d461-4873-a6a0-9de128fbe1cc",
+        "target": "76755f0b-6020-4d24-bdcc-d4a3120bfef0",
+        "label": "引数",
+        "line-color": "#0284c7",
+        "line-style": "solid",
+        "targetEndShape": "triangle"
+      },
+      {
+        "source": "394d98d6-d461-4873-a6a0-9de128fbe1cc",
+        "target": "e906b965-c7a7-4605-9491-0af60db4f4bf",
+        "label": "戻り値",
+        "line-color": "#0284c7",
         "line-style": "solid",
         "targetEndShape": "triangle"
       }
