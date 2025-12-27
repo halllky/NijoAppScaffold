@@ -75,16 +75,24 @@ public class ApplicationState {
 
                 // セクションへの振り分け
                 var type = rootAggregate.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
-                var sectionName = type switch {
-                    "data-model" => SchemaParseContext.SECTION_DATA_STRUCTURES,
-                    "query-model" => SchemaParseContext.SECTION_DATA_STRUCTURES,
-                    "structure-model" => SchemaParseContext.SECTION_DATA_STRUCTURES,
-                    "command-model" => SchemaParseContext.SECTION_COMMANDS,
-                    "enum" => SchemaParseContext.SECTION_STATIC_ENUMS,
-                    "value-object" => SchemaParseContext.SECTION_VALUE_OBJECTS,
-                    Models.ConstantModel.SCHEMA_NAME => SchemaParseContext.SECTION_CONSTANTS,
-                    _ => SchemaParseContext.SECTION_DATA_STRUCTURES,
-                };
+                string sectionName;
+                if (type == new Models.DataModel().SchemaName) {
+                    sectionName = SchemaParseContext.SECTION_DATA_STRUCTURES;
+                } else if (type == new Models.QueryModel().SchemaName) {
+                    sectionName = SchemaParseContext.SECTION_DATA_STRUCTURES;
+                } else if (type == new Models.CommandModel().SchemaName) {
+                    sectionName = SchemaParseContext.SECTION_COMMANDS;
+                } else if (type == new Models.StructureModel().SchemaName) {
+                    sectionName = SchemaParseContext.SECTION_DATA_STRUCTURES;
+                } else if (type == Models.ValueObjectModel.SCHEMA_NAME) {
+                    sectionName = SchemaParseContext.SECTION_VALUE_OBJECTS;
+                } else if (type == Models.ConstantModel.SCHEMA_NAME) {
+                    sectionName = SchemaParseContext.SECTION_CONSTANTS;
+                } else if (type == EnumDefParser.SCHEMA_NAME) {
+                    sectionName = SchemaParseContext.SECTION_STATIC_ENUMS;
+                } else {
+                    sectionName = SchemaParseContext.SECTION_STATIC_ENUMS;
+                }
 
                 if (sections.TryGetValue(sectionName, out var section)) {
                     if (commentToRootAggregate != null) section.Add(commentToRootAggregate);
