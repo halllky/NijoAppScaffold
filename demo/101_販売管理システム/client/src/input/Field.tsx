@@ -14,7 +14,7 @@ import { DescriptionTextArea } from "./DescriptionTextArea"
  * テキストボックスやチェックボックスなどの入力フォームを自動的に判別して
  * 適切なUIを表示するコンポーネントを利用するために必要なコンテキスト情報を提供する。
  */
-export function FieldUiContextProvider({
+export function FieldContextProvider({
   type,
   children,
 }: {
@@ -86,7 +86,7 @@ export function Field<
   // 単語
   if (fieldMetadata.type === "word") renderUiElement = ({ field }) => (
     <WordTextBox
-      maxLength={fieldMetadata.maxLength === undefined ? undefined : Number(fieldMetadata.maxLength)}
+      maxLength={fieldMetadata.customMaxLength}
       {...field}
       {...rest}
     />

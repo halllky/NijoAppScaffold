@@ -545,9 +545,11 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       Type="structure-model"
       UniqueId="a775c249-a449-4700-a33a-262ca6c820f3">
       <従業員番号
+        Custom-c582bb2e-804e-4136-93f0-85139aaa675f="100"
         Type="word"
         UniqueId="95019350-3caf-4bb1-be14-01351c4eb17d" />
       <パスワード
+        Custom-c582bb2e-804e-4136-93f0-85139aaa675f="50"
         Type="word"
         UniqueId="5619b3a0-f402-4bc5-ab03-8edc1baa2a6a" />
     </ログインParameter>
@@ -555,9 +557,11 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       Type="structure-model"
       UniqueId="da5e2ba7-864b-4d23-852b-1a4c6f525f98">
       <新しいパスワード
+        Custom-c582bb2e-804e-4136-93f0-85139aaa675f="50"
         Type="word"
         UniqueId="68322c5b-2976-453b-8e70-a968a946dedf" />
       <新しいパスワード_確認用
+        Custom-c582bb2e-804e-4136-93f0-85139aaa675f="50"
         Type="word"
         UniqueId="ab05211a-883a-4737-8cba-a10e8345df92" />
     </パスワード変更Parameter>
@@ -719,4 +723,12 @@ ASP.NET Core のサービスワーカーとして登録される定期処理。-
         UniqueId="356f8cd3-25ff-43fa-833f-c234a1d5614f" />
     </売上明細区分>
   </StaticEnums>
+  <CustomAttributes>
+    <!--DataModelのMaxLengthはDB桁数定義にのみ使用される。こちらは画面制御で使用。-->
+    <Custom-c582bb2e-804e-4136-93f0-85139aaa675f
+      AvailableModels="data-model,query-model,command-model,structure-model,enum,value-object"
+      DisplayName="最大長"
+      PhysicalName="CustomMaxLength"
+      Type="Decimal" />
+  </CustomAttributes>
 </NijoAppScaffold>

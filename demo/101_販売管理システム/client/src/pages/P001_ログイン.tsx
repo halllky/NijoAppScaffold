@@ -27,7 +27,7 @@ export function P001_ログイン(props: {
 }) {
 
   const { loginUser, loginAsync } = useLoginLogout()
-  const { handleSubmit, control } = useForm<ログインParameterDisplayData>({
+  const { setFocus, handleSubmit, control } = useForm<ログインParameterDisplayData>({
     defaultValues: {
       values: {
         従業員番号: "demo101-admin",
@@ -35,6 +35,13 @@ export function P001_ログイン(props: {
       },
     },
   })
+
+  // 初期表示時、またはログアウト後
+  React.useEffect(() => {
+    if (!loginUser) {
+      setFocus("values.従業員番号")
+    }
+  }, [loginUser])
 
   const [processing, setProcessing] = React.useState(false)
   const onSubmit = useEvent(async (data: ログインParameterDisplayData) => {
@@ -46,7 +53,7 @@ export function P001_ログイン(props: {
 
   // ログインしていない場合はログイン画面を表示
   if (!loginUser) return (
-    <UI.FieldUiContextProvider type="ログインParameter">
+    <UI.FieldContextProvider type="ログインParameter">
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="relative bg-white p-8 rounded shadow-md w-full max-w-md">
           <div className="mb-6">
@@ -78,7 +85,7 @@ export function P001_ログイン(props: {
         )}
 
       </div>
-    </UI.FieldUiContextProvider>
+    </UI.FieldContextProvider>
   )
 
   // ログインしている場合は、子コンポーネントを表示
