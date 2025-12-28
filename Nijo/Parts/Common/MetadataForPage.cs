@@ -542,6 +542,25 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 {{propName}}: {{tsValue}},
                 """;
         }
+
+        // カスタム属性
+        foreach (var customAttribute in NijoXmlCustomAttribute.FromXDocument(ctx.SchemaParser.Document)) {
+            if (string.IsNullOrWhiteSpace(customAttribute.PhysicalName)) continue;
+            if (string.IsNullOrWhiteSpace(customAttribute.UniqueId)) continue;
+
+            var attributeValue = xElement.Attribute(customAttribute.UniqueId)?.Value;
+            if (string.IsNullOrWhiteSpace(attributeValue)) continue;
+
+            var tsValue = customAttribute.Type switch {
+                NijoXmlCustomAttribute.E_Type.Boolean => "true",
+                NijoXmlCustomAttribute.E_Type.Decimal => attributeValue,
+                _ => $"'{attributeValue.Replace("\\", "\\\\").Replace("'", "\\'")}'",
+            };
+
+            yield return $$"""
+                {{customAttribute.PhysicalName.ToCamelCase()}}: {{tsValue}},
+                """;
+        }
     }
 
     /// <summary>
@@ -587,6 +606,25 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 {{option.AttributeName}} = {{csValue}},
                 """;
         }
+
+        // カスタム属性
+        foreach (var customAttribute in NijoXmlCustomAttribute.FromXDocument(ctx.SchemaParser.Document)) {
+            if (string.IsNullOrWhiteSpace(customAttribute.PhysicalName)) continue;
+            if (string.IsNullOrWhiteSpace(customAttribute.UniqueId)) continue;
+
+            var attributeValue = xElement.Attribute(customAttribute.UniqueId)?.Value;
+            if (string.IsNullOrWhiteSpace(attributeValue)) continue;
+
+            var csValue = customAttribute.Type switch {
+                NijoXmlCustomAttribute.E_Type.Boolean => "true",
+                NijoXmlCustomAttribute.E_Type.Decimal => $"{attributeValue}m",
+                _ => $"\"{attributeValue.Replace("\\", "\\\\").Replace("\"", "\\\"")}\"",
+            };
+
+            yield return $$"""
+                {{customAttribute.PhysicalName}} = {{csValue}},
+                """;
+        }
     }
 
     /// <summary>
@@ -622,6 +660,25 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 {{option.AttributeName.ToCamelCase()}}{{(isOptional ? "?" : "")}}: {{tsType}}
                 """;
         }
+
+        // カスタム属性
+        foreach (var customAttribute in NijoXmlCustomAttribute.FromXDocument(ctx.SchemaParser.Document)) {
+            if (string.IsNullOrWhiteSpace(customAttribute.PhysicalName)) continue;
+
+            var tsType = customAttribute.Type switch {
+                NijoXmlCustomAttribute.E_Type.Boolean => "boolean",
+                NijoXmlCustomAttribute.E_Type.Decimal => "number",
+                NijoXmlCustomAttribute.E_Type.Enum => customAttribute.EnumValues.Length == 0
+                    ? "never"
+                    : customAttribute.EnumValues.Select(v => $"'{v.Replace("'", "\\'")}'").Join(" | "),
+                _ => "string",
+            };
+
+            yield return $$"""
+                /** {{customAttribute.DisplayName}} */
+                {{customAttribute.PhysicalName.ToCamelCase()}}?: {{tsType}}
+                """;
+        }
     }
 
     /// <summary>
@@ -649,6 +706,22 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
             yield return $$"""
                 /// <summary>{{option.DisplayName}}</summary>
                 public {{csType}}{{nullableModifier}} {{option.AttributeName}} { get; init; }{{defaultValue}}
+                """;
+        }
+
+        // カスタム属性
+        foreach (var customAttribute in NijoXmlCustomAttribute.FromXDocument(ctx.SchemaParser.Document)) {
+            if (string.IsNullOrWhiteSpace(customAttribute.PhysicalName)) continue;
+
+            var csType = customAttribute.Type switch {
+                NijoXmlCustomAttribute.E_Type.Boolean => "bool",
+                NijoXmlCustomAttribute.E_Type.Decimal => "decimal?",
+                _ => "string?",
+            };
+
+            yield return $$"""
+                /// <summary>{{customAttribute.DisplayName}}</summary>
+                public {{csType}} {{customAttribute.PhysicalName}} { get; init; }
                 """;
         }
     }

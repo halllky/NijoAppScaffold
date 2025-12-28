@@ -8,7 +8,7 @@ import { useEffect } from 'react'
  */
 export const useOutsideClick = (
   ref: React.RefObject<HTMLElement | null>,
-  onOutsideClick: () => void,
+  onOutsideClick: (event: MouseEvent) => void,
   deps: React.DependencyList
 ) => {
   useEffect(() => {
@@ -17,7 +17,7 @@ export const useOutsideClick = (
       if (event.button !== 0) return
 
       if (ref.current && !ref.current.contains(event.target as Node)) {
-        onOutsideClick()
+        onOutsideClick(event)
       }
     }
 

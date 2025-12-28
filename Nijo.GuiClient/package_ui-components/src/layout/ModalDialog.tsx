@@ -23,14 +23,20 @@ export const ModalDialog = ({ open, onOutsideClick, children, className }: {
 }) => {
 
   const divRef = React.useRef<HTMLDivElement>(null);
-  useOutsideClick(divRef, () => {
+  useOutsideClick(divRef, (e) => {
+    // 他のモーダル（自分より手前にあるモーダル）の中をクリックした場合は無視する
+    const target = e.target as Element
+    const closestModalWrapper = target.closest?.('[data-nijo-modal-wrapper="true"]')
+    if (closestModalWrapper && divRef.current && !closestModalWrapper.contains(divRef.current)) {
+      return
+    }
     onOutsideClick?.()
   }, [onOutsideClick])
 
   if (!open) return null;
 
   return ReactDOM.createPortal(
-    <div className="fixed inset-0 z-10 flex items-center justify-center">
+    <div className="fixed inset-0 z-10 flex items-center justify-center" data-nijo-modal-wrapper="true">
 
       {/* シェード */}
       <div className="absolute inset-0 bg-black/25" />

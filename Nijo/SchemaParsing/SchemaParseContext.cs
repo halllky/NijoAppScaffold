@@ -56,6 +56,10 @@ public class SchemaParseContext {
     /// nijo.xml のルート要素直下の要素のうち、定数が格納されるXML要素の名前
     /// </summary>
     internal const string SECTION_CONSTANTS = "Constants";
+    /// <summary>
+    /// nijo.xml のルート要素直下の要素のうち、カスタム属性が格納されるXML要素の名前
+    /// </summary>
+    internal const string SECTION_CUSTOM_ATTRIBUTES = "CustomAttributes";
 
     /// <summary>
     /// nijo.xml のルート要素直下のセクション名を、XMLに記載される順序で列挙する。
@@ -66,6 +70,7 @@ public class SchemaParseContext {
         yield return SECTION_STATIC_ENUMS;
         yield return SECTION_VALUE_OBJECTS;
         yield return SECTION_CONSTANTS;
+        yield return SECTION_CUSTOM_ATTRIBUTES;
     }
 
     /// <summary>スキーマ解析では使用しないがスキーマ定義編集GUIで使う</summary>
@@ -160,15 +165,13 @@ public class SchemaParseContext {
         var attrs = xElement.Attributes().Select(attr => attr.Name.LocalName).ToHashSet();
         return _rule.NodeOptions.Where(opt => attrs.Contains(opt.AttributeName));
     }
-    /// <inheritdoc cref="SchemaParseRule.GetAvailableOptionsFor"/>
-    public IEnumerable<NodeOption> GetAvailableOptionsFor(IModel model, E_NodeType nodeType) {
-        return _rule.GetAvailableOptionsFor(model, nodeType);
-    }
     /// <summary>
     /// このルールで定義されているすべてのNodeOptionを返します。
     /// </summary>
     public IEnumerable<NodeOption> GetAllNodeOptions() {
-        return _rule.NodeOptions;
+        foreach (var opt in _rule.NodeOptions) {
+            yield return opt;
+        }
     }
     #endregion オプション属性
 
@@ -331,9 +334,23 @@ public class SchemaParseContext {
         var errorsList = new List<(XElement, string ErrorMessage)>();
         var attributeErrors = new List<(XElement, string AttributeName, string ErrorMessage)>();
 
+        // カスタム属性の定義の検証
+        var customAttributeElements = xDocument.Root?.Element(SECTION_CUSTOM_ATTRIBUTES)?.Elements().ToArray() ?? [];
+        var customAttributes = NijoXmlCustomAttribute.FromXDocument(xDocument).ToArray();
+        if (customAttributeElements.Length == customAttributes.Length) {
+            for (int i = 0; i < customAttributes.Length; i++) {
+                var attr = customAttributes[i];
+                var el = customAttributeElements[i];
+                foreach (var error in attr.ValidateThis(this, _rule)) {
+                    errorsList.Add((el, error));
+                }
+            }
+        }
+
         // ルート集約の物理名の衝突チェック
         var rootAggregates = xDocument.Root
             ?.Elements()
+            .Where(el => el.Name.LocalName != SECTION_CUSTOM_ATTRIBUTES)
             .SelectMany(el => el.ElementsWithoutMemo())
             ?? [];
         var rootPhysicalNames = new Dictionary<string, XElement>();
@@ -349,7 +366,8 @@ public class SchemaParseContext {
 
         // 同じテーブル名を複数の集約で定義することはできない
         var tableNameGroups = xDocument.Root
-            ?.Descendants()
+            ?.Element(SECTION_DATA_STRUCTURES)
+            ?.DescendantsAndSelf()
             .Where(el => GetNodeType(el).HasFlag(E_NodeType.Aggregate)
                       && TryGetModel(el, out var model) && model is DataModel)
             .GroupBy(el => el.GetDbName())
@@ -361,16 +379,17 @@ public class SchemaParseContext {
             }
         }
 
+        // 同じ親のメンバー同士での物理名の重複チェック
         var targetElements = xDocument.Root
+            ?.Element(SECTION_DATA_STRUCTURES)
             ?.Elements()
-            .SelectMany(el => el.Descendants())
+            .SelectMany(el => el.DescendantsAndSelf())
             ?? [];
         foreach (var el in targetElements) {
 
             var nodeType = GetNodeType(el);
             var typeAttrValue = el.Attribute(ATTR_NODE_TYPE)?.Value ?? string.Empty;
 
-            // 同じ親のメンバー同士での物理名の重複チェック
             var elParent = el.GetParentWithoutMemo();
             if (elParent != null && elParent.Parent != el.Document?.Root) {
                 var siblings = elParent.ElementsWithoutMemo().ToList();
@@ -482,6 +501,21 @@ public class SchemaParseContext {
                     AddError = err => attributeErrors.Add((el, opt.AttributeName, err)),
                     SchemaParseContext = this,
                 });
+            }
+
+            // カスタム属性の検証
+            if (TryGetModel(el, out var elModel)) {
+                foreach (var customAttr in customAttributes) {
+                    if (string.IsNullOrWhiteSpace(customAttr.UniqueId)) continue;
+
+                    if (!customAttr.AvailableModels.Contains(elModel.SchemaName)) {
+                        attributeErrors.Add((el, customAttr.UniqueId, $"カスタム属性 '{customAttr.PhysicalName}' はモデル '{elModel.SchemaName}' では使用できません。"));
+                    } else {
+                        foreach (var error in customAttr.ValidateModelElement(el)) {
+                            attributeErrors.Add((el, customAttr.UniqueId, error));
+                        }
+                    }
+                }
             }
         }
 

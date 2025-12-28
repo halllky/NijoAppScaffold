@@ -43,6 +43,7 @@ internal class SchemaEndpointHandlers {
             var applicationState = new ApplicationState {
                 ApplicationName = xDocument.Root?.Name.LocalName ?? "",
                 XmlElementTrees = SchemaParseContext.GetAllSectionNames()
+                    .Where(sectionName => sectionName != SchemaParseContext.SECTION_CUSTOM_ATTRIBUTES)
                     .Select(sectionName => xDocument.Root?.Element(sectionName))
                     .Where(section => section != null)
                     .SelectMany(section => section!.Elements())
@@ -51,6 +52,7 @@ internal class SchemaEndpointHandlers {
                     }).ToList() ?? [],
                 ValueMemberTypes = ValueMemberType.FromSchemaParseRule(rule),
                 AttributeDefs = XmlElementAttribute.FromSchemaParseRule(rule),
+                CustomAttributes = NijoXmlCustomAttribute.FromXDocument(xDocument).ToList(),
                 ProjectOptions = projectOptions.GetCurrentValues(),
                 ProjectOptionPropertyInfos = GeneratedProjectOptions.GetPropertyInfos().ToList(),
             };

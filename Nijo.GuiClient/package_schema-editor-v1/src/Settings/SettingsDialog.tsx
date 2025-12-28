@@ -7,6 +7,8 @@ import useEvent from "react-use-event-hook";
 import { ProjectOptionPropertyInfo, SchemaDefinitionGlobalState } from "../types";
 import { usePersonalSettings } from "./usePersonalSettings";
 import { PersonalSettings } from "./PersonalSettings";
+import { CustomAttributeSettings } from "./CustomAttributeSettings";
+import { GetValidationResultFunction, ValidationTriggerFunction } from "../MainPage/useValidation";
 
 /**
  * 個人用設定 + プロジェクト設定ダイアログ。
@@ -27,9 +29,12 @@ import { PersonalSettings } from "./PersonalSettings";
  * ここで設定された値は localStorage に保存される。
  */
 export const SettingsDialog: React.FC<{
+  focusOnCustomAttributeSettings: boolean
   onClose: () => void
   formMethods?: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
-}> = ({ onClose, formMethods }) => {
+  getValidationResult: GetValidationResultFunction | undefined
+  trigger: ValidationTriggerFunction | undefined
+}> = ({ focusOnCustomAttributeSettings, onClose, formMethods, getValidationResult, trigger }) => {
 
   const { personalSettings, save } = usePersonalSettings()
 
@@ -37,13 +42,21 @@ export const SettingsDialog: React.FC<{
     onClose()
   })
 
+  const customAttributeSettingsElementRef = React.useRef<HTMLDivElement>(null)
+  React.useEffect(() => {
+    // カスタム属性設定欄にフォーカスを移動する
+    if (focusOnCustomAttributeSettings && customAttributeSettingsElementRef.current) {
+      customAttributeSettingsElementRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [focusOnCustomAttributeSettings])
+
   // // 閉じるときに確認ダイアログを出す
   // useBlockerEx(true)
 
   return (
     <ModalDialog open
       onOutsideClick={handleClose}
-      className="w-1/2 min-w-xl max-w-3xl max-h-[80vh] flex flex-col gap-2"
+      className="w-4/5 min-w-xl max-h-[80vh] flex flex-col gap-2"
     >
 
       <FormLayout.Root
@@ -54,7 +67,12 @@ export const SettingsDialog: React.FC<{
 
         {formMethods && (
           <>
-            <ProjectSettingSection formMethods={formMethods} />
+            <ProjectSettingSection
+              formMethods={formMethods}
+              getValidationResult={getValidationResult}
+              trigger={trigger}
+              customAttributeSettingsElementRef={customAttributeSettingsElementRef}
+            />
             <FormLayout.Separator />
           </>
         )}
@@ -75,7 +93,11 @@ export const SettingsDialog: React.FC<{
  */
 const ProjectSettingSection: React.FC<{
   formMethods: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
-}> = ({ formMethods: { getValues, register } }) => {
+  getValidationResult: GetValidationResultFunction | undefined
+  trigger: ValidationTriggerFunction | undefined
+  customAttributeSettingsElementRef: React.RefObject<HTMLDivElement | null>
+}> = ({ formMethods, getValidationResult, trigger, customAttributeSettingsElementRef }) => {
+  const { getValues, register } = formMethods
 
   return (
     <FormLayout.Section labelEnd={(
@@ -93,6 +115,14 @@ const ProjectSettingSection: React.FC<{
           register={register}
         />
       ))}
+
+      {/* カスタム属性 */}
+      <CustomAttributeSettings
+        formMethods={formMethods}
+        getValidationResult={getValidationResult}
+        trigger={trigger}
+        elementRef={customAttributeSettingsElementRef}
+      />
     </FormLayout.Section>
   )
 }

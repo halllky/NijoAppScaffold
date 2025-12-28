@@ -2,7 +2,7 @@ import React from "react"
 import * as ReactHookForm from "react-hook-form"
 import * as ReactTable from "@tanstack/react-table"
 import * as Layout from "@nijo/ui-components/layout"
-import { SchemaDefinitionGlobalState, XmlElementAttribute } from "../../types"
+import { SchemaDefinitionGlobalState, XmlElementAttribute, NijoXmlCustomAttribute } from "../../types"
 import { GetValidationResultFunction } from "../useValidation"
 
 /** メンバーグリッドの行の型 */
@@ -49,8 +49,8 @@ export const createLocalNameCell = (
   })
 }
 
-/** 属性のセル */
-export const createAttributeCell = (
+/** Nijoで既定で用意されている属性のセル */
+export const createBasicAttributeCell = (
   attrDef: XmlElementAttribute,
   cellType: Layout.ColumnDefFactories<GridRowType>,
   getValidationResult: GetValidationResultFunction
@@ -77,6 +77,44 @@ export const createAttributeCell = (
       // エラー情報を取得
       const validationResult = getValidationResult(context.row.original.uniqueId)
       const hasError = validationResult?.[attrDef.attributeName]?.length > 0
+
+      return (
+        <PlainCell className={`px-1 truncate ${hasError ? 'bg-amber-300/50' : ''}`}>
+          {value}
+        </PlainCell>
+      )
+    },
+  })
+}
+
+/** カスタム属性のセル */
+export const createCustomAttributeCell = (
+  attrDef: NijoXmlCustomAttribute,
+  cellType: Layout.ColumnDefFactories<GridRowType>,
+  getValidationResult: GetValidationResultFunction
+) => {
+  return cellType.other(attrDef.displayName ?? attrDef.physicalName, {
+    defaultWidth: 120,
+    // 編集開始時処理
+    onStartEditing: e => {
+      e.setEditorInitialValue(e.row.attributes[attrDef.uniqueId] ?? '')
+    },
+    // 編集終了時処理
+    onEndEditing: e => {
+      const clone = window.structuredClone(e.row)
+      if (e.value.trim() === '') {
+        delete clone.attributes[attrDef.uniqueId]
+      } else {
+        clone.attributes[attrDef.uniqueId] = e.value
+      }
+      e.setEditedRow(clone)
+    },
+    // セルのレンダリング
+    renderCell: context => {
+      const value = context.row.original.attributes[attrDef.uniqueId]
+      // エラー情報を取得
+      const validationResult = getValidationResult(context.row.original.uniqueId)
+      const hasError = validationResult?.[attrDef.uniqueId]?.length > 0
 
       return (
         <PlainCell className={`px-1 truncate ${hasError ? 'bg-amber-300/50' : ''}`}>

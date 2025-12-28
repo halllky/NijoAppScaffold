@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -19,9 +20,16 @@ public class ApplicationState {
     [JsonPropertyName("xmlElementTrees")]
     public List<ModelPageForm> XmlElementTrees { get; set; } = [];
     [JsonPropertyName("attributeDefs")]
+    /// <summary>
+    /// nijo.xml のXML要素に定義できる属性の一覧。
+    /// ほぼ <see cref="Nijo.SchemaParsing.NodeOption"/> とだいたい同じ。
+    /// この一覧にはカスタム属性は含まれない。
+    /// </summary>
     public List<XmlElementAttribute> AttributeDefs { get; set; } = [];
     [JsonPropertyName("valueMemberTypes")]
     public List<ValueMemberType> ValueMemberTypes { get; set; } = [];
+    [JsonPropertyName("customAttributes")]
+    public List<NijoXmlCustomAttribute> CustomAttributes { get; set; } = [];
     [JsonPropertyName("projectOptions")]
     public JsonObject ProjectOptions { get; set; } = new();
     [JsonPropertyName("projectOptionPropertyInfos")]
@@ -100,6 +108,18 @@ public class ApplicationState {
                 } else {
                     if (commentToRootAggregate != null) xDocument.Root.Add(commentToRootAggregate);
                     xDocument.Root.Add(rootAggregate);
+                }
+            }
+        }
+
+        // カスタム属性
+        var customAttributesSection = sections[SchemaParseContext.SECTION_CUSTOM_ATTRIBUTES];
+        foreach (var customAttribute in CustomAttributes) {
+            foreach (var xNode in customAttribute.ToXNodes()) {
+                customAttributesSection.Add(xNode);
+
+                if (xNode is XElement xElement) {
+                    mapping[xElement] = customAttribute.UniqueId ?? throw new InvalidOperationException("ありえない");
                 }
             }
         }

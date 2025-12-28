@@ -1,7 +1,7 @@
 import React from "react"
 import useEvent from "react-use-event-hook"
 import * as ReactRouter from "react-router-dom"
-import { asTree, SchemaDefinitionGlobalState } from "../types"
+import { asTree, SchemaDefinitionGlobalState, XmlElementAttributeName } from "../types"
 import { SERVER_DOMAIN } from "../main"
 import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../routing"
 
@@ -53,37 +53,68 @@ export const useValidation = (
 
   // 検証結果を表形式で表示するときのためのデータを生成する。
   const validationResultList = React.useMemo(() => {
-    const xmlElementTrees = getEditingValues().xmlElementTrees ?? []
-    if (!xmlElementTrees.length) return []
+    const state = getEditingValues()
+    const xmlElementTrees = state.xmlElementTrees ?? []
+    const customAttributes = state.customAttributes ?? []
 
     // IDから当該要素の情報を引き当てるための辞書
     const elementMap = new Map(xmlElementTrees.flatMap(tree => tree.xmlElements).map(el => [el.uniqueId, el]))
     const treeUtilsMap = new Map(xmlElementTrees.map(tree => [tree, asTree(tree.xmlElements)]))
+    const customAttributeMap = new Map(customAttributes.map(ca => [ca.uniqueId, ca]))
 
     const infos: ValidationResultListItem[] = []
 
     for (const [id, obj] of Object.entries(validationResult ?? {})) {
+      // 集約定義のエラー
       const element = elementMap.get(id)
-      if (!element) continue
+      if (element) {
+        const tree = xmlElementTrees.find(t => t.xmlElements.some(el => el.uniqueId === id))
+        if (!tree) continue
 
-      const tree = xmlElementTrees.find(t => t.xmlElements.some(el => el.uniqueId === id))
-      if (!tree) continue
+        const treeUtils = treeUtilsMap.get(tree)
+        if (!treeUtils) continue
 
-      const treeUtils = treeUtilsMap.get(tree)
-      if (!treeUtils) continue
+        const rootElement = treeUtils.getRoot(element)
+        const rootAggregateName = rootElement.localName
 
-      const rootElement = treeUtils.getRoot(element)
-      const rootAggregateName = rootElement.localName
+        for (const [objKey, attrMessages] of Object.entries(obj)) {
 
-      for (const [objKey, attrMessages] of Object.entries(obj)) {
-        const attributeName = objKey === '_own' ? '' : objKey
-        infos.push(...attrMessages.map(x => ({
-          id,
-          rootAggregateName: rootAggregateName ?? '',
-          elementName: element.localName ?? '',
-          attributeName,
-          message: x,
-        })))
+          let attributeName: string
+          if (objKey === '_own') {
+            // この要素自体に対するエラー
+            attributeName = ''
+          } else {
+            // カスタム属性のエラーならばカスタム属性の名前を、
+            // そうでなければ属性名をそのまま使う
+            const customAttribute = customAttributes.find(ca => ca.uniqueId === objKey)
+            attributeName = customAttribute?.displayName ?? customAttribute?.physicalName ?? objKey
+          }
+
+          infos.push(...attrMessages.map(x => ({
+            id,
+            rootAggregateName: rootAggregateName ?? '',
+            elementName: element.localName ?? '',
+            attributeName,
+            message: x,
+          })))
+        }
+        continue
+      }
+
+      // カスタム属性定義のエラー
+      const customAttribute = customAttributeMap.get(id as XmlElementAttributeName)
+      if (customAttribute) {
+        for (const [objKey, attrMessages] of Object.entries(obj)) {
+          const attributeName = objKey === '_own' ? '' : objKey
+          infos.push(...attrMessages.map(x => ({
+            id,
+            rootAggregateName: 'カスタム属性',
+            elementName: customAttribute.physicalName ?? '',
+            attributeName,
+            message: x,
+          })))
+        }
+        continue
       }
     }
     return infos

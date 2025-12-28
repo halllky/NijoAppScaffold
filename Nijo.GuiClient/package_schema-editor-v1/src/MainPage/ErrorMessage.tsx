@@ -6,16 +6,26 @@ import { ValidationResultListItem } from "./useValidation"
  * エラーメッセージ表示欄。
  * すべての要素のエラーメッセージを羅列する。
  */
-export default function ({ getValues, validationResultList, selectRootAggregate, className }: {
+export default function ({ getValues, validationResultList, selectRootAggregate, openSettingsDialog, className }: {
   getValues: () => SchemaDefinitionGlobalState
   validationResultList: ValidationResultListItem[]
   selectRootAggregate: ((aggregateId: string) => void) | undefined
+  openSettingsDialog?: () => void
   className?: string
 }) {
   const handleClick = (elementId: string) => {
+    const state = getValues()
+
+    // カスタム属性の場合
+    const customAttribute = state.customAttributes?.find(ca => ca.uniqueId === elementId)
+    if (customAttribute) {
+      openSettingsDialog?.()
+      return
+    }
+
     if (!selectRootAggregate) return;
 
-    const xmlElementTrees = getValues().xmlElementTrees
+    const xmlElementTrees = state.xmlElementTrees
     if (!xmlElementTrees) return
 
     for (const tree of xmlElementTrees) {

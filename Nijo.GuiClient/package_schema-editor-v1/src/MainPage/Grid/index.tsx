@@ -11,7 +11,7 @@ import { UUID } from "uuidjs"
 import { TYPE_COLUMN_DEF } from "./getAttrTypeOptions"
 import { GetValidationResultFunction, ValidationTriggerFunction } from "../useValidation"
 import { MentionCellDataSourceContext, SchemaDefinitionMentionTextarea } from "./Input.Mention"
-import { createLocalNameCell, createAttributeCell, GridRowType } from "./Input.CellTypes"
+import { createLocalNameCell, createBasicAttributeCell, GridRowType, createCustomAttributeCell } from "./Input.CellTypes"
 import { usePersonalSettings } from "../../Settings"
 import { CellEditorWithMention } from "./Input.CellEditor"
 import { ModelTypeSelectorForSchema } from "./Input.ModelTypeSelector"
@@ -270,6 +270,11 @@ const GridSection = ({
     name: `xmlElementTrees.${rootAggregateIndex}.xmlElements`,
   })
 
+  const customAttributes = ReactHookForm.useWatch({
+    control,
+    name: "customAttributes"
+  }) ?? []
+
   // ルート集約の行は表示しないので、fieldsの最初の要素を除いた配列を使用する
   const gridData = React.useMemo(() => fields.slice(1), [fields])
 
@@ -281,7 +286,7 @@ const GridSection = ({
     columns.push(createLocalNameCell(cellType, getValidationResult))
 
     // Type
-    columns.push(createAttributeCell(TYPE_COLUMN_DEF, cellType, getValidationResult))
+    columns.push(createBasicAttributeCell(TYPE_COLUMN_DEF, cellType, getValidationResult))
 
     // コメント
     columns.push(cellType.text('comment', 'コメント', {
@@ -313,12 +318,17 @@ const GridSection = ({
         || (rootModelType === TYPE_DATA_MODEL && attrDef.attributeName === ATTR_IS_KEY)
         || attrDef.attributeName === ATTR_USER_HELP_TEXT) {
 
-        columns.push(createAttributeCell(attrDef, cellType, getValidationResult))
+        columns.push(createBasicAttributeCell(attrDef, cellType, getValidationResult))
       }
     }
 
+    for (const customAttr of customAttributes) {
+      if (!rootModelType || !customAttr.availableModels.includes(rootModelType)) continue;
+      columns.push(createCustomAttributeCell(customAttr, cellType, getValidationResult))
+    }
+
     return columns
-  }, [attributeDefs, fields, getValidationResult, showLessColumns, allElementsInTree, valueMemberTypes])
+  }, [attributeDefs, fields, getValidationResult, showLessColumns, allElementsInTree, valueMemberTypes, customAttributes])
 
   // 行挿入
   const handleInsertRow = useEvent(() => {

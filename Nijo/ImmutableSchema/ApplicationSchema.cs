@@ -35,6 +35,7 @@ public class ApplicationSchema {
         var rootAggregateElements = _xDocument
             .Root
             ?.Elements()
+            .Where(el => el.Name.LocalName != SchemaParseContext.SECTION_CUSTOM_ATTRIBUTES)
             .SelectMany(el => el.ElementsWithoutMemo())
             ?? [];
 

@@ -151,13 +151,13 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
   })
 
   // モーダルダイアログ管理
-  const [isOpenSettingDialog, setIsOpenSettingDialog] = React.useState(false)
+  const [settingDialogStatus, setSettingDialogStatus] = React.useState<{ focusToCustomAttributeSettings: boolean } | null>(null)
   const [isOpenEnumDefDialog, setIsOpenEnumDefDialog] = React.useState(false)
   const [isOpenCreateRootAggregateDialog, setIsOpenCreateRootAggregateDialog] = React.useState(false)
 
   // 設定画面
   const handlePersonalSettingsClick = useEvent(() => {
-    setIsOpenSettingDialog(true)
+    setSettingDialogStatus({ focusToCustomAttributeSettings: false })
   })
 
   // 列挙型定義画面
@@ -331,6 +331,7 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
             getValues={getValues}
             validationResultList={validationResultList}
             selectRootAggregate={selectRootAggregate}
+            openSettingsDialog={() => setSettingDialogStatus({ focusToCustomAttributeSettings: true })}
             className="h-full"
           />
         </Allotment.Pane>
@@ -338,8 +339,14 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
       </Allotment>
 
       {/* ダイアログ表示部分 */}
-      {isOpenSettingDialog && (
-        <SettingsDialog onClose={() => setIsOpenSettingDialog(false)} formMethods={formMethods} />
+      {settingDialogStatus && (
+        <SettingsDialog
+          focusOnCustomAttributeSettings={settingDialogStatus.focusToCustomAttributeSettings}
+          onClose={() => setSettingDialogStatus(null)}
+          formMethods={formMethods}
+          getValidationResult={getValidationResult}
+          trigger={trigger}
+        />
       )}
       {isOpenEnumDefDialog && (
         <EnumDefDialog

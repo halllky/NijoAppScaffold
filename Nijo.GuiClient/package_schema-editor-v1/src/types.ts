@@ -17,7 +17,10 @@ export type AppSchemaDefinitionGraphDataSet = {
   onlyRoot?: boolean
 }
 
-/** スキーマ定義編集におけるアプリケーション全体の状態 */
+/**
+ * スキーマ定義編集におけるアプリケーション全体の状態。
+ * データの持ち方こそ違うがデータの範囲は nijo.xml 1個分と対応する。
+ */
 export type SchemaDefinitionGlobalState = {
   /** XML要素をルート集約ごとの塊に分類したもの。 */
   xmlElementTrees: ModelPageForm[]
@@ -29,8 +32,21 @@ export type SchemaDefinitionGlobalState = {
   projectOptions: ProjectOptions
   /** プロジェクト設定項目のメタ情報 */
   projectOptionPropertyInfos: ProjectOptionPropertyInfo[]
+  /** カスタム属性定義 */
+  customAttributes: NijoXmlCustomAttribute[]
   /** グラフのViewState */
   schemaGraphViewState?: AppSchemaDefinitionGraphDataSet | null
+}
+
+/** カスタム属性定義 */
+export type NijoXmlCustomAttribute = {
+  uniqueId: XmlElementAttributeName
+  physicalName: string
+  displayName: string
+  comment?: string
+  availableModels: string[]
+  type: 'Boolean' | 'Decimal' | 'Enum' | 'String'
+  enumValues: string[]
 }
 
 /** Model定義画面のデータ型定義 */

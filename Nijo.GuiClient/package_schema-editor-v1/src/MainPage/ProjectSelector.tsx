@@ -137,7 +137,12 @@ export const ProjectSelector = () => {
 
       {/* ダイアログ表示部分 */}
       {isOpenSettingDialog && (
-        <SettingsDialog onClose={() => setIsOpenSettingDialog(false)} />
+        <SettingsDialog
+          focusOnCustomAttributeSettings={false}
+          onClose={() => setIsOpenSettingDialog(false)}
+          getValidationResult={undefined}
+          trigger={undefined}
+        />
       )}
     </div>
   )
