@@ -40,7 +40,7 @@ internal class BoolMember : IValueMemberType {
 
     ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => new() {
         FilterCsTypeName = "BooleanSearchCondition",
-        FilterTsTypeName = "{ trueのみ?: boolean; falseのみ?: boolean }",
+        FilterTsTypeName = "{ trueのみ?: boolean | null; falseのみ?: boolean | null }",
         RenderTsNewObjectFunctionValue = () => "{ trueのみ: false, falseのみ: false }",
         RenderFiltering = ctx => {
             var query = ctx.Query.Root.Name;

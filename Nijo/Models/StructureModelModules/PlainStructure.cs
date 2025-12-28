@@ -94,7 +94,7 @@ internal class PlainStructure : IInstancePropertyOwnerMetadata, ICreatablePresen
         return $$"""
             {
             {{((IInstancePropertyOwnerMetadata)this).GetMembers().SelectTextTemplate(member => $$"""
-                {{WithIndent(RenderMemberTsNewObjectCreation(member), "  ")}}
+              {{WithIndent(RenderMemberTsNewObjectCreation(member), "  ")}}
             """)}}
             }
             """;
@@ -177,7 +177,7 @@ internal class PlainStructure : IInstancePropertyOwnerMetadata, ICreatablePresen
             /** {{Aggregate.DisplayName}}の構造体 */
             export type {{TsTypeName}} = {
             {{members.SelectTextTemplate(member => $$"""
-                {{WithIndent(RenderMemberTs(member, ctx), "  ")}}
+              {{WithIndent(RenderMemberTs(member, ctx), "  ")}}
             """)}}
             }
             """;

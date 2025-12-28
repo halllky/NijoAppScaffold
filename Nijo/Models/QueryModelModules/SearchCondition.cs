@@ -105,9 +105,9 @@ namespace Nijo.Models.QueryModelModules {
                           /** 並び順 */
                           {{SORT_TS}}: (`${TSortMember}{{ASC_SUFFIX}}` | `${TSortMember}{{DESC_SUFFIX}}`)[]
                           /** ページングに使用。検索結果のうち先頭から何件スキップするか。 */
-                          {{SKIP_TS}}?: number
+                          {{SKIP_TS}}?: string | null
                           /** ページングに使用。検索結果のうち先頭から何件抽出するか。 */
-                          {{TAKE_TS}}?: number
+                          {{TAKE_TS}}?: string | null
                         }
                         """,
                 };
@@ -200,8 +200,8 @@ namespace Nijo.Models.QueryModelModules {
                         {{WithIndent(FilterRoot.RenderNewObjectFunctionMemberLiteral(), "    ")}}
                       },
                       {{SORT_TS}}: [],
-                      {{SKIP_TS}}: undefined,
-                      {{TAKE_TS}}: undefined,
+                      {{SKIP_TS}}: '',
+                      {{TAKE_TS}}: '',
                     }
                     """;
             }
@@ -218,7 +218,7 @@ namespace Nijo.Models.QueryModelModules {
 
                 return $$"""
                     /** {{_entryAggregate.DisplayName}}の主キーを設定します。 */
-                    export const {{PkAssignFunctionName}} = (obj: {{TsTypeName}}, keys: [{{keys.Select(k => $"{k.PhysicalName}: {k.Type.TsTypeName} | undefined").Join(", ")}}]) => {
+                    export const {{PkAssignFunctionName}} = (obj: {{TsTypeName}}, keys: [{{keys.Select(k => $"{k.PhysicalName}: {k.Type.TsTypeName} | null | undefined").Join(", ")}}]) => {
                       if (keys.length !== {{keys.Length}}) {
                         console.error(`主キーの数が一致しません。個数は{{keys.Length}}であるべきところ${keys.length}個です。`);
                         return
@@ -429,14 +429,25 @@ namespace Nijo.Models.QueryModelModules {
                 var typeName = Member.OnlySearchCondition
                     ? Member.Type.TsTypeName
                     : Member.Type.SearchBehavior?.FilterTsTypeName;
+
+                // { from, to } といったオブジェクトならnull不要
+                var withNull = typeName?.StartsWith("{") == true ? "" : " | null";
+
                 return $$"""
-                    {{Member.PhysicalName}}?: {{typeName}}
+                    {{Member.PhysicalName}}?: {{typeName}}{{withNull}}
                     """;
             }
             string IFilterMember.RenderTsNewObjectFunctionValue() {
-                return Member.OnlySearchCondition
-                    ? "undefined"
-                    : SearchBehavior!.RenderTsNewObjectFunctionValue();
+                if (Member.OnlySearchCondition) {
+                    return Member.Type.TsTypeName switch {
+                        "string" => "''",
+                        "boolean" => "false",
+                        _ => "null",
+                    };
+
+                } else {
+                    return SearchBehavior!.RenderTsNewObjectFunctionValue();
+                }
             }
 
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;

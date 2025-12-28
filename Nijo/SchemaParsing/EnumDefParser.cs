@@ -32,7 +32,12 @@ namespace Nijo.SchemaParsing {
 
         internal string RenderTsSearchConditionType() {
             return $$"""
-                { {{_xElement.ElementsWithoutMemo().Select(el => $"'{el.GetDisplayName().Replace("'", "\\'")}'?: boolean").Join(", ")}} }
+                { {{_xElement.ElementsWithoutMemo().Select(el => $"'{el.GetDisplayName().Replace("'", "\\'")}'?: boolean | null").Join(", ")}} }
+                """;
+        }
+        internal string RenderTsSearchConditionInitializer() {
+            return $$"""
+                { {{_xElement.ElementsWithoutMemo().Select(el => $"'{el.GetDisplayName().Replace("'", "\\'")}': false").Join(", ")}} }
                 """;
         }
 

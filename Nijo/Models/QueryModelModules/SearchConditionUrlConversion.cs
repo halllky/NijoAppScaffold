@@ -35,9 +35,9 @@ namespace Nijo.Models.QueryModelModules {
                   if (searchParams.has('{{URL_SORT}}'))
                     searchCondition.{{SearchCondition.Entry.SORT_TS}} = JSON.parse(searchParams.get('{{URL_SORT}}')!)
                   if (searchParams.has('{{URL_TAKE}}'))
-                    searchCondition.{{SearchCondition.Entry.TAKE_TS}} = Number(searchParams.get('{{URL_TAKE}}'))
+                    searchCondition.{{SearchCondition.Entry.TAKE_TS}} = searchParams.get('{{URL_TAKE}}')
                   if (searchParams.has('{{URL_SKIP}}'))
-                    searchCondition.{{SearchCondition.Entry.SKIP_TS}} = Number(searchParams.get('{{URL_SKIP}}'))
+                    searchCondition.{{SearchCondition.Entry.SKIP_TS}} = searchParams.get('{{URL_SKIP}}')
 
                   return searchCondition
                 }
@@ -50,8 +50,8 @@ namespace Nijo.Models.QueryModelModules {
                 export const {{ToQueryParameter}} = (searchCondition: {{_searchCondition.TsTypeName}}, searchParams: URLSearchParams): void => {
                   searchParams.append('{{URL_FILTER}}', JSON.stringify(searchCondition.{{SearchCondition.Entry.FILTER_TS}}))
                   if (searchCondition.{{SearchCondition.Entry.SORT_TS}} && searchCondition.{{SearchCondition.Entry.SORT_TS}}.length > 0) searchParams.append('{{URL_SORT}}', JSON.stringify(searchCondition.{{SearchCondition.Entry.SORT_TS}}))
-                  if (searchCondition.{{SearchCondition.Entry.TAKE_TS}} !== undefined) searchParams.append('{{URL_TAKE}}', searchCondition.{{SearchCondition.Entry.TAKE_TS}}.toString())
-                  if (searchCondition.{{SearchCondition.Entry.SKIP_TS}} !== undefined) searchParams.append('{{URL_SKIP}}', searchCondition.{{SearchCondition.Entry.SKIP_TS}}.toString())
+                  if (searchCondition.{{SearchCondition.Entry.TAKE_TS}} !== undefined && searchCondition.{{SearchCondition.Entry.TAKE_TS}} !== null) searchParams.append('{{URL_TAKE}}', searchCondition.{{SearchCondition.Entry.TAKE_TS}})
+                  if (searchCondition.{{SearchCondition.Entry.SKIP_TS}} !== undefined && searchCondition.{{SearchCondition.Entry.SKIP_TS}} !== null) searchParams.append('{{URL_SKIP}}', searchCondition.{{SearchCondition.Entry.SKIP_TS}})
                 }
                 """;
         }

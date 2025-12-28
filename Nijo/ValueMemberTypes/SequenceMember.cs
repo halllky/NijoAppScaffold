@@ -41,8 +41,8 @@ namespace Nijo.ValueMemberTypes {
 
         ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => new() {
             FilterCsTypeName = $"{FromTo.CS_CLASS_NAME}<int?>",
-            FilterTsTypeName = "{ from?: string; to?: string }",
-            RenderTsNewObjectFunctionValue = () => "{ from: undefined, to: undefined }",
+            FilterTsTypeName = "{ from?: string | null; to?: string | null }",
+            RenderTsNewObjectFunctionValue = () => "{ from: '', to: '' }",
             RenderFiltering = ctx => RangeSearchRenderer.RenderRangeSearchFiltering(ctx),
         };
 

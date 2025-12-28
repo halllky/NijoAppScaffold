@@ -39,8 +39,8 @@ internal class DateTimeMember : IValueMemberType {
 
     ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => new() {
         FilterCsTypeName = $"{FromTo.CS_CLASS_NAME}<DateTime?>",
-        FilterTsTypeName = "{ from?: string; to?: string }",
-        RenderTsNewObjectFunctionValue = () => "{ from: undefined, to: undefined }",
+        FilterTsTypeName = "{ from?: string | null; to?: string | null }",
+        RenderTsNewObjectFunctionValue = () => "{ from: '', to: '' }",
         RenderFiltering = ctx => RangeSearchRenderer.RenderRangeSearchFiltering(ctx),
     };
 

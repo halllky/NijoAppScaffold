@@ -51,7 +51,7 @@ namespace Nijo.ValueMemberTypes {
         ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => new() {
             FilterCsTypeName = _parser.CsSearchConditionClassName,
             FilterTsTypeName = _parser.RenderTsSearchConditionType(),
-            RenderTsNewObjectFunctionValue = () => "{}",
+            RenderTsNewObjectFunctionValue = () => _parser.RenderTsSearchConditionInitializer(),
             RenderFiltering = ctx => {
                 var query = ctx.Query.Root.Name;
                 var fullpathNullable = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");

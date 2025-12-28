@@ -52,7 +52,7 @@ internal class ValueObjectMember : IValueMemberType {
     ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => new() {
         FilterCsTypeName = "string",
         FilterTsTypeName = "string",
-        RenderTsNewObjectFunctionValue = () => "undefined",
+        RenderTsNewObjectFunctionValue = () => "''",
         RenderFiltering = ctx => {
             var query = ctx.Query.Root.Name;
             var fullpathNullable = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");

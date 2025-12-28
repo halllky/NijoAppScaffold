@@ -167,7 +167,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
             """)}}
             {{If(HasVersion, () => $$"""
               /** 楽観排他制御用のバージョニング情報 */
-              {{VERSION_TS}}?: number | null
+              {{VERSION_TS}}: number | null | undefined
             """)}}
             }
             """;
@@ -253,7 +253,11 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         }
 
         public string RenderNewObjectCreation() {
-            return "null";
+            return Member.Type.TsTypeName switch {
+                "string" => "''",
+                "boolean" => "false",
+                _ => "null",
+            };
         }
     }
     /// <summary>

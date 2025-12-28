@@ -51,7 +51,7 @@ function P100_売上() {
   ], [])
 
   const handleClear = useEvent(() => {
-    reset(createNew売上一覧SearchCondition())
+    reset(createNew売上一覧SearchCondition(), { keepDefaultValues: true })
   })
 
   return (

@@ -64,8 +64,8 @@ export function SearchPageBase<
   const executeSearch = useCallback(async (condition: TCondition, page: number, size: number) => {
     try {
       setLoading(true)
-      condition.skip = page * size
-      condition.take = size
+      condition.skip = (page * size).toString()
+      condition.take = size.toString()
       const result = await callComplexPostEndpointAsync(props.queryModelType, condition)
       if (result.type === 'ok') {
         setItems(result.returnValue.currentPageItems as TItem[])
