@@ -20,7 +20,7 @@ namespace Nijo.ValueMemberTypes {
         string IValueMemberType.SchemaTypeName => "sequence";
         string IValueMemberType.CsDomainTypeName => "int";
         string IValueMemberType.CsPrimitiveTypeName => "int";
-        string IValueMemberType.TsTypeName => "number";
+        string IValueMemberType.TsTypeName => "string";
         string IValueMemberType.DisplayName => "シーケンス型";
 
         string IValueMemberType.RenderSpecificationMarkdown() {
@@ -41,7 +41,7 @@ namespace Nijo.ValueMemberTypes {
 
         ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => new() {
             FilterCsTypeName = $"{FromTo.CS_CLASS_NAME}<int?>",
-            FilterTsTypeName = "{ from?: number; to?: number }",
+            FilterTsTypeName = "{ from?: string; to?: string }",
             RenderTsNewObjectFunctionValue = () => "{ from: undefined, to: undefined }",
             RenderFiltering = ctx => RangeSearchRenderer.RenderRangeSearchFiltering(ctx),
         };

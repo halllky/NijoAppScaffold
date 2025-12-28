@@ -21,7 +21,7 @@ internal class IntMember : IValueMemberType {
     string IValueMemberType.SchemaTypeName => "int";
     string IValueMemberType.CsDomainTypeName => "int";
     string IValueMemberType.CsPrimitiveTypeName => "int";
-    string IValueMemberType.TsTypeName => "number";
+    string IValueMemberType.TsTypeName => "string";
     UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.NumberMemberConstraint;
     string IValueMemberType.DisplayName => "整数型";
 
@@ -40,7 +40,7 @@ internal class IntMember : IValueMemberType {
 
     ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => new() {
         FilterCsTypeName = $"{FromTo.CS_CLASS_NAME}<int?>",
-        FilterTsTypeName = "{ from?: number; to?: number }",
+        FilterTsTypeName = "{ from?: string; to?: string }",
         RenderTsNewObjectFunctionValue = () => "{ from: undefined, to: undefined }",
         RenderFiltering = ctx => RangeSearchRenderer.RenderRangeSearchFiltering(ctx),
     };

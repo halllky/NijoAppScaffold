@@ -21,7 +21,7 @@ internal class DecimalMember : IValueMemberType {
     string IValueMemberType.SchemaTypeName => "decimal";
     string IValueMemberType.CsDomainTypeName => "decimal";
     string IValueMemberType.CsPrimitiveTypeName => "decimal";
-    string IValueMemberType.TsTypeName => "number";
+    string IValueMemberType.TsTypeName => "string";
     UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.NumberMemberConstraint;
     string IValueMemberType.DisplayName => "実数型";
 
@@ -40,7 +40,7 @@ internal class DecimalMember : IValueMemberType {
 
     ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => new() {
         FilterCsTypeName = $"{FromTo.CS_CLASS_NAME}<decimal?>",
-        FilterTsTypeName = "{ from?: number; to?: number }",
+        FilterTsTypeName = "{ from?: string; to?: string }",
         RenderTsNewObjectFunctionValue = () => "{ from: undefined, to: undefined }",
         RenderFiltering = ctx => RangeSearchRenderer.RenderRangeSearchFiltering(ctx),
     };

@@ -20,8 +20,8 @@ internal class YearMember : IValueMemberType {
     string IValueMemberType.TypePhysicalName => "Year";
     string IValueMemberType.SchemaTypeName => "year";
     string IValueMemberType.CsDomainTypeName => "int";
-    string IValueMemberType.CsPrimitiveTypeName => "int";
-    string IValueMemberType.TsTypeName => "number";
+    string IValueMemberType.CsPrimitiveTypeName => "int"; // DBには4桁の整数(西暦)で保存する
+    string IValueMemberType.TsTypeName => "string"; // TypeScriptでは4桁の西暦年の文字列で扱う
     UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.NumberMemberConstraint;
     string IValueMemberType.DisplayName => "年";
 
@@ -40,7 +40,7 @@ internal class YearMember : IValueMemberType {
 
     ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => new() {
         FilterCsTypeName = $"{FromTo.CS_CLASS_NAME}<int?>",
-        FilterTsTypeName = "{ from?: number; to?: number }",
+        FilterTsTypeName = "{ from?: string; to?: string }",
         RenderTsNewObjectFunctionValue = () => "{ from: undefined, to: undefined }",
         RenderFiltering = ctx => RangeSearchRenderer.RenderRangeSearchFiltering(ctx),
     };
