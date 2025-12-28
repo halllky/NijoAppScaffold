@@ -224,7 +224,7 @@ public partial class OverridedApplicationConfigure : DefaultConfiguration {
             if (value == null) {
                 writer.WriteNullValue();
             } else {
-                writer.WriteStringValue(value.Value.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ"));
+                writer.WriteStringValue(value.Value.ToString("yyyy-MM-dd HH:mm:ss"));
             }
         }
     }
