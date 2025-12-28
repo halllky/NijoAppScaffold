@@ -30,7 +30,7 @@ export default function デバッグメニュー() {
   }
 
   return (
-    <div className="flex flex-col gap-2 p-2 border border-gray-300">
+    <div className="flex flex-col gap-2 p-2 bg-white border border-gray-300 rounded">
       <h2 className="text-lg font-bold">デバッグメニュー</h2>
       <span className="text-sm text-gray-500">
         開発環境でのみ表示されるデバッグ用メニューです。

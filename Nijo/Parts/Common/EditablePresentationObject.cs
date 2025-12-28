@@ -167,7 +167,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
             """)}}
             {{If(HasVersion, () => $$"""
               /** 楽観排他制御用のバージョニング情報 */
-              {{VERSION_TS}}: number | undefined
+              {{VERSION_TS}}?: number | null
             """)}}
             }
             """;
@@ -248,12 +248,12 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         }
         public string RenderTsDeclaration() {
             return $$"""
-                {{PropertyName}}?: {{Member.Type.TsTypeName}}
+                {{PropertyName}}?: {{Member.Type.TsTypeName}} | null
                 """;
         }
 
         public string RenderNewObjectCreation() {
-            return "undefined";
+            return "null";
         }
     }
     /// <summary>
@@ -440,7 +440,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
               {{WILL_BE_DELETED_TS}}: false,
             """)}}
             {{If(HasVersion, () => $$"""
-              {{VERSION_TS}}: undefined,
+              {{VERSION_TS}}: null,
             """)}}
             {{GetChildMembers().SelectTextTemplate(c => $$"""
               {{c.PhysicalName}}: {{c.RenderNewObjectCreation()}},

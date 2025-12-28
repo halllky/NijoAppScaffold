@@ -39,6 +39,7 @@ function P000_トップページ() {
           )}
         </div>
       )}
+      className="bg-gray-100"
     />
   )
 }

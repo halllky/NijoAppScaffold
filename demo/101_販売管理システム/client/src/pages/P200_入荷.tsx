@@ -30,10 +30,14 @@ export default {
 function P200_入荷() {
   return (
     <SearchPageBase
+      queryModelType="入荷一覧"
       pageTitle="入荷"
-      onSearch={async () => ({ items: [], totalCount: 0 })}
-      searchCondition={() => <div>検索条件</div>}
-      searchResult={() => <div>検索結果</div>}
+      onClear={() => { throw new Error("Not implemented") }}
+      onSubmit={() => { throw new Error("Not implemented") }}
+      searchCondition={(
+        <div>検索条件</div>
+      )}
+      searchResultColumns={[]}
     />
   )
 }

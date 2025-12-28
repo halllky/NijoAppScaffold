@@ -60,19 +60,15 @@ export function P001_ログイン(props: {
             <PageTitle>ログイン</PageTitle>
             <DetailMessage.Rest />
           </div>
+          <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-[auto_1fr] gap-4 items-center">
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div>
-              <FormLabel>従業員番号</FormLabel>
-              <UI.Field name="values.従業員番号" className="w-full" control={control} />
-            </div>
-            <div>
-              <FormLabel>パスワード</FormLabel>
-              <UI.Field name="values.パスワード" type="password" className="w-full" control={control} />
-            </div>
-            <div className="pt-4">
-              <Button submit fill className="w-full justify-center">ログイン</Button>
-            </div>
+            <FormLabel>従業員番号</FormLabel>
+            <UI.Field name="values.従業員番号" className="w-full" control={control} />
+
+            <FormLabel>パスワード</FormLabel>
+            <UI.Field name="values.パスワード" type="password" className="w-full" control={control} />
+
+            <Button submit fill className="col-span-2 justify-center mt-4">ログイン</Button>
           </form>
 
           {processing && <NowLoading />}

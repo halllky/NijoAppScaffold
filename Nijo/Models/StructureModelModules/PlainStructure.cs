@@ -54,13 +54,13 @@ internal class PlainStructure : IInstancePropertyOwnerMetadata, ICreatablePresen
             .Select(agg => new StructureDescendantMember(agg));
 
         return $$"""
-                    #region 構造体定義
-                    {{new PlainStructure(rootAggregate).RenderCSharpDeclaring(ctx)}}
-                    {{descendants.SelectTextTemplate(node => $$"""
-                    {{node.RenderCSharpDeclaring(ctx)}}
-                    """)}}
-                    #endregion 構造体定義
-                    """;
+            #region 構造体定義
+            {{new PlainStructure(rootAggregate).RenderCSharpDeclaring(ctx)}}
+            {{descendants.SelectTextTemplate(node => $$"""
+            {{node.RenderCSharpDeclaring(ctx)}}
+            """)}}
+            #endregion 構造体定義
+            """;
     }
 
     /// <summary>
@@ -72,13 +72,13 @@ internal class PlainStructure : IInstancePropertyOwnerMetadata, ICreatablePresen
             .Select(agg => new StructureDescendantMember(agg));
 
         return $$"""
-                    //#region 構造体新規作成用関数
-                    {{new PlainStructure(rootAggregate).RenderTypeScriptObjectCreationFunction(ctx)}}
-                    {{descendants.SelectTextTemplate(node => $$"""
-                    {{node.RenderTypeScriptObjectCreationFunction(ctx)}}
-                    """)}}
-                    //#endregion 構造体新規作成用関数
-                    """;
+            //#region 構造体新規作成用関数
+            {{new PlainStructure(rootAggregate).RenderTypeScriptObjectCreationFunction(ctx)}}
+            {{descendants.SelectTextTemplate(node => $$"""
+            {{node.RenderTypeScriptObjectCreationFunction(ctx)}}
+            """)}}
+            //#endregion 構造体新規作成用関数
+            """;
     }
 
     /// <summary>
@@ -86,32 +86,32 @@ internal class PlainStructure : IInstancePropertyOwnerMetadata, ICreatablePresen
     /// </summary>
     private string RenderTypeScriptObjectCreationFunction(CodeRenderingContext ctx) {
         return $$"""
-                    /** {{Aggregate.DisplayName}}の構造体の新しいインスタンスを作成します。 */
-                    export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({{RenderTsNewObjectFunctionBody()}})
-                    """;
+            /** {{Aggregate.DisplayName}}の構造体の新しいインスタンスを作成します。 */
+            export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({{RenderTsNewObjectFunctionBody()}})
+            """;
     }
     public string RenderTsNewObjectFunctionBody() {
         return $$"""
-                    {
-                    {{((IInstancePropertyOwnerMetadata)this).GetMembers().SelectTextTemplate(member => $$"""
-                      {{WithIndent(RenderMemberTsNewObjectCreation(member), "  ")}}
-                    """)}}
-                    }
-                    """;
+            {
+            {{((IInstancePropertyOwnerMetadata)this).GetMembers().SelectTextTemplate(member => $$"""
+                {{WithIndent(RenderMemberTsNewObjectCreation(member), "  ")}}
+            """)}}
+            }
+            """;
         static string RenderMemberTsNewObjectCreation(IInstancePropertyMetadata member) {
             if (member is IInstanceValuePropertyMetadata v) {
                 return $$"""
-                            {{member.GetPropertyName(E_CsTs.TypeScript)}}: undefined,
-                            """;
+                    {{member.GetPropertyName(E_CsTs.TypeScript)}}: undefined,
+                    """;
             } else if (member is StructureRefToMember refTo) {
                 return $$"""
-                            {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{refTo.GetTargetStructure().TsNewObjectFunction}}(),
-                            """;
+                    {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{refTo.GetTargetStructure().TsNewObjectFunction}}(),
+                    """;
             } else if (member is StructureDescendantMember s) {
                 var initializer = s.IsArray ? "[]" : $"{s.RenderTsNewObjectFunctionBody()}";
                 return $$"""
-                            {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{initializer}},
-                            """;
+                    {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{initializer}},
+                    """;
             } else {
                 throw new NotImplementedException();
             }
@@ -122,33 +122,33 @@ internal class PlainStructure : IInstancePropertyOwnerMetadata, ICreatablePresen
         var members = ((IInstancePropertyOwnerMetadata)this).GetMembers().ToArray();
 
         return $$"""
-                    /// <summary>
-                    /// {{Aggregate.DisplayName}}の構造体。
-                    /// </summary>
-                    public partial class {{CsClassName}} {
-                    {{members.SelectTextTemplate(member => $$"""
-                        {{WithIndent(RenderMemberCSharp(member, ctx), "    ")}}
-                    """)}}
-                    }
-                    """;
+            /// <summary>
+            /// {{Aggregate.DisplayName}}の構造体。
+            /// </summary>
+            public partial class {{CsClassName}} {
+            {{members.SelectTextTemplate(member => $$"""
+                {{WithIndent(RenderMemberCSharp(member, ctx), "    ")}}
+            """)}}
+            }
+            """;
 
         static string RenderMemberCSharp(IInstancePropertyMetadata member, CodeRenderingContext ctx) {
             if (member is IInstanceValuePropertyMetadata v) {
                 return $$"""
-                            public {{v.Type.CsDomainTypeName}}? {{member.GetPropertyName(E_CsTs.CSharp)}} { get; set; }
-                            """;
+                    public {{v.Type.CsDomainTypeName}}? {{member.GetPropertyName(E_CsTs.CSharp)}} { get; set; }
+                    """;
             } else if (member is StructureRefToMember refTo) {
                 return $$"""
-                            public {{refTo.GetTargetStructure().CsClassName}} {{member.GetPropertyName(E_CsTs.CSharp)}} { get; set; } = new();
-                            """;
+                    public {{refTo.GetTargetStructure().CsClassName}} {{member.GetPropertyName(E_CsTs.CSharp)}} { get; set; } = new();
+                    """;
             } else if (member is StructureDescendantMember s) {
                 var csType = s.Aggregate is ChildrenAggregate
                     ? $"List<{s.CsClassName}>"
                     : s.CsClassName;
                 var initializer = s.Aggregate is ChildrenAggregate ? "new()" : "new()";
                 return $$"""
-                            public {{csType}} {{member.GetPropertyName(E_CsTs.CSharp)}} { get; set; } = {{initializer}};
-                            """;
+                    public {{csType}} {{member.GetPropertyName(E_CsTs.CSharp)}} { get; set; } = {{initializer}};
+                    """;
             } else {
                 throw new NotImplementedException();
             }
@@ -161,40 +161,40 @@ internal class PlainStructure : IInstancePropertyOwnerMetadata, ICreatablePresen
             .Select(agg => new StructureDescendantMember(agg));
 
         return $$"""
-                    //#region 構造体定義
-                    {{new PlainStructure(rootAggregate).RenderTypeScriptType(ctx)}}
-                    {{descendants.SelectTextTemplate(node => $$"""
-                    {{node.RenderTypeScriptType(ctx)}}
-                    """)}}
-                    //#endregion 構造体定義
-                    """;
+            //#region 構造体定義
+            {{new PlainStructure(rootAggregate).RenderTypeScriptType(ctx)}}
+            {{descendants.SelectTextTemplate(node => $$"""
+            {{node.RenderTypeScriptType(ctx)}}
+            """)}}
+            //#endregion 構造体定義
+            """;
     }
 
     private string RenderTypeScriptType(CodeRenderingContext ctx) {
         var members = ((IInstancePropertyOwnerMetadata)this).GetMembers().ToArray();
 
         return $$"""
-                    /** {{Aggregate.DisplayName}}の構造体 */
-                    export type {{TsTypeName}} = {
-                    {{members.SelectTextTemplate(member => $$"""
-                      {{WithIndent(RenderMemberTs(member, ctx), "  ")}}
-                    """)}}
-                    }
-                    """;
+            /** {{Aggregate.DisplayName}}の構造体 */
+            export type {{TsTypeName}} = {
+            {{members.SelectTextTemplate(member => $$"""
+                {{WithIndent(RenderMemberTs(member, ctx), "  ")}}
+            """)}}
+            }
+            """;
 
         static string RenderMemberTs(IInstancePropertyMetadata member, CodeRenderingContext ctx) {
             if (member is IInstanceValuePropertyMetadata v) {
                 return $$"""
-                            {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{v.Type.TsTypeName}} | undefined
-                            """;
+                    {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{v.Type.TsTypeName}} | undefined
+                    """;
             } else if (member is StructureRefToMember refTo) {
                 return $$"""
-                            {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{refTo.GetTargetStructure().TsTypeName}}
-                            """;
+                    {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{refTo.GetTargetStructure().TsTypeName}}
+                    """;
             } else if (member is StructureDescendantMember s) {
                 return $$"""
-                            {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{s.TsTypeName}}{{(s.IsArray ? "[]" : "")}}
-                            """;
+                    {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{s.TsTypeName}}{{(s.IsArray ? "[]" : "")}}
+                    """;
             } else {
                 throw new NotImplementedException();
             }

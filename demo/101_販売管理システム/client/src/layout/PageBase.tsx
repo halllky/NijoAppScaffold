@@ -1,4 +1,5 @@
 import { ReactNode, useEffect } from "react"
+import * as DetailMessage from "../util/DetailMessageContext"
 
 export type PageBaseProps = {
   /** ページタイトル。ブラウザのタイトルバーに表示されます。 */
@@ -16,6 +17,7 @@ export type PageBaseProps = {
 /**
  * ページのベースコンポーネント。
  * ヘッダー、コンテンツ、フッターのレイアウトと、ページタイトルの設定を行います。
+ * どこにも表示されないエラーメッセージの表示も行います。
  */
 export function PageBase(props: PageBaseProps) {
   useEffect(() => {
@@ -26,6 +28,9 @@ export function PageBase(props: PageBaseProps) {
 
   return (
     <div className="flex flex-col h-full">
+
+      {/* どこにも表示されないエラーメッセージ */}
+      <DetailMessage.Rest className="px-8" />
 
       {/* ヘッダ */}
       {props.header && (

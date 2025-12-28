@@ -67,7 +67,18 @@ export function DataTable<TRow>(props: DataTableProps<TRow>) {
             <tr key={rowIndex} className="even:bg-white odd:bg-gray-50">
               {props.columns.map((col, colIndex) => (
                 <td key={colIndex} className="px-1 py-px align-top">
-                  {col.render(row)}
+                  {(() => {
+                    const rendered = col.render(row)
+                    if (typeof rendered === 'string' || typeof rendered === 'number') {
+                      return (
+                        <div className="py-px px-1 truncate">
+                          {rendered}
+                        </div>
+                      )
+                    } else {
+                      return rendered
+                    }
+                  })()}
                 </td>
               ))}
             </tr>
