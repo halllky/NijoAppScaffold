@@ -1,20 +1,17 @@
 import React from "react"
 import * as ReactRouter from "react-router"
-import { useNavigate, useParams } from "react-router-dom"
+import { useParams } from "react-router-dom"
 import { EditPageBase } from "../layout/EditPageBase"
 
 /**
- * P101_売上詳細 へ遷移するためのフック
+ * P101_売上詳細 へ遷移するためのリンクURLを取得する関数
  */
-export function useNavigateToP101売上詳細() {
-  const navigate = useNavigate()
-  return React.useCallback((id?: string) => {
-    if (id) {
-      navigate(`/uriage/edit/${id}`)
-    } else {
-      navigate(`/uriage/new`)
-    }
-  }, [navigate])
+export function getLinkUrlToP101売上詳細(売上SEQ?: string | null) {
+  if (売上SEQ) {
+    return `/uriage/edit/${売上SEQ}`
+  } else {
+    return `/uriage/new`
+  }
 }
 
 /**

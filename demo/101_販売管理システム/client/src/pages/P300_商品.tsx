@@ -37,7 +37,13 @@ function P300_商品() {
       searchCondition={(
         <div>検索条件</div>
       )}
-      searchResultColumns={[]}
+      defineSearchResultColumns={[columnFor => [
+        columnFor('values.外部システム側ID'),
+        columnFor('values.商品名'),
+        columnFor('values.在庫数'),
+        columnFor('values.売値単価_税抜'),
+        columnFor('values.消費税区分'),
+      ], []]}
     />
   )
 }

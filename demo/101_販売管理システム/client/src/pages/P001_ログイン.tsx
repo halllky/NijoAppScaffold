@@ -26,6 +26,7 @@ export function P001_ログイン(props: {
   children: React.ReactNode
 }) {
 
+  const fieldContext = UI.useFieldUiContextProvider("ログインParameter")
   const { loginUser, loginAsync } = useLoginLogout()
   const { setFocus, handleSubmit, control } = useForm<ログインParameterDisplayData>({
     defaultValues: {
@@ -53,20 +54,24 @@ export function P001_ログイン(props: {
 
   // ログインしていない場合はログイン画面を表示
   if (!loginUser) return (
-    <UI.FieldContextProvider type="ログインParameter">
+    <UI.FieldUiContext.Provider value={fieldContext}>
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="relative bg-white p-8 rounded shadow-md w-full max-w-md">
           <div className="mb-6">
             <PageTitle>ログイン</PageTitle>
             <DetailMessage.Rest />
           </div>
-          <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-[auto_1fr] gap-4 items-center">
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col items-stretch gap-4 items-center">
 
-            <FormLabel>従業員番号</FormLabel>
-            <UI.Field name="values.従業員番号" className="w-full" control={control} />
+            <div className="flex gap-4">
+              <FormLabel className="basis-24 shrink-0">従業員番号</FormLabel>
+              <UI.Field name="values.従業員番号" className="flex-1" control={control} />
+            </div>
 
-            <FormLabel>パスワード</FormLabel>
-            <UI.Field name="values.パスワード" type="password" className="w-full" control={control} />
+            <div className="flex gap-4">
+              <FormLabel className="basis-24 shrink-0">パスワード</FormLabel>
+              <UI.Field name="values.パスワード" type="password" className="flex-1" control={control} />
+            </div>
 
             <Button submit fill className="col-span-2 justify-center mt-4">ログイン</Button>
           </form>
@@ -81,7 +86,7 @@ export function P001_ログイン(props: {
         )}
 
       </div>
-    </UI.FieldContextProvider>
+    </UI.FieldUiContext.Provider>
   )
 
   // ログインしている場合は、子コンポーネントを表示

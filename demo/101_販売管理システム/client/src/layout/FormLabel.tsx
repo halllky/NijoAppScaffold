@@ -8,7 +8,7 @@ export function FormLabel(props: {
   children?: React.ReactNode
 }) {
   return (
-    <label htmlFor={props.htmlFor} className={`block text-gray-700 select-none ${props.className ?? ''}`}>
+    <label htmlFor={props.htmlFor} className={`inline-block p-px text-gray-700 select-none ${props.className ?? ''}`}>
       {props.children}
     </label>
   )

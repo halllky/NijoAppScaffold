@@ -37,7 +37,9 @@ function P200_入荷() {
       searchCondition={(
         <div>検索条件</div>
       )}
-      searchResultColumns={[]}
+      defineSearchResultColumns={[columnFor => [
+
+      ], []]}
     />
   )
 }
