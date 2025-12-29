@@ -36,9 +36,10 @@ export default {
  * P100 売上
  */
 function P100_売上() {
-  const { register, handleSubmit, reset, control } = useForm<売上一覧SearchCondition>({
+  const formMethods = useForm<売上一覧SearchCondition>({
     defaultValues: createNew売上一覧SearchCondition(),
   })
+  const { register, handleSubmit, reset, control } = formMethods
 
   const handleClear = useEvent(() => {
     reset(createNew売上一覧SearchCondition(), { keepDefaultValues: true })
@@ -51,6 +52,7 @@ function P100_売上() {
       searchConditionDefaultSize={160}
       onClear={handleClear}
       onSubmit={handleSubmit}
+      onUrlChanged={reset}
       searchCondition={(
         <div className="h-full py-1 flex flex-col lg:flex-row lg:items-start gap-x-8 gap-y-2">
 
