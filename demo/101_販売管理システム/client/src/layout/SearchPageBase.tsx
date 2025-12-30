@@ -99,8 +99,13 @@ export function SearchPageBase<
   const [loading, setLoading] = React.useState(false)
   const [searchConditionVisible, setSearchConditionVisible] = React.useState(true)
   const { clearMessages, replaceMessages } = DetailMessage.useSetter()
+  const abortControllerRef = React.useRef<AbortController | null>(null)
 
   const executeSearch = React.useCallback(async (condition: TCondition, page: number, size: number) => {
+    abortControllerRef.current?.abort()
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
     try {
       setLoading(true)
       const conditionForRequest = {
@@ -108,7 +113,8 @@ export function SearchPageBase<
         skip: (page * size).toString(),
         take: size.toString(),
       } as TCondition
-      const result = await callComplexPostEndpointAsync(props.queryModelType, conditionForRequest)
+      const result = await callComplexPostEndpointAsync(props.queryModelType, conditionForRequest, { signal: controller.signal })
+
       if (result.type === 'ok') {
         setItems(result.returnValue.currentPageItems as TItem[])
         setTotalCount(result.returnValue.totalCount)
@@ -127,7 +133,9 @@ export function SearchPageBase<
         replaceMessages({ error: [result.message] })
       }
     } finally {
-      setLoading(false)
+      if (abortControllerRef.current === controller) {
+        setLoading(false)
+      }
     }
   }, [props.queryModelType, clearMessages, replaceMessages])
 
@@ -229,7 +237,7 @@ export function SearchPageBase<
               クリア
             </Button>
 
-            <Button submit fill form="search-form" disabled={loading}>
+            <Button submit fill form="search-form">
               検索
             </Button>
           </>
@@ -263,7 +271,7 @@ export function SearchPageBase<
 
                 <div className="flex flex-wrap items-center py-1">
                   {/* 件数表示 */}
-                  <div className="text-sm text-gray-600">
+                  <div className="min-w-48 text-sm text-gray-600">
                     {loading && (
                       <>検索中...</>
                     )}
