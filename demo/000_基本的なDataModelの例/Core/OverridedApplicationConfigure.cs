@@ -136,6 +136,7 @@ public partial class OverridedApplicationConfigure : DefaultConfiguration {
         base.EditDefaultJsonSerializerOptions(option);
 
         // 型ごとのシリアライズ設定
+        option.Converters.Add(new BooleanConverter());
         option.Converters.Add(new Int32Converter());
         option.Converters.Add(new DecimalConverter());
         option.Converters.Add(new DateTimeConverter());
@@ -150,6 +151,72 @@ public partial class OverridedApplicationConfigure : DefaultConfiguration {
         option.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 
         return option;
+    }
+    /// <summary>
+    /// 真偽値。通常のtrue/falseだけでなく、"TRUE" "True" "true" といった文字列と、1を真として変換する。
+    /// </summary>
+    private class BooleanConverter : JsonConverterFactory {
+        public override bool CanConvert(Type typeToConvert) {
+            return typeToConvert == typeof(bool) || typeToConvert == typeof(bool?);
+        }
+        public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options) {
+            return (JsonConverter)Activator.CreateInstance(
+                typeof(BooleanConverterInner<>).MakeGenericType(typeToConvert))!;
+        }
+        private class BooleanConverterInner<T> : JsonConverter<T> {
+            public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+                bool? b;
+                switch (reader.TokenType) {
+                    case JsonTokenType.Null:
+                        b = null;
+                        break;
+                    case JsonTokenType.True:
+                        b = true;
+                        break;
+                    case JsonTokenType.False:
+                        b = false;
+                        break;
+                    case JsonTokenType.String:
+                        var str = reader.GetString();
+                        if (string.IsNullOrWhiteSpace(str)) {
+                            b = null;
+                        } else if (bool.TryParse(str, out var p)) {
+                            b = p;
+                        } else if (str == "1") {
+                            b = true;
+                        } else if (str == "0") {
+                            b = false;
+                        } else {
+                            throw new JsonException($"不正な真偽値形式です: {str}");
+                        }
+                        break;
+                    case JsonTokenType.Number:
+                        if (reader.TryGetInt32(out var i)) {
+                            if (i == 1) b = true;
+                            else if (i == 0) b = false;
+                            else throw new JsonException($"不正な真偽値形式です: {i}");
+                        } else {
+                            throw new JsonException($"不正な真偽値形式です");
+                        }
+                        break;
+                    default:
+                        throw new JsonException($"不正な真偽値形式です: {reader.TokenType}");
+                }
+
+                if (b == null) {
+                    if (default(T) is null) return default!;
+                    throw new JsonException("null は許可されていません。");
+                }
+                return (T)(object)b.Value;
+            }
+            public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options) {
+                if (value is null) {
+                    writer.WriteNullValue();
+                } else {
+                    writer.WriteBooleanValue((bool)(object)value);
+                }
+            }
+        }
     }
     /// <summary>
     /// 整数。クライアント側ではstring型。
