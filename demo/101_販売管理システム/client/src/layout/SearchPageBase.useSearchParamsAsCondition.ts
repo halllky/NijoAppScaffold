@@ -70,8 +70,15 @@ export function assignDeep(source: Record<string, unknown>, target: Record<strin
         target[key] as Record<string, unknown>
       )
     } else {
-      // string や boolean などのプリミティブ値の場合はそのまま代入
-      target[key] = sourceValue
+      // string や boolean などのプリミティブ値の場合はそのまま代入。
+      // ただし、target側がbooleanでsource側が"true"/"false"の場合は変換する。
+      // DOMの checked に文字列を代入すると動作しないため。
+      const targetValue = target[key]
+      if (typeof targetValue === 'boolean' && (sourceValue === 'true' || sourceValue === 'false')) {
+        target[key] = sourceValue === 'true'
+      } else {
+        target[key] = sourceValue
+      }
     }
   }
 }
