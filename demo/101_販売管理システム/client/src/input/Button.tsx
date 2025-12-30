@@ -61,7 +61,7 @@ export const Button = ({
 }: ButtonProps) => {
 
   // 基本的なスタイル
-  const baseStyle = "rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-teal-400"
+  const baseStyle = "rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-teal-400 select-none"
 
   // レイアウト
   const layoutStyle = `flex items-center justify-center gap-1 ${inline ? 'inline-flex' : 'flex'} ${iconRight ? 'flex-row-reverse' : 'flex-row'}`

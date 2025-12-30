@@ -142,6 +142,8 @@ namespace Nijo.Parts.Common {
                     searchCondition.TsTypeName,
                     searchCondition.TsNewObjectFunction,
                     searchCondition.PkAssignFunctionName,
+                    searchCondition.TypeScriptSortableMemberType,
+                    searchCondition.GetTypeScriptSortableMemberType,
                     displayData.TsTypeName,
                     displayData.TsNewObjectFunction,
                     displayData.PkExtractFunctionName,
@@ -381,6 +383,18 @@ namespace Nijo.Parts.Common {
                       export const assignKeys: { [K in {{QUERY_MODEL_TYPE}}]: ((data: TypeMap[K], keys: unknown[]) => void) } = {
                     {{queryModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
                         '{{agg.PhysicalName}}': {{new SearchCondition.Entry(agg).PkAssignFunctionName}} as (data: {{new SearchCondition.Entry(agg).TsTypeName}}, keys: unknown[]) => void,
+                    """)}}
+                      }
+                      /** ソート可能メンバーの型（「昇順」「降順」抜き） */
+                      export interface SortableMemberTypeMap {
+                    {{queryModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
+                        '{{agg.PhysicalName}}': {{new SearchCondition.Entry(agg).TypeScriptSortableMemberType}}
+                    """)}}
+                      }
+                      /** ソート可能メンバー一覧取得関数 */
+                      export const getSortableMembers: { [K in {{QUERY_MODEL_TYPE}}]: (() => string[]) } = {
+                    {{queryModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
+                        '{{agg.PhysicalName}}': {{new SearchCondition.Entry(agg).GetTypeScriptSortableMemberType}},
                     """)}}
                       }
                     }
