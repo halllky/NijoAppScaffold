@@ -19,6 +19,7 @@
       <外部システム側ID
         DisplayName="商品コード"
         IsRequired="True"
+        StringSearchBehavior="Exact"
         Type="word"
         UniqueId="f5f225fa-eddd-4cca-ae58-b408e1b34100" />
       <商品名
@@ -214,6 +215,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       Type="query-model"
       UniqueId="7e844312-66b4-4693-b8eb-c4d3a4dd2565">
       <従業員番号
+        StringSearchBehavior="Exact"
         Type="word"
         UniqueId="91f94ec3-0cff-4468-84df-dbba8091f1c8" />
       <氏名
@@ -275,6 +277,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       Type="query-model"
       UniqueId="7508f4ed-a9ba-4c3d-b258-eb328affebdc">
       <従業員番号
+        StringSearchBehavior="Exact"
         Type="word"
         UniqueId="525a40bd-74c1-4c09-aea1-4cc238e05c59" />
       <氏名
@@ -390,6 +393,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       UniqueId="ca790c30-db44-4439-9452-2a1310a901bb">
       <!--UUID-->
       <入荷ID
+        StringSearchBehavior="Exact"
         Type="word"
         UniqueId="1f7d351c-4779-45fe-91c0-c21dde51c77e" />
       <入荷日時
@@ -419,6 +423,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
         Type="int"
         UniqueId="b583f019-e406-407e-94db-588a6c19dadc" />
       <外部システム側ID
+        StringSearchBehavior="Exact"
         Type="word"
         UniqueId="643fcd6c-1a53-406f-9d58-576b6eb5a3de" />
       <商品名
@@ -511,6 +516,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
         UniqueId="fcfd234d-d0fe-48d5-97d3-a9dd16510e13" />
       <!--外部システム側ID-->
       <外部システム側ID
+        StringSearchBehavior="Exact"
         Type="word"
         UniqueId="1ee75f27-4bed-4d90-9b4a-be02f2ee92e7" />
       <商品名

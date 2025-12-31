@@ -106,6 +106,7 @@ export async function callComplexPostEndpointAsync(
       const response = await callAspNetCoreApiAsync(url, {
         method: 'POST',
         body: formData,
+        signal: options?.signal,
       })
 
       // HTTPステータスコードが200-299でない場合はエラー。
@@ -145,6 +146,9 @@ export async function callComplexPostEndpointAsync(
     }
 
   } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return { type: 'canceled' }
+    }
     return { type: 'unknown', message: handleUnknownError(error) }
   }
 }
@@ -211,6 +215,8 @@ const IGNORE_CONFIRM = "ignore-confirm"
 export type ComplexPostOptions = {
   /** 確認メッセージを表示しない */
   ignoreConfirm?: true
+  /** 中断用シグナル */
+  signal?: AbortSignal
 }
 
 /**

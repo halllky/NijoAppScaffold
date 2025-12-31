@@ -85,6 +85,7 @@ public class SchemaParseRule {
             BasicNodeOptions.UserHelpText,
             BasicNodeOptions.ConstantType,
             BasicNodeOptions.ConstantValue,
+            BasicNodeOptions.StringSearchBehavior,
         };
         return new() {
             Models = models,

@@ -61,13 +61,30 @@ internal class ValueObjectMember : IValueMemberType {
             var queryFullPath = ctx.Query.GetFlattenArrayPath(E_CsTs.CSharp, out var isMany);
             var queryOwnerFullPath = queryFullPath.SkipLast(1);
 
+            var searchBehavior = ctx.Query.Metadata is IInstanceValuePropertyMetadata vm
+                && vm.SchemaPathNode.XElement.Attribute(BasicNodeOptions.StringSearchBehavior.AttributeName)?.Value is string s
+                ? s
+                : BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL;
+
+            string GetComparison(string target) {
+                return searchBehavior switch {
+                    BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT => $"{target} == trimmed",
+                    BasicNodeOptions.STRING_SEARCH_BEHAVIOR_FORWARD => $"Microsoft.EntityFrameworkCore.EF.Functions.Like((string){target}, $\"{{escaped}}%\", \"\\\\\")",
+                    BasicNodeOptions.STRING_SEARCH_BEHAVIOR_BACKWARD => $"Microsoft.EntityFrameworkCore.EF.Functions.Like((string){target}, $\"%{{escaped}}\", \"\\\\\")",
+                    _ => $"Microsoft.EntityFrameworkCore.EF.Functions.Like((string){target}, $\"%{{escaped}}%\", \"\\\\\")",
+                };
+            }
+
             return $$"""
                 if (!string.IsNullOrWhiteSpace({{fullpathNullable}})) {
                     var trimmed = {{fullpathNotNull}}!.Trim();
+                {{If(searchBehavior != BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT, () => $$"""
+                    var escaped = trimmed.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+                """)}}
                 {{If(isMany, () => $$"""
-                    {{query}} = {{query}}.Where(x => x.{{queryOwnerFullPath.Join("!.")}}.Any(y => y.{{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}}!.Contains(trimmed)));
+                    {{query}} = {{query}}.Where(x => x.{{queryOwnerFullPath.Join("!.")}}.Any(y => {{GetComparison($"y.{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}!")}}));
                 """).Else(() => $$"""
-                    {{query}} = {{query}}.Where(x => x.{{queryFullPath.Join("!.")}}!.Contains(trimmed));
+                    {{query}} = {{query}}.Where(x => {{GetComparison($"x.{queryFullPath.Join("!.")}!")}});
                 """)}}
                 }
                 """;
