@@ -62,7 +62,7 @@ export function LoginUserProvider({ children }: { children: React.ReactNode }) {
       if (result.type === 'ok') {
         const user: ログインユーザー情報DisplayData = {
           ...createNewログインユーザー情報DisplayData(),
-          ...result.returnValue.values,
+          ...result.returnValue,
         }
         sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user))
         setLoginUser(user)

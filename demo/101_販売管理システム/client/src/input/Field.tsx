@@ -138,6 +138,7 @@ export function Field<
       renderUiElement = ({ field }) => (
         <DescriptionTextArea
           {...field}
+          className="flex-1 overflow-y-auto"
           // input要素ではなくtextarea要素なのでpropsの型が違うのだが、
           // classNameなどよく使う属性については問題ないので強制的にキャスト
           {...rest as unknown as React.TextareaHTMLAttributes<HTMLTextAreaElement>}

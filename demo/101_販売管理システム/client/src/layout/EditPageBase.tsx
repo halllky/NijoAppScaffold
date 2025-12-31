@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useBlocker, useRevalidator } from "react-router-dom"
 import { PageBase } from "./PageBase"
 
@@ -8,12 +8,15 @@ export type EditPageBaseProps = {
   /** 編集中かどうか。編集中の場合、画面離脱時に確認ダイアログを表示します。 */
   isDirty?: boolean
   /** 保存処理（API 呼び出し） */
-  onSave?: () => Promise<{ reload: boolean }>
+  onSave?: EditPageSaveEvent
   /** ヘッダー部分のページタイトルの横の部分のレイアウト */
   header?: (controls: EditPageComponentProps) => React.ReactNode
   /** 子要素（レイアウトはすべて委譲） */
   children?: (controls: EditPageComponentProps) => React.ReactNode
 }
+
+/** 保存処理のハンドラの型 */
+export type EditPageSaveEvent = () => Promise<{ reload: boolean }>
 
 export type EditPageComponentProps = {
   /** 保存処理のハンドラ */
@@ -58,14 +61,28 @@ export function EditPageBase(props: EditPageBaseProps) {
     );
   })
 
+  // ブラウザのリロードや閉じる操作のブロック
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (props.isDirty && !skipBlockRef.current) {
+        e.preventDefault()
+        e.returnValue = ""
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  }, [props.isDirty, skipBlockRef])
+
   // 保存処理
   const save = useCallback(async () => {
     try {
       setSaving(true)
       skipBlockRef.current = true
 
-      await props.onSave?.()               // API 保存
-      revalidator.revalidate()       // loader 再実行
+      const result = await props.onSave?.() // API 保存
+      if (result?.reload) {
+        revalidator.revalidate() // loader 再実行
+      }
     } finally {
       setSaving(false)
       skipBlockRef.current = false

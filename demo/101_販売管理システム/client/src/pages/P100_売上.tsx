@@ -58,6 +58,11 @@ function P100_売上() {
       searchConditionDefaultSize={160}
       sortOptions={sortOptions}
       createInitialCondition={createInitialCondition}
+      header={(
+        <Link to={getLinkUrlToP101売上詳細()} className="text-teal-600 underline">
+          新規登録
+        </Link>
+      )}
       renderSearchCondition={({ register, control }) => (
         <div className="h-full py-1 flex flex-col lg:flex-row lg:items-start gap-x-8 gap-y-2">
 

@@ -233,6 +233,8 @@ export function SearchPageBase<
               </PageTitle>
             </button>
 
+            {props.header}
+
             <Button outline onClick={handleClear}>
               クリア
             </Button>
