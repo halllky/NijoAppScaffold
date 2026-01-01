@@ -91,7 +91,7 @@ function P100_売上() {
             <UI.Field name="filter.備考" control={control} />
 
             <FormLabel className="text-right">売上総額(税込)</FormLabel>
-            <UI.Field name="filter.売上総額_税込" type="numeric" control={control} />
+            <UI.Field name="filter.合計金額" type="numeric" control={control} />
 
             <FormLabel className="text-right">売上数量合計</FormLabel>
             <UI.Field name="filter.売上数量合計" type="numeric" control={control} />
@@ -115,7 +115,7 @@ function P100_売上() {
         columnFor('values.担当者.従業員番号', { header: '担当者', widthPx: 96 }),
         columnFor('values.担当者.氏名', { header: '', widthPx: 120 }),
         columnFor('values.備考', { widthPx: 200 }),
-        columnFor('values.売上総額_税込', { header: '売上総額(税込)', widthPx: 144 }),
+        columnFor('values.合計金額', { header: '売上総額(税込)', widthPx: 144 }),
         columnFor('values.売上数量合計', { widthPx: 144 }),
       ], []]}
     />

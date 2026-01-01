@@ -94,6 +94,9 @@ partial class OverridedApplicationService {
         // 保存処理
         using var tran = await DbContext.Database.BeginTransactionAsync();
 
+        // 念のため自動計算分の売上総額を再計算しておく
+        Simulate(param);
+
         // 売上ヘッダ作成
         var result = await Create売上Async(new() {
             売上日時 = param.Values.売上日時 ?? CurrentTime,
@@ -104,8 +107,10 @@ partial class OverridedApplicationService {
                 商品 = new() { 商品SEQ = x.Detail.Values.商品.商品SEQ },
                 区分 = 売上明細区分.売上,
                 売上数量 = x.Detail.Values.売上数量,
-                売上総額_税込 = x.Detail.Values.売上総額_税込,
-                備考 = x.Detail.Values.備考,
+
+                // 手修正分があればそちらを優先、なければ自動計算分を使用
+                売上総額_税込 = x.Detail.Values.売上総額_税込_手修正 ?? x.Detail.Values.売上総額_税込_自動計算,
+
                 引当明細 = x.Plan.Select(p => new 引当明細CreateCommand {
                     入荷 = new() { 入荷明細ID = p.StockId },
                     引当数量 = p.Deduct,

@@ -8,7 +8,7 @@ partial class OverridedApplicationService {
             担当者_従業員番号 = x.担当者!.従業員番号,
             担当者_氏名 = x.担当者!.氏名,
             備考 = x.備考,
-            売上総額_税込 = x.売上の売上明細!.Sum(d => d.売上総額_税込),
+            合計金額 = x.売上の売上明細!.Sum(d => d.売上総額_税込),
             売上数量合計 = x.売上の売上明細!.Sum(d => d.売上数量),
             Version = x.Version!.Value,
         });

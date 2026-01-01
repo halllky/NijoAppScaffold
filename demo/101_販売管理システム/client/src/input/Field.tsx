@@ -7,7 +7,7 @@ import * as DetailMessage from "../util/DetailMessageContext"
 import { WordTextBox } from "./WordTextBox"
 import { CheckBox } from "./CheckBox"
 import { DateInput } from "./DateInput"
-import { NumericTextBox } from "./NumericTextBox"
+import { NumericTextBox, NumericTextBoxProps } from "./NumericTextBox"
 import { DescriptionTextArea } from "./DescriptionTextArea"
 import { DataTableColumn } from "../layout/DataTable"
 
@@ -67,7 +67,7 @@ export type FieldProps<
 > = Omit<React.InputHTMLAttributes<HTMLInputElement>, "name" | "ref"> & {
   name: TFieldPath
   control: ReactHookForm.Control<TFormValues>
-}
+} & NumericTextBoxProps
 
 /**
  * nijoが自動生成するメタデータを参照して
@@ -249,8 +249,8 @@ export function Field<
 
   //#region フォーム - 列挙体
   if (('enumType' in fieldMetadata) && fieldMetadata.enumType) {
+    const enumValues = EnumValueMap[fieldMetadata.enumType]()
     if (contextValue.objectType === 'SearchCondition') {
-      const enumValues = EnumValueMap[fieldMetadata.enumType]()
       renderUiElement = ({ field }) => (
         <div className="flex flex-wrap gap-2 items-center">
           {enumValues.map(value => (
@@ -270,6 +270,21 @@ export function Field<
             </label>
           ))}
         </div>
+      )
+    } else {
+      renderUiElement = ({ field }) => (
+        <select
+          {...field}
+          // input要素ではなくselect要素なのでpropsの型が違うのだが、
+          // classNameなどよく使う属性については問題ないので強制的にキャスト
+          {...rest as unknown as React.SelectHTMLAttributes<HTMLSelectElement>}
+          className={`p-1 border ${rest.readOnly || rest.disabled ? "border-transparent" : "border-gray-600"}`}
+        >
+          <option key="" value=""></option>
+          {enumValues.map(value => (
+            <option key={value} value={value}>{value}</option>
+          ))}
+        </select>
       )
     }
   }

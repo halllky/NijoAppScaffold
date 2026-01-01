@@ -190,8 +190,10 @@ partial class OverridedApplicationService {
                     商品 = new() { 商品SEQ = detail.Values.商品.商品SEQ },
                     区分 = detail.Values.区分,
                     売上数量 = detail.Values.売上数量,
-                    売上総額_税込 = detail.Values.売上総額_税込,
-                    備考 = detail.Values.備考,
+
+                    // 手修正があればそちらを優先
+                    売上総額_税込 = detail.Values.売上総額_税込_手修正 ?? detail.Values.売上総額_税込_自動計算,
+
                     引当明細 = plan.Select(p => new 引当明細UpdateCommand {
                         入荷 = new() { 入荷明細ID = p.StockId },
                         引当数量 = p.Deduct,

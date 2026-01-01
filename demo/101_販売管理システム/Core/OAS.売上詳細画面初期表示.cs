@@ -21,7 +21,7 @@ partial class OverridedApplicationService {
             return;
         }
 
-        context.ReturnValue = new() {
+        var returnValue = new 売上詳細DisplayData() {
             Values = new() {
                 売上SEQ = entity.売上SEQ,
                 売上日時 = entity.売上日時,
@@ -29,6 +29,7 @@ partial class OverridedApplicationService {
                     従業員番号 = entity.担当者?.従業員番号,
                     氏名 = entity.担当者?.氏名,
                 },
+                合計金額 = null, // このあとのシミュレート処理で設定する
                 備考 = entity.備考,
             },
             売上詳細の売上明細 = entity.売上の売上明細.Select(x => new 売上詳細の売上明細DisplayData {
@@ -43,11 +44,23 @@ partial class OverridedApplicationService {
                     },
                     区分 = x.区分,
                     売上数量 = x.売上数量,
-                    売上総額_税込 = x.売上総額_税込,
-                    備考 = x.備考,
+                    売上総額_税込_自動計算 = null, // このあとのシミュレート処理で設定する
+                    売上総額_税込_手修正 = x.売上総額_税込,
                 },
                 ExistsInDatabase = true,
             }).ToList(),
         };
+
+        // 金額の自動計算
+        Simulate(returnValue);
+
+        // 自動計算された金額と手修正された金額が一致する場合は、手修正された金額をクリアする
+        foreach (var item in returnValue.売上詳細の売上明細) {
+            if (item.Values.売上総額_税込_手修正 == item.Values.売上総額_税込_自動計算) {
+                item.Values.売上総額_税込_手修正 = null;
+            }
+        }
+
+        context.ReturnValue = returnValue;
     }
 }

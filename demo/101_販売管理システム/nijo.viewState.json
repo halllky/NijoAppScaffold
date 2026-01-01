@@ -116,8 +116,7 @@
           "商品_商品SEQ",
           "区分",
           "売上数量",
-          "売上総額_税込",
-          "備考"
+          "売上総額_税込"
         ],
         "background-color": "#ea580c",
         "border-color": "#ea580c"
@@ -233,6 +232,12 @@
   },
   "schemaDefinition": {
     "nodes": {
+      "00556384-1f6d-4596-89d6-2cd1a9094ea5": {
+        "id": "00556384-1f6d-4596-89d6-2cd1a9094ea5",
+        "label": "売上金額シミュレート",
+        "background-color": "#0284c7",
+        "border-color": "#0284c7"
+      },
       "0d252a96-0dd0-45eb-af33-e761419117c7": {
         "id": "0d252a96-0dd0-45eb-af33-e761419117c7",
         "label": "売上詳細画面初期表示Parameter"
@@ -831,9 +836,21 @@
         "line-color": "#0284c7",
         "line-style": "solid",
         "targetEndShape": "triangle"
+      },
+      {
+        "source": "00556384-1f6d-4596-89d6-2cd1a9094ea5",
+        "target": "2352e942-65b1-47fe-ac3b-0c49bd4e295f",
+        "label": "引数など2件の参照",
+        "line-color": "#0284c7",
+        "line-style": "solid",
+        "targetEndShape": "triangle"
       }
     ],
     "nodePositions": {
+      "00556384-1f6d-4596-89d6-2cd1a9094ea5": {
+        "x": -43,
+        "y": -208
+      },
       "0d252a96-0dd0-45eb-af33-e761419117c7": {
         "x": -289.0813708132823,
         "y": 23.756490298191284

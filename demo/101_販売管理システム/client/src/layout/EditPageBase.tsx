@@ -11,6 +11,8 @@ export type EditPageBaseProps = {
   onSave?: EditPageSaveEvent
   /** ヘッダー部分のページタイトルの横の部分のレイアウト */
   header?: (controls: EditPageComponentProps) => React.ReactNode
+  /** フッター部分のレイアウト */
+  footer?: (controls: EditPageComponentProps) => React.ReactNode
   /** 子要素（レイアウトはすべて委譲） */
   children?: (controls: EditPageComponentProps) => React.ReactNode
 }
@@ -93,6 +95,7 @@ export function EditPageBase(props: EditPageBaseProps) {
     <PageBase
       browserTitle={props.pageTitle}
       header={props.header?.({ save, saving })}
+      footer={props.footer?.({ save, saving })}
       contents={props.children?.({ save, saving })}
       className="gap-2 px-8 py-2"
     />

@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router-dom"
 import { RootLayout } from "./layout/RootLayout"
 import * as DetailMessageContext from "./util/DetailMessageContext"
 import P000 from "./pages/P000_トップページ"
+import P002 from "./pages/P002_ログアウト"
 import P100 from "./pages/P100_売上"
 import P200 from "./pages/P200_入荷"
 import P300 from "./pages/P300_商品"
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
 
       // 業務画面
       P000,
+      P002,
       P100,
       P200,
       P300,

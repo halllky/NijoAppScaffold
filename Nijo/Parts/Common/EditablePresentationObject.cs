@@ -4,6 +4,7 @@ using System.Linq;
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Models.QueryModelModules;
+using Nijo.SchemaParsing;
 
 namespace Nijo.Parts.Common;
 
@@ -241,13 +242,28 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         public int? DecimalPlace => Member.DecimalPlace;
 
         public string RenderCsDeclaration() {
+            var comment = Member.XElement.GetCommentMultiLine().ToArray();
             return $$"""
-                /// <summary>{{Member.DisplayName}}</summary>
+                {{If(comment.Length > 0, () => $$"""
+                /// <summary>
+                {{Member.XElement.GetCommentMultiLine().SelectTextTemplate(line => $$"""
+                /// {{line}}
+                """)}}
+                /// </summary>
+                """)}}
                 public {{Member.Type.CsDomainTypeName}}? {{PropertyName}} { get; set; }
                 """;
         }
         public string RenderTsDeclaration() {
+            var comment = Member.XElement.GetCommentMultiLine().ToArray();
             return $$"""
+                {{If(comment.Length > 0, () => $$"""
+                /**
+                {{Member.XElement.GetCommentMultiLine().SelectTextTemplate(line => $$"""
+                 * {{line}}
+                """)}}
+                 */
+                """)}}
                 {{PropertyName}}?: {{Member.Type.TsTypeName}} | null
                 """;
         }
@@ -303,13 +319,28 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         public int? DecimalPlace => null;
 
         public string RenderCsDeclaration() {
+            var comment = Member.XElement.GetCommentMultiLine().ToArray();
             return $$"""
-                /// <summary>{{Member.DisplayName}}</summary>
+                {{If(comment.Length > 0, () => $$"""
+                /// <summary>
+                {{Member.XElement.GetCommentMultiLine().SelectTextTemplate(line => $$"""
+                /// {{line}}
+                """)}}
+                /// </summary>
+                """)}}
                 public {{RefEntry.CsClassName}} {{PropertyName}} { get; set; } = new();
                 """;
         }
         public string RenderTsDeclaration() {
+            var comment = Member.XElement.GetCommentMultiLine().ToArray();
             return $$"""
+                {{If(comment.Length > 0, () => $$"""
+                /**
+                {{Member.XElement.GetCommentMultiLine().SelectTextTemplate(line => $$"""
+                 * {{line}}
+                """)}}
+                 */
+                """)}}
                 {{PropertyName}}: {{RefEntry.TsTypeName}}
                 """;
         }

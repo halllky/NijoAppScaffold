@@ -13,6 +13,10 @@
       "path": "."
     },
     {
+      "name": "Nijo.NewProjectTemplate",
+      "path": "Nijo.NewProjectTemplate"
+    },
+    {
       "name": "現新比較",
       "path": "temp_ソース現新比較用"
     },

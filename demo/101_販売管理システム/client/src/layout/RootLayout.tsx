@@ -2,19 +2,18 @@ import React from "react"
 import { Outlet, Link, useNavigation } from "react-router-dom"
 import * as Icon from "@heroicons/react/24/solid"
 import * as P000 from "../pages/P000_トップページ"
+import * as P002 from "../pages/P002_ログアウト"
 import * as P100 from "../pages/P100_売上"
 import * as P200 from "../pages/P200_入荷"
 import * as P300 from "../pages/P300_商品"
 import * as P400 from "../pages/P400_従業員"
 import { NowLoading } from "./NowLoading"
-import { useLoginLogout } from "../util/useLoginLogout"
 
 /**
  * ログイン後のアプリケーション全体の枠
  */
 export function RootLayout() {
   const navigation = useNavigation()
-  const { logoutAsync } = useLoginLogout()
 
   return (
     <div className="flex flex-col h-full">
@@ -41,10 +40,7 @@ export function RootLayout() {
           <li className="flex-1"></li>
 
           <li className="shrink-0">
-            <button onClick={logoutAsync} className="hover:text-gray-300 select-none flex items-center gap-1 cursor-pointer">
-              <Icon.ArrowRightEndOnRectangleIcon className="w-5 h-5" />
-              ログアウト
-            </button>
+            <RootNavigationLink to={P002.URL} icon={Icon.ArrowRightEndOnRectangleIcon}>ログアウト</RootNavigationLink>
           </li>
         </ul>
       </nav>

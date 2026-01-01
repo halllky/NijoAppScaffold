@@ -227,12 +227,12 @@ public partial class OverridedApplicationConfigure : DefaultConfiguration {
                 return null;
 
             } else if (reader.TokenType == JsonTokenType.String) {
-                var strValue = reader.GetString();
+                // カンマ区切りになった数値形式を考慮
+                var strValue = reader.GetString()?.Trim().Replace(",", "");
                 if (string.IsNullOrWhiteSpace(strValue)) {
                     return null;
                 }
                 return int.Parse(strValue);
-
             } else if (reader.TokenType == JsonTokenType.Number) {
                 return reader.GetInt32();
             }
@@ -256,7 +256,8 @@ public partial class OverridedApplicationConfigure : DefaultConfiguration {
                 return null;
 
             } else if (reader.TokenType == JsonTokenType.String) {
-                var strValue = reader.GetString();
+                // カンマ区切りになった数値形式を考慮
+                var strValue = reader.GetString()?.Trim().Replace(",", "");
                 if (string.IsNullOrWhiteSpace(strValue)) {
                     return null;
                 }
