@@ -53,23 +53,31 @@ export type DetailMessageContextType = {
  * 内部コンテキストの型
  */
 type DetailMessageContextTypeInternal = {
-  /** nameと、そのnameに対するメッセージ更新関数の紐づけのref */
-  setMessageFunctionsByName: React.RefObject<NameRegistration>
-  /** どこにも登録されていないnameを表示する関数の一覧のuseStateのsetter */
-  setMessageFunctionsUnregistered: React.Dispatch<React.SetStateAction<ForUnregistered>>
+  /**
+   * 内部コンテキストの末端コンポーネントがプロバイダーに対してどのフィールドに対するエラーメッセージを表示するかを登録する。
+   * コンテキストプロバイダーは、エラーメッセージ表示のタイミングで、ここで登録された情報の中から
+   * 各フィールド名にマッチするものを探し出して、対応する setter 関数を呼び出す。
+   */
+  register: (registration: FieldRegistration) => void
+  /**
+   * register で登録した内容を解除する。
+   * 末端コンポーネントのアンマウント時に呼び出される必要がある。
+   */
+  unregister: (registration: FieldRegistration) => void
 }
 
-/** nameごとの登録情報 */
-type NameRegistration = Map<string, {
-  /** このコンポーネントに表示するメッセージを引数の値で置き換える */
-  setMessages: (messages: DetailMessageByField | null) => void
-}[]>
-
-/** どこにも登録されていないnameごとの登録情報 */
-type ForUnregistered = {
-  /** このコンポーネントに表示するメッセージを引数の値で置き換える */
-  setMessages: (messages: DetailMessageByField | null) => void
-}[]
+/** 内部コンテキストの末端コンポーネントがプロバイダーに対して行う登録 */
+type FieldRegistration = {
+  /** 末端コンポーネントで宣言される useState の setter 関数 */
+  messageSetter: (messages: DetailMessageByField | null) => void
+} & (
+    // どこにも表示されないメッセージを表示することを表す
+    | { type: 'unregistered' }
+    // 特定のnameに対するメッセージを表示することを表す
+    | { type: 'exact', name: string }
+    // 特定のnameおよびその子孫に対するメッセージを表示することを表す
+    | { type: 'forwardMatch', name: string }
+  )
 
 /**
  * 外部公開コンテキスト
@@ -84,8 +92,8 @@ const DetailMessageContext = React.createContext<DetailMessageContextType>({
  * 内部コンテキスト
  */
 const DetailMessageContextInternal = React.createContext<DetailMessageContextTypeInternal>({
-  setMessageFunctionsByName: { current: new Map() },
-  setMessageFunctionsUnregistered: () => { },
+  register: () => { throw new Error('DetailMessageContextInternal を配置してください。') },
+  unregister: () => { throw new Error('DetailMessageContextInternal を配置してください。') },
 })
 
 /**
@@ -101,29 +109,31 @@ export function useSetter() {
  * を表示するためのコンテキスト。各画面側で取り扱いやすいAPIを提供する。
  */
 export function Provider(props: { children: React.ReactNode }) {
-  // 状態（name対応）
-  const setMessageFunctionsByName = React.useRef<NameRegistration>(new Map())
 
-  // 状態（name未登録分）
-  const [unregistered, setUnregistered] = React.useState<ForUnregistered>([])
-  const setMessageFunctionsUnregistered = React.useRef<ForUnregistered>(unregistered)
-  setMessageFunctionsUnregistered.current = unregistered
+  // コンテキスト内に未登録メッセージ表示箇所がどこにも無い場合にプロバイダー直下にメッセージを表示するための状態
+  const [unregisteredMessages, setUnregisteredMessages] = React.useState<DetailMessageByField>({})
 
-  // コンテキスト内に未登録メッセージ表示箇所がどこにも無い場合はプロバイダー直下にメッセージを表示する
-  const [otherMessages, setOtherMessages] = React.useState<DetailMessageByField>({})
+  // 内部コンテキスト用の登録情報。
+  // エラーメッセージなどの表示時、この登録情報をもとに各フィールド名に対応する setter 関数を探し出して呼び出す。
+  const registeredRef = React.useRef<FieldRegistration[]>([])
+
+  // 内部コンテキストの末端コンポーネントに対して公開する登録関数
+  const internalContextValue: DetailMessageContextTypeInternal = React.useMemo(() => ({
+    register: request => {
+      registeredRef.current.push(request)
+    },
+    unregister: request => {
+      registeredRef.current = registeredRef.current.filter(item => item !== request)
+    },
+  }), [registeredRef])
 
   // 外部公開API
   const publicContextValue: DetailMessageContextType = React.useMemo(() => {
     const clearMessages = () => {
-      for (const arr of setMessageFunctionsByName.current.values()) {
-        for (const item of arr) {
-          item.setMessages(null)
-        }
+      for (const registerInfo of registeredRef.current) {
+        registerInfo.messageSetter(null)
       }
-      for (const item of setMessageFunctionsUnregistered.current) {
-        item.setMessages(null)
-      }
-      setOtherMessages({})
+      setUnregisteredMessages({})
     }
 
     const replaceMessages = (detail: PresentationContextDetail | null | undefined) => {
@@ -132,54 +142,127 @@ export function Provider(props: { children: React.ReactNode }) {
     }
 
     const appendMessages = (detail: PresentationContextDetail | null | undefined) => {
+      // どこに表示されないメッセージはここに蓄積させておいて最後にまとめて表示
+      const unregisteredCache: DetailMessageByField = {}
+
       // 構造化されたオブジェクトを平坦化
       const flatMap = flattenDetailMessages(detail)
 
-      for (const [name, messageByField] of flatMap) {
-        const registeredItems = setMessageFunctionsByName.current.get(name)
-        if (registeredItems) {
-          // nameが登録されているものを設定
-          for (const item of registeredItems) {
-            item.setMessages(messageByField)
-          }
-        } else {
-          // 登録されていないnameの場合
-          for (const item of setMessageFunctionsUnregistered.current) {
-            item.setMessages(messageByField)
-          }
-          setOtherMessages(prev => ({
-            error: [...(prev.error ?? []), ...(messageByField.error ?? [])],
-            warn: [...(prev.warn ?? []), ...(messageByField.warn ?? [])],
-            info: [...(prev.info ?? []), ...(messageByField.info ?? [])],
-          }))
+      // 平坦化されたメッセージを順に処理し、
+      // それぞれどこに表示するかを判定して setter 関数を呼び出す。
+      const exactMatchMap = new Map(registeredRef.current
+        .filter(item => item.type === 'exact')
+        .map(item => [item.name, item]))
+      const forwardMatcheList = registeredRef.current
+        .filter(item => item.type === 'forwardMatch')
+        .map(item => ({ splittedName: item.name.split('.'), ...item }))
+
+      for (const [nameSplittedByPeriod, messageByField] of flatMap) {
+
+        // nameの完全一致が登録されている場合はそこに優先的に表示
+        const name = nameSplittedByPeriod.join('.')
+        const exactMatch = exactMatchMap.get(name)
+        if (exactMatch) {
+          exactMatch.messageSetter(messageByField)
+          continue
         }
+
+        // 無い場合は前方一致を探す。
+        // 前方一致でヒットした登録情報のうち、最も長いものに表示。
+        // 最も長いものが複数ある場合は最初に登場した登録情報の箇所に表示。
+        // また、ヒットした以降の部分もエラーメッセージに含める。
+        // 例: 項目 "a.b.c.d" に対してエラーメッセージが発生しているとき、
+        //    "a.b" と "a.b.c" が登録されている場合は "a.b.c" にこれを表示する。
+        const forwardMatchCandidates = forwardMatcheList.map(registration => {
+          if (registration.splittedName.length > nameSplittedByPeriod.length) {
+            return { match: false, hitLength: -1, rest: [], messageSetter: registration.messageSetter }
+          }
+          for (let i = 0; i < registration.splittedName.length; i++) {
+            if (registration.splittedName[i] !== nameSplittedByPeriod[i]) {
+              return { match: false, hitLength: -1, rest: [], messageSetter: registration.messageSetter }
+            }
+          }
+          return {
+            match: true,
+            hitLength: registration.splittedName.length,
+            rest: nameSplittedByPeriod.slice(registration.splittedName.length),
+            messageSetter: registration.messageSetter,
+          }
+        }).filter(x => x.match)
+
+        if (forwardMatchCandidates.length > 0) {
+          // 上記でヒットした登録情報のうち最もパスが長いものを探す
+          let bestCandidate = forwardMatchCandidates[0]
+          for (const candidate of forwardMatchCandidates) {
+            if (candidate.hitLength > bestCandidate.hitLength) {
+              bestCandidate = candidate
+            }
+          }
+
+          // nameの残り部分をメッセージの先頭に付与してセットする。
+          // 半角数値の場合は配列インデックスなので「x行目」という文字に変換する。
+          const prefix = bestCandidate.rest
+            .filter(part => part !== 'values') // DisplayData の内部だけで使っているコンテナの名前
+            .map(part => /^\d+$/.test(part) ? `${Number(part) + 1}行目` : part)
+            .join(' ') + ': '
+          bestCandidate.messageSetter({
+            error: messageByField.error?.map(msg => prefix + msg),
+            warn: messageByField.warn?.map(msg => prefix + msg),
+            info: messageByField.info?.map(msg => prefix + msg),
+          })
+          continue
+        }
+
+        // どこにも登録されていないnameの場合はオブジェクトに溜めておいて最後にまとめてセットする。
+        // 該当のフィールドまでのパスをメッセージに含める。
+        const prefix = nameSplittedByPeriod
+          .filter(part => part !== 'values') // DisplayData の内部だけで使っているコンテナの名前
+          .map(part => /^\d+$/.test(part) ? `${Number(part) + 1}行目` : part)
+          .join(' ') + ': '
+        if (messageByField.error) {
+          unregisteredCache.error = [...(unregisteredCache.error ?? []), ...messageByField.error.map(msg => prefix + msg)]
+        }
+        if (messageByField.warn) {
+          unregisteredCache.warn = [...(unregisteredCache.warn ?? []), ...messageByField.warn.map(msg => prefix + msg)]
+        }
+        if (messageByField.info) {
+          unregisteredCache.info = [...(unregisteredCache.info ?? []), ...messageByField.info.map(msg => prefix + msg)]
+        }
+      }
+
+      // どこにも登録されていないname用のメッセージをセットする。
+      // コンテキスト内部で登録されている場合は最後に登録された箇所に表示し、
+      // どこにも無い場合はこのコンポーネントのstateにセットする。
+      const unregistered = registeredRef.current.filter(item => item.type === 'unregistered')
+      if (unregistered.length > 0) {
+        unregistered[unregistered.length - 1].messageSetter(unregisteredCache)
+      } else {
+        setUnregisteredMessages(prev => ({
+          error: [...(prev.error ?? []), ...(unregisteredCache.error ?? [])],
+          warn: [...(prev.warn ?? []), ...(unregisteredCache.warn ?? [])],
+          info: [...(prev.info ?? []), ...(unregisteredCache.info ?? [])],
+        }))
       }
     }
 
     return { replaceMessages, appendMessages, clearMessages }
-  }, [setMessageFunctionsByName, setMessageFunctionsUnregistered])
-
-  // 内部用
-  const internalContextValue: DetailMessageContextTypeInternal = React.useMemo(() => ({
-    setMessageFunctionsByName,
-    setMessageFunctionsUnregistered: setUnregistered,
-  }), [setMessageFunctionsByName, setUnregistered])
+  }, [registeredRef])
 
   return (
     <DetailMessageContextInternal.Provider value={internalContextValue}>
       <DetailMessageContext.Provider value={publicContextValue}>
 
         {/* コンテキスト内に未登録メッセージ表示箇所がどこにも無い場合はプロバイダー直下にメッセージを表示する */}
-        {unregistered.length === 0 && (otherMessages.error || otherMessages.warn || otherMessages.info) && (
+        {(unregisteredMessages.error || unregisteredMessages.warn || unregisteredMessages.info) && (
           <ul>
-            {otherMessages.error && otherMessages.error.map((msg, idx) => (
+            {unregisteredMessages.error && unregisteredMessages.error.map((msg, idx) => (
               <li key={`error-${idx}`} className="text-rose-700">{msg}</li>
             ))
             }
-            {otherMessages.warn && otherMessages.warn.map((msg, idx) => (
+            {unregisteredMessages.warn && unregisteredMessages.warn.map((msg, idx) => (
               <li key={`warn-${idx}`} className="text-amber-700">{msg}</li>
             ))}
-            {otherMessages.info && otherMessages.info.map((msg, idx) => (
+            {unregisteredMessages.info && unregisteredMessages.info.map((msg, idx) => (
               <li key={`info-${idx}`} className="text-sky-700">{msg}</li>
             ))}
           </ul>
@@ -213,33 +296,24 @@ export function Of<
 >(props: {
   /** この項目に対して発生したメッセージをこの箇所に表示する。 */
   name: TFieldPath
+  /** nameで指定した項目に加えて、その子孫の項目に発生したメッセージも含めるかどうか */
+  includeDescendants?: boolean
   /** useForm の control オブジェクト。 name を型安全に扱うために必要。 */
   control: ReactHookForm.Control<TFieldValues>
   className?: string
 }) {
 
-  const { setMessageFunctionsByName } = React.useContext(DetailMessageContextInternal)
+  const internalContext = React.useContext(DetailMessageContextInternal)
   const [messages, setMessages] = React.useState<DetailMessageByField | null>(null)
 
   React.useEffect(() => {
     // このコンポーネントと対象項目のnameを紐づける
-    setMessageFunctionsByName.current.set(props.name, [
-      ...(setMessageFunctionsByName.current.get(props.name) ?? []),
-      { setMessages }
-    ])
+    const registration: FieldRegistration = props.includeDescendants
+      ? { type: 'forwardMatch', name: props.name, messageSetter: setMessages }
+      : { type: 'exact', name: props.name, messageSetter: setMessages }
 
-    // アンマウント時に登録を解除する
-    return () => {
-      const arr = setMessageFunctionsByName.current.get(props.name)
-      if (arr) {
-        const newArr = arr.filter(item => item.setMessages !== setMessages)
-        if (newArr.length > 0) {
-          setMessageFunctionsByName.current.set(props.name, newArr)
-        } else {
-          setMessageFunctionsByName.current.delete(props.name)
-        }
-      }
-    }
+    internalContext.register(registration)
+    return () => internalContext.unregister(registration)
   }, [props.name])
 
   if (!messages) {
@@ -273,21 +347,12 @@ export function Of<
  * コンテキスト内のどこにもこのコンポーネントが存在しない場合、未登録のメッセージはプロバイダー直下に表示される。
  */
 export function Rest(props: { className?: string }) {
-  const { setMessageFunctionsUnregistered } = React.useContext(DetailMessageContextInternal)
+  const internalContext = React.useContext(DetailMessageContextInternal)
   const [messages, setMessages] = React.useState<DetailMessageByField | null>(null)
 
   React.useEffect(() => {
-    // このコンポーネントを登録する
-    setMessageFunctionsUnregistered(prev => {
-      return [...prev, { setMessages }]
-    })
-
-    // アンマウント時に登録を解除する
-    return () => {
-      setMessageFunctionsUnregistered(prev => {
-        return prev.filter(item => item.setMessages !== setMessages)
-      })
-    }
+    internalContext.register({ type: 'unregistered', messageSetter: setMessages })
+    return () => internalContext.unregister({ type: 'unregistered', messageSetter: setMessages })
   }, [])
 
   if (!messages) {
@@ -335,11 +400,11 @@ export function Rest(props: { className?: string }) {
  * }
  * ```
  */
-function flattenDetailMessages(detail: PresentationContextDetail | null | undefined): [name: string, messages: DetailMessageByField][] {
-  const result: [name: string, messages: DetailMessageByField][] = []
+function flattenDetailMessages(detail: PresentationContextDetail | null | undefined): [nameSplittedByPeriod: string[], messages: DetailMessageByField][] {
+  const result: [nameSplittedByPeriod: string[], messages: DetailMessageByField][] = []
   if (!detail) return result
 
-  const traverse = (current: PresentationContextDetail, prefix: string) => {
+  const traverse = (current: PresentationContextDetail, prefix: string[]) => {
     const { children, ...messages } = current
     const hasMessage = (messages.error?.length ?? 0) > 0
       || (messages.warn?.length ?? 0) > 0
@@ -351,13 +416,13 @@ function flattenDetailMessages(detail: PresentationContextDetail | null | undefi
 
     if (children) {
       for (const key of Object.keys(children)) {
-        const nextPrefix = prefix === '' ? key : `${prefix}.${key}`
+        const nextPrefix = [...prefix, key]
         traverse(children[key], nextPrefix)
       }
     }
   }
 
-  traverse(detail, '')
+  traverse(detail, [])
   return result
 }
 

@@ -103,11 +103,10 @@ namespace Nijo.Models.DataModelModules {
                     }
 
                     // 更新前処理。入力検証を行なう。
-                    var hasError = false;
-                    if (!{{OnBeforeMethodName}}(command, dbEntity, messages, context)) hasError = true;
+                    {{OnBeforeMethodName}}(command, dbEntity, messages, context);
 
                     // エラーがある場合は処理中断
-                    if (hasError) {
+                    if (messages.GetState()?.DescendantsAndSelf().Any(c => c.Errors.Count > 0) == true) {
                         // 単なる必須入力漏れなどでもエラーログが出過ぎてしまうのを防ぐため、
                         // IgnoreConfirmがtrueのとき（==更新を確定するつもりのとき）のみ内容をログ出力する
                         if (context.Options.IgnoreConfirm) {
@@ -180,12 +179,11 @@ namespace Nijo.Models.DataModelModules {
                 }
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の物理削除の確定前に実行される処理。
-                /// 自動生成されないエラーチェックはここで実装する。
+                /// このメソッドの中でエラーが追加された場合、{{_rootAggregate.DisplayName}} の物理削除は中断される。
+                /// どの画面・バッチから削除された場合であっても必ず {{_rootAggregate.DisplayName}} が満たしていなければならない整合性はここで実装する。
                 /// </summary>
-                /// <returns>正常ならtrue、エラーがあった場合はfalseを返す。</returns>
-                public virtual bool {{OnBeforeMethodName}}({{command.CsClassNameDelete}} command, {{dbEntity.CsClassName}} oldValue, {{messages.InterfaceName}} messages, {{PresentationContext.INTERFACE}} context) {
+                public virtual void {{OnBeforeMethodName}}({{command.CsClassNameDelete}} command, {{dbEntity.CsClassName}} oldValue, {{messages.InterfaceName}} messages, {{PresentationContext.INTERFACE}} context) {
                     // このメソッドをオーバーライドして処理を実装してください。
-                    return true;
                 }
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の物理削除のSQL発行後、コミット前に実行される処理。

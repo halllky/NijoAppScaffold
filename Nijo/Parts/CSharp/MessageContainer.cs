@@ -296,6 +296,11 @@ namespace Nijo.Parts.CSharp {
                             /// このインスタンスが持っているメッセージはすべて引き継がれます。
                             /// </summary>
                             TMessage As<TMessage>() where TMessage : {{SETTER_INTERFACE}};
+
+                            /// <summary>
+                            /// この項目に対して現在追加されているメッセージを取得します。
+                            /// </summary>
+                            IReadOnlyMessageContainer? GetState();
                         }
                         /// <inheritdoc cref="{{SETTER_INTERFACE}}">
                         public interface {{SETTER_INTERFACE_LIST}}<out T> : {{SETTER_INTERFACE}}, IReadOnlyList<T> where T : {{SETTER_INTERFACE}} {

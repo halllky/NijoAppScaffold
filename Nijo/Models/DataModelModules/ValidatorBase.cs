@@ -97,17 +97,12 @@ public abstract class ValidatorBase {
         return $$"""
             /// <summary>
             /// {{CommentName}}。違反する項目があった場合はその旨が第2引数のオブジェクト内に追記されます。
-            /// 1件以上エラーがあった場合はfalseを返します。
             /// </summary>
-            protected virtual bool {{MethodName}}({{argList.Join(", ")}}) {
+            protected virtual void {{MethodName}}({{argList.Join(", ")}}) {
             {{If(body.Length == 0, () => $$"""
-                return true; // 対象項目なし
+                // 対象項目なし
             """).Else(() => $$"""
-                var isValid = true;
-
                 {{WithIndent(RenderAggregate(efCoreEntity, arg, ["messages"]), "    ")}}
-
-                return isValid;
             """)}}
             }
             """;
@@ -148,7 +143,6 @@ public abstract class ValidatorBase {
                         // {{vm.DisplayName}}
                         if ({{WithIndent(ifStatement.If, "    ")}}) {
                             {{errorPath.Join(".")}}.AddError({{ifStatement.RenderErrorMessage}});
-                            isValid = false;
                         }
                         """;
 
@@ -170,7 +164,6 @@ public abstract class ValidatorBase {
                         // {{refTo.DisplayName}}
                         if ({{WithIndent(ifStatement.If, "    ")}}) {
                             {{errorPath.Join(".")}}.AddError({{ifStatement.RenderErrorMessage}});
-                            isValid = false;
                         }
                         """;
                 }
