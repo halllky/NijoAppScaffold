@@ -65,12 +65,18 @@ export function P001_ログイン(props: {
 
             <div className="flex gap-4">
               <FormLabel className="basis-24 shrink-0">従業員番号</FormLabel>
-              <UI.Field name="values.従業員番号" className="flex-1" control={control} />
+              <div className="flex-1">
+                <UI.Field name="values.従業員番号" className="w-full" control={control} />
+                <DetailMessage.Of name="values.従業員番号" control={control} />
+              </div>
             </div>
 
             <div className="flex gap-4">
               <FormLabel className="basis-24 shrink-0">パスワード</FormLabel>
-              <UI.Field name="values.パスワード" type="password" className="flex-1" control={control} />
+              <div className="flex-1">
+                <UI.Field name="values.パスワード" type="password" className="w-full" control={control} />
+                <DetailMessage.Of name="values.パスワード" control={control} />
+              </div>
             </div>
 
             <Button submit fill className="col-span-2 justify-center mt-4">ログイン</Button>

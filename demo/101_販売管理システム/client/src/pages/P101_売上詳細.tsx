@@ -243,7 +243,6 @@ function P101_売上詳細(props: {
                   <div className={`flex flex-col md:flex-row gap-x-8 gap-y-1 pt-2 border-t border-gray-300 whitespace-nowrap ${field.values.区分 === '取消' ? 'text-rose-700' : ''}`}>
                     <UI.Field
                       name={`売上詳細の売上明細.${index}.values.区分`}
-                      onlyInput
                       control={control}
                       className="w-16 shrink-0"
                     />
@@ -252,7 +251,6 @@ function P101_売上詳細(props: {
                     <div className="flex flex-wrap items-center gap-1 font-bold">
                       <UI.Field
                         name={`売上詳細の売上明細.${index}.values.商品.外部システム側ID`}
-                        onlyInput
                         className="w-32 shrink-0"
                         control={control}
                       />
@@ -277,7 +275,6 @@ function P101_売上詳細(props: {
                         name={`売上詳細の売上明細.${index}.values.売上数量`}
                         suffix="個"
                         className="w-16"
-                        onlyInput
                         control={control}
                       />
                       <span>
@@ -304,7 +301,6 @@ function P101_売上詳細(props: {
                         name={`売上詳細の売上明細.${index}.values.売上総額_税込_手修正`}
                         suffix="円"
                         commaSeparated
-                        onlyInput
                         className="w-40"
                         control={control}
                       />)
