@@ -118,7 +118,7 @@ partial class OverridedApplicationService {
             }).ToList(),
         }, context);
 
-        if (!result.Success) return;
+        if (result.Result != DataModelSaveResultType.Completed) return;
 
         // 入荷明細の残数量更新
         foreach (var (detail, plan) in allocationPlans) {
@@ -133,7 +133,7 @@ partial class OverridedApplicationService {
                     x.残数量 -= deduct;
                 }, context);
 
-                if (!updateResult.Success) {
+                if (updateResult.Result != DataModelSaveResultType.Completed) {
                     // エラーメッセージは Update入荷明細Async 内で設定されるはず
                     return; // トランザクションはコミットされずに終了＝ロールバック
                 }

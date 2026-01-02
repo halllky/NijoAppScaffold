@@ -35,7 +35,7 @@ partial class OverridedApplicationService {
             employee.パスワード = hash;
         }, context);
 
-        if (result.Success) {
+        if (result.Result == DataModelSaveResultType.Completed) {
             await tran.CommitAsync();
         }
     }

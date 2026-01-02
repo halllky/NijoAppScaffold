@@ -48,9 +48,9 @@ export default [
       if (result.type === 'ok') {
         return result.returnValue
       }
-      // TODO: エラー処理
       console.error('売上詳細画面初期表示エラー:', result)
-      throw new Error('not implemented');
+      const msg = result.type === 'error' ? JSON.stringify(result.detail) : 'データの取得に失敗しました。'
+      throw new Error(msg);
     }
   },
 ] satisfies ReactRouter.RouteObject[]

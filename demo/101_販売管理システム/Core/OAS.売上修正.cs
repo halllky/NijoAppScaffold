@@ -202,7 +202,7 @@ partial class OverridedApplicationService {
             }
         }, context);
 
-        if (!updateResult.Success) return;
+        if (updateResult.Result != DataModelSaveResultType.Completed) return;
 
         // 入荷明細の残数量更新
         foreach (var (detail, plan) in allocationPlans) {
@@ -214,7 +214,7 @@ partial class OverridedApplicationService {
                     x.残数量 -= deduct; // deductが負の場合は残数量が増える
                 }, context);
 
-                if (!updateStockResult.Success) {
+                if (updateStockResult.Result != DataModelSaveResultType.Completed) {
                     return;
                 }
             }

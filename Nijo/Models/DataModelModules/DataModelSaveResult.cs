@@ -9,7 +9,6 @@ internal class DataModelSaveResult {
         return new SourceFile {
             FileName = "DataModelSaveResult.cs",
             Contents = $$"""
-                using System.Diagnostics.CodeAnalysis;
 
                 namespace {{ctx.Config.RootNamespace}};
 
@@ -17,22 +16,42 @@ internal class DataModelSaveResult {
                 /// 保存処理の結果を表します。
                 /// </summary>
                 public class {{CLASS_NAME}}<T> {
-                    public {{CLASS_NAME}}(bool success, T? dbEntity) {
-                        Success = success;
+                    public {{CLASS_NAME}}(DataModelSaveResultType result, DataModelSaveErrorReason? errorReason, T? dbEntity) {
+                        Result = result;
+                        ErrorReason = errorReason;
                         DbEntity = dbEntity;
                     }
 
                     /// <summary>
-                    /// 保存処理が成功したかどうかを示します。
-                    /// エラーチェックのみの場合や保存処理でエラーが発生した場合はfalseとなります。
+                    /// 保存処理の終了状態を示します。
                     /// </summary>
-                    [MemberNotNullWhen(true, nameof(DbEntity))]
-                    public bool Success { get; }
-
+                    public DataModelSaveResultType Result { get; }
                     /// <summary>
-                    /// 保存後のデータを表します。保存処理が成功した場合にのみ設定されます。
+                    /// エラーが発生した場合、その理由を示します。エラーが発生しなかった場合は null です。
+                    /// </summary>
+                    public DataModelSaveErrorReason? ErrorReason { get; }
+                    /// <summary>
+                    /// 保存後のデータを表します。ステータスが <see cref="SaveResultType.Completed"/> の場合にのみ設定されます。
                     /// </summary>
                     public T? DbEntity { get; }
+                }
+
+                public enum DataModelSaveResultType {
+                    /// <summary>登録が成功したことを表します。</summary>
+                    Completed,
+                    /// <summary>バリデーションエラーが無いことを確認し、登録は行わなかったことを表します。</summary>
+                    ValidationOk,
+                    /// <summary>何らかのエラーが発生したことを表します。</summary>
+                    Error,
+                }
+
+                public enum DataModelSaveErrorReason {
+                    /// <summary>バリデーションエラーが発生したことを表します。</summary>
+                    ValidationError,
+                    /// <summary>同時更新エラー（排他エラー）が発生したことを表します。</summary>
+                    ConcurrencyError,
+                    /// <summary>登録後の処理でエラーが発生したことを表します。</summary>
+                    AfterSaveError,
                 }
                 """,
         };

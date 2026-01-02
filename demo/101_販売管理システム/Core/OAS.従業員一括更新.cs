@@ -44,7 +44,7 @@ partial class OverridedApplicationService {
                     SALT = salt,
                 }, context, message);
 
-                success = result.Success;
+                success = result.Result == DataModelSaveResultType.Completed;
 
             } else if (item.WillBeDeleted) {
 
@@ -64,7 +64,7 @@ partial class OverridedApplicationService {
                     employee.システム管理者 = item.Values.従業員.Values.システム管理者;
                 }, context, message);
 
-                success = result.Success;
+                success = result.Result == DataModelSaveResultType.Completed;
 
             } else {
                 // 変更なし

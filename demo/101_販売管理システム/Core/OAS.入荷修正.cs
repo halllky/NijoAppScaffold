@@ -28,7 +28,7 @@ partial class OverridedApplicationService {
             header.備考 = param.Values.備考;
         }, context);
 
-        if (!updateHeaderResult.Success) return;
+        if (updateHeaderResult.Result == DataModelSaveResultType.Error) return;
 
         // 既存明細の読み込み
         var existingDetails = await DbContext.入荷明細DbSet

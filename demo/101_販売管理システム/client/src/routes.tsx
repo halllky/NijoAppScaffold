@@ -13,6 +13,7 @@ import P301 from "./pages/P301_商品詳細"
 import UIComponentCatalog from "./debug-rooms/UIコンポーネントカタログ"
 import { P001_ログイン } from "./pages/P001_ログイン"
 import { LoginUserProvider } from "./util/useLoginLogout"
+import { ErrorPage } from "./layout/ErrorPage"
 
 export const router = createBrowserRouter([
   {
@@ -43,5 +44,7 @@ export const router = createBrowserRouter([
         UIComponentCatalog,
       ]),
     ],
+    // loader などでエラーが発生した場合に表示するエラーページ
+    errorElement: <ErrorPage />,
   },
 ])

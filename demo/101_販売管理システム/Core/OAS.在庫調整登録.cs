@@ -108,7 +108,7 @@ partial class OverridedApplicationService {
 
             // 在庫調整の登録に失敗した場合は処理中断。
             // コミットせずにトランザクションのスコープを抜けることでロールバックする。
-            if (!adjustmentResult.Success) {
+            if (adjustmentResult.Result != DataModelSaveResultType.Completed) {
                 return;
             }
 

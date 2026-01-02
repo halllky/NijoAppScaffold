@@ -50,13 +50,13 @@ partial class OverridedApplicationService {
                 備考 = item.Values.備考,
             }, context, message);
 
-            if (!detailResult.Success) {
+            if (detailResult.Result != DataModelSaveResultType.Completed) {
                 hasErrorInDetail = true;
             }
         }
 
         // すべてのヘッダ・明細の登録が成功したらコミット
-        if (tran != null && headerResult.Success && !hasErrorInDetail) {
+        if (tran != null && headerResult.Result == DataModelSaveResultType.Completed && !hasErrorInDetail) {
             await tran.CommitAsync();
         }
     }
