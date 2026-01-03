@@ -16,8 +16,6 @@ partial class OverridedApplicationService {
             : await DbContext.Database.BeginTransactionAsync();
 
         // 入荷ヘッダの登録
-        // IgnoreConfirm=false のときはバリデーションのみ実行され、戻り値は (false, null) となる。
-        // IgnoreConfirm=true のときは保存され、戻り値は (true, entity) となる。
         var newId = Guid.NewGuid().ToString();
         var headerResult = await Create入荷Async(new() {
             入荷ID = newId,
