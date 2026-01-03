@@ -5,7 +5,6 @@
   "type": "module",
   "workspaces": [
     "demo/000_基本的なDataModelの例/client",
-    "demo/100_チャットアプリ/client",
     "demo/101_販売管理システム/client",
     "demo/200_複雑なパターン/client",
     "Document",
@@ -15,12 +14,10 @@
     "Nijo.GuiClient/package_ui-components-debug"
   ],
   "scripts": {
-    "dev:chat-app": "npm run dev --workspace=demo/100_チャットアプリ/client",
     "dev:docs": "npm run start --workspace=Document",
     "dev:new-project-template": "npm run dev --workspace=Nijo.NewProjectTemplate/client",
     "dev:ui-components": "npm run dev --workspace=Nijo.GuiClient/package_ui-components",
     "dev:ui-components-debug": "npm run dev --workspace=Nijo.GuiClient/package_ui-components-debug",
-    "build:chat-app": "npm run build --workspace=demo/100_チャットアプリ/client",
     "build:docs": "npm run build --workspace=Document",
     "build:new-project-template": "npm run build --workspace=Nijo.NewProjectTemplate/client",
     "build:schema-editor": "npm run build --workspace=Nijo.GuiClient/package_schema-editor-v1",
