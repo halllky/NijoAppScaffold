@@ -24,6 +24,9 @@ public class PresentationContextInWebApi<TMessageRoot> : IPresentationContext<TM
     }
     #endregion 確認メッセージ
 
+    // この型は戻り値を持たないので常にnullになる。戻り値ありの方（このクラスを継承した方）で使用される。
+    public object? ReturnValue { get; set; } = null;
+
     public bool HasError() {
         return Messages.UnderlyingContext.Root.HasError();
     }
@@ -44,7 +47,14 @@ public class PresentationContextInWebApi<TReturnValue, TMessageRoot> : Presentat
     where TMessageRoot : IMessageSetter
     where TReturnValue : new() {
 
-    public TReturnValue ReturnValue { get; set; } = new();
+    public PresentationContextInWebApi() {
+        base.ReturnValue = new TReturnValue();
+    }
+
+    TReturnValue IPresentationContextWithReturnValue<TReturnValue, TMessageRoot>.ReturnValue {
+        get => (TReturnValue)base.ReturnValue!;
+        set => base.ReturnValue = value;
+    }
 }
 
 /// <summary>

@@ -127,7 +127,7 @@ partial class OverridedApplicationService {
                     備考 = $"在庫調整（増加）: {param.Values.在庫調整理由}",
                 }, context);
 
-                if (!newStockResult.Success) {
+                if (newStockResult.Result != DataModelSaveResultType.Completed) {
                     hasError = true;
                 }
 
@@ -138,7 +138,7 @@ partial class OverridedApplicationService {
                         x.残数量 -= deduct;
                     }, context);
 
-                    if (!updateStockResult.Success) {
+                    if (updateStockResult.Result != DataModelSaveResultType.Completed) {
                         hasError = true;
                         break;
                     }

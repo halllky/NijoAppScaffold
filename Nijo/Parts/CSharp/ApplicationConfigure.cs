@@ -13,15 +13,12 @@ namespace Nijo.Parts.CSharp {
     public class ApplicationConfigure : IMultiAggregateSourceFile {
 
         public const string ABSTRACT_CLASS_CORE = "DefaultConfiguration";
-        public const string ABSTRACT_CLASS_WEBAPI = "DefaultConfigurationInWebApi";
-
 
         #region Add
         private readonly Lock _lock = new();
 
         private readonly List<Func<string, string>> _coreConfigureServices = [];
         private readonly List<string> _coreMethods = [];
-        private readonly List<string> _webapi = [];
 
         /// <summary>
         /// ConfigureServicesに生成されるソースコード。
@@ -45,16 +42,6 @@ namespace Nijo.Parts.CSharp {
                 return this;
             }
         }
-        /// <summary>
-        /// Webapiプロジェクトのアプリケーション起動時に実行される設定処理にメソッド等を追加します。
-        /// </summary>
-        /// <param name="abstractMethod">ソースコード</param>
-        public ApplicationConfigure AddWebapiMethod(string abstractMethod) {
-            lock (_lock) {
-                _webapi.Add(abstractMethod);
-                return this;
-            }
-        }
         #endregion Add
 
 
@@ -65,10 +52,6 @@ namespace Nijo.Parts.CSharp {
         void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
             ctx.CoreLibrary(dir => {
                 dir.Generate(RenderCore(ctx));
-            });
-
-            ctx.WebapiProject(dir => {
-                dir.Generate(RenderWebapiConfigure(ctx));
             });
         }
 
@@ -133,27 +116,6 @@ namespace Nijo.Parts.CSharp {
                     {{coreMethods.OrderBy(source => source).SelectTextTemplate(source => $$"""
 
                         {{WithIndent(source, "    ")}}
-                    """)}}
-                    }
-                    """,
-            };
-        }
-
-        private SourceFile RenderWebapiConfigure(CodeRenderingContext _ctx) {
-            return new SourceFile {
-                FileName = "DefaultConfigurer.cs",
-                Contents = $$"""
-                    using Microsoft.AspNetCore.Mvc;
-                    using Microsoft.AspNetCore.Mvc.Filters;
-                    using Microsoft.AspNetCore.Mvc.ModelBinding;
-                    using Microsoft.Extensions.DependencyInjection;
-                    using Microsoft.Extensions.Logging;
-
-                    namespace {{_ctx.Config.RootNamespace}};
-                    public abstract class {{ABSTRACT_CLASS_WEBAPI}} {
-                    {{_webapi.OrderBy(source => source).SelectTextTemplate(sourceCode => $$"""
-
-                        {{WithIndent(sourceCode, "    ")}}
                     """)}}
                     }
                     """,
