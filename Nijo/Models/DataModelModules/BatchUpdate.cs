@@ -60,11 +60,11 @@ namespace Nijo.Models.DataModelModules {
 
             return $$"""
                 /// <summary>
-                /// {{_rootAggregate.DisplayName}}の一覧検索処理のエンドポイント
+                /// {{_rootAggregate.DisplayName}}の一括更新処理のエンドポイント
                 /// </summary>
                 [HttpPost("{{CONTROLLER_ACTION}}")]
                 public async Task<IActionResult> BatchUpdate() {
-                    return await base.{{AspNetController.HANDLE_METHOD}}<{{displayData.CsClassName}}, {{displayDataMessages.CsClassName}}>(
+                    return await base.{{AspNetController.HANDLE_METHOD}}<{{displayData.CsClassName}}[], {{MessageContainer.SETTER_CONCRETE_CLASS_LIST}}<{{displayDataMessages.CsClassName}}>>(
                         (data, context) => _applicationService.{{APP_SRV_METHOD}}(data, context));
                 }
                 """;
@@ -102,9 +102,9 @@ namespace Nijo.Models.DataModelModules {
                 public virtual async Task<bool> {{APP_SRV_METHOD}}({{AppSrvArgType}}[] displayDataItems, {{PresentationContext.INTERFACE}}<{{MessageContainer.SETTER_CONCRETE_CLASS_LIST}}<{{displayDataMssage.CsClassName}}>> context) {
                     // エラーチェックのみの1巡目処理の場合はトランザクションを開始しない。
                     // なお、DataModelの登録更新処理では、トランザクションが開始されないまま更新実行しようとすると、即時コミットではなくエラーになる。
-                    using var tran = context.Options.IgnoreConfirm
-                        ? await DbContext.Database.BeginTransactionAsync()
-                        : null;
+                    using var tran = context.ValidationOnly
+                        ? null
+                        : await DbContext.Database.BeginTransactionAsync();
 
                     for (int i = 0; i < displayDataItems.Length; i++) {
                         var displayData = displayDataItems[i];
@@ -136,13 +136,12 @@ namespace Nijo.Models.DataModelModules {
                     }
 
                     // エラーチェックのみの1巡目処理の場合はここで終了
-                    if (!context.Options.IgnoreConfirm) {
-                        context.AddConfirm({{MsgFactory.MSG}}.{{CONFIRM_SAVE_OR_NOT}}());
+                    if (context.ValidationOnly) {
                         return false;
                     }
 
                     // 1件でもエラーがあればロールバック
-                    if (context.HasError()) {
+                    if (context.Messages.GetState()?.DescendantsAndSelf().Any(x => x.Errors.Count > 0) == true) {
                         await tran!.RollbackAsync();
                         return false;
                     } else {
@@ -152,16 +151,5 @@ namespace Nijo.Models.DataModelModules {
                 }
                 """;
         }
-
-
-        #region メッセージ
-        private const string CONFIRM_SAVE_OR_NOT = "SaveOrNot";
-        internal static void RegisterCommonParts(CodeRenderingContext ctx) {
-            ctx.Use<MsgFactory>()
-                .AddMessage(CONFIRM_SAVE_OR_NOT,
-                    "保存処理を確定するかどうかの確認",
-                    "保存しますか？");
-        }
-        #endregion メッセージ
     }
 }

@@ -95,7 +95,8 @@ namespace Nijo.Models.QueryModelModules {
                     return await base.{{AspNetController.HANDLE_METHOD}}<{{searchCondition.CsClassName}}, {{returnType}}, {{searchConditionMessages.CsClassName}}>(async (data, context) => {
                         // エラーチェック
                         _applicationService.{{VALIDATE_METHOD}}(data, context);
-                        if (context.HasError() || (!context.Options.IgnoreConfirm && context.HasConfirm())) {
+                        if (context.Messages.GetState()?.DescendantsAndSelf().Any(x => x.Errors.Count > 0) == true
+                            || context.ValidationOnly) {
                             return;
                         }
 

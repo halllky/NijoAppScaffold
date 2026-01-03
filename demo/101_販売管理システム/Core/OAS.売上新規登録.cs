@@ -19,7 +19,6 @@ partial class OverridedApplicationService {
 
         // 在庫引当計算
         var allocationPlans = new List<(売上詳細の売上明細DisplayData Detail, List<(string StockId, int Deduct)> Plan)>();
-        var hasError = false;
 
         // 入荷明細のキャッシュ（商品SEQ -> List<入荷明細DbEntity>）
         var stockCache = new Dictionary<int, List<入荷明細DbEntity>>();
@@ -34,12 +33,10 @@ partial class OverridedApplicationService {
 
             if (productId == null) {
                 message.商品.AddError("商品を選択してください。");
-                hasError = true;
                 continue;
             }
             if (quantity == null || quantity <= 0) {
                 message.売上数量.AddError("売上数量は1以上の整数を入力してください。");
-                hasError = true;
                 continue;
             }
 
@@ -64,7 +61,6 @@ partial class OverridedApplicationService {
 
             if (totalAvailable < quantity) {
                 message.売上数量.AddError($"在庫不足です。（現在在庫: {totalAvailable}）");
-                hasError = true;
                 continue;
             }
 
@@ -88,8 +84,13 @@ partial class OverridedApplicationService {
             allocationPlans.Add((detail, plan));
         }
 
-        if (hasError) return;
-        if (!context.Options.IgnoreConfirm) return;
+        if (context.Messages.HasError()) {
+            return;
+        }
+        if (context.ValidationOnly) {
+            context.AddConfirm("登録を確定します。よろしいですか？");
+            return;
+        }
 
         // 保存処理
         using var tran = await DbContext.Database.BeginTransactionAsync();

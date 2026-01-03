@@ -69,8 +69,7 @@ partial class OverridedApplicationService {
         }
 
         // 保存処理
-        // IgnoreConfirm=true のときのみ実行
-        if (context.Options.IgnoreConfirm) {
+        if (!context.ValidationOnly) {
             using var tran = await DbContext.Database.BeginTransactionAsync();
 
             var adjustmentId = Guid.NewGuid().ToString();

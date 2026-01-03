@@ -58,29 +58,27 @@ public class TestUtilImpl {
     /// </summary>
     private string BaseWorkDirectory { get; set; } = "";
 
-    public TestScopeImpl<TMessageRoot> CreateScope<TMessageRoot>(string testCaseName, Action<IServiceCollection>? configureServices = null, IPresentationContextOptions? options = null) where TMessageRoot : IMessageSetter {
+    public TestScopeImpl<TMessageRoot> CreateScope<TMessageRoot>(string testCaseName, Action<IServiceCollection>? configureServices = null, bool validationOnly = false) where TMessageRoot : IMessageSetter {
         var (currentTestWorkDirectory, provider) = SetupEnvironments(testCaseName, configureServices);
         var messageRoot = MessageSetter.GetImpl<TMessageRoot>([], new MessageContainer());
-        var contextOptions = options ?? new PresentationContextOptionsImpl();
         var presentationContext = new PresentationContextInUnitTest<TMessageRoot> {
             Messages = messageRoot,
-            Options = contextOptions,
+            ValidationOnly = validationOnly,
             Confirms = [],
         };
 
         return new TestScopeImpl<TMessageRoot>(provider, presentationContext, currentTestWorkDirectory);
     }
 
-    public TestScopeImpl CreateScope(string testCaseName, Action<IServiceCollection>? configureServices = null, IPresentationContextOptions? options = null) {
-        return CreateScope(testCaseName, typeof(MessageSetter), configureServices, options);
+    public TestScopeImpl CreateScope(string testCaseName, Action<IServiceCollection>? configureServices = null, bool validationOnly = false) {
+        return CreateScope(testCaseName, typeof(MessageSetter), configureServices, validationOnly);
     }
 
-    public TestScopeImpl CreateScope(string testCaseName, Type messageRootType, Action<IServiceCollection>? configureServices = null, IPresentationContextOptions? options = null) {
+    public TestScopeImpl CreateScope(string testCaseName, Type messageRootType, Action<IServiceCollection>? configureServices = null, bool validationOnly = false) {
         var (currentTestWorkDirectory, provider) = SetupEnvironments(testCaseName, configureServices);
-        var contextOptions = options ?? new PresentationContextOptionsImpl();
         var presentationContext = new PresentationContextInUnitTest {
             Messages = MessageSetter.GetImpl(messageRootType, [], new MessageContainer()),
-            Options = contextOptions,
+            ValidationOnly = validationOnly,
             Confirms = [],
         };
 
@@ -156,12 +154,6 @@ public class TestUtilImpl {
     public class OverridedApplicationConfigureForTest : OverridedApplicationConfigure {
         // ログファイル名、Webアプリケーションの方では日付毎などだが、テストの場合は毎回別のフォルダに出力されるので、決め打ち
         protected override string LogFileNameRule => "テスト中に出力されたログ.log";
-    }
-    /// <summary>
-    /// <see cref="IPresentationContextOptions"/> のユニットテスト用の実装。
-    /// </summary>
-    public class PresentationContextOptionsImpl : IPresentationContextOptions {
-        public bool IgnoreConfirm { get; init; }
     }
     #endregion
 }

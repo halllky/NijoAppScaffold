@@ -25,7 +25,6 @@ partial class OverridedApplicationService {
         // ここでは在庫計算だけできればよい。
 
         var allocationPlans = new List<(売上詳細の売上明細DisplayData Detail, List<(string StockId, int Deduct)> Plan)>();
-        var hasError = false;
 
         // 入荷明細のキャッシュ
         var stockCache = new Dictionary<int, List<入荷明細DbEntity>>();
@@ -46,12 +45,10 @@ partial class OverridedApplicationService {
 
             if (productId == null) {
                 message.商品.AddError("商品を選択してください。");
-                hasError = true;
                 continue;
             }
             if (quantity == null || quantity == 0) {
                 message.売上数量.AddError("売上数量は0以外の整数を入力してください。");
-                hasError = true;
                 continue;
             }
 
@@ -101,7 +98,6 @@ partial class OverridedApplicationService {
                         // これ以上在庫がない
                         var totalAvailable = stocksForProduct.Sum(x => currentStockMap.TryGetValue(x.入荷明細ID!, out var value) ? value : 0);
                         message.売上数量.AddError($"在庫不足です。（現在在庫: {totalAvailable}）");
-                        hasError = true;
                         break;
                     }
 
@@ -154,7 +150,6 @@ partial class OverridedApplicationService {
                         // これ以上戻せる在庫がない
                         var totalReturnable = stocksForProduct.Sum(x => (x.入荷数量 ?? 0) - (currentStockMap.TryGetValue(x.入荷明細ID!, out var value) ? value : 0));
                         message.売上数量.AddError($"取消可能な在庫引当履歴が不足しています。（取消可能数: {totalReturnable}）");
-                        hasError = true;
                         break;
                     }
 
@@ -168,13 +163,18 @@ partial class OverridedApplicationService {
                 }
             }
 
-            if (hasError) continue;
+            if (message.HasError()) continue;
 
             allocationPlans.Add((detail, plan));
         }
 
-        if (hasError) return;
-        if (!context.Options.IgnoreConfirm) return;
+        if (context.Messages.HasError()) {
+            return;
+        }
+        if (context.ValidationOnly) {
+            context.AddConfirm("修正を確定します。よろしいですか？");
+            return;
+        }
 
         // 保存処理
         using var tran = await DbContext.Database.BeginTransactionAsync();

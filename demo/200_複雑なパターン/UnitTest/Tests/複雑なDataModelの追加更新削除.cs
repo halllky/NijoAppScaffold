@@ -18,8 +18,7 @@ partial class DB接続あり_更新あり {
     [Test]
     public async Task Childの追加更新削除が正常に動作するか確認() {
         var scope = TestUtilImpl.Instance.CreateScope<医療機器マスタSaveCommandMessages>(
-            nameof(Childの追加更新削除が正常に動作するか確認),
-            options: new PresentationContextOptions { IgnoreConfirm = true });
+            nameof(Childの追加更新削除が正常に動作するか確認));
 
         // 外部キー用に全テーブルデータ作成
         var generator = new OverridedDummyDataGenerator();
@@ -88,7 +87,7 @@ partial class DB接続あり_更新あり {
 
         Assert.Multiple(() => {
             // エラーが無いことを確認
-            Assert.That(scope.PresentationContext.HasError(), Is.False);
+            Assert.That(scope.PresentationContext.Messages.HasError(), Is.False);
 
             // 3テーブルともに登録されていることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
@@ -160,7 +159,7 @@ partial class DB接続あり_更新あり {
 
         Assert.Multiple(() => {
             // エラーが無いことを確認
-            Assert.That(scope.PresentationContext.HasError(), Is.False);
+            Assert.That(scope.PresentationContext.Messages.HasError(), Is.False);
 
             // 3テーブルともに新しい値に更新されていることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
@@ -222,7 +221,7 @@ partial class DB接続あり_更新あり {
 
         Assert.Multiple(() => {
             // エラーが無いことを確認
-            Assert.That(scope.PresentationContext.HasError(), Is.False);
+            Assert.That(scope.PresentationContext.Messages.HasError(), Is.False);
 
             // ルートと子が影響なし、孫が消えていることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
@@ -287,7 +286,7 @@ partial class DB接続あり_更新あり {
 
         Assert.Multiple(() => {
             // エラーが無いことを確認
-            Assert.That(scope.PresentationContext.HasError(), Is.False);
+            Assert.That(scope.PresentationContext.Messages.HasError(), Is.False);
 
             // 3テーブルすべてデータがあることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
@@ -323,7 +322,7 @@ partial class DB接続あり_更新あり {
 
         Assert.Multiple(() => {
             // エラーが無いことを確認
-            Assert.That(scope.PresentationContext.HasError(), Is.False);
+            Assert.That(scope.PresentationContext.Messages.HasError(), Is.False);
 
             // ルートだけデータが残っていることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));

@@ -139,15 +139,15 @@ namespace Nijo.Models.DataModelModules {
                     // エラーがある場合は処理中断
                     if (messages.GetState()?.DescendantsAndSelf().Any(c => c.Errors.Count > 0) == true) {
                         // 単なる必須入力漏れなどでもエラーログが出過ぎてしまうのを防ぐため、
-                        // IgnoreConfirmがtrueのとき（==更新を確定するつもりのとき）のみ内容をログ出力する
-                        if (context.Options.IgnoreConfirm) {
+                        // 更新を確定するつもりのときのみ内容をログ出力する
+                        if (!context.ValidationOnly) {
                             Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で入力エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
                         }
                         return new(DataModelSaveResultType.Error, DataModelSaveErrorReason.ValidationError, null);
                     }
 
                     // 「更新しますか？」の確認メッセージが承認される前の1巡目はエラーチェックのみで処理中断
-                    if (!context.Options.IgnoreConfirm) return new(DataModelSaveResultType.ValidationOk, null, null);
+                    if (context.ValidationOnly) return new(DataModelSaveResultType.ValidationOk, null, null);
                     if (DbContext.Database.CurrentTransaction == null) throw new InvalidOperationException("トランザクションが開始されていません。");
 
                     // 更新実行

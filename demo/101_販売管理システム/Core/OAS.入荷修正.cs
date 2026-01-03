@@ -17,9 +17,9 @@ partial class OverridedApplicationService {
         }
 
         // トランザクションの範囲は入荷ヘッダ更新から入荷明細登録まで
-        using var tran = context.Options.IgnoreConfirm
-            ? await DbContext.Database.BeginTransactionAsync()
-            : null;
+        using var tran = context.ValidationOnly
+            ? null
+            : await DbContext.Database.BeginTransactionAsync();
 
         // ヘッダ更新
         var updateHeaderResult = await Update入荷Async(param.Values.入荷ID, param.Values.Version, header => {
@@ -112,7 +112,7 @@ partial class OverridedApplicationService {
         }
 
         // エラーチェックのみの場合は確認メッセージを返す。
-        if (!context.Options.IgnoreConfirm) {
+        if (context.ValidationOnly && !context.Messages.HasError()) {
             context.AddConfirm("入荷データを修正します。よろしいですか？");
             return;
         }

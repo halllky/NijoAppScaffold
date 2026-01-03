@@ -11,7 +11,7 @@ namespace MyApp.UnitTest;
 /// <see cref="IPresentationContext"/> のユニットテスト用の実装
 /// </summary>
 internal class PresentationContextInUnitTest : IPresentationContext {
-    public required IPresentationContextOptions Options { get; init; }
+    public required bool ValidationOnly { get; init; }
     public required IMessageSetter Messages { get; init; }
     public required List<string> Confirms { get; init; }
 
@@ -29,7 +29,7 @@ internal class PresentationContextInUnitTest : IPresentationContext {
     public IPresentationContext<T> As<T>() where T : IMessageSetter {
         return new PresentationContextInUnitTest<T> {
             Messages = Messages.As<T>(),
-            Options = Options,
+            ValidationOnly = ValidationOnly,
             Confirms = Confirms,
         };
     }

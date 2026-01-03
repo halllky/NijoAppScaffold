@@ -15,7 +15,6 @@ namespace Nijo.Parts.CSharp {
 
         internal const string INTERFACE = "IPresentationContext";
         internal const string INTERFACE_WITH_RETURN_VALUE = "IPresentationContextWithReturnValue";
-        internal const string OPTIONS = "IPresentationContextOptions";
 
         internal static SourceFile RenderStaticCore(CodeRenderingContext ctx) {
             return new SourceFile {
@@ -29,23 +28,15 @@ namespace Nijo.Parts.CSharp {
                     /// </summary>
                     public interface {{INTERFACE}} {
 
-                        /// <inheritdoc cref="{{OPTIONS}}"/>
-                        {{OPTIONS}} Options { get; }
-
                         /// <summary>
-                        /// 「～しますがよろしいですか？」などの確認メッセージを追加します。
+                        /// 更新系の処理について、入力チェックのみを行うか、それとも実際の更新処理も行うかを表す。
+                        ///
+                        /// Webアプリケーションで何らかのデータを更新する場合、
+                        /// 1回目のHTTPリクエストでは入力チェックのみを行い、ユーザーに確認メッセージを表示した上で
+                        /// 2回目のHTTPリクエストで再度入力チェックしたうえで実際の更新処理を行う、という2段階の処理を行うことが多い。
+                        /// このプロパティが true の場合、入力チェックのみを行い、実際の更新処理は行わない。
                         /// </summary>
-                        void AddConfirm(string text);
-
-                        /// <summary>
-                        /// 「～しますがよろしいですか？」などの確認メッセージが発生しているかどうかを返します。
-                        /// </summary>
-                        bool HasConfirm();
-
-                        /// <summary>
-                        /// このコンテキストでエラーが発生しているかどうかを返します。
-                        /// </summary>
-                        bool HasError();
+                        bool ValidationOnly { get; }
 
                         /// <summary>
                         /// このインスタンスを、メッセージコンテナを持つ型にキャストします。
@@ -85,18 +76,6 @@ namespace Nijo.Parts.CSharp {
                         /// 画面側に返す戻り値を取得または設定します。
                         /// </summary>
                         TReturnValue ReturnValue { get; set; }
-                    }
-
-                    /// <summary>
-                    /// <see cref="{{INTERFACE}}"/> のオプション
-                    /// </summary>
-                    public interface {{OPTIONS}} {
-                        /// <summary>
-                        /// Confirm（「～しますがよろしいですか？」の確認メッセージ）が発生しても無視するかどうか。
-                        /// HTTPリクエストは「～しますがよろしいですか？」に対してOKが選択される前と後で計2回発生するが、
-                        /// 1回目はfalse, 2回目はtrueになる。
-                        /// </summary>
-                        bool IgnoreConfirm { get; }
                     }
                     """,
             };

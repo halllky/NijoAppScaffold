@@ -317,7 +317,6 @@ namespace Nijo.Models {
 
             // メッセージコンテナ
             UpdateMethod.RegisterCommonParts(ctx);
-            BatchUpdate.RegisterCommonParts(ctx);
 
             // バリデーターチェック違反時のメッセージ
             var msgFactory = ctx.Use<MsgFactory>();

@@ -1,11 +1,7 @@
 var builder = WebApplication.CreateBuilder(args);
 
 // Controller の設定
-builder.Services.AddControllers(options => {
-    // 全エンドポイントに共通して適用される ActionFilter の設定
-    options.Filters.Add<MyApp.WebApi.Base.LoggingActionFilter>();   // ログ出力
-    options.Filters.Add<MyApp.WebApi.Base.GlobalExceptionFilter>(); // グローバル例外ハンドリング
-});
+builder.Services.AddControllers();
 
 // swagger。デバッグのためにこのアプリで定義されているエンドポイントを一覧する
 builder.Services.AddSwaggerGen();
@@ -31,9 +27,6 @@ appConfig.ConfigureServices(builder.Services);
 builder.Services.ConfigureHttpJsonOptions(options => {
     appConfig.EditDefaultJsonSerializerOptions(options.SerializerOptions);
 });
-
-// 自動生成されたエンドポイントのリクエスト・レスポンス処理の設定
-builder.Services.AddScoped<MyApp.DefaultConfigurationInWebApi, MyApp.WebApi.Base.ConfigurationInWebApi>();
 
 // --------------------------------
 

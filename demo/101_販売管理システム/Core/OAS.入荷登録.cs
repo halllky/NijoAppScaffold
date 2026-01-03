@@ -11,9 +11,9 @@ partial class OverridedApplicationService {
         }
 
         // ヘッダと明細で1つのトランザクション
-        using var tran = context.Options.IgnoreConfirm
-            ? await DbContext.Database.BeginTransactionAsync()
-            : null;
+        using var tran = context.ValidationOnly
+            ? null
+            : await DbContext.Database.BeginTransactionAsync();
 
         // 入荷ヘッダの登録
         // IgnoreConfirm=false のときはバリデーションのみ実行され、戻り値は (false, null) となる。
