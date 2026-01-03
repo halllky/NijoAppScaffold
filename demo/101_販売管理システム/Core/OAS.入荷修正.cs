@@ -111,6 +111,12 @@ partial class OverridedApplicationService {
             }
         }
 
+        // エラーチェックのみの場合は確認メッセージを返す。
+        if (!context.Options.IgnoreConfirm) {
+            context.AddConfirm("入荷データを修正します。よろしいですか？");
+            return;
+        }
+
         if (tran != null && !context.Messages.HasError()) {
             await tran.CommitAsync();
         }

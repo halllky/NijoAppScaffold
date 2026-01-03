@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useBlocker, useRevalidator } from "react-router-dom"
 import { PageBase } from "./PageBase"
+import * as  DetailMessage from "../util/DetailMessageContext"
+import useEvent from "react-use-event-hook"
 
 export type EditPageBaseProps = {
   /** ページタイトル。ブラウザのタイトルバーに表示されます。 */
@@ -43,7 +45,7 @@ export type EditPageComponentProps = {
  * - 保存処理の実装
  */
 export function EditPageBase(props: EditPageBaseProps) {
-  const revalidator = useRevalidator()
+  const { revalidate } = useRevalidator()
   const [saving, setSaving] = useState(false)
 
   /**
@@ -76,20 +78,22 @@ export function EditPageBase(props: EditPageBaseProps) {
   }, [props.isDirty, skipBlockRef])
 
   // 保存処理
-  const save = useCallback(async () => {
+  const { replaceMessages } = DetailMessage.useSetter()
+  const save = useEvent(async () => {
     try {
       setSaving(true)
       skipBlockRef.current = true
 
       const result = await props.onSave?.() // API 保存
       if (result?.reload) {
-        revalidator.revalidate() // loader 再実行
+        replaceMessages({ info: ['保存しました。'] })
+        revalidate() // loader 再実行
       }
     } finally {
       setSaving(false)
       skipBlockRef.current = false
     }
-  }, [props.onSave, revalidator])
+  })
 
   return (
     <PageBase

@@ -76,11 +76,15 @@ function P201_入荷詳細(props: {
     name: "入荷商品一覧"
   })
 
-  // useFormの引数としてdefaultValuesを渡すだけだと
-  // isDirtyがtrueになってしまうため、useEffectで再度初期化している。
-  // またログインユーザー情報はこの時点でないと取得できない
+  // 以下の理由から useEffect によるリセットを行っている。
+  // - 保存後の画面再読み込み（useRevalidator）の際、
+  //   このコンポーネントのインスタンスは維持されるため、
+  //   loaderDataが更新されても初期値が変わらない。
+  // - ログインユーザー情報はこの時点でないと取得できない
+  // - useFormの引数としてdefaultValuesを渡すだけだと
+  //   isDirtyがtrueになってしまうため。
   const { loginUser } = useLoginLogout()
-  React.useLayoutEffect(() => {
+  React.useEffect(() => {
     const clone = window.structuredClone(loaderData)
     // 新規登録モードの場合
     if (props.mode === 'new') {
