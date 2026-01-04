@@ -95,11 +95,14 @@ export function Field<
       FieldContextProvider が配置されていません。
     </div>
   )
-  if (!fieldMetadata) return (
-    <div className={`${ERROR_CLASS_NAME} ${className ?? ""}`}>
-      指定されたフィールドのメタデータが見つかりません: {propsName}
-    </div>
-  )
+  if (!fieldMetadata) {
+    console.error(`Field - メタデータが見つかりません: ${propsName}`, { contextValue })
+    return (
+      <div className={`${ERROR_CLASS_NAME} ${className ?? ""}`}>
+        指定されたフィールドのメタデータが見つかりません: {propsName}
+      </div>
+    )
+  }
   if (fieldMetadata.type === "RootAggregate"
     || fieldMetadata.type === "ChildAggregate"
     || fieldMetadata.type === "ChildrenAggregate"
@@ -555,7 +558,7 @@ const createGetMetadataOfField = (
         || typeof current.members !== 'object'
         || current.members === null
         || !(part in current.members)) {
-        console.error(`getMetadataOfField - ${fieldName}`, { objectType, filteredParts, trace, part })
+        console.error(`getMetadataOfField - ${fieldName}`, { objectType, filteredParts, trace, part, current })
         throw new Error(`フィールドのメタデータが見つかりません: ${fieldName}`)
       }
 

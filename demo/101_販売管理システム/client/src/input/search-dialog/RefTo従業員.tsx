@@ -68,16 +68,20 @@ export const [
 
   // 検索条件欄のレンダリング
   renderSearchCondition: ({ formMethods }) => {
+    const contextValue = UI.useFieldUiContextProvider('従業員Ref', 'SearchCondition')
+
     return (
-      <div className="grid grid-cols-[10rem_1fr] gap-2">
+      <UI.FieldUiContext.Provider value={contextValue}>
+        <div className="grid grid-cols-[10rem_1fr] gap-2">
 
-        <FormLabel>従業員番号</FormLabel>
-        <UI.Field name="filter.従業員番号" control={formMethods.control} />
+          <FormLabel>従業員番号</FormLabel>
+          <UI.Field name="filter.従業員番号" control={formMethods.control} />
 
-        <FormLabel>氏名</FormLabel>
-        <UI.Field name="filter.氏名" control={formMethods.control} />
+          <FormLabel>氏名</FormLabel>
+          <UI.Field name="filter.氏名" control={formMethods.control} />
 
-      </div>
+        </div>
+      </UI.FieldUiContext.Provider>
     )
   },
 })
