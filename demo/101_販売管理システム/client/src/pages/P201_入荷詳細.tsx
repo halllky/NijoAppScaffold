@@ -225,14 +225,12 @@ function P201_入荷詳細(props: {
                     <div className="flex-1 flex gap-1 items-center">
                       <UI.Field
                         name={`入荷商品一覧.${index}.values.数量`}
-                        suffix="個"
                         className="w-24"
                         control={control}
                       />
                       <span className="mx-2">@</span>
                       <UI.Field
                         name={`入荷商品一覧.${index}.values.仕入単価_税抜`}
-                        suffix="円"
                         className="w-32"
                         control={control}
                       />

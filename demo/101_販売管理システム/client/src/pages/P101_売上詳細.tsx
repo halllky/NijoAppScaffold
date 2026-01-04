@@ -273,7 +273,6 @@ function P101_売上詳細(props: {
                       </span>
                       <UI.Field
                         name={`売上詳細の売上明細.${index}.values.売上数量`}
-                        suffix="個"
                         className="w-16"
                         control={control}
                       />
@@ -299,8 +298,6 @@ function P101_売上詳細(props: {
                       </span>
                       (手修正: <UI.Field
                         name={`売上詳細の売上明細.${index}.values.売上総額_税込_手修正`}
-                        suffix="円"
-                        commaSeparated
                         className="w-40"
                         control={control}
                       />)

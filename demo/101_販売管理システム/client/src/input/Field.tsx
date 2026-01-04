@@ -66,7 +66,7 @@ export type FieldProps<
 > = Omit<React.InputHTMLAttributes<HTMLInputElement>, "name" | "ref"> & {
   name: TFieldPath
   control: ReactHookForm.Control<TFormValues>
-} & NumericTextBoxProps
+}
 
 /**
  * nijoが自動生成するメタデータを参照して
@@ -213,6 +213,16 @@ export function Field<
     const decimalDigit = fieldMetadata.decimalPlace === undefined ? undefined : Number(fieldMetadata.decimalPlace)
     const integerDigit = fieldMetadata.totalDigit === undefined ? undefined : Number(fieldMetadata.totalDigit) - (decimalDigit || 0)
 
+    let suffix: string | undefined = undefined
+    let commaSeparated: boolean = false
+    if (fieldMetadata.isCurrency) {
+      suffix = "円"
+      commaSeparated = true
+    } else if (fieldMetadata.isQuantity) {
+      suffix = "個"
+      commaSeparated = true
+    }
+
     if (contextValue.objectType === 'SearchCondition' && !fieldMetadata.onlySearchCondition) {
       // 検索条件オブジェクトの場合は範囲検索
       renderUiElement = ({ field: { name, onBlur, onChange, ref, value } }) => (
@@ -224,6 +234,8 @@ export function Field<
             onChange={e => onChange({ from: e.target.value, to: value?.to })}
             ref={ref}
             value={value?.from ?? ""} // input要素は null を受け付けないので空文字列
+            suffix={suffix}
+            commaSeparated={commaSeparated}
             {...rest}
           />
           <span>～</span>
@@ -233,6 +245,8 @@ export function Field<
             name={name + ".to"}
             onChange={e => onChange({ to: e.target.value, from: value?.from })}
             value={value?.to ?? ""} // input要素は null を受け付けないので空文字列
+            suffix={suffix}
+            commaSeparated={commaSeparated}
             {...rest}
           />
         </div>
@@ -243,6 +257,8 @@ export function Field<
           integerDigit={integerDigit}
           decimalDigit={decimalDigit}
           className={className}
+          suffix={suffix}
+          commaSeparated={commaSeparated}
           {...field}
           {...rest}
         />
@@ -395,13 +411,30 @@ export function useGridColumnHelper<TGridRow>(
       || fieldMetadata.type === "sequence"
       || fieldMetadata.type === "year"
     ) {
+      let commaSeparated: boolean = false
+      let suffix: string | undefined = undefined
+      if (fieldMetadata.isCurrency) {
+        suffix = "円"
+        commaSeparated = true
+      } else if (fieldMetadata.isQuantity) {
+        suffix = "個"
+        commaSeparated = true
+      }
+
       return {
         header: fieldMetadata.displayName,
-        render: row => (
-          <span className="block w-full py-px px-1 truncate text-right">
-            {ReactHookForm.get(row, pathFromGridRow)}
-          </span>
-        ),
+        render: row => {
+          let value = ReactHookForm.get(row, pathFromGridRow)
+          if (commaSeparated) {
+            const num = Number(value)
+            if (Number.isFinite(num)) value = num.toLocaleString()
+          }
+          return (
+            <span className="block w-full py-px px-1 truncate text-right">
+              {value}{suffix}
+            </span>
+          )
+        },
         ...options,
       }
     }

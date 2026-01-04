@@ -28,6 +28,7 @@
         UniqueId="c3d4e5f6-a1b2-4c3d-0e4f-5a6b7c8d9e0f" />
       <!--必須でないのは、キャンペーン用販促商品など価格が存在しない商品があるため。-->
       <売値単価_税抜
+        Custom-e543a1e3-a539-459b-86ce-a17686043d59="True"
         Type="decimal"
         UniqueId="d4e5f6a1-b2c3-4d4e-1f5a-6b7c8d9e0f1a" />
       <消費税区分
@@ -97,11 +98,13 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
           UniqueId="98edd12a-643f-41f8-a71c-a60d1a467151" />
         <!--取消の場合は負の数で登録される。-->
         <売上数量
+          Custom-beceba92-faf8-49eb-a987-ff0d53889d64="True"
           IsRequired="True"
           Type="int"
           UniqueId="d4e5f6a1-b2c3-4d6e-3f7a-8b9c0d1e2f3a" />
         <!--税込み。丸め処理済み。取消の場合は負の数で登録される。基本的には商品マスタの単価に売上数量を乗じたものだが、登録時に手修正が可能。-->
         <売上総額_税込
+          Custom-e543a1e3-a539-459b-86ce-a17686043d59="True"
           IsRequired="True"
           Type="int"
           UniqueId="f6a1b2c3-d4e5-4f8a-5b9c-0d1e2f3a4b5c" />
@@ -115,6 +118,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
             UniqueId="c3d4e5f6-a1b2-4c1d-8e2f-3a4b5c6d7e8f" />
           <!--この売上が該当の入荷明細から何個引き当てたか。取消の場合は負の数で登録される。-->
           <引当数量
+            Custom-beceba92-faf8-49eb-a987-ff0d53889d64="True"
             IsRequired="True"
             Type="int"
             UniqueId="d4e5f6a1-b2c3-4d2e-9f3a-4b5c6d7e8f9a" />
@@ -154,9 +158,11 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
           Type="ref-to:商品"
           UniqueId="23cd27b4-406d-4e5c-988a-8715fcbd4a4d" />
         <数量
+          Custom-beceba92-faf8-49eb-a987-ff0d53889d64="True"
           Type="int"
           UniqueId="853acbf2-2764-424e-b60d-5ff066f18b9b" />
         <仕入単価_税抜
+          Custom-e543a1e3-a539-459b-86ce-a17686043d59="True"
           Type="decimal"
           UniqueId="1454146f-856e-4a67-b461-17a4fcd1e19e" />
         <消費税区分
@@ -243,17 +249,20 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
         Type="ref-to:商品"
         UniqueId="4857ef87-cd39-40c1-b36d-a8ed8449662a" />
       <仕入単価_税抜
+        Custom-e543a1e3-a539-459b-86ce-a17686043d59="True"
         Type="decimal"
         UniqueId="94e26a29-5a09-4b3c-880f-3965a223ce0c" />
       <消費税区分
         Type="消費税区分"
         UniqueId="9306ec38-6553-41f2-8a2d-62913169bdb3" />
       <入荷数量
+        Custom-beceba92-faf8-49eb-a987-ff0d53889d64="True"
         IsRequired="True"
         Type="int"
         UniqueId="9c25ab54-ac1c-4757-a87b-c33689958053" />
       <!--0になったら引当不可。入荷登録時に入荷数量と同じ値が設定され、売上登録で引当が発生するたびに減算される。-->
       <残数量
+        Custom-beceba92-faf8-49eb-a987-ff0d53889d64="True"
         IsRequired="True"
         Type="int"
         UniqueId="3c411e94-6efa-4842-9ddd-3969628021b1" />
@@ -322,9 +331,11 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
         Type="description"
         UniqueId="2c4ddbb9-7eb6-4ea1-96b9-eb3f2b13a53b" />
       <合計金額
+        Custom-e543a1e3-a539-459b-86ce-a17686043d59="True"
         Type="int"
         UniqueId="551e8525-3c9c-4c00-a95e-707d6cc4a452" />
       <売上数量合計
+        Custom-beceba92-faf8-49eb-a987-ff0d53889d64="True"
         Type="int"
         UniqueId="beb2ca92-d35c-4ec7-9c0e-2efc3c886f19" />
     </売上一覧>
@@ -349,6 +360,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
         UniqueId="b66f5118-fff3-441d-842a-c14a596b44ab" />
       <!--DBには保存しないが画面上での表示に使用-->
       <合計金額
+        Custom-e543a1e3-a539-459b-86ce-a17686043d59="True"
         Type="int"
         UniqueId="e49f5737-d260-40cf-99e7-404772e10153" />
       <!--引当のロジックの都合上、一度更新確定した明細は更新や削除ができない。取消の場合は別で取消の明細を追加していく。-->
@@ -369,14 +381,17 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
           UniqueId="8c35dcac-1c74-4535-b2c0-fc5f50a37fdd" />
         <!--取消の場合は負の数。-->
         <売上数量
+          Custom-beceba92-faf8-49eb-a987-ff0d53889d64="True"
           Type="int"
           UniqueId="88781893-d022-4594-bdda-5eedfc3a3eb4" />
         <!--取消の場合は負の数。丸め処理済みの値。自動計算。商品マスタの単価に売上数量を乗じたもの。手修正した金額が入力されている場合はそちらが優先される。-->
         <売上総額_税込_自動計算
+          Custom-e543a1e3-a539-459b-86ce-a17686043d59="True"
           Type="int"
           UniqueId="aa938911-99c2-4e98-b6d1-ed07a16eb255" />
         <!--取消の場合は負の数。人間が手で入力した金額。-->
         <売上総額_税込_手修正
+          Custom-e543a1e3-a539-459b-86ce-a17686043d59="True"
           Type="int"
           UniqueId="77fbe568-1f31-4320-80b1-b4572d5543c7" />
       </売上明細>
@@ -411,6 +426,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
         Type="int"
         UniqueId="47e8ab32-450e-4a0c-997c-d4b4e4627909" />
       <入荷数量合計
+        Custom-beceba92-faf8-49eb-a987-ff0d53889d64="True"
         Type="int"
         UniqueId="f91dd3c1-3e02-485c-9d51-00a6d77a8c97" />
     </入荷一覧>
@@ -431,6 +447,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
         Type="word"
         UniqueId="446d95d0-c894-4cbc-9f52-4cb316445c55" />
       <売値単価_税抜
+        Custom-e543a1e3-a539-459b-86ce-a17686043d59="True"
         Type="decimal"
         UniqueId="bfe5c44a-cc36-4136-b22c-ac6425ec9dce" />
       <消費税区分
@@ -450,9 +467,11 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
         Type="ref-to:商品"
         UniqueId="cb60d0f6-8dcb-4c4a-bc62-31aa338c4034" />
       <増減数
+        Custom-beceba92-faf8-49eb-a987-ff0d53889d64="True"
         Type="int"
         UniqueId="54379682-e77d-4da1-98e4-812ef8d6ad43" />
       <絶対数
+        Custom-beceba92-faf8-49eb-a987-ff0d53889d64="True"
         Type="int"
         UniqueId="a54a1771-b626-4353-ba03-7db45e9d4f61" />
       <在庫調整理由
@@ -483,10 +502,12 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
         UniqueId="66d0893f-9dfb-4f5e-bbd5-984aad2e115e" />
       <!--登録時パラメータをそのまま記録する。絶対数で調整された場合はnull。-->
       <増減数
+        Custom-beceba92-faf8-49eb-a987-ff0d53889d64="True"
         Type="int"
         UniqueId="3eed465f-4a93-4669-ade7-642091359f22" />
       <!--登録時パラメータをそのまま記録する。増減数で調整された場合はnull。-->
       <絶対数
+        Custom-beceba92-faf8-49eb-a987-ff0d53889d64="True"
         Type="int"
         UniqueId="f8e6c5fd-cb01-4757-896a-307bf6f5041c" />
       <在庫調整理由
@@ -501,6 +522,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
           Type="ref-to:入荷明細"
           UniqueId="637d132a-ce39-4162-b97e-13f9868af05d" />
         <引当数
+          Custom-beceba92-faf8-49eb-a987-ff0d53889d64="True"
           IsRequired="True"
           Type="int"
           UniqueId="b4908865-39d1-4e1a-a4cc-bb93cf318778" />
@@ -529,6 +551,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
         UniqueId="61b8be67-a146-4d37-8efe-a4532885593c" />
       <!--何個増減したか-->
       <増減数
+        Custom-beceba92-faf8-49eb-a987-ff0d53889d64="True"
         Type="int"
         UniqueId="0ce2b819-d092-4203-8ad6-3a489ba1ee18" />
       <!--入荷、売上による引当、在庫調整など-->
@@ -744,5 +767,17 @@ ASP.NET Core のサービスワーカーとして登録される定期処理。-
       DisplayName="最大長"
       PhysicalName="CustomMaxLength"
       Type="Decimal" />
+    <!--その数値項目が金額を表すかどうか。画面上で3桁カンマ区切りで表示されたり、サフィックスに「円」がついたりする。-->
+    <Custom-e543a1e3-a539-459b-86ce-a17686043d59
+      AvailableModels="data-model,query-model,command-model,structure-model,enum,value-object"
+      DisplayName="金額項目"
+      PhysicalName="IsCurrency"
+      Type="Boolean" />
+    <!--その数値項目が数量を表すか否か。画面上でサフィックスに「個」がつく。-->
+    <Custom-beceba92-faf8-49eb-a987-ff0d53889d64
+      AvailableModels="data-model,query-model,command-model,structure-model,enum,value-object"
+      DisplayName="数量"
+      PhysicalName="IsQuantity"
+      Type="Boolean" />
   </CustomAttributes>
 </NijoAppScaffold>

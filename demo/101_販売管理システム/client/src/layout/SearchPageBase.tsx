@@ -113,7 +113,10 @@ export function SearchPageBase<
         skip: (page * size).toString(),
         take: size.toString(),
       } as TCondition
-      const result = await callComplexPostEndpointAsync(props.queryModelType, conditionForRequest, { signal: controller.signal })
+      const result = await callComplexPostEndpointAsync(props.queryModelType, conditionForRequest, {
+        ignoreConfirm: true,
+        signal: controller.signal,
+      })
 
       if (result.type === 'ok') {
         setItems(result.returnValue.currentPageItems as TItem[])
