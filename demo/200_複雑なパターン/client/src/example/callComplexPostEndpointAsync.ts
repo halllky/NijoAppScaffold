@@ -19,7 +19,7 @@ export async function callComplexPostEndpointAsync<
   type: TQueryModelType,
   requestBody: TSearchCondition,
   options?: ComplexPostOptions,
-): Promise<CompolexPostResult<TSearchResult>>;
+): Promise<ComplexPostResult<TSearchResult>>;
 
 // 一覧検索（外部参照）
 export async function callComplexPostEndpointAsync<
@@ -30,7 +30,7 @@ export async function callComplexPostEndpointAsync<
   type: TQueryModelType,
   requestBody: TSearchCondition,
   options?: ComplexPostOptions,
-): Promise<CompolexPostResult<TSearchResult>>;
+): Promise<ComplexPostResult<TSearchResult>>;
 
 // コマンド実行
 export async function callComplexPostEndpointAsync<
@@ -41,7 +41,7 @@ export async function callComplexPostEndpointAsync<
   type: TCommandModelType,
   requestBody: TCommandParameter,
   options?: ComplexPostOptions,
-): Promise<CompolexPostResult<TCommandResult>>;
+): Promise<ComplexPostResult<TCommandResult>>;
 
 // 一括更新
 export async function callComplexPostEndpointAsync<
@@ -51,13 +51,13 @@ export async function callComplexPostEndpointAsync<
   type: TBatchUpdateModelType,
   requestBody: TBatchUpdateParameter,
   options?: ComplexPostOptions,
-): Promise<CompolexPostResult<unknown>>;
+): Promise<ComplexPostResult<unknown>>;
 
 export async function callComplexPostEndpointAsync(
   type: string,
   requestBody: unknown,
   options?: ComplexPostOptions,
-): Promise<CompolexPostResult<unknown>> {
+): Promise<ComplexPostResult<unknown>> {
 
   // -------------------------
   // 注意:
@@ -172,7 +172,7 @@ export async function callComplexPostEndpointAsync(
 // 内部処理用ヘルパー関数等
 
 /** ComplexPostの結果 */
-export type CompolexPostResult<TSuccess>
+export type ComplexPostResult<TSuccess>
   = { type: 'ok', returnValue: TSuccess }
   | { type: 'canceled' }
   | { type: 'error', detail: DetailMessagesContainer }
