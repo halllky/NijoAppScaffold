@@ -59,13 +59,21 @@ export async function callComplexPostEndpointAsync(
   options?: ComplexPostOptions,
 ): Promise<CompolexPostResult<unknown>> {
 
+  // -------------------------
+  // 注意:
+  // この関数の処理は NijoAppScaffold として決まった仕様があるわけではない。
+  // 実際の処理はアプリケーションごとの仕様に応じて適宜カスタマイズすること。
+  // 多くの場合、クライアント側からサーバー側のエンドポイントを呼び出す方式はアプリケーション全体で統一されているべきであるため、
+  // この関数の処理をクライアント側共通のヘルパー関数として実装し、各画面から呼び出す形にすることが望ましい。
+  // -------------------------
+
   try {
     // 添付ファイルを処理する。
     // リクエスト全体は Content-Type: multipart/form-data で送信する。
     // リクエスト本体は "complex-post-request-body" という名前のフィールドにJSONをまるごと格納する。
     // 添付ファイルは、ファイル1件ごとにUUIDを発番し、そのUUIDをキーとしてファイル本体のバイナリをそのフィールドに格納する。
     const formData = new FormData()
-    const stringifiedRequestBody = JSON.stringify(requestBody, (key, value) => {
+    const stringifiedRequestBody = JSON.stringify(requestBody, (_, value) => {
       // FileListならばこのタイミングでファイル1件ごとにUUIDを発番し、別フィールドにファイルの実体（Blob）を格納する
       if (value instanceof FileList) {
         const fileMetadataList: FileAttachmentMetadata[] = []
@@ -130,9 +138,16 @@ export async function callComplexPostEndpointAsync(
         }
       }
 
-      // 確認メッセージがある場合はそれを表示
-      if (json.confirms.length > 0) {
-        if (window.confirm(json.confirms.join('\n'))) {
+      // ステータスコードが 202 Accepted の場合、サーバー側でエラーが発生したか、
+      // 「保存しますがよろしいですか？」などの確認メッセージが発生している状態を示す。
+      if (response.status === 202) {
+        let confirmMessage = json.confirms.join('\n')
+        if (confirmMessage === '') {
+          // 基本的には Command Model の Execute メソッド内で明示的に文言が指定されているが、
+          // もし確認メッセージが空の場合（実装漏れの場合）はデフォルトのメッセージを表示する。
+          confirmMessage = '処理を確定しますか？'
+        }
+        if (window.confirm(confirmMessage)) {
           // 承諾された場合はignoreConfirmをtrueにしてHTTPリクエスト2巡目に進む
           searchParams.set(IGNORE_CONFIRM, 'true')
           continue

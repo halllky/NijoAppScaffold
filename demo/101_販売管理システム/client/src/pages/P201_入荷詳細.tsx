@@ -44,6 +44,8 @@ export default [
     loader: async ({ params }) => {
       const result = await callComplexPostEndpointAsync('入荷詳細画面初期表示', {
         values: { 入荷ID: params.id },
+      }, {
+        ignoreConfirm: true,
       })
       if (result.type === 'ok') {
         return result.returnValue
@@ -291,7 +293,9 @@ function NewItemArea(props: {
       searchCondition.filter.外部システム側ID = searchCode
       searchCondition.take = '2' // ありえないが複数ヒットを考慮
 
-      const result = await callComplexPostEndpointAsync('ref-to:商品', searchCondition)
+      const result = await callComplexPostEndpointAsync('ref-to:商品', searchCondition, {
+        ignoreConfirm: true,
+      })
       if (result.type === 'ok') {
         if (result.returnValue.totalCount === 0) {
           setErrorMessage('該当する商品がありません')
@@ -316,7 +320,9 @@ function NewItemArea(props: {
     const searchCondition = createNew商品SearchCondition()
     searchCondition.filter.商品名 = keyword
 
-    const result = await callComplexPostEndpointAsync('ref-to:商品', searchCondition)
+    const result = await callComplexPostEndpointAsync('ref-to:商品', searchCondition, {
+      ignoreConfirm: true,
+    })
     if (result.type === 'ok') {
       return result.returnValue.currentPageItems
     }

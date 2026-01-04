@@ -273,7 +273,7 @@ public partial class OverridedApplicationConfigure : DefaultConfiguration {
             if (value == null) {
                 writer.WriteNullValue();
             } else {
-                writer.WriteStringValue(value.Value.ToString());
+                writer.WriteStringValue(value.Value.ToString("#.#"));
             }
         }
     }

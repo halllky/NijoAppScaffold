@@ -44,6 +44,8 @@ export default [
     loader: async ({ params }) => {
       const result = await callComplexPostEndpointAsync('売上詳細画面初期表示', {
         values: { 売上SEQ: params.id },
+      }, {
+        ignoreConfirm: true,
       })
       if (result.type === 'ok') {
         return result.returnValue
@@ -113,6 +115,7 @@ function P101_売上詳細(props: {
     abortControllerRef.current = new AbortController()
 
     const result = await callComplexPostEndpointAsync('売上金額シミュレート', getValues(), {
+      ignoreConfirm: true,
       signal: abortControllerRef.current.signal,
     })
     if (result.type !== 'ok') return;
@@ -339,7 +342,9 @@ function NewItemArea(props: {
       searchCondition.filter.外部システム側ID = searchCode
       searchCondition.take = '2' // ありえないが複数ヒットを考慮
 
-      const result = await callComplexPostEndpointAsync('ref-to:商品', searchCondition)
+      const result = await callComplexPostEndpointAsync('ref-to:商品', searchCondition, {
+        ignoreConfirm: true,
+      })
       if (result.type === 'ok') {
         if (result.returnValue.totalCount === 0) {
           setErrorMessage('該当する商品がありません')
@@ -364,7 +369,9 @@ function NewItemArea(props: {
     const searchCondition = createNew商品SearchCondition()
     searchCondition.filter.商品名 = keyword
 
-    const result = await callComplexPostEndpointAsync('ref-to:商品', searchCondition)
+    const result = await callComplexPostEndpointAsync('ref-to:商品', searchCondition, {
+      ignoreConfirm: true,
+    })
     if (result.type === 'ok') {
       return result.returnValue.currentPageItems
     }

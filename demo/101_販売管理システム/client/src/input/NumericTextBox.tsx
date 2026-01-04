@@ -59,6 +59,7 @@ export const NumericTextBox = React.forwardRef<HTMLInputElement, NumericTextBoxP
       }
     }
     onFocus?.(e)
+    e.target.select()
   }
 
   // フォーカスアウト時に正規化＆カンマ付与

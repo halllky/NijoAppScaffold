@@ -78,9 +78,10 @@ export function EditPageBase(props: EditPageBaseProps) {
   }, [props.isDirty, skipBlockRef])
 
   // 保存処理
-  const { replaceMessages } = DetailMessage.useSetter()
+  const { clearMessages, replaceMessages } = DetailMessage.useSetter()
   const save = useEvent(async () => {
     try {
+      clearMessages()
       setSaving(true)
       skipBlockRef.current = true
 

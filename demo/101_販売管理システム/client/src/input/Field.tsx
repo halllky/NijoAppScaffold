@@ -210,8 +210,23 @@ export function Field<
     || fieldMetadata.type === "sequence"
     || fieldMetadata.type === "year"
   ) {
-    const decimalDigit = fieldMetadata.decimalPlace === undefined ? undefined : Number(fieldMetadata.decimalPlace)
-    const integerDigit = fieldMetadata.totalDigit === undefined ? undefined : Number(fieldMetadata.totalDigit) - (decimalDigit || 0)
+    let decimalDigit: number | undefined = undefined
+    if (fieldMetadata.decimalPlace !== undefined) {
+      decimalDigit = Number(fieldMetadata.decimalPlace)
+    } else if (fieldMetadata.type === "decimal") {
+      decimalDigit = 7
+    } else if (fieldMetadata.type === "int" || fieldMetadata.type === "sequence" || fieldMetadata.type === "year") {
+      decimalDigit = 0
+    }
+
+    let integerDigit: number | undefined = undefined
+    if (fieldMetadata.totalDigit !== undefined) {
+      integerDigit = Number(fieldMetadata.totalDigit) - (decimalDigit || 0)
+    } else if (fieldMetadata.type === "year") {
+      integerDigit = 4
+    } else {
+      integerDigit = 18 - (decimalDigit || 0)
+    }
 
     let suffix: string | undefined = undefined
     let commaSeparated: boolean = false
