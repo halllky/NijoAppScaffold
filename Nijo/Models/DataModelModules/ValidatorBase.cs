@@ -172,14 +172,14 @@ public abstract class ValidatorBase {
             // 子孫エンティティ
             var childProps = props
                 .Where(p => p.Metadata is NavigationProperty.PrincipalOrRelevant)
-                .ToDictionary(p => ((NavigationProperty.PrincipalOrRelevant)p.Metadata).OtherSide, p => p);
+                .ToDictionary(p => ((NavigationProperty.PrincipalOrRelevant)p.Metadata).OtherSide.ToMappingKey(), p => p);
             foreach (var nav in currentEntity.GetNavigationProperties()) {
                 if (nav is not NavigationProperty.NavigationOfParentChild nop) continue; // 外部参照のナビゲーションを除外
                 if (nop.Principal.ThisSide != currentEntity.Aggregate) continue; // 子から親へのナビゲーションを除外
 
                 if (nop.Relevant.ThisSide is ChildAggregate child) {
                     var childEntity = new EFCoreEntity(child);
-                    var childNav = childProps[child];
+                    var childNav = childProps[child.ToMappingKey()];
                     string[] childErrorPath = [.. ownerPath, childNav.Metadata.GetPropertyName(E_CsTs.CSharp)];
 
                     var body = RenderAggregate(childEntity, (IInstancePropertyOwner)childNav, childErrorPath).ToArray();
@@ -193,7 +193,7 @@ public abstract class ValidatorBase {
 
                 } else if (nop.Relevant.ThisSide is ChildrenAggregate children) {
                     var childrenEntity = new EFCoreEntity(children);
-                    var childrenNav = childProps[children];
+                    var childrenNav = childProps[children.ToMappingKey()];
                     var i = children.GetLoopVarName("i");
                     var loopItem = new Variable(children.GetLoopVarName("item"), childrenEntity);
                     string[] childErrorPath = [.. ownerPath, $"{childrenNav.Metadata.GetPropertyName(E_CsTs.CSharp)}[{i}]"];
