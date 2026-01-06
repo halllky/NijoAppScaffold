@@ -24,6 +24,7 @@ export const [
   {}
 >({
   title: '従業員',
+  queryModelType: '従業員Ref',
 
   // ダイアログ内部でなくその呼び出し元で使用する情報
   codePathFromRefTarget: '従業員番号',
@@ -67,7 +68,7 @@ export const [
   ],
 
   // 検索条件欄のレンダリング
-  renderSearchCondition: ({ formMethods }) => {
+  SearchCondition: ({ formMethods }) => {
     const contextValue = UI.useFieldUiContextProvider('従業員Ref', 'SearchCondition')
 
     return (
