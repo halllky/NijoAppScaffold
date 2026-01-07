@@ -11,7 +11,7 @@ import _007_グリッド機能 from "@nijo/ui-components/layout/DynamicForm/__te
 import FormLayoutPatternsDebugging from "./FormLayoutPatternsDebugging"
 import EditableGridDebugging from "./EditableGridDebugging"
 import EditableGridHookTest from "./EditableGridHookTest"
-import YearMonthGridのデバッグ from "../../package_ui-components/src/layout/YearMonthGridのデバッグ"
+import YearMonthGridDebugging from "./YearMonthGridDebugging"
 
 export default function () {
 
@@ -124,7 +124,7 @@ export const getDebuggingPages = (): { groupName: string, links: (ReactRouter.Ro
       {
         path: '/year-month-grid/001',
         label: 'YearMonthGrid 基本機能',
-        element: <YearMonthGridのデバッグ />,
+        element: <YearMonthGridDebugging />,
       }
     ],
   },

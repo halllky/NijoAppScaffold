@@ -43,10 +43,9 @@ export type Row<TItem extends BodyItem> = {
 }
 
 /** カレンダーのボディ部分に表示されるアイテムが備えるべき属性 */
-export type BodyItem = (
-  | { type: 'point', yearMonth: YearMonth }
-  | { type: 'range', since: YearMonth, until: YearMonth }
-) & {
+export type BodyItem = {
+  since: YearMonth
+  until: YearMonth
   /** アイテムの高さ(px) */
   heightPx?: number
 }
@@ -324,15 +323,9 @@ function calculateItemPosition(item: BodyItem, months: YearMonth[]): { left: num
   let effectiveStart: string
   let effectiveEnd: string
 
-  if (item.type === 'point') {
-    if (item.yearMonth < firstMonth || item.yearMonth > lastMonth) return null
-    effectiveStart = item.yearMonth
-    effectiveEnd = item.yearMonth
-  } else {
-    if (item.until < firstMonth || item.since > lastMonth) return null
-    effectiveStart = item.since < firstMonth ? firstMonth : item.since
-    effectiveEnd = item.until > lastMonth ? lastMonth : item.until
-  }
+  if (item.until < firstMonth || item.since > lastMonth) return null
+  effectiveStart = item.since < firstMonth ? firstMonth : item.since
+  effectiveEnd = item.until > lastMonth ? lastMonth : item.until
 
   const startIdx = months.indexOf(effectiveStart as YearMonth)
   const endIdx = months.indexOf(effectiveEnd as YearMonth)
