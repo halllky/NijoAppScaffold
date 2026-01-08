@@ -295,9 +295,18 @@ namespace Nijo.Models.QueryModelModules {
 
         /// <summary>
         /// 子孫要素をIncludeする式をレンダリングします。
+        /// また、 1:N のリレーションが複数登場する場合、パフォーマンスに問題が出るのを防ぐため
+        /// AsSplitQuery() を呼び出すようにします。
         /// </summary>
         internal IEnumerable<string> RenderInclude() {
-            foreach (var agg in Aggregate.EnumerateDescendants()) {
+            var descendants = Aggregate.EnumerateDescendants().ToArray();
+
+            // 1:N のリレーションが2個以上存在する場合は AsSplitQuery() を追加
+            if (descendants.Count(agg => agg is ChildrenAggregate) >= 2) {
+                yield return ".AsSplitQuery() // パフォーマンスの問題を防ぐため、テーブル毎に個別にSQLを発行して取得する";
+            }
+
+            foreach (var agg in descendants) {
                 var fullPath = agg.GetPathFromEntry().Skip(1).ToArray();
 
                 for (int i = 0; i < fullPath.Length; i++) {
