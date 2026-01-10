@@ -57,8 +57,6 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
     internal abstract string TsTypeName { get; }
     string IPresentationLayerStructure.TsTypeName => TsTypeName;
 
-    /// <summary>画面上で独自の追加削除のライフサイクルを持つかどうか</summary>
-    internal abstract bool HasLifeCycle { get; }
     /// <summary>楽観排他制御用のバージョンを持つかどうか</summary>
     internal abstract bool HasVersion { get; }
 
@@ -112,7 +110,6 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
                 [JsonPropertyName("{{c.PhysicalName}}")]
                 public {{WithIndent(c.CsClassNameAsMember, "    ")}} {{c.PhysicalName}} { get; set; } = new();
             """)}}
-            {{If(HasLifeCycle, () => $$"""
 
                 /// <summary>このデータがDBに保存済みかどうか</summary>
                 [JsonPropertyName("{{EXISTS_IN_DB_TS}}")]
@@ -123,7 +120,6 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
                 /// <summary>このデータが更新確定時に削除されるかどうか</summary>
                 [JsonPropertyName("{{WILL_BE_DELETED_TS}}")]
                 public bool {{WILL_BE_DELETED_CS}} { get; set; }
-            """)}}
             {{If(HasVersion, () => $$"""
                 /// <summary>楽観排他制御用のバージョニング情報</summary>
                 [JsonPropertyName("{{VERSION_TS}}")]
@@ -158,14 +154,12 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
               {{member.PhysicalName}}: {{member.TsTypeNameAsMember}}
             """)}}
 
-            {{If(HasLifeCycle, () => $$"""
               /** このデータがDBに保存済みかどうか */
               {{EXISTS_IN_DB_TS}}: boolean
               /** このデータに更新がかかっているかどうか */
               {{WILL_BE_CHANGED_TS}}: boolean
               /** このデータが更新確定時に削除されるかどうか */
               {{WILL_BE_DELETED_TS}}: boolean
-            """)}}
             {{If(HasVersion, () => $$"""
               /** 楽観排他制御用のバージョニング情報 */
               {{VERSION_TS}}: number | null | undefined
@@ -469,11 +463,9 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
                 {{m.GetPropertyName(E_CsTs.TypeScript)}}: {{m.RenderNewObjectCreation()}},
             """)}}
               },
-            {{If(HasLifeCycle, () => $$"""
               {{EXISTS_IN_DB_TS}}: false,
               {{WILL_BE_CHANGED_TS}}: true,
               {{WILL_BE_DELETED_TS}}: false,
-            """)}}
             {{If(HasVersion, () => $$"""
               {{VERSION_TS}}: null,
             """)}}
@@ -496,7 +488,6 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         internal override string TsTypeName => $"{Aggregate.PhysicalName}DisplayData";
         internal abstract string CsClassNameAsMember { get; }
         internal abstract string TsTypeNameAsMember { get; }
-        internal override bool HasLifeCycle => true;
         internal override bool HasVersion => Aggregate is RootAggregate;
 
         internal abstract string RenderNewObjectCreation();
@@ -510,7 +501,6 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
 
         internal override string CsClassNameAsMember => CsClassName;
         internal override string TsTypeNameAsMember => TsTypeName;
-        internal override bool HasLifeCycle => _child.HasLifeCycle;
 
         internal override string RenderNewObjectCreation() {
             return $"{TsNewObjectFunction}()";
@@ -531,7 +521,6 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
 
         internal override string CsClassNameAsMember => $"List<{CsClassName}>";
         internal override string TsTypeNameAsMember => $"{TsTypeName}[]";
-        internal override bool HasLifeCycle => true;
 
         internal override string RenderNewObjectCreation() {
             return "[]";

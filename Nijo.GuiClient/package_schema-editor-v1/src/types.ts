@@ -144,7 +144,6 @@ export const ATTR_GENERATE_BATCH_UPDATE_COMMAND = 'GenerateBatchUpdateCommand' a
 export const ATTR_IS_KEY = 'IsKey' as XmlElementAttributeName
 export const ATTR_DISPLAY_NAME = 'DisplayName' as XmlElementAttributeName
 export const ATTR_STATIC_ENUM_VALUE = 'Key' as XmlElementAttributeName
-export const ATTR_USER_HELP_TEXT = 'UserHelpText' as XmlElementAttributeName
 export const ATTR_PARAMETER = 'Parameter' as XmlElementAttributeName
 export const ATTR_RETURN_VALUE = 'ReturnValue' as XmlElementAttributeName
 

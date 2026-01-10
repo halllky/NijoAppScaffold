@@ -428,9 +428,6 @@ namespace Nijo.ImmutableSchema {
             }
         }
 
-        /// <summary>【廃止予定】画面上で追加削除されるタイミングが親と異なるかどうか</summary>
-        public bool HasLifeCycle => true || XElement.Attribute(BasicNodeOptions.HasLifeCycle.AttributeName) != null;
-
         AggregateBase IRelationalMember.MemberAggregate => this;
 
         public override AggregateBase AsEntry() {

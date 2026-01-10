@@ -57,7 +57,7 @@
       <数量 Type="int" />
       <単価 Type="int" />
 
-      <納品2 Type="child" HasLifecycle="True">
+      <納品2 Type="child">
         <商品ID Type="word" IsKey="True" />
         <納品日 Type="word" />
         <納品明細2 Type="children">
@@ -67,7 +67,7 @@
         </納品明細2>
       </納品2>
 
-      <請求2 Type="child" HasLifecycle="True">
+      <請求2 Type="child">
         <請求ID Type="word" IsKey="True" />
         <請求日 Type="word" />
         <請求明細2 Type="children">
@@ -78,7 +78,7 @@
         </請求明細2>
       </請求2>
 
-      <入金2 Type="child" HasLifecycle="True">
+      <入金2 Type="child">
         <入金ID Type="word" IsKey="True" />
         <入金日 Type="word" />
         <金額 Type="int" />

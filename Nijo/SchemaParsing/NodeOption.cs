@@ -265,20 +265,6 @@ internal static class BasicNodeOptions {
             // IsAvailableで基本的な判定は完了しているため、追加の検証は不要
         },
     };
-    internal static NodeOption HasLifeCycle = new() {
-        AttributeName = "HasLifeCycle",
-        DisplayName = "【廃止予定】独立ライフサイクル",
-        Type = E_NodeOptionType.Boolean,
-        HelpText = $$"""
-            【廃止予定】画面上で追加削除されるタイミングが親と異なるかどうか。
-            """,
-        IsAvailable = (model, nodeType) => {
-            return model is QueryModel;
-        },
-        ValidateOthers = ctx => {
-            // 特に制約なし
-        },
-    };
     internal static NodeOption OnlySearchCondition = new() {
         AttributeName = "OnlySearchCondition",
         DisplayName = "検索条件のみに生成",
@@ -424,28 +410,6 @@ internal static class BasicNodeOptions {
     #endregion StructureModel用
 
 
-    #region StaticEnumModel用
-    internal static NodeOption StaticEnumValue = new() {
-        AttributeName = Models.StaticEnumModelModules.StaticEnumValueDef.ATTR_KEY,
-        DisplayName = "静的列挙型値",
-        Type = E_NodeOptionType.String,
-        HelpText = $$"""
-            静的列挙型の区分値を指定します。
-            C#のenumの値となるため、整数で指定してください。
-            """,
-        IsAvailable = (model, nodeType) => {
-            return model is StaticEnumModel;
-        },
-        ValidateOthers = ctx => {
-            // 整数値のみ許可
-            if (!int.TryParse(ctx.Value, out _)) {
-                ctx.AddError("整数値で指定してください。");
-            }
-        },
-    };
-    #endregion StaticEnumModel用
-
-
     #region ValueMember用
     internal static NodeOption MaxLength = new() {
         AttributeName = "MaxLength",
@@ -539,23 +503,6 @@ internal static class BasicNodeOptions {
             // 特に制約なし
         },
     };
-
-    internal static NodeOption UserHelpText = new() {
-        AttributeName = "UserHelpText",
-        DisplayName = "ユーザー向け説明文",
-        Type = E_NodeOptionType.String,
-        HelpText = $$"""
-            アプリケーションのエンドユーザーに向けた説明文を指定します。
-            画面上でユーザーに表示し、項目の入力方法や意味を説明するために使用してください。
-            改行を含めることができます。
-            """,
-        IsAvailable = (model, nodeType) => {
-            return true;
-        },
-        ValidateOthers = ctx => {
-            // 特に制約なし（改行も許可）
-        },
-    };
     #endregion ValueMember用
 
 
@@ -623,23 +570,6 @@ internal static class BasicNodeOptions {
         },
         ValidateOthers = ctx => {
             // 値の妥当性チェックはConstantTypeで実施
-        },
-    };
-
-    internal static NodeOption TemplateParams = new() {
-        AttributeName = "TemplateParams",
-        DisplayName = "【廃止予定】テンプレートパラメータ",
-        Type = E_NodeOptionType.String,
-        HelpText = $$"""
-            【廃止予定】テンプレート文字列の引数名をカンマ区切りで指定します。
-            現在は{0}, {1}, ... から自動的に引数が判定されるため、この属性は不要です。
-            """,
-        IsAvailable = (model, nodeType) => {
-            return false; // 使用不可にする
-        },
-        ValidateOthers = ctx => {
-            // 廃止予定の警告
-            ctx.AddError("TemplateParams属性は廃止予定です。テンプレート文字列の引数は{0}, {1}, ...から自動的に判定されます。");
         },
     };
     #endregion ConstantModel用

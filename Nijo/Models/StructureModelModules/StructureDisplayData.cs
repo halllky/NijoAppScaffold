@@ -16,7 +16,6 @@ internal class StructureDisplayData : EditablePresentationObject {
     internal override string CsClassName => $"{Aggregate.PhysicalName}DisplayData";
     internal override string TsTypeName => $"{Aggregate.PhysicalName}DisplayData";
 
-    internal override bool HasLifeCycle => false;
     internal override bool HasVersion => false;
     #region レンダリング
     internal static string RenderCSharpRecursively(RootAggregate rootAggregate, CodeRenderingContext ctx) {

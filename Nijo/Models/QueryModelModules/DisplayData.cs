@@ -22,8 +22,6 @@ namespace Nijo.Models.QueryModelModules {
         /// <summary>TypeScript型名</summary>
         internal override string TsTypeName => $"{Aggregate.PhysicalName}DisplayData";
 
-        /// <summary>画面上で独自の追加削除のライフサイクルを持つかどうか</summary>
-        internal override bool HasLifeCycle => true;
         /// <summary>楽観排他制御用のバージョンを持つかどうか</summary>
         internal override bool HasVersion => Aggregate is RootAggregate;
 
