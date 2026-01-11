@@ -14,34 +14,6 @@ namespace Nijo.Models {
     internal class CommandModel : IModel {
         public string SchemaName => "command-model";
 
-        public string RenderModelValidateSpecificationMarkdown() {
-            return $$"""
-                #### 引数、戻り値
-
-                `{{BasicNodeOptions.Parameter.AttributeName}}` 属性と `{{BasicNodeOptions.ReturnValue.AttributeName}}` 属性で引数と戻り値の型を指定します。
-                以下のいずれかを指定できます：
-
-                * 何も指定しない（引数なし・戻り値なし）
-                * 構造体モデルのルート集約名
-                {{BasicNodeOptions.StructureRefToAvailable.Keys.SelectTextTemplate(key => $$"""
-                * クエリモデルのルート集約名:{{key}}
-                """)}}
-
-                #### その他制約事項
-
-                - コマンドモデルのルート集約は子孫XML要素を定義できません
-                - コマンドモデルの集約には主キー属性を定義できません
-                """;
-        }
-
-        public string RenderTypeAttributeSpecificationMarkdown() {
-            return $$"""
-                - 入れ子になった子集約 {{SchemaParseContext.NODE_TYPE_CHILD}} を定義できます。
-                - 子配列 {{SchemaParseContext.NODE_TYPE_CHILDREN}} を定義できます。
-                - その他メンバーに定義できる属性については [属性種類定義](/reference/{{ValueObjectTypesMd.FILE_NAME_WITHOUT_EXT}}) を参照してください。
-                """;
-        }
-
         public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
             // コマンドモデルの物理名を取得
             var rootAggregateName = context.GetPhysicalName(rootAggregateElement);

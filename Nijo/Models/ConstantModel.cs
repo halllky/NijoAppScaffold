@@ -22,50 +22,6 @@ namespace Nijo.Models {
 
         public string SchemaName => SCHEMA_NAME;
 
-        public string RenderModelValidateSpecificationMarkdown() {
-            return $$"""
-                #### 定数の種類
-
-                定数モデルでは以下の4つの型の定数を定義できます：
-
-                - **string**: 文字列定数
-                - **int**: 整数定数
-                - **decimal**: 小数定数
-                - **template**: テンプレート文字列（引数を受け取って文字列を返す関数）
-
-                #### 定数値の定義
-
-                各定数要素には以下の属性を指定できます：
-
-                - `ConstantType`: 定数の型（string, int, decimal, template）
-                - `ConstantValue`: 定数の値
-
-                #### テンプレート文字列
-
-                `template` 型を使用すると、引数を受け取って文字列を返す関数が生成されます。
-                使用できる変数の数は、ConstantValue中に含まれる `{0}` , `{1}` , ... から自動的に判定されます。
-                プレースホルダーが0個でも構いません。
-
-                #### ネストされた定数
-
-                `{{SchemaParseContext.NODE_TYPE_CHILD}}` を使用してネストされた定数を定義できます。
-                これにより階層構造を持つ定数グループを作成できます。
-
-                #### 制約事項
-
-                - すべての定数要素には `ConstantType` 属性が必須です（未指定の場合はstringとして扱われます）
-                - 定数名は有効な識別子である必要があります
-                - XMLコメント（<!-- コメント -->）は生成されるコードにも反映されます
-                """;
-        }
-
-        public string RenderTypeAttributeSpecificationMarkdown() {
-            return $$"""
-                - ネストされた定数グループには `{{SchemaParseContext.NODE_TYPE_CHILD}}` を指定してください。
-                - 定数要素自体に type 属性を指定することはできません（定数の型は `ConstantType` 属性で指定します）。
-                """;
-        }
-
         public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
             ValidateConstants(rootAggregateElement, addError);
 

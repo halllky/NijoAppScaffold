@@ -17,29 +17,6 @@ namespace Nijo.Models {
         internal const string SCHEMA_NAME = "structure-model";
         public string SchemaName => SCHEMA_NAME;
 
-        public string RenderModelValidateSpecificationMarkdown() {
-            return $$"""
-                #### 外部参照 `{{SchemaParseContext.NODE_TYPE_REFTO}}` について
-
-                - StructureModel から参照できるのは、クエリモデル、`{{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}}`属性が付与されたデータモデル、または他のStructureModelの集約のみです。
-                - SearchCondition を参照する場合、ルート集約の検索条件オブジェクトのみ参照可能です。
-                - 自身のツリーの集約を参照することはできません。
-                - クエリモデルを参照する場合、`{{BasicNodeOptions.RefToObject.AttributeName}}`属性の指定が必須です。
-
-                #### その他制約事項
-
-                - 主キー属性（`{{BasicNodeOptions.IsKey.AttributeName}}`）には特別な意味はありません。
-                """;
-        }
-
-        public string RenderTypeAttributeSpecificationMarkdown() {
-            return $$"""
-                - 入れ子になった子集約 `{{SchemaParseContext.NODE_TYPE_CHILD}}` を定義できます。
-                - 子配列 `{{SchemaParseContext.NODE_TYPE_CHILDREN}}` を定義できます。
-                - その他メンバーに定義できる属性については [属性種類定義](/reference/{{ValueObjectTypesMd.FILE_NAME_WITHOUT_EXT}}) を参照してください。
-                """;
-        }
-
         public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
             // 外部参照のチェック
             ValidateRefTo(rootAggregateElement, context, addError);

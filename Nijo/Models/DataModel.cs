@@ -23,56 +23,6 @@ namespace Nijo.Models {
     internal class DataModel : IModel {
         public string SchemaName => "data-model";
 
-        public string RenderModelValidateSpecificationMarkdown() {
-            return $$"""
-                #### 主キー属性 `{{BasicNodeOptions.IsKey.AttributeName}}`
-
-                DataModel の主キー属性はRDBMSのプライマリーキーと対応します。
-                また子テーブルは親テーブルの主キーを自動的に継承します。
-
-                | | {{BasicNodeOptions.IsKey.AttributeName}}指定可否 | 補足説明 |
-                | :-- | :-- | :-- |
-                | ルート集約 | ○ | ルート集約のメンバーのうちいずれかは主キー属性である必要があります。 |
-                | Child | × | Child集約のテーブルの主キーは親のそれと同一になります。<br />Child集約独自のキー項目を定義することはできません。 |
-                | Children | ○ | Children集約のテーブルの主キーは親のキーに加えChildren自身に定義されたキーになります。<br />必ずChildren集約独自のキーを指定する必要があります。 |
-
-                #### 循環参照について
-
-                データモデルでは、外部参照（`{{SchemaParseContext.NODE_TYPE_REFTO}}`）による循環参照が発生した場合、データの整合性に問題が生じる可能性があります。
-                特に、主キーや必須制約による循環参照は、データを登録できない状況を引き起こすため、バリデーションエラーとして検出されます。
-
-                ```
-                集約A ──(必須参照)──> 集約B ──(必須参照)──> 集約C ──(必須参照)──> 集約A
-                ```
-
-                このような循環参照がある場合、どの集約からもデータを登録できなくなります。
-                なぜなら、各集約が他の集約の存在を前提とするため、最初のデータを登録する方法が存在しないからです。
-
-                以下の条件を満たす外部参照のみが循環参照チェックの対象となります：
-
-                - **主キー属性**（`{{BasicNodeOptions.IsKey.AttributeName}}`）が指定されている外部参照
-                - **必須属性**（`{{BasicNodeOptions.IsRequired.AttributeName}}`）が指定されている外部参照
-
-                必須でない外部参照は循環参照チェックの対象外です。
-
-                #### その他の制約事項
-
-                - DataModel の集約から `{{SchemaParseContext.NODE_TYPE_REFTO}}` で参照することができるのは DataModel の集約のみです。
-                - 自身のツリーの集約を `{{SchemaParseContext.NODE_TYPE_REFTO}}` で参照することはできません。
-
-                """;
-        }
-
-        public string RenderTypeAttributeSpecificationMarkdown() {
-            return $$"""
-                - 親と1対1の子テーブルには `{{SchemaParseContext.NODE_TYPE_CHILD}}` を指定してください。
-                  親と1対多の子テーブルには `{{SchemaParseContext.NODE_TYPE_CHILDREN}}` を指定してください。
-                  子テーブルは常に親テーブルと一緒に更新され、排他制御も親と共有します。
-                  親テーブルがDELETEされると子テーブルもカスケードデリートされます。
-                - その他メンバーに定義できる属性については [属性種類定義](/reference/{{ValueObjectTypesMd.FILE_NAME_WITHOUT_EXT}}) を参照してください。
-                """;
-        }
-
         public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
             // ルートとChildrenはキー必須
             var rootAndChildren = rootAggregateElement
