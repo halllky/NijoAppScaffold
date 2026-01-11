@@ -1,3 +1,7 @@
+---
+sidebar_position: 9
+---
+
 # 値オブジェクト（ValueObject）
 スキーマ定義での指定方法: `value-object`
 

@@ -1,3 +1,7 @@
+---
+sidebar_position: 6
+---
+
 # StructureModel 構造体モデル
 
 スキーマ定義での指定方法: `structure-model`

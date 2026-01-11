@@ -141,13 +141,6 @@ namespace Nijo {
             dump.SetHandler(Dump, path);
             rootCommand.AddCommand(dump);
 
-            // スキーマ定義オプション
-            var generateInternal = new Command(
-                name: "generate-internal",
-                description: "スキーマ定義で使用できるオプションを説明するドキュメントをMarkdown形式で出力します。");
-            generateInternal.SetHandler(GenerateInternal);
-            rootCommand.AddCommand(generateInternal);
-
             // GUI用のサービスを展開する
             var serve = new Command(
                 name: "serve",
@@ -432,48 +425,6 @@ namespace Nijo {
         }
 
         /// <summary>
-        /// Nijoプロジェクト内部にファイルを生成する
-        /// </summary>
-        private static void GenerateInternal() {
-            var logger = ILoggerExtension.CreateConsoleLogger();
-            var rule = SchemaParseRule.Default();
-
-            // 各モデルでどういったオプションを使用できるかを記載
-            var modelsDir = Path.GetFullPath(Path.Combine(
-                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, // net9.0
-                "..", // Debug
-                "..", // bin
-                "..", // Nijo
-                "Models"));
-            void RenderOptionsMd(string filename, IModel model) {
-                var fullpath = Path.Combine(modelsDir, filename);
-
-                // 全てのノードタイプで利用可能なオプションを収集
-                var allNodeTypes = Enum.GetValues<E_NodeType>();
-                var availableOptions = allNodeTypes
-                    .SelectMany(nodeType => rule.GetAvailableOptionsFor(model, nodeType))
-                    .Distinct()
-                    .OrderBy(opt => opt.AttributeName);
-
-                File.WriteAllText(fullpath, $$"""
-                    # {{model.GetType().Name}}に指定することができるオプション
-                    {{availableOptions.SelectTextTemplate(opt => $$"""
-
-                    ## `{{opt.AttributeName}}` （{{opt.DisplayName}}）
-                    {{opt.HelpText}}
-                    """)}}
-                    """.Replace(SKIP_MARKER, string.Empty), new UTF8Encoding(false, false));
-
-                logger.LogInformation("オプション属性ドキュメントを生成しました: {0}", fullpath);
-            }
-
-            RenderOptionsMd("DataModel.Options.md", new DataModel());
-            RenderOptionsMd("QueryModel.Options.md", new QueryModel());
-            RenderOptionsMd("CommandModel.Options.md", new CommandModel());
-            RenderOptionsMd("StructureModel.Options.md", new StructureModel());
-        }
-
-        /// <summary>
         /// Nijo自体のドキュメント生成
         /// </summary>
         private static void GenerateReference(string outPath) {
@@ -493,18 +444,6 @@ namespace Nijo {
                     logger.LogInformation("古いファイルを削除しました: {file}", file);
                 }
             }
-
-            // 各モデルで利用可能なNodeOptionを取得
-            var models = Assembly
-                .GetExecutingAssembly()
-                .GetTypes()
-                .Where(t => typeof(IModel).IsAssignableFrom(t) && !t.IsAbstract)
-                .Select(t => (IModel)Activator.CreateInstance(t)!)
-                .ToArray();
-
-            var modelsPath = Path.Combine(outDirFullPath, ModelsMd.FILE_NAME);
-            File.WriteAllText(modelsPath, ModelsMd.Render(models, rule), new UTF8Encoding(false, false));
-            logger.LogInformation("Models.mdファイルを生成しました: {modelsPath}", modelsPath);
 
             // 値メンバー型のドキュメントを生成
             var schemaContext = new SchemaParseContext(new XDocument(), rule);
