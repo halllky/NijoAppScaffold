@@ -1,4 +1,3 @@
-using Nijo.Models.QueryModelModules;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using Nijo.CodeGenerating;
@@ -13,7 +12,7 @@ namespace Nijo.ImmutableSchema {
     /// <summary>
     /// モデルの属性のうち、xxxID, xxx名, xxx日付, ... などのような単一の値。
     /// </summary>
-    public sealed class ValueMember : IAggregateMember, IUiConstraintValue {
+    public sealed class ValueMember : IAggregateMember {
         internal ValueMember(XElement xElement, SchemaParseContext ctx, ISchemaPathNode? previous) {
             XElement = xElement;
             _ctx = ctx;

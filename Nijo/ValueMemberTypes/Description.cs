@@ -1,6 +1,5 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
-using Nijo.Models.QueryModelModules;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
@@ -20,7 +19,6 @@ namespace Nijo.ValueMemberTypes {
         string IValueMemberType.CsDomainTypeName => "string";
         string IValueMemberType.CsPrimitiveTypeName => "string";
         string IValueMemberType.TsTypeName => "string";
-        UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.StringMemberConstraint;
         string IValueMemberType.DisplayName => "文章型";
 
         string IValueMemberType.RenderSpecificationMarkdown() {

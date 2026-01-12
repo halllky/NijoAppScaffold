@@ -22,7 +22,6 @@ internal class DateTimeMember : IValueMemberType {
     string IValueMemberType.CsDomainTypeName => "DateTime";
     string IValueMemberType.CsPrimitiveTypeName => "DateTime";
     string IValueMemberType.TsTypeName => "string";
-    UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.MemberConstraintBase;
     string IValueMemberType.DisplayName => "日付時刻";
 
     string IValueMemberType.RenderSpecificationMarkdown() {

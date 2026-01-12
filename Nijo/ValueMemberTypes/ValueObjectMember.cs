@@ -1,7 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Models;
-using Nijo.Models.QueryModelModules;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
@@ -23,7 +22,6 @@ internal class ValueObjectMember : IValueMemberType {
     string IValueMemberType.CsDomainTypeName => _ctx.GetPhysicalName(_xElement);
     string IValueMemberType.CsPrimitiveTypeName => "string";
     string IValueMemberType.TsTypeName => $"Util.{_ctx.GetPhysicalName(_xElement)}";
-    UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.StringMemberConstraint;
     string IValueMemberType.DisplayName => "値オブジェクト型";
 
     string IValueMemberType.RenderSpecificationMarkdown() {

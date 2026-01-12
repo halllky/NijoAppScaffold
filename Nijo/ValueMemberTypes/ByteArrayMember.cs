@@ -1,7 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Models;
-using Nijo.Models.QueryModelModules;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
@@ -22,7 +21,6 @@ internal class ByteArrayMember : IValueMemberType {
     public string CsDomainTypeName => "byte[]";
     public string CsPrimitiveTypeName => "byte[]";
     public string TsTypeName => "/* バイト配列型のメンバーはクライアント側ソースにレンダリングされることはない想定 */";
-    public UiConstraint.E_Type UiConstraintType => UiConstraint.E_Type.MemberConstraintBase;
     public string DisplayName => "バイト配列";
 
     string IValueMemberType.RenderSpecificationMarkdown() {

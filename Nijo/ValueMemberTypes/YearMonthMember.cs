@@ -22,7 +22,6 @@ internal class YearMonthMember : IValueMemberType {
     string IValueMemberType.CsDomainTypeName => "YearMonth";
     string IValueMemberType.CsPrimitiveTypeName => "int"; // DBには yyyymm の6桁で保存する
     string IValueMemberType.TsTypeName => "string"; // TypeScriptでは yyyy/mm で扱う
-    UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.NumberMemberConstraint;
     string IValueMemberType.DisplayName => "年月型";
 
     string IValueMemberType.RenderSpecificationMarkdown() {

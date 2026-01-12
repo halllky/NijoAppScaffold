@@ -105,8 +105,6 @@ namespace Nijo.Models {
                 var displayData = new StructureDisplayData(rootAggregate);
                 aggregateFile.AddCSharpClass(StructureDisplayData.RenderCSharpRecursively(rootAggregate, ctx), "Class_DisplayData");
                 aggregateFile.AddTypeScriptTypeDef(StructureDisplayData.RenderTypeScriptRecursively(rootAggregate, ctx));
-                aggregateFile.AddTypeScriptTypeDef(displayData.RenderUiConstraintType(ctx));
-                aggregateFile.AddTypeScriptTypeDef(displayData.RenderUiConstraintValue(ctx));
                 aggregateFile.AddTypeScriptFunction(EditablePresentationObject.RenderTsNewObjectFunctionRecursively(displayData, ctx));
             }
             if (refferdAsParameter) {

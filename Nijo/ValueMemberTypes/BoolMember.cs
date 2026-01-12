@@ -1,6 +1,5 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
-using Nijo.Models.QueryModelModules;
 using Nijo.Parts.CSharp;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
@@ -22,7 +21,6 @@ internal class BoolMember : IValueMemberType {
     string IValueMemberType.CsDomainTypeName => "bool";
     string IValueMemberType.CsPrimitiveTypeName => "bool";
     string IValueMemberType.TsTypeName => "boolean";
-    UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.MemberConstraintBase;
     string IValueMemberType.DisplayName => "真偽値型";
 
     string IValueMemberType.RenderSpecificationMarkdown() {

@@ -22,7 +22,6 @@ internal class YearMember : IValueMemberType {
     string IValueMemberType.CsDomainTypeName => "int";
     string IValueMemberType.CsPrimitiveTypeName => "int"; // DBには4桁の整数(西暦)で保存する
     string IValueMemberType.TsTypeName => "string"; // TypeScriptでは4桁の西暦年の文字列で扱う
-    UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.NumberMemberConstraint;
     string IValueMemberType.DisplayName => "年";
 
     string IValueMemberType.RenderSpecificationMarkdown() {

@@ -22,7 +22,6 @@ internal class DateMember : IValueMemberType {
     string IValueMemberType.CsDomainTypeName => "DateOnly";
     string IValueMemberType.CsPrimitiveTypeName => "DateOnly";
     string IValueMemberType.TsTypeName => "string";
-    UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.MemberConstraintBase;
     string IValueMemberType.DisplayName => "日付型";
 
     string IValueMemberType.RenderSpecificationMarkdown() {

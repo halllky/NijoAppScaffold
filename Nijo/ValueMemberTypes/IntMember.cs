@@ -22,7 +22,6 @@ internal class IntMember : IValueMemberType {
     string IValueMemberType.CsDomainTypeName => "int";
     string IValueMemberType.CsPrimitiveTypeName => "int";
     string IValueMemberType.TsTypeName => "string";
-    UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.NumberMemberConstraint;
     string IValueMemberType.DisplayName => "整数型";
 
     string IValueMemberType.RenderSpecificationMarkdown() {

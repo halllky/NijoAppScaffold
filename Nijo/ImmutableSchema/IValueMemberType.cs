@@ -1,5 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.Models.QueryModelModules;
 using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
@@ -74,10 +73,6 @@ namespace Nijo.ImmutableSchema {
         /// パスワードなど検索条件に指定することができない型の場合はこれがnullになる。
         /// </summary>
         ValueMemberSearchBehavior? SearchBehavior { get; }
-        /// <summary>
-        /// UI上の制約がとりうる型
-        /// </summary>
-        UiConstraint.E_Type UiConstraintType { get; }
 
         /// <summary>
         /// ダミーデータ生成処理の既定の処理をレンダリングします。

@@ -204,9 +204,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
     /// <summary>
     /// Valuesオブジェクトの中のメンバー
     /// </summary>
-    internal interface IEditablePresentationObjectMemberInValues : IUiConstraintValue, IInstancePropertyMetadata {
-        UiConstraint.E_Type UiConstraintType { get; }
-
+    internal interface IEditablePresentationObjectMemberInValues : IInstancePropertyMetadata {
         string RenderCsDeclaration();
         string RenderTsDeclaration();
 
@@ -223,17 +221,10 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
 
         public string PropertyName => Member.PhysicalName;
         public string DisplayName => Member.DisplayName;
-        public UiConstraint.E_Type UiConstraintType => Member.Type.UiConstraintType;
 
         IValueMemberType IInstanceValuePropertyMetadata.Type => Member.Type;
         ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
         string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PropertyName;
-
-        public bool IsRequired => Member.IsKey || Member.IsRequired;
-        public string? CharacterType => Member.CharacterType;
-        public int? MaxLength => Member.MaxLength;
-        public int? TotalDigit => Member.TotalDigit;
-        public int? DecimalPlace => Member.DecimalPlace;
 
         public string RenderCsDeclaration() {
             var comment = Member.XElement.GetCommentMultiLine().ToArray();
@@ -304,13 +295,6 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
 
         public string PropertyName => Member.PhysicalName;
         public string DisplayName => Member.DisplayName;
-        public UiConstraint.E_Type UiConstraintType => UiConstraint.E_Type.MemberConstraintBase;
-
-        public bool IsRequired => Member.IsKey || Member.IsRequired;
-        public string? CharacterType => null;
-        public int? MaxLength => null;
-        public int? TotalDigit => null;
-        public int? DecimalPlace => null;
 
         public string RenderCsDeclaration() {
             var comment = Member.XElement.GetCommentMultiLine().ToArray();
@@ -352,78 +336,6 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => RefEntry.GetMembers();
     }
     #endregion Values
-
-
-    #region UI用の制約定義
-    internal string UiConstraintTypeName => $"{Aggregate.PhysicalName}ConstraintType";
-    internal string UiConstraingValueName => $"{Aggregate.PhysicalName}Constraints";
-    internal string RenderUiConstraintType(CodeRenderingContext ctx) {
-        if (Aggregate is not RootAggregate) throw new InvalidOperationException();
-
-        return $$"""
-            /** {{Aggregate.DisplayName}}の各メンバーの制約の型 */
-            type {{UiConstraintTypeName}} = {
-              {{WithIndent(RenderMembers(this), "  ")}}
-            }
-            """;
-
-        static string RenderMembers(EditablePresentationObject obj) {
-            return $$"""
-                {{VALUES_TS}}: {
-                {{obj.Values.GetMembers().SelectTextTemplate(m => $$"""
-                  {{m.GetPropertyName(E_CsTs.TypeScript)}}: Util.{{m.UiConstraintType}}
-                """)}}
-                }
-                {{obj.GetChildMembers().SelectTextTemplate(desc => $$"""
-                {{desc.PhysicalName}}: {
-                  {{WithIndent(RenderMembers(desc), "  ")}}
-                }
-                """)}}
-                """;
-        }
-    }
-    internal string RenderUiConstraintValue(CodeRenderingContext ctx) {
-        if (Aggregate is not RootAggregate) throw new InvalidOperationException();
-
-        return $$"""
-            /** {{Aggregate.DisplayName}}の各メンバーの制約の具体的な値 */
-            export const {{UiConstraingValueName}}: {{UiConstraintTypeName}} = {
-              {{WithIndent(RenderMembers(this), "  ")}}
-            }
-            """;
-
-        static string RenderMembers(EditablePresentationObject obj) {
-            return $$"""
-                {{VALUES_TS}}: {
-                {{obj.Values.GetMembers().SelectTextTemplate(m => $$"""
-                  {{m.GetPropertyName(E_CsTs.TypeScript)}}: {
-                {{If(m.IsRequired, () => $$"""
-                    {{UiConstraint.MEMBER_REQUIRED}}: true,
-                """)}}
-                {{If(m.CharacterType != null, () => $$"""
-                    {{UiConstraint.MEMBER_CHARACTER_TYPE}}: '{{m.CharacterType!.Replace("'", "\\'")}}',
-                """)}}
-                {{If(m.MaxLength != null, () => $$"""
-                    {{UiConstraint.MEMBER_MAX_LENGTH}}: {{m.MaxLength}},
-                """)}}
-                {{If(m.TotalDigit != null, () => $$"""
-                    {{UiConstraint.MEMBER_TOTAL_DIGIT}}: {{m.TotalDigit}},
-                """)}}
-                {{If(m.DecimalPlace != null, () => $$"""
-                    {{UiConstraint.MEMBER_DECIMAL_PLACE}}: {{m.DecimalPlace}},
-                """)}}
-                  },
-                """)}}
-                },
-                {{obj.GetChildMembers().SelectTextTemplate(desc => $$"""
-                {{desc.PhysicalName}}: {
-                  {{WithIndent(RenderMembers(desc), "  ")}}
-                },
-                """)}}
-                """;
-        }
-    }
-    #endregion UI用の制約定義
 
 
     #region TypeScript新規オブジェクト作成関数

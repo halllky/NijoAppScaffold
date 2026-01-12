@@ -46,7 +46,6 @@ namespace Nijo.ValueMemberTypes {
             RenderFiltering = ctx => RangeSearchRenderer.RenderRangeSearchFiltering(ctx),
         };
 
-        UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.NumberMemberConstraint;
 
         void IValueMemberType.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
             // シーケンスが1個以上定義されている場合、シーケンス採番の構文をユーザーに定義させる

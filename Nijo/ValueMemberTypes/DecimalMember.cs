@@ -22,7 +22,6 @@ internal class DecimalMember : IValueMemberType {
     string IValueMemberType.CsDomainTypeName => "decimal";
     string IValueMemberType.CsPrimitiveTypeName => "decimal";
     string IValueMemberType.TsTypeName => "string";
-    UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.NumberMemberConstraint;
     string IValueMemberType.DisplayName => "実数型";
 
     string IValueMemberType.RenderSpecificationMarkdown() {
