@@ -9,14 +9,14 @@ namespace MyApp;
 public partial class OverridedDummyDataGenerator : DummyDataGenerator {
 
     // 単語型のダミーデータ生成ロジック
-    protected override string? GetRandomWord(DummyDataGenerateContext context, MetadataOfApplicationSchema.ValueMemberMetadata member) {
+    protected override string? GetRandomWord(DummyDataGenerateContext context, MetadataForPage.ValueMetadata member) {
         if (member.IsKey) {
             return base.GetRandomWord(context, member);
 
         } else {
             var value = $"{member.DisplayName}その{context.Random.Next(1, 100)}";
-            if (member.MaxLength != null && value.Length > member.MaxLength.Value) {
-                value = value.Substring(0, member.MaxLength.Value);
+            if (member.MaxLength != null && value.Length > (int.TryParse(member.MaxLength, out var ml) ? ml : 12)) {
+                value = value.Substring(0, int.TryParse(member.MaxLength, out var ml2) ? ml2 : 12);
             }
             return value;
         }

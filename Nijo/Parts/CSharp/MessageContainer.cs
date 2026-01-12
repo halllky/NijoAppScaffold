@@ -95,7 +95,7 @@ namespace Nijo.Parts.CSharp {
 
 
         #region 基底クラス
-        private const string CONTEXT_CLASS = "MessageContainer";
+        internal const string CONTEXT_CLASS = "MessageContainer";
 
         internal const string SETTER_INTERFACE = "IMessageSetter";
         internal const string SETTER_INTERFACE_LIST = "IMessageSetterList";

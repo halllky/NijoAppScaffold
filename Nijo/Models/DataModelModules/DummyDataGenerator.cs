@@ -79,7 +79,7 @@ namespace Nijo.Models.DataModelModules {
                     {{If(rootAggregatesOrderByDataFlow.Length == 0, () => $$"""
                         public Task<{{MessageContainer.SETTER_INTERFACE}}> {{GENERATE_ASYNC}}({{ctx.Config.RootNamespace}}.{{ApplicationService.ABSTRACT_CLASS}} applicationService, {{DUMMY_DATA_GENERATE_OPTIONS}}? options = null) {
                             // Data Model の集約が定義されていないので何もしない
-                            return Task.CompletedTask;
+                            return Task.FromResult<{{MessageContainer.SETTER_INTERFACE}}>(new {{MessageContainer.SETTER_CLASS}}([], new {{MessageContainer.CONTEXT_CLASS}}()));
                         }
                     """).Else(() => $$"""
                         public async Task<{{MessageContainer.SETTER_INTERFACE}}> {{GENERATE_ASYNC}}({{ctx.Config.RootNamespace}}.{{ApplicationService.ABSTRACT_CLASS}} applicationService, {{DUMMY_DATA_GENERATE_OPTIONS}}? options = null) {
@@ -87,7 +87,6 @@ namespace Nijo.Models.DataModelModules {
                             // ランダム値採番等のコンテキスト
                             var context = new {{DUMMY_DATA_GENERATE_CONTEXT}} {
                                 Random = new Random(0),
-                                Metadata = new(),
                                 DbContext = applicationService.DbContext,
                             };
 
@@ -161,7 +160,7 @@ namespace Nijo.Models.DataModelModules {
 
                         #region 型ごとの標準ダミー値の生成ロジック
                     {{ctx.SchemaParser.GetValueMemberTypes().SelectTextTemplate(type => $$"""
-                        protected virtual {{type.CsDomainTypeName}}? GetRandom{{type.TypePhysicalName}}({{DUMMY_DATA_GENERATE_CONTEXT}} context, {{Metadata.CS_CLASSNAME}}.{{Metadata.VALUE_MEMBER_METADATA_CS}} member) {
+                        protected virtual {{type.CsDomainTypeName}}? GetRandom{{type.TypePhysicalName}}({{DUMMY_DATA_GENERATE_CONTEXT}} context, MetadataForPage.{{MetadataForPage.ValueMetadata.TYPE_NAME}} member) {
                             {{WithIndent(type.RenderCreateDummyDataValueBody(ctx), "        ")}}
                         }
                     """)}}
@@ -277,20 +276,22 @@ namespace Nijo.Models.DataModelModules {
                                 continue;
                             }
 
-                            var path = new List<string>();
+                            var accessPath = new List<string>();
+                            var pathFromRoot = vm.Member.GetPathFromRoot().ToArray();
 
-                            var root = vm.Member.Owner.GetRoot();
-                            path.Add(root.PhysicalName);
-
-                            path.AddRange(vm.Member.Owner
-                                .GetPathFromRoot()
-                                .AsSaveCommand());
-
-                            path.Add(vm.PhysicalName);
+                            for (var i = 0; i < pathFromRoot.Length; i++) {
+                                // MetadataForPage.XXX.Member.YYY.Member.ZZZ という形になる
+                                accessPath.Add(i == 0 ? "MetadataForPage" : "Members");
+                                accessPath.Add(pathFromRoot[i] switch {
+                                    AggregateBase agg => agg.PhysicalName,
+                                    ValueMember valMem => valMem.PhysicalName,
+                                    _ => throw new NotImplementedException(), // ありえない
+                                });
+                            }
 
                             yield return $$"""
-                                    {{member.PhysicalName}} = {{GetValueMemberValueMethodName(vm.Member.Type)}}(context, context.Metadata.{{path.Join(".")}}),
-                                    """;
+                                {{member.PhysicalName}} = {{GetValueMemberValueMethodName(vm.Member.Type)}}(context, {{accessPath.Join(".")}}),
+                                """;
 
                         } else if (member is SaveCommand.SaveCommandRefMember refTo) {
                             // contextに登録されているインスタンスから適当なものを選んでキーに変換する
@@ -414,7 +415,6 @@ namespace Nijo.Models.DataModelModules {
                     /// <summary>ダミーデータ作成処理コンテキスト情報</summary>
                     public sealed class {{DUMMY_DATA_GENERATE_CONTEXT}} {
                         public required Random Random { get; init; }
-                        public required {{Metadata.CS_CLASSNAME}} Metadata { get; init; }
                         public required {{ctx.Config.DbContextName}} DbContext { get; init; }
 
                         #region シーケンス
