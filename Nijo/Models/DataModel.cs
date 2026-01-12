@@ -89,7 +89,7 @@ namespace Nijo.Models {
                 if (sourceRoot == targetRoot) continue;
 
                 // 必須属性かどうか
-                bool isRequired = refElement.Attribute(BasicNodeOptions.IsRequired.AttributeName) != null;
+                bool isRequired = refElement.Attribute(BasicNodeOptions.IsNotNull.AttributeName) != null;
 
                 // 主キーかどうか
                 bool isKey = refElement.Attribute(BasicNodeOptions.IsKey.AttributeName) != null;

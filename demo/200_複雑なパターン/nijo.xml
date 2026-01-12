@@ -13,29 +13,28 @@
       <機器ID
         DbName="PRODUCT_ID"
         IsKey="True"
-        IsRequired="True"
+        IsNotNull="True"
         MaxLength="20"
         Type="word"
         UniqueId="a7fb34e2-a4b0-42d8-8579-e24a0aa52f97" />
       <機器名
         DbName="PRODUCT_NAME"
-        IsRequired="True"
+        IsNotNull="True"
         MaxLength="100"
         Type="word"
         UniqueId="73b82d70-15df-4af4-87f4-d9f20deccaba" />
       <単価
         DbName="PRICE"
-        IsRequired="True"
+        IsNotNull="True"
         Type="int"
         UniqueId="d2059102-3214-4958-a7b5-58f1036615a0" />
       <機器分類
         DbName="CATEGORY_ID"
-        IsRequired="True"
+        IsNotNull="True"
         Type="ref-to:機器分類マスタ"
         UniqueId="aeec1447-d6d5-4845-afa3-11a4ca3be794" />
       <供給業者
         DbName="SUPPLIER_ID"
-        IsRequired="False"
         Type="ref-to:供給業者マスタ"
         UniqueId="02b63bb5-c26c-4292-a499-677679eb79bd" />
       <機器詳細
@@ -161,23 +160,23 @@
       <診療ID
         DbName="ORDER_ID"
         IsKey="True"
-        IsRequired="True"
+        IsNotNull="True"
         MaxLength="20"
         Type="word"
         UniqueId="d11bc7f7-14eb-4143-a58e-d451398ea6b6" />
       <診療日時
         DbName="ORDER_DATE"
-        IsRequired="True"
+        IsNotNull="True"
         Type="datetime"
         UniqueId="24bc2d61-fe97-4927-ac3a-132399ebcf5d" />
       <患者
         DbName="CUSTOMER_ID"
-        IsRequired="True"
+        IsNotNull="True"
         Type="ref-to:患者マスタ"
         UniqueId="d725ee9e-0dfd-4c5c-b44e-534ce0bba98f" />
       <診療科
         DbName="STORE_ID"
-        IsRequired="True"
+        IsNotNull="True"
         Type="ref-to:診療科マスタ"
         UniqueId="9cb3db35-3410-4e94-a639-346c110c058b" />
       <担当医
@@ -195,17 +194,17 @@
           UniqueId="47ff7f6d-a2fc-4b32-ab23-2841ec561d2d" />
         <使用数量
           DbName="QUANTITY"
-          IsRequired="True"
+          IsNotNull="True"
           Type="int"
           UniqueId="1a3d2671-a12b-48c9-b78d-2ce30053d39e" />
         <単価
           DbName="UNIT_PRICE"
-          IsRequired="True"
+          IsNotNull="True"
           Type="int"
           UniqueId="0f7eb112-b619-4376-9d4f-cfbe86df6de8" />
         <小計
           DbName="SUBTOTAL"
-          IsRequired="True"
+          IsNotNull="True"
           Type="int"
           UniqueId="6980545c-474c-40a2-9f6a-5d5b461b09ee" />
         <保険適用情報
@@ -233,7 +232,7 @@
         UniqueId="d866a5f1-804a-49d6-a3e1-242a3a579554">
         <支払方法
           DbName="PAYMENT_TYPE"
-          IsRequired="True"
+          IsNotNull="True"
           Type="payment_type"
           UniqueId="4f0406c1-e0c7-483c-b3b5-16397dfbd743" />
         <支払日
@@ -269,7 +268,7 @@
         UniqueId="2b85deb8-6860-4e6e-a9fe-501f126db800">
         <紹介方法
           DbName="SHIPPING_METHOD"
-          IsRequired="True"
+          IsNotNull="True"
           Type="shipping_method"
           UniqueId="e3734def-aaa0-4857-9afe-d2e343f563ec" />
         <紹介先住所
@@ -327,13 +326,13 @@
       <患者ID
         DbName="CUSTOMER_ID"
         IsKey="True"
-        IsRequired="True"
+        IsNotNull="True"
         MaxLength="20"
         Type="word"
         UniqueId="09ad98f4-727e-48ad-afa4-c334742d94db" />
       <氏名
         DbName="CUSTOMER_NAME"
-        IsRequired="True"
+        IsNotNull="True"
         MaxLength="50"
         Type="word"
         UniqueId="8b63f997-693a-40fe-b898-1e2893cf459c" />
@@ -521,18 +520,18 @@
       <予約ID
         DbName="RESERVATION_ID"
         IsKey="True"
-        IsRequired="True"
+        IsNotNull="True"
         MaxLength="20"
         Type="word"
         UniqueId="d63bdfd1-6157-4dbc-81b4-20c6d1b5449c" />
       <予約日時
         DbName="RESERVATION_DATETIME"
-        IsRequired="True"
+        IsNotNull="True"
         Type="datetime"
         UniqueId="6f192de1-d3ea-4dd8-8e66-18d92fe5123b" />
       <患者
         DbName="CUSTOMER_ID"
-        IsRequired="True"
+        IsNotNull="True"
         Type="ref-to:患者マスタ"
         UniqueId="09f75291-4607-4ace-9848-64b94da4f4bb" />
       <予約区分
@@ -738,7 +737,6 @@
       Type="structure-model"
       UniqueId="d34cea5d-f605-4b35-afa6-f8c67ddc9ffc">
       <患者ID
-        IsRequired="True"
         Type="word"
         UniqueId="034870c8-6f85-44ea-8a65-72e127cadfc3" />
       <使用機器一覧
@@ -749,7 +747,6 @@
           Type="word"
           UniqueId="319c869c-00e5-4fcf-9672-24ae63b504ac" />
         <使用数量
-          IsRequired="True"
           Type="int"
           UniqueId="c0112f71-6b22-481c-9e3d-c729cf4c0d15" />
       </使用機器一覧>
@@ -885,13 +882,13 @@
       <診療科コード
         DbName="BUSHO_CD"
         IsKey="True"
-        IsRequired="True"
+        IsNotNull="True"
         MaxLength="10"
         Type="word"
         UniqueId="5b72589a-8727-44b2-ab2b-22b5ed4acaed" />
       <診療科名
         DbName="BUSHO_NAME"
-        IsRequired="True"
+        IsNotNull="True"
         MaxLength="40"
         Type="word"
         UniqueId="725c421d-f3b8-477e-940c-ca67cfc03959" />
@@ -904,12 +901,12 @@
       <医療従事者ID
         DbName="ID"
         IsKey="True"
-        IsRequired="True"
+        IsNotNull="True"
         Type="医療従事者ID型"
         UniqueId="ac69617c-49b2-46fc-a28e-5a3d60535a3f" />
       <氏名
         DbName="NAME"
-        IsRequired="True"
+        IsNotNull="True"
         MaxLength="40"
         Type="word"
         UniqueId="22f63acb-431c-402f-b079-5aaeac4bedf5" />
@@ -925,12 +922,12 @@
         <年度
           DbName="NENDO"
           IsKey="True"
-          IsRequired="True"
+          IsNotNull="True"
           Type="year"
           UniqueId="ff1c3792-0f48-4445-86a9-4f970aa40d31" />
         <診療科
           DbName="BUSHO_CD"
-          IsRequired="True"
+          IsNotNull="True"
           Type="ref-to:診療科"
           UniqueId="27344468-19f3-4868-8b0a-3b3793e6fd7d" />
       </所属診療科>
@@ -1122,17 +1119,17 @@
         UniqueId="5f567cb6-483b-4138-bd9b-62b6bcd31a62" />
       <点検日
         DbName="SURVEY_DATE"
-        IsRequired="True"
+        IsNotNull="True"
         Type="date"
         UniqueId="e18d2fde-0d1d-4bb9-a22b-5ab6f4382431" />
       <点検担当者
         DbName="SURVEYOR_ID"
-        IsRequired="True"
+        IsNotNull="True"
         Type="ref-to:医療従事者マスタ"
         UniqueId="bbb4c1a3-1623-4dd8-aaf1-7b93c9274823" />
       <実地確認数
         DbName="ACTUAL_COUNT"
-        IsRequired="True"
+        IsNotNull="True"
         Type="int"
         UniqueId="e0e4eef1-a7bc-498e-a093-6502496a7fed" />
       <在庫差異
@@ -1195,12 +1192,12 @@
         UniqueId="fc5cb3c5-8941-4766-9526-177ed6cf0d68" />
       <結果日時
         DbName="RESULT_DATETIME"
-        IsRequired="True"
+        IsNotNull="True"
         Type="datetime"
         UniqueId="d0d65eea-7e83-435d-8570-f7375cf514f9" />
       <結果担当者
         DbName="RESULT_STAFF_ID"
-        IsRequired="True"
+        IsNotNull="True"
         Type="ref-to:医療従事者マスタ"
         UniqueId="c9cbc4c0-b6e2-4312-9ed2-1aa5ca202a41" />
       <改善効果
@@ -1209,7 +1206,7 @@
         UniqueId="89b0ab6f-ff19-4a64-a7ca-43e2b692b211" />
       <結果状態
         DbName="RESULT_STATUS"
-        IsRequired="True"
+        IsNotNull="True"
         Type="result_status"
         UniqueId="43132ecc-6643-4fb1-831b-35b4c0e6d9a4" />
       <添付資料
@@ -1224,7 +1221,7 @@
           UniqueId="476879bc-5afd-42b6-81f8-54943dd2c694" />
         <資料名
           DbName="DOCUMENT_NAME"
-          IsRequired="True"
+          IsNotNull="True"
           MaxLength="100"
           Type="word"
           UniqueId="641bb2ba-7a2f-424e-b851-0235d987d70d" />

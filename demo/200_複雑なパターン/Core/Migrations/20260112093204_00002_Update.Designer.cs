@@ -2,17 +2,20 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyApp;
 
 #nullable disable
 
-namespace MyApp.Migrations
+namespace Demo200.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    partial class MyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260112093204_00002_Update")]
+    partial class _00002_Update
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.3");
@@ -164,13 +167,12 @@ namespace MyApp.Migrations
                         .HasColumnName("RESERVATION_TYPE")
                         .HasColumnOrder(3);
 
-                    b.Property<DateTime>("予約日時")
+                    b.Property<DateTime?>("予約日時")
                         .HasColumnType("TEXT")
                         .HasColumnName("RESERVATION_DATETIME")
                         .HasColumnOrder(1);
 
                     b.Property<string>("患者_患者ID")
-                        .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("TEXT")
                         .HasColumnName("患者_CUSTOMER_ID")
@@ -270,7 +272,7 @@ namespace MyApp.Migrations
                         .HasColumnName("UpdatedAt")
                         .HasColumnOrder(6);
 
-                    b.Property<int>("支払方法")
+                    b.Property<int?>("支払方法")
                         .HasColumnType("INTEGER")
                         .HasColumnName("PAYMENT_TYPE")
                         .HasColumnOrder(1);
@@ -511,13 +513,11 @@ namespace MyApp.Migrations
                         .HasColumnOrder(2);
 
                     b.Property<string>("保管庫_管理責任者_医療従事者ID")
-                        .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("WAREHOUSE_MANAGER_ID_ID")
                         .HasColumnOrder(7);
 
                     b.Property<string>("保管庫_管理責任者_氏名")
-                        .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("TEXT")
                         .HasColumnName("WAREHOUSE_MANAGER_ID_NAME")
@@ -712,17 +712,17 @@ namespace MyApp.Migrations
                         .HasColumnName("UpdatedAt")
                         .HasColumnOrder(7);
 
-                    b.Property<int>("使用数量")
+                    b.Property<int?>("使用数量")
                         .HasColumnType("INTEGER")
                         .HasColumnName("QUANTITY")
                         .HasColumnOrder(2);
 
-                    b.Property<int>("単価")
+                    b.Property<int?>("単価")
                         .HasColumnType("INTEGER")
                         .HasColumnName("UNIT_PRICE")
                         .HasColumnOrder(3);
 
-                    b.Property<int>("小計")
+                    b.Property<int?>("小計")
                         .HasColumnType("INTEGER")
                         .HasColumnName("SUBTOTAL")
                         .HasColumnOrder(4);
@@ -901,7 +901,6 @@ namespace MyApp.Migrations
                         .HasColumnOrder(8);
 
                     b.Property<string>("氏名")
-                        .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("TEXT")
                         .HasColumnName("NAME")
@@ -964,20 +963,18 @@ namespace MyApp.Migrations
                         .HasColumnName("供給業者_SUPPLIER_ID")
                         .HasColumnOrder(4);
 
-                    b.Property<int>("単価")
+                    b.Property<int?>("単価")
                         .HasColumnType("INTEGER")
                         .HasColumnName("PRICE")
                         .HasColumnOrder(2);
 
                     b.Property<string>("機器分類_機器分類ID")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("TEXT")
                         .HasColumnName("機器分類_CATEGORY_ID")
                         .HasColumnOrder(3);
 
                     b.Property<string>("機器名")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("TEXT")
                         .HasColumnName("PRODUCT_NAME")
@@ -1282,7 +1279,6 @@ namespace MyApp.Migrations
                         .HasColumnOrder(4);
 
                     b.Property<string>("氏名")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("TEXT")
                         .HasColumnName("CUSTOMER_NAME")
@@ -1507,7 +1503,6 @@ namespace MyApp.Migrations
                         .HasColumnOrder(5);
 
                     b.Property<string>("診療科_診療科コード")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("TEXT")
                         .HasColumnName("診療科_BUSHO_CD")
@@ -1579,17 +1574,16 @@ namespace MyApp.Migrations
                         .HasColumnOrder(5);
 
                     b.Property<string>("結果担当者_医療従事者ID")
-                        .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("結果担当者_ID")
                         .HasColumnOrder(4);
 
-                    b.Property<DateTime>("結果日時")
+                    b.Property<DateTime?>("結果日時")
                         .HasColumnType("TEXT")
                         .HasColumnName("RESULT_DATETIME")
                         .HasColumnOrder(3);
 
-                    b.Property<int>("結果状態")
+                    b.Property<int?>("結果状態")
                         .HasColumnType("INTEGER")
                         .HasColumnName("RESULT_STATUS")
                         .HasColumnOrder(6);
@@ -1908,7 +1902,7 @@ namespace MyApp.Migrations
                         .HasColumnName("医療機器_SUPPLIER_ID_PHONE")
                         .HasColumnOrder(11);
 
-                    b.Property<int>("医療機器_単価")
+                    b.Property<int?>("医療機器_単価")
                         .HasColumnType("INTEGER")
                         .HasColumnName("医療機器_PRICE")
                         .HasColumnOrder(5);
@@ -1926,7 +1920,6 @@ namespace MyApp.Migrations
                         .HasColumnOrder(7);
 
                     b.Property<string>("医療機器_機器名")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("TEXT")
                         .HasColumnName("医療機器_PRODUCT_NAME")
@@ -2032,7 +2025,7 @@ namespace MyApp.Migrations
                         .HasColumnName("INVENTORY_DIFF")
                         .HasColumnOrder(5);
 
-                    b.Property<int>("実地確認数")
+                    b.Property<int?>("実地確認数")
                         .HasColumnType("INTEGER")
                         .HasColumnName("ACTUAL_COUNT")
                         .HasColumnOrder(4);
@@ -2044,12 +2037,11 @@ namespace MyApp.Migrations
                         .HasColumnOrder(6);
 
                     b.Property<string>("点検担当者_医療従事者ID")
-                        .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("点検担当者_ID")
                         .HasColumnOrder(3);
 
-                    b.Property<DateOnly>("点検日")
+                    b.Property<DateOnly?>("点検日")
                         .HasColumnType("TEXT")
                         .HasColumnName("SURVEY_DATE")
                         .HasColumnOrder(2);
@@ -2229,7 +2221,6 @@ namespace MyApp.Migrations
                         .HasColumnOrder(7);
 
                     b.Property<string>("資料名")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("TEXT")
                         .HasColumnName("DOCUMENT_NAME")
@@ -2332,7 +2323,7 @@ namespace MyApp.Migrations
                         .HasColumnName("UpdatedAt")
                         .HasColumnOrder(4);
 
-                    b.Property<int>("紹介方法")
+                    b.Property<int?>("紹介方法")
                         .HasColumnType("INTEGER")
                         .HasColumnName("SHIPPING_METHOD")
                         .HasColumnOrder(1);
@@ -2518,13 +2509,11 @@ namespace MyApp.Migrations
                         .HasColumnOrder(5);
 
                     b.Property<string>("診療科_科長_医療従事者ID")
-                        .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("診療科_MANAGER_ID_ID")
                         .HasColumnOrder(10);
 
                     b.Property<string>("診療科_科長_氏名")
-                        .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("TEXT")
                         .HasColumnName("診療科_MANAGER_ID_NAME")
@@ -2610,7 +2599,6 @@ namespace MyApp.Migrations
                         .HasColumnOrder(9);
 
                     b.Property<string>("患者_患者ID")
-                        .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("TEXT")
                         .HasColumnName("患者_CUSTOMER_ID")
@@ -2621,13 +2609,12 @@ namespace MyApp.Migrations
                         .HasColumnName("担当医_ID")
                         .HasColumnOrder(4);
 
-                    b.Property<DateTime>("診療日時")
+                    b.Property<DateTime?>("診療日時")
                         .HasColumnType("TEXT")
                         .HasColumnName("ORDER_DATE")
                         .HasColumnOrder(1);
 
                     b.Property<string>("診療科_診療科ID")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("TEXT")
                         .HasColumnName("診療科_STORE_ID")
@@ -2726,7 +2713,6 @@ namespace MyApp.Migrations
                         .HasColumnOrder(6);
 
                     b.Property<string>("診療科名")
-                        .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("TEXT")
                         .HasColumnName("BUSHO_NAME")
@@ -2920,7 +2906,6 @@ namespace MyApp.Migrations
                         .WithMany("RefFrom予約_患者")
                         .HasForeignKey("患者_患者ID")
                         .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
                         .HasConstraintName("FK_患者マスタ_予約_XFB576B4");
 
                     b.HasOne("MyApp.医療従事者マスタDbEntity", "担当医")
@@ -3085,7 +3070,6 @@ namespace MyApp.Migrations
                         .WithMany("RefFrom医療機器マスタ_機器分類")
                         .HasForeignKey("機器分類_機器分類ID")
                         .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
                         .HasConstraintName("FK_機器分類マスタ_医療機器マスタ_X7D2BEB8");
 
                     b.Navigation("供給業者");
@@ -3207,7 +3191,6 @@ namespace MyApp.Migrations
                         .WithMany("RefFrom所属診療科_診療科")
                         .HasForeignKey("診療科_診療科コード")
                         .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
                         .HasConstraintName("FK_BUSHO_SHOZOKU_X6518C1A");
 
                     b.Navigation("Parent");
@@ -3221,7 +3204,6 @@ namespace MyApp.Migrations
                         .WithMany("RefFrom措置結果_結果担当者")
                         .HasForeignKey("結果担当者_医療従事者ID")
                         .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
                         .HasConstraintName("FK_EMPLOYEE_措置結果_XD70B07D");
 
                     b.HasOne("MyApp.対応措置DbEntity", "対象措置")
@@ -3327,7 +3309,6 @@ namespace MyApp.Migrations
                         .WithMany("RefFrom機器点検報告_点検担当者")
                         .HasForeignKey("点検担当者_医療従事者ID")
                         .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
                         .HasConstraintName("FK_EMPLOYEE_機器点検報告_XC084C68");
 
                     b.HasOne("MyApp.在庫情報DbEntity", "対象機器")
@@ -3446,7 +3427,6 @@ namespace MyApp.Migrations
                         .WithMany("RefFrom診療履歴_患者")
                         .HasForeignKey("患者_患者ID")
                         .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
                         .HasConstraintName("FK_患者マスタ_診療履歴_XFB576B4");
 
                     b.HasOne("MyApp.医療従事者マスタDbEntity", "担当医")
@@ -3459,7 +3439,6 @@ namespace MyApp.Migrations
                         .WithMany("RefFrom診療履歴_診療科")
                         .HasForeignKey("診療科_診療科ID")
                         .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
                         .HasConstraintName("FK_診療科マスタ_診療履歴_X6518C1A");
 
                     b.Navigation("患者");

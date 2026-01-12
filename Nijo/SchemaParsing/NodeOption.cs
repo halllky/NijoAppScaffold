@@ -186,21 +186,18 @@ internal static class BasicNodeOptions {
         },
     };
 
-    internal static NodeOption IsRequired = new() {
-        AttributeName = "IsRequired",
-        DisplayName = "必須",
+    internal static NodeOption IsNotNull = new() {
+        AttributeName = "IsNotNull",
+        DisplayName = "NOT NULL",
         Type = E_NodeOptionType.Boolean,
         HelpText = $$"""
-            必須項目であることを表します。
-            新規登録処理や更新処理での必須入力チェック処理が自動生成されます。
+            RDBMS 上で NOT NULL 制約がつくことを表します。
+            また、新規登録処理や更新処理でアプリケーション側で必須入力チェック処理が行われるようになります。
             """,
         IsAvailable = (model, nodeType) => {
-            return (model is DataModel
-                 || model is QueryModel
-                 || model is CommandModel
-                 || model is StructureModel)
-                 && (nodeType == E_NodeType.ValueMember
-                  || nodeType == E_NodeType.Ref);
+            return model is DataModel
+                && (nodeType == E_NodeType.ValueMember
+                 || nodeType == E_NodeType.Ref);
         },
         ValidateOthers = ctx => {
             // 特に制約なし

@@ -12,7 +12,7 @@
         Type="int"
         UniqueId="84baff83-2968-4325-b03a-e1097ddf746d" />
       <氏名
-        IsRequired="True"
+        IsNotNull="True"
         Type="word"
         UniqueId="4f668126-74ad-41db-8696-13267e93d59d" />
       <所属部署
@@ -27,7 +27,7 @@
         Type="int"
         UniqueId="2d52d3fd-0e35-4371-8ebf-7c70d8a2e1c6" />
       <部署名
-        IsRequired="True"
+        IsNotNull="True"
         Type="word"
         UniqueId="910a581f-4337-423f-958b-c9975a2551e2" />
       <事業所

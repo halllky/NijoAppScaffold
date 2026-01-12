@@ -32,7 +32,7 @@ namespace Nijo.Models.DataModelModules {
                 .SelectMany(agg => agg.GetMembers())
                 .Any(m => m is ValueMember vm
                        && vm.Type is ValueMemberTypes.SequenceMember
-                       && (vm.IsKey || vm.IsRequired));
+                       && (vm.IsKey || vm.IsNotNull));
         }
 
         protected override IEnumerable<AdditionalArgs> GetAdditionalMethodArgs(RootAggregate rootAggregate) {
@@ -47,7 +47,7 @@ namespace Nijo.Models.DataModelModules {
         }
 
         protected override ValidateStatement? GetIfStatement(ValueMember vm, IInstanceProperty prop, CodeRenderingContext ctx) {
-            if (!vm.IsKey && !vm.IsRequired) return null;
+            if (!vm.IsKey && !vm.IsNotNull) return null;
 
             var sb = new StringBuilder();
 
@@ -72,7 +72,7 @@ namespace Nijo.Models.DataModelModules {
         }
 
         protected override ValidateStatement? GetIfStatement(RefToMember refTo, IEnumerable<IInstanceProperty> fkProps, CodeRenderingContext ctx) {
-            if (!refTo.IsKey && !refTo.IsRequired) return null;
+            if (!refTo.IsKey && !refTo.IsNotNull) return null;
 
             var conditions = fkProps.Select(prop => {
                 if (prop.Metadata is IInstanceValuePropertyMetadata vm && vm.Type.CsPrimitiveTypeName == "string") {

@@ -67,7 +67,7 @@ public class SchemaParseRule {
             BasicNodeOptions.DbName,
             BasicNodeOptions.LatinName,
             BasicNodeOptions.IsKey,
-            BasicNodeOptions.IsRequired,
+            BasicNodeOptions.IsNotNull,
             BasicNodeOptions.GenerateDefaultQueryModel,
             BasicNodeOptions.GenerateBatchUpdateCommand,
             BasicNodeOptions.MapToView,

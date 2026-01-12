@@ -58,7 +58,7 @@ namespace Nijo.ImmutableSchema {
         /// <summary>キー属性か否か</summary>
         public bool IsKey => XElement.Attribute(BasicNodeOptions.IsKey.AttributeName) != null;
         /// <summary>必須か否か</summary>
-        public bool IsRequired => XElement.Attribute(BasicNodeOptions.IsRequired.AttributeName) != null;
+        public bool IsNotNull => XElement.Attribute(BasicNodeOptions.IsNotNull.AttributeName) != null;
 
         /// <summary>
         /// Commandのパラメータや戻り値でクエリモデルを参照する際の、そのクエリモデルのどのモジュールを参照するかの指定。

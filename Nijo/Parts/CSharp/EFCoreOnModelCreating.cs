@@ -76,7 +76,7 @@ internal static class EFCoreOnModelCreating {
             {{If(col.Member.MaxLength != null, () => $$"""
                         .HasMaxLength({{col.Member.MaxLength}})
             """)}}
-                        .IsRequired({{(col.IsKey || col.Member.IsRequired ? "true" : "false")}})
+                        .IsRequired({{(col.IsNotNull ? "true" : "false")}})
                         .HasColumnOrder({{ix}});
             {{If(col.Member.Type is SequenceMember, () => $$"""
                     {{SequenceMember.CONFIGURE_MEMBER}}(modelBuilder, entity, entity.Property(e => e.{{col.PhysicalName}}), "{{col.Member.SequenceName}}");

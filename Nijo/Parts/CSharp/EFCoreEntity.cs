@@ -261,6 +261,7 @@ namespace Nijo.Parts.CSharp {
             internal abstract string DisplayName { get; }
             internal abstract string DbName { get; }
             internal abstract bool IsKey { get; }
+            internal abstract bool IsNotNull { get; }
 
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
@@ -287,6 +288,7 @@ namespace Nijo.Parts.CSharp {
                 DisplayName = member.DisplayName;
                 DbName = dbName ?? member.DbName;
                 IsKey = isKey ?? member.IsKey;
+                IsNotNull = (isKey ?? member.IsKey) || Member.IsNotNull;
             }
             internal override ValueMember Member { get; }
             internal override string CsType { get; }
@@ -294,6 +296,7 @@ namespace Nijo.Parts.CSharp {
             internal override string DisplayName { get; }
             internal override string DbName { get; }
             internal override bool IsKey { get; }
+            internal override bool IsNotNull { get; }
         }
         /// <summary>
         /// 子テーブルに定義される、親テーブルの主キーを継承したカラム
@@ -315,6 +318,7 @@ namespace Nijo.Parts.CSharp {
             internal override string DisplayName => Member.DisplayName;
             internal override string DbName { get; }
             internal override bool IsKey => true;
+            internal override bool IsNotNull => true;
         }
         /// <summary>
         /// 外部参照がある場合の、参照先のキーを継承したカラム
@@ -341,6 +345,7 @@ namespace Nijo.Parts.CSharp {
             internal override string DisplayName => Member.DisplayName;
             internal override string DbName { get; }
             internal override bool IsKey => RefEntry.IsKey;
+            internal override bool IsNotNull => RefEntry.IsKey || RefEntry.IsNotNull;
             /// <summary>
             /// この参照先キーが同時に <see cref="ParentKeyMember"/> であるかどうか。
             /// </summary>

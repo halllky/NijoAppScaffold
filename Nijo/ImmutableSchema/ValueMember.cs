@@ -48,7 +48,7 @@ namespace Nijo.ImmutableSchema {
         /// <summary>キー属性か否か</summary>
         public bool IsKey => XElement.Attribute(BasicNodeOptions.IsKey.AttributeName) != null;
         /// <summary>必須か否か</summary>
-        public bool IsRequired => XElement.Attribute(BasicNodeOptions.IsRequired.AttributeName) != null;
+        public bool IsNotNull => XElement.Attribute(BasicNodeOptions.IsNotNull.AttributeName) != null;
         /// <summary>文字種。半角、半角英数、など</summary>
         public string? CharacterType => XElement.Attribute(BasicNodeOptions.CharacterType.AttributeName)?.Value;
         /// <summary>文字列系属性の最大長</summary>

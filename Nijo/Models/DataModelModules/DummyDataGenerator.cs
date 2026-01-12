@@ -322,7 +322,7 @@ namespace Nijo.Models.DataModelModules {
                                         ?? throw new InvalidOperationException($"{{owner}}の{{memberName}}のキー重複を防ぐため{{refToName}}には少なくとも{{{loopVar}} + 1}件のデータがある必要がありますが、{context.{{GeneratedList(refToRoot)}}.Count}件しかありません。"),
                                     """;
 
-                            } else if (refTo.Member.IsRequired) {
+                            } else if (refTo.Member.IsNotNull) {
                                 // refが必須の場合はその時点で参照先が1件も無いときに例外を出す
                                 yield return $$"""
                                     {{member.PhysicalName}} = context.{{GeneratedList(refToRoot)}}.Count == 0

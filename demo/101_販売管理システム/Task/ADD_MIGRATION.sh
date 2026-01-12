@@ -36,27 +36,16 @@ fi
 # DB定義に変更があるかを調べ、なければマイグレーションを続行するか確認
 echo "DB定義の変更を確認中..."
 dotnet ef migrations has-pending-model-changes --project "$TARGET_PROJECT" --startup-project "$STARTUP_PROJECT" --no-build
-HAS_CHANGES=$?
+HAS_CHANGES_EXIT_CODE=$?
 
-if [ $HAS_CHANGES -ne 0 ]; then
-    # 変更がない場合（has-pending-model-changes は変更がある場合に0以外を返す... ではなく、変更がある場合に0、ない場合に1を返すわけではない。
-    # 実は has-pending-model-changes は変更がある場合に exit code 1 を返す仕様... だったか？
-    # ドキュメントによると: "Checks if there are any pending model changes."
-    # 変更がある場合: exit code 0?
-    # 変更がない場合: exit code 0?
-    # 出力を見て判断する必要があるかもしれないが、ここでは簡易的に実装する。
-    # 実際には dotnet ef migrations add を実行して、空のマイグレーションが作成されるかどうかで判断することもできる。
-    
-    # バッチファイルのロジックを見ると:
-    # dotnet ef migrations has-pending-model-changes ...
-    # if not "%errorlevel%"=="0" ( ... )
-    # となっているので、エラーレベルで判定している。
-    # EF Core 8.0 以降では has-pending-model-changes が使える。
-    # 変更がある場合は exit code 1 になるらしい（要確認）。
-    # バッチファイルでは `if not "%errorlevel%"=="0"` なので、0以外なら「変更あり」とみなしている。
-    
-    # ここではとりあえず進める。
-    :
+# has-pending-model-changes: 変更がある場合は 1, ない場合は 0 を返す
+if [ $HAS_CHANGES_EXIT_CODE -eq 0 ]; then
+    echo "変更が検出されませんでした。"
+    read -p "それでもマイグレーションを作成しますか？ (y/N): " CONTINUE
+    if [[ ! "$CONTINUE" =~ ^[yY] ]]; then
+        echo "中断しました。"
+        exit 0
+    fi
 fi
 
 # マイグレーション名を入力
@@ -64,6 +53,19 @@ read -p "マイグレーション名を入力してください: " MIGRATION_NAM
 if [ -z "$MIGRATION_NAME" ]; then
     echo "マイグレーション名が入力されませんでした。"
     exit 1
+fi
+
+# 現在の最新のマイグレーションを取得（これが直前のマイグレーションになる）
+RAW_LIST=$(dotnet ef migrations list --project "$TARGET_PROJECT" --startup-project "$STARTUP_PROJECT" --no-build)
+# タイムスタンプ(数字)で始まる行のみ抽出して配列化
+# (Pending) などが含まれる場合があるため、awk で最初のトークンのみ取得する
+MIGRATIONS_LIST=$(echo "$RAW_LIST" | grep -E '^[0-9]+_' | awk '{print $1}')
+MIGRATIONS_ARRAY=($MIGRATIONS_LIST)
+COUNT=${#MIGRATIONS_ARRAY[@]}
+
+PREV_MIGRATION=""
+if [ $COUNT -gt 0 ]; then
+    PREV_MIGRATION=${MIGRATIONS_ARRAY[$((COUNT-1))]}
 fi
 
 # マイグレーション作成
@@ -74,7 +76,15 @@ if [ $? -ne 0 ]; then
 fi
 
 # SQLスクリプト生成
-dotnet ef migrations script --project "$TARGET_PROJECT" --startup-project "$STARTUP_PROJECT" --output "$MIGRATION_SCRIPT_DIR/$MIGRATION_NAME.sql"
+# 直近のマイグレーションからの差分のみを作成する
+if [ -n "$PREV_MIGRATION" ]; then
+    echo "直前のマイグレーション: $PREV_MIGRATION からの差分スクリプトを生成します。"
+    dotnet ef migrations script "$PREV_MIGRATION" --project "$TARGET_PROJECT" --startup-project "$STARTUP_PROJECT" --output "$MIGRATION_SCRIPT_DIR/$MIGRATION_NAME.sql"
+else
+    echo "前回のマイグレーションが見つからないため、全量のスクリプトを生成します。"
+    dotnet ef migrations script --project "$TARGET_PROJECT" --startup-project "$STARTUP_PROJECT" --output "$MIGRATION_SCRIPT_DIR/$MIGRATION_NAME.sql"
+fi
+
 if [ $? -ne 0 ]; then
     echo "SQLスクリプトの生成に失敗しました。"
     exit 1
