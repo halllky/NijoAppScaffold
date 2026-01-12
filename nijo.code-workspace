@@ -172,7 +172,6 @@
           "cwd": "${workspaceFolder:NijoAppScaffold}/Task"
         },
         "args": [
-          "\"${workspaceFolder:NijoAppScaffold}/demo/${input:demoFolder}\"",
           "\"${input:tempDirectoryName}\""
         ],
         "problemMatcher": [],
