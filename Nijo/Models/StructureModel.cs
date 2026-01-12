@@ -118,7 +118,6 @@ namespace Nijo.Models {
             ctx.Use<CommandQueryMappings>().AddStructureModel(rootAggregate);
 
             // 定数: メタデータ
-            ctx.Use<Metadata>().Add(rootAggregate);
             ctx.Use<MetadataForPage>().Add(rootAggregate);
 
             aggregateFile.ExecuteRendering(ctx);

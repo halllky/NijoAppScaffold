@@ -319,7 +319,6 @@ namespace Nijo.Models {
 
             // 定数: メタデータ ※DataModelの場合は全く同じ値になるので割愛
             if (!rootAggregate.GenerateDefaultQueryModel) {
-                ctx.Use<Metadata>().Add(rootAggregate);
                 ctx.Use<MetadataForPage>().Add(rootAggregate);
             }
         }

@@ -233,7 +233,6 @@ namespace Nijo.Models {
             aggregateFile.AddCSharpClass(KeyClass.KeyClassEntry.RenderClassDeclaringRecursively(rootAggregate, ctx), "Class_KeyClass");
 
             // 定数: メタデータ
-            ctx.Use<Metadata>().Add(rootAggregate);
             ctx.Use<MetadataForPage>().Add(rootAggregate);
 
             // カスタムロジック用モジュール
