@@ -23,7 +23,10 @@ namespace Nijo.Models.DataModelModules {
         public override string MsgId => MSG_ID_REQUIRED;
         public override string MsgTemplate => "{0} を入力してください。";
 
-        private static bool HasSequence(RootAggregate rootAggregate) {
+        /// <summary>
+        /// 必須のシーケンス属性が存在するか
+        /// </summary>
+        private static bool HasRequiredSequence(RootAggregate rootAggregate) {
             return rootAggregate
                 .EnumerateThisAndDescendants()
                 .SelectMany(agg => agg.GetMembers())
@@ -34,7 +37,7 @@ namespace Nijo.Models.DataModelModules {
 
         protected override IEnumerable<AdditionalArgs> GetAdditionalMethodArgs(RootAggregate rootAggregate) {
             // シーケンスがある場合、新規登録時にシーケンスのnullチェックを割愛する必要がある
-            if (HasSequence(rootAggregate)) {
+            if (HasRequiredSequence(rootAggregate)) {
                 yield return new() {
                     Type = "bool",
                     Name = IS_CREATE,
@@ -88,7 +91,7 @@ namespace Nijo.Models.DataModelModules {
         }
 
         internal override string RenderCaller(object caller, RootAggregate rootAggregate, string dbEntityInstanceName, string messageInstanceName) {
-            var hasSequence = HasSequence(rootAggregate);
+            var hasSequence = HasRequiredSequence(rootAggregate);
             if (hasSequence && caller is CreateMethod) {
                 return $$"""
                     {{MethodName}}({{dbEntityInstanceName}}, {{messageInstanceName}}, {{IS_CREATE}}: true)

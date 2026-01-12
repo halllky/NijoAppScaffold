@@ -14,8 +14,8 @@ using System.Xml.Linq;
 namespace Nijo.Parts.Common;
 
 /// <summary>
-/// 画面の自動生成のためのメタデータ。
-/// <see cref="Metadata"/> と役割が相当部分重複している。
+/// nijo.xml の定義をほぼそのまま C# や TypeScript のコードとしてレンダリングする。
+/// 各アプリケーションごとの共通処理でリフレクション的に利用されることを想定している。
 /// </summary>
 internal class MetadataForPage : IMultiAggregateSourceFile {
 
