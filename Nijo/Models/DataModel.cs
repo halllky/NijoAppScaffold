@@ -89,10 +89,10 @@ namespace Nijo.Models {
                 if (sourceRoot == targetRoot) continue;
 
                 // 必須属性かどうか
-                bool isRequired = refElement.Attribute(BasicNodeOptions.IsRequired.AttributeName)?.Value?.ToLower() == "true";
+                bool isRequired = refElement.Attribute(BasicNodeOptions.IsRequired.AttributeName) != null;
 
                 // 主キーかどうか
-                bool isKey = refElement.Attribute(BasicNodeOptions.IsKey.AttributeName)?.Value?.ToLower() == "true";
+                bool isKey = refElement.Attribute(BasicNodeOptions.IsKey.AttributeName) != null;
 
                 // キーまたは必須の場合のみグラフに追加
                 if (isKey || isRequired) {
