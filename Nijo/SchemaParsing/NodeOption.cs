@@ -279,6 +279,58 @@ internal static class BasicNodeOptions {
             // IsAvailableで基本的な判定は完了しているため、追加の検証は不要
         },
     };
+    internal static NodeOption StringSearchBehavior = new() {
+        AttributeName = "StringSearchBehavior",
+        DisplayName = "検索挙動",
+        Type = E_NodeOptionType.String,
+        HelpText = $$"""
+            検索時の挙動を指定します。
+            - {{STRING_SEARCH_BEHAVIOR_PARTIAL}}: 部分一致（デフォルト）
+            - {{STRING_SEARCH_BEHAVIOR_FORWARD}}: 前方一致
+            - {{STRING_SEARCH_BEHAVIOR_BACKWARD}}: 後方一致
+            - {{STRING_SEARCH_BEHAVIOR_EXACT}}: 完全一致
+            """,
+        IsAvailable = (model, nodeType) => {
+            return (model is QueryModel || model is DataModel)
+                && nodeType == E_NodeType.ValueMember;
+        },
+        ValidateOthers = ctx => {
+            // DataModel の場合は GenerateDefaultQueryModel が指定されている場合のみ許可
+            if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model) && model is DataModel) {
+                var root = ctx.XElement.GetRootAggregateElement();
+                var generateDefaultQueryModel = root.Attribute(GenerateDefaultQueryModel!.AttributeName);
+
+                if (generateDefaultQueryModel == null) {
+                    ctx.AddError("検索処理が自動生成されないDataModelのため指定できません。");
+                    return;
+                }
+            }
+
+            // 文字列型の値メンバーにのみ指定可能
+            if (!ctx.SchemaParseContext.TryResolveMemberType(ctx.XElement, out var valueMemberType)
+                || valueMemberType is not ValueMemberTypes.Word
+                && valueMemberType is not ValueMemberTypes.Description
+                && valueMemberType is not ValueMemberTypes.ValueObjectMember) {
+                ctx.AddError("この属性は文字列型の値メンバーにのみ指定可能です。");
+                return;
+            }
+
+            // 指定可能な値の確認
+            var validValues = new[] {
+                STRING_SEARCH_BEHAVIOR_PARTIAL,
+                STRING_SEARCH_BEHAVIOR_FORWARD,
+                STRING_SEARCH_BEHAVIOR_BACKWARD,
+                STRING_SEARCH_BEHAVIOR_EXACT,
+            };
+            if (!validValues.Contains(ctx.Value)) {
+                ctx.AddError($"検索挙動には {string.Join(", ", validValues)} のいずれかを指定してください。");
+            }
+        },
+    };
+    internal const string STRING_SEARCH_BEHAVIOR_PARTIAL = "Partial";
+    internal const string STRING_SEARCH_BEHAVIOR_FORWARD = "Forward";
+    internal const string STRING_SEARCH_BEHAVIOR_BACKWARD = "Backward";
+    internal const string STRING_SEARCH_BEHAVIOR_EXACT = "Exact";
     #endregion QueryModel用
 
 
@@ -570,57 +622,4 @@ internal static class BasicNodeOptions {
         },
     };
     #endregion ConstantModel用
-
-    internal static NodeOption StringSearchBehavior = new() {
-        AttributeName = "StringSearchBehavior",
-        DisplayName = "検索挙動",
-        Type = E_NodeOptionType.String,
-        HelpText = $$"""
-            検索時の挙動を指定します。
-            - {{STRING_SEARCH_BEHAVIOR_PARTIAL}}: 部分一致（デフォルト）
-            - {{STRING_SEARCH_BEHAVIOR_FORWARD}}: 前方一致
-            - {{STRING_SEARCH_BEHAVIOR_BACKWARD}}: 後方一致
-            - {{STRING_SEARCH_BEHAVIOR_EXACT}}: 完全一致
-            """,
-        IsAvailable = (model, nodeType) => {
-            return (model is QueryModel || model is DataModel)
-                && nodeType == E_NodeType.ValueMember;
-        },
-        ValidateOthers = ctx => {
-            // DataModel の場合は GenerateDefaultQueryModel が指定されている場合のみ許可
-            if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model) && model is DataModel) {
-                var root = ctx.XElement.GetRootAggregateElement();
-                var generateDefaultQueryModel = root.Attribute(GenerateDefaultQueryModel!.AttributeName);
-
-                if (generateDefaultQueryModel == null) {
-                    ctx.AddError("検索処理が自動生成されないDataModelのため指定できません。");
-                    return;
-                }
-            }
-
-            // 文字列型の値メンバーにのみ指定可能
-            if (!ctx.SchemaParseContext.TryResolveMemberType(ctx.XElement, out var valueMemberType)
-                || valueMemberType is not ValueMemberTypes.Word
-                && valueMemberType is not ValueMemberTypes.Description
-                && valueMemberType is not ValueMemberTypes.ValueObjectMember) {
-                ctx.AddError("この属性は文字列型の値メンバーにのみ指定可能です。");
-                return;
-            }
-
-            // 指定可能な値の確認
-            var validValues = new[] {
-                STRING_SEARCH_BEHAVIOR_PARTIAL,
-                STRING_SEARCH_BEHAVIOR_FORWARD,
-                STRING_SEARCH_BEHAVIOR_BACKWARD,
-                STRING_SEARCH_BEHAVIOR_EXACT,
-            };
-            if (!validValues.Contains(ctx.Value)) {
-                ctx.AddError($"検索挙動には {string.Join(", ", validValues)} のいずれかを指定してください。");
-            }
-        },
-    };
-    internal const string STRING_SEARCH_BEHAVIOR_PARTIAL = "Partial";
-    internal const string STRING_SEARCH_BEHAVIOR_FORWARD = "Forward";
-    internal const string STRING_SEARCH_BEHAVIOR_BACKWARD = "Backward";
-    internal const string STRING_SEARCH_BEHAVIOR_EXACT = "Exact";
 }
