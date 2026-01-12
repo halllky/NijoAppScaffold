@@ -16,21 +16,9 @@ partial class DB接続あり_更新あり {
         var scope = TestUtilImpl.Instance.CreateScope("標準のダミーデータ作成処理が成功するか");
 
         var generator = new OverridedDummyDataGenerator();
-        var dbDescriptor = new DummyDataDbOutput(scope.App.DbContext);
 
         Assert.DoesNotThrowAsync(async () => {
-            try {
-                await generator.GenerateAsync(dbDescriptor, scope.App.DbContext);
-
-            } catch {
-                // エラーが起きたデータのログ出力
-                using var fs = File.OpenWrite(Path.Combine(scope.WorkDirectory, "作成しようとしたデータ.tsv"));
-                using var sw = new StreamWriter(fs);
-                var tsvDescriptor = new DummyDataTsvOutput(sw);
-                await generator.GenerateAsync(tsvDescriptor, scope.App.DbContext);
-
-                throw;
-            }
+            await generator.GenerateAsync(scope.App);
         });
     }
 }

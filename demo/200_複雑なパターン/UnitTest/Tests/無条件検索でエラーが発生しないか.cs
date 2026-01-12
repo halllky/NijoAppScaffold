@@ -28,8 +28,7 @@ partial class DB接続あり_更新なし {
         var scope = TestUtilImpl.Instance.CreateScope($"{nameof(無条件検索でエラーが発生しないか)}_{testCasePhysicalName}", messageContainerType);
 
         var generator = new OverridedDummyDataGenerator();
-        var dbDescriptor = new DummyDataDbOutput(scope.App.DbContext);
-        await generator.GenerateAsync(dbDescriptor, scope.App.DbContext);
+        await generator.GenerateAsync(scope.App);
 
         // 無条件検索を実行
         try {
@@ -61,8 +60,7 @@ partial class DB接続あり_更新なし {
         var scope = TestUtilImpl.Instance.CreateScope($"{nameof(無条件外部参照検索でエラーが発生しないか)}_{testCasePhysicalName}", messageContainerType);
 
         var generator = new OverridedDummyDataGenerator();
-        var dbDescriptor = new DummyDataDbOutput(scope.App.DbContext);
-        await generator.GenerateAsync(dbDescriptor, scope.App.DbContext);
+        await generator.GenerateAsync(scope.App);
 
         // 無条件外部参照検索を実行
         try {

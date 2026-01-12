@@ -8,6 +8,13 @@ namespace MyApp.WebApi.Authorization;
 public class LoginAuthorizationFilter : IAuthorizationFilter {
     public void OnAuthorization(AuthorizationFilterContext context) {
         // ログイン不要のエンドポイント
+        var allowAnonymous = context.ActionDescriptor.EndpointMetadata
+            .OfType<Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute>()
+            .Any();
+        if (allowAnonymous) {
+            return;
+        }
+
         if (context.ActionDescriptor is ControllerActionDescriptor actionDescriptor
             && actionDescriptor.ControllerTypeInfo.AsType() == typeof(ログインController)) {
             return;

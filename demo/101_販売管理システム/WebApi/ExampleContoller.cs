@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyApp.Debugging;
 
@@ -8,6 +9,7 @@ namespace MyApp.WebApi;
 /// </summary>
 [ApiController]
 [Route("/example")]
+[AllowAnonymous]
 public class ExampleContoller : ControllerBase {
 
     // 設定やサービスクラスは DI コンテナ経由で受け取ってください。
@@ -45,8 +47,14 @@ public class ExampleContoller : ControllerBase {
 
             // ダミーデータの生成
             var generator = new OverridedDummyDataGenerator();
-            var descriptor = new DummyDataDbOutput(_app.DbContext);
-            await generator.GenerateAsync(descriptor, _app.DbContext);
+            var result = (await generator.GenerateAsync(_app)).GetState();
+
+            if (result?.HasError() == true) {
+                return Problem(string.Join("\n", [
+                    "ダミーデータの生成に失敗しました。",
+                    .. result.GetAllMessages()
+                ]));
+            }
 
             return Ok();
 

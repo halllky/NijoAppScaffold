@@ -40,7 +40,6 @@ namespace Nijo.Models.DataModelModules {
         void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
             ctx.CoreLibrary(dir => {
                 dir.Directory("Debugging", utilDir => {
-                    utilDir.Generate(RenderBulkInsertInterface(ctx));
                     utilDir.Generate(RenderDummyDataGenerator(ctx));
                     utilDir.Generate(RenderDummyDataGenerateContext(ctx));
                     utilDir.Generate(RenderDummyDataGenerateOptionsCSharp(ctx));
@@ -78,28 +77,70 @@ namespace Nijo.Models.DataModelModules {
                         /// 現在登録されているデータは全て削除されます。
                         /// </summary>
                     {{If(rootAggregatesOrderByDataFlow.Length == 0, () => $$"""
-                        public Task {{GENERATE_ASYNC}}({{I_DUMMY_DATA_OUTPUT}} dummyDataOutput, {{ctx.Config.DbContextName}} dbContext, {{DUMMY_DATA_GENERATE_OPTIONS}}? options = null) {
+                        public Task<{{MessageContainer.SETTER_INTERFACE}}> {{GENERATE_ASYNC}}({{ctx.Config.RootNamespace}}.{{ApplicationService.ABSTRACT_CLASS}} applicationService, {{DUMMY_DATA_GENERATE_OPTIONS}}? options = null) {
                             // Data Model の集約が定義されていないので何もしない
                             return Task.CompletedTask;
                         }
                     """).Else(() => $$"""
-                        public async Task {{GENERATE_ASYNC}}({{I_DUMMY_DATA_OUTPUT}} dummyDataOutput, {{ctx.Config.DbContextName}} dbContext, {{DUMMY_DATA_GENERATE_OPTIONS}}? options = null) {
+                        public async Task<{{MessageContainer.SETTER_INTERFACE}}> {{GENERATE_ASYNC}}({{ctx.Config.RootNamespace}}.{{ApplicationService.ABSTRACT_CLASS}} applicationService, {{DUMMY_DATA_GENERATE_OPTIONS}}? options = null) {
 
                             // ランダム値採番等のコンテキスト
                             var context = new {{DUMMY_DATA_GENERATE_CONTEXT}} {
                                 Random = new Random(0),
                                 Metadata = new(),
-                                DbContext = dbContext,
+                                DbContext = applicationService.DbContext,
+                            };
+
+                            // 保存後のエラーメッセージなどが入る
+                            var presentationContext = new DummyDataPresentationContext {
+                                ValidationOnly = false,
                             };
 
                             // データフローの順番でダミーデータのパターンを作成・登録
                     {{rootAggregatesOrderByDataFlow.SelectTextTemplate(rootAggregate => $$"""
                             if (options?.{{rootAggregate.PhysicalName}} != false) {
-                                context.{{GeneratedList(rootAggregate)}} = {{CreatePatternMethodName(rootAggregate)}}(context).ToArray();
+                                var commands = {{CreatePatternMethodName(rootAggregate)}}(context).ToArray();
+                                var entities = new List<{{new EFCoreEntity(rootAggregate).CsClassName}}>();
+                                var errorMessages = presentationContext.As<{{MessageContainer.SETTER_CONCRETE_CLASS_LIST}}<{{new SaveCommandMessageContainer(rootAggregate).CsClassName}}>>();
+
+                                using var transaction = await applicationService.DbContext.Database.BeginTransactionAsync();
+                                for (var i = 0; i < commands.Length; i++) {
+                                    var command = commands[i];
+                                    var result = await applicationService.{{new CreateMethod(rootAggregate).MethodName}}(command, presentationContext, errorMessages.Messages[i]);
+                                    if (result.Result == {{DataModelSaveResult.CLASS_NAME}}Type.Completed && result.DbEntity != null) {
+                                        entities.Add(result.DbEntity);
+                                    }
+                                }
+                                await transaction.CommitAsync();
+
+                                context.{{GeneratedList(rootAggregate)}} = entities;
                                 context.ResetSequence();
-                                {{WithIndent(RenderOutputting(rootAggregate), "            ")}}
                             }
+
                     """)}}
+                            return presentationContext.As<{{MessageContainer.SETTER_INTERFACE}}>().Messages;
+                        }
+
+                        private class DummyDataPresentationContext : {{PresentationContext.INTERFACE}} {
+                            public bool ValidationOnly { get; init; }
+                            public {{PresentationContext.INTERFACE}}<TMessage> As<TMessage>() where TMessage : {{MessageContainer.SETTER_INTERFACE}} {
+                                return new DummyDataPresentationContext<TMessage>(ValidationOnly);
+                            }
+                        }
+                        private class DummyDataPresentationContext<TMessage> : {{PresentationContext.INTERFACE}}<TMessage> where TMessage : {{MessageContainer.SETTER_INTERFACE}} {
+                            public DummyDataPresentationContext(bool validationOnly) {
+                                ValidationOnly = validationOnly;
+                                Messages = {{MessageContainer.SETTER_CLASS}}.{{MessageContainer.GET_IMPL}}<TMessage>([], new MessageContainer());
+                            }
+                            public DummyDataPresentationContext(bool validationOnly, TMessage messages) {
+                                ValidationOnly = validationOnly;
+                                Messages = messages;
+                            }
+                            public TMessage Messages { get; }
+                            public bool ValidationOnly { get; }
+                            public {{PresentationContext.INTERFACE}}<TMessage2> As<TMessage2>() where TMessage2 : {{MessageContainer.SETTER_INTERFACE}} {
+                                return new DummyDataPresentationContext<TMessage2>(ValidationOnly, Messages.As<TMessage2>());
+                            }
                         }
                     """)}}
 
@@ -129,31 +170,6 @@ namespace Nijo.Models.DataModelModules {
                     #endif
                     """,
             };
-
-            static IEnumerable<string> RenderOutputting(RootAggregate rootAggregate) {
-                foreach (var aggregate in rootAggregate.EnumerateThisAndDescendants()) {
-                    var selected = new List<string>();
-                    foreach (var node in aggregate.GetPathFromEntry()) {
-                        if (node is RootAggregate) {
-                            selected.Add($"context.{GeneratedList(rootAggregate)}.Select(x => x.{SaveCommand.TO_DBENTITY}())");
-
-                        } else if (node is ChildAggregate child) {
-                            var parent = (AggregateBase?)node.PreviousNode ?? throw new InvalidOperationException("ありえない");
-                            var nav = new NavigationProperty.NavigationOfParentChild(parent, child);
-                            selected.Add($".Select(e => e.{nav.Principal.OtherSidePhysicalName}).OfType<{nav.Principal.GetOtherSideCsTypeName()}>()");
-
-                        } else if (node is ChildrenAggregate children) {
-                            var parent = (AggregateBase?)node.PreviousNode ?? throw new InvalidOperationException("ありえない");
-                            var nav = new NavigationProperty.NavigationOfParentChild(parent, children);
-                            selected.Add($".SelectMany(e => e.{nav.Principal.OtherSidePhysicalName})");
-                        }
-                    }
-
-                    yield return $$"""
-                        await dummyDataOutput.OutputAsync({{selected.Join("")}});
-                        """;
-                }
-            }
 
             static string RenderCreatePatternMethod(RootAggregate rootAggregate) {
                 var saveCommand = new SaveCommand(rootAggregate, SaveCommand.E_Type.Create);
@@ -192,7 +208,7 @@ namespace Nijo.Models.DataModelModules {
                             } else if (node is ChildAggregate child) {
                                 var parent = (AggregateBase?)node.PreviousNode ?? throw new InvalidOperationException("ありえない");
                                 var nav = new NavigationProperty.NavigationOfParentChild(parent, child);
-                                pathFromRoot.Add($"Select(x => x.{nav.Principal.OtherSidePhysicalName}).OfType<{nav.Principal.GetOtherSideCsTypeName()}>()");
+                                pathFromRoot.Add($"Select(x => x.{nav.Principal.OtherSidePhysicalName}).OfType<{new EFCoreEntity(child).CsClassName}>()");
 
                             } else if (node is ChildrenAggregate children) {
                                 var parent = (AggregateBase?)node.PreviousNode ?? throw new InvalidOperationException("ありえない");
@@ -285,9 +301,13 @@ namespace Nijo.Models.DataModelModules {
                             var memberName = refTo.Member.DisplayName.Replace("\"", "\\\"");
                             var refToName = refTo.Member.RefTo.DisplayName.Replace("\"", "\\\"");
 
+                            var convertMethod = refToRoot.IsView
+                                ? keyClass.FromCreateCommandOrSearchResult
+                                : "FromRootDbEntity";
+
                             var convertToKeyClass = refTo.Member.RefTo.GetPathFromRoot().Any(agg => agg is ChildrenAggregate)
-                                ? $".SelectMany(x => {keyClass.ClassName}.{keyClass.FromCreateCommandOrSearchResult}(x))"
-                                : $".Select(x => {keyClass.ClassName}.{keyClass.FromCreateCommandOrSearchResult}(x))";
+                                ? $".SelectMany(x => {keyClass.ClassName}.{convertMethod}(x))"
+                                : $".Select(x => {keyClass.ClassName}.{convertMethod}(x))";
 
                             if (refTo.Member.IsKey) {
                                 // refがキーの場合はキー重複を防ぐためインデックス順に振る
@@ -466,11 +486,11 @@ namespace Nijo.Models.DataModelModules {
                     }
 
                 } else {
-                    var saveCommand = new SaveCommand(aggregate, SaveCommand.E_Type.Create);
+                    var dbEntity = new EFCoreEntity(aggregate);
 
                     return $$"""
                         /// <summary>このメソッドが呼ばれた時点で作成済みの{{aggregate.DisplayName}}</summary>
-                        public IReadOnlyList<{{saveCommand.CsClassNameCreate}}> {{propName}} { get; set; } = [];
+                        public IReadOnlyList<{{dbEntity.CsClassName}}> {{propName}} { get; set; } = [];
                         """;
                 }
             }
@@ -478,30 +498,6 @@ namespace Nijo.Models.DataModelModules {
         #endregion コンテキスト
 
 
-        #region DB操作
-        private const string I_DUMMY_DATA_OUTPUT = "IDummyDataOutput";
-
-        private static SourceFile RenderBulkInsertInterface(CodeRenderingContext ctx) {
-            return new SourceFile {
-                FileName = "IDummyDataOutput.cs",
-                Contents = $$"""
-                    namespace {{ctx.Config.RootNamespace}};
-
-                    /// <summary>
-                    /// ダミーデータのインスタンスを実際にデータベースに登録したり何らかのファイルに出力したりする機能を提供します。
-                    /// </summary>
-                    public interface {{I_DUMMY_DATA_OUTPUT}} {
-                        /// <summary>
-                        /// ダミーデータのインスタンスを出力します。
-                        /// データベースに登録したり何らかのファイルに出力したりしてください。
-                        /// </summary>
-                        /// <param name="entities">登録対象データ。EFCoreのエンティティの配列</param>
-                        Task OutputAsync<TEntity>(IEnumerable<TEntity> entities);
-                    }
-                    """,
-            };
-        }
-        #endregion DB操作
 
 
         #region オプションクラス

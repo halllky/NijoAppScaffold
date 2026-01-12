@@ -1,6 +1,7 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Models.QueryModelModules;
+using Nijo.Parts.CSharp;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -100,8 +101,139 @@ namespace Nijo.Models.DataModelModules {
                     """)}}
 
                         {{WithIndent(RenderCovertFromCreateCommand(), "    ")}}
+                        {{WithIndent(RenderConvertFromDbEntity(), "    ")}}
+                        {{WithIndent(RenderConvertFromRootDbEntity(), "    ")}}
                     }
                     """;
+            }
+
+            private string RenderConvertFromRootDbEntity() {
+                var root = _aggregate.GetRoot();
+                if (root.IsView) return ""; // Valid only for Table
+
+                var dbEntityClassName = new EFCoreEntity(root).CsClassName;
+
+                // Determine return type
+                var ancestors = _aggregate.EnumerateThisAndAncestors().ToArray();
+                var isArray = ancestors.Any(agg => agg is ChildrenAggregate);
+                var returnType = isArray ? $"IEnumerable<{ClassName}>" : ClassName;
+
+                return $$"""
+                    /// <summary>
+                    /// <see cref="{{dbEntityClassName}}"/> からこのクラスのインスタンスを取り出します。
+                    /// </summary>
+                    public static {{returnType}} FromRootDbEntity({{dbEntityClassName}} root) {
+                        {{WithIndent(RenderBody(), "    ")}}
+                    }
+                    """;
+
+                IEnumerable<string> RenderBody() {
+                    // Traverse from Root to this aggregate
+                    var path = _aggregate.GetPathFromRoot().ToArray();
+
+                    // If _aggregate == root, trivial.
+                    if (_aggregate is RootAggregate) {
+                        yield return $"if (root == null) throw new ArgumentNullException(nameof(root));";
+                        yield return $"return FromDbEntity(root);";
+                        yield break;
+                    }
+
+                    var isEnumerable = false;
+                    var expression = "root"; // Initial single object
+
+                    foreach (var node in path.Skip(1)) {
+                        var parent = (AggregateBase?)node.PreviousNode ?? throw new InvalidOperationException();
+                        var nav = new NavigationProperty.NavigationOfParentChild(parent, (AggregateBase)node);
+                        var propName = nav.Principal.OtherSidePhysicalName;
+
+                        if (node is ChildrenAggregate) {
+                            if (isEnumerable) {
+                                expression += $".SelectMany(x => x.{propName})";
+                            } else {
+                                expression += $".{propName}";
+                                isEnumerable = true;
+                            }
+                        } else {
+                            // Child
+                            if (isEnumerable) {
+                                expression += $".Select(x => x.{propName})";
+                                expression += "!.Where(x => x != null)";
+                            } else {
+                                expression += $".{propName}"; // Single object
+                                expression += "!"; // Force non-null
+                            }
+                        }
+                    }
+
+                    // Final conversion
+                    if (isEnumerable) {
+                        expression += $".Select(x => FromDbEntity(x))";
+                    } else {
+                        expression = $"FromDbEntity({expression})";
+                    }
+
+                    yield return $"return {expression};";
+                }
+            }
+
+            private string RenderConvertFromDbEntity() {
+                if (_aggregate.GetRoot().IsView) return "";
+
+                var efCoreEntity = new EFCoreEntity(_aggregate);
+                var argName = "entity";
+                var right = new Variable(argName, efCoreEntity);
+
+                // DbEntity と ValueMember の対応辞書
+                var dict = right
+                     .Create1To1PropertiesRecursively()
+                     .GroupBy(x => x.Metadata.SchemaPathNode.ToMappingKey())
+                     .Select(group => new {
+                         group.Key,
+                         // 外部キーのカラムは、参照元自身のプロパティと、ナビゲーションプロパティで辿った先の
+                         // 参照先エンティティのプロパティで重複するキーが登場するので、
+                         // パスが最も短いもの（= 参照元自身のプロパティ）を選択する
+                         Value = group.OrderBy(x => x.GetPathFromInstance().Count()).First(),
+                     })
+                     .ToDictionary(x => x.Key, x => x.Value);
+
+                return $$"""
+                    /// <summary>
+                    /// <see cref="{{efCoreEntity.CsClassName}}"/> を <see cref="{{ClassName}}"> に変換します。
+                    /// </summary>
+                    public static {{ClassName}} FromDbEntity({{efCoreEntity.CsClassName}} {{argName}}) {
+                        return new {{ClassName}} {
+                            {{WithIndent(RenderBodyRecursively(this), "        ")}}
+                        };
+                    }
+                    """;
+
+                IEnumerable<string> RenderBodyRecursively(IKeyClassStructure structure) {
+                    foreach (var member in structure.GetOwnMembers()) {
+                        if (member is KeyClassValueMember vm) {
+                            var path = dict.TryGetValue(vm.Member.ToMappingKey(), out var source)
+                                ? source.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")
+                                : throw new InvalidOperationException($"EFCoreEntity に対応するプロパティが見つからない: {vm.Member.DisplayName}");
+
+                            yield return $$"""
+                                {{member.PhysicalName}} = {{vm.Member.Type.RenderCastToDomainType()}}{{path}},
+                                """;
+
+                        } else if (member is KeyClassRefMember rm) {
+                            yield return $$"""
+                                {{member.PhysicalName}} = new() {
+                                    {{WithIndent(RenderBodyRecursively(rm), "    ")}}
+                                },
+                                """;
+
+                        } else if (member is KeyClassEntry parent) {
+                            yield return $$"""
+                                {{member.PhysicalName}} = new() {
+                                    {{WithIndent(RenderBodyRecursively(parent), "    ")}}
+                                },
+                                """;
+                        }
+                    }
+                }
             }
 
             #region FromCreateCommand, FromSearchResult

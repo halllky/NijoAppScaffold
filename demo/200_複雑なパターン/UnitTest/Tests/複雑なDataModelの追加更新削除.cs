@@ -22,8 +22,7 @@ partial class DB接続あり_更新あり {
 
         // 外部キー用に全テーブルデータ作成
         var generator = new OverridedDummyDataGenerator();
-        var dbDescriptor = new DummyDataDbOutput(scope.App.DbContext);
-        await generator.GenerateAsync(dbDescriptor, scope.App.DbContext);
+        await generator.GenerateAsync(scope.App);
 
         // 不要な部分を削除
         await scope.App.DbContext.措置結果DbSet.ExecuteDeleteAsync();
