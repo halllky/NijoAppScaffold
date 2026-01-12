@@ -526,7 +526,9 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
             var attributeValue = xElement.Attribute(option.AttributeName)?.Value;
 
             // フィルタリング: 空文字の文字列をスキップ
-            if (option.Type == E_NodeOptionType.String && string.IsNullOrWhiteSpace(attributeValue)) {
+            if ((option.Type == E_NodeOptionType.String
+              || option.Type == E_NodeOptionType.Integer)
+                && string.IsNullOrWhiteSpace(attributeValue)) {
                 continue;
             }
 
@@ -534,9 +536,11 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
             var propName = option.AttributeName.ToCamelCase();
 
             // TypeScriptの値をレンダリング
-            var tsValue = option.Type == E_NodeOptionType.Boolean
-                ? "true"
-                : $"'{attributeValue?.Replace("\\", "\\\\").Replace("'", "\\'")}'";
+            var tsValue = option.Type switch {
+                E_NodeOptionType.Boolean => "true",
+                E_NodeOptionType.Integer => attributeValue,
+                _ => $"'{attributeValue?.Replace("\\", "\\\\").Replace("'", "\\'")}'",
+            };
 
             yield return $$"""
                 {{propName}}: {{tsValue}},
@@ -593,14 +597,18 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
             var attributeValue = xElement.Attribute(option.AttributeName)?.Value;
 
             // フィルタリング: 空文字の文字列をスキップ
-            if (option.Type == E_NodeOptionType.String && string.IsNullOrWhiteSpace(attributeValue)) {
+            if ((option.Type == E_NodeOptionType.String
+              || option.Type == E_NodeOptionType.Integer)
+                && string.IsNullOrWhiteSpace(attributeValue)) {
                 continue;
             }
 
             // C#の値をレンダリング
-            var csValue = option.Type == E_NodeOptionType.Boolean
-                ? "true"
-                : $"\"{attributeValue?.Replace("\\", "\\\\").Replace("\"", "\\\"")}\"";
+            var csValue = option.Type switch {
+                E_NodeOptionType.Boolean => "true",
+                E_NodeOptionType.Integer => attributeValue,
+                _ => $"\"{attributeValue?.Replace("\\", "\\\\").Replace("\"", "\\\"")}\"",
+            };
 
             yield return $$"""
                 {{option.AttributeName}} = {{csValue}},
@@ -641,15 +649,20 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
         foreach (var option in nodeOptions) {
 
-            // CharacterTypeの場合は特別な型を生成
             string tsType;
             if (option.AttributeName == BasicNodeOptions.CharacterType.AttributeName) {
+                // CharacterTypeの場合は特別な型を生成
                 var characterTypes = ctx.GetCharacterTypes().ToArray();
                 tsType = characterTypes.Length == 0
                     ? "never"
                     : characterTypes.Select(type => $"'{type.Replace("'", "\\'")}'").Join(" | ");
+
             } else {
-                tsType = option.Type == E_NodeOptionType.Boolean ? "boolean" : "string";
+                tsType = option.Type switch {
+                    E_NodeOptionType.Boolean => "boolean",
+                    E_NodeOptionType.Integer => "number",
+                    _ => "string",
+                };
             }
 
             // DisplayName だけは必ずレンダリングされる
@@ -695,17 +708,22 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
         foreach (var option in nodeOptions) {
 
-            // C#の型を決定
-            string csType = option.Type == E_NodeOptionType.Boolean ? "bool" : "string";
-
+            // C#の型を決定する。
             // DisplayName だけは必須プロパティ
-            var isOptional = option.AttributeName != BasicNodeOptions.DisplayName.AttributeName;
-            var nullableModifier = isOptional && csType == "string" ? "?" : "";
-            var defaultValue = isOptional ? "" : " = string.Empty;";
+            string csType = option.AttributeName == BasicNodeOptions.DisplayName.AttributeName
+                ? "string"
+                : option.Type switch {
+                    E_NodeOptionType.Boolean => "bool",
+                    E_NodeOptionType.Integer => "int?",
+                    _ => "string?",
+                };
+            var defaultValue = option.AttributeName == BasicNodeOptions.DisplayName.AttributeName
+                ? " = string.Empty;"
+                : "";
 
             yield return $$"""
                 /// <summary>{{option.DisplayName}}</summary>
-                public {{csType}}{{nullableModifier}} {{option.AttributeName}} { get; init; }{{defaultValue}}
+                public {{csType}} {{option.AttributeName}} { get; init; }{{defaultValue}}
                 """;
         }
 

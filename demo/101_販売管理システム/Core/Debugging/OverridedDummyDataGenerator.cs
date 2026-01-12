@@ -15,8 +15,8 @@ public partial class OverridedDummyDataGenerator : DummyDataGenerator {
 
         } else {
             var value = $"{member.DisplayName}その{context.Random.Next(1, 100)}";
-            if (member.MaxLength != null && value.Length > (int.TryParse(member.MaxLength, out var ml) ? ml : 12)) {
-                value = value.Substring(0, int.TryParse(member.MaxLength, out var ml2) ? ml2 : 12);
+            if (member.MaxLength != null && value.Length > (member.MaxLength ?? 12)) {
+                value = value.Substring(0, member.MaxLength ?? 12);
             }
             return value;
         }

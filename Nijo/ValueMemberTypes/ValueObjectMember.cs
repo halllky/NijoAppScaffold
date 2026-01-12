@@ -97,7 +97,7 @@ internal class ValueObjectMember : IValueMemberType {
         return $$"""
             return member.IsKey
                 ? new {{_ctx.GetPhysicalName(_xElement)}}($"VO_{context.GetNextSequence():D10}_{string.Concat(Enumerable.Range(0, 6).Select(_ => "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"[context.Random.Next(0, 36)]))}")
-                : new {{_ctx.GetPhysicalName(_xElement)}}(string.Concat(Enumerable.Range(0, int.TryParse(member.MaxLength, out var maxLength) ? maxLength : 12).Select(_ => "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"[context.Random.Next(0, 36)])));
+                : new {{_ctx.GetPhysicalName(_xElement)}}(string.Concat(Enumerable.Range(0, member.MaxLength ?? 12).Select(_ => "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"[context.Random.Next(0, 36)])));
             """;
     }
 

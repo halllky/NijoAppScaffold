@@ -116,7 +116,7 @@ export type XmlElementAttribute = {
   displayName: string
   /** この属性が使用可能なモデルとノード種別の組み合わせの配列。 */
   availableElements: { model: string, nodeType: string }[]
-} & (XmlElementStringAttribute | XmlElementBoolAttribute | XmlElementSelectAttribute)
+} & (XmlElementStringAttribute | XmlElementBoolAttribute | XmlElementIntegerAttribute | XmlElementSelectAttribute)
 
 /** XML要素の属性の種類定義（文字列属性） */
 export type XmlElementStringAttribute = {
@@ -125,6 +125,9 @@ export type XmlElementStringAttribute = {
 /** XML要素の属性の種類定義（ブール属性） */
 export type XmlElementBoolAttribute = {
   type: 'bool'
+}
+export type XmlElementIntegerAttribute = {
+  type: 'integer'
 }
 /** XML要素の属性の種類定義（選択属性）  */
 export type XmlElementSelectAttribute = {

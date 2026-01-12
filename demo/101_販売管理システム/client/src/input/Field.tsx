@@ -215,7 +215,7 @@ export function Field<
   ) {
     let decimalDigit: number | undefined = undefined
     if (fieldMetadata.decimalPlace !== undefined) {
-      decimalDigit = Number(fieldMetadata.decimalPlace)
+      decimalDigit = fieldMetadata.decimalPlace
     } else if (fieldMetadata.type === "decimal") {
       decimalDigit = 7
     } else if (fieldMetadata.type === "int" || fieldMetadata.type === "sequence" || fieldMetadata.type === "year") {
@@ -224,7 +224,7 @@ export function Field<
 
     let integerDigit: number | undefined = undefined
     if (fieldMetadata.totalDigit !== undefined) {
-      integerDigit = Number(fieldMetadata.totalDigit) - (decimalDigit || 0)
+      integerDigit = fieldMetadata.totalDigit - (decimalDigit || 0)
     } else if (fieldMetadata.type === "year") {
       integerDigit = 4
     } else {

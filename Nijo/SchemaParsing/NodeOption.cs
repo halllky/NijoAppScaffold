@@ -27,7 +27,7 @@ public class NodeOption {
     /// </summary>
     public required string HelpText { get; init; }
     /// <summary>
-    /// 真偽値 or 文字列
+    /// この属性の値の型
     /// </summary>
     public required E_NodeOptionType Type { get; init; }
     /// <summary>
@@ -43,11 +43,12 @@ public class NodeOption {
 }
 
 /// <summary>
-/// 真偽値 or 文字列
+/// ノードオプションの値の型
 /// </summary>
 public enum E_NodeOptionType {
     Boolean,
     String,
+    Integer,
 }
 
 /// <summary>
@@ -463,15 +464,13 @@ internal static class BasicNodeOptions {
     internal static NodeOption MaxLength = new() {
         AttributeName = "MaxLength",
         DisplayName = "最大長",
-        Type = E_NodeOptionType.String,
+        Type = E_NodeOptionType.Integer,
         HelpText = $$"""
-            文字列項目の最大長。整数で指定してください。
+            RDBMS上での文字列項目の最大長。整数で指定してください。
             """,
         IsAvailable = (model, nodeType) => {
-            return (model is DataModel
-                 || model is QueryModel
-                 || model is CommandModel)
-                 && nodeType == E_NodeType.ValueMember;
+            return model is DataModel
+                && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
             // 整数値のみ許可
@@ -501,7 +500,7 @@ internal static class BasicNodeOptions {
     internal static NodeOption TotalDigit = new() {
         AttributeName = "TotalDigit",
         DisplayName = "総合桁数",
-        Type = E_NodeOptionType.String,
+        Type = E_NodeOptionType.Integer,
         HelpText = $$"""
             数値系属性の整数部桁数 + 小数部桁数
             """,
@@ -521,7 +520,7 @@ internal static class BasicNodeOptions {
     internal static NodeOption DecimalPlace = new() {
         AttributeName = "DecimalPlace",
         DisplayName = "小数部桁数",
-        Type = E_NodeOptionType.String,
+        Type = E_NodeOptionType.Integer,
         HelpText = $$"""
             数値系属性の小数部桁数
             """,
