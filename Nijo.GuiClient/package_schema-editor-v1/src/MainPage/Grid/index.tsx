@@ -4,7 +4,7 @@ import * as Icon from "@heroicons/react/24/solid"
 import * as Input from "@nijo/ui-components/input"
 import * as Layout from "@nijo/ui-components/layout"
 import FormLayout, { LabelProps } from "@nijo/ui-components/layout/FormLayout"
-import { SchemaDefinitionGlobalState, ATTR_TYPE, XmlElementAttribute, XmlElementItem, ATTR_IS_KEY, TYPE_DATA_MODEL, ATTR_USER_HELP_TEXT, TYPE_COMMAND_MODEL, TYPE_QUERY_MODEL, TYPE_CHILD, TYPE_CHILDREN, ValueMemberType, getNodeType, isAttributeAvailable, NODE_TYPE_ROOT_AGGREGATE } from "../../types"
+import { SchemaDefinitionGlobalState, ATTR_TYPE, XmlElementAttribute, XmlElementItem, ATTR_IS_KEY, TYPE_DATA_MODEL, TYPE_COMMAND_MODEL, TYPE_QUERY_MODEL, TYPE_CHILD, TYPE_CHILDREN, ValueMemberType, getNodeType, isAttributeAvailable, NODE_TYPE_ROOT_AGGREGATE } from "../../types"
 import * as UI from '../../UI'
 import useEvent from "react-use-event-hook"
 import { UUID } from "uuidjs"
@@ -315,8 +315,7 @@ const GridSection = ({
 
       // すべての属性を表示する設定の場合か、主要な属性の場合のみ表示
       if (!showLessColumns
-        || (rootModelType === TYPE_DATA_MODEL && attrDef.attributeName === ATTR_IS_KEY)
-        || attrDef.attributeName === ATTR_USER_HELP_TEXT) {
+        || (rootModelType === TYPE_DATA_MODEL && attrDef.attributeName === ATTR_IS_KEY)) {
 
         columns.push(createBasicAttributeCell(attrDef, cellType, getValidationResult))
       }
