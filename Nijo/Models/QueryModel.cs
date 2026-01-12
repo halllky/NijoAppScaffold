@@ -246,7 +246,6 @@ namespace Nijo.Models {
             aggregateFile.AddCSharpClass(searchResult.RenderTree(ctx), "Class_SearchResult");
             if (rootAggregate.IsView) {
                 ctx.Use<DbContextClass>().AddEntities(searchResult.EnumerateThisAndChildren());
-                ctx.Use<MetadataOfEFCoreEntity>().Register(rootAggregate);
             }
 
             // データ型: 画面表示用型 DisplayData

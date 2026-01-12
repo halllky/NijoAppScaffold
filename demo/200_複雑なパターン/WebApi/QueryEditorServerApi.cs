@@ -61,34 +61,6 @@ public class QueryEditorServerApi : ControllerBase {
         }
     }
 
-    [HttpGet("get-table-metadata")]
-    public IActionResult GetTableMetadata() {
-        var data = new MetadataOfEFCoreEntity().EnumerateDataModelsOrderByDataFlow();
-
-        // カスタムJsonConverterを使用してポリモーフィックシリアライゼーションを実現
-        var options = new JsonSerializerOptions {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true,
-            Converters = { new AggregateMemberConverter() }
-        };
-
-        var json = JsonSerializer.Serialize(data, options);
-        return Content(json, "application/json");
-    }
-    /// <summary>
-    /// IAggregateMemberのポリモーフィックシリアライゼーション用のカスタムコンバーター
-    /// </summary>
-    private class AggregateMemberConverter : JsonConverter<MetadataOfEFCoreEntity.IAggregateMember> {
-        public override MetadataOfEFCoreEntity.IAggregateMember Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-            throw new NotImplementedException("デシリアライゼーションは実装していません");
-        }
-
-        public override void Write(Utf8JsonWriter writer, MetadataOfEFCoreEntity.IAggregateMember value, JsonSerializerOptions options) {
-            // 実際の型でシリアライゼーションを行う
-            JsonSerializer.Serialize(writer, value, value.GetType(), options);
-        }
-    }
-
 
     [HttpPost("get-db-records")]
     public async Task<IActionResult> GetDbRecords([FromBody] GetDbRecordsParameter query) {
