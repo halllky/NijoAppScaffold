@@ -386,20 +386,25 @@ namespace Nijo.Models.QueryModelModules {
                 protected virtual IQueryable<{{searchResult.CsClassName}}> {{APPEND_ORDERBY_CLAUSE}}(IQueryable<{{searchResult.CsClassName}}> query, {{searchCondition.CsClassName}} searchCondition) {
                     IOrderedQueryable<{{searchResult.CsClassName}}>? sorted = null;
                     foreach (var sortOption in searchCondition.{{SearchCondition.Entry.SORT_CS}}) {
-                        sorted = sortOption switch {
-                {{sortMembers.SelectTextTemplate(m => $$"""
-                            "{{m.AscLiteral}}" => sorted == null
-                                ? query.OrderBy(e => {{m.Path}})
-                                : sorted.ThenBy(e => {{m.Path}}),
-                            "{{m.DescLiteral}}" => sorted == null
-                                ? query.OrderByDescending(e => {{m.Path}})
-                                : sorted.ThenByDescending(e => {{m.Path}}),
-                """)}}
-                            _ => throw new InvalidOperationException($"ソート条件 '{sortOption}' が不正です。"),
-                        };
+                        if (_{{_rootAggregate.PhysicalName}}SortStrategies.TryGetValue(sortOption, out var sortFunc)) {
+                            sorted = sortFunc(query, sorted);
+                        } else {
+                            throw new InvalidOperationException($"ソート条件 '{sortOption}' が不正です。");
+                        }
                     }
                     return sorted ?? query;
                 }
+                /// <summary>{{APPEND_ORDERBY_CLAUSE}} で使用</summary>
+                private static readonly Dictionary<string, Func<IQueryable<{{searchResult.CsClassName}}>, IOrderedQueryable<{{searchResult.CsClassName}}>?, IOrderedQueryable<{{searchResult.CsClassName}}>>> _{{_rootAggregate.PhysicalName}}SortStrategies = new() {
+                {{sortMembers.SelectTextTemplate(m => $$"""
+                    ["{{m.AscLiteral}}"] = (query, sorted) => sorted == null
+                        ? query.OrderBy(e => {{m.Path}})
+                        : sorted.ThenBy(e => {{m.Path}}),
+                    ["{{m.DescLiteral}}"] = (query, sorted) => sorted == null
+                        ? query.OrderByDescending(e => {{m.Path}})
+                        : sorted.ThenByDescending(e => {{m.Path}}),
+                """)}}
+                };
                 """;
         }
 
