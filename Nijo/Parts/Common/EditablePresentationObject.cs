@@ -34,6 +34,11 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
     /// <summary>画面上で削除が指示されてから、保存処理の実行でその削除が確定するまでの間、trueになる（TypeScript）</summary>
     internal const string WILL_BE_DELETED_TS = "willBeDeleted";
 
+    /// <summary>UI側で編集中のインスタンスを識別するためのID（C#）</summary>
+    internal const string INSTANCE_ID_CS = "InstanceId";
+    /// <summary>UI側で編集中のインスタンスを識別するためのID（TypeScript）</summary>
+    internal const string INSTANCE_ID_TS = "instanceId";
+
     /// <summary>楽観排他制御用のバージョニング情報をもつプロパティの名前（C#側）</summary>
     internal const string VERSION_CS = "Version";
     /// <summary>楽観排他制御用のバージョニング情報をもつプロパティの名前（TypeScript側）</summary>
@@ -103,6 +108,14 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
             /// {{Aggregate.DisplayName}}の画面表示用データ。
             /// </summary>
             public partial class {{CsClassName}} {
+                /// <summary>
+                /// 画面初期表示から保存までの間でこのインスタンスを識別する番号。
+                /// GUIでのでの利用を想定している。例えば通常の主キーはデータベース保存前は未定義であり
+                /// エラーメッセージとの紐づけなどに使用できないため、そういった用途に使用する。
+                /// </summary>
+                [JsonPropertyName("{{INSTANCE_ID_TS}}")]
+                public string {{INSTANCE_ID_CS}} { get; set; } = Guid.NewGuid().ToString();
+
                 /// <summary>{{Aggregate.DisplayName}}自身が持つ値</summary>
                 [JsonPropertyName("{{VALUES_TS}}")]
                 public {{CsValuesClassName}} {{VALUES_CS}} { get; set; } = new();
@@ -143,6 +156,12 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         return $$"""
             /** {{Aggregate.DisplayName}}の画面表示用データ。 */
             export type {{TsTypeName}} = {
+              /**
+               * 画面初期表示から保存までの間でこのインスタンスを識別する番号。
+               * GUIでのでの利用を想定している。例えば通常の主キーはデータベース保存前は未定義であり
+               * エラーメッセージとの紐づけなどに使用できないため、そういった用途に使用する。
+               */
+              {{INSTANCE_ID_TS}}: string
               /** 値 */
               {{VALUES_TS}}: {
             {{Values.GetMembers().SelectTextTemplate(m => $$"""
@@ -364,12 +383,26 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
     private string RenderTypeScriptObjectCreationFunction(CodeRenderingContext ctx) {
         return $$"""
             /** {{Aggregate.DisplayName}}の画面表示用データの新しいインスタンスを作成します。 */
-            export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({{RenderTsNewObjectFunctionBody()}})
+            export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => {
+              // タイムスタンプ(ミリ秒) + ランダム文字列 で一意のIDを生成
+              function generateRandomUniqueId(): string {
+                return [
+                  Date.now().toString(36).substring(0, 8),
+                  Math.random().toString(36).substring(2, 6),
+                  Math.random().toString(36).substring(2, 6),
+                  Math.random().toString(36).substring(2, 6),
+                  Math.random().toString(36).replace('.', ''),
+                ].join('-')
+              }
+
+              return {{WithIndent(RenderTsNewObjectFunctionBody(), "  ")}}
+            }
             """;
     }
     public string RenderTsNewObjectFunctionBody() {
         return $$"""
             {
+              {{INSTANCE_ID_TS}}: generateRandomUniqueId(),
               {{VALUES_TS}}: {
             {{Values.GetMembers().SelectTextTemplate(m => $$"""
                 {{m.GetPropertyName(E_CsTs.TypeScript)}}: {{m.RenderNewObjectCreation()}},
