@@ -184,7 +184,7 @@ namespace Nijo.Models.QueryModelModules {
                         throw;
                     }
 
-                    // 読み取り専用項目の設定や、C#上での追加情報の付加など、任意のカスタマイズ処理
+                    // C#メモリ上での任意のカスタマイズ処理がある場合はこの中で実施
                     var currentPageItems = {{OnAfterLoadMethod}}(loaded, searchCondition, context).ToArray();
 
                     return new() {
