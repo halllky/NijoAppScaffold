@@ -145,6 +145,18 @@ export function Provider(props: { children: React.ReactNode }) {
       // どこに表示されないメッセージはここに蓄積させておいて最後にまとめて表示
       const unregisteredCache: DetailMessageByField = {}
 
+      // 同じメッセージセッターに複数のメッセージが送られる場合に備えて、
+      // 各メッセージセッターへの通知をここでバッファリングする
+      const messageCache = new Map<(messages: DetailMessageByField | null) => void, DetailMessageByField>()
+      const addToCache = (setter: (messages: DetailMessageByField | null) => void, msg: DetailMessageByField) => {
+        const current = messageCache.get(setter) ?? {}
+        messageCache.set(setter, {
+          error: [...(current.error ?? []), ...(msg.error ?? [])],
+          warn: [...(current.warn ?? []), ...(msg.warn ?? [])],
+          info: [...(current.info ?? []), ...(msg.info ?? [])],
+        })
+      }
+
       // 構造化されたオブジェクトを平坦化
       const flatMap = flattenDetailMessages(detail)
 
@@ -163,7 +175,7 @@ export function Provider(props: { children: React.ReactNode }) {
         const name = nameSplittedByPeriod.join('.')
         const exactMatch = exactMatchMap.get(name)
         if (exactMatch) {
-          exactMatch.messageSetter(messageByField)
+          addToCache(exactMatch.messageSetter, messageByField)
           continue
         }
 
@@ -208,7 +220,7 @@ export function Provider(props: { children: React.ReactNode }) {
           if (prefix.length > 0) {
             prefix += ': '
           }
-          bestCandidate.messageSetter({
+          addToCache(bestCandidate.messageSetter, {
             error: messageByField.error?.map(msg => prefix + msg),
             warn: messageByField.warn?.map(msg => prefix + msg),
             info: messageByField.info?.map(msg => prefix + msg),
@@ -241,13 +253,18 @@ export function Provider(props: { children: React.ReactNode }) {
       // どこにも無い場合はこのコンポーネントのstateにセットする。
       const unregistered = registeredRef.current.filter(item => item.type === 'unregistered')
       if (unregistered.length > 0) {
-        unregistered[unregistered.length - 1].messageSetter(unregisteredCache)
+        addToCache(unregistered[unregistered.length - 1].messageSetter, unregisteredCache)
       } else {
         setUnregisteredMessages(prev => ({
           error: [...(prev.error ?? []), ...(unregisteredCache.error ?? [])],
           warn: [...(prev.warn ?? []), ...(unregisteredCache.warn ?? [])],
           info: [...(prev.info ?? []), ...(unregisteredCache.info ?? [])],
         }))
+      }
+
+      // stateへの反映
+      for (const [setter, message] of messageCache) {
+        setter(message)
       }
     }
 
@@ -262,14 +279,14 @@ export function Provider(props: { children: React.ReactNode }) {
         {(unregisteredMessages.error || unregisteredMessages.warn || unregisteredMessages.info) && (
           <ul>
             {unregisteredMessages.error && unregisteredMessages.error.map((msg, idx) => (
-              <li key={`error-${idx}`} className="text-rose-700">{msg}</li>
+              <li key={`error-${idx}`} className="text-sm text-rose-700">{msg}</li>
             ))
             }
             {unregisteredMessages.warn && unregisteredMessages.warn.map((msg, idx) => (
-              <li key={`warn-${idx}`} className="text-amber-700">{msg}</li>
+              <li key={`warn-${idx}`} className="text-sm text-amber-700">{msg}</li>
             ))}
             {unregisteredMessages.info && unregisteredMessages.info.map((msg, idx) => (
-              <li key={`info-${idx}`} className="text-sky-700">{msg}</li>
+              <li key={`info-${idx}`} className="text-sm text-sky-700">{msg}</li>
             ))}
           </ul>
         )}
@@ -329,13 +346,13 @@ export function Of<
   return (
     <ul className={props.className}>
       {messages?.error && messages.error.map((msg, idx) => (
-        <li key={`error-${idx}`} className="text-rose-700">{msg}</li>
+        <li key={`error-${idx}`} className="text-sm text-rose-700">{msg}</li>
       ))}
       {messages?.warn && messages.warn.map((msg, idx) => (
-        <li key={`warn-${idx}`} className="text-amber-700">{msg}</li>
+        <li key={`warn-${idx}`} className="text-sm text-amber-700">{msg}</li>
       ))}
       {messages?.info && messages.info.map((msg, idx) => (
-        <li key={`info-${idx}`} className="text-sky-700">{msg}</li>
+        <li key={`info-${idx}`} className="text-sm text-sky-700">{msg}</li>
       ))}
     </ul>
   )
@@ -368,13 +385,13 @@ export function Rest(props: { className?: string }) {
   return (
     <ul className={props.className}>
       {messages?.error && messages.error.map((msg, idx) => (
-        <li key={`error-${idx}`} className="text-rose-700">{msg}</li>
+        <li key={`error-${idx}`} className="text-sm text-rose-700">{msg}</li>
       ))}
       {messages?.warn && messages.warn.map((msg, idx) => (
-        <li key={`warn-${idx}`} className="text-amber-700">{msg}</li>
+        <li key={`warn-${idx}`} className="text-sm text-amber-700">{msg}</li>
       ))}
       {messages?.info && messages.info.map((msg, idx) => (
-        <li key={`info-${idx}`} className="text-sky-700">{msg}</li>
+        <li key={`info-${idx}`} className="text-sm text-sky-700">{msg}</li>
       ))}
     </ul>
   )
