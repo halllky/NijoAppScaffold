@@ -9,6 +9,13 @@ namespace MyApp;
 
 partial class OverridedApplicationConfigure {
 
+    /// <summary>ログ出力用キー名: ログインユーザーID</summary>
+    public const string LOG_SCOPEPROP_LOGIN_USERID = "LoginUserId";
+    /// <summary>ログ出力用キー名: 処理名</summary>
+    public const string LOG_SCOPEPROP_PROCESS_NAME = "ProcessName";
+    /// <summary>ログ出力用キー名: 処理1回分の識別子</summary>
+    public const string LOG_SCOPEPROP_SCOPE_ID = "ScopeId";
+
     partial void ConfigureDemoService(IServiceCollection services, IConfigurationSection myAppSection) {
 
         // 商品管理システムの設定をバインド。
@@ -33,14 +40,14 @@ partial class OverridedApplicationConfigure {
                 FileName = Path.Combine(logDir, "${shortdate}.log"),
                 Layout = "${longdate}"             // ログ時刻
                        + "\t${uppercase:${level}}" // ログレベル
-                       + "\t${scopeproperty:item=LoginUserId}" // ログインユーザーID（未ログイン時は空文字）
-                       + "\t${scopeproperty:item=ProcessName}" // 処理名。
-                                                               // Webの場合はURLのパス部分（ドメイン名とクエリを除いた部分）。
-                                                               // バッチの場合はコマンドライン引数で指定された処理名。
-                       + "\t${scopeproperty:item=ScopeId}" // 処理1回分の識別子。
-                                                           // Webの場合はHTTPリクエスト1回毎。
-                                                           // バッチの場合はバッチ処理1回毎。
-                                                           // これがあるとログの追跡が大いに助かる
+                       + "\t${scopeproperty:item=" + LOG_SCOPEPROP_LOGIN_USERID + "}" // ログインユーザーID（未ログイン時は空文字）
+                       + "\t${scopeproperty:item=" + LOG_SCOPEPROP_PROCESS_NAME + "}" // 処理名。
+                                                                                      // Webの場合はURLのパス部分（ドメイン名とクエリを除いた部分）。
+                                                                                      // バッチの場合はコマンドライン引数で指定された処理名。
+                       + "\t${scopeproperty:item=" + LOG_SCOPEPROP_SCOPE_ID + "}" // 処理1回分の識別子。
+                                                                                  // Webの場合はHTTPリクエスト1回毎。
+                                                                                  // バッチの場合はバッチ処理1回毎。
+                                                                                  // これがあるとログの追跡が大いに助かる
                        + "\t${logger}"  // ロガー名（通常はクラス名）
                        + "\t${message}" // ログ本文
                        + "\t${exception:format=tostring}", // 例外情報
