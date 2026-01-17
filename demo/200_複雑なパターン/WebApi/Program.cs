@@ -1,3 +1,10 @@
+using System.Runtime.CompilerServices;
+
+// このプロジェクトで宣言されている internal メンバーを、単体テストプロジェクトから参照可能にする
+[assembly: InternalsVisibleTo("Demo200.UnitTest")]
+
+// --------------------------------
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Controller の設定

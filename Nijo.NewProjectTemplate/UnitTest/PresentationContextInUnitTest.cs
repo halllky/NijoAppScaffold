@@ -10,7 +10,7 @@ namespace MyApp.UnitTest;
 /// <summary>
 /// <see cref="IPresentationContext"/> のユニットテスト用の実装
 /// </summary>
-internal class PresentationContextInUnitTest : IPresentationContext {
+internal class PresentationContextInUnitTest : IPresentationContext, IConfirmablePresentationContext {
     public required bool ValidationOnly { get; init; }
     public required IMessageSetter Messages { get; init; }
     public required List<string> Confirms { get; init; }
@@ -20,10 +20,6 @@ internal class PresentationContextInUnitTest : IPresentationContext {
     }
     public bool HasConfirm() {
         return Confirms.Count > 0;
-    }
-
-    public bool HasError() {
-        return Messages.UnderlyingContext.Root.HasError();
     }
 
     public IPresentationContext<T> As<T>() where T : IMessageSetter {

@@ -160,12 +160,6 @@ namespace Nijo.Parts.CSharp {
                         public sealed class {{CONTEXT_CLASS}} {
 
                             #region 外部公開API
-                            /// <summary>
-                            /// ルートメッセージコンテナを取得します。
-                            /// 追加されたメッセージはすべてこのオブジェクトから取得できます。
-                            /// </summary>
-                            public IReadOnlyMessageContainer Root => _root;
-
                             /// <summary>エラーメッセージを追加します。</summary>
                             public void AddError(IEnumerable<string> path, string message) {
                                 Get(path.ToArray()).Errors.Add(message);
@@ -177,6 +171,14 @@ namespace Nijo.Parts.CSharp {
                             /// <summary>インフォメーションメッセージを追加します。</summary>
                             public void AddInfo(IEnumerable<string> path, string message) {
                                 Get(path.ToArray()).Infos.Add(message);
+                            }
+
+                            /// <summary>
+                            /// 指定したパスのメッセージコンテナを取得します。
+                            /// 対応するメッセージが存在しない場合はnullを返します。
+                            /// </summary>
+                            public IReadOnlyMessageContainer? Find(IEnumerable<string> path) {
+                                return _root.Find(path);
                             }
                             #endregion 外部公開API
 
@@ -208,7 +210,7 @@ namespace Nijo.Parts.CSharp {
                                 /// </summary>
                                 /// <param name="path">このオブジェクトから該当のインスタンスまでのパス</param>
                                 /// <returns>メッセージコンテナ</returns>
-                                IReadOnlyMessageContainer? IReadOnlyMessageContainer.Find(IEnumerable<string> path) {
+                                public IReadOnlyMessageContainer? Find(IEnumerable<string> path) {
                                     var current = this;
                                     foreach (var p in path) {
                                         if (!current.Children.TryGetValue(p, out var child)) {
@@ -235,7 +237,7 @@ namespace Nijo.Parts.CSharp {
                             private MessageContainerStructure Get(string[] path) {
                                 return GetRecursive(_root, path);
 
-                                MessageContainerStructure GetRecursive(MessageContainerStructure current, string[] path) {
+                                static MessageContainerStructure GetRecursive(MessageContainerStructure current, string[] path) {
                                     if (path.Length == 0) return current;
 
                                     if (!current.Children.TryGetValue(path[0], out var child)) {
@@ -264,13 +266,6 @@ namespace Nijo.Parts.CSharp {
                             IReadOnlyDictionary<string, IReadOnlyMessageContainer> Children { get; }
                             /// <summary>子メッセージコンテナの子孫と自身を列挙</summary>
                             IEnumerable<IReadOnlyMessageContainer> DescendantsAndSelf();
-                            /// <summary>
-                            /// 指定したパスのメッセージコンテナを取得します。
-                            /// 対応するメッセージが存在しない場合はnullを返します。
-                            /// </summary>
-                            /// <param name="path">このオブジェクトから該当のインスタンスまでのパス</param>
-                            /// <returns>メッセージコンテナ</returns>
-                            IReadOnlyMessageContainer? Find(IEnumerable<string> path);
                         }
 
                         #region インターフェース
@@ -278,11 +273,6 @@ namespace Nijo.Parts.CSharp {
                         /// <see cref="{{CONTEXT_CLASS}}"/> へのメッセージ設定を容易にするためのヘルパー
                         /// </summary>
                         public interface {{SETTER_INTERFACE}} {
-                            /// <summary>
-                            /// メッセージ本体が格納されているオブジェクト。
-                            /// 現在発生しているメッセージはこのオブジェクトを通じて取得してください。
-                            /// </summary>
-                            {{CONTEXT_CLASS}} UnderlyingContext { get; }
 
                             /// <summary>エラーメッセージを付加します。</summary>
                             void AddError(string message);
@@ -315,36 +305,36 @@ namespace Nijo.Parts.CSharp {
                             /// <param name="path">オブジェクトルートからこのインスタンスまでのパス</param>
                             public {{SETTER_CLASS}}(IEnumerable<string> path, {{CONTEXT_CLASS}} underlyingContext) {
                                 _path = path;
-                                UnderlyingContext = underlyingContext;
+                                _underlyingContext = underlyingContext;
                             }
                             private readonly IEnumerable<string> _path;
-                            public {{CONTEXT_CLASS}} UnderlyingContext { get; }
+                            private readonly {{CONTEXT_CLASS}} _underlyingContext;
 
                             /// <summary>エラーメッセージを付加します。</summary>
                             public virtual void AddError(string message) {
-                                UnderlyingContext.AddError(_path, message);
+                                _underlyingContext.AddError(_path, message);
                             }
                             /// <summary>警告メッセージを付加します。</summary>
                             public virtual void AddWarn(string message) {
-                                UnderlyingContext.AddWarn(_path, message);
+                                _underlyingContext.AddWarn(_path, message);
                             }
                             /// <summary>インフォメーションメッセージを付加します。</summary>
                             public virtual void AddInfo(string message) {
-                                UnderlyingContext.AddInfo(_path, message);
+                                _underlyingContext.AddInfo(_path, message);
                             }
 
                             /// <summary>
                             /// この項目に対して現在追加されているメッセージを取得します。
                             /// </summary>
                             public IReadOnlyMessageContainer? GetState() {
-                                return UnderlyingContext.Root.Find(_path);
+                                return _underlyingContext.Find(_path);
                             }
 
                             /// <summary>
                             /// このインスタンスを指定した型にキャストして返します。
                             /// </summary>
                             public T As<T>() where T : {{SETTER_INTERFACE}} {
-                                return {{GET_IMPL}}<T>(_path, UnderlyingContext);
+                                return {{GET_IMPL}}<T>(_path, _underlyingContext);
                             }
 
                             /// <summary>
