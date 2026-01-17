@@ -88,6 +88,17 @@ export async function callComplexPostEndpointAsync(
         }
         return fileMetadataList
       }
+
+      // HTTP通信量削減のため、null, 空文字, 空配列、空オブジェクトはシリアライズしない
+      function isEmptyValueRecursive(value: unknown): boolean {
+        if (value === null) return true
+        if (typeof value === 'string' && value === '') return true
+        if (Array.isArray(value) && value.length === 0) return true
+        if (typeof value === 'object' && Object.values(value).every(isEmptyValueRecursive)) return true
+        return false
+      }
+      if (isEmptyValueRecursive(value)) return undefined
+
       return value
     })
     formData.append('complex-post-request-body', stringifiedRequestBody)

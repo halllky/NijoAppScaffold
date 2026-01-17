@@ -152,8 +152,7 @@ public class TestUtilImpl {
     /// <see cref="OverridedApplicationConfigure"/> のうちユニットテストの時だけ変更したい初期設定処理を変更したもの
     /// </summary>
     public class OverridedApplicationConfigureForTest : OverridedApplicationConfigure {
-        // ログファイル名、Webアプリケーションの方では日付毎などだが、テストの場合は毎回別のフォルダに出力されるので、決め打ち
-        protected override string LogFileNameRule => "テスト中に出力されたログ.log";
+        // 必要に応じてユニットテスト用の初期設定をここに追加する
     }
     #endregion
 }

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace MyApp;
 
@@ -11,7 +12,7 @@ partial class OverridedApplicationService {
             .Where(s => s.最終ログイン日時 < threshold)
             .ExecuteDeleteAsync();
 
-        Log.Info($"クリーンナップ処理を実行しました。削除されたセッション数: {deletedCount}");
+        Log.LogInformation($"クリーンナップ処理を実行しました。削除されたセッション数: {deletedCount}");
 
         // 古いログの削除は NLog の設定で自動的に行われるため、ここでは特に処理を実装しない。
     }

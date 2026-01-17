@@ -8,7 +8,8 @@ builder.Services.AddHttpContextAccessor();
 
 // Controller の設定
 builder.Services.AddControllers(options => {
-    options.Filters.Add<LoginAuthorizationFilter>();
+    options.Filters.Add<MyApp.WebApi.WebLogScope>(); // ログ出力用情報設定のフィルター
+    options.Filters.Add<LoginAuthorizationFilter>();      // ログインしていないリクエストを弾くフィルター
 });
 
 // swagger。デバッグのためにこのアプリで定義されているエンドポイントを一覧する

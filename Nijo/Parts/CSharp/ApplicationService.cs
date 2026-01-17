@@ -39,7 +39,7 @@ namespace Nijo.Parts.CSharp {
                 FileName = "ApplicationService.cs",
                 Contents = $$"""
                     using Microsoft.Extensions.DependencyInjection;
-                    using NLog;
+                    using Microsoft.Extensions.Logging;
 
                     namespace {{ctx.Config.RootNamespace}};
 
@@ -59,8 +59,8 @@ namespace Nijo.Parts.CSharp {
                         /// <summary>
                         /// ログ出力はこのプロパティを通して行われる想定
                         /// </summary>
-                        public Logger Log => _logger ??= ServiceProvider.GetRequiredService<Logger>();
-                        private Logger? _logger;
+                        public ILogger Log => _logger ??= ServiceProvider.GetRequiredService<ILogger<{{ABSTRACT_CLASS}}>>();
+                        private ILogger? _logger;
 
                         /// <summary>
                         /// <para>

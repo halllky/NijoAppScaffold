@@ -1,9 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using NLog;
-using NLog.Config;
-using NLog.Targets;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -60,6 +58,11 @@ public partial class OverridedApplicationConfigure : DefaultConfiguration {
 
         // デモ用のサービス登録。削除して問題ない
         ConfigureDemoService(services, myAppSection);
+
+        // ログ設定
+        services.AddLogging(logging => {
+            // ログに関してはここで設定を行う
+        });
     }
 
     // デモ用のサービス登録。削除して問題ない
@@ -91,44 +94,17 @@ public partial class OverridedApplicationConfigure : DefaultConfiguration {
     /// <summary>
     /// <see cref="DbContext.OnConfiguring(DbContextOptionsBuilder)"/>
     /// </summary>
-    public override void OnConfiguringDbContext(DbContextOptionsBuilder optionsBuilder, Logger logger) {
-        // SQL発行時にログ出力するようにする
+    public override void OnConfiguringDbContext(DbContextOptionsBuilder optionsBuilder, ILogger logger) {
+        // EFCore が標準で出力するログのうち Information 以上のものを標準のデバッグログとして出力する
+        // （EFCore の Information はSQLなどで、 Debug はコネクションの接続や解放などが含まれる）。
+        // EFCore 側のログ（"Microsoft.EntityFrameworkCore" カテゴリで出力される）と二重で出力されるので、
+        // 必要に応じて EFCore 側のログが出力されないように調整などすること。
         optionsBuilder.LogTo(
-            sql => logger.Debug(sql),
-            Microsoft.Extensions.Logging.LogLevel.Information,
+            sql => logger.LogDebug(sql),
+            LogLevel.Information,
             Microsoft.EntityFrameworkCore.Diagnostics.DbContextLoggerOptions.SingleLine);
     }
     #endregion DB
-
-    #region ログ
-    /// <summary>
-    /// ログファイル名規則。表記はNLogのルールに従う。
-    /// </summary>
-    protected virtual string LogFileNameRule => "${date:format=yyyy-MM-dd}.log";
-    /// <summary>
-    /// ログ出力設定
-    /// </summary>
-    protected override Logger ConfigureLogger(IServiceProvider services) {
-        var settings = services.GetRequiredService<RuntimeSetting>();
-        var config = new LoggingConfiguration();
-
-        // ファイル出力
-        var fileTarget = new FileTarget("logfile") {
-            FileName = Path.Combine(Directory.GetCurrentDirectory(), settings.LogDirectory, LogFileNameRule),
-            Layout = "${longdate}\t${level:uppercase=true}\t${logger}\t${message}${onexception:inner=${newline}${exception:format=tostring}}",
-            ArchiveFileName = Path.Combine(settings.LogDirectory, "archive", "${date:format=yyyy-MM-dd}.{#}.log"),
-            ArchiveNumbering = ArchiveNumberingMode.Sequence,
-            ArchiveAboveSize = 100 * 1024 * 1024, // 100MBを越えたらアーカイブ
-            MaxArchiveFiles = 100
-        };
-        config.AddTarget(fileTarget);
-        config.AddRuleForAllLevels(fileTarget);
-
-        // 設定を適用して新しいロガーを作成
-        LogManager.Configuration = config;
-        return LogManager.GetCurrentClassLogger();
-    }
-    #endregion ログ
 
 
     #region JSONシリアライズ設定

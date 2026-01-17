@@ -71,26 +71,14 @@ namespace Nijo.Parts.CSharp {
                 protected abstract {{ApplicationService.ABSTRACT_CLASS}} ConfigureApplicationService(IServiceProvider services);
                 """);
 
-            // NLog.Logger を登録
-            coreConfigureServices.Add(services => $$"""
-                // ログ出力
-                {{services}}.AddSingleton(ConfigureLogger);
-                """);
-            coreMethods.Add($$"""
-                /// <summary>
-                /// ログ出力設定
-                /// </summary>
-                protected abstract NLog.Logger ConfigureLogger(IServiceProvider services);
-                """);
-
             return new SourceFile {
                 FileName = "DefaultConfiguration.cs",
                 Contents = $$"""
                     using Microsoft.Extensions.DependencyInjection;
+                    using Microsoft.Extensions.Logging;
                     using System.Text.Json;
                     using System.Text.Json.Nodes;
                     using System.Text.Json.Serialization;
-                    using NLog;
 
                     namespace {{ctx.Config.RootNamespace}};
 

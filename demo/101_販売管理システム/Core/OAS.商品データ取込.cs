@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace MyApp;
 
@@ -10,7 +11,7 @@ partial class OverridedApplicationService {
         var shohinKanriSystem = ServiceProvider.GetRequiredService<Core.外部システム.商品管理システム.I商品管理システム>();
 
         foreach (var item in shohinKanriSystem.Enumerate商品データ()) {
-            Log.Info($"処理開始: {item.Name} ({item.ExternalId})");
+            Log.LogInformation($"処理開始: {item.Name} ({item.ExternalId})");
 
             // トランザクションの範囲は商品1件
             using var tran = await DbContext.Database.BeginTransactionAsync();
@@ -22,7 +23,7 @@ partial class OverridedApplicationService {
 
             // 消費税区分の変換 (文字列 -> Enum)
             if (!Enum.TryParse<消費税区分>(item.TaxType, out var taxType)) {
-                Log.Warn($"不正な消費税区分です: {item.TaxType} (商品: {item.Name})");
+                Log.LogWarning($"不正な消費税区分です: {item.TaxType} (商品: {item.Name})");
                 continue;
             }
 
@@ -50,6 +51,6 @@ partial class OverridedApplicationService {
             }
         }
 
-        Log.Info("商品データ取込が完了しました。");
+        Log.LogInformation("商品データ取込が完了しました。");
     }
 }

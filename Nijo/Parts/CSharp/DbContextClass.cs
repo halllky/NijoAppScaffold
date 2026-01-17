@@ -41,7 +41,7 @@ namespace Nijo.Parts.CSharp {
                     /// DBコンテキストの OnConfiguring メソッドから呼ばれる。
                     /// DB接続先設定などを行なう。
                     /// </summary>
-                    public abstract void {{ON_DBCONTEXT_CONFIGURING}}(Microsoft.EntityFrameworkCore.DbContextOptionsBuilder optionsBuilder, NLog.Logger logger);
+                    public abstract void {{ON_DBCONTEXT_CONFIGURING}}(Microsoft.EntityFrameworkCore.DbContextOptionsBuilder optionsBuilder, Microsoft.Extensions.Logging.ILogger logger);
                     """)
 
                 // DI設定
@@ -99,6 +99,7 @@ namespace Nijo.Parts.CSharp {
                 FileName = $"{ctx.Config.DbContextName.ToFileNameSafe()}.cs",
                 Contents = $$"""
                     using Microsoft.EntityFrameworkCore;
+                    using Microsoft.Extensions.Logging;
 
                     namespace {{ctx.Config.RootNamespace}};
 
@@ -111,14 +112,14 @@ namespace Nijo.Parts.CSharp {
                         /// <param name="options">EFCoreのオプション</param>
                         /// <param name="nijoConfig">ソースコード自動生成に関するオプション</param>
                         /// <param name="logger">SQLのログ出力用</param>
-                        public {{ctx.Config.DbContextName}}(DbContextOptions<{{ctx.Config.DbContextName}}> options, {{ApplicationConfigure.ABSTRACT_CLASS_CORE}} nijoConfig, NLog.Logger logger) : base(options) {
+                        public {{ctx.Config.DbContextName}}(DbContextOptions<{{ctx.Config.DbContextName}}> options, {{ApplicationConfigure.ABSTRACT_CLASS_CORE}} nijoConfig, Microsoft.Extensions.Logging.ILogger<{{ctx.Config.DbContextName}}> logger) : base(options) {
                             _nijoConfig = nijoConfig;
                             _logger = logger;
                         }
                     #pragma warning restore CS8618 // DbSetはEFCore側で自動的に設定されるため問題なし
 
                         private readonly {{ApplicationConfigure.ABSTRACT_CLASS_CORE}} _nijoConfig;
-                        private readonly NLog.Logger _logger;
+                        private readonly Microsoft.Extensions.Logging.ILogger _logger;
 
                     {{efCoreEntitiesOrderByDataFlow.SelectTextTemplate(entity => $$"""
                         public virtual DbSet<{{entity.CsClassName}}> {{entity.DbSetName}} { get; set; }
@@ -136,7 +137,7 @@ namespace Nijo.Parts.CSharp {
                                 _nijoConfig.{{ON_DBCONTEXT_MODEL_CREATING}}(modelBuilder);
 
                             } catch (Exception ex) {
-                                _logger.Error(ex);
+                                _logger.LogError(ex, "Error in OnModelCreating");
                                 throw;
                             }
                         }

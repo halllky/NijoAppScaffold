@@ -141,6 +141,7 @@ namespace Nijo.CodeGenerating {
                 using System.Text.Json.Serialization;
                 using Microsoft.EntityFrameworkCore;
                 using Microsoft.EntityFrameworkCore.Infrastructure;
+                using Microsoft.Extensions.Logging;
 
                 namespace {{ctx.Config.RootNamespace}};
 

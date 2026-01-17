@@ -175,11 +175,11 @@ namespace Nijo.Models.QueryModelModules {
                         totalCount = await filtered.CountAsync();
                         loaded = await converted.ToArrayAsync();
                     } catch {
-                        Log.Debug("{{_entryAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時検索条件: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(searchCondition));
+                        Log.LogDebug("{{_entryAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時検索条件: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(searchCondition));
                         try {
-                            Log.Debug("{{_entryAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時SQL: {0}", query.ToQueryString());
+                            Log.LogDebug("{{_entryAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時SQL: {0}", query.ToQueryString());
                         } catch {
-                            Log.Debug("{{_entryAggregate.DisplayName.Replace("\"", "\\\"")}} 不具合調査用のSQL変換に失敗しました。");
+                            Log.LogDebug("{{_entryAggregate.DisplayName.Replace("\"", "\\\"")}} 不具合調査用のSQL変換に失敗しました。");
                         }
                         throw;
                     }

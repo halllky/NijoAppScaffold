@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.Collections;
+using Microsoft.Extensions.Logging;
 
 namespace MyApp.UnitTest;
 
@@ -33,7 +34,7 @@ partial class DB接続あり_更新なし {
         // 無条件検索を実行
         try {
             var result = await test(scope.App, scope.PresentationContext);
-            scope.App.Log.Debug("取得したデータ: {0}", scope.App.Configuration.ToJson(result));
+            scope.App.Log.LogDebug("取得したデータ: {0}", scope.App.Configuration.ToJson(result));
             Assert.Pass("例外発生せず");
 
         } catch (InvalidOperationException ex) when (ex.Message.Contains(CANNOT_TRANSRATE_TO_SQL)) {
@@ -65,7 +66,7 @@ partial class DB接続あり_更新なし {
         // 無条件外部参照検索を実行
         try {
             var result = await test(scope.App, scope.PresentationContext);
-            scope.App.Log.Debug("取得したデータ: {0}", scope.App.Configuration.ToJson(result));
+            scope.App.Log.LogDebug("取得したデータ: {0}", scope.App.Configuration.ToJson(result));
             Assert.Pass("例外発生せず");
 
         } catch (InvalidOperationException ex) when (ex.Message.Contains(CANNOT_TRANSRATE_TO_SQL)) {
