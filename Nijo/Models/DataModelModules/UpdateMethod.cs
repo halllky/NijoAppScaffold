@@ -105,14 +105,14 @@ namespace Nijo.Models.DataModelModules {
                     }
 
                     // 更新前データ取得
-                    var beforeDbEntity = DbContext.{{dbEntity.DbSetName}}
+                    var beforeDbEntity = await DbContext.{{dbEntity.DbSetName}}
                         .AsNoTracking()
                 {{dbEntity.RenderInclude().SelectTextTemplate(source => $$"""
                         {{source}}
                 """)}}
-                        .SingleOrDefault(e {{WithIndent(keys.SelectTextTemplate((vm, i) => $$"""
-                                           {{(i == 0 ? "=>" : "&&")}} {{vm.SingleOrDefaultLeft}} == {{vm.ArgVarType.RenderCastToPrimitiveType()}}{{vm.ArgVarName}}
-                                           """), "                           ")}});
+                        .SingleOrDefaultAsync(e {{WithIndent(keys.SelectTextTemplate((vm, i) => $$"""
+                                                {{(i == 0 ? "=>" : "&&")}} {{vm.SingleOrDefaultLeft}} == {{vm.ArgVarType.RenderCastToPrimitiveType()}}{{vm.ArgVarName}}
+                                                """), "                                ")}});
 
                     if (beforeDbEntity == null) {
                         messages.AddError({{MsgFactory.MSG}}.{{ERR_DATA_NOT_FOUND}}());

@@ -87,14 +87,14 @@ namespace Nijo.Models.DataModelModules {
                     var {{vm.TempVarName}} = {{vm.VmType.RenderCastToPrimitiveType()}}command.{{vm.SaveCommandFullPath.Join("!.")}};
                 """)}}
 
-                    var dbEntity = DbContext.{{dbEntity.DbSetName}}
+                    var dbEntity = await DbContext.{{dbEntity.DbSetName}}
                         .AsTracking()
                 {{dbEntity.RenderInclude().SelectTextTemplate(source => $$"""
                         {{source}}
                 """)}}
-                        .SingleOrDefault(e {{WithIndent(keys.SelectTextTemplate((vm, i) => $$"""
-                                           {{(i == 0 ? "=>" : "&&")}} {{vm.SingleOrDefaultLeft}} == {{vm.TempVarName}}
-                                           """), "                           ")}});
+                        .SingleOrDefaultAsync(e {{WithIndent(keys.SelectTextTemplate((vm, i) => $$"""
+                                                {{(i == 0 ? "=>" : "&&")}} {{vm.SingleOrDefaultLeft}} == {{vm.TempVarName}}
+                                                """), "                                ")}});
 
                     if (dbEntity == null) {
                         messages.AddError({{MsgFactory.MSG}}.{{UpdateMethod.ERR_DATA_NOT_FOUND}}());
