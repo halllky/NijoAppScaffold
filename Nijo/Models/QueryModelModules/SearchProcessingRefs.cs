@@ -175,9 +175,9 @@ namespace Nijo.Models.QueryModelModules {
                         totalCount = await filtered.CountAsync();
                         loaded = await converted.ToArrayAsync();
                     } catch {
-                        Log.LogDebug("{{_entryAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時検索条件: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(searchCondition));
+                        Log.LogDebug("{{_entryAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時検索条件: {data}", {{ApplicationService.CONFIGURATION}}.ToJson(searchCondition));
                         try {
-                            Log.LogDebug("{{_entryAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時SQL: {0}", query.ToQueryString());
+                            Log.LogDebug("{{_entryAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時SQL: {data}", query.ToQueryString());
                         } catch {
                             Log.LogDebug("{{_entryAggregate.DisplayName.Replace("\"", "\\\"")}} 不具合調査用のSQL変換に失敗しました。");
                         }

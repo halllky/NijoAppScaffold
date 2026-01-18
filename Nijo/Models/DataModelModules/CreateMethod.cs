@@ -75,7 +75,7 @@ namespace Nijo.Models.DataModelModules {
                         // 単なる必須入力漏れなどでもエラーログが出過ぎてしまうのを防ぐため、
                         // 更新を確定するつもりのときのみ内容をログ出力する
                         if (!context.ValidationOnly) {
-                            Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}新規作成で入力エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                            Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}新規作成で入力エラーが発生した登録内容(JSON): {data}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
                         }
                         return new(DataModelSaveResultType.Error, DataModelSaveErrorReason.ValidationError, null);
                     }
@@ -102,7 +102,7 @@ namespace Nijo.Models.DataModelModules {
 
                         messages.AddError({{MsgFactory.MSG}}.{{UpdateMethod.ERR_ID_UNKNOWN}}(ex.Message));
                         Log.LogError(ex, "新規作成中にエラーが発生しました。");
-                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}新規作成でSQL発行時エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}新規作成でSQL発行時エラーが発生した登録内容(JSON): {data}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
 
                         return new(DataModelSaveResultType.Error, DataModelSaveErrorReason.ValidationError, null);
                     }
@@ -123,13 +123,13 @@ namespace Nijo.Models.DataModelModules {
                     } catch (Exception ex) {
                         messages.AddError({{MsgFactory.MSG}}.{{UpdateMethod.ERR_ID_UNKNOWN}}(ex.Message));
                         Log.LogError(ex, "新規作成後の処理中にエラーが発生しました。");
-                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}新規作成後エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}新規作成後エラーが発生した登録内容(JSON): {data}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
                         await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT);
                         return new(DataModelSaveResultType.Error, DataModelSaveErrorReason.AfterSaveError, null);
                     }
 
                     Log.LogInformation("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}データを新規登録しました。（{{keys.Select(x => x.LogTemplate).Join(", ")}}）", {{keys.Select(x => x.DbEntityFullPath).Join(", ")}});
-                    Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} 新規登録パラメータ: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                    Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} 新規登録パラメータ: {data}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
 
                     return new(DataModelSaveResultType.Completed, null, dbEntity);
                 }

@@ -157,9 +157,9 @@ namespace Nijo.Models.QueryModelModules {
                         // 画面表示用の型へ変換してデータ取得
                         loaded = await {{ToDisplayData}}(query);
                     } catch {
-                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時検索条件: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(searchCondition));
+                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時検索条件: {data}", {{ApplicationService.CONFIGURATION}}.ToJson(searchCondition));
                         try {
-                            Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時SQL: {0}", query.ToQueryString());
+                            Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時SQL: {data}", query.ToQueryString());
                         } catch {
                             Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} 不具合調査用のSQL変換に失敗しました。");
                         }

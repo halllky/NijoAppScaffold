@@ -78,7 +78,7 @@ namespace Nijo.Models.DataModelModules {
                     }
                 """)}}
                     if (keyIsEmpty) {
-                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除で主キー空エラーが発生したデータ: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除で主キー空エラーが発生したデータ: {data}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
                         return false;
                     }
 
@@ -98,7 +98,7 @@ namespace Nijo.Models.DataModelModules {
 
                     if (dbEntity == null) {
                         messages.AddError({{MsgFactory.MSG}}.{{UpdateMethod.ERR_DATA_NOT_FOUND}}());
-                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除で削除対象が見つからないエラーが発生したデータ: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除で削除対象が見つからないエラーが発生したデータ: {data}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
                         return false;
                     }
 
@@ -110,7 +110,7 @@ namespace Nijo.Models.DataModelModules {
                         // 単なる必須入力漏れなどでもエラーログが出過ぎてしまうのを防ぐため、
                         // 更新を確定するつもりのときのみ内容をログ出力する
                         if (!context.ValidationOnly) {
-                            Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除で入力エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                            Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除で入力エラーが発生した登録内容(JSON): {data}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
                         }
                         return false;
                     }
@@ -141,12 +141,12 @@ namespace Nijo.Models.DataModelModules {
 
                         if (ex is DbUpdateConcurrencyException) {
                             messages.AddError({{MsgFactory.MSG}}.{{UpdateMethod.ERR_CONCURRENCY}}());
-                            Log.LogWarning("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除で楽観排他エラー: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                            Log.LogWarning("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除で楽観排他エラー: {data}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
 
                         } else {
                             messages.AddError({{MsgFactory.MSG}}.{{UpdateMethod.ERR_ID_UNKNOWN}}(ex.Message));
                             Log.LogError(ex, "削除処理中にエラーが発生しました。");
-                            Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除でSQL発行時エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                            Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除でSQL発行時エラーが発生した登録内容(JSON): {data}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
                         }
                         return false;
                     }
@@ -167,13 +167,13 @@ namespace Nijo.Models.DataModelModules {
                     } catch (Exception ex) {
                         messages.AddError({{MsgFactory.MSG}}.{{UpdateMethod.ERR_ID_UNKNOWN}}(ex.Message));
                         Log.LogError(ex, "削除後の処理中にエラーが発生しました。");
-                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除後エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除後エラーが発生した登録内容(JSON): {data}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
                         await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT);
                         return false;
                     }
 
                     Log.LogInformation("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}データを物理削除しました。（{{keys.Select(x => x.LogTemplate).Join(", ")}}）", {{keys.Select(x => x.DbEntityFullPath).Join(", ")}});
-                    Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} 削除パラメータ: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                    Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} 削除パラメータ: {data}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
 
                     return true;
                 }
