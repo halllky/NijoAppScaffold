@@ -254,7 +254,7 @@ public partial class OverridedApplicationConfigure : DefaultConfiguration {
         }
     }
     /// <summary>
-    /// 日付時刻。ISO8601形式でシリアライズする。空文字はnullとみなす
+    /// 日付時刻。 yyyy-MM-dd HH:mm:ss 形式でシリアライズする。空文字はnullとみなす
     /// </summary>
     private class DateTimeConverter : JsonConverter<DateTime?> {
         public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
@@ -292,7 +292,7 @@ public partial class OverridedApplicationConfigure : DefaultConfiguration {
         }
     }
     /// <summary>
-    /// 年月。yyyy/MM形式でシリアライズする。空文字はnullとみなす
+    /// 年月。yyyy-MM形式でシリアライズする。空文字はnullとみなす
     /// </summary>
     public class YearMonthJsonConverter : JsonConverter<YearMonth?> {
         public override YearMonth? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
@@ -310,8 +310,8 @@ public partial class OverridedApplicationConfigure : DefaultConfiguration {
                     return new YearMonth(result);
                 }
 
-                // YYYY/MM形式の場合
-                if (value.Length == 7 && value[4] == '/') {
+                // YYYY-MM形式の場合
+                if (value.Length == 7 && value[4] == '-') {
                     int year = int.Parse(value.Substring(0, 4));
                     int month = int.Parse(value.Substring(5, 2));
                     return new YearMonth(year, month);
@@ -327,7 +327,7 @@ public partial class OverridedApplicationConfigure : DefaultConfiguration {
             if (value == null) {
                 writer.WriteNullValue();
             } else {
-                writer.WriteStringValue($"{value.Value.Year:0000}/{value.Value.Month:00}");
+                writer.WriteStringValue($"{value.Value.Year:0000}-{value.Value.Month:00}");
             }
         }
     }
