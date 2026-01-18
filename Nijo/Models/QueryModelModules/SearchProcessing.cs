@@ -152,9 +152,10 @@ namespace Nijo.Models.QueryModelModules {
                     {{displayData.CsClassName}}[] loaded;
                     int totalCount;
                     try {
-                        // 件数取得を先に直列で実行
+                        // トータル件数取得と、ページングされたデータの取得を直列で行う。
+                        // 並列で行うと、DbContextが前の処理の完了前に次の処理を開始したとしてエラーになるリスクがあるのと、
+                        // ネットワークやコネクションの負荷が高まる可能性があるため。
                         totalCount = await filtered.CountAsync();
-                        // 画面表示用の型へ変換してデータ取得
                         loaded = await {{ToDisplayData}}(query);
                     } catch {
                         Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時検索条件: {data}", {{ApplicationService.CONFIGURATION}}.ToJson(searchCondition));
