@@ -141,7 +141,7 @@ public class TestUtilImpl {
         var provider = services.BuildServiceProvider();
 
         // DB作成
-        var dbContext = provider.GetRequiredService<MyDbContext>();
+        var dbContext = provider.GetRequiredService<OverridedDbContext>();
         dbContext.EnsureCreatedAsyncEx(provider.GetRequiredService<RuntimeSetting>()).GetAwaiter().GetResult();
 
         return (currentTestWorkDirectory, provider);

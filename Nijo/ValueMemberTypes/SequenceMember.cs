@@ -56,7 +56,7 @@ namespace Nijo.ValueMemberTypes {
                 .SelectMany(agg => agg.GetMembers())
                 .Any(member => member is ValueMember vm && vm.Type is SequenceMember);
             if (hasSequence) {
-                ctx.Use<ApplicationConfigure>().AddCoreMethod(
+                ctx.Use<DbContextClass>().AddAdditionalMethod(
                     $$"""
                     /// <summary>
                     /// EFCoreのモデル定義処理で呼ばれます。

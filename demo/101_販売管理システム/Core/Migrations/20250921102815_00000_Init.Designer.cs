@@ -7,15 +7,12 @@ using MyApp;
 
 #nullable disable
 
-namespace MyApp.Migrations
-{
-    [DbContext(typeof(MyDbContext))]
+namespace MyApp.Migrations {
+    [DbContext(typeof(OverridedDbContext))]
     [Migration("20250921102815_00000_Init")]
-    partial class _00000_Init
-    {
+    partial class _00000_Init {
         /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
-        {
+        protected override void BuildTargetModel(ModelBuilder modelBuilder) {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.3");
 #pragma warning restore 612, 618

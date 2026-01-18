@@ -7,3691 +7,3573 @@ using MyApp;
 
 #nullable disable
 
-namespace MyApp.Migrations
-{
-    [DbContext(typeof(MyDbContext))]
-    partial class MyDbContextModelSnapshot : ModelSnapshot
-    {
-        protected override void BuildModel(ModelBuilder modelBuilder)
-        {
+namespace MyApp.Migrations {
+    [DbContext(typeof(OverridedDbContext))]
+    partial class MyDbContextModelSnapshot : ModelSnapshot {
+        protected override void BuildModel(ModelBuilder modelBuilder) {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.3");
 
-            modelBuilder.Entity("MyApp.カード情報DbEntity", b =>
-                {
-                    b.Property<string>("Parent_Parent_診療ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_Parent_ORDER_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(5);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(7);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(6);
-
-                    b.Property<int?>("カード種類")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("CARD_TYPE")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("下4桁")
-                        .HasMaxLength(4)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("LAST_FOUR_DIGITS")
-                        .HasColumnOrder(2);
-
-                    b.Property<DateOnly?>("有効期限")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("EXPIRY_DATE")
-                        .HasColumnOrder(3);
-
-                    b.HasKey("Parent_Parent_診療ID")
-                        .HasName("PK_CARD_INFO");
-
-                    b.ToTable("CARD_INFO", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.サイズDbEntity", b =>
-                {
-                    b.Property<string>("Parent_Parent_Parent_機器ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_Parent_Parent_PRODUCT_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(5);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(7);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(6);
-
-                    b.Property<int?>("奥行")
-                        .HasPrecision(16)
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("DEPTH")
-                        .HasColumnOrder(3);
-
-                    b.Property<int?>("幅")
-                        .HasPrecision(16)
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("WIDTH")
-                        .HasColumnOrder(1);
-
-                    b.Property<int?>("高さ")
-                        .HasPrecision(16)
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("HEIGHT")
-                        .HasColumnOrder(2);
-
-                    b.HasKey("Parent_Parent_Parent_機器ID")
-                        .HasName("PK_SIZE");
-
-                    b.ToTable("SIZE", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.予約DbEntity", b =>
-                {
-                    b.Property<string>("予約ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("RESERVATION_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(7);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(6);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(9);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(8);
-
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("Version")
-                        .HasColumnOrder(10);
-
-                    b.Property<string>("予約メモ")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("RESERVATION_NOTE")
-                        .HasColumnOrder(4);
-
-                    b.Property<int?>("予約区分")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("RESERVATION_TYPE")
-                        .HasColumnOrder(3);
-
-                    b.Property<DateTime>("予約日時")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("RESERVATION_DATETIME")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("患者_患者ID")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("患者_CUSTOMER_ID")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("担当医_医療従事者ID")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("担当医_ID")
-                        .HasColumnOrder(5);
-
-                    b.HasKey("予約ID")
-                        .HasName("PK_予約");
-
-                    b.HasIndex("患者_患者ID");
-
-                    b.HasIndex("担当医_医療従事者ID");
-
-                    b.ToTable("予約", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.付属品DbEntity", b =>
-                {
-                    b.Property<string>("Parent_Parent_機器ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_Parent_PRODUCT_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("付属品ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("ACCESSORY_ID")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(5);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(7);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(6);
-
-                    b.Property<string>("付属品名")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("ACCESSORY_NAME")
-                        .HasColumnOrder(2);
-
-                    b.Property<int?>("数量")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("QUANTITY")
-                        .HasColumnOrder(3);
-
-                    b.HasKey("Parent_Parent_機器ID", "付属品ID")
-                        .HasName("PK_ACCESSORIES");
-
-                    b.ToTable("ACCESSORIES", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.会計情報DbEntity", b =>
-                {
-                    b.Property<string>("Parent_診療ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_ORDER_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(5);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(7);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(6);
-
-                    b.Property<int>("支払方法")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("PAYMENT_TYPE")
-                        .HasColumnOrder(1);
-
-                    b.Property<DateOnly?>("支払日")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("PAYMENT_DATE")
-                        .HasColumnOrder(2);
-
-                    b.Property<int?>("支払状況")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("PAYMENT_STATUS")
-                        .HasColumnOrder(3);
-
-                    b.HasKey("Parent_診療ID")
-                        .HasName("PK_PAYMENT_INFO");
-
-                    b.ToTable("PAYMENT_INFO", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.供給業者マスタDbEntity", b =>
-                {
-                    b.Property<string>("供給業者ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("SUPPLIER_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(6);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(8);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(7);
-
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("Version")
-                        .HasColumnOrder(9);
-
-                    b.Property<string>("メールアドレス")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("EMAIL")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("供給業者名")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("SUPPLIER_NAME")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("担当者名")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CONTACT_PERSON")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("電話番号")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("PHONE")
-                        .HasColumnOrder(3);
-
-                    b.HasKey("供給業者ID")
-                        .HasName("PK_供給業者マスタ");
-
-                    b.ToTable("供給業者マスタ", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.保管庫マスタDbEntity", b =>
-                {
-                    b.Property<string>("保管庫ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("WAREHOUSE_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(4);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(3);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(6);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(5);
-
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("Version")
-                        .HasColumnOrder(7);
-
-                    b.Property<string>("保管庫名")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("WAREHOUSE_NAME")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("管理責任者_医療従事者ID")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("管理責任者_ID")
-                        .HasColumnOrder(2);
-
-                    b.HasKey("保管庫ID")
-                        .HasName("PK_保管庫マスタ");
-
-                    b.HasIndex("管理責任者_医療従事者ID");
-
-                    b.ToTable("保管庫マスタ", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.保管庫マスタの住所DbEntity", b =>
-                {
-                    b.Property<string>("Parent_保管庫ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_WAREHOUSE_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(6);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(8);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(7);
-
-                    b.Property<string>("市区町村")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CITY")
-                        .HasColumnOrder(3);
-
-                    b.Property<string>("番地建物名")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("ADDRESS_LINE")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("郵便番号")
-                        .HasMaxLength(8)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("POSTAL_CODE")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("都道府県")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("PREFECTURE")
-                        .HasColumnOrder(2);
-
-                    b.HasKey("Parent_保管庫ID")
-                        .HasName("PK_WAREHOUSE_ADDRESS");
-
-                    b.ToTable("WAREHOUSE_ADDRESS", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.保管庫別在庫SearchResult", b =>
-                {
-                    b.Property<string>("機器分類_機器分類ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CATEGORY_CATEGORY_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("保管庫_保管庫ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("WAREHOUSE_WAREHOUSE_ID")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("保管庫_住所_市区町村")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("WAREHOUSE_住所_CITY")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("保管庫_住所_番地建物名")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("WAREHOUSE_住所_ADDRESS_LINE")
-                        .HasColumnOrder(6);
-
-                    b.Property<string>("保管庫_住所_郵便番号")
-                        .HasMaxLength(8)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("WAREHOUSE_住所_POSTAL_CODE")
-                        .HasColumnOrder(3);
-
-                    b.Property<string>("保管庫_住所_都道府県")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("WAREHOUSE_住所_PREFECTURE")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("保管庫_保管庫名")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("WAREHOUSE_WAREHOUSE_NAME")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("保管庫_管理責任者_医療従事者ID")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("WAREHOUSE_MANAGER_ID_ID")
-                        .HasColumnOrder(7);
-
-                    b.Property<string>("保管庫_管理責任者_氏名")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("WAREHOUSE_MANAGER_ID_NAME")
-                        .HasColumnOrder(8);
-
-                    b.Property<string>("保管庫_管理責任者_氏名カナ")
-                        .HasMaxLength(40)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("WAREHOUSE_MANAGER_ID_NAME_KANA")
-                        .HasColumnOrder(9);
-
-                    b.Property<DateOnly?>("保管庫_管理責任者_退職日")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("WAREHOUSE_MANAGER_ID_TAISHOKU")
-                        .HasColumnOrder(10);
-
-                    b.Property<int?>("在庫数")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("STOCK_QUANTITY")
-                        .HasColumnOrder(11);
-
-                    b.Property<int?>("機器数")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("EQUIPMENT_COUNT")
-                        .HasColumnOrder(12);
-
-                    b.HasKey("機器分類_機器分類ID", "保管庫_保管庫ID")
-                        .HasName("PK_WAREHOUSE_INVENTORY");
-
-                    b.HasIndex("保管庫_保管庫ID");
-
-                    b.ToTable((string)null);
-
-                    b.ToView("WAREHOUSE_INVENTORY", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.保険適用情報DbEntity", b =>
-                {
-                    b.Property<string>("Parent_Parent_診療ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_Parent_ORDER_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("Parent_医療機器_機器ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_医療機器_PRODUCT_ID")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(6);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(8);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(7);
-
-                    b.Property<string>("保険コード")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("DISCOUNT_CODE")
-                        .HasColumnOrder(2);
-
-                    b.Property<decimal?>("保険適用率")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("DISCOUNT_RATE")
-                        .HasColumnOrder(3);
-
-                    b.Property<int?>("保険適用額")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("DISCOUNT_AMOUNT")
-                        .HasColumnOrder(4);
-
-                    b.HasKey("Parent_Parent_診療ID", "Parent_医療機器_機器ID")
-                        .HasName("PK_DISCOUNT_INFO");
-
-                    b.ToTable("DISCOUNT_INFO", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.処方薬DbEntity", b =>
-                {
-                    b.Property<string>("Parent_予約_予約ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_予約_RESERVATION_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("薬剤ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("MEDICINE_ID")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(8);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(7);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(10);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(9);
-
-                    b.Property<string>("備考")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("REMARKS")
-                        .HasColumnOrder(6);
-
-                    b.Property<int?>("日数")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("DAYS")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("用法")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("USAGE")
-                        .HasColumnOrder(4);
-
-                    b.Property<int?>("用量")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("DOSAGE")
-                        .HasColumnOrder(3);
-
-                    b.Property<string>("薬剤名")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("MEDICINE_NAME")
-                        .HasColumnOrder(2);
-
-                    b.HasKey("Parent_予約_予約ID", "薬剤ID")
-                        .HasName("PK_PRESCRIPTIONS");
-
-                    b.ToTable("PRESCRIPTIONS", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.処置明細DbEntity", b =>
-                {
-                    b.Property<string>("Parent_診療ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_ORDER_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("医療機器_機器ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("医療機器_PRODUCT_ID")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(6);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(8);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(7);
-
-                    b.Property<int>("使用数量")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("QUANTITY")
-                        .HasColumnOrder(2);
-
-                    b.Property<int>("単価")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("UNIT_PRICE")
-                        .HasColumnOrder(3);
-
-                    b.Property<int>("小計")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("SUBTOTAL")
-                        .HasColumnOrder(4);
-
-                    b.HasKey("Parent_診療ID", "医療機器_機器ID")
-                        .HasName("PK_ORDER_DETAILS");
-
-                    b.HasIndex("医療機器_機器ID");
-
-                    b.ToTable("ORDER_DETAILS", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.勤務スケジュールDbEntity", b =>
-                {
-                    b.Property<string>("医療従事者_医療従事者ID")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("医療従事者_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("診療科_診療科ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("診療科_STORE_ID")
-                        .HasColumnOrder(1);
-
-                    b.Property<DateOnly>("日付")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("DATE")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(8);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(7);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(10);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(9);
-
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("Version")
-                        .HasColumnOrder(11);
-
-                    b.Property<int?>("休憩時間")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("BREAK_TIME")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("備考")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("REMARKS")
-                        .HasColumnOrder(6);
-
-                    b.Property<string>("終了時間")
-                        .HasMaxLength(5)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("END_TIME")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("開始時間")
-                        .HasMaxLength(5)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("START_TIME")
-                        .HasColumnOrder(3);
-
-                    b.HasKey("医療従事者_医療従事者ID", "診療科_診療科ID", "日付")
-                        .HasName("PK_勤務スケジュール");
-
-                    b.HasIndex("診療科_診療科ID");
-
-                    b.ToTable("勤務スケジュール", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.医療従事者プロフィールDbEntity", b =>
-                {
-                    b.Property<string>("医療従事者_医療従事者ID")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("医療従事者_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(5);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(7);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(6);
-
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("Version")
-                        .HasColumnOrder(8);
-
-                    b.Property<string>("写真URL")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("PHOTO_URL")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("専門分野")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("SPECIALTY")
-                        .HasColumnOrder(3);
-
-                    b.Property<string>("自己紹介")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("SELF_INTRODUCTION")
-                        .HasColumnOrder(2);
-
-                    b.HasKey("医療従事者_医療従事者ID")
-                        .HasName("PK_医療従事者プロフィール");
-
-                    b.ToTable("医療従事者プロフィール", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.医療従事者マスタDbEntity", b =>
-                {
-                    b.Property<string>("医療従事者ID")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(5);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(7);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(6);
-
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("Version")
-                        .HasColumnOrder(8);
-
-                    b.Property<string>("氏名")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("NAME")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("氏名カナ")
-                        .HasMaxLength(40)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("NAME_KANA")
-                        .HasColumnOrder(2);
-
-                    b.Property<DateOnly?>("退職日")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("TAISHOKU")
-                        .HasColumnOrder(3);
-
-                    b.HasKey("医療従事者ID")
-                        .HasName("PK_EMPLOYEE");
-
-                    b.ToTable("EMPLOYEE", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.医療機器マスタDbEntity", b =>
-                {
-                    b.Property<string>("機器ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("PRODUCT_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(6);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(8);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(7);
-
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("Version")
-                        .HasColumnOrder(9);
-
-                    b.Property<string>("供給業者_供給業者ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("供給業者_SUPPLIER_ID")
-                        .HasColumnOrder(4);
-
-                    b.Property<int>("単価")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("PRICE")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("機器分類_機器分類ID")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("機器分類_CATEGORY_ID")
-                        .HasColumnOrder(3);
-
-                    b.Property<string>("機器名")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("PRODUCT_NAME")
-                        .HasColumnOrder(1);
-
-                    b.HasKey("機器ID")
-                        .HasName("PK_医療機器マスタ");
-
-                    b.HasIndex("供給業者_供給業者ID");
-
-                    b.HasIndex("機器分類_機器分類ID");
-
-                    b.ToTable("医療機器マスタ", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.医療資格DbEntity", b =>
-                {
-                    b.Property<string>("Parent_医療従事者_医療従事者ID")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_医療従事者_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("資格名")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("QUALIFICATION_NAME")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(5);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(7);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(6);
-
-                    b.Property<DateOnly?>("取得日")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("ACQUISITION_DATE")
-                        .HasColumnOrder(2);
-
-                    b.Property<DateOnly?>("有効期限")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("EXPIRY_DATE")
-                        .HasColumnOrder(3);
-
-                    b.HasKey("Parent_医療従事者_医療従事者ID", "資格名")
-                        .HasName("PK_QUALIFICATIONS");
-
-                    b.ToTable("QUALIFICATIONS", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.在庫情報DbEntity", b =>
-                {
-                    b.Property<string>("Parent_機器ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_PRODUCT_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("保管庫_保管庫ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("保管庫_WAREHOUSE_ID")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(5);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(7);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(6);
-
-                    b.Property<int?>("在庫数")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("STOCK_QUANTITY")
-                        .HasColumnOrder(2);
-
-                    b.Property<DateTime?>("棚卸日時")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("INVENTORY_DATE")
-                        .HasColumnOrder(3);
-
-                    b.HasKey("Parent_機器ID", "保管庫_保管庫ID")
-                        .HasName("PK_INVENTORY");
-
-                    b.HasIndex("保管庫_保管庫ID");
-
-                    b.ToTable("INVENTORY", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.在庫状況履歴DbEntity", b =>
-                {
-                    b.Property<string>("Parent_Parent_機器ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_Parent_PRODUCT_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("Parent_保管庫_保管庫ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_保管庫_WAREHOUSE_ID")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("履歴ID")
-                        .HasMaxLength(36)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("HISTORY_ID")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(8);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(7);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(10);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(9);
-
-                    b.Property<int?>("変更前在庫数")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("PREVIOUS_QUANTITY")
-                        .HasColumnOrder(4);
-
-                    b.Property<int?>("変更後在庫数")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("CURRENT_QUANTITY")
-                        .HasColumnOrder(5);
-
-                    b.Property<DateTime?>("変更日時")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CHANGE_DATE")
-                        .HasColumnOrder(3);
-
-                    b.Property<string>("担当者_医療従事者ID")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("担当者_ID")
-                        .HasColumnOrder(6);
-
-                    b.HasKey("Parent_Parent_機器ID", "Parent_保管庫_保管庫ID", "履歴ID")
-                        .HasName("PK_STOCK_HISTORY");
-
-                    b.HasIndex("担当者_医療従事者ID");
-
-                    b.ToTable("STOCK_HISTORY", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.対応措置DbEntity", b =>
-                {
-                    b.Property<string>("Parent_対象機器_Parent_機器ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_対象機器_Parent_PRODUCT_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("Parent_対象機器_保管庫_保管庫ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_対象機器_保管庫_WAREHOUSE_ID")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("措置ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("ACTION_ID")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(9);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(8);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(11);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(10);
-
-                    b.Property<string>("実施担当者_医療従事者ID")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("実施担当者_ID")
-                        .HasColumnOrder(6);
-
-                    b.Property<DateOnly?>("実施日")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("ACTION_DATE")
-                        .HasColumnOrder(5);
-
-                    b.Property<int?>("実施状況")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("STATUS")
-                        .HasColumnOrder(4);
-
-                    b.Property<int?>("措置種別")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("ACTION_TYPE")
-                        .HasColumnOrder(3);
-
-                    b.Property<string>("措置詳細")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("ACTION_DETAIL")
-                        .HasColumnOrder(7);
-
-                    b.HasKey("Parent_対象機器_Parent_機器ID", "Parent_対象機器_保管庫_保管庫ID", "措置ID")
-                        .HasName("PK_ACTIONS");
-
-                    b.HasIndex("実施担当者_医療従事者ID");
-
-                    b.ToTable("ACTIONS", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.患者マスタDbEntity", b =>
-                {
-                    b.Property<string>("患者ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CUSTOMER_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(8);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(7);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(10);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(9);
-
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("Version")
-                        .HasColumnOrder(11);
-
-                    b.Property<string>("メールアドレス")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("EMAIL")
-                        .HasColumnOrder(5);
-
-                    b.Property<int?>("性別")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("GENDER")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("氏名")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CUSTOMER_NAME")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("氏名カナ")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CUSTOMER_KANA")
-                        .HasColumnOrder(2);
-
-                    b.Property<DateOnly?>("生年月日")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("BIRTH_DATE")
-                        .HasColumnOrder(3);
-
-                    b.Property<string>("電話番号")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("PHONE")
-                        .HasColumnOrder(6);
-
-                    b.HasKey("患者ID")
-                        .HasName("PK_患者マスタ");
-
-                    b.ToTable("患者マスタ", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.患者マスタの住所DbEntity", b =>
-                {
-                    b.Property<string>("Parent_患者ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_CUSTOMER_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(6);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(8);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(7);
-
-                    b.Property<string>("市区町村")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CITY")
-                        .HasColumnOrder(3);
-
-                    b.Property<string>("番地建物名")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("ADDRESS_LINE")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("郵便番号")
-                        .HasMaxLength(8)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("POSTAL_CODE")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("都道府県")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("PREFECTURE")
-                        .HasColumnOrder(2);
-
-                    b.HasKey("Parent_患者ID")
-                        .HasName("PK_CUSTOMER_ADDRESS");
-
-                    b.ToTable("CUSTOMER_ADDRESS", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.患者情報DbEntity", b =>
-                {
-                    b.Property<string>("Parent_患者ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_CUSTOMER_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(5);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(7);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(6);
-
-                    b.Property<DateOnly?>("初診日")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("JOIN_DATE")
-                        .HasColumnOrder(2);
-
-                    b.Property<int?>("患者分類")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("RANK")
-                        .HasColumnOrder(1);
-
-                    b.Property<DateOnly?>("最終受診日")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("LAST_VISIT")
-                        .HasColumnOrder(3);
-
-                    b.HasKey("Parent_患者ID")
-                        .HasName("PK_MEMBERSHIP");
-
-                    b.ToTable("MEMBERSHIP", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.患者情報の診療履歴DbEntity", b =>
-                {
-                    b.Property<string>("Parent_Parent_患者ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_Parent_CUSTOMER_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("履歴ID")
-                        .HasMaxLength(36)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("HISTORY_ID")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(6);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(8);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(7);
-
-                    b.Property<DateOnly?>("日付")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("DATE")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("診療内容")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("REASON")
-                        .HasColumnOrder(4);
-
-                    b.Property<int?>("診療点数")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("POINTS")
-                        .HasColumnOrder(3);
-
-                    b.HasKey("Parent_Parent_患者ID", "履歴ID")
-                        .HasName("PK_POINT_HISTORY");
-
-                    b.ToTable("POINT_HISTORY", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.所属診療科DbEntity", b =>
-                {
-                    b.Property<string>("Parent_医療従事者ID")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<int>("年度")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("NENDO")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(4);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(3);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(6);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("診療科_診療科コード")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("診療科_BUSHO_CD")
-                        .HasColumnOrder(2);
-
-                    b.HasKey("Parent_医療従事者ID", "年度")
-                        .HasName("PK_SHOZOKU");
-
-                    b.HasIndex("診療科_診療科コード");
-
-                    b.ToTable("SHOZOKU", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.措置結果DbEntity", b =>
-                {
-                    b.Property<string>("対象措置_Parent_対象機器_Parent_機器ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("対象措置_Parent_対象機器_Parent_PRODUCT_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("対象措置_Parent_対象機器_保管庫_保管庫ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("対象措置_Parent_対象機器_保管庫_WAREHOUSE_ID")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("対象措置_措置ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("対象措置_ACTION_ID")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(9);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(8);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(11);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(10);
-
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("Version")
-                        .HasColumnOrder(12);
-
-                    b.Property<string>("フィードバック")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("FEEDBACK")
-                        .HasColumnOrder(7);
-
-                    b.Property<int?>("改善効果")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("ACHIEVEMENT")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("結果担当者_医療従事者ID")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("結果担当者_ID")
-                        .HasColumnOrder(4);
-
-                    b.Property<DateTime>("結果日時")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("RESULT_DATETIME")
-                        .HasColumnOrder(3);
-
-                    b.Property<int>("結果状態")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("RESULT_STATUS")
-                        .HasColumnOrder(6);
-
-                    b.HasKey("対象措置_Parent_対象機器_Parent_機器ID", "対象措置_Parent_対象機器_保管庫_保管庫ID", "対象措置_措置ID")
-                        .HasName("PK_措置結果");
-
-                    b.HasIndex("結果担当者_医療従事者ID");
-
-                    b.ToTable("措置結果", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.時間帯別収益SearchResult", b =>
-                {
-                    b.Property<int>("年月")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("年月")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("診療科_診療科ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("診療科_STORE_ID")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("時間帯")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("時間帯")
-                        .HasColumnOrder(2);
-
-                    b.Property<int?>("平均患者単価")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("平均患者単価")
-                        .HasColumnOrder(5);
-
-                    b.Property<int?>("診療件数")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("診療件数")
-                        .HasColumnOrder(4);
-
-                    b.Property<int?>("診療収益")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("診療収益")
-                        .HasColumnOrder(3);
-
-                    b.HasKey("年月", "診療科_診療科ID", "時間帯")
-                        .HasName("PK_V_時間帯別収益");
-
-                    b.ToTable((string)null);
-
-                    b.ToView("V_時間帯別収益", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.権限DbEntity", b =>
-                {
-                    b.Property<string>("Parent_医療従事者ID")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<int>("権限レベル")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("AUTHORITY_LEVEL")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(3);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(5);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(4);
-
-                    b.HasKey("Parent_医療従事者ID", "権限レベル")
-                        .HasName("PK_AUTHORITY");
-
-                    b.ToTable("AUTHORITY", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.機器仕様DbEntity", b =>
-                {
-                    b.Property<string>("Parent_Parent_機器ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_Parent_PRODUCT_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(3);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(5);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(4);
-
-                    b.Property<int?>("重量")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("WEIGHT")
-                        .HasColumnOrder(1);
-
-                    b.HasKey("Parent_Parent_機器ID")
-                        .HasName("PK_PRODUCT_SPEC");
-
-                    b.ToTable("PRODUCT_SPEC", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.機器分類マスタDbEntity", b =>
-                {
-                    b.Property<string>("機器分類ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CATEGORY_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(3);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(5);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(4);
-
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("Version")
-                        .HasColumnOrder(6);
-
-                    b.Property<string>("機器分類名")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CATEGORY_NAME")
-                        .HasColumnOrder(1);
-
-                    b.HasKey("機器分類ID")
-                        .HasName("PK_機器分類マスタ");
-
-                    b.ToTable("機器分類マスタ", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.機器分類別収益SearchResult", b =>
-                {
-                    b.Property<int>("年月")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("年月")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("診療科_診療科ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("診療科_STORE_ID")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("機器分類_機器分類ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("機器分類_CATEGORY_ID")
-                        .HasColumnOrder(2);
-
-                    b.Property<decimal?>("収益構成比")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("収益構成比")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("機器分類_機器分類名")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("機器分類_CATEGORY_NAME")
-                        .HasColumnOrder(3);
-
-                    b.Property<int?>("診療収益")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("診療収益")
-                        .HasColumnOrder(4);
-
-                    b.HasKey("年月", "診療科_診療科ID", "機器分類_機器分類ID")
-                        .HasName("PK_V_機器分類別収益");
-
-                    b.HasIndex("機器分類_機器分類ID");
-
-                    b.ToTable((string)null);
-
-                    b.ToView("V_機器分類別収益", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.機器分類別在庫集計ビューSearchResult", b =>
-                {
-                    b.Property<string>("機器分類_機器分類ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CATEGORY_CATEGORY_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<int?>("在庫合計")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("TOTAL_STOCK")
-                        .HasColumnOrder(2);
-
-                    b.Property<DateTime?>("最終更新日時")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("LAST_UPDATED")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("機器分類_機器分類名")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CATEGORY_CATEGORY_NAME")
-                        .HasColumnOrder(1);
-
-                    b.Property<int?>("機器種別数")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("PRODUCT_COUNT")
-                        .HasColumnOrder(3);
-
-                    b.HasKey("機器分類_機器分類ID")
-                        .HasName("PK_V_INVENTORY_BY_CATEGORY");
-
-                    b.ToTable((string)null);
-
-                    b.ToView("V_INVENTORY_BY_CATEGORY", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.機器別収益SearchResult", b =>
-                {
-                    b.Property<int>("年月")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("年月")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("診療科_診療科ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("診療科_STORE_ID")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("機器分類_機器分類ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("機器分類_CATEGORY_ID")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("医療機器_機器ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("医療機器_PRODUCT_ID")
-                        .HasColumnOrder(3);
-
-                    b.Property<int?>("使用回数")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("使用回数")
-                        .HasColumnOrder(19);
-
-                    b.Property<string>("医療機器_供給業者_メールアドレス")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("医療機器_SUPPLIER_ID_EMAIL")
-                        .HasColumnOrder(12);
-
-                    b.Property<string>("医療機器_供給業者_供給業者ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("医療機器_SUPPLIER_ID_SUPPLIER_ID")
-                        .HasColumnOrder(8);
-
-                    b.Property<string>("医療機器_供給業者_供給業者名")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("医療機器_SUPPLIER_ID_SUPPLIER_NAME")
-                        .HasColumnOrder(9);
-
-                    b.Property<string>("医療機器_供給業者_担当者名")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("医療機器_SUPPLIER_ID_CONTACT_PERSON")
-                        .HasColumnOrder(10);
-
-                    b.Property<string>("医療機器_供給業者_電話番号")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("医療機器_SUPPLIER_ID_PHONE")
-                        .HasColumnOrder(11);
-
-                    b.Property<int>("医療機器_単価")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("医療機器_PRICE")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("医療機器_機器分類_機器分類ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("医療機器_CATEGORY_ID_CATEGORY_ID")
-                        .HasColumnOrder(6);
-
-                    b.Property<string>("医療機器_機器分類_機器分類名")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("医療機器_CATEGORY_ID_CATEGORY_NAME")
-                        .HasColumnOrder(7);
-
-                    b.Property<string>("医療機器_機器名")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("医療機器_PRODUCT_NAME")
-                        .HasColumnOrder(4);
-
-                    b.Property<int?>("医療機器_機器詳細_機器仕様_サイズ_奥行")
-                        .HasPrecision(16)
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("医療機器_機器詳細_機器仕様_サイズ_DEPTH")
-                        .HasColumnOrder(17);
-
-                    b.Property<int?>("医療機器_機器詳細_機器仕様_サイズ_幅")
-                        .HasPrecision(16)
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("医療機器_機器詳細_機器仕様_サイズ_WIDTH")
-                        .HasColumnOrder(15);
-
-                    b.Property<int?>("医療機器_機器詳細_機器仕様_サイズ_高さ")
-                        .HasPrecision(16)
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("医療機器_機器詳細_機器仕様_サイズ_HEIGHT")
-                        .HasColumnOrder(16);
-
-                    b.Property<int?>("医療機器_機器詳細_機器仕様_重量")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("医療機器_機器詳細_機器仕様_WEIGHT")
-                        .HasColumnOrder(14);
-
-                    b.Property<string>("医療機器_機器詳細_機器説明")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("医療機器_機器詳細_DESCRIPTION")
-                        .HasColumnOrder(13);
-
-                    b.Property<int?>("平均単価")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("平均単価")
-                        .HasColumnOrder(20);
-
-                    b.Property<int?>("診療収益")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("診療収益")
-                        .HasColumnOrder(18);
-
-                    b.HasKey("年月", "診療科_診療科ID", "機器分類_機器分類ID", "医療機器_機器ID")
-                        .HasName("PK_V_機器別収益");
-
-                    b.HasIndex("医療機器_機器ID");
-
-                    b.ToTable((string)null);
-
-                    b.ToView("V_機器別収益", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.機器点検報告DbEntity", b =>
-                {
-                    b.Property<string>("対象機器_Parent_機器ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("対象機器_Parent_PRODUCT_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("対象機器_保管庫_保管庫ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("対象機器_保管庫_WAREHOUSE_ID")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(9);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(8);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(11);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(10);
-
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("Version")
-                        .HasColumnOrder(12);
-
-                    b.Property<string>("写真URL")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("PHOTO_URL")
-                        .HasColumnOrder(7);
-
-                    b.Property<int?>("在庫差異")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("INVENTORY_DIFF")
-                        .HasColumnOrder(5);
-
-                    b.Property<int>("実地確認数")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("ACTUAL_COUNT")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("点検メモ")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("SURVEY_NOTE")
-                        .HasColumnOrder(6);
-
-                    b.Property<string>("点検担当者_医療従事者ID")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("点検担当者_ID")
-                        .HasColumnOrder(3);
-
-                    b.Property<DateOnly>("点検日")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("SURVEY_DATE")
-                        .HasColumnOrder(2);
-
-                    b.HasKey("対象機器_Parent_機器ID", "対象機器_保管庫_保管庫ID")
-                        .HasName("PK_機器点検報告");
-
-                    b.HasIndex("点検担当者_医療従事者ID");
-
-                    b.ToTable("機器点検報告", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.機器詳細DbEntity", b =>
-                {
-                    b.Property<string>("Parent_機器ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_PRODUCT_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(3);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(5);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("機器説明")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("DESCRIPTION")
-                        .HasColumnOrder(1);
-
-                    b.HasKey("Parent_機器ID")
-                        .HasName("PK_PRODUCT_DETAIL");
-
-                    b.ToTable("PRODUCT_DETAIL", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.次回措置DbEntity", b =>
-                {
-                    b.Property<string>("Parent_対象措置_Parent_対象機器_Parent_機器ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_対象措置_Parent_対象機器_Parent_PRODUCT_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("Parent_対象措置_Parent_対象機器_保管庫_保管庫ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_対象措置_Parent_対象機器_保管庫_WAREHOUSE_ID")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("Parent_対象措置_措置ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_対象措置_ACTION_ID")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(8);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(7);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(10);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(9);
-
-                    b.Property<DateOnly?>("予定日")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("PLANNED_DATE")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("内容")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("NEXT_CONTENT")
-                        .HasColumnOrder(6);
-
-                    b.Property<string>("担当者_医療従事者ID")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("担当者_ID")
-                        .HasColumnOrder(5);
-
-                    b.Property<int?>("措置種別")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("NEXT_ACTION_TYPE")
-                        .HasColumnOrder(3);
-
-                    b.HasKey("Parent_対象措置_Parent_対象機器_Parent_機器ID", "Parent_対象措置_Parent_対象機器_保管庫_保管庫ID", "Parent_対象措置_措置ID")
-                        .HasName("PK_NEXT_ACTION");
-
-                    b.HasIndex("担当者_医療従事者ID");
-
-                    b.ToTable("NEXT_ACTION", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.添付資料DbEntity", b =>
-                {
-                    b.Property<string>("Parent_対象措置_Parent_対象機器_Parent_機器ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_対象措置_Parent_対象機器_Parent_PRODUCT_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("Parent_対象措置_Parent_対象機器_保管庫_保管庫ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_対象措置_Parent_対象機器_保管庫_WAREHOUSE_ID")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("Parent_対象措置_措置ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_対象措置_ACTION_ID")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("資料ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("DOCUMENT_ID")
-                        .HasColumnOrder(3);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(9);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(8);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(11);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(10);
-
-                    b.Property<string>("ファイルパス")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("FILE_PATH")
-                        .HasColumnOrder(6);
-
-                    b.Property<DateTime?>("登録日時")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("REGISTER_DATETIME")
-                        .HasColumnOrder(7);
-
-                    b.Property<string>("資料名")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("DOCUMENT_NAME")
-                        .HasColumnOrder(4);
-
-                    b.Property<int?>("資料種別")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("DOCUMENT_TYPE")
-                        .HasColumnOrder(5);
-
-                    b.HasKey("Parent_対象措置_Parent_対象機器_Parent_機器ID", "Parent_対象措置_Parent_対象機器_保管庫_保管庫ID", "Parent_対象措置_措置ID", "資料ID")
-                        .HasName("PK_ATTACHMENTS");
-
-                    b.ToTable("ATTACHMENTS", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.紹介先住所DbEntity", b =>
-                {
-                    b.Property<string>("Parent_Parent_診療ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_Parent_ORDER_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(6);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(8);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(7);
-
-                    b.Property<string>("市区町村")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CITY")
-                        .HasColumnOrder(3);
-
-                    b.Property<string>("番地建物名")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("ADDRESS_LINE")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("郵便番号")
-                        .HasMaxLength(8)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("POSTAL_CODE")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("都道府県")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("PREFECTURE")
-                        .HasColumnOrder(2);
-
-                    b.HasKey("Parent_Parent_診療ID")
-                        .HasName("PK_SHIPPING_ADDRESS");
-
-                    b.ToTable("SHIPPING_ADDRESS", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.紹介状情報DbEntity", b =>
-                {
-                    b.Property<string>("Parent_診療ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_ORDER_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(3);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(5);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(4);
-
-                    b.Property<int>("紹介方法")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("SHIPPING_METHOD")
-                        .HasColumnOrder(1);
-
-                    b.HasKey("Parent_診療ID")
-                        .HasName("PK_SHIPPING_INFO");
-
-                    b.ToTable("SHIPPING_INFO", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.紹介状況DbEntity", b =>
-                {
-                    b.Property<string>("Parent_Parent_診療ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_Parent_ORDER_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<int>("ステータス")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("STATUS")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(5);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(7);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(6);
-
-                    b.Property<string>("備考")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("REMARKS")
-                        .HasColumnOrder(3);
-
-                    b.Property<DateTime?>("更新日時")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UPDATE_DATE")
-                        .HasColumnOrder(2);
-
-                    b.HasKey("Parent_Parent_診療ID", "ステータス")
-                        .HasName("PK_SHIPPING_STATUS");
-
-                    b.ToTable("SHIPPING_STATUS", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.診察記録DbEntity", b =>
-                {
-                    b.Property<string>("予約_予約ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("予約_RESERVATION_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(8);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(7);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(10);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(9);
-
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("Version")
-                        .HasColumnOrder(11);
-
-                    b.Property<decimal?>("体温")
-                        .HasPrecision(3, 1)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("TEMPERATURE")
-                        .HasColumnOrder(3);
-
-                    b.Property<int?>("血圧上")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("BLOOD_PRESSURE_HIGH")
-                        .HasColumnOrder(4);
-
-                    b.Property<int?>("血圧下")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("BLOOD_PRESSURE_LOW")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("診察メモ")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("NOTE")
-                        .HasColumnOrder(6);
-
-                    b.Property<DateTime?>("診察終了時刻")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("END_TIME")
-                        .HasColumnOrder(2);
-
-                    b.Property<DateTime?>("診察開始時刻")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("START_TIME")
-                        .HasColumnOrder(1);
-
-                    b.HasKey("予約_予約ID")
-                        .HasName("PK_診察記録");
-
-                    b.ToTable("診察記録", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.診療収益分析SearchResult", b =>
-                {
-                    b.Property<int>("年月")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("年月")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("診療科_診療科ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("診療科_STORE_ID")
-                        .HasColumnOrder(1);
-
-                    b.Property<int?>("患者単価")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("患者単価")
-                        .HasColumnOrder(16);
-
-                    b.Property<int?>("患者数")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("患者数")
-                        .HasColumnOrder(15);
-
-                    b.Property<int?>("診療収益合計")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("診療収益合計")
-                        .HasColumnOrder(14);
-
-                    b.Property<string>("診療科_住所_市区町村")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("診療科_住所_CITY")
-                        .HasColumnOrder(6);
-
-                    b.Property<string>("診療科_住所_番地建物名")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("診療科_住所_ADDRESS_LINE")
-                        .HasColumnOrder(7);
-
-                    b.Property<string>("診療科_住所_郵便番号")
-                        .HasMaxLength(8)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("診療科_住所_POSTAL_CODE")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("診療科_住所_都道府県")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("診療科_住所_PREFECTURE")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("診療科_科長_医療従事者ID")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("診療科_MANAGER_ID_ID")
-                        .HasColumnOrder(10);
-
-                    b.Property<string>("診療科_科長_氏名")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("診療科_MANAGER_ID_NAME")
-                        .HasColumnOrder(11);
-
-                    b.Property<string>("診療科_科長_氏名カナ")
-                        .HasMaxLength(40)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("診療科_MANAGER_ID_NAME_KANA")
-                        .HasColumnOrder(12);
-
-                    b.Property<DateOnly?>("診療科_科長_退職日")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("診療科_MANAGER_ID_TAISHOKU")
-                        .HasColumnOrder(13);
-
-                    b.Property<string>("診療科_診療時間_終了時間")
-                        .HasMaxLength(5)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("診療科_診療時間_CLOSING_TIME")
-                        .HasColumnOrder(9);
-
-                    b.Property<string>("診療科_診療時間_開始時間")
-                        .HasMaxLength(5)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("診療科_診療時間_OPENING_TIME")
-                        .HasColumnOrder(8);
-
-                    b.Property<string>("診療科_診療科名")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("診療科_STORE_NAME")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("診療科_電話番号")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("診療科_PHONE")
-                        .HasColumnOrder(3);
-
-                    b.HasKey("年月", "診療科_診療科ID")
-                        .HasName("PK_V_診療収益分析");
-
-                    b.HasIndex("診療科_診療科ID");
-
-                    b.ToTable((string)null);
-
-                    b.ToView("V_診療収益分析", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.診療履歴DbEntity", b =>
-                {
-                    b.Property<string>("診療ID")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("ORDER_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(6);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(8);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(7);
-
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("Version")
-                        .HasColumnOrder(9);
-
-                    b.Property<string>("患者_患者ID")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("患者_CUSTOMER_ID")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("担当医_医療従事者ID")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("担当医_ID")
-                        .HasColumnOrder(4);
-
-                    b.Property<DateTime>("診療日時")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("ORDER_DATE")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("診療科_診療科ID")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("診療科_STORE_ID")
-                        .HasColumnOrder(3);
-
-                    b.HasKey("診療ID")
-                        .HasName("PK_診療履歴");
-
-                    b.HasIndex("患者_患者ID");
-
-                    b.HasIndex("担当医_医療従事者ID");
-
-                    b.HasIndex("診療科_診療科ID");
-
-                    b.ToTable("診療履歴", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.診療時間DbEntity", b =>
-                {
-                    b.Property<string>("Parent_診療科ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_STORE_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(4);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(3);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(6);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("終了時間")
-                        .HasMaxLength(5)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CLOSING_TIME")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("開始時間")
-                        .HasMaxLength(5)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("OPENING_TIME")
-                        .HasColumnOrder(1);
-
-                    b.HasKey("Parent_診療科ID")
-                        .HasName("PK_BUSINESS_HOURS");
-
-                    b.ToTable("BUSINESS_HOURS", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.診療科DbEntity", b =>
-                {
-                    b.Property<string>("診療科コード")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("BUSHO_CD")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(3);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(2);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(5);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(4);
-
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("Version")
-                        .HasColumnOrder(6);
-
-                    b.Property<string>("診療科名")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("BUSHO_NAME")
-                        .HasColumnOrder(1);
-
-                    b.HasKey("診療科コード")
-                        .HasName("PK_BUSHO");
-
-                    b.ToTable("BUSHO", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.診療科マスタDbEntity", b =>
-                {
-                    b.Property<string>("診療科ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("STORE_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(5);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(7);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(6);
-
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("Version")
-                        .HasColumnOrder(8);
-
-                    b.Property<string>("科長_医療従事者ID")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("科長_ID")
-                        .HasColumnOrder(3);
-
-                    b.Property<string>("診療科名")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("STORE_NAME")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("電話番号")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("PHONE")
-                        .HasColumnOrder(2);
-
-                    b.HasKey("診療科ID")
-                        .HasName("PK_診療科マスタ");
-
-                    b.HasIndex("科長_医療従事者ID");
-
-                    b.ToTable("診療科マスタ", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.診療科マスタの住所DbEntity", b =>
-                {
-                    b.Property<string>("Parent_診療科ID")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Parent_STORE_ID")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("CreateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreateUser")
-                        .HasColumnOrder(6);
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CreatedAt")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("UpdateUser")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdateUser")
-                        .HasColumnOrder(8);
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(7);
-
-                    b.Property<string>("市区町村")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("CITY")
-                        .HasColumnOrder(3);
-
-                    b.Property<string>("番地建物名")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("ADDRESS_LINE")
-                        .HasColumnOrder(4);
-
-                    b.Property<string>("郵便番号")
-                        .HasMaxLength(8)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("POSTAL_CODE")
-                        .HasColumnOrder(1);
-
-                    b.Property<string>("都道府県")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("PREFECTURE")
-                        .HasColumnOrder(2);
-
-                    b.HasKey("Parent_診療科ID")
-                        .HasName("PK_STORE_ADDRESS");
-
-                    b.ToTable("STORE_ADDRESS", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.診療科別患者統計ビューSearchResult", b =>
-                {
-                    b.Property<int?>("今月の新規患者数")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("NEW_PATIENTS_THIS_MONTH")
-                        .HasColumnOrder(3);
-
-                    b.Property<decimal?>("平均年齢")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("AVG_AGE")
-                        .HasColumnOrder(4);
-
-                    b.Property<int?>("患者総数")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("TOTAL_PATIENTS")
-                        .HasColumnOrder(2);
-
-                    b.Property<DateTime?>("統計日時")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("STATS_DATETIME")
-                        .HasColumnOrder(5);
-
-                    b.Property<string>("診療科コード")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("DEPT_CODE")
-                        .HasColumnOrder(0);
-
-                    b.Property<string>("診療科名")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("DEPT_NAME")
-                        .HasColumnOrder(1);
-
-                    b.ToTable((string)null);
-
-                    b.ToView("V_PATIENT_STATS_BY_DEPT", (string)null);
-                });
-
-            modelBuilder.Entity("MyApp.カード情報DbEntity", b =>
-                {
-                    b.HasOne("MyApp.会計情報DbEntity", "Parent")
-                        .WithOne("カード情報")
-                        .HasForeignKey("MyApp.カード情報DbEntity", "Parent_Parent_診療ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_PAYMENT_INFO_CARD_INFO");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.サイズDbEntity", b =>
-                {
-                    b.HasOne("MyApp.機器仕様DbEntity", "Parent")
-                        .WithOne("サイズ")
-                        .HasForeignKey("MyApp.サイズDbEntity", "Parent_Parent_Parent_機器ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_PRODUCT_SPEC_SIZE");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.予約DbEntity", b =>
-                {
-                    b.HasOne("MyApp.患者マスタDbEntity", "患者")
-                        .WithMany("RefFrom予約_患者")
-                        .HasForeignKey("患者_患者ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_患者マスタ_予約_XFB576B4");
-
-                    b.HasOne("MyApp.医療従事者マスタDbEntity", "担当医")
-                        .WithMany("RefFrom予約_担当医")
-                        .HasForeignKey("担当医_医療従事者ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .HasConstraintName("FK_EMPLOYEE_予約_XDECF289");
-
-                    b.Navigation("患者");
-
-                    b.Navigation("担当医");
-                });
-
-            modelBuilder.Entity("MyApp.付属品DbEntity", b =>
-                {
-                    b.HasOne("MyApp.機器詳細DbEntity", "Parent")
-                        .WithMany("付属品")
-                        .HasForeignKey("Parent_Parent_機器ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_PRODUCT_DETAIL_ACCESSORIES");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.会計情報DbEntity", b =>
-                {
-                    b.HasOne("MyApp.診療履歴DbEntity", "Parent")
-                        .WithOne("会計情報")
-                        .HasForeignKey("MyApp.会計情報DbEntity", "Parent_診療ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_診療履歴_PAYMENT_INFO");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.保管庫マスタDbEntity", b =>
-                {
-                    b.HasOne("MyApp.医療従事者マスタDbEntity", "管理責任者")
-                        .WithMany("RefFrom保管庫マスタ_管理責任者")
-                        .HasForeignKey("管理責任者_医療従事者ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .HasConstraintName("FK_EMPLOYEE_保管庫マスタ_XD847631");
-
-                    b.Navigation("管理責任者");
-                });
-
-            modelBuilder.Entity("MyApp.保管庫マスタの住所DbEntity", b =>
-                {
-                    b.HasOne("MyApp.保管庫マスタDbEntity", "Parent")
-                        .WithOne("保管庫マスタの住所")
-                        .HasForeignKey("MyApp.保管庫マスタの住所DbEntity", "Parent_保管庫ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_保管庫マスタ_WAREHOUSE_ADDRESS");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.保管庫別在庫SearchResult", b =>
-                {
-                    b.HasOne("MyApp.保管庫マスタDbEntity", "保管庫")
-                        .WithMany("RefFrom保管庫別在庫_保管庫")
-                        .HasForeignKey("保管庫_保管庫ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_保管庫マスタ_WAREHOUSE_INVENTORY_X48C69C7");
-
-                    b.HasOne("MyApp.機器分類別在庫集計ビューSearchResult", "Parent")
-                        .WithMany("保管庫別在庫")
-                        .HasForeignKey("機器分類_機器分類ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_V_INVENTORY_BY_CATEGORY_WAREHOUSE_INVENTORY");
-
-                    b.Navigation("Parent");
-
-                    b.Navigation("保管庫");
-                });
-
-            modelBuilder.Entity("MyApp.保険適用情報DbEntity", b =>
-                {
-                    b.HasOne("MyApp.処置明細DbEntity", "Parent")
-                        .WithOne("保険適用情報")
-                        .HasForeignKey("MyApp.保険適用情報DbEntity", "Parent_Parent_診療ID", "Parent_医療機器_機器ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_ORDER_DETAILS_DISCOUNT_INFO");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.処方薬DbEntity", b =>
-                {
-                    b.HasOne("MyApp.診察記録DbEntity", "Parent")
-                        .WithMany("処方薬")
-                        .HasForeignKey("Parent_予約_予約ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_診察記録_PRESCRIPTIONS");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.処置明細DbEntity", b =>
-                {
-                    b.HasOne("MyApp.診療履歴DbEntity", "Parent")
-                        .WithMany("処置明細")
-                        .HasForeignKey("Parent_診療ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_診療履歴_ORDER_DETAILS");
-
-                    b.HasOne("MyApp.医療機器マスタDbEntity", "医療機器")
-                        .WithMany("RefFrom処置明細_医療機器")
-                        .HasForeignKey("医療機器_機器ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_医療機器マスタ_ORDER_DETAILS_X5D5C85D");
-
-                    b.Navigation("Parent");
-
-                    b.Navigation("医療機器");
-                });
-
-            modelBuilder.Entity("MyApp.勤務スケジュールDbEntity", b =>
-                {
-                    b.HasOne("MyApp.医療従事者マスタDbEntity", "医療従事者")
-                        .WithMany("RefFrom勤務スケジュール_医療従事者")
-                        .HasForeignKey("医療従事者_医療従事者ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_EMPLOYEE_勤務スケジュール_X30E339A");
-
-                    b.HasOne("MyApp.診療科マスタDbEntity", "診療科")
-                        .WithMany("RefFrom勤務スケジュール_診療科")
-                        .HasForeignKey("診療科_診療科ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_診療科マスタ_勤務スケジュール_X6518C1A");
-
-                    b.Navigation("医療従事者");
-
-                    b.Navigation("診療科");
-                });
-
-            modelBuilder.Entity("MyApp.医療従事者プロフィールDbEntity", b =>
-                {
-                    b.HasOne("MyApp.医療従事者マスタDbEntity", "医療従事者")
-                        .WithOne("RefFrom医療従事者プロフィール_医療従事者")
-                        .HasForeignKey("MyApp.医療従事者プロフィールDbEntity", "医療従事者_医療従事者ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_EMPLOYEE_医療従事者プロフィール_X30E339A");
-
-                    b.Navigation("医療従事者");
-                });
-
-            modelBuilder.Entity("MyApp.医療機器マスタDbEntity", b =>
-                {
-                    b.HasOne("MyApp.供給業者マスタDbEntity", "供給業者")
-                        .WithMany("RefFrom医療機器マスタ_供給業者")
-                        .HasForeignKey("供給業者_供給業者ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .HasConstraintName("FK_供給業者マスタ_医療機器マスタ_X89DCA22");
-
-                    b.HasOne("MyApp.機器分類マスタDbEntity", "機器分類")
-                        .WithMany("RefFrom医療機器マスタ_機器分類")
-                        .HasForeignKey("機器分類_機器分類ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_機器分類マスタ_医療機器マスタ_X7D2BEB8");
-
-                    b.Navigation("供給業者");
-
-                    b.Navigation("機器分類");
-                });
-
-            modelBuilder.Entity("MyApp.医療資格DbEntity", b =>
-                {
-                    b.HasOne("MyApp.医療従事者プロフィールDbEntity", "Parent")
-                        .WithMany("医療資格")
-                        .HasForeignKey("Parent_医療従事者_医療従事者ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_医療従事者プロフィール_QUALIFICATIONS");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.在庫情報DbEntity", b =>
-                {
-                    b.HasOne("MyApp.医療機器マスタDbEntity", "Parent")
-                        .WithMany("在庫情報")
-                        .HasForeignKey("Parent_機器ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_医療機器マスタ_INVENTORY");
-
-                    b.HasOne("MyApp.保管庫マスタDbEntity", "保管庫")
-                        .WithMany("RefFrom在庫情報_保管庫")
-                        .HasForeignKey("保管庫_保管庫ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_保管庫マスタ_INVENTORY_X48C69C7");
-
-                    b.Navigation("Parent");
-
-                    b.Navigation("保管庫");
-                });
-
-            modelBuilder.Entity("MyApp.在庫状況履歴DbEntity", b =>
-                {
-                    b.HasOne("MyApp.医療従事者マスタDbEntity", "担当者")
-                        .WithMany("RefFrom在庫状況履歴_担当者")
-                        .HasForeignKey("担当者_医療従事者ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .HasConstraintName("FK_EMPLOYEE_STOCK_HISTORY_XB332A41");
-
-                    b.HasOne("MyApp.在庫情報DbEntity", "Parent")
-                        .WithMany("在庫状況履歴")
-                        .HasForeignKey("Parent_Parent_機器ID", "Parent_保管庫_保管庫ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_INVENTORY_STOCK_HISTORY");
-
-                    b.Navigation("Parent");
-
-                    b.Navigation("担当者");
-                });
-
-            modelBuilder.Entity("MyApp.対応措置DbEntity", b =>
-                {
-                    b.HasOne("MyApp.医療従事者マスタDbEntity", "実施担当者")
-                        .WithMany("RefFrom対応措置_実施担当者")
-                        .HasForeignKey("実施担当者_医療従事者ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .HasConstraintName("FK_EMPLOYEE_ACTIONS_X4FD1CEF");
-
-                    b.HasOne("MyApp.機器点検報告DbEntity", "Parent")
-                        .WithMany("対応措置")
-                        .HasForeignKey("Parent_対象機器_Parent_機器ID", "Parent_対象機器_保管庫_保管庫ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_機器点検報告_ACTIONS");
-
-                    b.Navigation("Parent");
-
-                    b.Navigation("実施担当者");
-                });
-
-            modelBuilder.Entity("MyApp.患者マスタの住所DbEntity", b =>
-                {
-                    b.HasOne("MyApp.患者マスタDbEntity", "Parent")
-                        .WithOne("患者マスタの住所")
-                        .HasForeignKey("MyApp.患者マスタの住所DbEntity", "Parent_患者ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_患者マスタ_CUSTOMER_ADDRESS");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.患者情報DbEntity", b =>
-                {
-                    b.HasOne("MyApp.患者マスタDbEntity", "Parent")
-                        .WithOne("患者情報")
-                        .HasForeignKey("MyApp.患者情報DbEntity", "Parent_患者ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_患者マスタ_MEMBERSHIP");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.患者情報の診療履歴DbEntity", b =>
-                {
-                    b.HasOne("MyApp.患者情報DbEntity", "Parent")
-                        .WithMany("患者情報の診療履歴")
-                        .HasForeignKey("Parent_Parent_患者ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_MEMBERSHIP_POINT_HISTORY");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.所属診療科DbEntity", b =>
-                {
-                    b.HasOne("MyApp.医療従事者マスタDbEntity", "Parent")
-                        .WithMany("所属診療科")
-                        .HasForeignKey("Parent_医療従事者ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_EMPLOYEE_SHOZOKU");
-
-                    b.HasOne("MyApp.診療科DbEntity", "診療科")
-                        .WithMany("RefFrom所属診療科_診療科")
-                        .HasForeignKey("診療科_診療科コード")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_BUSHO_SHOZOKU_X6518C1A");
-
-                    b.Navigation("Parent");
-
-                    b.Navigation("診療科");
-                });
-
-            modelBuilder.Entity("MyApp.措置結果DbEntity", b =>
-                {
-                    b.HasOne("MyApp.医療従事者マスタDbEntity", "結果担当者")
-                        .WithMany("RefFrom措置結果_結果担当者")
-                        .HasForeignKey("結果担当者_医療従事者ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_EMPLOYEE_措置結果_XD70B07D");
-
-                    b.HasOne("MyApp.対応措置DbEntity", "対象措置")
-                        .WithOne("RefFrom措置結果_対象措置")
-                        .HasForeignKey("MyApp.措置結果DbEntity", "対象措置_Parent_対象機器_Parent_機器ID", "対象措置_Parent_対象機器_保管庫_保管庫ID", "対象措置_措置ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_ACTIONS_措置結果_XFDF1611");
-
-                    b.Navigation("対象措置");
-
-                    b.Navigation("結果担当者");
-                });
-
-            modelBuilder.Entity("MyApp.時間帯別収益SearchResult", b =>
-                {
-                    b.HasOne("MyApp.診療収益分析SearchResult", "Parent")
-                        .WithMany("時間帯別収益")
-                        .HasForeignKey("年月", "診療科_診療科ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_V_診療収益分析_V_時間帯別収益");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.権限DbEntity", b =>
-                {
-                    b.HasOne("MyApp.医療従事者マスタDbEntity", "Parent")
-                        .WithMany("権限")
-                        .HasForeignKey("Parent_医療従事者ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_EMPLOYEE_AUTHORITY");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.機器仕様DbEntity", b =>
-                {
-                    b.HasOne("MyApp.機器詳細DbEntity", "Parent")
-                        .WithOne("機器仕様")
-                        .HasForeignKey("MyApp.機器仕様DbEntity", "Parent_Parent_機器ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_PRODUCT_DETAIL_PRODUCT_SPEC");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.機器分類別収益SearchResult", b =>
-                {
-                    b.HasOne("MyApp.機器分類マスタDbEntity", "機器分類")
-                        .WithMany("RefFrom機器分類別収益_機器分類")
-                        .HasForeignKey("機器分類_機器分類ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_機器分類マスタ_V_機器分類別収益_X7D2BEB8");
-
-                    b.HasOne("MyApp.診療収益分析SearchResult", "Parent")
-                        .WithMany("機器分類別収益")
-                        .HasForeignKey("年月", "診療科_診療科ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_V_診療収益分析_V_機器分類別収益");
-
-                    b.Navigation("Parent");
-
-                    b.Navigation("機器分類");
-                });
-
-            modelBuilder.Entity("MyApp.機器分類別在庫集計ビューSearchResult", b =>
-                {
-                    b.HasOne("MyApp.機器分類マスタDbEntity", "機器分類")
-                        .WithOne("RefFrom機器分類別在庫集計ビュー_機器分類")
-                        .HasForeignKey("MyApp.機器分類別在庫集計ビューSearchResult", "機器分類_機器分類ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_機器分類マスタ_V_INVENTORY_BY_CATEGORY_X7D2BEB8");
-
-                    b.Navigation("機器分類");
-                });
-
-            modelBuilder.Entity("MyApp.機器別収益SearchResult", b =>
-                {
-                    b.HasOne("MyApp.医療機器マスタDbEntity", "医療機器")
-                        .WithMany("RefFrom機器別収益_医療機器")
-                        .HasForeignKey("医療機器_機器ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_医療機器マスタ_V_機器別収益_X5D5C85D");
-
-                    b.HasOne("MyApp.機器分類別収益SearchResult", "Parent")
-                        .WithMany("機器別収益")
-                        .HasForeignKey("年月", "診療科_診療科ID", "機器分類_機器分類ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_V_機器分類別収益_V_機器別収益");
-
-                    b.Navigation("Parent");
-
-                    b.Navigation("医療機器");
-                });
-
-            modelBuilder.Entity("MyApp.機器点検報告DbEntity", b =>
-                {
-                    b.HasOne("MyApp.医療従事者マスタDbEntity", "点検担当者")
-                        .WithMany("RefFrom機器点検報告_点検担当者")
-                        .HasForeignKey("点検担当者_医療従事者ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_EMPLOYEE_機器点検報告_XC084C68");
-
-                    b.HasOne("MyApp.在庫情報DbEntity", "対象機器")
-                        .WithOne("RefFrom機器点検報告_対象機器")
-                        .HasForeignKey("MyApp.機器点検報告DbEntity", "対象機器_Parent_機器ID", "対象機器_保管庫_保管庫ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_INVENTORY_機器点検報告_X62E8D1C");
-
-                    b.Navigation("対象機器");
-
-                    b.Navigation("点検担当者");
-                });
-
-            modelBuilder.Entity("MyApp.機器詳細DbEntity", b =>
-                {
-                    b.HasOne("MyApp.医療機器マスタDbEntity", "Parent")
-                        .WithOne("機器詳細")
-                        .HasForeignKey("MyApp.機器詳細DbEntity", "Parent_機器ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_医療機器マスタ_PRODUCT_DETAIL");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.次回措置DbEntity", b =>
-                {
-                    b.HasOne("MyApp.医療従事者マスタDbEntity", "担当者")
-                        .WithMany("RefFrom次回措置_担当者")
-                        .HasForeignKey("担当者_医療従事者ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .HasConstraintName("FK_EMPLOYEE_NEXT_ACTION_XB332A41");
-
-                    b.HasOne("MyApp.措置結果DbEntity", "Parent")
-                        .WithOne("次回措置")
-                        .HasForeignKey("MyApp.次回措置DbEntity", "Parent_対象措置_Parent_対象機器_Parent_機器ID", "Parent_対象措置_Parent_対象機器_保管庫_保管庫ID", "Parent_対象措置_措置ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_措置結果_NEXT_ACTION");
-
-                    b.Navigation("Parent");
-
-                    b.Navigation("担当者");
-                });
-
-            modelBuilder.Entity("MyApp.添付資料DbEntity", b =>
-                {
-                    b.HasOne("MyApp.措置結果DbEntity", "Parent")
-                        .WithMany("添付資料")
-                        .HasForeignKey("Parent_対象措置_Parent_対象機器_Parent_機器ID", "Parent_対象措置_Parent_対象機器_保管庫_保管庫ID", "Parent_対象措置_措置ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_措置結果_ATTACHMENTS");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.紹介先住所DbEntity", b =>
-                {
-                    b.HasOne("MyApp.紹介状情報DbEntity", "Parent")
-                        .WithOne("紹介先住所")
-                        .HasForeignKey("MyApp.紹介先住所DbEntity", "Parent_Parent_診療ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_SHIPPING_INFO_SHIPPING_ADDRESS");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.紹介状情報DbEntity", b =>
-                {
-                    b.HasOne("MyApp.診療履歴DbEntity", "Parent")
-                        .WithOne("紹介状情報")
-                        .HasForeignKey("MyApp.紹介状情報DbEntity", "Parent_診療ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_診療履歴_SHIPPING_INFO");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.紹介状況DbEntity", b =>
-                {
-                    b.HasOne("MyApp.紹介状情報DbEntity", "Parent")
-                        .WithMany("紹介状況")
-                        .HasForeignKey("Parent_Parent_診療ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_SHIPPING_INFO_SHIPPING_STATUS");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.診察記録DbEntity", b =>
-                {
-                    b.HasOne("MyApp.予約DbEntity", "予約")
-                        .WithOne("RefFrom診察記録_予約")
-                        .HasForeignKey("MyApp.診察記録DbEntity", "予約_予約ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_予約_診察記録_XF01C7D4");
-
-                    b.Navigation("予約");
-                });
-
-            modelBuilder.Entity("MyApp.診療収益分析SearchResult", b =>
-                {
-                    b.HasOne("MyApp.診療科マスタDbEntity", "診療科")
-                        .WithMany("RefFrom診療収益分析_診療科")
-                        .HasForeignKey("診療科_診療科ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_診療科マスタ_V_診療収益分析_X6518C1A");
-
-                    b.Navigation("診療科");
-                });
-
-            modelBuilder.Entity("MyApp.診療履歴DbEntity", b =>
-                {
-                    b.HasOne("MyApp.患者マスタDbEntity", "患者")
-                        .WithMany("RefFrom診療履歴_患者")
-                        .HasForeignKey("患者_患者ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_患者マスタ_診療履歴_XFB576B4");
-
-                    b.HasOne("MyApp.医療従事者マスタDbEntity", "担当医")
-                        .WithMany("RefFrom診療履歴_担当医")
-                        .HasForeignKey("担当医_医療従事者ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .HasConstraintName("FK_EMPLOYEE_診療履歴_XDECF289");
-
-                    b.HasOne("MyApp.診療科マスタDbEntity", "診療科")
-                        .WithMany("RefFrom診療履歴_診療科")
-                        .HasForeignKey("診療科_診療科ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_診療科マスタ_診療履歴_X6518C1A");
-
-                    b.Navigation("患者");
-
-                    b.Navigation("担当医");
-
-                    b.Navigation("診療科");
-                });
-
-            modelBuilder.Entity("MyApp.診療時間DbEntity", b =>
-                {
-                    b.HasOne("MyApp.診療科マスタDbEntity", "Parent")
-                        .WithOne("診療時間")
-                        .HasForeignKey("MyApp.診療時間DbEntity", "Parent_診療科ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_診療科マスタ_BUSINESS_HOURS");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.診療科マスタDbEntity", b =>
-                {
-                    b.HasOne("MyApp.医療従事者マスタDbEntity", "科長")
-                        .WithMany("RefFrom診療科マスタ_科長")
-                        .HasForeignKey("科長_医療従事者ID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .HasConstraintName("FK_EMPLOYEE_診療科マスタ_X170D2D7");
-
-                    b.Navigation("科長");
-                });
-
-            modelBuilder.Entity("MyApp.診療科マスタの住所DbEntity", b =>
-                {
-                    b.HasOne("MyApp.診療科マスタDbEntity", "Parent")
-                        .WithOne("診療科マスタの住所")
-                        .HasForeignKey("MyApp.診療科マスタの住所DbEntity", "Parent_診療科ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_診療科マスタ_STORE_ADDRESS");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("MyApp.予約DbEntity", b =>
-                {
-                    b.Navigation("RefFrom診察記録_予約");
-                });
-
-            modelBuilder.Entity("MyApp.会計情報DbEntity", b =>
-                {
-                    b.Navigation("カード情報");
-                });
-
-            modelBuilder.Entity("MyApp.供給業者マスタDbEntity", b =>
-                {
-                    b.Navigation("RefFrom医療機器マスタ_供給業者");
-                });
-
-            modelBuilder.Entity("MyApp.保管庫マスタDbEntity", b =>
-                {
-                    b.Navigation("RefFrom保管庫別在庫_保管庫");
-
-                    b.Navigation("RefFrom在庫情報_保管庫");
-
-                    b.Navigation("保管庫マスタの住所");
-                });
-
-            modelBuilder.Entity("MyApp.処置明細DbEntity", b =>
-                {
-                    b.Navigation("保険適用情報");
-                });
-
-            modelBuilder.Entity("MyApp.医療従事者プロフィールDbEntity", b =>
-                {
-                    b.Navigation("医療資格");
-                });
-
-            modelBuilder.Entity("MyApp.医療従事者マスタDbEntity", b =>
-                {
-                    b.Navigation("RefFrom予約_担当医");
-
-                    b.Navigation("RefFrom保管庫マスタ_管理責任者");
-
-                    b.Navigation("RefFrom勤務スケジュール_医療従事者");
-
-                    b.Navigation("RefFrom医療従事者プロフィール_医療従事者");
-
-                    b.Navigation("RefFrom在庫状況履歴_担当者");
-
-                    b.Navigation("RefFrom対応措置_実施担当者");
-
-                    b.Navigation("RefFrom措置結果_結果担当者");
-
-                    b.Navigation("RefFrom機器点検報告_点検担当者");
-
-                    b.Navigation("RefFrom次回措置_担当者");
-
-                    b.Navigation("RefFrom診療履歴_担当医");
-
-                    b.Navigation("RefFrom診療科マスタ_科長");
-
-                    b.Navigation("所属診療科");
-
-                    b.Navigation("権限");
-                });
-
-            modelBuilder.Entity("MyApp.医療機器マスタDbEntity", b =>
-                {
-                    b.Navigation("RefFrom処置明細_医療機器");
-
-                    b.Navigation("RefFrom機器別収益_医療機器");
-
-                    b.Navigation("在庫情報");
-
-                    b.Navigation("機器詳細");
-                });
-
-            modelBuilder.Entity("MyApp.在庫情報DbEntity", b =>
-                {
-                    b.Navigation("RefFrom機器点検報告_対象機器");
-
-                    b.Navigation("在庫状況履歴");
-                });
-
-            modelBuilder.Entity("MyApp.対応措置DbEntity", b =>
-                {
-                    b.Navigation("RefFrom措置結果_対象措置");
-                });
-
-            modelBuilder.Entity("MyApp.患者マスタDbEntity", b =>
-                {
-                    b.Navigation("RefFrom予約_患者");
-
-                    b.Navigation("RefFrom診療履歴_患者");
-
-                    b.Navigation("患者マスタの住所");
-
-                    b.Navigation("患者情報");
-                });
-
-            modelBuilder.Entity("MyApp.患者情報DbEntity", b =>
-                {
-                    b.Navigation("患者情報の診療履歴");
-                });
-
-            modelBuilder.Entity("MyApp.措置結果DbEntity", b =>
-                {
-                    b.Navigation("次回措置");
-
-                    b.Navigation("添付資料");
-                });
-
-            modelBuilder.Entity("MyApp.機器仕様DbEntity", b =>
-                {
-                    b.Navigation("サイズ");
-                });
-
-            modelBuilder.Entity("MyApp.機器分類マスタDbEntity", b =>
-                {
-                    b.Navigation("RefFrom医療機器マスタ_機器分類");
-
-                    b.Navigation("RefFrom機器分類別収益_機器分類");
-
-                    b.Navigation("RefFrom機器分類別在庫集計ビュー_機器分類");
-                });
-
-            modelBuilder.Entity("MyApp.機器分類別収益SearchResult", b =>
-                {
-                    b.Navigation("機器別収益");
-                });
-
-            modelBuilder.Entity("MyApp.機器分類別在庫集計ビューSearchResult", b =>
-                {
-                    b.Navigation("保管庫別在庫");
-                });
-
-            modelBuilder.Entity("MyApp.機器点検報告DbEntity", b =>
-                {
-                    b.Navigation("対応措置");
-                });
-
-            modelBuilder.Entity("MyApp.機器詳細DbEntity", b =>
-                {
-                    b.Navigation("付属品");
-
-                    b.Navigation("機器仕様");
-                });
-
-            modelBuilder.Entity("MyApp.紹介状情報DbEntity", b =>
-                {
-                    b.Navigation("紹介先住所");
-
-                    b.Navigation("紹介状況");
-                });
-
-            modelBuilder.Entity("MyApp.診察記録DbEntity", b =>
-                {
-                    b.Navigation("処方薬");
-                });
-
-            modelBuilder.Entity("MyApp.診療収益分析SearchResult", b =>
-                {
-                    b.Navigation("時間帯別収益");
-
-                    b.Navigation("機器分類別収益");
-                });
-
-            modelBuilder.Entity("MyApp.診療履歴DbEntity", b =>
-                {
-                    b.Navigation("会計情報");
-
-                    b.Navigation("処置明細");
-
-                    b.Navigation("紹介状情報");
-                });
-
-            modelBuilder.Entity("MyApp.診療科DbEntity", b =>
-                {
-                    b.Navigation("RefFrom所属診療科_診療科");
-                });
-
-            modelBuilder.Entity("MyApp.診療科マスタDbEntity", b =>
-                {
-                    b.Navigation("RefFrom勤務スケジュール_診療科");
-
-                    b.Navigation("RefFrom診療収益分析_診療科");
-
-                    b.Navigation("RefFrom診療履歴_診療科");
-
-                    b.Navigation("診療時間");
-
-                    b.Navigation("診療科マスタの住所");
-                });
+            modelBuilder.Entity("MyApp.カード情報DbEntity", b => {
+                b.Property<string>("Parent_Parent_診療ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_Parent_ORDER_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(5);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(7);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(6);
+
+                b.Property<int?>("カード種類")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("CARD_TYPE")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("下4桁")
+                    .HasMaxLength(4)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("LAST_FOUR_DIGITS")
+                    .HasColumnOrder(2);
+
+                b.Property<DateOnly?>("有効期限")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("EXPIRY_DATE")
+                    .HasColumnOrder(3);
+
+                b.HasKey("Parent_Parent_診療ID")
+                    .HasName("PK_CARD_INFO");
+
+                b.ToTable("CARD_INFO", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.サイズDbEntity", b => {
+                b.Property<string>("Parent_Parent_Parent_機器ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_Parent_Parent_PRODUCT_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(5);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(7);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(6);
+
+                b.Property<int?>("奥行")
+                    .HasPrecision(16)
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("DEPTH")
+                    .HasColumnOrder(3);
+
+                b.Property<int?>("幅")
+                    .HasPrecision(16)
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("WIDTH")
+                    .HasColumnOrder(1);
+
+                b.Property<int?>("高さ")
+                    .HasPrecision(16)
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("HEIGHT")
+                    .HasColumnOrder(2);
+
+                b.HasKey("Parent_Parent_Parent_機器ID")
+                    .HasName("PK_SIZE");
+
+                b.ToTable("SIZE", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.予約DbEntity", b => {
+                b.Property<string>("予約ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("RESERVATION_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(7);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(6);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(9);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(8);
+
+                b.Property<int>("Version")
+                    .IsConcurrencyToken()
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("Version")
+                    .HasColumnOrder(10);
+
+                b.Property<string>("予約メモ")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("RESERVATION_NOTE")
+                    .HasColumnOrder(4);
+
+                b.Property<int?>("予約区分")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("RESERVATION_TYPE")
+                    .HasColumnOrder(3);
+
+                b.Property<DateTime>("予約日時")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("RESERVATION_DATETIME")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("患者_患者ID")
+                    .IsRequired()
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("患者_CUSTOMER_ID")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("担当医_医療従事者ID")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("担当医_ID")
+                    .HasColumnOrder(5);
+
+                b.HasKey("予約ID")
+                    .HasName("PK_予約");
+
+                b.HasIndex("患者_患者ID");
+
+                b.HasIndex("担当医_医療従事者ID");
+
+                b.ToTable("予約", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.付属品DbEntity", b => {
+                b.Property<string>("Parent_Parent_機器ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_Parent_PRODUCT_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("付属品ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("ACCESSORY_ID")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(5);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(7);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(6);
+
+                b.Property<string>("付属品名")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("ACCESSORY_NAME")
+                    .HasColumnOrder(2);
+
+                b.Property<int?>("数量")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("QUANTITY")
+                    .HasColumnOrder(3);
+
+                b.HasKey("Parent_Parent_機器ID", "付属品ID")
+                    .HasName("PK_ACCESSORIES");
+
+                b.ToTable("ACCESSORIES", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.会計情報DbEntity", b => {
+                b.Property<string>("Parent_診療ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_ORDER_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(5);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(7);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(6);
+
+                b.Property<int>("支払方法")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("PAYMENT_TYPE")
+                    .HasColumnOrder(1);
+
+                b.Property<DateOnly?>("支払日")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("PAYMENT_DATE")
+                    .HasColumnOrder(2);
+
+                b.Property<int?>("支払状況")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("PAYMENT_STATUS")
+                    .HasColumnOrder(3);
+
+                b.HasKey("Parent_診療ID")
+                    .HasName("PK_PAYMENT_INFO");
+
+                b.ToTable("PAYMENT_INFO", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.供給業者マスタDbEntity", b => {
+                b.Property<string>("供給業者ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("SUPPLIER_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(6);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(8);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(7);
+
+                b.Property<int>("Version")
+                    .IsConcurrencyToken()
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("Version")
+                    .HasColumnOrder(9);
+
+                b.Property<string>("メールアドレス")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("EMAIL")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("供給業者名")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("SUPPLIER_NAME")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("担当者名")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CONTACT_PERSON")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("電話番号")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("PHONE")
+                    .HasColumnOrder(3);
+
+                b.HasKey("供給業者ID")
+                    .HasName("PK_供給業者マスタ");
+
+                b.ToTable("供給業者マスタ", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.保管庫マスタDbEntity", b => {
+                b.Property<string>("保管庫ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("WAREHOUSE_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(4);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(3);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(6);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(5);
+
+                b.Property<int>("Version")
+                    .IsConcurrencyToken()
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("Version")
+                    .HasColumnOrder(7);
+
+                b.Property<string>("保管庫名")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("WAREHOUSE_NAME")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("管理責任者_医療従事者ID")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("管理責任者_ID")
+                    .HasColumnOrder(2);
+
+                b.HasKey("保管庫ID")
+                    .HasName("PK_保管庫マスタ");
+
+                b.HasIndex("管理責任者_医療従事者ID");
+
+                b.ToTable("保管庫マスタ", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.保管庫マスタの住所DbEntity", b => {
+                b.Property<string>("Parent_保管庫ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_WAREHOUSE_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(6);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(8);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(7);
+
+                b.Property<string>("市区町村")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CITY")
+                    .HasColumnOrder(3);
+
+                b.Property<string>("番地建物名")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("ADDRESS_LINE")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("郵便番号")
+                    .HasMaxLength(8)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("POSTAL_CODE")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("都道府県")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("PREFECTURE")
+                    .HasColumnOrder(2);
+
+                b.HasKey("Parent_保管庫ID")
+                    .HasName("PK_WAREHOUSE_ADDRESS");
+
+                b.ToTable("WAREHOUSE_ADDRESS", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.保管庫別在庫SearchResult", b => {
+                b.Property<string>("機器分類_機器分類ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CATEGORY_CATEGORY_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("保管庫_保管庫ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("WAREHOUSE_WAREHOUSE_ID")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("保管庫_住所_市区町村")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("WAREHOUSE_住所_CITY")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("保管庫_住所_番地建物名")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("WAREHOUSE_住所_ADDRESS_LINE")
+                    .HasColumnOrder(6);
+
+                b.Property<string>("保管庫_住所_郵便番号")
+                    .HasMaxLength(8)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("WAREHOUSE_住所_POSTAL_CODE")
+                    .HasColumnOrder(3);
+
+                b.Property<string>("保管庫_住所_都道府県")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("WAREHOUSE_住所_PREFECTURE")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("保管庫_保管庫名")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("WAREHOUSE_WAREHOUSE_NAME")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("保管庫_管理責任者_医療従事者ID")
+                    .IsRequired()
+                    .HasColumnType("TEXT")
+                    .HasColumnName("WAREHOUSE_MANAGER_ID_ID")
+                    .HasColumnOrder(7);
+
+                b.Property<string>("保管庫_管理責任者_氏名")
+                    .IsRequired()
+                    .HasMaxLength(40)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("WAREHOUSE_MANAGER_ID_NAME")
+                    .HasColumnOrder(8);
+
+                b.Property<string>("保管庫_管理責任者_氏名カナ")
+                    .HasMaxLength(40)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("WAREHOUSE_MANAGER_ID_NAME_KANA")
+                    .HasColumnOrder(9);
+
+                b.Property<DateOnly?>("保管庫_管理責任者_退職日")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("WAREHOUSE_MANAGER_ID_TAISHOKU")
+                    .HasColumnOrder(10);
+
+                b.Property<int?>("在庫数")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("STOCK_QUANTITY")
+                    .HasColumnOrder(11);
+
+                b.Property<int?>("機器数")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("EQUIPMENT_COUNT")
+                    .HasColumnOrder(12);
+
+                b.HasKey("機器分類_機器分類ID", "保管庫_保管庫ID")
+                    .HasName("PK_WAREHOUSE_INVENTORY");
+
+                b.HasIndex("保管庫_保管庫ID");
+
+                b.ToTable((string)null);
+
+                b.ToView("WAREHOUSE_INVENTORY", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.保険適用情報DbEntity", b => {
+                b.Property<string>("Parent_Parent_診療ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_Parent_ORDER_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("Parent_医療機器_機器ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_医療機器_PRODUCT_ID")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(6);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(8);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(7);
+
+                b.Property<string>("保険コード")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("DISCOUNT_CODE")
+                    .HasColumnOrder(2);
+
+                b.Property<decimal?>("保険適用率")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("DISCOUNT_RATE")
+                    .HasColumnOrder(3);
+
+                b.Property<int?>("保険適用額")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("DISCOUNT_AMOUNT")
+                    .HasColumnOrder(4);
+
+                b.HasKey("Parent_Parent_診療ID", "Parent_医療機器_機器ID")
+                    .HasName("PK_DISCOUNT_INFO");
+
+                b.ToTable("DISCOUNT_INFO", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.処方薬DbEntity", b => {
+                b.Property<string>("Parent_予約_予約ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_予約_RESERVATION_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("薬剤ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("MEDICINE_ID")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(8);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(7);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(10);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(9);
+
+                b.Property<string>("備考")
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("REMARKS")
+                    .HasColumnOrder(6);
+
+                b.Property<int?>("日数")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("DAYS")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("用法")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("USAGE")
+                    .HasColumnOrder(4);
+
+                b.Property<int?>("用量")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("DOSAGE")
+                    .HasColumnOrder(3);
+
+                b.Property<string>("薬剤名")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("MEDICINE_NAME")
+                    .HasColumnOrder(2);
+
+                b.HasKey("Parent_予約_予約ID", "薬剤ID")
+                    .HasName("PK_PRESCRIPTIONS");
+
+                b.ToTable("PRESCRIPTIONS", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.処置明細DbEntity", b => {
+                b.Property<string>("Parent_診療ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_ORDER_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("医療機器_機器ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("医療機器_PRODUCT_ID")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(6);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(8);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(7);
+
+                b.Property<int>("使用数量")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("QUANTITY")
+                    .HasColumnOrder(2);
+
+                b.Property<int>("単価")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("UNIT_PRICE")
+                    .HasColumnOrder(3);
+
+                b.Property<int>("小計")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("SUBTOTAL")
+                    .HasColumnOrder(4);
+
+                b.HasKey("Parent_診療ID", "医療機器_機器ID")
+                    .HasName("PK_ORDER_DETAILS");
+
+                b.HasIndex("医療機器_機器ID");
+
+                b.ToTable("ORDER_DETAILS", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.勤務スケジュールDbEntity", b => {
+                b.Property<string>("医療従事者_医療従事者ID")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("医療従事者_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("診療科_診療科ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("診療科_STORE_ID")
+                    .HasColumnOrder(1);
+
+                b.Property<DateOnly>("日付")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("DATE")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(8);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(7);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(10);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(9);
+
+                b.Property<int>("Version")
+                    .IsConcurrencyToken()
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("Version")
+                    .HasColumnOrder(11);
+
+                b.Property<int?>("休憩時間")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("BREAK_TIME")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("備考")
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("REMARKS")
+                    .HasColumnOrder(6);
+
+                b.Property<string>("終了時間")
+                    .HasMaxLength(5)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("END_TIME")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("開始時間")
+                    .HasMaxLength(5)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("START_TIME")
+                    .HasColumnOrder(3);
+
+                b.HasKey("医療従事者_医療従事者ID", "診療科_診療科ID", "日付")
+                    .HasName("PK_勤務スケジュール");
+
+                b.HasIndex("診療科_診療科ID");
+
+                b.ToTable("勤務スケジュール", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.医療従事者プロフィールDbEntity", b => {
+                b.Property<string>("医療従事者_医療従事者ID")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("医療従事者_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(5);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(7);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(6);
+
+                b.Property<int>("Version")
+                    .IsConcurrencyToken()
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("Version")
+                    .HasColumnOrder(8);
+
+                b.Property<string>("写真URL")
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("PHOTO_URL")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("専門分野")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("SPECIALTY")
+                    .HasColumnOrder(3);
+
+                b.Property<string>("自己紹介")
+                    .HasMaxLength(1000)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("SELF_INTRODUCTION")
+                    .HasColumnOrder(2);
+
+                b.HasKey("医療従事者_医療従事者ID")
+                    .HasName("PK_医療従事者プロフィール");
+
+                b.ToTable("医療従事者プロフィール", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.医療従事者マスタDbEntity", b => {
+                b.Property<string>("医療従事者ID")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(5);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(7);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(6);
+
+                b.Property<int>("Version")
+                    .IsConcurrencyToken()
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("Version")
+                    .HasColumnOrder(8);
+
+                b.Property<string>("氏名")
+                    .IsRequired()
+                    .HasMaxLength(40)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("NAME")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("氏名カナ")
+                    .HasMaxLength(40)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("NAME_KANA")
+                    .HasColumnOrder(2);
+
+                b.Property<DateOnly?>("退職日")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("TAISHOKU")
+                    .HasColumnOrder(3);
+
+                b.HasKey("医療従事者ID")
+                    .HasName("PK_EMPLOYEE");
+
+                b.ToTable("EMPLOYEE", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.医療機器マスタDbEntity", b => {
+                b.Property<string>("機器ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("PRODUCT_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(6);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(8);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(7);
+
+                b.Property<int>("Version")
+                    .IsConcurrencyToken()
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("Version")
+                    .HasColumnOrder(9);
+
+                b.Property<string>("供給業者_供給業者ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("供給業者_SUPPLIER_ID")
+                    .HasColumnOrder(4);
+
+                b.Property<int>("単価")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("PRICE")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("機器分類_機器分類ID")
+                    .IsRequired()
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("機器分類_CATEGORY_ID")
+                    .HasColumnOrder(3);
+
+                b.Property<string>("機器名")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("PRODUCT_NAME")
+                    .HasColumnOrder(1);
+
+                b.HasKey("機器ID")
+                    .HasName("PK_医療機器マスタ");
+
+                b.HasIndex("供給業者_供給業者ID");
+
+                b.HasIndex("機器分類_機器分類ID");
+
+                b.ToTable("医療機器マスタ", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.医療資格DbEntity", b => {
+                b.Property<string>("Parent_医療従事者_医療従事者ID")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_医療従事者_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("資格名")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("QUALIFICATION_NAME")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(5);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(7);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(6);
+
+                b.Property<DateOnly?>("取得日")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("ACQUISITION_DATE")
+                    .HasColumnOrder(2);
+
+                b.Property<DateOnly?>("有効期限")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("EXPIRY_DATE")
+                    .HasColumnOrder(3);
+
+                b.HasKey("Parent_医療従事者_医療従事者ID", "資格名")
+                    .HasName("PK_QUALIFICATIONS");
+
+                b.ToTable("QUALIFICATIONS", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.在庫情報DbEntity", b => {
+                b.Property<string>("Parent_機器ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_PRODUCT_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("保管庫_保管庫ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("保管庫_WAREHOUSE_ID")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(5);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(7);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(6);
+
+                b.Property<int?>("在庫数")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("STOCK_QUANTITY")
+                    .HasColumnOrder(2);
+
+                b.Property<DateTime?>("棚卸日時")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("INVENTORY_DATE")
+                    .HasColumnOrder(3);
+
+                b.HasKey("Parent_機器ID", "保管庫_保管庫ID")
+                    .HasName("PK_INVENTORY");
+
+                b.HasIndex("保管庫_保管庫ID");
+
+                b.ToTable("INVENTORY", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.在庫状況履歴DbEntity", b => {
+                b.Property<string>("Parent_Parent_機器ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_Parent_PRODUCT_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("Parent_保管庫_保管庫ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_保管庫_WAREHOUSE_ID")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("履歴ID")
+                    .HasMaxLength(36)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("HISTORY_ID")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(8);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(7);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(10);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(9);
+
+                b.Property<int?>("変更前在庫数")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("PREVIOUS_QUANTITY")
+                    .HasColumnOrder(4);
+
+                b.Property<int?>("変更後在庫数")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("CURRENT_QUANTITY")
+                    .HasColumnOrder(5);
+
+                b.Property<DateTime?>("変更日時")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CHANGE_DATE")
+                    .HasColumnOrder(3);
+
+                b.Property<string>("担当者_医療従事者ID")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("担当者_ID")
+                    .HasColumnOrder(6);
+
+                b.HasKey("Parent_Parent_機器ID", "Parent_保管庫_保管庫ID", "履歴ID")
+                    .HasName("PK_STOCK_HISTORY");
+
+                b.HasIndex("担当者_医療従事者ID");
+
+                b.ToTable("STOCK_HISTORY", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.対応措置DbEntity", b => {
+                b.Property<string>("Parent_対象機器_Parent_機器ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_対象機器_Parent_PRODUCT_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("Parent_対象機器_保管庫_保管庫ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_対象機器_保管庫_WAREHOUSE_ID")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("措置ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("ACTION_ID")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(9);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(8);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(11);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(10);
+
+                b.Property<string>("実施担当者_医療従事者ID")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("実施担当者_ID")
+                    .HasColumnOrder(6);
+
+                b.Property<DateOnly?>("実施日")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("ACTION_DATE")
+                    .HasColumnOrder(5);
+
+                b.Property<int?>("実施状況")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("STATUS")
+                    .HasColumnOrder(4);
+
+                b.Property<int?>("措置種別")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("ACTION_TYPE")
+                    .HasColumnOrder(3);
+
+                b.Property<string>("措置詳細")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("ACTION_DETAIL")
+                    .HasColumnOrder(7);
+
+                b.HasKey("Parent_対象機器_Parent_機器ID", "Parent_対象機器_保管庫_保管庫ID", "措置ID")
+                    .HasName("PK_ACTIONS");
+
+                b.HasIndex("実施担当者_医療従事者ID");
+
+                b.ToTable("ACTIONS", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.患者マスタDbEntity", b => {
+                b.Property<string>("患者ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CUSTOMER_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(8);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(7);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(10);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(9);
+
+                b.Property<int>("Version")
+                    .IsConcurrencyToken()
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("Version")
+                    .HasColumnOrder(11);
+
+                b.Property<string>("メールアドレス")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("EMAIL")
+                    .HasColumnOrder(5);
+
+                b.Property<int?>("性別")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("GENDER")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("氏名")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CUSTOMER_NAME")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("氏名カナ")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CUSTOMER_KANA")
+                    .HasColumnOrder(2);
+
+                b.Property<DateOnly?>("生年月日")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("BIRTH_DATE")
+                    .HasColumnOrder(3);
+
+                b.Property<string>("電話番号")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("PHONE")
+                    .HasColumnOrder(6);
+
+                b.HasKey("患者ID")
+                    .HasName("PK_患者マスタ");
+
+                b.ToTable("患者マスタ", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.患者マスタの住所DbEntity", b => {
+                b.Property<string>("Parent_患者ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_CUSTOMER_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(6);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(8);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(7);
+
+                b.Property<string>("市区町村")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CITY")
+                    .HasColumnOrder(3);
+
+                b.Property<string>("番地建物名")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("ADDRESS_LINE")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("郵便番号")
+                    .HasMaxLength(8)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("POSTAL_CODE")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("都道府県")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("PREFECTURE")
+                    .HasColumnOrder(2);
+
+                b.HasKey("Parent_患者ID")
+                    .HasName("PK_CUSTOMER_ADDRESS");
+
+                b.ToTable("CUSTOMER_ADDRESS", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.患者情報DbEntity", b => {
+                b.Property<string>("Parent_患者ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_CUSTOMER_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(5);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(7);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(6);
+
+                b.Property<DateOnly?>("初診日")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("JOIN_DATE")
+                    .HasColumnOrder(2);
+
+                b.Property<int?>("患者分類")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("RANK")
+                    .HasColumnOrder(1);
+
+                b.Property<DateOnly?>("最終受診日")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("LAST_VISIT")
+                    .HasColumnOrder(3);
+
+                b.HasKey("Parent_患者ID")
+                    .HasName("PK_MEMBERSHIP");
+
+                b.ToTable("MEMBERSHIP", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.患者情報の診療履歴DbEntity", b => {
+                b.Property<string>("Parent_Parent_患者ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_Parent_CUSTOMER_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("履歴ID")
+                    .HasMaxLength(36)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("HISTORY_ID")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(6);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(8);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(7);
+
+                b.Property<DateOnly?>("日付")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("DATE")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("診療内容")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("REASON")
+                    .HasColumnOrder(4);
+
+                b.Property<int?>("診療点数")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("POINTS")
+                    .HasColumnOrder(3);
+
+                b.HasKey("Parent_Parent_患者ID", "履歴ID")
+                    .HasName("PK_POINT_HISTORY");
+
+                b.ToTable("POINT_HISTORY", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.所属診療科DbEntity", b => {
+                b.Property<string>("Parent_医療従事者ID")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<int>("年度")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("NENDO")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(4);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(3);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(6);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("診療科_診療科コード")
+                    .IsRequired()
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("診療科_BUSHO_CD")
+                    .HasColumnOrder(2);
+
+                b.HasKey("Parent_医療従事者ID", "年度")
+                    .HasName("PK_SHOZOKU");
+
+                b.HasIndex("診療科_診療科コード");
+
+                b.ToTable("SHOZOKU", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.措置結果DbEntity", b => {
+                b.Property<string>("対象措置_Parent_対象機器_Parent_機器ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("対象措置_Parent_対象機器_Parent_PRODUCT_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("対象措置_Parent_対象機器_保管庫_保管庫ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("対象措置_Parent_対象機器_保管庫_WAREHOUSE_ID")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("対象措置_措置ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("対象措置_ACTION_ID")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(9);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(8);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(11);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(10);
+
+                b.Property<int>("Version")
+                    .IsConcurrencyToken()
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("Version")
+                    .HasColumnOrder(12);
+
+                b.Property<string>("フィードバック")
+                    .HasMaxLength(1000)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("FEEDBACK")
+                    .HasColumnOrder(7);
+
+                b.Property<int?>("改善効果")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("ACHIEVEMENT")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("結果担当者_医療従事者ID")
+                    .IsRequired()
+                    .HasColumnType("TEXT")
+                    .HasColumnName("結果担当者_ID")
+                    .HasColumnOrder(4);
+
+                b.Property<DateTime>("結果日時")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("RESULT_DATETIME")
+                    .HasColumnOrder(3);
+
+                b.Property<int>("結果状態")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("RESULT_STATUS")
+                    .HasColumnOrder(6);
+
+                b.HasKey("対象措置_Parent_対象機器_Parent_機器ID", "対象措置_Parent_対象機器_保管庫_保管庫ID", "対象措置_措置ID")
+                    .HasName("PK_措置結果");
+
+                b.HasIndex("結果担当者_医療従事者ID");
+
+                b.ToTable("措置結果", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.時間帯別収益SearchResult", b => {
+                b.Property<int>("年月")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("年月")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("診療科_診療科ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("診療科_STORE_ID")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("時間帯")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("時間帯")
+                    .HasColumnOrder(2);
+
+                b.Property<int?>("平均患者単価")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("平均患者単価")
+                    .HasColumnOrder(5);
+
+                b.Property<int?>("診療件数")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("診療件数")
+                    .HasColumnOrder(4);
+
+                b.Property<int?>("診療収益")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("診療収益")
+                    .HasColumnOrder(3);
+
+                b.HasKey("年月", "診療科_診療科ID", "時間帯")
+                    .HasName("PK_V_時間帯別収益");
+
+                b.ToTable((string)null);
+
+                b.ToView("V_時間帯別収益", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.権限DbEntity", b => {
+                b.Property<string>("Parent_医療従事者ID")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<int>("権限レベル")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("AUTHORITY_LEVEL")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(3);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(5);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(4);
+
+                b.HasKey("Parent_医療従事者ID", "権限レベル")
+                    .HasName("PK_AUTHORITY");
+
+                b.ToTable("AUTHORITY", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.機器仕様DbEntity", b => {
+                b.Property<string>("Parent_Parent_機器ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_Parent_PRODUCT_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(3);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(5);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(4);
+
+                b.Property<int?>("重量")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("WEIGHT")
+                    .HasColumnOrder(1);
+
+                b.HasKey("Parent_Parent_機器ID")
+                    .HasName("PK_PRODUCT_SPEC");
+
+                b.ToTable("PRODUCT_SPEC", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.機器分類マスタDbEntity", b => {
+                b.Property<string>("機器分類ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CATEGORY_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(3);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(5);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(4);
+
+                b.Property<int>("Version")
+                    .IsConcurrencyToken()
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("Version")
+                    .HasColumnOrder(6);
+
+                b.Property<string>("機器分類名")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CATEGORY_NAME")
+                    .HasColumnOrder(1);
+
+                b.HasKey("機器分類ID")
+                    .HasName("PK_機器分類マスタ");
+
+                b.ToTable("機器分類マスタ", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.機器分類別収益SearchResult", b => {
+                b.Property<int>("年月")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("年月")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("診療科_診療科ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("診療科_STORE_ID")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("機器分類_機器分類ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("機器分類_CATEGORY_ID")
+                    .HasColumnOrder(2);
+
+                b.Property<decimal?>("収益構成比")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("収益構成比")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("機器分類_機器分類名")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("機器分類_CATEGORY_NAME")
+                    .HasColumnOrder(3);
+
+                b.Property<int?>("診療収益")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("診療収益")
+                    .HasColumnOrder(4);
+
+                b.HasKey("年月", "診療科_診療科ID", "機器分類_機器分類ID")
+                    .HasName("PK_V_機器分類別収益");
+
+                b.HasIndex("機器分類_機器分類ID");
+
+                b.ToTable((string)null);
+
+                b.ToView("V_機器分類別収益", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.機器分類別在庫集計ビューSearchResult", b => {
+                b.Property<string>("機器分類_機器分類ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CATEGORY_CATEGORY_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<int?>("在庫合計")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("TOTAL_STOCK")
+                    .HasColumnOrder(2);
+
+                b.Property<DateTime?>("最終更新日時")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("LAST_UPDATED")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("機器分類_機器分類名")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CATEGORY_CATEGORY_NAME")
+                    .HasColumnOrder(1);
+
+                b.Property<int?>("機器種別数")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("PRODUCT_COUNT")
+                    .HasColumnOrder(3);
+
+                b.HasKey("機器分類_機器分類ID")
+                    .HasName("PK_V_INVENTORY_BY_CATEGORY");
+
+                b.ToTable((string)null);
+
+                b.ToView("V_INVENTORY_BY_CATEGORY", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.機器別収益SearchResult", b => {
+                b.Property<int>("年月")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("年月")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("診療科_診療科ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("診療科_STORE_ID")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("機器分類_機器分類ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("機器分類_CATEGORY_ID")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("医療機器_機器ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("医療機器_PRODUCT_ID")
+                    .HasColumnOrder(3);
+
+                b.Property<int?>("使用回数")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("使用回数")
+                    .HasColumnOrder(19);
+
+                b.Property<string>("医療機器_供給業者_メールアドレス")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("医療機器_SUPPLIER_ID_EMAIL")
+                    .HasColumnOrder(12);
+
+                b.Property<string>("医療機器_供給業者_供給業者ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("医療機器_SUPPLIER_ID_SUPPLIER_ID")
+                    .HasColumnOrder(8);
+
+                b.Property<string>("医療機器_供給業者_供給業者名")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("医療機器_SUPPLIER_ID_SUPPLIER_NAME")
+                    .HasColumnOrder(9);
+
+                b.Property<string>("医療機器_供給業者_担当者名")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("医療機器_SUPPLIER_ID_CONTACT_PERSON")
+                    .HasColumnOrder(10);
+
+                b.Property<string>("医療機器_供給業者_電話番号")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("医療機器_SUPPLIER_ID_PHONE")
+                    .HasColumnOrder(11);
+
+                b.Property<int>("医療機器_単価")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("医療機器_PRICE")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("医療機器_機器分類_機器分類ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("医療機器_CATEGORY_ID_CATEGORY_ID")
+                    .HasColumnOrder(6);
+
+                b.Property<string>("医療機器_機器分類_機器分類名")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("医療機器_CATEGORY_ID_CATEGORY_NAME")
+                    .HasColumnOrder(7);
+
+                b.Property<string>("医療機器_機器名")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("医療機器_PRODUCT_NAME")
+                    .HasColumnOrder(4);
+
+                b.Property<int?>("医療機器_機器詳細_機器仕様_サイズ_奥行")
+                    .HasPrecision(16)
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("医療機器_機器詳細_機器仕様_サイズ_DEPTH")
+                    .HasColumnOrder(17);
+
+                b.Property<int?>("医療機器_機器詳細_機器仕様_サイズ_幅")
+                    .HasPrecision(16)
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("医療機器_機器詳細_機器仕様_サイズ_WIDTH")
+                    .HasColumnOrder(15);
+
+                b.Property<int?>("医療機器_機器詳細_機器仕様_サイズ_高さ")
+                    .HasPrecision(16)
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("医療機器_機器詳細_機器仕様_サイズ_HEIGHT")
+                    .HasColumnOrder(16);
+
+                b.Property<int?>("医療機器_機器詳細_機器仕様_重量")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("医療機器_機器詳細_機器仕様_WEIGHT")
+                    .HasColumnOrder(14);
+
+                b.Property<string>("医療機器_機器詳細_機器説明")
+                    .HasMaxLength(1000)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("医療機器_機器詳細_DESCRIPTION")
+                    .HasColumnOrder(13);
+
+                b.Property<int?>("平均単価")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("平均単価")
+                    .HasColumnOrder(20);
+
+                b.Property<int?>("診療収益")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("診療収益")
+                    .HasColumnOrder(18);
+
+                b.HasKey("年月", "診療科_診療科ID", "機器分類_機器分類ID", "医療機器_機器ID")
+                    .HasName("PK_V_機器別収益");
+
+                b.HasIndex("医療機器_機器ID");
+
+                b.ToTable((string)null);
+
+                b.ToView("V_機器別収益", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.機器点検報告DbEntity", b => {
+                b.Property<string>("対象機器_Parent_機器ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("対象機器_Parent_PRODUCT_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("対象機器_保管庫_保管庫ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("対象機器_保管庫_WAREHOUSE_ID")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(9);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(8);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(11);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(10);
+
+                b.Property<int>("Version")
+                    .IsConcurrencyToken()
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("Version")
+                    .HasColumnOrder(12);
+
+                b.Property<string>("写真URL")
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("PHOTO_URL")
+                    .HasColumnOrder(7);
+
+                b.Property<int?>("在庫差異")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("INVENTORY_DIFF")
+                    .HasColumnOrder(5);
+
+                b.Property<int>("実地確認数")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("ACTUAL_COUNT")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("点検メモ")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("SURVEY_NOTE")
+                    .HasColumnOrder(6);
+
+                b.Property<string>("点検担当者_医療従事者ID")
+                    .IsRequired()
+                    .HasColumnType("TEXT")
+                    .HasColumnName("点検担当者_ID")
+                    .HasColumnOrder(3);
+
+                b.Property<DateOnly>("点検日")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("SURVEY_DATE")
+                    .HasColumnOrder(2);
+
+                b.HasKey("対象機器_Parent_機器ID", "対象機器_保管庫_保管庫ID")
+                    .HasName("PK_機器点検報告");
+
+                b.HasIndex("点検担当者_医療従事者ID");
+
+                b.ToTable("機器点検報告", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.機器詳細DbEntity", b => {
+                b.Property<string>("Parent_機器ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_PRODUCT_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(3);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(5);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("機器説明")
+                    .HasMaxLength(1000)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("DESCRIPTION")
+                    .HasColumnOrder(1);
+
+                b.HasKey("Parent_機器ID")
+                    .HasName("PK_PRODUCT_DETAIL");
+
+                b.ToTable("PRODUCT_DETAIL", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.次回措置DbEntity", b => {
+                b.Property<string>("Parent_対象措置_Parent_対象機器_Parent_機器ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_対象措置_Parent_対象機器_Parent_PRODUCT_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("Parent_対象措置_Parent_対象機器_保管庫_保管庫ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_対象措置_Parent_対象機器_保管庫_WAREHOUSE_ID")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("Parent_対象措置_措置ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_対象措置_ACTION_ID")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(8);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(7);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(10);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(9);
+
+                b.Property<DateOnly?>("予定日")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("PLANNED_DATE")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("内容")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("NEXT_CONTENT")
+                    .HasColumnOrder(6);
+
+                b.Property<string>("担当者_医療従事者ID")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("担当者_ID")
+                    .HasColumnOrder(5);
+
+                b.Property<int?>("措置種別")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("NEXT_ACTION_TYPE")
+                    .HasColumnOrder(3);
+
+                b.HasKey("Parent_対象措置_Parent_対象機器_Parent_機器ID", "Parent_対象措置_Parent_対象機器_保管庫_保管庫ID", "Parent_対象措置_措置ID")
+                    .HasName("PK_NEXT_ACTION");
+
+                b.HasIndex("担当者_医療従事者ID");
+
+                b.ToTable("NEXT_ACTION", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.添付資料DbEntity", b => {
+                b.Property<string>("Parent_対象措置_Parent_対象機器_Parent_機器ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_対象措置_Parent_対象機器_Parent_PRODUCT_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("Parent_対象措置_Parent_対象機器_保管庫_保管庫ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_対象措置_Parent_対象機器_保管庫_WAREHOUSE_ID")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("Parent_対象措置_措置ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_対象措置_ACTION_ID")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("資料ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("DOCUMENT_ID")
+                    .HasColumnOrder(3);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(9);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(8);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(11);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(10);
+
+                b.Property<string>("ファイルパス")
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("FILE_PATH")
+                    .HasColumnOrder(6);
+
+                b.Property<DateTime?>("登録日時")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("REGISTER_DATETIME")
+                    .HasColumnOrder(7);
+
+                b.Property<string>("資料名")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("DOCUMENT_NAME")
+                    .HasColumnOrder(4);
+
+                b.Property<int?>("資料種別")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("DOCUMENT_TYPE")
+                    .HasColumnOrder(5);
+
+                b.HasKey("Parent_対象措置_Parent_対象機器_Parent_機器ID", "Parent_対象措置_Parent_対象機器_保管庫_保管庫ID", "Parent_対象措置_措置ID", "資料ID")
+                    .HasName("PK_ATTACHMENTS");
+
+                b.ToTable("ATTACHMENTS", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.紹介先住所DbEntity", b => {
+                b.Property<string>("Parent_Parent_診療ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_Parent_ORDER_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(6);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(8);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(7);
+
+                b.Property<string>("市区町村")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CITY")
+                    .HasColumnOrder(3);
+
+                b.Property<string>("番地建物名")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("ADDRESS_LINE")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("郵便番号")
+                    .HasMaxLength(8)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("POSTAL_CODE")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("都道府県")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("PREFECTURE")
+                    .HasColumnOrder(2);
+
+                b.HasKey("Parent_Parent_診療ID")
+                    .HasName("PK_SHIPPING_ADDRESS");
+
+                b.ToTable("SHIPPING_ADDRESS", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.紹介状情報DbEntity", b => {
+                b.Property<string>("Parent_診療ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_ORDER_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(3);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(5);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(4);
+
+                b.Property<int>("紹介方法")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("SHIPPING_METHOD")
+                    .HasColumnOrder(1);
+
+                b.HasKey("Parent_診療ID")
+                    .HasName("PK_SHIPPING_INFO");
+
+                b.ToTable("SHIPPING_INFO", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.紹介状況DbEntity", b => {
+                b.Property<string>("Parent_Parent_診療ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_Parent_ORDER_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<int>("ステータス")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("STATUS")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(5);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(7);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(6);
+
+                b.Property<string>("備考")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("REMARKS")
+                    .HasColumnOrder(3);
+
+                b.Property<DateTime?>("更新日時")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UPDATE_DATE")
+                    .HasColumnOrder(2);
+
+                b.HasKey("Parent_Parent_診療ID", "ステータス")
+                    .HasName("PK_SHIPPING_STATUS");
+
+                b.ToTable("SHIPPING_STATUS", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.診察記録DbEntity", b => {
+                b.Property<string>("予約_予約ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("予約_RESERVATION_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(8);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(7);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(10);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(9);
+
+                b.Property<int>("Version")
+                    .IsConcurrencyToken()
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("Version")
+                    .HasColumnOrder(11);
+
+                b.Property<decimal?>("体温")
+                    .HasPrecision(3, 1)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("TEMPERATURE")
+                    .HasColumnOrder(3);
+
+                b.Property<int?>("血圧上")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("BLOOD_PRESSURE_HIGH")
+                    .HasColumnOrder(4);
+
+                b.Property<int?>("血圧下")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("BLOOD_PRESSURE_LOW")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("診察メモ")
+                    .HasMaxLength(1000)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("NOTE")
+                    .HasColumnOrder(6);
+
+                b.Property<DateTime?>("診察終了時刻")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("END_TIME")
+                    .HasColumnOrder(2);
+
+                b.Property<DateTime?>("診察開始時刻")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("START_TIME")
+                    .HasColumnOrder(1);
+
+                b.HasKey("予約_予約ID")
+                    .HasName("PK_診察記録");
+
+                b.ToTable("診察記録", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.診療収益分析SearchResult", b => {
+                b.Property<int>("年月")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("年月")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("診療科_診療科ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("診療科_STORE_ID")
+                    .HasColumnOrder(1);
+
+                b.Property<int?>("患者単価")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("患者単価")
+                    .HasColumnOrder(16);
+
+                b.Property<int?>("患者数")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("患者数")
+                    .HasColumnOrder(15);
+
+                b.Property<int?>("診療収益合計")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("診療収益合計")
+                    .HasColumnOrder(14);
+
+                b.Property<string>("診療科_住所_市区町村")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("診療科_住所_CITY")
+                    .HasColumnOrder(6);
+
+                b.Property<string>("診療科_住所_番地建物名")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("診療科_住所_ADDRESS_LINE")
+                    .HasColumnOrder(7);
+
+                b.Property<string>("診療科_住所_郵便番号")
+                    .HasMaxLength(8)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("診療科_住所_POSTAL_CODE")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("診療科_住所_都道府県")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("診療科_住所_PREFECTURE")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("診療科_科長_医療従事者ID")
+                    .IsRequired()
+                    .HasColumnType("TEXT")
+                    .HasColumnName("診療科_MANAGER_ID_ID")
+                    .HasColumnOrder(10);
+
+                b.Property<string>("診療科_科長_氏名")
+                    .IsRequired()
+                    .HasMaxLength(40)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("診療科_MANAGER_ID_NAME")
+                    .HasColumnOrder(11);
+
+                b.Property<string>("診療科_科長_氏名カナ")
+                    .HasMaxLength(40)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("診療科_MANAGER_ID_NAME_KANA")
+                    .HasColumnOrder(12);
+
+                b.Property<DateOnly?>("診療科_科長_退職日")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("診療科_MANAGER_ID_TAISHOKU")
+                    .HasColumnOrder(13);
+
+                b.Property<string>("診療科_診療時間_終了時間")
+                    .HasMaxLength(5)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("診療科_診療時間_CLOSING_TIME")
+                    .HasColumnOrder(9);
+
+                b.Property<string>("診療科_診療時間_開始時間")
+                    .HasMaxLength(5)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("診療科_診療時間_OPENING_TIME")
+                    .HasColumnOrder(8);
+
+                b.Property<string>("診療科_診療科名")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("診療科_STORE_NAME")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("診療科_電話番号")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("診療科_PHONE")
+                    .HasColumnOrder(3);
+
+                b.HasKey("年月", "診療科_診療科ID")
+                    .HasName("PK_V_診療収益分析");
+
+                b.HasIndex("診療科_診療科ID");
+
+                b.ToTable((string)null);
+
+                b.ToView("V_診療収益分析", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.診療履歴DbEntity", b => {
+                b.Property<string>("診療ID")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("ORDER_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(6);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(8);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(7);
+
+                b.Property<int>("Version")
+                    .IsConcurrencyToken()
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("Version")
+                    .HasColumnOrder(9);
+
+                b.Property<string>("患者_患者ID")
+                    .IsRequired()
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("患者_CUSTOMER_ID")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("担当医_医療従事者ID")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("担当医_ID")
+                    .HasColumnOrder(4);
+
+                b.Property<DateTime>("診療日時")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("ORDER_DATE")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("診療科_診療科ID")
+                    .IsRequired()
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("診療科_STORE_ID")
+                    .HasColumnOrder(3);
+
+                b.HasKey("診療ID")
+                    .HasName("PK_診療履歴");
+
+                b.HasIndex("患者_患者ID");
+
+                b.HasIndex("担当医_医療従事者ID");
+
+                b.HasIndex("診療科_診療科ID");
+
+                b.ToTable("診療履歴", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.診療時間DbEntity", b => {
+                b.Property<string>("Parent_診療科ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_STORE_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(4);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(3);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(6);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("終了時間")
+                    .HasMaxLength(5)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CLOSING_TIME")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("開始時間")
+                    .HasMaxLength(5)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("OPENING_TIME")
+                    .HasColumnOrder(1);
+
+                b.HasKey("Parent_診療科ID")
+                    .HasName("PK_BUSINESS_HOURS");
+
+                b.ToTable("BUSINESS_HOURS", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.診療科DbEntity", b => {
+                b.Property<string>("診療科コード")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("BUSHO_CD")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(3);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(5);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(4);
+
+                b.Property<int>("Version")
+                    .IsConcurrencyToken()
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("Version")
+                    .HasColumnOrder(6);
+
+                b.Property<string>("診療科名")
+                    .IsRequired()
+                    .HasMaxLength(40)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("BUSHO_NAME")
+                    .HasColumnOrder(1);
+
+                b.HasKey("診療科コード")
+                    .HasName("PK_BUSHO");
+
+                b.ToTable("BUSHO", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.診療科マスタDbEntity", b => {
+                b.Property<string>("診療科ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("STORE_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(5);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(7);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(6);
+
+                b.Property<int>("Version")
+                    .IsConcurrencyToken()
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("Version")
+                    .HasColumnOrder(8);
+
+                b.Property<string>("科長_医療従事者ID")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("科長_ID")
+                    .HasColumnOrder(3);
+
+                b.Property<string>("診療科名")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("STORE_NAME")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("電話番号")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("PHONE")
+                    .HasColumnOrder(2);
+
+                b.HasKey("診療科ID")
+                    .HasName("PK_診療科マスタ");
+
+                b.HasIndex("科長_医療従事者ID");
+
+                b.ToTable("診療科マスタ", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.診療科マスタの住所DbEntity", b => {
+                b.Property<string>("Parent_診療科ID")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_STORE_ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(6);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(8);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(7);
+
+                b.Property<string>("市区町村")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CITY")
+                    .HasColumnOrder(3);
+
+                b.Property<string>("番地建物名")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("ADDRESS_LINE")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("郵便番号")
+                    .HasMaxLength(8)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("POSTAL_CODE")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("都道府県")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("PREFECTURE")
+                    .HasColumnOrder(2);
+
+                b.HasKey("Parent_診療科ID")
+                    .HasName("PK_STORE_ADDRESS");
+
+                b.ToTable("STORE_ADDRESS", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.診療科別患者統計ビューSearchResult", b => {
+                b.Property<int?>("今月の新規患者数")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("NEW_PATIENTS_THIS_MONTH")
+                    .HasColumnOrder(3);
+
+                b.Property<decimal?>("平均年齢")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("AVG_AGE")
+                    .HasColumnOrder(4);
+
+                b.Property<int?>("患者総数")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("TOTAL_PATIENTS")
+                    .HasColumnOrder(2);
+
+                b.Property<DateTime?>("統計日時")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("STATS_DATETIME")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("診療科コード")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("DEPT_CODE")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("診療科名")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("DEPT_NAME")
+                    .HasColumnOrder(1);
+
+                b.ToTable((string)null);
+
+                b.ToView("V_PATIENT_STATS_BY_DEPT", (string)null);
+            });
+
+            modelBuilder.Entity("MyApp.カード情報DbEntity", b => {
+                b.HasOne("MyApp.会計情報DbEntity", "Parent")
+                    .WithOne("カード情報")
+                    .HasForeignKey("MyApp.カード情報DbEntity", "Parent_Parent_診療ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_PAYMENT_INFO_CARD_INFO");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.サイズDbEntity", b => {
+                b.HasOne("MyApp.機器仕様DbEntity", "Parent")
+                    .WithOne("サイズ")
+                    .HasForeignKey("MyApp.サイズDbEntity", "Parent_Parent_Parent_機器ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_PRODUCT_SPEC_SIZE");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.予約DbEntity", b => {
+                b.HasOne("MyApp.患者マスタDbEntity", "患者")
+                    .WithMany("RefFrom予約_患者")
+                    .HasForeignKey("患者_患者ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_患者マスタ_予約_XFB576B4");
+
+                b.HasOne("MyApp.医療従事者マスタDbEntity", "担当医")
+                    .WithMany("RefFrom予約_担当医")
+                    .HasForeignKey("担当医_医療従事者ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .HasConstraintName("FK_EMPLOYEE_予約_XDECF289");
+
+                b.Navigation("患者");
+
+                b.Navigation("担当医");
+            });
+
+            modelBuilder.Entity("MyApp.付属品DbEntity", b => {
+                b.HasOne("MyApp.機器詳細DbEntity", "Parent")
+                    .WithMany("付属品")
+                    .HasForeignKey("Parent_Parent_機器ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_PRODUCT_DETAIL_ACCESSORIES");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.会計情報DbEntity", b => {
+                b.HasOne("MyApp.診療履歴DbEntity", "Parent")
+                    .WithOne("会計情報")
+                    .HasForeignKey("MyApp.会計情報DbEntity", "Parent_診療ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_診療履歴_PAYMENT_INFO");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.保管庫マスタDbEntity", b => {
+                b.HasOne("MyApp.医療従事者マスタDbEntity", "管理責任者")
+                    .WithMany("RefFrom保管庫マスタ_管理責任者")
+                    .HasForeignKey("管理責任者_医療従事者ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .HasConstraintName("FK_EMPLOYEE_保管庫マスタ_XD847631");
+
+                b.Navigation("管理責任者");
+            });
+
+            modelBuilder.Entity("MyApp.保管庫マスタの住所DbEntity", b => {
+                b.HasOne("MyApp.保管庫マスタDbEntity", "Parent")
+                    .WithOne("保管庫マスタの住所")
+                    .HasForeignKey("MyApp.保管庫マスタの住所DbEntity", "Parent_保管庫ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_保管庫マスタ_WAREHOUSE_ADDRESS");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.保管庫別在庫SearchResult", b => {
+                b.HasOne("MyApp.保管庫マスタDbEntity", "保管庫")
+                    .WithMany("RefFrom保管庫別在庫_保管庫")
+                    .HasForeignKey("保管庫_保管庫ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_保管庫マスタ_WAREHOUSE_INVENTORY_X48C69C7");
+
+                b.HasOne("MyApp.機器分類別在庫集計ビューSearchResult", "Parent")
+                    .WithMany("保管庫別在庫")
+                    .HasForeignKey("機器分類_機器分類ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_V_INVENTORY_BY_CATEGORY_WAREHOUSE_INVENTORY");
+
+                b.Navigation("Parent");
+
+                b.Navigation("保管庫");
+            });
+
+            modelBuilder.Entity("MyApp.保険適用情報DbEntity", b => {
+                b.HasOne("MyApp.処置明細DbEntity", "Parent")
+                    .WithOne("保険適用情報")
+                    .HasForeignKey("MyApp.保険適用情報DbEntity", "Parent_Parent_診療ID", "Parent_医療機器_機器ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_ORDER_DETAILS_DISCOUNT_INFO");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.処方薬DbEntity", b => {
+                b.HasOne("MyApp.診察記録DbEntity", "Parent")
+                    .WithMany("処方薬")
+                    .HasForeignKey("Parent_予約_予約ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_診察記録_PRESCRIPTIONS");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.処置明細DbEntity", b => {
+                b.HasOne("MyApp.診療履歴DbEntity", "Parent")
+                    .WithMany("処置明細")
+                    .HasForeignKey("Parent_診療ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_診療履歴_ORDER_DETAILS");
+
+                b.HasOne("MyApp.医療機器マスタDbEntity", "医療機器")
+                    .WithMany("RefFrom処置明細_医療機器")
+                    .HasForeignKey("医療機器_機器ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_医療機器マスタ_ORDER_DETAILS_X5D5C85D");
+
+                b.Navigation("Parent");
+
+                b.Navigation("医療機器");
+            });
+
+            modelBuilder.Entity("MyApp.勤務スケジュールDbEntity", b => {
+                b.HasOne("MyApp.医療従事者マスタDbEntity", "医療従事者")
+                    .WithMany("RefFrom勤務スケジュール_医療従事者")
+                    .HasForeignKey("医療従事者_医療従事者ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_EMPLOYEE_勤務スケジュール_X30E339A");
+
+                b.HasOne("MyApp.診療科マスタDbEntity", "診療科")
+                    .WithMany("RefFrom勤務スケジュール_診療科")
+                    .HasForeignKey("診療科_診療科ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_診療科マスタ_勤務スケジュール_X6518C1A");
+
+                b.Navigation("医療従事者");
+
+                b.Navigation("診療科");
+            });
+
+            modelBuilder.Entity("MyApp.医療従事者プロフィールDbEntity", b => {
+                b.HasOne("MyApp.医療従事者マスタDbEntity", "医療従事者")
+                    .WithOne("RefFrom医療従事者プロフィール_医療従事者")
+                    .HasForeignKey("MyApp.医療従事者プロフィールDbEntity", "医療従事者_医療従事者ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_EMPLOYEE_医療従事者プロフィール_X30E339A");
+
+                b.Navigation("医療従事者");
+            });
+
+            modelBuilder.Entity("MyApp.医療機器マスタDbEntity", b => {
+                b.HasOne("MyApp.供給業者マスタDbEntity", "供給業者")
+                    .WithMany("RefFrom医療機器マスタ_供給業者")
+                    .HasForeignKey("供給業者_供給業者ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .HasConstraintName("FK_供給業者マスタ_医療機器マスタ_X89DCA22");
+
+                b.HasOne("MyApp.機器分類マスタDbEntity", "機器分類")
+                    .WithMany("RefFrom医療機器マスタ_機器分類")
+                    .HasForeignKey("機器分類_機器分類ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_機器分類マスタ_医療機器マスタ_X7D2BEB8");
+
+                b.Navigation("供給業者");
+
+                b.Navigation("機器分類");
+            });
+
+            modelBuilder.Entity("MyApp.医療資格DbEntity", b => {
+                b.HasOne("MyApp.医療従事者プロフィールDbEntity", "Parent")
+                    .WithMany("医療資格")
+                    .HasForeignKey("Parent_医療従事者_医療従事者ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_医療従事者プロフィール_QUALIFICATIONS");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.在庫情報DbEntity", b => {
+                b.HasOne("MyApp.医療機器マスタDbEntity", "Parent")
+                    .WithMany("在庫情報")
+                    .HasForeignKey("Parent_機器ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_医療機器マスタ_INVENTORY");
+
+                b.HasOne("MyApp.保管庫マスタDbEntity", "保管庫")
+                    .WithMany("RefFrom在庫情報_保管庫")
+                    .HasForeignKey("保管庫_保管庫ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_保管庫マスタ_INVENTORY_X48C69C7");
+
+                b.Navigation("Parent");
+
+                b.Navigation("保管庫");
+            });
+
+            modelBuilder.Entity("MyApp.在庫状況履歴DbEntity", b => {
+                b.HasOne("MyApp.医療従事者マスタDbEntity", "担当者")
+                    .WithMany("RefFrom在庫状況履歴_担当者")
+                    .HasForeignKey("担当者_医療従事者ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .HasConstraintName("FK_EMPLOYEE_STOCK_HISTORY_XB332A41");
+
+                b.HasOne("MyApp.在庫情報DbEntity", "Parent")
+                    .WithMany("在庫状況履歴")
+                    .HasForeignKey("Parent_Parent_機器ID", "Parent_保管庫_保管庫ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_INVENTORY_STOCK_HISTORY");
+
+                b.Navigation("Parent");
+
+                b.Navigation("担当者");
+            });
+
+            modelBuilder.Entity("MyApp.対応措置DbEntity", b => {
+                b.HasOne("MyApp.医療従事者マスタDbEntity", "実施担当者")
+                    .WithMany("RefFrom対応措置_実施担当者")
+                    .HasForeignKey("実施担当者_医療従事者ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .HasConstraintName("FK_EMPLOYEE_ACTIONS_X4FD1CEF");
+
+                b.HasOne("MyApp.機器点検報告DbEntity", "Parent")
+                    .WithMany("対応措置")
+                    .HasForeignKey("Parent_対象機器_Parent_機器ID", "Parent_対象機器_保管庫_保管庫ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_機器点検報告_ACTIONS");
+
+                b.Navigation("Parent");
+
+                b.Navigation("実施担当者");
+            });
+
+            modelBuilder.Entity("MyApp.患者マスタの住所DbEntity", b => {
+                b.HasOne("MyApp.患者マスタDbEntity", "Parent")
+                    .WithOne("患者マスタの住所")
+                    .HasForeignKey("MyApp.患者マスタの住所DbEntity", "Parent_患者ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_患者マスタ_CUSTOMER_ADDRESS");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.患者情報DbEntity", b => {
+                b.HasOne("MyApp.患者マスタDbEntity", "Parent")
+                    .WithOne("患者情報")
+                    .HasForeignKey("MyApp.患者情報DbEntity", "Parent_患者ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_患者マスタ_MEMBERSHIP");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.患者情報の診療履歴DbEntity", b => {
+                b.HasOne("MyApp.患者情報DbEntity", "Parent")
+                    .WithMany("患者情報の診療履歴")
+                    .HasForeignKey("Parent_Parent_患者ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_MEMBERSHIP_POINT_HISTORY");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.所属診療科DbEntity", b => {
+                b.HasOne("MyApp.医療従事者マスタDbEntity", "Parent")
+                    .WithMany("所属診療科")
+                    .HasForeignKey("Parent_医療従事者ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_EMPLOYEE_SHOZOKU");
+
+                b.HasOne("MyApp.診療科DbEntity", "診療科")
+                    .WithMany("RefFrom所属診療科_診療科")
+                    .HasForeignKey("診療科_診療科コード")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_BUSHO_SHOZOKU_X6518C1A");
+
+                b.Navigation("Parent");
+
+                b.Navigation("診療科");
+            });
+
+            modelBuilder.Entity("MyApp.措置結果DbEntity", b => {
+                b.HasOne("MyApp.医療従事者マスタDbEntity", "結果担当者")
+                    .WithMany("RefFrom措置結果_結果担当者")
+                    .HasForeignKey("結果担当者_医療従事者ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_EMPLOYEE_措置結果_XD70B07D");
+
+                b.HasOne("MyApp.対応措置DbEntity", "対象措置")
+                    .WithOne("RefFrom措置結果_対象措置")
+                    .HasForeignKey("MyApp.措置結果DbEntity", "対象措置_Parent_対象機器_Parent_機器ID", "対象措置_Parent_対象機器_保管庫_保管庫ID", "対象措置_措置ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_ACTIONS_措置結果_XFDF1611");
+
+                b.Navigation("対象措置");
+
+                b.Navigation("結果担当者");
+            });
+
+            modelBuilder.Entity("MyApp.時間帯別収益SearchResult", b => {
+                b.HasOne("MyApp.診療収益分析SearchResult", "Parent")
+                    .WithMany("時間帯別収益")
+                    .HasForeignKey("年月", "診療科_診療科ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_V_診療収益分析_V_時間帯別収益");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.権限DbEntity", b => {
+                b.HasOne("MyApp.医療従事者マスタDbEntity", "Parent")
+                    .WithMany("権限")
+                    .HasForeignKey("Parent_医療従事者ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_EMPLOYEE_AUTHORITY");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.機器仕様DbEntity", b => {
+                b.HasOne("MyApp.機器詳細DbEntity", "Parent")
+                    .WithOne("機器仕様")
+                    .HasForeignKey("MyApp.機器仕様DbEntity", "Parent_Parent_機器ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_PRODUCT_DETAIL_PRODUCT_SPEC");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.機器分類別収益SearchResult", b => {
+                b.HasOne("MyApp.機器分類マスタDbEntity", "機器分類")
+                    .WithMany("RefFrom機器分類別収益_機器分類")
+                    .HasForeignKey("機器分類_機器分類ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_機器分類マスタ_V_機器分類別収益_X7D2BEB8");
+
+                b.HasOne("MyApp.診療収益分析SearchResult", "Parent")
+                    .WithMany("機器分類別収益")
+                    .HasForeignKey("年月", "診療科_診療科ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_V_診療収益分析_V_機器分類別収益");
+
+                b.Navigation("Parent");
+
+                b.Navigation("機器分類");
+            });
+
+            modelBuilder.Entity("MyApp.機器分類別在庫集計ビューSearchResult", b => {
+                b.HasOne("MyApp.機器分類マスタDbEntity", "機器分類")
+                    .WithOne("RefFrom機器分類別在庫集計ビュー_機器分類")
+                    .HasForeignKey("MyApp.機器分類別在庫集計ビューSearchResult", "機器分類_機器分類ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_機器分類マスタ_V_INVENTORY_BY_CATEGORY_X7D2BEB8");
+
+                b.Navigation("機器分類");
+            });
+
+            modelBuilder.Entity("MyApp.機器別収益SearchResult", b => {
+                b.HasOne("MyApp.医療機器マスタDbEntity", "医療機器")
+                    .WithMany("RefFrom機器別収益_医療機器")
+                    .HasForeignKey("医療機器_機器ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_医療機器マスタ_V_機器別収益_X5D5C85D");
+
+                b.HasOne("MyApp.機器分類別収益SearchResult", "Parent")
+                    .WithMany("機器別収益")
+                    .HasForeignKey("年月", "診療科_診療科ID", "機器分類_機器分類ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_V_機器分類別収益_V_機器別収益");
+
+                b.Navigation("Parent");
+
+                b.Navigation("医療機器");
+            });
+
+            modelBuilder.Entity("MyApp.機器点検報告DbEntity", b => {
+                b.HasOne("MyApp.医療従事者マスタDbEntity", "点検担当者")
+                    .WithMany("RefFrom機器点検報告_点検担当者")
+                    .HasForeignKey("点検担当者_医療従事者ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_EMPLOYEE_機器点検報告_XC084C68");
+
+                b.HasOne("MyApp.在庫情報DbEntity", "対象機器")
+                    .WithOne("RefFrom機器点検報告_対象機器")
+                    .HasForeignKey("MyApp.機器点検報告DbEntity", "対象機器_Parent_機器ID", "対象機器_保管庫_保管庫ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_INVENTORY_機器点検報告_X62E8D1C");
+
+                b.Navigation("対象機器");
+
+                b.Navigation("点検担当者");
+            });
+
+            modelBuilder.Entity("MyApp.機器詳細DbEntity", b => {
+                b.HasOne("MyApp.医療機器マスタDbEntity", "Parent")
+                    .WithOne("機器詳細")
+                    .HasForeignKey("MyApp.機器詳細DbEntity", "Parent_機器ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_医療機器マスタ_PRODUCT_DETAIL");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.次回措置DbEntity", b => {
+                b.HasOne("MyApp.医療従事者マスタDbEntity", "担当者")
+                    .WithMany("RefFrom次回措置_担当者")
+                    .HasForeignKey("担当者_医療従事者ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .HasConstraintName("FK_EMPLOYEE_NEXT_ACTION_XB332A41");
+
+                b.HasOne("MyApp.措置結果DbEntity", "Parent")
+                    .WithOne("次回措置")
+                    .HasForeignKey("MyApp.次回措置DbEntity", "Parent_対象措置_Parent_対象機器_Parent_機器ID", "Parent_対象措置_Parent_対象機器_保管庫_保管庫ID", "Parent_対象措置_措置ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_措置結果_NEXT_ACTION");
+
+                b.Navigation("Parent");
+
+                b.Navigation("担当者");
+            });
+
+            modelBuilder.Entity("MyApp.添付資料DbEntity", b => {
+                b.HasOne("MyApp.措置結果DbEntity", "Parent")
+                    .WithMany("添付資料")
+                    .HasForeignKey("Parent_対象措置_Parent_対象機器_Parent_機器ID", "Parent_対象措置_Parent_対象機器_保管庫_保管庫ID", "Parent_対象措置_措置ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_措置結果_ATTACHMENTS");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.紹介先住所DbEntity", b => {
+                b.HasOne("MyApp.紹介状情報DbEntity", "Parent")
+                    .WithOne("紹介先住所")
+                    .HasForeignKey("MyApp.紹介先住所DbEntity", "Parent_Parent_診療ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_SHIPPING_INFO_SHIPPING_ADDRESS");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.紹介状情報DbEntity", b => {
+                b.HasOne("MyApp.診療履歴DbEntity", "Parent")
+                    .WithOne("紹介状情報")
+                    .HasForeignKey("MyApp.紹介状情報DbEntity", "Parent_診療ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_診療履歴_SHIPPING_INFO");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.紹介状況DbEntity", b => {
+                b.HasOne("MyApp.紹介状情報DbEntity", "Parent")
+                    .WithMany("紹介状況")
+                    .HasForeignKey("Parent_Parent_診療ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_SHIPPING_INFO_SHIPPING_STATUS");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.診察記録DbEntity", b => {
+                b.HasOne("MyApp.予約DbEntity", "予約")
+                    .WithOne("RefFrom診察記録_予約")
+                    .HasForeignKey("MyApp.診察記録DbEntity", "予約_予約ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_予約_診察記録_XF01C7D4");
+
+                b.Navigation("予約");
+            });
+
+            modelBuilder.Entity("MyApp.診療収益分析SearchResult", b => {
+                b.HasOne("MyApp.診療科マスタDbEntity", "診療科")
+                    .WithMany("RefFrom診療収益分析_診療科")
+                    .HasForeignKey("診療科_診療科ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_診療科マスタ_V_診療収益分析_X6518C1A");
+
+                b.Navigation("診療科");
+            });
+
+            modelBuilder.Entity("MyApp.診療履歴DbEntity", b => {
+                b.HasOne("MyApp.患者マスタDbEntity", "患者")
+                    .WithMany("RefFrom診療履歴_患者")
+                    .HasForeignKey("患者_患者ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_患者マスタ_診療履歴_XFB576B4");
+
+                b.HasOne("MyApp.医療従事者マスタDbEntity", "担当医")
+                    .WithMany("RefFrom診療履歴_担当医")
+                    .HasForeignKey("担当医_医療従事者ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .HasConstraintName("FK_EMPLOYEE_診療履歴_XDECF289");
+
+                b.HasOne("MyApp.診療科マスタDbEntity", "診療科")
+                    .WithMany("RefFrom診療履歴_診療科")
+                    .HasForeignKey("診療科_診療科ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_診療科マスタ_診療履歴_X6518C1A");
+
+                b.Navigation("患者");
+
+                b.Navigation("担当医");
+
+                b.Navigation("診療科");
+            });
+
+            modelBuilder.Entity("MyApp.診療時間DbEntity", b => {
+                b.HasOne("MyApp.診療科マスタDbEntity", "Parent")
+                    .WithOne("診療時間")
+                    .HasForeignKey("MyApp.診療時間DbEntity", "Parent_診療科ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_診療科マスタ_BUSINESS_HOURS");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.診療科マスタDbEntity", b => {
+                b.HasOne("MyApp.医療従事者マスタDbEntity", "科長")
+                    .WithMany("RefFrom診療科マスタ_科長")
+                    .HasForeignKey("科長_医療従事者ID")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .HasConstraintName("FK_EMPLOYEE_診療科マスタ_X170D2D7");
+
+                b.Navigation("科長");
+            });
+
+            modelBuilder.Entity("MyApp.診療科マスタの住所DbEntity", b => {
+                b.HasOne("MyApp.診療科マスタDbEntity", "Parent")
+                    .WithOne("診療科マスタの住所")
+                    .HasForeignKey("MyApp.診療科マスタの住所DbEntity", "Parent_診療科ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_診療科マスタ_STORE_ADDRESS");
+
+                b.Navigation("Parent");
+            });
+
+            modelBuilder.Entity("MyApp.予約DbEntity", b => {
+                b.Navigation("RefFrom診察記録_予約");
+            });
+
+            modelBuilder.Entity("MyApp.会計情報DbEntity", b => {
+                b.Navigation("カード情報");
+            });
+
+            modelBuilder.Entity("MyApp.供給業者マスタDbEntity", b => {
+                b.Navigation("RefFrom医療機器マスタ_供給業者");
+            });
+
+            modelBuilder.Entity("MyApp.保管庫マスタDbEntity", b => {
+                b.Navigation("RefFrom保管庫別在庫_保管庫");
+
+                b.Navigation("RefFrom在庫情報_保管庫");
+
+                b.Navigation("保管庫マスタの住所");
+            });
+
+            modelBuilder.Entity("MyApp.処置明細DbEntity", b => {
+                b.Navigation("保険適用情報");
+            });
+
+            modelBuilder.Entity("MyApp.医療従事者プロフィールDbEntity", b => {
+                b.Navigation("医療資格");
+            });
+
+            modelBuilder.Entity("MyApp.医療従事者マスタDbEntity", b => {
+                b.Navigation("RefFrom予約_担当医");
+
+                b.Navigation("RefFrom保管庫マスタ_管理責任者");
+
+                b.Navigation("RefFrom勤務スケジュール_医療従事者");
+
+                b.Navigation("RefFrom医療従事者プロフィール_医療従事者");
+
+                b.Navigation("RefFrom在庫状況履歴_担当者");
+
+                b.Navigation("RefFrom対応措置_実施担当者");
+
+                b.Navigation("RefFrom措置結果_結果担当者");
+
+                b.Navigation("RefFrom機器点検報告_点検担当者");
+
+                b.Navigation("RefFrom次回措置_担当者");
+
+                b.Navigation("RefFrom診療履歴_担当医");
+
+                b.Navigation("RefFrom診療科マスタ_科長");
+
+                b.Navigation("所属診療科");
+
+                b.Navigation("権限");
+            });
+
+            modelBuilder.Entity("MyApp.医療機器マスタDbEntity", b => {
+                b.Navigation("RefFrom処置明細_医療機器");
+
+                b.Navigation("RefFrom機器別収益_医療機器");
+
+                b.Navigation("在庫情報");
+
+                b.Navigation("機器詳細");
+            });
+
+            modelBuilder.Entity("MyApp.在庫情報DbEntity", b => {
+                b.Navigation("RefFrom機器点検報告_対象機器");
+
+                b.Navigation("在庫状況履歴");
+            });
+
+            modelBuilder.Entity("MyApp.対応措置DbEntity", b => {
+                b.Navigation("RefFrom措置結果_対象措置");
+            });
+
+            modelBuilder.Entity("MyApp.患者マスタDbEntity", b => {
+                b.Navigation("RefFrom予約_患者");
+
+                b.Navigation("RefFrom診療履歴_患者");
+
+                b.Navigation("患者マスタの住所");
+
+                b.Navigation("患者情報");
+            });
+
+            modelBuilder.Entity("MyApp.患者情報DbEntity", b => {
+                b.Navigation("患者情報の診療履歴");
+            });
+
+            modelBuilder.Entity("MyApp.措置結果DbEntity", b => {
+                b.Navigation("次回措置");
+
+                b.Navigation("添付資料");
+            });
+
+            modelBuilder.Entity("MyApp.機器仕様DbEntity", b => {
+                b.Navigation("サイズ");
+            });
+
+            modelBuilder.Entity("MyApp.機器分類マスタDbEntity", b => {
+                b.Navigation("RefFrom医療機器マスタ_機器分類");
+
+                b.Navigation("RefFrom機器分類別収益_機器分類");
+
+                b.Navigation("RefFrom機器分類別在庫集計ビュー_機器分類");
+            });
+
+            modelBuilder.Entity("MyApp.機器分類別収益SearchResult", b => {
+                b.Navigation("機器別収益");
+            });
+
+            modelBuilder.Entity("MyApp.機器分類別在庫集計ビューSearchResult", b => {
+                b.Navigation("保管庫別在庫");
+            });
+
+            modelBuilder.Entity("MyApp.機器点検報告DbEntity", b => {
+                b.Navigation("対応措置");
+            });
+
+            modelBuilder.Entity("MyApp.機器詳細DbEntity", b => {
+                b.Navigation("付属品");
+
+                b.Navigation("機器仕様");
+            });
+
+            modelBuilder.Entity("MyApp.紹介状情報DbEntity", b => {
+                b.Navigation("紹介先住所");
+
+                b.Navigation("紹介状況");
+            });
+
+            modelBuilder.Entity("MyApp.診察記録DbEntity", b => {
+                b.Navigation("処方薬");
+            });
+
+            modelBuilder.Entity("MyApp.診療収益分析SearchResult", b => {
+                b.Navigation("時間帯別収益");
+
+                b.Navigation("機器分類別収益");
+            });
+
+            modelBuilder.Entity("MyApp.診療履歴DbEntity", b => {
+                b.Navigation("会計情報");
+
+                b.Navigation("処置明細");
+
+                b.Navigation("紹介状情報");
+            });
+
+            modelBuilder.Entity("MyApp.診療科DbEntity", b => {
+                b.Navigation("RefFrom所属診療科_診療科");
+            });
+
+            modelBuilder.Entity("MyApp.診療科マスタDbEntity", b => {
+                b.Navigation("RefFrom勤務スケジュール_診療科");
+
+                b.Navigation("RefFrom診療収益分析_診療科");
+
+                b.Navigation("RefFrom診療履歴_診療科");
+
+                b.Navigation("診療時間");
+
+                b.Navigation("診療科マスタの住所");
+            });
 #pragma warning restore 612, 618
         }
     }

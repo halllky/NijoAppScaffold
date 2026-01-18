@@ -1,6 +1,5 @@
 using Nijo.CodeGenerating;
 using Nijo.Util.DotnetEx;
-using Nijo.ImmutableSchema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,12 +10,8 @@ using System.Threading;
 namespace Nijo.Parts.CSharp {
     public class DbContextClass : IMultiAggregateSourceFile {
 
-        private const string ON_DBCONTEXT_MODEL_CREATING = "OnModelCreating";
-        private const string ON_DBCONTEXT_CONFIGURE_CONVENSIONS = "ConfigureConventions";
-        private const string ON_DBCONTEXT_CONFIGURING = "OnConfiguringDbContext";
-
         private readonly List<IEFCoreEntity> _efCoreEntities = [];
-        private readonly List<string> _configureConversions = [];
+        private readonly List<string> _additionalMethods = [];
         private readonly Lock _lock = new();
 
         internal DbContextClass AddEntities(IEnumerable<IEFCoreEntity> eFCoreEntities) {
@@ -25,60 +20,15 @@ namespace Nijo.Parts.CSharp {
                 return this;
             }
         }
-        public DbContextClass AddConfigureConventions(string sourceCode) {
+        public DbContextClass AddAdditionalMethod(string sourceCode) {
             lock (_lock) {
-                _configureConversions.Add(sourceCode);
+                _additionalMethods.Add(sourceCode);
                 return this;
             }
         }
 
         void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
-            ctx.Use<ApplicationConfigure>()
-
-                // 接続先設定
-                .AddCoreMethod($$"""
-                    /// <summary>
-                    /// DBコンテキストの OnConfiguring メソッドから呼ばれる。
-                    /// DB接続先設定などを行なう。
-                    /// </summary>
-                    public abstract void {{ON_DBCONTEXT_CONFIGURING}}(Microsoft.EntityFrameworkCore.DbContextOptionsBuilder optionsBuilder, Microsoft.Extensions.Logging.ILogger logger);
-                    """)
-
-                // DI設定
-                .AddCoreConfigureServices(services => $$"""
-                    // DBコンテキスト(Entity Framework Core)
-                    {{services}}.AddDbContext<{{ctx.Config.DbContextName}}>(ConfigureDbContext);
-                    """)
-                .AddCoreMethod($$"""
-                    /// <summary>
-                    /// DBコンテキスト(Entity Framework Core)
-                    /// </summary>
-                    protected abstract void ConfigureDbContext(IServiceProvider services, Microsoft.EntityFrameworkCore.DbContextOptionsBuilder options);
-                    """)
-
-                // 生成後のプロジェクトでOnModelCreating等をカスタマイズできるようにしておく
-                .AddCoreMethod($$"""
-                    /// <summary>
-                    /// Entity Framework Core の定義にカスタマイズを加えます。
-                    /// 既定のモデル定義処理の一番最後に呼ばれます。
-                    /// データベース全体に対する設定を行なうことを想定しています。
-                    /// （例えば、全テーブルの列挙体のDB保存される型を数値でなく文字列にするなど）
-                    /// </summary>
-                    /// <param name="modelBuilder">モデルビルダー。Entity Framework Core 公式の解説を参照のこと。</param>
-                    public virtual void {{ON_DBCONTEXT_MODEL_CREATING}}(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder) {
-                        // 何か処理がある場合はこのメソッドをオーバーライドして記述してください。
-                    }
-                    """)
-                .AddCoreMethod($$"""
-                    /// <summary>
-                    /// Entity Framework Core の <see cref="DbContext.ConfigureConventions"/> メソッドから呼ばれます。
-                    /// 主にC#の値とDBのカラムの値の変換処理を定義します。
-                    /// </summary>
-                    /// <param name="configurationBuilder">Entity Framework Core 公式の解説を参照のこと。</param>
-                    public virtual void {{ON_DBCONTEXT_CONFIGURE_CONVENSIONS}}(Microsoft.EntityFrameworkCore.ModelConfigurationBuilder configurationBuilder) {
-                        // 何か処理がある場合はこのメソッドをオーバーライドして記述してください。
-                    }
-                    """);
+            // 特になし
         }
 
         void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
@@ -99,27 +49,19 @@ namespace Nijo.Parts.CSharp {
                 FileName = $"{ctx.Config.DbContextName.ToFileNameSafe()}.cs",
                 Contents = $$"""
                     using Microsoft.EntityFrameworkCore;
-                    using Microsoft.Extensions.Logging;
 
                     namespace {{ctx.Config.RootNamespace}};
 
-                    public partial class {{ctx.Config.DbContextName}} : DbContext {
+                    public abstract partial class {{ctx.Config.DbContextName}} : DbContext {
 
                     #pragma warning disable CS8618 // DbSetはEFCore側で自動的に設定されるため問題なし
                         /// <summary>
                         /// DBコンテキスト。Entity Framework Core の中核的な仕組み。
                         /// </summary>
                         /// <param name="options">EFCoreのオプション</param>
-                        /// <param name="nijoConfig">ソースコード自動生成に関するオプション</param>
-                        /// <param name="logger">SQLのログ出力用</param>
-                        public {{ctx.Config.DbContextName}}(DbContextOptions<{{ctx.Config.DbContextName}}> options, {{ApplicationConfigure.ABSTRACT_CLASS_CORE}} nijoConfig, Microsoft.Extensions.Logging.ILogger<{{ctx.Config.DbContextName}}> logger) : base(options) {
-                            _nijoConfig = nijoConfig;
-                            _logger = logger;
+                        public {{ctx.Config.DbContextName}}(DbContextOptions options) : base(options) {
                         }
                     #pragma warning restore CS8618 // DbSetはEFCore側で自動的に設定されるため問題なし
-
-                        private readonly {{ApplicationConfigure.ABSTRACT_CLASS_CORE}} _nijoConfig;
-                        private readonly Microsoft.Extensions.Logging.ILogger _logger;
 
                     {{efCoreEntitiesOrderByDataFlow.SelectTextTemplate(entity => $$"""
                         public virtual DbSet<{{entity.CsClassName}}> {{entity.DbSetName}} { get; set; }
@@ -127,31 +69,14 @@ namespace Nijo.Parts.CSharp {
 
                         /// <inheritdoc />
                         protected override void OnModelCreating(ModelBuilder modelBuilder) {
-                            try {
-                                // 集約ごとのモデル定義
                     {{efCoreEntitiesOrderByDataFlow.SelectTextTemplate(entity => $$"""
-                                _nijoConfig.{{entity.OnModelCreatingAutoGenerated}}(this, modelBuilder);
+                            {{entity.OnModelCreatingAutoGenerated}}(modelBuilder);
                     """)}}
-
-                                // モデル定義のカスタマイズ
-                                _nijoConfig.{{ON_DBCONTEXT_MODEL_CREATING}}(modelBuilder);
-
-                            } catch (Exception ex) {
-                                _logger.LogError(ex, "Error in OnModelCreating");
-                                throw;
-                            }
                         }
+                    {{_additionalMethods.SelectTextTemplate(method => $$"""
 
-                        /// <inheritdoc />
-                        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder) {
-                            _nijoConfig.{{ON_DBCONTEXT_CONFIGURE_CONVENSIONS}}(configurationBuilder);
-                        }
-
-                        /// <inheritdoc />
-                        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
-                            _nijoConfig.{{ON_DBCONTEXT_CONFIGURING}}(optionsBuilder, _logger);
-                        }
-
+                        {{WithIndent(method, "    ")}}
+                    """)}}
                     }
                     """,
             };
