@@ -56,8 +56,7 @@ namespace Nijo.Models.DataModelModules {
                 })
                 .ToArray();
 
-            return $$"""
-                #region 更新処理
+            var xmlComment = $$"""
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の更新を実行します。
                 /// </summary>
@@ -69,19 +68,24 @@ namespace Nijo.Models.DataModelModules {
                 /// GUIでの更新の場合は更新時ではなく画面表示時のバージョンを指定してください。
                 /// nullの場合は最新のバージョンに対して更新をかけます。
                 /// </param>
-                /// <param name="updater">更新関数。引数は更新前の値。この関数の中で更新したいプロパティを書き換えてください。</param>
+                /// <param name="updater">更新関数。引数は更新前の値。この関数の中で更新したいプロパティを書き換えてください。非同期処理がある場合は async / await を使用できます。</param>
                 /// <param name="context">コンテキスト</param>
                 /// <param name="messageOwner">
                 /// エラーメッセージを特定の位置に付加したい場合は指定する。
                 /// nullの場合はコンテキストのルートに付加される。
                 /// </param>
                 /// <returns>エラーがあった場合やエラーチェックのみの場合はfalseを、正常終了した場合はtrueと更新後のデータを返す。</returns>
+                """;
+
+            return $$"""
+                #region 更新処理
+                {{xmlComment}}
                 public virtual async Task<DataModelSaveResult<{{dbEntity.CsClassName}}>> {{MethodName}}(
                 {{keys.SelectTextTemplate(k => $$"""
                     {{k.ArgVarType.CsDomainTypeName}}? {{k.ArgVarName}},
                 """)}}
                     int? version,
-                    Action<{{command.CsClassNameUpdate}}> updater,
+                    Func<{{command.CsClassNameUpdate}}, Task> updater,
                     {{PresentationContext.INTERFACE}} context,
                     {{MessageContainer.SETTER_INTERFACE}}? messageOwner = null) {
 
@@ -118,7 +122,7 @@ namespace Nijo.Models.DataModelModules {
 
                     // 値の書き換え
                     var command = {{command.CsClassNameUpdate}}.{{SaveCommand.FROM_DBENTITY}}(beforeDbEntity);
-                    updater(command);
+                    await updater(command);
                     var afterDbEntity = command.{{SaveCommand.TO_DBENTITY}}();
 
                     // 自動的に登録される項目
@@ -212,6 +216,30 @@ namespace Nijo.Models.DataModelModules {
 
                     return new(DataModelSaveResultType.Completed, null, afterDbEntity);
                 }
+                {{xmlComment}}
+                public virtual Task<DataModelSaveResult<{{dbEntity.CsClassName}}>> {{MethodName}}(
+                {{keys.SelectTextTemplate(k => $$"""
+                    {{k.ArgVarType.CsDomainTypeName}}? {{k.ArgVarName}},
+                """)}}
+                    int? version,
+                    Action<{{command.CsClassNameUpdate}}> updater,
+                    {{PresentationContext.INTERFACE}} context,
+                    {{MessageContainer.SETTER_INTERFACE}}? messageOwner = null) {
+
+                    // 非同期版のオーバーロードに委譲
+                    return {{MethodName}}(
+                {{keys.SelectTextTemplate(k => $$"""
+                        {{k.ArgVarName}},
+                """)}}
+                        version,
+                        command => {
+                            updater(command);
+                            return Task.CompletedTask;
+                        },
+                        context,
+                        messageOwner);
+                }
+
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の更新の確定前に実行される処理。
                 /// このメソッドの中でエラーが追加された場合、{{_rootAggregate.DisplayName}} の更新は中断される。
