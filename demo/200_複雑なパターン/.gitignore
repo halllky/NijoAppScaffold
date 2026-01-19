@@ -16,6 +16,10 @@ appsettings.Development.json
 *.sqlite3-shm
 *.sqlite3-wal
 
+# ログ
+/UnitTest.Log
+/WebApi.Log
+
 # globs
 Makefile.in
 *.userprefs

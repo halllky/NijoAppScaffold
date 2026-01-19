@@ -17,9 +17,7 @@ partial class OverridedApplicationService {
         }
 
         // トランザクションの範囲は入荷ヘッダ更新から入荷明細登録まで
-        using var tran = context.ValidationOnly
-            ? null
-            : await DbContext.Database.BeginTransactionAsync();
+        await using var tran = await BeginTransactionAsync();
 
         // ヘッダ更新
         var updateHeaderResult = await Update入荷Async(param.Values.入荷ID, param.Values.Version, header => {
@@ -117,7 +115,7 @@ partial class OverridedApplicationService {
             return;
         }
 
-        if (tran != null && !context.Messages.HasError()) {
+        if (!context.ValidationOnly && !context.Messages.HasError()) {
             await tran.CommitAsync();
         }
     }

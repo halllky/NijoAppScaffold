@@ -12,6 +12,12 @@ public interface I商品管理システム {
     /// 最新の商品データを取得して返します。
     /// </summary>
     IEnumerable<ProductImportData> Enumerate商品データ();
+    /// <summary>
+    /// 在庫数量を更新します。
+    /// </summary>
+    /// <param name="externalProductId">外部システムの商品ID</param>
+    /// <param name="newStockQuantity">新しい在庫数量</param>
+    Task Update在庫数量Async(string externalProductId, int newStockQuantity);
 }
 
 /// <summary>
@@ -25,16 +31,9 @@ public class ProductImportData {
 }
 
 /// <summary>
-/// appsettings.json の商品管理システム設定セクションに対応する設定クラス
+/// こちらのシステムが在庫数量更新を通知する際のインターフェースの型
 /// </summary>
-public class 商品管理システムSettings {
-    /// <summary>
-    /// モックを使う場合は true。本番環境では false。
-    /// この値をもとにDIコンテナで登録するクラスを切り替える。
-    /// </summary>
-    public bool UseMock { get; set; } = true;
-    /// <summary>
-    /// モックJSONデータのパス
-    /// </summary>
-    public string MockJsonPath { get; set; } = string.Empty;
+public class QuantityUpdateInterfaceType {
+    public int NewQuantity { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }

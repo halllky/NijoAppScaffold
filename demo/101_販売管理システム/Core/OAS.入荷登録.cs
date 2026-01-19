@@ -11,9 +11,7 @@ partial class OverridedApplicationService {
         }
 
         // ヘッダと明細で1つのトランザクション
-        using var tran = context.ValidationOnly
-            ? null
-            : await DbContext.Database.BeginTransactionAsync();
+        await using var tran = await BeginTransactionAsync();
 
         // 入荷ヘッダの登録
         var newId = Guid.NewGuid().ToString();
@@ -54,7 +52,7 @@ partial class OverridedApplicationService {
         }
 
         // すべてのヘッダ・明細の登録が成功したらコミット
-        if (tran != null && headerResult.Result == DataModelSaveResultType.Completed && !hasErrorInDetail) {
+        if (!context.ValidationOnly && headerResult.Result == DataModelSaveResultType.Completed && !hasErrorInDetail) {
             await tran.CommitAsync();
         }
     }

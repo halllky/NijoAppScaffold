@@ -7,14 +7,11 @@ namespace MyApp;
 partial class OverridedApplicationService {
     public override async Task Execute商品データ取込(IPresentationContext<MessageSetter> context) {
 
-        // 外部システムとのインターフェースはDIコンテナで解決される
-        var shohinKanriSystem = ServiceProvider.GetRequiredService<Core.外部システム.商品管理システム.I商品管理システム>();
-
-        foreach (var item in shohinKanriSystem.Enumerate商品データ()) {
+        foreach (var item in 商品管理システム.Enumerate商品データ()) {
             Log.LogInformation($"処理開始: {item.Name} ({item.ExternalId})");
 
             // トランザクションの範囲は商品1件
-            using var tran = await DbContext.Database.BeginTransactionAsync();
+            await using var tran = await BeginTransactionAsync();
             DataModelSaveResult<商品DbEntity> result;
 
             // 外部システムIDで検索
@@ -46,7 +43,7 @@ partial class OverridedApplicationService {
                 }, context);
             }
 
-            if (result.Result == DataModelSaveResultType.Completed) {
+            if (!context.ValidationOnly && result.Result == DataModelSaveResultType.Completed) {
                 await tran.CommitAsync();
             }
         }

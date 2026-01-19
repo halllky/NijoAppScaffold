@@ -17,9 +17,7 @@ partial class OverridedApplicationService {
 
             // トランザクションの範囲は従業員1名ずつ。
             // 「保存しますか？」の確認前はエラーチェックのみなのでトランザクションは開始しない。
-            using var tran = context.ValidationOnly
-                ? null
-                : await DbContext.Database.BeginTransactionAsync();
+            await using var tran = await BeginTransactionAsync();
 
             var item = param.更新対象従業員一覧[i];
             var message = context.Messages.更新対象従業員一覧[i];
@@ -71,7 +69,7 @@ partial class OverridedApplicationService {
                 continue;
             }
 
-            if (tran != null && success) {
+            if (!context.ValidationOnly && success) {
                 await tran.CommitAsync();
             }
         }

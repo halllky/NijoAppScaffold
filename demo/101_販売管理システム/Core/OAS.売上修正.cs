@@ -177,7 +177,7 @@ partial class OverridedApplicationService {
         }
 
         // 保存処理
-        using var tran = await DbContext.Database.BeginTransactionAsync();
+        await using var tran = await BeginTransactionAsync();
 
         var updateResult = await Update売上Async(param.Values.売上SEQ, null, command => {
             // 備考の更新

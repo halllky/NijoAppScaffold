@@ -93,7 +93,7 @@ partial class OverridedApplicationService {
         }
 
         // 保存処理
-        using var tran = await DbContext.Database.BeginTransactionAsync();
+        await using var tran = await BeginTransactionAsync();
 
         // 念のため自動計算分の売上総額を再計算しておく
         Simulate(param);

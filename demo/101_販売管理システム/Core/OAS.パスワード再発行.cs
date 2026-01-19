@@ -26,7 +26,7 @@ partial class OverridedApplicationService {
         var hash = ComputeHash(INIT_PASSWORD, salt);
 
         // 更新
-        using var tran = await DbContext.Database.BeginTransactionAsync();
+        await using var tran = await BeginTransactionAsync();
 
         var result = await Update従業員Async(param.Values.対象者.従業員番号, null, employee => {
             employee.SALT = salt;

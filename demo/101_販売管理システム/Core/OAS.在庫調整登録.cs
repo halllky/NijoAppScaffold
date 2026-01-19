@@ -70,7 +70,7 @@ partial class OverridedApplicationService {
 
         // 保存処理
         if (!context.ValidationOnly) {
-            using var tran = await DbContext.Database.BeginTransactionAsync();
+            await using var tran = await BeginTransactionAsync();
 
             var adjustmentId = Guid.NewGuid().ToString();
             var allocationPlan = new List<(入荷明細DbEntity Stock, int Deduct)>();
