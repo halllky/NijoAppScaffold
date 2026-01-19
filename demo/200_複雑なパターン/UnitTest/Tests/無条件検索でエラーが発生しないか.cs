@@ -34,7 +34,7 @@ partial class DB接続あり_更新なし {
         // 無条件検索を実行
         try {
             var result = await test(scope.App, scope.PresentationContext);
-            scope.App.Log.LogDebug("取得したデータ: {0}", scope.App.Configuration.ToJson(result));
+            scope.App.Log.LogDebug("取得したデータ: {0}", scope.App.SerializeForLog(result));
             Assert.Pass("例外発生せず");
 
         } catch (InvalidOperationException ex) when (ex.Message.Contains(CANNOT_TRANSRATE_TO_SQL)) {
@@ -66,7 +66,7 @@ partial class DB接続あり_更新なし {
         // 無条件外部参照検索を実行
         try {
             var result = await test(scope.App, scope.PresentationContext);
-            scope.App.Log.LogDebug("取得したデータ: {0}", scope.App.Configuration.ToJson(result));
+            scope.App.Log.LogDebug("取得したデータ: {0}", scope.App.SerializeForLog(result));
             Assert.Pass("例外発生せず");
 
         } catch (InvalidOperationException ex) when (ex.Message.Contains(CANNOT_TRANSRATE_TO_SQL)) {

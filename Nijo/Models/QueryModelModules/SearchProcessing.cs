@@ -158,7 +158,7 @@ namespace Nijo.Models.QueryModelModules {
                         totalCount = await filtered.CountAsync();
                         loaded = await {{ToDisplayData}}(query);
                     } catch {
-                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時検索条件: {data}", {{ApplicationService.CONFIGURATION}}.ToJson(searchCondition));
+                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時検索条件: {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(searchCondition));
                         try {
                             Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時SQL: {data}", query.ToQueryString());
                         } catch {

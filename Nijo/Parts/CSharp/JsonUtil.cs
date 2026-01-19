@@ -27,18 +27,6 @@ namespace Nijo.Parts.CSharp {
         }
         private readonly List<RootAggregate> _valueObjectRootAggregates = [];
 
-        /// <summary>
-        /// JSONシリアライズクラスの登録
-        /// </summary>
-        /// <param name="newStatement">「new クラス名()」の文字列</param>
-        public JsonUtil AddConverterClass(string newStatement) {
-            lock (_lock) {
-                _converterClasses.Add(newStatement);
-                return this;
-            }
-        }
-        private readonly List<string> _converterClasses = [];
-
         void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
             ctx.Use<ApplicationConfigure>().AddCoreMethod(RenderCoreMethod());
         }
@@ -59,13 +47,7 @@ namespace Nijo.Parts.CSharp {
                     yield return new {{agg.PhysicalName}}.{{ValueObjectModel.JSON_CONVERTER_NAME}}();
                 """)}}
 
-                    // 追加のJSONシリアライズクラスの登録
-                {{_converterClasses.OrderBy(stmt => stmt).SelectTextTemplate(stmt => $$"""
-                    yield return {{stmt}};
-                """)}}
-                {{If(_valueObjectRootAggregates.Count == 0 && _converterClasses.Count == 0, () => $$"""
                     yield break;
-                """)}}
                 }
 
                 /// <summary>

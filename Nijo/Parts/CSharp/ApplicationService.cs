@@ -12,7 +12,7 @@ namespace Nijo.Parts.CSharp {
 
         public const string CURRENT_TIME = "CurrentTime";
         public const string CURRENT_USER = "CurrentUser";
-        public const string CONFIGURATION = "Configuration";
+        public const string SERIALIZE_FOR_LOG = "SerializeForLog";
 
         private readonly Lock _lock = new();
         private readonly List<string> _sourceCode = [];
@@ -84,10 +84,15 @@ namespace Nijo.Parts.CSharp {
                         public virtual string {{CURRENT_USER}} => "UNDEFINED";
 
                         /// <summary>
-                        /// 初期設定処理など
+                        /// ログ出力用にオブジェクトをシリアライズする。
                         /// </summary>
-                        public virtual {{ApplicationConfigure.ABSTRACT_CLASS_CORE}} {{CONFIGURATION}} => _configuration ??= ServiceProvider.GetRequiredService<{{ApplicationConfigure.ABSTRACT_CLASS_CORE}}>();
-                        private {{ApplicationConfigure.ABSTRACT_CLASS_CORE}}? _configuration;
+                        public virtual string {{SERIALIZE_FOR_LOG}}<T>(T obj) {
+                            return System.Text.Json.JsonSerializer.Serialize(obj, new System.Text.Json.JsonSerializerOptions {
+                                // Unicode文字のエスケープを抑制
+                                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                                WriteIndented = false,
+                            });
+                        }
 
                         /// <summary>
                         /// 現在のセッションの識別子。ログ出力に使用。

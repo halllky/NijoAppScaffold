@@ -31,7 +31,7 @@ namespace Nijo.Models.DataModelModules {
 
             return new ValidateStatement {
                 If = $$"""
-                    !Configuration.{{methodName}}({{path}})
+                    !{{methodName}}({{path}})
                     """,
 
                 RenderErrorMessage = $$"""
@@ -64,7 +64,7 @@ namespace Nijo.Models.DataModelModules {
                 _registeredTypes.Add(characterType);
 
                 var methodName = GetMethodName(characterType);
-                ctx.Use<ApplicationConfigure>().AddCoreMethod($$"""
+                ctx.Use<ApplicationService>().Add($$"""
                     /// <summary>
                     /// 文字種チェック（{{characterType}}）。
                     /// エラー（不正な文字種）の場合は false を返します。

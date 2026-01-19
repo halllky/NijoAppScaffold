@@ -145,7 +145,7 @@ namespace Nijo.Models.DataModelModules {
                         // 単なる必須入力漏れなどでもエラーログが出過ぎてしまうのを防ぐため、
                         // 更新を確定するつもりのときのみ内容をログ出力する
                         if (!context.ValidationOnly) {
-                            Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で入力エラーが発生した登録内容(JSON): {data}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                            Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で入力エラーが発生した登録内容(JSON): {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
                         }
                         return new(DataModelSaveResultType.Error, DataModelSaveErrorReason.ValidationError, null);
                     }
@@ -179,13 +179,13 @@ namespace Nijo.Models.DataModelModules {
 
                         if (ex is DbUpdateConcurrencyException) {
                             messages.AddError({{MsgFactory.MSG}}.{{ERR_CONCURRENCY}}());
-                            Log.LogWarning("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で楽観排他エラー: {data}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                            Log.LogWarning("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で楽観排他エラー: {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
                             return new(DataModelSaveResultType.Error, DataModelSaveErrorReason.ConcurrencyError, null);
 
                         } else {
                             messages.AddError({{MsgFactory.MSG}}.{{ERR_ID_UNKNOWN}}(ex.Message));
                             Log.LogError(ex, "更新処理中にエラーが発生しました。");
-                            Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新でSQL発行時エラーが発生した登録内容(JSON): {data}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                            Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新でSQL発行時エラーが発生した登録内容(JSON): {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
                             return new(DataModelSaveResultType.Error, DataModelSaveErrorReason.ValidationError, null);
                         }
                     }
@@ -206,13 +206,13 @@ namespace Nijo.Models.DataModelModules {
                     } catch (Exception ex) {
                         messages.AddError({{MsgFactory.MSG}}.{{ERR_ID_UNKNOWN}}(ex.Message));
                         Log.LogError(ex, "更新後の処理中にエラーが発生しました。");
-                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新後エラーが発生した登録内容(JSON): {data}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新後エラーが発生した登録内容(JSON): {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
                         await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT);
                         return new(DataModelSaveResultType.Error, DataModelSaveErrorReason.AfterSaveError, null);
                     }
 
                     Log.LogInformation("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}データを更新しました。（{{keys.Select(x => x.LogTemplate).Join(", ")}}）", {{keys.Select(x => x.DbEntityFullPath).Join(", ")}});
-                    Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} 更新パラメータ: {data}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                    Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} 更新パラメータ: {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
 
                     return new(DataModelSaveResultType.Completed, null, afterDbEntity);
                 }

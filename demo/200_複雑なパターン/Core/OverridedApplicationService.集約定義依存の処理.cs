@@ -11,6 +11,18 @@ namespace MyApp;
 
 partial class OverridedApplicationService {
 
+    public override bool ValidateIf半角数字および半角ハイフンのみ(string? value) {
+        if (string.IsNullOrEmpty(value)) {
+            return true;
+        }
+        foreach (char c in value) {
+            if ((c < '0' || c > '9') && c != '-') {
+                return false;
+            }
+        }
+        return true;
+    }
+
     protected override IQueryable<患者マスタSearchResult> CreateQuerySource(患者マスタSearchCondition searchCondition, IPresentationContext<患者マスタSearchConditionMessages> context) {
         return DbContext.患者マスタDbSet.Select(e => new 患者マスタSearchResult {
             患者ID = e.患者ID,

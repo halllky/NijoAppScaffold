@@ -96,7 +96,7 @@ namespace Nijo.ValueMemberTypes {
 
         #region 採番処理
         /// <summary>
-        /// <see cref="ApplicationConfigure"/> で使用するメソッド名。
+        /// <see cref="DbContextClass"/> で使用するメソッド名。
         /// 具体的なシーケンス設定方法はRDBMSにより異なるため、自動生成はせずにユーザーに定義させる。
         /// </summary>
         internal const string CONFIGURE_MEMBER = "ConfigureSequenceMember";
