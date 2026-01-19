@@ -10,12 +10,10 @@ public class 商品管理システム本番 : I商品管理システム {
         throw new NotImplementedException("実際の外部システム連携ロジックは未実装です。");
     }
 
-    public async Task Update在庫数量Async(string externalProductId, int newStockQuantity) {
+    public void Update在庫数量(string externalProductId, int newStockQuantity) {
         // ここに実際の外部システムの在庫数量を更新するロジックを実装する。
         // 例えば、Web APIを呼び出したり、メッセージングキューに送信したりする。
         // デモなので、未実装とする。
-
-        await Task.Delay(100); // ダミーの非同期処理
 
         throw new NotImplementedException("実際の外部システム連携ロジックは未実装です。");
     }

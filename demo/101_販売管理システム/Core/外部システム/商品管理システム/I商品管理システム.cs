@@ -17,7 +17,7 @@ public interface I商品管理システム {
     /// </summary>
     /// <param name="externalProductId">外部システムの商品ID</param>
     /// <param name="newStockQuantity">新しい在庫数量</param>
-    Task Update在庫数量Async(string externalProductId, int newStockQuantity);
+    void Update在庫数量(string externalProductId, int newStockQuantity);
 }
 
 /// <summary>

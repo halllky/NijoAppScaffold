@@ -21,7 +21,7 @@ partial class OverridedApplicationService {
             .AsNoTracking()
             .SingleAsync();
 
-        await 商品管理システム.Update在庫数量Async(
+        商品管理システム.Update在庫数量(
             externalProductId: shohin.外部システム側ID!,
             newStockQuantity: totalStock
         );
@@ -50,7 +50,7 @@ partial class OverridedApplicationService {
             .AsNoTracking()
             .SingleAsync();
 
-        await 商品管理システム.Update在庫数量Async(
+        商品管理システム.Update在庫数量(
             externalProductId: shohin.外部システム側ID!,
             newStockQuantity: totalStock
         );

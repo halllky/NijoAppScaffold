@@ -60,12 +60,13 @@ public class 商品管理システムMock : I商品管理システム {
         return externalData.Read;
     }
 
-    public async Task Update在庫数量Async(string externalProductId, int newStockQuantity) {
+    public void Update在庫数量(string externalProductId, int newStockQuantity) {
 
-        var currentTransaction = _app.CurrentTransaction
-            ?? throw new InvalidOperationException("外部リソース更新はトランザクションスコープ内でのみ実行可能です。");
+        if (_app.CurrentTransaction == null) {
+            throw new InvalidOperationException("外部リソース更新はトランザクションスコープ内でのみ実行可能です。");
+        }
 
-        currentTransaction.Prepare($"商品管理システム（モック） 在庫数更新 ID={externalProductId}", async cancellationToken => {
+        _app.CurrentTransaction.Prepare($"商品管理システム（モック） 在庫数更新 ID={externalProductId}", async cancellationToken => {
             // 設定ファイルからモックデータのパスを取得
             var mockDataPath = _app.Settings.商品管理システム.MockJsonPath;
             if (string.IsNullOrWhiteSpace(mockDataPath)) {
