@@ -12,10 +12,9 @@ public class MigrationEntryPoint : IDesignTimeDbContextFactory<OverridedDbContex
 
         // DI コンテナの構築。appsettings.json は WebApi のものを流用する
         var services = new ServiceCollection();
-        var config = new OverridedApplicationConfigure();
         var basePath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "WebApi"));
 
-        config.ConfigureServices(services, basePath);
+        OverridedApplicationService.ConfigureServices(services, basePath);
 
         var serviceProvider = services.BuildServiceProvider();
         return serviceProvider.GetRequiredService<OverridedDbContext>();

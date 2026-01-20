@@ -30,8 +30,7 @@ for d in "$SCRIPT_DIR/../demo/"*; do
 
             # Core
             rsync -av --delete-excluded --exclude=".*" "$SOURCE_ROOT/Core/Debugging/" "$TARGET_ROOT/Core/Debugging/"
-            cp "$SOURCE_ROOT/Core/OverridedApplicationConfigure.cs" "$TARGET_ROOT/Core/OverridedApplicationConfigure.cs"
-            cp "$SOURCE_ROOT/Core/OverridedApplicationService.cs" "$TARGET_ROOT/Core/OverridedApplicationService.cs"
+            cp "$SOURCE_ROOT/Core/JsonConversions.cs" "$TARGET_ROOT/Core/JsonConversions.cs"
             cp "$SOURCE_ROOT/Core/MigrationEntryPoint.cs" "$TARGET_ROOT/Core/MigrationEntryPoint.cs"
             cp "$SOURCE_ROOT/Core/PresentationContextExtensions.cs" "$TARGET_ROOT/Core/PresentationContextExtensions.cs"
             cp "$SOURCE_ROOT/Core/MessageContainerExtension.cs" "$TARGET_ROOT/Core/MessageContainerExtension.cs"

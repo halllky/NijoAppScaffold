@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -32,7 +33,7 @@ namespace Nijo.Models {
             });
 
             // JSONシリアライズの登録
-            ctx.Use<Parts.CSharp.JsonUtil>().AddValueObject(rootAggregate);
+            ctx.Use<ValueObjectJsonConverter>().Add($"{rootAggregate.PhysicalName}.{JSON_CONVERTER_NAME}");
 
             // TypeScript定義の生成
             ctx.ReactProject(dir => {
@@ -139,6 +140,64 @@ namespace Nijo.Models {
 
         public void GenerateCode(CodeRenderingContext ctx) {
             // 特になし
+        }
+
+        /// <summary>
+        /// JSONコンバーター
+        /// </summary>
+        public class ValueObjectJsonConverter : IMultiAggregateSourceFile {
+
+            private readonly List<string> _converterClassNames = [];
+            private readonly Lock _lock = new();
+
+            public void Add(string converterClassName) {
+                lock (_lock) {
+                    _converterClassNames.Add(converterClassName);
+                }
+            }
+
+            void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
+                // 特になし
+            }
+
+            void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
+                ctx.CoreLibrary(dir => {
+                    dir.Directory("Util", efcoreDir => {
+                        efcoreDir.Generate(Render(ctx));
+                    });
+                });
+            }
+
+            private SourceFile Render(CodeRenderingContext ctx) {
+
+                return new SourceFile {
+                    FileName = "ValueObjectJsonConverters.cs",
+                    Contents = $$"""
+                        using System.Text.Json;
+                        using System.Text.Json.Serialization;
+                        using System.Collections.Generic;
+
+                        namespace {{ctx.Config.RootNamespace}};
+
+                        /// <summary>
+                        /// 自動生成された値オブジェクトのJSONシリアライザーの一覧を返します。
+                        /// </summary>
+                        public static class ValueObjectJsonConverters {
+                            /// <summary>
+                            /// 自動生成された値オブジェクトのJSONシリアライザーの一覧を返します。
+                            /// </summary>
+                            public static IEnumerable<JsonConverter> GetConverters() {
+                        {{_converterClassNames.SelectTextTemplate(converterClassName => $$"""
+                                yield return new {{converterClassName}}();
+                        """)}}
+                        {{If(_converterClassNames.Count == 0, () => $$"""
+                                yield break;
+                        """)}}
+                            }
+                        }
+                        """,
+                };
+            }
         }
     }
 }
