@@ -219,6 +219,7 @@ namespace Nijo {
             using var ctx = new CodeRenderingContext(this, GetConfig(), renderingOptions, parseContext, immutableSchema);
 
             logger.LogInformation("ソース自動生成開始");
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
             // ルート集約毎のコードを生成
             Parallel.ForEach(immutableSchema.GetRootAggregates(), rootAggregate => {
@@ -318,7 +319,8 @@ namespace Nijo {
             logger.LogInformation("不要ファイル削除開始");
             ctx.CleanUnhandledFilesAndDirectories();
 
-            logger.LogInformation("ソース自動生成終了");
+            stopwatch.Stop();
+            logger.LogInformation("ソース自動生成終了 ({elapsed}ms)", stopwatch.ElapsedMilliseconds);
 
             return true;
         }
