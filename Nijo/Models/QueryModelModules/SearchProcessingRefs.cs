@@ -175,8 +175,8 @@ namespace Nijo.Models.QueryModelModules {
                         // トータル件数取得と、ページングされたデータの取得を直列で行う。
                         // 並列で行うと、DbContextが前の処理の完了前に次の処理を開始したとしてエラーになるリスクがあるのと、
                         // ネットワークやコネクションの負荷が高まる可能性があるため。
-                        totalCount = await filtered.CountAsync();
-                        loaded = await converted.ToArrayAsync();
+                        totalCount = await filtered.CountAsync().ConfigureAwait(false);
+                        loaded = await converted.ToArrayAsync().ConfigureAwait(false);
                     } catch {
                         Log.LogDebug("{{_entryAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時検索条件: {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(searchCondition));
                         try {

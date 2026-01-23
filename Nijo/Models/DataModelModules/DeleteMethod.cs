@@ -94,7 +94,8 @@ namespace Nijo.Models.DataModelModules {
                 """)}}
                         .SingleOrDefaultAsync(e {{WithIndent(keys.SelectTextTemplate((vm, i) => $$"""
                                                 {{(i == 0 ? "=>" : "&&")}} {{vm.SingleOrDefaultLeft}} == {{vm.TempVarName}}
-                                                """), "                                ")}});
+                                                """), "                                ")}})
+                        .ConfigureAwait(false);
 
                     if (dbEntity == null) {
                         messages.AddError({{MsgFactory.MSG}}.{{UpdateMethod.ERR_DATA_NOT_FOUND}}());
@@ -127,11 +128,11 @@ namespace Nijo.Models.DataModelModules {
                         entry.Property(e => e.{{EFCoreEntity.VERSION}}).OriginalValue = command.{{SaveCommand.VERSION}};
                         entry.Property(e => e.{{EFCoreEntity.VERSION}}).CurrentValue = command.{{SaveCommand.VERSION}};
 
-                        await DbContext.Database.CurrentTransaction.CreateSavepointAsync(SAVE_POINT);
-                        await DbContext.SaveChangesAsync();
+                        await DbContext.Database.CurrentTransaction.CreateSavepointAsync(SAVE_POINT).ConfigureAwait(false);
+                        await DbContext.SaveChangesAsync().ConfigureAwait(false);
 
                     } catch (DbUpdateException ex) {
-                        await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT);
+                        await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT).ConfigureAwait(false);
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(dbEntity).State = EntityState.Detached;
@@ -162,13 +163,13 @@ namespace Nijo.Models.DataModelModules {
                 """)}}
 
                         // セーブポイント解放
-                        await DbContext.Database.CurrentTransaction.ReleaseSavepointAsync(SAVE_POINT);
+                        await DbContext.Database.CurrentTransaction.ReleaseSavepointAsync(SAVE_POINT).ConfigureAwait(false);
 
                     } catch (Exception ex) {
                         messages.AddError({{MsgFactory.MSG}}.{{UpdateMethod.ERR_ID_UNKNOWN}}(ex.Message));
                         Log.LogError(ex, "削除後の処理中にエラーが発生しました。");
                         Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除後エラーが発生した登録内容(JSON): {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
-                        await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT);
+                        await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT).ConfigureAwait(false);
                         return false;
                     }
 

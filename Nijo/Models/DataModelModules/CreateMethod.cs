@@ -86,13 +86,13 @@ namespace Nijo.Models.DataModelModules {
 
                     // 更新実行
                     const string SAVE_POINT = "SAVE_POINT"; // 更新後処理でエラーが発生した場合はこのデータの更新のみロールバックする
-                    await DbContext.Database.CurrentTransaction.CreateSavepointAsync(SAVE_POINT);
+                    await DbContext.Database.CurrentTransaction.CreateSavepointAsync(SAVE_POINT).ConfigureAwait(false);
                     try {
                         DbContext.Add(dbEntity);
-                        await DbContext.SaveChangesAsync();
+                        await DbContext.SaveChangesAsync().ConfigureAwait(false);
 
                     } catch (DbUpdateException ex) {
-                        await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT);
+                        await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT).ConfigureAwait(false);
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(dbEntity).State = EntityState.Detached;
@@ -118,13 +118,13 @@ namespace Nijo.Models.DataModelModules {
                 """)}}
 
                         // セーブポイント解放
-                        await DbContext.Database.CurrentTransaction.ReleaseSavepointAsync(SAVE_POINT);
+                        await DbContext.Database.CurrentTransaction.ReleaseSavepointAsync(SAVE_POINT).ConfigureAwait(false);
 
                     } catch (Exception ex) {
                         messages.AddError({{MsgFactory.MSG}}.{{UpdateMethod.ERR_ID_UNKNOWN}}(ex.Message));
                         Log.LogError(ex, "新規作成後の処理中にエラーが発生しました。");
                         Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}新規作成後エラーが発生した登録内容(JSON): {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
-                        await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT);
+                        await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT).ConfigureAwait(false);
                         return new(DataModelSaveResultType.Error, DataModelSaveErrorReason.AfterSaveError, null);
                     }
 
