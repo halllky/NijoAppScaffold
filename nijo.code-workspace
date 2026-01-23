@@ -29,6 +29,10 @@
       "path": "Nijo.IntegrationTest"
     },
     {
+      "name": "ユニットテスト - ログ",
+      "path": "Nijo.IntegrationTest/bin/Debug/net9.0/Nijo.IntegrationTest.Log"
+    },
+    {
       "name": "現新比較",
       "path": "temp_ソース現新比較用"
     },
