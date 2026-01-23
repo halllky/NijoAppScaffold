@@ -16,9 +16,9 @@ internal class WebLogScope : IAsyncActionFilter {
         // このスコープのインスタンスが破棄されるまでの間、ログ出力時に以下の情報が常に付与される。
         // ここで設定される情報のキーは NLog の出力設定箇所で指定しているキー名と一致している必要がある。
         using var logScope = appSrv.Log.BeginScope(new Dictionary<string, string?> {
-            [OverridedApplicationConfigure.LOG_SCOPEPROP_LOGIN_USERID] = appSrv.LoginUser?.従業員番号,
-            [OverridedApplicationConfigure.LOG_SCOPEPROP_PROCESS_NAME] = context.HttpContext.Request.Path.ToString(),
-            [OverridedApplicationConfigure.LOG_SCOPEPROP_SCOPE_ID] = Guid.NewGuid().ToString().ToUpper().Replace("-", ""),
+            [OverridedApplicationService.LOG_SCOPEPROP_LOGIN_USERID] = appSrv.LoginUser?.従業員番号,
+            [OverridedApplicationService.LOG_SCOPEPROP_PROCESS_NAME] = context.HttpContext.Request.Path.ToString(),
+            [OverridedApplicationService.LOG_SCOPEPROP_SCOPE_ID] = Guid.NewGuid().ToString().ToUpper().Replace("-", ""),
         });
 
         await next();

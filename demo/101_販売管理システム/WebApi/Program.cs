@@ -1,3 +1,4 @@
+using MyApp;
 using MyApp.Core.Authorization;
 using MyApp.WebApi.Authorization;
 
@@ -29,14 +30,13 @@ builder.Services.AddCors(options => {
 });
 
 // アプリケーションサービス層のDI設定
-var appConfig = new MyApp.OverridedApplicationConfigure();
-appConfig.ConfigureServices(builder.Services);
+OverridedApplicationService.ConfigureServices(builder.Services, null);
 
 builder.Services.AddScoped<ISessionKeyProvider, LoginUserProviderInWebApi>(); // ログインユーザー情報提供サービスをWebApi用に差し替え
 
 // HTTPリクエスト・レスポンスで使われるJSONシリアライズ設定を上記DI設定のそれに合わせる
 builder.Services.ConfigureHttpJsonOptions(options => {
-    appConfig.EditDefaultJsonSerializerOptions(options.SerializerOptions);
+    options.SerializerOptions.EditDefaultJsonSerializerOptions();
 });
 
 // --------------------------------

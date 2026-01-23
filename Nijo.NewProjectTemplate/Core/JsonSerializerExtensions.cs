@@ -10,12 +10,12 @@ namespace MyApp;
 /// JSON変換設定。
 /// WebAPI が HTTP リクエスト/レスポンスをC#のクラスに変換する際や、ログ出力用のJSON変換で使われる。
 /// </summary>
-public class JsonConversions {
+public static class JsonSerializerExtensions {
 
     /// <summary>
     /// 引数で渡された JsonSerializerOptions を編集し、同じインスタンスを返す。
     /// </summary>
-    public static JsonSerializerOptions EditDefaultJsonSerializerOptions(JsonSerializerOptions option) {
+    public static JsonSerializerOptions EditDefaultJsonSerializerOptions(this JsonSerializerOptions option) {
 
         // 型ごとのシリアライズ設定
         option.Converters.Add(new BooleanConverter());
@@ -25,6 +25,10 @@ public class JsonConversions {
         option.Converters.Add(new DateOnlyConverter());
         option.Converters.Add(new YearMonthJsonConverter());
         option.Converters.Add(new EnumDisplayNameConverterFactory());
+
+        foreach (var converter in ValueObjectJsonConverters.GetConverters()) {
+            option.Converters.Add(converter);
+        }
 
         // 日本語などがUnicodeエスケープされるのを防ぐ
         option.Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;

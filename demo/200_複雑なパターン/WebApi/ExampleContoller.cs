@@ -25,7 +25,7 @@ public class ExampleContoller : ControllerBase {
     [HttpGet]
     public IActionResult Index() {
 
-        var jsonOptions = JsonConversions.EditDefaultJsonSerializerOptions(new());
+        var jsonOptions = new JsonSerializerOptions().EditDefaultJsonSerializerOptions();
 
         return Ok($$"""
             ASP.NET Core サーバーとの接続に成功しました。

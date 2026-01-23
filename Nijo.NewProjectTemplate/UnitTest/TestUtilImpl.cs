@@ -97,9 +97,8 @@ public class TestUtilImpl {
         Directory.CreateDirectory(currentTestWorkDirectory);
 
         // DI機構
-        var configure = new OverridedApplicationConfigureForTest();
         var services = new ServiceCollection();
-        configure.ConfigureServices(services);
+        OverridedApplicationService.ConfigureServices(services, null);
 
         // DI機構: テストケースごとのカスタマイズ
         configureServices?.Invoke(services);
@@ -146,15 +145,6 @@ public class TestUtilImpl {
 
         return (currentTestWorkDirectory, provider);
     }
-
-    #region
-    /// <summary>
-    /// <see cref="OverridedApplicationConfigure"/> のうちユニットテストの時だけ変更したい初期設定処理を変更したもの
-    /// </summary>
-    public class OverridedApplicationConfigureForTest : OverridedApplicationConfigure {
-        // 必要に応じてユニットテスト用の初期設定をここに追加する
-    }
-    #endregion
 }
 
 /// <summary>

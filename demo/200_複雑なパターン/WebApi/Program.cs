@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using MyApp;
 
 // このプロジェクトで宣言されている internal メンバーを、単体テストプロジェクトから参照可能にする
 [assembly: InternalsVisibleTo("Demo200.UnitTest")]
@@ -27,12 +28,11 @@ builder.Services.AddCors(options => {
 });
 
 // アプリケーションサービス層のDI設定
-var appConfig = new MyApp.OverridedApplicationConfigure();
-appConfig.ConfigureServices(builder.Services);
+OverridedApplicationService.ConfigureServices(builder.Services, null);
 
 // HTTPリクエスト・レスポンスで使われるJSONシリアライズ設定を上記DI設定のそれに合わせる
 builder.Services.ConfigureHttpJsonOptions(options => {
-    appConfig.EditDefaultJsonSerializerOptions(options.SerializerOptions);
+    options.SerializerOptions.EditDefaultJsonSerializerOptions();
 });
 
 // --------------------------------
