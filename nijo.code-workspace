@@ -9,12 +9,24 @@
   },
   "folders": [
     {
-      "name": "NijoAppScaffold",
+      "name": "ワークスペース全体",
       "path": "."
     },
     {
-      "name": "Nijo.NewProjectTemplate",
+      "name": "Nijo",
+      "path": "Nijo"
+    },
+    {
+      "name": "Nijo GUI",
+      "path": "Nijo.GuiClient/package_schema-editor-v1"
+    },
+    {
+      "name": "テンプレート",
       "path": "Nijo.NewProjectTemplate"
+    },
+    {
+      "name": "ユニットテスト",
+      "path": "Nijo.IntegrationTest"
     },
     {
       "name": "現新比較",
