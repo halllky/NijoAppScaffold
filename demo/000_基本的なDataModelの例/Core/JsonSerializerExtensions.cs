@@ -33,8 +33,10 @@ public static class JsonSerializerExtensions {
         // 日本語などがUnicodeエスケープされるのを防ぐ
         option.Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
 
-        // nullはJSONに含めない
-        option.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+        // nullは省略せずそのまま出力する。
+        // * HTMLでは項目自体が存在しない（undefined）よりは null の方が扱いやすいため
+        // * react-hook-form などのフォームライブラリで、プロパティが欠落していると正しく動作しない場合があるため
+        option.DefaultIgnoreCondition = JsonIgnoreCondition.Never;
 
         return option;
     }

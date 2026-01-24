@@ -35,8 +35,14 @@ export default [
   {
     path: "/uriage/new",
     element: <P101_売上詳細 mode="new" />,
-    loader: () => {
-      return Promise.resolve(createNew売上詳細DisplayData())
+    loader: async () => {
+      const parameter = createNew売上詳細画面初期表示ParameterDisplayData()
+      parameter.values.新規登録モード = true
+      const result = await callComplexPostEndpointAsync('売上詳細画面初期表示', parameter, {
+        ignoreConfirm: true,
+      })
+      if (result.type !== 'ok') throw result
+      return result.returnValue
     },
   },
   {
@@ -44,18 +50,15 @@ export default [
     element: <P101_売上詳細 mode="edit" />,
     loader: async ({ params }) => {
       const parameter = createNew売上詳細画面初期表示ParameterDisplayData()
+      parameter.values.新規登録モード = false
       parameter.values.売上SEQ = params.id ?? ''
 
       const result = await callComplexPostEndpointAsync('売上詳細画面初期表示', parameter, {
         ignoreConfirm: true,
       })
-      if (result.type === 'ok') {
-        return result.returnValue
-      }
-      console.error('売上詳細画面初期表示エラー:', result)
-      const msg = result.type === 'error' ? JSON.stringify(result.detail) : 'データの取得に失敗しました。'
-      throw new Error(msg);
-    }
+      if (result.type !== 'ok') throw result
+      return result.returnValue
+    },
   },
 ] satisfies ReactRouter.RouteObject[]
 
@@ -80,20 +83,6 @@ function P101_売上詳細(props: {
     name: "売上詳細の売上明細"
   })
 
-  // useFormの引数としてdefaultValuesを渡すだけだと
-  // isDirtyがtrueになってしまうため、useEffectで再度初期化している。
-  // またログインユーザー情報はこの時点でないと取得できない
-  const { loginUser } = useLoginLogout()
-  React.useLayoutEffect(() => {
-    const clone = window.structuredClone(loaderData)
-    // 新規登録モードの場合
-    if (props.mode === 'new') {
-      clone.values.売上日時 = dayjs().format('YYYY-MM-DD HH:mm:ss')
-      clone.values.担当者.従業員番号 = loginUser?.values.従業員番号 ?? ''
-      clone.values.担当者.氏名 = loginUser?.values.氏名 ?? ''
-    }
-    formMethods.reset(clone)
-  }, [loaderData, loginUser])
 
   // 画面タイトル
   const [browserTitle, pageTitle] = React.useMemo(() => {
@@ -159,8 +148,25 @@ function P101_売上詳細(props: {
   // 保存時処理
   const { replaceMessages } = DetailMessage.useSetter()
   const handleSave: EditPageSaveEvent = useEvent(async () => {
+
+    // 画面上で編集されたインスタンスに willBeChanged フラグを更新する（ヘッダ）
+    const currentValues = window.structuredClone(formMethods.getValues())
+    if (formMethods.formState.dirtyFields.values) {
+      currentValues.willBeChanged = true
+    }
+
+    // 画面上で編集されたインスタンスに willBeChanged フラグを更新する（明細）
+    const dirtyDetails = formMethods.formState.dirtyFields.売上詳細の売上明細
+    if (Array.isArray(dirtyDetails)) {
+      dirtyDetails.forEach((dirtyRow, index) => {
+        if (dirtyRow?.values && currentValues.売上詳細の売上明細[index]) {
+          currentValues.売上詳細の売上明細[index].willBeChanged = true
+        }
+      })
+    }
+
     if (props.mode === 'new') {
-      const result = await callComplexPostEndpointAsync('売上新規登録', formMethods.getValues())
+      const result = await callComplexPostEndpointAsync('売上新規登録', currentValues)
       if (result.type === 'ok') {
         return { reload: true }
       } else if (result.type === 'canceled') {
@@ -171,7 +177,7 @@ function P101_売上詳細(props: {
       return { reload: false }
 
     } else {
-      const result = await callComplexPostEndpointAsync('売上修正', formMethods.getValues())
+      const result = await callComplexPostEndpointAsync('売上修正', currentValues)
       if (result.type === 'ok') {
         return { reload: true }
       } else if (result.type === 'canceled') {
@@ -191,7 +197,7 @@ function P101_売上詳細(props: {
     >
       {({ save, saving }) => (
         <UI.FieldUiContext.Provider value={modelMetadata}>
-          <div className="max-h-full flex flex-col gap-y-2">
+          <div className="max-h-full max-w-5xl flex flex-col gap-y-2">
 
             {/* ヘッダ */}
             <div className="flex items-start gap-1">
@@ -226,13 +232,8 @@ function P101_売上詳細(props: {
               control={control}
             />
 
-            <div className="flex justify-between font-bold">
-              <span className="select-none text-gray-600">
-                明細
-              </span>
-              <div className="text-right">
-                合計: {totalAmount}円
-              </div>
+            <div className="flex justify-end font-bold">
+              合計: {totalAmount}円
             </div>
 
             {/* 明細欄 */}
@@ -242,14 +243,15 @@ function P101_売上詳細(props: {
                 明細がありません。
               </div>
             )}
-            <div className="flex flex-col gap-y-2 overflow-x-auto">
+            <div className="flex flex-col overflow-x-auto">
               {fields.map((field, index) => (
                 <React.Fragment key={field.id}>
-                  <div className={`flex flex-col md:flex-row gap-x-8 gap-y-1 pt-2 border-t border-gray-300 whitespace-nowrap ${field.values.区分 === '取消' ? 'text-rose-700' : ''}`}>
+                  <div className={`flex flex-col md:flex-row gap-x-8 gap-y-1 border-t border-gray-300 whitespace-nowrap ${field.values.区分 === '取消' ? 'text-rose-700' : ''}`}>
                     <UI.Field
                       name={`売上詳細の売上明細.${index}.values.区分`}
                       control={control}
                       className="w-16 shrink-0"
+                      readOnly={field.existsInDatabase}
                     />
 
                     {/* 商品 */}
@@ -258,6 +260,7 @@ function P101_売上詳細(props: {
                         name={`売上詳細の売上明細.${index}.values.商品.外部システム側ID`}
                         className="w-32 shrink-0"
                         control={control}
+                        readOnly={field.existsInDatabase}
                       />
                       <span
                         title={field.values.商品.商品名}
@@ -280,6 +283,7 @@ function P101_売上詳細(props: {
                         name={`売上詳細の売上明細.${index}.values.売上数量`}
                         className="w-16"
                         control={control}
+                        readOnly={field.existsInDatabase}
                       />
                       <span>
                         *
@@ -305,6 +309,7 @@ function P101_売上詳細(props: {
                         name={`売上詳細の売上明細.${index}.values.売上総額_税込_手修正`}
                         className="w-40"
                         control={control}
+                        readOnly={field.existsInDatabase}
                       />)
                     </div>
                   </div>

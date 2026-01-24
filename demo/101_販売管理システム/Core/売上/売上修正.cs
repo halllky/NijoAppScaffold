@@ -33,13 +33,18 @@ partial class OverridedApplicationService {
         // 新規追加明細の特定と在庫計算
         for (var i = 0; i < param.売上詳細の売上明細.Count; i++) {
             var detail = param.売上詳細の売上明細[i];
+            var message = context.Messages.売上詳細の売上明細[i];
 
             // 既存明細はスキップ
             if (detail.ExistsInDatabase) {
+                // 編集されていたらエラー
+                if (detail.WillBeChanged || detail.WillBeDeleted) {
+                    message.AddError("既存の売上明細の編集・削除はできません。新規追加のみ可能です。");
+                }
+
                 continue;
             }
 
-            var message = context.Messages.売上詳細の売上明細[i];
             var productId = detail.Values.商品.商品SEQ;
             var quantity = detail.Values.売上数量;
 

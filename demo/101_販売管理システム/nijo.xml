@@ -399,6 +399,9 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
     <売上詳細画面初期表示Parameter
       Type="structure-model"
       UniqueId="0d252a96-0dd0-45eb-af33-e761419117c7">
+      <新規登録モード
+        Type="bool"
+        UniqueId="c0be5f5c-7ab4-4717-80e2-556e377d3ace" />
       <売上SEQ
         Type="int"
         UniqueId="97e17b61-8a10-4378-ae62-9c3c186a8a70" />

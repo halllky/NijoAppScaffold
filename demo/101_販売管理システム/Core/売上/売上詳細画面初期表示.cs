@@ -5,6 +5,23 @@ namespace MyApp;
 
 partial class OverridedApplicationService {
     public override async Task Execute売上詳細画面初期表示(売上詳細画面初期表示ParameterDisplayData param, IPresentationContextWithReturnValue<売上詳細DisplayData, 売上詳細画面初期表示ParameterMessages> context) {
+
+        // 新規登録モード
+        if (param.Values.新規登録モード == true) {
+            context.ReturnValue = new() {
+                Values = new() {
+                    売上日時 = CurrentTime,
+                    担当者 = new() {
+                        従業員番号 = LoginUser?.従業員番号,
+                        氏名 = LoginUser?.氏名,
+                    },
+                },
+            };
+        }
+
+        // -----------------------------
+        // 以降は既存データ編集モード
+
         if (param.Values.売上SEQ == null) {
             context.Messages.売上SEQ.AddError("売上SEQが指定されていません。");
             return;

@@ -1,6 +1,7 @@
 namespace MyApp.Core.Authorization {
     public class LoginUser {
         public required string 従業員番号 { get; init; }
+        public required string 氏名 { get; init; }
         public required bool Isシステム管理者 { get; init; }
         /// <summary>
         /// 入荷登録権限があるか、システム管理者ならtrue
@@ -50,6 +51,7 @@ namespace MyApp {
 
                 _loginUserCache = new LoginUser {
                     従業員番号 = dbEntity.ユーザ_従業員番号 ?? throw new InvalidOperationException(),
+                    氏名 = dbEntity.ユーザ?.氏名 ?? throw new InvalidOperationException(),
                     Isシステム管理者 = dbEntity.ユーザ?.システム管理者 ?? false,
                     CanUse入荷登録 = (dbEntity.ユーザ?.システム管理者 ?? false) || (dbEntity.ユーザ?.入荷担当 ?? false),
                     CanUse売上登録 = (dbEntity.ユーザ?.システム管理者 ?? false) || (dbEntity.ユーザ?.販売担当 ?? false),
