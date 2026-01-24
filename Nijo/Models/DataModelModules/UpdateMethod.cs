@@ -40,7 +40,7 @@ namespace Nijo.Models.DataModelModules {
                     var fullpath = vm.GetPathFromEntry().ToArray();
                     return new {
                         ArgVarType = vm.Type,
-                        ArgVarName = vm.PhysicalName,
+                        ArgVarName = $"key{i}_{vm.PhysicalName}",
                         vm.DisplayName,
                         VmType = vm.Type,
                         LogTemplate = $"{vm.DisplayName.Replace("\"", "\\\"")}: {{key{i}}}",

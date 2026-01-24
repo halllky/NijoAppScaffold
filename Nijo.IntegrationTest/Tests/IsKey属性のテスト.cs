@@ -7,7 +7,7 @@ public class IsKey属性のテスト {
     [Test]
     public async Task DataModel_ルート集約でキーが必須であること() {
         // 正常系：キーあり
-        var project = await NijoTestUtil.CreateNewProjectAsync($$"""
+        using var project1 = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
                 <Data1 Type="data-model">
@@ -17,11 +17,12 @@ public class IsKey属性のテスト {
               </DataStructures>
             </NijoAppScaffold>
             """);
-        var errors = await project.EnumerateValidationErrorsAsync();
-        Assert.That(errors, Is.Empty);
+
+        var errors1 = await project1.EnumerateValidationErrorsAsync();
+        Assert.That(errors1, Is.Empty);
 
         // 異常系：キーなし
-        project = await NijoTestUtil.CreateNewProjectAsync($$"""
+        using var project2 = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
                 <Data2 Type="data-model">
@@ -31,14 +32,14 @@ public class IsKey属性のテスト {
               </DataStructures>
             </NijoAppScaffold>
             """);
-        errors = await project.EnumerateValidationErrorsAsync();
-        Assert.That(errors.SelectMany(e => e.OwnErrors), Does.Contain("キーが指定されていません。"));
+        var errors2 = await project2.EnumerateValidationErrorsAsync();
+        Assert.That(errors2.SelectMany(e => e.OwnErrors), Does.Contain("キーが指定されていません。"));
     }
 
     [Test]
     public async Task DataModel_Childrenでキーが必須であること() {
         // 正常系：Childrenにキーあり
-        var project = await NijoTestUtil.CreateNewProjectAsync($$"""
+        using var project1 = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
                 <Data1 Type="data-model">
@@ -50,11 +51,11 @@ public class IsKey属性のテスト {
               </DataStructures>
             </NijoAppScaffold>
             """);
-        var errors = await project.EnumerateValidationErrorsAsync();
-        Assert.That(errors, Is.Empty);
+        var errors1 = await project1.EnumerateValidationErrorsAsync();
+        Assert.That(errors1, Is.Empty);
 
         // 異常系：Childrenにキーなし
-        project = await NijoTestUtil.CreateNewProjectAsync($$"""
+        using var project2 = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
                 <Data2 Type="data-model">
@@ -66,18 +67,17 @@ public class IsKey属性のテスト {
               </DataStructures>
             </NijoAppScaffold>
             """);
-        errors = await project.EnumerateValidationErrorsAsync();
+        var errors2 = await project2.EnumerateValidationErrorsAsync();
 
-        var messages = errors.SelectMany(e => e.OwnErrors).ToArray();
+        var messages = errors2.SelectMany(e => e.OwnErrors).ToArray();
 
-        Assert.That(messages,
-            Does.Contain("キーが指定されていません。").Or.Contain("データモデルの子配列は必ず1個以上の主キーを持たなければなりません。"));
+        Assert.That(messages, Does.Contain("キーが指定されていません。").Or.Contain("データモデルの子配列は必ず1個以上の主キーを持たなければなりません。"));
     }
 
     [Test]
     public async Task DataModel_Childはキー指定不可であること() {
         // 異常系：Child内のメンバーにIsKeyを指定
-        var project = await NijoTestUtil.CreateNewProjectAsync($$"""
+        using var project = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
                 <Data1 Type="data-model">
@@ -103,7 +103,7 @@ public class IsKey属性のテスト {
     [Test]
     public async Task QueryModel_Viewにマッピングされる場合はルート集約とChildrenにキーが必須() {
         // 正常系：ルートとChildrenにキーあり
-        var project = await NijoTestUtil.CreateNewProjectAsync($$"""
+        using var project1 = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
                 <Query1 Type="query-model" MapToView="True">
@@ -115,10 +115,10 @@ public class IsKey属性のテスト {
               </DataStructures>
             </NijoAppScaffold>
             """);
-        Assert.That(await project.EnumerateValidationErrorsAsync(), Is.Empty);
+        Assert.That(await project1.EnumerateValidationErrorsAsync(), Is.Empty);
 
         // 異常系：ルートにキーなし（Childrenあり）
-        project = await NijoTestUtil.CreateNewProjectAsync($$"""
+        using var project2 = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
                 <Query2 Type="query-model" MapToView="True">
@@ -130,11 +130,11 @@ public class IsKey属性のテスト {
               </DataStructures>
             </NijoAppScaffold>
             """);
-        var errors = await project.EnumerateValidationErrorsAsync();
+        var errors = await project2.EnumerateValidationErrorsAsync();
         Assert.That(errors.SelectMany(e => e.OwnErrors), Does.Contain("Child/Childrenがあるビューにマッピングされるクエリモデルにはキーが必要です。"));
 
         // 異常系：Childrenにキーなし
-        project = await NijoTestUtil.CreateNewProjectAsync($$"""
+        using var project3 = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
                 <Query3 Type="query-model" MapToView="True">
@@ -146,13 +146,13 @@ public class IsKey属性のテスト {
               </DataStructures>
             </NijoAppScaffold>
             """);
-        errors = await project.EnumerateValidationErrorsAsync();
+        errors = await project3.EnumerateValidationErrorsAsync();
         Assert.That(errors.SelectMany(e => e.OwnErrors), Does.Contain("Child/Childrenがあるビューにマッピングされるクエリモデルにはキーが必要です。"));
     }
 
     [Test]
     public async Task QueryModel_Viewにマッピングされる場合であってもChildにはキー指定不可() {
-        var project = await NijoTestUtil.CreateNewProjectAsync($$"""
+        using var project = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
                 <Query1 Type="query-model" MapToView="True">
@@ -172,7 +172,7 @@ public class IsKey属性のテスト {
     [Test]
     public async Task QueryModel_Viewにマッピングされない場合はキー指定不可() {
         // ルートにキー指定
-        var project = await NijoTestUtil.CreateNewProjectAsync($$"""
+        using var project1 = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
                 <Query1 Type="query-model">
@@ -181,15 +181,15 @@ public class IsKey属性のテスト {
               </DataStructures>
             </NijoAppScaffold>
             """);
-        var errors = await project.EnumerateValidationErrorsAsync();
-        var allErrors = errors.SelectMany(e => {
+        var errors1 = await project1.EnumerateValidationErrorsAsync();
+        var allErrors1 = errors1.SelectMany(e => {
             return e.OwnErrors.Concat(e.AttributeErrors.Values.SelectMany(v => v));
         });
 
-        Assert.That(allErrors, Does.Contain("クエリモデルのルート集約で、ビューにマッピングされない場合はキーを指定できません。"));
+        Assert.That(allErrors1, Does.Contain("クエリモデルのルート集約で、ビューにマッピングされない場合はキーを指定できません。"));
 
         // Childrenにキー指定
-        project = await NijoTestUtil.CreateNewProjectAsync($$"""
+        using var project2 = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
                 <Query2 Type="query-model">
@@ -200,15 +200,15 @@ public class IsKey属性のテスト {
               </DataStructures>
             </NijoAppScaffold>
             """);
-        errors = await project.EnumerateValidationErrorsAsync();
-        allErrors = errors.SelectMany(e => e.AttributeErrors.Values.SelectMany(v => v));
-        Assert.That(allErrors, Does.Contain("クエリモデルの子配列で、ビューにマッピングされない場合はキーを指定できません。"));
+        var errors2 = await project2.EnumerateValidationErrorsAsync();
+        var allErrors2 = errors2.SelectMany(e => e.AttributeErrors.Values.SelectMany(v => v));
+        Assert.That(allErrors2, Does.Contain("クエリモデルの子配列で、ビューにマッピングされない場合はキーを指定できません。"));
     }
 
     [Test]
     public async Task その他のモデルにはキー指定不可であること() {
         // StructureModel でテスト
-        var project = await NijoTestUtil.CreateNewProjectAsync($$"""
+        using var project = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
                 <Struct1 Type="structure-model">

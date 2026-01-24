@@ -213,28 +213,35 @@ namespace Nijo.CodeGenerating {
                 var modules = new List<string>();
 
                 // DisplayData（Ref）
-                var refEntries = group.Select(agg => new Models.QueryModelModules.DisplayDataRef.Entry(agg));
-                foreach (var refEntry in refEntries) {
-                    modules.Add(refEntry.TsTypeName);
-                    modules.Add(refEntry.TsNewObjectFunction);
-                }
+                if (group.Key.Model is Models.StructureModel) {
+                    var plainStructure = new Models.StructureModelModules.PlainStructure(group.Key);
+                    modules.Add(plainStructure.TsTypeName);
+                    modules.Add(plainStructure.TsNewObjectFunction);
 
-                // DisplayData
-                foreach (var agg in group) {
-                    var displayData = new Models.QueryModelModules.DisplayData(agg);
-                    modules.Add(displayData.TsTypeName);
-                    modules.Add(displayData.TsNewObjectFunction);
-                }
+                } else {
+                    var refEntries = group.Select(agg => new Models.QueryModelModules.DisplayDataRef.Entry(agg));
+                    foreach (var refEntry in refEntries) {
+                        modules.Add(refEntry.TsTypeName);
+                        modules.Add(refEntry.TsNewObjectFunction);
+                    }
 
-                // SearchCondition
-                var searchConditionList = group
-                    .Select(agg => agg.GetRoot())
-                    .Distinct()
-                    .Select(agg => new Models.QueryModelModules.SearchCondition.Entry(agg));
-                foreach (var searchCondition in searchConditionList) {
-                    modules.Add(searchCondition.TsTypeName);
-                    modules.Add(searchCondition.FilterRoot.TsTypeName);
-                    modules.Add(searchCondition.TsNewObjectFunction);
+                    // DisplayData
+                    foreach (var agg in group) {
+                        var displayData = new Models.QueryModelModules.DisplayData(agg);
+                        modules.Add(displayData.TsTypeName);
+                        modules.Add(displayData.TsNewObjectFunction);
+                    }
+
+                    // SearchCondition
+                    var searchConditionList = group
+                        .Select(agg => agg.GetRoot())
+                        .Distinct()
+                        .Select(agg => new Models.QueryModelModules.SearchCondition.Entry(agg));
+                    foreach (var searchCondition in searchConditionList) {
+                        modules.Add(searchCondition.TsTypeName);
+                        modules.Add(searchCondition.FilterRoot.TsTypeName);
+                        modules.Add(searchCondition.TsNewObjectFunction);
+                    }
                 }
 
                 refToModules.Add(fileName, modules);

@@ -271,9 +271,18 @@ namespace Nijo.Models.DataModelModules {
                 // 右辺の変数に使われる変数を定義する。右辺は集約ルートが起点になる。
                 var thisCreateCommandInstance = (IInstancePropertyOwner?)null;
                 var thisCreateCommandInstanceOwnerArray = (IInstancePropertyOwner?)null;
-                var rightInstances = CollectInstancesRecursively(arg).ToDictionary(kv => kv.Key, kv => kv.Value);
+                var rightInstances = CollectInstancesRecursively(arg)
+                    .GroupBy(member => member.Metadata.SchemaPathNode.ToMappingKey())
+                    .Select(group => new {
+                        group.Key,
+                        // 外部キーのカラムは、参照元自身のプロパティと、ナビゲーションプロパティで辿った先の
+                        // 参照先エンティティのプロパティで重複するキーが登場するので、
+                        // パスが最も短いもの（= 参照元自身のプロパティ）を選択する
+                        Value = group.OrderBy(member => member.GetPathFromInstance().Count()).First(),
+                    })
+                    .ToDictionary(kv => kv.Key, kv => kv.Value.GetJoinedPathFromInstance(E_CsTs.CSharp, "?."));
 
-                IEnumerable<KeyValuePair<SchemaNodeIdentity, string>> CollectInstancesRecursively(IInstancePropertyOwner currentInstance, IInstancePropertyOwner? ownerArray = null) {
+                IEnumerable<IInstanceProperty> CollectInstancesRecursively(IInstancePropertyOwner currentInstance, IInstancePropertyOwner? ownerArray = null) {
 
                     // ValueMember(Ref先のValueMember含む)
                     var valueMembers = currentInstance
@@ -281,9 +290,7 @@ namespace Nijo.Models.DataModelModules {
                         .Where(p => p.Metadata is SaveCommand.SaveCommandValueMember member && member.IsKey
                                  || p.Metadata is SearchResult.SearchResultValueMember srm && srm.ValueMember.IsKey);
                     foreach (var member in valueMembers) {
-                        yield return KeyValuePair.Create(
-                            member.Metadata.SchemaPathNode.ToMappingKey(),
-                            member.GetJoinedPathFromInstance(E_CsTs.CSharp, "?."));
+                        yield return member;
                     }
 
                     // 左辺の集約が表れたら終了（左辺の子孫の集約はそれと対応する右辺の変数を定義しなくてもよい）

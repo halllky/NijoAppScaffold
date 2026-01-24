@@ -7,7 +7,7 @@ public class GeneratedProjectOptionsのテスト {
     [Test]
     public async Task ソースコード自動生成先フォルダを指定できるかの確認() {
 
-        var project = await NijoTestUtil.CreateNewProjectAsync($$"""
+        using var project = await NijoTestUtil.CreateNewProjectAsync($$"""
             <!-- ここで明示的に指定した名前のフォルダの内部にコードが生成されることを確認したい -->
             <NijoAppScaffold CoreLibraryFolderName="MyCoreLib"
                              WebapiProjectFolderName="MyWebApi"

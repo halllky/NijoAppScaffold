@@ -73,7 +73,7 @@ public class NijoTestUtil {
     /// Nijo プロジェクトを表すインスタンスと、
     /// そのテストユーティリティをまとめたクラス。
     /// </summary>
-    public class GeneratedProjectWithTestUtil {
+    public class GeneratedProjectWithTestUtil : IDisposable {
         /// <summary>
         /// Nijo プロジェクトのインスタンス。
         /// コード自動生成の実行などはこのインスタンスを通じて行う。
@@ -85,31 +85,48 @@ public class NijoTestUtil {
         /// </summary>
         public required ILogger Logger { get; init; }
 
+        void IDisposable.Dispose() {
+            var result = TestContext.CurrentContext.Result;
+            if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed) {
+                Logger.LogError("TEST FAILED: {Message}\n{StackTrace}", result.Message, result.StackTrace);
+            }
+        }
+
         /// <summary>
         /// スキーマ検証エラーを列挙する。
         /// </summary>
         public async Task<SchemaParsing.SchemaParseContext.ValidationError[]> EnumerateValidationErrorsAsync() {
-            using var reader = File.OpenRead(Project.SchemaXmlPath);
-            var document = await XDocument.LoadAsync(reader, LoadOptions.None, CancellationToken.None);
-            var rule = SchemaParsing.SchemaParseRule.Default();
-            var parseContext = new SchemaParsing.SchemaParseContext(document, rule);
+            try {
+                using var reader = File.OpenRead(Project.SchemaXmlPath);
+                var document = await XDocument.LoadAsync(reader, LoadOptions.None, CancellationToken.None);
+                var rule = SchemaParsing.SchemaParseRule.Default();
+                var parseContext = new SchemaParsing.SchemaParseContext(document, rule);
 
-            parseContext.TryBuildSchema(document, out var _, out var errors);
-            return errors;
+                parseContext.TryBuildSchema(document, out var _, out var errors);
+                return errors;
+            } catch (Exception ex) {
+                Logger.LogError(ex, "EnumerateValidationErrorsAsyncで例外が発生しました。");
+                throw;
+            }
         }
 
         /// <summary>
         /// <see cref="GeneratedProject.GenerateCode"/> の呼び出し方が少々煩雑なのでラップしたもの
         /// </summary>
         public async Task<bool> GenerateCodeAsync() {
-            using var reader = File.OpenRead(Project.SchemaXmlPath);
-            var document = await XDocument.LoadAsync(reader, LoadOptions.None, CancellationToken.None);
-            var rule = SchemaParsing.SchemaParseRule.Default();
-            var parseContext = new SchemaParsing.SchemaParseContext(document, rule);
-            var renderingOptions = new CodeGenerating.CodeRenderingOptions {
-                AllowNotImplemented = false,
-            };
-            return Project.GenerateCode(parseContext, renderingOptions, Logger);
+            try {
+                using var reader = File.OpenRead(Project.SchemaXmlPath);
+                var document = await XDocument.LoadAsync(reader, LoadOptions.None, CancellationToken.None);
+                var rule = SchemaParsing.SchemaParseRule.Default();
+                var parseContext = new SchemaParsing.SchemaParseContext(document, rule);
+                var renderingOptions = new CodeGenerating.CodeRenderingOptions {
+                    AllowNotImplemented = false,
+                };
+                return Project.GenerateCode(parseContext, renderingOptions, Logger);
+            } catch (Exception ex) {
+                Logger.LogError(ex, "GenerateCodeAsyncで例外が発生しました。");
+                throw;
+            }
         }
 
         /// <summary>
@@ -119,25 +136,25 @@ public class NijoTestUtil {
         /// TypeScript: npm run check の実行
         /// </summary>
         public async Task<bool> CheckCompileAsync() {
+            try {
+                // C# や TypeScript のビルド確認用のファイルを作成
+                await File.WriteAllTextAsync(
+                    Path.Combine(Project.ProjectRoot, "NijoGeneratedCode.csproj"),
+                    DEFAULT_CSPROJ,
+                    new UTF8Encoding(false));
+                await File.WriteAllTextAsync(
+                    Path.Combine(Project.ProjectRoot, "package.json"),
+                    DEFAULT_PACKAGE_JSON,
+                    new UTF8Encoding(false));
+                await File.WriteAllTextAsync(
+                    Path.Combine(Project.ProjectRoot, "tsconfig.json"),
+                    DEFAULT_TSCONFIG_JSON,
+                    new UTF8Encoding(false));
 
-            // C# や TypeScript のビルド確認用のファイルを作成
-            await File.WriteAllTextAsync(
-                Path.Combine(Project.ProjectRoot, "NijoGeneratedCode.csproj"),
-                DEFAULT_CSPROJ,
-                new UTF8Encoding(false));
-            await File.WriteAllTextAsync(
-                Path.Combine(Project.ProjectRoot, "package.json"),
-                DEFAULT_PACKAGE_JSON,
-                new UTF8Encoding(false));
-            await File.WriteAllTextAsync(
-                Path.Combine(Project.ProjectRoot, "tsconfig.json"),
-                DEFAULT_TSCONFIG_JSON,
-                new UTF8Encoding(false));
-
-            // このクラスだけは予め手作業で作成されていないとコンパイルが通らない
-            await File.WriteAllTextAsync(
-                Path.Combine(Project.ProjectRoot, "AutoGeneratedControllerBase.cs"),
-                $$"""
+                // このクラスだけは予め手作業で作成されていないとコンパイルが通らない
+                await File.WriteAllTextAsync(
+                    Path.Combine(Project.ProjectRoot, "AutoGeneratedControllerBase.cs"),
+                    $$"""
                 namespace {{Project.GetConfig().RootNamespace}};
 
                 // 本来はプロジェクトテンプレートに含まれ、自動生成コードから参照されるクラス。
@@ -163,14 +180,18 @@ public class NijoTestUtil {
                     }
                 }
                 """,
-                new UTF8Encoding(false));
+                    new UTF8Encoding(false));
 
-            // 2つを並列実行して待機
-            var results = await Task.WhenAll(
-                RunCommandAsync("dotnet", "build", "RESULT_CS.log"),
-                RunCommandAsync("npm", "run check", "RESULT_TS.log")
-            );
-            return results.All(ok => ok);
+                // 2つを並列実行して待機
+                var results = await Task.WhenAll(
+                    RunCommandAsync("dotnet", "build", "RESULT_CS.log"),
+                    RunCommandAsync("npm", "run check", "RESULT_TS.log")
+                );
+                return results.All(ok => ok);
+            } catch (Exception ex) {
+                Logger.LogError(ex, "CheckCompileAsyncで例外が発生しました。");
+                throw;
+            }
         }
 
         private async Task<bool> RunCommandAsync(string fileName, string arguments, string logFileName) {
@@ -207,9 +228,9 @@ public class NijoTestUtil {
             await File.WriteAllTextAsync(logPath, sb.ToString(), new UTF8Encoding(false));
 
             if (process.ExitCode != 0) {
-                Logger.LogError($"Command failed: {fileName} {arguments} (ExitCode: {process.ExitCode})");
+                Logger.LogError("Command failed: {FileName} {Arguments} (ExitCode: {ExitCode})", fileName, arguments, process.ExitCode);
             } else {
-                Logger.LogInformation($"Command success: {fileName} {arguments}");
+                Logger.LogInformation("Command success: {FileName} {Arguments}", fileName, arguments);
             }
 
             return process.ExitCode == 0;
