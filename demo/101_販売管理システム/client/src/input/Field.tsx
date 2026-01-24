@@ -116,11 +116,12 @@ export function Field<
   let renderUiElement: ReactHookForm.ControllerProps<TFormValues, TFieldPath>["render"] | undefined = undefined
 
   //#region フォーム - 単語
-  if (fieldMetadata.type === "word") renderUiElement = ({ field }) => (
+  if (fieldMetadata.type === "word") renderUiElement = ({ field: { value, ...restField } }) => (
     <WordTextBox
       maxLength={fieldMetadata.customMaxLength}
       className={className}
-      {...field}
+      value={value ?? ""}
+      {...restField}
       {...rest}
     />
   )
@@ -130,18 +131,20 @@ export function Field<
   if (fieldMetadata.type === "description") {
     if (contextValue.objectType === 'SearchCondition') {
       // 検索条件オブジェクトの場合は部分一致の言葉が入力されるだけなので単純にテキストボックス
-      renderUiElement = ({ field }) => (
+      renderUiElement = ({ field: { value, ...restField } }) => (
         <WordTextBox
           maxLength={fieldMetadata.customMaxLength}
           className={className}
-          {...field}
+          value={value ?? ""}
+          {...restField}
           {...rest}
         />
       )
     } else {
-      renderUiElement = ({ field }) => (
+      renderUiElement = ({ field: { value, ...restField } }) => (
         <DescriptionTextArea
-          {...field}
+          value={value ?? ""}
+          {...restField}
           className={`flex-1 overflow-y-auto ${className ?? ""}`}
           // input要素ではなくtextarea要素なのでpropsの型が違うのだが、
           // classNameなどよく使う属性については問題ないので強制的にキャスト
@@ -195,11 +198,12 @@ export function Field<
       )
 
     } else {
-      renderUiElement = ({ field }) => (
+      renderUiElement = ({ field: { value, ...restField } }) => (
         <DateInput
           appearance={appearance}
           className={className}
-          {...field}
+          value={value ?? ""}
+          {...restField}
           {...rest}
         />
       )
@@ -270,14 +274,15 @@ export function Field<
         </div>
       )
     } else {
-      renderUiElement = ({ field }) => (
+      renderUiElement = ({ field: { value, ...restField } }) => (
         <NumericTextBox
           integerDigit={integerDigit}
           decimalDigit={decimalDigit}
           className={className}
           suffix={suffix}
           commaSeparated={commaSeparated}
-          {...field}
+          value={value ?? ""}
+          {...restField}
           {...rest}
         />
       )

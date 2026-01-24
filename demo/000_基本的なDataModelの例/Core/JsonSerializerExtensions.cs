@@ -131,7 +131,7 @@ public static class JsonSerializerExtensions {
             if (value == null) {
                 writer.WriteNullValue();
             } else {
-                writer.WriteStringValue(value.Value.ToString());
+                writer.WriteStringValue(value.Value.ToString("#,##0"));
             }
         }
     }
@@ -161,7 +161,7 @@ public static class JsonSerializerExtensions {
             if (value == null) {
                 writer.WriteNullValue();
             } else {
-                writer.WriteStringValue(value.Value.ToString("#.#"));
+                writer.WriteStringValue(value.Value.ToString("#,##0.#"));
             }
         }
     }

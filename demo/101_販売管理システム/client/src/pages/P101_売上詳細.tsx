@@ -189,6 +189,11 @@ function P101_売上詳細(props: {
     }
   })
 
+  // 保存後に loaderData のインスタンスが更新されるのでフォーム内容をリセットする
+  React.useEffect(() => {
+    formMethods.reset(loaderData)
+  }, [loaderData, formMethods])
+
   return (
     <EditPageBase
       pageTitle={browserTitle}
@@ -197,7 +202,7 @@ function P101_売上詳細(props: {
     >
       {({ save, saving }) => (
         <UI.FieldUiContext.Provider value={modelMetadata}>
-          <div className="max-h-full max-w-5xl flex flex-col gap-y-2">
+          <div className="max-h-full max-w-6xl flex flex-col gap-y-2">
 
             {/* ヘッダ */}
             <div className="flex items-start gap-1">
@@ -243,79 +248,96 @@ function P101_売上詳細(props: {
                 明細がありません。
               </div>
             )}
-            <div className="flex flex-col overflow-x-auto">
-              {fields.map((field, index) => (
-                <React.Fragment key={field.id}>
-                  <div className={`flex flex-col md:flex-row gap-x-8 gap-y-1 border-t border-gray-300 whitespace-nowrap ${field.values.区分 === '取消' ? 'text-rose-700' : ''}`}>
-                    <UI.Field
-                      name={`売上詳細の売上明細.${index}.values.区分`}
-                      control={control}
-                      className="w-16 shrink-0"
-                      readOnly={field.existsInDatabase}
-                    />
-
-                    {/* 商品 */}
-                    <div className="flex flex-wrap items-center gap-1 font-bold">
-                      <UI.Field
-                        name={`売上詳細の売上明細.${index}.values.商品.外部システム側ID`}
-                        className="w-32 shrink-0"
-                        control={control}
-                        readOnly={field.existsInDatabase}
-                      />
-                      <span
-                        title={field.values.商品.商品名}
-                        className="inline-block flex-1 truncate"
-                      >
-                        {field.values.商品.商品名}
-                      </span>
-                    </div>
-
-                    {/* 計算途中 */}
-                    <div className="flex-1 flex gap-1 items-center">
-                      <span className="basis-32 shrink-0 text-right">
-                        {field.values.商品.売値単価_税抜}
-                        円
-                      </span>
-                      <span>
-                        *
-                      </span>
-                      <UI.Field
-                        name={`売上詳細の売上明細.${index}.values.売上数量`}
-                        className="w-16"
-                        control={control}
-                        readOnly={field.existsInDatabase}
-                      />
-                      <span>
-                        *
-                      </span>
-                      <span className="basis-20 shrink-0">
-                        {field.values.商品.消費税区分}
-                      </span>
-                      <span>
-                        =
-                      </span>
-                    </div>
-
-                    {/* 計算結果（行単位金額トータル） */}
-                    <div className="flex w-80 justify-end items-center gap-1">
-                      <span style={{
-                        // 手修正が入っている場合は打ち消し線で表示
-                        textDecoration: field.values.売上総額_税込_手修正 ? 'line-through' : undefined,
-                        opacity: field.values.売上総額_税込_手修正 ? 0.3 : undefined,
-                      }}>
-                        {field.values.売上総額_税込_自動計算}円
-                      </span>
-                      (手修正: <UI.Field
-                        name={`売上詳細の売上明細.${index}.values.売上総額_税込_手修正`}
-                        className="w-40"
-                        control={control}
-                        readOnly={field.existsInDatabase}
-                      />)
-                    </div>
-                  </div>
-                  <DetailMessage.Of name={`売上詳細の売上明細.${index}`} includeDescendants control={control} />
-                </React.Fragment>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="table-fixed w-full">
+                <tbody>
+                  {fields.map((field, index) => (
+                    <React.Fragment key={field.id}>
+                      <tr className={`border-t border-gray-300 whitespace-nowrap ${field.values.区分 === '取消' ? 'text-rose-700' : ''}`}>
+                        <td className="p-1 w-16 align-top">
+                          <UI.Field
+                            name={`売上詳細の売上明細.${index}.values.区分`}
+                            control={control}
+                            className="shrink-0"
+                            readOnly={field.existsInDatabase}
+                          />
+                        </td>
+                        <td className="p-1 w-32 align-top font-bold">
+                          <UI.Field
+                            name={`売上詳細の売上明細.${index}.values.商品.外部システム側ID`}
+                            className="shrink-0"
+                            control={control}
+                            readOnly={field.existsInDatabase}
+                          />
+                        </td>
+                        <td className="p-1 align-middle font-bold max-w-[16rem]">
+                          <div
+                            title={field.values.商品.商品名}
+                            className="truncate"
+                          >
+                            {field.values.商品.商品名}
+                          </div>
+                        </td>
+                        <td className="p-1 align-middle text-right w-32">
+                          {field.values.商品.売値単価_税抜}
+                          円
+                        </td>
+                        <td className="p-1 w-8 align-middle text-center">
+                          *
+                        </td>
+                        <td className="p-1 w-24 text-right align-top">
+                          <UI.Field
+                            name={`売上詳細の売上明細.${index}.values.売上数量`}
+                            className="w-full"
+                            readOnly={field.existsInDatabase}
+                            control={control}
+                          />
+                        </td>
+                        <td className="p-1 w-8 align-middle text-center">
+                          *
+                        </td>
+                        <td className="p-1 w-20 align-middle">
+                          {field.values.商品.消費税区分}
+                        </td>
+                        <td className="p-1 w-8 align-middle text-center">
+                          =
+                        </td>
+                        <td className="p-1 w-32 align-middle text-right">
+                          <span style={{
+                            // 手修正が入っている場合は打ち消し線で表示
+                            textDecoration: field.values.売上総額_税込_手修正 ? 'line-through' : undefined,
+                            opacity: field.values.売上総額_税込_手修正 ? 0.3 : undefined,
+                          }}>
+                            {field.values.売上総額_税込_自動計算}円
+                          </span>
+                        </td>
+                        <td className="p-1 w-40 align-middle">
+                          (手修正:
+                          <UI.Field
+                            name={`売上詳細の売上明細.${index}.values.売上総額_税込_手修正`}
+                            className="w-full"
+                            readOnly={field.existsInDatabase}
+                            control={control}
+                          />
+                          )
+                        </td>
+                        <td className="p-1 align-middle w-16 text-center">
+                          {!field.existsInDatabase && (
+                            <Button outline mini onClick={() => remove(index)}>
+                              削除
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colSpan={12} className="p-0 border-none">
+                          <DetailMessage.Of name={`売上詳細の売上明細.${index}`} includeDescendants control={control} />
+                        </td>
+                      </tr>
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
             {/* 新規明細行追加欄 */}
