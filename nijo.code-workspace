@@ -84,9 +84,9 @@
         "type": "shell",
         "problemMatcher": [],
         "options": {
-          "cwd": "${workspaceFolder:NijoAppScaffold}"
+          "cwd": "${workspaceFolder:ワークスペース全体}/Task"
         },
-        "command": "./Task/NijoServeデバッグ.sh"
+        "command": "./NijoServeデバッグ.sh"
       },
       {
         "label": "Nijo > リリース",
@@ -97,27 +97,27 @@
           "${input:releaseType}" // GitHub配置用のzipまで作成するなら1を指定
         ],
         "options": {
-          "cwd": "${workspaceFolder:NijoAppScaffold}"
+          "cwd": "${workspaceFolder:ワークスペース全体}/Task"
         },
-        "command": "./Task/Nijoリリース.sh"
+        "command": "./Nijoリリース.sh"
       },
       {
         "label": "Nijo > ドキュメント > デバッグ",
         "type": "shell",
         "problemMatcher": [],
         "options": {
-          "cwd": "${workspaceFolder:NijoAppScaffold}/Document"
+          "cwd": "${workspaceFolder:ワークスペース全体}/Document/task"
         },
-        "command": "./task/DEBUG.sh"
+        "command": "./DEBUG.sh"
       },
       {
         "label": "Nijo > ドキュメント > リリース",
         "type": "shell",
         "problemMatcher": [],
         "options": {
-          "cwd": "${workspaceFolder:NijoAppScaffold}/Document"
+          "cwd": "${workspaceFolder:ワークスペース全体}/Document/task"
         },
-        "command": "./task/RELEASE.sh"
+        "command": "./RELEASE.sh"
       },
       {
         "label": "Nijo > 標準UIコンポーネント > デバッグ",
@@ -127,7 +127,7 @@
           "$tsc-watch"
         ],
         "options": {
-          "cwd": "${workspaceFolder:NijoAppScaffold}/Nijo.GuiClient/package_ui-components-debug"
+          "cwd": "${workspaceFolder:ワークスペース全体}/Nijo.GuiClient/package_ui-components-debug"
         }
       },
       {
@@ -135,19 +135,19 @@
         "detail": "テンプレとデモの自動生成をかけなおし、テンプレの一部ソースを各デモにコピーする",
         "type": "shell",
         "options": {
-          "cwd": "${workspaceFolder:NijoAppScaffold}"
+          "cwd": "${workspaceFolder:ワークスペース全体}/Task"
         },
         "problemMatcher": [],
-        "command": "./Task/ソース最新化.sh"
+        "command": "./ソース最新化.sh"
       },
       {
         "label": "Nijo > デモ > デバッグ",
         "detail": "特定のデモのソースコード再生成をかけなおしてデバッグ開始",
         "type": "shell",
         "options": {
-          "cwd": "${workspaceFolder:NijoAppScaffold}/demo",
+          "cwd": "${workspaceFolder:ワークスペース全体}/demo",
           "env": {
-            "NIJO_CLI_PATH": "${workspaceFolder:NijoAppScaffold}/Nijo/bin/Debug/net9.0/nijo"
+            "NIJO_CLI_PATH": "${workspaceFolder:ワークスペース全体}/Nijo/bin/Debug/net9.0/nijo"
           }
         },
         "problemMatcher": [],
@@ -158,11 +158,11 @@
         "detail": "デモのnijo.xmlを編集する。「Nijo > リリース」で発行したときのものが使われる",
         "type": "shell",
         "options": {
-          "cwd": "${workspaceFolder:NijoAppScaffold}/Nijo/bin/Release/net9.0"
+          "cwd": "${workspaceFolder:ワークスペース全体}/Nijo/bin/Release/net9.0"
         },
         "args": [
           "serve",
-          "${workspaceFolder:NijoAppScaffold}/demo/${input:demoFolder}"
+          "${workspaceFolder:ワークスペース全体}/demo/${input:demoFolder}"
         ],
         "problemMatcher": [],
         "command": "./nijo"
@@ -172,9 +172,9 @@
         "detail": "特定のデモのマイグレーションSQLを作成",
         "type": "shell",
         "options": {
-          "cwd": "${workspaceFolder:NijoAppScaffold}/demo",
+          "cwd": "${workspaceFolder:ワークスペース全体}/demo",
           "env": {
-            "NIJO_CLI_PATH": "${workspaceFolder:NijoAppScaffold}/Nijo/bin/Debug/net9.0/nijo"
+            "NIJO_CLI_PATH": "${workspaceFolder:ワークスペース全体}/Nijo/bin/Debug/net9.0/nijo"
           }
         },
         "problemMatcher": [],
@@ -185,7 +185,7 @@
         "detail": "比較ツールでの目検に用いるため、自動生成されたソースを一時フォルダにコピー",
         "type": "shell",
         "options": {
-          "cwd": "${workspaceFolder:NijoAppScaffold}/Task"
+          "cwd": "${workspaceFolder:ワークスペース全体}/Task"
         },
         "args": [
           "\"${input:tempDirectoryName}\""
@@ -196,7 +196,7 @@
       {
         "label": "dotnet build Nijo",
         "type": "shell",
-        "command": "dotnet build ${workspaceFolder:NijoAppScaffold}/Nijo/Nijo.csproj",
+        "command": "dotnet build ${workspaceFolder:ワークスペース全体}/Nijo/Nijo.csproj",
         "problemMatcher": []
       }
     ],
