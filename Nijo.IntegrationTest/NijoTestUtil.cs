@@ -100,6 +100,19 @@ public class NijoTestUtil {
         public required ILogger Logger { get; init; }
 
         /// <summary>
+        /// スキーマ検証エラーを列挙する。
+        /// </summary>
+        public async Task<SchemaParsing.SchemaParseContext.ValidationError[]> EnumerateValidationErrorsAsync() {
+            using var reader = File.OpenRead(Project.SchemaXmlPath);
+            var document = await XDocument.LoadAsync(reader, LoadOptions.None, CancellationToken.None);
+            var rule = SchemaParsing.SchemaParseRule.Default();
+            var parseContext = new SchemaParsing.SchemaParseContext(document, rule);
+
+            parseContext.TryBuildSchema(document, out var _, out var errors);
+            return errors;
+        }
+
+        /// <summary>
         /// <see cref="GeneratedProject.GenerateCode"/> の呼び出し方が少々煩雑なのでラップしたもの
         /// </summary>
         public async Task<bool> GenerateCodeAsync() {
