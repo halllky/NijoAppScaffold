@@ -205,63 +205,81 @@ function P201_入荷詳細(props: {
                 明細がありません。
               </div>
             )}
-            <div className="flex flex-col gap-y-2 overflow-x-auto">
-              {fields.map((field, index) => (
-                <React.Fragment key={field.id}>
-                  <div className="flex flex-col md:flex-row gap-x-8 gap-y-1 pt-2 border-t border-gray-300 whitespace-nowrap">
+            <div className="overflow-x-auto">
+              <table className="min-w-max">
+                <tbody>
+                  {fields.map((field, index) => (
+                    <React.Fragment key={field.id}>
+                      <tr className="border-t border-gray-300 whitespace-nowrap">
 
-                    {/* 商品 */}
-                    <div className="flex flex-wrap items-center gap-1 font-bold">
-                      <UI.Field
-                        name={`入荷商品一覧.${index}.values.商品.外部システム側ID`}
-                        className="w-32 shrink-0"
-                        control={control}
-                      />
-                      <span
-                        title={field.values.商品.商品名}
-                        className="inline-block flex-1 truncate"
-                      >
-                        {field.values.商品.商品名}
-                      </span>
-                    </div>
+                        {/* 商品 */}
+                        <td className="p-1 align-middle font-bold">
+                          <UI.Field
+                            name={`入荷商品一覧.${index}.values.商品.外部システム側ID`}
+                            className="w-32 shrink-0"
+                            control={control}
+                          />
+                        </td>
+                        <td className="p-1 align-middle font-bold max-w-[16rem]">
+                          <div
+                            title={field.values.商品.商品名}
+                            className="truncate"
+                          >
+                            {field.values.商品.商品名}
+                          </div>
+                        </td>
 
-                    {/* 数量・単価 */}
-                    <div className="flex-1 flex gap-1 items-center">
-                      <UI.Field
-                        name={`入荷商品一覧.${index}.values.数量`}
-                        className="w-24"
-                        control={control}
-                      />
-                      <span className="mx-2">@</span>
-                      <UI.Field
-                        name={`入荷商品一覧.${index}.values.仕入単価_税抜`}
-                        className="w-32"
-                        control={control}
-                      />
-                      <UI.Field
-                        name={`入荷商品一覧.${index}.values.消費税区分`}
-                        className="w-32"
-                        control={control}
-                      />
-                    </div>
+                        {/* 数量・単価 */}
+                        <td className="p-1 align-middle">
+                          <UI.Field
+                            name={`入荷商品一覧.${index}.values.数量`}
+                            className="w-24 text-right"
+                            control={control}
+                          />
+                        </td>
+                        <td className="p-1 align-middle text-center">
+                          <span className="mx-2">@</span>
+                        </td>
+                        <td className="p-1 align-middle">
+                          <UI.Field
+                            name={`入荷商品一覧.${index}.values.仕入単価_税抜`}
+                            className="w-32 text-right"
+                            control={control}
+                          />
+                        </td>
+                        <td className="p-1 align-middle">
+                          <UI.Field
+                            name={`入荷商品一覧.${index}.values.消費税区分`}
+                            className="w-32"
+                            control={control}
+                          />
+                        </td>
 
-                    {/* 備考 */}
-                    <div className="flex-1">
-                      <UI.Field
-                        name={`入荷商品一覧.${index}.values.備考`}
-                        placeholder="備考"
-                        className="w-full"
-                        control={control}
-                      />
-                    </div>
+                        {/* 備考 */}
+                        <td className="p-1 align-middle">
+                          <UI.Field
+                            name={`入荷商品一覧.${index}.values.備考`}
+                            placeholder="備考"
+                            className="w-64"
+                            control={control}
+                          />
+                        </td>
 
-                    <Button outline onClick={() => remove(index)}>
-                      削除
-                    </Button>
-                  </div>
-                  <DetailMessage.Of name={`入荷商品一覧.${index}`} includeDescendants control={control} />
-                </React.Fragment>
-              ))}
+                        <td className="p-1 align-middle w-16 text-center">
+                          <Button outline mini onClick={() => remove(index)}>
+                            削除
+                          </Button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colSpan={8} className="p-0 border-none">
+                          <DetailMessage.Of name={`入荷商品一覧.${index}`} includeDescendants control={control} />
+                        </td>
+                      </tr>
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
             {/* 新規明細行追加欄 */}
