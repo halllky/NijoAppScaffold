@@ -184,6 +184,16 @@ internal static class BasicNodeOptions {
                     ctx.AddError("クエリモデルの子配列で、ビューにマッピングされない場合はキーを指定できません。");
                 }
             }
+
+            // クエリモデルのルート集約は、ビューにマッピングされない場合は付与不可
+            if (model is QueryModel && ownerType == E_NodeType.RootAggregate) {
+                var root = ctx.XElement.GetRootAggregateElement();
+                var mapToView = root.Attribute(MapToView!.AttributeName);
+
+                if (mapToView == null) {
+                    ctx.AddError("クエリモデルのルート集約で、ビューにマッピングされない場合はキーを指定できません。");
+                }
+            }
         },
     };
 

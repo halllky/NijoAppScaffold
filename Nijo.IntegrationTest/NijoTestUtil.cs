@@ -59,20 +59,6 @@ public class NijoTestUtil {
             nijoXmlContent.ReplaceLineEndings("\n"),
             new UTF8Encoding(false));
 
-        // C# や TypeScript のビルド確認用のファイルを作成
-        await File.WriteAllTextAsync(
-            Path.Combine(projectRoot, "NijoGeneratedCode.csproj"),
-            DEFAULT_CSPROJ,
-            new UTF8Encoding(false));
-        await File.WriteAllTextAsync(
-            Path.Combine(projectRoot, "package.json"),
-            DEFAULT_PACKAGE_JSON,
-            new UTF8Encoding(false));
-        await File.WriteAllTextAsync(
-            Path.Combine(projectRoot, "tsconfig.json"),
-            DEFAULT_TSCONFIG_JSON,
-            new UTF8Encoding(false));
-
         if (!GeneratedProject.TryOpen(projectRoot, out var project, out var errors)) {
             // ありえない
             throw new InvalidOperationException($"プロジェクトのオープンに失敗しました。エラー内容: {errors}");
@@ -133,6 +119,20 @@ public class NijoTestUtil {
         /// TypeScript: npm run check の実行
         /// </summary>
         public async Task<bool> CheckCompileAsync() {
+
+            // C# や TypeScript のビルド確認用のファイルを作成
+            await File.WriteAllTextAsync(
+                Path.Combine(Project.ProjectRoot, "NijoGeneratedCode.csproj"),
+                DEFAULT_CSPROJ,
+                new UTF8Encoding(false));
+            await File.WriteAllTextAsync(
+                Path.Combine(Project.ProjectRoot, "package.json"),
+                DEFAULT_PACKAGE_JSON,
+                new UTF8Encoding(false));
+            await File.WriteAllTextAsync(
+                Path.Combine(Project.ProjectRoot, "tsconfig.json"),
+                DEFAULT_TSCONFIG_JSON,
+                new UTF8Encoding(false));
 
             // このクラスだけは予め手作業で作成されていないとコンパイルが通らない
             await File.WriteAllTextAsync(

@@ -5,7 +5,7 @@ namespace Nijo.IntegrationTest.Tests;
 public class IsKey属性のテスト {
 
     [Test]
-    public async Task データモデルのルート集約でキーが必須であること() {
+    public async Task DataModel_ルート集約でキーが必須であること() {
         // 正常系：キーあり
         var project = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
@@ -36,7 +36,7 @@ public class IsKey属性のテスト {
     }
 
     [Test]
-    public async Task データモデルのChildrenでキーが必須であること() {
+    public async Task DataModel_Childrenでキーが必須であること() {
         // 正常系：Childrenにキーあり
         var project = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
@@ -75,7 +75,7 @@ public class IsKey属性のテスト {
     }
 
     [Test]
-    public async Task Childはキー指定不可であること() {
+    public async Task DataModel_Childはキー指定不可であること() {
         // 異常系：Child内のメンバーにIsKeyを指定
         var project = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
@@ -101,7 +101,112 @@ public class IsKey属性のテスト {
     }
 
     [Test]
-    public async Task データモデル以外のモデルにはキー指定不可であること() {
+    public async Task QueryModel_Viewにマッピングされる場合はルート集約とChildrenにキーが必須() {
+        // 正常系：ルートとChildrenにキーあり
+        var project = await NijoTestUtil.CreateNewProjectAsync($$"""
+            <NijoAppScaffold>
+              <DataStructures>
+                <Query1 Type="query-model" MapToView="True">
+                  <Id Type="int" IsKey="True" />
+                  <Children Type="children">
+                     <ChildId Type="int" IsKey="True" />
+                  </Children>
+                </Query1>
+              </DataStructures>
+            </NijoAppScaffold>
+            """);
+        Assert.That(await project.EnumerateValidationErrorsAsync(), Is.Empty);
+
+        // 異常系：ルートにキーなし（Childrenあり）
+        project = await NijoTestUtil.CreateNewProjectAsync($$"""
+            <NijoAppScaffold>
+              <DataStructures>
+                <Query2 Type="query-model" MapToView="True">
+                  <Id Type="int" />
+                  <Children Type="children">
+                     <ChildId Type="int" IsKey="True" />
+                  </Children>
+                </Query2>
+              </DataStructures>
+            </NijoAppScaffold>
+            """);
+        var errors = await project.EnumerateValidationErrorsAsync();
+        Assert.That(errors.SelectMany(e => e.OwnErrors), Does.Contain("Child/Childrenがあるビューにマッピングされるクエリモデルにはキーが必要です。"));
+
+        // 異常系：Childrenにキーなし
+        project = await NijoTestUtil.CreateNewProjectAsync($$"""
+            <NijoAppScaffold>
+              <DataStructures>
+                <Query3 Type="query-model" MapToView="True">
+                  <Id Type="int" IsKey="True" />
+                  <Children Type="children">
+                     <ChildId Type="int" />
+                  </Children>
+                </Query3>
+              </DataStructures>
+            </NijoAppScaffold>
+            """);
+        errors = await project.EnumerateValidationErrorsAsync();
+        Assert.That(errors.SelectMany(e => e.OwnErrors), Does.Contain("Child/Childrenがあるビューにマッピングされるクエリモデルにはキーが必要です。"));
+    }
+
+    [Test]
+    public async Task QueryModel_Viewにマッピングされる場合であってもChildにはキー指定不可() {
+        var project = await NijoTestUtil.CreateNewProjectAsync($$"""
+            <NijoAppScaffold>
+              <DataStructures>
+                <Query1 Type="query-model" MapToView="True">
+                  <Id Type="int" IsKey="True" />
+                  <ChildEntry Type="child">
+                     <ChildId Type="int" IsKey="True" />
+                  </ChildEntry>
+                </Query1>
+              </DataStructures>
+            </NijoAppScaffold>
+            """);
+        var errors = await project.EnumerateValidationErrorsAsync();
+        var allErrors = errors.SelectMany(e => e.AttributeErrors.Values.SelectMany(v => v));
+        Assert.That(allErrors, Does.Contain("クエリモデルの子集約にはキーを指定できません。"));
+    }
+
+    [Test]
+    public async Task QueryModel_Viewにマッピングされない場合はキー指定不可() {
+        // ルートにキー指定
+        var project = await NijoTestUtil.CreateNewProjectAsync($$"""
+            <NijoAppScaffold>
+              <DataStructures>
+                <Query1 Type="query-model">
+                  <Id Type="int" IsKey="True" />
+                </Query1>
+              </DataStructures>
+            </NijoAppScaffold>
+            """);
+        var errors = await project.EnumerateValidationErrorsAsync();
+        var allErrors = errors.SelectMany(e => {
+            return e.OwnErrors.Concat(e.AttributeErrors.Values.SelectMany(v => v));
+        });
+
+        Assert.That(allErrors, Does.Contain("クエリモデルのルート集約で、ビューにマッピングされない場合はキーを指定できません。"));
+
+        // Childrenにキー指定
+        project = await NijoTestUtil.CreateNewProjectAsync($$"""
+            <NijoAppScaffold>
+              <DataStructures>
+                <Query2 Type="query-model">
+                  <Children Type="children">
+                     <ChildId Type="int" IsKey="True" />
+                  </Children>
+                </Query2>
+              </DataStructures>
+            </NijoAppScaffold>
+            """);
+        errors = await project.EnumerateValidationErrorsAsync();
+        allErrors = errors.SelectMany(e => e.AttributeErrors.Values.SelectMany(v => v));
+        Assert.That(allErrors, Does.Contain("クエリモデルの子配列で、ビューにマッピングされない場合はキーを指定できません。"));
+    }
+
+    [Test]
+    public async Task その他のモデルにはキー指定不可であること() {
         // StructureModel でテスト
         var project = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
