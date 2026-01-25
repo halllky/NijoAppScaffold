@@ -332,6 +332,12 @@
         "background-color": "#059669",
         "border-color": "#059669"
       },
+      "87def3ce-18a3-4ad1-9ab1-bf0ad3c80763": {
+        "id": "87def3ce-18a3-4ad1-9ab1-bf0ad3c80763",
+        "label": "ログイン状態確認",
+        "background-color": "#0284c7",
+        "border-color": "#0284c7"
+      },
       "8877c58b-260a-4de3-a007-ce73d1d222b3": {
         "id": "8877c58b-260a-4de3-a007-ce73d1d222b3",
         "label": "ログアウト",
@@ -678,6 +684,30 @@
         "targetEndShape": "triangle"
       },
       {
+        "source": "9604df00-d30a-4033-affd-6d2d625558fa",
+        "target": "a1b2c3d4-e5f6-4a9b-6c0d-1e2f3a4b5c6d",
+        "label": "",
+        "line-color": "#059669",
+        "line-style": "dashed",
+        "targetEndShape": "triangle"
+      },
+      {
+        "source": "9604df00-d30a-4033-affd-6d2d625558fa",
+        "target": "a5e5b615-6cc1-4a50-8cc7-fe910dca543b",
+        "label": "",
+        "line-color": "#059669",
+        "line-style": "dashed",
+        "targetEndShape": "triangle"
+      },
+      {
+        "source": "9604df00-d30a-4033-affd-6d2d625558fa",
+        "target": "93c13d8d-23ba-44d5-b1ca-694c45efeb2b",
+        "label": "",
+        "line-color": "#059669",
+        "line-style": "dashed",
+        "targetEndShape": "triangle"
+      },
+      {
         "source": "72d0c66e-b523-4dd1-b8a0-8384368fe38b",
         "target": "659bf33a-c624-4e67-96a9-460809d70995",
         "label": "ユーザ",
@@ -844,6 +874,14 @@
         "line-color": "#0284c7",
         "line-style": "solid",
         "targetEndShape": "triangle"
+      },
+      {
+        "source": "87def3ce-18a3-4ad1-9ab1-bf0ad3c80763",
+        "target": "f594d8ac-f7ff-44ca-878f-fcbfd1e79ee1",
+        "label": "戻り値",
+        "line-color": "#0284c7",
+        "line-style": "solid",
+        "targetEndShape": "triangle"
       }
     ],
     "nodePositions": {
@@ -918,6 +956,10 @@
       "7e844312-66b4-4693-b8eb-c4d3a4dd2565": {
         "x": 333.13567695275884,
         "y": -64.68181742712613
+      },
+      "87def3ce-18a3-4ad1-9ab1-bf0ad3c80763": {
+        "x": 106,
+        "y": -347
       },
       "8877c58b-260a-4de3-a007-ce73d1d222b3": {
         "x": 34.282168703503174,

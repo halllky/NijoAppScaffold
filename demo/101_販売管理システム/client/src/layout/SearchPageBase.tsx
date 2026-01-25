@@ -15,7 +15,8 @@ import { useSearchParamsAsCondition } from "./SearchPageBase.useSearchParamsAsCo
 import { SearchPageSortDropdown } from "./SearchPageBase.SortDropdown"
 import type { SortComboItem } from "./SearchPageBase.SortDropdown"
 import useEvent from "react-use-event-hook"
-import { useLocation } from "react-router-dom" // 追加
+import { useLocation } from "react-router-dom"
+import { Pager } from "./Pager"
 
 export type { SortComboItem } from "./SearchPageBase.SortDropdown"
 
@@ -319,26 +320,13 @@ export function SearchPageBase<
           </Allotment>
         )}
         footer={(
-          // ページャー
-          <div className="w-full flex justify-center items-center">
-            <div className="flex gap-2 items-center">
-              <Button outline
-                onClick={() => handlePageChange(pageIndex - 1)}
-                disabled={!canPrev || loading}
-              >
-                前へ
-              </Button>
-              <span className="px-2 py-px select-none">
-                {pageIndex + 1} / {Math.max(1, totalPages)}
-              </span>
-              <Button outline
-                onClick={() => handlePageChange(pageIndex + 1)}
-                disabled={!canNext || loading}
-              >
-                次へ
-              </Button>
-            </div>
-          </div>
+          <Pager
+            pageIndex={pageIndex}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={handlePageChange}
+            disabled={loading}
+          />
         )}
       />
     </UI.FieldUiContext.Provider>

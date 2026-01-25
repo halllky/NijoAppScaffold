@@ -56,7 +56,17 @@ if (app.Environment.IsDevelopment()) {
     // app.UseHsts();
 
     // 本番環境では client フォルダのソースは1個の JavaScript ファイルにバンドルされて静的ファイルとして配信される
-    app.UseStaticFiles();
+    app.UseStaticFiles(new StaticFileOptions {
+        OnPrepareResponse = ctx => {
+            // HTMLはサイズが小さいのと、JavaScript/CSSのバージョンアップがあったときに
+            // 古いバージョンが参照されてしまうのを防ぐために、キャッシュ無効にする
+            if (ctx.File.Name.EndsWith(".html", StringComparison.OrdinalIgnoreCase)) {
+                ctx.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store");
+                ctx.Context.Response.Headers.Append("Pragma", "no-cache");
+                ctx.Context.Response.Headers.Append("Expires", "0");
+            }
+        }
+    });
 }
 
 // CORSミドルウェアを追加

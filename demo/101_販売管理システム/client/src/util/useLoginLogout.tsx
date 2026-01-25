@@ -14,12 +14,14 @@ type LoginUserContextType = {
   loginUser: ログインユーザー情報DisplayData | null
   loginAsync: (data: ログインParameterDisplayData) => Promise<void>
   logoutAsync: () => Promise<void>
+  initializing: boolean
 }
 
 const LoginUserContext = React.createContext<LoginUserContextType>({
   loginUser: null,
   loginAsync: async () => { },
   logoutAsync: async () => { },
+  initializing: true,
 })
 
 /**
@@ -34,6 +36,7 @@ export function LoginUserProvider({ children }: { children: React.ReactNode }) {
     const json = sessionStorage.getItem(SESSION_STORAGE_KEY)
     return json ? JSON.parse(json) as ログインユーザー情報DisplayData : null
   })
+  const [initializing, setInitializing] = React.useState(() => !sessionStorage.getItem(SESSION_STORAGE_KEY))
 
   // 他のタブでのログイン状態変更を検知
   React.useEffect(() => {
@@ -48,6 +51,27 @@ export function LoginUserProvider({ children }: { children: React.ReactNode }) {
     }
     window.addEventListener("storage", handler)
     return () => window.removeEventListener("storage", handler)
+  }, [])
+
+  // 初期表示時にサーバーへログイン状態を問い合わせる
+  // すでに別タブでログイン済みの場合にその状態を復元するため
+  React.useEffect(() => {
+    if (sessionStorage.getItem(SESSION_STORAGE_KEY)) return
+
+    callComplexPostEndpointAsync('ログイン状態確認', {}, {
+      ignoreConfirm: true,
+    }).then(result => {
+      if (result.type === 'ok') {
+        const user: ログインユーザー情報DisplayData = {
+          ...createNewログインユーザー情報DisplayData(),
+          ...result.returnValue,
+        }
+        sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user))
+        setLoginUser(user)
+      }
+    }).finally(() => {
+      setInitializing(false)
+    })
   }, [])
 
   const { replaceMessages } = DetailMessage.useSetter()
@@ -91,8 +115,8 @@ export function LoginUserProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    return { loginUser, loginAsync, logoutAsync }
-  }, [loginUser, replaceMessages])
+    return { loginUser, loginAsync, logoutAsync, initializing }
+  }, [loginUser, replaceMessages, initializing])
 
   return (
     <LoginUserContext.Provider value={contextValue}>

@@ -96,7 +96,7 @@ partial class OverridedApplicationService {
             // 在庫調整の登録
             var adjustmentResult = await Create在庫調整Async(new() {
                 在庫調整ID = adjustmentId,
-                在庫調整日時 = DateOnly.FromDateTime(CurrentTime),
+                在庫調整日時 = CurrentTime,
                 担当者 = new() { 従業員番号 = LoginUser.従業員番号 },
                 商品 = new() { 商品SEQ = param.Values.商品.商品SEQ },
                 増減数 = param.Values.増減数,

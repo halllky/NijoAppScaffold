@@ -27,7 +27,7 @@ export function P001_ログイン(props: {
 }) {
 
   const fieldContext = UI.useFieldUiContextProvider("ログインParameter")
-  const { loginUser, loginAsync } = useLoginLogout()
+  const { loginUser, loginAsync, initializing } = useLoginLogout()
   const { setFocus, handleSubmit, control } = useForm<ログインParameterDisplayData>({
     defaultValues: {
       values: {
@@ -51,6 +51,9 @@ export function P001_ログイン(props: {
     await loginAsync(data)
     setProcessing(false)
   })
+
+  // 初期化中の場合は何も表示しない
+  if (initializing) return null
 
   // ログインしていない場合はログイン画面を表示
   if (!loginUser) return (

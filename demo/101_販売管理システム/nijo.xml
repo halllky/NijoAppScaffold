@@ -494,7 +494,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
         UniqueId="5e134d02-1c42-4341-b323-f1f98de697e5" />
       <在庫調整日時
         IsNotNull="True"
-        Type="date"
+        Type="datetime"
         UniqueId="7120889a-9ee6-40cb-95cb-bd080719c4ef" />
       <担当者
         IsNotNull="True"
@@ -532,7 +532,8 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       </在庫調整引当明細>
     </在庫調整>
     <!--商品詳細画面で表示される。
-その商品の在庫がどう変動したかを新しい順に表示する。-->
+その商品の在庫がどう変動したかを新しい順に表示する。
+@[引当明細](a1b2c3d4-e5f6-4a9b-6c0d-1e2f3a4b5c6d) @[入荷明細](a5e5b615-6cc1-4a50-8cc7-fe910dca543b) @[在庫調整引当明細](93c13d8d-23ba-44d5-b1ca-694c45efeb2b) を組み合わせる。-->
     <商品在庫増減履歴
       Type="query-model"
       UniqueId="9604df00-d30a-4033-affd-6d2d625558fa">
@@ -737,6 +738,11 @@ ASP.NET Core のサービスワーカーとして登録される定期処理。-
       ReturnValue="売上詳細"
       Type="command-model"
       UniqueId="00556384-1f6d-4596-89d6-2cd1a9094ea5" />
+    <!--ブラウザのあるタブでログインし、その後別のタブで多重起動したとき、Cookieとサーバー側にはログイン状態が残っているが、新しいタブのJavaScriptには残っていないので、サーバー側に問い合わせてログイン中ならその情報を受け取る。-->
+    <ログイン状態確認
+      ReturnValue="ログインユーザー情報"
+      Type="command-model"
+      UniqueId="87def3ce-18a3-4ad1-9ab1-bf0ad3c80763" />
   </Commands>
   <StaticEnums>
     <消費税区分
