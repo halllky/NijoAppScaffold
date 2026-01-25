@@ -30,6 +30,13 @@ internal class PresentationContextInUnitTest : IPresentationContext, IConfirmabl
         };
     }
 
+    IPresentationContextWithReturnValue<TReturnValue, TMessage> IPresentationContext.AsWithReturnValue<TReturnValue, TMessage>() {
+        return new PresentationContextInUnitTest<TReturnValue, TMessage> {
+            Messages = Messages.As<TMessage>(),
+            ValidationOnly = ValidationOnly,
+            Confirms = Confirms,
+        };
+    }
 }
 
 /// <inheritdoc cref="PresentationContextInUnitTest"/>

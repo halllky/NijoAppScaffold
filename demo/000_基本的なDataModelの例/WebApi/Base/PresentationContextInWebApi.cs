@@ -38,9 +38,20 @@ public class PresentationContextInWebApi<TMessageRoot> : PresentationContextInWe
     // この型は戻り値を持たないので常にnullになる。戻り値ありの方（このクラスを継承した方）で使用される。
     public object? ReturnValue { get; set; } = null;
 
-    public IPresentationContext<T> As<T>() where T : IMessageSetter {
+    public IPresentationContext<T> As<T>()
+        where T : IMessageSetter {
         return new PresentationContextInWebApi<T> {
             Messages = Messages.As<T>(),
+            IgnoreConfirm = IgnoreConfirm,
+            Confirms = Confirms,
+        };
+    }
+
+    public IPresentationContextWithReturnValue<TReturnValue, TMessage> AsWithReturnValue<TReturnValue, TMessage>()
+        where TReturnValue : new()
+        where TMessage : IMessageSetter {
+        return new PresentationContextInWebApi<TReturnValue, TMessage> {
+            Messages = Messages.As<TMessage>(),
             IgnoreConfirm = IgnoreConfirm,
             Confirms = Confirms,
         };

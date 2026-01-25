@@ -3,17 +3,22 @@ import { Link } from "react-router-dom"
 import * as UIコンポーネントカタログ from "./UIコンポーネントカタログ"
 import { callAspNetCoreApiAsync } from "../example/callAspNetCoreApiAsync"
 import { Button } from "../input/Button"
+import { useLoginLogout } from "../util/useLoginLogout"
 
 export default function デバッグメニュー() {
   // 開発環境でのみ表示
   if (!import.meta.env.DEV) return null
 
   const [processing, setProcessing] = React.useState(false)
+  const { logoutAsync } = useLoginLogout()
   const handleRecreateDatabase = async () => {
     if (processing) return
     setProcessing(true)
     if (!confirm("データベースを削除して再作成しますか？\n※この操作は取り消せません。")) return
     try {
+      // ログイン情報も消えるので一旦ログアウト
+      await logoutAsync()
+
       const res = await callAspNetCoreApiAsync('/example/destroy-and-recreate-database', { method: 'POST' })
       if (res.ok) {
         alert("データベースを再作成しました。")

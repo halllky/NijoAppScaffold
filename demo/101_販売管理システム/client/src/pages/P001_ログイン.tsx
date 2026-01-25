@@ -32,7 +32,7 @@ export function P001_ログイン(props: {
     defaultValues: {
       values: {
         従業員番号: "admin",
-        パスワード: "admin",
+        パスワード: "password123",
       },
     },
   })

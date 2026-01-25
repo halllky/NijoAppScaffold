@@ -125,6 +125,12 @@ namespace Nijo.Models.DataModelModules {
                             public {{PresentationContext.INTERFACE}}<TMessage> As<TMessage>() where TMessage : {{MessageContainer.SETTER_INTERFACE}} {
                                 return new DummyDataPresentationContext<TMessage>(ValidationOnly);
                             }
+                            public {{PresentationContext.INTERFACE_WITH_RETURN_VALUE}}<TReturnValue, TMessage> AsWithReturnValue<TReturnValue, TMessage>()
+                                where TReturnValue : new()
+                                where TMessage : {{MessageContainer.SETTER_INTERFACE}} {
+                                // ダミーデータ作成ではこのメソッドは使われないので不要
+                                throw new NotImplementedException();
+                            }
                         }
                         private class DummyDataPresentationContext<TMessage> : {{PresentationContext.INTERFACE}}<TMessage> where TMessage : {{MessageContainer.SETTER_INTERFACE}} {
                             public DummyDataPresentationContext(bool validationOnly) {
@@ -139,6 +145,12 @@ namespace Nijo.Models.DataModelModules {
                             public bool ValidationOnly { get; }
                             public {{PresentationContext.INTERFACE}}<TMessage2> As<TMessage2>() where TMessage2 : {{MessageContainer.SETTER_INTERFACE}} {
                                 return new DummyDataPresentationContext<TMessage2>(ValidationOnly, Messages.As<TMessage2>());
+                            }
+                            public {{PresentationContext.INTERFACE_WITH_RETURN_VALUE}}<TReturnValue, TMessage1> AsWithReturnValue<TReturnValue, TMessage1>()
+                                where TReturnValue : new()
+                                where TMessage1 : {{MessageContainer.SETTER_INTERFACE}} {
+                                // ダミーデータ作成ではこのメソッドは使われないので不要
+                                throw new NotImplementedException();
                             }
                         }
                     """)}}

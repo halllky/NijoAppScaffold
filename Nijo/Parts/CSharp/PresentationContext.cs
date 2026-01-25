@@ -42,7 +42,16 @@ namespace Nijo.Parts.CSharp {
                         /// このインスタンスを、メッセージコンテナを持つ型にキャストします。
                         /// このインスタンスが持つ情報はすべて引き継がれます。
                         /// </summary>
-                        {{INTERFACE}}<TMessage> As<TMessage>() where TMessage : {{MessageContainer.SETTER_INTERFACE}};
+                        {{INTERFACE}}<TMessage> As<TMessage>()
+                            where TMessage : {{MessageContainer.SETTER_INTERFACE}};
+
+                        /// <summary>
+                        /// このインスタンスを、戻り値とメッセージコンテナを持つ型にキャストします。
+                        /// このインスタンスが持つ情報はすべて引き継がれます。
+                        /// </summary>
+                        {{INTERFACE_WITH_RETURN_VALUE}}<TReturnValue, TMessage> AsWithReturnValue<TReturnValue, TMessage>()
+                            where TReturnValue : new()
+                            where TMessage : {{MessageContainer.SETTER_INTERFACE}};
                     }
 
                     /// <inheritdoc cref="{{INTERFACE}}"/>
@@ -52,17 +61,6 @@ namespace Nijo.Parts.CSharp {
                         /// パラメータの各値に対するメッセージ。エラーや警告など。
                         /// </summary>
                         TMessageRoot Messages { get; }
-                    }
-
-                    /// <inheritdoc cref="{{INTERFACE}}"/>
-                    /// <typeparam name="TReturnValue">戻り値の型</typeparam>
-                    public interface {{INTERFACE_WITH_RETURN_VALUE}}<TReturnValue> : {{INTERFACE}}
-                        where TReturnValue : new() {
-
-                        /// <summary>
-                        /// 画面側に返す戻り値を取得または設定します。
-                        /// </summary>
-                        TReturnValue ReturnValue { get; set; }
                     }
 
                     /// <inheritdoc cref="{{INTERFACE}}"/>

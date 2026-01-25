@@ -5,11 +5,9 @@ using MyApp.Core.Authorization;
 namespace MyApp.WebApi.Authorization;
 
 public class LoginUserProviderInWebApi : ISessionKeyProvider {
-    private readonly OverridedApplicationService _app;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public LoginUserProviderInWebApi(OverridedApplicationService app, IHttpContextAccessor httpContextAccessor) {
-        _app = app;
+    public LoginUserProviderInWebApi(IHttpContextAccessor httpContextAccessor) {
         _httpContextAccessor = httpContextAccessor;
     }
 

@@ -35,6 +35,10 @@ partial class OverridedDummyDataGenerator {
     /// テスト用の管理者ユーザーの従業員番号
     /// </summary>
     public const string ADMIN_USER_ID = "admin";
+    /// <summary>
+    /// テスト用の管理者ユーザーのパスワード
+    /// </summary>
+    public const string DUMMY_USER_PASSWORD = "password123";
 
     // ユーザーは管理者 + 適当な人
     protected override IEnumerable<従業員CreateCommand> CreatePatternsOf従業員(DummyDataGenerateContext context) {
@@ -44,7 +48,7 @@ partial class OverridedDummyDataGenerator {
         yield return new 従業員CreateCommand {
             従業員番号 = ADMIN_USER_ID,
             氏名 = "デモ用ユーザー",
-            パスワード = OverridedApplicationService.ComputeHash("admin", salt),
+            パスワード = OverridedApplicationService.ComputeHash(DUMMY_USER_PASSWORD, salt),
             SALT = salt,
             入荷担当 = true,
             販売担当 = true,
@@ -56,7 +60,7 @@ partial class OverridedDummyDataGenerator {
             yield return new 従業員CreateCommand {
                 従業員番号 = $"user{i:000}",
                 氏名 = $"ユーザー{i:000}",
-                パスワード = OverridedApplicationService.ComputeHash("password", salt),
+                パスワード = OverridedApplicationService.ComputeHash(DUMMY_USER_PASSWORD, salt),
                 SALT = salt,
                 入荷担当 = i % 2 == 0,
                 販売担当 = i % 3 == 0,
@@ -102,6 +106,20 @@ partial class OverridedDummyDataGenerator {
         // トランザクション系データは CommandModel 経由で登録する。
         // 途中で登録失敗したらその時点で中断。
         var presentationContext = _createPresentationContext(result);
+
+        // この後の処理には入荷や売上の権限を持ったユーザーでログインしておく必要がある。
+        // 通常のログイン処理を通すとHTTPヘッダのCookieを参照してしまうので、リフレクションで無理矢理書き換える
+        var loginUserCache = typeof(OverridedApplicationService).GetField("_loginUserCache", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+        var isLoginUserLoaded = typeof(OverridedApplicationService).GetField("_isLoginUserLoaded", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+
+        loginUserCache.SetValue(applicationService, new Core.Authorization.LoginUser {
+            従業員番号 = ADMIN_USER_ID,
+            氏名 = DUMMY_USER_PASSWORD,
+            Isシステム管理者 = true,
+            CanUse入荷登録 = true,
+            CanUse売上登録 = true,
+        });
+        isLoginUserLoaded.SetValue(applicationService, true);
 
         // 全商品を少なくとも1回は入荷する（売上データ作成時に在庫不足エラーにならないようにするため）
         foreach (var item in allItems) {
