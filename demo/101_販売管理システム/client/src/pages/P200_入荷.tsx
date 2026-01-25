@@ -78,10 +78,10 @@ function P200_入荷() {
         columnFor('values.入荷ID', { widthPx: 180 }),
         columnFor('values.入荷日時'),
         columnFor('values.担当者.従業員番号', { header: '担当者', widthPx: 96 }),
-        columnFor('values.担当者.氏名', { header: '', widthPx: 120 }),
-        columnFor('values.備考', { widthPx: 200 }),
-        columnFor('values.明細件数', { widthPx: 144 }),
-        columnFor('values.入荷数量合計', { widthPx: 144 }),
+        columnFor('values.担当者.氏名', { header: '', widthPx: 144 }),
+        columnFor('values.明細件数', { widthPx: 96 }),
+        columnFor('values.入荷数量合計', { widthPx: 120 }),
+        columnFor('values.備考', { widthPx: 300 }),
       ], []]}
     />
   )
@@ -112,10 +112,6 @@ function SearchCondition({ register, control, setFocus }: UseFormReturn<入荷�
           name="filter.担当者"
           control={control}
         />
-        {/* <div className="flex gap-2">
-              <WordTextBox {...register("filter.担当者.従業員番号")} placeholder="従業員番号" className="w-1/3" />
-              <WordTextBox {...register("filter.担当者.氏名")} placeholder="氏名" className="flex-1" />
-            </div> */}
       </div>
 
       {/* 右列 */}

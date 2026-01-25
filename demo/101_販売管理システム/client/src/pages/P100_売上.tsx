@@ -79,10 +79,10 @@ function P100_売上() {
         columnFor('values.売上SEQ'),
         columnFor('values.売上日時'),
         columnFor('values.担当者.従業員番号', { header: '担当者', widthPx: 96 }),
-        columnFor('values.担当者.氏名', { header: '', widthPx: 120 }),
-        columnFor('values.備考', { widthPx: 200 }),
-        columnFor('values.合計金額', { header: '売上総額(税込)', widthPx: 144 }),
-        columnFor('values.売上数量合計', { widthPx: 144 }),
+        columnFor('values.担当者.氏名', { header: '', widthPx: 144 }),
+        columnFor('values.合計金額', { header: '売上総額(税込)', widthPx: 136 }),
+        columnFor('values.売上数量合計', { widthPx: 120 }),
+        columnFor('values.備考', { widthPx: 300 }),
       ], []]}
     />
   )
