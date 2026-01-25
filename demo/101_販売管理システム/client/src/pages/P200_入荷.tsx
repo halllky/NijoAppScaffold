@@ -8,6 +8,7 @@ import { 入荷一覧SearchCondition, createNew入荷一覧SearchCondition } fro
 import * as UI from "../input/Field"
 import { getLinkUrlToP201入荷詳細 } from "./P201_入荷詳細"
 import { RefTo従業員SearchCondition } from "../input/search-dialog/RefTo従業員"
+import { UseFormReturn } from "react-hook-form"
 
 export const URL = "/nyuka"
 
@@ -61,45 +62,7 @@ function P200_入荷() {
           新規登録
         </Link>
       )}
-      renderSearchCondition={({ register, control }) => (
-        <div className="h-full py-1 flex flex-col lg:flex-row lg:items-start gap-x-8 gap-y-2">
-
-          {/* 左列 */}
-          <div className="grid grid-cols-[112px_360px] gap-2">
-
-            <FormLabel className="text-right">入荷ID</FormLabel>
-            <UI.Field name="filter.入荷ID" control={control} />
-
-            <FormLabel className="text-right">入荷日時</FormLabel>
-            <UI.Field name="filter.入荷日時"
-              type="date"
-              control={control} />
-
-            <FormLabel className="text-right">担当者</FormLabel>
-            <RefTo従業員SearchCondition
-              name="filter.担当者"
-              control={control}
-            />
-            {/* <div className="flex gap-2">
-              <WordTextBox {...register("filter.担当者.従業員番号")} placeholder="従業員番号" className="w-1/3" />
-              <WordTextBox {...register("filter.担当者.氏名")} placeholder="氏名" className="flex-1" />
-            </div> */}
-          </div>
-
-          {/* 右列 */}
-          <div className="grid grid-cols-[112px_360px] gap-2">
-
-            <FormLabel className="text-right">備考</FormLabel>
-            <UI.Field name="filter.備考" control={control} />
-
-            <FormLabel className="text-right">明細件数</FormLabel>
-            <UI.Field name="filter.明細件数" type="numeric" control={control} />
-
-            <FormLabel className="text-right">入荷数量合計</FormLabel>
-            <UI.Field name="filter.入荷数量合計" type="numeric" control={control} />
-          </div>
-        </div>
-      )}
+      renderSearchCondition={SearchCondition}
       defineSearchResultColumns={[columnFor => [
         {
           header: '',
@@ -121,5 +84,52 @@ function P200_入荷() {
         columnFor('values.入荷数量合計', { widthPx: 144 }),
       ], []]}
     />
+  )
+}
+
+function SearchCondition({ register, control, setFocus }: UseFormReturn<入荷一覧SearchCondition>): React.ReactNode {
+
+  React.useEffect(() => {
+    setFocus("filter.入荷ID")
+  }, [setFocus])
+
+  return (
+    <div className="h-full py-1 flex flex-col lg:flex-row lg:items-start gap-x-8 gap-y-2">
+
+      {/* 左列 */}
+      <div className="grid grid-cols-[112px_360px] gap-2">
+
+        <FormLabel className="text-right">入荷ID</FormLabel>
+        <UI.Field name="filter.入荷ID" control={control} />
+
+        <FormLabel className="text-right">入荷日時</FormLabel>
+        <UI.Field name="filter.入荷日時"
+          type="date"
+          control={control} />
+
+        <FormLabel className="text-right">担当者</FormLabel>
+        <RefTo従業員SearchCondition
+          name="filter.担当者"
+          control={control}
+        />
+        {/* <div className="flex gap-2">
+              <WordTextBox {...register("filter.担当者.従業員番号")} placeholder="従業員番号" className="w-1/3" />
+              <WordTextBox {...register("filter.担当者.氏名")} placeholder="氏名" className="flex-1" />
+            </div> */}
+      </div>
+
+      {/* 右列 */}
+      <div className="grid grid-cols-[112px_360px] gap-2">
+
+        <FormLabel className="text-right">備考</FormLabel>
+        <UI.Field name="filter.備考" control={control} />
+
+        <FormLabel className="text-right">明細件数</FormLabel>
+        <UI.Field name="filter.明細件数" type="numeric" control={control} />
+
+        <FormLabel className="text-right">入荷数量合計</FormLabel>
+        <UI.Field name="filter.入荷数量合計" type="numeric" control={control} />
+      </div>
+    </div>
   )
 }

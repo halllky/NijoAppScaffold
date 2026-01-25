@@ -264,7 +264,7 @@ export function SearchPageBase<
                 className="h-full overflow-auto"
                 onSubmit={handleSubmit(handleSearch)}
               >
-                {props.renderSearchCondition(formMethods)}
+                {React.createElement(props.renderSearchCondition, formMethods)}
               </form>
             </Allotment.Pane>
 

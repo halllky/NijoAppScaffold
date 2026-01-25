@@ -63,41 +63,7 @@ function P100_売上() {
           新規登録
         </Link>
       )}
-      renderSearchCondition={({ register, control }) => (
-        <div className="h-full py-1 flex flex-col lg:flex-row lg:items-start gap-x-8 gap-y-2">
-
-          {/* 左列 */}
-          <div className="grid grid-cols-[112px_360px] gap-2">
-
-            <FormLabel className="text-right">売上SEQ</FormLabel>
-            <UI.Field name="filter.売上SEQ" control={control} />
-
-            <FormLabel className="text-right">売上日時</FormLabel>
-            <UI.Field name="filter.売上日時"
-              type="date" // 売上日時は時刻までもっているので既定ではdatetimeになるが、検索するときは日付程度のことが多いのでdateにする
-              control={control} />
-
-            <FormLabel className="text-right">担当者</FormLabel>
-            <div className="flex gap-2">
-              <WordTextBox {...register("filter.担当者.従業員番号")} placeholder="従業員番号" className="w-1/3" />
-              <WordTextBox {...register("filter.担当者.氏名")} placeholder="氏名" className="flex-1" />
-            </div>
-          </div>
-
-          {/* 右列 */}
-          <div className="grid grid-cols-[112px_360px] gap-2">
-
-            <FormLabel className="text-right">備考</FormLabel>
-            <UI.Field name="filter.備考" control={control} />
-
-            <FormLabel className="text-right">売上総額(税込)</FormLabel>
-            <UI.Field name="filter.合計金額" type="numeric" control={control} />
-
-            <FormLabel className="text-right">売上数量合計</FormLabel>
-            <UI.Field name="filter.売上数量合計" type="numeric" control={control} />
-          </div>
-        </div>
-      )}
+      renderSearchCondition={SearchCondition}
       defineSearchResultColumns={[columnFor => [
         {
           header: '',
@@ -119,5 +85,48 @@ function P100_売上() {
         columnFor('values.売上数量合計', { widthPx: 144 }),
       ], []]}
     />
+  )
+}
+
+function SearchCondition({ register, control, setFocus }: UseFormReturn<売上一覧SearchCondition>): React.ReactNode {
+
+  React.useEffect(() => {
+    setFocus("filter.売上SEQ")
+  }, [setFocus])
+
+  return (
+    <div className="h-full py-1 flex flex-col lg:flex-row lg:items-start gap-x-8 gap-y-2">
+
+      {/* 左列 */}
+      <div className="grid grid-cols-[112px_360px] gap-2">
+
+        <FormLabel className="text-right">売上SEQ</FormLabel>
+        <UI.Field name="filter.売上SEQ" control={control} />
+
+        <FormLabel className="text-right">売上日時</FormLabel>
+        <UI.Field name="filter.売上日時"
+          type="date" // 売上日時は時刻までもっているので既定ではdatetimeになるが、検索するときは日付程度のことが多いのでdateにする
+          control={control} />
+
+        <FormLabel className="text-right">担当者</FormLabel>
+        <div className="flex gap-2">
+          <WordTextBox {...register("filter.担当者.従業員番号")} placeholder="従業員番号" className="w-1/3" />
+          <WordTextBox {...register("filter.担当者.氏名")} placeholder="氏名" className="flex-1" />
+        </div>
+      </div>
+
+      {/* 右列 */}
+      <div className="grid grid-cols-[112px_360px] gap-2">
+
+        <FormLabel className="text-right">備考</FormLabel>
+        <UI.Field name="filter.備考" control={control} />
+
+        <FormLabel className="text-right">売上総額(税込)</FormLabel>
+        <UI.Field name="filter.合計金額" type="numeric" control={control} />
+
+        <FormLabel className="text-right">売上数量合計</FormLabel>
+        <UI.Field name="filter.売上数量合計" type="numeric" control={control} />
+      </div>
+    </div>
   )
 }
