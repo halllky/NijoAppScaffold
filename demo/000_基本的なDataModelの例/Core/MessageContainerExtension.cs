@@ -39,13 +39,13 @@ public static class MessageContainerExtension {
 
         foreach (var container in messageContainer.DescendantsAndSelf()) {
             foreach (var err in container.Errors) {
-                yield return $"{PathToString(container.Path)}: {err}";
+                yield return PathToString(container.Path) + err;
             }
             foreach (var warn in container.Warns) {
-                yield return $"{PathToString(container.Path)}: {warn}";
+                yield return PathToString(container.Path) + warn;
             }
             foreach (var info in container.Infos) {
-                yield return $"{PathToString(container.Path)}: {info}";
+                yield return PathToString(container.Path) + info;
             }
         }
 
@@ -60,7 +60,9 @@ public static class MessageContainerExtension {
                     result.Add(strKey);
                 }
             }
-            return string.Join(".", result);
+            return result.Count == 0
+                ? string.Empty
+                : (string.Join(".", result) + ": ");
         }
     }
 }

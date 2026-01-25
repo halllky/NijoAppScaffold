@@ -112,7 +112,7 @@ function P200_入荷() {
             </Link>
           ),
         },
-        columnFor('values.入荷ID'),
+        columnFor('values.入荷ID', { widthPx: 180 }),
         columnFor('values.入荷日時'),
         columnFor('values.担当者.従業員番号', { header: '担当者', widthPx: 96 }),
         columnFor('values.担当者.氏名', { header: '', widthPx: 120 }),

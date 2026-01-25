@@ -152,14 +152,14 @@ function P301_商品詳細() {
                           {row.values.事由}
                         </td>
                         <td className="px-3 py-1 text-right">
-                          <span className={Number(row.values.増減数) > 0 ? 'text-blue-600 font-bold' : Number(row.values.増減数) < 0 ? 'text-red-600 font-bold' : ''}>
-                            {Number(row.values.増減数) > 0 ? '+' : ''}{row.values.増減数}
+                          <span>
+                            {row.values.増減数}
                           </span>
                         </td>
                         <td className="px-3 py-1">
                           <div className="flex flex-wrap gap-4 items-start">
                             {/* 入荷へのリンク */}
-                            {row.values.入荷ID && (
+                            {row.増減履歴引当元売上一覧.length === 0 && row.values.入荷ID && (
                               <Link
                                 to={getLinkUrlToP201入荷詳細(row.values.入荷ID)}
                                 className="text-blue-600 hover:underline flex items-center gap-1"

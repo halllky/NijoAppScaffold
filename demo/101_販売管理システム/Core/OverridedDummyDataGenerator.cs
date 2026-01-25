@@ -1,4 +1,6 @@
 
+using Microsoft.EntityFrameworkCore; // Add for Include, ToListAsync
+
 namespace MyApp;
 
 partial class OverridedDummyDataGenerator {
@@ -32,17 +34,17 @@ partial class OverridedDummyDataGenerator {
     /// <summary>
     /// テスト用の管理者ユーザーの従業員番号
     /// </summary>
-    public const string ADMIN_USER_ID = "demo101-admin";
+    public const string ADMIN_USER_ID = "admin";
 
     // ユーザーは管理者 + 適当な人
     protected override IEnumerable<従業員CreateCommand> CreatePatternsOf従業員(DummyDataGenerateContext context) {
         var salt = OverridedApplicationService.GenerateSalt();
 
-        // 固定ユーザー: demo101-admin / demo101-admin
+        // 固定ユーザー: admin / admin
         yield return new 従業員CreateCommand {
             従業員番号 = ADMIN_USER_ID,
             氏名 = "デモ用ユーザー",
-            パスワード = OverridedApplicationService.ComputeHash("demo101-admin", salt),
+            パスワード = OverridedApplicationService.ComputeHash("admin", salt),
             SALT = salt,
             入荷担当 = true,
             販売担当 = true,
@@ -87,22 +89,95 @@ partial class OverridedDummyDataGenerator {
             return result;
         }
 
+        var db = applicationService.DbContext;
+        var allItems = await db.商品DbSet.ToListAsync();
+        var adminUser = await db.従業員DbSet.SingleAsync(e => e.従業員番号 == ADMIN_USER_ID);
+        var rand = new Random(0);
+
+        var adminUserRef = new 従業員RefRefTarget {
+            従業員番号 = adminUser.従業員番号,
+            氏名 = adminUser.氏名,
+        };
+
         // トランザクション系データは CommandModel 経由で登録する。
         // 途中で登録失敗したらその時点で中断。
         var presentationContext = _createPresentationContext(result);
 
+        // 全商品を少なくとも1回は入荷する（売上データ作成時に在庫不足エラーにならないようにするため）
+        foreach (var item in allItems) {
+            var details = new List<入荷商品一覧DisplayData>();
+            details.Add(new 入荷商品一覧DisplayData {
+                Values = new 入荷商品一覧DisplayDataValues {
+                    商品 = new 商品RefTarget {
+                        商品SEQ = item.商品SEQ,
+                        外部システム側ID = item.外部システム側ID,
+                        商品名 = item.商品名,
+                        売値単価_税抜 = item.売値単価_税抜,
+                        消費税区分 = item.消費税区分,
+                    },
+                    数量 = 100, // 確実に在庫を持たせる
+                    仕入単価_税抜 = item.売値単価_税抜 * 0.7m,
+                    消費税区分 = item.消費税区分,
+                    備考 = "初期在庫",
+                }
+            });
+
+            await applicationService.Execute入荷登録Async(new() {
+                Values = new() {
+                    入荷日時 = DateTime.Now.AddDays(-30),
+                    担当者 = adminUserRef,
+                    備考 = "初期在庫入荷",
+                },
+                入荷商品一覧 = details,
+            }, presentationContext.As<入荷詳細Messages>());
+
+            if (presentationContext.Messages.HasError()) {
+                presentationContext.Messages.AddError("初期在庫の登録に失敗しました。");
+                return presentationContext.Messages;
+            }
+            applicationService.DbContext.ChangeTracker.Clear();
+        }
+
         // 入荷新規登録のパターン
         // * 明細の数: 一度に1明細 or 複数明細
-        // * 商品: 複数回入荷される商品（多め） or 1回のみ入荷される商品（まあまあ） or 一度も入荷されない商品（少し）
+        // * 商品: 複数回入荷される商品（多め） or 1回のみ入荷される商品（まあまあ）
         for (var i = 0; i < 50; i++) {
+            var details = new List<入荷商品一覧DisplayData>();
+            var itemCount = rand.Next(1, 6); // 1〜5個の商品
+            for (var j = 0; j < itemCount; j++) {
+                var item = allItems[rand.Next(allItems.Count)];
+                details.Add(new 入荷商品一覧DisplayData {
+                    Values = new 入荷商品一覧DisplayDataValues {
+                        商品 = new 商品RefTarget {
+                            商品SEQ = item.商品SEQ,
+                            外部システム側ID = item.外部システム側ID,
+                            商品名 = item.商品名,
+                            売値単価_税抜 = item.売値単価_税抜,
+                            消費税区分 = item.消費税区分,
+                        },
+                        数量 = rand.Next(1, 100),
+                        仕入単価_税抜 = item.売値単価_税抜 * 0.7m,
+                        消費税区分 = item.消費税区分,
+                        備考 = $"テスト入荷明細 {i}-{j}",
+                    }
+                });
+            }
+
             await applicationService.Execute入荷登録Async(new() {
-                // TODO
+                Values = new() {
+                    入荷日時 = DateTime.Now.AddDays(-rand.Next(0, 30)),
+                    担当者 = adminUserRef,
+                    備考 = $"自動生成された入荷データ {i}",
+                },
+                入荷商品一覧 = details,
             }, presentationContext.As<入荷詳細Messages>());
 
             if (presentationContext.Messages.HasError()) {
                 presentationContext.Messages.AddError("入荷データの登録に失敗しました。");
                 return presentationContext.Messages;
             }
+
+            applicationService.DbContext.ChangeTracker.Clear();
         }
 
         // 売上新規登録 + 売上修正 のパターン
@@ -111,11 +186,33 @@ partial class OverridedDummyDataGenerator {
         // * 商品: 先ほど入荷されたものの中からピックアップ
         for (int i = 0; i < 50; i++) {
 
+            var details = new List<売上詳細の売上明細DisplayData>();
+            var itemCount = rand.Next(1, 4);
+            for (var j = 0; j < itemCount; j++) {
+                var item = allItems[rand.Next(allItems.Count)];
+                details.Add(new 売上詳細の売上明細DisplayData {
+                    Values = new 売上詳細の売上明細DisplayDataValues {
+                        商品 = new 商品RefTarget {
+                            商品SEQ = item.商品SEQ,
+                            外部システム側ID = item.外部システム側ID,
+                            商品名 = item.商品名,
+                            売値単価_税抜 = item.売値単価_税抜,
+                            消費税区分 = item.消費税区分,
+                        },
+                        区分 = 売上明細区分.売上,
+                        売上数量 = rand.Next(1, 5),
+                    }
+                });
+            }
+
             // 売上新規登録
             await applicationService.Execute売上新規登録Async(new() {
                 Values = new() {
-                    // TODO
+                    売上日時 = DateTime.Now.AddDays(-rand.Next(0, 10)),
+                    担当者 = adminUserRef,
+                    備考 = $"自動生成された売上 {i}",
                 },
+                売上詳細の売上明細 = details,
             }, presentationContext.As<売上詳細Messages>());
 
             if (presentationContext.Messages.HasError()) {
@@ -124,27 +221,94 @@ partial class OverridedDummyDataGenerator {
             }
 
             // 売上修正
-            if (i % 4 == 0) continue; // 修正されない売上のパターンが欲しいので
-
-            await applicationService.Execute売上修正Async(new() {
-                Values = new() {
-                    // TODO
-                },
-            }, presentationContext.As<売上詳細Messages>());
-
-            if (presentationContext.Messages.HasError()) {
-                presentationContext.Messages.AddError("売上修正に失敗しました。");
-                return presentationContext.Messages;
+            if (i % 4 == 0) {
+                applicationService.DbContext.ChangeTracker.Clear();
+                continue; // 修正されない売上のパターンが欲しいので
             }
+
+            // 直前に登録された売上を取得
+            var lastSales = await db.売上DbSet
+                                  .OrderByDescending(s => s.売上SEQ)
+                                  .Include(s => s.売上の売上明細)
+                                  .ThenInclude(d => d.商品)
+                                  .FirstOrDefaultAsync();
+
+            if (lastSales != null) {
+                var updateDetails = new List<売上詳細の売上明細DisplayData>();
+                foreach (var d in lastSales.売上の売上明細) {
+                    var dItem = d.商品;
+                    updateDetails.Add(new 売上詳細の売上明細DisplayData {
+                        Values = new 売上詳細の売上明細DisplayDataValues {
+                            明細ID = d.明細ID,
+                            商品 = dItem != null ? new 商品RefTarget {
+                                商品SEQ = dItem.商品SEQ,
+                                外部システム側ID = dItem.外部システム側ID,
+                                商品名 = dItem.商品名,
+                                売値単価_税抜 = dItem.売値単価_税抜,
+                                消費税区分 = dItem.消費税区分
+                            } : new(),
+                            区分 = d.区分,
+                            売上数量 = d.売上数量,
+                            売上総額_税込_手修正 = d.売上総額_税込,
+                        },
+                        ExistsInDatabase = true,
+                    });
+                }
+
+                await applicationService.Execute売上修正Async(new() {
+                    Values = new() {
+                        売上SEQ = lastSales.売上SEQ,
+                        売上日時 = lastSales.売上日時,
+                        担当者 = adminUserRef,
+                        備考 = lastSales.備考 + " (修正済み)",
+                    },
+                    売上詳細の売上明細 = updateDetails,
+                    ExistsInDatabase = true,
+                }, presentationContext.As<売上詳細Messages>());
+
+                if (presentationContext.Messages.HasError()) {
+                    presentationContext.Messages.AddError("売上修正に失敗しました。");
+                    return presentationContext.Messages;
+                }
+            }
+            applicationService.DbContext.ChangeTracker.Clear();
         }
 
         // 在庫調整のパターン
         // * 指定方法: 絶対数で指定 or 増減数で指定
         // * 商品: 売上登録 + 修正 で登場したものの中からピックアップ
         for (int i = 0; i < 20; i++) {
+            var item = allItems[rand.Next(allItems.Count)];
+            var useAbsolute = rand.Next(2) == 0;
+
+            int? fluctuation = null;
+            int? absolute = null;
+
+            if (useAbsolute) {
+                // 現在の在庫数と偶然一致してしまって「変更がありません」エラーになるのを避けるため、
+                // ランダムな値を生成しつつ、もしエラーならそれはテストとしては無視したいが、
+                // ここでは簡易的に、あまり在庫数としてありえなさそうな大きな値を設定することで回避を試みる。
+                // (前段の処理で100個程度の在庫が入っているはず)
+                absolute = rand.Next(10000, 20000);
+            } else {
+                // 0だと「変更がありません」エラーになるので0以外にする
+                do {
+                    fluctuation = rand.Next(-10, 11);
+                } while (fluctuation == 0);
+            }
+
             await applicationService.Execute在庫調整登録Async(new() {
                 Values = new() {
-                    // TODO
+                    商品 = new 商品RefTarget {
+                        商品SEQ = item.商品SEQ,
+                        外部システム側ID = item.外部システム側ID,
+                        商品名 = item.商品名,
+                        売値単価_税抜 = item.売値単価_税抜,
+                        消費税区分 = item.消費税区分,
+                    },
+                    在庫調整理由 = $"ダミー在庫調整 {i}",
+                    増減数 = fluctuation,
+                    絶対数 = absolute,
                 },
             }, presentationContext.As<在庫調整ParameterMessages>());
 
@@ -152,6 +316,7 @@ partial class OverridedDummyDataGenerator {
                 presentationContext.Messages.AddError("在庫調整データの登録に失敗しました。");
                 return presentationContext.Messages;
             }
+            applicationService.DbContext.ChangeTracker.Clear();
         }
 
         return presentationContext.Messages;

@@ -14,7 +14,7 @@ partial class OverridedApplicationService {
         await using var tran = await BeginTransactionAsync();
 
         // 入荷ヘッダの登録
-        var newId = Guid.NewGuid().ToString();
+        var newId = $"{CurrentTime:yyyyMMdd}-{Guid.NewGuid().GetHashCode():X8}";
         var headerResult = await Create入荷Async(new() {
             入荷ID = newId,
             入荷日時 = param.Values.入荷日時,

@@ -93,26 +93,21 @@ export function LoginUserProvider({ children }: { children: React.ReactNode }) {
       } else if (result.type === 'error') {
         replaceMessages(result.detail)
       } else if (result.type === 'unknown') {
-        alert(result.message)
+        replaceMessages({ error: [result.message] })
       }
     }
 
     // ログアウト
     const logoutAsync = async () => {
-      const result = await callComplexPostEndpointAsync('ログアウト', {}, {
+      await callComplexPostEndpointAsync('ログアウト', {}, {
         ignoreConfirm: true,
       })
 
-      if (result.type === 'ok') {
-        sessionStorage.removeItem(SESSION_STORAGE_KEY)
-        setLoginUser(null)
-      } else if (result.type === 'error') {
-        replaceMessages(result.detail)
-        return
-      } else if (result.type === 'unknown') {
-        alert(result.message)
-        return
-      }
+      // サーバー側の原因でログアウトに失敗した場合、
+      // クライアント側の状態をクリアできないとその後何も操作できなくなってしまうので
+      // 結果の如何にかかわらずクライアント側の状態は強制的にクリアする。
+      sessionStorage.removeItem(SESSION_STORAGE_KEY)
+      setLoginUser(null)
     }
 
     return { loginUser, loginAsync, logoutAsync, initializing }

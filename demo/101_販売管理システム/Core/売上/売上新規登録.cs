@@ -122,22 +122,29 @@ partial class OverridedApplicationService {
         if (result.Result != DataModelSaveResultType.Completed) return;
 
         // 入荷明細の残数量更新
-        foreach (var (detail, plan) in allocationPlans) {
-            foreach (var (stockId, deduct) in plan) {
-                // 楽観排他制御のため、stockCacheにあるVersionを使用したいが、
-                // ここでは簡易的に最新を取得して更新するか、あるいはnullを指定して強制更新するか。
-                // stockCacheにあるエンティティのVersionを使えばよい。
-                var stockEntity = stockCache.Values.SelectMany(x => x).FirstOrDefault(x => x.入荷明細ID == stockId);
-                var version = stockEntity?.Version;
+        // 同じ入荷明細に対して複数回の更新を行うと楽観排他制御エラーになるため、
+        // 入荷明細IDごとに減算数量を集計し、更新処理を1回にまとめる。
+        var stockUpdates = allocationPlans
+            .SelectMany(x => x.Plan)
+            .GroupBy(x => x.StockId)
+            .Select(g => new { StockId = g.Key, Deduct = g.Sum(x => x.Deduct) });
 
-                var updateResult = await Update入荷明細Async(stockId, version, x => {
-                    x.残数量 -= deduct;
-                }, context);
+        foreach (var update in stockUpdates) {
+            var stockId = update.StockId;
+            var deduct = update.Deduct;
 
-                if (updateResult.Result != DataModelSaveResultType.Completed) {
-                    // エラーメッセージは Update入荷明細Async 内で設定されるはず
-                    return; // トランザクションはコミットされずに終了＝ロールバック
-                }
+            // 楽観排他制御のため、stockCacheにあるVersionを使用する。
+            // 読込時点から他者による更新がないことを保証するため、Versionは必須。
+            var stockEntity = stockCache.Values.SelectMany(x => x).FirstOrDefault(x => x.入荷明細ID == stockId);
+            var version = stockEntity?.Version;
+
+            var updateResult = await Update入荷明細Async(stockId, version, x => {
+                x.残数量 -= deduct;
+            }, context);
+
+            if (updateResult.Result != DataModelSaveResultType.Completed) {
+                // エラーメッセージは Update入荷明細Async 内で設定されるはず
+                return; // トランザクションはコミットされずに終了＝ロールバック
             }
         }
 

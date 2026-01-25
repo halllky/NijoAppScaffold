@@ -31,8 +31,8 @@ export function P001_ログイン(props: {
   const { setFocus, handleSubmit, control } = useForm<ログインParameterDisplayData>({
     defaultValues: {
       values: {
-        従業員番号: "demo101-admin",
-        パスワード: "demo101-admin",
+        従業員番号: "admin",
+        パスワード: "admin",
       },
     },
   })

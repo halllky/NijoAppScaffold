@@ -56,10 +56,7 @@ function P300_商品() {
         <div className="h-full py-1 flex flex-col lg:flex-row lg:items-start gap-x-8 gap-y-2">
 
           {/* 左列 */}
-          <div className="grid grid-cols-[112px_360px] gap-2">
-
-            <FormLabel className="text-right">商品SEQ</FormLabel>
-            <UI.Field name="filter.商品SEQ" type="numeric" control={control} />
+          <div className="grid grid-cols-[10rem_12rem] gap-2">
 
             <FormLabel className="text-right">外部システム側ID</FormLabel>
             <UI.Field name="filter.外部システム側ID" control={control} />
@@ -69,7 +66,7 @@ function P300_商品() {
           </div>
 
           {/* 右列 */}
-          <div className="grid grid-cols-[112px_360px] gap-2">
+          <div className="grid grid-cols-[10rem_24rem] gap-2">
 
             <FormLabel className="text-right">売値単価(税抜)</FormLabel>
             <UI.Field name="filter.売値単価_税抜" type="numeric" control={control} />
@@ -94,11 +91,10 @@ function P300_商品() {
             </Link>
           ),
         },
-        columnFor('values.商品SEQ'),
-        columnFor('values.外部システム側ID'),
-        columnFor('values.商品名'),
-        columnFor('values.売値単価_税抜'),
-        columnFor('values.消費税区分'),
+        columnFor('values.外部システム側ID', { widthPx: 152 }),
+        columnFor('values.商品名', { widthPx: 300 }),
+        columnFor('values.売値単価_税抜', { header: '売値単価(税抜)', widthPx: 140 }),
+        columnFor('values.消費税区分', { widthPx: 120 }),
         columnFor('values.在庫数'),
       ], []]}
     />
