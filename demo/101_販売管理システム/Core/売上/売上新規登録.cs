@@ -4,7 +4,7 @@ using MyApp.Core.Authorization;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task Execute売上新規登録(売上詳細DisplayData param, IPresentationContext<売上詳細Messages> context) {
+    public override async Task Execute売上新規登録Async(売上詳細DisplayData param, IPresentationContext<売上詳細Messages> context) {
         // 権限チェック
         if (LoginUser == null || !LoginUser.CanUse売上登録) {
             context.Messages.AddError("販売担当のみ実行可能です。");

@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyApp.Debugging;
+using MyApp.WebApi.Base;
 
 namespace MyApp.WebApi;
 
@@ -47,7 +48,11 @@ public class ExampleContoller : ControllerBase {
             await _app.DbContext.EnsureCreatedAsyncEx(_app.Settings);
 
             // ダミーデータの生成
-            var generator = new OverridedDummyDataGenerator();
+            var generator = new OverridedDummyDataGenerator(messages => new PresentationContextInWebApi<MessageSetter> {
+                IgnoreConfirm = true,
+                Messages = messages.As<MessageSetter>(),
+                Confirms = [],
+            });
             var result = await generator.GenerateAsync(_app);
 
             if (result.HasError()) {

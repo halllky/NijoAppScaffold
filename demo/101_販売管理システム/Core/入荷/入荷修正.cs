@@ -4,7 +4,7 @@ using MyApp.Core.Authorization;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task Execute入荷修正(入荷詳細DisplayData param, IPresentationContext<入荷詳細Messages> context) {
+    public override async Task Execute入荷修正Async(入荷詳細DisplayData param, IPresentationContext<入荷詳細Messages> context) {
         if (LoginUser == null || !LoginUser.CanUse入荷登録) {
             context.Messages.AddError("入荷担当のみ実行可能です。");
             return;

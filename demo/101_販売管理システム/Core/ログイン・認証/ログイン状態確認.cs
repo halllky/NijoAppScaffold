@@ -4,7 +4,7 @@ namespace MyApp;
 
 partial class OverridedApplicationService {
 
-    public override Task Executeログイン状態確認(IPresentationContextWithReturnValue<ログインユーザー情報DisplayData, MessageSetter> context) {
+    public override Task Executeログイン状態確認Async(IPresentationContextWithReturnValue<ログインユーザー情報DisplayData, MessageSetter> context) {
 
         if (LoginUser != null) {
             context.ReturnValue = new() {

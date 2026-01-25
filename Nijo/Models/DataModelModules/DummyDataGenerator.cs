@@ -77,12 +77,12 @@ namespace Nijo.Models.DataModelModules {
                         /// 現在登録されているデータは全て削除されます。
                         /// </summary>
                     {{If(rootAggregatesOrderByDataFlow.Length == 0, () => $$"""
-                        public Task<{{MessageContainer.SETTER_INTERFACE}}> {{GENERATE_ASYNC}}({{ctx.Config.RootNamespace}}.{{ApplicationService.ABSTRACT_CLASS}} applicationService, {{DUMMY_DATA_GENERATE_OPTIONS}}? options = null) {
+                        public virtual Task<{{MessageContainer.SETTER_INTERFACE}}> {{GENERATE_ASYNC}}({{ctx.Config.RootNamespace}}.{{ApplicationService.ABSTRACT_CLASS}} applicationService, {{DUMMY_DATA_GENERATE_OPTIONS}}? options = null) {
                             // Data Model の集約が定義されていないので何もしない
                             return Task.FromResult<{{MessageContainer.SETTER_INTERFACE}}>(new {{MessageContainer.SETTER_CLASS}}([], new {{MessageContainer.CONTEXT_CLASS}}()));
                         }
                     """).Else(() => $$"""
-                        public async Task<{{MessageContainer.SETTER_INTERFACE}}> {{GENERATE_ASYNC}}({{ctx.Config.RootNamespace}}.{{ApplicationService.ABSTRACT_CLASS}} applicationService, {{DUMMY_DATA_GENERATE_OPTIONS}}? options = null) {
+                        public virtual async Task<{{MessageContainer.SETTER_INTERFACE}}> {{GENERATE_ASYNC}}({{ctx.Config.RootNamespace}}.{{ApplicationService.ABSTRACT_CLASS}} applicationService, {{DUMMY_DATA_GENERATE_OPTIONS}}? options = null) {
 
                             // ランダム値採番等のコンテキスト
                             var context = new {{DUMMY_DATA_GENERATE_CONTEXT}} {

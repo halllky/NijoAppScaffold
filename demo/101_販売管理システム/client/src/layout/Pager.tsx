@@ -7,6 +7,7 @@ type PagerProps = {
   totalCount: number
   onPageChange: (newPage: number) => void
   disabled?: boolean
+  className?: string
 }
 
 export function Pager(props: PagerProps) {
@@ -17,7 +18,7 @@ export function Pager(props: PagerProps) {
   const canNext = pageIndex < totalPages - 1
 
   return (
-    <div className="w-full flex justify-center items-center">
+    <div className={`w-full flex justify-center items-center ${props.className ?? ""}`}>
       <div className="flex gap-2 items-center">
         <Button outline
           onClick={() => onPageChange(pageIndex - 1)}

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task Execute商品データ取込(IPresentationContext<MessageSetter> context) {
+    public override async Task Execute商品データ取込Async(IPresentationContext<MessageSetter> context) {
 
         foreach (var item in 商品管理システム.Enumerate商品データ()) {
             Log.LogInformation($"処理開始: {item.Name} ({item.ExternalId})");

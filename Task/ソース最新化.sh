@@ -40,14 +40,12 @@ for d in "$SCRIPT_DIR/../demo/"*; do
 
             # WebApi
             rsync -av --delete-excluded --exclude=".*" "$SOURCE_ROOT/WebApi/Base/" "$TARGET_ROOT/WebApi/Base/"
-            cp "$SOURCE_ROOT/WebApi/ExampleContoller.cs" "$TARGET_ROOT/WebApi/ExampleContoller.cs"
             cp "$SOURCE_ROOT/WebApi/Properties/launchSettings.json" "$TARGET_ROOT/WebApi/Properties/launchSettings.json"
             cp "$SOURCE_ROOT/WebApi/Properties/PublishProfiles/本番用ビルド.pubxml" "$TARGET_ROOT/WebApi/Properties/PublishProfiles/本番用ビルド.pubxml"
 
             # UnitTest
             cp "$SOURCE_ROOT/UnitTest/PresentationContextInUnitTest.cs" "$TARGET_ROOT/UnitTest/PresentationContextInUnitTest.cs"
             cp "$SOURCE_ROOT/UnitTest/TestUtilImpl.cs" "$TARGET_ROOT/UnitTest/TestUtilImpl.cs"
-            rsync -av --exclude=".*" "$SOURCE_ROOT/UnitTest/Tests/" "$TARGET_ROOT/UnitTest/Tests/"
 
             # Task
             rsync -av --delete-excluded --exclude=".*" "$SOURCE_ROOT/Task/" "$TARGET_ROOT/Task/"

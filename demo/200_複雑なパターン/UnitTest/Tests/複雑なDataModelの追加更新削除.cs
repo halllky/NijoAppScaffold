@@ -17,8 +17,12 @@ partial class DB接続あり_更新あり {
     /// </summary>
     [Test]
     public async Task Childの追加更新削除が正常に動作するか確認() {
-        var scope = TestUtilImpl.Instance.CreateScope<医療機器マスタSaveCommandMessages>(
-            nameof(Childの追加更新削除が正常に動作するか確認));
+        var scope = TestUtilImpl.Instance.CreateScope(nameof(Childの追加更新削除が正常に動作するか確認));
+        var presentationContext = new PresentationContextInUnitTest<医療機器マスタSaveCommandMessages> {
+            ValidationOnly = false,
+            Messages = MessageSetter.GetImpl<医療機器マスタSaveCommandMessages>([], new()),
+            Confirms = [],
+        };
 
         // 外部キー用に全テーブルデータ作成
         var generator = new OverridedDummyDataGenerator();
@@ -80,13 +84,13 @@ partial class DB接続あり_更新あり {
                         }
                     }
                 }
-            }, scope.PresentationContext);
+            }, presentationContext);
             await tran.CommitAsync();
         }
 
         Assert.Multiple(() => {
             // エラーが無いことを確認
-            Assert.That(scope.PresentationContext.Messages.HasError(), Is.False);
+            Assert.That(presentationContext.Messages.HasError(), Is.False);
 
             // 3テーブルともに登録されていることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
@@ -152,13 +156,13 @@ partial class DB接続あり_更新あり {
                         }
                     }
                 };
-            }, scope.PresentationContext);
+            }, presentationContext);
             await tran.CommitAsync();
         }
 
         Assert.Multiple(() => {
             // エラーが無いことを確認
-            Assert.That(scope.PresentationContext.Messages.HasError(), Is.False);
+            Assert.That(presentationContext.Messages.HasError(), Is.False);
 
             // 3テーブルともに新しい値に更新されていることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
@@ -214,13 +218,13 @@ partial class DB接続あり_更新あり {
                         在庫状況履歴 = new List<在庫状況履歴UpdateCommand>() // 履歴を空にして削除
                     }
                 };
-            }, scope.PresentationContext);
+            }, presentationContext);
             await tran.CommitAsync();
         }
 
         Assert.Multiple(() => {
             // エラーが無いことを確認
-            Assert.That(scope.PresentationContext.Messages.HasError(), Is.False);
+            Assert.That(presentationContext.Messages.HasError(), Is.False);
 
             // ルートと子が影響なし、孫が消えていることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
@@ -279,13 +283,13 @@ partial class DB接続あり_更新あり {
                         },
                     },
                 };
-            }, scope.PresentationContext);
+            }, presentationContext);
             await tran.CommitAsync();
         }
 
         Assert.Multiple(() => {
             // エラーが無いことを確認
-            Assert.That(scope.PresentationContext.Messages.HasError(), Is.False);
+            Assert.That(presentationContext.Messages.HasError(), Is.False);
 
             // 3テーブルすべてデータがあることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
@@ -315,13 +319,13 @@ partial class DB接続あり_更新あり {
                 data.供給業者 = new() { 供給業者ID = supplier1.供給業者ID };
                 data.機器詳細 = null; // 機器詳細を削除
                 data.在庫情報 = new List<在庫情報UpdateCommand>(); // 在庫情報を空にして削除
-            }, scope.PresentationContext);
+            }, presentationContext);
             await tran.CommitAsync();
         }
 
         Assert.Multiple(() => {
             // エラーが無いことを確認
-            Assert.That(scope.PresentationContext.Messages.HasError(), Is.False);
+            Assert.That(presentationContext.Messages.HasError(), Is.False);
 
             // ルートだけデータが残っていることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));

@@ -97,15 +97,18 @@ function P301_商品詳細() {
   const pageTitle = `商品詳細: ${product.values.商品名}`
 
   return (
-    <PageBase browserTitle={pageTitle} contents={
-      <div className="max-w-5xl flex flex-col gap-4 p-4">
-
-        {/* ヘッダー情報 */}
-        <div className="bg-white p-4 rounded shadow">
-          <h1 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <span className="text-gray-500 text-sm font-normal">商品コード: {product.values.外部システム側ID}</span>
+    <PageBase
+      browserTitle={pageTitle}
+      className="max-w-5xl gap-2 overflow-hidden pb-1"
+      contents={
+        <>
+          <h1 className="text-xl font-bold flex items-center gap-2">
             {product.values.商品名}
+            <span className="text-gray-500 text-sm font-normal">
+              商品コード: {product.values.外部システム側ID}
+            </span>
           </h1>
+
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex flex-col">
@@ -121,69 +124,70 @@ function P301_商品詳細() {
               <span className="text-lg font-bold">{product.values.在庫数}</span>
             </div>
           </div>
-        </div>
 
-        {/* 在庫増減履歴一覧 */}
-        <div className="bg-white p-4 max-h-1/2 rounded shadow flex flex-col gap-2">
-          <h2 className="font-bold text-gray-700">在庫増減履歴</h2>
+          {/* 在庫増減履歴一覧 */}
+          <div className="flex-1 flex flex-col gap-2 overflow-hidden mt-2">
+            <h2 className="text-xs text-gray-500">在庫増減履歴</h2>
 
-          {history.length === 0 ? (
-            <div className="text-gray-500 p-4 text-center">履歴はありません</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm whitespace-nowrap">
-                <thead>
-                  <tr>
-                    <th className="sticky top-0 px-3 py-2 font-medium text-gray-500 bg-gray-50">日時</th>
-                    <th className="sticky top-0 px-3 py-2 font-medium text-gray-500 bg-gray-50">事由</th>
-                    <th className="sticky top-0 px-3 py-2 font-medium text-gray-500 bg-gray-50 text-right">増減数</th>
-                    <th className="sticky top-0 px-3 py-2 font-medium text-gray-500 bg-gray-50">関連伝票</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {history.map((row, i) => (
-                    <tr key={i} className="hover:bg-gray-50">
-                      <td className="px-3 py-2">
-                        {row.values.日時 ? dayjs(row.values.日時).format('YYYY-MM-DD HH:mm') : ''}
-                      </td>
-                      <td className="px-3 py-2">
-                        {row.values.事由}
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        <span className={Number(row.values.増減数) > 0 ? 'text-blue-600 font-bold' : Number(row.values.増減数) < 0 ? 'text-red-600 font-bold' : ''}>
-                          {Number(row.values.増減数) > 0 ? '+' : ''}{row.values.増減数}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2">
-                        <div className="flex flex-col gap-1 items-start">
-                          {/* 入荷へのリンク */}
-                          {row.values.入荷ID && (
-                            <Link
-                              to={getLinkUrlToP201入荷詳細(row.values.入荷ID)}
-                              className="text-blue-600 hover:underline flex items-center gap-1"
-                            >
-                              <span>入荷 No.{row.values.入荷ID}</span>
-                            </Link>
-                          )}
-
-                          {/* 売上へのリンク */}
-                          {row.増減履歴引当元売上一覧.map((sales, j) => (
-                            <Link
-                              key={j}
-                              to={getLinkUrlToP101売上詳細(sales.values.売上SEQ)}
-                              className="text-blue-600 hover:underline flex items-center gap-1"
-                            >
-                              <span>売上 No.{sales.values.売上SEQ}</span>
-                            </Link>
-                          ))}
-                        </div>
-                      </td>
+            {history.length === 0 ? (
+              <div className="text-gray-500 p-4 text-center">履歴はありません</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="text-left text-sm whitespace-nowrap">
+                  <thead>
+                    <tr>
+                      <th className="sticky top-0 pr-3 py-1 font-medium text-gray-500 bg-gray-50">日時</th>
+                      <th className="sticky top-0 px-3 py-1 font-medium text-gray-500 bg-gray-50">事由</th>
+                      <th className="sticky top-0 px-3 py-1 font-medium text-gray-500 bg-gray-50 text-right">増減数</th>
+                      <th className="sticky top-0 px-3 py-1 font-medium text-gray-500 bg-gray-50">関連伝票</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {history.map((row, i) => (
+                      <tr key={i} className="hover:bg-gray-50">
+                        <td className="pr-3 py-1">
+                          {row.values.日時 ? dayjs(row.values.日時).format('YYYY-MM-DD HH:mm') : ''}
+                        </td>
+                        <td className="px-3 py-1">
+                          {row.values.事由}
+                        </td>
+                        <td className="px-3 py-1 text-right">
+                          <span className={Number(row.values.増減数) > 0 ? 'text-blue-600 font-bold' : Number(row.values.増減数) < 0 ? 'text-red-600 font-bold' : ''}>
+                            {Number(row.values.増減数) > 0 ? '+' : ''}{row.values.増減数}
+                          </span>
+                        </td>
+                        <td className="px-3 py-1">
+                          <div className="flex flex-wrap gap-4 items-start">
+                            {/* 入荷へのリンク */}
+                            {row.values.入荷ID && (
+                              <Link
+                                to={getLinkUrlToP201入荷詳細(row.values.入荷ID)}
+                                className="text-blue-600 hover:underline flex items-center gap-1"
+                              >
+                                <span>入荷 No.{row.values.入荷ID}</span>
+                              </Link>
+                            )}
+
+                            {/* 売上へのリンク */}
+                            {row.増減履歴引当元売上一覧.map((sales, j) => (
+                              <Link
+                                key={j}
+                                to={getLinkUrlToP101売上詳細(sales.values.売上SEQ)}
+                                className="text-blue-600 hover:underline flex items-center gap-1"
+                              >
+                                <span>売上 No.{sales.values.売上SEQ}</span>
+                              </Link>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+          </div>
 
           <Pager
             pageIndex={historyPageIndex}
@@ -191,9 +195,7 @@ function P301_商品詳細() {
             totalCount={historyTotalCount}
             onPageChange={handleHistoryPageChange}
           />
-        </div>
-
-      </div>
-    } />
+        </>
+      } />
   )
 }

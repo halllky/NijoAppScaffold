@@ -105,14 +105,8 @@ namespace Nijo.Parts.Common {
                 /// <summary>
                 /// ユーザーに見せるメッセージの文言を返します。
                 /// </summary>
-                public {{CS_INTERFACE}} {{MSG}} => _displayMessageFactory ??= ServiceProvider.GetRequiredService<{{CS_INTERFACE}}>();
+                public {{CS_INTERFACE}} {{MSG}} => _displayMessageFactory ??= ServiceProvider.GetService<{{CS_INTERFACE}}>() ?? new {{CS_DEFAULT_CLASS_NAME}}();
                 private {{CS_INTERFACE}}? _displayMessageFactory;
-                /// <summary>
-                /// ユーザーに見せるメッセージの文言を構成します。
-                /// </summary>
-                protected virtual {{CS_INTERFACE}} ConfigureDisplayMessageFactory() {
-                    return new {{CS_DEFAULT_CLASS_NAME}}();
-                }
                 """);
         }
 

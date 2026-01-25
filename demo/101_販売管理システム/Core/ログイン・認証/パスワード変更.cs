@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task Executeパスワード変更(パスワード変更ParameterDisplayData param, IPresentationContext<パスワード変更ParameterMessages> context) {
+    public override async Task Executeパスワード変更Async(パスワード変更ParameterDisplayData param, IPresentationContext<パスワード変更ParameterMessages> context) {
         // ログインチェック
         if (LoginUser == null) {
             context.Messages.AddError("ログインしていません。");

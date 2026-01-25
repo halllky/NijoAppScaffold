@@ -20,7 +20,7 @@ namespace Nijo.Models.CommandModelModules {
 
 
         private const string CONTROLLER_ACTION_EXECUTE = "execute";
-        private string ExecuteMethodName => $"Execute{_rootAggregate.PhysicalName}";
+        private string ExecuteMethodName => $"Execute{_rootAggregate.PhysicalName}Async";
 
 
         #region TypeScript用

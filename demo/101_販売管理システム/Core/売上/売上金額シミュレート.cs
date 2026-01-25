@@ -31,7 +31,7 @@ partial class OverridedApplicationService {
                                                           ?? 0);
     }
 
-    public override Task Execute売上金額シミュレート(売上詳細DisplayData param, IPresentationContextWithReturnValue<売上詳細DisplayData, 売上詳細Messages> context) {
+    public override Task Execute売上金額シミュレートAsync(売上詳細DisplayData param, IPresentationContextWithReturnValue<売上詳細DisplayData, 売上詳細Messages> context) {
         Simulate(param);
         context.ReturnValue = param;
         return Task.CompletedTask;
