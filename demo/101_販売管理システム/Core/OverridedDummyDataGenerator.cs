@@ -153,7 +153,6 @@ partial class OverridedDummyDataGenerator {
                 presentationContext.Messages.AddError("初期在庫の登録に失敗しました。");
                 return presentationContext.Messages;
             }
-            applicationService.DbContext.ChangeTracker.Clear();
         }
 
         // 入荷新規登録のパターン
@@ -194,8 +193,6 @@ partial class OverridedDummyDataGenerator {
                 presentationContext.Messages.AddError("入荷データの登録に失敗しました。");
                 return presentationContext.Messages;
             }
-
-            applicationService.DbContext.ChangeTracker.Clear();
         }
 
         // 売上新規登録 + 売上修正 のパターン
@@ -240,7 +237,6 @@ partial class OverridedDummyDataGenerator {
 
             // 売上修正
             if (i % 4 == 0) {
-                applicationService.DbContext.ChangeTracker.Clear();
                 continue; // 修正されない売上のパターンが欲しいので
             }
 
@@ -289,7 +285,6 @@ partial class OverridedDummyDataGenerator {
                     return presentationContext.Messages;
                 }
             }
-            applicationService.DbContext.ChangeTracker.Clear();
         }
 
         // 在庫調整のパターン
@@ -334,7 +329,6 @@ partial class OverridedDummyDataGenerator {
                 presentationContext.Messages.AddError("在庫調整データの登録に失敗しました。");
                 return presentationContext.Messages;
             }
-            applicationService.DbContext.ChangeTracker.Clear();
         }
 
         return presentationContext.Messages;
