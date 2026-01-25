@@ -9,6 +9,7 @@ import * as UI from "../input/Field"
 import { UseFormReturn } from "react-hook-form"
 import { StockAdjustmentDialog } from "./StockAdjustmentDialog"
 import { UUID } from "uuidjs"
+import { Button } from "../input/Button"
 
 export const URL = "/shohin"
 
@@ -67,27 +68,13 @@ function P300_商品() {
         defineSearchResultColumns={[columnFor => [
           {
             header: '',
-            widthPx: 120,
+            widthPx: 60,
             render: row => (
-              <div className="flex gap-3">
-                <Link
-                  className="text-sky-600 underline"
-                  to={`/shohin/${row.values.商品SEQ}`}>
-                  詳細
-                </Link>
-                <button
-                  className="text-sky-600 underline"
-                  onClick={() => {
-                    const refTarget = createNew商品RefTarget()
-                    refTarget.商品SEQ = row.values.商品SEQ ?? undefined
-                    refTarget.商品名 = row.values.商品名 ?? undefined
-                    refTarget.外部システム側ID = row.values.外部システム側ID ?? undefined
-                    setStockAdjDialogState({ isOpen: true, key: UUID.generate(), product: refTarget })
-                  }}
-                >
-                  在庫調整
-                </button>
-              </div>
+              <Link
+                className="text-sky-600 underline"
+                to={`/shohin/${row.values.商品SEQ}`}>
+                詳細
+              </Link>
             ),
           },
           columnFor('values.外部システム側ID', { widthPx: 152 }),
@@ -95,6 +82,23 @@ function P300_商品() {
           columnFor('values.売値単価_税抜', { header: '売値単価(税抜)', widthPx: 140 }),
           columnFor('values.消費税区分', { widthPx: 120 }),
           columnFor('values.在庫数'),
+          {
+            header: '',
+            widthPx: 96,
+            render: row => (
+              <Button outline mini
+                onClick={() => {
+                  const refTarget = createNew商品RefTarget()
+                  refTarget.商品SEQ = row.values.商品SEQ ?? undefined
+                  refTarget.商品名 = row.values.商品名 ?? undefined
+                  refTarget.外部システム側ID = row.values.外部システム側ID ?? undefined
+                  setStockAdjDialogState({ isOpen: true, key: UUID.generate(), product: refTarget })
+                }}
+              >
+                在庫調整
+              </Button>
+            ),
+          },
         ], []]}
       />
       {

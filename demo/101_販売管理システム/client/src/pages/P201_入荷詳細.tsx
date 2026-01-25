@@ -157,7 +157,7 @@ function P201_入荷詳細(props: {
     >
       {({ save, saving }) => (
         <UI.FieldUiContext.Provider value={modelMetadata}>
-          <div className="max-h-full flex flex-col gap-y-2">
+          <div className="max-h-full max-w-5xl flex flex-col gap-y-2">
 
             {/* ヘッダ */}
             <div className="flex items-start gap-1">
