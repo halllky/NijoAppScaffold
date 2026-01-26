@@ -303,7 +303,7 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
             </Allotment.Pane>
 
             {/* ルート集約編集ペイン */}
-            <Allotment.Pane preferredSize={360} visible={aggPaneVisible}>
+            <Allotment.Pane preferredSize="50%" visible={aggPaneVisible}>
               {selectedRootAggregateIndex !== undefined && (
                 <PageRootAggregate
                   key={selectedRootAggregateIndex} // 選択中のルート集約が変更されたタイミングで再描画
