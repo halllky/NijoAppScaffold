@@ -82,8 +82,8 @@ function P201_入荷詳細(props: {
   })
   const { register, control, getValues, setValue, reset } = formMethods
   // 画面離脱時の未保存変更ブロック
-  const [forceReload, setForceReload] = React.useState(false)
-  useUnsavedChangesBlocker(() => formMethods.formState.isDirty && !forceReload)
+  const forceReloadRef = React.useRef(false)
+  useUnsavedChangesBlocker(() => formMethods.formState.isDirty && !forceReloadRef.current)
   const { fields, append, remove } = ReactHookForm.useFieldArray({
     control,
     name: "入荷商品一覧"
@@ -141,7 +141,7 @@ function P201_入荷詳細(props: {
       if (props.mode === 'new') {
         const result = await callComplexPostEndpointAsync('入荷登録', formMethods.getValues())
         if (result.type === 'ok') {
-          setForceReload(true) // 保存成功後は画面離脱ブロックを無効化
+          forceReloadRef.current = true // 保存成功後は画面離脱ブロックを無効化
           replaceMessages(result.detail)
           navigate(getLinkUrlToP201入荷詳細(result.returnValue.values.入荷ID))
         } else if (result.type === 'canceled') {
@@ -153,7 +153,7 @@ function P201_入荷詳細(props: {
       } else {
         const result = await callComplexPostEndpointAsync('入荷修正', formMethods.getValues())
         if (result.type === 'ok') {
-          setForceReload(true) // 保存成功後は画面離脱ブロックを無効化
+          // forceReloadRef.current = true // 編集モードの場合は画面遷移しないのでリロードフラグは立てない
           replaceMessages(result.detail)
           revalidate()
         } else if (result.type === 'canceled') {

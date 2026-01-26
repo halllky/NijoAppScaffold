@@ -89,8 +89,8 @@ function P101_売上詳細(props: {
   })
 
   // 画面離脱時の未保存変更ブロック
-  const [forceReload, setForceReload] = React.useState(false)
-  useUnsavedChangesBlocker(() => formMethods.formState.isDirty && !forceReload)
+  const forceReloadRef = React.useRef(false)
+  useUnsavedChangesBlocker(() => formMethods.formState.isDirty && !forceReloadRef.current)
 
   // 画面タイトル
   const [browserTitle, pageTitle] = React.useMemo(() => {
@@ -179,7 +179,7 @@ function P101_売上詳細(props: {
       if (props.mode === 'new') {
         const result = await callComplexPostEndpointAsync('売上新規登録', currentValues)
         if (result.type === 'ok') {
-          setForceReload(true) // 保存成功後は画面離脱ブロックを無効化
+          forceReloadRef.current = true // 保存成功後は画面離脱ブロックを無効化
           replaceMessages(result.detail)
           navigate(getLinkUrlToP101売上詳細(result.returnValue.values.売上SEQ))
         } else if (result.type === 'canceled') {
@@ -191,7 +191,6 @@ function P101_売上詳細(props: {
       } else {
         const result = await callComplexPostEndpointAsync('売上修正', currentValues)
         if (result.type === 'ok') {
-          setForceReload(true) // 保存成功後は画面離脱ブロックを無効化
           replaceMessages(result.detail)
           revalidate()
         } else if (result.type === 'canceled') {
