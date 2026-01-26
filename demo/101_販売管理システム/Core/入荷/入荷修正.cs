@@ -117,6 +117,7 @@ partial class OverridedApplicationService {
 
         if (!context.ValidationOnly && !context.Messages.HasError()) {
             await tran.CommitAsync();
+            context.Messages.AddInfo("入荷登録が完了しました。");
         }
     }
 }

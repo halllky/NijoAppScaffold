@@ -142,7 +142,8 @@ export async function callComplexPostEndpointAsync(
       const json = await response.json() as PresentationContextResponse<unknown>
 
       // レスポンスのエラー詳細情報フィールドに値がある場合はそれを表示
-      if (json.detail && Object.keys(json.detail).length > 0) {
+      const keys = Object.keys(json.detail) as (keyof DetailMessagesContainer)[]
+      if (json.detail && keys.filter(k => k !== 'info' && k !== 'warn').length > 0) {
         return {
           type: 'error',
           detail: json.detail,

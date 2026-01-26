@@ -226,5 +226,6 @@ partial class OverridedApplicationService {
         }
 
         await tran.CommitAsync();
+        context.Messages.AddInfo("売上修正が完了しました。");
     }
 }

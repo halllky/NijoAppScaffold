@@ -1,7 +1,8 @@
 import React from "react"
 import * as ReactRouter from "react-router"
 import { useNavigate } from "react-router-dom"
-import { EditPageBase } from "../layout/EditPageBase"
+import { PageBase } from "../layout/PageBase"
+import { useUnsavedChangesBlocker } from "../util/useUnsavedChangesBlocker"
 import { useForm, UseFormReturn, useFieldArray } from "react-hook-form"
 import {
   従業員一括更新ParameterDisplayData,
@@ -61,6 +62,8 @@ function P400_従業員() {
     defaultValues
   })
   const { formState: { isDirty, dirtyFields } } = methods
+  useUnsavedChangesBlocker(isDirty)
+  const [saving, setSaving] = React.useState(false)
 
   // defaultValues が更新されたらフォームをリセット
   React.useEffect(() => {
@@ -93,71 +96,72 @@ function P400_従業員() {
   }, [onSearch])
 
   // 保存実行
-  const { replaceMessages } = DetailMessage.useSetter()
+  const { replaceMessages, clearMessages } = DetailMessage.useSetter()
   const handleSave = React.useCallback(async () => {
-    const data = methods.getValues()
+    try {
+      clearMessages()
+      setSaving(true)
+      const data = methods.getValues()
 
-    // 変更検知ロジック
-    // defaultValues（検索直後の状態）と比較して、変更がある行の willBeChanged を true にする
+      // 変更検知ロジック
+      // defaultValues（検索直後の状態）と比較して、変更がある行の willBeChanged を true にする
 
-    // instanceId をキーにしたMapを作成
-    const originalMap = new Map(defaultValues.更新対象従業員一覧.map(item => [item.instanceId, item]))
+      // instanceId をキーにしたMapを作成
+      const originalMap = new Map(defaultValues.更新対象従業員一覧.map(item => [item.instanceId, item]))
 
-    for (const item of data.更新対象従業員一覧) {
-      if (!item.existsInDatabase) continue
-      if (item.willBeDeleted) continue
+      for (const item of data.更新対象従業員一覧) {
+        if (!item.existsInDatabase) continue
+        if (item.willBeDeleted) continue
 
-      const original = originalMap.get(item.instanceId)
-      if (!original) {
-        // ここに来ることは通常ない
-        continue
+        const original = originalMap.get(item.instanceId)
+        if (!original) {
+          // ここに来ることは通常ない
+          continue
+        }
+
+        // 比較対象の値を抽出
+        const currentVal = item.values.従業員.values
+        const originalVal = original.values.従業員.values
+
+        const isChanged =
+          currentVal.氏名 !== originalVal.氏名 ||
+          currentVal.入荷担当 !== originalVal.入荷担当 ||
+          currentVal.販売担当 !== originalVal.販売担当 ||
+          currentVal.システム管理者 !== originalVal.システム管理者
+
+        item.willBeChanged = isChanged
       }
 
-      // 比較対象の値を抽出
-      const currentVal = item.values.従業員.values
-      const originalVal = original.values.従業員.values
+      // 従業員一括更新コマンドの呼び出し
+      const result = await callComplexPostEndpointAsync('従業員一括更新', data)
 
-      const isChanged =
-        currentVal.氏名 !== originalVal.氏名 ||
-        currentVal.入荷担当 !== originalVal.入荷担当 ||
-        currentVal.販売担当 !== originalVal.販売担当 ||
-        currentVal.システム管理者 !== originalVal.システム管理者
-
-      item.willBeChanged = isChanged
+      if (result.type === 'ok') {
+        // 保存成功後、再検索して最新状態（Version等）を反映
+        replaceMessages(result.detail)
+        const currentCondition = searchConditionMethods.getValues()
+        await onSearch(currentCondition)
+      } else if (result.type === 'canceled') {
+        // 何もしない
+      } else {
+        replaceMessages(result.detail)
+      }
+    } finally {
+      setSaving(false)
     }
-
-    // 従業員一括更新コマンドの呼び出し
-    const result = await callComplexPostEndpointAsync('従業員一括更新', data)
-
-    if (result.type === 'ok') {
-      // 保存成功後、再検索して最新状態（Version等）を反映
-      replaceMessages(result.detail)
-      const currentCondition = searchConditionMethods.getValues()
-      await onSearch(currentCondition)
-    } else if (result.type === 'canceled') {
-      // 何もしない
-    } else {
-      replaceMessages(result.detail)
-    }
-
-    // 標準のリロード処理は使わない
-    return { reload: false }
-  }, [defaultValues, onSearch, searchConditionMethods, methods])
+  }, [defaultValues, onSearch, searchConditionMethods, methods, replaceMessages, clearMessages])
 
   return (
-    <EditPageBase
-      pageTitle="従業員"
-      isDirty={isDirty}
-      onSave={handleSave}
-      header={({ save, saving }) => (
+    <PageBase
+      browserTitle="従業員"
+      className="gap-2 px-8 py-2"
+      header={(
         <>
           <PageTitle>従業員</PageTitle>
           <div className="flex-1"></div>
-          <Button fill loading={saving} onClick={save}>保存</Button>
+          <Button fill loading={saving} onClick={handleSave}>保存</Button>
         </>
       )}
-    >
-      {() => (
+      contents={(
         <div className="flex-1 flex flex-col gap-4">
           {/* 検索条件エリア */}
           <UI.FieldUiContext.Provider value={searchConditionMetadata}>
@@ -183,7 +187,7 @@ function P400_従業員() {
           </UI.FieldUiContext.Provider>
         </div>
       )}
-    </EditPageBase>
+    />
   )
 }
 

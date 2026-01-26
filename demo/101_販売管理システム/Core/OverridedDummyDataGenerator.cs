@@ -147,7 +147,7 @@ partial class OverridedDummyDataGenerator {
                     備考 = "初期在庫入荷",
                 },
                 入荷商品一覧 = details,
-            }, presentationContext.As<入荷詳細Messages>());
+            }, presentationContext.AsWithReturnValue<入荷登録ReturnValueDisplayData, 入荷詳細Messages>());
 
             if (presentationContext.Messages.HasError()) {
                 presentationContext.Messages.AddError("初期在庫の登録に失敗しました。");
@@ -187,7 +187,7 @@ partial class OverridedDummyDataGenerator {
                     備考 = $"自動生成された入荷データ {i}",
                 },
                 入荷商品一覧 = details,
-            }, presentationContext.As<入荷詳細Messages>());
+            }, presentationContext.AsWithReturnValue<入荷登録ReturnValueDisplayData, 入荷詳細Messages>());
 
             if (presentationContext.Messages.HasError()) {
                 presentationContext.Messages.AddError("入荷データの登録に失敗しました。");
@@ -228,7 +228,7 @@ partial class OverridedDummyDataGenerator {
                     備考 = $"自動生成された売上 {i}",
                 },
                 売上詳細の売上明細 = details,
-            }, presentationContext.As<売上詳細Messages>());
+            }, presentationContext.AsWithReturnValue<売上新規登録ReturnValueDisplayData, 売上詳細Messages>());
 
             if (presentationContext.Messages.HasError()) {
                 presentationContext.Messages.AddError("売上新規登録に失敗しました。");
