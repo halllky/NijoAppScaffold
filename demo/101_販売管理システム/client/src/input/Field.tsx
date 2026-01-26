@@ -81,7 +81,7 @@ export function Field<
   name: propsName,
   control,
   className,
-  ...rest
+  ...restProps
 }: FieldProps<TFormValues, TFieldPath>): React.ReactNode {
 
   const contextValue = React.useContext(FieldUiContext)
@@ -122,7 +122,7 @@ export function Field<
       className={className}
       value={value ?? ""}
       {...restField}
-      {...rest}
+      {...restProps}
     />
   )
   //#endregion フォーム - 単語
@@ -137,7 +137,7 @@ export function Field<
           className={className}
           value={value ?? ""}
           {...restField}
-          {...rest}
+          {...restProps}
         />
       )
     } else {
@@ -148,7 +148,7 @@ export function Field<
           className={`flex-1 overflow-y-auto ${className ?? ""}`}
           // input要素ではなくtextarea要素なのでpropsの型が違うのだが、
           // classNameなどよく使う属性については問題ないので強制的にキャスト
-          {...rest as unknown as React.TextareaHTMLAttributes<HTMLTextAreaElement>}
+          {...restProps as unknown as React.TextareaHTMLAttributes<HTMLTextAreaElement>}
         />
       )
     }
@@ -157,11 +157,12 @@ export function Field<
 
   //#region フォーム - 真偽値
   if (fieldMetadata.type === "bool") {
-    renderUiElement = ({ field }) => (
+    renderUiElement = ({ field: { value, ...restField } }) => (
       <CheckBox
+        checked={!!value}
         className={className}
-        {...field}
-        {...rest}
+        {...restField}
+        {...restProps}
       />
     )
   }
@@ -184,7 +185,7 @@ export function Field<
             onChange={e => onChange({ from: e.target.value, to: value?.to })}
             ref={ref}
             value={value?.from ?? ""} // input type="date" は null を受け付けないので空文字列
-            {...rest}
+            {...restProps}
           />
           <span>～</span>
           <DateInput
@@ -192,7 +193,7 @@ export function Field<
             name={name + ".to"}
             onChange={e => onChange({ to: e.target.value, from: value?.from })}
             value={value?.to ?? ""} // input type="date" は null を受け付けないので空文字列
-            {...rest}
+            {...restProps}
           />
         </div>
       )
@@ -204,7 +205,7 @@ export function Field<
           className={className}
           value={value ?? ""}
           {...restField}
-          {...rest}
+          {...restProps}
         />
       )
     }
@@ -258,7 +259,7 @@ export function Field<
             value={value?.from ?? ""} // input要素は null を受け付けないので空文字列
             suffix={suffix}
             commaSeparated={commaSeparated}
-            {...rest}
+            {...restProps}
           />
           <span>～</span>
           <NumericTextBox
@@ -269,7 +270,7 @@ export function Field<
             value={value?.to ?? ""} // input要素は null を受け付けないので空文字列
             suffix={suffix}
             commaSeparated={commaSeparated}
-            {...rest}
+            {...restProps}
           />
         </div>
       )
@@ -283,7 +284,7 @@ export function Field<
           commaSeparated={commaSeparated}
           value={value ?? ""}
           {...restField}
-          {...rest}
+          {...restProps}
         />
       )
     }
@@ -307,7 +308,7 @@ export function Field<
                 }}
                 onBlur={field.onBlur}
                 ref={field.ref}
-                {...rest}
+                {...restProps}
               />
               {value}
             </label>
@@ -320,8 +321,8 @@ export function Field<
           {...field}
           // input要素ではなくselect要素なのでpropsの型が違うのだが、
           // classNameなどよく使う属性については問題ないので強制的にキャスト
-          {...rest as unknown as React.SelectHTMLAttributes<HTMLSelectElement>}
-          className={`p-1 border ${rest.readOnly || rest.disabled ? "border-transparent" : "border-gray-600"} ${className ?? ""}`}
+          {...restProps as unknown as React.SelectHTMLAttributes<HTMLSelectElement>}
+          className={`p-1 border ${restProps.readOnly || restProps.disabled ? "border-transparent" : "border-gray-600"} ${className ?? ""}`}
         >
           <option key="" value=""></option>
           {enumValues.map(value => (
