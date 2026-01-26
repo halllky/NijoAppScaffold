@@ -1,5 +1,4 @@
 import React, { useImperativeHandle, forwardRef, useEffect, useState } from 'react';
-import Navigator from './Cy.Navigator';
 import { useCytoscape, CytoscapeHookType, LayoutSelectorComponentType, ViewState, updateTagPositions, updateMemberPositions } from './Cy';
 import cytoscape from 'cytoscape';
 import { LayoutLogicName } from './Cy.AutoLayout';
@@ -29,8 +28,6 @@ export interface GraphViewProps {
   onSelectionChange?: (event: cytoscape.EventObject) => void;
   /** ノードのレイアウトが変更された瞬間に呼ばれる */
   onLayoutChange?: (event: cytoscape.EventObject) => void;
-  /** ナビゲーターを表示するかどうか */
-  showNavigator?: boolean;
   /** 方眼紙の背景を表示するかどうか */
   showGrid?: boolean;
   className?: string;
@@ -41,15 +38,10 @@ export const GraphView = forwardRef<GraphViewRef, GraphViewProps>((props, ref) =
   const {
     cy,
     containerRef,
-    applyToCytoscape,
     reset,
-    expandSelections,
-    collapseSelections,
-    toggleExpandCollapse,
     LayoutSelector,
     nodesLocked,
     toggleNodesLocked,
-    hasNoElements,
     collectViewState,
     selectAll,
     resetLayout,
@@ -59,9 +51,6 @@ export const GraphView = forwardRef<GraphViewRef, GraphViewProps>((props, ref) =
 
   const graphViewRefObject = React.useMemo((): GraphViewRef => ({
     reset,
-    expandSelections,
-    collapseSelections,
-    toggleExpandCollapse,
     LayoutSelector,
     getNodesLocked: () => nodesLocked,
     toggleNodesLocked,
@@ -71,7 +60,7 @@ export const GraphView = forwardRef<GraphViewRef, GraphViewProps>((props, ref) =
     resetLayout: () => resetLayout(props.layoutLogic ?? 'klay'),
     applyViewState,
   }), [
-    reset, expandSelections, collapseSelections, toggleExpandCollapse, LayoutSelector,
+    reset, LayoutSelector,
     nodesLocked, toggleNodesLocked, collectViewState, selectAll, cy, resetLayout, props.layoutLogic, applyViewState
   ]);
 
@@ -232,12 +221,6 @@ export const GraphView = forwardRef<GraphViewRef, GraphViewProps>((props, ref) =
         tabIndex={0}
         onKeyDown={props.handleKeyDown}
       ></div>
-      {props.showNavigator && (
-        <Navigator.Component
-          hasNoElements={hasNoElements}
-          className="absolute w-[20vw] h-[20vh] right-2 bottom-2 z-[200]"
-        />
-      )}
       {props.nowLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 z-[300]">
           <p className="text-white text-2xl">読み込み中...</p>

@@ -1,18 +1,14 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import cytoscape from 'cytoscape'
 import { UUID } from 'uuidjs'
 // @ts-ignore このライブラリは型定義を提供していない
 import nodeHtmlLabel from "cytoscape-node-html-label"
-import Navigator from './Cy.Navigator'
 import AutoLayout, { LayoutLogicName } from './Cy.AutoLayout'
-import ExpandCollapseFunctions from './Cy.ExpandCollapse'
 import { ViewState, useViewState } from './Cy.SaveLoad'
 import * as DS from './DataSource'
-import { USER_SETTING } from './UserSetting'
 import { GraphViewProps } from '.'
 
 AutoLayout.configure(cytoscape)
-Navigator.configure(cytoscape)
 
 // cytoscape-node-html-label拡張機能を登録
 nodeHtmlLabel(cytoscape)
@@ -33,9 +29,6 @@ export interface CytoscapeHookType {
   applyToCytoscape: (dataSet: DS.DataSet, viewState?: Partial<ViewState>) => Promise<void>;
   selectAll: () => void;
   reset: () => void;
-  expandSelections: () => void;
-  collapseSelections: () => void;
-  toggleExpandCollapse: () => void;
   LayoutSelector: LayoutSelectorComponentType;
   nodesLocked: boolean;
   toggleNodesLocked: () => void;
@@ -47,7 +40,6 @@ export interface CytoscapeHookType {
 
 export const useCytoscape = (props: GraphViewProps): CytoscapeHookType => {
   const [cy, setCy] = useState<cytoscape.Core>()
-  const [navInstance, setNavInstance] = useState<{ destroy: () => void }>()
 
   // GraphViewのpropsのうちイベントは常に最新のインスタンスを呼ぶ必要があるのでrefで管理
   const propsRef = React.useRef(props)
@@ -65,10 +57,6 @@ export const useCytoscape = (props: GraphViewProps): CytoscapeHookType => {
 
       // HTMLラベルテンプレートを設定
       setupHtmlLabels(cyInstance)
-
-      if (propsRef.current.showNavigator) {
-        setNavInstance(Navigator.setupCyInstance(cyInstance))
-      }
 
       // Cytoscapeは標準でcanvas要素のmousedownでフォーカスを外す処理をしており
       // これによりcanvasを操作しているときにキーボードショートカットが使えないため
@@ -144,16 +132,10 @@ export const useCytoscape = (props: GraphViewProps): CytoscapeHookType => {
 
       setCy(cyInstance)
 
-    } else if (cy && !divElement) {
-      // 破棄
-      navInstance?.destroy()
     }
-  }, [cy, navInstance, propsRef])
+  }, [cy, propsRef])
 
   const { autoLayout, LayoutSelector } = AutoLayout.useAutoLayout(cy)
-  const { actions: expandCollapseActions } = useMemo(() => {
-    return ExpandCollapseFunctions(cy)
-  }, [cy])
 
   const selectAll = useCallback(() => {
     cy?.nodes().select()
@@ -317,7 +299,6 @@ export const useCytoscape = (props: GraphViewProps): CytoscapeHookType => {
     applyToCytoscape,
     selectAll,
     reset,
-    ...expandCollapseActions,
     LayoutSelector,
     nodesLocked,
     toggleNodesLocked,
