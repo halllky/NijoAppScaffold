@@ -131,15 +131,13 @@ function P400_従業員() {
 
     if (result.type === 'ok') {
       // 保存成功後、再検索して最新状態（Version等）を反映
-      replaceMessages({ info: ['保存しました。'] })
+      replaceMessages(result.detail)
       const currentCondition = searchConditionMethods.getValues()
       await onSearch(currentCondition)
     } else if (result.type === 'canceled') {
       // 何もしない
-    } else if (result.type === 'error') {
-      replaceMessages(result.detail)
     } else {
-      replaceMessages({ error: [result.message] })
+      replaceMessages(result.detail)
     }
 
     // 標準のリロード処理は使わない

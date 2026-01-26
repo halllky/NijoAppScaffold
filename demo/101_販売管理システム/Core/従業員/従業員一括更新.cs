@@ -85,9 +85,15 @@ partial class OverridedApplicationService {
             }
         }
 
-        // 一部だけコミットされる場合があるのでメッセージを詳細に表示する
-        if (!context.ValidationOnly && context.Messages.HasError()) {
-            if (commitedIndex.Count > 0) {
+        // 保存後メッセージ。
+        // 一部の更新だけコミットされる場合があるので
+        // 分かりやすさのためにメッセージを詳細に表示する
+        if (!context.ValidationOnly) {
+
+            if (!context.Messages.HasError()) {
+                context.Messages.AddInfo("保存しました。");
+
+            } else if (commitedIndex.Count > 0) {
                 context.Messages.AddWarn("保存できなかったデータがあります。");
                 foreach (var i in commitedIndex) {
                     context.Messages.更新対象従業員一覧[i].AddInfo("保存しました。");

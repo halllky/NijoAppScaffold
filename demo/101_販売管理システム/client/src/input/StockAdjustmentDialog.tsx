@@ -51,8 +51,6 @@ export function StockAdjustmentDialog({ isOpen, onClose, onSuccess, product }: P
       onClose()
     } else if (result.type === 'error') {
       replaceMessages(result.detail)
-    } else if (result.type === 'unknown') {
-      replaceMessages({ error: [result.message] })
     } else if (result.type === 'canceled') {
       // 何もしない
     }

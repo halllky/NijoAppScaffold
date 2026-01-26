@@ -92,8 +92,6 @@ export function LoginUserProvider({ children }: { children: React.ReactNode }) {
         setLoginUser(user)
       } else if (result.type === 'error') {
         replaceMessages(result.detail)
-      } else if (result.type === 'unknown') {
-        replaceMessages({ error: [result.message] })
       }
     }
 

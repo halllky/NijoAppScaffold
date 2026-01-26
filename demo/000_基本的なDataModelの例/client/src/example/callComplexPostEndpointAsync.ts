@@ -133,8 +133,8 @@ export async function callComplexPostEndpointAsync(
       // サーバーからの応答が無い、サーバー側で復旧不可のエラーが発生した、などといったものを示す。
       if (!response.ok) {
         return {
-          type: 'unknown',
-          message: await toDisplayErrorText(response),
+          type: 'error',
+          detail: { error: [await toDisplayErrorText(response)] },
         }
       }
 
@@ -168,14 +168,14 @@ export async function callComplexPostEndpointAsync(
         }
       }
 
-      return { type: 'ok', returnValue: json.returnValue }
+      return { type: 'ok', returnValue: json.returnValue, detail: json.detail }
     }
 
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
       return { type: 'canceled' }
     }
-    return { type: 'unknown', message: handleUnknownError(error) }
+    return { type: 'error', detail: { error: [handleUnknownError(error)] } }
   }
 }
 
@@ -184,10 +184,9 @@ export async function callComplexPostEndpointAsync(
 
 /** ComplexPostの結果 */
 export type ComplexPostResult<TSuccess>
-  = { type: 'ok', returnValue: TSuccess }
+  = { type: 'ok', returnValue: TSuccess, detail: DetailMessagesContainer }
   | { type: 'canceled' }
   | { type: 'error', detail: DetailMessagesContainer }
-  | { type: 'unknown', message: string }
 
 /**
  * 未知のエラーを、画面上に表示できる文字列に変換する。

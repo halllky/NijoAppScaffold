@@ -130,11 +130,8 @@ export function SearchPageBase<
       } else if (result.type === 'canceled') {
         // キャンセルされた場合は何もしない
 
-      } else if (result.type === 'error') {
-        replaceMessages(result.detail)
-
       } else {
-        replaceMessages({ error: [result.message] })
+        replaceMessages(result.detail)
       }
     } finally {
       if (abortControllerRef.current === controller) {

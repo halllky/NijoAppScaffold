@@ -203,16 +203,6 @@ const useCommandExecutor = (
         ok: false,
       }
 
-    } else if (result.type === 'unknown') {
-      // 不明なエラー
-      newHistory = {
-        id: newHistoryId,
-        parameter,
-        errors: [result.message],
-        createdAt,
-        ok: false,
-      }
-
     } else {
       // 正常終了
       newHistory = {
