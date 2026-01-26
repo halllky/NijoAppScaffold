@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using MyApp.Core.Authorization;
 
 namespace MyApp;
@@ -13,10 +14,10 @@ partial class OverridedApplicationService {
         // 一括更新処理。
         // ここで実装すべきなのは、トランザクションの範囲の定義と、
         // 画面項目からデータベース項目へのマッピング。
+        var commitedIndex = new HashSet<int>();
         for (var i = 0; i < param.更新対象従業員一覧.Count; i++) {
 
-            // トランザクションの範囲は従業員1名ずつ。
-            // 「保存しますか？」の確認前はエラーチェックのみなのでトランザクションは開始しない。
+            // サーバーの負荷を考慮し、トランザクションの範囲は従業員1名ずつ
             await using var tran = await BeginTransactionAsync();
 
             var item = param.更新対象従業員一覧[i];
@@ -26,6 +27,15 @@ partial class OverridedApplicationService {
             // フラグ項目をもとに、追加・更新・削除のいずれかを実行する。
             // WillBeChanged や WillBeDeleted はJavaScript側でtrueを設定する処理を記述する必要がある。
             if (!item.ExistsInDatabase) {
+
+                // ユニーク制約によるチェックはかかるものの、
+                // ここでチェックをかけた方がロールバックの挙動が分かりやすくなるので重ねてチェックする
+                if (param.更新対象従業員一覧.Any(e => e != item && e.Values.従業員.Values.従業員番号 == item.Values.従業員.Values.従業員番号)
+                    || await DbContext.従業員DbSet.AnyAsync(e => e.従業員番号 == item.Values.従業員.Values.従業員番号)) {
+
+                    message.従業員.従業員番号.AddError($"従業員番号 '{item.Values.従業員.Values.従業員番号}' は既に存在します。");
+                    continue;
+                }
 
                 // 初期パスワード
                 var salt = GenerateSalt();
@@ -71,6 +81,20 @@ partial class OverridedApplicationService {
 
             if (!context.ValidationOnly && success) {
                 await tran.CommitAsync();
+                commitedIndex.Add(i);
+            }
+        }
+
+        // 一部だけコミットされる場合があるのでメッセージを詳細に表示する
+        if (!context.ValidationOnly && context.Messages.HasError()) {
+            if (commitedIndex.Count > 0) {
+                context.Messages.AddWarn("保存できなかったデータがあります。");
+                foreach (var i in commitedIndex) {
+                    context.Messages.更新対象従業員一覧[i].AddInfo("保存しました。");
+                }
+
+            } else {
+                context.Messages.AddError("保存に失敗しました。");
             }
         }
     }
