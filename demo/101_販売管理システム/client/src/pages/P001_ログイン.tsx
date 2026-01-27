@@ -39,10 +39,10 @@ export function P001_ログイン(props: {
 
   // 初期表示時、またはログアウト後
   React.useEffect(() => {
-    if (!loginUser) {
+    if (!initializing && !loginUser) {
       setFocus("values.従業員番号")
     }
-  }, [loginUser])
+  }, [initializing, loginUser])
 
   const [processing, setProcessing] = React.useState(false)
   const onSubmit = useEvent(async (data: ログインParameterDisplayData) => {

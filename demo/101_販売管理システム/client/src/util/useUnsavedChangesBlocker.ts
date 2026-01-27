@@ -7,18 +7,9 @@ import { useBlocker } from "react-router-dom"
  *
  * @param isDirty 編集中かどうか (true の場合ブロックする)
  */
-export function useUnsavedChangesBlocker(isDirty: () => boolean) {
-  // react-hook-form の formState.isDirty 等は Proxy であり、
-  // レンダリング中にアクセスしないと値の変更が監視されない（再レンダリングされない）仕様があるため、
-  // ここで意図的にアクセスさせておく。
-  isDirty()
-
-  const isDirtyRef = React.useRef(isDirty)
-  isDirtyRef.current = isDirty
-
+export function useUnsavedChangesBlocker(isDirty: boolean) {
   // 画面遷移ブロック (React Router)
-  // useBlocker に関数を渡すことで、レンダリング時ではなく遷移試行時に isDirty を評価する
-  const blocker = useBlocker(React.useCallback(() => isDirtyRef.current(), []))
+  const blocker = useBlocker(isDirty)
   useEffect(() => {
     if (blocker.state === "blocked") {
       const result = window.confirm(
@@ -35,12 +26,12 @@ export function useUnsavedChangesBlocker(isDirty: () => boolean) {
   // ブラウザのリロードや閉じる操作のブロック
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isDirtyRef.current()) {
+      if (isDirty) {
         e.preventDefault()
         e.returnValue = ""
       }
     }
     window.addEventListener("beforeunload", handleBeforeUnload)
     return () => window.removeEventListener("beforeunload", handleBeforeUnload)
-  }, [isDirtyRef])
+  }, [isDirty])
 }

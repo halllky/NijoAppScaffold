@@ -2,7 +2,6 @@ import React from "react"
 import * as ReactRouter from "react-router"
 import { useNavigate } from "react-router-dom"
 import { PageBase } from "../layout/PageBase"
-import { useUnsavedChangesBlocker } from "../util/useUnsavedChangesBlocker"
 import { useForm, UseFormReturn, useFieldArray } from "react-hook-form"
 import {
   従業員一括更新ParameterDisplayData,
@@ -61,8 +60,6 @@ function P400_従業員() {
   const methods = useForm<従業員一括更新ParameterDisplayData>({
     defaultValues
   })
-  const { formState: { isDirty, dirtyFields } } = methods
-  useUnsavedChangesBlocker(isDirty)
   const [saving, setSaving] = React.useState(false)
 
   // defaultValues が更新されたらフォームをリセット
@@ -153,6 +150,7 @@ function P400_従業員() {
   return (
     <PageBase
       browserTitle="従業員"
+      isDirty={methods.formState.isDirty}
       className="gap-2 px-8 py-2"
       header={(
         <>

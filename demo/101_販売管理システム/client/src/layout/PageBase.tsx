@@ -1,9 +1,12 @@
 import { ReactNode, useEffect } from "react"
 import * as DetailMessage from "../util/DetailMessageContext"
+import { useUnsavedChangesBlocker } from "../util/useUnsavedChangesBlocker"
 
 export type PageBaseProps = {
   /** ページタイトル。ブラウザのタイトルバーに表示されます。 */
   browserTitle?: string
+  /** trueの場合、ページを離脱する際に確認ダイアログを表示します。 */
+  isDirty?: boolean
   /** ヘッダー */
   header?: ReactNode
   /** コンテンツ */
@@ -25,6 +28,9 @@ export function PageBase(props: PageBaseProps) {
       document.title = props.browserTitle
     }
   }, [props.browserTitle])
+
+  // ページ離脱確認
+  useUnsavedChangesBlocker(props.isDirty ?? false)
 
   return (
     <div className="flex flex-col h-full">
