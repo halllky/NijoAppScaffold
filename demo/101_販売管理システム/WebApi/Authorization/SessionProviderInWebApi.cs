@@ -4,17 +4,17 @@ using MyApp.Core.Authorization;
 
 namespace MyApp.WebApi.Authorization;
 
-public class LoginUserProviderInWebApi : ISessionKeyProvider {
+public class SessionProviderInWebApi : ISessionKeyProvider {
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public LoginUserProviderInWebApi(IHttpContextAccessor httpContextAccessor) {
+    public SessionProviderInWebApi(IHttpContextAccessor httpContextAccessor) {
         _httpContextAccessor = httpContextAccessor;
     }
 
     /// <summary>
     /// セッションキーを保存する Cookie のキー名
     /// </summary>
-    private const string SESSION_ITEM_KEY = "LoginUserProviderInWebApi.Session";
+    private const string SESSION_ITEM_KEY = "SessionProviderInWebApi.Session";
 
     void ISessionKeyProvider.ReturnSessionKeyToClient(string sessionKey) {
         var httpContext = _httpContextAccessor.HttpContext;

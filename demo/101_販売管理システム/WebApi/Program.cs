@@ -4,13 +4,13 @@ using MyApp.WebApi.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// HttpContextAccessor の登録 (LoginUserProviderInWebApi で使用)
+// HttpContextAccessor の登録 (SessionProviderInWebApi で使用)
 builder.Services.AddHttpContextAccessor();
 
 // Controller の設定
 builder.Services.AddControllers(options => {
     options.Filters.Add<MyApp.WebApi.WebLogScope>(); // ログ出力用情報設定のフィルター
-    options.Filters.Add<LoginAuthorizationFilter>();      // ログインしていないリクエストを弾くフィルター
+    options.Filters.Add<LoginAuthorizationFilter>(); // ログインしていないリクエストを弾くフィルター
 });
 
 // swagger。デバッグのためにこのアプリで定義されているエンドポイントを一覧する
@@ -32,7 +32,7 @@ builder.Services.AddCors(options => {
 // アプリケーションサービス層のDI設定
 OverridedApplicationService.ConfigureServices(builder.Services, null);
 
-builder.Services.AddScoped<ISessionKeyProvider, LoginUserProviderInWebApi>(); // ログインユーザー情報提供サービスをWebApi用に差し替え
+builder.Services.AddScoped<ISessionKeyProvider, SessionProviderInWebApi>(); // ログインユーザー情報提供サービスをWebApi用に差し替え
 
 // HTTPリクエスト・レスポンスで使われるJSONシリアライズ設定を上記DI設定のそれに合わせる
 builder.Services.ConfigureHttpJsonOptions(options => {

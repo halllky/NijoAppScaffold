@@ -31,7 +31,7 @@ namespace MyApp {
                     return _loginUserCache;
                 }
 
-                // セッションキーを取得。
+                // Cookieからセッションキーを取得。
                 // ログイン済みなら必ず存在する。
                 var sessionKeyProvider = ServiceProvider.GetRequiredService<ISessionKeyProvider>();
                 var sessionKey = sessionKeyProvider.GetSessionKey();
@@ -44,7 +44,10 @@ namespace MyApp {
                 var dbEntity = DbContext.セッションDbSet
                     .Include(e => e.ユーザ)
                     .SingleOrDefault(e => e.セッションキー == sessionKey);
+
+                // 有効期限切れや、DBの古いデータが掃除された場合など
                 if (dbEntity == null) {
+                    sessionKeyProvider.ClearSessionKey();
                     _isLoginUserLoaded = true;
                     return null;
                 }
