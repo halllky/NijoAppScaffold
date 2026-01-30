@@ -48,6 +48,7 @@ export function useTanstackColumns<TRow>(props: EditableGrid2Props<TRow>) {
           isFixed: index <= lastFixedIndex,
           isReadOnly: leaf.isReadOnly ?? false,
           isGroupedColumn: group !== undefined,
+          isRowCheckBox: false,
         } satisfies ColumnMetadataInternal<TRow>,
       }),
     }))
@@ -79,6 +80,7 @@ export function useTanstackColumns<TRow>(props: EditableGrid2Props<TRow>) {
             isFixed: false,
             isReadOnly: false,
             isGroupedColumn: true,
+            isRowCheckBox: false,
           } satisfies ColumnMetadataInternal<TRow>,
         }))
       }

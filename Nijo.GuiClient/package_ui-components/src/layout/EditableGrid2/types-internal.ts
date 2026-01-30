@@ -10,6 +10,7 @@ export type ColumnMetadataInternal<TRow> = {
   isFixed: boolean
   isReadOnly: boolean | ((row: TRow, rowIndex: number) => boolean)
   isGroupedColumn: boolean
+  isRowCheckBox: boolean
 }
 
 /** 推定行高さ */

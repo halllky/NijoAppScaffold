@@ -22,6 +22,7 @@ export function createRowCheckBoxColumn<TRow>(
       isFixed: true,
       isReadOnly: false,
       isGroupedColumn: false,
+      isRowCheckBox: true,
     } satisfies ColumnMetadataInternal<TRow>,
 
     // テーブル左上の角の全選択チェックボックス

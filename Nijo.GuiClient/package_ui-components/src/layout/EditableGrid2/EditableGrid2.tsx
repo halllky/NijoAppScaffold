@@ -178,7 +178,9 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
                     dataColumnClassName += ' bg-gray-200'
                   }
 
-                  if (cellMeta.leafIndex === lastFixedIndex) dataColumnClassName += ` border-r border-gray-300`
+                  if (cellMeta.isRowCheckBox || cellMeta.leafIndex === lastFixedIndex) {
+dataColumnClassName += ` border-r border-gray-200`
+}
 
                   // z-indexを明示的に指定して SelectedRange(unfixed) より手前に、ヘッダより奥に来るようにする
                   if (cellMeta.isFixed) dataColumnClassName += ` sticky z-10`
