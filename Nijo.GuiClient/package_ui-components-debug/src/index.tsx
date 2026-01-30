@@ -11,6 +11,7 @@ import _007_グリッド機能 from "@nijo/ui-components/layout/DynamicForm/__te
 import FormLayoutPatternsDebugging from "./FormLayoutPatternsDebugging"
 import EditableGridDebugging from "./EditableGridDebugging"
 import EditableGridHookTest from "./EditableGridHookTest"
+import EditableGrid2Debugging from "./EditableGrid2Debugging"
 
 export default function () {
 
@@ -119,6 +120,11 @@ export const getDebuggingPages = (): { groupName: string, links: (ReactRouter.Ro
         path: '/editable-grid/008',
         label: 'EditableGrid フック使用テスト',
         element: <EditableGridHookTest />,
+      },
+      {
+        path: '/editable-grid-2/001',
+        label: 'EditableGrid 2',
+        element: <EditableGrid2Debugging />,
       },
     ],
   },
