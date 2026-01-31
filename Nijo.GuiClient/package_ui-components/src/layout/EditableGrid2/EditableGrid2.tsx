@@ -16,10 +16,10 @@ import { useCopyPaste } from "./useCopyPaste"
 /**
  * EditableGrid2 コンポーネント
  */
-export const EditableGrid2 = React.forwardRef(<TRow,>(
+export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
   props: EditableGrid2Props<TRow>,
   ref: React.ForwardedRef<EditableGrid2Ref<TRow>>
-) => {
+) {
 
   const tableContainerRef = React.useRef<HTMLDivElement>(null)
   const [isGridActive, setIsGridActive] = React.useState(false)
@@ -338,7 +338,7 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
 
   //#endregion レンダリング
 
-}) as (<TRow>(props: EditableGrid2Props<TRow> & { ref?: React.ForwardedRef<EditableGrid2Ref<TRow>> }) => React.ReactNode)
+}) as (<TRow>(props: EditableGrid2Props<TRow> & { ref?: React.ForwardedRef<EditableGrid2Ref<TRow>> }) => React.ReactNode);
 
 
 //#region メモ化ヘッダ
@@ -352,7 +352,7 @@ const HeaderCell = React.memo<{
   style: React.CSSProperties
   /** レンダリングのトリガーにのみ使用 */
   allChecked: unknown
-}>(({ header, className, style }) => {
+}>(function MemorizedTH({ header, className, style }) {
 
   return (
     <th className={className} style={style}>
@@ -397,7 +397,7 @@ const DataCell = React.memo<{
   isReadOnly: unknown
   /** レンダリングのトリガーにのみ使用 */
   isChecked: unknown
-}>(({ cell, className, style }) => {
+}>(function MemorizedTD({ cell, className, style }) {
 
   return (
     <td

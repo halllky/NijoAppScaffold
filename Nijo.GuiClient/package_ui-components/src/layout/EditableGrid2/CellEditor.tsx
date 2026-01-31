@@ -32,7 +32,7 @@ export type CellEditorRef = {
  * 最初の1文字目がIME変換候補状態で表示されるという動きを実現するため、
  * EditableGrid にフォーカスが当たっているうちは、見えないだけで、必ずこのコンポーネントにフォーカスが当たる。
  */
-export const CellEditor = React.forwardRef(<TRow,>({
+export const CellEditor = React.forwardRef(function CellEditor<TRow>({
   focusedCell,
   rowModel,
   visibleLeafColumns,
@@ -40,7 +40,7 @@ export const CellEditor = React.forwardRef(<TRow,>({
   gridEditorComponent,
   gridIsReadOnly,
   getPixel,
-}: CellEditorProps<TRow>, ref: React.ForwardedRef<CellEditorRef>) => {
+}: CellEditorProps<TRow>, ref: React.ForwardedRef<CellEditorRef>) {
 
   const editorTextareaRef = React.useRef<CellEditorTextareaRef>(null)
 
@@ -204,7 +204,7 @@ export const CellEditor = React.forwardRef(<TRow,>({
 /**
  * エディタコンポーネントが指定されていない場合のデフォルトのエディタ
  */
-const DefaultEditor: GridCellEditorComponent = React.forwardRef(({ }, ref) => {
+const DefaultEditor: GridCellEditorComponent = React.forwardRef(function DefaultEditor({ }, ref) {
 
   const [value, setValue] = React.useState<string>('')
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)

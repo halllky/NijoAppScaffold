@@ -16,12 +16,12 @@ export type SelectedRangeProps = {
 /**
  * 固定列用の選択範囲表示
  */
-export const SelectedRangeForFixedColumn = React.memo(({
+export const SelectedRangeForFixedColumn = React.memo(function SelectedRangeForFixedColumn({
   anchorCell,
   getPixel,
   lastFixedIndex,
   selectedRange,
-}: SelectedRangeProps) => {
+}: SelectedRangeProps) {
 
   if (!anchorCell) return null
   if (!selectedRange) return null
@@ -53,11 +53,11 @@ export const SelectedRangeForFixedColumn = React.memo(({
 /**
  * スクロール列用の選択範囲表示
  */
-export const SelectedRangeForScrollableColumn = React.memo(({
+export const SelectedRangeForScrollableColumn = React.memo(function SelectedRangeForScrollableColumn({
   anchorCell,
   getPixel,
   selectedRange,
-}: SelectedRangeProps) => {
+}: SelectedRangeProps) {
 
   if (!anchorCell) return null
   if (!selectedRange) return null
