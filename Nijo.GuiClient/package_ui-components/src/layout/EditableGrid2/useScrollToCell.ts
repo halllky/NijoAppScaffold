@@ -17,33 +17,40 @@ export function useScrollToCell<TRow>(
   visibleLeafColumns: TanStack.Column<TRow, unknown>[],
   lastFixedIndex: number | null,
   tableContainerRef: React.RefObject<HTMLDivElement | null>,
+  totalHeaderHeight: number,
 ): ScrollToCellFunction {
 
   return React.useCallback((cell: CellPosition | null) => {
     if (!cell) return
-    if (!tableContainerRef.current) return
+    const container = tableContainerRef.current
+    if (!container) return
 
     // 行スクロール
     const rowTop = getPixel({ position: 'top', rowIndex: cell.rowIndex })
     const rowBottom = getPixel({ position: 'bottom', rowIndex: cell.rowIndex })
 
-    const container = tableContainerRef.current
     const containerTop = container.scrollTop
     const containerHeight = container.clientHeight
-    const SCROLL_BAR_HEIGHT = 24
 
-    if (rowTop < containerTop) {
-      // 上に見切れている -> 上端合わせ
-      container.scrollTop = rowTop
+    // 動的にスクロールバーの高さを考慮
+    const hasHorizontalScrollbar = container.scrollWidth > container.clientWidth
+    const scrollBarHeight = hasHorizontalScrollbar ? (container.offsetHeight - container.clientHeight) : 0
 
-    } else if (rowBottom + SCROLL_BAR_HEIGHT > containerTop + containerHeight) {
+    // 少し余裕を持たせる
+    const SCROLL_PADDING = 4
+
+    if (rowTop < containerTop + totalHeaderHeight + SCROLL_PADDING) {
+      // 上に見切れている -> 上端合わせ (ヘッダー分考慮)
+      container.scrollTop = rowTop - totalHeaderHeight - SCROLL_PADDING
+
+    } else if (rowBottom > containerTop + containerHeight - scrollBarHeight - SCROLL_PADDING) {
       // 下に見切れている
-      if (rowBottom - rowTop > containerHeight) {
+      if (rowBottom - rowTop > containerHeight - totalHeaderHeight - scrollBarHeight) {
         // セル高さが可視領域より高い -> 上端合わせ
-        container.scrollTop = rowTop
+        container.scrollTop = rowTop - totalHeaderHeight - SCROLL_PADDING
       } else {
-        // 下端合わせ（スクロールバーの存在を考慮して少し余裕を持たせる）
-        container.scrollTop = rowBottom - containerHeight + SCROLL_BAR_HEIGHT
+        // 下端合わせ
+        container.scrollTop = rowBottom - containerHeight + scrollBarHeight + SCROLL_PADDING
       }
     }
 
@@ -56,7 +63,6 @@ export function useScrollToCell<TRow>(
       const columnWidth = column.getSize()
       const columnRight = columnLeft + columnWidth
 
-      const container = tableContainerRef.current
       const containerLeft = container.scrollLeft
       const containerWidth = container.clientWidth
 
@@ -69,21 +75,23 @@ export function useScrollToCell<TRow>(
         }
       }
 
-      const visibleWidth = containerWidth - fixedWidth
+      // 可視領域の右端（絶対座標）
+      const visibleRightBoundary = containerLeft + containerWidth
 
-      if (columnLeft < containerLeft + fixedWidth) {
+      if (columnLeft < containerLeft + fixedWidth + SCROLL_PADDING) {
         // 左に見切れている -> 左端合わせ
-        container.scrollLeft = columnLeft - fixedWidth
-      } else if (columnRight > containerLeft + fixedWidth + visibleWidth) {
+        container.scrollLeft = columnLeft - fixedWidth - SCROLL_PADDING
+      } else if (columnRight > visibleRightBoundary - SCROLL_PADDING) {
         // 右に見切れている
+        const visibleWidth = containerWidth - fixedWidth
         if (columnWidth > visibleWidth) {
           // セル幅が可視領域より広い -> 左端合わせ
-          container.scrollLeft = columnLeft - fixedWidth
+          container.scrollLeft = columnLeft - fixedWidth - SCROLL_PADDING
         } else {
           // 右端合わせ
-          container.scrollLeft = columnRight - fixedWidth - visibleWidth
+          container.scrollLeft = columnRight - containerWidth + SCROLL_PADDING
         }
       }
     }
-  }, [getPixel, visibleLeafColumns, lastFixedIndex, tableContainerRef])
+  }, [getPixel, visibleLeafColumns, lastFixedIndex, tableContainerRef, totalHeaderHeight])
 }

@@ -126,7 +126,10 @@ export function useSelection<TRow>(
     }
 
     // セル移動を検知してスクロールするために状態を更新
-    setKeyMoveState(nextPos)
+    setKeyMoveState({
+      rowIndex: Math.min(Math.max(nextPos.rowIndex, 0), rowCount - 1),
+      colIndex: Math.min(Math.max(nextPos.colIndex, minColIndex), colCount - 1),
+    })
   }
 
   // マウスダウン。

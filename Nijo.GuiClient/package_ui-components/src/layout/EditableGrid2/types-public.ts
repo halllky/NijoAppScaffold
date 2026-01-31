@@ -1,5 +1,6 @@
 import React from "react"
 import * as TanStack from "@tanstack/react-table"
+import { GridCellEditorComponent } from "./types-internal"
 
 /**
  * EditableGrid2 のプロパティ
@@ -21,6 +22,8 @@ export type EditableGrid2Props<TRow> = {
   clearSelectionOnBlur?: boolean
   /** 表示範囲外の行をどこまで予め読み込んでおくか。既定値は10 */
   overscan?: number
+  /** セルエディタ。未指定の場合は既定のコンポーネントが使われる。列定義で指定がある場合はそちらが優先される。 */
+  editor?: GridCellEditorComponent
 }
 
 /**
@@ -56,6 +59,12 @@ export type EditableGrid2LeafColumn<TRow> = {
   columnId?: string
   /** 画面初期表示時の列の幅（pxで指定） */
   defaultWidth?: number
+  /** セルエディタ。未指定の場合はグリッドのプロパティで指定されたものが、それも無い場合は既定のコンポーネントが使われる。 */
+  editor?: GridCellEditorComponent
+  /** セルエディタに表示する値を取得する関数。指定しない場合、この列は編集不可。 */
+  getValueForEditor?: (args: { row: TRow, rowIndex: number }) => string
+  /** セルエディタの値を設定する関数。指定しない場合、値が編集されても反映されない。 */
+  setValueFromEditor?: (args: { row: TRow, rowIndex: number, value: string }) => void
   /**
    * 列が読み取り専用かどうか。
    * trueの場合はセルの背景色が変わるのと、

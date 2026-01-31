@@ -1,0 +1,219 @@
+import React from "react"
+import * as TanStack from "@tanstack/react-table"
+import { CellEditorTextareaRef, checkIfCellReadOnly, ColumnMetadataInternal, GridCellEditorComponent } from "./types-internal"
+import { CellPosition } from "./useSelection"
+import { GetPixelFunction } from "./useGetPixel"
+
+export type CellEditorProps<TRow> = {
+  /** useSelection で管理されているフォーカスセル */
+  focusedCell: CellPosition | null
+  rowModel: TanStack.RowModel<TRow>
+  visibleLeafColumns: TanStack.Column<TRow, unknown>[]
+  /** 編集状態が変わったときに呼ばれるコールバック */
+  onEditingStateChanged: (isEditing: boolean) => void
+  /** グリッド全体のpropsで指定される標準コンポーネント */
+  gridEditorComponent?: GridCellEditorComponent
+  /** グリッド全体のpropsで指定される読み取り専用条件 */
+  gridIsReadOnly: boolean | ((row: TRow, rowIndex: number) => boolean) | undefined
+  /** 座標計算関数 */
+  getPixel: GetPixelFunction
+  /** 再レンダリングのトリガーに使っているだけ */
+  columnSizing: unknown
+}
+
+export type CellEditorRef = {
+  /** EditableGrid2 側でトリガーしてセルエディタに編集開始を要求するために使用 */
+  requestEditStart: () => void
+}
+
+/**
+ * セルの編集を行うコンポーネント。
+ * 通常時は透明で表示される。編集モードになると可視化される。
+ *
+ * キーボードでIME変換が必要な文字が入力された場合、
+ * 最初の1文字目がIME変換候補状態で表示されるという動きを実現するため、
+ * EditableGrid にフォーカスが当たっているうちは、見えないだけで、必ずこのコンポーネントにフォーカスが当たる。
+ */
+export const CellEditor = React.forwardRef(<TRow,>({
+  focusedCell,
+  rowModel,
+  visibleLeafColumns,
+  onEditingStateChanged,
+  gridEditorComponent,
+  gridIsReadOnly,
+  getPixel,
+  columnSizing,
+}: CellEditorProps<TRow>, ref: React.ForwardedRef<CellEditorRef>) => {
+
+  const containerRef = React.useRef<HTMLLabelElement>(null)
+  const editorTextareaRef = React.useRef<CellEditorTextareaRef>(null)
+
+  const [editorComponent, setEditorComponent] = React.useState<GridCellEditorComponent>(gridEditorComponent ?? DefaultEditor)
+  const [edittingCell, setEdittingCell] = React.useState<TanStack.Cell<TRow, unknown> | null>(null)
+
+  // -----------------------------------
+
+  // 編集確定
+  const commitEditing = (value?: string) => {
+    if (edittingCell === null) return;
+
+    const columnMeta = edittingCell.column.columnDef.meta as ColumnMetadataInternal<TRow>
+    if (columnMeta.original?.setValueFromEditor) {
+      columnMeta.original.setValueFromEditor({
+        rowIndex: edittingCell.row.index,
+        row: edittingCell.row.original,
+        value: value ?? editorTextareaRef.current?.getCurrentValue() ?? '',
+      })
+    }
+
+    setEdittingCell(null)
+    onEditingStateChanged(false)
+    setEditorComponent(gridEditorComponent ?? DefaultEditor)
+  }
+
+  // 編集キャンセル
+  const cancelEditing = () => {
+    // エディタの値を編集前の値に戻す
+    if (edittingCell) {
+      const columnMeta = edittingCell.column.columnDef.meta as ColumnMetadataInternal<TRow>
+      const value = columnMeta.original?.getValueForEditor
+        ? columnMeta.original.getValueForEditor({ row: edittingCell.row.original, rowIndex: edittingCell.row.index })
+        : ''
+      editorTextareaRef.current?.setValueAndSelectAll(value)
+    }
+
+    setEdittingCell(null)
+    onEditingStateChanged(false)
+    setEditorComponent(gridEditorComponent ?? DefaultEditor)
+  }
+
+  // エディタ内部のキー操作
+  const handleKeyDown: React.KeyboardEventHandler<HTMLLabelElement> = e => {
+    // 編集を確定させる
+    if (edittingCell) {
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        if (e.shiftKey) return; // セル内改行のため普通のEnterでは編集終了しないようにする
+
+        commitEditing()
+        e.preventDefault()
+      }
+      // 編集をキャンセルする
+      else if (e.key === 'Escape') {
+        cancelEditing()
+        e.preventDefault()
+      }
+    }
+  }
+
+  // エディタの位置を更新する
+  React.useEffect(() => {
+    if (edittingCell) return
+    if (!focusedCell) return
+    if (!containerRef.current) return
+
+    // エディタを編集対象セルの位置に移動させる
+    const left = getPixel({ position: 'left', colIndex: focusedCell.colIndex })
+    const right = getPixel({ position: 'right', colIndex: focusedCell.colIndex })
+    const top = getPixel({ position: 'top', rowIndex: focusedCell.rowIndex })
+    const bottom = getPixel({ position: 'bottom', rowIndex: focusedCell.rowIndex })
+    containerRef.current.style.left = `${left}px`
+    containerRef.current.style.top = `${top}px`
+    containerRef.current.style.minHeight = `${bottom - top}px`
+
+    // min-width で設定した場合、エディタの中の文字がオーバーフローしたときに横方向に延伸する。
+    // width で指定した場合は縦方向。
+    const columnMeta = visibleLeafColumns[focusedCell.colIndex]?.columnDef.meta as ColumnMetadataInternal<TRow> | undefined
+    if (columnMeta?.original?.editorOverflow === 'vertical') {
+      containerRef.current.style.width = `${right - left}px`
+      containerRef.current.style.minWidth = ''
+    } else {
+      containerRef.current.style.width = ''
+      containerRef.current.style.minWidth = `${right - left}px`
+    }
+
+    // 移動後のセルの値をエディタにセットする
+    if (columnMeta?.original?.getValueForEditor) {
+      const cell = rowModel
+        .flatRows[focusedCell.rowIndex]
+        ?.getVisibleCells()
+        ?.[focusedCell.colIndex]
+      if (cell) {
+        const value = columnMeta.original.getValueForEditor({ row: cell.row.original, rowIndex: cell.row.index })
+        editorTextareaRef.current?.setValueAndSelectAll(value)
+      }
+    }
+  }, [focusedCell, columnSizing, getPixel, rowModel, visibleLeafColumns, containerRef])
+
+  React.useImperativeHandle(ref, () => ({
+    requestEditStart: () => {
+      if (!focusedCell) return;
+
+      const cell = rowModel
+        .flatRows[focusedCell.rowIndex]
+        ?.getVisibleCells()
+        ?.[focusedCell.colIndex]
+      if (!cell) return;
+
+      const columnMeta = cell.column.columnDef.meta as ColumnMetadataInternal<TRow>
+      if (!columnMeta.original?.getValueForEditor) return;
+      if (checkIfCellReadOnly(cell, gridIsReadOnly)) return;
+
+      const value = columnMeta.original.getValueForEditor({ row: cell.row.original, rowIndex: cell.row.index })
+      editorTextareaRef.current?.setValueAndSelectAll(value)
+      setEdittingCell(cell)
+      onEditingStateChanged(true)
+      setEditorComponent(columnMeta.original?.editor ?? gridEditorComponent ?? DefaultEditor)
+    },
+  }))
+
+  return (
+    <label
+      ref={containerRef}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      className="absolute flex items-stretch bg-white outline-none border border-gray-950 z-30"
+      style={{
+        // クイック編集のためCellEditor自体は常に存在し続けるが、セル編集モードでないときは見えないようにする
+        opacity: edittingCell ? undefined : 0,
+        pointerEvents: edittingCell ? undefined : 'none',
+      }}
+    >
+      {React.createElement(editorComponent, {
+        ref: editorTextareaRef,
+      })}
+    </label>
+  )
+}) as (<TRow>(props: CellEditorProps<TRow> & { ref?: React.ForwardedRef<CellEditorRef> }) => React.ReactNode)
+
+
+/**
+ * エディタコンポーネントが指定されていない場合のデフォルトのエディタ
+ */
+const DefaultEditor: GridCellEditorComponent = React.forwardRef(({ }, ref) => {
+
+  const [value, setValue] = React.useState<string>('')
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null)
+
+  const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = e => {
+    setValue(e.target.value)
+  }
+
+  React.useImperativeHandle(ref, () => ({
+    focus: options => textareaRef.current?.focus(options),
+    blur: () => textareaRef.current?.blur(),
+    getCurrentValue: () => textareaRef.current?.value ?? '',
+    setValueAndSelectAll: (value: string) => {
+      setValue(value)
+      textareaRef.current?.select()
+    },
+  }), [textareaRef])
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value ?? ''}
+      onChange={handleChange}
+      className="w-full h-full resize-none field-sizing-content outline-none"
+    />
+  )
+})

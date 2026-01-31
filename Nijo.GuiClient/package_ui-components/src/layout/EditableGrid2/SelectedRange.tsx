@@ -11,8 +11,6 @@ export type SelectedRangeProps = {
   getPixel: GetPixelFunction
   /** 最も右にある固定列のインデックス。チェックボックス列がある場合はそれを0とする */
   lastFixedIndex: number | null
-  /** 列ヘッダの高さの合計 */
-  headerHeight: number
   /** 列サイズ変更時に再レンダリングするためのトリガー */
   columnSizing: unknown
 }
@@ -25,7 +23,6 @@ export const SelectedRangeForFixedColumn = React.memo(({
   getPixel,
   lastFixedIndex,
   selectedRange,
-  headerHeight,
 }: SelectedRangeProps) => {
 
   if (!anchorCell) return null
@@ -46,7 +43,6 @@ export const SelectedRangeForFixedColumn = React.memo(({
         getPixel={getPixel}
         selectedRange={clippedRange}
         hideBorderRight={selectedRange.endCol > lastFixedIndex}
-        headerHeight={headerHeight}
 
         // アンカーセルが固定列の範囲外の場合、
         // 範囲全体をオーバーレイで覆わせるために null を渡す
@@ -63,7 +59,6 @@ export const SelectedRangeForScrollableColumn = React.memo(({
   anchorCell,
   getPixel,
   selectedRange,
-  headerHeight,
 }: SelectedRangeProps) => {
 
   if (!anchorCell) return null
@@ -75,7 +70,6 @@ export const SelectedRangeForScrollableColumn = React.memo(({
       anchorCell={anchorCell}
       selectedRange={selectedRange}
       zIndex="5" // 固定列ボディセルより後ろ、非固定列ボディセルより手前
-      headerHeight={headerHeight}
     />
   )
 })
@@ -89,25 +83,23 @@ function SelectedRangeImpl({
   anchorCell,
   selectedRange,
   hideBorderRight,
-  headerHeight,
 }: {
   zIndex?: string
   getPixel: GetPixelFunction
   anchorCell: CellPosition | null
   selectedRange: CellSelectionRange
   hideBorderRight?: boolean
-  headerHeight: number
 }) {
 
   // 選択範囲全体の座標
   const left = getPixel({ position: 'left', colIndex: selectedRange.startCol })
   const right = getPixel({ position: 'right', colIndex: selectedRange.endCol })
-  const top = getPixel({ position: 'top', rowIndex: selectedRange.startRow }) + headerHeight
-  const bottom = getPixel({ position: 'bottom', rowIndex: selectedRange.endRow }) + headerHeight
+  const top = getPixel({ position: 'top', rowIndex: selectedRange.startRow })
+  const bottom = getPixel({ position: 'bottom', rowIndex: selectedRange.endRow })
 
   // アンカーセルの座標
-  const anchorTop = anchorCell === null ? null : getPixel({ position: 'top', rowIndex: anchorCell.rowIndex }) + headerHeight
-  const anchorBottom = anchorCell === null ? null : getPixel({ position: 'bottom', rowIndex: anchorCell.rowIndex }) + headerHeight
+  const anchorTop = anchorCell === null ? null : getPixel({ position: 'top', rowIndex: anchorCell.rowIndex })
+  const anchorBottom = anchorCell === null ? null : getPixel({ position: 'bottom', rowIndex: anchorCell.rowIndex })
   const anchorLeft = anchorCell === null ? null : getPixel({ position: 'left', colIndex: anchorCell.colIndex })
   const anchorRight = anchorCell === null ? null : getPixel({ position: 'right', colIndex: anchorCell.colIndex })
 

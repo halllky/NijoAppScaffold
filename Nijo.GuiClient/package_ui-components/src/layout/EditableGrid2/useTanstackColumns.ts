@@ -45,6 +45,7 @@ export function useTanstackColumns<TRow>(props: EditableGrid2Props<TRow>) {
         enableResizing: leaf.disableResizing !== true,
         meta: {
           leafIndex: index,
+          original: leaf,
           isFixed: index <= maxIndexOfIsFixed,
           isReadOnly: leaf.isReadOnly ?? false,
           isGroupedColumn: group !== undefined,
@@ -77,6 +78,7 @@ export function useTanstackColumns<TRow>(props: EditableGrid2Props<TRow>) {
           columns: [item.tanstackLeafColumn],
           meta: {
             leafIndex: null,
+            original: null,
             isFixed: false,
             isReadOnly: false,
             isGroupedColumn: true,

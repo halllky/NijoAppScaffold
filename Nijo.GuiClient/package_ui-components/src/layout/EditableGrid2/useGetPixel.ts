@@ -25,7 +25,9 @@ export function useGetPixel(
   /** スクロール表示範囲に含まれる行 */
   virtualItems: TanStackVirtual.VirtualItem[],
   /** 行の仮想化を司るオブジェクト */
-  rowVirtualizer: TanStackVirtual.Virtualizer<HTMLDivElement, Element>
+  rowVirtualizer: TanStackVirtual.Virtualizer<HTMLDivElement, Element>,
+  /** ヘッダーの合計高さ */
+  totalHeaderHeight: number,
 ): GetPixelFunction {
 
   const virtualItemsMap = React.useMemo(() => {
@@ -57,9 +59,9 @@ export function useGetPixel(
       const virtualItem = virtualItemsMap.get(rowIndex)
       if (virtualItem) {
         if (args.position === 'top') {
-          return virtualItem.start
+          return virtualItem.start + totalHeaderHeight
         } else {
-          return virtualItem.start + virtualItem.size
+          return virtualItem.start + virtualItem.size + totalHeaderHeight
         }
       }
 
@@ -76,5 +78,5 @@ export function useGetPixel(
       }
     }
 
-  }, [visibleLeafColumns, totalRowCount, virtualItemsMap, rowVirtualizer])
+  }, [visibleLeafColumns, totalRowCount, virtualItemsMap, rowVirtualizer, totalHeaderHeight])
 }

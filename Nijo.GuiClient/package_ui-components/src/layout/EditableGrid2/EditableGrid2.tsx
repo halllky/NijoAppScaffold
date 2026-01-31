@@ -3,11 +3,14 @@ import * as TanStack from "@tanstack/react-table"
 import * as TanStackVirtual from "@tanstack/react-virtual"
 import { EditableGrid2Props, EditableGrid2Ref } from "./types-public"
 import { useTanstackColumns } from "./useTanstackColumns"
-import { ColumnMetadataInternal, DEFAULT_COLUMN_WIDTH, ESTIMATED_ROW_HEIGHT } from "./types-internal"
+import { ColumnMetadataInternal, DEFAULT_COLUMN_WIDTH, ESTIMATED_ROW_HEIGHT, checkIfCellReadOnly } from "./types-internal"
 import { useGetPixel } from "./useGetPixel"
 import { SelectedRangeForFixedColumn, SelectedRangeForScrollableColumn } from "./SelectedRange"
 import { useSelection } from "./useSelection"
 import { useScrollToCell } from "./useScrollToCell"
+import { CellEditor, CellEditorRef } from "./CellEditor"
+import { useImeOpened } from "./useImeOpened"
+import { useOnKeyDownToStartEditing } from "./useOnKeyDownToStartEditing"
 
 /**
  * EditableGrid2 コンポーネント
@@ -76,59 +79,78 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
     visibleLeafColumns,
     props.rows.length,
     virtualItems,
-    rowVirtualizer
+    rowVirtualizer,
+    totalHeaderHeight,
   )
 
   // 指定セルまでのスクロール
-  const scrollToCell = useScrollToCell(getPixel, visibleLeafColumns, lastFixedIndex, tableContainerRef)
+  const scrollToCell = useScrollToCell(
+    getPixel,
+    visibleLeafColumns,
+    lastFixedIndex,
+    tableContainerRef,
+    totalHeaderHeight,
+  )
 
   // 範囲選択
   const {
     selectedRange,
     anchorCell,
+    focusedCell,
     selectionEvents,
   } = useSelection(table, props, visibleLeafColumns, scrollToCell)
+
+  // エディタ関連
+  const editorRef = React.useRef<CellEditorRef>(null)
+  const isImeOpened = useImeOpened(tableContainerRef)
+  const [isEditing, setIsEditing] = React.useState(false)
+  const onKeyDownToStartEditing = useOnKeyDownToStartEditing(isImeOpened)
 
   //#endregion 独自機能
   // -----------------------------
   //#region イベント
 
-  const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     // preventDefault するかどうかは各イベントの中で判断する
-    selectionEvents.handleKeyDown(e)
-  }, [selectionEvents])
+    if (!isEditing) {
+      selectionEvents.handleKeyDown(e)
+      onKeyDownToStartEditing(e, () => {
+        editorRef.current?.requestEditStart()
+      })
+    }
+  }
 
-  const handleMouseDown = React.useCallback((e: React.MouseEvent) => {
+  const handleMouseDown = (e: React.MouseEvent) => {
     selectionEvents.handleMouseDown(e)
-  }, [selectionEvents])
+  }
 
-  const handleMouseMove = React.useCallback((e: React.MouseEvent) => {
+  const handleMouseMove = (e: React.MouseEvent) => {
     selectionEvents.handleMouseMove(e)
-  }, [selectionEvents])
+  }
 
-  const handleMouseUp = React.useCallback((e: React.MouseEvent) => {
-  }, [])
+  const handleMouseUp = (e: React.MouseEvent) => {
+  }
 
-  const handleFocus = React.useCallback(() => {
+  const handleFocus = () => {
     if (!isGridActive) {
       setIsGridActive(true)
       selectionEvents.handleGridActiveChanged(true)
     }
-  }, [isGridActive, selectionEvents])
+  }
 
-  const handleBlur = React.useCallback((e: React.FocusEvent) => {
+  const handleBlur = (e: React.FocusEvent) => {
     if (isGridActive && !e.currentTarget.contains(e.relatedTarget)) {
       setIsGridActive(false)
       selectionEvents.handleGridActiveChanged(false)
     }
-  }, [isGridActive, selectionEvents])
+  }
 
-  const handleCopy = React.useCallback((e: React.ClipboardEvent) => {
+  const handleCopy = (e: React.ClipboardEvent) => {
 
-  }, [])
-  const handlePaste = React.useCallback((e: React.ClipboardEvent) => {
+  }
+  const handlePaste = (e: React.ClipboardEvent) => {
 
-  }, [])
+  }
 
   //#endregion イベント
   // -----------------------------
@@ -158,13 +180,25 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
         </div>
       </div> */}
 
+      {/* エディタ */}
+      <CellEditor
+        ref={editorRef}
+        focusedCell={focusedCell}
+        rowModel={rowModel}
+        visibleLeafColumns={visibleLeafColumns}
+        onEditingStateChanged={setIsEditing}
+        gridEditorComponent={props.editor}
+        gridIsReadOnly={props.isReadOnly}
+        getPixel={getPixel}
+        columnSizing={columnSizing}
+      />
+
       {/* 固定列用の選択範囲レイヤー (tableより手前に置くことで、sticky位置の基準をコンテナ左端にする) */}
       <SelectedRangeForFixedColumn
         lastFixedIndex={lastFixedIndex}
         getPixel={getPixel}
         anchorCell={anchorCell}
         selectedRange={selectedRange}
-        headerHeight={totalHeaderHeight}
         columnSizing={columnSizing}
       />
 
@@ -227,18 +261,7 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
                   const cellMeta = cell.column.columnDef.meta as ColumnMetadataInternal<TRow>
 
                   // 読み取り専用判定
-                  let cellIsReadOnly: boolean
-                  if (props.isReadOnly === true) {
-                    cellIsReadOnly = true
-                  } else if (cellMeta.isReadOnly === true) {
-                    cellIsReadOnly = true
-                  } else if (typeof props.isReadOnly === 'function') {
-                    cellIsReadOnly = props.isReadOnly(cell.row.original, cell.row.index)
-                  } else if (typeof cellMeta.isReadOnly === 'function') {
-                    cellIsReadOnly = cellMeta.isReadOnly(cell.row.original, cell.row.index)
-                  } else {
-                    cellIsReadOnly = false
-                  }
+                  const cellIsReadOnly = checkIfCellReadOnly(cell, props.isReadOnly)
 
                   let dataColumnClassName = 'flex outline-none select-none truncate'
                   if (!cellIsReadOnly) {
@@ -294,11 +317,8 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
         getPixel={getPixel}
         anchorCell={anchorCell}
         selectedRange={selectedRange}
-        headerHeight={totalHeaderHeight}
         columnSizing={columnSizing}
       />
-
-      {/* TODO: CellEditor */}
     </div>
   )
 
