@@ -38,15 +38,6 @@ export function useGetPixel(
 
   // 座標計算関数
   return React.useCallback(args => {
-
-    // TODO: あとで消す
-    // if (args.position === "left") return args.colIndex * 100
-    // if (args.position === "right") return (args.colIndex + 1) * 100
-    // if (args.position === "top") return args.rowIndex * 30
-    // if (args.position === "bottom") return (args.rowIndex + 1) * 30
-
-
-
     const { visibleLeafColumns, rowModel, rowVirtualizer } = colRowRef.current
 
     if (args.position === 'left' || args.position === 'right') {

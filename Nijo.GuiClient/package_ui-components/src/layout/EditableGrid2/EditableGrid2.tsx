@@ -5,7 +5,7 @@ import { EditableGrid2Props, EditableGrid2Ref } from "./types-public"
 import { useTanstackColumns } from "./useTanstackColumns"
 import { ColumnMetadataInternal, DEFAULT_COLUMN_WIDTH, ESTIMATED_ROW_HEIGHT } from "./types-internal"
 import { useGetPixel } from "./useGetPixel"
-import { SelectedRange } from "./SelectedRange"
+import { SelectedRangeForFixedColumn, SelectedRangeForScrollableColumn } from "./SelectedRange"
 import { CellPosition, CellSelectionRange } from "./useSelection"
 
 /**
@@ -71,7 +71,7 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
   React.useEffect(() => {
     window.setTimeout(() => {
       setTest1({ colIndex: 2, rowIndex: 2 });
-      setTest2({ startCol: 2, endCol: 4, startRow: 2, endRow: 4 });
+      setTest2({ startCol: 2, endCol: 4, startRow: 2, endRow: 9 });
     }, 1000);
   }, []);
 
@@ -88,6 +88,15 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
       onFocus={undefined}
       onBlur={undefined}
     >
+
+      {/* 固定列用の選択範囲レイヤー (tableより手前に置くことで、sticky位置の基準をコンテナ左端にする) */}
+      <SelectedRangeForFixedColumn
+        isGridActive
+        lastFixedIndex={lastFixedIndex}
+        getPixel={getPixel}
+        anchorCell={test1}
+        selectedRange={test2}
+      />
 
       <table
         className="grid border-collapse border-spacing-0"
@@ -109,7 +118,7 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
                   && headerGroupIndex === 0
 
                 let className = 'flex bg-gray-100 relative text-left select-none border-b border-r border-gray-200'
-                if (headerMeta.isFixed) className += ' sticky z-20'
+                if (headerMeta.isFixed) className += ' sticky z-10'
                 if (isNonGroupedUpperHeader) className += ' border-b-transparent'
 
                 return (
@@ -179,8 +188,8 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
                   }
 
                   if (cellMeta.isRowCheckBox || cellMeta.leafIndex === lastFixedIndex) {
-dataColumnClassName += ` border-r border-gray-200`
-}
+                    dataColumnClassName += ` border-r border-gray-200`
+                  }
 
                   // z-indexを明示的に指定して SelectedRange(unfixed) より手前に、ヘッダより奥に来るようにする
                   if (cellMeta.isFixed) dataColumnClassName += ` sticky z-10`
@@ -217,11 +226,13 @@ dataColumnClassName += ` border-r border-gray-200`
         </tbody>
       </table>
 
-      <SelectedRange
+      {/* スクロール列用の選択範囲レイヤー */}
+      <SelectedRangeForScrollableColumn
         isGridActive
+        lastFixedIndex={lastFixedIndex}
         getPixel={getPixel}
-        selectedRange={test2}
         anchorCell={test1}
+        selectedRange={test2}
       />
 
       {/* TODO: CellEditor */}
