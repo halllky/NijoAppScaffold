@@ -5,23 +5,27 @@ import { ColumnMetadataInternal } from "./types-internal"
 import { GetPixelFunction } from "./useGetPixel"
 
 /**
- * フォーカスされたセルの位置変更を検知して自動でその位置までスクロールするフック。
+ * セルが見えるようにスクロールする関数
  */
-export function useScrollToFocusedCell<TRow>(
-  focusedCell: CellPosition | null,
+export type ScrollToCellFunction = (cell: CellPosition | null) => void
+
+/**
+ * 指定のセルが見えるようにスクロールする関数を返す
+ */
+export function useScrollToCell<TRow>(
   getPixel: GetPixelFunction,
   visibleLeafColumns: TanStack.Column<TRow, unknown>[],
   lastFixedIndex: number | null,
   tableContainerRef: React.RefObject<HTMLDivElement | null>,
-) {
+): ScrollToCellFunction {
 
-  React.useEffect(() => {
-    if (!focusedCell) return
+  return React.useCallback((cell: CellPosition | null) => {
+    if (!cell) return
     if (!tableContainerRef.current) return
 
     // 行スクロール
-    const rowTop = getPixel({ position: 'top', rowIndex: focusedCell.rowIndex })
-    const rowBottom = getPixel({ position: 'bottom', rowIndex: focusedCell.rowIndex })
+    const rowTop = getPixel({ position: 'top', rowIndex: cell.rowIndex })
+    const rowBottom = getPixel({ position: 'bottom', rowIndex: cell.rowIndex })
 
     const container = tableContainerRef.current
     const containerTop = container.scrollTop
@@ -44,7 +48,7 @@ export function useScrollToFocusedCell<TRow>(
     }
 
     // 列スクロール
-    const column = visibleLeafColumns[focusedCell.colIndex]
+    const column = visibleLeafColumns[cell.colIndex]
     const meta = column?.columnDef.meta as ColumnMetadataInternal<TRow> | undefined
     if (column && !meta?.isFixed) {
 
@@ -81,5 +85,5 @@ export function useScrollToFocusedCell<TRow>(
         }
       }
     }
-  }, [focusedCell, getPixel, visibleLeafColumns, lastFixedIndex, tableContainerRef])
+  }, [getPixel, visibleLeafColumns, lastFixedIndex, tableContainerRef])
 }

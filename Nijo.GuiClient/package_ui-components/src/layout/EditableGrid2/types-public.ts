@@ -19,6 +19,8 @@ export type EditableGrid2Props<TRow> = {
   getRowClassName?: (row: TRow) => string
   /** フォーカスが外れたときに選択をクリアするかどうか */
   clearSelectionOnBlur?: boolean
+  /** 表示範囲外の行をどこまで予め読み込んでおくか。既定値は10 */
+  overscan?: number
 }
 
 /**

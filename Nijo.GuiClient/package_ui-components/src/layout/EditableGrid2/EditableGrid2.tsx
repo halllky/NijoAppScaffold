@@ -7,7 +7,7 @@ import { ColumnMetadataInternal, DEFAULT_COLUMN_WIDTH, ESTIMATED_ROW_HEIGHT } fr
 import { useGetPixel } from "./useGetPixel"
 import { SelectedRangeForFixedColumn, SelectedRangeForScrollableColumn } from "./SelectedRange"
 import { useSelection } from "./useSelection"
-import { useScrollToFocusedCell } from "./useScrollToFocusedCell"
+import { useScrollToCell } from "./useScrollToCell"
 
 /**
  * EditableGrid2 コンポーネント
@@ -20,9 +20,7 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
   const tableContainerRef = React.useRef<HTMLDivElement>(null)
   const [isGridActive, setIsGridActive] = React.useState(false)
 
-  // -----------------------------
-  // Tanstack table 関連
-  // -----------------------------
+  //#region Tanstack table
 
   // 列定義
   const {
@@ -62,16 +60,16 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
     getScrollElement: () => tableContainerRef.current,
     estimateSize: () => ESTIMATED_ROW_HEIGHT,
     measureElement: element => element?.getBoundingClientRect().height,
-    overscan: 10,
+    overscan: props.overscan ?? 10,
   })
   const virtualItems = rowVirtualizer.getVirtualItems()
   const tbodyTrRef = React.useCallback((node: HTMLTableRowElement) => {
     if (node) rowVirtualizer.measureElement(node) // 動的行高さを測定
   }, [rowVirtualizer])
 
+  //#endregion Tanstack table
   // -----------------------------
-  // EditableGrid2 の独自機能
-  // -----------------------------
+  //#region 独自機能
 
   // 座標計算関数
   const getPixel = useGetPixel(
@@ -81,20 +79,19 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
     rowVirtualizer
   )
 
+  // 指定セルまでのスクロール
+  const scrollToCell = useScrollToCell(getPixel, visibleLeafColumns, lastFixedIndex, tableContainerRef)
+
   // 範囲選択
   const {
     selectedRange,
     anchorCell,
-    focusedCell,
     selectionEvents,
-  } = useSelection(table, props, visibleLeafColumns)
+  } = useSelection(table, props, visibleLeafColumns, scrollToCell)
 
-  // 矢印キーによるセル移動を検知してスクロールする
-  useScrollToFocusedCell(focusedCell, getPixel, visibleLeafColumns, lastFixedIndex, tableContainerRef)
-
+  //#endregion 独自機能
   // -----------------------------
-  // イベント
-  // -----------------------------
+  //#region イベント
 
   const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
     // preventDefault するかどうかは各イベントの中で判断する
@@ -132,6 +129,10 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
   const handlePaste = React.useCallback((e: React.ClipboardEvent) => {
 
   }, [])
+
+  //#endregion イベント
+  // -----------------------------
+  //#region レンダリング
 
   return (
     <div
@@ -300,8 +301,13 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
       {/* TODO: CellEditor */}
     </div>
   )
+
+  //#endregion レンダリング
+
 }) as (<TRow>(props: EditableGrid2Props<TRow> & { ref?: React.ForwardedRef<EditableGrid2Ref<TRow>> }) => React.ReactNode)
 
+
+//#region メモ化ヘッダ
 
 /**
  * 列ヘッダ
@@ -341,6 +347,9 @@ const HeaderCell = React.memo<{
   )
 })
 
+//#endregion メモ化ヘッダ
+
+//#region メモ化ボディ
 
 /**
  * テーブルボディセル
@@ -379,3 +388,5 @@ const DataCell = React.memo<{
     prev.className === next.className // その他のスタイル変更
   )
 })
+
+//#endregion メモ化ボディ

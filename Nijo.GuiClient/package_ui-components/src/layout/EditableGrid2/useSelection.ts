@@ -2,6 +2,7 @@ import React from "react"
 import * as TanStack from "@tanstack/react-table"
 import { ColumnMetadataInternal } from "./types-internal"
 import { EditableGrid2Props } from "./types-public"
+import { ScrollToCellFunction } from "./useScrollToCell"
 
 /**
  * ボディセルの位置を表す構造体。
@@ -32,6 +33,7 @@ export function useSelection<TRow>(
   table: TanStack.Table<TRow>,
   props: EditableGrid2Props<TRow>,
   visibleLeafColumns: TanStack.ColumnDef<TRow, unknown>[],
+  scrollToCell: ScrollToCellFunction,
 ) {
 
   //#region 状態
@@ -65,6 +67,9 @@ export function useSelection<TRow>(
 
   // フォーカスを外す前に最後に選択していたセル
   const [lastFocused, setLastFocused] = React.useState<{ anchor: CellPosition | null, focused: CellPosition | null }>({ anchor: null, focused: null })
+
+  // キー操作によるセル移動を検知して自動スクロールするために使う状態
+  const [keyMoveState, setKeyMoveState] = React.useState<CellPosition | null>(null)
 
   //#endregion 状態
 
@@ -119,6 +124,9 @@ export function useSelection<TRow>(
       setAnchorCellWithClamp(nextPos)
       setFocusedCellWithClamp(nextPos)
     }
+
+    // セル移動を検知してスクロールするために状態を更新
+    setKeyMoveState(nextPos)
   }
 
   // マウスダウン。
@@ -216,6 +224,14 @@ export function useSelection<TRow>(
     props.rows.length,
     visibleLeafColumns.length,
   ])
+
+  // キー操作によるセル移動を検知して移動後のセルが見えるように自動スクロール
+  React.useEffect(() => {
+    if (keyMoveState) {
+      scrollToCell(keyMoveState)
+      setKeyMoveState(null)
+    }
+  }, [keyMoveState, scrollToCell])
 
   //#endregion useEffect
 
