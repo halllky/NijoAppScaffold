@@ -80,7 +80,7 @@ export default function () {
           textCell("価格", r => r.price, (rowIndex, value) => updateRow(rowIndex, r => ({ ...r, price: value })), { defaultWidth: 120 }),
           textCell("日付", r => r.date, (rowIndex, value) => updateRow(rowIndex, r => ({ ...r, date: value })), { defaultWidth: 140 }),
           textCell("フラグ", r => r.bool ? "✔" : "", (rowIndex, value) => updateRow(rowIndex, r => ({ ...r, bool: value === "✔" })), { defaultWidth: 80 }),
-          textCell("コメント", r => r.comment, (rowIndex, value) => updateRow(rowIndex, r => ({ ...r, comment: value })), { defaultWidth: 480 }),
+          textCell("コメント", r => r.comment, (rowIndex, value) => updateRow(rowIndex, r => ({ ...r, comment: value })), { defaultWidth: 320, editorOverflow: 'vertical' }),
         ], [fixed3Cols, updateRow]]}
 
         showCheckBox

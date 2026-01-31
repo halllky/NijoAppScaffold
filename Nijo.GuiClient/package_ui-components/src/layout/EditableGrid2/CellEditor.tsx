@@ -17,8 +17,6 @@ export type CellEditorProps<TRow> = {
   gridIsReadOnly: boolean | ((row: TRow, rowIndex: number) => boolean) | undefined
   /** 座標計算関数 */
   getPixel: GetPixelFunction
-  /** 再レンダリングのトリガーに使っているだけ */
-  columnSizing: unknown
 }
 
 export type CellEditorRef = {
@@ -42,10 +40,8 @@ export const CellEditor = React.forwardRef(<TRow,>({
   gridEditorComponent,
   gridIsReadOnly,
   getPixel,
-  columnSizing,
 }: CellEditorProps<TRow>, ref: React.ForwardedRef<CellEditorRef>) => {
 
-  const containerRef = React.useRef<HTMLLabelElement>(null)
   const editorTextareaRef = React.useRef<CellEditorTextareaRef>(null)
 
   const [editorComponent, setEditorComponent] = React.useState<GridCellEditorComponent>(gridEditorComponent ?? DefaultEditor)
@@ -105,45 +101,69 @@ export const CellEditor = React.forwardRef(<TRow,>({
     }
   }
 
-  // エディタの位置を更新する
-  React.useEffect(() => {
-    if (edittingCell) return
-    if (!focusedCell) return
-    if (!containerRef.current) return
+  // エディタの外観
+  const containerStyle = React.useMemo((): React.CSSProperties => {
+    const style: React.CSSProperties = {
+      // クイック編集のためCellEditor自体は常に存在し続けるが、セル編集モードでないときは見えないようにする
+      opacity: edittingCell ? undefined : 0,
+      pointerEvents: edittingCell ? undefined : 'none',
+    }
+
+    if (!focusedCell) return style
 
     // エディタを編集対象セルの位置に移動させる
     const left = getPixel({ position: 'left', colIndex: focusedCell.colIndex })
     const right = getPixel({ position: 'right', colIndex: focusedCell.colIndex })
     const top = getPixel({ position: 'top', rowIndex: focusedCell.rowIndex })
     const bottom = getPixel({ position: 'bottom', rowIndex: focusedCell.rowIndex })
-    containerRef.current.style.left = `${left}px`
-    containerRef.current.style.top = `${top}px`
-    containerRef.current.style.minHeight = `${bottom - top}px`
+    style.left = `${left}px`
+    style.top = `${top}px`
+
+    // 編集中はテキストボックスが伸縮する必要がある。
+    // 編集中でないときはエディタがグリッドの下限を超えて余計なスクロールが出るのを防ぐためheight固定
+    if (edittingCell) {
+      style.minHeight = `${bottom - top}px`
+    } else {
+      style.height = `${bottom - top}px`
+    }
 
     // min-width で設定した場合、エディタの中の文字がオーバーフローしたときに横方向に延伸する。
     // width で指定した場合は縦方向。
     const columnMeta = visibleLeafColumns[focusedCell.colIndex]?.columnDef.meta as ColumnMetadataInternal<TRow> | undefined
     if (columnMeta?.original?.editorOverflow === 'vertical') {
-      containerRef.current.style.width = `${right - left}px`
-      containerRef.current.style.minWidth = ''
+      style.width = `${right - left}px`
+      style.minWidth = ''
     } else {
-      containerRef.current.style.width = ''
-      containerRef.current.style.minWidth = `${right - left}px`
+      style.width = ''
+      style.minWidth = `${right - left}px`
     }
 
-    // 移動後のセルの値をエディタにセットする
+    return style
+  }, [focusedCell, getPixel, edittingCell, visibleLeafColumns])
+
+  // 移動後のセルの値をエディタにセットする
+  React.useEffect(() => {
+    if (edittingCell) return
+    if (!focusedCell) return
+
+    const columnMeta = visibleLeafColumns[focusedCell.colIndex]?.columnDef.meta as ColumnMetadataInternal<TRow> | undefined
+    let value = ''
     if (columnMeta?.original?.getValueForEditor) {
       const cell = rowModel
         .flatRows[focusedCell.rowIndex]
         ?.getVisibleCells()
         ?.[focusedCell.colIndex]
       if (cell) {
-        const value = columnMeta.original.getValueForEditor({ row: cell.row.original, rowIndex: cell.row.index })
-        editorTextareaRef.current?.setValueAndSelectAll(value)
+        value = columnMeta.original.getValueForEditor({ row: cell.row.original, rowIndex: cell.row.index })
       }
     }
-  }, [focusedCell, columnSizing, getPixel, rowModel, visibleLeafColumns, containerRef])
+    // グリッドにフォーカスが当たった瞬間に確実にフォーカスさせるためsetTimeoutを挟む
+    window.setTimeout(() => {
+      editorTextareaRef.current?.setValueAndSelectAll(value)
+    }, 0)
+  }, [focusedCell, rowModel, visibleLeafColumns])
 
+  // ref
   React.useImperativeHandle(ref, () => ({
     requestEditStart: () => {
       if (!focusedCell) return;
@@ -168,15 +188,10 @@ export const CellEditor = React.forwardRef(<TRow,>({
 
   return (
     <label
-      ref={containerRef}
       onKeyDown={handleKeyDown}
       tabIndex={0}
-      className="absolute flex items-stretch bg-white outline-none border border-gray-950 z-30"
-      style={{
-        // クイック編集のためCellEditor自体は常に存在し続けるが、セル編集モードでないときは見えないようにする
-        opacity: edittingCell ? undefined : 0,
-        pointerEvents: edittingCell ? undefined : 'none',
-      }}
+      className="absolute flex outline-none z-30"
+      style={containerStyle}
     >
       {React.createElement(editorComponent, {
         ref: editorTextareaRef,
@@ -213,7 +228,7 @@ const DefaultEditor: GridCellEditorComponent = React.forwardRef(({ }, ref) => {
       ref={textareaRef}
       value={value ?? ''}
       onChange={handleChange}
-      className="w-full h-full resize-none field-sizing-content outline-none"
+      className="w-full h-full px-[3px] resize-none field-sizing-content outline-none border border-black bg-white"
     />
   )
 })

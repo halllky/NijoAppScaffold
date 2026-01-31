@@ -81,6 +81,7 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
     virtualItems,
     rowVirtualizer,
     totalHeaderHeight,
+    columnSizing,
   )
 
   // 指定セルまでのスクロール
@@ -98,6 +99,7 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
     anchorCell,
     focusedCell,
     selectionEvents,
+    selectRow,
   } = useSelection(table, props, visibleLeafColumns, scrollToCell)
 
   // エディタ関連
@@ -105,6 +107,27 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
   const isImeOpened = useImeOpened(tableContainerRef)
   const [isEditing, setIsEditing] = React.useState(false)
   const onKeyDownToStartEditing = useOnKeyDownToStartEditing(isImeOpened)
+
+  // ref
+  React.useImperativeHandle(ref, () => ({
+    getCheckedRows: () => {
+      return table.getSelectedRowModel().flatRows.map(r => ({
+        rowIndex: r.index,
+        row: r.original,
+      }))
+    },
+    getSelectedRows: () => {
+      if (!selectedRange) return []
+
+      const rows: { rowIndex: number, row: TRow }[] = []
+      for (let r = selectedRange.startRow; r <= selectedRange.endRow; r++) {
+        const row = props.rows[r]
+        if (row) rows.push({ rowIndex: r, row })
+      }
+      return rows
+    },
+    selectRow,
+  }))
 
   //#endregion 独自機能
   // -----------------------------
@@ -190,7 +213,6 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
         gridEditorComponent={props.editor}
         gridIsReadOnly={props.isReadOnly}
         getPixel={getPixel}
-        columnSizing={columnSizing}
       />
 
       {/* 固定列用の選択範囲レイヤー (tableより手前に置くことで、sticky位置の基準をコンテナ左端にする) */}
@@ -199,7 +221,6 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
         getPixel={getPixel}
         anchorCell={anchorCell}
         selectedRange={selectedRange}
-        columnSizing={columnSizing}
       />
 
       <table
@@ -317,7 +338,6 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
         getPixel={getPixel}
         anchorCell={anchorCell}
         selectedRange={selectedRange}
-        columnSizing={columnSizing}
       />
     </div>
   )

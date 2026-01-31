@@ -83,9 +83,6 @@ export function useSelection<TRow>(
   const handleMouseMove = React.useRef<React.MouseEventHandler>(() => { })
   const handleGridActiveChanged = React.useRef<(isGridActive: boolean) => void>(() => { })
 
-  const tableRef = React.useRef(table)
-  tableRef.current = table
-
   // 矢印キーによるセル移動
   handleKeyDown.current = e => {
     if (!focusedCell) return
@@ -135,7 +132,7 @@ export function useSelection<TRow>(
   // マウスダウン。
   // Shiftキーが押されていれば範囲選択拡張、押されていなければ新規選択開始。
   handleMouseDown.current = e => {
-    const helper = getHelper(tableRef)
+    const helper = getHelper(table)
     const cellPos = helper.getCellPositionFromMouseEvent(e)
     if (!cellPos) return
 
@@ -166,7 +163,7 @@ export function useSelection<TRow>(
   handleMouseMove.current = e => {
     if (!isMouseDownRef.current) return
 
-    const helper = getHelper(tableRef)
+    const helper = getHelper(table)
     const cellPos = helper.getCellPositionFromMouseEvent(e)
     if (!cellPos) return
     if (cellPos.rowIndex === focusedCell?.rowIndex
@@ -179,7 +176,7 @@ export function useSelection<TRow>(
   // * フォーカスがあたったときは、最後に選択していたセルか、それがなければ先頭セルを選択
   // * フォーカスが外れたときは選択解除（プロパティで指定されている場合のみ）
   handleGridActiveChanged.current = isGridActive => {
-    const helper = getHelper(tableRef)
+    const helper = getHelper(table)
 
     if (isGridActive) {
       // マウスダウンによってフォーカスが当たった場合（セルクリック時など）は
@@ -238,11 +235,21 @@ export function useSelection<TRow>(
 
   //#endregion useEffect
 
+  //#region API
+
+  const selectRow = React.useCallback((startRow: number, endRow: number) => {
+    setAnchorCellWithClamp({ rowIndex: endRow, colIndex: Number.MAX_SAFE_INTEGER })
+    setFocusedCellWithClamp({ rowIndex: startRow, colIndex: 0 })
+  }, [setAnchorCellWithClamp, setFocusedCellWithClamp])
+
+  //#endregion API
+
   return {
     selectedRange,
     anchorCell,
     focusedCell,
     selectionEvents,
+    selectRow,
   }
 }
 
@@ -275,25 +282,25 @@ function useClampSetter(
  * EditableGrid2 固有の情報を考慮したヘルパーを作成する
  */
 function getHelper<TRow>(
-  tableRef: React.RefObject<TanStack.Table<TRow>>,
+  table: TanStack.Table<TRow>,
 ) {
 
   return {
     /** データが1行以上あるか */
-    hasDataRow: () => tableRef.current.getRowModel().rows.length > 0,
+    hasDataRow: () => table.getRowModel().rows.length > 0,
 
     /** 列が1列以上あるか。チェックボックス列は除外。 */
-    hasVisibleDataColumn: () => tableRef.current.getVisibleFlatColumns().some(col => {
+    hasVisibleDataColumn: () => table.getVisibleFlatColumns().some(col => {
       const meta = col.columnDef.meta as ColumnMetadataInternal<TRow>
       return !meta.isRowCheckBox
     }),
 
     /** 選択可能な最初のセルを取得する。データ行やデータ列が存在しない場合は null を返す。 */
     getFirstDataCell: (): CellPosition | null => {
-      const rowModel = tableRef.current.getRowModel()
+      const rowModel = table.getRowModel()
       if (rowModel.rows.length === 0) return null
 
-      const dataColumns = tableRef.current.getVisibleFlatColumns().filter(col => {
+      const dataColumns = table.getVisibleFlatColumns().filter(col => {
         const meta = col.columnDef.meta as ColumnMetadataInternal<TRow>
         return !meta.isRowCheckBox
       })

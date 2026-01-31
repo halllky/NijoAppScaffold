@@ -11,8 +11,6 @@ export type SelectedRangeProps = {
   getPixel: GetPixelFunction
   /** 最も右にある固定列のインデックス。チェックボックス列がある場合はそれを0とする */
   lastFixedIndex: number | null
-  /** 列サイズ変更時に再レンダリングするためのトリガー */
-  columnSizing: unknown
 }
 
 /**

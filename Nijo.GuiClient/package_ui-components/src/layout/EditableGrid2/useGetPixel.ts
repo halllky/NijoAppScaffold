@@ -28,6 +28,8 @@ export function useGetPixel(
   rowVirtualizer: TanStackVirtual.Virtualizer<HTMLDivElement, Element>,
   /** ヘッダーの合計高さ */
   totalHeaderHeight: number,
+  /** 再レンダリングのトリガーに使っているだけ */
+  columnSizing: unknown,
 ): GetPixelFunction {
 
   const virtualItemsMap = React.useMemo(() => {
@@ -78,5 +80,5 @@ export function useGetPixel(
       }
     }
 
-  }, [visibleLeafColumns, totalRowCount, virtualItemsMap, rowVirtualizer, totalHeaderHeight])
+  }, [visibleLeafColumns, totalRowCount, virtualItemsMap, rowVirtualizer, totalHeaderHeight, columnSizing])
 }
