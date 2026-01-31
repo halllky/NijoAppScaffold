@@ -11,6 +11,7 @@ import { useScrollToCell } from "./useScrollToCell"
 import { CellEditor, CellEditorRef } from "./CellEditor"
 import { useImeOpened } from "./useImeOpened"
 import { useOnKeyDownToStartEditing } from "./useOnKeyDownToStartEditing"
+import { useCopyPaste } from "./useCopyPaste"
 
 /**
  * EditableGrid2 コンポーネント
@@ -100,6 +101,7 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
     focusedCell,
     selectionEvents,
     selectRow,
+    setSelectionRange,
   } = useSelection(table, props, visibleLeafColumns, scrollToCell)
 
   // エディタ関連
@@ -107,6 +109,16 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
   const isImeOpened = useImeOpened(tableContainerRef)
   const [isEditing, setIsEditing] = React.useState(false)
   const onKeyDownToStartEditing = useOnKeyDownToStartEditing(isImeOpened)
+
+  // コピー＆ペースト
+  const { handleCopy, handlePaste } = useCopyPaste({
+    table,
+    activeCell: focusedCell,
+    selectedRange,
+    onRangeUpdated: setSelectionRange,
+    isEditing,
+    props,
+  })
 
   // ref
   React.useImperativeHandle(ref, () => ({
@@ -143,17 +155,6 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
     }
   }
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    selectionEvents.handleMouseDown(e)
-  }
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    selectionEvents.handleMouseMove(e)
-  }
-
-  const handleMouseUp = (e: React.MouseEvent) => {
-  }
-
   const handleFocus = () => {
     if (!isGridActive) {
       setIsGridActive(true)
@@ -168,12 +169,6 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
     }
   }
 
-  const handleCopy = (e: React.ClipboardEvent) => {
-
-  }
-  const handlePaste = (e: React.ClipboardEvent) => {
-
-  }
 
   //#endregion イベント
   // -----------------------------
@@ -186,9 +181,8 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
       tabIndex={0} // 1行も無い場合であってもキーボード操作を受け付けるようにするため
 
       onKeyDown={handleKeyDown}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
+      onMouseDown={selectionEvents.handleMouseDown}
+      onMouseMove={selectionEvents.handleMouseMove}
       onCopy={handleCopy}
       onPaste={handlePaste}
       onFocus={handleFocus}

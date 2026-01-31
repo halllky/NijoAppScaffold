@@ -242,6 +242,11 @@ export function useSelection<TRow>(
     setFocusedCellWithClamp({ rowIndex: startRow, colIndex: 0 })
   }, [setAnchorCellWithClamp, setFocusedCellWithClamp])
 
+  const setSelectionRange = React.useCallback((range: CellSelectionRange) => {
+    setAnchorCellWithClamp({ rowIndex: range.startRow, colIndex: range.startCol })
+    setFocusedCellWithClamp({ rowIndex: range.endRow, colIndex: range.endCol })
+  }, [setAnchorCellWithClamp, setFocusedCellWithClamp])
+
   //#endregion API
 
   return {
@@ -250,6 +255,7 @@ export function useSelection<TRow>(
     focusedCell,
     selectionEvents,
     selectRow,
+    setSelectionRange,
   }
 }
 
