@@ -3,16 +3,18 @@ import { GetPixelFunction } from "./useGetPixel"
 import { CellPosition, CellSelectionRange } from "./useSelection"
 
 export type SelectedRangeProps = {
-  /** グリッド自体にフォーカスが当たっているかどうか */
-  isGridActive: boolean
-  /** 最も右にある固定列のインデックス */
-  lastFixedIndex: number | null
-  /** 座標計算関数 */
-  getPixel: GetPixelFunction
   /** アンカーセルの位置 */
   anchorCell: CellPosition | null
   /** 選択範囲 */
   selectedRange: CellSelectionRange | null
+  /** 座標計算関数 */
+  getPixel: GetPixelFunction
+  /** 最も右にある固定列のインデックス。チェックボックス列がある場合はそれを0とする */
+  lastFixedIndex: number | null
+  /** 列ヘッダの高さの合計 */
+  headerHeight: number
+  /** 列サイズ変更時に再レンダリングするためのトリガー */
+  columnSizing: unknown
 }
 
 /**
@@ -21,21 +23,20 @@ export type SelectedRangeProps = {
 export const SelectedRangeForFixedColumn = React.memo(({
   anchorCell,
   getPixel,
-  isGridActive,
   lastFixedIndex,
   selectedRange,
+  headerHeight,
 }: SelectedRangeProps) => {
 
-  if (!isGridActive) return null
   if (!anchorCell) return null
   if (!selectedRange) return null
-  if (lastFixedIndex === null || lastFixedIndex < 0) return null
+  if (lastFixedIndex === null) return null
   if (selectedRange.startCol > lastFixedIndex) return null
 
   // 固定列の範囲（0 ～ lastFixedIndex）でクリップする
   const clippedRange: CellSelectionRange = {
     ...selectedRange,
-    endCol: Math.min(selectedRange.endCol, lastFixedIndex + 1),
+    endCol: Math.min(selectedRange.endCol, lastFixedIndex),
   }
 
   return (
@@ -45,7 +46,8 @@ export const SelectedRangeForFixedColumn = React.memo(({
         getPixel={getPixel}
         anchorCell={anchorCell}
         selectedRange={clippedRange}
-        hideBorderRight={selectedRange.endCol - 1 > lastFixedIndex}
+        hideBorderRight={selectedRange.endCol > lastFixedIndex}
+        headerHeight={headerHeight}
       />
     </div>
   )
@@ -55,13 +57,12 @@ export const SelectedRangeForFixedColumn = React.memo(({
  * スクロール列用の選択範囲表示
  */
 export const SelectedRangeForScrollableColumn = React.memo(({
-  isGridActive,
   anchorCell,
   getPixel,
   selectedRange,
+  headerHeight,
 }: SelectedRangeProps) => {
 
-  if (!isGridActive) return null
   if (!anchorCell) return null
   if (!selectedRange) return null
 
@@ -71,6 +72,7 @@ export const SelectedRangeForScrollableColumn = React.memo(({
       anchorCell={anchorCell}
       selectedRange={selectedRange}
       zIndex="5" // 固定列ボディセルより後ろ、非固定列ボディセルより手前
+      headerHeight={headerHeight}
     />
   )
 })
@@ -84,23 +86,25 @@ function SelectedRangeImpl({
   anchorCell,
   selectedRange,
   hideBorderRight,
+  headerHeight,
 }: {
   zIndex?: string
   getPixel: GetPixelFunction
   anchorCell: CellPosition
   selectedRange: CellSelectionRange
   hideBorderRight?: boolean
+  headerHeight: number
 }) {
 
   // 選択範囲全体の座標
   const left = getPixel({ position: 'left', colIndex: selectedRange.startCol })
   const right = getPixel({ position: 'right', colIndex: selectedRange.endCol })
-  const top = getPixel({ position: 'top', rowIndex: selectedRange.startRow })
-  const bottom = getPixel({ position: 'bottom', rowIndex: selectedRange.endRow })
+  const top = getPixel({ position: 'top', rowIndex: selectedRange.startRow }) + headerHeight
+  const bottom = getPixel({ position: 'bottom', rowIndex: selectedRange.endRow }) + headerHeight
 
   // アンカーセルの座標
-  const anchorTop = getPixel({ position: 'top', rowIndex: anchorCell.rowIndex })
-  const anchorBottom = getPixel({ position: 'bottom', rowIndex: anchorCell.rowIndex })
+  const anchorTop = getPixel({ position: 'top', rowIndex: anchorCell.rowIndex }) + headerHeight
+  const anchorBottom = getPixel({ position: 'bottom', rowIndex: anchorCell.rowIndex }) + headerHeight
   const anchorLeft = getPixel({ position: 'left', colIndex: anchorCell.colIndex })
   const anchorRight = getPixel({ position: 'right', colIndex: anchorCell.colIndex })
 

@@ -16,6 +16,12 @@ export default function () {
     setIsLargeData(e.target.checked)
   }
 
+  // フォーカスアウトで選択解除するかどうか
+  const [clearSelectionOnBlur, setClearSelectionOnBlur] = React.useState(true)
+  const handleChangeClearSelectionOnBlur = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setClearSelectionOnBlur(e.target.checked)
+  }
+
   const { reset, watch, control, setValue } = useForm<{ rows: TestRow[] }>()
   const rows = watch("rows") || []
 
@@ -47,7 +53,7 @@ export default function () {
         columns={[() => [
           buttonCell(row => row.willBeDeleted ? "復元" : "削除", (row, rowIndex) => {
             setValue(`rows.${rowIndex}.willBeDeleted`, row.willBeDeleted ? false : true)
-          }, { isFixed: fixed3Cols, defaultWidth: 40 }),
+          }, { isFixed: fixed3Cols, disableResizing: true, defaultWidth: 40 }),
           textCell("ID", r => r.id, { defaultWidth: 80, isReadOnly: true, isFixed: fixed3Cols }),
           textCell("商品名", r => r.name, { isFixed: fixed3Cols }),
           textCell("価格", r => r.price, { defaultWidth: 120 }),
@@ -57,6 +63,7 @@ export default function () {
         ], [fixed3Cols]]}
 
         showCheckBox
+        clearSelectionOnBlur={clearSelectionOnBlur}
         isReadOnly={row => row.willBeDeleted === true}
         className="h-96 w-1/2 resize"
       />
@@ -69,6 +76,11 @@ export default function () {
       <label>
         <input type="checkbox" checked={isLargeData} onChange={handleChangeIsLargeData} />
         大量データ
+      </label>
+
+      <label>
+        <input type="checkbox" checked={clearSelectionOnBlur} onChange={handleChangeClearSelectionOnBlur} />
+        フォーカスアウトで選択解除
       </label>
     </div>
   )

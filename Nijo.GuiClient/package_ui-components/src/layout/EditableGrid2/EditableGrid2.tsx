@@ -6,7 +6,8 @@ import { useTanstackColumns } from "./useTanstackColumns"
 import { ColumnMetadataInternal, DEFAULT_COLUMN_WIDTH, ESTIMATED_ROW_HEIGHT } from "./types-internal"
 import { useGetPixel } from "./useGetPixel"
 import { SelectedRangeForFixedColumn, SelectedRangeForScrollableColumn } from "./SelectedRange"
-import { CellPosition, CellSelectionRange } from "./useSelection"
+import { useSelection } from "./useSelection"
+import { useScrollToFocusedCell } from "./useScrollToFocusedCell"
 
 /**
  * EditableGrid2 コンポーネント
@@ -17,6 +18,11 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
 ) => {
 
   const tableContainerRef = React.useRef<HTMLDivElement>(null)
+  const [isGridActive, setIsGridActive] = React.useState(false)
+
+  // -----------------------------
+  // Tanstack table 関連
+  // -----------------------------
 
   // 列定義
   const {
@@ -27,11 +33,14 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
   } = useTanstackColumns(props)
 
   // TanStack Table のテーブルインスタンス
+  const [columnSizing, setColumnSizing] = React.useState<TanStack.ColumnSizingState>({})
   const table = TanStack.useReactTable({
     data: props.rows,
     columns: tanstackColumns,
     columnResizeMode: 'onChange',
+    onColumnSizingChange: setColumnSizing,
     state: {
+      columnSizing,
       columnVisibility,
     },
     getCoreRowModel: TanStack.getCoreRowModel(),
@@ -43,6 +52,8 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
     },
   })
   const visibleLeafColumns = table.getVisibleLeafColumns()
+  const headerGroups = table.getHeaderGroups()
+  const totalHeaderHeight = headerGroups.length * ESTIMATED_ROW_HEIGHT
 
   // 行の仮想化
   const rowModel = table.getRowModel()
@@ -58,6 +69,10 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
     if (node) rowVirtualizer.measureElement(node) // 動的行高さを測定
   }, [rowVirtualizer])
 
+  // -----------------------------
+  // EditableGrid2 の独自機能
+  // -----------------------------
+
   // 座標計算関数
   const getPixel = useGetPixel(
     visibleLeafColumns,
@@ -65,15 +80,57 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
     rowVirtualizer
   )
 
-  // TODO: 後で消す
-  const [test1, setTest1] = React.useState<CellPosition | null>(null);
-  const [test2, setTest2] = React.useState<CellSelectionRange | null>(null);
-  React.useEffect(() => {
-    window.setTimeout(() => {
-      setTest1({ colIndex: 2, rowIndex: 2 });
-      setTest2({ startCol: 2, endCol: 4, startRow: 2, endRow: 9 });
-    }, 1000);
-  }, []);
+  // 範囲選択
+  const {
+    selectedRange,
+    anchorCell,
+    focusedCell,
+    selectionEvents,
+  } = useSelection(table, props, visibleLeafColumns)
+
+  // 矢印キーによるセル移動を検知してスクロールする
+  useScrollToFocusedCell(focusedCell, rowVirtualizer, visibleLeafColumns, lastFixedIndex, tableContainerRef)
+
+  // -----------------------------
+  // イベント
+  // -----------------------------
+
+  const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
+    // preventDefault するかどうかは各イベントの中で判断する
+    selectionEvents.handleKeyDown(e)
+  }, [selectionEvents])
+
+  const handleMouseDown = React.useCallback((e: React.MouseEvent) => {
+    selectionEvents.handleMouseDown(e)
+  }, [selectionEvents])
+
+  const handleMouseMove = React.useCallback((e: React.MouseEvent) => {
+    selectionEvents.handleMouseMove(e)
+  }, [selectionEvents])
+
+  const handleMouseUp = React.useCallback((e: React.MouseEvent) => {
+  }, [])
+
+  const handleFocus = React.useCallback(() => {
+    if (!isGridActive) {
+      setIsGridActive(true)
+      selectionEvents.handleGridActiveChanged(true)
+    }
+  }, [isGridActive, selectionEvents])
+
+  const handleBlur = React.useCallback((e: React.FocusEvent) => {
+    if (isGridActive && !e.currentTarget.contains(e.relatedTarget)) {
+      setIsGridActive(false)
+      selectionEvents.handleGridActiveChanged(false)
+    }
+  }, [isGridActive, selectionEvents])
+
+  const handleCopy = React.useCallback((e: React.ClipboardEvent) => {
+
+  }, [])
+  const handlePaste = React.useCallback((e: React.ClipboardEvent) => {
+
+  }, [])
 
   return (
     <div
@@ -81,21 +138,24 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
       className={`z-0 overflow-auto bg-gray-200 relative outline-none ${props.className ?? ""}`}
       tabIndex={0} // 1行も無い場合であってもキーボード操作を受け付けるようにするため
 
-      // TODO: イベントハンドラ実装
-      onKeyDown={undefined}
-      onCopy={undefined}
-      onPaste={undefined}
-      onFocus={undefined}
-      onBlur={undefined}
+      onKeyDown={handleKeyDown}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onCopy={handleCopy}
+      onPaste={handlePaste}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
     >
 
       {/* 固定列用の選択範囲レイヤー (tableより手前に置くことで、sticky位置の基準をコンテナ左端にする) */}
       <SelectedRangeForFixedColumn
-        isGridActive
         lastFixedIndex={lastFixedIndex}
         getPixel={getPixel}
-        anchorCell={test1}
-        selectedRange={test2}
+        anchorCell={anchorCell}
+        selectedRange={selectedRange}
+        headerHeight={totalHeaderHeight}
+        columnSizing={columnSizing}
       />
 
       <table
@@ -106,7 +166,7 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
         {/* 列ヘッダ */}
         <thead className="grid sticky top-0 z-20 grid-header-group">
 
-          {table.getHeaderGroups().map((headerGroup, headerGroupIndex) => (
+          {headerGroups.map((headerGroup, headerGroupIndex) => (
             <tr key={headerGroup.id} className="flex w-full">
 
               {headerGroup.headers.map(header => {
@@ -187,7 +247,7 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
                     dataColumnClassName += ' bg-gray-200'
                   }
 
-                  if (cellMeta.isRowCheckBox || cellMeta.leafIndex === lastFixedIndex) {
+                  if (cellMeta.isRowCheckBox || cell.column.getIndex() === lastFixedIndex) {
                     dataColumnClassName += ` border-r border-gray-200`
                   }
 
@@ -197,6 +257,8 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
                   return (
                     <td
                       key={cell.id}
+                      data-row-index={cell.row.index}
+                      data-col-index={cell.column.getIndex()}
                       className={dataColumnClassName}
                       style={{
                         width: cell.column.getSize(),
@@ -228,11 +290,12 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
 
       {/* スクロール列用の選択範囲レイヤー */}
       <SelectedRangeForScrollableColumn
-        isGridActive
         lastFixedIndex={lastFixedIndex}
         getPixel={getPixel}
-        anchorCell={test1}
-        selectedRange={test2}
+        anchorCell={anchorCell}
+        selectedRange={selectedRange}
+        headerHeight={totalHeaderHeight}
+        columnSizing={columnSizing}
       />
 
       {/* TODO: CellEditor */}

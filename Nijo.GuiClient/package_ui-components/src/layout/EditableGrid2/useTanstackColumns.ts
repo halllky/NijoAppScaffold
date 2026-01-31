@@ -28,7 +28,7 @@ export function useTanstackColumns<TRow>(props: EditableGrid2Props<TRow>) {
 
     // 左列から順に true, false, true のように指定された場合、
     // 最後の true より左側はすべて固定列とする
-    const lastFixedIndex = flatten.reduce((max, cur, idx) => {
+    const maxIndexOfIsFixed = flatten.reduce((max, cur, idx) => {
       return cur.leaf.isFixed === true ? idx : max
     }, -1)
 
@@ -42,10 +42,10 @@ export function useTanstackColumns<TRow>(props: EditableGrid2Props<TRow>) {
         header: leaf.renderHeader,
         cell: leaf.renderBody,
         size: leaf.defaultWidth ?? DEFAULT_COLUMN_WIDTH,
-        enableResizing: leaf.disableResizing !== false,
+        enableResizing: leaf.disableResizing !== true,
         meta: {
           leafIndex: index,
-          isFixed: index <= lastFixedIndex,
+          isFixed: index <= maxIndexOfIsFixed,
           isReadOnly: leaf.isReadOnly ?? false,
           isGroupedColumn: group !== undefined,
           isRowCheckBox: false,
@@ -97,18 +97,20 @@ export function useTanstackColumns<TRow>(props: EditableGrid2Props<TRow>) {
       ])
     )
 
+    let lastFixedIndex: number | null
+    if (maxIndexOfIsFixed === -1) {
+      lastFixedIndex = props.showCheckBox ? 0 : null
+    } else {
+      lastFixedIndex = maxIndexOfIsFixed + (props.showCheckBox ? 1 : 0)
+    }
+
     return {
       /** useReactTable の columns に渡す列定義 */
       tanstackColumns,
       columnVisibility,
 
-      // /** 可視列。範囲選択などに使用する。 */
-      // visibleLeafColumns: withTanstackLeafColumn
-      //   .filter(item => !item.leaf.invisible)
-      //   .map(item => item.tanstackLeafColumn),
-
-      /** もっとも右にある固定列のインデックス。固定列が無い場合は null */
-      lastFixedIndex: lastFixedIndex === -1 ? null : lastFixedIndex,
+      /** もっとも右にある固定列のインデックス。固定列が無い場合は null。チェックボックス列がある場合はそれを0とする */
+      lastFixedIndex,
 
       /** グループ列が存在するかどうか */
       hasHeaderGroup,

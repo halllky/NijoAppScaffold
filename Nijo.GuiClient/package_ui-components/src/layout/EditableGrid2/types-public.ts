@@ -17,6 +17,8 @@ export type EditableGrid2Props<TRow> = {
   className?: string
   /** 行のclassNameを取得する関数。基本的にその行のテキスト色を変更する程度の想定。 */
   getRowClassName?: (row: TRow) => string
+  /** フォーカスが外れたときに選択をクリアするかどうか */
+  clearSelectionOnBlur?: boolean
 }
 
 /**
