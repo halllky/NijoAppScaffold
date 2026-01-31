@@ -62,7 +62,7 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
     getScrollElement: () => tableContainerRef.current,
     estimateSize: () => ESTIMATED_ROW_HEIGHT,
     measureElement: element => element?.getBoundingClientRect().height,
-    overscan: 5,
+    overscan: 10,
   })
   const virtualItems = rowVirtualizer.getVirtualItems()
   const tbodyTrRef = React.useCallback((node: HTMLTableRowElement) => {
@@ -76,7 +76,8 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
   // 座標計算関数
   const getPixel = useGetPixel(
     visibleLeafColumns,
-    rowModel,
+    props.rows.length,
+    virtualItems,
     rowVirtualizer
   )
 
@@ -89,7 +90,7 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
   } = useSelection(table, props, visibleLeafColumns)
 
   // 矢印キーによるセル移動を検知してスクロールする
-  useScrollToFocusedCell(focusedCell, rowVirtualizer, visibleLeafColumns, lastFixedIndex, tableContainerRef)
+  useScrollToFocusedCell(focusedCell, getPixel, visibleLeafColumns, lastFixedIndex, tableContainerRef)
 
   // -----------------------------
   // イベント
@@ -148,6 +149,14 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
       onBlur={handleBlur}
     >
 
+      {/* デバッグ用表示 */}
+      {/* <div className="sticky left-0 top-0 z-40">
+        <div className="absolute top-1 left-1 p-1 bg-white border border-gray-300">
+          A: ({anchorCell?.rowIndex}, {anchorCell?.colIndex}),
+          F: ({focusedCell?.rowIndex}, {focusedCell?.colIndex})
+        </div>
+      </div> */}
+
       {/* 固定列用の選択範囲レイヤー (tableより手前に置くことで、sticky位置の基準をコンテナ左端にする) */}
       <SelectedRangeForFixedColumn
         lastFixedIndex={lastFixedIndex}
@@ -182,27 +191,17 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
                 if (isNonGroupedUpperHeader) className += ' border-b-transparent'
 
                 return (
-                  <th
+                  <HeaderCell
                     key={header.id}
+                    header={header}
                     className={className}
                     style={{
                       width: header.getSize(),
                       height: ESTIMATED_ROW_HEIGHT,
                       left: headerMeta.isFixed ? `${header.getStart()}px` : undefined,
                     }}
-                  >
-                    {TanStack.flexRender(header.column.columnDef.header, header.getContext())}
-
-                    {/* 列幅を変更できる場合はサイズ変更ハンドラを設定 */}
-                    {header.column.getCanResize() && (
-                      <div
-                        onMouseDown={header.getResizeHandler()}
-                        onTouchStart={header.getResizeHandler()}
-                        className={`absolute top-0 right-0 h-full w-1.5 cursor-col-resize select-none touch-none ${header.column.getIsResizing() ? 'bg-sky-500 opacity-50' : 'hover:bg-gray-400'}`}
-                      >
-                      </div>
-                    )}
-                  </th>
+                    allChecked={table.getIsAllRowsSelected()}
+                  />
                 )
               })}
             </tr>
@@ -255,19 +254,19 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
                   if (cellMeta.isFixed) dataColumnClassName += ` sticky z-10`
 
                   return (
-                    <td
+                    <DataCell
                       key={cell.id}
-                      data-row-index={cell.row.index}
-                      data-col-index={cell.column.getIndex()}
+                      cell={cell}
+                      rowOriginal={row.original}
+                      isReadOnly={cellIsReadOnly}
+                      isChecked={cell.row.getIsSelected()}
                       className={dataColumnClassName}
                       style={{
                         width: cell.column.getSize(),
                         height: virtualRow.size,
                         left: cellMeta.isFixed ? `${cell.column.getStart()}px` : undefined,
                       }}
-                    >
-                      {TanStack.flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
+                    />
                   )
                 })}
               </tr>
@@ -302,3 +301,81 @@ export const EditableGrid2 = React.forwardRef(<TRow,>(
     </div>
   )
 }) as (<TRow>(props: EditableGrid2Props<TRow> & { ref?: React.ForwardedRef<EditableGrid2Ref<TRow>> }) => React.ReactNode)
+
+
+/**
+ * 列ヘッダ
+ */
+const HeaderCell = React.memo<{
+  header: TanStack.Header<any, any>
+  className: string
+  style: React.CSSProperties
+  /** レンダリングのトリガーにのみ使用 */
+  allChecked: unknown
+}>(({ header, className, style }) => {
+
+  return (
+    <th className={className} style={style}>
+      {TanStack.flexRender(header.column.columnDef.header, header.getContext())}
+
+      {/* 列幅を変更できる場合はサイズ変更ハンドラを設定 */}
+      {header.column.getCanResize() && (
+        <div
+          onMouseDown={header.getResizeHandler()}
+          onTouchStart={header.getResizeHandler()}
+          className={`absolute top-0 right-0 h-full w-1.5 cursor-col-resize select-none touch-none ${header.column.getIsResizing() ? 'bg-sky-500 opacity-50' : 'hover:bg-gray-400'}`}
+        />
+      )}
+    </th>
+  )
+
+}, (prev, next) => {
+  // 再レンダリングを抑制する条件（trueを返すと再レンダリングしない）
+  return (
+    prev.header.id === next.header.id &&
+    prev.style.width === next.style.width &&
+    prev.style.left === next.style.left &&
+    prev.className === next.className && // isResizing 等によるクラス変更検知
+    prev.header.column.columnDef === next.header.column.columnDef &&
+    prev.allChecked === next.allChecked // チェックボックス列の全選択状態変化検知
+  )
+})
+
+
+/**
+ * テーブルボディセル
+ */
+const DataCell = React.memo<{
+  cell: TanStack.Cell<any, any>
+  rowOriginal: any
+  className: string
+  style: React.CSSProperties
+  /** レンダリングのトリガーにのみ使用 */
+  isReadOnly: unknown
+  /** レンダリングのトリガーにのみ使用 */
+  isChecked: unknown
+}>(({ cell, className, style }) => {
+
+  return (
+    <td
+      data-row-index={cell.row.index}
+      data-col-index={cell.column.getIndex()}
+      className={className}
+      style={style}
+    >
+      {TanStack.flexRender(cell.column.columnDef.cell, cell.getContext())}
+    </td>
+  )
+
+}, (prev, next) => {
+  // 再レンダリングを抑制する条件（trueを返すと再レンダリングしない）
+  return (
+    prev.rowOriginal === next.rowOriginal && // 行データの参照比較 (最重要)
+    prev.style.width === next.style.width && // 列幅
+    prev.style.height === next.style.height && // 行高さ
+    prev.style.left === next.style.left && // 固定列位置
+    prev.isReadOnly === next.isReadOnly && // ReadOnly状態
+    prev.isChecked === next.isChecked && // チェック状態
+    prev.className === next.className // その他のスタイル変更
+  )
+})

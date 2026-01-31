@@ -1,15 +1,15 @@
 import * as TanStack from "@tanstack/react-table"
-import * as TanStackVirtual from "@tanstack/react-virtual"
 import { CellPosition } from "./useSelection"
 import React from "react"
 import { ColumnMetadataInternal } from "./types-internal"
+import { GetPixelFunction } from "./useGetPixel"
 
 /**
  * フォーカスされたセルの位置変更を検知して自動でその位置までスクロールするフック。
  */
 export function useScrollToFocusedCell<TRow>(
   focusedCell: CellPosition | null,
-  rowVirtualizer: TanStackVirtual.Virtualizer<HTMLDivElement, Element>,
+  getPixel: GetPixelFunction,
   visibleLeafColumns: TanStack.Column<TRow, unknown>[],
   lastFixedIndex: number | null,
   tableContainerRef: React.RefObject<HTMLDivElement | null>,
@@ -20,7 +20,28 @@ export function useScrollToFocusedCell<TRow>(
     if (!tableContainerRef.current) return
 
     // 行スクロール
-    rowVirtualizer.scrollToIndex(focusedCell.rowIndex, { align: 'auto' })
+    const rowTop = getPixel({ position: 'top', rowIndex: focusedCell.rowIndex })
+    const rowBottom = getPixel({ position: 'bottom', rowIndex: focusedCell.rowIndex })
+
+    const container = tableContainerRef.current
+    const containerTop = container.scrollTop
+    const containerHeight = container.clientHeight
+    const SCROLL_BAR_HEIGHT = 24
+
+    if (rowTop < containerTop) {
+      // 上に見切れている -> 上端合わせ
+      container.scrollTop = rowTop
+
+    } else if (rowBottom + SCROLL_BAR_HEIGHT > containerTop + containerHeight) {
+      // 下に見切れている
+      if (rowBottom - rowTop > containerHeight) {
+        // セル高さが可視領域より高い -> 上端合わせ
+        container.scrollTop = rowTop
+      } else {
+        // 下端合わせ（スクロールバーの存在を考慮して少し余裕を持たせる）
+        container.scrollTop = rowBottom - containerHeight + SCROLL_BAR_HEIGHT
+      }
+    }
 
     // 列スクロール
     const column = visibleLeafColumns[focusedCell.colIndex]
@@ -60,5 +81,5 @@ export function useScrollToFocusedCell<TRow>(
         }
       }
     }
-  }, [focusedCell, rowVirtualizer, visibleLeafColumns, lastFixedIndex, tableContainerRef])
+  }, [focusedCell, getPixel, visibleLeafColumns, lastFixedIndex, tableContainerRef])
 }

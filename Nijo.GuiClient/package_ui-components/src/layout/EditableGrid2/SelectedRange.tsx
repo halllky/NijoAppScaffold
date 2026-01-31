@@ -44,10 +44,13 @@ export const SelectedRangeForFixedColumn = React.memo(({
     <div className="sticky left-0 z-15">
       <SelectedRangeImpl
         getPixel={getPixel}
-        anchorCell={anchorCell}
         selectedRange={clippedRange}
         hideBorderRight={selectedRange.endCol > lastFixedIndex}
         headerHeight={headerHeight}
+
+        // アンカーセルが固定列の範囲外の場合、
+        // 範囲全体をオーバーレイで覆わせるために null を渡す
+        anchorCell={anchorCell.colIndex > lastFixedIndex ? null : anchorCell}
       />
     </div>
   )
@@ -90,7 +93,7 @@ function SelectedRangeImpl({
 }: {
   zIndex?: string
   getPixel: GetPixelFunction
-  anchorCell: CellPosition
+  anchorCell: CellPosition | null
   selectedRange: CellSelectionRange
   hideBorderRight?: boolean
   headerHeight: number
@@ -103,10 +106,10 @@ function SelectedRangeImpl({
   const bottom = getPixel({ position: 'bottom', rowIndex: selectedRange.endRow }) + headerHeight
 
   // アンカーセルの座標
-  const anchorTop = getPixel({ position: 'top', rowIndex: anchorCell.rowIndex }) + headerHeight
-  const anchorBottom = getPixel({ position: 'bottom', rowIndex: anchorCell.rowIndex }) + headerHeight
-  const anchorLeft = getPixel({ position: 'left', colIndex: anchorCell.colIndex })
-  const anchorRight = getPixel({ position: 'right', colIndex: anchorCell.colIndex })
+  const anchorTop = anchorCell === null ? null : getPixel({ position: 'top', rowIndex: anchorCell.rowIndex }) + headerHeight
+  const anchorBottom = anchorCell === null ? null : getPixel({ position: 'bottom', rowIndex: anchorCell.rowIndex }) + headerHeight
+  const anchorLeft = anchorCell === null ? null : getPixel({ position: 'left', colIndex: anchorCell.colIndex })
+  const anchorRight = anchorCell === null ? null : getPixel({ position: 'right', colIndex: anchorCell.colIndex })
 
   const borderClassNames = "absolute pointer-events-none border-1 border-sky-500"
   const overlayClassName = "absolute pointer-events-none bg-sky-200/25 mix-blend-multiply"
@@ -124,34 +127,47 @@ function SelectedRangeImpl({
       }} />
 
       {/* アンカーセルの位置だけ背景色なし、それ以外の選択セルは背景色あり、とするため、4つのdivでアンカーセル以外の部分を覆う */}
-      <div className={overlayClassName} style={{
-        left: `${left}px`,
-        top: `${anchorTop}px`,
-        width: `${Math.max(0, anchorLeft - left)}px`,
-        height: `${Math.max(0, anchorBottom - anchorTop)}px`,
-        zIndex,
-      }} />
-      <div className={overlayClassName} style={{
-        left: `${anchorRight}px`,
-        top: `${anchorTop}px`,
-        width: `${Math.max(0, right - anchorRight)}px`,
-        height: `${Math.max(0, anchorBottom - anchorTop)}px`,
-        zIndex,
-      }} />
-      <div className={overlayClassName} style={{
-        left: `${left}px`,
-        top: `${top}px`,
-        width: `${Math.max(0, right - left)}px`,
-        height: `${Math.max(0, anchorTop - top)}px`,
-        zIndex,
-      }} />
-      <div className={overlayClassName} style={{
-        left: `${left}px`,
-        top: `${anchorBottom}px`,
-        width: `${Math.max(0, right - left)}px`,
-        height: `${Math.max(0, bottom - anchorBottom)}px`,
-        zIndex,
-      }} />
+      {anchorCell && (<>
+        <div className={overlayClassName} style={{
+          left: `${left}px`,
+          top: `${anchorTop}px`,
+          width: `${Math.max(0, anchorLeft! - left)}px`,
+          height: `${Math.max(0, anchorBottom! - anchorTop!)}px`,
+          zIndex,
+        }} />
+        <div className={overlayClassName} style={{
+          left: `${anchorRight}px`,
+          top: `${anchorTop}px`,
+          width: `${Math.max(0, right - anchorRight!)}px`,
+          height: `${Math.max(0, anchorBottom! - anchorTop!)}px`,
+          zIndex,
+        }} />
+        <div className={overlayClassName} style={{
+          left: `${left}px`,
+          top: `${top}px`,
+          width: `${Math.max(0, right - left)}px`,
+          height: `${Math.max(0, anchorTop! - top)}px`,
+          zIndex,
+        }} />
+        <div className={overlayClassName} style={{
+          left: `${left}px`,
+          top: `${anchorBottom}px`,
+          width: `${Math.max(0, right - left)}px`,
+          height: `${Math.max(0, bottom - anchorBottom!)}px`,
+          zIndex,
+        }} />
+      </>)}
+
+      {/* アンカーセルが表示範囲外にある場合は全面をオーバーレイ */}
+      {anchorCell === null && (
+        <div className={overlayClassName} style={{
+          left: `${left}px`,
+          top: `${top}px`,
+          width: `${Math.max(0, right - left)}px`,
+          height: `${Math.max(0, bottom - top)}px`,
+          zIndex,
+        }} />
+      )}
     </>
   )
 }
