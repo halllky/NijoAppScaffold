@@ -23,8 +23,12 @@ export type CellEditorProps<TRow> = {
 }
 
 export type CellEditorRef = {
-  /** EditableGrid2 側でトリガーしてセルエディタに編集開始を要求するために使用 */
-  requestEditStart: () => void
+  /**
+   * EditableGrid2 側でトリガーしてセルエディタに編集開始を要求するために使用
+   *
+   * @param inputChar クイック編集で最初に入力された文字。nullの場合は通常の編集開始。
+   */
+  requestEditStart: (inputChar: string | null) => void
 }
 
 /**
@@ -170,7 +174,7 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
 
   // ref
   React.useImperativeHandle(ref, () => ({
-    requestEditStart: () => {
+    requestEditStart: inputChar => {
       if (!focusedCell) return;
 
       const cell = rowModel
@@ -185,7 +189,10 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
       const rowOriginal = getRowObject(cell.row.index)
       if (checkIfCellReadOnly(cell, gridIsReadOnly, rowOriginal)) return;
 
-      const value = columnMeta.original.getValueForEditor({ row: rowOriginal, rowIndex: cell.row.index })
+      // 英数字などIME変換不要な文字が入力されたことによる編集開始の場合、
+      // その文字を初期値としてエディタにセットする
+      const value = inputChar ?? columnMeta.original.getValueForEditor({ row: rowOriginal, rowIndex: cell.row.index })
+
       editorTextareaRef.current?.setValueAndSelectAll(value)
       setEdittingCell(cell)
       onEditingStateChanged(true)

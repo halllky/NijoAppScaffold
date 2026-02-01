@@ -3,7 +3,7 @@ import React from "react"
 /**
  * 文字入力をトリガーとしてセル編集を開始するためのフック
  */
-export function useOnKeyDownToStartEditing(isImeOpened: boolean): ((e: React.KeyboardEvent, onStartEditing: () => void) => void) {
+export function useOnKeyDownToStartEditing(isImeOpened: boolean): ((e: React.KeyboardEvent, onStartEditing: (inputChar: string | null) => void) => void) {
 
   return React.useCallback((e, onStartEditing) => {
 
@@ -13,7 +13,11 @@ export function useOnKeyDownToStartEditing(isImeOpened: boolean): ((e: React.Key
       || !e.ctrlKey && !e.metaKey && e.key.length === 1 /*文字や数字や記号の場合*/
 
     if (e.key === 'F2' || isQuickEditKey) {
-      onStartEditing()
+
+      // 文字や数字や記号の場合、その文字が入力された状態から編集開始
+      const inputChar = isQuickEditKey && e.key.length === 1 ? e.key : null;
+
+      onStartEditing(inputChar)
       e.preventDefault()
     }
 

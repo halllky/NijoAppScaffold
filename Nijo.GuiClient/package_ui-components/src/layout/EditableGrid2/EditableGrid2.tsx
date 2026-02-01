@@ -157,8 +157,8 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
     // preventDefault するかどうかは各イベントの中で判断する
     if (!isEditing) {
       selectionEvents.handleKeyDown(e)
-      onKeyDownToStartEditing(e, () => {
-        editorRef.current?.requestEditStart()
+      onKeyDownToStartEditing(e, inputChar => {
+        editorRef.current?.requestEditStart(inputChar)
       })
     }
   }
