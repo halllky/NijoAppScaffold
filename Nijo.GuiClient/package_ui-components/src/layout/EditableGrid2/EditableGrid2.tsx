@@ -244,8 +244,11 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
                 const isNonGroupedUpperHeader = hasHeaderGroup
                   && !headerMeta?.isGroupedColumn
                   && headerGroupIndex === 0
+                const isNonGroupedLowerHeader = hasHeaderGroup
+                  && !headerMeta?.isGroupedColumn
+                  && headerGroupIndex === 1
 
-                let className = 'flex bg-gray-100 relative text-left select-none border-b border-r border-gray-200'
+                let className = 'flex bg-gray-100 relative text-left select-none border-b border-r border-gray-300'
                 if (headerMeta.isFixed) className += ' sticky z-10'
                 if (isNonGroupedUpperHeader) className += ' border-b-transparent'
 
@@ -260,6 +263,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
                       left: headerMeta.isFixed ? `${header.getStart()}px` : undefined,
                     }}
                     allChecked={table.getIsAllRowsSelected()}
+                    isNonGroupedLowerHeader={isNonGroupedLowerHeader}
                   />
                 )
               })}
@@ -296,7 +300,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
                   }
 
                   if (cellMeta.isRowCheckBox || cell.column.getIndex() === lastFixedIndex) {
-                    dataColumnClassName += ` border-r border-gray-200`
+                    dataColumnClassName += ` border-r border-gray-300`
                   }
 
                   // z-indexを明示的に指定して SelectedRange(unfixed) より手前に、ヘッダより奥に来るようにする
@@ -360,13 +364,17 @@ const HeaderCell = React.memo<{
   header: TanStack.Header<any, any>
   className: string
   style: React.CSSProperties
+  /** グルーピングされた列が含まれるグリッドにおいて、この列がグルーピングされていない下段のヘッダかどうか */
+  isNonGroupedLowerHeader: boolean
   /** レンダリングのトリガーにのみ使用 */
   allChecked: unknown
-}>(function MemorizedTH({ header, className, style }) {
+}>(function MemorizedTH({ header, className, style, isNonGroupedLowerHeader }) {
 
   return (
     <th className={className} style={style}>
-      {TanStack.flexRender(header.column.columnDef.header, header.getContext())}
+      {!isNonGroupedLowerHeader && (
+        TanStack.flexRender(header.column.columnDef.header, header.getContext())
+      )}
 
       {/* 列幅を変更できる場合はサイズ変更ハンドラを設定 */}
       {header.column.getCanResize() && (
