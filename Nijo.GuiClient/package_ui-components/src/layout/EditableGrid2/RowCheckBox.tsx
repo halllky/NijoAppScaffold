@@ -19,7 +19,7 @@ export function createRowCheckBoxColumn<TRow>(
     enableResizing: false,
     meta: {
       leafIndex: null,
-      orginal: null,
+      original: null,
       isFixed: true,
       isReadOnly: false,
       isGroupedColumn: false,

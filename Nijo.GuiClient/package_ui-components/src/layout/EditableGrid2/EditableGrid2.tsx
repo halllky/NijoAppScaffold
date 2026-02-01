@@ -207,6 +207,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
         gridEditorComponent={props.editor}
         gridIsReadOnly={props.isReadOnly}
         getPixel={getPixel}
+        getRowValue={props.getRowValue}
       />
 
       {/* 固定列用の選択範囲レイヤー (tableより手前に置くことで、sticky位置の基準をコンテナ左端にする) */}
@@ -264,19 +265,20 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
           {virtualItems.map(virtualRow => {
             const row = rowModel.rows[virtualRow.index];
             if (!row) return null;
+            const rowOriginal = props.getRowValue ? props.getRowValue(row.index) : row.original
             return (
               <tr
                 key={row.id}
                 data-index={virtualRow.index} // 動的行高さ測定に必要
                 ref={tbodyTrRef} // 動的行高さを測定
-                className={`flex absolute w-full ${props.getRowClassName?.(row.original) ?? ''}`}
+                className={`flex absolute w-full ${props.getRowClassName?.(rowOriginal) ?? ''}`}
                 style={{ top: `${virtualRow.start}px` }}
               >
                 {row.getVisibleCells().map(cell => {
                   const cellMeta = cell.column.columnDef.meta as ColumnMetadataInternal<TRow>
 
                   // 読み取り専用判定
-                  const cellIsReadOnly = checkIfCellReadOnly(cell, props.isReadOnly)
+                  const cellIsReadOnly = checkIfCellReadOnly(cell, props.isReadOnly, rowOriginal)
 
                   let dataColumnClassName = 'flex outline-none select-none truncate'
                   if (!cellIsReadOnly) {
@@ -296,7 +298,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
                     <DataCell
                       key={cell.id}
                       cell={cell}
-                      rowOriginal={row.original}
+                      rowOriginal={rowOriginal}
                       isReadOnly={cellIsReadOnly}
                       isChecked={cell.row.getIsSelected()}
                       className={dataColumnClassName}

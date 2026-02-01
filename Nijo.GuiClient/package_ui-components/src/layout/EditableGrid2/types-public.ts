@@ -8,6 +8,12 @@ import { GridCellEditorComponent } from "./types-internal"
 export type EditableGrid2Props<TRow> = {
   /** 行データの配列 */
   rows: TRow[]
+  /**
+   * 指定したインデックスの最新の行データを取得する関数。
+   * これを指定すると、セル描画時や編集開始時に row.original の代わりにこの関数から取得した値が使用される。
+   * パフォーマンスチューニング（React Hook FormのgetValues等を使用）のために利用する。
+   */
+  getRowValue?: (index: number) => TRow
   /** 列定義と、列定義更新の依存配列。 */
   columns: [(() => EditableGrid2Column<TRow>[]), React.DependencyList]
   /** 行ヘッダのチェックボックスを表示するかどうか。 */

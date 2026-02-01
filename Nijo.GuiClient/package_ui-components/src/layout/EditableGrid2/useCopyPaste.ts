@@ -56,7 +56,7 @@ export const useCopyPaste = <TRow,>({
 
         let cellValue = '';
         if (colDef && colDef.getValueForEditor) {
-          const row = rows[r];
+          const row = props.getRowValue ? props.getRowValue(r) : rows[r];
           if (row) {
             cellValue = colDef.getValueForEditor({ row, rowIndex: r });
           }
@@ -164,13 +164,15 @@ export const useCopyPaste = <TRow,>({
         // 必要な関数が定義されていないならスキップ
         if (!colDef || !colDef.setValueFromEditor) continue;
 
+        const row = props.getRowValue ? props.getRowValue(targetRowIndex) : rows[targetRowIndex];
+
         // 読み取り専用ならスキップ
-        if (checkIfCellReadOnlyForPaste(props.isReadOnly, rows[targetRowIndex], targetRowIndex, meta)) continue;
+        if (checkIfCellReadOnlyForPaste(props.isReadOnly, row, targetRowIndex, meta)) continue;
 
         const pasteValue = rowInputData[pasteColIdx];
 
         colDef.setValueFromEditor({
-          row: rows[targetRowIndex],
+          row,
           rowIndex: targetRowIndex,
           value: pasteValue
         });

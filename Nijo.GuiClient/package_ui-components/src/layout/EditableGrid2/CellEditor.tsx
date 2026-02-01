@@ -17,6 +17,8 @@ export type CellEditorProps<TRow> = {
   gridIsReadOnly: boolean | ((row: TRow, rowIndex: number) => boolean) | undefined
   /** 座標計算関数 */
   getPixel: GetPixelFunction
+  /** 最新の行データを取得する関数 */
+  getRowValue?: (index: number) => TRow
 }
 
 export type CellEditorRef = {
@@ -40,6 +42,7 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
   gridEditorComponent,
   gridIsReadOnly,
   getPixel,
+  getRowValue,
 }: CellEditorProps<TRow>, ref: React.ForwardedRef<CellEditorRef>) {
 
   const editorTextareaRef = React.useRef<CellEditorTextareaRef>(null)
@@ -57,7 +60,7 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
     if (columnMeta.original?.setValueFromEditor) {
       columnMeta.original.setValueFromEditor({
         rowIndex: edittingCell.row.index,
-        row: edittingCell.row.original,
+        row: getRowValue ? getRowValue(edittingCell.row.index) : edittingCell.row.original,
         value: value ?? editorTextareaRef.current?.getCurrentValue() ?? '',
       })
     }
@@ -72,8 +75,9 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
     // エディタの値を編集前の値に戻す
     if (edittingCell) {
       const columnMeta = edittingCell.column.columnDef.meta as ColumnMetadataInternal<TRow>
+      const rowOriginal = getRowValue ? getRowValue(edittingCell.row.index) : edittingCell.row.original
       const value = columnMeta.original?.getValueForEditor
-        ? columnMeta.original.getValueForEditor({ row: edittingCell.row.original, rowIndex: edittingCell.row.index })
+        ? columnMeta.original.getValueForEditor({ row: rowOriginal, rowIndex: edittingCell.row.index })
         : ''
       editorTextareaRef.current?.setValueAndSelectAll(value)
     }
@@ -176,7 +180,9 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
 
       const columnMeta = cell.column.columnDef.meta as ColumnMetadataInternal<TRow>
       if (!columnMeta.original?.getValueForEditor) return;
-      if (checkIfCellReadOnly(cell, gridIsReadOnly)) return;
+
+      const rowOriginal = getRowValue ? getRowValue(cell.row.index) : cell.row.original;
+      if (checkIfCellReadOnly(cell, gridIsReadOnly, rowOriginal)) return;
 
       const value = columnMeta.original.getValueForEditor({ row: cell.row.original, rowIndex: cell.row.index })
       editorTextareaRef.current?.setValueAndSelectAll(value)

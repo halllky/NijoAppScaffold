@@ -40,7 +40,8 @@ export const DEFAULT_COLUMN_WIDTH = 128
  */
 export function checkIfCellReadOnly<TRow>(
   cell: TanStack.Cell<TRow, unknown>,
-  gridIsReadOnly: boolean | ((row: TRow, rowIndex: number) => boolean) | undefined
+  gridIsReadOnly: boolean | ((row: TRow, rowIndex: number) => boolean) | undefined,
+  originalRow: TRow
 ): boolean {
 
   // グリッド全体の読み取り専用
@@ -49,7 +50,7 @@ export function checkIfCellReadOnly<TRow>(
   }
 
   // 行単位の読み取り専用
-  if (typeof gridIsReadOnly === 'function' && gridIsReadOnly(cell.row.original, cell.row.index)) {
+  if (typeof gridIsReadOnly === 'function' && gridIsReadOnly(originalRow, cell.row.index)) {
     return true
   }
 
@@ -58,7 +59,7 @@ export function checkIfCellReadOnly<TRow>(
   if (columnMeta.isReadOnly === true) {
     return true
   }
-  if (typeof columnMeta.isReadOnly === 'function' && columnMeta.isReadOnly(cell.row.original, cell.row.index)) {
+  if (typeof columnMeta.isReadOnly === 'function' && columnMeta.isReadOnly(originalRow, cell.row.index)) {
     return true
   }
 
