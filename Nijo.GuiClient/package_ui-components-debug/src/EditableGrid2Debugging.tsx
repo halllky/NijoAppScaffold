@@ -97,6 +97,7 @@ export default function () {
             ],
           },
           textCell("コメント", "comment", { defaultWidth: 320, wrap: true }),
+          textCell("価格(同じ項目を複数回指定する例)", "price", { defaultWidth: 252 }),
         ], [fixed3Cols, updateRow, textCell, buttonCell]]}
 
         showCheckBox

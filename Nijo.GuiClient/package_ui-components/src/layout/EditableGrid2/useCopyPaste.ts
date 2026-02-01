@@ -1,5 +1,4 @@
 import React from "react";
-import useEvent from "react-use-event-hook";
 import * as TanStack from "@tanstack/react-table";
 import { EditableGrid2Props } from "./types-public";
 import { CellSelectionRange } from "./useSelection";
@@ -34,7 +33,7 @@ export const useCopyPaste = <TRow,>({
     ? props.rows.length
     : props.rows.array.length;
 
-  const handleCopy: React.ClipboardEventHandler = useEvent(e => {
+  const handleCopy: React.ClipboardEventHandler = e => {
     if (isEditing || !selectedRange) return;
 
     if (totalRowCount === 0) return;
@@ -76,9 +75,9 @@ export const useCopyPaste = <TRow,>({
     if (e.clipboardData) {
       e.clipboardData.setData('text/plain', tsvData);
     }
-  });
+  }
 
-  const handlePaste: React.ClipboardEventHandler = useEvent(e => {
+  const handlePaste: React.ClipboardEventHandler = e => {
     if (isEditing || !activeCell) return;
 
     // ペースト開始セルの読み取り専用チェック
@@ -97,9 +96,9 @@ export const useCopyPaste = <TRow,>({
     } catch (err) {
       console.error('クリップボードからのペーストに失敗しました:', err);
     }
-  });
+  }
 
-  const setStringValuesToSelectedRange = useEvent((values: string[][]) => {
+  const setStringValuesToSelectedRange = (values: string[][]) => {
     if (!activeCell) return;
 
     // ペーストデータのうち長さ0の配列部分は長さ1の配列と読み替える
@@ -192,9 +191,14 @@ export const useCopyPaste = <TRow,>({
         endCol
       });
     }
-  });
+  }
 
-  return { handleCopy, handlePaste };
+  const handleDelete = () => {
+    if (isEditing || !activeCell) return;
+    setStringValuesToSelectedRange([['']]);
+  }
+
+  return { handleCopy, handlePaste, handleDelete };
 };
 
 function checkIfCellReadOnlyForPaste<TRow>(

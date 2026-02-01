@@ -118,7 +118,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
   const onKeyDownToStartEditing = useOnKeyDownToStartEditing(isImeOpened)
 
   // コピー＆ペースト
-  const { handleCopy, handlePaste } = useCopyPaste({
+  const { handleCopy, handlePaste, handleDelete } = useCopyPaste({
     table,
     activeCell: focusedCell,
     selectedRange,
@@ -156,6 +156,13 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // preventDefault するかどうかは各イベントの中で判断する
     if (!isEditing) {
+      // 非編集時にDeleteキーが押された場合、選択範囲内の値をクリア
+      if (e.key === 'Delete') {
+        handleDelete()
+        e.preventDefault()
+        return
+      }
+
       selectionEvents.handleKeyDown(e)
       onKeyDownToStartEditing(e, inputChar => {
         editorRef.current?.requestEditStart(inputChar)
@@ -176,7 +183,6 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
       selectionEvents.handleGridActiveChanged(false)
     }
   }
-
 
   //#endregion イベント
   // -----------------------------
@@ -230,7 +236,6 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
         className="grid border-collapse border-spacing-0"
         style={{ minWidth: table.getTotalSize() }}
       >
-
         {/* 列ヘッダ */}
         <thead className="grid sticky top-0 z-20 grid-header-group">
 
