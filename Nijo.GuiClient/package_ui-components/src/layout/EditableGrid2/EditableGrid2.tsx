@@ -292,7 +292,9 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
                   // 読み取り専用判定
                   const cellIsReadOnly = checkIfCellReadOnly(cell, props.isReadOnly, rowOriginal)
 
-                  let dataColumnClassName = 'flex outline-none select-none truncate'
+                  let dataColumnClassName = 'flex outline-none select-none'
+                  if (!cellMeta.original?.wrap) dataColumnClassName += ' truncate'
+
                   if (!cellIsReadOnly) {
                     dataColumnClassName += ` bg-white`
                   } else if (cellMeta.isFixed) {
@@ -316,7 +318,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
                       className={dataColumnClassName}
                       style={{
                         width: cell.column.getSize(),
-                        height: virtualRow.size,
+                        minHeight: virtualRow.size,
                         left: cellMeta.isFixed ? `${cell.column.getStart()}px` : undefined,
                       }}
                     />
@@ -433,7 +435,7 @@ const DataCell = React.memo<{
   return (
     prev.rowOriginal === next.rowOriginal && // 行データの参照比較 (最重要)
     prev.style.width === next.style.width && // 列幅
-    prev.style.height === next.style.height && // 行高さ
+    prev.style.minHeight === next.style.minHeight && // 行高さ
     prev.style.left === next.style.left && // 固定列位置
     prev.isReadOnly === next.isReadOnly && // ReadOnly状態
     prev.isChecked === next.isChecked && // チェック状態

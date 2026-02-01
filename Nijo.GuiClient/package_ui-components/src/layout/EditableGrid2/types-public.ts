@@ -109,8 +109,8 @@ export type EditableGrid2LeafColumn<TRow> = {
   invisible?: boolean
   /** 列が固定されるかどうか */
   isFixed?: boolean
-  /** セルエディタの中の値がオーバーフローしたときにエディタを右方向と下方向のどちらに伸ばすか。デフォルトは `horizontal` */
-  editorOverflow?: 'horizontal' | 'vertical'
+  /** 文字列の折り返しをするかどうか */
+  wrap?: boolean
 }
 
 /** 列ヘッダセルのレンダリング処理 */

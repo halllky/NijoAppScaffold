@@ -96,7 +96,7 @@ export default function () {
               textCell("フラグ", "bool", { defaultWidth: 80, format: v => v ? "✔" : "", parse: v => v === "✔" }),
             ],
           },
-          textCell("コメント", "comment", { defaultWidth: 320, editorOverflow: 'vertical', wrap: true }),
+          textCell("コメント", "comment", { defaultWidth: 320, wrap: true }),
         ], [fixed3Cols, updateRow, textCell, buttonCell]]}
 
         showCheckBox

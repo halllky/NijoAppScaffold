@@ -139,7 +139,7 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
     // min-width で設定した場合、エディタの中の文字がオーバーフローしたときに横方向に延伸する。
     // width で指定した場合は縦方向。
     const columnMeta = visibleLeafColumns[focusedCell.colIndex]?.columnDef.meta as ColumnMetadataInternal<TRow> | undefined
-    if (columnMeta?.original?.editorOverflow === 'vertical') {
+    if (columnMeta?.original?.wrap) {
       style.width = `${right - left}px`
       style.minWidth = ''
     } else {
