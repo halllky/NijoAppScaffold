@@ -150,6 +150,10 @@ export type EditableGridCellEditorProps = {
 export type EditableGridCellEditorRef = {
   getCurrentValue: () => string
   setValueAndSelectAll: (value: string) => void
+  /**
+   * エディタのルート要素を取得する（クリックがエディタ内か判定するために使用）
+   */
+  getDomElement: () => HTMLElement | null
 }
 
 //#endregion セルエディタ

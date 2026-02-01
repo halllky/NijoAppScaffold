@@ -75,6 +75,24 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
     onEditingStateChanged(false)
     setEditorComponent(gridEditorComponent ?? DefaultEditor)
   }
+  const commitEditingRef = React.useRef(commitEditing)
+  commitEditingRef.current = commitEditing
+
+  // 画面外クリックで編集確定
+  React.useEffect(() => {
+    if (!edittingCell) return
+
+    const handleMouseDown = (e: MouseEvent) => {
+      // エディタ内のクリックなら無視
+      const domElement = editorTextareaRef.current?.getDomElement?.()
+      if (domElement && e.target instanceof Node && domElement.contains(e.target)) return
+      // エディタ外のクリックなら確定
+      commitEditingRef.current()
+    }
+
+    document.addEventListener('mousedown', handleMouseDown)
+    return () => document.removeEventListener('mousedown', handleMouseDown)
+  }, [edittingCell, commitEditingRef])
 
   // 編集キャンセル
   const cancelEditing = () => {
@@ -230,6 +248,7 @@ const DefaultEditor: EditableGridCellEditor = React.forwardRef(function DefaultE
       setValue(value)
       textareaRef.current?.select()
     },
+    getDomElement: () => textareaRef.current,
   }), [textareaRef])
 
   return (
