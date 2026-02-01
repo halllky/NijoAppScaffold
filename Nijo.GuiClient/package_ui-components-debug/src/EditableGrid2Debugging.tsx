@@ -1,6 +1,7 @@
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
 import React from "react"
 import { useFieldArray, useForm, Control, useWatch, UseFormGetValues, UseFormSetValue, Path } from "react-hook-form"
+import { UUID } from "uuidjs"
 
 export default function () {
 
@@ -28,17 +29,16 @@ export default function () {
   const { textCell, buttonCell } = useGridHelpers(control, getValues, setValue)
 
   // 行データを安全に更新するヘルパー関数
-  const ufa = useFieldArray({ name: "rows", control })
-  const ufaRef = React.useRef(ufa)
-  ufaRef.current = ufa
+  const { fields, append, insert, remove, replace } = useFieldArray({ name: "rows", control })
   const updateRow = React.useCallback((index: number, update: (current: TestRow) => TestRow) => {
     const current = getValues(`rows.${index}`)
     setValue(`rows.${index}`, update(current))
+    gridRef.current?.forceUpdate()
   }, [getValues, setValue])
 
   // React.useEffect(() => {
-  //   console.log('fields', ufa.fields)
-  // }, [ufa.fields])
+  //   console.log('fields', fields)
+  // }, [fields])
   // React.useEffect(() => {
   //   console.log('rows: ', rows)
   // }, [watch("rows")])
@@ -47,14 +47,14 @@ export default function () {
   // }, [watch("rows.0")])
   // React.useEffect(() => {
   //   console.log('rows.0.name: ', rows[0]?.name)
-  //   console.log(ufa.fields[0]?.id)
+  //   console.log(fields[0]?.id)
   // }, [watch("rows.0.name")])
 
   React.useEffect(() => {
     let rows: TestRow[]
     if (isLargeData) {
       rows = Array.from({ length: 1000 }).map((_, i) => ({
-        rowId: i + 1,
+        rowId: (i + 1).toString(),
         name: `商品${i + 1}`,
         price: ((i + 1) * 1000).toString(),
         date: `2024-${String((i % 12) + 1).padStart(2, '0')}-01`,
@@ -63,23 +63,21 @@ export default function () {
       }))
     } else {
       rows = [
-        { rowId: 1, name: "商品A", price: "1000", date: "2024-01-01", comment: "コメントA", bool: true },
-        { rowId: 2, name: "商品B", price: "2000", date: "2024-02-01", comment: "コメントB", bool: false },
-        { rowId: 3, name: "商品C", price: "3000", date: "2024-03-01", comment: "コメントC", bool: true },
+        { rowId: "1", name: "商品A", price: "1000", date: "2024-01-01", comment: "コメントA", bool: true },
+        { rowId: "2", name: "商品B", price: "2000", date: "2024-02-01", comment: "コメントB", bool: false },
+        { rowId: "3", name: "商品C", price: "3000", date: "2024-03-01", comment: "コメントC", bool: true },
       ]
     }
-    ufa.replace(rows)
-  }, [isLargeData])
+    replace(rows)
+  }, [isLargeData, replace])
 
   return (
     <div className="flex flex-col items-start">
       <EG2.EditableGrid2
         ref={gridRef}
-        rows={{
-          array: ufa.fields,
-          getRowValue: index => getValues(`rows.${index}`),
-        }}
-        getRowId={row => row.rowId?.toString() ?? ''}
+        data={fields}
+        getLatestRowObject={index => getValues(`rows.${index}`)}
+        getRowId={row => row.rowId}
         columns={[() => [
           buttonCell(row => row.willBeDeleted ? "復元" : "削除", (row, rowIndex) => {
             updateRow(rowIndex, r => ({ ...r, willBeDeleted: !r.willBeDeleted }))
@@ -126,7 +124,7 @@ export default function () {
       </span>
       <div>
         <button type="button" onClick={() => {
-          if (ufa.fields.length > 0) {
+          if (fields.length > 0) {
             setValue(`rows.0.comment`, `コメントをプログラムから更新しました: ${new Date().toLocaleString()}`)
           }
         }} className="px-2 py-1 text-white bg-blue-600 border border-white cursor-pointer">
@@ -139,19 +137,19 @@ export default function () {
       </span>
       <div className="flex gap-2">
         <button type="button" onClick={() => {
-          ufa.insert(0, { rowId: undefined, name: null, price: null, date: null, comment: null, bool: false })
+          insert(0, { rowId: UUID.generate(), name: null, price: null, date: null, comment: null, bool: false })
         }} className="px-2 py-1 text-white bg-purple-600 border border-white cursor-pointer">
           先頭に追加
         </button>
         <button type="button" onClick={() => {
-          ufa.append({ rowId: undefined, name: null, price: null, date: null, comment: null, bool: false })
+          append({ rowId: UUID.generate(), name: null, price: null, date: null, comment: null, bool: false })
         }} className="px-2 py-1 text-white bg-green-600 border border-white cursor-pointer">
           行追加
         </button>
         <button type="button" onClick={() => {
           const checkedRows = gridRef.current?.getCheckedRows() || []
           const removeRowIndexes = checkedRows.map(r => r.rowIndex)
-          ufa.remove(removeRowIndexes)
+          remove(removeRowIndexes)
         }} className="px-2 py-1 text-white bg-red-600 border border-white cursor-pointer">
           選択した行を削除
         </button>
@@ -165,7 +163,7 @@ type PageFormType = {
 }
 
 type TestRow = {
-  rowId?: number | null
+  rowId: string
   name?: string | null
   price?: string | null
   date?: string | null

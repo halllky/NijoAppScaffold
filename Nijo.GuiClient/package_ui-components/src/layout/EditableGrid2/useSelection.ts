@@ -36,23 +36,19 @@ export function useSelection<TRow>(
   scrollToCell: ScrollToCellFunction,
 ) {
 
-  const rowCount = Array.isArray(props.rows)
-    ? props.rows.length
-    : props.rows.array.length
-
   //#region 状態
 
   // アンカーセル。範囲選択の起点。
   // Shiftキーを押しながら矢印キーやマウスクリックで選択範囲を拡張したとき、
   // このセルは固定されたまま、選択範囲の反対側のセルが移動する。
   const [anchorCell, setAnchorCell] = React.useState<CellPosition | null>(null)
-  const setAnchorCellWithClamp = useClampSetter(setAnchorCell, rowCount, visibleLeafColumns.length, props.showCheckBox)
+  const setAnchorCellWithClamp = useClampSetter(setAnchorCell, props.data.length, visibleLeafColumns.length, props.showCheckBox)
 
   // 選択範囲を構成する2点のセルのうちアンカーセルの反対側。
   // Shiftキーを押しながら矢印キーやマウスクリックで選択範囲を拡張したとき、
   // こちら側のセルが移動する。
   const [focusedCell, setFocusedCell] = React.useState<CellPosition | null>(null)
-  const setFocusedCellWithClamp = useClampSetter(setFocusedCell, rowCount, visibleLeafColumns.length, props.showCheckBox)
+  const setFocusedCellWithClamp = useClampSetter(setFocusedCell, props.data.length, visibleLeafColumns.length, props.showCheckBox)
   // マウスダウン中かどうか。
   // マウスダウンによってフォーカスが当たった場合、フォーカスイベントによる選択セルの上書きを防ぐために使用する。
   const isMouseDownRef = React.useRef(false)
@@ -102,7 +98,7 @@ export function useSelection<TRow>(
       // Ctrl キーが押されていれば端まで移動
       switch (e.key) {
         case 'ArrowUp': rowIndex = 0; break
-        case 'ArrowDown': rowIndex = rowCount - 1; break
+        case 'ArrowDown': rowIndex = props.data.length - 1; break
         case 'ArrowLeft': colIndex = minColIndex; break
         case 'ArrowRight': colIndex = colCount - 1; break
       }
@@ -126,7 +122,7 @@ export function useSelection<TRow>(
 
     // セル移動を検知してスクロールするために状態を更新
     setKeyMoveState({
-      rowIndex: Math.min(Math.max(nextPos.rowIndex, 0), rowCount - 1),
+      rowIndex: Math.min(Math.max(nextPos.rowIndex, 0), props.data.length - 1),
       colIndex: Math.min(Math.max(nextPos.colIndex, minColIndex), colCount - 1),
     })
   }
@@ -222,7 +218,7 @@ export function useSelection<TRow>(
   React.useEffect(() => {
     setAnchorCellWithClamp(anchorCell)
     setFocusedCellWithClamp(focusedCell)
-  }, [rowCount, visibleLeafColumns.length])
+  }, [props.data.length, visibleLeafColumns.length])
 
   // キー操作によるセル移動を検知して移動後のセルが見えるように自動スクロール
   React.useEffect(() => {

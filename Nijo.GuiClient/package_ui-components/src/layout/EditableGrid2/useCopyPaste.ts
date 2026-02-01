@@ -29,14 +29,10 @@ export const useCopyPaste = <TRow,>({
   props,
 }: UseCopyPasteParams<TRow>) => {
 
-  const totalRowCount = Array.isArray(props.rows)
-    ? props.rows.length
-    : props.rows.array.length;
-
   const handleCopy: React.ClipboardEventHandler = e => {
     if (isEditing || !selectedRange) return;
 
-    if (totalRowCount === 0) return;
+    if (props.data.length === 0) return;
 
     e.preventDefault();
     e.stopPropagation();
@@ -49,7 +45,7 @@ export const useCopyPaste = <TRow,>({
     for (let r = selectedRange.startRow; r <= selectedRange.endRow; r++) {
       const rowData: string[] = [];
       // 行データの存在チェック
-      if (r >= totalRowCount) break;
+      if (r >= props.data.length) break;
 
       for (let c = selectedRange.startCol; c <= selectedRange.endCol; c++) {
         // 列定義の存在チェック
@@ -149,7 +145,7 @@ export const useCopyPaste = <TRow,>({
 
     for (let r = 0; r < rowCount; r++) {
       const targetRowIndex = startRow + r;
-      if (targetRowIndex >= totalRowCount) break;
+      if (targetRowIndex >= props.data.length) break;
 
       const pasteRowIdx = r % values.length;
       const rowInputData = values[pasteRowIdx];

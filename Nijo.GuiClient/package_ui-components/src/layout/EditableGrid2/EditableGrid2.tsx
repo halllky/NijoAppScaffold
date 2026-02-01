@@ -24,7 +24,8 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
 
   const tableContainerRef = React.useRef<HTMLDivElement>(null)
   const [isGridActive, setIsGridActive] = React.useState(false)
-  const getRowObject = useRowAccessor(props.rows)
+  const [_, forceUpdate] = React.useReducer(x => x >= Number.MAX_SAFE_INTEGER ? 0 : x + 1, 0)
+  const getRowObject = useRowAccessor(props.data, props.getLatestRowObject)
 
   //#region Tanstack table
 
@@ -39,9 +40,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
   // TanStack Table のテーブルインスタンス
   const [columnSizing, setColumnSizing] = React.useState<TanStack.ColumnSizingState>({})
   const table = TanStack.useReactTable({
-    data: Array.isArray(props.rows)
-      ? props.rows
-      : (props.rows.array as TRow[]), // tableインスタンスが row.original にアクセスすることはないためasで回避
+    data: props.data,
     getRowId: props.getRowId,
     columns: tanstackColumns,
     columnResizeMode: 'onChange',
@@ -70,6 +69,10 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
     estimateSize: () => ESTIMATED_ROW_HEIGHT,
     measureElement: element => element?.getBoundingClientRect().height,
     overscan: props.overscan ?? 10,
+    // 行が追加・削除・移動されたときに正しく再計算されるようにする
+    getItemKey: React.useCallback((index: number) => {
+      return rowModel.rows[index].id
+    }, [rowModel.rows]),
   })
   const virtualItems = rowVirtualizer.getVirtualItems()
   const tbodyTrRef = React.useCallback((node: HTMLTableRowElement) => {
@@ -83,9 +86,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
   // 座標計算関数
   const getPixel = useGetPixel(
     visibleLeafColumns,
-    Array.isArray(props.rows)
-      ? props.rows.length
-      : props.rows.array.length,
+    props.data.length,
     virtualItems,
     rowVirtualizer,
     totalHeaderHeight,
@@ -147,6 +148,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
       return rows
     },
     selectRow,
+    forceUpdate,
   }))
 
   //#endregion 独自機能
@@ -268,7 +270,12 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
             const rowOriginal = getRowObject(row.index)
             return (
               <tr
-                key={row.id}
+                // virtualRow.key はデータのID、
+                // virtualRow.index は表示範囲外も含めたデータ全体内での配列内の位置。
+                // key に index を含めない場合、先頭に行挿入などが行われて既存行の index がずれた際に、
+                // 画面上で行が増殖して見えたり重なったりする描画崩れが発生する。
+                key={`${virtualRow.key}::${virtualRow.index}`}
+
                 data-index={virtualRow.index} // data-index は TanStack Virtual の予約語
                 ref={tbodyTrRef} // 動的行高さを測定
                 className={`flex absolute w-full ${props.getRowClassName?.(rowOriginal) ?? ''}`}
