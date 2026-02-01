@@ -281,7 +281,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
             return (
               <tr
                 key={row.id}
-                data-index={virtualRow.index} // 動的行高さ測定に必要
+                data-index={virtualRow.index} // data-index は TanStack Virtual の予約語
                 ref={tbodyTrRef} // 動的行高さを測定
                 className={`flex absolute w-full ${props.getRowClassName?.(rowOriginal) ?? ''}`}
                 style={{ top: `${virtualRow.start}px` }}
@@ -293,7 +293,6 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
                   const cellIsReadOnly = checkIfCellReadOnly(cell, props.isReadOnly, rowOriginal)
 
                   let dataColumnClassName = 'flex outline-none select-none'
-                  if (!cellMeta.original?.wrap) dataColumnClassName += ' truncate'
 
                   if (!cellIsReadOnly) {
                     dataColumnClassName += ` bg-white`
@@ -318,7 +317,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
                       className={dataColumnClassName}
                       style={{
                         width: cell.column.getSize(),
-                        minHeight: virtualRow.size,
+                        minHeight: ESTIMATED_ROW_HEIGHT,
                         left: cellMeta.isFixed ? `${cell.column.getStart()}px` : undefined,
                       }}
                     />
@@ -421,8 +420,8 @@ const DataCell = React.memo<{
 
   return (
     <td
-      data-row-index={cell.row.index}
-      data-col-index={cell.column.getIndex()}
+      data-eg2-row-index={cell.row.index}
+      data-eg2-col-index={cell.column.getIndex()}
       className={className}
       style={style}
     >

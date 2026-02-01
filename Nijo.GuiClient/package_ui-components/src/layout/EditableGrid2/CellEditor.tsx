@@ -58,7 +58,7 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
   // -----------------------------------
 
   // 編集確定
-  const commitEditing = (value?: string) => {
+  const commitEditing = () => {
     if (edittingCell === null) return;
 
     const columnMeta = edittingCell.column.columnDef.meta as ColumnMetadataInternal<TRow>
@@ -66,7 +66,7 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
       columnMeta.original.setValueFromEditor({
         rowIndex: edittingCell.row.index,
         row: getRowObject(edittingCell.row.index),
-        value: value ?? editorTextareaRef.current?.getCurrentValue() ?? '',
+        value: editorTextareaRef.current?.getCurrentValue() ?? '',
       })
     }
 

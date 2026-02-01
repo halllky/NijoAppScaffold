@@ -184,7 +184,6 @@ function useGridHelpers(
     options?: Partial<EG2.EditableGrid2LeafColumn<TestRow>> & {
       format?: (value: any) => string
       parse?: (value: string) => any
-      wrap?: boolean
     }
   ): EG2.EditableGrid2LeafColumn<TestRow> => {
     return {

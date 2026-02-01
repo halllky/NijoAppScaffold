@@ -324,8 +324,8 @@ function getHelper<TRow>(
       if (!td) return null
 
       // 属性名は EditableGrid2.tsx で設定しているものと一致させる必要がある
-      const rowIndex = Number(td.getAttribute('data-row-index'))
-      const colIndex = Number(td.getAttribute('data-col-index'))
+      const rowIndex = Number(td.getAttribute('data-eg2-row-index'))
+      const colIndex = Number(td.getAttribute('data-eg2-col-index'))
 
       if (isNaN(rowIndex) || isNaN(colIndex)) return null
 
