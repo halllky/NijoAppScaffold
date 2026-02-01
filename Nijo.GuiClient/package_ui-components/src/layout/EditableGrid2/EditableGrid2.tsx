@@ -242,36 +242,19 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
           {headerGroups.map((headerGroup, headerGroupIndex) => (
             <tr key={headerGroup.id} className="flex w-full">
 
-              {headerGroup.headers.map(header => {
-                const headerMeta = header.column.columnDef.meta as ColumnMetadataInternal<TRow>
-
-                // 列グループの有無が混在しているテーブルにおいて、このheaderがグループでない列か否か
-                const isNonGroupedUpperHeader = hasHeaderGroup
-                  && !headerMeta?.isGroupedColumn
-                  && headerGroupIndex === 0
-                const isNonGroupedLowerHeader = hasHeaderGroup
-                  && !headerMeta?.isGroupedColumn
-                  && headerGroupIndex === 1
-
-                let className = 'flex bg-gray-100 relative text-left select-none border-b border-r border-gray-300'
-                if (headerMeta.isFixed) className += ' sticky z-10'
-                if (isNonGroupedUpperHeader) className += ' border-b-transparent'
-
-                return (
-                  <HeaderCell
-                    key={header.id}
-                    header={header}
-                    className={className}
-                    style={{
-                      width: header.getSize(),
-                      height: ESTIMATED_ROW_HEIGHT,
-                      left: headerMeta.isFixed ? `${header.getStart()}px` : undefined,
-                    }}
-                    allChecked={table.getIsAllRowsSelected()}
-                    isNonGroupedLowerHeader={isNonGroupedLowerHeader}
-                  />
-                )
-              })}
+              {headerGroup.headers.map(header => (
+                <MemorizedTH
+                  key={header.id}
+                  header={header}
+                  headerGroupIndex={headerGroupIndex}
+                  headerMeta={header.column.columnDef.meta as ColumnMetadataInternal<TRow>}
+                  hasHeaderGroup={hasHeaderGroup}
+                  size={header.getSize()}
+                  height={ESTIMATED_ROW_HEIGHT}
+                  start={header.getStart()}
+                  allChecked={table.getIsAllRowsSelected()}
+                />
+              ))}
             </tr>
           ))}
         </thead>
@@ -291,43 +274,20 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
                 className={`flex absolute w-full ${props.getRowClassName?.(rowOriginal) ?? ''}`}
                 style={{ top: `${virtualRow.start}px` }}
               >
-                {row.getVisibleCells().map(cell => {
-                  const cellMeta = cell.column.columnDef.meta as ColumnMetadataInternal<TRow>
-
-                  // 読み取り専用判定
-                  const cellIsReadOnly = checkIfCellReadOnly(cell, props.isReadOnly, rowOriginal)
-
-                  let dataColumnClassName = 'flex outline-none select-none'
-
-                  if (!cellIsReadOnly) {
-                    dataColumnClassName += ` bg-white`
-                  } else if (cellMeta.isFixed) {
-                    dataColumnClassName += ' bg-gray-200'
-                  }
-
-                  if (cellMeta.isRowCheckBox || cell.column.getIndex() === lastFixedIndex) {
-                    dataColumnClassName += ` border-r border-gray-300`
-                  }
-
-                  // z-indexを明示的に指定して SelectedRange(unfixed) より手前に、ヘッダより奥に来るようにする
-                  if (cellMeta.isFixed) dataColumnClassName += ` sticky z-10`
-
-                  return (
-                    <DataCell
-                      key={cell.id}
-                      cell={cell}
-                      rowOriginal={rowOriginal}
-                      isReadOnly={cellIsReadOnly}
-                      isChecked={cell.row.getIsSelected()}
-                      className={dataColumnClassName}
-                      style={{
-                        width: cell.column.getSize(),
-                        minHeight: ESTIMATED_ROW_HEIGHT,
-                        left: cellMeta.isFixed ? `${cell.column.getStart()}px` : undefined,
-                      }}
-                    />
-                  )
-                })}
+                {row.getVisibleCells().map(cell => (
+                  <MemorizedTD
+                    key={cell.id}
+                    cell={cell}
+                    cellMeta={cell.column.columnDef.meta as ColumnMetadataInternal<TRow>}
+                    rowOriginal={rowOriginal}
+                    isReadOnly={checkIfCellReadOnly(cell, props.isReadOnly, rowOriginal)}
+                    isChecked={cell.row.getIsSelected()}
+                    isLastFixedColumn={cell.column.getIndex() === lastFixedIndex}
+                    size={cell.column.getSize()}
+                    minHeight={ESTIMATED_ROW_HEIGHT}
+                    start={cell.column.getStart()}
+                  />
+                ))}
               </tr>
             )
           })}
@@ -366,18 +326,36 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
 /**
  * 列ヘッダ
  */
-const HeaderCell = React.memo<{
+const MemorizedTH = React.memo<{
   header: TanStack.Header<any, any>
-  className: string
-  style: React.CSSProperties
-  /** グルーピングされた列が含まれるグリッドにおいて、この列がグルーピングされていない下段のヘッダかどうか */
-  isNonGroupedLowerHeader: boolean
+  headerMeta: ColumnMetadataInternal<any>
+  headerGroupIndex: number
+  hasHeaderGroup: boolean
+  size: number
+  height: number
+  start: number
   /** レンダリングのトリガーにのみ使用 */
   allChecked: unknown
-}>(function MemorizedTH({ header, className, style, isNonGroupedLowerHeader }) {
+}>(function MemorizedTH({ header, headerMeta, hasHeaderGroup, headerGroupIndex, size, height, start }) {
+
+  // 列グループの有無が混在しているテーブルにおいて、このheaderがグループでない列か否か
+  const isNonGroupedUpperHeader = hasHeaderGroup
+    && !headerMeta?.isGroupedColumn
+    && headerGroupIndex === 0
+  const isNonGroupedLowerHeader = hasHeaderGroup
+    && !headerMeta?.isGroupedColumn
+    && headerGroupIndex === 1
+
+  let className = 'flex bg-gray-100 relative text-left select-none border-b border-r border-gray-300'
+  if (headerMeta.isFixed) className += ' sticky z-10'
+  if (isNonGroupedUpperHeader) className += ' border-b-transparent'
 
   return (
-    <th className={className} style={style}>
+    <th className={className} style={{
+      width: size,
+      height,
+      left: headerMeta.isFixed ? `${start}px` : undefined,
+    }}>
       {!isNonGroupedLowerHeader && (
         TanStack.flexRender(header.column.columnDef.header, header.getContext())
       )}
@@ -394,15 +372,18 @@ const HeaderCell = React.memo<{
   )
 
 }, (prev, next) => {
-  // 再レンダリングを抑制する条件（trueを返すと再レンダリングしない）
-  return (
-    prev.header.id === next.header.id &&
-    prev.style.width === next.style.width &&
-    prev.style.left === next.style.left &&
-    prev.className === next.className && // isResizing 等によるクラス変更検知
-    prev.header.column.columnDef === next.header.column.columnDef &&
-    prev.allChecked === next.allChecked // チェックボックス列の全選択状態変化検知
-  )
+  // 再レンダリングを抑制する条件（trueを返すと再レンダリングしない）。
+  // headerはレンダリングの度に新しいオブジェクトが渡されるため比較に使用しない
+  const { header: prevHeader, ...prevRest } = prev
+  const { header: nextHeader, ...nextRest } = next
+
+  // それ以外
+  for (const key in prevRest) {
+    const p = prevRest[key as keyof typeof prevRest]
+    const n = nextRest[key as keyof typeof nextRest]
+    if (!Object.is(p, n)) return false
+  }
+  return true
 })
 
 //#endregion メモ化ヘッダ
@@ -412,39 +393,65 @@ const HeaderCell = React.memo<{
 /**
  * テーブルボディセル
  */
-const DataCell = React.memo<{
+const MemorizedTD = React.memo<{
   cell: TanStack.Cell<any, any>
-  rowOriginal: any
-  className: string
-  style: React.CSSProperties
-  /** レンダリングのトリガーにのみ使用 */
-  isReadOnly: unknown
+  cellMeta: ColumnMetadataInternal<any>
+  rowOriginal: unknown
+  isReadOnly: boolean
+  isLastFixedColumn: boolean
+  size: number
+  minHeight: number
+  start: number
   /** レンダリングのトリガーにのみ使用 */
   isChecked: unknown
-}>(function MemorizedTD({ cell, className, style }) {
+}>(function MemorizedTD({ cell, cellMeta, size, minHeight, start, isReadOnly, isLastFixedColumn }) {
+
+  let className = 'flex outline-none select-none'
+
+  if (!isReadOnly) {
+    className += ` bg-white`
+  } else if (cellMeta.isFixed) {
+    className += ' bg-gray-200'
+  }
+
+  if (cellMeta.isRowCheckBox || isLastFixedColumn) {
+    className += ` border-r border-gray-300`
+  }
+
+  // z-indexを明示的に指定して SelectedRange(unfixed) より手前に、ヘッダより奥に来るようにする
+  if (cellMeta.isFixed) className += ` sticky z-10`
 
   return (
     <td
       data-eg2-row-index={cell.row.index}
       data-eg2-col-index={cell.column.getIndex()}
       className={className}
-      style={style}
+      style={{
+        width: size,
+        minHeight,
+        left: cellMeta.isFixed ? `${start}px` : undefined,
+      }}
     >
       {TanStack.flexRender(cell.column.columnDef.cell, cell.getContext())}
     </td>
   )
 
 }, (prev, next) => {
-  // 再レンダリングを抑制する条件（trueを返すと再レンダリングしない）
-  return (
-    prev.rowOriginal === next.rowOriginal && // 行データの参照比較 (最重要)
-    prev.style.width === next.style.width && // 列幅
-    prev.style.minHeight === next.style.minHeight && // 行高さ
-    prev.style.left === next.style.left && // 固定列位置
-    prev.isReadOnly === next.isReadOnly && // ReadOnly状態
-    prev.isChecked === next.isChecked && // チェック状態
-    prev.className === next.className // その他のスタイル変更
-  )
+  // 再レンダリングを抑制する条件（trueを返すと再レンダリングしない）。
+  // cell はレンダリングの度に新しいオブジェクトが渡されるため比較に使用しない
+  const { cell: prevCell, rowOriginal: prevRowOriginal, ...prevRest } = prev
+  const { cell: nextCell, rowOriginal: nextRowOriginal, ...nextRest } = next
+
+  // オリジナルの行オブジェクトは参照比較を行う
+  if (prevRowOriginal !== nextRowOriginal) return false
+
+  // それ以外
+  for (const key in prevRest) {
+    const p = prevRest[key as keyof typeof prevRest]
+    const n = nextRest[key as keyof typeof nextRest]
+    if (!Object.is(p, n)) return false
+  }
+  return true
 })
 
 //#endregion メモ化ボディ
