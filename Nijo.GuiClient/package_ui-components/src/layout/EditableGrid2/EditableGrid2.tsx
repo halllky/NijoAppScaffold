@@ -38,6 +38,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
   const [columnSizing, setColumnSizing] = React.useState<TanStack.ColumnSizingState>({})
   const table = TanStack.useReactTable({
     data: props.rows,
+    getRowId: props.getRowId,
     columns: tanstackColumns,
     columnResizeMode: 'onChange',
     onColumnSizingChange: setColumnSizing,

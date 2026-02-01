@@ -80,6 +80,7 @@ export default function () {
       <EG2.EditableGrid2
         ref={gridRef}
         rows={ufa.fields}
+        getRowId={row => row.rowId?.toString() ?? ''}
         getRowValue={getRowValue}
         columns={[() => [
           buttonCell(row => row.willBeDeleted ? "復元" : "削除", (row, rowIndex) => {

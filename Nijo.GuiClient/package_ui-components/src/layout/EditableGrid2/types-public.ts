@@ -8,6 +8,13 @@ import { GridCellEditorComponent } from "./types-internal"
 export type EditableGrid2Props<TRow> = {
   /** 行データの配列 */
   rows: TRow[]
+
+  /**
+   * 行を一意に識別するためのIDを取得する関数。
+   * 指定しない場合、配列のインデックスがIDとして使われるため、行削除時などに選択状態がずれる可能性があります。
+   */
+  getRowId?: (originalRow: TRow, index: number, parent?: TanStack.Row<TRow>) => string
+
   /**
    * 指定したインデックスの最新の行データを取得する関数。
    * これを指定すると、セル描画時や編集開始時に row.original の代わりにこの関数から取得した値が使用される。
