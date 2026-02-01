@@ -3,6 +3,7 @@ import * as TanStack from "@tanstack/react-table"
 import { CellEditorTextareaRef, checkIfCellReadOnly, ColumnMetadataInternal, GridCellEditorComponent } from "./types-internal"
 import { CellPosition } from "./useSelection"
 import { GetPixelFunction } from "./useGetPixel"
+import { RowAccessor } from "./useRowAccessor"
 
 export type CellEditorProps<TRow> = {
   /** useSelection で管理されているフォーカスセル */
@@ -18,7 +19,7 @@ export type CellEditorProps<TRow> = {
   /** 座標計算関数 */
   getPixel: GetPixelFunction
   /** 最新の行データを取得する関数 */
-  getRowValue?: (index: number) => TRow
+  getRowObject: RowAccessor<TRow>
 }
 
 export type CellEditorRef = {
@@ -42,7 +43,7 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
   gridEditorComponent,
   gridIsReadOnly,
   getPixel,
-  getRowValue,
+  getRowObject,
 }: CellEditorProps<TRow>, ref: React.ForwardedRef<CellEditorRef>) {
 
   const editorTextareaRef = React.useRef<CellEditorTextareaRef>(null)
@@ -60,7 +61,7 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
     if (columnMeta.original?.setValueFromEditor) {
       columnMeta.original.setValueFromEditor({
         rowIndex: edittingCell.row.index,
-        row: getRowValue ? getRowValue(edittingCell.row.index) : edittingCell.row.original,
+        row: getRowObject(edittingCell.row.index),
         value: value ?? editorTextareaRef.current?.getCurrentValue() ?? '',
       })
     }
@@ -75,7 +76,7 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
     // エディタの値を編集前の値に戻す
     if (edittingCell) {
       const columnMeta = edittingCell.column.columnDef.meta as ColumnMetadataInternal<TRow>
-      const rowOriginal = getRowValue ? getRowValue(edittingCell.row.index) : edittingCell.row.original
+      const rowOriginal = getRowObject(edittingCell.row.index)
       const value = columnMeta.original?.getValueForEditor
         ? columnMeta.original.getValueForEditor({ row: rowOriginal, rowIndex: edittingCell.row.index })
         : ''
@@ -158,7 +159,7 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
         ?.getVisibleCells()
         ?.[focusedCell.colIndex]
       if (cell) {
-        value = columnMeta.original.getValueForEditor({ row: cell.row.original, rowIndex: cell.row.index })
+        value = columnMeta.original.getValueForEditor({ row: getRowObject(cell.row.index), rowIndex: cell.row.index })
       }
     }
     // グリッドにフォーカスが当たった瞬間に確実にフォーカスさせるためsetTimeoutを挟む
@@ -181,10 +182,10 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
       const columnMeta = cell.column.columnDef.meta as ColumnMetadataInternal<TRow>
       if (!columnMeta.original?.getValueForEditor) return;
 
-      const rowOriginal = getRowValue ? getRowValue(cell.row.index) : cell.row.original;
+      const rowOriginal = getRowObject(cell.row.index)
       if (checkIfCellReadOnly(cell, gridIsReadOnly, rowOriginal)) return;
 
-      const value = columnMeta.original.getValueForEditor({ row: cell.row.original, rowIndex: cell.row.index })
+      const value = columnMeta.original.getValueForEditor({ row: rowOriginal, rowIndex: cell.row.index })
       editorTextareaRef.current?.setValueAndSelectAll(value)
       setEdittingCell(cell)
       onEditingStateChanged(true)

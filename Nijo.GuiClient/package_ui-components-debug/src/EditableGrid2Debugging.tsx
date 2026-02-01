@@ -24,9 +24,7 @@ export default function () {
     setClearSelectionOnBlur(e.target.checked)
   }
 
-  const { reset, watch, control, setValue, getValues } = useForm<{ rows: TestRow[] }>()
-  const rows = watch("rows")
-    || []
+  const { control, setValue, getValues } = useForm<{ rows: TestRow[] }>()
 
   // 行データを安全に更新するヘルパー関数
   const ufa = useFieldArray({ name: "rows", control })
@@ -36,23 +34,19 @@ export default function () {
     ufaRef.current.update(index, update(ufaRef.current.fields[index]))
   }, [ufaRef])
 
-  const getRowValue = React.useCallback((index: number) => {
-    return getValues(`rows.${index}`)
-  }, [getValues])
-
-  React.useEffect(() => {
-    console.log('fields', ufa.fields)
-  }, [ufa.fields])
-  React.useEffect(() => {
-    console.log('rows: ', rows)
-  }, [watch("rows")])
-  React.useEffect(() => {
-    console.log('rows.0: ', rows[0])
-  }, [watch("rows.0")])
-  React.useEffect(() => {
-    console.log('rows.0.name: ', rows[0]?.name)
-    console.log(ufa.fields[0]?.id)
-  }, [watch("rows.0.name")])
+  // React.useEffect(() => {
+  //   console.log('fields', ufa.fields)
+  // }, [ufa.fields])
+  // React.useEffect(() => {
+  //   console.log('rows: ', rows)
+  // }, [watch("rows")])
+  // React.useEffect(() => {
+  //   console.log('rows.0: ', rows[0])
+  // }, [watch("rows.0")])
+  // React.useEffect(() => {
+  //   console.log('rows.0.name: ', rows[0]?.name)
+  //   console.log(ufa.fields[0]?.id)
+  // }, [watch("rows.0.name")])
 
   React.useEffect(() => {
     let rows: TestRow[]
@@ -72,16 +66,18 @@ export default function () {
         { rowId: 3, name: "商品C", price: "3000", date: "2024-03-01", comment: "コメントC", bool: true },
       ]
     }
-    reset({ rows })
+    ufa.replace(rows)
   }, [isLargeData])
 
   return (
     <div className="flex flex-col items-start">
       <EG2.EditableGrid2
         ref={gridRef}
-        rows={ufa.fields}
+        rows={{
+          array: ufa.fields,
+          getRowValue: index => getValues(`rows.${index}`),
+        }}
         getRowId={row => row.rowId?.toString() ?? ''}
-        getRowValue={getRowValue}
         columns={[() => [
           buttonCell(row => row.willBeDeleted ? "復元" : "削除", (row, rowIndex) => {
             updateRow(rowIndex, r => ({ ...r, willBeDeleted: !r.willBeDeleted }))
@@ -123,7 +119,7 @@ export default function () {
       </span>
       <div>
         <button type="button" onClick={() => {
-          if (rows.length > 0) {
+          if (ufa.fields.length > 0) {
             setValue(`rows.0.comment`, `コメントをプログラムから更新しました: ${new Date().toLocaleString()}`)
           }
         }} className="px-2 py-1 text-white bg-blue-600 border border-white cursor-pointer">

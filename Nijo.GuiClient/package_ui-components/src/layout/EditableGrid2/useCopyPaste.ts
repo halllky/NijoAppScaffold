@@ -5,6 +5,7 @@ import { EditableGrid2Props } from "./types-public";
 import { CellSelectionRange } from "./useSelection";
 import { ColumnMetadataInternal } from "./types-internal";
 import { toTsvString, fromTsvString } from "../../util";
+import { RowAccessor } from "./useRowAccessor";
 
 interface UseCopyPasteParams<TRow> {
   table: TanStack.Table<TRow>;
@@ -15,6 +16,7 @@ interface UseCopyPasteParams<TRow> {
    */
   onRangeUpdated?: (range: CellSelectionRange) => void;
   isEditing: boolean;
+  getRowObject: RowAccessor<TRow>;
   props: EditableGrid2Props<TRow>;
 }
 
@@ -24,14 +26,18 @@ export const useCopyPaste = <TRow,>({
   selectedRange,
   onRangeUpdated,
   isEditing,
+  getRowObject,
   props,
 }: UseCopyPasteParams<TRow>) => {
+
+  const totalRowCount = Array.isArray(props.rows)
+    ? props.rows.length
+    : props.rows.array.length;
 
   const handleCopy: React.ClipboardEventHandler = useEvent(e => {
     if (isEditing || !selectedRange) return;
 
-    const rows = props.rows;
-    if (rows.length === 0) return;
+    if (totalRowCount === 0) return;
 
     e.preventDefault();
     e.stopPropagation();
@@ -44,7 +50,7 @@ export const useCopyPaste = <TRow,>({
     for (let r = selectedRange.startRow; r <= selectedRange.endRow; r++) {
       const rowData: string[] = [];
       // 行データの存在チェック
-      if (r >= rows.length) break;
+      if (r >= totalRowCount) break;
 
       for (let c = selectedRange.startCol; c <= selectedRange.endCol; c++) {
         // 列定義の存在チェック
@@ -56,7 +62,7 @@ export const useCopyPaste = <TRow,>({
 
         let cellValue = '';
         if (colDef && colDef.getValueForEditor) {
-          const row = props.getRowValue ? props.getRowValue(r) : rows[r];
+          const row = getRowObject(r);
           if (row) {
             cellValue = colDef.getValueForEditor({ row, rowIndex: r });
           }
@@ -140,12 +146,11 @@ export const useCopyPaste = <TRow,>({
 
     const rowCount = endRow - startRow + 1;
     const colCount = endCol - startCol + 1;
-    const rows = props.rows;
     const columns = table.getVisibleLeafColumns();
 
     for (let r = 0; r < rowCount; r++) {
       const targetRowIndex = startRow + r;
-      if (targetRowIndex >= rows.length) break;
+      if (targetRowIndex >= totalRowCount) break;
 
       const pasteRowIdx = r % values.length;
       const rowInputData = values[pasteRowIdx];
@@ -164,7 +169,7 @@ export const useCopyPaste = <TRow,>({
         // 必要な関数が定義されていないならスキップ
         if (!colDef || !colDef.setValueFromEditor) continue;
 
-        const row = props.getRowValue ? props.getRowValue(targetRowIndex) : rows[targetRowIndex];
+        const row = getRowObject(targetRowIndex);
 
         // 読み取り専用ならスキップ
         if (checkIfCellReadOnlyForPaste(props.isReadOnly, row, targetRowIndex, meta)) continue;

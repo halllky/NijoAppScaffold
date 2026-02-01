@@ -3,11 +3,15 @@ import * as TanStack from "@tanstack/react-table"
 import { EditableGrid2GroupColumn, EditableGrid2LeafColumn, EditableGrid2Props } from "./types-public"
 import { createRowCheckBoxColumn } from "./RowCheckBox"
 import { ColumnMetadataInternal, DEFAULT_COLUMN_WIDTH } from "./types-internal"
+import { RowAccessor } from "./useRowAccessor"
 
 /**
  * EditableGrid2 の列定義を TanStack Table の列定義に変換するカスタムフック
  */
-export function useTanstackColumns<TRow>(props: EditableGrid2Props<TRow>) {
+export function useTanstackColumns<TRow>(
+  props: EditableGrid2Props<TRow>,
+  getRowObject: RowAccessor<TRow>
+) {
 
   const getColumnDefs = props.columns[0]
   const dependencyList = props.columns[1]
@@ -57,7 +61,7 @@ export function useTanstackColumns<TRow>(props: EditableGrid2Props<TRow>) {
     // 最終的な TanStack Table の列定義を構築
     const tanstackColumns: TanStack.ColumnDef<TRow>[] = []
     if (props.showCheckBox) {
-      tanstackColumns.push(createRowCheckBoxColumn(props.showCheckBox, columnHelper))
+      tanstackColumns.push(createRowCheckBoxColumn(props.showCheckBox, columnHelper, getRowObject))
     }
     let currentGroup: EditableGrid2GroupColumn<TRow> | undefined = undefined
     for (const item of withTanstackLeafColumn) {

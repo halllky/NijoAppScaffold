@@ -36,20 +36,23 @@ export function useSelection<TRow>(
   scrollToCell: ScrollToCellFunction,
 ) {
 
+  const rowCount = Array.isArray(props.rows)
+    ? props.rows.length
+    : props.rows.array.length
+
   //#region 状態
 
   // アンカーセル。範囲選択の起点。
   // Shiftキーを押しながら矢印キーやマウスクリックで選択範囲を拡張したとき、
   // このセルは固定されたまま、選択範囲の反対側のセルが移動する。
   const [anchorCell, setAnchorCell] = React.useState<CellPosition | null>(null)
-  const setAnchorCellWithClamp = useClampSetter(setAnchorCell, props.rows.length, visibleLeafColumns.length, props.showCheckBox)
+  const setAnchorCellWithClamp = useClampSetter(setAnchorCell, rowCount, visibleLeafColumns.length, props.showCheckBox)
 
   // 選択範囲を構成する2点のセルのうちアンカーセルの反対側。
   // Shiftキーを押しながら矢印キーやマウスクリックで選択範囲を拡張したとき、
   // こちら側のセルが移動する。
   const [focusedCell, setFocusedCell] = React.useState<CellPosition | null>(null)
-  const setFocusedCellWithClamp = useClampSetter(setFocusedCell, props.rows.length, visibleLeafColumns.length, props.showCheckBox)
-
+  const setFocusedCellWithClamp = useClampSetter(setFocusedCell, rowCount, visibleLeafColumns.length, props.showCheckBox)
   // マウスダウン中かどうか。
   // マウスダウンによってフォーカスが当たった場合、フォーカスイベントによる選択セルの上書きを防ぐために使用する。
   const isMouseDownRef = React.useRef(false)
@@ -91,7 +94,6 @@ export function useSelection<TRow>(
     e.preventDefault()
 
     let { rowIndex, colIndex } = focusedCell
-    const rowCount = props.rows.length
     const colCount = visibleLeafColumns.length
     const showCheckBox = props.showCheckBox === true || typeof props.showCheckBox === 'function'
     const minColIndex = showCheckBox ? 1 : 0
@@ -220,10 +222,7 @@ export function useSelection<TRow>(
   React.useEffect(() => {
     setAnchorCellWithClamp(anchorCell)
     setFocusedCellWithClamp(focusedCell)
-  }, [
-    props.rows.length,
-    visibleLeafColumns.length,
-  ])
+  }, [rowCount, visibleLeafColumns.length])
 
   // キー操作によるセル移動を検知して移動後のセルが見えるように自動スクロール
   React.useEffect(() => {

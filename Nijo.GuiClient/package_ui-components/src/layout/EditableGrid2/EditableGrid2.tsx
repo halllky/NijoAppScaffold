@@ -12,6 +12,7 @@ import { CellEditor, CellEditorRef } from "./CellEditor"
 import { useImeOpened } from "./useImeOpened"
 import { useOnKeyDownToStartEditing } from "./useOnKeyDownToStartEditing"
 import { useCopyPaste } from "./useCopyPaste"
+import { useRowAccessor } from "./useRowAccessor"
 
 /**
  * EditableGrid2 コンポーネント
@@ -23,6 +24,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
 
   const tableContainerRef = React.useRef<HTMLDivElement>(null)
   const [isGridActive, setIsGridActive] = React.useState(false)
+  const getRowObject = useRowAccessor(props.rows)
 
   //#region Tanstack table
 
@@ -32,12 +34,14 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
     columnVisibility,
     hasHeaderGroup,
     lastFixedIndex,
-  } = useTanstackColumns(props)
+  } = useTanstackColumns(props, getRowObject)
 
   // TanStack Table のテーブルインスタンス
   const [columnSizing, setColumnSizing] = React.useState<TanStack.ColumnSizingState>({})
   const table = TanStack.useReactTable({
-    data: props.rows,
+    data: Array.isArray(props.rows)
+      ? props.rows
+      : (props.rows.array as TRow[]), // tableインスタンスが row.original にアクセスすることはないためasで回避
     getRowId: props.getRowId,
     columns: tanstackColumns,
     columnResizeMode: 'onChange',
@@ -79,7 +83,9 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
   // 座標計算関数
   const getPixel = useGetPixel(
     visibleLeafColumns,
-    props.rows.length,
+    Array.isArray(props.rows)
+      ? props.rows.length
+      : props.rows.array.length,
     virtualItems,
     rowVirtualizer,
     totalHeaderHeight,
@@ -118,6 +124,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
     selectedRange,
     onRangeUpdated: setSelectionRange,
     isEditing,
+    getRowObject,
     props,
   })
 
@@ -134,7 +141,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
 
       const rows: { rowIndex: number, row: TRow }[] = []
       for (let r = selectedRange.startRow; r <= selectedRange.endRow; r++) {
-        const row = props.rows[r]
+        const row = getRowObject(r)
         if (row) rows.push({ rowIndex: r, row })
       }
       return rows
@@ -208,7 +215,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
         gridEditorComponent={props.editor}
         gridIsReadOnly={props.isReadOnly}
         getPixel={getPixel}
-        getRowValue={props.getRowValue}
+        getRowObject={getRowObject}
       />
 
       {/* 固定列用の選択範囲レイヤー (tableより手前に置くことで、sticky位置の基準をコンテナ左端にする) */}
@@ -266,7 +273,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
           {virtualItems.map(virtualRow => {
             const row = rowModel.rows[virtualRow.index];
             if (!row) return null;
-            const rowOriginal = props.getRowValue ? props.getRowValue(row.index) : row.original
+            const rowOriginal = getRowObject(row.index)
             return (
               <tr
                 key={row.id}

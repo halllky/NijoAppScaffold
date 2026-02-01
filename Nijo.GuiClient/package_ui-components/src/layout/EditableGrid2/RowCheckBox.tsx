@@ -1,6 +1,7 @@
 import * as TanStack from "@tanstack/react-table"
 import { ColumnMetadataInternal } from "./types-internal"
 import { EditableGrid2Props } from "./types-public"
+import { RowAccessor } from "./useRowAccessor"
 
 /** 行ヘッダー列のID */
 export const ROW_HEADER_COLUMN_ID = "row-header"
@@ -10,7 +11,8 @@ export const ROW_HEADER_COLUMN_ID = "row-header"
  */
 export function createRowCheckBoxColumn<TRow>(
   propsShowCheckBox: EditableGrid2Props<TRow>["showCheckBox"],
-  columnHelper: TanStack.ColumnHelper<TRow>
+  columnHelper: TanStack.ColumnHelper<TRow>,
+  getRowObject: RowAccessor<TRow>,
 ): TanStack.ColumnDef<TRow, unknown> {
 
   return columnHelper.display({
@@ -46,7 +48,7 @@ export function createRowCheckBoxColumn<TRow>(
     cell: ctx => {
       const showCheckBox = propsShowCheckBox === true
         || typeof propsShowCheckBox === 'function'
-        && propsShowCheckBox(ctx.row.original, ctx.row.index)
+        && propsShowCheckBox(getRowObject(ctx.row.index), ctx.row.index)
 
       return (
         <label
