@@ -17,16 +17,6 @@ export type ColumnMetadataInternal<TRow> = {
   isRowCheckBox: boolean
 }
 
-/** セル編集エディタのコンポーネント */
-export type GridCellEditorComponent = React.ForwardRefExoticComponent<React.RefAttributes<CellEditorTextareaRef>>
-
-/** テキストエリアのref */
-export type CellEditorTextareaRef = {
-  focus: (options?: FocusOptions) => void
-  getCurrentValue: () => string
-  setValueAndSelectAll: (value: string) => void
-}
-
 /** 推定行高さ */
 export const ESTIMATED_ROW_HEIGHT = 24
 /** 行ヘッダー列の幅 */

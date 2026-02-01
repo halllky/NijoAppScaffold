@@ -88,7 +88,6 @@ export default function () {
           textCell("価格", "price", { defaultWidth: 120 }),
           {
             renderHeader: () => <span className="px-1 text-gray-700">グルーピングされた列</span>,
-            renderBody: () => "未使用のはず",
             columns: [
               textCell("日付", "date", { defaultWidth: 140 }),
               textCell("フラグ", "bool", { defaultWidth: 80, format: v => v ? "✔" : "", parse: v => v === "✔" }),

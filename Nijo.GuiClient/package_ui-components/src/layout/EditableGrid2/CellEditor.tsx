@@ -1,6 +1,7 @@
 import React from "react"
 import * as TanStack from "@tanstack/react-table"
-import { CellEditorTextareaRef, checkIfCellReadOnly, ColumnMetadataInternal, GridCellEditorComponent } from "./types-internal"
+import { EditableGridCellEditor, EditableGridCellEditorRef } from "./types-public"
+import { checkIfCellReadOnly, ColumnMetadataInternal } from "./types-internal"
 import { CellPosition } from "./useSelection"
 import { GetPixelFunction } from "./useGetPixel"
 import { RowAccessor } from "./useRowAccessor"
@@ -13,7 +14,7 @@ export type CellEditorProps<TRow> = {
   /** 編集状態が変わったときに呼ばれるコールバック */
   onEditingStateChanged: (isEditing: boolean) => void
   /** グリッド全体のpropsで指定される標準コンポーネント */
-  gridEditorComponent?: GridCellEditorComponent
+  gridEditorComponent?: EditableGridCellEditor
   /** グリッド全体のpropsで指定される読み取り専用条件 */
   gridIsReadOnly: boolean | ((row: TRow, rowIndex: number) => boolean) | undefined
   /** 座標計算関数 */
@@ -50,9 +51,9 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
   getRowObject,
 }: CellEditorProps<TRow>, ref: React.ForwardedRef<CellEditorRef>) {
 
-  const editorTextareaRef = React.useRef<CellEditorTextareaRef>(null)
+  const editorTextareaRef = React.useRef<EditableGridCellEditorRef>(null)
 
-  const [editorComponent, setEditorComponent] = React.useState<GridCellEditorComponent>(gridEditorComponent ?? DefaultEditor)
+  const [editorComponent, setEditorComponent] = React.useState<EditableGridCellEditor>(gridEditorComponent ?? DefaultEditor)
   const [edittingCell, setEdittingCell] = React.useState<TanStack.Cell<TRow, unknown> | null>(null)
 
   // -----------------------------------
@@ -111,8 +112,10 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
   }
 
   // エディタの外観
-  const containerStyle = React.useMemo((): React.CSSProperties => {
+  const editorStyle = React.useMemo((): React.CSSProperties => {
     const style: React.CSSProperties = {
+      position: 'absolute',
+      zIndex: 30, // 固定列ヘッダよりも手前
       // クイック編集のためCellEditor自体は常に存在し続けるが、セル編集モードでないときは見えないようにする
       opacity: edittingCell ? undefined : 0,
       pointerEvents: edittingCell ? undefined : 'none',
@@ -200,25 +203,18 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
     },
   }))
 
-  return (
-    <label
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-      className="absolute flex outline-none z-30"
-      style={containerStyle}
-    >
-      {React.createElement(editorComponent, {
-        ref: editorTextareaRef,
-      })}
-    </label>
-  )
+  return React.createElement(editorComponent, {
+    onKeyDown: handleKeyDown,
+    style: editorStyle,
+    ref: editorTextareaRef,
+  })
 }) as (<TRow>(props: CellEditorProps<TRow> & { ref?: React.ForwardedRef<CellEditorRef> }) => React.ReactNode)
 
 
 /**
  * エディタコンポーネントが指定されていない場合のデフォルトのエディタ
  */
-const DefaultEditor: GridCellEditorComponent = React.forwardRef(function DefaultEditor({ }, ref) {
+const DefaultEditor: EditableGridCellEditor = React.forwardRef(function DefaultEditor({ style, onKeyDown }, ref) {
 
   const [value, setValue] = React.useState<string>('')
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
@@ -228,7 +224,6 @@ const DefaultEditor: GridCellEditorComponent = React.forwardRef(function Default
   }
 
   React.useImperativeHandle(ref, () => ({
-    focus: options => textareaRef.current?.focus(options),
     blur: () => textareaRef.current?.blur(),
     getCurrentValue: () => textareaRef.current?.value ?? '',
     setValueAndSelectAll: (value: string) => {
@@ -242,7 +237,9 @@ const DefaultEditor: GridCellEditorComponent = React.forwardRef(function Default
       ref={textareaRef}
       value={value ?? ''}
       onChange={handleChange}
-      className="w-full h-full px-[3px] resize-none field-sizing-content outline-none border border-black bg-white"
+      onKeyDown={onKeyDown}
+      className="px-[3px] resize-none field-sizing-content outline-none border border-black bg-white"
+      style={style}
     />
   )
 })
