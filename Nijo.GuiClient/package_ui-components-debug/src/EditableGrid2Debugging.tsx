@@ -1,11 +1,9 @@
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
 import React from "react"
-import { useFieldArray, useForm, Control, useWatch, UseFormGetValues, UseFormSetValue, Path } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { UUID } from "uuidjs"
 
 export default function () {
-
-  const gridRef = React.useRef<EG2.EditableGrid2Ref<TestRow>>(null)
 
   // 商品名まで固定するかどうか
   const [fixed3Cols, setFixed2Cols] = React.useState(true)
@@ -26,29 +24,34 @@ export default function () {
   }
 
   const { control, setValue, getValues } = useForm<{ rows: TestRow[] }>()
-  const { textCell, buttonCell } = useGridHelpers(control, getValues, setValue)
 
-  // 行データを安全に更新するヘルパー関数
-  const { fields, append, insert, remove, replace } = useFieldArray({ name: "rows", control })
-  const updateRow = React.useCallback((index: number, update: (current: TestRow) => TestRow) => {
-    const current = getValues(`rows.${index}`)
-    setValue(`rows.${index}`, update(current))
-    gridRef.current?.forceUpdate()
-  }, [getValues, setValue])
+  // useFieldArrayForEditableGrid2 フックの使用
+  const {
+    fieldArrayReturn: { fields, append, insert, remove, replace },
+    editableGrid2Props,
+    gridRef,
+  } = EG2.useFieldArrayForEditableGrid2({
+    name: "rows", control, getValues, setValue
+  }, (helper) => [
+    helper.buttonCell(
+      row => row.willBeDeleted ? "復元" : "無効化",
+      (row, rowIndex) => setValue(`rows.${rowIndex}.willBeDeleted`, !row.willBeDeleted),
+      { isFixed: fixed3Cols, disableResizing: true, defaultWidth: 56 }
+    ),
 
-  // React.useEffect(() => {
-  //   console.log('fields', fields)
-  // }, [fields])
-  // React.useEffect(() => {
-  //   console.log('rows: ', rows)
-  // }, [watch("rows")])
-  // React.useEffect(() => {
-  //   console.log('rows.0: ', rows[0])
-  // }, [watch("rows.0")])
-  // React.useEffect(() => {
-  //   console.log('rows.0.name: ', rows[0]?.name)
-  //   console.log(fields[0]?.id)
-  // }, [watch("rows.0.name")])
+    helper.textCell("ID", "rowId", { defaultWidth: 80, isReadOnly: true, isFixed: fixed3Cols }),
+    helper.textCell("商品名", "name", { isFixed: fixed3Cols }),
+    helper.textCell("価格", "price", { defaultWidth: 120 }),
+    {
+      renderHeader: () => <span className="px-1 text-gray-700">グルーピングされた列</span>,
+      columns: [
+        helper.textCell("日付", "date", { defaultWidth: 140 }),
+        helper.textCell("フラグ", "bool", { defaultWidth: 80, format: v => v ? "✔" : "", parse: v => v === "✔" }),
+      ],
+    },
+    helper.textCell("コメント", "comment", { defaultWidth: 320, wrap: true }),
+    helper.textCell("価格(同じ項目を複数回指定する例)", "price", { defaultWidth: 252 }),
+  ], [fixed3Cols])
 
   React.useEffect(() => {
     let rows: TestRow[]
@@ -74,29 +77,7 @@ export default function () {
   return (
     <div className="flex flex-col items-start">
       <EG2.EditableGrid2
-        ref={gridRef}
-        data={fields}
-        getLatestRowObject={index => getValues(`rows.${index}`)}
-        getRowId={row => row.rowId}
-        columns={[() => [
-          buttonCell(row => row.willBeDeleted ? "復元" : "削除", (row, rowIndex) => {
-            updateRow(rowIndex, r => ({ ...r, willBeDeleted: !r.willBeDeleted }))
-          }, { isFixed: fixed3Cols, disableResizing: true, defaultWidth: 40 }),
-
-          textCell("ID", "rowId", { defaultWidth: 80, isReadOnly: true, isFixed: fixed3Cols }),
-          textCell("商品名", "name", { isFixed: fixed3Cols }),
-          textCell("価格", "price", { defaultWidth: 120 }),
-          {
-            renderHeader: () => <span className="px-1 text-gray-700">グルーピングされた列</span>,
-            columns: [
-              textCell("日付", "date", { defaultWidth: 140 }),
-              textCell("フラグ", "bool", { defaultWidth: 80, format: v => v ? "✔" : "", parse: v => v === "✔" }),
-            ],
-          },
-          textCell("コメント", "comment", { defaultWidth: 320, wrap: true }),
-          textCell("価格(同じ項目を複数回指定する例)", "price", { defaultWidth: 252 }),
-        ], [fixed3Cols, updateRow, textCell, buttonCell]]}
-
+        {...editableGrid2Props}
         showCheckBox
         clearSelectionOnBlur={clearSelectionOnBlur}
         isReadOnly={row => row.willBeDeleted === true}
@@ -125,6 +106,8 @@ export default function () {
         <button type="button" onClick={() => {
           if (fields.length > 0) {
             setValue(`rows.0.comment`, `コメントをプログラムから更新しました: ${new Date().toLocaleString()}`)
+            // 外部からの更新後は再描画が必要
+            gridRef.current?.forceUpdate()
           }
         }} className="px-2 py-1 text-white bg-blue-600 border border-white cursor-pointer">
           先頭行のコメント列を更新
@@ -157,10 +140,6 @@ export default function () {
   )
 }
 
-type PageFormType = {
-  rows: TestRow[]
-}
-
 type TestRow = {
   rowId: string
   name?: string | null
@@ -170,79 +149,3 @@ type TestRow = {
   bool?: boolean
   willBeDeleted?: boolean
 }
-
-function useGridHelpers(
-  control: Control<PageFormType>,
-  getValues: UseFormGetValues<PageFormType>,
-  setValue: UseFormSetValue<PageFormType>
-) {
-  const textCell = React.useCallback((
-    header: string,
-    key: keyof TestRow,
-    options?: Partial<EG2.EditableGrid2LeafColumn<TestRow>> & {
-      format?: (value: any) => string
-      parse?: (value: string) => any
-    }
-  ): EG2.EditableGrid2LeafColumn<TestRow> => {
-    return {
-      renderHeader: () => (
-        <div className="px-1 py-px truncate text-gray-700">
-          {header}
-        </div>
-      ),
-      renderBody: (cell) => (
-        <RHFTextCell
-          control={control}
-          name={`rows.${cell.row.index}.${String(key)}`}
-          wrap={options?.wrap}
-          format={options?.format}
-        />
-      ),
-      getValueForEditor: ({ rowIndex }) => {
-        const val = getValues(`rows.${rowIndex}.${String(key)}` as Path<PageFormType>) as any
-        return options?.format ? options.format(val) : (val?.toString() ?? '')
-      },
-      setValueFromEditor: ({ rowIndex, value }) => {
-        const val = options?.parse ? options.parse(value) : value
-        setValue(`rows.${rowIndex}.${String(key)}` as Path<PageFormType>, val)
-      },
-      ...options,
-    }
-  }, [control, getValues, setValue])
-
-  const buttonCell = React.useCallback((
-    text: (row: TestRow, rowIndex: number) => React.ReactNode,
-    onClick: (row: TestRow, rowIndex: number) => void,
-    options?: Partial<EG2.EditableGrid2LeafColumn<TestRow>>
-  ): EG2.EditableGrid2LeafColumn<TestRow> => {
-    return {
-      renderHeader: () => null,
-      renderBody: cell => (
-        <button type="button"
-          onClick={() => {
-            const current = getValues(`rows.${cell.row.index}`)
-            onClick(current, cell.row.index)
-          }}
-          className="w-full h-full text-sm text-white bg-teal-700 border border-white cursor-pointer"
-        >
-          <RowWatcher control={control} index={cell.row.index} render={(r) => text(r, cell.row.index)} />
-        </button>
-      ),
-      disableResizing: true,
-      ...options,
-    }
-  }, [control, getValues])
-
-  return { textCell, buttonCell }
-}
-
-const RowWatcher = ({ control, index, render }: { control: Control<any>, index: number, render: (row: any) => React.ReactNode }) => {
-  const row = useWatch({ control, name: `rows.${index}` })
-  return <>{render(row)}</>
-}
-
-const RHFTextCell = ({ control, name, wrap, format }: { control: Control<any>, name: string, wrap?: boolean, format?: (v: any) => string }) => {
-  const value = useWatch({ control, name })
-  return <div className={`px-1 py-px ${wrap ? 'whitespace-pre-wrap' : 'truncate'}`}>{format ? format(value) : (value as string)}</div>
-}
-
