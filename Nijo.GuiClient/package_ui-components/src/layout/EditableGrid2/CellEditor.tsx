@@ -63,17 +63,23 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
     if (edittingCell === null) return;
 
     const columnMeta = edittingCell.column.columnDef.meta as ColumnMetadataInternal<TRow>
+    const value = editorTextareaRef.current?.getCurrentValue() ?? ''
     if (columnMeta.original?.setValueFromEditor) {
       columnMeta.original.setValueFromEditor({
         rowIndex: edittingCell.row.index,
         row: getRowObject(edittingCell.row.index),
-        value: editorTextareaRef.current?.getCurrentValue() ?? '',
+        value,
       })
     }
 
     setEdittingCell(null)
     onEditingStateChanged(false)
     setEditorComponent(gridEditorComponent ?? DefaultEditor)
+
+    // エディタが select 要素のとき編集確定後にキー操作ができなくなるので setTimeiout を挟む
+    window.setTimeout(() => {
+      editorTextareaRef.current?.setValueAndSelectAll(value, 'edit-end')
+    }, 0)
   }
   const commitEditingRef = React.useRef(commitEditing)
   commitEditingRef.current = commitEditing
@@ -103,7 +109,10 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
       const value = columnMeta.original?.getValueForEditor
         ? columnMeta.original.getValueForEditor({ row: rowOriginal, rowIndex: edittingCell.row.index })
         : ''
-      editorTextareaRef.current?.setValueAndSelectAll(value)
+      // エディタが select 要素のとき編集確定後にキー操作ができなくなるので setTimeiout を挟む
+      window.setTimeout(() => {
+        editorTextareaRef.current?.setValueAndSelectAll(value, 'edit-end')
+      }, 0)
     }
 
     setEdittingCell(null)
@@ -186,10 +195,12 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
       if (cell) {
         value = columnMeta.original.getValueForEditor({ row: getRowObject(cell.row.index), rowIndex: cell.row.index })
       }
+      // エディタコンポーネントも更新
+      setEditorComponent(columnMeta.original?.editor ?? gridEditorComponent ?? DefaultEditor)
     }
     // グリッドにフォーカスが当たった瞬間に確実にフォーカスさせるためsetTimeoutを挟む
     window.setTimeout(() => {
-      editorTextareaRef.current?.setValueAndSelectAll(value)
+      editorTextareaRef.current?.setValueAndSelectAll(value, 'move-focus')
     }, 0)
   }, [focusedCell, rowModel, visibleLeafColumns])
 
@@ -214,10 +225,14 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
       // その文字を初期値としてエディタにセットする
       const value = inputChar ?? columnMeta.original.getValueForEditor({ row: rowOriginal, rowIndex: cell.row.index })
 
-      editorTextareaRef.current?.setValueAndSelectAll(value)
+      setEditorComponent(columnMeta.original?.editor ?? gridEditorComponent ?? DefaultEditor)
       setEdittingCell(cell)
       onEditingStateChanged(true)
-      setEditorComponent(columnMeta.original?.editor ?? gridEditorComponent ?? DefaultEditor)
+
+      // エディタがレンダリングされた後に値をセットして全選択するためにsetTimeoutを挟む
+      window.setTimeout(() => {
+        editorTextareaRef.current?.setValueAndSelectAll(value, 'edit-start')
+      }, 0)
     },
   }))
 

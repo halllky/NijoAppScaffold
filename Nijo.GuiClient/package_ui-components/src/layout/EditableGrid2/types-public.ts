@@ -125,7 +125,13 @@ export type EditableGrid2LeafColumn<TRow> = {
    * preventDefault が呼ばれた場合、キーによるセル移動やセル編集開始といった
    * EditableGrid2 の既定の動作がキャンセルされます。
    */
-  onCellKeyDown?: (args: { row: TRow, rowIndex: number, event: React.KeyboardEvent }) => void
+  onCellKeyDown?: (args: {
+    row: TRow
+    rowIndex: number
+    event: React.KeyboardEvent
+    /** 編集開始を要求する関数。呼び出すとセル編集が開始される。 */
+    requestEditStart: () => void
+  }) => void
 }
 
 /** 列ヘッダセルのレンダリング処理 */
@@ -161,7 +167,7 @@ export type EditableGridCellEditorProps = {
 /** セル編集エディタのref */
 export type EditableGridCellEditorRef = {
   getCurrentValue: () => string
-  setValueAndSelectAll: (value: string) => void
+  setValueAndSelectAll: (value: string, timing: 'move-focus' | 'edit-start' | 'edit-end') => void
   /**
    * エディタのルート要素を取得する（クリックがエディタ内か判定するために使用）
    */

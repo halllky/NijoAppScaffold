@@ -168,6 +168,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
             row: getRowObject(focusedCell.rowIndex),
             rowIndex: focusedCell.rowIndex,
             event: e,
+            requestEditStart: () => editorRef.current?.requestEditStart(null),
           })
           // イベントハンドラ内で preventDefault された場合はここで処理を終了する
           if (e.defaultPrevented) return

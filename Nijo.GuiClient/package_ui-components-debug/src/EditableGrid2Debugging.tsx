@@ -42,6 +42,11 @@ export default function () {
     helper.textCell("ID", "rowId", { defaultWidth: 80, isReadOnly: true, isFixed: fixed3Cols }),
     helper.textCell("商品名", "name", { isFixed: fixed3Cols }),
     helper.textCell("価格", "price", { defaultWidth: 120 }),
+    helper.selectCell("ステータス", "status", [
+      { value: "0", text: "未着手" },
+      { value: "1", text: "進行中" },
+      { value: "2", text: "完了" },
+    ], { defaultWidth: 100 }),
     {
       renderHeader: () => <span className="px-1 text-gray-700">グルーピングされた列</span>,
       columns: [
@@ -61,14 +66,15 @@ export default function () {
         name: `商品${i + 1}`,
         price: ((i + 1) * 1000).toString(),
         date: `2024-${String((i % 12) + 1).padStart(2, '0')}-01`,
+        status: (i % 3).toString(),
         comment: i % 10 === 4 ? `折り返しが発生する長いコメントです。折り返しが発生する長いコメントです。折り返しが発生する長いコメントです。\n\nこのコメントは複数行にわたって表示されます。` : `コメント${i + 1}`,
         bool: i % 2 === 0,
       }))
     } else {
       rows = [
-        { rowId: "1", name: "商品A", price: "1000", date: "2024-01-01", comment: "コメントA", bool: true },
-        { rowId: "2", name: "商品B", price: "2000", date: "2024-02-01", comment: "コメントB", bool: false },
-        { rowId: "3", name: "商品C", price: "3000", date: "2024-03-01", comment: "コメントC", bool: true },
+        { rowId: "1", name: "商品A", price: "1000", date: "2024-01-01", comment: "コメントA", bool: true, status: "0" },
+        { rowId: "2", name: "商品B", price: "2000", date: "2024-02-01", comment: "コメントB", bool: false, status: "1" },
+        { rowId: "3", name: "商品C", price: "3000", date: "2024-03-01", comment: "コメントC", bool: true, status: "2" },
       ]
     }
     replace(rows)
@@ -119,12 +125,12 @@ export default function () {
       </span>
       <div className="flex gap-2">
         <button type="button" onClick={() => {
-          insert(0, { rowId: UUID.generate(), name: null, price: null, date: null, comment: null, bool: false })
+          insert(0, { rowId: UUID.generate(), name: null, price: null, date: null, comment: null, bool: false, status: "0" })
         }} className="px-2 py-1 text-white bg-purple-600 border border-white cursor-pointer">
           先頭に追加
         </button>
         <button type="button" onClick={() => {
-          append({ rowId: UUID.generate(), name: null, price: null, date: null, comment: null, bool: false })
+          append({ rowId: UUID.generate(), name: null, price: null, date: null, comment: null, bool: false, status: "0" })
         }} className="px-2 py-1 text-white bg-green-600 border border-white cursor-pointer">
           行追加
         </button>
@@ -148,4 +154,5 @@ type TestRow = {
   comment?: string | null
   bool?: boolean
   willBeDeleted?: boolean
+  status?: string
 }

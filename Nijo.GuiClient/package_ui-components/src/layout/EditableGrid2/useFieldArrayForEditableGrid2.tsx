@@ -1,6 +1,6 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
-import { EditableGrid2Column, EditableGrid2LeafColumn, EditableGrid2Props, EditableGrid2Ref } from "./types-public"
+import { EditableGrid2Column, EditableGrid2LeafColumn, EditableGrid2Props, EditableGrid2Ref, EditableGridCellEditorProps, EditableGridCellEditorRef } from "./types-public"
 
 /**
  * EditableGrid2 を react-hook-form の useFieldArray と組み合わせて使用する際の
@@ -94,6 +94,14 @@ export type ColumnDefHelper<TRow> = {
     }
   ) => EditableGrid2LeafColumn<TRow>
 
+  /** 選択肢（ドロップダウン） */
+  selectCell: (
+    header: string,
+    key: keyof TRow,
+    candidateValues: { value: string, text: string }[],
+    options?: Partial<EditableGrid2LeafColumn<TRow>>
+  ) => EditableGrid2LeafColumn<TRow>
+
   /** チェックボックス */
   booleanCell: (
     header: string,
@@ -170,6 +178,79 @@ function useColumnDefHelper<
       disableResizing: true,
       ...options,
     }),
+
+    // 選択肢（ドロップダウン）
+    selectCell: (header, key, candidateValues, options) => {
+      const Editor = React.forwardRef<EditableGridCellEditorRef, EditableGridCellEditorProps>((props, ref) => {
+        const selectRef = React.useRef<HTMLSelectElement>(null)
+        const [value, setVal] = React.useState('')
+
+        React.useImperativeHandle(ref, () => ({
+          getCurrentValue: () => selectRef.current?.value ?? '',
+          setValueAndSelectAll: (v, timing) => {
+            setVal(v)
+            setTimeout(() => {
+              selectRef.current?.focus()
+              if (timing === 'edit-start') {
+                selectRef.current?.showPicker?.()
+              }
+            }, 0)
+          },
+          getDomElement: () => selectRef.current,
+        }))
+
+        return (
+          <select
+            ref={selectRef}
+            style={props.style}
+            value={value}
+            onChange={e => setVal(e.target.value)}
+            onKeyDown={props.onKeyDown}
+            className="border border-gray-700 outline-none bg-white"
+          >
+            {candidateValues.map(c => (
+              <option key={c.value} value={c.value}>{c.text}</option>
+            ))}
+          </select>
+        )
+      })
+
+      return {
+        renderHeader: () => (
+          <div className="px-1 py-px truncate text-gray-700">
+            {header}
+          </div>
+        ),
+        renderBody: ({ context }) => (
+          <RHFSelectCell
+            control={control}
+            name={`${arrayName}.${context.row.index}.${String(key)}` as ReactHookForm.Path<TField>}
+            options={candidateValues}
+          />
+        ),
+        editor: Editor,
+        getValueForEditor: ({ rowIndex }) => {
+          const val = getValues(`${arrayName}.${rowIndex}.${String(key)}` as ReactHookForm.Path<TField>) as unknown
+          return (val as string) ?? ''
+        },
+        setValueFromEditor: ({ rowIndex, value }) => {
+          setValue(
+            `${arrayName}.${rowIndex}.${String(key)}` as ReactHookForm.Path<TField>,
+            value as ReactHookForm.PathValue<TField, ReactHookForm.Path<TField>>,
+            { shouldDirty: true }
+          )
+        },
+        onCellKeyDown: ({ event, requestEditStart }) => {
+          const alt = event.altKey || event.metaKey
+          const upDown = event.key === 'ArrowUp' || event.key === 'ArrowDown'
+          if (event.key === 'Enter' || alt && upDown) {
+            requestEditStart()
+            event.preventDefault()
+          }
+        },
+        ...options,
+      }
+    },
 
     // チェックボックス
     booleanCell: (header, key, options) => ({
@@ -268,6 +349,23 @@ const RHFCheckboxCell = <
         className="block h-6"
       />
     </label>
+  )
+}
+
+const RHFSelectCell = <
+  TField extends ReactHookForm.FieldValues,
+  TPath extends ReactHookForm.Path<TField>,
+>({ control, name, options }: {
+  control: ReactHookForm.Control<TField> | undefined
+  name: TPath
+  options: { value: string, text: string }[]
+}) => {
+  const value = ReactHookForm.useWatch({ control, name })
+  const text = options.find(o => o.value === value)?.text ?? (value as string)
+  return (
+    <div className="px-1 py-px truncate">
+      {text}
+    </div>
   )
 }
 
