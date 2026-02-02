@@ -46,7 +46,7 @@ export default function () {
       renderHeader: () => <span className="px-1 text-gray-700">グルーピングされた列</span>,
       columns: [
         helper.textCell("日付", "date", { defaultWidth: 140 }),
-        helper.textCell("フラグ", "bool", { defaultWidth: 80, format: v => v ? "✔" : "", parse: v => v === "✔" }),
+        helper.booleanCell("フラグ", "bool", { defaultWidth: 80 }),
       ],
     },
     helper.textCell("コメント", "comment", { defaultWidth: 320, wrap: true }),

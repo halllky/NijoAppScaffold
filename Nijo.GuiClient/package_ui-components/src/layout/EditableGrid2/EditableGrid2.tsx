@@ -158,6 +158,22 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // preventDefault するかどうかは各イベントの中で判断する
     if (!isEditing) {
+
+      // カスタムキーイベントハンドラ (onCellKeyDown)
+      if (focusedCell) {
+        const col = visibleLeafColumns[focusedCell.colIndex]
+        const meta = col.columnDef.meta as ColumnMetadataInternal<TRow>
+        if (meta?.original?.onCellKeyDown) {
+          meta.original.onCellKeyDown({
+            row: getRowObject(focusedCell.rowIndex),
+            rowIndex: focusedCell.rowIndex,
+            event: e,
+          })
+          // イベントハンドラ内で preventDefault された場合はここで処理を終了する
+          if (e.defaultPrevented) return
+        }
+      }
+
       // 非編集時にDeleteキーが押された場合、選択範囲内の値をクリア
       if (e.key === 'Delete') {
         handleDelete()

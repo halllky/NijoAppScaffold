@@ -74,19 +74,28 @@ export type GetColumnDefWithHelper<TRow> = (helper: ColumnDefHelper<TRow>) => Ed
 
 /** 列定義ヘルパー */
 export type ColumnDefHelper<TRow> = {
+
   /** 文字列型 */
   textCell: (
     header: string,
     key: keyof TRow,
     options?: Partial<EditableGrid2LeafColumn<TRow>> & {
-      format?: (value: any) => string
-      parse?: (value: string) => any
+      format?: (value: unknown) => string
+      parse?: (value: string) => unknown
     }
   ) => EditableGrid2LeafColumn<TRow>
+
   /** ボタン */
   buttonCell: (
     text: (row: TRow, rowIndex: number) => React.ReactNode,
     onClick: (row: TRow, rowIndex: number) => void,
+    options?: Partial<EditableGrid2LeafColumn<TRow>>
+  ) => EditableGrid2LeafColumn<TRow>
+
+  /** チェックボックス */
+  booleanCell: (
+    header: string,
+    key: keyof TRow,
     options?: Partial<EditableGrid2LeafColumn<TRow>>
   ) => EditableGrid2LeafColumn<TRow>
 }
@@ -116,18 +125,22 @@ function useColumnDefHelper<
       renderBody: (cell) => (
         <RHFTextCell
           control={control}
-          name={`${arrayName}.${cell.row.index}.${String(key)}`}
+          name={`${arrayName}.${cell.row.index}.${String(key)}` as ReactHookForm.Path<TField>}
           wrap={options?.wrap}
           format={options?.format}
         />
       ),
       getValueForEditor: ({ rowIndex }) => {
-        const val = getValues(`${arrayName}.${rowIndex}.${String(key)}` as ReactHookForm.Path<TField>) as any
-        return options?.format ? options.format(val) : (val?.toString() ?? '')
+        const val = getValues(`${arrayName}.${rowIndex}.${String(key)}` as ReactHookForm.Path<TField>) as unknown
+        return options?.format?.(val) ?? val?.toString() ?? ''
       },
       setValueFromEditor: ({ rowIndex, value }) => {
-        const val = options?.parse ? options.parse(value) : value
-        setValue(`${arrayName}.${rowIndex}.${String(key)}` as ReactHookForm.Path<TField>, val)
+        const val = options?.parse?.(value) ?? value
+        setValue(
+          `${arrayName}.${rowIndex}.${String(key)}` as ReactHookForm.Path<TField>,
+          val as ReactHookForm.PathValue<TField, ReactHookForm.Path<TField>>,
+          { shouldDirty: true }
+        )
       },
       ...options,
     }),
@@ -138,7 +151,7 @@ function useColumnDefHelper<
       renderBody: cell => (
         <button type="button"
           onClick={() => {
-            const current = getValues(`${arrayName}.${cell.row.index}` as ReactHookForm.Path<TField>) as any
+            const current = getValues(`${arrayName}.${cell.row.index}` as ReactHookForm.Path<TField>) as ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName>
             onClick(current, cell.row.index)
             gridRef.current?.forceUpdate()
           }}
@@ -146,7 +159,7 @@ function useColumnDefHelper<
         >
           <RowWatcher
             control={control}
-            name={`${arrayName}.${cell.row.index}`}
+            name={`${arrayName}.${cell.row.index}` as ReactHookForm.Path<TField>}
             render={(r) => text(r, cell.row.index)}
           />
         </button>
@@ -155,17 +168,101 @@ function useColumnDefHelper<
       ...options,
     }),
 
+    // チェックボックス
+    booleanCell: (header, key, options) => ({
+      renderHeader: () => (
+        <div className="px-1 py-px truncate text-gray-700">
+          {header}
+        </div>
+      ),
+      renderBody: (cell) => (
+        <RHFCheckboxCell
+          control={control}
+          name={`${arrayName}.${cell.row.index}.${String(key)}` as ReactHookForm.Path<TField>}
+          onChange={v => setValue(
+            `${arrayName}.${cell.row.index}.${String(key)}` as ReactHookForm.Path<TField>,
+            v as ReactHookForm.PathValue<TField, ReactHookForm.Path<TField>>,
+            { shouldDirty: true }
+          )}
+        />
+      ),
+      onCellKeyDown: ({ rowIndex, event }) => {
+        if (event.key === ' ' || event.code === 'Space') {
+          event.preventDefault()
+          const current = getValues(`${arrayName}.${rowIndex}.${String(key)}` as ReactHookForm.Path<TField>) as boolean | undefined
+          setValue(
+            `${arrayName}.${rowIndex}.${String(key)}` as ReactHookForm.Path<TField>,
+            !current as ReactHookForm.PathValue<TField, ReactHookForm.Path<TField>>,
+            { shouldDirty: true }
+          )
+        }
+      },
+      getValueForEditor: ({ rowIndex }) => {
+        const val = getValues(`${arrayName}.${rowIndex}.${String(key)}` as ReactHookForm.Path<TField>) as boolean | undefined
+        return val ? 'true' : 'false'
+      },
+      setValueFromEditor: ({ rowIndex, value }) => {
+        const blnValue = [true, 1, 'true', '1', 'yes'].includes(typeof value === 'string' ? value.toLowerCase() : value)
+        setValue(
+          `${arrayName}.${rowIndex}.${String(key)}` as ReactHookForm.Path<TField>,
+          blnValue as ReactHookForm.PathValue<TField, ReactHookForm.Path<TField>>,
+          { shouldDirty: true }
+        )
+      },
+      ...options,
+    }),
+
   }), [control, getValues, setValue, arrayName])
 }
 
-const RowWatcher = ({ control, name, render }: { control: ReactHookForm.Control<any> | undefined, name: string, render: (row: any) => React.ReactNode }) => {
+const RowWatcher = <
+  TField extends ReactHookForm.FieldValues,
+  TPath extends ReactHookForm.Path<TField>,
+>({ control, name, render }: {
+  control: ReactHookForm.Control<TField> | undefined
+  name: TPath
+  render: (row: ReactHookForm.PathValue<TField, TPath>) => React.ReactNode
+}) => {
   const row = ReactHookForm.useWatch({ control, name })
   return <>{render(row)}</>
 }
 
-const RHFTextCell = ({ control, name, wrap, format }: { control: ReactHookForm.Control<any> | undefined, name: string, wrap?: boolean, format?: (v: any) => string }) => {
+const RHFTextCell = <
+  TField extends ReactHookForm.FieldValues,
+  TPath extends ReactHookForm.Path<TField>,
+>({ control, name, wrap, format }: {
+  control: ReactHookForm.Control<TField> | undefined
+  name: TPath
+  wrap?: boolean
+  format?: (v: ReactHookForm.PathValue<TField, TPath>) => string
+}) => {
   const value = ReactHookForm.useWatch({ control, name })
-  return <div className={`px-1 py-px ${wrap ? 'whitespace-pre-wrap' : 'truncate'}`}>{format ? format(value) : (value as string)}</div>
+  return (
+    <div className={`px-1 py-px ${wrap ? 'whitespace-pre-wrap' : 'truncate'}`}>
+      {format ? format(value) : (value as string)}
+    </div>
+  )
+}
+
+const RHFCheckboxCell = <
+  TField extends ReactHookForm.FieldValues,
+  TPath extends ReactHookForm.Path<TField>,
+>({ control, name, onChange }: {
+  control: ReactHookForm.Control<TField> | undefined
+  name: TPath
+  onChange: (value: boolean) => void
+}) => {
+  const value = ReactHookForm.useWatch({ control, name })
+  return (
+    <label className="self-start block h-full w-full px-1 cursor-pointer">
+      <input
+        type="checkbox"
+        checked={!!value}
+        onChange={e => onChange(e.target.checked)}
+        className="block h-6"
+      />
+    </label>
+  )
 }
 
 //#endregion 列定義ヘルパー

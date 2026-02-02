@@ -120,6 +120,12 @@ export type EditableGrid2LeafColumn<TRow> = {
   isFixed?: boolean
   /** 文字列の折り返しをするかどうか */
   wrap?: boolean
+  /**
+   * セル上でキーが押されたときのイベントハンドラ。
+   * preventDefault が呼ばれた場合、キーによるセル移動やセル編集開始といった
+   * EditableGrid2 の既定の動作がキャンセルされます。
+   */
+  onCellKeyDown?: (args: { row: TRow, rowIndex: number, event: React.KeyboardEvent }) => void
 }
 
 /** 列ヘッダセルのレンダリング処理 */
