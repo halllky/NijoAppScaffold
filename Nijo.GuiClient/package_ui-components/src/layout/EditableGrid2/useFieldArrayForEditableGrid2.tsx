@@ -89,7 +89,9 @@ export type ColumnDefHelper<TRow> = {
   buttonCell: (
     text: (row: TRow, rowIndex: number) => React.ReactNode,
     onClick: (row: TRow, rowIndex: number) => void,
-    options?: Partial<EditableGrid2LeafColumn<TRow>>
+    options?: Partial<EditableGrid2LeafColumn<TRow>> & {
+      disableIfReadOnly?: boolean
+    }
   ) => EditableGrid2LeafColumn<TRow>
 
   /** チェックボックス */
@@ -122,10 +124,10 @@ function useColumnDefHelper<
           {header}
         </div>
       ),
-      renderBody: (cell) => (
+      renderBody: ({ context }) => (
         <RHFTextCell
           control={control}
-          name={`${arrayName}.${cell.row.index}.${String(key)}` as ReactHookForm.Path<TField>}
+          name={`${arrayName}.${context.row.index}.${String(key)}` as ReactHookForm.Path<TField>}
           wrap={options?.wrap}
           format={options?.format}
         />
@@ -148,19 +150,20 @@ function useColumnDefHelper<
     // ボタンセル
     buttonCell: (text, onClick, options) => ({
       renderHeader: () => null,
-      renderBody: cell => (
+      renderBody: ({ context, isReadOnly }) => (
         <button type="button"
           onClick={() => {
-            const current = getValues(`${arrayName}.${cell.row.index}` as ReactHookForm.Path<TField>) as ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName>
-            onClick(current, cell.row.index)
+            const current = getValues(`${arrayName}.${context.row.index}` as ReactHookForm.Path<TField>) as ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName>
+            onClick(current, context.row.index)
             gridRef.current?.forceUpdate()
           }}
+          disabled={options?.disableIfReadOnly === true && isReadOnly}
           className="w-full h-full text-sm text-white bg-teal-700 border border-white cursor-pointer"
         >
           <RowWatcher
             control={control}
-            name={`${arrayName}.${cell.row.index}` as ReactHookForm.Path<TField>}
-            render={(r) => text(r, cell.row.index)}
+            name={`${arrayName}.${context.row.index}` as ReactHookForm.Path<TField>}
+            render={(r) => text(r, context.row.index)}
           />
         </button>
       ),
@@ -175,12 +178,13 @@ function useColumnDefHelper<
           {header}
         </div>
       ),
-      renderBody: (cell) => (
+      renderBody: ({ context, isReadOnly }) => (
         <RHFCheckboxCell
           control={control}
-          name={`${arrayName}.${cell.row.index}.${String(key)}` as ReactHookForm.Path<TField>}
+          isReadOnly={isReadOnly}
+          name={`${arrayName}.${context.row.index}.${String(key)}` as ReactHookForm.Path<TField>}
           onChange={v => setValue(
-            `${arrayName}.${cell.row.index}.${String(key)}` as ReactHookForm.Path<TField>,
+            `${arrayName}.${context.row.index}.${String(key)}` as ReactHookForm.Path<TField>,
             v as ReactHookForm.PathValue<TField, ReactHookForm.Path<TField>>,
             { shouldDirty: true }
           )}
@@ -247,10 +251,11 @@ const RHFTextCell = <
 const RHFCheckboxCell = <
   TField extends ReactHookForm.FieldValues,
   TPath extends ReactHookForm.Path<TField>,
->({ control, name, onChange }: {
+>({ control, name, onChange, isReadOnly }: {
   control: ReactHookForm.Control<TField> | undefined
   name: TPath
   onChange: (value: boolean) => void
+  isReadOnly: boolean
 }) => {
   const value = ReactHookForm.useWatch({ control, name })
   return (
@@ -259,6 +264,7 @@ const RHFCheckboxCell = <
         type="checkbox"
         checked={!!value}
         onChange={e => onChange(e.target.checked)}
+        disabled={isReadOnly}
         className="block h-6"
       />
     </label>

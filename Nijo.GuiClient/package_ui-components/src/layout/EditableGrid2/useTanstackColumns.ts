@@ -2,7 +2,7 @@ import React from "react"
 import * as TanStack from "@tanstack/react-table"
 import { EditableGrid2GroupColumn, EditableGrid2LeafColumn, EditableGrid2Props } from "./types-public"
 import { createRowCheckBoxColumn } from "./RowCheckBox"
-import { ColumnMetadataInternal, DEFAULT_COLUMN_WIDTH } from "./types-internal"
+import { checkIfCellReadOnly, ColumnMetadataInternal, DEFAULT_COLUMN_WIDTH } from "./types-internal"
 import { RowAccessor } from "./useRowAccessor"
 
 /**
@@ -43,8 +43,11 @@ export function useTanstackColumns<TRow>(
       leaf,
       tanstackLeafColumn: columnHelper.display({
         id: `col-${leaf.columnId ?? index}`,
-        header: leaf.renderHeader,
-        cell: leaf.renderBody,
+        header: context => leaf.renderHeader({ context }),
+        cell: context => leaf.renderBody({
+          context,
+          isReadOnly: checkIfCellReadOnly(context.cell, props.isReadOnly, getRowObject(context.row.index)),
+        }),
         size: leaf.defaultWidth ?? DEFAULT_COLUMN_WIDTH,
         enableResizing: leaf.disableResizing !== true,
         meta: {
@@ -78,7 +81,7 @@ export function useTanstackColumns<TRow>(
         // グループ化された列（新しいグループ）
         tanstackColumns.push(columnHelper.group({
           id: `group-${tanstackColumns.length}`,
-          header: item.group.renderHeader,
+          header: context => item.group?.renderHeader({ context }),
           columns: [item.tanstackLeafColumn],
           meta: {
             leafIndex: null,

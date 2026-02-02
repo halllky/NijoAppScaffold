@@ -129,10 +129,16 @@ export type EditableGrid2LeafColumn<TRow> = {
 }
 
 /** 列ヘッダセルのレンダリング処理 */
-export type EditableGrid2HeaderRenderer<TRow> = (cell: TanStack.HeaderContext<TRow, unknown>) => React.ReactNode
+export type EditableGrid2HeaderRenderer<TRow> = (args: {
+  context: TanStack.HeaderContext<TRow, unknown>
+}) => React.ReactNode
 
 /** ボディセルのレンダリング処理 */
-export type EditableGrid2BodyRenderer<TRow> = (cell: TanStack.CellContext<TRow, unknown>) => React.ReactNode
+export type EditableGrid2BodyRenderer<TRow> = (args: {
+  context: TanStack.CellContext<TRow, unknown>
+  /** グリッド全体の読み取り専用、行単位の読み取り専用、セル単位の読み取り専用を判定した結果 */
+  isReadOnly: boolean
+}) => React.ReactNode
 
 //#endregion 列
 
