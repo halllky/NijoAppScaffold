@@ -185,33 +185,36 @@ function useColumnDefHelper<
         const selectRef = React.useRef<HTMLSelectElement>(null)
         const [value, setVal] = React.useState('')
 
+        const handleChange: React.ChangeEventHandler<HTMLSelectElement> = e => {
+          props.requestCommit(e.target.value)
+        }
+
         React.useImperativeHandle(ref, () => ({
           getCurrentValue: () => selectRef.current?.value ?? '',
           setValueAndSelectAll: (v, timing) => {
             setVal(v)
             setTimeout(() => {
               selectRef.current?.focus()
-              if (timing === 'edit-start') {
-                selectRef.current?.showPicker?.()
-              }
+              if (timing === 'edit-start') selectRef.current?.showPicker?.()
             }, 0)
           },
           getDomElement: () => selectRef.current,
         }))
 
         return (
-          <select
-            ref={selectRef}
-            style={props.style}
-            value={value}
-            onChange={e => setVal(e.target.value)}
-            onKeyDown={props.onKeyDown}
-            className="border border-gray-700 outline-none bg-white"
-          >
-            {candidateValues.map(c => (
-              <option key={c.value} value={c.value}>{c.text}</option>
-            ))}
-          </select>
+          <div style={props.style}>
+            <select
+              ref={selectRef}
+              value={value}
+              onChange={handleChange}
+              onKeyDown={props.onKeyDown}
+              className="border border-gray-700 outline-none bg-white"
+            >
+              {candidateValues.map(c => (
+                <option key={c.value} value={c.value}>{c.text}</option>
+              ))}
+            </select>
+          </div>
         )
       })
 

@@ -162,6 +162,8 @@ export type EditableGridCellEditorProps = {
   style: React.CSSProperties
   /** Enterで編集確定したりEscapeで編集キャンセルしたりするためのキーイベントハンドラ */
   onKeyDown: React.KeyboardEventHandler<Element>
+  /** 明示的に編集完了を引き起こす */
+  requestCommit: (value: string) => void
 }
 
 /** セル編集エディタのref */

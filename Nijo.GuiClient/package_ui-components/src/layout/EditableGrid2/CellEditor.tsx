@@ -59,11 +59,11 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
   // -----------------------------------
 
   // 編集確定
-  const commitEditing = () => {
+  const commitEditing = (v?: string) => {
     if (edittingCell === null) return;
 
     const columnMeta = edittingCell.column.columnDef.meta as ColumnMetadataInternal<TRow>
-    const value = editorTextareaRef.current?.getCurrentValue() ?? ''
+    const value = v ?? editorTextareaRef.current?.getCurrentValue() ?? ''
     if (columnMeta.original?.setValueFromEditor) {
       columnMeta.original.setValueFromEditor({
         rowIndex: edittingCell.row.index,
@@ -237,6 +237,7 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
   }))
 
   return React.createElement(editorComponent, {
+    requestCommit: commitEditing,
     onKeyDown: handleKeyDown,
     style: editorStyle,
     ref: editorTextareaRef,
