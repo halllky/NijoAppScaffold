@@ -74,7 +74,6 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
 
     setEdittingCell(null)
     onEditingStateChanged(false)
-    setEditorComponent(gridEditorComponent ?? DefaultEditor)
 
     // エディタが select 要素のとき編集確定後にキー操作ができなくなるので setTimeiout を挟む
     window.setTimeout(() => {
@@ -117,7 +116,6 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
 
     setEdittingCell(null)
     onEditingStateChanged(false)
-    setEditorComponent(gridEditorComponent ?? DefaultEditor)
   }
 
   // エディタ内部のキー操作
@@ -224,15 +222,10 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
       // 英数字などIME変換不要な文字が入力されたことによる編集開始の場合、
       // その文字を初期値としてエディタにセットする
       const value = inputChar ?? columnMeta.original.getValueForEditor({ row: rowOriginal, rowIndex: cell.row.index })
+      editorTextareaRef.current?.setValueAndSelectAll(value, 'edit-start')
 
-      setEditorComponent(columnMeta.original?.editor ?? gridEditorComponent ?? DefaultEditor)
       setEdittingCell(cell)
       onEditingStateChanged(true)
-
-      // エディタがレンダリングされた後に値をセットして全選択するためにsetTimeoutを挟む
-      window.setTimeout(() => {
-        editorTextareaRef.current?.setValueAndSelectAll(value, 'edit-start')
-      }, 0)
     },
   }))
 

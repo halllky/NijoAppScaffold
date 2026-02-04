@@ -208,7 +208,7 @@ function useColumnDefHelper<
               value={value}
               onChange={handleChange}
               onKeyDown={props.onKeyDown}
-              className="border border-gray-700 outline-none bg-white"
+              className="w-full border border-gray-700 outline-none bg-white"
             >
               {candidateValues.map(c => (
                 <option key={c.value} value={c.value}>{c.text}</option>

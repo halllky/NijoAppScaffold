@@ -9,7 +9,6 @@ import { SelectedRangeForFixedColumn, SelectedRangeForScrollableColumn } from ".
 import { useSelection } from "./useSelection"
 import { useScrollToCell } from "./useScrollToCell"
 import { CellEditor, CellEditorRef } from "./CellEditor"
-import { useImeOpened } from "./useImeOpened"
 import { useOnKeyDownToStartEditing } from "./useOnKeyDownToStartEditing"
 import { useCopyPaste } from "./useCopyPaste"
 import { useRowAccessor } from "./useRowAccessor"
@@ -114,9 +113,8 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
 
   // エディタ関連
   const editorRef = React.useRef<CellEditorRef>(null)
-  const isImeOpened = useImeOpened(tableContainerRef)
   const [isEditing, setIsEditing] = React.useState(false)
-  const onKeyDownToStartEditing = useOnKeyDownToStartEditing(isImeOpened)
+  const onKeyDownToStartEditing = useOnKeyDownToStartEditing()
 
   // コピー＆ペースト
   const { handleCopy, handlePaste, handleDelete } = useCopyPaste({
