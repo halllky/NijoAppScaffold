@@ -45,7 +45,7 @@ export type EditableGrid2Props<TRow> = {
   clearSelectionOnBlur?: boolean
   /** 表示範囲外の行をどこまで予め読み込んでおくか。既定値は10 */
   overscan?: number
-  /** セルエディタ。未指定の場合は既定のコンポーネントが使われる。列定義で指定がある場合はそちらが優先される。 */
+  /** セルエディタ。列定義で指定がある場合はそちらが優先される。 */
   editor?: EditableGridCellEditor
 }
 
@@ -100,7 +100,7 @@ export type EditableGrid2LeafColumn<TRow> = {
   columnId?: string
   /** 画面初期表示時の列の幅（pxで指定） */
   defaultWidth?: number
-  /** セルエディタ。未指定の場合はグリッドのプロパティで指定されたものが、それも無い場合は既定のコンポーネントが使われる。 */
+  /** セルエディタ。未指定の場合はグリッドのプロパティで指定されたものが使われる。 */
   editor?: EditableGridCellEditor
   /** セルエディタに表示する値を取得する関数。指定しない場合、この列は編集不可。 */
   getValueForEditor?: (args: { row: TRow, rowIndex: number }) => string
@@ -160,10 +160,12 @@ export type EditableGridCellEditor = React.ForwardRefExoticComponent<
 export type EditableGridCellEditorProps = {
   /** スタイル。エディタの位置情報などが渡される */
   style: React.CSSProperties
-  /** Enterで編集確定したりEscapeで編集キャンセルしたりするためのキーイベントハンドラ */
-  onKeyDown: React.KeyboardEventHandler<Element>
+  /** セルが編集中かどうか */
+  isEditing: boolean
   /** 明示的に編集完了を引き起こす */
   requestCommit: (value: string) => void
+  /** 明示的に編集キャンセルを引き起こす */
+  requestCancel: () => void
 }
 
 /** セル編集エディタのref */

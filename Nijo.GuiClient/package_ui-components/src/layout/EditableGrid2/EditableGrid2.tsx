@@ -201,6 +201,22 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
     }
   }
 
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    if (isEditing) return
+
+    const target = e.target as HTMLElement
+    const td = target.closest('td')
+    if (!td) return
+
+    const rowIndex = Number(td.getAttribute('data-eg2-row-index'))
+    const colIndex = Number(td.getAttribute('data-eg2-col-index'))
+    if (isNaN(rowIndex) || isNaN(colIndex)) return
+
+    if (focusedCell && focusedCell.rowIndex === rowIndex && focusedCell.colIndex === colIndex) {
+      editorRef.current?.requestEditStart(null)
+    }
+  }
+
   //#endregion イベント
   // -----------------------------
   //#region レンダリング
@@ -214,6 +230,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
       onKeyDown={handleKeyDown}
       onMouseDown={selectionEvents.handleMouseDown}
       onMouseMove={selectionEvents.handleMouseMove}
+      onDoubleClick={handleDoubleClick}
       onCopy={handleCopy}
       onPaste={handlePaste}
       onFocus={handleFocus}

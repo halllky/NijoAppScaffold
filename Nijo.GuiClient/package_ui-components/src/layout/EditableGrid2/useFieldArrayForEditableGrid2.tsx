@@ -1,6 +1,6 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
-import { EditableGrid2Column, EditableGrid2LeafColumn, EditableGrid2Props, EditableGrid2Ref, EditableGridCellEditorProps, EditableGridCellEditorRef } from "./types-public"
+import { EditableGrid2Column, EditableGrid2LeafColumn, EditableGrid2Props, EditableGrid2Ref, EditableGridCellEditor, EditableGridCellEditorProps, EditableGridCellEditorRef } from "./types-public"
 
 /**
  * EditableGrid2 を react-hook-form の useFieldArray と組み合わせて使用する際の
@@ -125,8 +125,9 @@ function useColumnDefHelper<
 
   return React.useMemo(() => ({
 
-    // 文字列型セル
+    //#region ヘルパー: 文字列型
     textCell: (header, key, options) => ({
+      editor: TextCellEditor,
       renderHeader: () => (
         <div className="px-1 py-px truncate text-gray-700">
           {header}
@@ -154,8 +155,9 @@ function useColumnDefHelper<
       },
       ...options,
     }),
+    //#endregion ヘルパー: 文字列型
 
-    // ボタンセル
+    //#region ヘルパー: ボタン
     buttonCell: (text, onClick, options) => ({
       renderHeader: () => null,
       renderBody: ({ context, isReadOnly }) => (
@@ -166,7 +168,7 @@ function useColumnDefHelper<
             gridRef.current?.forceUpdate()
           }}
           disabled={options?.disableIfReadOnly === true && isReadOnly}
-          className="w-full h-full text-sm text-white bg-teal-700 border border-white cursor-pointer"
+          className="w-full h-full text-sm text-white bg-teal-700 border border-white"
         >
           <RowWatcher
             control={control}
@@ -178,8 +180,9 @@ function useColumnDefHelper<
       disableResizing: true,
       ...options,
     }),
+    //#endregion ヘルパー: ボタン
 
-    // 選択肢（ドロップダウン）
+    //#region ヘルパー: ドロップダウン
     selectCell: (header, key, candidateValues, options) => {
       const Editor = React.forwardRef<EditableGridCellEditorRef, EditableGridCellEditorProps>((props, ref) => {
         const selectRef = React.useRef<HTMLSelectElement>(null)
@@ -187,6 +190,18 @@ function useColumnDefHelper<
 
         const handleChange: React.ChangeEventHandler<HTMLSelectElement> = e => {
           props.requestCommit(e.target.value)
+        }
+        const handleClick: React.MouseEventHandler<HTMLSelectElement> = e => {
+          if (props.isEditing) {
+            props.requestCommit(selectRef.current?.value ?? '')
+          }
+        }
+        const handleKeyDown: React.KeyboardEventHandler<HTMLSelectElement> = e => {
+          // 編集をキャンセルする
+          if (props.isEditing && e.key === 'Escape') {
+            props.requestCancel()
+            e.preventDefault()
+          }
         }
 
         React.useImperativeHandle(ref, () => ({
@@ -207,8 +222,9 @@ function useColumnDefHelper<
               ref={selectRef}
               value={value}
               onChange={handleChange}
-              onKeyDown={props.onKeyDown}
-              className="w-full border border-gray-700 outline-none bg-white"
+              onClick={handleClick}
+              onKeyDown={handleKeyDown}
+              className="w-full border border-black outline-none bg-white"
             >
               {candidateValues.map(c => (
                 <option key={c.value} value={c.value}>{c.text}</option>
@@ -224,13 +240,15 @@ function useColumnDefHelper<
             {header}
           </div>
         ),
-        renderBody: ({ context }) => (
-          <RHFSelectCell
-            control={control}
-            name={`${arrayName}.${context.row.index}.${String(key)}` as ReactHookForm.Path<TField>}
-            options={candidateValues}
-          />
-        ),
+        renderBody: ({ context }) => {
+          const value = ReactHookForm.useWatch({ control, name: `${arrayName}.${context.row.index}.${String(key)}` as ReactHookForm.Path<TField> })
+          const text = candidateValues.find(o => o.value === value)?.text ?? (value as string)
+          return (
+            <div className="px-1 py-px truncate">
+              {text}
+            </div>
+          )
+        },
         editor: Editor,
         getValueForEditor: ({ rowIndex }) => {
           const val = getValues(`${arrayName}.${rowIndex}.${String(key)}` as ReactHookForm.Path<TField>) as unknown
@@ -254,26 +272,33 @@ function useColumnDefHelper<
         ...options,
       }
     },
+    //#endregion ヘルパー: ドロップダウン
 
-    // チェックボックス
+    //#region ヘルパー: チェックボックス
     booleanCell: (header, key, options) => ({
       renderHeader: () => (
         <div className="px-1 py-px truncate text-gray-700">
           {header}
         </div>
       ),
-      renderBody: ({ context, isReadOnly }) => (
-        <RHFCheckboxCell
-          control={control}
-          isReadOnly={isReadOnly}
-          name={`${arrayName}.${context.row.index}.${String(key)}` as ReactHookForm.Path<TField>}
-          onChange={v => setValue(
-            `${arrayName}.${context.row.index}.${String(key)}` as ReactHookForm.Path<TField>,
-            v as ReactHookForm.PathValue<TField, ReactHookForm.Path<TField>>,
-            { shouldDirty: true }
-          )}
-        />
-      ),
+      renderBody: ({ context, isReadOnly }) => {
+        const value = ReactHookForm.useWatch({ control, name: `${arrayName}.${context.row.index}.${String(key)}` as ReactHookForm.Path<TField> })
+        return (
+          <label className={`self-start block h-full w-full px-1 ${isReadOnly ? '' : 'cursor-pointer'}`}>
+            <input
+              type="checkbox"
+              checked={!!value}
+              onChange={e => setValue(
+                `${arrayName}.${context.row.index}.${String(key)}` as ReactHookForm.Path<TField>,
+                e.target.checked as ReactHookForm.PathValue<TField, ReactHookForm.Path<TField>>,
+                { shouldDirty: true }
+              )}
+              disabled={isReadOnly}
+              className="block h-6"
+            />
+          </label>
+        )
+      },
       onCellKeyDown: ({ rowIndex, event }) => {
         if (event.key === ' ' || event.code === 'Space') {
           event.preventDefault()
@@ -299,6 +324,7 @@ function useColumnDefHelper<
       },
       ...options,
     }),
+    //#endregion ヘルパー: チェックボックス
 
   }), [control, getValues, setValue, arrayName])
 }
@@ -332,44 +358,60 @@ const RHFTextCell = <
   )
 }
 
-const RHFCheckboxCell = <
-  TField extends ReactHookForm.FieldValues,
-  TPath extends ReactHookForm.Path<TField>,
->({ control, name, onChange, isReadOnly }: {
-  control: ReactHookForm.Control<TField> | undefined
-  name: TPath
-  onChange: (value: boolean) => void
-  isReadOnly: boolean
-}) => {
-  const value = ReactHookForm.useWatch({ control, name })
-  return (
-    <label className="self-start block h-full w-full px-1 cursor-pointer">
-      <input
-        type="checkbox"
-        checked={!!value}
-        onChange={e => onChange(e.target.checked)}
-        disabled={isReadOnly}
-        className="block h-6"
-      />
-    </label>
-  )
-}
-
-const RHFSelectCell = <
-  TField extends ReactHookForm.FieldValues,
-  TPath extends ReactHookForm.Path<TField>,
->({ control, name, options }: {
-  control: ReactHookForm.Control<TField> | undefined
-  name: TPath
-  options: { value: string, text: string }[]
-}) => {
-  const value = ReactHookForm.useWatch({ control, name })
-  const text = options.find(o => o.value === value)?.text ?? (value as string)
-  return (
-    <div className="px-1 py-px truncate">
-      {text}
-    </div>
-  )
-}
-
 //#endregion 列定義ヘルパー
+
+
+//#region 文字列型セルエディタ
+
+/**
+ * テキストセルエディタ
+ */
+const TextCellEditor: EditableGridCellEditor = React.forwardRef(function DefaultEditor({ style, isEditing, requestCommit, requestCancel }, ref) {
+
+  const [value, setValue] = React.useState<string>('')
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null)
+
+  const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = e => {
+    setValue(e.target.value)
+  }
+
+  // エディタ内部のキー操作
+  const handleKeyDown: React.KeyboardEventHandler<HTMLTextAreaElement> = e => {
+    // 編集を確定させる
+    if (isEditing) {
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        if (e.shiftKey) return; // セル内改行のため普通のEnterでは編集終了しないようにする
+
+        requestCommit(value)
+        e.preventDefault()
+      }
+      // 編集をキャンセルする
+      else if (e.key === 'Escape') {
+        requestCancel()
+        e.preventDefault()
+      }
+    }
+  }
+
+  React.useImperativeHandle(ref, () => ({
+    blur: () => textareaRef.current?.blur(),
+    getCurrentValue: () => textareaRef.current?.value ?? '',
+    setValueAndSelectAll: (value: string) => {
+      setValue(value)
+      textareaRef.current?.select()
+    },
+    getDomElement: () => textareaRef.current,
+  }), [textareaRef])
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value ?? ''}
+      onChange={handleChange}
+      onKeyDown={handleKeyDown}
+      className="px-[3px] resize-none field-sizing-content outline-none border border-black bg-white"
+      style={style}
+    />
+  )
+})
+//#endregion 文字列型セルエディタ

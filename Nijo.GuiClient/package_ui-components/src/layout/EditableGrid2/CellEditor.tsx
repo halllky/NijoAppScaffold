@@ -53,7 +53,7 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
 
   const editorTextareaRef = React.useRef<EditableGridCellEditorRef>(null)
 
-  const [editorComponent, setEditorComponent] = React.useState<EditableGridCellEditor>(gridEditorComponent ?? DefaultEditor)
+  const [editorComponent, setEditorComponent] = React.useState<EditableGridCellEditor>(gridEditorComponent ?? NoopEditor)
   const [edittingCell, setEdittingCell] = React.useState<TanStack.Cell<TRow, unknown> | null>(null)
 
   // -----------------------------------
@@ -118,24 +118,6 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
     onEditingStateChanged(false)
   }
 
-  // エディタ内部のキー操作
-  const handleKeyDown: React.KeyboardEventHandler<HTMLLabelElement> = e => {
-    // 編集を確定させる
-    if (edittingCell) {
-      if (e.key === 'Enter' || e.key === 'Tab') {
-        if (e.shiftKey) return; // セル内改行のため普通のEnterでは編集終了しないようにする
-
-        commitEditing()
-        e.preventDefault()
-      }
-      // 編集をキャンセルする
-      else if (e.key === 'Escape') {
-        cancelEditing()
-        e.preventDefault()
-      }
-    }
-  }
-
   // エディタの外観
   const editorStyle = React.useMemo((): React.CSSProperties => {
     const style: React.CSSProperties = {
@@ -194,7 +176,7 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
         value = columnMeta.original.getValueForEditor({ row: getRowObject(cell.row.index), rowIndex: cell.row.index })
       }
       // エディタコンポーネントも更新
-      setEditorComponent(columnMeta.original?.editor ?? gridEditorComponent ?? DefaultEditor)
+      setEditorComponent(columnMeta.original?.editor ?? gridEditorComponent ?? NoopEditor)
     }
     // グリッドにフォーカスが当たった瞬間に確実にフォーカスさせるためsetTimeoutを挟む
     window.setTimeout(() => {
@@ -206,6 +188,9 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
   React.useImperativeHandle(ref, () => ({
     requestEditStart: inputChar => {
       if (!focusedCell) return;
+
+      // エディタコンポーネントが指定されていない場合は編集開始しない
+      if (editorComponent === NoopEditor) return;
 
       const cell = rowModel
         .flatRows[focusedCell.rowIndex]
@@ -230,8 +215,9 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
   }))
 
   return React.createElement(editorComponent, {
+    isEditing: edittingCell !== null,
     requestCommit: commitEditing,
-    onKeyDown: handleKeyDown,
+    requestCancel: cancelEditing,
     style: editorStyle,
     ref: editorTextareaRef,
   })
@@ -239,35 +225,22 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
 
 
 /**
- * エディタコンポーネントが指定されていない場合のデフォルトのエディタ
+ * エディタコンポーネントが指定されていない場合のデフォルトのエディタ。
+ * フォーカスの保持だけを行い、エディタとしての機能は持たない。
  */
-const DefaultEditor: EditableGridCellEditor = React.forwardRef(function DefaultEditor({ style, onKeyDown }, ref) {
+const NoopEditor: EditableGridCellEditor = React.forwardRef(function NoopEditor({ style }, ref) {
 
-  const [value, setValue] = React.useState<string>('')
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
-
-  const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = e => {
-    setValue(e.target.value)
-  }
 
   React.useImperativeHandle(ref, () => ({
     blur: () => textareaRef.current?.blur(),
     getCurrentValue: () => textareaRef.current?.value ?? '',
-    setValueAndSelectAll: (value: string) => {
-      setValue(value)
-      textareaRef.current?.select()
-    },
+    setValueAndSelectAll: () => textareaRef.current?.select(),
     getDomElement: () => textareaRef.current,
   }), [textareaRef])
 
+  // このコンポーネントは常に非表示
   return (
-    <textarea
-      ref={textareaRef}
-      value={value ?? ''}
-      onChange={handleChange}
-      onKeyDown={onKeyDown}
-      className="px-[3px] resize-none field-sizing-content outline-none border border-black bg-white"
-      style={style}
-    />
+    <textarea ref={textareaRef} style={style} />
   )
 })
