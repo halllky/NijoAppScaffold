@@ -10,11 +10,12 @@ export type MentionInputWrapperProps = {
   onKeyDown?: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void
   placeholder?: string
   className?: string
+  style?: React.CSSProperties
   isReadOnly?: boolean
   /** メンション候補データを取得する関数 */
   getSuggestions: ReactMention.DataFunc
   /** 読み取り専用時の表示用コンポーネント（オプション） */
-  readOnlyRenderer?: React.ComponentType<{ value?: string; className?: string }>
+  readOnlyRenderer?: React.ComponentType<{ value?: string; className?: string; style?: React.CSSProperties }>
 }
 
 /**
@@ -26,6 +27,7 @@ export const MentionInputWrapper = React.forwardRef<HTMLTextAreaElement, Mention
   onKeyDown,
   placeholder,
   className,
+  style,
   isReadOnly,
   getSuggestions,
   readOnlyRenderer: ReadOnlyRenderer,
@@ -42,11 +44,11 @@ export const MentionInputWrapper = React.forwardRef<HTMLTextAreaElement, Mention
   // 読み取り専用の場合
   if (isReadOnly) {
     if (ReadOnlyRenderer) {
-      return <ReadOnlyRenderer value={value} className={className} />
+      return <ReadOnlyRenderer value={value} className={className} style={style} />
     }
     // デフォルトの読み取り専用表示
     return (
-      <div className={`whitespace-pre-wrap break-all pb-[2px] ${className ?? ''}`}>
+      <div className={`whitespace-pre-wrap break-all pb-[2px] ${className ?? ''}`} style={style}>
         {MentionUtil.parseAsMentionText(value).map((part, index) => (
           <React.Fragment key={index}>
             {part.isMention ? (
@@ -75,7 +77,10 @@ export const MentionInputWrapper = React.forwardRef<HTMLTextAreaElement, Mention
       className={`[&_textarea]:outline-none break-all resize-none field-sizing-content ${className ?? ''}`}
       suggestionsPortalHost={document.body}
       allowSuggestionsAboveCursor
-      style={MentionUtil.STYLE_MENTION_SUGGESTIONS}
+      style={{
+        ...MentionUtil.STYLE_MENTION_SUGGESTIONS,
+        ...style,
+      }}
     >
       <ReactMention.Mention
         trigger="@"

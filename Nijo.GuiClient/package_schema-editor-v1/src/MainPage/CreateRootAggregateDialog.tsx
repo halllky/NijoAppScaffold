@@ -2,7 +2,7 @@ import React from "react"
 import useEvent from "react-use-event-hook"
 import * as UI from "@nijo/ui-components"
 import { ModalDialog } from "@nijo/ui-components/layout"
-import { ModelTypeSelectorForSchema } from "./Grid/Input.ModelTypeSelector"
+import { ModelTypeSelector } from "../UI/ModelTypeSelector"
 import { TYPE_COMMAND_MODEL, TYPE_DATA_MODEL, TYPE_QUERY_MODEL, TYPE_STRUCTURE_MODEL } from "../types"
 
 export type RootAggregateModelType =
@@ -61,7 +61,7 @@ export const CreateRootAggregateDialog: React.FC<CreateRootAggregateDialogProps>
         <div className="flex flex-col gap-3 px-4 py-4">
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium">モデル種類</span>
-            <ModelTypeSelectorForSchema
+            <ModelTypeSelector
               value={modelType}
               onChange={value => setModelType(value as RootAggregateModelType)}
               className="w-full"

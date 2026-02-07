@@ -10,11 +10,9 @@ import useEvent from "react-use-event-hook"
 import { UUID } from "uuidjs"
 import { TYPE_COLUMN_DEF } from "./getAttrTypeOptions"
 import { GetValidationResultFunction, ValidationTriggerFunction } from "../useValidation"
-import { MentionCellDataSourceContext, SchemaDefinitionMentionTextarea } from "./Input.Mention"
 import { createLocalNameCell, createBasicAttributeCell, GridRowType, createCustomAttributeCell } from "./Input.CellTypes"
 import { usePersonalSettings } from "../../Settings"
 import { CellEditorWithMention } from "./Input.CellEditor"
-import { ModelTypeSelectorForSchema } from "./Input.ModelTypeSelector"
 
 /** コメント列のID */
 export const COLUMN_ID_COMMENT = ':comment:'
@@ -122,7 +120,7 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
   }
 
   return (
-    <MentionCellDataSourceContext.Provider value={schemaDefinitionData}>
+    <UI.MentionCellDataSourceContext.Provider value={schemaDefinitionData}>
       <div className={`flex flex-col gap-1 px-1 ${className ?? ''}`}>
 
         {/* ヘッダ（ルート集約名、ルート集約モデル、ペイン操作ボタン） */}
@@ -149,7 +147,7 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
           />
 
           {/* モデル種類選択 */}
-          <ModelTypeSelectorForSchema
+          <UI.ModelTypeSelector
             value={rootElement.attributes[ATTR_TYPE] || ''}
             onChange={value => handleAttributeChange(ATTR_TYPE, value)}
             className="min-w-[200px]"
@@ -204,7 +202,7 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
 
             {/* コメント */}
             <FormLayout.Field>
-              <SchemaDefinitionMentionTextarea
+              <UI.SchemaDefinitionMentionTextarea
                 value={rootElement.comment || ''}
                 onChange={value => {
                   const currentElement = formMethods.getValues(`xmlElementTrees.${rootAggregateIndex}.xmlElements.0`)
@@ -237,7 +235,7 @@ export const PageRootAggregate = ({ rootAggregateIndex, formMethods, getValidati
           />
         )}
       </div>
-    </MentionCellDataSourceContext.Provider>
+    </UI.MentionCellDataSourceContext.Provider>
   )
 }
 

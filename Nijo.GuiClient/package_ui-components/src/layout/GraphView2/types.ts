@@ -13,6 +13,8 @@ export type Node = {
   'color:container'?: string
   /** ノードをマウスドラッグで動かせるかどうか。デフォルトはtrue */
   locked?: boolean
+  /** GraphView2 の内部では用いられない任意の付加情報 */
+  meta?: Record<string, unknown>
 }
 
 /** グラフのエッジ */
@@ -30,11 +32,8 @@ export type Edge = {
   sourceEndShape?: cytoscape.Css.ArrowShape
   /** エッジの終点の形状 */
   targetEndShape?: cytoscape.Css.ArrowShape
-}
-
-export type DataSet = {
-  nodes: { [id: string]: Node }
-  edges: Edge[]
+  /** GraphView2 の内部では用いられない任意の付加情報 */
+  meta?: Record<string, unknown>
 }
 
 /** GraphView2のProps。GraphViewと互換性を保つ */
@@ -44,7 +43,6 @@ export interface GraphViewProps {
   nodes?: Node[];
   edges?: Edge[];
   parentMap?: { [nodeId: string]: string };
-  onReady?: () => void;
   onNodeDoubleClick?: (event: cytoscape.EventObject) => void;
   /** ノードの選択が変更された瞬間に呼ばれる */
   onSelectionChange?: (event: cytoscape.EventObject) => void;

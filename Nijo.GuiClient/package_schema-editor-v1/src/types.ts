@@ -13,7 +13,10 @@ export type AppSchemaDefinitionGraphDataSet = {
 } & {
   /** 表示モード ('schema' | 'er') */
   displayMode?: 'schema' | 'er'
-  /** ルート集約のみ表示フラグ */
+  /**
+   * ルート集約のみ表示フラグ
+   * @deprecated 廃止予定
+   */
   onlyRoot?: boolean
 }
 

@@ -6,6 +6,7 @@ import { MainPageLayout } from "./MainPageLayout"
 import { SchemaDefinitionGlobalState } from "../types"
 import { NowLoading } from "@nijo/ui-components/layout"
 import { loadSchema } from "./useSaveLoad"
+import NewUi20260207 from "../NewUi20260207"
 
 /**
  * メイン画面。
@@ -92,7 +93,8 @@ export default function MainPage() {
   )
 
   return (
-    <MainPageLayout defaultValues={state.defaultValues} />
+    <NewUi20260207 defaultValues={state.defaultValues} />
+    // <MainPageLayout defaultValues={state.defaultValues} />
   )
 }
 

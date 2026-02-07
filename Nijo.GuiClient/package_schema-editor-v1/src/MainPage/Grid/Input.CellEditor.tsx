@@ -2,7 +2,7 @@ import React from "react"
 import * as Icon from "@heroicons/react/24/solid"
 import * as Layout from "@nijo/ui-components/layout"
 import { COLUMN_ID_COMMENT } from "./index"
-import { SchemaDefinitionMentionTextarea } from "./Input.Mention"
+import { SchemaDefinitionMentionTextarea } from "../../UI/Mention"
 
 /**
  * メンションを含むセル編集エディタ（スキーマ定義編集用）。

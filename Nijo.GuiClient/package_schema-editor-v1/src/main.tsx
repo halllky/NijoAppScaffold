@@ -7,6 +7,7 @@ import { PersonalSettingsProvider } from "./Settings/usePersonalSettings"
 
 import "./main.css"
 import "allotment/dist/style.css"
+import { CtrlSProvider } from "./UI/useCtrlS"
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -21,9 +22,15 @@ function App() {
 
   return (
     <PersonalSettingsProvider>
+      {/* TODO: 削除予定 */}
       <Util.IMEProvider>
+        {/* TODO: 削除予定 */}
         <Util.CtrlSProvider>
-          <ReactRouter.RouterProvider router={router} />
+
+          <CtrlSProvider>
+            <ReactRouter.RouterProvider router={router} />
+          </CtrlSProvider>
+
         </Util.CtrlSProvider>
       </Util.IMEProvider>
     </PersonalSettingsProvider>

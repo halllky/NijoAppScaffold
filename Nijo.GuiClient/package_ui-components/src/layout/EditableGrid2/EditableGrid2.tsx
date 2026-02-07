@@ -129,6 +129,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
 
   // ref
   React.useImperativeHandle(ref, () => ({
+    isEditing,
     getCheckedRows: () => {
       return table.getSelectedRowModel().flatRows.map(r => ({
         rowIndex: r.index,

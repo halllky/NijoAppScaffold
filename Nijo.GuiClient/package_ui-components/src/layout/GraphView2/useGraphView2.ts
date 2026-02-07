@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useRef, useEffect, useMemo } from 'react'
 import cytoscape from 'cytoscape'
-import { GraphViewProps, DataSet, ViewState, Node, Edge } from './types'
+import { GraphViewProps, ViewState, Node, Edge } from './types'
 import { getStyleSheet, setupHtmlLabels } from './CytoscapeStyle'
 import { useGraphViewSaveLoad } from './useGraphViewSaveLoad'
 import { deepEqual } from './deepEqual';
@@ -88,6 +88,10 @@ export const useGraphView2 = (props: GraphViewProps): UseGraphView2Result => {
 
       cyInstance.ready(() => {
         handleViewportChange({ type: 'ready', target: cyInstance } as any)
+      })
+
+      cyInstance.on('pan', () => {
+        updateGridBackground(cyInstance, propsRef.current.showGrid)
       })
 
       setCy(cyInstance)
@@ -315,16 +319,20 @@ function updateGridBackground(cyInstance: cytoscape.Core, showGrid?: boolean) {
   const largeGridSize = 100 * zoom
 
   const backgroundImage = `
-        linear-gradient(to right,  rgba(0, 0, 0, 0.10) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(0, 0, 0, 0.10) 1px, transparent 1px),
-        linear-gradient(to right,  rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-        linear-gradient(to right,  rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px)
-    `
-
-  const backgroundSize = `100% 100%, 100% 100%, ${smallGridSize}px ${smallGridSize}px, ${smallGridSize}px ${smallGridSize}px, ${largeGridSize}px ${largeGridSize}px, ${largeGridSize}px ${largeGridSize}px`
-  const backgroundPosition = `0px 0px, 0px 0px, ${pan.x % smallGridSize}px ${pan.y % smallGridSize}px, ${pan.x % smallGridSize}px ${pan.y % smallGridSize}px, ${pan.x % largeGridSize}px ${pan.y % largeGridSize}px, ${pan.x % largeGridSize}px ${pan.y % largeGridSize}px`
+    linear-gradient(to right,  rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(to right,  rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px)`
+  const backgroundSize
+    = `${smallGridSize}px ${smallGridSize}px, `
+    + `${smallGridSize}px ${smallGridSize}px, `
+    + `${largeGridSize}px ${largeGridSize}px, `
+    + `${largeGridSize}px ${largeGridSize}px`
+  const backgroundPosition
+    = `${pan.x % smallGridSize}px ${pan.y % smallGridSize}px, `
+    + `${pan.x % smallGridSize}px ${pan.y % smallGridSize}px, `
+    + `${pan.x % largeGridSize}px ${pan.y % largeGridSize}px, `
+    + `${pan.x % largeGridSize}px ${pan.y % largeGridSize}px`
 
   container.style.backgroundImage = backgroundImage
   container.style.backgroundSize = backgroundSize

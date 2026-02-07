@@ -1,6 +1,6 @@
 import React from "react"
-import { XmlElementItem, ATTR_TYPE, TYPE_DATA_MODEL, TYPE_COMMAND_MODEL, TYPE_QUERY_MODEL, TYPE_CHILD, TYPE_CHILDREN, SchemaDefinitionGlobalState } from "../../types"
-import { MentionInputWrapper } from "../../UI/MentionInputWrapper"
+import { XmlElementItem, ATTR_TYPE, TYPE_DATA_MODEL, TYPE_COMMAND_MODEL, TYPE_QUERY_MODEL, TYPE_CHILD, TYPE_CHILDREN, SchemaDefinitionGlobalState } from "../types"
+import { MentionInputWrapper } from "./MentionInputWrapper"
 
 /** スキーマ定義データを提供するContext */
 export const MentionCellDataSourceContext = React.createContext<SchemaDefinitionGlobalState | null>(null)
@@ -12,12 +12,16 @@ export const MentionCellDataSourceContext = React.createContext<SchemaDefinition
 export const SchemaDefinitionMentionTextarea = React.forwardRef(({
   value,
   onChange,
+  onKeyDown,
   className,
+  style,
   placeholder,
 }: {
   value?: string
   onChange?: (value: string) => void
+  onKeyDown?: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void
   className?: string
+  style?: React.CSSProperties
   placeholder?: string
 }, ref: React.Ref<HTMLTextAreaElement>) => {
 
@@ -29,8 +33,10 @@ export const SchemaDefinitionMentionTextarea = React.forwardRef(({
       ref={ref}
       value={value}
       onChange={onChange}
+      onKeyDown={onKeyDown}
       placeholder={placeholder}
       className={className}
+      style={style}
       getSuggestions={getSuggestions}
     />
   )

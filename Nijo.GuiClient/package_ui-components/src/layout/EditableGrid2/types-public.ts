@@ -53,6 +53,8 @@ export type EditableGrid2Props<TRow> = {
  * EditableGrid2 の参照オブジェクト
  */
 export type EditableGrid2Ref<TRow> = {
+  /** セルエディタによる編集が行われているかどうか */
+  isEditing: boolean
   /** 選択されている行の取得 */
   getSelectedRows: () => { row: TRow, rowIndex: number }[]
   /** 行頭のチェックボックスで選択されている行を取得する */

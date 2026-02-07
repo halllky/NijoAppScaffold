@@ -174,7 +174,6 @@ export default function GraphView2Debugging() {
             nodes={nodes}
             edges={edges}
             showGrid={true}
-            onReady={() => addLog('GraphView2 Ready')}
             onNodeDoubleClick={(e) => addLog(`Double Click: ${e.target.id()}`)}
             onSelectionChange={(e) => {
               // 選択イベントは頻発するのでログが流れるのを防ぐなら条件分岐

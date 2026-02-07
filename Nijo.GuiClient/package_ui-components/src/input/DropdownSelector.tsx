@@ -1,4 +1,5 @@
 import React from "react"
+import ReactDOM from "react-dom"
 import * as Icon from "@heroicons/react/24/solid"
 
 type DropdownSelectorProps = {
@@ -17,7 +18,7 @@ export const DropdownSelector: React.FC<DropdownSelectorProps> = ({
 }) => {
   const [isOpen, setIsOpen] = React.useState(false)
   const [highlightedIndex, setHighlightedIndex] = React.useState(0)
-  const [maxHeight, setMaxHeight] = React.useState<number | undefined>(undefined)
+  const [popupStyle, setPopupStyle] = React.useState<React.CSSProperties>({})
   const dropdownRef = React.useRef<HTMLDivElement>(null)
   const menuRef = React.useRef<HTMLDivElement>(null)
 
@@ -28,9 +29,13 @@ export const DropdownSelector: React.FC<DropdownSelectorProps> = ({
   // ドロップダウンの外側クリックで閉じる
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
+      if (menuRef.current && menuRef.current.contains(event.target as Node)) {
+        return
       }
+      if (dropdownRef.current && dropdownRef.current.contains(event.target as Node)) {
+        return
+      }
+      setIsOpen(false)
     }
 
     document.addEventListener('mousedown', handleClickOutside)
@@ -38,13 +43,29 @@ export const DropdownSelector: React.FC<DropdownSelectorProps> = ({
   }, [])
 
   // ドロップダウンがブラウザの幅を超えたときにドロップダウンに縦スクロールを発生させるため、
-  // ドロップダウンが開いたときに最大高さを計算
-  React.useEffect(() => {
-    if (isOpen && menuRef.current) {
-      const menuRect = menuRef.current.getBoundingClientRect()
-      const viewportHeight = window.innerHeight
-      const availableHeight = viewportHeight - menuRect.top - 16 // 16px のマージン
-      setMaxHeight(availableHeight)
+  // ドロップダウンが開いたときに位置と最大高さを計算
+  React.useLayoutEffect(() => {
+    if (isOpen && dropdownRef.current) {
+      const updatePosition = () => {
+        if (!dropdownRef.current) return
+        const rect = dropdownRef.current.getBoundingClientRect()
+        const viewportHeight = window.innerHeight
+        const availableHeight = viewportHeight - rect.bottom - 16 // 16px のマージン
+
+        setPopupStyle({
+          position: 'absolute',
+          left: `${rect.left + window.scrollX}px`,
+          top: `${rect.bottom + window.scrollY + 4}px`,
+          width: `${rect.width}px`,
+          zIndex: 9999,
+          // 384px は Tailwind の h-96 の高さに相当
+          maxHeight: availableHeight > 0 ? `${availableHeight}px` : '384px',
+        })
+      }
+
+      updatePosition()
+      window.addEventListener('resize', updatePosition)
+      return () => window.removeEventListener('resize', updatePosition)
     }
   }, [isOpen])
 
@@ -101,7 +122,7 @@ export const DropdownSelector: React.FC<DropdownSelectorProps> = ({
         type="button"
         onClick={handleToggle}
         onKeyDown={handleKeyDown}
-        className="flex items-center justify-between w-full px-1 py-px border border-gray-300 bg-white text-left"
+        className="flex items-center justify-between w-full px-1 py-px border border-gray-700 bg-white text-left"
       >
         <span className="truncate">
           {selectedLabel || '選択してください'}
@@ -110,14 +131,11 @@ export const DropdownSelector: React.FC<DropdownSelectorProps> = ({
       </button>
 
       {/* ドロップダウンメニュー */}
-      {isOpen && (
+      {isOpen && ReactDOM.createPortal(
         <div
           ref={menuRef}
-          className="absolute z-50 w-full mt-1 bg-white border border-gray-300 shadow-lg overflow-y-auto"
-          style={{
-            // 384px は Tailwind の h-96 の高さに相当
-            maxHeight: maxHeight ? `${maxHeight}px` : '384px',
-          }}
+          className="bg-white border border-gray-700 shadow-lg overflow-y-auto"
+          style={popupStyle}
         >
           {children.map(([optionValue, optionLabel, optionRenderer], index) => (
             <div
@@ -129,7 +147,8 @@ export const DropdownSelector: React.FC<DropdownSelectorProps> = ({
               {optionRenderer}
             </div>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
