@@ -12,6 +12,7 @@ import FormLayoutPatternsDebugging from "./FormLayoutPatternsDebugging"
 import EditableGridDebugging from "./EditableGridDebugging"
 import EditableGridHookTest from "./EditableGridHookTest"
 import EditableGrid2Debugging from "./EditableGrid2Debugging"
+import GraphView2Debugging from "./GraphView2Debugging"
 
 export default function () {
 
@@ -69,6 +70,21 @@ export default function () {
 
 export const getDebuggingPages = (): { groupName: string, links: (ReactRouter.RouteObject & { label: string })[] }[] => [
   {
+    groupName: '刷新後',
+    links: [
+      {
+        path: '/editable-grid-2/001',
+        label: 'EditableGrid 2',
+        element: <EditableGrid2Debugging />,
+      },
+      {
+        path: '/graph-view-2/001',
+        label: 'GraphView2 基本機能',
+        element: <GraphView2Debugging />,
+      }
+    ]
+  },
+  {
     groupName: 'FormLayoutのデバッグ',
     links: [
       {
@@ -79,7 +95,7 @@ export const getDebuggingPages = (): { groupName: string, links: (ReactRouter.Ro
     ],
   },
   {
-    groupName: 'EditableGridのデバッグ',
+    groupName: 'EditableGrid(旧)のデバッグ',
     links: [
       {
         path: '/editable-grid/001',
@@ -120,11 +136,6 @@ export const getDebuggingPages = (): { groupName: string, links: (ReactRouter.Ro
         path: '/editable-grid/008',
         label: 'EditableGrid フック使用テスト',
         element: <EditableGridHookTest />,
-      },
-      {
-        path: '/editable-grid-2/001',
-        label: 'EditableGrid 2',
-        element: <EditableGrid2Debugging />,
       },
     ],
   },
