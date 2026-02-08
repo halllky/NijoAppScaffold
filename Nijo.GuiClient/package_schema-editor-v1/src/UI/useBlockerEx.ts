@@ -8,7 +8,7 @@ import * as ReactRouter from "react-router-dom"
  * @param shouldBlock 離脱をブロックするかどうかの条件
  * @param message 離脱時に表示するメッセージ
  */
-export const useBlockerEx = (shouldBlock: boolean, message: string = "編集中の内容がありますが、ページを離れてもよろしいですか？") => {
+export function useBlockerEx(shouldBlock: boolean, message: string = "編集中の内容がありますが、ページを離れてもよろしいですか？") {
 
   // 離脱時の確認ダイアログ
   // ページの再読み込み前に確認ダイアログを表示する

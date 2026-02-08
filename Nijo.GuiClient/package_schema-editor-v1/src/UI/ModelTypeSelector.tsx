@@ -47,6 +47,8 @@ type ModelTypeSelectorForSchemaProps = {
   value?: string
   onChange: (value: string) => void
   className?: string
+  autoFocus?: boolean
+  onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>
 }
 
 /**
@@ -82,5 +84,56 @@ export function ModelTypeSelector({
         )
       ])}
     </DropdownSelector>
+  )
+}
+
+/**
+ * ルート集約のモデルの型を選択するラジオボタン
+ */
+export function ModelTypeRadioButtonGroup({
+  value,
+  onChange,
+  autoFocus,
+  className,
+  onKeyDown,
+}: ModelTypeSelectorForSchemaProps) {
+
+  React.useEffect(() => {
+    if (autoFocus) {
+      const firstRadio = document.querySelector<HTMLInputElement>('input[name="modelType"]')
+      firstRadio?.focus()
+    }
+  }, [autoFocus])
+
+  return (
+    <div className={`flex flex-col gap-2 ${className ?? ''}`}>
+      {MODEL_TYPE_OPTIONS.map(option => (
+        <label
+          key={option.value}
+          className={`
+            flex items-start gap-3 p-3 rounded border cursor-pointer transition-colors
+            ${value === option.value ? 'bg-blue-50 border-blue-400 ring-1 ring-blue-400' : 'bg-white border-gray-200 hover:bg-gray-50'}
+          `}
+        >
+          <input
+            type="radio"
+            name="modelType"
+            value={option.value}
+            checked={value === option.value}
+            onChange={() => onChange(option.value)}
+            onKeyDown={onKeyDown}
+            className="mt-1"
+          />
+          <div>
+            <div className={`font-bold ${option.nameTextColor}`}>
+              {option.displayName}
+            </div>
+            <div className={`text-xs mt-1 leading-snug ${option.descriptionTextColor}`}>
+              {option.description}
+            </div>
+          </div>
+        </label>
+      ))}
+    </div>
   )
 }

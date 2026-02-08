@@ -72,7 +72,7 @@ export function Button({
   // 見た目（塗りつぶし、枠線など）
   let appearanceStyle = ""
   if (fill) {
-    appearanceStyle = "bg-cyan-600 text-white hover:bg-cyan-700 border border-transparent"
+    appearanceStyle = "bg-cyan-600 text-white hover:bg-cyan-700 border border-white"
   } else if (outline) {
     appearanceStyle = "bg-white text-cyan-700 border border-cyan-700 hover:bg-gray-50"
   } else if (underline) {

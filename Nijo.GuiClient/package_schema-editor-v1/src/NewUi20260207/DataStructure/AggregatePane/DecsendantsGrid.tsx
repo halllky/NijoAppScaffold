@@ -3,22 +3,10 @@ import * as ReactHookForm from "react-hook-form"
 import * as Icon from "@heroicons/react/24/solid"
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
 import { UUID } from "uuidjs"
-import { SchemaDefinitionGlobalState, XmlElementAttribute, ATTR_TYPE, ATTR_IS_KEY, TYPE_DATA_MODEL, isAttributeAvailable, ValueMemberType, XmlElementItem, NijoXmlCustomAttribute } from "../../../types"
+import { SchemaDefinitionGlobalState, ATTR_TYPE, isAttributeAvailable, XmlElementItem } from "../../../types"
 import * as UI from '../../../UI'
 import { GetValidationResultFunction, ValidationTriggerFunction } from '../../../MainPage/useValidation'
-import { CellEditorWithMention } from "../../../MainPage/Grid/Input.CellEditor"
-import { TYPE_COLUMN_DEF } from "../../../MainPage/Grid/getAttrTypeOptions"
-import { useFieldArrayForEditableGrid2 } from "../../../UI/useGridCellHelper"
 
-// ---------------------------------------------
-// Constants
-// ---------------------------------------------
-/** コメント列のID */
-export const COLUMN_ID_COMMENT = ':comment:'
-
-// ---------------------------------------------
-// Component
-// ---------------------------------------------
 /**
  * 子孫集約編集グリッド
  */
@@ -50,7 +38,7 @@ export function DecsendantsGrid(props: {
     fieldArrayReturn: { insert, remove, move, update },
     editableGrid2Props,
     gridRef,
-  } = useFieldArrayForEditableGrid2({
+  } = UI.useFieldArrayForEditableGrid2({
     name: `xmlElementTrees.${selectedRootAggregateIndex}.xmlElements`,
     skipFirstRow: true,
     control,
@@ -138,6 +126,12 @@ export function DecsendantsGrid(props: {
       }) satisfies XmlElementItem)
       insert(insertPosition, insertRows)
     }
+
+    // グリッド未選択なら行選択
+    window.setTimeout(() => {
+      const selectedRows = gridRef.current?.getSelectedRows()
+      if (!selectedRows || selectedRows.length === 0) gridRef.current?.selectRow(0, 0)
+    }, 10)
   }
 
   const handleInsertRowBelow = () => {
@@ -157,6 +151,12 @@ export function DecsendantsGrid(props: {
       }) satisfies XmlElementItem)
       insert(insertPosition, insertRows)
     }
+
+    // グリッド未選択なら行選択
+    window.setTimeout(() => {
+      const selectedRows = gridRef.current?.getSelectedRows()
+      if (!selectedRows || selectedRows.length === 0) gridRef.current?.selectRow(0, 0)
+    }, 10)
   }
 
   const handleDeleteRow = () => {

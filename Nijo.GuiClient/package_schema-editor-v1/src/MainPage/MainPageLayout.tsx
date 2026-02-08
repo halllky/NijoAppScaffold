@@ -20,6 +20,7 @@ import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../routing"
 import { UUID } from "uuidjs"
 import { CreateRootAggregateDialog, RootAggregateModelType } from "./CreateRootAggregateDialog"
 import { usePersonalSettings } from "../Settings/usePersonalSettings"
+import { useBlockerEx } from "../UI"
 
 export type MainPageLayoutProps = {
   defaultValues: SchemaDefinitionGlobalState
@@ -213,7 +214,7 @@ export const MainPageLayout = (props: MainPageLayoutProps) => {
   })
 
   // 画面離脱時の確認
-  UI.useBlockerEx(isDirty)
+  useBlockerEx(isDirty)
 
   return (
     <div className="h-full flex flex-col">

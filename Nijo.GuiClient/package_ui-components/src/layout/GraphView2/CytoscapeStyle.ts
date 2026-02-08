@@ -112,9 +112,9 @@ export const getStyleSheet = (): cytoscape.CytoscapeOptions['style'] => {
   }, {
     selector: 'node:selected',
     style: {
-      'border-style': 'dashed',
-      'border-width': '1px',
-      'border-color': node => (node.data('border-color:selected') as string) ?? '#FF4F02',
+      'border-style': 'solid',
+      'border-width': '2px',
+      'border-color': node => (node.data('border-color:selected') as string) ?? '#0060e6',
     },
   }, {
     selector: 'node:parent', // 子要素をもつノードに適用される
@@ -147,13 +147,14 @@ export const getStyleSheet = (): cytoscape.CytoscapeOptions['style'] => {
     selector: 'edge:selected',
     style: {
       'label': 'data(label)',
-      'color': '#FF4F02',
-      'line-color': '#FF4F02',
-      'line-style': 'dashed',
+      'color': '#0060e6',
+      'line-color': '#0060e6',
+      'line-style': 'solid',
+      'line-opacity': 1,
       'source-arrow-shape': edge => edge.data('sourceEndShape') ?? 'none',
       'target-arrow-shape': edge => edge.data('targetEndShape') ?? 'none',
-      'source-arrow-color': '#FF4F02',
-      'target-arrow-color': '#FF4F02',
+      'source-arrow-color': '#0060e6',
+      'target-arrow-color': '#0060e6',
       'width': '2px',
       'source-label': (edge: cytoscape.EdgeSingular) => edge.data('sourceEndLabel') ?? '',
       'target-label': (edge: cytoscape.EdgeSingular) => edge.data('targetEndLabel') ?? '',

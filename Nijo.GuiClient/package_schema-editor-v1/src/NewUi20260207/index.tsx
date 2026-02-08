@@ -34,6 +34,9 @@ export default function ({ defaultValues }: {
   const applicationName = ReactHookForm.useWatch({ name: "projectOptions.ApplicationName", control })
   const [displayTab, setDisplayTab] = React.useState<TabType>("data-structures")
 
+  // 画面離脱時の確認
+  UI.useBlockerEx(isDirty)
+
   // 個人設定
   const { personalSettings, save: savePersonalSettings } = usePersonalSettings()
 
