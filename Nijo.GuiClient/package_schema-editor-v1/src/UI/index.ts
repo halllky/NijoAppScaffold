@@ -1,4 +1,5 @@
 export * from "./Button"
+export * from "./GridCell.Text"
 export * from "./Mention"
 export * from "./MentionInputWrapper"
 export * from "./ModelTypeSelector"
