@@ -1,4 +1,5 @@
 import * as ReactHookForm from "react-hook-form"
+import * as Icon from "@heroicons/react/24/outline"
 import { ATTR_TYPE, SchemaDefinitionGlobalState, TYPE_COMMAND_MODEL } from "../../../types";
 import * as UI from "../../../UI"
 import { Allotment, LayoutPriority } from "allotment";
@@ -11,12 +12,19 @@ export function AggregatePane(props: {
   selectedRootAggregateIndex: number
   formMethods: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
   className?: string
+  onRequestDelete?: () => void
 }) {
   const {
     selectedRootAggregateIndex,
     formMethods: { register, control, watch },
     className,
+    onRequestDelete,
   } = props
+
+  const handleDelete = () => {
+    if (!confirm(`「${rootAggregate.localName}」を削除しますか？`)) return
+    onRequestDelete?.()
+  }
 
   const rootAggregate = ReactHookForm.useWatch({ name: `xmlElementTrees.${selectedRootAggregateIndex}.xmlElements.0`, control })
 
@@ -43,7 +51,10 @@ export function AggregatePane(props: {
             )}
           />
 
-          {/* TODO: 削除ボタン */}
+          {/* 削除ボタン */}
+          <UI.Button icon={Icon.TrashIcon} mini hideText onClick={handleDelete}>
+            削除
+          </UI.Button>
         </div>
 
         <Allotment

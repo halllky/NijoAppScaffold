@@ -61,7 +61,7 @@ export function Button({
 }: ButtonProps) {
 
   // 基本的なスタイル
-  const baseStyle = "rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-teal-400 select-none"
+  const baseStyle = "rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-cyan-400 select-none"
 
   // レイアウト
   const layoutStyle = `flex items-center justify-center gap-1 ${inline ? 'inline-flex' : 'flex'} ${iconRight ? 'flex-row-reverse' : 'flex-row'}`
@@ -72,13 +72,13 @@ export function Button({
   // 見た目（塗りつぶし、枠線など）
   let appearanceStyle = ""
   if (fill) {
-    appearanceStyle = "bg-teal-600 text-white hover:bg-teal-700 border border-transparent"
+    appearanceStyle = "bg-cyan-600 text-white hover:bg-cyan-700 border border-transparent"
   } else if (outline) {
-    appearanceStyle = "bg-white text-teal-700 border border-teal-700 hover:bg-gray-50"
+    appearanceStyle = "bg-white text-cyan-700 border border-cyan-700 hover:bg-gray-50"
   } else if (underline) {
-    appearanceStyle = "bg-transparent text-teal-600 underline hover:text-teal-800"
+    appearanceStyle = "bg-transparent text-cyan-600 underline hover:text-cyan-800"
   } else {
-    appearanceStyle = "bg-transparent text-teal-700 hover:bg-gray-100"
+    appearanceStyle = "bg-transparent text-cyan-700 hover:bg-gray-100"
   }
 
   // 無効状態

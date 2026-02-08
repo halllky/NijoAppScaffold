@@ -12,6 +12,8 @@ export function Diagram(props: {
   formMethods: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
   onSelectedRootAggregateChanged: (aggregateId: string | null) => void
   className?: string
+  /** 左肩部分にオーバーレイで表示される */
+  children?: React.ReactNode
 }) {
 
   const graphViewRef = React.useRef<GraphView2.GraphViewRef | null>(null)
@@ -42,13 +44,19 @@ export function Diagram(props: {
   })
 
   return (
-    <GraphView2.GraphView2
-      ref={graphViewRef}
-      nodes={nodes}
-      edges={edges}
-      onSelectionChange={handleSelectionChange}
-      showGrid
-      className={props.className}
-    />
+    <div className={`relative ${props.className ?? ''}`}>
+      <GraphView2.GraphView2
+        ref={graphViewRef}
+        nodes={nodes}
+        edges={edges}
+        onSelectionChange={handleSelectionChange}
+        showGrid
+        className="h-full w-full"
+      />
+
+      <div className="absolute top-2 left-2 select-none">
+        {props.children}
+      </div>
+    </div>
   )
 }

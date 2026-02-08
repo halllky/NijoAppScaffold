@@ -2,9 +2,13 @@ import { Allotment, LayoutPriority } from "allotment";
 import React from "react";
 import * as ReactHookForm from "react-hook-form"
 import { usePersonalSettings } from "../../Settings";
-import { SchemaDefinitionGlobalState } from "../../types";
+import { ATTR_TYPE, ModelPageForm, SchemaDefinitionGlobalState } from "../../types";
+import { Button } from "../../UI";
 import { Diagram } from "./Diagram";
 import { AggregatePane } from "./AggregatePane";
+import { NewRootAddDialog } from "./NewRootAddDialog";
+import { UUID } from "uuidjs";
+import { PlusIcon } from "@heroicons/react/24/solid";
 
 /**
  * データ構造定義タブ。
@@ -16,7 +20,7 @@ export default function ({ formMethods }: {
   formMethods: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
 }) {
 
-  const xmlElementTrees = ReactHookForm.useWatch({ name: "xmlElementTrees", control: formMethods.control })
+  const watchedXmlElementTrees = ReactHookForm.useWatch({ name: "xmlElementTrees", control: formMethods.control })
 
   // 個人設定
   const { personalSettings, save: savePersonalSettings } = usePersonalSettings()
@@ -29,7 +33,7 @@ export default function ({ formMethods }: {
       setAggPaneVisible(false)
       return;
     }
-    const index = xmlElementTrees?.findIndex(tree => tree.xmlElements?.[0]?.uniqueId === aggregateId)
+    const index = watchedXmlElementTrees?.findIndex(tree => tree.xmlElements?.[0]?.uniqueId === aggregateId)
     if (index === undefined || index === -1) return;
     setSelectedRootAggregateIndex(index)
     setAggPaneVisible(true)
@@ -41,6 +45,40 @@ export default function ({ formMethods }: {
   const setAggPaneOrientation = React.useCallback((orientation: 'horizontal' | 'vertical') => {
     savePersonalSettings('aggPaneOrientation', orientation)
   }, [savePersonalSettings])
+
+  // 新規ルート集約作成ダイアログ
+  const { append, remove } = ReactHookForm.useFieldArray({ name: "xmlElementTrees", control: formMethods.control })
+  const [isNewRootDialogOpen, setIsNewRootDialogOpen] = React.useState(false)
+  const handleRegisterNewRoot = (name: string, modelType: string) => {
+    const newRoot: ModelPageForm = {
+      xmlElements: [{
+        uniqueId: UUID.generate(),
+        indent: 0,
+        localName: name,
+        attributes: { [ATTR_TYPE]: modelType },
+      }],
+    }
+
+    append(newRoot)
+    setIsNewRootDialogOpen(false)
+
+    // 新規作成したルート集約を選択状態にする
+    // レンダリングを待つためにsetTimeoutを入れる
+    setTimeout(() => {
+      selectRootAggregate(newRoot.xmlElements[0].uniqueId)
+      setSelectedRootAggregateIndex(watchedXmlElementTrees.length) // append後の長さはlength+1なのでindexはlengthになる
+      setAggPaneVisible(true)
+    }, 0)
+  }
+
+  // ルート集約削除
+  const handleDeleteRootAggregate = () => {
+    if (selectedRootAggregateIndex !== undefined) {
+      remove(selectedRootAggregateIndex)
+    }
+    setSelectedRootAggregateIndex(undefined)
+    setAggPaneVisible(false)
+  }
 
   return (
     <Allotment
@@ -56,7 +94,16 @@ export default function ({ formMethods }: {
           formMethods={formMethods}
           onSelectedRootAggregateChanged={selectRootAggregate}
           className="h-full w-full border-t border-gray-400"
-        />
+        >
+          <Button onClick={() => setIsNewRootDialogOpen(true)} icon={PlusIcon} fill>
+            新規作成
+          </Button>
+          <NewRootAddDialog
+            open={isNewRootDialogOpen}
+            onClose={() => setIsNewRootDialogOpen(false)}
+            onRegister={handleRegisterNewRoot}
+          />
+        </Diagram>
       </Allotment.Pane>
 
       {/* ルート集約編集ペイン */}
@@ -67,6 +114,7 @@ export default function ({ formMethods }: {
             selectedRootAggregateIndex={selectedRootAggregateIndex}
             formMethods={formMethods}
             className={`h-full w-full border-gray-400 ${aggPaneOrientation === 'vertical' ? 'border-t' : 'border-l'}`}
+            onRequestDelete={handleDeleteRootAggregate}
           />
         )}
       </Allotment.Pane>
