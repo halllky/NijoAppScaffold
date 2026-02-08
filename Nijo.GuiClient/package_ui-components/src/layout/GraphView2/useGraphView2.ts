@@ -146,21 +146,7 @@ export const useGraphView2 = (props: GraphViewProps): UseGraphView2Result => {
         }
       })
 
-      // 追加・更新
-      // 親子関係があるので、追加順序（親が先）を気にする必要があるか？
-      // Cytoscapeは親が存在しなくてもとりあえず入れられるが、parent属性設定時に親がいないと warn が出るかも。
-      // 深さ順にソートして追加
-      const sortedNodes = [...nodesWithParent].sort((a, b) => {
-        const getDepth = (n: Node) => {
-          let depth = 0;
-          let p = n.parent;
-          while (p) { depth++; p = newNodesMap.get(p)?.parent }
-          return depth;
-        }
-        return getDepth(a) - getDepth(b)
-      })
-
-      for (const node of sortedNodes) {
+      for (const node of nodesWithParent) {
         const existingNode = cy.getElementById(node.id)
         const parentId = node.parent
 
