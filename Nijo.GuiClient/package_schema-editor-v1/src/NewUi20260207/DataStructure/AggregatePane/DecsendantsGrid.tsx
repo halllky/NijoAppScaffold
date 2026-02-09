@@ -88,21 +88,49 @@ export function DecsendantsGrid(props: {
     }))
 
     // モデルの既定の属性
+    const globalState = getValues()
     for (const attrDef of Array.from(attributeDefs.values())) {
       if (attrDef.attributeName === ATTR_TYPE) continue;
       if (!rootModelType || !isAttributeAvailable(attrDef, rootModelType, false)) continue;
 
-      columns.push(helper.text(attrDef.displayName, `attributes.${attrDef.attributeName}`, {
-        defaultWidth: 120,
-      }))
+      if (attrDef.type === 'EnumSelect') {
+        const ddlOptions = attrDef
+          .typeEnumValues
+          .map(opt => ({ value: opt, text: opt }))
+        columns.push(helper.dropdown(attrDef.displayName, `attributes.${attrDef.attributeName}`, ddlOptions, {
+          defaultWidth: 120,
+        }))
+      } else if (attrDef.type === 'Boolean') {
+        columns.push(helper.checkBox(attrDef.displayName, `attributes.${attrDef.attributeName}`, {
+          defaultWidth: 120,
+        }))
+      } else {
+        columns.push(helper.text(attrDef.displayName, `attributes.${attrDef.attributeName}`, {
+          defaultWidth: 120,
+        }))
+      }
     }
 
     // カスタム属性
     for (const customAttr of customAttributes) {
       if (!rootModelType || !customAttr.availableModels.includes(rootModelType)) continue;
-      columns.push(helper.text(customAttr.displayName ?? customAttr.physicalName, `attributes.${customAttr.uniqueId}`, {
-        defaultWidth: 120,
-      }))
+
+      if (customAttr.type === 'Enum') {
+        const ddlOptions = customAttr.enumValues.map(opt => ({ value: opt, text: opt }))
+        columns.push(helper.dropdown(customAttr.displayName ?? customAttr.physicalName, `attributes.${customAttr.uniqueId}`, ddlOptions, {
+          defaultWidth: 120,
+        }))
+
+      } else if (customAttr.type === 'Boolean') {
+        columns.push(helper.checkBox(customAttr.displayName ?? customAttr.physicalName, `attributes.${customAttr.uniqueId}`, {
+          defaultWidth: 120,
+        }))
+
+      } else {
+        columns.push(helper.text(customAttr.displayName ?? customAttr.physicalName, `attributes.${customAttr.uniqueId}`, {
+          defaultWidth: 120,
+        }))
+      }
     }
 
     return columns

@@ -31,6 +31,10 @@ public class NodeOption {
     /// </summary>
     public required E_NodeOptionType Type { get; init; }
     /// <summary>
+    /// <see cref="E_NodeOptionType"/> が列挙体の場合のみに使用される、選択肢の候補
+    /// </summary>
+    public string[]? TypeEnumValues { get; init; }
+    /// <summary>
     /// この属性が特定のモデル・ノード種別の組み合わせで利用可能かどうかを判定する。
     /// GUI上での属性入力欄の活性制御に使用される。
     /// </summary>
@@ -49,6 +53,7 @@ public enum E_NodeOptionType {
     Boolean,
     String,
     Integer,
+    EnumSelect,
 }
 
 /// <summary>
@@ -293,7 +298,13 @@ internal static class BasicNodeOptions {
     internal static NodeOption StringSearchBehavior = new() {
         AttributeName = "StringSearchBehavior",
         DisplayName = "検索挙動",
-        Type = E_NodeOptionType.String,
+        Type = E_NodeOptionType.EnumSelect,
+        TypeEnumValues = new[] {
+            STRING_SEARCH_BEHAVIOR_PARTIAL,
+            STRING_SEARCH_BEHAVIOR_FORWARD,
+            STRING_SEARCH_BEHAVIOR_BACKWARD,
+            STRING_SEARCH_BEHAVIOR_EXACT,
+        },
         HelpText = $$"""
             検索時の挙動を指定します。
             - {{STRING_SEARCH_BEHAVIOR_PARTIAL}}: 部分一致（デフォルト）
@@ -450,7 +461,8 @@ internal static class BasicNodeOptions {
     internal static NodeOption RefToObject = new() {
         AttributeName = "RefToObject",
         DisplayName = "参照先オブジェクト",
-        Type = E_NodeOptionType.String,
+        Type = E_NodeOptionType.EnumSelect,
+        TypeEnumValues = StructureRefToAvailable.Keys.ToArray(),
         HelpText = $$"""
             CommandModelまたはStructureModelはQueryModelの検索条件、画面表示用データ、外部参照のいずれかしか参照できない。
             その3種のうちどちらを参照するかの指定。

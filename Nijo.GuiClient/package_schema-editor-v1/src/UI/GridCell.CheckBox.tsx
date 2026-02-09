@@ -35,7 +35,7 @@ export function createCheckBoxCellHelper(
             checked={!!value}
             onChange={e => setValue(
               `${arrayName}.${fieldRowIndex}.${key}`,
-              e.target.checked as ReactHookForm.PathValue<ReactHookForm.FieldValues, typeof key>,
+              toServerValue(e.target.checked) as ReactHookForm.PathValue<ReactHookForm.FieldValues, typeof key>,
               { shouldDirty: true }
             )}
             disabled={isReadOnly}
@@ -52,7 +52,7 @@ export function createCheckBoxCellHelper(
         const current = getValues(`${arrayName}.${fieldRowIndex}.${key}`)
         setValue(
           `${arrayName}.${fieldRowIndex}.${key}`,
-          !current as ReactHookForm.PathValue<ReactHookForm.FieldValues, typeof key>,
+          toServerValue(!current) as ReactHookForm.PathValue<ReactHookForm.FieldValues, typeof key>,
           { shouldDirty: true }
         )
       }
@@ -67,10 +67,17 @@ export function createCheckBoxCellHelper(
       const blnValue = [true, 1, 'true', '1', 'yes'].includes(typeof value === 'string' ? value.toLowerCase() : value)
       setValue(
         `${arrayName}.${fieldRowIndex}.${key}`,
-        blnValue as ReactHookForm.PathValue<ReactHookForm.FieldValues, typeof key>,
+        toServerValue(blnValue) as ReactHookForm.PathValue<ReactHookForm.FieldValues, typeof key>,
         { shouldDirty: true }
       )
     },
     ...options,
   })
+}
+
+/**
+ * サーバー側ではbool値ではなく "True" or "" で管理しているのでそれにあわせる
+ */
+function toServerValue(value: unknown): 'True' | '' {
+  return value === true || value === 'True' ? 'True' : ''
 }

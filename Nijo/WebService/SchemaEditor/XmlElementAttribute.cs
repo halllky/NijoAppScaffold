@@ -16,6 +16,10 @@ public class XmlElementAttribute {
     public string DisplayName { get; set; } = "";
     [JsonPropertyName("availableElements")]
     public List<AvailableElement> AvailableElements { get; set; } = new List<AvailableElement>();
+    [JsonPropertyName("type"), JsonConverter(typeof(JsonStringEnumConverter))]
+    public E_NodeOptionType Type { get; set; }
+    [JsonPropertyName("typeEnumValues")]
+    public string[]? TypeEnumValues { get; set; }
 
     public class AvailableElement {
         [JsonPropertyName("model")]
@@ -43,6 +47,8 @@ public class XmlElementAttribute {
                 AttributeName = opt.AttributeName,
                 DisplayName = opt.DisplayName,
                 AvailableElements = availableElements,
+                Type = opt.Type,
+                TypeEnumValues = opt.TypeEnumValues,
             };
         }).ToList();
     }

@@ -119,22 +119,26 @@ export type XmlElementAttribute = {
   displayName: string
   /** この属性が使用可能なモデルとノード種別の組み合わせの配列。 */
   availableElements: { model: string, nodeType: string }[]
-} & (XmlElementStringAttribute | XmlElementBoolAttribute | XmlElementIntegerAttribute | XmlElementSelectAttribute)
+} & (XmlElementStringAttribute | XmlElementBoolAttribute | XmlElementIntegerAttribute | XmlElementSelectAttribute | XmlElementEnumSelectAttribute)
 
 /** XML要素の属性の種類定義（文字列属性） */
 export type XmlElementStringAttribute = {
-  type: 'string'
+  type: 'String'
 }
 /** XML要素の属性の種類定義（ブール属性） */
 export type XmlElementBoolAttribute = {
-  type: 'bool'
+  type: 'Boolean'
 }
 export type XmlElementIntegerAttribute = {
-  type: 'integer'
+  type: 'Integer'
+}
+export type XmlElementEnumSelectAttribute = {
+  type: 'EnumSelect'
+  typeEnumValues: string[]
 }
 /** XML要素の属性の種類定義（選択属性）  */
 export type XmlElementSelectAttribute = {
-  type: 'select'
+  type: 'XmlNodeType'
   /** 選択肢を取得する関数。 */
   getOptions: XmlElementSelectAttributeGetOptionFunction
 }

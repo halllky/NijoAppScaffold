@@ -92,7 +92,7 @@ export const getAttrTypeOptions: XmlElementSelectAttributeGetOptionFunction = cu
 export const TYPE_COLUMN_DEF: XmlElementAttribute = {
   attributeName: ATTR_TYPE,
   displayName: '種類',
-  type: 'select',
+  type: 'XmlNodeType',
   getOptions: getAttrTypeOptions,
   availableElements: [
     // すべてのモデル × すべてのノード種別で利用可能
