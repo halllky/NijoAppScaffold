@@ -13,6 +13,7 @@ import EditableGridDebugging from "./EditableGridDebugging"
 import EditableGridHookTest from "./EditableGridHookTest"
 import EditableGrid2Debugging from "./EditableGrid2Debugging"
 import GraphView2Debugging from "./GraphView2Debugging"
+import ReactContextDebugging from "./ReactContextDebugging"
 
 export default function () {
 
@@ -81,6 +82,11 @@ export const getDebuggingPages = (): { groupName: string, links: (ReactRouter.Ro
         path: '/graph-view-2/001',
         label: 'GraphView2 基本機能',
         element: <GraphView2Debugging />,
+      },
+      {
+        path: '/react-context/001',
+        label: 'React Context レンダリング調査',
+        element: <ReactContextDebugging />,
       }
     ]
   },
