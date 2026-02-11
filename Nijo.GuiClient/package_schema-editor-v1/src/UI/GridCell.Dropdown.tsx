@@ -33,7 +33,7 @@ export function createDropdownCellHelper(
         const value = ReactHookForm.useWatch({ control, name: `${arrayName}.${fieldRowIndex}.${key}` })
         const text = candidateValues.find(o => o.value === value)?.text ?? (value as string)
         return (
-          <div className="px-1 py-px truncate">
+          <div className="px-1 truncate">
             {text}
           </div>
         )

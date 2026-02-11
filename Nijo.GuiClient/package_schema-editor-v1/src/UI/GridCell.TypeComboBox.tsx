@@ -39,10 +39,12 @@ export function createComboBoxCellHelper(
 
         // ComboBoxなので、値そのものを表示する
         return (
-          <div className="px-1 py-px truncate">
-            {value as string}
+          <div className="flex items-center gap-4 px-1 truncate">
+            <span className="truncate">
+              {value as string}
+            </span>
             {displayText && displayText !== value && (
-              <span className="text-gray-400 text-sm ml-4">
+              <span className="flex-1 text-gray-400 text-sm truncate">
                 {displayText}
               </span>
             )}
@@ -100,7 +102,6 @@ const TypeComboEditor: EG2.EditableGridCellEditor = React.forwardRef((props, ref
   }, [items, value])
 
   // ドロップダウンの状態
-  const [isOpen, setIsOpen] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom')
 
@@ -109,27 +110,25 @@ const TypeComboEditor: EG2.EditableGridCellEditor = React.forwardRef((props, ref
     getCurrentValue: () => inputRef.current?.value ?? '',
     setValueAndSelectAll: (v, timing) => {
       setVal(v)
-      if (timing === 'edit-start') setIsOpen(true)
-      setTimeout(() => {
-        inputRef.current?.focus()
-        if (timing === 'move-focus') inputRef.current?.select()
-      }, 0)
+      if (timing === 'move-focus' || timing === 'edit-end') {
+        setTimeout(() => inputRef.current?.select(), 0)
+      }
     },
     getDomElement: () => inputRef.current,
   }))
 
   // 選択肢に自動フォーカス
   React.useEffect(() => {
-    if (!isOpen) return
+    if (!props.isEditing) return
     if (filteredItems.length === 0) return
     if (selectedIndex === -1 || selectedIndex >= filteredItems.length) {
       setSelectedIndex(0)
     }
-  }, [filteredItems])
+  }, [props.isEditing, filteredItems])
 
   // ドロップダウン位置計算
   useLayoutEffect(() => {
-    if (isOpen && wrapperRef.current) {
+    if (props.isEditing && wrapperRef.current) {
       // Gridのエディタは position: fixed ではなく absolute で配置されていることが多いが、
       // 画面端の判定には getBoundingClientRect を使う
       const rect = wrapperRef.current.getBoundingClientRect()
@@ -144,24 +143,24 @@ const TypeComboEditor: EG2.EditableGridCellEditor = React.forwardRef((props, ref
         setDropdownPosition('bottom')
       }
     }
-  }, [isOpen, filteredItems.length])
+  }, [props.isEditing, filteredItems.length])
 
   // キーボード操作でリストスクロール
   useEffect(() => {
-    if (isOpen && listRef.current && selectedIndex >= 0) {
+    if (props.isEditing && listRef.current && selectedIndex >= 0) {
       const selectedElement = listRef.current.children[selectedIndex] as HTMLElement
       if (selectedElement) {
         selectedElement.scrollIntoView({ block: 'nearest' })
       }
     }
-  }, [selectedIndex, isOpen])
+  }, [selectedIndex, props.isEditing])
 
   const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
     if (!props.isEditing) return
     if (e.nativeEvent.isComposing) return // 日本語入力中は無視
 
     // 候補選択操作
-    if (isOpen && filteredItems.length > 0) {
+    if (filteredItems.length > 0) {
       if (e.key === 'ArrowDown') {
         e.preventDefault()
         setSelectedIndex(prev => (prev < filteredItems.length - 1 ? prev + 1 : 0))
@@ -177,7 +176,7 @@ const TypeComboEditor: EG2.EditableGridCellEditor = React.forwardRef((props, ref
     // 編集確定
     if (e.key === 'Enter') {
       e.preventDefault()
-      commitValue(selectedIndex >= 0 && selectedIndex < filteredItems.length
+      props.requestCommit(selectedIndex >= 0 && selectedIndex < filteredItems.length
         ? filteredItems[selectedIndex].value
         : (e.target as HTMLInputElement).value)
       return
@@ -185,23 +184,10 @@ const TypeComboEditor: EG2.EditableGridCellEditor = React.forwardRef((props, ref
 
     // 編集キャンセル
     if (e.key === 'Escape') {
-      if (isOpen) {
-        // ドロップダウンだけ閉じる
-        e.preventDefault()
-        e.stopPropagation()
-        setIsOpen(false)
-      } else {
-        // 編集自体をキャンセル
-        props.requestCancel()
-        e.preventDefault()
-      }
+      // 編集自体をキャンセル
+      props.requestCancel()
+      e.preventDefault()
     }
-  }
-
-  const commitValue = (val: string) => {
-    setVal(val)
-    setIsOpen(false)
-    props.requestCommit(val)
   }
 
   return (
@@ -211,13 +197,13 @@ const TypeComboEditor: EG2.EditableGridCellEditor = React.forwardRef((props, ref
         value={value}
         onChange={ev => setVal(ev.target.value)}
         onKeyDown={handleKeyDown}
-        className="w-full h-full border-none outline-none bg-white px-1"
+        className="w-full h-full border border-gray-700 outline-none bg-white px-1"
       />
 
-      {isOpen && (
+      {props.isEditing && (
         <ul
           ref={listRef}
-          className={`absolute z-50 w-full min-w-[200px] bg-white border border-gray-300 max-h-60 overflow-auto shadow-lg list-none p-0 m-0 text-left ${dropdownPosition === 'top' ? 'bottom-full mb-1' : 'mt-1'
+          className={`absolute z-50 w-full min-w-[320px] bg-white border border-gray-700 max-h-60 overflow-auto shadow-lg list-none p-0 m-0 text-left ${dropdownPosition === 'top' ? 'bottom-full mb-1' : 'mt-1'
             }`}
         >
           {isLoading && filteredItems.length === 0 && (
@@ -232,7 +218,7 @@ const TypeComboEditor: EG2.EditableGridCellEditor = React.forwardRef((props, ref
             <li
               key={item.value}
               className={`px-1 py-px cursor-pointer border-b border-gray-100 last:border-none ${index === selectedIndex ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
-              onClick={() => commitValue(item.value)}
+              onClick={() => props.requestCommit(item.value)}
               onMouseDown={e => e.stopPropagation()} // EditableGrid2 が外側クリックで編集終了扱いにしないようにする
               onMouseMove={() => setSelectedIndex(index)}
             >

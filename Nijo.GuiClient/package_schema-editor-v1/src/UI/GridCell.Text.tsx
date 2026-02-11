@@ -47,7 +47,7 @@ export function createTextCellHelper(
           {value ?? undefined}
         </ReadOnlyMentionText>
       ) : (
-        <div className={`px-1 py-px ${options?.wrap ? 'whitespace-pre-wrap' : 'truncate'}`}>
+        <div className={`px-1 ${options?.wrap ? 'whitespace-pre-wrap' : 'truncate'}`}>
           {options?.format?.(value) ?? value}
         </div>
       )
@@ -100,7 +100,7 @@ export const TextCellEditor: EG2.EditableGridCellEditor = React.forwardRef(funct
     getCurrentValue: () => refInput.current?.value ?? '',
     setValueAndSelectAll: (v, timing) => {
       setValue(v)
-      if (timing === 'move-focus') {
+      if (timing === 'move-focus' || timing === 'edit-end') {
         setTimeout(() => refInput.current?.select(), 0)
       }
     },

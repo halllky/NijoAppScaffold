@@ -44,7 +44,7 @@ export function useFieldArrayForEditableGrid2<
       checkBox: createCheckBoxCellHelper(get, set, ctl, fieldArrayProps.name, skipFirstRow),
       button: createButtonCellHelper(get, ctl, fieldArrayProps.name, skipFirstRow, gridRef),
       dropdown: createDropdownCellHelper(get, set, ctl, fieldArrayProps.name, skipFirstRow),
-      comboBox: createComboBoxCellHelper(get, set, ctl, fieldArrayProps.name, skipFirstRow),
+      typeComboBox: createComboBoxCellHelper(get, set, ctl, fieldArrayProps.name, skipFirstRow),
     }
   }, [getValues, setValue, formProps.control, fieldArrayProps.name, skipFirstRow])
 
@@ -106,8 +106,8 @@ export type ColumnDefHelper<TRow> = {
   button: ReturnType<typeof createButtonCellHelper>
   /** ドロップダウン列 */
   dropdown: ReturnType<typeof createDropdownCellHelper>
-  /** コンボボックス列 */
-  comboBox: ReturnType<typeof createComboBoxCellHelper>
+  /** 種類のコンボボックス列 */
+  typeComboBox: ReturnType<typeof createComboBoxCellHelper>
 }
 
 //#endregion 列定義ヘルパー

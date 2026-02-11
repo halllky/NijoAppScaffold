@@ -155,37 +155,36 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
   //#region イベント
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    // preventDefault するかどうかは各イベントの中で判断する
-    if (!isEditing) {
+    // 編集中はセルエディタの方で処理する
+    if (isEditing) return
 
-      // カスタムキーイベントハンドラ (onCellKeyDown)
-      if (focusedCell) {
-        const col = visibleLeafColumns[focusedCell.colIndex]
-        const meta = col.columnDef.meta as ColumnMetadataInternal<TRow>
-        if (meta?.original?.onCellKeyDown) {
-          meta.original.onCellKeyDown({
-            row: getRowObject(focusedCell.rowIndex),
-            rowIndex: focusedCell.rowIndex,
-            event: e,
-            requestEditStart: () => editorRef.current?.requestEditStart(null),
-          })
-          // イベントハンドラ内で preventDefault された場合はここで処理を終了する
-          if (e.defaultPrevented) return
-        }
+    // カスタムキーイベントハンドラ (onCellKeyDown)
+    if (focusedCell) {
+      const col = visibleLeafColumns[focusedCell.colIndex]
+      const meta = col.columnDef.meta as ColumnMetadataInternal<TRow>
+      if (meta?.original?.onCellKeyDown) {
+        meta.original.onCellKeyDown({
+          row: getRowObject(focusedCell.rowIndex),
+          rowIndex: focusedCell.rowIndex,
+          event: e,
+          requestEditStart: () => editorRef.current?.requestEditStart(null),
+        })
+        // イベントハンドラ内で preventDefault された場合はここで処理を終了する
+        if (e.defaultPrevented) return
       }
-
-      // 非編集時にDeleteキーが押された場合、選択範囲内の値をクリア
-      if (e.key === 'Delete') {
-        handleDelete()
-        e.preventDefault()
-        return
-      }
-
-      selectionEvents.handleKeyDown(e)
-      onKeyDownToStartEditing(e, inputChar => {
-        editorRef.current?.requestEditStart(inputChar)
-      })
     }
+
+    // 非編集時にDeleteキーが押された場合、選択範囲内の値をクリア
+    if (e.key === 'Delete') {
+      handleDelete()
+      e.preventDefault()
+      return
+    }
+
+    selectionEvents.handleKeyDown(e)
+    onKeyDownToStartEditing(e, inputChar => {
+      editorRef.current?.requestEditStart(inputChar)
+    })
   }
 
   const handleFocus = () => {
@@ -247,19 +246,18 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
       </div> */}
 
       {/* エディタ */}
-      {isGridActive && (
-        <CellEditor
-          ref={editorRef}
-          focusedCell={focusedCell}
-          rowModel={rowModel}
-          visibleLeafColumns={visibleLeafColumns}
-          onEditingStateChanged={setIsEditing}
-          gridEditorComponent={props.editor}
-          gridIsReadOnly={props.isReadOnly}
-          getPixel={getPixel}
-          getRowObject={getRowObject}
-        />
-      )}
+      <CellEditor
+        ref={editorRef}
+        isGridActive={isGridActive}
+        focusedCell={focusedCell}
+        rowModel={rowModel}
+        visibleLeafColumns={visibleLeafColumns}
+        onEditingStateChanged={setIsEditing}
+        gridEditorComponent={props.editor}
+        gridIsReadOnly={props.isReadOnly}
+        getPixel={getPixel}
+        getRowObject={getRowObject}
+      />
 
       {/* 固定列用の選択範囲レイヤー (tableより手前に置くことで、sticky位置の基準をコンテナ左端にする) */}
       <SelectedRangeForFixedColumn

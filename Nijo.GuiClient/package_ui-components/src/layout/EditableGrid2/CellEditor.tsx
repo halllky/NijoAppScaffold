@@ -7,6 +7,8 @@ import { GetPixelFunction } from "./useGetPixel"
 import { RowAccessor } from "./useRowAccessor"
 
 export type CellEditorProps<TRow> = {
+  /** グリッド全体がアクティブ状態かどうか */
+  isGridActive: boolean
   /** useSelection で管理されているフォーカスセル */
   focusedCell: CellPosition | null
   rowModel: TanStack.RowModel<TRow>
@@ -41,6 +43,7 @@ export type CellEditorRef = {
  * EditableGrid にフォーカスが当たっているうちは、見えないだけで、必ずこのコンポーネントにフォーカスが当たる。
  */
 export const CellEditor = React.forwardRef(function CellEditor<TRow>({
+  isGridActive,
   focusedCell,
   rowModel,
   visibleLeafColumns,
@@ -55,6 +58,9 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
 
   const [editorComponent, setEditorComponent] = React.useState<EditableGridCellEditor>(gridEditorComponent ?? NoopEditor)
   const [edittingCell, setEdittingCell] = React.useState<TanStack.Cell<TRow, unknown> | null>(null)
+
+  const isGridActiveRef = React.useRef(isGridActive)
+  isGridActiveRef.current = isGridActive
 
   // -----------------------------------
 
@@ -75,8 +81,11 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
     setEdittingCell(null)
     onEditingStateChanged(false)
 
-    // エディタが select 要素のとき編集確定後にキー操作ができなくなるので setTimeiout を挟む
+    // エディタが select 要素のとき編集確定後にキー操作ができなくなるので setTimeiout を挟む。
+    // グリッドの中にフォーカスがある状態でグリッド外のボタンをクリックするなどした場合、
+    // setTimeout後の時間ではグリッドからフォーカスが外れてしまっている可能性があるので考慮する。
     window.setTimeout(() => {
+      if (!isGridActiveRef.current) return
       editorTextareaRef.current?.setValueAndSelectAll(value, 'edit-end')
     }, 0)
   }
@@ -108,8 +117,11 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
       const value = columnMeta.original?.getValueForEditor
         ? columnMeta.original.getValueForEditor({ row: rowOriginal, rowIndex: edittingCell.row.index })
         : ''
-      // エディタが select 要素のとき編集確定後にキー操作ができなくなるので setTimeiout を挟む
+      // エディタが select 要素のとき編集確定後にキー操作ができなくなるので setTimeiout を挟む。
+      // グリッドの中にフォーカスがある状態でグリッド外のボタンをクリックするなどした場合、
+      // setTimeout後の時間ではグリッドからフォーカスが外れてしまっている可能性があるので考慮する。
       window.setTimeout(() => {
+        if (!isGridActiveRef.current) return
         editorTextareaRef.current?.setValueAndSelectAll(value, 'edit-end')
       }, 0)
     }
@@ -165,6 +177,7 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
     if (edittingCell) return
     if (!focusedCell) return
 
+    // 移動先の列のエディタコンポーネントに切り替え
     const columnMeta = visibleLeafColumns[focusedCell.colIndex]?.columnDef.meta as ColumnMetadataInternal<TRow> | undefined
     let value = ''
     if (columnMeta?.original?.getValueForEditor) {
@@ -175,11 +188,14 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
       if (cell) {
         value = columnMeta.original.getValueForEditor({ row: getRowObject(cell.row.index), rowIndex: cell.row.index })
       }
-      // エディタコンポーネントも更新
       setEditorComponent(columnMeta.original?.editor ?? gridEditorComponent ?? NoopEditor)
     }
-    // グリッドにフォーカスが当たった瞬間に確実にフォーカスさせるためsetTimeoutを挟む
+
+    // グリッドにフォーカスが当たった瞬間に確実にフォーカスさせるためsetTimeoutを挟む。
+    // グリッドの中にフォーカスがある状態でグリッド外のボタンをクリックするなどした場合、
+    // setTimeout後の時間ではグリッドからフォーカスが外れてしまっている可能性があるので考慮する。
     window.setTimeout(() => {
+      if (!isGridActiveRef.current) return
       editorTextareaRef.current?.setValueAndSelectAll(value, 'move-focus')
     }, 0)
   }, [focusedCell, rowModel, visibleLeafColumns])

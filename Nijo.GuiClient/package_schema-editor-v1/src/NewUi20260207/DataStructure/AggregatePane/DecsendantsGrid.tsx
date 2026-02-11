@@ -82,13 +82,7 @@ export function DecsendantsGrid(props: {
     }))
 
     // 種類
-    columns.push(helper.comboBox('種類', `attributes.${ATTR_TYPE}`, async () => {
-      const url = new URL(`${SERVER_DOMAIN}/api/types`)
-      url.searchParams.set(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR, projectDir ?? '')
-      const res = await fetch(url.toString())
-      if (!res.ok) return []
-      return await res.json()
-    }, {
+    columns.push(helper.typeComboBox('種類', `attributes.${ATTR_TYPE}`, {
       defaultWidth: 120,
     }))
 
