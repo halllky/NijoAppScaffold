@@ -1,3 +1,4 @@
+import React from "react";
 import * as ReactHookForm from "react-hook-form"
 import * as Icon from "@heroicons/react/24/outline"
 import { ATTR_TYPE, SchemaDefinitionGlobalState, TYPE_COMMAND_MODEL } from "../../../types";
@@ -92,8 +93,8 @@ export function AggregatePane(props: {
             <DecsendantsGrid
               selectedRootAggregateIndex={selectedRootAggregateIndex}
               formMethods={props.formMethods}
-              trigger={() => Promise.resolve()} // TODO
-              getValidationResult={() => { return { _own: [] } }} // TODO
+              trigger={React.useCallback(() => Promise.resolve(), [])} // TODO
+              getValidationResult={React.useCallback(() => { return { _own: [] } }, [])} // TODO
               className="w-full h-full pt-1"
             />
           </Allotment.Pane>
