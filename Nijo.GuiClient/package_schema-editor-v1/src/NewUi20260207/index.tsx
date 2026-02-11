@@ -9,6 +9,7 @@ import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../routing"
 import { saveSchema } from "../MainPage/useSaveLoad"
 import DataStructure from "./DataStructure"
 import { SchemaCandidatesProvider } from "../MainPage/SchemaCandidatesContext"
+import ValueMemberTypes from "./ValueMemberTypes"
 
 /**
  * プロジェクト編集画面のメインレイアウト。
@@ -150,6 +151,10 @@ export default function ({ defaultValues }: {
 
           {displayTab === "data-structures" && (
             <DataStructure formMethods={formMethods} />
+          )}
+
+          {displayTab === "value-member-types" && (
+            <ValueMemberTypes formMethods={formMethods} />
           )}
 
         </main>
