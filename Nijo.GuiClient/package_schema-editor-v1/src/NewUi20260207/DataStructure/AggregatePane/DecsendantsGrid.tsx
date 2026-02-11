@@ -1,11 +1,14 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
+import * as ReactRouter from "react-router-dom"
 import * as Icon from "@heroicons/react/24/solid"
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
 import { UUID } from "uuidjs"
 import { SchemaDefinitionGlobalState, ATTR_TYPE, isAttributeAvailable, XmlElementItem } from "../../../types"
 import * as UI from '../../../UI'
 import { GetValidationResultFunction, ValidationTriggerFunction } from '../../../MainPage/useValidation'
+import { SERVER_DOMAIN } from "../../../main"
+import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../../../routing"
 
 /**
  * 子孫集約編集グリッド
@@ -33,6 +36,9 @@ export function DecsendantsGrid(props: {
 
   const watchedFields = ReactHookForm.useWatch({ name: `xmlElementTrees.${selectedRootAggregateIndex}.xmlElements`, control })
   const rootModelType = watchedFields?.[0]?.attributes?.[ATTR_TYPE]
+
+  const [searchParams] = ReactRouter.useSearchParams()
+  const projectDir = searchParams.get(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR)
 
   const {
     fieldArrayReturn: { insert, remove, move, update },
@@ -76,7 +82,13 @@ export function DecsendantsGrid(props: {
     }))
 
     // 種類
-    columns.push(helper.text('種類', `attributes.${ATTR_TYPE}`, {
+    columns.push(helper.comboBox('種類', `attributes.${ATTR_TYPE}`, async () => {
+      const url = new URL(`${SERVER_DOMAIN}/api/types`)
+      url.searchParams.set(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR, projectDir ?? '')
+      const res = await fetch(url.toString())
+      if (!res.ok) return []
+      return await res.json()
+    }, {
       defaultWidth: 120,
     }))
 
@@ -88,7 +100,6 @@ export function DecsendantsGrid(props: {
     }))
 
     // モデルの既定の属性
-    const globalState = getValues()
     for (const attrDef of Array.from(attributeDefs.values())) {
       if (attrDef.attributeName === ATTR_TYPE) continue;
       if (!rootModelType || !isAttributeAvailable(attrDef, rootModelType, false)) continue;
@@ -134,7 +145,7 @@ export function DecsendantsGrid(props: {
     }
 
     return columns
-  }, [getValidationResult, attributeDefs, rootModelType, customAttributes])
+  }, [getValidationResult, attributeDefs, rootModelType, customAttributes, projectDir, getValues])
 
   // Handlers
   const handleInsertRow = () => {

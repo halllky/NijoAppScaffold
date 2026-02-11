@@ -8,6 +8,7 @@ import { usePersonalSettings } from "../Settings"
 import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../routing"
 import { saveSchema } from "../MainPage/useSaveLoad"
 import DataStructure from "./DataStructure"
+import { SchemaCandidatesProvider } from "../MainPage/SchemaCandidatesContext"
 
 /**
  * プロジェクト編集画面のメインレイアウト。
@@ -70,89 +71,91 @@ export default function ({ defaultValues }: {
 
 
   return (
-    <div className="h-full w-full flex flex-col bg-gray-200">
+    <SchemaCandidatesProvider watch={formMethods.watch}>
+      <div className="h-full w-full flex flex-col bg-gray-200">
 
-      {/* ヘッダ */}
-      <header className="shrink-0 flex flex-wrap items-center gap-x-px gap-y-2 py-1 px-1">
+        {/* ヘッダ */}
+        <header className="shrink-0 flex flex-wrap items-center gap-x-px gap-y-2 py-1 px-1">
 
-        <ReactRouter.Link to="/" title="プロジェクト選択へ戻る">
-          <Icon.ChevronLeftIcon className="w-6 h-6 p-1 text-sky-600" />
-        </ReactRouter.Link>
+          <ReactRouter.Link to="/" title="プロジェクト選択へ戻る">
+            <Icon.ChevronLeftIcon className="w-6 h-6 p-1 text-sky-600" />
+          </ReactRouter.Link>
 
-        {/* プロジェクト名 兼 設定画面 */}
-        <h1 className="flex items-center px-1 font-bold select-none">
-          {applicationName || "名無しのプロジェクト"}
-        </h1>
+          {/* プロジェクト名 兼 設定画面 */}
+          <h1 className="flex items-center px-1 font-bold select-none">
+            {applicationName || "名無しのプロジェクト"}
+          </h1>
 
-        <div className="basis-2"></div>
+          <div className="basis-2"></div>
 
-        <UI.TabHeader isSelected={displayTab === "data-structures"}
-          onClick={() => setDisplayTab("data-structures")}
-        >
-          データ構造
-        </UI.TabHeader>
-
-        <UI.TabHeader isSelected={displayTab === "value-member-types"}
-          onClick={() => setDisplayTab("value-member-types")}
-        >
-          属性種類定義
-        </UI.TabHeader>
-
-        <UI.TabHeader isSelected={displayTab === "constnats"}
-          onClick={() => setDisplayTab("constnats")}
-        >
-          定数
-        </UI.TabHeader>
-
-        <UI.TabHeader isSelected={displayTab === "project-settings"}
-          onClick={() => setDisplayTab("project-settings")}
-        >
-          プロジェクト設定
-        </UI.TabHeader>
-
-        <div className="flex-1"></div>
-
-        {/* 保存時にコード自動生成をかけ直す */}
-        <label className="flex items-center gap-1 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={personalSettings.autoGenerateCode ?? false}
-            onChange={e => savePersonalSettings('autoGenerateCode', e.target.checked)}
-            className="h-4 w-4"
-          />
-          <span className="text-xs select-none">保存時にコード自動生成をかけ直す</span>
-        </label>
-
-        {/* 保存ボタン */}
-        <div className="basis-36 flex justify-end">
-          <UI.Button
-            icon={Icon.ArrowUpTrayIcon}
-            fill
-            onClick={handleSave}
-            loading={nowSaving}
+          <UI.TabHeader isSelected={displayTab === "data-structures"}
+            onClick={() => setDisplayTab("data-structures")}
           >
-            {saveButtonText}
-          </UI.Button>
-        </div>
-      </header>
+            データ構造
+          </UI.TabHeader>
 
-      {/* 保存時エラー */}
-      {saveError && (
-        <div className="text-rose-500 text-sm p-2">
-          {saveError}
-        </div>
-      )}
+          <UI.TabHeader isSelected={displayTab === "value-member-types"}
+            onClick={() => setDisplayTab("value-member-types")}
+          >
+            属性種類定義
+          </UI.TabHeader>
 
-      {/* メインコンテンツ */}
-      <main className="flex-1 bg-white overflow-auto border-t border-gray-400">
+          <UI.TabHeader isSelected={displayTab === "constnats"}
+            onClick={() => setDisplayTab("constnats")}
+          >
+            定数
+          </UI.TabHeader>
 
-        {displayTab === "data-structures" && (
-          <DataStructure formMethods={formMethods} />
+          <UI.TabHeader isSelected={displayTab === "project-settings"}
+            onClick={() => setDisplayTab("project-settings")}
+          >
+            プロジェクト設定
+          </UI.TabHeader>
+
+          <div className="flex-1"></div>
+
+          {/* 保存時にコード自動生成をかけ直す */}
+          <label className="flex items-center gap-1 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={personalSettings.autoGenerateCode ?? false}
+              onChange={e => savePersonalSettings('autoGenerateCode', e.target.checked)}
+              className="h-4 w-4"
+            />
+            <span className="text-xs select-none">保存時にコード自動生成をかけ直す</span>
+          </label>
+
+          {/* 保存ボタン */}
+          <div className="basis-36 flex justify-end">
+            <UI.Button
+              icon={Icon.ArrowUpTrayIcon}
+              fill
+              onClick={handleSave}
+              loading={nowSaving}
+            >
+              {saveButtonText}
+            </UI.Button>
+          </div>
+        </header>
+
+        {/* 保存時エラー */}
+        {saveError && (
+          <div className="text-rose-500 text-sm p-2">
+            {saveError}
+          </div>
         )}
 
-      </main>
+        {/* メインコンテンツ */}
+        <main className="flex-1 bg-white overflow-auto border-t border-gray-400">
 
-    </div>
+          {displayTab === "data-structures" && (
+            <DataStructure formMethods={formMethods} />
+          )}
+
+        </main>
+
+      </div>
+    </SchemaCandidatesProvider>
   )
 }
 

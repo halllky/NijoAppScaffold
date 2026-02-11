@@ -247,17 +247,19 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
       </div> */}
 
       {/* エディタ */}
-      <CellEditor
-        ref={editorRef}
-        focusedCell={focusedCell}
-        rowModel={rowModel}
-        visibleLeafColumns={visibleLeafColumns}
-        onEditingStateChanged={setIsEditing}
-        gridEditorComponent={props.editor}
-        gridIsReadOnly={props.isReadOnly}
-        getPixel={getPixel}
-        getRowObject={getRowObject}
-      />
+      {isGridActive && (
+        <CellEditor
+          ref={editorRef}
+          focusedCell={focusedCell}
+          rowModel={rowModel}
+          visibleLeafColumns={visibleLeafColumns}
+          onEditingStateChanged={setIsEditing}
+          gridEditorComponent={props.editor}
+          gridIsReadOnly={props.isReadOnly}
+          getPixel={getPixel}
+          getRowObject={getRowObject}
+        />
+      )}
 
       {/* 固定列用の選択範囲レイヤー (tableより手前に置くことで、sticky位置の基準をコンテナ左端にする) */}
       <SelectedRangeForFixedColumn

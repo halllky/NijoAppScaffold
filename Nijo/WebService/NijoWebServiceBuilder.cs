@@ -55,6 +55,7 @@ public class NijoWebServiceBuilder {
         app.MapPost("/api/validate", schemaHandlers.HandleValidateSchema);
         app.MapPost("/api/save", schemaHandlers.HandleSaveSchema);
         app.MapPost("/api/generate", schemaHandlers.HandleGenerateCode);
+        app.MapPost("/api/types", schemaHandlers.HandleGetNodeTypes);
 
         // デバッグ用ツール
         new DebugTools().ConfigureWebApplication(app);

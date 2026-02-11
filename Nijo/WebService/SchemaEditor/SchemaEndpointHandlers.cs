@@ -285,5 +285,68 @@ internal class SchemaEndpointHandlers {
                 context.RequestAborted);
         }
     }
+
+    /// <summary>
+    /// XML要素の種類の候補リストを返す
+    /// </summary>
+    internal async Task HandleGetNodeTypes(HttpContext context) {
+        try {
+            var project = await ProjectHelper.GetProjectAndSetResponseIfErrorAsync(context);
+            if (project == null) {
+                return;
+            }
+
+            var keyword = context.Request.Query["keyword"].ToString().ToLowerInvariant();
+
+            var candidates = new List<KeyValuePair<string, string>>();
+
+            // 1. 固定のキーワード
+            candidates.Add(KeyValuePair.Create(SchemaParseContext.NODE_TYPE_CHILD, "子要素"));
+            candidates.Add(KeyValuePair.Create(SchemaParseContext.NODE_TYPE_CHILDREN, "子配列(リスト)"));
+            candidates.Add(KeyValuePair.Create(SchemaParseContext.NODE_TYPE_MEMO, "メモ"));
+
+            // 2. プリミティブ型
+            var rule = SchemaParseRule.Default();
+            foreach (var vm in rule.ValueMemberTypes) {
+                candidates.Add(KeyValuePair.Create(vm.SchemaTypeName, vm.DisplayName));
+            }
+
+            // 3. 参照 (ref-to)
+            var xDocument = XDocument.Load(project.SchemaXmlPath);
+            var applicationState = await context.Request.ReadFromJsonAsync<ApplicationState>(context.RequestAborted);
+            if (applicationState != null) {
+                SchemaValidationService.TryValidateAsXml(applicationState, xDocument, out var editingXDocument, out _, out _);
+                if (editingXDocument != null) {
+                    xDocument = editingXDocument;
+                }
+            }
+
+            var dataStructures = xDocument.Root?.Element(SchemaParseContext.SECTION_DATA_STRUCTURES);
+            if (dataStructures != null) {
+                foreach (var element in dataStructures.Elements()) {
+                    var name = element.Name.LocalName;
+                    var value = $"{SchemaParseContext.NODE_TYPE_REFTO}:{name}";
+                    candidates.Add(KeyValuePair.Create(value, value));
+                }
+            }
+
+            var result = candidates
+                .Where(c => string.IsNullOrEmpty(keyword) || c.Key.ToLowerInvariant().Contains(keyword))
+                .Distinct()
+                .OrderBy(c => c.Key)
+                .Select(c => new { value = c.Key, text = c.Value })
+                .ToList();
+
+            context.Response.StatusCode = StatusCodes.Status200OK;
+            await HttpResponseHelper.WriteJsonResponseAsync(context, result, cancellationToken: context.RequestAborted);
+
+        } catch (Exception ex) {
+            await HttpResponseHelper.WriteErrorResponseAsync(
+                context,
+                (int)HttpStatusCode.InternalServerError,
+                ex.Message,
+                context.RequestAborted);
+        }
+    }
 }
 

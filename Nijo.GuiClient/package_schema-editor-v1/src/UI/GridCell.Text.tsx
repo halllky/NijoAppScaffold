@@ -82,15 +82,16 @@ export const TextCellEditor: EG2.EditableGridCellEditor = React.forwardRef(funct
   }
 
   const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = e => {
-    if (isEditing) {
-      if (e.key === 'Enter') {
-        requestCommit(value)
-        e.preventDefault()
-      }
-      else if (e.key === 'Escape') {
-        requestCancel()
-        e.preventDefault()
-      }
+    if (!isEditing) return
+    if (e.nativeEvent.isComposing) return // 日本語入力中は無視
+
+    if (e.key === 'Enter') {
+      requestCommit(value)
+      e.preventDefault()
+    }
+    else if (e.key === 'Escape') {
+      requestCancel()
+      e.preventDefault()
     }
   }
 
