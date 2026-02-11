@@ -284,6 +284,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
                   headerGroupIndex={headerGroupIndex}
                   headerMeta={header.column.columnDef.meta as ColumnMetadataInternal<TRow>}
                   hasHeaderGroup={hasHeaderGroup}
+                  isResizing={header.column.getIsResizing()}
                   size={header.getSize()}
                   height={ESTIMATED_ROW_HEIGHT}
                   start={header.getStart()}
@@ -371,12 +372,13 @@ const MemorizedTH = React.memo<{
   headerMeta: ColumnMetadataInternal<any>
   headerGroupIndex: number
   hasHeaderGroup: boolean
+  isResizing: boolean
   size: number
   height: number
   start: number
   /** レンダリングのトリガーにのみ使用 */
   allChecked: unknown
-}>(function MemorizedTH({ header, headerMeta, hasHeaderGroup, headerGroupIndex, size, height, start }) {
+}>(function MemorizedTH({ header, headerMeta, hasHeaderGroup, headerGroupIndex, isResizing, size, height, start }) {
 
   // 列グループの有無が混在しているテーブルにおいて、このheaderがグループでない列か否か
   const isNonGroupedUpperHeader = hasHeaderGroup
@@ -405,7 +407,7 @@ const MemorizedTH = React.memo<{
         <div
           onMouseDown={header.getResizeHandler()}
           onTouchStart={header.getResizeHandler()}
-          className={`absolute top-0 right-0 h-full w-1.5 cursor-col-resize select-none touch-none ${header.column.getIsResizing() ? 'bg-sky-500 opacity-50' : 'hover:bg-gray-400'}`}
+          className={`absolute top-0 right-0 h-full w-1.5 cursor-col-resize select-none touch-none ${isResizing ? 'bg-sky-500 opacity-50' : 'hover:bg-gray-400'}`}
         />
       )}
     </th>

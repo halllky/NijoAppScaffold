@@ -1,6 +1,7 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
+import { toServerValue } from "./CheckBox"
 
 export type CreateCheckBoxCellFunction = <TRow>(
   header: string,
@@ -73,11 +74,4 @@ export function createCheckBoxCellHelper(
     },
     ...options,
   })
-}
-
-/**
- * サーバー側ではbool値ではなく "True" or "" で管理しているのでそれにあわせる
- */
-function toServerValue(value: unknown): 'True' | '' {
-  return value === true || value === 'True' ? 'True' : ''
 }

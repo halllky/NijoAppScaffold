@@ -43,7 +43,7 @@ export function createTextCellHelper(
       })
 
       return options?.mentionAvailable ? (
-        <ReadOnlyMentionText className="px-1 truncate">
+        <ReadOnlyMentionText className={`px-1 ${options?.wrap ? 'whitespace-pre-wrap' : 'truncate'}`}>
           {value ?? undefined}
         </ReadOnlyMentionText>
       ) : (

@@ -36,7 +36,7 @@ export const WordTextBox = React.forwardRef<HTMLInputElement, WordTextBoxProps>(
     onBlur?.(e)
   }
 
-  const baseStyle = "block py-px px-1 border-b outline-blue-500 focus:ring-blue-500"
+  const baseStyle = "block py-px px-1 border outline-blue-500 focus:ring-blue-500"
   const editableStyle = "border-gray-600 bg-white"
   const readOnlyStyle = "border-transparent bg-transparent shadow-none cursor-default focus:ring-0"
 

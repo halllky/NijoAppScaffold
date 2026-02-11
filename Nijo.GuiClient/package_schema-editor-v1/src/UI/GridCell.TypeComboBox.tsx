@@ -39,7 +39,7 @@ export function createComboBoxCellHelper(
 
         // ComboBoxなので、値そのものを表示する
         return (
-          <div className="flex items-center gap-4 px-1 truncate">
+          <div className="self-start flex items-center gap-2 px-1 truncate">
             <span className="truncate">
               {value as string}
             </span>
@@ -224,7 +224,7 @@ const TypeComboEditor: EG2.EditableGridCellEditor = React.forwardRef((props, ref
             >
               {item.value}
               {item.text !== item.value && (
-                <span className="text-gray-400 text-sm ml-4">
+                <span className="text-gray-400 text-sm ml-2">
                   {item.text}
                 </span>
               )}

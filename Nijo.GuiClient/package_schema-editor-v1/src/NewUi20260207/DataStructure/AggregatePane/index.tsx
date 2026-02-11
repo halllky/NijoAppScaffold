@@ -5,6 +5,7 @@ import { ATTR_TYPE, SchemaDefinitionGlobalState, TYPE_COMMAND_MODEL } from "../.
 import * as UI from "../../../UI"
 import { Allotment, LayoutPriority } from "allotment";
 import { DecsendantsGrid } from "./DecsendantsGrid";
+import RootAggreagateAttrs from "./RootAggreagateAttrs";
 
 /**
  * ルート集約1個分の編集ペイン
@@ -61,26 +62,16 @@ export function AggregatePane(props: {
         <Allotment
           vertical
           proportionalLayout={false} // 一部のペインのみ伸縮するようにする
+          className="px-1"
         >
           {/* ルート集約の属性 */}
           <Allotment.Pane preferredSize={120} snap minSize={80}>
-            <div className="w-full h-full p-1 flex flex-col gap-1">
-
-              {/* ルート集約のコメント */}
-              <ReactHookForm.Controller
-                control={control}
-                name={`xmlElementTrees.${selectedRootAggregateIndex}.xmlElements.0.comment`}
-                render={({ field }) => (
-                  <div className="w-full border border-gray-700 px-1">
-                    <UI.SchemaDefinitionMentionTextarea
-                      {...field}
-                      className="w-full"
-                      placeholder="コメントを入力..."
-                    />
-                  </div>
-                )}
+            <div className="w-full h-full p-1 bg-gray-200 border-t border-x border-gray-300 overflow-auto">
+              <RootAggreagateAttrs
+                selectedRootAggregateIndex={selectedRootAggregateIndex}
+                formMethods={props.formMethods}
+                className="w-full"
               />
-
             </div>
           </Allotment.Pane>
 
@@ -95,7 +86,7 @@ export function AggregatePane(props: {
               formMethods={props.formMethods}
               trigger={React.useCallback(() => Promise.resolve(), [])} // TODO
               getValidationResult={React.useCallback(() => { return { _own: [] } }, [])} // TODO
-              className="w-full h-full pt-1"
+              className="w-full h-full py-1"
             />
           </Allotment.Pane>
         </Allotment>

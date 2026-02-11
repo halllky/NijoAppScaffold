@@ -83,7 +83,7 @@ export function DecsendantsGrid(props: {
 
     // 種類
     columns.push(helper.typeComboBox('種類', `attributes.${ATTR_TYPE}`, {
-      defaultWidth: 120,
+      defaultWidth: 160,
     }))
 
     // コメント
@@ -266,8 +266,8 @@ export function DecsendantsGrid(props: {
 
 
   return (
-    <div onKeyDown={handleKeyDown} className={`flex flex-col ${className ?? ''}`}>
-      <div className="flex flex-wrap gap-1 items-center p-1">
+    <div onKeyDown={handleKeyDown} className={`flex flex-col pt-2 gap-1 ${className ?? ''}`}>
+      <div className="flex flex-wrap gap-1 items-center">
         <UI.Button outline mini icon={Icon.PlusIcon} onClick={handleInsertRow}>行挿入(Enter)</UI.Button>
         <UI.Button outline mini icon={Icon.PlusIcon} onClick={handleInsertRowBelow}>下挿入(Ctrl + Enter)</UI.Button>
         <UI.Button outline mini icon={Icon.TrashIcon} onClick={handleDeleteRow}>行削除(Shift + Delete)</UI.Button>
@@ -280,7 +280,7 @@ export function DecsendantsGrid(props: {
 
       <EG2.EditableGrid2
         {...editableGrid2Props}
-        className="flex-1 w-full border-t border-gray-300"
+        className="flex-1 w-full border border-gray-300"
       />
     </div>
   )
