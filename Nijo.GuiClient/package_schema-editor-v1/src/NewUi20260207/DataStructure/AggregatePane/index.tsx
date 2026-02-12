@@ -35,7 +35,7 @@ export function AggregatePane(props: {
       <div className={`flex flex-col gap-1 ${className ?? ''}`}>
 
         {/* ヘッダ */}
-        <div className="flex flex-wrap items-center gap-1 px-1">
+        <div className="flex flex-wrap items-center gap-1 px-1 pt-1">
 
           {/* ルート集約名 */}
           {/* TODO: GUI上ではDisplayNameを編集し、LocalNameへの変換はサーバー側で行うようにする */}

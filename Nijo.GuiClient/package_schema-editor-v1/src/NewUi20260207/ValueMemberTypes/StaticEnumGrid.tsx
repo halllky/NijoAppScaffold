@@ -159,6 +159,31 @@ function SingleEnumEditor({ index, formMethods }: {
     remove(removedIndexes)
   }
 
+  const handleMoveUp = () => {
+    const selectedRows = gridRef.current?.getSelectedRows()
+    if (!selectedRows || selectedRows.length === 0) return
+    const startRow = selectedRows[0].rowIndex + 1 // Field Index
+    const endRow = startRow + selectedRows.length - 1
+    if (startRow <= 1) return // Can't move above root (index 0)
+
+    move(startRow - 1, endRow)
+
+    // Restore selection
+    gridRef.current?.selectRow(selectedRows[0].rowIndex - 1, selectedRows[0].rowIndex + selectedRows.length - 2)
+  }
+
+  const handleMoveDown = () => {
+    const selectedRows = gridRef.current?.getSelectedRows()
+    if (!selectedRows || selectedRows.length === 0) return
+    const startRow = selectedRows[0].rowIndex + 1
+    const endRow = startRow + selectedRows.length - 1
+    if (endRow >= watchedFields.length - 1) return
+
+    move(endRow + 1, startRow)
+
+    gridRef.current?.selectRow(selectedRows[0].rowIndex + 1, selectedRows[0].rowIndex + selectedRows.length)
+  }
+
   const handleKeyDown: React.KeyboardEventHandler<HTMLDivElement> = e => {
     if (gridRef.current?.isEditing) return
     if (e.key === 'Enter') {
@@ -167,6 +192,10 @@ function SingleEnumEditor({ index, formMethods }: {
     } else if (e.shiftKey && e.key === 'Delete') {
       e.preventDefault()
       handleDeleteRow()
+    } else if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      e.preventDefault()
+      if (e.key === 'ArrowUp') handleMoveUp()
+      else if (e.key === 'ArrowDown') handleMoveDown()
     }
   }
 
@@ -191,6 +220,9 @@ function SingleEnumEditor({ index, formMethods }: {
           <UI.Button mini outline icon={Icon.TrashIcon} onClick={handleDeleteRow}>
             値を削除 (Shift+Delete)
           </UI.Button>
+          <div className="basis-2"></div>
+          <UI.Button outline mini icon={Icon.ChevronUpIcon} onClick={handleMoveUp}>上へ (Alt + ↑)</UI.Button>
+          <UI.Button outline mini icon={Icon.ChevronDownIcon} onClick={handleMoveDown}>下へ (Alt + ↓)</UI.Button>
         </div>
 
         <EG2.EditableGrid2

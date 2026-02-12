@@ -95,11 +95,13 @@ const TypeComboEditor: EG2.EditableGridCellEditor = React.forwardRef((props, ref
 
   // 選択肢
   const { items, isLoading } = useSchemaCandidates()
+  const [inputted, setInputted] = useState(false) // 入力されたかどうか（ドロップダウンを開いた瞬間は全選択肢を表示したいので）
   const filteredItems = React.useMemo(() => {
     if (!value) return items
+    if (!inputted) return items
     const lowerValue = value.toLowerCase()
     return items.filter(item => item.value.toLowerCase().includes(lowerValue))
-  }, [items, value])
+  }, [items, value, inputted])
 
   // ドロップダウンの状態
   const [selectedIndex, setSelectedIndex] = useState(-1)
@@ -110,6 +112,7 @@ const TypeComboEditor: EG2.EditableGridCellEditor = React.forwardRef((props, ref
     getCurrentValue: () => inputRef.current?.value ?? '',
     setValueAndSelectAll: (v, timing) => {
       setVal(v)
+      setInputted(false)
       if (timing === 'move-focus' || timing === 'edit-end') {
         setTimeout(() => inputRef.current?.select(), 0)
       }
@@ -195,7 +198,7 @@ const TypeComboEditor: EG2.EditableGridCellEditor = React.forwardRef((props, ref
       <input
         ref={inputRef}
         value={value}
-        onChange={ev => setVal(ev.target.value)}
+        onChange={ev => { setVal(ev.target.value); setInputted(true) }}
         onKeyDown={handleKeyDown}
         className="w-full h-full border border-gray-700 outline-none bg-white px-1"
       />

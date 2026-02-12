@@ -16,7 +16,8 @@ import { PlusIcon } from "@heroicons/react/24/solid";
  * スキーマ定義の有向グラフを表示する。
  * 特定のルート集約が選択されている場合はその集約の編集ペインを表示する。
  */
-export default function ({ formMethods }: {
+export default function ({ visible, formMethods }: {
+  visible: boolean
   formMethods: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
 }) {
 
@@ -86,14 +87,14 @@ export default function ({ formMethods }: {
       vertical={aggPaneOrientation === 'vertical'}
       proportionalLayout={false} // 特定のペインだけ伸縮させる
       separator={false}
-      className="pt-1"
+      className={visible ? "" : "hidden"}
     >
       {/* ダイアグラム */}
       <Allotment.Pane priority={LayoutPriority.High}>
         <Diagram
           formMethods={formMethods}
           onSelectedRootAggregateChanged={selectRootAggregate}
-          className="h-full w-full border-t border-gray-400"
+          className="h-full w-full"
         >
           <Button onClick={() => setIsNewRootDialogOpen(true)} icon={PlusIcon} fill>
             新規作成
@@ -113,7 +114,7 @@ export default function ({ formMethods }: {
             key={selectedRootAggregateIndex}
             selectedRootAggregateIndex={selectedRootAggregateIndex}
             formMethods={formMethods}
-            className={`h-full w-full border-gray-400 ${aggPaneOrientation === 'vertical' ? 'border-t' : 'border-l'}`}
+            className={`h-full w-full border-gray-400 ${aggPaneOrientation === 'vertical' ? '' : 'border-l'}`}
             onRequestDelete={handleDeleteRootAggregate}
           />
         )}

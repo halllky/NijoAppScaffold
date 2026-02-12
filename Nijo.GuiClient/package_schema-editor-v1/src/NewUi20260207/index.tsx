@@ -149,9 +149,11 @@ export default function ({ defaultValues }: {
         {/* メインコンテンツ */}
         <main className="flex-1 bg-white overflow-auto border-t border-gray-400">
 
-          {displayTab === "data-structures" && (
-            <DataStructure formMethods={formMethods} />
-          )}
+          {/* データ構造タブは初期化コストが高いのでDOMを常に維持する */}
+          <DataStructure
+            visible={displayTab === "data-structures"}
+            formMethods={formMethods}
+          />
 
           {displayTab === "value-member-types" && (
             <ValueMemberTypes formMethods={formMethods} />

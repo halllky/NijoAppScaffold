@@ -106,7 +106,7 @@ export default function (props: {
             <ul className="list-disc list-inside my-2 space-y-1">
               <li>
                 <strong className="mr-2">bytearray (バイナリ型):</strong>
-                画像やファイルなどのバイナリデータ。
+                ハッシュ化されたパスワードなどのバイナリデータ。
               </li>
             </ul>
           </section>
@@ -114,7 +114,7 @@ export default function (props: {
 
         {/* 目次 */}
         <div className="self-start sticky top-0 basis-48 shrink-0 pt-8 px-2">
-          <span className="font-bold select-none">
+          <span className="font-bold text-sm select-none">
             属性種類定義
           </span>
           <SideMenuLink hash="string-values">
@@ -152,7 +152,7 @@ function SideMenuLink({ hash, children }: {
   }
 
   return (
-    <button type="button" onClick={handleClick} className="px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer select-none">
+    <button type="button" onClick={handleClick} className="px-2 py-1 w-full text-left hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer select-none">
       {children}
     </button>
   )

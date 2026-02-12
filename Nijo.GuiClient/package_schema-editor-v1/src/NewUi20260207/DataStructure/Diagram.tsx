@@ -54,7 +54,7 @@ export function Diagram(props: {
         className="h-full w-full"
       />
 
-      <div className="absolute top-2 left-2 select-none">
+      <div className="absolute top-1 left-1 select-none">
         {props.children}
       </div>
     </div>
