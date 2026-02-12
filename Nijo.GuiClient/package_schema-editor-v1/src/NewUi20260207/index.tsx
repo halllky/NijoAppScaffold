@@ -10,6 +10,7 @@ import { saveSchema } from "../MainPage/useSaveLoad"
 import DataStructure from "./DataStructure"
 import { SchemaCandidatesProvider } from "../MainPage/SchemaCandidatesContext"
 import ValueMemberTypes from "./ValueMemberTypes"
+import ConstantsGrid from "./Constants"
 
 /**
  * プロジェクト編集画面のメインレイアウト。
@@ -101,8 +102,8 @@ export default function ({ defaultValues }: {
             属性種類定義
           </UI.TabHeader>
 
-          <UI.TabHeader isSelected={displayTab === "constnats"}
-            onClick={() => setDisplayTab("constnats")}
+          <UI.TabHeader isSelected={displayTab === "constants"}
+            onClick={() => setDisplayTab("constants")}
           >
             定数
           </UI.TabHeader>
@@ -159,6 +160,10 @@ export default function ({ defaultValues }: {
             <ValueMemberTypes formMethods={formMethods} />
           )}
 
+          {displayTab === "constants" && (
+            <ConstantsGrid formMethods={formMethods} />
+          )}
+
         </main>
 
       </div>
@@ -171,4 +176,4 @@ type TabType =
   | "project-settings" // プロジェクト全体設定 + 個人用設定
   | "data-structures" // Data, Query, Command, Structure Model
   | "value-member-types" // 属性種類定義。文字、数値、日付、静的/動的区分、値オブジェクトなどの設定
-  | "constnats" // 定数定義
+  | "constants" // 定数定義

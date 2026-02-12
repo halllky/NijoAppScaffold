@@ -1,6 +1,6 @@
 import React from "react";
 import * as ReactHookForm from "react-hook-form";
-import { SchemaDefinitionGlobalState, ATTR_PARAMETER, ATTR_RETURN_VALUE, ATTR_TYPE, TYPE_CHILD, TYPE_CHILDREN, TYPE_COMMAND_MODEL, TYPE_DATA_MODEL, TYPE_MEMO, TYPE_QUERY_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, XmlElementItem, asTree } from "../../types";
+import { SchemaDefinitionGlobalState, ATTR_PARAMETER, ATTR_RETURN_VALUE, ATTR_TYPE, TYPE_CHILD, TYPE_CHILDREN, TYPE_COMMAND_MODEL, TYPE_DATA_MODEL, TYPE_MEMO, TYPE_QUERY_MODEL, TYPE_STRUCTURE_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, TYPE_CONSTANT_MODEL, XmlElementItem, asTree } from "../../types";
 import { GraphView2 } from "@nijo/ui-components";
 import { MentionUtil } from "../../UI";
 import { findRefToTarget } from "../../MainPage/findRefToTarget";
@@ -56,9 +56,11 @@ export function useDiagramDataSet(formMethods: ReactHookForm.UseFormReturn<Schem
       const rootElement = rootAggregateGroup.xmlElements[0];
       if (!rootElement) continue;
 
-      // enum, valueObject を除いて表示
+      // それぞれ独自のタブで編集されるモデルタイプは無視
       const model = rootElement.attributes[ATTR_TYPE]
-      if (model === TYPE_STATIC_ENUM_MODEL || model === TYPE_VALUE_OBJECT_MODEL) continue;
+      if (model === TYPE_STATIC_ENUM_MODEL) continue;
+      if (model === TYPE_VALUE_OBJECT_MODEL) continue;
+      if (model === TYPE_CONSTANT_MODEL) continue;
 
       const treeHelper = asTree(rootAggregateGroup.xmlElements); // ツリーヘルパーを初期化
 
