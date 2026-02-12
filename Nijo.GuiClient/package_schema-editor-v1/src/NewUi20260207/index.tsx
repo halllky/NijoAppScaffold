@@ -11,6 +11,7 @@ import DataStructure from "./DataStructure"
 import { SchemaCandidatesProvider } from "../MainPage/SchemaCandidatesContext"
 import ValueMemberTypes from "./ValueMemberTypes"
 import ConstantsGrid from "./Constants"
+import { ProjectSettings } from "./ProjectSettings"
 
 /**
  * プロジェクト編集画面のメインレイアウト。
@@ -162,6 +163,10 @@ export default function ({ defaultValues }: {
 
           {displayTab === "constants" && (
             <ConstantsGrid formMethods={formMethods} />
+          )}
+
+          {displayTab === "project-settings" && (
+            <ProjectSettings formMethods={formMethods} />
           )}
 
         </main>
