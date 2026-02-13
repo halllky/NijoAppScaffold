@@ -7,6 +7,7 @@ import { usePersonalSettings } from "../../Settings/usePersonalSettings";
 import { PersonalSettings } from "../../Settings/PersonalSettings";
 import { CustomAttributeSettings } from "../../Settings/CustomAttributeSettings";
 import { GetValidationResultFunction, ValidationTriggerFunction } from "../../MainPage/useValidation";
+import { Allotment, LayoutPriority } from "allotment";
 
 /**
  * プロジェクト設定タブの内容
@@ -19,45 +20,76 @@ export const ProjectSettings: React.FC<{
   const customAttributeSettingsElementRef = React.useRef<HTMLDivElement>(null)
 
   return (
-    <div className="p-4 h-full overflow-y-auto">
-      <FormLayout.Root
-        labelComponent={FormLayoutLabel}
-        className="max-w-4xl mx-auto"
-        labelWidthPx={240}
-      >
-        <ProjectSettingSection
-          formMethods={formMethods}
-          getValidationResult={undefined}
-          trigger={undefined}
-          customAttributeSettingsElementRef={customAttributeSettingsElementRef}
-        />
+    <Allotment proportionalLayout={false} separator={false}>
+      {/* 目次 */}
+      <Allotment.Pane preferredSize={200} className="border-r border-gray-400">
+        <div className="h-full w-full overflow-y-auto bg-gray-50 p-2">
+          <SideMenuLink hash="project-options">
+            プロジェクト設定
+          </SideMenuLink>
+          <SideMenuLink hash="custom-attributes">
+            カスタム属性
+          </SideMenuLink>
+          <SideMenuLink hash="personal-settings">
+            個人用設定
+          </SideMenuLink>
+        </div>
+      </Allotment.Pane>
 
-        <FormLayout.Separator />
+      {/* コンテンツ */}
+      <Allotment.Pane priority={LayoutPriority.High}>
+        <div className="p-4 h-full overflow-y-auto">
+          <FormLayout.Root
+            labelComponent={FormLayoutLabel}
+            className="max-w-4xl mx-auto"
+            labelWidthPx={240}
+          >
+            <ProjectOptionsSection
+              formMethods={formMethods}
+            />
 
-        <PersonalSettingSection
-          personalSettings={personalSettings}
-          save={save}
-        />
+            <FormLayout.Separator />
 
-      </FormLayout.Root>
-    </div>
+            {/* カスタム属性 */}
+            <FormLayout.Section labelEnd={(
+              <div id="custom-attributes" className="flex flex-col scroll-mt-2">
+                <h2 className="text-lg font-bold">カスタム属性</h2>
+              </div>
+            )}>
+              <CustomAttributeSettings
+                formMethods={formMethods}
+                getValidationResult={undefined}
+                trigger={undefined}
+                elementRef={customAttributeSettingsElementRef}
+              />
+            </FormLayout.Section>
+
+            <FormLayout.Separator />
+
+            <PersonalSettingSection
+              personalSettings={personalSettings}
+              save={save}
+            />
+
+            <div className="pb-96" />
+          </FormLayout.Root>
+        </div>
+      </Allotment.Pane>
+    </Allotment>
   )
 }
 
 /**
  * プロジェクト設定セクション
  */
-const ProjectSettingSection: React.FC<{
+const ProjectOptionsSection: React.FC<{
   formMethods: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
-  getValidationResult: GetValidationResultFunction | undefined
-  trigger: ValidationTriggerFunction | undefined
-  customAttributeSettingsElementRef: React.RefObject<HTMLDivElement | null>
-}> = ({ formMethods, getValidationResult, trigger, customAttributeSettingsElementRef }) => {
+}> = ({ formMethods }) => {
   const { getValues, register } = formMethods
 
   return (
     <FormLayout.Section labelEnd={(
-      <div className="flex flex-col">
+      <div id="project-options" className="flex flex-col scroll-mt-2">
         <h2 className="text-lg font-bold">プロジェクト設定</h2>
         <span className="text-xs text-gray-600">
           プロジェクト全体に適用される設定項目
@@ -71,14 +103,6 @@ const ProjectSettingSection: React.FC<{
           register={register}
         />
       ))}
-
-      {/* カスタム属性 */}
-      <CustomAttributeSettings
-        formMethods={formMethods}
-        getValidationResult={getValidationResult}
-        trigger={trigger}
-        elementRef={customAttributeSettingsElementRef}
-      />
     </FormLayout.Section>
   )
 }
@@ -160,7 +184,7 @@ const PersonalSettingSection: React.FC<{
 
   return (
     <FormLayout.Section labelEnd={(
-      <div className="flex flex-col">
+      <div id="personal-settings" className="flex flex-col scroll-mt-2">
         <h2 className="text-lg font-bold">個人用設定</h2>
         <span className="text-xs text-gray-600">
           自身にのみ適用される設定項目
@@ -180,16 +204,6 @@ const PersonalSettingSection: React.FC<{
           </span>
         </div>
       </FormLayout.Field>
-      {/*
-        Note: autoGenerateCode setting is handled in the Header of NewUi20260207,
-        so it might not be needed here anymore, or we can keep it for completeness?
-        The original SettingsDialog allowed setting it.
-        The mockup in NewUi20260207 index.tsx header has a checkbox for 'autoGenerateCode'.
-        Having it in both places is fine, or we can remove it here to avoid clutter if it's already prominent.
-        However, let's stick to the original implementation first.
-        Wait, I see NewUi20260207/index.tsx has `savePersonalSettings('autoGenerateCode', ...)` in the header.
-        So duplication is fine or I can just include it.
-      */}
       <FormLayout.Field label="autoGenerateCode">
         <div className="flex flex-col gap-px my-2">
           <input
@@ -214,5 +228,25 @@ const FormLayoutLabel: React.ElementType<LabelProps> = ({ className, ...rest }) 
       {...rest}
       className={`text-sm break-all ${className ?? ''}`}
     />
+  )
+}
+
+/**
+ * 目次のリンク
+ */
+function SideMenuLink({ hash, children }: {
+  hash: string
+  children?: React.ReactNode
+}) {
+
+  const handleClick = () => {
+    const el = document.getElementById(hash)
+    if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' })
+  }
+
+  return (
+    <button type="button" onClick={handleClick} className="px-2 py-1 w-full text-sm text-left truncate hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer select-none">
+      {children}
+    </button>
   )
 }

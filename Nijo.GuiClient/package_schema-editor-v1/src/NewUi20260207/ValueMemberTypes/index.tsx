@@ -1,6 +1,7 @@
 import { Allotment, LayoutPriority } from "allotment"
+import React from "react"
 import * as ReactHookForm from "react-hook-form"
-import { SchemaDefinitionGlobalState } from "../../types"
+import { ATTR_TYPE, SchemaDefinitionGlobalState, TYPE_STATIC_ENUM_MODEL } from "../../types"
 import StaticEnumGrid from "./StaticEnumGrid"
 
 /**
@@ -11,18 +12,72 @@ import StaticEnumGrid from "./StaticEnumGrid"
 export default function (props: {
   formMethods?: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
 }) {
+  const { control } = props.formMethods ?? {}
+  const xmlElementTrees = control ? ReactHookForm.useWatch({
+    control,
+    name: "xmlElementTrees"
+  }) : []
+
+  // 静的区分の一覧を取得
+  const enumItems = React.useMemo(() => {
+    return (xmlElementTrees ?? [])
+      .map(tree => tree.xmlElements[0])
+      .filter(el => el?.attributes?.[ATTR_TYPE] === TYPE_STATIC_ENUM_MODEL)
+      .map(el => ({
+        uniqueId: el.uniqueId,
+        localName: el.localName,
+      }))
+  }, [xmlElementTrees])
 
   return (
-    <div className="relative h-full w-full overflow-auto">
+    <Allotment proportionalLayout={false} separator={false}>
 
-      <div className="flex m-auto max-w-4xl px-4">
+      {/* 目次 */}
+      <Allotment.Pane preferredSize={200} className="border-r border-gray-400">
+        <div className="h-full w-full overflow-y-auto bg-gray-50 p-2">
 
-        {/* コンテンツ */}
-        <div className="flex-1 pt-2 pr-4 border-r border-gray-300">
+          <SideMenuLink hash="string-values">
+            文字列系項目
+          </SideMenuLink>
+          <SideMenuLink hash="numeric-values">
+            数値系項目
+          </SideMenuLink>
+          <SideMenuLink hash="date-values">
+            日付系項目
+          </SideMenuLink>
+          <SideMenuLink hash="selection-values">
+            選択・区分系項目
+          </SideMenuLink>
 
-          <p className="mb-4 text-sm">
-            データ構造定義で定義される各種構造体の属性に使用できる属性種類を定義します。
-          </p>
+          {/* 静的区分一覧へのリンク */}
+          <div className="ml-2 flex flex-col items-stretch border-l border-gray-300 gap-1 pb-4">
+            {enumItems.map(item => (
+              <button
+                type="button"
+                key={item.uniqueId}
+                onClick={() => {
+                  const el = document.getElementById(`enum-def-${item.uniqueId}`)
+                  if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+                }}
+                className="pl-2 py-0.5 w-full text-left hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer select-none"
+              >
+                <div className="text-xs truncate max-w-full" title={item.localName}>
+                  {item.localName || '(名前なし)'}
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <SideMenuLink hash="other-values">
+            その他
+          </SideMenuLink>
+
+        </div>
+      </Allotment.Pane>
+
+      {/* コンテンツ */}
+      <Allotment.Pane priority={LayoutPriority.High}>
+        <div className="h-full w-full overflow-y-auto px-4 py-2">
 
           <section>
             <h2 id="string-values" className="text-2xl font-bold">文字列系項目</h2>
@@ -110,31 +165,10 @@ export default function (props: {
               </li>
             </ul>
           </section>
-        </div>
 
-        {/* 目次 */}
-        <div className="self-start sticky top-0 basis-48 shrink-0 pt-8 px-2">
-          <span className="font-bold text-sm select-none">
-            属性種類定義
-          </span>
-          <SideMenuLink hash="string-values">
-            文字列系項目
-          </SideMenuLink>
-          <SideMenuLink hash="numeric-values">
-            数値系項目
-          </SideMenuLink>
-          <SideMenuLink hash="date-values">
-            日付系項目
-          </SideMenuLink>
-          <SideMenuLink hash="selection-values">
-            選択・区分系項目
-          </SideMenuLink>
-          <SideMenuLink hash="other-values">
-            その他
-          </SideMenuLink>
         </div>
-      </div>
-    </div>
+      </Allotment.Pane>
+    </Allotment>
   )
 }
 
@@ -152,7 +186,7 @@ function SideMenuLink({ hash, children }: {
   }
 
   return (
-    <button type="button" onClick={handleClick} className="px-2 py-1 w-full text-left hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer select-none">
+    <button type="button" onClick={handleClick} className="px-2 py-1 w-full text-sm text-left truncate hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer select-none">
       {children}
     </button>
   )

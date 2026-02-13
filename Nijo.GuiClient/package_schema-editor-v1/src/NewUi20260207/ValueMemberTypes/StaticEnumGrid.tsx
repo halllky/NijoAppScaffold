@@ -48,13 +48,17 @@ export default function StaticEnumGrid(props: {
 
   return (
     <div className="flex flex-col gap-2 py-2">
-      {enumIndexes.map(index => (
-        <SingleEnumEditor
-          key={xmlElementTrees[index].xmlElements[0]?.uniqueId ?? index}
-          index={index}
-          formMethods={props.formMethods}
-        />
-      ))}
+      {enumIndexes.map(index => {
+        const uniqueId = xmlElementTrees[index].xmlElements[0]?.uniqueId
+        return (
+          <div key={uniqueId ?? index} id={`enum-def-${uniqueId}`}>
+            <SingleEnumEditor
+              index={index}
+              formMethods={props.formMethods}
+            />
+          </div>
+        )
+      })}
       <div>
         <UI.Button icon={Icon.PlusIcon} onClick={handleAddEnum}>
           新しい区分を追加
@@ -200,7 +204,7 @@ function SingleEnumEditor({ index, formMethods }: {
   }
 
   return (
-    <div className="border border-gray-300 rounded p-4 bg-gray-50 flex flex-col gap-2">
+    <div className="py-4 flex flex-col gap-2">
       <div className="flex items-center gap-2">
         <UI.WordTextBox
           {...register(rootNamePath)}
@@ -227,7 +231,7 @@ function SingleEnumEditor({ index, formMethods }: {
 
         <EG2.EditableGrid2
           {...editableGrid2Props}
-          className="w-full border border-gray-300"
+          className="w-full border border-gray-700"
         />
       </div>
     </div>

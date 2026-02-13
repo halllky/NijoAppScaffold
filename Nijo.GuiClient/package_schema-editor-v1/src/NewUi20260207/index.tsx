@@ -85,9 +85,14 @@ export default function ({ defaultValues }: {
           </ReactRouter.Link>
 
           {/* プロジェクト名 兼 設定画面 */}
-          <h1 className="flex items-center px-1 font-bold select-none">
+          <UI.TabHeader
+            isAppTitle
+            isSelected={displayTab === "project-settings"}
+            onClick={() => setDisplayTab("project-settings")}
+          >
             {applicationName || "名無しのプロジェクト"}
-          </h1>
+            <Icon.Cog6ToothIcon className="w-5 h-5 text-gray-600" />
+          </UI.TabHeader>
 
           <div className="basis-2"></div>
 
@@ -107,12 +112,6 @@ export default function ({ defaultValues }: {
             onClick={() => setDisplayTab("constants")}
           >
             定数
-          </UI.TabHeader>
-
-          <UI.TabHeader isSelected={displayTab === "project-settings"}
-            onClick={() => setDisplayTab("project-settings")}
-          >
-            プロジェクト設定
           </UI.TabHeader>
 
           <div className="flex-1"></div>

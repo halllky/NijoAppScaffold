@@ -219,12 +219,11 @@ function SingleConstantEditor({ index, formMethods }: {
   }
 
   return (
-    <div className="border border-gray-300 rounded p-4 bg-gray-50 flex flex-col gap-2">
+    <div className="p-4 flex flex-col gap-2">
       <div className="flex items-center gap-2">
-        <div className="font-bold text-gray-700 select-none">定数定義</div>
         <UI.WordTextBox
           {...register(rootNamePath)}
-          className="w-64 border px-1"
+          className="w-64 border px-1 font-bold"
           placeholder="定数グループ名 (MyConstants)"
         />
         <UI.WordTextBox
@@ -253,7 +252,7 @@ function SingleConstantEditor({ index, formMethods }: {
 
         <EG2.EditableGrid2
           {...editableGrid2Props}
-          className="w-full border border-gray-300"
+          className="w-full border border-gray-700"
         />
       </div>
     </div>
