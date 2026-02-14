@@ -1,6 +1,6 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
-import { PersonalSettings } from "./PersonalSettings"
+import { PersonalSettings } from "../PersonalSettings/PersonalSettings"
 
 const LOCAL_STORAGE_KEY = 'typedDocument:personalSettings'
 

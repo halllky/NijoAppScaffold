@@ -3,14 +3,12 @@ import * as ReactRouter from 'react-router-dom'
 import * as Input from '@nijo/ui-components/input'
 import * as Icon from '@heroicons/react/24/solid'
 import { NIJOUI_CLIENT_ROUTE_PARAMS, useNijoUiNavigation } from '../routing'
-import { SettingsDialog } from '../Settings/SettingsDialog'
 
 /**
  * トップページ：プロジェクトフォルダを選択する画面
  */
 export const ProjectSelector = () => {
   const navigateNijoUi = useNijoUiNavigation()
-  const [isOpenSettingDialog, setIsOpenSettingDialog] = React.useState(false)
   const [folderPath, setFolderPath] = React.useState('')
   const [recentProjects, setRecentProjects] = React.useState<string[]>([])
   const [error, setError] = React.useState<string>()
@@ -58,24 +56,12 @@ export const ProjectSelector = () => {
     }
   }, [])
 
-  const handlePersonalSettingsClick = React.useCallback(() => {
-    setIsOpenSettingDialog(true)
-  }, [])
-
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 p-8">
       <div className="max-w-2xl flex flex-col items-center gap-4 p-8 bg-white rounded-lg shadow-md relative">
 
         <div className="flex items-center justify-center w-full">
           <h1 className="text-2xl font-bold">Nijo App Scaffold</h1>
-
-          {/* 個人設定ボタン */}
-          <Input.IconButton
-            icon={Icon.Cog6ToothIcon}
-            onClick={handlePersonalSettingsClick}
-          >
-            設定
-          </Input.IconButton>
         </div>
 
         <p className="text-gray-600">
@@ -134,16 +120,6 @@ export const ProjectSelector = () => {
           </div>
         )}
       </div>
-
-      {/* ダイアログ表示部分 */}
-      {isOpenSettingDialog && (
-        <SettingsDialog
-          focusOnCustomAttributeSettings={false}
-          onClose={() => setIsOpenSettingDialog(false)}
-          getValidationResult={undefined}
-          trigger={undefined}
-        />
-      )}
     </div>
   )
 }

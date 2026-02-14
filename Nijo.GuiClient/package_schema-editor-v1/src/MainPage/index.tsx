@@ -2,7 +2,6 @@ import React from "react"
 import * as ReactRouter from "react-router-dom"
 import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../routing"
 import { ProjectSelector } from "./ProjectSelector"
-import { MainPageLayout } from "./MainPageLayout"
 import { SchemaDefinitionGlobalState } from "../types"
 import { NowLoading } from "@nijo/ui-components/layout"
 import { loadSchema } from "../NewUi20260207/useSaveLoad"
@@ -94,7 +93,6 @@ export default function MainPage() {
 
   return (
     <NewUi20260207 defaultValues={state.defaultValues} />
-    // <MainPageLayout defaultValues={state.defaultValues} />
   )
 }
 
