@@ -114,8 +114,10 @@ export default function ({ visible, formMethods }: {
             key={selectedRootAggregateIndex}
             selectedRootAggregateIndex={selectedRootAggregateIndex}
             formMethods={formMethods}
-            className={`h-full w-full border-gray-400 ${aggPaneOrientation === 'vertical' ? '' : 'border-l'}`}
+            className={`h-full w-full border-gray-400 ${aggPaneOrientation === 'vertical' ? 'border-t' : 'border-l'}`}
             onRequestDelete={handleDeleteRootAggregate}
+            orientation={aggPaneOrientation}
+            onSwitchOrientation={() => setAggPaneOrientation(aggPaneOrientation === 'horizontal' ? 'vertical' : 'horizontal')}
           />
         )}
       </Allotment.Pane>

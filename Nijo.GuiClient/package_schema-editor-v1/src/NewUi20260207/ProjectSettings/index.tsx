@@ -244,7 +244,7 @@ function SideMenuLink({ hash, children }: {
   }
 
   return (
-    <button type="button" onClick={handleClick} className="px-2 py-1 w-full text-sm text-left truncate hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer select-none">
+    <button type="button" onClick={handleClick} className="px-2 py-1 w-full text-sm text-left truncate hover:bg-gray-200 cursor-pointer select-none">
       {children}
     </button>
   )

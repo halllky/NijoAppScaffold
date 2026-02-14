@@ -15,12 +15,16 @@ export function AggregatePane(props: {
   formMethods: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
   className?: string
   onRequestDelete?: () => void
+  orientation?: 'horizontal' | 'vertical'
+  onSwitchOrientation?: () => void
 }) {
   const {
     selectedRootAggregateIndex,
     formMethods: { register, control, watch },
     className,
     onRequestDelete,
+    orientation,
+    onSwitchOrientation,
   } = props
 
   const handleDelete = () => {
@@ -36,6 +40,18 @@ export function AggregatePane(props: {
 
         {/* ヘッダ */}
         <div className="flex flex-wrap items-center gap-1 px-1 pt-1">
+
+          {/* 分割方向切り替え */}
+          {onSwitchOrientation && (
+            <UI.Button
+              icon={orientation === 'vertical' ? Icon.ArrowsRightLeftIcon : Icon.ArrowsUpDownIcon}
+              mini
+              hideText
+              onClick={onSwitchOrientation}
+            >
+              分割方向切り替え
+            </UI.Button>
+          )}
 
           {/* ルート集約名 */}
           {/* TODO: GUI上ではDisplayNameを編集し、LocalNameへの変換はサーバー側で行うようにする */}

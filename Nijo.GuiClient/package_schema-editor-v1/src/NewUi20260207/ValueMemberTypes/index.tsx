@@ -59,7 +59,7 @@ export default function (props: {
                   const el = document.getElementById(`enum-def-${item.uniqueId}`)
                   if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' })
                 }}
-                className="pl-2 py-0.5 w-full text-left hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer select-none"
+                className="pl-2 py-0.5 w-full text-left hover:bg-gray-200 cursor-pointer select-none"
               >
                 <div className="text-xs truncate max-w-full" title={item.localName}>
                   {item.localName || '(名前なし)'}
@@ -186,7 +186,7 @@ function SideMenuLink({ hash, children }: {
   }
 
   return (
-    <button type="button" onClick={handleClick} className="px-2 py-1 w-full text-sm text-left truncate hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer select-none">
+    <button type="button" onClick={handleClick} className="px-2 py-1 w-full text-sm text-left truncate hover:bg-gray-200 cursor-pointer select-none">
       {children}
     </button>
   )
