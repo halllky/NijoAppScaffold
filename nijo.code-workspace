@@ -25,6 +25,10 @@
       "path": "Nijo.NewProjectTemplate"
     },
     {
+      "name": "Nijo ドキュメント",
+      "path": "Document"
+    },
+    {
       "name": "ユニットテスト",
       "path": "Nijo.IntegrationTest"
     },
