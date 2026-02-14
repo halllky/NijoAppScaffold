@@ -4,7 +4,7 @@ import useEvent from "react-use-event-hook"
 import { NowLoading } from "@nijo/ui-components/layout"
 import { loadSchema } from "./useSaveLoad"
 import { ProjectSelector } from "./ProjectSelector/ProjectSelector"
-import NewUi20260207 from "./ProjectPage"
+import ProjectPage from "./ProjectPage"
 
 /** WindowsForms埋め込みアプリまたはそのデバッグ用のルーティング */
 export const getRouterForNijoUi = (): ReactRouter.RouteObject[] => {
@@ -54,7 +54,7 @@ function Root() {
   )
 
   return (
-    <NewUi20260207 defaultValues={data} />
+    <ProjectPage defaultValues={data} />
   )
 }
 

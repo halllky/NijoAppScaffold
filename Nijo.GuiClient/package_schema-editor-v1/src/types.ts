@@ -183,60 +183,6 @@ export const NODE_TYPE_UNKNOWN = 'Unknown'
 // ---------------------------------
 
 /**
- * XML要素のノード種別を判定する。
- * C#のSchemaParseContext.GetNodeTypeに相当。
- */
-export const getNodeType = (element: XmlElementItem, allElements: XmlElementItem[], valueMemberTypes: ValueMemberType[]): string => {
-  const tree = asTree(allElements)
-
-  // ルート集約（インデント0）
-  if (element.indent === 0) {
-    return NODE_TYPE_ROOT_AGGREGATE
-  }
-
-  const typeAttr = element.attributes[ATTR_TYPE]
-
-  // メモ
-  if (typeAttr === TYPE_MEMO) {
-    return NODE_TYPE_MEMO
-  }
-
-  // Child
-  if (typeAttr === TYPE_CHILD) {
-    return NODE_TYPE_CHILD_AGGREGATE
-  }
-
-  // Children
-  if (typeAttr === TYPE_CHILDREN) {
-    return NODE_TYPE_CHILDREN_AGGREGATE
-  }
-
-  // RefTo
-  if (typeAttr?.startsWith('ref-to:')) {
-    return NODE_TYPE_REF
-  }
-
-  // 親が静的列挙型なら静的列挙型の値
-  const parent = tree.getParent(element)
-  const rootElement = tree.getRoot(element)
-  if (parent && parent.indent === 0 && rootElement.attributes[ATTR_TYPE] === TYPE_STATIC_ENUM_MODEL) {
-    return NODE_TYPE_STATIC_ENUM_VALUE
-  }
-
-  // ValueMember（値メンバーの種類に該当するか）
-  if (typeAttr && valueMemberTypes.some(vmt => vmt.schemaTypeName === typeAttr)) {
-    return NODE_TYPE_VALUE_MEMBER
-  }
-
-  // enum:... や value-object:... も ValueMember
-  if (typeAttr?.startsWith('enum:') || typeAttr?.startsWith('value-object:')) {
-    return NODE_TYPE_VALUE_MEMBER
-  }
-
-  return NODE_TYPE_UNKNOWN
-}
-
-/**
  * 指定された属性が、指定されたモデル種別・ノード種別の組み合わせで利用可能かを判定する。
  */
 export const isAttributeAvailable = (attr: XmlElementAttribute, modelType: string, onlyRoot: boolean): boolean => {
@@ -367,27 +313,4 @@ export const asTree = <TFlatItem extends { indent: number }>(flat: TFlatItem[]) 
       return descendants
     },
   }
-}
-
-/**
- * デバッグプロセスの状態。
- * このクラスのデータ構造はC#側と合わせる必要あり
- */
-export type DebugProcessState = {
-  /** サーバー側で発生した何らかのエラー */
-  errorSummary?: string
-  /** 現在実行中のNijoAppScaffoldのNode.jsのデバッグプロセスと推測されるPID */
-  estimatedPidOfNodeJs?: number
-  /** 現在実行中のNijoAppScaffoldのASP.NET Coreのデバッグプロセスと推測されるPID */
-  estimatedPidOfAspNetCore?: number
-  /** Node.jsのプロセス名 */
-  nodeJsProcessName?: string
-  /** ASP.NET Coreのプロセス名 */
-  aspNetCoreProcessName?: string
-  /** Node.jsのデバッグURL */
-  nodeJsDebugUrl?: string
-  /** ASP.NET CoreのデバッグURL（swagger-ui） */
-  aspNetCoreDebugUrl?: string
-  /** PID推測時のコンソール出力 */
-  consoleOut?: string
 }
