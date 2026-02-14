@@ -3,7 +3,7 @@ import * as ReactHookForm from "react-hook-form"
 import * as Icon from "@heroicons/react/24/solid"
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
 import { UUID } from "uuidjs"
-import { ApplicationState, ATTR_TYPE, TYPE_STATIC_ENUM_MODEL, XmlElementItem } from "../../types"
+import { ApplicationState, ATTR_TYPE, TYPE_STATIC_ENUM_MODEL, XmlElementAttributeName, XmlElementItem } from "../../types"
 import * as UI from '../../UI'
 
 type FormType = ApplicationState
@@ -102,7 +102,7 @@ function SingleEnumEditor({ index, formMethods }: {
     getValues,
     setValue,
   }, helper => {
-    const columns: EG2.EditableGrid2Column<any>[] = []
+    const columns: EG2.EditableGrid2Column<ReactHookForm.FieldArrayWithId<ApplicationState, `xmlElementTrees.${number}.xmlElements`>>[] = []
 
     // 名前
     columns.push(helper.text('値', 'localName', {
@@ -126,7 +126,7 @@ function SingleEnumEditor({ index, formMethods }: {
     }))
 
     // Key
-    columns.push(helper.text('C#列挙体キー', 'attributes.key', {
+    columns.push(helper.text('C#列挙体キー', `attributes.${"key" as XmlElementAttributeName}`, {
       defaultWidth: 100,
     }))
 

@@ -9,6 +9,8 @@ import { ApplicationState, NijoXmlCustomAttribute, TYPE_DATA_MODEL, TYPE_QUERY_M
 import { UUID } from "uuidjs"
 import FormLayout from "@nijo/ui-components/layout/FormLayout"
 import { GetValidationResultFunction, ValidationTriggerFunction } from "../useValidation"
+import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
+import * as UI from "../../UI"
 
 type CustomAttributeSettingsProps = {
   formMethods: ReactHookForm.UseFormReturn<ApplicationState>
@@ -18,6 +20,13 @@ type CustomAttributeSettingsProps = {
 }
 
 type GridRow = NijoXmlCustomAttribute & { id: string }
+
+const ATTR_TYPES: NijoXmlCustomAttribute['type'][] = [
+  'String',
+  'Boolean',
+  'Enum',
+  'Decimal',
+]
 
 const AVAILABLE_MODELS = [
   { id: TYPE_DATA_MODEL, label: 'Data Model' },
@@ -37,24 +46,73 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
   trigger,
   elementRef,
 }) => {
-  const { control, setValue } = formMethods
-  const customAttributes = ReactHookForm.useWatch({ control, name: "customAttributes" }) ?? []
+  const { control, getValues, setValue } = formMethods
 
-  const rows = React.useMemo<GridRow[]>(() => {
-    return customAttributes.map((attr, index) => ({ ...attr, id: `row-${index}` }))
-  }, [customAttributes])
+  const {
+    gridRef,
+    editableGrid2Props,
+    fieldArrayReturn: { fields: customAttributes, append, remove },
+  } = UI.useFieldArrayForEditableGrid2({
+    name: `customAttributes`,
+    control,
+    getValues,
+    setValue,
+  }, helper => {
 
-  const gridRef = React.useRef<Layout.EditableGridRef<GridRow>>(null)
-
-  const handleChangeRow: Layout.RowChangeEvent<GridRow> = useEvent(e => {
-    const newAttributes = [...customAttributes]
-    for (const { rowIndex, newRow } of e.changedRows) {
-      const { id, ...attr } = newRow
-      newAttributes[rowIndex] = attr
+    const renderBodyWithValidation = (columnId: keyof GridRow): EG2.EditableGrid2BodyRenderer<GridRow> => ({ context }) => {
+      const watchedRow = ReactHookForm.useWatch({ name: `customAttributes.${context.row.index}`, control })
+      const validationResult = getValidationResult?.(watchedRow.uniqueId)
+      const hasError = validationResult !== undefined && validationResult?._own.length > 0
+      return (
+        <div className={`flex-1 inline-flex text-left truncate px-1 ${hasError ? 'bg-amber-300/50' : ''}`}>
+          <span className="flex-1 truncate">
+            {ReactHookForm.get(watchedRow, columnId) as string}
+          </span>
+        </div>
+      )
     }
-    setValue("customAttributes", newAttributes, { shouldDirty: true })
-    trigger?.()
-  })
+
+    return [
+      helper.text("物理名", "physicalName", { defaultWidth: 150, renderBody: renderBodyWithValidation("physicalName") }),
+      helper.text("表示名", "displayName", { defaultWidth: 150, renderBody: renderBodyWithValidation("displayName") }),
+      helper.dropdown("タイプ", "type", ATTR_TYPES.map(type => ({ value: type, text: type })), { defaultWidth: 100, renderBody: renderBodyWithValidation("type") }),
+      {
+        renderHeader: () => "Enum値",
+        defaultWidth: 200,
+        isReadOnly: row => row.type !== 'Enum',
+        renderBody: ({ context }) => {
+          const watchedRow = ReactHookForm.useWatch({ name: `customAttributes.${context.row.index}`, control })
+          const validationResult = getValidationResult?.(watchedRow.uniqueId)
+          const hasError = validationResult !== undefined && validationResult?._own.length > 0
+          if (watchedRow.type !== 'Enum') return null
+          return (
+            <div className={`flex items-center justify-between w-full h-full px-1 ${hasError ? 'bg-amber-300/50' : ''}`}>
+              <span className="truncate">{watchedRow.enumValues?.join(", ")}</span>
+              <Input.IconButton mini icon={Icon.PencilIcon} onClick={() => setEditingEnumValuesIndex(context.row.index)} />
+            </div>
+          )
+        }
+      },
+      {
+        defaultWidth: 200,
+        renderHeader: () => "利用可能モデル",
+        renderBody: ({ context }) => {
+          const watchedRow = ReactHookForm.useWatch({ name: `customAttributes.${context.row.index}`, control })
+          const validationResult = getValidationResult?.(watchedRow.uniqueId)
+          const hasError = validationResult !== undefined && validationResult?._own.length > 0
+          const models = watchedRow.availableModels
+          const label = models.map(m => AVAILABLE_MODELS.find(am => am.id === m)?.label ?? m).join(", ")
+          return (
+            <div className={`flex items-center justify-between w-full h-full px-1 ${hasError ? 'bg-amber-300/50' : ''}`}>
+              <span className="truncate">{label}</span>
+              <Input.IconButton mini icon={Icon.PencilIcon} onClick={() => setEditingAvailableModelsIndex(context.row.index)} />
+            </div>
+          )
+        }
+      },
+      helper.text("コメント", "comment", { wrap: true, defaultWidth: 200, renderBody: renderBodyWithValidation("comment") }),
+    ]
+  }, [getValidationResult])
 
   const handleAddRow = useEvent(() => {
     const newAttr: NijoXmlCustomAttribute = {
@@ -72,75 +130,17 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
       ],
       enumValues: [],
     }
-    setValue("customAttributes", [...customAttributes, newAttr], { shouldDirty: true })
+    append(newAttr)
   })
 
   const handleDeleteRow = useEvent(() => {
     const selection = gridRef.current?.getSelectedRows()
     if (!selection || selection.length === 0) return
-    const indexesToRemove = new Set(selection.map(x => x.rowIndex))
-    const newAttributes = customAttributes.filter((_, index) => !indexesToRemove.has(index))
-    setValue("customAttributes", newAttributes, { shouldDirty: true })
+    remove(selection.map(x => x.rowIndex))
   })
 
   const [editingAvailableModelsIndex, setEditingAvailableModelsIndex] = React.useState<number | null>(null)
   const [editingEnumValuesIndex, setEditingEnumValuesIndex] = React.useState<number | null>(null)
-
-  const getColumnDefs: Layout.GetColumnDefsFunction<GridRow> = React.useCallback((cellType) => {
-    const renderTextCellWithValidation = (columnId: keyof GridRow, header: string, width: number) => {
-      return cellType.text(columnId as any, header, {
-        defaultWidth: width,
-        renderCell: context => {
-          const validationResult = getValidationResult?.(context.row.original.uniqueId)
-          const hasError = validationResult !== undefined && validationResult?._own.length > 0
-          return (
-            <div className={`flex-1 inline-flex text-left truncate px-1 ${hasError ? 'bg-amber-300/50' : ''}`}>
-              <span className="flex-1 truncate">
-                {context.cell.getValue() as string}
-              </span>
-            </div>
-          )
-        }
-      })
-    }
-
-    return [
-      renderTextCellWithValidation("physicalName", "物理名", 150),
-      renderTextCellWithValidation("displayName", "表示名", 150),
-      renderTextCellWithValidation("type", "タイプ", 100),
-      cellType.other("Enum 値", {
-        defaultWidth: 200,
-        isReadOnly: row => row.type !== 'Enum',
-        renderCell: context => {
-          const validationResult = getValidationResult?.(context.row.original.uniqueId)
-          const hasError = validationResult !== undefined && validationResult?._own.length > 0
-          if (context.row.original.type !== 'Enum') return null
-          return (
-            <div className={`flex items-center justify-between w-full h-full px-1 ${hasError ? 'bg-amber-300/50' : ''}`}>
-              <span className="truncate">{context.row.original.enumValues?.join(", ")}</span>
-              <Input.IconButton mini icon={Icon.PencilIcon} onClick={() => setEditingEnumValuesIndex(context.row.index)} />
-            </div>
-          )
-        }
-      }),
-      cellType.other("利用可能なモデル", {
-        defaultWidth: 200,
-        renderCell: context => {
-          const validationResult = getValidationResult?.(context.row.original.uniqueId)
-          const hasError = validationResult !== undefined && validationResult?._own.length > 0
-          const models = context.row.original.availableModels
-          const label = models.map(m => AVAILABLE_MODELS.find(am => am.id === m)?.label ?? m).join(", ")
-          return (
-            <div className={`flex items-center justify-between w-full h-full px-1 ${hasError ? 'bg-amber-300/50' : ''}`}>
-              <span className="truncate">{label}</span>
-              <Input.IconButton mini icon={Icon.PencilIcon} onClick={() => setEditingAvailableModelsIndex(context.row.index)} />
-            </div>
-          )
-        }
-      }),
-      renderTextCellWithValidation("comment", "コメント", 200),
-    ]
-  }, [getValidationResult])
 
   const errorMessages = React.useMemo(() => {
     const messages: string[] = []
@@ -166,7 +166,7 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
       <ul className="text-xs text-gray-600 mb-1 mx-2 list-disc list-inside">
         <li>物理名: 生成後のソースでの名前。"IsHelpText" などパスカルケースで指定</li>
         <li>表示名: このGUIツール上での表示名</li>
-        <li>タイプ: {(["String", "Boolean", "Enum", "Decimal"] satisfies NijoXmlCustomAttribute['type'][]).join(", ")} から選択</li>
+        <li>タイプ: {ATTR_TYPES.join(", ")} から選択</li>
       </ul>
 
       {errorMessages.length > 0 && (
@@ -177,11 +177,8 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
         </ul>
       )}
 
-      <Layout.EditableGrid
-        ref={gridRef}
-        getColumnDefs={getColumnDefs}
-        rows={rows}
-        onChangeRow={handleChangeRow}
+      <EG2.EditableGrid2
+        {...editableGrid2Props}
         className="flex-1 h-[240px] resize-y border border-gray-600"
       />
 
@@ -189,9 +186,7 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
         <AvailableModelsDialog
           initialSelection={customAttributes[editingAvailableModelsIndex].availableModels}
           onSave={(models) => {
-            const newAttributes = [...customAttributes]
-            newAttributes[editingAvailableModelsIndex] = { ...newAttributes[editingAvailableModelsIndex], availableModels: models }
-            setValue("customAttributes", newAttributes, { shouldDirty: true })
+            setValue(`customAttributes.${editingAvailableModelsIndex}.availableModels`, models, { shouldDirty: true })
             setEditingAvailableModelsIndex(null)
           }}
           onClose={() => setEditingAvailableModelsIndex(null)}
@@ -202,9 +197,7 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
         <EnumValuesDialog
           initialValues={customAttributes[editingEnumValuesIndex].enumValues}
           onSave={(values) => {
-            const newAttributes = [...customAttributes]
-            newAttributes[editingEnumValuesIndex] = { ...newAttributes[editingEnumValuesIndex], enumValues: values }
-            setValue("customAttributes", newAttributes, { shouldDirty: true })
+            setValue(`customAttributes.${editingEnumValuesIndex}.enumValues`, values, { shouldDirty: true })
             setEditingEnumValuesIndex(null)
           }}
           onClose={() => setEditingEnumValuesIndex(null)}
@@ -244,17 +237,11 @@ const AvailableModelsDialog = ({ initialSelection, onSave, onClose }: { initialS
 
 const EnumValuesDialog = ({ initialValues, onSave, onClose }: { initialValues: string[], onSave: (values: string[]) => void, onClose: () => void }) => {
   type EnumRow = { id: string, value: string }
-  const [rows, setRows] = React.useState<EnumRow[]>(initialValues.map((v, i) => ({ id: `row-${i}`, value: v })))
+  const [rows, setRows] = React.useState<EnumRow[]>(() => initialValues.map((v, i) => ({ id: `row-${i}`, value: v })))
+  const rowsRef = React.useRef(rows)
+  rowsRef.current = rows
 
-  const gridRef = React.useRef<Layout.EditableGridRef<EnumRow>>(null)
-
-  const handleChangeRow: Layout.RowChangeEvent<EnumRow> = useEvent(e => {
-    const newRows = [...rows]
-    for (const { rowIndex, newRow } of e.changedRows) {
-      newRows[rowIndex] = newRow
-    }
-    setRows(newRows)
-  })
+  const gridRef = React.useRef<EG2.EditableGrid2Ref<EnumRow>>(null)
 
   const handleAdd = () => {
     setRows([...rows, { id: UUID.generate(), value: '' }])
@@ -267,12 +254,6 @@ const EnumValuesDialog = ({ initialValues, onSave, onClose }: { initialValues: s
     setRows(rows.filter((_, i) => !indexes.has(i)))
   }
 
-  const getColumnDefs: Layout.GetColumnDefsFunction<EnumRow> = React.useCallback((cellType) => {
-    return [
-      cellType.text("value", "Value", { defaultWidth: 300 })
-    ]
-  }, [])
-
   return (
     <ModalDialog open className="w-[500px] h-[400px]">
       <div className="flex flex-col h-full gap-2 p-4">
@@ -280,12 +261,25 @@ const EnumValuesDialog = ({ initialValues, onSave, onClose }: { initialValues: s
           <Input.IconButton outline mini icon={Icon.PlusIcon} onClick={handleAdd}>追加</Input.IconButton>
           <Input.IconButton outline mini icon={Icon.TrashIcon} onClick={handleDelete}>削除</Input.IconButton>
         </div>
-        <Layout.EditableGrid
+        <EG2.EditableGrid2
           ref={gridRef}
-          getColumnDefs={getColumnDefs}
-          rows={rows}
-          onChangeRow={handleChangeRow}
+          data={rows}
           className="flex-1"
+          columns={[() => [{
+            renderHeader: () => "Value",
+            renderBody: ({ context }) => (
+              <span className="px-1 py-px">
+                {rowsRef.current[context.row.index].value}
+              </span>
+            ),
+            editor: UI.TextCellEditor,
+            getValueForEditor: ({ rowIndex }) => rowsRef.current[rowIndex].value,
+            setValueFromEditor: ({ rowIndex, value }) => setRows(rows => {
+              const newRows = [...rows]
+              newRows[rowIndex] = { ...newRows[rowIndex], value }
+              return newRows
+            }),
+          }], []]}
         />
         <div className="flex justify-end gap-2 mt-2">
           <Input.IconButton onClick={onClose}>キャンセル</Input.IconButton>
