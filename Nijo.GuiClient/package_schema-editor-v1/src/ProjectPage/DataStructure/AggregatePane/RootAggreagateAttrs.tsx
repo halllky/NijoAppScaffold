@@ -1,13 +1,13 @@
 import * as ReactHookForm from "react-hook-form"
 import * as UI from "../../../UI"
-import { SchemaDefinitionGlobalState, ATTR_TYPE, isAttributeAvailable } from "../../../types"
+import { ApplicationState, ATTR_TYPE, isAttributeAvailable } from "../../../types"
 
 /**
  * ルート集約の属性（コメント + 既定の属性 + カスタム属性）
  */
 export default function ({ selectedRootAggregateIndex, formMethods: { control, register }, className }: {
   selectedRootAggregateIndex: number
-  formMethods: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
+  formMethods: ReactHookForm.UseFormReturn<ApplicationState>
   className?: string
 }) {
 

@@ -1,14 +1,14 @@
 import React from "react"
 import useEvent from "react-use-event-hook"
 import * as ReactRouter from "react-router-dom"
-import { asTree, SchemaDefinitionGlobalState, XmlElementAttributeName } from "../types"
+import { asTree, ApplicationState, XmlElementAttributeName } from "../types"
 import { SERVER_DOMAIN } from "../main"
 import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../routing"
 
 /** スキーマ定義のバリデーション機能 */
 export const useValidation = (
   /** 編集中の最新の値を取得する関数 */
-  getEditingValues: () => SchemaDefinitionGlobalState
+  getEditingValues: () => ApplicationState
 ) => {
   // 短時間で繰り返し実行するとサーバーに負担がかかるため、
   // 最後にリクエストした時間から一定時間以内はリクエストをしないようにする。

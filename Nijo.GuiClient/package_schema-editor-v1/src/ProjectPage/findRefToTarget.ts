@@ -1,4 +1,4 @@
-import { XmlElementItem, SchemaDefinitionGlobalState, asTree, ATTR_TYPE } from "../types";
+import { XmlElementItem, ApplicationState, asTree, ATTR_TYPE } from "../types";
 
 /**
  * 'ref-to' 属性の値を解析し、ターゲットとなる XmlElementItem を検索する。
@@ -8,7 +8,7 @@ import { XmlElementItem, SchemaDefinitionGlobalState, asTree, ATTR_TYPE } from "
  */
 export const findRefToTarget = (
   refFrom: XmlElementItem,
-  allElements: SchemaDefinitionGlobalState['xmlElementTrees']
+  allElements: ApplicationState['xmlElementTrees']
 ): { refTo: XmlElementItem, refToRoot: XmlElementItem } | undefined => {
   const refToValue = refFrom.attributes[ATTR_TYPE];
   if (!refToValue || !refToValue.startsWith('ref-to:')) return undefined

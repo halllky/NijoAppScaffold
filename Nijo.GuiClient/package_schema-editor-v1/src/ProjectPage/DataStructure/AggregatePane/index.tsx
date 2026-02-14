@@ -1,7 +1,7 @@
 import React from "react";
 import * as ReactHookForm from "react-hook-form"
 import * as Icon from "@heroicons/react/24/outline"
-import { ATTR_TYPE, SchemaDefinitionGlobalState, TYPE_COMMAND_MODEL } from "../../../types";
+import { ATTR_TYPE, ApplicationState, TYPE_COMMAND_MODEL } from "../../../types";
 import * as UI from "../../../UI"
 import { Allotment, LayoutPriority } from "allotment";
 import { DecsendantsGrid } from "./DecsendantsGrid";
@@ -12,7 +12,7 @@ import RootAggreagateAttrs from "./RootAggreagateAttrs";
  */
 export function AggregatePane(props: {
   selectedRootAggregateIndex: number
-  formMethods: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
+  formMethods: ReactHookForm.UseFormReturn<ApplicationState>
   className?: string
   onRequestDelete?: () => void
   orientation?: 'horizontal' | 'vertical'

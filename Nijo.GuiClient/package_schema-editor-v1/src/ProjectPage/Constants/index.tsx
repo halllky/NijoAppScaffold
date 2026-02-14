@@ -4,7 +4,7 @@ import * as Icon from "@heroicons/react/24/solid"
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
 import { UUID } from "uuidjs"
 import {
-  SchemaDefinitionGlobalState,
+  ApplicationState,
   ATTR_TYPE,
   TYPE_CONSTANT_MODEL,
   XmlElementItem,
@@ -15,7 +15,7 @@ import {
 } from "../../types"
 import * as UI from '../../UI'
 
-type FormType = SchemaDefinitionGlobalState
+type FormType = ApplicationState
 
 /**
  * 定数定義グリッド

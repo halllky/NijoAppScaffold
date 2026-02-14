@@ -15,8 +15,6 @@ namespace Nijo.WebService.SchemaEditor;
 /// データの持ち方こそ違うがデータの範囲は nijo.xml 1個分と対応する。
 /// </summary>
 public class ApplicationState {
-    [JsonPropertyName("applicationName")]
-    public string ApplicationName { get; set; } = "";
     [JsonPropertyName("xmlElementTrees")]
     public List<ModelPageForm> XmlElementTrees { get; set; } = [];
     [JsonPropertyName("attributeDefs")]

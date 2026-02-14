@@ -4,7 +4,7 @@ import * as ReactRouter from "react-router-dom"
 import * as Icon from "@heroicons/react/24/solid"
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
 import { UUID } from "uuidjs"
-import { SchemaDefinitionGlobalState, ATTR_TYPE, isAttributeAvailable, XmlElementItem } from "../../../types"
+import { ApplicationState, ATTR_TYPE, isAttributeAvailable, XmlElementItem } from "../../../types"
 import * as UI from '../../../UI'
 import { GetValidationResultFunction, ValidationTriggerFunction } from '../../useValidation'
 import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../../../routing"
@@ -14,13 +14,13 @@ import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../../../routing"
  */
 export function DecsendantsGrid(props: {
   selectedRootAggregateIndex: number
-  formMethods: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
+  formMethods: ReactHookForm.UseFormReturn<ApplicationState>
   getValidationResult: GetValidationResultFunction
   trigger: ValidationTriggerFunction
   className?: string
 }) {
 
-  type GridRowType = ReactHookForm.FieldArrayWithId<SchemaDefinitionGlobalState, `xmlElementTrees.${number}.xmlElements`, 'id'>
+  type GridRowType = ReactHookForm.FieldArrayWithId<ApplicationState, `xmlElementTrees.${number}.xmlElements`, 'id'>
 
   const {
     selectedRootAggregateIndex,

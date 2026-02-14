@@ -2,7 +2,7 @@ import React from "react";
 import * as ReactHookForm from "react-hook-form";
 import FormLayout, { LabelProps } from "@nijo/ui-components/layout/FormLayout";
 import useEvent from "react-use-event-hook";
-import { ProjectOptionPropertyInfo, SchemaDefinitionGlobalState } from "../../types";
+import { ProjectOptionPropertyInfo, ApplicationState } from "../../types";
 import { usePersonalSettings } from "../../PersonalSettings";
 import { PersonalSettings } from "../../PersonalSettings/PersonalSettings";
 import { CustomAttributeSettings } from "./CustomAttributeSettings";
@@ -12,7 +12,7 @@ import { Allotment, LayoutPriority } from "allotment";
  * プロジェクト設定タブの内容
  */
 export const ProjectSettings: React.FC<{
-  formMethods: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
+  formMethods: ReactHookForm.UseFormReturn<ApplicationState>
 }> = ({ formMethods }) => {
 
   const { personalSettings, save } = usePersonalSettings()
@@ -82,7 +82,7 @@ export const ProjectSettings: React.FC<{
  * プロジェクト設定セクション
  */
 const ProjectOptionsSection: React.FC<{
-  formMethods: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
+  formMethods: ReactHookForm.UseFormReturn<ApplicationState>
 }> = ({ formMethods }) => {
   const { getValues, register } = formMethods
 
@@ -114,7 +114,7 @@ const ProjectSettingField: React.FC<{
   register: ReactHookForm.UseFormRegister<any>
 }> = ({ propertyInfo, register }) => {
 
-  const fieldName: ReactHookForm.Path<SchemaDefinitionGlobalState> = `projectOptions.${propertyInfo.propertyName}`
+  const fieldName: ReactHookForm.Path<ApplicationState> = `projectOptions.${propertyInfo.propertyName}`
 
   return (
     <>

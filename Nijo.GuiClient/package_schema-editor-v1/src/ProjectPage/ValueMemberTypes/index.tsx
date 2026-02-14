@@ -1,7 +1,7 @@
 import { Allotment, LayoutPriority } from "allotment"
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
-import { ATTR_TYPE, SchemaDefinitionGlobalState, TYPE_STATIC_ENUM_MODEL } from "../../types"
+import { ATTR_TYPE, ApplicationState, TYPE_STATIC_ENUM_MODEL } from "../../types"
 import StaticEnumGrid from "./StaticEnumGrid"
 
 /**
@@ -10,7 +10,7 @@ import StaticEnumGrid from "./StaticEnumGrid"
  * Nijo の ValueMemberType に相当する属性種類を定義する。
  */
 export default function (props: {
-  formMethods?: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
+  formMethods?: ReactHookForm.UseFormReturn<ApplicationState>
 }) {
   const { control } = props.formMethods ?? {}
   const xmlElementTrees = control ? ReactHookForm.useWatch({

@@ -41,7 +41,6 @@ internal class SchemaEndpointHandlers {
             var projectOptions = GeneratedProjectOptions.Parse(xDocument, false);
 
             var applicationState = new ApplicationState {
-                ApplicationName = xDocument.Root?.Name.LocalName ?? "",
                 XmlElementTrees = SchemaParseContext.GetAllSectionNames()
                     .Where(sectionName => sectionName != SchemaParseContext.SECTION_CUSTOM_ATTRIBUTES)
                     .Select(sectionName => xDocument.Root?.Element(sectionName))

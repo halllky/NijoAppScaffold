@@ -24,7 +24,7 @@ export type AppSchemaDefinitionGraphDataSet = {
  * スキーマ定義編集におけるアプリケーション全体の状態。
  * データの持ち方こそ違うがデータの範囲は nijo.xml 1個分と対応する。
  */
-export type SchemaDefinitionGlobalState = {
+export type ApplicationState = {
   /** XML要素をルート集約ごとの塊に分類したもの。 */
   xmlElementTrees: ModelPageForm[]
   /** XML要素の属性定義。 */
@@ -143,7 +143,7 @@ export type XmlElementSelectAttribute = {
   getOptions: XmlElementSelectAttributeGetOptionFunction
 }
 
-export type XmlElementSelectAttributeGetOptionFunction = (state: SchemaDefinitionGlobalState) => XmlElementSelectAttributeOption[]
+export type XmlElementSelectAttributeGetOptionFunction = (state: ApplicationState) => XmlElementSelectAttributeOption[]
 export type XmlElementSelectAttributeOption = { id: string, displayName: string }
 
 // ---------------------------------

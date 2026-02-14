@@ -2,14 +2,14 @@ import React from "react";
 import useEvent from "react-use-event-hook";
 import * as ReactHookForm from "react-hook-form";
 import { GraphView2 } from "@nijo/ui-components";
-import { SchemaDefinitionGlobalState } from "../../types";
+import { ApplicationState } from "../../types";
 import { NodeMetadata, useDiagramDataSet } from "./useDiagramDataSet";
 
 /**
  * スキーマ定義ダイアグラム
  */
 export function Diagram(props: {
-  formMethods: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
+  formMethods: ReactHookForm.UseFormReturn<ApplicationState>
   onSelectedRootAggregateChanged: (aggregateId: string | null) => void
   className?: string
   /** 左肩部分にオーバーレイで表示される */

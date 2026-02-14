@@ -3,7 +3,7 @@ import * as ReactRouter from "react-router"
 import * as ReactHookForm from "react-hook-form"
 import * as Icon from "@heroicons/react/24/outline"
 import * as UI from "../UI"
-import { SchemaDefinitionGlobalState } from "../types"
+import { ApplicationState } from "../types"
 import { usePersonalSettings } from "../PersonalSettings"
 import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../routing"
 import { saveSchema } from "../useSaveLoad"
@@ -23,7 +23,7 @@ import { ProjectSettings } from "./ProjectSettings"
  * フッターではスキーマ定義で発生しているエラー情報の表示を行う。
  */
 export default function ({ defaultValues }: {
-  defaultValues: SchemaDefinitionGlobalState
+  defaultValues: ApplicationState
 }) {
 
   // 現在開いているプロジェクトの情報
@@ -31,7 +31,7 @@ export default function ({ defaultValues }: {
   const projectDir = searchParams.get(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR)
 
   // react-hook-form
-  const formMethods = ReactHookForm.useForm<SchemaDefinitionGlobalState>({
+  const formMethods = ReactHookForm.useForm<ApplicationState>({
     defaultValues: defaultValues,
   })
   const { getValues, formState: { isDirty }, control } = formMethods

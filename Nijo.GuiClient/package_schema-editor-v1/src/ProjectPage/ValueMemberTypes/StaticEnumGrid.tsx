@@ -3,10 +3,10 @@ import * as ReactHookForm from "react-hook-form"
 import * as Icon from "@heroicons/react/24/solid"
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
 import { UUID } from "uuidjs"
-import { SchemaDefinitionGlobalState, ATTR_TYPE, TYPE_STATIC_ENUM_MODEL, XmlElementItem } from "../../types"
+import { ApplicationState, ATTR_TYPE, TYPE_STATIC_ENUM_MODEL, XmlElementItem } from "../../types"
 import * as UI from '../../UI'
 
-type FormType = SchemaDefinitionGlobalState
+type FormType = ApplicationState
 
 /**
  * 静的区分定義グリッド

@@ -2,7 +2,7 @@ import { Allotment, LayoutPriority } from "allotment";
 import React from "react";
 import * as ReactHookForm from "react-hook-form"
 import { usePersonalSettings } from "../../PersonalSettings";
-import { ATTR_TYPE, ModelPageForm, SchemaDefinitionGlobalState } from "../../types";
+import { ATTR_TYPE, ModelPageForm, ApplicationState } from "../../types";
 import { Button } from "../../UI";
 import { Diagram } from "./Diagram";
 import { AggregatePane } from "./AggregatePane";
@@ -18,7 +18,7 @@ import { PlusIcon } from "@heroicons/react/24/solid";
  */
 export default function ({ visible, formMethods }: {
   visible: boolean
-  formMethods: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>
+  formMethods: ReactHookForm.UseFormReturn<ApplicationState>
 }) {
 
   const watchedXmlElementTrees = ReactHookForm.useWatch({ name: "xmlElementTrees", control: formMethods.control })

@@ -1,9 +1,9 @@
 import React from "react"
-import { XmlElementItem, ATTR_TYPE, TYPE_DATA_MODEL, TYPE_COMMAND_MODEL, TYPE_QUERY_MODEL, TYPE_CHILD, TYPE_CHILDREN, SchemaDefinitionGlobalState } from "../types"
+import { XmlElementItem, ATTR_TYPE, TYPE_DATA_MODEL, TYPE_COMMAND_MODEL, TYPE_QUERY_MODEL, TYPE_CHILD, TYPE_CHILDREN, ApplicationState } from "../types"
 import { MentionInputWrapper } from "./MentionInputWrapper"
 
 /** スキーマ定義データを提供するContext */
-export const MentionCellDataSourceContext = React.createContext<SchemaDefinitionGlobalState | null>(null)
+export const MentionCellDataSourceContext = React.createContext<ApplicationState | null>(null)
 
 
 /**
@@ -47,7 +47,7 @@ export const SchemaDefinitionMentionTextarea = React.forwardRef(({
  * スキーマ定義データからメンションの候補リストを取得するカスタムフック
  */
 const useGetSuggestions = (
-  schemaDefinitionData: SchemaDefinitionGlobalState | null | undefined
+  schemaDefinitionData: ApplicationState | null | undefined
 ): Parameters<typeof MentionInputWrapper>[0]['getSuggestions'] => {
 
   return React.useCallback(async (query, callback) => {
