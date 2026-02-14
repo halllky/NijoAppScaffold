@@ -40,7 +40,6 @@ export const ProjectSettings: React.FC<{
         <div className="p-4 h-full overflow-y-auto">
           <FormLayout.Root
             labelComponent={FormLayoutLabel}
-            className="max-w-4xl mx-auto"
             labelWidthPx={240}
           >
             <ProjectOptionsSection
@@ -119,7 +118,7 @@ const ProjectSettingField: React.FC<{
   return (
     <>
       <FormLayout.Field label={propertyInfo.propertyName}>
-        <div className="flex flex-col">
+        <div className="flex items-start gap-2">
           {(() => {
             switch (propertyInfo.propertyType) {
               case 'bool':
@@ -142,7 +141,7 @@ const ProjectSettingField: React.FC<{
                       }
                     })}
                     placeholder={String(propertyInfo.defaultValue || '0')}
-                    className="px-1 py-px border border-gray-500"
+                    className="basis-80 shrink-0 px-1 py-px border border-gray-500"
                   />
                 )
               default:
@@ -151,12 +150,12 @@ const ProjectSettingField: React.FC<{
                     type="text"
                     {...register(fieldName)}
                     placeholder={String(propertyInfo.defaultValue || '')}
-                    className="px-1 py-px border border-gray-500"
+                    className="basis-80 shrink-0 px-1 py-px border border-gray-500"
                   />
                 )
             }
           })()}
-          <span className="mb-2 text-xs text-gray-500">
+          <span className="text-xs text-gray-500">
             {propertyInfo.description}
           </span>
         </div>
