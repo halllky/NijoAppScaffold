@@ -1,6 +1,6 @@
-import { SERVER_DOMAIN } from "../main"
-import { AppSchemaDefinitionGraphDataSet, SchemaDefinitionGlobalState } from "../types"
-import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../routing"
+import { SERVER_DOMAIN } from "./main"
+import { AppSchemaDefinitionGraphDataSet, SchemaDefinitionGlobalState } from "./types"
+import { NIJOUI_CLIENT_ROUTE_PARAMS } from "./routing"
 
 type LoadSchemaReturn =
   | { ok: true; schema: { applicationState: SchemaDefinitionGlobalState, schemaGraphViewState: AppSchemaDefinitionGraphDataSet | null } }
