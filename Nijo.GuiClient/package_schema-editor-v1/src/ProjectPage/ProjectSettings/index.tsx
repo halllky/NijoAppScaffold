@@ -118,7 +118,7 @@ const ProjectSettingField: React.FC<{
   return (
     <>
       <FormLayout.Field label={propertyInfo.propertyName}>
-        <div className="flex items-start gap-2">
+        <div className="flex flex-wrap items-start gap-x-2 gap-y-px my-1">
           {(() => {
             switch (propertyInfo.propertyType) {
               case 'bool':
@@ -126,7 +126,7 @@ const ProjectSettingField: React.FC<{
                   <input
                     type="checkbox"
                     {...register(fieldName)}
-                    className="h-4 w-4"
+                    className="h-4 w-4 my-1"
                   />
                 )
               case 'int':
@@ -141,7 +141,7 @@ const ProjectSettingField: React.FC<{
                       }
                     })}
                     placeholder={String(propertyInfo.defaultValue || '0')}
-                    className="basis-80 shrink-0 px-1 py-px border border-gray-500"
+                    className="basis-80 px-1 py-px border border-gray-500"
                   />
                 )
               default:
@@ -150,12 +150,12 @@ const ProjectSettingField: React.FC<{
                     type="text"
                     {...register(fieldName)}
                     placeholder={String(propertyInfo.defaultValue || '')}
-                    className="basis-80 shrink-0 px-1 py-px border border-gray-500"
+                    className="basis-80 px-1 py-px border border-gray-500"
                   />
                 )
             }
           })()}
-          <span className="text-xs text-gray-500">
+          <span className="flex-1 min-w-80 text-xs text-gray-500">
             {propertyInfo.description}
           </span>
         </div>
@@ -224,7 +224,7 @@ const FormLayoutLabel: React.ElementType<LabelProps> = ({ className, ...rest }) 
   return (
     <FormLayout.DefaultLabel
       {...rest}
-      className={`text-sm break-all ${className ?? ''}`}
+      className={`py-1 text-sm break-all ${className ?? ''}`}
     />
   )
 }

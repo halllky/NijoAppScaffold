@@ -90,8 +90,10 @@ export default function ({ defaultValues }: {
             isSelected={displayTab === "project-settings"}
             onClick={() => setDisplayTab("project-settings")}
           >
-            {applicationName || "名無しのプロジェクト"}
-            <Icon.Cog6ToothIcon className="w-5 h-5 text-gray-600" />
+            <div className="flex items-center gap-1">
+              {applicationName || "名無しのプロジェクト"}
+              <Icon.Cog6ToothIcon className="w-5 h-5 text-gray-600" />
+            </div>
           </UI.TabHeader>
 
           <div className="basis-2"></div>
