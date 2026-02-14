@@ -2,7 +2,7 @@ import { Node as CyNode, Edge as CyEdge } from "@nijo/ui-components/layout/Graph
 import { CytoscapeDataSet } from "@nijo/ui-components/layout/GraphView/Cy"
 import { ATTR_IS_KEY, ATTR_TYPE, ModelPageForm, TYPE_CHILD, TYPE_CHILDREN, TYPE_DATA_MODEL, XmlElementItem, asTree } from "../../types"
 import { MentionUtil } from "../../UI"
-import { findRefToTarget } from "../findRefToTarget"
+import { findRefToTarget } from "../../NewUi20260207/findRefToTarget"
 
 // ER図表示モードのdataSet作成関数
 export const createERDiagramDataSet = (xmlElementTrees: ModelPageForm[]): CytoscapeDataSet => {

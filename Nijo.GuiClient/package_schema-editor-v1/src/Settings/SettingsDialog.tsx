@@ -1,14 +1,13 @@
 import React from "react";
 import * as ReactHookForm from "react-hook-form";
-import { useBlockerEx } from "@nijo/ui-components";
 import { ModalDialog } from "@nijo/ui-components/layout";
 import FormLayout, { LabelProps } from "@nijo/ui-components/layout/FormLayout";
 import useEvent from "react-use-event-hook";
 import { ProjectOptionPropertyInfo, SchemaDefinitionGlobalState } from "../types";
-import { usePersonalSettings } from "./usePersonalSettings";
-import { PersonalSettings } from "./PersonalSettings";
+import { usePersonalSettings } from "../NewUi20260207/usePersonalSettings";
+import { PersonalSettings } from "../NewUi20260207/PersonalSettings";
 import { CustomAttributeSettings } from "./CustomAttributeSettings";
-import { GetValidationResultFunction, ValidationTriggerFunction } from "../MainPage/useValidation";
+import { GetValidationResultFunction, ValidationTriggerFunction } from "../NewUi20260207/useValidation";
 
 /**
  * 個人用設定 + プロジェクト設定ダイアログ。
@@ -49,9 +48,6 @@ export const SettingsDialog: React.FC<{
       customAttributeSettingsElementRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
   }, [focusOnCustomAttributeSettings])
-
-  // // 閉じるときに確認ダイアログを出す
-  // useBlockerEx(true)
 
   return (
     <ModalDialog open

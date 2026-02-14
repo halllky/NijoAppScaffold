@@ -8,7 +8,7 @@ import * as Input from "@nijo/ui-components/input"
 import { SchemaDefinitionGlobalState, NijoXmlCustomAttribute, TYPE_DATA_MODEL, TYPE_QUERY_MODEL, TYPE_COMMAND_MODEL, TYPE_STRUCTURE_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, XmlElementAttributeName } from "../types"
 import { UUID } from "uuidjs"
 import FormLayout from "@nijo/ui-components/layout/FormLayout"
-import { GetValidationResultFunction, ValidationTriggerFunction } from "../MainPage/useValidation"
+import { GetValidationResultFunction, ValidationTriggerFunction } from "../NewUi20260207/useValidation"
 
 type CustomAttributeSettingsProps = {
   formMethods: ReactHookForm.UseFormReturn<SchemaDefinitionGlobalState>

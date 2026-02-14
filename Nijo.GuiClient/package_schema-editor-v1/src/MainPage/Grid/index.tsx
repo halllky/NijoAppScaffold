@@ -9,7 +9,7 @@ import * as UI from '../../UI'
 import useEvent from "react-use-event-hook"
 import { UUID } from "uuidjs"
 import { TYPE_COLUMN_DEF } from "./getAttrTypeOptions"
-import { GetValidationResultFunction, ValidationTriggerFunction } from "../useValidation"
+import { GetValidationResultFunction, ValidationTriggerFunction } from "../../NewUi20260207/useValidation"
 import { createLocalNameCell, createBasicAttributeCell, GridRowType, createCustomAttributeCell } from "./Input.CellTypes"
 import { usePersonalSettings } from "../../Settings"
 import { CellEditorWithMention } from "./Input.CellEditor"

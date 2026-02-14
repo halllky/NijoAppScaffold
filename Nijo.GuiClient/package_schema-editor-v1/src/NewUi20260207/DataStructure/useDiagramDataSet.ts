@@ -3,7 +3,7 @@ import * as ReactHookForm from "react-hook-form";
 import { SchemaDefinitionGlobalState, ATTR_PARAMETER, ATTR_RETURN_VALUE, ATTR_TYPE, TYPE_CHILD, TYPE_CHILDREN, TYPE_COMMAND_MODEL, TYPE_DATA_MODEL, TYPE_MEMO, TYPE_QUERY_MODEL, TYPE_STRUCTURE_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, TYPE_CONSTANT_MODEL, XmlElementItem, asTree } from "../../types";
 import { GraphView2 } from "@nijo/ui-components";
 import { MentionUtil } from "../../UI";
-import { findRefToTarget } from "../../MainPage/findRefToTarget";
+import { findRefToTarget } from "../findRefToTarget";
 
 export type NodeMetadata = {
   rootAggregateUniqueId: string

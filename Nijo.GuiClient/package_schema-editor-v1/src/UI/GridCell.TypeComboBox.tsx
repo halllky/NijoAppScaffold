@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useImperativeHandle } from "react"
 import * as ReactHookForm from "react-hook-form"
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
-import { useSchemaCandidates } from "../MainPage/SchemaCandidatesContext"
+import { useSchemaCandidates } from "../NewUi20260207/SchemaCandidatesContext"
 
 export type CreateComboBoxCellFunction = <TRow>(
   header: string,

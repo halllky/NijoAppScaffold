@@ -2,7 +2,7 @@ import { Node as CyNode, Edge as CyEdge } from "@nijo/ui-components/layout/Graph
 import { CytoscapeDataSet } from "@nijo/ui-components/layout/GraphView/Cy"
 import { ATTR_PARAMETER, ATTR_RETURN_VALUE, ATTR_TYPE, ModelPageForm, TYPE_CHILD, TYPE_CHILDREN, TYPE_COMMAND_MODEL, TYPE_DATA_MODEL, TYPE_MEMO, TYPE_QUERY_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, XmlElementItem, asTree } from "../../types"
 import { MentionUtil } from "../../UI"
-import { findRefToTarget } from "../findRefToTarget"
+import { findRefToTarget } from "../../NewUi20260207/findRefToTarget"
 
 // スキーマ定義モードのdataSet作成関数
 export const createSchemaDefinitionDataSet = (xmlElementTrees: ModelPageForm[], onlyRoot: boolean): CytoscapeDataSet => {

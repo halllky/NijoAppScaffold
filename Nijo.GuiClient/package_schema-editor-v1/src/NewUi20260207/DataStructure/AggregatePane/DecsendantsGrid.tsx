@@ -6,8 +6,7 @@ import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
 import { UUID } from "uuidjs"
 import { SchemaDefinitionGlobalState, ATTR_TYPE, isAttributeAvailable, XmlElementItem } from "../../../types"
 import * as UI from '../../../UI'
-import { GetValidationResultFunction, ValidationTriggerFunction } from '../../../MainPage/useValidation'
-import { SERVER_DOMAIN } from "../../../main"
+import { GetValidationResultFunction, ValidationTriggerFunction } from '../../useValidation'
 import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../../../routing"
 
 /**

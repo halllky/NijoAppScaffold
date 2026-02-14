@@ -1,7 +1,7 @@
 import { Allotment, LayoutPriority } from "allotment";
 import React from "react";
 import * as ReactHookForm from "react-hook-form"
-import { usePersonalSettings } from "../../Settings";
+import { usePersonalSettings } from "../usePersonalSettings";
 import { ATTR_TYPE, ModelPageForm, SchemaDefinitionGlobalState } from "../../types";
 import { Button } from "../../UI";
 import { Diagram } from "./Diagram";

@@ -3,7 +3,7 @@ import * as ReactHookForm from "react-hook-form"
 import * as ReactTable from "@tanstack/react-table"
 import * as Layout from "@nijo/ui-components/layout"
 import { SchemaDefinitionGlobalState, XmlElementAttribute, NijoXmlCustomAttribute } from "../../types"
-import { GetValidationResultFunction } from "../useValidation"
+import { GetValidationResultFunction } from "../../NewUi20260207/useValidation"
 
 /** メンバーグリッドの行の型 */
 export type GridRowType = ReactHookForm.FieldArrayWithId<SchemaDefinitionGlobalState, `xmlElementTrees.${number}.xmlElements`>

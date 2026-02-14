@@ -6,7 +6,7 @@ import * as Layout from "@nijo/ui-components/layout"
 import * as Input from "@nijo/ui-components/input"
 import { SchemaDefinitionGlobalState, XmlElementItem, XmlElementAttribute, ATTR_TYPE, ATTR_DISPLAY_NAME, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, asTree, ModelPageForm, NODE_TYPE_STATIC_ENUM_VALUE, NODE_TYPE_VALUE_MEMBER, isAttributeAvailable, NODE_TYPE_ROOT_AGGREGATE, XmlElementAttributeName } from "../types"
 import { UUID } from "uuidjs"
-import { GetValidationResultFunction, ValidationTriggerFunction, ValidationResultListItem } from "../MainPage/useValidation"
+import { GetValidationResultFunction, ValidationTriggerFunction, ValidationResultListItem } from "../NewUi20260207/useValidation"
 import ErrorMessagePane from "../MainPage/ErrorMessage"
 
 type EnumDefDialogProps = {

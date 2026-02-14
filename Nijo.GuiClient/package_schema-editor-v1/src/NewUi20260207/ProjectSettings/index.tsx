@@ -3,10 +3,9 @@ import * as ReactHookForm from "react-hook-form";
 import FormLayout, { LabelProps } from "@nijo/ui-components/layout/FormLayout";
 import useEvent from "react-use-event-hook";
 import { ProjectOptionPropertyInfo, SchemaDefinitionGlobalState } from "../../types";
-import { usePersonalSettings } from "../../Settings/usePersonalSettings";
-import { PersonalSettings } from "../../Settings/PersonalSettings";
+import { usePersonalSettings } from "../../NewUi20260207/usePersonalSettings";
+import { PersonalSettings } from "../PersonalSettings";
 import { CustomAttributeSettings } from "../../Settings/CustomAttributeSettings";
-import { GetValidationResultFunction, ValidationTriggerFunction } from "../../MainPage/useValidation";
 import { Allotment, LayoutPriority } from "allotment";
 
 /**

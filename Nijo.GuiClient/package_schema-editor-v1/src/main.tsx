@@ -3,7 +3,7 @@ import * as ReactRouter from "react-router-dom"
 import ReactDOM from "react-dom/client"
 import * as Util from "@nijo/ui-components/util"
 import { getRouterForNijoUi } from "./routing"
-import { PersonalSettingsProvider } from "./Settings/usePersonalSettings"
+import { PersonalSettingsProvider } from "./NewUi20260207/usePersonalSettings"
 
 import "./main.css"
 import "allotment/dist/style.css"

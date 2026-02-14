@@ -5,7 +5,7 @@ import { ProjectSelector } from "./ProjectSelector"
 import { MainPageLayout } from "./MainPageLayout"
 import { SchemaDefinitionGlobalState } from "../types"
 import { NowLoading } from "@nijo/ui-components/layout"
-import { loadSchema } from "./useSaveLoad"
+import { loadSchema } from "../NewUi20260207/useSaveLoad"
 import NewUi20260207 from "../NewUi20260207"
 
 /**

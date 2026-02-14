@@ -1,6 +1,6 @@
 import React from "react"
 import { SchemaDefinitionGlobalState, asTree } from "../types"
-import { ValidationResultListItem } from "./useValidation"
+import { ValidationResultListItem } from "../NewUi20260207/useValidation"
 
 /**
  * エラーメッセージ表示欄。
