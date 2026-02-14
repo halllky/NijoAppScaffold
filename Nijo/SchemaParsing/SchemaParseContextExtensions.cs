@@ -10,38 +10,6 @@ using System.Xml.XPath;
 namespace Nijo.SchemaParsing;
 
 internal static class SchemaParseContextExtensions {
-    /// <summary>
-    /// 親要素を返します。親要素がメモの場合、さらにその親要素を返します。
-    /// </summary>
-    internal static XElement? GetParentWithoutMemo(this XElement? element) {
-        if (element == null) return null;
-
-        var parent = element.Parent;
-        while (parent != null && parent.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_MEMO) {
-            parent = parent.Parent;
-        }
-        return parent;
-    }
-    /// <summary>
-    /// メモを除いた子要素を列挙します。
-    /// メモが子要素を持っている場合、あたかもメモ要素が存在しなかったものとみなして
-    /// その子要素を列挙します。
-    /// </summary>
-    internal static IEnumerable<XElement> ElementsWithoutMemo(this XElement element) {
-        return Enumerate(element);
-
-        static IEnumerable<XElement> Enumerate(XElement owner) {
-            foreach (var el in owner.Elements()) {
-                if (el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_MEMO) {
-                    foreach (var el2 in Enumerate(el)) {
-                        yield return el2;
-                    }
-                } else {
-                    yield return el;
-                }
-            }
-        }
-    }
 
     /// <summary>
     /// 表示名称
@@ -98,7 +66,7 @@ internal static class SchemaParseContextExtensions {
     internal static bool TryGetAggregateNodeType(this XElement xElement, [NotNullWhen(true)] out E_NodeType? nodeType) {
 
         // ルート要素直下のセクション直下に定義されている場合はルート集約
-        if (xElement.GetParentWithoutMemo()?.Parent == xElement.Document?.Root) {
+        if (xElement.Parent?.Parent == xElement.Document?.Root) {
             nodeType = E_NodeType.RootAggregate;
             return true;
         }
@@ -122,7 +90,7 @@ internal static class SchemaParseContextExtensions {
     /// 要素のルート集約要素を返します
     /// </summary>
     internal static XElement GetRootAggregateElement(this XElement element) {
-        return element.AncestorsAndSelf().SkipLast(1).Last(e => e.GetParentWithoutMemo()?.Parent == e.Document?.Root);
+        return element.AncestorsAndSelf().SkipLast(1).Last(e => e.Parent?.Parent == e.Document?.Root);
     }
 
     /// <summary>

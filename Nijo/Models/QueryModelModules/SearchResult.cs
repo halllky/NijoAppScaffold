@@ -349,7 +349,7 @@ namespace Nijo.Models.QueryModelModules {
                     // Childrenはその親とは別のクラスのためアンダースコアによるパス結合をクリア
                     if (node.PreviousNode is ChildrenAggregate
                         // 親から子に向かって辿った場合のみクリア（参照先の場合は子から親に辿ることがある）
-                        && previousOfPrevious?.XElement == node.PreviousNode.XElement.GetParentWithoutMemo()) {
+                        && previousOfPrevious?.XElement == node.PreviousNode.XElement.Parent) {
                         list.Clear();
                     }
 
@@ -360,7 +360,7 @@ namespace Nijo.Models.QueryModelModules {
                     }
 
                     // 参照先のメンバーで子から親に辿る場合は "Parent" という名前になる
-                    if (node.XElement == node.PreviousNode.XElement.GetParentWithoutMemo()) {
+                    if (node.XElement == node.PreviousNode.XElement.Parent) {
                         list.Add("Parent");
                     } else {
                         if (forDbName && isLastNode && node is ValueMember vm) {

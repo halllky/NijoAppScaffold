@@ -168,7 +168,6 @@ export const TYPE_STATIC_ENUM_MODEL = 'enum'
 export const TYPE_VALUE_OBJECT_MODEL = 'value-object'
 export const TYPE_CHILD = 'child'
 export const TYPE_CHILDREN = 'children'
-export const TYPE_MEMO = '-'
 
 // ノード種別（C#のE_NodeTypeに対応）
 export const NODE_TYPE_ROOT_AGGREGATE = 'RootAggregate'
@@ -177,7 +176,6 @@ export const NODE_TYPE_CHILDREN_AGGREGATE = 'ChildrenAggregate'
 export const NODE_TYPE_VALUE_MEMBER = 'ValueMember'
 export const NODE_TYPE_REF = 'Ref'
 export const NODE_TYPE_STATIC_ENUM_VALUE = 'StaticEnumValue'
-export const NODE_TYPE_MEMO = 'Memo'
 export const NODE_TYPE_UNKNOWN = 'Unknown'
 
 // ---------------------------------

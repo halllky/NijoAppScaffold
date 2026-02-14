@@ -36,7 +36,7 @@ public class ApplicationSchema {
             .Root
             ?.Elements()
             .Where(el => el.Name.LocalName != SchemaParseContext.SECTION_CUSTOM_ATTRIBUTES)
-            .SelectMany(el => el.ElementsWithoutMemo())
+            .SelectMany(el => el.Elements())
             ?? [];
 
         foreach (var xElement in rootAggregateElements) {

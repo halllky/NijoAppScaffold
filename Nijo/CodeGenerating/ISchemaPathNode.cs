@@ -93,16 +93,16 @@ namespace Nijo.CodeGenerating {
             XElement current = element;
 
             // XMLルート要素まで遡る
-            while (current.GetParentWithoutMemo() != null) {
-                current = current.GetParentWithoutMemo()!;
+            while (current.Parent != null) {
+                current = current.Parent;
             }
 
             // XMLルート要素から、targetElementが属する直下の要素を見つける
             XElement xmlRoot = current;
             XElement? ancestor = element;
 
-            while (ancestor.GetParentWithoutMemo() != xmlRoot) {
-                ancestor = ancestor.GetParentWithoutMemo();
+            while (ancestor.Parent != xmlRoot) {
+                ancestor = ancestor.Parent;
                 if (ancestor == null)
                     return null;
             }
@@ -127,7 +127,7 @@ namespace Nijo.CodeGenerating {
             order++;
 
             // 子要素を深さ優先で探索
-            foreach (XElement child in currentElement.ElementsWithoutMemo()) {
+            foreach (XElement child in currentElement.Elements()) {
                 int result = FindElementOrder(child, targetElement, ref order);
                 if (result != -1) {
                     return result;

@@ -20,7 +20,7 @@ namespace Nijo.Models {
 
         public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
             // キー（key属性）のバリデーション
-            var enumValues = rootAggregateElement.ElementsWithoutMemo().ToList();
+            var enumValues = rootAggregateElement.Elements().ToList();
             var keyValues = new HashSet<int>();
 
             foreach (var valueElement in enumValues) {

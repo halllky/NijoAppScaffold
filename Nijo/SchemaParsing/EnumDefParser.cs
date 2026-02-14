@@ -32,12 +32,12 @@ namespace Nijo.SchemaParsing {
 
         internal string RenderTsSearchConditionType() {
             return $$"""
-                { {{_xElement.ElementsWithoutMemo().Select(el => $"'{el.GetDisplayName().Replace("'", "\\'")}'?: boolean | null").Join(", ")}} }
+                { {{_xElement.Elements().Select(el => $"'{el.GetDisplayName().Replace("'", "\\'")}'?: boolean | null").Join(", ")}} }
                 """;
         }
         internal string RenderTsSearchConditionInitializer() {
             return $$"""
-                { {{_xElement.ElementsWithoutMemo().Select(el => $"'{el.GetDisplayName().Replace("'", "\\'")}': false").Join(", ")}} }
+                { {{_xElement.Elements().Select(el => $"'{el.GetDisplayName().Replace("'", "\\'")}': false").Join(", ")}} }
                 """;
         }
 
@@ -45,7 +45,7 @@ namespace Nijo.SchemaParsing {
         /// この列挙体に定義されている値の物理名の一覧を返します。
         /// </summary>
         internal IEnumerable<string> GetItemPhysicalNames() {
-            foreach (var el in _xElement.ElementsWithoutMemo()) {
+            foreach (var el in _xElement.Elements()) {
                 yield return el.Name.LocalName;
             }
         }

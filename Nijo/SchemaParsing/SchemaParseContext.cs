@@ -81,9 +81,6 @@ public class SchemaParseContext {
     internal const string NODE_TYPE_CHILDREN = "children";
     internal const string NODE_TYPE_REFTO = "ref-to";
 
-    /// <summary>メモ。スキーマ定義やコード自動生成には影響しない単なる備考。</summary>
-    internal const string NODE_TYPE_MEMO = "-";
-
     /// <summary>
     /// 物理名。スキーマ内での物理名の衝突を考慮した値を返す。
     /// </summary>
@@ -105,7 +102,7 @@ public class SchemaParseContext {
                 .Any(x => x != xElement);
             if (duplicates) {
                 // 「（直近の親のPhysicalName）の（LocalName）」
-                return GetPhysicalName(xElement.GetParentWithoutMemo()!) + "の" + xElement.Name.LocalName;
+                return GetPhysicalName(xElement.Parent!) + "の" + xElement.Name.LocalName;
             }
         }
 
@@ -126,10 +123,10 @@ public class SchemaParseContext {
         }
 
         // 親がenumセクションの直下にあるなら静的区分の値
-        var xElementParent = xElement.GetParentWithoutMemo();
+        var xElementParent = xElement.Parent;
         if (xElementParent != null
-            && xElementParent.GetParentWithoutMemo()?.Parent == Document.Root
-            && xElementParent.GetParentWithoutMemo()?.Name.LocalName == SECTION_STATIC_ENUMS) {
+            && xElementParent.Parent?.Parent == Document.Root
+            && xElementParent.Parent?.Name.LocalName == SECTION_STATIC_ENUMS) {
             return E_NodeType.StaticEnumValue;
         }
 
@@ -137,11 +134,6 @@ public class SchemaParseContext {
         var type = xElement.Attribute(ATTR_NODE_TYPE);
         if (type == null) {
             return E_NodeType.Unknown;
-        }
-
-        // メモ
-        if (type.Value == NODE_TYPE_MEMO) {
-            return E_NodeType.Memo;
         }
 
         // RefTo
@@ -222,7 +214,7 @@ public class SchemaParseContext {
     internal IReadOnlyDictionary<string, ValueMemberTypes.StaticEnumMember> GetStaticEnumMembers() {
         return Document.Root
             ?.Element(SECTION_STATIC_ENUMS)
-            ?.ElementsWithoutMemo()
+            ?.Elements()
             .ToDictionary(GetPhysicalName, el => new ValueMemberTypes.StaticEnumMember(el, this))
             ?? [];
     }
@@ -234,7 +226,7 @@ public class SchemaParseContext {
     internal IReadOnlyDictionary<string, ValueMemberTypes.ValueObjectMember> GetValueObjectMembers() {
         return Document.Root
             ?.Element(SECTION_VALUE_OBJECTS)
-            ?.ElementsWithoutMemo()
+            ?.Elements()
             .ToDictionary(GetPhysicalName, el => new ValueMemberTypes.ValueObjectMember(el, this))
             ?? [];
     }
@@ -351,7 +343,7 @@ public class SchemaParseContext {
         var rootAggregates = xDocument.Root
             ?.Elements()
             .Where(el => el.Name.LocalName != SECTION_CUSTOM_ATTRIBUTES)
-            .SelectMany(el => el.ElementsWithoutMemo())
+            .SelectMany(el => el.Elements())
             ?? [];
         var rootPhysicalNames = new Dictionary<string, XElement>();
 
@@ -390,9 +382,9 @@ public class SchemaParseContext {
             var nodeType = GetNodeType(el);
             var typeAttrValue = el.Attribute(ATTR_NODE_TYPE)?.Value ?? string.Empty;
 
-            var elParent = el.GetParentWithoutMemo();
+            var elParent = el.Parent;
             if (elParent != null && elParent.Parent != el.Document?.Root) {
-                var siblings = elParent.ElementsWithoutMemo().ToList();
+                var siblings = elParent.Elements().ToList();
                 var siblingPhysicalNames = new Dictionary<string, XElement>();
 
                 foreach (var sibling in siblings) {
@@ -407,9 +399,6 @@ public class SchemaParseContext {
 
             // ノードの種類に基づくチェック
             switch (nodeType) {
-                // メモ。チェック不要
-                case E_NodeType.Memo:
-                    break;
 
                 // ノードの種類が不明な場合
                 case E_NodeType.Unknown:
@@ -440,7 +429,7 @@ public class SchemaParseContext {
                 // Child
                 case E_NodeType.ChildAggregate:
                     // 主キー属性のチェック
-                    if (el.ElementsWithoutMemo().Any(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null)) {
+                    if (el.Elements().Any(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null)) {
                         if (TryGetModel(el, out var childModel) && childModel is DataModel) {
                             errorsList.Add((el, $"データモデルの子集約には主キー属性を付与することができません。"));
                         }
@@ -451,7 +440,7 @@ public class SchemaParseContext {
                 case E_NodeType.ChildrenAggregate:
                     // データモデルの子配列は必ず1個以上の主キーが必要
                     if (TryGetModel(el, out var childrenModel) && childrenModel is DataModel) {
-                        if (el.ElementsWithoutMemo().All(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) == null)) {
+                        if (el.Elements().All(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) == null)) {
                             errorsList.Add((el, "データモデルの子配列は必ず1個以上の主キーを持たなければなりません。"));
                         }
                     }

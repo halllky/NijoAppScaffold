@@ -30,7 +30,7 @@ namespace Nijo.ImmutableSchema {
 
         public AggregateBase Owner {
             get {
-                var parent = XElement.GetParentWithoutMemo();
+                var parent = XElement.Parent;
                 return parent == PreviousNode?.XElement
                     ? (AggregateBase?)PreviousNode ?? throw new InvalidOperationException() // パスの巻き戻しの場合
                     : _ctx.ToAggregateBase(parent ?? throw new InvalidOperationException(), this);

@@ -26,7 +26,7 @@ namespace Nijo.Models {
             ValidateConstants(rootAggregateElement, addError);
 
             void ValidateConstants(XElement element, Action<XElement, string> addError) {
-                foreach (var constantElement in element.ElementsWithoutMemo()) {
+                foreach (var constantElement in element.Elements()) {
                     var constantType = constantElement.Attribute(BasicNodeOptions.ConstantType.AttributeName)?.Value;
 
                     if (constantType == "child") {

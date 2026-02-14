@@ -23,7 +23,7 @@ namespace Nijo.Models {
             }
 
             // 新仕様：コマンドモデルは子孫XML要素を定義できない
-            var childElements = rootAggregateElement.ElementsWithoutMemo();
+            var childElements = rootAggregateElement.Elements();
             if (childElements.Any()) {
                 addError(rootAggregateElement, $"コマンドモデルのルート集約は子孫XML要素を定義できません。引数と戻り値の型は{BasicNodeOptions.Parameter.AttributeName}属性と{BasicNodeOptions.ReturnValue.AttributeName}属性で指定してください。");
             }
@@ -55,7 +55,7 @@ namespace Nijo.Models {
                             el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILDREN);
 
             foreach (var aggregate in allAggregates) {
-                var membersWithKey = aggregate.ElementsWithoutMemo()
+                var membersWithKey = aggregate.Elements()
                     .Where(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null).ToList();
 
                 if (membersWithKey.Any()) {
@@ -82,7 +82,7 @@ namespace Nijo.Models {
                 // 参照先モデルの存在確認
                 var targetModel = context.Document.Root
                     ?.Element(SchemaParseContext.SECTION_DATA_STRUCTURES)
-                    ?.ElementsWithoutMemo()
+                    ?.Elements()
                     .FirstOrDefault(e => context.GetPhysicalName(e) == modelName);
                 if (targetModel == null) {
                     addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」が見つからないか、ルート集約ではありません。");

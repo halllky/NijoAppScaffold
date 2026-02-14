@@ -303,7 +303,6 @@ internal class SchemaEndpointHandlers {
             // 1. 固定のキーワード
             candidates.Add(KeyValuePair.Create(SchemaParseContext.NODE_TYPE_CHILD, "子要素"));
             candidates.Add(KeyValuePair.Create(SchemaParseContext.NODE_TYPE_CHILDREN, "子配列(リスト)"));
-            candidates.Add(KeyValuePair.Create(SchemaParseContext.NODE_TYPE_MEMO, "メモ"));
 
             // 2. プリミティブ型
             var rule = SchemaParseRule.Default();

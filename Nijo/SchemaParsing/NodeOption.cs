@@ -165,7 +165,7 @@ internal static class BasicNodeOptions {
         ValidateOthers = ctx => {
             if (!ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model)) return;
 
-            var owner = ctx.XElement.GetParentWithoutMemo();
+            var owner = ctx.XElement.Parent;
             if (owner == null) return;
 
             var ownerType = ctx.SchemaParseContext.GetNodeType(owner);

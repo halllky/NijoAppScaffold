@@ -228,11 +228,11 @@ namespace Nijo.CodeGenerating {
 
                     var dataStrucures = SchemaParser.Document.Root
                         ?.Element(SchemaParseContext.SECTION_DATA_STRUCTURES)
-                        ?.ElementsWithoutMemo()
+                        ?.Elements()
                         ?? [];
                     var commands = SchemaParser.Document.Root
                         ?.Element(SchemaParseContext.SECTION_COMMANDS)
-                        ?.ElementsWithoutMemo()
+                        ?.Elements()
                         ?? [];
 
                     foreach (var element in dataStrucures) {

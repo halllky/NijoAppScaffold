@@ -59,20 +59,6 @@ internal class ValueObjectTypesMd {
             スキーマ定義で `{{ValueObjectModel.SCHEMA_NAME}}` モデルとして定義された値オブジェクトをメンバー型として使用できます。
             {{SchemaParseContext.ATTR_NODE_TYPE}} 属性には当該値オブジェクトの物理名を指定してください。
 
-            ## コメント（`{{SchemaParseContext.NODE_TYPE_MEMO}}`）
-
-            この型の要素はソースコード自動生成処理上では無視されます。
-            例えば以下の例では、コメントは無視され、親集約自身が通常の属性1～3を持つものとしてソース生成されます。
-
-            ```xml
-            <親集約 Type="{{new DataModel().SchemaName}}">
-              <コメント Type="{{SchemaParseContext.NODE_TYPE_MEMO}}">
-                <通常の属性1 Type="word" />
-                <通常の属性2 Type="int" />
-              </コメント>
-             <通常の属性3 Type="date" />
-            </親集約>
-            ```
             """;
     }
 }

@@ -38,7 +38,7 @@ internal class ConstantDefParser {
     }
 
     private IEnumerable<ConstantValueDef> GetConstantsRecursive(XElement element, string parentPath) {
-        foreach (var child in element.ElementsWithoutMemo()) {
+        foreach (var child in element.Elements()) {
             var constantType = child.Attribute(ConstantType.AttributeName)?.Value;
             var currentPath = string.IsNullOrEmpty(parentPath)
                 ? child.Name.LocalName
@@ -64,7 +64,7 @@ internal class ConstantDefParser {
     }
 
     private IEnumerable<ConstantGroupDef> GetConstantGroupsRecursive(XElement element, string parentPath) {
-        foreach (var child in element.ElementsWithoutMemo()) {
+        foreach (var child in element.Elements()) {
             var constantType = child.Attribute(ConstantType.AttributeName)?.Value;
 
             if (constantType == "child") {

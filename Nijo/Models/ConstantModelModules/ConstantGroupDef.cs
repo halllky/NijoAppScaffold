@@ -43,7 +43,7 @@ namespace Nijo.Models.ConstantModelModules {
         /// このグループ内の直接の定数を取得
         /// </summary>
         internal IEnumerable<ConstantValueDef> GetDirectConstants() {
-            foreach (var child in _element.ElementsWithoutMemo()) {
+            foreach (var child in _element.Elements()) {
                 var constantType = child.Attribute(ConstantType.AttributeName)?.Value;
 
                 if (constantType != "child") {
@@ -58,7 +58,7 @@ namespace Nijo.Models.ConstantModelModules {
         /// このグループ内の直接の子グループを取得
         /// </summary>
         internal IEnumerable<ConstantGroupDef> GetDirectChildGroups() {
-            foreach (var child in _element.ElementsWithoutMemo()) {
+            foreach (var child in _element.Elements()) {
                 var constantType = child.Attribute(ConstantType.AttributeName)?.Value;
 
                 if (constantType == "child") {

@@ -1,6 +1,6 @@
 import React from "react";
 import * as ReactHookForm from "react-hook-form";
-import { SchemaDefinitionGlobalState, ATTR_PARAMETER, ATTR_RETURN_VALUE, ATTR_TYPE, TYPE_CHILD, TYPE_CHILDREN, TYPE_COMMAND_MODEL, TYPE_DATA_MODEL, TYPE_MEMO, TYPE_QUERY_MODEL, TYPE_STRUCTURE_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, TYPE_CONSTANT_MODEL, XmlElementItem, asTree } from "../../types";
+import { SchemaDefinitionGlobalState, ATTR_PARAMETER, ATTR_RETURN_VALUE, ATTR_TYPE, TYPE_CHILD, TYPE_CHILDREN, TYPE_COMMAND_MODEL, TYPE_DATA_MODEL, TYPE_QUERY_MODEL, TYPE_STRUCTURE_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, TYPE_CONSTANT_MODEL, XmlElementItem, asTree } from "../../types";
 import { GraphView2 } from "@nijo/ui-components";
 import { MentionUtil } from "../../UI";
 import { findRefToTarget } from "../findRefToTarget";
@@ -67,14 +67,6 @@ export function useDiagramDataSet(formMethods: ReactHookForm.UseFormReturn<Schem
       const addMembersRecursively = (owner: XmlElementItem, parentId: string | undefined) => {
         // ルート要素（ルート集約以外も表示する場合は Child, Children含む）のみ表示
         const type = owner.attributes[ATTR_TYPE];
-
-        // メモ要素の場合は無視して子要素を処理
-        if (type === TYPE_MEMO) {
-          for (const child of treeHelper.getChildren(owner)) {
-            addMembersRecursively(child, parentId)
-          }
-          return;
-        }
 
         // 処理対象外
         if (owner.indent !== 0 && type !== TYPE_CHILD && type !== TYPE_CHILDREN) {
