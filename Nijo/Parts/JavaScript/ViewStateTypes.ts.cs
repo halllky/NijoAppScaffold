@@ -28,23 +28,14 @@ public class ViewStateTypes {
     /// </summary>
     public static SourceFile RenderViewStateTypes(CodeRenderingContext ctx) {
 
-        // ダイアグラムの種類の一覧（複数のダイアグラムの状態が1か所に保存されるので）
-        var dataKey = new[] {
-            $"'{SchemaGraphViewStateTypeByViewMode.KEY_ER_DIAGRAM}'",
-            $"'{SchemaGraphViewStateTypeByViewMode.KEY_SCHEMA_DEFINITION}'",
-        };
-
         // デフォルト値
         string viewStateJsonContent = $$"""
             {
-            {{dataKey.SelectTextTemplate(key => $$"""
-              {{key}}: {
+              {{SchemaGraphViewStateTypeByViewMode.KEY_SCHEMA_DEFINITION}}: {
                 nodes: {},
                 edges: [],
                 nodePositions: {},
-                parentMap: {},
               },
-            """)}}
             }
             """;
 
@@ -67,7 +58,7 @@ public class ViewStateTypes {
 
                 /** nijo.xmlを GraphView で表示するためのデータの型 */
                 type {{RETURN_TYPE}} = {
-                  [key in {{string.Join(" | ", dataKey)}}]: {
+                  {{SchemaGraphViewStateTypeByViewMode.KEY_SCHEMA_DEFINITION}}: {
                     /** 有向グラフのノード一覧 */
                     {{SchemaGraphViewStateType.KEY_NODES}}: {
                       [id: string]: {
@@ -89,12 +80,12 @@ public class ViewStateTypes {
                         y: number
                       }
                     }
-                    /** ノードの親子関係のマッピング */
-                    {{SchemaGraphViewStateType.KEY_PARENT_MAP}}: {
-                      [id: string]: string
-                    }
+                    /** 未使用項目 */
+                    parentMap?: unknown
                   }
                 } & {
+                  /** 未使用項目 */
+                  erDiagram?: unknown
                   /** 未使用項目 */
                   displayMode?: unknown
                   /** 未使用項目 */

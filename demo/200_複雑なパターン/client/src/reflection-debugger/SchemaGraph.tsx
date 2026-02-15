@@ -15,22 +15,16 @@ export default function ({
   className: string
 }) {
 
-  // 表示モード切替
-  const [selectedViewMode, setSelectedViewMode] = useState<'erDiagram' | 'schemaDefinition'>('schemaDefinition');
   const graphViewRef = React.useRef<GraphViewRef>(null);
-  const handleViewModeChange: React.ChangeEventHandler<HTMLSelectElement> = useEvent((e) => {
-    setSelectedViewMode(e.target.value as 'erDiagram' | 'schemaDefinition');
-  })
 
   // データ
-  const viewStateData = useMemo(() => getNijoXmlViewState(), []);
+  const viewStateData = useMemo(() => getNijoXmlViewState().schemaDefinition, []);
   const selectedViewData = React.useMemo(() => {
-    const data = viewStateData[selectedViewMode]
     return {
-      ...data,
-      nodes: Object.values(data.nodes).map(d => ({ ...d, locked: true }) satisfies Node),
+      ...viewStateData,
+      nodes: Object.values(viewStateData.nodes).map(d => ({ ...d, locked: true }) satisfies Node),
     }
-  }, [selectedViewMode, viewStateData])
+  }, [viewStateData])
 
   // 選択
   const onSelectedNodeChange = useEvent((e: cytoscape.EventObject) => {
@@ -63,28 +57,13 @@ export default function ({
     <div className={`relative flex flex-col border border-gray-300 ${className ?? ''}`}>
       {/* グラフ */}
       <GraphView2
-        key={selectedViewMode}
         ref={graphViewRef}
         nodes={selectedViewData.nodes}
         edges={selectedViewData.edges}
-        defaultNodePositions={viewStateData[selectedViewMode]?.nodePositions}
-        parentMap={selectedViewData.parentMap}
+        defaultNodePositions={viewStateData.nodePositions}
         onSelectionChange={onSelectedNodeChange}
         className="w-full h-full"
       />
-
-      {/* ビューモード選択 */}
-      <label className="absolute top-2 left-2 flex items-center space-x-2 bg-white">
-        <select
-          value={selectedViewMode}
-          onChange={handleViewModeChange}
-          className="px-1 py-px border font-bold"
-        >
-          <option value="schemaDefinition">表示モード: スキーマ定義</option>
-          <option value="erDiagram">表示モード: ER図</option>
-        </select>
-      </label>
-
     </div>
   )
 }

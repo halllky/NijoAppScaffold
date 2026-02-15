@@ -12,7 +12,7 @@ import { SchemaCandidatesProvider } from "./SchemaCandidatesContext"
 import ValueMemberTypes from "./ValueMemberTypes"
 import ConstantsGrid from "./Constants"
 import { ProjectSettings } from "./ProjectSettings"
-import { GraphViewRef } from "@nijo/ui-components/layout/GraphView2"
+import { DiagramRef } from "./DataStructure/Diagram"
 
 /**
  * プロジェクト編集画面のメインレイアウト。
@@ -46,7 +46,7 @@ export default function ({ defaultValues }: {
   const { personalSettings, save: savePersonalSettings } = usePersonalSettings()
 
   // 保存
-  const graphViewRef = React.useRef<GraphViewRef>(null)
+  const diagramRef = React.useRef<DiagramRef>(null)
   const [saveButtonText, setSaveButtonText] = React.useState('保存(Ctrl + S)')
   const [nowSaving, setNowSaving] = React.useState(false)
   const [saveError, setSaveError] = React.useState<string>()
@@ -58,21 +58,7 @@ export default function ({ defaultValues }: {
     // データは随時setValueで更新されているため単にgetValuesで取得。
     // パフォーマンスの最適化のため、ダイアグラムのノード位置はこの時点で収集する
     const currentValues = window.structuredClone(getValues())
-    currentValues.schemaGraphViewState = {
-      schemaDefinition: {
-        nodes: {},
-        edges: [],
-        parentMap: {},
-        ...currentValues.schemaGraphViewState?.schemaDefinition,
-        nodePositions: (graphViewRef.current?.getViewState() ?? { nodePositions: {}, zoom: 1, pan: { x: 0, y: 0 } }).nodePositions,
-      },
-      erDiagram: currentValues.schemaGraphViewState?.erDiagram ?? {
-        nodes: {},
-        edges: [],
-        parentMap: {},
-        nodePositions: {},
-      },
-    }
+    currentValues.schemaGraphViewState = diagramRef.current?.getGraphDataSet() ?? null
 
     const result = await saveSchema(
       projectDir,
@@ -177,7 +163,7 @@ export default function ({ defaultValues }: {
           <DataStructure
             visible={displayTab === "data-structures"}
             formMethods={formMethods}
-            graphViewRef={graphViewRef}
+            diagramRef={diagramRef}
           />
 
           {displayTab === "value-member-types" && (

@@ -100,17 +100,15 @@ export const useGraphView2 = (props: GraphViewProps): UseGraphView2Result => {
   // deepEqualを使って無駄な更新を防ぐ
   const prevNodesRef = useRef<Node[] | undefined>(undefined)
   const prevEdgesRef = useRef<Edge[] | undefined>(undefined)
-  const prevParentMapRef = useRef<{ [nodeId: string]: string } | undefined>(undefined)
 
   useEffect(() => {
     if (!cy) return
 
     const nodes = props.nodes ?? []
     const edges = props.edges ?? []
-    const parentMap = props.parentMap ?? {}
 
     // 変更検知
-    const nodesChanged = !deepEqual(prevNodesRef.current, nodes) || !deepEqual(prevParentMapRef.current, parentMap)
+    const nodesChanged = !deepEqual(prevNodesRef.current, nodes)
     const edgesChanged = !deepEqual(prevEdgesRef.current, edges)
 
     if (!nodesChanged && !edgesChanged) return
@@ -119,16 +117,9 @@ export const useGraphView2 = (props: GraphViewProps): UseGraphView2Result => {
 
     // --- ノードの更新 ---
     if (nodesChanged) {
-      const existingNodes = new Set(cy.nodes().map(n => n.id()))
       const newNodesMap = new Map<string, Node>()
 
-      // parentMapを適用したNodeオブジェクトを作成
-      const nodesWithParent = nodes.map(n => ({
-        ...n,
-        parent: parentMap[n.id] ?? n.parent
-      }))
-
-      nodesWithParent.forEach(n => newNodesMap.set(n.id, n))
+      nodes.forEach(n => newNodesMap.set(n.id, n))
 
       // 削除対象のノード
       cy.nodes().forEach(cyNode => {
@@ -139,7 +130,7 @@ export const useGraphView2 = (props: GraphViewProps): UseGraphView2Result => {
         }
       })
 
-      for (const node of nodesWithParent) {
+      for (const node of nodes) {
         const existingNode = cy.getElementById(node.id)
         const parentId = node.parent
 
@@ -230,8 +221,7 @@ export const useGraphView2 = (props: GraphViewProps): UseGraphView2Result => {
 
     prevNodesRef.current = nodes
     prevEdgesRef.current = edges
-    prevParentMapRef.current = parentMap
-  }, [cy, props.nodes, props.edges, props.parentMap])
+  }, [cy, props.nodes, props.edges])
 
 
   // グリッド表示切替

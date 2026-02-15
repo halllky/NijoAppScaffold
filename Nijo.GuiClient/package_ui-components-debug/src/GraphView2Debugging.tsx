@@ -8,8 +8,8 @@ import { GraphView2 } from '@nijo/ui-components'
 export default function GraphView2Debugging() {
   const graphRef = useRef<GraphView2.GraphViewRef>(null)
   const [logs, setLogs] = useState<{ id: number, time: string, message: string }[]>([])
-  const [savedViewState, setSavedViewState] = useState<Pick<GraphView2.GraphViewProps, 'defaultNodePositions' | 'zoom' | 'scrollPosition'> | null>(null)
-  const [activeViewState, setActiveViewState] = useState<Partial<Pick<GraphView2.GraphViewProps, 'defaultNodePositions' | 'zoom' | 'scrollPosition'>> | undefined>(undefined)
+  const [savedViewState, setSavedViewState] = useState<Pick<GraphView2.GraphViewProps, 'defaultNodePositions' | 'zoom' | 'pan'> | null>(null)
+  const [activeViewState, setActiveViewState] = useState<Partial<Pick<GraphView2.GraphViewProps, 'defaultNodePositions' | 'zoom' | 'pan'>> | undefined>(undefined)
 
   const addLog = useCallback((message: string) => {
     setLogs(prev => [{
@@ -122,7 +122,7 @@ export default function GraphView2Debugging() {
 
   const handleSaveLayout = () => {
     if (graphRef.current) {
-      const viewState = graphRef.current.collectViewState()
+      const viewState = graphRef.current.getViewState()
       setSavedViewState(viewState)
       addLog('Layout saved')
       console.log('Saved ViewState:', viewState)

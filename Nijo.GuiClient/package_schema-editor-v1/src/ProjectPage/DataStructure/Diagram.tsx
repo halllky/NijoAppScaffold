@@ -2,8 +2,12 @@ import React from "react";
 import useEvent from "react-use-event-hook";
 import * as ReactHookForm from "react-hook-form";
 import { GraphView2 } from "@nijo/ui-components";
-import { ApplicationState } from "../../types";
+import { ApplicationState, AppSchemaDefinitionGraphDataSet } from "../../types";
 import { NodeMetadata, useDiagramDataSet } from "./useDiagramDataSet";
+
+export type DiagramRef = {
+  getGraphDataSet: () => AppSchemaDefinitionGraphDataSet
+}
 
 /**
  * スキーマ定義ダイアグラム
@@ -11,7 +15,7 @@ import { NodeMetadata, useDiagramDataSet } from "./useDiagramDataSet";
 export function Diagram(props: {
   formMethods: ReactHookForm.UseFormReturn<ApplicationState>
   onSelectedRootAggregateChanged: (aggregateId: string | null) => void
-  graphViewRef: React.RefObject<GraphView2.GraphViewRef | null>
+  diagramRef: React.RefObject<DiagramRef | null>
   className?: string
   /** 左肩部分にオーバーレイで表示される */
   children?: React.ReactNode
@@ -33,13 +37,28 @@ export function Diagram(props: {
     props.onSelectedRootAggregateChanged(meta.rootAggregateUniqueId)
   })
 
+  React.useImperativeHandle(props.diagramRef, () => ({
+    getGraphDataSet: () => {
+      if (!graphViewRef.current) throw new Error("GraphViewRef is not available")
+      return {
+        schemaDefinition: {
+          nodes: nodes.reduce((acc, node) => {
+            // メタ情報は内部制御にのみ使用しているため永続化対象外
+            const { meta, ...rest } = node
+            acc[node.id] = rest
+            return acc
+          }, {} as { [id: string]: GraphView2.Node }),
+          edges,
+          nodePositions: (graphViewRef.current?.getViewState() ?? { nodePositions: {}, zoom: 1, pan: { x: 0, y: 0 } }).nodePositions,
+        },
+      }
+    },
+  }))
+
   return (
     <div className={`relative ${props.className ?? ''}`}>
       <GraphView2.GraphView2
-        ref={gp => {
-          graphViewRef.current = gp
-          props.graphViewRef.current = gp
-        }}
+        ref={graphViewRef}
         nodes={nodes}
         edges={edges}
         defaultNodePositions={schemaGraphViewState?.schemaDefinition?.nodePositions}

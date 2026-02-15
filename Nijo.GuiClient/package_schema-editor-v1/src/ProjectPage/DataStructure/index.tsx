@@ -4,12 +4,11 @@ import * as ReactHookForm from "react-hook-form"
 import { usePersonalSettings } from "../../PersonalSettings";
 import { ATTR_TYPE, ModelPageForm, ApplicationState } from "../../types";
 import { Button } from "../../UI";
-import { Diagram } from "./Diagram";
+import { Diagram, DiagramRef } from "./Diagram";
 import { AggregatePane } from "./AggregatePane";
 import { NewRootAddDialog } from "./NewRootAddDialog";
 import { UUID } from "uuidjs";
 import { PlusIcon } from "@heroicons/react/24/solid";
-import { GraphViewRef } from "@nijo/ui-components/layout/GraphView2";
 
 /**
  * データ構造定義タブ。
@@ -17,10 +16,10 @@ import { GraphViewRef } from "@nijo/ui-components/layout/GraphView2";
  * スキーマ定義の有向グラフを表示する。
  * 特定のルート集約が選択されている場合はその集約の編集ペインを表示する。
  */
-export default function ({ visible, formMethods, graphViewRef }: {
+export default function ({ visible, formMethods, diagramRef }: {
   visible: boolean
   formMethods: ReactHookForm.UseFormReturn<ApplicationState>
-  graphViewRef: React.RefObject<GraphViewRef | null>
+  diagramRef: React.RefObject<DiagramRef | null>
 }) {
 
   const watchedXmlElementTrees = ReactHookForm.useWatch({ name: "xmlElementTrees", control: formMethods.control })
@@ -96,7 +95,7 @@ export default function ({ visible, formMethods, graphViewRef }: {
         <Diagram
           formMethods={formMethods}
           onSelectedRootAggregateChanged={selectRootAggregate}
-          graphViewRef={graphViewRef}
+          diagramRef={diagramRef}
           className="h-full w-full"
         >
           <Button onClick={() => setIsNewRootDialogOpen(true)} icon={PlusIcon} fill>

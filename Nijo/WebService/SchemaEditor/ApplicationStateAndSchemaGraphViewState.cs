@@ -28,25 +28,9 @@ public class ApplicationStateAndSchemaGraphViewState {
     /// グラフのモードごとの外観状態
     /// </summary>
     public class SchemaGraphViewStateTypeByViewMode {
-        public const string KEY_ER_DIAGRAM = "erDiagram";
         public const string KEY_SCHEMA_DEFINITION = "schemaDefinition";
-
-        [JsonPropertyName(KEY_ER_DIAGRAM)]
-        public SchemaGraphViewStateType ErDiagram { get; set; } = new();
         [JsonPropertyName(KEY_SCHEMA_DEFINITION)]
         public SchemaGraphViewStateType SchemaDefinition { get; set; } = new();
-
-        /// <summary>
-        /// 表示モード ('schema' | 'er')
-        /// </summary>
-        [JsonPropertyName("displayMode")]
-        public string DisplayMode { get; set; } = "schema";
-
-        /// <summary>
-        /// ルート集約のみ表示フラグ
-        /// </summary>
-        [JsonPropertyName("onlyRoot")]
-        public bool OnlyRoot { get; set; } = false;
     }
     /// <summary>
     /// GraphView のプロパティとして設定されることになるデータ
@@ -55,7 +39,6 @@ public class ApplicationStateAndSchemaGraphViewState {
         public const string KEY_NODES = "nodes";
         public const string KEY_EDGES = "edges";
         public const string KEY_NODE_POSITIONS = "nodePositions";
-        public const string KEY_PARENT_MAP = "parentMap";
 
         [JsonPropertyName(KEY_NODES)]
         [JsonConverter(typeof(SortedJsonConverter))]
@@ -66,9 +49,6 @@ public class ApplicationStateAndSchemaGraphViewState {
         [JsonPropertyName(KEY_NODE_POSITIONS)]
         [JsonConverter(typeof(SortedJsonConverter))]
         public JsonObject NodePositions { get; set; } = new();
-        [JsonPropertyName(KEY_PARENT_MAP)]
-        [JsonConverter(typeof(SortedJsonConverter))]
-        public JsonObject ParentMap { get; set; } = new();
     }
 
     /// <summary>

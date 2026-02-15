@@ -5,20 +5,18 @@ import { GraphViewProps, Node, Edge } from "@nijo/ui-components/layout/GraphView
  * 自動生成後のアプリケーションのデバッグメニューで永続化された状態が参照される。
  */
 export type AppSchemaDefinitionGraphDataSet = {
-  [key in 'erDiagram' | 'schemaDefinition']: {
+  schemaDefinition: {
     nodes: { [id: string]: Node }
     edges: Edge[]
-    parentMap: GraphViewProps['parentMap']
     nodePositions: GraphViewProps['defaultNodePositions']
   }
 } & {
-  /** 表示モード ('schema' | 'er') */
-  displayMode?: 'schema' | 'er'
-  /**
-   * ルート集約のみ表示フラグ
-   * @deprecated 廃止予定
-   */
-  onlyRoot?: boolean
+  /** 未使用項目 */
+  erDiagram?: never
+  /** 未使用項目 */
+  displayMode?: never
+  /** 未使用項目 */
+  onlyRoot?: never
 }
 
 /**

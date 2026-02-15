@@ -42,7 +42,6 @@ export interface GraphViewProps {
   nowLoading?: boolean;
   nodes?: Node[];
   edges?: Edge[];
-  parentMap?: { [nodeId: string]: string };
   /** ノードの位置情報。オブジェクト参照の比較で変更が検知されたタイミングでのみ適用される。 */
   defaultNodePositions?: { [nodeId: string]: cytoscape.Position };
   /** ズームレベル */
