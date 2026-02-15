@@ -177,6 +177,13 @@ export const NODE_TYPE_REF = 'Ref'
 export const NODE_TYPE_STATIC_ENUM_VALUE = 'StaticEnumValue'
 export const NODE_TYPE_UNKNOWN = 'Unknown'
 
+// 定数の種類
+export const CONSTANT_TYPE_CHILD = 'child'
+export const CONSTANT_TYPE_STRING = 'string'
+export const CONSTANT_TYPE_INT = 'int'
+export const CONSTANT_TYPE_DECIMAL = 'decimal'
+export const CONSTANT_TYPE_TEMPLATE = 'template'
+
 // ---------------------------------
 
 /**

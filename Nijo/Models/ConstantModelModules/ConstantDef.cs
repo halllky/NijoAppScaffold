@@ -47,10 +47,10 @@ namespace Nijo.Models.ConstantModelModules {
                 """)}}
                 /// </summary>
                 public static class {{CsClassName}} {
-                {{rootConstants.Where(c => c.Type != "template").SelectTextTemplate(constant => $$"""
+                {{rootConstants.Where(c => c.Type != ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
                     {{WithIndent(RenderCSharpConstant(constant, ctx), "    ")}}
                 """)}}
-                {{rootConstants.Where(c => c.Type == "template").SelectTextTemplate(constant => $$"""
+                {{rootConstants.Where(c => c.Type == ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
                     {{WithIndent(constant.RenderCSharpTemplateFunction(), "    ")}}
                 """)}}
                 {{rootGroups.SelectTextTemplate(group => $$"""
@@ -79,10 +79,10 @@ namespace Nijo.Models.ConstantModelModules {
                 """)}}
                 /// </summary>
                 public static class {{group.Name}} {
-                {{groupConstants.Where(c => c.Type != "template").SelectTextTemplate(constant => $$"""
+                {{groupConstants.Where(c => c.Type != ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
                     {{WithIndent(RenderCSharpConstant(constant, ctx), "    ")}}
                 """)}}
-                {{groupConstants.Where(c => c.Type == "template").SelectTextTemplate(constant => $$"""
+                {{groupConstants.Where(c => c.Type == ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
                     {{WithIndent(constant.RenderCSharpTemplateFunction(), "    ")}}
                 """)}}
                 {{childGroups.SelectTextTemplate(childGroup => $$"""
@@ -121,10 +121,10 @@ namespace Nijo.Models.ConstantModelModules {
                 """)}}
                  */
                 export const {{TsConstantsName}} = {
-                {{rootConstants.Where(c => c.Type != "template").SelectTextTemplate(constant => $$"""
+                {{rootConstants.Where(c => c.Type != ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
                   {{WithIndent(RenderTypeScriptConstant(constant, ctx), "  ")}}
                 """)}}
-                {{rootConstants.Where(c => c.Type == "template").SelectTextTemplate(constant => $$"""
+                {{rootConstants.Where(c => c.Type == ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
                   {{WithIndent(constant.RenderTypeScriptTemplateFunction(), "  ")}}
                 """)}}
                 {{rootGroups.SelectTextTemplate(group => $$"""
@@ -158,10 +158,10 @@ namespace Nijo.Models.ConstantModelModules {
                 """)}}
                  */
                 {{WithIndent(group.Name, "")}}: {
-                {{groupConstants.Where(c => c.Type != "template").SelectTextTemplate(constant => $$"""
+                {{groupConstants.Where(c => c.Type != ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
                   {{WithIndent(RenderTypeScriptConstant(constant, ctx), "  ")}}
                 """)}}
-                {{groupConstants.Where(c => c.Type == "template").SelectTextTemplate(constant => $$"""
+                {{groupConstants.Where(c => c.Type == ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
                   {{WithIndent(constant.RenderTypeScriptTemplateFunction(), "  ")}}
                 """)}}
                 {{childGroups.SelectTextTemplate(childGroup => $$"""

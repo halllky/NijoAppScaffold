@@ -29,7 +29,7 @@ namespace Nijo.Models {
                 foreach (var constantElement in element.Elements()) {
                     var constantType = constantElement.Attribute(BasicNodeOptions.ConstantType.AttributeName)?.Value;
 
-                    if (constantType == "child") {
+                    if (constantType == ConstantValueDef.CONSTTYPE_CHILD) {
                         // 子要素（ネストされた定数グループ）の場合は再帰的にバリデーション
                         ValidateConstants(constantElement, addError);
                     } else {

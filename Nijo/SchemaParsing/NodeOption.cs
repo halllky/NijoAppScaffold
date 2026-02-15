@@ -589,14 +589,20 @@ internal static class BasicNodeOptions {
             return model is ConstantModel;
         },
         ValidateOthers = ctx => {
-            var validTypes = new[] { "string", "int", "decimal", "template", "child" };
+            var validTypes = new[] {
+                Models.ConstantModelModules.ConstantValueDef.CONSTTYPE_STRING,
+                Models.ConstantModelModules.ConstantValueDef.CONSTTYPE_INT,
+                Models.ConstantModelModules.ConstantValueDef.CONSTTYPE_DECIMAL,
+                Models.ConstantModelModules.ConstantValueDef.CONSTTYPE_TEMPLATE,
+                Models.ConstantModelModules.ConstantValueDef.CONSTTYPE_CHILD,
+            };
             if (!validTypes.Contains(ctx.Value)) {
-                ctx.AddError($"type属性の値「{ctx.Value}」は無効です。string, int, decimal, template, child のいずれかを指定してください。");
+                ctx.AddError($"type属性の値「{ctx.Value}」は無効です。{string.Join(", ", validTypes)} のいずれかを指定してください。");
                 return;
             }
 
             // child型の場合はConstantValue属性は不要
-            if (ctx.Value == "child") {
+            if (ctx.Value == Models.ConstantModelModules.ConstantValueDef.CONSTTYPE_CHILD) {
                 return; // child型の場合は追加のバリデーション不要
             }
 
@@ -610,17 +616,17 @@ internal static class BasicNodeOptions {
             }
 
             switch (ctx.Value) {
-                case "int":
+                case Models.ConstantModelModules.ConstantValueDef.CONSTTYPE_INT:
                     if (!int.TryParse(valueAttr.Value, out _)) {
                         ctx.AddError($"int型の値「{valueAttr.Value}」は有効な整数ではありません。");
                     }
                     break;
-                case "decimal":
+                case Models.ConstantModelModules.ConstantValueDef.CONSTTYPE_DECIMAL:
                     if (!decimal.TryParse(valueAttr.Value, out _)) {
                         ctx.AddError($"decimal型の値「{valueAttr.Value}」は有効な小数ではありません。");
                     }
                     break;
-                case "template":
+                case Models.ConstantModelModules.ConstantValueDef.CONSTTYPE_TEMPLATE:
                     // テンプレート型の場合、プレースホルダーは自動判定されるため追加チェックは不要
                     break;
             }

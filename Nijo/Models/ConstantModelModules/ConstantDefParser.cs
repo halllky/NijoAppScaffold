@@ -44,7 +44,7 @@ internal class ConstantDefParser {
                 ? child.Name.LocalName
                 : $"{parentPath}.{child.Name.LocalName}";
 
-            if (constantType == "child") {
+            if (constantType == ConstantValueDef.CONSTTYPE_CHILD) {
                 // ネストされた定数グループ
                 foreach (var nested in GetConstantsRecursive(child, currentPath)) {
                     yield return nested;
@@ -67,7 +67,7 @@ internal class ConstantDefParser {
         foreach (var child in element.Elements()) {
             var constantType = child.Attribute(ConstantType.AttributeName)?.Value;
 
-            if (constantType == "child") {
+            if (constantType == ConstantValueDef.CONSTTYPE_CHILD) {
                 var currentPath = string.IsNullOrEmpty(parentPath)
                     ? child.Name.LocalName
                     : $"{parentPath}.{child.Name.LocalName}";

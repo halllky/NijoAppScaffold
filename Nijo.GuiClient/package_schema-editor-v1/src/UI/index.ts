@@ -1,5 +1,6 @@
 export * from "./Button"
 export * from "./CheckBox"
+export * from "./GridCell.ElementName"
 export * from "./GridCell.Text"
 export * from "./Mention"
 export * from "./MentionInputWrapper"

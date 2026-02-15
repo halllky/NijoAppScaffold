@@ -39,7 +39,7 @@ export function AggregatePane(props: {
       <div className={`flex flex-col gap-1 ${className ?? ''}`}>
 
         {/* ヘッダ */}
-        <div className="flex flex-wrap items-center gap-1 px-1 pt-1">
+        <div className="flex flex-wrap items-center gap-1 p-1">
 
           {/* 分割方向切り替え */}
           {onSwitchOrientation && (

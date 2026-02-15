@@ -46,7 +46,7 @@ namespace Nijo.Models.ConstantModelModules {
             foreach (var child in _element.Elements()) {
                 var constantType = child.Attribute(ConstantType.AttributeName)?.Value;
 
-                if (constantType != "child") {
+                if (constantType != ConstantValueDef.CONSTTYPE_CHILD) {
                     // 定数要素
                     var constantPath = $"{Path}.{child.Name.LocalName}";
                     yield return new ConstantValueDef(child, constantPath, _schemaParser);
@@ -61,7 +61,7 @@ namespace Nijo.Models.ConstantModelModules {
             foreach (var child in _element.Elements()) {
                 var constantType = child.Attribute(ConstantType.AttributeName)?.Value;
 
-                if (constantType == "child") {
+                if (constantType == ConstantValueDef.CONSTTYPE_CHILD) {
                     var childPath = $"{Path}.{child.Name.LocalName}";
                     yield return new ConstantGroupDef(child, childPath, _schemaParser);
                 }

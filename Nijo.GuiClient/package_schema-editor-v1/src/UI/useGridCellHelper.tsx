@@ -6,6 +6,8 @@ import { createCheckBoxCellHelper } from "./GridCell.CheckBox"
 import { createButtonCellHelper } from "./GridCell.Button"
 import { createDropdownCellHelper } from "./GridCell.Dropdown"
 import { createComboBoxCellHelper } from "./GridCell.TypeComboBox"
+import { createElementNameCellHelper } from "./GridCell.ElementName"
+import { useValidation } from "../ProjectPage/useValidation"
 
 /**
  * EditableGrid2 を react-hook-form の useFieldArray と組み合わせて使用する際の
@@ -44,6 +46,7 @@ export function useFieldArrayForEditableGrid2<
       checkBox: createCheckBoxCellHelper(get, set, ctl, fieldArrayProps.name, skipFirstRow),
       button: createButtonCellHelper(get, ctl, fieldArrayProps.name, skipFirstRow, gridRef),
       dropdown: createDropdownCellHelper(get, set, ctl, fieldArrayProps.name, skipFirstRow),
+      elementName: createElementNameCellHelper(get, set, ctl, fieldArrayProps.name, skipFirstRow),
       typeComboBox: createComboBoxCellHelper(get, set, ctl, fieldArrayProps.name, skipFirstRow),
     }
   }, [getValues, setValue, formProps.control, fieldArrayProps.name, skipFirstRow])
@@ -106,6 +109,8 @@ export type ColumnDefHelper<TRow> = {
   button: ReturnType<typeof createButtonCellHelper>
   /** ドロップダウン列 */
   dropdown: ReturnType<typeof createDropdownCellHelper>
+  /** XML要素の名前列。インデントつきで表示される。 */
+  elementName: ReturnType<typeof createElementNameCellHelper>
   /** 種類のコンボボックス列 */
   typeComboBox: ReturnType<typeof createComboBoxCellHelper>
 }

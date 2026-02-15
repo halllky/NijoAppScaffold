@@ -14,18 +14,24 @@ namespace Nijo.Models.ConstantModelModules {
     /// 定数値の定義
     /// </summary>
     internal class ConstantValueDef {
+        internal const string CONSTTYPE_CHILD = "child";
+        internal const string CONSTTYPE_STRING = "string";
+        internal const string CONSTTYPE_INT = "int";
+        internal const string CONSTTYPE_DECIMAL = "decimal";
+        internal const string CONSTTYPE_TEMPLATE = "template";
+
         internal ConstantValueDef(XElement element, string path, SchemaParseContext schemaParser) {
             _element = element;
             Path = path;
             _schemaParser = schemaParser;
 
             Name = element.Name.LocalName;
-            Type = element.Attribute(ConstantType.AttributeName)?.Value ?? "string";
+            Type = element.Attribute(ConstantType.AttributeName)?.Value ?? CONSTTYPE_STRING;
             Value = element.Attribute(ConstantValue.AttributeName)?.Value ?? string.Empty;
             DisplayName = element.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? Name;
 
             // テンプレート文字列の場合、{0}, {1}, ... から自動的に引数を判定
-            if (Type == "template") {
+            if (Type == CONSTTYPE_TEMPLATE) {
                 TemplateParams = ExtractTemplateParameters(Value);
             } else {
                 TemplateParams = Array.Empty<string>();
@@ -62,10 +68,10 @@ namespace Nijo.Models.ConstantModelModules {
         /// </summary>
         internal string GetCSharpValue() {
             return Type switch {
-                "string" => $"\"{Value.Replace("\"", "\\\"")}\"",
-                "int" => Value,
-                "decimal" => $"{Value}m",
-                "template" => $"\"{Value.Replace("\"", "\\\"")}\"", // テンプレート文字列も文字列として定義
+                CONSTTYPE_STRING => $"\"{Value.Replace("\"", "\\\"")}\"",
+                CONSTTYPE_INT => Value,
+                CONSTTYPE_DECIMAL => $"{Value}m",
+                CONSTTYPE_TEMPLATE => $"\"{Value.Replace("\"", "\\\"")}\"", // テンプレート文字列も文字列として定義
                 _ => $"\"{Value.Replace("\"", "\\\"")}\"",
             };
         }
@@ -75,10 +81,10 @@ namespace Nijo.Models.ConstantModelModules {
         /// </summary>
         internal string GetTypeScriptValue() {
             return Type switch {
-                "string" => $"'{Value.Replace("'", "\\'")}'",
-                "int" => Value,
-                "decimal" => Value,
-                "template" => $"'{Value.Replace("'", "\\'")}'", // テンプレート文字列も文字列として定義
+                CONSTTYPE_STRING => $"'{Value.Replace("'", "\\'")}'",
+                CONSTTYPE_INT => Value,
+                CONSTTYPE_DECIMAL => Value,
+                CONSTTYPE_TEMPLATE => $"'{Value.Replace("'", "\\'")}'", // テンプレート文字列も文字列として定義
                 _ => $"'{Value.Replace("'", "\\'")}'",
             };
         }
@@ -87,7 +93,7 @@ namespace Nijo.Models.ConstantModelModules {
         /// C#用のテンプレート関数を生成（ドキュメントに合わせて関数として生成）
         /// </summary>
         internal string RenderCSharpTemplateFunction() {
-            if (Type != "template") return string.Empty;
+            if (Type != CONSTTYPE_TEMPLATE) return string.Empty;
 
             var parameters = string.Join(", ", TemplateParams.Select((p, i) => $"string arg{i}"));
             var formatString = EscapeCSharpString(Value);
@@ -108,7 +114,7 @@ namespace Nijo.Models.ConstantModelModules {
         /// TypeScript用のテンプレート関数を生成（ドキュメントに合わせて関数として生成）
         /// </summary>
         internal string RenderTypeScriptTemplateFunction() {
-            if (Type != "template") return string.Empty;
+            if (Type != CONSTTYPE_TEMPLATE) return string.Empty;
 
             var parameters = string.Join(", ", TemplateParams.Select((p, i) => $"arg{i}: string"));
             var templateString = EscapeTypeScriptTemplate(Value);

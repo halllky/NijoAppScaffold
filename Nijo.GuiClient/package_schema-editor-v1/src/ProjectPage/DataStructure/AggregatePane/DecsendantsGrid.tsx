@@ -8,6 +8,7 @@ import { ApplicationState, ATTR_TYPE, isAttributeAvailable, XmlElementItem } fro
 import * as UI from '../../../UI'
 import { GetValidationResultFunction, ValidationTriggerFunction } from '../../useValidation'
 import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../../../routing"
+import { usePersonalSettings } from "../../../PersonalSettings"
 
 /**
  * 子孫集約編集グリッド
@@ -53,46 +54,7 @@ export function DecsendantsGrid(props: {
     const columns: EG2.EditableGrid2Column<GridRowType>[] = []
 
     // 名前
-    columns.push(helper.text('', 'localName', {
-      defaultWidth: 220,
-      isFixed: true,
-      renderHeader: () => (
-        <div className="border-l border-gray-300" />
-      ),
-      renderBody: ({ context }) => {
-        // Validation
-        const uniqueId = context.row.original.uniqueId
-        const validation = getValidationResult(uniqueId)
-        const hasOwnError = validation?._own?.length > 0
-        const bgColor = hasOwnError ? 'bg-amber-300/50' : ''
-        const indent = context.row.original.indent
-
-        return (
-          <div className={`px-1 flex-1 flex flex-col ${bgColor}`}>
-
-            {/* インデント + 名前 */}
-            <div className="flex text-left truncate">
-              {Array.from({ length: Math.max(0, indent - 1) }).map((_, i) => (
-                <div key={i} className="basis-[20px] shrink-0 relative leading-none border-l border-gray-300" />
-              ))}
-              <HelperRHFTextCell
-                control={control}
-                name={`xmlElementTrees.${selectedRootAggregateIndex}.xmlElements.${context.row.index + 1}.localName`}
-              />
-              &nbsp;
-            </div>
-
-            {/* この行で改行が発生する場合の名前の下の線 */}
-            <div className="flex-1 flex">
-              {Array.from({ length: Math.max(0, indent - 1) }).map((_, i) => (
-                <div key={i} className="basis-[20px] shrink-0 relative leading-none border-l border-gray-300" />
-              ))}
-              <div className="flex-1 border-l border-gray-300" />
-            </div>
-          </div>
-        )
-      }
-    }))
+    columns.push(helper.elementName(''))
 
     // 種類
     columns.push(helper.typeComboBox('種類', `attributes.${ATTR_TYPE}`, {
@@ -277,19 +239,22 @@ export function DecsendantsGrid(props: {
     e.preventDefault()
   }
 
+  const { personalSettings: { hideGridButtons } } = usePersonalSettings()
 
   return (
     <div onKeyDown={handleKeyDown} className={`flex flex-col pt-2 gap-1 ${className ?? ''}`}>
-      <div className="flex flex-wrap gap-1 items-center">
-        <UI.Button outline mini icon={Icon.PlusIcon} onClick={handleInsertRow}>行挿入(Enter)</UI.Button>
-        <UI.Button outline mini icon={Icon.PlusIcon} onClick={handleInsertRowBelow}>下挿入(Ctrl + Enter)</UI.Button>
-        <UI.Button outline mini icon={Icon.TrashIcon} onClick={handleDeleteRow}>行削除(Shift + Delete)</UI.Button>
-        <div className="basis-2"></div>
-        <UI.Button outline mini icon={Icon.ChevronDoubleLeftIcon} onClick={handleIndentDown}>インデント下げ(Shift + Tab)</UI.Button>
-        <UI.Button outline mini icon={Icon.ChevronDoubleRightIcon} onClick={handleIndentUp}>インデント上げ(Tab)</UI.Button>
-        <UI.Button outline mini icon={Icon.ChevronUpIcon} onClick={handleMoveUp}>上に移動(Alt + ↑)</UI.Button>
-        <UI.Button outline mini icon={Icon.ChevronDownIcon} onClick={handleMoveDown}>下に移動(Alt + ↓)</UI.Button>
-      </div>
+      {!hideGridButtons && (
+        <div className="flex flex-wrap gap-1 items-center">
+          <UI.Button outline mini icon={Icon.PlusIcon} onClick={handleInsertRow}>行挿入(Enter)</UI.Button>
+          <UI.Button outline mini icon={Icon.PlusIcon} onClick={handleInsertRowBelow}>下挿入(Ctrl + Enter)</UI.Button>
+          <UI.Button outline mini icon={Icon.TrashIcon} onClick={handleDeleteRow}>行削除(Shift + Delete)</UI.Button>
+          <div className="basis-2"></div>
+          <UI.Button outline mini icon={Icon.ChevronDoubleLeftIcon} onClick={handleIndentDown}>インデント下げ(Shift + Tab)</UI.Button>
+          <UI.Button outline mini icon={Icon.ChevronDoubleRightIcon} onClick={handleIndentUp}>インデント上げ(Tab)</UI.Button>
+          <UI.Button outline mini icon={Icon.ChevronUpIcon} onClick={handleMoveUp}>上に移動(Alt + ↑)</UI.Button>
+          <UI.Button outline mini icon={Icon.ChevronDownIcon} onClick={handleMoveDown}>下に移動(Alt + ↓)</UI.Button>
+        </div>
+      )}
 
       <EG2.EditableGrid2
         {...editableGrid2Props}
@@ -300,7 +265,3 @@ export function DecsendantsGrid(props: {
   )
 }
 
-const HelperRHFTextCell = ({ control, name }: { control: any, name: string }) => {
-  const value = ReactHookForm.useWatch({ control, name })
-  return <>{value}</>
-}
