@@ -327,6 +327,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
                     size={cell.column.getSize()}
                     minHeight={ESTIMATED_ROW_HEIGHT}
                     start={cell.column.getStart()}
+                    propsStriped={props.striped}
                   />
                 ))}
               </tr>
@@ -444,14 +445,17 @@ const MemorizedTD = React.memo<{
   size: number
   minHeight: number
   start: number
+  propsStriped: boolean | undefined
   /** レンダリングのトリガーにのみ使用 */
   isChecked: unknown
-}>(function MemorizedTD({ cell, cellMeta, size, minHeight, start, isReadOnly, isLastFixedColumn }) {
+}>(function MemorizedTD({ cell, cellMeta, size, minHeight, start, propsStriped, isReadOnly, isLastFixedColumn }) {
 
   let className = 'flex outline-none select-none'
 
   if (!isReadOnly) {
-    className += ` bg-white`
+    className += !propsStriped || cell.row.index % 2 === 0
+      ? ' bg-white'
+      : ' bg-gray-50'
   } else if (cellMeta.isFixed) {
     className += ' bg-gray-200'
   }

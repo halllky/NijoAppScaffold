@@ -56,7 +56,9 @@ export function DecsendantsGrid(props: {
     columns.push(helper.text('', 'localName', {
       defaultWidth: 220,
       isFixed: true,
-      renderHeader: () => null,
+      renderHeader: () => (
+        <div className="border-l border-gray-300" />
+      ),
       renderBody: ({ context }) => {
         // Validation
         const uniqueId = context.row.original.uniqueId
@@ -66,15 +68,27 @@ export function DecsendantsGrid(props: {
         const indent = context.row.original.indent
 
         return (
-          <div className={`px-1 flex-1 inline-flex text-left truncate ${bgColor}`}>
-            {/* Indent */}
-            {Array.from({ length: Math.max(0, indent - 1) }).map((_, i) => (
-              <div key={i} className="basis-[20px] min-w-[20px] relative leading-none" />
-            ))}
-            <HelperRHFTextCell
-              control={control}
-              name={`xmlElementTrees.${selectedRootAggregateIndex}.xmlElements.${context.row.index + 1}.localName`}
-            />
+          <div className={`px-1 flex-1 flex flex-col ${bgColor}`}>
+
+            {/* インデント + 名前 */}
+            <div className="flex text-left truncate">
+              {Array.from({ length: Math.max(0, indent - 1) }).map((_, i) => (
+                <div key={i} className="basis-[20px] shrink-0 relative leading-none border-l border-gray-300" />
+              ))}
+              <HelperRHFTextCell
+                control={control}
+                name={`xmlElementTrees.${selectedRootAggregateIndex}.xmlElements.${context.row.index + 1}.localName`}
+              />
+              &nbsp;
+            </div>
+
+            {/* この行で改行が発生する場合の名前の下の線 */}
+            <div className="flex-1 flex">
+              {Array.from({ length: Math.max(0, indent - 1) }).map((_, i) => (
+                <div key={i} className="basis-[20px] shrink-0 relative leading-none border-l border-gray-300" />
+              ))}
+              <div className="flex-1 border-l border-gray-300" />
+            </div>
           </div>
         )
       }
@@ -279,7 +293,8 @@ export function DecsendantsGrid(props: {
 
       <EG2.EditableGrid2
         {...editableGrid2Props}
-        className="flex-1 w-full border border-gray-300"
+        striped
+        className="flex-1 w-full border-y border-r border-gray-300"
       />
     </div>
   )

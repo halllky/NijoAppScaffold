@@ -45,6 +45,8 @@ export type EditableGrid2Props<TRow> = {
   clearSelectionOnBlur?: boolean
   /** 表示範囲外の行をどこまで予め読み込んでおくか。既定値は10 */
   overscan?: number
+  /** 偶数の行と奇数の行で背景色を交互に変更するかどうか */
+  striped?: boolean
   /** セルエディタ。列定義で指定がある場合はそちらが優先される。 */
   editor?: EditableGridCellEditor
 }
