@@ -1,8 +1,7 @@
 import React, { useCallback, useState, useRef, useEffect, useMemo } from 'react'
 import cytoscape from 'cytoscape'
-import { GraphViewProps, ViewState, Node, Edge } from './types'
+import { GraphViewProps, Node, Edge, GraphViewRef } from './types'
 import { getStyleSheet, setupHtmlLabels } from './CytoscapeStyle'
-import { useGraphViewSaveLoad } from './useGraphViewSaveLoad'
 import { deepEqual } from './deepEqual';
 
 export interface UseGraphView2Result {
@@ -12,8 +11,7 @@ export interface UseGraphView2Result {
   reset: () => void;
   nodesLocked: boolean;
   toggleNodesLocked: () => void;
-  collectViewState: () => ViewState;
-  applyViewState: (viewState: Partial<ViewState>) => void;
+  getViewState: GraphViewRef["getViewState"];
   getSelectedNodes: () => Node[];
   getSelectedEdges: () => Edge[];
 }
@@ -72,26 +70,21 @@ export const useGraphView2 = (props: GraphViewProps): UseGraphView2Result => {
       handleEvent('select', 'onSelectionChange')
       handleEvent('unselect', 'onSelectionChange')
 
-      // ビューポートの更新（グリッド背景、外部イベント）
-      const handleViewportChange = (e: cytoscape.EventObject) => {
-        updateGridBackground(cyInstance, propsRef.current.showGrid)
-        propsRef.current.onLayoutChange?.(e)
-      }
-
-      // モデルの変更（ドラッグ終了など）を伴うレイアウト変更通知
-      const handleModelChange = (e: cytoscape.EventObject) => {
-        // updatePositions(e) // ドラッグ終了時はCytoscapeが既に位置を更新済み。ここでの強制位置修正は循環参照による位置発散の原因になるため行わない。
-        propsRef.current.onLayoutChange?.(e)
-      }
-
-      cyInstance.on('layoutstop', handleModelChange)
-
-      cyInstance.ready(() => {
-        handleViewportChange({ type: 'ready', target: cyInstance } as any)
-      })
-
       cyInstance.on('pan', () => {
         updateGridBackground(cyInstance, propsRef.current.showGrid)
+        propsRef.current.onPanZoomChanged?.({ pan: cyInstance.pan(), zoom: cyInstance.zoom() })
+      })
+
+      cyInstance.on('zoom', () => {
+        propsRef.current.onPanZoomChanged?.({ pan: cyInstance.pan(), zoom: cyInstance.zoom() })
+      })
+
+      cyInstance.on('dragfree', 'node', (e) => {
+        const nodes: cytoscape.NodeCollection = e.target
+        propsRef.current.onNodePositionChanged?.(nodes.map(node => ({
+          id: node.id(),
+          position: { ...node.position() },
+        })))
       })
 
       setCy(cyInstance)
@@ -248,8 +241,44 @@ export const useGraphView2 = (props: GraphViewProps): UseGraphView2Result => {
     }
   }, [cy, props.showGrid])
 
+  // ノード位置
+  const prevNodePositionsRef = useRef<GraphViewProps["defaultNodePositions"]>(undefined)
+  useEffect(() => {
+    if (!cy) return
+    if (!props.defaultNodePositions) return
 
-  const { collectViewState, applyViewState } = useGraphViewSaveLoad(cy)
+    // パフォーマンスの最適化のため、オブジェクト参照比較でのみ変更を適用する。
+    if (Object.is(prevNodePositionsRef.current, props.defaultNodePositions)) return
+    prevNodePositionsRef.current = props.defaultNodePositions
+
+    const layoutOptions = {
+      name: 'preset',
+      positions: props.defaultNodePositions,
+      fit: false,
+      animate: false,
+    } satisfies cytoscape.PresetLayoutOptions
+    cy.layout(layoutOptions).run()
+
+  }, [cy, props.defaultNodePositions])
+
+  // ズームの外部制御
+  useEffect(() => {
+    if (!cy) return
+    if (props.zoom === undefined) return
+    if (props.zoom === cy.zoom()) return
+
+    cy.zoom(props.zoom)
+  }, [cy, props.zoom])
+
+  // パンの外部制御
+  useEffect(() => {
+    if (!cy) return
+    if (props.pan === undefined) return
+    const currentPan = cy.pan()
+    if (props.pan.x === currentPan.x && props.pan.y === currentPan.y) return
+
+    cy.pan(props.pan)
+  }, [cy, props.pan])
 
   const selectAll = useCallback(() => {
     cy?.nodes().select()
@@ -275,6 +304,23 @@ export const useGraphView2 = (props: GraphViewProps): UseGraphView2Result => {
     return cy?.edges(':selected').map((e: any) => e.data() as Edge) ?? []
   }, [cy])
 
+  const getViewState: GraphViewRef["getViewState"] = useCallback(() => {
+    if (!cy) return { nodePositions: {}, zoom: 1, pan: { x: 0, y: 0 } }
+
+    // ノード位置を収集
+    const nodePositions: { [nodeId: string]: cytoscape.Position } = {}
+    for (const node of cy.nodes()) {
+      const pos = node.position()
+      nodePositions[node.id()] = {
+        // 小数点以下の桁数を制限して丸める（Cytoscape内部で非常に大きな数値になることがあるため）
+        x: Math.trunc(pos.x * 10000000) / 10000000,
+        y: Math.trunc(pos.y * 10000000) / 10000000,
+      }
+    }
+
+    return { nodePositions, zoom: cy.zoom(), pan: cy.pan() }
+  }, [cy])
+
   return {
     cy,
     containerRef,
@@ -282,8 +328,7 @@ export const useGraphView2 = (props: GraphViewProps): UseGraphView2Result => {
     reset,
     nodesLocked,
     toggleNodesLocked,
-    collectViewState,
-    applyViewState,
+    getViewState,
     getSelectedNodes,
     getSelectedEdges,
   }

@@ -11,6 +11,7 @@ import { NodeMetadata, useDiagramDataSet } from "./useDiagramDataSet";
 export function Diagram(props: {
   formMethods: ReactHookForm.UseFormReturn<ApplicationState>
   onSelectedRootAggregateChanged: (aggregateId: string | null) => void
+  graphViewRef: React.RefObject<GraphView2.GraphViewRef | null>
   className?: string
   /** 左肩部分にオーバーレイで表示される */
   children?: React.ReactNode
@@ -19,17 +20,6 @@ export function Diagram(props: {
   const graphViewRef = React.useRef<GraphView2.GraphViewRef | null>(null)
   const { nodes, edges } = useDiagramDataSet(props.formMethods)
   const schemaGraphViewState = ReactHookForm.useWatch({ name: 'schemaGraphViewState', control: props.formMethods.control });
-
-  // TODO: useEffect は不安定なので GraphView2 のpropsでビューステートを受け渡せるようにする
-  React.useEffect(() => {
-    window.setTimeout(() => {
-      if (schemaGraphViewState?.schemaDefinition) {
-        graphViewRef.current?.applyViewState({
-          nodePositions: schemaGraphViewState.schemaDefinition.nodePositions,
-        })
-      }
-    }, 100)
-  }, [schemaGraphViewState])
 
   const handleSelectionChange = useEvent(() => {
     const selectedNodes = graphViewRef.current?.getSelectedNodes()
@@ -46,9 +36,13 @@ export function Diagram(props: {
   return (
     <div className={`relative ${props.className ?? ''}`}>
       <GraphView2.GraphView2
-        ref={graphViewRef}
+        ref={gp => {
+          graphViewRef.current = gp
+          props.graphViewRef.current = gp
+        }}
         nodes={nodes}
         edges={edges}
+        defaultNodePositions={schemaGraphViewState?.schemaDefinition?.nodePositions}
         onSelectionChange={handleSelectionChange}
         showGrid
         className="h-full w-full"

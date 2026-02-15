@@ -637,59 +637,59 @@
         OnlySearchCondition="True"
         Type="bool"
         UniqueId="4532069b-b6e8-447e-9474-c9f455f8c7f3" />
-        <機器分類別収益
-          DbName="V_機器分類別収益"
+      <機器分類別収益
+        DbName="V_機器分類別収益"
+        Type="children"
+        UniqueId="16cd3252-2b14-46e4-9581-15f3a53b298c">
+        <機器分類
+          IsKey="True"
+          Type="ref-to:機器分類マスタ"
+          UniqueId="f0c62ba4-9bf2-4075-948f-e145cb2c1310" />
+        <診療収益
+          Type="int"
+          UniqueId="2e7efa49-0163-4353-865b-29e2b8aa516b" />
+        <収益構成比
+          Type="decimal"
+          UniqueId="0447b5a9-c237-40ef-bdfa-8213d37857e2" />
+        <機器別収益
+          DbName="V_機器別収益"
           Type="children"
-          UniqueId="16cd3252-2b14-46e4-9581-15f3a53b298c">
-          <機器分類
+          UniqueId="0fd8848b-3023-43cc-9fba-14759b71403a">
+          <医療機器
             IsKey="True"
-            Type="ref-to:機器分類マスタ"
-            UniqueId="f0c62ba4-9bf2-4075-948f-e145cb2c1310" />
+            Type="ref-to:医療機器マスタ"
+            UniqueId="7775c94a-1617-46f2-adca-241febab0c2e" />
           <診療収益
             Type="int"
-            UniqueId="2e7efa49-0163-4353-865b-29e2b8aa516b" />
-          <収益構成比
-            Type="decimal"
-            UniqueId="0447b5a9-c237-40ef-bdfa-8213d37857e2" />
-          <機器別収益
-            DbName="V_機器別収益"
-            Type="children"
-            UniqueId="0fd8848b-3023-43cc-9fba-14759b71403a">
-            <医療機器
-              IsKey="True"
-              Type="ref-to:医療機器マスタ"
-              UniqueId="7775c94a-1617-46f2-adca-241febab0c2e" />
-            <診療収益
-              Type="int"
-              UniqueId="54a4d818-633b-439b-afbe-b91ac237b9d2" />
-            <使用回数
-              Type="int"
-              UniqueId="077a3f4c-3345-4991-aea8-577c055ab72c" />
-            <平均単価
-              Type="int"
-              UniqueId="809282ef-e0ba-4530-abfc-675c98e924e7" />
-          </機器別収益>
-        </機器分類別収益>
-        <時間帯別収益
-          DbName="V_時間帯別収益"
-          Type="children"
-          UniqueId="3440d2f6-d139-46f6-8e75-4c9b6020d05d">
-          <!-- 例: "10:00-10:59" -->
-          <時間帯
-            IsKey="True"
-            Type="word"
-            UniqueId="c65d18e5-3f0e-46a2-9faa-4d737b23dee0" />
-          <診療収益
+            UniqueId="54a4d818-633b-439b-afbe-b91ac237b9d2" />
+          <使用回数
             Type="int"
-            UniqueId="ee940abd-2f3c-48fb-9cd8-ac8a5e226e9f" />
-          <診療件数
+            UniqueId="077a3f4c-3345-4991-aea8-577c055ab72c" />
+          <平均単価
             Type="int"
-            UniqueId="6b384442-8b6f-4b93-884b-4560ce033d06" />
-          <!-- 診療件数 -->
-          <平均患者単価
-            Type="int"
-            UniqueId="5dad6b1c-3ece-461d-8e8f-15f455a7452c" />
-        </時間帯別収益>
+            UniqueId="809282ef-e0ba-4530-abfc-675c98e924e7" />
+        </機器別収益>
+      </機器分類別収益>
+      <時間帯別収益
+        DbName="V_時間帯別収益"
+        Type="children"
+        UniqueId="3440d2f6-d139-46f6-8e75-4c9b6020d05d">
+        <!-- 例: "10:00-10:59" -->
+        <時間帯
+          IsKey="True"
+          Type="word"
+          UniqueId="c65d18e5-3f0e-46a2-9faa-4d737b23dee0" />
+        <診療収益
+          Type="int"
+          UniqueId="ee940abd-2f3c-48fb-9cd8-ac8a5e226e9f" />
+        <診療件数
+          Type="int"
+          UniqueId="6b384442-8b6f-4b93-884b-4560ce033d06" />
+        <!-- 診療件数 -->
+        <平均患者単価
+          Type="int"
+          UniqueId="5dad6b1c-3ece-461d-8e8f-15f455a7452c" />
+      </時間帯別収益>
     </診療収益分析>
     <簡易診療登録Parameter
       Type="structure-model"

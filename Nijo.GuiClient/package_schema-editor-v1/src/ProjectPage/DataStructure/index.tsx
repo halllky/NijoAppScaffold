@@ -9,6 +9,7 @@ import { AggregatePane } from "./AggregatePane";
 import { NewRootAddDialog } from "./NewRootAddDialog";
 import { UUID } from "uuidjs";
 import { PlusIcon } from "@heroicons/react/24/solid";
+import { GraphViewRef } from "@nijo/ui-components/layout/GraphView2";
 
 /**
  * データ構造定義タブ。
@@ -16,9 +17,10 @@ import { PlusIcon } from "@heroicons/react/24/solid";
  * スキーマ定義の有向グラフを表示する。
  * 特定のルート集約が選択されている場合はその集約の編集ペインを表示する。
  */
-export default function ({ visible, formMethods }: {
+export default function ({ visible, formMethods, graphViewRef }: {
   visible: boolean
   formMethods: ReactHookForm.UseFormReturn<ApplicationState>
+  graphViewRef: React.RefObject<GraphViewRef | null>
 }) {
 
   const watchedXmlElementTrees = ReactHookForm.useWatch({ name: "xmlElementTrees", control: formMethods.control })
@@ -94,6 +96,7 @@ export default function ({ visible, formMethods }: {
         <Diagram
           formMethods={formMethods}
           onSelectedRootAggregateChanged={selectRootAggregate}
+          graphViewRef={graphViewRef}
           className="h-full w-full"
         >
           <Button onClick={() => setIsNewRootDialogOpen(true)} icon={PlusIcon} fill>

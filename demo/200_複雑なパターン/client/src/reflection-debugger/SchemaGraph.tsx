@@ -32,17 +32,6 @@ export default function ({
     }
   }, [selectedViewMode, viewStateData])
 
-  // TODO: useEffect は不安定なので GraphView2 のpropsでビューステートを受け渡せるようにする
-  React.useEffect(() => {
-    window.setTimeout(() => {
-      if (viewStateData[selectedViewMode]) {
-        graphViewRef.current?.applyViewState({
-          nodePositions: viewStateData[selectedViewMode].nodePositions,
-        })
-      }
-    }, 100)
-  }, [selectedViewMode, viewStateData])
-
   // 選択
   const onSelectedNodeChange = useEvent((e: cytoscape.EventObject) => {
     const selected = e.cy.nodes().filter(n => n.selected())
@@ -78,6 +67,7 @@ export default function ({
         ref={graphViewRef}
         nodes={selectedViewData.nodes}
         edges={selectedViewData.edges}
+        defaultNodePositions={viewStateData[selectedViewMode]?.nodePositions}
         parentMap={selectedViewData.parentMap}
         onSelectionChange={onSelectedNodeChange}
         className="w-full h-full"

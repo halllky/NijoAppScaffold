@@ -43,20 +43,22 @@ export interface GraphViewProps {
   nodes?: Node[];
   edges?: Edge[];
   parentMap?: { [nodeId: string]: string };
+  /** ノードの位置情報。オブジェクト参照の比較で変更が検知されたタイミングでのみ適用される。 */
+  defaultNodePositions?: { [nodeId: string]: cytoscape.Position };
+  /** ズームレベル */
+  zoom?: number;
+  /** スクロール位置 */
+  pan?: cytoscape.Position;
   onNodeDoubleClick?: (event: cytoscape.EventObject) => void;
   /** ノードの選択が変更された瞬間に呼ばれる */
   onSelectionChange?: (event: cytoscape.EventObject) => void;
-  /** ノードのレイアウトが変更された瞬間に呼ばれる */
-  onLayoutChange?: (event: cytoscape.EventObject) => void;
+  /** ズームレベルまたはスクロール位置（pan）が変更されたときに呼ばれる */
+  onPanZoomChanged?: (args: { pan: cytoscape.Position, zoom: number }) => void;
+  /** ノードの位置が変更されたときに呼ばれる */
+  onNodePositionChanged?: (nodes: { id: string; position: cytoscape.Position }[]) => void;
   /** 方眼紙の背景を表示するかどうか */
   showGrid?: boolean;
   className?: string;
-}
-
-export type ViewState = {
-  nodePositions: { [nodeId: string]: cytoscape.Position }
-  zoom: number
-  scrollPosition: cytoscape.Position
 }
 
 export interface GraphViewRef {
@@ -69,11 +71,13 @@ export interface GraphViewRef {
   /** ノードロック状態の切り替え */
   toggleNodesLocked: () => void;
   /** ビューステートの収集 */
-  collectViewState: () => ViewState;
+  getViewState: () => {
+    nodePositions: { [nodeId: string]: cytoscape.Position }
+    zoom: number
+    pan: cytoscape.Position
+  };
   /** 全選択 */
   selectAll: () => void;
   /** 初期状態にリセット (ここでは何もしないか、単純な再描画) */
   reset: () => void;
-  /** ビューステートの適用 */
-  applyViewState: (viewState: Partial<ViewState>) => void;
 }

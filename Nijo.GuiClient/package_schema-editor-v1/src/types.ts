@@ -1,4 +1,4 @@
-import { GraphViewProps, ViewState, Node, Edge } from "@nijo/ui-components/layout/GraphView2"
+import { GraphViewProps, Node, Edge } from "@nijo/ui-components/layout/GraphView2"
 
 /**
  * ER図とスキーマ定義グラフのデータセット。
@@ -9,7 +9,7 @@ export type AppSchemaDefinitionGraphDataSet = {
     nodes: { [id: string]: Node }
     edges: Edge[]
     parentMap: GraphViewProps['parentMap']
-    nodePositions: ViewState['nodePositions']
+    nodePositions: GraphViewProps['defaultNodePositions']
   }
 } & {
   /** 表示モード ('schema' | 'er') */

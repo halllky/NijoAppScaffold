@@ -8,7 +8,8 @@ import { GraphView2 } from '@nijo/ui-components'
 export default function GraphView2Debugging() {
   const graphRef = useRef<GraphView2.GraphViewRef>(null)
   const [logs, setLogs] = useState<{ id: number, time: string, message: string }[]>([])
-  const [savedViewState, setSavedViewState] = useState<GraphView2.ViewState | null>(null)
+  const [savedViewState, setSavedViewState] = useState<Pick<GraphView2.GraphViewProps, 'defaultNodePositions' | 'zoom' | 'scrollPosition'> | null>(null)
+  const [activeViewState, setActiveViewState] = useState<Partial<Pick<GraphView2.GraphViewProps, 'defaultNodePositions' | 'zoom' | 'scrollPosition'>> | undefined>(undefined)
 
   const addLog = useCallback((message: string) => {
     setLogs(prev => [{
@@ -129,9 +130,11 @@ export default function GraphView2Debugging() {
   }
 
   const handleLoadLayout = () => {
-    if (graphRef.current && savedViewState) {
-      graphRef.current.applyViewState(savedViewState)
+    if (savedViewState) {
+      setActiveViewState({ ...savedViewState })
       addLog('Layout loaded')
+      // 強制再描画のために少し待ってからundefinedに戻すなどのハックが必要かもしれないが、
+      // 一旦propを渡す形にする。
     } else {
       addLog('No saved layout to load')
     }
@@ -173,6 +176,7 @@ export default function GraphView2Debugging() {
             ref={graphRef}
             nodes={nodes}
             edges={edges}
+            {...activeViewState}
             showGrid={true}
             onNodeDoubleClick={(e) => addLog(`Double Click: ${e.target.id()}`)}
             onSelectionChange={(e) => {
@@ -183,7 +187,6 @@ export default function GraphView2Debugging() {
                 addLog(`Unselected: ${e.target.id()}`)
               }
             }}
-            onLayoutChange={() => { /* addLog('Layout Changed') */ }} // 頻繁に発生するためコメントアウト
           />
         </div>
 
