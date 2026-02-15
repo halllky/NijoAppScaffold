@@ -44,10 +44,10 @@ export interface GraphViewProps {
   edges?: Edge[];
   /** ノードの位置情報。オブジェクト参照の比較で変更が検知されたタイミングでのみ適用される。 */
   defaultNodePositions?: { [nodeId: string]: cytoscape.Position };
-  /** ズームレベル */
-  zoom?: number;
-  /** スクロール位置 */
-  pan?: cytoscape.Position;
+  /** 初期表示時のズームレベル */
+  defaultZoom?: number;
+  /** 初期表示時のスクロール位置 */
+  defaultPan?: cytoscape.Position;
   onNodeDoubleClick?: (event: cytoscape.EventObject) => void;
   /** ノードの選択が変更された瞬間に呼ばれる */
   onSelectionChange?: (event: cytoscape.EventObject) => void;

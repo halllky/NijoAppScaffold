@@ -251,24 +251,23 @@ export const useGraphView2 = (props: GraphViewProps): UseGraphView2Result => {
 
   }, [cy, props.defaultNodePositions])
 
-  // ズームの外部制御
+  // ズームの外部制御（最初の1回だけ設定）
+  const [zoomReseted, setZoomReseted] = useState(false)
   useEffect(() => {
     if (!cy) return
-    if (props.zoom === undefined) return
-    if (props.zoom === cy.zoom()) return
+    if (zoomReseted) return
+    setZoomReseted(true)
+    cy.zoom(props.defaultZoom)
+  }, [cy, zoomReseted, props.defaultZoom])
 
-    cy.zoom(props.zoom)
-  }, [cy, props.zoom])
-
-  // パンの外部制御
+  // パンの外部制御（最初の1回だけ設定）
+  const [panReseted, setPanReseted] = useState(false)
   useEffect(() => {
     if (!cy) return
-    if (props.pan === undefined) return
-    const currentPan = cy.pan()
-    if (props.pan.x === currentPan.x && props.pan.y === currentPan.y) return
-
-    cy.pan(props.pan)
-  }, [cy, props.pan])
+    if (panReseted) return
+    setPanReseted(true)
+    cy.pan(props.defaultPan)
+  }, [cy, panReseted, props.defaultPan])
 
   const selectAll = useCallback(() => {
     cy?.nodes().select()
