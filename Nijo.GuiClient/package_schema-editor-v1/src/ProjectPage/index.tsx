@@ -114,7 +114,7 @@ export default function ({ defaultValues }: {
           <UI.TabHeader isSelected={displayTab === "value-member-types"}
             onClick={() => setDisplayTab("value-member-types")}
           >
-            属性種類定義
+            種類設定
           </UI.TabHeader>
 
           <UI.TabHeader isSelected={displayTab === "constants"}

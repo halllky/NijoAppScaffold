@@ -208,12 +208,13 @@ function SingleEnumEditor({ index, formMethods }: {
       <div className="flex items-center gap-2">
         <UI.WordTextBox
           {...register(rootNamePath)}
-          className="flex-1 font-bold border px-1"
+          className="basis-80 font-bold border px-1"
           placeholder="区分名を入力"
         />
         <UI.Button mini hideText icon={Icon.TrashIcon} onClick={handleDeleteEnum}>
           区分自体の削除
         </UI.Button>
+        <div className="flex-1" />
       </div>
 
       <div onKeyDown={handleKeyDown} className="flex flex-col gap-1">

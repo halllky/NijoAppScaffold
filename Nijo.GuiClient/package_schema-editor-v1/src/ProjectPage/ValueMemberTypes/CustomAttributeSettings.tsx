@@ -3,7 +3,6 @@ import useEvent from "react-use-event-hook"
 import * as ReactHookForm from "react-hook-form"
 import * as Icon from "@heroicons/react/24/outline"
 import { ModalDialog } from "@nijo/ui-components/layout"
-import * as Layout from "@nijo/ui-components/layout"
 import * as Input from "@nijo/ui-components/input"
 import { ApplicationState, NijoXmlCustomAttribute, TYPE_DATA_MODEL, TYPE_QUERY_MODEL, TYPE_COMMAND_MODEL, TYPE_STRUCTURE_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, XmlElementAttributeName } from "../../types"
 import { UUID } from "uuidjs"
@@ -14,9 +13,9 @@ import * as UI from "../../UI"
 
 type CustomAttributeSettingsProps = {
   formMethods: ReactHookForm.UseFormReturn<ApplicationState>
-  getValidationResult: GetValidationResultFunction | undefined
-  trigger: ValidationTriggerFunction | undefined
-  elementRef: React.RefObject<HTMLDivElement | null>
+  getValidationResult?: GetValidationResultFunction
+  trigger?: ValidationTriggerFunction
+  elementRef?: React.RefObject<HTMLDivElement | null>
 }
 
 type GridRow = NijoXmlCustomAttribute & { id: string }
@@ -158,7 +157,7 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
 
   return (
     <FormLayout.Field fullWidth label="カスタム属性" labelEnd={(
-      <div ref={elementRef} className="flex gap-1">
+      <div ref={elementRef ?? undefined} className="flex gap-1">
         <Input.IconButton outline mini icon={Icon.PlusIcon} onClick={handleAddRow}>追加</Input.IconButton>
         <Input.IconButton outline mini icon={Icon.TrashIcon} onClick={handleDeleteRow}>削除</Input.IconButton>
       </div>

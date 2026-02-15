@@ -5,7 +5,6 @@ import useEvent from "react-use-event-hook";
 import { ProjectOptionPropertyInfo, ApplicationState } from "../../types";
 import { usePersonalSettings } from "../../PersonalSettings";
 import { PersonalSettings } from "../../PersonalSettings/PersonalSettings";
-import { CustomAttributeSettings } from "./CustomAttributeSettings";
 import { Allotment, LayoutPriority } from "allotment";
 
 /**
@@ -16,7 +15,6 @@ export const ProjectSettings: React.FC<{
 }> = ({ formMethods }) => {
 
   const { personalSettings, save } = usePersonalSettings()
-  const customAttributeSettingsElementRef = React.useRef<HTMLDivElement>(null)
 
   return (
     <Allotment proportionalLayout={false} separator={false}>
@@ -25,9 +23,6 @@ export const ProjectSettings: React.FC<{
         <div className="h-full w-full overflow-y-auto bg-gray-50 p-2">
           <SideMenuLink hash="project-options">
             プロジェクト設定
-          </SideMenuLink>
-          <SideMenuLink hash="custom-attributes">
-            カスタム属性
           </SideMenuLink>
           <SideMenuLink hash="personal-settings">
             個人用設定
@@ -45,22 +40,6 @@ export const ProjectSettings: React.FC<{
             <ProjectOptionsSection
               formMethods={formMethods}
             />
-
-            <FormLayout.Separator />
-
-            {/* カスタム属性 */}
-            <FormLayout.Section labelEnd={(
-              <div id="custom-attributes" className="flex flex-col scroll-mt-2">
-                <h2 className="text-lg font-bold">カスタム属性</h2>
-              </div>
-            )}>
-              <CustomAttributeSettings
-                formMethods={formMethods}
-                getValidationResult={undefined}
-                trigger={undefined}
-                elementRef={customAttributeSettingsElementRef}
-              />
-            </FormLayout.Section>
 
             <FormLayout.Separator />
 
