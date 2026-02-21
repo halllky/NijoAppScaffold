@@ -205,7 +205,7 @@ const TypeComboEditor: EG2.EditableGridCellEditor = React.forwardRef((props, ref
         value={value}
         onChange={ev => { setVal(ev.target.value); setInputted(true) }}
         onKeyDown={handleKeyDown}
-        className="w-full h-full border border-gray-700 outline-none bg-white px-1"
+        className="w-full max-h-full px-[3px] border border-gray-700 outline-none bg-white"
       />
 
       {props.isEditing && (

@@ -74,14 +74,17 @@ export function DecsendantsGrid(props: {
           .map(opt => ({ value: opt, text: opt }))
         columns.push(helper.dropdown(attrDef.displayName, `attributes.${attrDef.attributeName}`, ddlOptions, {
           defaultWidth: 120,
+          validationErrorSettings: [row => row.uniqueId, attrDef.attributeName],
         }))
       } else if (attrDef.type === 'Boolean') {
         columns.push(helper.checkBox(attrDef.displayName, `attributes.${attrDef.attributeName}`, {
           defaultWidth: 120,
+          validationErrorSettings: [row => row.uniqueId, attrDef.attributeName],
         }))
       } else {
         columns.push(helper.text(attrDef.displayName, `attributes.${attrDef.attributeName}`, {
           defaultWidth: 120,
+          validationErrorSettings: [row => row.uniqueId, attrDef.attributeName],
         }))
       }
     }
@@ -94,16 +97,19 @@ export function DecsendantsGrid(props: {
         const ddlOptions = customAttr.enumValues.map(opt => ({ value: opt, text: opt }))
         columns.push(helper.dropdown(customAttr.displayName ?? customAttr.physicalName, `attributes.${customAttr.uniqueId}`, ddlOptions, {
           defaultWidth: 120,
+          validationErrorSettings: [row => row.uniqueId, customAttr.uniqueId],
         }))
 
       } else if (customAttr.type === 'Boolean') {
         columns.push(helper.checkBox(customAttr.displayName ?? customAttr.physicalName, `attributes.${customAttr.uniqueId}`, {
           defaultWidth: 120,
+          validationErrorSettings: [row => row.uniqueId, customAttr.uniqueId],
         }))
 
       } else {
         columns.push(helper.text(customAttr.displayName ?? customAttr.physicalName, `attributes.${customAttr.uniqueId}`, {
           defaultWidth: 120,
+          validationErrorSettings: [row => row.uniqueId, customAttr.uniqueId],
         }))
       }
     }
@@ -215,13 +221,13 @@ export function DecsendantsGrid(props: {
   const handleKeyDown: React.KeyboardEventHandler<HTMLDivElement> = e => {
     if (gridRef.current?.isEditing) return;
 
-    if (!e.ctrlKey && e.key === 'Enter') {
+    if (!e.ctrlKey && e.key === 'Enter' && !e.defaultPrevented) {
       handleInsertRow()
-    } else if (e.ctrlKey && e.key === 'Enter') {
+    } else if (e.ctrlKey && e.key === 'Enter' && !e.defaultPrevented) {
       handleInsertRowBelow()
     } else if (e.shiftKey && e.key === 'Delete') {
       handleDeleteRow()
-    } else if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+    } else if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown') && !e.defaultPrevented) {
       if (e.key === 'ArrowUp') handleMoveUp()
       else if (e.key === 'ArrowDown') handleMoveDown()
     } else if (e.shiftKey && e.key === 'Tab') {

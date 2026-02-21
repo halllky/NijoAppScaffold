@@ -107,10 +107,12 @@ export const MentionInputWrapper = React.forwardRef<HTMLTextAreaElement, Mention
  * メンションをクリックすると、メンションのターゲットに移動する。
  */
 export const ReadOnlyMentionText = ({
+  title,
   children,
   className,
   onClickMention,
 }: {
+  title?: string
   children?: string
   className?: string
   /** 未指定の場合はメンションをクリックしても何もしない */
@@ -126,7 +128,7 @@ export const ReadOnlyMentionText = ({
   })
 
   return (
-    <div className={className}>
+    <div className={className} title={title}>
       <Linkify options={LINKIFY_OPTIONS}>
         {parsed.map((part, index) => (
           <React.Fragment key={index}>

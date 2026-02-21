@@ -195,11 +195,16 @@ export function ValidationContextProvider(props: {
  * @param xmlElementUniqueId XML要素のユニークID
  * @param attributeName 属性名。XML要素自体のエラーを知りたいときは省略する。
  */
-export function useFieldValidationError(xmlElementUniqueId: string, attributeName?: string): ErrorStateByField {
+export function useFieldValidationError(xmlElementUniqueId: string | null | undefined, attributeName?: string): ErrorStateByField {
   const { errorFlagContext } = React.useContext(ValidationContextInternal)
   const [errorState, setErrorState] = React.useState<ErrorStateByField>(() => ({ hasError: false, errorMessages: [] }))
 
   React.useEffect(() => {
+    if (!xmlElementUniqueId) {
+      setErrorState({ hasError: false, errorMessages: [] })
+      return;
+    }
+
     errorFlagContext.subscribe(xmlElementUniqueId, attributeName, setErrorState)
     return () => errorFlagContext.unsubscribe(setErrorState)
   }, [errorFlagContext, xmlElementUniqueId, attributeName])

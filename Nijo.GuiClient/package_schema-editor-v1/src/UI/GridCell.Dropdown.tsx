@@ -1,12 +1,20 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
+import { useFieldValidationError } from "../ProjectPage/useValidation"
+import { XmlElementItem } from "../types"
 
 export type CreateDropdownCellFunction = <TRow>(
   header: string,
   key: ReactHookForm.Path<TRow>,
   candidateValues: { value: string, text: string }[],
-  options?: Partial<EG2.EditableGrid2LeafColumn<TRow>>
+  options?: Partial<EG2.EditableGrid2LeafColumn<TRow>> & {
+    /** バリデーションエラーがあるときにセル背景色を変えるための設定 */
+    validationErrorSettings?: [
+      getXmlElementUniqueId: (row: TRow) => string | null | undefined,
+      attributeName?: string
+    ]
+  }
 ) => EG2.EditableGrid2LeafColumn<TRow>
 
 /**
@@ -32,8 +40,13 @@ export function createDropdownCellHelper(
         const fieldRowIndex = skipFirstRow ? context.row.index + 1 : context.row.index
         const value = ReactHookForm.useWatch({ control, name: `${arrayName}.${fieldRowIndex}.${key}` })
         const text = candidateValues.find(o => o.value === value)?.text ?? (value as string)
+        const { hasError, errorMessages } = useFieldValidationError(options?.validationErrorSettings?.[0]?.(context.row.original), options?.validationErrorSettings?.[1])
+
         return (
-          <div className="px-1 truncate">
+          <div
+            title={errorMessages.join('\n')}
+            className={`w-full px-1 truncate ${hasError ? 'bg-amber-300/50' : ''}`}
+          >
             {text}
           </div>
         )
@@ -114,8 +127,15 @@ function createEditor(candidateValues: { value: string, text: string }[]): EG2.E
           onKeyDown={handleKeyDown}
           className="w-full border border-black outline-none bg-white"
         >
+          {/* 空行 */}
+          <option value="" className="text-sm">
+            &nbsp;
+          </option>
+
           {candidateValues.map(c => (
-            <option key={c.value} value={c.value}>{c.text}</option>
+            <option key={c.value} value={c.value} className="text-sm">
+              {c.text}
+            </option>
           ))}
         </select>
       </div>

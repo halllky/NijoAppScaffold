@@ -3,6 +3,7 @@ import * as ReactHookForm from "react-hook-form"
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
 import { ReadOnlyMentionText } from "./MentionInputWrapper"
 import { SchemaDefinitionMentionTextarea } from "./Mention"
+import { useFieldValidationError } from "../ProjectPage/useValidation"
 
 export type CreateTextCellFunction = <TRow>(
   header: string,
@@ -12,6 +13,11 @@ export type CreateTextCellFunction = <TRow>(
     parse?: (value: string) => unknown
     /** メンション使用可能かどうか */
     mentionAvailable?: boolean
+    /** バリデーションエラーがあるときにセル背景色を変えるための設定 */
+    validationErrorSettings?: [
+      getXmlElementUniqueId: (row: TRow) => string | null | undefined,
+      attributeName?: string
+    ]
   }
 ) => EG2.EditableGrid2LeafColumn<TRow>
 
@@ -41,13 +47,20 @@ export function createTextCellHelper(
         control,
         name: `${arrayName}.${fieldRowIndex}.${key}`,
       })
+      const { hasError, errorMessages } = useFieldValidationError(options?.validationErrorSettings?.[0]?.(context.row.original), options?.validationErrorSettings?.[1])
 
       return options?.mentionAvailable ? (
-        <ReadOnlyMentionText className={`px-1 ${options?.wrap ? 'whitespace-pre-wrap' : 'truncate'}`}>
+        <ReadOnlyMentionText
+          title={errorMessages.join('\n')}
+          className={`w-full px-1 ${options?.wrap ? 'whitespace-pre-wrap' : 'truncate'} ${hasError ? 'bg-amber-300/50' : ''}`}
+        >
           {value ?? undefined}
         </ReadOnlyMentionText>
       ) : (
-        <div className={`px-1 ${options?.wrap ? 'whitespace-pre-wrap' : 'truncate'}`}>
+        <div
+          title={errorMessages.join('\n')}
+          className={`w-full px-1 ${options?.wrap ? 'whitespace-pre-wrap' : 'truncate'} ${hasError ? 'bg-amber-300/50' : ''}`}
+        >
           {options?.format?.(value) ?? value}
         </div>
       )
@@ -108,14 +121,20 @@ export const TextCellEditor: EG2.EditableGridCellEditor = React.forwardRef(funct
   }), [])
 
   return (
-    <input
-      ref={refInput}
-      value={value ?? ''}
-      onChange={handleChange}
-      onKeyDown={handleKeyDown}
-      className="px-[3px] resize-none field-sizing-content outline-none border border-black bg-white"
+    <label
       style={style}
-    />
+      className="px-[3px] resize-none border border-black bg-white"
+    >
+      <input
+        ref={refInput}
+        value={value ?? ''}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        spellCheck={false}
+        autoComplete="off"
+        className="block mt-[-1px] w-full field-sizing-content outline-none"
+      />
+    </label>
   )
 })
 

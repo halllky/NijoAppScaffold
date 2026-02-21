@@ -158,6 +158,11 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
         <li>タイプ: {ATTR_TYPES.join(", ")} から選択</li>
       </ul>
 
+      <EG2.EditableGrid2
+        {...editableGrid2Props}
+        className="flex-1 h-[240px] resize-y border border-gray-600"
+      />
+
       {errorMessages.length > 0 && (
         <ul className="text-amber-600 text-sm">
           {errorMessages.map((msg, i) => (
@@ -165,11 +170,6 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
           ))}
         </ul>
       )}
-
-      <EG2.EditableGrid2
-        {...editableGrid2Props}
-        className="flex-1 h-[240px] resize-y border border-gray-600"
-      />
 
       {editingAvailableModelsIndex !== null && (
         <AvailableModelsDialog

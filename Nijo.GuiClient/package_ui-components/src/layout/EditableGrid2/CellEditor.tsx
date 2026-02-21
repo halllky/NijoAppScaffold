@@ -150,9 +150,10 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
     style.left = `${left}px`
     style.top = `${top}px`
 
-    // 編集中はテキストボックスが伸縮する必要がある。
+    // wrapするセルの編集中はテキストボックスが伸縮する必要がある。
     // 編集中でないときはエディタがグリッドの下限を超えて余計なスクロールが出るのを防ぐためheight固定
-    if (edittingCell) {
+    const columnMeta = visibleLeafColumns[focusedCell.colIndex]?.columnDef.meta as ColumnMetadataInternal<TRow> | undefined
+    if (edittingCell && columnMeta?.original?.wrap) {
       style.minHeight = `${bottom - top}px`
     } else {
       style.height = `${bottom - top}px`
@@ -160,7 +161,6 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
 
     // min-width で設定した場合、エディタの中の文字がオーバーフローしたときに横方向に延伸する。
     // width で指定した場合は縦方向。
-    const columnMeta = visibleLeafColumns[focusedCell.colIndex]?.columnDef.meta as ColumnMetadataInternal<TRow> | undefined
     if (columnMeta?.original?.wrap) {
       style.width = `${right - left}px`
       style.minWidth = ''
