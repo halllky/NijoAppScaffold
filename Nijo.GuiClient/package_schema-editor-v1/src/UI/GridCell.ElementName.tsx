@@ -3,6 +3,7 @@ import * as ReactHookForm from "react-hook-form"
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
 import { TextCellEditor } from "./GridCell.Text"
 import { XmlElementItem } from "../types"
+import { useFieldValidationError } from "../ProjectPage/useValidation"
 
 export type CreateElementNameCellFunction = <TRow>(
   header: string,
@@ -32,14 +33,12 @@ export function createElementNameCellHelper(
     renderBody: ({ context }) => {
       const fieldRowIndex = skipFirstRow ? context.row.index + 1 : context.row.index
       const rowData: XmlElementItem = ReactHookForm.useWatch({ name: `${arrayName}.${fieldRowIndex}`, control })
-
-      // Validation
-      const validationResult = { _own: [] } // TODO
-      const hasOwnError = validationResult?._own && validationResult._own.length > 0
-      const bgColor = hasOwnError ? 'bg-amber-300/50' : ''
+      const { hasError, errorMessages } = useFieldValidationError(rowData.uniqueId)
+      const bgColor = hasError ? 'bg-amber-300/50' : ''
+      const tooltip = errorMessages.join('\n')
 
       return (
-        <div className={`px-1 flex-1 flex flex-col ${bgColor}`}>
+        <div className={`px-1 flex-1 flex flex-col ${bgColor}`} title={tooltip}>
 
           {/* インデント + 名前 */}
           <div className="flex text-left truncate">

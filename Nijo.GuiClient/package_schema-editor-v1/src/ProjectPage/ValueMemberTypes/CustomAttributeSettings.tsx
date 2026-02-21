@@ -7,14 +7,12 @@ import * as Input from "@nijo/ui-components/input"
 import { ApplicationState, NijoXmlCustomAttribute, TYPE_DATA_MODEL, TYPE_QUERY_MODEL, TYPE_COMMAND_MODEL, TYPE_STRUCTURE_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, XmlElementAttributeName } from "../../types"
 import { UUID } from "uuidjs"
 import FormLayout from "@nijo/ui-components/layout/FormLayout"
-import { GetValidationResultFunction, ValidationTriggerFunction } from "../useValidation"
+import { useFieldValidationError, useValidationErrorMessages } from "../useValidation"
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
 import * as UI from "../../UI"
 
 type CustomAttributeSettingsProps = {
   formMethods: ReactHookForm.UseFormReturn<ApplicationState>
-  getValidationResult?: GetValidationResultFunction
-  trigger?: ValidationTriggerFunction
   elementRef?: React.RefObject<HTMLDivElement | null>
 }
 
@@ -41,8 +39,6 @@ const AVAILABLE_MODELS = [
  */
 export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = ({
   formMethods,
-  getValidationResult,
-  trigger,
   elementRef,
 }) => {
   const { control, getValues, setValue } = formMethods
@@ -60,8 +56,7 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
 
     const renderBodyWithValidation = (columnId: keyof GridRow): EG2.EditableGrid2BodyRenderer<GridRow> => ({ context }) => {
       const watchedRow = ReactHookForm.useWatch({ name: `customAttributes.${context.row.index}`, control })
-      const validationResult = getValidationResult?.(watchedRow.uniqueId)
-      const hasError = validationResult !== undefined && validationResult?._own.length > 0
+      const { hasError } = useFieldValidationError(watchedRow.uniqueId)
       return (
         <div className={`flex-1 inline-flex text-left truncate px-1 ${hasError ? 'bg-amber-300/50' : ''}`}>
           <span className="flex-1 truncate">
@@ -81,8 +76,7 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
         isReadOnly: row => row.type !== 'Enum',
         renderBody: ({ context }) => {
           const watchedRow = ReactHookForm.useWatch({ name: `customAttributes.${context.row.index}`, control })
-          const validationResult = getValidationResult?.(watchedRow.uniqueId)
-          const hasError = validationResult !== undefined && validationResult?._own.length > 0
+          const { hasError } = useFieldValidationError(watchedRow.uniqueId)
           if (watchedRow.type !== 'Enum') return null
           return (
             <div className={`flex items-center justify-between w-full h-full px-1 ${hasError ? 'bg-amber-300/50' : ''}`}>
@@ -97,8 +91,7 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
         renderHeader: () => "利用可能モデル",
         renderBody: ({ context }) => {
           const watchedRow = ReactHookForm.useWatch({ name: `customAttributes.${context.row.index}`, control })
-          const validationResult = getValidationResult?.(watchedRow.uniqueId)
-          const hasError = validationResult !== undefined && validationResult?._own.length > 0
+          const { hasError } = useFieldValidationError(watchedRow.uniqueId)
           const models = watchedRow.availableModels
           const label = models.map(m => AVAILABLE_MODELS.find(am => am.id === m)?.label ?? m).join(", ")
           return (
@@ -111,7 +104,7 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
       },
       helper.text("コメント", "comment", { wrap: true, defaultWidth: 200, renderBody: renderBodyWithValidation("comment") }),
     ]
-  }, [getValidationResult])
+  }, [])
 
   const handleAddRow = useEvent(() => {
     const newAttr: NijoXmlCustomAttribute = {
@@ -141,19 +134,16 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
   const [editingAvailableModelsIndex, setEditingAvailableModelsIndex] = React.useState<number | null>(null)
   const [editingEnumValuesIndex, setEditingEnumValuesIndex] = React.useState<number | null>(null)
 
+  const validationResultList = useValidationErrorMessages()
   const errorMessages = React.useMemo(() => {
     const messages: string[] = []
     for (let i = 0; i < customAttributes.length; i++) {
       const attr = customAttributes[i]
-      const validationResult = getValidationResult?.(attr.uniqueId)
-      if (validationResult) {
-        for (const msgs of Object.values(validationResult)) {
-          messages.push(...msgs.map(err => `${i + 1}行目: ${err}`))
-        }
-      }
+      const validationResult = validationResultList.filter(v => v.xmlElementUniqueId === attr.uniqueId)
+      messages.push(...validationResult.map(err => `${i + 1}行目: ${err.message}`))
     }
     return messages
-  }, [customAttributes, getValidationResult])
+  }, [customAttributes, validationResultList])
 
   return (
     <FormLayout.Field fullWidth label="カスタム属性" labelEnd={(

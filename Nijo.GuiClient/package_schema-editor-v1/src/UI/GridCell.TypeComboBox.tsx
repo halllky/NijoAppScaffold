@@ -2,10 +2,11 @@ import React, { useState, useRef, useEffect, useLayoutEffect, useImperativeHandl
 import * as ReactHookForm from "react-hook-form"
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
 import { useSchemaCandidates } from "../ProjectPage/SchemaCandidatesContext"
+import { ATTR_TYPE, XmlElementItem } from "../types"
+import { useFieldValidationError } from "../ProjectPage/useValidation"
 
 export type CreateComboBoxCellFunction = <TRow>(
   header: string,
-  key: ReactHookForm.Path<TRow>,
   options?: Partial<EG2.EditableGrid2LeafColumn<TRow>>
 ) => EG2.EditableGrid2LeafColumn<TRow>
 
@@ -22,7 +23,7 @@ export function createComboBoxCellHelper(
   skipFirstRow: boolean | undefined,
 ): CreateComboBoxCellFunction {
 
-  return (header, key, options) => {
+  return (header, options) => {
     return {
       renderHeader: () => (
         <div className="px-1 py-px truncate text-sm text-gray-700">
@@ -31,19 +32,23 @@ export function createComboBoxCellHelper(
       ),
       renderBody: ({ context }) => {
         const fieldRowIndex = skipFirstRow ? context.row.index + 1 : context.row.index
-        const value = ReactHookForm.useWatch({ control, name: `${arrayName}.${fieldRowIndex}.${key}` })
+        const rowData: XmlElementItem = ReactHookForm.useWatch({ control, name: `${arrayName}.${fieldRowIndex}` })
+        const { hasError, errorMessages } = useFieldValidationError(rowData.uniqueId, ATTR_TYPE)
 
         // 論理名
         const { items } = useSchemaCandidates()
-        const displayText = items.find(item => item.value === value)?.text
+        const displayText = items.find(item => item.value === rowData.attributes[ATTR_TYPE])?.text
 
         // ComboBoxなので、値そのものを表示する
         return (
-          <div className="self-start flex items-center gap-2 px-1 truncate">
+          <div
+            title={errorMessages.join('\n')}
+            className={`w-full self-start flex items-center gap-2 px-1 truncate ${hasError ? 'bg-amber-300/50' : ''}`}
+          >
             <span className="truncate">
-              {value as string}
+              {rowData.attributes[ATTR_TYPE] as string}
             </span>
-            {displayText && displayText !== value && (
+            {displayText && displayText !== rowData.attributes[ATTR_TYPE] && (
               <span className="flex-1 text-gray-400 text-sm truncate">
                 {displayText}
               </span>
@@ -54,14 +59,14 @@ export function createComboBoxCellHelper(
       editor: TypeComboEditor,
       getValueForEditor: ({ rowIndex }) => {
         const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
-        const val: string | null | undefined = getValues(`${arrayName}.${fieldRowIndex}.${key}`)
+        const val: string | null | undefined = getValues(`${arrayName}.${fieldRowIndex}.attributes.${ATTR_TYPE}`)
         return val ?? ''
       },
       setValueFromEditor: ({ rowIndex, value }) => {
         const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
         setValue(
-          `${arrayName}.${fieldRowIndex}.${key}`,
-          value as ReactHookForm.PathValue<ReactHookForm.FieldValues, typeof key>,
+          `${arrayName}.${fieldRowIndex}.attributes.${ATTR_TYPE}`,
+          value as ReactHookForm.PathValue<ReactHookForm.FieldValues, typeof ATTR_TYPE>,
           { shouldDirty: true }
         )
       },

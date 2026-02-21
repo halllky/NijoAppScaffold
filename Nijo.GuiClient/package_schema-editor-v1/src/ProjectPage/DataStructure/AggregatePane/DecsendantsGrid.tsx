@@ -6,7 +6,6 @@ import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
 import { UUID } from "uuidjs"
 import { ApplicationState, ATTR_TYPE, isAttributeAvailable, XmlElementItem } from "../../../types"
 import * as UI from '../../../UI'
-import { GetValidationResultFunction, ValidationTriggerFunction } from '../../useValidation'
 import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../../../routing"
 import { usePersonalSettings } from "../../../PersonalSettings"
 
@@ -16,8 +15,6 @@ import { usePersonalSettings } from "../../../PersonalSettings"
 export function DecsendantsGrid(props: {
   selectedRootAggregateIndex: number
   formMethods: ReactHookForm.UseFormReturn<ApplicationState>
-  getValidationResult: GetValidationResultFunction
-  trigger: ValidationTriggerFunction
   className?: string
 }) {
 
@@ -26,8 +23,6 @@ export function DecsendantsGrid(props: {
   const {
     selectedRootAggregateIndex,
     formMethods: { control, getValues, setValue },
-    getValidationResult,
-    trigger,
     className,
   } = props
 
@@ -57,7 +52,7 @@ export function DecsendantsGrid(props: {
     columns.push(helper.elementName(''))
 
     // 種類
-    columns.push(helper.typeComboBox('種類', `attributes.${ATTR_TYPE}`, {
+    columns.push(helper.typeComboBox('種類', {
       defaultWidth: 160,
     }))
 
@@ -114,7 +109,7 @@ export function DecsendantsGrid(props: {
     }
 
     return columns
-  }, [getValidationResult, attributeDefs, rootModelType, customAttributes, projectDir, getValues])
+  }, [attributeDefs, rootModelType, customAttributes, projectDir, getValues])
 
   // Handlers
   const handleInsertRow = () => {

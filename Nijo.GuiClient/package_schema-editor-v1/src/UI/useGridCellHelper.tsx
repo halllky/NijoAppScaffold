@@ -7,7 +7,6 @@ import { createButtonCellHelper } from "./GridCell.Button"
 import { createDropdownCellHelper } from "./GridCell.Dropdown"
 import { createComboBoxCellHelper } from "./GridCell.TypeComboBox"
 import { createElementNameCellHelper } from "./GridCell.ElementName"
-import { useValidation } from "../ProjectPage/useValidation"
 
 /**
  * EditableGrid2 を react-hook-form の useFieldArray と組み合わせて使用する際の

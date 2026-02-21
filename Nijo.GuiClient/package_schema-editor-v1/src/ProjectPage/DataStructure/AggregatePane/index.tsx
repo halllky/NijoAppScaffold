@@ -100,8 +100,6 @@ export function AggregatePane(props: {
             <DecsendantsGrid
               selectedRootAggregateIndex={selectedRootAggregateIndex}
               formMethods={props.formMethods}
-              trigger={React.useCallback(() => Promise.resolve(), [])} // TODO
-              getValidationResult={React.useCallback(() => { return { _own: [] } }, [])} // TODO
               className="w-full h-full py-1"
             />
           </Allotment.Pane>

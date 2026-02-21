@@ -10,15 +10,20 @@ import { NewRootAddDialog } from "./NewRootAddDialog";
 import { UUID } from "uuidjs";
 import { PlusIcon } from "@heroicons/react/24/solid";
 
+export type DataStructureTabRef = {
+  selectRootAggregate: (rootAggregateId: string | null) => void
+}
+
 /**
  * データ構造定義タブ。
  *
  * スキーマ定義の有向グラフを表示する。
  * 特定のルート集約が選択されている場合はその集約の編集ペインを表示する。
  */
-export default function ({ visible, formMethods, diagramRef }: {
+export default function ({ visible, formMethods, dataStructureRef, diagramRef }: {
   visible: boolean
   formMethods: ReactHookForm.UseFormReturn<ApplicationState>
+  dataStructureRef: React.RefObject<DataStructureTabRef | null>
   diagramRef: React.RefObject<DiagramRef | null>
 }) {
 
@@ -40,6 +45,9 @@ export default function ({ visible, formMethods, diagramRef }: {
     setSelectedRootAggregateIndex(index)
     setAggPaneVisible(true)
   }
+  React.useImperativeHandle(dataStructureRef, () => ({
+    selectRootAggregate,
+  }), [])
 
   // 選択中のルート集約を画面右側に表示する
   const [aggPaneVisible, setAggPaneVisible] = React.useState(false)

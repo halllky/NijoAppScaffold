@@ -7,12 +7,13 @@ import { ApplicationState } from "../types"
 import { usePersonalSettings } from "../PersonalSettings"
 import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../routing"
 import { saveSchema } from "../useSaveLoad"
-import DataStructure from "./DataStructure"
+import DataStructure, { DataStructureTabRef } from "./DataStructure"
 import { SchemaCandidatesProvider } from "./SchemaCandidatesContext"
 import ValueMemberTypes from "./ValueMemberTypes"
 import ConstantsGrid from "./Constants"
 import { ProjectSettings } from "./ProjectSettings"
 import { DiagramRef } from "./DataStructure/Diagram"
+import { useValidationErrorMessages, ValidationContextProvider, ValidationResultListItem } from "./useValidation"
 
 /**
  * プロジェクト編集画面のメインレイアウト。
@@ -44,6 +45,13 @@ export default function ({ defaultValues }: {
 
   // 個人設定
   const { personalSettings, save: savePersonalSettings } = usePersonalSettings()
+
+  // バリデーション
+  const dataStructureRef = React.useRef<DataStructureTabRef>(null)
+  const handleClickErrorItem = (item: ValidationResultListItem) => {
+    setDisplayTab("data-structures")
+    dataStructureRef.current?.selectRootAggregate(item.rootAggregateUniqueId)
+  }
 
   // 保存
   const diagramRef = React.useRef<DiagramRef>(null)
@@ -82,105 +90,112 @@ export default function ({ defaultValues }: {
 
   return (
     <SchemaCandidatesProvider watch={formMethods.watch}>
-      <div className="h-full w-full flex flex-col bg-gray-200">
+      <ValidationContextProvider watch={formMethods.watch}>
+        <div className="h-full w-full flex flex-col bg-gray-200">
 
-        {/* ヘッダ */}
-        <header className="shrink-0 flex flex-wrap items-center gap-x-px gap-y-2 py-1 px-1">
+          {/* ヘッダ */}
+          <header className="shrink-0 flex flex-wrap items-center gap-x-px gap-y-2 py-1 px-1">
 
-          <ReactRouter.Link to="/" title="プロジェクト選択へ戻る">
-            <Icon.ChevronLeftIcon className="w-6 h-6 p-1 text-sky-600" />
-          </ReactRouter.Link>
+            <ReactRouter.Link to="/" title="プロジェクト選択へ戻る">
+              <Icon.ChevronLeftIcon className="w-6 h-6 p-1 text-sky-600" />
+            </ReactRouter.Link>
 
-          {/* プロジェクト名 兼 設定画面 */}
-          <UI.TabHeader
-            isAppTitle
-            isSelected={displayTab === "project-settings"}
-            onClick={() => setDisplayTab("project-settings")}
-          >
-            <div className="flex items-center gap-1">
-              {applicationName || "名無しのプロジェクト"}
-              <Icon.Cog6ToothIcon className="w-5 h-5 text-gray-600" />
-            </div>
-          </UI.TabHeader>
-
-          <div className="basis-2"></div>
-
-          <UI.TabHeader isSelected={displayTab === "data-structures"}
-            onClick={() => setDisplayTab("data-structures")}
-          >
-            データ構造
-          </UI.TabHeader>
-
-          <UI.TabHeader isSelected={displayTab === "value-member-types"}
-            onClick={() => setDisplayTab("value-member-types")}
-          >
-            種類設定
-          </UI.TabHeader>
-
-          <UI.TabHeader isSelected={displayTab === "constants"}
-            onClick={() => setDisplayTab("constants")}
-          >
-            定数
-          </UI.TabHeader>
-
-          <div className="flex-1"></div>
-
-          {/* 保存時にコード自動生成をかけ直す */}
-          <label className="flex items-center gap-1 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={personalSettings.autoGenerateCode ?? false}
-              onChange={e => savePersonalSettings('autoGenerateCode', e.target.checked)}
-              className="h-4 w-4"
-            />
-            <span className="text-xs select-none">保存時にコード自動生成をかけ直す</span>
-          </label>
-
-          {/* 保存ボタン */}
-          <div className="basis-36 flex justify-end">
-            <UI.Button
-              icon={Icon.ArrowUpTrayIcon}
-              fill
-              onClick={handleSave}
-              loading={nowSaving}
+            {/* プロジェクト名 兼 設定画面 */}
+            <UI.TabHeader
+              isAppTitle
+              isSelected={displayTab === "project-settings"}
+              onClick={() => setDisplayTab("project-settings")}
             >
-              {saveButtonText}
-            </UI.Button>
-          </div>
-        </header>
+              <div className="flex items-center gap-1">
+                {applicationName || "名無しのプロジェクト"}
+                <Icon.Cog6ToothIcon className="w-5 h-5 text-gray-600" />
+              </div>
+            </UI.TabHeader>
 
-        {/* 保存時エラー */}
-        {saveError && (
-          <div className="text-rose-500 text-sm p-2">
-            {saveError}
-          </div>
-        )}
+            <div className="basis-2"></div>
 
-        {/* メインコンテンツ */}
-        <main className="flex-1 bg-white overflow-auto border-t border-gray-400">
+            <UI.TabHeader isSelected={displayTab === "data-structures"}
+              onClick={() => setDisplayTab("data-structures")}
+            >
+              データ構造
+            </UI.TabHeader>
 
-          {/* データ構造タブは初期化コストが高いのでDOMを常に維持する */}
-          <DataStructure
-            visible={displayTab === "data-structures"}
-            formMethods={formMethods}
-            diagramRef={diagramRef}
-          />
+            <UI.TabHeader isSelected={displayTab === "value-member-types"}
+              onClick={() => setDisplayTab("value-member-types")}
+            >
+              種類設定
+            </UI.TabHeader>
 
-          {displayTab === "value-member-types" && (
-            <ValueMemberTypes formMethods={formMethods} />
+            <UI.TabHeader isSelected={displayTab === "constants"}
+              onClick={() => setDisplayTab("constants")}
+            >
+              定数
+            </UI.TabHeader>
+
+            <div className="flex-1"></div>
+
+            {/* 保存時にコード自動生成をかけ直す */}
+            <label className="flex items-center gap-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={personalSettings.autoGenerateCode ?? false}
+                onChange={e => savePersonalSettings('autoGenerateCode', e.target.checked)}
+                className="h-4 w-4"
+              />
+              <span className="text-xs select-none">保存時にコード自動生成をかけ直す</span>
+            </label>
+
+            {/* 保存ボタン */}
+            <div className="basis-36 flex justify-end">
+              <UI.Button
+                icon={Icon.ArrowUpTrayIcon}
+                fill
+                onClick={handleSave}
+                loading={nowSaving}
+              >
+                {saveButtonText}
+              </UI.Button>
+            </div>
+          </header>
+
+          {/* 保存時エラー */}
+          {saveError && (
+            <div className="text-rose-500 text-sm p-2">
+              {saveError}
+            </div>
           )}
 
-          {displayTab === "constants" && (
-            <ConstantsGrid formMethods={formMethods} />
-          )}
+          {/* メインコンテンツ */}
+          <main className="flex-1 bg-white overflow-auto border-t border-gray-400">
 
-          {displayTab === "project-settings" && (
-            <ProjectSettings formMethods={formMethods} />
-          )}
+            {/* データ構造タブは初期化コストが高いのでDOMを常に維持する */}
+            <DataStructure
+              visible={displayTab === "data-structures"}
+              formMethods={formMethods}
+              dataStructureRef={dataStructureRef}
+              diagramRef={diagramRef}
+            />
 
-        </main>
+            {displayTab === "value-member-types" && (
+              <ValueMemberTypes formMethods={formMethods} />
+            )}
 
-      </div>
+            {displayTab === "constants" && (
+              <ConstantsGrid formMethods={formMethods} />
+            )}
+
+            {displayTab === "project-settings" && (
+              <ProjectSettings formMethods={formMethods} />
+            )}
+
+          </main>
+
+          <footer className="max-h-20 overflow-auto bg-white border-t border-gray-400">
+            <ErrorMessage onClickErrorItem={handleClickErrorItem} />
+          </footer>
+
+        </div>
+      </ValidationContextProvider>
     </SchemaCandidatesProvider>
   )
 }
@@ -191,3 +206,30 @@ type TabType =
   | "data-structures" // Data, Query, Command, Structure Model
   | "value-member-types" // 属性種類定義。文字、数値、日付、静的/動的区分、値オブジェクトなどの設定
   | "constants" // 定数定義
+
+/**
+ * エラーメッセージ一覧
+ */
+function ErrorMessage({ onClickErrorItem }: {
+  onClickErrorItem: (item: ValidationResultListItem) => void
+}) {
+  const validationResultList = useValidationErrorMessages()
+  return (
+    <table className="w-full text-sm text-amber-600">
+      <tbody>
+        {validationResultList.map((item, index) => (
+          <tr
+            key={index}
+            onClick={() => onClickErrorItem(item)}
+            className="border-b border-gray-100 last:border-none cursor-pointer hover:bg-gray-50"
+          >
+            <td className="px-1 py-px whitespace-nowrap">{item.rootAggregateName}</td>
+            <td className="px-1 py-px whitespace-nowrap">{item.elementName}</td>
+            <td className="px-1 py-px whitespace-nowrap">{item.attributeName}</td>
+            <td className="px-1 py-px w-full">{item.message}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
