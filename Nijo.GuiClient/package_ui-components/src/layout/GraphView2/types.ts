@@ -72,8 +72,8 @@ export interface GraphViewRef {
   /** ビューステートの収集 */
   getViewState: () => {
     nodePositions: { [nodeId: string]: cytoscape.Position }
-    zoom: number
-    pan: cytoscape.Position
+    defaultZoom: number
+    defaultPan: cytoscape.Position
   };
   /** 全選択 */
   selectAll: () => void;

@@ -294,7 +294,7 @@ export const useGraphView2 = (props: GraphViewProps): UseGraphView2Result => {
   }, [cy])
 
   const getViewState: GraphViewRef["getViewState"] = useCallback(() => {
-    if (!cy) return { nodePositions: {}, zoom: 1, pan: { x: 0, y: 0 } }
+    if (!cy) return { nodePositions: {}, defaultZoom: 1, defaultPan: { x: 0, y: 0 } }
 
     // ノード位置を収集
     const nodePositions: { [nodeId: string]: cytoscape.Position } = {}
@@ -307,7 +307,7 @@ export const useGraphView2 = (props: GraphViewProps): UseGraphView2Result => {
       }
     }
 
-    return { nodePositions, zoom: cy.zoom(), pan: cy.pan() }
+    return { nodePositions, defaultZoom: cy.zoom(), defaultPan: cy.pan() }
   }, [cy])
 
   return {

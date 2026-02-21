@@ -55,7 +55,7 @@ export function Diagram(props: {
             return acc
           }, {} as { [id: string]: GraphView2.Node }),
           edges,
-          nodePositions: (graphViewRef.current?.getViewState() ?? { nodePositions: {}, zoom: 1, pan: { x: 0, y: 0 } }).nodePositions,
+          nodePositions: (graphViewRef.current?.getViewState() ?? { nodePositions: {}, defaultZoom: 1, defaultPan: { x: 0, y: 0 } }).nodePositions,
         },
       }
     },

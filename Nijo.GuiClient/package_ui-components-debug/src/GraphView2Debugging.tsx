@@ -8,8 +8,8 @@ import { GraphView2 } from '@nijo/ui-components'
 export default function GraphView2Debugging() {
   const graphRef = useRef<GraphView2.GraphViewRef>(null)
   const [logs, setLogs] = useState<{ id: number, time: string, message: string }[]>([])
-  const [savedViewState, setSavedViewState] = useState<Pick<GraphView2.GraphViewProps, 'defaultNodePositions' | 'zoom' | 'pan'> | null>(null)
-  const [activeViewState, setActiveViewState] = useState<Partial<Pick<GraphView2.GraphViewProps, 'defaultNodePositions' | 'zoom' | 'pan'>> | undefined>(undefined)
+  const [savedViewState, setSavedViewState] = useState<Pick<GraphView2.GraphViewProps, 'defaultNodePositions' | 'defaultZoom' | 'defaultPan'> | null>(null)
+  const [activeViewState, setActiveViewState] = useState<Partial<Pick<GraphView2.GraphViewProps, 'defaultNodePositions' | 'defaultZoom' | 'defaultPan'>> | undefined>(undefined)
 
   const addLog = useCallback((message: string) => {
     setLogs(prev => [{
