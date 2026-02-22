@@ -1,96 +1,230 @@
-import React from "react"
-import * as ReactHookForm from "react-hook-form"
-import { XmlElementItem, ATTR_TYPE, TYPE_DATA_MODEL, TYPE_COMMAND_MODEL, TYPE_QUERY_MODEL, TYPE_CHILD, TYPE_CHILDREN, ApplicationState, TYPE_STRUCTURE_MODEL } from "../types"
-import { MentionBaseEditable } from "./MentionBase"
+import React from 'react';
+import * as ReactMention from 'react-mentions';
+import LinkifyJs from 'linkifyjs';
+import Linkify from 'linkify-react';
 
+//#region 編集可能
 
-/**
- * スキーマ定義編集用メンションテキストエリア
- */
-export const Mention = React.forwardRef(({
-  getValues,
-  value,
-  onChange,
-  onKeyDown,
-  className,
-  style,
-  placeholder,
-}: {
-  getValues: ReactHookForm.UseFormGetValues<ApplicationState>
+export type MentionableTextareaProps = {
   value?: string
   onChange?: (value: string) => void
   onKeyDown?: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void
+  placeholder?: string
   className?: string
   style?: React.CSSProperties
-  placeholder?: string
-}, ref: React.Ref<HTMLTextAreaElement>) => {
+  isReadOnly?: boolean
+  /** メンションをクリックしたときのコールバック関数 */
+  onClickMention?: (part: MentionPart) => void
+  /** メンション候補データを取得する関数 */
+  getSuggestions: ReactMention.DataFunc
+}
 
-  const getSuggestions = useGetSuggestions(getValues)
+/**
+ * メンション機能付きテキストエリアの共通コンポーネント
+ */
+export const MentionableTextarea = React.forwardRef<HTMLTextAreaElement, MentionableTextareaProps>(({
+  value,
+  onChange,
+  onKeyDown,
+  placeholder,
+  className,
+  style,
+  isReadOnly,
+  getSuggestions,
+  onClickMention,
+}, ref) => {
 
+  // 読み取り専用の場合
+  if (isReadOnly) {
+    return (
+      <MentionableTextareaReadOnly
+        onClickMention={onClickMention}
+        className={`whitespace-pre-wrap break-all pb-[2px] ${className ?? ''}`}
+        style={style}
+      >
+        {value}
+      </MentionableTextareaReadOnly>
+    )
+  }
+
+  // 編集可能な場合
   return (
-    <MentionBaseEditable
-      ref={ref}
-      value={value}
-      onChange={onChange}
-      onKeyDown={onKeyDown}
+    <ReactMention.MentionsInput
+      inputRef={ref}
+      value={value ?? ''}
+      onChange={e => onChange?.(e.target.value)}
+      onKeyDown={e => onKeyDown?.(e as React.KeyboardEvent<HTMLTextAreaElement>)}
+      spellCheck={false}
       placeholder={placeholder}
-      className={className}
-      style={style}
-      getSuggestions={getSuggestions}
-    />
+      className={`[&_textarea]:outline-none break-all resize-none field-sizing-content ${className ?? ''}`}
+      suggestionsPortalHost={document.body}
+      allowSuggestionsAboveCursor
+      style={{
+        ...STYLE_MENTION_SUGGESTIONS,
+        ...style,
+      }}
+    >
+      <ReactMention.Mention
+        trigger="@"
+        markup="@[__display__](__id__)"
+        data={getSuggestions}
+        displayTransform={(id, display) => `@${display}`}
+        className="bg-sky-100 rounded-sm"
+        renderSuggestion={(item, search, highlightedDisplay, index, focused) => (
+          <span
+            className={`inline-block w-full truncate text-sm select-none px-1 text-gray-800 ${focused ? 'bg-gray-200' : ''}`}
+            title={item.display}
+          >
+            {item.display}
+            &nbsp;
+          </span>
+        )}
+      />
+    </ReactMention.MentionsInput>
   )
 })
 
+//#endregion 編集可能
+
+
+//#region 読み取り専用
 
 /**
- * スキーマ定義データからメンションの候補リストを取得するカスタムフック
+ * メンション機能付きテキストエリアの読み取り専用表示。
+ * メンションをクリックすると、メンションのターゲットに移動する。
  */
-function useGetSuggestions(
-  getValues: ReactHookForm.UseFormGetValues<ApplicationState>
-): Parameters<typeof MentionBaseEditable>[0]['getSuggestions'] {
+export function MentionableTextareaReadOnly({
+  title,
+  children,
+  className,
+  style,
+  onClickMention,
+}: {
+  title?: string
+  children?: string
+  className?: string
+  style?: React.CSSProperties
+  /** 未指定の場合はメンションをクリックしても何もしない */
+  onClickMention?: (part: MentionPart) => void
+}) {
 
-  return React.useCallback((query, callback) => {
-    const schemaDefinitionData = getValues()
-    if (!schemaDefinitionData) {
-      callback([])
-      return
-    }
+  const parsed = React.useMemo(() => {
+    return parseAsMentionText(children)
+  }, [children])
 
-    // 全てのXML要素を収集
-    const allElements: XmlElementItem[] = []
-    for (const tree of schemaDefinitionData.xmlElementTrees) {
-      allElements.push(...tree.xmlElements)
-    }
-
-    // ルート集約、child、childrenのみに制限
-    const targetElements = allElements.filter(el => {
-      const type = el.attributes[ATTR_TYPE]
-
-      // ルート集約
-      if (el.indent === 0
-        && (type === TYPE_DATA_MODEL
-          || type === TYPE_QUERY_MODEL
-          || type === TYPE_COMMAND_MODEL
-          || type === TYPE_STRUCTURE_MODEL)) return true
-
-      // child または children
-      if (type === TYPE_CHILD || type === TYPE_CHILDREN) return true
-
-      return false
-    })
-
-    // クエリに基づいてフィルタリング
-    const filtered = targetElements.filter(el => {
-      const localName = el.localName || ''
-      return localName.toLowerCase().includes(query.toLowerCase())
-    })
-
-    // 提案リストを作成
-    const suggestions = filtered.map(el => ({
-      id: el.uniqueId,
-      display: el.localName || '(名前なし)',
-    }))
-
-    callback(suggestions)
-  }, [getValues])
+  return (
+    <div className={className} style={style} title={title}>
+      <Linkify options={LINKIFY_OPTIONS}>
+        {parsed.map((part, index) => (
+          <React.Fragment key={index}>
+            {part.isMention ? (
+              <span
+                className={onClickMention
+                  ? `text-sky-600 hover:bg-sky-100 underline underline-offset-2 cursor-pointer`
+                  : `text-sky-700`}
+                onClick={() => onClickMention?.(part)}
+              >
+                @{part.text}
+              </span>
+            ) : (
+              <span>{part.text}</span>
+            )}
+          </React.Fragment>
+        ))}
+      </Linkify>
+    </div>
+  )
 }
+
+//#endregion 読み取り専用
+
+
+//#region ユーティリティ
+
+const LINKIFY_OPTIONS: LinkifyJs.Opts = {
+  target: '_blank',
+  className: 'text-sky-600 cursor-pointer underline underline-offset-2 hover:bg-sky-100',
+}
+
+const STYLE_MENTION_SUGGESTIONS: ReactMention.MentionsInputProps['style'] = {
+  suggestions: {
+    list: {
+      backgroundColor: 'white',
+      maxHeight: '200px',
+      overflowY: 'auto',
+      border: '1px solid rgba(0,0,0)',
+    },
+  },
+}
+
+/**
+ * メンション情報が含まれうる文字列を表示用の文字列に変換する。
+ * 例えば元の文字列が `aaa \@[bbb](123) ccc \@[ddd](456) eee` の場合、
+ * 戻り値は `aaa bbb ccc ddd eee` になる。
+ */
+function toPlainText(text: string): string {
+  return parseAsMentionText(text)
+    .map(part => part.isMention ? `@${part.text}` : part.text)
+    .join('')
+}
+
+/**
+ * メンション情報つきテキストとして解釈する。
+ * 例えば元の文字列が `aaa \@[bbb](123) ccc \@[ddd](456) eee` の場合、
+ * 戻り値は以下になる。
+ *
+ * ```javascript
+ * [
+ *   { isMention: false, text: 'aaa ' },
+ *   { isMention: true, text: 'bbb', targetId: '123' },
+ *   { isMention: false, text: ' ccc ' },
+ *   { isMention: true, text: 'ddd', targetId: '456' },
+ *   { isMention: false, text: ' eee' }
+ * ]
+ * ```
+ */
+export function parseAsMentionText(text: string | undefined): StringPart[] {
+  if (!text) return []
+
+  const result: StringPart[] = []
+  const regex = /@\[(.*?)\]\((.*?)\)/g
+  let lastIndex = 0
+  let match
+
+  while ((match = regex.exec(text)) !== null) {
+    // 前回のマッチから今回のマッチまでの非メンション部分を追加
+    if (match.index > lastIndex) {
+      result.push({
+        isMention: false,
+        text: text.substring(lastIndex, match.index),
+      })
+    }
+
+    // メンション部分を追加
+    const [_, display, id] = match
+    result.push({
+      isMention: true,
+      text: display,
+      targetId: id,
+    })
+
+    lastIndex = regex.lastIndex
+  }
+
+  // 最後のマッチ以降の非メンション部分を追加
+  if (lastIndex < text.length) {
+    result.push({
+      isMention: false,
+      text: text.substring(lastIndex),
+    })
+  }
+
+  return result
+}
+
+/** 文字列の一部分 */
+type StringPart = NotMentionPart | MentionPart
+type NotMentionPart = { isMention: false, text: string }
+type MentionPart = { isMention: true, text: string, targetId: string }
+
+//#endregion ユーティリティ

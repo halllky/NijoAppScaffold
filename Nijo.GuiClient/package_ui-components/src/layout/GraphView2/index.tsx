@@ -13,6 +13,7 @@ export const GraphView2 = forwardRef<GraphViewRef, GraphViewProps>((props, ref) 
     toggleNodesLocked,
     getViewState,
     selectAll,
+    panToNode,
     getSelectedNodes,
     getSelectedEdges,
   } = useGraphView2(props);
@@ -24,8 +25,9 @@ export const GraphView2 = forwardRef<GraphViewRef, GraphViewProps>((props, ref) 
     toggleNodesLocked,
     getViewState,
     selectAll,
+    panToNode,
     reset,
-  }), [nodesLocked, toggleNodesLocked, getViewState, selectAll, reset, getSelectedNodes, getSelectedEdges]);
+  }), [nodesLocked, toggleNodesLocked, getViewState, selectAll, panToNode, reset, getSelectedNodes, getSelectedEdges]);
 
   return (
     <div

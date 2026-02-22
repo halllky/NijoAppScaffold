@@ -7,6 +7,7 @@ import { NodeMetadata, useDiagramDataSet } from "./useDiagramDataSet";
 import { useDiagramPanZoomSaving } from "./useDiagramPanZoomSaving";
 
 export type DiagramRef = {
+  graphViewRef: React.RefObject<GraphView2.GraphViewRef | null>
   getGraphDataSet: () => AppSchemaDefinitionGraphDataSet
 }
 
@@ -42,8 +43,11 @@ export function Diagram(props: {
     props.onSelectedRootAggregateChanged(meta.rootAggregateUniqueId)
   })
 
-  // 画面全体のデータ保存時のレイアウト保存
+  // ref
   React.useImperativeHandle(props.diagramRef, () => ({
+    graphViewRef,
+
+    // 画面全体のデータ保存時のレイアウト保存
     getGraphDataSet: () => {
       if (!graphViewRef.current) throw new Error("GraphViewRef is not available")
       return {

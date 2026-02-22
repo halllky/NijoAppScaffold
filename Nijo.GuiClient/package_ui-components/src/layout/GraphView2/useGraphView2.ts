@@ -8,6 +8,7 @@ export interface UseGraphView2Result {
   cy: cytoscape.Core | undefined;
   containerRef: (divElement: HTMLElement | null) => void;
   selectAll: () => void;
+  panToNode: (nodeId: string) => void;
   reset: () => void;
   nodesLocked: boolean;
   toggleNodesLocked: () => void;
@@ -273,6 +274,18 @@ export const useGraphView2 = (props: GraphViewProps): UseGraphView2Result => {
     cy?.nodes().select()
   }, [cy])
 
+  const panToNode = useCallback((nodeId: string) => {
+    if (!cy) return
+    const target = cy.getElementById(nodeId)
+    if (target.length === 0) return
+
+    cy.animate({
+      center: { eles: target },
+      duration: 300,
+      easing: 'ease-in-out-cubic',
+    })
+  }, [cy])
+
   const [nodesLocked, setNodesLocked] = useState(false)
   const toggleNodesLocked = useCallback(() => {
     if (!cy) return
@@ -314,6 +327,7 @@ export const useGraphView2 = (props: GraphViewProps): UseGraphView2Result => {
     cy,
     containerRef,
     selectAll,
+    panToNode,
     reset,
     nodesLocked,
     toggleNodesLocked,

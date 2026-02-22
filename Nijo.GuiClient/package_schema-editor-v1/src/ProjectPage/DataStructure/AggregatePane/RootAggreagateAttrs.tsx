@@ -5,7 +5,7 @@ import { ApplicationState, ATTR_TYPE, isAttributeAvailable } from "../../../type
 /**
  * ルート集約の属性（コメント + 既定の属性 + カスタム属性）
  */
-export default function ({ selectedRootAggregateIndex, formMethods: { getValues, control, register }, className }: {
+export default function RootAggregateAttrs({ selectedRootAggregateIndex, formMethods: { getValues, control, register }, className }: {
   selectedRootAggregateIndex: number
   formMethods: ReactHookForm.UseFormReturn<ApplicationState>
   className?: string
@@ -18,6 +18,8 @@ export default function ({ selectedRootAggregateIndex, formMethods: { getValues,
   const rootElement = ReactHookForm.useWatch({ name: rootElementPath, control })
   const rootModelType = rootElement?.attributes?.[ATTR_TYPE]
 
+  const getMentionSuggestions = UI.useMentionSuggestions(getValues)
+
   return (
     <div className={`flex flex-col gap-1 ${className ?? ''}`}>
 
@@ -27,9 +29,9 @@ export default function ({ selectedRootAggregateIndex, formMethods: { getValues,
         name={`${rootElementPath}.comment`}
         render={({ field }) => (
           <div className="max-h-64 overflow-auto border border-gray-700 px-1 bg-white">
-            <UI.Mention
-              getValues={getValues}
+            <UI.MentionableTextarea
               {...field}
+              getSuggestions={getMentionSuggestions}
               className="w-full"
               placeholder="コメントを入力..."
             />

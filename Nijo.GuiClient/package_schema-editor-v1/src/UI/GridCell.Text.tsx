@@ -1,10 +1,11 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
-import { MentionBaseReadOnly } from "./MentionBase"
-import { Mention } from "./Mention"
+import { MentionableTextarea, MentionableTextareaReadOnly } from "./Mention"
 import { useFieldValidationError } from "../ProjectPage/useValidation"
 import { ApplicationState } from "../types"
+import { useMentionSuggestions } from "./useMentionSuggestions"
+import { JumpToElementContext } from "../ProjectPage/useJumpToElement"
 
 export type CreateTextCellFunction = <TRow>(
   header: string,
@@ -35,7 +36,7 @@ export function createTextCellHelper(
 
   return (header, key, options) => ({
     editor: options?.mentionAvailable
-      ? CommentCellEditor
+      ? MentionableCellEditor
       : TextCellEditor,
     renderHeader: () => (
       <div className="px-1 py-px truncate text-sm text-gray-700">
@@ -44,19 +45,18 @@ export function createTextCellHelper(
     ),
     renderBody: ({ context }) => {
       const fieldRowIndex = skipFirstRow ? context.row.index + 1 : context.row.index
-      const value: string | null | undefined = ReactHookForm.useWatch({
-        control,
-        name: `${arrayName}.${fieldRowIndex}.${key}`,
-      })
+      const value: string | null | undefined = ReactHookForm.useWatch({ name: `${arrayName}.${fieldRowIndex}.${key}`, control })
       const { hasError, errorMessages } = useFieldValidationError(options?.validationErrorSettings?.[0]?.(context.row.original), options?.validationErrorSettings?.[1])
+      const jumpToElement = React.useContext(JumpToElementContext)
 
       return options?.mentionAvailable ? (
-        <MentionBaseReadOnly
+        <MentionableTextareaReadOnly
           title={errorMessages.join('\n')}
+          onClickMention={part => jumpToElement?.(part.targetId)}
           className={`w-full px-1 ${options?.wrap ? 'whitespace-pre-wrap' : 'truncate'} ${hasError ? 'bg-amber-300/50' : ''}`}
         >
           {value ?? undefined}
-        </MentionBaseReadOnly>
+        </MentionableTextareaReadOnly>
       ) : (
         <div
           title={errorMessages.join('\n')}
@@ -142,20 +142,21 @@ export const TextCellEditor: EG2.EditableGridCellEditor = React.forwardRef(funct
 /**
  * メンション使用可能な列のセルエディタ
  */
-export const CommentCellEditor: EG2.EditableGridCellEditor = React.forwardRef(({
+export const MentionableCellEditor: EG2.EditableGridCellEditor = React.forwardRef(({
   requestCancel,
   requestCommit,
   style,
 }, ref) => {
 
   const { getValues } = ReactHookForm.useFormContext<ApplicationState>()
+  const getMentionSuggestions = useMentionSuggestions(getValues)
 
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const [value, setValue] = React.useState('');
 
   React.useImperativeHandle(ref, () => ({
     getCurrentValue: () => {
-      return textareaRef.current?.value ?? value
+      return value
     },
     setValueAndSelectAll: (value, timing) => {
       setValue(value)
@@ -166,24 +167,25 @@ export const CommentCellEditor: EG2.EditableGridCellEditor = React.forwardRef(({
     getDomElement: () => textareaRef.current,
   }))
 
-  const handleKeyDown: React.KeyboardEventHandler<HTMLTextAreaElement> = React.useCallback(e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+  const handleKeyDown: React.KeyboardEventHandler<HTMLTextAreaElement> = e => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault()
-      requestCommit((e.target as HTMLTextAreaElement).value)
+      requestCommit(value)
     } else if (e.key === 'Escape') {
       e.preventDefault()
       requestCancel()
     }
-  }, [requestCancel, requestCommit])
+  }
 
   return (
-    <Mention
-      getValues={getValues}
+    <MentionableTextarea
+      getSuggestions={getMentionSuggestions}
       ref={textareaRef}
       value={value ?? ''}
-      onChange={newValue => setValue(newValue)}
+      onChange={setValue}
       onKeyDown={handleKeyDown}
       style={style}
+      className="bg-white border border-gray-700 [&_textarea]:px-[3px] mt-[-1px]"
     />
   )
 })

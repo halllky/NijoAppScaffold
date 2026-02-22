@@ -77,6 +77,8 @@ export interface GraphViewRef {
   };
   /** 全選択 */
   selectAll: () => void;
+  /** 指定したIDのノードを表示領域の中央に移動 */
+  panToNode: (nodeId: string) => void;
   /** 初期状態にリセット (ここでは何もしないか、単純な再描画) */
   reset: () => void;
 }

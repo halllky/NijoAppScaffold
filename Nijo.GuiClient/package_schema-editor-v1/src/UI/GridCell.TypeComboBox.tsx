@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useImperativeHandle } from "react"
+import { createPortal } from "react-dom"
 import * as ReactHookForm from "react-hook-form"
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
 import { useSchemaCandidates } from "../ProjectPage/SchemaCandidatesContext"
@@ -110,7 +111,7 @@ const TypeComboEditor: EG2.EditableGridCellEditor = React.forwardRef((props, ref
 
   // ドロップダウンの状態
   const [selectedIndex, setSelectedIndex] = useState(-1)
-  const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom')
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({})
 
   // 外部からの制御
   useImperativeHandle(ref, () => ({
@@ -144,12 +145,24 @@ const TypeComboEditor: EG2.EditableGridCellEditor = React.forwardRef((props, ref
       const spaceBelow = windowHeight - rect.bottom
       const spaceAbove = rect.top
 
+      const newStyle: React.CSSProperties = {
+        position: 'fixed',
+        left: rect.left,
+        minWidth: '320px',
+        maxWidth: window.innerWidth - rect.left - 10,
+        zIndex: 9999,
+      }
+
       // 下が狭くて上が広いなら上に出す (AsyncComboBoxのロジック参考)
       if (spaceBelow < 250 && spaceAbove > spaceBelow) {
-        setDropdownPosition('top')
+        newStyle.bottom = windowHeight - rect.top + 4
+        newStyle.maxHeight = Math.min(spaceAbove - 10, 240) // max-h-60 相当
       } else {
-        setDropdownPosition('bottom')
+        newStyle.top = rect.bottom + 4
+        newStyle.maxHeight = Math.min(spaceBelow - 10, 240) // max-h-60 相当
       }
+
+      setDropdownStyle(newStyle)
     }
   }, [props.isEditing, filteredItems.length])
 
@@ -208,11 +221,11 @@ const TypeComboEditor: EG2.EditableGridCellEditor = React.forwardRef((props, ref
         className="w-full max-h-full px-[3px] border border-gray-700 outline-none bg-white"
       />
 
-      {props.isEditing && (
+      {props.isEditing && createPortal(
         <ul
           ref={listRef}
-          className={`absolute z-50 w-full min-w-[320px] bg-white border border-gray-700 max-h-60 overflow-auto shadow-lg list-none p-0 m-0 text-left ${dropdownPosition === 'top' ? 'bottom-full mb-1' : 'mt-1'
-            }`}
+          style={dropdownStyle}
+          className="fixed bg-white border border-gray-700 overflow-auto shadow-lg list-none p-0 m-0 text-left"
         >
           {isLoading && filteredItems.length === 0 && (
             <li className="p-2 text-gray-500 text-sm">検索中...</li>
@@ -238,7 +251,8 @@ const TypeComboEditor: EG2.EditableGridCellEditor = React.forwardRef((props, ref
               )}
             </li>
           ))}
-        </ul>
+        </ul>,
+        document.body
       )}
     </div>
   )

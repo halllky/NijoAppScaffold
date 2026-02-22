@@ -11,7 +11,7 @@ import { UUID } from "uuidjs";
 import { PlusIcon } from "@heroicons/react/24/solid";
 
 export type DataStructureTabRef = {
-  selectRootAggregate: (rootAggregateId: string | null) => void
+  selectRootAggregate: (rootOrDescendantXmlElementUniqueId: string | undefined | null) => void
 }
 
 /**
@@ -20,7 +20,7 @@ export type DataStructureTabRef = {
  * スキーマ定義の有向グラフを表示する。
  * 特定のルート集約が選択されている場合はその集約の編集ペインを表示する。
  */
-export default function ({ visible, formMethods, dataStructureRef, diagramRef }: {
+export default function DataStructureTab({ visible, formMethods, dataStructureRef, diagramRef }: {
   visible: boolean
   formMethods: ReactHookForm.UseFormReturn<ApplicationState>
   dataStructureRef: React.RefObject<DataStructureTabRef | null>
@@ -28,26 +28,45 @@ export default function ({ visible, formMethods, dataStructureRef, diagramRef }:
 }) {
 
   const watchedXmlElementTrees = ReactHookForm.useWatch({ name: "xmlElementTrees", control: formMethods.control })
+  const watchedXmlElementTreesRef = React.useRef(watchedXmlElementTrees)
+  watchedXmlElementTreesRef.current = watchedXmlElementTrees
 
   // 個人設定
   const { personalSettings, save: savePersonalSettings } = usePersonalSettings()
 
   // 選択中のルート集約
   const [selectedRootAggregateIndex, setSelectedRootAggregateIndex] = React.useState<number | undefined>(undefined);
-  const selectRootAggregate = (aggregateId: string | null) => {
-    if (aggregateId === null) {
+  const selectRootAggregate = (rootOrDescendantXmlElementUniqueId: string | undefined | null, scroll: boolean) => {
+    if (!rootOrDescendantXmlElementUniqueId) {
       setSelectedRootAggregateIndex(undefined)
       setAggPaneVisible(false)
       return;
     }
-    const index = watchedXmlElementTrees?.findIndex(tree => tree.xmlElements?.[0]?.uniqueId === aggregateId)
+
+    // ルート集約編集ペインの表示
+    const index = watchedXmlElementTrees?.findIndex(tree => tree.xmlElements?.some(el => el.uniqueId === rootOrDescendantXmlElementUniqueId))
     if (index === undefined || index === -1) return;
     setSelectedRootAggregateIndex(index)
     setAggPaneVisible(true)
+
+    // ダイアグラムで当該ノードを選択して表示領域の中央に移動する。
+    // 詳細ペインの表示でダイアグラムの中心座標が変わるので少し待つ。
+    // またルート集約の新規作成のタイミングでのフォーカスだとまだ配列中に存在しないので待機後にルート集約をとりなおす
+    if (scroll) {
+      window.setTimeout(() => {
+        if (!diagramRef.current?.graphViewRef.current) return;
+        const rootUniqueId = watchedXmlElementTreesRef.current
+          ?.find(tree => tree.xmlElements?.some(el => el.uniqueId === rootOrDescendantXmlElementUniqueId))
+          ?.xmlElements?.[0].uniqueId
+        if (!rootUniqueId) return;
+
+        diagramRef.current.graphViewRef.current.panToNode(rootUniqueId)
+      }, 300)
+    }
   }
   React.useImperativeHandle(dataStructureRef, () => ({
-    selectRootAggregate,
-  }), [])
+    selectRootAggregate: id => selectRootAggregate(id, true),
+  }))
 
   // 選択中のルート集約を画面右側に表示する
   const [aggPaneVisible, setAggPaneVisible] = React.useState(false)
@@ -75,7 +94,7 @@ export default function ({ visible, formMethods, dataStructureRef, diagramRef }:
     // 新規作成したルート集約を選択状態にする
     // レンダリングを待つためにsetTimeoutを入れる
     setTimeout(() => {
-      selectRootAggregate(newRoot.xmlElements[0].uniqueId)
+      selectRootAggregate(newRoot.xmlElements[0].uniqueId, true)
       setSelectedRootAggregateIndex(watchedXmlElementTrees.length) // append後の長さはlength+1なのでindexはlengthになる
       setAggPaneVisible(true)
     }, 0)
@@ -102,7 +121,7 @@ export default function ({ visible, formMethods, dataStructureRef, diagramRef }:
       <Allotment.Pane priority={LayoutPriority.High}>
         <Diagram
           formMethods={formMethods}
-          onSelectedRootAggregateChanged={selectRootAggregate}
+          onSelectedRootAggregateChanged={id => selectRootAggregate(id, false)}
           diagramRef={diagramRef}
           className="h-full w-full"
         >
