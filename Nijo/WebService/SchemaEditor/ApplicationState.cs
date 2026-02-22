@@ -69,7 +69,7 @@ public class ApplicationState {
 
         for (int i = 0; i < XmlElementTrees.Count; i++) {
             var aggregateTree = XmlElementTrees[i];
-            var logName = aggregateTree.XmlElements.Count > 0
+            var logName = aggregateTree.XmlElements.Count > 0 && !string.IsNullOrWhiteSpace(aggregateTree.XmlElements[0].LocalName)
                 ? $"{aggregateTree.XmlElements[0].LocalName}のツリー"
                 : $"第{i + 1}番目の集約ツリー";
             if (XmlElementItem.TryConvertToRootAggregateXElement(

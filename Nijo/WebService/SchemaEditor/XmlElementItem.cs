@@ -89,7 +89,8 @@ public class XmlElementItem {
             var item = items[i];
 
             // XElementへの変換
-            if (item.LocalName == null) {
+            var trimmedLocalName = item.LocalName?.Trim();
+            if (string.IsNullOrWhiteSpace(trimmedLocalName)) {
                 logError($"{i + 1}番目の要素の名前が空です");
                 rootAggregate = null;
                 commentToRootAggregate = null;
@@ -99,7 +100,8 @@ public class XmlElementItem {
             XElement xElement;
             try {
                 xComment = string.IsNullOrWhiteSpace(item.Comment) ? null : new XComment(item.Comment);
-                xElement = new XElement(item.LocalName);
+                xElement = new XElement(trimmedLocalName);
+
                 onXmlElementCreated(xElement, item);
             } catch (XmlException ex) {
                 logError($"XML要素として不正です: {ex.Message}");
