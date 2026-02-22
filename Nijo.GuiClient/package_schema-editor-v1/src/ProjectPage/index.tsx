@@ -24,7 +24,7 @@ import { useValidationErrorMessages, ValidationContextProvider, ValidationResult
  *
  * フッターではスキーマ定義で発生しているエラー情報の表示を行う。
  */
-export default function ({ defaultValues }: {
+export default function ProjectPage({ defaultValues }: {
   defaultValues: ApplicationState
 }) {
 

@@ -56,15 +56,14 @@ export function useFieldArrayForEditableGrid2<
       : fieldArrayReturn.fields
   }, [fieldArrayReturn.fields, skipFirstRow])
 
-  const getColumns = React.useCallback(() => {
-    return getColumnDef(helper)
-  }, [helper, ...getColumnDefDependencies])
-
   // EditableGrid2 の props
   const editableGrid2Props: EditableGrid2Props<TRow> & { ref: React.RefObject<EditableGrid2Ref<TRow> | null> } = {
     ref: gridRef,
     data,
-    columns: [getColumns, [getColumns]],
+    columns: [
+      () => getColumnDef(helper),
+      [helper, ...getColumnDefDependencies]
+    ],
     getRowId: row => (row as Record<string, string>)[fieldArrayProps.keyName ?? "id"],
     getLatestRowObject: index => {
       return skipFirstRow
