@@ -58,6 +58,11 @@ const ValidationContextInternal = React.createContext<ValidationContextType>({
   },
 })
 
+//#endregion 内部コンテキスト
+
+
+//#region プロバイダー
+
 export function ValidationContextProvider(props: {
   watch: ReactHookForm.UseFormWatch<ApplicationState>
   children?: React.ReactNode
@@ -67,10 +72,11 @@ export function ValidationContextProvider(props: {
   const [isTriggered, setIsTriggered] = React.useState(false)
   const watchedValuesRef = React.useRef<ReactHookForm.DeepPartial<ApplicationState> | null>(null)
   React.useEffect(() => {
-    props.watch(values => {
+    const subscription = props.watch(values => {
       watchedValuesRef.current = values
       setIsTriggered(true)
     })
+    return () => subscription.unsubscribe()
   }, [props.watch])
 
   // 短時間で繰り返し実行するとサーバーに負担がかかるため、
@@ -178,14 +184,8 @@ export function ValidationContextProvider(props: {
   )
 }
 
-//#endregion 内部コンテキスト
-
-
-//#region プロバイダー
-
-
-
 //#endregion プロバイダー
+
 
 //#region 特定フィールドのエラー有無
 
