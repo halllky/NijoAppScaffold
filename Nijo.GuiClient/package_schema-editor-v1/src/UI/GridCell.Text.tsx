@@ -1,9 +1,10 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
-import { ReadOnlyMentionText } from "./MentionInputWrapper"
-import { SchemaDefinitionMentionTextarea } from "./Mention"
+import { MentionBaseReadOnly } from "./MentionBase"
+import { Mention } from "./Mention"
 import { useFieldValidationError } from "../ProjectPage/useValidation"
+import { ApplicationState } from "../types"
 
 export type CreateTextCellFunction = <TRow>(
   header: string,
@@ -50,12 +51,12 @@ export function createTextCellHelper(
       const { hasError, errorMessages } = useFieldValidationError(options?.validationErrorSettings?.[0]?.(context.row.original), options?.validationErrorSettings?.[1])
 
       return options?.mentionAvailable ? (
-        <ReadOnlyMentionText
+        <MentionBaseReadOnly
           title={errorMessages.join('\n')}
           className={`w-full px-1 ${options?.wrap ? 'whitespace-pre-wrap' : 'truncate'} ${hasError ? 'bg-amber-300/50' : ''}`}
         >
           {value ?? undefined}
-        </ReadOnlyMentionText>
+        </MentionBaseReadOnly>
       ) : (
         <div
           title={errorMessages.join('\n')}
@@ -147,6 +148,8 @@ export const CommentCellEditor: EG2.EditableGridCellEditor = React.forwardRef(({
   style,
 }, ref) => {
 
+  const { getValues } = ReactHookForm.useFormContext<ApplicationState>()
+
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const [value, setValue] = React.useState('');
 
@@ -174,7 +177,8 @@ export const CommentCellEditor: EG2.EditableGridCellEditor = React.forwardRef(({
   }, [requestCancel, requestCommit])
 
   return (
-    <SchemaDefinitionMentionTextarea
+    <Mention
+      getValues={getValues}
       ref={textareaRef}
       value={value ?? ''}
       onChange={newValue => setValue(newValue)}

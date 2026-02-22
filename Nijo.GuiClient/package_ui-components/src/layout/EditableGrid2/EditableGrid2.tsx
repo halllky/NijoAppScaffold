@@ -250,6 +250,7 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
         ref={editorRef}
         isGridActive={isGridActive}
         focusedCell={focusedCell}
+        scrollContainerScrollLeft={tableContainerRef.current?.scrollLeft ?? 0}
         rowModel={rowModel}
         visibleLeafColumns={visibleLeafColumns}
         onEditingStateChanged={setIsEditing}

@@ -2,7 +2,7 @@ import React from "react";
 import * as ReactHookForm from "react-hook-form";
 import { ApplicationState, ATTR_PARAMETER, ATTR_RETURN_VALUE, ATTR_TYPE, TYPE_CHILD, TYPE_CHILDREN, TYPE_COMMAND_MODEL, TYPE_DATA_MODEL, TYPE_QUERY_MODEL, TYPE_STRUCTURE_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, TYPE_CONSTANT_MODEL, XmlElementItem, asTree } from "../../types";
 import { GraphView2 } from "@nijo/ui-components";
-import { MentionUtil } from "../../UI";
+import { parseAsMentionText } from "../../UI/MentionBase";
 import { findRefToTarget } from "../findRefToTarget";
 
 export type NodeMetadata = {
@@ -24,19 +24,9 @@ export function useDiagramDataSet(formMethods: ReactHookForm.UseFormReturn<Appli
 
     // メンション情報からターゲットIDを取得する関数
     const getMentionTargets = (element: XmlElementItem): string[] => {
-      const targets: string[] = []
-
-      // commentからメンション情報を解析
-      if (element.comment) {
-        const parts = MentionUtil.parseAsMentionText(element.comment)
-        for (const part of parts) {
-          if (part.isMention) {
-            targets.push(part.targetId)
-          }
-        }
-      }
-
-      return targets
+      return parseAsMentionText(element.comment ?? '')
+        .filter(part => part.isMention)
+        .map(part => part.targetId)
     }
 
     // 全要素のIDマップを作成（メンション解決用）

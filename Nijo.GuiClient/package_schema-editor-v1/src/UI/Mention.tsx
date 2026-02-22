@@ -1,15 +1,14 @@
 import React from "react"
-import { XmlElementItem, ATTR_TYPE, TYPE_DATA_MODEL, TYPE_COMMAND_MODEL, TYPE_QUERY_MODEL, TYPE_CHILD, TYPE_CHILDREN, ApplicationState } from "../types"
-import { MentionInputWrapper } from "./MentionInputWrapper"
-
-/** スキーマ定義データを提供するContext */
-export const MentionCellDataSourceContext = React.createContext<ApplicationState | null>(null)
+import * as ReactHookForm from "react-hook-form"
+import { XmlElementItem, ATTR_TYPE, TYPE_DATA_MODEL, TYPE_COMMAND_MODEL, TYPE_QUERY_MODEL, TYPE_CHILD, TYPE_CHILDREN, ApplicationState, TYPE_STRUCTURE_MODEL } from "../types"
+import { MentionBaseEditable } from "./MentionBase"
 
 
 /**
  * スキーマ定義編集用メンションテキストエリア
  */
-export const SchemaDefinitionMentionTextarea = React.forwardRef(({
+export const Mention = React.forwardRef(({
+  getValues,
   value,
   onChange,
   onKeyDown,
@@ -17,6 +16,7 @@ export const SchemaDefinitionMentionTextarea = React.forwardRef(({
   style,
   placeholder,
 }: {
+  getValues: ReactHookForm.UseFormGetValues<ApplicationState>
   value?: string
   onChange?: (value: string) => void
   onKeyDown?: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void
@@ -25,11 +25,10 @@ export const SchemaDefinitionMentionTextarea = React.forwardRef(({
   placeholder?: string
 }, ref: React.Ref<HTMLTextAreaElement>) => {
 
-  const schemaDefinitionData = React.useContext(MentionCellDataSourceContext)
-  const getSuggestions = useGetSuggestions(schemaDefinitionData)
+  const getSuggestions = useGetSuggestions(getValues)
 
   return (
-    <MentionInputWrapper
+    <MentionBaseEditable
       ref={ref}
       value={value}
       onChange={onChange}
@@ -46,11 +45,12 @@ export const SchemaDefinitionMentionTextarea = React.forwardRef(({
 /**
  * スキーマ定義データからメンションの候補リストを取得するカスタムフック
  */
-const useGetSuggestions = (
-  schemaDefinitionData: ApplicationState | null | undefined
-): Parameters<typeof MentionInputWrapper>[0]['getSuggestions'] => {
+function useGetSuggestions(
+  getValues: ReactHookForm.UseFormGetValues<ApplicationState>
+): Parameters<typeof MentionBaseEditable>[0]['getSuggestions'] {
 
-  return React.useCallback(async (query, callback) => {
+  return React.useCallback((query, callback) => {
+    const schemaDefinitionData = getValues()
     if (!schemaDefinitionData) {
       callback([])
       return
@@ -66,8 +66,12 @@ const useGetSuggestions = (
     const targetElements = allElements.filter(el => {
       const type = el.attributes[ATTR_TYPE]
 
-      // ルート集約（インデント0かつTypeがdata-model、query-model、command-modelのいずれか）
-      if (el.indent === 0 && (type === TYPE_DATA_MODEL || type === TYPE_QUERY_MODEL || type === TYPE_COMMAND_MODEL)) return true
+      // ルート集約
+      if (el.indent === 0
+        && (type === TYPE_DATA_MODEL
+          || type === TYPE_QUERY_MODEL
+          || type === TYPE_COMMAND_MODEL
+          || type === TYPE_STRUCTURE_MODEL)) return true
 
       // child または children
       if (type === TYPE_CHILD || type === TYPE_CHILDREN) return true
@@ -88,5 +92,5 @@ const useGetSuggestions = (
     }))
 
     callback(suggestions)
-  }, [schemaDefinitionData])
+  }, [getValues])
 }

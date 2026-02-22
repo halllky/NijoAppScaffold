@@ -5,7 +5,7 @@ import { ApplicationState, ATTR_TYPE, isAttributeAvailable } from "../../../type
 /**
  * ルート集約の属性（コメント + 既定の属性 + カスタム属性）
  */
-export default function ({ selectedRootAggregateIndex, formMethods: { control, register }, className }: {
+export default function ({ selectedRootAggregateIndex, formMethods: { getValues, control, register }, className }: {
   selectedRootAggregateIndex: number
   formMethods: ReactHookForm.UseFormReturn<ApplicationState>
   className?: string
@@ -27,7 +27,8 @@ export default function ({ selectedRootAggregateIndex, formMethods: { control, r
         name={`${rootElementPath}.comment`}
         render={({ field }) => (
           <div className="max-h-64 overflow-auto border border-gray-700 px-1 bg-white">
-            <UI.SchemaDefinitionMentionTextarea
+            <UI.Mention
+              getValues={getValues}
               {...field}
               className="w-full"
               placeholder="コメントを入力..."

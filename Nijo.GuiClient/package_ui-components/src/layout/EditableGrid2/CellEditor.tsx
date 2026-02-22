@@ -11,6 +11,8 @@ export type CellEditorProps<TRow> = {
   isGridActive: boolean
   /** useSelection で管理されているフォーカスセル */
   focusedCell: CellPosition | null
+  /** スクロールコンテナのDOM要素のscrollLeft */
+  scrollContainerScrollLeft: number
   rowModel: TanStack.RowModel<TRow>
   visibleLeafColumns: TanStack.Column<TRow, unknown>[]
   /** 編集状態が変わったときに呼ばれるコールバック */
@@ -45,6 +47,7 @@ export type CellEditorRef = {
 export const CellEditor = React.forwardRef(function CellEditor<TRow>({
   isGridActive,
   focusedCell,
+  scrollContainerScrollLeft,
   rowModel,
   visibleLeafColumns,
   onEditingStateChanged,
@@ -147,12 +150,20 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
     const right = getPixel({ position: 'right', colIndex: focusedCell.colIndex })
     const top = getPixel({ position: 'top', rowIndex: focusedCell.rowIndex })
     const bottom = getPixel({ position: 'bottom', rowIndex: focusedCell.rowIndex })
-    style.left = `${left}px`
+    const columnMeta = visibleLeafColumns[focusedCell.colIndex]?.columnDef.meta as ColumnMetadataInternal<TRow> | undefined
+
+    // 固定列の場合、セル本体は position: sticky によってスクロール位置に追従するが、
+    // セルエディタは position: absolute で配置しているため、そのままだとスクロール量の分だけ左にずれてしまう。
+    // 固定列のときだけ scrollLeft を補正として加算し、見た目上のセル位置と一致させる。
+    if (columnMeta?.isFixed) {
+      style.left = `${left + scrollContainerScrollLeft}px`
+    } else {
+      style.left = `${left}px`
+    }
     style.top = `${top}px`
 
     // wrapするセルの編集中はテキストボックスが伸縮する必要がある。
     // 編集中でないときはエディタがグリッドの下限を超えて余計なスクロールが出るのを防ぐためheight固定
-    const columnMeta = visibleLeafColumns[focusedCell.colIndex]?.columnDef.meta as ColumnMetadataInternal<TRow> | undefined
     if (edittingCell && columnMeta?.original?.wrap) {
       style.minHeight = `${bottom - top}px`
     } else {
@@ -170,7 +181,7 @@ export const CellEditor = React.forwardRef(function CellEditor<TRow>({
     }
 
     return style
-  }, [focusedCell, getPixel, edittingCell, visibleLeafColumns])
+  }, [focusedCell, getPixel, edittingCell, visibleLeafColumns, scrollContainerScrollLeft])
 
   // 移動後のセルの値をエディタにセットする
   React.useEffect(() => {
