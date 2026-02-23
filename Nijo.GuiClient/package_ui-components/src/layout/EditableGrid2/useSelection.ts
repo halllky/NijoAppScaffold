@@ -85,6 +85,7 @@ export function useSelection<TRow>(
   // 矢印キーによるセル移動
   handleKeyDown.current = e => {
     if (!focusedCell) return
+    if (e.altKey || e.metaKey) return // Alt, Meta キーはセル種別特有のイベント（ドロップダウンのメニュー展開など）が多いのでここでは処理しない
     if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return
 
     e.preventDefault()
