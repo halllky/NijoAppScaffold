@@ -4,10 +4,11 @@ import * as ReactRouter from "react-router-dom"
 import * as Icon from "@heroicons/react/24/solid"
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
 import { UUID } from "uuidjs"
-import { ApplicationState, ATTR_TYPE, isAttributeAvailable, XmlElementItem } from "../../../types"
+import { ApplicationState, ATTR_TYPE, isAttributeAvailable, XmlElementItem, TYPE_DATA_MODEL, ATTR_UNIQUE_CONSTRAINTS } from "../../../types"
 import * as UI from '../../../UI'
 import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../../../routing"
 import { usePersonalSettings } from "../../../PersonalSettings"
+import { useUniqueConstraintsColumns } from "./useUniqueConstraintColumns"
 
 /**
  * 子孫集約編集グリッド
@@ -34,6 +35,8 @@ export function DecsendantsGrid(props: {
 
   const [searchParams] = ReactRouter.useSearchParams()
   const projectDir = searchParams.get(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR)
+
+  const { uniqueConstraintColumns } = useUniqueConstraintsColumns(control, getValues, setValue, selectedRootAggregateIndex, true)
 
   const {
     fieldArrayReturn: { insert, remove, move, update },
@@ -68,7 +71,10 @@ export function DecsendantsGrid(props: {
       if (attrDef.attributeName === ATTR_TYPE) continue;
       if (!rootModelType || !isAttributeAvailable(attrDef, rootModelType, false)) continue;
 
-      if (attrDef.type === 'EnumSelect') {
+      if (attrDef.attributeName === ATTR_UNIQUE_CONSTRAINTS) {
+        columns.push(uniqueConstraintColumns)
+
+      } else if (attrDef.type === 'EnumSelect') {
         const ddlOptions = attrDef
           .typeEnumValues
           .map(opt => ({ value: opt, text: opt }))
@@ -115,7 +121,7 @@ export function DecsendantsGrid(props: {
     }
 
     return columns
-  }, [attributeDefs, rootModelType, customAttributes, projectDir, getValues])
+  }, [attributeDefs, rootModelType, customAttributes, projectDir, getValues, uniqueConstraintColumns, selectedRootAggregateIndex, setValue])
 
   // Handlers
   const handleInsertRow = () => {

@@ -12,7 +12,7 @@ using System.Xml.XPath;
 namespace Nijo.ImmutableSchema {
     /// <summary>
     /// モデルの集約。
-    /// 集約ルート, Child, Children, VariationItem のいずれか。
+    /// 集約ルート, Child, Children のいずれか。
     /// </summary>
     public abstract class AggregateBase : ISchemaPathNode {
 
@@ -112,6 +112,78 @@ namespace Nijo.ImmutableSchema {
                 }
             }
         }
+
+        #region ユニーク制約
+        /// <summary>
+        /// この集約に定義されているユニーク制約を列挙します。
+        /// </summary>
+        public IEnumerable<UniqueConstraint> GetUniqueConstraints() {
+            var attr = XElement.Attribute(BasicNodeOptions.UniqueConstraints.AttributeName)?.Value;
+            if (string.IsNullOrWhiteSpace(attr)) yield break;
+
+            var membersByUniqueId = GetMembers()
+                .Where(m => m is ValueMember or RefToMember)
+                .Select(m => new {
+                    Member = m,
+                    Id = m switch {
+                        ValueMember vm => vm.XElement.Attribute(SchemaParseContext.ATTR_UNIQUE_ID)?.Value,
+                        RefToMember rt => rt.XElement.Attribute(SchemaParseContext.ATTR_UNIQUE_ID)?.Value,
+                        _ => null,
+                    },
+                })
+                .Where(x => !string.IsNullOrWhiteSpace(x.Id))
+                .GroupBy(x => x.Id!, StringComparer.Ordinal)
+                .ToDictionary(g => g.Key, g => g.First().Member, StringComparer.Ordinal);
+
+            var constraintTexts = attr
+                .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            foreach (var constraintText in constraintTexts) {
+                var ids = constraintText
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .ToArray();
+
+                if (ids.Length == 0) continue;
+
+                var resolvedMembers = new List<IAggregateMember>(ids.Length);
+                var missing = false;
+
+                foreach (var id in ids) {
+                    if (!membersByUniqueId.TryGetValue(id, out var member)) {
+                        missing = true;
+                        break;
+                    }
+                    resolvedMembers.Add(member);
+                }
+
+                if (missing || resolvedMembers.Count != ids.Length) continue;
+
+                yield return new UniqueConstraint(this, resolvedMembers, ids);
+            }
+        }
+
+        /// <summary>ユニーク制約定義の不変情報</summary>
+        public sealed class UniqueConstraint {
+            internal UniqueConstraint(AggregateBase aggregate, IReadOnlyList<IAggregateMember> members, IReadOnlyList<string> uniqueIds) {
+                Aggregate = aggregate;
+                Members = members;
+                UniqueIds = uniqueIds;
+                CanonicalKey = string.Join(",", uniqueIds.OrderBy(id => id, StringComparer.Ordinal));
+            }
+
+            public AggregateBase Aggregate { get; }
+            public IReadOnlyList<IAggregateMember> Members { get; }
+            public IReadOnlyList<string> UniqueIds { get; }
+            public string CanonicalKey { get; }
+
+            /// <summary>
+            /// この制約が引数の参照のみから構成されているかどうか。
+            /// </summary>
+            public bool IsSingleRefTo(RefToMember refTo) {
+                return Members.Count == 1 && ReferenceEquals(Members[0], refTo);
+            }
+        }
+        #endregion ユニーク制約
 
 
         #region 親子

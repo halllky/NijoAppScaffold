@@ -153,11 +153,17 @@ internal abstract class NavigationProperty {
         public NavigationOfRef(RefToMember relation) {
             Relation = relation;
 
+            var hasUniqueConstraintOnlyForThisRef = relation.Owner
+                .GetUniqueConstraints()
+                .Any(c => c.IsSingleRefTo(relation));
+            var isOneToOne = hasUniqueConstraintOnlyForThisRef
+                || relation.RefTo.IsSingleKeyOf(relation.Owner);
+
             Principal = new() {
                 NavigationProperty = this,
                 ThisSide = relation.RefTo,
                 OtherSide = relation.Owner,
-                OtherSideIsMany = !relation.RefTo.IsSingleKeyOf(relation.Owner),
+                OtherSideIsMany = !isOneToOne,
                 OtherSidePhysicalName = $"RefFrom{relation.Owner.PhysicalName}_{relation.PhysicalName}",
             };
             Relevant = new() {

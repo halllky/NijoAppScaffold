@@ -70,6 +70,7 @@ public class SchemaParseRule {
             BasicNodeOptions.IsNotNull,
             BasicNodeOptions.GenerateDefaultQueryModel,
             BasicNodeOptions.GenerateBatchUpdateCommand,
+            BasicNodeOptions.UniqueConstraints,
             BasicNodeOptions.MapToView,
             BasicNodeOptions.OnlySearchCondition,
             BasicNodeOptions.Parameter,

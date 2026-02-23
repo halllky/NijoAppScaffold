@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Nijo.CodeGenerating;
+using Nijo.ImmutableSchema;
 using Nijo.ValueMemberTypes;
 using System;
 using System.Collections.Generic;
@@ -19,6 +20,14 @@ internal static class EFCoreOnModelCreating {
         var keys = columns
             .Where(col => col.IsKey)
             .ToArray();
+        var uniqueConstraints = entity.Aggregate.GetUniqueConstraints().ToArray();
+        var uniqueIndexes = uniqueConstraints
+            .Select(c => new {
+                Constraint = c,
+                Columns = ResolveUniqueColumns(c, columns).ToArray(),
+            })
+            .Where(x => x.Columns.Length > 0)
+            .ToArray();
 
         var navigations = entity.GetNavigationProperties().ToArray();
         var navigationsForDeclaring = navigations
@@ -36,6 +45,36 @@ internal static class EFCoreOnModelCreating {
 
         var rootAggregate = entity.Aggregate.GetRoot();
         var isView = rootAggregate.IsView;
+
+        static IEnumerable<string> ResolveUniqueColumns(AggregateBase.UniqueConstraint constraint, EFCoreEntity.EFCoreEntityColumn[] cols) {
+            var result = new List<string>();
+
+            foreach (var member in constraint.Members) {
+                switch (member) {
+                    case ValueMember vm:
+                        var ownColumn = cols
+                            .OfType<EFCoreEntity.OwnColumnMember>()
+                            .FirstOrDefault(c => c.Member == vm);
+                        if (ownColumn == null) return Array.Empty<string>();
+                        result.Add(ownColumn.PhysicalName);
+                        break;
+
+                    case RefToMember refTo:
+                        var fkColumns = cols
+                            .OfType<EFCoreEntity.RefKeyMember>()
+                            .Where(c => c.RefEntry == refTo)
+                            .ToArray();
+                        if (fkColumns.Length == 0) return Array.Empty<string>();
+                        result.AddRange(fkColumns.Select(c => c.PhysicalName));
+                        break;
+
+                    default:
+                        return Array.Empty<string>();
+                }
+            }
+
+            return result.Distinct(StringComparer.Ordinal);
+        }
 
         return $$"""
             /// <summary>
@@ -102,6 +141,18 @@ internal static class EFCoreOnModelCreating {
                         .IsRequired(true)
                         .IsConcurrencyToken(true)
                         .HasColumnOrder({{columns.Length + 4}});
+            """)}}
+            {{If(uniqueIndexes.Length > 0, () => $$"""
+
+                    // ユニーク制約
+            {{uniqueIndexes.SelectTextTemplate(idx => $$"""
+                    entity.HasIndex(e => new {
+            {{idx.Columns.SelectTextTemplate(col => $$"""
+                        e.{{col}},
+            """)}}
+                    })
+                    .IsUnique();
+            """)}}
             """)}}
             {{navigationsForConfiguringChildren.SelectTextTemplate(nav => $$"""
 

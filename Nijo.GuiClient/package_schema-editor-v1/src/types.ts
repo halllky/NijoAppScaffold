@@ -151,6 +151,7 @@ export const ATTR_TYPE = 'Type' as XmlElementAttributeName
 export const ATTR_GENERATE_DEFAULT_QUERY_MODEL = 'GenerateDefaultQueryModel' as XmlElementAttributeName
 export const ATTR_GENERATE_BATCH_UPDATE_COMMAND = 'GenerateBatchUpdateCommand' as XmlElementAttributeName
 export const ATTR_IS_KEY = 'IsKey' as XmlElementAttributeName
+export const ATTR_UNIQUE_CONSTRAINTS = 'UniqueConstraints' as XmlElementAttributeName
 export const ATTR_DISPLAY_NAME = 'DisplayName' as XmlElementAttributeName
 export const ATTR_STATIC_ENUM_VALUE = 'Key' as XmlElementAttributeName
 export const ATTR_PARAMETER = 'Parameter' as XmlElementAttributeName
