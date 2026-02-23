@@ -45,7 +45,15 @@ public abstract class ValidatorBase {
         public required string Comment { get; init; }
     }
     #endregion 追加の引数
+
     #region バリデーション式本体
+    /// <summary>
+    /// メソッドの先頭で何かしらの変数を宣言したりするのに使用
+    /// </summary>
+    protected virtual IEnumerable<string> RenderMethodHead() {
+        yield break;
+    }
+
     /// <summary>
     /// 項目単位の妥当性チェック処理のif文の中の式を表す情報を返します。
     /// null を返した場合、当該項目はチェック対象となりません。
@@ -53,6 +61,15 @@ public abstract class ValidatorBase {
     /// <param name="vm">チェック対象の項目</param>
     /// <param name="prop">メソッド引数から該当のプロパティまでの経路情報をもったオブジェクト</param>
     protected abstract ValidateStatement? GetIfStatement(ValueMember vm, IInstanceProperty prop, CodeRenderingContext ctx);
+
+    /// <summary>
+    /// 項目単位の妥当性チェック処理を複数返す場合に使用します。
+    /// デフォルトでは <see cref="GetIfStatement(ValueMember, IInstanceProperty, CodeRenderingContext)"/> の結果のみを返します。
+    /// </summary>
+    protected virtual IEnumerable<ValidateStatement> GetIfStatements(ValueMember vm, IInstanceProperty prop, CodeRenderingContext ctx) {
+        var stmt = GetIfStatement(vm, prop, ctx);
+        if (stmt != null) yield return stmt;
+    }
 
     /// <summary>
     /// 参照項目の妥当性チェック処理のif文の中の式を表す情報を返します。
@@ -63,18 +80,35 @@ public abstract class ValidatorBase {
     protected virtual ValidateStatement? GetIfStatement(RefToMember refTo, IEnumerable<IInstanceProperty> fkProps, CodeRenderingContext ctx) => null;
 
     /// <summary>
+    /// 参照項目の妥当性チェック処理を複数返す場合に使用します。
+    /// デフォルトでは <see cref="GetIfStatement(RefToMember, IEnumerable{IInstanceProperty}, CodeRenderingContext)"/> の結果のみを返します。
+    /// </summary>
+    protected virtual IEnumerable<ValidateStatement> GetIfStatements(RefToMember refTo, IEnumerable<IInstanceProperty> fkProps, CodeRenderingContext ctx) {
+        var stmt = GetIfStatement(refTo, fkProps, ctx);
+        if (stmt != null) yield return stmt;
+    }
+
+    /// <summary>
     /// 妥当性チェックの条件を表す情報
     /// </summary>
     protected class ValidateStatement {
         /// <summary>
         /// if () の中の式。 true の場合にエラーとなるようなソースコードを指定します。
         /// </summary>
-        public required string If { get; init; }
+        public string? If { get; init; }
+        /// <summary>
+        /// <see cref="If"/> をメッセージのアクセサ（例: messages.Foo[0].Bar）を受け取って動的に生成する場合に使用。
+        /// </summary>
+        public Func<string, string>? IfFactory { get; init; }
         /// <summary>
         /// エラーメッセージのレンダリング。
         /// <see cref="Parts.Common.MsgFactory.MSG"/>.メッセージID("パラメータ") の形で返してください。
         /// </summary>
-        public required string RenderErrorMessage { get; init; }
+        public string? RenderErrorMessage { get; init; }
+        /// <summary>
+        /// <see cref="RenderErrorMessage"/> をメッセージのアクセサ（例: messages.Foo[0].Bar）を受け取って動的に生成する場合に使用。
+        /// </summary>
+        public Func<string, string>? RenderErrorMessageFactory { get; init; }
     }
     #endregion バリデーション式本体
 
@@ -102,6 +136,9 @@ public abstract class ValidatorBase {
             {{If(body.Length == 0, () => $$"""
                 // 対象項目なし
             """).Else(() => $$"""
+            {{RenderMethodHead().SelectTextTemplate(source => $$"""
+                {{WithIndent(source, "    ")}}
+            """)}}
                 {{WithIndent(RenderAggregate(efCoreEntity, arg, ["messages"]), "    ")}}
             """)}}
             }
@@ -132,40 +169,49 @@ public abstract class ValidatorBase {
 
             foreach (var member in currentEntity.Aggregate.GetMembers()) {
                 if (member is ValueMember vm) {
-                    // 判定対象の項目でなければスキップ
                     var prop = ownColumnProps[vm];
-                    var ifStatement = GetIfStatement(vm, prop, ctx);
-                    if (ifStatement == null) continue;
+                    foreach (var ifStatement in GetIfStatements(vm, prop, ctx)) {
+                        string[] errorPath = [.. ownerPath, prop.Metadata.GetPropertyName(E_CsTs.CSharp)];
+                        var messageAccessor = errorPath.Join(".");
+                        var ifExpression = ifStatement.IfFactory?.Invoke(messageAccessor)
+                            ?? ifStatement.If
+                            ?? throw new InvalidOperationException("if文の条件が設定されていません。");
+                        var renderErrorMessage = ifStatement.RenderErrorMessageFactory?.Invoke(messageAccessor)
+                            ?? ifStatement.RenderErrorMessage
+                            ?? throw new InvalidOperationException("エラーメッセージが設定されていません。");
 
-                    string[] errorPath = [.. ownerPath, prop.Metadata.GetPropertyName(E_CsTs.CSharp)];
-
-                    yield return $$"""
-                        // {{vm.DisplayName}}
-                        if ({{WithIndent(ifStatement.If, "    ")}}) {
-                            {{errorPath.Join(".")}}.AddError({{ifStatement.RenderErrorMessage}});
-                        }
-                        """;
+                        yield return $$"""
+                            // {{vm.DisplayName}}
+                            if ({{WithIndent(ifExpression, "    ")}}) {
+                                {{messageAccessor}}.AddError({{renderErrorMessage}});
+                            }
+                            """;
+                    }
 
                 } else if (member is RefToMember refTo) {
                     if (!refKeyProps.TryGetValue(refTo, out var fkProps)) throw new InvalidOperationException("外部キー項目が見つかりません。");
 
-                    // 判定対象の項目でなければスキップ
-                    var ifStatement = GetIfStatement(refTo, fkProps, ctx);
-                    if (ifStatement == null) continue;
+                    foreach (var ifStatement in GetIfStatements(refTo, fkProps, ctx)) {
+                        var navProp = navProps.Values.Single(p =>
+                            ((NavigationProperty.PrincipalOrRelevant)p.Metadata).NavigationProperty is NavigationProperty.NavigationOfRef nav &&
+                            nav.Relation == refTo);
 
-                    // エラーメッセージのパスはナビゲーションプロパティを使う
-                    var navProp = navProps.Values.Single(p =>
-                        ((NavigationProperty.PrincipalOrRelevant)p.Metadata).NavigationProperty is NavigationProperty.NavigationOfRef nav &&
-                        nav.Relation == refTo);
+                        string[] errorPath = [.. ownerPath, navProp.Metadata.GetPropertyName(E_CsTs.CSharp)];
+                        var messageAccessor = errorPath.Join(".");
+                        var ifExpression = ifStatement.IfFactory?.Invoke(messageAccessor)
+                            ?? ifStatement.If
+                            ?? throw new InvalidOperationException("if文の条件が設定されていません。");
+                        var renderErrorMessage = ifStatement.RenderErrorMessageFactory?.Invoke(messageAccessor)
+                            ?? ifStatement.RenderErrorMessage
+                            ?? throw new InvalidOperationException("エラーメッセージが設定されていません。");
 
-                    string[] errorPath = [.. ownerPath, navProp.Metadata.GetPropertyName(E_CsTs.CSharp)];
-
-                    yield return $$"""
-                        // {{refTo.DisplayName}}
-                        if ({{WithIndent(ifStatement.If, "    ")}}) {
-                            {{errorPath.Join(".")}}.AddError({{ifStatement.RenderErrorMessage}});
-                        }
-                        """;
+                        yield return $$"""
+                            // {{refTo.DisplayName}}
+                            if ({{WithIndent(ifExpression, "    ")}}) {
+                                {{messageAccessor}}.AddError({{renderErrorMessage}});
+                            }
+                            """;
+                    }
                 }
             }
 

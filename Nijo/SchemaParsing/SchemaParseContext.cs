@@ -337,6 +337,14 @@ public class SchemaParseContext {
                     errorsList.Add((el, error));
                 }
             }
+
+            foreach (var attr in customAttributes.Where(a => a.IsValidation)) {
+                if (string.IsNullOrWhiteSpace(attr.PhysicalName)) continue;
+                if (!attr.PhysicalName.IsCSharpSafe()) {
+                    var el = customAttributeElements.FirstOrDefault(e => e.Name.LocalName == attr.UniqueId) ?? xDocument.Root ?? new XElement("root");
+                    errorsList.Add((el, $"カスタム属性 '{attr.PhysicalName}' の {nameof(attr.PhysicalName)} はC#の識別子として不正です。英数字とアンダースコアのみを使用し、先頭は英字またはアンダースコアにしてください。"));
+                }
+            }
         }
 
         // ルート集約の物理名の衝突チェック

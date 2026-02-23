@@ -70,6 +70,7 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
       helper.text("物理名", "physicalName", { defaultWidth: 150, renderBody: renderBodyWithValidation("physicalName") }),
       helper.text("表示名", "displayName", { defaultWidth: 150, renderBody: renderBodyWithValidation("displayName") }),
       helper.dropdown("タイプ", "type", ATTR_TYPES.map(type => ({ value: type, text: type })), { defaultWidth: 100, renderBody: renderBodyWithValidation("type") }),
+      helper.checkBox("バリデーション", "isValidation", { defaultWidth: 110 }),
       {
         renderHeader: () => "Enum値",
         defaultWidth: 200,
@@ -112,6 +113,7 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
       physicalName: '',
       displayName: '',
       type: 'String',
+      isValidation: false,
       availableModels: [
         TYPE_DATA_MODEL,
         TYPE_QUERY_MODEL,

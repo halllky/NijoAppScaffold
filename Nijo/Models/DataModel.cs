@@ -218,7 +218,7 @@ namespace Nijo.Models {
             // 処理: 自動生成されるバリデーションエラーチェック
             aggregateFile.AddAppSrvMethod($$"""
                 #region 自動生成されるバリデーション処理
-                {{GetValidators().SelectTextTemplate(validator => $$"""
+                {{GetValidators(ctx).SelectTextTemplate(validator => $$"""
                 {{validator.RenderDeclaring(rootAggregate, ctx)}}
                 """)}}
                 {{ValidateDynamicEnumType.RenderAppSrvCheckMethod(rootAggregate, ctx)}}
@@ -266,7 +266,11 @@ namespace Nijo.Models {
 
             // バリデーターチェック違反時のメッセージ
             var msgFactory = ctx.Use<MsgFactory>();
-            foreach (var validator in GetValidators()) {
+            var validatorsForMessage = GetValidators(ctx)
+                .GroupBy(v => v.MsgId)
+                .Select(g => g.First());
+
+            foreach (var validator in validatorsForMessage) {
                 msgFactory.AddMessage(
                     validator.MsgId,
                     $"入力エラー時メッセージ（{validator.CommentName}）",
@@ -277,11 +281,20 @@ namespace Nijo.Models {
         /// <summary>
         /// データモデルのバリデーターを列挙します。
         /// </summary>
-        internal static IEnumerable<ValidatorBase> GetValidators() {
+        internal static IEnumerable<ValidatorBase> GetValidators(CodeRenderingContext ctx) {
             yield return new ValidateRequired();
             yield return new ValidateMaxLength();
             yield return new ValidateCharacterType();
             yield return new ValidateDigitsAndScales();
+
+            var customValidationAttributes = NijoXmlCustomAttribute
+                .FromXDocument(ctx.SchemaParser.Document)
+                .Where(attr => attr.IsValidation
+                            && !string.IsNullOrWhiteSpace(attr.UniqueId)
+                            && !string.IsNullOrWhiteSpace(attr.PhysicalName));
+            foreach (var attr in customValidationAttributes) {
+                yield return new ValidateCustom(attr);
+            }
             // yield return new ValidateDynamicEnumType();
         }
     }

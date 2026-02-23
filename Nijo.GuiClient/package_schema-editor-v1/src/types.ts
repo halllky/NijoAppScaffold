@@ -46,6 +46,7 @@ export type NijoXmlCustomAttribute = {
   physicalName: string
   displayName: string
   comment?: string
+  isValidation: boolean
   availableModels: string[]
   type: 'Boolean' | 'Decimal' | 'Enum' | 'String'
   enumValues: string[]

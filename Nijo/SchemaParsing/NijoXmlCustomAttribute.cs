@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Xml.Linq;
+using Nijo.Util.DotnetEx;
 
 namespace Nijo.SchemaParsing;
 
@@ -25,6 +26,8 @@ public class NijoXmlCustomAttribute {
                 Comment = xElement.PreviousNode is XComment commentNode
                     ? commentNode.Value.Trim()
                     : string.Empty,
+                IsValidation = bool.TryParse(xElement.Attribute(nameof(IsValidation))?.Value, out var isValidation)
+                    && isValidation,
                 AvailableModels = xElement.Attribute(nameof(AvailableModels))?.Value
                     .Split(',')
                     .ToArray()
@@ -51,6 +54,9 @@ public class NijoXmlCustomAttribute {
         }
         if (!string.IsNullOrWhiteSpace(DisplayName)) {
             xElement.SetAttributeValue(nameof(DisplayName), DisplayName);
+        }
+        if (IsValidation) {
+            xElement.SetAttributeValue(nameof(IsValidation), "True");
         }
         if (AvailableModels.Length > 0) {
             xElement.SetAttributeValue(nameof(AvailableModels), string.Join(",", AvailableModels));
@@ -90,6 +96,13 @@ public class NijoXmlCustomAttribute {
     /// nijo.xml 上では、属性定義要素の直前にXMLコメントとして記述される。
     /// </summary>
     public string? Comment { get; set; }
+
+    /// <summary>
+    /// このカスタム属性がバリデーション用途に使用されるかどうか。
+    /// true の場合、入力検証のためのカスタムバリデーターが生成される。
+    /// </summary>
+    [JsonConverter(typeof(JsonStringBooleanConverter))]
+    public bool IsValidation { get; set; }
 
     /// <summary>
     /// このカスタム属性が使用可能なモデルのスキーマ定義上での名前の一覧。

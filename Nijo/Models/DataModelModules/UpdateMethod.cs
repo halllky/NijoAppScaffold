@@ -134,7 +134,7 @@ namespace Nijo.Models.DataModelModules {
                     afterDbEntity.{{EFCoreEntity.UPDATE_USER}} = {{ApplicationService.CURRENT_USER}};
 
                     // 更新前処理。入力検証や自動補完項目の設定を行なう。
-                {{DataModel.GetValidators().SelectTextTemplate(validator => $$"""
+                {{DataModel.GetValidators(ctx).SelectTextTemplate(validator => $$"""
                     {{validator.RenderCaller(this, _rootAggregate, "afterDbEntity", "messages")}};
                 """)}}
                     {{ValidateCharacterType.METHOD_NAME}}(afterDbEntity, messages);
