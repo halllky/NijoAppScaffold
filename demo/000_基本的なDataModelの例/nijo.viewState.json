@@ -18,6 +18,13 @@
         "label": "部署",
         "background-color": "#ea580c",
         "border-color": "#ea580c"
+      },
+      "51d08ec1-ddd8-4822-bf2b-91c458ee7e62": {
+        "id": "51d08ec1-ddd8-4822-bf2b-91c458ee7e62",
+        "label": "課",
+        "parent": "4c96eb60-249d-414c-8e3e-4b5a981fa8c6",
+        "background-color": "#ea580c",
+        "border-color": "#ea580c"
       }
     },
     "edges": [
@@ -48,8 +55,12 @@
         "y": 207
       },
       "4c96eb60-249d-414c-8e3e-4b5a981fa8c6": {
-        "x": 301,
-        "y": 319.0000004
+        "x": 355,
+        "y": 313
+      },
+      "51d08ec1-ddd8-4822-bf2b-91c458ee7e62": {
+        "x": 355,
+        "y": 313
       }
     }
   }

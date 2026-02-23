@@ -8,7 +8,7 @@ import { ApplicationState, ATTR_TYPE, isAttributeAvailable, XmlElementItem, TYPE
 import * as UI from '../../../UI'
 import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../../../routing"
 import { usePersonalSettings } from "../../../PersonalSettings"
-import { useUniqueConstraintsColumns } from "./useUniqueConstraintColumns"
+import { UniqueConstraintsContext, useUniqueConstraintsColumns } from "./useUniqueConstraintColumns"
 
 /**
  * 子孫集約編集グリッド
@@ -36,7 +36,7 @@ export function DecsendantsGrid(props: {
   const [searchParams] = ReactRouter.useSearchParams()
   const projectDir = searchParams.get(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR)
 
-  const { uniqueConstraintColumns } = useUniqueConstraintsColumns(control, getValues, setValue, selectedRootAggregateIndex, true)
+  const { uniqueConstraintColumns, contextValue: uniqueConstraintsContextValue } = useUniqueConstraintsColumns(control, getValues, setValue, selectedRootAggregateIndex, true)
 
   const {
     fieldArrayReturn: { insert, remove, move, update },
@@ -263,11 +263,13 @@ export function DecsendantsGrid(props: {
         </div>
       )}
 
-      <EG2.EditableGrid2
-        {...editableGrid2Props}
-        striped
-        className="flex-1 w-full border-y border-r border-gray-300"
-      />
+      <UniqueConstraintsContext.Provider value={uniqueConstraintsContextValue}>
+        <EG2.EditableGrid2
+          {...editableGrid2Props}
+          striped
+          className="flex-1 w-full border-y border-r border-gray-300"
+        />
+      </UniqueConstraintsContext.Provider>
     </div>
   )
 }

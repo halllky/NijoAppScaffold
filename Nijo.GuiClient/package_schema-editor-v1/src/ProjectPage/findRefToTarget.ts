@@ -23,7 +23,7 @@ export const findRefToTarget = (
   if (!rootAggregateGroup) return undefined
 
   // 子孫を探す
-  const tree = asTree(rootAggregateGroup.xmlElements)
+  const tree = asTree(rootAggregateGroup.xmlElements, el => el.uniqueId)
   const findRecursively = (remaining: string[], candidatesOwner: XmlElementItem) => {
     if (remaining.length === 0) return candidatesOwner
 

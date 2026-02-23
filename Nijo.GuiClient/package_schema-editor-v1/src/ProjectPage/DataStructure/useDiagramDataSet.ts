@@ -52,7 +52,7 @@ export function useDiagramDataSet(formMethods: ReactHookForm.UseFormReturn<Appli
       if (model === TYPE_VALUE_OBJECT_MODEL) continue;
       if (model === TYPE_CONSTANT_MODEL) continue;
 
-      const treeHelper = asTree(rootAggregateGroup.xmlElements); // ツリーヘルパーを初期化
+      const treeHelper = asTree(rootAggregateGroup.xmlElements, el => el.uniqueId); // ツリーヘルパーを初期化
 
       const addMembersRecursively = (owner: XmlElementItem, parentId: string | undefined) => {
         // ルート要素（ルート集約以外も表示する場合は Child, Children含む）のみ表示

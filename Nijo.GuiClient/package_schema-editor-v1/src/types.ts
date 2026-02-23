@@ -197,16 +197,17 @@ export const isAttributeAvailable = (attr: XmlElementAttribute, modelType: strin
 
 // ---------------------------------
 
-export type TreeHelper<TFlatItem extends { indent: number }> = ReturnType<typeof asTree<TFlatItem>>
+export type TreeHelper<TFlatItem extends { indent: number }, TKey> = ReturnType<typeof asTree<TFlatItem, TKey>>
 
 /** 内部の状態はフラットなツリーとして保持されているが、それをツリー構造として扱うためのユーティリティ。 */
-export const asTree = <TFlatItem extends { indent: number }>(flat: TFlatItem[]) => {
+export const asTree = <TFlatItem extends { indent: number }, TKey>(flat: TFlatItem[], keySelector: (item: TFlatItem) => TKey) => {
   return {
 
     /** 指定された要素のルートを取得する。 */
     getRoot: (el: TFlatItem): TFlatItem => {
       // 引数のエレメント以前の位置にある、インデント0の要素のうち直近のものがルート
-      const previousElementsAndThis = flat.slice(0, flat.indexOf(el) + 1)
+      const elKey = keySelector(el)
+      const previousElementsAndThis = flat.slice(0, flat.findIndex(x => keySelector(x) === elKey) + 1)
       const root = previousElementsAndThis.reverse().find(x => x.indent === 0)
       if (!root) throw new Error('root not found') // 必ずルート集約はあるはず
       return root
@@ -217,7 +218,8 @@ export const asTree = <TFlatItem extends { indent: number }>(flat: TFlatItem[]) 
       // 引数のエレメントより前の位置にあり、
       // インデントが引数のエレメントより小さいもののうち、直近にあるのが親。
       // インデントは必ずしも1小さいとは限らない。
-      const previousElements = flat.slice(0, flat.indexOf(el))
+      const elKey = keySelector(el)
+      const previousElements = flat.slice(0, flat.findIndex(x => keySelector(x) === elKey))
       const parent = previousElements.reverse().find(y => y.indent < el.indent)
       return parent
     },
@@ -236,7 +238,8 @@ export const asTree = <TFlatItem extends { indent: number }>(flat: TFlatItem[]) 
       //     - f
       //   - g
 
-      const elIndex = flat.indexOf(el)
+      const elKey = keySelector(el)
+      const elIndex = flat.findIndex(x => keySelector(x) === elKey)
       // 要素が配列内に見つからないという状況は設計上起こりえないかもしれないが、念のためチェック
       if (elIndex === -1) {
         return []
@@ -286,7 +289,8 @@ export const asTree = <TFlatItem extends { indent: number }>(flat: TFlatItem[]) 
       // 引数のエレメントより前の方向に辿っていき、
       // インデントが現在のエレメントより小さいものを集める。
       // よりルート集約に近いほうが先なので、最後に配列を逆転させてreturnする。
-      const previousElements = flat.slice(0, flat.indexOf(el))
+      const elKey = keySelector(el)
+      const previousElements = flat.slice(0, flat.findIndex(x => keySelector(x) === elKey))
       let currentIndent = el.indent
       const ancestors: TFlatItem[] = []
       for (const y of previousElements) {
@@ -305,7 +309,8 @@ export const asTree = <TFlatItem extends { indent: number }>(flat: TFlatItem[]) 
     /** 指定された要素の子孫を取得する。 */
     getDescendants: (el: TFlatItem): TFlatItem[] => {
       // getChildrenのロジックのうち「直下の子」という条件を外したものが子孫。
-      const belowElements = flat.slice(flat.indexOf(el) + 1)
+      const elKey = keySelector(el)
+      const belowElements = flat.slice(flat.findIndex(x => keySelector(x) === elKey) + 1)
       const descendants: TFlatItem[] = []
       for (const y of belowElements) {
         // 引数のエレメント以下のインデントの要素が登場したら探索を打ち切る

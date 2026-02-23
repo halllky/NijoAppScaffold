@@ -1,6 +1,6 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
-import { ApplicationState, ATTR_UNIQUE_CONSTRAINTS } from "../../../types"
+import { ApplicationState, ATTR_UNIQUE_CONSTRAINTS, asTree, XmlElementItem } from "../../../types"
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
 import { TextCellEditor } from "../../../UI"
 
@@ -15,25 +15,38 @@ export function useUniqueConstraintsColumns(
   skipFirstRow: boolean,
 ) {
 
-  // ユニーク制約の文字列定義をフォームから監視
-  const uniqueConstraintsRaw = ReactHookForm.useWatch({
-    name: `xmlElementTrees.${selectedRootAggregateIndex}.xmlElements.0.attributes.${ATTR_UNIQUE_CONSTRAINTS}`,
-    control
-  }) as string | undefined
+  // ルート、child, children すべて監視
+  const elements = ReactHookForm.useWatch({ name: `xmlElementTrees.${selectedRootAggregateIndex}.xmlElements`, control }) ?? []
 
-  // ユニーク制約の文字列定義を解析したもの
-  const uniqueConstraints = React.useMemo(() => {
-    return parseUniqueConstraints(uniqueConstraintsRaw)
-  }, [uniqueConstraintsRaw])
-  const uniqueConstraintsLength = uniqueConstraints.length
-  const uniqueConstraintsRef = React.useRef(uniqueConstraints)
-  uniqueConstraintsRef.current = uniqueConstraints
+  const treeHelper = React.useMemo(() => asTree(elements, el => el.uniqueId), [elements])
 
-  // 列定義
+  const uniqueConstraintsByParent = React.useMemo(() => {
+    const map = new Map<string, string[][]>()
+    for (const el of elements) {
+      const raw = el.attributes?.[ATTR_UNIQUE_CONSTRAINTS] as string | undefined
+      map.set(el.uniqueId, parseUniqueConstraints(raw))
+    }
+    return map
+  }, [elements])
+
+  const uniqueConstraintsMaxLength = React.useMemo(() => {
+    let max = 0
+    uniqueConstraintsByParent.forEach(constraints => {
+      if (constraints.length > max) max = constraints.length
+    })
+    return max
+  }, [uniqueConstraintsByParent])
+
+  const contextValue = React.useMemo(() => ({ elements, treeHelper, uniqueConstraintsByParent }), [elements, treeHelper, uniqueConstraintsByParent])
+
+  // 列定義。
+  // この変数が変わるとグリッド全体の列定義が更新されてしまうため、
+  // ユニーク制約の数が変わったとき以外は同じオブジェクトを返すようにする。
   type GridRow = ReactHookForm.FieldArrayWithId<ApplicationState, `xmlElementTrees.${number}.xmlElements`, "id">
   const uniqueConstraintColumns = React.useMemo((): EG2.EditableGrid2Column<GridRow> => {
     const columns: EG2.EditableGrid2LeafColumn<GridRow>[] = []
-    const constraintCount = uniqueConstraintsLength + 1
+    const constraintCount = uniqueConstraintsMaxLength + 1
+
     for (let i = 0; i < constraintCount; i++) {
       columns.push({
         columnId: `unique-constraint-${i}`,
@@ -43,26 +56,37 @@ export function useUniqueConstraintsColumns(
             {i + 1}
           </div>
         ),
-        renderBody: ({ context }) => {
-          const actualRowIndex = skipFirstRow ? context.row.index + 1 : context.row.index
-          const row = ReactHookForm.useWatch({
-            name: `xmlElementTrees.${selectedRootAggregateIndex}.xmlElements.${actualRowIndex}`,
-            control,
-            defaultValue: context.row.original,
-          }) as GridRow
-          const indexInConstraint = uniqueConstraintsRef.current[i]?.indexOf(row.uniqueId) ?? -1
-          const value = indexInConstraint >= 0 ? String(indexInConstraint + 1) : ''
-          return (
-            <div className="w-full px-1 truncate">
-              {value}
-            </div>
-          )
-        },
+        renderBody: ({ context }) => (
+          <UniqueConstraintCell
+            rowIndex={context.row.index}
+            columnIndex={i}
+            skipFirstRow={skipFirstRow}
+          />
+        ),
         getValueForEditor: ({ row }) => {
-          const indexInConstraint = uniqueConstraintsRef.current[i]?.indexOf(row.uniqueId) ?? -1
+          const currentElements = getValues(`xmlElementTrees.${selectedRootAggregateIndex}.xmlElements`) ?? []
+          if (!currentElements.length) return ''
+
+          const rowIndex = currentElements.findIndex(el => el.uniqueId === row.uniqueId)
+          if (rowIndex < 0) return ''
+
+          const treeHelperForEditor = asTree(currentElements, el => el.uniqueId)
+          const parentOrRoot = treeHelperForEditor.getParent(currentElements[rowIndex]) ?? currentElements[0]
+          const parentConstraints = parseUniqueConstraints(parentOrRoot.attributes?.[ATTR_UNIQUE_CONSTRAINTS] as string | undefined)
+          const indexInConstraint = parentConstraints[i]?.indexOf(row.uniqueId) ?? -1
           return indexInConstraint >= 0 ? String(indexInConstraint + 1) : ''
         },
         setValueFromEditor: ({ row, value }) => {
+          const currentElements = getValues(`xmlElementTrees.${selectedRootAggregateIndex}.xmlElements`) ?? []
+          if (!currentElements.length) return
+
+          const rowIndex = currentElements.findIndex(el => el.uniqueId === row.uniqueId)
+          if (rowIndex < 0) return
+
+          const treeHelperForEditor = asTree(currentElements, el => el.uniqueId)
+          const parentOrRoot = treeHelperForEditor.getParent(currentElements[rowIndex]) ?? currentElements[0]
+          const parentIndex = Math.max(0, currentElements.indexOf(parentOrRoot))
+
           let numValue = parseInt(value, 10)
           if (value.trim() === '') {
             numValue = 0 // 空文字が入力されたらその行をユニーク制約から外す
@@ -70,7 +94,7 @@ export function useUniqueConstraintsColumns(
             numValue = Number.MAX_SAFE_INTEGER // 文字列が入力されたらとりあえず一番後ろに追加する挙動にする
           }
 
-          const currentRaw = getValues(`xmlElementTrees.${selectedRootAggregateIndex}.xmlElements.0.attributes.${ATTR_UNIQUE_CONSTRAINTS}`)
+          const currentRaw = getValues(`xmlElementTrees.${selectedRootAggregateIndex}.xmlElements.${parentIndex}.attributes.${ATTR_UNIQUE_CONSTRAINTS}`)
           const currentConstraints = parseUniqueConstraints(currentRaw)
 
           if (!currentConstraints[i]) currentConstraints[i] = []
@@ -87,11 +111,11 @@ export function useUniqueConstraintsColumns(
 
           const newRaw = serializeUniqueConstraints(currentConstraints)
           setValue(
-            `xmlElementTrees.${selectedRootAggregateIndex}.xmlElements.0.attributes.${ATTR_UNIQUE_CONSTRAINTS}` as ReactHookForm.FieldPath<ApplicationState>,
+            `xmlElementTrees.${selectedRootAggregateIndex}.xmlElements.${parentIndex}.attributes.${ATTR_UNIQUE_CONSTRAINTS}` as ReactHookForm.FieldPath<ApplicationState>,
             newRaw,
             { shouldDirty: true })
         },
-        defaultWidth: i === uniqueConstraintsLength ? 120 : 20,
+        defaultWidth: i === uniqueConstraintsMaxLength ? 112 : 24,
       })
     }
 
@@ -103,7 +127,7 @@ export function useUniqueConstraintsColumns(
       ),
       columns,
     } satisfies EG2.EditableGrid2GroupColumn<GridRow>
-  }, [uniqueConstraintsLength, getValues, setValue, selectedRootAggregateIndex, skipFirstRow])
+  }, [uniqueConstraintsMaxLength, getValues, setValue, selectedRootAggregateIndex, skipFirstRow])
 
   return {
     /**
@@ -112,7 +136,49 @@ export function useUniqueConstraintsColumns(
      * ユニーク制約の数が変わったときに列定義も更新されるようになります。
      */
     uniqueConstraintColumns,
+    contextValue,
   }
+}
+
+type UniqueConstraintsContextValue = {
+  elements: XmlElementItem[]
+  treeHelper: ReturnType<typeof asTree<XmlElementItem, string>>
+  uniqueConstraintsByParent: Map<string, string[][]>
+}
+/**
+ * ユニーク制約の情報を提供するReact Context。
+ * ユニーク制約はグリッド内の他の行の値に依存するため、
+ * 適切に再レンダリングをかけるようにするためにContextを使用している。
+ */
+export const UniqueConstraintsContext = React.createContext<UniqueConstraintsContextValue>({
+  elements: [],
+  treeHelper: asTree<XmlElementItem, string>([], el => el.uniqueId),
+  uniqueConstraintsByParent: new Map(),
+})
+
+
+/**
+ * ユニーク制約のセルのレンダラー
+ */
+function UniqueConstraintCell({ rowIndex, columnIndex, skipFirstRow }: {
+  rowIndex: number
+  columnIndex: number
+  skipFirstRow: boolean
+}) {
+  const { elements, treeHelper, uniqueConstraintsByParent } = React.useContext(UniqueConstraintsContext)
+  const actualRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
+  const row = elements[actualRowIndex]
+  if (!row) return <div className="w-full px-1 truncate" />
+
+  const parent = treeHelper.getParent(row) ?? elements[0]
+  const parentConstraints = parent ? uniqueConstraintsByParent.get(parent.uniqueId) ?? [] : []
+  const indexInConstraint = parentConstraints[columnIndex]?.indexOf(row.uniqueId) ?? -1
+  const value = indexInConstraint >= 0 ? String(indexInConstraint + 1) : ''
+  return (
+    <div className="w-full px-1 truncate">
+      {value}
+    </div>
+  )
 }
 
 function parseUniqueConstraints(raw: string | undefined): string[][] {

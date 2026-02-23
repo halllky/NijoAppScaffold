@@ -33,6 +33,22 @@
       <事業所
         Type="ref-to:事業所"
         UniqueId="ce9290d5-a160-4e13-82db-bb3df15e6bc3" />
+      <課
+        Type="children"
+        UniqueConstraints="1f6febf0-adfe-4377-8749-9eb7223ef14c;"
+        UniqueId="51d08ec1-ddd8-4822-bf2b-91c458ee7e62">
+        <コード
+          IsKey="True"
+          Type="word"
+          UniqueId="1e4a365b-7b39-46da-8be0-de2d7bb75241" />
+        <!--ユニーク制約の例-->
+        <旧システムコード
+          Type="word"
+          UniqueId="1f6febf0-adfe-4377-8749-9eb7223ef14c" />
+        <課名称
+          Type="word"
+          UniqueId="f8667bbb-c921-46ec-869b-b989649634d5" />
+      </課>
     </部署>
     <!--ビューの例。
 ビューはデータモデルから ref-to で外部参照することができる。

@@ -254,7 +254,7 @@ function convertToValidationResultListItemList(state: ApplicationState, validati
 
   // IDから当該要素の情報を引き当てるための辞書
   const elementMap = new Map(xmlElementTrees.flatMap(tree => tree.xmlElements).map(el => [el.uniqueId, el]))
-  const treeUtilsMap = new Map(xmlElementTrees.map(tree => [tree, asTree(tree.xmlElements)]))
+  const treeUtilsMap = new Map(xmlElementTrees.map(tree => [tree, asTree(tree.xmlElements, el => el.uniqueId)]))
   const customAttributeMap = new Map(customAttributes.map(ca => [ca.uniqueId, ca]))
 
   const infos: ValidationResultListItem[] = []
