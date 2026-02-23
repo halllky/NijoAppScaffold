@@ -11,9 +11,9 @@ import DataStructure, { DataStructureTabRef } from "./DataStructure"
 import { SchemaCandidatesProvider } from "./SchemaCandidatesContext"
 import ValueMemberTypes from "./ValueMemberTypes"
 import ConstantsGrid from "./Constants"
-import { ProjectSettings } from "./ProjectSettings"
+import ProjectSettings from "./ProjectSettings"
 import { DiagramRef } from "./DataStructure/Diagram"
-import { useValidationErrorMessages, ValidationContextProvider, ValidationResultListItem } from "./useValidation"
+import { useValidationErrorMessages, ValidationContextProvider } from "./useValidation"
 import { JumpToElementContext, JumpToElementFunction } from "./useJumpToElement"
 
 /**

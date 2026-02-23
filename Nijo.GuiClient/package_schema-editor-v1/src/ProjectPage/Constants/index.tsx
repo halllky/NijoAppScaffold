@@ -16,7 +16,7 @@ import { SingleConstantEditor } from "./SingleConstantEditor"
  *
  * 複数の定数定義をリスト形式で表示し、それぞれを編集可能にする。
  */
-export default function ConstantsGrid(props: {
+function ConstantsGrid(props: {
   formMethods: ReactHookForm.UseFormReturn<ApplicationState>
 }) {
   const { control, setValue, getValues } = props.formMethods
@@ -66,3 +66,5 @@ export default function ConstantsGrid(props: {
     </div>
   )
 }
+
+export default React.memo(ConstantsGrid)

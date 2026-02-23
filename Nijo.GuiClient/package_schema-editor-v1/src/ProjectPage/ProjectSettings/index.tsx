@@ -10,9 +10,9 @@ import { Allotment, LayoutPriority } from "allotment";
 /**
  * プロジェクト設定タブの内容
  */
-export const ProjectSettings: React.FC<{
+function ProjectSettings({ formMethods }: {
   formMethods: ReactHookForm.UseFormReturn<ApplicationState>
-}> = ({ formMethods }) => {
+}) {
 
   const { personalSettings, save } = usePersonalSettings()
 
@@ -55,6 +55,8 @@ export const ProjectSettings: React.FC<{
     </Allotment>
   )
 }
+
+export default React.memo(ProjectSettings)
 
 /**
  * プロジェクト設定セクション

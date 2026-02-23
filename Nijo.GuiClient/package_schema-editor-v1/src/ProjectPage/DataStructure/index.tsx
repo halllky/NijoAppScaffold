@@ -5,7 +5,7 @@ import { usePersonalSettings } from "../../PersonalSettings";
 import { ATTR_TYPE, ModelPageForm, ApplicationState } from "../../types";
 import { Button } from "../../UI";
 import { Diagram, DiagramRef } from "./Diagram";
-import { AggregatePane } from "./AggregatePane";
+import AggregatePane from "./AggregatePane";
 import { NewRootAddDialog } from "./NewRootAddDialog";
 import { UUID } from "uuidjs";
 import { PlusIcon } from "@heroicons/react/24/solid";
@@ -20,16 +20,12 @@ export type DataStructureTabRef = {
  * スキーマ定義の有向グラフを表示する。
  * 特定のルート集約が選択されている場合はその集約の編集ペインを表示する。
  */
-export default function DataStructureTab({ visible, formMethods, dataStructureRef, diagramRef }: {
+function DataStructureTab({ visible, formMethods, dataStructureRef, diagramRef }: {
   visible: boolean
   formMethods: ReactHookForm.UseFormReturn<ApplicationState>
   dataStructureRef: React.RefObject<DataStructureTabRef | null>
   diagramRef: React.RefObject<DiagramRef | null>
 }) {
-
-  const watchedXmlElementTrees = ReactHookForm.useWatch({ name: "xmlElementTrees", control: formMethods.control })
-  const watchedXmlElementTreesRef = React.useRef(watchedXmlElementTrees)
-  watchedXmlElementTreesRef.current = watchedXmlElementTrees
 
   // 個人設定
   const { personalSettings, save: savePersonalSettings } = usePersonalSettings()
@@ -44,7 +40,8 @@ export default function DataStructureTab({ visible, formMethods, dataStructureRe
     }
 
     // ルート集約編集ペインの表示
-    const index = watchedXmlElementTrees?.findIndex(tree => tree.xmlElements?.some(el => el.uniqueId === rootOrDescendantXmlElementUniqueId))
+    const xmlElementTrees = formMethods.getValues("xmlElementTrees")
+    const index = xmlElementTrees?.findIndex(tree => tree.xmlElements?.some(el => el.uniqueId === rootOrDescendantXmlElementUniqueId))
     if (index === undefined || index === -1) return;
     setSelectedRootAggregateIndex(index)
     setAggPaneVisible(true)
@@ -55,7 +52,7 @@ export default function DataStructureTab({ visible, formMethods, dataStructureRe
     if (scroll) {
       window.setTimeout(() => {
         if (!diagramRef.current?.graphViewRef.current) return;
-        const rootUniqueId = watchedXmlElementTreesRef.current
+        const rootUniqueId = formMethods.getValues("xmlElementTrees")
           ?.find(tree => tree.xmlElements?.some(el => el.uniqueId === rootOrDescendantXmlElementUniqueId))
           ?.xmlElements?.[0].uniqueId
         if (!rootUniqueId) return;
@@ -71,14 +68,15 @@ export default function DataStructureTab({ visible, formMethods, dataStructureRe
   // 選択中のルート集約を画面右側に表示する
   const [aggPaneVisible, setAggPaneVisible] = React.useState(false)
   const aggPaneOrientation = personalSettings.aggPaneOrientation ?? 'horizontal'
-  const setAggPaneOrientation = React.useCallback((orientation: 'horizontal' | 'vertical') => {
-    savePersonalSettings('aggPaneOrientation', orientation)
-  }, [savePersonalSettings])
+  const handleSwitchAggPaneOrientation = React.useCallback(() => {
+    savePersonalSettings('aggPaneOrientation', aggPaneOrientation === 'horizontal' ? 'vertical' : 'horizontal')
+  }, [aggPaneOrientation, savePersonalSettings])
 
   // 新規ルート集約作成ダイアログ
   const { append, remove } = ReactHookForm.useFieldArray({ name: "xmlElementTrees", control: formMethods.control })
   const [isNewRootDialogOpen, setIsNewRootDialogOpen] = React.useState(false)
   const handleRegisterNewRoot = (name: string, modelType: string) => {
+    const previousLength = formMethods.getValues("xmlElementTrees")?.length ?? 0
     const newRoot: ModelPageForm = {
       xmlElements: [{
         uniqueId: UUID.generate(),
@@ -95,19 +93,19 @@ export default function DataStructureTab({ visible, formMethods, dataStructureRe
     // レンダリングを待つためにsetTimeoutを入れる
     setTimeout(() => {
       selectRootAggregate(newRoot.xmlElements[0].uniqueId, true)
-      setSelectedRootAggregateIndex(watchedXmlElementTrees.length) // append後の長さはlength+1なのでindexはlengthになる
+      setSelectedRootAggregateIndex(previousLength) // append後の長さはlength+1なのでindexはlengthになる
       setAggPaneVisible(true)
     }, 0)
   }
 
   // ルート集約削除
-  const handleDeleteRootAggregate = () => {
+  const handleDeleteRootAggregate = React.useCallback(() => {
     if (selectedRootAggregateIndex !== undefined) {
       remove(selectedRootAggregateIndex)
     }
     setSelectedRootAggregateIndex(undefined)
     setAggPaneVisible(false)
-  }
+  }, [remove, selectedRootAggregateIndex])
 
   return (
     <Allotment
@@ -146,10 +144,12 @@ export default function DataStructureTab({ visible, formMethods, dataStructureRe
             className={`h-full w-full border-gray-400 ${aggPaneOrientation === 'vertical' ? 'border-t' : 'border-l'}`}
             onRequestDelete={handleDeleteRootAggregate}
             orientation={aggPaneOrientation}
-            onSwitchOrientation={() => setAggPaneOrientation(aggPaneOrientation === 'horizontal' ? 'vertical' : 'horizontal')}
+            onSwitchOrientation={handleSwitchAggPaneOrientation}
           />
         )}
       </Allotment.Pane>
     </Allotment>
   )
 }
+
+export default React.memo(DataStructureTab)

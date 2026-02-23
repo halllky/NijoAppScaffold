@@ -4,13 +4,13 @@ import * as Icon from "@heroicons/react/24/outline"
 import { ATTR_TYPE, ApplicationState, TYPE_COMMAND_MODEL } from "../../../types";
 import * as UI from "../../../UI"
 import { Allotment, LayoutPriority } from "allotment";
-import { DecsendantsGrid } from "./DecsendantsGrid";
+import DecsendantsGrid from "./DecsendantsGrid";
 import RootAggreagateAttrs from "./RootAggreagateAttrs";
 
 /**
  * ルート集約1個分の編集ペイン
  */
-export function AggregatePane(props: {
+function AggregatePane(props: {
   selectedRootAggregateIndex: number
   formMethods: ReactHookForm.UseFormReturn<ApplicationState>
   className?: string
@@ -20,7 +20,7 @@ export function AggregatePane(props: {
 }) {
   const {
     selectedRootAggregateIndex,
-    formMethods: { register, control, watch },
+    formMethods: { register, getValues, control },
     className,
     onRequestDelete,
     orientation,
@@ -28,11 +28,12 @@ export function AggregatePane(props: {
   } = props
 
   const handleDelete = () => {
-    if (!confirm(`「${rootAggregate.localName}」を削除しますか？`)) return
+    const localName = getValues(`xmlElementTrees.${selectedRootAggregateIndex}.xmlElements.0.localName`)
+    if (!confirm(`「${localName}」を削除しますか？`)) return
     onRequestDelete?.()
   }
 
-  const rootAggregate = ReactHookForm.useWatch({ name: `xmlElementTrees.${selectedRootAggregateIndex}.xmlElements.0`, control })
+  const rootAggregateModelType = ReactHookForm.useWatch({ name: `xmlElementTrees.${selectedRootAggregateIndex}.xmlElements.0.attributes.${ATTR_TYPE}`, control })
 
   return (
     <div className={`flex flex-col gap-1 ${className ?? ''}`}>
@@ -94,7 +95,7 @@ export function AggregatePane(props: {
         <Allotment.Pane
           priority={LayoutPriority.High}
           minSize={80}
-          visible={rootAggregate.attributes[ATTR_TYPE] !== TYPE_COMMAND_MODEL}
+          visible={rootAggregateModelType !== TYPE_COMMAND_MODEL}
         >
           <DecsendantsGrid
             selectedRootAggregateIndex={selectedRootAggregateIndex}
@@ -107,3 +108,5 @@ export function AggregatePane(props: {
     </div>
   )
 }
+
+export default React.memo(AggregatePane)

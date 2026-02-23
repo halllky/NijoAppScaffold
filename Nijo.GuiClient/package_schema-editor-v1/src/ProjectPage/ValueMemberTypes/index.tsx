@@ -11,7 +11,7 @@ import { CustomAttributeSettings } from "./CustomAttributeSettings"
  *
  * Nijo の ValueMemberType に相当する属性種類を定義する。
  */
-export default function (props: {
+function ValueMemberTypes(props: {
   formMethods?: ReactHookForm.UseFormReturn<ApplicationState>
 }) {
   const { control } = props.formMethods ?? {}
@@ -218,6 +218,8 @@ export default function (props: {
     </Allotment>
   )
 }
+
+export default React.memo(ValueMemberTypes)
 
 /**
  * 目次のリンク

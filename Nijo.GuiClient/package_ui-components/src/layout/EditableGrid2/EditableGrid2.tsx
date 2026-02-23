@@ -16,7 +16,7 @@ import { useRowAccessor } from "./useRowAccessor"
 /**
  * EditableGrid2 コンポーネント
  */
-export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
+const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
   props: EditableGrid2Props<TRow>,
   ref: React.ForwardedRef<EditableGrid2Ref<TRow>>
 ) {
@@ -360,9 +360,35 @@ export const EditableGrid2 = React.forwardRef(function EditableGrid2<TRow,>(
   )
 
   //#endregion レンダリング
+})
 
+export default React.memo(EditableGrid2, (prev, next) => {
+  // getRowId / getLatestRowObject / columns[0] は毎回参照が変わる前提なので比較しない
+  const [, prevColumnDeps] = prev.columns ?? []
+  const [, nextColumnDeps] = next.columns ?? []
+
+  // columns[1] の依存配列は要素ごとに比較
+  const prevDepsLength = prevColumnDeps?.length ?? 0
+  const nextDepsLength = nextColumnDeps?.length ?? 0
+  if (prevDepsLength !== nextDepsLength) return false
+  for (let i = 0; i < prevDepsLength; i++) {
+    if (!Object.is(prevColumnDeps[i], nextColumnDeps?.[i])) return false
+  }
+
+  // 上記以外の props は Object.is で比較
+  const keys = new Set([...Object.keys(prev), ...Object.keys(next)])
+  keys.delete("getRowId" satisfies keyof EditableGrid2Props<unknown>)
+  keys.delete("getLatestRowObject" satisfies keyof EditableGrid2Props<unknown>)
+  keys.delete("columns" satisfies keyof EditableGrid2Props<unknown>)
+
+  for (const key of keys) {
+    const p = (prev as Record<string, unknown>)[key]
+    const n = (next as Record<string, unknown>)[key]
+    if (!Object.is(p, n)) return false
+  }
+
+  return true
 }) as (<TRow>(props: EditableGrid2Props<TRow> & { ref?: React.ForwardedRef<EditableGrid2Ref<TRow>> }) => React.ReactNode);
-
 
 //#region メモ化ヘッダ
 
