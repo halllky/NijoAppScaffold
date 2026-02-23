@@ -41,9 +41,9 @@
           IsKey="True"
           Type="word"
           UniqueId="1e4a365b-7b39-46da-8be0-de2d7bb75241" />
-        <!--ユニーク制約の例-->
+        <!--非主キーの外部参照のユニーク制約の例-->
         <旧システムコード
-          Type="word"
+          Type="ref-to:旧システム部署情報"
           UniqueId="1f6febf0-adfe-4377-8749-9eb7223ef14c" />
         <課名称
           Type="word"
@@ -67,5 +67,18 @@
         Type="word"
         UniqueId="25b6c40f-24a7-4c6e-9df5-385149e739b7" />
     </事業所>
+    <!--非主キーのユニーク制約の外部参照の例-->
+    <旧システム部署情報
+      Type="data-model"
+      UniqueId="202ad425-e9b6-4e28-9984-0f401d445ec1">
+      <旧システムコード
+        IsKey="True"
+        Type="word"
+        UniqueId="78f8403b-9d15-424e-91c3-f31bd0aeb562" />
+      <名称
+        IsNotNull="True"
+        Type="word"
+        UniqueId="1376a08d-3312-46c6-b51b-d4e70a74908a" />
+    </旧システム部署情報>
   </DataStructures>
 </NijoAppScaffold>

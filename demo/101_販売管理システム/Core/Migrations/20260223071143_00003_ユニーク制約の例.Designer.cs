@@ -2,17 +2,20 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyApp;
 
 #nullable disable
 
-namespace MyApp.Migrations
+namespace Demo101.Migrations
 {
     [DbContext(typeof(OverridedDbContext))]
-    partial class MyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260223071143_00003_ユニーク制約の例")]
+    partial class _00003_ユニーク制約の例
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.3");

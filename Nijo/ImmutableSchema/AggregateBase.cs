@@ -180,7 +180,7 @@ namespace Nijo.ImmutableSchema {
             /// この制約が引数の参照のみから構成されているかどうか。
             /// </summary>
             public bool IsSingleRefTo(RefToMember refTo) {
-                return Members.Count == 1 && ReferenceEquals(Members[0], refTo);
+                return Members.Count == 1 && Members[0].ToMappingKey() == refTo.ToMappingKey();
             }
         }
         #endregion ユニーク制約

@@ -13,6 +13,12 @@
         "background-color": "#ea580c",
         "border-color": "#ea580c"
       },
+      "202ad425-e9b6-4e28-9984-0f401d445ec1": {
+        "id": "202ad425-e9b6-4e28-9984-0f401d445ec1",
+        "label": "旧システム部署情報",
+        "background-color": "#ea580c",
+        "border-color": "#ea580c"
+      },
       "4c96eb60-249d-414c-8e3e-4b5a981fa8c6": {
         "id": "4c96eb60-249d-414c-8e3e-4b5a981fa8c6",
         "label": "部署",
@@ -43,6 +49,14 @@
         "line-color": "#ea580c",
         "line-style": "solid",
         "targetEndShape": "triangle"
+      },
+      {
+        "source": "51d08ec1-ddd8-4822-bf2b-91c458ee7e62",
+        "target": "202ad425-e9b6-4e28-9984-0f401d445ec1",
+        "label": "旧システムコード",
+        "line-color": "#ea580c",
+        "line-style": "solid",
+        "targetEndShape": "triangle"
       }
     ],
     "nodePositions": {
@@ -53,6 +67,10 @@
       "1956b3f6-a6e5-493c-b87a-e86933c7b45f": {
         "x": 249,
         "y": 207
+      },
+      "202ad425-e9b6-4e28-9984-0f401d445ec1": {
+        "x": 202.2469107,
+        "y": 369.259168
       },
       "4c96eb60-249d-414c-8e3e-4b5a981fa8c6": {
         "x": 355,
