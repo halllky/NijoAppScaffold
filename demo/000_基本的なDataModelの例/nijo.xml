@@ -21,6 +21,7 @@
     </社員>
     <部署
       Type="data-model"
+      UseSoftDelete="True"
       UniqueId="4c96eb60-249d-414c-8e3e-4b5a981fa8c6">
       <部署ID
         IsKey="True"

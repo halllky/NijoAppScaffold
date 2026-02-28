@@ -39,9 +39,7 @@ internal static class EFCoreOnModelCreating {
                     throw new InvalidOperationException(); // ありえない
                 });
         // 親子のナビゲーションは親側のOnModelCreatingで定義
-        var navigationsForConfiguringChildren = isDeletedTable
-            ? Array.Empty<NavigationProperty>()
-            : navigations
+        var navigationsForConfiguringChildren = navigations
                 .Where(nav => nav is NavigationProperty.NavigationOfParentChild && nav.Principal.ThisSide == entity.Aggregate);
         // 外部参照のナビゲーションは参照元側のOnModelCreatingで定義
         var navigationsForConfigureRefTo = isDeletedTable
@@ -83,6 +81,10 @@ internal static class EFCoreOnModelCreating {
             return result.Distinct(StringComparer.Ordinal);
         }
 
+        var pkName = isDeletedTable
+            ? $"PK_{entity.Aggregate.DbName}_DELETED"
+            : $"PK_{entity.Aggregate.DbName}";
+
         return $$"""
             /// <summary>
             /// テーブルやカラムの詳細を定義します。
@@ -102,7 +104,7 @@ internal static class EFCoreOnModelCreating {
                         e.{{col.PhysicalName}},
             """)}}
                     })
-                    .HasName("PK_{{entity.Aggregate.DbName}}");
+                    .HasName("{{pkName}}");
 
             """).Else(() => $$"""
                     entity.HasNoKey();

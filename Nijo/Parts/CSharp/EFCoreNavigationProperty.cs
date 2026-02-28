@@ -29,7 +29,7 @@ internal abstract class NavigationProperty {
     /// <summary>
     /// 集約から適切なインスタンスを取得
     /// </summary>
-    protected static IEFCoreEntity GetConcreteClass(AggregateBase aggregate) {
+    protected static IEFCoreEntity GetConcreteClass(AggregateBase aggregate, bool isDeletedTable) {
         var root = aggregate.GetRoot();
         if (root.Model is Models.QueryModel && root.IsView) {
             // QueryModelのビューの場合はSearchResultを返す
@@ -42,7 +42,7 @@ internal abstract class NavigationProperty {
             }
         }
         // それ以外はEFCoreEntityを返す
-        return new EFCoreEntity(aggregate);
+        return new EFCoreEntity(aggregate, isDeletedTable);
     }
 
     public override string ToString() {
@@ -56,15 +56,15 @@ internal abstract class NavigationProperty {
         internal required AggregateBase OtherSide { get; init; }
         internal required string OtherSidePhysicalName { get; init; }
         internal required bool OtherSideIsMany { get; init; }
+        internal required IEFCoreEntity OthersideConcreteClass { get; init; }
 
         bool IInstanceStructurePropertyMetadata.IsArray => OtherSideIsMany;
         ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => OtherSide;
         string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => OtherSidePhysicalName;
-        string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => GetConcreteClass(OtherSide).CsClassName;
+        string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => OthersideConcreteClass.CsClassName;
         IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() {
-            var otherSideEfCoreEntity = GetConcreteClass(OtherSide);
-            var otherSideMetadata = otherSideEfCoreEntity as IInstancePropertyOwnerMetadata
-                ?? throw new InvalidOperationException($"インスタンスが必要なインターフェースを実装していません: {otherSideEfCoreEntity.GetType()}");
+            var otherSideMetadata = OthersideConcreteClass as IInstancePropertyOwnerMetadata
+                ?? throw new InvalidOperationException($"インスタンスが必要なインターフェースを実装していません: {OthersideConcreteClass.GetType()}");
 
             foreach (var member in otherSideMetadata.GetMembers()) {
                 // 無限ループに陥るのでこのインスタンス自身は列挙しない
@@ -81,7 +81,7 @@ internal abstract class NavigationProperty {
         /// <summary>C#型名</summary>
         /// <param name="withNullable">末尾にNull許容演算子をつけるかどうか</param>
         internal string GetOtherSideCsTypeName(bool withNullable = false) {
-            var className = GetConcreteClass(OtherSide).CsClassName;
+            var className = OthersideConcreteClass.CsClassName;
             if (OtherSideIsMany) {
                 return $"ICollection<{className}>";
             } else {
@@ -109,13 +109,14 @@ internal abstract class NavigationProperty {
     /// 親子間のナビゲーションプロパティ
     /// </summary>
     internal class NavigationOfParentChild : NavigationProperty {
-        internal NavigationOfParentChild(AggregateBase parent, AggregateBase child) {
+        internal NavigationOfParentChild(AggregateBase parent, AggregateBase child, bool isDeletedTable = false) {
             Principal = new() {
                 NavigationProperty = this,
                 ThisSide = parent,
                 OtherSide = child,
                 OtherSideIsMany = child is ChildrenAggregate,
                 OtherSidePhysicalName = child.PhysicalName,
+                OthersideConcreteClass = GetConcreteClass(child, isDeletedTable),
             };
             Relevant = new() {
                 NavigationProperty = this,
@@ -123,26 +124,42 @@ internal abstract class NavigationProperty {
                 OtherSide = parent,
                 OtherSideIsMany = false,
                 OtherSidePhysicalName = "Parent",
+                OthersideConcreteClass = GetConcreteClass(parent, isDeletedTable),
             };
+
+            _isDeletedTable = isDeletedTable;
         }
+
+        private readonly bool _isDeletedTable;
+
         internal override PrincipalOrRelevant Principal { get; }
         internal override PrincipalOrRelevant Relevant { get; }
 
         internal override DeleteBehavior PrincipalDeletedBehavior => DeleteBehavior.Cascade;
 
         internal override string GetConstraintName() {
-            return $"FK_{Principal.ThisSide.DbName}_{Relevant.ThisSide.DbName}";
+            return _isDeletedTable
+                ? $"FK_DELETED_{Principal.ThisSide.DbName}_{Relevant.ThisSide.DbName}"
+                : $"FK_{Principal.ThisSide.DbName}_{Relevant.ThisSide.DbName}";
         }
         internal override IEnumerable<EFCoreEntity.EFCoreEntityColumn> GetRelevantForeignKeys() {
-            var child = GetConcreteClass(Relevant.ThisSide);
-            var childColumns = child.GetColumns();
-
-            // 子の主キーのうち、親の主キーのいずれかとマッピングキーが合致するものが親子間の外部キー
-            var parentKeys = Principal.ThisSide
-                .GetKeyVMs()
-                .Select(vm => vm.ToMappingKey())
+            var parentKeys = Relevant.OthersideConcreteClass
+                .GetColumns()
+                .Select(c => c.Member?.ToMappingKey())
+                .OfType<SchemaNodeIdentity>()
                 .ToHashSet();
-            return childColumns.Where(c => parentKeys.Contains(c.Member.ToMappingKey()));
+
+            return Principal.OthersideConcreteClass
+                .GetColumns()
+                .Where(c => c.IsKey)
+                .Where(c => {
+                    // 子の主キーのうち、親の主キーのいずれかとマッピングキーが合致するもの
+                    if (c.Member is not null && parentKeys.Contains(c.Member.ToMappingKey())) return true;
+                    // 論理削除テーブルのキー
+                    if (c is EFCoreEntity.DeletedUuidColumn) return true;
+
+                    return false;
+                });
         }
     }
 
@@ -165,6 +182,7 @@ internal abstract class NavigationProperty {
                 OtherSide = relation.Owner,
                 OtherSideIsMany = !isOneToOne,
                 OtherSidePhysicalName = $"RefFrom{relation.Owner.PhysicalName}_{relation.PhysicalName}",
+                OthersideConcreteClass = GetConcreteClass(relation.Owner, isDeletedTable: false),
             };
             Relevant = new() {
                 NavigationProperty = this,
@@ -172,6 +190,7 @@ internal abstract class NavigationProperty {
                 OtherSide = relation.RefTo,
                 OtherSideIsMany = false,
                 OtherSidePhysicalName = relation.PhysicalName,
+                OthersideConcreteClass = GetConcreteClass(relation.RefTo, isDeletedTable: false),
             };
         }
         internal RefToMember Relation { get; }
@@ -188,7 +207,7 @@ internal abstract class NavigationProperty {
             return $"FK_{Principal.ThisSide.DbName}_{Relevant.ThisSide.DbName}_{hash}";
         }
         internal override IEnumerable<EFCoreEntity.EFCoreEntityColumn> GetRelevantForeignKeys() {
-            var refFrom = GetConcreteClass(Relevant.ThisSide);
+            var refFrom = GetConcreteClass(Relevant.ThisSide, isDeletedTable: false);
             return refFrom
                 .GetColumns()
                 .Where(col => col is EFCoreEntity.RefKeyMember rm

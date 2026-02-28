@@ -85,83 +85,87 @@ namespace Nijo.Parts.CSharp {
         /// </list>
         /// </summary>
         public IEnumerable<EFCoreEntityColumn> GetColumns() {
-            var forceNullable = IsDeletedTable;
-            var columns = GetColumnsCore(forceNullable).ToList();
+            var columns = new List<EFCoreEntityColumn>();
 
-            if (IsDeletedTable) {
-                // 論理削除用の追加カラム
-                columns.Add(EFCoreEntityColumn.CreateExtra(
-                    physicalName: DELETED_UUID,
-                    dbName: DELETED_UUID,
-                    displayName: "論理削除UUID",
-                    csType: "Guid",
-                    isKey: true,
-                    isNotNull: true));
+            // 論理削除用の追加カラム
+            if (IsDeletedTable && Aggregate is RootAggregate) {
+                columns.Add(new DeletedUuidColumn());
+            }
 
-                columns.Add(EFCoreEntityColumn.CreateExtra(
-                    physicalName: DELETED_AT,
-                    dbName: DELETED_AT,
-                    displayName: "論理削除日時",
-                    csType: "DateTime",
-                    isKey: false,
-                    isNotNull: true));
+            // 親のキー
+            var parent = Aggregate.GetParent();
+            if (parent != null) {
+                foreach (var parentKey in EnumerateKeysRecursively(true, parent, null, ["Parent"])) {
+                    columns.Add(parentKey);
+                }
+            }
 
-                columns.Add(EFCoreEntityColumn.CreateExtra(
-                    physicalName: DELETED_USER,
-                    dbName: DELETED_USER,
-                    displayName: "論理削除を行ったユーザー",
-                    csType: "string",
-                    isKey: false,
-                    isNotNull: false));
+            // スキーマで定義されている列（ValueMember, RefToMember）
+            foreach (var member in Aggregate.GetMembers()) {
+                if (member is ValueMember vm) {
+                    // 自身のキー
+                    var pkIsDeletedUuid = IsDeletedTable && Aggregate is RootAggregate;
+                    columns.Add(new OwnColumnMember(
+                        vm,
+                        isKey: pkIsDeletedUuid ? false : null,
+                        isNotNull: pkIsDeletedUuid ? false : null));
+
+                } else if (member is RefToMember refTo) {
+                    foreach (var refToKey in EnumerateKeysRecursively(false, refTo.RefTo, refTo, [refTo.PhysicalName])) {
+                        columns.Add(refToKey);
+                    }
+                }
             }
 
             return columns;
 
-            IEnumerable<EFCoreEntityColumn> GetColumnsCore(bool forceAllNullable) {
-                var parent = Aggregate.GetParent();
-                if (parent != null) {
-                    foreach (var parentKey in EnumerateKeysRecursively(true, parent, null, ["Parent"])) {
-                        yield return parentKey;
+            // 親や参照先の集約のキーを辿る。
+            // 子孫テーブルは祖先のキーを継承する。
+            // 参照元は参照先のキーを継承する（FOREIGN KEY）。
+            IEnumerable<EFCoreEntityColumn> EnumerateKeysRecursively(bool isParent, AggregateBase parentOrRef, RefToMember? refEntry, IEnumerable<string> path) {
+                // 親のさらに親
+                var ancestor = parentOrRef.GetParent();
+                if (ancestor != null) {
+                    foreach (var ancestorKey in EnumerateKeysRecursively(true, ancestor, refEntry, [.. path, "Parent"])) {
+                        yield return ancestorKey;
                     }
                 }
 
-                foreach (var member in Aggregate.GetMembers()) {
-                    if (member is ValueMember vm) {
-                        // 自身のキー
-                        yield return new OwnColumnMember(vm, isKey: forceAllNullable ? false : null, isNotNull: forceAllNullable ? false : null);
+                // 論理削除テーブルのルート集約の場合、DeletedUuidもキーとして追加
+                if (IsDeletedTable && refEntry == null && parentOrRef is RootAggregate) {
+                    yield return new DeletedUuidColumn();
+                }
 
-                    } else if (member is RefToMember refTo) {
-                        foreach (var refToKey in EnumerateKeysRecursively(false, refTo.RefTo, refTo, [refTo.PhysicalName])) {
+                // 親や参照先の集約のキー
+                foreach (var member in parentOrRef.GetMembers()) {
+                    if (member is ValueMember vm) {
+
+                        if (vm.IsKey && refEntry != null) {
+                            // 参照先が子孫テーブルの場合の、その参照先から見た親のキー
+                            yield return new RefKeyMember(
+                                refEntry,
+                                vm,
+                                path,
+                                isParent,
+                                forceKey: IsDeletedTable ? false : null,
+                                forceNotNull: IsDeletedTable ? false : null);
+
+                        } else if (vm.IsKey && refEntry == null) {
+                            // 親自身のキー
+                            var isNullable = IsDeletedTable && parentOrRef is RootAggregate;
+                            yield return new ParentKeyMember(
+                                vm,
+                                path,
+                                forceKey: isNullable ? false : null,
+                                forceNotNull: isNullable ? false : null);
+
+                        }
+
+                    } else if (member is RefToMember refTo && refTo.IsKey) {
+                        foreach (var refToKey in EnumerateKeysRecursively(isParent, refTo.RefTo, refEntry ?? refTo, [.. path, refTo.PhysicalName])) {
                             yield return refToKey;
                         }
                     }
-                }
-
-                // 親や参照先の集約のキーを辿る。
-                // 子孫テーブルは祖先のキーを継承する。
-                // 参照元は参照先のキーを継承する（FOREIGN KEY）。
-                IEnumerable<EFCoreEntityColumn> EnumerateKeysRecursively(bool isParent, AggregateBase parentOrRef, RefToMember? refEntry, IEnumerable<string> path) {
-                    // 親のさらに親
-                    var ancestor = parentOrRef.GetParent();
-                    if (ancestor != null) {
-                        foreach (var ancestorKey in EnumerateKeysRecursively(true, ancestor, refEntry, [.. path, "Parent"])) {
-                            yield return ancestorKey;
-                        }
-                    }
-
-                    foreach (var member in parentOrRef.GetMembers()) {
-                        if (member is ValueMember vm && vm.IsKey) {
-                            yield return refEntry != null
-                                ? new RefKeyMember(refEntry, vm, path, isParent, forceKey: forceAllNullable ? false : null, forceNotNull: forceAllNullable ? false : null) // 祖先かつ参照先の場合は参照先が優先
-                                : new ParentKeyMember(vm, path, forceKey: forceAllNullable ? false : null, forceNotNull: forceAllNullable ? false : null);
-
-                        } else if (member is RefToMember refTo && refTo.IsKey) {
-                            foreach (var refToKey in EnumerateKeysRecursively(isParent, refTo.RefTo, refEntry ?? refTo, [.. path, refTo.PhysicalName])) {
-                                yield return refToKey;
-                            }
-                        }
-                    }
-
                 }
             }
         }
@@ -170,24 +174,24 @@ namespace Nijo.Parts.CSharp {
         /// ナビゲーションプロパティを列挙する
         /// </summary>
         public IEnumerable<NavigationProperty> GetNavigationProperties() {
-            if (IsDeletedTable) yield break;
-
             var parent = Aggregate.GetParent();
             if (parent != null) {
-                yield return new NavigationProperty.NavigationOfParentChild(parent, Aggregate);
+                yield return new NavigationProperty.NavigationOfParentChild(parent, Aggregate, IsDeletedTable);
             }
 
             foreach (var member in Aggregate.GetMembers()) {
                 if (member is ChildAggregate child) {
-                    yield return new NavigationProperty.NavigationOfParentChild(Aggregate, child);
+                    yield return new NavigationProperty.NavigationOfParentChild(Aggregate, child, IsDeletedTable);
 
                 } else if (member is ChildrenAggregate children) {
-                    yield return new NavigationProperty.NavigationOfParentChild(Aggregate, children);
+                    yield return new NavigationProperty.NavigationOfParentChild(Aggregate, children, IsDeletedTable);
 
                 } else if (member is RefToMember refTo) {
-                    yield return new NavigationProperty.NavigationOfRef(refTo);
+                    if (!IsDeletedTable) yield return new NavigationProperty.NavigationOfRef(refTo);
                 }
             }
+
+            if (IsDeletedTable) yield break;
 
             foreach (var refFrom in Aggregate.GetRefFroms()) {
                 // DBの実体をもたないクエリモデルやコマンドモデルから参照された場合はナビゲーションプロパティを張らない
@@ -264,29 +268,33 @@ namespace Nijo.Parts.CSharp {
 
             return $$"""
                 /// <summary>
+                {{If(IsDeletedTable, () => $$"""
+                /// 論理削除された{{Aggregate.DisplayName}}の Entity Framework Core エンティティ型。RDBMSのテーブル定義と対応。
+                """).Else(() => $$"""
                 /// {{Aggregate.DisplayName}}の Entity Framework Core エンティティ型。RDBMSのテーブル定義と対応。
+                """)}}
                 /// </summary>
                 public partial class {{CsClassName}} {
                 {{columns.SelectTextTemplate(col => $$"""
                     /// <summary>{{col.DisplayName}}</summary>
                     public {{col.CsType}}? {{col.PhysicalName}} { get; set; }
                 """)}}
-                {{If(IsDeletedTable, () => $$"""
-                    /// <summary>論理削除時に採番されるUUID</summary>
-                    public Guid {{DELETED_UUID}} { get; set; }
-                    /// <summary>論理削除が実行された日時</summary>
-                    public DateTime {{DELETED_AT}} { get; set; }
-                    /// <summary>論理削除を行ったユーザー</summary>
-                    public string? {{DELETED_USER}} { get; set; }
-                """)}}
                     /// <summary>データが新規作成された日時</summary>
                     public DateTime? {{CREATED_AT}} { get; set; }
                     /// <summary>データが更新された日時</summary>
                     public DateTime? {{UPDATED_AT}} { get; set; }
+                {{If(IsDeletedTable && Aggregate is RootAggregate, () => $$"""
+                    /// <summary>論理削除日時</summary>
+                    public DateTime? {{DELETED_AT}} { get; set; }
+                """)}}
                     /// <summary>データを新規作成したユーザー</summary>
                     public string? {{CREATE_USER}} { get; set; }
                     /// <summary>データを更新したユーザー</summary>
                     public string? {{UPDATE_USER}} { get; set; }
+                {{If(IsDeletedTable && Aggregate is RootAggregate, () => $$"""
+                    /// <summary>論理削除を行ったユーザー</summary>
+                    public string? {{DELETED_USER}} { get; set; }
+                """)}}
                 {{If(HasVersionColumn, () => $$"""
                     /// <summary>楽観排他制御用のバージョニング用カラム</summary>
                     public int? {{VERSION}} { get; set; }
@@ -327,10 +335,6 @@ namespace Nijo.Parts.CSharp {
             public override string ToString() {
                 // デバッグ用
                 return $"{DisplayName}({CsType})";
-            }
-
-            internal static EFCoreEntityColumn CreateExtra(string physicalName, string dbName, string displayName, string csType, bool isKey, bool isNotNull) {
-                return new ExtraColumn(physicalName, dbName, displayName, csType, isKey, isNotNull);
             }
         }
         /// <summary>
@@ -430,44 +434,17 @@ namespace Nijo.Parts.CSharp {
         }
 
         /// <summary>
-        /// スキーマに存在しない論理削除用の付加カラム
+        /// 論理削除テーブルの、論理削除用UUIDカラム
         /// </summary>
-        private sealed class ExtraColumn : EFCoreEntityColumn {
-            internal ExtraColumn(string physicalName, string dbName, string displayName, string csType, bool isKey, bool isNotNull) {
-                PhysicalName = physicalName;
-                DbName = dbName;
-                DisplayName = displayName;
-                CsType = csType;
-                IsKey = isKey;
-                IsNotNull = isNotNull;
-            }
-
+        internal class DeletedUuidColumn : EFCoreEntityColumn {
             internal override ValueMember? Member => null;
-            internal override IValueMemberType MemberType { get; } = new PrimitiveValueMemberType();
-            internal override string CsType { get; }
-            internal override string PhysicalName { get; }
-            internal override string DisplayName { get; }
-            internal override string DbName { get; }
-            internal override bool IsKey { get; }
-            internal override bool IsNotNull { get; }
-        }
-
-        /// <summary>
-        /// 論理削除専用カラムのための簡易な値型定義
-        /// </summary>
-        private sealed class PrimitiveValueMemberType : IValueMemberType {
-            public string DisplayName => "Primitive";
-            public string RenderSpecificationMarkdown() => string.Empty;
-            public string SchemaTypeName => "primitive-softdelete";
-            public void Validate(System.Xml.Linq.XElement element, SchemaParseContext context, Action<System.Xml.Linq.XElement, string> addError) { }
-            public string TypePhysicalName => "primitive-softdelete";
-            public string CsDomainTypeName => "object";
-            public string CsPrimitiveTypeName => "object";
-            public string TsTypeName => "unknown";
-            public void RegisterDependencies(IMultiAggregateSourceFileManager ctx) { }
-            public void RenderStaticSources(CodeRenderingContext ctx) { }
-            public ValueMemberSearchBehavior? SearchBehavior => null;
-            public string RenderCreateDummyDataValueBody(CodeRenderingContext ctx) => "return null!;";
+            internal override IValueMemberType MemberType => new ValueMemberTypes.Word();
+            internal override string CsType => "Guid";
+            internal override string PhysicalName => DELETED_UUID;
+            internal override string DisplayName => "論理削除UUID";
+            internal override string DbName => DELETED_UUID;
+            internal override bool IsKey => true;
+            internal override bool IsNotNull => true;
         }
         #endregion メンバー
 
@@ -478,8 +455,6 @@ namespace Nijo.Parts.CSharp {
         /// AsSplitQuery() を呼び出すようにします。
         /// </summary>
         internal IEnumerable<string> RenderInclude() {
-            if (IsDeletedTable) yield break;
-
             var descendants = Aggregate.EnumerateDescendants().ToArray();
 
             // 1:N のリレーションが2個以上存在する場合は AsSplitQuery() を追加
