@@ -19,6 +19,13 @@
         "background-color": "#ea580c",
         "border-color": "#ea580c"
       },
+      "3d203063-3cf5-4acd-ba63-ecbe5701782d": {
+        "id": "3d203063-3cf5-4acd-ba63-ecbe5701782d",
+        "label": "係",
+        "parent": "51d08ec1-ddd8-4822-bf2b-91c458ee7e62",
+        "background-color": "#ea580c",
+        "border-color": "#ea580c"
+      },
       "4c96eb60-249d-414c-8e3e-4b5a981fa8c6": {
         "id": "4c96eb60-249d-414c-8e3e-4b5a981fa8c6",
         "label": "部署",
@@ -72,13 +79,17 @@
         "x": 202.2469107,
         "y": 369.259168
       },
+      "3d203063-3cf5-4acd-ba63-ecbe5701782d": {
+        "x": 0,
+        "y": 0
+      },
       "4c96eb60-249d-414c-8e3e-4b5a981fa8c6": {
-        "x": 355,
-        "y": 313
+        "x": 0,
+        "y": 0
       },
       "51d08ec1-ddd8-4822-bf2b-91c458ee7e62": {
-        "x": 355,
-        "y": 313
+        "x": 0,
+        "y": 0
       }
     }
   }

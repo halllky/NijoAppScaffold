@@ -47,8 +47,21 @@
           Type="ref-to:旧システム部署情報"
           UniqueId="1f6febf0-adfe-4377-8749-9eb7223ef14c" />
         <課名称
+          IsNotNull="True"
           Type="word"
           UniqueId="f8667bbb-c921-46ec-869b-b989649634d5" />
+        <係
+          Type="children"
+          UniqueId="3d203063-3cf5-4acd-ba63-ecbe5701782d">
+          <連番
+            IsKey="True"
+            Type="int"
+            UniqueId="72f8ff2c-a014-428b-8a74-1b50d033cd94" />
+          <係名称
+            IsNotNull="True"
+            Type="word"
+            UniqueId="61e72ff4-9992-4a83-a546-0fb4c93ef3fa" />
+        </係>
       </課>
     </部署>
     <!--ビューの例。

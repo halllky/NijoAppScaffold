@@ -104,11 +104,10 @@ namespace Nijo.Parts.CSharp {
             foreach (var member in Aggregate.GetMembers()) {
                 if (member is ValueMember vm) {
                     // 自身のキー
-                    var pkIsDeletedUuid = IsDeletedTable && Aggregate is RootAggregate;
-                    columns.Add(new OwnColumnMember(
-                        vm,
-                        isKey: pkIsDeletedUuid ? false : null,
-                        isNotNull: pkIsDeletedUuid ? false : null));
+                    var isNotKey = IsDeletedTable && Aggregate is RootAggregate; // 論理削除テーブルのルートは専用のUUIDがキー
+                    var forceNullable = IsDeletedTable
+                        && (!vm.IsKey || Aggregate is RootAggregate);
+                    columns.Add(new OwnColumnMember(vm, isKey: isNotKey ? false : null, isNotNull: forceNullable ? false : null));
 
                 } else if (member is RefToMember refTo) {
                     foreach (var refToKey in EnumerateKeysRecursively(false, refTo.RefTo, refTo, [refTo.PhysicalName])) {

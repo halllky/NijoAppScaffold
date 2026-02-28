@@ -438,7 +438,7 @@ namespace Nijo.Models.DataModelModules {
                         ? $"{source.Root.Name}.{source.GetPathFromInstance().Select(p => p.Metadata.GetPropertyName(E_CsTs.CSharp)).Join("?.")}"
                         : "null";
                     yield return $$"""
-                        {{col.PhysicalName}} = {{col.Member.Type.RenderCastToPrimitiveType()}}{{sourcePath}},
+                        {{col.PhysicalName}} = {{col.MemberType.RenderCastToPrimitiveType()}}{{sourcePath}},
                         """;
                 }
 

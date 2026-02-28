@@ -163,6 +163,12 @@ internal static class EFCoreOnModelCreating {
                     .IsUnique();
             """)}}
             """)}}
+            {{If(isDeletedTable && entity.Aggregate is RootAggregate, () => $$"""
+
+                    // 論理削除テーブルは削除日時でソートされることが多いのでインデックスを張る
+                    entity.HasIndex(e => e.{{EFCoreEntity.DELETED_AT}})
+                        .HasDatabaseName("IX_{{tableName}}_DELETED_AT");
+            """)}}
             {{navigationsForConfiguringChildren.SelectTextTemplate(nav => $$"""
 
                     entity.{{(nav.Principal.OtherSideIsMany ? "HasMany" : "HasOne")}}(e => e.{{nav.Principal.OtherSidePhysicalName}})
