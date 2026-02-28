@@ -371,6 +371,7 @@ namespace Nijo.ImmutableSchema {
 
         public bool IsView => XElement.Attribute(BasicNodeOptions.MapToView.AttributeName) != null;
         public IModel Model => _ctx.TryGetModel(XElement, out var model) ? model : throw new InvalidOperationException($"ありえない: {XElement}");
+        public bool UseSoftDelete => XElement.Attribute(BasicNodeOptions.UseSoftDelete.AttributeName) != null;
 
         public override AggregateBase AsEntry() {
             return new RootAggregate(XElement, _ctx, null);

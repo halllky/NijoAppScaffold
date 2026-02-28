@@ -197,6 +197,13 @@ namespace Nijo.Models {
             aggregateFile.AddCSharpClass(EFCoreEntity.RenderClassDeclaring(efCoreEntity, ctx), "Class_EFCoreEntity");
             ctx.Use<DbContextClass>().AddEntities(efCoreEntity.EnumerateThisAndDescendants());
 
+            // データ型: EFCore Entity（論理削除用）
+            if (rootAggregate.UseSoftDelete) {
+                var deletedEfCoreEntity = new EFCoreEntity(rootAggregate, isDeletedTable: true);
+                aggregateFile.AddCSharpClass(EFCoreEntity.RenderClassDeclaring(deletedEfCoreEntity, ctx), "Class_EFCoreEntity_Deleted");
+                ctx.Use<DbContextClass>().AddEntities(deletedEfCoreEntity.EnumerateThisAndDescendants());
+            }
+
             // データ型: SaveCommand
             aggregateFile.AddCSharpClass(SaveCommand.RenderAll(rootAggregate, ctx), "Class_SaveCommand");
 
@@ -207,13 +214,20 @@ namespace Nijo.Models {
                 .Register(saveCommandMessage.InterfaceName, saveCommandMessage.CsClassName)
                 .Register(saveCommandMessage.CsClassName, saveCommandMessage.CsClassName);
 
-            // 処理: 新規登録、更新、削除
+            // 処理: 新規登録、更新
             var create = new CreateMethod(rootAggregate);
             var update = new UpdateMethod(rootAggregate);
-            var delete = new DeleteMethod(rootAggregate);
             aggregateFile.AddAppSrvMethod(create.Render(ctx), "新規登録処理");
             aggregateFile.AddAppSrvMethod(update.Render(ctx), "更新処理");
-            aggregateFile.AddAppSrvMethod(delete.Render(ctx), "物理削除処理");
+
+            // 処理: 削除
+            if (rootAggregate.UseSoftDelete) {
+                var softDelete = new SoftDeleteMethods(rootAggregate);
+                aggregateFile.AddAppSrvMethod(softDelete.Render(ctx), "論理削除処理");
+            } else {
+                var delete = new DeleteMethod(rootAggregate);
+                aggregateFile.AddAppSrvMethod(delete.Render(ctx), "物理削除処理");
+            }
 
             // 処理: 自動生成されるバリデーションエラーチェック
             aggregateFile.AddAppSrvMethod($$"""

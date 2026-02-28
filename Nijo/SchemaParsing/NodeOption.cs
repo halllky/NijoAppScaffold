@@ -258,6 +258,26 @@ internal static class BasicNodeOptions {
             }
         },
     };
+    internal static NodeOption UseSoftDelete = new() {
+        AttributeName = "UseSoftDelete",
+        DisplayName = "論理削除を行う",
+        Type = E_NodeOptionType.Boolean,
+        HelpText = $$"""
+            ルート集約の削除処理を物理削除ではなく論理削除に切り替えます。
+            削除時に元テーブルから行を削除し、同名+"_DELETED" のテーブルへコピーします。
+            復元処理は自動生成されないため、手動で実装する必要があります。
+            これは、復元時に新しいキーを採番するか、既存の新規作成処理を流用して復元するか、
+            単に削除前と同じ値でINSERTするだけか、といった仕様はケースバイケースで異なり、
+            コード生成で一律に対応するのが難しいためです。
+            """,
+        IsAvailable = (model, nodeType) => {
+            // データモデルのルート集約のみ許可
+            return model is DataModel && nodeType == E_NodeType.RootAggregate;
+        },
+        ValidateOthers = ctx => {
+            // IsAvailableで基本的な判定は完了しているため、追加の検証は不要
+        },
+    };
     internal static NodeOption UniqueConstraints = new() {
         AttributeName = "UniqueConstraints",
         DisplayName = "ユニーク制約",
