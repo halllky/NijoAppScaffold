@@ -121,7 +121,7 @@ internal static class EFCoreOnModelCreating {
             """)}}
                         .IsRequired({{(col.IsNotNull ? "true" : "false")}})
                         .HasColumnOrder({{ix}});
-            {{If(col.Member is not null && col.Member.Type is SequenceMember, () => $$"""
+            {{If(col.Member?.Type is SequenceMember, () => $$"""
                     {{SequenceMember.CONFIGURE_MEMBER}}(modelBuilder, entity, entity.Property(e => e.{{col.PhysicalName}}), "{{col.Member!.SequenceName}}");
 
             """)}}

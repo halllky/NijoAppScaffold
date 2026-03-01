@@ -21,7 +21,6 @@ namespace Nijo.Models.DataModelModules {
         internal string MethodName => $"SoftDelete{_rootAggregate.PhysicalName}Async";
         internal string OnBeforeMethodName => $"OnBeforeSoftDelete{_rootAggregate.PhysicalName}";
         internal string OnAfterMethodName => $"OnAfterSoftDelete{_rootAggregate.PhysicalName}Async";
-        internal string RestoreMethodName => $"Restore{_rootAggregate.PhysicalName}Async";
 
         internal string Render(CodeRenderingContext ctx) {
             var command = new SaveCommand(_rootAggregate, SaveCommand.E_Type.Delete);
@@ -68,6 +67,7 @@ namespace Nijo.Models.DataModelModules {
                 #region 論理削除処理
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の論理削除を実行します。
+                /// 復元処理は自動生成されないので、必要な場合は独自に実装してください。
                 /// </summary>
                 /// <param name="command">削除するデータ（主キーとバージョン）</param>
                 /// <param name="context">コンテキスト</param>
@@ -133,7 +133,8 @@ namespace Nijo.Models.DataModelModules {
                     try {
                         await DbContext.Database.CurrentTransaction.CreateSavepointAsync(SAVE_POINT).ConfigureAwait(false);
 
-                {{WithIndent(RenderInsertDeletedTree(liveTree, deletedTree, ctx), "        ")}}
+                        var deletedUuid = Guid.NewGuid();
+                        {{WithIndent(RenderInsertDeletedTree(liveTree, deletedTree, ctx), "        ")}}
 
                         var entry = DbContext.Entry(dbEntity);
                         entry.State = EntityState.Deleted;
@@ -206,67 +207,71 @@ namespace Nijo.Models.DataModelModules {
                     // このメソッドをオーバーライドして処理を実装してください。
                     return Task.CompletedTask;
                 }
-                /// <summary>
-                /// {{_rootAggregate.DisplayName}} の論理削除データを復元する処理のシグネチャです。実装は開発者が提供してください。
-                /// </summary>
-                public abstract Task<bool> {{RestoreMethodName}}({{dbEntity.CsClassName}} oldValue, {{deletedEntity.CsClassName}} archivedValue, {{messages.InterfaceName}} messages, {{PresentationContext.INTERFACE}} context);
                 #endregion 論理削除処理
                 """;
         }
 
-        private string RenderInsertDeletedTree(EFCoreEntity[] liveTree, EFCoreEntity[] deletedTree, CodeRenderingContext ctx) {
-            // liveTree と deletedTree は同じ順序・同じ集約を表す前提
-            var lines = new List<string>();
+        /// <summary>
+        /// 論理削除されたデータを削除前のデータから生成するコードをレンダリングします。
+        /// liveTree と deletedTree は同じ順序・同じ集約を表す前提
+        /// </summary>
+        private static IEnumerable<string> RenderInsertDeletedTree(EFCoreEntity[] liveTree, EFCoreEntity[] deletedTree, CodeRenderingContext ctx) {
+            return RenderAggregate(liveTree[0], deletedTree[0], "dbEntity", "deletedDbEntity");
 
-            void RenderAggregate(EFCoreEntity live, EFCoreEntity deleted, string sourceExpr, string targetVar) {
-                var columns = deleted.GetColumns().ToArray();
-                var body = new List<string>();
-                body.Add($"var {targetVar} = new {deleted.CsClassName} {{");
-                body.Add($"    {EFCoreEntity.DELETED_UUID} = Guid.NewGuid(),");
-                body.Add($"    {EFCoreEntity.DELETED_AT} = {ApplicationService.CURRENT_TIME},");
+            IEnumerable<string> RenderAggregate(EFCoreEntity live, EFCoreEntity deleted, string sourceExpr, string targetVar) {
+                yield return $$"""
 
-                foreach (var col in columns) {
-                    if (col.PhysicalName == EFCoreEntity.DELETED_UUID || col.PhysicalName == EFCoreEntity.DELETED_AT) continue;
-                    body.Add($"    {col.PhysicalName} = {sourceExpr}.{col.PhysicalName},");
-                }
-                body.Add($"    {EFCoreEntity.CREATED_AT} = {sourceExpr}.{EFCoreEntity.CREATED_AT},");
-                body.Add($"    {EFCoreEntity.UPDATED_AT} = {sourceExpr}.{EFCoreEntity.UPDATED_AT},");
-                body.Add($"    {EFCoreEntity.CREATE_USER} = {sourceExpr}.{EFCoreEntity.CREATE_USER},");
-                body.Add($"    {EFCoreEntity.UPDATE_USER} = {sourceExpr}.{EFCoreEntity.UPDATE_USER},");
-                if (deleted.HasVersionColumn) {
-                    body.Add($"    {EFCoreEntity.VERSION} = {sourceExpr}.{EFCoreEntity.VERSION},");
-                }
-                body.Add("};");
-
-                lines.AddRange(body);
-                lines.Add($"DbContext.{deleted.DbSetName}.Add({targetVar});");
-                lines.Add($"insertedSoftDeleteEntities.Add({targetVar});");
+                    var {{targetVar}} = new {{deleted.CsClassName}} {
+                        {{EFCoreEntity.DELETED_UUID}} = deletedUuid,
+                    {{If(deleted.Aggregate is RootAggregate, () => $$"""
+                        {{EFCoreEntity.DELETED_AT}} = {{ApplicationService.CURRENT_TIME}},
+                        {{EFCoreEntity.DELETED_USER}} = {{ApplicationService.CURRENT_USER}},
+                    """)}}
+                    {{deleted.GetColumns().Where(c => c is not EFCoreEntity.DeletedUuidColumn).SelectTextTemplate(col => $$"""
+                        {{col.PhysicalName}} = {{sourceExpr}}.{{col.PhysicalName}},
+                    """)}}
+                        {{EFCoreEntity.CREATED_AT}} = {{sourceExpr}}.{{EFCoreEntity.CREATED_AT}},
+                        {{EFCoreEntity.UPDATED_AT}} = {{sourceExpr}}.{{EFCoreEntity.UPDATED_AT}},
+                        {{EFCoreEntity.CREATE_USER}} = {{sourceExpr}}.{{EFCoreEntity.CREATE_USER}},
+                        {{EFCoreEntity.UPDATE_USER}} = {{sourceExpr}}.{{EFCoreEntity.UPDATE_USER}},
+                    {{If(deleted.HasVersionColumn, () => $$"""
+                        {{EFCoreEntity.VERSION}} = {{sourceExpr}}.{{EFCoreEntity.VERSION}},
+                    """)}}
+                    };
+                    DbContext.{{deleted.DbSetName}}.Add({{targetVar}});
+                    insertedSoftDeleteEntities.Add({{targetVar}});
+                    """;
 
                 // 子孫をレンダリング
                 foreach (var member in live.Aggregate.GetMembers()) {
                     if (member is ChildAggregate child) {
-                        lines.Add($"if ({sourceExpr}.{child.PhysicalName} != null) {{");
-                        RenderAggregate(
-                            liveTree.Single(e => e.Aggregate == child),
-                            deletedTree.Single(e => e.Aggregate == child),
-                            $"{sourceExpr}.{child.PhysicalName}!",
-                            $"{targetVar}_{child.PhysicalName}");
-                        lines.Add("}");
+                        yield return $$"""
+
+                            if ({{sourceExpr}}.{{child.PhysicalName}} != null) {
+                                {{WithIndent(RenderAggregate(
+                                    liveTree.Single(e => e.Aggregate == child),
+                                    deletedTree.Single(e => e.Aggregate == child),
+                                    $"{sourceExpr}.{child.PhysicalName}!",
+                                    $"{targetVar}_{child.PhysicalName}"), "    ")}}
+                            }
+                            """;
+
                     } else if (member is ChildrenAggregate children) {
                         var loopVar = children.GetLoopVarName();
-                        lines.Add($"foreach (var {loopVar} in {sourceExpr}.{children.PhysicalName} ?? Enumerable.Empty<{liveTree.Single(e => e.Aggregate == children).CsClassName}>()) {{");
-                        RenderAggregate(
-                            liveTree.Single(e => e.Aggregate == children),
-                            deletedTree.Single(e => e.Aggregate == children),
-                            loopVar,
-                            $"{targetVar}_{children.PhysicalName}");
-                        lines.Add("}");
+
+                        yield return $$"""
+
+                            foreach (var {{loopVar}} in {{sourceExpr}}.{{children.PhysicalName}} ?? []) {
+                                {{WithIndent(RenderAggregate(
+                                    liveTree.Single(e => e.Aggregate == children),
+                                    deletedTree.Single(e => e.Aggregate == children),
+                                    loopVar,
+                                    $"{targetVar}_{children.PhysicalName}"), "    ")}}
+                            }
+                            """;
                     }
                 }
             }
-
-            RenderAggregate(liveTree[0], deletedTree[0], "dbEntity", "deletedDbEntity");
-            return lines.Select(line => line).Join("\n");
         }
     }
 }

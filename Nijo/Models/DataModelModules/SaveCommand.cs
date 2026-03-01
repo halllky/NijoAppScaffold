@@ -434,7 +434,8 @@ namespace Nijo.Models.DataModelModules {
                 // 自身のカラム、外部参照のキー、親のキー
                 foreach (var col in left.GetColumns()) {
                     // シーケンス項目など登録と共に採番されるものはnullになる可能性がある
-                    var sourcePath = rigthMembers.TryGetValue(col.Member.ToMappingKey(), out var source)
+                    var mappingKey = col.Member?.ToMappingKey();
+                    var sourcePath = mappingKey != null && rigthMembers.TryGetValue(mappingKey, out var source)
                         ? $"{source.Root.Name}.{source.GetPathFromInstance().Select(p => p.Metadata.GetPropertyName(E_CsTs.CSharp)).Join("?.")}"
                         : "null";
                     yield return $$"""

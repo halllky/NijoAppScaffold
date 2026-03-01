@@ -56,6 +56,7 @@ public class ユニーク制約のテスト {
                 コード = "SEC-A",
                 旧システムコード = new() { 旧システムコード = "LEGACY-001" },
                 課名称 = "第一課",
+                係 = [],
             }],
         }, presentationContext);
         Assert.That(firstDepartment.Result, Is.EqualTo(DataModelSaveResultType.Completed), "初回の登録が失敗しました。");
@@ -68,6 +69,7 @@ public class ユニーク制約のテスト {
                 コード = "SEC-B",
                 旧システムコード = new() { 旧システムコード = "LEGACY-001" }, // ユニーク制約違反
                 課名称 = "第二課",
+                係 = [],
             }],
         }, presentationContext);
 
@@ -108,6 +110,7 @@ public class ユニーク制約のテスト {
                 コード = "NAV-SEC",
                 旧システムコード = new() { 旧システムコード = legacyCode },
                 課名称 = "ナビゲーション課",
+                係 = [],
             }],
         }, presentationContext);
         Assert.That(departmentResult.Result, Is.EqualTo(DataModelSaveResultType.Completed), "部署の作成に失敗しました。");
