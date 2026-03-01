@@ -245,6 +245,11 @@ namespace Nijo {
             ctx.Use<ApplicationService>();
             ctx.Use<EnumFile>();
             ctx.Use<MetadataForPage>();
+            ctx.CoreLibrary(dir => {
+                dir.Directory("Util", utilDir => {
+                    utilDir.Generate(NijoAttr.RenderDeclaration(ctx));
+                });
+            });
 
             // スキーマ定義にかかわらず必ず生成されるモジュールの登録: Query, Command モデル由来のもの
             ctx.Use<Models.ValueObjectModel.ValueObjectJsonConverter>();

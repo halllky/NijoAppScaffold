@@ -165,6 +165,22 @@ public class SchemaParseContext {
             yield return opt;
         }
     }
+
+    /// <summary>
+    /// XML要素に定義されているカスタム属性を返します。
+    /// </summary>
+    public IEnumerable<NijoXmlCustomAttribute> GetCustomAttributes(XElement xElement) {
+        var attrDefs = _customAttributesCache ??= NijoXmlCustomAttribute
+            .FromXDocument(Document)
+            .ToArray();
+        var attrs = xElement
+            .Attributes()
+            .Select(attr => attr.Name.LocalName)
+            .ToHashSet();
+        return attrDefs
+            .Where(attr => attrs.Contains(attr.PhysicalName!));
+    }
+    private NijoXmlCustomAttribute[]? _customAttributesCache;
     #endregion オプション属性
 
 

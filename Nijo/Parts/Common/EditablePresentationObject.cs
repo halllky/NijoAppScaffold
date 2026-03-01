@@ -4,6 +4,7 @@ using System.Linq;
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Models.QueryModelModules;
+using Nijo.Parts.CSharp;
 using Nijo.SchemaParsing;
 
 namespace Nijo.Parts.Common;
@@ -107,6 +108,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
             /// <summary>
             /// {{Aggregate.DisplayName}}の画面表示用データ。
             /// </summary>
+            {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
             public partial class {{CsClassName}} {
                 /// <summary>
                 /// 画面初期表示から保存までの間でこのインスタンスを識別する番号。
@@ -146,7 +148,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
             /// </summary>
             public partial class {{CsValuesClassName}} {
             {{Values.GetMembers().SelectTextTemplate(m => $$"""
-                {{WithIndent(m.RenderCsDeclaration(), "    ")}}
+                {{WithIndent(m.RenderCsDeclaration(ctx), "    ")}}
             """)}}
             }
             """;
@@ -224,7 +226,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
     /// Valuesオブジェクトの中のメンバー
     /// </summary>
     internal interface IEditablePresentationObjectMemberInValues : IInstancePropertyMetadata {
-        string RenderCsDeclaration();
+        string RenderCsDeclaration(CodeRenderingContext ctx);
         string RenderTsDeclaration();
 
         string RenderNewObjectCreation();
@@ -245,9 +247,10 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
         string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PropertyName;
 
-        public string RenderCsDeclaration() {
+        public string RenderCsDeclaration(CodeRenderingContext ctx) {
             return $$"""
                 {{Member.XElement.RenderXmlCommentOrJsDoc(E_CsTs.CSharp)}}
+                {{NijoAttr.RenderAttributeValues(ctx, Member)}}
                 public {{Member.Type.CsDomainTypeName}}? {{PropertyName}} { get; set; }
                 """;
         }
@@ -301,9 +304,10 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         public string PropertyName => Member.PhysicalName;
         public string DisplayName => Member.DisplayName;
 
-        public string RenderCsDeclaration() {
+        public string RenderCsDeclaration(CodeRenderingContext ctx) {
             return $$"""
                 {{Member.XElement.RenderXmlCommentOrJsDoc(E_CsTs.CSharp)}}
+                {{NijoAttr.RenderAttributeValues(ctx, Member)}}
                 public {{RefEntry.CsClassName}} {{PropertyName}} { get; set; } = new();
                 """;
         }
