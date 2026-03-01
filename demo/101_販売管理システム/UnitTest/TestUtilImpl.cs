@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 using MyApp.UnitTest;
 using MyApp.Debugging;
 
@@ -74,6 +76,20 @@ public partial class TestUtilImpl {
         OverridedApplicationService.ConfigureServices(services, null);
         ConfigureServicesスキーマ定義依存(services);
 
+        // DI機構: ログ
+        var logFilePath = Path.Combine(currentTestWorkDirectory, "result.log");
+        services.AddLogging(logging => {
+            logging.SetMinimumLevel(LogLevel.Trace);
+
+            // コンソール出力
+            logging.AddFilter<ConsoleLoggerProvider>((_, level) => level >= LogLevel.Warning);
+            logging.AddConsole();
+
+            // ファイル出力
+            logging.AddFilter<FileLoggerProvider>((_, level) => level != LogLevel.None);
+            logging.AddProvider(new FileLoggerProvider(logFilePath));
+        });
+
         // DI機構: テストケースごとのカスタマイズ
         configureServices?.Invoke(services);
 
@@ -121,6 +137,64 @@ public partial class TestUtilImpl {
     }
 
     partial void ConfigureServicesスキーマ定義依存(IServiceCollection services);
+
+    /// <summary>
+    /// テスト用のファイルロガー。ログをテキストファイルに出力する。
+    /// テストケースごとに異なるファイルに出力される想定。
+    /// </summary>
+    private sealed class FileLoggerProvider : ILoggerProvider {
+        private readonly StreamWriter _writer;
+        private readonly object _lock = new();
+        private bool _disposed;
+
+        public FileLoggerProvider(string filePath) {
+            Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+            _writer = new StreamWriter(File.Open(filePath, FileMode.Append, FileAccess.Write, FileShare.Read)) {
+                AutoFlush = true
+            };
+        }
+
+        public ILogger CreateLogger(string categoryName) => new FileLogger(categoryName, _writer, _lock);
+
+        public void Dispose() {
+            if (_disposed) return;
+            _disposed = true;
+            _writer.Dispose();
+        }
+    }
+
+    /// <inheritdoc cref="FileLoggerProvider" />
+    private sealed class FileLogger : ILogger {
+        private readonly string _categoryName;
+        private readonly StreamWriter _writer;
+        private readonly object _lock;
+
+        public FileLogger(string categoryName, StreamWriter writer, object writeLock) {
+            _categoryName = categoryName;
+            _writer = writer;
+            _lock = writeLock;
+        }
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => NullScope.Instance;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) {
+            var message = formatter(state, exception);
+            var line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [{logLevel}] {_categoryName} {message}";
+            if (exception != null) {
+                line += $"{Environment.NewLine}{exception}";
+            }
+            lock (_lock) {
+                _writer.WriteLine(line);
+            }
+        }
+    }
+
+    private sealed class NullScope : IDisposable {
+        public static readonly NullScope Instance = new();
+        public void Dispose() { }
+    }
 }
 
 /// <summary>
