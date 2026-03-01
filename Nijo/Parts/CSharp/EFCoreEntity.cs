@@ -234,7 +234,7 @@ namespace Nijo.Parts.CSharp {
             return $$"""
                 #region Entity Framework Core エンティティ定義
                 {{tree.SelectTextTemplate(efCoreEntity => $$"""
-                {{efCoreEntity.RenderClassDeclaring()}}
+                {{efCoreEntity.RenderClassDeclaring(ctx)}}
                 """)}}
 
                 partial class {{ctx.Config.DbContextName}} {
@@ -245,7 +245,7 @@ namespace Nijo.Parts.CSharp {
                 #endregion Entity Framework Core エンティティ定義
                 """;
         }
-        private string RenderClassDeclaring() {
+        private string RenderClassDeclaring(CodeRenderingContext ctx) {
             var columns = GetColumns().ToArray();
             var keys = columns
                 .Where(col => col.IsKey)
@@ -254,9 +254,25 @@ namespace Nijo.Parts.CSharp {
             var navigations = GetNavigationProperties().ToArray();
             var navigationsForDeclaring = navigations
                 .Select(nav => {
-                    if (nav.Principal.ThisSide == Aggregate) return nav.Principal;
-                    if (nav.Relevant.ThisSide == Aggregate) return nav.Relevant;
-                    throw new InvalidOperationException(); // ありえない
+                    // Principa と Relevant のうちどちらがこちら側の集約かを決める
+                    NavigationProperty.PrincipalOrRelevant thisSide;
+                    if (nav.Principal.ThisSide == Aggregate) thisSide = nav.Principal;
+                    else if (nav.Relevant.ThisSide == Aggregate) thisSide = nav.Relevant;
+                    else throw new InvalidOperationException(); // ありえない
+
+                    // メタデータの列挙に使用するノードを決める
+                    ISchemaPathNode nodeForMetadata;
+                    if (nav is NavigationProperty.NavigationOfParentChild) {
+                        // 親子のナビゲーションは相手側のノードを使用
+                        nodeForMetadata = thisSide.OtherSide;
+                    } else if (nav is NavigationProperty.NavigationOfRef navRef) {
+                        // 参照のナビゲーションはref-toの関係性自体を使用
+                        nodeForMetadata = navRef.Relation;
+                    } else {
+                        throw new InvalidOperationException(); // ありえない
+                    }
+
+                    return new { ThisSide = thisSide, NodeForMetadata = nodeForMetadata };
                 });
             // 親子のナビゲーションは親側のOnModelCreatingで定義
             var navigationsForConfiguringChildren = navigations
@@ -273,9 +289,13 @@ namespace Nijo.Parts.CSharp {
                 /// {{Aggregate.DisplayName}}の Entity Framework Core エンティティ型。RDBMSのテーブル定義と対応。
                 """)}}
                 /// </summary>
+                {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
                 public partial class {{CsClassName}} {
                 {{columns.SelectTextTemplate(col => $$"""
                     /// <summary>{{col.DisplayName}}</summary>
+                {{If(col.Member != null, () => $$"""
+                    {{NijoAttr.RenderAttributeValues(ctx, col.Member!)}}
+                """)}}
                     public {{col.CsType}}? {{col.PhysicalName}} { get; set; }
                 """)}}
                     /// <summary>データが新規作成された日時</summary>
@@ -300,7 +320,8 @@ namespace Nijo.Parts.CSharp {
                 """)}}
 
                 {{navigationsForDeclaring.SelectTextTemplate(nav => $$"""
-                    public virtual {{nav.GetOtherSideCsTypeName(true)}} {{nav.OtherSidePhysicalName}} { get; set; }{{nav.GetInitializerStatement()}}
+                    {{NijoAttr.RenderAttributeValues(ctx, nav.NodeForMetadata)}}
+                    public virtual {{nav.ThisSide.GetOtherSideCsTypeName(true)}} {{nav.ThisSide.OtherSidePhysicalName}} { get; set; }{{nav.ThisSide.GetInitializerStatement()}}
                 """)}}
 
                     /// <summary>このオブジェクトと比較対象のオブジェクトの主キーが一致するかを返します。</summary>

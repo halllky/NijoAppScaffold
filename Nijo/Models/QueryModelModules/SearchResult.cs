@@ -242,7 +242,7 @@ namespace Nijo.Models.QueryModelModules {
             return $$"""
                 #region 検索クエリ型
                 {{tree.SelectTextTemplate(sr => $$"""
-                {{RenderAggregate(sr)}}
+                {{RenderAggregate(sr, ctx)}}
                 """)}}
                 #endregion 検索クエリ型
                 {{If(root.IsView, () => $$"""
@@ -258,7 +258,7 @@ namespace Nijo.Models.QueryModelModules {
                 """)}}
                 """;
 
-            static string RenderAggregate(SearchResult sr) {
+            static string RenderAggregate(SearchResult sr, CodeRenderingContext ctx) {
                 // 視認性のために親と参照先のナビゲーションプロパティを後ろに持っていく
                 var orderedMembers = sr
                     .GetMembers()
@@ -272,9 +272,10 @@ namespace Nijo.Models.QueryModelModules {
                     /// {{sr.Aggregate.DisplayName}}の検索結果型。
                     /// SQLのSELECT句の形と対応する。
                     /// </summary>
+                    {{NijoAttr.RenderAttributeValues(ctx, sr.Aggregate)}}
                     public partial class {{sr.CsClassName}} {
                     {{orderedMembers.SelectTextTemplate(srm => $$"""
-                        {{WithIndent(srm.RenderDeclaration(), "    ")}}
+                        {{WithIndent(srm.RenderDeclaration(ctx), "    ")}}
                     """)}}
                     {{If(sr.HasVersionColumn, () => $$"""
                         /// <summary>
@@ -322,7 +323,7 @@ namespace Nijo.Models.QueryModelModules {
         internal interface ISearchResultMember : IInstancePropertyMetadata {
             bool IsOutOfEntryTree { get; }
             IAggregateMember Member { get; }
-            string RenderDeclaration();
+            string RenderDeclaration(CodeRenderingContext ctx);
             NavigationProperty? NavigationProperty { get; }
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
 
@@ -407,11 +408,12 @@ namespace Nijo.Models.QueryModelModules {
             IValueMemberType IInstanceValuePropertyMetadata.Type => ValueMember.Type;
             IAggregateMember ISearchResultMember.Member => ValueMember;
 
-            string ISearchResultMember.RenderDeclaration() {
+            string ISearchResultMember.RenderDeclaration(CodeRenderingContext ctx) {
                 var type = ValueMember.Type.CsPrimitiveTypeName;
 
                 return $$"""
                     /// <summary>{{ValueMember.DisplayName}}</summary>
+                    {{NijoAttr.RenderAttributeValues(ctx, ValueMember)}}
                     public {{type}}? {{GetPropertyName(E_CsTs.CSharp)}} { get; set; }
                     """;
             }
@@ -469,7 +471,7 @@ namespace Nijo.Models.QueryModelModules {
             string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => CsClassName;
             IAggregateMember ISearchResultMember.Member => Aggregate;
 
-            string ISearchResultMember.RenderDeclaration() {
+            string ISearchResultMember.RenderDeclaration(CodeRenderingContext ctx) {
                 // ビューにマッピングされない場合はただのリスト、
                 // ビューにマッピングされる場合はナビゲーションプロパティ
                 if (MapToEFCoreEntity) {
@@ -479,12 +481,14 @@ namespace Nijo.Models.QueryModelModules {
 
                     return $$"""
                         /// <summary>{{Aggregate.DisplayName}}</summary>
+                        {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
                         public virtual {{p.GetOtherSideCsTypeName(true)}} {{p.OtherSidePhysicalName}} { get; set; }{{p.GetInitializerStatement()}}
                         """;
 
                 } else {
                     return $$"""
                         /// <summary>{{Aggregate.DisplayName}}</summary>
+                        {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
                         public List<{{CsClassName}}> {{GetPropertyName(E_CsTs.CSharp)}} { get; set; } = new();
                         """;
                 }
@@ -515,13 +519,14 @@ namespace Nijo.Models.QueryModelModules {
                 return NavigationProperty.Principal.OtherSidePhysicalName;
             }
 
-            string ISearchResultMember.RenderDeclaration() {
+            string ISearchResultMember.RenderDeclaration(CodeRenderingContext ctx) {
                 var side = NavigationProperty.Principal;
                 var propName = side.OtherSidePhysicalName;
                 var initializer = side.GetInitializerStatement();
 
                 return $$"""
                     /// <summary>{{RefFrom.Owner.DisplayName}}</summary>
+                    {{NijoAttr.RenderAttributeValues(ctx, RefFrom)}}
                     public virtual {{RefFromItemTypeName}} {{propName}} { get; set; }{{initializer}}
                     """;
             }
@@ -562,7 +567,7 @@ namespace Nijo.Models.QueryModelModules {
                 _ => throw new InvalidOperationException(),
             };
 
-            string ISearchResultMember.RenderDeclaration() {
+            string ISearchResultMember.RenderDeclaration(CodeRenderingContext ctx) {
                 // ナビゲーションプロパティとしてレンダリング
                 var side = NavigationProperty switch {
                     NavigationProperty.NavigationOfParentChild parentChild => parentChild.Relevant,
@@ -576,6 +581,7 @@ namespace Nijo.Models.QueryModelModules {
 
                 return $$"""
                     /// <summary>{{MemberForSchemaPath.DisplayName}}</summary>
+                    {{NijoAttr.RenderAttributeValues(ctx, MemberForSchemaPath)}}
                     public virtual {{typeName}} {{propName}} { get; set; }{{initializer}}
                     """;
             }

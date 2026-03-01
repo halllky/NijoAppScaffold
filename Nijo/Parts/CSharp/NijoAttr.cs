@@ -27,24 +27,12 @@ internal static class NijoAttr {
     private static string GetAttributeClassName(NodeOption opt) => opt.AttributeName + "Attribute";
     private static string GetAttributeClassName(NijoXmlCustomAttribute attr) => attr.PhysicalName + "Attribute";
 
-    /// <inheritdoc cref="RenderAttributeValuesPrivate" />
-    internal static string RenderAttributeValues(CodeRenderingContext ctx, AggregateBase aggregate) {
-        return RenderAttributeValuesPrivate(ctx, aggregate.XElement);
-    }
-    /// <inheritdoc cref="RenderAttributeValuesPrivate" />
-    internal static string RenderAttributeValues(CodeRenderingContext ctx, ValueMember vm) {
-        return RenderAttributeValuesPrivate(ctx, vm.XElement);
-    }
-    /// <inheritdoc cref="RenderAttributeValuesPrivate" />
-    internal static string RenderAttributeValues(CodeRenderingContext ctx, RefToMember refTo) {
-        return RenderAttributeValuesPrivate(ctx, refTo.XElement);
-    }
     /// <summary>
     /// nijo.xml で定義されている各項目の属性値をC#のクラス定義やプロパティ定義の前にレンダリングする。
     /// </summary>
-    private static string RenderAttributeValuesPrivate(CodeRenderingContext ctx, XElement el) {
-        var basicNodeOptions = ctx.SchemaParser.GetOptions(el).ToArray();
-        var customAttributes = ctx.SchemaParser.GetCustomAttributes(el).ToArray();
+    internal static string RenderAttributeValues(CodeRenderingContext ctx, ISchemaPathNode node) {
+        var basicNodeOptions = ctx.SchemaParser.GetOptions(node.XElement).ToArray();
+        var customAttributes = ctx.SchemaParser.GetCustomAttributes(node.XElement).ToArray();
 
         if (basicNodeOptions.Length == 0 && customAttributes.Length == 0) {
             return SKIP_MARKER;
@@ -54,9 +42,9 @@ internal static class NijoAttr {
         foreach (var opt in basicNodeOptions) {
             var value = opt.Type switch {
                 E_NodeOptionType.Boolean => string.Empty,
-                E_NodeOptionType.String => $"(\"{el.Attribute(opt.AttributeName)?.Value.ReplaceLineEndings("\\\n").Replace("\"", "\\\"")}\")",
-                E_NodeOptionType.Integer => $"({el.Attribute(opt.AttributeName)?.Value})",
-                E_NodeOptionType.EnumSelect => $"({SUB_NAMESPACE}.{GetAttributeClassName(opt)}.{PRIVATE_ENUM_NAME}.{el.Attribute(opt.AttributeName)?.Value})",
+                E_NodeOptionType.String => $"(\"{node.XElement.Attribute(opt.AttributeName)?.Value.ReplaceLineEndings("\\\n").Replace("\"", "\\\"")}\")",
+                E_NodeOptionType.Integer => $"({node.XElement.Attribute(opt.AttributeName)?.Value})",
+                E_NodeOptionType.EnumSelect => $"({SUB_NAMESPACE}.{GetAttributeClassName(opt)}.{PRIVATE_ENUM_NAME}.{node.XElement.Attribute(opt.AttributeName)?.Value})",
                 _ => throw new Exception($"Unsupported option type: {opt.Type}")
             };
             list.Add($"{SUB_NAMESPACE}.{opt.AttributeName}{value}");
@@ -64,9 +52,9 @@ internal static class NijoAttr {
         foreach (var attr in customAttributes) {
             var value = attr.Type switch {
                 NijoXmlCustomAttribute.E_Type.Boolean => string.Empty,
-                NijoXmlCustomAttribute.E_Type.String => $"(\"{el.Attribute(attr.PhysicalName!)?.Value.ReplaceLineEndings("\\\n").Replace("\"", "\\\"")}\")",
-                NijoXmlCustomAttribute.E_Type.Decimal => $"({el.Attribute(attr.PhysicalName!)?.Value})",
-                NijoXmlCustomAttribute.E_Type.Enum => $"({SUB_NAMESPACE}.{GetAttributeClassName(attr)}.{PRIVATE_ENUM_NAME}.{el.Attribute(attr.PhysicalName!)?.Value})",
+                NijoXmlCustomAttribute.E_Type.String => $"(\"{node.XElement.Attribute(attr.PhysicalName!)?.Value.ReplaceLineEndings("\\\n").Replace("\"", "\\\"")}\")",
+                NijoXmlCustomAttribute.E_Type.Decimal => $"({node.XElement.Attribute(attr.PhysicalName!)?.Value})",
+                NijoXmlCustomAttribute.E_Type.Enum => $"({SUB_NAMESPACE}.{GetAttributeClassName(attr)}.{PRIVATE_ENUM_NAME}.{node.XElement.Attribute(attr.PhysicalName!)?.Value})",
                 _ => throw new Exception($"Unsupported custom attribute type: {attr.Type}")
             };
             list.Add($"{SUB_NAMESPACE}.{attr.PhysicalName}{value}");
@@ -93,9 +81,8 @@ internal static class NijoAttr {
                 /// <summary>
                 /// {{opt.DisplayName}}
                 /// <para>
-                {{opt.HelpText.Split(["\r\n", "\r", "\n"], StringSplitOptions.None).SelectTextTemplate(line => $$"""
-                /// {{line}}
-                """)}}
+                /// この Attribute は自動生成後のアプリケーションの共通処理内部でリフレクションを使用して動的な処理を行う際に使われることを想定しています。
+                /// 自動生成されたソースコード自体がこの Attribute を使用することはありません。
                 /// </para>
                 /// </summary>
                 [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
@@ -137,6 +124,8 @@ internal static class NijoAttr {
                 """)}}
                 /// </para>
                 """)}}
+                /// この Attribute は自動生成後のアプリケーションの共通処理内部でリフレクションを使用して動的な処理を行う際に使われることを想定しています。
+                /// 自動生成されたソースコード自体がこの Attribute を使用することはありません。
                 /// </summary>
                 [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
                 public sealed class {{GetAttributeClassName(attr)}} : System.Attribute {

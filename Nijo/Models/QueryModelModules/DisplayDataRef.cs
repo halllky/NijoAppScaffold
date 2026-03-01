@@ -1,6 +1,7 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.Common;
+using Nijo.Parts.CSharp;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -150,9 +151,10 @@ namespace Nijo.Models.QueryModelModules {
                     /// <summary>
                     /// {{((AggregateBase)Aggregate.GetEntry()).DisplayName}}が他の集約から外部参照されるときの{{Aggregate.DisplayName}}の型
                     /// </summary>
+                    {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
                     public partial class {{CsClassName}} {
                     {{GetMembers().SelectTextTemplate(member => $$"""
-                        {{WithIndent(member.RenderDeclaringCSharp(), "    ")}}
+                        {{WithIndent(member.RenderDeclaringCSharp(ctx), "    ")}}
                     """)}}
                     }
                     """;
@@ -288,8 +290,9 @@ namespace Nijo.Models.QueryModelModules {
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
 
-            string IPresentationLayerStructure.IMember.RenderDeclaringCSharp() {
+            string IPresentationLayerStructure.IMember.RenderDeclaringCSharp(CodeRenderingContext ctx) {
                 return $$"""
+                    {{NijoAttr.RenderAttributeValues(ctx, Member)}}
                     public {{GetTypeName(E_CsTs.CSharp)}}? {{PhysicalName}} { get; set; }
                     """;
             }
@@ -318,8 +321,9 @@ namespace Nijo.Models.QueryModelModules {
             bool IInstanceStructurePropertyMetadata.IsArray => false;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
 
-            string IPresentationLayerStructure.IMember.RenderDeclaringCSharp() {
+            string IPresentationLayerStructure.IMember.RenderDeclaringCSharp(CodeRenderingContext ctx) {
                 return $$"""
+                    {{NijoAttr.RenderAttributeValues(ctx, _member)}}
                     public {{GetTypeName(E_CsTs.CSharp)}} {{PhysicalName}} { get; set; } = new();
                     """;
             }
@@ -354,8 +358,9 @@ namespace Nijo.Models.QueryModelModules {
             bool IInstanceStructurePropertyMetadata.IsArray => false;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
 
-            string IPresentationLayerStructure.IMember.RenderDeclaringCSharp() {
+            string IPresentationLayerStructure.IMember.RenderDeclaringCSharp(CodeRenderingContext ctx) {
                 return $$"""
+                    {{NijoAttr.RenderAttributeValues(ctx, _member)}}
                     public {{GetTypeName(E_CsTs.CSharp)}} {{PhysicalName}} { get; set; } = new();
                     """;
             }
@@ -392,8 +397,9 @@ namespace Nijo.Models.QueryModelModules {
             bool IInstanceStructurePropertyMetadata.IsArray => true;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
 
-            string IPresentationLayerStructure.IMember.RenderDeclaringCSharp() {
+            string IPresentationLayerStructure.IMember.RenderDeclaringCSharp(CodeRenderingContext ctx) {
                 return $$"""
+                    {{NijoAttr.RenderAttributeValues(ctx, ChildrenAggregate)}}
                     public List<{{GetTypeName(E_CsTs.CSharp)}}> {{PhysicalName}} { get; set; } = [];
                     """;
             }
@@ -428,8 +434,9 @@ namespace Nijo.Models.QueryModelModules {
             bool IInstanceStructurePropertyMetadata.IsArray => false;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
 
-            string IPresentationLayerStructure.IMember.RenderDeclaringCSharp() {
+            string IPresentationLayerStructure.IMember.RenderDeclaringCSharp(CodeRenderingContext ctx) {
                 return $$"""
+                    {{NijoAttr.RenderAttributeValues(ctx, _parent)}}
                     public {{GetTypeName(E_CsTs.CSharp)}} {{PhysicalName}} { get; set; } = new();
                     """;
             }

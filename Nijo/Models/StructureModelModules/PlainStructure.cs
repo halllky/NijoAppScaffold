@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.Parts.CSharp;
 
 namespace Nijo.Models.StructureModelModules;
 
@@ -125,6 +126,7 @@ internal class PlainStructure : IInstancePropertyOwnerMetadata, ICreatablePresen
             /// <summary>
             /// {{Aggregate.DisplayName}}の構造体。
             /// </summary>
+            {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
             public partial class {{CsClassName}} {
             {{members.SelectTextTemplate(member => $$"""
                 {{WithIndent(RenderMemberCSharp(member, ctx), "    ")}}
@@ -135,10 +137,12 @@ internal class PlainStructure : IInstancePropertyOwnerMetadata, ICreatablePresen
         static string RenderMemberCSharp(IInstancePropertyMetadata member, CodeRenderingContext ctx) {
             if (member is IInstanceValuePropertyMetadata v) {
                 return $$"""
+                    {{NijoAttr.RenderAttributeValues(ctx, v.SchemaPathNode)}}
                     public {{v.Type.CsDomainTypeName}}? {{member.GetPropertyName(E_CsTs.CSharp)}} { get; set; }
                     """;
             } else if (member is StructureRefToMember refTo) {
                 return $$"""
+                    {{NijoAttr.RenderAttributeValues(ctx, refTo.RefToMember)}}
                     public {{refTo.GetTargetStructure().CsClassName}} {{member.GetPropertyName(E_CsTs.CSharp)}} { get; set; } = new();
                     """;
             } else if (member is StructureDescendantMember s) {
@@ -147,6 +151,7 @@ internal class PlainStructure : IInstancePropertyOwnerMetadata, ICreatablePresen
                     : s.CsClassName;
                 var initializer = s.Aggregate is ChildrenAggregate ? "new()" : "new()";
                 return $$"""
+                    {{NijoAttr.RenderAttributeValues(ctx, s.Aggregate)}}
                     public {{csType}} {{member.GetPropertyName(E_CsTs.CSharp)}} { get; set; } = {{initializer}};
                     """;
             } else {
@@ -222,6 +227,7 @@ internal class StructureRefToMember : IInstanceStructurePropertyMetadata {
         _refToMember = refToMember;
     }
     private readonly RefToMember _refToMember;
+    internal RefToMember RefToMember => _refToMember;
 
     internal ICreatablePresentationLayerStructure GetTargetStructure() {
         return _refToMember.RefToObject switch {

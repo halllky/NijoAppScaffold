@@ -112,9 +112,10 @@ namespace Nijo.Models.DataModelModules {
                 /// <summary>
                 /// {{Aggregate.DisplayName}} の新規登録コマンド引数
                 /// </summary>
+                {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
                 public partial class {{CsClassNameCreate}} {
                 {{GetMembers().SelectTextTemplate(m => $$"""
-                    {{WithIndent(m.RenderDeclaring(), "    ")}}
+                    {{WithIndent(m.RenderDeclaring(ctx), "    ")}}
                 """)}}
                 {{If(Aggregate is RootAggregate, () => $$"""
 
@@ -162,9 +163,10 @@ namespace Nijo.Models.DataModelModules {
                 /// <summary>
                 /// {{Aggregate.DisplayName}} の更新コマンド引数
                 /// </summary>
+                {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
                 public partial class {{CsClassNameUpdate}} {
                 {{GetMembers().SelectTextTemplate(m => $$"""
-                    {{WithIndent(m.RenderDeclaring(), "    ")}}
+                    {{WithIndent(m.RenderDeclaring(ctx), "    ")}}
                 """)}}
                 {{If(Aggregate is RootAggregate, () => $$"""
                     {{WithIndent(RenderToDbEntity(isCreate: false), "    ")}}
@@ -254,7 +256,7 @@ namespace Nijo.Models.DataModelModules {
                 /// </summary>
                 public partial class {{CsClassNameDelete}} {
                 {{GetMembers().SelectTextTemplate(m => $$"""
-                    {{WithIndent(m.RenderDeclaring(), "    ")}}
+                    {{WithIndent(m.RenderDeclaring(ctx), "    ")}}
                 """)}}
                 {{If(Aggregate is RootAggregate, () => $$"""
                     /// <summary>楽観排他制御用のバージョン</summary>
@@ -275,7 +277,7 @@ namespace Nijo.Models.DataModelModules {
             string CsUpdateType { get; }
             string CsDeleteType { get; }
 
-            string RenderDeclaring();
+            string RenderDeclaring(CodeRenderingContext ctx);
         }
         /// <summary>
         /// 更新処理引数クラスの値メンバー
@@ -298,9 +300,10 @@ namespace Nijo.Models.DataModelModules {
             IValueMemberType IInstanceValuePropertyMetadata.Type => Member.Type;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
 
-            string ISaveCommandMember.RenderDeclaring() {
+            string ISaveCommandMember.RenderDeclaring(CodeRenderingContext ctx) {
                 return $$"""
                     /// <summary>{{DisplayName}}</summary>
+                    {{NijoAttr.RenderAttributeValues(ctx, Member)}}
                     public required {{Member.Type.CsDomainTypeName}}? {{PhysicalName}} { get; set; }
                     """;
             }
@@ -331,9 +334,10 @@ namespace Nijo.Models.DataModelModules {
             IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() {
                 return ((IInstancePropertyOwnerMetadata)RefEntry).GetMembers();
             }
-            string ISaveCommandMember.RenderDeclaring() {
+            string ISaveCommandMember.RenderDeclaring(CodeRenderingContext ctx) {
                 return $$"""
                     /// <summary>{{Member.DisplayName}}</summary>
+                    {{NijoAttr.RenderAttributeValues(ctx, Member)}}
                     public required {{RefEntry.ClassName}}? {{Member.PhysicalName}} { get; set; }
                     """;
             }
@@ -357,7 +361,7 @@ namespace Nijo.Models.DataModelModules {
             string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => CsClassName;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
 
-            string ISaveCommandMember.RenderDeclaring() {
+            string ISaveCommandMember.RenderDeclaring(CodeRenderingContext ctx) {
                 var className = Type switch {
                     E_Type.Create => CsCreateType,
                     E_Type.Update => CsUpdateType,
@@ -366,6 +370,7 @@ namespace Nijo.Models.DataModelModules {
                 };
                 return $$"""
                     /// <summary>{{DisplayName}}</summary>
+                    {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
                     public required {{className}}? {{PhysicalName}} { get; set; }
                     """;
             }
@@ -390,7 +395,7 @@ namespace Nijo.Models.DataModelModules {
             string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => CsClassName;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
 
-            string ISaveCommandMember.RenderDeclaring() {
+            string ISaveCommandMember.RenderDeclaring(CodeRenderingContext ctx) {
                 var className = Type switch {
                     E_Type.Create => CsCreateType,
                     E_Type.Update => CsUpdateType,
@@ -399,6 +404,7 @@ namespace Nijo.Models.DataModelModules {
                 };
                 return $$"""
                     /// <summary>{{DisplayName}}</summary>
+                    {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
                     public required {{className}} {{PhysicalName}} { get; set; }
                     """;
             }

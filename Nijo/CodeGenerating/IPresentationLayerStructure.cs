@@ -25,7 +25,7 @@ public interface IPresentationLayerStructure {
     public interface IMember : IInstancePropertyMetadata {
         string PhysicalName { get; }
         string GetTypeName(E_CsTs csts);
-        string RenderDeclaringCSharp();
+        string RenderDeclaringCSharp(CodeRenderingContext ctx);
         string RenderDeclaringTypeScript();
     }
 }

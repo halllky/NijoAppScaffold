@@ -1,5 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.Parts.CSharp;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -68,6 +69,7 @@ namespace Nijo.Models.QueryModelModules {
                     /// <summary>
                     /// {{rootAggregate.DisplayName}}の一覧検索条件
                     /// </summary>
+                    {{NijoAttr.RenderAttributeValues(ctx, rootAggregate)}}
                     public partial class {{entry.CsClassName}} {
                         /// <summary>絞り込み条件</summary>
                         [JsonPropertyName("{{FILTER_TS}}")]
@@ -365,9 +367,10 @@ namespace Nijo.Models.QueryModelModules {
             /// </summary>
             private string RenderCSharpDeclaring(CodeRenderingContext ctx) {
                 return $$"""
+                    {{NijoAttr.RenderAttributeValues(ctx, _aggregate)}}
                     public partial class {{CsClassName}} {
                     {{GetOwnMembers().SelectTextTemplate(member => $$"""
-                        {{WithIndent(member.RenderCSharpDeclaring(), "    ")}}
+                        {{WithIndent(member.RenderCSharpDeclaring(ctx), "    ")}}
                     """)}}
                     }
                     """;
@@ -400,7 +403,7 @@ namespace Nijo.Models.QueryModelModules {
         /// <see cref="Filter"/> のメンバー
         /// </summary>
         internal interface IFilterMember : IInstancePropertyMetadata {
-            string RenderCSharpDeclaring();
+            string RenderCSharpDeclaring(CodeRenderingContext ctx);
             string RenderTypeScriptDeclaring();
             string RenderTsNewObjectFunctionValue();
         }
@@ -417,11 +420,12 @@ namespace Nijo.Models.QueryModelModules {
             public string DisplayName => Member.DisplayName;
             internal ValueMemberSearchBehavior? SearchBehavior => Member.Type.SearchBehavior;
 
-            string IFilterMember.RenderCSharpDeclaring() {
+            string IFilterMember.RenderCSharpDeclaring(CodeRenderingContext ctx) {
                 var typeName = Member.OnlySearchCondition
                     ? Member.Type.CsDomainTypeName
                     : Member.Type.SearchBehavior?.FilterCsTypeName;
                 return $$"""
+                    {{NijoAttr.RenderAttributeValues(ctx, Member)}}
                     public {{typeName}}? {{Member.PhysicalName}} { get; set; }
                     """;
             }
@@ -479,8 +483,9 @@ namespace Nijo.Models.QueryModelModules {
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => _rm.PhysicalName;
             string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp ? RefToFilter.CsClassName : RefToFilter.TsTypeName;
 
-            string IFilterMember.RenderCSharpDeclaring() {
+            string IFilterMember.RenderCSharpDeclaring(CodeRenderingContext ctx) {
                 return $$"""
+                    {{NijoAttr.RenderAttributeValues(ctx, _rm)}}
                     public {{RefToFilter.CsClassName}} {{_rm.PhysicalName}} { get; set; } = new();
                     """;
             }
@@ -514,8 +519,9 @@ namespace Nijo.Models.QueryModelModules {
             internal Filter ChildFilter { get; }
             public string DisplayName => _rm.DisplayName;
 
-            string IFilterMember.RenderCSharpDeclaring() {
+            string IFilterMember.RenderCSharpDeclaring(CodeRenderingContext ctx) {
                 return $$"""
+                    {{NijoAttr.RenderAttributeValues(ctx, _rm)}}
                     public {{ChildFilter.CsClassName}} {{_rm.PhysicalName}} { get; set; } = new();
                     """;
             }

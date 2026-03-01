@@ -54,7 +54,7 @@ namespace Nijo.Models.DataModelModules {
                 }
             }
 
-            string SaveCommand.ISaveCommandMember.RenderDeclaring() {
+            string SaveCommand.ISaveCommandMember.RenderDeclaring(CodeRenderingContext ctx) {
                 return $$"""
                     /// <summary>{{DisplayName}}</summary>
                     public required {{ClassName}}? {{PhysicalName}} { get; set; }
@@ -82,21 +82,23 @@ namespace Nijo.Models.DataModelModules {
                 return $$"""
                     #region キー項目のみのオブジェクト
                     {{entries.SelectTextTemplate(entry => $$"""
-                    {{entry.RenderDeclaring()}}
+                    {{entry.RenderDeclaring(ctx)}}
 
                     """)}}
                     #endregion キー項目のみのオブジェクト
                     """;
             }
 
-            protected virtual string RenderDeclaring() {
+            protected virtual string RenderDeclaring(CodeRenderingContext ctx) {
                 return $$"""
                     /// <summary>
                     /// {{_aggregate.DisplayName}} のキー
                     /// </summary>
+                    {{NijoAttr.RenderAttributeValues(ctx, _aggregate)}}
                     public partial class {{ClassName}} {
                     {{GetOwnMembers().SelectTextTemplate(m => $$"""
                         /// <summary>{{m.DisplayName}}</summary>
+                        {{NijoAttr.RenderAttributeValues(ctx, m.Member)}}
                         public required {{m.GetTypeName(E_CsTs.CSharp)}}? {{m.PhysicalName}} { get; set; }
                     """)}}
 
@@ -516,7 +518,7 @@ namespace Nijo.Models.DataModelModules {
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
             IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => GetOwnMembers();
 
-            string SaveCommand.ISaveCommandMember.RenderDeclaring() {
+            string SaveCommand.ISaveCommandMember.RenderDeclaring(CodeRenderingContext ctx) {
                 return $$"""
                     /// <summary>{{DisplayName}}</summary>
                     public required {{GetTypeName(E_CsTs.CSharp)}} {{PhysicalName}} { get; set; }
