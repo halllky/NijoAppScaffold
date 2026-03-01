@@ -50,13 +50,58 @@ internal static class SchemaParseContextExtensions {
         return lineEndingReplaced;
     }
     /// <summary>
-    /// このXElementの直前にXCommentがあればそのテキストを改行コードを1行ずつ返します。
+    /// C#用のXMLコメントまたはTypeScript用のJSDocコメントを生成します。
+    /// 物理名と DisplayName が異なる場合は DisplayName もコメントに含まれます。
+    /// 物理名と DisplayName が一致しており、かつコメントも存在しない場合、XMLコメントやJsDocの開始終了のタグや記号すらも生成されません。
     /// </summary>
-    internal static IEnumerable<string> GetCommentMultiLine(this XElement xElement) {
-        var rawText = xElement.PreviousNode is XComment comment ? comment.Value.Trim() : string.Empty;
-        return rawText
+    internal static string RenderXmlCommentOrJsDoc(this XElement xElement, E_CsTs csts) {
+        var physicalName = xElement.Name.LocalName;
+        var displayName = xElement.GetDisplayName();
+
+        var rawComment = xElement.PreviousNode is XComment comment ? comment.Value.Trim() : string.Empty;
+        var commentLines = rawComment
             .ReplaceLineEndings(Environment.NewLine)
             .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+
+        // レンダリングされるべき情報が一切無い場合
+        if (physicalName == displayName && commentLines.Length == 0) {
+            return SKIP_MARKER;
+        }
+
+        if (csts == E_CsTs.CSharp) {
+
+            return $$"""
+                /// <summary>
+                {{If(physicalName != displayName, () => $$"""
+                /// {{displayName}}
+                """)}}
+                {{If(physicalName != displayName && commentLines.Length > 0, () => $$"""
+                /// <para>
+                """)}}
+                {{commentLines.SelectTextTemplate(line => $$"""
+                /// {{line}}
+                """)}}
+                {{If(physicalName != displayName && commentLines.Length > 0, () => $$"""
+                /// </para>
+                """)}}
+                /// </summary>
+                """;
+
+        } else {
+            return $$"""
+                /**
+                {{If(physicalName != displayName, () => $$"""
+                 * {{displayName}}
+                """)}}
+                {{If(physicalName != displayName && commentLines.Length > 0, () => $$"""
+                 *
+                """)}}
+                {{commentLines.SelectTextTemplate(line => $$"""
+                 * {{line}}
+                """)}}
+                 */
+                """;
+        }
     }
 
     /// <summary>

@@ -36,9 +36,6 @@ namespace Nijo.Models.ConstantModelModules {
             } else {
                 TemplateParams = Array.Empty<string>();
             }
-
-            // XMLコメントを取得
-            XmlCommentLines = element.GetCommentMultiLine().ToArray();
         }
 
         private readonly XElement _element;
@@ -51,7 +48,6 @@ namespace Nijo.Models.ConstantModelModules {
         internal string Value { get; }
         internal string[] TemplateParams { get; }
         internal string DisplayName { get; }
-        internal string[] XmlCommentLines { get; }
 
         /// <summary>
         /// C#用の定数名を取得（ドキュメントに合わせて元の名前をそのまま使用）
@@ -100,12 +96,7 @@ namespace Nijo.Models.ConstantModelModules {
             var formatArgs = string.Join(", ", TemplateParams.Select((_, i) => $"arg{i}"));
 
             return $$"""
-                /// <summary>
-                /// {{DisplayName}}
-                {{XmlCommentLines.SelectTextTemplate(line => $$"""
-                /// {{line}}
-                """)}}
-                /// </summary>
+                {{Element.RenderXmlCommentOrJsDoc(E_CsTs.CSharp)}}
                 public static string {{CsConstantName}}({{parameters}}) => $"{{formatString}}";
                 """;
         }
@@ -120,12 +111,7 @@ namespace Nijo.Models.ConstantModelModules {
             var templateString = EscapeTypeScriptTemplate(Value);
 
             return $$"""
-                /**
-                 * {{DisplayName}}
-                {{XmlCommentLines.SelectTextTemplate(line => $$"""
-                 * {{line}}
-                """)}}
-                 */
+                {{Element.RenderXmlCommentOrJsDoc(E_CsTs.TypeScript)}}
                 {{TsConstantName}}: ({{parameters}}): string => `{{templateString}}`,
                 """;
         }

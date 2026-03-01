@@ -35,17 +35,10 @@ namespace Nijo.Models.ConstantModelModules {
             var rootConstants = constants.Where(c => !c.Path.Contains('.')).ToList();
             var rootGroups = groups.Where(g => !g.Path.Contains('.')).ToList();
 
-            var xmlComment = _parser.RootAggregateElement.GetCommentMultiLine();
-
             return $$"""
                 namespace {{ctx.Config.RootNamespace}};
 
-                /// <summary>
-                /// {{DisplayName}}
-                {{xmlComment.SelectTextTemplate(line => $$"""
-                /// {{line}}
-                """)}}
-                /// </summary>
+                {{_parser.RootAggregateElement.RenderXmlCommentOrJsDoc(E_CsTs.CSharp)}}
                 public static class {{CsClassName}} {
                 {{rootConstants.Where(c => c.Type != ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
                     {{WithIndent(RenderCSharpConstant(constant, ctx), "    ")}}
@@ -69,15 +62,8 @@ namespace Nijo.Models.ConstantModelModules {
             var childGroups = allGroups.Where(g => g.Path.StartsWith(group.Path + ".") &&
                                                    g.Path.Substring(group.Path.Length + 1).IndexOf('.') == -1).ToList();
 
-            var xmlComment = group.Element.GetCommentMultiLine();
-
             return $$"""
-                /// <summary>
-                /// {{group.DisplayName}}
-                {{xmlComment.SelectTextTemplate(line => $$"""
-                /// {{line}}
-                """)}}
-                /// </summary>
+                {{group.Element.RenderXmlCommentOrJsDoc(E_CsTs.CSharp)}}
                 public static class {{group.Name}} {
                 {{groupConstants.Where(c => c.Type != ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
                     {{WithIndent(RenderCSharpConstant(constant, ctx), "    ")}}
@@ -111,15 +97,8 @@ namespace Nijo.Models.ConstantModelModules {
             var rootConstants = constants.Where(c => !c.Path.Contains('.')).ToList();
             var rootGroups = groups.Where(g => !g.Path.Contains('.')).ToList();
 
-            var xmlComment = _parser.RootAggregateElement.GetCommentMultiLine();
-
             var contents = $$"""
-                /**
-                 * {{DisplayName}}
-                {{xmlComment.SelectTextTemplate(line => $$"""
-                 * {{line}}
-                """)}}
-                 */
+                {{_parser.RootAggregateElement.RenderXmlCommentOrJsDoc(E_CsTs.TypeScript)}}
                 export const {{TsConstantsName}} = {
                 {{rootConstants.Where(c => c.Type != ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
                   {{WithIndent(RenderTypeScriptConstant(constant, ctx), "  ")}}
@@ -148,15 +127,8 @@ namespace Nijo.Models.ConstantModelModules {
             var childGroups = allGroups.Where(g => g.Path.StartsWith(group.Path + ".") &&
                                                    g.Path.Substring(group.Path.Length + 1).IndexOf('.') == -1).ToList();
 
-            var xmlComment = group.Element.GetCommentMultiLine();
-
             return $$"""
-                /**
-                 * {{group.DisplayName}}
-                {{xmlComment.SelectTextTemplate(line => $$"""
-                 * {{line}}
-                """)}}
-                 */
+                {{group.Element.RenderXmlCommentOrJsDoc(E_CsTs.TypeScript)}}
                 {{WithIndent(group.Name, "")}}: {
                 {{groupConstants.Where(c => c.Type != ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
                   {{WithIndent(RenderTypeScriptConstant(constant, ctx), "  ")}}
@@ -175,15 +147,8 @@ namespace Nijo.Models.ConstantModelModules {
         /// C#の定数を生成（XMLコメント対応）
         /// </summary>
         private string RenderCSharpConstant(ConstantValueDef constant, CodeRenderingContext ctx) {
-            var xmlComment = constant.Element.GetCommentMultiLine();
-
             return $$"""
-                /// <summary>
-                /// {{constant.DisplayName}}
-                {{xmlComment.SelectTextTemplate(line => $$"""
-                /// {{line}}
-                """)}}
-                /// </summary>
+                {{WithIndent(constant.Element.RenderXmlCommentOrJsDoc(E_CsTs.CSharp), "")}}
                 public const {{GetCSharpType(constant.Type)}} {{constant.CsConstantName}} = {{constant.GetCSharpValue()}};
                 """;
         }
@@ -192,15 +157,8 @@ namespace Nijo.Models.ConstantModelModules {
         /// TypeScriptの定数を生成（JSDoc対応）
         /// </summary>
         private string RenderTypeScriptConstant(ConstantValueDef constant, CodeRenderingContext ctx) {
-            var xmlComment = constant.Element.GetCommentMultiLine();
-
             return $$"""
-                /**
-                 * {{constant.DisplayName}}
-                {{xmlComment.SelectTextTemplate(line => $$"""
-                 * {{line}}
-                """)}}
-                 */
+                {{WithIndent(constant.Element.RenderXmlCommentOrJsDoc(E_CsTs.TypeScript), "")}}
                 {{constant.TsConstantName}}: {{constant.GetTypeScriptValue()}},
                 """;
         }

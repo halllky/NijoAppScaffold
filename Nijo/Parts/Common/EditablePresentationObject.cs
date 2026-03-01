@@ -246,28 +246,14 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PropertyName;
 
         public string RenderCsDeclaration() {
-            var comment = Member.XElement.GetCommentMultiLine().ToArray();
             return $$"""
-                {{If(comment.Length > 0, () => $$"""
-                /// <summary>
-                {{Member.XElement.GetCommentMultiLine().SelectTextTemplate(line => $$"""
-                /// {{line}}
-                """)}}
-                /// </summary>
-                """)}}
+                {{Member.XElement.RenderXmlCommentOrJsDoc(E_CsTs.CSharp)}}
                 public {{Member.Type.CsDomainTypeName}}? {{PropertyName}} { get; set; }
                 """;
         }
         public string RenderTsDeclaration() {
-            var comment = Member.XElement.GetCommentMultiLine().ToArray();
             return $$"""
-                {{If(comment.Length > 0, () => $$"""
-                /**
-                {{Member.XElement.GetCommentMultiLine().SelectTextTemplate(line => $$"""
-                 * {{line}}
-                """)}}
-                 */
-                """)}}
+                {{Member.XElement.RenderXmlCommentOrJsDoc(E_CsTs.TypeScript)}}
                 {{PropertyName}}?: {{Member.Type.TsTypeName}} | null
                 """;
         }
@@ -316,28 +302,14 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         public string DisplayName => Member.DisplayName;
 
         public string RenderCsDeclaration() {
-            var comment = Member.XElement.GetCommentMultiLine().ToArray();
             return $$"""
-                {{If(comment.Length > 0, () => $$"""
-                /// <summary>
-                {{Member.XElement.GetCommentMultiLine().SelectTextTemplate(line => $$"""
-                /// {{line}}
-                """)}}
-                /// </summary>
-                """)}}
+                {{Member.XElement.RenderXmlCommentOrJsDoc(E_CsTs.CSharp)}}
                 public {{RefEntry.CsClassName}} {{PropertyName}} { get; set; } = new();
                 """;
         }
         public string RenderTsDeclaration() {
-            var comment = Member.XElement.GetCommentMultiLine().ToArray();
             return $$"""
-                {{If(comment.Length > 0, () => $$"""
-                /**
-                {{Member.XElement.GetCommentMultiLine().SelectTextTemplate(line => $$"""
-                 * {{line}}
-                """)}}
-                 */
-                """)}}
+                {{Member.XElement.RenderXmlCommentOrJsDoc(E_CsTs.TypeScript)}}
                 {{PropertyName}}: {{RefEntry.TsTypeName}}
                 """;
         }
