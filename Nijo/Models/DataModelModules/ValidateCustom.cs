@@ -5,6 +5,7 @@ using Nijo.Parts.CSharp;
 using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 
 namespace Nijo.Models.DataModelModules {
@@ -49,9 +50,6 @@ namespace Nijo.Models.DataModelModules {
             var propertyInfoExpr = $"typeof({declaringTypeName}).GetProperty(\"{prop.Metadata.GetPropertyName(E_CsTs.CSharp)}\")!";
             var valueClrType = GetValueClrType(prop);
             var valueExpr = prop.GetJoinedPathFromInstance(E_CsTs.CSharp);
-
-            RegisterApplicationServiceHook(_attribute, valueClrType, ctx);
-
             var methodName = GetMethodName(_attribute);
 
             if (_attribute.Type == NijoXmlCustomAttribute.E_Type.Boolean) {
@@ -72,8 +70,8 @@ namespace Nijo.Models.DataModelModules {
                     yield return new ValidateStatement {
                         If = "true",
                         RenderErrorMessage = $$"""
-                                {{MsgFactory.MSG}}.{{MSG_ID}}("{{vm.DisplayName.Replace("\"", "\\\"")}} のカスタム属性 '{{attrDisplayName.Replace("\"", "\\\"")}}' が設定されていません。")
-                                """,
+                            {{MsgFactory.MSG}}.{{MSG_ID}}("{{vm.DisplayName.Replace("\"", "\\\"")}} のカスタム属性 '{{attrDisplayName.Replace("\"", "\\\"")}}' が設定されていません。")
+                            """,
                     };
                     yield break;
                 }
@@ -86,42 +84,63 @@ namespace Nijo.Models.DataModelModules {
             }
         }
 
-        private void RegisterApplicationServiceHook(NijoXmlCustomAttribute attr, string valueClrType, CodeRenderingContext ctx) {
-            if (string.IsNullOrWhiteSpace(attr.PhysicalName)) return;
+        /// <summary>
+        /// アプリケーションサービスに abstract メソッドを登録する。
+        /// メソッドはこのカスタムバリデータが指定されている ValueMember の種類ごとに作成される。
+        /// 例えば数値が0以上であることを保証するカスタム属性「NotNegative」が int と decimal の
+        /// メンバーに指定されていた場合、引数の型が int の ValidateNotNegative(int? value, ...) と
+        /// 引数の型が decimal の ValidateNotNegative(decimal? value, ...) の2つのメソッドが生成される。
+        /// </summary>
+        internal static void RegisterApplicationServiceHooks(CodeRenderingContext ctx) {
 
-            var methodName = GetMethodName(attr);
-            var parameters = attr.Type == NijoXmlCustomAttribute.E_Type.Boolean
-                ? $"{valueClrType} value, System.Reflection.PropertyInfo propertyInfo"
-                : $"{valueClrType} value, string attributeValue, System.Reflection.PropertyInfo propertyInfo";
-            var signatureKey = $"{methodName}({parameters})";
+            // nijo.xml で定義されているカスタム属性の一覧
+            var customAttributes = NijoXmlCustomAttribute
+                .FromXDocument(ctx.SchemaParser.Document)
+                .Where(attr => attr.IsValidation
+                            && !string.IsNullOrWhiteSpace(attr.UniqueId)
+                            && !string.IsNullOrWhiteSpace(attr.PhysicalName))
+                .ToDictionary(attr => attr.UniqueId!);
 
-            lock (_registerLock) {
-                if (!_registeredApplicationServiceMethodSignatures.Add(signatureKey)) return;
+            // 上記カスタム属性を利用している ValueMember を型ごとにグルーピング
+            var grouped = ctx.Schema
+                .GetRootAggregates()
+                .Where(agg => agg.Model is DataModel)
+                .SelectMany(agg => agg.EnumerateThisAndDescendants())
+                .SelectMany(agg => agg.GetMembers())
+                .OfType<ValueMember>()
+                .SelectMany(vm => vm.XElement.Attributes()
+                    .Where(attr => customAttributes.ContainsKey(attr.Name.LocalName))
+                    .Select(attr => new { ValueMember = vm, Attribute = customAttributes[attr.Name.LocalName] }))
+                .GroupBy(x => new {
+                    x.Attribute.UniqueId,
+                    x.ValueMember.Type.CsDomainTypeName,
+                })
+                .Select(group => new {
+                    group.First().Attribute,
+                    group.Key.CsDomainTypeName,
+                });
 
-                if (attr.Type == NijoXmlCustomAttribute.E_Type.Boolean) {
-                    ctx.Use<ApplicationService>().Add($$"""
-                        /// <summary>
-                        /// カスタム属性 '{{attr.PhysicalName}}' (Boolean) 用の入力検証フック。
-                        /// null を返すとバリデーションOK、文字列を返すとその内容でエラー登録されます。
-                        /// </summary>
-                        /// <param name="value">検証対象の値</param>
-                        /// <param name="propertyInfo">検証対象プロパティの <see cref="System.Reflection.PropertyInfo"/>。</param>
-                        /// <returns>エラーの場合はメッセージ文字列、正常なら null</returns>
-                        public abstract string? {{methodName}}({{parameters}});
-                        """);
-                } else {
-                    ctx.Use<ApplicationService>().Add($$"""
-                        /// <summary>
-                        /// カスタム属性 '{{attr.PhysicalName}}' 用の入力検証フック。
-                        /// null を返すとバリデーションOK、文字列を返すとその内容でエラー登録されます。
-                        /// </summary>
-                        /// <param name="value">検証対象の値</param>
-                        /// <param name="attributeValue">カスタム属性に設定された値。</param>
-                        /// <param name="propertyInfo">検証対象プロパティの <see cref="System.Reflection.PropertyInfo"/>。</param>
-                        /// <returns>エラーの場合はメッセージ文字列、正常なら null</returns>
-                        public abstract string? {{methodName}}({{parameters}});
-                        """);
-                }
+            var app = ctx.Use<ApplicationService>();
+            foreach (var item in grouped) {
+                var methodName = GetMethodName(item.Attribute);
+                var parameters = item.Attribute.Type == NijoXmlCustomAttribute.E_Type.Boolean
+                        ? $"{item.CsDomainTypeName}? value, System.Reflection.PropertyInfo propertyInfo"
+                        : $"{item.CsDomainTypeName}? value, string attributeValue, System.Reflection.PropertyInfo propertyInfo";
+                var signatureKey = $"{methodName}({parameters})";
+
+                app.Add($$"""
+                    /// <summary>
+                    /// カスタム属性 '{{item.Attribute.PhysicalName}}' 用の入力検証フック。
+                    /// null を返すとバリデーションOK、文字列を返すとその内容でエラー登録されます。
+                    /// </summary>
+                    /// <param name="value">検証対象の値</param>
+                    {{If(item.Attribute.Type != NijoXmlCustomAttribute.E_Type.Boolean, () => $$"""
+                    /// <param name="attributeValue">カスタム属性に設定された値。</param>
+                    """)}}
+                    /// <param name="propertyInfo">検証対象プロパティの <see cref="System.Reflection.PropertyInfo"/>。</param>
+                    /// <returns>エラーの場合はメッセージ文字列、正常なら null</returns>
+                    public abstract string? {{methodName}}({{parameters}});
+                    """);
             }
         }
 

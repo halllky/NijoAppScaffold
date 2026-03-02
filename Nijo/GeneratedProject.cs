@@ -259,6 +259,7 @@ namespace Nijo {
             // スキーマ定義にかかわらず必ず生成されるモジュールの登録: DataModel 由来のもの
             ctx.Use<DbContextClass>();
             ctx.Use<Models.DataModelModules.DummyDataGenerator>();
+            Models.DataModelModules.ValidateCustom.RegisterApplicationServiceHooks(ctx);
 
             // IMultiAggregateSourceFile が別の IMultiAggregateSourceFile に依存することがあるので、
             // すべて漏らさず確実に依存関係を登録させる。
