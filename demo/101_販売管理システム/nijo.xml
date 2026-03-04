@@ -192,10 +192,12 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
         Type="word"
         UniqueId="292832fb-e8f0-42cc-b121-a7665db9be9e" />
       <パスワード
+        Custom-4d868e55-06d6-44eb-aa97-901f39dd1782="True"
         IsNotNull="True"
         Type="bytearray"
         UniqueId="e1d23e41-4dde-4ea3-bdc3-b88a80481786" />
       <SALT
+        Custom-4d868e55-06d6-44eb-aa97-901f39dd1782="True"
         IsNotNull="True"
         Type="bytearray"
         UniqueId="eae146ed-8c0f-484c-8b1a-dfc12ab1987d" />
@@ -586,6 +588,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
         Type="word"
         UniqueId="95019350-3caf-4bb1-be14-01351c4eb17d" />
       <パスワード
+        Custom-4d868e55-06d6-44eb-aa97-901f39dd1782="True"
         Custom-c582bb2e-804e-4136-93f0-85139aaa675f="50"
         Type="word"
         UniqueId="5619b3a0-f402-4bc5-ab03-8edc1baa2a6a" />
@@ -594,10 +597,12 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       Type="structure-model"
       UniqueId="da5e2ba7-864b-4d23-852b-1a4c6f525f98">
       <新しいパスワード
+        Custom-4d868e55-06d6-44eb-aa97-901f39dd1782="True"
         Custom-c582bb2e-804e-4136-93f0-85139aaa675f="50"
         Type="word"
         UniqueId="68322c5b-2976-453b-8e70-a968a946dedf" />
       <新しいパスワード_確認用
+        Custom-4d868e55-06d6-44eb-aa97-901f39dd1782="True"
         Custom-c582bb2e-804e-4136-93f0-85139aaa675f="50"
         Type="word"
         UniqueId="ab05211a-883a-4737-8cba-a10e8345df92" />
@@ -814,6 +819,12 @@ ASP.NET Core のサービスワーカーとして登録される定期処理。-
       DisplayName="0以上のみ"
       IsValidation="True"
       PhysicalName="NotNegative"
+      Type="Boolean" />
+    <!--ログ出力時に値をそのまま出さずにマスキングさせる。パスワードなどに指定する。-->
+    <Custom-4d868e55-06d6-44eb-aa97-901f39dd1782
+      AvailableModels="data-model,query-model,command-model,structure-model,enum,value-object"
+      DisplayName="マスキング"
+      PhysicalName="Masking"
       Type="Boolean" />
   </CustomAttributes>
 </NijoAppScaffold>

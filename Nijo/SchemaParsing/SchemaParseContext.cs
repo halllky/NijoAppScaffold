@@ -173,12 +173,12 @@ public class SchemaParseContext {
         var attrDefs = _customAttributesCache ??= NijoXmlCustomAttribute
             .FromXDocument(Document)
             .ToArray();
-        var attrs = xElement
+        var specifiedAttrCustomIds = xElement
             .Attributes()
             .Select(attr => attr.Name.LocalName)
             .ToHashSet();
         return attrDefs
-            .Where(attr => attrs.Contains(attr.PhysicalName!));
+            .Where(def => specifiedAttrCustomIds.Contains(def.UniqueId!));
     }
     private NijoXmlCustomAttribute[]? _customAttributesCache;
     #endregion オプション属性

@@ -52,9 +52,9 @@ internal static class NijoAttr {
         foreach (var attr in customAttributes) {
             var value = attr.Type switch {
                 NijoXmlCustomAttribute.E_Type.Boolean => string.Empty,
-                NijoXmlCustomAttribute.E_Type.String => $"(\"{node.XElement.Attribute(attr.PhysicalName!)?.Value.ReplaceLineEndings("\\\n").Replace("\"", "\\\"")}\")",
-                NijoXmlCustomAttribute.E_Type.Decimal => $"({node.XElement.Attribute(attr.PhysicalName!)?.Value})",
-                NijoXmlCustomAttribute.E_Type.Enum => $"({SUB_NAMESPACE}.{GetAttributeClassName(attr)}.{PRIVATE_ENUM_NAME}.{node.XElement.Attribute(attr.PhysicalName!)?.Value})",
+                NijoXmlCustomAttribute.E_Type.String => $"(\"{node.XElement.Attribute(attr.UniqueId!)?.Value.ReplaceLineEndings("\\\n").Replace("\"", "\\\"")}\")",
+                NijoXmlCustomAttribute.E_Type.Decimal => $"(\"{node.XElement.Attribute(attr.UniqueId!)?.Value}\")",
+                NijoXmlCustomAttribute.E_Type.Enum => $"({SUB_NAMESPACE}.{GetAttributeClassName(attr)}.{PRIVATE_ENUM_NAME}.{node.XElement.Attribute(attr.UniqueId!)?.Value})",
                 _ => throw new Exception($"Unsupported custom attribute type: {attr.Type}")
             };
             list.Add($"{SUB_NAMESPACE}.{attr.PhysicalName}{value}");
@@ -73,7 +73,7 @@ internal static class NijoAttr {
         var allCustomAttributes = NijoXmlCustomAttribute.FromXDocument(ctx.SchemaParser.Document);
 
         return new() {
-            FileName = "MetadataAttributes.cs",
+            FileName = "NijoAttr.cs",
             Contents = $$"""
                 namespace {{ctx.Config.RootNamespace}}.{{SUB_NAMESPACE}};
                 {{basicNodeOptions.SelectTextTemplate(opt => $$"""
@@ -137,8 +137,8 @@ internal static class NijoAttr {
                 """)}}
                 {{If(attr.Type == NijoXmlCustomAttribute.E_Type.Decimal, () => $$"""
                     public decimal Value { get; }
-                    public {{GetAttributeClassName(attr)}}(decimal value) {
-                        Value = value;
+                    public {{GetAttributeClassName(attr)}}(string value) {
+                        Value = decimal.Parse(value);
                     }
                 """)}}
                 {{If(attr.Type == NijoXmlCustomAttribute.E_Type.Enum, () => $$"""
