@@ -129,14 +129,23 @@ internal static class NijoAttr {
                 /// </summary>
                 [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
                 public sealed class {{GetAttributeClassName(attr)}} : System.Attribute {
+                {{If(attr.Type == NijoXmlCustomAttribute.E_Type.Boolean, () => $$"""
+                    /// <inheritdoc cref="{{GetAttributeClassName(attr)}}" />
+                    public {{GetAttributeClassName(attr)}}() {
+                    }
+                """)}}
                 {{If(attr.Type == NijoXmlCustomAttribute.E_Type.String, () => $$"""
                     public string Value { get; }
+
+                    /// <inheritdoc cref="{{GetAttributeClassName(attr)}}" />
                     public {{GetAttributeClassName(attr)}}(string value) {
                         Value = value;
                     }
                 """)}}
                 {{If(attr.Type == NijoXmlCustomAttribute.E_Type.Decimal, () => $$"""
                     public decimal Value { get; }
+
+                    /// <inheritdoc cref="{{GetAttributeClassName(attr)}}" />
                     public {{GetAttributeClassName(attr)}}(string value) {
                         Value = decimal.Parse(value);
                     }
@@ -149,6 +158,8 @@ internal static class NijoAttr {
                     }
 
                     public {{PRIVATE_ENUM_NAME}} Value { get; }
+
+                    /// <inheritdoc cref="{{GetAttributeClassName(attr)}}" />
                     public {{GetAttributeClassName(attr)}}({{PRIVATE_ENUM_NAME}} value) {
                         Value = value;
                     }
