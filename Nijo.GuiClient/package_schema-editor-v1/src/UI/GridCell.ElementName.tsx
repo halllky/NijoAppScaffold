@@ -30,6 +30,9 @@ export function createElementNameCellHelper(
         {header}
       </div>
     ),
+    renderHeaderPlaceholder: () => (
+      <div className="border-l border-gray-300" />
+    ),
     renderBody: ({ context }) => {
       const fieldRowIndex = skipFirstRow ? context.row.index + 1 : context.row.index
       const rowData: XmlElementItem = ReactHookForm.useWatch({ name: `${arrayName}.${fieldRowIndex}`, control })
@@ -38,15 +41,17 @@ export function createElementNameCellHelper(
       const tooltip = errorMessages.join('\n')
 
       return (
-        <div className={`px-1 flex-1 flex flex-col ${bgColor}`} title={tooltip}>
+        <div className={`px-1 flex-1 flex flex-col w-full ${bgColor}`} title={tooltip}>
 
           {/* インデント + 名前 */}
-          <div className="flex text-left truncate">
+          <div className="flex text-left overflow-hidden">
             {Array.from({ length: Math.max(0, rowData.indent - 1) }).map((_, i) => (
               <div key={i} className="basis-[20px] shrink-0 relative leading-none border-l border-gray-300" />
             ))}
-            {rowData.localName}
-            &nbsp;
+            <span className="flex-1 truncate">
+              {rowData.localName}
+              &nbsp;
+            </span>
           </div>
 
           {/* この行で改行が発生する場合の名前の下の線 */}

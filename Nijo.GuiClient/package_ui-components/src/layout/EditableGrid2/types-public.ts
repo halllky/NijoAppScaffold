@@ -94,6 +94,8 @@ export type EditableGrid2GroupColumn<TRow> = {
 export type EditableGrid2LeafColumn<TRow> = {
   /** 列のヘッダーのレンダリング処理をカスタマイズする関数。 */
   renderHeader: EditableGrid2HeaderRenderer<TRow>
+  /** 列のヘッダーのうち、グルーピングが発生している場合のグループ化されない列の下段のレンダリング処理をカスタマイズする関数。 */
+  renderHeaderPlaceholder?: EditableGrid2HeaderRenderer<TRow>
   /**
    * セルのボディのレンダリング処理をカスタマイズする関数。
    * セルの中にボタンを配置するなど、セル選択を防ぎたい要素がある場合、

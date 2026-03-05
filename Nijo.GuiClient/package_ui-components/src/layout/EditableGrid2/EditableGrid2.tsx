@@ -426,7 +426,12 @@ const MemorizedTH = React.memo<{
       height,
       left: headerMeta.isFixed ? `${start}px` : undefined,
     }}>
-      {!isNonGroupedLowerHeader && (
+      {isNonGroupedLowerHeader ? (
+        // グルーピングが発生するグリッドで、かつこのヘッダがグループ化されない列である場合、
+        // プレースホルダ用のレンダリング関数を呼び出す
+        (header.column.columnDef.meta as ColumnMetadataInternal<any>).original?.renderHeaderPlaceholder?.({ context: header.getContext() })
+      ) : (
+        // 上記以外は Tanstack Table の通常のヘッダレンダリング
         TanStack.flexRender(header.column.columnDef.header, header.getContext())
       )}
 
