@@ -108,6 +108,9 @@ namespace Nijo.Models.DataModelModules {
                                     var result = await applicationService.{{new CreateMethod(rootAggregate).MethodName}}(command, presentationContext, errorMessages.Messages[i]);
                                     if (result.Result == {{DataModelSaveResult.CLASS_NAME}}Type.Completed && result.DbEntity != null) {
                                         entities.Add(result.DbEntity);
+                                    } else {
+                                        var errorMessage = string.Join(", ", errorMessages.Messages[i].GetState()?.DescendantsAndSelf().SelectMany(x => x.Errors) ?? []);
+                                        throw new InvalidOperationException(errorMessage);
                                     }
                                 }
                                 await transaction.CommitAsync();
