@@ -50,9 +50,37 @@ internal class DecimalMember : IValueMemberType {
 
     string IValueMemberType.RenderCreateDummyDataValueBody(CodeRenderingContext ctx) {
         return $$"""
-            return member.IsKey
-                ? (decimal)context.GetNextSequence() + (decimal)(context.Random.NextDouble() * 0.1)
-                : (decimal)(context.Random.NextDouble() * 1000);
+            var totalDigits = member.TotalDigit ?? 6;
+            var decimalPlaces = member.DecimalPlace ?? 2;
+            if (decimalPlaces < 0) decimalPlaces = 0;
+            if (totalDigits < decimalPlaces) totalDigits = decimalPlaces;
+
+            var integerDigits = totalDigits - decimalPlaces;
+            var integerMax = 1;
+            for (var i = 0; i < integerDigits && integerMax <= int.MaxValue / 10; i++) {
+                integerMax *= 10;
+            }
+            if (integerMax <= 1) integerMax = int.MaxValue;
+            integerMax -= 1;
+
+            var fracMax = 1;
+            for (var i = 0; i < decimalPlaces && fracMax <= int.MaxValue / 10; i++) {
+                fracMax *= 10;
+            }
+            if (fracMax < 1) fracMax = 1;
+
+            var integerPart = member.IsKey
+                ? (int)(context.GetNextSequence() % (integerMax + 1))
+                : context.Random.Next(0, integerMax + 1);
+            var fractionalPart = decimalPlaces == 0
+                ? 0
+                : context.Random.Next(0, fracMax);
+
+            var divisor = 1m;
+            for (var i = 0; i < decimalPlaces; i++) {
+                divisor *= 10m;
+            }
+            return (decimal)integerPart + (decimal)fractionalPart / divisor;
             """;
     }
 

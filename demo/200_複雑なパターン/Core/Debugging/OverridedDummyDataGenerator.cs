@@ -10,6 +10,11 @@ public partial class OverridedDummyDataGenerator : DummyDataGenerator {
 
     // 単語型のダミーデータ生成ロジック
     protected override string? GetRandomWord(DummyDataGenerateContext context, MetadataForPage.ValueMetadata member) {
+        if (member.CharacterType == nameof(E_CharacterType.半角数字および半角ハイフンのみ)) {
+            var maxLength = member.MaxLength ?? 12;
+            return $"{context.Random.Next(100000, 999999)}-{context.Random.Next(1000, 9999)}".Substring(0, Math.Min(maxLength, 12));
+        }
+
         if (member.IsKey) {
             return base.GetRandomWord(context, member);
 

@@ -29,7 +29,6 @@ for d in "$SCRIPT_DIR/../demo/"*; do
             rsync -av --delete-excluded --exclude={".*","example.ts"} "$SOURCE_ROOT/client/src/example/" "$TARGET_ROOT/client/src/example/"
 
             # Core
-            rsync -av --delete-excluded --exclude=".*" "$SOURCE_ROOT/Core/Debugging/" "$TARGET_ROOT/Core/Debugging/"
             cp "$SOURCE_ROOT/Core/JsonSerializerExtensions.cs" "$TARGET_ROOT/Core/JsonSerializerExtensions.cs"
             cp "$SOURCE_ROOT/Core/MigrationEntryPoint.cs" "$TARGET_ROOT/Core/MigrationEntryPoint.cs"
             cp "$SOURCE_ROOT/Core/PresentationContextExtensions.cs" "$TARGET_ROOT/Core/PresentationContextExtensions.cs"

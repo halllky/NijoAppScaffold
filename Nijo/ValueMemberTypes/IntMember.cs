@@ -50,6 +50,18 @@ internal class IntMember : IValueMemberType {
 
     string IValueMemberType.RenderCreateDummyDataValueBody(CodeRenderingContext ctx) {
         return $$"""
+            if (member.TotalDigit is int totalDigits && totalDigits > 0) {
+                var max = 1;
+                for (var i = 0; i < totalDigits && max <= int.MaxValue / 10; i++) {
+                    max *= 10;
+                }
+                if (max <= 1) max = int.MaxValue;
+                max -= 1;
+                return member.IsKey
+                    ? (int)(context.GetNextSequence() % (max + 1))
+                    : context.Random.Next(0, max + 1);
+            }
+
             return member.IsKey
                 ? context.GetNextSequence()
                 : context.Random.Next(0, 1000);
