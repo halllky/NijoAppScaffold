@@ -7,7 +7,7 @@ sidebar_position: 1
 Nijoでの開発は、スキーマ定義ファイル `nijo.xml` を中心に行われます。
 `nijo.xml` を編集し、そこからソースコードを自動生成し、生成されたコードを利用して実装を進めるというサイクルを繰り返します。
 
-![開発ワークフロー図](/img/workflow.drawio.svg)
+<img src="/img/workflow.drawio.svg" alt="開発ワークフロー図" style={{ width: '100%' }} />
 
 ## 1. プロジェクト作成
 
