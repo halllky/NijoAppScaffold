@@ -345,6 +345,11 @@ public class SchemaParseContext {
         // カスタム属性の定義の検証
         var customAttributeElements = xDocument.Root?.Element(SECTION_CUSTOM_ATTRIBUTES)?.Elements().ToArray() ?? [];
         var customAttributes = NijoXmlCustomAttribute.FromXDocument(xDocument).ToArray();
+        var nodeOptionsByName = _rule.NodeOptions.ToDictionary(opt => opt.AttributeName);
+        var customAttributesByUniqueId = customAttributes
+            .Where(attr => !string.IsNullOrWhiteSpace(attr.UniqueId))
+            .GroupBy(attr => attr.UniqueId!)
+            .ToDictionary(group => group.Key, group => group.First());
         if (customAttributeElements.Length == customAttributes.Length) {
             for (int i = 0; i < customAttributes.Length; i++) {
                 var attr = customAttributes[i];
@@ -496,38 +501,54 @@ public class SchemaParseContext {
                     break;
             }
 
-            // オプション属性に基づくチェック
-            foreach (var opt in GetOptions(el)) {
-                // モデルとノード種別の組み合わせで利用可能かチェック
-                if (TryGetModel(el, out var optModel)) {
-                    if (!opt.IsAvailable(optModel, nodeType)) {
-                        attributeErrors.Add((el, opt.AttributeName, $"この属性はこの要素には指定できません。"));
+            // 属性に基づくチェック
+            foreach (var attr in el.Attributes()) {
+                // 名前空間宣言はスキーマのルールで定義された属性ではないのでスキップ
+                if (attr.IsNamespaceDeclaration) continue;
+
+                var attrName = attr.Name.LocalName;
+                var hasModel = TryGetModel(el, out var optModel);
+
+                // 特殊な属性
+                if (attrName == ATTR_NODE_TYPE || attrName == ATTR_UNIQUE_ID) {
+                    // チェック対象外
+                }
+
+                // 既定の属性
+                else if (nodeOptionsByName.TryGetValue(attrName, out var opt)) {
+
+                    // モデルとノード種別の組み合わせで利用可能かチェック
+                    if (hasModel && !opt.IsAvailable(optModel!, nodeType)) {
+                        attributeErrors.Add((el, attrName, $"この属性はこの要素には指定できません。"));
                         continue; // 指定不可な属性なので、それ以上の検証はスキップ
+                    }
+
+                    // 複雑な検証ロジック
+                    opt.ValidateOthers(new() {
+                        Value = attr.Value,
+                        XElement = el,
+                        NodeType = nodeType,
+                        AddError = err => attributeErrors.Add((el, attrName, err)),
+                        SchemaParseContext = this,
+                    });
+                }
+
+                // カスタム属性
+                else if (customAttributesByUniqueId.TryGetValue(attrName, out var customAttr)) {
+                    if (hasModel) {
+                        if (!customAttr.AvailableModels.Contains(optModel!.SchemaName)) {
+                            attributeErrors.Add((el, attrName, $"カスタム属性 '{customAttr.PhysicalName}' はモデル '{optModel!.SchemaName}' では使用できません。"));
+                        } else {
+                            foreach (var error in customAttr.ValidateModelElement(el)) {
+                                attributeErrors.Add((el, attrName, error));
+                            }
+                        }
                     }
                 }
 
-                // 複雑な検証ロジック
-                opt.ValidateOthers(new() {
-                    Value = el.Attribute(opt.AttributeName)!.Value,
-                    XElement = el,
-                    NodeType = nodeType,
-                    AddError = err => attributeErrors.Add((el, opt.AttributeName, err)),
-                    SchemaParseContext = this,
-                });
-            }
-
-            // カスタム属性の検証
-            if (TryGetModel(el, out var elModel)) {
-                foreach (var customAttr in customAttributes) {
-                    if (string.IsNullOrWhiteSpace(customAttr.UniqueId)) continue;
-
-                    if (!customAttr.AvailableModels.Contains(elModel.SchemaName)) {
-                        attributeErrors.Add((el, customAttr.UniqueId, $"カスタム属性 '{customAttr.PhysicalName}' はモデル '{elModel.SchemaName}' では使用できません。"));
-                    } else {
-                        foreach (var error in customAttr.ValidateModelElement(el)) {
-                            attributeErrors.Add((el, customAttr.UniqueId, error));
-                        }
-                    }
+                // 定義されていない属性
+                else {
+                    attributeErrors.Add((el, attrName, "この属性は定義されていません。"));
                 }
             }
         }

@@ -117,8 +117,8 @@
       },
       "4e1d9f4e-1d9f-4e1d-9f4e-1d9f4e1d9f4e": {
         "id": "4e1d9f4e-1d9f-4e1d-9f4e-1d9f4e1d9f4e",
-        "label": "アクセス履歴",
-        "parent": "9f4e1d9f-4e1d-9f4e-1d9f-4e1d9f4e1d9f"
+        "label": "権限一覧",
+        "parent": "e8f20d1d-9f4e-4f9c-9f4e-1d9f4e9f4e1d"
       },
       "50ea93fd-83fb-4b0a-8c89-fbd0ebf2bcd6": {
         "id": "50ea93fd-83fb-4b0a-8c89-fbd0ebf2bcd6",
@@ -288,8 +288,8 @@
       },
       "9f4e1d9f-4e1d-9f4e-1d9f-4e1d9f4e1d9f4": {
         "id": "9f4e1d9f-4e1d-9f4e-1d9f-4e1d9f4e1d9f4",
-        "label": "通知設定一覧",
-        "parent": "9f4e1d9f-4e1d-9f4e-1d9f-4e1d9f4e1d9f4"
+        "label": "設定情報",
+        "parent": "e8f20d1d-9f4e-4f9c-9f4e-1d9f4e9f4e1d"
       },
       "a0606f83-9804-4ff7-b219-8699850f784a": {
         "id": "a0606f83-9804-4ff7-b219-8699850f784a",
@@ -1002,7 +1002,7 @@
       },
       "e8f20d1d-9f4e-4f9c-9f4e-1d9f4e9f4e1d": {
         "x": 1172.2946591,
-        "y": 1155.5580345
+        "y": 1045.4364349
       },
       "e906b965-c7a7-4605-9491-0af60db4f4bf": {
         "x": 238.5008946,
