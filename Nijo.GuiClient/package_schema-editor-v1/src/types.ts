@@ -118,7 +118,7 @@ export type XmlElementAttribute = {
   /** この属性の画面表示上の名称。 */
   displayName: string
   /** この属性が使用可能なモデルとノード種別の組み合わせの配列。 */
-  availableElements: { model: string, nodeType: string }[]
+  availableElements: { model: string, nodeType: NijoXmlNodeType }[]
 } & (XmlElementStringAttribute | XmlElementBoolAttribute | XmlElementIntegerAttribute | XmlElementSelectAttribute | XmlElementEnumSelectAttribute)
 
 /** XML要素の属性の種類定義（文字列属性） */
@@ -179,6 +179,15 @@ export const NODE_TYPE_REF = 'Ref'
 export const NODE_TYPE_STATIC_ENUM_VALUE = 'StaticEnumValue'
 export const NODE_TYPE_UNKNOWN = 'Unknown'
 
+export type NijoXmlNodeType =
+  | typeof NODE_TYPE_ROOT_AGGREGATE
+  | typeof NODE_TYPE_CHILD_AGGREGATE
+  | typeof NODE_TYPE_CHILDREN_AGGREGATE
+  | typeof NODE_TYPE_VALUE_MEMBER
+  | typeof NODE_TYPE_REF
+  | typeof NODE_TYPE_STATIC_ENUM_VALUE
+  | typeof NODE_TYPE_UNKNOWN
+
 // 定数の種類
 export const CONSTANT_TYPE_CHILD = 'child'
 export const CONSTANT_TYPE_STRING = 'string'
@@ -189,11 +198,11 @@ export const CONSTANT_TYPE_TEMPLATE = 'template'
 // ---------------------------------
 
 /**
- * 指定された属性が、指定されたモデル種別・ノード種別の組み合わせで利用可能かを判定する。
+ * 指定された属性が、指定されたモデル種別で利用可能かを判定する。
  */
-export const isAttributeAvailable = (attr: XmlElementAttribute, modelType: string, onlyRoot: boolean): boolean => {
+export const isAttributeAvailable = (attr: XmlElementAttribute, modelType: string, nodeTypes: NijoXmlNodeType[]): boolean => {
   if (!modelType) return false
-  return attr.availableElements.some(ae => ae.model === modelType && (!onlyRoot || ae.nodeType === NODE_TYPE_ROOT_AGGREGATE))
+  return attr.availableElements.some(ae => ae.model === modelType && nodeTypes.includes(ae.nodeType))
 }
 
 // ---------------------------------

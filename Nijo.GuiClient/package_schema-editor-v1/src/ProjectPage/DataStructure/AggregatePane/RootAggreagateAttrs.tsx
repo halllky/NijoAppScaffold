@@ -46,7 +46,7 @@ export default function RootAggregateAttrs({ selectedRootAggregateIndex, formMet
         <div className="basis-96 flex flex-col gap-1">
           {Array.from(attributeDefs.values()).map(attrDef => {
             if (attrDef.attributeName === ATTR_TYPE) return null
-            if (!rootModelType || !isAttributeAvailable(attrDef, rootModelType, false)) return null
+            if (!rootModelType || !isAttributeAvailable(attrDef, rootModelType, ['RootAggregate'])) return null
 
             const path = `${rootElementPath}.attributes.${attrDef.attributeName}` as const
 
