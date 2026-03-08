@@ -1,0 +1,128 @@
+.source-code-viewer {
+  display: flex;
+  align-items: start;
+  overflow: auto;
+  resize: vertical;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  --explorer-name-width: 200px;
+}
+
+.source-code-viewer .file-explorer {
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+}
+
+.source-code-viewer .file-explorer.show-comment {
+  flex: 1;
+  height: 100%;
+}
+
+.source-code-viewer .file-explorer.name-only {
+  flex-basis: var(--explorer-name-width);
+  flex-shrink: 0;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.source-code-viewer .explorer-item {
+  flex-basis: 1.25rem;
+  display: flex;
+  align-items: stretch;
+  user-select: none;
+  cursor: pointer;
+  font-size: small;
+}
+
+.source-code-viewer .item-area-placeholder {
+  flex: 1;
+  width: var(--explorer-name-width);
+  border-right: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.source-code-viewer .explorer-item.is-selected {
+  background-color: var(--ifm-color-emphasis-100);
+}
+
+.source-code-viewer .file-name-and-indent {
+  flex-basis: var(--explorer-name-width);
+  flex-shrink: 0;
+  padding: 1px 4px;
+}
+
+.source-code-viewer .show-comment .file-name-and-indent {
+  border-right: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.source-code-viewer .indent {
+  flex-basis: 16px;
+  flex-shrink: 0;
+}
+
+.source-code-viewer .file-name {
+  flex: 1;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.source-code-viewer .comment-to-file {
+  flex: 1;
+  padding: 1px 4px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.source-code-viewer .source-code-preview {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+.source-code-viewer .source-code-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  white-space: normal;
+  padding: 4px;
+}
+
+.source-code-viewer .source-code-preview-file-name {
+  font-size: small;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-code-viewer .source-code-preview-close {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  background-color: var(--ifm-color-emphasis-100);
+  color: inherit;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: small;
+  cursor: pointer;
+}
+
+.source-code-viewer .source-code-preview-close:hover {
+  background-color: var(--ifm-color-emphasis-200);
+}
+
+.source-code-viewer .source-code-preview-pre {
+  flex: 1;
+  display: block;
+  font-size: small;
+  white-space: pre;
+  overflow: auto;
+  padding: 8px;
+  margin: 0;
+  background-color: var(--ifm-color-emphasis-100);
+}

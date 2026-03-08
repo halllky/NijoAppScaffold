@@ -1,7 +1,7 @@
 # 自動生成されるドキュメント
 /src/pages/reference
 /src/generated
-/static/source-code
+/static/source-codes
 
 # Dependencies
 /node_modules
