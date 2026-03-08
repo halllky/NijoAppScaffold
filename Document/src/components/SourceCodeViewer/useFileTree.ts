@@ -3,23 +3,35 @@ import { SourceCodePathAndComment } from "./SourceCodeViewer"
 import AVAILABLE_SOURCE_CODES from "./available-files"
 
 export type FileTreeLeaf = {
+  kind: "file"
   relativePath: string
   displayName: string
   indent: number
   comment: string
 }
 
+export type FileTreeFolder = {
+  kind: "folder"
+  relativePath: string
+  displayName: string
+  indent: number
+}
+
+export type FileTreeItem = FileTreeLeaf | FileTreeFolder
+
 export function useFileTree(propsFiles: SourceCodePathAndComment<keyof typeof AVAILABLE_SOURCE_CODES>[]) {
 
-  return React.useMemo((): FileTreeLeaf[] => {
+  return React.useMemo((): FileTreeItem[] => {
     type TreeNode = {
       name: string
+      path: string
       children: Map<string, TreeNode>
       file: { path: string, comment: string } | null
     }
 
     const root: TreeNode = {
       name: "",
+      path: "",
       children: new Map(),
       file: null,
     }
@@ -33,6 +45,7 @@ export function useFileTree(propsFiles: SourceCodePathAndComment<keyof typeof AV
         if (!child) {
           child = {
             name: part,
+            path: current.path ? `${current.path}/${part}` : part,
             children: new Map(),
             file: null,
           }
@@ -47,11 +60,21 @@ export function useFileTree(propsFiles: SourceCodePathAndComment<keyof typeof AV
       }
     }
 
-    const flattened: FileTreeLeaf[] = []
+    const flattened: FileTreeItem[] = []
 
     const visit = (node: TreeNode, depth: number): void => {
+      if (node !== root && node.children.size > 0) {
+        flattened.push({
+          kind: "folder",
+          relativePath: node.path,
+          displayName: node.name,
+          indent: Math.max(depth - 1, 0),
+        })
+      }
+
       if (node.file) {
         flattened.push({
+          kind: "file",
           relativePath: node.file.path,
           displayName: node.name,
           indent: Math.max(depth - 1, 0),

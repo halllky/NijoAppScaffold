@@ -1,6 +1,8 @@
 import React from "react"
+import { FolderIcon } from "@heroicons/react/24/outline"
+import { DocumentIcon } from "@heroicons/react/24/solid"
 import AVAILABLE_SOURCE_CODES from "./available-files"
-import { FileTreeLeaf, useFileTree } from "./useFileTree"
+import { FileTreeItem, FileTreeLeaf, useFileTree } from "./useFileTree"
 
 import "./SourceCodeViewer.css"
 
@@ -20,6 +22,12 @@ export function SourceCodeViewer<TProject extends keyof typeof AVAILABLE_SOURCE_
   files: SourceCodePathAndComment<TProject>[]
   height?: string
 }) {
+
+  const handleFileClick = React.useCallback((item: FileTreeItem) => {
+    if (item.kind === "file") {
+      setSelectedFile(item)
+    }
+  }, [])
 
   // 引数チェック
   if (!AVAILABLE_SOURCE_CODES[props.project]) {
@@ -82,13 +90,18 @@ export function SourceCodeViewer<TProject extends keyof typeof AVAILABLE_SOURCE_
         {filesTree.map(file => (
           <div
             key={file.relativePath}
-            className={`explorer-item ${selectedFile?.relativePath === file.relativePath ? "is-selected" : ""}`}
-            onClick={() => setSelectedFile(file)}
+            className={`explorer-item ${file.kind === "file" ? "is-file" : "is-folder"} ${selectedFile?.relativePath === file.relativePath ? "is-selected" : ""}`}
+            onClick={() => handleFileClick(file)}
           >
             <div className="file-name-and-indent">
               {Array.from({ length: file.indent }).map((_, ix) => (
                 <span key={ix} className="indent" />
               ))}
+              {file.kind === "folder" ? (
+                <FolderIcon className="file-or-folder-icon" />
+              ) : (
+                <DocumentIcon className="file-or-folder-icon" />
+              )}
               <span className="file-name">
                 {file.displayName}
               </span>
@@ -96,7 +109,7 @@ export function SourceCodeViewer<TProject extends keyof typeof AVAILABLE_SOURCE_
 
             {!selectedFile && (
               <span className="comment-to-file">
-                {file.comment}
+                {file.kind === "file" ? file.comment : ""}
               </span>
             )}
           </div>
