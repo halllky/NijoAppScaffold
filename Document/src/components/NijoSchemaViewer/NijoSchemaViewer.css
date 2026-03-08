@@ -1,0 +1,5 @@
+.nijo-schema-viewer {
+  height: 320px;
+  resize: vertical;
+  border: 1px solid var(--ifm-color-emphasis-400);
+}

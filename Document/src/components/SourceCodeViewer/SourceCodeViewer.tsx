@@ -44,30 +44,31 @@ export function SourceCodeViewer<TProject extends keyof typeof AVAILABLE_SOURCE_
 
   // 選択中のファイル
   const [selectedFile, setSelectedFile] = React.useState<FileTreeLeaf | null>(null)
-  const [selectedFileContents, setSelectedFileContents] = React.useState<string>()
+  const [selectedFileContents, setSelectedFileContents] = React.useState(() => new Map<string, string>())
   const preRef = React.useRef<HTMLPreElement>(null)
 
+  // ソースコードは画面表示時にまとめてフェッチしてキャッシュしておく
   React.useEffect(() => {
-    setSelectedFileContents(undefined)
-    if (selectedFile) {
-      fetch(`/NijoAppScaffold/source-codes/${props.project}/${selectedFile.relativePath}`).then(res => {
-        if (res.ok) {
-          return res.text()
-        } else {
-          throw new Error(`Failed to fetch source code: ${res.statusText}`)
-        }
-      }).then(text => {
-        setSelectedFileContents(text)
-      }).catch(err => {
-        console.error(err)
-        setSelectedFileContents("ソースコードの取得に失敗しました。")
-      })
-    }
-  }, [selectedFile])
+    Promise.all(props.files.map((file) => fetch(`/NijoAppScaffold/source-codes/${props.project}/${file.path}`).then(res => {
+      if (res.ok) {
+        return res.text()
+      } else {
+        throw new Error(`Failed to fetch source code: ${res.statusText}`)
+      }
+    }).then(body => {
+      return [file.path, body] as const
+
+    }).catch(err => {
+      console.error(err)
+      return [file.path, "ソースコードの取得に失敗しました。"] as const
+
+    }))).then(results => {
+      setSelectedFileContents(new Map(results))
+    })
+  }, [props.project, props.files])
 
   // フォーカス行へのスクロール処理
   React.useEffect(() => {
-    if (!selectedFileContents) return;
     if (!preRef.current) return;
     const focusLineNum = selectedFile && props.files.find(f => f.path === selectedFile.relativePath)?.focus
     if (focusLineNum && focusLineNum > 0) {
@@ -82,7 +83,7 @@ export function SourceCodeViewer<TProject extends keyof typeof AVAILABLE_SOURCE_
     } else {
       preRef.current.scrollTop = 0
     }
-  }, [selectedFileContents, selectedFile, props.files])
+  }, [selectedFile, props.files])
 
   return (
     <div className="source-code-viewer" style={{ height: props.height ?? "400px" }}>
@@ -135,7 +136,7 @@ export function SourceCodeViewer<TProject extends keyof typeof AVAILABLE_SOURCE_
             </button>
           </span>
           <pre className="source-code-preview-pre" ref={preRef}>
-            {selectedFileContents ?? "読み込み中..."}
+            {selectedFileContents.get(selectedFile.relativePath) ?? "読み込み中..."}
           </pre>
         </div>
       )}
