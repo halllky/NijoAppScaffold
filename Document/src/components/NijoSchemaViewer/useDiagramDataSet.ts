@@ -26,6 +26,8 @@ type XmlElementTree = {
   xmlElements: XmlElementItem[]
 }
 
+export type { XmlElementTree }
+
 type OrderedXmlEntry = {
   [key: string]: unknown
   ":@"?: Record<string, string>
@@ -271,7 +273,7 @@ export function useDiagramDataSet(nijoXmlPath: string) {
 
   const diagramData = React.useMemo(() => {
     if (!nijoXmlContent) {
-      return { nodes: [], edges: [] }
+      return { nodes: [], edges: [], xmlElementTrees: [] as XmlElementTree[] }
     }
 
     const xmlElementTrees = parseXmlElementTrees(nijoXmlContent)
@@ -422,6 +424,7 @@ export function useDiagramDataSet(nijoXmlPath: string) {
         "line-style": group.isMention ? "dashed" : "solid",
         targetEndShape: "triangle",
       }) satisfies GV2.Edge),
+      xmlElementTrees,
     }
   }, [nijoXmlContent])
 
@@ -436,5 +439,6 @@ export function useDiagramDataSet(nijoXmlPath: string) {
     nodes: diagramData.nodes,
     edges: diagramData.edges,
     nodePositions,
+    xmlElementTrees: diagramData.xmlElementTrees,
   }
 }
