@@ -15,6 +15,11 @@ export type Node = {
   locked?: boolean
   /** GraphView2 の内部では用いられない任意の付加情報 */
   meta?: Record<string, unknown>
+  /** このノード内部に表を表示する場合に使用（cytescape標準の仕組みではない拡張機能） */
+  table?: {
+    headers: string[]
+    rows: string[][]
+  }
 }
 
 /** グラフのエッジ */

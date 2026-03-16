@@ -1,6 +1,7 @@
 import cytoscape from 'cytoscape';
 // @ts-ignore このライブラリは型定義を提供していない
 import nodeHtmlLabel from "cytoscape-node-html-label";
+import { Node as GraphView2Node } from './types';
 
 // cytoscape-node-html-label拡張機能を登録
 nodeHtmlLabel(cytoscape);
@@ -15,11 +16,25 @@ export const setupHtmlLabels = (cyInstance: cytoscape.Core) => {
       query: 'node', // 全てのノードに適用
       valign: 'center',
       halign: 'center',
-      tpl: (data: { label: string | undefined }) => {
+      tpl: (data: { label?: string, table?: GraphView2Node["table"] }) => {
         const label = data.label || ''
         // 改行文字（\n または \r\n）を<br>タグに変換
         const htmlLabel = label.replace(/\r\n|\n/g, '<br>')
-        return `<div style="pointer-events: none; max-width: 320px;">${htmlLabel}</div>`
+        if (data.table && (data.table.headers.length > 0 || data.table.rows.length > 0)) {
+          const { headers, rows } = data.table
+          const headerCellHtml = headers.map(h =>
+            `<th style="padding:2px 6px;border:1px solid #c8c8c8;font-size:12px;font-weight:bold;white-space:nowrap;">${h}</th>`
+          ).join('')
+          const rowsHtml = rows.map(row =>
+            `<tr>${row.map(cell =>
+              `<td style="padding:2px 6px;border:1px solid #c8c8c8;font-size:12px;white-space:nowrap;">${cell}</td>`
+            ).join('')}</tr>`
+          ).join('')
+          return `<div style="pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:4px;"><div>${htmlLabel}</div><table style="border-collapse:collapse;"><thead><tr>${headerCellHtml}</tr></thead><tbody>${rowsHtml}</tbody></table></div>`
+
+        } else {
+          return `<div style="pointer-events: none; max-width: 320px;">${htmlLabel}</div>`
+        }
       }
     },
     {
@@ -45,6 +60,11 @@ export const getStyleSheet = (): cytoscape.CytoscapeOptions['style'] => {
   if (!canvasContext) return []
   const estimateTextWidth = (text: string) => {
     canvasContext.font = '16px Noto Sans JP'
+    return canvasContext.measureText(text).width
+  }
+
+  const estimateTableCellWidth = (text: string) => {
+    canvasContext.font = '12px Noto Sans JP'
     return canvasContext.measureText(text).width
   }
 
@@ -93,15 +113,39 @@ export const getStyleSheet = (): cytoscape.CytoscapeOptions['style'] => {
     css: {
       'shape': 'rectangle',
       'width': (node: cytoscape.NodeSingular) => {
-        const maxTextLength = estimateTextWidth(node.data('label') as string)
-        return Math.min(320, Math.max(32, maxTextLength + 8))
+        const labelWidth = estimateTextWidth((node.data('label') as string) || '')
+        const table = node.data('table') as GraphView2Node["table"] | undefined
+        if (table) {
+          const CELL_H_PADDING = 12 // padding: 2px 6px → 6px × 2 = 12px
+          const colCount = Math.max(table.headers.length, ...table.rows.map(r => r.length), 0)
+          let tableWidth = 0
+          for (let col = 0; col < colCount; col++) {
+            const cellTexts = [table.headers[col] ?? '', ...table.rows.map(row => row[col] ?? '')]
+            const maxCellWidth = Math.max(...cellTexts.map(t => estimateTableCellWidth(t)))
+            tableWidth += maxCellWidth + CELL_H_PADDING
+          }
+          return Math.min(600, Math.max(32, Math.max(labelWidth + 8, tableWidth + 2)))
+
+        } else {
+          return Math.min(320, Math.max(32, labelWidth + 8))
+        }
       },
       'height': (node: cytoscape.NodeSingular) => {
-        // max-widthを考慮してテキストの実際の行数を計算
         const label = (node.data('label') as string) || ''
-        const lines = calculateTextLines(label, 320) // HTMLラベルのmax-widthと同じ値
-        const lineHeight = 16 * 1.2 // フォントサイズ16px × line-height 1.2
-        return Math.max(32, lines * lineHeight + 8) // 最小32px、上下パディング8px
+        const table = node.data('table') as GraphView2Node["table"] | undefined
+        if (table) {
+          const LINE_HEIGHT = 16 * 1.2
+          const labelHeight = LINE_HEIGHT // テーブル付きノードのラベルは1行と仮定
+          const TABLE_ROW_HEIGHT = 22 // 12pxフォント + 上下パディング4px + ボーダー2px + 行間
+          const tableHeight = TABLE_ROW_HEIGHT * (1 + table.rows.length)
+          return Math.max(32, labelHeight + 4 + tableHeight + 8) // 4px gap + 8px上下パディング
+
+        } else {
+          // max-widthを考慮してテキストの実際の行数を計算
+          const lines = calculateTextLines(label, 320) // HTMLラベルのmax-widthと同じ値
+          const lineHeight = 16 * 1.2 // フォントサイズ16px × line-height 1.2
+          return Math.max(32, lines * lineHeight + 8) // 最小32px、上下パディング8px
+        }
       },
       'color': (node: cytoscape.NodeSingular) => (node.data('color') as string) ?? '#000000',
       'border-width': '1px',

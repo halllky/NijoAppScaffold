@@ -32,7 +32,15 @@ export default function GraphView2Debugging() {
     },
     { id: '4', label: 'Parent Node', 'color:container': '#e0e0e0' },
     { id: '5', label: 'Child 1', parent: '4' },
-    { id: '6', label: 'Child 2', parent: '4' },
+    {
+      id: '6',
+      label: 'Child 2',
+      parent: '4',
+      table: {
+        headers: ['Name', 'Value'],
+        rows: [['A', '10'], ['B', '20'], ['C', '30']],
+      },
+    },
   ])
 
   const [edges, setEdges] = useState<GraphView2.Edge[]>([
