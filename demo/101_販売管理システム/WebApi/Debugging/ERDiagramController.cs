@@ -132,7 +132,7 @@ public class ERDiagramController : ControllerBase {
     }
 
     private static string GetSaveFilePath(IWebHostEnvironment env) {
-        return Path.Combine(env.ContentRootPath, nameof(Debugging), SAVE_FILE_NAME);
+        return Path.Combine(env.ContentRootPath, SAVE_FILE_NAME);
     }
 
     private class ERDiagramResponse {
