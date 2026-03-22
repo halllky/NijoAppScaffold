@@ -11,6 +11,7 @@ import P101 from "./pages/P101_売上詳細"
 import P201 from "./pages/P201_入荷詳細"
 import P301 from "./pages/P301_商品詳細"
 import UIComponentCatalog from "./debug-rooms/UIコンポーネントカタログ"
+import ER図 from "./debug-rooms/ER図"
 import { P001_ログイン } from "./pages/P001_ログイン"
 import { LoginUserProvider } from "./util/useLoginLogout"
 import { ErrorPage } from "./layout/ErrorPage"
@@ -42,6 +43,7 @@ export const router = createBrowserRouter([
       // デバッグ用画面（開発環境でのみ表示）
       ...(!import.meta.env.DEV ? [] : [
         UIComponentCatalog,
+        ER図,
       ]),
     ],
     // loader などでエラーが発生した場合に表示するエラーページ

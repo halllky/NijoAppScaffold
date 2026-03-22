@@ -1,6 +1,9 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace MyApp.WebApi.Debugging;
@@ -9,15 +12,42 @@ namespace MyApp.WebApi.Debugging;
 [Route("/debug/er-diagram")]
 public class ERDiagramController : ControllerBase {
 
+    private const string SAVE_FILE_NAME = "ERDiagram.layout.json";
+
     [HttpGet]
-    public IActionResult GetERDiagram([FromServices] OverridedApplicationService app) {
-        var model = app.DbContext.Model;
+    public IActionResult GetERDiagram([FromServices] OverridedApplicationService app, [FromServices] IWebHostEnvironment env) {
+        var model = app.DbContext.GetService<IDesignTimeModel>().Model;
         var entityTypes = model.GetEntityTypes().ToList();
 
         return Ok(new ERDiagramResponse {
             LogicalNameDataSet = BuildDataSet(entityTypes, useLogicalName: true),
             PhysicalNameDataSet = BuildDataSet(entityTypes, useLogicalName: false),
+            SavedState = LoadSavedState(env),
         });
+    }
+
+    [HttpPost("layout")]
+    public async Task<IActionResult> SaveLayout([FromBody] ERDiagramSavedState request, [FromServices] IWebHostEnvironment env) {
+        if (!env.IsDevelopment()) {
+            return Forbid();
+        }
+
+        var saveFilePath = GetSaveFilePath(env);
+        var directoryPath = Path.GetDirectoryName(saveFilePath);
+        if (directoryPath == null) {
+            return Problem("保存先ディレクトリを解決できませんでした。", statusCode: StatusCodes.Status500InternalServerError);
+        }
+
+        Directory.CreateDirectory(directoryPath);
+
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web) {
+            WriteIndented = true,
+        };
+
+        await using var stream = System.IO.File.Create(saveFilePath);
+        await JsonSerializer.SerializeAsync(stream, request, options);
+
+        return Ok();
     }
 
     private static GraphView2DataSet BuildDataSet(IReadOnlyList<IReadOnlyEntityType> entityTypes, bool useLogicalName) {
@@ -51,7 +81,7 @@ public class ERDiagramController : ControllerBase {
                 .OrderBy(p => p.GetColumnOrder() ?? int.MaxValue)
                 .Select(p => new[] {
                     useLogicalName ? p.Name : (p.GetColumnName() ?? p.Name),
-                    GetTypeDisplay(p),
+                    GetStoreTypeDisplay(p),
                     pkProps.Contains(p) ? "○" : "",
                     p.IsNullable ? "" : "○",
                     uniqueIndexProps.Contains(p) ? "○" : "",
@@ -77,51 +107,77 @@ public class ERDiagramController : ControllerBase {
         return new GraphView2DataSet { Nodes = nodes, Edges = edges };
     }
 
-    private static string GetTypeDisplay(IReadOnlyProperty property) {
-        var clrType = property.ClrType;
-        var underlyingType = Nullable.GetUnderlyingType(clrType) ?? clrType;
-        var maxLength = property.GetMaxLength();
-        var precision = property.GetPrecision();
-        var scale = property.GetScale();
+    private static string GetStoreTypeDisplay(IReadOnlyProperty property) {
+        var storeObject = StoreObjectIdentifier.Create(property.DeclaringType, StoreObjectType.Table)
+            ?? StoreObjectIdentifier.Create(property.DeclaringType, StoreObjectType.View);
 
-        return underlyingType.Name switch {
-            "String" => maxLength.HasValue ? $"string({maxLength})" : "string",
-            "Int32" => "int",
-            "Int64" => "long",
-            "Int16" => "short",
-            "Byte" => "byte",
-            "Decimal" => precision.HasValue && scale.HasValue ? $"decimal({precision},{scale})"
-                                : precision.HasValue ? $"decimal({precision})" : "decimal",
-            "Double" => "double",
-            "Single" => "float",
-            "DateTime" => "datetime",
-            "DateTimeOffset" => "datetimeoffset",
-            "DateOnly" => "date",
-            "TimeOnly" => "time",
-            "Boolean" => "bool",
-            "Byte[]" => maxLength.HasValue ? $"binary({maxLength})" : "binary",
-            "Guid" => "guid",
-            _ => underlyingType.Name,
-        };
+        var storeType = storeObject.HasValue
+            ? property.GetColumnType(storeObject.Value)
+            : property.GetColumnType();
+
+        return storeType
+            ?? property.GetRelationalTypeMapping().StoreType;
+    }
+
+    private static ERDiagramSavedState? LoadSavedState(IWebHostEnvironment env) {
+        var saveFilePath = GetSaveFilePath(env);
+        if (!System.IO.File.Exists(saveFilePath)) return null;
+
+        try {
+            var json = System.IO.File.ReadAllText(saveFilePath);
+            return JsonSerializer.Deserialize<ERDiagramSavedState>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        } catch {
+            return null;
+        }
+    }
+
+    private static string GetSaveFilePath(IWebHostEnvironment env) {
+        return Path.Combine(env.ContentRootPath, nameof(Debugging), SAVE_FILE_NAME);
     }
 
     private class ERDiagramResponse {
         public GraphView2DataSet LogicalNameDataSet { get; set; } = new();
         public GraphView2DataSet PhysicalNameDataSet { get; set; } = new();
+        public ERDiagramSavedState? SavedState { get; set; }
     }
 
-    private class GraphView2DataSet {
+    public class ERDiagramSavedState {
+        [JsonPropertyName("logicalName")]
+        public GraphView2SavedDataSet? LogicalName { get; set; }
+        [JsonPropertyName("physicalName")]
+        public GraphView2SavedDataSet? PhysicalName { get; set; }
+        [JsonPropertyName("selectedDataSetKey")]
+        public string? SelectedDataSetKey { get; set; }
+    }
+
+    public class GraphView2DataSet {
         [JsonPropertyName("nodes")]
         public List<GraphView2Node> Nodes { get; set; } = [];
         [JsonPropertyName("edges")]
         public List<GraphView2Edge> Edges { get; set; } = [];
     }
 
+    public class GraphView2SavedDataSet : GraphView2DataSet {
+        [JsonPropertyName("nodePositions")]
+        public Dictionary<string, NodePosition> NodePositions { get; set; } = [];
+        [JsonPropertyName("defaultPan")]
+        public NodePosition? DefaultPan { get; set; }
+        [JsonPropertyName("defaultZoom")]
+        public double? DefaultZoom { get; set; }
+    }
+
+    public class NodePosition {
+        [JsonPropertyName("x")]
+        public double X { get; set; }
+        [JsonPropertyName("y")]
+        public double Y { get; set; }
+    }
+
     /// <summary>
     /// GraphView2 コンポーネントで使用するノードのデータ構造。
     /// ER図で言うとテーブルまたはビュー1個分。
     /// </summary>
-    private class GraphView2Node {
+    public class GraphView2Node {
         [JsonPropertyName("id")]
         public string Id { get; set; } = default!;
         [JsonPropertyName("label")]
@@ -133,7 +189,7 @@ public class ERDiagramController : ControllerBase {
     /// GraphView2 コンポーネントで使用するテーブルデータの構造。
     /// ER図で言うとテーブルのカラム名、NOT NULL などの情報。
     /// </summary>
-    private class TableData {
+    public class TableData {
         [JsonPropertyName("headers")]
         public string[] Headers { get; set; } = default!;
         [JsonPropertyName("rows")]
@@ -143,7 +199,7 @@ public class ERDiagramController : ControllerBase {
     /// GraphView2 コンポーネントで使用するエッジのデータ構造。
     /// ER図で言うとテーブル同士のリレーションシップ（外部キー制約など）を表す。
     /// </summary>
-    private class GraphView2Edge {
+    public class GraphView2Edge {
         [JsonPropertyName("label")]
         public string? Label { get; set; }
         [JsonPropertyName("source")]
