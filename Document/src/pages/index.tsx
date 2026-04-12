@@ -242,13 +242,12 @@ function Home(): ReactNode {
           </div>
 
           <div className={styles.bottomCallout}>
-            <Heading as="h3">先へ読み進める入口</Heading>
+            <Heading as="h3">次のドキュメント</Heading>
             <p>
-              詳細ドキュメントでは、開発工程との統合、自動生成と個別実装の境界、
-              nijo.xml を設計ドキュメントとしてどこまで正とみなせるか、アーキテクチャと開発ワークフローを順に説明します。
+              プロジェクト管理者、アーキテクト、プログラマそれぞれに向けた説明へ進みます。
             </p>
             <Link className="button button--primary button--lg" to="/docs/intro">
-              はじめにから読む
+              次へ
             </Link>
           </div>
         </section>
