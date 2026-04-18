@@ -10,7 +10,6 @@ partial class OverridedApplicationService {
             備考 = x.備考,
             合計金額 = x.売上の売上明細!.Sum(d => d.売上総額_税込),
             売上数量合計 = x.売上の売上明細!.Sum(d => d.売上数量),
-            Version = x.Version!.Value,
         });
     }
 }

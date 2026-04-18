@@ -15,7 +15,6 @@ partial class OverridedApplicationService {
                 事由 = "入荷",
                 入荷ID = e.入荷_入荷ID,
                 売上SEQ = (int?)null,
-                Version = e.Version ?? 0,
             });
 
         // 在庫調整による在庫増
@@ -33,7 +32,6 @@ partial class OverridedApplicationService {
                     事由 = "在庫調整（増）",
                     入荷ID = e.入荷_入荷ID,
                     売上SEQ = (int?)null,
-                    Version = e.Version ?? 0,
                 });
 
         // 売上による在庫減
@@ -47,7 +45,6 @@ partial class OverridedApplicationService {
                 事由 = "売上",
                 入荷ID = e.入荷!.入荷_入荷ID,
                 売上SEQ = e.Parent!.Parent!.売上SEQ,
-                Version = 0,
             });
 
         // 在庫調整による在庫減
@@ -61,7 +58,6 @@ partial class OverridedApplicationService {
                 事由 = "在庫調整（減）",
                 入荷ID = e.入荷明細!.入荷_入荷ID,
                 売上SEQ = (int?)null,
-                Version = e.Parent!.Version ?? 0,
             });
 
         return increaseByReceives
@@ -79,7 +75,6 @@ partial class OverridedApplicationService {
                 増減履歴引当元売上一覧 = x.売上SEQ.HasValue
                     ? new List<増減履歴引当元売上一覧SearchResult> { new() { 売上SEQ = x.売上SEQ.Value } }
                     : new List<増減履歴引当元売上一覧SearchResult>(),
-                Version = x.Version,
             });
     }
 }

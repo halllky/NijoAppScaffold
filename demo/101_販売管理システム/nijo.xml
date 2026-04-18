@@ -305,6 +305,10 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       <システム管理者
         Type="bool"
         UniqueId="e722013b-ba56-4663-9f13-7e85e5c5f44f" />
+      <!--楽観排他制御用-->
+      <Version
+        Type="int"
+        UniqueId="8d4bc54f-4621-426d-bbd1-82624c07dc62" />
     </従業員マスタ>
     <従業員一括更新Parameter
       Type="structure-model"

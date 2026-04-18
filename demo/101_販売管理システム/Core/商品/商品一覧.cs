@@ -12,7 +12,6 @@ partial class OverridedApplicationService {
             売値単価_税抜 = e.売値単価_税抜,
             消費税区分 = e.消費税区分,
             在庫数 = e.RefFrom入荷明細_商品.Sum(x => x.残数量),
-            Version = e.Version!.Value,
         });
     }
 }

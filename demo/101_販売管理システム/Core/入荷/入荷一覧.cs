@@ -11,7 +11,6 @@ partial class OverridedApplicationService {
             備考 = e.備考,
             入荷数量合計 = e.RefFrom入荷明細_入荷!.Sum(d => d.入荷数量),
             明細件数 = e.RefFrom入荷明細_入荷!.Count(),
-            Version = e.Version!.Value,
         });
     }
 }

@@ -67,10 +67,11 @@ namespace Nijo.Models.QueryModelModules {
         internal const string VERSION = "Version";
 
         /// <summary>
-        /// 楽観排他用のバージョンを持つかどうか。
-        /// ビューの場合はスキーマ定義で定義された属性がすべてのため暗黙的なバージョニング列は持たない
+        /// 楽観排他用のバージョンを持つかどうか
         /// </summary>
-        public bool HasVersionColumn => !Aggregate.GetRoot().IsView && Aggregate is RootAggregate;
+        public bool HasVersionColumn => Aggregate is RootAggregate rootAggregate
+                                     && rootAggregate.Model is DataModel
+                                     && rootAggregate.GenerateDefaultQueryModel;
         public bool HasTimestampColumns => false;
 
         public string CsClassName => $"{Aggregate.PhysicalName}SearchResult";

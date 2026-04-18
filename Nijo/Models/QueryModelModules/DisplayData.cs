@@ -23,7 +23,9 @@ namespace Nijo.Models.QueryModelModules {
         internal override string TsTypeName => $"{Aggregate.PhysicalName}DisplayData";
 
         /// <summary>楽観排他制御用のバージョンを持つかどうか</summary>
-        internal override bool HasVersion => Aggregate is RootAggregate;
+        internal override bool HasVersion => Aggregate is RootAggregate rootAggregate
+                                          && rootAggregate.Model is DataModel
+                                          && rootAggregate.GenerateDefaultQueryModel;
 
 
         #region レンダリング

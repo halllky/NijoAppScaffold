@@ -427,10 +427,6 @@ namespace Nijo.Models.QueryModelModules {
             // CreateQuerySource で GROUP BY したクエリを onlyExistsInDisplayData で変換できないことがあったのでいったんオフ
             const bool FILTER_ONLY_DISPLAY_MEMBERS = false;
 
-            var versionValue = _rootAggregate.IsView
-                ? "null"
-                : $"searchResult.{SearchResult.VERSION}";
-
             return $$"""
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}}の検索結果型を画面表示用の型に変換する式を返します。
@@ -442,7 +438,9 @@ namespace Nijo.Models.QueryModelModules {
                     // クエリの項目のうち画面表示用データに含まれるもののみを抽出
                     var onlyExistsInDisplayData = query.Select({{right.Name}} => new {
                         {{WithIndent(RenderBodyOfOnlyExistsInDisplayData(searchResult, right, ctx), "        ")}}
+                {{If(displayData.HasVersion, () => $$"""
                         {{right.Name}}.{{SearchResult.VERSION}},
+                """)}}
                     });
 
                     // ここでSQLを発行
@@ -464,7 +462,9 @@ namespace Nijo.Models.QueryModelModules {
                         {{DisplayData.EXISTS_IN_DB_CS}} = true,
                         {{DisplayData.WILL_BE_CHANGED_CS}} = false,
                         {{DisplayData.WILL_BE_DELETED_CS}} = false,
-                        {{DisplayData.VERSION_CS}} = {{versionValue}},
+                {{If(displayData.HasVersion, () => $$"""
+                        {{DisplayData.VERSION_CS}} = searchResult.{{SearchResult.VERSION}},
+                """)}}
                     }).ToArray();
 
                     return displayDataList;
