@@ -13,32 +13,32 @@ partial class OverridedApplicationService {
 
         // 入力チェック: 商品
         // ※ 自動生成されたコードでもチェックされるが、商品のキーがないとこのあとの処理が成り立たないので先にチェックする。
-        if (param.Values.商品.商品SEQ == null) {
+        if (param.商品.商品SEQ == null) {
             context.Messages.商品.AddError("商品を選択してください。");
             return;
         }
 
         // 入力チェック: 増減数・絶対数
         // ※ 「どちらか片方のみ」というのは自動生成されたコードでは表現できないので、ここでチェックする。
-        if (param.Values.増減数 == null && param.Values.絶対数 == null) {
+        if (param.増減数 == null && param.絶対数 == null) {
             context.Messages.AddError("増減数または絶対数のいずれかを指定してください。");
             return;
         }
-        if (param.Values.増減数 != null && param.Values.絶対数 != null) {
+        if (param.増減数 != null && param.絶対数 != null) {
             context.Messages.AddError("増減数と絶対数の両方を指定することはできません。");
             return;
         }
 
         // 増減数の計算
         int delta;
-        if (param.Values.増減数 != null) {
-            delta = param.Values.増減数.Value;
+        if (param.増減数 != null) {
+            delta = param.増減数.Value;
         } else {
             // 現在の在庫数を計算
             var currentInventory = await DbContext.入荷明細DbSet
-                .Where(x => x.商品_商品SEQ == param.Values.商品.商品SEQ)
+                .Where(x => x.商品_商品SEQ == param.商品.商品SEQ)
                 .SumAsync(x => x.残数量);
-            delta = param.Values.絶対数!.Value - currentInventory!.Value;
+            delta = param.絶対数!.Value - currentInventory!.Value;
         }
 
         if (delta == 0) {
@@ -55,7 +55,7 @@ partial class OverridedApplicationService {
             // 入荷日時は登録漏れや過去日の登録により順序が狂うことがあるため、システム登録日時 CreatedAt を使用する。
             var sortedStocks = await DbContext.入荷明細DbSet
                 .Include(x => x.入荷)
-                .Where(x => x.商品_商品SEQ == param.Values.商品.商品SEQ && x.残数量 > 0)
+                .Where(x => x.商品_商品SEQ == param.商品.商品SEQ && x.残数量 > 0)
                 .OrderBy(x => x.CreatedAt)
                 .ToListAsync();
 
@@ -98,10 +98,10 @@ partial class OverridedApplicationService {
                 在庫調整ID = adjustmentId,
                 在庫調整日時 = CurrentTime,
                 担当者 = new() { 従業員番号 = LoginUser.従業員番号 },
-                商品 = new() { 商品SEQ = param.Values.商品.商品SEQ },
-                増減数 = param.Values.増減数,
-                絶対数 = param.Values.絶対数,
-                在庫調整理由 = param.Values.在庫調整理由,
+                商品 = new() { 商品SEQ = param.商品.商品SEQ },
+                増減数 = param.増減数,
+                絶対数 = param.絶対数,
+                在庫調整理由 = param.在庫調整理由,
                 在庫調整引当明細 = adjustmentDetails,
             }, context);
 
@@ -118,12 +118,12 @@ partial class OverridedApplicationService {
                     入荷明細ID = Guid.NewGuid().ToString(),
                     入荷 = null,
                     在庫調整 = adjustmentId,
-                    商品 = new() { 商品SEQ = param.Values.商品.商品SEQ },
+                    商品 = new() { 商品SEQ = param.商品.商品SEQ },
                     仕入単価_税抜 = 0, // 在庫調整のため0とする
                     消費税区分 = 消費税区分.非課税,
                     入荷数量 = delta,
                     残数量 = delta,
-                    備考 = $"在庫調整（増加）: {param.Values.在庫調整理由}",
+                    備考 = $"在庫調整（増加）: {param.在庫調整理由}",
                 }, context);
 
                 if (newStockResult.Result != DataModelSaveResultType.Completed) {

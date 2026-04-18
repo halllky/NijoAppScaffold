@@ -17,9 +17,9 @@ partial class OverridedApplicationService {
         var newId = $"{CurrentTime:yyyyMMdd}-{Guid.NewGuid().GetHashCode():X8}";
         var headerResult = await Create入荷Async(new() {
             入荷ID = newId,
-            入荷日時 = param.Values.入荷日時,
-            担当者 = new() { 従業員番号 = param.Values.担当者.従業員番号 },
-            備考 = param.Values.備考,
+            入荷日時 = param.入荷日時,
+            担当者 = new() { 従業員番号 = param.担当者.従業員番号 },
+            備考 = param.備考,
         }, context);
 
         // 明細は1件以上必須
@@ -38,12 +38,12 @@ partial class OverridedApplicationService {
                 入荷明細ID = Guid.NewGuid().ToString(),
                 入荷 = new() { 入荷ID = newId },
                 在庫調整 = null,
-                商品 = new() { 商品SEQ = item.Values.商品.商品SEQ },
-                仕入単価_税抜 = item.Values.仕入単価_税抜,
-                消費税区分 = item.Values.消費税区分,
-                入荷数量 = item.Values.数量,
-                残数量 = item.Values.数量, // 入荷時は残数量＝入荷数量
-                備考 = item.Values.備考,
+                商品 = new() { 商品SEQ = item.商品.商品SEQ },
+                仕入単価_税抜 = item.仕入単価_税抜,
+                消費税区分 = item.消費税区分,
+                入荷数量 = item.数量,
+                残数量 = item.数量, // 入荷時は残数量＝入荷数量
+                備考 = item.備考,
             }, context, message);
 
             if (detailResult.Result != DataModelSaveResultType.Completed) {
@@ -54,7 +54,7 @@ partial class OverridedApplicationService {
         // すべてのヘッダ・明細の登録が成功したらコミット
         if (!context.ValidationOnly && headerResult.Result == DataModelSaveResultType.Completed && !hasErrorInDetail) {
             await tran.CommitAsync();
-            context.ReturnValue.Values.入荷ID = newId;
+            context.ReturnValue.入荷ID = newId;
             context.Messages.AddInfo("入荷登録が完了しました。");
         }
     }

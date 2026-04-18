@@ -8,18 +8,18 @@ namespace MyApp;
 partial class OverridedApplicationService {
     public override async Task ExecuteログインAsync(ログインParameterDisplayData param, IPresentationContextWithReturnValue<ログインユーザー情報DisplayData, ログインParameterMessages> context) {
         // 入力チェック
-        if (string.IsNullOrWhiteSpace(param.Values.従業員番号)) {
+        if (string.IsNullOrWhiteSpace(param.従業員番号)) {
             context.Messages.従業員番号.AddError("従業員番号を入力してください。");
             return;
         }
-        if (string.IsNullOrWhiteSpace(param.Values.パスワード)) {
+        if (string.IsNullOrWhiteSpace(param.パスワード)) {
             context.Messages.パスワード.AddError("パスワードを入力してください。");
             return;
         }
 
         // 従業員検索
         var employee = await DbContext.従業員DbSet
-            .SingleOrDefaultAsync(e => e.従業員番号 == param.Values.従業員番号);
+            .SingleOrDefaultAsync(e => e.従業員番号 == param.従業員番号);
 
         if (employee == null) {
             context.Messages.AddError("従業員番号またはパスワードが間違っています。");
@@ -32,7 +32,7 @@ partial class OverridedApplicationService {
             return;
         }
 
-        var computedHash = ComputeHash(param.Values.パスワード, employee.SALT);
+        var computedHash = ComputeHash(param.パスワード, employee.SALT);
 
         if (!computedHash.SequenceEqual(employee.パスワード)) {
             context.Messages.AddError("従業員番号またはパスワードが間違っています。");
@@ -60,13 +60,11 @@ partial class OverridedApplicationService {
 
         // JavaScriptで使うログインユーザー情報
         context.ReturnValue = new() {
-            Values = new() {
-                従業員番号 = employee.従業員番号,
-                氏名 = employee.氏名,
-                入荷機能を利用可能 = employee.入荷担当 == true || employee.システム管理者 == true,
-                販売機能を利用可能 = employee.販売担当 == true || employee.システム管理者 == true,
-                システム管理者 = employee.システム管理者 == true,
-            },
+            従業員番号 = employee.従業員番号,
+            氏名 = employee.氏名,
+            入荷機能を利用可能 = employee.入荷担当 == true || employee.システム管理者 == true,
+            販売機能を利用可能 = employee.販売担当 == true || employee.システム管理者 == true,
+            システム管理者 = employee.システム管理者 == true,
         };
 
         await tran.CommitAsync();

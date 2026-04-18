@@ -10,7 +10,7 @@ partial class OverridedApplicationService {
             return;
         }
 
-        var id = param.Values.入荷ID;
+        var id = param.入荷ID;
         if (string.IsNullOrEmpty(id)) {
             context.Messages.AddError("入荷IDが指定されていません。");
             return;
@@ -20,10 +20,10 @@ partial class OverridedApplicationService {
         await using var tran = await BeginTransactionAsync();
 
         // ヘッダ更新
-        var updateHeaderResult = await Update入荷Async(param.Values.入荷ID, param.Values.Version, header => {
-            header.入荷日時 = param.Values.入荷日時;
-            header.担当者 = new() { 従業員番号 = param.Values.担当者.従業員番号 };
-            header.備考 = param.Values.備考;
+        var updateHeaderResult = await Update入荷Async(param.入荷ID, param.Version, header => {
+            header.入荷日時 = param.入荷日時;
+            header.担当者 = new() { 従業員番号 = param.担当者.従業員番号 };
+            header.備考 = param.備考;
         }, context);
 
         if (updateHeaderResult.Result == DataModelSaveResultType.Error) return;
@@ -40,7 +40,7 @@ partial class OverridedApplicationService {
         for (var i = 0; i < param.入荷商品一覧.Count; i++) {
             var inputItem = param.入荷商品一覧[i];
             var message = context.Messages.入荷商品一覧[i];
-            var inputId = inputItem.Values.入荷明細ID;
+            var inputId = inputItem.入荷明細ID;
 
             if (inputItem.ExistsInDatabase) {
                 // 更新
@@ -52,7 +52,7 @@ partial class OverridedApplicationService {
                 processedIds.Add(inputId);
 
                 // 商品変更チェック
-                if (existingItem.商品?.商品SEQ != inputItem.Values.商品.商品SEQ) {
+                if (existingItem.商品?.商品SEQ != inputItem.商品.商品SEQ) {
                     if (existingItem.残数量 != existingItem.入荷数量) {
                         message.商品.AddError("既に出荷引当が行われているため、商品は変更できません。");
                     }
@@ -60,7 +60,7 @@ partial class OverridedApplicationService {
 
                 // 数量変更チェック
                 var usedQuantity = existingItem.入荷数量 - existingItem.残数量;
-                var newQuantity = inputItem.Values.数量;
+                var newQuantity = inputItem.数量;
                 if (newQuantity < usedQuantity) {
                     message.数量.AddError($"入荷数量を既に使用されている数量({usedQuantity})未満にすることはできません。");
                 }
@@ -68,13 +68,13 @@ partial class OverridedApplicationService {
                 if (message.HasError()) continue;
 
                 // 更新実行
-                await Update入荷明細Async(inputId, inputItem.Values.Version, detail => {
-                    detail.商品 = new() { 商品SEQ = inputItem.Values.商品.商品SEQ };
-                    detail.仕入単価_税抜 = inputItem.Values.仕入単価_税抜;
-                    detail.消費税区分 = inputItem.Values.消費税区分;
+                await Update入荷明細Async(inputId, inputItem.Version, detail => {
+                    detail.商品 = new() { 商品SEQ = inputItem.商品.商品SEQ };
+                    detail.仕入単価_税抜 = inputItem.仕入単価_税抜;
+                    detail.消費税区分 = inputItem.消費税区分;
                     detail.入荷数量 = newQuantity;
                     detail.残数量 = newQuantity - usedQuantity;
-                    detail.備考 = inputItem.Values.備考;
+                    detail.備考 = inputItem.備考;
                 }, context, message);
 
             } else {
@@ -83,12 +83,12 @@ partial class OverridedApplicationService {
                     入荷明細ID = Guid.NewGuid().ToString(),
                     入荷 = new() { 入荷ID = id },
                     在庫調整 = null,
-                    商品 = new() { 商品SEQ = inputItem.Values.商品.商品SEQ },
-                    仕入単価_税抜 = inputItem.Values.仕入単価_税抜,
-                    消費税区分 = inputItem.Values.消費税区分,
-                    入荷数量 = inputItem.Values.数量,
-                    残数量 = inputItem.Values.数量,
-                    備考 = inputItem.Values.備考,
+                    商品 = new() { 商品SEQ = inputItem.商品.商品SEQ },
+                    仕入単価_税抜 = inputItem.仕入単価_税抜,
+                    消費税区分 = inputItem.消費税区分,
+                    入荷数量 = inputItem.数量,
+                    残数量 = inputItem.数量,
+                    備考 = inputItem.備考,
                 }, context, message);
             }
         }

@@ -15,11 +15,6 @@ namespace Nijo.Parts.Common;
 /// </summary>
 internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetadata, ICreatablePresentationLayerStructure {
 
-    /// <summary>値が格納されるプロパティの名前（C#）</summary>
-    internal const string VALUES_CS = "Values";
-    /// <summary>値が格納されるプロパティの名前（TypeScript）</summary>
-    internal const string VALUES_TS = "values";
-
     /// <summary>このデータがDBに保存済みかどうか（C#）。つまり新規作成のときはfalse, 閲覧・更新・削除のときはtrue</summary>
     internal const string EXISTS_IN_DB_CS = "ExistsInDatabase";
     /// <summary>このデータがDBに保存済みかどうか（TypeScript）。つまり新規作成のときはfalse, 閲覧・更新・削除のときはtrue</summary>
@@ -57,8 +52,6 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
     /// <summary>C#クラス名</summary>
     internal abstract string CsClassName { get; }
     string IPresentationLayerStructure.CsClassName => CsClassName;
-    /// <summary>C#クラス名（values）</summary>
-    internal string CsValuesClassName => $"{CsClassName}Values";
     /// <summary>TypeScript型名</summary>
     internal abstract string TsTypeName { get; }
     string IPresentationLayerStructure.TsTypeName => TsTypeName;
@@ -68,12 +61,6 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
 
     /// <summary>C#側に追加のメソッドをレンダリングする場合は指定</summary>
     protected virtual string RenderAdditionalMethodToCSharp() => string.Empty;
-
-    /// <summary>
-    /// 子孫要素でなく自身のメンバーはこのオブジェクトの中に列挙される
-    /// </summary>
-    internal ValuesContainer Values => _values ??= new ValuesContainer(this);
-    private ValuesContainer? _values;
 
     /// <summary>
     /// 子要素を列挙する。
@@ -94,10 +81,24 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         return ((IInstancePropertyOwnerMetadata)this).GetMembers();
     }
     IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() {
-        yield return Values;
+        foreach (var valueMember in GetValueMembers()) {
+            yield return valueMember;
+        }
 
         foreach (var childMember in GetChildMembers()) {
             yield return (IInstancePropertyMetadata)childMember;
+        }
+    }
+
+    internal IEnumerable<IEditablePresentationObjectValueOrRefMember> GetValueMembers() {
+        foreach (var member in Aggregate.GetMembers()) {
+            if (member is ValueMember vm && !vm.OnlySearchCondition) {
+                yield return new EditablePresentationObjectValueMember(vm);
+
+            } else if (member is RefToMember refTo) {
+                yield return new EditablePresentationObjectRefMember(refTo);
+
+            }
         }
     }
 
@@ -118,9 +119,9 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
                 [JsonPropertyName("{{INSTANCE_ID_TS}}")]
                 public string {{INSTANCE_ID_CS}} { get; set; } = Guid.NewGuid().ToString();
 
-                /// <summary>{{Aggregate.DisplayName}}自身が持つ値</summary>
-                [JsonPropertyName("{{VALUES_TS}}")]
-                public {{CsValuesClassName}} {{VALUES_CS}} { get; set; } = new();
+            {{GetValueMembers().SelectTextTemplate(m => $$"""
+                {{WithIndent(m.RenderCsDeclaration(ctx), "    ")}}
+            """)}}
             {{GetChildMembers().SelectTextTemplate(c => $$"""
                 [JsonPropertyName("{{c.PhysicalName}}")]
                 public {{WithIndent(c.CsClassNameAsMember, "    ")}} {{c.PhysicalName}} { get; set; } = new();
@@ -142,15 +143,6 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
             """)}}
                 {{WithIndent(RenderAdditionalMethodToCSharp(), "    ")}}
             }
-
-            /// <summary>
-            /// <see cref="{{CsClassName}}/> の{{VALUES_CS}}の型
-            /// </summary>
-            public partial class {{CsValuesClassName}} {
-            {{Values.GetMembers().SelectTextTemplate(m => $$"""
-                {{WithIndent(m.RenderCsDeclaration(ctx), "    ")}}
-            """)}}
-            }
             """;
     }
 
@@ -164,12 +156,9 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
                * エラーメッセージとの紐づけなどに使用できないため、そういった用途に使用する。
                */
               {{INSTANCE_ID_TS}}: string
-              /** 値 */
-              {{VALUES_TS}}: {
-            {{Values.GetMembers().SelectTextTemplate(m => $$"""
-                {{WithIndent(m.RenderTsDeclaration(), "    ")}}
+            {{GetValueMembers().SelectTextTemplate(m => $$"""
+              {{WithIndent(m.RenderTsDeclaration(), "  ")}}
             """)}}
-              }
             {{GetChildMembers().SelectTextTemplate(member => $$"""
               /** {{member.DisplayName}} */
               {{member.PhysicalName}}: {{member.TsTypeNameAsMember}}
@@ -191,50 +180,20 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
     #endregion レンダリング
 
 
-    #region Values
+    #region ValueMember or RefTo
     /// <summary>
-    /// Valuesオブジェクトそのもの
+    /// ValueMember or RefTo
     /// </summary>
-    internal class ValuesContainer : IInstanceStructurePropertyMetadata {
-        public ValuesContainer(EditablePresentationObject owner) {
-            _owner = owner;
-        }
-        private readonly EditablePresentationObject _owner;
-
-        ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => ISchemaPathNode.Empty;
-        string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => csts == E_CsTs.CSharp ? VALUES_CS : VALUES_TS;
-        bool IInstanceStructurePropertyMetadata.IsArray => false;
-        string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp
-            ? _owner.CsValuesClassName
-            : throw new InvalidOperationException("この分岐にくることは無いはず");
-
-        IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => GetMembers();
-
-        internal IEnumerable<IEditablePresentationObjectMemberInValues> GetMembers() {
-            foreach (var member in _owner.Aggregate.GetMembers()) {
-                if (member is ValueMember vm && !vm.OnlySearchCondition) {
-                    yield return new EditablePresentationObjectValueMember(vm);
-
-                } else if (member is RefToMember refTo) {
-                    yield return new EditablePresentationObjectRefMember(refTo);
-
-                }
-            }
-        }
-    }
-    /// <summary>
-    /// Valuesオブジェクトの中のメンバー
-    /// </summary>
-    internal interface IEditablePresentationObjectMemberInValues : IInstancePropertyMetadata {
+    internal interface IEditablePresentationObjectValueOrRefMember : IInstancePropertyMetadata {
         string RenderCsDeclaration(CodeRenderingContext ctx);
         string RenderTsDeclaration();
 
         string RenderNewObjectCreation();
     }
     /// <summary>
-    /// Valuesオブジェクトの中のValueMember
+    /// ValueMember
     /// </summary>
-    internal class EditablePresentationObjectValueMember : IEditablePresentationObjectMemberInValues, IInstanceValuePropertyMetadata {
+    internal class EditablePresentationObjectValueMember : IEditablePresentationObjectValueOrRefMember, IInstanceValuePropertyMetadata {
         internal EditablePresentationObjectValueMember(ValueMember vm) {
             Member = vm;
         }
@@ -270,9 +229,9 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         }
     }
     /// <summary>
-    /// Valuesオブジェクトの中のRefTo
+    /// RefTo
     /// </summary>
-    internal class EditablePresentationObjectRefMember : IEditablePresentationObjectMemberInValues, IInstanceStructurePropertyMetadata {
+    internal class EditablePresentationObjectRefMember : IEditablePresentationObjectValueOrRefMember, IInstanceStructurePropertyMetadata {
         internal EditablePresentationObjectRefMember(RefToMember refTo) {
             Member = refTo;
 
@@ -330,7 +289,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
             : RefEntry.TsTypeName;
         IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => RefEntry.GetMembers();
     }
-    #endregion Values
+    #endregion ValueMember or RefTo
 
 
     #region TypeScript新規オブジェクト作成関数
@@ -379,11 +338,9 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         return $$"""
             {
               {{INSTANCE_ID_TS}}: generateRandomUniqueId(),
-              {{VALUES_TS}}: {
-            {{Values.GetMembers().SelectTextTemplate(m => $$"""
-                {{m.GetPropertyName(E_CsTs.TypeScript)}}: {{m.RenderNewObjectCreation()}},
+            {{GetValueMembers().SelectTextTemplate(m => $$"""
+              {{m.GetPropertyName(E_CsTs.TypeScript)}}: {{m.RenderNewObjectCreation()}},
             """)}}
-              },
               {{EXISTS_IN_DB_TS}}: false,
               {{WILL_BE_CHANGED_TS}}: true,
               {{WILL_BE_DELETED_TS}}: false,
@@ -399,7 +356,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
     #endregion TypeScript新規オブジェクト作成関数
 
 
-    #region Valuesの外に定義されるメンバー（Child, Children）
+    #region Child, Children
     internal abstract class EditablePresentationObjectDescendant : EditablePresentationObject {
         internal EditablePresentationObjectDescendant(AggregateBase aggregate) : base(aggregate) { }
 
@@ -452,5 +409,5 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
         string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp ? CsClassName : TsTypeName;
     }
-    #endregion Valuesの外に定義されるメンバー（Child, Children）
+    #endregion Child, Children
 }

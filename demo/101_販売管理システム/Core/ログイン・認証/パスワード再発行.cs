@@ -16,7 +16,7 @@ partial class OverridedApplicationService {
         }
 
         // 入力チェック
-        if (param.Values.対象者 == null) {
+        if (param.対象者 == null) {
             context.Messages.対象者.AddError("対象者を選択してください。");
             return;
         }
@@ -28,7 +28,7 @@ partial class OverridedApplicationService {
         // 更新
         await using var tran = await BeginTransactionAsync();
 
-        var result = await Update従業員Async(param.Values.対象者.従業員番号, null, employee => {
+        var result = await Update従業員Async(param.対象者.従業員番号, null, employee => {
             employee.SALT = salt;
             employee.パスワード = hash;
         }, context);

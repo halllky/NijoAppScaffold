@@ -11,8 +11,8 @@ partial class OverridedApplicationService {
         }
 
         // 入力チェック
-        var newPassword = param.Values.新しいパスワード;
-        var confirmPassword = param.Values.新しいパスワード_確認用;
+        var newPassword = param.新しいパスワード;
+        var confirmPassword = param.新しいパスワード_確認用;
 
         if (string.IsNullOrWhiteSpace(newPassword)) {
             context.Messages.新しいパスワード.AddError("新しいパスワードを入力してください。");

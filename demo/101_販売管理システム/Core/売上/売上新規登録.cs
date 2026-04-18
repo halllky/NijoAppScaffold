@@ -28,8 +28,8 @@ partial class OverridedApplicationService {
         for (var i = 0; i < param.売上詳細の売上明細.Count; i++) {
             var detail = param.売上詳細の売上明細[i];
             var message = context.Messages.売上詳細の売上明細[i];
-            var productId = detail.Values.商品.商品SEQ;
-            var quantity = detail.Values.売上数量;
+            var productId = detail.商品.商品SEQ;
+            var quantity = detail.売上数量;
 
             if (productId == null) {
                 message.商品.AddError("商品を選択してください。");
@@ -100,17 +100,17 @@ partial class OverridedApplicationService {
 
         // 売上ヘッダ作成
         var result = await Create売上Async(new() {
-            売上日時 = param.Values.売上日時 ?? CurrentTime,
+            売上日時 = param.売上日時 ?? CurrentTime,
             担当者 = new() { 従業員番号 = LoginUser.従業員番号 },
-            備考 = param.Values.備考,
+            備考 = param.備考,
             売上の売上明細 = allocationPlans.Select(x => new 売上の売上明細CreateCommand {
                 明細ID = Guid.NewGuid().ToString(),
-                商品 = new() { 商品SEQ = x.Detail.Values.商品.商品SEQ },
+                商品 = new() { 商品SEQ = x.Detail.商品.商品SEQ },
                 区分 = 売上明細区分.売上,
-                売上数量 = x.Detail.Values.売上数量,
+                売上数量 = x.Detail.売上数量,
 
                 // 手修正分があればそちらを優先、なければ自動計算分を使用
-                売上総額_税込 = x.Detail.Values.売上総額_税込_手修正 ?? x.Detail.Values.売上総額_税込_自動計算,
+                売上総額_税込 = x.Detail.売上総額_税込_手修正 ?? x.Detail.売上総額_税込_自動計算,
 
                 引当明細 = x.Plan.Select(p => new 引当明細CreateCommand {
                     入荷 = new() { 入荷明細ID = p.StockId },
@@ -149,7 +149,7 @@ partial class OverridedApplicationService {
         }
 
         await tran.CommitAsync();
-        context.ReturnValue.Values.売上SEQ = result.DbEntity?.売上SEQ;
+        context.ReturnValue.売上SEQ = result.DbEntity?.売上SEQ;
         context.Messages.AddInfo("売上登録が完了しました。");
     }
 }

@@ -39,10 +39,10 @@ export function StockAdjustmentDialog({ isOpen, onClose, onSuccess, product }: P
   const { replaceMessages } = DetailMessage.useSetter()
   const onSubmit: SubmitHandler<在庫調整Parameter> = async (data) => {
     const parameter = createNew在庫調整ParameterDisplayData()
-    parameter.values.商品 = data.商品
-    parameter.values.増減数 = data.増減数
-    parameter.values.絶対数 = data.絶対数
-    parameter.values.在庫調整理由 = data.在庫調整理由
+    parameter.商品 = data.商品
+    parameter.増減数 = data.増減数
+    parameter.絶対数 = data.絶対数
+    parameter.在庫調整理由 = data.在庫調整理由
 
     const result = await callComplexPostEndpointAsync('在庫調整登録', parameter)
 

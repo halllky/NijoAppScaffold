@@ -33,7 +33,6 @@ namespace Nijo.Models.StructureModelModules {
                             NestedObject = null,
                             CsType = null,
                             IsArray = false,
-                            IsInValuesObject = true,
                         };
                         break;
                     case StructureRefToMember refToMember:
@@ -51,7 +50,6 @@ namespace Nijo.Models.StructureModelModules {
                             NestedObject = targetMessage,
                             CsType = targetMessage?.CsClassName,
                             IsArray = false,
-                            IsInValuesObject = true,
                         };
                         break;
                     case StructureDescendantMember descendantMember:
@@ -62,7 +60,6 @@ namespace Nijo.Models.StructureModelModules {
                             NestedObject = nestedObject,
                             CsType = null,
                             IsArray = descendantMember.IsArray,
-                            IsInValuesObject = false,
                         };
                         break;
                     default:
@@ -92,13 +89,8 @@ namespace Nijo.Models.StructureModelModules {
             public required MessageContainer.Setter? NestedObject { get; init; }
             public required string? CsType { get; init; }
             public required bool IsArray { get; init; }
-            /// <summary>このメンバーが Values オブジェクト内のメンバーであるか否か</summary>
-            public required bool IsInValuesObject { get; init; }
 
             public IEnumerable<string> GetPathSinceParent() {
-                if (IsInValuesObject) {
-                    yield return Parts.Common.EditablePresentationObject.VALUES_TS;
-                }
                 yield return PhysicalName;
             }
         }

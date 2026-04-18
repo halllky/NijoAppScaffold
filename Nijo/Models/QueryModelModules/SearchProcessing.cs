@@ -453,9 +453,7 @@ namespace Nijo.Models.QueryModelModules {
 
                     // 画面表示用データへの変換はC#メモリ上で行なう
                     var displayDataList = searchResultList.Select({{right.Name}} => new {{displayData.CsClassName}}() {
-                        {{DisplayData.VALUES_CS}} = new() {
-                            {{WithIndent(RenderValueMembers(displayData, right), "            ")}}
-                        },
+                        {{WithIndent(RenderValueMembers(displayData, right), "        ")}}
                 {{displayData.GetChildMembers().SelectTextTemplate(child => $$"""
                         {{WithIndent(RenderDescendantMember(child, right), "        ")}}
                 """)}}
@@ -513,7 +511,7 @@ namespace Nijo.Models.QueryModelModules {
                     .GroupBy(x => x.Metadata.SchemaPathNode.ToMappingKey())
                     .ToDictionary(g => g.Key, g => g.OrderBy(x => x.GetPathFromInstance().Count()).First());
 
-                foreach (var member in left.Values.GetMembers()) {
+                foreach (var member in left.GetValueMembers()) {
                     if (member is EditablePresentationObject.EditablePresentationObjectValueMember vm) {
                         var right = rightMembers[vm.Member.ToMappingKey()];
 
@@ -578,9 +576,7 @@ namespace Nijo.Models.QueryModelModules {
 
                     return $$"""
                         {{displayData.PhysicalName}} = new() {
-                            {{EditablePresentationObject.VALUES_CS}} = new() {
-                                {{WithIndent(RenderValueMembers(displayData, rightInstance), "        ")}}
-                            },
+                            {{WithIndent(RenderValueMembers(displayData, rightInstance), "    ")}}
                         {{displayData.GetChildMembers().SelectTextTemplate(child => $$"""
                             {{WithIndent(RenderDescendantMember(child, rightInstance), "    ")}}
                         """)}}
@@ -600,9 +596,7 @@ namespace Nijo.Models.QueryModelModules {
 
                     return $$"""
                         {{displayData.PhysicalName}} = {{rightArray.GetJoinedPathFromInstance(E_CsTs.CSharp, "!.")}}.Select({{loopVar.Name}} => new {{displayData.CsClassName}} {
-                            {{EditablePresentationObject.VALUES_CS}} = new() {
-                                {{WithIndent(RenderValueMembers(displayData, loopVar), "        ")}}
-                            },
+                            {{WithIndent(RenderValueMembers(displayData, loopVar), "    ")}}
                         {{displayData.GetChildMembers().SelectTextTemplate(child => $$"""
                             {{WithIndent(RenderDescendantMember(child, loopVar), "    ")}}
                         """)}}

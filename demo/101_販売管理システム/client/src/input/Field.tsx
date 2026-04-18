@@ -539,9 +539,6 @@ const createGetMetadataOfField = (
       // 検索条件オブジェクトの場合は最初が "filter" で始まる
       if (objectType === 'SearchCondition' && i === 0 && part === "filter") continue;
 
-      // 編集可能オブジェクトの場合は ValueMember, RefToMember のコンテナが "values" になっている
-      if (objectType === 'EditableObject' && part === "values") continue;
-
       // 半角数値のみから構成される部分は配列インデックスなので除外する
       if (/^\d+$/.test(part)) continue;
 

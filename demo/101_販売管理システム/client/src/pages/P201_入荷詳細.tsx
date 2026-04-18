@@ -45,7 +45,7 @@ export default [
     element: <P201_入荷詳細 mode="edit" />,
     loader: async ({ params }) => {
       const parameter = createNew入荷詳細画面初期表示ParameterDisplayData()
-      parameter.values.入荷ID = params.id ?? ''
+      parameter.入荷ID = params.id ?? ''
 
       const result = await callComplexPostEndpointAsync('入荷詳細画面初期表示', parameter, {
         ignoreConfirm: true,
@@ -98,9 +98,9 @@ function P201_入荷詳細(props: {
     const clone = window.structuredClone(loaderData)
     // 新規登録モードの場合
     if (props.mode === 'new') {
-      clone.values.入荷日時 = dayjs().format('YYYY-MM-DD HH:mm:ss')
-      clone.values.担当者.従業員番号 = loginUser?.values.従業員番号 ?? ''
-      clone.values.担当者.氏名 = loginUser?.values.氏名 ?? ''
+      clone.入荷日時 = dayjs().format('YYYY-MM-DD HH:mm:ss')
+      clone.担当者.従業員番号 = loginUser?.従業員番号 ?? ''
+      clone.担当者.氏名 = loginUser?.氏名 ?? ''
     }
     reset(clone)
   }, [loaderData, loginUser, reset])
@@ -110,10 +110,10 @@ function P201_入荷詳細(props: {
     if (props.mode === 'new') {
       return ["入荷登録", "入荷登録"]
     } else {
-      const date = dayjs(loaderData.values.入荷日時).format('YYYY-MM-DD')
+      const date = dayjs(loaderData.入荷日時).format('YYYY-MM-DD')
       return [
-        `入荷 No.${loaderData.values.入荷ID} (${date})`,
-        `入荷 No.${loaderData.values.入荷ID}`
+        `入荷 No.${loaderData.入荷ID} (${date})`,
+        `入荷 No.${loaderData.入荷ID}`
       ]
     }
   }, [props.mode, loaderData])
@@ -121,10 +121,10 @@ function P201_入荷詳細(props: {
   // 明細行追加処理
   const handleCreateNewItem = useEvent((newItem: 商品RefTarget) => {
     const newDetail = createNew入荷商品一覧DisplayData()
-    newDetail.values.入荷明細ID = UUID.generate()
-    newDetail.values.商品 = newItem
-    newDetail.values.数量 = '1'
-    newDetail.values.消費税区分 = newItem.消費税区分
+    newDetail.入荷明細ID = UUID.generate()
+    newDetail.商品 = newItem
+    newDetail.数量 = '1'
+    newDetail.消費税区分 = newItem.消費税区分
     append(newDetail, { shouldFocus: false })
   })
 
@@ -147,7 +147,7 @@ function P201_入荷詳細(props: {
             if (formMethods.formState.isDirty) {
               window.setTimeout(waitAndNavigate, 10)
             } else {
-              navigate(getLinkUrlToP201入荷詳細(result.returnValue.values.入荷ID))
+              navigate(getLinkUrlToP201入荷詳細(result.returnValue.入荷ID))
             }
           }
           waitAndNavigate()
@@ -193,14 +193,14 @@ function P201_入荷詳細(props: {
 
                 <div className="flex gap-2 items-center">
                   <FormLabel className="basis-20 shrink-0 text-right">入荷日時</FormLabel>
-                  <UI.Field name="values.入荷日時" control={control} />
+                  <UI.Field name="入荷日時" control={control} />
                 </div>
 
                 <div className="flex gap-2 items-center">
                   <FormLabel className="basis-20 shrink-0 text-right">担当者</FormLabel>
                   <div className="flex gap-2">
-                    <WordTextBox {...register("values.担当者.従業員番号")} className="w-32" />
-                    {getValues("values.担当者.氏名")}
+                    <WordTextBox {...register("担当者.従業員番号")} className="w-32" />
+                    {getValues("担当者.氏名")}
                   </div>
                 </div>
               </div>
@@ -211,7 +211,7 @@ function P201_入荷詳細(props: {
             </div>
 
             <UI.Field
-              name="values.備考"
+              name="備考"
               placeholder="備考"
               className="min-h-16 max-h-28"
               control={control}
@@ -240,24 +240,24 @@ function P201_入荷詳細(props: {
                         {/* 商品 */}
                         <td className="p-1 align-middle font-bold">
                           <UI.Field
-                            name={`入荷商品一覧.${index}.values.商品.外部システム側ID`}
+                            name={`入荷商品一覧.${index}.商品.外部システム側ID`}
                             className="w-32 shrink-0"
                             control={control}
                           />
                         </td>
                         <td className="p-1 align-middle font-bold max-w-[16rem]">
                           <div
-                            title={field.values.商品.商品名}
+                            title={field.商品.商品名}
                             className="truncate"
                           >
-                            {field.values.商品.商品名}
+                            {field.商品.商品名}
                           </div>
                         </td>
 
                         {/* 数量・単価 */}
                         <td className="p-1 align-middle">
                           <UI.Field
-                            name={`入荷商品一覧.${index}.values.数量`}
+                            name={`入荷商品一覧.${index}.数量`}
                             className="w-24 text-right"
                             control={control}
                           />
@@ -267,14 +267,14 @@ function P201_入荷詳細(props: {
                         </td>
                         <td className="p-1 align-middle">
                           <UI.Field
-                            name={`入荷商品一覧.${index}.values.仕入単価_税抜`}
+                            name={`入荷商品一覧.${index}.仕入単価_税抜`}
                             className="w-32 text-right"
                             control={control}
                           />
                         </td>
                         <td className="p-1 align-middle">
                           <UI.Field
-                            name={`入荷商品一覧.${index}.values.消費税区分`}
+                            name={`入荷商品一覧.${index}.消費税区分`}
                             className="w-32"
                             control={control}
                           />
@@ -283,7 +283,7 @@ function P201_入荷詳細(props: {
                         {/* 備考 */}
                         <td className="p-1 align-middle">
                           <UI.Field
-                            name={`入荷商品一覧.${index}.values.備考`}
+                            name={`入荷商品一覧.${index}.備考`}
                             placeholder="備考"
                             className="w-64"
                             control={control}

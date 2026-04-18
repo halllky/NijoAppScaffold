@@ -70,18 +70,18 @@ function P200_入荷() {
           render: row => (
             <Link
               className="text-sky-600 underline"
-              to={getLinkUrlToP201入荷詳細(row.values.入荷ID)}>
+              to={getLinkUrlToP201入荷詳細(row.入荷ID)}>
               詳細
             </Link>
           ),
         },
-        columnFor('values.入荷ID', { widthPx: 180 }),
-        columnFor('values.入荷日時'),
-        columnFor('values.担当者.従業員番号', { header: '担当者', widthPx: 96 }),
-        columnFor('values.担当者.氏名', { header: '', widthPx: 144 }),
-        columnFor('values.明細件数', { widthPx: 96 }),
-        columnFor('values.入荷数量合計', { widthPx: 120 }),
-        columnFor('values.備考', { widthPx: 300 }),
+        columnFor('入荷ID', { widthPx: 180 }),
+        columnFor('入荷日時'),
+        columnFor('担当者.従業員番号', { header: '担当者', widthPx: 96 }),
+        columnFor('担当者.氏名', { header: '', widthPx: 144 }),
+        columnFor('明細件数', { widthPx: 96 }),
+        columnFor('入荷数量合計', { widthPx: 120 }),
+        columnFor('備考', { widthPx: 300 }),
       ], []]}
     />
   )

@@ -428,7 +428,7 @@ namespace Nijo.Parts.CSharp {
 
             /// <summary>
             /// 親オブジェクトからこのメンバーまでのパスを列挙する。
-            /// 例えば DisplayData のValueMemberの場合は ["values", <see cref="PhysicalName"/>]、
+            /// 例えば DisplayData のValueMemberの場合は [<see cref="PhysicalName"/>]、
             /// SearchCondition のValueMemberの場合は ["filter", <see cref="PhysicalName"/>]、
             /// それ以外のプレーンな構造のオブジェクトの場合は単に [<see cref="PhysicalName"/>] となる。
             /// </summary>

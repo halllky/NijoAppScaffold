@@ -104,7 +104,7 @@ function P301_商品詳細() {
     })
   }
 
-  const pageTitle = `商品詳細: ${product.values.商品名}`
+  const pageTitle = `商品詳細: ${product.商品名}`
 
   return (
     <PageBase
@@ -113,9 +113,9 @@ function P301_商品詳細() {
       header={
         <>
           <h1 className="text-xl font-bold flex items-center gap-2">
-            {product.values.商品名}
+            {product.商品名}
             <span className="text-gray-500 text-sm font-normal">
-              商品コード: {product.values.外部システム側ID}
+              商品コード: {product.外部システム側ID}
             </span>
           </h1>
           <Button outline onClick={() => setStockAdjDialogState({ isOpen: true, key: UUID.generate() })}>在庫調整</Button>
@@ -126,15 +126,15 @@ function P301_商品詳細() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex flex-col">
               <span className="text-xs text-gray-500">標準売単価</span>
-              <span className="text-lg font-bold">{product.values.売値単価_税抜} 円</span>
+              <span className="text-lg font-bold">{product.売値単価_税抜} 円</span>
             </div>
             <div className="flex flex-col">
               <span className="text-xs text-gray-500">消費税</span>
-              <span className="text-lg">{product.values.消費税区分}</span>
+              <span className="text-lg">{product.消費税区分}</span>
             </div>
             <div className="flex flex-col">
               <span className="text-xs text-gray-500">現在庫数</span>
-              <span className="text-lg font-bold">{product.values.在庫数}</span>
+              <span className="text-lg font-bold">{product.在庫数}</span>
             </div>
           </div>
 
@@ -159,25 +159,25 @@ function P301_商品詳細() {
                     {history.map((row, i) => (
                       <tr key={i} className="hover:bg-gray-50">
                         <td className="pr-3 py-1">
-                          {row.values.日時 ? dayjs(row.values.日時).format('YYYY-MM-DD HH:mm') : ''}
+                          {row.日時 ? dayjs(row.日時).format('YYYY-MM-DD HH:mm') : ''}
                         </td>
                         <td className="px-3 py-1">
-                          {row.values.事由}
+                          {row.事由}
                         </td>
                         <td className="px-3 py-1 text-right">
                           <span>
-                            {row.values.増減数}
+                            {row.増減数}
                           </span>
                         </td>
                         <td className="px-3 py-1">
                           <div className="flex flex-wrap gap-4 items-start">
                             {/* 入荷へのリンク */}
-                            {row.増減履歴引当元売上一覧.length === 0 && row.values.入荷ID && (
+                            {row.増減履歴引当元売上一覧.length === 0 && row.入荷ID && (
                               <Link
-                                to={getLinkUrlToP201入荷詳細(row.values.入荷ID)}
+                                to={getLinkUrlToP201入荷詳細(row.入荷ID)}
                                 className="text-blue-600 hover:underline flex items-center gap-1"
                               >
-                                <span>入荷 No.{row.values.入荷ID}</span>
+                                <span>入荷 No.{row.入荷ID}</span>
                               </Link>
                             )}
 
@@ -185,10 +185,10 @@ function P301_商品詳細() {
                             {row.増減履歴引当元売上一覧.map((sales, j) => (
                               <Link
                                 key={j}
-                                to={getLinkUrlToP101売上詳細(sales.values.売上SEQ)}
+                                to={getLinkUrlToP101売上詳細(sales.売上SEQ)}
                                 className="text-blue-600 hover:underline flex items-center gap-1"
                               >
-                                <span>売上 No.{sales.values.売上SEQ}</span>
+                                <span>売上 No.{sales.売上SEQ}</span>
                               </Link>
                             ))}
                           </div>
@@ -217,9 +217,9 @@ function P301_商品詳細() {
             onSuccess={() => revalidator.revalidate()}
             product={(() => {
               const ref = createNew商品RefTarget()
-              ref.商品SEQ = product.values.商品SEQ ?? undefined
-              ref.商品名 = product.values.商品名 ?? undefined
-              ref.外部システム側ID = product.values.外部システム側ID ?? undefined
+              ref.商品SEQ = product.商品SEQ ?? undefined
+              ref.商品名 = product.商品名 ?? undefined
+              ref.外部システム側ID = product.外部システム側ID ?? undefined
               return ref
             })()}
           />

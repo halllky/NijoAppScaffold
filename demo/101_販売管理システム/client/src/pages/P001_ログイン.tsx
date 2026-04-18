@@ -30,17 +30,15 @@ export function P001_ログイン(props: {
   const { loginUser, loginAsync, initializing } = useLoginLogout()
   const { setFocus, handleSubmit, control } = useForm<ログインParameterDisplayData>({
     defaultValues: {
-      values: {
-        従業員番号: "admin",
-        パスワード: "password123",
-      },
+      従業員番号: "admin",
+      パスワード: "password123",
     },
   })
 
   // 初期表示時、またはログアウト後
   React.useEffect(() => {
     if (!initializing && !loginUser) {
-      setFocus("values.従業員番号")
+      setFocus("従業員番号")
     }
   }, [initializing, loginUser])
 
@@ -69,16 +67,16 @@ export function P001_ログイン(props: {
             <div className="flex gap-4">
               <FormLabel className="basis-24 shrink-0">従業員番号</FormLabel>
               <div className="flex-1">
-                <UI.Field name="values.従業員番号" className="w-full" control={control} />
-                <DetailMessage.Of name="values.従業員番号" control={control} />
+                <UI.Field name="従業員番号" className="w-full" control={control} />
+                <DetailMessage.Of name="従業員番号" control={control} />
               </div>
             </div>
 
             <div className="flex gap-4">
               <FormLabel className="basis-24 shrink-0">パスワード</FormLabel>
               <div className="flex-1">
-                <UI.Field name="values.パスワード" type="password" className="w-full" control={control} />
-                <DetailMessage.Of name="values.パスワード" control={control} />
+                <UI.Field name="パスワード" type="password" className="w-full" control={control} />
+                <DetailMessage.Of name="パスワード" control={control} />
               </div>
             </div>
 

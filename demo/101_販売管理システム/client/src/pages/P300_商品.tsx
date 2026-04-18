@@ -72,16 +72,16 @@ function P300_商品() {
             render: row => (
               <Link
                 className="text-sky-600 underline"
-                to={`/shohin/${row.values.商品SEQ}`}>
+                to={`/shohin/${row.商品SEQ}`}>
                 詳細
               </Link>
             ),
           },
-          columnFor('values.外部システム側ID', { widthPx: 152 }),
-          columnFor('values.商品名', { widthPx: 300 }),
-          columnFor('values.売値単価_税抜', { header: '売値単価(税抜)', widthPx: 140 }),
-          columnFor('values.消費税区分', { widthPx: 120 }),
-          columnFor('values.在庫数'),
+          columnFor('外部システム側ID', { widthPx: 152 }),
+          columnFor('商品名', { widthPx: 300 }),
+          columnFor('売値単価_税抜', { header: '売値単価(税抜)', widthPx: 140 }),
+          columnFor('消費税区分', { widthPx: 120 }),
+          columnFor('在庫数'),
           {
             header: '',
             widthPx: 96,
@@ -89,9 +89,9 @@ function P300_商品() {
               <Button outline mini
                 onClick={() => {
                   const refTarget = createNew商品RefTarget()
-                  refTarget.商品SEQ = row.values.商品SEQ ?? undefined
-                  refTarget.商品名 = row.values.商品名 ?? undefined
-                  refTarget.外部システム側ID = row.values.外部システム側ID ?? undefined
+                  refTarget.商品SEQ = row.商品SEQ ?? undefined
+                  refTarget.商品名 = row.商品名 ?? undefined
+                  refTarget.外部システム側ID = row.外部システム側ID ?? undefined
                   setStockAdjDialogState({ isOpen: true, key: UUID.generate(), product: refTarget })
                 }}
               >

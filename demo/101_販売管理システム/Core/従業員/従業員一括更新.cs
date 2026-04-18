@@ -30,10 +30,10 @@ partial class OverridedApplicationService {
 
                 // ユニーク制約によるチェックはかかるものの、
                 // ここでチェックをかけた方がロールバックの挙動が分かりやすくなるので重ねてチェックする
-                if (param.更新対象従業員一覧.Any(e => e != item && e.Values.従業員.Values.従業員番号 == item.Values.従業員.Values.従業員番号)
-                    || await DbContext.従業員DbSet.AnyAsync(e => e.従業員番号 == item.Values.従業員.Values.従業員番号)) {
+                if (param.更新対象従業員一覧.Any(e => e != item && e.従業員.従業員番号 == item.従業員.従業員番号)
+                    || await DbContext.従業員DbSet.AnyAsync(e => e.従業員番号 == item.従業員.従業員番号)) {
 
-                    message.従業員.従業員番号.AddError($"従業員番号 '{item.Values.従業員.Values.従業員番号}' は既に存在します。");
+                    message.従業員.従業員番号.AddError($"従業員番号 '{item.従業員.従業員番号}' は既に存在します。");
                     continue;
                 }
 
@@ -43,11 +43,11 @@ partial class OverridedApplicationService {
 
                 // 新規追加
                 var result = await Create従業員Async(new() {
-                    従業員番号 = item.Values.従業員.Values.従業員番号,
-                    氏名 = item.Values.従業員.Values.氏名,
-                    入荷担当 = item.Values.従業員.Values.入荷担当,
-                    販売担当 = item.Values.従業員.Values.販売担当,
-                    システム管理者 = item.Values.従業員.Values.システム管理者,
+                    従業員番号 = item.従業員.従業員番号,
+                    氏名 = item.従業員.氏名,
+                    入荷担当 = item.従業員.入荷担当,
+                    販売担当 = item.従業員.販売担当,
+                    システム管理者 = item.従業員.システム管理者,
                     パスワード = hash,
                     SALT = salt,
                 }, context, message);
@@ -58,18 +58,18 @@ partial class OverridedApplicationService {
 
                 // 削除
                 success = await Delete従業員Async(new() {
-                    従業員番号 = item.Values.従業員.Values.従業員番号,
-                    Version = item.Values.従業員.Values.Version,
+                    従業員番号 = item.従業員.従業員番号,
+                    Version = item.従業員.Version,
                 }, context, message);
 
             } else if (item.WillBeChanged) {
 
                 // 更新
-                var result = await Update従業員Async(item.Values.従業員.Values.従業員番号, item.Values.従業員.Values.Version, employee => {
-                    employee.氏名 = item.Values.従業員.Values.氏名;
-                    employee.入荷担当 = item.Values.従業員.Values.入荷担当;
-                    employee.販売担当 = item.Values.従業員.Values.販売担当;
-                    employee.システム管理者 = item.Values.従業員.Values.システム管理者;
+                var result = await Update従業員Async(item.従業員.従業員番号, item.従業員.Version, employee => {
+                    employee.氏名 = item.従業員.氏名;
+                    employee.入荷担当 = item.従業員.入荷担当;
+                    employee.販売担当 = item.従業員.販売担当;
+                    employee.システム管理者 = item.従業員.システム管理者;
                 }, context, message);
 
                 success = result.Result == DataModelSaveResultType.Completed;

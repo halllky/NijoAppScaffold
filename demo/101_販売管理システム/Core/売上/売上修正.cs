@@ -12,7 +12,7 @@ partial class OverridedApplicationService {
         }
 
         // 入力チェック
-        if (param.Values.売上SEQ == null) {
+        if (param.売上SEQ == null) {
             context.Messages.AddError("売上SEQが指定されていません。");
             return;
         }
@@ -45,8 +45,8 @@ partial class OverridedApplicationService {
                 continue;
             }
 
-            var productId = detail.Values.商品.商品SEQ;
-            var quantity = detail.Values.売上数量;
+            var productId = detail.商品.商品SEQ;
+            var quantity = detail.売上数量;
 
             if (productId == null) {
                 message.商品.AddError("商品を選択してください。");
@@ -184,20 +184,20 @@ partial class OverridedApplicationService {
         // 保存処理
         await using var tran = await BeginTransactionAsync();
 
-        var updateResult = await Update売上Async(param.Values.売上SEQ, null, command => {
+        var updateResult = await Update売上Async(param.売上SEQ, null, command => {
             // 備考の更新
-            command.備考 = param.Values.備考;
+            command.備考 = param.備考;
 
             // 新規明細の追加
             foreach (var (detail, plan) in allocationPlans) {
                 command.売上の売上明細.Add(new() {
                     明細ID = Guid.NewGuid().ToString(),
-                    商品 = new() { 商品SEQ = detail.Values.商品.商品SEQ },
-                    区分 = detail.Values.区分,
-                    売上数量 = detail.Values.売上数量,
+                    商品 = new() { 商品SEQ = detail.商品.商品SEQ },
+                    区分 = detail.区分,
+                    売上数量 = detail.売上数量,
 
                     // 手修正があればそちらを優先
-                    売上総額_税込 = detail.Values.売上総額_税込_手修正 ?? detail.Values.売上総額_税込_自動計算,
+                    売上総額_税込 = detail.売上総額_税込_手修正 ?? detail.売上総額_税込_自動計算,
 
                     引当明細 = plan.Select(p => new 引当明細UpdateCommand {
                         入荷 = new() { 入荷明細ID = p.StockId },

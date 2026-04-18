@@ -125,27 +125,23 @@ partial class OverridedDummyDataGenerator {
         foreach (var item in allItems) {
             var details = new List<入荷商品一覧DisplayData>();
             details.Add(new 入荷商品一覧DisplayData {
-                Values = new 入荷商品一覧DisplayDataValues {
-                    商品 = new 商品RefTarget {
-                        商品SEQ = item.商品SEQ,
-                        外部システム側ID = item.外部システム側ID,
-                        商品名 = item.商品名,
-                        売値単価_税抜 = item.売値単価_税抜,
-                        消費税区分 = item.消費税区分,
-                    },
-                    数量 = 100, // 確実に在庫を持たせる
-                    仕入単価_税抜 = item.売値単価_税抜 * 0.7m,
+                商品 = new 商品RefTarget {
+                    商品SEQ = item.商品SEQ,
+                    外部システム側ID = item.外部システム側ID,
+                    商品名 = item.商品名,
+                    売値単価_税抜 = item.売値単価_税抜,
                     消費税区分 = item.消費税区分,
-                    備考 = "初期在庫",
-                }
+                },
+                数量 = 100, // 確実に在庫を持たせる
+                仕入単価_税抜 = item.売値単価_税抜 * 0.7m,
+                消費税区分 = item.消費税区分,
+                備考 = "初期在庫",
             });
 
             await applicationService.Execute入荷登録Async(new() {
-                Values = new() {
-                    入荷日時 = DateTime.Now.AddDays(-30),
-                    担当者 = adminUserRef,
-                    備考 = "初期在庫入荷",
-                },
+                入荷日時 = DateTime.Now.AddDays(-30),
+                担当者 = adminUserRef,
+                備考 = "初期在庫入荷",
                 入荷商品一覧 = details,
             }, presentationContext.AsWithReturnValue<入荷登録ReturnValueDisplayData, 入荷詳細Messages>());
 
@@ -164,28 +160,24 @@ partial class OverridedDummyDataGenerator {
             for (var j = 0; j < itemCount; j++) {
                 var item = allItems[rand.Next(allItems.Count)];
                 details.Add(new 入荷商品一覧DisplayData {
-                    Values = new 入荷商品一覧DisplayDataValues {
-                        商品 = new 商品RefTarget {
-                            商品SEQ = item.商品SEQ,
-                            外部システム側ID = item.外部システム側ID,
-                            商品名 = item.商品名,
-                            売値単価_税抜 = item.売値単価_税抜,
-                            消費税区分 = item.消費税区分,
-                        },
-                        数量 = rand.Next(1, 100),
-                        仕入単価_税抜 = item.売値単価_税抜 * 0.7m,
+                    商品 = new 商品RefTarget {
+                        商品SEQ = item.商品SEQ,
+                        外部システム側ID = item.外部システム側ID,
+                        商品名 = item.商品名,
+                        売値単価_税抜 = item.売値単価_税抜,
                         消費税区分 = item.消費税区分,
-                        備考 = $"テスト入荷明細 {i}-{j}",
-                    }
+                    },
+                    数量 = rand.Next(1, 100),
+                    仕入単価_税抜 = item.売値単価_税抜 * 0.7m,
+                    消費税区分 = item.消費税区分,
+                    備考 = $"テスト入荷明細 {i}-{j}",
                 });
             }
 
             await applicationService.Execute入荷登録Async(new() {
-                Values = new() {
-                    入荷日時 = DateTime.Now.AddDays(-rand.Next(0, 30)),
-                    担当者 = adminUserRef,
-                    備考 = $"自動生成された入荷データ {i}",
-                },
+                入荷日時 = DateTime.Now.AddDays(-rand.Next(0, 30)),
+                担当者 = adminUserRef,
+                備考 = $"自動生成された入荷データ {i}",
                 入荷商品一覧 = details,
             }, presentationContext.AsWithReturnValue<入荷登録ReturnValueDisplayData, 入荷詳細Messages>());
 
@@ -206,27 +198,23 @@ partial class OverridedDummyDataGenerator {
             for (var j = 0; j < itemCount; j++) {
                 var item = allItems[rand.Next(allItems.Count)];
                 details.Add(new 売上詳細の売上明細DisplayData {
-                    Values = new 売上詳細の売上明細DisplayDataValues {
-                        商品 = new 商品RefTarget {
-                            商品SEQ = item.商品SEQ,
-                            外部システム側ID = item.外部システム側ID,
-                            商品名 = item.商品名,
-                            売値単価_税抜 = item.売値単価_税抜,
-                            消費税区分 = item.消費税区分,
-                        },
-                        区分 = 売上明細区分.売上,
-                        売上数量 = rand.Next(1, 5),
-                    }
+                    商品 = new 商品RefTarget {
+                        商品SEQ = item.商品SEQ,
+                        外部システム側ID = item.外部システム側ID,
+                        商品名 = item.商品名,
+                        売値単価_税抜 = item.売値単価_税抜,
+                        消費税区分 = item.消費税区分,
+                    },
+                    区分 = 売上明細区分.売上,
+                    売上数量 = rand.Next(1, 5),
                 });
             }
 
             // 売上新規登録
             await applicationService.Execute売上新規登録Async(new() {
-                Values = new() {
-                    売上日時 = DateTime.Now.AddDays(-rand.Next(0, 10)),
-                    担当者 = adminUserRef,
-                    備考 = $"自動生成された売上 {i}",
-                },
+                売上日時 = DateTime.Now.AddDays(-rand.Next(0, 10)),
+                担当者 = adminUserRef,
+                備考 = $"自動生成された売上 {i}",
                 売上詳細の売上明細 = details,
             }, presentationContext.AsWithReturnValue<売上新規登録ReturnValueDisplayData, 売上詳細Messages>());
 
@@ -252,30 +240,26 @@ partial class OverridedDummyDataGenerator {
                 foreach (var d in lastSales.売上の売上明細) {
                     var dItem = d.商品;
                     updateDetails.Add(new 売上詳細の売上明細DisplayData {
-                        Values = new 売上詳細の売上明細DisplayDataValues {
-                            明細ID = d.明細ID,
-                            商品 = dItem != null ? new 商品RefTarget {
-                                商品SEQ = dItem.商品SEQ,
-                                外部システム側ID = dItem.外部システム側ID,
-                                商品名 = dItem.商品名,
-                                売値単価_税抜 = dItem.売値単価_税抜,
-                                消費税区分 = dItem.消費税区分
-                            } : new(),
-                            区分 = d.区分,
-                            売上数量 = d.売上数量,
-                            売上総額_税込_手修正 = d.売上総額_税込,
-                        },
+                        明細ID = d.明細ID,
+                        商品 = dItem != null ? new 商品RefTarget {
+                            商品SEQ = dItem.商品SEQ,
+                            外部システム側ID = dItem.外部システム側ID,
+                            商品名 = dItem.商品名,
+                            売値単価_税抜 = dItem.売値単価_税抜,
+                            消費税区分 = dItem.消費税区分
+                        } : new(),
+                        区分 = d.区分,
+                        売上数量 = d.売上数量,
+                        売上総額_税込_手修正 = d.売上総額_税込,
                         ExistsInDatabase = true,
                     });
                 }
 
                 await applicationService.Execute売上修正Async(new() {
-                    Values = new() {
-                        売上SEQ = lastSales.売上SEQ,
-                        売上日時 = lastSales.売上日時,
-                        担当者 = adminUserRef,
-                        備考 = lastSales.備考 + " (修正済み)",
-                    },
+                    売上SEQ = lastSales.売上SEQ,
+                    売上日時 = lastSales.売上日時,
+                    担当者 = adminUserRef,
+                    備考 = lastSales.備考 + " (修正済み)",
                     売上詳細の売上明細 = updateDetails,
                     ExistsInDatabase = true,
                 }, presentationContext.As<売上詳細Messages>());
@@ -311,18 +295,16 @@ partial class OverridedDummyDataGenerator {
             }
 
             await applicationService.Execute在庫調整登録Async(new() {
-                Values = new() {
-                    商品 = new 商品RefTarget {
-                        商品SEQ = item.商品SEQ,
-                        外部システム側ID = item.外部システム側ID,
-                        商品名 = item.商品名,
-                        売値単価_税抜 = item.売値単価_税抜,
-                        消費税区分 = item.消費税区分,
-                    },
-                    在庫調整理由 = $"ダミー在庫調整 {i}",
-                    増減数 = fluctuation,
-                    絶対数 = absolute,
+                商品 = new 商品RefTarget {
+                    商品SEQ = item.商品SEQ,
+                    外部システム側ID = item.外部システム側ID,
+                    商品名 = item.商品名,
+                    売値単価_税抜 = item.売値単価_税抜,
+                    消費税区分 = item.消費税区分,
                 },
+                在庫調整理由 = $"ダミー在庫調整 {i}",
+                増減数 = fluctuation,
+                絶対数 = absolute,
             }, presentationContext.As<在庫調整ParameterMessages>());
 
             if (presentationContext.Messages.HasError()) {

@@ -37,7 +37,7 @@ export default [
     element: <P101_売上詳細 mode="new" />,
     loader: async () => {
       const parameter = createNew売上詳細画面初期表示ParameterDisplayData()
-      parameter.values.新規登録モード = true
+      parameter.新規登録モード = true
       const result = await callComplexPostEndpointAsync('売上詳細画面初期表示', parameter, {
         ignoreConfirm: true,
       })
@@ -50,8 +50,8 @@ export default [
     element: <P101_売上詳細 mode="edit" />,
     loader: async ({ params }) => {
       const parameter = createNew売上詳細画面初期表示ParameterDisplayData()
-      parameter.values.新規登録モード = false
-      parameter.values.売上SEQ = params.id ?? ''
+      parameter.新規登録モード = false
+      parameter.売上SEQ = params.id ?? ''
 
       const result = await callComplexPostEndpointAsync('売上詳細画面初期表示', parameter, {
         ignoreConfirm: true,
@@ -91,16 +91,16 @@ function P101_売上詳細(props: {
     if (props.mode === 'new') {
       return ["売上登録", "売上登録"]
     } else {
-      const date = dayjs(loaderData.values.売上日時).format('YYYY-MM-DD')
+      const date = dayjs(loaderData.売上日時).format('YYYY-MM-DD')
       return [
-        `売上 No.${loaderData.values.売上SEQ} (${date})`,
-        `売上 No.${loaderData.values.売上SEQ}`
+        `売上 No.${loaderData.売上SEQ} (${date})`,
+        `売上 No.${loaderData.売上SEQ}`
       ]
     }
   }, [props.mode, loaderData])
 
   // 自動計算金額（計算処理の実体はサーバー側）
-  const totalAmount = ReactHookForm.useWatch({ name: 'values.合計金額', control })
+  const totalAmount = ReactHookForm.useWatch({ name: '合計金額', control })
   const abortControllerRef = React.useRef<AbortController | null>(null)
   const triggerRecalculation = React.useCallback(async () => {
     // 計算処理の重複実行対策
@@ -114,24 +114,24 @@ function P101_売上詳細(props: {
     if (result.type !== 'ok') return;
     if (abortControllerRef.current?.signal.aborted) return;
 
-    setValue('values.合計金額', result.returnValue.values.合計金額)
+    setValue('合計金額', result.returnValue.合計金額)
 
     const currentArray = getValues().売上詳細の売上明細
     for (const detail of result.returnValue.売上詳細の売上明細) {
-      const index = currentArray.findIndex(d => d.values.明細ID === detail.values.明細ID)
+      const index = currentArray.findIndex(d => d.明細ID === detail.明細ID)
       if (index === -1) continue;
-      setValue(`売上詳細の売上明細.${index}.values.売上総額_税込_自動計算`, detail.values.売上総額_税込_自動計算)
+      setValue(`売上詳細の売上明細.${index}.売上総額_税込_自動計算`, detail.売上総額_税込_自動計算)
     }
   }, [getValues, setValue])
 
   // 自動計算のトリガーとなる項目が何かしら変更されたら再計算を実行
   const watchedFields = ReactHookForm.useWatch({ name: "売上詳細の売上明細", control })
   const recalculateTrigger = JSON.stringify((watchedFields ?? []).flatMap(field => [
-    field.values.明細ID,
-    field.values.区分,
-    field.values.商品.外部システム側ID,
-    field.values.売上数量,
-    field.values.売上総額_税込_手修正,
+    field.明細ID,
+    field.区分,
+    field.商品.外部システム側ID,
+    field.売上数量,
+    field.売上総額_税込_手修正,
   ]))
   React.useEffect(() => {
     triggerRecalculation()
@@ -140,10 +140,10 @@ function P101_売上詳細(props: {
   // 明細行追加処理
   const handleCreateNewItem = useEvent((newItem: 商品RefTarget) => {
     const newDetail = createNew売上詳細の売上明細DisplayData()
-    newDetail.values.明細ID = UUID.generate()
-    newDetail.values.商品 = newItem
-    newDetail.values.区分 = '売上'
-    newDetail.values.売上数量 = '1'
+    newDetail.明細ID = UUID.generate()
+    newDetail.商品 = newItem
+    newDetail.区分 = '売上'
+    newDetail.売上数量 = '1'
     append(newDetail, { shouldFocus: false })
   })
 
@@ -156,7 +156,7 @@ function P101_売上詳細(props: {
 
       // 画面上で編集されたインスタンスに willBeChanged フラグを更新する（ヘッダ）
       const currentValues = window.structuredClone(formMethods.getValues())
-      if (formMethods.formState.dirtyFields.values) {
+      if (formMethods.formState.dirtyFields) {
         currentValues.willBeChanged = true
       }
 
@@ -164,7 +164,7 @@ function P101_売上詳細(props: {
       const dirtyDetails = formMethods.formState.dirtyFields.売上詳細の売上明細
       if (Array.isArray(dirtyDetails)) {
         dirtyDetails.forEach((dirtyRow, index) => {
-          if (dirtyRow?.values && currentValues.売上詳細の売上明細[index]) {
+          if (dirtyRow && currentValues.売上詳細の売上明細[index]) {
             currentValues.売上詳細の売上明細[index].willBeChanged = true
           }
         })
@@ -182,7 +182,7 @@ function P101_売上詳細(props: {
             if (formMethods.formState.isDirty) {
               window.setTimeout(waitAndNavigate, 10)
             } else {
-              navigate(getLinkUrlToP101売上詳細(result.returnValue.values.売上SEQ))
+              navigate(getLinkUrlToP101売上詳細(result.returnValue.売上SEQ))
             }
           }
           waitAndNavigate()
@@ -232,14 +232,14 @@ function P101_売上詳細(props: {
 
                 <div className="flex gap-2 items-center">
                   <FormLabel className="basis-20 shrink-0 text-right">売上日時</FormLabel>
-                  <UI.Field name="values.売上日時" control={control} />
+                  <UI.Field name="売上日時" control={control} />
                 </div>
 
                 <div className="flex gap-2 items-center">
                   <FormLabel className="basis-20 shrink-0 text-right">担当者</FormLabel>
                   <div className="flex gap-2">
-                    <WordTextBox {...register("values.担当者.従業員番号")} className="w-32" />
-                    {getValues("values.担当者.氏名")}
+                    <WordTextBox {...register("担当者.従業員番号")} className="w-32" />
+                    {getValues("担当者.氏名")}
                   </div>
                 </div>
               </div>
@@ -250,7 +250,7 @@ function P101_売上詳細(props: {
             </div>
 
             <UI.Field
-              name="values.備考"
+              name="備考"
               placeholder="備考"
               className="min-h-16 max-h-28"
               control={control}
@@ -272,10 +272,10 @@ function P101_売上詳細(props: {
                 <tbody>
                   {fields.map((field, index) => (
                     <React.Fragment key={field.id}>
-                      <tr className={`border-t border-gray-300 whitespace-nowrap ${field.values.区分 === '取消' ? 'text-rose-700' : ''}`}>
+                      <tr className={`border-t border-gray-300 whitespace-nowrap ${field.区分 === '取消' ? 'text-rose-700' : ''}`}>
                         <td className="p-1 w-16 align-top">
                           <UI.Field
-                            name={`売上詳細の売上明細.${index}.values.区分`}
+                            name={`売上詳細の売上明細.${index}.区分`}
                             control={control}
                             className="shrink-0"
                             readOnly={field.existsInDatabase}
@@ -283,7 +283,7 @@ function P101_売上詳細(props: {
                         </td>
                         <td className="p-1 w-32 align-top font-bold">
                           <UI.Field
-                            name={`売上詳細の売上明細.${index}.values.商品.外部システム側ID`}
+                            name={`売上詳細の売上明細.${index}.商品.外部システム側ID`}
                             className="shrink-0"
                             control={control}
                             readOnly={field.existsInDatabase}
@@ -291,14 +291,14 @@ function P101_売上詳細(props: {
                         </td>
                         <td className="p-1 align-middle font-bold max-w-[16rem]">
                           <div
-                            title={field.values.商品.商品名}
+                            title={field.商品.商品名}
                             className="truncate"
                           >
-                            {field.values.商品.商品名}
+                            {field.商品.商品名}
                           </div>
                         </td>
                         <td className="p-1 align-middle text-right w-32">
-                          {field.values.商品.売値単価_税抜}
+                          {field.商品.売値単価_税抜}
                           円
                         </td>
                         <td className="p-1 w-8 align-middle text-center">
@@ -306,7 +306,7 @@ function P101_売上詳細(props: {
                         </td>
                         <td className="p-1 w-24 text-right align-top">
                           <UI.Field
-                            name={`売上詳細の売上明細.${index}.values.売上数量`}
+                            name={`売上詳細の売上明細.${index}.売上数量`}
                             className="w-full"
                             readOnly={field.existsInDatabase}
                             control={control}
@@ -316,7 +316,7 @@ function P101_売上詳細(props: {
                           *
                         </td>
                         <td className="p-1 w-20 align-middle">
-                          {field.values.商品.消費税区分}
+                          {field.商品.消費税区分}
                         </td>
                         <td className="p-1 w-8 align-middle text-center">
                           =
@@ -324,16 +324,16 @@ function P101_売上詳細(props: {
                         <td className="p-1 w-32 align-middle text-right">
                           <span style={{
                             // 手修正が入っている場合は打ち消し線で表示
-                            textDecoration: field.values.売上総額_税込_手修正 ? 'line-through' : undefined,
-                            opacity: field.values.売上総額_税込_手修正 ? 0.3 : undefined,
+                            textDecoration: field.売上総額_税込_手修正 ? 'line-through' : undefined,
+                            opacity: field.売上総額_税込_手修正 ? 0.3 : undefined,
                           }}>
-                            {field.values.売上総額_税込_自動計算}円
+                            {field.売上総額_税込_自動計算}円
                           </span>
                         </td>
                         <td className="p-1 w-40 align-middle">
                           (手修正:
                           <UI.Field
-                            name={`売上詳細の売上明細.${index}.values.売上総額_税込_手修正`}
+                            name={`売上詳細の売上明細.${index}.売上総額_税込_手修正`}
                             className="w-full"
                             readOnly={field.existsInDatabase}
                             control={control}

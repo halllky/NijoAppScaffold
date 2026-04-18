@@ -214,7 +214,6 @@ export function Provider(props: { children: React.ReactNode }) {
           // nameの残り部分をメッセージの先頭に付与してセットする。
           // 半角数値の場合は配列インデックスなので「x行目」という文字に変換する。
           let prefix = bestCandidate.rest
-            .filter(part => part !== 'values') // DisplayData の内部だけで使っているコンテナの名前
             .map(part => /^\d+$/.test(part) ? `${Number(part) + 1}行目` : part)
             .join(' ')
           if (prefix.length > 0) {
@@ -231,7 +230,6 @@ export function Provider(props: { children: React.ReactNode }) {
         // どこにも登録されていないnameの場合はオブジェクトに溜めておいて最後にまとめてセットする。
         // 該当のフィールドまでのパスをメッセージに含める。
         let prefix = nameSplittedByPeriod
-          .filter(part => part !== 'values') // DisplayData の内部だけで使っているコンテナの名前
           .map(part => /^\d+$/.test(part) ? `${Number(part) + 1}行目` : part)
           .join(' ')
         if (prefix.length > 0) {
