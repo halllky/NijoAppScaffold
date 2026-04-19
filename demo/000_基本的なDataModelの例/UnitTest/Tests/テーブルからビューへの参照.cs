@@ -35,7 +35,7 @@ public class テーブルからビューへの参照 {
             }],
         }, presentationContext);
 
-        Assert.That(createResult.Result, Is.EqualTo(DataModelSaveResultType.Completed), "部署の作成に失敗しました。");
+        Assert.That(createResult.IsSaveCompleted(), Is.True, "部署の作成に失敗しました。");
 
         await transaction.CommitAsync();
 
@@ -75,7 +75,7 @@ public class テーブルからビューへの参照 {
             }],
         }, presentationContext);
 
-        Assert.That(createResult.Result, Is.EqualTo(DataModelSaveResultType.Completed), "部署の作成に失敗しました。");
+        Assert.That(createResult.IsSaveCompleted(), Is.True, "部署の作成に失敗しました。");
 
         await transaction.CommitAsync();
 
@@ -117,7 +117,7 @@ public class テーブルからビューへの参照 {
             }],
         }, presentationContext);
 
-        Assert.That(createResult.Result, Is.EqualTo(DataModelSaveResultType.Completed), "部署の作成に失敗しました。");
+        Assert.That(createResult.IsSaveCompleted(), Is.True, "部署の作成に失敗しました。");
 
         await transaction.CommitAsync();
 

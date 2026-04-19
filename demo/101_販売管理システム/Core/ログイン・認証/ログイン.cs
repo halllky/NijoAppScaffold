@@ -50,7 +50,7 @@ partial class OverridedApplicationService {
             最終ログイン日時 = CurrentTime,
         }, context);
 
-        if (result.Result != DataModelSaveResultType.Completed) {
+        if (!result.IsSaveCompleted()) {
             return;
         }
 

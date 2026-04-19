@@ -46,7 +46,7 @@ public class ユニーク制約のテスト {
             旧システムコード = "LEGACY-001",
             名称 = "旧システム部署A",
         }, presentationContext);
-        Assert.That(legacyResult.Result, Is.EqualTo(DataModelSaveResultType.Completed), "旧システム部署情報の作成に失敗しました。");
+        Assert.That(legacyResult.IsSaveCompleted(out var _), Is.True, "旧システム部署情報の作成に失敗しました。");
 
         var firstDepartment = await scope.App.Create部署Async(new() {
             部署ID = 1,
@@ -59,7 +59,7 @@ public class ユニーク制約のテスト {
                 係 = [],
             }],
         }, presentationContext);
-        Assert.That(firstDepartment.Result, Is.EqualTo(DataModelSaveResultType.Completed), "初回の登録が失敗しました。");
+        Assert.That(firstDepartment.IsSaveCompleted(out var _), Is.True, "初回の登録が失敗しました。");
 
         var duplicateDepartment = await scope.App.Create部署Async(new() {
             部署ID = 2,
@@ -73,8 +73,8 @@ public class ユニーク制約のテスト {
             }],
         }, presentationContext);
 
-        Assert.That(duplicateDepartment.Result, Is.EqualTo(DataModelSaveResultType.Error), "ユニーク制約違反でエラーになっていません。");
-        Assert.That(duplicateDepartment.ErrorReason, Is.EqualTo(DataModelSaveErrorReason.ValidationError));
+        Assert.That(duplicateDepartment.IsError(out var reason), Is.False, "ユニーク制約違反でエラーになっていません。");
+        Assert.That(reason, Is.EqualTo(DataModelSaveErrorReason.ValidationError));
 
         var sectionCount = await scope.App.DbContext.課DbSet.CountAsync(x => x.旧システムコード_旧システムコード == "LEGACY-001");
         Assert.That(sectionCount, Is.EqualTo(1), "ユニーク制約違反時に既存データが巻き戻されていません。");
@@ -100,7 +100,7 @@ public class ユニーク制約のテスト {
             旧システムコード = legacyCode,
             名称 = "ナビ用旧システム部署",
         }, presentationContext);
-        Assert.That(legacyResult.Result, Is.EqualTo(DataModelSaveResultType.Completed), "旧システム部署情報の作成に失敗しました。");
+        Assert.That(legacyResult.IsSaveCompleted(out var _), Is.True, "旧システム部署情報の作成に失敗しました。");
 
         var departmentResult = await scope.App.Create部署Async(new() {
             部署ID = departmentId,
@@ -113,7 +113,7 @@ public class ユニーク制約のテスト {
                 係 = [],
             }],
         }, presentationContext);
-        Assert.That(departmentResult.Result, Is.EqualTo(DataModelSaveResultType.Completed), "部署の作成に失敗しました。");
+        Assert.That(departmentResult.IsSaveCompleted(out var _), Is.True, "部署の作成に失敗しました。");
 
         await transaction.CommitAsync();
 

@@ -119,7 +119,7 @@ partial class OverridedApplicationService {
             }).ToList(),
         }, context);
 
-        if (result.Result != DataModelSaveResultType.Completed) return;
+        if (!result.IsSaveCompleted(out var savedEntity)) return;
 
         // 入荷明細の残数量更新
         // 同じ入荷明細に対して複数回の更新を行うと楽観排他制御エラーになるため、
@@ -142,14 +142,14 @@ partial class OverridedApplicationService {
                 x.残数量 -= deduct;
             }, context);
 
-            if (updateResult.Result != DataModelSaveResultType.Completed) {
+            if (!updateResult.IsSaveCompleted()) {
                 // エラーメッセージは Update入荷明細Async 内で設定されるはず
                 return; // トランザクションはコミットされずに終了＝ロールバック
             }
         }
 
         await tran.CommitAsync();
-        context.ReturnValue.売上SEQ = result.DbEntity?.売上SEQ;
+        context.ReturnValue.売上SEQ = savedEntity.売上SEQ;
         context.Messages.AddInfo("売上登録が完了しました。");
     }
 }

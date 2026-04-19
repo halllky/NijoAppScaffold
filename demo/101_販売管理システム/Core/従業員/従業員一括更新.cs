@@ -52,7 +52,7 @@ partial class OverridedApplicationService {
                     SALT = salt,
                 }, context, message);
 
-                success = result.Result == DataModelSaveResultType.Completed;
+                success = result.IsSaveCompleted();
 
             } else if (item.WillBeDeleted) {
 
@@ -72,7 +72,7 @@ partial class OverridedApplicationService {
                     employee.システム管理者 = item.従業員.システム管理者;
                 }, context, message);
 
-                success = result.Result == DataModelSaveResultType.Completed;
+                success = result.IsSaveCompleted();
 
             } else {
                 // 変更なし

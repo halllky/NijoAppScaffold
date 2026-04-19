@@ -46,13 +46,13 @@ partial class OverridedApplicationService {
                 備考 = item.備考,
             }, context, message);
 
-            if (detailResult.Result != DataModelSaveResultType.Completed) {
+            if (!detailResult.IsSaveCompleted()) {
                 hasErrorInDetail = true;
             }
         }
 
         // すべてのヘッダ・明細の登録が成功したらコミット
-        if (!context.ValidationOnly && headerResult.Result == DataModelSaveResultType.Completed && !hasErrorInDetail) {
+        if (!context.ValidationOnly && headerResult.IsSaveCompleted() && !hasErrorInDetail) {
             await tran.CommitAsync();
             context.ReturnValue.入荷ID = newId;
             context.Messages.AddInfo("入荷登録が完了しました。");

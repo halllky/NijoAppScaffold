@@ -43,7 +43,7 @@ partial class OverridedApplicationService {
                 }, context);
             }
 
-            if (!context.ValidationOnly && result.Result == DataModelSaveResultType.Completed) {
+            if (!context.ValidationOnly && result.IsSaveCompleted()) {
                 await tran.CommitAsync();
             }
         }

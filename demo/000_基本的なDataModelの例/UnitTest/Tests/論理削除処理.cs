@@ -28,7 +28,7 @@ public class 論理削除処理 {
             旧システムコード = legacyCode,
             名称 = "論理削除用旧システム部署",
         }, presentationContext);
-        Assert.That(legacyResult.Result, Is.EqualTo(DataModelSaveResultType.Completed), "旧システム部署情報の作成に失敗しました。");
+        Assert.That(legacyResult.IsSaveCompleted(), Is.True, "旧システム部署情報の作成に失敗しました。");
 
         var createResult = await scope.App.Create部署Async(new() {
             部署ID = departmentId,
@@ -44,13 +44,13 @@ public class 論理削除処理 {
                 ],
             }],
         }, presentationContext);
-        Assert.That(createResult.Result, Is.EqualTo(DataModelSaveResultType.Completed), "部署の作成に失敗しました。");
-        Assert.That(createResult.DbEntity, Is.Not.Null, "登録結果にDbEntityがありません。");
-        Assert.That(createResult.DbEntity!.Version, Is.Not.Null, "登録結果のバージョンが取得できません。");
+        Assert.That(createResult.IsSaveCompleted(out var savedEntity), Is.True, "部署の作成に失敗しました。");
+        Assert.That(savedEntity, Is.Not.Null, "登録結果にDbEntityがありません。");
+        Assert.That(savedEntity?.Version, Is.Not.Null, "登録結果のバージョンが取得できません。");
 
         var deleteResult = await scope.App.SoftDelete部署Async(new() {
             部署ID = departmentId,
-            Version = createResult.DbEntity!.Version,
+            Version = savedEntity?.Version,
         }, presentationContext);
         Assert.That(deleteResult, Is.True, "論理削除が失敗しました。");
 

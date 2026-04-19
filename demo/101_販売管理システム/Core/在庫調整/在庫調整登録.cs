@@ -107,7 +107,7 @@ partial class OverridedApplicationService {
 
             // 在庫調整の登録に失敗した場合は処理中断。
             // コミットせずにトランザクションのスコープを抜けることでロールバックする。
-            if (adjustmentResult.Result != DataModelSaveResultType.Completed) {
+            if (!adjustmentResult.IsSaveCompleted()) {
                 return;
             }
 
@@ -126,7 +126,7 @@ partial class OverridedApplicationService {
                     備考 = $"在庫調整（増加）: {param.在庫調整理由}",
                 }, context);
 
-                if (newStockResult.Result != DataModelSaveResultType.Completed) {
+                if (!newStockResult.IsSaveCompleted()) {
                     hasError = true;
                 }
 
@@ -137,7 +137,7 @@ partial class OverridedApplicationService {
                         x.残数量 -= deduct;
                     }, context);
 
-                    if (updateStockResult.Result != DataModelSaveResultType.Completed) {
+                    if (!updateStockResult.IsSaveCompleted()) {
                         hasError = true;
                         break;
                     }
