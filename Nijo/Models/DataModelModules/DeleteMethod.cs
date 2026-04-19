@@ -65,8 +65,8 @@ namespace Nijo.Models.DataModelModules {
                 /// エラーメッセージを特定の位置に付加したい場合は指定する。
                 /// nullの場合はコンテキストのルートに付加される。
                 /// </param>
-                /// <returns>正常終了したかどうか</returns>
-                public virtual async Task<bool> {{MethodName}}({{command.CsClassNameDelete}} command, {{PresentationContext.INTERFACE}} context, {{MessageContainer.SETTER_INTERFACE}}? messageOwner = null) {
+                /// <returns>エラーがあった場合やエラーチェックのみの場合はfalseを、正常終了した場合はtrueと削除前のデータを返す。</returns>
+                public virtual async Task<DataModelSaveResult<{{dbEntity.CsClassName}}>> {{MethodName}}({{command.CsClassNameDelete}} command, {{PresentationContext.INTERFACE}} context, {{MessageContainer.SETTER_INTERFACE}}? messageOwner = null) {
                     var messages = messageOwner?.As<{{messages.InterfaceName}}>() ?? context.As<{{messages.InterfaceName}}>().Messages;
 
                     // 削除に必要な項目が空の場合は処理中断
@@ -79,7 +79,7 @@ namespace Nijo.Models.DataModelModules {
                 """)}}
                     if (keyIsEmpty) {
                         Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除で主キー空エラーが発生したデータ: {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
-                        return false;
+                        return new(DataModelSaveErrorReason.ValidationError);
                     }
 
                     // 削除前データ取得
@@ -100,7 +100,7 @@ namespace Nijo.Models.DataModelModules {
                     if (dbEntity == null) {
                         messages.AddError({{MsgFactory.MSG}}.{{UpdateMethod.ERR_DATA_NOT_FOUND}}());
                         Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除で削除対象が見つからないエラーが発生したデータ: {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
-                        return false;
+                        return new(DataModelSaveErrorReason.ValidationError);
                     }
 
                     // 更新前処理。入力検証を行なう。
@@ -113,11 +113,11 @@ namespace Nijo.Models.DataModelModules {
                         if (!context.ValidationOnly) {
                             Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除で入力エラーが発生した登録内容(JSON): {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
                         }
-                        return false;
+                        return new(DataModelSaveErrorReason.ValidationError);
                     }
 
                     // 「更新しますか？」の確認メッセージが承認される前の1巡目はエラーチェックのみで処理中断
-                    if (context.ValidationOnly) return false;
+                    if (context.ValidationOnly) return new(true);
                     if (DbContext.Database.CurrentTransaction == null) throw new InvalidOperationException("トランザクションが開始されていません。");
 
                     // 削除実行
@@ -143,13 +143,14 @@ namespace Nijo.Models.DataModelModules {
                         if (ex is DbUpdateConcurrencyException) {
                             messages.AddError({{MsgFactory.MSG}}.{{UpdateMethod.ERR_CONCURRENCY}}());
                             Log.LogWarning("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除で楽観排他エラー: {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
+                            return new(DataModelSaveErrorReason.ConcurrencyError);
 
                         } else {
                             messages.AddError({{MsgFactory.MSG}}.{{UpdateMethod.ERR_ID_UNKNOWN}}(ex.Message));
                             Log.LogError(ex, "削除処理中にエラーが発生しました。");
                             Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除でSQL発行時エラーが発生した登録内容(JSON): {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
+                            return new(DataModelSaveErrorReason.ValidationError);
                         }
-                        return false;
                     }
 
                     // 削除後処理
@@ -170,13 +171,13 @@ namespace Nijo.Models.DataModelModules {
                         Log.LogError(ex, "削除後の処理中にエラーが発生しました。");
                         Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}削除後エラーが発生した登録内容(JSON): {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
                         await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT).ConfigureAwait(false);
-                        return false;
+                        return new(DataModelSaveErrorReason.AfterSaveError);
                     }
 
                     Log.LogInformation("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}データを物理削除しました。（{{keys.Select(x => x.LogTemplate).Join(", ")}}）", {{keys.Select(x => x.DbEntityFullPath).Join(", ")}});
                     Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} 削除パラメータ: {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
 
-                    return true;
+                    return new(dbEntity);
                 }
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の物理削除の確定前に実行される処理。

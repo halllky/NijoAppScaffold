@@ -57,10 +57,12 @@ partial class OverridedApplicationService {
             } else if (item.WillBeDeleted) {
 
                 // 削除
-                success = await Delete従業員Async(new() {
+                var result = await Delete従業員Async(new() {
                     従業員番号 = item.従業員.従業員番号,
                     Version = item.従業員.Version,
                 }, context, message);
+
+                success = result.IsSaveCompleted();
 
             } else if (item.WillBeChanged) {
 
