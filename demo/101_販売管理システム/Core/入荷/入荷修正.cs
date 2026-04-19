@@ -20,7 +20,10 @@ partial class OverridedApplicationService {
         await using var tran = await BeginTransactionAsync();
 
         // ヘッダ更新
-        var updateHeaderResult = await Update入荷Async(param.入荷ID, param.Version, header => {
+        var updateHeaderResult = await Update入荷Async(new() {
+            入荷ID = param.入荷ID,
+            Version = param.Version,
+        }, header => {
             header.入荷日時 = param.入荷日時;
             header.担当者 = new() { 従業員番号 = param.担当者.従業員番号 };
             header.備考 = param.備考;
@@ -68,7 +71,10 @@ partial class OverridedApplicationService {
                 if (message.HasError()) continue;
 
                 // 更新実行
-                await Update入荷明細Async(inputId, inputItem.Version, detail => {
+                await Update入荷明細Async(new() {
+                    入荷明細ID = inputId,
+                    Version = inputItem.Version,
+                }, detail => {
                     detail.商品 = new() { 商品SEQ = inputItem.商品.商品SEQ };
                     detail.仕入単価_税抜 = inputItem.仕入単価_税抜;
                     detail.消費税区分 = inputItem.消費税区分;

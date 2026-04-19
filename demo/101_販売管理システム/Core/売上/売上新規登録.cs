@@ -138,7 +138,10 @@ partial class OverridedApplicationService {
             var stockEntity = stockCache.Values.SelectMany(x => x).FirstOrDefault(x => x.入荷明細ID == stockId);
             var version = stockEntity?.Version;
 
-            var updateResult = await Update入荷明細Async(stockId, version, x => {
+            var updateResult = await Update入荷明細Async(new() {
+                入荷明細ID = stockId,
+                Version = version,
+            }, x => {
                 x.残数量 -= deduct;
             }, context);
 

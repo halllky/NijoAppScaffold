@@ -67,7 +67,10 @@ partial class OverridedApplicationService {
             } else if (item.WillBeChanged) {
 
                 // 更新
-                var result = await Update従業員Async(item.従業員.従業員番号, item.従業員.Version, employee => {
+                var result = await Update従業員Async(new() {
+                    従業員番号 = item.従業員.従業員番号,
+                    Version = item.従業員.Version,
+                }, employee => {
                     employee.氏名 = item.従業員.氏名;
                     employee.入荷担当 = item.従業員.入荷担当;
                     employee.販売担当 = item.従業員.販売担当;

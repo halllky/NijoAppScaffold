@@ -76,7 +76,7 @@ namespace Nijo.Models.QueryModelModules {
 
             var createCommand = new SaveCommand(Aggregate, SaveCommand.E_Type.Create);
             var udpateCommand = new SaveCommand(Aggregate, SaveCommand.E_Type.Update);
-            var deleteCommand = new SaveCommand(Aggregate, SaveCommand.E_Type.Delete);
+            var updOrDelKey = new SaveCommand(Aggregate, SaveCommand.E_Type.UpdOrDelKey);
 
             var right = new Variable("this", this);
             var dict = right
@@ -99,11 +99,11 @@ namespace Nijo.Models.QueryModelModules {
                     {{WithIndent(EnumerateMembers(true, udpateCommand, right, dict), "    ")}}
                 }
                 /// <summary>
-                /// このインスタンスを <see cref="{{deleteCommand.CsClassName}}"/> に変換します。
+                /// このインスタンスを <see cref="{{updOrDelKey.CsClassName}}"/> に変換します。
                 /// </summary>
-                public {{deleteCommand.CsClassNameDelete}} {{TO_DELETE_COMMAND}}() {
-                    return new {{deleteCommand.CsClassNameDelete}} {
-                        {{WithIndent(EnumerateMembers(false, deleteCommand, right, dict), "        ")}}
+                public {{updOrDelKey.CsClassNameDelete}} {{TO_DELETE_COMMAND}}() {
+                    return new {{updOrDelKey.CsClassNameDelete}} {
+                        {{WithIndent(EnumerateMembers(false, updOrDelKey, right, dict), "        ")}}
                         {{SaveCommand.VERSION}} = this.{{VERSION_CS}},
                     };
                 }

@@ -25,6 +25,7 @@ namespace Nijo.Models.DataModelModules {
 
         internal string Render(CodeRenderingContext ctx) {
             var command = new SaveCommand(_rootAggregate, SaveCommand.E_Type.Update);
+            var keyCommand = new SaveCommand(_rootAggregate, SaveCommand.E_Type.UpdOrDelKey);
             var dbEntity = new EFCoreEntity(_rootAggregate);
             var messages = new SaveCommandMessageContainer(_rootAggregate);
 
@@ -39,8 +40,7 @@ namespace Nijo.Models.DataModelModules {
                 .Select((vm, i) => {
                     var fullpath = vm.GetPathFromEntry().ToArray();
                     return new {
-                        ArgVarType = vm.Type,
-                        ArgVarName = $"key{i}_{vm.PhysicalName}",
+                        TempVarName = $"searchKey{i + 1}",
                         vm.DisplayName,
                         VmType = vm.Type,
                         LogTemplate = $"{vm.DisplayName.Replace("\"", "\\\"")}: {{key{i}}}",
@@ -60,14 +60,7 @@ namespace Nijo.Models.DataModelModules {
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の更新を実行します。
                 /// </summary>
-                {{keys.SelectTextTemplate(k => $$"""
-                /// <param name="{{k.ArgVarName}}">{{k.DisplayName}}。nullの場合はエラー。</param>
-                """)}}
-                /// <param name="version">
-                /// 楽観排他制御用のバージョン。
-                /// GUIでの更新の場合は更新時ではなく画面表示時のバージョンを指定してください。
-                /// nullの場合は最新のバージョンに対して更新をかけます。
-                /// </param>
+                /// <param name="key">更新対象の主キーと楽観排他制御用のバージョン。</param>
                 /// <param name="updater">更新関数。引数は更新前の値。この関数の中で更新したいプロパティを書き換えてください。非同期処理がある場合は async / await を使用できます。</param>
                 /// <param name="context">コンテキスト</param>
                 /// <param name="messageOwner">
@@ -81,10 +74,7 @@ namespace Nijo.Models.DataModelModules {
                 #region 更新処理
                 {{xmlComment}}
                 public virtual async Task<DataModelSaveResult<{{dbEntity.CsClassName}}>> {{MethodName}}(
-                {{keys.SelectTextTemplate(k => $$"""
-                    {{k.ArgVarType.CsDomainTypeName}}? {{k.ArgVarName}},
-                """)}}
-                    int? version,
+                    {{keyCommand.CsClassNameDelete}} key,
                     Func<{{command.CsClassNameUpdate}}, Task> updater,
                     {{PresentationContext.INTERFACE}} context,
                     {{MessageContainer.SETTER_INTERFACE}}? messageOwner = null) {
@@ -94,30 +84,34 @@ namespace Nijo.Models.DataModelModules {
                     // 更新に必要な項目が空の場合は処理中断
                     var keyIsEmpty = false;
                 {{keys.SelectTextTemplate(vm => $$"""
-                    if ({{vm.ArgVarName}} == null) {
+                    if (key.{{vm.SaveCommandFullPath.Join("?.")}} == null) {
                         keyIsEmpty = true;
                         messages.{{vm.SaveCommandMessageFullPath.Join(".")}}.AddError({{MsgFactory.MSG}}.{{ERR_KEY_IS_EMPTY}}("{{vm.DisplayName.Replace("\"", "\\\"")}}"));
                     }
                 """)}}
                     if (keyIsEmpty) {
-                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で主キーが空 ({{keys.Select((vm, i) => $"{vm.ArgVarName}: {{key{i}}}").Join(", ")}}, {{SaveCommand.VERSION}}:{{$"{{key{keys.Length}}}"}})", {{keys.Select(vm => vm.ArgVarName).Join(", ")}}, version);
+                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で主キー空エラーが発生したデータ: {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(key));
                         return new(DataModelSaveErrorReason.ValidationError);
                     }
 
                     // 更新前データ取得
+                {{keys.SelectTextTemplate(vm => $$"""
+                    var {{vm.TempVarName}} = {{vm.VmType.RenderCastToPrimitiveType()}}key.{{vm.SaveCommandFullPath.Join("!.")}};
+                """)}}
+
                     var beforeDbEntity = await DbContext.{{dbEntity.DbSetName}}
                         .AsNoTracking()
                 {{dbEntity.RenderInclude().SelectTextTemplate(source => $$"""
                         {{source}}
                 """)}}
                         .SingleOrDefaultAsync(e {{WithIndent(keys.SelectTextTemplate((vm, i) => $$"""
-                                                {{(i == 0 ? "=>" : "&&")}} {{vm.SingleOrDefaultLeft}} == {{vm.ArgVarType.RenderCastToPrimitiveType()}}{{vm.ArgVarName}}
+                                                {{(i == 0 ? "=>" : "&&")}} {{vm.SingleOrDefaultLeft}} == {{vm.TempVarName}}
                                                 """), "                                ")}})
                         .ConfigureAwait(false);
 
                     if (beforeDbEntity == null) {
                         messages.AddError({{MsgFactory.MSG}}.{{ERR_DATA_NOT_FOUND}}());
-                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で更新対象が見つからないエラーが発生したデータ: {{keys.Select((vm, i) => $"{vm.ArgVarName}: {{key{i}}}").Join(", ")}}", {{keys.Select(vm => vm.ArgVarName).Join(", ")}});
+                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で更新対象が見つからないエラーが発生したデータ: {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(key));
                         return new(DataModelSaveErrorReason.ValidationError);
                     }
 
@@ -127,7 +121,7 @@ namespace Nijo.Models.DataModelModules {
                     var afterDbEntity = command.{{SaveCommand.TO_DBENTITY}}();
 
                     // 自動的に登録される項目
-                    afterDbEntity.{{EFCoreEntity.VERSION}} = (version ?? beforeDbEntity.{{EFCoreEntity.VERSION}}) + 1;
+                    afterDbEntity.{{EFCoreEntity.VERSION}} = (key.{{SaveCommand.VERSION}} ?? beforeDbEntity.{{EFCoreEntity.VERSION}}) + 1;
                     afterDbEntity.{{EFCoreEntity.CREATED_AT}} = beforeDbEntity.{{EFCoreEntity.CREATED_AT}};
                     afterDbEntity.{{EFCoreEntity.UPDATED_AT}} = {{ApplicationService.CURRENT_TIME}};
                     afterDbEntity.{{EFCoreEntity.CREATE_USER}} = beforeDbEntity.{{EFCoreEntity.CREATE_USER}};
@@ -160,7 +154,7 @@ namespace Nijo.Models.DataModelModules {
                     try {
                         var entry = DbContext.Entry(afterDbEntity);
                         entry.State = EntityState.Modified;
-                        entry.Property(e => e.{{EFCoreEntity.VERSION}}).OriginalValue = version ?? beforeDbEntity.{{EFCoreEntity.VERSION}};
+                        entry.Property(e => e.{{EFCoreEntity.VERSION}}).OriginalValue = key.{{SaveCommand.VERSION}} ?? beforeDbEntity.{{EFCoreEntity.VERSION}};
 
                 {{RenderDescendantAttaching(_rootAggregate).SelectTextTemplate(source => $$"""
                         {{WithIndent(source, "        ")}}
@@ -219,20 +213,14 @@ namespace Nijo.Models.DataModelModules {
                 }
                 {{xmlComment}}
                 public virtual Task<DataModelSaveResult<{{dbEntity.CsClassName}}>> {{MethodName}}(
-                {{keys.SelectTextTemplate(k => $$"""
-                    {{k.ArgVarType.CsDomainTypeName}}? {{k.ArgVarName}},
-                """)}}
-                    int? version,
+                    {{keyCommand.CsClassNameDelete}} key,
                     Action<{{command.CsClassNameUpdate}}> updater,
                     {{PresentationContext.INTERFACE}} context,
                     {{MessageContainer.SETTER_INTERFACE}}? messageOwner = null) {
 
                     // 非同期版のオーバーロードに委譲
                     return {{MethodName}}(
-                {{keys.SelectTextTemplate(k => $$"""
-                        {{k.ArgVarName}},
-                """)}}
-                        version,
+                        key,
                         command => {
                             updater(command);
                             return Task.CompletedTask;

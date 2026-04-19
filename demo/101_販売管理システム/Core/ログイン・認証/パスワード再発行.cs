@@ -28,7 +28,10 @@ partial class OverridedApplicationService {
         // 更新
         await using var tran = await BeginTransactionAsync();
 
-        var result = await Update従業員Async(param.対象者.従業員番号, null, employee => {
+        var result = await Update従業員Async(new() {
+            従業員番号 = param.対象者.従業員番号,
+            Version = null,
+        }, employee => {
             employee.SALT = salt;
             employee.パスワード = hash;
         }, context);

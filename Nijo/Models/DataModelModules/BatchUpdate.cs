@@ -71,23 +71,11 @@ namespace Nijo.Models.DataModelModules {
         }
 
         internal string RenderAppSrvMethod(CodeRenderingContext ctx) {
-            var displayData = new DisplayData(_rootAggregate);
             var displayDataMssage = new DisplayDataMessageContainer(_rootAggregate);
 
             var createMethod = new CreateMethod(_rootAggregate);
             var updateMethod = new UpdateMethod(_rootAggregate);
             var deleteMethod = new DeleteMethod(_rootAggregate);
-
-            var createCommand = new SaveCommand(_rootAggregate, SaveCommand.E_Type.Create);
-            var udpateCommand = new SaveCommand(_rootAggregate, SaveCommand.E_Type.Update);
-            var deleteCommand = new SaveCommand(_rootAggregate, SaveCommand.E_Type.Delete);
-
-            // Updateの主キー
-            var ownKeys = _rootAggregate.GetKeyVMs().ToHashSet();
-            var primaryKeys = new Variable("displayData", displayData)
-                .Create1To1PropertiesRecursively()
-                .Where(prop => prop.Metadata is DisplayData.EditablePresentationObjectValueMember vm && ownKeys.Contains(vm.Member)
-                            || prop.Metadata is DisplayDataRef.RefDisplayDataValueMember refVm && ownKeys.Contains(refVm.Member));
 
             return $$"""
                 /// <summary>
@@ -121,11 +109,9 @@ namespace Nijo.Models.DataModelModules {
 
                         } else if (displayData.WillBeChanged) {
                             // 更新
+                            var updateKey = displayData.{{DisplayData.TO_DELETE_COMMAND}}();
                             await {{updateMethod.MethodName}}(
-                {{primaryKeys.SelectTextTemplate(prop => $$"""
-                                {{prop.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")}},
-                """)}}
-                                displayData.{{DisplayData.VERSION_CS}},
+                                updateKey,
                                 displayData.{{DisplayData.ASSIGN_TO_UPDATE_COMMAND}},
                                 context,
                                 context.Messages[i]);

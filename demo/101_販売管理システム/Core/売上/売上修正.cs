@@ -184,7 +184,10 @@ partial class OverridedApplicationService {
         // 保存処理
         await using var tran = await BeginTransactionAsync();
 
-        var updateResult = await Update売上Async(param.売上SEQ, null, command => {
+        var updateResult = await Update売上Async(new() {
+            売上SEQ = param.売上SEQ,
+            Version = null,
+        }, command => {
             // 備考の更新
             command.備考 = param.備考;
 
@@ -215,7 +218,10 @@ partial class OverridedApplicationService {
                 var stockEntity = stockCache.Values.SelectMany(x => x).FirstOrDefault(x => x.入荷明細ID == stockId);
                 var version = stockEntity?.Version;
 
-                var updateStockResult = await Update入荷明細Async(stockId, version, x => {
+                var updateStockResult = await Update入荷明細Async(new() {
+                    入荷明細ID = stockId,
+                    Version = version,
+                }, x => {
                     x.残数量 -= deduct; // deductが負の場合は残数量が増える
                 }, context);
 

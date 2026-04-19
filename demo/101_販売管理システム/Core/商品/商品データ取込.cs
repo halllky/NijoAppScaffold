@@ -36,7 +36,10 @@ partial class OverridedApplicationService {
             } else {
                 // 更新
                 // バッチ処理なので楽観排他制御は行わず、現在のバージョンを取得して更新する
-                result = await Update商品Async(entity.商品SEQ, entity.Version, command => {
+                result = await Update商品Async(new() {
+                    商品SEQ = entity.商品SEQ,
+                    Version = entity.Version,
+                }, command => {
                     command.商品名 = item.Name;
                     command.売値単価_税抜 = item.Price;
                     command.消費税区分 = taxType;

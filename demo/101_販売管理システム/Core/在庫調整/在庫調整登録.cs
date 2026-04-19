@@ -133,7 +133,10 @@ partial class OverridedApplicationService {
             } else {
                 // 減少：既存の入荷明細の更新
                 foreach (var (stock, deduct) in allocationPlan) {
-                    var updateStockResult = await Update入荷明細Async(stock.入荷明細ID, stock.Version, x => {
+                    var updateStockResult = await Update入荷明細Async(new() {
+                        入荷明細ID = stock.入荷明細ID,
+                        Version = stock.Version,
+                    }, x => {
                         x.残数量 -= deduct;
                     }, context);
 

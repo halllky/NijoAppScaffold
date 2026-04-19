@@ -110,7 +110,10 @@ partial class DB接続あり_更新あり {
             var warehouse1 = scope.App.DbContext.保管庫マスタDbSet.OrderBy(x => x.保管庫ID).First();
             var employee1 = scope.App.DbContext.医療従事者マスタDbSet.OrderBy(x => x.医療従事者ID).First();
 
-            await scope.App.Update医療機器マスタAsync("MED001", 0, data => {
+            await scope.App.Update医療機器マスタAsync(new() {
+                機器ID = "MED001",
+                Version = 0,
+            }, data => {
                 data.機器名 = "テスト医療機器1-更新";
                 data.単価 = 1500;
                 data.機器分類 = new() { 機器分類ID = category1.機器分類ID };
@@ -191,7 +194,10 @@ partial class DB接続あり_更新あり {
             var supplier1 = scope.App.DbContext.供給業者マスタDbSet.OrderBy(x => x.供給業者ID).First();
             var warehouse1 = scope.App.DbContext.保管庫マスタDbSet.OrderBy(x => x.保管庫ID).First();
 
-            await scope.App.Update医療機器マスタAsync("MED001", 1, data => {
+            await scope.App.Update医療機器マスタAsync(new() {
+                機器ID = "MED001",
+                Version = 1,
+            }, data => {
                 data.機器名 = "テスト医療機器1-更新";
                 data.単価 = 1500;
                 data.機器分類 = new() { 機器分類ID = category1.機器分類ID };
@@ -244,7 +250,10 @@ partial class DB接続あり_更新あり {
             var warehouse1 = scope.App.DbContext.保管庫マスタDbSet.OrderBy(x => x.保管庫ID).First();
             var employee1 = scope.App.DbContext.医療従事者マスタDbSet.OrderBy(x => x.医療従事者ID).First();
 
-            await scope.App.Update医療機器マスタAsync("MED001", 2, data => {
+            await scope.App.Update医療機器マスタAsync(new() {
+                機器ID = "MED001",
+                Version = 2,
+            }, data => {
                 data.機器名 = "テスト医療機器1-更新";
                 data.単価 = 1500;
                 data.機器分類 = new() { 機器分類ID = category1.機器分類ID };
@@ -312,7 +321,10 @@ partial class DB接続あり_更新あり {
             var category1 = scope.App.DbContext.機器分類マスタDbSet.OrderBy(x => x.機器分類ID).First();
             var supplier1 = scope.App.DbContext.供給業者マスタDbSet.OrderBy(x => x.供給業者ID).First();
 
-            await scope.App.Update医療機器マスタAsync("MED001", 3, data => {
+            await scope.App.Update医療機器マスタAsync(new() {
+                機器ID = "MED001",
+                Version = 3,
+            }, data => {
                 data.機器名 = "テスト医療機器1-更新";
                 data.単価 = 1500;
                 data.機器分類 = new() { 機器分類ID = category1.機器分類ID };

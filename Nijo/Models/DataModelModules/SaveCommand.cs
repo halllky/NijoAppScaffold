@@ -23,13 +23,13 @@ namespace Nijo.Models.DataModelModules {
         }
         internal AggregateBase Aggregate { get; }
 
-        internal enum E_Type { Create, Update, Delete }
+        internal enum E_Type { Create, Update, UpdOrDelKey }
         internal E_Type Type { get; }
 
         internal string CsClassName => Type switch {
             E_Type.Create => $"{Aggregate.PhysicalName}CreateCommand",
             E_Type.Update => $"{Aggregate.PhysicalName}UpdateCommand",
-            E_Type.Delete => $"{Aggregate.PhysicalName}DeleteCommand",
+            E_Type.UpdOrDelKey => $"{Aggregate.PhysicalName}UpdateOrDeleteKey",
             _ => throw new InvalidOperationException(),
         };
         internal string CsClassNameCreate => CsClassName;
@@ -37,7 +37,7 @@ namespace Nijo.Models.DataModelModules {
         internal string CsClassNameDelete => CsClassName;
 
         /// <summary>
-        /// 楽観排他のバージョン。Deleteの場合のみ使用。（Updateの場合はコマンドのプロパティとしてではなく更新処理の引数で渡す）
+        /// 楽観排他のバージョン。UpdateOrDeleteKeyの場合のみ使用
         /// </summary>
         internal const string VERSION = "Version";
         internal const string TO_DBENTITY = "ToDbEntity";
@@ -67,7 +67,7 @@ namespace Nijo.Models.DataModelModules {
 
                 #region 物理削除時引数
                 {{tree.SelectTextTemplate(agg => $$"""
-                {{new SaveCommand(agg, E_Type.Delete).RenderDeleteCommandDeclaring(ctx)}}
+                {{new SaveCommand(agg, E_Type.UpdOrDelKey).RenderDeleteCommandDeclaring(ctx)}}
                 """)}}
                 #endregion 物理削除時引数
                 """;
@@ -80,7 +80,7 @@ namespace Nijo.Models.DataModelModules {
             return Type switch {
                 E_Type.Create => GetCreateCommandMembers(),
                 E_Type.Update => GetUpdateCommandMembers(),
-                E_Type.Delete => GetDeleteCommandMembers(),
+                E_Type.UpdOrDelKey => GetDeleteCommandMembers(),
                 _ => throw new NotImplementedException(),
             };
         }
@@ -259,7 +259,10 @@ namespace Nijo.Models.DataModelModules {
                     {{WithIndent(m.RenderDeclaring(ctx), "    ")}}
                 """)}}
                 {{If(Aggregate is RootAggregate, () => $$"""
-                    /// <summary>楽観排他制御用のバージョン</summary>
+                    /// <summary>
+                    /// 楽観排他制御用のバージョン。
+                    /// GUIでの更新の場合は更新時ではなく画面表示時のバージョンを指定してください。
+                    /// </summary>
                     public required int? {{VERSION}} { get; set; }
                 """)}}
                 }
@@ -353,7 +356,7 @@ namespace Nijo.Models.DataModelModules {
             public string DisplayName => Aggregate.DisplayName;
             public string CsCreateType => new SaveCommand(Aggregate, SaveCommand.E_Type.Create).CsClassNameCreate;
             public string CsUpdateType => new SaveCommand(Aggregate, SaveCommand.E_Type.Update).CsClassNameUpdate;
-            public string CsDeleteType => new SaveCommand(Aggregate, SaveCommand.E_Type.Delete).CsClassNameDelete;
+            public string CsDeleteType => new SaveCommand(Aggregate, SaveCommand.E_Type.UpdOrDelKey).CsClassNameDelete;
 
             bool ISaveCommandMember.IsKey => false;
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Aggregate;
@@ -365,7 +368,7 @@ namespace Nijo.Models.DataModelModules {
                 var className = Type switch {
                     E_Type.Create => CsCreateType,
                     E_Type.Update => CsUpdateType,
-                    E_Type.Delete => CsDeleteType,
+                    E_Type.UpdOrDelKey => CsDeleteType,
                     _ => throw new NotImplementedException(),
                 };
                 return $$"""
@@ -387,7 +390,7 @@ namespace Nijo.Models.DataModelModules {
             public string DisplayName => base.Aggregate.DisplayName;
             public string CsCreateType => $"List<{new SaveCommand(base.Aggregate, E_Type.Create).CsClassName}>";
             public string CsUpdateType => $"List<{new SaveCommand(base.Aggregate, E_Type.Update).CsClassName}>";
-            public string CsDeleteType => $"List<{new SaveCommand(base.Aggregate, E_Type.Delete).CsClassName}>";
+            public string CsDeleteType => $"List<{new SaveCommand(base.Aggregate, E_Type.UpdOrDelKey).CsClassName}>";
 
             bool ISaveCommandMember.IsKey => false;
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => base.Aggregate;
@@ -399,7 +402,7 @@ namespace Nijo.Models.DataModelModules {
                 var className = Type switch {
                     E_Type.Create => CsCreateType,
                     E_Type.Update => CsUpdateType,
-                    E_Type.Delete => CsDeleteType,
+                    E_Type.UpdOrDelKey => CsDeleteType,
                     _ => throw new NotImplementedException(),
                 };
                 return $$"""
