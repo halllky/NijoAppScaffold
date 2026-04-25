@@ -332,6 +332,9 @@ internal class DeepEqualFunction {
                         """;
 
                 } else if (member is IInstanceStructurePropertyMetadata structureMember) {
+                    // Childはローカル比較関数で登場するので割愛
+                    if (structureMember.SchemaPathNode is AggregateBase agg && agg.IsDescendantOf(disp.Aggregate)) yield break;
+
                     // 外部参照先のChildrenがキーになることは無い
                     if (onlyKey && structureMember.IsArray) yield break;
 
