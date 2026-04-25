@@ -723,11 +723,11 @@
       Type="structure-model"
       UniqueId="76755f0b-6020-4d24-bdcc-d4a3120bfef0">
       <担当者
-        RefToObject="SearchCondition"
+        RefToObject="DisplayData"
         Type="ref-to:医療従事者マスタ"
         UniqueId="23a0757a-4b84-43a0-bbbb-c7ed6a78e44a" />
       <診療科
-        RefToObject="SearchCondition"
+        RefToObject="DisplayData"
         Type="ref-to:診療科マスタ"
         UniqueId="d1291d11-0638-4960-a043-3ec2926ae4ed" />
       <管理理由
@@ -740,11 +740,11 @@
         Type="children"
         UniqueId="50ea93fd-83fb-4b0a-8c89-fbd0ebf2bcd6">
         <医療機器
-          RefToObject="SearchCondition"
+          RefToObject="DisplayData"
           Type="ref-to:医療機器マスタ"
           UniqueId="db8fb20d-49e2-45ca-be78-8aab442b047a" />
         <保管庫
-          RefToObject="SearchCondition"
+          RefToObject="DisplayData"
           Type="ref-to:保管庫マスタ"
           UniqueId="82aa1f13-1657-4c7d-bb91-be1066072660" />
         <現在数量
@@ -766,12 +766,12 @@
           Type="ref-to:医療従事者マスタ/権限"
           UniqueId="2c6c0e75-04ca-407e-b984-5bbb00d3e03a" />
         <承認者
-          RefToObject="SearchCondition"
+          RefToObject="DisplayData"
           Type="ref-to:医療従事者マスタ"
           UniqueId="16acdb81-2c06-4c90-85d5-d42d460fbd3e" />
       </権限確認>
       <診療データ
-        RefToObject="SearchCondition"
+        RefToObject="DisplayData"
         Type="ref-to:診療収益分析"
         UniqueId="632b0c5b-524d-47c9-a8e3-72ab6d60f83a" />
     </医療機器管理Parameter>

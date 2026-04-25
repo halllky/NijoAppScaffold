@@ -61,10 +61,9 @@ namespace Nijo.ImmutableSchema {
         public bool IsNotNull => XElement.Attribute(BasicNodeOptions.IsNotNull.AttributeName) != null;
 
         /// <summary>
-        /// Commandのパラメータや戻り値でクエリモデルを参照する際の、そのクエリモデルのどのモジュールを参照するかの指定。
+        /// StructureModelがQueryModelを参照する際の、そのクエリモデルのどのモジュールを参照するかの指定。
         /// </summary>
         public E_RefToObject? RefToObject => XElement.Attribute(BasicNodeOptions.RefToObject.AttributeName)?.Value switch {
-            BasicNodeOptions.REF_TO_OBJECT_SEARCH_CONDITION => E_RefToObject.SearchCondition,
             BasicNodeOptions.REF_TO_OBJECT_DISPLAY_DATA => E_RefToObject.DisplayData,
             BasicNodeOptions.REF_TO_OBJECT_REF_TARGET => E_RefToObject.RefTarget,
             null => null,
@@ -72,7 +71,6 @@ namespace Nijo.ImmutableSchema {
         };
 
         public enum E_RefToObject {
-            SearchCondition,
             DisplayData,
             RefTarget,
         }

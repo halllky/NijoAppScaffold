@@ -108,8 +108,8 @@ namespace Nijo.Models {
                     }
 
                     // RefToObjectの値チェック
-                    if (!BasicNodeOptions.StructureRefToAvailable.ContainsKey(refToObject)) {
-                        addError(rootAggregateElement, $"{attributeName}属性のRefToObject指定「{refToObject}」は無効です。{string.Join(" または ", BasicNodeOptions.StructureRefToAvailable.Keys)}のいずれかを指定してください。");
+                    if (!BasicNodeOptions.AvailableFromCommandToQuery.ContainsKey(refToObject)) {
+                        addError(rootAggregateElement, $"{attributeName}属性のRefToObject指定「{refToObject}」は無効です。{string.Join(" または ", BasicNodeOptions.AvailableFromCommandToQuery.Keys)}のいずれかを指定してください。");
                     }
                 }
             } catch (ArgumentException ex) {

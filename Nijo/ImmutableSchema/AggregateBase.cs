@@ -472,7 +472,7 @@ namespace Nijo.ImmutableSchema {
 
                 return new Models.StructureModelModules.StructureDisplayData(targetRootAggregate);
 
-            } else if (BasicNodeOptions.StructureRefToAvailable.TryGetValue(splitted[1], out var factory)) {
+            } else if (BasicNodeOptions.AvailableFromCommandToQuery.TryGetValue(splitted[1], out var factory)) {
                 return factory(targetRootAggregate);
 
             } else {

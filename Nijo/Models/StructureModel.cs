@@ -71,8 +71,8 @@ namespace Nijo.Models {
                 // RefToObjectの値が不正かチェック
                 if ((isQueryModel || isGDQM)
                         && refToObject != null
-                        && !BasicNodeOptions.StructureRefToAvailable.ContainsKey(refToObject.Value)) {
-                    addError(refElement, $"{BasicNodeOptions.RefToObject.AttributeName}属性の値は {string.Join(" または ", BasicNodeOptions.StructureRefToAvailable.Keys)} のいずれかを指定してください。");
+                        && !BasicNodeOptions.AvailableFromStructureToQuery.Contains(refToObject.Value)) {
+                    addError(refElement, $"{BasicNodeOptions.RefToObject.AttributeName}属性の値は {string.Join(" または ", BasicNodeOptions.AvailableFromStructureToQuery)} のいずれかを指定してください。");
                 }
 
                 // 検索条件を参照する場合はルート集約のみ参照可能

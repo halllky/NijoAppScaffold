@@ -250,7 +250,6 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
             } else {
                 // Structure => Query
                 RefEntry = refTo.RefToObject switch {
-                    RefToMember.E_RefToObject.SearchCondition => new SearchCondition.Entry((RootAggregate)refTo.RefTo),
                     RefToMember.E_RefToObject.DisplayData => new DisplayData(refTo.RefTo),
                     RefToMember.E_RefToObject.RefTarget => new DisplayDataRef.Entry(refTo.RefTo),
                     _ => throw new NotImplementedException("ありえない"),
