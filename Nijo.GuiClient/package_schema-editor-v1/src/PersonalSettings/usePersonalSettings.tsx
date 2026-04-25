@@ -33,11 +33,13 @@ export const PersonalSettingsProvider: React.FC<{ children: React.ReactNode }> =
     path: TPath,
     value: ReactHookForm.PathValue<PersonalSettings, TPath>
   ) => {
-    const clone = window.structuredClone(personalSettings)
-    ReactHookForm.set(clone, path, value)
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(clone))
-    setPersonalSettings(clone)
-  }, [personalSettings])
+    setPersonalSettings(prev => {
+      const clone = window.structuredClone(prev)
+      ReactHookForm.set(clone, path, value)
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(clone))
+      return clone
+    })
+  }, [])
 
   // ブラウザの他のタブで設定が更新された場合にこちらにも適用する
   React.useEffect(() => {
