@@ -3,6 +3,7 @@ using Nijo.ImmutableSchema;
 using Nijo.Models.QueryModelModules;
 using Nijo.Parts.Common;
 using Nijo.Parts.CSharp;
+using Nijo.Parts.JavaScript;
 using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
@@ -261,9 +262,7 @@ namespace Nijo.Models {
             aggregateFile.AddTypeScriptFunction(EditablePresentationObject.RenderTsNewObjectFunctionRecursively(displayData, ctx));
             aggregateFile.AddTypeScriptFunction(displayData.RenderExtractPrimaryKey());
             aggregateFile.AddTypeScriptFunction(displayData.RenderAssignPrimaryKey());
-
-            var deepEquals = new DeepEqual(rootAggregate);
-            aggregateFile.AddTypeScriptFunction(deepEquals.RenderTypeScript());
+            aggregateFile.AddTypeScriptFunction(new DeepEqualFunction(displayData).Render(ctx));
 
             // データ型: 画面表示用型メッセージ
             var displayDataMessages = new DisplayDataMessageContainer(rootAggregate);
@@ -323,6 +322,8 @@ namespace Nijo.Models {
         }
 
         public void GenerateCode(CodeRenderingContext ctx) {
+            ctx.Use<DeepEqualFunction.OptionType>();
+
             ctx.CoreLibrary(dir => {
                 dir.Directory("Util", utilDir => {
                     utilDir.Generate(SearchProcessingReturn.RenderCSharp(ctx)); // 一覧検索の戻り値の型

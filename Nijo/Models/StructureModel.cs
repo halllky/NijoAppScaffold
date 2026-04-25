@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using Nijo.Parts.Common;
+using Nijo.Parts.JavaScript;
 
 namespace Nijo.Models {
     /// <summary>
@@ -106,6 +107,7 @@ namespace Nijo.Models {
                 aggregateFile.AddCSharpClass(StructureDisplayData.RenderCSharpRecursively(rootAggregate, ctx), "Class_DisplayData");
                 aggregateFile.AddTypeScriptTypeDef(StructureDisplayData.RenderTypeScriptRecursively(rootAggregate, ctx));
                 aggregateFile.AddTypeScriptFunction(EditablePresentationObject.RenderTsNewObjectFunctionRecursively(displayData, ctx));
+                aggregateFile.AddTypeScriptFunction(new DeepEqualFunction(displayData).Render(ctx));
             }
             if (refferdAsParameter) {
                 // メッセージコンテナ
@@ -124,7 +126,7 @@ namespace Nijo.Models {
         }
 
         public void GenerateCode(CodeRenderingContext ctx) {
-            // 特になし
+            ctx.Use<DeepEqualFunction.OptionType>();
         }
     }
 }
