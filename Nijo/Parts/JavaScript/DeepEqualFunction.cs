@@ -287,102 +287,63 @@ internal class DeepEqualFunction {
             var left = new Variable("left", disp);
             var right = new Variable("right", disp);
 
+            var leftMembers = left
+                .Create1To1PropertiesRecursively()
+                .ToDictionary(p => p.Metadata.SchemaPathNode.ToMappingKey());
+            var rightMembers = right
+                .Create1To1PropertiesRecursively()
+                .ToDictionary(p => p.Metadata.SchemaPathNode.ToMappingKey());
+
             return $$"""
                 function {{LocalCompareFunc(disp)}}({{left.Name}}: {{disp.TsTypeName}}, {{right.Name}}: {{disp.TsTypeName}}, equals: Exclude<Util.{{OptionType.TYPENAME}}["compareFunction"], undefined>): boolean {
-                {{RenderMembers().SelectTextTemplate(source => $$"""
-                  {{WithIndent(source, "  ")}}
+                {{disp.GetValueMembers().SelectMany(m => RenderMember(m, onlyKey: false)).SelectTextTemplate(sourceCode => $$"""
+                  {{WithIndent(sourceCode, "  ")}}
                 """)}}
                   if (({{left.Name}}.{{EditablePresentationObject.WILL_BE_DELETED_TS}} ?? false) !== ({{right.Name}}.{{EditablePresentationObject.WILL_BE_DELETED_TS}} ?? false)) return false;
                   return true;
                 }
                 """;
 
-            IEnumerable<string> RenderMembers() {
-                var leftMembers = left
-                    .Create1To1PropertiesRecursively()
-                    .ToDictionary(p => p.Metadata.SchemaPathNode.ToMappingKey());
-                var rightMembers = right
-                    .Create1To1PropertiesRecursively()
-                    .ToDictionary(p => p.Metadata.SchemaPathNode.ToMappingKey());
+            IEnumerable<string> RenderMember(IInstancePropertyMetadata member, bool onlyKey) {
 
-                foreach (var m in disp.GetValueMembers()) {
-
-                    // Value Member
-                    if (m is EditablePresentationObject.EditablePresentationObjectValueMember vm) {
-
-                        var leftProp = leftMembers[vm.Member.ToMappingKey()]
-                            .GetJoinedPathFromInstance(E_CsTs.TypeScript, "?.");
-                        var rightProp = rightMembers[vm.Member.ToMappingKey()]
-                            .GetJoinedPathFromInstance(E_CsTs.TypeScript, "?.");
-
-                        var valueTypeName = vm.Member.Type switch {
-                            ValueMemberTypes.StaticEnumMember => "Enum",
-                            ValueMemberTypes.ValueObjectMember => "ValueObject",
-                            _ => vm.Member.Type.TypePhysicalName,
-                        };
-                        var valueTypeAdditionalInfo = vm.Member.Type switch {
-                            ValueMemberTypes.StaticEnumMember => $", '{vm.Member.Type.TsTypeName.Split('.').Last()}'",
-                            ValueMemberTypes.ValueObjectMember => $", undefined, '{vm.Member.Type.TsTypeName.Split('.').Last()}'",
-                            _ => "",
-                        };
-
-                        yield return $$"""
-                            if (!equals('{{valueTypeName}}', {{leftProp}}, {{rightProp}}{{valueTypeAdditionalInfo}})) return false;
-                            """;
+                if (member is IInstanceValuePropertyMetadata valueMember) {
+                    if (onlyKey && member is DisplayDataRef.RefDisplayDataValueMember refValueMember && !refValueMember.Member.IsKey) {
+                        yield break; // 外部参照オブジェクトはキー以外を比較しない
                     }
 
-                    // RefTo Member
-                    else if (m is EditablePresentationObject.EditablePresentationObjectRefMember rm) {
-                        foreach (var sourceCode in RenderRefMember(rm.RefEntry.GetMembers(), onlyKey: rm.RefEntry is DisplayDataRef.DisplayDataRefBase)) {
+                    var leftProp = leftMembers[valueMember.SchemaPathNode.ToMappingKey()]
+                        .GetJoinedPathFromInstance(E_CsTs.TypeScript, "?.");
+                    var rightProp = rightMembers[valueMember.SchemaPathNode.ToMappingKey()]
+                        .GetJoinedPathFromInstance(E_CsTs.TypeScript, "?.");
+
+                    var valueTypeName = valueMember.Type switch {
+                        ValueMemberTypes.StaticEnumMember => "Enum",
+                        ValueMemberTypes.ValueObjectMember => "ValueObject",
+                        _ => valueMember.Type.TypePhysicalName,
+                    };
+                    var valueTypeAdditionalInfo = valueMember.Type switch {
+                        ValueMemberTypes.StaticEnumMember => $", '{valueMember.Type.TsTypeName.Split('.').Last()}'",
+                        ValueMemberTypes.ValueObjectMember => $", undefined, '{valueMember.Type.TsTypeName.Split('.').Last()}'",
+                        _ => "",
+                    };
+
+                    yield return $$"""
+                        if (!equals('{{valueTypeName}}', {{leftProp}}, {{rightProp}}{{valueTypeAdditionalInfo}})) return false;
+                        """;
+
+                } else if (member is IInstanceStructurePropertyMetadata structureMember) {
+                    // 外部参照先のChildrenがキーになることは無い
+                    if (onlyKey && structureMember.IsArray) yield break;
+
+                    // RefTo の配列要素の差分はこの関数では追跡しない
+                    if (structureMember.IsArray) yield break;
+
+                    var isRefEntry = structureMember is EditablePresentationObject.EditablePresentationObjectRefMember;
+
+                    foreach (var member2 in structureMember.GetMembers()) {
+                        foreach (var sourceCode in RenderMember(member2, onlyKey || isRefEntry)) {
                             yield return sourceCode;
                         }
-
-                        IEnumerable<string> RenderRefMember(IEnumerable<IInstancePropertyMetadata> members, bool onlyKey) {
-                            foreach (var member in members) {
-                                if (member is IInstanceValuePropertyMetadata valueMember) {
-                                    if (onlyKey && member is DisplayDataRef.RefDisplayDataValueMember refValueMember && !refValueMember.Member.IsKey) {
-                                        continue; // 外部参照オブジェクトはキー以外を比較しない
-                                    }
-
-                                    var leftProp = leftMembers[valueMember.SchemaPathNode.ToMappingKey()]
-                                        .GetJoinedPathFromInstance(E_CsTs.TypeScript, "?.");
-                                    var rightProp = rightMembers[valueMember.SchemaPathNode.ToMappingKey()]
-                                        .GetJoinedPathFromInstance(E_CsTs.TypeScript, "?.");
-
-                                    var valueTypeName = valueMember.Type switch {
-                                        ValueMemberTypes.StaticEnumMember => "Enum",
-                                        ValueMemberTypes.ValueObjectMember => "ValueObject",
-                                        _ => valueMember.Type.TypePhysicalName,
-                                    };
-                                    var valueTypeAdditionalInfo = valueMember.Type switch {
-                                        ValueMemberTypes.StaticEnumMember => $", '{valueMember.Type.TsTypeName.Split('.').Last()}'",
-                                        ValueMemberTypes.ValueObjectMember => $", undefined, '{valueMember.Type.TsTypeName.Split('.').Last()}'",
-                                        _ => "",
-                                    };
-
-                                    yield return $$"""
-                                        if (!equals('{{valueTypeName}}', {{leftProp}}, {{rightProp}}{{valueTypeAdditionalInfo}})) return false;
-                                        """;
-
-                                } else if (member is IInstanceStructurePropertyMetadata structureMember) {
-                                    if (onlyKey && structureMember.IsArray) {
-                                        // 外部参照先のChildrenがキーになることは無い
-                                        continue;
-                                    }
-
-                                    if (structureMember.IsArray) {
-                                        // RefTo の配列要素の差分はこの関数では追跡しない
-                                        continue;
-                                    }
-
-                                    foreach (var sourceCode in RenderRefMember(structureMember.GetMembers(), onlyKey)) {
-                                        yield return sourceCode;
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        throw new Exception($"Unknown member type: {m.GetType()}");
                     }
                 }
             }
