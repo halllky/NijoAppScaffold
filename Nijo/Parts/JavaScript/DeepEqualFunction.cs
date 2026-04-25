@@ -24,6 +24,27 @@ internal class DeepEqualFunction {
 
     internal string FunctionName => $"deepEqual{_displayData.Aggregate.PhysicalName}";
 
+    internal const string JSDOC = $$"""
+        /**
+         * 2つの画面表示用オブジェクトをディープイコールで比較し、等しい場合はtrueを返す関数。
+         *
+         * * 以下は差があっても変更なしと判定します。
+         *   * ネストされたオブジェクトや配列の参照等価性
+         *   * {{EditablePresentationObject.EXISTS_IN_DB_TS}} の差分
+         *   * {{EditablePresentationObject.WILL_BE_CHANGED_TS}} の差分
+         * * 以下は変更ありと判定します。
+         *   * 配列の要素の並び替え。 {{EditablePresentationObject.INSTANCE_ID_TS}} の順番で比較します。
+         *   * {{EditablePresentationObject.WILL_BE_DELETED_TS}} の差分
+         * * 以下はオプションでルールを変更できます。
+         *   * stringやnumberの値比較ルール。
+         *     例えばnullとundefinedと空文字を同じとみなすかどうかなど。
+         *     未指定の場合は Object.is が使用されます。
+         *
+         * @param left 比較対象のオブジェクト
+         * @param right 比較対象のオブジェクト。オプションを指定すると、差分があるオブジェクトの {{EditablePresentationObject.WILL_BE_CHANGED_TS}} を自動的に変更することもできます。
+         * @param option 比較ルールのオプション
+         */
+        """;
 
     internal class OptionType : IMultiAggregateSourceFile {
         internal const string TYPENAME = "DisplayDataDeepEqualOption";
@@ -161,21 +182,7 @@ internal class DeepEqualFunction {
 
         return $$"""
             //#region ディープイコール関数
-            /**
-             * 2つの {{_displayData.Aggregate.DisplayName}} オブジェクトのディープイコールを判定します。
-             *
-             * * 以下は差があっても変更なしと判定します。
-             *   * ネストされたオブジェクトや配列の参照等価性
-             *   * {{EditablePresentationObject.EXISTS_IN_DB_TS}} の変更
-             *   * {{EditablePresentationObject.WILL_BE_CHANGED_TS}} の変更
-             * * 以下は変更ありと判定します。
-             *   * 配列の要素の並び替え。 {{EditablePresentationObject.INSTANCE_ID_TS}} の順番で比較します。
-             *   * {{EditablePresentationObject.WILL_BE_DELETED_TS}} の変更
-             * * 以下はオプションでルールを変更できます。
-             *   * stringやnumberの値比較ルール。
-             *     例えばnullとundefinedと空文字を同じとみなすかどうかなど。
-             *     （未指定の場合は Object.is が使用されます）
-             */
+            {{JSDOC}}
             export function {{FunctionName}}({{left.Name}}: {{_displayData.TsTypeName}}, {{right.Name}}: {{_displayData.TsTypeName}}, option?: Util.{{OptionType.TYPENAME}}): boolean {
               const compareFunction: Exclude<Util.{{OptionType.TYPENAME}}["compareFunction"], undefined> = option?.compareFunction ?? ((_, left, right, __?, ___?) => Object.is(left, right));
               let areEqual = true;

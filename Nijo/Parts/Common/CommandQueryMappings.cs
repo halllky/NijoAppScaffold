@@ -3,6 +3,7 @@ using Nijo.ImmutableSchema;
 using Nijo.Models.CommandModelModules;
 using Nijo.Models.DataModelModules;
 using Nijo.Models.QueryModelModules;
+using Nijo.Parts.JavaScript;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -148,6 +149,7 @@ namespace Nijo.Parts.Common {
                     displayData.TsNewObjectFunction,
                     displayData.PkExtractFunctionName,
                     displayData.PkAssignFunctionName,
+                    new DeepEqualFunction(displayData).FunctionName,
                 };
 
                 // 子孫集約のモジュール
@@ -179,6 +181,7 @@ namespace Nijo.Parts.Common {
                 if (parameterStructureModels.Contains(rootAggregate)) {
                     modules.Add(structureDisplayData.TsTypeName);
                     modules.Add(structureDisplayData.TsNewObjectFunction);
+                    modules.Add(new DeepEqualFunction(structureDisplayData).FunctionName);
                 }
                 imports.Add(($"./{rootAggregate.PhysicalName}", modules.ToArray()));
             }
@@ -504,7 +507,29 @@ namespace Nijo.Parts.Common {
 
 
                     //#region ディープイコール関数
-                    // TODO ver.1
+                    {{DeepEqualFunction.JSDOC}}
+                    export const deepEqualFunction: {
+                      [K in {{QUERY_MODEL_TYPE}} | {{STRUCTURE_MODEL_DISPLAY_DATA_TYPE}}]: (
+                        left: K extends {{QUERY_MODEL_TYPE}}
+                          ? DisplayData.TypeMap[K]
+                          : K extends {{STRUCTURE_MODEL_DISPLAY_DATA_TYPE}}
+                          ? StructureModelDisplayData.TypeMap[K]
+                          : never,
+                        right: K extends {{QUERY_MODEL_TYPE}}
+                          ? DisplayData.TypeMap[K]
+                          : K extends {{STRUCTURE_MODEL_DISPLAY_DATA_TYPE}}
+                          ? StructureModelDisplayData.TypeMap[K]
+                          : never,
+                        option?: Util.{{DeepEqualFunction.OptionType.TYPENAME}}
+                      ) => boolean
+                    } = {
+                    {{queryModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
+                      '{{agg.PhysicalName}}': {{new DeepEqualFunction(new DisplayData(agg)).FunctionName}},
+                    """)}}
+                    {{parameterStructureModels.SelectTextTemplate(agg => $$"""
+                      '{{agg.PhysicalName}}': {{new DeepEqualFunction(new Models.StructureModelModules.StructureDisplayData(agg)).FunctionName}},
+                    """)}}
+                    }
                     //#endregion ディープイコール関数
                     """,
             };
