@@ -166,14 +166,15 @@ internal class DeepEqualFunction {
              *
              * * 以下は差があっても変更なしと判定します。
              *   * ネストされたオブジェクトや配列の参照等価性
-             *   * 外部参照オブジェクトのキー以外の項目
              *   * {{EditablePresentationObject.EXISTS_IN_DB_TS}} の変更
              *   * {{EditablePresentationObject.WILL_BE_CHANGED_TS}} の変更
              * * 以下は変更ありと判定します。
              *   * 配列の要素の並び替え。 {{EditablePresentationObject.INSTANCE_ID_TS}} の順番で比較します。
              *   * {{EditablePresentationObject.WILL_BE_DELETED_TS}} の変更
-             * * 以下はオプションでルールを変更できます。例えばnullとundefinedと空文字を同じとみなすかどうかなど。
-             *   * stringやnumberの値比較ルール（未指定の場合は Object.is が使用されます）
+             * * 以下はオプションでルールを変更できます。
+             *   * stringやnumberの値比較ルール。
+             *     例えばnullとundefinedと空文字を同じとみなすかどうかなど。
+             *     （未指定の場合は Object.is が使用されます）
              */
             export function {{FunctionName}}({{left.Name}}: {{_displayData.TsTypeName}}, {{right.Name}}: {{_displayData.TsTypeName}}, option?: Util.{{OptionType.TYPENAME}}): boolean {
               const compareFunction: Exclude<Util.{{OptionType.TYPENAME}}["compareFunction"], undefined> = option?.compareFunction ?? ((_, left, right, __?, ___?) => Object.is(left, right));
@@ -341,10 +342,14 @@ internal class DeepEqualFunction {
                     // RefTo の配列要素の差分はこの関数では追跡しない
                     if (structureMember.IsArray) yield break;
 
-                    var isRefEntry = structureMember is EditablePresentationObject.EditablePresentationObjectRefMember;
+                    // 外部参照先のキー以外の項目もすべてディープイコールの比較対象とする。
+                    // キーのみにしようと思うと Structure, Query モデルでキー属性を定義できるようにする必要があり、
+                    // それらのモデルでは（ビューにマッピングされるQueryModelを除き）キーの役割がここしかないため、
+                    // 仕様の複雑化を招くのを避けた。
+                    // var isRefEntry = structureMember is EditablePresentationObject.EditablePresentationObjectRefMember;
 
                     foreach (var member2 in structureMember.GetMembers()) {
-                        foreach (var sourceCode in RenderMember(member2, onlyKey || isRefEntry)) {
+                        foreach (var sourceCode in RenderMember(member2, onlyKey /*|| isRefEntry */)) {
                             yield return sourceCode;
                         }
                     }
