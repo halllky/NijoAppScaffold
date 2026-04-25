@@ -268,6 +268,18 @@ namespace Nijo.Models.QueryModelModules {
                     .ThenBy(x => x.Index)
                     .Select(x => x.Member);
 
+                // Child がDB存在しているかのフラグ項目。DisplayData への変換時に使用される。
+                var descendantChildMembers = sr.Aggregate
+                    .EnumerateThisAndDescendants()
+                    .Where(agg => agg is ChildAggregate child
+                               && agg.EnumerateAncestors().All(anc => anc is not ChildrenAggregate children
+                                                                   || children == sr.Aggregate
+                                                                   || children.IsAncestorOf(sr.Aggregate)));
+                var existsInDbFlags = descendantChildMembers.Select(child => new {
+                    child.DisplayName,
+                    PhysicalName = GetExistsInDbFlagName((ChildAggregate)child),
+                });
+
                 return $$"""
                     /// <summary>
                     /// {{sr.Aggregate.DisplayName}}の検索結果型。
@@ -277,6 +289,13 @@ namespace Nijo.Models.QueryModelModules {
                     public partial class {{sr.CsClassName}} {
                     {{orderedMembers.SelectTextTemplate(srm => $$"""
                         {{WithIndent(srm.RenderDeclaration(ctx), "    ")}}
+                    """)}}
+                    {{existsInDbFlags.SelectTextTemplate(flag => $$"""
+                        /// <summary>
+                        /// {{flag.DisplayName}}がデータベース上に存在しているかどうかのフラグ。
+                        /// 基本的に子テーブル側の主キーがNULLか否かで判定されることを想定。
+                        /// </summary>
+                        public bool {{flag.PhysicalName}} { get; set; }
                     """)}}
                     {{If(sr.HasVersionColumn, () => $$"""
                         /// <summary>
@@ -333,10 +352,17 @@ namespace Nijo.Models.QueryModelModules {
             /// 詳細なルールはこのクラスのXMLコメントを参照。
             /// </summary>
             internal string GetPhysicalName(bool forDbName = false) {
+                return GetPhysicalName(Member, forDbName);
+            }
+            /// <summary>
+            /// プロパティ名の計算。
+            /// 詳細なルールはこのクラスのXMLコメントを参照。
+            /// </summary>
+            internal static string GetPhysicalName(IAggregateMember member, bool forDbName) {
                 var list = new List<string>();
                 var previousOfPrevious = (ISchemaPathNode?)null;
                 var isLastNode = false;
-                var nodes = Member.GetPathFromEntry().ToArray();
+                var nodes = member.GetPathFromEntry().ToArray();
 
                 for (int i = 0; i < nodes.Length; i++) {
                     var node = nodes[i];
@@ -588,5 +614,16 @@ namespace Nijo.Models.QueryModelModules {
             }
         }
         #endregion メンバー
+
+        #region ChildのDB存在フラグ
+
+        /// <summary>
+        /// ChildがDB上に存在しているかのフラグのプロパティ名を計算します。
+        /// </summary>
+        internal static string GetExistsInDbFlagName(ChildAggregate child) {
+            return $"{ISearchResultMember.GetPhysicalName(child, false)}_ExistsInDatabase";
+        }
+
+        #endregion ChildのDB存在フラグ
     }
 }

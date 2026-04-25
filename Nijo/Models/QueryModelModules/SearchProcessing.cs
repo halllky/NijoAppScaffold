@@ -574,13 +574,15 @@ namespace Nijo.Models.QueryModelModules {
             static string RenderDescendantMember(EditablePresentationObject.EditablePresentationObjectDescendant displayData, IInstancePropertyOwner rightInstance) {
                 if (displayData.Aggregate is ChildAggregate child) {
 
+                    var existsInDb = rightInstance.GetName(E_CsTs.CSharp) + "." + SearchResult.GetExistsInDbFlagName(child);
+
                     return $$"""
                         {{displayData.PhysicalName}} = new() {
                             {{WithIndent(RenderValueMembers(displayData, rightInstance), "    ")}}
                         {{displayData.GetChildMembers().SelectTextTemplate(child => $$"""
                             {{WithIndent(RenderDescendantMember(child, rightInstance), "    ")}}
                         """)}}
-                            {{EditablePresentationObject.EXISTS_IN_DB_CS}} = true,
+                            {{EditablePresentationObject.EXISTS_IN_DB_CS}} = {{existsInDb}},
                             {{EditablePresentationObject.WILL_BE_CHANGED_CS}} = false,
                             {{EditablePresentationObject.WILL_BE_DELETED_CS}} = false,
                         },
