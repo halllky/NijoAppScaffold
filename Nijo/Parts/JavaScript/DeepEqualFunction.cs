@@ -10,6 +10,10 @@ using Nijo.Util.DotnetEx;
 
 namespace Nijo.Parts.JavaScript;
 
+/// <summary>
+/// 編集画面の離脱チェックなどに用いられるディープイコール関数と、
+/// <see cref="EditablePresentationObject.WILL_BE_CHANGED_TS" /> のフラグ設定用の関数。
+/// </summary>
 internal class DeepEqualFunction {
 
     internal DeepEqualFunction(EditablePresentationObject displayData) {
@@ -316,14 +320,14 @@ internal class DeepEqualFunction {
                             ValueMemberTypes.ValueObjectMember => "ValueObject",
                             _ => vm.Member.Type.TypePhysicalName,
                         };
-                        var valueType2 = vm.Member.Type switch {
+                        var valueTypeAdditionalInfo = vm.Member.Type switch {
                             ValueMemberTypes.StaticEnumMember => $", '{vm.Member.Type.TsTypeName.Split('.').Last()}'",
                             ValueMemberTypes.ValueObjectMember => $", undefined, '{vm.Member.Type.TsTypeName.Split('.').Last()}'",
                             _ => "",
                         };
 
                         yield return $$"""
-                            if (!equals('{{valueTypeName}}', {{leftProp}}, {{rightProp}}{{valueType2}})) return false;
+                            if (!equals('{{valueTypeName}}', {{leftProp}}, {{rightProp}}{{valueTypeAdditionalInfo}})) return false;
                             """;
                     }
 
@@ -350,14 +354,14 @@ internal class DeepEqualFunction {
                                         ValueMemberTypes.ValueObjectMember => "ValueObject",
                                         _ => valueMember.Type.TypePhysicalName,
                                     };
-                                    var valueType2 = valueMember.Type switch {
+                                    var valueTypeAdditionalInfo = valueMember.Type switch {
                                         ValueMemberTypes.StaticEnumMember => $", '{valueMember.Type.TsTypeName.Split('.').Last()}'",
                                         ValueMemberTypes.ValueObjectMember => $", undefined, '{valueMember.Type.TsTypeName.Split('.').Last()}'",
                                         _ => "",
                                     };
 
                                     yield return $$"""
-                                        if (!equals('{{valueTypeName}}', {{leftProp}}, {{rightProp}}{{valueType2}})) return false;
+                                        if (!equals('{{valueTypeName}}', {{leftProp}}, {{rightProp}}{{valueTypeAdditionalInfo}})) return false;
                                         """;
 
                                 } else if (member is IInstanceStructurePropertyMetadata structureMember) {
