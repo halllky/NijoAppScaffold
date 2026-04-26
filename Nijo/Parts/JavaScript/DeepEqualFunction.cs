@@ -343,16 +343,22 @@ internal class DeepEqualFunction {
                     // Childはローカル比較関数で登場するので割愛
                     if (structureMember.SchemaPathNode is AggregateBase agg && agg.IsDescendantOf(disp.Aggregate)) yield break;
 
-                    // 外部参照先のChildrenがキーになることは無い
-                    if (onlyKey && structureMember.IsArray) yield break;
-
-                    // RefTo の配列要素の差分はこの関数では追跡しない
-                    if (structureMember.IsArray) yield break;
+                    // RefTo の配列要素の差分はこの関数では追跡しない。
+                    // ローカル比較関数の外でやっているChildrenの比較と同じようにすれば可能ではあるが、
+                    // キーのみを比較対象とする方向性で仕様変更すれば、参照先の子配列はキーになりえないので比較しなくて済む。
+                    if (structureMember.IsArray) {
+                        yield return $$"""
+                            // {{structureMember.SchemaPathNode.GetPathFromEntry().Select(x => x.XElement.Name.LocalName).Join(".")}} はディープイコールの対象となりません。
+                            """;
+                        yield break;
+                    }
 
                     // 外部参照先のキー以外の項目もすべてディープイコールの比較対象とする。
-                    // キーのみにしようと思うと Structure, Query モデルでキー属性を定義できるようにする必要があり、
-                    // それらのモデルでは（ビューにマッピングされるQueryModelを除き）キーの役割がここしかないため、
-                    // 仕様の複雑化を招くのを避けた。
+                    // * キーのみにしようと思うと Structure, Query モデルでキー属性を定義できるようにする必要があり、
+                    //   それらのモデルでは（ビューにマッピングされるQueryModelを除き）キーの役割がここしかないため、
+                    //   仕様の複雑化を招くのを避けた。
+                    // * ただ「RefToされる Query / Structure はキー必須」を nijo.xml 定義時のバリデーションに含めれば
+                    //   利用者がそれほど迷うこともないか？
                     // var isRefEntry = structureMember is EditablePresentationObject.EditablePresentationObjectRefMember;
 
                     foreach (var member2 in structureMember.GetMembers()) {
