@@ -101,9 +101,13 @@ internal class DeepEqualFunction {
                 })
                 .ToArray();
 
-            var voTypeNames = valueMemberTypePhysicalNames
-                .Where(t => t.TypeIdentifier == TYPE_VALUE_OBJECT)
-                .Select(t => t.TsTypeName)
+            // voTypeNames はグルーピング後の valueMemberTypePhysicalNames から取得すると
+            // 2個以上あるとき TsTypeName が結合文字列になって import文などが壊れるため、
+            // グルーピング前のスキーマから個別に取得する
+            var voTypeNames = ctx.SchemaParser
+                .GetValueMemberTypes()
+                .Where(t => t is ValueMemberTypes.ValueObjectMember)
+                .Select(t => t.TsTypeName.Split('.').Last())
                 .ToArray();
 
             return $$"""
