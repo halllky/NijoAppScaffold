@@ -46,6 +46,11 @@ for d in "$SCRIPT_DIR/../demo/"*; do
             cp "$SOURCE_ROOT/UnitTest/PresentationContextInUnitTest.cs" "$TARGET_ROOT/UnitTest/PresentationContextInUnitTest.cs"
             cp "$SOURCE_ROOT/UnitTest/TestUtilImpl.cs" "$TARGET_ROOT/UnitTest/TestUtilImpl.cs"
 
+            # Management
+            cp "$SOURCE_ROOT/Management/README.md" "$TARGET_ROOT/Management/README.md"
+            cp "$SOURCE_ROOT/Management/Program.cs" "$TARGET_ROOT/Management/Program.cs"
+            rsync -av --delete-excluded --exclude=".*" "$SOURCE_ROOT/Management/Commands/" "$TARGET_ROOT/Management/Commands/"
+
             # Task
             rsync -av --delete-excluded --exclude=".*" "$SOURCE_ROOT/Task/" "$TARGET_ROOT/Task/"
         fi

@@ -28,7 +28,10 @@ namespace Nijo.Parts.CSharp {
         }
 
         void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
-            // 特になし
+            // 汎用参照テーブル用のビュー情報提供メソッド。
+            // Nijoの空テンプレートにこのメソッドの使用例を含めるため、
+            // スキーマ定義に汎用参照テーブルが存在するか否かにかかわらずメソッドを生成する。
+            ctx.Use<Models.DataModelModules.GenericLookupViewsInfoProvider>();
         }
 
         void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {

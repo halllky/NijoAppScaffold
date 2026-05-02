@@ -6,6 +6,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$SCRIPT_DIR/.."
 MIGRATION_DIR="$PROJECT_ROOT/Core/Migrations"
 MIGRATION_SCRIPT_DIR="$PROJECT_ROOT/Core/MigrationsScript"
+MANAGEMENT_PROJECT="$PROJECT_ROOT/Management"
+GENERAL_LOOKUP_VIEWS_SQL="$MIGRATION_SCRIPT_DIR/V0000_RecreateGeneralLookupViews.sql"
 
 # Check required tools
 if ! command -v dotnet-ef &> /dev/null; then
@@ -30,6 +32,13 @@ fi
 dotnet build "$STARTUP_PROJECT" -c Debug
 if [ $? -ne 0 ]; then
     echo "ビルドに失敗しました。ビルドを中断します。"
+    exit 1
+fi
+
+# 汎用参照テーブルビュー再作成SQLを最新化する（汎用参照テーブルを使わないならこのステップは削除してよい）
+dotnet run --project "$MANAGEMENT_PROJECT" -- generate-general-lookup-views-sql --output "$GENERAL_LOOKUP_VIEWS_SQL"
+if [ $? -ne 0 ]; then
+    echo "汎用参照テーブルビュー再作成SQLの生成に失敗しました。"
     exit 1
 fi
 

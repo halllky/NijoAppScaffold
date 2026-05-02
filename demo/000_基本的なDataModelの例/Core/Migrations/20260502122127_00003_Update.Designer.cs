@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyApp;
 
@@ -10,9 +11,11 @@ using MyApp;
 namespace Demo000.Migrations
 {
     [DbContext(typeof(OverridedDbContext))]
-    partial class MyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260502122127_00003_Update")]
+    partial class _00003_Update
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.3");
