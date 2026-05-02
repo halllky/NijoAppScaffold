@@ -397,7 +397,7 @@ namespace Nijo.Models.QueryModelModules {
                 if (query == null) {
                     var message = prop.Metadata is SearchCondition.FilterValueMember fvm && fvm.Member.OnlySearchCondition
                         ? "このメンバーの絞り込み処理は自動生成されません。クエリ定義メソッド内で実装してください。"
-                        : "外部参照先の配列要素を検索結果に含めるオプションではないため、このメンバーの検索条件は無視されます。";
+                        : "このメンバーの検索条件は無視されます。";
 
                     // SearchConditionと対応するSearchResultのメンバーが無い場合
                     // （このメンバーが参照先のChildrenの場合）
