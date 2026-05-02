@@ -185,7 +185,7 @@ internal static class EFCoreOnModelCreating {
             {{navigationsForConfigureRefTo.SelectTextTemplate(nav => $$"""
 
                     entity.HasOne(e => e.{{nav.Relevant.OtherSidePhysicalName}})
-                        .{{(nav.Principal.OtherSideIsMany ? "WithMany" : "WithOne")}}(e => e.{{nav.Principal.OtherSidePhysicalName}})
+                        .{{RenderInverseNavigation(nav)}}
                         .HasForeignKey{{(nav.IsOneToOne ? $"<{nav.Principal.GetOtherSideCsTypeName()}>" : "")}}(e => new {
             {{nav.GetRelevantForeignKeys().SelectTextTemplate(fk => $$"""
                             e.{{fk.PhysicalName}},
@@ -197,5 +197,17 @@ internal static class EFCoreOnModelCreating {
                 });
             }
             """;
+
+        static string RenderInverseNavigation(NavigationProperty nav) {
+            // 汎用参照テーブルのビューエンティティは参照元のナビゲーションプロパティを持たないため、
+            // 相手方ナビゲーションプロパティなしで WithMany() / WithOne() のみを指定する
+            if (nav.Relevant.OthersideConcreteClass is GenericLookupViewEntity) {
+                return nav.Principal.OtherSideIsMany ? "WithMany()" : "WithOne()";
+            }
+
+            return nav.Principal.OtherSideIsMany
+                ? $"WithMany(e => e.{nav.Principal.OtherSidePhysicalName})"
+                : $"WithOne(e => e.{nav.Principal.OtherSidePhysicalName})";
+        }
     }
 }

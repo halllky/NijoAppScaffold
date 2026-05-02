@@ -12,7 +12,7 @@ namespace Nijo.Parts.CSharp;
 /// 汎用参照テーブルのカテゴリごとのビューに対応するEFCoreエンティティ。
 /// ハードコードされる主キー列はビューのWHERE句で絞り込まれるため、このエンティティには含まれない。
 /// </summary>
-internal class GenericLookupViewEntity : IEFCoreEntity {
+internal class GenericLookupViewEntity : IEFCoreEntity, IInstancePropertyOwnerMetadata {
 
     internal GenericLookupViewEntity(RootAggregate rootAggregate, GenericLookupTableParser.GenericLookupTableCategory category) {
         Aggregate = rootAggregate;
@@ -57,6 +57,8 @@ internal class GenericLookupViewEntity : IEFCoreEntity {
 
     /// <summary>ビューエンティティはナビゲーションプロパティを持ちません</summary>
     public IEnumerable<NavigationProperty> GetNavigationProperties() => [];
+
+    IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => GetColumns();
 
     /// <summary>
     /// このビューエンティティのC#クラス定義とDbContext partial class内のOnModelCreatingメソッドをレンダリングします。

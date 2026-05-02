@@ -1,5 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.Models.DataModelModules;
 using Nijo.Models;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
@@ -138,6 +139,12 @@ namespace Nijo.Parts.CSharp {
                 // 親や参照先の集約のキー
                 foreach (var member in parentOrRef.GetMembers()) {
                     if (member is ValueMember vm) {
+
+                        if (refEntry != null
+                            && GenericLookupRefToInfo.TryCreate(refEntry, out var genericLookupRef)
+                            && genericLookupRef.IsHardCoded(vm)) {
+                            continue;
+                        }
 
                         if (vm.IsKey && refEntry != null) {
                             // 参照先が子孫テーブルの場合の、その参照先から見た親のキー

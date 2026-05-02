@@ -311,14 +311,16 @@ namespace Nijo.Models.DataModelModules {
                         } else if (member is SaveCommand.SaveCommandRefMember refTo) {
                             // contextに登録されているインスタンスから適当なものを選んでキーに変換する
                             var refToRoot = refTo.Member.RefTo.GetRoot();
-                            var keyClass = new KeyClass.KeyClassEntry(refTo.Member.RefTo.AsEntry());
+                            var keyClass = KeyClass.CreateRefEntry(refTo.Member);
 
                             var owner = refTo.Member.Owner.DisplayName.Replace("\"", "\\\"");
                             var memberName = refTo.Member.DisplayName.Replace("\"", "\\\"");
                             var refToName = refTo.Member.RefTo.DisplayName.Replace("\"", "\\\"");
 
                             var convertMethod = refToRoot.IsView
-                                ? keyClass.FromCreateCommandOrSearchResult
+                                ? keyClass is KeyClass.KeyClassEntry normalKeyClass
+                                    ? normalKeyClass.FromCreateCommandOrSearchResult
+                                    : "FromCreateCommand"
                                 : "FromRootDbEntity";
 
                             var convertToKeyClass = refTo.Member.RefTo.GetPathFromRoot().Any(agg => agg is ChildrenAggregate)

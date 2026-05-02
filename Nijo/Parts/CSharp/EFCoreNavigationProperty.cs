@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.Models.DataModelModules;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -43,6 +44,13 @@ internal abstract class NavigationProperty {
         }
         // それ以外はEFCoreEntityを返す
         return new EFCoreEntity(aggregate, isDeletedTable);
+    }
+
+    protected static IEFCoreEntity GetConcreteClass(RefToMember relation, bool isDeletedTable) {
+        if (GenericLookupRefToInfo.TryCreate(relation, out var info)) {
+            return new GenericLookupViewEntity(info.RootAggregate, info.Category);
+        }
+        return GetConcreteClass(relation.RefTo, isDeletedTable);
     }
 
     public override string ToString() {
@@ -190,7 +198,7 @@ internal abstract class NavigationProperty {
                 OtherSide = relation.RefTo,
                 OtherSideIsMany = false,
                 OtherSidePhysicalName = relation.PhysicalName,
-                OthersideConcreteClass = GetConcreteClass(relation.RefTo, isDeletedTable: false),
+                OthersideConcreteClass = GetConcreteClass(relation, isDeletedTable: false),
             };
         }
         internal RefToMember Relation { get; }

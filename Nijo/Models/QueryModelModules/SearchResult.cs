@@ -1,5 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.Models.DataModelModules;
 using Nijo.Parts.CSharp;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
@@ -179,8 +180,21 @@ namespace Nijo.Models.QueryModelModules {
                         // SearchResultからの直接の参照の場合（refToMemberがnull）は、このrefToを渡す。
                         // 参照先のさらに参照先の場合（refToMemberが設定済み）は、さらに先の参照にはnullを渡す。
                         var refToMemberForRecursion = refToMember == null ? refTo : null;
-                        foreach (var srm in GetMembersRecursively(refTo.RefTo, true, refToMember: refToMemberForRecursion)) {
-                            yield return srm;
+                        if (GenericLookupRefToInfo.TryCreate(refTo, out var genericLookupRef)) {
+                            foreach (var valueMember in refTo.RefTo.GetMembers().OfType<ValueMember>()) {
+                                if (genericLookupRef.IsHardCoded(valueMember)) continue;
+
+                                yield return new SearchResultValueMember(
+                                    valueMember,
+                                    isOutOfEntryTree: true,
+                                    refToMember: valueMember.IsKey && genericLookupRef.IsNonHardCoded(valueMember)
+                                        ? refToMemberForRecursion
+                                        : null);
+                            }
+                        } else {
+                            foreach (var srm in GetMembersRecursively(refTo.RefTo, true, refToMember: refToMemberForRecursion)) {
+                                yield return srm;
+                            }
                         }
 
                     } else {

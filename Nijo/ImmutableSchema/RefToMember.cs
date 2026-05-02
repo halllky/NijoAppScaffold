@@ -22,6 +22,8 @@ namespace Nijo.ImmutableSchema {
         public XElement XElement { get; }
         private readonly SchemaParseContext _ctx;
 
+        internal SchemaParseContext SchemaParseContext => _ctx;
+
         XElement ISchemaPathNode.XElement => XElement;
         public ISchemaPathNode? PreviousNode { get; }
 

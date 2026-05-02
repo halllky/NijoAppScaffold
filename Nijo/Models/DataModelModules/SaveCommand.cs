@@ -317,10 +317,10 @@ namespace Nijo.Models.DataModelModules {
         internal class SaveCommandRefMember : ISaveCommandMember, IInstanceStructurePropertyMetadata {
             internal SaveCommandRefMember(RefToMember refTo) {
                 Member = refTo;
-                RefEntry = new KeyClass.KeyClassEntry(refTo.RefTo);
+                RefEntry = KeyClass.CreateRefEntry(refTo);
             }
             internal RefToMember Member { get; }
-            internal KeyClass.KeyClassEntry RefEntry { get; }
+            internal KeyClass.IKeyClassStructureEntry RefEntry { get; }
 
             bool ISaveCommandMember.IsKey => Member.IsKey;
             ISchemaPathNode ISaveCommandMember.Member => Member;
