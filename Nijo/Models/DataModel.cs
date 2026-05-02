@@ -256,7 +256,6 @@ namespace Nijo.Models {
                 {{GetValidators(ctx).SelectTextTemplate(validator => $$"""
                 {{validator.RenderDeclaring(rootAggregate, ctx)}}
                 """)}}
-                {{ValidateDynamicEnumType.RenderAppSrvCheckMethod(rootAggregate, ctx)}}
                 #endregion 自動生成されるバリデーション処理
                 """, "バリデーション処理");
 
@@ -318,6 +317,7 @@ namespace Nijo.Models {
         /// </summary>
         internal static IEnumerable<ValidatorBase> GetValidators(CodeRenderingContext ctx) {
             yield return new ValidateRequired();
+            yield return new ValidateGenericLookupExists();
             yield return new ValidateMaxLength();
             yield return new ValidateCharacterType();
             yield return new ValidateDigitsAndScales();
@@ -330,7 +330,6 @@ namespace Nijo.Models {
             foreach (var attr in customValidationAttributes) {
                 yield return new ValidateCustom(attr);
             }
-            // yield return new ValidateDynamicEnumType();
         }
     }
 }

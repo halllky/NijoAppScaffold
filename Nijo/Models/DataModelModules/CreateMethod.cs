@@ -67,7 +67,6 @@ namespace Nijo.Models.DataModelModules {
                     {{validator.RenderCaller(this, _rootAggregate, "dbEntity", "messages")}};
                 """)}}
                     {{ValidateCharacterType.METHOD_NAME}}(dbEntity, messages);
-                    {{ValidateDynamicEnumType.METHOD_NAME}}(dbEntity, messages);
                     {{OnBeforeMethodName}}(command, messages, context);
 
                     // エラーがある場合は処理中断

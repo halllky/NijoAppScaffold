@@ -81,7 +81,7 @@ internal static class GenericLookupTableFeature {
             /// '{{rootAggregate.DisplayName}}' の汎用参照テーブルユーティリティ。
             /// カテゴリごとのハードコード値取得とデータソース取得を提供します。
             /// </summary>
-            protected {{utilClassName}} {{rootAggregate.PhysicalName}}Util => {{fieldName}} ??= new {{utilClassName}}(this.DbContext);
+            public {{utilClassName}} {{rootAggregate.PhysicalName}}Util => {{fieldName}} ??= new {{utilClassName}}(this.DbContext);
             private {{utilClassName}}? {{fieldName}};
             #endregion 汎用参照テーブル '{{rootAggregate.DisplayName}}' ユーティリティ
             """;
