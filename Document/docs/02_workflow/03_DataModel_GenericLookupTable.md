@@ -9,7 +9,7 @@
 * 運用中に増えない（リリース時点で区分値が確定している）場合、区分値によるプログラムの条件分岐や制御が可能になるが、値を増やすにはプログラム改修が必要になる。
 * 運用中に増える区分値は、その値をプログラム中での制御に使用できないが、簡単に値を増やすことができる。
 
-:::info
+:::note 汎用参照テーブルの採用判断
 
 基本的に、汎用参照テーブルはアンチパターンとされることが多い。
 
@@ -57,59 +57,131 @@
 上記と対応する nijo.xml のスキーマ定義はこのようになる。
 
 ```xml
- <NijoAppScaffold>
+<NijoAppScaffold>
+  <DataStructures>
+    <!-- 汎用参照テーブル -->
+    <MyLookupTable UniqueId="xxxx-xxxx-xxxx-xxxx"
+                   IsGenericLookupTable="True"
+                   DisplayName="区分マスタ"
+                   DbName="KBN_MST">
+      <!-- ハードコードされる主キーその1（MG: マネジメント層業務用の区分、GB: 現場部門業務用の区分） -->
+      <BusinessSection UniqueId="ssss-ssss-ssss-ssss"
+                       DisplayName="業務分類"
+                       Type="Word"
+                       IsKey="True"
+                       IsHardCodedPrimaryKey="True" />
+      <!-- ハードコードされる主キーその2 -->
+      <CodeType UniqueId="yyyy-yyyy-yyyy-yyyy"
+                DisplayName="コード種別"
+                Type="Word"
+                IsKey="True"
+                IsHardCodedPrimaryKey="True" />
+      <!-- ハードコードされない主キー -->
+      <CodeValue UniqueId="zzzz-zzzz-zzzz-zzzz"
+                 DisplayName="コード値"
+                 Type="Word"
+                 IsKey="True" />
+      <!-- 非主キー項目 -->
+      <CodeName UniqueId="wwww-wwww-wwww-wwww"
+                DisplayName="表示用名称" />
+      <DisplayOrder UniqueId="vvvv-vvvv-vvvv-vvvv"
+                    DisplayName="表示順" />
+    </MyLookupTable>
 
-   <DataStructures>
-     <MyLookupTable UniqueId="xxxx-xxxx-xxxx-xxxx"
-                    IsGenericLookupTable="True"
-                    DisplayName="区分マスタ"
-                    DbName="KBN_MST">
-       <!-- MG: マネジメント層業務用の区分、GB: 現場部門業務用の区分 -->
-       <CodeType UniqueId="ssss-ssss-ssss-ssss"
-                 DisplayName="業務分類"
-                 Type="Word"
-                 IsKey="True"
-                 IsHardCodedPrimaryKey="True" />
-       <CodeType UniqueId="yyyy-yyyy-yyyy-yyyy"
-                 DisplayName="コード種別"
-                 Type="Word"
-                 IsKey="True"
-                 IsHardCodedPrimaryKey="True" />
-       <CodeValue UniqueId="zzzz-zzzz-zzzz-zzzz"
-                  DisplayName="コード値"
-                  Type="Word"
+    <!-- 上記汎用参照テーブルを参照するトランザクションデータの例 -->
+    <Customers UniqueId="aaaa-aaaa-aaaa-aaaa"
+               DisplayName="顧客マスタ"
+               DbName="CUSTOMERS">
+      <CustomerID UniqueId="1111-1111-1111-1111"
+                  Type="Int"
                   IsKey="True" />
-       <CodeName UniqueId="wwww-wwww-wwww-wwww"
-                 DisplayName="表示用名称" />
-       <DisplayOrder UniqueId="vvvv-vvvv-vvvv-vvvv"
-                     DisplayName="表示順" />
-     </MyLookupTable>
-   </DataStructures>
+      <CustomerName UniqueId="2222-2222-2222-2222"
+                    DisplayName="顧客名"
+                    Type="Word" />
+      <!-- 汎用参照テーブルのハードコードされない主キー部分のみを外部キーとして持つ -->
+      <Country UniqueId="3333-3333-3333-3333"
+               DisplayName="国地域"
+               Type="ref-to:MyLookupTable"
+               Category="Countries" />
+    </Customers>
+  </DataStructures>
 
-   <GenericLookupTableCategories>
-     <Categories For="xxxx-xxxx-xxxx-xxxx">
-       <Countries DisplayName="国・地域区分">
-         <Key For="ssss-ssss-ssss-ssss" Value="MG" />
-         <Key For="yyyy-yyyy-yyyy-yyyy" Value="001" />
-       </Countries>
-       <Strategies DisplayName="経営戦略分類">
-         <Key For="ssss-ssss-ssss-ssss" Value="MG" />
-         <Key For="yyyy-yyyy-yyyy-yyyy" Value="002" />
-       </Strategies>
-       <Reporting DisplayName="日報実働時間計上区分">
-         <Key For="ssss-ssss-ssss-ssss" Value="GB" />
-         <Key For="yyyy-yyyy-yyyy-yyyy" Value="001" />
-       </Reporting>
-       <Urgency DisplayName="緊急度区分">
-         <Key For="ssss-ssss-ssss-ssss" Value="GB" />
-         <Key For="yyyy-yyyy-yyyy-yyyy" Value="002" />
-       </Urgency>
-     </Categories>
-   </GenericLookupTableCategories>
- </NijoAppScaffold>
+  <GenericLookupTableCategories>
+    <!-- 上記汎用参照テーブルのハードコードされる主キー部分の定義 -->
+    <Categories For="xxxx-xxxx-xxxx-xxxx">
+      <Countries DisplayName="国・地域区分">
+        <Key For="ssss-ssss-ssss-ssss" Value="MG" />
+        <Key For="yyyy-yyyy-yyyy-yyyy" Value="001" />
+      </Countries>
+      <Strategies DisplayName="経営戦略分類">
+        <Key For="ssss-ssss-ssss-ssss" Value="MG" />
+        <Key For="yyyy-yyyy-yyyy-yyyy" Value="002" />
+      </Strategies>
+      <Reporting DisplayName="日報実働時間計上区分">
+        <Key For="ssss-ssss-ssss-ssss" Value="GB" />
+        <Key For="yyyy-yyyy-yyyy-yyyy" Value="001" />
+      </Reporting>
+      <Urgency DisplayName="緊急度区分">
+        <Key For="ssss-ssss-ssss-ssss" Value="GB" />
+        <Key For="yyyy-yyyy-yyyy-yyyy" Value="002" />
+      </Urgency>
+    </Categories>
+  </GenericLookupTableCategories>
+</NijoAppScaffold>
 ```
 
 ## プログラム上での取り扱い方
+
+### 登録・更新・削除時（汎用参照テーブル）
+
+通常の DataModel と同様、Entity Framework Core を通じて登録・更新・削除が可能。
+更新時はハードコードされる種別も指定する必要があるが、前述の自動生成される補助用のプロパティから参照可能。
+
+```cs
+partial class OverridedApplicationService {
+    public override async Task Execute何らかの画面更新Async(何らかの画面更新ParameterDisplayData param, IPresentationContext<何らかの画面更新ParameterMessages> context) {
+
+        // 新規追加の例。
+        // ハードコードされる種別である「業務分類」「コード種別」は
+        // 補助用のプロパティの「Countries（国・地域区分）」から参照可能
+        await Create区分マスタAsync(new() {
+            BusinessSection = this.区分マスタUtil.Countries.BusinessSection, // 業務分類
+            CodeType = this.区分マスタUtil.Countries.CodeType, // コード種別
+            CodeValue = "新しいコード値", // コード値
+            DisplayName = "新しい表示用名称", // 表示用名称
+            DisplayOrder = 99, // 表示順
+        }, context, message);
+    }
+}
+```
+
+### 登録・更新・削除時（他のトランザクションテーブル）
+
+トランザクションテーブル側では、汎用参照テーブルのハードコードされない主キー部分のみを外部キーとして持てばよい。
+
+なお、外部キー制約が効かないため、自動生成されるチェック処理中でDBにその区分が存在するかのチェックが入る。
+SQL発行のタイミングと汎用参照テーブル側の更新のタイミングによってはここでチェックしても整合性を100%保証できないことには注意が必要。
+
+```cs
+partial class OverridedApplicationService {
+    public override async Task Execute顧客マスタ更新Async(顧客マスタ更新ParameterDisplayData param, IPresentationContext<顧客マスタ更新ParameterMessages> context) {
+
+        // 新規追加の例
+        await Create顧客マスタAsync(new() {
+            CustomerID = 123,
+            CustomerName = "新しい顧客",
+
+            // トランザクションテーブル側では、汎用参照テーブルの
+            // ハードコードされない主キー部分のみを外部キーとして持てばよい。
+            // この例では「業務分類」「コード種別」「コード値」のうち
+            // 前者2つはハードコードなので「コード値」のみを持てばよい。
+            Country = new() { CodeValue = "JP" }, // 国地域区分.コード値
+
+        }, context, message);
+    }
+}
+
+```
 
 ### 参照時（汎用参照テーブル単独）
 
@@ -135,7 +207,8 @@ class OverridedApplicationService : AutoGeneratedApplicationService {
         // 業務分類が MG、コード種別が 001 の区分の値の塊が取得できる。
         // 画面側のデータ構造で区分マスタへの ref-to を行なっておけば、
         // データ構造も自動的に同期することができる。
-        context.ReturnValue.国地域区分ドロップダウンデータソース = this.区分マスタUtil.Countries.ToList();
+        var dataSource = this.区分マスタUtil.Countries.ToList();
+        context.ReturnValue.国地域区分ドロップダウンデータソース = dataSource;
     }
 }
 ```
@@ -148,10 +221,10 @@ class OverridedApplicationService : AutoGeneratedApplicationService {
 
 例えば、以下のようなトランザクションテーブルがあったとする。
 
-| ID(PK) | 国地域_コード値 | その他の列... |
-| :----- | :-------------- | :------------ |
-| 1      | JP              | ...           |
-| 2      | US              | ...           |
+| 顧客ID(PK) | 顧客名 | 国地域_コード値 |
+| :--------- | :----- | :-------------- |
+| 1          | 顧客A  | JP              |
+| 2          | 顧客B  | US              |
 
 このとき、このトランザクションデータを表示する画面でのクエリでは、
 ビューに対する JOIN を行い、その時点の最新のコード値や名称がクエリ結果に含まれる形になる。
@@ -159,45 +232,125 @@ class OverridedApplicationService : AutoGeneratedApplicationService {
 
 ```cs
 partial class OverridedApplicationService {
-    protected override IQueryable<何かのトランデータSearchResult> CreateQuerySource(何かのトランデータSearchCondition searchCondition, IPresentationContext<何かのトランデータSearchConditionMessages> context) {
+    protected override IQueryable<顧客マスタSearchResult> CreateQuerySource(顧客マスタSearchCondition searchCondition, IPresentationContext<顧客マスタSearchConditionMessages> context) {
 
-        return DbContext.何かのトランデータDbSet.Select(e => new 何かのトランデータSearchResult {
-            ID = e.ID,
+        return DbContext.顧客マスタDbSet.Select(e => new 顧客マスタSearchResult {
+            CustomerID = e.CustomerID,
+            CustomerName = e.CustomerName,
 
             // このページの最初の方で示した nijo.xml の定義の場合、
             // 国地域_コード値 はコード値の部分にあたるため、トランザクションテーブルはこの列を持つ。
             // このように単にナビゲーションプロパティをたどることでビューへのJOINが行われ、コード値や名称が取得できる。
             // 表示順など任意の列も同様に取得できる。
             // ここにはハードコードされる種別である「業務分類」「コード種別」が含まれない。
-            国地域 = new() {
-                コード値 = e.国地域_コード値,
-                表示用名称 = e.国地域!.表示用名称,
-                表示順 = e.国地域!.表示順,
+            Country = new() {
+                CodeValue = e.Country_CodeValue,        // 国地域.コード値
+                CodeName = e.Country!.CodeName,         // 国地域.表示用名称
+                DisplayOrder = e.Country!.DisplayOrder, // 国地域.表示順
             },
         });
     }
 }
 ```
 
-### 登録・更新・削除時
+---
 
-通常の DataModel と同様、Entity Framework Core を通じて登録・更新・削除が可能。
-更新時はハードコードされる種別も指定する必要があるが、前述の自動生成される補助用のプロパティから参照可能。
+自動生成される DbContext は以下のようになる。
 
 ```cs
-partial class OverridedApplicationService {
-    public override async Task Execute何らかの画面更新Async(何らかの画面更新ParameterDisplayData param, IPresentationContext<何らかの画面更新ParameterMessages> context) {
+class AutoGeneratedDbContext : DbContext {
+    // テーブルと対応する DbSet 。登録更新の場合はこちらが使われる
+    public virtual DbSet<区分マスタDbEntity> 区分マスタDbSet { get; set; }
 
-        // 新規追加の例。
-        // ハードコードされる種別である「業務分類」「コード種別」は
-        // 補助用のプロパティの「Countries（国・地域区分）」から参照可能
-        await Create区分マスタAsync(new() {
-            業務分類 = this.区分マスタUtil.Countries.業務分類,
-            コード種別 = this.区分マスタUtil.Countries.コード種別,
-            コード値 = "新しいコード値",
-            表示用名称 = "新しい表示用名称",
-            表示順 = 99,
-        }, context, message);
+    // ビューと対応する DbSet
+    public virtual DbSet<区分マスタ_CountriesDbEntity> 区分マスタ_CountriesDbSet { get; set; }
+    public virtual DbSet<区分マスタ_StrategiesDbEntity> 区分マスタ_StrategiesDbSet { get; set; }
+    public virtual DbSet<区分マスタ_ReportingDbEntity> 区分マスタ_ReportingDbSet { get; set; }
+    public virtual DbSet<区分マスタ_UrgencyDbEntity> 区分マスタ_UrgencyDbSet { get; set; }
+}
+```
+
+:::warning ビュー定義の自動生成について
+
+Nijo は特定の RDBMS 非依存のため、ビュー作成SQLとその適用は自動生成されない。
+整理すると以下のようになる。
+
+* 自動生成されるもの
+  * EFCore 上のビューのデータ構造定義
+  * そのビューにどういう名前のカラムがあるか
+  * そのビューとトランザクションテーブル側との関係性
+  * ビューと対応するC#クラス定義、ナビゲーションプロパティ
+* 自動生成されないもの
+  * ビュー作成SQL
+  * ビューの適用
+
+ただし、スキーマ定義変更のたびに都度それに応じたSQLを書くのは大変なので、これを補助する仕組みがある。
+一度各プロジェクトのRDBMSに合わせた仕組みを構築しておけば、スキーマ定義変更時に自動的にビュー再作成SQLが出来るようになるはず。
+
+```cs
+// ------- 自動生成 -------
+
+// ビューの物理名などの情報をもつ構造体
+interface IGeneralLookupViewInfo {
+    public string ViewName { get; }
+    public string SourceTableName { get; } // ビューの元になるテーブル名
+    public IGeneralLookupTableHardcodedColumn[] HardcodedColumns { get; }
+    public IGeneralLookupTableColumn[] NonHardcodedColumns { get; }
+}
+interface IGeneralLookupTableHardcodedColumn {
+    public string ColumnName { get; }
+    public object Value { get; } // 型が string か int かはテーブル定義に従う
+}
+interface IGeneralLookupTableColumn {
+    public string ColumnName { get; }
+}
+
+class AutoGeneratedDbContext {
+
+    // ビュー定義の自動生成に伴い、ビューの物理名などの情報をもつ構造体と、
+    // その構造体のカラム定義を返すメソッドが自動生成される。
+    public static IEnumerable<IGeneralLookupViewInfo> GetGeneralLookupViewsInfo();
+}
+
+// ------- 手動実装 -------
+class XXXXXXXXXXXXXX {
+
+    public void Sample() {
+
+        // 上記の自動生成されたメソッドを呼び出すことで、ビュー定義の情報が取得できる。
+        var viewsInfo = AutoGeneratedDbContext.GetGeneralLookupViewsInfo();
+
+        // これをもとに、各RDBMSに合わせたビュー作成SQLを生成し、適用する。
+        foreach (var view in viewsInfo) {
+
+            // SQLiteの例
+            var sql = $$"""
+                DROP VIEW IF EXISTS "{{view.ViewName}}";
+
+                CREATE VIEW "{{view.ViewName}}" AS
+                SELECT {{string.Join(" , ", view.NonHardcodedColumns.Select(c => $"t1.\"{c.ColumnName}\""))}}
+                FROM   "{{view.SourceTableName}}" AS t1
+                WHERE  {{string.Join(" AND ", view.HardcodedColumns.Select(c => $"t1.\"{c.ColumnName}\" = '{c.Value}'"))}};
+                """;
+        }
     }
 }
 ```
+
+このページの最初の例で示すと、上記のSQL作成処理で以下の文字列ができる。
+
+```sql
+DROP VIEW IF EXISTS "KBN_MST_Countries";
+
+CREATE VIEW "KBN_MST_Countries" AS
+SELECT t1."CodeValue" , t1."CodeName" , t1."DisplayOrder"
+FROM   "KBN_MST" AS t1
+WHERE  t1."BusinessSection" = 'MG' AND t1."CodeType" = '001';
+```
+
+このビューの責務は以下。
+
+* 大元の汎用参照テーブルから、特定のハードコードされる区分種類による絞り込みを行うこと。
+* ハードコードされる主キー以外のカラムをすべて持つこと。
+
+:::
