@@ -28,17 +28,6 @@ if [ $? -ne 0 ]; then
 fi
 popd > /dev/null
 
-# Install Node.js packages if not installed
-pushd "$PROJECT_ROOT/client" > /dev/null
-if [ ! -d "node_modules" ]; then
-    read -p "node_modules （このアプリで使用しているNode.jsの各種ライブラリ）がインストールされていません。インストールしますか？ (y/n): " yn
-    case $yn in
-        [Yy]* ) npm ci;;
-        * ) exit 1;;
-    esac
-fi
-popd > /dev/null
-
 $BROWSER "http://localhost:5173"
 
 # Start debugging
