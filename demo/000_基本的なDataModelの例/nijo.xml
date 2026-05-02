@@ -4,6 +4,7 @@
   RootNamespace="MyApp">
   <DataStructures>
     <社員
+      GenerateDefaultQueryModel="True"
       Type="data-model"
       UniqueId="1956b3f6-a6e5-493c-b87a-e86933c7b45f">
       <!--入社時に発行される一意なID-->
@@ -20,6 +21,7 @@
         UniqueId="a2e46961-8e91-45c9-b329-ab9ea55921f9" />
     </社員>
     <部署
+      GenerateDefaultQueryModel="True"
       Type="data-model"
       UseSoftDelete="True"
       UniqueId="4c96eb60-249d-414c-8e3e-4b5a981fa8c6">
@@ -83,6 +85,7 @@
     </事業所>
     <!--非主キーのユニーク制約の外部参照の例-->
     <旧システム部署情報
+      GenerateDefaultQueryModel="True"
       Type="data-model"
       UniqueId="202ad425-e9b6-4e28-9984-0f401d445ec1">
       <旧システムコード
