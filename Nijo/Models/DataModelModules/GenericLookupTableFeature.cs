@@ -44,7 +44,7 @@ internal static class GenericLookupTableFeature {
             // C#クラス定義 + DbContext partial クラス内のOnModelCreatingメソッド
             aggregateFile.AddCSharpClass(
                 GenericLookupViewEntity.RenderClassDeclaring(viewEntity, ctx),
-                $"ViewEntity_{category.Name}");
+                $"Class_EFCoreEntity_{category.Name}");
 
             // DbContextへの DbSet 登録
             ctx.Use<DbContextClass>().AddEntities([viewEntity]);
