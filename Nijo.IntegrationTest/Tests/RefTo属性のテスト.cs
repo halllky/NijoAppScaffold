@@ -23,6 +23,44 @@ public class RefTo属性のテスト {
     }
 
     [Test]
+    public async Task GenerateDefaultQueryModel付きDataModel_から_非GenerateDefaultQueryModelのDataModel() {
+        using var project = await NijoTestUtil.CreateNewProjectAsync($$"""
+            <NijoAppScaffold>
+              <DataStructures>
+                <Data1 Type="data-model">
+                  <Id Type="int" IsKey="True" />
+                </Data1>
+                <Data2 Type="data-model" GenerateDefaultQueryModel="True">
+                  <Id Type="int" IsKey="True" />
+                  <Ref1 Type="ref-to:Data1" />
+                </Data2>
+              </DataStructures>
+            </NijoAppScaffold>
+            """);
+        var errors = await project.EnumerateValidationErrorsAsync();
+        var allErrors = errors.SelectMany(e => e.OwnErrors.Concat(e.AttributeErrors.Values.SelectMany(v => v)));
+        Assert.That(allErrors, Does.Contain("GenerateDefaultQueryModel属性が付与されたデータモデルの集約からは、同じくGenerateDefaultQueryModel属性が付与されたデータモデルの集約しか参照できません。"));
+    }
+
+    [Test]
+    public async Task GenerateDefaultQueryModel付きDataModel_から_GenerateDefaultQueryModel付きDataModel() {
+        using var project = await NijoTestUtil.CreateNewProjectAsync($$"""
+            <NijoAppScaffold>
+              <DataStructures>
+                <Data1 Type="data-model" GenerateDefaultQueryModel="True">
+                  <Id Type="int" IsKey="True" />
+                </Data1>
+                <Data2 Type="data-model" GenerateDefaultQueryModel="True">
+                  <Id Type="int" IsKey="True" />
+                  <Ref1 Type="ref-to:Data1" />
+                </Data2>
+              </DataStructures>
+            </NijoAppScaffold>
+            """);
+        Assert.That(await project.EnumerateValidationErrorsAsync(), Is.Empty);
+    }
+
+    [Test]
     public async Task DataModel_から_QueryModel() {
         // 正常系: MapToView=True
         using var project1 = await NijoTestUtil.CreateNewProjectAsync($$"""

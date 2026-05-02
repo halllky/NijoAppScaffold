@@ -630,6 +630,15 @@ public class SchemaParseContext {
                     errorMessage = "データモデルの集約からはデータモデルの集約またはビューにマッピングされるクエリモデルしか参照できません。";
                     return false;
                 }
+
+                // GDQM -> 非GDQM の参照を禁止。RefTargetなどが生成されないので
+                if (rootElement.HasGenerateDefaultQueryModelAttribute()
+                    && TryGetModel(refTo, out var refToDataModel)
+                    && refToDataModel is DataModel
+                    && !refToRoot.HasGenerateDefaultQueryModelAttribute()) {
+                    errorMessage = $"{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデルの集約からは、同じく{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデルの集約しか参照できません。";
+                    return false;
+                }
             } else if (model is QueryModel) {
                 // クエリモデルからはクエリモデルの集約しか参照できない
                 if (TryGetModel(refTo, out var refToModel) && !(refToModel is QueryModel)) {

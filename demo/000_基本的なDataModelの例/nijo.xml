@@ -107,6 +107,7 @@
     </旧システム部署情報>
     <!--汎用参照テーブル（GenericLookupTable）の定義例-->
     <汎用マスタ
+      GenerateDefaultQueryModel="True"
       IsGenericLookupTable="True"
       Type="data-model"
       UniqueId="5fa9afef-8d6c-4999-bf57-09d56c39de14">
