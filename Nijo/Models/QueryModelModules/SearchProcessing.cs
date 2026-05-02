@@ -219,9 +219,18 @@ namespace Nijo.Models.QueryModelModules {
             var efCoreEntity = new EFCoreEntity(_rootAggregate);
             var e = new Variable("e", efCoreEntity);
 
-            var rightMembers = new Dictionary<SchemaNodeIdentity, IInstanceProperty>();
+            // 右辺の候補。
+            // MapToView な参照先を含む場合、同じスキーマ要素に対して
+            // FK列・ナビゲーション先の値・親由来の値など複数の右辺候補がぶら下がることがある。
+            // そのため1件に決め打ちせず候補群として保持し、実際のレンダリング時に選び分ける。
+            var rightMembers = new Dictionary<SchemaNodeIdentity, List<IInstanceProperty>>();
             foreach (var prop in e.Create1To1PropertiesRecursively()) {
-                rightMembers[prop.Metadata.SchemaPathNode.ToMappingKey()] = prop;
+                var key = prop.Metadata.SchemaPathNode.ToMappingKey();
+                if (!rightMembers.TryGetValue(key, out var candidates)) {
+                    candidates = [];
+                    rightMembers[key] = candidates;
+                }
+                candidates.Add(prop);
             }
 
             return $$"""
@@ -233,12 +242,24 @@ namespace Nijo.Models.QueryModelModules {
                 }
                 """;
 
-            static IEnumerable<string> RenderMembers(IInstancePropertyOwner left, IReadOnlyDictionary<SchemaNodeIdentity, IInstanceProperty> rightMembers) {
+            static IEnumerable<string> RenderMembers(IInstancePropertyOwner left, IReadOnlyDictionary<SchemaNodeIdentity, List<IInstanceProperty>> rightMembers) {
                 foreach (var prop in left.CreateProperties()) {
                     if (prop is InstanceValueProperty valueProp) {
-                        var right = rightMembers[valueProp.Metadata.SchemaPathNode.ToMappingKey()];
+                        var searchResultValue = valueProp.Metadata as SearchResult.SearchResultValueMember;
+
+                        // DataModel -> MapToView QueryModel の ref-to 展開値は、
+                        // 同じマッピングキーでも FK 列ではなくビュー実体側の値を参照する必要がある。
+                        var isViewValueViaRef = searchResultValue?.IsOutOfEntryTree == true
+                            && searchResultValue.ValueMember.Owner.GetRoot().IsView;
+                        var right = ResolveRightMember(valueProp, rightMembers, preferDeepNavigation: isViewValueViaRef);
+
+                        // ビュー参照先の値は、SearchResult 上のフラット化された名前ではなく
+                        // 実際のビュー型に定義される ValueMember 名で末尾を組み立てる。
+                        var rightPath = isViewValueViaRef
+                            ? RenderViewValuePath(right, searchResultValue!.ValueMember.PhysicalName)
+                            : right.GetJoinedPathFromInstance(E_CsTs.CSharp, "!.");
                         yield return $$"""
-                            {{valueProp.Metadata.GetPropertyName(E_CsTs.CSharp)}} = {{right.GetJoinedPathFromInstance(E_CsTs.CSharp, "!.")}},
+                            {{valueProp.Metadata.GetPropertyName(E_CsTs.CSharp)}} = {{rightPath}},
                             """;
 
                     } else if (prop is InstanceStructureProperty structureProp) {
@@ -253,13 +274,18 @@ namespace Nijo.Models.QueryModelModules {
                             var rightMetadata = new EFCoreEntity(leftMetadata.Aggregate);
                             var loopVar = new Variable(((ChildrenAggregate)rightMetadata.Aggregate).GetLoopVarName(), rightMetadata);
 
-                            // 辞書に、ラムダ式内部で右辺に使用できるプロパティを加える
-                            var overridedDict = new Dictionary<SchemaNodeIdentity, IInstanceProperty>(rightMembers);
+                            // 子配列のラムダ内では、外側の候補に加えてループ変数配下の候補も使えるようにする。
+                            var overridedDict = rightMembers.ToDictionary(kv => kv.Key, kv => kv.Value.ToList());
                             foreach (var m in loopVar.Create1To1PropertiesRecursively() ?? []) {
-                                overridedDict[m.Metadata.SchemaPathNode.ToMappingKey()] = m;
+                                var key = m.Metadata.SchemaPathNode.ToMappingKey();
+                                if (!overridedDict.TryGetValue(key, out var candidates)) {
+                                    candidates = [];
+                                    overridedDict[key] = candidates;
+                                }
+                                candidates.Add(m);
                             }
 
-                            var arrayPath = rightMembers[leftMetadata.Aggregate.ToMappingKey()];
+                            var arrayPath = ResolveRightMember(structureProp, rightMembers);
 
                             yield return $$"""
                                 {{structureProp.Metadata.GetPropertyName(E_CsTs.CSharp)}} = {{arrayPath.GetJoinedPathFromInstance(E_CsTs.CSharp, "!.")}}!.Select({{loopVar.Name}} => new {{leftMetadata.CsClassName}} {
@@ -269,6 +295,51 @@ namespace Nijo.Models.QueryModelModules {
                         }
                     }
                 }
+            }
+
+            static IInstanceProperty ResolveRightMember(IInstanceProperty left, IReadOnlyDictionary<SchemaNodeIdentity, List<IInstanceProperty>> rightMembers, bool preferDeepNavigation = false) {
+                var key = left.Metadata.SchemaPathNode.ToMappingKey();
+                if (!rightMembers.TryGetValue(key, out var candidates) || candidates.Count == 0) {
+                    throw new InvalidOperationException($"右辺に対応するプロパティが見つかりません: {key}");
+                }
+                if (candidates.Count == 1) {
+                    return candidates[0];
+                }
+
+                var leftPath = left.GetPathFromInstance()
+                    .Select(p => p.Metadata.SchemaPathNode.ToMappingKey())
+                    .ToArray();
+
+                // まず「より深いナビゲーションを優先するか」を見て、次に左辺と共有する経路の長さで絞る。
+                // それでも同点なら、より素直な短い名前・短いパスを採用する。
+                return candidates
+                    .OrderByDescending(candidate => preferDeepNavigation ? candidate.GetPathFromInstance().Count() : 0)
+                    .ThenByDescending(candidate => CountCommonPathSegments(leftPath, candidate))
+                    .ThenBy(candidate => candidate.Metadata.GetPropertyName(E_CsTs.CSharp).Length)
+                    .ThenBy(candidate => candidate.GetJoinedPathFromInstance(E_CsTs.CSharp, "!.").Length)
+                    .First();
+
+                static int CountCommonPathSegments(IReadOnlyList<SchemaNodeIdentity> leftPath, IInstanceProperty candidate) {
+                    var rightPath = candidate.GetPathFromInstance()
+                        .Select(p => p.Metadata.SchemaPathNode.ToMappingKey())
+                        .ToArray();
+                    var common = 0;
+                    var max = Math.Min(leftPath.Count, rightPath.Length);
+                    for (var i = 0; i < max; i++) {
+                        if (leftPath[i] != rightPath[i]) break;
+                        common++;
+                    }
+                    return common;
+                }
+            }
+
+            static string RenderViewValuePath(IInstanceProperty right, string actualValueMemberName) {
+                // 候補として拾った右辺の所有者まではそのまま使い、末尾だけを
+                // ビューに実在する ValueMember 名へ差し替えて参照式を組み立てる。
+                if (right.Owner is IInstanceProperty ownerProperty) {
+                    return $"{ownerProperty.GetJoinedPathFromInstance(E_CsTs.CSharp, "!.")}!.{actualValueMemberName}";
+                }
+                return $"{right.Root.Name}.{actualValueMemberName}";
             }
         }
 
