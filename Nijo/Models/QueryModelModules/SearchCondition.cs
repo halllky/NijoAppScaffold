@@ -165,7 +165,14 @@ namespace Nijo.Models.QueryModelModules {
 
                 static IEnumerable<SortableMember> EnumerateRecursively(AggregateBase aggregate) {
                     foreach (var member in aggregate.GetMembers()) {
-                        if (member is ValueMember vm && !vm.OnlySearchCondition) {
+                        if (member is ValueMember vm) {
+
+                            // 検索条件にのみ存在するメンバーはソートに使用できない
+                            if (vm.OnlySearchCondition) continue;
+
+                            // 汎用参照テーブルのハードコードされる項目はソートに使用できない
+                            if (vm.IsHardCodedPrimaryKey) continue;
+
                             yield return new SortableMember(vm);
 
                         } else if (member is ChildrenAggregate) {
@@ -213,7 +220,10 @@ namespace Nijo.Models.QueryModelModules {
             #region 主キーアサイン関数
             internal string PkAssignFunctionName => $"assign{_entryAggregate.PhysicalName}SearchConditionKeys";
             internal string RenderPkAssignFunction() {
-                var keys = _entryAggregate.GetKeyVMs().ToArray();
+                var keys = _entryAggregate
+                    .GetKeyVMs()
+                    .Where(vm => !vm.IsHardCodedPrimaryKey) // ハードコードされる主キーは検索条件に現れないので
+                    .ToArray();
                 var dataProperties = new Variable("obj", this)
                     .Create1To1PropertiesRecursively()
                     .ToDictionary(p => p.Metadata.SchemaPathNode.ToMappingKey());
@@ -280,7 +290,15 @@ namespace Nijo.Models.QueryModelModules {
             /// </summary>
             internal IEnumerable<IFilterMember> GetOwnMembers() {
                 foreach (var member in _aggregate.GetMembers()) {
-                    if (member is ValueMember vm && (vm.Type.SearchBehavior != null || vm.OnlySearchCondition)) {
+                    if (member is ValueMember vm) {
+
+                        // 検索の挙動が未指定の型を弾く。バイト配列など。
+                        // ただし明示的に検索条件にのみ存在することが指定されているものはこの限りでない
+                        if (vm.Type.SearchBehavior == null && !vm.OnlySearchCondition) continue;
+
+                        // 汎用参照テーブルのハードコードされる項目
+                        if (vm.IsHardCodedPrimaryKey) continue;
+
                         yield return new FilterValueMember(vm);
 
                     } else if (member is RefToMember refTo) {

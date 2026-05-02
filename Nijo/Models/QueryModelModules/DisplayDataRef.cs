@@ -126,7 +126,14 @@ namespace Nijo.Models.QueryModelModules {
                     yield return new RefDisplayDataParentMember(parent);
                 }
                 foreach (var member in Aggregate.GetMembers()) {
-                    if (member is ValueMember vm && !vm.OnlySearchCondition) {
+                    if (member is ValueMember vm) {
+
+                        // 検索条件にのみ存在するメンバー
+                        if (vm.OnlySearchCondition) continue;
+
+                        // 汎用参照テーブルのハードコードされる項目
+                        if (vm.IsHardCodedPrimaryKey) continue;
+
                         yield return new RefDisplayDataValueMember(vm);
 
                     } else if (member is RefToMember refTo && Aggregate.PreviousNode != (ISchemaPathNode)refTo) {
@@ -230,7 +237,10 @@ namespace Nijo.Models.QueryModelModules {
             internal string PkExtractFunctionName => $"extract{Aggregate.PhysicalName}RefKeys";
             internal string PkAssignFunctionName => $"assign{Aggregate.PhysicalName}RefKeys";
             internal string RenderExtractPrimaryKey() {
-                var keys = Aggregate.GetKeyVMs().ToArray();
+                var keys = Aggregate
+                    .GetKeyVMs()
+                    .Where(vm => !vm.IsHardCodedPrimaryKey) // ハードコードされる主キーはRefDisplayDataに現れないので
+                    .ToArray();
                 var dataProperties = new Variable("data", this)
                     .Create1To1PropertiesRecursively()
                     .ToDictionary(p => p.Metadata.SchemaPathNode.ToMappingKey());
@@ -248,7 +258,10 @@ namespace Nijo.Models.QueryModelModules {
                     """;
             }
             internal string RenderAssignPrimaryKey() {
-                var keys = Aggregate.GetKeyVMs().ToArray();
+                var keys = Aggregate
+                    .GetKeyVMs()
+                    .Where(vm => !vm.IsHardCodedPrimaryKey) // ハードコードされる主キーはRefDisplayDataに現れないので
+                    .ToArray();
                 var dataProperties = new Variable("data", this)
                     .Create1To1PropertiesRecursively()
                     .ToDictionary(p => p.Metadata.SchemaPathNode.ToMappingKey());
