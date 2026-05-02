@@ -407,9 +407,8 @@ internal static class BasicNodeOptions {
             """,
         Type = E_NodeOptionType.Boolean,
         IsAvailable = (model, nodeType) => {
-            // データモデルの属性にのみ適用可能
-            return model is DataModel
-                && (nodeType == E_NodeType.ValueMember || nodeType == E_NodeType.Ref);
+            // データモデルのValueMemberにのみ適用可能
+            return model is DataModel && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
             // IsGenericLookupTable と組み合わせて使う必要がある

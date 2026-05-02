@@ -69,9 +69,6 @@ internal static class GenericLookupRefToInfo {
         public required IReadOnlyList<ValueMember> HardCodedKeyMembers { get; init; }
         public required IReadOnlyList<ValueMember> NonHardCodedKeyMembers { get; init; }
 
-        public string RefEntryClassName => $"{RefTo.RefTo.PhysicalName}_{RefTo.PhysicalName}Key";
-        public string ViewEntityClassName => $"{RootAggregate.PhysicalName}_{Category.Name}DbEntity";
-
         public bool IsHardCoded(ValueMember valueMember) => HardCodedKeyMembers.Contains(valueMember);
         public bool IsNonHardCoded(ValueMember valueMember) => NonHardCodedKeyMembers.Contains(valueMember);
     }

@@ -31,7 +31,6 @@ namespace Nijo.Models.DataModelModules {
             var pkValueCandidates = new Variable("dbEntity", dbEntity)
                 .CreateProperties()
                 .ToArray();
-            var keyClass = new KeyClass.KeyClassEntry(_rootAggregate);
             var keys = _rootAggregate
                 .GetKeyVMs()
                 .Select((vm, i) => {

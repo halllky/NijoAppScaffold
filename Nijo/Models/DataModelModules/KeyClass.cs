@@ -21,14 +21,24 @@ namespace Nijo.Models.DataModelModules {
         /// <see cref="IKeyClassMember"/> インターフェースを備えている理由は、
         /// エントリーが子孫かつこのクラスがその子孫の親の場合、このクラスは子孫のキーのメンバーになりうるため。
         /// </summary>
-        internal class KeyClassEntry : IKeyClassMember, IKeyClassStructureEntry, IInstanceStructurePropertyMetadata {
+        internal class KeyClassEntry : IKeyClassMember, IKeyClassStructure, IInstanceStructurePropertyMetadata {
             internal KeyClassEntry(AggregateBase aggregate) {
                 _aggregate = aggregate;
+                _genericLookupInfo = null;
+            }
+            internal KeyClassEntry(RefToMember refTo) {
+                _aggregate = refTo.RefTo;
+                _genericLookupInfo = GenericLookupRefToInfo.TryCreate(refTo, out var info) ? info : null;
             }
             private readonly AggregateBase _aggregate;
 
-            internal string ClassName => $"{_aggregate.PhysicalName}Key";
-            string IKeyClassStructureEntry.ClassName => ClassName;
+            /// <summary>
+            /// 汎用参照テーブルに対する外部参照の場合はここに値が入る。
+            /// 汎用参照テーブルを参照するときのキー構造体からはハードコードされた主キーが除外される。
+            /// </summary>
+            private readonly GenericLookupRefToInfo.Info? _genericLookupInfo;
+
+            public string ClassName => $"{_aggregate.PhysicalName}Key";
             string IKeyClassMember.GetTypeName(E_CsTs csts) => ClassName;
 
             bool SaveCommand.ISaveCommandMember.IsKey => true;
@@ -47,10 +57,14 @@ namespace Nijo.Models.DataModelModules {
 
                 foreach (var m in _aggregate.GetMembers()) {
                     if (m is ValueMember vm && vm.IsKey) {
+
+                        // 汎用参照テーブルを参照するときのキー構造体からはハードコードされた主キーが除外される
+                        if (_genericLookupInfo != null && vm.IsHardCodedPrimaryKey) continue;
+
                         yield return new KeyClassValueMember(vm);
 
                     } else if (m is RefToMember rm && rm.IsKey) {
-                        yield return CreateRefMember(rm);
+                        yield return new KeyClassRefMember(rm);
                     }
                 }
             }
@@ -61,7 +75,6 @@ namespace Nijo.Models.DataModelModules {
                     public required {{ClassName}}? {{PhysicalName}} { get; set; }
                     """;
             }
-            string IKeyClassStructureEntry.RenderDeclaring(CodeRenderingContext ctx) => RenderDeclaring(ctx);
 
             /// <summary>
             /// 子孫のキークラス定義も含めて全部レンダリング
@@ -73,23 +86,39 @@ namespace Nijo.Models.DataModelModules {
                     .EnumerateThisAndDescendants()
                     .ToArray();
 
+                var isGenericLookupTable = rootAggregate.XElement
+                    .Attribute(SchemaParsing.BasicNodeOptions.IsGenericLookupTable.AttributeName) != null;
+
                 // キーのエントリー。以下いずれかの場合のみレンダリングする
                 // - その集約がほかの集約から参照されている場合
                 // - その集約の子がほかの集約から参照されている場合
-                var entries = tree
-                    .Where(agg => agg.EnumerateThisAndDescendants().Any(a => a.GetRefFroms().Any()))
-                    .Select(agg => (IKeyClassStructureEntry)new KeyClassEntry(agg))
-                    .Concat(tree
-                        .SelectMany(agg => agg.GetMembers().OfType<RefToMember>())
-                        .Where(refTo => GenericLookupRefToInfo.TryCreate(refTo, out _))
-                        .Select(refTo => CreateRefEntry(refTo)))
-                    .DistinctBy(entry => entry.ClassName)
-                    .ToArray();
+                var entries = new Dictionary<string, KeyClassEntry>();
+                foreach (var agg in tree) {
+                    var refToAgg = agg.GetRefFroms().ToArray();
+                    var areDecendantsReffered = agg.EnumerateDescendants().Any(desc => desc.GetRefFroms().Any());
+
+                    // 自身が参照されていない場合でも子孫が参照されている場合はその親としてキー構造体が必要
+                    if (refToAgg.Length > 0 || areDecendantsReffered) {
+
+                        // 汎用参照テーブルの場合は ref-to でどのカテゴリが参照されているかによって
+                        // キー構造体のクラス名が変わるため、参照関係ごとにキー構造体のエントリーを作成する。
+                        // そうでない場合は単に集約ごとにキー構造体のエントリーを1つ作成すればよい。
+                        if (isGenericLookupTable) {
+                            foreach (var refTo in refToAgg) {
+                                var keyClass = new KeyClassEntry(refTo);
+                                entries.TryAdd(keyClass.ClassName, keyClass);
+                            }
+                        } else {
+                            var keyClass = new KeyClassEntry(agg);
+                            entries.TryAdd(keyClass.ClassName, keyClass);
+                        }
+                    }
+                }
 
                 return $$"""
                     #region キー項目のみのオブジェクト
-                    {{entries.SelectTextTemplate(entry => $$"""
-                    {{entry.RenderDeclaring(ctx)}}
+                    {{entries.SelectTextTemplate(kvp => $$"""
+                    {{kvp.Value.RenderDeclaring(ctx)}}
 
                     """)}}
                     #endregion キー項目のみのオブジェクト
@@ -417,7 +446,7 @@ namespace Nijo.Models.DataModelModules {
                 }
 
                 // return new xxxxKeyClass { ... }; の中身のレンダリング
-                IEnumerable<string> RenderReturnBodyRecursively(IKeyClassStructure keyClass) {
+                IEnumerable<string> RenderReturnBodyRecursively(KeyClassEntry keyClass) {
                     foreach (var member in keyClass.GetOwnMembers()) {
                         if (member is KeyClassValueMember vm) {
                             var path = rightInstances.GetValueOrDefault(vm.Member.ToMappingKey())
@@ -465,11 +494,8 @@ namespace Nijo.Models.DataModelModules {
         /// KeyClassのエントリー、Ref の2種類
         /// </summary>
         internal interface IKeyClassStructure : IInstancePropertyOwnerMetadata {
-            IEnumerable<IKeyClassMember> GetOwnMembers();
-        }
-        internal interface IKeyClassStructureEntry : IKeyClassStructure, IInstanceStructurePropertyMetadata {
             string ClassName { get; }
-            string RenderDeclaring(CodeRenderingContext ctx);
+            IEnumerable<IKeyClassMember> GetOwnMembers();
         }
         internal interface IKeyClassMember : SaveCommand.ISaveCommandMember {
             string GetTypeName(E_CsTs csts);
@@ -493,14 +519,23 @@ namespace Nijo.Models.DataModelModules {
         internal class KeyClassRefMember : IKeyClassStructure, IKeyClassMember, IInstanceStructurePropertyMetadata {
             internal KeyClassRefMember(RefToMember refTo) {
                 Member = refTo;
-                MemberKeyClassEntry = CreateRefEntry(refTo);
+                MemberKeyClassEntry = new KeyClassEntry(refTo);
+                _genericLookupInfo = GenericLookupRefToInfo.TryCreate(refTo, out var info) ? info : null;
             }
+
+            /// <summary>
+            /// 汎用参照テーブルへの外部参照の場合はここに値が入る。
+            /// 汎用参照テーブルへの外部参照の場合、キー構造体からはハードコードされた主キーが除外される。
+            /// </summary>
+            private readonly GenericLookupRefToInfo.Info? _genericLookupInfo;
+
             internal RefToMember Member { get; }
-            internal IKeyClassStructureEntry MemberKeyClassEntry { get; }
+            internal KeyClassEntry MemberKeyClassEntry { get; }
 
             public string PhysicalName => Member.PhysicalName;
             public string DisplayName => Member.DisplayName;
             public string GetTypeName(E_CsTs csts) => MemberKeyClassEntry.ClassName;
+            string IKeyClassStructure.ClassName => MemberKeyClassEntry.ClassName;
 
             ISchemaPathNode SaveCommand.ISaveCommandMember.Member => Member;
             string SaveCommand.ISaveCommandMember.CsCreateType => GetTypeName(E_CsTs.CSharp);
@@ -515,10 +550,14 @@ namespace Nijo.Models.DataModelModules {
 
                 foreach (var m in Member.RefTo.GetMembers()) {
                     if (m is ValueMember vm && vm.IsKey) {
+
+                        // 汎用参照テーブルを参照するときのキー構造体からはハードコードされた主キーが除外される
+                        if (_genericLookupInfo != null && vm.IsHardCodedPrimaryKey) continue;
+
                         yield return new KeyClassValueMember(vm);
 
                     } else if (m is RefToMember rm && rm.IsKey) {
-                        yield return CreateRefMember(rm);
+                        yield return new KeyClassRefMember(rm);
                     }
                 }
             }
@@ -535,101 +574,6 @@ namespace Nijo.Models.DataModelModules {
                     public required {{GetTypeName(E_CsTs.CSharp)}} {{PhysicalName}} { get; set; }
                     """;
             }
-        }
-
-        internal sealed class GenericLookupRefToKeyClassEntry : IKeyClassStructureEntry, IKeyClassMember {
-            internal GenericLookupRefToKeyClassEntry(GenericLookupRefToInfo.Info info) {
-                Info = info;
-            }
-
-            internal GenericLookupRefToInfo.Info Info { get; }
-
-            string IKeyClassStructureEntry.ClassName => ClassName;
-            public string ClassName => Info.RefEntryClassName;
-            public string PhysicalName => Info.RefTo.PhysicalName;
-            public string DisplayName => Info.RefTo.DisplayName;
-            public string CsCreateType => ClassName;
-            public string CsUpdateType => ClassName;
-            public string CsDeleteType => ClassName;
-
-            public IEnumerable<IKeyClassMember> GetOwnMembers() {
-                foreach (var member in Info.NonHardCodedKeyMembers) {
-                    yield return new KeyClassValueMember(member);
-                }
-            }
-
-            bool SaveCommand.ISaveCommandMember.IsKey => true;
-            ISchemaPathNode SaveCommand.ISaveCommandMember.Member => Info.RefTo;
-            ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Info.RefTo;
-            bool IInstanceStructurePropertyMetadata.IsArray => false;
-            string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
-            string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => ClassName;
-            string IKeyClassMember.GetTypeName(E_CsTs csts) => ClassName;
-            IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => GetOwnMembers();
-
-            string IKeyClassStructureEntry.RenderDeclaring(CodeRenderingContext ctx) {
-                var createCommandClassName = new SaveCommand(Info.RootAggregate, SaveCommand.E_Type.Create).CsClassNameCreate;
-                var dbEntityClassName = new EFCoreEntity(Info.RootAggregate).CsClassName;
-
-                return $$"""
-                    /// <summary>
-                    /// {{DisplayName}} 参照用のキー
-                    /// </summary>
-                    {{NijoAttr.RenderAttributeValues(ctx, Info.RefTo)}}
-                    public partial class {{ClassName}} {
-                    {{GetOwnMembers().SelectTextTemplate(m => $$"""
-                        /// <summary>{{m.DisplayName}}</summary>
-                        {{NijoAttr.RenderAttributeValues(ctx, m.Member)}}
-                        public required {{m.GetTypeName(E_CsTs.CSharp)}}? {{m.PhysicalName}} { get; set; }
-                    """)}}
-
-                        /// <summary>
-                        /// <see cref="{{createCommandClassName}}"/> を <see cref="{{ClassName}}"> に変換します。
-                        /// </summary>
-                        public static {{ClassName}} FromCreateCommand({{createCommandClassName}} createCommand) {
-                            return new {{ClassName}} {
-                                {{WithIndent(RenderAssignments("createCommand"), "        ")}}
-                            };
-                        }
-
-                        /// <summary>
-                        /// <see cref="{{dbEntityClassName}}"/> を <see cref="{{ClassName}}"> に変換します。
-                        /// </summary>
-                        public static {{ClassName}} FromDbEntity({{dbEntityClassName}} entity) {
-                            return new {{ClassName}} {
-                                {{WithIndent(RenderAssignments("entity"), "        ")}}
-                            };
-                        }
-
-                        /// <summary>
-                        /// <see cref="{{dbEntityClassName}}"/> からこのクラスのインスタンスを取り出します。
-                        /// </summary>
-                        public static {{ClassName}} FromRootDbEntity({{dbEntityClassName}} root) {
-                            if (root == null) throw new ArgumentNullException(nameof(root));
-                            return FromDbEntity(root);
-                        }
-                    }
-                    """;
-
-                string RenderAssignments(string argName) {
-                    return Info.NonHardCodedKeyMembers.SelectTextTemplate(member => $$"""
-                        {{member.PhysicalName}} = {{argName}}.{{member.PhysicalName}},
-                    """);
-                }
-            }
-            string SaveCommand.ISaveCommandMember.RenderDeclaring(CodeRenderingContext ctx)
-                => ((IKeyClassStructureEntry)this).RenderDeclaring(ctx);
-        }
-
-        internal static IKeyClassStructureEntry CreateRefEntry(RefToMember refTo) {
-            if (GenericLookupRefToInfo.TryCreate(refTo, out var info)) {
-                return new GenericLookupRefToKeyClassEntry(info);
-            }
-            return new KeyClassEntry(refTo.RefTo);
-        }
-
-        internal static IKeyClassMember CreateRefMember(RefToMember refTo) {
-            return new KeyClassRefMember(refTo);
         }
         #endregion メンバー
     }
