@@ -378,6 +378,62 @@ internal static class BasicNodeOptions {
             }
         },
     };
+    internal static NodeOption IsGenericLookupTable = new() {
+        AttributeName = "IsGenericLookupTable",
+        DisplayName = "汎用テーブル",
+        Type = E_NodeOptionType.Boolean,
+        HelpText = $$"""
+            俗に汎用マスタ、区分マスタ、コードマスタなどと呼ばれるテーブル。
+            国コード、通貨単位、分析集計表の分類など、システムの運用中に値の追加削除が発生しうる区分が格納されます。
+            構成と指定は、複数の主キーから構成され、その主キーのうち一部がソースコード上にハードコードされ、
+            残りの主キーが動的に登録されていきます。
+            通常の列挙体（区分値がシステム運用中に変わらないもの）はこれではなくEnumで定義してください。
+            """,
+        IsAvailable = (model, nodeType) => {
+            // データモデルのルート集約のみ許可
+            return model is DataModel && nodeType == E_NodeType.RootAggregate;
+        },
+        ValidateOthers = ctx => {
+            // IsAvailableで基本的な判定は完了しているため、追加の検証は不要
+        },
+    };
+    internal static NodeOption IsHardCodedPrimaryKey = new() {
+        AttributeName = "IsHardCodedPrimaryKey",
+        DisplayName = "ハードコード",
+        HelpText = $$"""
+            {{nameof(IsGenericLookupTable)}} と組み合わせて使います。
+            主キーのうち、ソースコード上にハードコードされる主キーに指定されます。
+            この属性が指定される項目は {{nameof(IsKey)}} が指定されている必要があります。
+            """,
+        Type = E_NodeOptionType.Boolean,
+        IsAvailable = (model, nodeType) => {
+            // データモデルの属性にのみ適用可能
+            return model is DataModel
+                && (nodeType == E_NodeType.ValueMember || nodeType == E_NodeType.Ref);
+        },
+        ValidateOthers = ctx => {
+            // IsGenericLookupTable と組み合わせて使う必要がある
+            var root = ctx.XElement.GetRootAggregateElement();
+            var isGenericLookupTable = root.Attribute(IsGenericLookupTable.AttributeName);
+            if (isGenericLookupTable == null) {
+                ctx.AddError($"この属性は {IsGenericLookupTable.AttributeName} 属性と組み合わせて使用する必要があります。");
+                return;
+            }
+
+            // ルート集約の属性でなければいけない
+            var owner = ctx.XElement.Parent;
+            if (owner == null || ctx.SchemaParseContext.GetNodeType(owner) != E_NodeType.RootAggregate) {
+                ctx.AddError($"この属性はルート集約の属性にのみ指定可能です。");
+                return;
+            }
+
+            // この属性が指定される項目は IsKey も指定されている必要がある
+            var isKey = ctx.XElement.Attribute(IsKey.AttributeName);
+            if (isKey == null) {
+                ctx.AddError($"この属性が指定される項目は {IsKey.AttributeName} 属性も指定する必要があります。");
+            }
+        },
+    };
     #endregion DataModel用
 
 

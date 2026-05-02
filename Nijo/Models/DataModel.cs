@@ -53,6 +53,24 @@ namespace Nijo.Models {
 
             // 循環参照のチェック（主キーや必須制約による閉路が生じないか）
             ValidateCircularReferences(rootAggregateElement, context, addError);
+
+            // 汎用参照テーブルのチェック。
+            // * 主キーのうち1個以上はハードコードされる主キーでなければならない
+            // * 主キーのうち1個以上はハードコードされない主キーでなければならない
+            if (rootAggregateElement.Attribute(BasicNodeOptions.IsGenericLookupTable.AttributeName) != null) {
+                var keyMembers = rootAggregateElement.Elements()
+                    .Where(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null)
+                    .ToList();
+                var hasHardCodedKey = keyMembers.Any(m => m.Attribute(BasicNodeOptions.IsHardCodedPrimaryKey.AttributeName) != null);
+                var hasNonHardCodedKey = keyMembers.Any(m => m.Attribute(BasicNodeOptions.IsHardCodedPrimaryKey.AttributeName) == null);
+
+                if (!hasHardCodedKey) {
+                    addError(rootAggregateElement, "汎用参照テーブルの主キーのうち、少なくとも1個はハードコードされる主キーでなければなりません。");
+                }
+                if (!hasNonHardCodedKey) {
+                    addError(rootAggregateElement, "汎用参照テーブルの主キーのうち、少なくとも1個はハードコードされない主キーでなければなりません。");
+                }
+            }
         }
 
         /// <summary>

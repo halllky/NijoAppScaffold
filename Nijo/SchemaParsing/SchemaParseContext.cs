@@ -60,6 +60,10 @@ public class SchemaParseContext {
     /// nijo.xml のルート要素直下の要素のうち、カスタム属性が格納されるXML要素の名前
     /// </summary>
     internal const string SECTION_CUSTOM_ATTRIBUTES = "CustomAttributes";
+    /// <summary>
+    /// nijo.xml のルート要素直下の要素のうち、汎用参照テーブルのカテゴリが格納されるXML要素の名前
+    /// </summary>
+    internal const string SECTION_GENERIC_LOOKUP_TABLES = "GenericLookupTableCategories";
 
     /// <summary>
     /// nijo.xml のルート要素直下のセクション名を、XMLに記載される順序で列挙する。
@@ -73,7 +77,10 @@ public class SchemaParseContext {
         yield return SECTION_CUSTOM_ATTRIBUTES;
     }
 
-    /// <summary>スキーマ解析では使用しないがスキーマ定義編集GUIで使う</summary>
+    /// <summary>
+    /// 要素を一意に識別するための属性名。
+    /// GUI上で新たに作成されて以降決して変更されない前提。
+    /// </summary>
     internal const string ATTR_UNIQUE_ID = "UniqueId";
     internal const string ATTR_NODE_TYPE = "Type";
 

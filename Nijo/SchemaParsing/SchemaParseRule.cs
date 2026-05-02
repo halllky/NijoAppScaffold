@@ -72,6 +72,8 @@ public class SchemaParseRule {
             BasicNodeOptions.GenerateBatchUpdateCommand,
             BasicNodeOptions.UseSoftDelete,
             BasicNodeOptions.UniqueConstraints,
+            BasicNodeOptions.IsGenericLookupTable,
+            BasicNodeOptions.IsHardCodedPrimaryKey,
             BasicNodeOptions.MapToView,
             BasicNodeOptions.OnlySearchCondition,
             BasicNodeOptions.Parameter,
