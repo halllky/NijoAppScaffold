@@ -434,6 +434,35 @@ internal static class BasicNodeOptions {
             }
         },
     };
+    internal static NodeOption GenericLookupCategory = new() {
+        AttributeName = "Category",
+        DisplayName = "カテゴリ",
+        Type = E_NodeOptionType.String,
+        HelpText = $$"""
+            汎用参照テーブルへの参照（ref-to）に指定します。
+            {{nameof(IsGenericLookupTable)}} が指定されたテーブルへの参照において、
+            どのカテゴリの値を参照するかを指定してください。
+            例えば「Countries」「Strategies」などのカテゴリ名を指定します。
+            参照先テーブルの {{nameof(IsGenericLookupTable)}} 属性と組み合わせて使います。
+            """,
+        IsAvailable = (model, nodeType) => {
+            return model is DataModel && nodeType == E_NodeType.Ref;
+        },
+        ValidateOthers = ctx => {
+            // 参照先が汎用参照テーブルでなければエラー
+            var typeAttr = ctx.XElement.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
+            if (typeAttr == null) return;
+
+            var refTo = ctx.SchemaParseContext.FindRefTo(ctx.XElement);
+            if (refTo == null) {
+                ctx.AddError("参照先が見つかりません。");
+                return;
+            }
+            if (refTo.Attribute(IsGenericLookupTable.AttributeName) == null) {
+                ctx.AddError($"この属性は {IsGenericLookupTable.AttributeName} が指定された汎用参照テーブルへの参照にのみ指定可能です。");
+            }
+        },
+    };
     #endregion DataModel用
 
 

@@ -74,6 +74,7 @@ public class SchemaParseRule {
             BasicNodeOptions.UniqueConstraints,
             BasicNodeOptions.IsGenericLookupTable,
             BasicNodeOptions.IsHardCodedPrimaryKey,
+            BasicNodeOptions.GenericLookupCategory,
             BasicNodeOptions.MapToView,
             BasicNodeOptions.OnlySearchCondition,
             BasicNodeOptions.Parameter,

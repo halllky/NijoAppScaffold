@@ -54,6 +54,7 @@ internal class SchemaEndpointHandlers {
                 CustomAttributes = NijoXmlCustomAttribute.FromXDocument(xDocument).ToList(),
                 ProjectOptions = projectOptions.GetCurrentValues(),
                 ProjectOptionPropertyInfos = GeneratedProjectOptions.GetPropertyInfos().ToList(),
+                GenericLookupTableCategories = LoadGenericLookupTableCategories(xDocument),
             };
 
             // nijo.viewState.jsonの読み込み
@@ -345,6 +346,39 @@ internal class SchemaEndpointHandlers {
                 ex.Message,
                 context.RequestAborted);
         }
+    }
+
+    /// <summary>
+    /// nijo.xml の GenericLookupTableCategories セクションを読み込んで返す。
+    /// </summary>
+    private static List<GenericLookupTableCategoriesData> LoadGenericLookupTableCategories(XDocument xDocument) {
+        var result = new List<GenericLookupTableCategoriesData>();
+        var section = xDocument.Root?.Element(SchemaParseContext.SECTION_GENERIC_LOOKUP_TABLES);
+        if (section == null) return result;
+
+        foreach (var categoriesElement in section.Elements(SchemaParsing.GenericLookupTableParser.CATEGORIES)) {
+            var forAttr = categoriesElement.Attribute(SchemaParsing.GenericLookupTableParser.FOR)?.Value;
+            if (string.IsNullOrEmpty(forAttr)) continue;
+
+            var data = new GenericLookupTableCategoriesData { For = forAttr };
+            foreach (var categoryElement in categoriesElement.Elements()) {
+                var category = new GenericLookupTableCategoryData {
+                    Name = categoryElement.Name.LocalName,
+                    DisplayName = categoryElement.Attribute(SchemaParsing.BasicNodeOptions.DisplayName.AttributeName)?.Value
+                        ?? categoryElement.Name.LocalName,
+                };
+                foreach (var keyElement in categoryElement.Elements(SchemaParsing.GenericLookupTableParser.KEY)) {
+                    var keyFor = keyElement.Attribute(SchemaParsing.GenericLookupTableParser.FOR)?.Value;
+                    var keyValue = keyElement.Attribute(SchemaParsing.GenericLookupTableParser.KEY_VALUE)?.Value;
+                    if (!string.IsNullOrEmpty(keyFor) && keyValue != null) {
+                        category.HardCodedKeyValues[keyFor] = keyValue;
+                    }
+                }
+                data.Categories.Add(category);
+            }
+            result.Add(data);
+        }
+        return result;
     }
 }
 

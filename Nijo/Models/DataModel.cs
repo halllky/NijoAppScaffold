@@ -222,6 +222,9 @@ namespace Nijo.Models {
                 ctx.Use<DbContextClass>().AddEntities(deletedEfCoreEntity.EnumerateThisAndDescendants());
             }
 
+            // 汎用参照テーブル: カテゴリごとのビューエンティティ・ユーティリティ・静的メソッドを生成
+            GenericLookupTableFeature.GenerateCode(ctx, rootAggregate, aggregateFile);
+
             // データ型: SaveCommand
             aggregateFile.AddCSharpClass(SaveCommand.RenderAll(rootAggregate, ctx), "Class_SaveCommand");
 

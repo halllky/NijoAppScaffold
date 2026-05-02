@@ -1,11 +1,12 @@
 import React from "react";
 import * as ReactHookForm from "react-hook-form"
 import * as Icon from "@heroicons/react/24/outline"
-import { ATTR_TYPE, ApplicationState, TYPE_COMMAND_MODEL } from "../../../types";
+import { ATTR_TYPE, ATTR_IS_GENERIC_LOOKUP_TABLE, ApplicationState, TYPE_COMMAND_MODEL } from "../../../types";
 import * as UI from "../../../UI"
 import { Allotment, LayoutPriority } from "allotment";
 import DecsendantsGrid from "./DecsendantsGrid";
 import RootAggreagateAttrs from "./RootAggreagateAttrs";
+import GenericLookupTableCategoriesPane from "./GenericLookupTableCategoriesPane";
 
 /**
  * ルート集約1個分の編集ペイン
@@ -34,6 +35,7 @@ function AggregatePane(props: {
   }
 
   const rootAggregateModelType = ReactHookForm.useWatch({ name: `xmlElementTrees.${selectedRootAggregateIndex}.xmlElements.0.attributes.${ATTR_TYPE}`, control })
+  const isGenericLookupTable = ReactHookForm.useWatch({ name: `xmlElementTrees.${selectedRootAggregateIndex}.xmlElements.0.attributes.${ATTR_IS_GENERIC_LOOKUP_TABLE}`, control }) === 'True'
 
   return (
     <div className={`flex flex-col gap-1 ${className ?? ''}`}>
@@ -103,6 +105,22 @@ function AggregatePane(props: {
             className="w-full h-full py-1"
           />
         </Allotment.Pane>
+
+        {/* 汎用参照テーブルのカテゴリ定義 */}
+        {isGenericLookupTable && (
+          <Allotment.Pane
+            preferredSize={200}
+            minSize={80}
+          >
+            <div className="w-full h-full p-1 bg-gray-100 border-t border-x border-gray-300 overflow-auto">
+              <GenericLookupTableCategoriesPane
+                selectedRootAggregateIndex={selectedRootAggregateIndex}
+                formMethods={props.formMethods}
+                className="w-full"
+              />
+            </div>
+          </Allotment.Pane>
+        )}
       </Allotment>
 
     </div>

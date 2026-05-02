@@ -59,6 +59,11 @@ namespace Nijo.ImmutableSchema {
         public bool IsKey => XElement.Attribute(BasicNodeOptions.IsKey.AttributeName) != null;
         /// <summary>必須か否か</summary>
         public bool IsNotNull => XElement.Attribute(BasicNodeOptions.IsNotNull.AttributeName) != null;
+        /// <summary>
+        /// 汎用参照テーブルへの参照において参照するカテゴリ名。
+        /// 汎用参照テーブル以外への参照の場合は null。
+        /// </summary>
+        public string? Category => XElement.Attribute(BasicNodeOptions.GenericLookupCategory.AttributeName)?.Value;
 
         /// <summary>
         /// StructureModelがQueryModelを参照する際の、そのクエリモデルのどのモジュールを参照するかの指定。

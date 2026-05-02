@@ -38,6 +38,12 @@
         "parent": "4c96eb60-249d-414c-8e3e-4b5a981fa8c6",
         "background-color": "#ea580c",
         "border-color": "#ea580c"
+      },
+      "5fa9afef-8d6c-4999-bf57-09d56c39de14": {
+        "id": "5fa9afef-8d6c-4999-bf57-09d56c39de14",
+        "label": "汎用マスタ",
+        "background-color": "#ea580c",
+        "border-color": "#ea580c"
       }
     },
     "edges": [
@@ -45,6 +51,14 @@
         "source": "1956b3f6-a6e5-493c-b87a-e86933c7b45f",
         "target": "4c96eb60-249d-414c-8e3e-4b5a981fa8c6",
         "label": "所属部署",
+        "line-color": "#ea580c",
+        "line-style": "solid",
+        "targetEndShape": "triangle"
+      },
+      {
+        "source": "1956b3f6-a6e5-493c-b87a-e86933c7b45f",
+        "target": "5fa9afef-8d6c-4999-bf57-09d56c39de14",
+        "label": "契約種別",
         "line-color": "#ea580c",
         "line-style": "solid",
         "targetEndShape": "triangle"
@@ -90,6 +104,10 @@
       "51d08ec1-ddd8-4822-bf2b-91c458ee7e62": {
         "x": 335,
         "y": 270
+      },
+      "5fa9afef-8d6c-4999-bf57-09d56c39de14": {
+        "x": 134.9999999,
+        "y": 311.9999999
       }
     }
   }

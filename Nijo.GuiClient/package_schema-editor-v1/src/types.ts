@@ -6,6 +6,7 @@ import {
   ProjectOptions,
   ProjectOptionPropertyInfo,
   NijoXmlCustomAttribute,
+  GenericLookupTableCategoriesData,
 } from "./types.nijoXml"
 
 export * from "./types.nijoXml"
@@ -46,6 +47,8 @@ export type ApplicationState = {
   projectOptionPropertyInfos: ProjectOptionPropertyInfo[]
   /** カスタム属性定義 */
   customAttributes: NijoXmlCustomAttribute[]
+  /** 汎用参照テーブルのカテゴリ定義 */
+  genericLookupTableCategories: GenericLookupTableCategoriesData[]
   /** グラフのViewState */
   schemaGraphViewState?: AppSchemaDefinitionGraphDataSet | null
 }

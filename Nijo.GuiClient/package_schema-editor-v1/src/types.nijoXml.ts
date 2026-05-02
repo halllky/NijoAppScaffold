@@ -113,6 +113,28 @@ export const ATTR_PARAMETER = 'Parameter' as XmlElementAttributeName
 export const ATTR_RETURN_VALUE = 'ReturnValue' as XmlElementAttributeName
 export const ATTR_CONSTANT_TYPE = 'ConstantType' as XmlElementAttributeName
 export const ATTR_CONSTANT_VALUE = 'ConstantValue' as XmlElementAttributeName
+export const ATTR_IS_GENERIC_LOOKUP_TABLE = 'IsGenericLookupTable' as XmlElementAttributeName
+export const ATTR_IS_HARD_CODED_PRIMARY_KEY = 'IsHardCodedPrimaryKey' as XmlElementAttributeName
+
+// ---------------------------------
+
+/** 汎用参照テーブルの1カテゴリ分のデータ */
+export type GenericLookupTableCategoryItem = {
+  /** カテゴリ名（XML要素名）例: "Countries" */
+  name: string
+  /** 表示用名称 例: "国・地域区分" */
+  displayName: string
+  /** ハードコードされるキーの値: UniqueId → Value のマッピング */
+  hardCodedKeyValues: { [uniqueId: string]: string }
+}
+
+/** 汎用参照テーブル1個分のカテゴリ定義データ */
+export type GenericLookupTableCategoriesData = {
+  /** 対象ルート集約のUniqueId */
+  for: string
+  /** カテゴリ一覧 */
+  categories: GenericLookupTableCategoryItem[]
+}
 
 export const TYPE_DATA_MODEL = 'data-model'
 export const TYPE_QUERY_MODEL = 'query-model'

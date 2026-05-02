@@ -32,6 +32,8 @@ public class ApplicationState {
     public JsonObject ProjectOptions { get; set; } = new();
     [JsonPropertyName("projectOptionPropertyInfos")]
     public List<ProjectOptionPropertyInfo> ProjectOptionPropertyInfos { get; set; } = [];
+    [JsonPropertyName("genericLookupTableCategories")]
+    public List<GenericLookupTableCategoriesData> GenericLookupTableCategories { get; set; } = [];
 
     /// <summary>
     /// 新しい <see cref="XDocument"/> インスタンスを構築して返す。
@@ -129,6 +131,34 @@ public class ApplicationState {
             }
         }
 
+        // 汎用参照テーブルのカテゴリセクションを追加
+        var genericLookupSection = new XElement(SchemaParseContext.SECTION_GENERIC_LOOKUP_TABLES);
+        foreach (var data in GenericLookupTableCategories) {
+            if (string.IsNullOrEmpty(data.For)) continue;
+            var categoriesElement = new XElement(SchemaParsing.GenericLookupTableParser.CATEGORIES);
+            categoriesElement.SetAttributeValue(SchemaParsing.GenericLookupTableParser.FOR, data.For);
+            foreach (var category in data.Categories) {
+                if (string.IsNullOrEmpty(category.Name)) continue;
+                var categoryElement = new XElement(category.Name);
+                if (!string.IsNullOrEmpty(category.DisplayName)) {
+                    categoryElement.SetAttributeValue(SchemaParsing.BasicNodeOptions.DisplayName.AttributeName, category.DisplayName);
+                }
+                foreach (var (uniqueId, value) in category.HardCodedKeyValues) {
+                    var keyElement = new XElement(SchemaParsing.GenericLookupTableParser.KEY);
+                    keyElement.SetAttributeValue(SchemaParsing.GenericLookupTableParser.FOR, uniqueId);
+                    keyElement.SetAttributeValue(SchemaParsing.GenericLookupTableParser.KEY_VALUE, value);
+                    categoryElement.Add(keyElement);
+                }
+                categoriesElement.Add(categoryElement);
+            }
+            if (categoriesElement.HasElements) {
+                genericLookupSection.Add(categoriesElement);
+            }
+        }
+        if (genericLookupSection.HasElements) {
+            xDocument.Root.Add(genericLookupSection);
+        }
+
         if (errors.Count > 0) {
             uuidToXmlElement = null;
             return false;
@@ -139,3 +169,29 @@ public class ApplicationState {
     }
 }
 
+/// <summary>
+/// 汎用参照テーブル1個分のカテゴリ定義データ（GUI編集用）
+/// </summary>
+public class GenericLookupTableCategoriesData {
+    /// <summary>対象ルート集約のUniqueId</summary>
+    [JsonPropertyName("for")]
+    public string For { get; set; } = "";
+    /// <summary>カテゴリ一覧</summary>
+    [JsonPropertyName("categories")]
+    public List<GenericLookupTableCategoryData> Categories { get; set; } = [];
+}
+
+/// <summary>
+/// 汎用参照テーブルの1カテゴリ分のデータ（GUI編集用）
+/// </summary>
+public class GenericLookupTableCategoryData {
+    /// <summary>カテゴリ名（XML要素名）例: "Countries"</summary>
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = "";
+    /// <summary>表示用名称 例: "国・地域区分"</summary>
+    [JsonPropertyName("displayName")]
+    public string DisplayName { get; set; } = "";
+    /// <summary>ハードコードされるキーの値: UniqueId → Value のマッピング</summary>
+    [JsonPropertyName("hardCodedKeyValues")]
+    public Dictionary<string, string> HardCodedKeyValues { get; set; } = new();
+}

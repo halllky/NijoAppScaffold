@@ -19,6 +19,10 @@
       <所属部署
         Type="ref-to:部署"
         UniqueId="a2e46961-8e91-45c9-b329-ab9ea55921f9" />
+      <契約種別
+        Category="契約区分"
+        Type="ref-to:汎用マスタ"
+        UniqueId="6a19d6bf-64d3-4edc-ba43-762ab2edada8" />
     </社員>
     <部署
       GenerateDefaultQueryModel="True"
@@ -63,6 +67,10 @@
             IsNotNull="True"
             Type="word"
             UniqueId="61e72ff4-9992-4a83-a546-0fb4c93ef3fa" />
+          <勤怠管理区分
+            Category="勤怠管理区分"
+            Type="ref-to:汎用マスタ"
+            UniqueId="1c9be8ce-0d9d-41c0-a3b4-d56aac06b0f2" />
         </係>
       </課>
     </部署>
@@ -97,5 +105,40 @@
         Type="word"
         UniqueId="1376a08d-3312-46c6-b51b-d4e70a74908a" />
     </旧システム部署情報>
+    <!--汎用参照テーブル（GenericLookupTable）の定義例-->
+    <汎用マスタ
+      IsGenericLookupTable="True"
+      Type="data-model"
+      UniqueId="5fa9afef-8d6c-4999-bf57-09d56c39de14">
+      <汎用種別
+        IsHardCodedPrimaryKey="True"
+        IsKey="True"
+        Type="word"
+        UniqueId="fe7444f8-fcca-4adc-9bc4-8b349bb445c5" />
+      <区分値
+        IsKey="True"
+        Type="word"
+        UniqueId="d53ec0af-86df-4951-97f1-32ef5fcc7dc0" />
+      <表示名称
+        Type="word"
+        UniqueId="062655d6-b3bb-422b-9c9f-1543c83cba6e" />
+    </汎用マスタ>
   </DataStructures>
+  <GenericLookupTableCategories>
+    <Categories
+      For="5fa9afef-8d6c-4999-bf57-09d56c39de14">
+      <契約区分
+        DisplayName="契約区分">
+        <Key
+          For="fe7444f8-fcca-4adc-9bc4-8b349bb445c5"
+          Value="010" />
+      </契約区分>
+      <勤怠管理区分
+        DisplayName="勤怠管理区分">
+        <Key
+          For="fe7444f8-fcca-4adc-9bc4-8b349bb445c5"
+          Value="020" />
+      </勤怠管理区分>
+    </Categories>
+  </GenericLookupTableCategories>
 </NijoAppScaffold>
