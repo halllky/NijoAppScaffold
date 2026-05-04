@@ -222,7 +222,8 @@ namespace Nijo {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
             // ルート集約毎のコードを生成
-            Parallel.ForEach(immutableSchema.GetRootAggregates(), rootAggregate => {
+            var rootAggregates = immutableSchema.GetRootAggregates().ToArray();
+            Parallel.ForEach(rootAggregates, rootAggregate => {
                 logger.LogInformation("レンダリング開始: {name}", rootAggregate.DisplayName);
                 try {
                     rootAggregate.Model.GenerateCode(ctx, rootAggregate);
@@ -232,7 +233,7 @@ namespace Nijo {
             });
 
             // ルート集約1個と対応しない、モデル固有のコードを生成
-            Parallel.ForEach(parseContext.Models.Values, model => {
+            Parallel.ForEach(rootAggregates.Select(r => r.Model).Distinct(), model => {
                 logger.LogInformation("レンダリング開始: {name}", model.GetType().Name);
                 try {
                     model.GenerateCode(ctx);
