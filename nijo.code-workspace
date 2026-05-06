@@ -77,7 +77,12 @@
     "omnisharp.enableEditorConfigSupport": true,
     "dotnet.defaultSolution": "nijo.sln",
     "eslint.enable": false,
-    "typescript.tsdk": "node_modules\\typescript\\lib"
+    "js/ts.tsdk.path": "node_modules\\typescript\\lib",
+    "chat.tools.terminal.autoApprove": {
+      "dotnet build": true,
+      "dotnet test": true,
+      "diff": true
+    }
   },
   "tasks": {
     "version": "2.0.0",
