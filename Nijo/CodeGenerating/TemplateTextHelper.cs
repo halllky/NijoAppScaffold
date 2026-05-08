@@ -52,11 +52,53 @@ namespace Nijo.CodeGenerating {
             }
         }
 
+        /// <summary>
+        /// 呼び出し位置の左側にある半角スペース数だけ、2行目以降もインデントされるようにマーカーを埋め込みます。
+        /// 実際のインデント付与は <see cref="SourceFile.Render(string)"/> で行われます。
+        /// </summary>
+        internal static string WithIndent(IEnumerable<string> content) {
+            using var enumerator = content.GetEnumerator();
+            if (!enumerator.MoveNext()) {
+                return string.Empty;
+            }
+
+            var stringBuilder = new StringBuilder();
+            stringBuilder.Append(enumerator.Current);
+
+            while (enumerator.MoveNext()) {
+                stringBuilder.AppendLine();
+                stringBuilder.Append(enumerator.Current);
+            }
+
+            return WithIndent(stringBuilder.ToString());
+        }
+
+        /// <summary>
+        /// 呼び出し位置の左側にある半角スペース数だけ、2行目以降もインデントされるようにマーカーを埋め込みます。
+        /// 実際のインデント付与は <see cref="SourceFile.Render(string)"/> で行われます。
+        /// </summary>
+        internal static string WithIndent(string content) {
+            if (content == string.Empty) {
+                return string.Empty;
+            }
+
+            return $"{INDENT_START_MARKER}{content}{INDENT_END_MARKER}";
+        }
+
+        /// <summary>
+        /// 明示的に指定したインデント文字列で、2行目以降をインデントします。
+        /// 既存呼び出しとの互換性のために残しているオーバーロードです。
+        /// </summary>
         internal static string WithIndent(IEnumerable<string> content, string indent) {
             return content
                 .Select(x => WithIndent(x, indent))
                 .Join(Environment.NewLine + indent);
         }
+
+        /// <summary>
+        /// 明示的に指定したインデント文字列で、2行目以降をインデントします。
+        /// 既存呼び出しとの互換性のために残しているオーバーロードです。
+        /// </summary>
         internal static string WithIndent(string content, string indent) {
             return content
                 .Split(Environment.NewLine)
@@ -64,8 +106,18 @@ namespace Nijo.CodeGenerating {
         }
 
         /// <summary>
+        /// <see cref="WithIndent(IEnumerable{string})"/> と <see cref="WithIndent(string)"/> の開始位置を表すマーカーです。
+        /// </summary>
+        internal static string INDENT_START_MARKER = "\0\0\0\0\0\0\0\0\0\0\u0001";
+
+        /// <summary>
+        /// <see cref="WithIndent(IEnumerable{string})"/> と <see cref="WithIndent(string)"/> の終了位置を表すマーカーです。
+        /// </summary>
+        internal static string INDENT_END_MARKER = "\0\0\0\0\0\0\0\0\0\0\u0002";
+
+        /// <summary>
         /// この文字列が存在する行はファイルにレンダリングされない。
-        /// 
+        ///
         /// <see cref="If(bool, Func{string})"/> や
         /// <see cref="TemplateTextHelperExtensions.SelectTextTemplate{T}(IEnumerable{T}, Func{T, string})"/>
         /// によって条件に合致しなかったり要素の数が0だったりして空行が生成されてしまうのを防ぐためのもの。
