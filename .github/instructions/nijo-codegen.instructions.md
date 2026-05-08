@@ -10,11 +10,13 @@ Nijo 配下のコード生成では、生成コードの組み立てに以下の
 - ループ
   - `string.Join` を使わないこと。
   - ループにより複数行にわたる垂直方向に反復するコード生成は `SelectTextTemplate` を使うこと。
-  - `SelectTextTemplate` は raw string の左端から開始すること。
+  - `SelectTextTemplate` は raw string の補間式として使い、selector も raw string を返すこと。
+  - selector が返す raw string の終端インデントは、挿入先の位置に揃えること。
 - 条件分岐
   - 条件分岐によるコード生成は `If` を使うこと。
-  - `If` は raw string の左端から開始すること。
+  - `If` / `ElseIf` / `Else` は raw string の補間式として同じ挿入位置で連鎖させ、各分岐も raw string を返すこと。
 - インデント
   - インデント制御は `WithIndent` を使うこと。
-  - `WithIndent` は挿入位置で使い、内容側は原則としてインデント 0 で組み立てること。
+  - 新規コードでは `WithIndent` の 1 引数版を優先し、挿入位置で使うこと。
+  - 1 引数版 `WithIndent` の左側には半角スペースだけを置き、内容側は原則としてインデント 0 で組み立てること。
   - 空白や改行の差分を `Trim`、後置換、後連結でごまかさず、テンプレート構造自体を正すこと。

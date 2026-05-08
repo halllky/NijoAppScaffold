@@ -20,8 +20,9 @@ namespace Nijo.CodeGenerating {
         private bool _evaluated;
 
         /// <summary>
-        /// 条件によってソースコードをレンダリングし分けるためのヘルパー。
-        /// 必ず raw string の左端（インデント0の位置）から開始すること。
+        /// 条件によってテンプレート片をレンダリングし分けるためのヘルパー。
+        /// Render 系メソッドの raw string 補間内で使い、各分岐の戻り値も raw string で記述すること。
+        /// If, ElseIf, Else の連鎖全体は同じ挿入位置で開始し、各 raw string の終端インデントも揃えること。
         /// </summary>
         internal static TemplateTextHelper If(bool condition, Func<string> text) {
             var helper = new TemplateTextHelper(new StringBuilder());
@@ -59,10 +60,10 @@ namespace Nijo.CodeGenerating {
         }
 
         /// <summary>
-        /// Render 系メソッドの中でインデントを表すのに使う。
-        /// 必ず raw string の中の、インデントを下げたい位置から開始すること。
-        /// 例えば、インデント4スペース分下げたい場合は、このメソッドの呼び出しも
-        /// raw string の左端からスペース4個分から開始する。
+        /// Render 系メソッドの中で、複数行のテンプレート片に挿入位置と同じだけのインデントを与えるために使う。
+        /// raw string の補間内で、インデントを下げたい位置から開始すること。
+        /// この呼び出しの左側には半角スペースだけを置き、その幅が Render 時に 2 行目以降へ適用される。
+        /// content 側は原則としてインデント 0 から組み立て、さらに深いネストは WithIndent を重ねて表現すること。
         /// </summary>
         /// <param name="content">レンダリング対象のソースコード</param>
         internal static string WithIndent(IEnumerable<string> content) {
@@ -92,8 +93,8 @@ namespace Nijo.CodeGenerating {
         }
 
         /// <summary>
-        /// 明示的に指定したインデント文字列で、2行目以降をインデントします。
-        /// 既存呼び出しとの互換性のために残しているオーバーロードです。
+        /// 明示的に指定したインデント文字列で 2 行目以降をインデントします。
+        /// 既存呼び出しとの互換性のために残しているオーバーロードで、新規コードでは 1 引数版を優先します。
         /// </summary>
         internal static string WithIndent(IEnumerable<string> content, string indent) {
             return content
@@ -102,8 +103,8 @@ namespace Nijo.CodeGenerating {
         }
 
         /// <summary>
-        /// 明示的に指定したインデント文字列で、2行目以降をインデントします。
-        /// 既存呼び出しとの互換性のために残しているオーバーロードです。
+        /// 明示的に指定したインデント文字列で 2 行目以降をインデントします。
+        /// 既存呼び出しとの互換性のために残しているオーバーロードで、新規コードでは 1 引数版を優先します。
         /// </summary>
         internal static string WithIndent(string content, string indent) {
             return content
@@ -132,10 +133,10 @@ namespace Nijo.CodeGenerating {
     }
     internal static class TemplateTextHelperExtensions {
         /// <summary>
-        /// Render 系メソッドの中でループを表すのに使う。
-        /// 必ず raw string の左端（インデント0の位置）で呼び出すこと。
-        /// また、ループ内部のソースコードも必ず raw string で記述し、
-        /// そのインデントレベルは外側の raw string の終端のインデントレベルと同じにすること。
+        /// Render 系メソッドの中で、複数要素に対して縦方向にテンプレート片を反復するときに使う。
+        /// raw string の補間内で呼び出し、selector の戻り値も raw string で記述すること。
+        /// selector が返す raw string の終端インデントは、挿入先の raw string でこの補間式を置いた位置に揃えること。
+        /// 反復の各要素に対してさらに深いインデントが必要なら、selector 内で WithIndent を使うこと。
         /// </summary>
         internal static string SelectTextTemplate<T>(this IEnumerable<T> values, Func<T, string> selector) {
             var sourceCode = values.Select(selector).Join(Environment.NewLine);
