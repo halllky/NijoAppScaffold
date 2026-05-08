@@ -19,6 +19,10 @@ namespace Nijo.CodeGenerating {
         private readonly StringBuilder _stringBuilder;
         private bool _evaluated;
 
+        /// <summary>
+        /// 条件によってソースコードをレンダリングし分けるためのヘルパー。
+        /// 必ず raw string の左端（インデント0の位置）から開始すること。
+        /// </summary>
         internal static TemplateTextHelper If(bool condition, Func<string> text) {
             var helper = new TemplateTextHelper(new StringBuilder());
             if (condition) {
@@ -27,6 +31,7 @@ namespace Nijo.CodeGenerating {
             }
             return helper;
         }
+        /// <inheritdoc cref="If(bool, Func{string})"/>
         internal TemplateTextHelper ElseIf(bool condition, Func<string> text) {
             if (!_evaluated && condition) {
                 _stringBuilder.AppendLine(text());
@@ -34,6 +39,7 @@ namespace Nijo.CodeGenerating {
             }
             return this;
         }
+        /// <inheritdoc cref="If(bool, Func{string})"/>
         internal TemplateTextHelper Else(Func<string> text) {
             if (!_evaluated) {
                 _stringBuilder.AppendLine(text());
@@ -53,9 +59,12 @@ namespace Nijo.CodeGenerating {
         }
 
         /// <summary>
-        /// 呼び出し位置の左側にある半角スペース数だけ、2行目以降もインデントされるようにマーカーを埋め込みます。
-        /// 実際のインデント付与は <see cref="SourceFile.Render(string)"/> で行われます。
+        /// Render 系メソッドの中でインデントを表すのに使う。
+        /// 必ず raw string の中の、インデントを下げたい位置から開始すること。
+        /// 例えば、インデント4スペース分下げたい場合は、このメソッドの呼び出しも
+        /// raw string の左端からスペース4個分から開始する。
         /// </summary>
+        /// <param name="content">レンダリング対象のソースコード</param>
         internal static string WithIndent(IEnumerable<string> content) {
             using var enumerator = content.GetEnumerator();
             if (!enumerator.MoveNext()) {
@@ -73,10 +82,7 @@ namespace Nijo.CodeGenerating {
             return WithIndent(stringBuilder.ToString());
         }
 
-        /// <summary>
-        /// 呼び出し位置の左側にある半角スペース数だけ、2行目以降もインデントされるようにマーカーを埋め込みます。
-        /// 実際のインデント付与は <see cref="SourceFile.Render(string)"/> で行われます。
-        /// </summary>
+        /// <inheritdoc cref="WithIndent(IEnumerable{string})"/>
         internal static string WithIndent(string content) {
             if (content == string.Empty) {
                 return string.Empty;
@@ -125,12 +131,19 @@ namespace Nijo.CodeGenerating {
         internal static string SKIP_MARKER = "\0\0\0\0\0\0\0\0\0\0\0"; // 通常のソースコード上に現れなさそうな文字列であれば何でもよい
     }
     internal static class TemplateTextHelperExtensions {
+        /// <summary>
+        /// Render 系メソッドの中でループを表すのに使う。
+        /// 必ず raw string の左端（インデント0の位置）で呼び出すこと。
+        /// また、ループ内部のソースコードも必ず raw string で記述し、
+        /// そのインデントレベルは外側の raw string の終端のインデントレベルと同じにすること。
+        /// </summary>
         internal static string SelectTextTemplate<T>(this IEnumerable<T> values, Func<T, string> selector) {
             var sourceCode = values.Select(selector).Join(Environment.NewLine);
             return sourceCode == string.Empty
                 ? SKIP_MARKER
                 : sourceCode;
         }
+        /// <inheritdoc cref="SelectTextTemplate{T}(IEnumerable{T}, Func{T, string})"/>
         internal static string SelectTextTemplate<T>(this IEnumerable<T> values, Func<T, int, string> selector) {
             var sourceCode = values.Select(selector).Join(Environment.NewLine);
             return sourceCode == string.Empty
