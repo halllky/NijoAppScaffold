@@ -75,6 +75,12 @@ namespace Nijo.Parts.Common {
                     }
                     """,
                 });
+
+                // Oracle用のenum定義（事業PFへの公開テーブルで区分値の名称をとるのに使う）
+                // ※ここのディレクトリ名はマイグレーションスクリプト生成コマンドと一致させる必要がある
+                dir.Directory("..\\MigrationsScript", migrationDir => {
+                    migrationDir.Generate(GetOracleGetNameFunction(orderedDefs));
+                });
             });
 
             ctx.ReactProject(dir => {
@@ -130,6 +136,42 @@ namespace Nijo.Parts.Common {
                     """,
                 });
             });
+        }
+
+        private static SourceFile GetOracleGetNameFunction(IReadOnlyList<EnumDefInfo> enumDefs) {
+            return new SourceFile {
+                FileName = "Enum名取得関数（事業PF公開テーブル用）.sql",
+                Contents = $$"""
+                    {{enumDefs.SelectTextTemplate(enm => $$"""
+                    {{Render(enm)}}
+                    /
+
+                    """)}}
+                    """,
+            };
+
+            static string Render(EnumDefInfo enm) {
+                var functionName = $"GET_{enm.Name.ToCSharpSafe()}_NAME";
+                const string args = "p_value";
+
+                return $$"""
+                    CREATE OR REPLACE FUNCTION {{functionName}}({{args}} IN NVARCHAR2) RETURN NVARCHAR2
+                    IS
+                    BEGIN
+                    {{If(enm.Items.Count == 0, () => $$"""
+                        RETURN NULL;
+                    """).Else(() => $$"""
+                    {{enm.Items.SelectTextTemplate((item, ix) => $$"""
+                        {{(ix == 0 ? "IF" : "ELSIF")}} {{args}} = '{{item.Value}}' THEN
+                            RETURN N'{{item.DisplayName.Replace("'", "\\'")}}';
+                    """)}}
+                        ELSE
+                            RETURN NULL;
+                        END IF;
+                    """)}}
+                    END;
+                    """;
+            }
         }
     }
 }
