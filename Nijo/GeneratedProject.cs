@@ -333,6 +333,9 @@ namespace Nijo {
                 });
             });
 
+            LegacyMessageConst.Render(ctx);
+            LegacyExcelBook.Render(ctx);
+
             // 生成されていないファイルやディレクトリを削除
             logger.LogInformation("不要ファイル削除開始");
             ctx.CleanUnhandledFilesAndDirectories();

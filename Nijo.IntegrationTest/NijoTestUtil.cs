@@ -60,6 +60,11 @@ public class NijoTestUtil {
             nijoXmlContent.ReplaceLineEndings("\n"),
             new UTF8Encoding(false));
 
+        await File.WriteAllTextAsync(
+            Path.Combine(projectRoot, "nijo.メッセージ一覧.xml"),
+            BuildLegacyMessageXml(),
+            new UTF8Encoding(false));
+
         if (!GeneratedProject.TryOpen(projectRoot, out var project, out var errors)) {
             // ありえない
             throw new InvalidOperationException($"プロジェクトのオープンに失敗しました。エラー内容: {errors}");
