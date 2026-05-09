@@ -62,8 +62,9 @@ namespace Nijo.Models.ReadModel2Modules {
         internal string RenderCSharpDeclaringRecursively(CodeRenderingContext context) {
             if (IsEntry) {
                 return $$"""
+                    #region 検索条件クラス（{{RefEntry.DisplayName}}）
                     /// <summary>
-                    /// {{RefEntry.DisplayName}}が他の集約から参照されたときの検索条件
+                    /// {{RefEntry.DisplayName}}の一覧検索条件
                     /// </summary>
                     public partial class {{CsClassName}} {
                         /// <summary>絞り込み条件（キーワード検索）</summary>
@@ -81,11 +82,17 @@ namespace Nijo.Models.ReadModel2Modules {
                         /// <summary>最大何件取得するか</summary>
                         [JsonPropertyName("take")]
                         public virtual int? Take { get; set; }
-                        /// <summary>明細データを除外可能な場合にtrue</summary>
+                        /// <summary>
+                        /// 検索結果に明細データを含めなくても構わない場合、trueになる。
+                        /// 具体的には一覧検索画面での検索とExcel出力の場合にtrueに、詳細登録画面の場合にfalseになる。
+                        /// パフォーマンス改善以外の目的に使用しないこと。
+                        /// </summary>
                         [JsonPropertyName("excludeChildren")]
                         public virtual bool ExcludeChildren { get; set; }
                     }
                     {{RenderFilterCSharp(context)}}
+                    #endregion 検索条件クラス（{{RefEntry.DisplayName}}）
+
                     """;
             }
 
@@ -126,10 +133,33 @@ namespace Nijo.Models.ReadModel2Modules {
                 /// </summary>
                 public partial class {{FilterClassName}} {
                 {{EnumerateFilterMembers().SelectTextTemplate(member => $$"""
-                    {{WithIndent(member.RenderCSharpDeclaring(context), "    ")}}
+                    {{WithIndent(RenderLegacyFilterMember(member), "    ")}}
                 """)}}
                 }
+                {{EnumerateFilterMembers().OfType<FilterStructureMember>().Where(member => member.Target.RefEntry == RefEntry).SelectTextTemplate(member => $$"""
+                {{member.Target.RenderFilterCSharp(context)}}
+                """)}}
                 """;
+
+            static string RenderLegacyFilterMember(IFilterMember member) {
+                return member switch {
+                    FilterValueMember value => $$"""
+                        public virtual {{GetLegacyCsTypeName(value)}}? {{value.Member.PhysicalName}} { get; set; }
+                        """,
+                    IInstanceStructurePropertyMetadata structure => $$"""
+                        public virtual {{structure.GetTypeName(E_CsTs.CSharp)}} {{structure.GetPropertyName(E_CsTs.CSharp)}} { get; set; } = new();
+                        """,
+                    _ => throw new InvalidOperationException(),
+                };
+
+                static string GetLegacyCsTypeName(FilterValueMember value) {
+                    var typeName = value.Member.OnlySearchCondition
+                        ? value.Member.Type.CsDomainTypeName
+                        : value.Member.Type.SearchBehavior?.FilterCsTypeName;
+
+                    return typeName?.Replace("DateOnly", "Date") ?? string.Empty;
+                }
+            }
         }
 
         private string RenderFilterTypeScript(CodeRenderingContext context) {
@@ -140,6 +170,9 @@ namespace Nijo.Models.ReadModel2Modules {
                   {{WithIndent(member.RenderTypeScriptDeclaring(), "  ")}}
                 """)}}
                 }
+                                {{EnumerateFilterMembers().OfType<FilterStructureMember>().Where(member => member.Target.RefEntry == RefEntry).SelectTextTemplate(member => $$"""
+                                {{member.Target.RenderFilterTypeScript(context)}}
+                                """)}}
                 """;
         }
 
@@ -153,11 +186,14 @@ namespace Nijo.Models.ReadModel2Modules {
 
         private IEnumerable<IFilterMember> EnumerateFilterMembers() {
             foreach (var member in Aggregate.GetMembers()) {
-                if (member is ValueMember vm) {
-                    if (vm.Type.SearchBehavior == null && !vm.OnlySearchCondition) continue;
-                    if (vm.IsHardCodedPrimaryKey) continue;
-                    yield return new FilterValueMember(vm);
-                } else if (member is RefToMember refTo) {
+                if (member is not ValueMember vm) continue;
+                if (vm.Type.SearchBehavior == null && !vm.OnlySearchCondition) continue;
+                if (vm.IsHardCodedPrimaryKey) continue;
+                yield return new FilterValueMember(vm);
+            }
+
+            foreach (var member in Aggregate.GetMembers()) {
+                if (member is RefToMember refTo) {
                     yield return new FilterStructureMember(refTo.PhysicalName, new RefSearchCondition(refTo.RefTo.GetRoot(), refTo.RefTo.GetRoot()));
                 } else if (member is ChildAggregate child) {
                     yield return new FilterStructureMember(child.PhysicalName, new RefSearchCondition(child, RefEntry));
@@ -245,6 +281,7 @@ namespace Nijo.Models.ReadModel2Modules {
             }
             private readonly string _propertyName;
             private readonly RefSearchCondition _target;
+            internal RefSearchCondition Target => _target;
 
             public string DisplayName => _propertyName;
             public ISchemaPathNode SchemaPathNode => _target.Aggregate;

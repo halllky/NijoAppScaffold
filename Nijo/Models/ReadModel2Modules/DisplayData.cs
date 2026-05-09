@@ -36,8 +36,8 @@ namespace Nijo.Models.ReadModel2Modules {
         internal static IInstancePropertyOwnerMetadata GetLegacyCompatibleInstanceApiMetadata(AggregateBase aggregate) {
             return aggregate switch {
                 RootAggregate root => new LegacyDisplayDataMetadata(new DisplayData(root)),
-                ChildAggregate child => new EditablePresentationObjectChildDescendant(child),
-                ChildrenAggregate children => new EditablePresentationObjectChildrenDescendant(children),
+                ChildAggregate child => new LegacyDisplayDataMetadata(new DisplayData(child)),
+                ChildrenAggregate children => new LegacyDisplayDataMetadata(new DisplayData(children)),
                 _ => throw new InvalidOperationException(),
             };
         }
@@ -45,14 +45,18 @@ namespace Nijo.Models.ReadModel2Modules {
         internal new string RenderCSharpDeclaring(CodeRenderingContext ctx) {
             if (!ctx.IsLegacyCompatibilityMode()) {
                 return base.RenderCSharpDeclaring(ctx);
+                // TODO #43 ADDMODDDELを明示的に指定できるようにする
             }
 
             var implements = new List<string>();
             if (Aggregate is RootAggregate) implements.Add("DisplayDataClassBase");
             if (HasLifeCycle) implements.Add(ISaveCommandConvertible.INTERFACE_NAME);
             var inheritance = implements.Count == 0 ? string.Empty : $" : {implements.Join(", ")}";
+            var childMembers = GetChildMembers().ToArray();
+            var legacyValueMembers = GetLegacyValueMembers().ToArray();
 
-            return $$"""
+            if (childMembers.Length == 0) {
+                return $$"""
             /// <summary>
             /// {{Aggregate.DisplayName}}の画面表示用データ構造
             /// </summary>
@@ -60,11 +64,8 @@ namespace Nijo.Models.ReadModel2Modules {
                 /// <summary>値</summary>
                 [JsonPropertyName("{{VALUES_TS}}")]
                 public virtual {{ValueCsClassName}} {{VALUES_CS}} { get; set; } = new();
+            {{If(HasLifeCycle, () => $$"""
 
-            {{GetChildMembers().SelectTextTemplate(c => $$"""
-                [JsonPropertyName("{{c.PhysicalName}}")]
-                public {{WithIndent(c.CsClassNameAsMember, "    ")}} {{c.PhysicalName}} { get; set; } = new();
-              """)}}
                 // TODO #43 ADDMODDDELを明示的に指定できるようにする
                 /// <summary>このデータがDBに保存済みかどうか</summary>
                 [JsonPropertyName("{{EXISTS_IN_DB_TS}}")]
@@ -83,11 +84,13 @@ namespace Nijo.Models.ReadModel2Modules {
                 /// </summary>
                 [JsonPropertyName("{{UNIQUE_ID_TS}}")]
                 public virtual required string {{UNIQUE_ID_CS}} { get; set; }
+            """)}}
             {{If(HasVersion, () => $$"""
                 /// <summary>楽観排他制御用のバージョニング情報</summary>
                 [JsonPropertyName("{{VERSION_TS}}")]
                 public virtual int? {{VERSION_CS}} { get; set; }
             """)}}
+            {{If(!HasLifeCycle && !HasVersion, () => "")}}
                 /// <summary>どの項目が読み取り専用か</summary>
                 [JsonPropertyName("{{READONLY_TS}}")]
                 public virtual {{ReadOnlyCsClassName}} {{READONLY_CS}} { get; set; } = new();
@@ -96,7 +99,7 @@ namespace Nijo.Models.ReadModel2Modules {
             /// {{Aggregate.DisplayName}}の画面表示用データの値の部分
             /// </summary>
             public partial class {{ValueCsClassName}} {
-            {{GetValueMembers().SelectTextTemplate(member => $$"""
+            {{legacyValueMembers.SelectTextTemplate(member => $$"""
                 {{WithIndent(RenderLegacyValueMember(member), "    ")}}
             """)}}
             }
@@ -107,10 +110,76 @@ namespace Nijo.Models.ReadModel2Modules {
             public partial class {{ReadOnlyCsClassName}} {
                 /// <summary>{{Aggregate.DisplayName}}全体が読み取り専用か否か</summary>
                 [JsonPropertyName("{{ALL_READONLY_TS}}")]
-                public bool {{ALL_READONLY_CS}} { get; set; }
-            {{GetValueMembers().SelectTextTemplate(member => $$"""
+                public virtual bool {{ALL_READONLY_CS}} { get; set; }
+            {{legacyValueMembers.SelectTextTemplate(member => $$"""
                 /// <summary>{{member.GetPropertyName(E_CsTs.CSharp)}}が読み取り専用か否か</summary>
-                public bool {{member.GetPropertyName(E_CsTs.CSharp)}} { get; set; }
+                public virtual bool {{member.GetPropertyName(E_CsTs.CSharp)}} { get; set; }
+            """)}}
+            }
+            """;
+            }
+
+            return $$"""
+            /// <summary>
+            /// {{Aggregate.DisplayName}}の画面表示用データ構造
+            /// </summary>
+            public partial class {{CsClassName}}{{inheritance}} {
+                /// <summary>値</summary>
+                [JsonPropertyName("{{VALUES_TS}}")]
+                public virtual {{ValueCsClassName}} {{VALUES_CS}} { get; set; } = new();
+            {{childMembers.SelectTextTemplate(c => $$"""
+                {{WithIndent(RenderLegacyChildMember(c), "    ")}}
+            """)}}
+            {{If(HasLifeCycle, () => $$"""
+
+                // TODO #43 ADDMODDDELを明示的に指定できるようにする
+                /// <summary>このデータがDBに保存済みかどうか</summary>
+                [JsonPropertyName("{{EXISTS_IN_DB_TS}}")]
+                public virtual bool {{EXISTS_IN_DB_CS}} { get; set; }
+                /// <summary>このデータに更新がかかっているかどうか</summary>
+                [JsonPropertyName("{{WILL_BE_CHANGED_TS}}")]
+                public virtual bool {{WILL_BE_CHANGED_CS}} { get; set; }
+                /// <summary>このデータが更新確定時に削除されるかどうか</summary>
+                [JsonPropertyName("{{WILL_BE_DELETED_TS}}")]
+                public virtual bool {{WILL_BE_DELETED_CS}} { get; set; }
+                /// <summary>
+                /// 画面操作で使用される一意なID。このインスタンスが作成されたときに発番される。
+                /// 画面上で行データの更新や行移動などがなされたりしたときに当該インスタンスを適切に追跡出来るようにするために必要。
+                /// このIDは永続化の対象とならない。
+                /// インスタンスをnewする場合は明示的にGUIDを設定する ※Guid.NewGuid().ToString()
+                /// </summary>
+                [JsonPropertyName("{{UNIQUE_ID_TS}}")]
+                public virtual required string {{UNIQUE_ID_CS}} { get; set; }
+            """)}}
+            {{If(HasVersion, () => $$"""
+                /// <summary>楽観排他制御用のバージョニング情報</summary>
+                [JsonPropertyName("{{VERSION_TS}}")]
+                public virtual int? {{VERSION_CS}} { get; set; }
+            """)}}
+            {{If(!HasLifeCycle && !HasVersion, () => "")}}
+                /// <summary>どの項目が読み取り専用か</summary>
+                [JsonPropertyName("{{READONLY_TS}}")]
+                public virtual {{ReadOnlyCsClassName}} {{READONLY_CS}} { get; set; } = new();
+            }
+            /// <summary>
+            /// {{Aggregate.DisplayName}}の画面表示用データの値の部分
+            /// </summary>
+            public partial class {{ValueCsClassName}} {
+            {{legacyValueMembers.SelectTextTemplate(member => $$"""
+                {{WithIndent(RenderLegacyValueMember(member), "    ")}}
+            """)}}
+            }
+            {{RenderLegacyMessageClasses()}}
+            /// <summary>
+            /// {{Aggregate.DisplayName}}の画面表示用データの読み取り専用情報格納部分
+            /// </summary>
+            public partial class {{ReadOnlyCsClassName}} {
+                /// <summary>{{Aggregate.DisplayName}}全体が読み取り専用か否か</summary>
+                [JsonPropertyName("{{ALL_READONLY_TS}}")]
+                public virtual bool {{ALL_READONLY_CS}} { get; set; }
+            {{legacyValueMembers.SelectTextTemplate(member => $$"""
+                /// <summary>{{member.GetPropertyName(E_CsTs.CSharp)}}が読み取り専用か否か</summary>
+                public virtual bool {{member.GetPropertyName(E_CsTs.CSharp)}} { get; set; }
             """)}}
             }
             """;
@@ -123,14 +192,24 @@ namespace Nijo.Models.ReadModel2Modules {
                         """,
                     EditablePresentationObjectRefMember reference => $$"""
                         /// <summary>{{reference.Member.DisplayName}}</summary>
-                        public virtual {{((IInstanceStructurePropertyMetadata)reference).GetTypeName(E_CsTs.CSharp)}} {{reference.Member.PhysicalName}} { get; set; } = new();
+                        public virtual {{((IInstanceStructurePropertyMetadata)reference).GetTypeName(E_CsTs.CSharp)}}? {{reference.Member.PhysicalName}} { get; set; }
                         """,
                     _ => throw new InvalidOperationException(),
                 };
             }
 
+            static string RenderLegacyChildMember(EditablePresentationObject.EditablePresentationObjectDescendant descendant) {
+                return $$"""
+                    /// <summary>{{descendant.DisplayName}}</summary>
+                    public virtual {{descendant.CsClassNameAsMember}} {{descendant.PhysicalName}} { get; set; } = new();
+                    """;
+            }
+
             string RenderLegacyMessageClasses() {
                 var members = GetLegacyMessageMembers().ToArray();
+                var messageBaseClass = Aggregate is ChildrenAggregate ? "DisplayMessageContainerInGrid" : "DisplayMessageContainerBase";
+                var messagePathCtorArgs = Aggregate is ChildrenAggregate ? "IEnumerable<string> path, DisplayMessageContainerBase grid, int rowIndex" : "IEnumerable<string> path";
+                var messagePathBaseCall = Aggregate is ChildrenAggregate ? "base(path, grid, rowIndex)" : "base(path)";
 
                 return $$"""
                     {{If(Aggregate is RootAggregate, () => $$"""
@@ -144,33 +223,34 @@ namespace Nijo.Models.ReadModel2Modules {
                         /// <summary>すべてのメッセージを画面ルートに転送する場合に用いられるコンストラクタ</summary>
                         public {{MessageListCsClassName}}(IDisplayMessageContainer origin) : base(origin, _ => new(origin)) { }
                     }
-                    """)}}
 
+                    """)}}
                     /// <summary>
                     /// {{Aggregate.DisplayName}}の画面表示用データのメッセージ情報格納部分。
                     /// WriteModelのデータとのマッピングが必要になる場合、このクラスを使用せず、
                     /// 別途当該WriteModelのエラーデータのインターフェースを実装したクラスを新規作成して、そちらを使用してください。
                     /// </summary>
-                    public partial class {{MessageCsClassName}} : DisplayMessageContainerBase {
-                        public {{MessageCsClassName}}(IEnumerable<string> path) : base(path) {
+                    public partial class {{MessageCsClassName}} : {{messageBaseClass}} {
+                        public {{MessageCsClassName}}({{messagePathCtorArgs}}) : {{messagePathBaseCall}} {
                     {{members.SelectTextTemplate(member => $$"""
-                        {{WithIndent(member.RenderPathConstructor(), "        ")}}
+                            {{WithIndent(member.RenderPathConstructor(), "        ")}}
                     """)}}
                         }
                         /// <summary>すべてのメッセージを画面ルートに転送する場合に用いられるコンストラクタ</summary>
                         public {{MessageCsClassName}}(IDisplayMessageContainer origin) : base(origin) {
                     {{members.SelectTextTemplate(member => $$"""
-                        {{WithIndent(member.RenderOriginConstructor(), "        ")}}
+                            {{WithIndent(member.RenderOriginConstructor(), "        ")}}
                     """)}}
                         }
 
                     {{members.SelectTextTemplate(member => $$"""
-                    public {{member.TypeName}} {{member.PropertyName}} { get; }
+                        /// <summary>{{member.PropertyName}}についてのメッセージ</summary>
+                        public {{member.TypeName}} {{member.PropertyName}} { get; }
                     """)}}
 
                         public override IEnumerable<IDisplayMessageContainer> EnumerateChildren() {
                     {{members.SelectTextTemplate(member => $$"""
-                        yield return {{member.PropertyName}};
+                            yield return {{member.PropertyName}};
                     """)}}
                         }
                     }
@@ -179,29 +259,61 @@ namespace Nijo.Models.ReadModel2Modules {
         }
 
         private IEnumerable<LegacyMessageMember> GetLegacyMessageMembers() {
-            foreach (var member in GetValueMembers()) {
-                yield return new LegacyMessageMember(member.GetPropertyName(E_CsTs.CSharp), "DisplayMessageContainer");
+            foreach (var member in GetLegacyValueMembers()) {
+                yield return new LegacyMessageMember(member.GetPropertyName(E_CsTs.CSharp), "IDisplayMessageContainer", true, Aggregate is ChildrenAggregate);
             }
 
             foreach (var child in GetChildMembers()) {
                 var typeName = child is EditablePresentationObjectChildrenDescendant
                     ? $"DisplayMessageContainerList<{child.CsClassName}Messages>"
                     : $"{child.CsClassName}Messages";
-                yield return new LegacyMessageMember(child.PhysicalName, typeName);
+                yield return new LegacyMessageMember(child.PhysicalName, typeName, false, false);
             }
         }
 
-        private readonly record struct LegacyMessageMember(string PropertyName, string TypeName) {
+        private IEnumerable<IEditablePresentationObjectValueOrRefMember> GetLegacyValueMembers() {
+            foreach (var member in Aggregate.GetMembers()) {
+                if (member is ValueMember valueMember) {
+                    if (!valueMember.OnlySearchCondition || valueMember.Type.CsDomainTypeName == "bool") {
+                        yield return new EditablePresentationObjectValueMember(valueMember);
+                    }
+                } else if (member is RefToMember refToMember) {
+                    yield return new EditablePresentationObjectRefMember(refToMember);
+                }
+            }
+        }
+
+        private readonly record struct LegacyMessageMember(string PropertyName, string TypeName, bool IsValueMember, bool IsInGrid) {
             internal string RenderPathConstructor() {
-                return TypeName.StartsWith("DisplayMessageContainerList<", StringComparison.Ordinal)
-                  ? $"{PropertyName} = new([.. path, \"{PropertyName}\"], i => new([.. path, \"{PropertyName}\", i.ToString()]));"
-                  : $"{PropertyName} = new([.. path, \"{PropertyName}\"]);";
+                var path = IsValueMember
+                    ? $"[.. path, \"{VALUES_TS}\", \"{PropertyName}\"]"
+                    : $"[.. path, \"{PropertyName}\"]";
+
+                if (IsValueMember) {
+                    return IsInGrid
+                        ? $"{PropertyName} = new DisplayMessageContainerInGrid({path}, grid, rowIndex);"
+                        : $"{PropertyName} = new DisplayMessageContainer({path});";
+                }
+
+                if (TypeName.StartsWith("DisplayMessageContainerList<", StringComparison.Ordinal)) {
+                    var itemType = TypeName["DisplayMessageContainerList<".Length..^1];
+                    return $"{PropertyName} = new([.. path, \"{PropertyName}\"], rowIndex => {{\n    return new {itemType}([.. path, \"{PropertyName}\", rowIndex.ToString()], {PropertyName}!, rowIndex);\n}});";
+                }
+
+                return $"{PropertyName} = new {TypeName}({path});";
             }
 
             internal string RenderOriginConstructor() {
-                return TypeName.StartsWith("DisplayMessageContainerList<", StringComparison.Ordinal)
-                  ? $"{PropertyName} = new(origin, _ => new(origin));"
-                  : $"{PropertyName} = new(origin);";
+                if (IsValueMember) {
+                    return $"{PropertyName} = origin;";
+                }
+
+                if (TypeName.StartsWith("DisplayMessageContainerList<", StringComparison.Ordinal)) {
+                    var itemType = TypeName["DisplayMessageContainerList<".Length..^1];
+                    return $"{PropertyName} = new([], rowIndex => {{\n    return new {itemType}(origin);\n}});";
+                }
+
+                return $"{PropertyName} = new {TypeName}(origin);";
             }
         }
 
@@ -341,8 +453,6 @@ namespace Nijo.Models.ReadModel2Modules {
                 """;
         }
         internal string RenderSetKeysReadOnly(CodeRenderingContext ctx) {
-            var keys = Aggregate.GetKeyVMs().ToArray();
-
             if (!ctx.IsLegacyCompatibilityMode()) {
                 return $$"""
               /// <summary>
@@ -354,16 +464,61 @@ namespace Nijo.Models.ReadModel2Modules {
               """;
             }
 
+            var renderedChildMembers = NormalizeEmptyTemplate(GetChildMembers().SelectTextTemplate(child => child switch {
+                EditablePresentationObjectChildrenDescendant children => $$"""
+                    foreach (var x in displayData.{{children.PhysicalName}}) {
+                        {{WithIndent(RenderAggregate(children, "x"), "    ")}}
+                    }
+                    """,
+                EditablePresentationObjectChildDescendant childDescendant => RenderAggregate(childDescendant, $"displayData.{childDescendant.PhysicalName}"),
+                _ => throw new InvalidOperationException(),
+            }));
+            var needsTrailingBlankLine = GetChildMembers().Any() && renderedChildMembers == string.Empty;
+
             return $$"""
                 /// <summary>
                 /// {{Aggregate.DisplayName}}の主キー項目を読み取り専用にします。
                 /// </summary>
                 private void SetKeysReadOnly({{CsClassName}} displayData) {
-                {{keys.SelectTextTemplate(key => $$"""
-                    displayData.{{READONLY_CS}}.{{key.PhysicalName}} = true;
-                """)}}
+                    {{WithIndent(RenderAggregate(this, "displayData"), "    ")}}
+                {{If(needsTrailingBlankLine, () => "")}}
                 }
                 """;
+
+            static string RenderAggregate(EditablePresentationObject displayData, string instance) {
+                var ownMembers = NormalizeEmptyTemplate(RenderOwnMembers(displayData, instance));
+                var childMembers = NormalizeEmptyTemplate(displayData.GetChildMembers().SelectTextTemplate(child => child switch {
+                    EditablePresentationObjectChildrenDescendant children => $$"""
+                        foreach (var x in {{instance}}.{{children.PhysicalName}}) {
+                            {{WithIndent(RenderAggregate(children, "x"), "    ")}}
+                        }
+                        """,
+                    EditablePresentationObjectChildDescendant childDescendant => RenderAggregate(childDescendant, $"{instance}.{childDescendant.PhysicalName}"),
+                    _ => throw new InvalidOperationException(),
+                }));
+
+                return ownMembers != string.Empty && childMembers != string.Empty
+                    ? ownMembers + Environment.NewLine + childMembers
+                    : ownMembers + childMembers;
+            }
+
+            static string RenderOwnMembers(EditablePresentationObject displayData, string instance) {
+                return displayData.Aggregate.GetMembers()
+                    .Where(member => member switch {
+                        ValueMember valueMember => valueMember.IsKey,
+                        RefToMember refToMember => refToMember.IsKey,
+                        _ => false,
+                    })
+                    .SelectTextTemplate(member => member switch {
+                        ValueMember valueMember => $"{instance}.{READONLY_CS}.{valueMember.PhysicalName} = true;",
+                        RefToMember refToMember => $"{instance}.{READONLY_CS}.{refToMember.PhysicalName} = true;",
+                        _ => throw new InvalidOperationException(),
+                    });
+            }
+
+            static string NormalizeEmptyTemplate(string value) {
+                return value == SKIP_MARKER ? string.Empty : value;
+            }
         }
 
         internal string PkExtractFunctionName => $"extract{Aggregate.PhysicalName}Keys";
@@ -406,7 +561,9 @@ namespace Nijo.Models.ReadModel2Modules {
 
             public IEnumerable<IInstancePropertyMetadata> GetMembers() {
                 foreach (var member in _displayData.GetValueMembers()) {
-                    yield return member;
+                    if (member is IInstancePropertyMetadata metadata) {
+                        yield return metadata;
+                    }
                 }
             }
         }

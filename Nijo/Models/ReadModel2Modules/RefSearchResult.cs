@@ -7,13 +7,15 @@ using Nijo.Util.DotnetEx;
 
 namespace Nijo.Models.ReadModel2Modules {
     internal class RefSearchResult : IInstancePropertyOwnerMetadata {
-        internal RefSearchResult(AggregateBase aggregate, AggregateBase refEntry) {
+        internal RefSearchResult(AggregateBase aggregate, AggregateBase refEntry, string? relationSuffixOverride = null) {
             Aggregate = aggregate;
             RefEntry = refEntry;
+            _relationSuffixOverride = relationSuffixOverride;
         }
 
         internal AggregateBase Aggregate { get; }
         internal AggregateBase RefEntry { get; }
+        private readonly string? _relationSuffixOverride;
 
         internal string CsClassName => Aggregate == RefEntry
             ? $"{RefEntry.PhysicalName}RefSearchResult"
@@ -34,31 +36,50 @@ namespace Nijo.Models.ReadModel2Modules {
                     {{WithIndent(member.RenderCSharpDeclaring(), "    ")}}
                 """)}}
                 }
+                {{EnumerateMembers().OfType<StructureMember>().Where(member => member.Target.RefEntry == RefEntry && (Aggregate != RefEntry || member.SchemaPathNode is RefToMember)).SelectTextTemplate(member => $$"""
+                {{member.Target.RenderCSharp(context)}}
+                """)}}
                 """;
         }
 
         private IEnumerable<IMember> EnumerateMembers() {
             foreach (var member in Aggregate.GetMembers()) {
                 if (member is ValueMember vm) {
-                    if (vm.OnlySearchCondition) continue;
+                    if (vm.OnlySearchCondition && !(CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode() && vm.Type.CsDomainTypeName == "bool")) continue;
                     if (vm.IsHardCodedPrimaryKey) continue;
                     yield return new ValueMemberWrapper(vm);
                 } else if (member is RefToMember refTo) {
-                    yield return new StructureMember(refTo.PhysicalName, new RefSearchResult(refTo.RefTo.AsEntry(), refTo.RefTo.AsEntry()), false, refTo);
+                    yield return new StructureMember(refTo.PhysicalName, new RefSearchResult(refTo.RefTo.AsEntry(), RefEntry, GetNestedRefRelationSuffix(refTo.PhysicalName)), false, refTo);
                 } else if (member is ChildAggregate child) {
-                    yield return new StructureMember(child.PhysicalName, new RefSearchResult(child, RefEntry), false, child);
+                    yield return new StructureMember(child.PhysicalName, new RefSearchResult(child, RefEntry, GetNestedRelationSuffix(child.PhysicalName)), false, child);
                 } else if (member is ChildrenAggregate children) {
-                    yield return new StructureMember(children.PhysicalName, new RefSearchResult(children, RefEntry), true, children);
+                    yield return new StructureMember(children.PhysicalName, new RefSearchResult(children, RefEntry, GetNestedRelationSuffix(children.PhysicalName)), true, children);
                 }
             }
         }
 
         private string GetRelationSuffix() {
-            return Aggregate.GetPathFromEntry()
+            if (_relationSuffixOverride != null) return _relationSuffixOverride.ToCSharpSafe();
+
+            var suffix = Aggregate.GetPathFromEntry()
                 .Skip(1)
                 .OfType<AggregateBase>()
                 .Select(node => node.PhysicalName.ToCSharpSafe())
                 .Join("の");
+
+            return suffix == string.Empty ? Aggregate.PhysicalName.ToCSharpSafe() : suffix;
+        }
+
+        private string GetNestedRefRelationSuffix(string propertyName) {
+            return _relationSuffixOverride == null
+                ? propertyName
+                : $"{_relationSuffixOverride}の{propertyName}";
+        }
+
+        private string? GetNestedRelationSuffix(string propertyName) {
+            return _relationSuffixOverride == null
+                ? null
+                : $"{_relationSuffixOverride}の{propertyName}";
         }
 
         private interface IMember : IInstancePropertyMetadata {
@@ -77,7 +98,7 @@ namespace Nijo.Models.ReadModel2Modules {
 
             public string RenderCSharpDeclaring() {
                 return $$"""
-                    public virtual {{Member.Type.CsDomainTypeName}}? {{Member.PhysicalName}} { get; set; }
+                    public virtual {{Member.Type.CsDomainTypeName.Replace("DateOnly", "Date")}}? {{Member.PhysicalName}} { get; set; }
                     """;
             }
         }
@@ -93,6 +114,7 @@ namespace Nijo.Models.ReadModel2Modules {
             private readonly RefSearchResult _target;
             private readonly bool _isArray;
             private readonly ISchemaPathNode _schemaPathNode;
+            internal RefSearchResult Target => _target;
 
             public string DisplayName => _propertyName;
             public ISchemaPathNode SchemaPathNode => _schemaPathNode;

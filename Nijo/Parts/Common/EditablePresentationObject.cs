@@ -238,13 +238,15 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
             var ownerModel = refTo.Owner.GetRoot().Model;
             var refToModel = refTo.RefTo.GetRoot().Model;
 
-            if (ownerModel is Models.QueryModel
-                || ownerModel is Models.ReadModel2
+            if (ownerModel is Models.ReadModel2
+                || refToModel is Models.ReadModel2) {
+                RefEntry = new Models.ReadModel2Modules.RefDisplayData(refTo.RefTo.AsEntry(), refTo.RefTo.AsEntry());
+
+            } else if (ownerModel is Models.QueryModel
                 || ownerModel is Models.DataModel
                 || ownerModel is Models.WriteModel2
                 || refToModel is Models.DataModel
-                || refToModel is Models.WriteModel2
-                || refToModel is Models.ReadModel2) {
+                || refToModel is Models.WriteModel2) {
                 // Query => Query
                 RefEntry = new DisplayDataRef.Entry(refTo.RefTo);
 

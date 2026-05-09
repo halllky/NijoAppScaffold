@@ -95,6 +95,36 @@ namespace Nijo.Models.ReadModel2Modules {
                     export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({{RenderTsNewObjectFunctionBody()}})
                     """;
             }
+            internal IEnumerable<FilterableMember> EnumerateFilterMembersRecursively() {
+                return EnumerateRecursively(_entryAggregate, []);
+
+                static IEnumerable<FilterableMember> EnumerateRecursively(AggregateBase aggregate, IReadOnlyList<string> path) {
+                    foreach (var member in aggregate.GetMembers().OfType<ValueMember>()) {
+                        if (member.Owner != aggregate) continue;
+                        var isLegacySearchOnlyBool = member.OnlySearchCondition && member.Type.CsDomainTypeName == "bool";
+                        if (member.Type.SearchBehavior == null && !isLegacySearchOnlyBool) continue;
+                        if (member.OnlySearchCondition && !isLegacySearchOnlyBool) continue;
+                        if (member.IsHardCodedPrimaryKey) continue;
+                        yield return new FilterableMember(member, [.. path, member.PhysicalName]);
+                    }
+
+                    foreach (var member in aggregate.GetMembers()) {
+                        if (member is RefToMember refTo) {
+                            foreach (var child in EnumerateRecursively(refTo.RefTo.GetRoot(), [.. path, refTo.PhysicalName])) {
+                                yield return child;
+                            }
+                        } else if (member is ChildAggregate child) {
+                            foreach (var childMember in EnumerateRecursively(child, [.. path, child.PhysicalName])) {
+                                yield return childMember;
+                            }
+                        } else if (member is ChildrenAggregate children) {
+                            foreach (var childMember in EnumerateRecursively(children, [.. path, children.PhysicalName])) {
+                                yield return childMember;
+                            }
+                        }
+                    }
+                }
+            }
             internal string RenderParseQueryParameterFunction() {
                 return $$"""
                     /** クエリパラメータを解釈して画面初期表示時検索条件オブジェクトを返します。 */
@@ -295,18 +325,23 @@ namespace Nijo.Models.ReadModel2Modules {
             }
 
             internal IEnumerable<SortableMember> EnumerateSortMembersRecursively() {
-                return EnumerateRecursively(_entryAggregate);
+                return EnumerateRecursively(_entryAggregate, []);
 
-                static IEnumerable<SortableMember> EnumerateRecursively(AggregateBase aggregate) {
+                static IEnumerable<SortableMember> EnumerateRecursively(AggregateBase aggregate, IReadOnlyList<string> path) {
                     foreach (var member in aggregate.GetMembers()) {
                         if (member is ValueMember vm) {
                             if (vm.OnlySearchCondition) continue;
                             if (vm.IsHardCodedPrimaryKey) continue;
-                            yield return new SortableMember(vm);
-                        } else if (member is ChildrenAggregate) {
+                            yield return new SortableMember(vm, [.. path, vm.PhysicalName]);
+                        }
+                    }
+
+                    foreach (var member in aggregate.GetMembers()) {
+                        if (member is ChildrenAggregate) {
                             continue;
-                        } else if (member is IRelationalMember relational) {
-                            foreach (var vm2 in EnumerateRecursively(relational.MemberAggregate)) {
+                        }
+                        if (member is IRelationalMember relational) {
+                            foreach (var vm2 in EnumerateRecursively(relational.MemberAggregate, [.. path, relational.PhysicalName])) {
                                 yield return vm2;
                             }
                         }
@@ -323,14 +358,29 @@ namespace Nijo.Models.ReadModel2Modules {
             private readonly AggregateBase _aggregate;
             internal AggregateBase Aggregate => _aggregate;
 
-            internal string CsClassName => $"{_aggregate.PhysicalName}SearchConditionFilter";
-            internal string TsTypeName => $"{_aggregate.PhysicalName}SearchConditionFilter";
+            internal string CsClassName => GetFilterTypeName();
+            internal string TsTypeName => GetFilterTypeName();
             string IPresentationLayerStructure.CsClassName => CsClassName;
             string IPresentationLayerStructure.TsTypeName => TsTypeName;
 
             public ISchemaPathNode SchemaPathNode => ISchemaPathNode.Empty;
             public bool IsArray => false;
             public string TsNewObjectFunction => $"createNew{TsTypeName}";
+
+            private string GetFilterTypeName() {
+                var entry = (AggregateBase)_aggregate.GetEntry();
+
+                if (!CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode() || _aggregate == entry) {
+                    return $"{_aggregate.PhysicalName}SearchConditionFilter";
+                }
+
+                var suffix = _aggregate.GetPathFromEntry()
+                    .Skip(1)
+                    .OfType<AggregateBase>()
+                    .Select(node => node.PhysicalName.ToCSharpSafe())
+                    .Join("_");
+                return $"{entry.PhysicalName}SearchConditionFilter_{suffix}";
+            }
 
             public IEnumerable<IInstancePropertyMetadata> GetMembers() => GetOwnMembers();
             IEnumerable<IInstancePropertyMetadata> IPresentationLayerStructure.GetMembers() => GetMembers();
@@ -346,11 +396,14 @@ namespace Nijo.Models.ReadModel2Modules {
 
             internal IEnumerable<IFilterMember> GetOwnMembers() {
                 foreach (var member in _aggregate.GetMembers()) {
-                    if (member is ValueMember vm) {
-                        if (vm.Type.SearchBehavior == null && !vm.OnlySearchCondition) continue;
-                        if (vm.IsHardCodedPrimaryKey) continue;
-                        yield return new FilterValueMember(vm);
-                    } else if (member is RefToMember refTo) {
+                    if (member is not ValueMember vm) continue;
+                    if (vm.Type.SearchBehavior == null && !vm.OnlySearchCondition) continue;
+                    if (vm.IsHardCodedPrimaryKey) continue;
+                    yield return new FilterValueMember(vm);
+                }
+
+                foreach (var member in _aggregate.GetMembers()) {
+                    if (member is RefToMember refTo) {
                         yield return new FilterRefMember(refTo);
                     } else if (member is ChildAggregate child) {
                         yield return new FilterChildOrChildrenMember(child);
@@ -453,26 +506,30 @@ namespace Nijo.Models.ReadModel2Modules {
             internal FilterRefMember(RefToMember refTo) {
                 _refTo = refTo;
                 RefToFilter = new Filter(refTo.RefTo.GetRoot());
+                LegacyRefToFilter = new RefSearchCondition(refTo.RefTo.GetRoot(), refTo.RefTo.GetRoot());
             }
 
             private readonly RefToMember _refTo;
             internal Filter RefToFilter { get; }
+            internal RefSearchCondition LegacyRefToFilter { get; }
 
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => _refTo;
             bool IInstanceStructurePropertyMetadata.IsArray => false;
             IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => RefToFilter.GetMembers();
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => _refTo.PhysicalName;
-            string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp ? RefToFilter.CsClassName : RefToFilter.TsTypeName;
+            string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
+                ? (csts == E_CsTs.CSharp ? LegacyRefToFilter.CsFilterTypeName : LegacyRefToFilter.TsFilterTypeName)
+                : (csts == E_CsTs.CSharp ? RefToFilter.CsClassName : RefToFilter.TsTypeName);
 
             string IFilterMember.RenderCSharpDeclaring(CodeRenderingContext ctx) {
                 return $$"""
                     {{NijoAttr.RenderAttributeValues(ctx, _refTo)}}
-                    public {{RefToFilter.CsClassName}} {{_refTo.PhysicalName}} { get; set; } = new();
+                    public {{((IInstanceStructurePropertyMetadata)this).GetTypeName(E_CsTs.CSharp)}} {{_refTo.PhysicalName}} { get; set; } = new();
                     """;
             }
             string IFilterMember.RenderTypeScriptDeclaring() {
                 return $$"""
-                    {{_refTo.PhysicalName}}: {{RefToFilter.TsTypeName}}
+                    {{_refTo.PhysicalName}}: {{((IInstanceStructurePropertyMetadata)this).GetTypeName(E_CsTs.TypeScript)}}
                     """;
             }
             string IFilterMember.RenderTsNewObjectFunctionValue() {
@@ -527,20 +584,31 @@ namespace Nijo.Models.ReadModel2Modules {
         }
 
         internal class SortableMember {
-            internal SortableMember(ValueMember member) {
+            internal SortableMember(ValueMember member, IReadOnlyList<string> path) {
                 Member = member;
+                _path = path;
             }
 
             internal ValueMember Member { get; }
+            private readonly IReadOnlyList<string> _path;
 
             internal string GetLiteral() {
-                return Member
-                    .GetPathFromEntry()
-                    .OfType<ISchemaPathNode>()
-                    .Skip(1)
-                    .Select(node => node.XElement.Name.LocalName)
-                    .Join(".");
+                return _path.Join(".");
             }
+
+            internal string GetSearchResultPath() {
+                return _path.Join(".");
+            }
+        }
+
+        internal class FilterableMember {
+            internal FilterableMember(ValueMember member, IReadOnlyList<string> path) {
+                Member = member;
+                Path = path;
+            }
+
+            internal ValueMember Member { get; }
+            internal IReadOnlyList<string> Path { get; }
         }
     }
 }

@@ -1,6 +1,8 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.Parts.Common;
 using Nijo.Parts.CSharp;
+using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -170,20 +172,16 @@ namespace Nijo.Models.ReadModel2Modules {
                 .OfType<InstanceValueProperty>()
                 .GroupBy(p => p.Metadata.SchemaPathNode.ToMappingKey())
                 .ToDictionary(g => g.Key, g => g.OrderBy(x => x.GetPathFromInstance().Count()).First());
-            var searchConditionMembers = scVar
-                .CreatePropertiesRecursively()
-                .OfType<InstanceValueProperty>()
-                .Where(prop => prop.Metadata.Type.SearchBehavior != null)
+            var filterMembers = searchCondition
+                .EnumerateFilterMembersRecursively()
                 .ToArray();
             var sortMembers = searchCondition
                 .EnumerateSortMembersRecursively()
-                .SelectMany(m => queryItemMembers.TryGetValue(m.Member.ToMappingKey(), out var queryMember)
-                    ? [new SortMemberTemplate(
-                        m.GetLiteral() + SearchCondition.ASC_SUFFIX,
-                        m.GetLiteral() + SearchCondition.DESC_SUFFIX,
-                        string.Join("!.", queryMember.GetPathFromInstance().Select(p => p.Metadata.GetPropertyName(E_CsTs.CSharp))),
-                        m.Member.Type.CsDomainTypeName == "string")]
-                    : Array.Empty<SortMemberTemplate>())
+                .Select(m => new SortMemberTemplate(
+                    m.GetLiteral() + SearchCondition.ASC_SUFFIX,
+                    m.GetLiteral() + SearchCondition.DESC_SUFFIX,
+                    m.GetSearchResultPath(),
+                    m.Member.Type.CsDomainTypeName == "string"))
                 .ToArray();
             var keys = _aggregate.GetKeyVMs().ToArray();
             var defaultOrderBy = keys.SelectTextTemplate((vm, i) => {
@@ -334,9 +332,9 @@ namespace Nijo.Models.ReadModel2Modules {
                 #pragma warning disable CS8603 // Null 参照戻り値である可能性があります。
                 #pragma warning disable CS8604 // Null 参照引数の可能性があります。
 
-            {{searchConditionMembers.SelectTextTemplate(prop => $$"""
-                // フィルタリング: {{prop.Metadata.DisplayName}}
-                {{WithIndent(RenderFilter(prop), "    ")}}
+            {{filterMembers.SelectTextTemplate(member => $$"""
+                // フィルタリング: {{member.Member.DisplayName}}
+                {{WithIndent(RenderFilter(member), "    ")}}
 
             """)}}
                 return query;
@@ -352,18 +350,14 @@ namespace Nijo.Models.ReadModel2Modules {
             protected virtual {{displayData.CsClassName}} {{ToDisplayDataMethod}}({{searchResult.CsClassName}} searchResult) {
             {{If(context.IsLegacyCompatibilityMode(), () => $$"""
                 return new {{displayData.CsClassName}} {
-                    {{DisplayData.EXISTS_IN_DB_CS}} = true,
-                    {{DisplayData.WILL_BE_CHANGED_CS}} = false,
-                    {{DisplayData.WILL_BE_DELETED_CS}} = false,
+                    {{EditablePresentationObject.EXISTS_IN_DB_CS}} = true,
+                    {{EditablePresentationObject.WILL_BE_CHANGED_CS}} = false,
+                    {{EditablePresentationObject.WILL_BE_DELETED_CS}} = false,
                     {{DisplayData.UNIQUE_ID_CS}} = Guid.NewGuid().ToString(),
                 {{If(displayData.HasVersion, () => $$"""
-                    {{DisplayData.VERSION_CS}} = searchResult.Version,
+                    {{EditablePresentationObject.VERSION_CS}} = searchResult.Version,
                 """)}}
-                    {{DisplayData.VALUES_CS}} = new {{displayData.ValueCsClassName}} {
-            {{RenderLegacyDisplayDataValueMembers(displayData, new Variable("searchResult", searchResult)).SelectTextTemplate(line => $$"""
-                        {{WithIndent(line, "    ")}}
-            """)}}
-                    },
+                    {{WithIndent(RenderLegacyDisplayDataMembers(displayData, new Variable("searchResult", searchResult)), "        ")}}
                 };
             """).Else(() => $$"""
                 return new {{displayData.CsClassName}} {
@@ -379,17 +373,48 @@ namespace Nijo.Models.ReadModel2Modules {
             }
             """;
 
-            string RenderFilter(InstanceValueProperty prop) {
-                var query = queryVarMembers.GetValueOrDefault(prop.Metadata.SchemaPathNode.ToMappingKey());
-                if (query == null) {
-                    return "// このメンバーの検索条件は無視されます。";
+            string RenderFilter(SearchCondition.FilterableMember member) {
+                if (member.Member.Type.SearchBehavior == null
+                    || (member.Member.OnlySearchCondition && member.Member.Type.CsDomainTypeName == "bool")) {
+                    return "// この項目のWHERE句の処理は Create...QuerySource メソッドで個別に実装してください。";
                 }
+
                 var ctx = new FilterStatementRenderingContext {
-                    Query = query,
-                    SearchCondition = prop,
+                    Query = CreateQueryProperty(member),
+                    SearchCondition = CreateSearchConditionProperty(member),
                     CodeRenderingContext = context,
                 };
-                return prop.Metadata.Type.SearchBehavior!.RenderFiltering(ctx);
+                return member.Member.Type.SearchBehavior!.RenderFiltering(ctx);
+            }
+
+            InstanceValueProperty CreateQueryProperty(SearchCondition.FilterableMember member) {
+                return CreateValueProperty(new Variable("query", searchResult), member);
+            }
+
+            InstanceValueProperty CreateSearchConditionProperty(SearchCondition.FilterableMember member) {
+                var filterRoot = scVar.CreateProperty(searchCondition.FilterRoot);
+                return CreateValueProperty(filterRoot, member);
+            }
+
+            static InstanceValueProperty CreateValueProperty(IInstancePropertyOwner rootOwner, SearchCondition.FilterableMember member) {
+                IInstancePropertyOwner current = rootOwner;
+
+                foreach (var segment in member.Path.Take(member.Path.Count - 1)) {
+                    var structure = current.Metadata
+                        .GetMembers()
+                        .OfType<IInstanceStructurePropertyMetadata>()
+                        .FirstOrDefault(meta => meta.GetPropertyName(E_CsTs.CSharp) == segment)
+                        ?? throw new InvalidOperationException($"Filter path not found (structure): {string.Join('.', member.Path)} / segment={segment} / available={string.Join(',', current.Metadata.GetMembers().Select(meta => meta.GetPropertyName(E_CsTs.CSharp)))}");
+                    current = current.CreateProperty(structure);
+                }
+
+                var value = current.Metadata
+                    .GetMembers()
+                    .OfType<IInstanceValuePropertyMetadata>()
+                    .FirstOrDefault(meta => meta.GetPropertyName(E_CsTs.CSharp) == member.Member.PhysicalName)
+                    ?? throw new InvalidOperationException($"Filter path not found (value): {string.Join('.', member.Path)} / value={member.Member.PhysicalName} / available={string.Join(',', current.Metadata.GetMembers().Select(meta => meta.GetPropertyName(E_CsTs.CSharp)))}");
+
+                return current.CreateProperty(value);
             }
 
             static IEnumerable<string> RenderDisplayDataMembers(DisplayData left, IInstancePropertyOwner rightInstance) {
@@ -425,18 +450,179 @@ namespace Nijo.Models.ReadModel2Modules {
                 }
             }
 
-            static IEnumerable<string> RenderLegacyDisplayDataValueMembers(DisplayData left, IInstancePropertyOwner rightInstance) {
+            static string RenderLegacyDisplayDataObject(EditablePresentationObject left, IInstancePropertyOwner rightInstance, bool renderTypeName = true) {
+                var newExpression = renderTypeName ? $"new {left.CsClassName}" : "new()";
+                var hasLifeCycle = left.Aggregate is RootAggregate
+                    || left.Aggregate is ChildrenAggregate
+                    || left.Aggregate.XElement.Attribute(BasicNodeOptions.HasLifecycle.AttributeName) != null;
+
+                return $$"""
+                    {{newExpression}} {
+                    {{If(hasLifeCycle, () => $$"""
+                        {{EditablePresentationObject.EXISTS_IN_DB_CS}} = true,
+                        {{EditablePresentationObject.WILL_BE_CHANGED_CS}} = false,
+                        {{EditablePresentationObject.WILL_BE_DELETED_CS}} = false,
+                        {{DisplayData.UNIQUE_ID_CS}} = Guid.NewGuid().ToString(),
+                    """)}}
+                    {{If(left.HasVersion, () => $$"""
+                        {{EditablePresentationObject.VERSION_CS}} = {{GetVersionValue(rightInstance)}},
+                    """)}}
+                        {{WithIndent(RenderLegacyDisplayDataMembers(left, rightInstance), "    ")}}
+                    }
+                    """;
+
+                static string GetVersionValue(IInstancePropertyOwner instance) {
+                    return instance switch {
+                        Variable variable => $"{variable.Name}.{EditablePresentationObject.VERSION_CS}",
+                        _ => throw new InvalidOperationException("Version を持つオブジェクトの変換元が変数ではありません。"),
+                    };
+                }
+            }
+
+            static string RenderLegacyDisplayDataMembers(EditablePresentationObject left, IInstancePropertyOwner rightInstance) {
                 var rightMembers = rightInstance
                     .CreatePropertiesRecursively()
                     .GroupBy(x => x.Metadata.SchemaPathNode.ToMappingKey())
                     .ToDictionary(g => g.Key, g => g.OrderBy(x => x.GetPathFromInstance().Count()).First());
 
-                foreach (var member in left.GetValueMembers()) {
+                return $$"""
+                    {{DisplayData.VALUES_CS}} = new {{left.CsClassName}}Values {
+                    {{EnumerateLegacyValueMembers(left).SelectTextTemplate(member => $$"""
+                        {{WithIndent(RenderValueMember(member, rightInstance, rightMembers), "    ")}}
+                    """)}}
+                    },
+                    {{left.GetChildMembers().SelectTextTemplate(child => RenderChildMember(child, rightMembers))}}
+                    """;
+
+                static IEnumerable<EditablePresentationObject.IEditablePresentationObjectValueOrRefMember> EnumerateLegacyValueMembers(EditablePresentationObject left) {
+                    foreach (var member in left.Aggregate.GetMembers()) {
+                        if (member is ValueMember valueMember) {
+                            var isLegacySearchOnlyBool = valueMember.OnlySearchCondition && valueMember.Type.CsDomainTypeName == "bool";
+                            if (!valueMember.OnlySearchCondition || isLegacySearchOnlyBool) {
+                                yield return new DisplayData.EditablePresentationObjectValueMember(valueMember);
+                            }
+                        } else if (member is RefToMember refTo) {
+                            yield return new DisplayData.EditablePresentationObjectRefMember(refTo);
+                        }
+                    }
+                }
+
+                static string RenderValueMember(EditablePresentationObject.IEditablePresentationObjectValueOrRefMember member, IInstancePropertyOwner rightInstance, IReadOnlyDictionary<SchemaNodeIdentity, IInstanceProperty> rightMembers) {
                     if (member is DisplayData.EditablePresentationObjectValueMember vm) {
-                        var right = rightMembers[vm.Member.ToMappingKey()];
-                        yield return $"{member.GetPropertyName(E_CsTs.CSharp)} = {vm.Member.Type.RenderCastToDomainType()}{right.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")},";
-                    } else if (member is DisplayData.EditablePresentationObjectRefMember) {
-                        yield return $"{member.GetPropertyName(E_CsTs.CSharp)} = new(),";
+                        if (!rightMembers.TryGetValue(vm.Member.ToMappingKey(), out var right)) {
+                            if (vm.Member.OnlySearchCondition && vm.Member.Type.CsDomainTypeName == "bool" && rightInstance is Variable variable) {
+                                return $"{member.GetPropertyName(E_CsTs.CSharp)} = {vm.Member.Type.RenderCastToDomainType()}{variable.Name}.{vm.Member.PhysicalName},";
+                            }
+
+                            throw new KeyNotFoundException(vm.Member.PhysicalName);
+                        }
+
+                        return $"{member.GetPropertyName(E_CsTs.CSharp)} = {vm.Member.Type.RenderCastToDomainType()}{right.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")},";
+                    }
+
+                    if (member is DisplayData.EditablePresentationObjectRefMember refMember) {
+                        if (!rightMembers.TryGetValue(refMember.Member.ToMappingKey(), out var right)
+                            || right is not InstanceStructureProperty rightStructure) {
+                            return $"{member.GetPropertyName(E_CsTs.CSharp)} = new(),";
+                        }
+
+                        return $"{member.GetPropertyName(E_CsTs.CSharp)} = {RenderStructureOwner(refMember.RefEntry.CsClassName, refMember, rightStructure, false)},";
+                    }
+
+                    throw new InvalidOperationException();
+                }
+
+                static string RenderChildMember(EditablePresentationObject.EditablePresentationObjectDescendant child, IReadOnlyDictionary<SchemaNodeIdentity, IInstanceProperty> rightMembers) {
+                    if (!rightMembers.TryGetValue(child.Aggregate.ToMappingKey(), out var right)
+                        || right is not InstanceStructureProperty rightStructure) {
+                        return child switch {
+                            EditablePresentationObject.EditablePresentationObjectChildrenDescendant => $$"""
+                                {{child.PhysicalName}} = [],
+                                """,
+                            _ => $$"""
+                                {{child.PhysicalName}} = new(),
+                                """,
+                        };
+                    }
+
+                    if (child is EditablePresentationObject.EditablePresentationObjectChildrenDescendant) {
+                        return $$"""
+                            {{child.PhysicalName}} = {{rightStructure.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")}}?.Select(item => {{RenderLegacyDisplayDataObject(child, new Variable("item", rightStructure.Metadata))}}).ToList() ?? [],
+                            """;
+                    }
+
+                    return $$"""
+                        {{child.PhysicalName}} = {{RenderLegacyDisplayDataObject(child, rightStructure, false)}},
+                        """;
+                }
+
+                static string RenderStructureOwner(string typeName, IInstanceStructurePropertyMetadata leftOwner, IInstancePropertyOwner rightOwner, bool renderTypeName = true) {
+                    var sourceMembers = rightOwner
+                        .CreatePropertiesRecursively()
+                        .GroupBy(x => x.Metadata.GetPropertyName(E_CsTs.CSharp))
+                        .ToDictionary(g => g.Key, g => g.OrderBy(x => x.GetPathFromInstance().Count()).First());
+                    var newExpression = renderTypeName ? $"new {typeName}()" : "new()";
+
+                    return $$"""
+                        {{newExpression}} {
+                        {{leftOwner.GetMembers().SelectTextTemplate(member => $$"""
+                            {{WithIndent(RenderMember(member), "    ")}}
+                        """)}}
+                        }
+                        """;
+
+                    string RenderMember(IInstancePropertyMetadata member) {
+                        return member switch {
+                            IInstanceValuePropertyMetadata value => $$"""
+                                {{value.GetPropertyName(E_CsTs.CSharp)}} = {{RenderValueAssignment(value)}},
+                                """,
+                            IInstanceStructurePropertyMetadata structure => RenderStructureMember(structure),
+                            _ => throw new InvalidOperationException(),
+                        };
+                    }
+
+                    string RenderValueAssignment(IInstanceValuePropertyMetadata value) {
+                        if (!sourceMembers.TryGetValue(value.GetPropertyName(E_CsTs.CSharp), out var sourceProperty)) {
+                            if (value is DisplayData.EditablePresentationObjectValueMember editableValue
+                                && editableValue.Member.OnlySearchCondition
+                                && editableValue.Member.Type.CsDomainTypeName == "bool") {
+                                if (rightOwner is Variable variable) {
+                                    return editableValue.Member.Type.RenderCastToDomainType() + $"{variable.Name}.Values?.{editableValue.Member.PhysicalName}";
+                                }
+
+                                if (rightOwner is InstanceStructureProperty structureProperty) {
+                                    return editableValue.Member.Type.RenderCastToDomainType() + $"{structureProperty.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")}?.{editableValue.Member.PhysicalName}";
+                                }
+                            }
+
+                            return "null";
+                        }
+
+                        return value.Type.RenderCastToDomainType() + sourceProperty.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");
+                    }
+
+                    string RenderStructureMember(IInstanceStructurePropertyMetadata structure) {
+                        if (!sourceMembers.TryGetValue(structure.GetPropertyName(E_CsTs.CSharp), out var sourcePropertyBase)
+                            || sourcePropertyBase is not InstanceStructureProperty sourceProperty) {
+                            return structure.IsArray
+                                ? $$"""
+                                    {{structure.GetPropertyName(E_CsTs.CSharp)}} = [],
+                                    """
+                                : $$"""
+                                    {{structure.GetPropertyName(E_CsTs.CSharp)}} = new {{structure.GetTypeName(E_CsTs.CSharp)}} {
+                                    },
+                                    """;
+                        }
+
+                        if (structure.IsArray) {
+                            return $$"""
+                                {{structure.GetPropertyName(E_CsTs.CSharp)}} = {{sourceProperty.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")}}?.Select(x1 => {{RenderStructureOwner(structure.GetTypeName(E_CsTs.CSharp), structure, new Variable("x1", sourceProperty.Metadata))}}).ToList() ?? [],
+                                """;
+                        }
+
+                        return $$"""
+                            {{structure.GetPropertyName(E_CsTs.CSharp)}} = {{RenderStructureOwner(structure.GetTypeName(E_CsTs.CSharp), structure, sourceProperty, false)}},
+                            """;
                     }
                 }
             }

@@ -21,7 +21,7 @@ namespace Nijo.Models.ReadModel2Modules {
         public IEnumerable<IInstancePropertyMetadata> GetMembers() {
             foreach (var member in Aggregate.GetMembers()) {
                 if (member is ValueMember vm) {
-                    if (vm.OnlySearchCondition) continue;
+                    if (vm.OnlySearchCondition && !(CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode() && vm.Type.CsDomainTypeName == "bool")) continue;
                     if (vm.IsHardCodedPrimaryKey) continue;
                     yield return new SearchResultValueMember(vm);
                 } else if (member is RefToMember refTo) {
@@ -152,17 +152,25 @@ namespace Nijo.Models.ReadModel2Modules {
             public ISchemaPathNode SchemaPathNode => _schemaPathNode;
             public bool IsArray => _isArray;
             public string GetPropertyName(E_CsTs csts) => _propertyName;
-            public string GetTypeName(E_CsTs csts) => _target.CsClassName;
+            public string GetTypeName(E_CsTs csts) => GetResolvedTypeName();
             public IEnumerable<IInstancePropertyMetadata> GetMembers() => _target.GetMembers();
 
             internal string RenderDeclaration() {
                 return _isArray
                     ? $$"""
-                        public virtual List<{{_target.CsClassName}}>? {{_propertyName}} { get; set; }
+                        public virtual List<{{GetResolvedTypeName()}}>? {{_propertyName}} { get; set; }
                         """
                     : $$"""
-                        public virtual {{_target.CsClassName}}? {{_propertyName}} { get; set; }
+                        public virtual {{GetResolvedTypeName()}}? {{_propertyName}} { get; set; }
                         """;
+            }
+
+            private string GetResolvedTypeName() {
+                if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode() && _schemaPathNode is RefToMember refTo) {
+                    return new RefSearchResult(refTo.RefTo.AsEntry(), refTo.RefTo.AsEntry()).CsClassName;
+                }
+
+                return _target.CsClassName;
             }
         }
     }
