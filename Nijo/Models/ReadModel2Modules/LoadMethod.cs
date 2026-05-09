@@ -72,6 +72,49 @@ namespace Nijo.Models.ReadModel2Modules {
         internal string RenderControllerAction(CodeRenderingContext context) {
             var searchCondition = new SearchCondition.Entry(_aggregate);
 
+            if (context.IsLegacyCompatibilityMode()) {
+                return $$"""
+                    [HttpPost("{{ControllerActionLoad}}")]
+                    public virtual IActionResult Load{{_aggregate.PhysicalName}}(ComplexPostRequest<{{searchCondition.CsClassName}}> request) {
+                        _applicationService.Log.Debug("Load {{_aggregate.DisplayName.Replace("\"", "\\\"")}}: {0}", request.Data.ToJson());
+                        if (_applicationService.GetAuthorizedLevel(E_AuthorizedAction.{{_aggregate.PhysicalName}}) == E_AuthLevel.None) return Forbid();
+
+                        var context = new PresentationContext(new DisplayMessageContainer([]), new() { IgnoreConfirm = request.IgnoreConfirm }, _applicationService);
+
+                        // エラーチェック
+                        _applicationService.{{AppSrvValidateMethod}}(request.Data, context);
+                        if (context.HasError() || (!context.Options.IgnoreConfirm && context.HasConfirm())) {
+                            return this.JsonContent(context.GetResult(isLoadProcess: true).ToJsonObject());
+                        }
+
+                        // 検索処理実行
+                        var searchResult = _applicationService.{{AppSrvLoadMethod}}(request.Data, context);
+                        context.ReturnValue = searchResult.ToArray();
+                        return this.JsonContent(context.GetResult(isLoadProcess: true).ToJsonObject());
+                    }
+                    [HttpPost("{{ControllerActionCount}}")]
+                    public virtual IActionResult Count{{_aggregate.PhysicalName}}(ComplexPostRequest<{{searchCondition.FilterRoot.CsClassName}}> request) {
+                        _applicationService.Log.Debug("Count {{_aggregate.DisplayName.Replace("\"", "\\\"")}}: {0}", request.Data.ToJson());
+                        if (_applicationService.GetAuthorizedLevel(E_AuthorizedAction.{{_aggregate.PhysicalName}}) == E_AuthLevel.None) return Forbid();
+
+                        var context = new PresentationContext(new DisplayMessageContainer([]), new() { IgnoreConfirm = request.IgnoreConfirm }, _applicationService);
+
+                        // エラーチェック
+                        var searchCondition = new {{searchCondition.CsClassName}}();
+                        searchCondition.{{SearchCondition.Entry.FILTER_CS}} = request.Data;
+                        _applicationService.{{AppSrvValidateMethod}}(searchCondition, context);
+                        if (context.HasError() || (!context.Options.IgnoreConfirm && context.HasConfirm())) {
+                            return this.JsonContent(context.GetResult(isLoadProcess: true).ToJsonObject());
+                        }
+
+                        // カウント処理実行
+                        var count = _applicationService.{{AppSrvCountMethod}}(request.Data, context);
+                        context.ReturnValue = count;
+                        return this.JsonContent(context.GetResult(isLoadProcess: true).ToJsonObject());
+                    }
+                    """;
+            }
+
             return $$"""
                 [HttpPost("{{ControllerActionLoad}}")]
                 public virtual IActionResult Load{{_aggregate.PhysicalName}}(ComplexPostRequest<{{searchCondition.CsClassName}}> request) {
@@ -106,6 +149,35 @@ namespace Nijo.Models.ReadModel2Modules {
                     var count = _applicationService.{{AppSrvCountMethod}}(request.Data, context);
                     context.ReturnValue = count;
                     return this.JsonContent(context.GetResult(isLoadProcess: true).ToJsonObject());
+                }
+                """;
+        }
+
+        internal string RenderLegacyExcelControllerAction() {
+            var searchCondition = new SearchCondition.Entry(_aggregate);
+
+            return $$"""
+                /// <summary>
+                /// 一覧検索を行ない、結果をExcelファイルとしてクライアント側に返します。
+                /// </summary>
+                [HttpPost("excel")]
+                public virtual IActionResult ExcelList(ComplexPostRequest<{{searchCondition.CsClassName}}> request) {
+                    if (_applicationService.GetAuthorizedLevel(E_AuthorizedAction.{{_aggregate.PhysicalName}}) == E_AuthLevel.None) return Forbid();
+
+                    /*********** 結合の不具合一覧のNo.114の件 **********/
+                    // ページを跨いで全件出力する
+                    request.Data.Skip = null;
+                    request.Data.Take = null;
+
+                    // パフォーマンスのためExcel出力時は子孫テーブル（特に親と1対多のテーブル）をSELECTしない
+                    request.Data.ExcludeChildren = true;
+
+                    var context = new PresentationContext(new DisplayMessageContainer([]), new() { IgnoreConfirm = true }, _applicationService);
+                    var excelBook = _applicationService.CreateSearchResultExcelBook(request.Data, context);
+                    if (context.HasError()) {
+                        return this.JsonContent(context.GetResult().ToJsonObject());
+                    }
+                    return File(excelBook.ToByteArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
                 }
                 """;
         }

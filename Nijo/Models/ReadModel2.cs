@@ -131,6 +131,10 @@ namespace Nijo.Models {
             }
 
             if (ctx.IsLegacyCompatibilityMode()) {
+                aggregateFile.AddWebapiControllerAction(loadMethod.RenderLegacyExcelControllerAction());
+            }
+
+            if (ctx.IsLegacyCompatibilityMode()) {
                 aggregateFile.AddCSharpClass(aggregates.SelectTextTemplate(aggregate => {
                     var refEntry = (AggregateBase)aggregate.GetEntry();
                     var refSearchResult = new RefSearchResult(aggregate, refEntry);
@@ -284,7 +288,6 @@ namespace Nijo.Models {
             });
             ctx.ReactProject(dir => {
                 dir.Directory("util", utilDir => {
-                    utilDir.Generate(SearchCondition.Entry.RenderTsBaseType());
                 });
             });
 

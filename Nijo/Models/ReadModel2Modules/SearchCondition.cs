@@ -56,6 +56,17 @@ namespace Nijo.Models.ReadModel2Modules {
             public string TsNewObjectFunction => $"createNew{TsTypeName}";
 
             public string RenderTsNewObjectFunctionBody() {
+                if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
+                    return $$"""
+                                                {
+                                                    {{FILTER_TS}}: {
+                                                        {{WithIndent(FilterRoot.RenderLegacyNewObjectFunctionMemberLiteral(), "    ")}}
+                                                    },
+                                                    {{SORT_TS}}: [],
+                                                }
+                                                """;
+                }
+
                 return $$"""
                     {
                       {{FILTER_TS}}: {
@@ -70,6 +81,19 @@ namespace Nijo.Models.ReadModel2Modules {
 
             internal string RenderTypeScriptSortableMemberType() {
                 var sortableMembers = EnumerateSortMembersRecursively().ToArray();
+
+                if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
+                    return $$"""
+                                                /** {{_entryAggregate.DisplayName}} のメンバーのうちソート可能なもの */
+                                                export type {{TypeScriptSortableMemberType}}
+                                                {{If(sortableMembers.Length == 0, () => $$"""
+                                                    = never
+                                                """)}}
+                                                {{sortableMembers.SelectTextTemplate((member, i) => $$"""
+                                                    {{(i == 0 ? "=" : "|")}} '{{member.GetLiteral().Replace("'", "\\'")}}'
+                                                """)}}
+                                                """;
+                }
 
                 return $$"""
                     /** {{_entryAggregate.DisplayName}}のメンバーのうちソート可能なものを表すリテラル型 */
@@ -126,6 +150,30 @@ namespace Nijo.Models.ReadModel2Modules {
                 }
             }
             internal string RenderParseQueryParameterFunction() {
+                if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
+                    return $$"""
+                                                /** クエリパラメータを解釈して画面初期表示時検索条件オブジェクトを返します。 */
+                                                export const {{ParseQueryParameter}} = (urlSearch: string): {{TsTypeName}} => {
+                                                    const searchCondition = {{TsNewObjectFunction}}()
+                                                    if (!urlSearch) return searchCondition
+
+                                                    const searchParams = new URLSearchParams(urlSearch)
+                                                    if (searchParams.has('k'))
+                                                        searchCondition.{{KEYWORD_TS}} = searchParams.get('k')!
+                                                    if (searchParams.has('f'))
+                                                        searchCondition.{{FILTER_TS}} = JSON.parse(searchParams.get('f')!)
+                                                    if (searchParams.has('s'))
+                                                        searchCondition.{{SORT_TS}} = JSON.parse(searchParams.get('s')!)
+                                                    if (searchParams.has('t'))
+                                                        searchCondition.{{TAKE_TS}} = Number(searchParams.get('t'))
+                                                    if (searchParams.has('p'))
+                                                        searchCondition.{{SKIP_TS}} = Number(searchParams.get('p'))
+
+                                                    return searchCondition
+                                                }
+                                                """;
+                }
+
                 return $$"""
                     /** クエリパラメータを解釈して画面初期表示時検索条件オブジェクトを返します。 */
                     export const {{ParseQueryParameter}} = (urlSearch: string): {{TsTypeName}} => {
@@ -293,6 +341,40 @@ namespace Nijo.Models.ReadModel2Modules {
             internal static string RenderTypeScriptRecursively(RootAggregate rootAggregate, CodeRenderingContext ctx) {
                 var entry = new Entry(rootAggregate);
 
+                if (ctx.IsLegacyCompatibilityMode()) {
+                    return $$"""
+                                                // ----------------------------------------------------------
+                                                // 検索条件クラス（{{rootAggregate.DisplayName}}）
+
+                                                /** {{rootAggregate.DisplayName}}の一覧検索条件 */
+                                                export type {{entry.TsTypeName}} = {
+                                                  /** 絞り込み条件（キーワード検索） */
+                                                  {{Entry.KEYWORD_TS}}?: string
+                                                  /** 絞り込み条件 */
+                                                  {{Entry.FILTER_TS}}: {{entry.FilterRoot.TsTypeName}}
+                                                  /** 並び順 */
+                                                  {{Entry.SORT_TS}}?: (`${{{entry.TypeScriptSortableMemberType}}}{{ASC_SUFFIX}}` | `${{{entry.TypeScriptSortableMemberType}}}{{DESC_SUFFIX}}`)[]
+                                                  /** 先頭から何件スキップするか */
+                                                  {{Entry.SKIP_TS}}?: number | null
+                                                  /** 最大何件取得するか */
+                                                  {{Entry.TAKE_TS}}?: number | null
+                                                  /**
+                                                   * 検索結果に明細データを含めなくても構わない場合、trueになる。
+                                                   * 具体的には一覧検索画面での検索とExcel出力の場合にtrueに、詳細登録画面の場合にfalseになる。
+                                                   * パフォーマンス改善以外の目的に使用しないこと。
+                                                   */
+                                                  {{Entry.EXCLUDE_CHILDREN_TS}}?: boolean
+                                                }
+                                                /** {{rootAggregate.DisplayName}}の一覧検索条件のうち絞り込み条件を指定する部分 */
+                                                export type {{entry.FilterRoot.TsTypeName}} = {
+                                                {{entry.FilterRoot.RenderTypeScriptDeclaringLiteral().SelectTextTemplate(source => $$"""
+                                                  {{WithIndent(source, "  ")}}
+                                                """)}}
+                                                }
+
+                                                """;
+                }
+
                 return $$"""
                     /** {{rootAggregate.DisplayName}}の検索時の検索条件の型。 */
                     export type {{entry.TsTypeName}} = AutoGeneratedUtil.{{TS_BASE_TYPE_NAME}}<{{entry.FilterRoot.TsTypeName}}, {{entry.TypeScriptSortableMemberType}}>
@@ -448,6 +530,27 @@ namespace Nijo.Models.ReadModel2Modules {
                     {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{member.RenderTsNewObjectFunctionValue()}},
                     """)}}
                     """;
+            }
+
+            internal string RenderLegacyNewObjectFunctionMemberLiteral() {
+                return $$"""
+                    {{GetOwnMembers().OfType<IInstanceStructurePropertyMetadata>().SelectTextTemplate(member => $$"""
+                    {{member.GetPropertyName(E_CsTs.TypeScript)}}: {
+                      {{WithIndent(RenderLegacyNestedMemberLiteral(member), "  ")}}
+                    },
+                    """)}}
+                    """;
+
+                static string RenderLegacyNestedMemberLiteral(IInstanceStructurePropertyMetadata member) {
+                    return member
+                        .GetMembers()
+                        .OfType<IInstanceStructurePropertyMetadata>()
+                        .SelectTextTemplate(child => $$"""
+                        {{child.GetPropertyName(E_CsTs.TypeScript)}}: {
+                          {{WithIndent(RenderLegacyNestedMemberLiteral(child), "  ")}}
+                        },
+                        """);
+                }
             }
         }
 

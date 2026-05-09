@@ -247,6 +247,40 @@ namespace Nijo.CodeGenerating {
         private string RenderWebapi(CodeRenderingContext ctx) {
             var controller = new AspNetController(_rootAggregate);
 
+            if (ctx.IsLegacyCompatibilityMode()) {
+                var legacyControllerActions = _webApiControllerAction
+                    .SelectTextTemplate(source => $"        {WithIndent(source.TrimStart(), "        ")}");
+
+                return $$"""
+                    namespace {{ctx.Config.RootNamespace}} {
+                        using System;
+                        using System.Collections;
+                        using System.Collections.Generic;
+                        using System.ComponentModel;
+                        using System.ComponentModel.DataAnnotations;
+                        using System.Linq;
+                        using Microsoft.AspNetCore.Mvc;
+                        using Microsoft.EntityFrameworkCore;
+                        using Microsoft.EntityFrameworkCore.Infrastructure;
+                        using {{ctx.Config.RootNamespace}};
+
+                        /// <summary>
+                        /// {{_rootAggregate.DisplayName}}に関する Web API 操作を提供する ASP.NET Core のコントローラー
+                        /// </summary>
+                        [ApiController]
+                        [Route("api/{{_rootAggregate.PhysicalName}}")]
+                        public partial class {{controller.CsClassName}} : ControllerBase {
+                            public {{controller.CsClassName}}(OverridedApplicationService applicationService) {
+                                _applicationService = applicationService;
+                            }
+                            protected readonly OverridedApplicationService _applicationService;
+
+                    {{legacyControllerActions}}
+                        }
+                    }
+                    """;
+            }
+
             return $$"""
                 using System;
                 using System.Collections;
@@ -335,6 +369,9 @@ namespace Nijo.CodeGenerating {
             }
 
             if (ctx.IsLegacyCompatibilityMode()) {
+                var legacyTypeScriptSections = _typeScriptSectionsInOrder
+                    .SelectTextTemplate(source => $"{Dedent(source)}\n\n");
+
                 return $$"""
                     import React from "react"
                     import useEvent from "react-use-event-hook"
@@ -347,11 +384,37 @@ namespace Nijo.CodeGenerating {
                     import { {{modules.Value.Distinct().Join(", ")}} } from "{{modules.Key}}"
                     """)}}
 
-                        {{_typeScriptSectionsInOrder.SelectTextTemplate(source => $$"""
-                    {{source}}
-
-                    """)}}
+                    {{legacyTypeScriptSections}}
                     """;
+            }
+
+            static string Dedent(string source) {
+                var normalized = source.Replace("\r\n", "\n");
+                var lines = normalized.Split('\n');
+                var firstNonEmptyIndex = Array.FindIndex(lines, line => !string.IsNullOrWhiteSpace(line));
+                if (firstNonEmptyIndex < 0) return normalized;
+
+                var firstIndent = lines[firstNonEmptyIndex].TakeWhile(char.IsWhiteSpace).Count();
+                var bodyIndent = lines
+                    .Skip(firstNonEmptyIndex + 1)
+                    .Where(line => !string.IsNullOrWhiteSpace(line))
+                    .Select(line => line.TakeWhile(char.IsWhiteSpace).Count())
+                    .DefaultIfEmpty(firstIndent)
+                    .Min();
+
+                for (var i = 0; i < lines.Length; i++) {
+                    if (string.IsNullOrWhiteSpace(lines[i])) {
+                        lines[i] = string.Empty;
+                        continue;
+                    }
+
+                    var indent = i <= firstNonEmptyIndex ? firstIndent : bodyIndent;
+                    if (lines[i].Length >= indent) {
+                        lines[i] = lines[i][indent..];
+                    }
+                }
+
+                return string.Join("\n", lines);
             }
 
             return $$"""

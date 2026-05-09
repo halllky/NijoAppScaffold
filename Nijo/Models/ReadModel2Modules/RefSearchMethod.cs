@@ -63,6 +63,58 @@ namespace Nijo.Models.ReadModel2Modules {
         internal string RenderController(CodeRenderingContext context) {
             var searchCondition = new RefSearchCondition(Aggregate, RefEntry);
 
+            if (context.IsLegacyCompatibilityMode()) {
+                return $$"""
+                    [HttpPost("{{ControllerLoadAction}}")]
+                    [SkipHttpLoggingAttribute]
+                    public virtual IActionResult Load{{Aggregate.PhysicalName}}(ComplexPostRequest<{{searchCondition.CsClassName}}> request) {
+                        try {
+                            if (_applicationService.GetAuthorizedLevel(E_AuthorizedAction.{{Aggregate.PhysicalName}}) == E_AuthLevel.None) return Forbid();
+
+                            var context = new PresentationContext(new DisplayMessageContainer([]), new() { IgnoreConfirm = request.IgnoreConfirm }, _applicationService);
+
+                            // エラーチェック
+                            _applicationService.{{AppSrvValidateMethod}}(request.Data, context);
+                            if (context.HasError() || (!context.Options.IgnoreConfirm && context.HasConfirm())) {
+                                return this.JsonContent(context.GetResult(isLoadProcess: true).ToJsonObject());
+                            }
+
+                            // 検索処理実行
+                            var searchResult = _applicationService.{{AppSrvLoadMethod}}(request.Data, context);
+                            context.ReturnValue = searchResult.ToArray();
+                            return this.JsonContent(context.GetResult(isLoadProcess: true).ToJsonObject());
+                        } catch {
+                            _applicationService.Log.Debug("Load(ref) {{Aggregate.DisplayName.Replace("\"", "\\\"")}}: {0}", request.Data.ToJson());
+                            throw;
+                        }
+                    }
+                    [HttpPost("{{ControllerCountAction}}")]
+                    [SkipHttpLoggingAttribute]{{" "}}
+                    public virtual IActionResult Count{{Aggregate.PhysicalName}}(ComplexPostRequest<{{searchCondition.CsFilterTypeName}}> request) {
+                        try {
+                            if (_applicationService.GetAuthorizedLevel(E_AuthorizedAction.{{Aggregate.PhysicalName}}) == E_AuthLevel.None) return Forbid();
+
+                            var context = new PresentationContext(new DisplayMessageContainer([]), new() { IgnoreConfirm = request.IgnoreConfirm }, _applicationService);
+
+                            // エラーチェック
+                            var searchCondition = new {{searchCondition.CsClassName}} { Filter = request.Data };
+                            _applicationService.{{AppSrvValidateMethod}}(searchCondition , context);
+                            if (context.HasError() || (!context.Options.IgnoreConfirm && context.HasConfirm())) {
+                                return this.JsonContent(context.GetResult(isLoadProcess: true).ToJsonObject());
+                            }
+
+                            // カウント処理実行
+                            var count = _applicationService.{{AppSrvCountMethod}}(request.Data, context);
+                            context.ReturnValue = count;
+                            return this.JsonContent(context.GetResult(isLoadProcess: true).ToJsonObject());
+                        } catch {
+                            _applicationService.Log.Debug("Count(ref) {{Aggregate.DisplayName.Replace("\"", "\\\"")}}: {0}", request.Data.ToJson());
+                            throw;
+                        }
+                    }
+                    """;
+            }
+
             return $$"""
                 [HttpPost("{{ControllerLoadAction}}")]
                 public virtual IActionResult Load{{Aggregate.PhysicalName}}(ComplexPostRequest<{{searchCondition.CsClassName}}> request) {
