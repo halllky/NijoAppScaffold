@@ -96,11 +96,11 @@ public class ApplicationSchema {
         return $$"""
         {{allAggregates.SelectTextTemplate(aggregate => $$"""
             class {{aggregate.PhysicalName}} {
-                {{WithIndent(GenerateClassMembers(aggregate), "        ")}}
+                {{WithIndent(GenerateClassMembers(aggregate))}}
             }
         """)}}
         {{allAggregates.SelectTextTemplate(aggregate => $$"""
-            {{WithIndent(GenerateRelationShips(aggregate), "    ")}}
+            {{WithIndent(GenerateRelationShips(aggregate))}}
         """)}}
         """;
 
@@ -154,7 +154,7 @@ public class ApplicationSchema {
             {{rootAggregates.SelectTextTemplate(rootAggregate => $$"""
             ### {{rootAggregate.DisplayName}}
 
-            {{WithIndent(RenderRootAggregate(rootAggregate), "")}}
+            {{WithIndent(RenderRootAggregate(rootAggregate))}}
 
             """)}}
             """;

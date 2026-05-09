@@ -80,7 +80,7 @@ internal class GenericLookupViewsInfoProvider : IMultiAggregateSourceFile {
                 yield break;
             """)}}
             {{_tables.SelectTextTemplate(tableEntry => $$"""
-                {{WithIndent(RenderGeneralLookupViewInfoImpl(tableEntry.Root, tableEntry.Categories), "    ")}}
+                {{WithIndent(RenderGeneralLookupViewInfoImpl(tableEntry.Root, tableEntry.Categories))}}
             """)}}
             }
 

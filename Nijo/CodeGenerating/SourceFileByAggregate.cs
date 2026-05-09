@@ -149,7 +149,7 @@ namespace Nijo.CodeGenerating {
                 partial class {{ApplicationService.ABSTRACT_CLASS}} {
                 {{appSrvMethods.SelectTextTemplate(source => $$"""
 
-                    {{WithIndent(source, "    ")}}
+                    {{WithIndent(source)}}
 
                 """)}}
                 }
@@ -157,7 +157,7 @@ namespace Nijo.CodeGenerating {
                 """)}}
                 {{csharpClass.SelectTextTemplate(source => $$"""
 
-                {{WithIndent(source, "")}}
+                {{WithIndent(source)}}
 
                 """)}}
                 """;
@@ -192,7 +192,7 @@ namespace Nijo.CodeGenerating {
                     private readonly {{ApplicationService.ABSTRACT_CLASS}} _applicationService;
                 {{_webApiControllerAction.SelectTextTemplate(source => $$"""
 
-                    {{WithIndent(source, "    ")}}
+                    {{WithIndent(source)}}
                 """)}}
                 }
                 """;

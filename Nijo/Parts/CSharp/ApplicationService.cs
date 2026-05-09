@@ -100,7 +100,7 @@ namespace Nijo.Parts.CSharp {
                         public virtual string? LogSessionKey => null;
                     {{_sourceCode.OrderBy(source => source).SelectTextTemplate(source => $$"""
 
-                        {{WithIndent(source, "    ")}}
+                        {{WithIndent(source)}}
                     """)}}
                     }
                     """,

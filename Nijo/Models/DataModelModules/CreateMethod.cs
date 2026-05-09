@@ -96,7 +96,7 @@ namespace Nijo.Models.DataModelModules {
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(dbEntity).State = EntityState.Detached;
                 {{UpdateMethod.RenderDescendantDetaching(_rootAggregate, "dbEntity").SelectTextTemplate(source => $$"""
-                        {{WithIndent(source, "        ")}}
+                        {{WithIndent(source)}}
                 """)}}
 
                         messages.AddError({{MsgFactory.MSG}}.{{UpdateMethod.ERR_ID_UNKNOWN}}(ex.Message));
@@ -113,7 +113,7 @@ namespace Nijo.Models.DataModelModules {
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(dbEntity).State = EntityState.Detached;
                 {{UpdateMethod.RenderDescendantDetaching(_rootAggregate, "dbEntity").SelectTextTemplate(source => $$"""
-                        {{WithIndent(source, "        ")}}
+                        {{WithIndent(source)}}
                 """)}}
 
                         // セーブポイント解放

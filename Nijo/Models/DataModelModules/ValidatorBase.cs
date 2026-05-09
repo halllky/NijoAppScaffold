@@ -137,9 +137,9 @@ public abstract class ValidatorBase {
                 // 対象項目なし
             """).Else(() => $$"""
             {{RenderMethodHead().SelectTextTemplate(source => $$"""
-                {{WithIndent(source, "    ")}}
+                {{WithIndent(source)}}
             """)}}
-                {{WithIndent(RenderAggregate(efCoreEntity, arg, ["messages"]), "    ")}}
+                {{WithIndent(RenderAggregate(efCoreEntity, arg, ["messages"]))}}
             """)}}
             }
             """;
@@ -182,7 +182,7 @@ public abstract class ValidatorBase {
 
                         yield return $$"""
                             // {{vm.DisplayName}}
-                            if ({{WithIndent(ifExpression, "    ")}}) {
+                            if ({{WithIndent(ifExpression)}}) {
                                 {{messageAccessor}}.AddError({{renderErrorMessage}});
                             }
                             """;
@@ -207,7 +207,7 @@ public abstract class ValidatorBase {
 
                         yield return $$"""
                             // {{refTo.DisplayName}}
-                            if ({{WithIndent(ifExpression, "    ")}}) {
+                            if ({{WithIndent(ifExpression)}}) {
                                 {{messageAccessor}}.AddError({{renderErrorMessage}});
                             }
                             """;
@@ -233,7 +233,7 @@ public abstract class ValidatorBase {
 
                     yield return $$"""
                         if ({{childNav.GetJoinedPathFromInstance(E_CsTs.CSharp)}} != null) {
-                            {{WithIndent(body, "    ")}}
+                            {{WithIndent(body)}}
                         }
                         """;
 
@@ -251,7 +251,7 @@ public abstract class ValidatorBase {
                         for (var {{i}} = 0; {{i}} < {{childrenNav.GetJoinedPathFromInstance(E_CsTs.CSharp)}}.Count; {{i}}++) {
                             var {{loopItem.Name}} = {{childrenNav.GetJoinedPathFromInstance(E_CsTs.CSharp)}}.ElementAt({{i}});
 
-                            {{WithIndent(body, "    ")}}
+                            {{WithIndent(body)}}
                         }
                         """;
 

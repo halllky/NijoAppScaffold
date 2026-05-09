@@ -127,7 +127,7 @@ namespace Nijo.Models.QueryModelModules {
                     /** {{rootAggregate.DisplayName}}の検索時の検索条件の絞り込み条件の型。 */
                     export type {{entry.FilterRoot.TsTypeName}} = {
                     {{entry.FilterRoot.RenderTypeScriptDeclaringLiteral().SelectTextTemplate(source => $$"""
-                      {{WithIndent(source, "  ")}}
+                      {{WithIndent(source)}}
                     """)}}
                     }
                     """;
@@ -206,7 +206,7 @@ namespace Nijo.Models.QueryModelModules {
                 return $$"""
                     {
                       {{FILTER_TS}}: {
-                        {{WithIndent(FilterRoot.RenderNewObjectFunctionMemberLiteral(), "    ")}}
+                        {{WithIndent(FilterRoot.RenderNewObjectFunctionMemberLiteral())}}
                       },
                       {{SORT_TS}}: [],
                       {{SKIP_TS}}: '',
@@ -236,7 +236,7 @@ namespace Nijo.Models.QueryModelModules {
                         return
                       }
                     {{keys.SelectTextTemplate((k, i) => $$"""
-                      {{WithIndent(RenderMember(k, i), "  ")}}
+                      {{WithIndent(RenderMember(k, i))}}
                     """)}}
                     }
                     """;
@@ -388,7 +388,7 @@ namespace Nijo.Models.QueryModelModules {
                     {{NijoAttr.RenderAttributeValues(ctx, _aggregate)}}
                     public partial class {{CsClassName}} {
                     {{GetOwnMembers().SelectTextTemplate(member => $$"""
-                        {{WithIndent(member.RenderCSharpDeclaring(ctx), "    ")}}
+                        {{WithIndent(member.RenderCSharpDeclaring(ctx))}}
                     """)}}
                     }
                     """;
@@ -515,7 +515,7 @@ namespace Nijo.Models.QueryModelModules {
             string IFilterMember.RenderTsNewObjectFunctionValue() {
                 return $$"""
                     {
-                      {{WithIndent(RefToFilter.RenderNewObjectFunctionMemberLiteral(), "  ")}}
+                      {{WithIndent(RefToFilter.RenderNewObjectFunctionMemberLiteral())}}
                     }
                     """;
             }
@@ -546,14 +546,14 @@ namespace Nijo.Models.QueryModelModules {
             string IFilterMember.RenderTypeScriptDeclaring() {
                 return $$"""
                     {{_rm.PhysicalName}}: {
-                      {{WithIndent(ChildFilter.RenderTypeScriptDeclaringLiteral(), "  ")}}
+                      {{WithIndent(ChildFilter.RenderTypeScriptDeclaringLiteral())}}
                     }
                     """;
             }
             string IFilterMember.RenderTsNewObjectFunctionValue() {
                 return $$"""
                     {
-                      {{WithIndent(ChildFilter.RenderNewObjectFunctionMemberLiteral(), "  ")}}
+                      {{WithIndent(ChildFilter.RenderNewObjectFunctionMemberLiteral())}}
                     }
                     """;
             }

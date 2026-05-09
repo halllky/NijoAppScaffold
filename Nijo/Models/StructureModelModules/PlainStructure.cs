@@ -95,7 +95,7 @@ internal class PlainStructure : IInstancePropertyOwnerMetadata, ICreatablePresen
         return $$"""
             {
             {{((IInstancePropertyOwnerMetadata)this).GetMembers().SelectTextTemplate(member => $$"""
-              {{WithIndent(RenderMemberTsNewObjectCreation(member), "  ")}}
+              {{WithIndent(RenderMemberTsNewObjectCreation(member))}}
             """)}}
             }
             """;
@@ -129,7 +129,7 @@ internal class PlainStructure : IInstancePropertyOwnerMetadata, ICreatablePresen
             {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
             public partial class {{CsClassName}} {
             {{members.SelectTextTemplate(member => $$"""
-                {{WithIndent(RenderMemberCSharp(member, ctx), "    ")}}
+                {{WithIndent(RenderMemberCSharp(member, ctx))}}
             """)}}
             }
             """;
@@ -182,7 +182,7 @@ internal class PlainStructure : IInstancePropertyOwnerMetadata, ICreatablePresen
             /** {{Aggregate.DisplayName}}の構造体 */
             export type {{TsTypeName}} = {
             {{members.SelectTextTemplate(member => $$"""
-              {{WithIndent(RenderMemberTs(member, ctx), "  ")}}
+              {{WithIndent(RenderMemberTs(member, ctx))}}
             """)}}
             }
             """;

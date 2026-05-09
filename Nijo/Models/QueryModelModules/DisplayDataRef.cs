@@ -161,7 +161,7 @@ namespace Nijo.Models.QueryModelModules {
                     {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
                     public partial class {{CsClassName}} {
                     {{GetMembers().SelectTextTemplate(member => $$"""
-                        {{WithIndent(member.RenderDeclaringCSharp(ctx), "    ")}}
+                        {{WithIndent(member.RenderDeclaringCSharp(ctx))}}
                     """)}}
                     }
                     """;
@@ -188,7 +188,7 @@ namespace Nijo.Models.QueryModelModules {
                      */
                     export type {{TsTypeName}} = {
                     {{GetMembers().SelectTextTemplate(member => $$"""
-                      {{WithIndent(member.RenderDeclaringTypeScript(), "  ")}}
+                      {{WithIndent(member.RenderDeclaringTypeScript())}}
                     """)}}
                     }
                     """;
@@ -202,7 +202,7 @@ namespace Nijo.Models.QueryModelModules {
             public string RenderTsNewObjectFunctionBody() {
                 return $$"""
                     {
-                      {{WithIndent(RenderMembersRecursively(this), "  ")}}
+                      {{WithIndent(RenderMembersRecursively(this))}}
                     }
                     """;
                 static IEnumerable<string> RenderMembersRecursively(DisplayDataRefBase obj) {
@@ -220,7 +220,7 @@ namespace Nijo.Models.QueryModelModules {
                         } else if (member is DisplayDataRefBase container) {
                             yield return $$"""
                                 {{member.PhysicalName}}: {
-                                  {{WithIndent(RenderMembersRecursively(container), "  ")}}
+                                  {{WithIndent(RenderMembersRecursively(container))}}
                                 },
                                 """;
 
@@ -382,7 +382,7 @@ namespace Nijo.Models.QueryModelModules {
                 return $$"""
                     {{PhysicalName}}: {
                     {{GetMembers().SelectTextTemplate(member => $$"""
-                      {{WithIndent(member.RenderDeclaringTypeScript(), "  ")}}
+                      {{WithIndent(member.RenderDeclaringTypeScript())}}
                     """)}}
                     }
                     """;
@@ -421,7 +421,7 @@ namespace Nijo.Models.QueryModelModules {
                 return $$"""
                     {{PhysicalName}}: {
                     {{GetMembers().SelectTextTemplate(member => $$"""
-                      {{WithIndent(member.RenderDeclaringTypeScript(), "  ")}}
+                      {{WithIndent(member.RenderDeclaringTypeScript())}}
                     """)}}
                     }[]
                     """;
@@ -458,7 +458,7 @@ namespace Nijo.Models.QueryModelModules {
                 return $$"""
                     {{PhysicalName}}: {
                     {{GetMembers().SelectTextTemplate(member => $$"""
-                      {{WithIndent(member.RenderDeclaringTypeScript(), "  ")}}
+                      {{WithIndent(member.RenderDeclaringTypeScript())}}
                     """)}}
                     }
                     """;

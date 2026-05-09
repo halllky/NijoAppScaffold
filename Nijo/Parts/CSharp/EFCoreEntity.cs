@@ -246,7 +246,7 @@ namespace Nijo.Parts.CSharp {
 
                 partial class {{ctx.Config.DbContextName}} {
                 {{tree.SelectTextTemplate(efCoreEntity => $$"""
-                    {{WithIndent(EFCoreOnModelCreating.RenderOnModelCreating(efCoreEntity, ctx), "    ")}}
+                    {{WithIndent(EFCoreOnModelCreating.RenderOnModelCreating(efCoreEntity, ctx))}}
                 """)}}
                 }
                 #endregion Entity Framework Core エンティティ定義

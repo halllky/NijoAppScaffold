@@ -106,7 +106,7 @@ namespace Nijo.Models.DataModelModules {
                 """)}}
                         .SingleOrDefaultAsync(e {{WithIndent(keys.SelectTextTemplate((vm, i) => $$"""
                                                 {{(i == 0 ? "=>" : "&&")}} {{vm.SingleOrDefaultLeft}} == {{vm.TempVarName}}
-                                                """), "                                ")}})
+                                                """))}})
                         .ConfigureAwait(false);
 
                     if (beforeDbEntity == null) {
@@ -156,7 +156,7 @@ namespace Nijo.Models.DataModelModules {
                         entry.Property(e => e.{{EFCoreEntity.VERSION}}).OriginalValue = key.{{SaveCommand.VERSION}} ?? beforeDbEntity.{{EFCoreEntity.VERSION}};
 
                 {{RenderDescendantAttaching(_rootAggregate).SelectTextTemplate(source => $$"""
-                        {{WithIndent(source, "        ")}}
+                        {{WithIndent(source)}}
 
                 """)}}
                         await DbContext.Database.CurrentTransaction.CreateSavepointAsync(SAVE_POINT).ConfigureAwait(false);
@@ -168,7 +168,7 @@ namespace Nijo.Models.DataModelModules {
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(afterDbEntity).State = EntityState.Detached;
                 {{RenderDescendantDetaching(_rootAggregate, "afterDbEntity").SelectTextTemplate(source => $$"""
-                        {{WithIndent(source, "        ")}}
+                        {{WithIndent(source)}}
                 """)}}
 
                         if (ex is DbUpdateConcurrencyException) {
@@ -191,7 +191,7 @@ namespace Nijo.Models.DataModelModules {
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(afterDbEntity).State = EntityState.Detached;
                 {{RenderDescendantDetaching(_rootAggregate, "afterDbEntity").SelectTextTemplate(source => $$"""
-                        {{WithIndent(source, "        ")}}
+                        {{WithIndent(source)}}
                 """)}}
 
                         // セーブポイント解放

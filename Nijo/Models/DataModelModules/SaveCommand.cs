@@ -115,11 +115,11 @@ namespace Nijo.Models.DataModelModules {
                 {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
                 public partial class {{CsClassNameCreate}} {
                 {{GetMembers().SelectTextTemplate(m => $$"""
-                    {{WithIndent(m.RenderDeclaring(ctx), "    ")}}
+                    {{WithIndent(m.RenderDeclaring(ctx))}}
                 """)}}
                 {{If(Aggregate is RootAggregate, () => $$"""
 
-                    {{WithIndent(RenderToDbEntity(isCreate: true), "    ")}}
+                    {{WithIndent(RenderToDbEntity(isCreate: true))}}
                 """)}}
                 }
                 """;
@@ -166,17 +166,17 @@ namespace Nijo.Models.DataModelModules {
                 {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
                 public partial class {{CsClassNameUpdate}} {
                 {{GetMembers().SelectTextTemplate(m => $$"""
-                    {{WithIndent(m.RenderDeclaring(ctx), "    ")}}
+                    {{WithIndent(m.RenderDeclaring(ctx))}}
                 """)}}
                 {{If(Aggregate is RootAggregate, () => $$"""
-                    {{WithIndent(RenderToDbEntity(isCreate: false), "    ")}}
+                    {{WithIndent(RenderToDbEntity(isCreate: false))}}
 
                     /// <summary>
                     /// Entity Framework Core のエンティティからこのクラスのインスタンスを作成します。
                     /// </summary>
                     public static {{CsClassNameUpdate}} {{FROM_DBENTITY}}({{efCoreEntity.CsClassName}} dbEntity) {
                         return new() {
-                            {{WithIndent(EnumerateMembers(this, right, dict), "            ")}}
+                            {{WithIndent(EnumerateMembers(this, right, dict))}}
                         };
                     }
                 """)}}
@@ -214,14 +214,14 @@ namespace Nijo.Models.DataModelModules {
 
                             yield return $$"""
                                 {{member.GetPropertyName(E_CsTs.CSharp)}} = {{arrayPath}}?.Select({{loopVar.Name}} => new {{sp.GetTypeName(E_CsTs.CSharp)}}() {
-                                    {{WithIndent(EnumerateMembers(sp, loopVar, dict2), "    ")}}
+                                    {{WithIndent(EnumerateMembers(sp, loopVar, dict2))}}
                                 }).ToList() ?? [],
                                 """;
 
                         } else {
                             yield return $$"""
                                 {{member.GetPropertyName(E_CsTs.CSharp)}} = new() {
-                                    {{WithIndent(EnumerateMembers(sp, right, rigthMembers), "    ")}}
+                                    {{WithIndent(EnumerateMembers(sp, right, rigthMembers))}}
                                 },
                                 """;
                         }
@@ -256,7 +256,7 @@ namespace Nijo.Models.DataModelModules {
                 /// </summary>
                 public partial class {{CsClassNameDelete}} {
                 {{GetMembers().SelectTextTemplate(m => $$"""
-                    {{WithIndent(m.RenderDeclaring(ctx), "    ")}}
+                    {{WithIndent(m.RenderDeclaring(ctx))}}
                 """)}}
                 {{If(Aggregate is RootAggregate, () => $$"""
                     /// <summary>
@@ -430,7 +430,7 @@ namespace Nijo.Models.DataModelModules {
                 /// </summary>
                 public {{efCoreEntity.CsClassName}} {{TO_DBENTITY}}() {
                     return new {{efCoreEntity.CsClassName}} {
-                        {{WithIndent(RenderToDbEntityBody(efCoreEntity, rootInstance, rightDictOfRootInstance), "        ")}}
+                        {{WithIndent(RenderToDbEntityBody(efCoreEntity, rootInstance, rightDictOfRootInstance))}}
                 {{If(isCreate, () => $$"""
                         {{EFCoreEntity.VERSION}} = 0,
                 """)}}
@@ -468,7 +468,7 @@ namespace Nijo.Models.DataModelModules {
                         // childPath が null でない場合のみ Child を生成
                         yield return $$"""
                             {{nav.Principal.OtherSidePhysicalName}} = {{childPath}} == null ? null : new() {
-                                {{WithIndent(RenderToDbEntityBody(childEntity, right, rigthMembers), "    ")}}
+                                {{WithIndent(RenderToDbEntityBody(childEntity, right, rigthMembers))}}
                             },
                             """;
 
@@ -488,7 +488,7 @@ namespace Nijo.Models.DataModelModules {
 
                         yield return $$"""
                             {{nav.Principal.OtherSidePhysicalName}} = {{arrayPath}}?.Select({{loopVar.Name}} => new {{childrenEntity.CsClassName}} {
-                                {{WithIndent(RenderToDbEntityBody(childrenEntity, loopVar, dict2), "    ")}}
+                                {{WithIndent(RenderToDbEntityBody(childrenEntity, loopVar, dict2))}}
                             }).ToHashSet() ?? [],
                             """;
 

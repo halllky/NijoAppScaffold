@@ -161,14 +161,14 @@ namespace Nijo.Models.DataModelModules {
 
                         #region ルート集約毎のパターン作成処理
                     {{rootAggregatesOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                        {{WithIndent(RenderCreatePatternMethod(agg), "    ")}}
+                        {{WithIndent(RenderCreatePatternMethod(agg))}}
                     """)}}
                         #endregion ルート集約毎のパターン作成処理
 
 
                         #region ルート集約毎のインスタンス1件作成処理
                     {{rootAggregatesOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                        {{WithIndent(RenderCreateRootAggregateMethod(agg), "    ")}}
+                        {{WithIndent(RenderCreateRootAggregateMethod(agg))}}
                     """)}}
                         #endregion ルート集約毎のインスタンス1件作成処理
 
@@ -176,7 +176,7 @@ namespace Nijo.Models.DataModelModules {
                         #region 型ごとの標準ダミー値の生成ロジック
                     {{ctx.SchemaParser.GetValueMemberTypes().SelectTextTemplate(type => $$"""
                         protected virtual {{type.CsDomainTypeName}}? GetRandom{{type.TypePhysicalName}}({{DUMMY_DATA_GENERATE_CONTEXT}} context, MetadataForPage.{{MetadataForPage.ValueMetadata.TYPE_NAME}} member) {
-                            {{WithIndent(type.RenderCreateDummyDataValueBody(ctx), "        ")}}
+                            {{WithIndent(type.RenderCreateDummyDataValueBody(ctx))}}
                         }
                     """)}}
                         #endregion 型ごとの標準ダミー値の生成ロジック
@@ -263,7 +263,7 @@ namespace Nijo.Models.DataModelModules {
                     /// <summary>{{rootAggregate.DisplayName}}の作成コマンドのインスタンスを作成して返します。</summary>
                     protected virtual {{saveCommand.CsClassNameCreate}} {{CreateAggregateMethodName(rootAggregate)}}({{DUMMY_DATA_GENERATE_CONTEXT}} context, int itemIndex) {
                         return new {{saveCommand.CsClassNameCreate}} {
-                            {{WithIndent(RenderBody(saveCommand), "        ")}}
+                            {{WithIndent(RenderBody(saveCommand))}}
                         };
                     }
                     """;
@@ -361,7 +361,7 @@ namespace Nijo.Models.DataModelModules {
                         } else if (member is SaveCommand.SaveCommandChildMember child) {
                             yield return $$"""
                                 {{member.PhysicalName}} = new() {
-                                    {{WithIndent(RenderBody(child), "    ")}}
+                                    {{WithIndent(RenderBody(child))}}
                                 },
                                 """;
 
@@ -377,7 +377,7 @@ namespace Nijo.Models.DataModelModules {
 
                                 yield return $$"""
                                     {{member.PhysicalName}} = Enumerable.Range(0, Enum.GetValues<{{enumType.CsDomainTypeName}}>().Length).Select(i => new {{children.CsClassNameCreate}} {
-                                        {{WithIndent(RenderBody(children), "    ")}}
+                                        {{WithIndent(RenderBody(children))}}
                                     }).ToList(),
                                     """;
 
@@ -386,7 +386,7 @@ namespace Nijo.Models.DataModelModules {
                                 var refToMember = (RefToMember)childrenKeys[0];
                                 yield return $$"""
                                     {{member.PhysicalName}} = Enumerable.Range(0, context.{{GeneratedList(refToMember.RefTo)}}.Count).Select(i => new {{children.CsClassNameCreate}} {
-                                        {{WithIndent(RenderBody(children), "    ")}}
+                                        {{WithIndent(RenderBody(children))}}
                                     }).ToList(),
                                     """;
 
@@ -394,7 +394,7 @@ namespace Nijo.Models.DataModelModules {
                                 // キーが特殊でない場合は適当にとりあえず4件作成する
                                 yield return $$"""
                                     {{member.PhysicalName}} = Enumerable.Range(0, 4).Select(i => new {{children.CsClassNameCreate}} {
-                                        {{WithIndent(RenderBody(children), "    ")}}
+                                        {{WithIndent(RenderBody(children))}}
                                     }).ToList(),
                                     """;
                             }
@@ -450,7 +450,7 @@ namespace Nijo.Models.DataModelModules {
                         #endregion シーケンス
 
                     {{rootAggregatesOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                        {{WithIndent(RenderGetRefTo(agg), "    ")}}
+                        {{WithIndent(RenderGetRefTo(agg))}}
                     """)}}
                     }
                     """,

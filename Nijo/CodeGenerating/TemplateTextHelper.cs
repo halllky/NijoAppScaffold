@@ -96,6 +96,7 @@ namespace Nijo.CodeGenerating {
         /// 明示的に指定したインデント文字列で 2 行目以降をインデントします。
         /// 既存呼び出しとの互換性のために残しているオーバーロードで、新規コードでは 1 引数版を優先します。
         /// </summary>
+        [Obsolete("WithIndent(string) を優先してください。")]
         internal static string WithIndent(IEnumerable<string> content, string indent) {
             return content
                 .Select(x => WithIndent(x, indent))
@@ -106,6 +107,7 @@ namespace Nijo.CodeGenerating {
         /// 明示的に指定したインデント文字列で 2 行目以降をインデントします。
         /// 既存呼び出しとの互換性のために残しているオーバーロードで、新規コードでは 1 引数版を優先します。
         /// </summary>
+        [Obsolete("WithIndent(string) を優先してください。")]
         internal static string WithIndent(string content, string indent) {
             return content
                 .Split(Environment.NewLine)

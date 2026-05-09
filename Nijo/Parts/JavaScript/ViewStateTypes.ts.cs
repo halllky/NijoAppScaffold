@@ -94,7 +94,7 @@ public class ViewStateTypes {
 
                 /** nijo.xml のスキーマ定義を GraphView で表示できるようにしたデータ */
                 export default function (): {{RETURN_TYPE}} {
-                  return {{WithIndent(viewStateJsonContent, "  ")}}
+                  return {{WithIndent(viewStateJsonContent)}}
                 }
                 """,
         };

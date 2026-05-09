@@ -120,11 +120,11 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
                 public string {{INSTANCE_ID_CS}} { get; set; } = Guid.NewGuid().ToString();
 
             {{GetValueMembers().SelectTextTemplate(m => $$"""
-                {{WithIndent(m.RenderCsDeclaration(ctx), "    ")}}
+                {{WithIndent(m.RenderCsDeclaration(ctx))}}
             """)}}
             {{GetChildMembers().SelectTextTemplate(c => $$"""
                 [JsonPropertyName("{{c.PhysicalName}}")]
-                public {{WithIndent(c.CsClassNameAsMember, "    ")}} {{c.PhysicalName}} { get; set; } = new();
+                public {{WithIndent(c.CsClassNameAsMember)}} {{c.PhysicalName}} { get; set; } = new();
             """)}}
 
                 /// <summary>このデータがDBに保存済みかどうか</summary>
@@ -141,7 +141,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
                 [JsonPropertyName("{{VERSION_TS}}")]
                 public int? {{VERSION_CS}} { get; set; }
             """)}}
-                {{WithIndent(RenderAdditionalMethodToCSharp(), "    ")}}
+                {{WithIndent(RenderAdditionalMethodToCSharp())}}
             }
             """;
     }
@@ -157,7 +157,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
                */
               {{INSTANCE_ID_TS}}: string
             {{GetValueMembers().SelectTextTemplate(m => $$"""
-              {{WithIndent(m.RenderTsDeclaration(), "  ")}}
+              {{WithIndent(m.RenderTsDeclaration())}}
             """)}}
             {{GetChildMembers().SelectTextTemplate(member => $$"""
               /** {{member.DisplayName}} */
@@ -329,7 +329,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
                 ].join('-')
               }
 
-              return {{WithIndent(RenderTsNewObjectFunctionBody(), "  ")}}
+              return {{WithIndent(RenderTsNewObjectFunctionBody())}}
             }
             """;
     }

@@ -87,7 +87,7 @@ namespace Nijo.Parts.CSharp {
                         public {{m.CsType ?? $"{SETTER_INTERFACE_LIST}<{m.NestedObject?.CsClassName}>"}} {{m.PhysicalName}} { get; }
                     """)}}
                     """)}}
-                        {{WithIndent(RenderCSharpAdditionalSource(), "    ")}}
+                        {{WithIndent(RenderCSharpAdditionalSource())}}
                     }
                     """;
             }

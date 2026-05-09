@@ -236,7 +236,7 @@ namespace Nijo.Models.QueryModelModules {
             return $$"""
                 protected virtual IQueryable<{{searchResult.CsClassName}}> {{CREATE_QUERY_SOURCE}}({{searchCondition.CsClassName}} searchCondition, {{PresentationContext.INTERFACE}}<{{searchConditionMessage.CsClassName}}> context) {
                     return this.DbContext.{{efCoreEntity.DbSetName}}.Select({{e.Name}} => new {{searchResult.CsClassName}} {
-                        {{WithIndent(RenderMembers(newObject, rightMembers), "        ")}}
+                        {{WithIndent(RenderMembers(newObject, rightMembers))}}
                         {{SearchResult.VERSION}} = (int){{e.Name}}.{{EFCoreEntity.VERSION}}!,
                     });
                 }
@@ -266,7 +266,7 @@ namespace Nijo.Models.QueryModelModules {
                         if (!structureProp.Metadata.IsArray) {
                             yield return $$"""
                                 {{structureProp.Metadata.GetPropertyName(E_CsTs.CSharp)}} = new() {
-                                    {{WithIndent(RenderMembers(structureProp, rightMembers), "    ")}}
+                                    {{WithIndent(RenderMembers(structureProp, rightMembers))}}
                                 },
                                 """;
                         } else {
@@ -289,7 +289,7 @@ namespace Nijo.Models.QueryModelModules {
 
                             yield return $$"""
                                 {{structureProp.Metadata.GetPropertyName(E_CsTs.CSharp)}} = {{arrayPath.GetJoinedPathFromInstance(E_CsTs.CSharp, "!.")}}!.Select({{loopVar.Name}} => new {{leftMetadata.CsClassName}} {
-                                    {{WithIndent(RenderMembers(structureProp, overridedDict), "    ")}}
+                                    {{WithIndent(RenderMembers(structureProp, overridedDict))}}
                                 }).ToList(),
                                 """;
                         }
@@ -354,7 +354,7 @@ namespace Nijo.Models.QueryModelModules {
             return $$"""
                 protected virtual IQueryable<{{searchResult.CsClassName}}> {{CREATE_QUERY_SOURCE}}({{searchCondition.CsClassName}} searchCondition, {{PresentationContext.INTERFACE}}<{{searchConditionMessage.CsClassName}}> context) {
                     return this.DbContext.{{searchResult.DbSetName}}
-                        {{WithIndent(searchResult.RenderInclude(), "        ")}};
+                        {{WithIndent(searchResult.RenderInclude())}};
                 }
                 """;
         }
@@ -386,7 +386,7 @@ namespace Nijo.Models.QueryModelModules {
                 /// {{_rootAggregate.DisplayName}}のクエリに画面で指定された検索条件（SQLで言うWHERE句）を付加する
                 /// </summary>
                 protected virtual IQueryable<{{searchResult.CsClassName}}> {{APPEND_WHERE_CLAUSE}}(IQueryable<{{searchResult.CsClassName}}> {{queryVar.Name}}, {{searchCondition.CsClassName}} {{scVar.Name}}) {
-                    {{WithIndent(searchConditionMembers.Select(RenderMember), "    ")}}
+                    {{WithIndent(searchConditionMembers.Select(RenderMember))}}
                     return query;
                 }
                 """;
@@ -508,7 +508,7 @@ namespace Nijo.Models.QueryModelModules {
 
                     // クエリの項目のうち画面表示用データに含まれるもののみを抽出
                     var onlyExistsInDisplayData = query.Select({{right.Name}} => new {
-                        {{WithIndent(RenderBodyOfOnlyExistsInDisplayData(searchResult, right, ctx), "        ")}}
+                        {{WithIndent(RenderBodyOfOnlyExistsInDisplayData(searchResult, right, ctx))}}
                 {{If(displayData.HasVersion, () => $$"""
                         {{right.Name}}.{{SearchResult.VERSION}},
                 """)}}
@@ -524,9 +524,9 @@ namespace Nijo.Models.QueryModelModules {
 
                     // 画面表示用データへの変換はC#メモリ上で行なう
                     var displayDataList = searchResultList.Select({{right.Name}} => new {{displayData.CsClassName}}() {
-                        {{WithIndent(RenderValueMembers(displayData, right), "        ")}}
+                        {{WithIndent(RenderValueMembers(displayData, right))}}
                 {{displayData.GetChildMembers().SelectTextTemplate(child => $$"""
-                        {{WithIndent(RenderDescendantMember(child, right), "        ")}}
+                        {{WithIndent(RenderDescendantMember(child, right))}}
                 """)}}
                         {{DisplayData.EXISTS_IN_DB_CS}} = true,
                         {{DisplayData.WILL_BE_CHANGED_CS}} = false,
@@ -567,7 +567,7 @@ namespace Nijo.Models.QueryModelModules {
 
                         yield return $$"""
                             {{structureProp.Metadata.GetPropertyName(E_CsTs.CSharp)}} = {{property?.GetJoinedPathFromInstance(E_CsTs.CSharp, "!.")}}.Select({{loopVar.Name}} => new {
-                                {{WithIndent(RenderBodyOfOnlyExistsInDisplayData(metadata, loopVar, ctx), "    ")}}
+                                {{WithIndent(RenderBodyOfOnlyExistsInDisplayData(metadata, loopVar, ctx))}}
                             }),
                             """;
                     }
@@ -597,7 +597,7 @@ namespace Nijo.Models.QueryModelModules {
 
                         yield return $$"""
                             {{member.GetPropertyName(E_CsTs.CSharp)}} = new() {
-                                {{WithIndent(RenderRefMember(displayDataRef, rightInstance, rightMembers), "    ")}}
+                                {{WithIndent(RenderRefMember(displayDataRef, rightInstance, rightMembers))}}
                             },
                             """;
 
@@ -623,14 +623,14 @@ namespace Nijo.Models.QueryModelModules {
 
                                     yield return $$"""
                                         {{member.PhysicalName}} = {{property?.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")}}.Select({{loopVar.Name}} => new {{children.CsClassName}} {
-                                            {{WithIndent(RenderRefMember(children, loopVar, overridedDict), "    ")}}
+                                            {{WithIndent(RenderRefMember(children, loopVar, overridedDict))}}
                                         }).ToList(),
                                         """;
 
                                 } else if (member is DisplayDataRef.DisplayDataRefBase container) {
                                     yield return $$"""
                                         {{member.PhysicalName}} = new() {
-                                            {{WithIndent(RenderRefMember(container, rightInstance, rightMembers), "    ")}}
+                                            {{WithIndent(RenderRefMember(container, rightInstance, rightMembers))}}
                                         },
                                         """;
                                 }
@@ -649,9 +649,9 @@ namespace Nijo.Models.QueryModelModules {
 
                     return $$"""
                         {{displayData.PhysicalName}} = new() {
-                            {{WithIndent(RenderValueMembers(displayData, rightInstance), "    ")}}
+                            {{WithIndent(RenderValueMembers(displayData, rightInstance))}}
                         {{displayData.GetChildMembers().SelectTextTemplate(child => $$"""
-                            {{WithIndent(RenderDescendantMember(child, rightInstance), "    ")}}
+                            {{WithIndent(RenderDescendantMember(child, rightInstance))}}
                         """)}}
                             {{EditablePresentationObject.EXISTS_IN_DB_CS}} = {{existsInDb}},
                             {{EditablePresentationObject.WILL_BE_CHANGED_CS}} = false,
@@ -669,9 +669,9 @@ namespace Nijo.Models.QueryModelModules {
 
                     return $$"""
                         {{displayData.PhysicalName}} = {{rightArray.GetJoinedPathFromInstance(E_CsTs.CSharp, "!.")}}.Select({{loopVar.Name}} => new {{displayData.CsClassName}} {
-                            {{WithIndent(RenderValueMembers(displayData, loopVar), "    ")}}
+                            {{WithIndent(RenderValueMembers(displayData, loopVar))}}
                         {{displayData.GetChildMembers().SelectTextTemplate(child => $$"""
-                            {{WithIndent(RenderDescendantMember(child, loopVar), "    ")}}
+                            {{WithIndent(RenderDescendantMember(child, loopVar))}}
                         """)}}
                             {{EditablePresentationObject.EXISTS_IN_DB_CS}} = true,
                             {{EditablePresentationObject.WILL_BE_CHANGED_CS}} = false,

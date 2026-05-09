@@ -138,9 +138,9 @@ namespace Nijo.Models.DataModelModules {
                         public required {{m.GetTypeName(E_CsTs.CSharp)}}? {{m.PhysicalName}} { get; set; }
                     """)}}
 
-                        {{WithIndent(RenderCovertFromCreateCommand(), "    ")}}
-                        {{WithIndent(RenderConvertFromDbEntity(), "    ")}}
-                        {{WithIndent(RenderConvertFromRootDbEntity(), "    ")}}
+                        {{WithIndent(RenderCovertFromCreateCommand())}}
+                        {{WithIndent(RenderConvertFromDbEntity())}}
+                        {{WithIndent(RenderConvertFromRootDbEntity())}}
                     }
                     """;
             }
@@ -161,7 +161,7 @@ namespace Nijo.Models.DataModelModules {
                     /// <see cref="{{dbEntityClassName}}"/> からこのクラスのインスタンスを取り出します。
                     /// </summary>
                     public static {{returnType}} FromRootDbEntity({{dbEntityClassName}} root) {
-                        {{WithIndent(RenderBody(), "    ")}}
+                        {{WithIndent(RenderBody())}}
                     }
                     """;
 
@@ -240,7 +240,7 @@ namespace Nijo.Models.DataModelModules {
                     /// </summary>
                     public static {{ClassName}} FromDbEntity({{efCoreEntity.CsClassName}} {{argName}}) {
                         return new {{ClassName}} {
-                            {{WithIndent(RenderBodyRecursively(this), "        ")}}
+                            {{WithIndent(RenderBodyRecursively(this))}}
                         };
                     }
                     """;
@@ -259,14 +259,14 @@ namespace Nijo.Models.DataModelModules {
                         } else if (member is KeyClassRefMember rm) {
                             yield return $$"""
                                 {{member.PhysicalName}} = new() {
-                                    {{WithIndent(RenderBodyRecursively(rm), "    ")}}
+                                    {{WithIndent(RenderBodyRecursively(rm))}}
                                 },
                                 """;
 
                         } else if (member is KeyClassEntry parent) {
                             yield return $$"""
                                 {{member.PhysicalName}} = new() {
-                                    {{WithIndent(RenderBodyRecursively(parent), "    ")}}
+                                    {{WithIndent(RenderBodyRecursively(parent))}}
                                 },
                                 """;
                         }
@@ -387,7 +387,7 @@ namespace Nijo.Models.DataModelModules {
                     /// <see cref="{{argClassName}}"/> を <see cref="{{ClassName}}"> のインスタンス{{(isReturnArray ? "複数個" : "")}}に変換します。
                     /// </summary>
                     public static {{returnType}} {{FromCreateCommandOrSearchResult}}({{argClassName}} {{arg.Name}}) {
-                        {{WithIndent(RenderReturnOrForEach(arg, 0, false), "    ")}}
+                        {{WithIndent(RenderReturnOrForEach(arg, 0, false))}}
                     }
                     """;
 
@@ -408,7 +408,7 @@ namespace Nijo.Models.DataModelModules {
 
                         return $$"""
                             {{@return}} new {{ClassName}} {
-                                {{WithIndent(RenderReturnBodyRecursively(this), "    ")}}
+                                {{WithIndent(RenderReturnBodyRecursively(this))}}
                             };
                             """;
                     }
@@ -437,7 +437,7 @@ namespace Nijo.Models.DataModelModules {
 
                         return $$"""
                             foreach (var {{loopVar.Name}} in {{childProperty.GetJoinedPathFromInstance(E_CsTs.CSharp)}}) {
-                                {{WithIndent(RenderReturnOrForEach(childProperty, indexInAncestorArray + 1, true), "    ")}}
+                                {{WithIndent(RenderReturnOrForEach(childProperty, indexInAncestorArray + 1, true))}}
                             }
                             """;
                     }
@@ -462,14 +462,14 @@ namespace Nijo.Models.DataModelModules {
                         } else if (member is KeyClassRefMember rm) {
                             yield return $$"""
                                 {{member.PhysicalName}} = new() {
-                                    {{WithIndent(RenderReturnBodyRecursively(rm.MemberKeyClassEntry), "    ")}}
+                                    {{WithIndent(RenderReturnBodyRecursively(rm.MemberKeyClassEntry))}}
                                 },
                                 """;
 
                         } else if (member is KeyClassEntry pm) {
                             yield return $$"""
                                 {{member.PhysicalName}} = new() {
-                                    {{WithIndent(RenderReturnBodyRecursively(pm), "    ")}}
+                                    {{WithIndent(RenderReturnBodyRecursively(pm))}}
                                 },
                                 """;
 

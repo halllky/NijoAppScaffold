@@ -287,7 +287,7 @@ namespace Nijo.Models.QueryModelModules {
                     /// </summary>
                     protected virtual Expression<Func<{{searchResult.CsClassName}}, {{displayData.CsClassName}}>> {{ToRefTarget}}() {
                         return {{sr.Name}} => new {{displayData.CsClassName}}() {
-                            {{WithIndent(RenderBody(left), "        ")}}
+                            {{WithIndent(RenderBody(left))}}
                         };
                     }
                     """;
@@ -320,7 +320,7 @@ namespace Nijo.Models.QueryModelModules {
                     /// </summary>
                     protected virtual Expression<Func<{{searchResult.CsClassName}}, IEnumerable<{{displayData.CsClassName}}>>> {{ToRefTarget}}() {
                         return {{sr.Name}} => {{arrayPath}}.Select({{loopVar.Name}} => new {{displayData.CsClassName}}() {
-                            {{WithIndent(RenderBody(left), "        ")}}
+                            {{WithIndent(RenderBody(left))}}
                         });
                     }
                     """;
@@ -344,7 +344,7 @@ namespace Nijo.Models.QueryModelModules {
 
                             yield return $$"""
                                 {{member.Metadata.GetPropertyName(E_CsTs.CSharp)}} = {{arrayPath}}!.Select({{loopVarName}} => new {{childrenMetadata.CsClassName}} {
-                                    {{WithIndent(RenderBody(left), "    ")}}
+                                    {{WithIndent(RenderBody(left))}}
                                 }).ToList(),
                                 """;
 
@@ -354,7 +354,7 @@ namespace Nijo.Models.QueryModelModules {
 
                             yield return $$"""
                                 {{member.Metadata.GetPropertyName(E_CsTs.CSharp)}} = new() {
-                                    {{WithIndent(RenderBody(left), "    ")}}
+                                    {{WithIndent(RenderBody(left))}}
                                 },
                                 """;
                         }

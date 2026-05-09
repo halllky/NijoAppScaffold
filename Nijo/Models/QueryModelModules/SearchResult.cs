@@ -266,7 +266,7 @@ namespace Nijo.Models.QueryModelModules {
                 #region Entity Framework Core エンティティ定義
                 partial class {{ctx.Config.DbContextName}} {
                 {{tree.SelectTextTemplate(sr => $$"""
-                    {{WithIndent(EFCoreOnModelCreating.RenderOnModelCreating(sr, ctx), "    ")}}
+                    {{WithIndent(EFCoreOnModelCreating.RenderOnModelCreating(sr, ctx))}}
                 """)}}
                 }
                 #endregion Entity Framework Core エンティティ定義
@@ -302,7 +302,7 @@ namespace Nijo.Models.QueryModelModules {
                     {{NijoAttr.RenderAttributeValues(ctx, sr.Aggregate)}}
                     public partial class {{sr.CsClassName}} {
                     {{orderedMembers.SelectTextTemplate(srm => $$"""
-                        {{WithIndent(srm.RenderDeclaration(ctx), "    ")}}
+                        {{WithIndent(srm.RenderDeclaration(ctx))}}
                     """)}}
                     {{existsInDbFlags.SelectTextTemplate(flag => $$"""
                         /// <summary>

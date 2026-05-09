@@ -81,7 +81,7 @@ internal class GenericLookupViewEntity : IEFCoreEntity, IInstancePropertyOwnerMe
             }
 
             partial class {{ctx.Config.DbContextName}} {
-                {{WithIndent(RenderOnModelCreating(viewEntity, ctx), "    ")}}
+                {{WithIndent(RenderOnModelCreating(viewEntity, ctx))}}
             }
             #endregion 汎用参照テーブル '{{viewEntity.Aggregate.DisplayName}}' のカテゴリ '{{viewEntity.Category.DisplayName}}' ビューエンティティ
             """;

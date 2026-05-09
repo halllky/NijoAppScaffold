@@ -191,14 +191,14 @@ internal class DeepEqualFunction {
               const compareFunction: Exclude<Util.{{OptionType.TYPENAME}}["compareFunction"], undefined> = option?.compareFunction ?? ((_, left, right, __?, ___?) => Object.is(left, right));
               let areEqual = true;
 
-              {{WithIndent(RenderAggregate(_displayData, left, right), "  ")}}
+              {{WithIndent(RenderAggregate(_displayData, left, right))}}
 
               return areEqual;
 
               // ------ 値比較関数 --------
             {{CollectDescendants(_displayData).SelectTextTemplate(disp => $$"""
 
-              {{WithIndent(RenderLocalCompareFunction(disp), "  ")}}
+              {{WithIndent(RenderLocalCompareFunction(disp))}}
             """)}}
             }
             //#endregion ディープイコール関数
@@ -286,7 +286,7 @@ internal class DeepEqualFunction {
                       }
                     {{disp.GetChildMembers().SelectTextTemplate(child => $$"""
 
-                      {{WithIndent(RenderAggregate(child, leftInLoop, rightInLoop), "  ")}}
+                      {{WithIndent(RenderAggregate(child, leftInLoop, rightInLoop))}}
                     """)}}
                     }
                     """;
@@ -309,7 +309,7 @@ internal class DeepEqualFunction {
             return $$"""
                 function {{LocalCompareFunc(disp)}}({{left.Name}}: {{disp.TsTypeName}}, {{right.Name}}: {{disp.TsTypeName}}, equals: Exclude<Util.{{OptionType.TYPENAME}}["compareFunction"], undefined>): boolean {
                 {{disp.GetValueMembers().SelectMany(m => RenderMember(m, onlyKey: false)).SelectTextTemplate(sourceCode => $$"""
-                  {{WithIndent(sourceCode, "  ")}}
+                  {{WithIndent(sourceCode)}}
                 """)}}
                   if (({{left.Name}}.{{EditablePresentationObject.WILL_BE_DELETED_TS}} ?? false) !== ({{right.Name}}.{{EditablePresentationObject.WILL_BE_DELETED_TS}} ?? false)) return false;
                   return true;

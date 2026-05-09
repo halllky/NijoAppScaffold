@@ -60,16 +60,16 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
                 /** 画面の自動生成のためのメタデータ */
                 export namespace MetadataForPage {
-                  {{WithIndent(AggregateMetadata.RenderTypeScriptType(ctx), "  ")}}
+                  {{WithIndent(AggregateMetadata.RenderTypeScriptType(ctx))}}
 
-                  {{WithIndent(ValueMetadata.RenderTypeScriptType(ctx), "  ")}}
+                  {{WithIndent(ValueMetadata.RenderTypeScriptType(ctx))}}
 
-                  {{WithIndent(RefMetadata.RenderTypeScriptType(ctx), "  ")}}
+                  {{WithIndent(RefMetadata.RenderTypeScriptType(ctx))}}
 
                   /** 画面の自動生成のためのメタデータ取得関数 */
                   export const getAll = () => ({
                 {{entriesOrderByDataFlow.SelectTextTemplate(entry => $$"""
-                    '{{entry.PhysicalName}}': {{WithIndent(entry.RenderTypeScriptMetadataObject(ctx), "    ")}},
+                    '{{entry.PhysicalName}}': {{WithIndent(entry.RenderTypeScriptMetadataObject(ctx))}},
                 """)}}
                   }) as const satisfies { [k in ( {{CommandQueryMappings.DATA_MODEL_TYPE}} | {{CommandQueryMappings.QUERY_MODEL_TYPE}} | {{CommandQueryMappings.COMMAND_MODEL_TYPE}} | {{CommandQueryMappings.STRUCTURE_MODEL_TYPE}})]: {{AggregateMetadata.TYPE_ROOT_AGGREGATE_NAME}} }
                 }
@@ -100,11 +100,11 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 /// 画面の自動生成のためのメタデータ
                 /// </summary>
                 public static class MetadataForPage {
-                    {{WithIndent(AggregateMetadata.RenderCSharpType(ctx), "    ")}}
+                    {{WithIndent(AggregateMetadata.RenderCSharpType(ctx))}}
 
-                    {{WithIndent(ValueMetadata.RenderCSharpType(ctx), "    ")}}
+                    {{WithIndent(ValueMetadata.RenderCSharpType(ctx))}}
 
-                    {{WithIndent(RefMetadata.RenderCSharpType(ctx), "    ")}}
+                    {{WithIndent(RefMetadata.RenderCSharpType(ctx))}}
 
                     /// <summary>
                     /// 画面の自動生成のためのメタデータ取得関数
@@ -117,9 +117,9 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
                 {{entriesOrderByDataFlow.SelectTextTemplate(e => $$"""
                     #region {{e.Entry.PhysicalName}}
-                    public static {{e.Entry.CSharpTypeName}} {{e.Entry.PhysicalName}} => {{WithIndent(e.Entry.RenderCSharpNewStatement(ctx), "    ")}};
+                    public static {{e.Entry.CSharpTypeName}} {{e.Entry.PhysicalName}} => {{WithIndent(e.Entry.RenderCSharpNewStatement(ctx))}};
                 {{e.Tree.SelectTextTemplate(agg => $$"""
-                    {{WithIndent(agg.RenderCSharpMemberClass(ctx), "    ")}}
+                    {{WithIndent(agg.RenderCSharpMemberClass(ctx))}}
                 """)}}
                     #endregion {{e.Entry.PhysicalName}}
                 """)}}
@@ -155,11 +155,11 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                   type: '{{type}}',
                   model: '{{_aggregate.GetRoot().Model.SchemaName}}',
                 {{RenderNodeOptions(_aggregate.XElement, ctx).SelectTextTemplate(source => $$"""
-                  {{WithIndent(source, "  ")}}
+                  {{WithIndent(source)}}
                 """)}}
                   members: {
                 {{_aggregate.GetMembers().Select(IMetadataEntity.GetImpl).SelectTextTemplate(m => $$"""
-                    '{{m.PhysicalName}}': {{WithIndent(m.RenderTypeScriptMetadataObject(ctx), "    ")}},
+                    '{{m.PhysicalName}}': {{WithIndent(m.RenderTypeScriptMetadataObject(ctx))}},
                 """)}}
                   },
                 }
@@ -180,7 +180,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                     Type = "{{type}}",
                     Model = E_ModelType.{{_aggregate.GetRoot().Model.SchemaName.KebabCaseToPascalCase()}},
                 {{RenderNodeOptionsCs(_aggregate.XElement, ctx).SelectTextTemplate(source => $$"""
-                    {{WithIndent(source, "    ")}}
+                    {{WithIndent(source)}}
                 """)}}
                     Members = new {{MemberClassName}}(),
                 }
@@ -191,7 +191,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
             return $$"""
                 public sealed class {{MemberClassName}} : {{I_AGGREGATE_METADATA_MEMBER}} {
                 {{_aggregate.GetMembers().Select(IMetadataEntity.GetImpl).SelectTextTemplate(m => $$"""
-                    public {{m.CSharpTypeName}} {{m.PhysicalName}} => {{WithIndent(m.RenderCSharpNewStatement(ctx), "    ")}};
+                    public {{m.CSharpTypeName}} {{m.PhysicalName}} => {{WithIndent(m.RenderCSharpNewStatement(ctx))}};
                 """)}}
 
                     public Dictionary<string, {{TYPE_MEMBER}}> AsDictionary() {
@@ -229,7 +229,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                   /** この構造体のメンバー */
                   members: { [key: string]: {{TYPE_MEMBER}} }
                 {{RenderNodeOptionTypes(ctx).SelectTextTemplate(source => $$"""
-                  {{WithIndent(source, "  ")}}
+                  {{WithIndent(source)}}
                 """)}}
                 }
 
@@ -252,7 +252,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                     /// <summary>この集約のモデル。子孫集約の場合も値が入る。</summary>
                     public E_ModelType Model { get; init; }
                 {{RenderNodeOptionTypesCs(ctx).SelectTextTemplate(source => $$"""
-                    {{WithIndent(source, "    ")}}
+                    {{WithIndent(source)}}
                 """)}}
 
                     /// <summary>この構造体のメンバー</summary>
@@ -317,7 +317,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                   uniqueId: '{{_vm.XElement.Attribute(nameof(WebService.SchemaEditor.XmlElementItem.UniqueId))?.Value.Replace("'", "\\'")}}',
                   {{typeProp}}: '{{_vm.Type.SchemaTypeName}}',
                 {{RenderNodeOptions(_vm.XElement, ctx).SelectTextTemplate(source => $$"""
-                  {{WithIndent(source, "  ")}}
+                  {{WithIndent(source)}}
                 """)}}
                 }
                 """;
@@ -335,7 +335,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                     UniqueId = "{{_vm.XElement.Attribute(nameof(WebService.SchemaEditor.XmlElementItem.UniqueId))?.Value.Replace("\"", "\\\"")}}",
                     {{typeValue}},
                 {{RenderNodeOptionsCs(_vm.XElement, ctx).SelectTextTemplate(source => $$"""
-                    {{WithIndent(source, "    ")}}
+                    {{WithIndent(source)}}
                 """)}}
                 }
                 """;
@@ -366,7 +366,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                   /** 値オブジェクトの型名。このメンバーが値オブジェクトの場合のみ */
                   valueObjectType?: {{valueObjectLiteral}}
                 {{RenderNodeOptionTypes(ctx).SelectTextTemplate(source => $$"""
-                  {{WithIndent(source, "  ")}}
+                  {{WithIndent(source)}}
                 """)}}
                 }
                 """;
@@ -387,7 +387,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                     /// <summary>値オブジェクトの型名。このメンバーが値オブジェクトの場合のみ</summary>
                     public string? ValueObjectType { get; init; }
                 {{RenderNodeOptionTypesCs(ctx).SelectTextTemplate(source => $$"""
-                    {{WithIndent(source, "    ")}}
+                    {{WithIndent(source)}}
                 """)}}
                 }
                 """;
@@ -413,7 +413,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                   type: 'ref-to',
                   refTo: '{{_refTo.RefTo.RefEntryName}}',
                 {{RenderNodeOptions(_refTo.XElement, ctx).SelectTextTemplate(source => $$"""
-                  {{WithIndent(source, "  ")}}
+                  {{WithIndent(source)}}
                 """)}}
                 }
                 """;
@@ -426,7 +426,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                     Type = "ref-to",
                     RefTo = "{{_refTo.RefTo.RefEntryName}}",
                 {{RenderNodeOptionsCs(_refTo.XElement, ctx).SelectTextTemplate(source => $$"""
-                    {{WithIndent(source, "    ")}}
+                    {{WithIndent(source)}}
                 """)}}
                 }
                 """;
@@ -445,7 +445,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                   /** 参照先。参照先が子孫集約の場合はルート集約からのパスのスラッシュ区切り */
                   refTo: `ref-to:${string}`
                 {{RenderNodeOptionTypes(ctx).SelectTextTemplate(source => $$"""
-                  {{WithIndent(source, "  ")}}
+                  {{WithIndent(source)}}
                 """)}}
                 }
                 """;
@@ -462,7 +462,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                     /// <summary>参照先。参照先が子孫集約の場合はルート集約からのパスのスラッシュ区切り</summary>
                     public required string RefTo { get; init; }
                 {{RenderNodeOptionTypesCs(ctx).SelectTextTemplate(source => $$"""
-                    {{WithIndent(source, "    ")}}
+                    {{WithIndent(source)}}
                 """)}}
                 }
                 """;

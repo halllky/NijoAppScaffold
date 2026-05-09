@@ -128,7 +128,7 @@ internal static class GenericLookupTableFeature {
                 }
             {{categories.SelectTextTemplate(cat => $$"""
 
-                {{WithIndent(RenderPropertyForCategory(cat), "    ")}}
+                {{WithIndent(RenderPropertyForCategory(cat))}}
             """)}}
             }
 

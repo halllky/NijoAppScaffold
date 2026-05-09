@@ -78,7 +78,7 @@ namespace Nijo.Parts.CSharp {
                         }
                     {{_additionalMethods.SelectTextTemplate(method => $$"""
 
-                        {{WithIndent(method, "    ")}}
+                        {{WithIndent(method)}}
                     """)}}
                     }
                     """,

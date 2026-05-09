@@ -89,21 +89,21 @@ namespace Nijo.Models.QueryModelModules {
                 /// </summary>
                 public {{createCommand.CsClassNameCreate}} {{TO_CREATE_COMMAND}}() {
                     return new {{createCommand.CsClassNameCreate}} {
-                        {{WithIndent(EnumerateMembers(false, createCommand, right, dict), "        ")}}
+                        {{WithIndent(EnumerateMembers(false, createCommand, right, dict))}}
                     };
                 }
                 /// <summary>
                 /// このインスタンスの値を <see cref="{{udpateCommand.CsClassName}}"/> に割り当てる処理を返します。
                 /// </summary>
                 public void {{ASSIGN_TO_UPDATE_COMMAND}}({{udpateCommand.CsClassNameUpdate}} command) {
-                    {{WithIndent(EnumerateMembers(true, udpateCommand, right, dict), "    ")}}
+                    {{WithIndent(EnumerateMembers(true, udpateCommand, right, dict))}}
                 }
                 /// <summary>
                 /// このインスタンスを <see cref="{{updOrDelKey.CsClassName}}"/> に変換します。
                 /// </summary>
                 public {{updOrDelKey.CsClassNameDelete}} {{TO_DELETE_COMMAND}}() {
                     return new {{updOrDelKey.CsClassNameDelete}} {
-                        {{WithIndent(EnumerateMembers(false, updOrDelKey, right, dict), "        ")}}
+                        {{WithIndent(EnumerateMembers(false, updOrDelKey, right, dict))}}
                         {{SaveCommand.VERSION}} = this.{{VERSION_CS}},
                     };
                 }
@@ -138,14 +138,14 @@ namespace Nijo.Models.QueryModelModules {
 
                             yield return $$"""
                                 {{start}}{{member.GetPropertyName(E_CsTs.CSharp)}} = {{arrayPath}}?.Select({{loopVar.Name}} => new {{sp.GetTypeName(E_CsTs.CSharp)}}() {
-                                    {{WithIndent(EnumerateMembers(false, sp, loopVar, dict2), "    ")}}
+                                    {{WithIndent(EnumerateMembers(false, sp, loopVar, dict2))}}
                                 }).ToList() ?? []{{end}}
                                 """;
 
                         } else {
                             yield return $$"""
                                 {{start}}{{member.GetPropertyName(E_CsTs.CSharp)}} = new() {
-                                    {{WithIndent(EnumerateMembers(false, sp, right, rigthMembers), "    ")}}
+                                    {{WithIndent(EnumerateMembers(false, sp, right, rigthMembers))}}
                                 }{{end}}
                                 """;
                         }
