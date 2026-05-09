@@ -80,7 +80,7 @@ namespace Nijo.CodeGenerating {
 
                 // ループや条件分岐の空展開で発生する余計な空行だけ抑止し、通常の空行は保持する
                 if (!containsSkipMarker || !string.IsNullOrWhiteSpace(line)) {
-                    sw.Write(currentIndent + line);
+                    sw.Write(string.IsNullOrWhiteSpace(concatted) ? string.Empty : concatted);
                     if (i < splitted.Length - 1 || endsWithNewLine) {
                         sw.WriteLine();
                     }

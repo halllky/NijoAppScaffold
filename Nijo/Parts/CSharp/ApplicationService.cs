@@ -135,8 +135,10 @@ namespace Nijo.Parts.CSharp {
                                 /// </summary>
                                 public virtual string? LogSessionKey => null;
 
+                        {{orderedLegacySources.SelectTextTemplate(line => $$"""
 
-                        {{string.Join("\n\n", orderedLegacySources.Select(source => "        " + WithIndent(source, "        ")))}}
+                                {{WithIndent(line)}}
+                        """)}}
                             }
                         }
                         """,
