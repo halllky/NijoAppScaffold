@@ -16,10 +16,91 @@ namespace Nijo.Models.ReadModel2Modules {
         internal override string TsTypeName => $"{Aggregate.PhysicalName}DisplayData";
         internal override bool HasVersion => Aggregate is RootAggregate
                                           || Aggregate.XElement.Attribute(BasicNodeOptions.HasLifecycle.AttributeName) != null;
+        internal const string VALUES_CS = "Values";
+        internal const string VALUES_TS = "values";
+        internal string ValueCsClassName => $"{CsClassName}Values";
+        internal const string READONLY_CS = "ReadOnly";
+        internal const string READONLY_TS = "readOnly";
+        internal const string ALL_READONLY_CS = "AllReadOnly";
+        internal const string ALL_READONLY_TS = "allReadOnly";
+        internal string ReadOnlyCsClassName => $"{CsClassName}ReadOnly";
+        internal const string UNIQUE_ID_CS = "UniqueId";
+        internal const string UNIQUE_ID_TS = "uniqueId";
+
+        internal new string RenderCSharpDeclaring(CodeRenderingContext ctx) {
+            if (!ctx.IsLegacyCompatibilityMode()) {
+                return base.RenderCSharpDeclaring(ctx);
+            }
+
+            return $$"""
+            /// <summary>
+            /// {{Aggregate.DisplayName}}の画面表示用データ構造
+            /// </summary>
+            {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
+            public partial class {{CsClassName}} {
+                /// <summary>値</summary>
+                [JsonPropertyName("{{VALUES_TS}}")]
+                public virtual {{ValueCsClassName}} {{VALUES_CS}} { get; set; } = new();
+
+            {{GetChildMembers().SelectTextTemplate(c => $$"""
+                [JsonPropertyName("{{c.PhysicalName}}")]
+                public {{WithIndent(c.CsClassNameAsMember, "    ")}} {{c.PhysicalName}} { get; set; } = new();
+              """)}}
+
+                /// <summary>このデータがDBに保存済みかどうか</summary>
+                [JsonPropertyName("{{EXISTS_IN_DB_TS}}")]
+                public bool {{EXISTS_IN_DB_CS}} { get; set; }
+                /// <summary>このデータに更新がかかっているかどうか</summary>
+                [JsonPropertyName("{{WILL_BE_CHANGED_TS}}")]
+                public bool {{WILL_BE_CHANGED_CS}} { get; set; }
+                /// <summary>このデータが更新確定時に削除されるかどうか</summary>
+                [JsonPropertyName("{{WILL_BE_DELETED_TS}}")]
+                public bool {{WILL_BE_DELETED_CS}} { get; set; }
+                /// <summary>
+                /// 画面操作で使用される一意なID。このインスタンスが作成されたときに発番される。
+                /// 画面上で行データの更新や行移動などがなされたりしたときに当該インスタンスを適切に追跡出来るようにするために必要。
+                /// このIDは永続化の対象とならない。
+                /// インスタンスをnewする場合は明示的にGUIDを設定する ※Guid.NewGuid().ToString()
+                /// </summary>
+                [JsonPropertyName("{{UNIQUE_ID_TS}}")]
+                public virtual required string {{UNIQUE_ID_CS}} { get; set; }
+            {{If(HasVersion, () => $$"""
+                /// <summary>楽観排他制御用のバージョニング情報</summary>
+                [JsonPropertyName("{{VERSION_TS}}")]
+                public int? {{VERSION_CS}} { get; set; }
+            """)}}
+                /// <summary>どの項目が読み取り専用か</summary>
+                [JsonPropertyName("{{READONLY_TS}}")]
+                public {{ReadOnlyCsClassName}} {{READONLY_CS}} { get; set; } = new();
+            }
+
+            /// <summary>
+            /// {{Aggregate.DisplayName}}の画面表示用データの値の部分
+            /// </summary>
+            public partial class {{ValueCsClassName}} {
+            {{GetValueMembers().SelectTextTemplate(member => $$"""
+                {{WithIndent(member.RenderCsDeclaration(ctx), "    ")}}
+              """)}}
+            }
+
+            /// <summary>
+            /// {{Aggregate.DisplayName}}の画面表示用データの読み取り専用情報格納部分
+            /// </summary>
+            public partial class {{ReadOnlyCsClassName}} {
+                /// <summary>{{Aggregate.DisplayName}}全体が読み取り専用か否か</summary>
+                [JsonPropertyName("{{ALL_READONLY_TS}}")]
+                public bool {{ALL_READONLY_CS}} { get; set; }
+            {{GetValueMembers().SelectTextTemplate(member => $$"""
+                /// <summary>{{member.GetPropertyName(E_CsTs.CSharp)}}が読み取り専用か否か</summary>
+                public bool {{member.GetPropertyName(E_CsTs.CSharp)}} { get; set; }
+              """)}}
+            }
+            """;
+        }
 
         internal static SourceFile RenderBaseClass() => new() {
             FileName = "DisplayDataClassBase.cs",
-          Contents = CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
+            Contents = CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
             ? """
               /// <summary>
               /// 画面表示用データの基底クラス
@@ -153,12 +234,27 @@ namespace Nijo.Models.ReadModel2Modules {
                 """;
         }
         internal string RenderSetKeysReadOnly(CodeRenderingContext ctx) {
+            var keys = Aggregate.GetKeyVMs().ToArray();
+
+            if (!ctx.IsLegacyCompatibilityMode()) {
+                return $$"""
+              /// <summary>
+              /// {{Aggregate.DisplayName}}の主キー項目を読み取り専用にします。
+              /// 現行の ReadModel2 移植途中では読み取り専用メタデータ構造をまだ持たないため no-op とする。
+              /// </summary>
+              private void SetKeysReadOnly({{CsClassName}} displayData) {
+              }
+              """;
+            }
+
             return $$"""
                 /// <summary>
                 /// {{Aggregate.DisplayName}}の主キー項目を読み取り専用にします。
-                /// 現行の ReadModel2 移植途中では読み取り専用メタデータ構造をまだ持たないため no-op とする。
                 /// </summary>
                 private void SetKeysReadOnly({{CsClassName}} displayData) {
+                {{keys.SelectTextTemplate(key => $$"""
+                    displayData.{{READONLY_CS}}.{{key.PhysicalName}} = true;
+                """)}}
                 }
                 """;
         }

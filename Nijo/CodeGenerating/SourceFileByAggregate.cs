@@ -170,7 +170,7 @@ namespace Nijo.CodeGenerating {
             return sourceCode.Contains("GetMultiViewUrlFromDisplayData", StringComparison.Ordinal)
                 || sourceCode.Contains("GetSingleViewUrlFromDisplayData(", StringComparison.Ordinal)
                 || sourceCode.Contains("GetSingleViewUrlOf", StringComparison.Ordinal)
-                || sourceCode.Contains("GetAuthorizedLevel(", StringComparison.Ordinal)
+                || sourceCode.Contains("public virtual E_AuthLevel GetAuthorizedLevel(", StringComparison.Ordinal)
                 || sourceCode.Contains("CreateSearchResultExcelBook(", StringComparison.Ordinal);
         }
         private static string RenderCoreLibrary(CodeRenderingContext ctx, List<string> appSrvMethods, List<string> csharpClass) {
@@ -194,8 +194,7 @@ namespace Nijo.CodeGenerating {
                     {{If(appSrvMethods.Count > 0, () => $$"""
                         partial class {{ApplicationService.ABSTRACT_CLASS}} {
                     {{appSrvMethods.SelectTextTemplate(source => $$"""
-                            {{WithIndent(source, "        ")}}
-
+                            {{WithIndent(source.TrimEnd(), "        ")}}
                     """)}}
                         }
 

@@ -19,6 +19,7 @@ namespace Nijo.Models.ReadModel2Modules {
         private string ControllerCountAction => Aggregate == RefEntry
             ? "search-refs-count"
             : $"search-refs-count/{Aggregate.PhysicalName}";
+        private string AppSrvValidateMethod => $"Validate{Aggregate.PhysicalName}RefSearchCondition";
         private string AppSrvLoadMethod => $"SearchRefs{Aggregate.PhysicalName}";
         private string AppSrvCountMethod => $"SearchRefsCount{Aggregate.PhysicalName}";
 
@@ -74,6 +75,36 @@ namespace Nijo.Models.ReadModel2Modules {
         internal string RenderAppSrvMethodOfReadModel(CodeRenderingContext context) {
             var searchCondition = new RefSearchCondition(Aggregate, RefEntry);
             var searchResult = new RefDisplayData(Aggregate, RefEntry);
+
+            if (context.IsLegacyCompatibilityMode()) {
+                return $$"""
+                    /// <summary>
+                    /// {{Aggregate.DisplayName}}の検索条件に不正が無いかを調べます。
+                    /// 不正な場合、検索処理自体の実行が中止されます。
+                    /// <see cref="{{AppSrvLoadMethod}}"/> がクライアント側から呼ばれたときのみ実行されます。
+                    /// </summary>
+                    /// <param name="refSearchConditionFilter">検索条件</param>
+                    /// <param name="context">エラーがある場合はこのオブジェクトの中にエラー内容を追記してください。</param>
+                    public virtual void {{AppSrvValidateMethod}}({{searchCondition.CsClassName}} refSearchConditionFilter, IPresentationContext context) {
+                        // このメソッドをオーバーライドしてエラーチェック処理を記述してください。
+                    }
+                    /// <summary>
+                    /// {{Aggregate.DisplayName}} が他の集約から参照されるときの検索結果カウント
+                    /// </summary>
+                    public virtual int {{AppSrvCountMethod}}({{searchCondition.CsFilterTypeName}} refSearchConditionFilter, IPresentationContext context) {
+                        return 0;
+                    }
+
+                    /// <summary>
+                    /// {{Aggregate.DisplayName}} が他の集約から参照されるときの検索処理
+                    /// </summary>
+                    /// <param name="refSearchCondition">検索条件</param>
+                    /// <returns>検索結果</returns>
+                    public virtual IEnumerable<{{searchResult.CsClassName}}> {{AppSrvLoadMethod}}({{searchCondition.CsClassName}} refSearchCondition, IPresentationContext context) {
+                        return Enumerable.Empty<{{searchResult.CsClassName}}>();
+                    }
+                    """;
+            }
 
             return $$"""
                 public virtual int {{AppSrvCountMethod}}({{searchCondition.CsFilterTypeName}} searchCondition, IPresentationContext context) {

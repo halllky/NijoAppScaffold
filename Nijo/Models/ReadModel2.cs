@@ -58,20 +58,26 @@ namespace Nijo.Models {
                 aggregateFile.AddTypeScriptFunction(displayData.RenderTsNewObjectFunction(ctx));
             }
 
+            var singleView = new SingleView(rootAggregate);
             var loadMethod = new LoadMethod(rootAggregate);
             aggregateFile.AddTypeScriptFunction(loadMethod.RenderReactHook(ctx));
             aggregateFile.AddWebapiControllerAction(loadMethod.RenderControllerAction(ctx));
-            aggregateFile.AddAppSrvMethod(loadMethod.RenderAppSrvBaseMethod(ctx));
-            aggregateFile.AddAppSrvMethod(loadMethod.RenderAppSrvAbstractMethod(ctx));
-            aggregateFile.AddAppSrvMethod(rootDisplayData.RenderSetKeysReadOnly(ctx));
+            aggregateFile.AddAppSrvMethod($$"""
+                {{loadMethod.RenderAppSrvBaseMethod(ctx).TrimEnd()}}
+                {{loadMethod.RenderAppSrvAbstractMethod(ctx).TrimEnd()}}
+                {{rootDisplayData.RenderSetKeysReadOnly(ctx).TrimEnd()}}
+                {{singleView.RenderSetSingleViewDisplayDataFn(ctx).TrimEnd()}}
+                """);
 
             var displayDataMessages = new Nijo.Models.QueryModelModules.DisplayDataMessageContainer(rootAggregate);
             aggregateFile.AddCSharpClass(Nijo.Models.QueryModelModules.DisplayDataMessageContainer.RenderCSharpRecursively(rootAggregate), "Class_DisplayDataMessage");
             ctx.Use<Parts.CSharp.MessageContainer.BaseClass>().Register(displayDataMessages.CsClassName, displayDataMessages.CsClassName);
 
-            aggregateFile.AddTypeScriptFunction(new BatchUpdateReadModel().RenderFunction(ctx, rootAggregate));
-            aggregateFile.AddWebapiControllerAction(BatchUpdateReadModel.RenderControllerActionVersion2(ctx, rootAggregate));
-            aggregateFile.AddAppSrvMethod(BatchUpdateReadModel.RenderAppSrvMethodVersion2(ctx, rootAggregate));
+            if (rootAggregate.GenerateBatchUpdateCommand) {
+                aggregateFile.AddTypeScriptFunction(new BatchUpdateReadModel().RenderFunction(ctx, rootAggregate));
+                aggregateFile.AddWebapiControllerAction(BatchUpdateReadModel.RenderControllerActionVersion2(ctx, rootAggregate));
+                aggregateFile.AddAppSrvMethod(BatchUpdateReadModel.RenderAppSrvMethodVersion2(ctx, rootAggregate));
+            }
 
             aggregateFile.AddTypeScriptFunction(rootDisplayData.RenderDeepEqualFunctionRecursively(ctx));
             aggregateFile.AddTypeScriptFunction(rootDisplayData.RenderCheckChangesFunction(ctx));
@@ -84,15 +90,21 @@ namespace Nijo.Models {
             var multiView = new MultiView(rootAggregate);
             aggregateFile.AddTypeScriptFunction(multiView.RenderNavigationHook(ctx));
             aggregateFile.AddTypeScriptFunction(multiView.RenderExcelDownloadHook());
-            aggregateFile.AddAppSrvMethod(multiView.RenderAppSrvGetUrlMethod());
+            if (ctx.IsLegacyCompatibilityMode()) {
+                ctx.Use<Parts.CSharp.ApplicationService>().Add(multiView.RenderAppSrvGetUrlMethod());
+            } else {
+                aggregateFile.AddAppSrvMethod(multiView.RenderAppSrvGetUrlMethod());
+            }
 
-            var singleView = new SingleView(rootAggregate);
             aggregateFile.AddTypeScriptFunction(singleView.RenderPageFrameComponent(ctx));
-            aggregateFile.AddAppSrvMethod(singleView.RenderSetSingleViewDisplayDataFn(ctx));
             aggregateFile.AddWebapiControllerAction(singleView.RenderSetSingleViewDisplayData(ctx));
             aggregateFile.AddTypeScriptFunction(singleView.RenderNavigateFn(ctx, SingleView.E_Type.New));
             aggregateFile.AddTypeScriptFunction(singleView.RenderNavigateFn(ctx, SingleView.E_Type.Edit));
-            aggregateFile.AddAppSrvMethod(singleView.RenderAppSrvGetUrlMethod());
+            if (ctx.IsLegacyCompatibilityMode()) {
+                ctx.Use<Parts.CSharp.ApplicationService>().Add(singleView.RenderAppSrvGetUrlMethod());
+            } else {
+                aggregateFile.AddAppSrvMethod(singleView.RenderAppSrvGetUrlMethod());
+            }
 
             foreach (var aggregate in rootAggregate.EnumerateThisAndDescendants()) {
                 var refEntry = (AggregateBase)aggregate.GetEntry();
