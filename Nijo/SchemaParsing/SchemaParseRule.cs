@@ -39,7 +39,7 @@ public class SchemaParseRule {
         var models = new IModel[] {
             new DataModel(),
             new WriteModel2(),
-            new ReadModel2Compat(),
+            new ReadModel2(),
             new QueryModel(),
             new CommandModel(),
             new StaticEnumModel(),
