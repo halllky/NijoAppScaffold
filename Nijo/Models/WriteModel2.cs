@@ -57,14 +57,15 @@ namespace Nijo.Models {
             // 集約横断で使う保存用共通型
             ctx.Use<DataClassForSaveBase>().Register(rootAggregate);
 
-            // EF Core Entity
-            var rootEfCoreEntity = new WriteModel2EFCoreEntity(rootAggregate);
-            aggregateFile.AddCSharpClass(rootEfCoreEntity.Render(ctx), "Class_EFCoreEntity");
             ctx.Use<LegacyDbContextClass>().AddEntities(rootAggregate
                 .EnumerateThisAndDescendants()
                 .Select(aggregate => new WriteModel2EFCoreEntity(aggregate).AsIEFCoreEntity()));
 
             foreach (var aggregate in rootAggregate.EnumerateThisAndDescendants()) {
+                // EF Core Entity
+                var efCoreEntity = new WriteModel2EFCoreEntity(aggregate);
+                aggregateFile.AddCSharpClass(efCoreEntity.Render(ctx), "Class_EFCoreEntity");
+
                 // 保存用 DTO 群
                 var createDataClass = new DataClassForSave(aggregate, DataClassForSave.E_Type.Create);
                 aggregateFile.AddCSharpClass(createDataClass.RenderCSharp(ctx), "Class_DataClassForCreate");

@@ -85,7 +85,7 @@ namespace Nijo.CodeGenerating {
                 ctx.ReactProject(dir => {
                     if (_typeScriptTypeDef.Count > 0 || _typeScriptFunctions.Count > 0) {
                         dir.Generate(new SourceFile(_callerFilePath, _callerMemberName) {
-                            FileName = $"{_rootAggregate.PhysicalName.ToFileNameSafe()}.ts",
+                            FileName = $"{_rootAggregate.PhysicalName.ToFileNameSafe()}.tsx",
                             Contents = RenderNodeJs(ctx),
                         });
                     }
@@ -115,31 +115,29 @@ namespace Nijo.CodeGenerating {
                         AppSrvMethods = g.Select(x => x.SourceCode).ToList(),
                         CSharpClass = new List<string>()
                     })
-                    .Concat(
-                        _csharpClass
+                    .Concat(_csharpClass
                         .Where(x => x.FileName != null)
                         .GroupBy(x => x.FileName)
                         .Select(g => new {
                             FileName = g.Key,
                             AppSrvMethods = new List<string>(),
                             CSharpClass = g.Select(x => x.SourceCode).ToList()
-                        })
-                    )
+                        }))
                     .GroupBy(x => x.FileName)
                     .Select(g => new {
                         FileName = g.Key,
                         AppSrvMethods = g.SelectMany(x => x.AppSrvMethods).ToList(),
-                        CSharpClass = g.SelectMany(x => x.CSharpClass).ToList()
+                        CSharpClass = g.SelectMany(x => x.CSharpClass).ToList(),
                     });
 
-                dir.Directory(_rootAggregate.PhysicalName.ToFileNameSafe(), aggregateDir => {
-                    foreach (var fileGroup in fileGroups) {
-                        aggregateDir.Generate(new SourceFile(_callerFilePath, _callerMemberName) {
-                            FileName = $"{fileGroup.FileName}.cs",
-                            Contents = RenderCoreLibrary(ctx, fileGroup.AppSrvMethods, fileGroup.CSharpClass)
+                foreach (var fileGroup in fileGroups) {
+                    dir.Directory(_rootAggregate.PhysicalName.ToFileNameSafe(), aggDir => {
+                        aggDir.Generate(new SourceFile(_callerFilePath, _callerMemberName) {
+                            FileName = fileGroup.FileName!,
+                            Contents = RenderCoreLibrary(ctx, fileGroup.AppSrvMethods, fileGroup.CSharpClass),
                         });
-                    }
-                });
+                    });
+                }
             });
             ctx.WebapiProject(dir => {
                 if (_webApiControllerAction.Count > 0) {
@@ -158,7 +156,6 @@ namespace Nijo.CodeGenerating {
                 }
             });
         }
-
         private static string RenderCoreLibrary(CodeRenderingContext ctx, List<string> appSrvMethods, List<string> csharpClass) {
             if (ctx.IsLegacyCompatibilityMode()) {
                 return $$"""

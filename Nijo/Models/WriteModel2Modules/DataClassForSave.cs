@@ -84,7 +84,7 @@ namespace Nijo.Models.WriteModel2Modules {
             return $$"""
                 public partial class {{CsClassName}} {
                 {{GetOwnMembers().SelectTextTemplate(member => $$"""
-                    public {{GetMemberTypeNameCSharp(member)}} {{member.PhysicalName}} { get; set; }{{GetInitializer(member)}}
+                    public {{GetLegacyMemberTypeNameCSharp(member)}} {{member.PhysicalName}} { get; set; }{{GetLegacyInitializer(member)}}
                 """)}}
                 {{If(Aggregate is RootAggregate, () => $$"""
 
@@ -201,7 +201,7 @@ namespace Nijo.Models.WriteModel2Modules {
                         [JsonPropertyName("_thisObjectIsReadOnly")]
                         public bool _ThisObjectIsReadOnly { get; set; }
                     {{GetOwnMembers().SelectTextTemplate(member => $$"""
-                        public {{GetLegacyReadOnlyMemberTypeNameCSharp(member)}} {{member.PhysicalName}} { get; {{(member is ChildAggregate or ChildrenAggregate ? "}" : "set; }")}}
+                        {{GetLegacyReadOnlyPropertyDecl(member)}}
                     """)}}
                     }
                     """;
@@ -220,6 +220,14 @@ namespace Nijo.Models.WriteModel2Modules {
                 """)}}
                 }
                 """;
+        }
+
+        private string GetLegacyReadOnlyPropertyDecl(IAggregateMember member) {
+            return member switch {
+                ValueMember or RefToMember => $"public {GetLegacyReadOnlyMemberTypeNameCSharp(member)} {member.PhysicalName} {{ get; set; }}",
+                ChildAggregate or ChildrenAggregate => $"public {GetLegacyReadOnlyMemberTypeNameCSharp(member)} {member.PhysicalName} {{ get; }} = new();",
+                _ => throw new InvalidOperationException($"未対応のメンバー型: {member.GetType().Name}"),
+            };
         }
 
         /// <summary>
@@ -311,6 +319,13 @@ namespace Nijo.Models.WriteModel2Modules {
         }
 
         private IEnumerable<string> RenderToDbEntityBody(AggregateBase aggregate, string instanceName, IDictionary<ValueMember, string> inheritedKeys, bool includeCreateAuditFields, string currentUserArg, string currentTimeArg) {
+            if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
+                foreach (var source in RenderToDbEntityBodyLegacy(aggregate, instanceName, inheritedKeys, includeCreateAuditFields, currentUserArg, currentTimeArg, nullConditional: false)) {
+                    yield return source;
+                }
+                yield break;
+            }
+
             var currentKeys = new Dictionary<ValueMember, string>(inheritedKeys);
             if (Type == E_Type.UpdateOrDelete && aggregate is RootAggregate && !CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
                 yield return $"{Nijo.Parts.CSharp.EFCoreEntity.VERSION} = {instanceName}.{VERSION},";
@@ -364,6 +379,72 @@ namespace Nijo.Models.WriteModel2Modules {
                         """;
                 }
             }
+        }
+
+        private IEnumerable<string> RenderToDbEntityBodyLegacy(AggregateBase aggregate, string instanceName, IDictionary<ValueMember, string> inheritedKeys, bool includeCreateAuditFields, string currentUserArg, string currentTimeArg, bool nullConditional) {
+            var currentKeys = new Dictionary<ValueMember, string>(inheritedKeys);
+
+            foreach (var member in aggregate.GetMembers()) {
+                if (member is ValueMember keyVm && keyVm.IsKey) {
+                    currentKeys[keyVm] = RenderMemberAccess(instanceName, keyVm.PhysicalName, nullConditional);
+                } else if (member is RefToMember keyRef && keyRef.IsKey) {
+                    CollectRefKeyExpressions(keyRef, RenderMemberAccess(instanceName, keyRef.PhysicalName, nullConditional), currentKeys);
+                }
+            }
+
+            var parent = aggregate.GetParent();
+            if (parent != null) {
+                foreach (var parentKey in new LegacyEFCoreEntity(parent).GetColumns().Where(col => col.IsKey)) {
+                    if (parentKey.Member == null) continue;
+                    if (!currentKeys.TryGetValue(parentKey.Member, out var keyExpr)) continue;
+
+                    yield return $"PARENT_{parentKey.PhysicalName} = {keyExpr},";
+                }
+            }
+
+            foreach (var member in aggregate.GetMembers().OfType<RefToMember>()) {
+                foreach (var source in RenderRefToDbEntityAssignments(member, RenderMemberAccess(instanceName, member.PhysicalName, nullConditional))) {
+                    yield return source;
+                }
+            }
+
+            foreach (var member in aggregate.GetMembers()) {
+                if (member is ValueMember vm) {
+                    var value = currentKeys.TryGetValue(vm, out var keyExpr)
+                        ? keyExpr
+                        : RenderMemberAccess(instanceName, vm.PhysicalName, nullConditional);
+                    yield return $"{vm.PhysicalName} = {vm.Type.RenderCastToPrimitiveType()}{value},";
+
+                } else if (member is ChildAggregate child) {
+                    var childDbEntity = new EFCoreEntity(child);
+                    var childExpr = RenderMemberAccess(instanceName, child.PhysicalName, nullConditional);
+                    var childMembers = RenderToDbEntityBodyLegacy(child, childExpr, currentKeys, includeCreateAuditFields, currentUserArg, currentTimeArg, nullConditional: true)
+                        .Concat(RenderCreateAuditFields(includeCreateAuditFields, currentUserArg, currentTimeArg))
+                        .Select(line => $"    {line}")
+                        .ToArray();
+                    yield return $"{child.PhysicalName} = new {childDbEntity.ClassName} {{{Environment.NewLine}"
+                        + $"{string.Join(Environment.NewLine, childMembers)}{Environment.NewLine}"
+                        + "},";
+
+                } else if (member is ChildrenAggregate children) {
+                    var childDbEntity = new EFCoreEntity(children);
+                    var childModel = new DataClassForSave(children, Type);
+                    var loopVar = "item1";
+                    var childMembers = childModel.RenderToDbEntityBodyLegacy(children, loopVar, currentKeys, includeCreateAuditFields, currentUserArg, currentTimeArg, nullConditional: false)
+                        .Concat(RenderCreateAuditFields(includeCreateAuditFields, currentUserArg, currentTimeArg))
+                        .Select(line => $"    {line}")
+                        .ToArray();
+                    yield return $"{children.PhysicalName} = {RenderMemberAccess(instanceName, children.PhysicalName, nullConditional)}?.Select({loopVar} => new {childDbEntity.ClassName} {{{Environment.NewLine}"
+                        + $"{string.Join(Environment.NewLine, childMembers)}{Environment.NewLine}"
+                        + $"}}).ToHashSet() ?? new HashSet<{childDbEntity.ClassName}>(),";
+                }
+            }
+        }
+
+        private static string RenderMemberAccess(string instanceName, string memberName, bool nullConditional) {
+            return nullConditional
+                ? $"{instanceName}?.{memberName}"
+                : $"{instanceName}.{memberName}";
         }
 
         private IEnumerable<string> RenderCreateAuditFields(bool includeCreateAuditFields, string currentUserArg, string currentTimeArg) {
@@ -425,6 +506,13 @@ namespace Nijo.Models.WriteModel2Modules {
         }
 
         private IEnumerable<string> RenderFromDbEntityBody(AggregateBase aggregate, string instanceName, IDictionary<ValueMember, string> inheritedKeys) {
+            if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
+                foreach (var source in RenderFromDbEntityBodyLegacy(aggregate, instanceName, inheritedKeys, nullConditional: false)) {
+                    yield return source;
+                }
+                yield break;
+            }
+
             var currentKeys = new Dictionary<ValueMember, string>(inheritedKeys);
             if (Type == E_Type.UpdateOrDelete && aggregate is RootAggregate && !CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
                 yield return $"{VERSION} = {instanceName}.{Nijo.Parts.CSharp.EFCoreEntity.VERSION},";
@@ -472,6 +560,49 @@ namespace Nijo.Models.WriteModel2Modules {
             }
         }
 
+        private IEnumerable<string> RenderFromDbEntityBodyLegacy(AggregateBase aggregate, string instanceName, IDictionary<ValueMember, string> inheritedKeys, bool nullConditional) {
+            var currentKeys = new Dictionary<ValueMember, string>(inheritedKeys);
+
+            foreach (var member in aggregate.GetMembers()) {
+                if (member is ValueMember keyVm && keyVm.IsKey) {
+                    currentKeys[keyVm] = RenderMemberAccess(instanceName, keyVm.PhysicalName, nullConditional);
+                }
+            }
+
+            foreach (var member in aggregate.GetMembers()) {
+                if (member is ValueMember vm) {
+                    var value = currentKeys.TryGetValue(vm, out var keyExpr)
+                        ? keyExpr
+                        : RenderMemberAccess(instanceName, vm.PhysicalName, nullConditional);
+                    yield return $"{vm.PhysicalName} = {vm.Type.RenderCastToDomainType()}{value},";
+
+                } else if (member is RefToMember refTo) {
+                    yield return $$"""
+                        {{refTo.PhysicalName}} = new() {
+                            {{WithIndent(RenderFromRefTargetKeysLegacy(refTo.RefTo, instanceName, [refTo.PhysicalName], parentPathUnsupported: false), "    ")}}
+                        },
+                        """;
+
+                } else if (member is ChildAggregate child) {
+                    var childModel = new DataClassForSave(child, Type);
+                    yield return $$"""
+                        {{child.PhysicalName}} = new() {
+                            {{WithIndent(childModel.RenderFromDbEntityBodyLegacy(child, RenderMemberAccess(instanceName, child.PhysicalName, nullConditional), currentKeys, nullConditional: true), "    ")}}
+                        },
+                        """;
+
+                } else if (member is ChildrenAggregate children) {
+                    var childModel = new DataClassForSave(children, Type);
+                    var loopVar = "item1";
+                    yield return $$"""
+                        {{children.PhysicalName}} = {{RenderMemberAccess(instanceName, children.PhysicalName, nullConditional)}}?.Select({{loopVar}} => new {{childModel.CsClassName}} {
+                            {{WithIndent(childModel.RenderFromDbEntityBodyLegacy(children, loopVar, currentKeys, nullConditional: false), "    ")}}
+                        }).ToList() ?? new List<{{childModel.CsClassName}}>(),
+                        """;
+                }
+            }
+        }
+
         private IEnumerable<string> RenderFromRefTargetKeys(AggregateBase aggregate, string entityExpr, IReadOnlyList<string> path, bool parentPathUnsupported) {
             var parent = aggregate.GetParent();
             if (parent != null) {
@@ -492,6 +623,29 @@ namespace Nijo.Models.WriteModel2Modules {
                             {{WithIndent(RenderFromRefTargetKeys(refTo.RefTo, entityExpr, [.. path, refTo.PhysicalName], parentPathUnsupported), "    ")}}
                         },
                         """;
+                }
+            }
+        }
+
+        private IEnumerable<string> RenderFromRefTargetKeysLegacy(AggregateBase aggregate, string entityExpr, IReadOnlyList<string> path, bool parentPathUnsupported) {
+            foreach (var vm in aggregate.GetMembers().OfType<ValueMember>().Where(vm => vm.IsKey)) {
+                var sourceProperty = $"{path.Join("_")}_{vm.PhysicalName}";
+                var value = parentPathUnsupported ? "null" : $"{vm.Type.RenderCastToDomainType()}{entityExpr}.{sourceProperty}";
+                yield return $"{vm.PhysicalName} = {value},";
+            }
+
+            foreach (var refTo in aggregate.GetMembers().OfType<RefToMember>().Where(refTo => refTo.IsKey)) {
+                yield return $$"""
+                    {{refTo.PhysicalName}} = new() {
+                        {{WithIndent(RenderFromRefTargetKeysLegacy(refTo.RefTo, entityExpr, [.. path, refTo.PhysicalName], parentPathUnsupported), "    ")}}
+                    },
+                    """;
+            }
+
+            var parent = aggregate.GetParent();
+            if (parent != null) {
+                foreach (var source in RenderFromRefTargetKeysLegacy(parent, entityExpr, [.. path, "Parent"], parentPathUnsupported: true)) {
+                    yield return source;
                 }
             }
         }
@@ -548,6 +702,10 @@ namespace Nijo.Models.WriteModel2Modules {
 
         private string GetInitializer(IAggregateMember member) {
             return member is ChildrenAggregate ? " = [];" : string.Empty;
+        }
+
+        private string GetLegacyInitializer(IAggregateMember member) {
+            return string.Empty;
         }
 
         private IEnumerable<MessageMember> GetMessageMembers() {
@@ -612,8 +770,16 @@ namespace Nijo.Models.WriteModel2Modules {
                         DisplayName = member.DisplayName,
                         InterfaceType = $"IDisplayMessageContainerList<{nested.MessageInterfaceName}>",
                         ClassType = $"IDisplayMessageContainerList<{nested.MessageInterfaceName}>",
-                        PathConstructorExpression = $"{member.PhysicalName} = new DisplayMessageContainerList<{nested.MessageInterfaceName}>([.. path, \"{member.PhysicalName}\"], i => {{ return new {nested.MessageClassName}([.. path, \"{member.PhysicalName}\"], i); }});",
-                        OriginConstructorExpression = $"{member.PhysicalName} = new DisplayMessageContainerList<{nested.MessageInterfaceName}>(origin, i => {{ return new {nested.MessageClassName}(origin); }});",
+                        PathConstructorExpression = $$"""
+                            {{member.PhysicalName}} = new DisplayMessageContainerList<{{nested.MessageInterfaceName}}>([.. path, "{{member.PhysicalName}}"], i => {
+                                return new {{nested.MessageClassName}}([.. path, "{{member.PhysicalName}}"], i);
+                            });
+                            """,
+                        OriginConstructorExpression = $$"""
+                            {{member.PhysicalName}} = new DisplayMessageContainerList<{{nested.MessageInterfaceName}}>(origin, i => {
+                                return new {{nested.MessageClassName}}(origin);
+                            });
+                            """,
                         ConstructorExpression = string.Empty,
                     };
                 }
@@ -624,12 +790,22 @@ namespace Nijo.Models.WriteModel2Modules {
             return $"{CsClassName}ReadOnlyData";
         }
 
+        private string GetLegacyMemberTypeNameCSharp(IAggregateMember member) {
+            return member switch {
+                ValueMember vm => vm.Type.CsDomainTypeName + "?",
+                RefToMember refTo => new DataClassForRefTargetKeys(refTo.RefTo, refTo.RefTo).CsClassName + "?",
+                ChildAggregate child => new DataClassForSave(child, Type).CsClassName + "?",
+                ChildrenAggregate children => $"List<{new DataClassForSave(children, Type).CsClassName}>?",
+                _ => throw new InvalidOperationException($"未対応のメンバー型: {member.GetType().Name}"),
+            };
+        }
+
         private string GetLegacyReadOnlyMemberTypeNameCSharp(IAggregateMember member) {
             return member switch {
                 ValueMember => "bool",
                 RefToMember => "bool",
-                ChildAggregate child => $"{new DataClassForSave(child, Type).GetLegacyReadOnlyCsClassName()} {{ get; }} = new();",
-                ChildrenAggregate children => $"List<{new DataClassForSave(children, Type).GetLegacyReadOnlyCsClassName()}> {{ get; }} = new();",
+                ChildAggregate child => new DataClassForSave(child, Type).GetLegacyReadOnlyCsClassName(),
+                ChildrenAggregate children => $"List<{new DataClassForSave(children, Type).GetLegacyReadOnlyCsClassName()}>",
                 _ => throw new InvalidOperationException($"未対応のメンバー型: {member.GetType().Name}"),
             };
         }

@@ -90,8 +90,9 @@ namespace Nijo.Models.WriteModel2Modules {
         }
 
         private string RenderSingleCSharpTypeLegacy() {
-            var valueMembers = GetOwnMembers().OfType<RefTargetKeyValueMember>().ToArray();
-            var relationMembers = GetLegacyRelationMembers().ToArray();
+            var legacyMembers = GetLegacyMembers().ToArray();
+            var valueMembers = legacyMembers.OfType<RefTargetKeyValueMember>().ToArray();
+            var relationMembers = legacyMembers.OfType<RefTargetKeyStructureMember>().ToArray();
 
             return $$"""
                 /// <summary>
@@ -137,7 +138,22 @@ namespace Nijo.Models.WriteModel2Modules {
         }
 
         private IEnumerable<RefTargetKeyStructureMember> GetLegacyRelationMembers() {
-            return GetOwnMembers().OfType<RefTargetKeyStructureMember>();
+            return GetLegacyMembers().OfType<RefTargetKeyStructureMember>();
+        }
+
+        private IEnumerable<IRefTargetKeyMember> GetLegacyMembers() {
+            foreach (var member in Aggregate.GetMembers()) {
+                if (member is ValueMember vm && vm.IsKey) {
+                    yield return new RefTargetKeyValueMember(vm);
+                } else if (member is RefToMember refTo && refTo.IsKey) {
+                    yield return new RefTargetKeyRefMember(this, refTo);
+                }
+            }
+
+            var parent = Aggregate.GetParent();
+            if (parent != null) {
+                yield return new RefTargetKeyParentMember(this, parent);
+            }
         }
 
         private IEnumerable<DataClassForRefTargetKeys> GetChildAggregatesRecursively() {
@@ -152,10 +168,37 @@ namespace Nijo.Models.WriteModel2Modules {
         }
 
         private string GetLegacyCsClassName(ISchemaPathNode node) {
+            if (node.ToMappingKey() == EntryAggregate.ToMappingKey()) {
+                return $"{EntryAggregate.PhysicalName}RefTargetKeys";
+            }
+
+            if (node is AggregateBase aggregateNode) {
+                var ancestorHistory = GetLegacyAncestorHistory(aggregateNode).ToArray();
+                if (ancestorHistory.Length > 0) {
+                    return $"{EntryAggregate.PhysicalName}RefTargetKeys_{ancestorHistory.Join("_")}";
+                }
+            }
+
             var relationHistory = GetLegacyRelationHistory(node).ToArray();
             return relationHistory.Length == 0
                 ? $"{EntryAggregate.PhysicalName}RefTargetKeys"
                 : $"{EntryAggregate.PhysicalName}RefTargetKeys_{relationHistory.Join("_")}";
+        }
+
+        private IEnumerable<string> GetLegacyAncestorHistory(AggregateBase target) {
+            var current = EntryAggregate;
+            var history = new List<string>();
+
+            while (current.GetParent() is AggregateBase parent) {
+                history.Add(parent.PhysicalName);
+                if (parent.ToMappingKey() == target.ToMappingKey()) {
+                    foreach (var name in history) {
+                        yield return name;
+                    }
+                    yield break;
+                }
+                current = parent;
+            }
         }
 
         private IEnumerable<string> GetLegacyRelationHistory(ISchemaPathNode node) {
@@ -248,24 +291,26 @@ namespace Nijo.Models.WriteModel2Modules {
         }
 
         private abstract class RefTargetKeyStructureMember : IRefTargetKeyMember, IInstanceStructurePropertyMetadata {
-            protected RefTargetKeyStructureMember(DataClassForRefTargetKeys owner, IAggregateMember member, DataClassForRefTargetKeys targetStructure) {
+            protected RefTargetKeyStructureMember(DataClassForRefTargetKeys owner, ISchemaPathNode schemaPathNode, string physicalName, string displayName, DataClassForRefTargetKeys targetStructure) {
                 OwnerStructure = owner;
-                Member = member;
+                SchemaPathNode = schemaPathNode;
+                PhysicalName = physicalName;
+                DisplayName = displayName;
                 TargetStructure = targetStructure;
             }
 
             protected DataClassForRefTargetKeys OwnerStructure { get; }
-            protected IAggregateMember Member { get; }
+            protected ISchemaPathNode SchemaPathNode { get; }
             internal DataClassForRefTargetKeys TargetStructure { get; }
 
-            public string PhysicalName => Member.PhysicalName;
-            public string DisplayName => Member.DisplayName;
+            public string PhysicalName { get; }
+            public string DisplayName { get; }
             public bool RequiresCollectionInitializer => IsArray;
             public string GetCSharpPropertyTypeName() => IsArray ? $"List<{GetTypeName(E_CsTs.CSharp)}>" : $"{GetTypeName(E_CsTs.CSharp)}?";
             public string GetTypeScriptPropertyTypeName() => IsArray ? $"{GetTypeName(E_CsTs.TypeScript)}[]" : $"{GetTypeName(E_CsTs.TypeScript)} | undefined";
             public abstract string GetLegacyCSharpPropertyTypeName();
 
-            ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
+            ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => SchemaPathNode;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
             IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => ((IInstancePropertyOwnerMetadata)TargetStructure).GetMembers();
 
@@ -275,7 +320,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
         private sealed class RefTargetKeyRefMember : RefTargetKeyStructureMember {
             internal RefTargetKeyRefMember(DataClassForRefTargetKeys owner, RefToMember member)
-                : base(owner, member, new DataClassForRefTargetKeys(member.RefTo, member.RefTo)) {
+                : base(owner, member, member.PhysicalName, member.DisplayName, new DataClassForRefTargetKeys(member.RefTo, member.RefTo)) {
                 RefTo = member;
             }
 
@@ -286,7 +331,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
         private sealed class RefTargetKeyChildMember : RefTargetKeyStructureMember {
             internal RefTargetKeyChildMember(DataClassForRefTargetKeys owner, ChildAggregate member)
-                : base(owner, member, new DataClassForRefTargetKeys(member, owner.EntryAggregate)) {
+                : base(owner, member, member.PhysicalName, member.DisplayName, new DataClassForRefTargetKeys(member, owner.EntryAggregate)) {
                 Child = member;
             }
 
@@ -297,13 +342,26 @@ namespace Nijo.Models.WriteModel2Modules {
 
         private sealed class RefTargetKeyChildrenMember : RefTargetKeyStructureMember {
             internal RefTargetKeyChildrenMember(DataClassForRefTargetKeys owner, ChildrenAggregate member)
-                : base(owner, member, new DataClassForRefTargetKeys(member, owner.EntryAggregate)) {
+                : base(owner, member, member.PhysicalName, member.DisplayName, new DataClassForRefTargetKeys(member, owner.EntryAggregate)) {
                 Children = member;
             }
 
             private ChildrenAggregate Children { get; }
             public override bool IsArray => true;
             public override string GetLegacyCSharpPropertyTypeName() => OwnerStructure.GetLegacyCsClassName(Children);
+        }
+
+        private sealed class RefTargetKeyParentMember : RefTargetKeyStructureMember {
+            private const string PARENT = "PARENT";
+
+            internal RefTargetKeyParentMember(DataClassForRefTargetKeys owner, AggregateBase parent)
+                : base(owner, parent, PARENT, parent.DisplayName, new DataClassForRefTargetKeys(parent, owner.EntryAggregate)) {
+                Parent = parent;
+            }
+
+            private AggregateBase Parent { get; }
+            public override bool IsArray => false;
+            public override string GetLegacyCSharpPropertyTypeName() => OwnerStructure.GetLegacyCsClassName(Parent);
         }
     }
 }
