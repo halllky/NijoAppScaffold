@@ -19,6 +19,10 @@ namespace Nijo.Models.WriteModel2Modules {
         /// </remarks>
         internal static string Render(RootAggregate rootAggregate, CodeRenderingContext ctx) {
             RegisterHelpers(rootAggregate, ctx);
+            if (ctx.IsLegacyCompatibilityMode()) {
+                return RenderLegacy(rootAggregate, ctx);
+            }
+
             var body = RenderAggregate(rootAggregate, "dbEntity", ctx).ToArray();
             var messageInterfaceName = new DataClassForSave(rootAggregate, DataClassForSave.E_Type.UpdateOrDelete).MessageInterfaceName;
 
@@ -39,6 +43,44 @@ namespace Nijo.Models.WriteModel2Modules {
                 protected virtual void CheckKbnType({{new EFCoreEntity(rootAggregate).ClassName}} dbEntity, {{SaveContext.BEFORE_SAVE}}<{{messageInterfaceName}}> e) {
                 }
                 """)}}
+                """;
+        }
+
+        private static string RenderLegacy(RootAggregate rootAggregate, CodeRenderingContext ctx) {
+            var body = RenderAggregateLegacy(rootAggregate, "dbEntity", ctx).ToArray();
+            var messageInterfaceName = new DataClassForSave(rootAggregate, DataClassForSave.E_Type.UpdateOrDelete).MessageInterfaceName;
+
+            return $$"""
+                /// <summary>
+                /// 文字列系項目の文字種チェック。違反する項目があった場合はその旨が第2引数のオブジェクト内に追記されます。
+                /// </summary>
+                public virtual void CheckCharacterType({{new EFCoreEntity(rootAggregate).ClassName}} dbEntity, {{SaveContext.BEFORE_SAVE}}<{{messageInterfaceName}}> e) {
+                {{If(body.Length > 0, () => $$"""
+                    string? temp;
+                    var config = ServiceProvider.GetRequiredService<DefaultConfiguration>();
+
+                """).Else(() => $$"""
+
+                """)}}
+                {{If(body.Length == 0, () => $$"""
+
+                """).Else(() => $$"""
+                    {{WithIndent(body, "    ")}}
+                """)}}
+                }
+                """;
+        }
+
+        internal static string RenderLegacyKbnType(RootAggregate rootAggregate) {
+            var messageInterfaceName = new DataClassForSave(rootAggregate, DataClassForSave.E_Type.UpdateOrDelete).MessageInterfaceName;
+
+            return $$"""
+                /// <summary>
+                /// 異なる種類の区分値が登録されないかのチェック処理。違反する項目があった場合はその旨が第2引数のオブジェクト内に追記されます。
+                /// </summary>
+                public virtual void CheckKbnType({{new EFCoreEntity(rootAggregate).ClassName}} dbEntity, {{SaveContext.BEFORE_SAVE}}<{{messageInterfaceName}}> e) {
+
+                }
                 """;
         }
 
@@ -93,6 +135,72 @@ namespace Nijo.Models.WriteModel2Modules {
                             {{WithIndent(loopBody, "    ")}}
                         }
                         """;
+                }
+            }
+        }
+
+        private static IEnumerable<string> RenderAggregateLegacy(AggregateBase aggregate, string instanceName, CodeRenderingContext ctx) {
+            foreach (var member in aggregate.GetMembers()) {
+                if (member is ValueMember vm) {
+                    if (string.IsNullOrWhiteSpace(vm.CharacterType)) continue;
+
+                    var valueExpr = $"{instanceName}.{vm.PhysicalName}";
+                    var messagePath = string.Join('.', GetLegacyMessagePath(vm));
+                    var methodName = $"config.{LegacyDefaultConfiguration.GetCharacterTypeMethodName(vm.CharacterType)}";
+
+                    yield return $$"""
+                        temp = {{valueExpr}};
+                        if (!string.IsNullOrEmpty(temp) && !{{methodName}}(temp, {{vm.MaxLength?.ToString() ?? "null"}})) {
+                            e.{{messagePath}}.AddError(MSG.ERRC0004("{{vm.CharacterType}}"));
+                        }
+                        """;
+
+                } else if (member is ChildAggregate child) {
+                    var childExpr = $"{instanceName}.{child.PhysicalName}";
+                    var childBody = RenderAggregateLegacy(child, childExpr, ctx).ToArray();
+                    if (childBody.Length == 0) continue;
+
+                    yield return $$"""
+                        if ({{childExpr}} != null) {
+                            {{WithIndent(childBody, "    ")}}
+                        }
+                        """;
+
+                } else if (member is ChildrenAggregate children) {
+                    var arrayExpr = $"{instanceName}.{children.PhysicalName}";
+                    var indexName = children.GetLoopVarName("i");
+                    var itemName = children.GetLoopVarName("item");
+                    var loopBody = RenderAggregateLegacy(children, itemName, ctx).ToArray();
+                    if (loopBody.Length == 0) continue;
+
+                    yield return $$"""
+                        for (var {{indexName}} = 0; {{indexName}} < {{arrayExpr}}.Count; {{indexName}}++) {
+                            var {{itemName}} = {{arrayExpr}}.ElementAt({{indexName}});
+
+                            {{WithIndent(loopBody, "    ")}}
+                        }
+                        """;
+                }
+            }
+        }
+
+        private static IEnumerable<string> GetLegacyMessagePath(ISchemaPathNode node) {
+            yield return "Messages";
+
+            foreach (var pathNode in node.GetPathFromEntry().Skip(1)) {
+                switch (pathNode) {
+                    case ChildAggregate child:
+                        yield return child.PhysicalName;
+                        break;
+                    case ChildrenAggregate children:
+                        yield return $"{children.PhysicalName}[{children.GetLoopVarName("i")}]";
+                        break;
+                    case ValueMember vm:
+                        yield return vm.PhysicalName;
+                        break;
+                    case RefToMember refTo:
+                        yield return refTo.PhysicalName;
+                        yield break;
                 }
             }
         }
