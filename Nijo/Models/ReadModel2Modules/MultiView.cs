@@ -53,7 +53,6 @@ namespace Nijo.Models.ReadModel2Modules {
                         }, options)
                       }, [navigate])
                     }
-
                     """;
             }
 
@@ -117,7 +116,6 @@ namespace Nijo.Models.ReadModel2Modules {
                         )
                       }, [complexPost])
                     }
-
                     """;
             }
 

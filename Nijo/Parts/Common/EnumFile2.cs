@@ -72,7 +72,6 @@ namespace Nijo.Parts.Common {
 
                         {{WithIndent(source, "    ")}}
                     """)}}
-
                     }
                     """,
                 });

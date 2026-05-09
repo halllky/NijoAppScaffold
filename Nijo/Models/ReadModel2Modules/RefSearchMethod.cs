@@ -31,65 +31,64 @@ namespace Nijo.Models.ReadModel2Modules {
             var searchResult = new RefDisplayData(Aggregate, RefEntry);
 
             if (context.IsLegacyCompatibilityMode()) {
-                return string.Join(Environment.NewLine, new[] {
-                    $"/** {Aggregate.DisplayName}の参照先検索を行いその結果を保持します。 */",
-                    $"export const {ReactHookName} = (",
-                    "  /** 昔は意味を持っていたが今は意味が無くなったパラメータ。必ずtrueを指定すること。 */",
-                    "  disableAutoLoad: true",
-                    ") => {",
-                    "  const [currentPageItems, setCurrentPageItems] = React.useState<" + searchResult.TsTypeName + "[]>(() => [])",
-                    "  const [nowLoading, setNowLoading] = React.useState(false)",
-                    "  const { complexPost } = Util.useHttpRequest()",
-                    string.Empty,
-                    "  const load = React.useCallback(async (searchCondition: " + searchCondition.TsTypeName + "): Promise<" + searchResult.TsTypeName + "[]> => {",
-                    "    setNowLoading(true)",
-                    "    try {",
-                    "      const res = await complexPost<" + searchResult.TsTypeName + "[]>(`/api/" + Aggregate.PhysicalName + "/" + ControllerLoadAction + "`, searchCondition)",
-                    "      if (!res.ok) {",
-                    "        return []",
-                    "      }",
-                    "      setCurrentPageItems(res.data ?? [])",
-                    "      return res.data ?? []",
-                    "    } finally {",
-                    "      setNowLoading(false)",
-                    "    }",
-                    "  }, [complexPost])",
-                    string.Empty,
-                    "  const count = React.useCallback(async (searchConditionFilter: " + searchCondition.TsFilterTypeName + "): Promise<number> => {",
-                    "    try {",
-                    "      const res = await complexPost<number>(`/api/" + Aggregate.PhysicalName + "/" + ControllerCountAction + "`, searchConditionFilter, {",
-                    "        ignoreConfirm: true,",
-                    "      })",
-                    "      return res.data ?? 0",
-                    "    } catch {",
-                    "      return 0",
-                    "    }",
-                    "  }, [complexPost])",
-                    string.Empty,
-                    "  React.useEffect(() => {",
-                    "    if (!nowLoading && !disableAutoLoad) {",
-                    "      load(" + searchCondition.TsNewObjectFunction + "())",
-                    "    }",
-                    "  }, [load])",
-                    string.Empty,
-                    "  return {",
-                    "    /** 読み込み結果の一覧です。現在表示中のページのデータのみが格納されています。 */",
-                    "    currentPageItems,",
-                    "    /** 現在読み込み中か否かを返します。 */",
-                    "    nowLoading,",
-                    "    /**",
-                    $"     * {Aggregate.DisplayName}の一覧検索を行います。",
-                    "     * 結果はこの関数の戻り値として返されます。",
-                    "     * また戻り値と同じものがこのフックの状態（currentPageItems）に格納されます。",
-                    "     * どちらか使いやすい方で参照してください。",
-                    "     */",
-                    "    load,",
-                    "    /** 検索結果件数カウント */",
-                    "    count,",
-                    "  }",
-                    "}",
-                    string.Empty,
-                });
+                return $$"""
+                    /** {{Aggregate.DisplayName}}の参照先検索を行いその結果を保持します。 */
+                    export const {{ReactHookName}} = (
+                      /** 昔は意味を持っていたが今は意味が無くなったパラメータ。必ずtrueを指定すること。 */
+                      disableAutoLoad: true
+                    ) => {
+                      const [currentPageItems, setCurrentPageItems] = React.useState<{{searchResult.TsTypeName}}[]>(() => [])
+                      const [nowLoading, setNowLoading] = React.useState(false)
+                      const { complexPost } = Util.useHttpRequest()
+
+                      const load = React.useCallback(async (searchCondition: {{searchCondition.TsTypeName}}): Promise<{{searchResult.TsTypeName}}[]> => {
+                        setNowLoading(true)
+                        try {
+                          const res = await complexPost<{{searchResult.TsTypeName}}[]>(`/api/{{Aggregate.PhysicalName}}/{{ControllerLoadAction}}`, searchCondition)
+                          if (!res.ok) {
+                            return []
+                          }
+                          setCurrentPageItems(res.data ?? [])
+                          return res.data ?? []
+                        } finally {
+                          setNowLoading(false)
+                        }
+                      }, [complexPost])
+
+                      const count = React.useCallback(async (searchConditionFilter: {{searchCondition.TsFilterTypeName}}): Promise<number> => {
+                        try {
+                          const res = await complexPost<number>(`/api/{{Aggregate.PhysicalName}}/{{ControllerCountAction}}`, searchConditionFilter, {
+                            ignoreConfirm: true,
+                          })
+                          return res.data ?? 0
+                        } catch {
+                          return 0
+                        }
+                      }, [complexPost])
+
+                      React.useEffect(() => {
+                        if (!nowLoading && !disableAutoLoad) {
+                          load({{searchCondition.TsNewObjectFunction}}())
+                        }
+                      }, [load])
+
+                      return {
+                        /** 読み込み結果の一覧です。現在表示中のページのデータのみが格納されています。 */
+                        currentPageItems,
+                        /** 現在読み込み中か否かを返します。 */
+                        nowLoading,
+                        /**
+                         * {{Aggregate.DisplayName}}の一覧検索を行います。
+                         * 結果はこの関数の戻り値として返されます。
+                         * また戻り値と同じものがこのフックの状態（currentPageItems）に格納されます。
+                         * どちらか使いやすい方で参照してください。
+                         */
+                        load,
+                        /** 検索結果件数カウント */
+                        count,
+                      }
+                    }
+                    """;
             }
 
             return $$"""

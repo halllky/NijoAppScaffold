@@ -73,10 +73,8 @@ namespace Nijo.Models.ReadModel2Modules {
 
             if (context.IsLegacyCompatibilityMode()) {
                 return $$"""
-
                     /* {{TsTypeName}} の新しいインスタンスを作成して返します。 */
                     export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({{RenderTsNewObjectFunctionBody()}})
-
                     """;
             }
 

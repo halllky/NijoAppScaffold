@@ -128,8 +128,10 @@ namespace Nijo.Models {
                 aggregateFile.AddAppSrvMethod(refSearchMethod.RenderAppSrvMethodOfReadModel(ctx));
             }
 
-            aggregateFile.AddTypeScriptTypeDef(rootDisplayData.RenderUiConstraintType(ctx));
-            aggregateFile.AddTypeScriptFunction(rootDisplayData.RenderUiConstraintValue(ctx));
+            aggregateFile.AddTypeScriptTypeDef($$"""
+                {{rootDisplayData.RenderUiConstraintType(ctx)}}
+                {{rootDisplayData.RenderUiConstraintValue(ctx)}}
+                """);
 
             if (ctx.IsLegacyCompatibilityMode()) {
                 aggregateFile.AddWebapiControllerAction(loadMethod.RenderLegacyExcelControllerAction());

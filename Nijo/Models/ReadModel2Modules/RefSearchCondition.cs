@@ -125,7 +125,6 @@ namespace Nijo.Models.ReadModel2Modules {
 
                 if (context.IsLegacyCompatibilityMode()) {
                     return $$"""
-
                         // ----------------------------------------------------------
                         // 検索条件クラス（{{RefEntry.DisplayName}}）
 
@@ -179,10 +178,8 @@ namespace Nijo.Models.ReadModel2Modules {
 
                 return $$"""
 
-
                     /** {{RefEntry.DisplayName}}の検索条件クラスの空オブジェクトを作成して返します。 */
                     export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => {{objectLiteral}}
-
                     """;
             }
 

@@ -97,7 +97,6 @@ namespace Nijo.Models.ReadModel2Modules {
                         load,
                       }
                     }
-
                     """;
             }
 

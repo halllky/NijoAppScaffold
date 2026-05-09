@@ -106,21 +106,20 @@ namespace Nijo.Models {
                 .Any(member => member.Type is ValueMemberTypes.SequenceMember && !string.IsNullOrWhiteSpace(member.SequenceName));
 
             // 登録・更新・削除 AppSrv
-            var legacyAppSrvSections = new[] {
-                LegacyUpdateMethod.Render(rootAggregate, ctx),
-                LegacyDeleteMethod.Render(rootAggregate, ctx),
-                RequiredCheck.Render(rootAggregate, ctx),
-                MaxLengthCheck.Render(rootAggregate, ctx),
-                NotNegativeCheck.Render(rootAggregate, ctx),
-                CharacterTypeCheck.Render(rootAggregate, ctx),
-                DigitsCheck.Render(rootAggregate, ctx),
-                CharacterTypeCheck.RenderLegacyKbnType(rootAggregate),
-            }
-            .Concat(hasSequenceMember ? [new GenerateAndSetSequenceMethod(rootAggregate).RenderAppSrvMethod(ctx)] : [])
-            .ToArray();
-            var legacyAppSrvMethods = string.Join(Environment.NewLine, legacyAppSrvSections.Select(source => source.TrimEnd('\r', '\n')));
-            aggregateFile.AddAppSrvMethod(LegacyCreateMethod.Render(rootAggregate, ctx), "新規登録処理");
-            aggregateFile.AddAppSrvMethod(legacyAppSrvMethods, "更新処理");
+            aggregateFile.AddAppSrvMethod($$"""
+                {{LegacyCreateMethod.Render(rootAggregate, ctx)}}
+
+                {{LegacyUpdateMethod.Render(rootAggregate, ctx)}}
+                {{LegacyDeleteMethod.Render(rootAggregate, ctx)}}
+                {{RequiredCheck.Render(rootAggregate, ctx)}}
+                {{MaxLengthCheck.Render(rootAggregate, ctx)}}
+                {{NotNegativeCheck.Render(rootAggregate, ctx)}}
+                {{CharacterTypeCheck.Render(rootAggregate, ctx)}}
+                {{DigitsCheck.Render(rootAggregate, ctx)}}
+                {{CharacterTypeCheck.RenderLegacyKbnType(rootAggregate)}}
+
+                {{If(hasSequenceMember, () => new GenerateAndSetSequenceMethod(rootAggregate).RenderAppSrvMethod(ctx))}}
+                """);
 
             // WriteModel2 と同形の QueryModel 生成
             if (rootAggregate.GenerateDefaultQueryModel) {
