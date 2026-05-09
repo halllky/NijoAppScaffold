@@ -187,7 +187,7 @@ namespace Nijo.CodeGenerating {
 
                     """)}}
                     {{csharpClass.SelectTextTemplate(source => $$"""
-                        {{WithIndent(source, "    ")}}
+                    {{WithIndent(source, "")}}
 
                     """)}}
                     }
