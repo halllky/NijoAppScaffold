@@ -49,7 +49,7 @@ namespace Nijo.Models.DataModelModules {
                 })
                 .Join("\r\n|| ");
 
-            var utilExpression = $"{info.RootAggregate.PhysicalName}Util.{info.Category.Name}";
+            var utilExpression = $"{info.RootAggregate.PhysicalName}Util.{info.Category.DisplayName.ToCSharpSafe()}";
             var existsExpression = keyConditions.Length == 0
                 ? $"{utilExpression}.Any()"
                 : $"{utilExpression}.Any(candidate => {keyConditions.Join("\r\n&& ")})";

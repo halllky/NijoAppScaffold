@@ -266,6 +266,7 @@ namespace Nijo.CodeGenerating {
                 return _characterTypes ??= Schema
                     .GetRootAggregates()
                     .Where(root => root.Model is Models.DataModel
+                                              or Models.WriteModel2
                                               or Models.QueryModel
                                               or Models.CommandModel)
                     .SelectMany(root => root.EnumerateThisAndDescendants())
@@ -278,6 +279,17 @@ namespace Nijo.CodeGenerating {
             }
         }
         private string[]? _characterTypes;
+
+        /// <summary>
+        /// 旧版互換モデルを含むスキーマかどうか。
+        /// 出力ファイル名やレイアウトを旧版互換へ寄せる判断に使用する。
+        /// </summary>
+        internal bool IsLegacyCompatibilityMode() {
+            return Schema.GetRootAggregates().Any(root => root.Model is Models.WriteModel2
+                or Models.ReadModel2Compat
+                or Models.ValueObjectModel2
+                or Models.StaticEnumModel2);
+        }
 
 
         #region シングルトン機構。あちこちのオブジェクトのかなり深いところからコンテキストを参照したいケースがあるので

@@ -51,7 +51,7 @@ namespace Nijo.ValueMemberTypes {
             // シーケンスが1個以上定義されている場合、シーケンス採番の構文をユーザーに定義させる
             var hasSequence = ctx.Schema
                 .GetRootAggregates()
-                .Where(root => root.Model is Models.DataModel)
+                .Where(root => root.Model is Models.DataModel or Models.WriteModel2)
                 .SelectMany(root => root.EnumerateThisAndDescendants())
                 .SelectMany(agg => agg.GetMembers())
                 .Any(member => member is ValueMember vm && vm.Type is SequenceMember);

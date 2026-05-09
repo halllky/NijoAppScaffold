@@ -21,9 +21,9 @@ namespace Nijo.Models {
     /// DDD（ドメイン駆動設計）における集約ルートの概念とほぼ同じ。
     /// </summary>
     internal class DataModel : IModel {
-        public string SchemaName => "data-model";
+        public virtual string SchemaName => "data-model";
 
-        public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
+        public virtual void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
             // ルートとChildrenはキー必須
             var rootAndChildren = rootAggregateElement
                 .DescendantsAndSelf()
@@ -207,7 +207,7 @@ namespace Nijo.Models {
             return false;
         }
 
-        public void GenerateCode(CodeRenderingContext ctx, RootAggregate rootAggregate) {
+        public virtual void GenerateCode(CodeRenderingContext ctx, RootAggregate rootAggregate) {
             var aggregateFile = new SourceFileByAggregate(rootAggregate);
 
             // データ型: EFCore Entity
@@ -287,7 +287,7 @@ namespace Nijo.Models {
             aggregateFile.ExecuteRendering(ctx);
         }
 
-        public void GenerateCode(CodeRenderingContext ctx) {
+        public virtual void GenerateCode(CodeRenderingContext ctx) {
             // 保存処理の結果クラス
             ctx.CoreLibrary(dir => {
                 dir.Directory("Util", utilDir => {

@@ -36,7 +36,7 @@ namespace Nijo.Parts.CSharp {
 
         void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
             ctx.CoreLibrary(dir => {
-                dir.Directory("Util", efcoreDir => {
+                dir.Directory(ctx.IsLegacyCompatibilityMode() ? "EntityFramework" : "Util", efcoreDir => {
                     efcoreDir.Generate(Render(ctx));
                 });
             });
@@ -49,7 +49,7 @@ namespace Nijo.Parts.CSharp {
                 .ToArray();
 
             return new SourceFile {
-                FileName = $"{ctx.Config.DbContextName.ToFileNameSafe()}.cs",
+                FileName = ctx.IsLegacyCompatibilityMode() ? "EFCoreDbContext.cs" : $"{ctx.Config.DbContextName.ToFileNameSafe()}.cs",
                 Contents = $$"""
                     using Microsoft.EntityFrameworkCore;
 

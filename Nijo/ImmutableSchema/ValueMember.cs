@@ -49,6 +49,8 @@ namespace Nijo.ImmutableSchema {
         public bool IsKey => XElement.Attribute(BasicNodeOptions.IsKey.AttributeName) != null;
         /// <summary>必須か否か</summary>
         public bool IsNotNull => XElement.Attribute(BasicNodeOptions.IsNotNull.AttributeName) != null;
+        /// <summary>非負数制約か否か</summary>
+        public bool IsNotNegative => XElement.Attribute(BasicNodeOptions.NotNegative.AttributeName) != null;
         /// <summary>汎用参照テーブルのハードコードされる主キーか否か</summary>
         public bool IsHardCodedPrimaryKey => XElement.Attribute(BasicNodeOptions.IsHardCodedPrimaryKey.AttributeName) != null;
         /// <summary>文字種。半角、半角英数、など</summary>

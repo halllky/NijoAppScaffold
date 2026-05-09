@@ -28,6 +28,12 @@ namespace Nijo.Models {
                     utilDir.Generate(RenderCSharp(rootAggregate, ctx));
                 });
             });
+
+            ctx.ReactProject(dir => {
+                dir.Directory("util", utilDir => {
+                    utilDir.Generate(RenderTypeScript(rootAggregate));
+                });
+            });
         }
 
         private static SourceFile RenderCSharp(RootAggregate rootAggregate, CodeRenderingContext ctx) {
@@ -113,6 +119,22 @@ namespace Nijo.Models {
                             }
                         }
                     }
+                    """,
+            };
+        }
+
+        private static SourceFile RenderTypeScript(RootAggregate rootAggregate) {
+            var className = rootAggregate.PhysicalName;
+
+            return new SourceFile {
+                FileName = $"{className}.ts",
+                Contents = $$"""
+                    /**
+                     * {{rootAggregate.DisplayName}}。
+                     * 誤って{{rootAggregate.DisplayName}}ではない文字列型の項目に代入してしまったときにエラーで気付けるよう、公称型で定義している。
+                     * stringと相互に変換するときは明示的に as で変換する。
+                     */
+                    export type {{className}} = string & { readonly __brand: unique symbol }
                     """,
             };
         }

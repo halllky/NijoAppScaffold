@@ -33,15 +33,15 @@ internal class ByteArrayMember : IValueMemberType {
 
     void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
         // バイト配列型はDataModelにしか定義できない
-        var isNotDataModel = context.TryGetModel(element, out var model) && model is not DataModel;
+        var isNotDataModelLike = context.TryGetModel(element, out var model) && model is not DataModel && model is not WriteModel2;
 
         var root = element.AncestorsAndSelf().Reverse().Skip(1).FirstOrDefault();
         var generateDefaultQueryModel = root != null && context.GetOptions(root).Contains(BasicNodeOptions.GenerateDefaultQueryModel);
 
-        if (isNotDataModel) {
+        if (isNotDataModelLike) {
             addError(element, $"バイト配列を画面や帳票で用いることはできないため、{SchemaTypeName}は{nameof(DataModel)}にしか定義できません。");
 
-        } else if (generateDefaultQueryModel) {
+        } else if (generateDefaultQueryModel && model is DataModel) {
             addError(element, $"バイト配列を画面や帳票で用いることはできないため、{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}が指定された集約に{SchemaTypeName}を使用することはできません。");
         }
     }

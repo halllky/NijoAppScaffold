@@ -62,6 +62,37 @@ namespace Nijo.CodeGenerating {
 
         public void ExecuteRendering(CodeRenderingContext ctx) {
 
+            if (ctx.IsLegacyCompatibilityMode()) {
+                ctx.CoreLibrary(dir => {
+                    var allAppSrvMethods = _appSrvMethods.Select(x => x.SourceCode).ToList();
+                    var allCSharpClasses = _csharpClass.Select(x => x.SourceCode).ToList();
+
+                    if (allAppSrvMethods.Count > 0 || allCSharpClasses.Count > 0) {
+                        dir.Generate(new SourceFile(_callerFilePath, _callerMemberName) {
+                            FileName = $"{_rootAggregate.PhysicalName.ToFileNameSafe()}.cs",
+                            Contents = RenderCoreLibrary(ctx, allAppSrvMethods, allCSharpClasses),
+                        });
+                    }
+                });
+                ctx.WebapiProject(dir => {
+                    if (_webApiControllerAction.Count > 0) {
+                        dir.Generate(new SourceFile(_callerFilePath, _callerMemberName) {
+                            FileName = $"{_rootAggregate.PhysicalName.ToFileNameSafe()}.cs",
+                            Contents = RenderWebapi(ctx),
+                        });
+                    }
+                });
+                ctx.ReactProject(dir => {
+                    if (_typeScriptTypeDef.Count > 0 || _typeScriptFunctions.Count > 0) {
+                        dir.Generate(new SourceFile(_callerFilePath, _callerMemberName) {
+                            FileName = $"{_rootAggregate.PhysicalName.ToFileNameSafe()}.ts",
+                            Contents = RenderNodeJs(ctx),
+                        });
+                    }
+                });
+                return;
+            }
+
             ctx.CoreLibrary(dir => {
                 // デフォルトファイルに出力されるコード
                 var defaultAppSrvMethods = _appSrvMethods.Where(x => x.FileName == null).Select(x => x.SourceCode).ToList();
@@ -225,6 +256,12 @@ namespace Nijo.CodeGenerating {
                         modules.Add(refEntry.TsNewObjectFunction);
                     }
 
+                    if (group.Key.Model is Models.WriteModel2) {
+                        foreach (var agg in group) {
+                            modules.Add(new Models.WriteModel2Modules.DataClassForRefTargetKeys(agg, agg).TsTypeName);
+                        }
+                    }
+
                     // DisplayData
                     foreach (var agg in group) {
                         var displayData = new Models.QueryModelModules.DisplayData(agg);
@@ -254,7 +291,7 @@ namespace Nijo.CodeGenerating {
                 import * as Util from "./util"
                 import * as EnumDefs from "./{{Path.GetFileNameWithoutExtension(EnumFile.TS_FILENAME)}}"
                 {{refToModules.SelectTextTemplate(modules => $$"""
-                import { {{modules.Value.Join(", ")}} } from "{{modules.Key}}"
+                import { {{modules.Value.Distinct().Join(", ")}} } from "{{modules.Key}}"
                 """)}}
 
                 //#region 型定義

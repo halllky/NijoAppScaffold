@@ -19,9 +19,15 @@ namespace Nijo.SchemaParsing;
 /// XML要素をこのアプリケーションのルールに従って解釈する
 /// </summary>
 public class SchemaParseContext {
+    private static bool IsDataModelLike(IModel model) {
+        return model is DataModel || model is WriteModel2;
+    }
+
     public SchemaParseContext(XDocument xDocument, SchemaParseRule rule) {
         // ルールの検証
         rule.ThrowIfInvalid();
+
+        NormalizeLegacyCompatibility(xDocument);
 
         Document = xDocument;
         Models = rule.Models.ToDictionary(m => m.SchemaName);
@@ -35,6 +41,30 @@ public class SchemaParseContext {
     private readonly IReadOnlyDictionary<string, IValueMemberType> _valueMemberTypes;
     /// <summary>enum, value-object を除いた値型の一覧</summary>
     public IEnumerable<IValueMemberType> ValueMemberTypes => _rule.ValueMemberTypes;
+
+    private static readonly Dictionary<string, string> LEGACY_MODEL_TYPE_ALIASES = new(StringComparer.Ordinal);
+    static SchemaParseContext() {
+        LEGACY_MODEL_TYPE_ALIASES["command"] = "command-model";
+    }
+    private static readonly Dictionary<string, string> LEGACY_VALUE_TYPE_ALIASES = new(StringComparer.Ordinal) {
+        ["seq"] = "sequence",
+        ["year-month"] = "yearmonth",
+        ["sentence"] = "description",
+        ["uuid"] = "word",
+        ["file"] = "word",
+    };
+    private static readonly Dictionary<string, string> LEGACY_ATTRIBUTE_ALIASES = new(StringComparer.Ordinal) {
+        ["GenerateDefaultReadModel"] = BasicNodeOptions.GenerateDefaultQueryModel.AttributeName,
+        ["SearchBehavior"] = BasicNodeOptions.StringSearchBehavior.AttributeName,
+        ["SearchConditionOnly"] = BasicNodeOptions.OnlySearchCondition.AttributeName,
+        ["IsDynamicEnumWriteModel"] = BasicNodeOptions.IsGenericLookupTable.AttributeName,
+    };
+    private static readonly Dictionary<string, string> LEGACY_STRING_SEARCH_BEHAVIOR_VALUES = new(StringComparer.Ordinal) {
+        ["部分一致"] = BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL,
+        ["前方一致"] = BasicNodeOptions.STRING_SEARCH_BEHAVIOR_FORWARD,
+        ["後方一致"] = BasicNodeOptions.STRING_SEARCH_BEHAVIOR_BACKWARD,
+        ["完全一致"] = BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT,
+    };
 
     /// <summary>
     /// nijo.xml のルート要素直下の要素のうち、データ構造をもつモデル（Data Model, Query Model, Structure Model）が格納されるXML要素の名前
@@ -87,6 +117,172 @@ public class SchemaParseContext {
     internal const string NODE_TYPE_CHILD = "child";
     internal const string NODE_TYPE_CHILDREN = "children";
     internal const string NODE_TYPE_REFTO = "ref-to";
+
+    private static void NormalizeLegacyCompatibility(XDocument xDocument) {
+        var dynamicEnumDefinitions = new Dictionary<string, (string CategoryName, string DisplayName)>(StringComparer.Ordinal);
+
+        NormalizeLegacyCommands(xDocument);
+
+        var dataStructures = xDocument.Root?.Element(SECTION_DATA_STRUCTURES);
+        if (dataStructures != null) {
+            foreach (var legacyDynamicEnum in dataStructures.Elements().Where(IsLegacyDynamicEnumRoot).ToArray()) {
+                var type = legacyDynamicEnum.Attribute(ATTR_NODE_TYPE)?.Value ?? string.Empty;
+                var categoryName = type.Split(':', 2).ElementAtOrDefault(1);
+                if (!string.IsNullOrWhiteSpace(categoryName)) {
+                    dynamicEnumDefinitions[legacyDynamicEnum.Name.LocalName] = (
+                        categoryName,
+                        legacyDynamicEnum.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? legacyDynamicEnum.Name.LocalName);
+                }
+                legacyDynamicEnum.Remove();
+            }
+        }
+
+        foreach (var element in xDocument.Descendants()) {
+            NormalizeLegacyAttributes(element, dynamicEnumDefinitions);
+            NormalizeLegacyType(element);
+        }
+
+        EnsureGenericLookupCategoriesSection(xDocument, dynamicEnumDefinitions);
+
+        static bool IsLegacyDynamicEnumRoot(XElement element) {
+            var type = element.Attribute(ATTR_NODE_TYPE)?.Value;
+            return type?.StartsWith("dynamic-enum-type:", StringComparison.Ordinal) == true;
+        }
+    }
+
+    private static void NormalizeLegacyCommands(XDocument xDocument) {
+        var commandsSection = xDocument.Root?.Element(SECTION_COMMANDS);
+        var dataStructuresSection = xDocument.Root?.Element(SECTION_DATA_STRUCTURES);
+        if (commandsSection == null || dataStructuresSection == null) return;
+
+        var existingRootNames = dataStructuresSection.Elements().Select(el => el.Name.LocalName).ToHashSet(StringComparer.Ordinal);
+
+        foreach (var command in commandsSection.Elements().ToArray()) {
+            if (!command.Elements().Any()) continue;
+
+            var parameterStructureName = command.Name.LocalName + "Parameter";
+            var suffix = 2;
+            while (existingRootNames.Contains(parameterStructureName)) {
+                parameterStructureName = command.Name.LocalName + "Parameter" + suffix;
+                suffix++;
+            }
+            existingRootNames.Add(parameterStructureName);
+
+            var parameterStructure = new XElement(parameterStructureName);
+            parameterStructure.SetAttributeValue(ATTR_NODE_TYPE, "structure-model");
+            parameterStructure.SetAttributeValue(BasicNodeOptions.DisplayName.AttributeName, command.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? parameterStructureName);
+
+            foreach (var member in command.Elements().ToArray()) {
+                var clonedMember = new XElement(member);
+                clonedMember.Attribute("Required")?.Remove();
+                clonedMember.Attribute(BasicNodeOptions.IsNotNull.AttributeName)?.Remove();
+                parameterStructure.Add(clonedMember);
+            }
+
+            dataStructuresSection.Add(parameterStructure);
+            command.SetAttributeValue(BasicNodeOptions.Parameter.AttributeName, parameterStructureName);
+            command.Elements().Remove();
+        }
+    }
+
+    private static void NormalizeLegacyAttributes(
+        XElement element,
+        IReadOnlyDictionary<string, (string CategoryName, string DisplayName)> dynamicEnumDefinitions) {
+
+        foreach (var (legacyName, canonicalName) in LEGACY_ATTRIBUTE_ALIASES) {
+            if (element.Attribute(legacyName) is not XAttribute legacyAttribute) continue;
+            if (element.Attribute(canonicalName) == null) {
+                element.SetAttributeValue(canonicalName, legacyAttribute.Value);
+            }
+            legacyAttribute.Remove();
+        }
+
+        if (element.Attribute("Required") is XAttribute required
+            && (element.Attribute(ATTR_NODE_TYPE)?.Value?.StartsWith("ref-to:", StringComparison.Ordinal) == true
+             || element.Attribute(ATTR_NODE_TYPE)?.Value is string rawType
+             && rawType != NODE_TYPE_CHILD
+             && rawType != NODE_TYPE_CHILDREN)) {
+            if (element.Attribute(BasicNodeOptions.IsNotNull.AttributeName) == null) {
+                element.SetAttributeValue(BasicNodeOptions.IsNotNull.AttributeName, required.Value);
+            }
+        }
+
+        if (element.Attribute("DynamicEnumTypePhysicalName") is XAttribute dynamicEnumTypePhysicalName) {
+            if (element.Attribute(BasicNodeOptions.GenericLookupCategory.AttributeName) == null
+                && dynamicEnumDefinitions.TryGetValue(dynamicEnumTypePhysicalName.Value, out var dynamicEnum)) {
+                element.SetAttributeValue(BasicNodeOptions.GenericLookupCategory.AttributeName, dynamicEnum.CategoryName);
+            }
+            dynamicEnumTypePhysicalName.Remove();
+        }
+
+        if (element.Attribute(BasicNodeOptions.StringSearchBehavior.AttributeName) is XAttribute stringSearchBehavior
+            && LEGACY_STRING_SEARCH_BEHAVIOR_VALUES.TryGetValue(stringSearchBehavior.Value, out var canonicalBehavior)) {
+            stringSearchBehavior.Value = canonicalBehavior;
+        }
+    }
+
+    private static void NormalizeLegacyType(XElement element) {
+        var typeAttribute = element.Attribute(ATTR_NODE_TYPE);
+        if (typeAttribute == null) return;
+
+        if (LEGACY_MODEL_TYPE_ALIASES.TryGetValue(typeAttribute.Value, out var modelAlias)) {
+            typeAttribute.Value = modelAlias;
+            return;
+        }
+
+        if (typeAttribute.Value == "search-condition-only-bool") {
+            typeAttribute.Value = "bool";
+            if (element.Attribute(BasicNodeOptions.OnlySearchCondition.AttributeName) == null) {
+                element.SetAttributeValue(BasicNodeOptions.OnlySearchCondition.AttributeName, true);
+            }
+            return;
+        }
+
+        if (LEGACY_VALUE_TYPE_ALIASES.TryGetValue(typeAttribute.Value, out var valueAlias)) {
+            typeAttribute.Value = valueAlias;
+        }
+    }
+
+    private static void EnsureGenericLookupCategoriesSection(
+        XDocument xDocument,
+        IReadOnlyDictionary<string, (string CategoryName, string DisplayName)> dynamicEnumDefinitions) {
+
+        if (dynamicEnumDefinitions.Count == 0) return;
+
+        var targetRoot = xDocument.Root?
+            .Element(SECTION_DATA_STRUCTURES)?
+            .Elements()
+            .FirstOrDefault(el => el.Attribute(BasicNodeOptions.IsGenericLookupTable.AttributeName) != null);
+        if (targetRoot == null) return;
+
+        var uniqueId = targetRoot.Attribute(ATTR_UNIQUE_ID)?.Value;
+        if (string.IsNullOrWhiteSpace(uniqueId)) {
+            uniqueId = $"compat-glt-{targetRoot.Name.LocalName}";
+            targetRoot.SetAttributeValue(ATTR_UNIQUE_ID, uniqueId);
+        }
+
+        var section = xDocument.Root!.Element(SECTION_GENERIC_LOOKUP_TABLES);
+        if (section == null) {
+            section = new XElement(SECTION_GENERIC_LOOKUP_TABLES);
+            xDocument.Root.Add(section);
+        }
+
+        var categories = section.Elements(GenericLookupTableParser.CATEGORIES)
+            .FirstOrDefault(el => el.Attribute(GenericLookupTableParser.FOR)?.Value == uniqueId);
+        if (categories == null) {
+            categories = new XElement(GenericLookupTableParser.CATEGORIES);
+            categories.SetAttributeValue(GenericLookupTableParser.FOR, uniqueId);
+            section.Add(categories);
+        }
+
+        foreach (var dynamicEnum in dynamicEnumDefinitions.Values) {
+            if (categories.Element(dynamicEnum.CategoryName) != null) continue;
+
+            var categoryElement = new XElement(dynamicEnum.CategoryName);
+            categoryElement.SetAttributeValue(BasicNodeOptions.DisplayName.AttributeName, dynamicEnum.DisplayName);
+            categories.Add(categoryElement);
+        }
+    }
 
     /// <summary>
     /// 物理名。スキーマ内での物理名の衝突を考慮した値を返す。
@@ -397,7 +593,7 @@ public class SchemaParseContext {
             ?.Element(SECTION_DATA_STRUCTURES)
             ?.DescendantsAndSelf()
             .Where(el => GetNodeType(el).HasFlag(E_NodeType.Aggregate)
-                      && TryGetModel(el, out var model) && model is DataModel)
+                      && TryGetModel(el, out var model) && IsDataModelLike(model))
             .GroupBy(el => el.GetDbName())
             ?? [];
         foreach (var group in tableNameGroups) {
@@ -466,7 +662,7 @@ public class SchemaParseContext {
                 case E_NodeType.ChildAggregate:
                     // 主キー属性のチェック
                     if (el.Elements().Any(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null)) {
-                        if (TryGetModel(el, out var childModel) && childModel is DataModel) {
+                        if (TryGetModel(el, out var childModel) && IsDataModelLike(childModel)) {
                             errorsList.Add((el, $"データモデルの子集約には主キー属性を付与することができません。"));
                         }
                     }
@@ -475,7 +671,7 @@ public class SchemaParseContext {
                 // Children
                 case E_NodeType.ChildrenAggregate:
                     // データモデルの子配列は必ず1個以上の主キーが必要
-                    if (TryGetModel(el, out var childrenModel) && childrenModel is DataModel) {
+                    if (TryGetModel(el, out var childrenModel) && IsDataModelLike(childrenModel)) {
                         if (el.Elements().All(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) == null)) {
                             errorsList.Add((el, "データモデルの子配列は必ず1個以上の主キーを持たなければなりません。"));
                         }
@@ -621,7 +817,22 @@ public class SchemaParseContext {
 
         // モデルの種類に基づく参照制約チェック
         if (TryGetModel(refElement, out var model)) {
-            if (model is DataModel) {
+            if (model is WriteModel2) {
+                if (TryGetModel(refTo, out var refToModel)
+                    && refToModel is not WriteModel2
+                    && refToModel is not ReadModel2Compat) {
+                    errorMessage = $"{nameof(WriteModel2)}の集約からは{nameof(WriteModel2)}または{nameof(ReadModel2Compat)}しか参照できません。";
+                    return false;
+                }
+
+                if (rootElement.HasGenerateDefaultQueryModelAttribute()
+                    && TryGetModel(refTo, out var refToWriteModel)
+                    && refToWriteModel is WriteModel2
+                    && !refToRoot.HasGenerateDefaultQueryModelAttribute()) {
+                    errorMessage = $"{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデルの集約からは、同じく{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデルの集約しか参照できません。";
+                    return false;
+                }
+            } else if (IsDataModelLike(model)) {
                 // データモデルからはデータモデルの集約、
                 // またはビューにマッピングされるクエリモデルしか参照できない
                 if (TryGetModel(refTo, out var refToModel)
@@ -634,7 +845,7 @@ public class SchemaParseContext {
                 // GDQM -> 非GDQM の参照を禁止。RefTargetなどが生成されないので
                 if (rootElement.HasGenerateDefaultQueryModelAttribute()
                     && TryGetModel(refTo, out var refToDataModel)
-                    && refToDataModel is DataModel
+                    && IsDataModelLike(refToDataModel)
                     && !refToRoot.HasGenerateDefaultQueryModelAttribute()) {
                     errorMessage = $"{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデルの集約からは、同じく{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデルの集約しか参照できません。";
                     return false;
