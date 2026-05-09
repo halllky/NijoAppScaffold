@@ -370,7 +370,7 @@ namespace Nijo.CodeGenerating {
 
             if (ctx.IsLegacyCompatibilityMode()) {
                 var legacyTypeScriptSections = _typeScriptSectionsInOrder
-                    .SelectTextTemplate(source => $"{Dedent(source)}\n\n");
+                    .SelectTextTemplate(source => source);
 
                 return $$"""
                     import React from "react"
@@ -386,35 +386,6 @@ namespace Nijo.CodeGenerating {
 
                     {{legacyTypeScriptSections}}
                     """;
-            }
-
-            static string Dedent(string source) {
-                var normalized = source.Replace("\r\n", "\n");
-                var lines = normalized.Split('\n');
-                var firstNonEmptyIndex = Array.FindIndex(lines, line => !string.IsNullOrWhiteSpace(line));
-                if (firstNonEmptyIndex < 0) return normalized;
-
-                var firstIndent = lines[firstNonEmptyIndex].TakeWhile(char.IsWhiteSpace).Count();
-                var bodyIndent = lines
-                    .Skip(firstNonEmptyIndex + 1)
-                    .Where(line => !string.IsNullOrWhiteSpace(line))
-                    .Select(line => line.TakeWhile(char.IsWhiteSpace).Count())
-                    .DefaultIfEmpty(firstIndent)
-                    .Min();
-
-                for (var i = 0; i < lines.Length; i++) {
-                    if (string.IsNullOrWhiteSpace(lines[i])) {
-                        lines[i] = string.Empty;
-                        continue;
-                    }
-
-                    var indent = i <= firstNonEmptyIndex ? firstIndent : bodyIndent;
-                    if (lines[i].Length >= indent) {
-                        lines[i] = lines[i][indent..];
-                    }
-                }
-
-                return string.Join("\n", lines);
             }
 
             return $$"""

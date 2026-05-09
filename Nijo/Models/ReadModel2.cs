@@ -42,9 +42,9 @@ namespace Nijo.Models {
             var searchCondition = new SearchCondition.Entry(rootAggregate);
             aggregateFile.AddCSharpClass(SearchCondition.Entry.RenderCSharpRecursively(rootAggregate, ctx), "Class_SearchCondition");
             aggregateFile.AddTypeScriptTypeDef(SearchCondition.Entry.RenderTypeScriptRecursively(rootAggregate, ctx));
-            aggregateFile.AddTypeScriptTypeDef(searchCondition.RenderTypeScriptSortableMemberType());
             aggregateFile.AddTypeScriptFunction(searchCondition.RenderNewObjectFunction());
             aggregateFile.AddTypeScriptFunction(searchCondition.RenderParseQueryParameterFunction());
+            aggregateFile.AddTypeScriptTypeDef(searchCondition.RenderTypeScriptSortableMemberType());
 
             foreach (var aggregate in rootAggregate.EnumerateThisAndDescendants()) {
                 var searchResult = new SearchResult(aggregate);
@@ -52,7 +52,7 @@ namespace Nijo.Models {
 
                 var displayData = new DisplayData(aggregate);
                 aggregateFile.AddCSharpClass(displayData.RenderCSharpDeclaring(ctx), "Class_DisplayData");
-                aggregateFile.AddTypeScriptTypeDef(displayData.RenderTypeScriptType(ctx));
+                aggregateFile.AddTypeScriptTypeDef(ctx.IsLegacyCompatibilityMode() ? displayData.RenderLegacyTypeScriptType() : displayData.RenderTypeScriptType(ctx));
                 aggregateFile.AddTypeScriptFunction(displayData.RenderTsNewObjectFunction(ctx));
             }
 
@@ -75,8 +75,6 @@ namespace Nijo.Models {
 
             aggregateFile.AddTypeScriptFunction(rootDisplayData.RenderDeepEqualFunctionRecursively(ctx));
             aggregateFile.AddTypeScriptFunction(rootDisplayData.RenderCheckChangesFunction(ctx));
-            aggregateFile.AddTypeScriptTypeDef(rootDisplayData.RenderUiConstraintType(ctx));
-            aggregateFile.AddTypeScriptFunction(rootDisplayData.RenderUiConstraintValue(ctx));
 
             ctx.Use<DisplayDataTypeList>().Add(rootDisplayData);
             ctx.Use<UiConstraintTypes>().Add(rootDisplayData);
@@ -89,6 +87,9 @@ namespace Nijo.Models {
             } else {
                 aggregateFile.AddAppSrvMethod(multiView.RenderAppSrvGetUrlMethod());
             }
+
+            aggregateFile.AddTypeScriptTypeDef(rootDisplayData.RenderUiConstraintType(ctx));
+            aggregateFile.AddTypeScriptFunction(rootDisplayData.RenderUiConstraintValue(ctx));
 
             aggregateFile.AddTypeScriptFunction(singleView.RenderPageFrameComponent(ctx));
             aggregateFile.AddWebapiControllerAction(singleView.RenderSetSingleViewDisplayData(ctx));
