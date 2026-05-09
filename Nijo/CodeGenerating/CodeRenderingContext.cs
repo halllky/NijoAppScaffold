@@ -285,7 +285,8 @@ namespace Nijo.CodeGenerating {
         /// 出力ファイル名やレイアウトを旧版互換へ寄せる判断に使用する。
         /// </summary>
         internal bool IsLegacyCompatibilityMode() {
-            return Schema.GetRootAggregates().Any(root => root.Model is Models.WriteModel2
+            return Config.ForceLegacyCompatibilityMode
+                || Schema.GetRootAggregates().Any(root => root.Model is Models.WriteModel2
                 or Models.ReadModel2Compat
                 or Models.ValueObjectModel2
                 or Models.StaticEnumModel2);

@@ -221,6 +221,17 @@ namespace Nijo {
             logger.LogInformation("ソース自動生成開始");
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
+            if (LegacyEmptySchemaCompatibilityRenderer.ShouldRender(ctx)) {
+                LegacyEmptySchemaCompatibilityRenderer.Render(ctx);
+
+                logger.LogInformation("不要ファイル削除開始");
+                ctx.CleanUnhandledFilesAndDirectories();
+
+                stopwatch.Stop();
+                logger.LogInformation("ソース自動生成終了 ({elapsed}ms)", stopwatch.ElapsedMilliseconds);
+                return true;
+            }
+
             // ルート集約毎のコードを生成
             var rootAggregates = immutableSchema.GetRootAggregates().ToArray();
             Parallel.ForEach(rootAggregates, rootAggregate => {
