@@ -333,6 +333,14 @@ namespace Nijo.CodeGenerating {
                     modules.Add(plainStructure.TsTypeName);
                     modules.Add(plainStructure.TsNewObjectFunction);
 
+                } else if (ctx.IsLegacyCompatibilityMode() && group.Key.Model is Models.ReadModel2) {
+                    var refDisplayData = new Models.ReadModel2Modules.RefDisplayData(group.Key, group.Key.AsEntry());
+                    modules.Add(refDisplayData.TsTypeName);
+                    modules.Add(refDisplayData.TsNewObjectFunction);
+
+                    var refSearchCondition = new Models.ReadModel2Modules.RefSearchCondition(group.Key, group.Key.AsEntry());
+                    modules.Add(refSearchCondition.TsFilterTypeName);
+
                 } else {
                     var refEntries = group.Select(agg => new Models.QueryModelModules.DisplayDataRef.Entry(agg));
                     foreach (var refEntry in refEntries) {

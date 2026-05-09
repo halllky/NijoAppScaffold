@@ -5,6 +5,7 @@ using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Nijo.Models.ReadModel2Modules {
     internal class RefSearchCondition : IInstancePropertyOwnerMetadata, ICreatablePresentationLayerStructure {
@@ -49,6 +50,16 @@ namespace Nijo.Models.ReadModel2Modules {
         }
         IEnumerable<IInstancePropertyMetadata> IPresentationLayerStructure.GetMembers() => GetMembers();
         public string RenderTsNewObjectFunctionBody() {
+            if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
+                return $$"""
+                    {
+                        filter: {
+                        },
+                        sort: [],
+                    }
+                    """;
+            }
+
             return $$"""
                 {
                   filter: {
@@ -102,12 +113,12 @@ namespace Nijo.Models.ReadModel2Modules {
             if (IsEntry) {
                 var sortableMemberType = new SearchCondition.Entry(RefEntry.GetRoot()).TypeScriptSortableMemberType;
                 var excludeChildrenComment = """
-/**
- * 検索結果に明細データを含めなくても構わない場合、trueになる。
- * 具体的には一覧検索画面での検索とExcel出力の場合にtrueに、詳細登録画面の場合にfalseになる。
- * パフォーマンス改善以外の目的に使用しないこと。
- */
-""";
+                    /**
+                     * 検索結果に明細データを含めなくても構わない場合、trueになる。
+                     * 具体的には一覧検索画面での検索とExcel出力の場合にtrueに、詳細登録画面の場合にfalseになる。
+                     * パフォーマンス改善以外の目的に使用しないこと。
+                     */
+                    """;
 
                 if (context.IsLegacyCompatibilityMode()) {
                     return $$"""
@@ -151,6 +162,19 @@ namespace Nijo.Models.ReadModel2Modules {
         }
         internal string RenderCreateNewObjectFn(CodeRenderingContext context) {
             if (!IsEntry) return string.Empty;
+
+            if (context.IsLegacyCompatibilityMode()) {
+                return $$"""
+
+
+                    /** {{RefEntry.DisplayName}}の検索条件クラスの空オブジェクトを作成して返します。 */
+                    export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({
+                      filter: {
+                      },
+                      sort: [],
+                    })
+                    """;
+            }
 
             return $$"""
                 /** {{RefEntry.DisplayName}}の検索条件クラスの空オブジェクトを作成して返します。 */
@@ -202,9 +226,9 @@ namespace Nijo.Models.ReadModel2Modules {
                   {{WithIndent(member.RenderTypeScriptDeclaring(), "  ")}}
                 """)}}
                 }
-                                {{EnumerateFilterMembers().OfType<FilterStructureMember>().Where(member => member.Target.RefEntry == RefEntry).SelectTextTemplate(member => $$"""
-                                {{member.Target.RenderFilterTypeScript(context)}}
-                                """)}}
+                {{EnumerateFilterMembers().OfType<FilterStructureMember>().Where(member => member.Target.RefEntry == RefEntry).SelectTextTemplate(member => $$"""
+                {{member.Target.RenderFilterTypeScript(context)}}
+                """)}}
                 """;
         }
 
@@ -284,6 +308,21 @@ namespace Nijo.Models.ReadModel2Modules {
             }
 
             public string RenderTypeScriptDeclaring() {
+                if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
+                    var legacyMemberType = Member.Type.TsTypeName.Contains("null") || !Member.IsKey
+                        ? Member.Type.TsTypeName
+                        : $"{Member.Type.TsTypeName} | null";
+                    var legacyTypeName = Member.OnlySearchCondition
+                        ? legacyMemberType
+                        : Member.Type.SearchBehavior?.FilterTsTypeName is string filterTsTypeName
+                            && Regex.IsMatch(filterTsTypeName, @"\{.*from.*to.*\}")
+                            ? $"{{ from?: {legacyMemberType}, to?: {legacyMemberType} }}"
+                            : legacyMemberType;
+                    return $$"""
+                        {{Member.PhysicalName}}?: {{legacyTypeName}}
+                        """;
+                }
+
                 var typeName = Member.OnlySearchCondition
                     ? Member.Type.TsTypeName
                     : Member.Type.SearchBehavior?.FilterTsTypeName;
