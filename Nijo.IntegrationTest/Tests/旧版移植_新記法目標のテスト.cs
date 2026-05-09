@@ -329,7 +329,7 @@ public class 旧版移植_新記法目標のテスト {
             <LegacyApp>
               <取引状態 is="enum" DisplayName="取引状態">
                 <未処理 key="0" />
-                <処理済 key="1" />
+                <処理済 key="1" DisplayName="処理(済)" />
                 <取消 key="2" />
               </取引状態>
             </LegacyApp>
@@ -345,7 +345,7 @@ public class 旧版移植_新記法目標のテスト {
               <StaticEnums>
                 <取引状態 Type="enum-2" DisplayName="取引状態">
                   <未処理 key="0" />
-                  <処理済 key="1" />
+                  <処理済 key="1" DisplayName="処理(済)" />
                   <取消 key="2" />
                 </取引状態>
               </StaticEnums>
