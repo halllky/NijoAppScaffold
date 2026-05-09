@@ -1,6 +1,8 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Nijo.Models.ReadModel2Modules {
     internal class RefSearchMethod {
@@ -73,10 +75,22 @@ namespace Nijo.Models.ReadModel2Modules {
                 """;
         }
         internal string RenderAppSrvMethodOfReadModel(CodeRenderingContext context) {
+            var refTargetRoot = Aggregate.GetRoot();
+            var normalSearchCondition = new SearchCondition.Entry(refTargetRoot);
+            var createQueryMethodName = $"Create{refTargetRoot.PhysicalName}QuerySource";
+            var appendWhereClauseMethodName = "AppendWhereClause";
+            var loadMethodName = $"Load{refTargetRoot.PhysicalName}";
             var searchCondition = new RefSearchCondition(Aggregate, RefEntry);
             var searchResult = new RefDisplayData(Aggregate, RefEntry);
 
             if (context.IsLegacyCompatibilityMode()) {
+                var refFilterMetadata = GetRefSearchFilterMetadata(searchCondition);
+                var targetSequence = RenderTargetSequenceFromRoot("searchResult");
+                var countSequence = RenderTargetSequenceFromRoot("query");
+                var convertedFilterForCount = RenderFilterConverting(normalSearchCondition.FilterRoot, new Variable("refSearchConditionFilter", refFilterMetadata));
+                var convertedFilterForLoad = RenderFilterConverting(normalSearchCondition.FilterRoot, new Variable("refSearchCondition", searchCondition));
+                var convertedResult = RenderResultConverting(searchResult, new Variable("sr", DisplayData.GetLegacyCompatibleInstanceApiMetadata(Aggregate)));
+
                 return $$"""
                     /// <summary>
                     /// {{Aggregate.DisplayName}}の検索条件に不正が無いかを調べます。
@@ -92,16 +106,42 @@ namespace Nijo.Models.ReadModel2Modules {
                     /// {{Aggregate.DisplayName}} が他の集約から参照されるときの検索結果カウント
                     /// </summary>
                     public virtual int {{AppSrvCountMethod}}({{searchCondition.CsFilterTypeName}} refSearchConditionFilter, IPresentationContext context) {
-                        return 0;
-                    }
+                        // 通常の一覧検索結果カウント処理を流用する
+                        var searchCondition = new {{normalSearchCondition.CsClassName}} {
+                            {{SearchCondition.Entry.FILTER_CS}} = {{WithIndent(convertedFilterForCount, "        ")}},
+                        };
+                        var querySource = {{createQueryMethodName}}(searchCondition, context);
+                        var query = {{appendWhereClauseMethodName}}(querySource, searchCondition);
 
+                    #pragma warning disable CS8603 // Null 参照戻り値である可能性があります。
+                        var count = {{WithIndent(countSequence, "        ")}}
+                            .Count();
+                    #pragma warning restore CS8603 // Null 参照戻り値である可能性があります。
+
+                        return count;
+                    }
                     /// <summary>
                     /// {{Aggregate.DisplayName}} が他の集約から参照されるときの検索処理
                     /// </summary>
                     /// <param name="refSearchCondition">検索条件</param>
                     /// <returns>検索結果</returns>
                     public virtual IEnumerable<{{searchResult.CsClassName}}> {{AppSrvLoadMethod}}({{searchCondition.CsClassName}} refSearchCondition, IPresentationContext context) {
-                        return Enumerable.Empty<{{searchResult.CsClassName}}>();
+                        // 通常の一覧検索処理を流用するため、検索条件の値を移し替える
+                        var searchCondition = new {{normalSearchCondition.CsClassName}} {
+                            {{SearchCondition.Entry.FILTER_CS}} = {{WithIndent(convertedFilterForLoad, "        ")}},
+                            Keyword = refSearchCondition.Keyword,
+                            {{SearchCondition.Entry.SKIP_CS}} = refSearchCondition.Skip,
+                            {{SearchCondition.Entry.SORT_CS}} = refSearchCondition.Sort,
+                            {{SearchCondition.Entry.TAKE_CS}} = refSearchCondition.Take,
+                        };
+
+                        // 検索処理実行
+                        var searchResult = {{loadMethodName}}(searchCondition, context);
+
+                        // 通常の一覧検索結果の型を、他の集約から参照されるときの型に変換する
+                        var refTargets = {{WithIndent(targetSequence, "        ")}}
+                            .Select(sr => {{WithIndent(convertedResult, "        ")}});
+                        return refTargets;
                     }
                     """;
             }
@@ -115,6 +155,133 @@ namespace Nijo.Models.ReadModel2Modules {
                     return Enumerable.Empty<{{searchResult.CsClassName}}>();
                 }
                 """;
+        }
+
+        private static IInstancePropertyOwnerMetadata GetRefSearchFilterMetadata(RefSearchCondition searchCondition) {
+            IInstancePropertyOwnerMetadata? filterMetadata = searchCondition
+                .GetMembers()
+                .OfType<IInstanceStructurePropertyMetadata>()
+                .SingleOrDefault(member => member.GetPropertyName(E_CsTs.CSharp) == "Filter");
+
+            return filterMetadata ?? searchCondition;
+        }
+
+        private string RenderTargetSequenceFromRoot(string sourceName) {
+            var path = Aggregate
+                .GetPathFromRoot()
+                .Skip(1)
+                .OfType<AggregateBase>()
+                .ToArray();
+
+            if (path.Length == 0) {
+                return sourceName;
+            }
+
+            return $$"""
+                {{sourceName}}
+                {{path.SelectTextTemplate(aggregate => aggregate is ChildrenAggregate
+                    ? $$"""
+                        .SelectMany(item => item.{{aggregate.PhysicalName}})
+                    """
+                    : $$"""
+                        .Select(item => item.{{aggregate.PhysicalName}})
+                    """)}}
+                """;
+        }
+
+        private static string RenderFilterConverting(SearchCondition.Filter targetFilter, IInstancePropertyOwner source) {
+            var sourceMembers = source
+                .CreatePropertiesRecursively()
+                .GroupBy(prop => prop.Metadata.SchemaPathNode.ToMappingKey())
+                .ToDictionary(group => group.Key, group => group.OrderBy(prop => prop.GetPathFromInstance().Count()).First());
+
+            return RenderOwner(targetFilter);
+
+            string RenderOwner(IInstancePropertyOwnerMetadata ownerMetadata) {
+                return $$"""
+                    new() {
+                    {{ownerMetadata.GetMembers().SelectTextTemplate(member => member switch {
+                    IInstanceValuePropertyMetadata value => $$"""
+                            {{value.GetPropertyName(E_CsTs.CSharp)}} = {{RenderValueAssignment(value)}},
+                        """,
+                    IInstanceStructurePropertyMetadata structure => $$"""
+                            {{structure.GetPropertyName(E_CsTs.CSharp)}} = {{WithIndent(RenderOwner(structure), "    ")}},
+                        """,
+                    _ => throw new InvalidOperationException(),
+                })}}
+                    }
+                    """;
+            }
+
+            string RenderValueAssignment(IInstanceValuePropertyMetadata value) {
+                if (!sourceMembers.TryGetValue(value.SchemaPathNode.ToMappingKey(), out var sourceProperty)) {
+                    return "null";
+                }
+
+                return sourceProperty.GetJoinedPathFromInstance(E_CsTs.CSharp, ".");
+            }
+        }
+
+        private static string RenderResultConverting(RefDisplayData target, IInstancePropertyOwner source) {
+            return RenderOwner(target.CsClassName, target, source);
+
+            static string RenderOwner(string typeName, IInstancePropertyOwnerMetadata targetMetadata, IInstancePropertyOwner sourceOwner) {
+                var sourceMembers = sourceOwner
+                    .CreatePropertiesRecursively()
+                    .GroupBy(prop => prop.Metadata.SchemaPathNode.ToMappingKey())
+                    .ToDictionary(group => group.Key, group => group.OrderBy(prop => prop.GetPathFromInstance().Count()).First());
+
+                return $$"""
+                    new {{typeName}} {
+                    {{targetMetadata.GetMembers().SelectTextTemplate(member => $$"""
+                        {{WithIndent(RenderMember(member), "    ")}}
+                    """)}}
+                    }
+                    """;
+
+                string RenderMember(IInstancePropertyMetadata member) {
+                    return member switch {
+                        IInstanceValuePropertyMetadata value => $$"""
+                        {{value.GetPropertyName(E_CsTs.CSharp)}} = {{RenderValueAssignment(value)}},
+                        """,
+                        IInstanceStructurePropertyMetadata structure => RenderStructureMember(structure),
+                        _ => throw new InvalidOperationException(),
+                    };
+                }
+
+                string RenderValueAssignment(IInstanceValuePropertyMetadata value) {
+                    if (!sourceMembers.TryGetValue(value.SchemaPathNode.ToMappingKey(), out var sourceProperty)) {
+                        return "null";
+                    }
+
+                    return value.Type.RenderCastToDomainType()
+                        + sourceProperty.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");
+                }
+
+                string RenderStructureMember(IInstanceStructurePropertyMetadata structure) {
+                    if (!sourceMembers.TryGetValue(structure.SchemaPathNode.ToMappingKey(), out var sourcePropertyBase)
+                        || sourcePropertyBase is not InstanceStructureProperty sourceProperty) {
+                        return structure.IsArray
+                            ? $$"""
+                            {{structure.GetPropertyName(E_CsTs.CSharp)}} = [],
+                            """
+                            : $$"""
+                            {{structure.GetPropertyName(E_CsTs.CSharp)}} = new {{structure.GetTypeName(E_CsTs.CSharp)}} {
+                            },
+                            """;
+                    }
+
+                    if (structure.IsArray) {
+                        return $$"""
+                        {{structure.GetPropertyName(E_CsTs.CSharp)}} = {{sourceProperty.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")}}?.Select(x => {{RenderOwner(structure.GetTypeName(E_CsTs.CSharp), structure, new Variable("x", sourceProperty.Metadata))}}).ToList() ?? [],
+                        """;
+                    }
+
+                    return $$"""
+                    {{structure.GetPropertyName(E_CsTs.CSharp)}} = {{RenderOwner(structure.GetTypeName(E_CsTs.CSharp), structure, sourceProperty)}},
+                    """;
+                }
+            }
         }
     }
 }

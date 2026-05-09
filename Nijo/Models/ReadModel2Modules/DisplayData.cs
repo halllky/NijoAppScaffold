@@ -5,6 +5,7 @@ using Nijo.Parts.Common;
 using Nijo.Parts.CSharp;
 using Nijo.Util.DotnetEx;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Nijo.Models.ReadModel2Modules {
@@ -16,6 +17,9 @@ namespace Nijo.Models.ReadModel2Modules {
         internal override string TsTypeName => $"{Aggregate.PhysicalName}DisplayData";
         internal override bool HasVersion => Aggregate is RootAggregate
                                           || Aggregate.XElement.Attribute(BasicNodeOptions.HasLifecycle.AttributeName) != null;
+        internal bool HasLifeCycle => Aggregate is RootAggregate
+                 || Aggregate is ChildrenAggregate
+                 || Aggregate.XElement.Attribute(BasicNodeOptions.HasLifecycle.AttributeName) != null;
         internal const string VALUES_CS = "Values";
         internal const string VALUES_TS = "values";
         internal string ValueCsClassName => $"{CsClassName}Values";
@@ -24,20 +28,35 @@ namespace Nijo.Models.ReadModel2Modules {
         internal const string ALL_READONLY_CS = "AllReadOnly";
         internal const string ALL_READONLY_TS = "allReadOnly";
         internal string ReadOnlyCsClassName => $"{CsClassName}ReadOnly";
+        internal string MessageCsClassName => $"{CsClassName}Messages";
+        internal string MessageListCsClassName => $"{CsClassName}MessagesList";
         internal const string UNIQUE_ID_CS = "UniqueId";
         internal const string UNIQUE_ID_TS = "uniqueId";
+
+        internal static IInstancePropertyOwnerMetadata GetLegacyCompatibleInstanceApiMetadata(AggregateBase aggregate) {
+            return aggregate switch {
+                RootAggregate root => new LegacyDisplayDataMetadata(new DisplayData(root)),
+                ChildAggregate child => new EditablePresentationObjectChildDescendant(child),
+                ChildrenAggregate children => new EditablePresentationObjectChildrenDescendant(children),
+                _ => throw new InvalidOperationException(),
+            };
+        }
 
         internal new string RenderCSharpDeclaring(CodeRenderingContext ctx) {
             if (!ctx.IsLegacyCompatibilityMode()) {
                 return base.RenderCSharpDeclaring(ctx);
             }
 
+            var implements = new List<string>();
+            if (Aggregate is RootAggregate) implements.Add("DisplayDataClassBase");
+            if (HasLifeCycle) implements.Add(ISaveCommandConvertible.INTERFACE_NAME);
+            var inheritance = implements.Count == 0 ? string.Empty : $" : {implements.Join(", ")}";
+
             return $$"""
             /// <summary>
             /// {{Aggregate.DisplayName}}の画面表示用データ構造
             /// </summary>
-            {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
-            public partial class {{CsClassName}} {
+            public partial class {{CsClassName}}{{inheritance}} {
                 /// <summary>値</summary>
                 [JsonPropertyName("{{VALUES_TS}}")]
                 public virtual {{ValueCsClassName}} {{VALUES_CS}} { get; set; } = new();
@@ -46,16 +65,16 @@ namespace Nijo.Models.ReadModel2Modules {
                 [JsonPropertyName("{{c.PhysicalName}}")]
                 public {{WithIndent(c.CsClassNameAsMember, "    ")}} {{c.PhysicalName}} { get; set; } = new();
               """)}}
-
+                // TODO #43 ADDMODDDELを明示的に指定できるようにする
                 /// <summary>このデータがDBに保存済みかどうか</summary>
                 [JsonPropertyName("{{EXISTS_IN_DB_TS}}")]
-                public bool {{EXISTS_IN_DB_CS}} { get; set; }
+                public virtual bool {{EXISTS_IN_DB_CS}} { get; set; }
                 /// <summary>このデータに更新がかかっているかどうか</summary>
                 [JsonPropertyName("{{WILL_BE_CHANGED_TS}}")]
-                public bool {{WILL_BE_CHANGED_CS}} { get; set; }
+                public virtual bool {{WILL_BE_CHANGED_CS}} { get; set; }
                 /// <summary>このデータが更新確定時に削除されるかどうか</summary>
                 [JsonPropertyName("{{WILL_BE_DELETED_TS}}")]
-                public bool {{WILL_BE_DELETED_CS}} { get; set; }
+                public virtual bool {{WILL_BE_DELETED_CS}} { get; set; }
                 /// <summary>
                 /// 画面操作で使用される一意なID。このインスタンスが作成されたときに発番される。
                 /// 画面上で行データの更新や行移動などがなされたりしたときに当該インスタンスを適切に追跡出来るようにするために必要。
@@ -67,22 +86,21 @@ namespace Nijo.Models.ReadModel2Modules {
             {{If(HasVersion, () => $$"""
                 /// <summary>楽観排他制御用のバージョニング情報</summary>
                 [JsonPropertyName("{{VERSION_TS}}")]
-                public int? {{VERSION_CS}} { get; set; }
+                public virtual int? {{VERSION_CS}} { get; set; }
             """)}}
                 /// <summary>どの項目が読み取り専用か</summary>
                 [JsonPropertyName("{{READONLY_TS}}")]
-                public {{ReadOnlyCsClassName}} {{READONLY_CS}} { get; set; } = new();
+                public virtual {{ReadOnlyCsClassName}} {{READONLY_CS}} { get; set; } = new();
             }
-
             /// <summary>
             /// {{Aggregate.DisplayName}}の画面表示用データの値の部分
             /// </summary>
             public partial class {{ValueCsClassName}} {
             {{GetValueMembers().SelectTextTemplate(member => $$"""
-                {{WithIndent(member.RenderCsDeclaration(ctx), "    ")}}
-              """)}}
+                {{WithIndent(RenderLegacyValueMember(member), "    ")}}
+            """)}}
             }
-
+            {{RenderLegacyMessageClasses()}}
             /// <summary>
             /// {{Aggregate.DisplayName}}の画面表示用データの読み取り専用情報格納部分
             /// </summary>
@@ -93,9 +111,98 @@ namespace Nijo.Models.ReadModel2Modules {
             {{GetValueMembers().SelectTextTemplate(member => $$"""
                 /// <summary>{{member.GetPropertyName(E_CsTs.CSharp)}}が読み取り専用か否か</summary>
                 public bool {{member.GetPropertyName(E_CsTs.CSharp)}} { get; set; }
-              """)}}
+            """)}}
             }
             """;
+
+            static string RenderLegacyValueMember(IEditablePresentationObjectValueOrRefMember member) {
+                return member switch {
+                    EditablePresentationObjectValueMember value => $$"""
+                        /// <summary>{{value.Member.DisplayName}}</summary>
+                        public virtual {{value.Member.Type.CsDomainTypeName.Replace("DateOnly", "Date")}}? {{value.Member.PhysicalName}} { get; set; }
+                        """,
+                    EditablePresentationObjectRefMember reference => $$"""
+                        /// <summary>{{reference.Member.DisplayName}}</summary>
+                        public virtual {{((IInstanceStructurePropertyMetadata)reference).GetTypeName(E_CsTs.CSharp)}} {{reference.Member.PhysicalName}} { get; set; } = new();
+                        """,
+                    _ => throw new InvalidOperationException(),
+                };
+            }
+
+            string RenderLegacyMessageClasses() {
+                var members = GetLegacyMessageMembers().ToArray();
+
+                return $$"""
+                    {{If(Aggregate is RootAggregate, () => $$"""
+                    /// <summary>
+                    /// {{Aggregate.DisplayName}}の画面表示用データのメッセージ情報格納部分。
+                    /// （クライアント側からWebサーバー側に一度に複数件のデータが送られてくる場合のためのもの）
+                    /// </summary>
+                    public partial class {{MessageListCsClassName}} : DisplayMessageContainerList<{{MessageCsClassName}}> {
+                        public {{MessageListCsClassName}}(IEnumerable<string> path) : base(path, i => new([.. path, i.ToString()])) { }
+
+                        /// <summary>すべてのメッセージを画面ルートに転送する場合に用いられるコンストラクタ</summary>
+                        public {{MessageListCsClassName}}(IDisplayMessageContainer origin) : base(origin, _ => new(origin)) { }
+                    }
+                    """)}}
+
+                    /// <summary>
+                    /// {{Aggregate.DisplayName}}の画面表示用データのメッセージ情報格納部分。
+                    /// WriteModelのデータとのマッピングが必要になる場合、このクラスを使用せず、
+                    /// 別途当該WriteModelのエラーデータのインターフェースを実装したクラスを新規作成して、そちらを使用してください。
+                    /// </summary>
+                    public partial class {{MessageCsClassName}} : DisplayMessageContainerBase {
+                        public {{MessageCsClassName}}(IEnumerable<string> path) : base(path) {
+                    {{members.SelectTextTemplate(member => $$"""
+                        {{WithIndent(member.RenderPathConstructor(), "        ")}}
+                    """)}}
+                        }
+                        /// <summary>すべてのメッセージを画面ルートに転送する場合に用いられるコンストラクタ</summary>
+                        public {{MessageCsClassName}}(IDisplayMessageContainer origin) : base(origin) {
+                    {{members.SelectTextTemplate(member => $$"""
+                        {{WithIndent(member.RenderOriginConstructor(), "        ")}}
+                    """)}}
+                        }
+
+                    {{members.SelectTextTemplate(member => $$"""
+                    public {{member.TypeName}} {{member.PropertyName}} { get; }
+                    """)}}
+
+                        public override IEnumerable<IDisplayMessageContainer> EnumerateChildren() {
+                    {{members.SelectTextTemplate(member => $$"""
+                        yield return {{member.PropertyName}};
+                    """)}}
+                        }
+                    }
+                    """;
+            }
+        }
+
+        private IEnumerable<LegacyMessageMember> GetLegacyMessageMembers() {
+            foreach (var member in GetValueMembers()) {
+                yield return new LegacyMessageMember(member.GetPropertyName(E_CsTs.CSharp), "DisplayMessageContainer");
+            }
+
+            foreach (var child in GetChildMembers()) {
+                var typeName = child is EditablePresentationObjectChildrenDescendant
+                    ? $"DisplayMessageContainerList<{child.CsClassName}Messages>"
+                    : $"{child.CsClassName}Messages";
+                yield return new LegacyMessageMember(child.PhysicalName, typeName);
+            }
+        }
+
+        private readonly record struct LegacyMessageMember(string PropertyName, string TypeName) {
+            internal string RenderPathConstructor() {
+                return TypeName.StartsWith("DisplayMessageContainerList<", StringComparison.Ordinal)
+                  ? $"{PropertyName} = new([.. path, \"{PropertyName}\"], i => new([.. path, \"{PropertyName}\", i.ToString()]));"
+                  : $"{PropertyName} = new([.. path, \"{PropertyName}\"]);";
+            }
+
+            internal string RenderOriginConstructor() {
+                return TypeName.StartsWith("DisplayMessageContainerList<", StringComparison.Ordinal)
+                  ? $"{PropertyName} = new(origin, _ => new(origin));"
+                  : $"{PropertyName} = new(origin);";
+            }
         }
 
         internal static SourceFile RenderBaseClass() => new() {
@@ -265,6 +372,44 @@ namespace Nijo.Models.ReadModel2Modules {
         internal string CheckChangesFunction => $"checkChanges{TsTypeName}";
         internal string UiConstraintTypeName => $"{Aggregate.PhysicalName}ConstraintType";
         internal string UiConstraingValueName => $"{Aggregate.PhysicalName}Constraints";
+
+        private sealed class LegacyDisplayDataMetadata : IInstancePropertyOwnerMetadata {
+            internal LegacyDisplayDataMetadata(DisplayData displayData) {
+                _displayData = displayData;
+                _values = new LegacyDisplayDataValuesMember(displayData);
+            }
+
+            private readonly DisplayData _displayData;
+            private readonly LegacyDisplayDataValuesMember _values;
+
+            public IEnumerable<IInstancePropertyMetadata> GetMembers() {
+                yield return _values;
+
+                foreach (var child in _displayData.GetChildMembers()) {
+                    yield return (IInstancePropertyMetadata)child;
+                }
+            }
+        }
+
+        private sealed class LegacyDisplayDataValuesMember : IInstanceStructurePropertyMetadata {
+            internal LegacyDisplayDataValuesMember(DisplayData displayData) {
+                _displayData = displayData;
+            }
+
+            private readonly DisplayData _displayData;
+
+            public ISchemaPathNode SchemaPathNode => _displayData.Aggregate;
+            public bool IsArray => false;
+            public string GetPropertyName(E_CsTs csts) => csts == E_CsTs.CSharp ? VALUES_CS : VALUES_TS;
+            public string GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp ? _displayData.ValueCsClassName : _displayData.ValueCsClassName;
+            public string DisplayName => "値";
+
+            public IEnumerable<IInstancePropertyMetadata> GetMembers() {
+                foreach (var member in _displayData.GetValueMembers()) {
+                    yield return member;
+                }
+            }
+        }
 
         internal string RenderUiConstraintType(CodeRenderingContext ctx) {
             return $$"""

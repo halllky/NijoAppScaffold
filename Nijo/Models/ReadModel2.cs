@@ -34,6 +34,8 @@ namespace Nijo.Models {
         public void GenerateCode(CodeRenderingContext ctx, RootAggregate rootAggregate) {
             if (!ctx.IsLegacyCompatibilityMode()) throw new InvalidOperationException("旧版互換モードでのみ利用可能");
 
+            ctx.Use<Parts.CSharp.MessageContainer.BaseClass>();
+
             var aggregateFile = new SourceFileByAggregate(rootAggregate);
             var rootDisplayData = new DisplayData(rootAggregate);
 
@@ -43,10 +45,6 @@ namespace Nijo.Models {
             aggregateFile.AddTypeScriptTypeDef(searchCondition.RenderTypeScriptSortableMemberType());
             aggregateFile.AddTypeScriptFunction(searchCondition.RenderNewObjectFunction());
             aggregateFile.AddTypeScriptFunction(searchCondition.RenderParseQueryParameterFunction());
-
-            var searchConditionMessages = new Nijo.Models.QueryModelModules.SearchConditionMessageContainer(rootAggregate);
-            aggregateFile.AddCSharpClass(Nijo.Models.QueryModelModules.SearchConditionMessageContainer.RenderCSharpRecursively(rootAggregate), "Class_SearchConditionMessage");
-            ctx.Use<Parts.CSharp.MessageContainer.BaseClass>().Register(searchConditionMessages.CsClassName, searchConditionMessages.CsClassName);
 
             foreach (var aggregate in rootAggregate.EnumerateThisAndDescendants()) {
                 var searchResult = new SearchResult(aggregate);
@@ -68,10 +66,6 @@ namespace Nijo.Models {
                 {{rootDisplayData.RenderSetKeysReadOnly(ctx).TrimEnd()}}
                 {{singleView.RenderSetSingleViewDisplayDataFn(ctx).TrimEnd()}}
                 """);
-
-            var displayDataMessages = new Nijo.Models.QueryModelModules.DisplayDataMessageContainer(rootAggregate);
-            aggregateFile.AddCSharpClass(Nijo.Models.QueryModelModules.DisplayDataMessageContainer.RenderCSharpRecursively(rootAggregate), "Class_DisplayDataMessage");
-            ctx.Use<Parts.CSharp.MessageContainer.BaseClass>().Register(displayDataMessages.CsClassName, displayDataMessages.CsClassName);
 
             if (rootAggregate.GenerateBatchUpdateCommand) {
                 aggregateFile.AddTypeScriptFunction(new BatchUpdateReadModel().RenderFunction(ctx, rootAggregate));
