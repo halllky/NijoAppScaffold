@@ -112,7 +112,6 @@ namespace Nijo.Parts.CSharp {
 
                                     private readonly DefaultConfiguration _nijoConfig;
                                     private readonly NLog.Logger _logger;
-
                                     {{dbSets}}
 
                                     /// <summary>
@@ -126,7 +125,6 @@ namespace Nijo.Parts.CSharp {
                                         try {
                                             // 集約ごとのモデル定義
                                     {{onModelCreatingCalls}}
-
                                             // モデル定義に変更を加えたい場合は CustomizedConfiguration クラスでこのメソッドをオーバーライドしてください。
                                             _nijoConfig.OnModelCreating(modelBuilder);
 

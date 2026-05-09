@@ -52,10 +52,6 @@ namespace Nijo.Models {
                 var searchResult = new SearchResult(aggregate);
                 aggregateFile.AddCSharpClass(searchResult.RenderCSharpDeclaring(ctx), "Class_SearchResult");
 
-                if (aggregate == rootAggregate) {
-                    ctx.Use<Parts.CSharp.LegacyDbContextClass>().AddEntities(searchResult.EnumerateThisAndChildren());
-                }
-
                 var displayData = new DisplayData(aggregate);
                 aggregateFile.AddCSharpClass(displayData.RenderCSharpDeclaring(ctx), "Class_DisplayData");
                 aggregateFile.AddTypeScriptTypeDef(displayData.RenderTypeScriptType(ctx));
@@ -118,9 +114,7 @@ namespace Nijo.Models {
                 aggregateFile.AddAppSrvMethod(refSearchMethod.RenderAppSrvMethodOfReadModel(ctx));
             }
 
-            foreach (var aggregate in rootAggregate.EnumerateThisAndDescendants()) {
-                ctx.Use<AuthorizedAction>().Register(aggregate);
-            }
+            ctx.Use<AuthorizedAction>().Register(rootAggregate);
 
             aggregateFile.ExecuteRendering(ctx);
         }
@@ -129,6 +123,7 @@ namespace Nijo.Models {
             var applicationService = ctx.Use<Parts.CSharp.ApplicationService>();
             ctx.Use<Parts.CSharp.LegacyDbContextClass>();
             ctx.Use<Parts.CSharp.LegacyDefaultConfiguration>().AddValueObject("Date");
+            ctx.Use<EnumFile2>().AddSourceCode(SingleView.RenderSingleViewNavigationEnums());
 
             ctx.CoreLibrary(dir => {
                 dir.Directory("Util", utilDir => {
@@ -144,8 +139,9 @@ namespace Nijo.Models {
                             /// </summary>
                             public partial class Date : IComparable<Date>, IComparable {
                                 public Date(int year, int month, int day) {
+                                    // 年、月、日の範囲チェック
                                     if (year < 1 || month < 1 || month > 12 || day < 1 || day > DateTime.DaysInMonth(year, month)) {
-                                        throw new ArgumentOutOfRangeException(MSG.ERRC0043(year.ToString(), month.ToString(), day.ToString()));
+                                        throw new ArgumentOutOfRangeException(MSG.ERRC0043(year.ToString(),month.ToString(),day.ToString()));
                                     }
                                     Year = year;
                                     Month = month;
@@ -193,15 +189,21 @@ namespace Nijo.Models {
                                     return !Equals(left, right);
                                 }
                                 public static bool operator <(Date? left, Date? right) {
-                                    if (left == null || right == null) return false;
-                                    if (left.Year != right.Year) return left.Year < right.Year;
-                                    if (left.Month != right.Month) return left.Month < right.Month;
+                                    if (left == null || right == null)
+                                        return false;
+                                    if (left.Year != right.Year)
+                                        return left.Year < right.Year;
+                                    if (left.Month != right.Month)
+                                        return left.Month < right.Month;
                                     return left.Day < right.Day;
                                 }
                                 public static bool operator >(Date? left, Date? right) {
-                                    if (left == null || right == null) return false;
-                                    if (left.Year != right.Year) return left.Year > right.Year;
-                                    if (left.Month != right.Month) return left.Month > right.Month;
+                                    if (left == null || right == null)
+                                        return false;
+                                    if (left.Year != right.Year)
+                                        return left.Year > right.Year;
+                                    if (left.Month != right.Month)
+                                        return left.Month > right.Month;
                                     return left.Day > right.Day;
                                 }
                                 public static bool operator <=(Date? left, Date? right) {
@@ -211,16 +213,21 @@ namespace Nijo.Models {
                                     return left > right || left == right;
                                 }
 
+                                #region IComparableインターフェースの実装
                                 public int CompareTo(object? obj) {
-                                    if (obj == null) return 1;
+                                    if (obj == null) return 1; // nullは常に小さい
                                     if (obj is not Date other) throw new InvalidOperationException("Date型とそれ以外の大小を比較できません。");
                                     return CompareTo(other);
                                 }
                                 public int CompareTo(Date? other) {
-                                    if (other == null) return 1;
-                                    return ToDateTime().CompareTo(other.ToDateTime());
+                                    if (other == null) return 1; // nullは常に小さい
+                                    return ToDateTime().CompareTo(other.ToDateTime()); // DateTimeに変換して比較
                                 }
+                                #endregion IComparableインターフェースの実装
 
+                                /// <summary>
+                                /// Entity Framework Core 用のDBとC#の型変換定義
+                                /// </summary>
                                 public class EFCoreDateConverter : Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<Date, DateTime> {
                                     public EFCoreDateConverter() : base(
                                         date => date.ToDateTime(),

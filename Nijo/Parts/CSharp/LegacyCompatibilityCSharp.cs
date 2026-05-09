@@ -311,6 +311,13 @@ namespace Nijo.Parts.CSharp {
                 .Where(root => root.Model is Models.WriteModel2)
                 .OrderByDataFlow()
                 .ToArray();
+            var readModel2Roots = ctx.Schema.GetRootAggregates()
+                .Where(root => root.Model is Models.ReadModel2)
+                .OrderByDataFlow()
+                .ToArray();
+            var jsonValueObjectClassNames = valueObjectClassNames
+                .Where(className => !(readModel2Roots.Length > 0 && className == "Date"))
+                .ToArray();
             var customConverterRegistrations = new List<string> {
                 "option.Converters.Add(new CustomJsonConverters.IntegerValueConverter());",
                 "option.Converters.Add(new CustomJsonConverters.DecimalValueConverter());",
@@ -320,8 +327,13 @@ namespace Nijo.Parts.CSharp {
                 customConverterRegistrations.Add(string.Empty);
                 customConverterRegistrations.Add("option.Converters.Add(new CustomJsonConverters.SaveCommandBaseConverter());");
             }
-            foreach (var className in valueObjectClassNames) {
+            foreach (var className in jsonValueObjectClassNames) {
                 customConverterRegistrations.Add("option.Converters.Add(new " + className + ".JsonValueConverter());");
+            }
+            if (readModel2Roots.Length > 0) {
+                customConverterRegistrations.Add(string.Empty);
+                customConverterRegistrations.Add("option.Converters.Add(new CustomJsonConverters.DateJsonValueConverter());");
+                customConverterRegistrations.Add("option.Converters.Add(new CustomJsonConverters.DisplayDataBatchUpdateCommandConverter());");
             }
             var customConverterRegistrationsText = string.Join(Environment.NewLine, customConverterRegistrations.Select(line => line == string.Empty ? string.Empty : $"            {line}"));
             var contents = $$"""
@@ -572,7 +584,11 @@ namespace Nijo.Parts.CSharp {
 
                         {{RenderSaveCommandBaseConverter(writeModel2Roots)}}
                         """)}}
-                        {{If(valueObjectClassNames.Length > 0, () => $$"""
+                        {{If(readModel2Roots.Length > 0, () => $$"""
+
+                        {{RenderReadModel2JsonConverters(readModel2Roots)}}
+                        """)}}
+                        {{If(jsonValueObjectClassNames.Length > 0, () => $$"""
 
 
                         """)}}
@@ -597,6 +613,56 @@ namespace Nijo.Parts.CSharp {
                 FileName = "JsonConversion.cs",
                 Contents = contents,
             };
+        }
+
+        private static string RenderReadModel2JsonConverters(RootAggregate[] readModel2Roots) {
+            return "    " + WithIndent($$"""
+                public class DateJsonValueConverter : JsonConverter<Date?> {
+                    public override Date? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+                        var strDateTime = reader.GetString();
+                        return string.IsNullOrWhiteSpace(strDateTime)
+                            ? null
+                            : new Date(DateTime.Parse(strDateTime));
+                    }
+
+                    public override void Write(Utf8JsonWriter writer, Date? value, JsonSerializerOptions options) {
+                        if (value == null) {
+                            writer.WriteNullValue();
+                        } else {
+                            writer.WriteStringValue(value.ToString());
+                        }
+                    }
+                }
+
+                class DisplayDataBatchUpdateCommandConverter : JsonConverter<DisplayDataClassBase> {
+                    public override DisplayDataClassBase? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+                        using var jsonDocument = JsonDocument.ParseValue(ref reader);
+                        var dataType = jsonDocument.RootElement.GetProperty("dataType").GetString();
+                        var value = jsonDocument.RootElement.GetProperty("values");
+
+                {{readModel2Roots.SelectTextTemplate(root => $$"""
+                        {{WithIndent(RenderReadModel2JsonConverterBranch(root), "        ")}}
+                """)}}
+
+                        throw new InvalidOperationException(MSG.ERRC0026(dataType!));
+                    }
+
+                    public override void Write(Utf8JsonWriter writer, DisplayDataClassBase? value, JsonSerializerOptions options) {
+                        JsonSerializer.Serialize(writer, value, options);
+                    }
+                }
+                """, "    ");
+        }
+
+        private static string RenderReadModel2JsonConverterBranch(RootAggregate root) {
+            var displayData = new Models.ReadModel2Modules.DisplayData(root);
+
+            return $$"""
+                if (dataType == "{{root.DisplayName}}") {
+                    return JsonSerializer.Deserialize<{{displayData.CsClassName}}>(value.GetRawText(), options)
+                        ?? throw new InvalidOperationException(MSG.ERRC0025("{{displayData.CsClassName}}",value.GetRawText()));
+                }
+                """;
         }
 
         private static string RenderSaveCommandBaseConverter(RootAggregate[] writeModel2Roots) {

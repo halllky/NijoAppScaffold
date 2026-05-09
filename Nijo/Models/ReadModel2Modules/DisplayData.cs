@@ -19,15 +19,23 @@ namespace Nijo.Models.ReadModel2Modules {
 
         internal static SourceFile RenderBaseClass() => new() {
             FileName = "DisplayDataClassBase.cs",
-            Contents = $$"""
-                namespace {{CodeRenderingContext.CurrentContext.Config.RootNamespace}};
+          Contents = CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
+            ? """
+              /// <summary>
+              /// 画面表示用データの基底クラス
+              /// </summary>
+              public abstract partial class DisplayDataClassBase {
+              }
+              """
+            : $$"""
+              namespace {{CodeRenderingContext.CurrentContext.Config.RootNamespace}};
 
-                /// <summary>
-                /// 画面表示用データの基底クラス
-                /// </summary>
-                public abstract partial class DisplayDataClassBase {
-                }
-                """,
+              /// <summary>
+              /// 画面表示用データの基底クラス
+              /// </summary>
+              public abstract partial class DisplayDataClassBase {
+              }
+              """,
         };
         internal static string RenderCSharpRecursively(RootAggregate rootAggregate, CodeRenderingContext ctx) {
             var tree = rootAggregate

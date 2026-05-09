@@ -5,6 +5,21 @@ using System.Linq;
 
 namespace Nijo.Models.ReadModel2Modules {
     internal class SingleView {
+        internal const string E_SINGLE_VIEW_TYPE = "E_SingleViewType";
+        internal static string RenderSingleViewNavigationEnums() {
+            return $$"""
+                /// <summary>詳細画面のモード</summary>
+                public enum {{E_SINGLE_VIEW_TYPE}} {
+                    /// <summary>新規データ作成モード</summary>
+                    New,
+                    /// <summary>既存データの編集モード</summary>
+                    Edit,
+                    /// <summary>既存データの閲覧モード</summary>
+                    ReadOnly,
+                }
+                """;
+        }
+
         internal enum E_Type {
             New,
             ReadOnly,
