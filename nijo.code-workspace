@@ -17,6 +17,10 @@
       "path": "Nijo"
     },
     {
+      "name": "Nijo（移植前）",
+      "path": "nijo-old"
+    },
+    {
       "name": "Nijo GUI",
       "path": "Nijo.GuiClient/package_schema-editor-v1"
     },
