@@ -18,6 +18,7 @@ namespace Nijo.Models.WriteModel2Modules {
         /// </remarks>
         internal static string Render(RootAggregate rootAggregate, CodeRenderingContext ctx) {
             var body = RenderAggregate(rootAggregate, "dbEntity").ToArray();
+            var messageInterfaceName = new DataClassForSave(rootAggregate, DataClassForSave.E_Type.UpdateOrDelete).MessageInterfaceName;
 
             return $$"""
                 protected virtual void ValidateMaxLength({{new EFCoreEntity(rootAggregate).ClassName}} dbEntity, {{MessageContainer.SETTER_INTERFACE}} messages) {
@@ -27,6 +28,12 @@ namespace Nijo.Models.WriteModel2Modules {
                     {{WithIndent(body, "    ")}}
                 """)}}
                 }
+                {{If(ctx.IsLegacyCompatibilityMode(), () => $$"""
+
+                protected virtual void CheckMaxLength({{new EFCoreEntity(rootAggregate).ClassName}} dbEntity, {{SaveContext.BEFORE_SAVE}}<{{messageInterfaceName}}> e) {
+                    ValidateMaxLength(dbEntity, e.Messages);
+                }
+                """)}}
                 """;
         }
 

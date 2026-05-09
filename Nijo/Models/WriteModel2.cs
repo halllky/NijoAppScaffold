@@ -99,10 +99,9 @@ namespace Nijo.Models {
             }
 
             // 登録・更新・削除 AppSrv
-            var createMethod = new CreateMethod(rootAggregate);
             var updateMethod = new UpdateMethod(rootAggregate);
             var deleteMethod = new DeleteMethod(rootAggregate);
-            aggregateFile.AddAppSrvMethod(createMethod.Render(ctx), "新規登録処理");
+            aggregateFile.AddAppSrvMethod(LegacyCreateMethod.Render(rootAggregate, ctx), "新規登録処理");
             aggregateFile.AddAppSrvMethod(updateMethod.Render(ctx), "更新処理");
             aggregateFile.AddAppSrvMethod(deleteMethod.Render(ctx), "削除処理");
 
@@ -126,8 +125,6 @@ namespace Nijo.Models {
             // ダミーデータ、メタデータ、既存の共通マッピング
             ctx.Use<DummyDataGenerator>().Add(rootAggregate);
             ctx.Use<WriteModelMetadata>().Register(rootAggregate);
-            ctx.Use<MetadataForPage>().Add(rootAggregate);
-            ctx.Use<CommandQueryMappings>().AddDataModel(rootAggregate);
 
             aggregateFile.ExecuteRendering(ctx);
         }

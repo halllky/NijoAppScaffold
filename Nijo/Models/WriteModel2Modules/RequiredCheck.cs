@@ -21,6 +21,7 @@ namespace Nijo.Models.WriteModel2Modules {
         /// </remarks>
         internal static string Render(RootAggregate rootAggregate, CodeRenderingContext ctx) {
             var body = RenderAggregate(rootAggregate, "dbEntity").ToArray();
+            var messageInterfaceName = new DataClassForSave(rootAggregate, DataClassForSave.E_Type.UpdateOrDelete).MessageInterfaceName;
 
             return $$"""
                 protected virtual void ValidateRequired({{new EFCoreEntity(rootAggregate).ClassName}} dbEntity, {{MessageContainer.SETTER_INTERFACE}} messages, bool {{IS_CREATE}} = false) {
@@ -30,6 +31,12 @@ namespace Nijo.Models.WriteModel2Modules {
                     {{WithIndent(body, "    ")}}
                 """)}}
                 }
+                {{If(ctx.IsLegacyCompatibilityMode(), () => $$"""
+
+                protected virtual void CheckRequired({{new EFCoreEntity(rootAggregate).ClassName}} dbEntity, {{SaveContext.BEFORE_SAVE}}<{{messageInterfaceName}}> e) {
+                    ValidateRequired(dbEntity, e.Messages, isCreate: true);
+                }
+                """)}}
                 """;
         }
 
