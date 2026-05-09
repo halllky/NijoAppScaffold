@@ -1,16 +1,16 @@
+using Nijo.CodeGenerating;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Nijo.CodeGenerating {
+namespace Nijo.Parts.CSharp {
     /// <summary>
-    /// 空スキーマ時に旧版の固定出力へ合わせるためのレンダラー。
+    /// 旧版互換モードで生成する C# 関連ファイル。
     /// </summary>
-    internal static class LegacyEmptySchemaCompatibilityRenderer {
+    internal static class LegacyCompatibilityCSharp {
 
-        internal static void Render(CodeRenderingContext ctx) {
+        internal static void RenderCore(CodeRenderingContext ctx) {
             ctx.CoreLibrary(dir => {
-                dir.Generate(RenderDefaultConfiguration(ctx));
                 dir.Directory("Util", utilDir => {
                     utilDir.Generate(RenderCoreDotnetExtensions(ctx));
                     utilDir.Generate(RenderFromTo(ctx));
@@ -21,7 +21,9 @@ namespace Nijo.CodeGenerating {
                     utilDir.Generate(RenderSpaceFinderConstCSharp(ctx));
                 });
             });
+        }
 
+        internal static void RenderWebApi(CodeRenderingContext ctx) {
             ctx.WebapiProject(dir => {
                 dir.Directory("Util", utilDir => {
                     utilDir.Generate(RenderAttachmentFileRepositoryWeb(ctx));
@@ -30,74 +32,6 @@ namespace Nijo.CodeGenerating {
                     utilDir.Generate(RenderSavingUploadedFilesFilter(ctx));
                 });
             });
-
-            ctx.ReactProject(dir => {
-                dir.Generate(RenderVForm2ContainerQueryCss(ctx));
-                dir.Directory("util", utilDir => {
-                    utilDir.Generate(RenderTypeScriptUtilIndex());
-                    utilDir.Generate(RenderPresentationContextTypeScript());
-                    utilDir.Generate(RenderSpaceFinderConstTypeScript(ctx));
-                });
-            });
-        }
-
-        private static SourceFile RenderDefaultConfiguration(CodeRenderingContext ctx) {
-            return new SourceFile {
-                FileName = "DefaultConfiguration.cs",
-                Contents = $$"""
-                    namespace {{ctx.Config.RootNamespace}} {
-                        using Microsoft.EntityFrameworkCore;
-                        using Microsoft.Extensions.Configuration;
-                        using Microsoft.Extensions.DependencyInjection;
-                        using NLog;
-                        using NLog.Web;
-
-                        /// <summary>
-                        /// 自動生成されたアプリケーション実行時設定。
-                        /// 設定の一部を変更したい場合は <see cref="CustomizedConfiguration"/> で該当の設定をオーバーライドしてください。
-                        /// </summary>
-                        public abstract partial class DefaultConfiguration {
-
-                            /// <summary>
-                            /// DI設定
-                            /// </summary>
-                            /// <param name="appSettingsNijoSection">appsettings.jsonのうちNijoセクション部分</param>
-                            public virtual void ConfigureServices(IServiceCollection services, IConfigurationSection appSettingsNijoSection) {
-
-                                // アプリケーションサービス
-                                ConfigureApplicationService(services);
-
-                                // 実行時設定ファイル
-                                ConfigureRuntimeSetting(services);
-
-                                // DB接続
-                                services.AddScoped<Microsoft.EntityFrameworkCore.DbContext, {{ctx.Config.DbContextName}}>();
-                                ConfigureDbContext(services);
-
-                                // Encodingで Shift-JIS が使えるようにする
-                                System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-                            }
-
-                            /// <summary>
-                            /// <see cref="OverridedApplicationService"/> をDIに登録します。
-                            /// </summary>
-                            protected abstract void ConfigureApplicationService(IServiceCollection services);
-
-                            /// <summary>
-                            /// 実行時設定をどこから参照するかの処理をDIに登録します。
-                            /// <see cref="IRuntimeSetting"/> 型を登録してください。
-                            /// </summary>
-                            protected abstract void ConfigureRuntimeSetting(IServiceCollection services);
-
-                            /// <summary>
-                            /// Entity Framework Core のDbContextをDIに登録します。
-                            /// </summary>
-                            protected abstract void ConfigureDbContext(IServiceCollection services);
-
-                        }
-                    }
-                    """,
-            };
         }
 
         private static SourceFile RenderRuntimeSetting(CodeRenderingContext ctx) {
@@ -364,6 +298,11 @@ namespace Nijo.CodeGenerating {
         }
 
         private static SourceFile RenderJsonConversion(CodeRenderingContext ctx) {
+            var valueObjectClassNames = ctx.GetMultiAggregateSourceFiles()
+                .OfType<LegacyDbContextClass>()
+                .SingleOrDefault()
+                ?.GetValueObjectClassNames()
+                ?? [];
             var contents = $$"""
                     namespace {{ctx.Config.RootNamespace}} {
                         using System.Text.Json;
@@ -386,6 +325,9 @@ namespace Nijo.CodeGenerating {
                                 option.Converters.Add(new CustomJsonConverters.DecimalValueConverter());
                                 option.Converters.Add(new CustomJsonConverters.DateTimeValueConverter());
 
+                    {{valueObjectClassNames.SelectTextTemplate(className => $$"""
+                                option.Converters.Add(new {{className}}.JsonValueConverter());
+                    """)}}
                             }
                             public static JsonSerializerOptions GetJsonSrializerOptions() {
                                 var option = new System.Text.Json.JsonSerializerOptions();
@@ -611,6 +553,10 @@ namespace Nijo.CodeGenerating {
                                 }
                             }
                         }
+                        {{If(valueObjectClassNames.Length > 0, () => $$"""
+
+
+                        """)}}
                     }
                     """;
             contents = contents
@@ -962,109 +908,6 @@ namespace Nijo.CodeGenerating {
 
                             }
                         }
-                    }
-                    """,
-            };
-        }
-
-        private static SourceFile RenderVForm2ContainerQueryCss(CodeRenderingContext ctx) {
-            const int maxColumn = 5;
-            const int maxMember = 100;
-            var threshold = ctx.Config.VFormThreshold ?? 320;
-
-            var sections = Enumerable.Range(1, maxColumn).Select(col => {
-                var minmax = new List<string>();
-                if (col > 1) minmax.Add($"(min-width: {(col - 1) * threshold + threshold}px)");
-                if (col < maxColumn) minmax.Add($"(max-width: {col * threshold + threshold}px)");
-
-                return $$"""
-                    /* VForm2: 横{{col}}列の場合のレイアウト */
-                    @container {{string.Join(" and ", minmax)}} {
-                      .vform-template-column {
-                        grid-template-columns: calc((1px * var(--vform-max-depth)) + var(--vform-label-width)) 1fr{{(col >= 2 ? $" repeat({col - 1}, var(--vform-label-width) 1fr)" : string.Empty)}};
-                      }
-                    {{Enumerable.Range(1, maxMember).SelectTextTemplate(i => $$"""
-
-                      .vform-vertical-{{i}}-items {
-                        grid-template-rows: repeat({{Math.Ceiling((decimal)i / col)}}, auto);
-                      }
-                    """)}}
-                    }
-                    """;
-            });
-
-            return new SourceFile {
-                FileName = "vform2-container-query.css",
-                Contents = $$"""
-                    {{sections.SelectTextTemplate(source => $$"""
-
-                    {{source}}
-                    """)}}
-                    """,
-            };
-        }
-
-        private static SourceFile RenderTypeScriptUtilIndex() {
-            return new SourceFile {
-                FileName = "index.ts",
-                Contents = """
-                    export * from "./presentation-context"
-                    export * from "./space-finder-const"
-                    export * from "./MSG"
-                    export * from "./index"
-                    """,
-            };
-        }
-
-        private static SourceFile RenderPresentationContextTypeScript() {
-            return new SourceFile {
-                FileName = "presentation-context.ts",
-                Contents = """
-                    /** 更新系処理結果後のプレゼンテーション側の状態。このオブジェクトの型はサーバー側と合わせる必要がある */
-                    export type PresentationContextState<T = object> = {
-                      /** 処理全体の成否 */
-                      ok: boolean
-                      /** 処理結果の概要。「処理成功しました」など */
-                      summary?: string
-                      /** 確認メッセージ */
-                      confirms?: string[]
-                      /** 処理結果の詳細。項目ごとにメッセージが格納される。 */
-                      detail?: [string, ReactHookFormMultipleErrorObject][]
-                      /** アプリケーション側からプレゼンテーション側に返す任意の値 */
-                      returnValue?: T
-                    }
-
-                    /**
-                     * react-hook-form で1つのフィールドに複数のエラーを表示させる場合のエラーメッセージのオブジェクトの型。
-                     * ただしキー名を "ERROR-" 等で始めるのは react-hook-forms ではなくこのプロジェクトの都合（警告やインフォメーションで色を分けるため）
-                     */
-                    export type ReactHookFormMultipleErrorObject = {
-                      types: {
-                        [key in `ERROR-${number | string}` | `WARN-${number | string}` | `INFO-${number | string}`]: string
-                      }
-                    }
-                    """,
-            };
-        }
-
-        private static SourceFile RenderSpaceFinderConstTypeScript(CodeRenderingContext ctx) {
-            var maxFileSize = ctx.Config.MaxFileSizeMB?.ToString() ?? "undefined";
-            var maxTotalFileSize = ctx.Config.MaxTotalFileSizeMB?.ToString() ?? "undefined";
-            var extensions = string.IsNullOrWhiteSpace(ctx.Config.AttachmentFileExtensions)
-                ? "undefined"
-                : $"[{string.Join(", ", ctx.Config.AttachmentFileExtensions.Split(';', StringSplitOptions.RemoveEmptyEntries).Select(ext => $"'.{ext}'"))}]";
-
-            return new SourceFile {
-                FileName = "space-finder-const.ts",
-                Contents = $$"""
-                    /** Webブラウザから添付ファイルとして添付可能なファイルの制限を表す定数。 */
-                    export const AttachmentFileConst = {
-                      /** 添付可能なファイルの上限サイズ（メガバイト） */
-                      MaxFileSizeMB: {{maxFileSize}},
-                      /** 一度に複数ファイル添付する際のトータルの上限サイズ（メガバイト） */
-                      MaxTotalFileSizeMB: {{maxTotalFileSize}},
-                      /** 添付可能なファイルの拡張子 */
-                      AttachmentFileExtensions: {{extensions}},
                     }
                     """,
             };

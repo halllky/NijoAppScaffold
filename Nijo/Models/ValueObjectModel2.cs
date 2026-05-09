@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -23,17 +24,24 @@ namespace Nijo.Models {
         }
 
         public void GenerateCode(CodeRenderingContext ctx, RootAggregate rootAggregate) {
+            var className = rootAggregate.PhysicalName;
+
             ctx.CoreLibrary(dir => {
                 dir.Directory("Util", utilDir => {
                     utilDir.Generate(RenderCSharp(rootAggregate, ctx));
                 });
             });
 
-            ctx.ReactProject(dir => {
-                dir.Directory("util", utilDir => {
-                    utilDir.Generate(RenderTypeScript(rootAggregate));
+            if (ctx.IsLegacyCompatibilityMode()) {
+                ctx.Use<Parts.CSharp.LegacyDbContextClass>().AddValueObject(className);
+                ctx.Use<Parts.CSharp.LegacyDefaultConfiguration>().AddValueObject(className);
+            } else {
+                ctx.ReactProject(dir => {
+                    dir.Directory("util", utilDir => {
+                        utilDir.Generate(RenderTypeScript(rootAggregate));
+                    });
                 });
-            });
+            }
         }
 
         private static SourceFile RenderCSharp(RootAggregate rootAggregate, CodeRenderingContext ctx) {
