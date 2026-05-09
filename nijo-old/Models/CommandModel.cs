@@ -50,7 +50,7 @@ namespace Nijo.Models {
         void IModel.GenerateCode(CodeRenderingContext context) {
             // データ型: ステップ変更時イベント引数、実行時イベント引数
             context.CoreLibrary.UtilDir(dir => {
-                //dir.Generate(CommandMethod.RenderStepChangeEventArgs()); // D-Plusでは登場しないのでコメントアウト
+                //dir.Generate(CommandMethod.RenderStepChangeEventArgs()); // 登場しないのでコメントアウト
             });
 
             // 共通Controllerクラス
