@@ -73,6 +73,78 @@ public class WithIndentのテスト {
         }));
     }
 
+    [Test]
+    public void WithIndent内の先頭行がスキップ対象でも後続行のインデントが壊れない() {
+        var optionalHeader = Enumerable.Empty<int>().SelectTextTemplate(_ => $$"""
+            Header();
+            """);
+
+        var block = $$"""
+            {{optionalHeader}}
+            Body();
+            """;
+
+        var lines = RenderLines($$"""
+            void Example() {
+                {{WithIndent(block)}}
+            }
+            """);
+
+        Assert.That(lines[^3..], Is.EqualTo(new[] {
+            "void Example() {",
+            "    Body();",
+            "}",
+        }));
+    }
+
+    [Test]
+    public void SKIP_MARKERを含まない通常の空行は保持される() {
+        var lines = RenderLines($$"""
+            class Example {
+
+                void Method() {
+                }
+            }
+            """);
+
+        Assert.That(lines[^5..], Is.EqualTo(new[] {
+            "class Example {",
+            string.Empty,
+            "    void Method() {",
+            "    }",
+            "}",
+        }));
+    }
+
+    [Test]
+    public void SelectTextTemplateでスペースなしWithIndentを使っても出力に影響を与えない() {
+
+        var jsdoc = $$"""
+            /**
+            {{If(true, () => $$"""
+             * This is a JSDoc comment.
+            """)}}
+             * It should be indented correctly.
+             */
+            """;
+
+        // 左側スペースなしで WithIndent を使っているので出力には影響を与えないはず
+        var jsdocWithIndent = WithIndent(jsdoc);
+
+        var actual = $$"""
+            {{Enumerable.Range(0, 1).SelectTextTemplate(_ => $$"""
+                {{WithIndent(jsdocWithIndent)}}
+            """)}}
+            """;
+
+        Assert.That(RenderLines(actual)[^4..], Is.EqualTo(new[] {
+            "    /**",
+            "     * This is a JSDoc comment.",
+            "     * It should be indented correctly.",
+            "     */",
+        }));
+    }
+
     private static string[] RenderLines(string contents) {
         var filePath = Path.Combine(Path.GetTempPath(), $"{Path.GetRandomFileName()}.cs");
         try {

@@ -182,7 +182,7 @@ public abstract class ValidatorBase {
 
                         yield return $$"""
                             // {{vm.DisplayName}}
-                            if ({{WithIndent(ifExpression)}}) {
+                            if ({{WithIndent(ifExpression, "    ")}}) {
                                 {{messageAccessor}}.AddError({{renderErrorMessage}});
                             }
                             """;
@@ -207,7 +207,7 @@ public abstract class ValidatorBase {
 
                         yield return $$"""
                             // {{refTo.DisplayName}}
-                            if ({{WithIndent(ifExpression)}}) {
+                            if ({{WithIndent(ifExpression, "    ")}}) {
                                 {{messageAccessor}}.AddError({{renderErrorMessage}});
                             }
                             """;

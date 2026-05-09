@@ -69,7 +69,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                   /** 画面の自動生成のためのメタデータ取得関数 */
                   export const getAll = () => ({
                 {{entriesOrderByDataFlow.SelectTextTemplate(entry => $$"""
-                    '{{entry.PhysicalName}}': {{WithIndent(entry.RenderTypeScriptMetadataObject(ctx))}},
+                    '{{entry.PhysicalName}}': {{WithIndent(entry.RenderTypeScriptMetadataObject(ctx), "    ")}},
                 """)}}
                   }) as const satisfies { [k in ( {{CommandQueryMappings.DATA_MODEL_TYPE}} | {{CommandQueryMappings.QUERY_MODEL_TYPE}} | {{CommandQueryMappings.COMMAND_MODEL_TYPE}} | {{CommandQueryMappings.STRUCTURE_MODEL_TYPE}})]: {{AggregateMetadata.TYPE_ROOT_AGGREGATE_NAME}} }
                 }
@@ -117,9 +117,9 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
                 {{entriesOrderByDataFlow.SelectTextTemplate(e => $$"""
                     #region {{e.Entry.PhysicalName}}
-                    public static {{e.Entry.CSharpTypeName}} {{e.Entry.PhysicalName}} => {{WithIndent(e.Entry.RenderCSharpNewStatement(ctx))}};
+                    public static {{e.Entry.CSharpTypeName}} {{e.Entry.PhysicalName}} => {{WithIndent(e.Entry.RenderCSharpNewStatement(ctx), "    ")}};
                 {{e.Tree.SelectTextTemplate(agg => $$"""
-                    {{WithIndent(agg.RenderCSharpMemberClass(ctx))}}
+                    {{WithIndent(agg.RenderCSharpMemberClass(ctx), "    ")}}
                 """)}}
                     #endregion {{e.Entry.PhysicalName}}
                 """)}}
@@ -159,7 +159,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                 """)}}
                   members: {
                 {{_aggregate.GetMembers().Select(IMetadataEntity.GetImpl).SelectTextTemplate(m => $$"""
-                    '{{m.PhysicalName}}': {{WithIndent(m.RenderTypeScriptMetadataObject(ctx))}},
+                    '{{m.PhysicalName}}': {{WithIndent(m.RenderTypeScriptMetadataObject(ctx), "    ")}},
                 """)}}
                   },
                 }
@@ -180,7 +180,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
                     Type = "{{type}}",
                     Model = E_ModelType.{{_aggregate.GetRoot().Model.SchemaName.KebabCaseToPascalCase()}},
                 {{RenderNodeOptionsCs(_aggregate.XElement, ctx).SelectTextTemplate(source => $$"""
-                    {{WithIndent(source)}}
+                    {{WithIndent(source, "    ")}}
                 """)}}
                     Members = new {{MemberClassName}}(),
                 }
@@ -191,7 +191,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
             return $$"""
                 public sealed class {{MemberClassName}} : {{I_AGGREGATE_METADATA_MEMBER}} {
                 {{_aggregate.GetMembers().Select(IMetadataEntity.GetImpl).SelectTextTemplate(m => $$"""
-                    public {{m.CSharpTypeName}} {{m.PhysicalName}} => {{WithIndent(m.RenderCSharpNewStatement(ctx))}};
+                    public {{m.CSharpTypeName}} {{m.PhysicalName}} => {{WithIndent(m.RenderCSharpNewStatement(ctx), "    ")}};
                 """)}}
 
                     public Dictionary<string, {{TYPE_MEMBER}}> AsDictionary() {

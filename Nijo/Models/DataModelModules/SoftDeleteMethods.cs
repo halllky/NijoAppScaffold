@@ -104,7 +104,7 @@ namespace Nijo.Models.DataModelModules {
                 """)}}
                         .SingleOrDefaultAsync(e {{WithIndent(keys.SelectTextTemplate((vm, i) => $$"""
                                                 {{(i == 0 ? "=>" : "&&")}} {{vm.SingleOrDefaultLeft}} == {{vm.TempVarName}}
-                                                """))}})
+                                                """), "                                ")}})
                         .ConfigureAwait(false);
 
                     if (dbEntity == null) {
@@ -254,7 +254,7 @@ namespace Nijo.Models.DataModelModules {
                                     liveTree.Single(e => e.Aggregate == child),
                                     deletedTree.Single(e => e.Aggregate == child),
                                     $"{sourceExpr}.{child.PhysicalName}!",
-                                    $"{targetVar}_{{child.PhysicalName}}"))}}
+                                    $"{targetVar}_{child.PhysicalName}"))}}
                             }
                             """;
 
@@ -268,7 +268,7 @@ namespace Nijo.Models.DataModelModules {
                                     liveTree.Single(e => e.Aggregate == children),
                                     deletedTree.Single(e => e.Aggregate == children),
                                     loopVar,
-                                    $"{targetVar}_{{children.PhysicalName}}"))}}
+                                    $"{targetVar}_{children.PhysicalName}"))}}
                             }
                             """;
                     }

@@ -63,6 +63,7 @@ namespace Nijo.CodeGenerating {
         /// Render 系メソッドの中で、複数行のテンプレート片に挿入位置と同じだけのインデントを与えるために使う。
         /// raw string の補間内で、インデントを下げたい位置から開始すること。
         /// この呼び出しの左側には半角スペースだけを置き、その幅が Render 時に 2 行目以降へ適用される。
+        /// 左側にキーワードや記号など半角スペース以外を置く必要がある場合は 2 引数版を使うこと。
         /// content 側は原則としてインデント 0 から組み立て、さらに深いネストは WithIndent を重ねて表現すること。
         /// </summary>
         /// <param name="content">レンダリング対象のソースコード</param>
@@ -89,25 +90,27 @@ namespace Nijo.CodeGenerating {
                 return string.Empty;
             }
 
+            // すでに WithIndent によってインデントマーカーが付与されている場合は、重複してマーカーを付与しない
+            if (content.StartsWith(INDENT_START_MARKER, StringComparison.Ordinal)
+                && content.EndsWith(INDENT_END_MARKER, StringComparison.Ordinal)) {
+                return content;
+            }
+
             return $"{INDENT_START_MARKER}{content}{INDENT_END_MARKER}";
         }
 
         /// <summary>
         /// 明示的に指定したインデント文字列で 2 行目以降をインデントします。
-        /// 既存呼び出しとの互換性のために残しているオーバーロードで、新規コードでは 1 引数版を優先します。
+        /// raw string の補間位置の左側に空白以外の文字列を置く必要がある場合に使います。
+        /// 左側が半角スペースだけで済む場合は 1 引数版を優先します。
         /// </summary>
-        [Obsolete("WithIndent(string) を優先してください。")]
         internal static string WithIndent(IEnumerable<string> content, string indent) {
             return content
                 .Select(x => WithIndent(x, indent))
                 .Join(Environment.NewLine + indent);
         }
 
-        /// <summary>
-        /// 明示的に指定したインデント文字列で 2 行目以降をインデントします。
-        /// 既存呼び出しとの互換性のために残しているオーバーロードで、新規コードでは 1 引数版を優先します。
-        /// </summary>
-        [Obsolete("WithIndent(string) を優先してください。")]
+        /// <inheritdoc cref="WithIndent(IEnumerable{string}, string)"/>
         internal static string WithIndent(string content, string indent) {
             return content
                 .Split(Environment.NewLine)

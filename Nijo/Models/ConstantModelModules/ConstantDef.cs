@@ -129,7 +129,7 @@ namespace Nijo.Models.ConstantModelModules {
 
             return $$"""
                 {{group.Element.RenderXmlCommentOrJsDoc(E_CsTs.TypeScript)}}
-                {{WithIndent(group.Name)}}: {
+                {{group.Name}}: {
                 {{groupConstants.Where(c => c.Type != ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
                   {{WithIndent(RenderTypeScriptConstant(constant, ctx))}}
                 """)}}
@@ -148,7 +148,7 @@ namespace Nijo.Models.ConstantModelModules {
         /// </summary>
         private string RenderCSharpConstant(ConstantValueDef constant, CodeRenderingContext ctx) {
             return $$"""
-                {{WithIndent(constant.Element.RenderXmlCommentOrJsDoc(E_CsTs.CSharp))}}
+                {{constant.Element.RenderXmlCommentOrJsDoc(E_CsTs.CSharp)}}
                 public const {{GetCSharpType(constant.Type)}} {{constant.CsConstantName}} = {{constant.GetCSharpValue()}};
                 """;
         }
@@ -158,7 +158,7 @@ namespace Nijo.Models.ConstantModelModules {
         /// </summary>
         private string RenderTypeScriptConstant(ConstantValueDef constant, CodeRenderingContext ctx) {
             return $$"""
-                {{WithIndent(constant.Element.RenderXmlCommentOrJsDoc(E_CsTs.TypeScript))}}
+                {{constant.Element.RenderXmlCommentOrJsDoc(E_CsTs.TypeScript)}}
                 {{constant.TsConstantName}}: {{constant.GetTypeScriptValue()}},
                 """;
         }

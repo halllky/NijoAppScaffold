@@ -106,7 +106,7 @@ namespace Nijo.Models.DataModelModules {
                 """)}}
                         .SingleOrDefaultAsync(e {{WithIndent(keys.SelectTextTemplate((vm, i) => $$"""
                                                 {{(i == 0 ? "=>" : "&&")}} {{vm.SingleOrDefaultLeft}} == {{vm.TempVarName}}
-                                                """))}})
+                                                """), "                                ")}})
                         .ConfigureAwait(false);
 
                     if (beforeDbEntity == null) {

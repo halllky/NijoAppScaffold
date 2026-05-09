@@ -65,16 +65,17 @@ namespace Nijo.CodeGenerating {
             var indentStack = new Stack<string>();
 
             foreach (var rawLine in Contents.Split(["\r\n", "\n"], StringSplitOptions.None)) {
-
-                // ループしてコードブロックを出力する箇所でループ対象が0件だった場合に余計な空行が入るのを防ぐ
-                if (rawLine.Contains(SKIP_MARKER)) continue;
-
+                var containsSkipMarker = rawLine.Contains(SKIP_MARKER);
                 var currentIndent = string.Concat(indentStack.Reverse());
                 var line = rawLine
+                    .Replace(SKIP_MARKER, string.Empty)
                     .Replace(INDENT_START_MARKER, string.Empty)
                     .Replace(INDENT_END_MARKER, string.Empty);
 
-                sw.WriteLine(currentIndent + line);
+                // ループや条件分岐の空展開で発生する余計な空行だけ抑止し、通常の空行は保持する
+                if (!containsSkipMarker || !string.IsNullOrWhiteSpace(line)) {
+                    sw.WriteLine(currentIndent + line);
+                }
                 UpdateIndentStack(indentStack, rawLine);
             }
         }
