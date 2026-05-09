@@ -51,13 +51,16 @@ namespace Nijo.Models.ReadModel2Modules {
         IEnumerable<IInstancePropertyMetadata> IPresentationLayerStructure.GetMembers() => GetMembers();
         public string RenderTsNewObjectFunctionBody() {
             if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
-                return $$"""
-                    {
-                        filter: {
-                        },
-                        sort: [],
-                    }
-                    """;
+                var legacyFilterMembers = RenderLegacyNewObjectFunctionMemberLiteral();
+
+                return string.Join(Environment.NewLine, new[] {
+                    "{",
+                    "  filter: {",
+                    legacyFilterMembers == string.Empty ? string.Empty : IndentAll(legacyFilterMembers, "    "),
+                    "  },",
+                    "  sort: [],",
+                    "}",
+                }.Where(line => line != string.Empty));
             }
 
             return $$"""
@@ -164,15 +167,22 @@ namespace Nijo.Models.ReadModel2Modules {
             if (!IsEntry) return string.Empty;
 
             if (context.IsLegacyCompatibilityMode()) {
+                var legacyFilterMembers = RenderLegacyNewObjectFunctionMemberLiteral();
+                var objectLiteral = string.Join(Environment.NewLine, new[] {
+                    "({",
+                    "  filter: {",
+                    legacyFilterMembers == string.Empty ? string.Empty : IndentAll(legacyFilterMembers, "    "),
+                    "  },",
+                    "  sort: [],",
+                    "})",
+                }.Where(line => line != string.Empty));
+
                 return $$"""
 
 
                     /** {{RefEntry.DisplayName}}の検索条件クラスの空オブジェクトを作成して返します。 */
-                    export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({
-                      filter: {
-                      },
-                      sort: [],
-                    })
+                    export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => {{objectLiteral}}
+
                     """;
             }
 
@@ -240,6 +250,14 @@ namespace Nijo.Models.ReadModel2Modules {
                 """;
         }
 
+        private string RenderLegacyNewObjectFunctionMemberLiteral() {
+            return $$"""
+                {{EnumerateFilterMembers().OfType<FilterStructureMember>().SelectTextTemplate(member => $$"""
+                {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{member.RenderLegacyTsNewObjectFunctionValue()}},
+                """)}}
+                """;
+        }
+
         private IEnumerable<IFilterMember> EnumerateFilterMembers() {
             foreach (var member in Aggregate.GetMembers()) {
                 if (member is not ValueMember vm) continue;
@@ -257,6 +275,10 @@ namespace Nijo.Models.ReadModel2Modules {
                     yield return new FilterStructureMember(children.PhysicalName, new RefSearchCondition(children, RefEntry));
                 }
             }
+        }
+
+        private static string IndentAll(string content, string indent) {
+            return content == string.Empty ? string.Empty : indent + WithIndent(content, indent);
         }
 
         private string GetRelationSuffix() {
@@ -309,15 +331,13 @@ namespace Nijo.Models.ReadModel2Modules {
 
             public string RenderTypeScriptDeclaring() {
                 if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
-                    var legacyMemberType = Member.Type.TsTypeName.Contains("null") || !Member.IsKey
-                        ? Member.Type.TsTypeName
-                        : $"{Member.Type.TsTypeName} | null";
+                    var legacyPrimitiveType = GetLegacyPrimitiveTsType(Member);
                     var legacyTypeName = Member.OnlySearchCondition
-                        ? legacyMemberType
+                        ? legacyPrimitiveType
                         : Member.Type.SearchBehavior?.FilterTsTypeName is string filterTsTypeName
                             && Regex.IsMatch(filterTsTypeName, @"\{.*from.*to.*\}")
-                            ? $"{{ from?: {legacyMemberType}, to?: {legacyMemberType} }}"
-                            : legacyMemberType;
+                            ? $"{{ from?: {legacyPrimitiveType}, to?: {legacyPrimitiveType} }}"
+                            : GetLegacyTsType(Member);
                     return $$"""
                         {{Member.PhysicalName}}?: {{legacyTypeName}}
                         """;
@@ -342,6 +362,26 @@ namespace Nijo.Models.ReadModel2Modules {
                 }
 
                 return Member.Type.SearchBehavior!.RenderTsNewObjectFunctionValue();
+            }
+
+            private static string GetLegacyTsType(ValueMember member) {
+                return member.Type switch {
+                    ValueMemberTypes.BoolMember => "'指定なし' | 'Trueのみ' | 'Falseのみ'",
+                    _ => GetLegacyPrimitiveTsType(member),
+                };
+            }
+
+            private static string GetLegacyPrimitiveTsType(ValueMember member) {
+                return member.Type switch {
+                    ValueMemberTypes.IntMember => "string | null",
+                    ValueMemberTypes.DecimalMember => "string | null",
+                    ValueMemberTypes.SequenceMember => "number | null",
+                    ValueMemberTypes.YearMember => "number | null",
+                    ValueMemberTypes.YearMonthMember => "number | null",
+                    ValueMemberTypes.DateMember => "string",
+                    ValueMemberTypes.DateTimeMember => "string",
+                    _ => member.Type.TsTypeName,
+                };
             }
         }
 
@@ -377,6 +417,18 @@ namespace Nijo.Models.ReadModel2Modules {
                 return $$"""
                     {
                       {{WithIndent(_target.RenderNewObjectFunctionMemberLiteral(), "  ")}}
+                    }
+                    """;
+            }
+
+            public string RenderLegacyTsNewObjectFunctionValue() {
+                var legacyMembers = _target.RenderLegacyNewObjectFunctionMemberLiteral();
+
+                return $$"""
+                    {
+                    {{If(legacyMembers != string.Empty, () => $$"""
+                      {{WithIndent(legacyMembers, "  ")}}
+                    """)}}
                     }
                     """;
             }

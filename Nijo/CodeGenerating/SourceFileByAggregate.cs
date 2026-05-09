@@ -378,6 +378,7 @@ namespace Nijo.CodeGenerating {
 
             if (ctx.IsLegacyCompatibilityMode()) {
                 var legacyTypeScriptSections = _typeScriptSectionsInOrder
+                    .Where(source => !string.IsNullOrWhiteSpace(source))
                     .SelectTextTemplate(source => source);
 
                 return $$"""

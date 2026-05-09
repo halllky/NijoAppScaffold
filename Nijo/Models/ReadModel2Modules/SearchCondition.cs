@@ -92,6 +92,7 @@ namespace Nijo.Models.ReadModel2Modules {
                         {{sortableMembers.SelectTextTemplate((member, i) => $$"""
                           {{(i == 0 ? "=" : "|")}} '{{member.GetLiteral().Replace("'", "\\'")}}'
                         """)}}
+
                         """;
                 }
 
@@ -351,6 +352,13 @@ namespace Nijo.Models.ReadModel2Modules {
                 var entry = new Entry(rootAggregate);
 
                 if (ctx.IsLegacyCompatibilityMode()) {
+                    var filters = rootAggregate
+                        .EnumerateThisAndDescendants()
+                        .Select(agg => new Filter(agg));
+                    var legacyFilters = filters.SelectTextTemplate(filter => $$"""
+                        {{RenderLegacyFilter(filter)}}
+                        """);
+
                     return $$"""
                         // ----------------------------------------------------------
                         // 検索条件クラス（{{rootAggregate.DisplayName}}）
@@ -374,15 +382,21 @@ namespace Nijo.Models.ReadModel2Modules {
                            */
                           {{Entry.EXCLUDE_CHILDREN_TS}}?: boolean
                         }
-                        /** {{rootAggregate.DisplayName}}の一覧検索条件のうち絞り込み条件を指定する部分 */
-                        export type {{entry.FilterRoot.TsTypeName}} = {
-                        {{entry.FilterRoot.RenderTypeScriptDeclaringLiteral().SelectTextTemplate(source => $$"""
-                          {{WithIndent(source, "  ")}}
-                        """)}}
-                        }
+                        {{legacyFilters}}
 
 
                         """;
+
+                    static string RenderLegacyFilter(Filter filter) {
+                        return $$"""
+                        /** {{filter.Aggregate.DisplayName}}の一覧検索条件のうち絞り込み条件を指定する部分 */
+                        export type {{filter.TsTypeName}} = {
+                        {{filter.GetOwnMembers().SelectTextTemplate(member => $$"""
+                          {{WithIndent(member.RenderTypeScriptDeclaring(), "  ")}}
+                        """)}}
+                        }
+                        """;
+                    }
                 }
 
                 return $$"""
@@ -591,15 +605,13 @@ namespace Nijo.Models.ReadModel2Modules {
             }
             string IFilterMember.RenderTypeScriptDeclaring() {
                 if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
-                    var legacyMemberType = Member.Type.TsTypeName.Contains("null") || !Member.IsKey
-                        ? Member.Type.TsTypeName
-                        : $"{Member.Type.TsTypeName} | null";
+                    var legacyPrimitiveType = GetLegacySearchConditionPrimitiveTsType(Member);
                     var legacyTypeName = Member.OnlySearchCondition
-                        ? legacyMemberType
+                        ? legacyPrimitiveType
                         : SearchBehavior?.FilterTsTypeName is string filterTsTypeName
                             && Regex.IsMatch(filterTsTypeName, @"\{.*from.*to.*\}")
-                            ? $"{{ from?: {legacyMemberType}, to?: {legacyMemberType} }}"
-                            : legacyMemberType;
+                            ? $"{{ from?: {legacyPrimitiveType}, to?: {legacyPrimitiveType} }}"
+                            : GetLegacySearchConditionTsType(Member);
                     return $$"""
                         {{Member.PhysicalName}}?: {{legacyTypeName}}
                         """;
@@ -628,6 +640,26 @@ namespace Nijo.Models.ReadModel2Modules {
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => Member.PhysicalName;
             IValueMemberType IInstanceValuePropertyMetadata.Type => Member.Type;
+
+            private static string GetLegacySearchConditionTsType(ValueMember member) {
+                return member.Type.SchemaTypeName switch {
+                    "bool" => "'指定なし' | 'Trueのみ' | 'Falseのみ'",
+                    _ => GetLegacySearchConditionPrimitiveTsType(member),
+                };
+            }
+
+            private static string GetLegacySearchConditionPrimitiveTsType(ValueMember member) {
+                return member.Type switch {
+                    ValueMemberTypes.IntMember => "string | null",
+                    ValueMemberTypes.DecimalMember => "string | null",
+                    ValueMemberTypes.SequenceMember => "number | null",
+                    ValueMemberTypes.YearMember => "number | null",
+                    ValueMemberTypes.YearMonthMember => "number | null",
+                    ValueMemberTypes.DateMember => "string",
+                    ValueMemberTypes.DateTimeMember => "string",
+                    _ => member.Type.TsTypeName,
+                };
+            }
         }
 
         internal class FilterRefMember : IFilterMember, IInstanceStructurePropertyMetadata {
@@ -690,6 +722,12 @@ namespace Nijo.Models.ReadModel2Modules {
                     """;
             }
             string IFilterMember.RenderTypeScriptDeclaring() {
+                if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
+                    return $$"""
+                        {{_relational.PhysicalName}}: {{ChildFilter.TsTypeName}}
+                        """;
+                }
+
                 return $$"""
                     {{_relational.PhysicalName}}: {
                       {{WithIndent(ChildFilter.RenderTypeScriptDeclaringLiteral(), "  ")}}

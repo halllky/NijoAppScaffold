@@ -56,15 +56,7 @@ namespace Nijo.Models.ReadModel2Modules {
         }
         internal string RenderTypeScript(CodeRenderingContext context) {
             if (context.IsLegacyCompatibilityMode()) {
-                return $$"""
-
-                    /** {{RefEntry.DisplayName}}が他の集約から参照されたときの{{Aggregate.DisplayName}}の画面表示用データ型 */
-                    export type {{TsTypeName}} = {
-                    {{EnumerateMembers().SelectTextTemplate(member => $$"""
-                      {{WithIndent(member.RenderTypeScriptDeclaring(), "  ")}}
-                    """)}}
-                    }
-                    """;
+                return IsEntry ? RenderLegacyTypeScriptRecursively() : string.Empty;
             }
 
             return $$"""
@@ -91,6 +83,20 @@ namespace Nijo.Models.ReadModel2Modules {
             return $$"""
                 /** {{CsClassName}}を新規作成します。 */
                 export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({{RenderTsNewObjectFunctionBody()}})
+                """;
+        }
+
+        private string RenderLegacyTypeScriptRecursively() {
+            return $$"""
+                /** {{RefEntry.DisplayName}}が他の集約から参照されたときの{{Aggregate.DisplayName}}の画面表示用データ型 */
+                export type {{TsTypeName}} = {
+                {{EnumerateMembers().SelectTextTemplate(member => $$"""
+                  {{WithIndent(member.RenderTypeScriptDeclaring(), "  ")}}
+                """)}}
+                }
+                {{EnumerateMembers().OfType<StructureMember>().Where(member => member.Target.RefEntry == RefEntry).SelectTextTemplate(member => $$"""
+                {{member.Target.RenderLegacyTypeScriptRecursively()}}
+                """)}}
                 """;
         }
 
@@ -169,9 +175,16 @@ namespace Nijo.Models.ReadModel2Modules {
 
             public string RenderTypeScriptDeclaring() {
                 if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
-                    var legacyTypeName = Member.Type.TsTypeName.Contains("null") || !Member.IsKey
-                        ? Member.Type.TsTypeName
-                        : $"{Member.Type.TsTypeName} | null";
+                    var legacyTypeName = Member.Type switch {
+                        ValueMemberTypes.IntMember => "string | null",
+                        ValueMemberTypes.DecimalMember => "string | null",
+                        ValueMemberTypes.SequenceMember => "number | null",
+                        ValueMemberTypes.YearMember => "number | null",
+                        ValueMemberTypes.YearMonthMember => "number | null",
+                        ValueMemberTypes.DateMember => "string",
+                        ValueMemberTypes.DateTimeMember => "string",
+                        _ => Member.Type.TsTypeName,
+                    };
                     return $$"""
                         {{Member.PhysicalName}}: {{legacyTypeName}} | undefined
                         """;
@@ -238,6 +251,10 @@ namespace Nijo.Models.ReadModel2Modules {
             }
 
             public string RenderTsNewObjectFunctionValue() {
+                if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
+                    return _isArray ? "[]" : _target.RenderTsNewObjectFunctionBody();
+                }
+
                 return _isArray ? "[]" : $"{_target.TsNewObjectFunction}()";
             }
         }

@@ -332,7 +332,6 @@ namespace Nijo.Models.ReadModel2Modules {
             var legacyValueMembers = GetLegacyValueMembers().ToArray();
 
             return $$"""
-
                 /** {{Aggregate.DisplayName}}の画面表示用データ構造 */
                 export type {{TsTypeName}} = {
                   /** 値 */
@@ -393,8 +392,19 @@ namespace Nijo.Models.ReadModel2Modules {
 
         private static string GetLegacyTsType(IEditablePresentationObjectValueOrRefMember member) {
             return member switch {
-                EditablePresentationObjectValueMember value when value.Member.IsKey && !value.Member.Type.TsTypeName.Contains("null") => $"{value.Member.Type.TsTypeName} | null",
-                EditablePresentationObjectValueMember value => value.Member.Type.TsTypeName,
+                EditablePresentationObjectValueMember value => value.Member.Type.SchemaTypeName switch {
+                    "int" => "string | null",
+                    "numeric" => "string | null",
+                    "decimal" => "string | null",
+                    "sequence" => "number | null",
+                    "year" => "number | null",
+                    "yearmonth" => "number | null",
+                    "date" => "string",
+                    "datetime" => "string",
+                    "bool" => "boolean",
+                    "search-condition-only-bool" => "boolean",
+                    _ => value.Member.Type.TsTypeName,
+                },
                 EditablePresentationObjectRefMember reference => reference.RefEntry.TsTypeName,
                 _ => throw new InvalidOperationException(),
             };
@@ -507,25 +517,55 @@ namespace Nijo.Models.ReadModel2Modules {
         internal string RenderTsNewObjectFunction(CodeRenderingContext ctx) {
             if (ctx.IsLegacyCompatibilityMode()) {
                 var childMembers = GetChildMembers().ToArray();
+                var ownMemberInitializers = Aggregate.GetMembers()
+                    .Select(RenderLegacyOwnMemberInitialize)
+                    .OfType<string>()
+                    .ToArray();
+                var lifeCycleInitializers = HasLifeCycle
+                    ? new[] {
+                        $"{EXISTS_IN_DB_TS}: false,",
+                        $"{WILL_BE_CHANGED_TS}: true,",
+                        $"{WILL_BE_DELETED_TS}: false,",
+                        $"{UNIQUE_ID_TS}: UUID.generate(),",
+                    }
+                    : Array.Empty<string>();
 
                 return $$"""
                     /** {{Aggregate.DisplayName}}の画面表示用オブジェクトを新規作成します。 */
                     export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({
                       {{VALUES_TS}}: {
+                    {{ownMemberInitializers.SelectTextTemplate(line => $$"""
+                        {{WithIndent(line, "    ")}}
+                    """)}}
                       },
                     {{childMembers.SelectTextTemplate(c => $$"""
                       {{c.PhysicalName}}: {{c.RenderNewObjectCreation()}},
                     """)}}
-                      {{EXISTS_IN_DB_TS}}: false,
-                      {{WILL_BE_CHANGED_TS}}: true,
-                      {{WILL_BE_DELETED_TS}}: false,
-                      {{UNIQUE_ID_TS}}: UUID.generate(),
+                    {{lifeCycleInitializers.SelectTextTemplate(line => $$"""
+                      {{line}}
+                    """)}}
                     {{If(HasVersion, () => $$"""
                       {{VERSION_TS}}: undefined,
                     """)}}
                     })
 
                     """;
+
+                string? RenderLegacyOwnMemberInitialize(IAggregateMember member) {
+                    if (member is ValueMember valueMember
+                        && valueMember.Owner == Aggregate
+                        && valueMember.Type.SchemaTypeName == "uuid") {
+                        return $"{member.PhysicalName}: UUID.generate(),";
+                    }
+
+                    if (member is RefToMember refToMember
+                        && refToMember.Owner == Aggregate) {
+                        var refInstance = new RefDisplayData(refToMember.RefTo.AsEntry(), refToMember.RefTo.AsEntry());
+                        return $"{member.PhysicalName}: {refInstance.TsNewObjectFunction}(),";
+                    }
+
+                    return null;
+                }
             }
 
             return $$"""
@@ -639,6 +679,7 @@ namespace Nijo.Models.ReadModel2Modules {
                 }
                 """;
         }
+
         internal string RenderSetKeysReadOnly(CodeRenderingContext ctx) {
             if (!ctx.IsLegacyCompatibilityMode()) {
                 return $$"""
@@ -824,15 +865,15 @@ namespace Nijo.Models.ReadModel2Modules {
         }
 
         private static string RenderLegacyDeepEqualBody(AggregateBase aggregate, string left, string right) {
-            return $$"""
-                {{aggregate.GetMembers().SelectTextTemplate(member => member switch {
-                ValueMember valueMember when !valueMember.OnlySearchCondition => RenderLegacyValueMember(valueMember, left, right),
-                RefToMember refToMember => RenderLegacyRefMember(refToMember, left, right),
-                ChildAggregate childAggregate => RenderLegacyChildAggregate(childAggregate, left, right),
-                ChildrenAggregate childrenAggregate => RenderLegacyChildrenAggregate(childrenAggregate, left, right),
-                _ => string.Empty,
-            })}}
-                """;
+            return string.Join(Environment.NewLine, aggregate.GetMembers()
+                .Select(member => member switch {
+                    ValueMember valueMember when !valueMember.OnlySearchCondition || valueMember.Type.CsDomainTypeName == "bool" => RenderLegacyValueMember(valueMember, left, right),
+                    RefToMember refToMember => RenderLegacyRefMember(refToMember, left, right),
+                    ChildAggregate childAggregate => RenderLegacyChildAggregate(childAggregate, left, right),
+                    ChildrenAggregate childrenAggregate => RenderLegacyChildrenAggregate(childrenAggregate, left, right),
+                    _ => string.Empty,
+                })
+                .Where(rendered => rendered != string.Empty));
 
             static string RenderLegacyValueMember(ValueMember valueMember, string left, string right) {
                 var leftValue = $"{left}.{VALUES_TS}?.{valueMember.PhysicalName}";
@@ -852,41 +893,49 @@ namespace Nijo.Models.ReadModel2Modules {
             }
 
             static string RenderLegacyRefMember(RefToMember refToMember, string left, string right) {
-                return $$"""
-                    if (JSON.stringify({{left}}.{{VALUES_TS}}?.{{refToMember.PhysicalName}} ?? null) !== JSON.stringify({{right}}.{{VALUES_TS}}?.{{refToMember.PhysicalName}} ?? null)) return false
-                    """;
+                var leftValue = $"{left}.{VALUES_TS}?.{refToMember.PhysicalName}";
+                var rightValue = $"{right}.{VALUES_TS}?.{refToMember.PhysicalName}";
+
+                return string.Join(Environment.NewLine, refToMember.RefTo
+                    .AsEntry()
+                    .GetKeyVMs()
+                    .Select(key => $"if (({leftValue}?.{key.PhysicalName} ?? undefined) !== ({rightValue}?.{key.PhysicalName} ?? undefined)) return false"));
             }
 
             static string RenderLegacyChildAggregate(ChildAggregate childAggregate, string left, string right) {
-                return $$"""
-                    if ((({{left}}.{{childAggregate.PhysicalName}} ?? undefined) === undefined) !== ((({{right}}.{{childAggregate.PhysicalName}} ?? undefined) === undefined))) return false
-                    if ({{left}}.{{childAggregate.PhysicalName}} && {{right}}.{{childAggregate.PhysicalName}}) {
-                      {{WithIndent(RenderLegacyDeepEqualBody(childAggregate, $"{left}.{childAggregate.PhysicalName}", $"{right}.{childAggregate.PhysicalName}"), "  ")}}
-                    }
-                    """;
+                return RenderLegacyDeepEqualBody(
+                        childAggregate,
+                        $"{left}.{childAggregate.PhysicalName}?",
+                        $"{right}.{childAggregate.PhysicalName}?");
             }
 
             static string RenderLegacyChildrenAggregate(ChildrenAggregate childrenAggregate, string left, string right) {
                 var leftItems = $"{left}{'.'}{childrenAggregate.PhysicalName}";
                 var rightItems = $"{right}{'.'}{childrenAggregate.PhysicalName}";
+                var depth = childrenAggregate.Owner.EnumerateAncestors().Count();
+                var indexVar = depth < 1 ? "i" : $"i{depth}";
+                var leftItemVar = $"a{depth}";
+                var rightItemVar = $"b{depth}";
 
-                return $$"""
-                    const {{childrenAggregate.GetLoopVarName("leftItems")}} = {{leftItems}} ?? []
-                    const {{childrenAggregate.GetLoopVarName("rightItems")}} = {{rightItems}} ?? []
-                    if ({{childrenAggregate.GetLoopVarName("leftItems")}}.length !== {{childrenAggregate.GetLoopVarName("rightItems")}}.length) return false
-                    for (let i = 0; i < {{childrenAggregate.GetLoopVarName("leftItems")}}.length; i++) {
-                      const leftItem = {{childrenAggregate.GetLoopVarName("leftItems")}}[i]
-                      const rightItem = {{childrenAggregate.GetLoopVarName("rightItems")}}[i]
-                      {{WithIndent(RenderLegacyDeepEqualBody(childrenAggregate, "leftItem", "rightItem"), "  ")}}
-                    }
-                    """;
+                return string.Join(Environment.NewLine, new[] {
+                                        $"if ({leftItems}.length !== {rightItems}.length) return false;",
+                                        $"if (({leftItems} ?? undefined) !== undefined && ({rightItems} ?? undefined) !== undefined) {{",
+                                        $"  for (let {indexVar} = 0; {indexVar} < {leftItems}.length; {indexVar}++) {{",
+                                        $"    const {leftItemVar} = {leftItems}[{indexVar}]",
+                                        $"    const {rightItemVar} = {rightItems}[{indexVar}]",
+                                    "    " + WithIndent(RenderLegacyDeepEqualBody(childrenAggregate, leftItemVar, rightItemVar), "    "),
+                                        "  }",
+                                        "}",
+                                });
             }
         }
 
         private static string RenderUiConstraintMembers(EditablePresentationObject displayData) {
             static string IndentAll(string content, string indent) => indent + WithIndent(content, indent);
 
-            var valueMembers = displayData.GetValueMembers()
+            var uiConstraintValueMembers = EnumerateUiConstraintValueMembers(displayData).ToArray();
+
+            var valueMembers = uiConstraintValueMembers
                 .Select(member => member switch {
                     EditablePresentationObjectValueMember valueMember => $"  {valueMember.PropertyName}: {GetUiConstraintTypeName(valueMember.Member)}",
                     EditablePresentationObjectRefMember refMember => $"  {refMember.PropertyName}: AutoGeneratedUtil.MemberConstraintBase",
@@ -896,9 +945,9 @@ namespace Nijo.Models.ReadModel2Modules {
 
             var childMembers = displayData.GetChildMembers()
                 .Select(child => string.Join(Environment.NewLine, new[] {
-                            $"  {child.PhysicalName}: {{",
-                            IndentAll(RenderUiConstraintMembers(child), "    "),
-                            "  }",
+                            $"{child.PhysicalName}: {{",
+                            IndentAll(RenderUiConstraintMembers(child), "  "),
+                            "}",
                 }));
 
             return string.Join(Environment.NewLine, new[] {
@@ -912,7 +961,9 @@ namespace Nijo.Models.ReadModel2Modules {
         private static string RenderUiConstraintValues(EditablePresentationObject displayData) {
             static string IndentAll(string content, string indent) => indent + WithIndent(content, indent);
 
-            var valueMembers = displayData.GetValueMembers()
+            var uiConstraintValueMembers = EnumerateUiConstraintValueMembers(displayData).ToArray();
+
+            var valueMembers = uiConstraintValueMembers
                 .Select(member => member switch {
                     EditablePresentationObjectValueMember valueMember => IndentAll(RenderUiConstraintValue(valueMember), "  "),
                     EditablePresentationObjectRefMember refMember => IndentAll(RenderUiConstraintValue(refMember), "  "),
@@ -922,9 +973,9 @@ namespace Nijo.Models.ReadModel2Modules {
 
             var childMembers = displayData.GetChildMembers()
                 .Select(child => string.Join(Environment.NewLine, new[] {
-                            $"  {child.PhysicalName}: {{",
-                            IndentAll(RenderUiConstraintValues(child), "    "),
-                            "  },",
+                            $"{child.PhysicalName}: {{",
+                            IndentAll(RenderUiConstraintValues(child), "  "),
+                            "},",
                 }));
 
             return string.Join(Environment.NewLine, new[] {
@@ -933,6 +984,19 @@ namespace Nijo.Models.ReadModel2Modules {
                         "},",
                         string.Join(Environment.NewLine, childMembers),
                     }.Where(text => text != string.Empty));
+        }
+
+        private static IEnumerable<IEditablePresentationObjectValueOrRefMember> EnumerateUiConstraintValueMembers(EditablePresentationObject displayData) {
+            if (!CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
+                return displayData.GetValueMembers();
+            }
+
+            return displayData.Aggregate.GetMembers().Select(member => member switch {
+                ValueMember valueMember when !valueMember.OnlySearchCondition || valueMember.Type.CsDomainTypeName == "bool"
+                    => (IEditablePresentationObjectValueOrRefMember?)new EditablePresentationObjectValueMember(valueMember),
+                RefToMember refToMember => new EditablePresentationObjectRefMember(refToMember),
+                _ => null,
+            }).OfType<IEditablePresentationObjectValueOrRefMember>();
         }
 
         private static string GetUiConstraintTypeName(ValueMember valueMember) {
@@ -950,7 +1014,7 @@ namespace Nijo.Models.ReadModel2Modules {
             if (!string.IsNullOrWhiteSpace(valueMember.Member.CharacterType)) valueLines.Add($"characterType: '{valueMember.Member.CharacterType}',");
             if (valueMember.Member.TotalDigit is int totalDigit) valueLines.Add($"totalDigit: {totalDigit},");
             if (valueMember.Member.DecimalPlace is int decimalPlace) valueLines.Add($"decimalPlace: {decimalPlace},");
-            if (valueMember.Member.IsNotNegative) valueLines.Add("notNegative: true,");
+            if (valueMember.Member.DecimalPlace is int && valueMember.Member.IsNotNegative) valueLines.Add("notNegative: true,");
 
             return $$"""
                 {{valueMember.PropertyName}}: {
