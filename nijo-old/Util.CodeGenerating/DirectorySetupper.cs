@@ -44,9 +44,15 @@ namespace Nijo.Util.CodeGenerating {
 
             using var sw = SourceFile.GetStreamWriter(file);
 
-            foreach (var line in sourceFile.RenderContent(_ctx).Split(Environment.NewLine)) {
-                if (line.Contains(SKIP_MARKER)) continue;
-                sw.WriteLine(line);
+            var newLine = sw.NewLine;
+            var content = sourceFile.RenderContent(_ctx).ReplaceLineEndings(newLine);
+            var lines = content.Split(newLine);
+            var endsWithNewLine = content.EndsWith(newLine, StringComparison.Ordinal);
+            var filtered = lines.Where(line => !line.Contains(SKIP_MARKER));
+
+            sw.Write(string.Join(newLine, filtered));
+            if (endsWithNewLine) {
+                sw.Write(newLine);
             }
         }
 
