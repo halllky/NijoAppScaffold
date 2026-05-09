@@ -186,10 +186,13 @@ namespace Nijo.CodeGenerating {
                         }
 
                     """)}}
+
+                    #region データ構造クラス
                     {{csharpClass.SelectTextTemplate(source => $$"""
-                    {{WithIndent(source, "")}}
+                        {{WithIndent(source, "    ")}}
 
                     """)}}
+                    #endregion データ構造クラス
                     }
                     """;
             }

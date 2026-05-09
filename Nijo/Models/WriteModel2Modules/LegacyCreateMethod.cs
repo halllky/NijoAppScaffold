@@ -90,7 +90,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(dbEntity).State = EntityState.Detached;
-                {{DataModelModules.UpdateMethod.RenderDescendantDetaching(rootAggregate, "dbEntity").SelectTextTemplate(source => $$"""
+                {{LegacyDescendantState.RenderDescendantDetaching(rootAggregate, "dbEntity").SelectTextTemplate(source => $$"""
                         {{WithIndent(source, "        ")}}
                 """)}}
 
@@ -116,7 +116,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(dbEntity).State = EntityState.Detached;
-                {{DataModelModules.UpdateMethod.RenderDescendantDetaching(rootAggregate, "dbEntity").SelectTextTemplate(source => $$"""
+                {{LegacyDescendantState.RenderDescendantDetaching(rootAggregate, "dbEntity").SelectTextTemplate(source => $$"""
                         {{WithIndent(source, "        ")}}
                 """)}}
 

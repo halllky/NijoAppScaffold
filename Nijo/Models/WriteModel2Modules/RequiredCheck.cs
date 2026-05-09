@@ -150,14 +150,14 @@ namespace Nijo.Models.WriteModel2Modules {
                         """;
 
                 } else if (member is ChildAggregate child) {
-                    var childExpr = $"{instanceName}.{child.PhysicalName}";
+                    var childExpr = $"{instanceName}.{child.PhysicalName}?";
                     var childBody = RenderAggregateLegacy(child, childExpr).ToArray();
                     if (childBody.Length == 0) continue;
 
                     yield return $$"""
-                        if ({{childExpr}} != null) {
-                            {{WithIndent(childBody, "    ")}}
-                        }
+
+                        // {{child.DisplayName}} の各項目の必須チェック
+                        {{WithIndent(childBody, "")}}
                         """;
 
                 } else if (member is ChildrenAggregate children) {
@@ -168,6 +168,12 @@ namespace Nijo.Models.WriteModel2Modules {
                     if (loopBody.Length == 0) continue;
 
                     yield return $$"""
+                        if ({{arrayExpr}} != null
+                            && {{arrayExpr}}.Count == 0) {
+                            e.Messages.{{children.PhysicalName}}.AddError("{{children.DisplayName}}には1件以上指定する必要があります。");
+                        }
+
+                        // {{children.DisplayName}} の各項目の必須チェック
                         for (var {{indexName}} = 0; {{indexName}} < {{arrayExpr}}.Count; {{indexName}}++) {
                             var {{itemName}} = {{arrayExpr}}.ElementAt({{indexName}});
 

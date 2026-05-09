@@ -31,15 +31,18 @@ namespace Nijo.Models.WriteModel2Modules {
                     var fullpath = vm.GetPathFromEntry().ToArray();
                     return new {
                         TempVarName = $"searchKey{i + 1}",
-                        PhysicalName = vm.PhysicalName,
+                        PhysicalName = fullpath.Select(node => node switch {
+                            AggregateBase => null,
+                            ValueMember valueMember => valueMember.PhysicalName,
+                            RefToMember refToMember => refToMember.PhysicalName,
+                            _ => throw new InvalidOperationException($"未対応のスキーマパス型: {node.GetType().Name}"),
+                        }).Where(name => name != null).Join("_"),
                         vm.DisplayName,
                         VmType = vm.Type,
                         LogTemplate = $"{vm.DisplayName.Replace("\"", "\\\"")}: {{key{i}}}",
                         SaveCommandFullPath = fullpath.AsSaveCommand().ToArray(),
                         SaveCommandMessageFullPath = fullpath.AsSaveCommandMessage().ToArray(),
-                        SingleOrDefaultLeft = selectKeysLeft
-                            .Single(x => x.Metadata.SchemaPathNode.ToMappingKey() == vm.ToMappingKey())
-                            .GetJoinedPathFromInstance(E_CsTs.CSharp, "!."),
+                        SingleOrDefaultLeft = $"e.{fullpath.AsSaveCommand().Join(".")}",
                         DbEntityFullPath = pkValueCandidates
                             .Single(x => x.Metadata.SchemaPathNode.ToMappingKey() == vm.ToMappingKey())
                             .GetJoinedPathFromInstance(E_CsTs.CSharp, "?."),
@@ -79,6 +82,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
                     var beforeDbEntity = DbContext.{{dbEntity.DbSetName}}
                         .AsNoTracking()
+                {{new Nijo.Parts.CSharp.EFCoreEntity(rootAggregate).RenderInclude().Select(source => source.Replace("e => e!.", "x => x.")).Select(source => source.Replace("ThenInclude(e => e!.", "ThenInclude(x => x.")).Select(source => $"        {source}").SelectTextTemplate(source => source)}}
                         .SingleOrDefault(e {{WithIndent(keys.SelectTextTemplate((k, i) => $$"""
                                            {{(i == 0 ? "=>" : "&&")}} {{k.SingleOrDefaultLeft}} == {{k.TempVarName}}
                                            """), "                           ")}});
@@ -135,7 +139,7 @@ namespace Nijo.Models.WriteModel2Modules {
                         entry.State = EntityState.Modified;
                         entry.Property(e => e.{{Nijo.Parts.CSharp.EFCoreEntity.VERSION}}).OriginalValue = after.{{DataClassForSaveBase.VERSION_CS}};
 
-                {{DataModelModules.UpdateMethod.RenderDescendantAttaching(rootAggregate).SelectTextTemplate(source => $$"""
+                {{LegacyDescendantState.RenderDescendantAttaching(rootAggregate).SelectTextTemplate(source => $$"""
                         {{WithIndent(source, "        ")}}
 
                 """)}}
@@ -147,7 +151,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(afterDbEntity).State = EntityState.Detached;
-                {{DataModelModules.UpdateMethod.RenderDescendantDetaching(rootAggregate, "afterDbEntity").SelectTextTemplate(source => $$"""
+                {{LegacyDescendantState.RenderDescendantDetaching(rootAggregate, "afterDbEntity").SelectTextTemplate(source => $$"""
                         {{WithIndent(source, "        ")}}
                 """)}}
 
@@ -171,7 +175,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(afterDbEntity).State = EntityState.Detached;
-                {{DataModelModules.UpdateMethod.RenderDescendantDetaching(rootAggregate, "afterDbEntity").SelectTextTemplate(source => $$"""
+                {{LegacyDescendantState.RenderDescendantDetaching(rootAggregate, "afterDbEntity").SelectTextTemplate(source => $$"""
                         {{WithIndent(source, "        ")}}
                 """)}}
 

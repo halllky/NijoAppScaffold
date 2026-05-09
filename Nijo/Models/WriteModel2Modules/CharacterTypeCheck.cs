@@ -1,6 +1,8 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.Models.DataModelModules;
 using Nijo.Parts.CSharp;
+using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -60,7 +62,7 @@ namespace Nijo.Models.WriteModel2Modules {
                     var config = ServiceProvider.GetRequiredService<DefaultConfiguration>();
 
                 """).Else(() => $$"""
-
+                    // 該当項目なし
                 """)}}
                 {{If(body.Length == 0, () => $$"""
 
@@ -73,15 +75,73 @@ namespace Nijo.Models.WriteModel2Modules {
 
         internal static string RenderLegacyKbnType(RootAggregate rootAggregate) {
             var messageInterfaceName = new DataClassForSave(rootAggregate, DataClassForSave.E_Type.UpdateOrDelete).MessageInterfaceName;
+            var body = RenderAggregateLegacyKbnType(rootAggregate, "dbEntity").ToArray();
 
             return $$"""
                 /// <summary>
                 /// 異なる種類の区分値が登録されないかのチェック処理。違反する項目があった場合はその旨が第2引数のオブジェクト内に追記されます。
                 /// </summary>
                 public virtual void CheckKbnType({{new EFCoreEntity(rootAggregate).ClassName}} dbEntity, {{SaveContext.BEFORE_SAVE}}<{{messageInterfaceName}}> e) {
+                {{If(body.Length == 0, () => $$"""
 
+                """).Else(() => $$"""
+                    {{WithIndent(body, "    ")}}
+                """)}}
                 }
                 """;
+        }
+
+        private static IEnumerable<string> RenderAggregateLegacyKbnType(AggregateBase aggregate, string instanceName) {
+            foreach (var member in aggregate.GetMembers()) {
+                if (member is ValueMember) {
+                    continue;
+
+                } else if (member is RefToMember refTo) {
+                    if (!GenericLookupRefToInfo.TryCreate(refTo, out var info)) continue;
+
+                    var refExpr = $"{instanceName}.{refTo.PhysicalName}";
+                    var messagePath = string.Join('.', GetLegacyMessagePath(refTo));
+                    var hasAnyValueExpression = string.Join("\r\n|| ", info.NonHardCodedKeyMembers.Select(valueMember => {
+                        var valueExpr = $"{refExpr}.{valueMember.PhysicalName}";
+                        return valueMember.Type.CsPrimitiveTypeName == "string"
+                            ? $"!string.IsNullOrWhiteSpace({valueExpr})"
+                            : $"{valueExpr} != null";
+                    }));
+                    var utilExpression = $"{info.RootAggregate.PhysicalName}Util.{info.Category.DisplayName.ToCSharpSafe()}";
+                    var existsExpression = info.NonHardCodedKeyMembers.Count == 0
+                        ? $"{utilExpression}.Any()"
+                        : $"{utilExpression}.Any(candidate => {string.Join("\r\n&& ", info.NonHardCodedKeyMembers.Select(valueMember => $"candidate.{valueMember.PhysicalName} == {refExpr}.{valueMember.PhysicalName}"))})";
+
+                    yield return $$"""
+                        if (({{hasAnyValueExpression}})
+                            && !({{existsExpression}})) {
+                            e.{{messagePath}}.AddError("区分値の種類が不正です。");
+                        }
+                        """;
+
+                } else if (member is ChildAggregate child) {
+                    var childExpr = $"{instanceName}.{child.PhysicalName}?";
+
+                    yield return $$"""
+
+                        {{WithIndent(RenderAggregateLegacyKbnType(child, childExpr), "")}}
+                        """;
+
+                } else if (member is ChildrenAggregate children) {
+                    var arrayExpr = $"{instanceName}.{children.PhysicalName}";
+                    var indexName = children.GetLoopVarName("i");
+                    var itemName = children.GetLoopVarName("item");
+
+                    yield return $$"""
+
+                        for (var {{indexName}} = 0; {{indexName}} < {{arrayExpr}}.Count; {{indexName}}++) {
+                            var {{itemName}} = {{arrayExpr}}.ElementAt({{indexName}});
+
+                            {{WithIndent(RenderAggregateLegacyKbnType(children, itemName), "    ")}}
+                        }
+                        """;
+                }
+            }
         }
 
         private static void RegisterHelpers(RootAggregate rootAggregate, CodeRenderingContext ctx) {
@@ -156,28 +216,24 @@ namespace Nijo.Models.WriteModel2Modules {
                         """;
 
                 } else if (member is ChildAggregate child) {
-                    var childExpr = $"{instanceName}.{child.PhysicalName}";
-                    var childBody = RenderAggregateLegacy(child, childExpr, ctx).ToArray();
-                    if (childBody.Length == 0) continue;
+                    var childExpr = $"{instanceName}.{child.PhysicalName}?";
 
                     yield return $$"""
-                        if ({{childExpr}} != null) {
-                            {{WithIndent(childBody, "    ")}}
-                        }
+
+                        {{WithIndent(RenderAggregateLegacy(child, childExpr, ctx), "")}}
                         """;
 
                 } else if (member is ChildrenAggregate children) {
                     var arrayExpr = $"{instanceName}.{children.PhysicalName}";
                     var indexName = children.GetLoopVarName("i");
                     var itemName = children.GetLoopVarName("item");
-                    var loopBody = RenderAggregateLegacy(children, itemName, ctx).ToArray();
-                    if (loopBody.Length == 0) continue;
 
                     yield return $$"""
+
                         for (var {{indexName}} = 0; {{indexName}} < {{arrayExpr}}.Count; {{indexName}}++) {
                             var {{itemName}} = {{arrayExpr}}.ElementAt({{indexName}});
 
-                            {{WithIndent(loopBody, "    ")}}
+                            {{WithIndent(RenderAggregateLegacy(children, itemName, ctx), "    ")}}
                         }
                         """;
                 }

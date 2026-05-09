@@ -114,28 +114,24 @@ namespace Nijo.Models.WriteModel2Modules {
                         """;
 
                 } else if (member is ChildAggregate child) {
-                    var childExpr = $"{instanceName}.{child.PhysicalName}";
-                    var childBody = RenderAggregateLegacy(child, childExpr).ToArray();
-                    if (childBody.Length == 0) continue;
+                    var childExpr = $"{instanceName}.{child.PhysicalName}?";
 
                     yield return $$"""
-                        if ({{childExpr}} != null) {
-                            {{WithIndent(childBody, "    ")}}
-                        }
+
+                        {{WithIndent(RenderAggregateLegacy(child, childExpr), "")}}
                         """;
 
                 } else if (member is ChildrenAggregate children) {
                     var arrayExpr = $"{instanceName}.{children.PhysicalName}";
                     var indexName = children.GetLoopVarName("i");
                     var itemName = children.GetLoopVarName("item");
-                    var loopBody = RenderAggregateLegacy(children, itemName).ToArray();
-                    if (loopBody.Length == 0) continue;
 
                     yield return $$"""
+
                         for (var {{indexName}} = 0; {{indexName}} < {{arrayExpr}}.Count; {{indexName}}++) {
                             var {{itemName}} = {{arrayExpr}}.ElementAt({{indexName}});
 
-                            {{WithIndent(loopBody, "    ")}}
+                            {{WithIndent(RenderAggregateLegacy(children, itemName), "    ")}}
                         }
                         """;
                 }

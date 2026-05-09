@@ -47,6 +47,10 @@ namespace Nijo.Models.WriteModel2Modules {
         /// Create は新規登録入力、UpdateOrDelete は更新・削除・読み取り専用差分比較の共通土台を担う。
         /// </remarks>
         internal string RenderCSharp(CodeRenderingContext ctx) {
+            if (ctx.IsLegacyCompatibilityMode()) {
+                return RenderCSharpLegacy(ctx);
+            }
+
             return $$"""
                 /// <summary>
                 /// {{Aggregate.DisplayName}} の保存用 DTO。
@@ -69,6 +73,28 @@ namespace Nijo.Models.WriteModel2Modules {
 
                     /// <summary>
                     /// DB エンティティから DTO を復元します。
+                    /// </summary>
+                    {{WithIndent(RenderFromDbEntity(), "    ")}}
+                """)}}
+                }
+                """;
+        }
+
+        private string RenderCSharpLegacy(CodeRenderingContext ctx) {
+            return $$"""
+                public partial class {{CsClassName}} {
+                {{GetOwnMembers().SelectTextTemplate(member => $$"""
+                    public {{GetMemberTypeNameCSharp(member)}} {{member.PhysicalName}} { get; set; }{{GetInitializer(member)}}
+                """)}}
+                {{If(Aggregate is RootAggregate, () => $$"""
+
+                    /// <summary>
+                    /// {{Aggregate.DisplayName}}のオブジェクトをデータベースに保存する形に変換します。
+                    /// </summary>
+                    {{WithIndent(RenderToDbEntity(ctx), "    ")}}
+
+                    /// <summary>
+                    /// {{Aggregate.DisplayName}}のオブジェクトをデータベースに保存する形に変換します。
                     /// </summary>
                     {{WithIndent(RenderFromDbEntity(), "    ")}}
                 """)}}
@@ -104,13 +130,13 @@ namespace Nijo.Models.WriteModel2Modules {
                     public partial class {{MessageClassName}} : DisplayMessageContainerBase, {{MessageInterfaceName}} {
                         public {{MessageClassName}}({{ctorArg}}) : base({{baseCtor}}) {
                     {{legacyMembers.SelectTextTemplate(member => $$"""
-                        {{member.PathConstructorExpression}}
+                            {{WithIndent(member.PathConstructorExpression, "        ")}}
                     """)}}
                         }
                         /// <summary>すべてのメッセージを画面ルートに転送する場合に用いられるコンストラクタ</summary>
                         public {{MessageClassName}}(IDisplayMessageContainer origin) : base(origin) {
                     {{legacyMembers.SelectTextTemplate(member => $$"""
-                        {{member.OriginConstructorExpression}}
+                            {{WithIndent(member.OriginConstructorExpression, "        ")}}
                     """)}}
                         }
 
@@ -119,7 +145,7 @@ namespace Nijo.Models.WriteModel2Modules {
                     """)}}
 
                         public override IEnumerable<IDisplayMessageContainer> EnumerateChildren() {
-                        {{legacyMembers.SelectTextTemplate(member => $$"""
+                    {{legacyMembers.SelectTextTemplate(member => $$"""
                             yield return {{member.PhysicalName}};
                     """)}}
                         }
@@ -174,9 +200,6 @@ namespace Nijo.Models.WriteModel2Modules {
                     public sealed class {{GetLegacyReadOnlyCsClassName()}} {
                         [JsonPropertyName("_thisObjectIsReadOnly")]
                         public bool _ThisObjectIsReadOnly { get; set; }
-                    {{If(Type == E_Type.UpdateOrDelete && Aggregate is RootAggregate, () => $$"""
-                        public bool {{VERSION}} { get; set; }
-                    """)}}
                     {{GetOwnMembers().SelectTextTemplate(member => $$"""
                         public {{GetLegacyReadOnlyMemberTypeNameCSharp(member)}} {{member.PhysicalName}} { get; {{(member is ChildAggregate or ChildrenAggregate ? "}" : "set; }")}}
                     """)}}
@@ -209,7 +232,7 @@ namespace Nijo.Models.WriteModel2Modules {
         internal string RenderTypeScript(CodeRenderingContext ctx) {
             return $$"""
                                 export type {{TsTypeName}} = {
-                                {{If(Type == E_Type.UpdateOrDelete && Aggregate is RootAggregate, () => $$"""
+                                {{If(Type == E_Type.UpdateOrDelete && Aggregate is RootAggregate && !ctx.IsLegacyCompatibilityMode(), () => $$"""
                                     version: number | undefined,
                                 """)}}
                                 {{GetOwnMembers().SelectTextTemplate(member => $$"""
@@ -228,7 +251,7 @@ namespace Nijo.Models.WriteModel2Modules {
         internal string RenderTypeScriptReadOnlyStructure(CodeRenderingContext ctx) {
             return $$"""
                                 export type {{ReadOnlyTsTypeName}} = Readonly<{
-                                {{If(Type == E_Type.UpdateOrDelete && Aggregate is RootAggregate, () => $$"""
+                                {{If(Type == E_Type.UpdateOrDelete && Aggregate is RootAggregate && !ctx.IsLegacyCompatibilityMode(), () => $$"""
                                     version: number | undefined,
                                 """)}}
                                 {{GetOwnMembers().SelectTextTemplate(member => $$"""
@@ -248,9 +271,9 @@ namespace Nijo.Models.WriteModel2Modules {
         internal string RenderTsNewObjectFunction(CodeRenderingContext ctx) {
             return $$"""
                 export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({
-                                {{If(Type == E_Type.UpdateOrDelete && Aggregate is RootAggregate, () => $$"""
-                                    version: undefined,
-                                """)}}
+                {{If(Type == E_Type.UpdateOrDelete && Aggregate is RootAggregate && !ctx.IsLegacyCompatibilityMode(), () => $$"""
+                  version: undefined,
+                """)}}
                 {{GetOwnMembers().SelectTextTemplate(member => $$"""
                   {{member.PhysicalName}}: {{RenderTsInitialValue(member)}},
                 """)}}
@@ -289,7 +312,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
         private IEnumerable<string> RenderToDbEntityBody(AggregateBase aggregate, string instanceName, IDictionary<ValueMember, string> inheritedKeys, bool includeCreateAuditFields, string currentUserArg, string currentTimeArg) {
             var currentKeys = new Dictionary<ValueMember, string>(inheritedKeys);
-            if (Type == E_Type.UpdateOrDelete && aggregate is RootAggregate) {
+            if (Type == E_Type.UpdateOrDelete && aggregate is RootAggregate && !CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
                 yield return $"{Nijo.Parts.CSharp.EFCoreEntity.VERSION} = {instanceName}.{VERSION},";
             }
 
@@ -321,7 +344,7 @@ namespace Nijo.Models.WriteModel2Modules {
                     yield return $$"""
                         {{child.PhysicalName}} = {{childExpr}} != null
                             ? new {{childDbEntity.ClassName}} {
-                                {{WithIndent(RenderToDbEntityBody(child, childExpr, currentKeys, includeCreateAuditFields, currentUserArg, currentTimeArg), "                ")}}
+                                {{WithIndent(RenderToDbEntityBody(child, childExpr, currentKeys, includeCreateAuditFields, currentUserArg, currentTimeArg), "        ")}}
                                 {{childAuditFieldsText}}
                             }
                             : null,
@@ -335,7 +358,7 @@ namespace Nijo.Models.WriteModel2Modules {
                     var childAuditFieldsText = childAuditFields.SelectTextTemplate(line => $"            {line}");
                     yield return $$"""
                         {{children.PhysicalName}} = {{instanceName}}.{{children.PhysicalName}}?.Select({{loopVar}} => new {{childDbEntity.ClassName}} {
-                            {{WithIndent(childModel.RenderToDbEntityBody(children, loopVar, currentKeys, includeCreateAuditFields, currentUserArg, currentTimeArg), "            ")}}
+                            {{WithIndent(childModel.RenderToDbEntityBody(children, loopVar, currentKeys, includeCreateAuditFields, currentUserArg, currentTimeArg), "    ")}}
                             {{childAuditFieldsText}}
                         }).ToHashSet() ?? [],
                         """;
@@ -403,7 +426,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
         private IEnumerable<string> RenderFromDbEntityBody(AggregateBase aggregate, string instanceName, IDictionary<ValueMember, string> inheritedKeys) {
             var currentKeys = new Dictionary<ValueMember, string>(inheritedKeys);
-            if (Type == E_Type.UpdateOrDelete && aggregate is RootAggregate) {
+            if (Type == E_Type.UpdateOrDelete && aggregate is RootAggregate && !CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
                 yield return $"{VERSION} = {instanceName}.{Nijo.Parts.CSharp.EFCoreEntity.VERSION},";
             }
 
@@ -421,10 +444,9 @@ namespace Nijo.Models.WriteModel2Modules {
                     yield return $"{vm.PhysicalName} = {vm.Type.RenderCastToDomainType()}{value},";
 
                 } else if (member is RefToMember refTo) {
-                    var refType = new DataClassForRefTargetKeys(refTo.RefTo, refTo.RefTo);
                     yield return $$"""
-                        {{refTo.PhysicalName}} = new {{refType.CsClassName}} {
-                            {{WithIndent(RenderFromRefTargetKeys(refTo.RefTo, instanceName, [refTo.PhysicalName], parentPathUnsupported: false), "            ")}}
+                        {{refTo.PhysicalName}} = new() {
+                            {{WithIndent(RenderFromRefTargetKeys(refTo.RefTo, instanceName, [refTo.PhysicalName], parentPathUnsupported: false), "    ")}}
                         },
                         """;
 
@@ -433,7 +455,7 @@ namespace Nijo.Models.WriteModel2Modules {
                     yield return $$"""
                         {{child.PhysicalName}} = {{instanceName}}.{{child.PhysicalName}} != null
                             ? new {{childModel.CsClassName}} {
-                                {{WithIndent(childModel.RenderFromDbEntityBody(child, $"{instanceName}.{child.PhysicalName}", currentKeys), "                ")}}
+                                {{WithIndent(childModel.RenderFromDbEntityBody(child, $"{instanceName}.{child.PhysicalName}", currentKeys), "        ")}}
                             }
                             : null,
                         """;
@@ -443,7 +465,7 @@ namespace Nijo.Models.WriteModel2Modules {
                     var loopVar = children.GetLoopVarName();
                     yield return $$"""
                         {{children.PhysicalName}} = {{instanceName}}.{{children.PhysicalName}}?.Select({{loopVar}} => new {{childModel.CsClassName}} {
-                            {{WithIndent(childModel.RenderFromDbEntityBody(children, loopVar, currentKeys), "            ")}}
+                            {{WithIndent(childModel.RenderFromDbEntityBody(children, loopVar, currentKeys), "    ")}}
                         }).ToList() ?? [],
                         """;
                 }
@@ -465,10 +487,9 @@ namespace Nijo.Models.WriteModel2Modules {
                     yield return $"{vm.PhysicalName} = {value},";
 
                 } else if (member is RefToMember refTo && refTo.IsKey) {
-                    var nested = new DataClassForRefTargetKeys(refTo.RefTo, refTo.RefTo);
                     yield return $$"""
-                        {{refTo.PhysicalName}} = new {{nested.CsClassName}} {
-                            {{WithIndent(RenderFromRefTargetKeys(refTo.RefTo, entityExpr, [.. path, refTo.PhysicalName], parentPathUnsupported), "            ")}}
+                        {{refTo.PhysicalName}} = new() {
+                            {{WithIndent(RenderFromRefTargetKeys(refTo.RefTo, entityExpr, [.. path, refTo.PhysicalName], parentPathUnsupported), "    ")}}
                         },
                         """;
                 }
@@ -569,8 +590,8 @@ namespace Nijo.Models.WriteModel2Modules {
                         DisplayName = member.DisplayName,
                         InterfaceType = "IDisplayMessageContainer",
                         ClassType = "IDisplayMessageContainer",
-                        PathConstructorExpression = $"        {member.PhysicalName} = new DisplayMessageContainer([.. path, \"{member.PhysicalName}\"]);",
-                        OriginConstructorExpression = $"        {member.PhysicalName} = origin;",
+                        PathConstructorExpression = $"{member.PhysicalName} = new DisplayMessageContainer([.. path, \"{member.PhysicalName}\"]);",
+                        OriginConstructorExpression = $"{member.PhysicalName} = origin;",
                         ConstructorExpression = string.Empty,
                     };
                 } else if (member is ChildAggregate child) {
@@ -580,8 +601,8 @@ namespace Nijo.Models.WriteModel2Modules {
                         DisplayName = member.DisplayName,
                         InterfaceType = nested.MessageInterfaceName,
                         ClassType = nested.MessageInterfaceName,
-                        PathConstructorExpression = $"        {member.PhysicalName} = new {nested.MessageClassName}([.. path, \"{member.PhysicalName}\"]);",
-                        OriginConstructorExpression = $"        {member.PhysicalName} = origin;",
+                        PathConstructorExpression = $"{member.PhysicalName} = new {nested.MessageClassName}([.. path, \"{member.PhysicalName}\"]);",
+                        OriginConstructorExpression = $"{member.PhysicalName} = origin;",
                         ConstructorExpression = string.Empty,
                     };
                 } else if (member is ChildrenAggregate children) {
@@ -591,8 +612,8 @@ namespace Nijo.Models.WriteModel2Modules {
                         DisplayName = member.DisplayName,
                         InterfaceType = $"IDisplayMessageContainerList<{nested.MessageInterfaceName}>",
                         ClassType = $"IDisplayMessageContainerList<{nested.MessageInterfaceName}>",
-                        PathConstructorExpression = $"        {member.PhysicalName} = new DisplayMessageContainerList<{nested.MessageInterfaceName}>([.. path, \"{member.PhysicalName}\"], i => {{ return new {nested.MessageClassName}([.. path, \"{member.PhysicalName}\"], i); }});",
-                        OriginConstructorExpression = $"        {member.PhysicalName} = new DisplayMessageContainerList<{nested.MessageInterfaceName}>(origin, i => {{ return new {nested.MessageClassName}(origin); }});",
+                        PathConstructorExpression = $"{member.PhysicalName} = new DisplayMessageContainerList<{nested.MessageInterfaceName}>([.. path, \"{member.PhysicalName}\"], i => {{ return new {nested.MessageClassName}([.. path, \"{member.PhysicalName}\"], i); }});",
+                        OriginConstructorExpression = $"{member.PhysicalName} = new DisplayMessageContainerList<{nested.MessageInterfaceName}>(origin, i => {{ return new {nested.MessageClassName}(origin); }});",
                         ConstructorExpression = string.Empty,
                     };
                 }

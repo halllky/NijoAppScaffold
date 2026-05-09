@@ -22,9 +22,27 @@ namespace Nijo.Models.WriteModel2Modules {
                 .Where(vm => vm.Type is ValueMemberTypes.SequenceMember && !string.IsNullOrWhiteSpace(vm.SequenceName))
                 .ToArray();
 
-            var valueMembers = rootAggregate
+            var allColumns = new Nijo.Parts.CSharp.EFCoreEntity(rootAggregate).GetColumns().ToArray();
+            var columnsByMember = allColumns
+                .Where(col => col.Member is not null)
+                .ToDictionary(col => col.Member!.ToMappingKey());
+            var columns = rootAggregate
                 .GetMembers()
                 .OfType<ValueMember>()
+                .Select(member => columnsByMember[member.ToMappingKey()])
+                .ToArray();
+            var keyColumns = columns.Where(col => col.IsKey).ToArray();
+            var refTos = rootAggregate
+                .GetMembers()
+                .OfType<RefToMember>()
+                .ToArray();
+            var childAggregates = rootAggregate
+                .GetMembers()
+                .OfType<ChildAggregate>()
+                .ToArray();
+            var childrenAggregates = rootAggregate
+                .GetMembers()
+                .OfType<ChildrenAggregate>()
                 .ToArray();
             var referedBy = rootAggregate
                 .GetRefFroms()
@@ -32,135 +50,150 @@ namespace Nijo.Models.WriteModel2Modules {
 
             var columnOrder = 0;
             var columnDefinitions = new List<string>();
-            foreach (var vm in valueMembers) {
-                var valueGeneratedNever = (vm.Type.CsPrimitiveTypeName == "int" || vm.Type.CsPrimitiveTypeName == "long") && vm.IsKey;
+            foreach (var col in columns) {
+                var valueGeneratedNever = (col.CsType == "int" || col.CsType == "long") && col.IsKey;
 
                 var lines = new List<string> {
-                    $"entity.Property(e => e.{vm.PhysicalName})",
-                    $"    .HasColumnName(\"{vm.DbName.Replace("\"", "\\\"")}\")",
-                    $"    .HasComment(\"{vm.DisplayName.Replace("\"", "\\\"")}\")",
+                    $"entity.Property(e => e.{col.PhysicalName})",
+                    $"    .HasColumnName(\"{col.DbName.Replace("\"", "\\\"")}\")",
+                    $"    .HasComment(\"{col.PhysicalName.Replace("\"", "\\\"")}\")",
                 };
-                if (vm.TotalDigit != null) {
-                    lines.Add($"    .HasPrecision({vm.TotalDigit}, {vm.DecimalPlace?.ToString() ?? "0"})");
+                if (col.Member?.TotalDigit != null) {
+                    lines.Add($"    .HasPrecision({col.Member.TotalDigit}, {col.Member.DecimalPlace?.ToString() ?? "0"})");
                 }
                 if (valueGeneratedNever) {
                     lines.Add("    .ValueGeneratedNever() // 暗黙的シーケンスの生成をオフにする");
                 }
-                if (vm.MaxLength != null) {
-                    lines.Add($"    .HasMaxLength({vm.MaxLength})");
+                if (col.Member?.MaxLength != null) {
+                    lines.Add($"    .HasMaxLength({col.Member.MaxLength})");
                 }
-                lines.Add($"    .IsRequired({(vm.IsKey || vm.IsNotNull ? "true" : "false")})");
+                lines.Add($"    .IsRequired({(col.IsKey || col.IsNotNull ? "true" : "false")})");
                 lines.Add($"    .HasColumnOrder({columnOrder++});");
                 columnDefinitions.Add(string.Join(Environment.NewLine, lines));
             }
 
             return $$"""
-
-                #region データ構造クラス
-                    /// <summary>
-                    /// Entity Framework Core のルールに則った{{rootAggregate.DisplayName}}のデータ型
-                    /// </summary>
-                    public partial class {{entity.ClassName}} {
-                {{valueMembers.SelectTextTemplate(vm => $$"""
-                        public {{vm.Type.CsPrimitiveTypeName}}? {{vm.PhysicalName}} { get; set; }
+                /// <summary>
+                /// Entity Framework Core のルールに則った{{rootAggregate.DisplayName}}のデータ型
+                /// </summary>
+                public partial class {{entity.ClassName}} {
+                {{columns.SelectTextTemplate(col => $$"""
+                    public {{col.CsType}}? {{col.PhysicalName}} { get; set; }
                 """)}}
-                        /// <summary>楽観排他制御用のバージョニング用カラム</summary>
-                        public int? {{Nijo.Parts.CSharp.EFCoreEntity.VERSION}} { get; set; }
-                        /// <summary>データが新規作成された日時</summary>
-                        public DateTime? {{Nijo.Parts.CSharp.EFCoreEntity.CREATED_AT}} { get; set; }
-                        /// <summary>データが更新された日時</summary>
-                        public DateTime? {{Nijo.Parts.CSharp.EFCoreEntity.UPDATED_AT}} { get; set; }
-                        /// <summary>データを新規作成したユーザー</summary>
-                        public string? {{Nijo.Parts.CSharp.EFCoreEntity.CREATE_USER}} { get; set; }
-                        /// <summary>データを更新したユーザー</summary>
-                        public string? {{Nijo.Parts.CSharp.EFCoreEntity.UPDATE_USER}} { get; set; }
+                    /// <summary>楽観排他制御用のバージョニング用カラム</summary>
+                    public int? {{Nijo.Parts.CSharp.EFCoreEntity.VERSION}} { get; set; }
+                    /// <summary>データが新規作成された日時</summary>
+                    public DateTime? {{Nijo.Parts.CSharp.EFCoreEntity.CREATED_AT}} { get; set; }
+                    /// <summary>データが更新された日時</summary>
+                    public DateTime? {{Nijo.Parts.CSharp.EFCoreEntity.UPDATED_AT}} { get; set; }
+                    /// <summary>データを新規作成したユーザー</summary>
+                    public string? {{Nijo.Parts.CSharp.EFCoreEntity.CREATE_USER}} { get; set; }
+                    /// <summary>データを更新したユーザー</summary>
+                    public string? {{Nijo.Parts.CSharp.EFCoreEntity.UPDATE_USER}} { get; set; }
 
+                {{If(refTos.Length > 0, () => $$"""
+                {{refTos.SelectTextTemplate(refTo => $$"""
+                    public virtual {{refTo.RefTo.PhysicalName}}DbEntity? {{refTo.PhysicalName}} { get; set; }
+                """)}}
+                """)}}
+                {{childAggregates.SelectTextTemplate(child => $$"""
+                    public virtual {{child.PhysicalName}}DbEntity? {{child.PhysicalName}} { get; set; }
+                """)}}
+                {{childrenAggregates.SelectTextTemplate(children => $$"""
+                    public virtual ICollection<{{children.PhysicalName}}DbEntity> {{children.PhysicalName}} { get; set; } = new HashSet<{{children.PhysicalName}}DbEntity>();
+                """)}}
                 {{referedBy.SelectTextTemplate(refFrom => $$"""
-                        public virtual ICollection<{{refFrom.Owner.PhysicalName}}DbEntity> {{GetRefFromPropertyName(refFrom)}} { get; set; } = new HashSet<{{refFrom.Owner.PhysicalName}}DbEntity>();
+                    public virtual ICollection<{{refFrom.Owner.PhysicalName}}DbEntity> {{GetRefFromPropertyName(refFrom)}} { get; set; } = new HashSet<{{refFrom.Owner.PhysicalName}}DbEntity>();
                 """)}}
 
-                        /// <summary>このオブジェクトと比較対象のオブジェクトの主キーが一致するかを返します。</summary>
-                        public bool KeyEquals({{entity.ClassName}} entity) {
-                {{rootAggregate.GetKeyVMs().SelectTextTemplate(vm => $$"""
-                            if (entity.{{vm.PhysicalName}} != this.{{vm.PhysicalName}}) return false;
+                    /// <summary>このオブジェクトと比較対象のオブジェクトの主キーが一致するかを返します。</summary>
+                    public bool KeyEquals({{entity.ClassName}} entity) {
+                {{keyColumns.SelectTextTemplate(col => $$"""
+                        if (entity.{{col.PhysicalName}} != this.{{col.PhysicalName}}) return false;
                 """)}}
-                            return true;
-                        }
-                        /// <summary>
-                        /// このオブジェクトと引数のオブジェクトに、何らかの差分があるかどうかを調べます。
-                        /// 登録日時等はこのメソッドの判定から除外されます。
-                        /// </summary>
-                        public bool HasChanges({{entity.ClassName}} entity) {
-                {{valueMembers.SelectTextTemplate(vm => $$"""
-                            if (this.{{vm.PhysicalName}} != entity.{{vm.PhysicalName}}) return true;
-                """)}}
-                            return false;
-                        }
+                        return true;
                     }
+                    /// <summary>
+                    /// このオブジェクトと引数のオブジェクトに、何らかの差分があるかどうかを調べます。
+                    /// 登録日時等はこのメソッドの判定から除外されます。
+                    /// </summary>
+                    public bool HasChanges({{entity.ClassName}} entity) {
+                {{columns.SelectTextTemplate(col => $$"""
+                        if (this.{{col.PhysicalName}} != entity.{{col.PhysicalName}}) return true;
+                """)}}
+                        return false;
+                    }
+                }
 
-                    partial class DefaultConfiguration {
-                        /// <summary>
-                        /// テーブルやカラムの詳細を定義します。
-                        /// 参考: "Fluent API" （Entity FrameWork Core の仕組み）
-                        /// </summary>
-                        public void OnModelCreating{{rootAggregate.PhysicalName}}({{ctx.Config.DbContextName}} dbContext, ModelBuilder modelBuilder) {
+                partial class DefaultConfiguration {
+                    /// <summary>
+                    /// テーブルやカラムの詳細を定義します。
+                    /// 参考: "Fluent API" （Entity FrameWork Core の仕組み）
+                    /// </summary>
+                    public void OnModelCreating{{rootAggregate.PhysicalName}}({{ctx.Config.DbContextName}} dbContext, ModelBuilder modelBuilder) {
                 {{If(sequences.Length > 0, () => $$"""
-                            // シーケンスを作成
+                        // シーケンスを作成
                 """)}}
                 {{sequences.SelectTextTemplate(s => $$"""
-                            modelBuilder.HasSequence<int>("{{s.SequenceName!.Replace("\"", "\\\"")}}")
-                                .StartsAt(1)
-                                .IncrementsBy(1);
+                        modelBuilder.HasSequence<int>("{{s.SequenceName!.Replace("\"", "\\\"")}}")
+                            .StartsAt(1)
+                            .IncrementsBy(1);
                 """)}}
-                            modelBuilder.Entity<{{ctx.Config.RootNamespace}}.{{entity.ClassName}}>(entity => {
+                        modelBuilder.Entity<{{ctx.Config.RootNamespace}}.{{entity.ClassName}}>(entity => {
 
-                                entity.ToTable("{{rootAggregate.DbName.Replace("\"", "\\\"")}}")
-                                .HasComment("{{rootAggregate.DisplayName.Replace("\"", "\\\"")}}");
+                            entity.ToTable("{{rootAggregate.DbName.Replace("\"", "\\\"")}}")
+                            .HasComment("{{rootAggregate.DisplayName.Replace("\"", "\\\"")}}");
 
-                                entity.HasKey(e => new {
-                {{rootAggregate.GetKeyVMs().SelectTextTemplate(vm => $$"""
-                                    e.{{vm.PhysicalName}},
+                            entity.HasKey(e => new {
+                {{keyColumns.SelectTextTemplate(col => $$"""
+                                e.{{col.PhysicalName}},
                 """)}}
-                                })
-                                .HasName("PK_{{GetConstraintToken(rootAggregate)}}");
+                            })
+                            .HasName("PK_{{GetConstraintToken(rootAggregate)}}");
 
-                                {{WithIndent(columnDefinitions, "                ")}}
-                                entity.Property(e => e.{{Nijo.Parts.CSharp.EFCoreEntity.CREATED_AT}})
-                                    .HasColumnName("{{ctx.Config.CreatedAtDbColumnName.Replace("\"", "\\\"")}}")
-                                    .HasColumnOrder({{columnOrder++}});
-                                entity.Property(e => e.{{Nijo.Parts.CSharp.EFCoreEntity.CREATE_USER}})
-                                    .HasColumnName("{{ctx.Config.CreateUserDbColumnName.Replace("\"", "\\\"")}}")
-                                    .HasColumnOrder({{columnOrder++}});
-                                entity.Property(e => e.{{Nijo.Parts.CSharp.EFCoreEntity.UPDATED_AT}})
-                                    .HasColumnName("{{ctx.Config.UpdatedAtDbColumnName.Replace("\"", "\\\"")}}")
-                                    .HasColumnOrder({{columnOrder++}});
-                                entity.Property(e => e.{{Nijo.Parts.CSharp.EFCoreEntity.UPDATE_USER}})
-                                    .HasColumnName("{{ctx.Config.UpdateUserDbColumnName.Replace("\"", "\\\"")}}")
-                                    .HasColumnOrder({{columnOrder++}});
+                            {{WithIndent(columnDefinitions, "            ")}}
+                            entity.Property(e => e.{{Nijo.Parts.CSharp.EFCoreEntity.CREATED_AT}})
+                                .HasColumnName("{{ctx.Config.CreatedAtDbColumnName.Replace("\"", "\\\"")}}")
+                                .HasColumnOrder({{columnOrder++}});
+                            entity.Property(e => e.{{Nijo.Parts.CSharp.EFCoreEntity.CREATE_USER}})
+                                .HasColumnName("{{ctx.Config.CreateUserDbColumnName.Replace("\"", "\\\"")}}")
+                                .HasColumnOrder({{columnOrder++}});
+                            entity.Property(e => e.{{Nijo.Parts.CSharp.EFCoreEntity.UPDATED_AT}})
+                                .HasColumnName("{{ctx.Config.UpdatedAtDbColumnName.Replace("\"", "\\\"")}}")
+                                .HasColumnOrder({{columnOrder++}});
+                            entity.Property(e => e.{{Nijo.Parts.CSharp.EFCoreEntity.UPDATE_USER}})
+                                .HasColumnName("{{ctx.Config.UpdateUserDbColumnName.Replace("\"", "\\\"")}}")
+                                .HasColumnOrder({{columnOrder++}});
                 {{If(!string.IsNullOrEmpty(ctx.Config.VersionDbColumnName), () => $$"""
-                                entity.Property(e => e.{{Nijo.Parts.CSharp.EFCoreEntity.VERSION}})
-                                    .HasColumnName("{{ctx.Config.VersionDbColumnName.Replace("\"", "\\\"")}}")
-                                    .IsRequired(true)
-                                    .IsConcurrencyToken(true)
-                                    .HasColumnOrder({{columnOrder++}});
+                            entity.Property(e => e.{{Nijo.Parts.CSharp.EFCoreEntity.VERSION}})
+                                .HasColumnName("{{ctx.Config.VersionDbColumnName.Replace("\"", "\\\"")}}")
+                                .IsRequired(true)
+                                .IsConcurrencyToken(true)
+                                .HasColumnOrder({{columnOrder++}});
                 """).Else(() => $$"""
-                                entity.Property(e => e.{{Nijo.Parts.CSharp.EFCoreEntity.VERSION}})
-                                    .IsRequired(true)
-                                    .IsConcurrencyToken(true)
-                                    .HasColumnOrder({{columnOrder++}});
+                            entity.Property(e => e.{{Nijo.Parts.CSharp.EFCoreEntity.VERSION}})
+                                .IsRequired(true)
+                                .IsConcurrencyToken(true)
+                                .HasColumnOrder({{columnOrder++}});
                 """)}}
 
                 {{referedBy.Select(RenderRefFromOnModelCreating).SelectTextTemplate(source => $$"""
-                                {{WithIndent(source, "                ")}}
+                            {{WithIndent(source, "            ")}}
 
                 """)}}
 
-                                // このエンティティに対して、自動生成されない初期設定がある場合はこの中で設定される（インデックス、ユニーク制約、デフォルト値など）
-                                OnModelCreating(entity);
-                            });
-                        }
+                            // このエンティティに対して、自動生成されない初期設定がある場合はこの中で設定される（インデックス、ユニーク制約、デフォルト値など）
+                            OnModelCreating(entity);
+                        });
                     }
-                #endregion データ構造クラス
+
+                    /// <summary>
+                    /// 自動生成されない初期設定がある場合はこのメソッドをオーバーライドして設定してください。
+                    /// （インデックス、ユニーク制約、デフォルト値など）
+                    /// </summary>
+                    public virtual void OnModelCreating(Microsoft.EntityFrameworkCore.Metadata.Builders.EntityTypeBuilder<{{entity.ClassName}}> entity) {
+                    }
+                }
                 """;
         }
 
