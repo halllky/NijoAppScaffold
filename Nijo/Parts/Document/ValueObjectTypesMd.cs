@@ -56,7 +56,7 @@ internal class ValueObjectTypesMd {
 
             ## 値オブジェクト型（`当該値オブジェクト名`）
 
-            スキーマ定義で `{{ValueObjectModel.SCHEMA_NAME}}` モデルとして定義された値オブジェクトをメンバー型として使用できます。
+            スキーマ定義で `{{ValueObjectModel.SCHEMA_NAME}}` または `{{ValueObjectModel2.SCHEMA_NAME}}` モデルとして定義された値オブジェクトをメンバー型として使用できます。
             {{SchemaParseContext.ATTR_NODE_TYPE}} 属性には当該値オブジェクトの物理名を指定してください。
 
             """;

@@ -4,7 +4,7 @@ import * as ReactHookForm from "react-hook-form"
 import * as Icon from "@heroicons/react/24/outline"
 import { ModalDialog } from "@nijo/ui-components/layout"
 import * as Input from "@nijo/ui-components/input"
-import { ApplicationState, NijoXmlCustomAttribute, TYPE_DATA_MODEL, TYPE_QUERY_MODEL, TYPE_COMMAND_MODEL, TYPE_STRUCTURE_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, XmlElementAttributeName } from "../../types"
+import { ApplicationState, NijoXmlCustomAttribute, TYPE_DATA_MODEL, TYPE_QUERY_MODEL, TYPE_COMMAND_MODEL, TYPE_STRUCTURE_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_STATIC_ENUM_MODEL2, TYPE_VALUE_OBJECT_MODEL, TYPE_VALUE_OBJECT_MODEL2, XmlElementAttributeName } from "../../types"
 import { UUID } from "uuidjs"
 import FormLayout from "@nijo/ui-components/layout/FormLayout"
 import { useFieldValidationError, useValidationErrorMessages } from "../useValidation"
@@ -31,7 +31,9 @@ const AVAILABLE_MODELS = [
   { id: TYPE_COMMAND_MODEL, label: 'Command Model' },
   { id: TYPE_STRUCTURE_MODEL, label: 'Structure Model' },
   { id: TYPE_STATIC_ENUM_MODEL, label: 'Enum' },
+  { id: TYPE_STATIC_ENUM_MODEL2, label: 'Enum 2' },
   { id: TYPE_VALUE_OBJECT_MODEL, label: 'Value Object' },
+  { id: TYPE_VALUE_OBJECT_MODEL2, label: 'Value Object 2' },
 ]
 
 /**
@@ -120,7 +122,9 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
         TYPE_COMMAND_MODEL,
         TYPE_STRUCTURE_MODEL,
         TYPE_STATIC_ENUM_MODEL,
+        TYPE_STATIC_ENUM_MODEL2,
         TYPE_VALUE_OBJECT_MODEL,
+        TYPE_VALUE_OBJECT_MODEL2,
       ],
       enumValues: [],
     }

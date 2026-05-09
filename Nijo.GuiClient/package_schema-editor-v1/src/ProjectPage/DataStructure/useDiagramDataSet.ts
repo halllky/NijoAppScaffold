@@ -1,6 +1,6 @@
 import React from "react";
 import * as ReactHookForm from "react-hook-form";
-import { ApplicationState, ATTR_PARAMETER, ATTR_RETURN_VALUE, ATTR_TYPE, TYPE_CHILD, TYPE_CHILDREN, TYPE_COMMAND_MODEL, TYPE_DATA_MODEL, TYPE_QUERY_MODEL, TYPE_STRUCTURE_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_VALUE_OBJECT_MODEL, TYPE_CONSTANT_MODEL, XmlElementItem, asTree } from "../../types";
+import { ApplicationState, ATTR_PARAMETER, ATTR_RETURN_VALUE, ATTR_TYPE, TYPE_CHILD, TYPE_CHILDREN, TYPE_COMMAND_MODEL, TYPE_DATA_MODEL, TYPE_QUERY_MODEL, TYPE_STRUCTURE_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_STATIC_ENUM_MODEL2, TYPE_VALUE_OBJECT_MODEL, TYPE_VALUE_OBJECT_MODEL2, TYPE_CONSTANT_MODEL, XmlElementItem, asTree } from "../../types";
 import { GraphView2 } from "@nijo/ui-components";
 import { parseAsMentionText } from "../../UI/Mention";
 import { findRefToTarget } from "../findRefToTarget";
@@ -50,6 +50,8 @@ export function useDiagramDataSet(formMethods: ReactHookForm.UseFormReturn<Appli
       const model = rootElement.attributes[ATTR_TYPE]
       if (model === TYPE_STATIC_ENUM_MODEL) continue;
       if (model === TYPE_VALUE_OBJECT_MODEL) continue;
+      if (model === TYPE_VALUE_OBJECT_MODEL2) continue;
+      if (model === TYPE_STATIC_ENUM_MODEL2) continue;
       if (model === TYPE_CONSTANT_MODEL) continue;
 
       const treeHelper = asTree(rootAggregateGroup.xmlElements, el => el.uniqueId); // ツリーヘルパーを初期化
