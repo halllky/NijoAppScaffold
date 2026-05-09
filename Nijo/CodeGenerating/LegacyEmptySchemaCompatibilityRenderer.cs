@@ -7,10 +7,6 @@ namespace Nijo.CodeGenerating {
     /// 空スキーマ時に旧版の固定出力へ合わせるためのレンダラー。
     /// </summary>
     internal static class LegacyEmptySchemaCompatibilityRenderer {
-        internal static bool ShouldRender(CodeRenderingContext ctx) {
-            return ctx.Config.ForceLegacyCompatibilityMode
-                && !ctx.Schema.GetRootAggregates().Any();
-        }
 
         internal static void Render(CodeRenderingContext ctx) {
             ctx.CoreLibrary(dir => {
@@ -43,9 +39,6 @@ namespace Nijo.CodeGenerating {
                     utilDir.Generate(RenderSpaceFinderConstTypeScript(ctx));
                 });
             });
-
-            Parts.Common.LegacyMessageConst.Render(ctx);
-            Parts.CSharp.LegacyExcelBook.Render(ctx);
         }
 
         private static SourceFile RenderDefaultConfiguration(CodeRenderingContext ctx) {

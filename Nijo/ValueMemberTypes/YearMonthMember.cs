@@ -59,10 +59,15 @@ internal class YearMonthMember : IValueMemberType {
     }
 
     void IValueMemberType.RenderStaticSources(CodeRenderingContext ctx) {
-        ctx.CoreLibrary(dir => {
-            dir.Generate(new SourceFile {
-                FileName = "YearMonth.cs",
-                Contents = $$"""
+
+        if (ctx.IsLegacyCompatibilityMode()) {
+
+        } else {
+
+            ctx.CoreLibrary(dir => {
+                dir.Generate(new SourceFile {
+                    FileName = "YearMonth.cs",
+                    Contents = $$"""
                 using System;
                 using System.Globalization;
                 using System.Text.Json;
@@ -242,7 +247,8 @@ internal class YearMonthMember : IValueMemberType {
                     }
                 }
                 """,
+                });
             });
-        });
+        }
     }
 }
