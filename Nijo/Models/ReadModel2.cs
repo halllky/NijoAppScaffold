@@ -88,9 +88,6 @@ namespace Nijo.Models {
                 aggregateFile.AddAppSrvMethod(multiView.RenderAppSrvGetUrlMethod());
             }
 
-            aggregateFile.AddTypeScriptTypeDef(rootDisplayData.RenderUiConstraintType(ctx));
-            aggregateFile.AddTypeScriptFunction(rootDisplayData.RenderUiConstraintValue(ctx));
-
             aggregateFile.AddTypeScriptFunction(singleView.RenderPageFrameComponent(ctx));
             aggregateFile.AddWebapiControllerAction(singleView.RenderSetSingleViewDisplayData(ctx));
             aggregateFile.AddTypeScriptFunction(singleView.RenderNavigateFn(ctx, SingleView.E_Type.New));
@@ -130,6 +127,9 @@ namespace Nijo.Models {
                 aggregateFile.AddWebapiControllerAction(refSearchMethod.RenderController(ctx));
                 aggregateFile.AddAppSrvMethod(refSearchMethod.RenderAppSrvMethodOfReadModel(ctx));
             }
+
+            aggregateFile.AddTypeScriptTypeDef(rootDisplayData.RenderUiConstraintType(ctx));
+            aggregateFile.AddTypeScriptFunction(rootDisplayData.RenderUiConstraintValue(ctx));
 
             if (ctx.IsLegacyCompatibilityMode()) {
                 aggregateFile.AddWebapiControllerAction(loadMethod.RenderLegacyExcelControllerAction());
