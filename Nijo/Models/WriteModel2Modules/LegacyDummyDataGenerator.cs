@@ -667,6 +667,12 @@ namespace Nijo.Models.WriteModel2Modules {
         }
 
         private static IEnumerable<string> EnumerateOrderByKeyPaths(AggregateBase aggregate) {
+            if (aggregate.GetParent() is AggregateBase parent) {
+                foreach (var path in EnumerateOrderByKeyPaths(parent)) {
+                    yield return $"Parent.{path}";
+                }
+            }
+
             foreach (var key in aggregate.GetOwnKeys()) {
                 if (key is ValueMember vm) {
                     yield return vm.PhysicalName;
@@ -699,20 +705,12 @@ namespace Nijo.Models.WriteModel2Modules {
                 }
             }
 
-            foreach (var member in aggregate.GetMembers()) {
-                if (member is ChildAggregate child) {
-                    yield return $$"""
-                        {{child.PhysicalName}} = new() {
-                        {{RenderRefTargetKeyMembers(child, entryAggregate, $"{instanceName}.{child.PhysicalName}").SelectTextTemplate(line => $"    {WithIndent(line, "    ")}")}}
-                        },
-                        """;
-                } else if (member is ChildrenAggregate children) {
-                    yield return $$"""
-                        {{children.PhysicalName}} = {{instanceName}}.{{children.PhysicalName}}.Select(x => new {{new DataClassForRefTargetKeys(children, entryAggregate).CsClassName}} {
-                        {{RenderRefTargetKeyMembers(children, entryAggregate, "x").SelectTextTemplate(line => $"    {WithIndent(line, "    ")}")}}
-                        }).ToList(),
-                        """;
-                }
+            if (aggregate.GetParent() is AggregateBase parent) {
+                yield return $$"""
+                    PARENT = new() {
+                    {{RenderRefTargetKeyMembers(parent, entryAggregate, $"{instanceName}.Parent").SelectTextTemplate(line => $"    {WithIndent(line, "    ")}")}}
+                    },
+                    """;
             }
         }
 

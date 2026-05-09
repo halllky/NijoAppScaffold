@@ -29,6 +29,10 @@ namespace Nijo.Parts.CSharp {
         }
 
         public void Render(CodeRenderingContext ctx) {
+            if (ctx.IsLegacyCompatibilityMode() && _sourceCode.Count == 0) {
+                return;
+            }
+
             ctx.CoreLibrary(dir => {
                 dir.Generate(RenderDeclaring(ctx));
             });

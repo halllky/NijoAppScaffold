@@ -11,13 +11,15 @@ namespace Nijo.Models.WriteModel2Modules {
     /// 参照先キーのデータ型を担当する移植先。
     /// </summary>
     internal class DataClassForRefTargetKeys : IInstancePropertyOwnerMetadata {
-        internal DataClassForRefTargetKeys(AggregateBase aggregate, AggregateBase entryAggregate) {
+        internal DataClassForRefTargetKeys(AggregateBase aggregate, AggregateBase entryAggregate, string? legacyClassNameOverride = null) {
             Aggregate = aggregate;
             EntryAggregate = entryAggregate;
+            _legacyClassNameOverride = legacyClassNameOverride;
         }
 
         protected AggregateBase Aggregate { get; }
         protected AggregateBase EntryAggregate { get; }
+        private readonly string? _legacyClassNameOverride;
         internal string CsClassName => $"{GetTypeStem()}RefTargetKeys";
         internal string TsTypeName => CsClassName;
 
@@ -102,7 +104,7 @@ namespace Nijo.Models.WriteModel2Modules {
                 /// <summary>
                 /// {{Aggregate.DisplayName}} のキー
                 /// </summary>
-                public partial class {{GetLegacyCsClassName(Aggregate)}} {
+                public partial class {{GetLegacyCurrentClassName()}} {
                 {{valueMembers.SelectTextTemplate(member => $$"""
                     public required {{member.GetLegacyCSharpPropertyTypeName()}} {{member.PhysicalName}} { get; set; }
                 """)}}
@@ -114,7 +116,7 @@ namespace Nijo.Models.WriteModel2Modules {
         }
 
         private string RenderLegacyDescendant(RefTargetKeyStructureMember member) {
-            return new DataClassForRefTargetKeys(member.TargetStructure.Aggregate, EntryAggregate).RenderLegacyCSharpBodyRecursively();
+            return new DataClassForRefTargetKeys(member.TargetStructure.Aggregate, EntryAggregate, member.GetLegacyCSharpPropertyTypeName()).RenderLegacyCSharpBodyRecursively();
         }
 
         private string RenderLegacyTypeScriptBodyRecursively() {
@@ -141,11 +143,15 @@ namespace Nijo.Models.WriteModel2Modules {
             var legacyMembers = GetLegacyMembers().ToArray();
             return new[] {
                 $"/** {Aggregate.DisplayName} のキー */",
-                $"export type {GetLegacyCsClassName(Aggregate)} = {{",
+                $"export type {GetLegacyCurrentClassName()} = {{",
             }
             .Concat(legacyMembers.Select(member => $"  {member.PhysicalName}: {GetLegacyTypeScriptPropertyTypeName(member)}"))
             .Concat(["}"])
             .Join(Environment.NewLine);
+        }
+
+        private string GetLegacyCurrentClassName() {
+            return _legacyClassNameOverride ?? GetLegacyCsClassName(Aggregate);
         }
 
         private IEnumerable<IRefTargetKeyMember> GetOwnMembers() {
@@ -300,7 +306,7 @@ namespace Nijo.Models.WriteModel2Modules {
         private string GetLegacyTypeScriptPropertyTypeName(IRefTargetKeyMember member) {
             return member switch {
                 RefTargetKeyValueMember valueMember => $"{valueMember.Member.Type.TsTypeName} | null | undefined",
-                RefTargetKeyStructureMember structureMember => $"{GetLegacyCsClassName(structureMember.TargetStructure.Aggregate)} | undefined",
+                RefTargetKeyStructureMember structureMember => $"{structureMember.GetLegacyCSharpPropertyTypeName()} | undefined",
                 _ => member.GetTypeScriptPropertyTypeName(),
             };
         }
@@ -359,7 +365,13 @@ namespace Nijo.Models.WriteModel2Modules {
 
             private RefToMember RefTo { get; }
             public override bool IsArray => false;
-            public override string GetLegacyCSharpPropertyTypeName() => OwnerStructure.GetLegacyCsClassName(RefTo.RefTo);
+            public override string GetLegacyCSharpPropertyTypeName() {
+                if (OwnerStructure.Aggregate.ToMappingKey() == OwnerStructure.EntryAggregate.ToMappingKey()) {
+                    return OwnerStructure.GetLegacyCsClassName(RefTo.RefTo);
+                }
+
+                return $"{OwnerStructure.GetLegacyCurrentClassName()}の{RefTo.PhysicalName}";
+            }
         }
 
         private sealed class RefTargetKeyChildMember : RefTargetKeyStructureMember {

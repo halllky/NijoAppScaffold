@@ -437,9 +437,17 @@ namespace Nijo.Models.WriteModel2Modules {
                 }
             }
 
-            foreach (var member in aggregate.GetMembers().OfType<RefToMember>()) {
-                foreach (var source in RenderRefToDbEntityAssignments(member, RenderMemberAccess(instanceName, member.PhysicalName, nullConditional))) {
-                    yield return source;
+            var refAssignmentGroups = aggregate.GetMembers()
+                .OfType<RefToMember>()
+                .Select(member => RenderRefToDbEntityAssignmentsLegacy(member, RenderMemberAccess(instanceName, member.PhysicalName, nullConditional)).ToArray())
+                .ToArray();
+            var refAssignmentCount = refAssignmentGroups.Select(group => group.Length).DefaultIfEmpty(0).Max();
+
+            for (var index = 0; index < refAssignmentCount; index++) {
+                foreach (var group in refAssignmentGroups) {
+                    if (index < group.Length) {
+                        yield return group[index];
+                    }
                 }
             }
 
@@ -497,6 +505,12 @@ namespace Nijo.Models.WriteModel2Modules {
             }
         }
 
+        private IEnumerable<string> RenderRefToDbEntityAssignmentsLegacy(RefToMember refTo, string refExpr) {
+            foreach (var source in RenderRefTargetKeyAssignmentsLegacy(refTo.RefTo, refExpr, [refTo.PhysicalName])) {
+                yield return source;
+            }
+        }
+
         private IEnumerable<string> RenderRefTargetKeyAssignments(AggregateBase aggregate, string sourceExpr, IReadOnlyList<string> path, bool parentPathUnsupported) {
             var parent = aggregate.GetParent();
             if (parent != null) {
@@ -516,6 +530,27 @@ namespace Nijo.Models.WriteModel2Modules {
                         yield return source;
                     }
                 }
+            }
+        }
+
+        private IEnumerable<string> RenderRefTargetKeyAssignmentsLegacy(AggregateBase aggregate, string sourceExpr, IReadOnlyList<string> path) {
+            var parent = aggregate.GetParent();
+            if (parent != null) {
+                foreach (var source in RenderRefTargetKeyAssignmentsLegacy(parent, $"{sourceExpr}?.PARENT", [.. path, "PARENT"])) {
+                    yield return source;
+                }
+            }
+
+            foreach (var member in aggregate.GetMembers().OfType<RefToMember>().Where(refTo => refTo.IsKey)) {
+                foreach (var source in RenderRefTargetKeyAssignmentsLegacy(member.RefTo, $"{sourceExpr}?.{member.PhysicalName}", [.. path, member.PhysicalName])) {
+                    yield return source;
+                }
+            }
+
+            foreach (var member in aggregate.GetMembers().OfType<ValueMember>().Where(vm => vm.IsKey)) {
+                var targetProperty = $"{path.Join("_")}_{member.PhysicalName}";
+                var value = $"{member.Type.RenderCastToPrimitiveType()}{sourceExpr}?.{member.PhysicalName}";
+                yield return $"{targetProperty} = {value},";
             }
         }
 
@@ -679,9 +714,11 @@ namespace Nijo.Models.WriteModel2Modules {
 
             var parent = aggregate.GetParent();
             if (parent != null) {
-                foreach (var source in RenderFromRefTargetKeysLegacy(parent, entityExpr, [.. path, "Parent"], parentPathUnsupported: true)) {
-                    yield return source;
-                }
+                yield return $$"""
+                    PARENT = new() {
+                        {{WithIndent(RenderFromRefTargetKeysLegacy(parent, entityExpr, [.. path, "PARENT"], parentPathUnsupported: false), "    ")}}
+                    },
+                    """;
             }
         }
 
