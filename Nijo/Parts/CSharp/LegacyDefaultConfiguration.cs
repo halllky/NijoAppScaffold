@@ -10,6 +10,7 @@ namespace Nijo.Parts.CSharp {
     /// </summary>
     internal class LegacyDefaultConfiguration : IMultiAggregateSourceFile {
         private readonly List<string> _valueObjectClassNames = [];
+        private readonly List<string> _characterTypes = [];
         private readonly Lock _lock = new();
         private bool _renderDbContextCustomizationMethods;
 
@@ -17,6 +18,15 @@ namespace Nijo.Parts.CSharp {
             lock (_lock) {
                 if (!_valueObjectClassNames.Contains(className)) {
                     _valueObjectClassNames.Add(className);
+                }
+                return this;
+            }
+        }
+
+        internal LegacyDefaultConfiguration AddCharacterType(string characterType) {
+            lock (_lock) {
+                if (!_characterTypes.Contains(characterType)) {
+                    _characterTypes.Add(characterType);
                 }
                 return this;
             }
@@ -35,6 +45,7 @@ namespace Nijo.Parts.CSharp {
 
         void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
             var valueObjectClassNames = GetValueObjectClassNames();
+            var characterTypes = GetCharacterTypes();
             var renderDbContextCustomizationMethods = ShouldRenderDbContextCustomizationMethods();
 
             ctx.CoreLibrary(dir => {
@@ -99,6 +110,13 @@ namespace Nijo.Parts.CSharp {
                                     return new {{className}}.EFCoreValueConverter();
                                 }
                         """)}}
+                        {{characterTypes.SelectTextTemplate(characterType => $$"""
+
+                                /// <summary>
+                                /// データ登録更新前の、文字列が{{characterType}}か否かを判定するロジック
+                                /// </summary>
+                                public abstract bool {{GetCharacterTypeMethodName(characterType)}}(string value, int? maxLength);
+                        """)}}
                         {{If(renderDbContextCustomizationMethods, () => $$"""
 
                                 /// <summary>
@@ -131,10 +149,28 @@ namespace Nijo.Parts.CSharp {
             }
         }
 
+        internal string[] GetCharacterTypes() {
+            lock (_lock) {
+                return _characterTypes.OrderBy(x => x).ToArray();
+            }
+        }
+
         internal bool ShouldRenderDbContextCustomizationMethods() {
             lock (_lock) {
                 return _renderDbContextCustomizationMethods;
             }
+        }
+
+        internal static string GetCharacterTypeMethodName(string characterType) {
+            return "CheckIfStringIs" + characterType
+                .Replace(" ", string.Empty)
+                .Replace("　", string.Empty)
+                .Replace("(", string.Empty)
+                .Replace(")", string.Empty)
+                .Replace("（", string.Empty)
+                .Replace("）", string.Empty)
+                .Replace("-", string.Empty)
+                .Replace("ー", string.Empty);
         }
     }
 }

@@ -28,6 +28,8 @@ namespace Nijo.Models {
         }
 
         void IModel.GenerateCode(CodeRenderingContext ctx, RootAggregate rootAggregate) {
+            if (!ctx.IsLegacyCompatibilityMode()) throw new InvalidOperationException("旧版互換モードでのみ利用可能");
+
             base.GenerateCode(ctx, rootAggregate);
         }
 

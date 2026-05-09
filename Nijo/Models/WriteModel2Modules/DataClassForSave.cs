@@ -84,6 +84,49 @@ namespace Nijo.Models.WriteModel2Modules {
         /// 旧版の MessageDataCsClassName / InterfaceName 相当を現行 MessageContainer.BaseClass へ接続できる形で定義する。
         /// </remarks>
         internal string RenderCSharpMessageStructure(CodeRenderingContext ctx) {
+            if (ctx.IsLegacyCompatibilityMode()) {
+                var legacyMembers = GetMessageMembersLegacy().ToArray();
+                var ctorArg = Aggregate is ChildrenAggregate ? "IEnumerable<string> path, int index" : "IEnumerable<string> path";
+                var baseCtor = Aggregate is ChildrenAggregate ? "[.. path, index.ToString()]" : "path";
+
+                return $$"""
+                    /// <summary>
+                    /// {{Aggregate.DisplayName}}の更新処理中に発生したメッセージを画面表示するための入れ物
+                    /// </summary>
+                    public interface {{MessageInterfaceName}} : IDisplayMessageContainer {
+                    {{legacyMembers.SelectTextTemplate(member => $$"""
+                        {{member.InterfaceType}} {{member.PhysicalName}} { get; }
+                    """)}}
+                    }
+                    /// <summary>
+                    /// {{Aggregate.DisplayName}}の更新処理中に発生したメッセージを画面表示するための入れ物の具象クラス
+                    /// </summary>
+                    public partial class {{MessageClassName}} : DisplayMessageContainerBase, {{MessageInterfaceName}} {
+                        public {{MessageClassName}}({{ctorArg}}) : base({{baseCtor}}) {
+                    {{legacyMembers.SelectTextTemplate(member => $$"""
+                        {{member.PathConstructorExpression}}
+                    """)}}
+                        }
+                        /// <summary>すべてのメッセージを画面ルートに転送する場合に用いられるコンストラクタ</summary>
+                        public {{MessageClassName}}(IDisplayMessageContainer origin) : base(origin) {
+                    {{legacyMembers.SelectTextTemplate(member => $$"""
+                        {{member.OriginConstructorExpression}}
+                    """)}}
+                        }
+
+                    {{legacyMembers.SelectTextTemplate(member => $$"""
+                        public {{member.InterfaceType}} {{member.PhysicalName}} { get; }
+                    """)}}
+
+                        public override IEnumerable<IDisplayMessageContainer> EnumerateChildren() {
+                        {{legacyMembers.SelectTextTemplate(member => $$"""
+                            yield return {{member.PhysicalName}};
+                    """)}}
+                        }
+                    }
+                    """;
+            }
+
             ctx.Use<MessageContainer.BaseClass>().Register(MessageInterfaceName, MessageClassName);
 
             var members = GetMessageMembers().ToArray();
@@ -123,6 +166,24 @@ namespace Nijo.Models.WriteModel2Modules {
         /// 旧版の ReadOnlyStructure は更新前比較や confirmation 前の値保持に使われていた点を維持する。
         /// </remarks>
         internal string RenderCSharpReadOnlyStructure(CodeRenderingContext ctx) {
+            if (ctx.IsLegacyCompatibilityMode()) {
+                return $$"""
+                    /// <summary>
+                    /// {{Aggregate.DisplayName}}の読み取り専用用構造体用クラス
+                    /// </summary>
+                    public sealed class {{GetLegacyReadOnlyCsClassName()}} {
+                        [JsonPropertyName("_thisObjectIsReadOnly")]
+                        public bool _ThisObjectIsReadOnly { get; set; }
+                    {{If(Type == E_Type.UpdateOrDelete && Aggregate is RootAggregate, () => $$"""
+                        public bool {{VERSION}} { get; set; }
+                    """)}}
+                    {{GetOwnMembers().SelectTextTemplate(member => $$"""
+                        public {{GetLegacyReadOnlyMemberTypeNameCSharp(member)}} {{member.PhysicalName}} { get; {{(member is ChildAggregate or ChildrenAggregate ? "}" : "set; }")}}
+                    """)}}
+                    }
+                    """;
+            }
+
             return $$"""
                 /// <summary>
                 /// {{Aggregate.DisplayName}} の読み取り専用 DTO。
@@ -473,12 +534,66 @@ namespace Nijo.Models.WriteModel2Modules {
             }
         }
 
+        private IEnumerable<MessageMember> GetMessageMembersLegacy() {
+            foreach (var member in GetOwnMembers()) {
+                if (member is ValueMember or RefToMember) {
+                    yield return new MessageMember {
+                        PhysicalName = member.PhysicalName,
+                        DisplayName = member.DisplayName,
+                        InterfaceType = "IDisplayMessageContainer",
+                        ClassType = "IDisplayMessageContainer",
+                        PathConstructorExpression = $"        {member.PhysicalName} = new DisplayMessageContainer([.. path, \"{member.PhysicalName}\"]);",
+                        OriginConstructorExpression = $"        {member.PhysicalName} = origin;",
+                        ConstructorExpression = string.Empty,
+                    };
+                } else if (member is ChildAggregate child) {
+                    var nested = new DataClassForSave(child, Type);
+                    yield return new MessageMember {
+                        PhysicalName = member.PhysicalName,
+                        DisplayName = member.DisplayName,
+                        InterfaceType = nested.MessageInterfaceName,
+                        ClassType = nested.MessageInterfaceName,
+                        PathConstructorExpression = $"        {member.PhysicalName} = new {nested.MessageClassName}([.. path, \"{member.PhysicalName}\"]);",
+                        OriginConstructorExpression = $"        {member.PhysicalName} = origin;",
+                        ConstructorExpression = string.Empty,
+                    };
+                } else if (member is ChildrenAggregate children) {
+                    var nested = new DataClassForSave(children, Type);
+                    yield return new MessageMember {
+                        PhysicalName = member.PhysicalName,
+                        DisplayName = member.DisplayName,
+                        InterfaceType = $"IDisplayMessageContainerList<{nested.MessageInterfaceName}>",
+                        ClassType = $"IDisplayMessageContainerList<{nested.MessageInterfaceName}>",
+                        PathConstructorExpression = $"        {member.PhysicalName} = new DisplayMessageContainerList<{nested.MessageInterfaceName}>([.. path, \"{member.PhysicalName}\"], i => {{ return new {nested.MessageClassName}([.. path, \"{member.PhysicalName}\"], i); }});",
+                        OriginConstructorExpression = $"        {member.PhysicalName} = new DisplayMessageContainerList<{nested.MessageInterfaceName}>(origin, i => {{ return new {nested.MessageClassName}(origin); }});",
+                        ConstructorExpression = string.Empty,
+                    };
+                }
+            }
+        }
+
+        private string GetLegacyReadOnlyCsClassName() {
+            return $"{CsClassName}ReadOnlyData";
+        }
+
+        private string GetLegacyReadOnlyMemberTypeNameCSharp(IAggregateMember member) {
+            return member switch {
+                ValueMember => "bool",
+                RefToMember => "bool",
+                ChildAggregate child => $"{new DataClassForSave(child, Type).GetLegacyReadOnlyCsClassName()} {{ get; }} = new();",
+                ChildrenAggregate children => $"List<{new DataClassForSave(children, Type).GetLegacyReadOnlyCsClassName()}> {{ get; }} = new();",
+                _ => throw new InvalidOperationException($"未対応のメンバー型: {member.GetType().Name}"),
+            };
+        }
+
         private sealed class MessageMember {
             public required string PhysicalName { get; init; }
             public required string DisplayName { get; init; }
             public required string InterfaceType { get; init; }
             public required string ClassType { get; init; }
             public required string ConstructorExpression { get; init; }
+            public string PathConstructorExpression { get; init; } = string.Empty;
+            public string OriginConstructorExpression { get; init; } = string.Empty;
         }
     }
 }

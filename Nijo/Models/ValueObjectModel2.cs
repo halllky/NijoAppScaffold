@@ -24,6 +24,8 @@ namespace Nijo.Models {
         }
 
         public void GenerateCode(CodeRenderingContext ctx, RootAggregate rootAggregate) {
+            if (!ctx.IsLegacyCompatibilityMode()) throw new InvalidOperationException("旧版互換モードでのみ利用可能");
+
             var className = rootAggregate.PhysicalName;
 
             ctx.CoreLibrary(dir => {
@@ -32,16 +34,8 @@ namespace Nijo.Models {
                 });
             });
 
-            if (ctx.IsLegacyCompatibilityMode()) {
-                ctx.Use<Parts.CSharp.LegacyDbContextClass>().AddValueObject(className);
-                ctx.Use<Parts.CSharp.LegacyDefaultConfiguration>().AddValueObject(className);
-            } else {
-                ctx.ReactProject(dir => {
-                    dir.Directory("util", utilDir => {
-                        utilDir.Generate(RenderTypeScript(rootAggregate));
-                    });
-                });
-            }
+            ctx.Use<Parts.CSharp.LegacyDbContextClass>().AddValueObject(className);
+            ctx.Use<Parts.CSharp.LegacyDefaultConfiguration>().AddValueObject(className);
         }
 
         private static SourceFile RenderCSharp(RootAggregate rootAggregate, CodeRenderingContext ctx) {
