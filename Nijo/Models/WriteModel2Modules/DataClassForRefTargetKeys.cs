@@ -56,6 +56,10 @@ namespace Nijo.Models.WriteModel2Modules {
         /// 実装方針: C# 側と同じ構造を保ったまま、参照選択 UI で使える TypeScript 型を生成する。
         /// </remarks>
         internal string RenderTypeScriptDeclaringRecursively(CodeRenderingContext ctx) {
+            if (ctx.IsLegacyCompatibilityMode()) {
+                return RenderLegacyTypeScriptBodyRecursively();
+            }
+
             var descendants = GetChildAggregatesRecursively().ToArray();
 
             return $$"""
@@ -113,6 +117,16 @@ namespace Nijo.Models.WriteModel2Modules {
             return new DataClassForRefTargetKeys(member.TargetStructure.Aggregate, EntryAggregate).RenderLegacyCSharpBodyRecursively();
         }
 
+        private string RenderLegacyTypeScriptBodyRecursively() {
+            return $$"""
+                // {{Aggregate.DisplayName}} が他の集約から参照されるときの項目のうち、登録更新に必要なキー情報のみの部分
+                {{RenderSingleTypeScriptTypeLegacy()}}
+                {{GetLegacyRelationMembers().SelectTextTemplate(member => $$"""
+                {{new DataClassForRefTargetKeys(member.TargetStructure.Aggregate, EntryAggregate).RenderLegacyTypeScriptBodyRecursively()}}
+                """)}}
+                """;
+        }
+
         private string RenderSingleTypeScriptType() {
             return $$"""
                 export type {{TsTypeName}} = {
@@ -121,6 +135,17 @@ namespace Nijo.Models.WriteModel2Modules {
                 """)}}
                 }
                 """;
+        }
+
+        private string RenderSingleTypeScriptTypeLegacy() {
+            var legacyMembers = GetLegacyMembers().ToArray();
+            return new[] {
+                $"/** {Aggregate.DisplayName} のキー */",
+                $"export type {GetLegacyCsClassName(Aggregate)} = {{",
+            }
+            .Concat(legacyMembers.Select(member => $"  {member.PhysicalName}: {GetLegacyTypeScriptPropertyTypeName(member)}"))
+            .Concat(["}"])
+            .Join(Environment.NewLine);
         }
 
         private IEnumerable<IRefTargetKeyMember> GetOwnMembers() {
@@ -270,6 +295,14 @@ namespace Nijo.Models.WriteModel2Modules {
             string GetCSharpPropertyTypeName();
             string GetTypeScriptPropertyTypeName();
             string GetLegacyCSharpPropertyTypeName();
+        }
+
+        private string GetLegacyTypeScriptPropertyTypeName(IRefTargetKeyMember member) {
+            return member switch {
+                RefTargetKeyValueMember valueMember => $"{valueMember.Member.Type.TsTypeName} | null | undefined",
+                RefTargetKeyStructureMember structureMember => $"{GetLegacyCsClassName(structureMember.TargetStructure.Aggregate)} | undefined",
+                _ => member.GetTypeScriptPropertyTypeName(),
+            };
         }
 
         private sealed class RefTargetKeyValueMember : IRefTargetKeyMember, IInstanceValuePropertyMetadata {

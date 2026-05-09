@@ -60,6 +60,7 @@ namespace Nijo.Parts.JavaScript {
             return new SourceFile {
                 FileName = "index.ts",
                 Contents = """
+                    export * from "./batch-update"
                     export * from "./presentation-context"
                     export * from "./space-finder-const"
                     export * from "./MSG"
