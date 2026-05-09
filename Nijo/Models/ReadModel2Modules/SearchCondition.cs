@@ -141,7 +141,14 @@ namespace Nijo.Models.ReadModel2Modules {
 
                     foreach (var member in aggregate.GetMembers()) {
                         if (member is RefToMember refTo) {
-                            foreach (var child in EnumerateRecursively(refTo.RefTo.GetRoot(), [.. path, refTo.PhysicalName])) {
+                            if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
+                                var legacyRefToFilter = new RefSearchCondition(refTo.RefTo, refTo.RefTo.AsEntry());
+                                foreach (var child in EnumerateLegacyRefMembers(legacyRefToFilter.GetFilterMembers(), [.. path, refTo.PhysicalName])) {
+                                    yield return child;
+                                }
+                                continue;
+                            }
+                            foreach (var child in EnumerateRecursively(refTo.RefTo, [.. path, refTo.PhysicalName])) {
                                 yield return child;
                             }
                         } else if (member is ChildAggregate child) {
@@ -151,6 +158,24 @@ namespace Nijo.Models.ReadModel2Modules {
                         } else if (member is ChildrenAggregate children) {
                             foreach (var childMember in EnumerateRecursively(children, [.. path, children.PhysicalName])) {
                                 yield return childMember;
+                            }
+                        }
+                    }
+
+                    static IEnumerable<FilterableMember> EnumerateLegacyRefMembers(IEnumerable<IInstancePropertyMetadata> members, IReadOnlyList<string> path) {
+                        foreach (var member in members) {
+                            if (member is IInstanceValuePropertyMetadata value && value.SchemaPathNode is ValueMember vm) {
+                                var isLegacySearchOnlyBool = vm.OnlySearchCondition && vm.Type.CsDomainTypeName == "bool";
+                                if (vm.Type.SearchBehavior == null && !isLegacySearchOnlyBool) continue;
+                                if (vm.OnlySearchCondition && !isLegacySearchOnlyBool) continue;
+                                if (vm.IsHardCodedPrimaryKey) continue;
+                                yield return new FilterableMember(vm, [.. path, member.GetPropertyName(E_CsTs.CSharp)]);
+                                continue;
+                            }
+                            if (member is IInstanceStructurePropertyMetadata structure) {
+                                foreach (var child in EnumerateLegacyRefMembers(structure.GetMembers(), [.. path, member.GetPropertyName(E_CsTs.CSharp)])) {
+                                    yield return child;
+                                }
                             }
                         }
                     }
@@ -442,6 +467,11 @@ namespace Nijo.Models.ReadModel2Modules {
                         if (member is ChildrenAggregate) {
                             continue;
                         }
+                        if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
+                            && member is RefToMember refTo
+                            && refTo.RefTo.GetParent() != null) {
+                            continue;
+                        }
                         if (member is IRelationalMember relational) {
                             foreach (var vm2 in EnumerateRecursively(relational.MemberAggregate, [.. path, relational.PhysicalName])) {
                                 yield return vm2;
@@ -661,8 +691,8 @@ namespace Nijo.Models.ReadModel2Modules {
         internal class FilterRefMember : IFilterMember, IInstanceStructurePropertyMetadata {
             internal FilterRefMember(RefToMember refTo) {
                 _refTo = refTo;
-                RefToFilter = new Filter(refTo.RefTo.GetRoot());
-                LegacyRefToFilter = new RefSearchCondition(refTo.RefTo.GetRoot(), refTo.RefTo.GetRoot());
+                RefToFilter = new Filter(refTo.RefTo);
+                LegacyRefToFilter = new RefSearchCondition(refTo.RefTo, refTo.RefTo.AsEntry());
             }
 
             private readonly RefToMember _refTo;
@@ -671,7 +701,9 @@ namespace Nijo.Models.ReadModel2Modules {
 
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => _refTo;
             bool IInstanceStructurePropertyMetadata.IsArray => false;
-            IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => RefToFilter.GetMembers();
+            IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
+                ? LegacyRefToFilter.GetFilterMembers()
+                : RefToFilter.GetMembers();
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => _refTo.PhysicalName;
             string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
                 ? (csts == E_CsTs.CSharp ? LegacyRefToFilter.CsFilterTypeName : LegacyRefToFilter.TsFilterTypeName)

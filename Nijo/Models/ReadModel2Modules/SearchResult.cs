@@ -153,7 +153,13 @@ namespace Nijo.Models.ReadModel2Modules {
             public bool IsArray => _isArray;
             public string GetPropertyName(E_CsTs csts) => _propertyName;
             public string GetTypeName(E_CsTs csts) => GetResolvedTypeName();
-            public IEnumerable<IInstancePropertyMetadata> GetMembers() => _target.GetMembers();
+            public IEnumerable<IInstancePropertyMetadata> GetMembers() {
+                if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode() && _schemaPathNode is RefToMember refTo) {
+                    return new RefSearchResult(refTo.RefTo.AsEntry(), refTo.RefTo.AsEntry()).GetMembers();
+                }
+
+                return _target.GetMembers();
+            }
 
             internal string RenderDeclaration() {
                 return _isArray

@@ -888,13 +888,28 @@ namespace Nijo.Models.ReadModel2Modules {
             }
 
             static string RenderLegacyRefMember(RefToMember refToMember, string left, string right) {
-                var leftValue = $"{left}.{VALUES_TS}?.{refToMember.PhysicalName}";
-                var rightValue = $"{right}.{VALUES_TS}?.{refToMember.PhysicalName}";
+                var refEntry = refToMember.RefTo.AsEntry();
+                var refDisplayData = new RefDisplayData(refEntry, refEntry);
+                var leftRoot = new Variable($"{left}.{VALUES_TS}?.{refToMember.PhysicalName}?", refDisplayData);
+                var rightRoot = new Variable($"{right}.{VALUES_TS}?.{refToMember.PhysicalName}?", refDisplayData);
+                var leftMembers = leftRoot
+                    .CreatePropertiesRecursively()
+                    .OfType<InstanceValueProperty>()
+                    .GroupBy(property => property.Metadata.SchemaPathNode.ToMappingKey())
+                    .ToDictionary(group => group.Key, group => group.OrderBy(property => property.GetPathFromInstance().Count()).First());
+                var rightMembers = rightRoot
+                    .CreatePropertiesRecursively()
+                    .OfType<InstanceValueProperty>()
+                    .GroupBy(property => property.Metadata.SchemaPathNode.ToMappingKey())
+                    .ToDictionary(group => group.Key, group => group.OrderBy(property => property.GetPathFromInstance().Count()).First());
 
-                return string.Join(Environment.NewLine, refToMember.RefTo
-                    .AsEntry()
+                return string.Join(Environment.NewLine, refEntry
                     .GetKeyVMs()
-                    .Select(key => $"if (({leftValue}?.{key.PhysicalName} ?? undefined) !== ({rightValue}?.{key.PhysicalName} ?? undefined)) return false"));
+                    .Select(key => {
+                        var leftProp = leftMembers[key.ToMappingKey()].GetJoinedPathFromInstance(E_CsTs.TypeScript, "?.");
+                        var rightProp = rightMembers[key.ToMappingKey()].GetJoinedPathFromInstance(E_CsTs.TypeScript, "?.");
+                        return $"if (({leftProp} ?? undefined) !== ({rightProp} ?? undefined)) return false";
+                    }));
             }
 
             static string RenderLegacyChildAggregate(ChildAggregate childAggregate, string left, string right) {

@@ -94,6 +94,7 @@ namespace Nijo.Models.ReadModel2Modules {
                     {{aggregate.PhysicalName}},
                 """)}}
                 }
+
                 """;
         }
     }
