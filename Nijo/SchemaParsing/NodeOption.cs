@@ -82,6 +82,9 @@ internal static class BasicNodeOptions {
     private static bool IsDataModelLike(IModel model) {
         return model is DataModel || model is WriteModel2 || model is ReadModel2;
     }
+    private static bool IsCommandModelLike(IModel model) {
+        return model is CommandModel || model is CommandModel2;
+    }
     private static bool IsStrictQueryModel(IModel model) {
         return model is QueryModel && model is not ReadModel2;
     }
@@ -248,7 +251,7 @@ internal static class BasicNodeOptions {
             新規登録処理や更新処理でアプリケーション側の非負数チェック対象になります。
             """,
         IsAvailable = (model, nodeType) => {
-            return IsDataModelLike(model)
+            return (IsDataModelLike(model) || model is CommandModel2)
                 && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
@@ -261,7 +264,7 @@ internal static class BasicNodeOptions {
         },
     };
     internal static NodeOption Required = CreateCompatibilityOption("Required", (model, nodeType) => {
-        return (IsDataModelLike(model) || model is QueryModel)
+        return (IsDataModelLike(model) || model is QueryModel || model is CommandModel2)
             && (nodeType == E_NodeType.ValueMember
              || nodeType == E_NodeType.Ref
              || nodeType == E_NodeType.ChildAggregate
@@ -277,6 +280,20 @@ internal static class BasicNodeOptions {
     internal static NodeOption HasLifecycle = CreateCompatibilityOption("HasLifecycle");
     internal static NodeOption ForceGenerateRefToModules = CreateCompatibilityOption("ForceGenerateRefToModules");
     internal static NodeOption CustomizeBatchUpdateReadModels = CreateCompatibilityOption("CustomizeBatchUpdateReadModels");
+    internal static NodeOption Step = new() {
+        AttributeName = CommandModel2.STEP_ATTRIBUTE_NAME,
+        DisplayName = "ステップ番号",
+        Type = E_NodeOptionType.Integer,
+        HelpText = "旧版互換のコマンドモデルで段階遷移を行う際のステップ番号です。整数で指定してください。",
+        IsAvailable = (model, nodeType) => {
+            return model is CommandModel2 && nodeType == E_NodeType.ChildAggregate;
+        },
+        ValidateOthers = ctx => {
+            if (!int.TryParse(ctx.Value, out _)) {
+                ctx.AddError("整数値で指定してください。");
+            }
+        },
+    };
 
 
     #region DataModel用
@@ -744,7 +761,7 @@ internal static class BasicNodeOptions {
             """,
         IsAvailable = (model, nodeType) => {
             // CommandModelまたはStructureModelの外部参照のみ許可
-            return (model is CommandModel || model is StructureModel)
+            return (IsCommandModelLike(model) || model is StructureModel)
                 && nodeType == E_NodeType.Ref;
         },
         ValidateOthers = ctx => {
@@ -765,7 +782,7 @@ internal static class BasicNodeOptions {
             RDBMS上での文字列項目の最大長。整数で指定してください。
             """,
         IsAvailable = (model, nodeType) => {
-            return IsDataModelLike(model)
+            return (IsDataModelLike(model) || model is CommandModel2)
                 && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
@@ -786,7 +803,7 @@ internal static class BasicNodeOptions {
         IsAvailable = (model, nodeType) => {
             return (IsDataModelLike(model)
                || model is QueryModel
-               || model is CommandModel)
+               || IsCommandModelLike(model))
                && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
@@ -803,7 +820,7 @@ internal static class BasicNodeOptions {
         IsAvailable = (model, nodeType) => {
             return (IsDataModelLike(model)
                || model is QueryModel
-               || model is CommandModel)
+               || IsCommandModelLike(model))
                && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
@@ -823,7 +840,7 @@ internal static class BasicNodeOptions {
         IsAvailable = (model, nodeType) => {
             return (IsDataModelLike(model)
                || model is QueryModel
-               || model is CommandModel)
+               || IsCommandModelLike(model))
                && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {

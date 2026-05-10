@@ -3,6 +3,7 @@ using Nijo.ImmutableSchema;
 using Nijo.Models.CommandModelModules;
 using Nijo.Models.DataModelModules;
 using Nijo.Models.QueryModelModules;
+using Nijo.Parts.CSharp;
 using Nijo.Parts.JavaScript;
 using Nijo.Util.DotnetEx;
 using System;
@@ -410,13 +411,13 @@ namespace Nijo.Parts.Common {
                       /** Commandパラメータ型一覧 */
                       export interface TypeMap {
                     {{commandModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                        '{{agg.PhysicalName}}': {{agg.GetParameterStructure()?.TsTypeName ?? "Record<string, never> // 引数なし"}}
+                        '{{agg.PhysicalName}}': {{GetCommandParameterTsTypeName(agg)}}
                     """)}}
                       }
                       /** Commandパラメータ新規作成関数 */
                       export const create: { [K in {{COMMAND_MODEL_TYPE}}]: (() => TypeMap[K]) } = {
                     {{commandModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                        '{{agg.PhysicalName}}': {{agg.GetParameterStructure()?.TsNewObjectFunction ?? "() => ({ /* 引数なし */ })"}},
+                        '{{agg.PhysicalName}}': {{GetCommandParameterTsCreateFunction(agg)}},
                     """)}}
                       }
                     }
@@ -429,13 +430,13 @@ namespace Nijo.Parts.Common {
                       /** Command戻り値型一覧 */
                       export interface TypeMap {
                     {{commandModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                        '{{agg.PhysicalName}}': {{agg.GetReturnValueStructure()?.TsTypeName ?? "Record<string, never> // 戻り値なし"}}
+                        '{{agg.PhysicalName}}': {{GetCommandReturnValueTsTypeName(agg)}}
                     """)}}
                       }
                       /** Command戻り値新規作成関数 */
                       export const create: { [K in {{COMMAND_MODEL_TYPE}}]: (() => TypeMap[K]) } = {
                     {{commandModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                        '{{agg.PhysicalName}}': {{agg.GetReturnValueStructure()?.TsNewObjectFunction ?? "() => ({ /* 戻り値なし */ })"}},
+                        '{{agg.PhysicalName}}': {{GetCommandReturnValueTsCreateFunction(agg)}},
                     """)}}
                       }
                     }
@@ -463,7 +464,7 @@ namespace Nijo.Parts.Common {
 
 
                     //#region コマンド
-                    {{CommandProcessing.RenderTsTypeMap(commandModelsOrderByDataFlow)}}
+                    {{RenderCommandExecuteTsTypeMap(commandModelsOrderByDataFlow)}}
                     //#endregion コマンド
 
 
@@ -558,6 +559,82 @@ namespace Nijo.Parts.Common {
                 _structureModels.Add(rootAggregate);
                 return this;
             }
+        }
+
+        private static string GetCommandParameterTsTypeName(RootAggregate aggregate) {
+            if (aggregate.Model is Models.CommandModel2) {
+                return new Models.CommandModel2Modules.CommandParameter(aggregate).TsTypeName;
+            }
+
+            return aggregate.GetParameterStructure()?.TsTypeName ?? "Record<string, never> // 引数なし";
+        }
+
+        private static string GetCommandParameterTsCreateFunction(RootAggregate aggregate) {
+            if (aggregate.Model is Models.CommandModel2) {
+                return $"createNew{new Models.CommandModel2Modules.CommandParameter(aggregate).TsTypeName}";
+            }
+
+            return aggregate.GetParameterStructure()?.TsNewObjectFunction ?? "() => ({ /* 引数なし */ })";
+        }
+
+        private static string GetCommandReturnValueTsTypeName(RootAggregate aggregate) {
+            if (aggregate.Model is Models.CommandModel2) {
+                return "Record<string, never> // 戻り値なし";
+            }
+
+            return aggregate.GetReturnValueStructure()?.TsTypeName ?? "Record<string, never> // 戻り値なし";
+        }
+
+        private static string GetCommandReturnValueTsCreateFunction(RootAggregate aggregate) {
+            if (aggregate.Model is Models.CommandModel2) {
+                return "() => ({ /* 戻り値なし */ })";
+            }
+
+            return aggregate.GetReturnValueStructure()?.TsNewObjectFunction ?? "() => ({ /* 戻り値なし */ })";
+        }
+
+        private static string RenderCommandExecuteTsTypeMap(IEnumerable<RootAggregate> commandModels) {
+            var items = commandModels.Select(rootAggregate => new {
+                EscapedPhysicalName = rootAggregate.PhysicalName.Replace("'", "\\'"),
+                Endpoint = GetCommandExecuteEndpoint(rootAggregate),
+                ParamType = GetCommandParameterTsTypeName(rootAggregate),
+                ReturnType = GetCommandReturnValueTsTypeName(rootAggregate),
+            }).ToArray();
+
+            return $$"""
+            /** コマンド起動処理 */
+            export namespace ExecuteFeature {
+              /** コマンドの実行エンドポイントの一覧 */
+              export const Endpoint: { [key in {{COMMAND_MODEL_TYPE}}]: string } = {
+            {{items.SelectTextTemplate(x => $$"""
+              '{{x.EscapedPhysicalName}}': '{{x.Endpoint}}',
+            """)}}
+              }
+
+              /** コマンドのパラメータ型の一覧 */
+              export interface ParamType {
+            {{items.SelectTextTemplate(x => $$"""
+              '{{x.EscapedPhysicalName}}': {{x.ParamType}}
+            """)}}
+              }
+
+              /** コマンドのサーバーからの戻り値の型の一覧 */
+              export interface ReturnType {
+            {{items.SelectTextTemplate(x => $$"""
+              '{{x.EscapedPhysicalName}}': {{x.ReturnType}}
+            """)}}
+              }
+            }
+            """;
+        }
+
+        private static string GetCommandExecuteEndpoint(RootAggregate aggregate) {
+            if (aggregate.Model is Models.CommandModel2) {
+                return $"/api/{aggregate.PhysicalName}";
+            }
+
+            var controller = new AspNetController(aggregate);
+            return controller.GetActionNameForClient("execute");
         }
     }
 }
