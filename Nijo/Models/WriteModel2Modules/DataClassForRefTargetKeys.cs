@@ -59,7 +59,7 @@ namespace Nijo.Models.WriteModel2Modules {
         /// </remarks>
         internal string RenderTypeScriptDeclaringRecursively(CodeRenderingContext ctx) {
             if (ctx.IsLegacyCompatibilityMode()) {
-                return RenderLegacyTypeScriptBodyRecursively();
+                return RenderLegacyTypeScriptBodyRecursively(includeHeaderComment: true);
             }
 
             var descendants = GetChildAggregatesRecursively().ToArray();
@@ -119,12 +119,14 @@ namespace Nijo.Models.WriteModel2Modules {
             return new DataClassForRefTargetKeys(member.TargetStructure.Aggregate, EntryAggregate, member.GetLegacyCSharpPropertyTypeName()).RenderLegacyCSharpBodyRecursively();
         }
 
-        private string RenderLegacyTypeScriptBodyRecursively() {
+        private string RenderLegacyTypeScriptBodyRecursively(bool includeHeaderComment) {
             return $$"""
+                {{If(includeHeaderComment, () => $$"""
                 // {{Aggregate.DisplayName}} が他の集約から参照されるときの項目のうち、登録更新に必要なキー情報のみの部分
+                """)}}
                 {{RenderSingleTypeScriptTypeLegacy()}}
                 {{GetLegacyRelationMembers().SelectTextTemplate(member => $$"""
-                {{new DataClassForRefTargetKeys(member.TargetStructure.Aggregate, EntryAggregate).RenderLegacyTypeScriptBodyRecursively()}}
+                {{new DataClassForRefTargetKeys(member.TargetStructure.Aggregate, EntryAggregate, member.GetLegacyCSharpPropertyTypeName()).RenderLegacyTypeScriptBodyRecursively(includeHeaderComment: false)}}
                 """)}}
                 """;
         }
@@ -141,13 +143,20 @@ namespace Nijo.Models.WriteModel2Modules {
 
         private string RenderSingleTypeScriptTypeLegacy() {
             var legacyMembers = GetLegacyMembers().ToArray();
-            return new[] {
-                $"/** {Aggregate.DisplayName} のキー */",
-                $"export type {GetLegacyCurrentClassName()} = {{",
-            }
-            .Concat(legacyMembers.Select(member => $"  {member.PhysicalName}: {GetLegacyTypeScriptPropertyTypeName(member)}"))
-            .Concat(["}"])
-            .Join(Environment.NewLine);
+            var valueMembers = legacyMembers.OfType<RefTargetKeyValueMember>().ToArray();
+            var relationMembers = legacyMembers.OfType<RefTargetKeyStructureMember>().ToArray();
+
+            return $$"""
+                /** {{Aggregate.DisplayName}} のキー */
+                export type {{GetLegacyCurrentClassName()}} = {
+                {{valueMembers.SelectTextTemplate(member => $$"""
+                  {{RenderLegacyTypeScriptMember(member)}}
+                """)}}
+                {{relationMembers.SelectTextTemplate(member => $$"""
+                  {{RenderLegacyTypeScriptMember(member)}}
+                """)}}
+                }
+                """;
         }
 
         private string GetLegacyCurrentClassName() {
@@ -306,9 +315,13 @@ namespace Nijo.Models.WriteModel2Modules {
         private string GetLegacyTypeScriptPropertyTypeName(IRefTargetKeyMember member) {
             return member switch {
                 RefTargetKeyValueMember valueMember => $"{valueMember.Member.Type.TsTypeName} | null | undefined",
-                RefTargetKeyStructureMember structureMember => $"{structureMember.GetLegacyCSharpPropertyTypeName()} | undefined",
+                RefTargetKeyStructureMember structureMember => structureMember.GetLegacyCSharpPropertyTypeName(),
                 _ => member.GetTypeScriptPropertyTypeName(),
             };
+        }
+
+        private string RenderLegacyTypeScriptMember(IRefTargetKeyMember member) {
+            return $"{member.PhysicalName}: {GetLegacyTypeScriptPropertyTypeName(member)}";
         }
 
         private sealed class RefTargetKeyValueMember : IRefTargetKeyMember, IInstanceValuePropertyMetadata {

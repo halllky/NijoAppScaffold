@@ -2,6 +2,7 @@ using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
 using Nijo.Util.DotnetEx;
+using Nijo.ValueMemberTypes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -239,12 +240,13 @@ namespace Nijo.Models.WriteModel2Modules {
         /// </remarks>
         internal string RenderTypeScript(CodeRenderingContext ctx) {
             if (ctx.IsLegacyCompatibilityMode()) {
-                return new[] {
-                    $"export type {TsTypeName} = {{",
-                }
-                .Concat(GetOwnMembers().Select(member => $"  {member.PhysicalName}: {GetLegacyMemberTypeNameTypeScript(member)}"))
-                .Concat(["}"])
-                .Join(Environment.NewLine);
+                return $$"""
+                    export type {{TsTypeName}} = {
+                    {{GetOwnMembers().SelectTextTemplate(member => $$"""
+                      {{member.PhysicalName}}: {{GetLegacyMemberTypeNameTypeScript(member)}}
+                    """)}}
+                    }
+                    """;
             }
 
             return $$"""
@@ -267,14 +269,15 @@ namespace Nijo.Models.WriteModel2Modules {
         /// </remarks>
         internal string RenderTypeScriptReadOnlyStructure(CodeRenderingContext ctx) {
             if (ctx.IsLegacyCompatibilityMode()) {
-                return new[] {
-                    $"/** {Aggregate.DisplayName}の読み取り専用情報格納用の型 */",
-                    $"export type {GetLegacyReadOnlyTsTypeName()} = {{",
-                    "  _thisObjectIsReadOnly?: string[]",
-                }
-                .Concat(GetOwnMembers().Select(member => $"  {member.PhysicalName}?: {GetLegacyReadOnlyMemberTypeNameTypeScript(member)}"))
-                .Concat(["}"])
-                .Join(Environment.NewLine);
+                return $$"""
+                    /** {{Aggregate.DisplayName}}の読み取り専用情報格納用の型 */
+                    export type {{GetLegacyReadOnlyTsTypeName()}} = {
+                      _thisObjectIsReadOnly?: string[]
+                    {{GetOwnMembers().SelectTextTemplate(member => $$"""
+                      {{member.PhysicalName}}?: {{GetLegacyReadOnlyMemberTypeNameTypeScript(member)}}
+                    """)}}
+                    }
+                    """;
             }
 
             return $$"""
@@ -306,7 +309,7 @@ namespace Nijo.Models.WriteModel2Modules {
                     {{comment}}
                     export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({
                     {{GetOwnMembers().SelectTextTemplate(member => $$"""
-                      {{member.PhysicalName}}: {{RenderTsInitialValue(member)}},
+                      {{member.PhysicalName}}: {{WithIndent(RenderTsInitialValueLegacy(member), "  ")}},
                     """)}}
                     })
                     """;
@@ -465,9 +468,13 @@ namespace Nijo.Models.WriteModel2Modules {
                         .Concat(RenderCreateAuditFields(includeCreateAuditFields, currentUserArg, currentTimeArg))
                         .Select(line => $"    {line}")
                         .ToArray();
-                    yield return $"{child.PhysicalName} = new {childDbEntity.ClassName} {{{Environment.NewLine}"
-                        + $"{string.Join(Environment.NewLine, childMembers)}{Environment.NewLine}"
-                        + "},";
+                    yield return $$"""
+                        {{child.PhysicalName}} = new {{childDbEntity.ClassName}} {
+                        {{childMembers.SelectTextTemplate(line => $$"""
+                        {{line}}
+                        """)}}
+                        },
+                        """;
 
                 } else if (member is ChildrenAggregate children) {
                     var childDbEntity = new EFCoreEntity(children);
@@ -477,9 +484,13 @@ namespace Nijo.Models.WriteModel2Modules {
                         .Concat(RenderCreateAuditFields(includeCreateAuditFields, currentUserArg, currentTimeArg))
                         .Select(line => $"    {line}")
                         .ToArray();
-                    yield return $"{children.PhysicalName} = {RenderMemberAccess(instanceName, children.PhysicalName, nullConditional)}?.Select({loopVar} => new {childDbEntity.ClassName} {{{Environment.NewLine}"
-                        + $"{string.Join(Environment.NewLine, childMembers)}{Environment.NewLine}"
-                        + $"}}).ToHashSet() ?? new HashSet<{childDbEntity.ClassName}>(),";
+                    yield return $$"""
+                        {{children.PhysicalName}} = {{RenderMemberAccess(instanceName, children.PhysicalName, nullConditional)}}?.Select({{loopVar}} => new {{childDbEntity.ClassName}} {
+                        {{childMembers.SelectTextTemplate(line => $$"""
+                        {{line}}
+                        """)}}
+                        }).ToHashSet() ?? new HashSet<{{childDbEntity.ClassName}}>(),
+                        """;
                 }
             }
         }
@@ -764,7 +775,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
         private string GetLegacyMemberTypeNameTypeScript(IAggregateMember member) {
             return member switch {
-                ValueMember vm => vm.IsKey
+                ValueMember vm => ShouldUseNullInLegacyTypeScript(vm)
                     ? $"{vm.Type.TsTypeName} | null | undefined"
                     : $"{vm.Type.TsTypeName} | undefined",
                 RefToMember refTo => $"{new DataClassForRefTargetKeys(refTo.RefTo, refTo.RefTo).TsTypeName} | undefined",
@@ -772,6 +783,16 @@ namespace Nijo.Models.WriteModel2Modules {
                 ChildrenAggregate children => $"{new DataClassForSave(children, Type).TsTypeName}[]",
                 _ => throw new InvalidOperationException($"未対応のメンバー型: {member.GetType().Name}"),
             };
+        }
+
+        private static bool ShouldUseNullInLegacyTypeScript(ValueMember member) {
+            return member.IsKey
+                || member.Type is DecimalMember
+                || member.Type is IntMember
+                || member.Type is DateMember
+                || member.Type is DateTimeMember
+                || member.Type is YearMonthMember
+                || member.Type is YearMember;
         }
 
         private string GetLegacyReadOnlyMemberTypeNameTypeScript(IAggregateMember member) {
@@ -792,6 +813,22 @@ namespace Nijo.Models.WriteModel2Modules {
                 ValueMember => "undefined",
                 RefToMember => "undefined",
                 ChildAggregate => "undefined",
+                ChildrenAggregate => "[]",
+                _ => throw new InvalidOperationException($"未対応のメンバー型: {member.GetType().Name}"),
+            };
+        }
+
+        private string RenderTsInitialValueLegacy(IAggregateMember member) {
+            return member switch {
+                ValueMember => "undefined",
+                RefToMember => "undefined",
+                ChildAggregate child => $$"""
+                    {
+                    {{new DataClassForSave(child, Type).GetOwnMembers().SelectTextTemplate(nested => $$"""
+                      {{nested.PhysicalName}}: {{new DataClassForSave(child, Type).RenderTsInitialValueLegacy(nested)}},
+                    """)}}
+                    }
+                    """,
                 ChildrenAggregate => "[]",
                 _ => throw new InvalidOperationException($"未対応のメンバー型: {member.GetType().Name}"),
             };
