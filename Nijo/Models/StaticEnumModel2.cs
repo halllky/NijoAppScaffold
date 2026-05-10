@@ -60,7 +60,25 @@ namespace Nijo.Models {
                 Items: items
             );
 
-            ctx.Use<EnumFile2>().AddEnum(enumDef);
+            ctx.Use<EnumFile2>()
+                .AddEnum(enumDef)
+                .AddSourceCode($$"""
+                    /// <summary>{{xElement.GetDisplayName()}}の検索条件クラス</summary>
+                    public class {{xElement.Name.LocalName.ToCSharpSafe()}}SearchCondition {
+                    {{items.SelectTextTemplate(item => $$"""
+                        [System.Text.Json.Serialization.JsonPropertyName("{{item.DisplayName.Replace("\"", "\\\"")}}")]
+                        public bool {{item.PhysicalName}} { get; set; }
+                    """)}}
+
+                        /// <summary>いずれかの値が選択されているかを返します。</summary>
+                        public bool AnyChecked() {
+                    {{items.SelectTextTemplate(item => $$"""
+                            if ({{item.PhysicalName}}) return true;
+                    """)}}
+                            return false;
+                        }
+                    }
+                    """);
         }
 
         public void GenerateCode(CodeRenderingContext ctx) {

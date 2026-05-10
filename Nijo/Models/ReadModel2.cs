@@ -37,6 +37,11 @@ namespace Nijo.Models {
             ctx.Use<Parts.CSharp.MessageContainer.BaseClass>();
 
             var aggregateFile = new SourceFileByAggregate(rootAggregate);
+            GenerateCode(ctx, rootAggregate, aggregateFile);
+            aggregateFile.ExecuteRendering(ctx);
+        }
+
+        internal static void GenerateCode(CodeRenderingContext ctx, RootAggregate rootAggregate, SourceFileByAggregate aggregateFile) {
             var rootDisplayData = new DisplayData(rootAggregate);
 
             var searchCondition = new SearchCondition.Entry(rootAggregate);
@@ -169,8 +174,6 @@ namespace Nijo.Models {
                 if (aggregate is not RootAggregate && !aggregate.GetRefFroms().Any()) continue;
                 ctx.Use<AuthorizedAction>().Register(aggregate);
             }
-
-            aggregateFile.ExecuteRendering(ctx);
         }
 
         public void GenerateCode(CodeRenderingContext ctx) {
@@ -333,7 +336,7 @@ namespace Nijo.Models {
 
         private static string RenderLegacyExcelAppServiceMethods(CodeRenderingContext ctx) {
             var roots = ctx.Schema.GetRootAggregates()
-                .Where(root => root.Model is ReadModel2)
+                .Where(root => root.Model is ReadModel2 || root.GenerateDefaultQueryModel)
                 .ToArray();
 
             return $$"""
@@ -389,6 +392,7 @@ namespace Nijo.Models {
                     switch (member) {
                         case ValueMember valueMember:
                             if (valueMember.OnlySearchCondition && valueMember.Type.CsDomainTypeName != "bool") continue;
+                            if (valueMember.XElement.Attribute(BasicNodeOptions.Hidden.AttributeName) != null) continue;
                             yield return ($"{accessor}{(useValuesContainer ? ".Values?" : string.Empty)}.{valueMember.PhysicalName}", aggregate.DisplayName, valueMember.DisplayName);
                             break;
                         case RefToMember refToMember:

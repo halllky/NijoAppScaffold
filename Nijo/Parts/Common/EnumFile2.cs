@@ -50,6 +50,12 @@ namespace Nijo.Parts.Common {
             if (_enumDefs.Count == 0 && _sourceCodes.Count == 0) return;
 
             var orderedDefs = _enumDefs.OrderBy(d => d.Name).ToArray();
+            var orderedSourceCodes = _sourceCodes
+                .Select((source, index) => new { Source = source, Index = index })
+                .OrderBy(x => GetSourcePriority(x.Source))
+                .ThenBy(x => x.Index)
+                .Select(x => x.Source)
+                .ToArray();
 
             ctx.CoreLibrary(dir => {
                 dir.Generate(new SourceFile {
@@ -68,7 +74,7 @@ namespace Nijo.Parts.Common {
                     """)}}
                         }
                     """)}}
-                    {{_sourceCodes.SelectTextTemplate(source => $$"""
+                    {{orderedSourceCodes.SelectTextTemplate(source => $$"""
 
                         {{WithIndent(source, "    ")}}
                     """)}}
@@ -82,6 +88,15 @@ namespace Nijo.Parts.Common {
                     migrationDir.Generate(GetOracleGetNameFunction(orderedDefs));
                 });
             });
+
+            static int GetSourcePriority(string source) {
+                if (source.Contains("public enum E_BoolSearchCondition", StringComparison.Ordinal)) return 0;
+                if (source.Contains("SearchCondition", StringComparison.Ordinal)) return 1;
+                if (source.Contains("public enum E_SingleViewType", StringComparison.Ordinal)) return 2;
+                if (source.Contains("public enum E_AuthLevel", StringComparison.Ordinal)) return 3;
+                if (source.Contains("public enum E_AddOrModOrDel", StringComparison.Ordinal)) return 4;
+                return 100;
+            }
 
             ctx.ReactProject(dir => {
                 dir.Generate(new SourceFile {

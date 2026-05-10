@@ -227,6 +227,16 @@ public class SchemaParseContext {
         var typeAttribute = element.Attribute(ATTR_NODE_TYPE);
         if (typeAttribute == null) return;
 
+        var forceLegacyCompatibilityMode = bool.TryParse(
+            element.Document?.Root?.Attribute(nameof(GeneratedProjectOptions.ForceLegacyCompatibilityMode))?.Value,
+            out var forceLegacyCompatibilityModeValue)
+            && forceLegacyCompatibilityModeValue;
+
+        if (forceLegacyCompatibilityMode && typeAttribute.Value == EnumDefParser.SCHEMA_NAME) {
+            typeAttribute.Value = StaticEnumModel2.SCHEMA_NAME;
+            return;
+        }
+
         if (LEGACY_MODEL_TYPE_ALIASES.TryGetValue(typeAttribute.Value, out var modelAlias)) {
             typeAttribute.Value = modelAlias;
             return;

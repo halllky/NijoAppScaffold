@@ -1,5 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.Parts.Common;
 using Nijo.Parts.CSharp;
 using Nijo.Util.DotnetEx;
 using System;
@@ -56,6 +57,19 @@ namespace Nijo.Models.WriteModel2Modules {
         /// 少なくとも ApplicationService / MessageContainer / MsgFactory との接続点をここで明示する。
         /// </remarks>
         void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
+            ctx.Use<EnumFile2>().AddSourceCode($$"""
+                /// <summary>追加・更新・削除のいずれかを表す区分</summary>
+                public enum {{ADD_MOD_DEL_ENUM_CS}} {
+                    /// <summary>新規追加</summary>
+                    ADD,
+                    /// <summary>更新</summary>
+                    MOD,
+                    /// <summary>削除</summary>
+                    DEL,
+                    /// <summary>変更なし</summary>
+                    NONE,
+                }
+                """);
         }
 
         /// <summary>
@@ -206,16 +220,6 @@ namespace Nijo.Models.WriteModel2Modules {
 
                     [JsonPropertyName("{{VERSION_TS}}")]
                     public required int {{VERSION_CS}} { get; init; }
-                }
-
-                /// <summary>
-                /// 追加・更新・削除のいずれかを表す区分。
-                /// </summary>
-                public enum {{ADD_MOD_DEL_ENUM_CS}} {
-                    ADD,
-                    MOD,
-                    DEL,
-                    NONE,
                 }
                 """;
         }

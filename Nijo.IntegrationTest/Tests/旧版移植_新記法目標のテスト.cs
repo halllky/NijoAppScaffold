@@ -577,6 +577,7 @@ public class 旧版移植_新記法目標のテスト {
             <NijoAppScaffold UseWijmo="True"
                              DisableLocalRepository="True"
                              UseBatchUpdateVersion2="True"
+                             RootNamespace="LegacyApp"
                              DbContextName="MyDbContext"
                              CreateUserDbColumnName="REG_MAN_CD"
                              UpdateUserDbColumnName="UP_MAN_CD"

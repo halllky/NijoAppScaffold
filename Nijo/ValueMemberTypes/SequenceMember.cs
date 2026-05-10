@@ -55,7 +55,7 @@ namespace Nijo.ValueMemberTypes {
                 .SelectMany(root => root.EnumerateThisAndDescendants())
                 .SelectMany(agg => agg.GetMembers())
                 .Any(member => member is ValueMember vm && vm.Type is SequenceMember);
-            if (hasSequence) {
+            if (hasSequence && !ctx.Config.ForceLegacyCompatibilityMode) {
                 ctx.Use<DbContextClass>().AddAdditionalMethod(
                     $$"""
                     /// <summary>

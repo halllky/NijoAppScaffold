@@ -35,6 +35,8 @@ namespace Nijo.Parts.CSharp {
         }
 
         void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
+            if (ctx.IsLegacyCompatibilityMode()) return;
+
             ctx.CoreLibrary(dir => {
                 dir.Directory(ctx.IsLegacyCompatibilityMode() ? "EntityFramework" : "Util", efcoreDir => {
                     efcoreDir.Generate(Render(ctx));

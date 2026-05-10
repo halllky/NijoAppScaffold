@@ -68,6 +68,8 @@ namespace Nijo.Parts.Common {
         }
 
         void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
+            if (ctx.IsLegacyCompatibilityMode()) return;
+
             ctx.CoreLibrary(dir => {
                 dir.Directory("Util", utilDir => {
                     utilDir.Generate(RenderCSharp(ctx));

@@ -36,42 +36,76 @@ internal class BoolMember : IValueMemberType {
         // 真偽値型の場合は特別な検証は必要ありません
     }
 
-    ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => new() {
-        FilterCsTypeName = "BooleanSearchCondition",
-        FilterTsTypeName = "{ trueのみ?: boolean | null; falseのみ?: boolean | null }",
-        RenderTsNewObjectFunctionValue = () => "{ trueのみ: false, falseのみ: false }",
-        RenderFiltering = ctx => {
-            var query = ctx.Query.Root.Name;
-            var cast = ctx.SearchCondition.Metadata.Type.RenderCastToPrimitiveType();
+    ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => CodeRenderingContext.CurrentContext?.IsLegacyCompatibilityMode() == true
+        ? new() {
+            FilterCsTypeName = "E_BoolSearchCondition",
+            FilterTsTypeName = "'指定なし' | 'Trueのみ' | 'Falseのみ'",
+            RenderTsNewObjectFunctionValue = () => "'指定なし'",
+            RenderFiltering = ctx => {
+                var query = ctx.Query.Root.Name;
+                var fullpathNullable = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");
+                var queryFullPath = ctx.Query.GetFlattenArrayPath(E_CsTs.CSharp, out var isMany);
+                var queryOwnerFullPath = queryFullPath.SkipLast(1);
 
-            var fullpathNullable = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");
-            var fullpathNotNull = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, ".");
-
-            var queryFullPath = ctx.Query.GetFlattenArrayPath(E_CsTs.CSharp, out var isMany);
-            var queryOwnerFullPath = queryFullPath.SkipLast(1);
-
-            return $$"""
-                if ({{fullpathNullable}}?.AnyChecked() == true) {
-                    if ({{fullpathNotNull}}.Trueのみ) {
-                {{If(isMany, () => $$"""
+                return $$"""
+                    if ({{fullpathNullable}} == E_BoolSearchCondition.Trueのみ) {
+                    {{If(isMany, () => $$"""
                         {{query}} = {{query}}.Where(x => x.{{queryOwnerFullPath.Join(".")}}.Any(y => y.{{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}} == true));
-                """).Else(() => $$"""
+                    """).Else(() => $$"""
                         {{query}} = {{query}}.Where(x => x.{{queryFullPath.Join(".")}} == true);
-                """)}}
-                    } else {
-                {{If(isMany, () => $$"""
-                        {{query}} = {{query}}.Where(x => x.{{queryOwnerFullPath.Join(".")}}.Any(y => y.{{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}} != true));
-                """).Else(() => $$"""
-                        {{query}} = {{query}}.Where(x => x.{{queryFullPath.Join(".")}} != true);
-                """)}}
+                    """)}}
+                    } else if ({{fullpathNullable}} == E_BoolSearchCondition.Falseのみ) {
+                    {{If(isMany, () => $$"""
+                        {{query}} = {{query}}.Where(x => x.{{queryOwnerFullPath.Join(".")}}.Any(y => y.{{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}} == false));
+                    """).Else(() => $$"""
+                        {{query}} = {{query}}.Where(x => x.{{queryFullPath.Join(".")}} == false);
+                    """)}}
                     }
-                }
-                """;
+                    """;
+            }
         }
-    };
+        : new() {
+            FilterCsTypeName = "BooleanSearchCondition",
+            FilterTsTypeName = "{ trueのみ?: boolean | null; falseのみ?: boolean | null }",
+            RenderTsNewObjectFunctionValue = () => "{ trueのみ: false, falseのみ: false }",
+            RenderFiltering = ctx => {
+                var query = ctx.Query.Root.Name;
+                var fullpathNullable = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");
+                var fullpathNotNull = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, ".");
+                var queryFullPath = ctx.Query.GetFlattenArrayPath(E_CsTs.CSharp, out var isMany);
+                var queryOwnerFullPath = queryFullPath.SkipLast(1);
+
+                return $$"""
+                    if ({{fullpathNullable}}?.AnyChecked() == true) {
+                        if ({{fullpathNotNull}}.Trueのみ) {
+                    {{If(isMany, () => $$"""
+                            {{query}} = {{query}}.Where(x => x.{{queryOwnerFullPath.Join(".")}}.Any(y => y.{{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}} == true));
+                    """).Else(() => $$"""
+                            {{query}} = {{query}}.Where(x => x.{{queryFullPath.Join(".")}} == true);
+                    """)}}
+                        } else {
+                    {{If(isMany, () => $$"""
+                            {{query}} = {{query}}.Where(x => x.{{queryOwnerFullPath.Join(".")}}.Any(y => y.{{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}} != true));
+                    """).Else(() => $$"""
+                            {{query}} = {{query}}.Where(x => x.{{queryFullPath.Join(".")}} != true);
+                    """)}}
+                        }
+                    }
+                    """;
+            }
+        };
 
     void IValueMemberType.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
-        // 特になし
+        if (CodeRenderingContext.CurrentContext?.IsLegacyCompatibilityMode() == true) {
+            ctx.Use<Parts.Common.EnumFile2>().AddSourceCode($$"""
+
+                public enum E_BoolSearchCondition {
+                    指定なし,
+                    Trueのみ,
+                    Falseのみ,
+                }
+                """);
+        }
     }
 
     string IValueMemberType.RenderCreateDummyDataValueBody(CodeRenderingContext ctx) {
@@ -85,7 +119,6 @@ internal class BoolMember : IValueMemberType {
     void IValueMemberType.RenderStaticSources(CodeRenderingContext ctx) {
 
         if (ctx.IsLegacyCompatibilityMode()) {
-
         } else {
             ctx.CoreLibrary(dir => {
                 dir.Generate(new SourceFile {

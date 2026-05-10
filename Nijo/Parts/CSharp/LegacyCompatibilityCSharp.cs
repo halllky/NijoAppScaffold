@@ -315,8 +315,17 @@ namespace Nijo.Parts.CSharp {
                 .Where(root => root.Model is Models.ReadModel2)
                 .OrderByDataFlow()
                 .ToArray();
+            var hasYearMonth = ctx.Schema.GetRootAggregates()
+                .SelectMany(root => root.EnumerateThisAndDescendants())
+                .SelectMany(aggregate => aggregate.GetMembers())
+                .OfType<Nijo.ImmutableSchema.ValueMember>()
+                .Any(member => member.Type is Nijo.ValueMemberTypes.YearMonthMember);
+            var hasFileAttachment = System.Xml.Linq.XDocument.Load(ctx.Project.SchemaXmlPath).Descendants()
+                .Any(element => element.Attribute(SchemaParsing.SchemaParseContext.ATTR_NODE_TYPE)?.Value == "file");
             var jsonValueObjectClassNames = valueObjectClassNames
                 .Where(className => !(readModel2Roots.Length > 0 && className == "Date"))
+                .Where(className => className != "YearMonth")
+                .Where(className => className != "FileAttachmentMetadata")
                 .ToArray();
             var contents = $$"""
                     namespace {{ctx.Config.RootNamespace}} {
@@ -348,6 +357,12 @@ namespace Nijo.Parts.CSharp {
                     """)}}
                     {{If(readModel2Roots.Length > 0, () => $$"""
                                 option.Converters.Add(new CustomJsonConverters.DateJsonValueConverter());
+                    {{If(hasYearMonth, () => $$"""
+                                option.Converters.Add(new CustomJsonConverters.YearMonthJsonValueConverter());
+                    """)}}
+                    {{If(hasFileAttachment, () => $$"""
+                                option.Converters.Add(new FileAttachmentMetadata.JsonValueConverter());
+                    """)}}
                                 option.Converters.Add(new CustomJsonConverters.DisplayDataBatchUpdateCommandConverter());
                     """)}}
                             }
@@ -621,6 +636,23 @@ namespace Nijo.Parts.CSharp {
                     }
 
                     public override void Write(Utf8JsonWriter writer, Date? value, JsonSerializerOptions options) {
+                        if (value == null) {
+                            writer.WriteNullValue();
+                        } else {
+                            writer.WriteStringValue(value.ToString());
+                        }
+                    }
+                }
+
+                public class YearMonthJsonValueConverter : JsonConverter<YearMonth?> {
+                    public override YearMonth? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+                        var strYearMonth = reader.GetString();
+                        return string.IsNullOrWhiteSpace(strYearMonth)
+                            ? null
+                            : new YearMonth(DateTime.Parse($"{strYearMonth}/01"));
+                    }
+
+                    public override void Write(Utf8JsonWriter writer, YearMonth? value, JsonSerializerOptions options) {
                         if (value == null) {
                             writer.WriteNullValue();
                         } else {
