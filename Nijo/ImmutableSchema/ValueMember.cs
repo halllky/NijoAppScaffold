@@ -65,6 +65,8 @@ namespace Nijo.ImmutableSchema {
         public string? SequenceName => XElement.Attribute(BasicNodeOptions.SequenceName.AttributeName)?.Value;
         /// <summary>検索条件にのみレンダリングされるか否か</summary>
         public bool OnlySearchCondition => XElement.Attribute(BasicNodeOptions.OnlySearchCondition.AttributeName) != null;
+        /// <summary>旧版互換の hidden 指定か否か</summary>
+        public bool IsHidden => XElement.Attribute(BasicNodeOptions.Hidden.AttributeName) != null;
         #endregion メンバー毎に定義される制約
 
         #region 等価比較

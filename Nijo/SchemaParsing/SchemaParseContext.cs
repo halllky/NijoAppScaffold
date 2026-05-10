@@ -118,6 +118,13 @@ public class SchemaParseContext {
     internal const string NODE_TYPE_CHILDREN = "children";
     internal const string NODE_TYPE_REFTO = "ref-to";
 
+    internal sealed class OriginalTypeAnnotation {
+        internal OriginalTypeAnnotation(string typeName) {
+            TypeName = typeName;
+        }
+        internal string TypeName { get; }
+    }
+
     private static void NormalizeLegacyCompatibility(XDocument xDocument) {
         var dynamicEnumDefinitions = new Dictionary<string, (string CategoryName, string DisplayName)>(StringComparer.Ordinal);
 
@@ -233,16 +240,19 @@ public class SchemaParseContext {
             && forceLegacyCompatibilityModeValue;
 
         if (forceLegacyCompatibilityMode && typeAttribute.Value == EnumDefParser.SCHEMA_NAME) {
+            SetOriginalTypeAnnotation(element, typeAttribute.Value);
             typeAttribute.Value = StaticEnumModel2.SCHEMA_NAME;
             return;
         }
 
         if (LEGACY_MODEL_TYPE_ALIASES.TryGetValue(typeAttribute.Value, out var modelAlias)) {
+            SetOriginalTypeAnnotation(element, typeAttribute.Value);
             typeAttribute.Value = modelAlias;
             return;
         }
 
         if (typeAttribute.Value == "search-condition-only-bool") {
+            SetOriginalTypeAnnotation(element, typeAttribute.Value);
             typeAttribute.Value = "bool";
             if (element.Attribute(BasicNodeOptions.OnlySearchCondition.AttributeName) == null) {
                 element.SetAttributeValue(BasicNodeOptions.OnlySearchCondition.AttributeName, true);
@@ -251,7 +261,12 @@ public class SchemaParseContext {
         }
 
         if (LEGACY_VALUE_TYPE_ALIASES.TryGetValue(typeAttribute.Value, out var valueAlias)) {
+            SetOriginalTypeAnnotation(element, typeAttribute.Value);
             typeAttribute.Value = valueAlias;
+        }
+
+        static void SetOriginalTypeAnnotation(XElement element, string typeName) {
+            element.AddAnnotation(new OriginalTypeAnnotation(typeName));
         }
     }
 

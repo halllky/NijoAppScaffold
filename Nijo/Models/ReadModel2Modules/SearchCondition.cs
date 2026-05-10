@@ -459,6 +459,7 @@ namespace Nijo.Models.ReadModel2Modules {
                         if (member is ValueMember vm) {
                             if (vm.OnlySearchCondition) continue;
                             if (vm.IsHardCodedPrimaryKey) continue;
+                            if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode() && vm.IsHidden) continue;
                             yield return new SortableMember(vm, [.. path, vm.PhysicalName]);
                         }
                     }

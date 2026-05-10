@@ -55,6 +55,7 @@ internal class ValueObjectMember : IValueMemberType {
             var query = ctx.Query.Root.Name;
             var fullpathNullable = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");
             var fullpathNotNull = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, "!.");
+            var fullpathLegacy = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, ".");
 
             var queryFullPath = ctx.Query.GetFlattenArrayPath(E_CsTs.CSharp, out var isMany);
             var queryOwnerFullPath = queryFullPath.SkipLast(1);
@@ -63,6 +64,30 @@ internal class ValueObjectMember : IValueMemberType {
                 && vm.SchemaPathNode.XElement.Attribute(BasicNodeOptions.StringSearchBehavior.AttributeName)?.Value is string s
                 ? s
                 : BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL;
+
+            if (ctx.CodeRenderingContext.IsLegacyCompatibilityMode()
+                && searchBehavior != BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT) {
+                var escapedExpr = searchBehavior switch {
+                    BasicNodeOptions.STRING_SEARCH_BEHAVIOR_FORWARD => $"{fullpathLegacy}.Trim().Replace(\"\\\\\", \"\\\\\\\\\").Replace(\"%\", \"\\\\%\") + \"%\"",
+                    BasicNodeOptions.STRING_SEARCH_BEHAVIOR_BACKWARD => $"\"%\" + {fullpathLegacy}.Trim().Replace(\"\\\\\", \"\\\\\\\\\").Replace(\"%\", \"\\\\%\")",
+                    _ => $"\"%\" + {fullpathLegacy}.Trim().Replace(\"\\\\\", \"\\\\\\\\\").Replace(\"%\", \"\\\\%\") + \"%\"",
+                };
+                var queryTarget = isMany
+                    ? $"y.{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}!"
+                    : $"x.{queryFullPath.Join(".")}!";
+
+                return $$"""
+                    if (!string.IsNullOrWhiteSpace({{fullpathNullable}})) {
+                        var escaped = {{escapedExpr}};
+
+                    {{If(isMany, () => $$"""
+                        {{query}} = {{query}}.Where(x => x.{{queryOwnerFullPath.Join(".")}}.Any(y => EF.Functions.Like((string){{queryTarget}}, escaped, "\\")));
+                    """).Else(() => $$"""
+                        {{query}} = {{query}}.Where(x => EF.Functions.Like((string){{queryTarget}}, escaped, "\\"));
+                    """)}}
+                    }
+                    """;
+            }
 
             string GetComparison(string target) {
                 return searchBehavior switch {
