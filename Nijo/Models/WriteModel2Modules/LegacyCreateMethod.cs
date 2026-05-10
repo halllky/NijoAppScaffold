@@ -11,11 +11,13 @@ namespace Nijo.Models.WriteModel2Modules {
     /// 旧版互換の新規登録処理レンダラー。
     /// </summary>
     internal static class LegacyCreateMethod {
+        internal static string GetMethodName(RootAggregate rootAggregate) => $"Create{rootAggregate.PhysicalName}";
+
         internal static string Render(RootAggregate rootAggregate, CodeRenderingContext ctx) {
             var command = new DataClassForSave(rootAggregate, DataClassForSave.E_Type.Create);
             var dbEntity = new EFCoreEntity(rootAggregate);
             var messages = new DataClassForSave(rootAggregate, DataClassForSave.E_Type.UpdateOrDelete).MessageInterfaceName;
-            var methodName = $"Create{rootAggregate.PhysicalName}";
+            var methodName = GetMethodName(rootAggregate);
             var onBeforeMethodName = $"OnBeforeCreate{rootAggregate.PhysicalName}";
             var onAfterMethodName = $"OnAfterCreate{rootAggregate.PhysicalName}";
 
