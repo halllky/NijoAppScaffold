@@ -7,11 +7,6 @@
 	"image": "mcr.microsoft.com/devcontainers/dotnet:1-9.0-bookworm",
 	// 上記イメージに下記機能を追加する。詳細: https://containers.dev/features.
 	"features": {
-		// 共通ユーティリティをインストールし、Zshをデフォルトシェルに設定する。
-		// これにより、curl、wget、unzip などのコマンドが利用可能になる。
-		"ghcr.io/devcontainers/features/common-utils:2": {
-			"configureZshAsDefaultShell": true
-		},
 		// Node.js をインストール
 		"ghcr.io/devcontainers/features/node:1": {}
 	},
