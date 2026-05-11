@@ -1,0 +1,60 @@
+// VSCode の拡張機能 Dev Container 用の設定ファイル。
+// このファイルのフォーマットの詳細については https://aka.ms/devcontainer.json を参照してください。
+// ※なおDockerfileを用いた構築も可能 https://containers.dev/guide/dockerfile
+{
+	"name": "Nijo (VS Code Dev Container)",
+	// Microsoft公式の .NET 9.0 開発用イメージをベースとする
+	"image": "mcr.microsoft.com/devcontainers/dotnet:1-9.0-bookworm",
+	// 上記イメージに下記機能を追加する。詳細: https://containers.dev/features.
+	"features": {
+		// Node.js をインストール
+		"ghcr.io/devcontainers/features/node:1": {}
+	},
+	// コンテナ内で展開したWebにホスト側からアクセスするためのポートを指定
+	"forwardPorts": [
+		3000, // Document
+		5173, // Vite default
+		5176, // Nijo.GuiClient の一部のプロジェクトで使用
+		5290, // デモのWebAPI
+		5000, // .NET default http
+		5001 // .NET default https
+	],
+	// コンテナビルド後に実行するコマンド
+	// * .NET 関連のライブラリをインストールする
+	// * デモのマイグレーション用ツール（dotnet-ef）をインストールする
+	// * Node.js 関連のライブラリをインストールする
+	// * nijo のコマンドラインツールを使用可能にしておく。（ビルド成果物は Nijo/bin/Debug 以下に配置される）
+	"postCreateCommand": "dotnet restore && dotnet tool install --global dotnet-ef --version 9.0.3 && npm ci && ./Task/Nijoリリース.sh 0",
+	// Configure tool-specific properties.
+	"customizations": {
+		"vscode": {
+			// VSCode 拡張機能
+			"extensions": [
+				// VSCodeで .NET を使うためにほぼ必須
+				"ms-dotnettools.csdevkit",
+				// .editorconfig ファイルで指定したスタイルによるソースコード自動整形に必須
+				"EditorConfig.EditorConfig",
+				// デモのDBにSQLiteを使っているのでVSCode上で中身を確認・編集できるようにする
+				"yy0931.vscode-sqlite3-editor",
+				// Markdown 関連の便利機能いろいろ
+				"yzhang.markdown-all-in-one",
+				// Markdown ファイル内で Mermaid 図を描画してくれる
+				"bierner.markdown-mermaid"
+			],
+			"settings": {
+				// ターミナルのデフォルトシェルを Zsh に変更
+				"terminal.integrated.defaultProfile.linux": "zsh"
+			}
+		}
+	},
+	"runArgs": [
+		// メモリ不足を防ぐために、コンテナに割り当てるメモリを増やす（Vite や Docusaurus のビルドでメモリ不足になる場合があるため）
+		"--memory=4g"
+	],
+	"containerEnv": {
+		// Node.js のメモリ上限を 4GB に設定（Vite や Docusaurus のビルドでメモリ不足になる場合があるため）
+		"NODE_OPTIONS": "--max-old-space-size=4096"
+	}
+	// 管理者権限が必要な場合は以下のコメントアウトを外す。現状不要。詳細: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+}

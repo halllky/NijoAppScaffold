@@ -1,0 +1,12 @@
+{
+  "name": "nijo-demo-000_data-model",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tsc": "tsc --noEmit"
+  }
+}

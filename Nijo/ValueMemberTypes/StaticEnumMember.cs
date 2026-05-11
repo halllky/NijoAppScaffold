@@ -1,6 +1,5 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
-using Nijo.Models.QueryModelModules;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using Nijo.Models.StaticEnumModelModules;
@@ -38,10 +37,20 @@ namespace Nijo.ValueMemberTypes {
         public string TsTypeName => $"EnumDefs.{_parser.TsTypeName}";
         public string DisplayName => "列挙型";
 
+        string IValueMemberType.RenderSpecificationMarkdown() {
+            return $$"""
+                事前に定義された選択肢から値を選択する型です。
+                ステータス、カテゴリ、区分などの固定選択肢データに適しています。
+                検索時は複数の選択肢を同時に指定できます。
+
+                予め nijo.xml で区分の種類を `{{EnumDefParser.SCHEMA_NAME}}` モデルとして定義しておく必要があります。
+                """;
+        }
+
         ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => new() {
             FilterCsTypeName = _parser.CsSearchConditionClassName,
             FilterTsTypeName = _parser.RenderTsSearchConditionType(),
-            RenderTsNewObjectFunctionValue = () => "{}",
+            RenderTsNewObjectFunctionValue = () => _parser.RenderTsSearchConditionInitializer(),
             RenderFiltering = ctx => {
                 var query = ctx.Query.Root.Name;
                 var fullpathNullable = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");
@@ -65,7 +74,6 @@ namespace Nijo.ValueMemberTypes {
                     """;
             }
         };
-        UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.MemberConstraintBase;
 
         void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
             // 列挙型の定義が正しいことを検証

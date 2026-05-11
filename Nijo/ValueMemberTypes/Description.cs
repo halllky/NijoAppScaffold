@@ -1,6 +1,5 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
-using Nijo.Models.QueryModelModules;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
@@ -20,8 +19,15 @@ namespace Nijo.ValueMemberTypes {
         string IValueMemberType.CsDomainTypeName => "string";
         string IValueMemberType.CsPrimitiveTypeName => "string";
         string IValueMemberType.TsTypeName => "string";
-        UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.StringMemberConstraint;
         string IValueMemberType.DisplayName => "文章型";
+
+        string IValueMemberType.RenderSpecificationMarkdown() {
+            return $$"""
+                改行を含む長い文章を格納する型です。
+                備考、説明、コメントなどの文章データに適しています。
+                検索時の挙動は部分一致検索が可能です。
+                """;
+        }
 
         void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
             // 文章型の検証
@@ -31,7 +37,7 @@ namespace Nijo.ValueMemberTypes {
         ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => new() {
             FilterCsTypeName = "string",
             FilterTsTypeName = "string",
-            RenderTsNewObjectFunctionValue = () => "undefined",
+            RenderTsNewObjectFunctionValue = () => "''",
             RenderFiltering = ctx => {
                 var query = ctx.Query.Root.Name;
                 var fullpathNullable = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");
@@ -40,13 +46,30 @@ namespace Nijo.ValueMemberTypes {
                 var queryFullPath = ctx.Query.GetFlattenArrayPath(E_CsTs.CSharp, out var isMany);
                 var queryOwnerFullPath = queryFullPath.SkipLast(1);
 
+                var searchBehavior = ctx.Query.Metadata is IInstanceValuePropertyMetadata vm
+                    && vm.SchemaPathNode.XElement.Attribute(BasicNodeOptions.StringSearchBehavior.AttributeName)?.Value is string s
+                    ? s
+                    : BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL;
+
+                string GetComparison(string target) {
+                    return searchBehavior switch {
+                        BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT => $"{target} == trimmed",
+                        BasicNodeOptions.STRING_SEARCH_BEHAVIOR_FORWARD => $"Microsoft.EntityFrameworkCore.EF.Functions.Like({target}, $\"{{escaped}}%\", \"\\\\\")",
+                        BasicNodeOptions.STRING_SEARCH_BEHAVIOR_BACKWARD => $"Microsoft.EntityFrameworkCore.EF.Functions.Like({target}, $\"%{{escaped}}\", \"\\\\\")",
+                        _ => $"Microsoft.EntityFrameworkCore.EF.Functions.Like({target}, $\"%{{escaped}}%\", \"\\\\\")",
+                    };
+                }
+
                 return $$"""
                     if (!string.IsNullOrWhiteSpace({{fullpathNullable}})) {
                         var trimmed = {{fullpathNotNull}}!.Trim();
+                    {{If(searchBehavior != BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT, () => $$"""
+                        var escaped = trimmed.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+                    """)}}
                     {{If(isMany, () => $$"""
-                        {{query}} = {{query}}.Where(x => x.{{queryOwnerFullPath.Join("!.")}}!.Any(y => y.{{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}}!.Contains(trimmed)));
+                        {{query}} = {{query}}.Where(x => x.{{queryOwnerFullPath.Join("!.")}}!.Any(y => {{GetComparison($"y.{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}!")}}));
                     """).Else(() => $$"""
-                        {{query}} = {{query}}.Where(x => x.{{queryFullPath.Join("!.")}}!.Contains(trimmed));
+                        {{query}} = {{query}}.Where(x => {{GetComparison($"x.{queryFullPath.Join("!.")}!")}});
                     """)}}
                     }
                     """;

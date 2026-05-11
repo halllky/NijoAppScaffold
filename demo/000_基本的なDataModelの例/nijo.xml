@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<NijoAppScaffold
+  ApplicationName="デモ000：基本的なDataModelの例"
+  RootNamespace="MyApp">
+  <DataStructures>
+    <社員
+      GenerateDefaultQueryModel="True"
+      Type="data-model"
+      UniqueId="1956b3f6-a6e5-493c-b87a-e86933c7b45f">
+      <!--入社時に発行される一意なID-->
+      <社員ID
+        IsKey="True"
+        Type="int"
+        UniqueId="84baff83-2968-4325-b03a-e1097ddf746d" />
+      <氏名
+        IsNotNull="True"
+        Type="word"
+        UniqueId="4f668126-74ad-41db-8696-13267e93d59d" />
+      <所属部署
+        Type="ref-to:部署"
+        UniqueId="a2e46961-8e91-45c9-b329-ab9ea55921f9" />
+      <契約種別
+        Category="契約区分"
+        Type="ref-to:汎用マスタ"
+        UniqueId="6a19d6bf-64d3-4edc-ba43-762ab2edada8" />
+    </社員>
+    <部署
+      GenerateDefaultQueryModel="True"
+      Type="data-model"
+      UseSoftDelete="True"
+      UniqueId="4c96eb60-249d-414c-8e3e-4b5a981fa8c6">
+      <部署ID
+        IsKey="True"
+        Type="int"
+        UniqueId="2d52d3fd-0e35-4371-8ebf-7c70d8a2e1c6" />
+      <部署名
+        IsNotNull="True"
+        Type="word"
+        UniqueId="910a581f-4337-423f-958b-c9975a2551e2" />
+      <事業所
+        Type="ref-to:事業所"
+        UniqueId="ce9290d5-a160-4e13-82db-bb3df15e6bc3" />
+      <課
+        Type="children"
+        UniqueConstraints="1f6febf0-adfe-4377-8749-9eb7223ef14c;"
+        UniqueId="51d08ec1-ddd8-4822-bf2b-91c458ee7e62">
+        <コード
+          IsKey="True"
+          Type="word"
+          UniqueId="1e4a365b-7b39-46da-8be0-de2d7bb75241" />
+        <!--非主キーの外部参照のユニーク制約の例-->
+        <旧システムコード
+          Type="ref-to:旧システム部署情報"
+          UniqueId="1f6febf0-adfe-4377-8749-9eb7223ef14c" />
+        <課名称
+          IsNotNull="True"
+          Type="word"
+          UniqueId="f8667bbb-c921-46ec-869b-b989649634d5" />
+        <係
+          Type="children"
+          UniqueId="3d203063-3cf5-4acd-ba63-ecbe5701782d">
+          <連番
+            IsKey="True"
+            Type="int"
+            UniqueId="72f8ff2c-a014-428b-8a74-1b50d033cd94" />
+          <係名称
+            IsNotNull="True"
+            Type="word"
+            UniqueId="61e72ff4-9992-4a83-a546-0fb4c93ef3fa" />
+          <勤怠管理区分
+            Category="勤怠管理区分"
+            Type="ref-to:汎用マスタ"
+            UniqueId="1c9be8ce-0d9d-41c0-a3b4-d56aac06b0f2" />
+        </係>
+      </課>
+    </部署>
+    <!--ビューの例。
+ビューはデータモデルから ref-to で外部参照することができる。
+テーブルからテーブルへの ref-to と異なり、外部キー制約は張られない。-->
+    <事業所
+      MapToView="True"
+      Type="query-model"
+      UniqueId="0112870a-b512-4b7c-a464-db9a254a4250">
+      <!--ビュー内部でハードコードする。-->
+      <事業所ID
+        IsKey="True"
+        Type="word"
+        UniqueId="c185f4b5-ed5a-43ba-a418-effca9791119" />
+      <!--ビュー内部でハードコードする。-->
+      <事業所名
+        Type="word"
+        UniqueId="25b6c40f-24a7-4c6e-9df5-385149e739b7" />
+    </事業所>
+    <!--非主キーのユニーク制約の外部参照の例-->
+    <旧システム部署情報
+      GenerateDefaultQueryModel="True"
+      Type="data-model"
+      UniqueId="202ad425-e9b6-4e28-9984-0f401d445ec1">
+      <旧システムコード
+        IsKey="True"
+        Type="word"
+        UniqueId="78f8403b-9d15-424e-91c3-f31bd0aeb562" />
+      <名称
+        IsNotNull="True"
+        Type="word"
+        UniqueId="1376a08d-3312-46c6-b51b-d4e70a74908a" />
+    </旧システム部署情報>
+    <!--汎用参照テーブル（GenericLookupTable）の定義例-->
+    <汎用マスタ
+      GenerateDefaultQueryModel="True"
+      IsGenericLookupTable="True"
+      Type="data-model"
+      UniqueId="5fa9afef-8d6c-4999-bf57-09d56c39de14">
+      <汎用種別
+        IsHardCodedPrimaryKey="True"
+        IsKey="True"
+        Type="word"
+        UniqueId="fe7444f8-fcca-4adc-9bc4-8b349bb445c5" />
+      <区分値
+        IsKey="True"
+        Type="word"
+        UniqueId="d53ec0af-86df-4951-97f1-32ef5fcc7dc0" />
+      <表示名称
+        Type="word"
+        UniqueId="062655d6-b3bb-422b-9c9f-1543c83cba6e" />
+    </汎用マスタ>
+  </DataStructures>
+  <GenericLookupTableCategories>
+    <Categories
+      For="5fa9afef-8d6c-4999-bf57-09d56c39de14">
+      <契約区分
+        DisplayName="契約区分">
+        <Key
+          For="fe7444f8-fcca-4adc-9bc4-8b349bb445c5"
+          Value="010" />
+      </契約区分>
+      <勤怠管理区分
+        DisplayName="勤怠管理区分">
+        <Key
+          For="fe7444f8-fcca-4adc-9bc4-8b349bb445c5"
+          Value="020" />
+      </勤怠管理区分>
+    </Categories>
+  </GenericLookupTableCategories>
+</NijoAppScaffold>

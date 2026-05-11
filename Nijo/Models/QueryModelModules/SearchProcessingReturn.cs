@@ -36,12 +36,12 @@ namespace Nijo.Models.QueryModelModules {
                         /// 検索結果のうち現在のページに表示されるもの
                         /// </summary>
                         [JsonPropertyName("{{CURRENT_PAGE_ITEMS_TS}}")]
-                        public required IReadOnlyList<TDisplayData> {{CURRENT_PAGE_ITEMS_CS}} { get; init; }
+                        public IReadOnlyList<TDisplayData> {{CURRENT_PAGE_ITEMS_CS}} { get; init; } = [];
                         /// <summary>
                         /// 検索結果のトータル件数（検索結果のうち現在のページ以外も含む）
                         /// </summary>
                         [JsonPropertyName("{{TOTAL_COUNT_TS}}")]
-                        public required int {{TOTAL_COUNT_CS}} { get; init; }
+                        public int {{TOTAL_COUNT_CS}} { get; init; } = 0;
                     }
                     """,
             };

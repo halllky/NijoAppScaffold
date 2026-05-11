@@ -1,0 +1,80 @@
+using MyApp;
+using MyApp.Core.Authorization;
+using MyApp.WebApi.Authorization;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// HttpContextAccessor の登録 (SessionProviderInWebApi で使用)
+builder.Services.AddHttpContextAccessor();
+
+// Controller の設定
+builder.Services.AddControllers(options => {
+    options.Filters.Add<MyApp.WebApi.WebLogScope>(); // ログ出力用情報設定のフィルター
+    options.Filters.Add<LoginAuthorizationFilter>(); // ログインしていないリクエストを弾くフィルター
+});
+
+// swagger。デバッグのためにこのアプリで定義されているエンドポイントを一覧する
+builder.Services.AddSwaggerGen();
+
+// CORS設定
+builder.Services.AddCors(options => {
+    // 開発環境ではViteからのリクエストを許可
+    if (builder.Environment.IsDevelopment()) {
+        options.AddDefaultPolicy(policy => {
+            policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost") // localhostであればポート問わず許可
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials(); // クライアント側の credentials: 'include' に対応するために必須
+        });
+    }
+});
+
+// アプリケーションサービス層のDI設定
+OverridedApplicationService.ConfigureServices(builder.Services, null);
+
+builder.Services.AddScoped<ISessionKeyProvider, SessionProviderInWebApi>(); // ログインユーザー情報提供サービスをWebApi用に差し替え
+
+// HTTPリクエスト・レスポンスで使われるJSONシリアライズ設定を上記DI設定のそれに合わせる
+builder.Services.ConfigureHttpJsonOptions(options => {
+    options.SerializerOptions.EditDefaultJsonSerializerOptions();
+});
+
+// --------------------------------
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment()) {
+    // swagger。デバッグのためにこのアプリで定義されているエンドポイントを一覧する
+    app.UseSwagger();
+    app.UseSwaggerUI();
+
+    // 開発時専用エラーページ
+    app.UseDeveloperExceptionPage();
+
+} else {
+    // セキュリティの設定が必要なら追加
+    // app.UseHsts();
+
+    // 本番環境では client フォルダのソースは1個の JavaScript ファイルにバンドルされて静的ファイルとして配信される
+    app.UseStaticFiles(new StaticFileOptions {
+        OnPrepareResponse = ctx => {
+            // HTMLはサイズが小さいのと、JavaScript/CSSのバージョンアップがあったときに
+            // 古いバージョンが参照されてしまうのを防ぐために、キャッシュ無効にする
+            if (ctx.File.Name.EndsWith(".html", StringComparison.OrdinalIgnoreCase)) {
+                ctx.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store");
+                ctx.Context.Response.Headers.Append("Pragma", "no-cache");
+                ctx.Context.Response.Headers.Append("Expires", "0");
+            }
+        }
+    });
+}
+
+// CORSミドルウェアを追加
+app.UseCors();
+
+app.MapDefaultControllerRoute();
+
+// セキュリティの設定が必要なら追加
+// app.UseHttpsRedirection();
+
+app.Run();

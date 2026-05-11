@@ -39,18 +39,21 @@ namespace Nijo.Models.DataModelModules {
                 })
                 .ToArray();
 
-            var hasSequence = _rootAggregate
-                .EnumerateThisAndDescendants()
-                .SelectMany(agg => agg.GetMembers())
-                .Any(member => member is ValueMember vm && vm.Type is SequenceMember);
-
             return $$"""
                 #region 新規登録処理
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の新規登録を実行します。
                 /// </summary>
-                public virtual async Task {{MethodName}}({{command.CsClassNameCreate}} command, {{messages.InterfaceName}} messages, {{PresentationContext.INTERFACE}} context) {
+                /// <param name="command">新規登録するデータ</param>
+                /// <param name="context">コンテキスト</param>
+                /// <param name="messageOwner">
+                /// エラーメッセージを特定の位置に付加したい場合は指定する。
+                /// nullの場合はコンテキストのルートに付加される。
+                /// </param>
+                /// <returns>エラーがあった場合やエラーチェックのみの場合はfalseを、正常終了した場合はtrueと新規登録後のデータを返す。</returns>
+                public virtual async Task<DataModelSaveResult<{{dbEntity.CsClassName}}>> {{MethodName}}({{command.CsClassNameCreate}} command, {{PresentationContext.INTERFACE}} context, {{MessageContainer.SETTER_INTERFACE}}? messageOwner = null) {
                     var dbEntity = command.{{SaveCommand.TO_DBENTITY}}();
+                    var messages = messageOwner?.As<{{messages.InterfaceName}}>() ?? context.As<{{messages.InterfaceName}}>().Messages;
 
                     // 自動的に登録される項目
                     dbEntity.{{EFCoreEntity.VERSION}} = 0;
@@ -60,53 +63,47 @@ namespace Nijo.Models.DataModelModules {
                     dbEntity.{{EFCoreEntity.UPDATE_USER}} = {{ApplicationService.CURRENT_USER}};
 
                     // 更新前処理。入力検証や自動補完項目の設定を行なう。
-                    {{CheckRequired.METHOD_NAME}}(dbEntity, messages);
-                    {{CheckMaxLength.METHOD_NAME}}(dbEntity, messages);
-                    {{CheckCharacterType.METHOD_NAME}}(dbEntity, messages);
-                    {{CheckDigitsAndScales.METHOD_NAME}}(dbEntity, messages);
-                    {{DynamicEnum.METHOD_NAME}}(dbEntity, messages);
+                {{DataModel.GetValidators(ctx).SelectTextTemplate(validator => $$"""
+                    {{validator.RenderCaller(this, _rootAggregate, "dbEntity", "messages")}};
+                """)}}
+                    {{ValidateCharacterType.METHOD_NAME}}(dbEntity, messages);
                     {{OnBeforeMethodName}}(command, messages, context);
 
                     // エラーがある場合は処理中断
-                    if (messages.HasError()) {
+                    if (messages.GetState()?.DescendantsAndSelf().Any(c => c.Errors.Count > 0) == true) {
                         // 単なる必須入力漏れなどでもエラーログが出過ぎてしまうのを防ぐため、
-                        // IgnoreConfirmがtrueのとき（==更新を確定するつもりのとき）のみ内容をログ出力する
-                        if (context.Options.IgnoreConfirm) {
-                            Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}新規作成で入力エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                        // 更新を確定するつもりのときのみ内容をログ出力する
+                        if (!context.ValidationOnly) {
+                            Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}新規作成で入力エラーが発生した登録内容(JSON): {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
                         }
-                        return;
+                        return new(DataModelSaveErrorReason.ValidationError);
                     }
 
                     // 「更新しますか？」の確認メッセージが承認される前の1巡目はエラーチェックのみで処理中断
-                    if (!context.Options.IgnoreConfirm) return;
-
+                    if (context.ValidationOnly) return new(true);
                     if (DbContext.Database.CurrentTransaction == null) throw new InvalidOperationException("トランザクションが開始されていません。");
 
-                {{If(hasSequence, () => $$"""
-                    // シーケンス項目
-                    {{SequenceMember.SET_METHOD}}(dbEntity);
-
-                """)}}
                     // 更新実行
                     const string SAVE_POINT = "SAVE_POINT"; // 更新後処理でエラーが発生した場合はこのデータの更新のみロールバックする
-                    await DbContext.Database.CurrentTransaction.CreateSavepointAsync(SAVE_POINT);
+                    await DbContext.Database.CurrentTransaction.CreateSavepointAsync(SAVE_POINT).ConfigureAwait(false);
                     try {
                         DbContext.Add(dbEntity);
-                        await DbContext.SaveChangesAsync();
+                        await DbContext.SaveChangesAsync().ConfigureAwait(false);
 
                     } catch (DbUpdateException ex) {
-                        await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT);
+                        await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT).ConfigureAwait(false);
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(dbEntity).State = EntityState.Detached;
                 {{UpdateMethod.RenderDescendantDetaching(_rootAggregate, "dbEntity").SelectTextTemplate(source => $$"""
-                        {{WithIndent(source, "        ")}}
+                        {{WithIndent(source)}}
                 """)}}
 
                         messages.AddError({{MsgFactory.MSG}}.{{UpdateMethod.ERR_ID_UNKNOWN}}(ex.Message));
-                        Log.Error(ex);
-                        Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}新規作成でSQL発行時エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
-                        return;
+                        Log.LogError(ex, "新規作成中にエラーが発生しました。");
+                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}新規作成でSQL発行時エラーが発生した登録内容(JSON): {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
+
+                        return new(DataModelSaveErrorReason.ValidationError);
                     }
 
                     // 更新後処理
@@ -116,27 +113,29 @@ namespace Nijo.Models.DataModelModules {
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(dbEntity).State = EntityState.Detached;
                 {{UpdateMethod.RenderDescendantDetaching(_rootAggregate, "dbEntity").SelectTextTemplate(source => $$"""
-                        {{WithIndent(source, "        ")}}
+                        {{WithIndent(source)}}
                 """)}}
 
                         // セーブポイント解放
-                        await DbContext.Database.CurrentTransaction.ReleaseSavepointAsync(SAVE_POINT);
+                        await DbContext.Database.CurrentTransaction.ReleaseSavepointAsync(SAVE_POINT).ConfigureAwait(false);
 
                     } catch (Exception ex) {
                         messages.AddError({{MsgFactory.MSG}}.{{UpdateMethod.ERR_ID_UNKNOWN}}(ex.Message));
-                        Log.Error(ex);
-                        Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}新規作成後エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
-                        await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT);
-                        return;
+                        Log.LogError(ex, "新規作成後の処理中にエラーが発生しました。");
+                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}新規作成後エラーが発生した登録内容(JSON): {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
+                        await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT).ConfigureAwait(false);
+                        return new(DataModelSaveErrorReason.AfterSaveError);
                     }
 
-                    Log.Info("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}データを新規登録しました。（{{keys.Select(x => x.LogTemplate).Join(", ")}}）", {{keys.Select(x => x.DbEntityFullPath).Join(", ")}});
-                    Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} 新規登録パラメータ: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                    Log.LogInformation("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}データを新規登録しました。（{{keys.Select(x => x.LogTemplate).Join(", ")}}）", {{keys.Select(x => x.DbEntityFullPath).Join(", ")}});
+                    Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} 新規登録パラメータ: {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
+
+                    return new(dbEntity);
                 }
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の新規登録の確定前に実行される処理。
-                /// 自動生成されないエラーチェックはここで実装する。
-                /// エラーがあった場合、第2引数のメッセージにエラー内容を格納する。
+                /// このメソッドの中でエラーが追加された場合、{{_rootAggregate.DisplayName}} の新規登録は中断される。
+                /// どの画面・バッチから更新された場合であっても必ず {{_rootAggregate.DisplayName}} が満たしていなければならない整合性はここで実装する。
                 /// </summary>
                 public virtual void {{OnBeforeMethodName}}({{command.CsClassNameCreate}} command, {{messages.InterfaceName}} messages, {{PresentationContext.INTERFACE}} context) {
                     // このメソッドをオーバーライドして処理を実装してください。

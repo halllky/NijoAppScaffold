@@ -1,6 +1,7 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Models.DataModelModules;
+using Nijo.Parts.CSharp;
 using Nijo.Util.DotnetEx;
 using Nijo.ValueMemberTypes;
 using System;
@@ -22,19 +23,22 @@ namespace Nijo.Models.DataModelModules {
         }
         internal AggregateBase Aggregate { get; }
 
-        internal enum E_Type { Create, Update, Delete }
+        internal enum E_Type { Create, Update, UpdOrDelKey }
         internal E_Type Type { get; }
 
         internal string CsClassName => Type switch {
             E_Type.Create => $"{Aggregate.PhysicalName}CreateCommand",
             E_Type.Update => $"{Aggregate.PhysicalName}UpdateCommand",
-            E_Type.Delete => $"{Aggregate.PhysicalName}DeleteCommand",
+            E_Type.UpdOrDelKey => $"{Aggregate.PhysicalName}UpdateOrDeleteKey",
             _ => throw new InvalidOperationException(),
         };
         internal string CsClassNameCreate => CsClassName;
         internal string CsClassNameUpdate => CsClassName;
         internal string CsClassNameDelete => CsClassName;
 
+        /// <summary>
+        /// 楽観排他のバージョン。UpdateOrDeleteKeyの場合のみ使用
+        /// </summary>
         internal const string VERSION = "Version";
         internal const string TO_DBENTITY = "ToDbEntity";
         internal const string FROM_DBENTITY = "FromDbEntity";
@@ -63,7 +67,7 @@ namespace Nijo.Models.DataModelModules {
 
                 #region 物理削除時引数
                 {{tree.SelectTextTemplate(agg => $$"""
-                {{new SaveCommand(agg, E_Type.Delete).RenderDeleteCommandDeclaring(ctx)}}
+                {{new SaveCommand(agg, E_Type.UpdOrDelKey).RenderDeleteCommandDeclaring(ctx)}}
                 """)}}
                 #endregion 物理削除時引数
                 """;
@@ -76,7 +80,7 @@ namespace Nijo.Models.DataModelModules {
             return Type switch {
                 E_Type.Create => GetCreateCommandMembers(),
                 E_Type.Update => GetUpdateCommandMembers(),
-                E_Type.Delete => GetDeleteCommandMembers(),
+                E_Type.UpdOrDelKey => GetDeleteCommandMembers(),
                 _ => throw new NotImplementedException(),
             };
         }
@@ -108,13 +112,14 @@ namespace Nijo.Models.DataModelModules {
                 /// <summary>
                 /// {{Aggregate.DisplayName}} の新規登録コマンド引数
                 /// </summary>
+                {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
                 public partial class {{CsClassNameCreate}} {
                 {{GetMembers().SelectTextTemplate(m => $$"""
-                    {{WithIndent(m.RenderDeclaring(), "    ")}}
+                    {{WithIndent(m.RenderDeclaring(ctx))}}
                 """)}}
                 {{If(Aggregate is RootAggregate, () => $$"""
 
-                    {{WithIndent(RenderToDbEntity(isCreate: true), "    ")}}
+                    {{WithIndent(RenderToDbEntity(isCreate: true))}}
                 """)}}
                 }
                 """;
@@ -141,30 +146,88 @@ namespace Nijo.Models.DataModelModules {
         }
         private string RenderUpdateCommandDeclaring(CodeRenderingContext ctx) {
             var efCoreEntity = new EFCoreEntity(Aggregate);
+            var right = new Variable("dbEntity", efCoreEntity);
+            var dict = right
+                 .Create1To1PropertiesRecursively()
+                 .GroupBy(x => x.Metadata.SchemaPathNode.ToMappingKey())
+                 .Select(group => new {
+                     group.Key,
+                     // 外部キーのカラムは、参照元自身のプロパティと、ナビゲーションプロパティで辿った先の
+                     // 参照先エンティティのプロパティで重複するキーが登場するので、
+                     // パスが最も短いもの（= 参照元自身のプロパティ）を選択する
+                     Value = group.OrderBy(x => x.GetPathFromInstance().Count()).First(),
+                 })
+                 .ToDictionary(x => x.Key, x => x.Value);
 
             return $$"""
                 /// <summary>
                 /// {{Aggregate.DisplayName}} の更新コマンド引数
                 /// </summary>
+                {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
                 public partial class {{CsClassNameUpdate}} {
                 {{GetMembers().SelectTextTemplate(m => $$"""
-                    {{WithIndent(m.RenderDeclaring(), "    ")}}
+                    {{WithIndent(m.RenderDeclaring(ctx))}}
                 """)}}
                 {{If(Aggregate is RootAggregate, () => $$"""
-                    /// <summary>楽観排他制御用のバージョン</summary>
-                    public required int? {{VERSION}} { get; set; }
-
-                    {{WithIndent(RenderToDbEntity(isCreate: false), "    ")}}
+                    {{WithIndent(RenderToDbEntity(isCreate: false))}}
 
                     /// <summary>
                     /// Entity Framework Core のエンティティからこのクラスのインスタンスを作成します。
                     /// </summary>
                     public static {{CsClassNameUpdate}} {{FROM_DBENTITY}}({{efCoreEntity.CsClassName}} dbEntity) {
-                        throw new NotImplementedException(); // TODO ver.1
+                        return new() {
+                            {{WithIndent(EnumerateMembers(this, right, dict))}}
+                        };
                     }
                 """)}}
                 }
                 """;
+
+            static IEnumerable<string> EnumerateMembers(IInstancePropertyOwnerMetadata left, IInstancePropertyOwner right, IReadOnlyDictionary<SchemaNodeIdentity, IInstanceProperty> rigthMembers) {
+                foreach (var member in left.GetMembers()) {
+                    if (member is IInstanceValuePropertyMetadata vp) {
+                        var rightPath = rigthMembers.TryGetValue(member.SchemaPathNode.ToMappingKey(), out var source)
+                            ? $"{source.Root.Name}.{source.GetPathFromInstance().Select(p => p.Metadata.GetPropertyName(E_CsTs.CSharp)).Join("?.")}"
+                            : "null";
+                        yield return $$"""
+                            {{member.GetPropertyName(E_CsTs.CSharp)}} = {{vp.Type.RenderCastToDomainType()}}{{rightPath}},
+                            """;
+
+                    } else if (member is IInstanceStructurePropertyMetadata sp) {
+
+                        if (sp.IsArray) {
+                            var arrayPath = rigthMembers.TryGetValue(sp.SchemaPathNode.ToMappingKey(), out var source)
+                                ? $"{source.Root.Name}.{source.GetPathFromInstance().Select(p => p.Metadata.GetPropertyName(E_CsTs.CSharp)).Join("?.")}"
+                              : throw new InvalidOperationException($"右辺にChildrenのXElementが無い: {sp.DisplayName}");
+
+                            // 辞書に、ラムダ式内部で右辺に使用できるプロパティを加える
+                            var dict2 = new Dictionary<SchemaNodeIdentity, IInstanceProperty>(rigthMembers);
+                            var loopVar = new Variable(((ChildrenAggregate)sp.SchemaPathNode).GetLoopVarName(), (IInstancePropertyOwnerMetadata)source.Metadata);
+                            foreach (var descendant in loopVar.Create1To1PropertiesRecursively()) {
+                                var key = descendant.Metadata.SchemaPathNode.ToMappingKey();
+
+                                // dictの宣言箇所のコメントと同じ理由により重複が発生しうるのでその場合はスキップ
+                                if (dict2.ContainsKey(key)) continue;
+
+                                dict2.Add(key, descendant);
+                            }
+
+                            yield return $$"""
+                                {{member.GetPropertyName(E_CsTs.CSharp)}} = {{arrayPath}}?.Select({{loopVar.Name}} => new {{sp.GetTypeName(E_CsTs.CSharp)}}() {
+                                    {{WithIndent(EnumerateMembers(sp, loopVar, dict2))}}
+                                }).ToList() ?? [],
+                                """;
+
+                        } else {
+                            yield return $$"""
+                                {{member.GetPropertyName(E_CsTs.CSharp)}} = new() {
+                                    {{WithIndent(EnumerateMembers(sp, right, rigthMembers))}}
+                                },
+                                """;
+                        }
+                    }
+                }
+            }
         }
         #endregion UPDATE
 
@@ -193,10 +256,13 @@ namespace Nijo.Models.DataModelModules {
                 /// </summary>
                 public partial class {{CsClassNameDelete}} {
                 {{GetMembers().SelectTextTemplate(m => $$"""
-                    {{WithIndent(m.RenderDeclaring(), "    ")}}
+                    {{WithIndent(m.RenderDeclaring(ctx))}}
                 """)}}
                 {{If(Aggregate is RootAggregate, () => $$"""
-                    /// <summary>楽観排他制御用のバージョン</summary>
+                    /// <summary>
+                    /// 楽観排他制御用のバージョン。
+                    /// GUIでの更新の場合は更新時ではなく画面表示時のバージョンを指定してください。
+                    /// </summary>
                     public required int? {{VERSION}} { get; set; }
                 """)}}
                 }
@@ -214,7 +280,7 @@ namespace Nijo.Models.DataModelModules {
             string CsUpdateType { get; }
             string CsDeleteType { get; }
 
-            string RenderDeclaring();
+            string RenderDeclaring(CodeRenderingContext ctx);
         }
         /// <summary>
         /// 更新処理引数クラスの値メンバー
@@ -237,9 +303,10 @@ namespace Nijo.Models.DataModelModules {
             IValueMemberType IInstanceValuePropertyMetadata.Type => Member.Type;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
 
-            string ISaveCommandMember.RenderDeclaring() {
+            string ISaveCommandMember.RenderDeclaring(CodeRenderingContext ctx) {
                 return $$"""
                     /// <summary>{{DisplayName}}</summary>
+                    {{NijoAttr.RenderAttributeValues(ctx, Member)}}
                     public required {{Member.Type.CsDomainTypeName}}? {{PhysicalName}} { get; set; }
                     """;
             }
@@ -250,7 +317,7 @@ namespace Nijo.Models.DataModelModules {
         internal class SaveCommandRefMember : ISaveCommandMember, IInstanceStructurePropertyMetadata {
             internal SaveCommandRefMember(RefToMember refTo) {
                 Member = refTo;
-                RefEntry = new KeyClass.KeyClassEntry(refTo.RefTo);
+                RefEntry = new KeyClass.KeyClassEntry(refTo);
             }
             internal RefToMember Member { get; }
             internal KeyClass.KeyClassEntry RefEntry { get; }
@@ -270,9 +337,10 @@ namespace Nijo.Models.DataModelModules {
             IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() {
                 return ((IInstancePropertyOwnerMetadata)RefEntry).GetMembers();
             }
-            string ISaveCommandMember.RenderDeclaring() {
+            string ISaveCommandMember.RenderDeclaring(CodeRenderingContext ctx) {
                 return $$"""
                     /// <summary>{{Member.DisplayName}}</summary>
+                    {{NijoAttr.RenderAttributeValues(ctx, Member)}}
                     public required {{RefEntry.ClassName}}? {{Member.PhysicalName}} { get; set; }
                     """;
             }
@@ -288,7 +356,7 @@ namespace Nijo.Models.DataModelModules {
             public string DisplayName => Aggregate.DisplayName;
             public string CsCreateType => new SaveCommand(Aggregate, SaveCommand.E_Type.Create).CsClassNameCreate;
             public string CsUpdateType => new SaveCommand(Aggregate, SaveCommand.E_Type.Update).CsClassNameUpdate;
-            public string CsDeleteType => new SaveCommand(Aggregate, SaveCommand.E_Type.Delete).CsClassNameDelete;
+            public string CsDeleteType => new SaveCommand(Aggregate, SaveCommand.E_Type.UpdOrDelKey).CsClassNameDelete;
 
             bool ISaveCommandMember.IsKey => false;
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Aggregate;
@@ -296,15 +364,16 @@ namespace Nijo.Models.DataModelModules {
             string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => CsClassName;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
 
-            string ISaveCommandMember.RenderDeclaring() {
+            string ISaveCommandMember.RenderDeclaring(CodeRenderingContext ctx) {
                 var className = Type switch {
                     E_Type.Create => CsCreateType,
                     E_Type.Update => CsUpdateType,
-                    E_Type.Delete => CsDeleteType,
+                    E_Type.UpdOrDelKey => CsDeleteType,
                     _ => throw new NotImplementedException(),
                 };
                 return $$"""
                     /// <summary>{{DisplayName}}</summary>
+                    {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
                     public required {{className}}? {{PhysicalName}} { get; set; }
                     """;
             }
@@ -321,7 +390,7 @@ namespace Nijo.Models.DataModelModules {
             public string DisplayName => base.Aggregate.DisplayName;
             public string CsCreateType => $"List<{new SaveCommand(base.Aggregate, E_Type.Create).CsClassName}>";
             public string CsUpdateType => $"List<{new SaveCommand(base.Aggregate, E_Type.Update).CsClassName}>";
-            public string CsDeleteType => $"List<{new SaveCommand(base.Aggregate, E_Type.Delete).CsClassName}>";
+            public string CsDeleteType => $"List<{new SaveCommand(base.Aggregate, E_Type.UpdOrDelKey).CsClassName}>";
 
             bool ISaveCommandMember.IsKey => false;
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => base.Aggregate;
@@ -329,15 +398,16 @@ namespace Nijo.Models.DataModelModules {
             string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => CsClassName;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
 
-            string ISaveCommandMember.RenderDeclaring() {
+            string ISaveCommandMember.RenderDeclaring(CodeRenderingContext ctx) {
                 var className = Type switch {
                     E_Type.Create => CsCreateType,
                     E_Type.Update => CsUpdateType,
-                    E_Type.Delete => CsDeleteType,
+                    E_Type.UpdOrDelKey => CsDeleteType,
                     _ => throw new NotImplementedException(),
                 };
                 return $$"""
                     /// <summary>{{DisplayName}}</summary>
+                    {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
                     public required {{className}} {{PhysicalName}} { get; set; }
                     """;
             }
@@ -360,8 +430,10 @@ namespace Nijo.Models.DataModelModules {
                 /// </summary>
                 public {{efCoreEntity.CsClassName}} {{TO_DBENTITY}}() {
                     return new {{efCoreEntity.CsClassName}} {
-                        {{WithIndent(RenderToDbEntityBody(efCoreEntity, rootInstance, rightDictOfRootInstance), "        ")}}
-                        {{EFCoreEntity.VERSION}} = {{(isCreate ? "0" : $"{rootInstance.Name}.{VERSION}")}},
+                        {{WithIndent(RenderToDbEntityBody(efCoreEntity, rootInstance, rightDictOfRootInstance))}}
+                {{If(isCreate, () => $$"""
+                        {{EFCoreEntity.VERSION}} = 0,
+                """)}}
                     };
                 }
                 """;
@@ -371,18 +443,19 @@ namespace Nijo.Models.DataModelModules {
                 // 自身のカラム、外部参照のキー、親のキー
                 foreach (var col in left.GetColumns()) {
                     // シーケンス項目など登録と共に採番されるものはnullになる可能性がある
-                    var sourcePath = rigthMembers.TryGetValue(col.Member.ToMappingKey(), out var source)
+                    var mappingKey = col.Member?.ToMappingKey();
+                    var sourcePath = mappingKey != null && rigthMembers.TryGetValue(mappingKey, out var source)
                         ? $"{source.Root.Name}.{source.GetPathFromInstance().Select(p => p.Metadata.GetPropertyName(E_CsTs.CSharp)).Join("?.")}"
                         : "null";
                     yield return $$"""
-                        {{col.PhysicalName}} = {{col.Member.Type.RenderCastToPrimitiveType()}}{{sourcePath}},
+                        {{col.PhysicalName}} = {{col.MemberType.RenderCastToPrimitiveType()}}{{sourcePath}},
                         """;
                 }
 
                 // 子
                 var childAndChildren = left
                     .GetNavigationProperties()
-                    .OfType<EFCoreEntity.NavigationOfParentChild>()
+                    .OfType<NavigationProperty.NavigationOfParentChild>()
                     .Where(nav => nav.Principal.ThisSide == left.Aggregate);
                 foreach (var nav in childAndChildren) {
                     if (nav.Relevant.ThisSide is ChildAggregate child) {
@@ -395,7 +468,7 @@ namespace Nijo.Models.DataModelModules {
                         // childPath が null でない場合のみ Child を生成
                         yield return $$"""
                             {{nav.Principal.OtherSidePhysicalName}} = {{childPath}} == null ? null : new() {
-                                {{WithIndent(RenderToDbEntityBody(childEntity, right, rigthMembers), "    ")}}
+                                {{WithIndent(RenderToDbEntityBody(childEntity, right, rigthMembers))}}
                             },
                             """;
 
@@ -415,7 +488,7 @@ namespace Nijo.Models.DataModelModules {
 
                         yield return $$"""
                             {{nav.Principal.OtherSidePhysicalName}} = {{arrayPath}}?.Select({{loopVar.Name}} => new {{childrenEntity.CsClassName}} {
-                                {{WithIndent(RenderToDbEntityBody(childrenEntity, loopVar, dict2), "    ")}}
+                                {{WithIndent(RenderToDbEntityBody(childrenEntity, loopVar, dict2))}}
                             }).ToHashSet() ?? [],
                             """;
 

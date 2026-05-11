@@ -1,4 +1,3 @@
-using Nijo.Models.QueryModelModules;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using Nijo.CodeGenerating;
@@ -13,7 +12,7 @@ namespace Nijo.ImmutableSchema {
     /// <summary>
     /// モデルの属性のうち、xxxID, xxx名, xxx日付, ... などのような単一の値。
     /// </summary>
-    public sealed class ValueMember : IAggregateMember, IUiConstraintValue {
+    public sealed class ValueMember : IAggregateMember {
         internal ValueMember(XElement xElement, SchemaParseContext ctx, ISchemaPathNode? previous) {
             XElement = xElement;
             _ctx = ctx;
@@ -25,14 +24,18 @@ namespace Nijo.ImmutableSchema {
         public ISchemaPathNode? PreviousNode { get; }
 
         public string PhysicalName => _ctx.GetPhysicalName(XElement);
-        public string DisplayName => _ctx.GetDisplayName(XElement);
-        public string DbName => _ctx.GetDbName(XElement);
+        public string DisplayName => XElement.GetDisplayName();
+        public string DbName => XElement.GetDbName();
         public decimal Order => XElement.ElementsBeforeSelf().Count();
-        public string GetComment(E_CsTs csts) => _ctx.GetComment(XElement, csts);
 
-        public AggregateBase Owner => XElement.Parent == PreviousNode?.XElement
-            ? (AggregateBase?)PreviousNode ?? throw new InvalidOperationException() // パスの巻き戻しの場合
-            : _ctx.ToAggregateBase(XElement.Parent ?? throw new InvalidOperationException(), this);
+        public AggregateBase Owner {
+            get {
+                var parent = XElement.Parent;
+                return parent == PreviousNode?.XElement
+                    ? (AggregateBase?)PreviousNode ?? throw new InvalidOperationException() // パスの巻き戻しの場合
+                    : _ctx.ToAggregateBase(parent ?? throw new InvalidOperationException(), this);
+            }
+        }
 
         /// <summary>
         /// この属性の型
@@ -45,7 +48,9 @@ namespace Nijo.ImmutableSchema {
         /// <summary>キー属性か否か</summary>
         public bool IsKey => XElement.Attribute(BasicNodeOptions.IsKey.AttributeName) != null;
         /// <summary>必須か否か</summary>
-        public bool IsRequired => XElement.Attribute(BasicNodeOptions.IsRequired.AttributeName) != null;
+        public bool IsNotNull => XElement.Attribute(BasicNodeOptions.IsNotNull.AttributeName) != null;
+        /// <summary>汎用参照テーブルのハードコードされる主キーか否か</summary>
+        public bool IsHardCodedPrimaryKey => XElement.Attribute(BasicNodeOptions.IsHardCodedPrimaryKey.AttributeName) != null;
         /// <summary>文字種。半角、半角英数、など</summary>
         public string? CharacterType => XElement.Attribute(BasicNodeOptions.CharacterType.AttributeName)?.Value;
         /// <summary>文字列系属性の最大長</summary>
@@ -56,6 +61,8 @@ namespace Nijo.ImmutableSchema {
         public int? DecimalPlace => int.TryParse(XElement.Attribute(BasicNodeOptions.DecimalPlace.AttributeName)?.Value, out var v) ? v : null;
         /// <summary>シーケンス物理名</summary>
         public string? SequenceName => XElement.Attribute(BasicNodeOptions.SequenceName.AttributeName)?.Value;
+        /// <summary>検索条件にのみレンダリングされるか否か</summary>
+        public bool OnlySearchCondition => XElement.Attribute(BasicNodeOptions.OnlySearchCondition.AttributeName) != null;
         #endregion メンバー毎に定義される制約
 
         #region 等価比較

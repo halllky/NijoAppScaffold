@@ -1,0 +1,365 @@
+.heroSection {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(110, 220, 176, 0.34), transparent 32%),
+    radial-gradient(circle at right 18%, rgba(30, 119, 189, 0.18), transparent 28%),
+    linear-gradient(180deg, #f4f8f2 0%, #eef5fb 100%);
+}
+
+.heroSection::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(12, 36, 58, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(12, 36, 58, 0.04) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.65), transparent 92%);
+}
+
+.heroInner {
+  position: relative;
+  z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 5.5rem 1.5rem 4rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+.heroCopy {
+  max-width: 880px;
+}
+
+.eyebrow,
+.sectionLabel {
+  margin: 0 0 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #0d7b5e;
+}
+
+.heroTitle {
+  margin: 0;
+  font-size: clamp(2.8rem, 5.4vw, 5rem);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  color: #10263b;
+}
+
+.heroLead {
+  margin: 1.4rem 0 0;
+  max-width: 42rem;
+  font-size: 1.08rem;
+  line-height: 1.85;
+  color: #27445c;
+}
+
+.heroActions {
+  margin-top: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+}
+
+.ghostButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.8rem 1.2rem;
+  border: 1px solid rgba(16, 38, 59, 0.15);
+  border-radius: 999px;
+  font-weight: 700;
+  color: #10263b;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px);
+}
+
+.ghostButton:hover {
+  color: #10263b;
+  background: rgba(255, 255, 255, 0.94);
+  text-decoration: none;
+}
+
+.heroNotes {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.heroNotes span {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.48rem 0.78rem;
+  border-radius: 999px;
+  background: rgba(16, 38, 59, 0.06);
+  color: #27445c;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.heroVisuals {
+  display: grid;
+  gap: 1rem;
+}
+
+.heroFigureLarge,
+.heroFigureSmall,
+.mediaCard {
+  margin: 0;
+}
+
+.heroFigureLarge,
+.heroFigureSmall {
+  position: static;
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid rgba(16, 38, 59, 0.1);
+  box-shadow: 0 30px 80px rgba(16, 38, 59, 0.16);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+}
+
+.heroFigureLarge {
+  inset: auto;
+}
+
+.heroFigureSmall {
+  width: 100%;
+}
+
+.heroFigureLarge img,
+.heroFigureSmall img,
+.mediaCard img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.pageMain {
+  background: linear-gradient(180deg, #fcfcf8 0%, #f6f8fb 100%);
+}
+
+.sectionBlock,
+.sectionBlockAlt,
+.sectionBlockDark {
+  padding: 5rem 1.5rem;
+}
+
+.sectionBlockAlt {
+  background: linear-gradient(180deg, #f4f8fb 0%, #eef4ef 100%);
+}
+
+.sectionBlockDark {
+  background: #10263b;
+  color: #ebf4ff;
+}
+
+.sectionHeading,
+.sectionHeadingNarrow {
+  max-width: 1280px;
+  margin: 0 auto 2.2rem;
+}
+
+.sectionHeadingNarrow {
+  max-width: 880px;
+}
+
+.sectionHeading h2,
+.sectionHeadingNarrow h2 {
+  margin-bottom: 0.9rem;
+  font-size: clamp(2rem, 3vw, 3rem);
+  line-height: 1.1;
+}
+
+.sectionHeading p,
+.sectionHeadingNarrow p,
+.copyCard p,
+.pointCard p,
+.constraintCard li,
+.bottomCallout p,
+.mediaCard figcaption,
+.listCard li {
+  font-size: 1rem;
+  line-height: 1.9;
+}
+
+.imageTextStack,
+.splitPanel,
+.constraintGrid,
+.pointGrid {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.imageTextStack {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.6rem;
+}
+
+.mediaCard,
+.copyCard,
+.listCard,
+.constraintCard,
+.pointCard,
+.bottomCallout {
+  border-radius: 28px;
+  border: 1px solid rgba(16, 38, 59, 0.1);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 22px 60px rgba(16, 38, 59, 0.08);
+}
+
+.mediaCard {
+  overflow: hidden;
+}
+
+.mediaCard figcaption {
+  padding: 1rem 1.2rem 1.25rem;
+  color: #45627d;
+}
+
+.copyCard {
+  padding: 2rem 2rem 2.15rem;
+}
+
+.copyCard h3,
+.listCard h3,
+.constraintCard h3,
+.pointCard h3,
+.bottomCallout h3 {
+  margin-bottom: 0.8rem;
+}
+
+.splitPanel {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.6rem;
+  align-items: start;
+}
+
+.dualListPanel {
+  display: grid;
+  gap: 1rem;
+}
+
+.listCard {
+  padding: 1.6rem 1.7rem;
+}
+
+.listCard ul,
+.constraintCard ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.listCard li,
+.constraintCard li {
+  color: #2a4a64;
+}
+
+.pointGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.pointCard {
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(235, 244, 255, 0.14);
+  color: #ebf4ff;
+  box-shadow: none;
+}
+
+.pointCard p {
+  color: rgba(235, 244, 255, 0.82);
+}
+
+.constraintGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.constraintCard {
+  padding: 1.6rem 1.7rem;
+}
+
+.bottomCallout {
+  max-width: 1280px;
+  margin: 1.6rem auto 0;
+  padding: 1.8rem 2rem;
+}
+
+@media screen and (max-width: 1200px) {
+  .pointGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media screen and (max-width: 996px) {
+
+  .heroInner,
+  .imageTextStack,
+  .splitPanel,
+  .constraintGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .heroInner {
+    padding-top: 4.5rem;
+  }
+
+  .heroFigureLarge,
+  .heroFigureSmall {
+    position: static;
+    width: 100%;
+  }
+
+  .sectionBlock,
+  .sectionBlockAlt,
+  .sectionBlockDark {
+    padding: 4rem 1rem;
+  }
+
+  .pointGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media screen and (max-width: 640px) {
+  .heroTitle {
+    font-size: 2.5rem;
+  }
+
+  .heroLead,
+  .sectionHeading p,
+  .sectionHeadingNarrow p,
+  .copyCard p,
+  .pointCard p,
+  .constraintCard li,
+  .bottomCallout p,
+  .mediaCard figcaption,
+  .listCard li {
+    line-height: 1.75;
+  }
+
+  .copyCard,
+  .listCard,
+  .constraintCard,
+  .pointCard,
+  .bottomCallout {
+    padding: 1.4rem;
+  }
+
+  .pointGrid {
+    grid-template-columns: 1fr;
+  }
+}

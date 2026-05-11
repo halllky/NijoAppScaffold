@@ -21,7 +21,7 @@ namespace Nijo.CodeGenerating {
         /// <summary>
         /// モデルの指定内容の検証を行ないます。
         /// </summary>
-        public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError);
+        void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError);
 
         /// <summary>
         /// ルート集約1個と対応するソースコードを生成します。
@@ -32,6 +32,5 @@ namespace Nijo.CodeGenerating {
         /// ユーティリティクラスなどのような、ルート集約1個と対応しないソースコードを生成します。
         /// </summary>
         void GenerateCode(CodeRenderingContext ctx);
-
     }
 }

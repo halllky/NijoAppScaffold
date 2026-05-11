@@ -1,0 +1,114 @@
+{
+  "schemaDefinition": {
+    "nodes": {
+      "0112870a-b512-4b7c-a464-db9a254a4250": {
+        "id": "0112870a-b512-4b7c-a464-db9a254a4250",
+        "label": "事業所",
+        "background-color": "#059669",
+        "border-color": "#059669"
+      },
+      "1956b3f6-a6e5-493c-b87a-e86933c7b45f": {
+        "id": "1956b3f6-a6e5-493c-b87a-e86933c7b45f",
+        "label": "社員",
+        "background-color": "#ea580c",
+        "border-color": "#ea580c"
+      },
+      "202ad425-e9b6-4e28-9984-0f401d445ec1": {
+        "id": "202ad425-e9b6-4e28-9984-0f401d445ec1",
+        "label": "旧システム部署情報",
+        "background-color": "#ea580c",
+        "border-color": "#ea580c"
+      },
+      "3d203063-3cf5-4acd-ba63-ecbe5701782d": {
+        "id": "3d203063-3cf5-4acd-ba63-ecbe5701782d",
+        "label": "係",
+        "parent": "51d08ec1-ddd8-4822-bf2b-91c458ee7e62",
+        "background-color": "#ea580c",
+        "border-color": "#ea580c"
+      },
+      "4c96eb60-249d-414c-8e3e-4b5a981fa8c6": {
+        "id": "4c96eb60-249d-414c-8e3e-4b5a981fa8c6",
+        "label": "部署",
+        "background-color": "#ea580c",
+        "border-color": "#ea580c"
+      },
+      "51d08ec1-ddd8-4822-bf2b-91c458ee7e62": {
+        "id": "51d08ec1-ddd8-4822-bf2b-91c458ee7e62",
+        "label": "課",
+        "parent": "4c96eb60-249d-414c-8e3e-4b5a981fa8c6",
+        "background-color": "#ea580c",
+        "border-color": "#ea580c"
+      },
+      "5fa9afef-8d6c-4999-bf57-09d56c39de14": {
+        "id": "5fa9afef-8d6c-4999-bf57-09d56c39de14",
+        "label": "汎用マスタ",
+        "background-color": "#ea580c",
+        "border-color": "#ea580c"
+      }
+    },
+    "edges": [
+      {
+        "source": "1956b3f6-a6e5-493c-b87a-e86933c7b45f",
+        "target": "4c96eb60-249d-414c-8e3e-4b5a981fa8c6",
+        "label": "所属部署",
+        "line-color": "#ea580c",
+        "line-style": "solid",
+        "targetEndShape": "triangle"
+      },
+      {
+        "source": "1956b3f6-a6e5-493c-b87a-e86933c7b45f",
+        "target": "5fa9afef-8d6c-4999-bf57-09d56c39de14",
+        "label": "契約種別",
+        "line-color": "#ea580c",
+        "line-style": "solid",
+        "targetEndShape": "triangle"
+      },
+      {
+        "source": "4c96eb60-249d-414c-8e3e-4b5a981fa8c6",
+        "target": "0112870a-b512-4b7c-a464-db9a254a4250",
+        "label": "事業所",
+        "line-color": "#ea580c",
+        "line-style": "solid",
+        "targetEndShape": "triangle"
+      },
+      {
+        "source": "51d08ec1-ddd8-4822-bf2b-91c458ee7e62",
+        "target": "202ad425-e9b6-4e28-9984-0f401d445ec1",
+        "label": "旧システムコード",
+        "line-color": "#ea580c",
+        "line-style": "solid",
+        "targetEndShape": "triangle"
+      }
+    ],
+    "nodePositions": {
+      "0112870a-b512-4b7c-a464-db9a254a4250": {
+        "x": 514,
+        "y": 204
+      },
+      "1956b3f6-a6e5-493c-b87a-e86933c7b45f": {
+        "x": 193,
+        "y": 186
+      },
+      "202ad425-e9b6-4e28-9984-0f401d445ec1": {
+        "x": 337.2469107,
+        "y": 387.259168
+      },
+      "3d203063-3cf5-4acd-ba63-ecbe5701782d": {
+        "x": 335,
+        "y": 270
+      },
+      "4c96eb60-249d-414c-8e3e-4b5a981fa8c6": {
+        "x": 335,
+        "y": 270
+      },
+      "51d08ec1-ddd8-4822-bf2b-91c458ee7e62": {
+        "x": 335,
+        "y": 270
+      },
+      "5fa9afef-8d6c-4999-bf57-09d56c39de14": {
+        "x": 134.9999999,
+        "y": 311.9999999
+      }
+    }
+  }
+}

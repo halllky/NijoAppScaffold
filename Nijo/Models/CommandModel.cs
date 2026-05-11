@@ -22,33 +22,26 @@ namespace Nijo.Models {
                 return;
             }
 
-            // 引数の物理名チェック
-            var expectedParameterName = $"{rootAggregateName}{CommandModelExtensions.PARAMETER_PHYSICAL_NAME}";
-            var correctParameterElement = rootAggregateElement
-                .Elements()
-                .FirstOrDefault(e => context.GetPhysicalName(e) == expectedParameterName);
-            if (correctParameterElement == null) {
-                addError(rootAggregateElement, $"引数の物理名「{expectedParameterName}」を持つ子集約が見つかりません。");
-            } else if (context.GetNodeType(correctParameterElement) != E_NodeType.ChildAggregate) {
-                addError(correctParameterElement, $"{SchemaParseContext.NODE_TYPE_CHILD} 型である必要があります。");
+            // 新仕様：コマンドモデルは子孫XML要素を定義できない
+            var childElements = rootAggregateElement.Elements();
+            if (childElements.Any()) {
+                addError(rootAggregateElement, $"コマンドモデルのルート集約は子孫XML要素を定義できません。引数と戻り値の型は{BasicNodeOptions.Parameter.AttributeName}属性と{BasicNodeOptions.ReturnValue.AttributeName}属性で指定してください。");
             }
 
-            // 戻り値の物理名チェック
-            var expectedReturnValueName = $"{rootAggregateName}{CommandModelExtensions.RETURN_VALUE_PHYSICAL_NAME}";
-            var correctReturnValueElement = rootAggregateElement
-                .Elements()
-                .FirstOrDefault(e => context.GetPhysicalName(e) == expectedReturnValueName);
-            if (correctReturnValueElement == null) {
-                addError(rootAggregateElement, $"戻り値の物理名「{expectedReturnValueName}」を持つ子集約が見つかりません。");
-            } else if (context.GetNodeType(correctReturnValueElement) != E_NodeType.ChildAggregate) {
-                addError(correctReturnValueElement, $"{SchemaParseContext.NODE_TYPE_CHILD} 型である必要があります。");
+            // Parameter属性の検証
+            var parameterAttr = rootAggregateElement.Attribute(BasicNodeOptions.Parameter.AttributeName)?.Value;
+            if (!string.IsNullOrEmpty(parameterAttr)) {
+                ValidateTypeSpecification(parameterAttr, "Parameter", rootAggregateElement, context, addError);
+            }
+
+            // ReturnValue属性の検証
+            var returnValueAttr = rootAggregateElement.Attribute(BasicNodeOptions.ReturnValue.AttributeName)?.Value;
+            if (!string.IsNullOrEmpty(returnValueAttr)) {
+                ValidateTypeSpecification(returnValueAttr, "ReturnValue", rootAggregateElement, context, addError);
             }
 
             // コマンドモデルの集約には主キー属性を定義できない
             ValidateNoKeyAttributes(rootAggregateElement, context, addError);
-
-            // 外部参照のチェック
-            ValidateRefTo(rootAggregateElement, context, addError);
         }
 
         /// <summary>
@@ -75,74 +68,57 @@ namespace Nijo.Models {
         }
 
         /// <summary>
-        /// コマンドモデルの外部参照をチェックします
+        /// Parameter属性またはReturnValue属性の型指定を検証します
         /// </summary>
-        private void ValidateRefTo(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
-            // 自身を起点とするすべての外部参照を取得
-            var refElements = rootAggregateElement
-                .Descendants()
-                .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value?.StartsWith(SchemaParseContext.NODE_TYPE_REFTO + ":") == true)
-                .ToList();
+        private void ValidateTypeSpecification(string typeSpec, string attributeName, XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
+            try {
+                var (modelName, refToObject) = CommandModelExtensions.ParseTypeSpecification(typeSpec);
 
-            if (!refElements.Any()) return;
-
-            foreach (var refElement in refElements) {
-                var refTo = context.FindRefTo(refElement);
-                if (refTo == null) {
-                    addError(refElement, $"参照先の要素が見つかりません: {refElement.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value}");
-                    continue;
+                if (string.IsNullOrEmpty(modelName)) {
+                    addError(rootAggregateElement, $"{attributeName}属性の値が不正です: {typeSpec}");
+                    return;
                 }
 
-                // 自身のツリーの集約を参照していないかチェック
-                var rootElement = refElement.AncestorsAndSelf().Last(e => e.Parent == e.Document?.Root);
-                var refToRoot = refTo.AncestorsAndSelf().Last(e => e.Parent == e.Document?.Root);
-
-                if (rootElement == refToRoot) {
-                    addError(refElement, "自身のツリーの集約を参照することはできません。");
-                    continue;
+                // 参照先モデルの存在確認
+                var targetModel = context.Document.Root
+                    ?.Element(SchemaParseContext.SECTION_DATA_STRUCTURES)
+                    ?.Elements()
+                    .FirstOrDefault(e => context.GetPhysicalName(e) == modelName);
+                if (targetModel == null) {
+                    addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」が見つからないか、ルート集約ではありません。");
+                    return;
                 }
 
-                // 参照先がクエリモデルまたはGDQMデータモデルか確認
-                var refToType = refToRoot.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
-                var isQueryModel = refToType == QueryModel.NODE_TYPE;
-                var isGDQM = context.HasGenerateDefaultQueryModelAttribute(refToRoot);
+                // 参照先モデルの種類チェック
+                var targetModelType = targetModel.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
 
-                if (!isQueryModel && !isGDQM) {
-                    addError(refElement, $"コマンドモデルの集約からは、クエリモデルまたは{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデルの集約しか参照できません。");
-                }
-
-                // RefToObjectの指定があるかどうか
-                if (refElement.Attribute(BasicNodeOptions.RefToObject.AttributeName) == null) {
-                    addError(refElement, $"コマンドモデルからクエリモデルを外部参照する場合、{BasicNodeOptions.RefToObject.AttributeName}属性を指定する必要があります。");
+                if (string.IsNullOrEmpty(refToObject)) {
+                    // 構造体モデルの場合
+                    if (targetModelType != StructureModel.SCHEMA_NAME) {
+                        addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」は構造体モデルではありません。");
+                    }
                 } else {
-                    var refToObject = refElement.Attribute(BasicNodeOptions.RefToObject.AttributeName)?.Value;
-                    if (refToObject != BasicNodeOptions.REF_TO_OBJECT_DISPLAY_DATA && refToObject != BasicNodeOptions.REF_TO_OBJECT_SEARCH_CONDITION) {
-                        addError(refElement, $"{BasicNodeOptions.RefToObject.AttributeName}属性の値は「{BasicNodeOptions.REF_TO_OBJECT_DISPLAY_DATA}」または「{BasicNodeOptions.REF_TO_OBJECT_SEARCH_CONDITION}」である必要があります。");
+                    // クエリモデルの場合
+                    var isQueryModel = targetModelType == QueryModel.NODE_TYPE;
+                    var isGDQM = targetModel.HasGenerateDefaultQueryModelAttribute();
+
+                    if (!isQueryModel && !isGDQM) {
+                        addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」はクエリモデルまたは{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデルではありません。");
+                        return;
+                    }
+
+                    // RefToObjectの値チェック
+                    if (!BasicNodeOptions.AvailableFromCommandToQuery.ContainsKey(refToObject)) {
+                        addError(rootAggregateElement, $"{attributeName}属性のRefToObject指定「{refToObject}」は無効です。{string.Join(" または ", BasicNodeOptions.AvailableFromCommandToQuery.Keys)}のいずれかを指定してください。");
                     }
                 }
+            } catch (ArgumentException ex) {
+                addError(rootAggregateElement, $"{attributeName}属性の値が不正です: {ex.Message}");
             }
         }
 
         public void GenerateCode(CodeRenderingContext ctx, RootAggregate rootAggregate) {
             var aggregateFile = new SourceFileByAggregate(rootAggregate);
-
-            // データ型: パラメータ型定義
-            var parameterType = new ParameterOrReturnValue(rootAggregate, ParameterOrReturnValue.E_Type.Parameter);
-            aggregateFile.AddCSharpClass(parameterType.RenderCSharpRecursively(ctx), "Class_Parameter");
-            aggregateFile.AddTypeScriptTypeDef(parameterType.RenderTypeScript(ctx));
-            aggregateFile.AddTypeScriptFunction(parameterType.RenderNewObjectFn());
-
-            // データ型: パラメータ型メッセージ
-            var parameterMessages = new ParameterTypeMessageContainer(rootAggregate.GetCommandModelParameterChild());
-            aggregateFile.AddCSharpClass(ParameterTypeMessageContainer.RenderCSharpRecursively(rootAggregate), "Class_ParameterMessage");
-            aggregateFile.AddTypeScriptTypeDef(parameterMessages.RenderTypeScript());
-            ctx.Use<MessageContainer.BaseClass>().Register(parameterMessages.CsClassName, parameterMessages.CsClassName);
-
-            // データ型: 戻り値型定義
-            var returnType = new ParameterOrReturnValue(rootAggregate, ParameterOrReturnValue.E_Type.ReturnValue);
-            aggregateFile.AddCSharpClass(returnType.RenderCSharpRecursively(ctx), "Class_ReturnValue");
-            aggregateFile.AddTypeScriptTypeDef(returnType.RenderTypeScript(ctx));
-            aggregateFile.AddTypeScriptFunction(returnType.RenderNewObjectFn());
 
             // 処理: TypeScript用マッピング、Webエンドポイント、本処理抽象メソッド
             var commandProcessing = new CommandProcessing(rootAggregate);
@@ -152,10 +128,8 @@ namespace Nijo.Models {
             // カスタムロジック用モジュール
             ctx.Use<CommandQueryMappings>().AddCommandModel(rootAggregate);
 
-            // 定数: メタデータ
-            ctx.Use<Metadata>()
-                .Add(rootAggregate.GetCommandModelParameterChild())
-                .Add(rootAggregate.GetCommandModelReturnValueChild());
+            // 定数: メタデータ（新仕様ではルート集約のみ）
+            ctx.Use<MetadataForPage>().Add(rootAggregate);
 
             aggregateFile.ExecuteRendering(ctx);
         }
@@ -167,34 +141,22 @@ namespace Nijo.Models {
 
 
     internal static class CommandModelExtensions {
-        // ルート集約の直下にあり、物理名がこれらである要素は特別な意味を持つ
-        internal const string PARAMETER_PHYSICAL_NAME = "Parameter";
-        internal const string RETURN_VALUE_PHYSICAL_NAME = "ReturnValue";
 
-        /// <summary>
-        /// CommandModelの引数の型が定義された集約を返します。
-        /// 定義されていない場合は例外になります。
-        /// </summary>
-        internal static ChildAggregate GetCommandModelParameterChild(this RootAggregate rootAggregate) {
-            var rootAggregateName = rootAggregate.PhysicalName;
-            var expectedParameterName = $"{rootAggregateName}{PARAMETER_PHYSICAL_NAME}";
-            var param = rootAggregate
-                .GetMembers()
-                .Single(m => m is ChildAggregate && m.PhysicalName == expectedParameterName);
-            return (ChildAggregate)param;
-        }
+        internal static (string? ModelName, string? RefToObject) ParseTypeSpecification(string? typeSpec) {
+            if (string.IsNullOrEmpty(typeSpec)) {
+                return (null, null);
+            }
 
-        /// <summary>
-        /// CommandModelの戻り値の型が定義された集約を返します。
-        /// 定義されていない場合は例外になります。
-        /// </summary>
-        internal static ChildAggregate GetCommandModelReturnValueChild(this RootAggregate rootAggregate) {
-            var rootAggregateName = rootAggregate.PhysicalName;
-            var expectedReturnValueName = $"{rootAggregateName}{RETURN_VALUE_PHYSICAL_NAME}";
-            var param = rootAggregate
-                .GetMembers()
-                .Single(m => m is ChildAggregate && m.PhysicalName == expectedReturnValueName);
-            return (ChildAggregate)param;
+            var parts = typeSpec.Split(':');
+            if (parts.Length == 1) {
+                // 構造体モデルの場合
+                return (parts[0], null);
+            } else if (parts.Length == 2) {
+                // クエリモデルの場合
+                return (parts[0], parts[1]);
+            }
+
+            throw new ArgumentException($"Invalid type specification: {typeSpec}");
         }
     }
 }

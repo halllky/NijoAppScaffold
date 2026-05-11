@@ -14,7 +14,7 @@ namespace Nijo.Parts.CSharp {
     internal class PresentationContext {
 
         internal const string INTERFACE = "IPresentationContext";
-        internal const string OPTIONS = "IPresentationContextOptions";
+        internal const string INTERFACE_WITH_RETURN_VALUE = "IPresentationContextWithReturnValue";
 
         internal static SourceFile RenderStaticCore(CodeRenderingContext ctx) {
             return new SourceFile {
@@ -28,50 +28,52 @@ namespace Nijo.Parts.CSharp {
                     /// </summary>
                     public interface {{INTERFACE}} {
 
-                        /// <inheritdoc cref="{{OPTIONS}}"/>
-                        {{OPTIONS}} Options { get; }
+                        /// <summary>
+                        /// 更新系の処理について、入力チェックのみを行うか、それとも実際の更新処理も行うかを表す。
+                        ///
+                        /// Webアプリケーションで何らかのデータを更新する場合、
+                        /// 1回目のHTTPリクエストでは入力チェックのみを行い、ユーザーに確認メッセージを表示した上で
+                        /// 2回目のHTTPリクエストで再度入力チェックしたうえで実際の更新処理を行う、という2段階の処理を行うことが多い。
+                        /// このプロパティが true の場合、入力チェックのみを行い、実際の更新処理は行わない。
+                        /// </summary>
+                        bool ValidationOnly { get; }
 
                         /// <summary>
-                        /// パラメータの各値に対するメッセージ。エラーや警告など。
+                        /// このインスタンスを、メッセージコンテナを持つ型にキャストします。
+                        /// このインスタンスが持つ情報はすべて引き継がれます。
                         /// </summary>
-                        {{MessageContainer.INTERFACE}} Messages { get; }
+                        {{INTERFACE}}<TMessage> As<TMessage>()
+                            where TMessage : {{MessageContainer.SETTER_INTERFACE}};
 
                         /// <summary>
-                        /// 「～しますがよろしいですか？」などの確認メッセージを追加します。
+                        /// このインスタンスを、戻り値とメッセージコンテナを持つ型にキャストします。
+                        /// このインスタンスが持つ情報はすべて引き継がれます。
                         /// </summary>
-                        void AddConfirm(string text);
-
-                        /// <summary>
-                        /// 「～しますがよろしいですか？」などの確認メッセージが発生しているかどうかを返します。
-                        /// </summary>
-                        bool HasConfirm();
-
-                        /// <summary>
-                        /// キャストします。
-                        /// メッセージコンテナの型が実際の型と異なる場合は例外を投げます。
-                        /// </summary>
-                        {{INTERFACE}}<TMessageRoot> Cast<TMessageRoot>() where TMessageRoot : {{MessageContainer.INTERFACE}};
+                        {{INTERFACE_WITH_RETURN_VALUE}}<TReturnValue, TMessage> AsWithReturnValue<TReturnValue, TMessage>()
+                            where TReturnValue : new()
+                            where TMessage : {{MessageContainer.SETTER_INTERFACE}};
                     }
 
                     /// <inheritdoc cref="{{INTERFACE}}"/>
                     /// <typeparam name="TMessageRoot">パラメータのメッセージ型</typeparam>
-                    public interface {{INTERFACE}}<TMessageRoot> : {{INTERFACE}} where TMessageRoot : {{MessageContainer.INTERFACE}} {
+                    public interface {{INTERFACE}}<TMessageRoot> : {{INTERFACE}} where TMessageRoot : {{MessageContainer.SETTER_INTERFACE}} {
                         /// <summary>
                         /// パラメータの各値に対するメッセージ。エラーや警告など。
                         /// </summary>
-                        new TMessageRoot Messages { get; }
+                        TMessageRoot Messages { get; }
                     }
 
-                    /// <summary>
-                    /// <see cref="{{INTERFACE}}"/> のオプション
-                    /// </summary>
-                    public interface {{OPTIONS}} {
+                    /// <inheritdoc cref="{{INTERFACE}}"/>
+                    /// <typeparam name="TReturnValue">戻り値の型</typeparam>
+                    /// <typeparam name="TMessageRoot">パラメータのメッセージ型</typeparam>
+                    public interface {{INTERFACE_WITH_RETURN_VALUE}}<TReturnValue, TMessageRoot> : {{INTERFACE}}<TMessageRoot>
+                        where TMessageRoot : {{MessageContainer.SETTER_INTERFACE}}
+                        where TReturnValue : new() {
+
                         /// <summary>
-                        /// Confirm（「～しますがよろしいですか？」の確認メッセージ）が発生しても無視するかどうか。
-                        /// HTTPリクエストは「～しますがよろしいですか？」に対してOKが選択される前と後で計2回発生するが、
-                        /// 1回目はfalse, 2回目はtrueになる。
+                        /// 画面側に返す戻り値を取得または設定します。
                         /// </summary>
-                        bool IgnoreConfirm { get; }
+                        TReturnValue ReturnValue { get; set; }
                     }
                     """,
             };

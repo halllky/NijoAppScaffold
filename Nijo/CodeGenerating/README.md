@@ -26,6 +26,7 @@
 
 ### ソースコード内部に登場する変数の抽象
 - **`Instance API`**: 生成されるソースコード上のインスタンス構造を抽象化
+- **`IPresentationLayerStructure`**: C#とTypeScriptの両方に登場する構造体
 - **`ISchemaPathNode`**: スキーマ定義のパス構造を管理するインターフェース
 - **`SchemaNodeIdentity`**: マッピング処理でスキーマノードを一意に識別
 

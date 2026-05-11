@@ -1,5 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.Parts.CSharp;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -22,15 +23,18 @@ namespace Nijo.Models.QueryModelModules {
         /// 検索条件オブジェクトのエントリー。
         /// フィルタ、ソート、ページングの属性を持つ。
         /// </summary>
-        internal class Entry : IInstancePropertyOwnerMetadata {
+        internal class Entry : IInstancePropertyOwnerMetadata, ICreatablePresentationLayerStructure {
             internal Entry(RootAggregate entryAggregate) {
                 _entryAggregate = entryAggregate;
                 FilterRoot = new Filter(_entryAggregate);
             }
             private readonly RootAggregate _entryAggregate;
+            internal RootAggregate EntryAggregate => _entryAggregate;
 
             internal virtual string CsClassName => $"{_entryAggregate.PhysicalName}SearchCondition";
             internal virtual string TsTypeName => $"{_entryAggregate.PhysicalName}SearchCondition";
+            string IPresentationLayerStructure.CsClassName => CsClassName;
+            string IPresentationLayerStructure.TsTypeName => TsTypeName;
 
             /// <summary>フィルタリング</summary>
             internal Filter FilterRoot { get; }
@@ -47,6 +51,9 @@ namespace Nijo.Models.QueryModelModules {
             internal const string TAKE_CS = "Take";
             internal const string TAKE_TS = "take";
 
+            IEnumerable<IInstancePropertyMetadata> IPresentationLayerStructure.GetMembers() {
+                return ((IInstancePropertyOwnerMetadata)this).GetMembers();
+            }
             IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() {
                 yield return FilterRoot;
             }
@@ -62,6 +69,7 @@ namespace Nijo.Models.QueryModelModules {
                     /// <summary>
                     /// {{rootAggregate.DisplayName}}の一覧検索条件
                     /// </summary>
+                    {{NijoAttr.RenderAttributeValues(ctx, rootAggregate)}}
                     public partial class {{entry.CsClassName}} {
                         /// <summary>絞り込み条件</summary>
                         [JsonPropertyName("{{FILTER_TS}}")]
@@ -99,9 +107,9 @@ namespace Nijo.Models.QueryModelModules {
                           /** 並び順 */
                           {{SORT_TS}}: (`${TSortMember}{{ASC_SUFFIX}}` | `${TSortMember}{{DESC_SUFFIX}}`)[]
                           /** ページングに使用。検索結果のうち先頭から何件スキップするか。 */
-                          {{SKIP_TS}}?: number
+                          {{SKIP_TS}}?: string | null
                           /** ページングに使用。検索結果のうち先頭から何件抽出するか。 */
-                          {{TAKE_TS}}?: number
+                          {{TAKE_TS}}?: string | null
                         }
                         """,
                 };
@@ -119,7 +127,7 @@ namespace Nijo.Models.QueryModelModules {
                     /** {{rootAggregate.DisplayName}}の検索時の検索条件の絞り込み条件の型。 */
                     export type {{entry.FilterRoot.TsTypeName}} = {
                     {{entry.FilterRoot.RenderTypeScriptDeclaringLiteral().SelectTextTemplate(source => $$"""
-                      {{WithIndent(source, "  ")}}
+                      {{WithIndent(source)}}
                     """)}}
                     }
                     """;
@@ -158,6 +166,13 @@ namespace Nijo.Models.QueryModelModules {
                 static IEnumerable<SortableMember> EnumerateRecursively(AggregateBase aggregate) {
                     foreach (var member in aggregate.GetMembers()) {
                         if (member is ValueMember vm) {
+
+                            // 検索条件にのみ存在するメンバーはソートに使用できない
+                            if (vm.OnlySearchCondition) continue;
+
+                            // 汎用参照テーブルのハードコードされる項目はソートに使用できない
+                            if (vm.IsHardCodedPrimaryKey) continue;
+
                             yield return new SortableMember(vm);
 
                         } else if (member is ChildrenAggregate) {
@@ -180,18 +195,23 @@ namespace Nijo.Models.QueryModelModules {
             /// <summary>
             /// TypeScriptの新規オブジェクト作成関数の名前
             /// </summary>
-            internal string TsNewObjectFunction => $"createNew{TsTypeName}";
+            public string TsNewObjectFunction => $"createNew{TsTypeName}";
             internal string RenderNewObjectFunction() {
                 return $$"""
                     /** {{_entryAggregate.DisplayName}}の検索条件クラスの空オブジェクトを作成して返します。 */
-                    export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({
+                    export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({{RenderTsNewObjectFunctionBody()}})
+                    """;
+            }
+            public string RenderTsNewObjectFunctionBody() {
+                return $$"""
+                    {
                       {{FILTER_TS}}: {
-                        {{WithIndent(FilterRoot.RenderNewObjectFunctionMemberLiteral(), "    ")}}
+                        {{WithIndent(FilterRoot.RenderNewObjectFunctionMemberLiteral())}}
                       },
                       {{SORT_TS}}: [],
-                      {{SKIP_TS}}: undefined,
-                      {{TAKE_TS}}: undefined,
-                    })
+                      {{SKIP_TS}}: '',
+                      {{TAKE_TS}}: '',
+                    }
                     """;
             }
             #endregion TypeScript側のオブジェクト新規作成関数
@@ -200,20 +220,23 @@ namespace Nijo.Models.QueryModelModules {
             #region 主キーアサイン関数
             internal string PkAssignFunctionName => $"assign{_entryAggregate.PhysicalName}SearchConditionKeys";
             internal string RenderPkAssignFunction() {
-                var keys = _entryAggregate.GetKeyVMs().ToArray();
+                var keys = _entryAggregate
+                    .GetKeyVMs()
+                    .Where(vm => !vm.IsHardCodedPrimaryKey) // ハードコードされる主キーは検索条件に現れないので
+                    .ToArray();
                 var dataProperties = new Variable("obj", this)
                     .Create1To1PropertiesRecursively()
                     .ToDictionary(p => p.Metadata.SchemaPathNode.ToMappingKey());
 
                 return $$"""
                     /** {{_entryAggregate.DisplayName}}の主キーを設定します。 */
-                    export const {{PkAssignFunctionName}} = (obj: {{TsTypeName}}, keys: [{{keys.Select(k => $"{k.PhysicalName}: {k.Type.TsTypeName} | undefined").Join(", ")}}]) => {
+                    export const {{PkAssignFunctionName}} = (obj: {{TsTypeName}}, keys: [{{keys.Select(k => $"{k.PhysicalName}: {k.Type.TsTypeName} | null | undefined").Join(", ")}}]) => {
                       if (keys.length !== {{keys.Length}}) {
                         console.error(`主キーの数が一致しません。個数は{{keys.Length}}であるべきところ${keys.length}個です。`);
                         return
                       }
                     {{keys.SelectTextTemplate((k, i) => $$"""
-                      {{WithIndent(RenderMember(k, i), "  ")}}
+                      {{WithIndent(RenderMember(k, i))}}
                     """)}}
                     }
                     """;
@@ -267,7 +290,15 @@ namespace Nijo.Models.QueryModelModules {
             /// </summary>
             internal IEnumerable<IFilterMember> GetOwnMembers() {
                 foreach (var member in _aggregate.GetMembers()) {
-                    if (member is ValueMember vm && vm.Type.SearchBehavior != null) {
+                    if (member is ValueMember vm) {
+
+                        // 検索の挙動が未指定の型を弾く。バイト配列など。
+                        // ただし明示的に検索条件にのみ存在することが指定されているものはこの限りでない
+                        if (vm.Type.SearchBehavior == null && !vm.OnlySearchCondition) continue;
+
+                        // 汎用参照テーブルのハードコードされる項目
+                        if (vm.IsHardCodedPrimaryKey) continue;
+
                         yield return new FilterValueMember(vm);
 
                     } else if (member is RefToMember refTo) {
@@ -354,9 +385,10 @@ namespace Nijo.Models.QueryModelModules {
             /// </summary>
             private string RenderCSharpDeclaring(CodeRenderingContext ctx) {
                 return $$"""
+                    {{NijoAttr.RenderAttributeValues(ctx, _aggregate)}}
                     public partial class {{CsClassName}} {
                     {{GetOwnMembers().SelectTextTemplate(member => $$"""
-                        {{WithIndent(member.RenderCSharpDeclaring(), "    ")}}
+                        {{WithIndent(member.RenderCSharpDeclaring(ctx))}}
                     """)}}
                     }
                     """;
@@ -389,7 +421,7 @@ namespace Nijo.Models.QueryModelModules {
         /// <see cref="Filter"/> のメンバー
         /// </summary>
         internal interface IFilterMember : IInstancePropertyMetadata {
-            string RenderCSharpDeclaring();
+            string RenderCSharpDeclaring(CodeRenderingContext ctx);
             string RenderTypeScriptDeclaring();
             string RenderTsNewObjectFunctionValue();
         }
@@ -398,25 +430,47 @@ namespace Nijo.Models.QueryModelModules {
         /// </summary>
         internal class FilterValueMember : IFilterMember, IInstanceValuePropertyMetadata {
             internal FilterValueMember(ValueMember member) {
-                if (member.Type.SearchBehavior == null) throw new ArgumentException();
+                if (member.Type.SearchBehavior == null && !member.OnlySearchCondition) throw new ArgumentException();
                 Member = member;
             }
 
             internal ValueMember Member { get; }
             public string DisplayName => Member.DisplayName;
-            internal ValueMemberSearchBehavior SearchBehavior => Member.Type.SearchBehavior!;
+            internal ValueMemberSearchBehavior? SearchBehavior => Member.Type.SearchBehavior;
 
-            string IFilterMember.RenderCSharpDeclaring() {
+            string IFilterMember.RenderCSharpDeclaring(CodeRenderingContext ctx) {
+                var typeName = Member.OnlySearchCondition
+                    ? Member.Type.CsDomainTypeName
+                    : Member.Type.SearchBehavior?.FilterCsTypeName;
                 return $$"""
-                    public {{Member.Type.SearchBehavior?.FilterCsTypeName}}? {{Member.PhysicalName}} { get; set; }
+                    {{NijoAttr.RenderAttributeValues(ctx, Member)}}
+                    public {{typeName}}? {{Member.PhysicalName}} { get; set; }
                     """;
             }
             string IFilterMember.RenderTypeScriptDeclaring() {
+                var typeName = Member.OnlySearchCondition
+                    ? Member.Type.TsTypeName
+                    : Member.Type.SearchBehavior?.FilterTsTypeName;
+
+                // { from, to } といったオブジェクトならnull不要
+                var withNull = typeName?.StartsWith("{") == true ? "" : " | null";
+
                 return $$"""
-                    {{Member.PhysicalName}}?: {{Member.Type.SearchBehavior?.FilterTsTypeName}}
+                    {{Member.PhysicalName}}?: {{typeName}}{{withNull}}
                     """;
             }
-            string IFilterMember.RenderTsNewObjectFunctionValue() => Member.Type.SearchBehavior!.RenderTsNewObjectFunctionValue();
+            string IFilterMember.RenderTsNewObjectFunctionValue() {
+                if (Member.OnlySearchCondition) {
+                    return Member.Type.TsTypeName switch {
+                        "string" => "''",
+                        "boolean" => "false",
+                        _ => "null",
+                    };
+
+                } else {
+                    return SearchBehavior!.RenderTsNewObjectFunctionValue();
+                }
+            }
 
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => Member.PhysicalName;
@@ -447,8 +501,9 @@ namespace Nijo.Models.QueryModelModules {
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => _rm.PhysicalName;
             string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp ? RefToFilter.CsClassName : RefToFilter.TsTypeName;
 
-            string IFilterMember.RenderCSharpDeclaring() {
+            string IFilterMember.RenderCSharpDeclaring(CodeRenderingContext ctx) {
                 return $$"""
+                    {{NijoAttr.RenderAttributeValues(ctx, _rm)}}
                     public {{RefToFilter.CsClassName}} {{_rm.PhysicalName}} { get; set; } = new();
                     """;
             }
@@ -460,7 +515,7 @@ namespace Nijo.Models.QueryModelModules {
             string IFilterMember.RenderTsNewObjectFunctionValue() {
                 return $$"""
                     {
-                      {{WithIndent(RefToFilter.RenderNewObjectFunctionMemberLiteral(), "  ")}}
+                      {{WithIndent(RefToFilter.RenderNewObjectFunctionMemberLiteral())}}
                     }
                     """;
             }
@@ -482,22 +537,23 @@ namespace Nijo.Models.QueryModelModules {
             internal Filter ChildFilter { get; }
             public string DisplayName => _rm.DisplayName;
 
-            string IFilterMember.RenderCSharpDeclaring() {
+            string IFilterMember.RenderCSharpDeclaring(CodeRenderingContext ctx) {
                 return $$"""
+                    {{NijoAttr.RenderAttributeValues(ctx, _rm)}}
                     public {{ChildFilter.CsClassName}} {{_rm.PhysicalName}} { get; set; } = new();
                     """;
             }
             string IFilterMember.RenderTypeScriptDeclaring() {
                 return $$"""
                     {{_rm.PhysicalName}}: {
-                      {{WithIndent(ChildFilter.RenderTypeScriptDeclaringLiteral(), "  ")}}
+                      {{WithIndent(ChildFilter.RenderTypeScriptDeclaringLiteral())}}
                     }
                     """;
             }
             string IFilterMember.RenderTsNewObjectFunctionValue() {
                 return $$"""
                     {
-                      {{WithIndent(ChildFilter.RenderNewObjectFunctionMemberLiteral(), "  ")}}
+                      {{WithIndent(ChildFilter.RenderNewObjectFunctionMemberLiteral())}}
                     }
                     """;
             }

@@ -19,18 +19,11 @@ namespace Nijo.Parts.Common {
         /// C#側はアプリケーションサービスにこの名前のプロパティが存在するのでそれ経由で使用する。
         /// </summary>
         public const string MSG = "MSG";
-
         /// <summary>
         /// 自動生成されるコードの中で <see cref="MsgFactory"/> のインスタンスにアクセスするためのインタフェース名。
         /// </summary>
         public const string CS_INTERFACE = "IDisplayMessageFactory";
-        /// <summary>
-        /// 自動生成されるコードの中で <see cref="MsgFactory"/> のインスタンスにアクセスするためのインタフェース名。
-        /// </summary>
-        public const string TS_TYPE_NAME = "DisplayMessageFactory";
-
         public const string CS_DEFAULT_CLASS_NAME = "DefaultMessageFactory";
-        public const string GET_TS_DEFAULT_IMPL = "DefaultMessageFactory";
 
 
         #region Add
@@ -69,10 +62,8 @@ namespace Nijo.Parts.Common {
             /// テンプレート中に含まれる変数 {0}, {1}, ... の変数名
             /// </summary>
             public IEnumerable<string> GetParameterVarNames() {
-                var match = NumberInsideCurlyBrace().Match(Template);
-                if (!match.Success) yield break;
-
-                for (int i = 0; i < match.Groups.Count; i++) {
+                var matches = NumberInsideCurlyBrace().Matches(Template);
+                for (int i = 0; i < matches.Count; i++) {
                     yield return $"arg{i}";
                 }
             }
@@ -114,22 +105,9 @@ namespace Nijo.Parts.Common {
                 /// <summary>
                 /// ユーザーに見せるメッセージの文言を返します。
                 /// </summary>
-                public {{CS_INTERFACE}} {{MSG}} => _displayMessageFactory ??= ServiceProvider.GetRequiredService<{{CS_INTERFACE}}>();
+                public {{CS_INTERFACE}} {{MSG}} => _displayMessageFactory ??= ServiceProvider.GetService<{{CS_INTERFACE}}>() ?? new {{CS_DEFAULT_CLASS_NAME}}();
                 private {{CS_INTERFACE}}? _displayMessageFactory;
                 """);
-
-            ctx.Use<ApplicationConfigure>()
-                .AddCoreConfigureServices(services => $$"""
-                    ConfigureDisplayMessageFactory({{services}});
-                    """)
-                .AddCoreMethod($$"""
-                    /// <summary>
-                    /// ユーザーに見せるメッセージの文言を構成します。
-                    /// </summary>
-                    protected virtual void ConfigureDisplayMessageFactory(IServiceCollection services) {
-                        services.AddScoped<{{CS_INTERFACE}}, {{CS_DEFAULT_CLASS_NAME}}>();
-                    }
-                    """);
         }
 
         void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
@@ -164,38 +142,6 @@ namespace Nijo.Parts.Common {
                                 public string {{msg.Id}}({{msg.GetParameterVarNames().Select(p => $"string {p}").Join(", ")}}) => $"{{msg.GetTemplateLiteral(E_CsTs.CSharp)}}";
                             """)}}
                             }
-                            """,
-                    });
-                });
-            });
-
-            // TypeScript側定数
-            ctx.ReactProject(dir => {
-                dir.Directory("util", utilDir => {
-                    utilDir.Generate(new SourceFile {
-                        FileName = "MSG.ts",
-                        Contents = $$"""
-                            /**
-                             * 自動生成されるコードの中で登場する、ユーザーに表示するメッセージ。
-                             * 具体的な文言は React Context 経由で入れ替えることができる。
-                             */
-                            export type {{TS_TYPE_NAME}} = {
-                            {{messagesOrderById.SelectTextTemplate(msg => $$"""
-                              /**
-                               * {{msg.Comment}}
-                               */
-                              {{msg.Id}}: ({{msg.GetParameterVarNames().Select(p => $"{p}: string").Join(", ")}}) => string
-                            """)}}
-                            }
-
-                            /**
-                             * {{TS_TYPE_NAME}} の既定の実装。
-                             */
-                            export const {{GET_TS_DEFAULT_IMPL}} = (): {{TS_TYPE_NAME}} => ({
-                            {{messagesOrderById.SelectTextTemplate(msg => $$"""
-                              {{msg.Id}}: ({{msg.GetParameterVarNames().Select(p => $"{p}: string").Join(", ")}}) => `{{msg.GetTemplateLiteral(E_CsTs.TypeScript)}}`,
-                            """)}}
-                            })
                             """,
                     });
                 });

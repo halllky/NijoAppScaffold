@@ -1,6 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
-using Nijo.Parts.Common;
+using Nijo.Parts.CSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Nijo.Models.DataModelModules {
-    internal class SaveCommandMessageContainer : MessageContainer {
+    internal class SaveCommandMessageContainer : MessageContainer.Setter {
         public SaveCommandMessageContainer(AggregateBase aggregate) : base(aggregate) {
         }
 
@@ -23,7 +23,7 @@ namespace Nijo.Models.DataModelModules {
             yield return InterfaceName;
         }
 
-        protected override IEnumerable<IMessageContainerMember> GetMembers() {
+        protected override IEnumerable<MessageContainer.IMember> GetMembers() {
             // SaveCommandと同じデータ型になるのでSaveCommandの処理を流用する。
             // Updateを使っているのは、Create, Update, Delete のうちUpdateが最も多くの項目を持っているため
             return new SaveCommand(_aggregate, SaveCommand.E_Type.Update)
@@ -31,7 +31,7 @@ namespace Nijo.Models.DataModelModules {
                 .Select(m => new MessageContainerMemberImpl {
                     PhysicalName = m.PhysicalName,
                     DisplayName = m.DisplayName,
-                    NestedObjectIsArray = m.Member is ChildrenAggregate,
+                    IsArray = m.Member is ChildrenAggregate,
                     NestedObject = m.Member switch {
                         ChildAggregate child => new SaveCommandMessageContainer(child),
                         ChildrenAggregate children => new SaveCommandMessageContainer(children),
@@ -39,7 +39,7 @@ namespace Nijo.Models.DataModelModules {
                     },
                     CsType = m.Member switch {
                         ChildAggregate child => new SaveCommandMessageContainer(child).InterfaceName,
-                        ChildrenAggregate children => $"{INTERFACE_LIST}<{new SaveCommandMessageContainer(children).InterfaceName}>",
+                        ChildrenAggregate children => $"{MessageContainer.SETTER_INTERFACE_LIST}<{new SaveCommandMessageContainer(children).InterfaceName}>",
                         _ => null,
                     },
                 });
@@ -69,13 +69,13 @@ namespace Nijo.Models.DataModelModules {
                 /// <summary>
                 /// {{_aggregate.DisplayName}} のデータ構造と対応したメッセージの入れ物
                 /// </summary>
-                public interface {{InterfaceName}} : {{INTERFACE}} {
+                public interface {{InterfaceName}} : {{MessageContainer.SETTER_INTERFACE}} {
                 {{GetMembers().Cast<MessageContainerMemberImpl>().SelectTextTemplate(m => $$"""
                     /// <summary>{{m.DisplayName}}に対して発生したメッセージの入れ物</summary>
                 {{If(m.NestedObject == null, () => $$"""
-                    {{INTERFACE}} {{m.PhysicalName}} { get; }
-                """).ElseIf(m.NestedObjectIsArray, () => $$"""
-                    {{INTERFACE_LIST}}<{{m.NestedObject?.InterfaceName}}> {{m.PhysicalName}} { get; }
+                    {{MessageContainer.SETTER_INTERFACE}} {{m.PhysicalName}} { get; }
+                """).ElseIf(m.IsArray, () => $$"""
+                    {{MessageContainer.SETTER_INTERFACE_LIST}}<{{m.NestedObject?.InterfaceName}}> {{m.PhysicalName}} { get; }
                 """).Else(() => $$"""
                     {{m.NestedObject?.InterfaceName}} {{m.PhysicalName}} { get; }
                 """)}}
@@ -85,13 +85,17 @@ namespace Nijo.Models.DataModelModules {
         }
         #endregion レンダリング
 
-        private class MessageContainerMemberImpl : IMessageContainerMember {
+        private class MessageContainerMemberImpl : MessageContainer.IMember {
             public required string PhysicalName { get; set; }
             public required string DisplayName { get; set; }
-            public required bool NestedObjectIsArray { get; set; }
+            public required bool IsArray { get; set; }
             public required SaveCommandMessageContainer? NestedObject { get; set; }
-            MessageContainer? IMessageContainerMember.NestedObject => NestedObject;
+            MessageContainer.Setter? MessageContainer.IMember.NestedObject => NestedObject;
             public string? CsType { get; set; }
+
+            public IEnumerable<string> GetPathSinceParent() {
+                yield return PhysicalName;
+            }
         }
     }
 }

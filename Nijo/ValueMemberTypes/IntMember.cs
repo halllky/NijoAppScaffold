@@ -21,9 +21,16 @@ internal class IntMember : IValueMemberType {
     string IValueMemberType.SchemaTypeName => "int";
     string IValueMemberType.CsDomainTypeName => "int";
     string IValueMemberType.CsPrimitiveTypeName => "int";
-    string IValueMemberType.TsTypeName => "number";
-    UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.NumberMemberConstraint;
+    string IValueMemberType.TsTypeName => "string";
     string IValueMemberType.DisplayName => "整数型";
+
+    string IValueMemberType.RenderSpecificationMarkdown() {
+        return $$"""
+            整数値を格納する型です。
+            数量、回数、順序番号などの数値データに適しています。
+            検索時の挙動は範囲検索（以上・以下）が可能です。
+            """;
+    }
 
     void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
         // 整数型の検証
@@ -32,8 +39,8 @@ internal class IntMember : IValueMemberType {
 
     ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => new() {
         FilterCsTypeName = $"{FromTo.CS_CLASS_NAME}<int?>",
-        FilterTsTypeName = "{ from?: number; to?: number }",
-        RenderTsNewObjectFunctionValue = () => "{ from: undefined, to: undefined }",
+        FilterTsTypeName = "{ from?: string | null; to?: string | null }",
+        RenderTsNewObjectFunctionValue = () => "{ from: '', to: '' }",
         RenderFiltering = ctx => RangeSearchRenderer.RenderRangeSearchFiltering(ctx),
     };
 
@@ -43,6 +50,18 @@ internal class IntMember : IValueMemberType {
 
     string IValueMemberType.RenderCreateDummyDataValueBody(CodeRenderingContext ctx) {
         return $$"""
+            if (member.TotalDigit is int totalDigits && totalDigits > 0) {
+                var max = 1;
+                for (var i = 0; i < totalDigits && max <= int.MaxValue / 10; i++) {
+                    max *= 10;
+                }
+                if (max <= 1) max = int.MaxValue;
+                max -= 1;
+                return member.IsKey
+                    ? (int)(context.GetNextSequence() % (max + 1))
+                    : context.Random.Next(0, max + 1);
+            }
+
             return member.IsKey
                 ? context.GetNextSequence()
                 : context.Random.Next(0, 1000);

@@ -1,0 +1,16 @@
+{
+  "extends": "../tsconfig.app.json",
+  "compilerOptions": {
+    "paths": {
+      "@nijo/ui-components": [
+        "../package_ui-components/src"
+      ],
+      "@nijo/ui-components/*": [
+        "../package_ui-components/src/*"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ]
+}

@@ -27,10 +27,12 @@ namespace Nijo.Models {
             // ルートとChildrenはキー必須
             var rootAndChildren = rootAggregateElement
                 .DescendantsAndSelf()
-                .Where(el => el.Parent == el.Document?.Root
+                .Where(el => el.Parent?.Parent == el.Document?.Root
                           || el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILDREN);
             foreach (var el in rootAndChildren) {
-                if (el.Elements().All(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) == null)) {
+                var hasKey = el.Elements().Any(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null);
+
+                if (!hasKey) {
                     addError(el, "キーが指定されていません。");
                 }
             }
@@ -51,6 +53,24 @@ namespace Nijo.Models {
 
             // 循環参照のチェック（主キーや必須制約による閉路が生じないか）
             ValidateCircularReferences(rootAggregateElement, context, addError);
+
+            // 汎用参照テーブルのチェック。
+            // * 主キーのうち1個以上はハードコードされる主キーでなければならない
+            // * 主キーのうち1個以上はハードコードされない主キーでなければならない
+            if (rootAggregateElement.Attribute(BasicNodeOptions.IsGenericLookupTable.AttributeName) != null) {
+                var keyMembers = rootAggregateElement.Elements()
+                    .Where(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null)
+                    .ToList();
+                var hasHardCodedKey = keyMembers.Any(m => m.Attribute(BasicNodeOptions.IsHardCodedPrimaryKey.AttributeName) != null);
+                var hasNonHardCodedKey = keyMembers.Any(m => m.Attribute(BasicNodeOptions.IsHardCodedPrimaryKey.AttributeName) == null);
+
+                if (!hasHardCodedKey) {
+                    addError(rootAggregateElement, "汎用参照テーブルの主キーのうち、少なくとも1個はハードコードされる主キーでなければなりません。");
+                }
+                if (!hasNonHardCodedKey) {
+                    addError(rootAggregateElement, "汎用参照テーブルの主キーのうち、少なくとも1個はハードコードされない主キーでなければなりません。");
+                }
+            }
         }
 
         /// <summary>
@@ -78,19 +98,19 @@ namespace Nijo.Models {
                 if (targetElement == null) continue;
 
                 // 参照元の最上位ルート集約
-                var sourceRoot = refElement.AncestorsAndSelf().Last(e => e.Parent == e.Document?.Root);
+                var sourceRoot = refElement.AncestorsAndSelf().Last(e => e.Parent?.Parent == e.Document?.Root);
 
                 // 参照先の最上位ルート集約
-                var targetRoot = targetElement.AncestorsAndSelf().Last(e => e.Parent == e.Document?.Root);
+                var targetRoot = targetElement.AncestorsAndSelf().Last(e => e.Parent?.Parent == e.Document?.Root);
 
                 // 自身のツリー内なら無視
                 if (sourceRoot == targetRoot) continue;
 
                 // 必須属性かどうか
-                bool isRequired = refElement.Attribute(BasicNodeOptions.IsRequired.AttributeName)?.Value?.ToLower() == "true";
+                bool isRequired = refElement.Attribute(BasicNodeOptions.IsNotNull.AttributeName) != null;
 
                 // 主キーかどうか
-                bool isKey = refElement.Attribute(BasicNodeOptions.IsKey.AttributeName)?.Value?.ToLower() == "true";
+                bool isKey = refElement.Attribute(BasicNodeOptions.IsKey.AttributeName) != null;
 
                 // キーまたは必須の場合のみグラフに追加
                 if (isKey || isRequired) {
@@ -195,11 +215,18 @@ namespace Nijo.Models {
             aggregateFile.AddCSharpClass(EFCoreEntity.RenderClassDeclaring(efCoreEntity, ctx), "Class_EFCoreEntity");
             ctx.Use<DbContextClass>().AddEntities(efCoreEntity.EnumerateThisAndDescendants());
 
+            // データ型: EFCore Entity（論理削除用）
+            if (rootAggregate.UseSoftDelete) {
+                var deletedEfCoreEntity = new EFCoreEntity(rootAggregate, isDeletedTable: true);
+                aggregateFile.AddCSharpClass(EFCoreEntity.RenderClassDeclaring(deletedEfCoreEntity, ctx), "Class_EFCoreEntity_Deleted");
+                ctx.Use<DbContextClass>().AddEntities(deletedEfCoreEntity.EnumerateThisAndDescendants());
+            }
+
+            // 汎用参照テーブル: カテゴリごとのビューエンティティ・ユーティリティ・静的メソッドを生成
+            GenericLookupTableFeature.GenerateCode(ctx, rootAggregate, aggregateFile);
+
             // データ型: SaveCommand
             aggregateFile.AddCSharpClass(SaveCommand.RenderAll(rootAggregate, ctx), "Class_SaveCommand");
-
-            // データ型: ほかの集約から参照されるときのキー
-            aggregateFile.AddCSharpClass(KeyClass.KeyClassEntry.RenderClassDeclaringRecursively(rootAggregate, ctx), "Class_KeyClass");
 
             // データ型: SaveCommandメッセージ
             var saveCommandMessage = new SaveCommandMessageContainer(rootAggregate);
@@ -208,22 +235,27 @@ namespace Nijo.Models {
                 .Register(saveCommandMessage.InterfaceName, saveCommandMessage.CsClassName)
                 .Register(saveCommandMessage.CsClassName, saveCommandMessage.CsClassName);
 
-            // 処理: 新規登録、更新、削除
+            // 処理: 新規登録、更新
             var create = new CreateMethod(rootAggregate);
             var update = new UpdateMethod(rootAggregate);
-            var delete = new DeleteMethod(rootAggregate);
             aggregateFile.AddAppSrvMethod(create.Render(ctx), "新規登録処理");
             aggregateFile.AddAppSrvMethod(update.Render(ctx), "更新処理");
-            aggregateFile.AddAppSrvMethod(delete.Render(ctx), "物理削除処理");
+
+            // 処理: 削除
+            if (rootAggregate.UseSoftDelete) {
+                var softDelete = new SoftDeleteMethods(rootAggregate);
+                aggregateFile.AddAppSrvMethod(softDelete.Render(ctx), "論理削除処理");
+            } else {
+                var delete = new DeleteMethod(rootAggregate);
+                aggregateFile.AddAppSrvMethod(delete.Render(ctx), "物理削除処理");
+            }
 
             // 処理: 自動生成されるバリデーションエラーチェック
             aggregateFile.AddAppSrvMethod($$"""
                 #region 自動生成されるバリデーション処理
-                {{CheckRequired.Render(rootAggregate, ctx)}}
-                {{CheckMaxLength.Render(rootAggregate, ctx)}}
-                {{CheckCharacterType.Render(rootAggregate, ctx)}}
-                {{CheckDigitsAndScales.Render(rootAggregate, ctx)}}
-                {{DynamicEnum.RenderAppSrvCheckMethod(rootAggregate, ctx)}}
+                {{GetValidators(ctx).SelectTextTemplate(validator => $$"""
+                {{validator.RenderDeclaring(rootAggregate, ctx)}}
+                """)}}
                 #endregion 自動生成されるバリデーション処理
                 """, "バリデーション処理");
 
@@ -231,8 +263,11 @@ namespace Nijo.Models {
             ctx.Use<DummyDataGenerator>()
                 .Add(rootAggregate);
 
+            // データ型: ほかの集約から参照されるときのキー
+            aggregateFile.AddCSharpClass(KeyClass.KeyClassEntry.RenderClassDeclaringRecursively(rootAggregate, ctx), "Class_KeyClass");
+
             // 定数: メタデータ
-            ctx.Use<Metadata>().Add(rootAggregate);
+            ctx.Use<MetadataForPage>().Add(rootAggregate);
 
             // カスタムロジック用モジュール
             ctx.Use<CommandQueryMappings>().AddDataModel(rootAggregate);
@@ -249,18 +284,52 @@ namespace Nijo.Models {
                 aggregateFile.AddAppSrvMethod(batchUpdate.RenderAppSrvMethod(ctx), "一括更新処理");
             }
 
-            // メタデータ
-            ctx.Use<MetadataForDataPreview>().Register(rootAggregate);
-
             aggregateFile.ExecuteRendering(ctx);
         }
 
         public void GenerateCode(CodeRenderingContext ctx) {
-            // メッセージ
-            UpdateMethod.RegisterCommonParts(ctx);
-            BatchUpdate.RegisterCommonParts(ctx);
+            // 保存処理の結果クラス
+            ctx.CoreLibrary(dir => {
+                dir.Directory("Util", utilDir => {
+                    utilDir.Generate(DataModelSaveResult.Render(ctx));
+                });
+            });
 
-            // TODO ver.1: 追加更新削除区分のenum(C#)
+            // メッセージコンテナ
+            UpdateMethod.RegisterCommonParts(ctx);
+
+            // バリデーターチェック違反時のメッセージ
+            var msgFactory = ctx.Use<MsgFactory>();
+            var validatorsForMessage = GetValidators(ctx)
+                .GroupBy(v => v.MsgId)
+                .Select(g => g.First());
+
+            foreach (var validator in validatorsForMessage) {
+                msgFactory.AddMessage(
+                    validator.MsgId,
+                    $"入力エラー時メッセージ（{validator.CommentName}）",
+                    validator.MsgTemplate);
+            }
+        }
+
+        /// <summary>
+        /// データモデルのバリデーターを列挙します。
+        /// </summary>
+        internal static IEnumerable<ValidatorBase> GetValidators(CodeRenderingContext ctx) {
+            yield return new ValidateRequired();
+            yield return new ValidateGenericLookupExists();
+            yield return new ValidateMaxLength();
+            yield return new ValidateCharacterType();
+            yield return new ValidateDigitsAndScales();
+
+            var customValidationAttributes = NijoXmlCustomAttribute
+                .FromXDocument(ctx.SchemaParser.Document)
+                .Where(attr => attr.IsValidation
+                            && !string.IsNullOrWhiteSpace(attr.UniqueId)
+                            && !string.IsNullOrWhiteSpace(attr.PhysicalName));
+            foreach (var attr in customValidationAttributes) {
+                yield return new ValidateCustom(attr);
+            }
         }
     }
 }

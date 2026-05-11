@@ -1,4 +1,5 @@
 using Nijo.ImmutableSchema;
+using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -28,10 +28,15 @@ namespace Nijo.Models.StaticEnumModelModules {
         public ISchemaPathNode? PreviousNode { get; }
 
         public string PhysicalName => _ctx.GetPhysicalName(_xElement);
-        public string DisplayName => _ctx.GetDisplayName(_xElement);
-        public AggregateBase Owner => _xElement.Parent == PreviousNode?.XElement
-            ? (AggregateBase?)PreviousNode ?? throw new InvalidOperationException() // パスの巻き戻しの場合
-            : _ctx.ToAggregateBase(_xElement.Parent ?? throw new InvalidOperationException(), this);
+        public string DisplayName => _xElement.GetDisplayName();
+        public AggregateBase Owner {
+            get {
+                var parent = _xElement.Parent;
+                return parent == PreviousNode?.XElement
+                    ? (AggregateBase?)PreviousNode ?? throw new InvalidOperationException() // パスの巻き戻しの場合
+                    : _ctx.ToAggregateBase(parent ?? throw new InvalidOperationException(), this);
+            }
+        }
         public decimal Order => _xElement.ElementsBeforeSelf().Count();
 
         public int EnumValue => int.Parse(_xElement.Attribute(ATTR_KEY)?.Value ?? throw new InvalidOperationException());

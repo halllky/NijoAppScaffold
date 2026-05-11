@@ -3,16 +3,54 @@
     "recommendations": [
       "EditorConfig.EditorConfig",
       "yzhang.markdown-all-in-one",
-      "redhat.vscode-xml",
-      "bierner.markdown-preview-github-styles",
       "ms-dotnettools.vscode-dotnet-runtime",
       "bierner.markdown-mermaid"
     ]
   },
   "folders": [
     {
-      "name": "NijoApplicationBuilder",
+      "name": "ワークスペース全体",
       "path": "."
+    },
+    {
+      "name": "Nijo",
+      "path": "Nijo"
+    },
+    {
+      "name": "Nijo GUI",
+      "path": "Nijo.GuiClient/package_schema-editor-v1"
+    },
+    {
+      "name": "Nijo テンプレート",
+      "path": "Nijo.NewProjectTemplate"
+    },
+    {
+      "name": "Nijo ドキュメント",
+      "path": "Document"
+    },
+    {
+      "name": "ユニットテスト",
+      "path": "Nijo.IntegrationTest"
+    },
+    {
+      "name": "ユニットテスト - ログ",
+      "path": "Nijo.IntegrationTest/bin/Debug/net9.0/Nijo.IntegrationTest.Log"
+    },
+    {
+      "name": "現新比較",
+      "path": "temp_ソース現新比較用"
+    },
+    {
+      "name": "DEMO 000 基本的なDataModelの例",
+      "path": "demo/000_基本的なDataModelの例"
+    },
+    {
+      "name": "DEMO 101 販売管理システム",
+      "path": "demo/101_販売管理システム"
+    },
+    {
+      "name": "DEMO 200 複雑なパターン",
+      "path": "demo/200_複雑なパターン"
     }
   ],
   "settings": {
@@ -23,6 +61,11 @@
     "[sql]": {
       "editor.formatOnSave": false
     },
+    "[xml]": {
+      "editor.formatOnSave": false
+    },
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": false,
     "markdown.preview.breaks": true,
     "extensions.ignoreRecommendations": false,
     "workbench.colorCustomizations": {
@@ -31,121 +74,197 @@
       "activityBar.background": "#492818",
       "activityBar.foreground": "#cccccc"
     },
-    "xml.format.maxLineWidth": 0,
-    "[xml]": {
-      "files.trimFinalNewlines": false
-    },
-    "omnisharp.enableEditorConfigSupport": true
+    "omnisharp.enableEditorConfigSupport": true,
+    "dotnet.defaultSolution": "nijo.sln",
+    "eslint.enable": false,
+    "js/ts.tsdk.path": "node_modules\\typescript\\lib",
+    "chat.tools.terminal.autoApprove": {
+      "dotnet build": true,
+      "dotnet test": true,
+      "diff": true
+    }
   },
   "tasks": {
     "version": "2.0.0",
     "tasks": [
       {
-        "label": "Nijo: テンプレプロジェクトのコード自動生成をかけなおす",
-        "command": ".\\run-nijo-exe.bat",
+        "label": "Nijo > nijo serve デバッグ",
+        "detail": "nijo serve コマンドで展開されるGUIツール自体のデバッグ",
         "type": "shell",
+        "problemMatcher": [],
+        "options": {
+          "cwd": "${workspaceFolder:ワークスペース全体}/Task"
+        },
+        "command": "./NijoServeデバッグ.sh"
+      },
+      {
+        "label": "Nijo > リリース",
+        "detail": "GitHub配置用のzip作成、またはデモの編集用の内部向けリリース",
+        "type": "shell",
+        "problemMatcher": [],
+        "args": [
+          "${input:releaseType}" // GitHub配置用のzipまで作成するなら1を指定
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:ワークスペース全体}/Task"
+        },
+        "command": "./Nijoリリース.sh"
+      },
+      {
+        "label": "Nijo > ドキュメント > デバッグ",
+        "type": "shell",
+        "problemMatcher": [],
+        "options": {
+          "cwd": "${workspaceFolder:ワークスペース全体}/Document/task"
+        },
+        "command": "./DEBUG.sh"
+      },
+      {
+        "label": "Nijo > ドキュメント > リリース",
+        "type": "shell",
+        "problemMatcher": [],
+        "options": {
+          "cwd": "${workspaceFolder:ワークスペース全体}/Document/task"
+        },
+        "command": "./RELEASE.sh"
+      },
+      {
+        "label": "Nijo > 標準UIコンポーネント > デバッグ",
+        "command": "npm run dev",
+        "type": "shell",
+        "problemMatcher": [
+          "$tsc-watch"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:ワークスペース全体}/Nijo.GuiClient/package_ui-components-debug"
+        }
+      },
+      {
+        "label": "Nijo > ソース最新化",
+        "detail": "テンプレとデモの自動生成をかけなおし、テンプレの一部ソースを各デモにコピーする",
+        "type": "shell",
+        "options": {
+          "cwd": "${workspaceFolder:ワークスペース全体}/Task"
+        },
+        "problemMatcher": [],
+        "command": "./ソース最新化.sh"
+      },
+      {
+        "label": "Nijo > デモ > デバッグ",
+        "detail": "特定のデモのソースコード再生成をかけなおしてデバッグ開始",
+        "type": "shell",
+        "options": {
+          "cwd": "${workspaceFolder:ワークスペース全体}/demo",
+          "env": {
+            "NIJO_CLI_PATH": "${workspaceFolder:ワークスペース全体}/Nijo/bin/Debug/net9.0/nijo"
+          }
+        },
+        "problemMatcher": [],
+        "command": "./${input:demoFolder}/Task/DEBUG.sh"
+      },
+      {
+        "label": "Nijo > デモ > スキーマ定義編集",
+        "detail": "デモのnijo.xmlを編集する。「Nijo > リリース」で発行したときのものが使われる",
+        "type": "shell",
+        "options": {
+          "cwd": "${workspaceFolder:ワークスペース全体}/Nijo/bin/Release/net9.0"
+        },
+        "args": [
+          "serve",
+          "${workspaceFolder:ワークスペース全体}/demo/${input:demoFolder}"
+        ],
+        "problemMatcher": [],
+        "command": "./nijo"
+      },
+      {
+        "label": "Nijo > デモ > マイグレーション",
+        "detail": "特定のデモのマイグレーションSQLを作成",
+        "type": "shell",
+        "options": {
+          "cwd": "${workspaceFolder:ワークスペース全体}/demo",
+          "env": {
+            "NIJO_CLI_PATH": "${workspaceFolder:ワークスペース全体}/Nijo/bin/Debug/net9.0/nijo"
+          }
+        },
+        "problemMatcher": [],
+        "command": "./${input:demoFolder}/Task/ADD_MIGRATION.sh"
+      },
+      {
+        "label": "Nijo > デモ > 現新比較",
+        "detail": "比較ツールでの目検に用いるため、自動生成されたソースを一時フォルダにコピー",
+        "type": "shell",
+        "options": {
+          "cwd": "${workspaceFolder:ワークスペース全体}/Task"
+        },
+        "args": [
+          "\"${input:tempDirectoryName}\""
+        ],
+        "problemMatcher": [],
+        "command": "./各AutoGeneratedを一時フォルダにコピー.sh"
+      },
+      {
+        "label": "dotnet build Nijo",
+        "type": "shell",
+        "command": "dotnet build ${workspaceFolder:ワークスペース全体}/Nijo/Nijo.csproj",
+        "problemMatcher": []
+      }
+    ],
+    "inputs": [
+      {
+        "id": "demoFolder",
+        "description": "デモを選択してください",
+        "type": "pickString",
+        "options": [
+          // demo 直下のフォルダの名前をここに記載
+          "000_基本的なDataModelの例",
+          "101_販売管理システム",
+          "200_複雑なパターン"
+        ]
+      },
+      {
+        "id": "tempDirectoryName",
+        "description": "一時フォルダ名を入力してください",
+        "type": "promptString"
+      },
+      {
+        "id": "releaseType",
+        "description": "リリースタイプを選択してください",
+        "type": "pickString",
+        "options": [
+          {
+            "label": "GitHub配置用のリリース",
+            "value": "1"
+          },
+          {
+            "label": "「Nijo > デモ > スキーマ定義編集」で使うための発行",
+            "value": "0"
+          }
+        ]
+      }
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": ".NET Core Attach",
+        "type": "coreclr",
+        "request": "attach"
+      },
+      {
+        "name": "000 基本的なDataModelの例 - コード生成",
+        "type": "coreclr",
+        "request": "launch",
+        "program": "${workspaceFolder:NijoAppScaffold}/Nijo/bin/Debug/net9.0/nijo",
         "args": [
           "generate"
         ],
-        "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Nijo.ApplicationTemplate.Ver1"
-        },
-        "problemMatcher": []
-      },
-      {
-        "label": "Nijo: テンプレプロジェクトのデバッグ実行を開始する",
-        "command": ".\\run-nijo-exe.bat",
-        "type": "shell",
-        "args": [
-          "run"
-        ],
-        "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Nijo.ApplicationTemplate.Ver1"
-        },
-        "problemMatcher": []
-      },
-      {
-        "label": "Nijo: テンプレプロジェクトのデバッグ実行を開始する（コード自動生成スキップ）",
-        "command": ".\\run-nijo-exe.bat",
-        "type": "shell",
-        "args": [
-          "run",
-          "--no-build"
-        ],
-        "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Nijo.ApplicationTemplate.Ver1"
-        },
-        "problemMatcher": []
-      },
-      {
-        "label": "Nijo: 「自動テストで作成されたプロジェクト」のコード自動生成をかけなおす",
-        "command": ".\\run-nijo-exe.bat",
-        "type": "shell",
-        "args": [
-          "generate",
-        ],
-        "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/自動テストで作成されたプロジェクト"
-        },
-        "problemMatcher": []
-      },
-      {
-        "label": "Nijo: 「自動テストで作成されたプロジェクト」のコンパイルエラーチェック",
-        "command": ".\\build-and-error-check.bat",
-        "type": "shell",
-        "args": [
-          "generate",
-        ],
-        "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/自動テストで作成されたプロジェクト"
-        },
-        "problemMatcher": []
-      },
-      {
-        "label": "Nijo: スキーマ定義編集UIのデバッグ実行を開始する",
-        "command": ".\\TASK_DEBUG.bat",
-        "type": "shell",
-        "problemMatcher": [],
-        "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Nijo.Ui"
-        },
-      },
-      {
-        "label": "Nijo: スキーマ定義編集UIのビルドおよび発行を行う",
-        "command": ".\\TASK_PUBLISH.bat",
-        "type": "shell",
-        "problemMatcher": [],
-        "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Nijo.Ui"
-        },
-      },
-      {
-        "label": "Nijo: リリースモジュール作成",
-        "command": ".\\release.bat",
-        "type": "shell",
-        "problemMatcher": [],
-        "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}"
-        },
-      },
-      {
-        "label": "Nijo: ドキュメントのデバッグ",
-        "command": "npm run docs:dev",
-        "type": "shell",
-        "problemMatcher": [],
-        "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Document"
-        },
-      },
-      {
-        "label": "Nijo: ドキュメントのビルド",
-        "command": ".\\RELEASE_DOCUMENT.bat",
-        "type": "shell",
-        "problemMatcher": [],
-        "options": {
-          "cwd": "${workspaceFolder:NijoApplicationBuilder}/Document"
-        },
+        "cwd": "${workspaceFolder:DEMO 000 基本的なDataModelの例}",
+        "stopAtEntry": false,
+        "console": "internalConsole",
+        "preLaunchTask": "dotnet build Nijo"
       }
-    ]
+    ],
+    "compounds": []
   }
 }

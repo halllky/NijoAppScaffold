@@ -32,6 +32,8 @@ namespace Nijo.CodeGenerating {
         public required string Contents { get; init; }
 
         internal void Render(string filepath) {
+
+            // 出力ファイルの形式を決める
             var ext = Path.GetExtension(filepath).ToLower();
             var encoding = ext == ".cs" || ext == ".sql"
                 ? Encoding.UTF8 // With BOM
@@ -48,6 +50,7 @@ namespace Nijo.CodeGenerating {
                 NewLine = newLine,
             };
 
+            // ファイル先頭の注意書き
             if (ext != ".md") {
                 sw.WriteLine($$"""
                     {{(ext == ".css" ? "/*" : "")}}
@@ -58,9 +61,54 @@ namespace Nijo.CodeGenerating {
                     """.ReplaceLineEndings(newLine));
             }
 
-            foreach (var line in Contents.Split(Environment.NewLine)) {
-                if (line.Contains(SKIP_MARKER)) continue;
-                sw.WriteLine(line);
+            // WithIndent 用のスタック
+            var indentStack = new Stack<string>();
+
+            foreach (var rawLine in Contents.Split(["\r\n", "\n"], StringSplitOptions.None)) {
+                var containsSkipMarker = rawLine.Contains(SKIP_MARKER);
+                var currentIndent = string.Concat(indentStack.Reverse());
+                var line = rawLine
+                    .Replace(SKIP_MARKER, string.Empty)
+                    .Replace(INDENT_START_MARKER, string.Empty)
+                    .Replace(INDENT_END_MARKER, string.Empty);
+
+                // ループや条件分岐の空展開で発生する余計な空行だけ抑止し、通常の空行は保持する
+                if (!containsSkipMarker || !string.IsNullOrWhiteSpace(line)) {
+                    sw.WriteLine(currentIndent + line);
+                }
+                UpdateIndentStack(indentStack, rawLine);
+            }
+        }
+
+        /// <summary>
+        /// <see cref="TemplateTextHelper.WithIndent"/> の仕組みを実現するための仕組み。
+        /// インデントスタックを更新します。
+        /// WithIndentでインデント開始マーカーが見つかったら、その位置までの文字列をスタックに積みます。
+        /// WithIndentでインデント終了マーカーが見つかったら、スタックから1つ取り出します。
+        /// </summary>
+        private static void UpdateIndentStack(Stack<string> indentStack, string line) {
+            var searchIndex = 0;
+
+            while (searchIndex < line.Length) {
+                var nextStart = line.IndexOf(INDENT_START_MARKER, searchIndex, StringComparison.Ordinal);
+                var nextEnd = line.IndexOf(INDENT_END_MARKER, searchIndex, StringComparison.Ordinal);
+
+                if (nextStart < 0 && nextEnd < 0) {
+                    break;
+                }
+
+                if (nextEnd >= 0 && (nextStart < 0 || nextEnd < nextStart)) {
+                    if (indentStack.Count == 0) {
+                        throw new InvalidOperationException("インデント終了マーカーに対応する開始マーカーがありません。");
+                    }
+
+                    indentStack.Pop();
+                    searchIndex = nextEnd + INDENT_END_MARKER.Length;
+                    continue;
+                }
+
+                indentStack.Push(line[..nextStart]);
+                searchIndex = nextStart + INDENT_START_MARKER.Length;
             }
         }
     }

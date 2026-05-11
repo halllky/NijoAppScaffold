@@ -141,6 +141,7 @@ namespace Nijo.CodeGenerating {
                 using System.Text.Json.Serialization;
                 using Microsoft.EntityFrameworkCore;
                 using Microsoft.EntityFrameworkCore.Infrastructure;
+                using Microsoft.Extensions.Logging;
 
                 namespace {{ctx.Config.RootNamespace}};
 
@@ -148,7 +149,7 @@ namespace Nijo.CodeGenerating {
                 partial class {{ApplicationService.ABSTRACT_CLASS}} {
                 {{appSrvMethods.SelectTextTemplate(source => $$"""
 
-                    {{WithIndent(source, "    ")}}
+                    {{WithIndent(source)}}
 
                 """)}}
                 }
@@ -156,7 +157,7 @@ namespace Nijo.CodeGenerating {
                 """)}}
                 {{csharpClass.SelectTextTemplate(source => $$"""
 
-                {{WithIndent(source, "")}}
+                {{WithIndent(source)}}
 
                 """)}}
                 """;
@@ -183,18 +184,15 @@ namespace Nijo.CodeGenerating {
                 /// </summary>
                 [ApiController]
                 [Route("{{controller.Route}}")]
-                public partial class {{controller.CsClassName}} : ControllerBase {
-                    public {{controller.CsClassName}}({{ApplicationService.ABSTRACT_CLASS}} applicationService, {{ApplicationConfigure.ABSTRACT_CLASS_WEBAPI}} webConfigure) {
+                public partial class {{controller.CsClassName}} : {{AspNetController.CONTROLLER_BASE}} {
+                    public {{controller.CsClassName}}({{ApplicationService.ABSTRACT_CLASS}} applicationService) {
                         _applicationService = applicationService;
-                        _webConfigure = webConfigure;
                     }
                     /// <summary>アプリケーションサービス</summary>
                     private readonly {{ApplicationService.ABSTRACT_CLASS}} _applicationService;
-                    /// <summary>WebApiプロジェクトの設定処理</summary>
-                    private readonly {{ApplicationConfigure.ABSTRACT_CLASS_WEBAPI}} _webConfigure;
                 {{_webApiControllerAction.SelectTextTemplate(source => $$"""
 
-                    {{WithIndent(source, "    ")}}
+                    {{WithIndent(source)}}
                 """)}}
                 }
                 """;
@@ -215,28 +213,35 @@ namespace Nijo.CodeGenerating {
                 var modules = new List<string>();
 
                 // DisplayData（Ref）
-                var refEntries = group.Select(agg => new Models.QueryModelModules.DisplayDataRef.Entry(agg));
-                foreach (var refEntry in refEntries) {
-                    modules.Add(refEntry.TsTypeName);
-                    modules.Add(refEntry.TsNewObjectFunction);
-                }
+                if (group.Key.Model is Models.StructureModel) {
+                    var plainStructure = new Models.StructureModelModules.PlainStructure(group.Key);
+                    modules.Add(plainStructure.TsTypeName);
+                    modules.Add(plainStructure.TsNewObjectFunction);
 
-                // DisplayData
-                foreach (var agg in group) {
-                    var displayData = new Models.QueryModelModules.DisplayData(agg);
-                    modules.Add(displayData.TsTypeName);
-                    modules.Add(displayData.TsNewObjectFunction);
-                }
+                } else {
+                    var refEntries = group.Select(agg => new Models.QueryModelModules.DisplayDataRef.Entry(agg));
+                    foreach (var refEntry in refEntries) {
+                        modules.Add(refEntry.TsTypeName);
+                        modules.Add(refEntry.TsNewObjectFunction);
+                    }
 
-                // SearchCondition
-                var searchConditionList = group
-                    .Select(agg => agg.GetRoot())
-                    .Distinct()
-                    .Select(agg => new Models.QueryModelModules.SearchCondition.Entry(agg));
-                foreach (var searchCondition in searchConditionList) {
-                    modules.Add(searchCondition.TsTypeName);
-                    modules.Add(searchCondition.FilterRoot.TsTypeName);
-                    modules.Add(searchCondition.TsNewObjectFunction);
+                    // DisplayData
+                    foreach (var agg in group) {
+                        var displayData = new Models.QueryModelModules.DisplayData(agg);
+                        modules.Add(displayData.TsTypeName);
+                        modules.Add(displayData.TsNewObjectFunction);
+                    }
+
+                    // SearchCondition
+                    var searchConditionList = group
+                        .Select(agg => agg.GetRoot())
+                        .Distinct()
+                        .Select(agg => new Models.QueryModelModules.SearchCondition.Entry(agg));
+                    foreach (var searchCondition in searchConditionList) {
+                        modules.Add(searchCondition.TsTypeName);
+                        modules.Add(searchCondition.FilterRoot.TsTypeName);
+                        modules.Add(searchCondition.TsNewObjectFunction);
+                    }
                 }
 
                 refToModules.Add(fileName, modules);

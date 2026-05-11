@@ -3,6 +3,7 @@ using Nijo.ImmutableSchema;
 using Nijo.Models.CommandModelModules;
 using Nijo.Models.DataModelModules;
 using Nijo.Models.QueryModelModules;
+using Nijo.Parts.JavaScript;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,10 @@ namespace Nijo.Parts.Common {
     /// </summary>
     internal class CommandQueryMappings : IMultiAggregateSourceFile {
 
+        /// <summary>
+        /// JavaScript用: DataModelの型名のリテラル型
+        /// </summary>
+        internal const string DATA_MODEL_TYPE = "DataModelType";
         /// <summary>
         /// JavaScript用: QueryModelの型名のリテラル型
         /// </summary>
@@ -39,6 +44,14 @@ namespace Nijo.Parts.Common {
         /// </summary>
         internal const string COMMAND_MODEL_TYPE = "CommandModelType";
         /// <summary>
+        /// JavaScript用: StructureModelの型名のリテラル型
+        /// </summary>
+        internal const string STRUCTURE_MODEL_TYPE = "StructureModelType";
+        /// <summary>
+        /// JavaScript用: StructureModelの編集用データの型名のリテラル型
+        /// </summary>
+        internal const string STRUCTURE_MODEL_DISPLAY_DATA_TYPE = "StructureModelDisplayDataType";
+        /// <summary>
         /// C#用: QueryModel, CommandModelの種類を表すenum
         /// </summary>
         internal const string E_COMMAND_QUERY_TYPE = "E_CommandQueryType";
@@ -47,6 +60,7 @@ namespace Nijo.Parts.Common {
         private readonly List<RootAggregate> _queryModels = [];
         private readonly List<RootAggregate> _commandModels = [];
         private readonly List<RootAggregate> _dataModels = [];
+        private readonly List<RootAggregate> _structureModels = [];
 
         void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
             // 特になし
@@ -91,6 +105,7 @@ namespace Nijo.Parts.Common {
             var dataModelsOrderByDataFlow = _dataModels.OrderByDataFlow().ToArray();
             var queryModelsOrderByDataFlow = _queryModels.OrderByDataFlow().ToArray();
             var commandModelsOrderByDataFlow = _commandModels.OrderByDataFlow().ToArray();
+            var structureModelsOrderByDataFlow = _structureModels.OrderByDataFlow().ToArray();
 
             // QueryModelのルート集約だけでなくツリー全部
             var queryModelAggregateTypes = queryModelsOrderByDataFlow
@@ -102,6 +117,12 @@ namespace Nijo.Parts.Common {
             // 一括更新処理可能なQueryModel
             var batchUpdatableQueryModels = dataModelsOrderByDataFlow
                 .Where(root => root.GenerateBatchUpdateCommand)
+                .ToArray();
+
+            // CommandModel のパラメータまたは戻り値に指定されている StructureModel の型名
+            var parameterStructureModels = structureModelsOrderByDataFlow
+                .Where(x => x.EnumerateCommandModelsRefferingAsParameter().Any()
+                         || x.EnumerateCommandModelsRefferingAsReturnValue().Any())
                 .ToArray();
 
             // Ref関連モジュールは他の集約から参照されているもののみ使用可能
@@ -122,10 +143,13 @@ namespace Nijo.Parts.Common {
                     searchCondition.TsTypeName,
                     searchCondition.TsNewObjectFunction,
                     searchCondition.PkAssignFunctionName,
+                    searchCondition.TypeScriptSortableMemberType,
+                    searchCondition.GetTypeScriptSortableMemberType,
                     displayData.TsTypeName,
                     displayData.TsNewObjectFunction,
                     displayData.PkExtractFunctionName,
                     displayData.PkAssignFunctionName,
+                    new DeepEqualFunction(displayData).FunctionName,
                 };
 
                 // 子孫集約のモジュール
@@ -147,18 +171,19 @@ namespace Nijo.Parts.Common {
 
                 imports.Add(($"./{rootAggregate.PhysicalName}", modules.ToArray()));
             }
-            foreach (var rootAggregate in commandModelsOrderByDataFlow) {
-                var param = new ParameterOrReturnValue(rootAggregate, ParameterOrReturnValue.E_Type.Parameter);
-                var returnType = new ParameterOrReturnValue(rootAggregate, ParameterOrReturnValue.E_Type.ReturnValue);
-
-                imports.Add((
-                    $"./{rootAggregate.PhysicalName}",
-                    new[] {
-                        param.TsTypeName,
-                        param.TsNewObjectFunction,
-                        returnType.TsTypeName,
-                        returnType.TsNewObjectFunction,
-                    }));
+            foreach (var rootAggregate in structureModelsOrderByDataFlow) {
+                var structureRoot = new Models.StructureModelModules.PlainStructure(rootAggregate);
+                var structureDisplayData = new Models.StructureModelModules.StructureDisplayData(rootAggregate);
+                var modules = new List<string> {
+                    structureRoot.TsTypeName,
+                    structureRoot.TsNewObjectFunction,
+                };
+                if (parameterStructureModels.Contains(rootAggregate)) {
+                    modules.Add(structureDisplayData.TsTypeName);
+                    modules.Add(structureDisplayData.TsNewObjectFunction);
+                    modules.Add(new DeepEqualFunction(structureDisplayData).FunctionName);
+                }
+                imports.Add(($"./{rootAggregate.PhysicalName}", modules.ToArray()));
             }
 
             return new SourceFile {
@@ -169,7 +194,17 @@ namespace Nijo.Parts.Common {
                     import { {{x.Modules.Join(", ")}} } from "{{x.ImportFrom}}"
                     """)}}
 
-                    //#region Command,Queryの種類の一覧
+                    //#region Data,Command,Queryの種類の一覧
+
+                    /** DataModelの種類の一覧。ルート集約のみ。 */
+                    export type {{DATA_MODEL_TYPE}}
+                    {{If(dataModelsOrderByDataFlow.Length == 0, () => $$"""
+                      = never
+                    """).Else(() => $$"""
+                    {{dataModelsOrderByDataFlow.SelectTextTemplate((agg, i) => $$"""
+                      {{(i == 0 ? "=" : "|")}} '{{agg.PhysicalName}}'
+                    """)}}
+                    """)}}
 
                     /** QueryModelの種類の一覧。ルート集約のみ。 */
                     export type {{QUERY_MODEL_TYPE}}
@@ -221,8 +256,32 @@ namespace Nijo.Parts.Common {
                     """)}}
                     """)}}
 
-                    /** CommandModel, QuerModel の種類の一覧 */
-                    export type CommandOrQueryModelType = {{QUERY_MODEL_TYPE}} | {{COMMAND_MODEL_TYPE}}
+                    /** StructureModelの種類の一覧 */
+                    export type {{STRUCTURE_MODEL_TYPE}}
+                    {{If(structureModelsOrderByDataFlow.Length == 0, () => $$"""
+                      = never
+                    """).Else(() => $$"""
+                    {{structureModelsOrderByDataFlow.SelectTextTemplate((agg, i) => $$"""
+                      {{(i == 0 ? "=" : "|")}} '{{agg.PhysicalName}}'
+                    """)}}
+                    """)}}
+
+                    /** StructureModelの編集用データの種類の一覧 */
+                    export type {{STRUCTURE_MODEL_DISPLAY_DATA_TYPE}}
+                    {{If(parameterStructureModels.Length == 0, () => $$"""
+                      = never
+                    """).Else(() => $$"""
+                    {{parameterStructureModels.SelectTextTemplate((agg, i) => $$"""
+                      {{(i == 0 ? "=" : "|")}} '{{agg.PhysicalName}}'
+                    """)}}
+                    """)}}
+
+                    /** DataModelの種類の一覧を文字列として返します。 */
+                    export const getDataModelTypeList = (): {{DATA_MODEL_TYPE}}[] => [
+                    {{dataModelsOrderByDataFlow.SelectTextTemplate((agg, i) => $$"""
+                      '{{agg.PhysicalName}}',
+                    """)}}
+                    ]
 
                     /** QueryModelの種類の一覧を文字列として返します。 */
                     export const getQueryModelTypeList = (): {{QUERY_MODEL_TYPE}}[] => [
@@ -238,12 +297,13 @@ namespace Nijo.Parts.Common {
                     """)}}
                     ]
 
-                    /** CommandModel, QuerModel の種類の一覧を文字列として返します。 */
-                    export const getCommandOrQueryModelTypeList = (): CommandOrQueryModelType[] => [
-                      ...getQueryModelTypeList(),
-                      ...getCommandModelTypeList(),
+                    /** StructureModelの種類の一覧を文字列として返します。 */
+                    export const getStructureModelTypeList = (): {{STRUCTURE_MODEL_TYPE}}[] => [
+                    {{structureModelsOrderByDataFlow.SelectTextTemplate((agg, i) => $$"""
+                      '{{agg.PhysicalName}}',
+                    """)}}
                     ]
-                    //#endregion Command,Queryの種類の一覧
+                    //#endregion Data,Command,Queryの種類の一覧
 
 
                     //#region DisplayData
@@ -328,6 +388,18 @@ namespace Nijo.Parts.Common {
                         '{{agg.PhysicalName}}': {{new SearchCondition.Entry(agg).PkAssignFunctionName}} as (data: {{new SearchCondition.Entry(agg).TsTypeName}}, keys: unknown[]) => void,
                     """)}}
                       }
+                      /** ソート可能メンバーの型（「昇順」「降順」抜き） */
+                      export interface SortableMemberTypeMap {
+                    {{queryModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
+                        '{{agg.PhysicalName}}': {{new SearchCondition.Entry(agg).TypeScriptSortableMemberType}}
+                    """)}}
+                      }
+                      /** ソート可能メンバー一覧取得関数 */
+                      export const getSortableMembers: { [K in {{QUERY_MODEL_TYPE}}]: (() => string[]) } = {
+                    {{queryModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
+                        '{{agg.PhysicalName}}': {{new SearchCondition.Entry(agg).GetTypeScriptSortableMemberType}},
+                    """)}}
+                      }
                     }
                     //#endregion SearchCondition
 
@@ -338,13 +410,13 @@ namespace Nijo.Parts.Common {
                       /** Commandパラメータ型一覧 */
                       export interface TypeMap {
                     {{commandModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                        '{{agg.PhysicalName}}': {{new ParameterOrReturnValue(agg, ParameterOrReturnValue.E_Type.Parameter).TsTypeName}}
+                        '{{agg.PhysicalName}}': {{agg.GetParameterStructure()?.TsTypeName ?? "Record<string, never> // 引数なし"}}
                     """)}}
                       }
                       /** Commandパラメータ新規作成関数 */
                       export const create: { [K in {{COMMAND_MODEL_TYPE}}]: (() => TypeMap[K]) } = {
                     {{commandModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                        '{{agg.PhysicalName}}': {{new ParameterOrReturnValue(agg, ParameterOrReturnValue.E_Type.Parameter).TsNewObjectFunction}},
+                        '{{agg.PhysicalName}}': {{agg.GetParameterStructure()?.TsNewObjectFunction ?? "() => ({ /* 引数なし */ })"}},
                     """)}}
                       }
                     }
@@ -357,13 +429,13 @@ namespace Nijo.Parts.Common {
                       /** Command戻り値型一覧 */
                       export interface TypeMap {
                     {{commandModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                        '{{agg.PhysicalName}}': {{new ParameterOrReturnValue(agg, ParameterOrReturnValue.E_Type.ReturnValue).TsTypeName}}
+                        '{{agg.PhysicalName}}': {{agg.GetReturnValueStructure()?.TsTypeName ?? "Record<string, never> // 戻り値なし"}}
                     """)}}
                       }
                       /** Command戻り値新規作成関数 */
                       export const create: { [K in {{COMMAND_MODEL_TYPE}}]: (() => TypeMap[K]) } = {
                     {{commandModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                        '{{agg.PhysicalName}}': {{new ParameterOrReturnValue(agg, ParameterOrReturnValue.E_Type.ReturnValue).TsNewObjectFunction}},
+                        '{{agg.PhysicalName}}': {{agg.GetReturnValueStructure()?.TsNewObjectFunction ?? "() => ({ /* 戻り値なし */ })"}},
                     """)}}
                       }
                     }
@@ -400,29 +472,65 @@ namespace Nijo.Parts.Common {
                     //#endregion DataModel一括更新
 
 
-                    //#region 画面遷移用フック（MultiView）
-                    // TODO ver.1
-                    //#endregion 画面遷移用フック（MultiView）
+                    //#region StructureModel
+                    /** StructureModel */
+                    export namespace StructureModel {
+                      /** StructureModel型一覧 */
+                      export interface TypeMap {
+                    {{structureModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
+                        '{{agg.PhysicalName}}': {{new Models.StructureModelModules.PlainStructure(agg).TsTypeName}}
+                    """)}}
+                      }
+                      /** StructureModel新規作成関数 */
+                      export const create: { [K in {{STRUCTURE_MODEL_TYPE}}]: (() => TypeMap[K]) } = {
+                    {{structureModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
+                        '{{agg.PhysicalName}}': {{new Models.StructureModelModules.PlainStructure(agg).TsNewObjectFunction}},
+                    """)}}
+                      }
+                    }
+                    /** StructureModel（編集用） */
+                    export namespace StructureModelDisplayData {
+                      /** StructureModel型一覧 */
+                      export interface TypeMap {
+                    {{parameterStructureModels.SelectTextTemplate(agg => $$"""
+                        '{{agg.PhysicalName}}': {{new Models.StructureModelModules.StructureDisplayData(agg).TsTypeName}}
+                    """)}}
+                      }
+                      /** StructureModel新規作成関数 */
+                      export const create: { [K in {{STRUCTURE_MODEL_DISPLAY_DATA_TYPE}}]: (() => TypeMap[K]) } = {
+                    {{parameterStructureModels.SelectTextTemplate(agg => $$"""
+                        '{{agg.PhysicalName}}': {{new Models.StructureModelModules.StructureDisplayData(agg).TsNewObjectFunction}},
+                    """)}}
+                      }
+                    }
+                    //#endregion StructureModel
 
-                    //#region 画面遷移用フック（SingleView）
-                    // TODO ver.1
-                    //#endregion 画面遷移用フック（SingleView）
-
-                    //#region URLから検索条件オブジェクトへの変換
-                    // TODO ver.1
-                    //#endregion URLから検索条件オブジェクトへの変換
-
-                    //#region 検索条件オブジェクトからURLへの変換
-                    // TODO ver.1
-                    //#endregion 検索条件オブジェクトからURLへの変換
 
                     //#region ディープイコール関数
-                    // TODO ver.1
+                    {{DeepEqualFunction.JSDOC}}
+                    export const deepEqualFunction: {
+                      [K in {{QUERY_MODEL_TYPE}} | {{STRUCTURE_MODEL_DISPLAY_DATA_TYPE}}]: (
+                        left: K extends {{QUERY_MODEL_TYPE}}
+                          ? DisplayData.TypeMap[K]
+                          : K extends {{STRUCTURE_MODEL_DISPLAY_DATA_TYPE}}
+                          ? StructureModelDisplayData.TypeMap[K]
+                          : never,
+                        right: K extends {{QUERY_MODEL_TYPE}}
+                          ? DisplayData.TypeMap[K]
+                          : K extends {{STRUCTURE_MODEL_DISPLAY_DATA_TYPE}}
+                          ? StructureModelDisplayData.TypeMap[K]
+                          : never,
+                        option?: Util.{{DeepEqualFunction.OptionType.TYPENAME}}
+                      ) => boolean
+                    } = {
+                    {{queryModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
+                      '{{agg.PhysicalName}}': {{new DeepEqualFunction(new DisplayData(agg)).FunctionName}},
+                    """)}}
+                    {{parameterStructureModels.SelectTextTemplate(agg => $$"""
+                      '{{agg.PhysicalName}}': {{new DeepEqualFunction(new Models.StructureModelModules.StructureDisplayData(agg)).FunctionName}},
+                    """)}}
+                    }
                     //#endregion ディープイコール関数
-
-                    //#region UI制約型一覧
-                    // TODO ver.1
-                    //#endregion UI制約型一覧
                     """,
             };
         }
@@ -442,6 +550,12 @@ namespace Nijo.Parts.Common {
         internal CommandQueryMappings AddDataModel(RootAggregate rootAggregate) {
             lock (_lock) {
                 _dataModels.Add(rootAggregate);
+                return this;
+            }
+        }
+        internal CommandQueryMappings AddStructureModel(RootAggregate rootAggregate) {
+            lock (_lock) {
+                _structureModels.Add(rootAggregate);
                 return this;
             }
         }

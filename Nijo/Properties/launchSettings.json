@@ -4,21 +4,14 @@
       "commandName": "Project",
       "hotReloadEnabled": true
     },
-    "Ver1のテンプレのdump": {
-      "commandName": "Project",
-      "commandLineArgs": "dump",
-      "workingDirectory": "..\\Nijo.ApplicationTemplate.Ver1"
-    },
-    "Ver1のテンプレのソース自動生成": {
+    "デモ200のソース自動生成": {
       "commandName": "Project",
       "commandLineArgs": "generate",
-      "workingDirectory": "..\\Nijo.ApplicationTemplate.Ver1"
+      "workingDirectory": "..\\demo\\200_複雑なパターン"
     },
-    "run-ui-service": {
+    "DebugServe": {
       "commandName": "Project",
-      "commandLineArgs": "run-ui-service --port 8081",
-      "workingDirectory": "..\\Nijo.ApplicationTemplate.Ver1",
-      "hotReloadEnabled": true
+      "commandLineArgs": "serve --url http://0.0.0.0:5001 --no-browser"
     }
   }
 }

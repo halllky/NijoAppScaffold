@@ -1,0 +1,17 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./package_ui-components"
+    },
+    {
+      "path": "./package_ui-components-debug"
+    },
+    {
+      "path": "./package_schema-editor-v1"
+    },
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ]
+}

@@ -10,7 +10,6 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Build" Version="17.12.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
     <PackageReference Include="System.CodeDom" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
@@ -56,16 +55,11 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="..\temp_release\Nijo.ApplicationTemplate.Ver1.zip" Condition="Exists('..\temp_release\Nijo.ApplicationTemplate.Ver1.zip')">
-      <LogicalName>Nijo.ApplicationTemplate.Ver1.zip</LogicalName>
+    <EmbeddedResource Include="..\temp_release\Nijo.NewProjectTemplate.zip" Condition="Exists('..\temp_release\Nijo.NewProjectTemplate.zip')">
+      <LogicalName>Nijo.NewProjectTemplate.zip</LogicalName>
     </EmbeddedResource>
 
-    <EmbeddedResource Include="$(ProjectDir)..\Nijo.IntegrationTest\DataPatterns\012_スカラメンバー網羅.xml" LinkBase="NewProjectDefaultXml" />
-
-    <EmbeddedResource Remove="C:\Users\krpzx\OneDrive\ドキュメント\local\20230409_haldoc\haldoc\Nijo\..\Nijo.IntegrationTest\DataPatterns\012_スカラメンバー網羅.xml" />
-
-    <EmbeddedResource Remove="C:\Users\krpzx\OneDrive\ドキュメント\local\20230409_haldoc\haldoc\Nijo\..\Xml設定GUI\dist\index.html" />
-    <EmbeddedResource LinkBase="GuiWebAppHtml" Include="$(ProjectDir)..\Nijo.ApplicationTemplate.Ver1\react\dist\index.html" Condition="Exists('$(ProjectDir)..\Nijo.ApplicationTemplate.Ver1\react\dist\index.html')" />
+    <EmbeddedResource LinkBase="GuiWebAppHtml" Include="$(ProjectDir)..\Nijo.GuiClient\package_schema-editor-v1\dist\index.html" Condition="Exists('$(ProjectDir)..\Nijo.GuiClient\package_schema-editor-v1\dist\index.html')" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />

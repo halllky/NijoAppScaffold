@@ -22,8 +22,16 @@ internal class YearMonthMember : IValueMemberType {
     string IValueMemberType.CsDomainTypeName => "YearMonth";
     string IValueMemberType.CsPrimitiveTypeName => "int"; // DBには yyyymm の6桁で保存する
     string IValueMemberType.TsTypeName => "string"; // TypeScriptでは yyyy/mm で扱う
-    UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.NumberMemberConstraint;
     string IValueMemberType.DisplayName => "年月型";
+
+    string IValueMemberType.RenderSpecificationMarkdown() {
+        return $$"""
+            西暦と月から成る年月（YYYY/MM形式）を格納する型です。
+            契約期間、有効期限、統計期間などの年月データに適しています。
+            日付は含まれません。
+            検索時の挙動は期間検索（開始年月〜終了年月）が可能です。
+            """;
+    }
 
     void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
         // 年月型の検証
@@ -32,8 +40,8 @@ internal class YearMonthMember : IValueMemberType {
 
     ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => new() {
         FilterCsTypeName = $"{FromTo.CS_CLASS_NAME}<YearMonth?>",
-        FilterTsTypeName = "{ from?: string; to?: string }",
-        RenderTsNewObjectFunctionValue = () => "{ from: undefined, to: undefined }",
+        FilterTsTypeName = "{ from?: string | null; to?: string | null }",
+        RenderTsNewObjectFunctionValue = () => "{ from: '', to: '' }",
         RenderFiltering = ctx => RangeSearchRenderer.RenderRangeSearchFiltering(ctx),
     };
 

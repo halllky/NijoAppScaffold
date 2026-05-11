@@ -1,6 +1,5 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
-using Nijo.Models.QueryModelModules;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
@@ -21,8 +20,15 @@ internal class Word : IValueMemberType {
     string IValueMemberType.CsDomainTypeName => "string";
     string IValueMemberType.CsPrimitiveTypeName => "string";
     string IValueMemberType.TsTypeName => "string";
-    UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.StringMemberConstraint;
     string IValueMemberType.DisplayName => "単語型";
+
+    string IValueMemberType.RenderSpecificationMarkdown() {
+        return $$"""
+            文字列を格納する型です。
+            名前などの、改行を含まない文字列データに適しています。
+            検索時の挙動は完全一致・部分一致・前方一致・後方一致から選択可能です。
+            """;
+    }
 
     void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
         // 特に追加の検証はありません。
@@ -32,7 +38,7 @@ internal class Word : IValueMemberType {
     ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => new() {
         FilterCsTypeName = "string",
         FilterTsTypeName = "string",
-        RenderTsNewObjectFunctionValue = () => "undefined",
+        RenderTsNewObjectFunctionValue = () => "''",
         RenderFiltering = ctx => {
             var query = ctx.Query.Root.Name;
             var fullpathNullable = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");
@@ -41,13 +47,30 @@ internal class Word : IValueMemberType {
             var queryFullPath = ctx.Query.GetFlattenArrayPath(E_CsTs.CSharp, out var isMany);
             var queryOwnerFullPath = queryFullPath.SkipLast(1);
 
+            var searchBehavior = ctx.Query.Metadata is IInstanceValuePropertyMetadata vm
+                && vm.SchemaPathNode.XElement.Attribute(BasicNodeOptions.StringSearchBehavior.AttributeName)?.Value is string s
+                ? s
+                : BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL;
+
+            string GetComparison(string target) {
+                return searchBehavior switch {
+                    BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT => $"{target} == trimmed",
+                    BasicNodeOptions.STRING_SEARCH_BEHAVIOR_FORWARD => $"Microsoft.EntityFrameworkCore.EF.Functions.Like({target}, $\"{{escaped}}%\", \"\\\\\")",
+                    BasicNodeOptions.STRING_SEARCH_BEHAVIOR_BACKWARD => $"Microsoft.EntityFrameworkCore.EF.Functions.Like({target}, $\"%{{escaped}}\", \"\\\\\")",
+                    _ => $"Microsoft.EntityFrameworkCore.EF.Functions.Like({target}, $\"%{{escaped}}%\", \"\\\\\")",
+                };
+            }
+
             return $$"""
                 if (!string.IsNullOrWhiteSpace({{fullpathNullable}})) {
                     var trimmed = {{fullpathNotNull}}!.Trim();
+                {{If(searchBehavior != BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT, () => $$"""
+                    var escaped = trimmed.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+                """)}}
                 {{If(isMany, () => $$"""
-                    {{query}} = {{query}}.Where(x => x.{{queryOwnerFullPath.Join("!.")}}!.Any(y => y.{{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}}!.Contains(trimmed)));
+                    {{query}} = {{query}}.Where(x => x.{{queryOwnerFullPath.Join("!.")}}!.Any(y => {{GetComparison($"y.{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}!")}}));
                 """).Else(() => $$"""
-                    {{query}} = {{query}}.Where(x => x.{{queryFullPath.Join("!.")}}!.Contains(trimmed));
+                    {{query}} = {{query}}.Where(x => {{GetComparison($"x.{queryFullPath.Join("!.")}!")}});
                 """)}}
                 }
                 """;
@@ -60,27 +83,9 @@ internal class Word : IValueMemberType {
 
     string IValueMemberType.RenderCreateDummyDataValueBody(CodeRenderingContext ctx) {
         return $$"""
-            if (member.IsKey) {
-                string prefix = "KEY_";
-                string seqValue = context.GetNextSequence().ToString("D10");
-                string separator = "_";
-
-                // 接頭辞とシーケンス値と区切り文字の長さを計算
-                int fixedPartLength = prefix.Length + seqValue.Length + separator.Length;
-
-                // 利用可能な残り文字数を計算（最大長から固定部分の長さを引く）
-                int availableLength = Math.Max(1, (member.MaxLength ?? 20) - fixedPartLength);
-
-                // 残りの文字数分だけランダム文字を生成
-                string randomPart = string.Concat(Enumerable.Range(0, availableLength)
-                    .Select(_ => "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"[context.Random.Next(0, 36)]));
-
-                return $"{prefix}{seqValue}{separator}{randomPart}";
-            }
-            else {
-                return string.Concat(Enumerable.Range(0, member.MaxLength ?? 12)
-                    .Select(_ => "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}\\\"|;:,.<>?"[context.Random.Next(0, 63)]));
-            }
+            return string
+                .Concat(Enumerable.Range(0, member.MaxLength ?? 12)
+                .Select(_ => "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}\\\"|;:,.<>?"[context.Random.Next(0, 63)]));
             """;
     }
 

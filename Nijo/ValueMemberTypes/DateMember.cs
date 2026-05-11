@@ -22,8 +22,16 @@ internal class DateMember : IValueMemberType {
     string IValueMemberType.CsDomainTypeName => "DateOnly";
     string IValueMemberType.CsPrimitiveTypeName => "DateOnly";
     string IValueMemberType.TsTypeName => "string";
-    UiConstraint.E_Type IValueMemberType.UiConstraintType => UiConstraint.E_Type.MemberConstraintBase;
     string IValueMemberType.DisplayName => "日付型";
+
+    string IValueMemberType.RenderSpecificationMarkdown() {
+        return $$"""
+            日付（年月日）を格納する型です。
+            誕生日、登録日、期限日などの日付データに適しています。
+            時刻情報は含まれません。
+            検索時の挙動は期間検索（開始日〜終了日）が可能です。
+            """;
+    }
 
     void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
         // 日付型の検証
@@ -32,8 +40,8 @@ internal class DateMember : IValueMemberType {
 
     ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => new() {
         FilterCsTypeName = $"{FromTo.CS_CLASS_NAME}<DateOnly?>",
-        FilterTsTypeName = "{ from?: string; to?: string }",
-        RenderTsNewObjectFunctionValue = () => "{ from: undefined, to: undefined }",
+        FilterTsTypeName = "{ from?: string | null; to?: string | null }",
+        RenderTsNewObjectFunctionValue = () => "{ from: '', to: '' }",
         RenderFiltering = ctx => RangeSearchRenderer.RenderRangeSearchFiltering(ctx),
     };
 

@@ -36,7 +36,51 @@ public class SchemaParseContext {
     /// <summary>enum, value-object を除いた値型の一覧</summary>
     public IEnumerable<IValueMemberType> ValueMemberTypes => _rule.ValueMemberTypes;
 
-    /// <summary>スキーマ解析では使用しないがスキーマ定義編集GUIで使う</summary>
+    /// <summary>
+    /// nijo.xml のルート要素直下の要素のうち、データ構造をもつモデル（Data Model, Query Model, Structure Model）が格納されるXML要素の名前
+    /// </summary>
+    internal const string SECTION_DATA_STRUCTURES = "DataStructures";
+    /// <summary>
+    /// nijo.xml のルート要素直下の要素のうち、 Command Model が格納されるXML要素の名前
+    /// </summary>
+    internal const string SECTION_COMMANDS = "Commands";
+    /// <summary>
+    /// nijo.xml のルート要素直下の要素のうち、静的区分が格納されるXML要素の名前
+    /// </summary>
+    internal const string SECTION_STATIC_ENUMS = "StaticEnums";
+    /// <summary>
+    /// nijo.xml のルート要素直下の要素のうち、値オブジェクトが格納されるXML要素の名前
+    /// </summary>
+    internal const string SECTION_VALUE_OBJECTS = "ValueObjects";
+    /// <summary>
+    /// nijo.xml のルート要素直下の要素のうち、定数が格納されるXML要素の名前
+    /// </summary>
+    internal const string SECTION_CONSTANTS = "Constants";
+    /// <summary>
+    /// nijo.xml のルート要素直下の要素のうち、カスタム属性が格納されるXML要素の名前
+    /// </summary>
+    internal const string SECTION_CUSTOM_ATTRIBUTES = "CustomAttributes";
+    /// <summary>
+    /// nijo.xml のルート要素直下の要素のうち、汎用参照テーブルのカテゴリが格納されるXML要素の名前
+    /// </summary>
+    internal const string SECTION_GENERIC_LOOKUP_TABLES = "GenericLookupTableCategories";
+
+    /// <summary>
+    /// nijo.xml のルート要素直下のセクション名を、XMLに記載される順序で列挙する。
+    /// </summary>
+    internal static IEnumerable<string> GetAllSectionNames() {
+        yield return SECTION_DATA_STRUCTURES;
+        yield return SECTION_COMMANDS;
+        yield return SECTION_STATIC_ENUMS;
+        yield return SECTION_VALUE_OBJECTS;
+        yield return SECTION_CONSTANTS;
+        yield return SECTION_CUSTOM_ATTRIBUTES;
+    }
+
+    /// <summary>
+    /// 要素を一意に識別するための属性名。
+    /// GUI上で新たに作成されて以降決して変更されない前提。
+    /// </summary>
     internal const string ATTR_UNIQUE_ID = "UniqueId";
     internal const string ATTR_NODE_TYPE = "Type";
 
@@ -62,8 +106,7 @@ public class SchemaParseContext {
                 // まずXML要素の名前がxElementのXML要素の名前と衝突している要素を絞り込む
                 .XPathSelectElements($"//{xElement.Name.LocalName}")
                 // 自分以外の要素で同じ名前のものがあるかチェック
-                .Where(x => x != xElement)
-                .Any();
+                .Any(x => x != xElement);
             if (duplicates) {
                 // 「（直近の親のPhysicalName）の（LocalName）」
                 return GetPhysicalName(xElement.Parent!) + "の" + xElement.Name.LocalName;
@@ -72,33 +115,6 @@ public class SchemaParseContext {
 
         // それ以外の場合は単純にLocalNameを返す
         return xElement.Name.LocalName;
-    }
-    /// <summary>
-    /// 表示名称
-    /// </summary>
-    internal string GetDisplayName(XElement xElement) {
-        return xElement.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? xElement.Name.LocalName;
-    }
-    /// <summary>
-    /// DB名
-    /// </summary>
-    internal string GetDbName(XElement xElement) {
-        return xElement.Attribute(BasicNodeOptions.DbName.AttributeName)?.Value ?? xElement.Name.LocalName;
-    }
-    /// <summary>
-    /// ラテン名
-    /// </summary>
-    internal string GetLatinName(XElement xElement) {
-        return xElement.Attribute(BasicNodeOptions.LatinName.AttributeName)?.Value ?? xElement.Name.LocalName.ToHashedString();
-    }
-    /// <summary>
-    /// このXElementの直前にXCommentがあればそのテキストを返し、なければ空文字列を返します。
-    /// 改行コードは \r\n または \n に置き換えられます。
-    /// </summary>
-    internal string GetComment(XElement xElement, E_CsTs csts) {
-        var rawText = xElement.PreviousNode is XComment comment ? comment.Value.Trim() : string.Empty;
-        var lineEnding = csts == E_CsTs.CSharp ? "\\r\\n" : "\\n";
-        return rawText.Replace("\r\n", lineEnding).Replace("\n", lineEnding);
     }
 
 
@@ -109,14 +125,15 @@ public class SchemaParseContext {
     /// </summary>
     internal E_NodeType GetNodeType(XElement xElement) {
         // ルート集約, Child, Children
-        if (TryGetAggregateNodeType(xElement, out var aggregateNodeType)) {
+        if (xElement.TryGetAggregateNodeType(out var aggregateNodeType)) {
             return aggregateNodeType.Value;
         }
 
-        // 親がenumなら静的区分の値
-        if (xElement.Parent != null
-         && xElement.Parent.Parent == Document.Root
-         && xElement.Parent.Attribute(ATTR_NODE_TYPE)?.Value == EnumDefParser.SCHEMA_NAME) {
+        // 親がenumセクションの直下にあるなら静的区分の値
+        var xElementParent = xElement.Parent;
+        if (xElementParent != null
+            && xElementParent.Parent?.Parent == Document.Root
+            && xElementParent.Parent?.Name.LocalName == SECTION_STATIC_ENUMS) {
             return E_NodeType.StaticEnumValue;
         }
 
@@ -136,32 +153,6 @@ public class SchemaParseContext {
         }
         return E_NodeType.Unknown;
     }
-    /// <summary>
-    /// <see cref="GetNodeType(XElement)"/> のロジックのうちルート集約・Child・Childrenの判定には
-    /// <see cref="SchemaParseContext"/> のインスタンスが要らないのでその部分だけ切り出したもの
-    /// </summary>
-    internal static bool TryGetAggregateNodeType(XElement xElement, [NotNullWhen(true)] out E_NodeType? nodeType) {
-
-        // ルート要素直下に定義されている場合はルート集約
-        if (xElement.Parent == xElement.Document?.Root) {
-            nodeType = E_NodeType.RootAggregate;
-            return true;
-        }
-        // Child
-        var type = xElement.Attribute(ATTR_NODE_TYPE);
-        if (type?.Value == NODE_TYPE_CHILD) {
-            nodeType = E_NodeType.ChildAggregate;
-            return true;
-        }
-        // Children
-        if (type?.Value == NODE_TYPE_CHILDREN) {
-            nodeType = E_NodeType.ChildrenAggregate;
-            return true;
-        }
-
-        nodeType = null;
-        return false;
-    }
 
 
     #region オプション属性
@@ -173,10 +164,30 @@ public class SchemaParseContext {
         var attrs = xElement.Attributes().Select(attr => attr.Name.LocalName).ToHashSet();
         return _rule.NodeOptions.Where(opt => attrs.Contains(opt.AttributeName));
     }
-    /// <inheritdoc cref="SchemaParseRule.GetAvailableOptionsFor"/>
-    public IEnumerable<NodeOption> GetAvailableOptionsFor(IModel model) {
-        return _rule.GetAvailableOptionsFor(model);
+    /// <summary>
+    /// このルールで定義されているすべてのNodeOptionを返します。
+    /// </summary>
+    public IEnumerable<NodeOption> GetAllNodeOptions() {
+        foreach (var opt in _rule.NodeOptions) {
+            yield return opt;
+        }
     }
+
+    /// <summary>
+    /// XML要素に定義されているカスタム属性を返します。
+    /// </summary>
+    public IEnumerable<NijoXmlCustomAttribute> GetCustomAttributes(XElement xElement) {
+        var attrDefs = _customAttributesCache ??= NijoXmlCustomAttribute
+            .FromXDocument(Document)
+            .ToArray();
+        var specifiedAttrCustomIds = xElement
+            .Attributes()
+            .Select(attr => attr.Name.LocalName)
+            .ToHashSet();
+        return attrDefs
+            .Where(def => specifiedAttrCustomIds.Contains(def.UniqueId!));
+    }
+    private NijoXmlCustomAttribute[]? _customAttributesCache;
     #endregion オプション属性
 
 
@@ -185,7 +196,7 @@ public class SchemaParseContext {
     /// XML要素と対応するモデルを返します。
     /// </summary>
     internal bool TryGetModel(XElement xElement, [NotNullWhen(true)] out IModel? model) {
-        var root = xElement.AncestorsAndSelf().Reverse().Skip(1).FirstOrDefault();
+        var root = xElement.GetRootAggregateElement();
         if (root == null) {
             model = null;
             return false;
@@ -215,22 +226,6 @@ public class SchemaParseContext {
         }
         throw new InvalidOperationException($"集約ではありません: {xElement}");
     }
-    /// <summary>
-    /// 指定されたモデルのうち、ルート集約、Child、Childrenを列挙します。
-    /// </summary>
-    internal IEnumerable<XElement> EnumerateModelElements(string modelSchemaName) {
-        foreach (var rootElement in Document.Root?.Elements() ?? []) {
-            if (rootElement.Attribute(ATTR_NODE_TYPE)?.Value != modelSchemaName) continue;
-
-            yield return rootElement;
-
-            // 子孫のうちType="child"またはType="children"の要素を抽出する
-            var descendantChildren = rootElement.XPathSelectElements($"descendant::*[@{ATTR_NODE_TYPE}='{NODE_TYPE_CHILD}' or @{ATTR_NODE_TYPE}='{NODE_TYPE_CHILDREN}']");
-            foreach (var descendantElement in descendantChildren) {
-                yield return descendantElement;
-            }
-        }
-    }
     #endregion Aggregate
 
 
@@ -241,8 +236,8 @@ public class SchemaParseContext {
     /// <returns></returns>
     internal IReadOnlyDictionary<string, ValueMemberTypes.StaticEnumMember> GetStaticEnumMembers() {
         return Document.Root
+            ?.Element(SECTION_STATIC_ENUMS)
             ?.Elements()
-            .Where(el => el.Attribute(ATTR_NODE_TYPE)?.Value == EnumDefParser.SCHEMA_NAME)
             .ToDictionary(GetPhysicalName, el => new ValueMemberTypes.StaticEnumMember(el, this))
             ?? [];
     }
@@ -253,8 +248,8 @@ public class SchemaParseContext {
     /// <returns></returns>
     internal IReadOnlyDictionary<string, ValueMemberTypes.ValueObjectMember> GetValueObjectMembers() {
         return Document.Root
+            ?.Element(SECTION_VALUE_OBJECTS)
             ?.Elements()
-            .Where(el => el.Attribute(ATTR_NODE_TYPE)?.Value == ValueObjectModel.SCHEMA_NAME)
             .ToDictionary(GetPhysicalName, el => new ValueMemberTypes.ValueObjectMember(el, this))
             ?? [];
     }
@@ -318,23 +313,29 @@ public class SchemaParseContext {
     /// </summary>
     internal XElement? FindRefTo(XElement xElement) {
         var type = xElement.Attribute(ATTR_NODE_TYPE) ?? throw new InvalidOperationException();
-        var xPath = type.Value.Split(':')[1];
+        var xPath = $"//{SECTION_DATA_STRUCTURES}/{type.Value.Split(':')[1]}";
         return Document.Root?.XPathSelectElement(xPath);
     }
     /// <summary>
     /// 引数の集約を参照している集約を探して返します。
     /// </summary>
     internal IEnumerable<XElement> FindRefFrom(XElement xElement) {
-        // 完全なパスを構築
-        var fullPath = string.Join("/", xElement.AncestorsAndSelf().Reverse().Skip(1).Select(GetPhysicalName));
-
-        // 完全なパスによる参照のみを検索
-        return Document.XPathSelectElements($"//*[@{ATTR_NODE_TYPE}='{NODE_TYPE_REFTO}:{fullPath}']") ?? [];
+        var fullPath = string.Join("/", xElement.AncestorsAndSelf().Reverse().Skip(2).Select(GetPhysicalName));
+        return Document.XPathSelectElements($"//{SECTION_DATA_STRUCTURES}//*[@{ATTR_NODE_TYPE}='{NODE_TYPE_REFTO}:{fullPath}']") ?? [];
     }
     #endregion RefTo
 
 
     #region 検証
+    /// <summary>
+    /// <see cref="TryBuildSchema"/> の仕様をレンダリングする。ドキュメント用。
+    /// </summary>
+    internal static string RenderValidationSpecificationMarkdown() {
+        return $$"""
+            - 複数のルート集約の間で物理名が重複していてはいけません。
+            - 同じ親に属するメンバーで同じ物理名が重複していてはいけません。
+            """;
+    }
     /// <summary>
     /// XMLドキュメントがスキーマ定義として不正な状態を持たないかを検証し、
     /// 検証に成功した場合はアプリケーションスキーマのインスタンスを返します。
@@ -348,8 +349,38 @@ public class SchemaParseContext {
         var errorsList = new List<(XElement, string ErrorMessage)>();
         var attributeErrors = new List<(XElement, string AttributeName, string ErrorMessage)>();
 
+        // カスタム属性の定義の検証
+        var customAttributeElements = xDocument.Root?.Element(SECTION_CUSTOM_ATTRIBUTES)?.Elements().ToArray() ?? [];
+        var customAttributes = NijoXmlCustomAttribute.FromXDocument(xDocument).ToArray();
+        var nodeOptionsByName = _rule.NodeOptions.ToDictionary(opt => opt.AttributeName);
+        var customAttributesByUniqueId = customAttributes
+            .Where(attr => !string.IsNullOrWhiteSpace(attr.UniqueId))
+            .GroupBy(attr => attr.UniqueId!)
+            .ToDictionary(group => group.Key, group => group.First());
+        if (customAttributeElements.Length == customAttributes.Length) {
+            for (int i = 0; i < customAttributes.Length; i++) {
+                var attr = customAttributes[i];
+                var el = customAttributeElements[i];
+                foreach (var error in attr.ValidateThis(this, _rule)) {
+                    errorsList.Add((el, error));
+                }
+            }
+
+            foreach (var attr in customAttributes.Where(a => a.IsValidation)) {
+                if (string.IsNullOrWhiteSpace(attr.PhysicalName)) continue;
+                if (!attr.PhysicalName.IsCSharpSafe()) {
+                    var el = customAttributeElements.FirstOrDefault(e => e.Name.LocalName == attr.UniqueId) ?? xDocument.Root ?? new XElement("root");
+                    errorsList.Add((el, $"カスタム属性 '{attr.PhysicalName}' の {nameof(attr.PhysicalName)} はC#の識別子として不正です。英数字とアンダースコアのみを使用し、先頭は英字またはアンダースコアにしてください。"));
+                }
+            }
+        }
+
         // ルート集約の物理名の衝突チェック
-        var rootAggregates = xDocument.Root?.Elements() ?? [];
+        var rootAggregates = xDocument.Root
+            ?.Elements()
+            .Where(el => el.Name.LocalName != SECTION_CUSTOM_ATTRIBUTES)
+            .SelectMany(el => el.Elements())
+            ?? [];
         var rootPhysicalNames = new Dictionary<string, XElement>();
 
         foreach (var root in rootAggregates) {
@@ -363,9 +394,11 @@ public class SchemaParseContext {
 
         // 同じテーブル名を複数の集約で定義することはできない
         var tableNameGroups = xDocument.Root
-            ?.Descendants()
-            .Where(el => GetNodeType(el).HasFlag(E_NodeType.Aggregate))
-            .GroupBy(el => GetDbName(el))
+            ?.Element(SECTION_DATA_STRUCTURES)
+            ?.DescendantsAndSelf()
+            .Where(el => GetNodeType(el).HasFlag(E_NodeType.Aggregate)
+                      && TryGetModel(el, out var model) && model is DataModel)
+            .GroupBy(el => el.GetDbName())
             ?? [];
         foreach (var group in tableNameGroups) {
             if (group.Count() == 1) continue;
@@ -374,14 +407,20 @@ public class SchemaParseContext {
             }
         }
 
-        foreach (var el in xDocument.Root?.Descendants() ?? []) {
+        // 同じ親のメンバー同士での物理名の重複チェック
+        var targetElements = xDocument.Root
+            ?.Element(SECTION_DATA_STRUCTURES)
+            ?.Elements()
+            .SelectMany(el => el.DescendantsAndSelf())
+            ?? [];
+        foreach (var el in targetElements) {
 
             var nodeType = GetNodeType(el);
             var typeAttrValue = el.Attribute(ATTR_NODE_TYPE)?.Value ?? string.Empty;
 
-            // 同じ親のメンバー同士での物理名の重複チェック
-            if (el.Parent != null && el.Parent != el.Document?.Root) {
-                var siblings = el.Parent.Elements().ToList();
+            var elParent = el.Parent;
+            if (elParent != null && elParent.Parent != el.Document?.Root) {
+                var siblings = elParent.Elements().ToList();
                 var siblingPhysicalNames = new Dictionary<string, XElement>();
 
                 foreach (var sibling in siblings) {
@@ -396,8 +435,15 @@ public class SchemaParseContext {
 
             // ノードの種類に基づくチェック
             switch (nodeType) {
+
                 // ノードの種類が不明な場合
                 case E_NodeType.Unknown:
+                    // ConstantModelの場合はType属性未指定でもエラーにしない（ConstantTypeで判定しているため）
+                    if (TryGetModel(el, out var constantModel) && constantModel is ConstantModel) {
+                        // ConstantModelの定数要素はType属性未指定でも許可
+                        break;
+                    }
+
                     if (string.IsNullOrEmpty(typeAttrValue)) {
                         attributeErrors.Add((el, ATTR_NODE_TYPE, $"ノードの種類が不明です。{ATTR_NODE_TYPE}属性が指定されているか確認してください。"));
                     } else {
@@ -462,15 +508,55 @@ public class SchemaParseContext {
                     break;
             }
 
-            // オプション属性に基づくチェック
-            foreach (var opt in GetOptions(el)) {
-                opt.Validate(new() {
-                    Value = el.Attribute(opt.AttributeName)!.Value,
-                    XElement = el,
-                    NodeType = nodeType,
-                    AddError = err => attributeErrors.Add((el, opt.AttributeName, err)),
-                    SchemaParseContext = this,
-                });
+            // 属性に基づくチェック
+            foreach (var attr in el.Attributes()) {
+                // 名前空間宣言はスキーマのルールで定義された属性ではないのでスキップ
+                if (attr.IsNamespaceDeclaration) continue;
+
+                var attrName = attr.Name.LocalName;
+                var hasModel = TryGetModel(el, out var optModel);
+
+                // 特殊な属性
+                if (attrName == ATTR_NODE_TYPE || attrName == ATTR_UNIQUE_ID) {
+                    // チェック対象外
+                }
+
+                // 既定の属性
+                else if (nodeOptionsByName.TryGetValue(attrName, out var opt)) {
+
+                    // モデルとノード種別の組み合わせで利用可能かチェック
+                    if (hasModel && !opt.IsAvailable(optModel!, nodeType)) {
+                        attributeErrors.Add((el, attrName, $"この属性はこの要素には指定できません。"));
+                        continue; // 指定不可な属性なので、それ以上の検証はスキップ
+                    }
+
+                    // 複雑な検証ロジック
+                    opt.ValidateOthers(new() {
+                        Value = attr.Value,
+                        XElement = el,
+                        NodeType = nodeType,
+                        AddError = err => attributeErrors.Add((el, attrName, err)),
+                        SchemaParseContext = this,
+                    });
+                }
+
+                // カスタム属性
+                else if (customAttributesByUniqueId.TryGetValue(attrName, out var customAttr)) {
+                    if (hasModel) {
+                        if (!customAttr.AvailableModels.Contains(optModel!.SchemaName)) {
+                            attributeErrors.Add((el, attrName, $"カスタム属性 '{customAttr.PhysicalName}' はモデル '{optModel!.SchemaName}' では使用できません。"));
+                        } else {
+                            foreach (var error in customAttr.ValidateModelElement(el)) {
+                                attributeErrors.Add((el, attrName, error));
+                            }
+                        }
+                    }
+                }
+
+                // 定義されていない属性
+                else {
+                    attributeErrors.Add((el, attrName, "この属性は定義されていません。"));
+                }
             }
         }
 
@@ -525,8 +611,8 @@ public class SchemaParseContext {
         }
 
         // 自身のツリーの集約を参照していないかチェック
-        var rootElement = refElement.AncestorsAndSelf().Last(e => e.Parent == e.Document?.Root);
-        var refToRoot = refTo.AncestorsAndSelf().Last(e => e.Parent == e.Document?.Root);
+        var rootElement = refElement.GetRootAggregateElement();
+        var refToRoot = refTo.GetRootAggregateElement();
 
         if (rootElement == refToRoot) {
             errorMessage = "自身のツリーの集約を参照することはできません。";
@@ -536,16 +622,28 @@ public class SchemaParseContext {
         // モデルの種類に基づく参照制約チェック
         if (TryGetModel(refElement, out var model)) {
             if (model is DataModel) {
-                // データモデルからはデータモデルの集約しか参照できない
-                if (TryGetModel(refTo, out var refToModel) && !(refToModel is DataModel)) {
-                    errorMessage = "データモデルの集約からはデータモデルの集約しか参照できません。";
+                // データモデルからはデータモデルの集約、
+                // またはビューにマッピングされるクエリモデルしか参照できない
+                if (TryGetModel(refTo, out var refToModel)
+                    && refToModel is not DataModel
+                    && (refToModel is not QueryModel || refToRoot.Attribute(BasicNodeOptions.MapToView.AttributeName) == null)) {
+                    errorMessage = "データモデルの集約からはデータモデルの集約またはビューにマッピングされるクエリモデルしか参照できません。";
+                    return false;
+                }
+
+                // GDQM -> 非GDQM の参照を禁止。RefTargetなどが生成されないので
+                if (rootElement.HasGenerateDefaultQueryModelAttribute()
+                    && TryGetModel(refTo, out var refToDataModel)
+                    && refToDataModel is DataModel
+                    && !refToRoot.HasGenerateDefaultQueryModelAttribute()) {
+                    errorMessage = $"{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデルの集約からは、同じく{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデルの集約しか参照できません。";
                     return false;
                 }
             } else if (model is QueryModel) {
                 // クエリモデルからはクエリモデルの集約しか参照できない
                 if (TryGetModel(refTo, out var refToModel) && !(refToModel is QueryModel)) {
                     // GenerateDefaultQueryModelの値をより厳密に検証
-                    var isGDQM = HasGenerateDefaultQueryModelAttribute(refTo);
+                    var isGDQM = refTo.HasGenerateDefaultQueryModelAttribute();
 
                     if (!isGDQM) {
                         errorMessage = $"クエリモデルの集約からはクエリモデルの集約または{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデルしか参照できません。";
@@ -562,7 +660,7 @@ public class SchemaParseContext {
                 // コマンドモデルからはクエリモデルの集約しか参照できない
                 if (TryGetModel(refTo, out var refToModel) && !(refToModel is QueryModel)) {
                     // GenerateDefaultQueryModelの値をより厳密に検証
-                    var isGDQM = HasGenerateDefaultQueryModelAttribute(refTo);
+                    var isGDQM = refTo.HasGenerateDefaultQueryModelAttribute();
 
                     if (!isGDQM) {
                         errorMessage = $"コマンドモデルの集約からはクエリモデルの集約または{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデルしか参照できません。";
@@ -574,6 +672,24 @@ public class SchemaParseContext {
                 if (refElement.Attribute(BasicNodeOptions.RefToObject.AttributeName) == null) {
                     errorMessage = $"コマンドモデルからクエリモデルを外部参照する場合、{BasicNodeOptions.RefToObject.AttributeName}属性を指定する必要があります。";
                     return false;
+                }
+            } else if (model is StructureModel) {
+                // StructureModelからはクエリモデル、GDQMデータモデル、またはStructureModelの集約しか参照できない
+                if (TryGetModel(refTo, out var refToModel)) {
+                    var isQueryModel = refToModel is QueryModel;
+                    var isGDQM = refTo.HasGenerateDefaultQueryModelAttribute();
+                    var isStructureModel = refToModel is StructureModel;
+
+                    if (!isQueryModel && !isGDQM && !isStructureModel) {
+                        errorMessage = $"StructureModelの集約からはクエリモデル、{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデル、またはStructureModelの集約しか参照できません。";
+                        return false;
+                    }
+
+                    // クエリモデルまたはGDQMデータモデルを参照する場合はRefToObjectの指定が必須
+                    if ((isQueryModel || isGDQM) && refElement.Attribute(BasicNodeOptions.RefToObject.AttributeName) == null) {
+                        errorMessage = $"StructureModelからクエリモデルを外部参照する場合、{BasicNodeOptions.RefToObject.AttributeName}属性を指定する必要があります。";
+                        return false;
+                    }
                 }
             }
         }
@@ -647,21 +763,5 @@ public class SchemaParseContext {
             .Where(value => !string.IsNullOrEmpty(value))
             .Distinct()
             .OrderBy(charType => charType);
-    }
-
-    /// <summary>
-    /// 要素のルート集約要素を返します
-    /// </summary>
-    internal XElement GetRootAggregateElement(XElement element) {
-        return element.AncestorsAndSelf().Last(e => e.Parent == e.Document?.Root);
-    }
-
-    /// <summary>
-    /// 要素またはその親のルート集約にGenerateDefaultQueryModel属性が付与されているかを確認します
-    /// </summary>
-    internal bool HasGenerateDefaultQueryModelAttribute(XElement element) {
-        var rootElement = GetRootAggregateElement(element);
-        var gdqmAttr = rootElement.Attribute(BasicNodeOptions.GenerateDefaultQueryModel.AttributeName)?.Value;
-        return !string.IsNullOrEmpty(gdqmAttr) && gdqmAttr.Equals("True", StringComparison.OrdinalIgnoreCase);
     }
 }

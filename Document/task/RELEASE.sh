@@ -1,0 +1,24 @@
+#!/bin/bash
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+NIJO_DIR="$SCRIPT_DIR/../../Nijo"
+DOC_DIR="$SCRIPT_DIR/.."
+
+# Nijo最新化
+dotnet build "$NIJO_DIR" -c Debug
+if [ $? -ne 0 ]; then
+  echo "ビルドに失敗しました"
+  exit 1
+fi
+
+# 自動生成されるドキュメントの生成
+"$NIJO_DIR/bin/Debug/net9.0/nijo" generate-reference --out "$DOC_DIR/src/pages/reference"
+if [ $? -ne 0 ]; then
+  echo "ドキュメントの生成に失敗しました"
+  exit 1
+fi
+
+# リリースモジュール作成
+cd "$DOC_DIR"
+npm run build
+exit 0

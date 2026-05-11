@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components.Rendering;
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
-using Nijo.Parts.Common;
+using Nijo.Parts.CSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +12,7 @@ namespace Nijo.Models.QueryModelModules {
     /// <summary>
     /// <see cref="SearchCondition.Entry"/> のデータ構造と対応するメッセージの入れ物
     /// </summary>
-    internal class SearchConditionMessageContainer : MessageContainer {
+    internal class SearchConditionMessageContainer : MessageContainer.Setter {
         public SearchConditionMessageContainer(AggregateBase aggregate) : base(aggregate) {
             _filter = new SearchCondition.Filter(aggregate);
         }
@@ -22,7 +22,7 @@ namespace Nijo.Models.QueryModelModules {
         internal override string CsClassName => $"{_aggregate.PhysicalName}SearchConditionMessages";
         internal override string TsTypeName => $"{_aggregate.PhysicalName}SearchConditionMessages";
 
-        protected override IEnumerable<IMessageContainerMember> GetMembers() {
+        protected override IEnumerable<MessageContainer.IMember> GetMembers() {
             return _filter
                 .GetOwnMembers()
                 .Select(m => new ContainerMemberImpl {
@@ -32,14 +32,26 @@ namespace Nijo.Models.QueryModelModules {
                         ? new SearchConditionMessageContainer(rm.MemberAggregate)
                         : null,
                     CsType = null,
+                    IsArray = m is IRelationalMember rm2 && rm2.MemberAggregate is ChildrenAggregate,
+                    OwnerIsRoot = _aggregate is RootAggregate,
                 });
         }
 
-        private class ContainerMemberImpl : IMessageContainerMember {
+        private class ContainerMemberImpl : MessageContainer.IMember {
             public required string PhysicalName { get; init; }
             public required string DisplayName { get; init; }
-            public required MessageContainer? NestedObject { get; init; }
+            public required MessageContainer.Setter? NestedObject { get; init; }
             public required string? CsType { get; init; }
+            public required bool IsArray { get; init; }
+            /// <summary>filter直下のオブジェクトか否かの判定</summary>
+            public required bool OwnerIsRoot { get; init; }
+
+            public IEnumerable<string> GetPathSinceParent() {
+                if (OwnerIsRoot) {
+                    yield return SearchCondition.Entry.FILTER_TS;
+                }
+                yield return PhysicalName;
+            }
         }
 
         internal static string RenderCSharpRecursively(RootAggregate rootAggregate) {

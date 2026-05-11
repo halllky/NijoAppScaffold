@@ -1,0 +1,13 @@
+{
+  "name": "nijo-demo-200",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5173 --host",
+    "build": "tsc && vite build",
+    "tsc": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nijo/ui-components": "file:../../../Nijo.GuiClient/package_ui-components"
+  }
+}

@@ -1,0 +1,1977 @@
+{
+  "logicalName": {
+    "nodePositions": {
+      "MyApp.\u30BB\u30C3\u30B7\u30E7\u30F3DbEntity": {
+        "x": 372.2834305,
+        "y": 348.0164281
+      },
+      "MyApp.\u5165\u8377DbEntity": {
+        "x": 785.4512476,
+        "y": 39.3159483
+      },
+      "MyApp.\u5165\u8377\u660E\u7D30DbEntity": {
+        "x": 1209.211728,
+        "y": 46.8821365
+      },
+      "MyApp.\u5546\u54C1DbEntity": {
+        "x": 2026.4139965,
+        "y": 441.8371622
+      },
+      "MyApp.\u5728\u5EAB\u8ABF\u6574DbEntity": {
+        "x": 1695.0688915,
+        "y": 18.1306212
+      },
+      "MyApp.\u5728\u5EAB\u8ABF\u6574\u5F15\u5F53\u660E\u7D30DbEntity": {
+        "x": 1588.9264982,
+        "y": 420.5953741
+      },
+      "MyApp.\u58F2\u4E0ADbEntity": {
+        "x": 962.5000522,
+        "y": 729.295854
+      },
+      "MyApp.\u58F2\u4E0A\u306E\u58F2\u4E0A\u660E\u7D30DbEntity": {
+        "x": 1393.8267209,
+        "y": 735.3488046
+      },
+      "MyApp.\u5F15\u5F53\u660E\u7D30DbEntity": {
+        "x": 1183.5406275,
+        "y": 426.6483247
+      },
+      "MyApp.\u5F93\u696D\u54E1DbEntity": {
+        "x": 779.5601155,
+        "y": 385.7909083
+      }
+    },
+    "defaultPan": {
+      "x": -237.09273359605692,
+      "y": 95.30649347148292
+    },
+    "defaultZoom": 0.6608347356824943,
+    "nodes": [
+      {
+        "id": "MyApp.\u30BB\u30C3\u30B7\u30E7\u30F3DbEntity",
+        "label": "\u30BB\u30C3\u30B7\u30E7\u30F3",
+        "table": {
+          "headers": [
+            "\u30AB\u30E9\u30E0\u540D(\u8AD6\u7406)",
+            "\u578B",
+            "PK",
+            "NOT NULL",
+            "\u30E6\u30CB\u30FC\u30AF"
+          ],
+          "rows": [
+            [
+              "\u30BB\u30C3\u30B7\u30E7\u30F3\u30AD\u30FC",
+              "TEXT",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u30E6\u30FC\u30B6_\u5F93\u696D\u54E1\u756A\u53F7",
+              "TEXT",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u6700\u7D42\u30ED\u30B0\u30A4\u30F3\u65E5\u6642",
+              "TEXT",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "CreatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "Version",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ]
+          ]
+        }
+      },
+      {
+        "id": "MyApp.\u5165\u8377DbEntity",
+        "label": "\u5165\u8377",
+        "table": {
+          "headers": [
+            "\u30AB\u30E9\u30E0\u540D(\u8AD6\u7406)",
+            "\u578B",
+            "PK",
+            "NOT NULL",
+            "\u30E6\u30CB\u30FC\u30AF"
+          ],
+          "rows": [
+            [
+              "\u5165\u8377ID",
+              "TEXT",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5165\u8377\u65E5\u6642",
+              "TEXT",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u62C5\u5F53\u8005_\u5F93\u696D\u54E1\u756A\u53F7",
+              "TEXT",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5099\u8003",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "Version",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ]
+          ]
+        }
+      },
+      {
+        "id": "MyApp.\u5165\u8377\u660E\u7D30DbEntity",
+        "label": "\u5165\u8377\u660E\u7D30",
+        "table": {
+          "headers": [
+            "\u30AB\u30E9\u30E0\u540D(\u8AD6\u7406)",
+            "\u578B",
+            "PK",
+            "NOT NULL",
+            "\u30E6\u30CB\u30FC\u30AF"
+          ],
+          "rows": [
+            [
+              "\u5165\u8377\u660E\u7D30ID",
+              "TEXT",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5165\u8377_\u5165\u8377ID",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "\u5728\u5EAB\u8ABF\u6574",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "\u5546\u54C1_\u5546\u54C1SEQ",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u4ED5\u5165\u5358\u4FA1_\u7A0E\u629C",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "\u6D88\u8CBB\u7A0E\u533A\u5206",
+              "INTEGER",
+              "",
+              "",
+              ""
+            ],
+            [
+              "\u5165\u8377\u6570\u91CF",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u6B8B\u6570\u91CF",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5099\u8003",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "Version",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ]
+          ]
+        }
+      },
+      {
+        "id": "MyApp.\u5546\u54C1DbEntity",
+        "label": "\u5546\u54C1",
+        "table": {
+          "headers": [
+            "\u30AB\u30E9\u30E0\u540D(\u8AD6\u7406)",
+            "\u578B",
+            "PK",
+            "NOT NULL",
+            "\u30E6\u30CB\u30FC\u30AF"
+          ],
+          "rows": [
+            [
+              "\u5546\u54C1SEQ",
+              "INTEGER",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5916\u90E8\u30B7\u30B9\u30C6\u30E0\u5074ID",
+              "TEXT",
+              "",
+              "\u25CB",
+              "\u25CB"
+            ],
+            [
+              "\u5546\u54C1\u540D",
+              "TEXT",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u58F2\u5024\u5358\u4FA1_\u7A0E\u629C",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "\u6D88\u8CBB\u7A0E\u533A\u5206",
+              "INTEGER",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "Version",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ]
+          ]
+        }
+      },
+      {
+        "id": "MyApp.\u5728\u5EAB\u8ABF\u6574DbEntity",
+        "label": "\u5728\u5EAB\u8ABF\u6574",
+        "table": {
+          "headers": [
+            "\u30AB\u30E9\u30E0\u540D(\u8AD6\u7406)",
+            "\u578B",
+            "PK",
+            "NOT NULL",
+            "\u30E6\u30CB\u30FC\u30AF"
+          ],
+          "rows": [
+            [
+              "\u5728\u5EAB\u8ABF\u6574ID",
+              "TEXT",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5728\u5EAB\u8ABF\u6574\u65E5\u6642",
+              "TEXT",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u62C5\u5F53\u8005_\u5F93\u696D\u54E1\u756A\u53F7",
+              "TEXT",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5546\u54C1_\u5546\u54C1SEQ",
+              "INTEGER",
+              "",
+              "",
+              ""
+            ],
+            [
+              "\u5897\u6E1B\u6570",
+              "INTEGER",
+              "",
+              "",
+              ""
+            ],
+            [
+              "\u7D76\u5BFE\u6570",
+              "INTEGER",
+              "",
+              "",
+              ""
+            ],
+            [
+              "\u5728\u5EAB\u8ABF\u6574\u7406\u7531",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "Version",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ]
+          ]
+        }
+      },
+      {
+        "id": "MyApp.\u5728\u5EAB\u8ABF\u6574\u5F15\u5F53\u660E\u7D30DbEntity",
+        "label": "\u5728\u5EAB\u8ABF\u6574\u5F15\u5F53\u660E\u7D30",
+        "table": {
+          "headers": [
+            "\u30AB\u30E9\u30E0\u540D(\u8AD6\u7406)",
+            "\u578B",
+            "PK",
+            "NOT NULL",
+            "\u30E6\u30CB\u30FC\u30AF"
+          ],
+          "rows": [
+            [
+              "Parent_\u5728\u5EAB\u8ABF\u6574ID",
+              "TEXT",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5165\u8377\u660E\u7D30_\u5165\u8377\u660E\u7D30ID",
+              "TEXT",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5F15\u5F53\u6570",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "CreatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ]
+          ]
+        }
+      },
+      {
+        "id": "MyApp.\u58F2\u4E0ADbEntity",
+        "label": "\u58F2\u4E0A",
+        "table": {
+          "headers": [
+            "\u30AB\u30E9\u30E0\u540D(\u8AD6\u7406)",
+            "\u578B",
+            "PK",
+            "NOT NULL",
+            "\u30E6\u30CB\u30FC\u30AF"
+          ],
+          "rows": [
+            [
+              "\u58F2\u4E0ASEQ",
+              "INTEGER",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u58F2\u4E0A\u65E5\u6642",
+              "TEXT",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u62C5\u5F53\u8005_\u5F93\u696D\u54E1\u756A\u53F7",
+              "TEXT",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5099\u8003",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "Version",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ]
+          ]
+        }
+      },
+      {
+        "id": "MyApp.\u58F2\u4E0A\u306E\u58F2\u4E0A\u660E\u7D30DbEntity",
+        "label": "\u58F2\u4E0A\u306E\u58F2\u4E0A\u660E\u7D30",
+        "table": {
+          "headers": [
+            "\u30AB\u30E9\u30E0\u540D(\u8AD6\u7406)",
+            "\u578B",
+            "PK",
+            "NOT NULL",
+            "\u30E6\u30CB\u30FC\u30AF"
+          ],
+          "rows": [
+            [
+              "Parent_\u58F2\u4E0ASEQ",
+              "INTEGER",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u660E\u7D30ID",
+              "TEXT",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5546\u54C1_\u5546\u54C1SEQ",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u533A\u5206",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u58F2\u4E0A\u6570\u91CF",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u58F2\u4E0A\u7DCF\u984D_\u7A0E\u8FBC",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "CreatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ]
+          ]
+        }
+      },
+      {
+        "id": "MyApp.\u5F15\u5F53\u660E\u7D30DbEntity",
+        "label": "\u5F15\u5F53\u660E\u7D30",
+        "table": {
+          "headers": [
+            "\u30AB\u30E9\u30E0\u540D(\u8AD6\u7406)",
+            "\u578B",
+            "PK",
+            "NOT NULL",
+            "\u30E6\u30CB\u30FC\u30AF"
+          ],
+          "rows": [
+            [
+              "Parent_Parent_\u58F2\u4E0ASEQ",
+              "INTEGER",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "Parent_\u660E\u7D30ID",
+              "TEXT",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5165\u8377_\u5165\u8377\u660E\u7D30ID",
+              "TEXT",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5F15\u5F53\u6570\u91CF",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "CreatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ]
+          ]
+        }
+      },
+      {
+        "id": "MyApp.\u5F93\u696D\u54E1DbEntity",
+        "label": "\u5F93\u696D\u54E1",
+        "table": {
+          "headers": [
+            "\u30AB\u30E9\u30E0\u540D(\u8AD6\u7406)",
+            "\u578B",
+            "PK",
+            "NOT NULL",
+            "\u30E6\u30CB\u30FC\u30AF"
+          ],
+          "rows": [
+            [
+              "\u5F93\u696D\u54E1\u756A\u53F7",
+              "TEXT",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u6C0F\u540D",
+              "TEXT",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u30D1\u30B9\u30EF\u30FC\u30C9",
+              "BLOB",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "SALT",
+              "BLOB",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5165\u8377\u62C5\u5F53",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u8CA9\u58F2\u62C5\u5F53",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u30B7\u30B9\u30C6\u30E0\u7BA1\u7406\u8005",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "CreatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "Version",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ]
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "label": null,
+        "source": "MyApp.\u30BB\u30C3\u30B7\u30E7\u30F3DbEntity",
+        "target": "MyApp.\u5F93\u696D\u54E1DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u5165\u8377DbEntity",
+        "target": "MyApp.\u5F93\u696D\u54E1DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u5165\u8377\u660E\u7D30DbEntity",
+        "target": "MyApp.\u5165\u8377DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u5165\u8377\u660E\u7D30DbEntity",
+        "target": "MyApp.\u5546\u54C1DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u5728\u5EAB\u8ABF\u6574DbEntity",
+        "target": "MyApp.\u5546\u54C1DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u5728\u5EAB\u8ABF\u6574DbEntity",
+        "target": "MyApp.\u5F93\u696D\u54E1DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u5728\u5EAB\u8ABF\u6574\u5F15\u5F53\u660E\u7D30DbEntity",
+        "target": "MyApp.\u5728\u5EAB\u8ABF\u6574DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u5728\u5EAB\u8ABF\u6574\u5F15\u5F53\u660E\u7D30DbEntity",
+        "target": "MyApp.\u5165\u8377\u660E\u7D30DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u58F2\u4E0ADbEntity",
+        "target": "MyApp.\u5F93\u696D\u54E1DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u58F2\u4E0A\u306E\u58F2\u4E0A\u660E\u7D30DbEntity",
+        "target": "MyApp.\u58F2\u4E0ADbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u58F2\u4E0A\u306E\u58F2\u4E0A\u660E\u7D30DbEntity",
+        "target": "MyApp.\u5546\u54C1DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u5F15\u5F53\u660E\u7D30DbEntity",
+        "target": "MyApp.\u5165\u8377\u660E\u7D30DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u5F15\u5F53\u660E\u7D30DbEntity",
+        "target": "MyApp.\u58F2\u4E0A\u306E\u58F2\u4E0A\u660E\u7D30DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      }
+    ]
+  },
+  "physicalName": {
+    "nodePositions": {
+      "MyApp.\u30BB\u30C3\u30B7\u30E7\u30F3DbEntity": {
+        "x": 372.2834305,
+        "y": 348.0164281
+      },
+      "MyApp.\u5165\u8377DbEntity": {
+        "x": 785.4512476,
+        "y": 39.3159483
+      },
+      "MyApp.\u5165\u8377\u660E\u7D30DbEntity": {
+        "x": 1209.211728,
+        "y": 46.8821365
+      },
+      "MyApp.\u5546\u54C1DbEntity": {
+        "x": 2026.4139965,
+        "y": 441.8371622
+      },
+      "MyApp.\u5728\u5EAB\u8ABF\u6574DbEntity": {
+        "x": 1695.0688915,
+        "y": 18.1306212
+      },
+      "MyApp.\u5728\u5EAB\u8ABF\u6574\u5F15\u5F53\u660E\u7D30DbEntity": {
+        "x": 1588.9264982,
+        "y": 420.5953741
+      },
+      "MyApp.\u58F2\u4E0ADbEntity": {
+        "x": 962.5000522,
+        "y": 729.295854
+      },
+      "MyApp.\u58F2\u4E0A\u306E\u58F2\u4E0A\u660E\u7D30DbEntity": {
+        "x": 1393.8267209,
+        "y": 735.3488046
+      },
+      "MyApp.\u5F15\u5F53\u660E\u7D30DbEntity": {
+        "x": 1183.5406275,
+        "y": 426.6483247
+      },
+      "MyApp.\u5F93\u696D\u54E1DbEntity": {
+        "x": 779.5601155,
+        "y": 385.7909083
+      }
+    },
+    "defaultPan": {
+      "x": -237.09273359605692,
+      "y": 95.30649347148292
+    },
+    "defaultZoom": 0.6608347356824943,
+    "nodes": [
+      {
+        "id": "MyApp.\u30BB\u30C3\u30B7\u30E7\u30F3DbEntity",
+        "label": "\u30BB\u30C3\u30B7\u30E7\u30F3",
+        "table": {
+          "headers": [
+            "\u30AB\u30E9\u30E0\u540D(\u7269\u7406)",
+            "\u578B",
+            "PK",
+            "NOT NULL",
+            "\u30E6\u30CB\u30FC\u30AF"
+          ],
+          "rows": [
+            [
+              "\u30BB\u30C3\u30B7\u30E7\u30F3\u30AD\u30FC",
+              "TEXT",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u30E6\u30FC\u30B6_\u5F93\u696D\u54E1\u756A\u53F7",
+              "TEXT",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u6700\u7D42\u30ED\u30B0\u30A4\u30F3\u65E5\u6642",
+              "TEXT",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "CreatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "Version",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ]
+          ]
+        }
+      },
+      {
+        "id": "MyApp.\u5165\u8377DbEntity",
+        "label": "\u5165\u8377",
+        "table": {
+          "headers": [
+            "\u30AB\u30E9\u30E0\u540D(\u7269\u7406)",
+            "\u578B",
+            "PK",
+            "NOT NULL",
+            "\u30E6\u30CB\u30FC\u30AF"
+          ],
+          "rows": [
+            [
+              "\u5165\u8377ID",
+              "TEXT",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5165\u8377\u65E5\u6642",
+              "TEXT",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u62C5\u5F53\u8005_\u5F93\u696D\u54E1\u756A\u53F7",
+              "TEXT",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5099\u8003",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "Version",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ]
+          ]
+        }
+      },
+      {
+        "id": "MyApp.\u5165\u8377\u660E\u7D30DbEntity",
+        "label": "\u5165\u8377\u660E\u7D30",
+        "table": {
+          "headers": [
+            "\u30AB\u30E9\u30E0\u540D(\u7269\u7406)",
+            "\u578B",
+            "PK",
+            "NOT NULL",
+            "\u30E6\u30CB\u30FC\u30AF"
+          ],
+          "rows": [
+            [
+              "\u5165\u8377\u660E\u7D30ID",
+              "TEXT",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5165\u8377_\u5165\u8377ID",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "\u5728\u5EAB\u8ABF\u6574",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "\u5546\u54C1_\u5546\u54C1SEQ",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u4ED5\u5165\u5358\u4FA1_\u7A0E\u629C",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "\u6D88\u8CBB\u7A0E\u533A\u5206",
+              "INTEGER",
+              "",
+              "",
+              ""
+            ],
+            [
+              "\u5165\u8377\u6570\u91CF",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u6B8B\u6570\u91CF",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5099\u8003",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "Version",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ]
+          ]
+        }
+      },
+      {
+        "id": "MyApp.\u5546\u54C1DbEntity",
+        "label": "\u5546\u54C1",
+        "table": {
+          "headers": [
+            "\u30AB\u30E9\u30E0\u540D(\u7269\u7406)",
+            "\u578B",
+            "PK",
+            "NOT NULL",
+            "\u30E6\u30CB\u30FC\u30AF"
+          ],
+          "rows": [
+            [
+              "\u5546\u54C1SEQ",
+              "INTEGER",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5916\u90E8\u30B7\u30B9\u30C6\u30E0\u5074ID",
+              "TEXT",
+              "",
+              "\u25CB",
+              "\u25CB"
+            ],
+            [
+              "\u5546\u54C1\u540D",
+              "TEXT",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u58F2\u5024\u5358\u4FA1_\u7A0E\u629C",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "\u6D88\u8CBB\u7A0E\u533A\u5206",
+              "INTEGER",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "Version",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ]
+          ]
+        }
+      },
+      {
+        "id": "MyApp.\u5728\u5EAB\u8ABF\u6574DbEntity",
+        "label": "\u5728\u5EAB\u8ABF\u6574",
+        "table": {
+          "headers": [
+            "\u30AB\u30E9\u30E0\u540D(\u7269\u7406)",
+            "\u578B",
+            "PK",
+            "NOT NULL",
+            "\u30E6\u30CB\u30FC\u30AF"
+          ],
+          "rows": [
+            [
+              "\u5728\u5EAB\u8ABF\u6574ID",
+              "TEXT",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5728\u5EAB\u8ABF\u6574\u65E5\u6642",
+              "TEXT",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u62C5\u5F53\u8005_\u5F93\u696D\u54E1\u756A\u53F7",
+              "TEXT",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5546\u54C1_\u5546\u54C1SEQ",
+              "INTEGER",
+              "",
+              "",
+              ""
+            ],
+            [
+              "\u5897\u6E1B\u6570",
+              "INTEGER",
+              "",
+              "",
+              ""
+            ],
+            [
+              "\u7D76\u5BFE\u6570",
+              "INTEGER",
+              "",
+              "",
+              ""
+            ],
+            [
+              "\u5728\u5EAB\u8ABF\u6574\u7406\u7531",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "Version",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ]
+          ]
+        }
+      },
+      {
+        "id": "MyApp.\u5728\u5EAB\u8ABF\u6574\u5F15\u5F53\u660E\u7D30DbEntity",
+        "label": "\u5728\u5EAB\u8ABF\u6574\u5F15\u5F53\u660E\u7D30",
+        "table": {
+          "headers": [
+            "\u30AB\u30E9\u30E0\u540D(\u7269\u7406)",
+            "\u578B",
+            "PK",
+            "NOT NULL",
+            "\u30E6\u30CB\u30FC\u30AF"
+          ],
+          "rows": [
+            [
+              "Parent_\u5728\u5EAB\u8ABF\u6574ID",
+              "TEXT",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5165\u8377\u660E\u7D30_\u5165\u8377\u660E\u7D30ID",
+              "TEXT",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5F15\u5F53\u6570",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "CreatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ]
+          ]
+        }
+      },
+      {
+        "id": "MyApp.\u58F2\u4E0ADbEntity",
+        "label": "\u58F2\u4E0A",
+        "table": {
+          "headers": [
+            "\u30AB\u30E9\u30E0\u540D(\u7269\u7406)",
+            "\u578B",
+            "PK",
+            "NOT NULL",
+            "\u30E6\u30CB\u30FC\u30AF"
+          ],
+          "rows": [
+            [
+              "\u58F2\u4E0ASEQ",
+              "INTEGER",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u58F2\u4E0A\u65E5\u6642",
+              "TEXT",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u62C5\u5F53\u8005_\u5F93\u696D\u54E1\u756A\u53F7",
+              "TEXT",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5099\u8003",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "Version",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ]
+          ]
+        }
+      },
+      {
+        "id": "MyApp.\u58F2\u4E0A\u306E\u58F2\u4E0A\u660E\u7D30DbEntity",
+        "label": "\u58F2\u4E0A\u660E\u7D30",
+        "table": {
+          "headers": [
+            "\u30AB\u30E9\u30E0\u540D(\u7269\u7406)",
+            "\u578B",
+            "PK",
+            "NOT NULL",
+            "\u30E6\u30CB\u30FC\u30AF"
+          ],
+          "rows": [
+            [
+              "Parent_\u58F2\u4E0ASEQ",
+              "INTEGER",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u660E\u7D30ID",
+              "TEXT",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5546\u54C1_\u5546\u54C1SEQ",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u533A\u5206",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u58F2\u4E0A\u6570\u91CF",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u58F2\u4E0A\u7DCF\u984D_\u7A0E\u8FBC",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "CreatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ]
+          ]
+        }
+      },
+      {
+        "id": "MyApp.\u5F15\u5F53\u660E\u7D30DbEntity",
+        "label": "\u5F15\u5F53\u660E\u7D30",
+        "table": {
+          "headers": [
+            "\u30AB\u30E9\u30E0\u540D(\u7269\u7406)",
+            "\u578B",
+            "PK",
+            "NOT NULL",
+            "\u30E6\u30CB\u30FC\u30AF"
+          ],
+          "rows": [
+            [
+              "Parent_Parent_\u58F2\u4E0ASEQ",
+              "INTEGER",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "Parent_\u660E\u7D30ID",
+              "TEXT",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5165\u8377_\u5165\u8377\u660E\u7D30ID",
+              "TEXT",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5F15\u5F53\u6570\u91CF",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "CreatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ]
+          ]
+        }
+      },
+      {
+        "id": "MyApp.\u5F93\u696D\u54E1DbEntity",
+        "label": "\u5F93\u696D\u54E1",
+        "table": {
+          "headers": [
+            "\u30AB\u30E9\u30E0\u540D(\u7269\u7406)",
+            "\u578B",
+            "PK",
+            "NOT NULL",
+            "\u30E6\u30CB\u30FC\u30AF"
+          ],
+          "rows": [
+            [
+              "\u5F93\u696D\u54E1\u756A\u53F7",
+              "TEXT",
+              "\u25CB",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u6C0F\u540D",
+              "TEXT",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u30D1\u30B9\u30EF\u30FC\u30C9",
+              "BLOB",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "SALT",
+              "BLOB",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u5165\u8377\u62C5\u5F53",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u8CA9\u58F2\u62C5\u5F53",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "\u30B7\u30B9\u30C6\u30E0\u7BA1\u7406\u8005",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ],
+            [
+              "CreatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "CreateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdatedAt",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "UpdateUser",
+              "TEXT",
+              "",
+              "",
+              ""
+            ],
+            [
+              "Version",
+              "INTEGER",
+              "",
+              "\u25CB",
+              ""
+            ]
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "label": null,
+        "source": "MyApp.\u30BB\u30C3\u30B7\u30E7\u30F3DbEntity",
+        "target": "MyApp.\u5F93\u696D\u54E1DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u5165\u8377DbEntity",
+        "target": "MyApp.\u5F93\u696D\u54E1DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u5165\u8377\u660E\u7D30DbEntity",
+        "target": "MyApp.\u5165\u8377DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u5165\u8377\u660E\u7D30DbEntity",
+        "target": "MyApp.\u5546\u54C1DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u5728\u5EAB\u8ABF\u6574DbEntity",
+        "target": "MyApp.\u5546\u54C1DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u5728\u5EAB\u8ABF\u6574DbEntity",
+        "target": "MyApp.\u5F93\u696D\u54E1DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u5728\u5EAB\u8ABF\u6574\u5F15\u5F53\u660E\u7D30DbEntity",
+        "target": "MyApp.\u5728\u5EAB\u8ABF\u6574DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u5728\u5EAB\u8ABF\u6574\u5F15\u5F53\u660E\u7D30DbEntity",
+        "target": "MyApp.\u5165\u8377\u660E\u7D30DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u58F2\u4E0ADbEntity",
+        "target": "MyApp.\u5F93\u696D\u54E1DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u58F2\u4E0A\u306E\u58F2\u4E0A\u660E\u7D30DbEntity",
+        "target": "MyApp.\u58F2\u4E0ADbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u58F2\u4E0A\u306E\u58F2\u4E0A\u660E\u7D30DbEntity",
+        "target": "MyApp.\u5546\u54C1DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u5F15\u5F53\u660E\u7D30DbEntity",
+        "target": "MyApp.\u5165\u8377\u660E\u7D30DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      },
+      {
+        "label": null,
+        "source": "MyApp.\u5F15\u5F53\u660E\u7D30DbEntity",
+        "target": "MyApp.\u58F2\u4E0A\u306E\u58F2\u4E0A\u660E\u7D30DbEntity",
+        "sourceEndShape": null,
+        "targetEndShape": "triangle"
+      }
+    ]
+  },
+  "selectedDataSetKey": "physicalName"
+}

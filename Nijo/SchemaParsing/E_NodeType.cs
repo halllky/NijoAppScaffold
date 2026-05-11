@@ -38,5 +38,5 @@ public enum E_NodeType {
     /// <summary>
     /// 未知の値
     /// </summary>
-    Unknown = 1 << 20,
+    Unknown = 1 << 10,
 }

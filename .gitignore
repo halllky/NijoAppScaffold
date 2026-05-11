@@ -1,23 +1,25 @@
 /自動テストで作成されたプロジェクト/*
-/プロジェクト新規作成処理のテストで作成されたプロジェクト/*
 /Nijo.IntegrationTest.Log/*
-/Nijo.IntegrationTest.DataPatternsImplementors/*
-/Nijo.ApplicationTemplate.Ver1/memo/*
+/demo/200_複雑なパターン/memo/*
 
 # リリース用一時フォルダ
 /temp_release/*
 
+# ソース現新比較用一時フォルダ
+/temp_ソース現新比較用/*
+
 # 開発者個人設定
 appsettings.Development.json
 
-# SQLiteのコミット前の状態が保存される一時ファイル
+# SQLite
+*.sqlite3
 *.sqlite3-shm
 *.sqlite3-wal
 
 # GitHub Pages
 # docs フォルダーはGitHub Actionsが自動生成するため、通常はコミットしない
 # 手動でビルドする場合は、この行をコメントアウトしてdocsフォルダーをコミットする
-docs/
+/docs/
 
 # globs
 Makefile.in

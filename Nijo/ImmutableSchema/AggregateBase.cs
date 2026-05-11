@@ -12,48 +12,43 @@ using System.Xml.XPath;
 namespace Nijo.ImmutableSchema {
     /// <summary>
     /// モデルの集約。
-    /// 集約ルート, Child, Children, VariationItem のいずれか。
+    /// 集約ルート, Child, Children のいずれか。
     /// </summary>
     public abstract class AggregateBase : ISchemaPathNode {
 
         internal AggregateBase(XElement xElement, SchemaParseContext ctx, ISchemaPathNode? previous) {
-            _xElement = xElement;
+            XElement = xElement;
             _ctx = ctx;
             PreviousNode = previous;
         }
-        private protected readonly XElement _xElement;
+        public XElement XElement { get; }
         private protected readonly SchemaParseContext _ctx;
 
-        XElement ISchemaPathNode.XElement => _xElement;
+        XElement ISchemaPathNode.XElement => XElement;
         public ISchemaPathNode? PreviousNode { get; }
 
         /// <summary>
         /// 物理名
         /// </summary>
-        public string PhysicalName => _ctx.GetPhysicalName(_xElement);
+        public string PhysicalName => _ctx.GetPhysicalName(XElement);
         /// <summary>
         /// 表示用名称
         /// </summary>
-        public string DisplayName => _ctx.GetDisplayName(_xElement);
+        public string DisplayName => XElement.GetDisplayName();
         /// <summary>
         /// データベーステーブル名
         /// </summary>
-        public string DbName => _ctx.GetDbName(_xElement);
+        public string DbName => XElement.GetDbName();
         /// <summary>
         /// ラテン語名
         /// </summary>
-        public string LatinName => _ctx.GetLatinName(_xElement);
+        public string LatinName => XElement.GetLatinName();
 
         /// <summary>
         /// この集約が参照先エントリーとして参照された場合の名前。
         /// スキーマ定義xmlのType属性の表記と一致しているとメタデータを使った処理が書きやすくて嬉しいので合わせている。
         /// </summary>
         public string RefEntryName => $"ref-to:{EnumerateThisAndAncestors().Select(a => a.PhysicalName).Join("/")}";
-
-        /// <summary>
-        /// コメント
-        /// </summary>
-        public string GetComment(E_CsTs csts) => _ctx.GetComment(_xElement, csts);
 
         /// <summary>
         /// この集約が持つメンバーを列挙します。
@@ -64,7 +59,7 @@ namespace Nijo.ImmutableSchema {
         /// </list>
         /// </summary>
         public IEnumerable<IAggregateMember> GetMembers() {
-            foreach (var el in _xElement.Elements()) {
+            foreach (var el in XElement.Elements()) {
                 // パスの巻き戻しの場合（この集約の1つ前がこの集約の子、かつその子を列挙しようとしている場合）
                 // 新たにインスタンスを作るのでなく1つ前のインスタンスをそのまま使う
                 if (el == PreviousNode?.XElement) {
@@ -118,6 +113,78 @@ namespace Nijo.ImmutableSchema {
             }
         }
 
+        #region ユニーク制約
+        /// <summary>
+        /// この集約に定義されているユニーク制約を列挙します。
+        /// </summary>
+        public IEnumerable<UniqueConstraint> GetUniqueConstraints() {
+            var attr = XElement.Attribute(BasicNodeOptions.UniqueConstraints.AttributeName)?.Value;
+            if (string.IsNullOrWhiteSpace(attr)) yield break;
+
+            var membersByUniqueId = GetMembers()
+                .Where(m => m is ValueMember or RefToMember)
+                .Select(m => new {
+                    Member = m,
+                    Id = m switch {
+                        ValueMember vm => vm.XElement.Attribute(SchemaParseContext.ATTR_UNIQUE_ID)?.Value,
+                        RefToMember rt => rt.XElement.Attribute(SchemaParseContext.ATTR_UNIQUE_ID)?.Value,
+                        _ => null,
+                    },
+                })
+                .Where(x => !string.IsNullOrWhiteSpace(x.Id))
+                .GroupBy(x => x.Id!, StringComparer.Ordinal)
+                .ToDictionary(g => g.Key, g => g.First().Member, StringComparer.Ordinal);
+
+            var constraintTexts = attr
+                .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            foreach (var constraintText in constraintTexts) {
+                var ids = constraintText
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .ToArray();
+
+                if (ids.Length == 0) continue;
+
+                var resolvedMembers = new List<IAggregateMember>(ids.Length);
+                var missing = false;
+
+                foreach (var id in ids) {
+                    if (!membersByUniqueId.TryGetValue(id, out var member)) {
+                        missing = true;
+                        break;
+                    }
+                    resolvedMembers.Add(member);
+                }
+
+                if (missing || resolvedMembers.Count != ids.Length) continue;
+
+                yield return new UniqueConstraint(this, resolvedMembers, ids);
+            }
+        }
+
+        /// <summary>ユニーク制約定義の不変情報</summary>
+        public sealed class UniqueConstraint {
+            internal UniqueConstraint(AggregateBase aggregate, IReadOnlyList<IAggregateMember> members, IReadOnlyList<string> uniqueIds) {
+                Aggregate = aggregate;
+                Members = members;
+                UniqueIds = uniqueIds;
+                CanonicalKey = string.Join(",", uniqueIds.OrderBy(id => id, StringComparer.Ordinal));
+            }
+
+            public AggregateBase Aggregate { get; }
+            public IReadOnlyList<IAggregateMember> Members { get; }
+            public IReadOnlyList<string> UniqueIds { get; }
+            public string CanonicalKey { get; }
+
+            /// <summary>
+            /// この制約が引数の参照のみから構成されているかどうか。
+            /// </summary>
+            public bool IsSingleRefTo(RefToMember refTo) {
+                return Members.Count == 1 && Members[0].ToMappingKey() == refTo.ToMappingKey();
+            }
+        }
+        #endregion ユニーク制約
+
 
         #region 親子
         /// <summary>
@@ -125,15 +192,15 @@ namespace Nijo.ImmutableSchema {
         /// </summary>
         public AggregateBase? GetParent() {
             // この集約がルート集約の場合
-            if (_xElement.Parent == _xElement.Document?.Root) return null;
+            if (XElement.Parent?.Parent == XElement.Document?.Root) return null;
 
             // 1つ前の集約が親の場合
-            if (PreviousNode is AggregateBase agg && agg._xElement == _xElement.Parent) {
+            if (PreviousNode is AggregateBase agg && agg.XElement == XElement.Parent) {
                 return agg;
             }
 
             // 子から親に辿る場合
-            return _ctx.ToAggregateBase(_xElement.Parent ?? throw new InvalidOperationException(), this);
+            return _ctx.ToAggregateBase(XElement.Parent ?? throw new InvalidOperationException(), this);
         }
 
         /// <summary>
@@ -178,11 +245,11 @@ namespace Nijo.ImmutableSchema {
         /// 経路情報はクリアされ、ルート集約がエントリーになる。
         /// </summary>
         public IEnumerable<AggregateBase> GetPathFromRoot() {
-            var ancesotors = _xElement
+            var ancesotors = XElement
                 .AncestorsAndSelf()
                 .Reverse()
-                // ドキュメントルートも祖先に含まれてしまうので除外
-                .Where(el => el != _xElement.Document?.Root);
+                // ドキュメントルート、セクションも祖先に含まれてしまうので除外
+                .Skip(2);
 
             var prev = (AggregateBase?)null;
 
@@ -219,26 +286,26 @@ namespace Nijo.ImmutableSchema {
         /// この集約が引数の集約の親か否かを返します。
         /// </summary>
         public bool IsParentOf(AggregateBase aggregate) {
-            return aggregate._xElement.Parent == _xElement;
+            return aggregate.XElement.Parent == XElement;
         }
         /// <summary>
         /// この集約が引数の集約の子か否かを返します。
         /// （<see cref="ChildAggregate"/> または <see cref="ChildrenAggregate"/> のいずれでもtrue）
         /// </summary>
         public bool IsChildOf(AggregateBase aggregate) {
-            return _xElement.Parent == aggregate._xElement;
+            return XElement.Parent == aggregate.XElement;
         }
         /// <summary>
         /// この集約が引数の集約の祖先か否かを返します。
         /// </summary>
         public bool IsAncestorOf(AggregateBase aggregate) {
-            return aggregate._xElement.Ancestors().Contains(_xElement);
+            return aggregate.XElement.Ancestors().Contains(XElement);
         }
         /// <summary>
         /// この集約が引数の集約の子孫か否かを返します。
         /// </summary>
         public bool IsDescendantOf(AggregateBase aggregate) {
-            return aggregate._xElement.Descendants().Contains(_xElement);
+            return aggregate.XElement.Descendants().Contains(XElement);
         }
         #endregion 親子
 
@@ -263,7 +330,7 @@ namespace Nijo.ImmutableSchema {
         /// </summary>
         public IEnumerable<RefToMember> GetRefFroms() {
             return _ctx
-                .FindRefFrom(_xElement)
+                .FindRefFrom(XElement)
                 .Select(el => el == PreviousNode?.XElement
                     ? (RefToMember)PreviousNode // パスの巻き戻しの場合
                     : new RefToMember(el, _ctx, this));
@@ -279,11 +346,11 @@ namespace Nijo.ImmutableSchema {
 
         #region 等価比較
         public override int GetHashCode() {
-            return _xElement.GetHashCode();
+            return XElement.GetHashCode();
         }
         public override bool Equals(object? obj) {
             return obj is AggregateBase agg
-                && agg._xElement == _xElement;
+                && agg.XElement == XElement;
         }
         public static bool operator ==(AggregateBase? left, AggregateBase? right) => ReferenceEquals(left, null) ? ReferenceEquals(right, null) : left.Equals(right);
         public static bool operator !=(AggregateBase? left, AggregateBase? right) => !(left == right);
@@ -302,17 +369,117 @@ namespace Nijo.ImmutableSchema {
         internal RootAggregate(XElement xElement, SchemaParseContext ctx, ISchemaPathNode? previous)
             : base(xElement, ctx, previous) { }
 
-        public bool IsReadOnly => _xElement.Attribute(BasicNodeOptions.IsReadOnly.AttributeName) != null;
-        public IModel Model => _ctx.TryGetModel(_xElement, out var model) ? model : throw new InvalidOperationException("ありえない");
+        public bool IsView => XElement.Attribute(BasicNodeOptions.MapToView.AttributeName) != null;
+        public IModel Model => _ctx.TryGetModel(XElement, out var model) ? model : throw new InvalidOperationException($"ありえない: {XElement}");
+        public bool UseSoftDelete => XElement.Attribute(BasicNodeOptions.UseSoftDelete.AttributeName) != null;
 
         public override AggregateBase AsEntry() {
-            return new RootAggregate(_xElement, _ctx, null);
+            return new RootAggregate(XElement, _ctx, null);
         }
 
         #region DataModelと全く同じ型のQueryModel, CommandModel を生成するかどうか
-        public bool GenerateDefaultQueryModel => _xElement.Attribute(BasicNodeOptions.GenerateDefaultQueryModel.AttributeName) != null;
-        public bool GenerateBatchUpdateCommand => _xElement.Attribute(BasicNodeOptions.GenerateBatchUpdateCommand.AttributeName) != null;
+        public bool GenerateDefaultQueryModel => XElement.Attribute(BasicNodeOptions.GenerateDefaultQueryModel.AttributeName) != null;
+        public bool GenerateBatchUpdateCommand => XElement.Attribute(BasicNodeOptions.GenerateBatchUpdateCommand.AttributeName) != null;
         #endregion DataModelと全く同じ型のQueryModel, CommandModel を生成するかどうか
+
+        #region このCommandModelの引数・戻り値の集約を返す
+        /// <summary>
+        /// このCommandModelの引数の構造体を返します。
+        /// このルート集約がCommandModelでない場合は例外。
+        /// </summary>
+        public ICreatablePresentationLayerStructure? GetParameterStructure() {
+            if (Model is not Models.CommandModel) throw new InvalidOperationException($"{PhysicalName}はCommandModelでない");
+            var parameter = XElement.Attribute(BasicNodeOptions.Parameter.AttributeName);
+            return parameter == null ? null : GetTargetStructure(parameter, true);
+        }
+        /// <summary>
+        /// このCommandModelの戻り値の構造体を返します。
+        /// このルート集約がCommandModelでない場合は例外。
+        /// </summary>
+        public ICreatablePresentationLayerStructure? GetReturnValueStructure() {
+            if (Model is not Models.CommandModel) throw new InvalidOperationException($"{PhysicalName}はCommandModelでない");
+            var returnValue = XElement.Attribute(BasicNodeOptions.ReturnValue.AttributeName);
+            return returnValue == null ? null : GetTargetStructure(returnValue, false);
+        }
+
+        /// <summary>
+        /// このルート集約をBasicNodeOptions.Parameterに指定しているコマンドモデルを列挙します。
+        /// </summary>
+        public IEnumerable<RootAggregate> EnumerateCommandModelsRefferingAsParameter() {
+            var commandModelElements = _ctx.Document.Root
+                ?.Element(SchemaParseContext.SECTION_COMMANDS)
+                ?.Elements()
+                ?? [];
+
+            foreach (var rootElement in commandModelElements) {
+                var parameterAttr = rootElement.Attribute(BasicNodeOptions.Parameter.AttributeName);
+                if (parameterAttr == null) {
+                    continue;
+                }
+
+                // Parameter属性の値を解析
+                var splitted = parameterAttr.Value.Split(':');
+                var parameterTargetName = splitted[0];
+
+                // このルート集約がParameter属性で指定されている場合
+                if (parameterTargetName == PhysicalName) {
+                    yield return (RootAggregate)_ctx.ToAggregateBase(rootElement, null);
+                }
+            }
+        }
+
+        /// <summary>
+        /// このルート集約を <see cref="BasicNodeOptions.ReturnValue"/> に指定しているコマンドモデルを列挙します。
+        /// </summary>
+        public IEnumerable<RootAggregate> EnumerateCommandModelsRefferingAsReturnValue() {
+            var commandModelElements = _ctx.Document.Root
+                ?.Element(SchemaParseContext.SECTION_COMMANDS)
+                ?.Elements()
+                ?? [];
+
+            foreach (var rootElement in commandModelElements) {
+                var returnValueAttr = rootElement.Attribute(BasicNodeOptions.ReturnValue.AttributeName);
+                if (returnValueAttr == null) {
+                    continue;
+                }
+
+                // ReturnValue属性の値を解析
+                var splitted = returnValueAttr.Value.Split(':');
+                var returnValueTargetName = splitted[0];
+
+                // このルート集約がReturnValue属性で指定されている場合
+                if (returnValueTargetName == PhysicalName) {
+                    yield return (RootAggregate)_ctx.ToAggregateBase(rootElement, null);
+                }
+            }
+        }
+
+        private ICreatablePresentationLayerStructure GetTargetStructure(XAttribute attribute, bool isParameter) {
+            var splitted = attribute.Value.Split(':');
+            var targetPhysicalName = splitted[0];
+            var targetXElement = _ctx.Document.Root
+                ?.Element(SchemaParseContext.SECTION_DATA_STRUCTURES)
+                ?.Element(targetPhysicalName)
+                ?? throw new InvalidOperationException($"対象の集約が見つかりません: {targetPhysicalName}");
+
+            var targetRootAggregate = (RootAggregate)_ctx.ToAggregateBase(targetXElement, null);
+            if (splitted.Length == 1) {
+                // コマンドモデルの典型的な利用シーンとして「詳細画面の初期表示データ取得」があるので
+                // 戻り値であっても常にDisplayDataを返したほうがよいのか？うーん…
+                // return isParameter
+                //     ? new Models.StructureModelModules.StructureDisplayData(targetRootAggregate)
+                //     : new Models.StructureModelModules.PlainStructure(targetRootAggregate);
+
+                return new Models.StructureModelModules.StructureDisplayData(targetRootAggregate);
+
+            } else if (BasicNodeOptions.AvailableFromCommandToQuery.TryGetValue(splitted[1], out var factory)) {
+                return factory(targetRootAggregate);
+
+            } else {
+                throw new InvalidOperationException($"不正な参照先の種類: {splitted[1]}");
+            }
+        }
+        #endregion このCommandModelの引数・戻り値の集約を返す
     }
 
     /// <summary>
@@ -322,18 +489,20 @@ namespace Nijo.ImmutableSchema {
         internal ChildAggregate(XElement xElement, SchemaParseContext ctx, ISchemaPathNode? previous)
             : base(xElement, ctx, previous) { }
 
-        public decimal Order => _xElement.ElementsBeforeSelf().Count();
-        public AggregateBase Owner => _xElement.Parent == PreviousNode?.XElement
-            ? (AggregateBase?)PreviousNode ?? throw new InvalidOperationException() // パスの巻き戻しの場合
-            : _ctx.ToAggregateBase(_xElement.Parent ?? throw new InvalidOperationException(), this);
-
-        /// <summary>【廃止予定】画面上で追加削除されるタイミングが親と異なるかどうか</summary>
-        public bool HasLifeCycle => true || _xElement.Attribute(BasicNodeOptions.HasLifeCycle.AttributeName) != null;
+        public decimal Order => XElement.ElementsBeforeSelf().Count();
+        public AggregateBase Owner {
+            get {
+                var parent = XElement.Parent;
+                return parent == PreviousNode?.XElement
+                    ? (AggregateBase?)PreviousNode ?? throw new InvalidOperationException() // パスの巻き戻しの場合
+                    : _ctx.ToAggregateBase(parent ?? throw new InvalidOperationException(), this);
+            }
+        }
 
         AggregateBase IRelationalMember.MemberAggregate => this;
 
         public override AggregateBase AsEntry() {
-            return new ChildAggregate(_xElement, _ctx, null);
+            return new ChildAggregate(XElement, _ctx, null);
         }
     }
 
@@ -344,26 +513,52 @@ namespace Nijo.ImmutableSchema {
         internal ChildrenAggregate(XElement xElement, SchemaParseContext ctx, ISchemaPathNode? previous)
             : base(xElement, ctx, previous) { }
 
-        public decimal Order => _xElement.ElementsBeforeSelf().Count();
-        public AggregateBase Owner => _xElement.Parent == PreviousNode?.XElement
-            ? (AggregateBase?)PreviousNode ?? throw new InvalidOperationException() // パスの巻き戻しの場合
-            : _ctx.ToAggregateBase(_xElement.Parent ?? throw new InvalidOperationException(), this);
+        public decimal Order => XElement.ElementsBeforeSelf().Count();
+        public AggregateBase Owner {
+            get {
+                var parent = XElement.Parent;
+                return parent == PreviousNode?.XElement
+                    ? (AggregateBase?)PreviousNode ?? throw new InvalidOperationException() // パスの巻き戻しの場合
+                    : _ctx.ToAggregateBase(parent ?? throw new InvalidOperationException(), this);
+            }
+        }
         AggregateBase IRelationalMember.MemberAggregate => this;
 
         public override AggregateBase AsEntry() {
-            return new ChildrenAggregate(_xElement, _ctx, null);
+            return new ChildrenAggregate(XElement, _ctx, null);
         }
 
         /// <summary>
         /// Childrenのメンバーに対するループ処理をレンダリングするとき、
         /// そのループ変数として使うために "x", "x0", "x1", ... という名前を返す。
+        /// 引数に "i" を指定した場合は "i", "j", "k", ... という名前を返す。
         /// 変数は、宣言方法に気を付ければ、同じ深さのChildrenが複数あっても衝突しない名前になる。
         /// </summary>
         public string GetLoopVarName(string alpha = "x") {
             // 深さ。ルート集約直下のChildrenのとき0になる
-            var depth = _xElement.Ancestors().Count() - 2;
+            var depth = XElement
+                .Ancestors()
+                .Count()
+                // ドキュメントルート、セクション、ルート集約を除く
+                - 3;
 
-            return depth == 0 ? alpha : (alpha + depth);
+            if (depth == 0) {
+                return alpha;
+
+            } else if (alpha == "i") {
+                // i, j, k, ... を返す。
+                // zまで到達した場合は aa, ab, ac, ... とする
+                var index = depth + 8; // 'i'からのオフセット
+                var sb = new StringBuilder();
+                while (index >= 0) {
+                    sb.Insert(0, (char)('a' + (index % 26)));
+                    index = (index / 26) - 1;
+                }
+                return sb.ToString();
+
+            } else {
+                return alpha + depth;
+            }
         }
     }
 }

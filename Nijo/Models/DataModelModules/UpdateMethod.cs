@@ -25,6 +25,7 @@ namespace Nijo.Models.DataModelModules {
 
         internal string Render(CodeRenderingContext ctx) {
             var command = new SaveCommand(_rootAggregate, SaveCommand.E_Type.Update);
+            var keyCommand = new SaveCommand(_rootAggregate, SaveCommand.E_Type.UpdOrDelKey);
             var dbEntity = new EFCoreEntity(_rootAggregate);
             var messages = new SaveCommandMessageContainer(_rootAggregate);
 
@@ -40,7 +41,6 @@ namespace Nijo.Models.DataModelModules {
                     var fullpath = vm.GetPathFromEntry().ToArray();
                     return new {
                         TempVarName = $"searchKey{i + 1}",
-                        vm.PhysicalName,
                         vm.DisplayName,
                         VmType = vm.Type,
                         LogTemplate = $"{vm.DisplayName.Replace("\"", "\\\"")}: {{key{i}}}",
@@ -56,121 +56,132 @@ namespace Nijo.Models.DataModelModules {
                 })
                 .ToArray();
 
-            var hasSequence = _rootAggregate
-                .EnumerateThisAndDescendants()
-                .SelectMany(agg => agg.GetMembers())
-                .Any(member => member is ValueMember vm && vm.Type is SequenceMember);
-
-            return $$"""
-                #region 更新処理
+            var xmlComment = $$"""
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の更新を実行します。
                 /// </summary>
-                public virtual async Task {{MethodName}}({{command.CsClassNameUpdate}} command, {{messages.InterfaceName}} messages, {{PresentationContext.INTERFACE}} context) {
+                /// <param name="key">更新対象の主キーと楽観排他制御用のバージョン。</param>
+                /// <param name="updater">更新関数。引数は更新前の値。この関数の中で更新したいプロパティを書き換えてください。非同期処理がある場合は async / await を使用できます。</param>
+                /// <param name="context">コンテキスト</param>
+                /// <param name="messageOwner">
+                /// エラーメッセージを特定の位置に付加したい場合は指定する。
+                /// nullの場合はコンテキストのルートに付加される。
+                /// </param>
+                /// <returns>エラーがあった場合やエラーチェックのみの場合はfalseを、正常終了した場合はtrueと更新後のデータを返す。</returns>
+                """;
+
+            return $$"""
+                #region 更新処理
+                {{xmlComment}}
+                public virtual async Task<DataModelSaveResult<{{dbEntity.CsClassName}}>> {{MethodName}}(
+                    {{keyCommand.CsClassNameDelete}} key,
+                    Func<{{command.CsClassNameUpdate}}, Task> updater,
+                    {{PresentationContext.INTERFACE}} context,
+                    {{MessageContainer.SETTER_INTERFACE}}? messageOwner = null) {
+
+                    var messages = messageOwner?.As<{{messages.InterfaceName}}>() ?? context.As<{{messages.InterfaceName}}>().Messages;
 
                     // 更新に必要な項目が空の場合は処理中断
                     var keyIsEmpty = false;
                 {{keys.SelectTextTemplate(vm => $$"""
-                    if (command.{{vm.SaveCommandFullPath.Join("?.")}} == null) {
+                    if (key.{{vm.SaveCommandFullPath.Join("?.")}} == null) {
                         keyIsEmpty = true;
                         messages.{{vm.SaveCommandMessageFullPath.Join(".")}}.AddError({{MsgFactory.MSG}}.{{ERR_KEY_IS_EMPTY}}("{{vm.DisplayName.Replace("\"", "\\\"")}}"));
                     }
                 """)}}
                     if (keyIsEmpty) {
-                        Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で主キー空エラーが発生したデータ: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
-                        return;
+                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で主キー空エラーが発生したデータ: {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(key));
+                        return new(DataModelSaveErrorReason.ValidationError);
                     }
 
                     // 更新前データ取得
                 {{keys.SelectTextTemplate(vm => $$"""
-                    var {{vm.TempVarName}} = {{vm.VmType.RenderCastToPrimitiveType()}}command.{{vm.SaveCommandFullPath.Join("!.")}};
+                    var {{vm.TempVarName}} = {{vm.VmType.RenderCastToPrimitiveType()}}key.{{vm.SaveCommandFullPath.Join("!.")}};
                 """)}}
 
-                    var beforeDbEntity = DbContext.{{dbEntity.DbSetName}}
+                    var beforeDbEntity = await DbContext.{{dbEntity.DbSetName}}
                         .AsNoTracking()
                 {{dbEntity.RenderInclude().SelectTextTemplate(source => $$"""
                         {{source}}
                 """)}}
-                        .SingleOrDefault(e {{WithIndent(keys.SelectTextTemplate((vm, i) => $$"""
-                                           {{(i == 0 ? "=>" : "&&")}} {{vm.SingleOrDefaultLeft}} == {{vm.TempVarName}}
-                                           """), "                           ")}});
+                        .SingleOrDefaultAsync(e {{WithIndent(keys.SelectTextTemplate((vm, i) => $$"""
+                                                {{(i == 0 ? "=>" : "&&")}} {{vm.SingleOrDefaultLeft}} == {{vm.TempVarName}}
+                                                """), "                                ")}})
+                        .ConfigureAwait(false);
 
                     if (beforeDbEntity == null) {
                         messages.AddError({{MsgFactory.MSG}}.{{ERR_DATA_NOT_FOUND}}());
-                        Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で更新対象が見つからないエラーが発生したデータ: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
-                        return;
+                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で更新対象が見つからないエラーが発生したデータ: {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(key));
+                        return new(DataModelSaveErrorReason.ValidationError);
                     }
 
+                    // 値の書き換え
+                    var command = {{command.CsClassNameUpdate}}.{{SaveCommand.FROM_DBENTITY}}(beforeDbEntity);
+                    await updater(command);
                     var afterDbEntity = command.{{SaveCommand.TO_DBENTITY}}();
 
                     // 自動的に登録される項目
-                    afterDbEntity.{{EFCoreEntity.VERSION}}++;
+                    afterDbEntity.{{EFCoreEntity.VERSION}} = (key.{{SaveCommand.VERSION}} ?? beforeDbEntity.{{EFCoreEntity.VERSION}}) + 1;
                     afterDbEntity.{{EFCoreEntity.CREATED_AT}} = beforeDbEntity.{{EFCoreEntity.CREATED_AT}};
                     afterDbEntity.{{EFCoreEntity.UPDATED_AT}} = {{ApplicationService.CURRENT_TIME}};
                     afterDbEntity.{{EFCoreEntity.CREATE_USER}} = beforeDbEntity.{{EFCoreEntity.CREATE_USER}};
                     afterDbEntity.{{EFCoreEntity.UPDATE_USER}} = {{ApplicationService.CURRENT_USER}};
 
                     // 更新前処理。入力検証や自動補完項目の設定を行なう。
-                    {{CheckRequired.METHOD_NAME}}(afterDbEntity, messages);
-                    {{CheckMaxLength.METHOD_NAME}}(afterDbEntity, messages);
-                    {{CheckCharacterType.METHOD_NAME}}(afterDbEntity, messages);
-                    {{CheckDigitsAndScales.METHOD_NAME}}(afterDbEntity, messages);
-                    {{DynamicEnum.METHOD_NAME}}(afterDbEntity, messages);
+                {{DataModel.GetValidators(ctx).SelectTextTemplate(validator => $$"""
+                    {{validator.RenderCaller(this, _rootAggregate, "afterDbEntity", "messages")}};
+                """)}}
+                    {{ValidateCharacterType.METHOD_NAME}}(afterDbEntity, messages);
                     {{OnBeforeMethodName}}(command, beforeDbEntity, messages, context);
 
                     // エラーがある場合は処理中断
-                    if (messages.HasError()) {
+                    if (messages.GetState()?.DescendantsAndSelf().Any(c => c.Errors.Count > 0) == true) {
                         // 単なる必須入力漏れなどでもエラーログが出過ぎてしまうのを防ぐため、
-                        // IgnoreConfirmがtrueのとき（==更新を確定するつもりのとき）のみ内容をログ出力する
-                        if (context.Options.IgnoreConfirm) {
-                            Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で入力エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                        // 更新を確定するつもりのときのみ内容をログ出力する
+                        if (!context.ValidationOnly) {
+                            Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で入力エラーが発生した登録内容(JSON): {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
                         }
-                        return;
+                        return new(DataModelSaveErrorReason.ValidationError);
                     }
 
                     // 「更新しますか？」の確認メッセージが承認される前の1巡目はエラーチェックのみで処理中断
-                    if (!context.Options.IgnoreConfirm) return;
-
+                    if (context.ValidationOnly) return new(true);
                     if (DbContext.Database.CurrentTransaction == null) throw new InvalidOperationException("トランザクションが開始されていません。");
 
-                {{If(hasSequence, () => $$"""
-                    // シーケンス項目
-                    {{SequenceMember.SET_METHOD}}(afterDbEntity);
-
-                """)}}
                     // 更新実行
                     const string SAVE_POINT = "SAVE_POINT"; // 更新後処理でエラーが発生した場合はこのデータの更新のみロールバックする
                     try {
                         var entry = DbContext.Entry(afterDbEntity);
                         entry.State = EntityState.Modified;
-                        entry.Property(e => e.{{EFCoreEntity.VERSION}}).OriginalValue = command.{{SaveCommand.VERSION}};
+                        entry.Property(e => e.{{EFCoreEntity.VERSION}}).OriginalValue = key.{{SaveCommand.VERSION}} ?? beforeDbEntity.{{EFCoreEntity.VERSION}};
 
                 {{RenderDescendantAttaching(_rootAggregate).SelectTextTemplate(source => $$"""
-                        {{WithIndent(source, "        ")}}
+                        {{WithIndent(source)}}
 
                 """)}}
-                        await DbContext.Database.CurrentTransaction.CreateSavepointAsync(SAVE_POINT);
-                        await DbContext.SaveChangesAsync();
+                        await DbContext.Database.CurrentTransaction.CreateSavepointAsync(SAVE_POINT).ConfigureAwait(false);
+                        await DbContext.SaveChangesAsync().ConfigureAwait(false);
 
                     } catch (DbUpdateException ex) {
-                        await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT);
+                        await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT).ConfigureAwait(false);
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(afterDbEntity).State = EntityState.Detached;
                 {{RenderDescendantDetaching(_rootAggregate, "afterDbEntity").SelectTextTemplate(source => $$"""
-                        {{WithIndent(source, "        ")}}
+                        {{WithIndent(source)}}
                 """)}}
 
                         if (ex is DbUpdateConcurrencyException) {
                             messages.AddError({{MsgFactory.MSG}}.{{ERR_CONCURRENCY}}());
-                            Log.Warn("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で楽観排他エラー: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                            Log.LogWarning("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新で楽観排他エラー: {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
+                            return new(DataModelSaveErrorReason.ConcurrencyError);
 
                         } else {
                             messages.AddError({{MsgFactory.MSG}}.{{ERR_ID_UNKNOWN}}(ex.Message));
-                            Log.Error(ex);
-                            Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新でSQL発行時エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                            Log.LogError(ex, "更新処理中にエラーが発生しました。");
+                            Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新でSQL発行時エラーが発生した登録内容(JSON): {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
+                            return new(DataModelSaveErrorReason.ValidationError);
                         }
-                        return;
                     }
 
                     // 更新後処理
@@ -180,27 +191,47 @@ namespace Nijo.Models.DataModelModules {
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(afterDbEntity).State = EntityState.Detached;
                 {{RenderDescendantDetaching(_rootAggregate, "afterDbEntity").SelectTextTemplate(source => $$"""
-                        {{WithIndent(source, "        ")}}
+                        {{WithIndent(source)}}
                 """)}}
 
                         // セーブポイント解放
-                        await DbContext.Database.CurrentTransaction.ReleaseSavepointAsync(SAVE_POINT);
+                        await DbContext.Database.CurrentTransaction.ReleaseSavepointAsync(SAVE_POINT).ConfigureAwait(false);
 
                     } catch (Exception ex) {
                         messages.AddError({{MsgFactory.MSG}}.{{ERR_ID_UNKNOWN}}(ex.Message));
-                        Log.Error(ex);
-                        Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新後エラーが発生した登録内容(JSON): {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
-                        await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT);
-                        return;
+                        Log.LogError(ex, "更新後の処理中にエラーが発生しました。");
+                        Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}更新後エラーが発生した登録内容(JSON): {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
+                        await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT).ConfigureAwait(false);
+                        return new(DataModelSaveErrorReason.AfterSaveError);
                     }
 
-                    Log.Info("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}データを更新しました。（{{keys.Select(x => x.LogTemplate).Join(", ")}}）", {{keys.Select(x => x.DbEntityFullPath).Join(", ")}});
-                    Log.Debug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} 更新パラメータ: {0}", {{ApplicationService.CONFIGURATION}}.ToJson(command));
+                    Log.LogInformation("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}}データを更新しました。（{{keys.Select(x => x.LogTemplate).Join(", ")}}）", {{keys.Select(x => x.DbEntityFullPath).Join(", ")}});
+                    Log.LogDebug("{{_rootAggregate.DisplayName.Replace("\"", "\\\"")}} 更新パラメータ: {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(command));
+
+                    return new(afterDbEntity);
                 }
+                {{xmlComment}}
+                public virtual Task<DataModelSaveResult<{{dbEntity.CsClassName}}>> {{MethodName}}(
+                    {{keyCommand.CsClassNameDelete}} key,
+                    Action<{{command.CsClassNameUpdate}}> updater,
+                    {{PresentationContext.INTERFACE}} context,
+                    {{MessageContainer.SETTER_INTERFACE}}? messageOwner = null) {
+
+                    // 非同期版のオーバーロードに委譲
+                    return {{MethodName}}(
+                        key,
+                        command => {
+                            updater(command);
+                            return Task.CompletedTask;
+                        },
+                        context,
+                        messageOwner);
+                }
+
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}} の更新の確定前に実行される処理。
-                /// 自動生成されないエラーチェックはここで実装する。
-                /// エラーがあった場合、第3引数のメッセージにエラー内容を格納する。
+                /// このメソッドの中でエラーが追加された場合、{{_rootAggregate.DisplayName}} の更新は中断される。
+                /// どの画面・バッチから更新された場合であっても必ず {{_rootAggregate.DisplayName}} が満たしていなければならない整合性はここで実装する。
                 /// </summary>
                 public virtual void {{OnBeforeMethodName}}({{command.CsClassNameUpdate}} command, {{dbEntity.CsClassName}} oldValue, {{messages.InterfaceName}} messages, {{PresentationContext.INTERFACE}} context) {
                     // このメソッドをオーバーライドして処理を実装してください。
@@ -232,17 +263,17 @@ namespace Nijo.Models.DataModelModules {
         internal static void RegisterCommonParts(CodeRenderingContext ctx) {
             ctx.Use<MsgFactory>()
                 .AddMessage(ERR_ID_UNKNOWN,
-                            "登録/更新/削除のタイミングでRDBMS上で何らかのエラーが生じた場合のメッセージ",
-                            "登録処理でエラーが発生しました: {0}")
+                    "登録/更新/削除のタイミングでRDBMS上で何らかのエラーが生じた場合のメッセージ",
+                    "登録処理でエラーが発生しました: {0}")
                 .AddMessage(ERR_KEY_IS_EMPTY,
-                            "更新または削除で対象の主キーが指定されていない場合のメッセージ",
-                            "{0}が空です。")
+                    "更新または削除で対象の主キーが指定されていない場合のメッセージ",
+                    "{0}が空です。")
                 .AddMessage(ERR_DATA_NOT_FOUND,
-                            "更新対象・削除対象のデータがデータベース上で見つからなかったときのメッセージ",
-                            "更新対象のデータが見つかりません。")
+                    "更新対象・削除対象のデータがデータベース上で見つからなかったときのメッセージ",
+                    "更新対象のデータが見つかりません。")
                 .AddMessage(ERR_CONCURRENCY,
-                            "楽観排他制御に引っかかったときのメッセージ",
-                            "ほかのユーザーが更新しました。");
+                    "楽観排他制御に引っかかったときのメッセージ",
+                    "ほかのユーザーが更新しました。");
         }
 
         /// <summary>

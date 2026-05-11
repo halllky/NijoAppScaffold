@@ -1,5 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.Models.QueryModelModules;
 using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
@@ -19,6 +18,12 @@ namespace Nijo.ImmutableSchema {
         /// UI上の表示名
         /// </summary>
         string DisplayName { get; }
+        /// <summary>
+        /// この型の仕様をレンダリングする。ドキュメント用。
+        /// 技術的詳細は含めず、この型がアプリケーションのユーザー目線でどのようなものかを記載するに留めること。
+        /// また、基本的に見出しを含めず、本文のみの記載とする。やむを得ず見出しを含める場合は `###` 以降を使用すること。
+        /// </summary>
+        string RenderSpecificationMarkdown();
         #endregion Ui
 
 
@@ -68,10 +73,6 @@ namespace Nijo.ImmutableSchema {
         /// パスワードなど検索条件に指定することができない型の場合はこれがnullになる。
         /// </summary>
         ValueMemberSearchBehavior? SearchBehavior { get; }
-        /// <summary>
-        /// UI上の制約がとりうる型
-        /// </summary>
-        UiConstraint.E_Type UiConstraintType { get; }
 
         /// <summary>
         /// ダミーデータ生成処理の既定の処理をレンダリングします。

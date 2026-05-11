@@ -1,0 +1,8 @@
+DROP VIEW IF EXISTS 事業所;
+
+CREATE VIEW 事業所 AS
+SELECT '1' AS 事業所ID, '東京本社' AS 事業所名
+UNION ALL
+SELECT '2', '大阪支店'
+UNION ALL
+SELECT '3', '福岡営業所';
