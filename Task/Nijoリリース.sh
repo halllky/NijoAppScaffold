@@ -100,6 +100,12 @@ rm "$APP_TEMPLATE_ZIP"
 echo "リリース $RELEASE_VERSION を作成しました。"
 echo "GitHubのReleaseページにアップロードしてください。"
 
-open "$NIJO_ROOT/temp_release"
+if command -v xdg-open > /dev/null 2>&1; then
+  xdg-open "$NIJO_ROOT/temp_release" > /dev/null 2>&1 || true
+elif command -v open > /dev/null 2>&1; then
+  open "$NIJO_ROOT/temp_release" > /dev/null 2>&1 || true
+else
+  echo "成果物: $NIJO_ROOT/temp_release"
+fi
 
 exit 0
