@@ -6,7 +6,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'Nijo App Scaffold',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/icon.png',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -99,7 +99,7 @@ const config: Config = {
 
   themeConfig: {
     // Replace with your project's social card
-    image: 'img/docusaurus-social-card.jpg',
+    image: 'img/icon.png',
     colorMode: {
       respectPrefersColorScheme: true,
     },
@@ -107,7 +107,7 @@ const config: Config = {
       title: 'Nijo App Scaffold',
       logo: {
         alt: 'Nijo App Scaffold Logo',
-        src: 'img/logo.svg',
+        src: 'img/icon.png',
       },
       items: [
         {
