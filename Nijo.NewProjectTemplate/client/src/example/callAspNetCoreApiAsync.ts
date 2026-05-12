@@ -18,14 +18,14 @@ const ASP_NET_CORE_BASE_URL = import.meta.env.DEV
  * サーバー側ベースURLの解決や、認証用のCookieの付加を責務とする。
  * エラーハンドリングは特に行なっていないため呼び出し側で行うこと。
  *
- * @param endpoint URLのオリジン部分を除くパスおよびクエリパラメータ。
+ * @param endpoint URLのオリジン部分を除くパスおよびクエリパラメータ。URIエンコードはこの関数内部で行う。
  * @param init リクエストの初期化情報。HTTPメソッドやボディなど。
  * @returns レスポンス
  */
 export async function callAspNetCoreApiAsync(endpoint: string, init: RequestInit): Promise<Response> {
   const url = endpoint.startsWith('/')
-    ? `${ASP_NET_CORE_BASE_URL}${endpoint.slice(1)}`
-    : `${ASP_NET_CORE_BASE_URL}${endpoint}`
+    ? `${ASP_NET_CORE_BASE_URL}${window.encodeURIComponent(endpoint.slice(1))}`
+    : `${ASP_NET_CORE_BASE_URL}${window.encodeURIComponent(endpoint)}`
   return await fetch(url, {
     // 認証用のCookieをHTTPヘッダに付加する
     credentials: 'include',
