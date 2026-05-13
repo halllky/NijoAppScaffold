@@ -18,6 +18,7 @@ description: "Nijo の全コード生成で raw string, SelectTextTemplate, If, 
   - TypeScript を生成する raw string では、生成後ソースの桁位置は「raw string 本文の先頭空白」「補間開始列」「閉じ側の `"""` の列」で決まる。C# の見た目を整える目的で動かさないこと。
   - 特に `{{...}}` 行、`SelectTextTemplate` の selector、`If` / `ElseIf` / `Else` の各分岐、`WithIndent(...)` 呼び出し行は列位置を維持すること。
   - TypeScript 生成コードを含むメソッドでは、C# のインデントと生成される TypeScript のインデントを別物として扱うこと。メソッド全体を機械的に再インデントしないこと。
+  - TypeScript を生成する raw string の編集は `apply_patch` で行わず、 `sed` などの行単位の置換コマンドで修正すること。 `apply_patch` に不具合があり、C#の4スペースインデントとTypeScriptの2スペースインデントが混在する箇所で、インデントを崩す誤動作が発生するため。
   - よくある誤りは「TS の 2 スペースを 4 スペースに直す」「raw string 開始以降を丸ごと右へずらして 2 倍にする」「raw string をやめる」の 3 つ。これらはすべて禁止。
   - raw string の空白を直すときは目視で済ませず、代表行の先頭空白数を確認すること。インデントが一様に 2 倍または半分に崩れたら、C# レイヤーと TS レイヤーを分けて復元すること。
 - 確認
