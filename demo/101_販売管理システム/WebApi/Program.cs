@@ -74,6 +74,13 @@ app.UseCors();
 
 app.MapDefaultControllerRoute();
 
+// 存在しないパスへのリクエストは index.html を返すようにし、
+// 実際にどの画面が初期表示されるかは React Router のルーティング設定で制御する。
+// 開発環境ではViteの開発サーバーがHTMLを配信するため、ここでのフォールバックは不要
+if (!app.Environment.IsDevelopment()) {
+    app.MapFallbackToFile("index.html");
+}
+
 // セキュリティの設定が必要なら追加
 // app.UseHttpsRedirection();
 

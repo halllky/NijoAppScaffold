@@ -1,3 +1,4 @@
+#if DEBUG
 
 using Microsoft.EntityFrameworkCore; // Add for Include, ToListAsync
 
@@ -316,3 +317,5 @@ partial class OverridedDummyDataGenerator {
         return presentationContext.Messages;
     }
 }
+
+#endif
