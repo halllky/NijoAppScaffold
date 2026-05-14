@@ -101,7 +101,7 @@ namespace Nijo.Models.CommandModelModules {
                 /// </summary>
                 [HttpPost("{{CONTROLLER_ACTION_EXECUTE}}")]
                 public async Task<IActionResult> Execute() {
-                    return await base.{{AspNetController.HANDLE_METHOD}}<{{handleGenericArgs.Join(", ")}}>(_applicationService.{{ExecuteMethodName}});
+                    return await {{AspNetController.CONTROLLER_HANDLER_FIELD}}.{{AspNetController.HANDLE_METHOD}}<{{handleGenericArgs.Join(", ")}}>(this, _applicationService.{{ExecuteMethodName}});
                 }
                 """;
         }

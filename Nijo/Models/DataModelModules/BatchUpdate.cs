@@ -64,7 +64,8 @@ namespace Nijo.Models.DataModelModules {
                 /// </summary>
                 [HttpPost("{{CONTROLLER_ACTION}}")]
                 public async Task<IActionResult> BatchUpdate() {
-                    return await base.{{AspNetController.HANDLE_METHOD}}<{{displayData.CsClassName}}[], {{MessageContainer.SETTER_CONCRETE_CLASS_LIST}}<{{displayDataMessages.CsClassName}}>>(
+                    return await {{AspNetController.CONTROLLER_HANDLER_FIELD}}.{{AspNetController.HANDLE_METHOD}}<{{displayData.CsClassName}}[], {{MessageContainer.SETTER_CONCRETE_CLASS_LIST}}<{{displayDataMessages.CsClassName}}>>(
+                        this,
                         (data, context) => _applicationService.{{APP_SRV_METHOD}}(data, context));
                 }
                 """;

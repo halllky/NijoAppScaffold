@@ -256,6 +256,7 @@ namespace Nijo {
             ctx.Use<Models.ValueObjectModel.ValueObjectJsonConverter>();
             ctx.Use<MessageContainer.BaseClass>();
             ctx.Use<CommandQueryMappings>();
+            ctx.Use<AspNetController.HandlerInterfaceFile>();
 
             // スキーマ定義にかかわらず必ず生成されるモジュールの登録: DataModel 由来のもの
             ctx.Use<DbContextClass>();

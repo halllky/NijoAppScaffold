@@ -92,7 +92,7 @@ namespace Nijo.Models.QueryModelModules {
                 /// </summary>
                 [HttpPost("{{CONTROLLER_ACTION_LOAD}}")]
                 public async Task<IActionResult> Load() {
-                    return await base.{{AspNetController.HANDLE_METHOD}}<{{searchCondition.CsClassName}}, {{returnType}}, {{searchConditionMessages.CsClassName}}>(async (data, context) => {
+                    return await {{AspNetController.CONTROLLER_HANDLER_FIELD}}.{{AspNetController.HANDLE_METHOD}}<{{searchCondition.CsClassName}}, {{returnType}}, {{searchConditionMessages.CsClassName}}>(this, async (data, context) => {
                         // エラーチェック
                         _applicationService.{{VALIDATE_METHOD}}(data, context);
                         if (context.Messages.GetState()?.DescendantsAndSelf().Any(x => x.Errors.Count > 0) == true
