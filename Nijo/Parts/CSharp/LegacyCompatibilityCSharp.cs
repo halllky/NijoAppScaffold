@@ -318,24 +318,6 @@ namespace Nijo.Parts.CSharp {
             var jsonValueObjectClassNames = valueObjectClassNames
                 .Where(className => !(readModel2Roots.Length > 0 && className == "Date"))
                 .ToArray();
-            var customConverterRegistrations = new List<string> {
-                "option.Converters.Add(new CustomJsonConverters.IntegerValueConverter());",
-                "option.Converters.Add(new CustomJsonConverters.DecimalValueConverter());",
-                "option.Converters.Add(new CustomJsonConverters.DateTimeValueConverter());",
-            };
-            if (writeModel2Roots.Length > 0) {
-                customConverterRegistrations.Add(string.Empty);
-                customConverterRegistrations.Add("option.Converters.Add(new CustomJsonConverters.SaveCommandBaseConverter());");
-            }
-            foreach (var className in jsonValueObjectClassNames) {
-                customConverterRegistrations.Add("option.Converters.Add(new " + className + ".JsonValueConverter());");
-            }
-            if (readModel2Roots.Length > 0) {
-                customConverterRegistrations.Add(string.Empty);
-                customConverterRegistrations.Add("option.Converters.Add(new CustomJsonConverters.DateJsonValueConverter());");
-                customConverterRegistrations.Add("option.Converters.Add(new CustomJsonConverters.DisplayDataBatchUpdateCommandConverter());");
-            }
-            var customConverterRegistrationsText = string.Join(Environment.NewLine, customConverterRegistrations.Select(line => line == string.Empty ? string.Empty : $"            {line}"));
             var contents = $$"""
                     namespace {{ctx.Config.RootNamespace}} {
                         using System.Text.Json;
@@ -354,7 +336,20 @@ namespace Nijo.Parts.CSharp {
                                 option.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 
                                 // カスタムコンバータ
-                    {{customConverterRegistrationsText}}
+                                option.Converters.Add(new CustomJsonConverters.IntegerValueConverter());
+                                option.Converters.Add(new CustomJsonConverters.DecimalValueConverter());
+                                option.Converters.Add(new CustomJsonConverters.DateTimeValueConverter());
+
+                    {{If(writeModel2Roots.Length > 0, () => $$"""
+                                option.Converters.Add(new CustomJsonConverters.SaveCommandBaseConverter());
+                    """)}}
+                    {{jsonValueObjectClassNames.SelectTextTemplate(className => $$"""
+                                option.Converters.Add(new {{className}}.JsonValueConverter());
+                    """)}}
+                    {{If(readModel2Roots.Length > 0, () => $$"""
+                                option.Converters.Add(new CustomJsonConverters.DateJsonValueConverter());
+                                option.Converters.Add(new CustomJsonConverters.DisplayDataBatchUpdateCommandConverter());
+                    """)}}
                             }
                             public static JsonSerializerOptions GetJsonSrializerOptions() {
                                 var option = new System.Text.Json.JsonSerializerOptions();
