@@ -42,7 +42,7 @@ internal class Word : IValueMemberType {
         RenderFiltering = ctx => {
             var query = ctx.Query.Root.Name;
             var fullpathNullable = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");
-            var fullpathNotNull = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, "!.");
+            var fullpathNotNull = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, ctx.CodeRenderingContext.IsLegacyCompatibilityMode() ? "." : "!.");
 
             var queryFullPath = ctx.Query.GetFlattenArrayPath(E_CsTs.CSharp, out var isMany);
             var queryOwnerFullPath = queryFullPath.SkipLast(1);
@@ -53,6 +53,9 @@ internal class Word : IValueMemberType {
                 : BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL;
 
             string GetComparison(string target) {
+                if (ctx.CodeRenderingContext.IsLegacyCompatibilityMode() && searchBehavior == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL) {
+                    return $"{target}.Contains(trimmed)";
+                }
                 return searchBehavior switch {
                     BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT => $"{target} == trimmed",
                     BasicNodeOptions.STRING_SEARCH_BEHAVIOR_FORWARD => $"Microsoft.EntityFrameworkCore.EF.Functions.Like({target}, $\"{{escaped}}%\", \"\\\\\")",
@@ -63,14 +66,14 @@ internal class Word : IValueMemberType {
 
             return $$"""
                 if (!string.IsNullOrWhiteSpace({{fullpathNullable}})) {
-                    var trimmed = {{fullpathNotNull}}!.Trim();
-                {{If(searchBehavior != BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT, () => $$"""
+                    var trimmed = {{fullpathNotNull}}.Trim();
+                {{If(searchBehavior != BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT && !(ctx.CodeRenderingContext.IsLegacyCompatibilityMode() && searchBehavior == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL), () => $$"""
                     var escaped = trimmed.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
                 """)}}
                 {{If(isMany, () => $$"""
-                    {{query}} = {{query}}.Where(x => x.{{queryOwnerFullPath.Join("!.")}}!.Any(y => {{GetComparison($"y.{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}!")}}));
+                    {{query}} = {{query}}.Where(x => x.{{queryOwnerFullPath.Join(ctx.CodeRenderingContext.IsLegacyCompatibilityMode() ? "." : "!.")}}{{If(ctx.CodeRenderingContext.IsLegacyCompatibilityMode(), () => "").Else(() => "!")}}.Any(y => {{GetComparison($"y.{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}{(ctx.CodeRenderingContext.IsLegacyCompatibilityMode() ? "" : "!")}")}}));
                 """).Else(() => $$"""
-                    {{query}} = {{query}}.Where(x => {{GetComparison($"x.{queryFullPath.Join("!.")}!")}});
+                    {{query}} = {{query}}.Where(x => {{GetComparison($"x.{queryFullPath.Join(ctx.CodeRenderingContext.IsLegacyCompatibilityMode() ? "." : "!.")}{(ctx.CodeRenderingContext.IsLegacyCompatibilityMode() ? "" : "!")}")}});
                 """)}}
                 }
                 """;

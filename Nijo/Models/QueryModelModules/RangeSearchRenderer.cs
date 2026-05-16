@@ -24,6 +24,37 @@ namespace Nijo.Models.QueryModelModules {
             var queryFullPath = ctx.Query.GetFlattenArrayPath(E_CsTs.CSharp, out var isMany);
             var queryOwnerFullPath = queryFullPath.SkipLast(1);
 
+            if (ctx.CodeRenderingContext.IsLegacyCompatibilityMode()) {
+                return $$"""
+                    if ({{fullpathNullable}}?.From != null
+                     && {{fullpathNullable}}?.To != null) {
+                        var from = {{cast}}{{fullpathNotNull}}.From;
+                        var to = {{cast}}{{fullpathNotNull}}.To;
+                    {{If(isMany, () => $$"""
+                        {{query}} = {{query}}.Where(x => x.{{queryOwnerFullPath.Join(".")}}.Any(y => y.{{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}} >= from && y.{{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}} <= to));
+                    """).Else(() => $$"""
+                        {{query}} = {{query}}.Where(x => x.{{queryFullPath.Join(".")}} >= from && x.{{queryFullPath.Join(".")}} <= to);
+                    """)}}
+
+                    } else if ({{fullpathNullable}}?.From != null) {
+                        var from = {{cast}}{{fullpathNotNull}}.From;
+                    {{If(isMany, () => $$"""
+                        {{query}} = {{query}}.Where(x => x.{{queryOwnerFullPath.Join(".")}}.Any(y => y.{{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}} >= from));
+                    """).Else(() => $$"""
+                        {{query}} = {{query}}.Where(x => x.{{queryFullPath.Join(".")}} >= from);
+                    """)}}
+
+                    } else if ({{fullpathNullable}}?.To != null) {
+                        var to = {{cast}}{{fullpathNotNull}}.To;
+                    {{If(isMany, () => $$"""
+                        {{query}} = {{query}}.Where(x => x.{{queryOwnerFullPath.Join(".")}}.Any(y => y.{{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}} <= to));
+                    """).Else(() => $$"""
+                        {{query}} = {{query}}.Where(x => x.{{queryFullPath.Join(".")}} <= to);
+                    """)}}
+                    }
+                    """;
+            }
+
             return $$"""
                 if ({{fullpathNullable}}?.From != null && {{fullpathNullable}}?.To != null) {
                     var from = {{cast}}{{fullpathNotNull}}!.From;

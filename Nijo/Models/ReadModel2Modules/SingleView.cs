@@ -39,6 +39,7 @@ namespace Nijo.Models.ReadModel2Modules {
                 return $"/{_aggregate.DisplayName}".ToHashedString();
             }
         }
+        private string LegacySetSingleViewDisplayDataMethod => $"SettingDisplayData{_aggregate.PhysicalName}";
 
         public string Url => $"/{UrlSubDomain}/:mode/:key0?";
         public string ComponentPhysicalName => $"{_aggregate.PhysicalName}SingleView";
@@ -73,6 +74,21 @@ namespace Nijo.Models.ReadModel2Modules {
         internal string RenderSetSingleViewDisplayDataFn(CodeRenderingContext context) {
             var displayData = new DisplayData(_aggregate);
 
+            if (context.IsLegacyCompatibilityMode()) {
+                return $$"""
+                    /// <summary>
+                    /// 新規作成時の画面表示データを作成します。
+                    /// クライアント側でクエリパラメータを指定した場合、この処理の中で参照することができます。
+                    /// </summary>
+                    /// <param name="queryParameter">クライアント側で指定されたクエリパラメータ</param>
+                    public virtual {{displayData.CsClassName}} {{LegacySetSingleViewDisplayDataMethod}}(IEnumerable<KeyValuePair<string, StringValues>> queryParameter, IPresentationContext context) {
+                        return new {{displayData.CsClassName}} {
+                            {{DisplayData.UNIQUE_ID_CS}} = Guid.NewGuid().ToString(),
+                        };
+                    }
+                    """;
+            }
+
             return $$"""
                 protected virtual {{displayData.CsClassName}} Set{{_aggregate.PhysicalName}}SingleViewDisplayData({{displayData.CsClassName}} displayData, IPresentationContext context) {
                     return displayData;
@@ -81,6 +97,22 @@ namespace Nijo.Models.ReadModel2Modules {
         }
         internal string RenderSetSingleViewDisplayData(CodeRenderingContext context) {
             var displayData = new DisplayData(_aggregate);
+
+            if (context.IsLegacyCompatibilityMode()) {
+                return $$"""
+                    /// <summary>
+                    /// 新規作成時の画面表示データを作成します。
+                    /// クライアント側でクエリパラメータを指定した場合、この処理の中で参照することができます。
+                    /// </summary>
+                    [HttpPost("new-display-data")]
+                    public virtual IActionResult Setting{{_aggregate.PhysicalName}}DisplayData(ComplexPostRequest request) {
+                        var context = new PresentationContext(new DisplayMessageContainer([]), new() { IgnoreConfirm = true }, _applicationService);
+                        var displayData = _applicationService.{{LegacySetSingleViewDisplayDataMethod}}(HttpContext.Request.Query, context);
+                        context.ReturnValue = displayData;
+                        return this.JsonContent(context.GetResult().ToJsonObject());
+                    }
+                    """;
+            }
 
             return $$"""
                 [HttpPost("new-display-data")]
