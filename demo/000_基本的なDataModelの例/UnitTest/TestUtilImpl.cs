@@ -73,7 +73,7 @@ public partial class TestUtilImpl {
 
         // DI機構
         var services = new ServiceCollection();
-        OverridedApplicationService.ConfigureServices(services, null);
+        OverridedApplicationService.ConfigureServices(services, currentTestWorkDirectory);
         ConfigureServicesスキーマ定義依存(services);
 
         // DI機構: ログ

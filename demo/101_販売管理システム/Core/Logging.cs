@@ -18,7 +18,7 @@ internal static class LogSettings {
     /// <see cref="OverridedApplicationService.ConfigureServices"/> のうちログ出力設定に関する部分。
     /// 処理が多いので別メソッドとして切り出している。
     /// </summary>
-    public static void ConfigureServices(IServiceCollection services, IConfigurationSection myAppSection) {
+    public static void ConfigureServices(IServiceCollection services, IConfigurationSection myAppSection, string basePath) {
 
         // NLog を用いたログ設定を Microsoft.Extensions.Logging に統合する
         services.AddLogging(logging => {
@@ -28,7 +28,7 @@ internal static class LogSettings {
             var logDir = myAppSection.GetValue<string?>(nameof(RuntimeSetting.LogDirectory));
             if (string.IsNullOrWhiteSpace(logDir)) logDir = "Log";
             if (!Path.IsPathRooted(logDir)) {
-                logDir = Path.Combine(Directory.GetCurrentDirectory(), logDir);
+                logDir = Path.Combine(basePath, logDir);
             }
             var fileTarget = new NLog.Targets.FileTarget("logfile") {
                 FileName = Path.Combine(logDir, "${shortdate}.log"),
