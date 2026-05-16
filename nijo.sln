@@ -55,7 +55,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo101.Management", "demo\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo200.Management", "demo\200_複雑なパターン\Management\Demo200.Management.csproj", "{7DB14CD8-96BC-73F6-A867-3B59FB25F4B1}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nijo-old（移植前）", "nijo-old", "{DBF6AECC-FF15-06FF-EF7B-0E5B23A669FB}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nijo-old（移植前）", "nijo-old\Nijo.csproj", "{DBF6AECC-FF15-06FF-EF7B-0E5B23A669FB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nijo", "nijo-old\Nijo.csproj", "{E17E2F83-C057-4973-80B4-5A1ABD9C8A72}"
 EndProject

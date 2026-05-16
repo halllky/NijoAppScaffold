@@ -43,7 +43,7 @@ namespace Nijo.Util.CodeGenerating {
             var content = RenderContent(ctx).ReplaceLineEndings(sw.NewLine);
             foreach (var line in content.Split(sw.NewLine)) {
                 if (line.Contains(SKIP_MARKER)) continue;
-                sw.WriteLine(line);
+                sw.WriteLine(string.IsNullOrWhiteSpace(line) ? string.Empty : line);
             }
         }
     }
