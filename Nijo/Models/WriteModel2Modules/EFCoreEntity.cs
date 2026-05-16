@@ -29,7 +29,10 @@ namespace Nijo.Models.WriteModel2Modules {
                 throw new InvalidOperationException($"{nameof(Render)} はルート集約に対してのみ呼び出してください。");
             }
 
-            // 現時点では WriteModel2 固有差分は無いため、現行の EFCore エンティティ実装をそのまま使用する。
+            if (ctx.IsLegacyCompatibilityMode()) {
+                return LegacyEFCoreEntity.Render(rootAggregate, ctx);
+            }
+
             return Nijo.Parts.CSharp.EFCoreEntity.RenderClassDeclaring(new Nijo.Parts.CSharp.EFCoreEntity(rootAggregate), ctx);
         }
 
