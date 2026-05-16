@@ -333,6 +333,11 @@ namespace Nijo.CodeGenerating {
                     modules.Add(plainStructure.TsTypeName);
                     modules.Add(plainStructure.TsNewObjectFunction);
 
+                } else if (ctx.IsLegacyCompatibilityMode() && group.Key.Model is Models.WriteModel2) {
+                    foreach (var agg in group) {
+                        modules.Add(new Models.WriteModel2Modules.DataClassForRefTargetKeys(agg, agg).TsTypeName);
+                    }
+
                 } else if (ctx.IsLegacyCompatibilityMode() && group.Key.Model is Models.ReadModel2) {
                     foreach (var agg in group) {
                         var refEntry = agg.AsEntry();
