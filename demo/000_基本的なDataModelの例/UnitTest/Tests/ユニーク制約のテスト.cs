@@ -73,7 +73,7 @@ public class ユニーク制約のテスト {
             }],
         }, presentationContext);
 
-        Assert.That(duplicateDepartment.IsError(out var reason), Is.False, "ユニーク制約違反でエラーになっていません。");
+        Assert.That(duplicateDepartment.IsError(out var reason), Is.True, presentationContext.BuildFailureMessage("ユニーク制約違反でエラーになっていません。"));
         Assert.That(reason, Is.EqualTo(DataModelSaveErrorReason.ValidationError));
 
         var sectionCount = await scope.App.DbContext.課DbSet.CountAsync(x => x.旧システムコード_旧システムコード == "LEGACY-001");
