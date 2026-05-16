@@ -687,24 +687,36 @@ namespace Nijo.CodeGenerating {
         private static SourceFile RenderSpaceFinderConstCSharp(CodeRenderingContext ctx) {
             var members = new List<string>();
             if (ctx.Config.MaxFileSizeMB.HasValue) {
-                members.Add($"        /// <summary>添付可能なファイルの上限サイズ（メガバイト）</summary>\n        public const int MAX_FILE_SIZE_MB = {ctx.Config.MaxFileSizeMB.Value};");
+                members.Add($$"""
+                    /// <summary>添付可能なファイルの上限サイズ（メガバイト）</summary>
+                    public const int MAX_FILE_SIZE_MB = {{ctx.Config.MaxFileSizeMB.Value}};
+                    """);
             }
             if (ctx.Config.MaxTotalFileSizeMB.HasValue) {
-                members.Add($"        /// <summary>一度に複数ファイル添付する際のトータルの上限サイズ（メガバイト）</summary>\n        public const int MAX_TOTAL_FILE_SIZE_MB = {ctx.Config.MaxTotalFileSizeMB.Value};");
+                members.Add($$"""
+                    /// <summary>一度に複数ファイル添付する際のトータルの上限サイズ（メガバイト）</summary>
+                    public const int MAX_TOTAL_FILE_SIZE_MB = {{ctx.Config.MaxTotalFileSizeMB.Value}};
+                    """);
             }
             if (!string.IsNullOrWhiteSpace(ctx.Config.AttachmentFileExtensions)) {
                 var extensions = string.Join(", ", ctx.Config.AttachmentFileExtensions.Split(';', StringSplitOptions.RemoveEmptyEntries).Select(ext => $"\".{ext}\""));
-                members.Add($"        /// <summary>添付可能なファイルの拡張子</summary>\n        public static IEnumerable<string> ATTACHMENT_FILE_EXTENSIONS => [{extensions}];");
+                members.Add($$"""
+                    /// <summary>添付可能なファイルの拡張子</summary>
+                    public static IEnumerable<string> ATTACHMENT_FILE_EXTENSIONS => [{{extensions}}];
+                    """);
             }
 
-            var body = members.Count == 0 ? string.Empty : Environment.NewLine + string.Join(Environment.NewLine, members) + Environment.NewLine;
             return new SourceFile {
                 FileName = "SpaceFinderConst.cs",
                 Contents = $$"""
                     using System.Collections.Generic;
 
                     namespace {{ctx.Config.RootNamespace}} {
-                        public class SpaceFinderConst {{{body}}}
+                        public class SpaceFinderConst {
+                    {{members.SelectTextTemplate(source => $$"""
+                            {{WithIndent(source, "        ")}}
+                    """)}}
+                        }
                     }
                     """,
             };
@@ -805,7 +817,7 @@ namespace Nijo.CodeGenerating {
                         /// Reactフック側の処理と組み合わせて複雑な挙動を実現するPOSTリクエスト。
                         /// 例えば後述のような挙動を実現する。
                         /// 詳細な挙動を調べる場合はReact側のcomplexPost関連のソースも併せて参照のこと。
-                        ///
+                        ///{{" "}}
                         /// <list type="bullet">
                         /// <item>ブラウザからサーバーへのリクエストで入力フォームの内容とファイル内容を同時に送信し（multipart/form-data）、サーバー側ではそれを意識せず利用できるようにする</item>
                         /// <item>「～ですがよろしいですか？」の確認ダイアログの表示と、それがOKされたときに同じ内容のリクエストを再送信する</item>
@@ -987,26 +999,30 @@ namespace Nijo.CodeGenerating {
                 if (col > 1) minmax.Add($"(min-width: {(col - 1) * threshold + threshold}px)");
                 if (col < maxColumn) minmax.Add($"(max-width: {col * threshold + threshold}px)");
 
-                var rows = string.Join("\n\n", Enumerable.Range(1, maxMember).Select(i => $$"""
-                      .vform-vertical-{{i}}-items {
-                        grid-template-rows: repeat({{Math.Ceiling((decimal)i / col)}}, auto);
-                      }
-                    """));
-
                 return $$"""
                     /* VForm2: 横{{col}}列の場合のレイアウト */
                     @container {{string.Join(" and ", minmax)}} {
                       .vform-template-column {
                         grid-template-columns: calc((1px * var(--vform-max-depth)) + var(--vform-label-width)) 1fr{{(col >= 2 ? $" repeat({col - 1}, var(--vform-label-width) 1fr)" : string.Empty)}};
                       }
-                    {{rows}}
+                    {{Enumerable.Range(1, maxMember).SelectTextTemplate(i => $$"""
+
+                      .vform-vertical-{{i}}-items {
+                        grid-template-rows: repeat({{Math.Ceiling((decimal)i / col)}}, auto);
+                      }
+                    """)}}
                     }
                     """;
             });
 
             return new SourceFile {
                 FileName = "vform2-container-query.css",
-                Contents = string.Join("\n\n", sections),
+                Contents = $$"""
+                    {{sections.SelectTextTemplate(source => $$"""
+
+                    {{source}}
+                    """)}}
+                    """,
             };
         }
 
