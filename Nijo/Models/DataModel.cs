@@ -310,6 +310,13 @@ namespace Nijo.Models {
                     $"入力エラー時メッセージ（{validator.CommentName}）",
                     validator.MsgTemplate);
             }
+
+            // QueryModel と全く同じ型の場合はQueryModelのソースも生成
+            var rootAggregates = ctx.Schema.GetRootAggregates().ToArray();
+            if (rootAggregates.Any(root => root.GenerateDefaultQueryModel)
+             && rootAggregates.All(root => root.Model is not QueryModel)) {
+                QueryModel.GenerateQueryModelCommonModules(ctx);
+            }
         }
 
         /// <summary>

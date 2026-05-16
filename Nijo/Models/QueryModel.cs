@@ -322,6 +322,10 @@ namespace Nijo.Models {
         }
 
         public void GenerateCode(CodeRenderingContext ctx) {
+            GenerateQueryModelCommonModules(ctx);
+        }
+
+        internal static void GenerateQueryModelCommonModules(CodeRenderingContext ctx) {
             ctx.Use<DeepEqualFunction.OptionType>();
 
             ctx.CoreLibrary(dir => {
