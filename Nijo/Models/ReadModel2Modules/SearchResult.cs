@@ -37,6 +37,25 @@ namespace Nijo.Models.ReadModel2Modules {
         public IEnumerable<NavigationProperty> GetNavigationProperties() => Enumerable.Empty<NavigationProperty>();
 
         internal string RenderCSharpDeclaring(CodeRenderingContext ctx) {
+            if (ctx.IsLegacyCompatibilityMode()) {
+                var createQueryMethodName = $"Create{Aggregate.GetRoot().PhysicalName}QuerySource";
+
+                return $$"""
+                    /// <summary>
+                    /// <see cref="{{ApplicationService.ABSTRACT_CLASS}}.{{createQueryMethodName}}"/> の戻り値の型。
+                    /// </summary>
+                    public partial class {{CsClassName}} {
+                    {{GetMembers().SelectTextTemplate(member => $$"""
+                        {{WithIndent(RenderLegacyMember(member), "    ")}}
+                    """)}}
+                    {{If(HasVersionColumn, () => $$"""
+                        /// <summary>楽観排他制御用のバージョニング用</summary>
+                        public required int Version { get; set; }
+                    """)}}
+                    }
+                    """;
+            }
+
             return $$"""
                 /// <summary>
                 /// {{Aggregate.DisplayName}}の検索結果型。
@@ -58,6 +77,30 @@ namespace Nijo.Models.ReadModel2Modules {
                     SearchResultStructureMember structure => structure.RenderDeclaration(),
                     _ => string.Empty,
                 };
+            }
+
+            static string RenderLegacyMember(IInstancePropertyMetadata member) {
+                return member switch {
+                    SearchResultValueMember value => $$"""
+                        /// <summary>{{value.Member.PhysicalName}}</summary>
+                        public virtual {{GetLegacyValueTypeName(value)}}? {{value.Member.PhysicalName}} { get; set; }
+                        """,
+                    SearchResultStructureMember structure => $$"""
+                        /// <summary>{{structure.GetPropertyName(E_CsTs.CSharp)}}</summary>
+                        public virtual {{GetLegacyTypeName(structure)}}? {{structure.GetPropertyName(E_CsTs.CSharp)}} { get; set; }
+                        """,
+                    _ => string.Empty,
+                };
+            }
+
+            static string GetLegacyTypeName(SearchResultStructureMember structure) {
+                return structure.IsArray
+                    ? $"List<{structure.GetTypeName(E_CsTs.CSharp)}>"
+                    : structure.GetTypeName(E_CsTs.CSharp);
+            }
+
+            static string GetLegacyValueTypeName(SearchResultValueMember value) {
+                return value.Member.Type.CsDomainTypeName.Replace("DateOnly", "Date");
             }
         }
         internal string RenderCSharpRecursively(CodeRenderingContext ctx) {

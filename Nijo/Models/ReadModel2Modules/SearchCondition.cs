@@ -42,6 +42,10 @@ namespace Nijo.Models.ReadModel2Modules {
             internal const string SKIP_TS = "skip";
             internal const string TAKE_CS = "Take";
             internal const string TAKE_TS = "take";
+            internal const string KEYWORD_CS = "Keyword";
+            internal const string KEYWORD_TS = "keyword";
+            internal const string EXCLUDE_CHILDREN_CS = "ExcludeChildren";
+            internal const string EXCLUDE_CHILDREN_TS = "excludeChildren";
 
             IEnumerable<IInstancePropertyMetadata> IPresentationLayerStructure.GetMembers() => ((IInstancePropertyOwnerMetadata)this).GetMembers();
 
@@ -154,6 +158,81 @@ namespace Nijo.Models.ReadModel2Modules {
             internal static string RenderCSharpRecursively(RootAggregate rootAggregate, CodeRenderingContext ctx) {
                 var entry = new Entry(rootAggregate);
 
+                if (ctx.IsLegacyCompatibilityMode()) {
+                    var filters = rootAggregate
+                        .EnumerateThisAndDescendants()
+                        .Select(aggregate => new Filter(aggregate));
+
+                    return $$"""
+                        #region 検索条件クラス（{{rootAggregate.DisplayName}}）
+                        /// <summary>
+                        /// {{rootAggregate.DisplayName}}の一覧検索条件
+                        /// </summary>
+                        public partial class {{entry.CsClassName}} {
+                            /// <summary>絞り込み条件（キーワード検索）</summary>
+                            [JsonPropertyName("{{KEYWORD_TS}}")]
+                            public string? {{KEYWORD_CS}} { get; set; }
+                            /// <summary>絞り込み条件</summary>
+                            [JsonPropertyName("{{FILTER_TS}}")]
+                            public virtual {{entry.FilterRoot.CsClassName}} {{FILTER_CS}} { get; set; } = new();
+                            /// <summary>並び順</summary>
+                            [JsonPropertyName("{{SORT_TS}}")]
+                            public virtual List<string>? {{SORT_CS}} { get; set; } = new();
+                            /// <summary>先頭から何件スキップするか</summary>
+                            [JsonPropertyName("{{SKIP_TS}}")]
+                            public virtual int? {{SKIP_CS}} { get; set; }
+                            /// <summary>最大何件取得するか</summary>
+                            [JsonPropertyName("{{TAKE_TS}}")]
+                            public virtual int? {{TAKE_CS}} { get; set; }
+                            /// <summary>
+                            /// 検索結果に明細データを含めなくても構わない場合、trueになる。
+                            /// 具体的には一覧検索画面での検索とExcel出力の場合にtrueに、詳細登録画面の場合にfalseになる。
+                            /// パフォーマンス改善以外の目的に使用しないこと。
+                            /// </summary>
+                            [JsonPropertyName("{{EXCLUDE_CHILDREN_TS}}")]
+                            public virtual bool {{EXCLUDE_CHILDREN_CS}} { get; set; }
+                        }
+                        {{filters.SelectTextTemplate(filter => $$"""
+                        {{RenderLegacyFilter(filter)}}
+                        """)}}
+                        #endregion 検索条件クラス（{{rootAggregate.DisplayName}}）
+
+                        """;
+
+                    string RenderLegacyFilter(Filter filter) {
+                        return $$"""
+                            /// <summary>
+                            /// {{filter.Aggregate.DisplayName}}の一覧検索条件のうち絞り込み条件を指定する部分
+                            /// </summary>
+                            public partial class {{filter.CsClassName}} {
+                            {{filter.GetOwnMembers().SelectTextTemplate(member => $$"""
+                                {{WithIndent(RenderLegacyFilterMember(member), "    ")}}
+                            """)}}
+                            }
+                            """;
+                    }
+
+                    static string RenderLegacyFilterMember(IFilterMember member) {
+                        return member switch {
+                            FilterValueMember value => $$"""
+                                public virtual {{GetLegacyCsTypeName(value)}}? {{value.Member.PhysicalName}} { get; set; }
+                                """,
+                            IInstanceStructurePropertyMetadata structure => $$"""
+                                public virtual {{structure.GetTypeName(E_CsTs.CSharp)}} {{structure.GetPropertyName(E_CsTs.CSharp)}} { get; set; } = new();
+                                """,
+                            _ => throw new InvalidOperationException(),
+                        };
+
+                        static string GetLegacyCsTypeName(FilterValueMember value) {
+                            var typeName = value.Member.OnlySearchCondition
+                                ? value.Member.Type.CsDomainTypeName
+                                : value.Member.Type.SearchBehavior?.FilterCsTypeName;
+
+                            return typeName?.Replace("DateOnly", "Date") ?? string.Empty;
+                        }
+                    }
+                }
+
                 return $$"""
                     #region 検索条件エントリーポイント
                     /// <summary>
@@ -242,6 +321,7 @@ namespace Nijo.Models.ReadModel2Modules {
             }
 
             private readonly AggregateBase _aggregate;
+            internal AggregateBase Aggregate => _aggregate;
 
             internal string CsClassName => $"{_aggregate.PhysicalName}SearchConditionFilter";
             internal string TsTypeName => $"{_aggregate.PhysicalName}SearchConditionFilter";
