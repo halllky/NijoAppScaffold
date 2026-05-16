@@ -1,0 +1,261 @@
+using Nijo.Core;
+using Nijo.Parts.WebServer;
+using Nijo.Util.CodeGenerating;
+using Nijo.Util.DotnetEx;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Nijo.Models.WriteModel2Features {
+    /// <summary>
+    /// 一括更新処理
+    /// </summary>
+    internal class BatchUpdateWriteModel : ISummarizedFile {
+
+        private readonly List<GraphNode<Aggregate>> _aggregates = new();
+        internal void Register(GraphNode<Aggregate> aggregate) {
+            _aggregates.Add(aggregate);
+        }
+
+        private readonly List<string> _additionalHooks = new();
+        internal void AddReactHook(string code) {
+            _additionalHooks.Add(code);
+        }
+
+        private readonly List<string> _additionalControllerActions = new();
+        internal void AddControllerAction(string code) {
+            _additionalControllerActions.Add(code);
+        }
+
+        private readonly List<string> _additionalAppSrvMethods = new();
+        internal void AddAppSrvMethod(string code) {
+            _additionalAppSrvMethods.Add(code);
+        }
+
+        // --------------------------------------------------
+
+        internal const string HOOK_NAME = "useBatchUpdateWriteModels";
+        internal const string HOOK_PARAM_ITEMS = "Items";
+
+        internal const string CONTROLLER_SUBDOMAIN = "batch-update";
+        private const string CONTROLLER_ACTION_IMMEDIATELY = "immediately";
+
+        internal const string APPSRV_METHOD = "BatchUpdateWriteModels";
+        internal const string APPSRV_METHOD_PRIVATE = "ExecuteBatchUpdate";
+
+        int ISummarizedFile.RenderingOrder => 100; // BatchUpdateDisplayDataでマイナス1したときに既定値である0を下回るのがなんとなく不安だったので
+        void ISummarizedFile.OnEndGenerating(CodeRenderingContext context) {
+
+            context.ReactProject.UtilDir(dir => {
+                dir.Generate(new SourceFile {
+                    FileName = "batch-update.ts",
+                    RenderContent = ctx => {
+                        return $$"""
+                            import React from "react"
+                            import useEvent from "react-use-event-hook"
+                            import * as ReactHookForm from "react-hook-form"
+                            import * as Util from "../../util2"
+                            import * as Types from "../index"
+
+                            {{DataClassForSaveBase.RenderAddModDelType()}}
+                            {{RenderHook(ctx)}}
+                            """;
+                    },
+                });
+            });
+
+            context.WebApiProject.ControllerDir(dir => {
+                dir.Generate(RenderController());
+            });
+            context.CoreLibrary.AppSrvMethods.Add(RenderAppSrvMethod(context));
+
+        }
+
+        private string RenderHook(CodeRenderingContext context) {
+            return $$"""
+                {{_additionalHooks.SelectTextTemplate(code => $$"""
+
+                {{code}}
+                """)}}
+                """;
+        }
+
+        private SourceFile RenderController() => new SourceFile {
+            FileName = "BatchUpdateController.cs",
+            RenderContent = context => {
+                var appSrv = new ApplicationService();
+
+                return $$"""
+                    using Microsoft.AspNetCore.Mvc;
+
+                    namespace {{context.Config.RootNamespace}};
+
+                    [ApiController]
+                    [Route("{{Controller.SUBDOMAIN}}/{{CONTROLLER_SUBDOMAIN}}")]
+                    public partial class BatchUpdateController : ControllerBase {
+                        public BatchUpdateController({{appSrv.ConcreteClassName}} applicationService) {
+                            _applicationService = applicationService;
+                        }
+
+                        private readonly {{appSrv.ConcreteClassName}} _applicationService;
+
+                        #region WriteModel一括更新
+                        /// <summary>
+                        /// 一括更新処理を実行します。
+                        /// </summary>
+                        /// <param name="parameter">一括更新内容</param>
+                        /// <param name="ignoreConfirm">「○○ですがよろしいですか？」などのコンファームを無視します。</param>
+                        [HttpPost("{{CONTROLLER_ACTION_IMMEDIATELY}}")]
+                        public virtual IActionResult ExecuteImmediately([FromBody] WriteModelsBatchUpdateParameter parameter, [FromQuery] bool ignoreConfirm) {
+                            _applicationService.Log.Debug("Batch Update: {0}", Request.Form[ComplexPostRequest.PARAM_DATA].ToString());
+
+                            var options = new {{SaveContext.SAVE_OPTIONS}} {
+                                IgnoreConfirm = ignoreConfirm,
+                            };
+                            var result = _applicationService.{{APPSRV_METHOD}}(parameter.{{HOOK_PARAM_ITEMS}}, options);
+                    
+                            if (result.HasError()) {
+                                return BadRequest(result.GetErrorDataJson());
+                            }
+                            return Ok();
+                        }
+                        public partial class WriteModelsBatchUpdateParameter {
+                            public List<{{DataClassForSaveBase.SAVE_COMMAND_BASE}}> {{HOOK_PARAM_ITEMS}} { get; set; } = new();
+                        }
+                        #endregion WriteModel一括更新
+                    {{_additionalControllerActions.SelectTextTemplate(code => $$"""
+
+                        {{WithIndent(code, "    ")}}
+                    """)}}
+                    }
+                    """;
+            },
+        };
+
+        private string RenderAppSrvMethod(CodeRenderingContext context) {
+            var sortedAggregates = _aggregates
+                //.OrderBy(agg => 依存される順) // TODO #35
+                .Select((agg, i) => {
+                    var create = new DataClassForSave(agg, DataClassForSave.E_Type.Create);
+                    var save = new DataClassForSave(agg, DataClassForSave.E_Type.UpdateOrDelete);
+                    return new {
+                        CreateItems = $"create{agg.Item.PhysicalName}", // 引数のうちこの集約の新規追加データのみから成る配列の変数名
+                        UpdateItems = $"update{agg.Item.PhysicalName}", // 引数のうちこの集約の更新データのみから成る配列の変数名
+                        DeleteItems = $"delete{agg.Item.PhysicalName}", // 引数のうちこの集約の削除データのみから成る配列の変数名
+                        CreateCommand = $"{DataClassForSaveBase.CREATE_COMMAND}<{create.CsClassName}>", // 新規作成コマンドのクラス名
+                        UpdateCommand = $"{DataClassForSaveBase.UPDATE_COMMAND}<{save.CsClassName}>", // 更新コマンドのクラス名
+                        DeleteCommand = $"{DataClassForSaveBase.DELETE_COMMAND}<{save.CsClassName}>", // 削除コマンドのクラス名
+                        TempVar0 = $"x{(i * 3) + 0}", // 一時変数
+                        TempVar1 = $"x{(i * 3) + 1}", // 一時変数
+                        TempVar2 = $"x{(i * 3) + 2}", // 一時変数
+                        Create = new CreateMethod(agg).MethodName, // メソッド名
+                        Update = new UpdateMethod(agg).MethodName, // メソッド名
+                        Delete = new DeleteMethod(agg).MethodName, // メソッド名
+                        DisplayMessageInterface = save.MessageDataCsInterfaceName,
+                        DisplayMessageClass = save.MessageDataCsClassName,
+                    };
+                })
+                .ToArray();
+
+            return $$"""
+                #region 一括更新
+                {{_additionalAppSrvMethods.SelectTextTemplate(code => $$"""
+                {{code}}
+
+                """)}}
+                /// <summary>
+                /// WriteModelを一括更新します。
+                /// </summary>
+                /// <param name="items">更新データ</param>
+                /// <param name="saveContext">コンテキスト引数。エラーや警告の送出はこのオブジェクトを通して行なってください。</param>
+                public virtual {{SaveContext.STATE_CLASS_NAME}} {{APPSRV_METHOD}}(IReadOnlyList<{{DataClassForSaveBase.SAVE_COMMAND_BASE}}> items, {{SaveContext.SAVE_OPTIONS}} options) {
+                    var batchUpdateState = new {{SaveContext.STATE_CLASS_NAME}}(options);
+                    using var tran = DbContext.Database.BeginTransaction();
+                    try {
+                        // エラーメッセージの入れ物のオブジェクトを用意する
+                        var itemsAndMessages = new List<({{DataClassForSaveBase.SAVE_COMMAND_BASE}}, {{DisplayMessageContainer.INTERFACE}})>();
+                        for (var i = 0; i < items.Count; i++) {
+                            {{DisplayMessageContainer.ABSTRACT_CLASS}} errorContainer = items[i] switch {
+                {{sortedAggregates.SelectTextTemplate(x => $$"""
+                                {{x.CreateCommand}} or
+                                {{x.UpdateCommand}} or
+                                {{x.DeleteCommand}} => new {{x.DisplayMessageClass}}([]),
+                """)}}
+                                _ => throw new InvalidOperationException(),
+                            };
+                            itemsAndMessages.Add((items[i], errorContainer));
+                            batchUpdateState.RegisterErrorDataWithIndex(i, errorContainer);
+                        }
+
+                        // 一括更新実行
+                        {{APPSRV_METHOD_PRIVATE}}(itemsAndMessages, batchUpdateState);
+                        if (!batchUpdateState.HasError() || batchUpdateState.ForceCommit) {
+                            tran.Commit();
+                        } else {
+                            tran.Rollback();
+                        }
+
+                        return batchUpdateState;
+                    } catch {
+                        tran.Rollback();
+                        throw;
+                    }
+                }
+
+                /// <summary>
+                /// データ一括更新を実行します。
+                /// </summary>
+                /// <param name="items">更新データ</param>
+                /// <param name="saveContext">コンテキスト引数。エラーや警告の送出はこのオブジェクトを通して行なってください。</param>
+                private void {{APPSRV_METHOD_PRIVATE}}(IEnumerable<({{DataClassForSaveBase.SAVE_COMMAND_BASE}}, {{DisplayMessageContainer.INTERFACE}})> itemsAndMessages, {{SaveContext.STATE_CLASS_NAME}} saveContextState) {
+
+                    // パラメータの各要素の型を仕分けてそれぞれの配列に格納する
+                {{sortedAggregates.SelectTextTemplate(agg => $$"""
+                    var {{agg.CreateItems}} = new List<({{agg.CreateCommand}}, {{agg.DisplayMessageInterface}})>();
+                    var {{agg.UpdateItems}} = new List<({{agg.UpdateCommand}}, {{agg.DisplayMessageInterface}})>();
+                    var {{agg.DeleteItems}} = new List<({{agg.DeleteCommand}}, {{agg.DisplayMessageInterface}})>();
+                """)}}
+
+                    foreach (var (item, msg) in itemsAndMessages) {
+                {{If(sortedAggregates.Length == 0, () => $$"""
+                        throw new InvalidOperationException({{MessageConst.CS_CLASS_NAME}}.{{MessageConst.C_INF0033}}(nameof(itemsAndMessages),item.ToJson()));
+                """).Else(() => $$"""
+                {{sortedAggregates.SelectTextTemplate((agg, i) => $$"""
+                        {{(i == 0 ? "if" : "} else if")}} (item is {{agg.CreateCommand}} {{agg.TempVar0}}) {
+                            {{agg.CreateItems}}.Add(({{agg.TempVar0}}, ({{agg.DisplayMessageInterface}})msg));
+                        } else if (item is {{agg.UpdateCommand}} {{agg.TempVar1}}) {
+                            {{agg.UpdateItems}}.Add(({{agg.TempVar1}}, ({{agg.DisplayMessageInterface}})msg));
+                        } else if (item is {{agg.DeleteCommand}} {{agg.TempVar2}}) {
+                            {{agg.DeleteItems}}.Add(({{agg.TempVar2}}, ({{agg.DisplayMessageInterface}})msg));
+
+                """)}}
+                        } else {
+                            throw new InvalidOperationException({{MessageConst.CS_CLASS_NAME}}.{{MessageConst.C_INF0034}}(nameof(itemsAndMessages),item.ToJson()));
+                        }
+                """)}}
+                    }
+
+                    // データ間の依存関係に注意しないと正常終了すべき処理が異常終了してしまうので、正しい順番で処理する。
+                    // 1. 依存する側  のデータの削除
+                    // 2. 依存される側のデータの削除
+                    // 3. 依存される側のデータの新規作成
+                    // 4. 依存する側  のデータの新規作成
+                    // 5. 依存される側のデータの更新
+                    // 6. 依存する側  のデータの更新
+                {{sortedAggregates.Reverse().SelectTextTemplate(agg => $$"""
+                    foreach (var (item, msg) in {{agg.DeleteItems}}) {{agg.Delete}}(item, msg, saveContextState);
+                """)}}
+                {{sortedAggregates.SelectTextTemplate(agg => $$"""
+                    foreach (var (item, msg) in {{agg.CreateItems}}) {{agg.Create}}(item, msg, saveContextState);
+                """)}}
+                {{sortedAggregates.SelectTextTemplate(agg => $$"""
+                    foreach (var (item, msg) in {{agg.UpdateItems}}) {{agg.Update}}(item, msg, saveContextState);
+                """)}}
+                }
+                #endregion 一括更新
+                """;
+        }
+    }
+}
