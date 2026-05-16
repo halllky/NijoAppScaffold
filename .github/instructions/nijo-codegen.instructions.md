@@ -3,24 +3,54 @@ applyTo: "Nijo/**/*.cs"
 description: "Nijo の全コード生成で raw string, SelectTextTemplate, If, WithIndent を強制する"
 ---
 
-この指示は Nijo 配下の全 C# に渡されるが、強制対象は Render 系メソッドの中で生成コードを組み立てる箇所だけ。ここでいう Render 系メソッドとは、生成コード文字列を返すメソッドと、その直下のテンプレート組み立て箇所を指す。非 Render 系の通常ロジックには適用しない。
+## Render系メソッドの規約
 
-- 正本
-  - 詳細規約は [Nijo/CodeGenerating/TemplateTextHelper.cs](../../Nijo/CodeGenerating/TemplateTextHelper.cs) の XML コメントを正とする。
-  - 迷ったら既存の Render 実装を踏襲し、新しい流儀を持ち込まないこと。
-- 生成方法
-  - 生成コードは raw string を起点に記述すること。崩れたからといって `string.Join`、後置換、後連結、`Trim` 逃げしてはならない。
-  - 垂直方向の反復は `SelectTextTemplate`、条件分岐は `If` / `ElseIf` / `Else` を raw string の補間式として使うこと。
-  - `SelectTextTemplate` の selector と各分岐も raw string を返すこと。
+ここでいう Render 系メソッドとは、生成コード文字列を返すメソッドと、その直下のテンプレート組み立て箇所を指す。非 Render 系の通常ロジックには適用しない。
+
+- コードブロックの反復は `SelectTextTemplate`、条件分岐は `If` / `ElseIf` / `Else` を raw string の補間式として使うこと。詳細な使い方は [Nijo/CodeGenerating/TemplateTextHelper.cs](../../Nijo/CodeGenerating/TemplateTextHelper.cs) の XML コメントを参照。
 - インデント
-  - インデント制御は `WithIndent` を使い、新規コードでは 1 引数版を優先すること。
-  - 1 引数版 `WithIndent` の左側には半角スペースだけを置き、内容側は原則インデント 0 で組み立てること。
-  - TypeScript を生成する raw string では、生成後ソースの桁位置は「raw string 本文の先頭空白」「補間開始列」「閉じ側の `"""` の列」で決まる。C# の見た目を整える目的で動かさないこと。
-  - 特に `{{...}}` 行、`SelectTextTemplate` の selector、`If` / `ElseIf` / `Else` の各分岐、`WithIndent(...)` 呼び出し行は列位置を維持すること。
-  - TypeScript 生成コードを含むメソッドでは、C# のインデントと生成される TypeScript のインデントを別物として扱うこと。メソッド全体を機械的に再インデントしないこと。
+  - Render系メソッドが return するコードブロックはインデント 0 で組み立てること。
+    インデントの制御はそのRender系メソッドを呼ぶ側の責務とする。
+  - インデント制御は `WithIndent` を使うこと。2 引数版と 1 引数版があるが、1 引数版を優先すること。詳細な使い方は [Nijo/CodeGenerating/TemplateTextHelper.cs](../../Nijo/CodeGenerating/TemplateTextHelper.cs) の XML コメントを参照。
+  - `SelectTextTemplate` / `If` / `ElseIf` / `Else` はそれを含む raw string の左端から開始すること。
+  - `WithIndent` はインデントしたい列位置から開始すること。
   - TypeScript を生成する raw string の編集は `apply_patch` で行わず、 `sed` などの行単位の置換コマンドで修正すること。 `apply_patch` に不具合があり、C#の4スペースインデントとTypeScriptの2スペースインデントが混在する箇所で、インデントを崩す誤動作が発生するため。
-  - よくある誤りは「TS の 2 スペースを 4 スペースに直す」「raw string 開始以降を丸ごと右へずらして 2 倍にする」「raw string をやめる」の 3 つ。これらはすべて禁止。
-  - raw string の空白を直すときは目視で済ませず、代表行の先頭空白数を確認すること。インデントが一様に 2 倍または半分に崩れたら、C# レイヤーと TS レイヤーを分けて復元すること。
-- 確認
-  - TypeScript を生成する raw string を編集した直後は、少なくとも `CS8999` が出ていないことを確認すること。
-  - 可能なら、生成後 TypeScript の期待インデントや文字列一致テストも確認すること。
+- 禁止
+  - 生成コードは raw string を起点に記述すること。崩れたからといって `string.Join`、後置換、後連結、`Trim` 逃げしてはならない。
+  - 迷ったら既存の Render 実装を踏襲し、新しい流儀を持ち込まないこと。
+
+## スキーマ定義と対応する構造体のレンダリング処理の規約
+
+スキーマ定義（nijo.xml）と対応する構造体のレンダリング処理が頻出する。
+
+* 子要素、子配列、外部参照といった複雑な構造体定義のレンダリング
+* 同じ集約からレンダリングされるとあるオブジェクトから別のオブジェクトへの変換処理
+* EFCore のエンティティ、検索条件オブジェクト、画面表示用オブジェクトなど生成後のクラス特有の事情
+
+これは基本的に [Instance API](../../Nijo/CodeGenerating/Instance API.cs) を用いて生成物に対応するメタデータ構造を先に作る必要がある。
+
+基本的な考え方は以下。
+
+1. レンダリングされるクラス・構造体・フィールド・プロパティと1対1対応するクラスを定義し、それぞれに以下のインターフェースを実装する。
+  * IInstancePropertyOwnerMetadata : フィールドを包含する構造体
+  * IInstanceValuePropertyMetadata : これ自身がフィールドであり、かつ他のフィールドを包含する構造体ではないもの。具体的には int, string など。
+  * IInstanceStructurePropertyMetadata : これ自身がフィールドであり、かつ他のフィールドを包含する構造体
+  * これらメタデータクラスは、C#名、プロパティ名、多重度、子メンバー列挙規則を返す責務を持つ。
+2. 処理のレンダリング箇所で `Variable` クラスのインスタンスを宣言し、この変数を起点としてその子孫フィールドの情報を生成しレンダリングに用いる。
+  * フィールドの列挙には以下を使う。
+    * CreateProperties : 構造体直下のフィールドを列挙
+    * CreatePropertiesRecursively : 構造体直下のフィールドと、子構造体のフィールドを再帰的に列挙
+    * Create1To1PropertiesRecursively : CreatePropertiesRecursively のうち元の変数との多重度が1:1のものを列挙。具体的にはネストされた配列のフィールドとその子孫が除外される。
+   * 何階層もネストされた構造体のレンダリングが基本になるので、多くの場合は再起処理になる。
+   * 「配列のときはこういうソースをレンダリングする」「外部参照(RefTo)のときはこう」のように処理を分岐することが多くなるはずだが、これには基本的に型スイッチを用いて上記1で定義したクラスを条件にして分岐をおこなう
+   * Variable のルートからそのフィールドまでのパスのレンダリングには基本的に `GetJoinedPathFromInstance` を使う
+   * 同じ集約からレンダリングされるとあるオブジェクトから別のオブジェクトへの変換処理において、右辺と左辺でどのフィールドが対応しているかの判定には `ISchemaPathNode.ToMappingKey` を用いる。
+3. クラス名やプロパティ名の命名規則は、そのメタデータクラスの中に閉じ込めること。
+  * 特定の構造体専用の命名規則を、別の `RenderXXX` メソッドや `GetName` 系の補助メソッド群に分散させないこと。
+  * 再起関数の引数でエントリーからのパス名の履歴を持ち回って名前を組み立てるような実装は避けること。
+
+既存実装例は多いが、主に以下を参照。
+
+* [SaveCommand](../../Nijo/Models/DataModelModules/SaveCommand.cs)
+* [EFCoreEntity](../../Nijo/Parts/CSharp/EFCoreEntity.cs)
+* [SearchCondition](../../Nijo/Models/QueryModelModules/SearchCondition.cs)
