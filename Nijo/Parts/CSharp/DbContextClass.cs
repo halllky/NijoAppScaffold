@@ -44,7 +44,7 @@ namespace Nijo.Parts.CSharp {
 
         private SourceFile Render(CodeRenderingContext ctx) {
             var efCoreEntitiesOrderByDataFlow = _efCoreEntities
-                .OrderBy(e => e.Aggregate.GetRoot().GetIndexOfDataFlow())
+                .OrderBy(e => e.Aggregate.GetRoot().GetIndexOfDataFlow(ctx))
                 .ThenBy(e => e.Aggregate.GetOrderInTree())
                 .ToArray();
 

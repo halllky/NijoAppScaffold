@@ -20,11 +20,6 @@ namespace Nijo.CodeGenerating {
             RenderingOptions = renderingOptions;
             SchemaParser = xmlParseContext;
             Schema = immutableSchema;
-
-            lock (_lock) {
-                if (_currentContext != null) throw new InvalidOperationException("既に他のコード生成処理が開始されています。");
-                _currentContext = this;
-            }
         }
 
         public GeneratedProject Project { get; }
@@ -278,33 +273,21 @@ namespace Nijo.CodeGenerating {
             }
         }
         private string[]? _characterTypes;
-
-
-        #region シングルトン機構。あちこちのオブジェクトのかなり深いところからコンテキストを参照したいケースがあるので
-        /// <inheritdoc cref="CodeRenderingContext"/>
-        public static CodeRenderingContext CurrentContext => _currentContext ?? throw new InvalidOperationException("コード自動生成は開始されていません。");
-        private static CodeRenderingContext? _currentContext;
-        private static readonly Lock _lock = new();
-
         void IDisposable.Dispose() {
-            lock (_lock) {
-                if (_currentContext == this) _currentContext = null;
-            }
         }
-        #endregion シングルトン機構。あちこちのオブジェクトのかなり深いところからコンテキストを参照したいケースがあるので
     }
 
     public static class CodeRenderingContextExtensions {
         /// <inheritdoc cref="CodeRenderingContext.GetIndexOfDataFlow"/>
-        public static int GetIndexOfDataFlow(this RootAggregate rootAggregate) {
-            return CodeRenderingContext.CurrentContext.GetIndexOfDataFlow(rootAggregate);
+        public static int GetIndexOfDataFlow(this RootAggregate rootAggregate, CodeRenderingContext ctx) {
+            return ctx.GetIndexOfDataFlow(rootAggregate);
         }
         /// <summary>
         /// ルート集約を、ref-toによる外部参照の関係性に従い、
         /// 参照される方を先、参照する方を後、とする順番に並び替えた新しいインスタンスを返します。
         /// </summary>
-        public static IEnumerable<RootAggregate> OrderByDataFlow(this IEnumerable<RootAggregate> rootAggregates) {
-            return rootAggregates.OrderBy(r => CodeRenderingContext.CurrentContext.GetIndexOfDataFlow(r));
+        public static IEnumerable<RootAggregate> OrderByDataFlow(this IEnumerable<RootAggregate> rootAggregates, CodeRenderingContext ctx) {
+            return rootAggregates.OrderBy(r => ctx.GetIndexOfDataFlow(r));
         }
     }
 }

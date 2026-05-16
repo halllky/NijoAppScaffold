@@ -557,7 +557,7 @@ namespace Nijo.Models.QueryModelModules {
 
                         // 外部参照先のChildrenの場合、アプリケーション全体で外部参照先のChildrenを
                         // 画面表示用データに含めるよう明示的に設定されている場合のみ列挙する。
-                        if (metadata.IsOutOfEntryTree && !ctx.Config.GenerateRefToChildrenDisplayData) {
+                        if (metadata.IsOutOfEntryTree && !metadata.Aggregate.SchemaParseContext.ProjectOptions.GenerateRefToChildrenDisplayData) {
                             continue;
                         }
 

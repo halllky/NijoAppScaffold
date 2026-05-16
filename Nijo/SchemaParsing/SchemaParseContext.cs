@@ -19,17 +19,19 @@ namespace Nijo.SchemaParsing;
 /// XML要素をこのアプリケーションのルールに従って解釈する
 /// </summary>
 public class SchemaParseContext {
-    public SchemaParseContext(XDocument xDocument, SchemaParseRule rule) {
+    public SchemaParseContext(XDocument xDocument, SchemaParseRule rule, GeneratedProjectOptions projectOptions) {
         // ルールの検証
         rule.ThrowIfInvalid();
 
         Document = xDocument;
+        ProjectOptions = projectOptions;
         Models = rule.Models.ToDictionary(m => m.SchemaName);
         _rule = rule;
         _valueMemberTypes = rule.ValueMemberTypes.ToDictionary(m => m.SchemaTypeName);
     }
 
     public XDocument Document { get; }
+    public GeneratedProjectOptions ProjectOptions { get; }
     public IReadOnlyDictionary<string, IModel> Models { get; }
     private readonly SchemaParseRule _rule;
     private readonly IReadOnlyDictionary<string, IValueMemberType> _valueMemberTypes;

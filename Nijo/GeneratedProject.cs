@@ -216,7 +216,7 @@ namespace Nijo {
                 return false;
             }
 
-            using var ctx = new CodeRenderingContext(this, GetConfig(), renderingOptions, parseContext, immutableSchema);
+            using var ctx = new CodeRenderingContext(this, parseContext.ProjectOptions, renderingOptions, parseContext, immutableSchema);
 
             logger.LogInformation("ソース自動生成開始");
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();

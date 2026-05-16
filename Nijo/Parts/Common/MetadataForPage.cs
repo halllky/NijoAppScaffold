@@ -48,7 +48,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
     private SourceFile RenderTypeScript(CodeRenderingContext ctx) {
         var entriesOrderByDataFlow = _entries
-            .OrderBy(agg => agg.GetRoot().GetIndexOfDataFlow())
+            .OrderBy(agg => agg.GetRoot().GetIndexOfDataFlow(ctx))
             .Select(aggregate => (IMetadataEntity)new AggregateMetadata(aggregate));
 
         return new SourceFile {
@@ -79,7 +79,7 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
     private SourceFile RenderCSharp(CodeRenderingContext ctx) {
         var entriesOrderByDataFlow = _entries
-            .OrderBy(agg => agg.GetRoot().GetIndexOfDataFlow())
+            .OrderBy(agg => agg.GetRoot().GetIndexOfDataFlow(ctx))
             .Select(aggregate => new {
                 Entry = new AggregateMetadata(aggregate),
                 Tree = aggregate

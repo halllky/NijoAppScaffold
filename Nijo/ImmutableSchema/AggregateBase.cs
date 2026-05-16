@@ -26,6 +26,7 @@ namespace Nijo.ImmutableSchema {
 
         XElement ISchemaPathNode.XElement => XElement;
         public ISchemaPathNode? PreviousNode { get; }
+        public SchemaParseContext SchemaParseContext => _ctx;
 
         /// <summary>
         /// 物理名

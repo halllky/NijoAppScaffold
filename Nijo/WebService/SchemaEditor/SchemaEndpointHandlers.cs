@@ -259,7 +259,7 @@ internal class SchemaEndpointHandlers {
             }
 
             // コード生成処理 (エラーがなければ実行)
-            var generationParseContext = new SchemaParseContext(xDocumentToSave, rule);
+            var generationParseContext = new SchemaParseContext(xDocumentToSave, rule, GeneratedProjectOptions.Parse(xDocumentToSave, true));
             var renderingOptions = new CodeRenderingOptions { AllowNotImplemented = false };
 
             var logger = context.RequestServices.GetRequiredService<ILogger<NijoWebServiceBuilder>>();

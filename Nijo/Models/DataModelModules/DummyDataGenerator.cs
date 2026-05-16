@@ -55,7 +55,7 @@ namespace Nijo.Models.DataModelModules {
         private SourceFile RenderDummyDataGenerator(CodeRenderingContext ctx) {
             // データフロー順に並び替え
             var rootAggregatesOrderByDataFlow = _rootAggregates
-                .OrderByDataFlow()
+                .OrderByDataFlow(ctx)
                 .Where(agg => !agg.IsView)
                 .ToArray();
 
@@ -416,7 +416,7 @@ namespace Nijo.Models.DataModelModules {
         private SourceFile RenderDummyDataGenerateContext(CodeRenderingContext ctx) {
             // データフロー順に並び替え
             var rootAggregatesOrderByDataFlow = _rootAggregates
-                .OrderByDataFlow()
+                .OrderByDataFlow(ctx)
                 .ToArray();
 
             return new SourceFile {
@@ -519,7 +519,7 @@ namespace Nijo.Models.DataModelModules {
         private SourceFile RenderDummyDataGenerateOptionsCSharp(CodeRenderingContext ctx) {
             // データフロー順に並び替え
             var rootAggregatesOrderByDataFlow = _rootAggregates
-                .OrderByDataFlow()
+                .OrderByDataFlow(ctx)
                 .Where(agg => !agg.IsView)
                 .ToArray();
 
@@ -546,7 +546,7 @@ namespace Nijo.Models.DataModelModules {
         private SourceFile RenderDummyDataGenerateOptionsTypeScript(CodeRenderingContext ctx) {
             // データフロー順に並び替え
             var rootAggregatesOrderByDataFlow = _rootAggregates
-                .OrderByDataFlow()
+                .OrderByDataFlow(ctx)
                 .Where(agg => !agg.IsView)
                 .ToArray();
 

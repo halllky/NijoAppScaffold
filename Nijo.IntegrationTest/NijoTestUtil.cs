@@ -101,7 +101,7 @@ public class NijoTestUtil {
                 using var reader = File.OpenRead(Project.SchemaXmlPath);
                 var document = await XDocument.LoadAsync(reader, LoadOptions.None, CancellationToken.None);
                 var rule = SchemaParsing.SchemaParseRule.Default();
-                var parseContext = new SchemaParsing.SchemaParseContext(document, rule);
+                var parseContext = new SchemaParsing.SchemaParseContext(document, rule, CodeGenerating.GeneratedProjectOptions.Parse(document, true));
 
                 parseContext.TryBuildSchema(document, out var _, out var errors);
                 return errors;
@@ -119,7 +119,7 @@ public class NijoTestUtil {
                 using var reader = File.OpenRead(Project.SchemaXmlPath);
                 var document = await XDocument.LoadAsync(reader, LoadOptions.None, CancellationToken.None);
                 var rule = SchemaParsing.SchemaParseRule.Default();
-                var parseContext = new SchemaParsing.SchemaParseContext(document, rule);
+                var parseContext = new SchemaParsing.SchemaParseContext(document, rule, CodeGenerating.GeneratedProjectOptions.Parse(document, true));
                 var renderingOptions = new CodeGenerating.CodeRenderingOptions {
                     AllowNotImplemented = false,
                 };
