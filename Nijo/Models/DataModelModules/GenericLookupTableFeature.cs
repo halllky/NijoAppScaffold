@@ -2,6 +2,7 @@ using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
 using Nijo.SchemaParsing;
+using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -123,7 +124,7 @@ internal static class GenericLookupTableFeature {
                 /// <summary>{{utilClassName}} に定義されているカテゴリの一覧を返します。</summary>
                 public IEnumerable<{{categoryClassName}}> GetAllCategories() {
             {{categories.SelectTextTemplate(cat => $$"""
-                    yield return {{cat.Name}};
+                    yield return {{cat.DisplayName.ToCSharpSafe()}};
             """)}}
                 }
             {{categories.SelectTextTemplate(cat => $$"""
@@ -154,6 +155,7 @@ internal static class GenericLookupTableFeature {
             """;
 
         string RenderPropertyForCategory(GenericLookupTableParser.GenericLookupTableCategory cat) {
+            var categoryIdentifier = cat.DisplayName.ToCSharpSafe();
             var keyMap = cat.HardCodedKeys.ToDictionary(k => k.UniqueId, k => k.Value);
             var propInits = uniqueHardcodedMembers.SelectTextTemplate(m => {
                 var uid = m.XElement.Attribute(SchemaParseContext.ATTR_UNIQUE_ID)?.Value;
@@ -163,9 +165,9 @@ internal static class GenericLookupTableFeature {
                 return $"{m.PhysicalName} = {propValue},";
             });
             return $$"""
-                private {{categoryClassName}}<{{rootAggregate.PhysicalName}}_{{cat.Name}}DbEntity>? _{{cat.Name}};
+                private {{categoryClassName}}<{{rootAggregate.PhysicalName}}_{{categoryIdentifier}}DbEntity>? _{{categoryIdentifier}};
                 /// <summary>カテゴリ '{{cat.DisplayName}}' のユーティリティ</summary>
-                public {{categoryClassName}}<{{rootAggregate.PhysicalName}}_{{cat.Name}}DbEntity> {{cat.Name}} => _{{cat.Name}} ??= new(_dbContext.{{rootAggregate.PhysicalName}}_{{cat.Name}}DbSet) {
+                public {{categoryClassName}}<{{rootAggregate.PhysicalName}}_{{categoryIdentifier}}DbEntity> {{categoryIdentifier}} => _{{categoryIdentifier}} ??= new(_dbContext.{{rootAggregate.PhysicalName}}_{{categoryIdentifier}}DbSet) {
                     PhysicalName = "{{cat.Name}}",
                     DisplayName = "{{cat.DisplayName.Replace("\"", "\\\"")}}",
                     {{propInits}}

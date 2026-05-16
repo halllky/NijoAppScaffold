@@ -38,6 +38,8 @@ public class SchemaParseRule {
     public static SchemaParseRule Default() {
         var models = new IModel[] {
             new DataModel(),
+            new WriteModel2(),
+            new ReadModel2Compat(),
             new QueryModel(),
             new CommandModel(),
             new StaticEnumModel(),
@@ -70,6 +72,8 @@ public class SchemaParseRule {
             BasicNodeOptions.LatinName,
             BasicNodeOptions.IsKey,
             BasicNodeOptions.IsNotNull,
+            BasicNodeOptions.NotNegative,
+            BasicNodeOptions.Required,
             BasicNodeOptions.GenerateDefaultQueryModel,
             BasicNodeOptions.GenerateBatchUpdateCommand,
             BasicNodeOptions.UseSoftDelete,
@@ -90,6 +94,16 @@ public class SchemaParseRule {
             BasicNodeOptions.ConstantType,
             BasicNodeOptions.ConstantValue,
             BasicNodeOptions.StringSearchBehavior,
+            BasicNodeOptions.Name,
+            BasicNodeOptions.Hidden,
+            BasicNodeOptions.Wide,
+            BasicNodeOptions.Combo,
+            BasicNodeOptions.Radio,
+            BasicNodeOptions.GridCombo,
+            BasicNodeOptions.Readonly,
+            BasicNodeOptions.HasLifecycle,
+            BasicNodeOptions.ForceGenerateRefToModules,
+            BasicNodeOptions.CustomizeBatchUpdateReadModels,
         };
         return new() {
             Models = models,

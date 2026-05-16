@@ -203,6 +203,7 @@ namespace Nijo.Parts.CSharp {
                 // DBの実体をもたないクエリモデルやコマンドモデルから参照された場合はナビゲーションプロパティを張らない
                 var refFromRoot = refFrom.Owner.GetRoot();
                 var hasDbEntity = refFromRoot.Model is DataModel
+                               || refFromRoot.Model is Models.WriteModel2
                                || refFromRoot.Model is QueryModel
                                && refFromRoot.IsView;
 

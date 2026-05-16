@@ -79,6 +79,25 @@ public class NodeOptionValidateContext {
 /// 標準のオプション属性
 /// </summary>
 internal static class BasicNodeOptions {
+    private static bool IsDataModelLike(IModel model) {
+        return model is DataModel || model is WriteModel2 || model is ReadModel2Compat;
+    }
+    private static bool IsStrictQueryModel(IModel model) {
+        return model is QueryModel && model is not ReadModel2Compat;
+    }
+
+    private static NodeOption CreateCompatibilityOption(string attributeName, Func<IModel, E_NodeType, bool>? isAvailable = null) {
+        return new() {
+            AttributeName = attributeName,
+            DisplayName = $"互換属性: {attributeName}",
+            Type = E_NodeOptionType.String,
+            HelpText = "旧版互換のために受け付ける属性です。現行 parser で必要に応じて正規化されます。",
+            IsAvailable = isAvailable ?? ((_, _) => true),
+            ValidateOthers = _ => {
+                // 旧版互換の受け皿としてのみ扱う。
+            },
+        };
+    }
 
     internal static NodeOption DisplayName = new() {
         AttributeName = "DisplayName",
@@ -109,7 +128,7 @@ internal static class BasicNodeOptions {
             複数の集約で同じテーブル名を指定することはできません。
             """,
         IsAvailable = (model, nodeType) => {
-            return model is DataModel || model is QueryModel;
+            return IsDataModelLike(model) || model is QueryModel;
         },
         ValidateOthers = ctx => {
             // QueryModelの場合はビューにマッピングされる場合のみ指定可能
@@ -158,10 +177,10 @@ internal static class BasicNodeOptions {
             （カスタマイズ処理でURLとDisplayDataの間のデータのやり取りに使用する想定）
             """,
         IsAvailable = (model, nodeType) => {
-            return (model is DataModel
-                 || model is QueryModel)
-                 && (nodeType == E_NodeType.ValueMember
-                  || nodeType == E_NodeType.Ref);
+            return (IsDataModelLike(model)
+               || model is QueryModel)
+               && (nodeType == E_NodeType.ValueMember
+                || nodeType == E_NodeType.Ref);
         },
         ValidateOthers = ctx => {
             if (!ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model)) return;
@@ -172,17 +191,17 @@ internal static class BasicNodeOptions {
             var ownerType = ctx.SchemaParseContext.GetNodeType(owner);
 
             // データモデルの子集約には付与不可
-            if (model is DataModel && ownerType == E_NodeType.ChildAggregate) {
+            if (IsDataModelLike(model) && ownerType == E_NodeType.ChildAggregate) {
                 ctx.AddError("データモデルの子集約にはキーを指定できません。");
             }
 
             // クエリモデルの子集約には付与不可
-            if (model is QueryModel && ownerType == E_NodeType.ChildAggregate) {
+            if (IsStrictQueryModel(model) && ownerType == E_NodeType.ChildAggregate) {
                 ctx.AddError("クエリモデルの子集約にはキーを指定できません。");
             }
 
             // クエリモデルの子配列は、ビューにマッピングされない場合は付与不可
-            if (model is QueryModel && ownerType == E_NodeType.ChildrenAggregate) {
+            if (IsStrictQueryModel(model) && ownerType == E_NodeType.ChildrenAggregate) {
                 var root = ctx.XElement.GetRootAggregateElement();
                 var mapToView = root.Attribute(MapToView!.AttributeName);
 
@@ -192,7 +211,7 @@ internal static class BasicNodeOptions {
             }
 
             // クエリモデルのルート集約は、ビューにマッピングされない場合は付与不可
-            if (model is QueryModel && ownerType == E_NodeType.RootAggregate) {
+            if (IsStrictQueryModel(model) && ownerType == E_NodeType.RootAggregate) {
                 var root = ctx.XElement.GetRootAggregateElement();
                 var mapToView = root.Attribute(MapToView!.AttributeName);
 
@@ -212,7 +231,7 @@ internal static class BasicNodeOptions {
             また、新規登録処理や更新処理でアプリケーション側で必須入力チェック処理が行われるようになります。
             """,
         IsAvailable = (model, nodeType) => {
-            return model is DataModel
+            return IsDataModelLike(model)
                 && (nodeType == E_NodeType.ValueMember
                  || nodeType == E_NodeType.Ref);
         },
@@ -220,6 +239,44 @@ internal static class BasicNodeOptions {
             // 特に制約なし
         },
     };
+    internal static NodeOption NotNegative = new() {
+        AttributeName = "NotNegative",
+        DisplayName = "非負数",
+        Type = E_NodeOptionType.Boolean,
+        HelpText = $$"""
+            数値系属性に 0 以上の値のみを許可します。
+            新規登録処理や更新処理でアプリケーション側の非負数チェック対象になります。
+            """,
+        IsAvailable = (model, nodeType) => {
+            return IsDataModelLike(model)
+                && nodeType == E_NodeType.ValueMember;
+        },
+        ValidateOthers = ctx => {
+            if (!ctx.SchemaParseContext.TryResolveMemberType(ctx.XElement, out var valueMemberType)
+                || valueMemberType is not ValueMemberTypes.IntMember
+                && valueMemberType is not ValueMemberTypes.DecimalMember
+                && valueMemberType is not ValueMemberTypes.SequenceMember) {
+                ctx.AddError("この属性は int, decimal, sequence 型の値メンバーにのみ指定可能です。");
+            }
+        },
+    };
+    internal static NodeOption Required = CreateCompatibilityOption("Required", (model, nodeType) => {
+        return (IsDataModelLike(model) || model is QueryModel)
+            && (nodeType == E_NodeType.ValueMember
+             || nodeType == E_NodeType.Ref
+             || nodeType == E_NodeType.ChildAggregate
+             || nodeType == E_NodeType.ChildrenAggregate);
+    });
+    internal static NodeOption Name = CreateCompatibilityOption("Name");
+    internal static NodeOption Hidden = CreateCompatibilityOption("Hidden");
+    internal static NodeOption Wide = CreateCompatibilityOption("Wide");
+    internal static NodeOption Combo = CreateCompatibilityOption("Combo");
+    internal static NodeOption Radio = CreateCompatibilityOption("Radio");
+    internal static NodeOption GridCombo = CreateCompatibilityOption("GridCombo");
+    internal static NodeOption Readonly = CreateCompatibilityOption("Readonly");
+    internal static NodeOption HasLifecycle = CreateCompatibilityOption("HasLifecycle");
+    internal static NodeOption ForceGenerateRefToModules = CreateCompatibilityOption("ForceGenerateRefToModules");
+    internal static NodeOption CustomizeBatchUpdateReadModels = CreateCompatibilityOption("CustomizeBatchUpdateReadModels");
 
 
     #region DataModel用
@@ -234,7 +291,7 @@ internal static class BasicNodeOptions {
             """,
         IsAvailable = (model, nodeType) => {
             // データモデルのルート集約のみ許可
-            return model is DataModel && nodeType == E_NodeType.RootAggregate;
+            return IsDataModelLike(model) && nodeType == E_NodeType.RootAggregate;
         },
         ValidateOthers = ctx => {
             // IsAvailableで基本的な判定は完了しているため、追加の検証は不要
@@ -249,7 +306,7 @@ internal static class BasicNodeOptions {
             DataModel、かつ、それとまったく同じ形のQueryModelが生成される場合にのみ指定可能。
             """,
         IsAvailable = (model, nodeType) => {
-            return model is DataModel && nodeType == E_NodeType.RootAggregate;
+            return IsDataModelLike(model) && nodeType == E_NodeType.RootAggregate;
         },
         ValidateOthers = ctx => {
             // このオプションを使用するためにはGenerateDefaultQueryModelの指定が必須
@@ -272,7 +329,7 @@ internal static class BasicNodeOptions {
             """,
         IsAvailable = (model, nodeType) => {
             // データモデルのルート集約のみ許可
-            return model is DataModel && nodeType == E_NodeType.RootAggregate;
+            return IsDataModelLike(model) && nodeType == E_NodeType.RootAggregate;
         },
         ValidateOthers = ctx => {
             // IsAvailableで基本的な判定は完了しているため、追加の検証は不要
@@ -290,7 +347,7 @@ internal static class BasicNodeOptions {
             例: "xxxx,yyyy;zzzz;" と指定した場合、Xの列とYの列の組み合わせと、Zの列にユニーク制約がつきます。
             """,
         IsAvailable = (model, nodeType) => {
-            return model is DataModel
+            return IsDataModelLike(model)
                 && (nodeType == E_NodeType.RootAggregate
                 || nodeType == E_NodeType.ChildAggregate
                 || nodeType == E_NodeType.ChildrenAggregate);
@@ -391,7 +448,7 @@ internal static class BasicNodeOptions {
             """,
         IsAvailable = (model, nodeType) => {
             // データモデルのルート集約のみ許可
-            return model is DataModel && nodeType == E_NodeType.RootAggregate;
+            return IsDataModelLike(model) && nodeType == E_NodeType.RootAggregate;
         },
         ValidateOthers = ctx => {
             // IsAvailableで基本的な判定は完了しているため、追加の検証は不要
@@ -408,7 +465,7 @@ internal static class BasicNodeOptions {
         Type = E_NodeOptionType.Boolean,
         IsAvailable = (model, nodeType) => {
             // データモデルのValueMemberにのみ適用可能
-            return model is DataModel && nodeType == E_NodeType.ValueMember;
+            return IsDataModelLike(model) && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
             // IsGenericLookupTable と組み合わせて使う必要がある
@@ -445,7 +502,7 @@ internal static class BasicNodeOptions {
             参照先テーブルの {{nameof(IsGenericLookupTable)}} 属性と組み合わせて使います。
             """,
         IsAvailable = (model, nodeType) => {
-            return model is DataModel && nodeType == E_NodeType.Ref;
+            return IsDataModelLike(model) && nodeType == E_NodeType.Ref;
         },
         ValidateOthers = ctx => {
             // 参照先が汎用参照テーブルでなければエラー
@@ -518,12 +575,14 @@ internal static class BasicNodeOptions {
             - {{STRING_SEARCH_BEHAVIOR_EXACT}}: 完全一致
             """,
         IsAvailable = (model, nodeType) => {
-            return (model is QueryModel || model is DataModel)
+            return (model is QueryModel || IsDataModelLike(model))
                 && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
             // DataModel の場合は GenerateDefaultQueryModel が指定されている場合のみ許可
-            if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model) && model is DataModel) {
+            if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model)
+                && IsDataModelLike(model)
+                && model is not ReadModel2Compat) {
                 var root = ctx.XElement.GetRootAggregateElement();
                 var generateDefaultQueryModel = root.Attribute(GenerateDefaultQueryModel!.AttributeName);
 
@@ -706,7 +765,7 @@ internal static class BasicNodeOptions {
             RDBMS上での文字列項目の最大長。整数で指定してください。
             """,
         IsAvailable = (model, nodeType) => {
-            return model is DataModel
+            return IsDataModelLike(model)
                 && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
@@ -725,10 +784,10 @@ internal static class BasicNodeOptions {
             最終的に廃止予定（nijo.xml上でカスタムバリデータを定義できるようにする）
             """,
         IsAvailable = (model, nodeType) => {
-            return (model is DataModel
-                 || model is QueryModel
-                 || model is CommandModel)
-                 && nodeType == E_NodeType.ValueMember;
+            return (IsDataModelLike(model)
+               || model is QueryModel
+               || model is CommandModel)
+               && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
             // 特に制約なし
@@ -742,10 +801,10 @@ internal static class BasicNodeOptions {
             数値系属性の整数部桁数 + 小数部桁数
             """,
         IsAvailable = (model, nodeType) => {
-            return (model is DataModel
-                 || model is QueryModel
-                 || model is CommandModel)
-                 && nodeType == E_NodeType.ValueMember;
+            return (IsDataModelLike(model)
+               || model is QueryModel
+               || model is CommandModel)
+               && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
             // 整数値のみ許可
@@ -762,10 +821,10 @@ internal static class BasicNodeOptions {
             数値系属性の小数部桁数
             """,
         IsAvailable = (model, nodeType) => {
-            return (model is DataModel
-                 || model is QueryModel
-                 || model is CommandModel)
-                 && nodeType == E_NodeType.ValueMember;
+            return (IsDataModelLike(model)
+               || model is QueryModel
+               || model is CommandModel)
+               && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
             // 整数値のみ許可
@@ -782,7 +841,7 @@ internal static class BasicNodeOptions {
             シーケンス物理名
             """,
         IsAvailable = (model, nodeType) => {
-            return model is DataModel && nodeType == E_NodeType.ValueMember;
+            return IsDataModelLike(model) && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
             // 特に制約なし

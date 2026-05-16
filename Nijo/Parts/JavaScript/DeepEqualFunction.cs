@@ -66,10 +66,10 @@ internal class DeepEqualFunction {
 
             const string TYPE_ENUM = "Enum";
             const string TYPE_VALUE_OBJECT = "ValueObject";
+            const string TYPE_BYTE_ARRAY = "ByteArray";
 
             var valueMemberTypePhysicalNames = ctx.SchemaParser
                 .GetValueMemberTypes()
-                .Where(t => t is not ValueMemberTypes.ByteArrayMember)
                 .Select(t => {
                     if (t is ValueMemberTypes.StaticEnumMember staticEnum) {
                         return new {
@@ -82,6 +82,12 @@ internal class DeepEqualFunction {
                             DisplayName = "値オブジェクト",
                             TypeIdentifier = TYPE_VALUE_OBJECT,
                             TsTypeName = t.TsTypeName.Split('.').Last(),
+                        };
+                    } else if (t is ValueMemberTypes.ByteArrayMember) {
+                        return new {
+                            t.DisplayName,
+                            TypeIdentifier = TYPE_BYTE_ARRAY,
+                            TsTypeName = "unknown",
                         };
                     } else {
                         return new {
