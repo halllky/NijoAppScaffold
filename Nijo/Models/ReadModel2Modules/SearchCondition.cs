@@ -58,13 +58,13 @@ namespace Nijo.Models.ReadModel2Modules {
             public string RenderTsNewObjectFunctionBody() {
                 if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
                     return $$"""
-                                                {
-                                                    {{FILTER_TS}}: {
-                                                        {{WithIndent(FilterRoot.RenderLegacyNewObjectFunctionMemberLiteral(), "    ")}}
-                                                    },
-                                                    {{SORT_TS}}: [],
-                                                }
-                                                """;
+                        {
+                          {{FILTER_TS}}: {
+                          {{FilterRoot.RenderLegacyNewObjectFunctionMemberLiteral()}}
+                          },
+                          {{SORT_TS}}: [],
+                        }
+                        """;
                 }
 
                 return $$"""
@@ -84,15 +84,15 @@ namespace Nijo.Models.ReadModel2Modules {
 
                 if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
                     return $$"""
-                                                /** {{_entryAggregate.DisplayName}} のメンバーのうちソート可能なもの */
-                                                export type {{TypeScriptSortableMemberType}}
-                                                {{If(sortableMembers.Length == 0, () => $$"""
-                                                    = never
-                                                """)}}
-                                                {{sortableMembers.SelectTextTemplate((member, i) => $$"""
-                                                    {{(i == 0 ? "=" : "|")}} '{{member.GetLiteral().Replace("'", "\\'")}}'
-                                                """)}}
-                                                """;
+                        /** {{_entryAggregate.DisplayName}} のメンバーのうちソート可能なもの */
+                        export type {{TypeScriptSortableMemberType}}
+                        {{If(sortableMembers.Length == 0, () => $$"""
+                          = never
+                        """)}}
+                        {{sortableMembers.SelectTextTemplate((member, i) => $$"""
+                          {{(i == 0 ? "=" : "|")}} '{{member.GetLiteral().Replace("'", "\\'")}}'
+                        """)}}
+                        """;
                 }
 
                 return $$"""
@@ -114,6 +114,14 @@ namespace Nijo.Models.ReadModel2Modules {
                     """;
             }
             internal string RenderNewObjectFunction() {
+                if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
+                    return $$"""
+                        /** {{_entryAggregate.DisplayName}}の検索条件クラスの空オブジェクトを作成して返します。 */
+                        export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({{RenderTsNewObjectFunctionBody()}})
+
+                        """;
+                }
+
                 return $$"""
                     /** {{_entryAggregate.DisplayName}}の検索条件クラスの空オブジェクトを作成して返します。 */
                     export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({{RenderTsNewObjectFunctionBody()}})
@@ -152,26 +160,27 @@ namespace Nijo.Models.ReadModel2Modules {
             internal string RenderParseQueryParameterFunction() {
                 if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
                     return $$"""
-                                                /** クエリパラメータを解釈して画面初期表示時検索条件オブジェクトを返します。 */
-                                                export const {{ParseQueryParameter}} = (urlSearch: string): {{TsTypeName}} => {
-                                                    const searchCondition = {{TsNewObjectFunction}}()
-                                                    if (!urlSearch) return searchCondition
+                        /** クエリパラメータを解釈して画面初期表示時検索条件オブジェクトを返します。 */
+                        export const {{ParseQueryParameter}} = (urlSearch: string): {{TsTypeName}} => {
+                          const searchCondition = {{TsNewObjectFunction}}()
+                          if (!urlSearch) return searchCondition
 
-                                                    const searchParams = new URLSearchParams(urlSearch)
-                                                    if (searchParams.has('k'))
-                                                        searchCondition.{{KEYWORD_TS}} = searchParams.get('k')!
-                                                    if (searchParams.has('f'))
-                                                        searchCondition.{{FILTER_TS}} = JSON.parse(searchParams.get('f')!)
-                                                    if (searchParams.has('s'))
-                                                        searchCondition.{{SORT_TS}} = JSON.parse(searchParams.get('s')!)
-                                                    if (searchParams.has('t'))
-                                                        searchCondition.{{TAKE_TS}} = Number(searchParams.get('t'))
-                                                    if (searchParams.has('p'))
-                                                        searchCondition.{{SKIP_TS}} = Number(searchParams.get('p'))
+                          const searchParams = new URLSearchParams(urlSearch)
+                          if (searchParams.has('k'))
+                            searchCondition.{{KEYWORD_TS}} = searchParams.get('k')!
+                          if (searchParams.has('f'))
+                            searchCondition.{{FILTER_TS}} = JSON.parse(searchParams.get('f')!)
+                          if (searchParams.has('s'))
+                            searchCondition.{{SORT_TS}} = JSON.parse(searchParams.get('s')!)
+                          if (searchParams.has('t'))
+                            searchCondition.{{TAKE_TS}} = Number(searchParams.get('t'))
+                          if (searchParams.has('p'))
+                            searchCondition.{{SKIP_TS}} = Number(searchParams.get('p'))
 
-                                                    return searchCondition
-                                                }
-                                                """;
+                          return searchCondition
+                        }
+
+                        """;
                 }
 
                 return $$"""
@@ -343,36 +352,37 @@ namespace Nijo.Models.ReadModel2Modules {
 
                 if (ctx.IsLegacyCompatibilityMode()) {
                     return $$"""
-                                                // ----------------------------------------------------------
-                                                // 検索条件クラス（{{rootAggregate.DisplayName}}）
+                        // ----------------------------------------------------------
+                        // 検索条件クラス（{{rootAggregate.DisplayName}}）
 
-                                                /** {{rootAggregate.DisplayName}}の一覧検索条件 */
-                                                export type {{entry.TsTypeName}} = {
-                                                  /** 絞り込み条件（キーワード検索） */
-                                                  {{Entry.KEYWORD_TS}}?: string
-                                                  /** 絞り込み条件 */
-                                                  {{Entry.FILTER_TS}}: {{entry.FilterRoot.TsTypeName}}
-                                                  /** 並び順 */
-                                                  {{Entry.SORT_TS}}?: (`${{{entry.TypeScriptSortableMemberType}}}{{ASC_SUFFIX}}` | `${{{entry.TypeScriptSortableMemberType}}}{{DESC_SUFFIX}}`)[]
-                                                  /** 先頭から何件スキップするか */
-                                                  {{Entry.SKIP_TS}}?: number | null
-                                                  /** 最大何件取得するか */
-                                                  {{Entry.TAKE_TS}}?: number | null
-                                                  /**
-                                                   * 検索結果に明細データを含めなくても構わない場合、trueになる。
-                                                   * 具体的には一覧検索画面での検索とExcel出力の場合にtrueに、詳細登録画面の場合にfalseになる。
-                                                   * パフォーマンス改善以外の目的に使用しないこと。
-                                                   */
-                                                  {{Entry.EXCLUDE_CHILDREN_TS}}?: boolean
-                                                }
-                                                /** {{rootAggregate.DisplayName}}の一覧検索条件のうち絞り込み条件を指定する部分 */
-                                                export type {{entry.FilterRoot.TsTypeName}} = {
-                                                {{entry.FilterRoot.RenderTypeScriptDeclaringLiteral().SelectTextTemplate(source => $$"""
-                                                  {{WithIndent(source, "  ")}}
-                                                """)}}
-                                                }
+                        /** {{rootAggregate.DisplayName}}の一覧検索条件 */
+                        export type {{entry.TsTypeName}} = {
+                          /** 絞り込み条件（キーワード検索） */
+                          {{Entry.KEYWORD_TS}}?: string
+                          /** 絞り込み条件 */
+                          {{Entry.FILTER_TS}}: {{entry.FilterRoot.TsTypeName}}
+                          /** 並び順 */
+                          {{Entry.SORT_TS}}?: (`${{{entry.TypeScriptSortableMemberType}}}{{ASC_SUFFIX}}` | `${{{entry.TypeScriptSortableMemberType}}}{{DESC_SUFFIX}}`)[]
+                          /** 先頭から何件スキップするか */
+                          {{Entry.SKIP_TS}}?: number | null
+                          /** 最大何件取得するか */
+                          {{Entry.TAKE_TS}}?: number | null
+                          /**
+                           * 検索結果に明細データを含めなくても構わない場合、trueになる。
+                           * 具体的には一覧検索画面での検索とExcel出力の場合にtrueに、詳細登録画面の場合にfalseになる。
+                           * パフォーマンス改善以外の目的に使用しないこと。
+                           */
+                          {{Entry.EXCLUDE_CHILDREN_TS}}?: boolean
+                        }
+                        /** {{rootAggregate.DisplayName}}の一覧検索条件のうち絞り込み条件を指定する部分 */
+                        export type {{entry.FilterRoot.TsTypeName}} = {
+                        {{entry.FilterRoot.RenderTypeScriptDeclaringLiteral().SelectTextTemplate(source => $$"""
+                          {{WithIndent(source, "  ")}}
+                        """)}}
+                        }
 
-                                                """;
+
+                        """;
                 }
 
                 return $$"""
@@ -580,6 +590,21 @@ namespace Nijo.Models.ReadModel2Modules {
                     """;
             }
             string IFilterMember.RenderTypeScriptDeclaring() {
+                if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
+                    var legacyMemberType = Member.Type.TsTypeName.Contains("null") || !Member.IsKey
+                        ? Member.Type.TsTypeName
+                        : $"{Member.Type.TsTypeName} | null";
+                    var legacyTypeName = Member.OnlySearchCondition
+                        ? legacyMemberType
+                        : SearchBehavior?.FilterTsTypeName is string filterTsTypeName
+                            && Regex.IsMatch(filterTsTypeName, @"\{.*from.*to.*\}")
+                            ? $"{{ from?: {legacyMemberType}, to?: {legacyMemberType} }}"
+                            : legacyMemberType;
+                    return $$"""
+                        {{Member.PhysicalName}}?: {{legacyTypeName}}
+                        """;
+                }
+
                 var typeName = Member.OnlySearchCondition
                     ? Member.Type.TsTypeName
                     : Member.Type.SearchBehavior?.FilterTsTypeName;

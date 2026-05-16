@@ -37,6 +37,70 @@ namespace Nijo.Models.ReadModel2Modules {
             var searchCondition = new SearchCondition.Entry(_aggregate);
             var searchResult = new DisplayData(_aggregate);
 
+            if (context.IsLegacyCompatibilityMode()) {
+                return $$"""
+                    /** {{_aggregate.DisplayName}}の一覧検索を行いその結果を保持します。 */
+                    export const {{ReactHookName}} = (
+                      /** 昔は意味を持っていたが今は意味が無くなったパラメータ。必ずtrueを指定すること。 */
+                      disableAutoLoad: true
+                    ) => {
+                      const [currentPageItems, setCurrentPageItems] = React.useState<{{searchResult.TsTypeName}}[]>(() => [])
+                      const [nowLoading, setNowLoading] = React.useState(false)
+                      const dispatchMsg = Util.useMsgContext()
+                      const { complexPost } = Util.useHttpRequest()
+
+                      const load = React.useCallback(async (searchCondition: {{searchCondition.TsTypeName}}, options?: Util.ComplexPostOptions): Promise<{{searchResult.TsTypeName}}[]> => {
+                        setNowLoading(true)
+                        try {
+                          const res = await complexPost<{{searchResult.TsTypeName}}[]>(`/api/{{_aggregate.PhysicalName}}/{{ControllerActionLoad}}`, searchCondition, options)
+                          if (!res.ok) {
+                            return []
+                          }
+                          setCurrentPageItems(res.data ?? [])
+                          return res.data ?? []
+                        } finally {
+                          setNowLoading(false)
+                        }
+                      }, [complexPost, dispatchMsg])
+
+                      const count = React.useCallback(async (searchConditionFilter: {{searchCondition.FilterRoot.TsTypeName}}, options?: Util.ComplexPostOptions): Promise<number> => {
+                        try {
+                          const res = await complexPost<number>(`/api/{{_aggregate.PhysicalName}}/{{ControllerActionCount}}`, searchConditionFilter, {
+                            ...options,
+                            ignoreConfirm: options?.ignoreConfirm ?? true,
+                          })
+                          return res.data ?? 0
+                        } catch {
+                          return 0
+                        }
+                      }, [complexPost])
+
+                      React.useEffect(() => {
+                        if (!nowLoading && !disableAutoLoad) {
+                          load(createNew{{searchCondition.TsTypeName}}())
+                        }
+                      }, [load])
+
+                      return {
+                        /** 読み込み結果の一覧です。現在表示中のページのデータのみが格納されています。 */
+                        currentPageItems,
+                        /** 現在読み込み中か否かを返します。 */
+                        nowLoading,
+                        /** 指定の検索条件でヒットするデータの件数をカウントします。 */
+                        count,
+                        /**
+                         * {{_aggregate.DisplayName}}の一覧検索を行います。
+                         * 結果はこの関数の戻り値として返されます。
+                         * また戻り値と同じものがこのフックの状態（currentPageItems）に格納されます。
+                         * どちらか使いやすい方で参照してください。
+                         */
+                        load,
+                      }
+                    }
+
+                    """;
+            }
+
             return $$"""
                 /** {{_aggregate.DisplayName}}の一覧検索を行いその結果を保持します。 */
                 export const {{ReactHookName}} = (
