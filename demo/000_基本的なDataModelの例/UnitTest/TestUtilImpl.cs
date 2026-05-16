@@ -119,7 +119,7 @@ public partial class TestUtilImpl {
 
             // appsettings.json から読み取る設定を適用
             new ConfigurationBuilder()
-                .SetBasePath(BaseWorkDirectory)
+                .SetBasePath(currentTestWorkDirectory)
                 .AddJsonFile("appsettings.json", true)
                 .AddJsonFile("appsettings.Development.json", true) // 後にAddされたファイルが優先される
                 .Build()
