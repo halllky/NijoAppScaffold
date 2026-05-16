@@ -69,14 +69,16 @@ namespace Nijo.Models {
                 {{loadMethod.RenderAppSrvBaseMethod(ctx).TrimEnd()}}
                 {{loadMethod.RenderAppSrvAbstractMethod(ctx).TrimEnd()}}
                 {{rootDisplayData.RenderSetKeysReadOnly(ctx).TrimEnd()}}
-                {{singleView.RenderSetSingleViewDisplayDataFn(ctx).TrimEnd()}}
                 """);
 
-            if (rootAggregate.GenerateBatchUpdateCommand) {
+            if ((ctx.IsLegacyCompatibilityMode() && rootAggregate.Model is WriteModel2)
+                || rootAggregate.GenerateBatchUpdateCommand) {
                 aggregateFile.AddTypeScriptFunction(new BatchUpdateReadModel().RenderFunction(ctx, rootAggregate));
                 aggregateFile.AddWebapiControllerAction(BatchUpdateReadModel.RenderControllerActionVersion2(ctx, rootAggregate));
                 aggregateFile.AddAppSrvMethod(BatchUpdateReadModel.RenderAppSrvMethodVersion2(ctx, rootAggregate));
             }
+
+            aggregateFile.AddAppSrvMethod(singleView.RenderSetSingleViewDisplayDataFn(ctx));
 
             aggregateFile.AddTypeScriptFunction(rootDisplayData.RenderDeepEqualFunctionRecursively(ctx));
             aggregateFile.AddTypeScriptFunction(rootDisplayData.RenderCheckChangesFunction(ctx));

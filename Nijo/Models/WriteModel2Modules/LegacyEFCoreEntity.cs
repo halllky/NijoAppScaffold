@@ -39,7 +39,7 @@ namespace Nijo.Models.WriteModel2Modules {
                 foreach (var parentKey in new LegacyEFCoreEntity(parent).GetColumns().Where(col => col.IsKey)) {
                     if (parentKey.Member == null) continue;
 
-                    yield return new Nijo.Parts.CSharp.EFCoreEntity.ParentKeyMember(
+                    yield return new LegacyParentKeyMember(
                         parentKey.Member,
                         $"PARENT_{parentKey.PhysicalName}",
                         $"PARENT_{parentKey.DbName}");
@@ -53,7 +53,7 @@ namespace Nijo.Models.WriteModel2Modules {
             }
 
             foreach (var vm in Aggregate.GetMembers().OfType<ValueMember>()) {
-                yield return new Nijo.Parts.CSharp.EFCoreEntity.OwnColumnMember(vm);
+                yield return new LegacyOwnColumnMember(vm);
             }
         }
 
@@ -100,7 +100,7 @@ namespace Nijo.Models.WriteModel2Modules {
                 foreach (var parentKey in new LegacyEFCoreEntity(parent).GetColumns().Where(col => col.IsKey)) {
                     if (parentKey.Member == null) continue;
 
-                    yield return new Nijo.Parts.CSharp.EFCoreEntity.ParentKeyMember(
+                    yield return new LegacyParentKeyMember(
                         parentKey.Member,
                         $"PARENT_{parentKey.PhysicalName}",
                         $"PARENT_{parentKey.DbName}");
@@ -123,7 +123,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
             foreach (var member in Aggregate.GetMembers()) {
                 if (member is ValueMember vm) {
-                    yield return new Nijo.Parts.CSharp.EFCoreEntity.OwnColumnMember(vm);
+                    yield return new LegacyOwnColumnMember(vm);
                 }
             }
 
@@ -156,7 +156,7 @@ namespace Nijo.Models.WriteModel2Modules {
             }
         }
 
-        private IEnumerable<Nijo.Parts.CSharp.EFCoreEntity.RefKeyMember> EnumerateRefKeyMembers(RefToMember refTo) {
+        private IEnumerable<LegacyRefKeyMember> EnumerateRefKeyMembers(RefToMember refTo) {
             var genericLookupRef = GenericLookupRefToInfo.TryCreate(refTo, out var info) ? info : null;
 
             foreach (var targetKey in new LegacyEFCoreEntity(refTo.RefTo).GetColumns().Where(col => col.IsKey)) {
@@ -166,7 +166,7 @@ namespace Nijo.Models.WriteModel2Modules {
                 var isParentKey = targetKey is Nijo.Parts.CSharp.EFCoreEntity.ParentKeyMember
                                || targetKey is Nijo.Parts.CSharp.EFCoreEntity.RefKeyMember refKey && refKey.IsParentKey;
 
-                yield return new Nijo.Parts.CSharp.EFCoreEntity.RefKeyMember(
+                yield return new LegacyRefKeyMember(
                     refTo,
                     targetKey.Member,
                     $"{refTo.PhysicalName}_{targetKey.PhysicalName}",
@@ -375,7 +375,7 @@ namespace Nijo.Models.WriteModel2Modules {
             var relevantId = GetConstraintToken(childAggregate);
             var foreignKeys = new LegacyEFCoreEntity(childAggregate)
                 .GetColumns()
-                .OfType<Nijo.Parts.CSharp.EFCoreEntity.ParentKeyMember>()
+                .OfType<LegacyParentKeyMember>()
                 .ToArray();
 
             return $$"""
@@ -403,7 +403,7 @@ namespace Nijo.Models.WriteModel2Modules {
             var relevantId = GetConstraintToken(relevantAggregate);
             var foreignKeys = new LegacyEFCoreEntity(relevantAggregate)
                 .GetColumns()
-                .OfType<Nijo.Parts.CSharp.EFCoreEntity.RefKeyMember>()
+                .OfType<LegacyRefKeyMember>()
                 .Where(fk => fk.RefEntry == refFrom)
                 .ToArray();
 
@@ -498,6 +498,71 @@ namespace Nijo.Models.WriteModel2Modules {
                 if (!refFrom.IsKey) return true;
                 return !refFrom.RefTo.IsSingleKeyOf(refFrom.Owner);
             }
+        }
+
+        private static string GetLegacyColumnCsType(ValueMember member) {
+            return member.Type.CsDomainTypeName.Replace("DateOnly", "Date", StringComparison.Ordinal);
+        }
+
+        private sealed class LegacyOwnColumnMember : Nijo.Parts.CSharp.EFCoreEntity.EFCoreEntityColumn {
+            internal LegacyOwnColumnMember(ValueMember member) {
+                Member = member;
+            }
+
+            internal override ValueMember Member { get; }
+            internal override IValueMemberType MemberType => Member.Type;
+            internal override string CsType => GetLegacyColumnCsType(Member);
+            internal override string PhysicalName => Member.PhysicalName;
+            internal override string DisplayName => Member.DisplayName;
+            internal override string DbName => Member.DbName;
+            internal override bool IsKey => Member.IsKey;
+            internal override bool IsNotNull => Member.IsKey || Member.IsNotNull;
+        }
+
+        private sealed class LegacyParentKeyMember : Nijo.Parts.CSharp.EFCoreEntity.EFCoreEntityColumn {
+            internal LegacyParentKeyMember(ValueMember member, string physicalName, string dbName, bool? forceKey = null, bool? forceNotNull = null) {
+                Member = member;
+                PhysicalName = physicalName;
+                DbName = dbName;
+                _isKey = forceKey ?? true;
+                _isNotNull = forceNotNull ?? true;
+            }
+
+            internal override ValueMember Member { get; }
+            internal override IValueMemberType MemberType => Member.Type;
+            internal override string CsType => GetLegacyColumnCsType(Member);
+            internal override string PhysicalName { get; }
+            internal override string DisplayName => Member.DisplayName;
+            internal override string DbName { get; }
+            private readonly bool _isKey;
+            private readonly bool _isNotNull;
+            internal override bool IsKey => _isKey;
+            internal override bool IsNotNull => _isNotNull;
+        }
+
+        private sealed class LegacyRefKeyMember : Nijo.Parts.CSharp.EFCoreEntity.EFCoreEntityColumn {
+            internal LegacyRefKeyMember(RefToMember refEntry, ValueMember member, string physicalName, string dbName, bool isParentKey, bool? forceKey = null, bool? forceNotNull = null) {
+                RefEntry = refEntry;
+                Member = member;
+                PhysicalName = physicalName;
+                DbName = dbName;
+                IsParentKey = isParentKey;
+                _isKey = forceKey ?? RefEntry.IsKey;
+                _isNotNull = forceNotNull ?? RefEntry.IsKey || RefEntry.IsNotNull;
+            }
+
+            internal RefToMember RefEntry { get; }
+            internal override ValueMember Member { get; }
+            internal override IValueMemberType MemberType => Member.Type;
+            internal override string CsType => GetLegacyColumnCsType(Member);
+            internal override string PhysicalName { get; }
+            internal override string DisplayName => Member.DisplayName;
+            internal override string DbName { get; }
+            private readonly bool _isKey;
+            private readonly bool _isNotNull;
+            internal override bool IsKey => _isKey;
+            internal override bool IsNotNull => _isNotNull;
+            internal bool IsParentKey { get; }
         }
     }
 }

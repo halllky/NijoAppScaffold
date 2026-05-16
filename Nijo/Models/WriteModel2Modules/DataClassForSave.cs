@@ -447,7 +447,7 @@ namespace Nijo.Models.WriteModel2Modules {
                     var value = currentKeys.TryGetValue(vm, out var keyExpr)
                         ? keyExpr
                         : RenderMemberAccess(instanceName, vm.PhysicalName, nullConditional);
-                    yield return $"{vm.PhysicalName} = {vm.Type.RenderCastToPrimitiveType()}{value},";
+                    yield return $"{vm.PhysicalName} = {value},";
 
                 } else if (member is ChildAggregate child) {
                     var childDbEntity = new EFCoreEntity(child);
@@ -640,7 +640,7 @@ namespace Nijo.Models.WriteModel2Modules {
                     var value = currentKeys.TryGetValue(vm, out var keyExpr)
                         ? keyExpr
                         : RenderMemberAccess(instanceName, vm.PhysicalName, nullConditional);
-                    yield return $"{vm.PhysicalName} = {vm.Type.RenderCastToDomainType()}{value},";
+                    yield return $"{vm.PhysicalName} = {value},";
 
                 } else if (member is RefToMember refTo) {
                     yield return $$"""
@@ -696,7 +696,7 @@ namespace Nijo.Models.WriteModel2Modules {
         private IEnumerable<string> RenderFromRefTargetKeysLegacy(AggregateBase aggregate, string entityExpr, IReadOnlyList<string> path, bool parentPathUnsupported) {
             foreach (var vm in aggregate.GetMembers().OfType<ValueMember>().Where(vm => vm.IsKey)) {
                 var sourceProperty = $"{path.Join("_")}_{vm.PhysicalName}";
-                var value = parentPathUnsupported ? "null" : $"{vm.Type.RenderCastToDomainType()}{entityExpr}.{sourceProperty}";
+                var value = parentPathUnsupported ? "null" : $"{entityExpr}.{sourceProperty}";
                 yield return $"{vm.PhysicalName} = {value},";
             }
 
@@ -911,12 +911,16 @@ namespace Nijo.Models.WriteModel2Modules {
 
         private string GetLegacyMemberTypeNameCSharp(IAggregateMember member) {
             return member switch {
-                ValueMember vm => vm.Type.CsDomainTypeName + "?",
+                ValueMember vm => GetLegacyValueTypeNameCSharp(vm) + "?",
                 RefToMember refTo => new DataClassForRefTargetKeys(refTo.RefTo, refTo.RefTo).CsClassName + "?",
                 ChildAggregate child => new DataClassForSave(child, Type).CsClassName + "?",
                 ChildrenAggregate children => $"List<{new DataClassForSave(children, Type).CsClassName}>?",
                 _ => throw new InvalidOperationException($"未対応のメンバー型: {member.GetType().Name}"),
             };
+        }
+
+        private static string GetLegacyValueTypeNameCSharp(ValueMember member) {
+            return member.Type.CsDomainTypeName.Replace("DateOnly", "Date", StringComparison.Ordinal);
         }
 
         private string GetLegacyReadOnlyMemberTypeNameCSharp(IAggregateMember member) {

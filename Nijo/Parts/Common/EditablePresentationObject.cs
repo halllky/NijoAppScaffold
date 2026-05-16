@@ -373,7 +373,8 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         internal override string TsTypeName => $"{Aggregate.PhysicalName}DisplayData";
         internal abstract string CsClassNameAsMember { get; }
         internal abstract string TsTypeNameAsMember { get; }
-        internal override bool HasVersion => Aggregate is RootAggregate;
+        internal override bool HasVersion => Aggregate is RootAggregate
+            || Aggregate.XElement.Attribute(BasicNodeOptions.HasLifecycle.AttributeName) != null;
 
         internal abstract string RenderNewObjectCreation();
     }
