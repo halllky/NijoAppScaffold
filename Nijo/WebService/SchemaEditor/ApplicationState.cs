@@ -92,11 +92,11 @@ public class ApplicationState {
                     sectionName = SchemaParseContext.SECTION_COMMANDS;
                 } else if (type == new Models.StructureModel().SchemaName) {
                     sectionName = SchemaParseContext.SECTION_DATA_STRUCTURES;
-                } else if (type == Models.ValueObjectModel.SCHEMA_NAME) {
+                } else if (type == Models.ValueObjectModel.SCHEMA_NAME || type == Models.ValueObjectModel2.SCHEMA_NAME) {
                     sectionName = SchemaParseContext.SECTION_VALUE_OBJECTS;
                 } else if (type == Models.ConstantModel.SCHEMA_NAME) {
                     sectionName = SchemaParseContext.SECTION_CONSTANTS;
-                } else if (type == EnumDefParser.SCHEMA_NAME) {
+                } else if (type == EnumDefParser.SCHEMA_NAME || type == Models.StaticEnumModel2.SCHEMA_NAME) {
                     sectionName = SchemaParseContext.SECTION_STATIC_ENUMS;
                 } else {
                     sectionName = SchemaParseContext.SECTION_STATIC_ENUMS;

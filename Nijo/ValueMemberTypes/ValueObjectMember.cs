@@ -30,7 +30,7 @@ internal class ValueObjectMember : IValueMemberType {
             通常の文字列型よりも特別な意味を持った値（「○○コード」など）を表現するのに適しています。
             検索時の挙動は完全一致・部分一致・前方一致・後方一致から選択可能です。
 
-            予め nijo.xml で値オブジェクトの種類を `{{ValueObjectModel.SCHEMA_NAME}}` モデルとして定義しておく必要があります。
+            予め nijo.xml で値オブジェクトの種類を `{{ValueObjectModel.SCHEMA_NAME}}` または `{{ValueObjectModel2.SCHEMA_NAME}}` モデルとして定義しておく必要があります。
             """;
     }
 

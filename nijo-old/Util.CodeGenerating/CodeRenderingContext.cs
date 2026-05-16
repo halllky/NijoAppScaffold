@@ -101,6 +101,11 @@ namespace Nijo.Util.CodeGenerating {
 
             UseSummarizedFile<Configure>();
 
+            // 区分値定義が存在する場合は EnumDefs を必ず登録する（集約ゼロのenum-onlyプロジェクト対応）
+            if (Schema.EnumDefinitions.Any()) {
+                UseSummarizedFile<Parts.WebServer.EnumDefs>();
+            }
+
             Models.WriteModel2Features.CharacterTypeCheck.RenderLogic(this);
 
             CoreLibrary.UtilDir(utilDir => {

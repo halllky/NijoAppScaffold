@@ -42,6 +42,8 @@ public class SchemaParseRule {
             new CommandModel(),
             new StaticEnumModel(),
             new ValueObjectModel(),
+            new ValueObjectModel2(),
+            new StaticEnumModel2(),
             new StructureModel(),
             new ConstantModel(),
         };
