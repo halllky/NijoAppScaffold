@@ -71,6 +71,21 @@ public partial class TestUtilImpl {
         var currentTestWorkDirectory = Path.Combine(BaseWorkDirectory, testCaseName);
         Directory.CreateDirectory(currentTestWorkDirectory);
 
+        // appsettings.json はWebApiのそれを流用する
+        var webapiDir = Path.Combine(
+            BaseWorkDirectory,
+            "..", // UnitTest.Log
+            "..", // MyApp.sln があるフォルダ
+            "WebApi");
+        var appSettingsJson = Path.Combine(webapiDir, "appsettings.json");
+        var developmentJson = Path.Combine(webapiDir, "appsettings.Development.json");
+        if (File.Exists(appSettingsJson)) {
+            File.Copy(appSettingsJson, Path.Combine(currentTestWorkDirectory, "appsettings.json"));
+        }
+        if (File.Exists(developmentJson)) {
+            File.Copy(developmentJson, Path.Combine(currentTestWorkDirectory, "appsettings.Development.json"));
+        }
+
         // DI機構
         var services = new ServiceCollection();
         OverridedApplicationService.ConfigureServices(services, currentTestWorkDirectory);
@@ -102,9 +117,9 @@ public partial class TestUtilImpl {
 
             var settings = new RuntimeSetting();
 
-            // appsettings.json から読み取る設定を適用。WebApiのそれを流用する
-            var builder = new ConfigurationBuilder();
-            builder.SetBasePath(Path.Combine(solutionRoot, "WebApi"))
+            // appsettings.json から読み取る設定を適用
+            new ConfigurationBuilder()
+                .SetBasePath(BaseWorkDirectory)
                 .AddJsonFile("appsettings.json", true)
                 .AddJsonFile("appsettings.Development.json", true) // 後にAddされたファイルが優先される
                 .Build()
