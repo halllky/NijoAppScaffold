@@ -33,6 +33,30 @@ namespace Nijo.Models.WriteModel2Modules {
             return GetOwnMembers().OfType<Nijo.Parts.CSharp.EFCoreEntity.EFCoreEntityColumn>();
         }
 
+        private IEnumerable<Nijo.Parts.CSharp.EFCoreEntity.EFCoreEntityColumn> GetColumnsForOnModelCreating() {
+            var parent = Aggregate.GetParent();
+            if (parent != null) {
+                foreach (var parentKey in new LegacyEFCoreEntity(parent).GetColumns().Where(col => col.IsKey)) {
+                    if (parentKey.Member == null) continue;
+
+                    yield return new Nijo.Parts.CSharp.EFCoreEntity.ParentKeyMember(
+                        parentKey.Member,
+                        $"PARENT_{parentKey.PhysicalName}",
+                        $"PARENT_{parentKey.DbName}");
+                }
+            }
+
+            foreach (var refTo in Aggregate.GetMembers().OfType<RefToMember>()) {
+                foreach (var refKey in EnumerateRefKeyMembers(refTo)) {
+                    yield return refKey;
+                }
+            }
+
+            foreach (var vm in Aggregate.GetMembers().OfType<ValueMember>()) {
+                yield return new Nijo.Parts.CSharp.EFCoreEntity.OwnColumnMember(vm);
+            }
+        }
+
         public IEnumerable<Nijo.Parts.CSharp.NavigationProperty> GetNavigationProperties() {
             var parent = Aggregate.GetParent();
             if (parent != null) {
@@ -83,10 +107,16 @@ namespace Nijo.Models.WriteModel2Modules {
                 }
             }
 
-            foreach (var member in Aggregate.GetMembers()) {
-                if (member is RefToMember refTo) {
-                    foreach (var refKey in EnumerateRefKeyMembers(refTo)) {
-                        yield return refKey;
+            var refKeyGroups = Aggregate.GetMembers()
+                .OfType<RefToMember>()
+                .Select(refTo => EnumerateRefKeyMembers(refTo).ToArray())
+                .ToArray();
+            var refKeyCount = refKeyGroups.Select(group => group.Length).DefaultIfEmpty(0).Max();
+
+            for (var index = 0; index < refKeyCount; index++) {
+                foreach (var group in refKeyGroups) {
+                    if (index < group.Length) {
+                        yield return group[index];
                     }
                 }
             }
@@ -221,7 +251,7 @@ namespace Nijo.Models.WriteModel2Modules {
         }
 
         private string RenderOnModelCreating(CodeRenderingContext ctx) {
-            var columns = GetColumns()
+            var columns = GetColumnsForOnModelCreating()
                 .OrderByDescending(col => col.IsKey)
                 .ToArray();
             var keyColumns = columns.Where(col => col.IsKey).ToArray();

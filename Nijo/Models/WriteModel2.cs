@@ -95,9 +95,7 @@ namespace Nijo.Models {
             ctx.Use<SaveContext>().AddWriteModel(rootAggregate);
 
             // 一括更新処理
-            if (rootAggregate.GenerateBatchUpdateCommand) {
-                ctx.Use<BatchUpdateWriteModel>().Register(rootAggregate);
-            }
+            ctx.Use<BatchUpdateWriteModel>().Register(rootAggregate);
 
             var hasSequenceMember = rootAggregate
                 .EnumerateThisAndDescendants()
@@ -120,6 +118,9 @@ namespace Nijo.Models {
 
                 {{If(hasSequenceMember, () => new GenerateAndSetSequenceMethod(rootAggregate).RenderAppSrvMethod(ctx))}}
                 """);
+
+            // 旧版互換では action が 0 件でも集約ごとの controller ファイル自体は生成される。
+            aggregateFile.AddWebapiControllerAction(string.Empty);
 
             // WriteModel2 と同形の QueryModel 生成
             if (rootAggregate.GenerateDefaultQueryModel) {
