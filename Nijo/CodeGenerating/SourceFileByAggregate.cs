@@ -70,6 +70,13 @@ namespace Nijo.CodeGenerating {
                     var allAppSrvMethods = _appSrvMethods.Select(x => x.SourceCode).ToList();
                     var allCSharpClasses = _csharpClass.Select(x => x.SourceCode).ToList();
 
+                    if (allAppSrvMethods.Count > 0) {
+                        var appService = ctx.Use<ApplicationService>();
+                        foreach (var method in allAppSrvMethods.Where(ShouldPromoteToLegacyApplicationService)) {
+                            appService.Add(method);
+                        }
+                    }
+
                     if (allAppSrvMethods.Count > 0 || allCSharpClasses.Count > 0) {
                         dir.Generate(new SourceFile(_callerFilePath, _callerMemberName) {
                             FileName = $"{_rootAggregate.PhysicalName.ToFileNameSafe()}.cs",
@@ -158,6 +165,13 @@ namespace Nijo.CodeGenerating {
                     });
                 }
             });
+        }
+        private static bool ShouldPromoteToLegacyApplicationService(string sourceCode) {
+            return sourceCode.Contains("GetMultiViewUrlFromDisplayData", StringComparison.Ordinal)
+                || sourceCode.Contains("GetSingleViewUrlFromDisplayData(", StringComparison.Ordinal)
+                || sourceCode.Contains("GetSingleViewUrlOf", StringComparison.Ordinal)
+                || sourceCode.Contains("GetAuthorizedLevel(", StringComparison.Ordinal)
+                || sourceCode.Contains("CreateSearchResultExcelBook(", StringComparison.Ordinal);
         }
         private static string RenderCoreLibrary(CodeRenderingContext ctx, List<string> appSrvMethods, List<string> csharpClass) {
             if (ctx.IsLegacyCompatibilityMode()) {

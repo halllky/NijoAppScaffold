@@ -80,10 +80,10 @@ public class NodeOptionValidateContext {
 /// </summary>
 internal static class BasicNodeOptions {
     private static bool IsDataModelLike(IModel model) {
-        return model is DataModel || model is WriteModel2 || model is ReadModel2Compat;
+        return model is DataModel || model is WriteModel2 || model is ReadModel2;
     }
     private static bool IsStrictQueryModel(IModel model) {
-        return model is QueryModel && model is not ReadModel2Compat;
+        return model is QueryModel && model is not ReadModel2;
     }
 
     private static NodeOption CreateCompatibilityOption(string attributeName, Func<IModel, E_NodeType, bool>? isAvailable = null) {
@@ -550,8 +550,8 @@ internal static class BasicNodeOptions {
             例: 「退職後1年以上経過している人のみ抽出」のような、検索条件の絞り込みにのみ必要な属性。
             """,
         IsAvailable = (model, nodeType) => {
-            // QueryModelのValueMemberのみ許可
-            return model is QueryModel && nodeType == E_NodeType.ValueMember;
+            // QueryModel / ReadModel2 の ValueMember のみ許可
+            return (model is QueryModel || model is ReadModel2) && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
             // IsAvailableで基本的な判定は完了しているため、追加の検証は不要
@@ -582,7 +582,7 @@ internal static class BasicNodeOptions {
             // DataModel の場合は GenerateDefaultQueryModel が指定されている場合のみ許可
             if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model)
                 && IsDataModelLike(model)
-                && model is not ReadModel2Compat) {
+                && model is not ReadModel2) {
                 var root = ctx.XElement.GetRootAggregateElement();
                 var generateDefaultQueryModel = root.Attribute(GenerateDefaultQueryModel!.AttributeName);
 

@@ -8,7 +8,7 @@ namespace Nijo.Parts.CSharp {
     internal static class LegacyExcelBook {
         internal static void Render(CodeRenderingContext ctx) {
             if (!ctx.IsLegacyCompatibilityMode()) return;
-            if (!ctx.Schema.GetRootAggregates().Any(root => root.Model is Models.ReadModel2Compat)) return;
+            if (!ctx.Schema.GetRootAggregates().Any(root => root.Model is Models.ReadModel2)) return;
 
             var contents = $$"""
                             using NPOI.SS.UserModel;

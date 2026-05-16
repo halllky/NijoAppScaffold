@@ -143,7 +143,7 @@ namespace Nijo.Parts.CSharp {
                 };
 
                 return new SourceFile {
-                    FileName = "MessageContainer.cs",
+                    FileName = ctx.IsLegacyCompatibilityMode() ? "MessageReceiver.cs" : "MessageContainer.cs",
                     Contents = $$"""
                         using System.Collections;
                         using System.Text.Json;

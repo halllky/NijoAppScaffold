@@ -287,7 +287,7 @@ namespace Nijo.CodeGenerating {
         internal bool IsLegacyCompatibilityMode() {
             return Config.ForceLegacyCompatibilityMode
                 || Schema.GetRootAggregates().Any(root => root.Model is Models.WriteModel2
-                or Models.ReadModel2Compat
+                or Models.ReadModel2
                 or Models.ValueObjectModel2
                 or Models.StaticEnumModel2);
         }

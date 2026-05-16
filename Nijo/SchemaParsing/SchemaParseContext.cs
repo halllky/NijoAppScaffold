@@ -820,8 +820,8 @@ public class SchemaParseContext {
             if (model is WriteModel2) {
                 if (TryGetModel(refTo, out var refToModel)
                     && refToModel is not WriteModel2
-                    && refToModel is not ReadModel2Compat) {
-                    errorMessage = $"{nameof(WriteModel2)}の集約からは{nameof(WriteModel2)}または{nameof(ReadModel2Compat)}しか参照できません。";
+                    && refToModel is not ReadModel2) {
+                    errorMessage = $"{nameof(WriteModel2)}の集約からは{nameof(WriteModel2)}または{nameof(ReadModel2)}しか参照できません。";
                     return false;
                 }
 

@@ -46,7 +46,8 @@ namespace Nijo.Parts.CSharp {
         void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
             var valueObjectClassNames = GetValueObjectClassNames();
             var characterTypes = GetCharacterTypes();
-            var renderDbContextCustomizationMethods = ShouldRenderDbContextCustomizationMethods();
+            var renderDbContextCustomizationMethods = ShouldRenderDbContextCustomizationMethods()
+                && !ctx.Schema.GetRootAggregates().All(root => root.Model is Models.ReadModel2);
 
             ctx.CoreLibrary(dir => {
                 dir.Generate(new SourceFile {
@@ -106,8 +107,8 @@ namespace Nijo.Parts.CSharp {
                                 /// <summary>
                                 /// <see cref="{{className}}"/> クラスのプロパティがDBとC#の間で変換されるときの処理を定義するクラスを返します。
                                 /// </summary>
-                                public virtual Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter GetEFCoreValueConverterOf{{className}}() {
-                                    return new {{className}}.EFCoreValueConverter();
+                                public virtual Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter {{(className == "Date" ? "GetYearMonthDayEFCoreValueConverter" : $"GetEFCoreValueConverterOf{className}")}}() {
+                                    return new {{(className == "Date" ? "Date.EFCoreDateConverter" : $"{className}.EFCoreValueConverter")}}();
                                 }
                         """)}}
                         {{characterTypes.SelectTextTemplate(characterType => $$"""
