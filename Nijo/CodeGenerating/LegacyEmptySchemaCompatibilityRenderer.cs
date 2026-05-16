@@ -21,7 +21,6 @@ namespace Nijo.CodeGenerating {
                     utilDir.Generate(RenderPresentationContextCSharp(ctx));
                     utilDir.Generate(RenderRuntimeSetting(ctx));
                     utilDir.Generate(RenderJsonConversion(ctx));
-                    utilDir.Generate(RenderMsgCSharp(ctx));
                     utilDir.Generate(RenderRegexCache(ctx));
                     utilDir.Generate(RenderSpaceFinderConstCSharp(ctx));
                 });
@@ -39,12 +38,14 @@ namespace Nijo.CodeGenerating {
             ctx.ReactProject(dir => {
                 dir.Generate(RenderVForm2ContainerQueryCss(ctx));
                 dir.Directory("util", utilDir => {
-                    utilDir.Generate(RenderMsgTypeScript());
                     utilDir.Generate(RenderTypeScriptUtilIndex());
                     utilDir.Generate(RenderPresentationContextTypeScript());
                     utilDir.Generate(RenderSpaceFinderConstTypeScript(ctx));
                 });
             });
+
+            Parts.Common.LegacyMessageConst.Render(ctx);
+            Parts.CSharp.LegacyExcelBook.Render(ctx);
         }
 
         private static SourceFile RenderDefaultConfiguration(CodeRenderingContext ctx) {
@@ -640,22 +641,6 @@ namespace Nijo.CodeGenerating {
             };
         }
 
-        private static SourceFile RenderMsgCSharp(CodeRenderingContext ctx) {
-            return new SourceFile {
-                FileName = "MSG.cs",
-                Contents = $$"""
-                    namespace {{ctx.Config.RootNamespace}};
-
-                    /// <summary>
-                    /// メッセージマスタ（メッセージ定数）。
-                    /// 画面上に表示するメッセージ等はこの関数から取得してください。
-                    /// </summary>
-                    public static partial class MSG {
-                    }
-                    """,
-            };
-        }
-
         private static SourceFile RenderRegexCache(CodeRenderingContext ctx) {
             return new SourceFile {
                 FileName = "RegexCache.cs",
@@ -1026,27 +1011,13 @@ namespace Nijo.CodeGenerating {
             };
         }
 
-        private static SourceFile RenderMsgTypeScript() {
-            return new SourceFile {
-                FileName = "MSG.ts",
-                Contents = """
-                    /**
-                     * メッセージマスタ（メッセージ定数）。
-                     * 画面上に表示するメッセージ等はこの関数から取得してください。
-                     */
-                    export const MSG = {
-                    }
-                    """,
-            };
-        }
-
         private static SourceFile RenderTypeScriptUtilIndex() {
             return new SourceFile {
                 FileName = "index.ts",
                 Contents = """
-                    export * from "./MSG"
                     export * from "./presentation-context"
                     export * from "./space-finder-const"
+                    export * from "./MSG"
                     export * from "./index"
                     """,
             };
