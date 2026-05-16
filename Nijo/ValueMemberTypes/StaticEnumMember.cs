@@ -3,6 +3,7 @@ using Nijo.ImmutableSchema;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using Nijo.Models.StaticEnumModelModules;
+using Nijo.Parts.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -82,7 +83,15 @@ namespace Nijo.ValueMemberTypes {
         }
 
         void IValueMemberType.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
-            // 特になし
+            if (CodeRenderingContext.CurrentContext?.IsLegacyCompatibilityMode() != true) return;
+
+            var enumRoot = CodeRenderingContext.CurrentContext.Schema.GetRootAggregates()
+                .SingleOrDefault(root => root.PhysicalName == _parser.CsEnumName && root.Model is Models.StaticEnumModel2);
+            if (enumRoot == null) return;
+
+            var staticEnum = new StaticEnumDef(_parser, enumRoot);
+            var searchCondition = new StaticEnumSearchCondition(staticEnum, _parser);
+            ctx.Use<EnumFile2>().AddSourceCode(searchCondition.RenderCSharp());
         }
         void IValueMemberType.RenderStaticSources(CodeRenderingContext ctx) {
             // 特になし

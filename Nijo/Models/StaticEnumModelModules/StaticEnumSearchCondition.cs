@@ -30,6 +30,7 @@ namespace Nijo.Models.StaticEnumModelModules {
                 /// <summary>{{_staticEnum.DisplayName}}の検索条件クラス</summary>
                 public class {{CsClassName}} {
                 {{_staticEnum.GetValues().SelectTextTemplate(item => $$"""
+                    [System.Text.Json.Serialization.JsonPropertyName("{{item.DisplayName.Replace("\"", "\\\"")}}")]
                     public bool {{item.PhysicalName}} { get; set; }
                 """)}}
 

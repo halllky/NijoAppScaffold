@@ -37,7 +37,9 @@ namespace Nijo.Parts.Common {
 
         internal EnumFile2 AddSourceCode(string sourceCode) {
             lock (_lock) {
-                _sourceCodes.Add(sourceCode);
+                if (!_sourceCodes.Contains(sourceCode)) {
+                    _sourceCodes.Add(sourceCode);
+                }
                 return this;
             }
         }

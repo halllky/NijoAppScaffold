@@ -3,6 +3,7 @@ using Nijo.ImmutableSchema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Nijo.Parts.CSharp {
     /// <summary>
@@ -322,6 +323,7 @@ namespace Nijo.Parts.CSharp {
                 .Any(member => member.Type is Nijo.ValueMemberTypes.YearMonthMember);
             var hasFileAttachment = System.Xml.Linq.XDocument.Load(ctx.Project.SchemaXmlPath).Descendants()
                 .Any(element => element.Attribute(SchemaParsing.SchemaParseContext.ATTR_NODE_TYPE)?.Value == "file");
+            var shouldRenderDisplayDataBatchUpdateConverter = readModel2Roots.Length > 0 && writeModel2Roots.Length == 0;
             var jsonValueObjectClassNames = valueObjectClassNames
                 .Where(className => !(readModel2Roots.Length > 0 && className == "Date"))
                 .Where(className => className != "YearMonth")
@@ -360,7 +362,7 @@ namespace Nijo.Parts.CSharp {
                     {{If(hasFileAttachment, () => $$"""
                                 option.Converters.Add(new FileAttachmentMetadata.JsonValueConverter());
                     """)}}
-                    {{If(!ctx.IsLegacyCompatibilityMode(), () => $$"""
+                    {{If(shouldRenderDisplayDataBatchUpdateConverter, () => $$"""
                                 option.Converters.Add(new CustomJsonConverters.DisplayDataBatchUpdateCommandConverter());
                     """)}}
                     """)}}
@@ -602,7 +604,10 @@ namespace Nijo.Parts.CSharp {
                         """)}}
                         {{If(writeModel2Roots.Length > 0, () => $$"""
 
+                        {{If(readModel2Roots.Length > 0, () => $$"""
 
+
+                        """)}}
                         {{RenderSaveCommandBaseConverter(writeModel2Roots)}}
                         """)}}
                     }
@@ -622,6 +627,7 @@ namespace Nijo.Parts.CSharp {
                 .Replace("}\n\n        throw new JsonException", "}\n    \n        throw new JsonException")
                 .Replace("}\n\n    public override void Write(Utf8JsonWriter", "}\n    \n    public override void Write(Utf8JsonWriter")
                 .Replace("display = field?.GetCustomAttribute<DisplayAttribute>();\n\n        var output", "display = field?.GetCustomAttribute<DisplayAttribute>();\n    \n        var output");
+            contents = Regex.Replace(contents, @"\n{3,}(    class DisplayDataBatchUpdateCommandConverter)", "\n\n$1");
             return new SourceFile {
                 FileName = "JsonConversion.cs",
                 Contents = contents,
@@ -629,6 +635,14 @@ namespace Nijo.Parts.CSharp {
         }
 
         private static string RenderReadModel2JsonConverters(CodeRenderingContext ctx, RootAggregate[] readModel2Roots) {
+            var hasYearMonth = ctx.Schema.GetRootAggregates()
+                .SelectMany(root => root.EnumerateThisAndDescendants())
+                .SelectMany(aggregate => aggregate.GetMembers())
+                .OfType<Nijo.ImmutableSchema.ValueMember>()
+                .Any(member => member.Type is Nijo.ValueMemberTypes.YearMonthMember);
+            var shouldRenderDisplayDataBatchUpdateConverter = readModel2Roots.Length > 0
+                && !ctx.Schema.GetRootAggregates().Any(root => root.Model is Models.WriteModel2);
+
             return "    " + WithIndent($$"""
                 public class DateJsonValueConverter : JsonConverter<Date?> {
                     public override Date? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
@@ -647,6 +661,7 @@ namespace Nijo.Parts.CSharp {
                     }
                 }
 
+                {{If(hasYearMonth, () => $$"""
                 public class YearMonthJsonValueConverter : JsonConverter<YearMonth?> {
                     public override YearMonth? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
                 {{If(ctx.IsLegacyCompatibilityMode(), () => $$"""
@@ -679,8 +694,8 @@ namespace Nijo.Parts.CSharp {
                         }
                     }
                 }
-
-                {{If(!ctx.IsLegacyCompatibilityMode(), () => $$"""
+                """)}}
+                {{If(shouldRenderDisplayDataBatchUpdateConverter, () => $$"""
                 class DisplayDataBatchUpdateCommandConverter : JsonConverter<DisplayDataClassBase> {
                     public override DisplayDataClassBase? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
                         using var jsonDocument = JsonDocument.ParseValue(ref reader);

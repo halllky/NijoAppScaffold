@@ -267,9 +267,13 @@ namespace Nijo.Models.ReadModel2Modules {
                 /// </para>
                 /// </summary>
                 protected virtual IQueryable<{{searchResult.CsClassName}}> {{AppSrvCreateQueryMethod}}({{searchCondition.CsClassName}} searchCondition, IPresentationContext context) {
+                {{If(_aggregate.GenerateDefaultQueryModel, () => $$"""
+                    {{WithIndent(RenderLegacyDefaultQuerySource(), "    ")}}
+                """).Else(() => $$"""
                     // クエリのソース定義部分は自動生成されません。
                     // このメソッドをオーバーライドしてソース定義処理を記述してください。
                     return Enumerable.Empty<{{searchResult.CsClassName}}>().AsQueryable();
+                """)}}
                 }
 
                 /// <summary>
@@ -286,6 +290,76 @@ namespace Nijo.Models.ReadModel2Modules {
                     return currentPageSearchResult;
                 }
                 """;
+        }
+
+        private string RenderLegacyDefaultQuerySource() {
+            var dbEntity = new EFCoreEntity(_aggregate);
+            var searchResult = new SearchResult(_aggregate);
+
+            return $$"""
+                #pragma warning disable CS8602 // null 参照の可能性があるものの逆参照です。
+                return DbContext.{{dbEntity.DbSetName}}.Select(e => {{RenderLegacyResultInitializer(searchResult, new Variable("e", dbEntity), true)}});
+                #pragma warning restore CS8602 // null 参照の可能性があるものの逆参照です。
+                """;
+
+            static string RenderLegacyResultInitializer(IInstancePropertyOwnerMetadata owner, Variable sourceVar, bool renderNewClassName) {
+                var valueMap = sourceVar
+                    .CreatePropertiesRecursively()
+                    .OfType<InstanceValueProperty>()
+                    .GroupBy(prop => prop.Metadata.SchemaPathNode.ToMappingKey())
+                    .ToDictionary(group => group.Key, group => group.OrderBy(prop => prop.GetPathFromInstance().Count()).First());
+                var structureMap = sourceVar
+                    .CreatePropertiesRecursively()
+                    .OfType<InstanceStructureProperty>()
+                    .GroupBy(prop => prop.Metadata.SchemaPathNode.ToMappingKey())
+                    .ToDictionary(group => group.Key, group => group.OrderBy(prop => prop.GetPathFromInstance().Count()).First());
+                var typeName = owner switch {
+                    SearchResult rootSearchResult => rootSearchResult.CsClassName,
+                    RefSearchResult refSearchResult => refSearchResult.CsClassName,
+                    IInstanceStructurePropertyMetadata structure => structure.GetTypeName(E_CsTs.CSharp),
+                    _ => throw new InvalidOperationException($"未対応の検索結果型です: {owner.GetType().FullName}"),
+                };
+
+                return $$"""
+                    {{(renderNewClassName ? $"new {typeName}" : "new()")}} {
+                    {{owner.GetMembers().SelectTextTemplate(member => $$"""
+                        {{member.GetPropertyName(E_CsTs.CSharp)}} = {{WithIndent(RenderMember(member), "    ")}},
+                    """)}}
+                    {{If(owner is SearchResult root && root.HasVersionColumn, () => $$"""
+                        Version = {{sourceVar.Name}}.{{EFCoreEntity.VERSION}}!.Value,
+                    """)}}
+                    }
+                    """;
+
+                string RenderMember(IInstancePropertyMetadata member) {
+                    if (member is IInstanceValuePropertyMetadata value) {
+                        return valueMap.TryGetValue(value.SchemaPathNode.ToMappingKey(), out var source)
+                            ? source.GetJoinedPathFromInstance(E_CsTs.CSharp, "!.")
+                            : $"{sourceVar.Name}.{value.GetPropertyName(E_CsTs.CSharp)}";
+                    }
+
+                    if (member is not IInstanceStructurePropertyMetadata structure) {
+                        throw new InvalidOperationException($"未対応のメンバーです: {member.GetType().FullName}");
+                    }
+
+                    if (!structure.IsArray) {
+                        return RenderLegacyResultInitializer(structure, sourceVar, false);
+                    }
+
+                    if (structure.SchemaPathNode is not ChildrenAggregate childrenAggregate) {
+                        throw new InvalidOperationException($"配列メンバーの型が想定外です: {structure.SchemaPathNode.GetType().FullName}");
+                    }
+
+                    var depth = childrenAggregate.EnumerateAncestors().Count();
+                    var itemVarName = depth <= 1 ? "x" : $"x{depth}";
+                    var arrayPath = structureMap.TryGetValue(childrenAggregate.ToMappingKey(), out var arraySource)
+                        ? arraySource.GetJoinedPathFromInstance(E_CsTs.CSharp, "!.")
+                        : $"{sourceVar.Name}.{structure.GetPropertyName(E_CsTs.CSharp)}";
+                    return $$"""
+                        {{arrayPath}}.Select({{itemVarName}} => {{RenderLegacyResultInitializer(structure, new Variable(itemVarName, new EFCoreEntity(childrenAggregate)), true)}}).ToList()
+                        """;
+                }
+            }
         }
 
         internal string RenderAppSrvBaseMethod(CodeRenderingContext context) {

@@ -96,7 +96,13 @@ internal class BoolMember : IValueMemberType {
         };
 
     void IValueMemberType.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
-        if (CodeRenderingContext.CurrentContext?.IsLegacyCompatibilityMode() == true) {
+        if (CodeRenderingContext.CurrentContext?.IsLegacyCompatibilityMode() == true
+            && CodeRenderingContext.CurrentContext.Schema.GetRootAggregates()
+                .SelectMany(root => root.EnumerateThisAndDescendants())
+                .SelectMany(aggregate => aggregate.GetMembers())
+                .OfType<ValueMember>()
+                .Any(member => ReferenceEquals(member.Type, this)
+                    && member.XElement.Annotation<SchemaParseContext.OriginalTypeAnnotation>()?.TypeName != "search-condition-only-bool")) {
             ctx.Use<Parts.Common.EnumFile2>().AddSourceCode($$"""
 
                 public enum E_BoolSearchCondition {
