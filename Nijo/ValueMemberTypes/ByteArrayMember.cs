@@ -46,7 +46,17 @@ internal class ByteArrayMember : IValueMemberType {
         }
     }
 
-    ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => null; // バイト配列に対する検索は提供しない
+    ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => new() {
+        FilterCsTypeName = "byte[]",
+        FilterTsTypeName = "string",
+        RenderTsNewObjectFunctionValue = () => "''",
+        RenderFiltering = ctx => {
+            var displayName = (ctx.Query.Metadata as IInstanceValuePropertyMetadata)?.SchemaPathNode.XElement.GetDisplayName();
+            return $$"""
+                /* Byte配列 '{{displayName}}' に対する検索条件の指定はサポートされていません。 */
+                """;
+        },
+    };
 
     void IValueMemberType.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
         // 特になし

@@ -315,11 +315,16 @@ namespace Nijo.Parts.CSharp {
                 .Where(root => root.Model is Models.ReadModel2)
                 .OrderByDataFlow()
                 .ToArray();
-            var hasYearMonth = ctx.Schema.GetRootAggregates()
-                .SelectMany(root => root.EnumerateThisAndDescendants())
-                .SelectMany(aggregate => aggregate.GetMembers())
-                .OfType<Nijo.ImmutableSchema.ValueMember>()
-                .Any(member => member.Type is Nijo.ValueMemberTypes.YearMonthMember);
+            var hasYearMonth = ctx.Schema.GetRootAggregates().Any(root => {
+                var requiresLegacyYearMonthConverter = root.Model is Models.DataModel || root.GenerateDefaultQueryModel;
+                if (!requiresLegacyYearMonthConverter) return false;
+
+                return root
+                    .EnumerateThisAndDescendants()
+                    .SelectMany(aggregate => aggregate.GetMembers())
+                    .OfType<Nijo.ImmutableSchema.ValueMember>()
+                    .Any(member => member.Type is Nijo.ValueMemberTypes.YearMonthMember);
+            });
             var hasFileAttachment = System.Xml.Linq.XDocument.Load(ctx.Project.SchemaXmlPath).Descendants()
                 .Any(element => element.Attribute(SchemaParsing.SchemaParseContext.ATTR_NODE_TYPE)?.Value == "file");
             var jsonValueObjectClassNames = valueObjectClassNames
@@ -360,7 +365,7 @@ namespace Nijo.Parts.CSharp {
                     {{If(hasFileAttachment, () => $$"""
                                 option.Converters.Add(new FileAttachmentMetadata.JsonValueConverter());
                     """)}}
-                    {{If(!ctx.IsLegacyCompatibilityMode(), () => $$"""
+                    {{If(writeModel2Roots.Length == 0, () => $$"""
                                 option.Converters.Add(new CustomJsonConverters.DisplayDataBatchUpdateCommandConverter());
                     """)}}
                     """)}}
@@ -598,12 +603,11 @@ namespace Nijo.Parts.CSharp {
                         """)}}
                         {{If(readModel2Roots.Length > 0, () => $$"""
 
-                        {{RenderReadModel2JsonConverters(ctx, readModel2Roots)}}
+                        {{RenderReadModel2JsonConverters(ctx, readModel2Roots, hasYearMonth, writeModel2Roots.Length == 0)}}
                         """)}}
                         {{If(writeModel2Roots.Length > 0, () => $$"""
 
-
-                        {{RenderSaveCommandBaseConverter(writeModel2Roots)}}
+                        {{RenderSaveCommandBaseConverter(writeModel2Roots, hasYearMonth)}}
                         """)}}
                     }
                     """;
@@ -628,7 +632,7 @@ namespace Nijo.Parts.CSharp {
             };
         }
 
-        private static string RenderReadModel2JsonConverters(CodeRenderingContext ctx, RootAggregate[] readModel2Roots) {
+        private static string RenderReadModel2JsonConverters(CodeRenderingContext ctx, RootAggregate[] readModel2Roots, bool renderYearMonthJsonValueConverter, bool renderDisplayDataBatchUpdateCommandConverter) {
             return "    " + WithIndent($$"""
                 public class DateJsonValueConverter : JsonConverter<Date?> {
                     public override Date? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
@@ -647,6 +651,7 @@ namespace Nijo.Parts.CSharp {
                     }
                 }
 
+                {{If(renderYearMonthJsonValueConverter, () => $$"""
                 public class YearMonthJsonValueConverter : JsonConverter<YearMonth?> {
                     public override YearMonth? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
                 {{If(ctx.IsLegacyCompatibilityMode(), () => $$"""
@@ -679,8 +684,8 @@ namespace Nijo.Parts.CSharp {
                         }
                     }
                 }
-
-                {{If(!ctx.IsLegacyCompatibilityMode(), () => $$"""
+                """)}}
+                {{If(renderDisplayDataBatchUpdateCommandConverter, () => $$"""
                 class DisplayDataBatchUpdateCommandConverter : JsonConverter<DisplayDataClassBase> {
                     public override DisplayDataClassBase? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
                         using var jsonDocument = JsonDocument.ParseValue(ref reader);
@@ -713,9 +718,9 @@ namespace Nijo.Parts.CSharp {
                 """;
         }
 
-        private static string RenderSaveCommandBaseConverter(RootAggregate[] writeModel2Roots) {
-            return "    " + WithIndent($$"""
-                class SaveCommandBaseConverter : JsonConverter<SaveCommandBase> {
+        private static string RenderSaveCommandBaseConverter(RootAggregate[] writeModel2Roots, bool hasYearMonth) {
+            var rendered = WithIndent($$"""
+                    class SaveCommandBaseConverter : JsonConverter<SaveCommandBase> {
                     public override SaveCommandBase? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
                         using var jsonDocument = JsonDocument.ParseValue(ref reader);
                         var dataType = jsonDocument.RootElement.GetProperty("dataType").GetString();
@@ -734,6 +739,7 @@ namespace Nijo.Parts.CSharp {
                     }
                 }
                 """, "    ");
+            return hasYearMonth ? Environment.NewLine + Environment.NewLine + rendered : rendered;
         }
 
         private static string RenderSaveCommandBaseConverterBranch(RootAggregate root) {

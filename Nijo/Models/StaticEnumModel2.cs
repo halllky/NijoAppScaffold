@@ -60,9 +60,20 @@ namespace Nijo.Models {
                 Items: items
             );
 
-            ctx.Use<EnumFile2>()
-                .AddEnum(enumDef)
-                .AddSourceCode($$"""
+            var shouldRenderSearchConditionClass = ctx.Schema.GetRootAggregates().Any(candidateRoot => {
+                var requiresLegacySearchCondition = candidateRoot.Model is ReadModel2 || candidateRoot.GenerateDefaultQueryModel;
+                if (!requiresLegacySearchCondition) return false;
+
+                var searchCondition = new ReadModel2Modules.SearchCondition.Entry(candidateRoot);
+                return searchCondition.EnumerateFilterMembersRecursively().Any(member => member.Member.Type is ValueMemberTypes.StaticEnumMember staticEnum
+                    && staticEnum.Definition.CsEnumName == enumDef.Name);
+            });
+
+            var enumFile = ctx.Use<EnumFile2>()
+                .AddEnum(enumDef);
+
+            if (shouldRenderSearchConditionClass) {
+                enumFile.AddSourceCode($$"""
                     /// <summary>{{xElement.GetDisplayName()}}の検索条件クラス</summary>
                     public class {{xElement.Name.LocalName.ToCSharpSafe()}}SearchCondition {
                     {{items.SelectTextTemplate(item => $$"""
@@ -79,6 +90,7 @@ namespace Nijo.Models {
                         }
                     }
                     """);
+            }
         }
 
         public void GenerateCode(CodeRenderingContext ctx) {

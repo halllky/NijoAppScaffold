@@ -96,7 +96,22 @@ internal class BoolMember : IValueMemberType {
         };
 
     void IValueMemberType.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
-        if (CodeRenderingContext.CurrentContext?.IsLegacyCompatibilityMode() == true) {
+        if (CodeRenderingContext.CurrentContext?.IsLegacyCompatibilityMode() == true
+            && ctx.Schema.GetRootAggregates().Any(rootAggregate => {
+                var requiresLegacyBoolSearchCondition = rootAggregate.Model is Models.ReadModel2
+                    || rootAggregate.GenerateDefaultQueryModel;
+                if (!requiresLegacyBoolSearchCondition) return false;
+
+                var hasSchemaBoolMember = rootAggregate
+                    .EnumerateThisAndDescendants()
+                    .SelectMany(aggregate => aggregate.GetMembers())
+                    .OfType<ValueMember>()
+                    .Any(member => member.Type is BoolMember);
+                if (!hasSchemaBoolMember) return false;
+
+                var searchCondition = new Models.ReadModel2Modules.SearchCondition.Entry(rootAggregate);
+                return searchCondition.EnumerateFilterMembersRecursively().Any(member => member.Member.Type is BoolMember && !member.Member.OnlySearchCondition);
+            })) {
             ctx.Use<Parts.Common.EnumFile2>().AddSourceCode($$"""
 
                 public enum E_BoolSearchCondition {

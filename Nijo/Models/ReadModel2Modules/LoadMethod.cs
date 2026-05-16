@@ -1,5 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.Models;
 using Nijo.Parts.Common;
 using Nijo.Parts.CSharp;
 using Nijo.SchemaParsing;
@@ -9,7 +10,7 @@ using System.Linq;
 
 namespace Nijo.Models.ReadModel2Modules {
     internal class LoadMethod {
-        private readonly record struct SortMemberTemplate(string AscLiteral, string DescLiteral, string Path, bool IsString);
+        private readonly record struct SortMemberTemplate(string AscLiteral, string DescLiteral, string Path, bool IsString, bool UsePlainStringSort);
 
         internal const string CURRENT_PAGE_ITEMS = "currentPageItems";
         internal const string NOW_LOADING = "nowLoading";
@@ -21,6 +22,10 @@ namespace Nijo.Models.ReadModel2Modules {
         }
 
         private readonly RootAggregate _aggregate;
+
+        private static bool IsOriginalFileMember(ValueMember member) {
+            return member.XElement.Annotation<SchemaParseContext.OriginalTypeAnnotation>()?.TypeName == "file";
+        }
 
         internal string ReactHookName => $"use{_aggregate.PhysicalName}Loader";
         private const string ControllerActionLoad = "load";
@@ -250,6 +255,90 @@ namespace Nijo.Models.ReadModel2Modules {
             var searchResult = new SearchResult(_aggregate);
             var displayData = new DisplayData(_aggregate);
 
+            if (context.IsLegacyCompatibilityMode() && _aggregate.Model is not ReadModel2) {
+                var newObject = new Variable("unused", searchResult);
+                var efCoreEntity = new EFCoreEntity(_aggregate);
+                var entityVar = new Variable("e", efCoreEntity);
+                var rightMembers = QuerySourceProjectionHelper.BuildCandidateDictionary(entityVar);
+                var renderedProjectionMembers = string.Join(Environment.NewLine,
+                    QuerySourceProjectionHelper.RenderProjectionMembers(
+                        newObject,
+                        rightMembers,
+                        PreferDeepNavigation,
+                        RenderSpecialValuePath,
+                        CreateArrayItemVariable,
+                        RenderArrayPath,
+                        renderExplicitConstructorInvocation: structureProp => structureProp.GetPathFromInstance().Count() > 1)
+                        .Select(line => $"        {line}"));
+                return $$"""
+                    /// <summary>
+                    /// {{_aggregate.DisplayName}}の検索クエリのソース定義。
+                    /// <para>
+                    /// このメソッドでやること
+                    /// - クエリのソース定義（SQLで言うとFROM句とSELECT句に相当する部分）
+                    /// - カスタム検索条件による絞り込み
+                    /// - その他任意の絞り込み（例えばログイン中のユーザーのIDを参照して検索結果に含まれる他者の個人情報を除外するなど）
+                    /// </para>
+                    /// <para>
+                    /// このメソッドで書かなくてよいこと
+                    /// - 自動生成される検索条件による絞り込み
+                    /// - ソート
+                    /// - ページング
+                    /// </para>
+                    /// </summary>
+                    protected virtual IQueryable<{{searchResult.CsClassName}}> {{AppSrvCreateQueryMethod}}({{searchCondition.CsClassName}} searchCondition, IPresentationContext context) {
+                        #pragma warning disable CS8602 // null 参照の可能性があるものの逆参照です。
+                        return DbContext.{{efCoreEntity.DbSetName}}.Select({{entityVar.Name}} => new {{searchResult.CsClassName}} {
+                    """
+                + Environment.NewLine
+                + renderedProjectionMembers
+                + Environment.NewLine
+                + $$"""
+                            Version = {{entityVar.Name}}.{{EFCoreEntity.VERSION}}!.Value,
+                        });
+                        #pragma warning restore CS8602 // null 参照の可能性があるものの逆参照です。
+                    }
+
+                    /// <summary>
+                    /// {{_aggregate.DisplayName}}の画面表示用データの、インメモリでのカスタマイズ処理。
+                    /// 任意の項目のC#上での計算、読み取り専用項目の設定、画面に表示するメッセージの設定などを行います。
+                    /// この処理はSQLに変換されるのではなくインメモリ上で実行されるため、
+                    /// データベースから読み込んだデータにしかアクセスできない代わりに、
+                    /// C#のメソッドやインターフェースなどを無制限に利用することができます。
+                    /// </summary>
+                    /// <param name="currentPageSearchResult">検索結果。ページングされた後の、そのページのデータしかないので注意。</param>
+                    /// <param name="searchCondition">検索条件</param>
+                    /// <param name="context">エラー等の送出に使う。通常使うことは無い</param>
+                    protected virtual IEnumerable<{{displayData.CsClassName}}> {{AppSrvAfterLoadedMethod}}(IEnumerable<{{displayData.CsClassName}}> currentPageSearchResult, {{searchCondition.CsClassName}} searchCondition, IPresentationContext context) {
+                        return currentPageSearchResult;
+                    }
+                    """;
+
+                static bool PreferDeepNavigation(InstanceValueProperty _) {
+                    return false;
+                }
+
+                static string? RenderSpecialValuePath(InstanceValueProperty _, IInstanceProperty right) {
+                    return right.GetJoinedPathFromInstance(E_CsTs.CSharp, ".");
+                }
+
+                static string RenderArrayPath(IInstanceProperty right) {
+                    return right.GetJoinedPathFromInstance(E_CsTs.CSharp, ".");
+                }
+
+                static Variable CreateArrayItemVariable(InstanceStructureProperty structureProp) {
+                    if (structureProp.Metadata.SchemaPathNode is not ChildrenAggregate childrenAggregate) {
+                        throw new InvalidOperationException($"子配列でない構造体が配列投影として扱われました: {structureProp.Metadata.SchemaPathNode}");
+                    }
+
+                    var rightMetadata = new EFCoreEntity(childrenAggregate);
+                    var loopVarName = structureProp.GetPathFromInstance().Count() > 1
+                        ? "x1"
+                        : childrenAggregate.GetLoopVarName();
+                    return new Variable(loopVarName, rightMetadata);
+                }
+            }
+
             return $$"""
                 /// <summary>
                 /// {{_aggregate.DisplayName}}の検索クエリのソース定義。
@@ -316,7 +405,8 @@ namespace Nijo.Models.ReadModel2Modules {
                     m.GetLiteral() + SearchCondition.ASC_SUFFIX,
                     m.GetLiteral() + SearchCondition.DESC_SUFFIX,
                     m.GetSearchResultPath(),
-                    m.Member.Type.CsPrimitiveTypeName == "string"))
+                    m.Member.Type.CsPrimitiveTypeName == "string",
+                    context.IsLegacyCompatibilityMode() && IsOriginalFileMember(m.Member)))
                 .ToArray();
             var keys = _aggregate.GetKeyVMs().ToArray();
             var defaultOrderBy = keys.SelectTextTemplate((vm, i) => {
@@ -382,7 +472,7 @@ namespace Nijo.Models.ReadModel2Modules {
                 // ソート
                 IOrderedQueryable<{{searchResult.CsClassName}}>? sorted = null;
                 foreach (var sortOption in searchCondition.{{SearchCondition.Entry.SORT_CS}}) {
-            {{sortMembers.SelectTextTemplate(m => m.IsString ? $$"""
+            {{sortMembers.SelectTextTemplate(m => m.IsString && !m.UsePlainStringSort ? $$"""
                     if (sortOption == "{{m.AscLiteral}}") {
                         sorted = sorted == null
                             ? query.OrderBy(e => EF.Functions.Collate(e.{{m.Path}}, "JAPANESE_M_AI"))

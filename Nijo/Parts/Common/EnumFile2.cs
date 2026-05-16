@@ -84,9 +84,13 @@ namespace Nijo.Parts.Common {
 
                 // Oracle用のenum定義（事業PFへの公開テーブルで区分値の名称をとるのに使う）
                 // ※ここのディレクトリ名はマイグレーションスクリプト生成コマンドと一致させる必要がある
-                dir.Directory("..\\MigrationsScript", migrationDir => {
-                    migrationDir.Generate(GetOracleGetNameFunction(orderedDefs));
-                });
+                var shouldGenerateMigrationScript = orderedDefs.Length > 0
+                    || orderedSourceCodes.Any(source => !source.Contains("public enum E_AddOrModOrDel", StringComparison.Ordinal));
+                if (shouldGenerateMigrationScript) {
+                    dir.Directory("..\\MigrationsScript", migrationDir => {
+                        migrationDir.Generate(GetOracleGetNameFunction(orderedDefs));
+                    });
+                }
             });
 
             static int GetSourcePriority(string source) {

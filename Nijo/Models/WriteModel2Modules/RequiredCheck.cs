@@ -152,12 +152,14 @@ namespace Nijo.Models.WriteModel2Modules {
                 } else if (member is ChildAggregate child) {
                     var childExpr = $"{instanceName}.{child.PhysicalName}?";
                     var childBody = RenderAggregateLegacy(child, childExpr).ToArray();
-                    if (childBody.Length == 0) continue;
+                    var childBodyText = childBody.Length == 0
+                        ? string.Empty
+                        : WithIndent(childBody, "");
 
                     yield return $$"""
 
                         // {{child.DisplayName}} の各項目の必須チェック
-                        {{WithIndent(childBody, "")}}
+                        {{childBodyText}}
                         """;
 
                 } else if (member is ChildrenAggregate children) {

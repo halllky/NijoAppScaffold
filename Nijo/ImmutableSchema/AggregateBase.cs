@@ -380,6 +380,7 @@ namespace Nijo.ImmutableSchema {
         #region DataModelと全く同じ型のQueryModel, CommandModel を生成するかどうか
         public bool GenerateDefaultQueryModel => XElement.Attribute(BasicNodeOptions.GenerateDefaultQueryModel.AttributeName) != null;
         public bool GenerateBatchUpdateCommand => XElement.Attribute(BasicNodeOptions.GenerateBatchUpdateCommand.AttributeName) != null;
+        public bool CustomizeBatchUpdateReadModels => XElement.Attribute(BasicNodeOptions.CustomizeBatchUpdateReadModels.AttributeName) != null;
         #endregion DataModelと全く同じ型のQueryModel, CommandModel を生成するかどうか
 
         #region このCommandModelの引数・戻り値の集約を返す

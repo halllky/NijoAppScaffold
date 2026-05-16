@@ -1,6 +1,7 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.SchemaParsing;
+using Nijo.Models.WriteModel2Modules;
 using Nijo.Parts.Common;
 using Nijo.Parts.CSharp;
 using Nijo.Util.DotnetEx;
@@ -16,7 +17,7 @@ namespace Nijo.Models.ReadModel2Modules {
         internal override string CsClassName => $"{Aggregate.PhysicalName}DisplayData";
         internal override string TsTypeName => $"{Aggregate.PhysicalName}DisplayData";
         internal override bool HasVersion => Aggregate is RootAggregate
-                                          || Aggregate.XElement.Attribute(BasicNodeOptions.HasLifecycle.AttributeName) != null;
+                          || Aggregate.XElement.Attribute(BasicNodeOptions.HasLifecycle.AttributeName) != null;
         internal bool HasLifeCycle => Aggregate is RootAggregate
                  || Aggregate is ChildrenAggregate
                  || Aggregate.XElement.Attribute(BasicNodeOptions.HasLifecycle.AttributeName) != null;
@@ -205,6 +206,10 @@ namespace Nijo.Models.ReadModel2Modules {
                 var messageBaseClass = Aggregate is ChildrenAggregate ? "DisplayMessageContainerInGrid" : "DisplayMessageContainerBase";
                 var messagePathCtorArgs = Aggregate is ChildrenAggregate ? "IEnumerable<string> path, DisplayMessageContainerBase grid, int rowIndex" : "IEnumerable<string> path";
                 var messagePathBaseCall = Aggregate is ChildrenAggregate ? "base(path, grid, rowIndex)" : "base(path)";
+                var saveCommandMessageInterface = GetLegacySaveCommandMessageInterface();
+                var inheritance = saveCommandMessageInterface == null
+                    ? messageBaseClass
+                    : $"{messageBaseClass}, {saveCommandMessageInterface}";
 
                 return $$"""
                     {{If(Aggregate is RootAggregate, () => $$"""
@@ -222,10 +227,14 @@ namespace Nijo.Models.ReadModel2Modules {
                     """)}}
                     /// <summary>
                     /// {{Aggregate.DisplayName}}の画面表示用データのメッセージ情報格納部分。
+                    {{If(saveCommandMessageInterface != null, () => $$"""
+                    /// <see cref="{{saveCommandMessageInterface}}"/> の更新処理で発生したエラー等を画面項目にマッピングする。
+                    """).Else(() => $$"""
                     /// WriteModelのデータとのマッピングが必要になる場合、このクラスを使用せず、
                     /// 別途当該WriteModelのエラーデータのインターフェースを実装したクラスを新規作成して、そちらを使用してください。
+                    """)}}
                     /// </summary>
-                    public partial class {{MessageCsClassName}} : {{messageBaseClass}} {
+                    public partial class {{MessageCsClassName}} : {{inheritance}} {
                         public {{MessageCsClassName}}({{messagePathCtorArgs}}) : {{messagePathBaseCall}} {
                     {{members.SelectTextTemplate(member => $$"""
                             {{WithIndent(member.RenderPathConstructor(), "        ")}}
@@ -298,12 +307,25 @@ namespace Nijo.Models.ReadModel2Modules {
                 yield return new LegacyMessageMember(member.GetPropertyName(E_CsTs.CSharp), "IDisplayMessageContainer", true, Aggregate is ChildrenAggregate);
             }
 
+            var bridgeToWriteModel = GetLegacySaveCommandMessageInterface() != null;
             foreach (var child in GetChildMembers()) {
+                var constructorTypeName = $"{child.CsClassName}Messages";
                 var typeName = child is EditablePresentationObjectChildrenDescendant
-                    ? $"DisplayMessageContainerList<{child.CsClassName}Messages>"
-                    : $"{child.CsClassName}Messages";
-                yield return new LegacyMessageMember(child.PhysicalName, typeName, false, false);
+                    ? bridgeToWriteModel
+                        ? $"DisplayMessageContainerList<{new DataClassForSave(child.Aggregate, DataClassForSave.E_Type.UpdateOrDelete).MessageInterfaceName}>"
+                        : $"DisplayMessageContainerList<{constructorTypeName}>"
+                    : bridgeToWriteModel
+                        ? new DataClassForSave(child.Aggregate, DataClassForSave.E_Type.UpdateOrDelete).MessageInterfaceName
+                        : constructorTypeName;
+                yield return new LegacyMessageMember(child.PhysicalName, typeName, false, false, constructorTypeName);
             }
+        }
+
+        private string? GetLegacySaveCommandMessageInterface() {
+            if (Aggregate.GetRoot() is not RootAggregate rootAggregate) return null;
+            if (rootAggregate.Model is not Models.WriteModel2) return null;
+            if (!rootAggregate.GenerateDefaultQueryModel) return null;
+            return new DataClassForSave(Aggregate, DataClassForSave.E_Type.UpdateOrDelete).MessageInterfaceName;
         }
 
         private IEnumerable<IEditablePresentationObjectValueOrRefMember> GetLegacyValueMembers() {
@@ -400,7 +422,7 @@ namespace Nijo.Models.ReadModel2Modules {
             };
         }
 
-        private readonly record struct LegacyMessageMember(string PropertyName, string TypeName, bool IsValueMember, bool IsInGrid) {
+        private readonly record struct LegacyMessageMember(string PropertyName, string TypeName, bool IsValueMember, bool IsInGrid, string? ConstructorTypeName = null) {
             internal string RenderPathConstructor() {
                 var path = IsValueMember
                     ? $"[.. path, \"{VALUES_TS}\", \"{PropertyName}\"]"
@@ -413,11 +435,11 @@ namespace Nijo.Models.ReadModel2Modules {
                 }
 
                 if (TypeName.StartsWith("DisplayMessageContainerList<", StringComparison.Ordinal)) {
-                    var itemType = TypeName["DisplayMessageContainerList<".Length..^1];
+                    var itemType = ConstructorTypeName ?? TypeName["DisplayMessageContainerList<".Length..^1];
                     return $"{PropertyName} = new([.. path, \"{PropertyName}\"], rowIndex => {{\n    return new {itemType}([.. path, \"{PropertyName}\", rowIndex.ToString()], {PropertyName}!, rowIndex);\n}});";
                 }
 
-                return $"{PropertyName} = new {TypeName}({path});";
+                return $"{PropertyName} = new {ConstructorTypeName ?? TypeName}({path});";
             }
 
             internal string RenderOriginConstructor() {
@@ -426,11 +448,11 @@ namespace Nijo.Models.ReadModel2Modules {
                 }
 
                 if (TypeName.StartsWith("DisplayMessageContainerList<", StringComparison.Ordinal)) {
-                    var itemType = TypeName["DisplayMessageContainerList<".Length..^1];
+                    var itemType = ConstructorTypeName ?? TypeName["DisplayMessageContainerList<".Length..^1];
                     return $"{PropertyName} = new([], rowIndex => {{\n    return new {itemType}(origin);\n}});";
                 }
 
-                return $"{PropertyName} = new {TypeName}(origin);";
+                return $"{PropertyName} = new {ConstructorTypeName ?? TypeName}(origin);";
             }
         }
 

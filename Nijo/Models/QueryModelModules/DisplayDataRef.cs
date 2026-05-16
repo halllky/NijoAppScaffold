@@ -146,7 +146,8 @@ namespace Nijo.Models.QueryModelModules {
 
                         // 参照先のChildrenを生成すると検索処理のSQLが複雑になりすぎて発行できないことがあるので
                         // オプションで明示的に生成するよう指定が無い限りは生成されない
-                        if (!CodeRenderingContext.CurrentContext.Config.GenerateRefToChildrenDisplayData) continue;
+                        if (!CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
+                            && !CodeRenderingContext.CurrentContext.Config.GenerateRefToChildrenDisplayData) continue;
 
                         yield return new RefDisplayDataChildrenMember(children);
                     }
@@ -361,11 +362,36 @@ namespace Nijo.Models.QueryModelModules {
 
             public string PhysicalName => _member.PhysicalName;
             public string DisplayName => _member.DisplayName;
-            public string GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp
-                ? $"{_member.PhysicalName}RefTargetVia{_member.PreviousNode!.XElement.Name.LocalName.ToCSharpSafe()}"
+            public string GetTypeName(E_CsTs csts) => CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
+                ? GetLegacyTypeName()
                 : $"{_member.PhysicalName}RefTargetVia{_member.PreviousNode!.XElement.Name.LocalName.ToCSharpSafe()}";
             public override string CsClassName => GetTypeName(E_CsTs.CSharp);
             public override string TsTypeName => throw new InvalidOperationException("このオブジェクトはTSの名前つきの型ではない");
+
+            private string GetLegacyTypeName() {
+                var (entryName, relation) = GetLegacyRefTargetNameParts(_member);
+                return $"{entryName}RefTarget_{relation}";
+            }
+
+            private static (string EntryName, string Relation) GetLegacyRefTargetNameParts(AggregateBase aggregate) {
+                var path = aggregate.GetPathFromEntry().ToArray();
+                var refIndex = Array.FindLastIndex(path, node => node is RefToMember);
+                if (refIndex >= 0 && path[refIndex] is RefToMember refTo) {
+                    return (
+                        refTo.RefTo.AsEntry().PhysicalName,
+                        path.Skip(refIndex + 2)
+                            .OfType<AggregateBase>()
+                            .Select(node => node.PhysicalName.ToCSharpSafe())
+                            .Join("の"));
+                }
+
+                return (
+                    ((AggregateBase)aggregate.GetEntry()).PhysicalName,
+                    path.Skip(1)
+                        .OfType<AggregateBase>()
+                        .Select(node => node.PhysicalName.ToCSharpSafe())
+                        .Join("の"));
+            }
 
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => _member;
             bool IInstanceStructurePropertyMetadata.IsArray => false;
@@ -402,9 +428,36 @@ namespace Nijo.Models.QueryModelModules {
 
             public string PhysicalName => ChildrenAggregate.PhysicalName;
             public string DisplayName => ChildrenAggregate.DisplayName;
-            public string GetTypeName(E_CsTs csts) => $"{ChildrenAggregate.PhysicalName}RefTargetVia{ChildrenAggregate.PreviousNode!.XElement.Name.LocalName.ToCSharpSafe()}";
+            public string GetTypeName(E_CsTs csts) => CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
+                ? GetLegacyTypeName()
+                : $"{ChildrenAggregate.PhysicalName}RefTargetVia{ChildrenAggregate.PreviousNode!.XElement.Name.LocalName.ToCSharpSafe()}";
             public override string CsClassName => GetTypeName(E_CsTs.CSharp);
             public override string TsTypeName => throw new InvalidOperationException("このオブジェクトはTSの名前つきの型ではない");
+
+            private string GetLegacyTypeName() {
+                var (entryName, relation) = GetLegacyRefTargetNameParts(ChildrenAggregate);
+                return $"{entryName}RefTarget_{relation}";
+            }
+
+            private static (string EntryName, string Relation) GetLegacyRefTargetNameParts(AggregateBase aggregate) {
+                var path = aggregate.GetPathFromEntry().ToArray();
+                var refIndex = Array.FindLastIndex(path, node => node is RefToMember);
+                if (refIndex >= 0 && path[refIndex] is RefToMember refTo) {
+                    return (
+                        refTo.RefTo.AsEntry().PhysicalName,
+                        path.Skip(refIndex + 2)
+                            .OfType<AggregateBase>()
+                            .Select(node => node.PhysicalName.ToCSharpSafe())
+                            .Join("の"));
+                }
+
+                return (
+                    ((AggregateBase)aggregate.GetEntry()).PhysicalName,
+                    path.Skip(1)
+                        .OfType<AggregateBase>()
+                        .Select(node => node.PhysicalName.ToCSharpSafe())
+                        .Join("の"));
+            }
 
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => ChildrenAggregate;
             bool IInstanceStructurePropertyMetadata.IsArray => true;

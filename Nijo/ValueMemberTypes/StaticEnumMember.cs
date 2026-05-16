@@ -59,6 +59,23 @@ namespace Nijo.ValueMemberTypes {
                 var queryFullPath = ctx.Query.GetFlattenArrayPath(E_CsTs.CSharp, out var isMany);
                 var queryOwnerFullPath = queryFullPath.SkipLast(1);
 
+                if (ctx.CodeRenderingContext.IsLegacyCompatibilityMode()) {
+                    return $$"""
+                        if ({{fullpathNullable}} != null && {{fullpathNotNull}}.{{StaticEnumSearchCondition.ANY_CHECKED}}()) {
+                            var array = new List<{{CsPrimitiveTypeName}}?>();
+                        {{_parser.GetItemPhysicalNames().SelectTextTemplate(physicalName => $$"""
+                            if ({{fullpathNotNull}}.{{physicalName}}) array.Add({{CsPrimitiveTypeName}}.{{physicalName}});
+                        """)}}
+
+                        {{If(isMany, () => $$"""
+                            {{query}} = {{query}}.Where(x => x.{{queryOwnerFullPath.Join(".")}}.Any(y => array.Contains(y.{{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}})));
+                        """).Else(() => $$"""
+                            {{query}} = {{query}}.Where(x => array.Contains(x.{{queryFullPath.Join(".")}}));
+                        """)}}
+                        }
+                        """;
+                }
+
                 return $$"""
                     if ({{fullpathNullable}}?.{{StaticEnumSearchCondition.ANY_CHECKED}}() == true) {
                         var array = new List<{{CsPrimitiveTypeName}}>();

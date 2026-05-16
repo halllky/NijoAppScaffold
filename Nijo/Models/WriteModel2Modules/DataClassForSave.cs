@@ -1,6 +1,8 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.Models.DataModelModules;
 using Nijo.Parts.CSharp;
+using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using Nijo.ValueMemberTypes;
 using System;
@@ -430,6 +432,8 @@ namespace Nijo.Models.WriteModel2Modules {
 
             var refAssignmentGroups = aggregate.GetMembers()
                 .OfType<RefToMember>()
+                .OrderBy(refTo => GenericLookupRefToInfo.TryCreate(refTo, out _) ? 0 : 1)
+                .ThenBy(refTo => refTo.Order)
                 .Select(member => RenderRefToDbEntityAssignmentsLegacy(member, RenderMemberAccess(instanceName, member.PhysicalName, nullConditional)).ToArray())
                 .ToArray();
             var refAssignmentCount = refAssignmentGroups.Select(group => group.Length).DefaultIfEmpty(0).Max();
@@ -447,7 +451,7 @@ namespace Nijo.Models.WriteModel2Modules {
                     var value = currentKeys.TryGetValue(vm, out var keyExpr)
                         ? keyExpr
                         : RenderMemberAccess(instanceName, vm.PhysicalName, nullConditional);
-                    yield return $"{vm.PhysicalName} = {vm.Type.RenderCastToPrimitiveType()}{value},";
+                    yield return $"{vm.PhysicalName} = {value},";
 
                 } else if (member is ChildAggregate child) {
                     var childDbEntity = new EFCoreEntity(child);
@@ -548,7 +552,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
             foreach (var member in aggregate.GetMembers().OfType<ValueMember>().Where(vm => vm.IsKey)) {
                 var targetProperty = $"{path.Join("_")}_{member.PhysicalName}";
-                var value = $"{member.Type.RenderCastToPrimitiveType()}{sourceExpr}?.{member.PhysicalName}";
+                var value = $"{sourceExpr}?.{member.PhysicalName}";
                 yield return $"{targetProperty} = {value},";
             }
         }
@@ -640,7 +644,7 @@ namespace Nijo.Models.WriteModel2Modules {
                     var value = currentKeys.TryGetValue(vm, out var keyExpr)
                         ? keyExpr
                         : RenderMemberAccess(instanceName, vm.PhysicalName, nullConditional);
-                    yield return $"{vm.PhysicalName} = {vm.Type.RenderCastToDomainType()}{value},";
+                    yield return $"{vm.PhysicalName} = {value},";
 
                 } else if (member is RefToMember refTo) {
                     yield return $$"""
@@ -696,7 +700,7 @@ namespace Nijo.Models.WriteModel2Modules {
         private IEnumerable<string> RenderFromRefTargetKeysLegacy(AggregateBase aggregate, string entityExpr, IReadOnlyList<string> path, bool parentPathUnsupported) {
             foreach (var vm in aggregate.GetMembers().OfType<ValueMember>().Where(vm => vm.IsKey)) {
                 var sourceProperty = $"{path.Join("_")}_{vm.PhysicalName}";
-                var value = parentPathUnsupported ? "null" : $"{vm.Type.RenderCastToDomainType()}{entityExpr}.{sourceProperty}";
+                var value = parentPathUnsupported ? "null" : $"{entityExpr}.{sourceProperty}";
                 yield return $"{vm.PhysicalName} = {value},";
             }
 
@@ -911,7 +915,9 @@ namespace Nijo.Models.WriteModel2Modules {
 
         private string GetLegacyMemberTypeNameCSharp(IAggregateMember member) {
             return member switch {
-                ValueMember vm => vm.Type.CsDomainTypeName + "?",
+                ValueMember vm => (vm.XElement.Annotation<SchemaParseContext.OriginalTypeAnnotation>()?.TypeName == "file"
+                    ? "List<FileAttachmentMetadata>"
+                    : vm.Type.CsDomainTypeName.Replace("DateOnly", "Date")) + "?",
                 RefToMember refTo => new DataClassForRefTargetKeys(refTo.RefTo, refTo.RefTo).CsClassName + "?",
                 ChildAggregate child => new DataClassForSave(child, Type).CsClassName + "?",
                 ChildrenAggregate children => $"List<{new DataClassForSave(children, Type).CsClassName}>?",

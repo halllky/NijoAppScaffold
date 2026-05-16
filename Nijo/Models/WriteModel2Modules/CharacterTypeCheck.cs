@@ -2,6 +2,7 @@ using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Models.DataModelModules;
 using Nijo.Parts.CSharp;
+using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -101,13 +102,30 @@ namespace Nijo.Models.WriteModel2Modules {
 
                     var refExpr = $"{instanceName}.{refTo.PhysicalName}";
                     var messagePath = string.Join('.', GetLegacyMessagePath(refTo));
+                    var utilityName = info.RootAggregate.XElement.Attribute(BasicNodeOptions.IsGenericLookupTable.AttributeName) != null
+                        ? "区分マスタUtil"
+                        : $"{info.RootAggregate.PhysicalName}Util";
+
+                    if (info.NonHardCodedKeyMembers.Count == 1) {
+                        var keyMember = info.NonHardCodedKeyMembers[0];
+                        var keyExpr = $"{refExpr}.{keyMember.PhysicalName}";
+                        var keyGuardExpr = $"{refExpr}?.{keyMember.PhysicalName}";
+                        yield return $$"""
+                            if ({{keyGuardExpr}} != null
+                                && !{{utilityName}}.{{info.Category.DisplayName.ToCSharpSafe()}}.Contains{{keyMember.PhysicalName}}({{keyExpr}}.Value)) {
+                                e.{{messagePath}}.AddError("区分値の種類が不正です。");
+                            }
+                            """;
+                        continue;
+                    }
+
                     var hasAnyValueExpression = string.Join("\r\n|| ", info.NonHardCodedKeyMembers.Select(valueMember => {
                         var valueExpr = $"{refExpr}.{valueMember.PhysicalName}";
                         return valueMember.Type.CsPrimitiveTypeName == "string"
                             ? $"!string.IsNullOrWhiteSpace({valueExpr})"
                             : $"{valueExpr} != null";
                     }));
-                    var utilExpression = $"{info.RootAggregate.PhysicalName}Util.{info.Category.DisplayName.ToCSharpSafe()}";
+                    var utilExpression = $"{utilityName}.{info.Category.DisplayName.ToCSharpSafe()}";
                     var existsExpression = info.NonHardCodedKeyMembers.Count == 0
                         ? $"{utilExpression}.Any()"
                         : $"{utilExpression}.Any(candidate => {string.Join("\r\n&& ", info.NonHardCodedKeyMembers.Select(valueMember => $"candidate.{valueMember.PhysicalName} == {refExpr}.{valueMember.PhysicalName}"))})";

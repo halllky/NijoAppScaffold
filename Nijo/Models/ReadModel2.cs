@@ -63,19 +63,21 @@ namespace Nijo.Models {
 
             var singleView = new SingleView(rootAggregate);
             var loadMethod = new LoadMethod(rootAggregate);
+            var shouldRenderBatchUpdate = rootAggregate.GenerateBatchUpdateCommand
+                 || (ctx.IsLegacyCompatibilityMode() && rootAggregate.Model is WriteModel2 && rootAggregate.GenerateDefaultQueryModel);
             aggregateFile.AddTypeScriptFunction(loadMethod.RenderReactHook(ctx));
             aggregateFile.AddWebapiControllerAction(loadMethod.RenderControllerAction(ctx));
             aggregateFile.AddAppSrvMethod($$"""
                 {{loadMethod.RenderAppSrvBaseMethod(ctx).TrimEnd()}}
                 {{loadMethod.RenderAppSrvAbstractMethod(ctx).TrimEnd()}}
                 {{rootDisplayData.RenderSetKeysReadOnly(ctx).TrimEnd()}}
+                {{If(shouldRenderBatchUpdate, () => BatchUpdateReadModel.RenderAppSrvMethodVersion2(ctx, rootAggregate).TrimEnd())}}
                 {{singleView.RenderSetSingleViewDisplayDataFn(ctx).TrimEnd()}}
                 """);
 
-            if (rootAggregate.GenerateBatchUpdateCommand) {
+            if (shouldRenderBatchUpdate) {
                 aggregateFile.AddTypeScriptFunction(new BatchUpdateReadModel().RenderFunction(ctx, rootAggregate));
                 aggregateFile.AddWebapiControllerAction(BatchUpdateReadModel.RenderControllerActionVersion2(ctx, rootAggregate));
-                aggregateFile.AddAppSrvMethod(BatchUpdateReadModel.RenderAppSrvMethodVersion2(ctx, rootAggregate));
             }
 
             aggregateFile.AddTypeScriptFunction(rootDisplayData.RenderDeepEqualFunctionRecursively(ctx));
@@ -105,7 +107,10 @@ namespace Nijo.Models {
 
             var aggregates = rootAggregate.EnumerateThisAndDescendants().ToArray();
             var legacyRefAggregates = aggregates
-                .Where(aggregate => aggregate is RootAggregate || aggregate.GetRefFroms().Any())
+                .Where(aggregate => {
+                    if (aggregate.GetRefFroms().Any()) return true;
+                    return aggregate is RootAggregate && rootAggregate.Model is ReadModel2;
+                })
                 .ToArray();
 
             foreach (var aggregate in aggregates) {
@@ -177,6 +182,9 @@ namespace Nijo.Models {
         }
 
         public void GenerateCode(CodeRenderingContext ctx) {
+            var hasReadModel = ctx.Schema.GetRootAggregates().Any(rootAggregate => rootAggregate.Model is ReadModel2 || rootAggregate.GenerateDefaultQueryModel);
+            if (!hasReadModel) return;
+
             var applicationService = ctx.Use<Parts.CSharp.ApplicationService>();
             ctx.Use<Parts.CSharp.LegacyDbContextClass>();
             ctx.Use<Parts.CSharp.LegacyDefaultConfiguration>().AddValueObject("Date");

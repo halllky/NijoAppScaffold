@@ -1,5 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -105,8 +106,12 @@ namespace Nijo.Models.ReadModel2Modules {
             IValueMemberType IInstanceValuePropertyMetadata.Type => Member.Type;
 
             public string RenderCSharpDeclaring() {
+                var typeName = CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
+                    && Member.XElement.Annotation<SchemaParseContext.OriginalTypeAnnotation>()?.TypeName == "file"
+                    ? "List<FileAttachmentMetadata>"
+                    : Member.Type.CsDomainTypeName.Replace("DateOnly", "Date");
                 return $$"""
-                    public virtual {{Member.Type.CsDomainTypeName.Replace("DateOnly", "Date")}}? {{Member.PhysicalName}} { get; set; }
+                    public virtual {{typeName}}? {{Member.PhysicalName}} { get; set; }
                     """;
             }
         }

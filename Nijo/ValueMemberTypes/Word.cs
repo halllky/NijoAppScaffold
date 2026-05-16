@@ -40,6 +40,8 @@ internal class Word : IValueMemberType {
         FilterTsTypeName = "string",
         RenderTsNewObjectFunctionValue = () => "''",
         RenderFiltering = ctx => {
+            var schemaPathNode = (ctx.Query.Metadata as IInstanceValuePropertyMetadata)?.SchemaPathNode;
+            var originalType = schemaPathNode?.XElement.Annotation<SchemaParseContext.OriginalTypeAnnotation>()?.TypeName;
             var query = ctx.Query.Root.Name;
             var fullpathNullable = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");
             var fullpathNotNull = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, ctx.CodeRenderingContext.IsLegacyCompatibilityMode() ? "." : "!.");
@@ -56,7 +58,16 @@ internal class Word : IValueMemberType {
                 ? s
                 : BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL;
 
+            if (ctx.CodeRenderingContext.IsLegacyCompatibilityMode() && originalType == "file") {
+                return $$"""
+                    // {{schemaPathNode?.XElement.GetDisplayName()}} に対する検索はサポ－トされていません。
+                    """;
+            }
+
             string GetComparison(string target) {
+                if (ctx.CodeRenderingContext.IsLegacyCompatibilityMode() && originalType == "uuid") {
+                    return $"{target}.Equals(trimmed)";
+                }
                 if (ctx.CodeRenderingContext.IsLegacyCompatibilityMode() && searchBehavior == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL) {
                     return $"{target}.Contains(trimmed)";
                 }

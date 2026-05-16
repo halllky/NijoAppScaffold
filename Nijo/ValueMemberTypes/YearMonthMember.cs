@@ -61,6 +61,18 @@ internal class YearMonthMember : IValueMemberType {
     void IValueMemberType.RenderStaticSources(CodeRenderingContext ctx) {
 
         if (ctx.IsLegacyCompatibilityMode()) {
+            var requiresLegacyYearMonthSource = ctx.Schema.GetRootAggregates().Any(rootAggregate => {
+                var requiresLegacySource = rootAggregate.Model is Models.DataModel || rootAggregate.GenerateDefaultQueryModel;
+                if (!requiresLegacySource) return false;
+
+                return rootAggregate
+                    .EnumerateThisAndDescendants()
+                    .SelectMany(aggregate => aggregate.GetMembers())
+                    .OfType<ValueMember>()
+                    .Any(member => member.Type is YearMonthMember);
+            });
+            if (!requiresLegacyYearMonthSource) return;
+
             ctx.CoreLibrary(dir => {
                 dir.Directory("Util", utilDir => {
                     utilDir.Generate(new SourceFile {

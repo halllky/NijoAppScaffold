@@ -207,10 +207,14 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PropertyName;
 
         public string RenderCsDeclaration(CodeRenderingContext ctx) {
+            var typeName = ctx.IsLegacyCompatibilityMode()
+                && Member.XElement.Annotation<SchemaParseContext.OriginalTypeAnnotation>()?.TypeName == "file"
+                ? "List<FileAttachmentMetadata>"
+                : Member.Type.CsDomainTypeName;
             return $$"""
                 {{Member.XElement.RenderXmlCommentOrJsDoc(E_CsTs.CSharp)}}
                 {{NijoAttr.RenderAttributeValues(ctx, Member)}}
-                public {{Member.Type.CsDomainTypeName}}? {{PropertyName}} { get; set; }
+                public {{typeName}}? {{PropertyName}} { get; set; }
                 """;
         }
         public string RenderTsDeclaration() {
@@ -373,7 +377,8 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         internal override string TsTypeName => $"{Aggregate.PhysicalName}DisplayData";
         internal abstract string CsClassNameAsMember { get; }
         internal abstract string TsTypeNameAsMember { get; }
-        internal override bool HasVersion => Aggregate is RootAggregate;
+        internal override bool HasVersion => Aggregate is RootAggregate
+            || Aggregate.XElement.Attribute(BasicNodeOptions.HasLifecycle.AttributeName) != null;
 
         internal abstract string RenderNewObjectCreation();
     }

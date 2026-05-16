@@ -420,6 +420,10 @@ namespace Nijo.Models.ReadModel2Modules {
                 }
 
                 string RenderValueAssignment(IInstanceValuePropertyMetadata value) {
+                    var castPrefix = CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
+                        ? string.Empty
+                        : value.Type.RenderCastToDomainType();
+
                     if (!sourceMembers.TryGetValue(value.SchemaPathNode.ToMappingKey(), out var sourceProperty)
                         && !sourceMembersByName.TryGetValue(value.GetPropertyName(E_CsTs.CSharp), out sourceProperty)) {
                         if (value.SchemaPathNode is ValueMember schemaValue
@@ -427,16 +431,16 @@ namespace Nijo.Models.ReadModel2Modules {
                             && schemaValue.Type.CsDomainTypeName == "bool"
                             && sourceOwner is Variable variable) {
                             if (variable.Metadata is LegacyParentAndSelfMetadata) {
-                                return value.Type.RenderCastToDomainType()
+                                return castPrefix
                                     + $"{variable.Name}.self?.Values?.{value.GetPropertyName(E_CsTs.CSharp)}";
                             }
 
-                            return value.Type.RenderCastToDomainType()
+                            return castPrefix
                                 + $"{variable.Name}.Values?.{value.GetPropertyName(E_CsTs.CSharp)}";
                         }
 
                         if (currentSourceStructure != null) {
-                            return value.Type.RenderCastToDomainType()
+                            return castPrefix
                                 + currentSourceStructure.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")
                                 + $"?.{value.GetPropertyName(E_CsTs.CSharp)}";
                         }
@@ -444,7 +448,7 @@ namespace Nijo.Models.ReadModel2Modules {
                         return "null";
                     }
 
-                    return value.Type.RenderCastToDomainType()
+                    return castPrefix
                         + sourceProperty.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");
                 }
 
