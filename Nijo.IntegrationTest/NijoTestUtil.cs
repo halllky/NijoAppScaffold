@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using System.Xml.Linq;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 
@@ -151,19 +152,31 @@ public class NijoTestUtil {
                     DEFAULT_TSCONFIG_JSON,
                     new UTF8Encoding(false));
 
+                var csLogPath = Path.Combine(Project.ProjectRoot, "RESULT_CS.log");
+                var tsLogPath = Path.Combine(Project.ProjectRoot, "RESULT_TS.log");
+
                 // 2つを並列実行して待機
                 var results = await Task.WhenAll(
-                    RunCommandAsync("dotnet", "build", "RESULT_CS.log"),
-                    RunCommandAsync("npm", "run check", "RESULT_TS.log")
+                    RunCommandAsync("dotnet", "build", csLogPath),
+                    RunCommandAsync("npm", "run check", tsLogPath)
                 );
-                return results.All(ok => ok);
+
+                if (results.All(ok => ok)) {
+                    return true;
+                }
+
+                Logger.LogError(
+                    "コンパイル確認に失敗しました。C# ログ: {CsLogPath}, TypeScript ログ: {TsLogPath}",
+                    csLogPath,
+                    tsLogPath);
+                return false;
             } catch (Exception ex) {
                 Logger.LogError(ex, "CheckCompileAsyncで例外が発生しました。");
                 throw;
             }
         }
 
-        private async Task<bool> RunCommandAsync(string fileName, string arguments, string logFileName) {
+        private async Task<bool> RunCommandAsync(string fileName, string arguments, string logFilePath) {
             var psi = new ProcessStartInfo {
                 FileName = fileName,
                 Arguments = arguments,
@@ -183,7 +196,6 @@ public class NijoTestUtil {
             var stderr = await process.StandardError.ReadToEndAsync();
             await process.WaitForExitAsync();
 
-            var logPath = Path.Combine(Project.ProjectRoot, logFileName);
             var sb = new StringBuilder();
             sb.AppendLine($"COMMAND: {fileName} {arguments}");
             sb.AppendLine($"EXIT_CODE: {process.ExitCode}");
@@ -194,15 +206,42 @@ public class NijoTestUtil {
             sb.AppendLine("STDERR:");
             sb.AppendLine(stderr);
 
-            await File.WriteAllTextAsync(logPath, sb.ToString(), new UTF8Encoding(false));
+            await File.WriteAllTextAsync(logFilePath, sb.ToString(), new UTF8Encoding(false));
 
             if (process.ExitCode != 0) {
-                Logger.LogError("Command failed: {FileName} {Arguments} (ExitCode: {ExitCode})", fileName, arguments, process.ExitCode);
+                var summary = SummarizeCommandFailure(stdout, stderr);
+                Logger.LogError(
+                    "Command failed: {FileName} {Arguments} (ExitCode: {ExitCode})\nLog: {LogFilePath}\nSummary:\n{Summary}",
+                    fileName,
+                    arguments,
+                    process.ExitCode,
+                    logFilePath,
+                    summary);
             } else {
                 Logger.LogInformation("Command success: {FileName} {Arguments}", fileName, arguments);
             }
 
             return process.ExitCode == 0;
+        }
+
+        private static string SummarizeCommandFailure(string stdout, string stderr) {
+            var combined = $"{stdout}\n{stderr}";
+            var lines = combined
+                .Split('\n', StringSplitOptions.TrimEntries)
+                .Where(line => !string.IsNullOrWhiteSpace(line))
+                .ToArray();
+
+            var errorLines = lines
+                .Where(line => Regex.IsMatch(line, @"\berror\b|\bBuild FAILED\b|\bfailed\b", RegexOptions.IgnoreCase))
+                .Distinct()
+                .Take(12)
+                .ToArray();
+
+            if (errorLines.Length > 0) {
+                return string.Join(Environment.NewLine, errorLines);
+            }
+
+            return string.Join(Environment.NewLine, lines.TakeLast(Math.Min(20, lines.Length)));
         }
     }
 
@@ -233,6 +272,10 @@ public class NijoTestUtil {
 
             lock (_lock) {
                 File.AppendAllText(_logFilePath, logRecord);
+            }
+
+            if (logLevel >= LogLevel.Error) {
+                TestContext.Progress.Write(logRecord);
             }
         }
     }

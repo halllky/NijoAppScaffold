@@ -26,6 +26,38 @@ partial class DB接続あり_更新あり {
         Assert.That(
             result.HasError(),
             Is.False,
-            "ダミーデータの作成に失敗しました。エラー: " + string.Join(", ", result.GetAllMessages()));
+            BuildFailureMessage(result, "ダミーデータの作成に失敗しました。"));
+    }
+
+    private static string BuildFailureMessage(IMessageSetter messages, string message) {
+        var details = new List<string>();
+        var messageState = messages.GetState();
+
+        if (messageState is not null) {
+            var nodesWithMessages = messageState
+                .DescendantsAndSelf()
+                .Where(node => node.Errors.Count > 0 || node.Warns.Count > 0 || node.Infos.Count > 0)
+                .ToArray();
+
+            if (nodesWithMessages.Length > 0) {
+                details.Add("Messages:");
+                foreach (var node in nodesWithMessages) {
+                    var path = node.Path.Length == 0 ? "(root)" : string.Join('.', node.Path);
+                    foreach (var error in node.Errors) {
+                        details.Add($"  [Error] {path}: {error}");
+                    }
+                    foreach (var warn in node.Warns) {
+                        details.Add($"  [Warn] {path}: {warn}");
+                    }
+                    foreach (var info in node.Infos) {
+                        details.Add($"  [Info] {path}: {info}");
+                    }
+                }
+            }
+        }
+
+        return details.Count == 0
+            ? message
+            : $"{message}{Environment.NewLine}{string.Join(Environment.NewLine, details)}";
     }
 }
