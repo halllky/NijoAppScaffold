@@ -22,29 +22,5 @@ namespace Nijo.Util.CodeGenerating {
                 NewLine = newLine,
             };
         }
-
-        internal void Render(string filepath, CodeRenderingContext ctx) {
-            var ext = Path.GetExtension(filepath).ToLower();
-            using var sw = GetStreamWriter(filepath);
-
-            if (ext != ".md") {
-                var comment = ext switch {
-                    ".sql" => "--",
-                    ".css" => "",
-                    _ => "//",
-                };
-                sw.WriteLine($$"""
-                    {{(ext == ".css" ? "/*" : "")}}
-                    {{comment}} このファイルは自動生成されました。このファイルの内容を直接書き換えても、次回の自動生成処理で上書きされるのでご注意ください。
-                    {{(ext == ".css" ? "*/" : "")}}
-                    """.ReplaceLineEndings(sw.NewLine));
-            }
-
-            var content = RenderContent(ctx).ReplaceLineEndings(sw.NewLine);
-            foreach (var line in content.Split(sw.NewLine)) {
-                if (line.Contains(SKIP_MARKER)) continue;
-                sw.WriteLine(string.IsNullOrWhiteSpace(line) ? string.Empty : line);
-            }
-        }
     }
 }

@@ -48,7 +48,9 @@ namespace Nijo.Util.CodeGenerating {
             var content = sourceFile.RenderContent(_ctx).ReplaceLineEndings(newLine);
             var lines = content.Split(newLine);
             var endsWithNewLine = content.EndsWith(newLine, StringComparison.Ordinal);
-            var filtered = lines.Where(line => !line.Contains(SKIP_MARKER));
+            var filtered = lines
+                .Where(line => !line.Contains(SKIP_MARKER))
+                .Select(line => string.IsNullOrWhiteSpace(line) ? string.Empty : line);
 
             sw.Write(string.Join(newLine, filtered));
             if (endsWithNewLine) {
