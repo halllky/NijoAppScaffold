@@ -7,13 +7,15 @@ using System.Linq;
 
 namespace Nijo.Models.ReadModel2Modules {
     internal class RefDisplayData : IInstancePropertyOwnerMetadata, ICreatablePresentationLayerStructure {
-        internal RefDisplayData(AggregateBase aggregate, AggregateBase refEntry) {
+        internal RefDisplayData(AggregateBase aggregate, AggregateBase refEntry, string? relationSuffixOverride = null) {
             Aggregate = aggregate;
             RefEntry = refEntry;
+            _relationSuffixOverride = relationSuffixOverride;
         }
 
         internal AggregateBase Aggregate { get; }
         internal AggregateBase RefEntry { get; }
+        private readonly string? _relationSuffixOverride;
         private bool IsEntry => Aggregate == RefEntry;
 
         internal string CsClassName => IsEntry
@@ -41,14 +43,15 @@ namespace Nijo.Models.ReadModel2Modules {
 
         internal string RenderCSharp(CodeRenderingContext context) {
             return $$"""
-                /// <summary>
-                /// {{RefEntry.DisplayName}}が他の集約から外部参照されるときの{{Aggregate.DisplayName}}の型
-                /// </summary>
+                /// <summary>{{RefEntry.DisplayName}}が他の集約から参照されたときの{{Aggregate.DisplayName}}の画面表示用データ型</summary>
                 public partial class {{CsClassName}} {
                 {{EnumerateMembers().SelectTextTemplate(member => $$"""
                     {{WithIndent(member.RenderCSharpDeclaring(context), "    ")}}
                 """)}}
                 }
+                {{EnumerateMembers().OfType<StructureMember>().Where(member => member.Target.RefEntry == RefEntry && (Aggregate != RefEntry || member.SchemaPathNode is RefToMember)).SelectTextTemplate(member => $$"""
+                {{member.Target.RenderCSharp(context)}}
+                """)}}
                 """;
         }
         internal string RenderTypeScript(CodeRenderingContext context) {
@@ -73,15 +76,18 @@ namespace Nijo.Models.ReadModel2Modules {
         private IEnumerable<IMember> EnumerateMembers() {
             foreach (var member in Aggregate.GetMembers()) {
                 if (member is ValueMember vm) {
-                    if (vm.OnlySearchCondition) continue;
+                    var isLegacySearchOnlyBool = CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
+                        && vm.OnlySearchCondition
+                        && vm.Type.CsDomainTypeName == "bool";
+                    if (vm.OnlySearchCondition && !isLegacySearchOnlyBool) continue;
                     if (vm.IsHardCodedPrimaryKey) continue;
                     yield return new ValueMemberWrapper(vm);
                 } else if (member is RefToMember refTo) {
-                    yield return new StructureMember(refTo.PhysicalName, new RefDisplayData(refTo.RefTo.AsEntry(), refTo.RefTo.AsEntry()), false, refTo);
+                    yield return new StructureMember(refTo.PhysicalName, new RefDisplayData(refTo.RefTo.AsEntry(), RefEntry, GetNestedRefRelationSuffix(refTo.PhysicalName)), false, refTo);
                 } else if (member is ChildAggregate child) {
-                    yield return new StructureMember(child.PhysicalName, new RefDisplayData(child, RefEntry), false, child);
+                    yield return new StructureMember(child.PhysicalName, new RefDisplayData(child, RefEntry, GetNestedRelationSuffix(child.PhysicalName)), false, child);
                 } else if (member is ChildrenAggregate children) {
-                    yield return new StructureMember(children.PhysicalName, new RefDisplayData(children, RefEntry), true, children);
+                    yield return new StructureMember(children.PhysicalName, new RefDisplayData(children, RefEntry, GetNestedRelationSuffix(children.PhysicalName)), true, children);
                 }
             }
         }
@@ -95,11 +101,27 @@ namespace Nijo.Models.ReadModel2Modules {
         }
 
         private string GetRelationSuffix() {
-            return Aggregate.GetPathFromEntry()
+            if (_relationSuffixOverride != null) return _relationSuffixOverride.ToCSharpSafe();
+
+            var suffix = Aggregate.GetPathFromEntry()
                 .Skip(1)
                 .OfType<AggregateBase>()
                 .Select(node => node.PhysicalName.ToCSharpSafe())
                 .Join("の");
+
+            return suffix == string.Empty ? Aggregate.PhysicalName.ToCSharpSafe() : suffix;
+        }
+
+        private string GetNestedRefRelationSuffix(string propertyName) {
+            return _relationSuffixOverride == null
+                ? propertyName
+                : $"{_relationSuffixOverride}の{propertyName}";
+        }
+
+        private string? GetNestedRelationSuffix(string propertyName) {
+            return _relationSuffixOverride == null
+                ? null
+                : $"{_relationSuffixOverride}の{propertyName}";
         }
 
         private interface IMember : IInstancePropertyMetadata {
@@ -120,7 +142,7 @@ namespace Nijo.Models.ReadModel2Modules {
 
             public string RenderCSharpDeclaring(CodeRenderingContext context) {
                 return $$"""
-                    public {{Member.Type.CsDomainTypeName}}? {{Member.PhysicalName}} { get; set; }
+                    public virtual {{Member.Type.CsDomainTypeName.Replace("DateOnly", "Date")}}? {{Member.PhysicalName}} { get; set; }
                     """;
             }
 
@@ -146,6 +168,7 @@ namespace Nijo.Models.ReadModel2Modules {
             private readonly RefDisplayData _target;
             private readonly bool _isArray;
             private readonly ISchemaPathNode _schemaPathNode;
+            internal RefDisplayData Target => _target;
 
             public string DisplayName => _propertyName;
             public ISchemaPathNode SchemaPathNode => _schemaPathNode;
@@ -155,12 +178,22 @@ namespace Nijo.Models.ReadModel2Modules {
             IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => _target.GetMembers();
 
             public string RenderCSharpDeclaring(CodeRenderingContext context) {
+                if (context.IsLegacyCompatibilityMode()) {
+                    return _isArray
+                        ? $$"""
+                            public virtual List<{{_target.CsClassName}}>? {{_propertyName}} { get; set; }
+                            """
+                        : $$"""
+                            public virtual {{_target.CsClassName}}? {{_propertyName}} { get; set; }
+                            """;
+                }
+
                 return _isArray
                     ? $$"""
-                        public List<{{_target.CsClassName}}> {{_propertyName}} { get; set; } = [];
+                        public virtual List<{{_target.CsClassName}}> {{_propertyName}} { get; set; } = [];
                         """
                     : $$"""
-                        public {{_target.CsClassName}} {{_propertyName}} { get; set; } = new();
+                        public virtual {{_target.CsClassName}} {{_propertyName}} { get; set; } = new();
                         """;
             }
 

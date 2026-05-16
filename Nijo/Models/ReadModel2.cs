@@ -100,24 +100,48 @@ namespace Nijo.Models {
                 aggregateFile.AddAppSrvMethod(singleView.RenderAppSrvGetUrlMethod());
             }
 
-            foreach (var aggregate in rootAggregate.EnumerateThisAndDescendants()) {
+            var aggregates = rootAggregate.EnumerateThisAndDescendants().ToArray();
+
+            foreach (var aggregate in aggregates) {
                 var refEntry = (AggregateBase)aggregate.GetEntry();
                 var refSearchCondition = new RefSearchCondition(aggregate, refEntry);
                 var refSearchResult = new RefSearchResult(aggregate, refEntry);
                 var refDisplayData = new RefDisplayData(aggregate, refEntry);
 
-                aggregateFile.AddCSharpClass(refSearchCondition.RenderCSharpDeclaringRecursively(ctx), "Class_RefSearchCondition");
-                aggregateFile.AddCSharpClass(refSearchResult.RenderCSharp(ctx), "Class_RefSearchResult");
-                aggregateFile.AddCSharpClass(refDisplayData.RenderCSharp(ctx), "Class_RefDisplayData");
-                aggregateFile.AddTypeScriptTypeDef(refSearchCondition.RenderTypeScriptDeclaringRecursively(ctx));
-                aggregateFile.AddTypeScriptFunction(refSearchCondition.RenderCreateNewObjectFn(ctx));
+                if (aggregate == refEntry) {
+                    aggregateFile.AddCSharpClass(refSearchCondition.RenderCSharpDeclaringRecursively(ctx), "Class_RefSearchCondition");
+                }
+                if (!ctx.IsLegacyCompatibilityMode()) {
+                    aggregateFile.AddCSharpClass(refSearchResult.RenderCSharp(ctx), $"Class_RefSearchResult_{refSearchResult.CsClassName}");
+                    aggregateFile.AddCSharpClass(refDisplayData.RenderCSharp(ctx), $"Class_RefDisplayData_{refDisplayData.CsClassName}");
+                }
+                if (aggregate == refEntry) {
+                    aggregateFile.AddTypeScriptTypeDef(refSearchCondition.RenderTypeScriptDeclaringRecursively(ctx));
+                    aggregateFile.AddTypeScriptFunction(refSearchCondition.RenderCreateNewObjectFn(ctx));
+                }
                 aggregateFile.AddTypeScriptTypeDef(refDisplayData.RenderTypeScript(ctx));
                 aggregateFile.AddTypeScriptFunction(refDisplayData.RenderTsNewObjectFunction(ctx));
+
+                if (aggregate != refEntry) continue;
 
                 var refSearchMethod = new RefSearchMethod(aggregate, refEntry);
                 aggregateFile.AddTypeScriptFunction(refSearchMethod.RenderHook(ctx));
                 aggregateFile.AddWebapiControllerAction(refSearchMethod.RenderController(ctx));
                 aggregateFile.AddAppSrvMethod(refSearchMethod.RenderAppSrvMethodOfReadModel(ctx));
+            }
+
+            if (ctx.IsLegacyCompatibilityMode()) {
+                aggregateFile.AddCSharpClass(aggregates.SelectTextTemplate(aggregate => {
+                    var refEntry = (AggregateBase)aggregate.GetEntry();
+                    var refSearchResult = new RefSearchResult(aggregate, refEntry);
+                    return refSearchResult.RenderCSharp(ctx);
+                }), $"Class_RefSearchResults_{rootAggregate.PhysicalName}");
+
+                aggregateFile.AddCSharpClass(aggregates.SelectTextTemplate(aggregate => {
+                    var refEntry = (AggregateBase)aggregate.GetEntry();
+                    var refDisplayData = new RefDisplayData(aggregate, refEntry);
+                    return refDisplayData.RenderCSharp(ctx);
+                }), $"Class_RefDisplayData_{rootAggregate.PhysicalName}");
             }
 
             ctx.Use<AuthorizedAction>().Register(rootAggregate);

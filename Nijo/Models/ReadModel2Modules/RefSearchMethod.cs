@@ -200,15 +200,12 @@ namespace Nijo.Models.ReadModel2Modules {
             string RenderOwner(IInstancePropertyOwnerMetadata ownerMetadata) {
                 return $$"""
                     new() {
-                    {{ownerMetadata.GetMembers().SelectTextTemplate(member => member switch {
-                    IInstanceValuePropertyMetadata value => $$"""
+                    {{ownerMetadata.GetMembers().OfType<IInstanceValuePropertyMetadata>().SelectTextTemplate(value => $$"""
                             {{value.GetPropertyName(E_CsTs.CSharp)}} = {{RenderValueAssignment(value)}},
-                        """,
-                    IInstanceStructurePropertyMetadata structure => $$"""
+                        """)}}
+                    {{ownerMetadata.GetMembers().OfType<IInstanceStructurePropertyMetadata>().SelectTextTemplate(structure => $$"""
                             {{structure.GetPropertyName(E_CsTs.CSharp)}} = {{WithIndent(RenderOwner(structure), "    ")}},
-                        """,
-                    _ => throw new InvalidOperationException(),
-                })}}
+                        """)}}
                     }
                     """;
             }
@@ -225,14 +222,20 @@ namespace Nijo.Models.ReadModel2Modules {
         private static string RenderResultConverting(RefDisplayData target, IInstancePropertyOwner source) {
             return RenderOwner(target.CsClassName, target, source);
 
-            static string RenderOwner(string typeName, IInstancePropertyOwnerMetadata targetMetadata, IInstancePropertyOwner sourceOwner) {
+            static string RenderOwner(string typeName, IInstancePropertyOwnerMetadata targetMetadata, IInstancePropertyOwner sourceOwner, bool renderTypeName = true, InstanceStructureProperty? currentSourceStructure = null) {
                 var sourceMembers = sourceOwner
                     .CreatePropertiesRecursively()
                     .GroupBy(prop => prop.Metadata.SchemaPathNode.ToMappingKey())
                     .ToDictionary(group => group.Key, group => group.OrderBy(prop => prop.GetPathFromInstance().Count()).First());
+                var sourceMembersByName = sourceOwner
+                    .CreatePropertiesRecursively()
+                    .GroupBy(prop => prop.Metadata.GetPropertyName(E_CsTs.CSharp))
+                    .ToDictionary(group => group.Key, group => group.OrderBy(prop => prop.GetPathFromInstance().Count()).First());
+
+                var newExpression = renderTypeName ? $"new {typeName}" : "new()";
 
                 return $$"""
-                    new {{typeName}} {
+                    {{newExpression}} {
                     {{targetMetadata.GetMembers().SelectTextTemplate(member => $$"""
                         {{WithIndent(RenderMember(member), "    ")}}
                     """)}}
@@ -250,7 +253,22 @@ namespace Nijo.Models.ReadModel2Modules {
                 }
 
                 string RenderValueAssignment(IInstanceValuePropertyMetadata value) {
-                    if (!sourceMembers.TryGetValue(value.SchemaPathNode.ToMappingKey(), out var sourceProperty)) {
+                    if (!sourceMembers.TryGetValue(value.SchemaPathNode.ToMappingKey(), out var sourceProperty)
+                        && !sourceMembersByName.TryGetValue(value.GetPropertyName(E_CsTs.CSharp), out sourceProperty)) {
+                        if (value.SchemaPathNode is ValueMember schemaValue
+                            && schemaValue.OnlySearchCondition
+                            && schemaValue.Type.CsDomainTypeName == "bool"
+                            && sourceOwner is Variable variable) {
+                            return value.Type.RenderCastToDomainType()
+                                + $"{variable.Name}.Values?.{value.GetPropertyName(E_CsTs.CSharp)}";
+                        }
+
+                        if (currentSourceStructure != null) {
+                            return value.Type.RenderCastToDomainType()
+                                + currentSourceStructure.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")
+                                + $"?.{value.GetPropertyName(E_CsTs.CSharp)}";
+                        }
+
                         return "null";
                     }
 
@@ -260,25 +278,49 @@ namespace Nijo.Models.ReadModel2Modules {
 
                 string RenderStructureMember(IInstanceStructurePropertyMetadata structure) {
                     if (!sourceMembers.TryGetValue(structure.SchemaPathNode.ToMappingKey(), out var sourcePropertyBase)
+                        && !sourceMembersByName.TryGetValue(structure.GetPropertyName(E_CsTs.CSharp), out sourcePropertyBase)
                         || sourcePropertyBase is not InstanceStructureProperty sourceProperty) {
                         return structure.IsArray
                             ? $$"""
                             {{structure.GetPropertyName(E_CsTs.CSharp)}} = [],
                             """
                             : $$"""
-                            {{structure.GetPropertyName(E_CsTs.CSharp)}} = new {{structure.GetTypeName(E_CsTs.CSharp)}} {
+                            {{structure.GetPropertyName(E_CsTs.CSharp)}} = new() {
                             },
                             """;
                     }
 
+                    var isUnderLegacyValues = sourceProperty
+                        .GetPathFromInstance()
+                        .Any(property => property.Metadata.GetPropertyName(E_CsTs.CSharp) == DisplayData.VALUES_CS);
+
                     if (structure.IsArray) {
+                        var itemMetadata = isUnderLegacyValues
+                            ? sourceProperty.Metadata
+                            : Nijo.Models.ReadModel2Modules.DisplayData.GetLegacyCompatibleInstanceApiMetadata((AggregateBase)structure.SchemaPathNode);
+
                         return $$"""
-                        {{structure.GetPropertyName(E_CsTs.CSharp)}} = {{sourceProperty.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")}}?.Select(x => {{RenderOwner(structure.GetTypeName(E_CsTs.CSharp), structure, new Variable("x", sourceProperty.Metadata))}}).ToList() ?? [],
+                        {{structure.GetPropertyName(E_CsTs.CSharp)}} = {{sourceProperty.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")}}?.Select(x => {{RenderOwner(structure.GetTypeName(E_CsTs.CSharp), structure, new Variable("x", itemMetadata))}}).ToList() ?? [],
                         """;
                     }
 
+                    IInstancePropertyOwner nestedSourceOwner;
+                    InstanceStructureProperty? nestedCurrentSourceStructure;
+                    if (!isUnderLegacyValues && structure.SchemaPathNode is AggregateBase aggregateBase) {
+                        var legacyMetadata = Nijo.Models.ReadModel2Modules.DisplayData.GetLegacyCompatibleInstanceApiMetadata(aggregateBase);
+                        var legacyValuesMember = legacyMetadata
+                            .GetMembers()
+                            .OfType<IInstanceStructurePropertyMetadata>()
+                            .Single(member => member.GetPropertyName(E_CsTs.CSharp) == DisplayData.VALUES_CS);
+                        nestedSourceOwner = sourceProperty.CreateProperty(legacyValuesMember);
+                        nestedCurrentSourceStructure = null;
+                    } else {
+                        nestedSourceOwner = sourceProperty;
+                        nestedCurrentSourceStructure = sourceProperty;
+                    }
+
                     return $$"""
-                    {{structure.GetPropertyName(E_CsTs.CSharp)}} = {{RenderOwner(structure.GetTypeName(E_CsTs.CSharp), structure, sourceProperty)}},
+                    {{structure.GetPropertyName(E_CsTs.CSharp)}} = {{RenderOwner(structure.GetTypeName(E_CsTs.CSharp), structure, nestedSourceOwner, false, nestedCurrentSourceStructure)}},
                     """;
                 }
             }
