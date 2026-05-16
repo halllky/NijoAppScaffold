@@ -42,7 +42,7 @@ namespace Nijo.Core.AggregateMemberTypes {
             """;
 
 
-        // D-Plusでは添付ファイルに対する検索はできない。
+        // 添付ファイルに対する検索はできない。
         public string GetSearchConditionCSharpType(AggregateMember.ValueMember vm) => "string";
         public string GetSearchConditionTypeScriptType(AggregateMember.ValueMember vm) => "undefined";
         public string RenderFilteringStatement(AggregateMember.ValueMember member, string query, string searchCondition, E_SearchConditionObject searchConditionObject, E_SearchQueryObject searchQueryObject) {
