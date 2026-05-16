@@ -1,5 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.Models.DataModelModules;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ namespace Nijo.Models.WriteModel2Modules {
     /// <summary>
     /// 参照先キーのデータ型を担当する移植先。
     /// </summary>
-    internal class DataClassForRefTargetKeys {
+    internal class DataClassForRefTargetKeys : IInstancePropertyOwnerMetadata {
         internal DataClassForRefTargetKeys(AggregateBase aggregate, AggregateBase entryAggregate) {
             Aggregate = aggregate;
             EntryAggregate = entryAggregate;
@@ -20,6 +21,8 @@ namespace Nijo.Models.WriteModel2Modules {
         internal string CsClassName => $"{GetTypeStem()}RefTargetKeys";
         internal string TsTypeName => CsClassName;
 
+        IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => GetOwnMembers();
+
         /// <summary>
         /// 参照先キー型の C# 宣言を再帰的にレンダリングする。
         /// </summary>
@@ -28,12 +31,19 @@ namespace Nijo.Models.WriteModel2Modules {
         /// entryAggregate はクラス名・型名の起点、Aggregate は現在レンダリング中のノードを表す想定。
         /// </remarks>
         internal string RenderCSharpDeclaringRecursively(CodeRenderingContext ctx) {
+            if (ctx.IsLegacyCompatibilityMode()) {
+                return $$"""
+                    #region {{Aggregate.DisplayName}} が他の集約から参照されるときの項目のうち、登録更新に必要なキー情報のみの部分
+                    {{RenderLegacyCSharpBodyRecursively()}}
+                    #endregion {{Aggregate.DisplayName}} が他の集約から参照されるときの項目のうち、登録更新に必要なキー情報のみの部分
+                    """;
+            }
+
             var descendants = GetChildAggregatesRecursively().ToArray();
 
             return $$"""
                 {{RenderSingleCSharpType()}}
                 {{descendants.SelectTextTemplate(descendant => $$"""
-
                 {{descendant.RenderSingleCSharpType()}}
                 """)}}
                 """;
@@ -51,7 +61,6 @@ namespace Nijo.Models.WriteModel2Modules {
             return $$"""
                 {{RenderSingleTypeScriptType()}}
                 {{descendants.SelectTextTemplate(descendant => $$"""
-
                 {{descendant.RenderSingleTypeScriptType()}}
                 """)}}
                 """;
@@ -63,72 +72,142 @@ namespace Nijo.Models.WriteModel2Modules {
                 /// {{Aggregate.DisplayName}} を参照するときに必要なキー群。
                 /// </summary>
                 public partial class {{CsClassName}} {
-                {{GetMembersForType().SelectTextTemplate(member => $$"""
+                {{GetOwnMembers().SelectTextTemplate(member => $$"""
                     /// <summary>{{member.DisplayName}}</summary>
-                    public {{GetMemberTypeNameCSharp(member)}} {{member.PhysicalName}} { get; set; }{{(member is ChildrenAggregate ? " = [];" : string.Empty)}}
+                    public {{member.GetCSharpPropertyTypeName()}} {{member.PhysicalName}} { get; set; }{{(member.RequiresCollectionInitializer ? " = [];" : string.Empty)}}
                 """)}}
                 }
                 """;
+        }
+
+        private string RenderLegacyCSharpBodyRecursively() {
+            return $$"""
+                {{RenderSingleCSharpTypeLegacy()}}
+                {{GetLegacyRelationMembers().SelectTextTemplate(member => $$"""
+                {{RenderLegacyDescendant(member)}}
+                """)}}
+                """;
+        }
+
+        private string RenderSingleCSharpTypeLegacy() {
+            var valueMembers = GetOwnMembers().OfType<RefTargetKeyValueMember>().ToArray();
+            var relationMembers = GetLegacyRelationMembers().ToArray();
+
+            return $$"""
+                /// <summary>
+                /// {{Aggregate.DisplayName}} のキー
+                /// </summary>
+                public partial class {{GetLegacyCsClassName(Aggregate)}} {
+                {{valueMembers.SelectTextTemplate(member => $$"""
+                    public required {{member.GetLegacyCSharpPropertyTypeName()}} {{member.PhysicalName}} { get; set; }
+                """)}}
+                {{relationMembers.SelectTextTemplate(member => $$"""
+                    public required {{member.GetLegacyCSharpPropertyTypeName()}} {{member.PhysicalName}} { get; set; }
+                """)}}
+                }
+                """;
+        }
+
+        private string RenderLegacyDescendant(RefTargetKeyStructureMember member) {
+            return new DataClassForRefTargetKeys(member.TargetStructure.Aggregate, EntryAggregate).RenderLegacyCSharpBodyRecursively();
         }
 
         private string RenderSingleTypeScriptType() {
             return $$"""
                 export type {{TsTypeName}} = {
-                {{GetMembersForType().SelectTextTemplate(member => $$"""
-                  {{member.PhysicalName}}: {{GetMemberTypeNameTypeScript(member)}},
+                {{GetOwnMembers().SelectTextTemplate(member => $$"""
+                  {{member.PhysicalName}}: {{member.GetTypeScriptPropertyTypeName()}},
                 """)}}
                 }
                 """;
         }
 
-        private IEnumerable<IAggregateMember> GetMembersForType() {
+        private IEnumerable<IRefTargetKeyMember> GetOwnMembers() {
             foreach (var member in Aggregate.GetMembers()) {
                 if (member is ValueMember vm && vm.IsKey) {
-                    yield return member;
+                    yield return new RefTargetKeyValueMember(vm);
                 } else if (member is RefToMember refTo && refTo.IsKey) {
-                    yield return member;
-                } else if (member is ChildAggregate or ChildrenAggregate) {
-                    yield return member;
+                    yield return new RefTargetKeyRefMember(this, refTo);
+                } else if (member is ChildAggregate child) {
+                    yield return new RefTargetKeyChildMember(this, child);
+                } else if (member is ChildrenAggregate children) {
+                    yield return new RefTargetKeyChildrenMember(this, children);
                 }
             }
+        }
+
+        private IEnumerable<RefTargetKeyStructureMember> GetLegacyRelationMembers() {
+            return GetOwnMembers().OfType<RefTargetKeyStructureMember>();
         }
 
         private IEnumerable<DataClassForRefTargetKeys> GetChildAggregatesRecursively() {
-            foreach (var member in Aggregate.GetMembers()) {
-                if (member is ChildAggregate child) {
-                    var nested = new DataClassForRefTargetKeys(child, EntryAggregate);
-                    yield return nested;
-                    foreach (var descendant in nested.GetChildAggregatesRecursively()) {
-                        yield return descendant;
-                    }
-                } else if (member is ChildrenAggregate children) {
-                    var nested = new DataClassForRefTargetKeys(children, EntryAggregate);
-                    yield return nested;
-                    foreach (var descendant in nested.GetChildAggregatesRecursively()) {
-                        yield return descendant;
-                    }
+            foreach (var member in GetOwnMembers().OfType<RefTargetKeyStructureMember>()) {
+                if (member is RefTargetKeyRefMember) continue;
+
+                yield return member.TargetStructure;
+                foreach (var descendant in member.TargetStructure.GetChildAggregatesRecursively()) {
+                    yield return descendant;
                 }
             }
         }
 
-        private string GetMemberTypeNameCSharp(IAggregateMember member) {
-            return member switch {
-                ValueMember vm => vm.Type.CsDomainTypeName + "?",
-                RefToMember refTo => new DataClassForRefTargetKeys(refTo.RefTo, refTo.RefTo).CsClassName + "?",
-                ChildAggregate child => new DataClassForRefTargetKeys(child, EntryAggregate).CsClassName + "?",
-                ChildrenAggregate children => $"List<{new DataClassForRefTargetKeys(children, EntryAggregate).CsClassName}>",
-                _ => throw new InvalidOperationException($"未対応のメンバー型: {member.GetType().Name}"),
-            };
+        private string GetLegacyCsClassName(ISchemaPathNode node) {
+            var relationHistory = GetLegacyRelationHistory(node).ToArray();
+            return relationHistory.Length == 0
+                ? $"{EntryAggregate.PhysicalName}RefTargetKeys"
+                : $"{EntryAggregate.PhysicalName}RefTargetKeys_{relationHistory.Join("_")}";
         }
 
-        private string GetMemberTypeNameTypeScript(IAggregateMember member) {
-            return member switch {
-                ValueMember vm => $"{vm.Type.TsTypeName} | undefined",
-                RefToMember refTo => $"{new DataClassForRefTargetKeys(refTo.RefTo, refTo.RefTo).TsTypeName} | undefined",
-                ChildAggregate child => $"{new DataClassForRefTargetKeys(child, EntryAggregate).TsTypeName} | undefined",
-                ChildrenAggregate children => $"{new DataClassForRefTargetKeys(children, EntryAggregate).TsTypeName}[]",
-                _ => throw new InvalidOperationException($"未対応のメンバー型: {member.GetType().Name}"),
-            };
+        private IEnumerable<string> GetLegacyRelationHistory(ISchemaPathNode node) {
+            var path = node.GetPathFromEntry();
+            var isOutOfEntryTree = false;
+
+            foreach (var current in path) {
+                if (current.PreviousNode == null) continue;
+                if (current.PreviousNode is RefToMember) continue;
+
+                if (current is RefToMember refTo) {
+                    var previous = (AggregateBase?)current.PreviousNode ?? throw new InvalidOperationException("reftoの前は必ず集約です。");
+
+                    if (previous == refTo.Owner) {
+                        if (!isOutOfEntryTree) {
+                            yield return ((SaveCommand.ISaveCommandMember)new SaveCommand.SaveCommandRefMember(refTo)).PhysicalName;
+                            isOutOfEntryTree = true;
+                        } else {
+                            yield return new KeyClass.KeyClassRefMember(refTo).PhysicalName;
+                        }
+                        continue;
+                    }
+
+                    if (previous == refTo.RefTo) {
+                        throw new InvalidOperationException("RefTargetKeys では参照先から参照元へ辿れません。");
+                    }
+
+                    throw new InvalidOperationException("reftoの前は必ず参照元集約か参照先集約になるのでありえない");
+                }
+
+                if (current is AggregateBase curr && current.PreviousNode is AggregateBase prev) {
+                    if (curr.IsParentOf(prev)) {
+                        if (!isOutOfEntryTree) throw new InvalidOperationException("エントリー内で子から親へは辿れません。");
+
+                        yield return new KeyClass.KeyClassEntry(curr).PhysicalName;
+                        continue;
+                    }
+
+                    if (curr.IsChildOf(prev)) {
+                        if (isOutOfEntryTree) throw new InvalidOperationException("参照先キー内で親から子へは辿れません。");
+
+                        yield return curr switch {
+                            ChildAggregate child => new SaveCommand.SaveCommandChildMember(child, SaveCommand.E_Type.Create).PhysicalName,
+                            ChildrenAggregate children => new SaveCommand.SaveCommandChildrenMember(children, SaveCommand.E_Type.Create).PhysicalName,
+                            _ => throw new InvalidOperationException("ありえない"),
+                        };
+                        continue;
+                    }
+
+                    throw new InvalidOperationException("必ず 親→子, 子→親 のどちらかになるのでありえない");
+                }
+            }
         }
 
         private string GetTypeStem() {
@@ -139,6 +218,92 @@ namespace Nijo.Models.WriteModel2Modules {
                 .ToArray();
 
             return path.Join(string.Empty);
+        }
+
+        private interface IRefTargetKeyMember : IInstancePropertyMetadata {
+            string PhysicalName { get; }
+            new string DisplayName { get; }
+            bool RequiresCollectionInitializer { get; }
+            string GetCSharpPropertyTypeName();
+            string GetTypeScriptPropertyTypeName();
+            string GetLegacyCSharpPropertyTypeName();
+        }
+
+        private sealed class RefTargetKeyValueMember : IRefTargetKeyMember, IInstanceValuePropertyMetadata {
+            internal RefTargetKeyValueMember(ValueMember member) {
+                Member = member;
+            }
+
+            internal ValueMember Member { get; }
+            public string PhysicalName => Member.PhysicalName;
+            public string DisplayName => Member.DisplayName;
+            public bool RequiresCollectionInitializer => false;
+            public string GetCSharpPropertyTypeName() => $"{Member.Type.CsDomainTypeName}?";
+            public string GetTypeScriptPropertyTypeName() => $"{Member.Type.TsTypeName} | undefined";
+            public string GetLegacyCSharpPropertyTypeName() => $"{Member.Type.CsDomainTypeName}?";
+
+            ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
+            string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
+            IValueMemberType IInstanceValuePropertyMetadata.Type => Member.Type;
+        }
+
+        private abstract class RefTargetKeyStructureMember : IRefTargetKeyMember, IInstanceStructurePropertyMetadata {
+            protected RefTargetKeyStructureMember(DataClassForRefTargetKeys owner, IAggregateMember member, DataClassForRefTargetKeys targetStructure) {
+                OwnerStructure = owner;
+                Member = member;
+                TargetStructure = targetStructure;
+            }
+
+            protected DataClassForRefTargetKeys OwnerStructure { get; }
+            protected IAggregateMember Member { get; }
+            internal DataClassForRefTargetKeys TargetStructure { get; }
+
+            public string PhysicalName => Member.PhysicalName;
+            public string DisplayName => Member.DisplayName;
+            public bool RequiresCollectionInitializer => IsArray;
+            public string GetCSharpPropertyTypeName() => IsArray ? $"List<{GetTypeName(E_CsTs.CSharp)}>" : $"{GetTypeName(E_CsTs.CSharp)}?";
+            public string GetTypeScriptPropertyTypeName() => IsArray ? $"{GetTypeName(E_CsTs.TypeScript)}[]" : $"{GetTypeName(E_CsTs.TypeScript)} | undefined";
+            public abstract string GetLegacyCSharpPropertyTypeName();
+
+            ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
+            string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
+            IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => ((IInstancePropertyOwnerMetadata)TargetStructure).GetMembers();
+
+            public abstract bool IsArray { get; }
+            public string GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp ? TargetStructure.CsClassName : TargetStructure.TsTypeName;
+        }
+
+        private sealed class RefTargetKeyRefMember : RefTargetKeyStructureMember {
+            internal RefTargetKeyRefMember(DataClassForRefTargetKeys owner, RefToMember member)
+                : base(owner, member, new DataClassForRefTargetKeys(member.RefTo, member.RefTo)) {
+                RefTo = member;
+            }
+
+            private RefToMember RefTo { get; }
+            public override bool IsArray => false;
+            public override string GetLegacyCSharpPropertyTypeName() => OwnerStructure.GetLegacyCsClassName(RefTo.RefTo);
+        }
+
+        private sealed class RefTargetKeyChildMember : RefTargetKeyStructureMember {
+            internal RefTargetKeyChildMember(DataClassForRefTargetKeys owner, ChildAggregate member)
+                : base(owner, member, new DataClassForRefTargetKeys(member, owner.EntryAggregate)) {
+                Child = member;
+            }
+
+            private ChildAggregate Child { get; }
+            public override bool IsArray => false;
+            public override string GetLegacyCSharpPropertyTypeName() => OwnerStructure.GetLegacyCsClassName(Child);
+        }
+
+        private sealed class RefTargetKeyChildrenMember : RefTargetKeyStructureMember {
+            internal RefTargetKeyChildrenMember(DataClassForRefTargetKeys owner, ChildrenAggregate member)
+                : base(owner, member, new DataClassForRefTargetKeys(member, owner.EntryAggregate)) {
+                Children = member;
+            }
+
+            private ChildrenAggregate Children { get; }
+            public override bool IsArray => true;
+            public override string GetLegacyCSharpPropertyTypeName() => OwnerStructure.GetLegacyCsClassName(Children);
         }
     }
 }
