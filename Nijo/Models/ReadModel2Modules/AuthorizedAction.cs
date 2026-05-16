@@ -76,7 +76,7 @@ namespace Nijo.Models.ReadModel2Modules {
                     /// </summary>
                     Read = 2,
                     /// <summary>
-                    /// ReadModelの場合は「閲覧権限（制限なし）と更新権限あり（制限付き）」。CommandModelの場合は「実行権限なし」
+                    /// ReadModelの場合は「閲覧権限（制限なし）と更新権限あり（制限付き）」。CommandModelの場合は「実行権限あり」
                     /// </summary>
                     Write_RESTRICT = 3,
                     /// <summary>

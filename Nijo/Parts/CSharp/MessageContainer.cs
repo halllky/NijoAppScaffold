@@ -137,6 +137,10 @@ namespace Nijo.Parts.CSharp {
             /// 基底クラスのレンダリング
             /// </summary>
             private SourceFile RenderCSharpBaseClass(CodeRenderingContext ctx) {
+                if (ctx.IsLegacyCompatibilityMode()) {
+                    return RenderLegacyCSharpBaseClass(ctx);
+                }
+
                 var registered = new Dictionary<string, string>(_registered) {
                     { SETTER_INTERFACE, SETTER_CLASS },
                     { SETTER_CLASS, SETTER_CLASS },
@@ -405,6 +409,377 @@ namespace Nijo.Parts.CSharp {
                             }
                         }
                         #endregion 具象クラス
+                        """,
+                };
+            }
+
+            private SourceFile RenderLegacyCSharpBaseClass(CodeRenderingContext ctx) {
+                var readModel2Roots = ctx.Schema.GetRootAggregates()
+                    .Where(root => root.Model is Models.ReadModel2)
+                    .OrderByDataFlow()
+                    .ToArray();
+                var defaultClassMappings = readModel2Roots.SelectMany(root => {
+                    var rootClass = new[] { new Models.QueryModelModules.DisplayDataMessageContainer(root).CsClassName };
+                    var rootList = new[] { $"{new Models.QueryModelModules.DisplayDataMessageContainer(root).CsClassName}List" };
+                    var descendants = root
+                        .EnumerateDescendants()
+                        .Select(agg => new Models.QueryModelModules.DisplayDataMessageContainer(agg).CsClassName);
+                    return rootClass.Concat(rootList).Concat(descendants);
+                }).Distinct().ToArray();
+
+                return new SourceFile {
+                    FileName = "MessageReceiver.cs",
+                    Contents = $$"""
+                        using System.Collections;
+                        using System.Text.Json;
+                        using System.Text.Json.Nodes;
+
+                        namespace {{ctx.Config.RootNamespace}};
+
+                        /// <summary>
+                        /// 登録処理などで生じたエラーメッセージなどをHTTPレスポンスとして返すまでの入れ物のインターフェース
+                        /// </summary>
+                        public interface IDisplayMessageContainer {
+                            void AddError(string message);
+                            void AddConcurrencyError(string message);
+                            void AddInfo(string message);
+                            void AddWarn(string message);
+                            IEnumerable<IDisplayMessageContainer> EnumerateChildren();
+
+                            bool HasError();
+                            bool HasWarning();
+
+                            /// <summary>
+                            /// エラーの中でも特に排他エラーが発生しているか否かを返します。
+                            /// </summary>
+                            bool HasConcurrencyError();
+                        }
+
+                        public static class DisplayMessageContainerExtensions {
+                            /// <summary>
+                            /// エラー等のメッセージを送出する処理が求める型と、そのメッセージを受け取って画面等に表示する処理が知っている型が相違している時に
+                            /// 画面ルートにすべてのメッセージを転送するために用いられるマッピング。
+                            /// 引数はメッセージ送出側が求める型。
+                            /// 戻り値はその型の具象型。
+                            /// </summary>
+                            /// <param name="pageRoot">メッセージ転送先</param>
+                            public static IDisplayMessageContainer GetDefaultClass(Type type, IDisplayMessageContainer pageRoot) {
+                        {{defaultClassMappings.SelectTextTemplate(typeName => $$"""
+                                if (type == typeof({{typeName}})) return new {{typeName}}(pageRoot);
+                        """)}}
+                                throw new ArgumentException($"{type.Name} 型には既定のメッセージコンテナクラスがありません。");
+                            }
+                        }
+
+                        /// <summary>
+                        /// 登録処理などで生じたエラーメッセージなどをHTTPレスポンスとして返すまでの入れ物の抽象クラス
+                        /// </summary>
+                        public abstract partial class DisplayMessageContainerBase : IDisplayMessageContainer {
+                            public DisplayMessageContainerBase(IEnumerable<string> path) {
+                                _path = path;
+                            }
+                            /// <summary>すべてのメッセージを画面ルートに転送する場合に用いられるコンストラクタ</summary>
+                            public DisplayMessageContainerBase(IDisplayMessageContainer origin) {
+                                _origin = origin;
+                            }
+                            private readonly IEnumerable<string>? _path;
+                            /// <summary>すべてのメッセージを画面ルートに転送する場合に用いられる転送先</summary>
+                            private readonly IDisplayMessageContainer? _origin;
+
+                            private readonly List<string> _errors = new();
+                            private readonly List<string> _warnings = new();
+                            private readonly List<string> _informations = new();
+                            private bool _hasConcurrencyError = false;
+
+                            public virtual void AddError(string message) {
+                                if (_origin == null) {
+                                    _errors.Add(message);
+                                } else {
+                                    _origin.AddError(message); // メッセージを画面ルートへ転送する
+                                }
+                            }
+                            public virtual void AddConcurrencyError(string message) {
+                                AddError(message);
+                                _hasConcurrencyError = true;
+                            }
+                            public virtual void AddWarn(string message) {
+                                if (_origin == null) {
+                                    _warnings.Add(message);
+                                } else {
+                                    _origin.AddWarn(message); // メッセージを画面ルートへ転送する
+                                }
+                            }
+                            public virtual void AddInfo(string message) {
+                                if (_origin == null) {
+                                    _informations.Add(message);
+                                } else {
+                                    _origin.AddInfo(message); // メッセージを画面ルートへ転送する
+                                }
+                            }
+
+                            public bool HasError() {
+                                if (_errors.Count > 0) return true;
+                                if (EnumerateDescendants().Any(container => container.HasError())) return true;
+                                return false;
+                            }
+                            public bool HasWarning() {
+                                if (_warnings.Count > 0) return true;
+                                if (EnumerateDescendants().Any(container => container.HasWarning())) return true;
+                                return false;
+                            }
+                            public bool HasConcurrencyError() {
+                                if (_hasConcurrencyError) return true;
+                                if (EnumerateDescendants().Any(container => container.HasConcurrencyError())) return true;
+                                return false;
+                            }
+
+                            public virtual IEnumerable<JsonArray> ToReactHookFormErrors() {
+                                // 全メッセージを画面ルート（origin）に転送している場合
+                                if (_origin is DisplayMessageContainerBase origin) {
+                                    foreach (var msg in origin.ToReactHookFormErrors()) {
+                                        yield return msg;
+                                    }
+                                    yield break;
+                                }
+
+                                // このオブジェクト自身または子孫自身がそれぞれメッセージを保持している場合
+                                if (_errors.Count > 0 || _warnings.Count > 0 || _informations.Count > 0) {
+                                    var types = new JsonObject();
+                                    for (var i = 0; i < _errors.Count; i++) {
+                                        types[$"ERROR-{i}"] = _errors[i]; // キーを "ERROR-" で始めるというルールはTypeScript側と合わせる必要がある
+                                    }
+                                    for (var i = 0; i < _warnings.Count; i++) {
+                                        types[$"WARN-{i}"] = _warnings[i]; // キーを "WARN-" で始めるというルールはTypeScript側と合わせる必要がある
+                                    }
+                                    for (var i = 0; i < _informations.Count; i++) {
+                                        types[$"INFO-{i}"] = _informations[i]; // キーを "INFO-" で始めるというルールはTypeScript側と合わせる必要がある
+                                    }
+                                    yield return new JsonArray {
+                                        _path != null && _path.Any()
+                                            ? string.Join(".", _path)
+                                            : "root", // "root" という名前は React hook form のエラーデータのルール
+                                        new JsonObject { ["types"] = types }, // "types" という名前は React hook form のエラーデータのルール
+                                    };
+                                }
+                                foreach (var child in EnumerateChildren().OfType<DisplayMessageContainerBase>()) {
+                                    foreach (var msg in child.ToReactHookFormErrors()) {
+                                        yield return msg;
+                                    }
+                                }
+                            }
+
+                            public abstract IEnumerable<IDisplayMessageContainer> EnumerateChildren();
+
+                            public IEnumerable<DisplayMessageContainerBase> EnumerateDescendants() {
+                                foreach (var child in EnumerateChildren().OfType<DisplayMessageContainerBase>()) {
+                                    yield return child;
+
+                                    foreach (var desc in child.EnumerateDescendants()) {
+                                        yield return desc;
+                                    }
+                                }
+                            }
+
+                            /// <summary>
+                            /// このオブジェクトまたは子孫が持っているメッセージのうち
+                            /// エラーメッセージのみを列挙します。
+                            /// </summary>
+                            public IEnumerable<string> GetErrorMessages() {
+                                // 全メッセージを画面ルート（origin）に転送している場合
+                                if (_origin is DisplayMessageContainerBase origin) {
+                                    foreach (var err in origin.GetErrorMessages()) {
+                                        yield return err;
+                                    }
+                                    yield break;
+                                }
+
+                                // このオブジェクト自身または子孫自身がそれぞれメッセージを保持している場合
+                                foreach (var err in _errors) {
+                                    var fieldName = GetThisFieldName();
+                                    yield return string.IsNullOrEmpty(fieldName) ? err : $"{fieldName}: {err}";
+                                }
+                                foreach (var desc in EnumerateChildren().OfType<DisplayMessageContainerBase>()) {
+                                    foreach (var err in desc.GetErrorMessages()) {
+                                        yield return err;
+                                    }
+                                }
+                            }
+                            /// <summary>
+                            /// このオブジェクトまたは子孫が持っているメッセージのうち
+                            /// 警告メッセージのみを列挙します。
+                            /// </summary>
+                            public IEnumerable<string> GetWarningMessages() {
+                                // 全メッセージを画面ルート（origin）に転送している場合
+                                if (_origin is DisplayMessageContainerBase origin) {
+                                    foreach (var warn in origin.GetWarningMessages()) {
+                                        yield return warn;
+                                    }
+                                    yield break;
+                                }
+
+                                // このオブジェクト自身または子孫自身がそれぞれメッセージを保持している場合
+                                foreach (var warn in _warnings) {
+                                    var fieldName = GetThisFieldName();
+                                    yield return string.IsNullOrEmpty(fieldName) ? warn : $"{fieldName}: {warn}";
+                                }
+                                foreach (var desc in EnumerateChildren().OfType<DisplayMessageContainerBase>()) {
+                                    foreach (var warn in desc.GetWarningMessages()) {
+                                        yield return warn;
+                                    }
+                                }
+                            }
+                            /// <summary>
+                            /// このオブジェクトまたは子孫が持っているメッセージのうち
+                            /// インフォメーションメッセージのみを列挙します。
+                            /// </summary>
+                            public IEnumerable<string> GetInformationMessages() {
+                                // 全メッセージを画面ルート（origin）に転送している場合
+                                if (_origin is DisplayMessageContainerBase origin) {
+                                    foreach (var info in origin.GetInformationMessages()) {
+                                        yield return info;
+                                    }
+                                    yield break;
+                                }
+
+                                // このオブジェクト自身または子孫自身がそれぞれメッセージを保持している場合
+                                foreach (var info in _informations) {
+                                    var fieldName = GetThisFieldName();
+                                    yield return string.IsNullOrEmpty(fieldName) ? info : $"{fieldName}: {info}";
+                                }
+                                foreach (var desc in EnumerateChildren().OfType<DisplayMessageContainerBase>()) {
+                                    foreach (var info in desc.GetInformationMessages()) {
+                                        yield return info;
+                                    }
+                                }
+                            }
+                            /// <summary>
+                            /// このオブジェクトの表示用の名称を返します。
+                            /// 祖先からのパスは含まれません。
+                            /// </summary>
+                            public string GetThisFieldName() {
+                                if (_path == null) return string.Empty;
+                                if (!_path.Any()) return string.Empty;
+
+                                // パスの最後がintの場合、この要素は配列の要素
+                                var last = _path.Last();
+                                if (int.TryParse(last, out var index)) {
+                                    var last2 = _path.SkipLast(1).LastOrDefault();
+                                    if (last2 == null) {
+                                        return $"{index + 1}行目";
+                                    } else {
+                                        return $"{last2}({index + 1}行目)";
+                                    }
+                                } else {
+                                    return last;
+                                }
+                            }
+                        }
+
+                        /// <summary>
+                        /// 登録処理などで生じたエラーメッセージなどをHTTPレスポンスとして返すまでの入れ物
+                        /// </summary>
+                        public partial class DisplayMessageContainer : DisplayMessageContainerBase {
+                            public DisplayMessageContainer(IEnumerable<string> path) : base(path) { }
+                            /// <summary>すべてのメッセージを画面ルートに転送する場合に用いられるコンストラクタ</summary>
+                            public DisplayMessageContainer(IDisplayMessageContainer origin) : base(origin) { }
+
+                            public override IEnumerable<IDisplayMessageContainer> EnumerateChildren() {
+                                yield break;
+                            }
+                        }
+
+                        /// <summary>
+                        /// 登録処理などで生じたエラーメッセージなどをHTTPレスポンスとして返すまでの入れ物のうち、グリッドの内部の項目。
+                        /// グリッドのヘッダと自身のセルの部分の2か所にエラー等のメッセージを表示する必要があるため、
+                        /// エラーメッセージが1個追加されるごとにHTTPレスポンスのエラーメッセージのオブジェクトが2個ずつ増えていく。
+                        /// </summary>
+                        public partial class DisplayMessageContainerInGrid : DisplayMessageContainerBase {
+                            /// <param name="path">このメンバー自身のパス</param>
+                            /// <param name="gridRoot">グリッドに表示されるメッセージの入れ物。全メッセージを画面ルートに転送する場合はnullになる。</param>
+                            /// <param name="rowIndex">このオブジェクトがグリッドの何行目か</param>
+                            public DisplayMessageContainerInGrid(IEnumerable<string> path, IDisplayMessageContainer gridRoot, int rowIndex) : base(path) {
+                                _gridRoot = gridRoot;
+                                _rowIndex = rowIndex;
+                            }
+                            /// <summary>全メッセージを画面ルートに転送する場合に用いられるコンストラクタ</summary>
+                            public DisplayMessageContainerInGrid(IDisplayMessageContainer origin) : base(origin) {
+                                _gridRoot = null;
+                                _rowIndex = null;
+                            }
+                            private readonly IDisplayMessageContainer? _gridRoot;
+                            private readonly int? _rowIndex;
+
+                            public override void AddError(string message) {
+                                _gridRoot?.AddError($"{_rowIndex + 1}行目: {message}");
+                                base.AddError(message);
+                            }
+                            public override void AddWarn(string message) {
+                                _gridRoot?.AddWarn($"{_rowIndex + 1}行目: {message}");
+                                base.AddWarn(message);
+                            }
+                            public override void AddInfo(string message) {
+                                _gridRoot?.AddInfo($"{_rowIndex + 1}行目: {message}");
+                                base.AddInfo(message);
+                            }
+
+                            public override IEnumerable<IDisplayMessageContainer> EnumerateChildren() {
+                                yield break;
+                            }
+                        }
+
+                        /// <summary>
+                        /// 登録処理などで生じたエラーメッセージなどをHTTPレスポンスとして返すまでの入れ物の配列
+                        /// </summary>
+                        public interface IDisplayMessageContainerList<out T> : IDisplayMessageContainer, IReadOnlyList<T> where T : IDisplayMessageContainer {
+                        }
+
+                        /// <inheritdoc cref="IDisplayMessageContainerList"/>
+                        public partial class DisplayMessageContainerList<T> : DisplayMessageContainerBase, IDisplayMessageContainerList<T> where T : IDisplayMessageContainer {
+                            public DisplayMessageContainerList(IEnumerable<string> path, Func<int, T> createItem) : base(path) {
+                                _createItem = createItem;
+                            }
+                            /// <summary>全メッセージを画面ルートに転送する場合に用いられるコンストラクタ</summary>
+                            public DisplayMessageContainerList(IDisplayMessageContainer origin, Func<int, T> createItem) : base(origin) {
+                                _createItem = createItem;
+                            }
+
+                            private readonly Func<int, T> _createItem;
+                            private readonly Dictionary<int, T> _items = new();
+
+                            public T this[int index] {
+                                get {
+                                    ArgumentOutOfRangeException.ThrowIfNegative(index);
+
+                                    if (_items.TryGetValue(index, out var item)) {
+                                        return item;
+                                    } else {
+                                        var newItem = _createItem(index);
+                                        _items[index] = newItem;
+                                        return newItem;
+                                    }
+                                }
+                            }
+
+                            public int Count => _items.Keys.Count == 0
+                                ? 0
+                                : (_items.Keys.Max() + 1);
+
+                            public IEnumerator<T> GetEnumerator() {
+                                if (_items.Count == 0) yield break;
+
+                                var max = _items.Keys.Max() + 1;
+                                for (int i = 0; i < max; i++) {
+                                    yield return this[i];
+                                }
+                            }
+                            IEnumerator IEnumerable.GetEnumerator() {
+                                return GetEnumerator();
+                            }
+
+                            public override IEnumerable<IDisplayMessageContainer> EnumerateChildren() {
+                                return this.Cast<IDisplayMessageContainer>();
+                            }
+                        }
                         """,
                 };
             }
