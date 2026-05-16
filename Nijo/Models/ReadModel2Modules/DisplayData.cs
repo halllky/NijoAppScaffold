@@ -43,11 +43,6 @@ namespace Nijo.Models.ReadModel2Modules {
         }
 
         internal new string RenderCSharpDeclaring(CodeRenderingContext ctx) {
-            if (!ctx.IsLegacyCompatibilityMode()) {
-                return base.RenderCSharpDeclaring(ctx);
-                // TODO #43 ADDMODDDELを明示的に指定できるようにする
-            }
-
             var implements = new List<string>();
             if (Aggregate is RootAggregate) implements.Add("DisplayDataClassBase");
             if (HasLifeCycle) implements.Add(ISaveCommandConvertible.INTERFACE_NAME);
@@ -259,10 +254,6 @@ namespace Nijo.Models.ReadModel2Modules {
         }
 
         internal new string RenderTypeScriptType(CodeRenderingContext ctx) {
-            if (!ctx.IsLegacyCompatibilityMode()) {
-                return base.RenderTypeScriptType(ctx);
-            }
-
             var childMembers = GetChildMembers().ToArray();
             var legacyValueMembers = GetLegacyValueMembers().ToArray();
 
@@ -677,17 +668,6 @@ namespace Nijo.Models.ReadModel2Modules {
         }
 
         internal string RenderSetKeysReadOnly(CodeRenderingContext ctx) {
-            if (!ctx.IsLegacyCompatibilityMode()) {
-                return $$"""
-                    /// <summary>
-                    /// {{Aggregate.DisplayName}}の主キー項目を読み取り専用にします。
-                    /// 現行の ReadModel2 移植途中では読み取り専用メタデータ構造をまだ持たないため no-op とする。
-                    /// </summary>
-                    private void SetKeysReadOnly({{CsClassName}} displayData) {
-                    }
-                    """;
-            }
-
             var renderedChildMembers = NormalizeEmptyTemplate(GetChildMembers().SelectTextTemplate(child => child switch {
                 EditablePresentationObjectChildrenDescendant children => $$"""
                     foreach (var x in displayData.{{children.PhysicalName}}) {
@@ -997,10 +977,6 @@ namespace Nijo.Models.ReadModel2Modules {
         }
 
         private static IEnumerable<IEditablePresentationObjectValueOrRefMember> EnumerateUiConstraintValueMembers(EditablePresentationObject displayData) {
-            if (!CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
-                return displayData.GetValueMembers();
-            }
-
             return displayData.Aggregate.GetMembers().Select(member => member switch {
                 ValueMember valueMember when !valueMember.OnlySearchCondition || valueMember.Type.CsDomainTypeName == "bool"
                     => (IEditablePresentationObjectValueOrRefMember?)new EditablePresentationObjectValueMember(valueMember),

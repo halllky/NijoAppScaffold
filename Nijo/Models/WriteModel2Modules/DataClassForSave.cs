@@ -251,9 +251,6 @@ namespace Nijo.Models.WriteModel2Modules {
 
             return $$"""
                                 export type {{TsTypeName}} = {
-                                {{If(Type == E_Type.UpdateOrDelete && Aggregate is RootAggregate && !ctx.IsLegacyCompatibilityMode(), () => $$"""
-                                    version: number | undefined,
-                                """)}}
                                 {{GetOwnMembers().SelectTextTemplate(member => $$"""
                                     {{member.PhysicalName}}: {{GetMemberTypeNameTypeScript(member)}},
                                 """)}}
@@ -282,9 +279,6 @@ namespace Nijo.Models.WriteModel2Modules {
 
             return $$"""
                                 export type {{ReadOnlyTsTypeName}} = Readonly<{
-                                {{If(Type == E_Type.UpdateOrDelete && Aggregate is RootAggregate && !ctx.IsLegacyCompatibilityMode(), () => $$"""
-                                    version: number | undefined,
-                                """)}}
                                 {{GetOwnMembers().SelectTextTemplate(member => $$"""
                                     {{member.PhysicalName}}: {{GetReadOnlyMemberTypeNameTypeScript(member)}},
                                 """)}}
@@ -317,9 +311,6 @@ namespace Nijo.Models.WriteModel2Modules {
 
             return $$"""
                 export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({
-                {{If(Type == E_Type.UpdateOrDelete && Aggregate is RootAggregate && !ctx.IsLegacyCompatibilityMode(), () => $$"""
-                  version: undefined,
-                """)}}
                 {{GetOwnMembers().SelectTextTemplate(member => $$"""
                   {{member.PhysicalName}}: {{RenderTsInitialValue(member)}},
                 """)}}
@@ -365,9 +356,6 @@ namespace Nijo.Models.WriteModel2Modules {
             }
 
             var currentKeys = new Dictionary<ValueMember, string>(inheritedKeys);
-            if (Type == E_Type.UpdateOrDelete && aggregate is RootAggregate && !CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
-                yield return $"{Nijo.Parts.CSharp.EFCoreEntity.VERSION} = {instanceName}.{VERSION},";
-            }
 
             foreach (var member in aggregate.GetMembers()) {
                 if (member is ValueMember keyVm && keyVm.IsKey) {
@@ -595,9 +583,6 @@ namespace Nijo.Models.WriteModel2Modules {
             }
 
             var currentKeys = new Dictionary<ValueMember, string>(inheritedKeys);
-            if (Type == E_Type.UpdateOrDelete && aggregate is RootAggregate && !CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
-                yield return $"{VERSION} = {instanceName}.{Nijo.Parts.CSharp.EFCoreEntity.VERSION},";
-            }
 
             foreach (var member in aggregate.GetMembers()) {
                 if (member is ValueMember keyVm && keyVm.IsKey) {

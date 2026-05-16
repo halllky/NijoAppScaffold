@@ -474,7 +474,7 @@ namespace Nijo.Models.WriteModel2Modules {
                         var m = new {{saveData.MessageClassName}}([]);
                         var presentationContext = new PresentationContext(m, ctx.SaveOptions, this);
                         using var tran = DbContext.Database.BeginTransaction();
-                        {{new CreateMethod(rootAggregate).MethodName.Replace("Async", string.Empty, StringComparison.Ordinal)}}(item, m, presentationContext);
+                        {{LegacyCreateMethod.GetMethodName(rootAggregate)}}(item, m, presentationContext);
                         if (presentationContext.HasError()) {
                             throw new InvalidOperationException($"{{rootAggregate.DisplayName.Replace("\"", "\\\"")}}のダミーデータ作成でエラーが発生しました: {presentationContext.GetResult().ToJsonObject().ToJson()}");
                         }

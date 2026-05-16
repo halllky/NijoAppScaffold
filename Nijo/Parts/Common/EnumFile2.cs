@@ -58,7 +58,6 @@ namespace Nijo.Parts.Common {
                     namespace {{ctx.Config.RootNamespace}} {
                         using System.ComponentModel.DataAnnotations;
 
-
                     {{orderedDefs.SelectTextTemplate(def => $$"""
                         public enum {{def.Name}} {
                     {{def.Items.SelectTextTemplate(item => $$"""
