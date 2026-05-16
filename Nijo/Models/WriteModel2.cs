@@ -50,6 +50,8 @@ namespace Nijo.Models {
         }
 
         public void GenerateCode(CodeRenderingContext ctx, RootAggregate rootAggregate) {
+            if (!ctx.IsLegacyCompatibilityMode()) throw new InvalidOperationException("旧版互換モードでのみ利用可能");
+
             var aggregateFile = new SourceFileByAggregate(rootAggregate);
 
             // 集約横断で使う保存用共通型
@@ -58,7 +60,7 @@ namespace Nijo.Models {
             // EF Core Entity
             var rootEfCoreEntity = new WriteModel2EFCoreEntity(rootAggregate);
             aggregateFile.AddCSharpClass(rootEfCoreEntity.Render(ctx), "Class_EFCoreEntity");
-            ctx.Use<DbContextClass>().AddEntities(rootAggregate
+            ctx.Use<LegacyDbContextClass>().AddEntities(rootAggregate
                 .EnumerateThisAndDescendants()
                 .Select(aggregate => new WriteModel2EFCoreEntity(aggregate).AsIEFCoreEntity()));
 

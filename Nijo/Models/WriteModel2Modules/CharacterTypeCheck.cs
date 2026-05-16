@@ -19,7 +19,7 @@ namespace Nijo.Models.WriteModel2Modules {
         /// </remarks>
         internal static string Render(RootAggregate rootAggregate, CodeRenderingContext ctx) {
             RegisterHelpers(rootAggregate, ctx);
-            var body = RenderAggregate(rootAggregate, "dbEntity").ToArray();
+            var body = RenderAggregate(rootAggregate, "dbEntity", ctx).ToArray();
 
             return $$"""
                 protected virtual void ValidateCharacterType({{new EFCoreEntity(rootAggregate).ClassName}} dbEntity, {{MessageContainer.SETTER_INTERFACE}} messages) {
@@ -35,29 +35,35 @@ namespace Nijo.Models.WriteModel2Modules {
         private static void RegisterHelpers(RootAggregate rootAggregate, CodeRenderingContext ctx) {
             foreach (var vm in rootAggregate.EnumerateThisAndDescendants().SelectMany(agg => agg.GetMembers()).OfType<ValueMember>()) {
                 if (!string.IsNullOrWhiteSpace(vm.CharacterType)) {
-                    ctx.Use<DataModelModules.ValidateCharacterType.Helper>().Register(vm.CharacterType, ctx);
+                    if (ctx.IsLegacyCompatibilityMode()) {
+                        ctx.Use<LegacyDefaultConfiguration>().AddCharacterType(vm.CharacterType);
+                    } else {
+                        ctx.Use<DataModelModules.ValidateCharacterType.Helper>().Register(vm.CharacterType, ctx);
+                    }
                 }
             }
         }
 
-        private static IEnumerable<string> RenderAggregate(AggregateBase aggregate, string instanceName) {
+        private static IEnumerable<string> RenderAggregate(AggregateBase aggregate, string instanceName, CodeRenderingContext ctx) {
             foreach (var member in aggregate.GetMembers()) {
                 if (member is ValueMember vm) {
                     if (string.IsNullOrWhiteSpace(vm.CharacterType)) continue;
 
-                    var methodName = DataModelModules.ValidateCharacterType.Helper.GetMethodName(vm.CharacterType);
+                    var methodName = ctx.IsLegacyCompatibilityMode()
+                        ? $"ServiceProvider.GetRequiredService<DefaultConfiguration>().{LegacyDefaultConfiguration.GetCharacterTypeMethodName(vm.CharacterType)}"
+                        : DataModelModules.ValidateCharacterType.Helper.GetMethodName(vm.CharacterType);
                     var valueExpr = $"{instanceName}.{vm.PhysicalName}";
                     var displayName = vm.DisplayName.Replace("\"", "\\\"");
                     yield return $$"""
                         if (!string.IsNullOrEmpty({{valueExpr}})
-                            && !{{methodName}}({{valueExpr}})) {
+                            && !{{methodName}}({{valueExpr}}{{(ctx.IsLegacyCompatibilityMode() ? $", {vm.MaxLength?.ToString() ?? "null"}" : string.Empty)}})) {
                             messages.AddError("{{displayName}} は {{vm.CharacterType}} で入力してください。");
                         }
                         """;
 
                 } else if (member is ChildAggregate child) {
                     var childExpr = $"{instanceName}.{child.PhysicalName}";
-                    var childBody = RenderAggregate(child, childExpr).ToArray();
+                    var childBody = RenderAggregate(child, childExpr, ctx).ToArray();
                     if (childBody.Length == 0) continue;
 
                     yield return $$"""
@@ -69,7 +75,7 @@ namespace Nijo.Models.WriteModel2Modules {
                 } else if (member is ChildrenAggregate children) {
                     var arrayExpr = $"{instanceName}.{children.PhysicalName}";
                     var itemName = children.GetLoopVarName("item");
-                    var loopBody = RenderAggregate(children, itemName).ToArray();
+                    var loopBody = RenderAggregate(children, itemName, ctx).ToArray();
                     if (loopBody.Length == 0) continue;
 
                     yield return $$"""

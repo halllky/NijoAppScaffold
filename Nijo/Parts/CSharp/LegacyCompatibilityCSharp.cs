@@ -1,4 +1,5 @@
 using Nijo.CodeGenerating;
+using Nijo.ImmutableSchema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -300,9 +301,29 @@ namespace Nijo.Parts.CSharp {
         private static SourceFile RenderJsonConversion(CodeRenderingContext ctx) {
             var valueObjectClassNames = ctx.GetMultiAggregateSourceFiles()
                 .OfType<LegacyDbContextClass>()
-                .SingleOrDefault()
-                ?.GetValueObjectClassNames()
-                ?? [];
+                .SelectMany(sourceFile => sourceFile.GetValueObjectClassNames())
+                .Concat(ctx.GetMultiAggregateSourceFiles()
+                    .OfType<LegacyDefaultConfiguration>()
+                    .SelectMany(sourceFile => sourceFile.GetValueObjectClassNames()))
+                .Distinct()
+                .ToArray();
+            var writeModel2Roots = ctx.Schema.GetRootAggregates()
+                .Where(root => root.Model is Models.WriteModel2)
+                .OrderByDataFlow()
+                .ToArray();
+            var customConverterRegistrations = new List<string> {
+                "option.Converters.Add(new CustomJsonConverters.IntegerValueConverter());",
+                "option.Converters.Add(new CustomJsonConverters.DecimalValueConverter());",
+                "option.Converters.Add(new CustomJsonConverters.DateTimeValueConverter());",
+            };
+            if (writeModel2Roots.Length > 0) {
+                customConverterRegistrations.Add(string.Empty);
+                customConverterRegistrations.Add("option.Converters.Add(new CustomJsonConverters.SaveCommandBaseConverter());");
+            }
+            foreach (var className in valueObjectClassNames) {
+                customConverterRegistrations.Add("option.Converters.Add(new " + className + ".JsonValueConverter());");
+            }
+            var customConverterRegistrationsText = string.Join(Environment.NewLine, customConverterRegistrations.Select(line => line == string.Empty ? string.Empty : $"            {line}"));
             var contents = $$"""
                     namespace {{ctx.Config.RootNamespace}} {
                         using System.Text.Json;
@@ -321,13 +342,7 @@ namespace Nijo.Parts.CSharp {
                                 option.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 
                                 // カスタムコンバータ
-                                option.Converters.Add(new CustomJsonConverters.IntegerValueConverter());
-                                option.Converters.Add(new CustomJsonConverters.DecimalValueConverter());
-                                option.Converters.Add(new CustomJsonConverters.DateTimeValueConverter());
-
-                    {{valueObjectClassNames.SelectTextTemplate(className => $$"""
-                                option.Converters.Add(new {{className}}.JsonValueConverter());
-                    """)}}
+                    {{customConverterRegistrationsText}}
                             }
                             public static JsonSerializerOptions GetJsonSrializerOptions() {
                                 var option = new System.Text.Json.JsonSerializerOptions();
@@ -553,6 +568,10 @@ namespace Nijo.Parts.CSharp {
                                 }
                             }
                         }
+                        {{If(writeModel2Roots.Length > 0, () => $$"""
+
+                        {{RenderSaveCommandBaseConverter(writeModel2Roots)}}
+                        """)}}
                         {{If(valueObjectClassNames.Length > 0, () => $$"""
 
 
@@ -578,6 +597,63 @@ namespace Nijo.Parts.CSharp {
                 FileName = "JsonConversion.cs",
                 Contents = contents,
             };
+        }
+
+        private static string RenderSaveCommandBaseConverter(RootAggregate[] writeModel2Roots) {
+            return "    " + WithIndent($$"""
+                class SaveCommandBaseConverter : JsonConverter<SaveCommandBase> {
+                    public override SaveCommandBase? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+                        using var jsonDocument = JsonDocument.ParseValue(ref reader);
+                        var dataType = jsonDocument.RootElement.GetProperty("dataType").GetString();
+                        var addOrModOrDel = jsonDocument.RootElement.GetProperty("addOrModOrDel").GetString();
+                        var value = jsonDocument.RootElement.GetProperty("values");
+
+                {{writeModel2Roots.SelectTextTemplate(root => $$"""
+                        {{WithIndent(RenderSaveCommandBaseConverterBranch(root), "        ")}}
+                """)}}
+
+                        throw new InvalidOperationException(MSG.ERRC0037(jsonDocument.RootElement.GetRawText()));
+                    }
+
+                    public override void Write(Utf8JsonWriter writer, SaveCommandBase? value, JsonSerializerOptions options) {
+                        JsonSerializer.Serialize(writer, value, options);
+                    }
+                }
+                """, "    ");
+        }
+
+        private static string RenderSaveCommandBaseConverterBranch(RootAggregate root) {
+            var create = new Models.WriteModel2Modules.DataClassForSave(root, Models.WriteModel2Modules.DataClassForSave.E_Type.Create);
+            var save = new Models.WriteModel2Modules.DataClassForSave(root, Models.WriteModel2Modules.DataClassForSave.E_Type.UpdateOrDelete);
+
+            return $$"""
+                if (dataType == "{{root.PhysicalName}}") {
+                    if (addOrModOrDel == "ADD") {
+                        return new CreateCommand<{{create.CsClassName}}> {
+                            Values = JsonSerializer.Deserialize<{{create.CsClassName}}>(value.GetRawText(), options)
+                                ?? throw new InvalidOperationException(MSG.ERRC0025("{{create.CsClassName}}",value.GetRawText())),
+                        };
+                    } else if (addOrModOrDel == "MOD") {
+                        return new UpdateCommand<{{save.CsClassName}}> {
+                            Values = JsonSerializer.Deserialize<{{save.CsClassName}}>(value.GetRawText(), options)
+                                ?? throw new InvalidOperationException(MSG.ERRC0025("{{save.CsClassName}}",value.GetRawText())),
+                            Version = jsonDocument.RootElement.GetProperty("version").GetInt32(),
+                        };
+                    } else if (addOrModOrDel == "DEL") {
+                        return new DeleteCommand<{{save.CsClassName}}> {
+                            Values = JsonSerializer.Deserialize<{{save.CsClassName}}>(value.GetRawText(), options)
+                                ?? throw new InvalidOperationException(MSG.ERRC0025("{{save.CsClassName}}",value.GetRawText())),
+                            Version = jsonDocument.RootElement.GetProperty("version").GetInt32(),
+                        };
+                    } else if (addOrModOrDel == "NONE") {
+                        return new NoOperation<{{save.CsClassName}}> {
+                            Values = JsonSerializer.Deserialize<{{save.CsClassName}}>(value.GetRawText(), options)
+                                ?? throw new InvalidOperationException(MSG.ERRC0025("{{save.CsClassName}}",value.GetRawText())),
+                            Version = jsonDocument.RootElement.GetProperty("version").GetInt32(),
+                        };
+                    }
+                }
+                """;
         }
 
         private static SourceFile RenderRegexCache(CodeRenderingContext ctx) {

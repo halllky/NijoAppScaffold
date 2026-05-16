@@ -160,6 +160,42 @@ namespace Nijo.CodeGenerating {
         }
 
         private static string RenderCoreLibrary(CodeRenderingContext ctx, List<string> appSrvMethods, List<string> csharpClass) {
+            if (ctx.IsLegacyCompatibilityMode()) {
+                return $$"""
+                    namespace {{ctx.Config.RootNamespace}} {
+                        using System;
+                        using System.Collections;
+                        using System.Collections.Generic;
+                        using System.ComponentModel;
+                        using System.ComponentModel.DataAnnotations;
+                        using System.Linq;
+                        using System.Text.Json.Nodes;
+                        using System.Text.Json.Serialization;
+                        using Microsoft.EntityFrameworkCore;
+                        using Microsoft.EntityFrameworkCore.Infrastructure;
+                        using Microsoft.Extensions.DependencyInjection;
+                        using Microsoft.Extensions.Primitives;
+                        using {{ctx.Config.RootNamespace}};
+
+                    {{If(appSrvMethods.Count > 0, () => $$"""
+                        partial class {{ApplicationService.ABSTRACT_CLASS}} {
+                    {{appSrvMethods.SelectTextTemplate(source => $$"""
+
+                            {{WithIndent(source, "    ")}}
+
+                    """)}}
+                        }
+
+                    """)}}
+                    {{csharpClass.SelectTextTemplate(source => $$"""
+
+                        {{WithIndent(source, "")}}
+
+                    """)}}
+                    }
+                    """;
+            }
+
             return $$"""
                 using System;
                 using System.Collections;

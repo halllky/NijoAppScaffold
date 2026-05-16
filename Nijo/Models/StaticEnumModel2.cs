@@ -41,6 +41,8 @@ namespace Nijo.Models {
         }
 
         public void GenerateCode(CodeRenderingContext ctx, RootAggregate rootAggregate) {
+            if (!ctx.IsLegacyCompatibilityMode()) throw new InvalidOperationException("旧版互換モードでのみ利用可能");
+
             var xElement = ((ISchemaPathNode)rootAggregate).XElement;
 
             var items = xElement.Elements()

@@ -56,7 +56,6 @@ namespace Nijo.Models.WriteModel2Modules {
         /// 少なくとも ApplicationService / MessageContainer / MsgFactory との接続点をここで明示する。
         /// </remarks>
         void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
-            ctx.Use<MessageContainer.BaseClass>();
         }
 
         /// <summary>
@@ -87,6 +86,65 @@ namespace Nijo.Models.WriteModel2Modules {
         }
 
         private string RenderCSharpBaseClass(CodeRenderingContext ctx) {
+            if (ctx.IsLegacyCompatibilityMode()) {
+                return $$"""
+                    using System.Text.Json.Serialization;
+
+                    namespace {{ctx.Config.RootNamespace}};
+
+                    /// <summary>
+                    /// なんらかの集約の新規登録・更新・削除のいずれかのパラメータ。
+                    /// 一括更新のWebAPIでは多種多様な種類のオブジェクトが一気に送られてくるので
+                    /// どの集約の更新なのか、新規登録・更新・削除のどれなのかが混在している。
+                    /// JSONからのデシリアライズ時、オブジェクトに付随している区分値を参照してそれらのうちどれなのかを判断する。
+                    /// </summary>
+                    public abstract class {{SAVE_COMMAND_BASE}} {
+                    }
+
+                    /// <summary>
+                    /// 新規データ登録パラメータ
+                    /// </summary>
+                    public partial class {{CREATE_COMMAND}}<T> : {{SAVE_COMMAND_BASE}} {
+                        /// <summary>新規登録内容</summary>
+                        [JsonPropertyName("{{VALUES_TS}}")]
+                        public required T {{VALUES_CS}} { get; init; }
+                    }
+                    /// <summary>
+                    /// 既存データ更新パラメータ
+                    /// </summary>
+                    public partial class {{UPDATE_COMMAND}}<T> : {{SAVE_COMMAND_BASE}} {
+                        /// <summary>更新内容</summary>
+                        [JsonPropertyName("{{VALUES_TS}}")]
+                        public required T {{VALUES_CS}} { get; init; }
+                        /// <summary>楽観排他制御用のバージョニング情報</summary>
+                        [JsonPropertyName("{{VERSION_TS}}")]
+                        public required int {{VERSION_CS}} { get; init; }
+                    }
+                    /// <summary>
+                    /// 既存データ削除パラメータ
+                    /// </summary>
+                    public partial class {{DELETE_COMMAND}}<T> : {{SAVE_COMMAND_BASE}} {
+                        /// <summary>削除内容</summary>
+                        [JsonPropertyName("{{VALUES_TS}}")]
+                        public required T {{VALUES_CS}} { get; init; }
+                        /// <summary>楽観排他制御用のバージョニング情報</summary>
+                        [JsonPropertyName("{{VERSION_TS}}")]
+                        public required int {{VERSION_CS}} { get; init; }
+                    }
+                    /// <summary>
+                    /// 既存データを更新も削除もしない
+                    /// </summary>
+                    public partial class {{NO_OPERATION}}<T> : {{SAVE_COMMAND_BASE}} {
+                        /// <summary>データ内容</summary>
+                        [JsonPropertyName("{{VALUES_TS}}")]
+                        public required T {{VALUES_CS}} { get; init; }
+                        /// <summary>楽観排他制御用のバージョニング情報</summary>
+                        [JsonPropertyName("{{VERSION_TS}}")]
+                        public required int {{VERSION_CS}} { get; init; }
+                    }
+                    """;
+            }
+
             return $$"""
                 using System.Text.Json.Serialization;
 

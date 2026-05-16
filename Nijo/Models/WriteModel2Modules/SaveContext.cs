@@ -41,7 +41,6 @@ namespace Nijo.Models.WriteModel2Modules {
         /// 実装方針: MessageContainer の具象型や関連 metadata をここで事前登録する。
         /// </remarks>
         void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
-            ctx.Use<MessageContainer.BaseClass>();
         }
 
         /// <summary>
@@ -63,6 +62,78 @@ namespace Nijo.Models.WriteModel2Modules {
         }
 
         private string RenderCSharp(CodeRenderingContext ctx) {
+            if (ctx.IsLegacyCompatibilityMode()) {
+                return $$"""
+                    using System.Text.Json.Nodes;
+
+                    namespace {{ctx.Config.RootNamespace}};
+
+                    /// <summary>
+                    /// 一括更新処理の細かい挙動を呼び出し元で指定できるようにするためのオプション
+                    /// </summary>
+                    public partial class {{SAVE_OPTIONS}} {
+                        /// <summary>
+                        /// trueの場合、 <see cref="AddConfirm" /> による警告があっても更新処理が続行されます。
+                        /// 画面側で警告に対して「はい(Yes)」が選択されたあとのリクエストではこの値がtrueになります。
+                        /// </summary>
+                        public required bool IgnoreConfirm { get; init; }
+                    }
+
+                    /// <summary>
+                    /// 一括更新処理のデータ1件分のコンテキスト引数。エラーメッセージや確認メッセージなどを書きやすくするためのもの。
+                    /// </summary>
+                    /// <typeparam name="TMessage">ユーザーに通知するメッセージデータの構造体</typeparam>
+                    public partial class {{BEFORE_SAVE}}<TMessage> {
+                        public {{BEFORE_SAVE}}({{PresentationContext.INTERFACE}} state, TMessage messages) {
+                            _state = state;
+                            Messages = messages;
+                        }
+                        private readonly {{PresentationContext.INTERFACE}} _state;
+
+                        /// <inheritdoc cref="{{SAVE_OPTIONS}}" />
+                        public {{SAVE_OPTIONS}} Options => _state.Options;
+
+                        /// <summary>ユーザーに通知するメッセージデータ</summary>
+                        public TMessage Messages { get; }
+
+                        /// <summary>
+                        /// <para>
+                        /// 更新処理を実行してもよいかどうかをユーザーに問いかけるメッセージを追加します。
+                        /// </para>
+                        /// <para>
+                        /// ボタンの意味を統一してユーザーが混乱しないようにするため、
+                        /// 「はい(Yes)」を選択したときに処理が続行され、
+                        /// 「いいえ(No)」を選択したときに処理が中断されるような文言にしてください。
+                        /// </para>
+                        /// <para>
+                        /// <see cref="IgnoreConfirm"/> がfalseのリクエストで何らかのコンファームが発生した場合、
+                        /// 更新処理は中断されます。
+                        /// </para>
+                        /// </summary>
+                        public void AddConfirm(string message) {
+                            _state.AddConfirm(message);
+                        }
+
+                        /// <summary>
+                        /// 警告が1件以上あるかどうかを返します。
+                        /// </summary>
+                        public bool HasConfirm() {
+                            return _state.HasConfirm();
+                        }
+                    }
+
+                    /// <summary>
+                    /// 更新後イベント引数
+                    /// </summary>
+                    public partial class {{AFTER_SAVE_EVENT_ARGS}} {
+                        public {{AFTER_SAVE_EVENT_ARGS}}({{PresentationContext.INTERFACE}} batchUpdateState) {
+                            _batchUpdateState = batchUpdateState;
+                        }
+                        protected readonly {{PresentationContext.INTERFACE}} _batchUpdateState;
+                    }
+                    """;
+            }
+
             var writeModels = SnapshotWriteModels()
                 .OrderBy(root => root.GetIndexOfDataFlow())
                 .ThenBy(root => root.PhysicalName)
