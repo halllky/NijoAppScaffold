@@ -83,10 +83,14 @@ internal class BoolMember : IValueMemberType {
     }
 
     void IValueMemberType.RenderStaticSources(CodeRenderingContext ctx) {
-        ctx.CoreLibrary(dir => {
-            dir.Generate(new SourceFile {
-                FileName = "BooleanSearchCondition.cs",
-                Contents = $$"""
+
+        if (ctx.IsLegacyCompatibilityMode()) {
+
+        } else {
+            ctx.CoreLibrary(dir => {
+                dir.Generate(new SourceFile {
+                    FileName = "BooleanSearchCondition.cs",
+                    Contents = $$"""
                     using System;
                     using System.Text.Json.Serialization;
 
@@ -101,7 +105,9 @@ internal class BoolMember : IValueMemberType {
                         }
                     }
                     """,
+                });
             });
-        });
+        }
+
     }
 }
