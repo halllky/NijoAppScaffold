@@ -36,7 +36,7 @@ namespace Nijo.Models.WriteModel2Modules {
                             ValueMember valueMember => valueMember.PhysicalName,
                             RefToMember refToMember => refToMember.PhysicalName,
                             _ => throw new InvalidOperationException($"未対応のスキーマパス型: {node.GetType().Name}"),
-                        }).Where(name => name != null).Join("_"),
+                        }).Where(name => name != null)!.Join("_"),
                         vm.DisplayName,
                         LogTemplate = $"{vm.DisplayName.Replace("\"", "\\\"")}: {{key{i}}}",
                         SaveCommandFullPath = fullpath.AsSaveCommand().ToArray(),
