@@ -204,7 +204,11 @@ namespace Nijo.Models.WriteModel2Modules {
                 if (member is ValueMember vm) {
                     if (string.IsNullOrWhiteSpace(vm.CharacterType)) continue;
 
-                    var valueExpr = $"{instanceName}.{vm.PhysicalName}";
+                    var sourceExpr = $"{instanceName}.{vm.PhysicalName}";
+                    var castToPrimitive = vm.Type.RenderCastToPrimitiveType();
+                    var valueExpr = string.IsNullOrEmpty(castToPrimitive)
+                        ? sourceExpr
+                        : $"({castToPrimitive}{sourceExpr})";
                     var messagePath = string.Join('.', GetLegacyMessagePath(vm));
                     var methodName = $"config.{LegacyDefaultConfiguration.GetCharacterTypeMethodName(vm.CharacterType)}";
 

@@ -46,6 +46,10 @@ internal class Word : IValueMemberType {
 
             var queryFullPath = ctx.Query.GetFlattenArrayPath(E_CsTs.CSharp, out var isMany);
             var queryOwnerFullPath = queryFullPath.SkipLast(1);
+            var manyOwnerPath = queryOwnerFullPath.Join(ctx.CodeRenderingContext.IsLegacyCompatibilityMode() ? "." : "!.");
+            var manyOwnerSuffix = ctx.CodeRenderingContext.IsLegacyCompatibilityMode() ? string.Empty : "!";
+            var manyValuePath = $"y.{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}{(ctx.CodeRenderingContext.IsLegacyCompatibilityMode() ? string.Empty : "!")}";
+            var singleValuePath = $"x.{queryFullPath.Join(ctx.CodeRenderingContext.IsLegacyCompatibilityMode() ? "." : "!.")}{(ctx.CodeRenderingContext.IsLegacyCompatibilityMode() ? string.Empty : "!")}";
 
             var searchBehavior = ctx.Query.Metadata is IInstanceValuePropertyMetadata vm
                 && vm.SchemaPathNode.XElement.Attribute(BasicNodeOptions.StringSearchBehavior.AttributeName)?.Value is string s
@@ -71,9 +75,9 @@ internal class Word : IValueMemberType {
                     var escaped = trimmed.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
                 """)}}
                 {{If(isMany, () => $$"""
-                    {{query}} = {{query}}.Where(x => x.{{queryOwnerFullPath.Join(ctx.CodeRenderingContext.IsLegacyCompatibilityMode() ? "." : "!.")}}{{If(ctx.CodeRenderingContext.IsLegacyCompatibilityMode(), () => "").Else(() => "!")}}.Any(y => {{GetComparison($"y.{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}{(ctx.CodeRenderingContext.IsLegacyCompatibilityMode() ? "" : "!")}")}}));
+                    {{query}} = {{query}}.Where(x => x.{{manyOwnerPath}}{{manyOwnerSuffix}}.Any(y => {{GetComparison(manyValuePath)}}));
                 """).Else(() => $$"""
-                    {{query}} = {{query}}.Where(x => {{GetComparison($"x.{queryFullPath.Join(ctx.CodeRenderingContext.IsLegacyCompatibilityMode() ? "." : "!.")}{(ctx.CodeRenderingContext.IsLegacyCompatibilityMode() ? "" : "!")}")}});
+                    {{query}} = {{query}}.Where(x => {{GetComparison(singleValuePath)}});
                 """)}}
                 }
                 """;

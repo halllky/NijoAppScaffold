@@ -1,6 +1,8 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.Models.DataModelModules;
 using Nijo.Parts.CSharp;
+using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using Nijo.ValueMemberTypes;
 using System;
@@ -413,7 +415,7 @@ namespace Nijo.Models.WriteModel2Modules {
                 } else {
                 {{rootAggregate.EnumerateThisAndDescendants().SelectTextTemplate((aggregate, index) => $$"""
 
-                    // {{aggregate.DisplayName}} テーブル
+                    // {{aggregate.DbName}} テーブル
                     var data{{index}} = {{RenderDbEntityProjection(aggregate, rootAggregate.PhysicalName + "CreateCommands")}};
                     _bulkInsert.BulkInsertAsync(data{{index}}).GetAwaiter().GetResult();
                 """)}}
@@ -502,13 +504,22 @@ namespace Nijo.Models.WriteModel2Modules {
             foreach (var member in aggregate.GetMembers()) {
                 switch (member) {
                     case ValueMember vm:
+                        if (ShouldSkipDummyValue(vm)) {
+                            continue;
+                        }
                         yield return $"{vm.PhysicalName} = {RenderDummyValue(ctx, vm)},";
                         break;
 
                     case RefToMember refTo:
-                        yield return usePatternBuilderReferenceBehavior
-                            ? $"{refTo.PhysicalName} = ctx.GetRefTargetKeyOf{refTo.RefTo.PhysicalName}(null, allowNull: true),"
-                            : $"{refTo.PhysicalName} = ctx.GetRefTargetKeyOf{refTo.RefTo.PhysicalName}(index),";
+                        if (GenericLookupRefToInfo.TryCreate(refTo, out var genericLookupRef)) {
+                            yield return usePatternBuilderReferenceBehavior
+                                ? $"{refTo.PhysicalName} = ctx.GetRefTargetKeyOf{refTo.RefTo.PhysicalName}(\"{genericLookupRef.Category.Name}\", allowNull: true),"
+                                : $"{refTo.PhysicalName} = ctx.GetRefTargetKeyOf{refTo.RefTo.PhysicalName}(\"{genericLookupRef.Category.Name}\"),";
+                        } else {
+                            yield return usePatternBuilderReferenceBehavior
+                                ? $"{refTo.PhysicalName} = ctx.GetRefTargetKeyOf{refTo.RefTo.PhysicalName}(null, allowNull: true),"
+                                : $"{refTo.PhysicalName} = ctx.GetRefTargetKeyOf{refTo.RefTo.PhysicalName}(index),";
+                        }
                         break;
 
                     case ChildAggregate child:
@@ -541,6 +552,8 @@ namespace Nijo.Models.WriteModel2Modules {
         }
 
         private static string RenderDummyValue(CodeRenderingContext ctx, ValueMember vm) {
+            var schemaTypeName = GetSchemaTypeName(vm);
+
             return vm.Type switch {
                 BoolMember => "ctx.Random.Next(0, 1) == 0",
                 IntMember => vm.TotalDigit is int totalDigit ? $"ctx.Random.Next(0, {new string('9', totalDigit)})" : "ctx.Random.Next(0, 999999)",
@@ -554,10 +567,21 @@ namespace Nijo.Models.WriteModel2Modules {
                 _ when vm.Type.TypePhysicalName == "YearMonth" => "new YearMonth(ctx.Random.Next(1970, 2040), ctx.Random.Next(1, 12))",
                 _ when vm.Type.TypePhysicalName == "Date" => "new Date(ctx.Random.Next(1970, 2040), ctx.Random.Next(1, 12), ctx.Random.Next(1, 28))",
                 _ when vm.Type.TypePhysicalName == "DateTime" => "new DateTime((long)ctx.Random.Next(999999))",
-                _ when vm.Type.TypePhysicalName == "Uuid" => "Guid.NewGuid().ToString()",
+                _ when string.Equals(schemaTypeName, "uuid", StringComparison.OrdinalIgnoreCase) || vm.Type.TypePhysicalName == "Uuid" => "Guid.NewGuid().ToString()",
                 _ when vm.Type.TypePhysicalName == "Sequence" => "ctx.GetDummySequence()",
-                _ => RenderDummyStringValue(vm),
+                _ => $"{vm.Type.RenderCastToDomainType()}{RenderDummyStringValue(vm)}",
             };
+        }
+
+        private static bool ShouldSkipDummyValue(ValueMember vm) {
+            var schemaTypeName = GetSchemaTypeName(vm);
+            return string.Equals(schemaTypeName, "file", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(schemaTypeName, "bytearray", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string? GetSchemaTypeName(ValueMember vm) {
+            return vm.XElement.Annotation<SchemaParseContext.OriginalTypeAnnotation>()?.TypeName
+                ?? vm.XElement.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
         }
 
         private static string RenderDummyStringValue(ValueMember vm) {
@@ -613,14 +637,60 @@ namespace Nijo.Models.WriteModel2Modules {
 
                 #pragma warning disable CS8602
                 {{referableAggregates.SelectTextTemplate(aggregate => $$"""
-                    {{WithIndent(RenderRefTargetKeyGetter(aggregate), "    ")}}
+                    {{WithIndent(RenderRefTargetKeyGetter(ctx, aggregate), "    ")}}
                 """)}}
                 #pragma warning restore CS8602
                 }
                 """;
         }
 
-        private static string RenderRefTargetKeyGetter(AggregateBase aggregate) {
+        private static string RenderRefTargetKeyGetter(CodeRenderingContext ctx, AggregateBase aggregate) {
+            if (aggregate is RootAggregate rootAggregate
+                && rootAggregate.XElement.Attribute(BasicNodeOptions.IsGenericLookupTable.AttributeName) != null) {
+
+                var genericLookupRefTargetKey = new DataClassForRefTargetKeys(rootAggregate, rootAggregate);
+                var parser = new GenericLookupTableParser(ctx.SchemaParser);
+                var categories = parser.GetCategoriesOf(rootAggregate).ToArray();
+                var hardcodedUniqueIds = categories.FirstOrDefault()?.HardCodedKeys
+                    .Select(key => key.UniqueId)
+                    .ToHashSet(StringComparer.Ordinal)
+                    ?? [];
+                var nonHardCodedKeyMembers = rootAggregate.GetMembers()
+                    .OfType<ValueMember>()
+                    .Where(member => member.IsKey)
+                    .Where(member => !hardcodedUniqueIds.Contains(member.XElement.Attribute(SchemaParseContext.ATTR_UNIQUE_ID)?.Value ?? string.Empty))
+                    .ToArray();
+
+                return $$"""
+                    /// <summary>
+                    /// 外部参照のキーを取得する。
+                    /// このメソッドが呼ばれる時点でDBに参照先データが登録されている必要があるため、
+                    /// ダミーデータの作成はデータの流れの順番に実行される必要がある。
+                    /// </summary>
+                    /// <param name="typeKey">種別</param>
+                    public {{genericLookupRefTargetKey.CsClassName}}? GetRefTargetKeyOf{{aggregate.PhysicalName}}(string typeKey, bool allowNull = false) {
+                        var dict = typeKey switch {
+                    {{categories.SelectTextTemplate(category => $$"""
+                            "{{category.Name}}" => _app.区分マスタUtil.{{category.DisplayName.ToCSharpSafe()}},
+                    """)}}
+                            _ => throw new InvalidOperationException($"不明な区分マスタ種別 '{typeKey}'"),
+                        };
+                        if (dict.Count() == 0) {
+                            if (allowNull) {
+                                return null;
+                            } else {
+                                throw new InvalidOperationException($"区分マスタに区分 '{_app.区分マスタUtil.EnumerateTypes().Single(kv => kv.Key == typeKey).Value}' のデータが1件もありません。");
+                            }
+                        }
+                        return new() {
+                    {{nonHardCodedKeyMembers.SelectTextTemplate(member => $$"""
+                            {{member.PhysicalName}} = dict.ElementAt(Random.Next(0, dict.Count() - 1)).{{member.PhysicalName}},
+                    """)}}
+                        };
+                    }
+                    """;
+            }
+
             var entity = new EFCoreEntity(aggregate);
             var refTargetKey = new DataClassForRefTargetKeys(aggregate, aggregate);
             var orderByKeys = EnumerateOrderByKeyPaths(aggregate).ToArray();

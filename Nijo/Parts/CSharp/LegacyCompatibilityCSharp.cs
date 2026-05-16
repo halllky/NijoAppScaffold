@@ -349,9 +349,6 @@ namespace Nijo.Parts.CSharp {
                                 option.Converters.Add(new CustomJsonConverters.DecimalValueConverter());
                                 option.Converters.Add(new CustomJsonConverters.DateTimeValueConverter());
 
-                    {{If(writeModel2Roots.Length > 0, () => $$"""
-                                option.Converters.Add(new CustomJsonConverters.SaveCommandBaseConverter());
-                    """)}}
                     {{jsonValueObjectClassNames.SelectTextTemplate(className => $$"""
                                 option.Converters.Add(new {{className}}.JsonValueConverter());
                     """)}}
@@ -363,7 +360,12 @@ namespace Nijo.Parts.CSharp {
                     {{If(hasFileAttachment, () => $$"""
                                 option.Converters.Add(new FileAttachmentMetadata.JsonValueConverter());
                     """)}}
+                    {{If(!ctx.IsLegacyCompatibilityMode(), () => $$"""
                                 option.Converters.Add(new CustomJsonConverters.DisplayDataBatchUpdateCommandConverter());
+                    """)}}
+                    """)}}
+                    {{If(writeModel2Roots.Length > 0, () => $$"""
+                                option.Converters.Add(new CustomJsonConverters.SaveCommandBaseConverter());
                     """)}}
                             }
                             public static JsonSerializerOptions GetJsonSrializerOptions() {
@@ -590,17 +592,18 @@ namespace Nijo.Parts.CSharp {
                                 }
                             }
                         }
-                        {{If(writeModel2Roots.Length > 0, () => $$"""
-
-                        {{RenderSaveCommandBaseConverter(writeModel2Roots)}}
-                        """)}}
-                        {{If(readModel2Roots.Length > 0, () => $$"""
-
-                        {{RenderReadModel2JsonConverters(readModel2Roots)}}
-                        """)}}
                         {{If(jsonValueObjectClassNames.Length > 0, () => $$"""
 
 
+                        """)}}
+                        {{If(readModel2Roots.Length > 0, () => $$"""
+
+                        {{RenderReadModel2JsonConverters(ctx, readModel2Roots)}}
+                        """)}}
+                        {{If(writeModel2Roots.Length > 0, () => $$"""
+
+
+                        {{RenderSaveCommandBaseConverter(writeModel2Roots)}}
                         """)}}
                     }
                     """;
@@ -625,7 +628,7 @@ namespace Nijo.Parts.CSharp {
             };
         }
 
-        private static string RenderReadModel2JsonConverters(RootAggregate[] readModel2Roots) {
+        private static string RenderReadModel2JsonConverters(CodeRenderingContext ctx, RootAggregate[] readModel2Roots) {
             return "    " + WithIndent($$"""
                 public class DateJsonValueConverter : JsonConverter<Date?> {
                     public override Date? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
@@ -646,21 +649,38 @@ namespace Nijo.Parts.CSharp {
 
                 public class YearMonthJsonValueConverter : JsonConverter<YearMonth?> {
                     public override YearMonth? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+                {{If(ctx.IsLegacyCompatibilityMode(), () => $$"""
+                        if (reader.TokenType == JsonTokenType.Null) {
+                            return null;
+                        } else {
+                            // WijmoのUIコントロールではDate型で扱われるので
+                            return DateTime.TryParse(reader.GetString(), out var dateTime)
+                                ? new YearMonth(dateTime)
+                                : null;
+                        }
+                """).Else(() => $$"""
                         var strYearMonth = reader.GetString();
                         return string.IsNullOrWhiteSpace(strYearMonth)
                             ? null
                             : new YearMonth(DateTime.Parse($"{strYearMonth}/01"));
+                """)}}
                     }
 
                     public override void Write(Utf8JsonWriter writer, YearMonth? value, JsonSerializerOptions options) {
                         if (value == null) {
                             writer.WriteNullValue();
                         } else {
+                {{If(ctx.IsLegacyCompatibilityMode(), () => $$"""
+                            // WijmoのUIコントロールではDate型で扱われるので
+                            writer.WriteStringValue(value.ToDateTime().ToString("yyyy/MM"));
+                """).Else(() => $$"""
                             writer.WriteStringValue(value.ToString());
+                """)}}
                         }
                     }
                 }
 
+                {{If(!ctx.IsLegacyCompatibilityMode(), () => $$"""
                 class DisplayDataBatchUpdateCommandConverter : JsonConverter<DisplayDataClassBase> {
                     public override DisplayDataClassBase? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
                         using var jsonDocument = JsonDocument.ParseValue(ref reader);
@@ -678,6 +698,7 @@ namespace Nijo.Parts.CSharp {
                         JsonSerializer.Serialize(writer, value, options);
                     }
                 }
+                """)}}
                 """, "    ");
         }
 

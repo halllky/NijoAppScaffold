@@ -418,14 +418,58 @@ namespace Nijo.Parts.CSharp {
                     .Where(root => root.Model is Models.ReadModel2)
                     .OrderByDataFlow()
                     .ToArray();
-                var defaultClassMappings = readModel2Roots.SelectMany(root => {
-                    var rootClass = new[] { new Models.QueryModelModules.DisplayDataMessageContainer(root).CsClassName };
-                    var rootList = new[] { $"{new Models.QueryModelModules.DisplayDataMessageContainer(root).CsClassName}List" };
-                    var descendants = root
-                        .EnumerateDescendants()
-                        .Select(agg => new Models.QueryModelModules.DisplayDataMessageContainer(agg).CsClassName);
-                    return rootClass.Concat(rootList).Concat(descendants);
-                }).Distinct().ToArray();
+                var defaultClassMappings = ctx.Schema.GetRootAggregates()
+                    .Where(root => root.Model is Models.WriteModel2 || root.Model is Models.ReadModel2 || root.Model is Models.CommandModel2)
+                    .OrderByDataFlow()
+                    .SelectMany(root => {
+                        if (root.Model is Models.WriteModel2) {
+                            return root
+                                .EnumerateThisAndDescendants()
+                                .SelectMany((agg, index) => {
+                                    var saveContainer = new Models.DataModelModules.SaveCommandMessageContainer(agg);
+                                    var saveMappings = new[] {
+                                        new KeyValuePair<string, string>(saveContainer.InterfaceName, saveContainer.CsClassName),
+                                        new KeyValuePair<string, string>(saveContainer.CsClassName, saveContainer.CsClassName),
+                                    };
+
+                                    if (!root.GenerateDefaultQueryModel) {
+                                        return saveMappings;
+                                    }
+
+                                    var displayName = new Models.QueryModelModules.DisplayDataMessageContainer(agg).CsClassName;
+                                    var displayMappings = index == 0
+                                        ? new[] {
+                                            new KeyValuePair<string, string>(displayName, displayName),
+                                            new KeyValuePair<string, string>($"{displayName}List", $"{displayName}List"),
+                                        }
+                                        : new[] {
+                                            new KeyValuePair<string, string>(displayName, displayName),
+                                        };
+
+                                    return saveMappings.Concat(displayMappings);
+                                });
+                        }
+
+                        if (root.Model is Models.ReadModel2) {
+                            var rootClassName = new Models.QueryModelModules.DisplayDataMessageContainer(root).CsClassName;
+                            var rootClass = new[] { new KeyValuePair<string, string>(rootClassName, rootClassName) };
+                            var rootList = new[] { new KeyValuePair<string, string>($"{rootClassName}List", $"{rootClassName}List") };
+                            var descendants = root
+                                .EnumerateDescendants()
+                                .Select(agg => new Models.QueryModelModules.DisplayDataMessageContainer(agg).CsClassName)
+                                .Select(name => new KeyValuePair<string, string>(name, name));
+                            return rootClass.Concat(rootList).Concat(descendants);
+                        }
+
+                        if (root.Model is Models.CommandModel2) {
+                            var name = new Models.CommandModel2Modules.CommandParameter(root).MessageDataCsClassName;
+                            return new[] { new KeyValuePair<string, string>(name, name) };
+                        }
+
+                        return [];
+                    })
+                    .DistinctBy(kv => kv.Key)
+                    .ToArray();
 
                 return new SourceFile {
                     FileName = "MessageReceiver.cs",
@@ -464,8 +508,8 @@ namespace Nijo.Parts.CSharp {
                             /// </summary>
                             /// <param name="pageRoot">メッセージ転送先</param>
                             public static IDisplayMessageContainer GetDefaultClass(Type type, IDisplayMessageContainer pageRoot) {
-                        {{defaultClassMappings.SelectTextTemplate(typeName => $$"""
-                                if (type == typeof({{typeName}})) return new {{typeName}}(pageRoot);
+                        {{defaultClassMappings.SelectTextTemplate(kv => $$"""
+                                if (type == typeof({{kv.Key}})) return new {{kv.Value}}(pageRoot);
                         """)}}
                                 throw new ArgumentException($"{type.Name} 型には既定のメッセージコンテナクラスがありません。");
                             }

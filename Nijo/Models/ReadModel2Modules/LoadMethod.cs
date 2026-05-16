@@ -316,7 +316,7 @@ namespace Nijo.Models.ReadModel2Modules {
                     m.GetLiteral() + SearchCondition.ASC_SUFFIX,
                     m.GetLiteral() + SearchCondition.DESC_SUFFIX,
                     m.GetSearchResultPath(),
-                    m.Member.Type.CsDomainTypeName == "string"))
+                    m.Member.Type.CsPrimitiveTypeName == "string"))
                 .ToArray();
             var keys = _aggregate.GetKeyVMs().ToArray();
             var defaultOrderBy = keys.SelectTextTemplate((vm, i) => {
@@ -646,13 +646,13 @@ namespace Nijo.Models.ReadModel2Modules {
                     if (member is DisplayData.EditablePresentationObjectValueMember vm) {
                         if (!rightMembers.TryGetValue(vm.Member.ToMappingKey(), out var right)) {
                             if (vm.Member.OnlySearchCondition && vm.Member.Type.CsDomainTypeName == "bool" && rightInstance is Variable variable) {
-                                return $"{member.GetPropertyName(E_CsTs.CSharp)} = {vm.Member.Type.RenderCastToDomainType()}{variable.Name}.{vm.Member.PhysicalName},";
+                                return $"{member.GetPropertyName(E_CsTs.CSharp)} = {variable.Name}.{vm.Member.PhysicalName},";
                             }
 
                             throw new KeyNotFoundException(vm.Member.PhysicalName);
                         }
 
-                        return $"{member.GetPropertyName(E_CsTs.CSharp)} = {vm.Member.Type.RenderCastToDomainType()}{right.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")},";
+                        return $"{member.GetPropertyName(E_CsTs.CSharp)} = {right.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")},";
                     }
 
                     if (member is DisplayData.EditablePresentationObjectRefMember refMember) {
@@ -722,18 +722,18 @@ namespace Nijo.Models.ReadModel2Modules {
                                 && editableValue.Member.OnlySearchCondition
                                 && editableValue.Member.Type.CsDomainTypeName == "bool") {
                                 if (rightOwner is Variable variable) {
-                                    return editableValue.Member.Type.RenderCastToDomainType() + $"{variable.Name}.Values?.{editableValue.Member.PhysicalName}";
+                                    return $"{variable.Name}.Values?.{editableValue.Member.PhysicalName}";
                                 }
 
                                 if (rightOwner is InstanceStructureProperty structureProperty) {
-                                    return editableValue.Member.Type.RenderCastToDomainType() + $"{structureProperty.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")}?.{editableValue.Member.PhysicalName}";
+                                    return $"{structureProperty.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.")}?.{editableValue.Member.PhysicalName}";
                                 }
                             }
 
                             return "null";
                         }
 
-                        return value.Type.RenderCastToDomainType() + sourceProperty.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");
+                        return sourceProperty.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");
                     }
 
                     string RenderStructureMember(IInstanceStructurePropertyMetadata structure) {
