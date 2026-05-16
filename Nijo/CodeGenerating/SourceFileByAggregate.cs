@@ -180,16 +180,14 @@ namespace Nijo.CodeGenerating {
                     {{If(appSrvMethods.Count > 0, () => $$"""
                         partial class {{ApplicationService.ABSTRACT_CLASS}} {
                     {{appSrvMethods.SelectTextTemplate(source => $$"""
-
-                            {{WithIndent(source, "    ")}}
+                            {{WithIndent(source, "        ")}}
 
                     """)}}
                         }
 
                     """)}}
                     {{csharpClass.SelectTextTemplate(source => $$"""
-
-                        {{WithIndent(source, "")}}
+                        {{WithIndent(source, "    ")}}
 
                     """)}}
                     }

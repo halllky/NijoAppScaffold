@@ -65,7 +65,7 @@ namespace Nijo.Models.WriteModel2Modules {
                     /// <summary>
                     /// DTO を DB エンティティへ変換します。
                     /// </summary>
-                    {{WithIndent(RenderToDbEntity(), "    ")}}
+                    {{WithIndent(RenderToDbEntity(ctx), "    ")}}
 
                     /// <summary>
                     /// DB エンティティから DTO を復元します。
@@ -262,20 +262,32 @@ namespace Nijo.Models.WriteModel2Modules {
             return Aggregate.GetMembers();
         }
 
-        private string RenderToDbEntity() {
+        private string RenderToDbEntity(CodeRenderingContext ctx) {
+            const string currentUserArg = "currentUser";
+            const string currentTimeArg = "currentTime";
             var keyExpressions = new Dictionary<ValueMember, string>();
             var returnType = new EFCoreEntity(Aggregate).ClassName;
+
+            if (ctx.IsLegacyCompatibilityMode()) {
+                return $$"""
+                    public {{returnType}} {{TO_DBENTITY}}(string? {{currentUserArg}} = null, DateTime? {{currentTimeArg}} = null) {
+                        return new {{returnType}} {
+                            {{WithIndent(RenderToDbEntityBody(Aggregate, "this", keyExpressions, includeCreateAuditFields: true, currentUserArg, currentTimeArg), "        ")}}
+                        };
+                    }
+                    """;
+            }
 
             return $$"""
                 public {{returnType}} {{TO_DBENTITY}}() {
                     return new {{returnType}} {
-                        {{WithIndent(RenderToDbEntityBody(Aggregate, "this", keyExpressions), "        ")}}
+                        {{WithIndent(RenderToDbEntityBody(Aggregate, "this", keyExpressions, includeCreateAuditFields: false, currentUserArg, currentTimeArg), "        ")}}
                     };
                 }
                 """;
         }
 
-        private IEnumerable<string> RenderToDbEntityBody(AggregateBase aggregate, string instanceName, IDictionary<ValueMember, string> inheritedKeys) {
+        private IEnumerable<string> RenderToDbEntityBody(AggregateBase aggregate, string instanceName, IDictionary<ValueMember, string> inheritedKeys, bool includeCreateAuditFields, string currentUserArg, string currentTimeArg) {
             var currentKeys = new Dictionary<ValueMember, string>(inheritedKeys);
             if (Type == E_Type.UpdateOrDelete && aggregate is RootAggregate) {
                 yield return $"{Nijo.Parts.CSharp.EFCoreEntity.VERSION} = {instanceName}.{VERSION},";
@@ -304,10 +316,13 @@ namespace Nijo.Models.WriteModel2Modules {
                 } else if (member is ChildAggregate child) {
                     var childDbEntity = new EFCoreEntity(child);
                     var childExpr = $"{instanceName}.{child.PhysicalName}";
+                    var childAuditFields = RenderCreateAuditFields(includeCreateAuditFields, currentUserArg, currentTimeArg).ToArray();
+                    var childAuditFieldsText = childAuditFields.SelectTextTemplate(line => $"                {line}");
                     yield return $$"""
                         {{child.PhysicalName}} = {{childExpr}} != null
                             ? new {{childDbEntity.ClassName}} {
-                                {{WithIndent(RenderToDbEntityBody(child, childExpr, currentKeys), "                ")}}
+                                {{WithIndent(RenderToDbEntityBody(child, childExpr, currentKeys, includeCreateAuditFields, currentUserArg, currentTimeArg), "                ")}}
+                                {{childAuditFieldsText}}
                             }
                             : null,
                         """;
@@ -316,13 +331,25 @@ namespace Nijo.Models.WriteModel2Modules {
                     var childDbEntity = new EFCoreEntity(children);
                     var childModel = new DataClassForSave(children, Type);
                     var loopVar = children.GetLoopVarName();
+                    var childAuditFields = RenderCreateAuditFields(includeCreateAuditFields, currentUserArg, currentTimeArg).ToArray();
+                    var childAuditFieldsText = childAuditFields.SelectTextTemplate(line => $"            {line}");
                     yield return $$"""
                         {{children.PhysicalName}} = {{instanceName}}.{{children.PhysicalName}}?.Select({{loopVar}} => new {{childDbEntity.ClassName}} {
-                            {{WithIndent(childModel.RenderToDbEntityBody(children, loopVar, currentKeys), "            ")}}
+                            {{WithIndent(childModel.RenderToDbEntityBody(children, loopVar, currentKeys, includeCreateAuditFields, currentUserArg, currentTimeArg), "            ")}}
+                            {{childAuditFieldsText}}
                         }).ToHashSet() ?? [],
                         """;
                 }
             }
+        }
+
+        private IEnumerable<string> RenderCreateAuditFields(bool includeCreateAuditFields, string currentUserArg, string currentTimeArg) {
+            if (!includeCreateAuditFields || Type != E_Type.Create) yield break;
+
+            yield return $"{Nijo.Parts.CSharp.EFCoreEntity.CREATE_USER} = {currentUserArg},";
+            yield return $"{Nijo.Parts.CSharp.EFCoreEntity.UPDATE_USER} = {currentUserArg},";
+            yield return $"{Nijo.Parts.CSharp.EFCoreEntity.CREATED_AT} = {currentTimeArg},";
+            yield return $"{Nijo.Parts.CSharp.EFCoreEntity.UPDATED_AT} = {currentTimeArg},";
         }
 
         private IEnumerable<string> RenderRefToDbEntityAssignments(RefToMember refTo, string refExpr) {
