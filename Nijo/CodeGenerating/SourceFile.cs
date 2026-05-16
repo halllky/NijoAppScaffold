@@ -63,8 +63,13 @@ namespace Nijo.CodeGenerating {
 
             // WithIndent 用のスタック
             var indentStack = new Stack<string>();
+            var splitted = Contents.Split(["\r\n", "\n"], StringSplitOptions.None);
+            var endsWithNewLine = Contents
+                .ReplaceLineEndings(newLine)
+                .EndsWith(newLine, StringComparison.Ordinal);
 
-            foreach (var rawLine in Contents.Split(["\r\n", "\n"], StringSplitOptions.None)) {
+            for (var i = 0; i < splitted.Length; i++) {
+                var rawLine = splitted[i];
                 var containsSkipMarker = rawLine.Contains(SKIP_MARKER);
                 var currentIndent = string.Concat(indentStack.Reverse());
                 var line = rawLine
@@ -75,7 +80,10 @@ namespace Nijo.CodeGenerating {
 
                 // ループや条件分岐の空展開で発生する余計な空行だけ抑止し、通常の空行は保持する
                 if (!containsSkipMarker || !string.IsNullOrWhiteSpace(line)) {
-                    sw.WriteLine(currentIndent + line);
+                    sw.Write(currentIndent + line);
+                    if (i < splitted.Length - 1 || endsWithNewLine) {
+                        sw.WriteLine();
+                    }
                 }
                 UpdateIndentStack(indentStack, rawLine);
             }
