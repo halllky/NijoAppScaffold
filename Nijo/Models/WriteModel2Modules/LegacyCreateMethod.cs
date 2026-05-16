@@ -148,7 +148,6 @@ namespace Nijo.Models.WriteModel2Modules {
                 protected virtual void {{onAfterMethodName}}({{dbEntity.ClassName}} dbEntity, {{SaveContext.AFTER_SAVE_EVENT_ARGS}} e) {
                     // このメソッドをオーバーライドして必要な更新後処理を記述してください。
                 }
-
                 """;
         }
     }

@@ -98,22 +98,28 @@ namespace Nijo.Models {
                 ctx.Use<BatchUpdateWriteModel>().Register(rootAggregate);
             }
 
+            var hasSequenceMember = rootAggregate
+                .EnumerateThisAndDescendants()
+                .SelectMany(aggregate => aggregate.GetMembers())
+                .OfType<ValueMember>()
+                .Any(member => member.Type is ValueMemberTypes.SequenceMember && !string.IsNullOrWhiteSpace(member.SequenceName));
+
             // 登録・更新・削除 AppSrv
-            var updateMethod = new UpdateMethod(rootAggregate);
-            var deleteMethod = new DeleteMethod(rootAggregate);
+            var legacyAppSrvSections = new[] {
+                LegacyUpdateMethod.Render(rootAggregate, ctx),
+                LegacyDeleteMethod.Render(rootAggregate, ctx),
+                RequiredCheck.Render(rootAggregate, ctx),
+                MaxLengthCheck.Render(rootAggregate, ctx),
+                NotNegativeCheck.Render(rootAggregate, ctx),
+                CharacterTypeCheck.Render(rootAggregate, ctx),
+                DigitsCheck.Render(rootAggregate, ctx),
+                CharacterTypeCheck.RenderLegacyKbnType(rootAggregate),
+            }
+            .Concat(hasSequenceMember ? [new GenerateAndSetSequenceMethod(rootAggregate).RenderAppSrvMethod(ctx)] : [])
+            .ToArray();
+            var legacyAppSrvMethods = string.Join(Environment.NewLine, legacyAppSrvSections.Select(source => source.TrimEnd('\r', '\n')));
             aggregateFile.AddAppSrvMethod(LegacyCreateMethod.Render(rootAggregate, ctx), "新規登録処理");
-            aggregateFile.AddAppSrvMethod(updateMethod.Render(ctx), "更新処理");
-            aggregateFile.AddAppSrvMethod(deleteMethod.Render(ctx), "削除処理");
-
-            // 自動生成バリデーション
-            aggregateFile.AddAppSrvMethod(RequiredCheck.Render(rootAggregate, ctx), "必須入力チェック");
-            aggregateFile.AddAppSrvMethod(MaxLengthCheck.Render(rootAggregate, ctx), "最大長チェック");
-            aggregateFile.AddAppSrvMethod(NotNegativeCheck.Render(rootAggregate, ctx), "非負数チェック");
-            aggregateFile.AddAppSrvMethod(CharacterTypeCheck.Render(rootAggregate, ctx), "文字種チェック");
-            aggregateFile.AddAppSrvMethod(DigitsCheck.Render(rootAggregate, ctx), "桁数チェック");
-
-            // シーケンス採番
-            aggregateFile.AddAppSrvMethod(new GenerateAndSetSequenceMethod(rootAggregate).RenderAppSrvMethod(ctx), "シーケンス採番");
+            aggregateFile.AddAppSrvMethod(legacyAppSrvMethods, "更新処理");
 
             // WriteModel2 と同形の QueryModel 生成
             if (rootAggregate.GenerateDefaultQueryModel) {
