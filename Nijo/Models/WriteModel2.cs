@@ -122,9 +122,9 @@ namespace Nijo.Models {
             // 旧版互換では action が 0 件でも集約ごとの controller ファイル自体は生成される。
             aggregateFile.AddWebapiControllerAction(string.Empty);
 
-            // WriteModel2 と同形の QueryModel 生成
+            // WriteModel2 と同形の ReadModel2 相当ソース生成
             if (rootAggregate.GenerateDefaultQueryModel) {
-                QueryModel.GenerateCode(ctx, rootAggregate, aggregateFile);
+                ReadModel2.GenerateCode(ctx, rootAggregate, aggregateFile);
             }
 
             Nijo.Models.DataModelModules.GenericLookupTableFeature.GenerateCode(ctx, rootAggregate, aggregateFile);

@@ -61,9 +61,135 @@ internal class YearMonthMember : IValueMemberType {
     void IValueMemberType.RenderStaticSources(CodeRenderingContext ctx) {
 
         if (ctx.IsLegacyCompatibilityMode()) {
+            ctx.CoreLibrary(dir => {
+                dir.Directory("Util", utilDir => {
+                    utilDir.Generate(new SourceFile {
+                        FileName = "YearMonth.cs",
+                        Contents = $$"""
+                            namespace {{ctx.Config.RootNamespace}};
+
+                            /// <summary>
+                            /// 年月。
+                            /// 通常の <see cref="DateTime"/> を使った場合とで何か挙動が変わるといったことはない。
+                            /// 通常の <see cref="DateTime"/> を使った場合、日・時・分・秒といった情報がノイズになるので、
+                            /// わざわざそれを意識しなくても済むようにするためのクラス。
+                            /// </summary>
+                            public partial class YearMonth : IComparable<YearMonth>, IComparable {
+                                public YearMonth(int year, int month) {
+                                    // 年、月の範囲チェック
+                                    if (year < 1 || month < 1 || month > 12) {
+                                        throw new ArgumentOutOfRangeException(MSG.ERRC0044(year.ToString(), month.ToString()));
+                                    }
+                                    Year = year;
+                                    Month = month;
+                                }
+                                public YearMonth(DateTime dateTime) {
+                                    Year = dateTime.Year;
+                                    Month = dateTime.Month;
+                                }
+                                public YearMonth(Date date) {
+                                    Year = date.Year;
+                                    Month = date.Month;
+                                }
+
+                                public int Year { get; }
+                                public int Month { get; }
+
+                                public DateTime ToDateTime() {
+                                    return new DateTime(Year, Month, 1); // 日は1日固定
+                                }
+
+                                public bool Contains(DateTime dateTime) {
+                                    return dateTime.Year == Year && dateTime.Month == Month;
+                                }
+                                public bool Contains(Date date) {
+                                    return date.Year == Year && date.Month == Month;
+                                }
+
+                                /// <summary>
+                                /// 日本の会計年度の開始月である4月を始まりとした年度を返します。
+                                /// </summary>
+                                public int GetNendo() {
+                                    return Month >= 1 && Month <= 3
+                                        ? Year - 1
+                                        : Year;
+                                }
+
+                                public override bool Equals(object? obj) {
+                                    if (obj is YearMonth other) {
+                                        return Year == other.Year && Month == other.Month;
+                                    }
+                                    return false;
+                                }
+                                public override int GetHashCode() {
+                                    return HashCode.Combine(Year, Month);
+                                }
+                                public override string ToString() {
+                                    return $"{Year:0000}/{Month:00}";
+                                }
+                                public string ToString(string format) {
+                                    return ToDateTime().ToString(format);
+                                }
+
+                                [return: System.Diagnostics.CodeAnalysis.NotNullIfNotNull(nameof(ym))]
+                                public static explicit operator DateTime?(YearMonth? ym) => ym == null ? null : new DateTime(ym.Year, ym.Month, 1);
+                                [return: System.Diagnostics.CodeAnalysis.NotNullIfNotNull(nameof(datetime))]
+                                public static explicit operator YearMonth?(DateTime? datetime) => datetime == null ? null : new YearMonth(datetime.Value);
+
+                                public static bool operator ==(YearMonth? left, YearMonth? right) {
+                                    return Equals(left, right);
+                                }
+                                public static bool operator !=(YearMonth? left, YearMonth? right) {
+                                    return !Equals(left, right);
+                                }
+                                public static bool operator <(YearMonth? left, YearMonth? right) {
+                                    if (left == null || right == null)
+                                        return false;
+                                    if (left.Year != right.Year)
+                                        return left.Year < right.Year;
+                                    return left.Month < right.Month;
+                                }
+                                public static bool operator >(YearMonth? left, YearMonth? right) {
+                                    if (left == null || right == null)
+                                        return false;
+                                    if (left.Year != right.Year)
+                                        return left.Year > right.Year;
+                                    return left.Month > right.Month;
+                                }
+                                public static bool operator <=(YearMonth? left, YearMonth? right) {
+                                    return left < right || left == right;
+                                }
+                                public static bool operator >=(YearMonth? left, YearMonth? right) {
+                                    return left > right || left == right;
+                                }
+
+                                #region IComparableインターフェースの実装
+                                public int CompareTo(object? obj) {
+                                    if (obj == null) return 1; // nullは常に小さい
+                                    if (obj is not YearMonth other) throw new InvalidOperationException("YearMonth型とそれ以外の大小を比較できません。");
+                                    return CompareTo(other);
+                                }
+                                public int CompareTo(YearMonth? other) {
+                                    if (other == null) return 1; // nullは常に小さい
+                                    return ToDateTime().CompareTo(other.ToDateTime()); // DateTimeに変換して比較
+                                }
+                                #endregion IComparableインターフェースの実装
+
+                                /// <summary>
+                                /// Entity Framework Core 用のDBとC#の型変換定義
+                                /// </summary>
+                                public class EFCoreYearMonthConverter : Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<YearMonth, int> {
+                                    public EFCoreYearMonthConverter() : base(
+                                        yearMonth => (yearMonth.Year * 100) + yearMonth.Month,
+                                        yyyymm => new YearMonth(yyyymm / 100, yyyymm % 100)) { }
+                                }
+                            }
+                            """,
+                    });
+                });
+            });
 
         } else {
-
             ctx.CoreLibrary(dir => {
                 dir.Generate(new SourceFile {
                     FileName = "YearMonth.cs",

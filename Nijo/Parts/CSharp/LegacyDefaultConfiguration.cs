@@ -48,6 +48,13 @@ namespace Nijo.Parts.CSharp {
             var characterTypes = GetCharacterTypes();
             var renderDbContextCustomizationMethods = ShouldRenderDbContextCustomizationMethods()
                 && !ctx.Schema.GetRootAggregates().All(root => root.Model is Models.ReadModel2);
+            var hasYearMonth = ctx.Schema.GetRootAggregates()
+                .SelectMany(root => root.EnumerateThisAndDescendants())
+                .SelectMany(aggregate => aggregate.GetMembers())
+                .OfType<Nijo.ImmutableSchema.ValueMember>()
+                .Any(member => member.Type is Nijo.ValueMemberTypes.YearMonthMember);
+            var hasFileAttachment = System.Xml.Linq.XDocument.Load(ctx.Project.SchemaXmlPath).Descendants()
+                .Any(element => element.Attribute(SchemaParsing.SchemaParseContext.ATTR_NODE_TYPE)?.Value == "file");
 
             ctx.CoreLibrary(dir => {
                 dir.Generate(new SourceFile {
@@ -102,7 +109,7 @@ namespace Nijo.Parts.CSharp {
                                 /// </summary>
                                 protected abstract void ConfigureDbContext(IServiceCollection services);
 
-                        {{valueObjectClassNames.SelectTextTemplate(className => $$"""
+                        {{valueObjectClassNames.Where(className => className != "Date").SelectTextTemplate(className => $$"""
 
                                 /// <summary>
                                 /// <see cref="{{className}}"/> クラスのプロパティがDBとC#の間で変換されるときの処理を定義するクラスを返します。
@@ -118,6 +125,33 @@ namespace Nijo.Parts.CSharp {
                                 /// </summary>
                                 public abstract bool {{GetCharacterTypeMethodName(characterType)}}(string value, int? maxLength);
                         """)}}
+                        {{If(valueObjectClassNames.Contains("Date"), () => WithIndent($$"""
+
+                        /// <summary>
+                        /// <see cref="Date"/> クラスのプロパティがDBとC#の間で変換されるときの処理を定義するクラスを返します。
+                        /// </summary>
+                        public virtual Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter GetYearMonthDayEFCoreValueConverter() {
+                            return new Date.EFCoreDateConverter();
+                        }
+                        """, "        "))}}
+                        {{If(hasYearMonth, () => WithIndent($$"""
+
+                        /// <summary>
+                        /// <see cref="YearMonth"/> クラスのプロパティがDBとC#の間で変換されるときの処理を定義するクラスを返します。
+                        /// </summary>
+                        public virtual Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter GetYearMonthEFCoreValueConverter() {
+                            return new YearMonth.EFCoreYearMonthConverter();
+                        }
+                        """, "        "))}}
+                        {{If(hasFileAttachment, () => WithIndent($$"""
+
+                        /// <summary>
+                        /// <see cref="List<FileAttachmentMetadata>"/> クラスのプロパティがDBとC#の間で変換されるときの処理を定義するクラスを返します。
+                        /// </summary>
+                        public virtual Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter GetFileAttachmentEFCoreValueConverter() {
+                            return new EFCoreFileAttachmentConverter();
+                        }
+                        """, "        "))}}
                         {{If(renderDbContextCustomizationMethods, () => $$"""
 
                                 /// <summary>
