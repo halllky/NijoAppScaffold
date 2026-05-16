@@ -92,7 +92,6 @@ namespace Nijo.Models.ReadModel2Modules {
                         {{sortableMembers.SelectTextTemplate((member, i) => $$"""
                           {{(i == 0 ? "=" : "|")}} '{{member.GetLiteral().Replace("'", "\\'")}}'
                         """)}}
-
                         """;
                 }
 
@@ -119,7 +118,6 @@ namespace Nijo.Models.ReadModel2Modules {
                     return $$"""
                         /** {{_entryAggregate.DisplayName}}の検索条件クラスの空オブジェクトを作成して返します。 */
                         export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({{RenderTsNewObjectFunctionBody()}})
-
                         """;
                 }
 
@@ -180,7 +178,6 @@ namespace Nijo.Models.ReadModel2Modules {
 
                           return searchCondition
                         }
-
                         """;
                 }
 
@@ -383,7 +380,6 @@ namespace Nijo.Models.ReadModel2Modules {
                           {{Entry.EXCLUDE_CHILDREN_TS}}?: boolean
                         }
                         {{legacyFilters}}
-
 
                         """;
 

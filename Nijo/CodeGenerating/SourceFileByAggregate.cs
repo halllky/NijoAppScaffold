@@ -194,7 +194,7 @@ namespace Nijo.CodeGenerating {
                     {{If(appSrvMethods.Count > 0, () => $$"""
                         partial class {{ApplicationService.ABSTRACT_CLASS}} {
                     {{appSrvMethods.SelectTextTemplate(source => $$"""
-                            {{WithIndent(source.TrimEnd(), "        ")}}
+                            {{WithIndent(source, "        ")}}
                     """)}}
                         }
 
@@ -377,10 +377,6 @@ namespace Nijo.CodeGenerating {
             }
 
             if (ctx.IsLegacyCompatibilityMode()) {
-                var legacyTypeScriptSections = _typeScriptSectionsInOrder
-                    .Where(source => !string.IsNullOrWhiteSpace(source))
-                    .SelectTextTemplate(source => source);
-
                 return $$"""
                     import React from "react"
                     import useEvent from "react-use-event-hook"
@@ -393,7 +389,10 @@ namespace Nijo.CodeGenerating {
                     import { {{modules.Value.Distinct().Join(", ")}} } from "{{modules.Key}}"
                     """)}}
 
-                    {{legacyTypeScriptSections}}
+                    {{_typeScriptSectionsInOrder.Where(source => !string.IsNullOrEmpty(source)).SelectTextTemplate(source => $$"""
+                    {{source}}
+
+                    """)}}
                     """;
             }
 

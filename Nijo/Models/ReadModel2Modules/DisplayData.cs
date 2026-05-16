@@ -363,7 +363,6 @@ namespace Nijo.Models.ReadModel2Modules {
                   /** どの項目が読み取り専用か */
                   {{READONLY_TS}}?: {{WithIndent(RenderLegacyTsReadOnlyType(legacyValueMembers), "  ")}}
                 }
-
                 """;
         }
 
@@ -548,7 +547,6 @@ namespace Nijo.Models.ReadModel2Modules {
                       {{VERSION_TS}}: undefined,
                     """)}}
                     })
-
                     """;
 
                 string? RenderLegacyOwnMemberInitialize(IAggregateMember member) {
@@ -631,7 +629,6 @@ namespace Nijo.Models.ReadModel2Modules {
                       if (a.{{WILL_BE_DELETED_TS}} !== b.{{WILL_BE_DELETED_TS}}) return false
                       return true
                     }
-
                     """;
             }
 
@@ -663,7 +660,6 @@ namespace Nijo.Models.ReadModel2Modules {
 
                       return anyChanged
                     }
-
                     """;
             }
 
@@ -811,7 +807,6 @@ namespace Nijo.Models.ReadModel2Modules {
                 export const {{UiConstraingValueName}}: {{UiConstraintTypeName}} = {
                   {{WithIndent(RenderUiConstraintValues(this), "  ")}}
                 }
-
                 """;
         }
 

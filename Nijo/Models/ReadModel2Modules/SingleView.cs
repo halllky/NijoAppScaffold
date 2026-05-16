@@ -186,7 +186,6 @@ searchCondition.{{SearchCondition.Entry.FILTER_TS}}.{{k.PhysicalName}}  = { from
                         reload,
                       }
                     }
-
                     """;
             }
 
@@ -285,7 +284,6 @@ searchCondition.{{SearchCondition.Entry.FILTER_TS}}.{{k.PhysicalName}}  = { from
                             }
                           }, [navigate])
                         }
-
                         """;
                 } else {
                     var legacyFunctionName = $"useNavigateTo{_aggregate.PhysicalName}SingleView";
