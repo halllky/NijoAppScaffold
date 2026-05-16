@@ -244,7 +244,7 @@ namespace Nijo {
 
             // スキーマ定義にかかわらず必ず生成されるモジュールの登録
             if (ctx.Config.ForceLegacyCompatibilityMode) {
-                LegacyEmptySchemaCompatibilityRenderer.Render(ctx);
+                LegacyCompatibilityRenderer.Render(ctx);
                 LegacyMessageConst.Render(ctx);
                 LegacyExcelBook.Render(ctx);
 
