@@ -10,7 +10,7 @@ namespace Nijo.Parts.JavaScript {
     internal static class LegacyCompatibilityJavaScript {
         internal static void RenderReact(CodeRenderingContext ctx) {
             var hasReadModel2 = ctx.Schema.GetRootAggregates().Any(root => root.Model is Models.ReadModel2);
-            var hasCommandModel = ctx.Schema.GetRootAggregates().Any(root => root.Model is Models.CommandModel);
+            var hasCommandModel = ctx.Schema.GetRootAggregates().Any(root => root.Model is Models.CommandModel || root.Model is Models.CommandModel2);
             var hasWriteModel2 = ctx.Schema.GetRootAggregates().Any(root => root.Model is Models.WriteModel2);
 
             ctx.ReactProject(dir => {

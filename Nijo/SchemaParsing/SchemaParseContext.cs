@@ -158,6 +158,8 @@ public class SchemaParseContext {
         var existingRootNames = dataStructuresSection.Elements().Select(el => el.Name.LocalName).ToHashSet(StringComparer.Ordinal);
 
         foreach (var command in commandsSection.Elements().ToArray()) {
+            var commandType = command.Attribute(ATTR_NODE_TYPE)?.Value;
+            if (string.Equals(commandType, CommandModel2.SCHEMA_NAME, StringComparison.Ordinal)) continue;
             if (!command.Elements().Any()) continue;
 
             var parameterStructureName = command.Name.LocalName + "Parameter";

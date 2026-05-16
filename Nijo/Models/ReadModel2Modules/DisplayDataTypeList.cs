@@ -6,52 +6,52 @@ using System.Linq;
 using System.Threading;
 
 namespace Nijo.Models.ReadModel2Modules {
-  internal class DisplayDataTypeList : IMultiAggregateSourceFile {
-    private sealed record Item(
-        DisplayData DisplayData,
-        SearchCondition.Entry SearchCondition,
-        LoadMethod LoadMethod);
+    internal class DisplayDataTypeList : IMultiAggregateSourceFile {
+        private sealed record Item(
+            DisplayData DisplayData,
+            SearchCondition.Entry SearchCondition,
+            LoadMethod LoadMethod);
 
-    private readonly Lock _lock = new();
-    private readonly List<DisplayData> _displayDataList = [];
+        private readonly Lock _lock = new();
+        private readonly List<DisplayData> _displayDataList = [];
 
-    internal DisplayDataTypeList Add(DisplayData displayData) {
-      lock (_lock) {
-        _displayDataList.Add(displayData);
-        return this;
-      }
-    }
+        internal DisplayDataTypeList Add(DisplayData displayData) {
+            lock (_lock) {
+                _displayDataList.Add(displayData);
+                return this;
+            }
+        }
 
-    public void RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
-    }
+        public void RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
+        }
 
-    public void Render(CodeRenderingContext ctx) {
-      var items = _displayDataList
-          .DistinctBy(displayData => displayData.Aggregate)
-          .OrderBy(displayData => displayData.Aggregate.GetRoot().GetIndexOfDataFlow())
-          .Select(displayData => new Item(
-                  displayData,
-                  new SearchCondition.Entry(displayData.Aggregate.GetRoot()),
-                  new LoadMethod(displayData.Aggregate.GetRoot())))
-          .ToArray();
+        public void Render(CodeRenderingContext ctx) {
+            var items = _displayDataList
+                .DistinctBy(displayData => displayData.Aggregate)
+                .OrderBy(displayData => displayData.Aggregate.GetRoot().GetIndexOfDataFlow())
+                .Select(displayData => new Item(
+                        displayData,
+                        new SearchCondition.Entry(displayData.Aggregate.GetRoot()),
+                        new LoadMethod(displayData.Aggregate.GetRoot())))
+                .ToArray();
 
-      ctx.ReactProject(dir => {
-        dir.Generate(new SourceFile {
-          FileName = "index.ts",
-          Contents = ctx.IsLegacyCompatibilityMode()
-                ? RenderLegacy(items, ctx)
-                : Render(items, ctx),
-        });
-      });
-    }
+            ctx.ReactProject(dir => {
+                dir.Generate(new SourceFile {
+                    FileName = "index.ts",
+                    Contents = ctx.IsLegacyCompatibilityMode()
+                        ? RenderLegacy(items, ctx)
+                        : Render(items, ctx),
+                });
+            });
+        }
 
-    private static string RenderLegacy(Item[] items, CodeRenderingContext ctx) {
-      var commandModels = ctx.Schema.GetRootAggregates()
-          .Where(root => root.Model is Models.CommandModel)
-          .ToArray();
-      var hasStaticEnums = ctx.Schema.GetRootAggregates().Any(root => root.Model is Models.StaticEnumModel2);
+        private static string RenderLegacy(Item[] items, CodeRenderingContext ctx) {
+            var commandModels = ctx.Schema.GetRootAggregates()
+                .Where(root => root.Model is Models.CommandModel || root.Model is Models.CommandModel2)
+                .ToArray();
+            var hasStaticEnums = ctx.Schema.GetRootAggregates().Any(root => root.Model is Models.StaticEnumModel2);
 
-      return $$"""
+            return $$"""
                 // カスタマイズ側ソースで利用可能なようにまとめてexportする
                 {{items.SelectTextTemplate(item => $$"""
                 export * from "./{{item.DisplayData.Aggregate.PhysicalName}}"
@@ -352,12 +352,12 @@ namespace Nijo.Models.ReadModel2Modules {
                 }
                 //#endregion Excel出力フック
                 """;
-    }
+        }
 
-    private static string Render(Item[] items, CodeRenderingContext ctx) {
-      var hasStaticEnums = ctx.Schema.GetRootAggregates().Any(root => root.Model is Models.StaticEnumModel2);
+        private static string Render(Item[] items, CodeRenderingContext ctx) {
+            var hasStaticEnums = ctx.Schema.GetRootAggregates().Any(root => root.Model is Models.StaticEnumModel2);
 
-      return $$"""
+            return $$"""
                 // カスタマイズ側ソースで利用可能なようにまとめてexportする
                 {{items.SelectTextTemplate(item => $$"""
                 export * from "./{{item.DisplayData.Aggregate.PhysicalName}}"
@@ -470,6 +470,6 @@ namespace Nijo.Models.ReadModel2Modules {
                 }
                 //#endregion 検索用フック（MultiView）
                 """;
+        }
     }
-  }
 }
