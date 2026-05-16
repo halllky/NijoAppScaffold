@@ -101,6 +101,38 @@ namespace Nijo.Models.ReadModel2Modules {
         internal string RenderTypeScriptDeclaringRecursively(CodeRenderingContext context) {
             if (IsEntry) {
                 var sortableMemberType = new SearchCondition.Entry(RefEntry.GetRoot()).TypeScriptSortableMemberType;
+                var excludeChildrenComment = """
+/**
+ * 検索結果に明細データを含めなくても構わない場合、trueになる。
+ * 具体的には一覧検索画面での検索とExcel出力の場合にtrueに、詳細登録画面の場合にfalseになる。
+ * パフォーマンス改善以外の目的に使用しないこと。
+ */
+""";
+
+                if (context.IsLegacyCompatibilityMode()) {
+                    return $$"""
+
+                        // ----------------------------------------------------------
+                        // 検索条件クラス（{{RefEntry.DisplayName}}）
+
+                        /** {{RefEntry.DisplayName}}の一覧検索条件 */
+                        export type {{TsTypeName}} = {
+                          /** 絞り込み条件（キーワード検索） */
+                          keyword?: string
+                          /** 絞り込み条件 */
+                          filter: {{FilterTypeName}}
+                          /** 並び順 */
+                          sort?: (`${{{sortableMemberType}}}{{SearchCondition.ASC_SUFFIX}}` | `${{{sortableMemberType}}}{{SearchCondition.DESC_SUFFIX}}`)[]
+                          /** 先頭から何件スキップするか */
+                          skip?: number | null
+                          /** 最大何件取得するか */
+                          take?: number | null
+                          {{WithIndent(excludeChildrenComment, "  ")}}
+                          excludeChildren?: boolean
+                        }
+                        {{RenderFilterTypeScript(context)}}
+                        """;
+                }
 
                 return $$"""
                     export type {{TsTypeName}} = {

@@ -44,14 +44,16 @@ namespace Nijo.Models.ReadModel2Modules {
 
                       /** {{_aggregate.DisplayName}}の一覧検索画面へ遷移します。初期表示時検索条件を指定することができます。 */
                       return React.useCallback((init?: {{searchCondition.TsTypeName}}, options?: ReactRouter.NavigateOptions) => {
+                        // 初期表示時検索条件の設定
                         const searchParams = new URLSearchParams()
                         {{AppendToSearchParamsFunction}}(searchParams, init)
                         navigate({
                           pathname: '{{Url}}',
-                          search: searchParams.toString(),
+                          search: searchParams.toString()
                         }, options)
                       }, [navigate])
                     }
+
                     """;
             }
 
@@ -100,6 +102,24 @@ namespace Nijo.Models.ReadModel2Modules {
         }
         internal string RenderExcelDownloadHook() {
             var searchCondition = new SearchCondition.Entry(_aggregate);
+
+            if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
+                return $$"""
+                    /** {{_aggregate.DisplayName}}の一覧Excelをダウンロードする関数を返します。 */
+                    export const {{ExcelDownloadHookName}} = () => {
+                      const { complexPost } = Util.useHttpRequest()
+
+                      return React.useCallback(async (searchCondition: {{searchCondition.TsTypeName}}) => {
+                        await complexPost(
+                          `/api/{{_aggregate.PhysicalName}}/excel`,
+                          searchCondition,
+                          { downloadFileName: `{{_aggregate.DisplayName}}一覧検索.xlsx` }
+                        )
+                      }, [complexPost])
+                    }
+
+                    """;
+            }
 
             return $$"""
                 /** {{_aggregate.DisplayName}}の一覧Excelをダウンロードする関数を返します。 */
