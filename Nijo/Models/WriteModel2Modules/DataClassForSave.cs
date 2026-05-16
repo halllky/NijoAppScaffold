@@ -238,6 +238,15 @@ namespace Nijo.Models.WriteModel2Modules {
         /// DisplayData ではなく保存 payload 用であることが分かるよう、旧版の dataType / addOrModOrDel との接続を意識する。
         /// </remarks>
         internal string RenderTypeScript(CodeRenderingContext ctx) {
+            if (ctx.IsLegacyCompatibilityMode()) {
+                return new[] {
+                    $"export type {TsTypeName} = {{",
+                }
+                .Concat(GetOwnMembers().Select(member => $"  {member.PhysicalName}: {GetLegacyMemberTypeNameTypeScript(member)}"))
+                .Concat(["}"])
+                .Join(Environment.NewLine);
+            }
+
             return $$"""
                                 export type {{TsTypeName}} = {
                                 {{If(Type == E_Type.UpdateOrDelete && Aggregate is RootAggregate && !ctx.IsLegacyCompatibilityMode(), () => $$"""
@@ -257,6 +266,17 @@ namespace Nijo.Models.WriteModel2Modules {
         /// 実装方針: immutable な編集補助ビューを旧版互換で用意し、更新差分計算の土台にする。
         /// </remarks>
         internal string RenderTypeScriptReadOnlyStructure(CodeRenderingContext ctx) {
+            if (ctx.IsLegacyCompatibilityMode()) {
+                return new[] {
+                    $"/** {Aggregate.DisplayName}の読み取り専用情報格納用の型 */",
+                    $"export type {GetLegacyReadOnlyTsTypeName()} = {{",
+                    "  _thisObjectIsReadOnly?: string[]",
+                }
+                .Concat(GetOwnMembers().Select(member => $"  {member.PhysicalName}?: {GetLegacyReadOnlyMemberTypeNameTypeScript(member)}"))
+                .Concat(["}"])
+                .Join(Environment.NewLine);
+            }
+
             return $$"""
                                 export type {{ReadOnlyTsTypeName}} = Readonly<{
                                 {{If(Type == E_Type.UpdateOrDelete && Aggregate is RootAggregate && !ctx.IsLegacyCompatibilityMode(), () => $$"""
@@ -277,6 +297,21 @@ namespace Nijo.Models.WriteModel2Modules {
         /// ルート集約と children 集約のみが呼び出し対象で、child 単体では呼ばれない前提を維持する。
         /// </remarks>
         internal string RenderTsNewObjectFunction(CodeRenderingContext ctx) {
+            if (ctx.IsLegacyCompatibilityMode()) {
+                var comment = Type == E_Type.Create
+                    ? $"/** {Aggregate.DisplayName}の新規作成用コマンドを作成します。 */"
+                    : $"/** {Aggregate.DisplayName}の更新用コマンドを作成します。 */";
+
+                return $$"""
+                    {{comment}}
+                    export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({
+                    {{GetOwnMembers().SelectTextTemplate(member => $$"""
+                      {{member.PhysicalName}}: {{RenderTsInitialValue(member)}},
+                    """)}}
+                    })
+                    """;
+            }
+
             return $$"""
                 export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({
                 {{If(Type == E_Type.UpdateOrDelete && Aggregate is RootAggregate && !ctx.IsLegacyCompatibilityMode(), () => $$"""
@@ -688,6 +723,31 @@ namespace Nijo.Models.WriteModel2Modules {
                 ChildrenAggregate children => $"ReadonlyArray<{new DataClassForSave(children, Type).ReadOnlyTsTypeName}>",
                 _ => throw new InvalidOperationException($"未対応のメンバー型: {member.GetType().Name}"),
             };
+        }
+
+        private string GetLegacyMemberTypeNameTypeScript(IAggregateMember member) {
+            return member switch {
+                ValueMember vm => vm.IsKey
+                    ? $"{vm.Type.TsTypeName} | null | undefined"
+                    : $"{vm.Type.TsTypeName} | undefined",
+                RefToMember refTo => $"{new DataClassForRefTargetKeys(refTo.RefTo, refTo.RefTo).TsTypeName} | undefined",
+                ChildAggregate child => new DataClassForSave(child, Type).TsTypeName,
+                ChildrenAggregate children => $"{new DataClassForSave(children, Type).TsTypeName}[]",
+                _ => throw new InvalidOperationException($"未対応のメンバー型: {member.GetType().Name}"),
+            };
+        }
+
+        private string GetLegacyReadOnlyMemberTypeNameTypeScript(IAggregateMember member) {
+            return member switch {
+                ValueMember or RefToMember => "string[]",
+                ChildAggregate child => new DataClassForSave(child, Type).GetLegacyReadOnlyTsTypeName(),
+                ChildrenAggregate children => $"{new DataClassForSave(children, Type).GetLegacyReadOnlyTsTypeName()}[]",
+                _ => throw new InvalidOperationException($"未対応のメンバー型: {member.GetType().Name}"),
+            };
+        }
+
+        private string GetLegacyReadOnlyTsTypeName() {
+            return $"{CsClassName}ReadOnlyData";
         }
 
         private string RenderTsInitialValue(IAggregateMember member) {
