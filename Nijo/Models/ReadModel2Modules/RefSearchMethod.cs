@@ -7,19 +7,26 @@ using System.Linq;
 
 namespace Nijo.Models.ReadModel2Modules {
     internal class RefSearchMethod {
-        internal RefSearchMethod(AggregateBase aggregate, AggregateBase refEntry) {
+        internal RefSearchMethod(AggregateBase aggregate, AggregateBase refEntry, string? controllerActionSuffixOverride = null) {
             Aggregate = aggregate;
             RefEntry = refEntry;
+            _controllerActionSuffixOverride = controllerActionSuffixOverride;
         }
 
         internal AggregateBase Aggregate { get; }
         internal AggregateBase RefEntry { get; }
+        private readonly string? _controllerActionSuffixOverride;
+        private string ApiRootPhysicalName => RefEntry.GetRoot().PhysicalName;
 
         internal string ReactHookName => $"useSearchReference{Aggregate.PhysicalName}";
-        private string ControllerLoadAction => Aggregate == RefEntry
+        private string ControllerLoadAction => _controllerActionSuffixOverride != null
+            ? $"search-refs/{_controllerActionSuffixOverride}"
+            : Aggregate == RefEntry
             ? "search-refs"
             : $"search-refs/{Aggregate.PhysicalName}";
-        private string ControllerCountAction => Aggregate == RefEntry
+        private string ControllerCountAction => _controllerActionSuffixOverride != null
+            ? $"search-refs-count/{_controllerActionSuffixOverride}"
+            : Aggregate == RefEntry
             ? "search-refs-count"
             : $"search-refs-count/{Aggregate.PhysicalName}";
         private string AppSrvValidateMethod => $"Validate{Aggregate.PhysicalName}RefSearchCondition";
@@ -44,7 +51,7 @@ namespace Nijo.Models.ReadModel2Modules {
                       const load = React.useCallback(async (searchCondition: {{searchCondition.TsTypeName}}): Promise<{{searchResult.TsTypeName}}[]> => {
                         setNowLoading(true)
                         try {
-                          const res = await complexPost<{{searchResult.TsTypeName}}[]>(`/api/{{Aggregate.PhysicalName}}/{{ControllerLoadAction}}`, searchCondition)
+                          const res = await complexPost<{{searchResult.TsTypeName}}[]>(`/api/{{ApiRootPhysicalName}}/{{ControllerLoadAction}}`, searchCondition)
                           if (!res.ok) {
                             return []
                           }
@@ -57,7 +64,7 @@ namespace Nijo.Models.ReadModel2Modules {
 
                       const count = React.useCallback(async (searchConditionFilter: {{searchCondition.TsFilterTypeName}}): Promise<number> => {
                         try {
-                          const res = await complexPost<number>(`/api/{{Aggregate.PhysicalName}}/{{ControllerCountAction}}`, searchConditionFilter, {
+                          const res = await complexPost<number>(`/api/{{ApiRootPhysicalName}}/{{ControllerCountAction}}`, searchConditionFilter, {
                             ignoreConfirm: true,
                           })
                           return res.data ?? 0
@@ -94,34 +101,35 @@ namespace Nijo.Models.ReadModel2Modules {
             return $$"""
                 /** {{Aggregate.DisplayName}}の参照先検索を行いその結果を保持します。 */
                 export const {{ReactHookName}} = (
-                    disableAutoLoad: true
+                  disableAutoLoad: true
                 ) => {
-                    const [currentPageItems, setCurrentPageItems] = React.useState<{{searchResult.TsTypeName}}[]>(() => [])
-                    const [nowLoading, setNowLoading] = React.useState(false)
+                  const [currentPageItems, setCurrentPageItems] = React.useState<{{searchResult.TsTypeName}}[]>(() => [])
+                  const [nowLoading, setNowLoading] = React.useState(false)
 
-                    const load = React.useCallback(async (_searchCondition: {{searchCondition.TsTypeName}}): Promise<{{searchResult.TsTypeName}}[]> => {
-                        setNowLoading(true)
-                        try {
-                            setCurrentPageItems([])
-                            return []
-                        } finally {
-                            setNowLoading(false)
-                        }
-                    }, [])
-
-                    const count = React.useCallback(async (_filter: {{searchCondition.TsFilterTypeName}}): Promise<number> => {
-                        return 0
-                    }, [])
-
-                    return {
-                        currentPageItems,
-                        nowLoading,
-                        load,
-                        count,
+                  const load = React.useCallback(async (_searchCondition: {{searchCondition.TsTypeName}}): Promise<{{searchResult.TsTypeName}}[]> => {
+                    setNowLoading(true)
+                    try {
+                      setCurrentPageItems([])
+                      return []
+                    } finally {
+                      setNowLoading(false)
                     }
+                  }, [])
+
+                  const count = React.useCallback(async (_filter: {{searchCondition.TsFilterTypeName}}): Promise<number> => {
+                    return 0
+                  }, [])
+
+                  return {
+                    currentPageItems,
+                    nowLoading,
+                    load,
+                    count,
+                  }
                 }
                 """;
         }
+
         internal string RenderController(CodeRenderingContext context) {
             var searchCondition = new RefSearchCondition(Aggregate, RefEntry);
 
@@ -199,11 +207,13 @@ namespace Nijo.Models.ReadModel2Modules {
 
             if (context.IsLegacyCompatibilityMode()) {
                 var refFilterMetadata = GetRefSearchFilterMetadata(searchCondition);
-                var targetSequence = RenderTargetSequenceFromRoot("searchResult");
-                var countSequence = RenderTargetSequenceFromRoot("query");
+                var targetSequence = RenderLegacyTargetSequenceFromRoot("searchResult");
+                var countSequence = RenderLegacyCountSequenceFromRoot("query");
                 var convertedFilterForCount = RenderFilterConverting(normalSearchCondition.FilterRoot, new Variable("refSearchConditionFilter", refFilterMetadata));
                 var convertedFilterForLoad = RenderFilterConverting(normalSearchCondition.FilterRoot, new Variable("refSearchCondition", searchCondition));
-                var convertedResult = RenderResultConverting(searchResult, new Variable("sr", DisplayData.GetLegacyCompatibleInstanceApiMetadata(Aggregate)));
+                var convertedResult = Aggregate == Aggregate.GetRoot()
+                    ? RenderResultConverting(searchResult, new Variable("sr", DisplayData.GetLegacyCompatibleInstanceApiMetadata(Aggregate)))
+                    : RenderResultConverting(searchResult, new Variable("sr", new LegacyParentAndSelfMetadata(Aggregate)));
 
                 return $$"""
                     /// <summary>
@@ -280,7 +290,7 @@ namespace Nijo.Models.ReadModel2Modules {
             return filterMetadata ?? searchCondition;
         }
 
-        private string RenderTargetSequenceFromRoot(string sourceName) {
+        private string RenderLegacyCountSequenceFromRoot(string sourceName) {
             var path = Aggregate
                 .GetPathFromRoot()
                 .Skip(1)
@@ -291,16 +301,59 @@ namespace Nijo.Models.ReadModel2Modules {
                 return sourceName;
             }
 
-            return $$"""
-                {{sourceName}}
-                {{path.SelectTextTemplate(aggregate => aggregate is ChildrenAggregate
-                    ? $$"""
-                        .SelectMany(item => item.{{aggregate.PhysicalName}})
-                    """
-                    : $$"""
-                        .Select(item => item.{{aggregate.PhysicalName}})
-                    """)}}
-                """;
+            return sourceName + Environment.NewLine + path.SelectTextTemplate(aggregate => aggregate is ChildrenAggregate
+                ? $$"""
+.SelectMany(e => e.{{aggregate.PhysicalName}})
+"""
+                : $$"""
+.Select(e => e.{{aggregate.PhysicalName}})
+""");
+        }
+
+        private string RenderLegacyTargetSequenceFromRoot(string sourceName) {
+            var path = Aggregate
+                .GetPathFromRoot()
+                .Skip(1)
+                .OfType<AggregateBase>()
+                .ToArray();
+
+            if (path.Length == 0) {
+                return sourceName;
+            }
+
+            if (path.Length == 1) {
+                return path[0] switch {
+                    ChildrenAggregate children => $$"""
+                        {{sourceName}}
+                        .SelectMany(sr => sr.{{children.PhysicalName}}, (parent, self) => new { parent, self })
+                        """,
+                    _ => $$"""
+                        {{sourceName}}
+                        .Select(parent => new { parent, self = parent.{{path[0].PhysicalName}} })
+                        """,
+                };
+            }
+
+            var parentPath = path[..^1];
+            var target = path[^1];
+            var parentSequence = sourceName + Environment.NewLine + parentPath.SelectTextTemplate(aggregate => aggregate is ChildrenAggregate
+                ? $$"""
+.SelectMany(e => e.{{aggregate.PhysicalName}})
+"""
+                : $$"""
+.Select(e => e.{{aggregate.PhysicalName}})
+""");
+
+            return target switch {
+                ChildrenAggregate children => $$"""
+                    {{parentSequence}}
+                    .SelectMany(sr => sr.{{children.PhysicalName}}, (parent, self) => new { parent, self })
+                    """,
+                _ => $$"""
+                    {{parentSequence}}
+                    .Select(parent => new { parent, self = parent.{{target.PhysicalName}} })
+                    """,
+            };
         }
 
         private static string RenderFilterConverting(SearchCondition.Filter targetFilter, IInstancePropertyOwner source) {
@@ -373,6 +426,11 @@ namespace Nijo.Models.ReadModel2Modules {
                             && schemaValue.OnlySearchCondition
                             && schemaValue.Type.CsDomainTypeName == "bool"
                             && sourceOwner is Variable variable) {
+                            if (variable.Metadata is LegacyParentAndSelfMetadata) {
+                                return value.Type.RenderCastToDomainType()
+                                    + $"{variable.Name}.self?.Values?.{value.GetPropertyName(E_CsTs.CSharp)}";
+                            }
+
                             return value.Type.RenderCastToDomainType()
                                 + $"{variable.Name}.Values?.{value.GetPropertyName(E_CsTs.CSharp)}";
                         }
@@ -438,6 +496,37 @@ namespace Nijo.Models.ReadModel2Modules {
                     """;
                 }
             }
+        }
+
+        private sealed class LegacyParentAndSelfMetadata : IInstancePropertyOwnerMetadata {
+            internal LegacyParentAndSelfMetadata(AggregateBase aggregate) {
+                var parent = aggregate.GetParent() ?? throw new InvalidOperationException();
+                _members = [
+                    new LegacyPairStructureMember("self", aggregate, DisplayData.GetLegacyCompatibleInstanceApiMetadata(aggregate)),
+                    new LegacyPairStructureMember("parent", parent, DisplayData.GetLegacyCompatibleInstanceApiMetadata(parent)),
+                ];
+            }
+
+            private readonly IInstancePropertyMetadata[] _members;
+            public IEnumerable<IInstancePropertyMetadata> GetMembers() => _members;
+        }
+
+        private sealed class LegacyPairStructureMember : IInstanceStructurePropertyMetadata {
+            internal LegacyPairStructureMember(string propertyName, ISchemaPathNode schemaPathNode, IInstancePropertyOwnerMetadata metadata) {
+                _propertyName = propertyName;
+                _schemaPathNode = schemaPathNode;
+                _metadata = metadata;
+            }
+
+            private readonly string _propertyName;
+            private readonly ISchemaPathNode _schemaPathNode;
+            private readonly IInstancePropertyOwnerMetadata _metadata;
+
+            public ISchemaPathNode SchemaPathNode => _schemaPathNode;
+            public string GetPropertyName(E_CsTs csts) => _propertyName;
+            public string GetTypeName(E_CsTs csts) => string.Empty;
+            public bool IsArray => false;
+            public IEnumerable<IInstancePropertyMetadata> GetMembers() => _metadata.GetMembers();
         }
     }
 }

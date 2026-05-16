@@ -9,14 +9,16 @@ using System.Text.RegularExpressions;
 
 namespace Nijo.Models.ReadModel2Modules {
     internal class RefSearchCondition : IInstancePropertyOwnerMetadata, ICreatablePresentationLayerStructure {
-        internal RefSearchCondition(AggregateBase aggregate, AggregateBase refEntry) {
+        internal RefSearchCondition(AggregateBase aggregate, AggregateBase refEntry, string? filterClassNameOverride = null) {
             Aggregate = aggregate;
             RefEntry = refEntry;
+            _filterClassNameOverride = filterClassNameOverride;
             FilterRoot = new FilterContainerMember(this);
         }
 
         internal AggregateBase Aggregate { get; }
         internal AggregateBase RefEntry { get; }
+        private readonly string? _filterClassNameOverride;
         private bool IsEntry => Aggregate == RefEntry;
         private FilterContainerMember FilterRoot { get; }
 
@@ -29,9 +31,9 @@ namespace Nijo.Models.ReadModel2Modules {
         string IPresentationLayerStructure.CsClassName => CsClassName;
         string IPresentationLayerStructure.TsTypeName => TsTypeName;
 
-        private string FilterClassName => IsEntry
+        private string FilterClassName => _filterClassNameOverride ?? (IsEntry
             ? $"{RefEntry.PhysicalName}RefSearchConditionFilter"
-            : $"{RefEntry.PhysicalName}RefSearchConditionFilter_{GetRelationSuffix()}";
+            : $"{RefEntry.PhysicalName}RefSearchConditionFilter_{GetRelationSuffix()}");
         private string FilterTypeName => FilterClassName;
         internal string CsFilterTypeName => FilterClassName;
         internal string TsFilterTypeName => FilterTypeName;
@@ -44,6 +46,11 @@ namespace Nijo.Models.ReadModel2Modules {
                 yield break;
             }
 
+            foreach (var member in EnumerateFilterMembers()) {
+                yield return member;
+            }
+        }
+        internal IEnumerable<IInstancePropertyMetadata> GetFilterMembers() {
             foreach (var member in EnumerateFilterMembers()) {
                 yield return member;
             }
@@ -114,7 +121,7 @@ namespace Nijo.Models.ReadModel2Modules {
         }
         internal string RenderTypeScriptDeclaringRecursively(CodeRenderingContext context) {
             if (IsEntry) {
-                var sortableMemberType = new SearchCondition.Entry(RefEntry.GetRoot()).TypeScriptSortableMemberType;
+                var sortableMemberType = $"SortableMemberOf{RefEntry.PhysicalName}";
                 var excludeChildrenComment = """
                     /**
                      * 検索結果に明細データを含めなくても構わない場合、trueになる。
@@ -265,12 +272,25 @@ namespace Nijo.Models.ReadModel2Modules {
 
             foreach (var member in Aggregate.GetMembers()) {
                 if (member is RefToMember refTo) {
-                    yield return new FilterStructureMember(refTo.PhysicalName, new RefSearchCondition(refTo.RefTo.GetRoot(), refTo.RefTo.GetRoot()));
+                    if (ReferenceEquals(Aggregate.PreviousNode, refTo)) continue;
+                    yield return new FilterStructureMember(
+                        refTo.PhysicalName,
+                        new RefSearchCondition(
+                            refTo.RefTo,
+                            refTo.RefTo.AsEntry(),
+                            $"{refTo.RefTo.AsEntry().PhysicalName}RefSearchConditionFilter"));
                 } else if (member is ChildAggregate child) {
+                    if (ReferenceEquals(Aggregate.PreviousNode, child)) continue;
                     yield return new FilterStructureMember(child.PhysicalName, new RefSearchCondition(child, RefEntry));
                 } else if (member is ChildrenAggregate children) {
+                    if (ReferenceEquals(Aggregate.PreviousNode, children)) continue;
                     yield return new FilterStructureMember(children.PhysicalName, new RefSearchCondition(children, RefEntry));
                 }
+            }
+
+            var parent = Aggregate.GetParent();
+            if (parent != null && !ReferenceEquals(Aggregate.PreviousNode, parent)) {
+                yield return new FilterStructureMember("PARENT", new RefSearchCondition(parent, RefEntry));
             }
         }
 

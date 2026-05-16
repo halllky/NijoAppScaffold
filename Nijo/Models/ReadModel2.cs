@@ -99,8 +99,36 @@ namespace Nijo.Models {
             }
 
             var aggregates = rootAggregate.EnumerateThisAndDescendants().ToArray();
+            var legacyRefAggregates = aggregates
+                .Where(aggregate => aggregate is RootAggregate || aggregate.GetRefFroms().Any())
+                .ToArray();
 
             foreach (var aggregate in aggregates) {
+                if (ctx.IsLegacyCompatibilityMode()) {
+                    if (!legacyRefAggregates.Contains(aggregate)) continue;
+
+                    var legacyRefEntry = aggregate.AsEntry();
+                    var legacyRefSearchCondition = new RefSearchCondition(legacyRefEntry, legacyRefEntry);
+                    var legacyRefSearchResult = new RefSearchResult(legacyRefEntry, legacyRefEntry);
+                    var legacyRefSearchMethod = new RefSearchMethod(
+                        legacyRefEntry,
+                        legacyRefEntry,
+                        aggregate.PreviousNode == null ? null : aggregate.PhysicalName);
+                    var legacyRefDisplayData = new RefDisplayData(legacyRefEntry, legacyRefEntry);
+
+                    aggregateFile.AddCSharpClass(legacyRefSearchCondition.RenderCSharpDeclaringRecursively(ctx), $"Class_RefSearchCondition_{legacyRefEntry.PhysicalName}");
+                    aggregateFile.AddCSharpClass(legacyRefSearchResult.RenderCSharp(ctx), $"Class_RefSearchResult_{legacyRefEntry.PhysicalName}");
+                    aggregateFile.AddCSharpClass(legacyRefDisplayData.RenderCSharp(ctx), $"Class_RefDisplayData_{legacyRefEntry.PhysicalName}");
+                    aggregateFile.AddTypeScriptTypeDef(legacyRefSearchCondition.RenderTypeScriptDeclaringRecursively(ctx));
+                    aggregateFile.AddTypeScriptFunction(legacyRefSearchCondition.RenderCreateNewObjectFn(ctx));
+                    aggregateFile.AddTypeScriptTypeDef(legacyRefDisplayData.RenderTypeScript(ctx));
+                    aggregateFile.AddTypeScriptFunction(legacyRefDisplayData.RenderTsNewObjectFunction(ctx));
+                    aggregateFile.AddTypeScriptFunction(legacyRefSearchMethod.RenderHook(ctx));
+                    aggregateFile.AddWebapiControllerAction(legacyRefSearchMethod.RenderController(ctx));
+                    aggregateFile.AddAppSrvMethod(legacyRefSearchMethod.RenderAppSrvMethodOfReadModel(ctx));
+                    continue;
+                }
+
                 var refEntry = (AggregateBase)aggregate.GetEntry();
                 var refSearchCondition = new RefSearchCondition(aggregate, refEntry);
                 var refSearchResult = new RefSearchResult(aggregate, refEntry);
@@ -137,21 +165,10 @@ namespace Nijo.Models {
                 aggregateFile.AddWebapiControllerAction(loadMethod.RenderLegacyExcelControllerAction());
             }
 
-            if (ctx.IsLegacyCompatibilityMode()) {
-                aggregateFile.AddCSharpClass(aggregates.SelectTextTemplate(aggregate => {
-                    var refEntry = (AggregateBase)aggregate.GetEntry();
-                    var refSearchResult = new RefSearchResult(aggregate, refEntry);
-                    return refSearchResult.RenderCSharp(ctx);
-                }), $"Class_RefSearchResults_{rootAggregate.PhysicalName}");
-
-                aggregateFile.AddCSharpClass(aggregates.SelectTextTemplate(aggregate => {
-                    var refEntry = (AggregateBase)aggregate.GetEntry();
-                    var refDisplayData = new RefDisplayData(aggregate, refEntry);
-                    return refDisplayData.RenderCSharp(ctx);
-                }), $"Class_RefDisplayData_{rootAggregate.PhysicalName}");
+            foreach (var aggregate in aggregates) {
+                if (aggregate is not RootAggregate && !aggregate.GetRefFroms().Any()) continue;
+                ctx.Use<AuthorizedAction>().Register(aggregate);
             }
-
-            ctx.Use<AuthorizedAction>().Register(rootAggregate);
 
             aggregateFile.ExecuteRendering(ctx);
         }
@@ -358,19 +375,31 @@ namespace Nijo.Models {
                     """;
             }
 
-            static IEnumerable<(string Accessor, string OwnerDisplayName, string MemberDisplayName)> EnumerateColumns(AggregateBase aggregate, string accessor, bool useValuesContainer) {
+            static IEnumerable<(string Accessor, string OwnerDisplayName, string MemberDisplayName)> EnumerateColumns(AggregateBase aggregate, string accessor, bool useValuesContainer, bool isInRefTree = false, AggregateBase? previousAggregate = null) {
+                var parent = aggregate.GetParent();
+                if (isInRefTree
+                    && parent != null
+                    && (previousAggregate == null || !ReferenceEquals(parent.XElement, previousAggregate.XElement))) {
+                    foreach (var column in EnumerateColumns(parent, $"{accessor}.PARENT?", useValuesContainer: false, true, aggregate)) {
+                        yield return column;
+                    }
+                }
+
                 foreach (var member in aggregate.GetMembers()) {
                     switch (member) {
-                        case ValueMember valueMember when !valueMember.OnlySearchCondition:
+                        case ValueMember valueMember:
+                            if (valueMember.OnlySearchCondition && valueMember.Type.CsDomainTypeName != "bool") continue;
                             yield return ($"{accessor}{(useValuesContainer ? ".Values?" : string.Empty)}.{valueMember.PhysicalName}", aggregate.DisplayName, valueMember.DisplayName);
                             break;
                         case RefToMember refToMember:
-                            foreach (var column in EnumerateColumns(refToMember.RefTo, $"{accessor}{(useValuesContainer ? ".Values?" : string.Empty)}.{refToMember.PhysicalName}?", useValuesContainer: false)) {
+                            if (previousAggregate != null && ReferenceEquals(refToMember.RefTo.XElement, previousAggregate.XElement)) continue;
+                            foreach (var column in EnumerateColumns(refToMember.RefTo, $"{accessor}{(useValuesContainer ? ".Values?" : string.Empty)}.{refToMember.PhysicalName}?", useValuesContainer: false, true, aggregate)) {
                                 yield return column;
                             }
                             break;
                         case ChildAggregate childAggregate:
-                            foreach (var column in EnumerateColumns(childAggregate, $"{accessor}.{childAggregate.PhysicalName}?", useValuesContainer: true)) {
+                            if (previousAggregate != null && ReferenceEquals(childAggregate.XElement, previousAggregate.XElement)) continue;
+                            foreach (var column in EnumerateColumns(childAggregate, $"{accessor}.{childAggregate.PhysicalName}?", useValuesContainer: true, isInRefTree, aggregate)) {
                                 yield return column;
                             }
                             break;

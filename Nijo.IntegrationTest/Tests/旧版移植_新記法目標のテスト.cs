@@ -150,6 +150,10 @@ public class 旧版移植_新記法目標のテスト {
                 <会社 is="ref-to:会社 key" />
                 <取引先ID is="int:9 key" />
                 <取引先名 is="word max-length:100 required" />
+                <連絡先 is="children required">
+                  <連絡先ID is="int:9 key" />
+                  <連絡先名 is="word max-length:100 required" />
+                </連絡先>
               </取引先>
 
               <受注 is="write-model-2"
@@ -157,6 +161,7 @@ public class 旧版移植_新記法目標のテスト {
                   DisplayName="受注">
                 <受注ID is="int:9 key" />
                 <取引先 is="ref-to:取引先" />
+                <取引先連絡先 is="ref-to:取引先/連絡先 hidden" />
                 <受付担当者コード is="word max-length:12 required character-type:HalfWidthAlphaNum" />
                 <合計数量 is="int:9 not-negative required" />
                 <配送先 is="child">
@@ -193,6 +198,10 @@ public class 旧版移植_新記法目標のテスト {
                   <会社 Type="ref-to:会社" IsKey="True" />
                   <取引先ID Type="int" TotalDigit="9" IsKey="True" />
                   <取引先名 Type="word" MaxLength="100" Required="True" />
+                  <連絡先 Type="children" Required="True">
+                    <連絡先ID Type="int" TotalDigit="9" IsKey="True" />
+                    <連絡先名 Type="word" MaxLength="100" Required="True" />
+                  </連絡先>
                 </取引先>
 
                 <受注 Type="write-model-2"
@@ -200,6 +209,7 @@ public class 旧版移植_新記法目標のテスト {
                     DisplayName="受注">
                   <受注ID Type="int" TotalDigit="9" IsKey="True" />
                   <取引先 Type="ref-to:取引先" />
+                  <取引先連絡先 Type="ref-to:取引先/連絡先" Hidden="True" />
                   <受付担当者コード Type="word" MaxLength="12" Required="True" CharacterType="HalfWidthAlphaNum" />
                   <合計数量 Type="int" TotalDigit="9" NotNegative="True" Required="True" />
                   <配送先 Type="child">
@@ -264,6 +274,7 @@ public class 旧版移植_新記法目標のテスト {
                     DisplayName="受注検索">
                 <受注ID is="int:9 key" />
                 <取引先 is="ref-to:取引先照会" />
+                <取引先取引履歴 is="ref-to:取引先照会/取引履歴 hidden" />
                 <受付日 is="date" />
                 <合計金額 is="decimal:12,2 not-negative" />
                 <ヘッダ補足 is="child">
@@ -313,6 +324,7 @@ public class 旧版移植_新記法目標のテスト {
                       DisplayName="受注検索">
                   <受注ID Type="int" TotalDigit="9" IsKey="True" />
                   <取引先 Type="ref-to:取引先照会" />
+                  <取引先取引履歴 Type="ref-to:取引先照会/取引履歴" Hidden="True" />
                   <受付日 Type="date" />
                   <合計金額 Type="decimal" TotalDigit="12" DecimalPlace="2" NotNegative="True" />
                   <ヘッダ補足 Type="child">

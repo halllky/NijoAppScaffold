@@ -36,23 +36,31 @@ namespace Nijo.Models.ReadModel2Modules {
                     {{WithIndent(member.RenderCSharpDeclaring(), "    ")}}
                 """)}}
                 }
-                {{EnumerateMembers().OfType<StructureMember>().Where(member => member.Target.RefEntry == RefEntry && (Aggregate != RefEntry || member.SchemaPathNode is RefToMember)).SelectTextTemplate(member => $$"""
+                {{EnumerateMembers().OfType<StructureMember>().Where(member => member.Target.RefEntry == RefEntry).SelectTextTemplate(member => $$"""
                 {{member.Target.RenderCSharp(context)}}
                 """)}}
                 """;
         }
 
         private IEnumerable<IMember> EnumerateMembers() {
+            var parent = Aggregate.GetParent();
+            if (parent != null && !ReferenceEquals(Aggregate.PreviousNode, parent)) {
+                yield return new StructureMember("PARENT", new RefSearchResult(parent, RefEntry, GetNestedRefRelationSuffix(parent.PhysicalName)), false, parent);
+            }
+
             foreach (var member in Aggregate.GetMembers()) {
                 if (member is ValueMember vm) {
                     if (vm.OnlySearchCondition && !(CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode() && vm.Type.CsDomainTypeName == "bool")) continue;
                     if (vm.IsHardCodedPrimaryKey) continue;
                     yield return new ValueMemberWrapper(vm);
                 } else if (member is RefToMember refTo) {
+                    if (ReferenceEquals(Aggregate.PreviousNode, refTo)) continue;
                     yield return new StructureMember(refTo.PhysicalName, new RefSearchResult(refTo.RefTo.AsEntry(), RefEntry, GetNestedRefRelationSuffix(refTo.PhysicalName)), false, refTo);
                 } else if (member is ChildAggregate child) {
+                    if (ReferenceEquals(Aggregate.PreviousNode, child)) continue;
                     yield return new StructureMember(child.PhysicalName, new RefSearchResult(child, RefEntry, GetNestedRelationSuffix(child.PhysicalName)), false, child);
                 } else if (member is ChildrenAggregate children) {
+                    if (ReferenceEquals(Aggregate.PreviousNode, children)) continue;
                     yield return new StructureMember(children.PhysicalName, new RefSearchResult(children, RefEntry, GetNestedRelationSuffix(children.PhysicalName)), true, children);
                 }
             }
