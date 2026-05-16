@@ -60,7 +60,7 @@ namespace Nijo.Models.ReadModel2Modules {
                     return $$"""
                         {
                           {{FILTER_TS}}: {
-                          {{FilterRoot.RenderLegacyNewObjectFunctionMemberLiteral()}}
+                            {{WithIndent(FilterRoot.RenderLegacyNewObjectFunctionMemberLiteral(), "    ")}}
                           },
                           {{SORT_TS}}: [],
                         }

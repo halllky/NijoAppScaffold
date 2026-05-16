@@ -55,6 +55,18 @@ namespace Nijo.Models.ReadModel2Modules {
                 """;
         }
         internal string RenderTypeScript(CodeRenderingContext context) {
+            if (context.IsLegacyCompatibilityMode()) {
+                return $$"""
+
+                    /** {{RefEntry.DisplayName}}が他の集約から参照されたときの{{Aggregate.DisplayName}}の画面表示用データ型 */
+                    export type {{TsTypeName}} = {
+                    {{EnumerateMembers().SelectTextTemplate(member => $$"""
+                      {{WithIndent(member.RenderTypeScriptDeclaring(), "  ")}}
+                    """)}}
+                    }
+                    """;
+            }
+
             return $$"""
                 /** {{RefEntry.DisplayName}}が他の集約から外部参照されるときの{{Aggregate.DisplayName}}の型 */
                 export type {{TsTypeName}} = {
@@ -66,6 +78,15 @@ namespace Nijo.Models.ReadModel2Modules {
         }
         internal string RenderTsNewObjectFunction(CodeRenderingContext context) {
             if (!IsEntry) return string.Empty;
+
+            if (context.IsLegacyCompatibilityMode()) {
+                return $$"""
+
+                    /* {{TsTypeName}} の新しいインスタンスを作成して返します。 */
+                    export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({{RenderTsNewObjectFunctionBody()}})
+
+                    """;
+            }
 
             return $$"""
                 /** {{CsClassName}}を新規作成します。 */
@@ -147,6 +168,15 @@ namespace Nijo.Models.ReadModel2Modules {
             }
 
             public string RenderTypeScriptDeclaring() {
+                if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
+                    var legacyTypeName = Member.Type.TsTypeName.Contains("null") || !Member.IsKey
+                        ? Member.Type.TsTypeName
+                        : $"{Member.Type.TsTypeName} | null";
+                    return $$"""
+                        {{Member.PhysicalName}}: {{legacyTypeName}} | undefined
+                        """;
+                }
+
                 return $$"""
                     {{Member.PhysicalName}}?: {{Member.Type.TsTypeName}}
                     """;
