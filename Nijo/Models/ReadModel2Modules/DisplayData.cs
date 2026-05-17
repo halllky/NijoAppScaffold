@@ -412,8 +412,15 @@ namespace Nijo.Models.ReadModel2Modules {
 
         private static string GetLegacyTsType(IEditablePresentationObjectValueOrRefMember member) {
             return member switch {
-                EditablePresentationObjectValueMember value when value.Member.Type is ValueMemberTypes.StaticEnumMember => value.Member.Type.TsTypeName,
+                EditablePresentationObjectValueMember value when value.Member.Type is ValueMemberTypes.StaticEnumMember staticEnum => CodeRenderingContext.CurrentContext?.Schema.GetRootAggregates()
+                    .SingleOrDefault(root => root.PhysicalName == staticEnum.Definition.CsEnumName && root.Model is Models.StaticEnumModel2) is RootAggregate enumRoot
+                        ? new StaticEnumModelModules.StaticEnumDef(staticEnum.Definition, enumRoot)
+                            .GetValues()
+                            .Select(enumValue => $"'{enumValue.DisplayName.Replace("'", "\\'")}'")
+                            .Join(" | ")
+                        : "string",
                 EditablePresentationObjectValueMember value => GetLegacySchemaTypeName(value.Member) switch {
+                    "file" => "Util.FileAttachmentMetadata",
                     "int" => "string | null",
                     "numeric" => "string | null",
                     "decimal" => "string | null",
@@ -573,7 +580,7 @@ namespace Nijo.Models.ReadModel2Modules {
                 string? RenderLegacyOwnMemberInitialize(IAggregateMember member) {
                     if (member is ValueMember valueMember
                         && valueMember.Owner == Aggregate
-                        && valueMember.Type.SchemaTypeName == "uuid") {
+                        && GetLegacySchemaTypeName(valueMember) == "uuid") {
                         return $"{member.PhysicalName}: UUID.generate(),";
                     }
 
@@ -642,22 +649,26 @@ namespace Nijo.Models.ReadModel2Modules {
                 """;
         }
         internal string RenderDeepEqualFunctionRecursively(CodeRenderingContext ctx) {
-                        var descendants = GetChildMembers()
+            var descendants = GetChildMembers()
                 .Select(child => new DisplayData(child.Aggregate).RenderDeepEqualFunctionRecursively(ctx))
-                                .Where(source => !string.IsNullOrWhiteSpace(source))
-                                .ToArray();
+                .Where(source => !string.IsNullOrWhiteSpace(source))
+                .ToArray();
+            var descendantsText = descendants.Length == 0
+                ? string.Empty
+                : Environment.NewLine + string.Join(Environment.NewLine, descendants);
 
             if (ctx.IsLegacyCompatibilityMode()) {
+                var legacyDescendantsText = Aggregate.GetRoot().Model is Models.WriteModel2
+                    ? string.Empty
+                    : descendantsText;
+
                 return $$"""
                     /** 2つの{{Aggregate.DisplayName}}オブジェクトの値を比較し、一致しているかを返します。 */
                     export const {{DeepEqualFunction}} = (a: {{TsTypeName}}, b: {{TsTypeName}}): boolean => {
                       {{WithIndent(RenderLegacyDeepEqualBody(Aggregate, "a", "b"), "  ")}}
                       if (a.{{WILL_BE_DELETED_TS}} !== b.{{WILL_BE_DELETED_TS}}) return false
                       return true
-                    }
-                                        {{descendants.SelectTextTemplate(source => $$"""
-                                        {{source}}
-                                        """)}}
+                    }{{legacyDescendantsText}}
                     """;
             }
 
@@ -667,14 +678,28 @@ namespace Nijo.Models.ReadModel2Modules {
                   {{WithIndent(RenderDeepEqualBody(Aggregate, "a", "b"), "  ")}}
                   if (a.{{WILL_BE_DELETED_TS}} !== b.{{WILL_BE_DELETED_TS}}) return false
                   return true
-                }
-                                {{descendants.SelectTextTemplate(source => $$"""
-                                {{source}}
-                                """)}}
+                }{{descendantsText}}
                 """;
         }
         internal string RenderCheckChangesFunction(CodeRenderingContext ctx) {
             if (ctx.IsLegacyCompatibilityMode()) {
+                var descendants = Aggregate.GetRoot().Model is Models.WriteModel2
+                    ? Array.Empty<(string PhysicalName, string DeepEquals, string DefaultValue, string CurrentValue, string FindCondition)>()
+                    : GetChildMembers()
+                        .OfType<EditablePresentationObjectChildrenDescendant>()
+                        .Select((children, i) => (
+                            PhysicalName: children.PhysicalName,
+                            DeepEquals: new DisplayData(children.Aggregate).DeepEqualFunction,
+                            DefaultValue: $"{children.PhysicalName}defaultValues{i}",
+                            CurrentValue: $"{children.PhysicalName}currentValues{i}",
+                            FindCondition: children.Aggregate.GetMembers()
+                                .OfType<ValueMember>()
+                                .Where(member => member.IsKey)
+                                .SelectTextTemplate((key, j) => $$"""
+                      {{(j == 0 ? "" : "&& ")}}b.{{VALUES_TS}}?.{{key.PhysicalName}} === after.{{VALUES_TS}}?.{{key.PhysicalName}}
+                """)))
+                        .ToArray();
+
                 return $$"""
                     /** 更新前後の値をディープイコールで判定し、変更があったオブジェクトのwillBeChangedプロパティをtrueに設定して返します。 */
                     export const {{CheckChangesFunction}} = ({ defaultValues, currentValues }: {
@@ -690,6 +715,21 @@ namespace Nijo.Models.ReadModel2Modules {
                         anyChanged = true
                       }
 
+                    {{descendants.SelectTextTemplate(x => $$"""
+                      const {{x.DefaultValue}} = defaultValues.{{x.PhysicalName}} ?? []
+                      const {{x.CurrentValue}} = currentValues.{{x.PhysicalName}} ?? []
+                      for (const after of {{x.CurrentValue}}) {
+                        const before = {{x.DefaultValue}}.find(b =>
+                    {{x.FindCondition}})
+                        if (before && {{x.DeepEquals}}(before, after)) {
+                          after.{{WILL_BE_CHANGED_TS}} = false
+                        } else {
+                          after.{{WILL_BE_CHANGED_TS}} = true
+                          anyChanged = true
+                        }
+                      }
+
+                    """)}}
                       return anyChanged
                     }
                     """;
@@ -814,12 +854,39 @@ namespace Nijo.Models.ReadModel2Modules {
         }
 
         internal string RenderUiConstraintType(CodeRenderingContext ctx) {
+            var legacyDynamicEnumTypeDef = ctx.IsLegacyCompatibilityMode()
+                ? RenderLegacyDynamicEnumTypeScript()
+                : string.Empty;
+            if (!string.IsNullOrEmpty(legacyDynamicEnumTypeDef)) {
+                legacyDynamicEnumTypeDef += Environment.NewLine;
+            }
+
             return $$"""
-                /** {{Aggregate.DisplayName}}の各メンバーの制約の型 */
+                {{legacyDynamicEnumTypeDef}}/** {{Aggregate.DisplayName}}の各メンバーの制約の型 */
                 type {{UiConstraintTypeName}} = {
                   {{WithIndent(RenderUiConstraintMembers(this), "  ")}}
                 }
                 """;
+
+            string RenderLegacyDynamicEnumTypeScript() {
+                if (Aggregate is not RootAggregate root) return string.Empty;
+                if (root.XElement.Attribute(BasicNodeOptions.IsGenericLookupTable.AttributeName) == null) return string.Empty;
+
+                var categories = new GenericLookupTableParser(ctx.SchemaParser).GetCategoriesOf(root).ToArray();
+                if (categories.Length == 0) return string.Empty;
+
+                return $$"""
+                    /** 区分マスタの種類名 */
+                    export type 区分マスタ種別 = keyof typeof 区分マスタ種別Key
+                    /** 区分マスタの種類と対応するキー */
+                    export const 区分マスタ種別Key = {
+                    {{categories.SelectTextTemplate(category => $$"""
+                      {{category.DisplayName.ToCSharpSafe()}}: '{{category.Name}}' as const,
+                    """)}}
+                    }
+
+                    """;
+            }
         }
 
         internal string RenderUiConstraintValue(CodeRenderingContext ctx) {
@@ -901,6 +968,18 @@ namespace Nijo.Models.ReadModel2Modules {
                         """,
                     ValueMemberTypes.DateMember or ValueMemberTypes.DateTimeMember or ValueMemberTypes.YearMember or ValueMemberTypes.YearMonthMember => $$"""
                         if (Util.toISOStringStrict({{leftValue}}) !== Util.toISOStringStrict({{rightValue}})) return false
+                        """,
+                    _ when GetLegacySchemaTypeName(valueMember) == "file" => $$"""
+
+                        // 添付ファイルのディープイコールはIDで比較
+                        const files1_x3f0 = {{leftValue}} ?? []
+                        const files2_x3f0 = {{rightValue}} ?? []
+                        if (files1_x3f0.length !== files2_x3f0.length) return false
+                        const files2Set_x3f0 = new Set(files2_x3f0.map(f2 => f2.fileAttachmentId))
+                        for (let f1 of files1_x3f0) {
+                          if (!files2Set_x3f0.has(f1.fileAttachmentId)) return false
+                        }
+
                         """,
                     _ => $$"""
                         if (({{leftValue}} ?? undefined) !== ({{rightValue}} ?? undefined)) return false
@@ -989,6 +1068,33 @@ namespace Nijo.Models.ReadModel2Modules {
                     }.Where(text => text != string.Empty));
         }
 
+        private string RenderLegacyChildrenCheckChanges(EditablePresentationObjectChildrenDescendant children) {
+            var childDisplayData = new DisplayData(children.Aggregate);
+            const string defaultValuesRoot = "defaultValues";
+            const string currentValuesRoot = "currentValues";
+            var defaultValuesVar = $"{children.PhysicalName}{defaultValuesRoot}0";
+            var currentValuesVar = $"{children.PhysicalName}{currentValuesRoot}0";
+            var childKeys = children.Aggregate.GetMembers().OfType<ValueMember>().Where(member => member.IsKey).ToArray();
+            var findCondition = childKeys.Select(key => $$"""
+                b.{{VALUES_TS}}?.{{key.PhysicalName}} === after.{{VALUES_TS}}?.{{key.PhysicalName}}
+                """).Join(" && ");
+
+            return $$"""
+                const {{defaultValuesVar}} = {{defaultValuesRoot}}.{{children.PhysicalName}} ?? []
+                const {{currentValuesVar}} = {{currentValuesRoot}}.{{children.PhysicalName}} ?? []
+                for (const after of {{currentValuesVar}}) {
+                  const before = {{defaultValuesVar}}.find(b =>
+                    {{findCondition}})
+                  if (before && {{childDisplayData.DeepEqualFunction}}(before, after)) {
+                    after.{{WILL_BE_CHANGED_TS}} = false
+                  } else {
+                    after.{{WILL_BE_CHANGED_TS}} = true
+                    anyChanged = true
+                  }
+                }
+                """;
+
+        }
         private static string RenderUiConstraintValues(EditablePresentationObject displayData) {
             static string IndentAll(string content, string indent) => indent + WithIndent(content, indent);
 
@@ -1027,6 +1133,10 @@ namespace Nijo.Models.ReadModel2Modules {
         }
 
         private static string GetUiConstraintTypeName(ValueMember valueMember) {
+            if (GetLegacySchemaTypeName(valueMember) == "file") {
+                return "AutoGeneratedUtil.MemberConstraintBase";
+            }
+
             return valueMember.Type switch {
                 ValueMemberTypes.Word or ValueMemberTypes.Description or ValueMemberTypes.ValueObjectMember => "AutoGeneratedUtil.StringMemberConstraint",
                 ValueMemberTypes.IntMember or ValueMemberTypes.DecimalMember or ValueMemberTypes.SequenceMember => "AutoGeneratedUtil.NumberMemberConstraint",

@@ -880,7 +880,7 @@ public class 旧版移植_新記法目標のテスト {
           .ToArray();
 
         if (missingFiles.Length == 0 && extraFiles.Length == 0 && contentDiffs.Length == 0) {
-          return;
+            return;
         }
 
         var message = $$"""
@@ -892,7 +892,7 @@ public class 旧版移植_新記法目標のテスト {
         Assert.Fail(message);
     }
 
-      private static string IfAny(string title, IEnumerable<string> values) {
+    private static string IfAny(string title, IEnumerable<string> values) {
         var items = values.ToArray();
         if (items.Length == 0) return string.Empty;
 
@@ -901,36 +901,38 @@ public class 旧版移植_新記法目標のテスト {
           {{title}}:
           {{string.Join(Environment.NewLine, items.Select(item => $"- {item}"))}}
           """;
-      }
+    }
 
-      private static string BuildContentDiffSummary(string expected, string actual) {
+    private static string BuildContentDiffSummary(string expected, string actual) {
         var expectedLines = expected.Split('\n');
         var actualLines = actual.Split('\n');
         var max = Math.Max(expectedLines.Length, actualLines.Length);
+        const int beforeContext = 4;
+        const int afterContext = 8;
 
         for (var i = 0; i < max; i++) {
-          var expectedLine = i < expectedLines.Length ? expectedLines[i] : "<EOF>";
-          var actualLine = i < actualLines.Length ? actualLines[i] : "<EOF>";
-          if (expectedLine == actualLine) continue;
+            var expectedLine = i < expectedLines.Length ? expectedLines[i] : "<EOF>";
+            var actualLine = i < actualLines.Length ? actualLines[i] : "<EOF>";
+            if (expectedLine == actualLine) continue;
 
-          var start = Math.Max(0, i - 2);
-          var end = Math.Min(max - 1, i + 2);
-          var snippet = Enumerable.Range(start, end - start + 1)
-            .Select(index => {
-              var expectedSnippetLine = index < expectedLines.Length ? expectedLines[index] : "<EOF>";
-              var actualSnippetLine = index < actualLines.Length ? actualLines[index] : "<EOF>";
-              var marker = index == i ? '>' : ' ';
-              return $"{marker} L{index + 1}: expected: {expectedSnippetLine}{Environment.NewLine}  L{index + 1}: actual  : {actualSnippetLine}";
-            });
+            var start = Math.Max(0, i - beforeContext);
+            var end = Math.Min(max - 1, i + afterContext);
+            var snippet = Enumerable.Range(start, end - start + 1)
+              .Select(index => {
+                  var expectedSnippetLine = index < expectedLines.Length ? expectedLines[index] : "<EOF>";
+                  var actualSnippetLine = index < actualLines.Length ? actualLines[index] : "<EOF>";
+                  var marker = index == i ? '>' : ' ';
+                  return $"{marker} L{index + 1}: expected: {expectedSnippetLine}{Environment.NewLine}  L{index + 1}: actual  : {actualSnippetLine}";
+              });
 
-          return $$"""
+            return $$"""
             First difference at line {{i + 1}}
             {{string.Join(Environment.NewLine, snippet)}}
             """;
         }
 
         return "Content differs, but no line-level difference was found.";
-      }
+    }
 
     private static string FormatValidationError(Nijo.SchemaParsing.SchemaParseContext.ValidationError error) {
         var ownErrors = error.OwnErrors.Select(message => $"- own: {message}");

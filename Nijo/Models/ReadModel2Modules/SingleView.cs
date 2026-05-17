@@ -50,20 +50,20 @@ namespace Nijo.Models.ReadModel2Modules {
             var displayData = new DisplayData(_aggregate);
             var searchCondition = new SearchCondition.Entry(_aggregate);
             var keys = _aggregate.GetKeyVMs().Select((vm, i) => new {
-              Member = vm,
+                Member = vm,
                 vm.PhysicalName,
                 vm.DisplayName,
                 Index = i,
             }).ToArray();
 
             static string GetLegacyFilterValueFromUrl(ValueMember member, string variableName) {
-              var legacySchemaTypeName = member.XElement.Annotation<SchemaParsing.SchemaParseContext.OriginalTypeAnnotation>()?.TypeName
-                ?? member.XElement.Attribute(SchemaParsing.SchemaParseContext.ATTR_NODE_TYPE)?.Value;
+                var legacySchemaTypeName = member.XElement.Annotation<SchemaParsing.SchemaParseContext.OriginalTypeAnnotation>()?.TypeName
+                  ?? member.XElement.Attribute(SchemaParsing.SchemaParseContext.ATTR_NODE_TYPE)?.Value;
 
-              return legacySchemaTypeName switch {
-                "int" or "numeric" or "decimal" or "sequence" or "seq" or "year" => $"Number({variableName})",
-                _ => variableName,
-              };
+                return legacySchemaTypeName switch {
+                    "sequence" or "seq" => $"Number({variableName})",
+                    _ => variableName,
+                };
             }
 
             if (context.IsLegacyCompatibilityMode()) {

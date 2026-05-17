@@ -308,4 +308,5 @@ internal static class GenericLookupTableFeature {
             _ => "pk",
         };
     }
+
 }

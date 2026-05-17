@@ -705,10 +705,12 @@ namespace Nijo.Models.ReadModel2Modules {
 
             private static string GetLegacySearchConditionPrimitiveTsType(ValueMember member) {
                 if (member.Type is ValueMemberTypes.StaticEnumMember) {
-                    return member.Type.TsTypeName;
+                    return (member.Type.SearchBehavior?.FilterTsTypeName ?? member.Type.TsTypeName)
+                        .Replace(" | null", string.Empty, StringComparison.Ordinal);
                 }
 
                 return GetLegacySchemaTypeName(member) switch {
+                    "file" => "undefined",
                     "int" or "numeric" or "decimal" => "string | null",
                     "sequence" or "seq" => "number | null",
                     "year" => "number | null",

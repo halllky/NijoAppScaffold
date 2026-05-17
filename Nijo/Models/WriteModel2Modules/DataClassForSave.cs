@@ -832,7 +832,9 @@ namespace Nijo.Models.WriteModel2Modules {
 
         private string RenderTsInitialValueLegacy(IAggregateMember member) {
             return member switch {
-                ValueMember => "undefined",
+                ValueMember valueMember => Type == E_Type.Create && GetLegacySchemaTypeName(valueMember) == "uuid"
+                    ? "UUID.generate()"
+                    : "undefined",
                 RefToMember => "undefined",
                 ChildAggregate child => $$"""
                     {
