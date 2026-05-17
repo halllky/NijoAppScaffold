@@ -144,6 +144,8 @@ public class SchemaParseContext {
             }
         }
 
+        CollectGenericLookupCategoryDefinitions(xDocument, dynamicEnumDefinitions);
+
         foreach (var element in xDocument.Descendants()) {
             NormalizeLegacyAttributes(element, dynamicEnumDefinitions);
             NormalizeLegacyType(element);
@@ -154,6 +156,29 @@ public class SchemaParseContext {
         static bool IsLegacyDynamicEnumRoot(XElement element) {
             var type = element.Attribute(ATTR_NODE_TYPE)?.Value;
             return type?.StartsWith("dynamic-enum-type:", StringComparison.Ordinal) == true;
+        }
+    }
+
+    private static void CollectGenericLookupCategoryDefinitions(
+        XDocument xDocument,
+        IDictionary<string, (string CategoryName, string DisplayName)> dynamicEnumDefinitions) {
+
+        var section = xDocument.Root?.Element(SECTION_GENERIC_LOOKUP_TABLES);
+        if (section == null) return;
+
+        foreach (var categoryElement in section
+            .Elements(GenericLookupTableParser.CATEGORIES)
+            .Elements()) {
+
+            var categoryName = categoryElement.Name.LocalName;
+            var displayName = categoryElement.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? categoryName;
+
+            if (!dynamicEnumDefinitions.ContainsKey(categoryName)) {
+                dynamicEnumDefinitions[categoryName] = (categoryName, displayName);
+            }
+            if (!dynamicEnumDefinitions.ContainsKey(displayName)) {
+                dynamicEnumDefinitions[displayName] = (categoryName, displayName);
+            }
         }
     }
 
