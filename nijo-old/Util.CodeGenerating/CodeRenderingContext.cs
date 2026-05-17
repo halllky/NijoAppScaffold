@@ -197,7 +197,8 @@ namespace Nijo.Util.CodeGenerating {
                     RenderContent = ctx => {
                         var filenames = Directory
                             .GetFiles(dir.Path)
-                            .Select(path => Path.GetFileNameWithoutExtension(path).Replace("\"", "\\\""));
+                            .Select(path => Path.GetFileNameWithoutExtension(path).Replace("\"", "\\\""))
+                            .OrderBy(name => name, StringComparer.OrdinalIgnoreCase);
                         return $$"""
                             {{filenames.SelectTextTemplate(name => $$"""
                             export * from "./{{name}}"
