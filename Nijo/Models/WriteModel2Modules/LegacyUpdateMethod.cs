@@ -129,7 +129,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
                 {{If(hasSequenceMember, () => $$"""
                     //シーケンス項目
-                    GenerateAndSetSequenceAsync(afterDbEntity, batchUpdateState).GetAwaiter().GetResult();
+                    GenerateAndSetSequenceValue(afterDbEntity);
 
                 """)}}
                     // 更新実行

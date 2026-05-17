@@ -1,6 +1,7 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
+using Nijo.SchemaParsing;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -103,7 +104,16 @@ namespace Nijo.Models.ReadModel2Modules {
             }
 
             static string GetLegacyValueTypeName(SearchResultValueMember value) {
+                if (GetLegacySchemaTypeName(value.Member) == "file") {
+                    return "List<FileAttachmentMetadata>";
+                }
+
                 return value.Member.Type.CsDomainTypeName.Replace("DateOnly", "Date");
+            }
+
+            static string? GetLegacySchemaTypeName(ValueMember member) {
+                return member.XElement.Annotation<SchemaParseContext.OriginalTypeAnnotation>()?.TypeName
+                    ?? member.XElement.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
             }
         }
         internal string RenderCSharpRecursively(CodeRenderingContext ctx) {

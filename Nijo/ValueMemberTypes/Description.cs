@@ -59,6 +59,9 @@ namespace Nijo.ValueMemberTypes {
                     if (ctx.CodeRenderingContext.IsLegacyCompatibilityMode() && searchBehavior == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL) {
                         return $"{target}.Contains(trimmed)";
                     }
+                    if (ctx.CodeRenderingContext.IsLegacyCompatibilityMode() && searchBehavior == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT) {
+                        return $"Microsoft.EntityFrameworkCore.EF.Functions.Like({target}, escaped, \"\\\")";
+                    }
                     return searchBehavior switch {
                         BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT => $"{target} == trimmed",
                         BasicNodeOptions.STRING_SEARCH_BEHAVIOR_FORWARD => $"Microsoft.EntityFrameworkCore.EF.Functions.Like({target}, $\"{{escaped}}%\", \"\\\\\")",
@@ -70,8 +73,8 @@ namespace Nijo.ValueMemberTypes {
                 return $$"""
                     if (!string.IsNullOrWhiteSpace({{fullpathNullable}})) {
                         var trimmed = {{fullpathNotNull}}.Trim();
-                    {{If(searchBehavior != BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT && !(ctx.CodeRenderingContext.IsLegacyCompatibilityMode() && searchBehavior == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL), () => $$"""
-                        var escaped = trimmed.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+                    {{If(!(ctx.CodeRenderingContext.IsLegacyCompatibilityMode() && searchBehavior == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL), () => $$"""
+                        var escaped = trimmed.Replace("\\", "\\\\").Replace("%", "\\%"){{If(!ctx.CodeRenderingContext.IsLegacyCompatibilityMode() || searchBehavior != BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT, () => ".Replace(\"_\", \"\\_\")")}};
                     """)}}
                     {{If(isMany, () => $$"""
                         {{query}} = {{query}}.Where(x => x.{{manyOwnerPath}}{{manyOwnerSuffix}}.Any(y => {{GetComparison(manyValuePath)}}));

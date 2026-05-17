@@ -50,16 +50,27 @@ namespace Nijo.Models.ReadModel2Modules {
             var displayData = new DisplayData(_aggregate);
             var searchCondition = new SearchCondition.Entry(_aggregate);
             var keys = _aggregate.GetKeyVMs().Select((vm, i) => new {
+              Member = vm,
                 vm.PhysicalName,
                 vm.DisplayName,
                 Index = i,
             }).ToArray();
 
+            static string GetLegacyFilterValueFromUrl(ValueMember member, string variableName) {
+              var legacySchemaTypeName = member.XElement.Annotation<SchemaParsing.SchemaParseContext.OriginalTypeAnnotation>()?.TypeName
+                ?? member.XElement.Attribute(SchemaParsing.SchemaParseContext.ATTR_NODE_TYPE)?.Value;
+
+              return legacySchemaTypeName switch {
+                "int" or "numeric" or "decimal" or "sequence" or "seq" or "year" => $"Number({variableName})",
+                _ => variableName,
+              };
+            }
+
             if (context.IsLegacyCompatibilityMode()) {
                 var keyParams = keys.Select(k => $"key{k.Index}").Join(", ");
                 var missingKeyCondition = keys.Select(k => $"key{k.Index} === undefined").Join(" || ");
                 var assignKeyFilters = keys.SelectTextTemplate(k => $$"""
-searchCondition.{{SearchCondition.Entry.FILTER_TS}}.{{k.PhysicalName}}  = { from: key{{k.Index}}, to: key{{k.Index}} }
+searchCondition.{{SearchCondition.Entry.FILTER_TS}}.{{k.PhysicalName}}  = { from: {{GetLegacyFilterValueFromUrl(k.Member, $"key{k.Index}")}}, to: {{GetLegacyFilterValueFromUrl(k.Member, $"key{k.Index}")}} }
 """);
                 var notFoundMessage = keys.Select(k => $"{k.DisplayName}: ${{key{k.Index}}}").Join(", ");
 

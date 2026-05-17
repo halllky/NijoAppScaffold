@@ -1,6 +1,7 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
+using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -223,9 +224,14 @@ namespace Nijo.Models.ReadModel2Modules {
                 };
 
                 static string GetLegacyCsTypeName(FilterValueMember value) {
-                    var typeName = value.Member.OnlySearchCondition
-                        ? value.Member.Type.CsDomainTypeName
-                        : value.Member.Type.SearchBehavior?.FilterCsTypeName;
+                    var typeName = CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
+                        && value.Member.OnlySearchCondition
+                        && value.Member.Type.CsDomainTypeName != "bool"
+                        && value.Member.Type.SearchBehavior != null
+                            ? value.Member.Type.SearchBehavior.FilterCsTypeName
+                            : value.Member.OnlySearchCondition
+                            ? value.Member.Type.CsDomainTypeName
+                            : value.Member.Type.SearchBehavior?.FilterCsTypeName;
 
                     return typeName?.Replace("DateOnly", "Date") ?? string.Empty;
                 }
@@ -338,7 +344,9 @@ namespace Nijo.Models.ReadModel2Modules {
             IValueMemberType IInstanceValuePropertyMetadata.Type => Member.Type;
 
             public string RenderCSharpDeclaring(CodeRenderingContext context) {
-                var typeName = Member.OnlySearchCondition
+                var typeName = ShouldUseLegacySearchBehavior(Member)
+                    ? Member.Type.SearchBehavior?.FilterCsTypeName
+                    : Member.OnlySearchCondition
                     ? Member.Type.CsDomainTypeName
                     : Member.Type.SearchBehavior?.FilterCsTypeName;
                 return $$"""
@@ -349,10 +357,15 @@ namespace Nijo.Models.ReadModel2Modules {
             public string RenderTypeScriptDeclaring() {
                 if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
                     var legacyPrimitiveType = GetLegacyPrimitiveTsType(Member);
-                    var legacyTypeName = Member.OnlySearchCondition
+                    var legacyTypeName = ShouldUseLegacySearchBehavior(Member)
+                        ? Member.Type.SearchBehavior?.FilterTsTypeName is string legacyFilterTsTypeName
+                            && Regex.IsMatch(legacyFilterTsTypeName, @"\{.*from.*to.*\}")
+                            ? $"{{ from?: {legacyPrimitiveType}, to?: {legacyPrimitiveType} }}"
+                            : GetLegacyTsType(Member)
+                        : Member.OnlySearchCondition
                         ? legacyPrimitiveType
-                        : Member.Type.SearchBehavior?.FilterTsTypeName is string filterTsTypeName
-                            && Regex.IsMatch(filterTsTypeName, @"\{.*from.*to.*\}")
+                        : Member.Type.SearchBehavior?.FilterTsTypeName is string defaultFilterTsTypeName
+                            && Regex.IsMatch(defaultFilterTsTypeName, @"\{.*from.*to.*\}")
                             ? $"{{ from?: {legacyPrimitiveType}, to?: {legacyPrimitiveType} }}"
                             : GetLegacyTsType(Member);
                     return $$"""
@@ -370,7 +383,7 @@ namespace Nijo.Models.ReadModel2Modules {
             }
 
             public string RenderTsNewObjectFunctionValue() {
-                if (Member.OnlySearchCondition) {
+                if (Member.OnlySearchCondition && !ShouldUseLegacySearchBehavior(Member)) {
                     return Member.Type.TsTypeName switch {
                         "string" => "''",
                         "boolean" => "false",
@@ -382,23 +395,38 @@ namespace Nijo.Models.ReadModel2Modules {
             }
 
             private static string GetLegacyTsType(ValueMember member) {
-                return member.Type switch {
-                    ValueMemberTypes.BoolMember => "'指定なし' | 'Trueのみ' | 'Falseのみ'",
+                return GetLegacySchemaTypeName(member) switch {
+                    "bool" => "'指定なし' | 'Trueのみ' | 'Falseのみ'",
+                    "search-condition-only-bool" => "boolean",
                     _ => GetLegacyPrimitiveTsType(member),
                 };
             }
 
             private static string GetLegacyPrimitiveTsType(ValueMember member) {
-                return member.Type switch {
-                    ValueMemberTypes.IntMember => "string | null",
-                    ValueMemberTypes.DecimalMember => "string | null",
-                    ValueMemberTypes.SequenceMember => "number | null",
-                    ValueMemberTypes.YearMember => "number | null",
-                    ValueMemberTypes.YearMonthMember => "number | null",
-                    ValueMemberTypes.DateMember => "string",
-                    ValueMemberTypes.DateTimeMember => "string",
-                    _ => member.Type.TsTypeName,
+                if (member.Type is ValueMemberTypes.StaticEnumMember) {
+                    return member.Type.TsTypeName;
+                }
+
+                return GetLegacySchemaTypeName(member) switch {
+                    "int" or "numeric" or "decimal" => "string | null",
+                    "sequence" or "seq" => "number | null",
+                    "year" => "number | null",
+                    "yearmonth" or "year-month" or "date" or "datetime" => "Date | null",
+                    "bool" or "search-condition-only-bool" => "boolean",
+                    _ => "string",
                 };
+            }
+
+            private static bool ShouldUseLegacySearchBehavior(ValueMember member) {
+                return CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
+                    && member.OnlySearchCondition
+                    && member.Type.CsDomainTypeName != "bool"
+                    && member.Type.SearchBehavior != null;
+            }
+
+            private static string? GetLegacySchemaTypeName(ValueMember member) {
+                return member.XElement.Annotation<SchemaParseContext.OriginalTypeAnnotation>()?.TypeName
+                    ?? member.XElement.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
             }
         }
 

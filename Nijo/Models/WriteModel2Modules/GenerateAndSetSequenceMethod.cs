@@ -24,6 +24,23 @@ namespace Nijo.Models.WriteModel2Modules {
         /// create 時の自動補完のみを対象にし、update/delete では採番しない前提を維持する。
         /// </remarks>
         internal string RenderAppSrvMethod(CodeRenderingContext ctx) {
+            if (ctx.IsLegacyCompatibilityMode()) {
+                var legacyBody = RenderLegacyAggregate(RootAggregate, "entity").ToArray();
+                return $$"""
+                    /// <summary>
+                    /// {{RootAggregate.DisplayName}} に含まれるシーケンス項目のうち、
+                    /// 値がnullのものについて、DBにアクセスして採番を行なう。
+                    /// </summary>
+                    protected virtual void GenerateAndSetSequenceValue({{new EFCoreEntity(RootAggregate).ClassName}} entity) {
+                        var conn = DbContext.Database.GetDbConnection();
+                        using var cmd = conn.CreateCommand();
+                        cmd.CommandType = System.Data.CommandType.Text;
+
+                        {{WithIndent(legacyBody)}}
+                    }
+                    """;
+            }
+
             var body = RenderAggregate(RootAggregate, "dbEntity").ToArray();
             return $$"""
                 protected virtual Task GenerateAndSetSequenceAsync({{new EFCoreEntity(RootAggregate).ClassName}} dbEntity, {{PresentationContext.INTERFACE}} context) {
@@ -43,9 +60,48 @@ namespace Nijo.Models.WriteModel2Modules {
                     await using var cmd = conn.CreateCommand();
                     cmd.CommandType = System.Data.CommandType.Text;
 
-                    {{WithIndent(body, "    ")}}
+                    {{WithIndent(body)}}
                 }
                 """;
+        }
+
+        private IEnumerable<string> RenderLegacyAggregate(AggregateBase aggregate, string instanceName) {
+            foreach (var member in aggregate.GetMembers()) {
+                if (member is ValueMember vm && vm.Type is ValueMemberTypes.SequenceMember && !string.IsNullOrWhiteSpace(vm.SequenceName)) {
+                    yield return $$"""
+                    // {{vm.DisplayName}}
+                    """;
+                    yield return $$"""
+                    if ({{instanceName}}.{{vm.PhysicalName}} == null) {
+                        cmd.CommandText = $"SELECT \"{{vm.SequenceName}}\".nextval FROM DUAL";
+                        {{instanceName}}.{{vm.PhysicalName}} = Convert.ToInt32(cmd.ExecuteScalar())!;
+                    }
+                    """;
+
+                } else if (member is ChildAggregate child) {
+                    var childExpr = $"{instanceName}.{child.PhysicalName}";
+                    var childBody = RenderLegacyAggregate(child, childExpr).ToArray();
+                    if (childBody.Length == 0) continue;
+
+                    yield return $$"""
+                    if ({{childExpr}} != null) {
+                        {{WithIndent(childBody)}}
+                    }
+                    """;
+
+                } else if (member is ChildrenAggregate children) {
+                    var arrayExpr = $"{instanceName}.{children.PhysicalName}";
+                    var itemName = children.GetLoopVarName("item");
+                    var loopBody = RenderLegacyAggregate(children, itemName).ToArray();
+                    if (loopBody.Length == 0) continue;
+
+                    yield return $$"""
+                    foreach (var {{itemName}} in {{arrayExpr}} ?? []) {
+                        {{WithIndent(loopBody)}}
+                    }
+                    """;
+                }
+            }
         }
 
         private IEnumerable<string> RenderAggregate(AggregateBase aggregate, string instanceName) {
@@ -65,7 +121,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
                     yield return $$"""
                         if ({{childExpr}} != null) {
-                            {{WithIndent(childBody, "    ")}}
+                            {{WithIndent(childBody)}}
                         }
                         """;
 
@@ -77,7 +133,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
                     yield return $$"""
                         foreach (var {{itemName}} in {{arrayExpr}} ?? []) {
-                            {{WithIndent(loopBody, "    ")}}
+                            {{WithIndent(loopBody)}}
                         }
                         """;
                 }

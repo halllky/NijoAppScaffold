@@ -1,5 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -181,16 +182,7 @@ namespace Nijo.Models.ReadModel2Modules {
 
             public string RenderTypeScriptDeclaring() {
                 if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
-                    var legacyTypeName = Member.Type switch {
-                        ValueMemberTypes.IntMember => "string | null",
-                        ValueMemberTypes.DecimalMember => "string | null",
-                        ValueMemberTypes.SequenceMember => "number | null",
-                        ValueMemberTypes.YearMember => "number | null",
-                        ValueMemberTypes.YearMonthMember => "number | null",
-                        ValueMemberTypes.DateMember => "string",
-                        ValueMemberTypes.DateTimeMember => "string",
-                        _ => Member.Type.TsTypeName,
-                    };
+                    var legacyTypeName = GetLegacyTsType(Member);
                     return $$"""
                         {{Member.PhysicalName}}: {{legacyTypeName}} | undefined
                         """;
@@ -203,6 +195,24 @@ namespace Nijo.Models.ReadModel2Modules {
 
             public string RenderTsNewObjectFunctionValue() {
                 return "undefined";
+            }
+
+            private static string GetLegacyTsType(ValueMember member) {
+                if (member.Type is ValueMemberTypes.StaticEnumMember) {
+                    return member.Type.TsTypeName;
+                }
+
+                var legacySchemaTypeName = member.XElement.Annotation<SchemaParseContext.OriginalTypeAnnotation>()?.TypeName
+                    ?? member.XElement.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
+
+                return legacySchemaTypeName switch {
+                    "int" or "numeric" or "decimal" => "string | null",
+                    "sequence" or "seq" => "number | null",
+                    "year" => "number | null",
+                    "yearmonth" or "year-month" or "date" or "datetime" => "Date | null",
+                    "bool" or "search-condition-only-bool" => "boolean",
+                    _ => "string",
+                };
             }
         }
 

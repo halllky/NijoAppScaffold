@@ -65,9 +65,9 @@ internal class ValueObjectMember : IValueMemberType {
                 ? s
                 : BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL;
 
-            if (ctx.CodeRenderingContext.IsLegacyCompatibilityMode()
-                && searchBehavior != BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT) {
+            if (ctx.CodeRenderingContext.IsLegacyCompatibilityMode()) {
                 var escapedExpr = searchBehavior switch {
+                    BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT => $"{fullpathLegacy}.Trim().Replace(\"\\\\\", \"\\\\\\\\\").Replace(\"%\", \"\\\\%\")",
                     BasicNodeOptions.STRING_SEARCH_BEHAVIOR_FORWARD => $"{fullpathLegacy}.Trim().Replace(\"\\\\\", \"\\\\\\\\\").Replace(\"%\", \"\\\\%\") + \"%\"",
                     BasicNodeOptions.STRING_SEARCH_BEHAVIOR_BACKWARD => $"\"%\" + {fullpathLegacy}.Trim().Replace(\"\\\\\", \"\\\\\\\\\").Replace(\"%\", \"\\\\%\")",
                     _ => $"\"%\" + {fullpathLegacy}.Trim().Replace(\"\\\\\", \"\\\\\\\\\").Replace(\"%\", \"\\\\%\") + \"%\"",
@@ -90,6 +90,9 @@ internal class ValueObjectMember : IValueMemberType {
             }
 
             string GetComparison(string target) {
+                if (ctx.CodeRenderingContext.IsLegacyCompatibilityMode() && searchBehavior == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT) {
+                    return $"Microsoft.EntityFrameworkCore.EF.Functions.Like((string){target}, escaped, \"\\\")";
+                }
                 return searchBehavior switch {
                     BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT => $"{target} == trimmed",
                     BasicNodeOptions.STRING_SEARCH_BEHAVIOR_FORWARD => $"Microsoft.EntityFrameworkCore.EF.Functions.Like((string){target}, $\"{{escaped}}%\", \"\\\\\")",
@@ -101,8 +104,8 @@ internal class ValueObjectMember : IValueMemberType {
             return $$"""
                 if (!string.IsNullOrWhiteSpace({{fullpathNullable}})) {
                     var trimmed = {{fullpathNotNull}}!.Trim();
-                {{If(searchBehavior != BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT, () => $$"""
-                    var escaped = trimmed.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+                {{If(searchBehavior != BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT || ctx.CodeRenderingContext.IsLegacyCompatibilityMode(), () => $$"""
+                    var escaped = trimmed.Replace("\\", "\\\\").Replace("%", "\\%"){{If(!ctx.CodeRenderingContext.IsLegacyCompatibilityMode() || searchBehavior != BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT, () => ".Replace(\"_\", \"\\_\")")}};
                 """)}}
                 {{If(isMany, () => $$"""
                     {{query}} = {{query}}.Where(x => x.{{queryOwnerFullPath.Join("!.")}}.Any(y => {{GetComparison($"y.{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}!")}}));

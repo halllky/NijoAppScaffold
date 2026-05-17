@@ -101,23 +101,45 @@ namespace Nijo.Models.WriteModel2Modules {
 
                     var refExpr = $"{instanceName}.{refTo.PhysicalName}";
                     var messagePath = string.Join('.', GetLegacyMessagePath(refTo));
-                    var hasAnyValueExpression = string.Join("\r\n|| ", info.NonHardCodedKeyMembers.Select(valueMember => {
-                        var valueExpr = $"{refExpr}.{valueMember.PhysicalName}";
-                        return valueMember.Type.CsPrimitiveTypeName == "string"
-                            ? $"!string.IsNullOrWhiteSpace({valueExpr})"
-                            : $"{valueExpr} != null";
-                    }));
-                    var utilExpression = $"{info.RootAggregate.PhysicalName}Util.{info.Category.DisplayName.ToCSharpSafe()}";
-                    var existsExpression = info.NonHardCodedKeyMembers.Count == 0
-                        ? $"{utilExpression}.Any()"
-                        : $"{utilExpression}.Any(candidate => {string.Join("\r\n&& ", info.NonHardCodedKeyMembers.Select(valueMember => $"candidate.{valueMember.PhysicalName} == {refExpr}.{valueMember.PhysicalName}"))})";
+                    var hasAnyValueExpression = info.NonHardCodedKeyMembers.Count == 1
+                        ? RenderHasAnyValueExpression(info.NonHardCodedKeyMembers[0], useNullConditional: true)
+                        : string.Join("\r\n|| ", info.NonHardCodedKeyMembers.Select(valueMember => RenderHasAnyValueExpression(valueMember, useNullConditional: false)));
+                    var utilExpression = $"区分マスタUtil.{info.Category.DisplayName.ToCSharpSafe()}";
+                    var existsExpression = info.NonHardCodedKeyMembers.Count switch {
+                        0 => $"{utilExpression}.Any()",
+                        1 => RenderContainsExpression(info.NonHardCodedKeyMembers[0]),
+                        _ => $"{utilExpression}.Any(candidate => {string.Join("\r\n&& ", info.NonHardCodedKeyMembers.Select(valueMember => $"candidate.{valueMember.PhysicalName} == {refExpr}.{valueMember.PhysicalName}"))})",
+                    };
+                    var hasAnyValueCondition = info.NonHardCodedKeyMembers.Count == 1
+                        ? hasAnyValueExpression
+                        : $"({hasAnyValueExpression})";
+                    var notExistsExpression = info.NonHardCodedKeyMembers.Count == 1
+                        ? $"!{existsExpression}"
+                        : $"!({existsExpression})";
 
                     yield return $$"""
-                        if (({{hasAnyValueExpression}})
-                            && !({{existsExpression}})) {
+                        if ({{hasAnyValueCondition}}
+                            && {{notExistsExpression}}) {
                             e.{{messagePath}}.AddError("区分値の種類が不正です。");
                         }
                         """;
+
+                    string RenderHasAnyValueExpression(ValueMember valueMember, bool useNullConditional) {
+                        var valueExpr = useNullConditional
+                            ? $"{refExpr}?.{valueMember.PhysicalName}"
+                            : $"{refExpr}.{valueMember.PhysicalName}";
+                        return valueMember.Type.CsPrimitiveTypeName == "string"
+                            ? $"!string.IsNullOrWhiteSpace({valueExpr})"
+                            : $"{valueExpr} != null";
+                    }
+
+                    string RenderContainsExpression(ValueMember valueMember) {
+                        var valueExpr = $"{refExpr}.{valueMember.PhysicalName}";
+                        var containsArg = valueMember.Type.CsPrimitiveTypeName == "string"
+                            ? valueExpr
+                            : $"{valueExpr}.Value";
+                        return $"{utilExpression}.Contains{valueMember.PhysicalName}({containsArg})";
+                    }
 
                 } else if (member is ChildAggregate child) {
                     var childExpr = $"{instanceName}.{child.PhysicalName}?";

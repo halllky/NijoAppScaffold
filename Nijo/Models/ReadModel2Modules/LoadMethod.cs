@@ -302,7 +302,7 @@ namespace Nijo.Models.ReadModel2Modules {
                 #pragma warning restore CS8602 // null 参照の可能性があるものの逆参照です。
                 """;
 
-            static string RenderLegacyResultInitializer(IInstancePropertyOwnerMetadata owner, Variable sourceVar, bool renderNewClassName) {
+            static string RenderLegacyResultInitializer(IInstancePropertyOwnerMetadata owner, Variable sourceVar, bool renderNewClassName, bool useConstructorParentheses = false) {
                 var valueMap = sourceVar
                     .CreatePropertiesRecursively()
                     .OfType<InstanceValueProperty>()
@@ -321,7 +321,7 @@ namespace Nijo.Models.ReadModel2Modules {
                 };
 
                 return $$"""
-                    {{(renderNewClassName ? $"new {typeName}" : "new()")}} {
+                    {{(renderNewClassName ? (useConstructorParentheses ? $"new {typeName}()" : $"new {typeName}") : "new()")}} {
                     {{owner.GetMembers().SelectTextTemplate(member => $$"""
                         {{member.GetPropertyName(E_CsTs.CSharp)}} = {{WithIndent(RenderMember(member), "    ")}},
                     """)}}
@@ -334,7 +334,7 @@ namespace Nijo.Models.ReadModel2Modules {
                 string RenderMember(IInstancePropertyMetadata member) {
                     if (member is IInstanceValuePropertyMetadata value) {
                         return valueMap.TryGetValue(value.SchemaPathNode.ToMappingKey(), out var source)
-                            ? source.GetJoinedPathFromInstance(E_CsTs.CSharp, "!.")
+                            ? source.GetJoinedPathFromInstance(E_CsTs.CSharp, ".")
                             : $"{sourceVar.Name}.{value.GetPropertyName(E_CsTs.CSharp)}";
                     }
 
@@ -343,7 +343,10 @@ namespace Nijo.Models.ReadModel2Modules {
                     }
 
                     if (!structure.IsArray) {
-                        return RenderLegacyResultInitializer(structure, sourceVar, false);
+                        var structurePath = structureMap.TryGetValue(structure.SchemaPathNode.ToMappingKey(), out var structureSource)
+                            ? structureSource.GetJoinedPathFromInstance(E_CsTs.CSharp, ".")
+                            : $"{sourceVar.Name}.{structure.GetPropertyName(E_CsTs.CSharp)}";
+                        return RenderLegacyResultInitializer(structure, new Variable(structurePath, structure), false);
                     }
 
                     if (structure.SchemaPathNode is not ChildrenAggregate childrenAggregate) {
@@ -351,12 +354,13 @@ namespace Nijo.Models.ReadModel2Modules {
                     }
 
                     var depth = childrenAggregate.EnumerateAncestors().Count();
-                    var itemVarName = depth <= 1 ? "x" : $"x{depth}";
+                    var isLegacyRefSearchResult = structure.GetTypeName(E_CsTs.CSharp).Contains("RefSearchResult", StringComparison.Ordinal);
+                    var itemVarName = isLegacyRefSearchResult ? "x1" : depth <= 1 ? "x" : $"x{depth}";
                     var arrayPath = structureMap.TryGetValue(childrenAggregate.ToMappingKey(), out var arraySource)
-                        ? arraySource.GetJoinedPathFromInstance(E_CsTs.CSharp, "!.")
+                        ? arraySource.GetJoinedPathFromInstance(E_CsTs.CSharp, ".")
                         : $"{sourceVar.Name}.{structure.GetPropertyName(E_CsTs.CSharp)}";
                     return $$"""
-                        {{arrayPath}}.Select({{itemVarName}} => {{RenderLegacyResultInitializer(structure, new Variable(itemVarName, new EFCoreEntity(childrenAggregate)), true)}}).ToList()
+                        {{arrayPath}}.Select({{itemVarName}} => {{RenderLegacyResultInitializer(structure, new Variable(itemVarName, new EFCoreEntity(childrenAggregate)), true, useConstructorParentheses: isLegacyRefSearchResult)}}).ToList()
                         """;
                 }
             }
@@ -390,8 +394,9 @@ namespace Nijo.Models.ReadModel2Modules {
                     m.GetLiteral() + SearchCondition.ASC_SUFFIX,
                     m.GetLiteral() + SearchCondition.DESC_SUFFIX,
                     m.GetSearchResultPath(),
-                    m.Member.Type.CsPrimitiveTypeName == "string"))
+                    m.Member.Type.UseStringSortInSearch(m.Member, context)))
                 .ToArray();
+            var legacyUnsupportedFilterMembers = Array.Empty<SearchCondition.FilterableMember>();
             var keys = _aggregate.GetKeyVMs().ToArray();
             var defaultOrderBy = keys.SelectTextTemplate((vm, i) => {
                 var path = string.Join("!.", queryItemMembers[vm.ToMappingKey()].GetPathFromInstance().Select(p => p.Metadata.GetPropertyName(E_CsTs.CSharp)));
@@ -541,7 +546,7 @@ namespace Nijo.Models.ReadModel2Modules {
                 #pragma warning disable CS8603 // Null 参照戻り値である可能性があります。
                 #pragma warning disable CS8604 // Null 参照引数の可能性があります。
 
-            {{filterMembers.SelectTextTemplate(member => $$"""
+            {{filterMembers.Concat(legacyUnsupportedFilterMembers).Distinct().SelectTextTemplate(member => $$"""
                 // フィルタリング: {{member.Member.DisplayName}}
                 {{WithIndent(RenderFilter(member), "    ")}}
 
@@ -583,8 +588,7 @@ namespace Nijo.Models.ReadModel2Modules {
             """;
 
             string RenderFilter(SearchCondition.FilterableMember member) {
-                if (member.Member.Type.SearchBehavior == null
-                    || (member.Member.OnlySearchCondition && member.Member.Type.CsDomainTypeName == "bool")) {
+                if (member.Member.OnlySearchCondition && member.Member.Type.CsDomainTypeName == "bool") {
                     return "// この項目のWHERE句の処理は Create...QuerySource メソッドで個別に実装してください。";
                 }
 
@@ -593,7 +597,8 @@ namespace Nijo.Models.ReadModel2Modules {
                     SearchCondition = CreateSearchConditionProperty(member),
                     CodeRenderingContext = context,
                 };
-                return member.Member.Type.SearchBehavior!.RenderFiltering(ctx);
+                return member.Member.Type.RenderFiltering(ctx)
+                    ?? "// この項目のWHERE句の処理は Create...QuerySource メソッドで個別に実装してください。";
             }
 
             InstanceValueProperty CreateQueryProperty(SearchCondition.FilterableMember member) {

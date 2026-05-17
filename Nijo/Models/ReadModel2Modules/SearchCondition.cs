@@ -133,8 +133,13 @@ namespace Nijo.Models.ReadModel2Modules {
                     foreach (var member in aggregate.GetMembers().OfType<ValueMember>()) {
                         if (member.Owner != aggregate) continue;
                         var isLegacySearchOnlyBool = member.OnlySearchCondition && member.Type.CsDomainTypeName == "bool";
-                        if (member.Type.SearchBehavior == null && !isLegacySearchOnlyBool) continue;
-                        if (member.OnlySearchCondition && !isLegacySearchOnlyBool) continue;
+                        var isLegacyQueryModelSearchOnly = CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
+                            && aggregate.GetRoot().Model is Models.QueryModel
+                            && member.OnlySearchCondition;
+                        if (member.Type.SearchBehavior == null
+                            && !isLegacySearchOnlyBool
+                            && !IsLegacyByteArraySearchMember(member)) continue;
+                        if (member.OnlySearchCondition && !isLegacySearchOnlyBool && !isLegacyQueryModelSearchOnly) continue;
                         if (member.IsHardCodedPrimaryKey) continue;
                         yield return new FilterableMember(member, [.. path, member.PhysicalName]);
                     }
@@ -166,8 +171,13 @@ namespace Nijo.Models.ReadModel2Modules {
                         foreach (var member in members) {
                             if (member is IInstanceValuePropertyMetadata value && value.SchemaPathNode is ValueMember vm) {
                                 var isLegacySearchOnlyBool = vm.OnlySearchCondition && vm.Type.CsDomainTypeName == "bool";
-                                if (vm.Type.SearchBehavior == null && !isLegacySearchOnlyBool) continue;
-                                if (vm.OnlySearchCondition && !isLegacySearchOnlyBool) continue;
+                                var isLegacyQueryModelSearchOnly = CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
+                                    && vm.Owner.GetRoot().Model is Models.QueryModel
+                                    && vm.OnlySearchCondition;
+                                if (vm.Type.SearchBehavior == null
+                                    && !isLegacySearchOnlyBool
+                                    && !IsLegacyByteArraySearchMember(vm)) continue;
+                                if (vm.OnlySearchCondition && !isLegacySearchOnlyBool && !isLegacyQueryModelSearchOnly) continue;
                                 if (vm.IsHardCodedPrimaryKey) continue;
                                 yield return new FilterableMember(vm, [.. path, member.GetPropertyName(E_CsTs.CSharp)]);
                                 continue;
@@ -334,9 +344,12 @@ namespace Nijo.Models.ReadModel2Modules {
                         };
 
                         static string GetLegacyCsTypeName(FilterValueMember value) {
-                            var typeName = value.Member.OnlySearchCondition
+                            var typeName = ShouldUseLegacySearchBehavior(value.Member)
+                                ? value.Member.Type.SearchBehavior?.FilterCsTypeName
+                                : value.Member.OnlySearchCondition
                                 ? value.Member.Type.CsDomainTypeName
-                                : value.Member.Type.SearchBehavior?.FilterCsTypeName;
+                                : value.Member.Type.SearchBehavior?.FilterCsTypeName
+                                ?? (IsLegacyByteArraySearchMember(value.Member) ? value.Member.Type.CsDomainTypeName : null);
 
                             return typeName?.Replace("DateOnly", "Date") ?? string.Empty;
                         }
@@ -455,13 +468,13 @@ namespace Nijo.Models.ReadModel2Modules {
                 return EnumerateRecursively(_entryAggregate, []);
 
                 static IEnumerable<SortableMember> EnumerateRecursively(AggregateBase aggregate, IReadOnlyList<string> path) {
-                    foreach (var member in aggregate.GetMembers()) {
-                        if (member is ValueMember vm) {
-                            if (vm.OnlySearchCondition) continue;
-                            if (vm.IsHardCodedPrimaryKey) continue;
-                            if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode() && vm.IsHidden) continue;
-                            yield return new SortableMember(vm, [.. path, vm.PhysicalName]);
-                        }
+                    foreach (var vm in aggregate.GetMembers().OfType<ValueMember>()) {
+                        if (vm.OnlySearchCondition && !ShouldUseLegacySortMember(vm)) continue;
+                        if (vm.IsHardCodedPrimaryKey) continue;
+                        if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
+                            && vm.IsHidden
+                            && !ShouldUseLegacySortMember(vm)) continue;
+                        yield return new SortableMember(vm, [.. path, vm.PhysicalName]);
                     }
 
                     foreach (var member in aggregate.GetMembers()) {
@@ -530,7 +543,9 @@ namespace Nijo.Models.ReadModel2Modules {
             internal IEnumerable<IFilterMember> GetOwnMembers() {
                 foreach (var member in _aggregate.GetMembers()) {
                     if (member is not ValueMember vm) continue;
-                    if (vm.Type.SearchBehavior == null && !vm.OnlySearchCondition) continue;
+                    if (vm.Type.SearchBehavior == null
+                        && !vm.OnlySearchCondition
+                        && !IsLegacyByteArraySearchMember(vm)) continue;
                     if (vm.IsHardCodedPrimaryKey) continue;
                     yield return new FilterValueMember(vm);
                 }
@@ -613,7 +628,9 @@ namespace Nijo.Models.ReadModel2Modules {
 
         internal class FilterValueMember : IFilterMember, IInstanceValuePropertyMetadata {
             internal FilterValueMember(ValueMember member) {
-                if (member.Type.SearchBehavior == null && !member.OnlySearchCondition) throw new ArgumentException();
+                if (member.Type.SearchBehavior == null
+                    && !member.OnlySearchCondition
+                    && !IsLegacyByteArraySearchMember(member)) throw new ArgumentException();
                 Member = member;
             }
 
@@ -622,9 +639,12 @@ namespace Nijo.Models.ReadModel2Modules {
             internal ValueMemberSearchBehavior? SearchBehavior => Member.Type.SearchBehavior;
 
             string IFilterMember.RenderCSharpDeclaring(CodeRenderingContext ctx) {
-                var typeName = Member.OnlySearchCondition
+                var typeName = ShouldUseLegacySearchBehavior(Member)
+                    ? Member.Type.SearchBehavior?.FilterCsTypeName
+                    : Member.OnlySearchCondition
                     ? Member.Type.CsDomainTypeName
-                    : Member.Type.SearchBehavior?.FilterCsTypeName;
+                    : Member.Type.SearchBehavior?.FilterCsTypeName
+                    ?? (IsLegacyByteArraySearchMember(Member) ? Member.Type.CsDomainTypeName : null);
                 return $$"""
                     {{NijoAttr.RenderAttributeValues(ctx, Member)}}
                     public {{typeName}}? {{Member.PhysicalName}} { get; set; }
@@ -633,10 +653,15 @@ namespace Nijo.Models.ReadModel2Modules {
             string IFilterMember.RenderTypeScriptDeclaring() {
                 if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
                     var legacyPrimitiveType = GetLegacySearchConditionPrimitiveTsType(Member);
-                    var legacyTypeName = Member.OnlySearchCondition
+                    var legacyTypeName = ShouldUseLegacySearchBehavior(Member)
+                        ? SearchBehavior?.FilterTsTypeName is string legacyFilterTsTypeName
+                            && Regex.IsMatch(legacyFilterTsTypeName, @"\{.*from.*to.*\}")
+                            ? $"{{ from?: {legacyPrimitiveType}, to?: {legacyPrimitiveType} }}"
+                            : GetLegacySearchConditionTsType(Member)
+                        : Member.OnlySearchCondition
                         ? legacyPrimitiveType
-                        : SearchBehavior?.FilterTsTypeName is string filterTsTypeName
-                            && Regex.IsMatch(filterTsTypeName, @"\{.*from.*to.*\}")
+                        : SearchBehavior?.FilterTsTypeName is string defaultFilterTsTypeName
+                            && Regex.IsMatch(defaultFilterTsTypeName, @"\{.*from.*to.*\}")
                             ? $"{{ from?: {legacyPrimitiveType}, to?: {legacyPrimitiveType} }}"
                             : GetLegacySearchConditionTsType(Member);
                     return $$"""
@@ -644,7 +669,9 @@ namespace Nijo.Models.ReadModel2Modules {
                         """;
                 }
 
-                var typeName = Member.OnlySearchCondition
+                var typeName = ShouldUseLegacySearchBehavior(Member)
+                    ? Member.Type.SearchBehavior?.FilterTsTypeName
+                    : Member.OnlySearchCondition
                     ? Member.Type.TsTypeName
                     : Member.Type.SearchBehavior?.FilterTsTypeName;
                 var withNull = typeName?.StartsWith("{") == true ? string.Empty : " | null";
@@ -653,7 +680,7 @@ namespace Nijo.Models.ReadModel2Modules {
                     """;
             }
             string IFilterMember.RenderTsNewObjectFunctionValue() {
-                if (Member.OnlySearchCondition) {
+                if (Member.OnlySearchCondition && !ShouldUseLegacySearchBehavior(Member)) {
                     return Member.Type.TsTypeName switch {
                         "string" => "''",
                         "boolean" => "false",
@@ -669,22 +696,25 @@ namespace Nijo.Models.ReadModel2Modules {
             IValueMemberType IInstanceValuePropertyMetadata.Type => Member.Type;
 
             private static string GetLegacySearchConditionTsType(ValueMember member) {
-                return member.Type.SchemaTypeName switch {
+                return GetLegacySchemaTypeName(member) switch {
                     "bool" => "'指定なし' | 'Trueのみ' | 'Falseのみ'",
+                    "search-condition-only-bool" => "boolean",
                     _ => GetLegacySearchConditionPrimitiveTsType(member),
                 };
             }
 
             private static string GetLegacySearchConditionPrimitiveTsType(ValueMember member) {
-                return member.Type switch {
-                    ValueMemberTypes.IntMember => "string | null",
-                    ValueMemberTypes.DecimalMember => "string | null",
-                    ValueMemberTypes.SequenceMember => "number | null",
-                    ValueMemberTypes.YearMember => "number | null",
-                    ValueMemberTypes.YearMonthMember => "number | null",
-                    ValueMemberTypes.DateMember => "string",
-                    ValueMemberTypes.DateTimeMember => "string",
-                    _ => member.Type.TsTypeName,
+                if (member.Type is ValueMemberTypes.StaticEnumMember) {
+                    return member.Type.TsTypeName;
+                }
+
+                return GetLegacySchemaTypeName(member) switch {
+                    "int" or "numeric" or "decimal" => "string | null",
+                    "sequence" or "seq" => "number | null",
+                    "year" => "number | null",
+                    "yearmonth" or "year-month" or "date" or "datetime" => "Date | null",
+                    "bool" or "search-condition-only-bool" => "boolean",
+                    _ => "string",
                 };
             }
         }
@@ -804,6 +834,29 @@ namespace Nijo.Models.ReadModel2Modules {
 
             internal ValueMember Member { get; }
             internal IReadOnlyList<string> Path { get; }
+        }
+
+        private static bool IsLegacyByteArraySearchMember(ValueMember member) {
+            return CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
+                && (GetLegacySchemaTypeName(member) == "bytearray" || member.Type.CsDomainTypeName == "byte[]");
+        }
+
+        private static bool ShouldUseLegacySearchBehavior(ValueMember member) {
+            return CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
+                && member.OnlySearchCondition
+                && member.Type.CsDomainTypeName != "bool"
+                && member.Type.SearchBehavior != null;
+        }
+
+        private static bool ShouldUseLegacySortMember(ValueMember member) {
+            return CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()
+                && member.OnlySearchCondition
+                && member.Type.CsDomainTypeName == "bool";
+        }
+
+        private static string? GetLegacySchemaTypeName(ValueMember member) {
+            return member.XElement.Annotation<SchemaParsing.SchemaParseContext.OriginalTypeAnnotation>()?.TypeName
+                ?? member.XElement.Attribute(SchemaParsing.SchemaParseContext.ATTR_NODE_TYPE)?.Value;
         }
     }
 }

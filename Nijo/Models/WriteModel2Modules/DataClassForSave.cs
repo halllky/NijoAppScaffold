@@ -1,6 +1,7 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
+using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using Nijo.ValueMemberTypes;
 using System;
@@ -431,6 +432,7 @@ namespace Nijo.Models.WriteModel2Modules {
             var refAssignmentGroups = aggregate.GetMembers()
                 .OfType<RefToMember>()
                 .Select(member => RenderRefToDbEntityAssignmentsLegacy(member, RenderMemberAccess(instanceName, member.PhysicalName, nullConditional)).ToArray())
+                .Reverse()
                 .ToArray();
             var refAssignmentCount = refAssignmentGroups.Select(group => group.Length).DefaultIfEmpty(0).Max();
 
@@ -761,12 +763,37 @@ namespace Nijo.Models.WriteModel2Modules {
         private string GetLegacyMemberTypeNameTypeScript(IAggregateMember member) {
             return member switch {
                 ValueMember vm => ShouldUseNullInLegacyTypeScript(vm)
-                    ? $"{vm.Type.TsTypeName} | null | undefined"
-                    : $"{vm.Type.TsTypeName} | undefined",
+                    ? $"{GetLegacyValueTypeNameTypeScript(vm)} | null | undefined"
+                    : $"{GetLegacyValueTypeNameTypeScript(vm)} | undefined",
                 RefToMember refTo => $"{new DataClassForRefTargetKeys(refTo.RefTo, refTo.RefTo).TsTypeName} | undefined",
                 ChildAggregate child => new DataClassForSave(child, Type).TsTypeName,
                 ChildrenAggregate children => $"{new DataClassForSave(children, Type).TsTypeName}[]",
                 _ => throw new InvalidOperationException($"未対応のメンバー型: {member.GetType().Name}"),
+            };
+        }
+
+        private static string GetLegacyValueTypeNameTypeScript(ValueMember member) {
+            if (member.Type is StaticEnumMember staticEnum) {
+                var enumRoot = CodeRenderingContext.CurrentContext?.Schema.GetRootAggregates()
+                    .SingleOrDefault(root => root.PhysicalName == staticEnum.Definition.CsEnumName && root.Model is Models.StaticEnumModel2);
+                if (enumRoot != null) {
+                    var staticEnumDef = new StaticEnumModelModules.StaticEnumDef(staticEnum.Definition, enumRoot);
+                    return staticEnumDef.GetValues()
+                        .Select(value => $"'{value.DisplayName.Replace("'", "\\'")}'")
+                        .Join(" | ");
+                }
+
+                return "string";
+            }
+
+            return GetLegacySchemaTypeName(member) switch {
+                "file" => "Util.FileAttachmentMetadata",
+                "int" or "numeric" or "decimal" => "string",
+                "sequence" or "seq" => "number",
+                "year" => "number",
+                "yearmonth" or "year-month" or "date" or "datetime" => "Date",
+                "bool" or "search-condition-only-bool" => "boolean",
+                _ => "string",
             };
         }
 
@@ -920,7 +947,16 @@ namespace Nijo.Models.WriteModel2Modules {
         }
 
         private static string GetLegacyValueTypeNameCSharp(ValueMember member) {
+            if (GetLegacySchemaTypeName(member) == "file") {
+                return "List<FileAttachmentMetadata>";
+            }
+
             return member.Type.CsDomainTypeName.Replace("DateOnly", "Date", StringComparison.Ordinal);
+        }
+
+        private static string? GetLegacySchemaTypeName(ValueMember member) {
+            return member.XElement.Annotation<SchemaParseContext.OriginalTypeAnnotation>()?.TypeName
+                ?? member.XElement.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
         }
 
         private string GetLegacyReadOnlyMemberTypeNameCSharp(IAggregateMember member) {

@@ -12,7 +12,7 @@ namespace Nijo.ImmutableSchema {
     /// モデルの属性の種類。
     /// 単語型、日付型、整数型、…など
     /// </summary>
-    public interface IValueMemberType {
+    public partial interface IValueMemberType {
         #region Ui
         /// <summary>
         /// UI上の表示名
@@ -120,6 +120,25 @@ namespace Nijo.ImmutableSchema {
         public required InstanceValueProperty SearchCondition { get; init; }
         /// <inheritdoc cref="CodeGenerating.CodeRenderingContext"/>
         public required CodeRenderingContext CodeRenderingContext { get; init; }
+    }
+}
+
+namespace Nijo.ImmutableSchema {
+    public partial interface IValueMemberType {
+        /// <summary>
+        /// 型自身に検索時のWHERE句レンダリングを委譲する。
+        /// 既定では <see cref="SearchBehavior"/> の設定を使う。
+        /// </summary>
+        string? RenderFiltering(FilterStatementRenderingContext context) {
+            return SearchBehavior?.RenderFiltering(context);
+        }
+
+        /// <summary>
+        /// 一覧検索のソートで文字列照合を使うべき型かどうかを返す。
+        /// </summary>
+        bool UseStringSortInSearch(ValueMember member, CodeRenderingContext context) {
+            return CsPrimitiveTypeName == "string";
+        }
     }
 }
 

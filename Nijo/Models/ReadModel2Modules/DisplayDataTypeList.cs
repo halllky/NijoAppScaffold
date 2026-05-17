@@ -334,7 +334,7 @@ namespace Nijo.Models.ReadModel2Modules {
                   [K in ReadModelType]: () => UseBatchUpdateReturn<K>
                 } = {
                 {{items.SelectTextTemplate(item => $$"""
-                  '{{item.DisplayData.Aggregate.PhysicalName}}': {{item.DisplayData.Aggregate.PhysicalName}}.useBatchUpdate{{item.DisplayData.Aggregate.PhysicalName}},
+                  '{{item.DisplayData.Aggregate.PhysicalName}}': {{GetLegacyBatchUpdateHook(item)}},
                 """)}}
                 }
                 //#endregion 一括更新フック
@@ -352,6 +352,15 @@ namespace Nijo.Models.ReadModel2Modules {
                 }
                 //#endregion Excel出力フック
                 """;
+
+              static string GetLegacyBatchUpdateHook(Item item) {
+                var root = item.DisplayData.Aggregate.GetRoot();
+                var isReadonlyReadModel = root.Model is Models.ReadModel2
+                  && root.XElement.Attribute(SchemaParsing.BasicNodeOptions.Readonly.AttributeName) != null;
+                return isReadonlyReadModel
+                  ? "useNoopBatchUpdate"
+                  : $"{item.DisplayData.Aggregate.PhysicalName}.useBatchUpdate{item.DisplayData.Aggregate.PhysicalName}";
+              }
         }
 
         private static string Render(Item[] items, CodeRenderingContext ctx) {

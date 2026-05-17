@@ -184,7 +184,7 @@ namespace Nijo.Models.ReadModel2Modules {
                 return member switch {
                     EditablePresentationObjectValueMember value => $$"""
                         /// <summary>{{value.Member.DisplayName}}</summary>
-                        public virtual {{value.Member.Type.CsDomainTypeName.Replace("DateOnly", "Date")}}? {{value.Member.PhysicalName}} { get; set; }
+                        public virtual {{GetLegacyValueTypeName(value.Member)}}? {{value.Member.PhysicalName}} { get; set; }
                         """,
                     EditablePresentationObjectRefMember reference => $$"""
                         /// <summary>{{reference.Member.DisplayName}}</summary>
@@ -192,6 +192,19 @@ namespace Nijo.Models.ReadModel2Modules {
                         """,
                     _ => throw new InvalidOperationException(),
                 };
+
+                static string GetLegacyValueTypeName(ValueMember member) {
+                    if (GetLegacySchemaTypeName(member) == "file") {
+                        return "List<FileAttachmentMetadata>";
+                    }
+
+                    return member.Type.CsDomainTypeName.Replace("DateOnly", "Date");
+                }
+
+                static string? GetLegacySchemaTypeName(ValueMember member) {
+                    return member.XElement.Annotation<SchemaParseContext.OriginalTypeAnnotation>()?.TypeName
+                        ?? member.XElement.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
+                }
             }
 
             static string RenderLegacyChildMember(EditablePresentationObject.EditablePresentationObjectDescendant descendant) {
@@ -392,20 +405,25 @@ namespace Nijo.Models.ReadModel2Modules {
                 """;
         }
 
+        private static string? GetLegacySchemaTypeName(ValueMember member) {
+            return member.XElement.Annotation<SchemaParseContext.OriginalTypeAnnotation>()?.TypeName
+                ?? member.XElement.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
+        }
+
         private static string GetLegacyTsType(IEditablePresentationObjectValueOrRefMember member) {
             return member switch {
-                EditablePresentationObjectValueMember value => value.Member.Type.SchemaTypeName switch {
+                EditablePresentationObjectValueMember value when value.Member.Type is ValueMemberTypes.StaticEnumMember => value.Member.Type.TsTypeName,
+                EditablePresentationObjectValueMember value => GetLegacySchemaTypeName(value.Member) switch {
                     "int" => "string | null",
                     "numeric" => "string | null",
                     "decimal" => "string | null",
-                    "sequence" => "number | null",
+                    "sequence" or "seq" => "number | null",
                     "year" => "number | null",
-                    "yearmonth" => "number | null",
-                    "date" => "string",
-                    "datetime" => "string",
+                    "yearmonth" or "year-month" => "Date | null",
+                    "date" or "datetime" => "Date | null",
                     "bool" => "boolean",
                     "search-condition-only-bool" => "boolean",
-                    _ => value.Member.Type.TsTypeName,
+                    _ => "string",
                 },
                 EditablePresentationObjectRefMember reference => reference.RefEntry.TsTypeName,
                 _ => throw new InvalidOperationException(),
@@ -624,6 +642,11 @@ namespace Nijo.Models.ReadModel2Modules {
                 """;
         }
         internal string RenderDeepEqualFunctionRecursively(CodeRenderingContext ctx) {
+                        var descendants = GetChildMembers()
+                .Select(child => new DisplayData(child.Aggregate).RenderDeepEqualFunctionRecursively(ctx))
+                                .Where(source => !string.IsNullOrWhiteSpace(source))
+                                .ToArray();
+
             if (ctx.IsLegacyCompatibilityMode()) {
                 return $$"""
                     /** 2つの{{Aggregate.DisplayName}}オブジェクトの値を比較し、一致しているかを返します。 */
@@ -632,6 +655,9 @@ namespace Nijo.Models.ReadModel2Modules {
                       if (a.{{WILL_BE_DELETED_TS}} !== b.{{WILL_BE_DELETED_TS}}) return false
                       return true
                     }
+                                        {{descendants.SelectTextTemplate(source => $$"""
+                                        {{source}}
+                                        """)}}
                     """;
             }
 
@@ -642,6 +668,9 @@ namespace Nijo.Models.ReadModel2Modules {
                   if (a.{{WILL_BE_DELETED_TS}} !== b.{{WILL_BE_DELETED_TS}}) return false
                   return true
                 }
+                                {{descendants.SelectTextTemplate(source => $$"""
+                                {{source}}
+                                """)}}
                 """;
         }
         internal string RenderCheckChangesFunction(CodeRenderingContext ctx) {
@@ -856,8 +885,8 @@ namespace Nijo.Models.ReadModel2Modules {
                 .Select(member => member switch {
                     ValueMember valueMember when !valueMember.OnlySearchCondition || valueMember.Type.CsDomainTypeName == "bool" => RenderLegacyValueMember(valueMember, left, right),
                     RefToMember refToMember => RenderLegacyRefMember(refToMember, left, right),
-                    ChildAggregate childAggregate => RenderLegacyChildAggregate(childAggregate, left, right),
-                    ChildrenAggregate childrenAggregate => RenderLegacyChildrenAggregate(childrenAggregate, left, right),
+                    ChildAggregate childAggregate when aggregate.GetRoot().Model is not Models.ReadModel2 => RenderLegacyChildAggregate(childAggregate, left, right),
+                    ChildrenAggregate childrenAggregate when aggregate.GetRoot().Model is not Models.ReadModel2 => RenderLegacyChildrenAggregate(childrenAggregate, left, right),
                     _ => string.Empty,
                 })
                 .Where(rendered => rendered != string.Empty));
@@ -867,7 +896,7 @@ namespace Nijo.Models.ReadModel2Modules {
                 var rightValue = $"{right}.{VALUES_TS}?.{valueMember.PhysicalName}";
 
                 return valueMember.Type switch {
-                    ValueMemberTypes.DecimalMember or ValueMemberTypes.IntMember or ValueMemberTypes.SequenceMember => $$"""
+                    ValueMemberTypes.DecimalMember or ValueMemberTypes.IntMember => $$"""
                         if (!Util.strictDecimalEquals({{leftValue}},{{rightValue}})) return false
                         """,
                     ValueMemberTypes.DateMember or ValueMemberTypes.DateTimeMember or ValueMemberTypes.YearMember or ValueMemberTypes.YearMonthMember => $$"""
@@ -998,9 +1027,9 @@ namespace Nijo.Models.ReadModel2Modules {
         }
 
         private static string GetUiConstraintTypeName(ValueMember valueMember) {
-            return valueMember.Type.CsDomainTypeName switch {
-                "string" => "AutoGeneratedUtil.StringMemberConstraint",
-                "int" or "decimal" => "AutoGeneratedUtil.NumberMemberConstraint",
+            return valueMember.Type switch {
+                ValueMemberTypes.Word or ValueMemberTypes.Description or ValueMemberTypes.ValueObjectMember => "AutoGeneratedUtil.StringMemberConstraint",
+                ValueMemberTypes.IntMember or ValueMemberTypes.DecimalMember or ValueMemberTypes.SequenceMember => "AutoGeneratedUtil.NumberMemberConstraint",
                 _ => "AutoGeneratedUtil.MemberConstraintBase",
             };
         }

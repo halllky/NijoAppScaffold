@@ -46,14 +46,14 @@ namespace Nijo.Models.WriteModel2Modules {
                 }
             }
 
-            foreach (var refTo in Aggregate.GetMembers().OfType<RefToMember>()) {
-                foreach (var refKey in EnumerateRefKeyMembers(refTo)) {
-                    yield return refKey;
+            foreach (var member in Aggregate.GetMembers()) {
+                if (member is ValueMember vm) {
+                    yield return new LegacyOwnColumnMember(vm);
+                } else if (member is RefToMember refTo) {
+                    foreach (var refKey in EnumerateRefKeyMembers(refTo)) {
+                        yield return refKey;
+                    }
                 }
-            }
-
-            foreach (var vm in Aggregate.GetMembers().OfType<ValueMember>()) {
-                yield return new LegacyOwnColumnMember(vm);
             }
         }
 
@@ -110,6 +110,7 @@ namespace Nijo.Models.WriteModel2Modules {
             var refKeyGroups = Aggregate.GetMembers()
                 .OfType<RefToMember>()
                 .Select(refTo => EnumerateRefKeyMembers(refTo).ToArray())
+                .Reverse()
                 .ToArray();
             var refKeyCount = refKeyGroups.Select(group => group.Length).DefaultIfEmpty(0).Max();
 
@@ -255,10 +256,11 @@ namespace Nijo.Models.WriteModel2Modules {
                 .OrderByDescending(col => col.IsKey)
                 .ToArray();
             var keyColumns = columns.Where(col => col.IsKey).ToArray();
-            var sequences = Aggregate
-                .GetMembers()
+            var sequences = GetColumnsForOnModelCreating()
+                .Select(col => col.Member)
                 .OfType<ValueMember>()
                 .Where(vm => vm.Type is ValueMemberTypes.SequenceMember && !string.IsNullOrWhiteSpace(vm.SequenceName))
+                .Distinct()
                 .ToArray();
 
             var columnOrder = 0;
@@ -423,7 +425,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
         private static string GetConstraintToken(AggregateBase aggregate) {
             var raw = aggregate.XElement.Attribute(SchemaParseContext.ATTR_UNIQUE_ID)?.Value;
-            if (string.IsNullOrWhiteSpace(raw)) {
+            if (string.IsNullOrWhiteSpace(raw) || raw.StartsWith("compat-glt-", StringComparison.Ordinal)) {
                 raw = GetLegacyNodeIdPath(aggregate);
             }
 
@@ -431,7 +433,7 @@ namespace Nijo.Models.WriteModel2Modules {
         }
 
         private static string GetLegacyNodeIdPath(AggregateBase aggregate) {
-            return string.Concat(aggregate.EnumerateThisAndAncestors().Select(x => $"/{x.PhysicalName}"));
+            return string.Concat(aggregate.EnumerateThisAndAncestors().Select(x => $"/{x.XElement.Name.LocalName}"));
         }
 
         private abstract class LegacyNavigationMember : IInstanceStructurePropertyMetadata {
@@ -501,7 +503,16 @@ namespace Nijo.Models.WriteModel2Modules {
         }
 
         private static string GetLegacyColumnCsType(ValueMember member) {
+            if (GetLegacySchemaTypeName(member) == "file") {
+                return "List<FileAttachmentMetadata>";
+            }
+
             return member.Type.CsDomainTypeName.Replace("DateOnly", "Date", StringComparison.Ordinal);
+        }
+
+        private static string? GetLegacySchemaTypeName(ValueMember member) {
+            return member.XElement.Annotation<SchemaParseContext.OriginalTypeAnnotation>()?.TypeName
+                ?? member.XElement.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
         }
 
         private sealed class LegacyOwnColumnMember : Nijo.Parts.CSharp.EFCoreEntity.EFCoreEntityColumn {

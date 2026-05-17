@@ -37,17 +37,19 @@ internal static class GenericLookupTableFeature {
 
         if (categories.Length == 0) return;
 
-        // カテゴリごとのビューエンティティを生成
-        foreach (var category in categories) {
-            var viewEntity = new GenericLookupViewEntity(rootAggregate, category);
+        if (!IsLegacyDynamicEnumUtility(rootAggregate, ctx)) {
+            // カテゴリごとのビューエンティティを生成
+            foreach (var category in categories) {
+                var viewEntity = new GenericLookupViewEntity(rootAggregate, category);
 
-            // C#クラス定義 + DbContext partial クラス内のOnModelCreatingメソッド
-            aggregateFile.AddCSharpClass(
-                GenericLookupViewEntity.RenderClassDeclaring(viewEntity, ctx),
-                $"Class_EFCoreEntity_{category.Name}");
+                // C#クラス定義 + DbContext partial クラス内のOnModelCreatingメソッド
+                aggregateFile.AddCSharpClass(
+                    GenericLookupViewEntity.RenderClassDeclaring(viewEntity, ctx),
+                    $"Class_EFCoreEntity_{category.Name}");
 
-            // DbContextへの DbSet 登録
-            ctx.Use<DbContextClass>().AddEntities([viewEntity]);
+                // DbContextへの DbSet 登録
+                ctx.Use<DbContextClass>().AddEntities([viewEntity]);
+            }
         }
 
         // ○○Util クラスをアプリケーションサービスに追加

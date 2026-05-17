@@ -415,7 +415,7 @@ namespace Nijo.Models.QueryModelModules {
                     };
                     return $$"""
                         // 絞り込み: {{prop.Metadata.DisplayName}}
-                        {{prop.Metadata.Type.SearchBehavior!.RenderFiltering(context)}}
+                        {{prop.Metadata.Type.RenderFiltering(context)}}
 
                         """;
                 }

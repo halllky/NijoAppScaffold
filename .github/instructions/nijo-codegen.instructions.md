@@ -9,11 +9,11 @@ description: "Nijo の全コード生成で raw string, SelectTextTemplate, If, 
 
 - コードブロックの反復は `SelectTextTemplate`、条件分岐は `If` / `ElseIf` / `Else` を raw string の補間式として使うこと。詳細な使い方は [Nijo/CodeGenerating/TemplateTextHelper.cs](../../Nijo/CodeGenerating/TemplateTextHelper.cs) の XML コメントを参照。
 - インデント
-  - Render系メソッドが return するコードブロックはインデント 0 で組み立てること。
+  - Render系メソッドが return するコードブロック自体にそのブロックの外側のインデントを含めないこと。つまり raw string の閉じ側の `"""` と同じ列位置を左端として扱う。
     インデントの制御はそのRender系メソッドを呼ぶ側の責務とする。
   - インデント制御は `WithIndent` を使うこと。2 引数版と 1 引数版があるが、1 引数版を優先すること。詳細な使い方は [Nijo/CodeGenerating/TemplateTextHelper.cs](../../Nijo/CodeGenerating/TemplateTextHelper.cs) の XML コメントを参照。
-  - `SelectTextTemplate` / `If` / `ElseIf` / `Else` はそれを含む raw string の左端から開始すること。
-  - `WithIndent` はインデントしたい列位置から開始すること。
+  - `SelectTextTemplate` / `If` / `ElseIf` / `Else` はそれを含む raw string の閉じ側の `"""` と同じ列位置から開始すること。
+  - `WithIndent` は閉じ側の `"""` と同じ列位置を基準として、挟みたいインデント分だけ右にずらした位置から開始すること。
   - TypeScript を生成する raw string の編集は `apply_patch` で行わず、 `sed` などの行単位の置換コマンドで修正すること。 `apply_patch` に不具合があり、C#の4スペースインデントとTypeScriptの2スペースインデントが混在する箇所で、インデントを崩す誤動作が発生するため。
 - 禁止
   - 生成コードは raw string を起点に記述すること。崩れたからといって `string.Join`、後置換、後連結、`Trim` 逃げしてはならない。

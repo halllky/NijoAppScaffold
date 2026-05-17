@@ -48,6 +48,18 @@ internal class ByteArrayMember : IValueMemberType {
 
     ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => null; // バイト配列に対する検索は提供しない
 
+    string? IValueMemberType.RenderFiltering(FilterStatementRenderingContext context) {
+        if (!context.CodeRenderingContext.IsLegacyCompatibilityMode()) {
+            return null;
+        }
+
+        var displayName = context.Query.Metadata.SchemaPathNode is ValueMember member
+            ? member.DisplayName
+            : context.Query.Metadata.GetPropertyName(E_CsTs.CSharp);
+
+        return $"/* Byte配列 '{displayName}' に対する検索条件の指定はサポートされていません。 */";
+    }
+
     void IValueMemberType.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
         // 特になし
     }

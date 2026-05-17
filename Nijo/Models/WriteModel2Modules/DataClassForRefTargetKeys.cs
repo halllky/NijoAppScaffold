@@ -1,6 +1,7 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Models.DataModelModules;
+using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -314,9 +315,27 @@ namespace Nijo.Models.WriteModel2Modules {
 
         private string GetLegacyTypeScriptPropertyTypeName(IRefTargetKeyMember member) {
             return member switch {
-                RefTargetKeyValueMember valueMember => $"{valueMember.Member.Type.TsTypeName} | null | undefined",
+                RefTargetKeyValueMember valueMember => $"{GetLegacyTypeScriptPrimitiveTypeName(valueMember.Member)} | null | undefined",
                 RefTargetKeyStructureMember structureMember => structureMember.GetLegacyCSharpPropertyTypeName(),
                 _ => member.GetTypeScriptPropertyTypeName(),
+            };
+        }
+
+        private static string GetLegacyTypeScriptPrimitiveTypeName(ValueMember member) {
+            var legacySchemaTypeName = member.XElement.Annotation<SchemaParseContext.OriginalTypeAnnotation>()?.TypeName
+                ?? member.XElement.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
+
+            if (member.Type is ValueMemberTypes.StaticEnumMember) {
+                return member.Type.TsTypeName;
+            }
+
+            return legacySchemaTypeName switch {
+                "int" or "numeric" or "decimal" => "string",
+                "sequence" or "seq" => "number",
+                "year" => "number",
+                "yearmonth" or "year-month" or "date" or "datetime" => "Date",
+                "bool" or "search-condition-only-bool" => "boolean",
+                _ => "string",
             };
         }
 

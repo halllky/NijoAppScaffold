@@ -71,7 +71,10 @@ namespace Nijo.Models {
                 {{rootDisplayData.RenderSetKeysReadOnly(ctx).TrimEnd()}}
                 """);
 
-            if ((ctx.IsLegacyCompatibilityMode() && rootAggregate.Model is WriteModel2)
+            var legacyReadModelNeedsBatchUpdate = rootAggregate.Model is ReadModel2
+                && rootAggregate.XElement.Attribute(BasicNodeOptions.Readonly.AttributeName) == null;
+
+            if ((ctx.IsLegacyCompatibilityMode() && (rootAggregate.Model is WriteModel2 || legacyReadModelNeedsBatchUpdate || rootAggregate.Model is QueryModel))
                 || rootAggregate.GenerateBatchUpdateCommand) {
                 aggregateFile.AddTypeScriptFunction(new BatchUpdateReadModel().RenderFunction(ctx, rootAggregate));
                 aggregateFile.AddWebapiControllerAction(BatchUpdateReadModel.RenderControllerActionVersion2(ctx, rootAggregate));
@@ -107,7 +110,8 @@ namespace Nijo.Models {
 
             var aggregates = rootAggregate.EnumerateThisAndDescendants().ToArray();
             var legacyRefAggregates = aggregates
-                .Where(aggregate => aggregate is RootAggregate || aggregate.GetRefFroms().Any())
+                .Where(aggregate => aggregate.GetRefFroms().Any()
+                    || aggregate is RootAggregate && rootAggregate.Model is not WriteModel2)
                 .ToArray();
 
             foreach (var aggregate in aggregates) {

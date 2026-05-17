@@ -40,6 +40,12 @@ internal class Word : IValueMemberType {
         FilterTsTypeName = "string",
         RenderTsNewObjectFunctionValue = () => "''",
         RenderFiltering = ctx => {
+            var sourceMember = ctx.Query.Metadata is IInstanceValuePropertyMetadata vm
+                && vm.SchemaPathNode is ValueMember valueMember
+                    ? valueMember
+                    : null;
+            var legacySchemaTypeName = sourceMember?.XElement.Annotation<SchemaParseContext.OriginalTypeAnnotation>()?.TypeName
+                ?? sourceMember?.XElement.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
             var query = ctx.Query.Root.Name;
             var fullpathNullable = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");
             var fullpathNotNull = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, ctx.CodeRenderingContext.IsLegacyCompatibilityMode() ? "." : "!.");
@@ -51,14 +57,34 @@ internal class Word : IValueMemberType {
             var manyValuePath = $"y.{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}{(ctx.CodeRenderingContext.IsLegacyCompatibilityMode() ? string.Empty : "!")}";
             var singleValuePath = $"x.{queryFullPath.Join(ctx.CodeRenderingContext.IsLegacyCompatibilityMode() ? "." : "!.")}{(ctx.CodeRenderingContext.IsLegacyCompatibilityMode() ? string.Empty : "!")}";
 
-            var searchBehavior = ctx.Query.Metadata is IInstanceValuePropertyMetadata vm
-                && vm.SchemaPathNode.XElement.Attribute(BasicNodeOptions.StringSearchBehavior.AttributeName)?.Value is string s
+            var searchBehavior = ctx.Query.Metadata is IInstanceValuePropertyMetadata searchMetadata
+                && searchMetadata.SchemaPathNode.XElement.Attribute(BasicNodeOptions.StringSearchBehavior.AttributeName)?.Value is string s
                 ? s
                 : BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL;
+
+            if (ctx.CodeRenderingContext.IsLegacyCompatibilityMode() && legacySchemaTypeName == "file") {
+                return $"// {sourceMember?.DisplayName ?? ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)} に対する検索はサポ－トされていません。";
+            }
+
+            if (ctx.CodeRenderingContext.IsLegacyCompatibilityMode() && legacySchemaTypeName == "uuid") {
+                return $$"""
+                    if (!string.IsNullOrWhiteSpace({{fullpathNullable}})) {
+                        var trimmed = {{fullpathNotNull}}.Trim();
+                    {{If(isMany, () => $$"""
+                        {{query}} = {{query}}.Where(x => x.{{manyOwnerPath}}{{manyOwnerSuffix}}.Any(y => {{manyValuePath}}.Equals(trimmed)));
+                    """).Else(() => $$"""
+                        {{query}} = {{query}}.Where(x => {{singleValuePath}}.Equals(trimmed));
+                    """)}}
+                    }
+                    """;
+            }
 
             string GetComparison(string target) {
                 if (ctx.CodeRenderingContext.IsLegacyCompatibilityMode() && searchBehavior == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL) {
                     return $"{target}.Contains(trimmed)";
+                }
+                if (ctx.CodeRenderingContext.IsLegacyCompatibilityMode() && searchBehavior == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT) {
+                    return $"Microsoft.EntityFrameworkCore.EF.Functions.Like({target}, escaped, \"\\\")";
                 }
                 return searchBehavior switch {
                     BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT => $"{target} == trimmed",
@@ -71,8 +97,8 @@ internal class Word : IValueMemberType {
             return $$"""
                 if (!string.IsNullOrWhiteSpace({{fullpathNullable}})) {
                     var trimmed = {{fullpathNotNull}}.Trim();
-                {{If(searchBehavior != BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT && !(ctx.CodeRenderingContext.IsLegacyCompatibilityMode() && searchBehavior == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL), () => $$"""
-                    var escaped = trimmed.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+                {{If(!(ctx.CodeRenderingContext.IsLegacyCompatibilityMode() && searchBehavior == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL), () => $$"""
+                    var escaped = trimmed.Replace("\\", "\\\\").Replace("%", "\\%"){{If(!ctx.CodeRenderingContext.IsLegacyCompatibilityMode() || searchBehavior != BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT, () => ".Replace(\"_\", \"\\_\")")}};
                 """)}}
                 {{If(isMany, () => $$"""
                     {{query}} = {{query}}.Where(x => x.{{manyOwnerPath}}{{manyOwnerSuffix}}.Any(y => {{GetComparison(manyValuePath)}}));
@@ -86,6 +112,12 @@ internal class Word : IValueMemberType {
 
     void IValueMemberType.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
         // 特になし
+    }
+
+    bool IValueMemberType.UseStringSortInSearch(ValueMember member, CodeRenderingContext context) {
+        var legacySchemaTypeName = member.XElement.Annotation<SchemaParseContext.OriginalTypeAnnotation>()?.TypeName
+            ?? member.XElement.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
+        return !(context.IsLegacyCompatibilityMode() && legacySchemaTypeName == "file");
     }
 
     string IValueMemberType.RenderCreateDummyDataValueBody(CodeRenderingContext ctx) {

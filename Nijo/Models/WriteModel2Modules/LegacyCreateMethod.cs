@@ -63,9 +63,6 @@ namespace Nijo.Models.WriteModel2Modules {
                     CheckCharacterType(dbEntity, beforeSaveArgs);
                     CheckDigitsAndScales(dbEntity, beforeSaveArgs);
                     CheckKbnType(dbEntity, beforeSaveArgs);
-                {{If(hasSequenceMember, () => $$"""
-                    GenerateAndSetSequenceAsync(dbEntity, batchUpdateState).GetAwaiter().GetResult();
-                """)}}
                     {{onBeforeMethodName}}(dbEntity, beforeSaveArgs);
 
                     // エラーがある場合は処理中断
@@ -81,6 +78,11 @@ namespace Nijo.Models.WriteModel2Modules {
                     // 「更新しますか？」の確認メッセージが承認される前の1巡目はエラーチェックのみで処理中断
                     if (!batchUpdateState.Options.IgnoreConfirm) return;
 
+                {{If(hasSequenceMember, () => $$"""
+                    //シーケンス項目
+                    GenerateAndSetSequenceValue(dbEntity);
+
+                """)}}
                     // 更新実行
                     const string SAVE_POINT = "SAVE_POINT"; // 更新後処理でエラーが発生した場合はこのデータの更新のみロールバックする
                     DbContext.Database.CurrentTransaction!.CreateSavepoint(SAVE_POINT);
