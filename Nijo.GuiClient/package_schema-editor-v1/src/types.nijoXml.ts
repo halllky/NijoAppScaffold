@@ -137,8 +137,11 @@ export type GenericLookupTableCategoriesData = {
 }
 
 export const TYPE_DATA_MODEL = 'data-model'
+export const TYPE_WRITE_MODEL2 = 'write-model-2'
+export const TYPE_READ_MODEL2 = 'read-model-2'
 export const TYPE_QUERY_MODEL = 'query-model'
 export const TYPE_COMMAND_MODEL = 'command-model'
+export const TYPE_COMMAND_MODEL2 = 'command-model-2'
 export const TYPE_STRUCTURE_MODEL = 'structure-model'
 export const TYPE_CONSTANT_MODEL = 'constant-model'
 export const TYPE_STATIC_ENUM_MODEL = 'enum'

@@ -1,7 +1,7 @@
 import React from "react";
 import * as ReactHookForm from "react-hook-form"
 import * as Icon from "@heroicons/react/24/outline"
-import { ATTR_TYPE, ATTR_IS_GENERIC_LOOKUP_TABLE, ApplicationState, TYPE_COMMAND_MODEL } from "../../../types";
+import { ATTR_TYPE, ATTR_IS_GENERIC_LOOKUP_TABLE, ApplicationState } from "../../../types";
 import * as UI from "../../../UI"
 import { Allotment, LayoutPriority } from "allotment";
 import DecsendantsGrid from "./DecsendantsGrid";
@@ -34,7 +34,6 @@ function AggregatePane(props: {
     onRequestDelete?.()
   }
 
-  const rootAggregateModelType = ReactHookForm.useWatch({ name: `xmlElementTrees.${selectedRootAggregateIndex}.xmlElements.0.attributes.${ATTR_TYPE}`, control })
   const isGenericLookupTable = ReactHookForm.useWatch({ name: `xmlElementTrees.${selectedRootAggregateIndex}.xmlElements.0.attributes.${ATTR_IS_GENERIC_LOOKUP_TABLE}`, control }) === 'True'
 
   return (
@@ -97,7 +96,6 @@ function AggregatePane(props: {
         <Allotment.Pane
           priority={LayoutPriority.High}
           minSize={80}
-          visible={rootAggregateModelType !== TYPE_COMMAND_MODEL}
         >
           <DecsendantsGrid
             selectedRootAggregateIndex={selectedRootAggregateIndex}

@@ -3,7 +3,7 @@ import * as ReactHookForm from "react-hook-form"
 import * as Icon from "@heroicons/react/24/solid"
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
 import { UUID } from "uuidjs"
-import { ApplicationState, ATTR_TYPE, TYPE_STATIC_ENUM_MODEL, XmlElementAttributeName, XmlElementItem } from "../../types"
+import { ApplicationState, ATTR_DISPLAY_NAME, ATTR_TYPE, TYPE_STATIC_ENUM_MODEL, XmlElementAttributeName, XmlElementItem } from "../../types"
 import * as UI from '../../UI'
 
 type FormType = ApplicationState
@@ -15,8 +15,14 @@ type FormType = ApplicationState
  */
 export default function StaticEnumGrid(props: {
   formMethods: ReactHookForm.UseFormReturn<FormType>
+  modelType?: string
+  addButtonLabel?: string
+  namePlaceholder?: string
 }) {
   const { control, setValue, getValues } = props.formMethods
+  const modelType = props.modelType ?? TYPE_STATIC_ENUM_MODEL
+  const addButtonLabel = props.addButtonLabel ?? '新しい区分を追加'
+  const namePlaceholder = props.namePlaceholder ?? '区分名を入力'
   const xmlElementTrees = ReactHookForm.useWatch({
     control,
     name: "xmlElementTrees"
@@ -26,9 +32,9 @@ export default function StaticEnumGrid(props: {
   const enumIndexes = React.useMemo(() => {
     return xmlElementTrees
       .map((tree, index) => ({ tree, index }))
-      .filter(({ tree }) => tree.xmlElements?.[0]?.attributes?.[ATTR_TYPE] === TYPE_STATIC_ENUM_MODEL)
+      .filter(({ tree }) => tree.xmlElements?.[0]?.attributes?.[ATTR_TYPE] === modelType)
       .map(({ index }) => index)
-  }, [xmlElementTrees])
+  }, [modelType, xmlElementTrees])
 
   const handleAddEnum = () => {
     const newEnum: XmlElementItem = {
@@ -36,7 +42,7 @@ export default function StaticEnumGrid(props: {
       indent: 0,
       localName: "",
       value: undefined,
-      attributes: { [ATTR_TYPE]: TYPE_STATIC_ENUM_MODEL },
+      attributes: { [ATTR_TYPE]: modelType },
       comment: undefined,
     }
     const newTree = { xmlElements: [newEnum] }
@@ -55,27 +61,30 @@ export default function StaticEnumGrid(props: {
             <SingleEnumEditor
               index={index}
               formMethods={props.formMethods}
+              namePlaceholder={namePlaceholder}
             />
           </div>
         )
       })}
       <div>
         <UI.Button icon={Icon.PlusIcon} onClick={handleAddEnum}>
-          新しい区分を追加
+          {addButtonLabel}
         </UI.Button>
       </div>
     </div>
   )
 }
 
-function SingleEnumEditor({ index, formMethods }: {
+function SingleEnumEditor({ index, formMethods, namePlaceholder }: {
   index: number
   formMethods: ReactHookForm.UseFormReturn<FormType>
+  namePlaceholder?: string
 }) {
   const { register, control, getValues, setValue } = formMethods
 
   // ルート要素（区分定義自体）の名前
   const rootNamePath = `xmlElementTrees.${index}.xmlElements.0.localName` as const
+  const rootDisplayNamePath = `xmlElementTrees.${index}.xmlElements.0.attributes.${ATTR_DISPLAY_NAME}` as const
 
   // 削除処理
   const handleDeleteEnum = () => {
@@ -128,6 +137,10 @@ function SingleEnumEditor({ index, formMethods }: {
     // Key
     columns.push(helper.text('C#列挙体キー', `attributes.${"key" as XmlElementAttributeName}`, {
       defaultWidth: 100,
+    }))
+
+    columns.push(helper.text('表示名', `attributes.${ATTR_DISPLAY_NAME}`, {
+      defaultWidth: 160,
     }))
 
     // コメント
@@ -209,7 +222,12 @@ function SingleEnumEditor({ index, formMethods }: {
         <UI.WordTextBox
           {...register(rootNamePath)}
           className="basis-80 font-bold border px-1"
-          placeholder="区分名を入力"
+          placeholder={namePlaceholder ?? '区分名を入力'}
+        />
+        <UI.WordTextBox
+          {...register(rootDisplayNamePath)}
+          className="basis-64 border px-1"
+          placeholder="表示名"
         />
         <UI.Button mini hideText icon={Icon.TrashIcon} onClick={handleDeleteEnum}>
           区分自体の削除

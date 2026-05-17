@@ -4,7 +4,7 @@ import * as ReactRouter from "react-router-dom"
 import * as Icon from "@heroicons/react/24/solid"
 import * as EG2 from "@nijo/ui-components/layout/EditableGrid2"
 import { UUID } from "uuidjs"
-import { ApplicationState, ATTR_TYPE, isAttributeAvailable, XmlElementItem, TYPE_DATA_MODEL, ATTR_UNIQUE_CONSTRAINTS, NODE_TYPE_CHILD_AGGREGATE } from "../../../types"
+import { ApplicationState, ATTR_TYPE, isAttributeAvailable, XmlElementItem, ATTR_UNIQUE_CONSTRAINTS, NODE_TYPE_CHILD_AGGREGATE } from "../../../types"
 import * as UI from '../../../UI'
 import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../../../routing"
 import { usePersonalSettings } from "../../../PersonalSettings"

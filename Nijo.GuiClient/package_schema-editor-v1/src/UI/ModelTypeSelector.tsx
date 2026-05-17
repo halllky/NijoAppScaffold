@@ -1,5 +1,5 @@
 import React from "react"
-import { TYPE_DATA_MODEL, TYPE_QUERY_MODEL, TYPE_COMMAND_MODEL, TYPE_STRUCTURE_MODEL } from "../types"
+import { TYPE_WRITE_MODEL2, TYPE_READ_MODEL2, TYPE_COMMAND_MODEL2, TYPE_STRUCTURE_MODEL } from "../types"
 import { DropdownSelector } from "@nijo/ui-components"
 
 /** モデル種類の選択肢 */
@@ -14,23 +14,23 @@ type ModelTypeOption = {
 /** モデル種類の選択肢定義 */
 const MODEL_TYPE_OPTIONS: ModelTypeOption[] = [
   {
-    value: TYPE_DATA_MODEL,
-    displayName: "Data Model",
-    description: "永続化されるデータ。EFCoreの構造定義、自動生成可能なエラーチェック、楽観的排他制御の基本機能が自動生成されます。",
+    value: TYPE_WRITE_MODEL2,
+    displayName: "Write Model 2",
+    description: "旧版互換の更新系モデル。永続化対象の構造、バリデーション、参照生成の移植先として扱います。",
     nameTextColor: "text-orange-600",
     descriptionTextColor: "text-orange-500",
   },
   {
-    value: TYPE_QUERY_MODEL,
-    displayName: "Query Model",
-    description: "データの検索や照会に特化したモデル。一覧検索処理が自動生成されます。",
+    value: TYPE_READ_MODEL2,
+    displayName: "Read Model 2",
+    description: "旧版互換の参照系モデル。検索条件や表示用データを一体で定義します。",
     nameTextColor: "text-emerald-600",
     descriptionTextColor: "text-emerald-500",
   },
   {
-    value: TYPE_COMMAND_MODEL,
-    displayName: "Command Model",
-    description: "引数を受け取り戻り値を返す処理。Webサーバー・クライアント間で常に同期された型定義を提供します。",
+    value: TYPE_COMMAND_MODEL2,
+    displayName: "Command Model 2",
+    description: "旧版互換のコマンドモデル。引数や step を子要素としてこの画面でまとめて編集します。",
     nameTextColor: "text-sky-600",
     descriptionTextColor: "text-sky-500",
   },

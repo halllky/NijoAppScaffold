@@ -84,13 +84,13 @@ public class ApplicationState {
                 // セクションへの振り分け
                 var type = rootAggregate.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
                 string sectionName;
-                if (type == new Models.DataModel().SchemaName) {
-                    sectionName = SchemaParseContext.SECTION_DATA_STRUCTURES;
-                } else if (type == new Models.QueryModel().SchemaName) {
-                    sectionName = SchemaParseContext.SECTION_DATA_STRUCTURES;
-                } else if (type == new Models.CommandModel().SchemaName) {
+                if (type == new Models.CommandModel().SchemaName || type == Models.CommandModel2.SCHEMA_NAME) {
                     sectionName = SchemaParseContext.SECTION_COMMANDS;
-                } else if (type == new Models.StructureModel().SchemaName) {
+                } else if (type == new Models.DataModel().SchemaName
+                        || type == Models.WriteModel2.SCHEMA_NAME
+                        || type == Models.ReadModel2.SCHEMA_NAME
+                        || type == new Models.QueryModel().SchemaName
+                        || type == new Models.StructureModel().SchemaName) {
                     sectionName = SchemaParseContext.SECTION_DATA_STRUCTURES;
                 } else if (type == Models.ValueObjectModel.SCHEMA_NAME || type == Models.ValueObjectModel2.SCHEMA_NAME) {
                     sectionName = SchemaParseContext.SECTION_VALUE_OBJECTS;

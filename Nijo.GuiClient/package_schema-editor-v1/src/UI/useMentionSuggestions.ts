@@ -1,6 +1,6 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
-import { XmlElementItem, ATTR_TYPE, TYPE_DATA_MODEL, TYPE_COMMAND_MODEL, TYPE_QUERY_MODEL, TYPE_CHILD, TYPE_CHILDREN, ApplicationState, TYPE_STRUCTURE_MODEL } from "../types"
+import { XmlElementItem, ATTR_TYPE, TYPE_WRITE_MODEL2, TYPE_COMMAND_MODEL2, TYPE_READ_MODEL2, TYPE_CHILD, TYPE_CHILDREN, ApplicationState, TYPE_STRUCTURE_MODEL } from "../types"
 import { MentionableTextarea } from "./Mention"
 
 /**
@@ -29,9 +29,9 @@ export function useMentionSuggestions(
 
       // ルート集約
       if (el.indent === 0
-        && (type === TYPE_DATA_MODEL
-          || type === TYPE_QUERY_MODEL
-          || type === TYPE_COMMAND_MODEL
+        && (type === TYPE_WRITE_MODEL2
+          || type === TYPE_READ_MODEL2
+          || type === TYPE_COMMAND_MODEL2
           || type === TYPE_STRUCTURE_MODEL)) return true
 
       // child または children

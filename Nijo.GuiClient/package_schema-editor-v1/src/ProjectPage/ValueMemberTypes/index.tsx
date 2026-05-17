@@ -2,8 +2,9 @@ import { Allotment, LayoutPriority } from "allotment"
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
 import FormLayout from "@nijo/ui-components/layout/FormLayout"
-import { ATTR_TYPE, ApplicationState, TYPE_STATIC_ENUM_MODEL } from "../../types"
+import { ATTR_TYPE, ApplicationState, TYPE_STATIC_ENUM_MODEL, TYPE_STATIC_ENUM_MODEL2 } from "../../types"
 import StaticEnumGrid from "./StaticEnumGrid"
+import ValueObjectGrid from "./ValueObjectGrid"
 import { CustomAttributeSettings } from "./CustomAttributeSettings"
 
 /**
@@ -25,6 +26,16 @@ function ValueMemberTypes(props: {
     return (xmlElementTrees ?? [])
       .map(tree => tree.xmlElements[0])
       .filter(el => el?.attributes?.[ATTR_TYPE] === TYPE_STATIC_ENUM_MODEL)
+      .map(el => ({
+        uniqueId: el.uniqueId,
+        localName: el.localName,
+      }))
+  }, [xmlElementTrees])
+
+  const enum2Items = React.useMemo(() => {
+    return (xmlElementTrees ?? [])
+      .map(tree => tree.xmlElements[0])
+      .filter(el => el?.attributes?.[ATTR_TYPE] === TYPE_STATIC_ENUM_MODEL2)
       .map(el => ({
         uniqueId: el.uniqueId,
         localName: el.localName,
@@ -74,8 +85,33 @@ function ValueMemberTypes(props: {
                     ))}
                   </div>
                 )}
+                <SideMenuLink hash="selection-values-2" className="pl-1 text-sm">
+                  選択・区分型 2
+                </SideMenuLink>
+                {enum2Items.length > 0 && (
+                  <div className="ml-2 flex flex-col items-stretch border-l border-gray-200 gap-1 pl-1 py-1">
+                    {enum2Items.map(item => (
+                      <button
+                        type="button"
+                        key={item.uniqueId}
+                        onClick={() => {
+                          const el = document.getElementById(`enum-def-${item.uniqueId}`)
+                          if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+                        }}
+                        className="pl-1 py-0.5 w-full text-left hover:bg-gray-200 cursor-pointer select-none"
+                      >
+                        <div className="text-xs truncate max-w-full" title={item.localName}>
+                          {item.localName || '(名前なし)'}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <SideMenuLink hash="other-values" className="pl-1 text-sm">
                   その他
+                </SideMenuLink>
+                <SideMenuLink hash="value-objects-2" className="pl-1 text-sm">
+                  Value Object 2
                 </SideMenuLink>
               </div>
             </div>
@@ -182,6 +218,27 @@ function ValueMemberTypes(props: {
             </section>
 
             <section className="mt-8">
+              <h2 id="selection-values-2" className="text-2xl font-bold">選択・区分型 2</h2>
+
+              <ul className="list-disc list-inside my-2 space-y-1">
+                <li>
+                  <strong className="mr-2">静的区分 2:</strong>
+                  migrated model 用の静的区分。表示名つきの値定義を編集します。
+                </li>
+              </ul>
+
+              {props.formMethods && (
+                <StaticEnumGrid
+                  formMethods={props.formMethods}
+                  modelType={TYPE_STATIC_ENUM_MODEL2}
+                  addButtonLabel="新しい区分 2 を追加"
+                  namePlaceholder="区分 2 名を入力"
+                />
+              )}
+
+            </section>
+
+            <section className="mt-8">
               <h2 id="other-values" className="text-2xl font-bold">その他</h2>
 
               <ul className="list-disc list-inside my-2 space-y-1">
@@ -190,6 +247,18 @@ function ValueMemberTypes(props: {
                   ハッシュ化されたパスワードなどのバイナリデータ。
                 </li>
               </ul>
+            </section>
+
+            <section className="mt-8">
+              <h2 id="value-objects-2" className="text-2xl font-bold">Value Object 2</h2>
+
+              <p className="text-sm text-gray-700 mt-2">
+                migrated model 用の値オブジェクトを定義します。物理名、表示名、LatinName をここで編集します。
+              </p>
+
+              {props.formMethods && (
+                <ValueObjectGrid formMethods={props.formMethods} />
+              )}
             </section>
           </section>
 

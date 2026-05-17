@@ -1,6 +1,6 @@
 import React from "react";
 import * as ReactHookForm from "react-hook-form";
-import { ApplicationState, ATTR_PARAMETER, ATTR_RETURN_VALUE, ATTR_TYPE, TYPE_CHILD, TYPE_CHILDREN, TYPE_COMMAND_MODEL, TYPE_DATA_MODEL, TYPE_QUERY_MODEL, TYPE_STRUCTURE_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_STATIC_ENUM_MODEL2, TYPE_VALUE_OBJECT_MODEL, TYPE_VALUE_OBJECT_MODEL2, TYPE_CONSTANT_MODEL, XmlElementItem, asTree } from "../../types";
+import { ApplicationState, ATTR_TYPE, TYPE_CHILD, TYPE_CHILDREN, TYPE_COMMAND_MODEL2, TYPE_WRITE_MODEL2, TYPE_READ_MODEL2, TYPE_STRUCTURE_MODEL, TYPE_STATIC_ENUM_MODEL, TYPE_STATIC_ENUM_MODEL2, TYPE_VALUE_OBJECT_MODEL, TYPE_VALUE_OBJECT_MODEL2, TYPE_CONSTANT_MODEL, XmlElementItem, asTree } from "../../types";
 import { GraphView2 } from "@nijo/ui-components";
 import { parseAsMentionText } from "../../UI/Mention";
 import { findRefToTarget } from "../findRefToTarget";
@@ -68,11 +68,11 @@ export function useDiagramDataSet(formMethods: ReactHookForm.UseFormReturn<Appli
         // ダイアグラムノードを追加
         let bgColor: string | undefined = undefined
         let borderColor: string | undefined = undefined
-        if (model === TYPE_DATA_MODEL) {
+        if (model === TYPE_WRITE_MODEL2) {
           bgColor = borderColor = '#ea580c' // orange-600
-        } else if (model === TYPE_COMMAND_MODEL) {
+        } else if (model === TYPE_COMMAND_MODEL2) {
           bgColor = borderColor = '#0284c7' // sky-600
-        } else if (model === TYPE_QUERY_MODEL) {
+        } else if (model === TYPE_READ_MODEL2) {
           bgColor = borderColor = '#059669' // emerald-600
         }
         nodes[owner.uniqueId] = {
@@ -102,53 +102,6 @@ export function useDiagramDataSet(formMethods: ReactHookForm.UseFormReturn<Appli
                 sourceModel: model,
                 isMention: true,
               })
-            }
-          }
-        }
-
-        // TYPE_COMMAND_MODELの場合、ATTR_PARAMETERとATTR_RETURN_VALUE属性で定義されている物理名のノードにエッジを追加
-        if (model === TYPE_COMMAND_MODEL) {
-          // Parameter属性の処理
-          // ※QueryModelを参照する場合は「xxxxx:DisplayData」のようにコロンの前が物理名
-          const parameterValue = owner.attributes[ATTR_PARAMETER]?.split(':')[0]
-          if (parameterValue) {
-            // 物理名に基づいてターゲット要素を検索
-            const targetElement = Array.from(elementIdMap.values()).find(({ element }) =>
-              element.localName === parameterValue
-            )
-            if (targetElement) {
-              const targetUniqueId = targetElement.element.uniqueId
-
-              if (owner.uniqueId !== targetUniqueId) {
-                edges.push({
-                  source: owner.uniqueId,
-                  target: targetUniqueId,
-                  label: '引数',
-                  sourceModel: model,
-                })
-              }
-            }
-          }
-
-          // ReturnValue属性の処理
-          // ※QueryModelを参照する場合は「xxxxx:DisplayData」のようにコロンの前が物理名
-          const returnValue = owner.attributes[ATTR_RETURN_VALUE]?.split(':')[0]
-          if (returnValue) {
-            // 物理名に基づいてターゲット要素を検索
-            const targetElement = Array.from(elementIdMap.values()).find(({ element }) =>
-              element.localName === returnValue
-            )
-            if (targetElement) {
-              const targetUniqueId = targetElement.element.uniqueId
-
-              if (owner.uniqueId !== targetUniqueId) {
-                edges.push({
-                  source: owner.uniqueId,
-                  target: targetUniqueId,
-                  label: '戻り値',
-                  sourceModel: model,
-                })
-              }
             }
           }
         }
@@ -215,11 +168,11 @@ export function useDiagramDataSet(formMethods: ReactHookForm.UseFormReturn<Appli
       const label = group.labels.length === 1 ? group.labels[0] : `${group.labels[0]}など${group.labels.length}件の参照`
 
       let lineColor: string | undefined = undefined
-      if (group.sourceModel === TYPE_DATA_MODEL) {
+      if (group.sourceModel === TYPE_WRITE_MODEL2) {
         lineColor = '#ea580c' // orange-600
-      } else if (group.sourceModel === TYPE_COMMAND_MODEL) {
+      } else if (group.sourceModel === TYPE_COMMAND_MODEL2) {
         lineColor = '#0284c7' // sky-600
-      } else if (group.sourceModel === TYPE_QUERY_MODEL) {
+      } else if (group.sourceModel === TYPE_READ_MODEL2) {
         lineColor = '#059669' // emerald-600
       }
 
