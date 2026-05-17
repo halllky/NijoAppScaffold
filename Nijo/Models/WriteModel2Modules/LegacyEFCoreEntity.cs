@@ -9,6 +9,7 @@ using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Linq;
 
 namespace Nijo.Models.WriteModel2Modules {
     /// <summary>
@@ -109,6 +110,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
             var refKeyGroups = Aggregate.GetMembers()
                 .OfType<RefToMember>()
+                .OrderBy(refTo => GetRootAggregateDefinitionOrder(refTo.RefTo.GetRoot()))
                 .Select(refTo => EnumerateRefKeyMembers(refTo).ToArray())
                 .ToArray();
             var refKeyCount = refKeyGroups.Select(group => group.Length).DefaultIfEmpty(0).Max();
@@ -154,6 +156,18 @@ namespace Nijo.Models.WriteModel2Modules {
                     yield return new RefFromNavigationMember(refFrom);
                 }
             }
+        }
+
+        /// <summary>
+        /// ルート集約の XML 上の定義順を返す。
+        /// <see cref="CodeRenderingContext.GetIndexOfDataFlow(RootAggregate)"/> と異なり、
+        /// ref-to の依存関係は考慮せず、単にXML上での定義順を返す。
+        /// </summary>
+        internal static int GetRootAggregateDefinitionOrder(RootAggregate rootAggregate) {
+            return rootAggregate.XElement
+                .NodesBeforeSelf()
+                .OfType<XElement>()
+                .Count();
         }
 
         private IEnumerable<LegacyRefKeyMember> EnumerateRefKeyMembers(RefToMember refTo) {

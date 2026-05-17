@@ -431,6 +431,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
             var refAssignmentGroups = aggregate.GetMembers()
                 .OfType<RefToMember>()
+                .OrderBy(refTo => LegacyEFCoreEntity.GetRootAggregateDefinitionOrder(refTo.RefTo.GetRoot()))
                 .Select(member => RenderRefToDbEntityAssignmentsLegacy(member, RenderMemberAccess(instanceName, member.PhysicalName, nullConditional)).ToArray())
                 .ToArray();
             var refAssignmentCount = refAssignmentGroups.Select(group => group.Length).DefaultIfEmpty(0).Max();
