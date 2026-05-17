@@ -106,9 +106,18 @@ namespace Nijo.ValueMemberTypes {
                 .SingleOrDefault(root => root.PhysicalName == _parser.CsEnumName && root.Model is Models.StaticEnumModel2);
             if (enumRoot == null) return;
 
-            var staticEnum = new StaticEnumDef(_parser, enumRoot);
-            var searchCondition = new StaticEnumSearchCondition(staticEnum, _parser);
-            ctx.Use<EnumFile2>().AddSourceCode(searchCondition.RenderCSharp());
+            var isUsed = CodeRenderingContext.CurrentContext.Schema.GetRootAggregates()
+                .SelectMany(root => root.EnumerateThisAndDescendants())
+                .SelectMany(aggregate => aggregate.GetMembers())
+                .OfType<ValueMember>()
+                .Any(member => member.Type is StaticEnumMember staticEnumMember
+                    && staticEnumMember.Definition.CsEnumName == _parser.CsEnumName);
+            if (isUsed) {
+                var staticEnum = new StaticEnumDef(_parser, enumRoot);
+                var searchCondition = new StaticEnumSearchCondition(staticEnum, _parser);
+                ctx.Use<EnumFile2>().AddSourceCode(searchCondition.RenderCSharp());
+            }
+
         }
         void IValueMemberType.RenderStaticSources(CodeRenderingContext ctx) {
             // 特になし

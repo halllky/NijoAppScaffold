@@ -298,6 +298,9 @@ namespace Nijo.CodeGenerating {
                                 _applicationService = applicationService;
                             }
                             protected readonly OverridedApplicationService _applicationService;
+                    {{If(renderedActions.Length == 0, () => $$"""
+
+                    """)}}
 
                     {{renderedActions.SelectTextTemplate(source => $$"""
                             {{WithIndent(source)}}

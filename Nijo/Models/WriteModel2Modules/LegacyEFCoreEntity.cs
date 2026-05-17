@@ -110,7 +110,6 @@ namespace Nijo.Models.WriteModel2Modules {
             var refKeyGroups = Aggregate.GetMembers()
                 .OfType<RefToMember>()
                 .Select(refTo => EnumerateRefKeyMembers(refTo).ToArray())
-                .Reverse()
                 .ToArray();
             var refKeyCount = refKeyGroups.Select(group => group.Length).DefaultIfEmpty(0).Max();
 
