@@ -658,9 +658,14 @@ namespace Nijo.Models.ReadModel2Modules {
                 : Environment.NewLine + string.Join(Environment.NewLine, descendants);
 
             if (ctx.IsLegacyCompatibilityMode()) {
-                var legacyDescendantsText = Aggregate.GetRoot().Model is Models.WriteModel2
+                var legacyDescendants = Aggregate.GetRoot().Model is Models.WriteModel2
+                    ? Array.Empty<string>()
+                    : GetChildMembers()
+                        .SelectMany(child => EnumerateLegacyDeepEqualFunctions(new DisplayData(child.Aggregate)))
+                        .ToArray();
+                var legacyDescendantsText = legacyDescendants.Length == 0
                     ? string.Empty
-                    : descendantsText;
+                    : Environment.NewLine + string.Join(Environment.NewLine, legacyDescendants);
 
                 return $$"""
                     /** 2つの{{Aggregate.DisplayName}}オブジェクトの値を比較し、一致しているかを返します。 */
@@ -680,10 +685,31 @@ namespace Nijo.Models.ReadModel2Modules {
                   return true
                 }{{descendantsText}}
                 """;
+
+            static IEnumerable<string> EnumerateLegacyDeepEqualFunctions(DisplayData displayData) {
+                if (displayData.HasVersion) {
+                    yield return $$"""
+                        /** 2つの{{displayData.Aggregate.DisplayName}}オブジェクトの値を比較し、一致しているかを返します。 */
+                        export const {{displayData.DeepEqualFunction}} = (a: {{displayData.TsTypeName}}, b: {{displayData.TsTypeName}}): boolean => {
+                          {{WithIndent(RenderLegacyDeepEqualBody(displayData.Aggregate, "a", "b"), "  ")}}
+                          if (a.{{WILL_BE_DELETED_TS}} !== b.{{WILL_BE_DELETED_TS}}) return false
+                          return true
+                        }
+                        """;
+                }
+
+                foreach (var child in displayData.GetChildMembers()) {
+                    foreach (var rendered in EnumerateLegacyDeepEqualFunctions(new DisplayData(child.Aggregate))) {
+                        yield return rendered;
+                    }
+                }
+            }
         }
         internal string RenderCheckChangesFunction(CodeRenderingContext ctx) {
             if (ctx.IsLegacyCompatibilityMode()) {
                 var descendants = Aggregate.GetRoot().Model is Models.WriteModel2
+                    || Aggregate.GetRoot().Model is Models.ReadModel2
+                    && Aggregate.GetRoot().XElement.Attribute(BasicNodeOptions.CustomizeBatchUpdateReadModels.AttributeName) == null
                     ? Array.Empty<(string PhysicalName, string DeepEquals, string DefaultValue, string CurrentValue, string FindCondition)>()
                     : GetChildMembers()
                         .OfType<EditablePresentationObjectChildrenDescendant>()
@@ -952,8 +978,8 @@ namespace Nijo.Models.ReadModel2Modules {
                 .Select(member => member switch {
                     ValueMember valueMember when !valueMember.OnlySearchCondition || valueMember.Type.CsDomainTypeName == "bool" => RenderLegacyValueMember(valueMember, left, right),
                     RefToMember refToMember => RenderLegacyRefMember(refToMember, left, right),
-                    ChildAggregate childAggregate when aggregate.GetRoot().Model is not Models.ReadModel2 => RenderLegacyChildAggregate(childAggregate, left, right),
-                    ChildrenAggregate childrenAggregate when aggregate.GetRoot().Model is not Models.ReadModel2 => RenderLegacyChildrenAggregate(childrenAggregate, left, right),
+                    ChildAggregate childAggregate when !new DisplayData(childAggregate).HasVersion => RenderLegacyChildAggregate(childAggregate, left, right),
+                    ChildrenAggregate childrenAggregate when !new DisplayData(childrenAggregate).HasVersion => RenderLegacyChildrenAggregate(childrenAggregate, left, right),
                     _ => string.Empty,
                 })
                 .Where(rendered => rendered != string.Empty));
@@ -961,6 +987,7 @@ namespace Nijo.Models.ReadModel2Modules {
             static string RenderLegacyValueMember(ValueMember valueMember, string left, string right) {
                 var leftValue = $"{left}.{VALUES_TS}?.{valueMember.PhysicalName}";
                 var rightValue = $"{right}.{VALUES_TS}?.{valueMember.PhysicalName}";
+                var legacyHash = GetLegacyNodeToken(valueMember);
 
                 return valueMember.Type switch {
                     ValueMemberTypes.DecimalMember or ValueMemberTypes.IntMember => $$"""
@@ -972,12 +999,12 @@ namespace Nijo.Models.ReadModel2Modules {
                     _ when GetLegacySchemaTypeName(valueMember) == "file" => $$"""
 
                         // 添付ファイルのディープイコールはIDで比較
-                        const files1_x3f0 = {{leftValue}} ?? []
-                        const files2_x3f0 = {{rightValue}} ?? []
-                        if (files1_x3f0.length !== files2_x3f0.length) return false
-                        const files2Set_x3f0 = new Set(files2_x3f0.map(f2 => f2.fileAttachmentId))
-                        for (let f1 of files1_x3f0) {
-                          if (!files2Set_x3f0.has(f1.fileAttachmentId)) return false
+                        const files1_{{legacyHash}} = {{leftValue}} ?? []
+                        const files2_{{legacyHash}} = {{rightValue}} ?? []
+                        if (files1_{{legacyHash}}.length !== files2_{{legacyHash}}.length) return false
+                        const files2Set_{{legacyHash}} = new Set(files2_{{legacyHash}}.map(f2 => f2.fileAttachmentId))
+                        for (let f1 of files1_{{legacyHash}}) {
+                          if (!files2Set_{{legacyHash}}.has(f1.fileAttachmentId)) return false
                         }
 
                         """,
@@ -985,6 +1012,15 @@ namespace Nijo.Models.ReadModel2Modules {
                         if (({{leftValue}} ?? undefined) !== ({{rightValue}} ?? undefined)) return false
                         """,
                 };
+            }
+
+            static string GetLegacyNodeToken(ValueMember valueMember) {
+                var raw = valueMember.XElement.Attribute(SchemaParseContext.ATTR_UNIQUE_ID)?.Value;
+                if (string.IsNullOrWhiteSpace(raw) || raw.StartsWith("compat-glt-", StringComparison.Ordinal)) {
+                    raw = string.Concat(valueMember.GetPathFromEntry().Select(x => $"/{x.XElement.Name.LocalName}"));
+                }
+
+                return raw.ToHashedString().Substring(0, 4);
             }
 
             static string RenderLegacyRefMember(RefToMember refToMember, string left, string right) {

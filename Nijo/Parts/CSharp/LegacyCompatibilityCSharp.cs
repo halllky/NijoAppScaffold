@@ -1,5 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -327,7 +328,9 @@ namespace Nijo.Parts.CSharp {
                 .Any(member => member.Type is Nijo.ValueMemberTypes.YearMonthMember);
             var hasFileAttachment = System.Xml.Linq.XDocument.Load(ctx.Project.SchemaXmlPath).Descendants()
                 .Any(element => element.Attribute(SchemaParsing.SchemaParseContext.ATTR_NODE_TYPE)?.Value == "file");
-            var shouldRenderDisplayDataBatchUpdateConverter = readModel2Roots.Length > 0 && writeModel2Roots.Length == 0;
+            var shouldRenderDisplayDataBatchUpdateConverter = readModel2Roots.Any(root =>
+                root.XElement.Attribute(BasicNodeOptions.CustomizeBatchUpdateReadModels.AttributeName) != null)
+                && writeModel2Roots.Length == 0;
             var jsonValueObjectClassNames = valueObjectClassNames
                 .Where(className => !(readModel2Roots.Length > 0 && className == "Date"))
                 .Where(className => className != "YearMonth")

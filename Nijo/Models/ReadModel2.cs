@@ -111,7 +111,7 @@ namespace Nijo.Models {
             var aggregates = rootAggregate.EnumerateThisAndDescendants().ToArray();
             var legacyRefAggregates = aggregates
                 .Where(aggregate => aggregate.GetRefFroms().Any()
-                    || aggregate is RootAggregate && rootAggregate.Model is not WriteModel2)
+                    || aggregate.XElement.Attribute(BasicNodeOptions.ForceGenerateRefToModules.AttributeName) != null)
                 .ToArray();
 
             foreach (var aggregate in aggregates) {
