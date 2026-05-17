@@ -3,13 +3,17 @@ using Nijo.ImmutableSchema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace Nijo.Parts.CSharp {
     /// <summary>
     /// 旧版互換モードで生成する C# 関連ファイル。
     /// </summary>
     internal static class LegacyCompatibilityCSharp {
+
+        private sealed class CustomJsonConverterSource {
+            internal required string ConverterClassName { get; init; }
+            internal required string ConverterClassDeclaring { get; init; }
+        }
 
         internal static void RenderCore(CodeRenderingContext ctx) {
             ctx.CoreLibrary(dir => {
@@ -329,7 +333,17 @@ namespace Nijo.Parts.CSharp {
                 .Where(className => className != "YearMonth")
                 .Where(className => className != "FileAttachmentMetadata")
                 .ToArray();
-            var contents = $$"""
+            var customJsonConverters = BuildCustomJsonConverters(
+                ctx,
+                jsonValueObjectClassNames,
+                readModel2Roots,
+                hasYearMonth,
+                hasFileAttachment,
+                shouldRenderDisplayDataBatchUpdateConverter,
+                writeModel2Roots);
+            return new SourceFile {
+                FileName = "JsonConversion.cs",
+                Contents = $$"""
                     namespace {{ctx.Config.RootNamespace}} {
                         using System.Text.Json;
                         using System.Text.Json.Nodes;
@@ -347,28 +361,7 @@ namespace Nijo.Parts.CSharp {
                                 option.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 
                                 // カスタムコンバータ
-                                option.Converters.Add(new CustomJsonConverters.IntegerValueConverter());
-                                option.Converters.Add(new CustomJsonConverters.DecimalValueConverter());
-                                option.Converters.Add(new CustomJsonConverters.DateTimeValueConverter());
-
-                    {{jsonValueObjectClassNames.SelectTextTemplate(className => $$"""
-                                option.Converters.Add(new {{className}}.JsonValueConverter());
-                    """)}}
-                    {{If(readModel2Roots.Length > 0, () => $$"""
-                                option.Converters.Add(new CustomJsonConverters.DateJsonValueConverter());
-                    {{If(hasYearMonth, () => $$"""
-                                option.Converters.Add(new CustomJsonConverters.YearMonthJsonValueConverter());
-                    """)}}
-                    {{If(hasFileAttachment, () => $$"""
-                                option.Converters.Add(new FileAttachmentMetadata.JsonValueConverter());
-                    """)}}
-                    {{If(shouldRenderDisplayDataBatchUpdateConverter, () => $$"""
-                                option.Converters.Add(new CustomJsonConverters.DisplayDataBatchUpdateCommandConverter());
-                    """)}}
-                    """)}}
-                    {{If(writeModel2Roots.Length > 0, () => $$"""
-                                option.Converters.Add(new CustomJsonConverters.SaveCommandBaseConverter());
-                    """)}}
+                                {{WithIndent(RenderJsonSerializerOptionConverters(customJsonConverters))}}
                             }
                             public static JsonSerializerOptions GetJsonSrializerOptions() {
                                 var option = new System.Text.Json.JsonSerializerOptions();
@@ -452,198 +445,253 @@ namespace Nijo.Parts.CSharp {
                         using System.Reflection;
                         using System.ComponentModel.DataAnnotations;
 
-                        public class IntegerValueConverter : JsonConverter<int?> {
-                            public override int? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-
-                                if (reader.TokenType == JsonTokenType.String) {
-                                    if (string.IsNullOrWhiteSpace(reader.GetString())) {
-                                        return null;
-                                    }
-                                    return decimal.TryParse(reader.GetString(), out var str)
-                                        ? (int)str
-                                        : throw new InvalidOperationException($"文字列の数値への変換に失敗しました。:{reader.GetString()}");
-                                }
-
-                                if (reader.TokenType == JsonTokenType.Number) {
-                                    return reader.TryGetDecimal(out var dec)
-                                        ? (int)dec
-                                        : null;
-                                }
-
-                                if (reader.TokenType == JsonTokenType.Null) {
-                                    return null;
-                                }
-
-                                throw new InvalidOperationException($"文字列または数値に変換できない値です。:{Encoding.UTF8.GetString(reader.ValueSpan)}");
-                            }
-
-                            public override void Write(Utf8JsonWriter writer, int? value, JsonSerializerOptions options) {
-                                if (value == null) {
-                                    writer.WriteNullValue();
-                                } else {
-                                    // Dpulsでは今のところ3桁カンマ区切りの数値しかないため、ここで一律カンマ区切りに変換している。
-                                    writer.WriteStringValue(value?.ToString("#,##0"));
-                                }
-                            }
-                        }
-                        public class DecimalValueConverter : JsonConverter<decimal?> {
-                            public override decimal? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-                                if (reader.TokenType == JsonTokenType.String) {
-                                    if (string.IsNullOrWhiteSpace(reader.GetString())) {
-                                        return null;
-                                    }
-                                    return decimal.TryParse(reader.GetString(), out var str)
-                                        ? str
-                                        : throw new InvalidOperationException($"文字列の数値への変換に失敗しました。:{reader.GetString()}");
-                                }
-
-                                if (reader.TokenType == JsonTokenType.Number) {
-                                    return reader.TryGetDecimal(out var dec)
-                                        ? dec
-                                        : null;
-                                }
-
-                                if (reader.TokenType == JsonTokenType.Null) {
-                                    return null;
-                                }
-
-                                throw new InvalidOperationException($"文字列または数値に変換できない値です。:{Encoding.UTF8.GetString(reader.ValueSpan)}");
-                            }
-
-                            public override void Write(Utf8JsonWriter writer, decimal? value, JsonSerializerOptions options) {
-                                if (value == null) {
-                                    writer.WriteNullValue();
-                                } else {
-                                    // Dpulsでは今のところ3桁カンマ区切りの数値しかないため、ここで一律カンマ区切りに変換している。
-                                    writer.WriteStringValue(value?.ToString("#,##0.############################"));
-                                }
-                            }
-                        }
-                        public class DateTimeValueConverter : JsonConverter<DateTime?> {
-                            public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-                                var strDateTime = reader.GetString();
-                                return string.IsNullOrWhiteSpace(strDateTime)
-                                    ? null
-                                    : DateTime.Parse(strDateTime);
-                            }
-
-                            public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions options) {
-                                if (value == null) {
-                                    writer.WriteNullValue();
-                                } else {
-                                    writer.WriteStringValue(value.Value.ToString("yyyy/MM/dd HH:mm:ss"));
-                                }
-                            }
-                        }
-                        public class EnumConverterForDisplayNameFactory : JsonConverterFactory {
-                            /// <summary>
-                            /// 値の型がenumならこのクラスの処理対象である。
-                            /// </summary>
-                            public override bool CanConvert(Type typeToConvert) {
-                                return typeToConvert.IsEnum;
-                            }
-
-                            public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options) {
-
-                                var conveterType = typeof(EnumConverterForDisplayName<>).MakeGenericType(typeToConvert);
-                                return (JsonConverter)Activator.CreateInstance(conveterType)!;
-
-                            }
-
-                            private class EnumConverterForDisplayName<TEnum> : JsonConverter<TEnum> where TEnum : struct, Enum {
-
-                                public override TEnum Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-                                    if (reader.TokenType == JsonTokenType.Null) {
-                                        return default;
-                                    }
-
-                                    if (reader.TokenType == JsonTokenType.String) {
-                                        // [Display(Name = ...)] が指定されている場合はその名前で読み取る
-                                        var strValue = reader.GetString();
-                                        foreach (var field in typeof(TEnum).GetFields(BindingFlags.Public | BindingFlags.Static)) {
-                                            var display = field.GetCustomAttribute<DisplayAttribute>();
-                                            if (display?.Name == strValue || field.Name == strValue) {
-                                                return (TEnum)field.GetValue(null)!;
-                                            }
-                                        }
-
-                                        // 一致するものが無い場合はenum値として解釈
-                                        if (int.TryParse(strValue, out var intValue)
-                                         && Enum.IsDefined(typeof(TEnum), intValue)) {
-                                            return (TEnum)Enum.ToObject(typeof(TEnum), intValue);
-                                        }
-                                    }
-
-                                    // 数値の場合はenum値として解釈
-                                    if (reader.TokenType == JsonTokenType.Number) {
-                                        var intValue = reader.GetInt32();
-                                        if (Enum.IsDefined(typeof(TEnum), intValue)) {
-                                            return (TEnum)Enum.ToObject(typeof(TEnum), intValue);
-                                        }
-                                    }
-
-                                    throw new JsonException($"Cannot Convert '{reader.GetString()}' to {typeof(TEnum).Name}");
-                                }
-
-                                public override void Write(Utf8JsonWriter writer, TEnum value, JsonSerializerOptions options) {
-                                    var field = typeof(TEnum).GetField(value.ToString());
-                                    var display = field?.GetCustomAttribute<DisplayAttribute>();
-
-                                    var output = display?.Name ?? value.ToString();
-                                    writer.WriteStringValue(output);
-                                }
-                            }
-                        }
-                        {{If(jsonValueObjectClassNames.Length > 0, () => $$"""
-
-
-                        """)}}
-                        {{If(readModel2Roots.Length > 0, () => $$"""
-
-                        {{RenderReadModel2JsonConverters(ctx, readModel2Roots)}}
-                        """)}}
-                        {{If(writeModel2Roots.Length > 0, () => $$"""
-
-                        {{If(readModel2Roots.Length > 0, () => $$"""
-
-
-                        """)}}
-                        {{RenderSaveCommandBaseConverter(writeModel2Roots)}}
-                        """)}}
+                        {{WithIndent(RenderJsonCustomConverters(customJsonConverters))}}
                     }
-                    """;
-            contents = contents
-                .Replace("options) {\n\n            if", "options) {\n    \n            if")
-                .Replace("}\n\n            if", "}\n    \n            if")
-                .Replace("}\n\n            throw new InvalidOperationException", "}\n    \n            throw new InvalidOperationException")
-                .Replace("}\n\n        public override void Write", "}\n    \n        public override void Write")
-                .Replace("}\n\n    public override JsonConverter? CreateConverter", "}\n    \n    public override JsonConverter? CreateConverter")
-                .Replace("options) {\n\n        var conveterType", "options) {\n    \n        var conveterType")
-                .Replace("Activator.CreateInstance(conveterType)!;\n\n    }", "Activator.CreateInstance(conveterType)!;\n    \n    }")
-                .Replace("}\n\n    private class EnumConverterForDisplayName<TEnum>", "}\n    \n    private class EnumConverterForDisplayName<TEnum>")
-                .Replace("Enum {\n\n        public override TEnum Read", "Enum {\n    \n        public override TEnum Read")
-                .Replace("}\n\n        if (reader.TokenType == JsonTokenType.String)", "}\n    \n        if (reader.TokenType == JsonTokenType.String)")
-                .Replace("}\n\n        // 数値の場合はenum値として解釈", "}\n    \n        // 数値の場合はenum値として解釈")
-                .Replace("}\n\n        throw new JsonException", "}\n    \n        throw new JsonException")
-                .Replace("}\n\n    public override void Write(Utf8JsonWriter", "}\n    \n    public override void Write(Utf8JsonWriter")
-                .Replace("display = field?.GetCustomAttribute<DisplayAttribute>();\n\n        var output", "display = field?.GetCustomAttribute<DisplayAttribute>();\n    \n        var output");
-            contents = Regex.Replace(contents, @"\n{3,}(    class DisplayDataBatchUpdateCommandConverter)", "\n\n$1");
-            return new SourceFile {
-                FileName = "JsonConversion.cs",
-                Contents = contents,
+                    """,
             };
         }
 
-        private static string RenderReadModel2JsonConverters(CodeRenderingContext ctx, RootAggregate[] readModel2Roots) {
-            var hasYearMonth = ctx.Schema.GetRootAggregates()
-                .SelectMany(root => root.EnumerateThisAndDescendants())
-                .SelectMany(aggregate => aggregate.GetMembers())
-                .OfType<Nijo.ImmutableSchema.ValueMember>()
-                .Any(member => member.Type is Nijo.ValueMemberTypes.YearMonthMember);
-            var shouldRenderDisplayDataBatchUpdateConverter = readModel2Roots.Length > 0
-                && !ctx.Schema.GetRootAggregates().Any(root => root.Model is Models.WriteModel2);
+        private static List<CustomJsonConverterSource> BuildCustomJsonConverters(
+            CodeRenderingContext ctx,
+            string[] jsonValueObjectClassNames,
+            RootAggregate[] readModel2Roots,
+            bool hasYearMonth,
+            bool hasFileAttachment,
+            bool shouldRenderDisplayDataBatchUpdateConverter,
+            RootAggregate[] writeModel2Roots) {
 
-            return "    " + WithIndent($$"""
+            var customJsonConverters = jsonValueObjectClassNames
+                .Select(className => new CustomJsonConverterSource {
+                    ConverterClassName = $"{className}.JsonValueConverter",
+                    ConverterClassDeclaring = string.Empty,
+                })
+                .ToList();
+
+            if (readModel2Roots.Length > 0) {
+                customJsonConverters.Add(new CustomJsonConverterSource {
+                    ConverterClassName = "CustomJsonConverters.DateJsonValueConverter",
+                    ConverterClassDeclaring = RenderDateJsonValueConverter(),
+                });
+                if (hasYearMonth) {
+                    customJsonConverters.Add(new CustomJsonConverterSource {
+                        ConverterClassName = "CustomJsonConverters.YearMonthJsonValueConverter",
+                        ConverterClassDeclaring = RenderYearMonthJsonValueConverter(ctx),
+                    });
+                }
+                if (hasFileAttachment) {
+                    customJsonConverters.Add(new CustomJsonConverterSource {
+                        ConverterClassName = "FileAttachmentMetadata.JsonValueConverter",
+                        ConverterClassDeclaring = string.Empty,
+                    });
+                }
+                if (shouldRenderDisplayDataBatchUpdateConverter) {
+                    customJsonConverters.Add(new CustomJsonConverterSource {
+                        ConverterClassName = "CustomJsonConverters.DisplayDataBatchUpdateCommandConverter",
+                        ConverterClassDeclaring = RenderDisplayDataBatchUpdateCommandConverter(readModel2Roots),
+                    });
+                }
+            }
+
+            if (writeModel2Roots.Length > 0) {
+                customJsonConverters.Add(new CustomJsonConverterSource {
+                    ConverterClassName = "CustomJsonConverters.SaveCommandBaseConverter",
+                    ConverterClassDeclaring = RenderSaveCommandBaseConverter(writeModel2Roots),
+                });
+            }
+
+            return customJsonConverters;
+        }
+
+        private static string RenderJsonSerializerOptionConverters(IReadOnlyCollection<CustomJsonConverterSource> customJsonConverters) {
+
+            return $$"""
+                option.Converters.Add(new CustomJsonConverters.IntegerValueConverter());
+                option.Converters.Add(new CustomJsonConverters.DecimalValueConverter());
+                option.Converters.Add(new CustomJsonConverters.DateTimeValueConverter());
+
+                {{customJsonConverters.SelectTextTemplate(converter => $$"""
+                option.Converters.Add(new {{converter.ConverterClassName}}());
+                """)}}
+                """;
+        }
+
+        private static string RenderJsonCustomConverters(IReadOnlyCollection<CustomJsonConverterSource> customJsonConverters) {
+            return $$"""
+                {{RenderIntegerValueConverter()}}
+                {{RenderDecimalValueConverter()}}
+                {{RenderDateTimeValueConverter()}}
+                {{RenderEnumConverterForDisplayNameFactory()}}
+                {{customJsonConverters.SelectTextTemplate(converter => $$"""
+
+                {{WithIndent(converter.ConverterClassDeclaring)}}
+                """)}}
+                """;
+        }
+
+        private static string RenderIntegerValueConverter() {
+            return """
+                public class IntegerValueConverter : JsonConverter<int?> {
+                    public override int? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+
+                        if (reader.TokenType == JsonTokenType.String) {
+                            if (string.IsNullOrWhiteSpace(reader.GetString())) {
+                                return null;
+                            }
+                            return decimal.TryParse(reader.GetString(), out var str)
+                                ? (int)str
+                                : throw new InvalidOperationException($"文字列の数値への変換に失敗しました。:{reader.GetString()}");
+                        }
+
+                        if (reader.TokenType == JsonTokenType.Number) {
+                            return reader.TryGetDecimal(out var dec)
+                                ? (int)dec
+                                : null;
+                        }
+
+                        if (reader.TokenType == JsonTokenType.Null) {
+                            return null;
+                        }
+
+                        throw new InvalidOperationException($"文字列または数値に変換できない値です。:{Encoding.UTF8.GetString(reader.ValueSpan)}");
+                    }
+
+                    public override void Write(Utf8JsonWriter writer, int? value, JsonSerializerOptions options) {
+                        if (value == null) {
+                            writer.WriteNullValue();
+                        } else {
+                            // Dpulsでは今のところ3桁カンマ区切りの数値しかないため、ここで一律カンマ区切りに変換している。
+                            writer.WriteStringValue(value?.ToString("#,##0"));
+                        }
+                    }
+                }
+                """;
+        }
+
+        private static string RenderDecimalValueConverter() {
+            return """
+                public class DecimalValueConverter : JsonConverter<decimal?> {
+                    public override decimal? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+                        if (reader.TokenType == JsonTokenType.String) {
+                            if (string.IsNullOrWhiteSpace(reader.GetString())) {
+                                return null;
+                            }
+                            return decimal.TryParse(reader.GetString(), out var str)
+                                ? str
+                                : throw new InvalidOperationException($"文字列の数値への変換に失敗しました。:{reader.GetString()}");
+                        }
+
+                        if (reader.TokenType == JsonTokenType.Number) {
+                            return reader.TryGetDecimal(out var dec)
+                                ? dec
+                                : null;
+                        }
+
+                        if (reader.TokenType == JsonTokenType.Null) {
+                            return null;
+                        }
+
+                        throw new InvalidOperationException($"文字列または数値に変換できない値です。:{Encoding.UTF8.GetString(reader.ValueSpan)}");
+                    }
+
+                    public override void Write(Utf8JsonWriter writer, decimal? value, JsonSerializerOptions options) {
+                        if (value == null) {
+                            writer.WriteNullValue();
+                        } else {
+                            // Dpulsでは今のところ3桁カンマ区切りの数値しかないため、ここで一律カンマ区切りに変換している。
+                            writer.WriteStringValue(value?.ToString("#,##0.############################"));
+                        }
+                    }
+                }
+                """;
+        }
+
+        private static string RenderDateTimeValueConverter() {
+            return """
+                public class DateTimeValueConverter : JsonConverter<DateTime?> {
+                    public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+                        var strDateTime = reader.GetString();
+                        return string.IsNullOrWhiteSpace(strDateTime)
+                            ? null
+                            : DateTime.Parse(strDateTime);
+                    }
+
+                    public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions options) {
+                        if (value == null) {
+                            writer.WriteNullValue();
+                        } else {
+                            writer.WriteStringValue(value.Value.ToString("yyyy/MM/dd HH:mm:ss"));
+                        }
+                    }
+                }
+                """;
+        }
+
+        private static string RenderEnumConverterForDisplayNameFactory() {
+            return """
+                public class EnumConverterForDisplayNameFactory : JsonConverterFactory {
+                    /// <summary>
+                    /// 値の型がenumならこのクラスの処理対象である。
+                    /// </summary>
+                    public override bool CanConvert(Type typeToConvert) {
+                        return typeToConvert.IsEnum;
+                    }
+
+                    public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options) {
+
+                        var conveterType = typeof(EnumConverterForDisplayName<>).MakeGenericType(typeToConvert);
+                        return (JsonConverter)Activator.CreateInstance(conveterType)!;
+
+                    }
+
+                    private class EnumConverterForDisplayName<TEnum> : JsonConverter<TEnum> where TEnum : struct, Enum {
+
+                        public override TEnum Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+                            if (reader.TokenType == JsonTokenType.Null) {
+                                return default;
+                            }
+
+                            if (reader.TokenType == JsonTokenType.String) {
+                                // [Display(Name = ...)] が指定されている場合はその名前で読み取る
+                                var strValue = reader.GetString();
+                                foreach (var field in typeof(TEnum).GetFields(BindingFlags.Public | BindingFlags.Static)) {
+                                    var display = field.GetCustomAttribute<DisplayAttribute>();
+                                    if (display?.Name == strValue || field.Name == strValue) {
+                                        return (TEnum)field.GetValue(null)!;
+                                    }
+                                }
+
+                                // 一致するものが無い場合はenum値として解釈
+                                if (int.TryParse(strValue, out var intValue)
+                                 && Enum.IsDefined(typeof(TEnum), intValue)) {
+                                    return (TEnum)Enum.ToObject(typeof(TEnum), intValue);
+                                }
+                            }
+
+                            // 数値の場合はenum値として解釈
+                            if (reader.TokenType == JsonTokenType.Number) {
+                                var intValue = reader.GetInt32();
+                                if (Enum.IsDefined(typeof(TEnum), intValue)) {
+                                    return (TEnum)Enum.ToObject(typeof(TEnum), intValue);
+                                }
+                            }
+
+                            throw new JsonException($"Cannot Convert '{reader.GetString()}' to {typeof(TEnum).Name}");
+                        }
+
+                        public override void Write(Utf8JsonWriter writer, TEnum value, JsonSerializerOptions options) {
+                            var field = typeof(TEnum).GetField(value.ToString());
+                            var display = field?.GetCustomAttribute<DisplayAttribute>();
+
+                            var output = display?.Name ?? value.ToString();
+                            writer.WriteStringValue(output);
+                        }
+                    }
+                }
+                """;
+        }
+
+        private static string RenderDateJsonValueConverter() {
+            return """
                 public class DateJsonValueConverter : JsonConverter<Date?> {
                     public override Date? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
                         var strDateTime = reader.GetString();
@@ -660,8 +708,11 @@ namespace Nijo.Parts.CSharp {
                         }
                     }
                 }
+                """;
+        }
 
-                {{If(hasYearMonth, () => $$"""
+        private static string RenderYearMonthJsonValueConverter(CodeRenderingContext ctx) {
+            return $$"""
                 public class YearMonthJsonValueConverter : JsonConverter<YearMonth?> {
                     public override YearMonth? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
                 {{If(ctx.IsLegacyCompatibilityMode(), () => $$"""
@@ -694,8 +745,11 @@ namespace Nijo.Parts.CSharp {
                         }
                     }
                 }
-                """)}}
-                {{If(shouldRenderDisplayDataBatchUpdateConverter, () => $$"""
+                """;
+        }
+
+        private static string RenderDisplayDataBatchUpdateCommandConverter(RootAggregate[] readModel2Roots) {
+            return $$"""
                 class DisplayDataBatchUpdateCommandConverter : JsonConverter<DisplayDataClassBase> {
                     public override DisplayDataClassBase? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
                         using var jsonDocument = JsonDocument.ParseValue(ref reader);
@@ -703,7 +757,7 @@ namespace Nijo.Parts.CSharp {
                         var value = jsonDocument.RootElement.GetProperty("values");
 
                 {{readModel2Roots.SelectTextTemplate(root => $$"""
-                        {{WithIndent(RenderReadModel2JsonConverterBranch(root), "        ")}}
+                    {{WithIndent(RenderReadModel2JsonConverterBranch(root))}}
                 """)}}
 
                         throw new InvalidOperationException(MSG.ERRC0026(dataType!));
@@ -713,8 +767,7 @@ namespace Nijo.Parts.CSharp {
                         JsonSerializer.Serialize(writer, value, options);
                     }
                 }
-                """)}}
-                """, "    ");
+                """;
         }
 
         private static string RenderReadModel2JsonConverterBranch(RootAggregate root) {
@@ -729,7 +782,7 @@ namespace Nijo.Parts.CSharp {
         }
 
         private static string RenderSaveCommandBaseConverter(RootAggregate[] writeModel2Roots) {
-            return "    " + WithIndent($$"""
+            return $$"""
                 class SaveCommandBaseConverter : JsonConverter<SaveCommandBase> {
                     public override SaveCommandBase? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
                         using var jsonDocument = JsonDocument.ParseValue(ref reader);
@@ -738,7 +791,7 @@ namespace Nijo.Parts.CSharp {
                         var value = jsonDocument.RootElement.GetProperty("values");
 
                 {{writeModel2Roots.SelectTextTemplate(root => $$"""
-                        {{WithIndent(RenderSaveCommandBaseConverterBranch(root), "        ")}}
+                        {{WithIndent(RenderSaveCommandBaseConverterBranch(root))}}
                 """)}}
 
                         throw new InvalidOperationException(MSG.ERRC0037(jsonDocument.RootElement.GetRawText()));
@@ -748,7 +801,7 @@ namespace Nijo.Parts.CSharp {
                         JsonSerializer.Serialize(writer, value, options);
                     }
                 }
-                """, "    ");
+                """;
         }
 
         private static string RenderSaveCommandBaseConverterBranch(RootAggregate root) {
@@ -843,7 +896,7 @@ namespace Nijo.Parts.CSharp {
                     namespace {{ctx.Config.RootNamespace}} {
                         public class SpaceFinderConst {
                     {{members.SelectTextTemplate(source => $$"""
-                            {{WithIndent(source, "        ")}}
+                            {{WithIndent(source)}}
                     """)}}
                         }
                     }
