@@ -507,12 +507,13 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
     internal static IEnumerable<string> RenderNodeOptions(XElement xElement, CodeRenderingContext ctx) {
 
         var options = ctx.SchemaParser.GetOptions(xElement);
+        var displayName = xElement.GetDisplayName();
 
         // DisplayName だけは未定義の場合は物理名を採用する。
         // メタデータを用いたカスタマイズ処理でDisplayNameの使用頻度が高いため。
         if (!options.Any(o => o.AttributeName == BasicNodeOptions.DisplayName.AttributeName)) {
             yield return $$"""
-                {{BasicNodeOptions.DisplayName.AttributeName.ToCamelCase()}}: '{{ctx.SchemaParser.GetPhysicalName(xElement)}}',
+                {{BasicNodeOptions.DisplayName.AttributeName.ToCamelCase()}}: '{{displayName.Replace("\\", "\\\\").Replace("'", "\\'")}}',
                 """;
         }
 
@@ -527,9 +528,14 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
         foreach (var option in options) {
             var attributeValue = xElement.Attribute(option.AttributeName)?.Value;
 
+            if (option.AttributeName == BasicNodeOptions.DisplayName.AttributeName) {
+                attributeValue = displayName;
+            }
+
             // フィルタリング: 空文字の文字列をスキップ
             if ((option.Type == E_NodeOptionType.String
               || option.Type == E_NodeOptionType.Integer)
+                && option.AttributeName != BasicNodeOptions.DisplayName.AttributeName
                 && string.IsNullOrWhiteSpace(attributeValue)) {
                 continue;
             }
@@ -578,12 +584,13 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
     internal static IEnumerable<string> RenderNodeOptionsCs(XElement xElement, CodeRenderingContext ctx) {
 
         var options = ctx.SchemaParser.GetOptions(xElement);
+        var displayName = xElement.GetDisplayName();
 
         // DisplayName だけは未定義の場合は物理名を採用する。
         // メタデータを用いたカスタマイズ処理でDisplayNameの使用頻度が高いため。
         if (!options.Any(o => o.AttributeName == BasicNodeOptions.DisplayName.AttributeName)) {
             yield return $$"""
-                {{BasicNodeOptions.DisplayName.AttributeName}} = "{{ctx.SchemaParser.GetPhysicalName(xElement)}}",
+                {{BasicNodeOptions.DisplayName.AttributeName}} = "{{displayName.Replace("\\", "\\\\").Replace("\"", "\\\"")}}",
                 """;
         }
 
@@ -598,9 +605,14 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
         foreach (var option in options) {
             var attributeValue = xElement.Attribute(option.AttributeName)?.Value;
 
+            if (option.AttributeName == BasicNodeOptions.DisplayName.AttributeName) {
+                attributeValue = displayName;
+            }
+
             // フィルタリング: 空文字の文字列をスキップ
             if ((option.Type == E_NodeOptionType.String
               || option.Type == E_NodeOptionType.Integer)
+                && option.AttributeName != BasicNodeOptions.DisplayName.AttributeName
                 && string.IsNullOrWhiteSpace(attributeValue)) {
                 continue;
             }

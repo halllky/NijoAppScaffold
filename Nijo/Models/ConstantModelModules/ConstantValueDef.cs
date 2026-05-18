@@ -28,7 +28,7 @@ namespace Nijo.Models.ConstantModelModules {
             Name = element.Name.LocalName;
             Type = element.Attribute(ConstantType.AttributeName)?.Value ?? CONSTTYPE_STRING;
             Value = element.Attribute(ConstantValue.AttributeName)?.Value ?? string.Empty;
-            DisplayName = element.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? Name;
+            DisplayName = element.GetDisplayName();
 
             // テンプレート文字列の場合、{0}, {1}, ... から自動的に引数を判定
             if (Type == CONSTTYPE_TEMPLATE) {

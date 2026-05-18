@@ -119,6 +119,20 @@ internal static class BasicNodeOptions {
         },
     };
 
+    internal static NodeOption DisplayNameIsEmpty = new() {
+        AttributeName = "DisplayNameIsEmpty",
+        DisplayName = "表示用名称を空にする",
+        Type = E_NodeOptionType.Boolean,
+        HelpText = $$"""
+            この属性が指定されている場合、{{DisplayName.AttributeName}} 属性の値にかかわらず表示用名称は空文字になります。
+            ラベルを表示しない項目を表現したい場合に使用してください。
+            """,
+        IsAvailable = (_, _) => true,
+        ValidateOthers = _ => {
+            // 特に制約なし
+        },
+    };
+
     internal static NodeOption DbName = new() {
         AttributeName = "DbName",
         DisplayName = "データベース上名称",

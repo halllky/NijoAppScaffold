@@ -18,7 +18,7 @@ namespace Nijo.Models.ConstantModelModules {
             _schemaParser = schemaParser;
 
             Name = element.Name.LocalName;
-            DisplayName = element.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? Name;
+            DisplayName = element.GetDisplayName();
         }
 
         private readonly XElement _element;

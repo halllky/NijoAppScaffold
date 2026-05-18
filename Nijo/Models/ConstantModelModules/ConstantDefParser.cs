@@ -17,7 +17,7 @@ internal class ConstantDefParser {
     internal ConstantDefParser(XElement rootAggregateElement, SchemaParseContext schemaParser) {
         _rootAggregateElement = rootAggregateElement;
         _schemaParser = schemaParser;
-        DisplayName = rootAggregateElement.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? rootAggregateElement.Name.LocalName;
+        DisplayName = rootAggregateElement.GetDisplayName();
         PhysicalName = _schemaParser.GetPhysicalName(rootAggregateElement);
     }
 

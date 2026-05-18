@@ -79,8 +79,7 @@ internal class GenericLookupTableParser {
 
                 yield return new GenericLookupTableCategory {
                     Name = categoryElement.Name.LocalName,
-                    DisplayName = categoryElement.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value
-                        ?? categoryElement.Name.LocalName,
+                    DisplayName = categoryElement.GetDisplayName(),
                     HardCodedKeys = keys,
                 };
             }

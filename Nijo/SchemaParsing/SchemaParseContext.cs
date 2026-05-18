@@ -139,7 +139,7 @@ public class SchemaParseContext {
                 if (!string.IsNullOrWhiteSpace(categoryName)) {
                     dynamicEnumDefinitions[legacyDynamicEnum.Name.LocalName] = (
                         categoryName,
-                        legacyDynamicEnum.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? legacyDynamicEnum.Name.LocalName);
+                        legacyDynamicEnum.GetDisplayName());
                 }
                 legacyDynamicEnum.Remove();
             }
@@ -172,7 +172,7 @@ public class SchemaParseContext {
             .Elements()) {
 
             var categoryName = categoryElement.Name.LocalName;
-            var displayName = categoryElement.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? categoryName;
+            var displayName = categoryElement.GetDisplayName();
 
             if (!dynamicEnumDefinitions.ContainsKey(categoryName)) {
                 dynamicEnumDefinitions[categoryName] = (categoryName, displayName);
@@ -205,7 +205,7 @@ public class SchemaParseContext {
 
             var parameterStructure = new XElement(parameterStructureName);
             parameterStructure.SetAttributeValue(ATTR_NODE_TYPE, "structure-model");
-            parameterStructure.SetAttributeValue(BasicNodeOptions.DisplayName.AttributeName, command.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? parameterStructureName);
+            parameterStructure.SetAttributeValue(BasicNodeOptions.DisplayName.AttributeName, command.GetDisplayName() == string.Empty ? string.Empty : command.GetDisplayName() ?? parameterStructureName);
 
             foreach (var member in command.Elements().ToArray()) {
                 var clonedMember = new XElement(member);
