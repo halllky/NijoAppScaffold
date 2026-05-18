@@ -97,6 +97,24 @@ internal static class BasicNodeOptions {
         },
     };
 
+    internal static NodeOption DisplayNameIsEmpty = new() {
+        AttributeName = "DisplayNameIsEmpty",
+        DisplayName = "表示用名称を空文字にする",
+        Type = E_NodeOptionType.Boolean,
+        HelpText = $$"""
+            表示用名称を明示的に空文字にしたい場合に指定してください。
+            {{DisplayName.AttributeName}} 属性と同時に指定することはできません。
+            """,
+        IsAvailable = (model, nodeType) => {
+            return true;
+        },
+        ValidateOthers = ctx => {
+            if (ctx.XElement.Attribute(DisplayName.AttributeName) != null) {
+                ctx.AddError($"{DisplayName.AttributeName} 属性と同時に指定することはできません。");
+            }
+        },
+    };
+
     internal static NodeOption DbName = new() {
         AttributeName = "DbName",
         DisplayName = "データベース上名称",

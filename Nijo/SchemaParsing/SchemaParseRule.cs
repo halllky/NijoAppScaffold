@@ -64,6 +64,7 @@ public class SchemaParseRule {
         };
         var nodeOptions = new NodeOption[] {
             BasicNodeOptions.DisplayName,
+            BasicNodeOptions.DisplayNameIsEmpty,
             BasicNodeOptions.DbName,
             BasicNodeOptions.LatinName,
             BasicNodeOptions.IsKey,

@@ -508,7 +508,11 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
         // DisplayName だけは未定義の場合は物理名を採用する。
         // メタデータを用いたカスタマイズ処理でDisplayNameの使用頻度が高いため。
-        if (!options.Any(o => o.AttributeName == BasicNodeOptions.DisplayName.AttributeName)) {
+        if (options.Any(o => o.AttributeName == BasicNodeOptions.DisplayNameIsEmpty.AttributeName)) {
+            yield return $$"""
+                {{BasicNodeOptions.DisplayName.AttributeName.ToCamelCase()}}: '',
+                """;
+        } else if (!options.Any(o => o.AttributeName == BasicNodeOptions.DisplayName.AttributeName)) {
             yield return $$"""
                 {{BasicNodeOptions.DisplayName.AttributeName.ToCamelCase()}}: '{{ctx.SchemaParser.GetPhysicalName(xElement)}}',
                 """;
@@ -579,7 +583,11 @@ internal class MetadataForPage : IMultiAggregateSourceFile {
 
         // DisplayName だけは未定義の場合は物理名を採用する。
         // メタデータを用いたカスタマイズ処理でDisplayNameの使用頻度が高いため。
-        if (!options.Any(o => o.AttributeName == BasicNodeOptions.DisplayName.AttributeName)) {
+        if (options.Any(o => o.AttributeName == BasicNodeOptions.DisplayNameIsEmpty.AttributeName)) {
+            yield return $$"""
+                {{BasicNodeOptions.DisplayName.AttributeName}} = "",
+                """;
+        } else if (!options.Any(o => o.AttributeName == BasicNodeOptions.DisplayName.AttributeName)) {
             yield return $$"""
                 {{BasicNodeOptions.DisplayName.AttributeName}} = "{{ctx.SchemaParser.GetPhysicalName(xElement)}}",
                 """;

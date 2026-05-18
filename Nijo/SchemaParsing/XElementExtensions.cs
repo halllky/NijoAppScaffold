@@ -15,6 +15,9 @@ internal static class SchemaParseContextExtensions {
     /// 表示名称
     /// </summary>
     internal static string GetDisplayName(this XElement xElement) {
+        if (xElement.Attribute(BasicNodeOptions.DisplayNameIsEmpty.AttributeName) != null) {
+            return string.Empty;
+        }
         return xElement.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? xElement.Name.LocalName;
     }
     /// <summary>
