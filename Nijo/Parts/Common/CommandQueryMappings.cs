@@ -63,7 +63,8 @@ namespace Nijo.Parts.Common {
         private readonly List<RootAggregate> _structureModels = [];
 
         void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
-            // 特になし
+            // ディープイコールのオプション型に依存しているので
+            ctx.Use<DeepEqualFunction.OptionType>();
         }
 
         void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
