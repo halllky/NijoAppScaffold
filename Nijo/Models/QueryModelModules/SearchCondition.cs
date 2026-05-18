@@ -2,6 +2,7 @@ using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
 using Nijo.Util.DotnetEx;
+using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,9 +16,20 @@ namespace Nijo.Models.QueryModelModules {
     /// </summary>
     internal static class SearchCondition {
         internal const string TS_BASE_TYPE_NAME = "SearchConditionBaseType";
+        private const string STRING_RANGE_FILTER_TS_TYPE_NAME = "{ from?: string | null; to?: string | null }";
 
         internal const string ASC_SUFFIX = "（昇順）";
         internal const string DESC_SUFFIX = "（降順）";
+
+        private static bool IsStringRangeSearch(ValueMember member) {
+            return member.Type is ValueMemberTypes.Word or ValueMemberTypes.Description or ValueMemberTypes.ValueObjectMember
+                && member.XElement.Attribute(BasicNodeOptions.StringSearchBehavior.AttributeName)?.Value == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_RANGE;
+        }
+
+        private static bool IsRangeFilter(ValueMember member) {
+            return IsStringRangeSearch(member)
+                || (member.Type.SearchBehavior != null && Regex.IsMatch(member.Type.SearchBehavior.FilterTsTypeName, @"\{.*from.*to.*\}"));
+        }
 
         /// <summary>
         /// 検索条件オブジェクトのエントリー。
@@ -248,7 +260,7 @@ namespace Nijo.Models.QueryModelModules {
                         : $"keys[{index}]";
 
                     // 範囲検索の場合はfrom, to 両方に代入する
-                    if (vm.Type.SearchBehavior != null && Regex.IsMatch(vm.Type.SearchBehavior.FilterTsTypeName, @"\{.*from.*to.*\}")) {
+                    if (IsRangeFilter(vm)) {
                         return $$"""
                             {{dataProperties[vm.ToMappingKey()].GetJoinedPathFromInstance(E_CsTs.TypeScript, ".")}} = { from: {{value}}, to: {{value}} }
                             """;
@@ -441,7 +453,9 @@ namespace Nijo.Models.QueryModelModules {
             string IFilterMember.RenderCSharpDeclaring(CodeRenderingContext ctx) {
                 var typeName = Member.OnlySearchCondition
                     ? Member.Type.CsDomainTypeName
-                    : Member.Type.SearchBehavior?.FilterCsTypeName;
+                    : IsStringRangeSearch(Member)
+                        ? $"{FromTo.CS_CLASS_NAME}<string?>"
+                        : Member.Type.SearchBehavior?.FilterCsTypeName;
                 return $$"""
                     {{NijoAttr.RenderAttributeValues(ctx, Member)}}
                     public {{typeName}}? {{Member.PhysicalName}} { get; set; }
@@ -450,7 +464,9 @@ namespace Nijo.Models.QueryModelModules {
             string IFilterMember.RenderTypeScriptDeclaring() {
                 var typeName = Member.OnlySearchCondition
                     ? Member.Type.TsTypeName
-                    : Member.Type.SearchBehavior?.FilterTsTypeName;
+                    : IsStringRangeSearch(Member)
+                        ? STRING_RANGE_FILTER_TS_TYPE_NAME
+                        : Member.Type.SearchBehavior?.FilterTsTypeName;
 
                 // { from, to } といったオブジェクトならnull不要
                 var withNull = typeName?.StartsWith("{") == true ? "" : " | null";
@@ -466,6 +482,9 @@ namespace Nijo.Models.QueryModelModules {
                         "boolean" => "false",
                         _ => "null",
                     };
+
+                } else if (IsStringRangeSearch(Member)) {
+                    return "{ from: '', to: '' }";
 
                 } else {
                     return SearchBehavior!.RenderTsNewObjectFunctionValue();

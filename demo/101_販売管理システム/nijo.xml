@@ -451,7 +451,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
         Type="int"
         UniqueId="b583f019-e406-407e-94db-588a6c19dadc" />
       <外部システム側ID
-        StringSearchBehavior="Exact"
+        StringSearchBehavior="Range"
         Type="word"
         UniqueId="643fcd6c-1a53-406f-9d58-576b6eb5a3de" />
       <商品名
