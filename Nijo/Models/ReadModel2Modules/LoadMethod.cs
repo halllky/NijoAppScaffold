@@ -397,7 +397,10 @@ namespace Nijo.Models.ReadModel2Modules {
                     m.Member.Type.UseStringSortInSearch(m.Member, context)))
                 .ToArray();
             var legacyUnsupportedFilterMembers = Array.Empty<SearchCondition.FilterableMember>();
-            var keys = _aggregate.GetKeyVMs().ToArray();
+            var keys = _aggregate
+                .GetKeyVMs()
+                .Where(vm => queryItemMembers.ContainsKey(vm.ToMappingKey()))
+                .ToArray();
             var defaultOrderBy = keys.SelectTextTemplate((vm, i) => {
                 var path = string.Join("!.", queryItemMembers[vm.ToMappingKey()].GetPathFromInstance().Select(p => p.Metadata.GetPropertyName(E_CsTs.CSharp)));
                 return i == 0
