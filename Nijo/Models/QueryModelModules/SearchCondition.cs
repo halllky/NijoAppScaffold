@@ -1,6 +1,7 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
+using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -248,7 +249,7 @@ namespace Nijo.Models.QueryModelModules {
                         : $"keys[{index}]";
 
                     // 範囲検索の場合はfrom, to 両方に代入する
-                    if (vm.Type.SearchBehavior != null && Regex.IsMatch(vm.Type.SearchBehavior.FilterTsTypeName, @"\{.*from.*to.*\}")) {
+                    if (HasFromToFilter(vm)) {
                         return $$"""
                             {{dataProperties[vm.ToMappingKey()].GetJoinedPathFromInstance(E_CsTs.TypeScript, ".")}} = { from: {{value}}, to: {{value}} }
                             """;
@@ -441,7 +442,7 @@ namespace Nijo.Models.QueryModelModules {
             string IFilterMember.RenderCSharpDeclaring(CodeRenderingContext ctx) {
                 var typeName = Member.OnlySearchCondition
                     ? Member.Type.CsDomainTypeName
-                    : Member.Type.SearchBehavior?.FilterCsTypeName;
+                    : GetFilterCsTypeName(Member);
                 return $$"""
                     {{NijoAttr.RenderAttributeValues(ctx, Member)}}
                     public {{typeName}}? {{Member.PhysicalName}} { get; set; }
@@ -450,7 +451,7 @@ namespace Nijo.Models.QueryModelModules {
             string IFilterMember.RenderTypeScriptDeclaring() {
                 var typeName = Member.OnlySearchCondition
                     ? Member.Type.TsTypeName
-                    : Member.Type.SearchBehavior?.FilterTsTypeName;
+                    : GetFilterTsTypeName(Member);
 
                 // { from, to } といったオブジェクトならnull不要
                 var withNull = typeName?.StartsWith("{") == true ? "" : " | null";
@@ -468,13 +469,41 @@ namespace Nijo.Models.QueryModelModules {
                     };
 
                 } else {
-                    return SearchBehavior!.RenderTsNewObjectFunctionValue();
+                    return GetFilterTsInitializer(Member);
                 }
             }
 
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => Member.PhysicalName;
             IValueMemberType IInstanceValuePropertyMetadata.Type => Member.Type;
+        }
+
+        private static bool IsStringRangeSearchMember(ValueMember member) {
+            return member.Type is ValueMemberTypes.Word or ValueMemberTypes.Description or ValueMemberTypes.ValueObjectMember
+                && BasicNodeOptions.IsRangeSearchBehavior(member.XElement);
+        }
+
+        private static bool HasFromToFilter(ValueMember member) {
+            return IsStringRangeSearchMember(member)
+                || member.Type.SearchBehavior != null && Regex.IsMatch(member.Type.SearchBehavior.FilterTsTypeName, @"\{.*from.*to.*\}");
+        }
+
+        private static string? GetFilterCsTypeName(ValueMember member) {
+            return IsStringRangeSearchMember(member)
+                ? $"{FromTo.CS_CLASS_NAME}<string?>"
+                : member.Type.SearchBehavior?.FilterCsTypeName;
+        }
+
+        private static string? GetFilterTsTypeName(ValueMember member) {
+            return IsStringRangeSearchMember(member)
+                ? "{ from?: string | null; to?: string | null }"
+                : member.Type.SearchBehavior?.FilterTsTypeName;
+        }
+
+        private static string GetFilterTsInitializer(ValueMember member) {
+            return IsStringRangeSearchMember(member)
+                ? "{ from: '', to: '' }"
+                : member.Type.SearchBehavior!.RenderTsNewObjectFunctionValue();
         }
         /// <summary>
         /// Ref 部分のフィルターのコンテナ

@@ -1,6 +1,7 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
+using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -263,7 +264,7 @@ namespace Nijo.Models.ReadModel2Modules {
                         ? $"Number(keys[{index}])"
                         : $"keys[{index}]";
 
-                    if (vm.Type.SearchBehavior != null && Regex.IsMatch(vm.Type.SearchBehavior.FilterTsTypeName, @"\{.*from.*to.*\}")) {
+                    if (HasFromToFilter(vm)) {
                         return $$"""
                             {{dataProperties[vm.ToMappingKey()].GetJoinedPathFromInstance(E_CsTs.TypeScript, ".")}} = { from: {{value}}, to: {{value}} }
                             """;
@@ -345,10 +346,10 @@ namespace Nijo.Models.ReadModel2Modules {
 
                         static string GetLegacyCsTypeName(FilterValueMember value) {
                             var typeName = ShouldUseLegacySearchBehavior(value.Member)
-                                ? value.Member.Type.SearchBehavior?.FilterCsTypeName
+                                ? GetFilterCsTypeName(value.Member)
                                 : value.Member.OnlySearchCondition
                                 ? value.Member.Type.CsDomainTypeName
-                                : value.Member.Type.SearchBehavior?.FilterCsTypeName
+                                : GetFilterCsTypeName(value.Member)
                                 ?? (IsLegacyByteArraySearchMember(value.Member) ? value.Member.Type.CsDomainTypeName : null);
 
                             return typeName?.Replace("DateOnly", "Date") ?? string.Empty;
@@ -640,10 +641,10 @@ namespace Nijo.Models.ReadModel2Modules {
 
             string IFilterMember.RenderCSharpDeclaring(CodeRenderingContext ctx) {
                 var typeName = ShouldUseLegacySearchBehavior(Member)
-                    ? Member.Type.SearchBehavior?.FilterCsTypeName
+                    ? GetFilterCsTypeName(Member)
                     : Member.OnlySearchCondition
                     ? Member.Type.CsDomainTypeName
-                    : Member.Type.SearchBehavior?.FilterCsTypeName
+                    : GetFilterCsTypeName(Member)
                     ?? (IsLegacyByteArraySearchMember(Member) ? Member.Type.CsDomainTypeName : null);
                 return $$"""
                     {{NijoAttr.RenderAttributeValues(ctx, Member)}}
@@ -654,14 +655,12 @@ namespace Nijo.Models.ReadModel2Modules {
                 if (CodeRenderingContext.CurrentContext.IsLegacyCompatibilityMode()) {
                     var legacyPrimitiveType = GetLegacySearchConditionPrimitiveTsType(Member);
                     var legacyTypeName = ShouldUseLegacySearchBehavior(Member)
-                        ? SearchBehavior?.FilterTsTypeName is string legacyFilterTsTypeName
-                            && Regex.IsMatch(legacyFilterTsTypeName, @"\{.*from.*to.*\}")
+                        ? HasFromToFilter(Member)
                             ? $"{{ from?: {legacyPrimitiveType}, to?: {legacyPrimitiveType} }}"
                             : GetLegacySearchConditionTsType(Member)
                         : Member.OnlySearchCondition
                         ? legacyPrimitiveType
-                        : SearchBehavior?.FilterTsTypeName is string defaultFilterTsTypeName
-                            && Regex.IsMatch(defaultFilterTsTypeName, @"\{.*from.*to.*\}")
+                        : HasFromToFilter(Member)
                             ? $"{{ from?: {legacyPrimitiveType}, to?: {legacyPrimitiveType} }}"
                             : GetLegacySearchConditionTsType(Member);
                     return $$"""
@@ -670,10 +669,10 @@ namespace Nijo.Models.ReadModel2Modules {
                 }
 
                 var typeName = ShouldUseLegacySearchBehavior(Member)
-                    ? Member.Type.SearchBehavior?.FilterTsTypeName
+                    ? GetFilterTsTypeName(Member)
                     : Member.OnlySearchCondition
                     ? Member.Type.TsTypeName
-                    : Member.Type.SearchBehavior?.FilterTsTypeName;
+                    : GetFilterTsTypeName(Member);
                 var withNull = typeName?.StartsWith("{") == true ? string.Empty : " | null";
                 return $$"""
                     {{Member.PhysicalName}}?: {{typeName}}{{withNull}}
@@ -688,7 +687,7 @@ namespace Nijo.Models.ReadModel2Modules {
                     };
                 }
 
-                return SearchBehavior!.RenderTsNewObjectFunctionValue();
+                return GetFilterTsInitializer(Member);
             }
 
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
@@ -719,6 +718,34 @@ namespace Nijo.Models.ReadModel2Modules {
                     _ => "string",
                 };
             }
+        }
+
+        private static bool IsStringRangeSearchMember(ValueMember member) {
+            return member.Type is ValueMemberTypes.Word or ValueMemberTypes.Description or ValueMemberTypes.ValueObjectMember
+                && BasicNodeOptions.IsRangeSearchBehavior(member.XElement);
+        }
+
+        private static bool HasFromToFilter(ValueMember member) {
+            return IsStringRangeSearchMember(member)
+                || member.Type.SearchBehavior != null && Regex.IsMatch(member.Type.SearchBehavior.FilterTsTypeName, @"\{.*from.*to.*\}");
+        }
+
+        private static string? GetFilterCsTypeName(ValueMember member) {
+            return IsStringRangeSearchMember(member)
+                ? $"{FromTo.CS_CLASS_NAME}<string?>"
+                : member.Type.SearchBehavior?.FilterCsTypeName;
+        }
+
+        private static string? GetFilterTsTypeName(ValueMember member) {
+            return IsStringRangeSearchMember(member)
+                ? "{ from?: string | null; to?: string | null }"
+                : member.Type.SearchBehavior?.FilterTsTypeName;
+        }
+
+        private static string GetFilterTsInitializer(ValueMember member) {
+            return IsStringRangeSearchMember(member)
+                ? "{ from: '', to: '' }"
+                : member.Type.SearchBehavior!.RenderTsNewObjectFunctionValue();
         }
 
         internal class FilterRefMember : IFilterMember, IInstanceStructurePropertyMetadata {

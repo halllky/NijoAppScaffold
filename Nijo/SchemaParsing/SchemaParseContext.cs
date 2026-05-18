@@ -64,6 +64,7 @@ public class SchemaParseContext {
         ["前方一致"] = BasicNodeOptions.STRING_SEARCH_BEHAVIOR_FORWARD,
         ["後方一致"] = BasicNodeOptions.STRING_SEARCH_BEHAVIOR_BACKWARD,
         ["完全一致"] = BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT,
+        ["範囲検索"] = BasicNodeOptions.STRING_SEARCH_BEHAVIOR_RANGE,
     };
 
     /// <summary>

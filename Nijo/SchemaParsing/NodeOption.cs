@@ -583,6 +583,7 @@ internal static class BasicNodeOptions {
             STRING_SEARCH_BEHAVIOR_FORWARD,
             STRING_SEARCH_BEHAVIOR_BACKWARD,
             STRING_SEARCH_BEHAVIOR_EXACT,
+            STRING_SEARCH_BEHAVIOR_RANGE,
         },
         HelpText = $$"""
             検索時の挙動を指定します。
@@ -590,6 +591,7 @@ internal static class BasicNodeOptions {
             - {{STRING_SEARCH_BEHAVIOR_FORWARD}}: 前方一致
             - {{STRING_SEARCH_BEHAVIOR_BACKWARD}}: 後方一致
             - {{STRING_SEARCH_BEHAVIOR_EXACT}}: 完全一致
+            - {{STRING_SEARCH_BEHAVIOR_RANGE}}: 範囲検索
             """,
         IsAvailable = (model, nodeType) => {
             return (model is QueryModel || IsDataModelLike(model))
@@ -624,6 +626,7 @@ internal static class BasicNodeOptions {
                 STRING_SEARCH_BEHAVIOR_FORWARD,
                 STRING_SEARCH_BEHAVIOR_BACKWARD,
                 STRING_SEARCH_BEHAVIOR_EXACT,
+                STRING_SEARCH_BEHAVIOR_RANGE,
             };
             if (!validValues.Contains(ctx.Value)) {
                 ctx.AddError($"検索挙動には {string.Join(", ", validValues)} のいずれかを指定してください。");
@@ -634,6 +637,11 @@ internal static class BasicNodeOptions {
     internal const string STRING_SEARCH_BEHAVIOR_FORWARD = "Forward";
     internal const string STRING_SEARCH_BEHAVIOR_BACKWARD = "Backward";
     internal const string STRING_SEARCH_BEHAVIOR_EXACT = "Exact";
+    internal const string STRING_SEARCH_BEHAVIOR_RANGE = "Range";
+
+    internal static bool IsRangeSearchBehavior(XElement element) {
+        return element.Attribute(StringSearchBehavior.AttributeName)?.Value == STRING_SEARCH_BEHAVIOR_RANGE;
+    }
     #endregion QueryModel用
 
 

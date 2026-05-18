@@ -1,5 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.Models.QueryModelModules;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
@@ -25,7 +26,7 @@ namespace Nijo.ValueMemberTypes {
             return $$"""
                 改行を含む長い文章を格納する型です。
                 備考、説明、コメントなどの文章データに適しています。
-                検索時の挙動は部分一致検索が可能です。
+                検索時の挙動は完全一致・部分一致・前方一致・後方一致・範囲検索から選択可能です。
                 """;
         }
 
@@ -54,6 +55,10 @@ namespace Nijo.ValueMemberTypes {
                     && vm.SchemaPathNode.XElement.Attribute(BasicNodeOptions.StringSearchBehavior.AttributeName)?.Value is string s
                     ? s
                     : BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL;
+
+                if (searchBehavior == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_RANGE) {
+                    return RangeSearchRenderer.RenderRangeSearchFiltering(ctx);
+                }
 
                 string GetComparison(string target) {
                     if (ctx.CodeRenderingContext.IsLegacyCompatibilityMode() && searchBehavior == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL) {

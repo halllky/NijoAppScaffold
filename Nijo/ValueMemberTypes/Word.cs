@@ -1,5 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.Models.QueryModelModules;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
@@ -26,7 +27,7 @@ internal class Word : IValueMemberType {
         return $$"""
             文字列を格納する型です。
             名前などの、改行を含まない文字列データに適しています。
-            検索時の挙動は完全一致・部分一致・前方一致・後方一致から選択可能です。
+            検索時の挙動は完全一致・部分一致・前方一致・後方一致・範囲検索から選択可能です。
             """;
     }
 
@@ -61,6 +62,10 @@ internal class Word : IValueMemberType {
                 && searchMetadata.SchemaPathNode.XElement.Attribute(BasicNodeOptions.StringSearchBehavior.AttributeName)?.Value is string s
                 ? s
                 : BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL;
+
+            if (searchBehavior == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_RANGE) {
+                return RangeSearchRenderer.RenderRangeSearchFiltering(ctx);
+            }
 
             if (ctx.CodeRenderingContext.IsLegacyCompatibilityMode() && legacySchemaTypeName == "file") {
                 return $"// {sourceMember?.DisplayName ?? ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)} に対する検索はサポ－トされていません。";
