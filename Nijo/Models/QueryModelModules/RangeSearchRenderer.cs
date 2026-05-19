@@ -17,7 +17,6 @@ namespace Nijo.Models.QueryModelModules {
         public static string RenderRangeSearchFiltering(FilterStatementRenderingContext ctx) {
             var query = ctx.Query.Root.Name;
             var cast = ctx.SearchCondition.Metadata.Type.RenderCastToPrimitiveType();
-            var queryCast = ctx.Query.Metadata.Type.RenderCastToPrimitiveType(notNull: true);
 
             var fullpathNullable = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");
             var fullpathNotNull = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, ".");
@@ -25,8 +24,8 @@ namespace Nijo.Models.QueryModelModules {
             var queryFullPath = ctx.Query.GetFlattenArrayPath(E_CsTs.CSharp, out var isMany);
             var queryOwnerFullPath = queryFullPath.SkipLast(1);
 
-            var manyTarget = RenderQueryTarget($"y.{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}");
-            var singleTarget = RenderQueryTarget($"x.{queryFullPath.Join(".")}");
+            var manyTarget = $"y.{ctx.Query.Metadata.GetPropertyName(E_CsTs.CSharp)}";
+            var singleTarget = $"x.{queryFullPath.Join(".")}";
 
             var manyFromToCondition = RenderComparison(manyTarget, ">=", "from") + " && " + RenderComparison(manyTarget, "<=", "to");
             var singleFromToCondition = RenderComparison(singleTarget, ">=", "from") + " && " + RenderComparison(singleTarget, "<=", "to");
@@ -60,12 +59,6 @@ namespace Nijo.Models.QueryModelModules {
                 """)}}
                 }
                 """;
-
-            string RenderQueryTarget(string target) {
-                return string.IsNullOrEmpty(queryCast)
-                    ? target
-                    : $"{queryCast}{target}";
-            }
 
             string RenderComparison(string target, string op, string value) {
                 if (ctx.Query.Metadata.Type.CsPrimitiveTypeName == "string") {
