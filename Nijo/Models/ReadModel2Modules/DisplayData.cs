@@ -1045,6 +1045,7 @@ namespace Nijo.Models.ReadModel2Modules {
 
                 return refEntry
                     .GetKeyVMs()
+                    .Where(key => leftMembers.ContainsKey(key.ToMappingKey()) && rightMembers.ContainsKey(key.ToMappingKey()))
                     .SelectTextTemplate(key => {
                         var leftProp = leftMembers[key.ToMappingKey()].GetJoinedPathFromInstance(E_CsTs.TypeScript, "?.");
                         var rightProp = rightMembers[key.ToMappingKey()].GetJoinedPathFromInstance(E_CsTs.TypeScript, "?.");
