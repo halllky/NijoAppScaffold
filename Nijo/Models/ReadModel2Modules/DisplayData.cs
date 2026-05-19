@@ -653,9 +653,6 @@ namespace Nijo.Models.ReadModel2Modules {
                 .Select(child => new DisplayData(child.Aggregate).RenderDeepEqualFunctionRecursively(ctx))
                 .Where(source => !string.IsNullOrWhiteSpace(source))
                 .ToArray();
-            var descendantsText = descendants.Length == 0
-                ? string.Empty
-                : Environment.NewLine + string.Join(Environment.NewLine, descendants);
 
             if (ctx.IsLegacyCompatibilityMode()) {
                 var legacyDescendants = Aggregate.GetRoot().Model is Models.WriteModel2
@@ -663,27 +660,30 @@ namespace Nijo.Models.ReadModel2Modules {
                     : GetChildMembers()
                         .SelectMany(child => EnumerateLegacyDeepEqualFunctions(new DisplayData(child.Aggregate)))
                         .ToArray();
-                var legacyDescendantsText = legacyDescendants.Length == 0
-                    ? string.Empty
-                    : Environment.NewLine + string.Join(Environment.NewLine, legacyDescendants);
 
                 return $$"""
                     /** 2つの{{Aggregate.DisplayName}}オブジェクトの値を比較し、一致しているかを返します。 */
                     export const {{DeepEqualFunction}} = (a: {{TsTypeName}}, b: {{TsTypeName}}): boolean => {
-                      {{WithIndent(RenderLegacyDeepEqualBody(Aggregate, "a", "b"), "  ")}}
+                      {{WithIndent(RenderLegacyDeepEqualBody(Aggregate, "a", "b"))}}
                       if (a.{{WILL_BE_DELETED_TS}} !== b.{{WILL_BE_DELETED_TS}}) return false
                       return true
-                    }{{legacyDescendantsText}}
+                    }
+                    {{legacyDescendants.SelectTextTemplate(descendant => $$"""
+                    {{descendant}}
+                    """)}}
                     """;
             }
 
             return $$"""
                 /** 2つの{{Aggregate.DisplayName}}オブジェクトの値を比較し、一致しているかを返します。 */
                 export const {{DeepEqualFunction}} = (a: {{TsTypeName}}, b: {{TsTypeName}}): boolean => {
-                  {{WithIndent(RenderDeepEqualBody(Aggregate, "a", "b"), "  ")}}
+                  {{WithIndent(RenderDeepEqualBody(Aggregate, "a", "b"))}}
                   if (a.{{WILL_BE_DELETED_TS}} !== b.{{WILL_BE_DELETED_TS}}) return false
                   return true
-                }{{descendantsText}}
+                }
+                {{descendants.SelectTextTemplate(descendant => $$"""
+                {{descendant}}
+                """)}}
                 """;
 
             static IEnumerable<string> EnumerateLegacyDeepEqualFunctions(DisplayData displayData) {
@@ -691,7 +691,7 @@ namespace Nijo.Models.ReadModel2Modules {
                     yield return $$"""
                         /** 2つの{{displayData.Aggregate.DisplayName}}オブジェクトの値を比較し、一致しているかを返します。 */
                         export const {{displayData.DeepEqualFunction}} = (a: {{displayData.TsTypeName}}, b: {{displayData.TsTypeName}}): boolean => {
-                          {{WithIndent(RenderLegacyDeepEqualBody(displayData.Aggregate, "a", "b"), "  ")}}
+                          {{WithIndent(RenderLegacyDeepEqualBody(displayData.Aggregate, "a", "b"))}}
                           if (a.{{WILL_BE_DELETED_TS}} !== b.{{WILL_BE_DELETED_TS}}) return false
                           return true
                         }
@@ -705,6 +705,7 @@ namespace Nijo.Models.ReadModel2Modules {
                 }
             }
         }
+
         internal string RenderCheckChangesFunction(CodeRenderingContext ctx) {
             if (ctx.IsLegacyCompatibilityMode()) {
                 var descendants = Aggregate.GetRoot().Model is Models.WriteModel2
@@ -890,7 +891,7 @@ namespace Nijo.Models.ReadModel2Modules {
             return $$"""
                 {{legacyDynamicEnumTypeDef}}/** {{Aggregate.DisplayName}}の各メンバーの制約の型 */
                 type {{UiConstraintTypeName}} = {
-                  {{WithIndent(RenderUiConstraintMembers(this), "  ")}}
+                  {{WithIndent(RenderUiConstraintMembers(this))}}
                 }
                 """;
 
@@ -919,7 +920,7 @@ namespace Nijo.Models.ReadModel2Modules {
             return $$"""
                 /** {{Aggregate.DisplayName}}の各メンバーの制約の具体的な値 */
                 export const {{UiConstraingValueName}}: {{UiConstraintTypeName}} = {
-                  {{WithIndent(RenderUiConstraintValues(this), "  ")}}
+                  {{WithIndent(RenderUiConstraintValues(this))}}
                 }
                 """;
         }
@@ -974,7 +975,7 @@ namespace Nijo.Models.ReadModel2Modules {
         }
 
         private static string RenderLegacyDeepEqualBody(AggregateBase aggregate, string left, string right) {
-            return string.Join(Environment.NewLine, aggregate.GetMembers()
+            return aggregate.GetMembers()
                 .Select(member => member switch {
                     ValueMember valueMember when !valueMember.OnlySearchCondition || valueMember.Type.CsDomainTypeName == "bool" => RenderLegacyValueMember(valueMember, left, right),
                     RefToMember refToMember => RenderLegacyRefMember(refToMember, left, right),
@@ -982,7 +983,10 @@ namespace Nijo.Models.ReadModel2Modules {
                     ChildrenAggregate childrenAggregate when !new DisplayData(childrenAggregate).HasVersion => RenderLegacyChildrenAggregate(childrenAggregate, left, right),
                     _ => string.Empty,
                 })
-                .Where(rendered => rendered != string.Empty));
+                .Where(rendered => rendered != string.Empty)
+                .SelectTextTemplate(rendered => $$"""
+                    {{rendered}}
+                    """);
 
             static string RenderLegacyValueMember(ValueMember valueMember, string left, string right) {
                 var leftValue = $"{left}.{VALUES_TS}?.{valueMember.PhysicalName}";
@@ -1039,13 +1043,15 @@ namespace Nijo.Models.ReadModel2Modules {
                     .GroupBy(property => property.Metadata.SchemaPathNode.ToMappingKey())
                     .ToDictionary(group => group.Key, group => group.OrderBy(property => property.GetPathFromInstance().Count()).First());
 
-                return string.Join(Environment.NewLine, refEntry
+                return refEntry
                     .GetKeyVMs()
-                    .Select(key => {
+                    .SelectTextTemplate(key => {
                         var leftProp = leftMembers[key.ToMappingKey()].GetJoinedPathFromInstance(E_CsTs.TypeScript, "?.");
                         var rightProp = rightMembers[key.ToMappingKey()].GetJoinedPathFromInstance(E_CsTs.TypeScript, "?.");
-                        return $"if (({leftProp} ?? undefined) !== ({rightProp} ?? undefined)) return false";
-                    }));
+                        return $$"""
+                            if (({{leftProp}} ?? undefined) !== ({{rightProp}} ?? undefined)) return false
+                            """;
+                    });
             }
 
             static string RenderLegacyChildAggregate(ChildAggregate childAggregate, string left, string right) {
@@ -1063,45 +1069,41 @@ namespace Nijo.Models.ReadModel2Modules {
                 var leftItemVar = $"a{depth}";
                 var rightItemVar = $"b{depth}";
 
-                return string.Join(Environment.NewLine, new[] {
-                                        $"if ({leftItems}.length !== {rightItems}.length) return false;",
-                                        $"if (({leftItems} ?? undefined) !== undefined && ({rightItems} ?? undefined) !== undefined) {{",
-                                        $"  for (let {indexVar} = 0; {indexVar} < {leftItems}.length; {indexVar}++) {{",
-                                        $"    const {leftItemVar} = {leftItems}[{indexVar}]",
-                                        $"    const {rightItemVar} = {rightItems}[{indexVar}]",
-                                    "    " + WithIndent(RenderLegacyDeepEqualBody(childrenAggregate, leftItemVar, rightItemVar), "    "),
-                                        "  }",
-                                        "}",
-                                });
+                return $$"""
+                    if ({{leftItems}}.length !== {{rightItems}}.length) return false;
+                    if (({{leftItems}} ?? undefined) !== undefined && ({{rightItems}} ?? undefined) !== undefined) {
+                      for (let {{indexVar}} = 0; {{indexVar}} < {{leftItems}}.length; {{indexVar}}++) {
+                        const {{leftItemVar}} = {{leftItems}}[{{indexVar}}]
+                        const {{rightItemVar}} = {{rightItems}}[{{indexVar}}]
+                        {{WithIndent(RenderLegacyDeepEqualBody(childrenAggregate, leftItemVar, rightItemVar))}}
+                      }
+                    }
+                    """;
             }
         }
 
         private static string RenderUiConstraintMembers(EditablePresentationObject displayData) {
-            static string IndentAll(string content, string indent) => indent + WithIndent(content, indent);
-
             var uiConstraintValueMembers = EnumerateUiConstraintValueMembers(displayData).ToArray();
+            var childMembers = displayData.GetChildMembers().ToArray();
 
-            var valueMembers = uiConstraintValueMembers
-                .Select(member => member switch {
-                    EditablePresentationObjectValueMember valueMember => $"  {valueMember.PropertyName}: {GetUiConstraintTypeName(valueMember.Member)}",
-                    EditablePresentationObjectRefMember refMember => $"  {refMember.PropertyName}: AutoGeneratedUtil.MemberConstraintBase",
-                    _ => string.Empty,
-                })
-                .Where(text => text != string.Empty);
-
-            var childMembers = displayData.GetChildMembers()
-                .Select(child => string.Join(Environment.NewLine, new[] {
-                            $"{child.PhysicalName}: {{",
-                            IndentAll(RenderUiConstraintMembers(child), "  "),
-                            "}",
-                }));
-
-            return string.Join(Environment.NewLine, new[] {
-                        "values: {",
-                        string.Join(Environment.NewLine, valueMembers),
-                        "}",
-                        string.Join(Environment.NewLine, childMembers),
-                    }.Where(text => text != string.Empty));
+            return $$"""
+                values: {
+                {{uiConstraintValueMembers.SelectTextTemplate(member => member switch {
+                EditablePresentationObjectValueMember valueMember => $$"""
+                      {{valueMember.PropertyName}}: {{GetUiConstraintTypeName(valueMember.Member)}}
+                    """,
+                EditablePresentationObjectRefMember refMember => $$"""
+                      {{refMember.PropertyName}}: AutoGeneratedUtil.MemberConstraintBase
+                    """,
+                _ => string.Empty,
+            })}}
+                }
+                {{childMembers.SelectTextTemplate(child => $$"""
+                {{child.PhysicalName}}: {
+                  {{WithIndent(RenderUiConstraintMembers(child))}}
+                }
+                """)}}
+                """;
         }
 
         private string RenderLegacyChildrenCheckChanges(EditablePresentationObjectChildrenDescendant children) {
@@ -1111,16 +1113,15 @@ namespace Nijo.Models.ReadModel2Modules {
             var defaultValuesVar = $"{children.PhysicalName}{defaultValuesRoot}0";
             var currentValuesVar = $"{children.PhysicalName}{currentValuesRoot}0";
             var childKeys = children.Aggregate.GetMembers().OfType<ValueMember>().Where(member => member.IsKey).ToArray();
-            var findCondition = childKeys.Select(key => $$"""
-                b.{{VALUES_TS}}?.{{key.PhysicalName}} === after.{{VALUES_TS}}?.{{key.PhysicalName}}
-                """).Join(" && ");
 
             return $$"""
                 const {{defaultValuesVar}} = {{defaultValuesRoot}}.{{children.PhysicalName}} ?? []
                 const {{currentValuesVar}} = {{currentValuesRoot}}.{{children.PhysicalName}} ?? []
                 for (const after of {{currentValuesVar}}) {
                   const before = {{defaultValuesVar}}.find(b =>
-                    {{findCondition}})
+                    {{childKeys.SelectTextTemplate((key, index) => $$"""
+                    {{(index == 0 ? string.Empty : "&& ")}}b.{{VALUES_TS}}?.{{key.PhysicalName}} === after.{{VALUES_TS}}?.{{key.PhysicalName}}
+                    """)}})
                   if (before && {{childDisplayData.DeepEqualFunction}}(before, after)) {
                     after.{{WILL_BE_CHANGED_TS}} = false
                   } else {
@@ -1132,31 +1133,26 @@ namespace Nijo.Models.ReadModel2Modules {
 
         }
         private static string RenderUiConstraintValues(EditablePresentationObject displayData) {
-            static string IndentAll(string content, string indent) => indent + WithIndent(content, indent);
-
-            var uiConstraintValueMembers = EnumerateUiConstraintValueMembers(displayData).ToArray();
-
-            var valueMembers = uiConstraintValueMembers
+            var uiConstraintValueMembers = EnumerateUiConstraintValueMembers(displayData)
                 .Select(member => member switch {
-                    EditablePresentationObjectValueMember valueMember => IndentAll(RenderUiConstraintValue(valueMember), "  "),
-                    EditablePresentationObjectRefMember refMember => IndentAll(RenderUiConstraintValue(refMember), "  "),
+                    EditablePresentationObjectValueMember valueMember => RenderUiConstraintValue(valueMember),
+                    EditablePresentationObjectRefMember refMember => RenderUiConstraintValue(refMember),
                     _ => string.Empty,
-                })
-                .Where(text => text != string.Empty);
+                });
+            var childMembers = displayData.GetChildMembers().ToArray();
 
-            var childMembers = displayData.GetChildMembers()
-                .Select(child => string.Join(Environment.NewLine, new[] {
-                            $"{child.PhysicalName}: {{",
-                            IndentAll(RenderUiConstraintValues(child), "  "),
-                            "},",
-                }));
-
-            return string.Join(Environment.NewLine, new[] {
-                        "values: {",
-                        string.Join(Environment.NewLine, valueMembers),
-                        "},",
-                        string.Join(Environment.NewLine, childMembers),
-                    }.Where(text => text != string.Empty));
+            return $$"""
+                values: {
+                {{uiConstraintValueMembers.SelectTextTemplate(source => $$"""
+                  {{WithIndent(source)}}
+                """)}}
+                },
+                {{childMembers.SelectTextTemplate(child => $$"""
+                {{child.PhysicalName}}: {
+                  {{WithIndent(RenderUiConstraintValues(child))}}
+                },
+                """)}}
+                """;
         }
 
         private static IEnumerable<IEditablePresentationObjectValueOrRefMember> EnumerateUiConstraintValueMembers(EditablePresentationObject displayData) {
