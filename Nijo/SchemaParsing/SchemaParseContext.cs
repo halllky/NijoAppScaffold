@@ -12,6 +12,7 @@ using System.Xml.Linq;
 using System.Xml.XPath;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 
 namespace Nijo.SchemaParsing;
 
@@ -28,6 +29,10 @@ public class SchemaParseContext {
         Models = rule.Models.ToDictionary(m => m.SchemaName);
         _rule = rule;
         _valueMemberTypes = rule.ValueMemberTypes.ToDictionary(m => m.SchemaTypeName);
+        _elementCountByLocalName = new Lazy<IReadOnlyDictionary<string, int>>(() => Document
+            .Descendants()
+            .GroupBy(el => el.Name.LocalName)
+            .ToDictionary(group => group.Key, group => group.Count()));
     }
 
     public XDocument Document { get; }
@@ -94,30 +99,31 @@ public class SchemaParseContext {
     /// 物理名。スキーマ内での物理名の衝突を考慮した値を返す。
     /// </summary>
     internal string GetPhysicalName(XElement xElement) {
-        var nodeType = GetNodeType(xElement);
+        return _physicalNameCache.GetOrAdd(xElement, el => {
+            var nodeType = GetNodeType(el);
 
-        // ルート集約の場合は単純に名前を返す。
-        // ルート集約の物理名の衝突はスキーマの検証時にエラーになるため、ここでは考えなくてよい
-        if (nodeType == E_NodeType.RootAggregate) {
-            return xElement.Name.LocalName;
-        }
-
-        // Child型またはChildren型、かつ名前衝突がある場合、「（直近の親のPhysicalName）の（LocalName）」
-        if (nodeType == E_NodeType.ChildAggregate || nodeType == E_NodeType.ChildrenAggregate) {
-            var duplicates = Document
-                // まずXML要素の名前がxElementのXML要素の名前と衝突している要素を絞り込む
-                .XPathSelectElements($"//{xElement.Name.LocalName}")
-                // 自分以外の要素で同じ名前のものがあるかチェック
-                .Any(x => x != xElement);
-            if (duplicates) {
-                // 「（直近の親のPhysicalName）の（LocalName）」
-                return GetPhysicalName(xElement.Parent!) + "の" + xElement.Name.LocalName;
+            // ルート集約の場合は単純に名前を返す。
+            // ルート集約の物理名の衝突はスキーマの検証時にエラーになるため、ここでは考えなくてよい
+            if (nodeType == E_NodeType.RootAggregate) {
+                return el.Name.LocalName;
             }
-        }
 
-        // それ以外の場合は単純にLocalNameを返す
-        return xElement.Name.LocalName;
+            // Child型またはChildren型、かつ名前衝突がある場合、「（直近の親のPhysicalName）の（LocalName）」
+            if (nodeType == E_NodeType.ChildAggregate || nodeType == E_NodeType.ChildrenAggregate) {
+                var duplicates = _elementCountByLocalName.Value.TryGetValue(el.Name.LocalName, out var count)
+                    && count > 1;
+                if (duplicates) {
+                    // 「（直近の親のPhysicalName）の（LocalName）」
+                    return GetPhysicalName(el.Parent!) + "の" + el.Name.LocalName;
+                }
+            }
+
+            // それ以外の場合は単純にLocalNameを返す
+            return el.Name.LocalName;
+        });
     }
+    private readonly ConcurrentDictionary<XElement, string> _physicalNameCache = new();
+    private readonly Lazy<IReadOnlyDictionary<string, int>> _elementCountByLocalName;
 
 
     /// <summary>
@@ -126,35 +132,38 @@ public class SchemaParseContext {
     /// XML要素が不正であっても例外を出さない。
     /// </summary>
     internal E_NodeType GetNodeType(XElement xElement) {
-        // ルート集約, Child, Children
-        if (xElement.TryGetAggregateNodeType(out var aggregateNodeType)) {
-            return aggregateNodeType.Value;
-        }
+        return _nodeTypeCache.GetOrAdd(xElement, el => {
+            // ルート集約, Child, Children
+            if (el.TryGetAggregateNodeType(out var aggregateNodeType)) {
+                return aggregateNodeType.Value;
+            }
 
-        // 親がenumセクションの直下にあるなら静的区分の値
-        var xElementParent = xElement.Parent;
-        if (xElementParent != null
-            && xElementParent.Parent?.Parent == Document.Root
-            && xElementParent.Parent?.Name.LocalName == SECTION_STATIC_ENUMS) {
-            return E_NodeType.StaticEnumValue;
-        }
+            // 親がenumセクションの直下にあるなら静的区分の値
+            var xElementParent = el.Parent;
+            if (xElementParent != null
+                && xElementParent.Parent?.Parent == Document.Root
+                && xElementParent.Parent?.Name.LocalName == SECTION_STATIC_ENUMS) {
+                return E_NodeType.StaticEnumValue;
+            }
 
-        // 以降はType属性の値で区別
-        var type = xElement.Attribute(ATTR_NODE_TYPE);
-        if (type == null) {
+            // 以降はType属性の値で区別
+            var type = el.Attribute(ATTR_NODE_TYPE);
+            if (type == null) {
+                return E_NodeType.Unknown;
+            }
+
+            // RefTo
+            if (type.Value.StartsWith(NODE_TYPE_REFTO)) {
+                return E_NodeType.Ref;
+            }
+            // ValueMember
+            if (TryResolveMemberType(el, out _)) {
+                return E_NodeType.ValueMember;
+            }
             return E_NodeType.Unknown;
-        }
-
-        // RefTo
-        if (type.Value.StartsWith(NODE_TYPE_REFTO)) {
-            return E_NodeType.Ref;
-        }
-        // ValueMember
-        if (TryResolveMemberType(xElement, out _)) {
-            return E_NodeType.ValueMember;
-        }
-        return E_NodeType.Unknown;
+        });
     }
+    private readonly ConcurrentDictionary<XElement, E_NodeType> _nodeTypeCache = new();
 
 
     #region オプション属性
@@ -316,15 +325,21 @@ public class SchemaParseContext {
     internal XElement? FindRefTo(XElement xElement) {
         var type = xElement.Attribute(ATTR_NODE_TYPE) ?? throw new InvalidOperationException();
         var xPath = $"//{SECTION_DATA_STRUCTURES}/{type.Value.Split(':')[1]}";
-        return Document.Root?.XPathSelectElement(xPath);
+        return _refToCache.GetOrAdd(xPath, path => {
+            return Document.Root?.XPathSelectElement(path);
+        });
     }
     /// <summary>
     /// 引数の集約を参照している集約を探して返します。
     /// </summary>
     internal IEnumerable<XElement> FindRefFrom(XElement xElement) {
-        var fullPath = string.Join("/", xElement.AncestorsAndSelf().Reverse().Skip(2).Select(GetPhysicalName));
-        return Document.XPathSelectElements($"//{SECTION_DATA_STRUCTURES}//*[@{ATTR_NODE_TYPE}='{NODE_TYPE_REFTO}:{fullPath}']") ?? [];
+        return _refFromCache.GetOrAdd(xElement, el => {
+            var fullPath = string.Join("/", el.AncestorsAndSelf().Reverse().Skip(2).Select(GetPhysicalName));
+            return Document.XPathSelectElements($"//{SECTION_DATA_STRUCTURES}//*[@{ATTR_NODE_TYPE}='{NODE_TYPE_REFTO}:{fullPath}']")?.ToArray() ?? [];
+        });
     }
+    private readonly ConcurrentDictionary<string, XElement?> _refToCache = new();
+    private readonly ConcurrentDictionary<XElement, IReadOnlyCollection<XElement>> _refFromCache = new();
     #endregion RefTo
 
 
