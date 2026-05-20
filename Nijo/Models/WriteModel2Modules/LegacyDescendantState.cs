@@ -11,14 +11,8 @@ namespace Nijo.Models.WriteModel2Modules {
     /// 旧版互換の子孫要素アタッチ・デタッチ処理レンダラー。
     /// </summary>
     internal static class LegacyDescendantState {
-        internal static IEnumerable<string> RenderDescendantAttaching(RootAggregate rootAggregate) {
+        internal static IEnumerable<string> RenderDescendantAttaching(RootAggregate rootAggregate, IReadOnlyDictionary<SchemaNodeIdentity, InstancePropertyPath> variablePathInfo) {
             var descendantDbEntities = rootAggregate.EnumerateDescendants().ToArray();
-
-            var rootDbEntity = new Nijo.Parts.CSharp.EFCoreEntity(rootAggregate);
-            var variablePathInfo = new Variable("※この変数名は使用されない※", rootDbEntity)
-                .CreatePropertiesRecursively()
-                .Where(p => p is InstanceStructureProperty)
-                .ToDictionary(x => x.Metadata.SchemaPathNode.ToMappingKey());
 
             for (int i = 0; i < descendantDbEntities.Length; i++) {
                 var descAggregate = descendantDbEntities[i];
@@ -91,14 +85,16 @@ namespace Nijo.Models.WriteModel2Modules {
             }
         }
 
-        internal static IEnumerable<string> RenderDescendantDetaching(RootAggregate rootAggregate, string rootEntityName) {
+        /// <summary>
+        /// 旧版互換の子孫要素デタッチ処理をレンダリングします。
+        /// 子孫へのパス辞書は呼び出し元で事前計算したものを受け取り、
+        /// 同一集約に対する繰り返し計算を避けます。
+        /// </summary>
+        /// <param name="rootAggregate">デタッチ対象のルート集約。</param>
+        /// <param name="variablePathInfo">ルート集約の EF Core Entity から各子孫要素へ辿るための事前計算済みパス辞書。</param>
+        /// <param name="rootEntityName">レンダリングされるコード上でのルートエンティティ変数名。</param>
+        internal static IEnumerable<string> RenderDescendantDetaching(RootAggregate rootAggregate, IReadOnlyDictionary<SchemaNodeIdentity, InstancePropertyPath> variablePathInfo, string rootEntityName) {
             var descendantDbEntities = rootAggregate.EnumerateDescendants().ToArray();
-
-            var rootDbEntity = new Nijo.Parts.CSharp.EFCoreEntity(rootAggregate);
-            var variablePathInfo = new Variable("※この変数名は使用されない※", rootDbEntity)
-                .CreatePropertiesRecursively()
-                .Where(p => p is InstanceStructureProperty)
-                .ToDictionary(x => x.Metadata.SchemaPathNode.ToMappingKey());
 
             for (int i = 0; i < descendantDbEntities.Length; i++) {
                 var descAggregate = descendantDbEntities[i];

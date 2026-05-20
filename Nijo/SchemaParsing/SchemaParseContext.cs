@@ -31,6 +31,11 @@ public class SchemaParseContext {
         NormalizeLegacyCompatibility(xDocument);
 
         Document = xDocument;
+
+        // 拡張メソッドの方の GetDisplayName からこのコンテキストの
+        // GetDisplayName を呼び出すために、XDocument にこのコンテキストをアノテーションとして付与する。
+        Document.AddAnnotation(this);
+
         Models = rule.Models.ToDictionary(m => m.SchemaName);
         _rule = rule;
         _valueMemberTypes = rule.ValueMemberTypes.ToDictionary(m => m.SchemaTypeName);
@@ -38,6 +43,9 @@ public class SchemaParseContext {
             .Descendants()
             .GroupBy(el => el.Name.LocalName)
             .ToDictionary(group => group.Key, group => group.Count()));
+        _genericLookupTableCategoriesCache = new Lazy<IReadOnlyDictionary<string, IReadOnlyList<GenericLookupTableParser.GenericLookupTableCategory>>>(
+            ParseGenericLookupTableCategories,
+            isThreadSafe: true);
     }
 
     public XDocument Document { get; }
@@ -341,6 +349,63 @@ public class SchemaParseContext {
             categories.Add(categoryElement);
         }
     }
+
+    /// <summary>
+    /// 物理名。スキーマ内での物理名の衝突を考慮した値を返す。
+    /// </summary>
+    internal string GetDisplayName(XElement xElement) {
+        return _displayNameCache.GetOrAdd(xElement, el => {
+            if (el.Attribute(BasicNodeOptions.DisplayNameIsEmpty.AttributeName) != null) {
+                return string.Empty;
+            }
+
+            return el.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? el.Name.LocalName;
+        });
+    }
+    private readonly ConcurrentDictionary<XElement, string> _displayNameCache = new();
+
+    internal IReadOnlyList<GenericLookupTableParser.GenericLookupTableCategory> GetGenericLookupTableCategories(string uniqueId) {
+        return _genericLookupTableCategoriesCache.Value.GetValueOrDefault(uniqueId)
+            ?? Array.Empty<GenericLookupTableParser.GenericLookupTableCategory>();
+    }
+
+    private IReadOnlyDictionary<string, IReadOnlyList<GenericLookupTableParser.GenericLookupTableCategory>> ParseGenericLookupTableCategories() {
+        var section = Document.Root?.Element(SECTION_GENERIC_LOOKUP_TABLES);
+        if (section == null) return new Dictionary<string, IReadOnlyList<GenericLookupTableParser.GenericLookupTableCategory>>(StringComparer.Ordinal);
+
+        var categoriesByUniqueId = new Dictionary<string, IReadOnlyList<GenericLookupTableParser.GenericLookupTableCategory>>(StringComparer.Ordinal);
+
+        foreach (var categoriesElement in section.Elements(GenericLookupTableParser.CATEGORIES)) {
+            var uniqueId = categoriesElement.Attribute(GenericLookupTableParser.FOR)?.Value;
+            if (string.IsNullOrEmpty(uniqueId)) continue;
+
+            var categories = new List<GenericLookupTableParser.GenericLookupTableCategory>();
+            foreach (var categoryElement in categoriesElement.Elements()) {
+                var keys = new List<GenericLookupTableParser.GenericLookupTableCategory.HardCodedKeyEntry>();
+                foreach (var keyElement in categoryElement.Elements(GenericLookupTableParser.KEY)) {
+                    var keyFor = keyElement.Attribute(GenericLookupTableParser.FOR)?.Value;
+                    var keyValue = keyElement.Attribute(GenericLookupTableParser.KEY_VALUE)?.Value;
+                    if (!string.IsNullOrEmpty(keyFor) && keyValue != null) {
+                        keys.Add(new GenericLookupTableParser.GenericLookupTableCategory.HardCodedKeyEntry {
+                            UniqueId = keyFor,
+                            Value = keyValue,
+                        });
+                    }
+                }
+
+                categories.Add(new GenericLookupTableParser.GenericLookupTableCategory {
+                    Name = categoryElement.Name.LocalName,
+                    DisplayName = GetDisplayName(categoryElement),
+                    HardCodedKeys = keys,
+                });
+            }
+
+            categoriesByUniqueId.TryAdd(uniqueId, categories);
+        }
+
+        return categoriesByUniqueId;
+    }
+    private readonly Lazy<IReadOnlyDictionary<string, IReadOnlyList<GenericLookupTableParser.GenericLookupTableCategory>>> _genericLookupTableCategoriesCache;
 
     /// <summary>
     /// 物理名。スキーマ内での物理名の衝突を考慮した値を返す。

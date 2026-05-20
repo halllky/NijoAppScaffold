@@ -53,6 +53,9 @@ namespace Nijo.Models {
             if (!ctx.IsLegacyCompatibilityMode()) throw new InvalidOperationException("旧版互換モードでのみ利用可能");
 
             var aggregateFile = new SourceFileByAggregate(rootAggregate);
+            var descendantStructurePaths = new Nijo.Parts.CSharp.EFCoreEntity(rootAggregate)
+                .CreateStructurePathsRecursively()
+                .ToDictionary(x => x.Metadata.SchemaPathNode.ToMappingKey());
 
             // 集約横断で使う保存用共通型
             ctx.Use<DataClassForSaveBase>().Register(rootAggregate);
@@ -105,10 +108,10 @@ namespace Nijo.Models {
 
             // 登録・更新・削除 AppSrv
             aggregateFile.AddAppSrvMethod($$"""
-                {{LegacyCreateMethod.Render(rootAggregate, ctx)}}
+                {{LegacyCreateMethod.Render(rootAggregate, ctx, descendantStructurePaths)}}
 
-                {{LegacyUpdateMethod.Render(rootAggregate, ctx)}}
-                {{LegacyDeleteMethod.Render(rootAggregate, ctx)}}
+                {{LegacyUpdateMethod.Render(rootAggregate, ctx, descendantStructurePaths)}}
+                {{LegacyDeleteMethod.Render(rootAggregate, ctx, descendantStructurePaths)}}
                 {{RequiredCheck.Render(rootAggregate, ctx)}}
                 {{MaxLengthCheck.Render(rootAggregate, ctx)}}
                 {{NotNegativeCheck.Render(rootAggregate, ctx)}}

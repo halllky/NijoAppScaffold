@@ -4,6 +4,7 @@ using Nijo.Models.DataModelModules;
 using Nijo.Parts.CSharp;
 using Nijo.Util.DotnetEx;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Nijo.Models.WriteModel2Modules {
@@ -11,7 +12,7 @@ namespace Nijo.Models.WriteModel2Modules {
     /// 旧版互換の削除処理レンダラー。
     /// </summary>
     internal static class LegacyDeleteMethod {
-        internal static string Render(RootAggregate rootAggregate, CodeRenderingContext ctx) {
+        internal static string Render(RootAggregate rootAggregate, CodeRenderingContext ctx, IReadOnlyDictionary<SchemaNodeIdentity, InstancePropertyPath> descendantStructurePaths) {
             var dataClass = new DataClassForSave(rootAggregate, DataClassForSave.E_Type.UpdateOrDelete);
             var dbEntity = new EFCoreEntity(rootAggregate);
             var messages = dataClass.MessageInterfaceName;
@@ -121,7 +122,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(afterDbEntity).State = EntityState.Detached;
-                {{LegacyDescendantState.RenderDescendantDetaching(rootAggregate, "afterDbEntity").SelectTextTemplate(source => $$"""
+                {{LegacyDescendantState.RenderDescendantDetaching(rootAggregate, descendantStructurePaths, "afterDbEntity").SelectTextTemplate(source => $$"""
                         {{WithIndent(source, "        ")}}
                 """)}}
 
@@ -145,7 +146,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(afterDbEntity).State = EntityState.Detached;
-                {{LegacyDescendantState.RenderDescendantDetaching(rootAggregate, "afterDbEntity").SelectTextTemplate(source => $$"""
+                {{LegacyDescendantState.RenderDescendantDetaching(rootAggregate, descendantStructurePaths, "afterDbEntity").SelectTextTemplate(source => $$"""
                         {{WithIndent(source, "        ")}}
                 """)}}
 

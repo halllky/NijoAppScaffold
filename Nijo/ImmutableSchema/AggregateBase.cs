@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using System.Xml.XPath;
@@ -34,7 +35,7 @@ namespace Nijo.ImmutableSchema {
         /// <summary>
         /// 表示用名称
         /// </summary>
-        public string DisplayName => XElement.GetDisplayName();
+        public string DisplayName => _ctx.GetDisplayName(XElement);
         /// <summary>
         /// データベーステーブル名
         /// </summary>
@@ -59,25 +60,33 @@ namespace Nijo.ImmutableSchema {
         /// </list>
         /// </summary>
         public IEnumerable<IAggregateMember> GetMembers() {
-            foreach (var el in XElement.Elements()) {
-                // パスの巻き戻しの場合（この集約の1つ前がこの集約の子、かつその子を列挙しようとしている場合）
-                // 新たにインスタンスを作るのでなく1つ前のインスタンスをそのまま使う
-                if (el == PreviousNode?.XElement) {
-                    yield return (IAggregateMember)PreviousNode;
-                    continue;
-                }
+            lock (_memberCacheLock) {
+                return _memberCache ??= XElement
+                    .Elements()
+                    .Select(el => {
+                        // パスの巻き戻しの場合（この集約の1つ前がこの集約の子、かつその子を列挙しようとしている場合）
+                        // 新たにインスタンスを作るのでなく1つ前のインスタンスをそのまま使う
+                        if (el == PreviousNode?.XElement) {
+                            return (IAggregateMember)PreviousNode;
+                        }
 
-                var nodeType = _ctx.GetNodeType(el);
-                yield return nodeType switch {
-                    E_NodeType.ChildAggregate => new ChildAggregate(el, _ctx, this),
-                    E_NodeType.ChildrenAggregate => new ChildrenAggregate(el, _ctx, this),
-                    E_NodeType.Ref => new RefToMember(el, _ctx, this),
-                    E_NodeType.ValueMember => new ValueMember(el, _ctx, this),
-                    E_NodeType.StaticEnumValue => new Models.StaticEnumModelModules.StaticEnumValueDef(el, _ctx, this),
-                    _ => throw new InvalidOperationException($"メンバーでない種類: {nodeType}（{el}）"),
-                };
+                        var nodeType = _ctx.GetNodeType(el);
+                        return nodeType switch {
+                            E_NodeType.ChildAggregate => new ChildAggregate(el, _ctx, this),
+                            E_NodeType.ChildrenAggregate => new ChildrenAggregate(el, _ctx, this),
+                            E_NodeType.Ref => new RefToMember(el, _ctx, this),
+                            E_NodeType.ValueMember => new ValueMember(el, _ctx, this),
+                            E_NodeType.StaticEnumValue => new Models.StaticEnumModelModules.StaticEnumValueDef(el, _ctx, this),
+                            _ => throw new InvalidOperationException($"メンバーでない種類: {nodeType}（{el}）"),
+                        };
+                    })
+                    .ToArray();
             }
         }
+        private readonly Lock _memberCacheLock = new();
+        /// <summary><see cref="GetMembers"/> は頻繁に呼ばれるためキャッシュする。</summary>
+        private IAggregateMember[]? _memberCache;
+
         /// <summary>
         /// この集約に直接属するキー項目を返します。
         /// つまりキーに <see cref="RefToMember"/> が含まれるならばそのRef自身を列挙します。

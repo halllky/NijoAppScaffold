@@ -212,11 +212,11 @@ internal class DeepEqualFunction {
 
         string RenderAggregate(EditablePresentationObject disp, IInstancePropertyOwner leftInstance, IInstancePropertyOwner rightInstance) {
 
-            var leftMembers = leftInstance
-                .Create1To1PropertiesRecursively()
+            var leftMembers = leftInstance.Metadata
+                .Create1To1PropertyPathsRecursively()
                 .ToDictionary(p => p.Metadata.SchemaPathNode.ToMappingKey());
-            var rightMembers = rightInstance
-                .Create1To1PropertiesRecursively()
+            var rightMembers = rightInstance.Metadata
+                .Create1To1PropertyPathsRecursively()
                 .ToDictionary(p => p.Metadata.SchemaPathNode.ToMappingKey());
 
             // ルート, Child
@@ -224,10 +224,10 @@ internal class DeepEqualFunction {
              || disp is EditablePresentationObject.EditablePresentationObjectChildDescendant) {
                 var leftObj = disp.Aggregate is RootAggregate
                     ? left.Name
-                    : leftMembers[disp.Aggregate.ToMappingKey()].GetJoinedPathFromInstance(E_CsTs.TypeScript, ".");
+                    : leftMembers[disp.Aggregate.ToMappingKey()].GetJoinedPathFromRoot(left.Name, E_CsTs.TypeScript, ".");
                 var rightObj = disp.Aggregate is RootAggregate
                     ? right.Name
-                    : rightMembers[disp.Aggregate.ToMappingKey()].GetJoinedPathFromInstance(E_CsTs.TypeScript, ".");
+                    : rightMembers[disp.Aggregate.ToMappingKey()].GetJoinedPathFromRoot(right.Name, E_CsTs.TypeScript, ".");
 
                 return $$"""
                     // {{disp.Aggregate.DisplayName}} の等価比較
@@ -246,8 +246,8 @@ internal class DeepEqualFunction {
 
             // Children
             else if (disp is EditablePresentationObject.EditablePresentationObjectChildrenDescendant children) {
-                var leftArr = leftMembers[children.ChildrenAggregate.ToMappingKey()].GetJoinedPathFromInstance(E_CsTs.TypeScript, "?.");
-                var rightArr = rightMembers[children.ChildrenAggregate.ToMappingKey()].GetJoinedPathFromInstance(E_CsTs.TypeScript, "?.");
+                var leftArr = leftMembers[children.ChildrenAggregate.ToMappingKey()].GetJoinedPathFromRoot(left.Name, E_CsTs.TypeScript, "?.");
+                var rightArr = rightMembers[children.ChildrenAggregate.ToMappingKey()].GetJoinedPathFromRoot(right.Name, E_CsTs.TypeScript, "?.");
                 var numX = varNameCounter++;
                 var x = numX == 1 ? "" : numX.ToString(); // 変数名が被らないように、2回目以降は末尾に数字を付与
                 var leftIds = $"leftIds{x}";
@@ -305,11 +305,11 @@ internal class DeepEqualFunction {
             var left = new Variable("left", disp);
             var right = new Variable("right", disp);
 
-            var leftMembers = left
-                .Create1To1PropertiesRecursively()
+            var leftMembers = left.Metadata
+                .Create1To1PropertyPathsRecursively()
                 .ToDictionary(p => p.Metadata.SchemaPathNode.ToMappingKey());
-            var rightMembers = right
-                .Create1To1PropertiesRecursively()
+            var rightMembers = right.Metadata
+                .Create1To1PropertyPathsRecursively()
                 .ToDictionary(p => p.Metadata.SchemaPathNode.ToMappingKey());
 
             return $$"""
@@ -330,9 +330,9 @@ internal class DeepEqualFunction {
                     }
 
                     var leftProp = leftMembers[valueMember.SchemaPathNode.ToMappingKey()]
-                        .GetJoinedPathFromInstance(E_CsTs.TypeScript, "?.");
+                        .GetJoinedPathFromRoot(left.Name, E_CsTs.TypeScript, "?.");
                     var rightProp = rightMembers[valueMember.SchemaPathNode.ToMappingKey()]
-                        .GetJoinedPathFromInstance(E_CsTs.TypeScript, "?.");
+                        .GetJoinedPathFromRoot(right.Name, E_CsTs.TypeScript, "?.");
 
                     var valueTypeName = valueMember.Type switch {
                         ValueMemberTypes.StaticEnumMember => "Enum",

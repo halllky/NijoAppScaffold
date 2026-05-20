@@ -4,6 +4,7 @@ using Nijo.Models.DataModelModules;
 using Nijo.Parts.CSharp;
 using Nijo.Util.DotnetEx;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Nijo.Models.WriteModel2Modules {
@@ -13,7 +14,7 @@ namespace Nijo.Models.WriteModel2Modules {
     internal static class LegacyCreateMethod {
         internal static string GetMethodName(RootAggregate rootAggregate) => $"Create{rootAggregate.PhysicalName}";
 
-        internal static string Render(RootAggregate rootAggregate, CodeRenderingContext ctx) {
+        internal static string Render(RootAggregate rootAggregate, CodeRenderingContext ctx, IReadOnlyDictionary<SchemaNodeIdentity, InstancePropertyPath> descendantStructurePaths) {
             var command = new DataClassForSave(rootAggregate, DataClassForSave.E_Type.Create);
             var dbEntity = new EFCoreEntity(rootAggregate);
             var messages = new DataClassForSave(rootAggregate, DataClassForSave.E_Type.UpdateOrDelete).MessageInterfaceName;
@@ -94,7 +95,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(dbEntity).State = EntityState.Detached;
-                {{LegacyDescendantState.RenderDescendantDetaching(rootAggregate, "dbEntity").SelectTextTemplate(source => $$"""
+                {{LegacyDescendantState.RenderDescendantDetaching(rootAggregate, descendantStructurePaths, "dbEntity").SelectTextTemplate(source => $$"""
                         {{WithIndent(source, "        ")}}
                 """)}}
 
@@ -120,7 +121,7 @@ namespace Nijo.Models.WriteModel2Modules {
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(dbEntity).State = EntityState.Detached;
-                {{LegacyDescendantState.RenderDescendantDetaching(rootAggregate, "dbEntity").SelectTextTemplate(source => $$"""
+                {{LegacyDescendantState.RenderDescendantDetaching(rootAggregate, descendantStructurePaths, "dbEntity").SelectTextTemplate(source => $$"""
                         {{WithIndent(source, "        ")}}
                 """)}}
 

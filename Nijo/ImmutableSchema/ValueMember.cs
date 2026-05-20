@@ -24,7 +24,7 @@ namespace Nijo.ImmutableSchema {
         public ISchemaPathNode? PreviousNode { get; }
 
         public string PhysicalName => _ctx.GetPhysicalName(XElement);
-        public string DisplayName => XElement.GetDisplayName();
+        public string DisplayName => _ctx.GetDisplayName(XElement);
         public string DbName => XElement.GetDbName();
         public decimal Order => XElement.ElementsBeforeSelf().Count();
 

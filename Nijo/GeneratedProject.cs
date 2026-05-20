@@ -223,7 +223,10 @@ namespace Nijo {
 
             // ルート集約毎のコードを生成
             var rootAggregates = immutableSchema.GetRootAggregates().ToArray();
-            Parallel.ForEach(rootAggregates, rootAggregate => {
+            var rootAggregateParallelOptions = new ParallelOptions {
+                MaxDegreeOfParallelism = Math.Min(Environment.ProcessorCount, 4),
+            };
+            Parallel.ForEach(rootAggregates, rootAggregateParallelOptions, rootAggregate => {
                 logger.LogInformation("レンダリング開始: {name}", rootAggregate.DisplayName);
                 try {
                     rootAggregate.Model.GenerateCode(ctx, rootAggregate);
@@ -233,14 +236,14 @@ namespace Nijo {
             });
 
             // ルート集約1個と対応しない、モデル固有のコードを生成
-            Parallel.ForEach(rootAggregates.Select(r => r.Model).Distinct(), model => {
+            foreach (var model in rootAggregates.Select(r => r.Model).Distinct()) {
                 logger.LogInformation("レンダリング開始: {name}", model.GetType().Name);
                 try {
                     model.GenerateCode(ctx);
                 } catch (Exception ex) {
                     throw new InvalidOperationException($"{model.GetType().Name}のレンダリングで例外が発生", ex);
                 }
-            });
+            }
 
             // スキーマ定義にかかわらず必ず生成されるモジュールの登録
             if (ctx.Config.ForceLegacyCompatibilityMode) {
@@ -294,20 +297,20 @@ namespace Nijo {
             ctx.StopUseMultiAggregateSourceFiles();
 
             // IMultiAggregateSourceFile のレンダリング実行
-            Parallel.ForEach(ctx.GetMultiAggregateSourceFiles(), src => {
+            foreach (var src in ctx.GetMultiAggregateSourceFiles()) {
                 logger.LogInformation("レンダリング開始: {name}", src.GetType().Name);
                 try {
                     src.Render(ctx);
                 } catch (Exception ex) {
                     throw new InvalidOperationException($"{src.GetType().Name}のレンダリングで例外が発生", ex);
                 }
-            });
+            }
 
             // スキーマ定義にかかわらず必ず生成されるモジュールを生成する
-            Parallel.ForEach(parseContext.GetValueMemberTypes(), vmType => {
+            foreach (var vmType in parseContext.GetValueMemberTypes()) {
                 logger.LogInformation("レンダリング開始: {name}", vmType.GetType().Name);
                 vmType.RenderStaticSources(ctx);
-            });
+            }
 
             if (ctx.IsLegacyCompatibilityMode()) {
 
