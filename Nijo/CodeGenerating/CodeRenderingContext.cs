@@ -118,6 +118,11 @@ namespace Nijo.CodeGenerating {
                 _handled.Add(Path.GetFullPath(fullpath));
             }
         }
+        internal bool TryHandle(string fullpath) {
+            lock (_handleLock) {
+                return _handled.Add(Path.GetFullPath(fullpath));
+            }
+        }
         internal bool IsHandled(string fullpath) {
             lock (_handleLock) {
                 return _handled.Contains(Path.GetFullPath(fullpath));

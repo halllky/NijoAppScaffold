@@ -23,7 +23,7 @@ namespace Nijo.Models.DataModelModules {
         internal string OnBeforeMethodName => $"OnBeforeUpdate{_rootAggregate.PhysicalName}";
         internal string OnAfterMethodName => $"OnAfterUpdate{_rootAggregate.PhysicalName}Async";
 
-        internal string Render(CodeRenderingContext ctx) {
+        internal string Render(CodeRenderingContext ctx, IReadOnlyDictionary<SchemaNodeIdentity, InstancePropertyPath> variablePathInfo) {
             var command = new SaveCommand(_rootAggregate, SaveCommand.E_Type.Update);
             var keyCommand = new SaveCommand(_rootAggregate, SaveCommand.E_Type.UpdOrDelKey);
             var dbEntity = new EFCoreEntity(_rootAggregate);
@@ -155,7 +155,7 @@ namespace Nijo.Models.DataModelModules {
                         entry.State = EntityState.Modified;
                         entry.Property(e => e.{{EFCoreEntity.VERSION}}).OriginalValue = key.{{SaveCommand.VERSION}} ?? beforeDbEntity.{{EFCoreEntity.VERSION}};
 
-                {{RenderDescendantAttaching(_rootAggregate).SelectTextTemplate(source => $$"""
+                {{RenderDescendantAttaching(_rootAggregate, variablePathInfo).SelectTextTemplate(source => $$"""
                         {{WithIndent(source)}}
 
                 """)}}
@@ -167,7 +167,7 @@ namespace Nijo.Models.DataModelModules {
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(afterDbEntity).State = EntityState.Detached;
-                {{RenderDescendantDetaching(_rootAggregate, "afterDbEntity").SelectTextTemplate(source => $$"""
+                {{RenderDescendantDetaching(_rootAggregate, variablePathInfo, "afterDbEntity").SelectTextTemplate(source => $$"""
                         {{WithIndent(source)}}
                 """)}}
 
@@ -190,7 +190,7 @@ namespace Nijo.Models.DataModelModules {
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(afterDbEntity).State = EntityState.Detached;
-                {{RenderDescendantDetaching(_rootAggregate, "afterDbEntity").SelectTextTemplate(source => $$"""
+                {{RenderDescendantDetaching(_rootAggregate, variablePathInfo, "afterDbEntity").SelectTextTemplate(source => $$"""
                         {{WithIndent(source)}}
                 """)}}
 
@@ -279,14 +279,8 @@ namespace Nijo.Models.DataModelModules {
         /// <summary>
         /// 子孫要素をDbContextにアタッチするソースをレンダリングする。
         /// </summary>
-        internal static IEnumerable<string> RenderDescendantAttaching(RootAggregate rootAggregate) {
+        internal static IEnumerable<string> RenderDescendantAttaching(RootAggregate rootAggregate, IReadOnlyDictionary<SchemaNodeIdentity, InstancePropertyPath> variablePathInfo) {
             var descendantDbEntities = rootAggregate.EnumerateDescendants().ToArray();
-
-            var rootDbEntity = new EFCoreEntity(rootAggregate);
-            var variablePathInfo = new Variable("※この変数名は使用されない※", rootDbEntity)
-                .CreatePropertiesRecursively()
-                .Where(p => p is InstanceStructureProperty)
-                .ToDictionary(x => x.Metadata.SchemaPathNode.ToMappingKey());
 
             for (int i = 0; i < descendantDbEntities.Length; i++) {
                 var descAggregate = descendantDbEntities[i];
@@ -340,14 +334,8 @@ namespace Nijo.Models.DataModelModules {
         /// <summary>
         /// 子孫要素の EntityState を全てDetachにしていくソースをレンダリングする。
         /// </summary>
-        internal static IEnumerable<string> RenderDescendantDetaching(RootAggregate rootAggregate, string rootEntityName) {
+        internal static IEnumerable<string> RenderDescendantDetaching(RootAggregate rootAggregate, IReadOnlyDictionary<SchemaNodeIdentity, InstancePropertyPath> variablePathInfo, string rootEntityName) {
             var descendantDbEntities = rootAggregate.EnumerateDescendants().ToArray();
-
-            var rootDbEntity = new EFCoreEntity(rootAggregate);
-            var variablePathInfo = new Variable("※この変数名は使用されない※", rootDbEntity)
-                .CreatePropertiesRecursively()
-                .Where(p => p is InstanceStructureProperty)
-                .ToDictionary(x => x.Metadata.SchemaPathNode.ToMappingKey());
 
             for (int i = 0; i < descendantDbEntities.Length; i++) {
                 var descAggregate = descendantDbEntities[i];

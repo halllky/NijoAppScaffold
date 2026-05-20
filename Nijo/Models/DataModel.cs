@@ -236,18 +236,21 @@ namespace Nijo.Models {
                 .Register(saveCommandMessage.CsClassName, saveCommandMessage.CsClassName);
 
             // 処理: 新規登録、更新
+            var descendantStructurePaths = efCoreEntity
+                .CreateStructurePathsRecursively()
+                .ToDictionary(x => x.Metadata.SchemaPathNode.ToMappingKey());
             var create = new CreateMethod(rootAggregate);
             var update = new UpdateMethod(rootAggregate);
-            aggregateFile.AddAppSrvMethod(create.Render(ctx), "新規登録処理");
-            aggregateFile.AddAppSrvMethod(update.Render(ctx), "更新処理");
+            aggregateFile.AddAppSrvMethod(create.Render(ctx, descendantStructurePaths), "新規登録処理");
+            aggregateFile.AddAppSrvMethod(update.Render(ctx, descendantStructurePaths), "更新処理");
 
             // 処理: 削除
             if (rootAggregate.UseSoftDelete) {
                 var softDelete = new SoftDeleteMethods(rootAggregate);
-                aggregateFile.AddAppSrvMethod(softDelete.Render(ctx), "論理削除処理");
+                aggregateFile.AddAppSrvMethod(softDelete.Render(ctx, descendantStructurePaths), "論理削除処理");
             } else {
                 var delete = new DeleteMethod(rootAggregate);
-                aggregateFile.AddAppSrvMethod(delete.Render(ctx), "物理削除処理");
+                aggregateFile.AddAppSrvMethod(delete.Render(ctx, descendantStructurePaths), "物理削除処理");
             }
 
             // 処理: 自動生成されるバリデーションエラーチェック

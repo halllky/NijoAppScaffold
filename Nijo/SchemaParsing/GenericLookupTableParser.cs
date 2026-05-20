@@ -35,11 +35,11 @@ internal class GenericLookupTableParser {
     /// </summary>
     internal const string KEY_VALUE = "Value";
 
+    private readonly SchemaParseContext _ctx;
+
     internal GenericLookupTableParser(SchemaParseContext ctx) {
         _ctx = ctx;
     }
-
-    private readonly SchemaParseContext _ctx;
 
     /// <summary>
     /// nijo.xml の <see cref="SECTION_NAME"/> セクションの内容が正しいか検査します。
@@ -54,40 +54,9 @@ internal class GenericLookupTableParser {
     /// </summary>
     internal IEnumerable<GenericLookupTableCategory> GetCategoriesOf(RootAggregate rootAggregate) {
         var uniqueId = rootAggregate.XElement.Attribute(SchemaParseContext.ATTR_UNIQUE_ID)?.Value;
-        if (string.IsNullOrEmpty(uniqueId)) yield break;
+        if (string.IsNullOrEmpty(uniqueId)) return Array.Empty<GenericLookupTableCategory>();
 
-        var section = _ctx.Document.Root?.Element(SECTION_NAME);
-        if (section == null) yield break;
-
-        foreach (var categoriesElement in section.Elements(CATEGORIES)) {
-            var forAttr = categoriesElement.Attribute(FOR)?.Value;
-            if (forAttr != uniqueId) continue;
-
-            // このテーブルに対応する Categories 要素が見つかった
-            foreach (var categoryElement in categoriesElement.Elements()) {
-                var keys = new List<GenericLookupTableCategory.HardCodedKeyEntry>();
-                foreach (var keyElement in categoryElement.Elements(KEY)) {
-                    var keyFor = keyElement.Attribute(FOR)?.Value;
-                    var keyValue = keyElement.Attribute(KEY_VALUE)?.Value;
-                    if (!string.IsNullOrEmpty(keyFor) && keyValue != null) {
-                        keys.Add(new GenericLookupTableCategory.HardCodedKeyEntry {
-                            UniqueId = keyFor,
-                            Value = keyValue,
-                        });
-                    }
-                }
-
-                yield return new GenericLookupTableCategory {
-                    Name = categoryElement.Name.LocalName,
-                    DisplayName = categoryElement.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value
-                        ?? categoryElement.Name.LocalName,
-                    HardCodedKeys = keys,
-                };
-            }
-
-            // 同じテーブルの Categories 要素は1つだけのはず
-            yield break;
-        }
+        return _ctx.GetGenericLookupTableCategories(uniqueId);
     }
 
     /// <summary>

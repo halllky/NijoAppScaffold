@@ -120,6 +120,27 @@ public sealed class InstanceStructureProperty : IInstanceProperty, IInstanceProp
     }
 }
 
+/// <summary>
+/// 自動生成されるソースコード上のメンバーへの軽量なパス情報。
+/// 比較や変換処理のレンダリングで、完全な <see cref="IInstanceProperty"/> 木を組み立てずに
+/// パスと配列境界だけを扱いたいときに使用する。
+/// </summary>
+public readonly record struct InstancePropertyPath {
+    public required IInstancePropertyMetadata Metadata { get; init; }
+    public required InstancePropertyPathSegment[] Segments { get; init; }
+
+    public IEnumerable<IInstancePropertyMetadata> GetPathFromInstance() {
+        foreach (var segment in Segments) {
+            yield return segment.Metadata;
+        }
+    }
+}
+
+public readonly record struct InstancePropertyPathSegment {
+    public required IInstancePropertyMetadata Metadata { get; init; }
+    public required bool IsNullable { get; init; }
+};
+
 // ------------------------------------------
 
 public static partial class CodeGeneratingHelperExtensions {
@@ -199,6 +220,48 @@ public static partial class CodeGeneratingHelperExtensions {
             if (prop is InstanceStructureProperty structureProperty && !structureProperty.Metadata.IsArray) {
                 foreach (var vp in structureProperty.Create1To1PropertiesRecursively()) {
                     yield return vp;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// この構造体およびその子孫の構造体メンバーを、軽量なパス情報として再帰的に列挙します。
+    /// 値メンバーや <see cref="Variable"/> / <see cref="IInstancePropertyOwner"/> の参照を生成しないため、
+    /// 左右比較や変換処理のレンダリングで構造体メンバーだけが必要な場合に使用します。
+    /// </summary>
+    public static IEnumerable<InstancePropertyPath> CreateStructurePathsRecursively(this IInstancePropertyOwnerMetadata ownerMetadata) {
+        foreach (var path in CreatePropertyPathsRecursively(ownerMetadata, parentSegments: [], recursivePredicate: static _ => true)) {
+            if (path.Metadata is IInstanceStructurePropertyMetadata) {
+                yield return path;
+            }
+        }
+    }
+
+    /// <summary>
+    /// この構造体およびその子孫のメンバーのうち、この構造体と1対1の多重度を持つもののみを軽量なパス情報として再帰的に列挙します。
+    /// </summary>
+    public static IEnumerable<InstancePropertyPath> Create1To1PropertyPathsRecursively(this IInstancePropertyOwnerMetadata ownerMetadata) {
+        return CreatePropertyPathsRecursively(ownerMetadata, parentSegments: [], recursivePredicate: static structure => !structure.IsArray);
+    }
+
+    private static IEnumerable<InstancePropertyPath> CreatePropertyPathsRecursively(IInstancePropertyOwnerMetadata ownerMetadata, InstancePropertyPathSegment[] parentSegments, Func<IInstanceStructurePropertyMetadata, bool> recursivePredicate) {
+        foreach (var propertyMetadata in ownerMetadata.GetMembers()) {
+            var segments = new InstancePropertyPathSegment[parentSegments.Length + 1];
+            Array.Copy(parentSegments, segments, parentSegments.Length);
+            segments[^1] = new InstancePropertyPathSegment {
+                Metadata = propertyMetadata,
+                IsNullable = true,
+            };
+
+            yield return new InstancePropertyPath {
+                Metadata = propertyMetadata,
+                Segments = segments,
+            };
+
+            if (propertyMetadata is IInstanceStructurePropertyMetadata structureMetadata && recursivePredicate(structureMetadata)) {
+                foreach (var descendant in CreatePropertyPathsRecursively(structureMetadata, segments, recursivePredicate)) {
+                    yield return descendant;
                 }
             }
         }
@@ -294,6 +357,46 @@ public static partial class CodeGeneratingHelperExtensions {
     }
 
     /// <summary>
+    /// 軽量なパス情報を、指定されたルート変数名からの joined path に変換します。
+    /// </summary>
+    public static string GetJoinedPathFromRoot(this InstancePropertyPath property, string rootName, E_CsTs csts, string nullableSeparator = ".") {
+        var path = new StringBuilder();
+        var previousIsArray = false;
+        var select = csts == E_CsTs.CSharp ? "Select" : "map";
+        var selectMany = csts == E_CsTs.CSharp ? "SelectMany" : "flatMap";
+
+        path.Append(rootName);
+
+        InstancePropertyPathSegment? previous = null;
+        foreach (var current in property.Segments) {
+            if (previous == null) {
+                path.Append('.');
+            } else if (previous.Value.IsNullable) {
+                path.Append(nullableSeparator);
+            } else {
+                path.Append('.');
+            }
+
+            var currentIsArray = current.Metadata is IInstanceStructurePropertyMetadata structureProperty && structureProperty.IsArray;
+            if (previousIsArray) {
+                path.Append(currentIsArray
+                    ? $"{selectMany}(e => e.{current.Metadata.GetPropertyName(csts)})"
+                    : $"{select}(e => e.{current.Metadata.GetPropertyName(csts)})");
+            } else {
+                path.Append(current.Metadata.GetPropertyName(csts));
+            }
+
+            if (!previousIsArray && currentIsArray) {
+                previousIsArray = true;
+            }
+
+            previous = current;
+        }
+
+        return path.ToString();
+    }
+
+    /// <summary>
     /// 大元の変数より後ろのパスをフラットな配列にして返す。
     /// C#はLinqの Select, SelectMany を使う。TypeScriptはmap, flatMapを使う。
     ///
@@ -350,6 +453,37 @@ public static partial class CodeGeneratingHelperExtensions {
             isMany = false;
             return [];
         }
+    }
+
+    /// <summary>
+    /// 大元の変数より後ろのパスをフラットな配列にして返す。
+    /// <see cref="InstancePropertyPath"/> を使う軽量列挙向けのオーバーロード。
+    /// </summary>
+    public static string[] GetFlattenArrayPath(this InstancePropertyPath path, E_CsTs csts, out bool isMany) {
+        var flattened = new List<string>();
+        isMany = false;
+
+        foreach (var segment in path.Segments) {
+            if (segment.Metadata is IInstanceStructurePropertyMetadata structMeta && structMeta.IsArray) {
+                if (isMany) {
+                    flattened.Add(csts == E_CsTs.CSharp
+                        ? $"SelectMany(x => x.{segment.Metadata.GetPropertyName(csts)})"
+                        : $"flatMap(x => x.{segment.Metadata.GetPropertyName(csts)})");
+                } else {
+                    flattened.Add(segment.Metadata.GetPropertyName(csts));
+                }
+
+                isMany = true;
+            } else if (isMany) {
+                flattened.Add(csts == E_CsTs.CSharp
+                    ? $"Select(x => x.{segment.Metadata.GetPropertyName(csts)})"
+                    : $"map(x => x.{segment.Metadata.GetPropertyName(csts)})");
+            } else {
+                flattened.Add(segment.Metadata.GetPropertyName(csts));
+            }
+        }
+
+        return flattened.ToArray();
     }
     #endregion GetPath系メソッド
 }
