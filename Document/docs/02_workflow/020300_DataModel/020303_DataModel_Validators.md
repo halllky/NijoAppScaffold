@@ -32,10 +32,10 @@ DB への保存（SaveChanges）
 
 `IsKey="true"` または `IsNotNull="true"` が付いている項目は必須入力として扱われます。
 
-| XML 属性 | 適用対象 | 説明 |
-| --- | --- | --- |
-| `IsKey="true"` | Root・Children の ValueMember / ref-to | 主キー。必須入力 + DB NOT NULL 制約 |
-| `IsNotNull="true"` | DataModel の ValueMember / ref-to | 必須入力 + DB NOT NULL 制約 |
+| XML 属性           | 適用対象                               | 説明                                |
+| ------------------ | -------------------------------------- | ----------------------------------- |
+| `IsKey="true"`     | Root・Children の ValueMember / ref-to | 主キー。必須入力 + DB NOT NULL 制約 |
+| `IsNotNull="true"` | DataModel の ValueMember / ref-to      | 必須入力 + DB NOT NULL 制約         |
 
 ```xml
 <Order Type="data-model" DisplayName="受注">
@@ -134,10 +134,10 @@ public override bool ValidateIf半角英数字(string? value) {
 
 数値型（int / long / decimal）の項目に付与します。
 
-| XML 属性 | 説明 |
-| --- | --- |
-| `TotalDigit="N"` | 整数型の場合: 10^N 未満であること。decimal の場合: 整数部と小数部を合わせた最大桁数 |
-| `DecimalPlace="M"` | decimal のみ。小数部の最大桁数（`TotalDigit` と組み合わせて使用） |
+| XML 属性           | 説明                                                                                |
+| ------------------ | ----------------------------------------------------------------------------------- |
+| `TotalDigit="N"`   | 整数型の場合: 10^N 未満であること。decimal の場合: 整数部と小数部を合わせた最大桁数 |
+| `DecimalPlace="M"` | decimal のみ。小数部の最大桁数（`TotalDigit` と組み合わせて使用）                   |
 
 ```xml
 <OrderDetail Type="children" DisplayName="受注明細">
@@ -169,7 +169,7 @@ if (dbEntity.UnitPrice != null && (
 `ref-to` で汎用参照テーブル（`IsGenericLookupTable="true"`）を参照している場合、
 指定された区分値がテーブルに存在するかどうかのチェックが自動生成されます。
 
-詳細は [汎用参照テーブル](./DataModel_GenericLookupTable) を参照してください。
+詳細は [汎用参照テーブル](./020306_DataModel_GenericLookupTable.md) を参照してください。
 
 ---
 

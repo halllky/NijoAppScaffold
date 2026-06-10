@@ -13,10 +13,10 @@ sidebar_position: 5
 
 CommandModel は他のモデルと異なり、**処理の中身（ロジック）は自動生成されません**。生成されるのはフロントエンドとバックエンドをつなぐ枠組みです。
 
-| モジュール | 詳細ページ |
-| --- | --- |
-| Execute メソッドのシグネチャ・Web API エンドポイント | このページ参照 |
-| 引数・戻り値の型定義（Parameter / ReturnValue） | [引数・戻り値の型定義](./CommandModel_Parameters) |
+| モジュール                                           | 詳細ページ                                                  |
+| ---------------------------------------------------- | ----------------------------------------------------------- |
+| Execute メソッドのシグネチャ・Web API エンドポイント | このページ参照                                              |
+| 引数・戻り値の型定義（Parameter / ReturnValue）      | [引数・戻り値の型定義](./020501_CommandModel_Parameters.md) |
 
 ## 設計指針
 
@@ -32,7 +32,7 @@ DataModel が「名詞（データ）」であるのに対し、CommandModel は
 CommandModel 自体はデータ構造を持ちません。
 引数・戻り値が必要な場合は **StructureModel** または **QueryModel**（SearchCondition / DisplayData）を指定します。
 
-詳細は [引数・戻り値の型定義](./CommandModel_Parameters) を参照してください。
+詳細は [引数・戻り値の型定義](./020501_CommandModel_Parameters.md) を参照してください。
 
 ## Execute メソッド
 

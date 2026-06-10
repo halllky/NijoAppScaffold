@@ -8,10 +8,10 @@ QueryModel の検索処理は、内部的に **SearchResult** と **DisplayData*
 
 ## SearchResult と DisplayData の役割分担
 
-| クラス | 役割 | 構造 |
-| --- | --- | --- |
+| クラス               | 役割                                                                    | 構造                                                                  |
+| -------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | `{Name}SearchResult` | EF Core の IQueryable に使うクラス。WHERE句・ORDER BY句の動的構築に使用 | **フラット構造**（Child は `_{フィールド名}` でアンダースコアつなぎ） |
-| `{Name}DisplayData` | フロントエンドに返す表示用クラス | **階層構造**（Child / Children はネストしたオブジェクト） |
+| `{Name}DisplayData`  | フロントエンドに返す表示用クラス                                        | **階層構造**（Child / Children はネストしたオブジェクト）             |
 
 SearchResult がフラット構造になっている理由は、EF Core の LINQ to Entity から直接 SQL にチューニングしやすくするためです。
 開発者が直接扱うのは DisplayData であり、SearchResult を直接操作することは通常ありません。
@@ -59,7 +59,7 @@ public class OrderQueryDisplayData {
 ### 状態フラグ（一括更新用）
 
 `ExistsInDatabase`・`WillBeDeleted`・`WillBeChanged` は一括更新（BatchUpdate）のフラグです。
-詳細は [一括更新](./DataModel_BatchUpdate) を参照してください。
+詳細は [一括更新](../020300_DataModel/020305_DataModel_BatchUpdate.md) を参照してください。
 
 ## SaveCommand への変換
 
@@ -88,9 +88,9 @@ var deleteKey = displayData.ToDeleteCommand();
 Util.SearchProcessingResult<OrderQueryDisplayData>
 ```
 
-| フィールド | 説明 |
-| --- | --- |
-| `Items` | 現在ページの DisplayData の配列 |
+| フィールド   | 説明                                         |
+| ------------ | -------------------------------------------- |
+| `Items`      | 現在ページの DisplayData の配列              |
 | `TotalCount` | フィルタ後の全件数（ページネーション表示用） |
 
 TypeScript 側では `LoadFeature.ReturnType` で型を参照できます。
