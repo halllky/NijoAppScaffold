@@ -2,61 +2,77 @@
 sidebar_position: 5
 ---
 
-# CommandModel (コマンドモデル)
+# CommandModel（コマンドモデル）
 
-アプリケーションの利用者や外部システムが何らかのトリガーで要請を行い、結果を返す「処理の1サイクル」を定義します。
-データの登録・更新だけでなく、「複雑なデータ構造をもつ画面の初期表示処理」や「データ集計Excel出力」といった操作もCommand Modelとして定義されます。
-関数定義のように、**「引数 (Parameter)」** と **「戻り値 (ReturnValue)」** を持ちます。
+「処理の1サイクル」を定義します。関数定義のように **引数（Parameter）** と **戻り値（ReturnValue）** を持ちます。
+データの登録・更新だけでなく、「複雑な画面の初期表示」「データ集計 Excel 出力」といった操作も CommandModel として定義します。
+
+スキーマ定義ファイル (`nijo.xml`) での指定方法: `Type="command-model"`
 
 ## 自動生成されるモジュール
 
-コマンドモデルの定義1個から、以下のモジュールが自動生成されます。
-CommandModelは他のモデルと異なり、**データ構造や処理の中身（ロジック）は自動生成されません**。生成されるのは、フロントエンドとバックエンドをつなぐ「枠組み」です。
+CommandModel は他のモデルと異なり、**処理の中身（ロジック）は自動生成されません**。生成されるのはフロントエンドとバックエンドをつなぐ枠組みです。
 
-### 1. 処理のインターフェース（バックエンド）
-* **処理実装用クラス**: 開発者がビジネスロジックを実装するためのクラス（Application Service）。
-  * `Execute` メソッド: ここに実際の処理を記述します。引数と戻り値の型は、定義時に指定した他のモデル（DataModel, QueryModel, StructureModel）の型が使用されます。
-* **Web API エンドポイント**: コマンドを外部（フロントエンド含む）に公開するための Controller クラス。HTTPリクエストを受け取り、上記の `Execute` メソッドを呼び出します。
-
-### 2. TypeScript APIクライアント
-* **API呼び出し関数**: フロントエンドからこのコマンドを呼び出すための非同期関数。引数と戻り値には、TypeScriptの型定義が適用され、型安全にAPIを呼び出すことができます。
-
-### 3. 拡張ポイント
-* **`Execute`**: **必ず実装が必要です**。具体的なビジネスロジック（DB更新、外部連携、計算など）を記述します。
-
-詳細は リファレンス を参照してください。
+| モジュール | 詳細ページ |
+| --- | --- |
+| Execute メソッドのシグネチャ・Web API エンドポイント | このページ参照 |
+| 引数・戻り値の型定義（Parameter / ReturnValue） | [引数・戻り値の型定義](./CommandModel_Parameters) |
 
 ## 設計指針
 
-### 1. コマンドモデルの粒度
+### コマンドモデルの粒度
 
-基本的には **「1つのユースケース（ユーザーのアクション）」につき「1つのCommandModel」** を定義します。
-例えば、「受注登録ボタンを押す」「月次集計を実行する」「CSVを取り込む」といった操作の一つ一つが CommandModel になります。
+**「1つのユースケース（ユーザーのアクション）」につき「1つの CommandModel」** を定義します。
+「受注登録ボタンを押す」「月次集計を実行する」「CSV を取り込む」がそれぞれ CommandModel になります。
 
-DataModelが「名詞（データ）」であるのに対し、CommandModelは「動詞（処理）」であると言えます。
+DataModel が「名詞（データ）」であるのに対し、CommandModel は「動詞（処理）」です。
 
-### 2. 実装パターン
+### 引数と戻り値のデータ構造
 
-CommandModelの `Execute` メソッド内では、要件に応じて自由な処理を記述できます。
+CommandModel 自体はデータ構造を持ちません。
+引数・戻り値が必要な場合は **StructureModel** または **QueryModel**（SearchCondition / DisplayData）を指定します。
 
-* **DataModelの更新**:
-  * 最も一般的なパターンです。
-  * 引数で受け取ったデータを元に、DataModelの `Create`, `Update`, `Delete` メソッドを呼び出してデータベースを更新します。
-  * トランザクション管理もここで行います。
-* **参照系処理**:
-  * 複雑な計算結果を返すだけの処理や、一時的なデータの変換処理など、DB更新を伴わない処理も定義可能です。
-* **外部システム連携**:
-  * 外部APIの呼び出しや、メール送信などもここで実装します。
-  * 当然、DataModelの更新と組み合わせて実装することも可能です。
+詳細は [引数・戻り値の型定義](./CommandModel_Parameters) を参照してください。
 
-### 3. 引数と戻り値のデータ構造
+## Execute メソッド
 
-CommandModel自体はデータ構造を持ちません。
-引数や戻り値が必要な場合は、**QueryModel**、または **StructureModel** または **DataModel（QueryModelが生成されるもののみ）** で定義された構造を指定して利用します。
+CommandModel の処理本体は `Execute{Name}Async` メソッドに実装します。**必ず開発者が実装する必要があります。**
 
-各 Command Model では、引数・戻り値それぞれについて以下のいずれかを指定します。
+```csharp
+// Application Service に生成されるスタブ
+public abstract Task Execute受注登録Async(
+    受注登録DisplayData param,
+    IPresentationContext<受注登録DisplayDataMessages> context);
 
-* 何も定義しない（引数なし）
-* 構造体モデル
-* クエリモデルの検索条件
-* クエリモデルの検索結果
+// 開発者が実装
+public override async Task Execute受注登録Async(
+    受注登録DisplayData param,
+    IPresentationContext<受注登録DisplayDataMessages> context) {
+
+    // トランザクションを開始
+    await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+
+    // DataModel の CRUD メソッドを呼び出す
+    var result = await CreateOrderAsync(param.ToCreateCommand(), context);
+    if (!result.IsSuccess) {
+        await transaction.RollbackAsync();
+        return;
+    }
+
+    await transaction.CommitAsync();
+}
+```
+
+## 基本的な XML 定義例
+
+```xml
+<!-- 引数と戻り値あり -->
+<受注登録 Type="command-model" DisplayName="受注登録">
+  <Parameter   Type="structure-model:受注登録Form"  />
+  <ReturnValue Type="query-model:受注詳細Query" />
+</受注登録>
+
+<!-- 引数なし・戻り値なし -->
+<月次集計 Type="command-model" DisplayName="月次集計実行">
+</月次集計>
+```
