@@ -1,4 +1,5 @@
 ---
+sidebar_label: クエリモデル
 sidebar_position: 4
 ---
 

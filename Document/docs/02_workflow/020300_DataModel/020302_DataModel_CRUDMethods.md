@@ -1,5 +1,5 @@
 ---
-draft: true
+
 ---
 
 # CRUD メソッド
@@ -9,11 +9,11 @@ DataModel の定義から、新規登録・更新・物理削除の3種類のメ
 
 ## 生成されるメソッド一覧
 
-| メソッド名 | 処理 | 引数 | 戻り値 |
-| --- | --- | --- | --- |
-| `Create{集約名}Async` | 新規登録 | `{集約名}CreateCommand` | `DataModelSaveResult<{集約名}DbEntity>` |
-| `Update{集約名}Async` | 更新 | `{集約名}UpdateOrDeleteKey`, 更新関数 | `DataModelSaveResult<{集約名}DbEntity>` |
-| `Delete{集約名}Async` | 物理削除 | `{集約名}UpdateOrDeleteKey` | `DataModelSaveResult<{集約名}DbEntity>` |
+| メソッド名            | 処理     | 引数                                  | 戻り値                                  |
+| --------------------- | -------- | ------------------------------------- | --------------------------------------- |
+| `Create{集約名}Async` | 新規登録 | `{集約名}CreateCommand`               | `DataModelSaveResult<{集約名}DbEntity>` |
+| `Update{集約名}Async` | 更新     | `{集約名}UpdateOrDeleteKey`, 更新関数 | `DataModelSaveResult<{集約名}DbEntity>` |
+| `Delete{集約名}Async` | 物理削除 | `{集約名}UpdateOrDeleteKey`           | `DataModelSaveResult<{集約名}DbEntity>` |
 
 ## SaveCommand クラス
 
@@ -21,11 +21,11 @@ CRUD メソッドの引数には EF Core エンティティクラス（`DbEntity
 
 ### 3種類の SaveCommand
 
-| クラス名 | 用途 | 含まれる項目 |
-| --- | --- | --- |
-| `{集約名}CreateCommand` | 新規登録 | 全項目（ただしシーケンス自動採番項目は除く） |
-| `{集約名}UpdateCommand` | 更新時の値 | 全項目 |
-| `{集約名}UpdateOrDeleteKey` | 更新・削除対象の特定 | キー項目 + `Version`（楽観排他用） |
+| クラス名                    | 用途                 | 含まれる項目                                 |
+| --------------------------- | -------------------- | -------------------------------------------- |
+| `{集約名}CreateCommand`     | 新規登録             | 全項目（ただしシーケンス自動採番項目は除く） |
+| `{集約名}UpdateCommand`     | 更新時の値           | 全項目                                       |
+| `{集約名}UpdateOrDeleteKey` | 更新・削除対象の特定 | キー項目 + `Version`（楽観排他用）           |
 
 ### なぜ DbEntity ではなく SaveCommand を使うのか
 

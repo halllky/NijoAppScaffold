@@ -1,5 +1,5 @@
 ---
-draft: true
+
 ---
 
 # 一覧検索処理
@@ -84,13 +84,13 @@ protected override IQueryable<OrderQuerySearchResult> CreateQuerySource(
 `AppendWhereClause` は `CreateQuerySource` で得た IQueryable に WHERE 句を追加します。
 各属性の型に応じた絞り込み条件が**自動生成**されます。
 
-| 属性の型 | 自動生成される条件 |
-| --- | --- |
-| `string`（Word/Description） | LIKE による部分一致 |
-| 数値（int/long/decimal） | `{Name}Min` ≤ value ≤ `{Name}Max` の範囲検索 |
-| `DateTime` | `{Name}From` ≤ value ≤ `{Name}To` の範囲検索 |
-| `StaticEnum` | チェックされた値の IN 条件 |
-| `OnlySearchCondition="true"` | 自動生成なし（開発者が実装） |
+| 属性の型                     | 自動生成される条件                           |
+| ---------------------------- | -------------------------------------------- |
+| `string`（Word/Description） | LIKE による部分一致                          |
+| 数値（int/long/decimal）     | `{Name}Min` ≤ value ≤ `{Name}Max` の範囲検索 |
+| `DateTime`                   | `{Name}From` ≤ value ≤ `{Name}To` の範囲検索 |
+| `StaticEnum`                 | チェックされた値の IN 条件                   |
+| `OnlySearchCondition="true"` | 自動生成なし（開発者が実装）                 |
 
 ### オーバーライドして条件を追加する
 

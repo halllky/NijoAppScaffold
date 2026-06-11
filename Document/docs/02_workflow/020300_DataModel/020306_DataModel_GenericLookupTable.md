@@ -1,6 +1,6 @@
 ---
-# 執筆中
-draft: true
+sidebar_label: 汎用参照テーブル
+
 
 ---
 

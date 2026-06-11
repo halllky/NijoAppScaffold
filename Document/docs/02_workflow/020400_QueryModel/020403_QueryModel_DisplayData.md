@@ -1,5 +1,6 @@
 ---
-draft: true
+sidebar_label: 検索結果
+
 ---
 
 # 検索結果（DisplayData）

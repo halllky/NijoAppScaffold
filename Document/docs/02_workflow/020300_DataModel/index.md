@@ -1,4 +1,5 @@
 ---
+sidebar_label: データモデル
 sidebar_position: 3
 ---
 

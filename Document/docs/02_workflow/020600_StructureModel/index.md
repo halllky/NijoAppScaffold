@@ -1,4 +1,5 @@
 ---
+sidebar_label: 構造体モデル
 sidebar_position: 6
 ---
 

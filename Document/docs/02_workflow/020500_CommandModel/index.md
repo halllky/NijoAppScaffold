@@ -1,4 +1,5 @@
 ---
+sidebar_label: コマンドモデル
 sidebar_position: 5
 ---
 
