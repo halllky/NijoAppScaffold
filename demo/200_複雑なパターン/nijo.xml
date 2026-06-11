@@ -3,9 +3,7 @@
   ApplicationName="デモ200：複雑なパターン"
   RootNamespace="MyApp">
   <DataStructures>
-    <!-- GDQM かつ GenerateBatchUpdateCommand のデータモデル -->
     <医療機器マスタ
-      GenerateBatchUpdateCommand="True"
       GenerateDefaultQueryModel="True"
       LatinName="Medical Equipment Master"
       Type="data-model"
@@ -307,7 +305,6 @@
         </紹介状況>
       </紹介状情報>
     </診療履歴>
-    <!-- GDQMだがGenerateBatchUpdateCommandではない -->
     <患者マスタ
       GenerateDefaultQueryModel="True"
       LatinName="Patient Master"

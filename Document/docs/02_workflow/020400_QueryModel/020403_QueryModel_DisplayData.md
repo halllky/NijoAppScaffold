@@ -32,7 +32,7 @@ public class OrderQueryDisplayData {
     // DataModel に GenerateDefaultQueryModel="true" が指定された場合のみ存在
     public int? Version { get; set; }
 
-    // 一括更新（BatchUpdate）で使用する状態フラグ
+    // 編集状態フラグ
     public bool ExistsInDatabase { get; set; }
     public bool WillBeDeleted    { get; set; }
     public bool WillBeChanged    { get; set; }
@@ -56,28 +56,10 @@ public class OrderQueryDisplayData {
 </OrderSummary>
 ```
 
-### 状態フラグ（一括更新用）
+### 編集状態フラグ
 
-`ExistsInDatabase`・`WillBeDeleted`・`WillBeChanged` は一括更新（BatchUpdate）のフラグです。
-詳細は [一括更新](../020300_DataModel/020305_DataModel_BatchUpdate.md) を参照してください。
-
-## SaveCommand への変換
-
-`GenerateDefaultQueryModel="true"` の場合、DisplayData から CRUD の SaveCommand への変換メソッドが生成されます。
-
-```csharp
-// DisplayData → 新規登録コマンドに変換
-var createCmd = displayData.ToCreateCommand();
-
-// DisplayData → 更新コマンドに代入
-var updateCmd = new OrderUpdateOrDeleteKey { OrderId = "ORD-001", Version = 2 };
-displayData.AssignToUpdateCommand(updateCmd);
-
-// DisplayData → 削除キーに変換
-var deleteKey = displayData.ToDeleteCommand();
-```
-
-これらのメソッドにより、一覧画面から編集した DisplayData を直接 CRUD メソッドに渡せます。
+`ExistsInDatabase`・`WillBeDeleted`・`WillBeChanged` はUIでの編集状態を追跡するフラグです。
+フレームワークが自動的に設定・参照します。
 
 ## ページネーションレスポンス
 

@@ -40,10 +40,6 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
     /// <summary>楽観排他制御用のバージョニング情報をもつプロパティの名前（TypeScript側）</summary>
     internal const string VERSION_TS = "version";
 
-    internal const string TO_CREATE_COMMAND = "ToCreateCommand";
-    internal const string ASSIGN_TO_UPDATE_COMMAND = "AssignToUpdateCommand";
-    internal const string TO_DELETE_COMMAND = "ToDeleteCommand";
-
     protected EditablePresentationObject(AggregateBase aggregate) {
         Aggregate = aggregate;
     }

@@ -276,13 +276,6 @@ namespace Nijo.Models {
                 QueryModel.GenerateCode(ctx, rootAggregate, aggregateFile);
             }
 
-            // 標準の一括作成コマンド
-            if (rootAggregate.GenerateBatchUpdateCommand) {
-                var batchUpdate = new BatchUpdate(rootAggregate);
-                aggregateFile.AddWebapiControllerAction(batchUpdate.RenderControllerAction(ctx));
-                aggregateFile.AddAppSrvMethod(batchUpdate.RenderAppSrvMethod(ctx), "一括更新処理");
-            }
-
             aggregateFile.ExecuteRendering(ctx);
         }
 

@@ -258,24 +258,6 @@ internal static class BasicNodeOptions {
             // IsAvailableで基本的な判定は完了しているため、追加の検証は不要
         },
     };
-    internal static NodeOption GenerateBatchUpdateCommand = new() {
-        AttributeName = "GenerateBatchUpdateCommand",
-        DisplayName = "DataModelと全く同じ型のQueryModelの一括更新用のWebエンドポイント・アプリケーションサービスを生成するかどうか",
-        Type = E_NodeOptionType.Boolean,
-        HelpText = $$"""
-            標準の更新ロジックで一括更新処理を生成する場合に指定。
-            DataModel、かつ、それとまったく同じ形のQueryModelが生成される場合にのみ指定可能。
-            """,
-        IsAvailable = (model, nodeType) => {
-            return model is DataModel && nodeType == E_NodeType.RootAggregate;
-        },
-        ValidateOthers = ctx => {
-            // このオプションを使用するためにはGenerateDefaultQueryModelの指定が必須
-            if (ctx.XElement.Attribute(GenerateDefaultQueryModel.AttributeName) == null) {
-                ctx.AddError($"このオプションを使用するためには{GenerateDefaultQueryModel.AttributeName}属性の指定が必須です。");
-            }
-        },
-    };
     internal static NodeOption UseSoftDelete = new() {
         AttributeName = "UseSoftDelete",
         DisplayName = "論理削除を行う",
