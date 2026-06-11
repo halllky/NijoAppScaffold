@@ -60,7 +60,7 @@ public class ExampleContoller : ControllerBase {
             if (result.HasError()) {
                 return Problem(string.Join("\n", [
                     "ダミーデータの生成に失敗しました。",
-                    .. result.GetAllMessages(),
+                    ..result.GetAllMessages(),
                 ]));
             }
 

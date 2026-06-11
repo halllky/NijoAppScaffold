@@ -1,5 +1,4 @@
 using MyApp;
-using MyApp.Debugging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,8 +11,8 @@ partial class DB接続あり_更新あり {
 
     [Test]
     [Category("DB接続あり（更新あり）")]
-    public async Task 標準のダミーデータ作成処理が成功するか() {
-        var scope = TestUtilImpl.Instance.CreateScope("標準のダミーデータ作成処理が成功するか");
+    public async Task ダミーデータ作成処理が成功するか() {
+        var scope = TestUtilImpl.Instance.CreateScope("ダミーデータ作成処理が成功するか");
 
         var generator = new DummyDataGeneratorInUnitTest(messages => new PresentationContextInUnitTest<MessageSetter> {
             ValidationOnly = false,

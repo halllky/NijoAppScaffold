@@ -262,10 +262,6 @@ namespace Nijo.Models {
                 #endregion 自動生成されるバリデーション処理
                 """, "バリデーション処理");
 
-            // 処理: ダミーデータ作成関数
-            ctx.Use<DummyDataGenerator>()
-                .Add(rootAggregate);
-
             // データ型: ほかの集約から参照されるときのキー
             aggregateFile.AddCSharpClass(KeyClass.KeyClassEntry.RenderClassDeclaringRecursively(rootAggregate, ctx), "Class_KeyClass");
 

@@ -301,12 +301,6 @@ namespace Nijo.Models {
                 aggregateFile.AddCSharpClass(DataModelModules.KeyClass.KeyClassEntry.RenderClassDeclaringRecursively(rootAggregate, ctx), "Class_KeyClass");
             }
 
-            // 処理: ダミーデータ作成関数
-            // ※ ほかの集約から参照されている場合、このビューへの参照を解決するために必要
-            if (rootAggregate.IsView) {
-                ctx.Use<DataModelModules.DummyDataGenerator>().Add(rootAggregate);
-            }
-
             // UI用モジュール
             // - DisplayData等のマッピングオブジェクト
             // - React Router のURL定義

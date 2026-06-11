@@ -22,7 +22,6 @@ DataModel の定義1個から、以下のモジュールが自動生成されま
 | 論理削除メソッド（オプション）                   | [論理削除](./020304_DataModel_SoftDelete.md)                       |
 | 一括更新 API（オプション）                       | [一括更新](./020305_DataModel_BatchUpdate.md)                      |
 | 汎用参照テーブル（オプション）                   | [汎用参照テーブル](./020306_DataModel_GenericLookupTable.md)       |
-| ダミーデータ生成処理                             | [ダミーデータ生成](./020307_DataModel_DummyData.md)                |
 
 ## 設計指針
 
