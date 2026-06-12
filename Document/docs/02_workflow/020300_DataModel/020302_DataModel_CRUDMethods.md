@@ -29,11 +29,9 @@ CRUD メソッドの引数には EF Core エンティティクラス（`DbEntity
 
 ### なぜ DbEntity ではなく SaveCommand を使うのか
 
-更新処理の引数に `DbEntity` を直接使うと、更新すべきでないカラムまで誤って上書きしてしまうリスクがあります。
-SaveCommand は操作ごとに必要な項目のみを持つため、実装ミスを防ぎます。
-
-例えば更新時に、参照先の詳細情報（ナビゲーションプロパティ）は不要です。
-`UpdateCommand` では参照先のキーのみを保持する `{参照名}Key` クラスが使われます。
+`DbEntity` を更新処理の引数に直接使うと、更新すべきでないカラム（ナビゲーションプロパティ等）まで誤って上書きするリスクがあります。
+`SaveCommand` は操作ごとに必要な項目のみを持つため、実装ミスを防ぎます。
+`UpdateCommand` での参照先は、ナビゲーションプロパティではなくキーのみを保持する `{参照名}Key` クラスになります。
 
 ### DbEntity との相互変換
 
@@ -63,7 +61,7 @@ public virtual async Task<DataModelSaveResult<OrderDbEntity>> CreateOrderAsync(
 1. `command.ToDbEntity()` でエンティティを生成
 2. `CreatedAt`, `UpdatedAt`, `CreateUser`, `UpdateUser`, `Version = 0` を自動設定
 3. スキーマ定義から自動生成されたバリデーション（必須・最大長・文字種・桁数）を実行
-4. `OnBeforeCreateOrderAsync`（フック）を呼び出し
+4. `OnBeforeCreateOrder`（フック）を呼び出し
 5. エラーがある場合は中断して戻る
 6. `context.ValidationOnly == true` の場合は DB への保存を行わず戻る
 7. SAVEPOINT を作成して `DbContext.SaveChangesAsync()` を実行
@@ -86,9 +84,9 @@ var command = new OrderCreateCommand {
 };
 
 var result = await CreateOrderAsync(command, context);
-if (!result.IsSuccess) {
+if (!result.IsSaveCompleted()) {
     await DbContext.Database.RollbackTransactionAsync();
-    return result.ToFailureResponse();
+    return;
 }
 
 await DbContext.Database.CommitTransactionAsync();
@@ -123,7 +121,7 @@ public virtual Task<DataModelSaveResult<OrderDbEntity>> UpdateOrderAsync(
 5. `command.ToDbEntity()` で更新後エンティティを生成
 6. メタデータ（`Version + 1`, `UpdatedAt`, `UpdateUser`）を自動設定
 7. バリデーション実行 → フック実行 → `ValidationOnly` チェック
-8. SAVEPOINT 作成 → EF Core の `EntityState.Modified` でアタッチ → `SaveChangesAsync()`
+8. EF Core の `EntityState.Modified` でアタッチ（Child/Children の子も同様） → SAVEPOINT 作成 → `SaveChangesAsync()`
 9. 楽観排他エラー（`DbUpdateConcurrencyException`）の場合は専用メッセージを返す
 10. 後処理フック実行 → SAVEPOINT 解放
 
@@ -146,9 +144,9 @@ var result = await UpdateOrderAsync(key, command => {
 更新直前に再取得した最新版を渡してしまうと、楽観排他制御の意味がなくなります。
 :::
 
-### Children の更新ルール
+### Child / Children の更新ルール
 
-`Children`（1対多の子集約）の更新は、更新前後のレコードをキーで照合して以下のように処理されます：
+`Child`（1対1の子集約）と `Children`（1対多の子集約）の更新は、更新前後のレコードをキーで照合して以下のように処理されます：
 
 - 更新前に存在し、更新後も存在する → `UPDATE`
 - 更新前に存在せず、更新後に存在する → `INSERT`
@@ -236,16 +234,21 @@ public virtual Task OnAfterDeleteOrderAsync(
 ## DataModelSaveResult（戻り値）
 
 ```csharp
-// 成功判定
-if (result.IsSuccess) {
-    var savedEntity = result.Value; // 保存後の DbEntity
+// 保存が完了したか（バリデーションのみの場合は false）
+if (result.IsSaveCompleted(out var savedEntity)) {
+    // savedEntity が保存後の DbEntity
 }
 
-// エラー理由
-switch (result.ErrorReason) {
-    case DataModelSaveErrorReason.ValidationError:    // バリデーションエラー
-    case DataModelSaveErrorReason.ConcurrencyError:   // 楽観排他エラー
-    case DataModelSaveErrorReason.AfterSaveError:     // 後処理フックのエラー
+// バリデーションエラーが無かったか（保存した場合もバリデーションのみの場合も true）
+if (result.IsValidationOk()) { ... }
+
+// エラーが発生したか
+if (result.IsError(out var errorReason)) {
+    switch (errorReason) {
+        case DataModelSaveErrorReason.ValidationError:    // バリデーションエラー
+        case DataModelSaveErrorReason.ConcurrencyError:   // 楽観排他エラー
+        case DataModelSaveErrorReason.AfterSaveError:     // 後処理フックのエラー
+    }
 }
 ```
 
@@ -265,13 +268,13 @@ switch (result.ErrorReason) {
 await using var transaction = await DbContext.Database.BeginTransactionAsync();
 
 var createResult = await CreateOrderAsync(createCmd, context);
-if (!createResult.IsSuccess) {
+if (!createResult.IsSaveCompleted()) {
     await transaction.RollbackAsync();
     return;
 }
 
 var updateResult = await UpdateCustomerAsync(updateKey, updater, context);
-if (!updateResult.IsSuccess) {
+if (!updateResult.IsSaveCompleted()) {
     await transaction.RollbackAsync();
     return;
 }

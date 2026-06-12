@@ -42,20 +42,20 @@ CommandModel の処理本体は `Execute{Name}Async` メソッドに実装しま
 ```csharp
 // Application Service に生成されるスタブ
 public abstract Task Execute受注登録Async(
-    受注登録DisplayData param,
-    IPresentationContext<受注登録DisplayDataMessages> context);
+    受注登録FormDisplayData param,
+    IPresentationContext<受注登録FormDisplayDataMessages> context);
 
 // 開発者が実装
 public override async Task Execute受注登録Async(
-    受注登録DisplayData param,
-    IPresentationContext<受注登録DisplayDataMessages> context) {
+    受注登録FormDisplayData param,
+    IPresentationContext<受注登録FormDisplayDataMessages> context) {
 
     // トランザクションを開始
-    await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+    await using var transaction = await DbContext.Database.BeginTransactionAsync();
 
     // DataModel の CRUD メソッドを呼び出す
     var result = await CreateOrderAsync(param.ToCreateCommand(), context);
-    if (!result.IsSuccess) {
+    if (!result.IsSaveCompleted()) {
         await transaction.RollbackAsync();
         return;
     }
@@ -67,13 +67,11 @@ public override async Task Execute受注登録Async(
 ## 基本的な XML 定義例
 
 ```xml
-<!-- 引数と戻り値あり -->
-<受注登録 Type="command-model" DisplayName="受注登録">
-  <Parameter   Type="structure-model:受注登録Form"  />
-  <ReturnValue Type="query-model:受注詳細Query" />
-</受注登録>
+<!-- 引数と戻り値あり（Parameter・ReturnValue はXML属性で指定する） -->
+<受注登録 Type="command-model" DisplayName="受注登録"
+          Parameter="受注登録Form"
+          ReturnValue="受注詳細Query:DisplayData" />
 
 <!-- 引数なし・戻り値なし -->
-<月次集計 Type="command-model" DisplayName="月次集計実行">
-</月次集計>
+<月次集計 Type="command-model" DisplayName="月次集計実行" />
 ```

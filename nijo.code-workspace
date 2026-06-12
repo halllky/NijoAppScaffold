@@ -17,15 +17,15 @@
       "path": "Nijo"
     },
     {
-      "name": "Nijo GUI",
+      "name": "Nijo_GUI",
       "path": "Nijo.GuiClient/package_schema-editor-v1"
     },
     {
-      "name": "Nijo テンプレート",
+      "name": "Nijo_Template",
       "path": "Nijo.NewProjectTemplate"
     },
     {
-      "name": "Nijo ドキュメント",
+      "name": "Nijo_Document",
       "path": "Document"
     },
     {
@@ -41,15 +41,15 @@
       "path": "temp_ソース現新比較用"
     },
     {
-      "name": "DEMO 000 基本的なDataModelの例",
+      "name": "DEMO_000_基本的なDataModelの例",
       "path": "demo/000_基本的なDataModelの例"
     },
     {
-      "name": "DEMO 101 販売管理システム",
+      "name": "DEMO_101_販売管理システム",
       "path": "demo/101_販売管理システム"
     },
     {
-      "name": "DEMO 200 複雑なパターン",
+      "name": "DEMO_200_複雑なパターン",
       "path": "demo/200_複雑なパターン"
     }
   ],
