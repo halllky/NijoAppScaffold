@@ -231,7 +231,8 @@ namespace Nijo {
                         return;
                     }
                     var rule = SchemaParseRule.Default();
-                    var parseContext = new SchemaParseContext(XDocument.Load(project.SchemaXmlPath), rule);
+                    var xDocument = XDocument.Load(project.SchemaXmlPath);
+                    var parseContext = new SchemaParseContext(xDocument, rule, GeneratedProjectOptions.Parse(xDocument, true));
 
                     if (!project.ValidateSchema(parseContext, logger)) {
                         context.ExitCode = 1;
@@ -269,7 +270,8 @@ namespace Nijo {
                         return;
                     }
                     var rule = SchemaParseRule.Default();
-                    var parseContext = new SchemaParseContext(XDocument.Load(project.SchemaXmlPath), rule);
+                    var xDocument = XDocument.Load(project.SchemaXmlPath);
+                    var parseContext = new SchemaParseContext(xDocument, rule, GeneratedProjectOptions.Parse(xDocument, true));
                     var renderingOptions = new CodeRenderingOptions {
                         AllowNotImplemented = allowNotImplemented,
                     };
@@ -328,7 +330,8 @@ namespace Nijo {
                 try {
                     if (!noBuild) {
                         var rule = SchemaParseRule.Default();
-                        var parseContext = new SchemaParseContext(XDocument.Load(project.SchemaXmlPath), rule);
+                        var xDocument = XDocument.Load(project.SchemaXmlPath);
+                        var parseContext = new SchemaParseContext(xDocument, rule, GeneratedProjectOptions.Parse(xDocument, true));
                         var renderingOptions = new CodeRenderingOptions {
                             AllowNotImplemented = allowNotImplemented,
                         };
@@ -394,7 +397,7 @@ namespace Nijo {
 
             var rule = SchemaParseRule.Default();
             var xDocument = XDocument.Load(project.SchemaXmlPath);
-            var parseContext = new SchemaParseContext(xDocument, rule);
+            var parseContext = new SchemaParseContext(xDocument, rule, GeneratedProjectOptions.Parse(xDocument, true));
 
             // TryBuildSchemaメソッドを使用してApplicationSchemaのインスタンスを生成
             if (parseContext.TryBuildSchema(xDocument, out var appSchema, out var errors)) {
@@ -446,7 +449,7 @@ namespace Nijo {
             }
 
             // 値メンバー型のドキュメントを生成
-            var schemaContext = new SchemaParseContext(new XDocument(), rule);
+            var schemaContext = new SchemaParseContext(new XDocument(), rule, GeneratedProjectOptions.Parse(null, true));
             var valueMemberTypes = schemaContext.GetValueMemberTypes().ToArray();
             var valueMemberTypesPath = Path.Combine(outDirFullPath, ValueObjectTypesMd.FILE_NAME_WITHOUT_EXT + ".md");
             File.WriteAllText(valueMemberTypesPath, ValueObjectTypesMd.Render(valueMemberTypes), new UTF8Encoding(false, false));

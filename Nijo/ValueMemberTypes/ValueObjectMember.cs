@@ -1,6 +1,7 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Models;
+using Nijo.Models.QueryModelModules;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
@@ -28,7 +29,7 @@ internal class ValueObjectMember : IValueMemberType {
         return $$"""
             独自の値オブジェクトを参照する型です。
             通常の文字列型よりも特別な意味を持った値（「○○コード」など）を表現するのに適しています。
-            検索時の挙動は完全一致・部分一致・前方一致・後方一致から選択可能です。
+            検索時の挙動は完全一致・部分一致・前方一致・後方一致・範囲検索から選択可能です。
 
             予め nijo.xml で値オブジェクトの種類を `{{ValueObjectModel.SCHEMA_NAME}}` モデルとして定義しておく必要があります。
             """;
@@ -52,6 +53,10 @@ internal class ValueObjectMember : IValueMemberType {
         FilterTsTypeName = "string",
         RenderTsNewObjectFunctionValue = () => "''",
         RenderFiltering = ctx => {
+            if (IsRangeSearch(ctx)) {
+                return RangeSearchRenderer.RenderRangeSearchFiltering(ctx);
+            }
+
             var query = ctx.Query.Root.Name;
             var fullpathNullable = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");
             var fullpathNotNull = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, "!.");
@@ -88,6 +93,11 @@ internal class ValueObjectMember : IValueMemberType {
                 """;
         },
     };
+
+    private static bool IsRangeSearch(FilterStatementRenderingContext ctx) {
+        return ctx.Query.Metadata is IInstanceValuePropertyMetadata vm
+            && vm.SchemaPathNode.XElement.Attribute(BasicNodeOptions.StringSearchBehavior.AttributeName)?.Value == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_RANGE;
+    }
 
     void IValueMemberType.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
         // 特になし

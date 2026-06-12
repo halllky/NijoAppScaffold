@@ -22,7 +22,7 @@ namespace Nijo.Models.DataModelModules {
         internal string OnBeforeMethodName => $"OnBeforeSoftDelete{_rootAggregate.PhysicalName}";
         internal string OnAfterMethodName => $"OnAfterSoftDelete{_rootAggregate.PhysicalName}Async";
 
-        internal string Render(CodeRenderingContext ctx) {
+        internal string Render(CodeRenderingContext ctx, IReadOnlyDictionary<SchemaNodeIdentity, InstancePropertyPath> variablePathInfo) {
             var command = new SaveCommand(_rootAggregate, SaveCommand.E_Type.UpdOrDelKey);
             var dbEntity = new EFCoreEntity(_rootAggregate);
             var deletedEntity = new EFCoreEntity(_rootAggregate, isDeletedTable: true);
@@ -148,7 +148,7 @@ namespace Nijo.Models.DataModelModules {
                         await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT).ConfigureAwait(false);
 
                         DbContext.Entry(dbEntity).State = EntityState.Detached;
-                {{UpdateMethod.RenderDescendantDetaching(_rootAggregate, "dbEntity").SelectTextTemplate(source => $$"""
+                {{UpdateMethod.RenderDescendantDetaching(_rootAggregate, variablePathInfo, "dbEntity").SelectTextTemplate(source => $$"""
                         {{WithIndent(source)}}
                 """)}}
                         foreach (var inserted in insertedSoftDeleteEntities) {
@@ -173,7 +173,7 @@ namespace Nijo.Models.DataModelModules {
                         await {{OnAfterMethodName}}(dbEntity, messages, context);
 
                         DbContext.Entry(dbEntity).State = EntityState.Detached;
-                {{UpdateMethod.RenderDescendantDetaching(_rootAggregate, "dbEntity").SelectTextTemplate(source => $$"""
+                {{UpdateMethod.RenderDescendantDetaching(_rootAggregate, variablePathInfo, "dbEntity").SelectTextTemplate(source => $$"""
                         {{WithIndent(source)}}
                 """)}}
                         foreach (var inserted in insertedSoftDeleteEntities) {

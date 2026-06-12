@@ -1,4 +1,5 @@
 ---
+sidebar_label: 定数モデル
 sidebar_position: 7
 ---
 

@@ -146,7 +146,7 @@ namespace Nijo.Models.QueryModelModules {
 
                         // 参照先のChildrenを生成すると検索処理のSQLが複雑になりすぎて発行できないことがあるので
                         // オプションで明示的に生成するよう指定が無い限りは生成されない
-                        if (!CodeRenderingContext.CurrentContext.Config.GenerateRefToChildrenDisplayData) continue;
+                        if (!Aggregate.SchemaParseContext.ProjectOptions.GenerateRefToChildrenDisplayData) continue;
 
                         yield return new RefDisplayDataChildrenMember(children);
                     }

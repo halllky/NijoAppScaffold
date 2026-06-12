@@ -18,7 +18,7 @@ const ASP_NET_CORE_BASE_URL = import.meta.env.DEV
  * サーバー側ベースURLの解決や、認証用のCookieの付加を責務とする。
  * エラーハンドリングは特に行なっていないため呼び出し側で行うこと。
  *
- * @param endpoint URLのオリジン部分を除くパスおよびクエリパラメータ。
+ * @param endpoint URLのオリジン部分を除くパスおよびクエリパラメータ。URIエンコードは呼び出し側で行う。
  * @param init リクエストの初期化情報。HTTPメソッドやボディなど。
  * @returns レスポンス
  */

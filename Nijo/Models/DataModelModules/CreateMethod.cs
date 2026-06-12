@@ -6,6 +6,7 @@ using Nijo.ValueMemberTypes;
 using Nijo.Parts.Common;
 using System;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace Nijo.Models.DataModelModules {
     /// <summary>
@@ -21,7 +22,7 @@ namespace Nijo.Models.DataModelModules {
         internal string OnBeforeMethodName => $"OnBeforeCreate{_rootAggregate.PhysicalName}";
         internal string OnAfterMethodName => $"OnAfterCreate{_rootAggregate.PhysicalName}Async";
 
-        internal string Render(CodeRenderingContext ctx) {
+        internal string Render(CodeRenderingContext ctx, IReadOnlyDictionary<SchemaNodeIdentity, InstancePropertyPath> variablePathInfo) {
             var command = new SaveCommand(_rootAggregate, SaveCommand.E_Type.Create);
             var dbEntity = new EFCoreEntity(_rootAggregate);
             var messages = new SaveCommandMessageContainer(_rootAggregate);
@@ -95,7 +96,7 @@ namespace Nijo.Models.DataModelModules {
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(dbEntity).State = EntityState.Detached;
-                {{UpdateMethod.RenderDescendantDetaching(_rootAggregate, "dbEntity").SelectTextTemplate(source => $$"""
+                {{UpdateMethod.RenderDescendantDetaching(_rootAggregate, variablePathInfo, "dbEntity").SelectTextTemplate(source => $$"""
                         {{WithIndent(source)}}
                 """)}}
 
@@ -112,7 +113,7 @@ namespace Nijo.Models.DataModelModules {
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(dbEntity).State = EntityState.Detached;
-                {{UpdateMethod.RenderDescendantDetaching(_rootAggregate, "dbEntity").SelectTextTemplate(source => $$"""
+                {{UpdateMethod.RenderDescendantDetaching(_rootAggregate, variablePathInfo, "dbEntity").SelectTextTemplate(source => $$"""
                         {{WithIndent(source)}}
                 """)}}
 

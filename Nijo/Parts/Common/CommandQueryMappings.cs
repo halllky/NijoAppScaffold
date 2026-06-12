@@ -1,7 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Models.CommandModelModules;
-using Nijo.Models.DataModelModules;
 using Nijo.Models.QueryModelModules;
 using Nijo.Parts.JavaScript;
 using Nijo.Util.DotnetEx;
@@ -36,10 +35,6 @@ namespace Nijo.Parts.Common {
         /// </summary>
         internal const string REFERED_QUERY_MODEL_TYPE = "ReferedQueryModelType";
         /// <summary>
-        /// JavaScript用: 一括更新処理が存在するQueryModelの型名のリテラル型
-        /// </summary>
-        internal const string BATCH_UPDATABLE_QUERY_MODEL_TYPE = "BatchUpdatableQueryModelType";
-        /// <summary>
         /// JavaScript用: CommandModelの型名のリテラル型
         /// </summary>
         internal const string COMMAND_MODEL_TYPE = "CommandModelType";
@@ -63,7 +58,8 @@ namespace Nijo.Parts.Common {
         private readonly List<RootAggregate> _structureModels = [];
 
         void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
-            // 特になし
+            // ディープイコールのオプション型に依存しているので
+            ctx.Use<DeepEqualFunction.OptionType>();
         }
 
         void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
@@ -78,7 +74,7 @@ namespace Nijo.Parts.Common {
         }
 
         private SourceFile RenderCSharp(CodeRenderingContext ctx) {
-            var values = _queryModels.Concat(_commandModels).OrderByDataFlow();
+            var values = _queryModels.Concat(_commandModels).OrderByDataFlow(ctx);
 
             return new SourceFile {
                 FileName = "E_CommandQueryType.cs",
@@ -102,21 +98,16 @@ namespace Nijo.Parts.Common {
 
         private SourceFile RenderTypeScript(CodeRenderingContext ctx) {
 
-            var dataModelsOrderByDataFlow = _dataModels.OrderByDataFlow().ToArray();
-            var queryModelsOrderByDataFlow = _queryModels.OrderByDataFlow().ToArray();
-            var commandModelsOrderByDataFlow = _commandModels.OrderByDataFlow().ToArray();
-            var structureModelsOrderByDataFlow = _structureModels.OrderByDataFlow().ToArray();
+            var dataModelsOrderByDataFlow = _dataModels.OrderByDataFlow(ctx).ToArray();
+            var queryModelsOrderByDataFlow = _queryModels.OrderByDataFlow(ctx).ToArray();
+            var commandModelsOrderByDataFlow = _commandModels.OrderByDataFlow(ctx).ToArray();
+            var structureModelsOrderByDataFlow = _structureModels.OrderByDataFlow(ctx).ToArray();
 
             // QueryModelのルート集約だけでなくツリー全部
             var queryModelAggregateTypes = queryModelsOrderByDataFlow
                 .SelectMany(x => x.EnumerateThisAndDescendants())
-                .OrderBy(x => x.GetRoot().GetIndexOfDataFlow())
+                .OrderBy(x => x.GetRoot().GetIndexOfDataFlow(ctx))
                 .ThenBy(x => x.GetOrderInTree())
-                .ToArray();
-
-            // 一括更新処理可能なQueryModel
-            var batchUpdatableQueryModels = dataModelsOrderByDataFlow
-                .Where(root => root.GenerateBatchUpdateCommand)
                 .ToArray();
 
             // CommandModel のパラメータまたは戻り値に指定されている StructureModel の型名
@@ -231,16 +222,6 @@ namespace Nijo.Parts.Common {
                     {{If(referedRefEntires.Values.SelectMany(x => x).Any(), () => $$"""
                     {{referedRefEntires.Values.SelectMany(x => x).OrderBy(x => x.CsClassName).SelectTextTemplate((refEntry, i) => $$"""
                       {{(i == 0 ? "=" : "|")}} '{{refEntry.Aggregate.RefEntryName}}'
-                    """)}}
-                    """).Else(() => $$"""
-                      = never
-                    """)}}
-
-                    /** 一括更新処理可能なQueryModelの種類の一覧 */
-                    export type {{BATCH_UPDATABLE_QUERY_MODEL_TYPE}}
-                    {{If(batchUpdatableQueryModels.Length > 0, () => $$"""
-                    {{batchUpdatableQueryModels.SelectTextTemplate((dataModel, i) => $$"""
-                      {{(i == 0 ? "=" : "|")}} '{{dataModel.PhysicalName}}'
                     """)}}
                     """).Else(() => $$"""
                       = never
@@ -465,11 +446,6 @@ namespace Nijo.Parts.Common {
                     //#region コマンド
                     {{CommandProcessing.RenderTsTypeMap(commandModelsOrderByDataFlow)}}
                     //#endregion コマンド
-
-
-                    //#region DataModel一括更新
-                    {{BatchUpdate.RenderTsTypeMap(dataModelsOrderByDataFlow)}}
-                    //#endregion DataModel一括更新
 
 
                     //#region StructureModel

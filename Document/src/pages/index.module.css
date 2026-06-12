@@ -86,24 +86,6 @@
   text-decoration: none;
 }
 
-.heroNotes {
-  margin-top: 1.5rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-}
-
-.heroNotes span {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.48rem 0.78rem;
-  border-radius: 999px;
-  background: rgba(16, 38, 59, 0.06);
-  color: #27445c;
-  font-size: 0.92rem;
-  font-weight: 600;
-}
-
 .heroVisuals {
   display: grid;
   gap: 1rem;

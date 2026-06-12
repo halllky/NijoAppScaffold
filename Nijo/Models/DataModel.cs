@@ -236,18 +236,21 @@ namespace Nijo.Models {
                 .Register(saveCommandMessage.CsClassName, saveCommandMessage.CsClassName);
 
             // 処理: 新規登録、更新
+            var descendantStructurePaths = efCoreEntity
+                .CreateStructurePathsRecursively()
+                .ToDictionary(x => x.Metadata.SchemaPathNode.ToMappingKey());
             var create = new CreateMethod(rootAggregate);
             var update = new UpdateMethod(rootAggregate);
-            aggregateFile.AddAppSrvMethod(create.Render(ctx), "新規登録処理");
-            aggregateFile.AddAppSrvMethod(update.Render(ctx), "更新処理");
+            aggregateFile.AddAppSrvMethod(create.Render(ctx, descendantStructurePaths), "新規登録処理");
+            aggregateFile.AddAppSrvMethod(update.Render(ctx, descendantStructurePaths), "更新処理");
 
             // 処理: 削除
             if (rootAggregate.UseSoftDelete) {
                 var softDelete = new SoftDeleteMethods(rootAggregate);
-                aggregateFile.AddAppSrvMethod(softDelete.Render(ctx), "論理削除処理");
+                aggregateFile.AddAppSrvMethod(softDelete.Render(ctx, descendantStructurePaths), "論理削除処理");
             } else {
                 var delete = new DeleteMethod(rootAggregate);
-                aggregateFile.AddAppSrvMethod(delete.Render(ctx), "物理削除処理");
+                aggregateFile.AddAppSrvMethod(delete.Render(ctx, descendantStructurePaths), "物理削除処理");
             }
 
             // 処理: 自動生成されるバリデーションエラーチェック
@@ -258,10 +261,6 @@ namespace Nijo.Models {
                 """)}}
                 #endregion 自動生成されるバリデーション処理
                 """, "バリデーション処理");
-
-            // 処理: ダミーデータ作成関数
-            ctx.Use<DummyDataGenerator>()
-                .Add(rootAggregate);
 
             // データ型: ほかの集約から参照されるときのキー
             aggregateFile.AddCSharpClass(KeyClass.KeyClassEntry.RenderClassDeclaringRecursively(rootAggregate, ctx), "Class_KeyClass");
@@ -275,13 +274,6 @@ namespace Nijo.Models {
             // QueryModelと全く同じ型の場合はそれぞれのモデルのソースも生成
             if (rootAggregate.GenerateDefaultQueryModel) {
                 QueryModel.GenerateCode(ctx, rootAggregate, aggregateFile);
-            }
-
-            // 標準の一括作成コマンド
-            if (rootAggregate.GenerateBatchUpdateCommand) {
-                var batchUpdate = new BatchUpdate(rootAggregate);
-                aggregateFile.AddWebapiControllerAction(batchUpdate.RenderControllerAction(ctx));
-                aggregateFile.AddAppSrvMethod(batchUpdate.RenderAppSrvMethod(ctx), "一括更新処理");
             }
 
             aggregateFile.ExecuteRendering(ctx);
@@ -309,6 +301,13 @@ namespace Nijo.Models {
                     validator.MsgId,
                     $"入力エラー時メッセージ（{validator.CommentName}）",
                     validator.MsgTemplate);
+            }
+
+            // QueryModel と全く同じ型の場合はQueryModelのソースも生成
+            var rootAggregates = ctx.Schema.GetRootAggregates().ToArray();
+            if (rootAggregates.Any(root => root.GenerateDefaultQueryModel)
+             && rootAggregates.All(root => root.Model is not QueryModel)) {
+                QueryModel.GenerateQueryModelCommonModules(ctx);
             }
         }
 

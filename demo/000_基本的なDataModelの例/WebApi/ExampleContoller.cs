@@ -48,14 +48,7 @@ public class ExampleContoller : ControllerBase {
 
             // ダミーデータの生成
             var generator = new OverridedDummyDataGenerator();
-            var result = await generator.GenerateAsync(_app);
-
-            if (result.HasError()) {
-                return Problem(string.Join("\n", [
-                    "ダミーデータの生成に失敗しました。",
-                    .. result.GetAllMessages(),
-                ]));
-            }
+            await generator.GenerateAsync(_app);
 
             return Ok();
 

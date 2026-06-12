@@ -104,7 +104,7 @@ public class カテゴリ付き汎用参照の回帰テスト {
 
         var messages = presentationContext.As<I部署SaveCommandMessages>().Messages;
 
-        Assert.That(createResult.IsSaveCompleted(out var _), Is.True, "カテゴリ内の区分値で部署を保存できませんでした。");
+        Assert.That(createResult.IsSaveCompleted(out var _), Is.True, presentationContext.BuildFailureMessage("カテゴリ内の区分値で部署を保存できませんでした。"));
         Assert.That(messages.HasError(), Is.False, "保存成功時に不要なエラーが残っています。");
         Assert.That(messages.課[0].係[0].勤怠管理区分.HasError(), Is.False, "勤怠管理区分にエラーが残っています。");
     }
@@ -138,6 +138,6 @@ public class カテゴリ付き汎用参照の回帰テスト {
             表示名称 = displayName,
         }, presentationContext);
 
-        Assert.That(createResult.IsSaveCompleted(out var _), Is.True, $"汎用マスタ '{categoryName}:{code}' の準備に失敗しました。");
+        Assert.That(createResult.IsSaveCompleted(out var _), Is.True, presentationContext.BuildFailureMessage($"汎用マスタ '{categoryName}:{code}' の準備に失敗しました。"));
     }
 }

@@ -154,7 +154,7 @@ namespace Nijo.Models.QueryModelModules {
                         if (aggregate.PreviousNode == (ISchemaPathNode)children) continue;
 
                         // 参照先のChildrenは、コンフィグで明示的に指定されていない場合は生成しない
-                        if (isOutOfEntryTree && !CodeRenderingContext.CurrentContext.Config.GenerateRefToChildrenDisplayData) continue;
+                        if (isOutOfEntryTree && !aggregate.SchemaParseContext.ProjectOptions.GenerateRefToChildrenDisplayData) continue;
 
                         yield return new SearchResultChildrenMember(children, isOutOfEntryTree);
 

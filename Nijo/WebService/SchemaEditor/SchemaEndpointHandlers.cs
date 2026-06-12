@@ -77,6 +77,8 @@ internal class SchemaEndpointHandlers {
             context.Response.StatusCode = StatusCodes.Status200OK;
             await HttpResponseHelper.WriteJsonResponseAsync(context, response, cancellationToken: context.RequestAborted);
         } catch (Exception ex) {
+            await Console.Error.WriteLineAsync(ex.ToString());
+
             await HttpResponseHelper.WriteErrorResponseAsync(
                 context,
                 (int)HttpStatusCode.InternalServerError,
@@ -119,6 +121,8 @@ internal class SchemaEndpointHandlers {
             context.Response.StatusCode = (int)HttpStatusCode.OK;
 
         } catch (Exception ex) {
+            await Console.Error.WriteLineAsync(ex.ToString());
+
             await HttpResponseHelper.WriteErrorResponseAsync(
                 context,
                 (int)HttpStatusCode.InternalServerError,
@@ -229,6 +233,8 @@ internal class SchemaEndpointHandlers {
             context.Response.StatusCode = (int)HttpStatusCode.OK;
 
         } catch (Exception ex) {
+            await Console.Error.WriteLineAsync(ex.ToString());
+
             await HttpResponseHelper.WriteErrorResponseAsync(
                 context,
                 (int)HttpStatusCode.BadRequest,
@@ -259,7 +265,7 @@ internal class SchemaEndpointHandlers {
             }
 
             // コード生成処理 (エラーがなければ実行)
-            var generationParseContext = new SchemaParseContext(xDocumentToSave, rule);
+            var generationParseContext = new SchemaParseContext(xDocumentToSave, rule, GeneratedProjectOptions.Parse(xDocumentToSave, true));
             var renderingOptions = new CodeRenderingOptions { AllowNotImplemented = false };
 
             var logger = context.RequestServices.GetRequiredService<ILogger<NijoWebServiceBuilder>>();
@@ -278,6 +284,8 @@ internal class SchemaEndpointHandlers {
             }
 
         } catch (Exception ex) {
+            await Console.Error.WriteLineAsync(ex.ToString());
+
             await HttpResponseHelper.WriteErrorResponseAsync(
                 context,
                 (int)HttpStatusCode.InternalServerError,
@@ -340,6 +348,8 @@ internal class SchemaEndpointHandlers {
             await HttpResponseHelper.WriteJsonResponseAsync(context, result, cancellationToken: context.RequestAborted);
 
         } catch (Exception ex) {
+            await Console.Error.WriteLineAsync(ex.ToString());
+
             await HttpResponseHelper.WriteErrorResponseAsync(
                 context,
                 (int)HttpStatusCode.InternalServerError,

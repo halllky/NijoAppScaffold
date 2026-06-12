@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text.Json.Nodes;
 using System.Xml.Linq;
+using Nijo.CodeGenerating;
 using Nijo.SchemaParsing;
 
 namespace Nijo.WebService.SchemaEditor;
@@ -39,7 +40,7 @@ internal class SchemaValidationService {
         SchemaParseRule rule,
         out IEnumerable<SchemaParseContext.ValidationError> errors) {
 
-        var schemaParseContext = new SchemaParseContext(xDocument, rule);
+        var schemaParseContext = new SchemaParseContext(xDocument, rule, GeneratedProjectOptions.Parse(xDocument, true));
         if (!schemaParseContext.TryBuildSchema(schemaParseContext.Document, out var _, out var xmlErrors)) {
             errors = xmlErrors;
             return false;

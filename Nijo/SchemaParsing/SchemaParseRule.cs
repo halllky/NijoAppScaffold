@@ -64,12 +64,12 @@ public class SchemaParseRule {
         };
         var nodeOptions = new NodeOption[] {
             BasicNodeOptions.DisplayName,
+            BasicNodeOptions.DisplayNameIsEmpty,
             BasicNodeOptions.DbName,
             BasicNodeOptions.LatinName,
             BasicNodeOptions.IsKey,
             BasicNodeOptions.IsNotNull,
             BasicNodeOptions.GenerateDefaultQueryModel,
-            BasicNodeOptions.GenerateBatchUpdateCommand,
             BasicNodeOptions.UseSoftDelete,
             BasicNodeOptions.UniqueConstraints,
             BasicNodeOptions.IsGenericLookupTable,

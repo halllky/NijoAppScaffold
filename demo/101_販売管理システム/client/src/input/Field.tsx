@@ -115,22 +115,36 @@ export function Field<
 
   let renderUiElement: ReactHookForm.ControllerProps<TFormValues, TFieldPath>["render"] | undefined = undefined
 
-  //#region フォーム - 単語
-  if (fieldMetadata.type === "word") renderUiElement = ({ field: { value, ...restField } }) => (
-    <WordTextBox
-      maxLength={fieldMetadata.customMaxLength}
-      className={className}
-      value={value ?? ""}
-      {...restField}
-      {...restProps}
-    />
-  )
-  //#endregion フォーム - 単語
+  const isRangeSearchCondition = contextValue.objectType === 'SearchCondition'
+    && fieldMetadata.stringSearchBehavior === 'Range'
+    && !fieldMetadata.onlySearchCondition
 
-  //#region フォーム - 文章
-  if (fieldMetadata.type === "description") {
-    if (contextValue.objectType === 'SearchCondition') {
-      // 検索条件オブジェクトの場合は部分一致の言葉が入力されるだけなので単純にテキストボックス
+  const renderStringRangeSearch: ReactHookForm.ControllerProps<TFormValues, TFieldPath>["render"] = ({ field: { name, onBlur, onChange, ref, value } }) => (
+    <div className={`flex items-center gap-2 ${className ?? ""}`} onBlur={onBlur}>
+      <WordTextBox
+        maxLength={fieldMetadata.customMaxLength}
+        name={name + ".from"}
+        onChange={e => onChange({ from: e.target.value, to: value?.to })}
+        ref={ref}
+        value={value?.from ?? ""}
+        {...restProps}
+      />
+      <span>～</span>
+      <WordTextBox
+        maxLength={fieldMetadata.customMaxLength}
+        name={name + ".to"}
+        onChange={e => onChange({ to: e.target.value, from: value?.from })}
+        value={value?.to ?? ""}
+        {...restProps}
+      />
+    </div>
+  )
+
+  //#region フォーム - 単語
+  if (fieldMetadata.type === "word") {
+    if (isRangeSearchCondition) {
+      renderUiElement = renderStringRangeSearch
+    } else {
       renderUiElement = ({ field: { value, ...restField } }) => (
         <WordTextBox
           maxLength={fieldMetadata.customMaxLength}
@@ -140,6 +154,26 @@ export function Field<
           {...restProps}
         />
       )
+    }
+  }
+  //#endregion フォーム - 単語
+
+  //#region フォーム - 文章
+  if (fieldMetadata.type === "description") {
+    if (contextValue.objectType === 'SearchCondition') {
+      if (isRangeSearchCondition) {
+        renderUiElement = renderStringRangeSearch
+      } else {
+        renderUiElement = ({ field: { value, ...restField } }) => (
+          <WordTextBox
+            maxLength={fieldMetadata.customMaxLength}
+            className={className}
+            value={value ?? ""}
+            {...restField}
+            {...restProps}
+          />
+        )
+      }
     } else {
       renderUiElement = ({ field: { value, ...restField } }) => (
         <DescriptionTextArea

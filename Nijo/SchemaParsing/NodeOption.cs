@@ -97,6 +97,24 @@ internal static class BasicNodeOptions {
         },
     };
 
+    internal static NodeOption DisplayNameIsEmpty = new() {
+        AttributeName = "DisplayNameIsEmpty",
+        DisplayName = "表示用名称を空文字にする",
+        Type = E_NodeOptionType.Boolean,
+        HelpText = $$"""
+            表示用名称を明示的に空文字にしたい場合に指定してください。
+            {{DisplayName.AttributeName}} 属性と同時に指定することはできません。
+            """,
+        IsAvailable = (model, nodeType) => {
+            return true;
+        },
+        ValidateOthers = ctx => {
+            if (ctx.XElement.Attribute(DisplayName.AttributeName) != null) {
+                ctx.AddError($"{DisplayName.AttributeName} 属性と同時に指定することはできません。");
+            }
+        },
+    };
+
     internal static NodeOption DbName = new() {
         AttributeName = "DbName",
         DisplayName = "データベース上名称",
@@ -238,24 +256,6 @@ internal static class BasicNodeOptions {
         },
         ValidateOthers = ctx => {
             // IsAvailableで基本的な判定は完了しているため、追加の検証は不要
-        },
-    };
-    internal static NodeOption GenerateBatchUpdateCommand = new() {
-        AttributeName = "GenerateBatchUpdateCommand",
-        DisplayName = "DataModelと全く同じ型のQueryModelの一括更新用のWebエンドポイント・アプリケーションサービスを生成するかどうか",
-        Type = E_NodeOptionType.Boolean,
-        HelpText = $$"""
-            標準の更新ロジックで一括更新処理を生成する場合に指定。
-            DataModel、かつ、それとまったく同じ形のQueryModelが生成される場合にのみ指定可能。
-            """,
-        IsAvailable = (model, nodeType) => {
-            return model is DataModel && nodeType == E_NodeType.RootAggregate;
-        },
-        ValidateOthers = ctx => {
-            // このオプションを使用するためにはGenerateDefaultQueryModelの指定が必須
-            if (ctx.XElement.Attribute(GenerateDefaultQueryModel.AttributeName) == null) {
-                ctx.AddError($"このオプションを使用するためには{GenerateDefaultQueryModel.AttributeName}属性の指定が必須です。");
-            }
         },
     };
     internal static NodeOption UseSoftDelete = new() {
@@ -509,6 +509,7 @@ internal static class BasicNodeOptions {
             STRING_SEARCH_BEHAVIOR_FORWARD,
             STRING_SEARCH_BEHAVIOR_BACKWARD,
             STRING_SEARCH_BEHAVIOR_EXACT,
+            STRING_SEARCH_BEHAVIOR_RANGE,
         },
         HelpText = $$"""
             検索時の挙動を指定します。
@@ -516,6 +517,7 @@ internal static class BasicNodeOptions {
             - {{STRING_SEARCH_BEHAVIOR_FORWARD}}: 前方一致
             - {{STRING_SEARCH_BEHAVIOR_BACKWARD}}: 後方一致
             - {{STRING_SEARCH_BEHAVIOR_EXACT}}: 完全一致
+            - {{STRING_SEARCH_BEHAVIOR_RANGE}}: 範囲検索（辞書順で以上・以下）
             """,
         IsAvailable = (model, nodeType) => {
             return (model is QueryModel || model is DataModel)
@@ -548,6 +550,7 @@ internal static class BasicNodeOptions {
                 STRING_SEARCH_BEHAVIOR_FORWARD,
                 STRING_SEARCH_BEHAVIOR_BACKWARD,
                 STRING_SEARCH_BEHAVIOR_EXACT,
+                STRING_SEARCH_BEHAVIOR_RANGE,
             };
             if (!validValues.Contains(ctx.Value)) {
                 ctx.AddError($"検索挙動には {string.Join(", ", validValues)} のいずれかを指定してください。");
@@ -558,6 +561,7 @@ internal static class BasicNodeOptions {
     internal const string STRING_SEARCH_BEHAVIOR_FORWARD = "Forward";
     internal const string STRING_SEARCH_BEHAVIOR_BACKWARD = "Backward";
     internal const string STRING_SEARCH_BEHAVIOR_EXACT = "Exact";
+    internal const string STRING_SEARCH_BEHAVIOR_RANGE = "Range";
     #endregion QueryModel用
 
 

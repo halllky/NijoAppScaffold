@@ -1,5 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
+using Nijo.Models.QueryModelModules;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
@@ -25,7 +26,7 @@ namespace Nijo.ValueMemberTypes {
             return $$"""
                 改行を含む長い文章を格納する型です。
                 備考、説明、コメントなどの文章データに適しています。
-                検索時の挙動は部分一致検索が可能です。
+                検索時の挙動は完全一致・部分一致・前方一致・後方一致・範囲検索から選択可能です。
                 """;
         }
 
@@ -39,6 +40,10 @@ namespace Nijo.ValueMemberTypes {
             FilterTsTypeName = "string",
             RenderTsNewObjectFunctionValue = () => "''",
             RenderFiltering = ctx => {
+                if (IsRangeSearch(ctx)) {
+                    return RangeSearchRenderer.RenderRangeSearchFiltering(ctx);
+                }
+
                 var query = ctx.Query.Root.Name;
                 var fullpathNullable = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");
                 var fullpathNotNull = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, "!.");
@@ -75,6 +80,11 @@ namespace Nijo.ValueMemberTypes {
                     """;
             },
         };
+
+        private static bool IsRangeSearch(FilterStatementRenderingContext ctx) {
+            return ctx.Query.Metadata is IInstanceValuePropertyMetadata vm
+                && vm.SchemaPathNode.XElement.Attribute(BasicNodeOptions.StringSearchBehavior.AttributeName)?.Value == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_RANGE;
+        }
 
         void IValueMemberType.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
             // 特になし

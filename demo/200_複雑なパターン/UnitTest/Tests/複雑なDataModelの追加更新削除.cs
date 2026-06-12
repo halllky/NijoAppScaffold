@@ -90,7 +90,7 @@ partial class DB接続あり_更新あり {
 
         Assert.Multiple(() => {
             // エラーが無いことを確認
-            Assert.That(presentationContext.Messages.HasError(), Is.False);
+            Assert.That(presentationContext.Messages.HasError(), Is.False, presentationContext.BuildFailureMessage("医療機器マスタの新規登録に失敗しました。"));
 
             // 3テーブルともに登録されていることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
@@ -165,7 +165,7 @@ partial class DB接続あり_更新あり {
 
         Assert.Multiple(() => {
             // エラーが無いことを確認
-            Assert.That(presentationContext.Messages.HasError(), Is.False);
+            Assert.That(presentationContext.Messages.HasError(), Is.False, presentationContext.BuildFailureMessage("医療機器マスタの更新に失敗しました。"));
 
             // 3テーブルともに新しい値に更新されていることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
@@ -230,7 +230,7 @@ partial class DB接続あり_更新あり {
 
         Assert.Multiple(() => {
             // エラーが無いことを確認
-            Assert.That(presentationContext.Messages.HasError(), Is.False);
+            Assert.That(presentationContext.Messages.HasError(), Is.False, presentationContext.BuildFailureMessage("医療機器マスタの孫要素削除に失敗しました。"));
 
             // ルートと子が影響なし、孫が消えていることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
@@ -298,7 +298,7 @@ partial class DB接続あり_更新あり {
 
         Assert.Multiple(() => {
             // エラーが無いことを確認
-            Assert.That(presentationContext.Messages.HasError(), Is.False);
+            Assert.That(presentationContext.Messages.HasError(), Is.False, presentationContext.BuildFailureMessage("医療機器マスタの孫要素再作成に失敗しました。"));
 
             // 3テーブルすべてデータがあることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
@@ -337,7 +337,7 @@ partial class DB接続あり_更新あり {
 
         Assert.Multiple(() => {
             // エラーが無いことを確認
-            Assert.That(presentationContext.Messages.HasError(), Is.False);
+            Assert.That(presentationContext.Messages.HasError(), Is.False, presentationContext.BuildFailureMessage("医療機器マスタの子要素削除に失敗しました。"));
 
             // ルートだけデータが残っていることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));

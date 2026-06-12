@@ -15,6 +15,43 @@ internal class PresentationContextInUnitTest : IPresentationContext, IConfirmabl
     public required IMessageSetter Messages { get; init; }
     public required List<string> Confirms { get; init; }
 
+    public string BuildFailureMessage(string message) {
+        var details = new List<string>();
+
+        if (Confirms.Count > 0) {
+            details.Add("Confirm:");
+            details.AddRange(Confirms.Select(confirm => $"  - {confirm}"));
+        }
+
+        var messageState = Messages.GetState();
+        if (messageState is not null) {
+            var nodesWithMessages = messageState
+                .DescendantsAndSelf()
+                .Where(node => node.Errors.Count > 0 || node.Warns.Count > 0 || node.Infos.Count > 0)
+                .ToArray();
+
+            if (nodesWithMessages.Length > 0) {
+                details.Add("Messages:");
+                foreach (var node in nodesWithMessages) {
+                    var path = node.Path.Length == 0 ? "(root)" : string.Join('.', node.Path);
+                    foreach (var error in node.Errors) {
+                        details.Add($"  [Error] {path}: {error}");
+                    }
+                    foreach (var warn in node.Warns) {
+                        details.Add($"  [Warn] {path}: {warn}");
+                    }
+                    foreach (var info in node.Infos) {
+                        details.Add($"  [Info] {path}: {info}");
+                    }
+                }
+            }
+        }
+
+        return details.Count == 0
+            ? message
+            : $"{message}{Environment.NewLine}{string.Join(Environment.NewLine, details)}";
+    }
+
     public void AddConfirm(string text) {
         Confirms.Add(text);
     }

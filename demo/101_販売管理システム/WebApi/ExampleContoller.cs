@@ -1,3 +1,5 @@
+#if DEBUG
+
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -58,7 +60,7 @@ public class ExampleContoller : ControllerBase {
             if (result.HasError()) {
                 return Problem(string.Join("\n", [
                     "ダミーデータの生成に失敗しました。",
-                    .. result.GetAllMessages(),
+                    ..result.GetAllMessages(),
                 ]));
             }
 
@@ -69,3 +71,5 @@ public class ExampleContoller : ControllerBase {
         }
     }
 }
+
+#endif

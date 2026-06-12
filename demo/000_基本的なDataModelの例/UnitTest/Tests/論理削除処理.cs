@@ -28,7 +28,7 @@ public class 論理削除処理 {
             旧システムコード = legacyCode,
             名称 = "論理削除用旧システム部署",
         }, presentationContext);
-        Assert.That(legacyResult.IsSaveCompleted(), Is.True, "旧システム部署情報の作成に失敗しました。");
+        Assert.That(legacyResult.IsSaveCompleted(), Is.True, presentationContext.BuildFailureMessage("旧システム部署情報の作成に失敗しました。"));
 
         var createResult = await scope.App.Create部署Async(new() {
             部署ID = departmentId,
@@ -44,7 +44,7 @@ public class 論理削除処理 {
                 ],
             }],
         }, presentationContext);
-        Assert.That(createResult.IsSaveCompleted(out var savedEntity), Is.True, "部署の作成に失敗しました。");
+        Assert.That(createResult.IsSaveCompleted(out var savedEntity), Is.True, presentationContext.BuildFailureMessage("部署の作成に失敗しました。"));
         Assert.That(savedEntity, Is.Not.Null, "登録結果にDbEntityがありません。");
         Assert.That(savedEntity?.Version, Is.Not.Null, "登録結果のバージョンが取得できません。");
 
@@ -52,7 +52,7 @@ public class 論理削除処理 {
             部署ID = departmentId,
             Version = savedEntity?.Version,
         }, presentationContext);
-        Assert.That(deleteResult, Is.True, "論理削除が失敗しました。");
+        Assert.That(deleteResult.IsSaveCompleted(out var _), Is.True, presentationContext.BuildFailureMessage("論理削除が失敗しました。"));
 
         Assert.That(await scope.App.DbContext.部署DbSet.AnyAsync(x => x.部署ID == departmentId), Is.False, "論理削除後も部署が残っています。");
         Assert.That(await scope.App.DbContext.課DbSet.AnyAsync(x => x.Parent_部署ID == departmentId), Is.False, "論理削除後も課が残っています。");

@@ -16,27 +16,27 @@ const salesPoints: Point[] = [
   {
     title: 'フルスタック',
     body:
-      '画面からデータベースまでを対象範囲にしつつ、一覧検索のような定型処理を自動生成して、業務固有の表現だけを個別実装に残せます。',
+      '画面からデータベースまでを一体で扱います。一覧検索のような定型処理は自動生成されるので、手で書くのは業務固有の部分だけです。',
   },
   {
     title: '型安全',
     body:
-      'C# と TypeScript の型定義を同じスキーマから生成し、Entity Framework Core まで含めてデータ構造の同期を保ちます。',
+      'C# と TypeScript の型定義を同じスキーマから生成します。Entity Framework Core まで含めて、データ構造のずれが起きません。',
   },
   {
     title: '設計共有',
     body:
-      'スキーマ定義をGUIで可視化し、複雑なリレーションや機能分割を関係者と俯瞰しながら議論できます。',
+      'スキーマ定義はGUIで図として見られるので、複雑なリレーションや機能分割をチームで俯瞰しながら議論できます。',
   },
   {
     title: '業務システム向け',
     body:
-      '排他制御、論理削除、監査用属性、ログマスキングのような基幹系で問題になりやすい論点を自然に組み込むことができます。',
+      '排他制御、論理削除、監査用属性、ログマスキングといった、基幹系でつまずきやすい論点を最初から考慮しています。',
   },
   {
     title: 'スクラッチ並みの柔軟性',
     body:
-      'UI、認証認可、外部連携、複雑な業務ロジックは通常の C# と TypeScript で自由に作り込めます。',
+      'UI、認証認可、外部連携、複雑な業務ロジックは、通常の C# と TypeScript で自由に作り込めます。',
   },
 ];
 
@@ -47,16 +47,12 @@ function HeroSection(): ReactNode {
         <div className={styles.heroCopy}>
           <p className={styles.eyebrow}>Schema-driven full-stack application scaffold</p>
           <Heading as="h1" className={styles.heroTitle}>
-            Nijoは、業務システムの
-            <br />
-            画面からDBまでをつなぐ
-            <br />
-            スキーマ駆動の開発基盤です。
+            業務システムの“つなぎ”を、書かない。
           </Heading>
           <p className={styles.heroLead}>
-            開発者が主に操作するのはスキーマ定義GUIです。
-            そこで定義した構造をもとに、C#、TypeScript、Entity Framework Core のコードを生成し、
-            型の整合と設計共有を同時に前へ進めます。
+            画面、API、型定義、DBのあいだを埋める単純作業は、システムの価値を生みません。
+            Nijoは、GUIで定義したスキーマから C#・TypeScript・EF Core のコードを生成し、
+            開発者が書くのを業務固有のロジックだけにする開発基盤です。
           </p>
           <div className={styles.heroActions}>
             <Link className="button button--primary button--lg" to="/docs/intro">
@@ -65,11 +61,6 @@ function HeroSection(): ReactNode {
             <Link className={styles.ghostButton} to="https://github.com/halllky/NijoAppScaffold">
               GitHubを見る
             </Link>
-          </div>
-          <div className={styles.heroNotes}>
-            <span>開発者が主に操作するのはスキーマ定義GUI</span>
-            <span>画面からDBまでをスコープに含む</span>
-            <span>UIは自由に作り込める</span>
           </div>
         </div>
       </div>
@@ -93,23 +84,34 @@ function Home(): ReactNode {
       <main className={styles.pageMain}>
         <section className={styles.sectionBlock}>
           <div className={styles.sectionHeading}>
-            <p className={styles.sectionLabel}>Scope</p>
-            <Heading as="h2">何を自動化し、何を開発者に残すかが明確です。</Heading>
+            <p className={styles.sectionLabel}>Problem</p>
+            <Heading as="h2">同じデータ構造を、何度も書いていませんか</Heading>
             <p>
-              Nijoは「何でも自動化する」ツールではありません。スキーマから一意に決まる部分を強く自動化し、
-              業務価値が出る部分は通常のスクラッチ開発と同じ自由度で残します。
+              たとえば「商品」というひとつの概念のために、テーブル定義、C#のエンティティ、APIの入出力、
+              TypeScriptの型、画面のフォーム、そして設計書を書く。
+              業務システムの開発では、本質的に同じ構造を形を変えて何度も記述し、
+              仕様変更のたびにそのすべてを揃え直すことになります。
+              Nijoが「つなぎ」と呼んでなくそうとしているのは、この作業です。
+            </p>
+          </div>
+        </section>
+
+        <section className={styles.sectionBlockAlt}>
+          <div className={styles.sectionHeading}>
+            <p className={styles.sectionLabel}>How it works</p>
+            <Heading as="h2">スキーマを1回定義して、業務ロジックだけを書く</Heading>
+            <p>
+              Nijoでの開発は、おおまかに次の流れで進みます。
             </p>
           </div>
 
           <div className={styles.imageTextStack}>
             <div className={styles.copyCard}>
-              <Heading as="h3">設計の中心はスキーマ定義</Heading>
+              <Heading as="h3">1. スキーマをGUIで定義する</Heading>
               <p>
-                画面項目、データ構造、参照関係、更新単位をスキーマとして定義し、関係者が同じ絵を見ながら議論できます。
-                この可視化は、あとから陳腐化する資料ではなく、コード生成と同期された開発中の設計図として機能します。
-              </p>
-              <p>
-                開発者は主にこのGUIを操作して、データ構造や関係性を定義します。
+                画面項目、データ構造、参照関係、更新単位をGUIで定義します。
+                この定義がコード生成の唯一の入力になるため、設計書と実装が食い違ったまま放置されることがありません。
+                複雑なリレーションも図として俯瞰できるので、チームでの認識合わせにもそのまま使えます。
               </p>
               <img src={guiEditorImage} alt="Nijoのスキーマ定義GUI画面" />
             </div>
@@ -117,84 +119,75 @@ function Home(): ReactNode {
 
           <div className={styles.imageTextStack} style={{ marginTop: '1rem' }}>
             <div className={styles.copyCard}>
-              <Heading as="h3">対象範囲は画面からDBまで</Heading>
+              <Heading as="h3">2. 画面からDBまでのコードが生成される</Heading>
               <p>
-                Nijoは、Webクライアント、サーバー、データベースまでをひと続きの構造として扱います。
-                一覧検索処理のような定型ロジックは自動生成できますが、検索条件や検索結果を画面上でどう表現するかは、
-                通常のJavaScriptやTypeScriptによる開発で自由に決められます。
+                スキーマから、サーバー側のC#クラス、クライアント側のTypeScript型定義、
+                Entity Framework Core のマッピングが生成されます。
+                一覧検索や登録・更新・削除といった定型処理も同様です。
+                言語をまたいでデータ構造がずれることはなく、スキーマを変更すれば全体に反映されます。
               </p>
               <p>
-                自動生成は下支えに徹し、エンドユーザー向けUIは案件に合わせて作り込めます。
+                左がTypeScript、右がC#のコードです。
+              </p>
+              <img src={typeSyncImage} alt="TypeScriptとC#の構造体が同期される例" />
+            </div>
+          </div>
+
+          <div className={styles.imageTextStack} style={{ marginTop: '1rem' }}>
+            <div className={styles.copyCard}>
+              <Heading as="h3">3. 業務固有のロジックだけを手で書く</Heading>
+              <p>
+                生成されたコードには、開発者が書き込むための場所が空けてあります。
+                次の画像では、左が手書きのコード、右が自動生成されたコードです。
+              </p>
+              <p>手で書く部分（画像左側）:</p>
+              <ul>
+                <li>
+                  ※1: 業務固有のロジック。この例では在庫引当（売上確定時に、どの在庫データをその売上と紐づけるかを決める処理）
+                </li>
+                <li>
+                  ※2: 更新前の確認メッセージを出すタイミングや文言
+                </li>
+                <li>
+                  ※3: トランザクションの境界。このほか、UI表現、認証認可、外部システム連携なども手書きの範囲です
+                </li>
+              </ul>
+              <p>自動生成される部分（画像右側）:</p>
+              <ul>
+                <li>
+                  ※4: 楽観排他のバージョンや、登録日時・登録者といった監査用属性の設定
+                </li>
+                <li>
+                  ※5: 必須、桁数、型など、データ構造から自明に決まる入力チェック
+                </li>
+              </ul>
+              <p>
+                赤い矢印は、手書きのコードから自動生成された処理を呼び出している箇所です。
+              </p>
+              <img src={boundaryImage} alt="自動生成コードと手動実装コードの境界を示す画面" />
+            </div>
+          </div>
+
+          <div className={styles.imageTextStack} style={{ marginTop: '1rem' }}>
+            <div className={styles.copyCard}>
+              <Heading as="h3">4. UIは案件に合わせて作り込む</Heading>
+              <p>
+                自動生成はあくまで下支えです。検索条件や検索結果を画面上でどう見せるかは、
+                通常のTypeScript開発でエンドユーザーや案件に合わせて自由に決められます。
+                次の画像は、Nijoで構築した販売管理システムの例です。
               </p>
               <img src={businessUiImage} alt="Nijoで構築された販売管理システムの画面" />
             </div>
           </div>
         </section>
 
-        <section className={styles.sectionBlockAlt}>
-          <div className={styles.sectionHeading}>
-            <p className={styles.sectionLabel}>Boundary</p>
-            <Heading as="h2">自動生成と個別実装の境界が読み取りやすい構造です。</Heading>
-            <p>
-              更新系の処理では、共通で守るべき品質と、案件ごとに変わる業務判断を分けて扱うことが重要です。
-              Nijoはその境界をコード上にも明示します。
-            </p>
-          </div>
-
-          <div className={styles.imageTextStack}>
-            <div className={styles.copyCard}>
-              <Heading as="h3">画像左側: 開発者が自身で実装する部分</Heading>
-              <ul>
-                <li>
-                  ※1 在庫引当のような業務固有ロジック（在庫引当: 小売店などで売上確定時に在庫データのうちどれをその売上と紐づけるかのロジックのこと）
-                </li>
-                <li>
-                  ※2 更新前の確認メッセージを出すタイミングや文言
-                </li>
-                <li>
-                  ※3 トランザクションの境界。（画像中には無いが、UI表現、認証認可、外部システム連携なども個別実装）
-                </li>
-              </ul>
-              <Heading as="h3">画像右側: 自動生成された部分</Heading>
-              <ul>
-                <li>
-                  ※4 楽観排他のバージョンや登録日時・登録者など監査用属性の設定
-                </li>
-                <li>
-                  ※5 必須、MaxLength、桁数、型といったデータ構造から自明に導ける入力チェック
-                </li>
-              </ul>
-              <Heading as="h3">矢印: 手動実装部分で自動生成処理を呼び出している箇所</Heading>
-              <img src={boundaryImage} alt="自動生成コードと手動実装コードの境界を示す画面" />
-            </div>
-          </div>
-        </section>
-
-        <section className={styles.sectionBlock}>
-          <div className={styles.imageTextStack}>
-            <div className={styles.copyCard}>
-              <p className={styles.sectionLabel}>Type Safety</p>
-              <Heading as="h2">TypeScriptとC#の構造体が自動的に同期されます。</Heading>
-              <p>
-                サーバー側はC#、クライアント側はTypeScriptで厳密に型定義されたデータクラスを生成します。
-                同じスキーマ定義から両方を生成するため、言語を跨いだデータ構造の整合性を維持しやすくなります。
-                データベースとアプリケーションの型同期は Entity Framework Core の標準的な仕組みに乗ります。
-              </p>
-              <p>
-                画像左: TypeScript , 画像右: C#
-              </p>
-              <img src={typeSyncImage} alt="TypeScriptとC#の構造体が同期される例" />
-            </div>
-          </div>
-        </section>
-
         <section className={styles.sectionBlockDark}>
           <div className={styles.sectionHeadingNarrow}>
-            <p className={styles.sectionLabel}>Sales Points</p>
-            <Heading as="h2">このツールが解決しようとしている問題</Heading>
+            <p className={styles.sectionLabel}>Why Nijo</p>
+            <Heading as="h2">生成の効率と、スクラッチの自由を両立する</Heading>
             <p>
-              画面、API、型定義、DB設計、チーム内の認識合わせが分断されると、単純作業が増え、変更に弱くなります。
-              Nijoはその接続部分をスキーマと生成コードで受け持ちます。
+              つなぎの部分を生成で受け持ちながら、業務の価値が出る部分はスクラッチ開発と同じ自由度で書ける。
+              Nijoの設計は、この両立のためにあります。
             </p>
           </div>
           <div className={styles.pointGrid}>
@@ -210,9 +203,10 @@ function Home(): ReactNode {
         <section className={styles.sectionBlock}>
           <div className={styles.sectionHeading}>
             <p className={styles.sectionLabel}>Constraints</p>
-            <Heading as="h2">重要な制約を先に明示します。</Heading>
+            <Heading as="h2">採用前に知っておいてほしいこと</Heading>
             <p>
-              採用前に判断しやすいように、必須となる技術と、Nijoがカバーしない責務をトップページでも明示します。
+              Nijoには前提となる技術スタックがあり、カバーしない領域もあります。
+              プロジェクトに合うかどうかを、ここで先に確認してください。
             </p>
           </div>
 
@@ -242,12 +236,12 @@ function Home(): ReactNode {
           </div>
 
           <div className={styles.bottomCallout}>
-            <Heading as="h3">次のドキュメント</Heading>
+            <Heading as="h3">もっと詳しく</Heading>
             <p>
-              プロジェクト管理者、アーキテクト、プログラマそれぞれに向けた説明へ進みます。
+              ドキュメントでは、プロジェクト管理者、アーキテクト、プログラマそれぞれの視点からNijoを説明しています。
             </p>
             <Link className="button button--primary button--lg" to="/docs/intro">
-              次へ
+              ドキュメントを読む
             </Link>
           </div>
         </section>

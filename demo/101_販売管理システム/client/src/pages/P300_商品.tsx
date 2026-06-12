@@ -118,14 +118,14 @@ function P300_商品() {
 function SearchCondition({ register, control, setFocus }: UseFormReturn<商品一覧SearchCondition>): React.ReactNode {
 
   React.useEffect(() => {
-    setFocus("filter.外部システム側ID")
+    setFocus("filter.外部システム側ID.from")
   }, [setFocus])
 
   return (
     <div className="h-full py-1 flex flex-col lg:flex-row lg:items-start gap-x-8 gap-y-2">
 
       {/* 左列 */}
-      <div className="grid grid-cols-[10rem_12rem] gap-2">
+      <div className="grid grid-cols-[10rem_24rem] gap-2">
 
         <FormLabel className="text-right">外部システム側ID</FormLabel>
         <UI.Field name="filter.外部システム側ID" control={control} />
