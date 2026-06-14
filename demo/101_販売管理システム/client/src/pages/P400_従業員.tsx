@@ -1,5 +1,5 @@
 import React from "react"
-import * as ReactRouter from "react-router"
+import * as ReactRouter from "react-router-dom"
 import { useNavigate } from "react-router-dom"
 import { PageBase } from "../layout/PageBase"
 import { useForm, UseFormReturn, useFieldArray } from "react-hook-form"

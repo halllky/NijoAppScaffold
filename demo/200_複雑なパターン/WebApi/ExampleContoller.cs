@@ -5,6 +5,8 @@ using MyApp.Debugging;
 
 namespace MyApp.WebApi;
 
+public record LoginRequest(string UserId, string Password);
+
 /// <summary>
 /// 自動生成に頼らず自前でControllerを定義する場合の実装例
 /// </summary>
@@ -34,6 +36,39 @@ public class ExampleContoller : ControllerBase {
 
             {{JsonSerializer.Serialize(_app.Settings, jsonOptions)}}
             """);
+    }
+
+    /// <summary>
+    /// ログイン。デモ用のため任意のユーザーIDでログイン可能。
+    /// </summary>
+    [HttpPost("login")]
+    public IActionResult Login([FromBody] LoginRequest req) {
+        if (string.IsNullOrWhiteSpace(req.UserId))
+            return BadRequest("ユーザーIDを入力してください。");
+
+        var userInfo = new ログインユーザー情報 {
+            ユーザーID = req.UserId,
+            表示名 = req.UserId,
+            メールアドレス = $"{req.UserId}@example.local",
+            最終ログイン日時 = DateTime.Now,
+        };
+        return Ok(userInfo);
+    }
+
+    /// <summary>
+    /// ログアウト。
+    /// </summary>
+    [HttpPost("logout")]
+    public IActionResult Logout() {
+        return Ok();
+    }
+
+    /// <summary>
+    /// ログイン状態確認。Cookieベースのセッションを使わないデモ用なので常に未ログイン扱い。
+    /// </summary>
+    [HttpGet("login-status")]
+    public IActionResult LoginStatus() {
+        return NoContent();
     }
 
     /// <summary>

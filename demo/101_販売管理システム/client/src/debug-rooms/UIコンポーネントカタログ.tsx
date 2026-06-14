@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import * as ReactRouter from "react-router"
+import * as ReactRouter from "react-router-dom"
 import { useNavigate } from "react-router-dom"
 import { useForm, Controller } from "react-hook-form"
 import { PageBase } from "../layout/PageBase"

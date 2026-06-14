@@ -1,5 +1,5 @@
 import React from "react"
-import * as ReactRouter from "react-router"
+import * as ReactRouter from "react-router-dom"
 import * as ReactHookForm from "react-hook-form"
 import * as Icon from "@heroicons/react/24/outline"
 import * as UI from "../UI"

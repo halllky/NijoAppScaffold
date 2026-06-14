@@ -1,5 +1,5 @@
 import React from "react"
-import * as ReactRouter from "react-router"
+import * as ReactRouter from "react-router-dom"
 import { useNavigate } from "react-router-dom"
 import { useLoginLogout } from "../util/useLoginLogout"
 import { NowLoading } from "../layout/NowLoading"
