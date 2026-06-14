@@ -67,6 +67,20 @@ if [ $? -ne 0 ]; then
 fi
 popd > /dev/null
 
+# デモ編集用（内部向け）の場合は、現在のOSで動くフレームワーク依存ビルドを
+# bin/Release/net10.0/publish フォルダに1箇所だけ発行して終了する。
+# 「Nijo > デモ > スキーマ定義編集」タスクがこの publish フォルダの nijo を実行する。
+if [ "$ARCHIVE_RELEASE_ZIP" == "0" ]; then
+  echo "デモ編集用のビルドを開始します。"
+  dotnet publish "$NIJO_ROOT/Nijo/Nijo.csproj" -c Release -o "$NIJO_ROOT/Nijo/bin/Release/net10.0/publish"
+  if [ $? -ne 0 ]; then
+    echo "ビルドに失敗しました。"
+    exit 1
+  fi
+  exit 0
+fi
+
+# GitHub配置用：win/osx をそれぞれRID別に発行する
 echo "ビルドを開始します。"
 dotnet publish "$NIJO_ROOT/Nijo/Nijo.csproj" -p:PublishProfile=FOR_GITHUB_RELEASE_WINDOWS
 if [ $? -ne 0 ]; then
@@ -78,10 +92,6 @@ dotnet publish "$NIJO_ROOT/Nijo/Nijo.csproj" -p:PublishProfile=FOR_GITHUB_RELEAS
 if [ $? -ne 0 ]; then
   echo "ビルドに失敗しました。"
   exit 1
-fi
-
-if [ "$ARCHIVE_RELEASE_ZIP" == "0" ]; then
-  exit 0
 fi
 
 # 圧縮

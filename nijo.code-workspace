@@ -166,7 +166,7 @@
         "detail": "デモのnijo.xmlを編集する。「Nijo > リリース」で発行したときのものが使われる",
         "type": "shell",
         "options": {
-          "cwd": "${workspaceFolder:ワークスペース全体}/Nijo/bin/Release/net10.0"
+          "cwd": "${workspaceFolder:ワークスペース全体}/Nijo/bin/Release/net10.0/publish"
         },
         "args": [
           "serve",
