@@ -30,3 +30,8 @@
   --ifm-color-primary-lightest: #4fddbf;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
+
+/* :::info などの見出しが強制的にアッパーケースにならないようにする */
+[class*="admonitionHeading"] {
+  text-transform: none;
+}
