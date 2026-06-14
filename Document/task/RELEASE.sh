@@ -12,7 +12,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # 自動生成されるドキュメントの生成
-"$NIJO_DIR/bin/Debug/net9.0/nijo" generate-reference --out "$DOC_DIR/src/pages/reference"
+"$NIJO_DIR/bin/Debug/net10.0/nijo" generate-reference --out "$DOC_DIR/src/pages/reference"
 if [ $? -ne 0 ]; then
   echo "ドキュメントの生成に失敗しました"
   exit 1

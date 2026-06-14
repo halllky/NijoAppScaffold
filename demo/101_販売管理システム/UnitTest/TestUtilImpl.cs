@@ -25,7 +25,7 @@ public partial class TestUtilImpl {
     public void Setup() {
         Instance = new() {
             BaseWorkDirectory = Path.GetFullPath(Path.Combine(
-                TestContext.CurrentContext.WorkDirectory, // net9.0
+                TestContext.CurrentContext.WorkDirectory, // net10.0
                 "..", // Debug
                 "..", // bin
                 "..", // UnitTest

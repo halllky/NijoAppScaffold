@@ -2,7 +2,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SOURCE_ROOT="$SCRIPT_DIR/../Nijo.NewProjectTemplate"
-NIJO_EXE_PATH="$SCRIPT_DIR/../Nijo/bin/Debug/net9.0/nijo"
+NIJO_EXE_PATH="$SCRIPT_DIR/../Nijo/bin/Debug/net10.0/nijo"
 
 # nijo.exe リビルド
 dotnet build "$SCRIPT_DIR/../Nijo" -c Debug

@@ -32,7 +32,7 @@ public class NijoTestUtil {
     public void Setup() {
         // Nijo用のワークフォルダを作成
         BaseDirectory = Path.GetFullPath(Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory, // net9.0
+            AppDomain.CurrentDomain.BaseDirectory, // net10.0
             $"Nijo.IntegrationTest.Log",
             $"テスト結果_{DateTime.Now:yyyyMMddHHmmss}_{Guid.NewGuid().ToString().Substring(0, 8)}"));
 
@@ -287,7 +287,7 @@ public class NijoTestUtil {
         <Project Sdk="Microsoft.NET.Sdk">
           <PropertyGroup>
             <OutputType>Library</OutputType>
-            <TargetFramework>net9.0</TargetFramework>
+            <TargetFramework>net10.0</TargetFramework>
             <Nullable>enable</Nullable>
             <ImplicitUsings>enable</ImplicitUsings>
           </PropertyGroup>

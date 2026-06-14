@@ -86,11 +86,11 @@ fi
 
 # 圧縮
 # zipコマンドを使用
-pushd "$NIJO_ROOT/Nijo/bin/Release/net9.0/publish-win" > /dev/null
+pushd "$NIJO_ROOT/Nijo/bin/Release/net10.0/publish-win" > /dev/null
 zip -r "$NIJO_ROOT/temp_release/release-$RELEASE_VERSION-win.zip" .
 popd > /dev/null
 
-pushd "$NIJO_ROOT/Nijo/bin/Release/net9.0/publish-osx" > /dev/null
+pushd "$NIJO_ROOT/Nijo/bin/Release/net10.0/publish-osx" > /dev/null
 zip -r "$NIJO_ROOT/temp_release/release-$RELEASE_VERSION-osx.zip" .
 popd > /dev/null
 
