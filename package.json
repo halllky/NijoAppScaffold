@@ -24,6 +24,7 @@
     "build:ui-components": "npm run build --workspace=Nijo.GuiClient/package_ui-components",
     "build:ui-components-debug": "npm run build --workspace=Nijo.GuiClient/package_ui-components-debug",
     "test:all": "npm run test --workspaces --if-present",
+    "test:ci": "npm run test:run --workspaces --if-present",
     "lint:all": "npm run lint --workspaces --if-present",
     "tsc:all": "npm run tsc --workspaces --if-present"
   },

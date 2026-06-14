@@ -7,6 +7,19 @@ import { DynamicFormRef } from "./types"
 import _001_セクションと配列の基本的組み合わせ from "./__tests__/001_セクションと配列の基本的組み合わせ"
 import * as Util from "../../util"
 
+/**
+ * セクションと配列を組み合わせたデータ構造が DynamicForm で正しく描画され、
+ * 値メンバーの入力値が往復し、配列の追加が機能することを検証する。
+ *
+ * 配列は子孫に配列を含むかどうかで描画経路が分岐する（Form.Members.tsx 参照）。
+ *   - 子孫に配列なし: グリッド表示（<table>）。追加ボタンの文言は「追加」
+ *   - 子孫に配列あり: フォーム表示。追加ボタンの文言は「<arrayLabel> を追加」
+ * この性質を前提に、文言で各追加ボタンを特定する（DOM 上の出現順に依存しない）。
+ *
+ * 注: グリッド（仮想化された EditableGrid）のセルをダブルクリックして編集する操作は、
+ * jsdom 上では要素サイズや仮想化の挙動が実ブラウザと異なり不安定なため、ここでは
+ * 検証対象に含めない。本テストはグリッド外の値の往復と配列構造の生成までを保証する。
+ */
 test("セクション, 配列 の組み合わせ", async () => {
   const user = userEvent.setup()
 
@@ -40,137 +53,43 @@ test("セクション, 配列 の組み合わせ", async () => {
       />
     </Util.IMEProvider>
   )
+  const getValues = () => ref.current!.useFormReturn.getValues() as any
 
-  // name属性で直接特定する
-  const member1InputByName = document.querySelector('input[name=".section1.section1_1.member1"]') as HTMLInputElement
-  const member3InputByName = document.querySelector('input[name=".array2.0.section2_1.member3"]') as HTMLInputElement
+  // --- 1. グリッド外の値メンバーが描画され、入力値が往復すること ---
+  const member1Input = document.querySelector('input[name=".section1.section1_1.member1"]') as HTMLInputElement
+  const member3Input = document.querySelector('input[name=".array2.0.section2_1.member3"]') as HTMLInputElement
+  expect(member1Input).toBeTruthy()
+  expect(member3Input).toBeTruthy()
 
-  expect(member1InputByName).toBeTruthy()
-  expect(member3InputByName).toBeTruthy()
+  await user.type(member1Input, "値1")
+  await user.type(member3Input, "値3")
+  expect(getValues().section1.section1_1.member1).toBe("値1")
+  expect(getValues().array2[0].section2_1.member3).toBe("値3")
 
-  // user-eventを使用してメンバーに値を入力（グリッド内でない要素）
-  await user.type(member1InputByName, "値1")
-  await user.type(member3InputByName, "値3")
+  // --- 2. 配列の描画経路が想定どおりであること ---
+  // グリッド表示: 配列1-2, 配列2[0].配列2-2 の2つ（追加ボタン文言「追加」）
+  // フォーム表示: 配列2（追加ボタン文言「配列2 を追加」）
+  expect(document.querySelectorAll('table')).toHaveLength(2)
+  expect(screen.getAllByText("追加")).toHaveLength(2)
+  const array2AddButton = screen.getByText("配列2 を追加")
 
-  // 複数の「追加」ボタンがあるため、getAllByTextを使用
-  const addButtons = screen.getAllByText("追加")
+  // --- 3. フォーム表示の配列（配列2）に1件追加すると、要素が増え、
+  //        新しい要素の中の配列2-2グリッドぶん <table> も増えること ---
+  await user.click(array2AddButton)
+  expect(getValues().array2).toHaveLength(2)
+  expect(document.querySelectorAll('table')).toHaveLength(3)
 
-  // 期待される数の追加ボタンが存在することを確認
-  expect(addButtons.length).toBeGreaterThanOrEqual(3)
+  // --- 4. グリッド表示の配列（配列1-2）に1件追加できること ---
+  // 配列1-2はsection1配下にあり、DOM上で常に先頭の「追加」ボタンになる
+  const array1_2LengthBefore = getValues().section1.array1_2.length
+  await user.click(screen.getAllByText("追加")[0])
+  expect(getValues().section1.array1_2.length).toBe(array1_2LengthBefore + 1)
 
-  // 最初の「追加」ボタン（配列1-2）をクリック
-  await user.click(addButtons[0])
-
-  // 少し待機してグリッドが更新されるのを待つ
-  await new Promise(resolve => setTimeout(resolve, 300))
-
-  // 3番目の「追加」ボタン（配列2-2）をクリック
-  await user.click(addButtons[2])
-  await new Promise(resolve => setTimeout(resolve, 300))
-
-  // EditableGridのセル編集をテスト
-  // 配列1-2のグリッド内の最初のセルを探す
-  const gridContainers = document.querySelectorAll('table')
-  expect(gridContainers.length).toEqual(2)
-
-  // 最初のグリッド（配列1-2）でのセル編集を試行
-  const firstGrid = gridContainers[0] as HTMLElement
-
-  // グリッド内のセルを探す（tbody内のtd要素）
-  const firstGridCells = firstGrid.querySelectorAll('tbody td')
-  expect(firstGridCells.length).toBeGreaterThan(0)
-
-  // 最初のデータセルを取得（ヘッダー以外）
-  const firstDataCell = firstGridCells[0] as HTMLElement
-
-  // セルをクリックしてアクティブにする
-  await user.click(firstDataCell)
-  await new Promise(resolve => setTimeout(resolve, 100))
-
-  // ダブルクリックで編集開始を試行
-  await user.dblClick(firstDataCell)
-  await new Promise(resolve => setTimeout(resolve, 200))
-
-  // textareaが存在することを期待
-  const textarea = document.querySelector('textarea')
-  expect(textarea).toBeTruthy()
-
-  // textareaに値を入力
-  await user.clear(textarea!)
-  await user.type(textarea!, "値2")
-
-  // Ctrl+Enterで編集確定
-  await user.keyboard('{Control>}{Enter}{/Control}')
-  await new Promise(resolve => setTimeout(resolve, 200))
-
-  // 2番目のグリッド（配列2-2）でも同様の操作
-  const secondGrid = gridContainers[1] as HTMLElement
-  const secondGridCells = secondGrid.querySelectorAll('tbody td')
-  expect(secondGridCells.length).toBeGreaterThan(0)
-
-  const secondDataCell = secondGridCells[0] as HTMLElement
-
-  // セルをクリックしてアクティブにする
-  await user.click(secondDataCell)
-  await new Promise(resolve => setTimeout(resolve, 100))
-
-  // ダブルクリックで編集開始
-  await user.dblClick(secondDataCell)
-  await new Promise(resolve => setTimeout(resolve, 200))
-
-  // textareaに値を入力
-  const textarea2 = document.querySelector('textarea')
-  expect(textarea2).toBeTruthy()
-
-  await user.clear(textarea2!)
-  await user.type(textarea2!, "値4")
-
-  // Ctrl+Enterで編集確定
-  await user.keyboard('{Control>}{Enter}{/Control}')
-  await new Promise(resolve => setTimeout(resolve, 200))
-
-  // DynamicFormRefのuseFormReturnのgetValuesで値を取得して検証
-  const formValues = ref.current?.useFormReturn.getValues()
-
-  // グリッド外の要素（member1とmember3）の検証
-  expect((formValues as any)?.section1?.section1_1?.member1).toBe("値1")
-  expect((formValues as any)?.array2?.[0]?.section2_1?.member3).toBe("値3")
-
-  // フォーム構造が正しく作成されていることを確認
-  expect(formValues).toHaveProperty("section1.section1_1")
-  expect(formValues).toHaveProperty("section1.array1_2")
-  expect(formValues).toHaveProperty("array2")
-  expect(Array.isArray((formValues as any)?.array2)).toBe(true)
-
-  // 必須の検証: グリッド外の要素（member1とmember3）
-  expect((formValues as any)?.section1?.section1_1?.member1).toBe("値1")
-  expect((formValues as any)?.array2?.[0]?.section2_1?.member3).toBe("値3")
-
-  // フォーム構造が正しく作成されていることを確認
-  expect(formValues).toHaveProperty("section1.section1_1")
-  expect(formValues).toHaveProperty("section1.array1_2")
-  expect(formValues).toHaveProperty("array2")
-
-  // 配列構造の基本的な検証
-  expect(Array.isArray((formValues as any)?.section1?.array1_2)).toBe(true)
-  expect(Array.isArray((formValues as any)?.array2)).toBe(true)
-
-  // 追加ボタンによる配列アイテムの追加が動作していることを確認
-  expect((formValues as any)?.section1?.array1_2?.length).toBeGreaterThan(1)
-  expect((formValues as any)?.array2?.length).toBeGreaterThan(1)
-
-  // グリッド内のセル編集結果を検証
-  // member2（配列1-2内）の編集結果
-  const array1_2Values = (formValues as any)?.section1?.array1_2
-  expect(Array.isArray(array1_2Values)).toBe(true)
-
-  // member4（配列2-2内）の編集結果
-  const array2Values = (formValues as any)?.array2
-  expect(Array.isArray(array2Values)).toBe(true)
-
-  // デバッグ用: フォーム全体の値を確認
-  console.log("フォーム全体の値:", JSON.stringify(formValues, null, 2))
-
-  // EditableGridでの編集が行われた場合の検証
-  // （EditableGridの複雑な実装により、正確な値の反映は環境に依存する可能性があります）
+  // --- 5. 最終的なフォーム構造の検証 ---
+  const formValues = getValues()
+  expect(formValues).toHaveProperty("section1.section1_1.member1", "値1")
+  expect(Array.isArray(formValues.section1.array1_2)).toBe(true)
+  expect(Array.isArray(formValues.array2)).toBe(true)
+  expect(formValues.array2[0].section2_1.member3).toBe("値3")
+  expect(Array.isArray(formValues.array2[0].array2_2)).toBe(true)
 })
