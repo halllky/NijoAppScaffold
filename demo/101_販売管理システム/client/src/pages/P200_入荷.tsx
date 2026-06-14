@@ -1,5 +1,5 @@
 import React from "react"
-import * as ReactRouter from "react-router"
+import * as ReactRouter from "react-router-dom"
 import { useNavigate, Link } from "react-router-dom"
 import { SearchPageBase, SortComboItem } from "../layout/SearchPageBase"
 import { FormLabel } from "../layout/FormLabel"

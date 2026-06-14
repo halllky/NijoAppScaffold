@@ -3,8 +3,7 @@
     "recommendations": [
       "EditorConfig.EditorConfig",
       "yzhang.markdown-all-in-one",
-      "ms-dotnettools.vscode-dotnet-runtime",
-      "bierner.markdown-mermaid"
+      "ms-dotnettools.vscode-dotnet-runtime"
     ]
   },
   "folders": [
@@ -34,7 +33,7 @@
     },
     {
       "name": "ユニットテスト - ログ",
-      "path": "Nijo.IntegrationTest/bin/Debug/net9.0/Nijo.IntegrationTest.Log"
+      "path": "Nijo.IntegrationTest/bin/Debug/net10.0/Nijo.IntegrationTest.Log"
     },
     {
       "name": "現新比較",
@@ -156,7 +155,7 @@
         "options": {
           "cwd": "${workspaceFolder:ワークスペース全体}/demo",
           "env": {
-            "NIJO_CLI_PATH": "${workspaceFolder:ワークスペース全体}/Nijo/bin/Debug/net9.0/nijo"
+            "NIJO_CLI_PATH": "${workspaceFolder:ワークスペース全体}/Nijo/bin/Debug/net10.0/nijo"
           }
         },
         "problemMatcher": [],
@@ -167,7 +166,7 @@
         "detail": "デモのnijo.xmlを編集する。「Nijo > リリース」で発行したときのものが使われる",
         "type": "shell",
         "options": {
-          "cwd": "${workspaceFolder:ワークスペース全体}/Nijo/bin/Release/net9.0"
+          "cwd": "${workspaceFolder:ワークスペース全体}/Nijo/bin/Release/net10.0/publish"
         },
         "args": [
           "serve",
@@ -183,7 +182,7 @@
         "options": {
           "cwd": "${workspaceFolder:ワークスペース全体}/demo",
           "env": {
-            "NIJO_CLI_PATH": "${workspaceFolder:ワークスペース全体}/Nijo/bin/Debug/net9.0/nijo"
+            "NIJO_CLI_PATH": "${workspaceFolder:ワークスペース全体}/Nijo/bin/Debug/net10.0/nijo"
           }
         },
         "problemMatcher": [],
@@ -207,6 +206,20 @@
         "type": "shell",
         "command": "dotnet build ${workspaceFolder:ワークスペース全体}/Nijo/Nijo.csproj",
         "problemMatcher": []
+      },
+      {
+        "label": "Nijo > ユニットテスト (Node.js + .NET)",
+        "detail": "デプロイ前の確認用。vitest (run) と Nijo.IntegrationTest を順に実行し、両方成功したら完了。",
+        "type": "shell",
+        "group": {
+          "kind": "test",
+          "isDefault": true
+        },
+        "problemMatcher": [],
+        "options": {
+          "cwd": "${workspaceFolder:ワークスペース全体}"
+        },
+        "command": "npm run test:ci && dotnet test ${workspaceFolder:ワークスペース全体}/Nijo.IntegrationTest/Nijo.IntegrationTest.csproj"
       }
     ],
     "inputs": [
@@ -255,7 +268,7 @@
         "name": "000 基本的なDataModelの例 - コード生成",
         "type": "coreclr",
         "request": "launch",
-        "program": "${workspaceFolder:NijoAppScaffold}/Nijo/bin/Debug/net9.0/nijo",
+        "program": "${workspaceFolder:NijoAppScaffold}/Nijo/bin/Debug/net10.0/nijo",
         "args": [
           "generate"
         ],

@@ -1,5 +1,5 @@
 import React from "react"
-import * as ReactRouter from "react-router"
+import * as ReactRouter from "react-router-dom"
 import { Link } from "react-router-dom"
 import { GraphView2 } from "@nijo/ui-components"
 import { callAspNetCoreApiAsync } from "../example/callAspNetCoreApiAsync"

@@ -7,10 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Nijo.WebService.Common;
-using Nijo.WebService.Debugging;
 using Nijo.WebService.SchemaEditor;
-using Nijo.WebService.TypedDocument;
 
 namespace Nijo.WebService;
 
@@ -56,12 +53,6 @@ public class NijoWebServiceBuilder {
         app.MapPost("/api/save", schemaHandlers.HandleSaveSchema);
         app.MapPost("/api/generate", schemaHandlers.HandleGenerateCode);
         app.MapPost("/api/types", schemaHandlers.HandleGetNodeTypes);
-
-        // デバッグ用ツール
-        new DebugTools().ConfigureWebApplication(app);
-
-        // 型つきアウトライナー用エンドポイント
-        new TypedDocumentAndDataPreview().ConfigureWebApplication(app);
 
         // 上位のいずれにも該当しないエンドポイントへのリクエストは
         // React.js のビルド後html（js, css がすべて1つのhtmlファイル内にバンドルされているもの）を返す。

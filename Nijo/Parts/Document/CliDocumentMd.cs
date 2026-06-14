@@ -173,7 +173,7 @@ internal class CliDocumentMd {
         }
 
         // 必須かどうか
-        if (option.IsRequired) {
+        if (option.Required) {
             sb.AppendLine("**必須**: はい");
             sb.AppendLine();
         }

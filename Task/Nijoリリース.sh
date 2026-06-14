@@ -45,6 +45,32 @@ if [ "$goto_EXISTS_VERSION_TAG" == "false" ]; then
   fi
 fi
 
+# --- デプロイ前のテスト ---
+# GitHub配置用リリース（＝デプロイ）のときのみ、node と dotnet のテストを実行し、
+# すべて成功した場合のみデプロイを続行する。失敗した場合はここで中断する。
+if [ "$ARCHIVE_RELEASE_ZIP" != "0" ]; then
+  echo "デプロイ前のテストを実行します（Node.js / .NET）。"
+
+  echo "[1/2] Node.js (vitest) のテストを実行します。"
+  pushd "$NIJO_ROOT" > /dev/null
+  npm run test:ci
+  NODE_TEST_RESULT=$?
+  popd > /dev/null
+  if [ $NODE_TEST_RESULT -ne 0 ]; then
+    echo "Node.js のテストに失敗したため、デプロイを中断します。"
+    exit 1
+  fi
+
+  echo "[2/2] .NET (Nijo.IntegrationTest) のテストを実行します。"
+  dotnet test "$NIJO_ROOT/Nijo.IntegrationTest/Nijo.IntegrationTest.csproj"
+  if [ $? -ne 0 ]; then
+    echo ".NET のテストに失敗したため、デプロイを中断します。"
+    exit 1
+  fi
+
+  echo "すべてのテストが成功しました。デプロイを続行します。"
+fi
+
 # EXISTS_VERSION_TAG
 echo "アプリケーションテンプレートを圧縮します: $APP_TEMPLATE_ZIP"
 mkdir -p "$NIJO_ROOT/temp_release"
@@ -67,6 +93,20 @@ if [ $? -ne 0 ]; then
 fi
 popd > /dev/null
 
+# デモ編集用（内部向け）の場合は、現在のOSで動くフレームワーク依存ビルドを
+# bin/Release/net10.0/publish フォルダに1箇所だけ発行して終了する。
+# 「Nijo > デモ > スキーマ定義編集」タスクがこの publish フォルダの nijo を実行する。
+if [ "$ARCHIVE_RELEASE_ZIP" == "0" ]; then
+  echo "デモ編集用のビルドを開始します。"
+  dotnet publish "$NIJO_ROOT/Nijo/Nijo.csproj" -c Release -o "$NIJO_ROOT/Nijo/bin/Release/net10.0/publish"
+  if [ $? -ne 0 ]; then
+    echo "ビルドに失敗しました。"
+    exit 1
+  fi
+  exit 0
+fi
+
+# GitHub配置用：win/osx をそれぞれRID別に発行する
 echo "ビルドを開始します。"
 dotnet publish "$NIJO_ROOT/Nijo/Nijo.csproj" -p:PublishProfile=FOR_GITHUB_RELEASE_WINDOWS
 if [ $? -ne 0 ]; then
@@ -80,17 +120,13 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-if [ "$ARCHIVE_RELEASE_ZIP" == "0" ]; then
-  exit 0
-fi
-
 # 圧縮
 # zipコマンドを使用
-pushd "$NIJO_ROOT/Nijo/bin/Release/net9.0/publish-win" > /dev/null
+pushd "$NIJO_ROOT/Nijo/bin/Release/net10.0/publish-win" > /dev/null
 zip -r "$NIJO_ROOT/temp_release/release-$RELEASE_VERSION-win.zip" .
 popd > /dev/null
 
-pushd "$NIJO_ROOT/Nijo/bin/Release/net9.0/publish-osx" > /dev/null
+pushd "$NIJO_ROOT/Nijo/bin/Release/net10.0/publish-osx" > /dev/null
 zip -r "$NIJO_ROOT/temp_release/release-$RELEASE_VERSION-osx.zip" .
 popd > /dev/null
 

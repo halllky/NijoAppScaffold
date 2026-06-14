@@ -9,7 +9,7 @@ sidebar_position: 1
 
 ## 必要なもの
 
-* .NET 9 SDK (Microsoft公式サイトからダウンロードしてください)
+* .NET 10 SDK (Microsoft公式サイトからダウンロードしてください)
 * nijo のコマンドラインツール。[ダウンロードはこちら](https://github.com/halllky/NijoAppScaffold/releases)
 
 上記だけで最低限動作しますが、ここでは業務システムとして必要な機能が一通りそろったデモで動かすことを想定しているため、以下も必要になります。

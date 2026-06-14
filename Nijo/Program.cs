@@ -1,11 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
-using System.CommandLine.Builder;
-using System.CommandLine.Parsing;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -15,16 +12,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Security.Policy;
 using Nijo.SchemaParsing;
 using System.Xml.Linq;
-using Nijo.Models.DataModelModules;
-using Nijo.Models.QueryModelModules;
-using Nijo.ImmutableSchema;
 using Nijo.CodeGenerating;
-using Nijo.Models;
-using System.CommandLine.Invocation;
-using System.CommandLine.Binding;
 
 [assembly: InternalsVisibleTo("Nijo.IntegrationTest")]
 
@@ -41,24 +31,22 @@ namespace Nijo {
             };
 
             var rootCommand = DefineCommand();
+            var config = new CommandLineConfiguration(rootCommand) {
+                EnableDefaultExceptionHandler = false,
+            };
 
-            var parser = new CommandLineBuilder(rootCommand)
-                .UseDefaults()
-
-                // 例外処理
-                .UseExceptionHandler((ex, _) => {
-                    if (ex is OperationCanceledException) {
-                        Console.Error.WriteLine("キャンセルされました。");
-                    } else {
-                        cancellationTokenSource.Cancel();
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.Error.WriteLine(ex.ToString());
-                        Console.ResetColor();
-                    }
-                })
-                .Build();
-
-            return await parser.InvokeAsync(args);
+            try {
+                return await config.InvokeAsync(args, cancellationTokenSource.Token);
+            } catch (OperationCanceledException) {
+                Console.Error.WriteLine("キャンセルされました。");
+                return 1;
+            } catch (Exception ex) {
+                cancellationTokenSource.Cancel();
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.Error.WriteLine(ex.ToString());
+                Console.ResetColor();
+                return 1;
+            }
         }
 
         private static RootCommand DefineCommand() {
@@ -68,97 +56,80 @@ namespace Nijo {
             // ** 引数定義 **
 
             // プロジェクト相対パス
-            var path = new Argument<string?>(
-                name: "project path",
-                getDefaultValue: () => string.Empty,
-                description: "カレントディレクトリから操作対象のnijoプロジェクトへの相対パス");
+            var path = new Argument<string?>("project path") {
+                DefaultValueFactory = _ => string.Empty,
+                Description = "カレントディレクトリから操作対象のnijoプロジェクトへの相対パス",
+            };
 
             // ビルドスキップ
-            var noBuild = new Option<bool>(
-                ["-n", "--no-build"],
-                description: "デバッグ開始時にコード自動生成をせず、アプリケーションの起動のみ行います。");
+            var noBuild = new Option<bool>("--no-build", "-n") {
+                Description = "デバッグ開始時にコード自動生成をせず、アプリケーションの起動のみ行います。",
+            };
 
             // デバッグ実行時、ブラウザを立ち上げない
-            var noBrowser = new Option<bool>(
-                ["-b", "--no-browser"],
-                description: "デバッグ開始時にブラウザを立ち上げません。");
+            var noBrowser = new Option<bool>("--no-browser", "-b") {
+                Description = "デバッグ開始時にブラウザを立ち上げません。",
+            };
 
             // 未実装を許可
-            var allowNotImplemented = new Option<bool>(
-                ["-a", "--allow-not-implemented"],
-                description: "QueryModelのデータ構造定義などの必ず実装しなければならないメソッドは通常abstractでレンダリングされるが、コンパイルエラーの確認などのためにあえてvirtualでレンダリングする。");
+            var allowNotImplemented = new Option<bool>("--allow-not-implemented", "-a") {
+                Description = "QueryModelのデータ構造定義などの必ず実装しなければならないメソッドは通常abstractでレンダリングされるが、コンパイルエラーの確認などのためにあえてvirtualでレンダリングする。",
+            };
 
             // デバッグ実行キャンセルファイル
-            var cancelFile = new Option<string?>(
-                ["-c", "--cancel-file"],
-                description: "デバッグ実行の終了のトリガーは、通常はユーザーからのキー入力ですが、これを指定したときはこのファイルが存在したら終了と判定します。");
+            var cancelFile = new Option<string?>("--cancel-file", "-c") {
+                Description = "デバッグ実行の終了のトリガーは、通常はユーザーからのキー入力ですが、これを指定したときはこのファイルが存在したら終了と判定します。",
+            };
 
             // GUI用のサービスが実行されるURL
-            var url = new Option<string?>(
-                ["-u", "--url"],
-                description: "GUI用のサービスが実行されるURLを明示的に指定します。");
+            var url = new Option<string?>("--url", "-u") {
+                Description = "GUI用のサービスが実行されるURLを明示的に指定します。",
+            };
 
             // ---------------------------------------------------
             // ** コマンド **
 
             // 新規プロジェクト作成
-            var newProject = new Command(
-                name: "new",
-                description: "新規プロジェクトを作成します。")
-                { path };
-            newProject.SetHandler(NewProject(path));
-            rootCommand.AddCommand(newProject);
+            var newProject = new Command("new", "新規プロジェクトを作成します。") { path };
+            newProject.SetAction(NewProject(path));
+            rootCommand.Add(newProject);
 
             // 検証
-            var validate = new Command(
-                name: "validate",
-                description: "スキーマ定義の検証を行ないます。")
-                { path };
-            validate.SetHandler(Validate(path));
-            rootCommand.AddCommand(validate);
+            var validate = new Command("validate", "スキーマ定義の検証を行ないます。") { path };
+            validate.SetAction(Validate(path));
+            rootCommand.Add(validate);
 
             // コード自動生成
-            var generate = new Command(
-                name: "generate",
-                description: "ソースコードの自動生成を実行します。")
-                { path, allowNotImplemented };
-            generate.SetHandler(Generate(path, allowNotImplemented));
-            rootCommand.AddCommand(generate);
+            var generate = new Command("generate", "ソースコードの自動生成を実行します。") { path, allowNotImplemented };
+            generate.SetAction(Generate(path, allowNotImplemented));
+            rootCommand.Add(generate);
 
             // デバッグ実行開始
-            var run = new Command(
-                name: "run",
-                description: "プロジェクトのデバッグを開始します。")
-                { path, noBuild, noBrowser, allowNotImplemented, cancelFile };
-            run.SetHandler(Run, path, noBuild, noBrowser, allowNotImplemented, cancelFile);
-            rootCommand.AddCommand(run);
-
-            // スキーマダンプ
-            var dump = new Command(
-                name: "dump",
-                description: "スキーマ定義とプロパティパスの情報をMarkdown形式で出力します。")
-                { path };
-            dump.SetHandler(Dump, path);
-            rootCommand.AddCommand(dump);
+            var run = new Command("run", "プロジェクトのデバッグを開始します。") { path, noBuild, noBrowser, allowNotImplemented, cancelFile };
+            run.SetAction((parseResult, ct) => Run(
+                parseResult.GetValue(path),
+                parseResult.GetValue(noBuild),
+                parseResult.GetValue(noBrowser),
+                parseResult.GetValue(allowNotImplemented),
+                parseResult.GetValue(cancelFile)));
+            rootCommand.Add(run);
 
             // GUI用のサービスを展開する
-            var serve = new Command(
-                name: "serve",
-                description: "GUI用のサービスを展開します。")
-                { path, url, noBrowser };
-            serve.SetHandler(Serve, path, url, noBrowser);
-            rootCommand.AddCommand(serve);
+            var serve = new Command("serve", "GUI用のサービスを展開します。") { path, url, noBrowser };
+            serve.SetAction((parseResult, ct) => Serve(
+                parseResult.GetValue(path),
+                parseResult.GetValue(url),
+                parseResult.GetValue(noBrowser)));
+            rootCommand.Add(serve);
 
             // リファレンスドキュメント生成
-            var outOption = new Option<string>(
-                ["-o", "--out"],
-                description: "出力先ディレクトリのパス");
-            var generateReference = new Command(
-                name: "generate-reference",
-                description: "各モデルで利用可能なNodeOptionのHelpTextを.mdファイルとして出力します。")
-                { outOption };
-            generateReference.SetHandler(GenerateReference, outOption);
-            rootCommand.AddCommand(generateReference);
+            var outOption = new Option<string>("--out", "-o") {
+                Description = "出力先ディレクトリのパス",
+                Required = true,
+            };
+            var generateReference = new Command("generate-reference", "各モデルで利用可能なNodeOptionのHelpTextを.mdファイルとして出力します。") { outOption };
+            generateReference.SetAction(parseResult => GenerateReference(parseResult.GetValue(outOption)!));
+            rootCommand.Add(generateReference);
 
             return rootCommand;
         }
@@ -168,43 +139,36 @@ namespace Nijo {
         /// 新規プロジェクトを作成します。
         /// </summary>
         /// <param name="argPath">対象フォルダまでの相対パス</param>
-        private static Action<InvocationContext> NewProject(Argument<string?> argPath) {
+        private static Func<ParseResult, int> NewProject(Argument<string?> argPath) {
+            return parseResult => {
+                var path = parseResult.GetValue(argPath);
 
-            return context => {
-                try {
-                    var path = GetValueForHandlerParameter(argPath, context);
+                var projectRoot = path == null
+                    ? Directory.GetCurrentDirectory()
+                    : Path.Combine(Directory.GetCurrentDirectory(), path);
+                var logger = ILoggerExtension.CreateConsoleLogger();
 
-                    var projectRoot = path == null
-                        ? Directory.GetCurrentDirectory()
-                        : Path.Combine(Directory.GetCurrentDirectory(), path);
-                    var logger = ILoggerExtension.CreateConsoleLogger();
+                if (Directory.Exists(projectRoot)) {
+                    logger.LogError("既にプロジェクトが存在します: {projectRoot}", projectRoot);
+                    return 1;
+                }
 
+                var (success, errorMessage) = GeneratedProject.CreatePhysicalProjectAndInstallDependenciesAsync(projectRoot, logger);
+
+                if (success) {
+                    logger.LogInformation("プロジェクトの作成が完了しました: {projectRoot}", projectRoot);
+                    return 0;
+                } else {
+                    logger.LogError(errorMessage ?? "プロジェクトの作成に失敗しました。");
+                    // 作成途中のディレクトリが残っている可能性があるので削除を試みる
                     if (Directory.Exists(projectRoot)) {
-                        logger.LogError("既にプロジェクトが存在します: {projectRoot}", projectRoot);
-                        context.ExitCode = 1;
-                        return;
-                    }
-
-                    var (success, errorMessage) = GeneratedProject.CreatePhysicalProjectAndInstallDependenciesAsync(projectRoot, logger);
-
-                    if (success) {
-                        logger.LogInformation("プロジェクトの作成が完了しました: {projectRoot}", projectRoot);
-                        context.ExitCode = 0;
-                    } else {
-                        logger.LogError(errorMessage ?? "プロジェクトの作成に失敗しました。");
-                        // 作成途中のディレクトリが残っている可能性があるので削除を試みる
-                        if (Directory.Exists(projectRoot)) {
-                            try {
-                                Directory.Delete(projectRoot, recursive: true);
-                            } catch (Exception ex) {
-                                logger.LogWarning($"作成失敗したプロジェクトディレクトリの削除に失敗しました: {projectRoot}, {ex.Message}");
-                            }
+                        try {
+                            Directory.Delete(projectRoot, recursive: true);
+                        } catch (Exception ex) {
+                            logger.LogWarning($"作成失敗したプロジェクトディレクトリの削除に失敗しました: {projectRoot}, {ex.Message}");
                         }
-                        context.ExitCode = 1;
                     }
-                } catch {
-                    context.ExitCode = 1;
-                    throw;
+                    return 1;
                 }
             };
         }
@@ -214,35 +178,24 @@ namespace Nijo {
         /// スキーマ定義の検証を行ないます。
         /// </summary>
         /// <param name="argPath">対象フォルダまでの相対パス</param>
-        private static Action<InvocationContext> Validate(Argument<string?> argPath) {
+        private static Func<ParseResult, int> Validate(Argument<string?> argPath) {
+            return parseResult => {
+                var path = parseResult.GetValue(argPath);
 
-            return context => {
-                try {
-                    var path = GetValueForHandlerParameter(argPath, context);
+                var projectRoot = path == null
+                    ? Directory.GetCurrentDirectory()
+                    : Path.Combine(Directory.GetCurrentDirectory(), path);
+                var logger = ILoggerExtension.CreateConsoleLogger();
 
-                    var projectRoot = path == null
-                        ? Directory.GetCurrentDirectory()
-                        : Path.Combine(Directory.GetCurrentDirectory(), path);
-                    var logger = ILoggerExtension.CreateConsoleLogger();
-
-                    if (!GeneratedProject.TryOpen(projectRoot, out var project, out var error)) {
-                        logger.LogError(error);
-                        context.ExitCode = 1;
-                        return;
-                    }
-                    var rule = SchemaParseRule.Default();
-                    var xDocument = XDocument.Load(project.SchemaXmlPath);
-                    var parseContext = new SchemaParseContext(xDocument, rule, GeneratedProjectOptions.Parse(xDocument, true));
-
-                    if (!project.ValidateSchema(parseContext, logger)) {
-                        context.ExitCode = 1;
-                        return;
-                    }
-                    context.ExitCode = 0;
-                } catch {
-                    context.ExitCode = 1;
-                    throw;
+                if (!GeneratedProject.TryOpen(projectRoot, out var project, out var error)) {
+                    logger.LogError(error);
+                    return 1;
                 }
+                var rule = SchemaParseRule.Default();
+                var xDocument = XDocument.Load(project.SchemaXmlPath);
+                var parseContext = new SchemaParseContext(xDocument, rule, GeneratedProjectOptions.Parse(xDocument, true));
+
+                return project.ValidateSchema(parseContext, logger) ? 0 : 1;
             };
         }
 
@@ -252,39 +205,28 @@ namespace Nijo {
         /// </summary>
         /// <param name="path">対象フォルダまでの相対パス</param>
         /// <param name="allowNotImplemented">抽象メソッドをabstractでなくvirtualで生成</param>
-        private static Action<InvocationContext> Generate(Argument<string?> argPath, Option<bool> optAllowNotImplemented) {
+        private static Func<ParseResult, int> Generate(Argument<string?> argPath, Option<bool> optAllowNotImplemented) {
+            return parseResult => {
+                var path = parseResult.GetValue(argPath);
+                var allowNotImplemented = parseResult.GetValue(optAllowNotImplemented);
 
-            return context => {
-                try {
-                    var path = GetValueForHandlerParameter(argPath, context);
-                    var allowNotImplemented = GetValueForHandlerParameter(optAllowNotImplemented, context);
+                var projectRoot = path == null
+                    ? Directory.GetCurrentDirectory()
+                    : Path.Combine(Directory.GetCurrentDirectory(), path);
+                var logger = ILoggerExtension.CreateConsoleLogger();
 
-                    var projectRoot = path == null
-                        ? Directory.GetCurrentDirectory()
-                        : Path.Combine(Directory.GetCurrentDirectory(), path);
-                    var logger = ILoggerExtension.CreateConsoleLogger();
-
-                    if (!GeneratedProject.TryOpen(projectRoot, out var project, out var error)) {
-                        logger.LogError(error);
-                        context.ExitCode = 1;
-                        return;
-                    }
-                    var rule = SchemaParseRule.Default();
-                    var xDocument = XDocument.Load(project.SchemaXmlPath);
-                    var parseContext = new SchemaParseContext(xDocument, rule, GeneratedProjectOptions.Parse(xDocument, true));
-                    var renderingOptions = new CodeRenderingOptions {
-                        AllowNotImplemented = allowNotImplemented,
-                    };
-
-                    if (project.GenerateCode(parseContext, renderingOptions, logger)) {
-                        context.ExitCode = 0;
-                    } else {
-                        context.ExitCode = 1;
-                    }
-                } catch {
-                    context.ExitCode = 1;
-                    throw;
+                if (!GeneratedProject.TryOpen(projectRoot, out var project, out var error)) {
+                    logger.LogError(error);
+                    return 1;
                 }
+                var rule = SchemaParseRule.Default();
+                var xDocument = XDocument.Load(project.SchemaXmlPath);
+                var parseContext = new SchemaParseContext(xDocument, rule, GeneratedProjectOptions.Parse(xDocument, true));
+                var renderingOptions = new CodeRenderingOptions {
+                    AllowNotImplemented = allowNotImplemented,
+                };
+
+                return project.GenerateCode(parseContext, renderingOptions, logger) ? 0 : 1;
             };
         }
 
@@ -381,53 +323,6 @@ namespace Nijo {
         }
 
         /// <summary>
-        /// スキーマ定義とプロパティパスの情報をMarkdown形式で出力します。
-        /// </summary>
-        /// <param name="path">対象フォルダまでの相対パス</param>
-        private static void Dump(string? path) {
-            var projectRoot = path == null
-                ? Directory.GetCurrentDirectory()
-                : Path.Combine(Directory.GetCurrentDirectory(), path);
-            var logger = ILoggerExtension.CreateConsoleLogger();
-
-            if (!GeneratedProject.TryOpen(projectRoot, out var project, out var error)) {
-                logger.LogError(error);
-                return;
-            }
-
-            var rule = SchemaParseRule.Default();
-            var xDocument = XDocument.Load(project.SchemaXmlPath);
-            var parseContext = new SchemaParseContext(xDocument, rule, GeneratedProjectOptions.Parse(xDocument, true));
-
-            // TryBuildSchemaメソッドを使用してApplicationSchemaのインスタンスを生成
-            if (parseContext.TryBuildSchema(xDocument, out var appSchema, out var errors)) {
-                // ApplicationSchemaクラスのGenerateMarkdownDumpメソッドを使用
-                var markdownContent = appSchema.GenerateMarkdownDump();
-
-                // 標準出力に出力
-                Console.WriteLine(markdownContent);
-            } else {
-                logger.LogError("スキーマのビルドに失敗したため、ダンプを生成できませんでした。");
-                foreach (var err in errors) {
-                    var xmlPath = err.XElement
-                        .AncestorsAndSelf()
-                        .Reverse()
-                        .Skip(1)
-                        .Select(el => el.Name.LocalName)
-                        .Join("/");
-
-                    var errorMessages = err.OwnErrors
-                        .Concat(err.AttributeErrors.SelectMany(x => x.Value, (p, v) => $"[{p.Key}] {v}"))
-                        .ToArray();
-                    var summary = errorMessages.Length >= 2
-                        ? $"{errorMessages.Length}件のエラー（{errorMessages.Join(", ")}）"
-                        : errorMessages.Single();
-                    logger.LogError("  * {xmlPath}: {summary}", xmlPath, summary);
-                }
-            }
-        }
-
-        /// <summary>
         /// Nijo自体のドキュメント生成
         /// </summary>
         private static void GenerateReference(string outPath) {
@@ -519,22 +414,6 @@ namespace Nijo {
             }
 
             await app.RunAsync(url);
-        }
-
-
-        /// <summary>
-        /// CommandLineParser ライブラリのための補助メソッド。
-        /// ハンドラパラメーターに対応する値を取得します。
-        /// </summary>
-        private static T? GetValueForHandlerParameter<T>(IValueDescriptor<T> symbol, InvocationContext context) {
-            if (symbol is IValueSource source && source.TryGetValue(symbol, context.BindingContext, out var ret) && ret is T value)
-                return value;
-
-            return symbol switch {
-                Argument<T> argument => context.ParseResult.GetValueForArgument(argument),
-                Option<T> option => context.ParseResult.GetValueForOption(option),
-                _ => throw new ArgumentOutOfRangeException()
-            };
         }
     }
 }
