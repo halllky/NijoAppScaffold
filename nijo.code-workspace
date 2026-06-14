@@ -3,8 +3,7 @@
     "recommendations": [
       "EditorConfig.EditorConfig",
       "yzhang.markdown-all-in-one",
-      "ms-dotnettools.vscode-dotnet-runtime",
-      "bierner.markdown-mermaid"
+      "ms-dotnettools.vscode-dotnet-runtime"
     ]
   },
   "folders": [

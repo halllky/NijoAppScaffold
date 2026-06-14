@@ -133,14 +133,6 @@ namespace Nijo {
             run.SetHandler(Run, path, noBuild, noBrowser, allowNotImplemented, cancelFile);
             rootCommand.AddCommand(run);
 
-            // スキーマダンプ
-            var dump = new Command(
-                name: "dump",
-                description: "スキーマ定義とプロパティパスの情報をMarkdown形式で出力します。")
-                { path };
-            dump.SetHandler(Dump, path);
-            rootCommand.AddCommand(dump);
-
             // GUI用のサービスを展開する
             var serve = new Command(
                 name: "serve",
@@ -376,53 +368,6 @@ namespace Nijo {
                         await Task.Delay(500);
                     }
                     break;
-                }
-            }
-        }
-
-        /// <summary>
-        /// スキーマ定義とプロパティパスの情報をMarkdown形式で出力します。
-        /// </summary>
-        /// <param name="path">対象フォルダまでの相対パス</param>
-        private static void Dump(string? path) {
-            var projectRoot = path == null
-                ? Directory.GetCurrentDirectory()
-                : Path.Combine(Directory.GetCurrentDirectory(), path);
-            var logger = ILoggerExtension.CreateConsoleLogger();
-
-            if (!GeneratedProject.TryOpen(projectRoot, out var project, out var error)) {
-                logger.LogError(error);
-                return;
-            }
-
-            var rule = SchemaParseRule.Default();
-            var xDocument = XDocument.Load(project.SchemaXmlPath);
-            var parseContext = new SchemaParseContext(xDocument, rule, GeneratedProjectOptions.Parse(xDocument, true));
-
-            // TryBuildSchemaメソッドを使用してApplicationSchemaのインスタンスを生成
-            if (parseContext.TryBuildSchema(xDocument, out var appSchema, out var errors)) {
-                // ApplicationSchemaクラスのGenerateMarkdownDumpメソッドを使用
-                var markdownContent = appSchema.GenerateMarkdownDump();
-
-                // 標準出力に出力
-                Console.WriteLine(markdownContent);
-            } else {
-                logger.LogError("スキーマのビルドに失敗したため、ダンプを生成できませんでした。");
-                foreach (var err in errors) {
-                    var xmlPath = err.XElement
-                        .AncestorsAndSelf()
-                        .Reverse()
-                        .Skip(1)
-                        .Select(el => el.Name.LocalName)
-                        .Join("/");
-
-                    var errorMessages = err.OwnErrors
-                        .Concat(err.AttributeErrors.SelectMany(x => x.Value, (p, v) => $"[{p.Key}] {v}"))
-                        .ToArray();
-                    var summary = errorMessages.Length >= 2
-                        ? $"{errorMessages.Length}件のエラー（{errorMessages.Join(", ")}）"
-                        : errorMessages.Single();
-                    logger.LogError("  * {xmlPath}: {summary}", xmlPath, summary);
                 }
             }
         }

@@ -37,9 +37,7 @@
 				// デモのDBにSQLiteを使っているのでVSCode上で中身を確認・編集できるようにする
 				"yy0931.vscode-sqlite3-editor",
 				// Markdown 関連の便利機能いろいろ
-				"yzhang.markdown-all-in-one",
-				// Markdown ファイル内で Mermaid 図を描画してくれる
-				"bierner.markdown-mermaid"
+				"yzhang.markdown-all-in-one"
 			],
 			"settings": {
 				// ターミナルのデフォルトシェルを Zsh に変更

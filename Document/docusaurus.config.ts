@@ -34,11 +34,6 @@ const config: Config = {
     locales: ['ja'],
   },
 
-  markdown: {
-    mermaid: true,
-  },
-  themes: ['@docusaurus/theme-mermaid'],
-
   // フォントに Noto Sans JP を使用
   headTags: [
     {
@@ -112,12 +107,20 @@ const config: Config = {
       },
       items: [
         {
-          type: 'docSidebar',
-          sidebarId: 'tutorialSidebar',
+          to: 'docs/intro',
           position: 'left',
-          label: 'Tutorial',
+          label: 'ドキュメント',
         },
-        // { to: '/blog', label: 'Blog', position: 'left' },
+        {
+          to: 'docs/demo',
+          position: 'left',
+          label: 'デモ',
+        },
+        {
+          to: '/reference/CLI',
+          label: 'コマンドラインAPI',
+          position: 'left',
+        },
         {
           href: 'https://github.com/halllky/NijoAppScaffold',
           label: 'GitHub',
@@ -129,38 +132,24 @@ const config: Config = {
       style: 'dark',
       links: [
         {
-          title: 'Docs',
+          title: 'ドキュメント',
           items: [
-            {
-              label: 'Tutorial',
-              to: '/docs/intro',
-            },
+            { label: 'はじめに', to: '/docs/intro' },
+            { label: 'デモ', to: '/docs/demo' },
+            { label: '設計・開発', to: '/docs/workflow/' },
+            { label: 'アーキテクチャ概要', to: '/docs/architecture' },
           ],
         },
-        // {
-        //   title: 'Community',
-        //   items: [
-        //     {
-        //       label: 'Stack Overflow',
-        //       href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-        //     },
-        //     {
-        //       label: 'Discord',
-        //       href: 'https://discordapp.com/invite/docusaurus',
-        //     },
-        //     {
-        //       label: 'X',
-        //       href: 'https://x.com/docusaurus',
-        //     },
-        //   ],
-        // },
         {
-          title: 'More',
+          title: 'リファレンス',
           items: [
-            // {
-            //   label: 'Blog',
-            //   to: '/blog',
-            // },
+            { label: 'コマンドライン API', to: '/reference/CLI' },
+            { label: 'nijo.xml 属性種類定義', to: '/reference/ValueMemberTypes' },
+          ],
+        },
+        {
+          title: 'リンク',
+          items: [
             {
               label: 'GitHub',
               href: 'https://github.com/halllky/NijoAppScaffold',
