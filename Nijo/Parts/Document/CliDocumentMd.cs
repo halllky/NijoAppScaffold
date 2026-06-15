@@ -56,7 +56,7 @@ internal class CliDocumentMd {
         sb.AppendLine();
 
         foreach (var command in rootCommand.Subcommands.OrderBy(c => c.Name)) {
-            sb.AppendLine($"- [`{command.Name}`](#{command.Name.Replace("-", "")}) - {command.Description}");
+            sb.AppendLine($"- [`{command.Name}`](#{command.Name}) - {command.Description}");
         }
         sb.AppendLine();
 
