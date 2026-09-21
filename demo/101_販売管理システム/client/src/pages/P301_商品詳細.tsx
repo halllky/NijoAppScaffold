@@ -136,6 +136,8 @@ function P301_商品詳細() {
       </div>
     ), { defaultWidth: 320, wrap: true }),
   ], [])
+  const historyRowKeys = React.useMemo(() => history.map((_, index) => index.toString()), [history])
+  const getLatestHistoryRowObject = React.useCallback((index: number) => history[index], [history])
 
   return (
     <PageBase
@@ -173,10 +175,10 @@ function P301_商品詳細() {
           <div className="flex-1 flex flex-col gap-2 overflow-hidden mt-2">
             <h2 className="text-xs text-gray-500">在庫増減履歴</h2>
 
-            <Grid.EG2.EditableGrid2
-              data={history}
-              columns={[() => historyColumns, []]}
-              getRowId={(_, index) => index.toString()}
+            <Grid.EG2.EditableGrid
+              rowKeys={historyRowKeys}
+              getLatestRowObject={getLatestHistoryRowObject}
+              columns={historyColumns}
               striped
               className="flex-1 border border-gray-300"
             />

@@ -118,7 +118,7 @@ export function Provider(props: { children: React.ReactNode }) {
   const registeredRef = React.useRef<FieldRegistration[]>([])
 
   // これまでに appendMessages に渡された detail をすべて平坦化して蓄積しておく。
-  // EditableGrid2 のような仮想化されたグリッドでは、メッセージが発生した時点で
+  // EditableGrid のような仮想化されたグリッドでは、メッセージが発生した時点で
   // 対象の行がまだ画面外で未マウントのことがあるため、この蓄積をもとに
   // 新しく登録されたコンポーネントへ後から配信し直す（下記 scheduleRedistribute）。
   const accumulatedFlatMapRef = React.useRef<[string[], DetailMessageByField][]>([])

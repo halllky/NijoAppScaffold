@@ -94,16 +94,16 @@ function SingleEnumEditor({ index, formMethods }: {
     getValues,
     setValue,
   }, helper => {
-    const columns: EG2.EditableGrid2Column<any>[] = []
+    const columns: EG2.EditableGridColumn<any>[] = []
 
     // 名前
     columns.push(helper.text('値', 'physicalName', {
       defaultWidth: 220,
       isFixed: true,
-      renderBody: ({ context }) => {
+      renderBody: ({ rowIndex }) => {
         const value = ReactHookForm.useWatch({
           control,
-          name: `${membersPath}.${context.row.index}.physicalName`,
+          name: `${membersPath}.${rowIndex}.physicalName`,
         })
         return (
           <div className="px-1 w-full truncate">
@@ -217,7 +217,7 @@ function SingleEnumEditor({ index, formMethods }: {
           <UI.Button outline mini icon={Icon.ChevronDownIcon} onClick={handleMoveDown}>下へ (Alt + ↓)</UI.Button>
         </div>
 
-        <EG2.EditableGrid2
+        <EG2.EditableGrid
           {...editableGrid2Props}
           className="w-full border border-gray-700"
         />

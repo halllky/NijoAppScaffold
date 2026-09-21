@@ -61,7 +61,7 @@ export function SingleConstantEditor({ index, formMethods }: {
     getValues,
     setValue,
   }, helper => {
-    const columns: EG2.EditableGrid2Column<any>[] = []
+    const columns: EG2.EditableGridColumn<any>[] = []
 
     // 定義名
     columns.push(helper.elementName(''))
@@ -235,7 +235,7 @@ export function SingleConstantEditor({ index, formMethods }: {
           <UI.Button outline mini icon={Icon.ChevronDownIcon} onClick={handleMoveDown}>下に移動 (Alt + ↓)</UI.Button>
         </div>
 
-        <EG2.EditableGrid2
+        <EG2.EditableGrid
           {...editableGrid2Props}
           striped
           className="w-full min-h-36 border border-gray-700"

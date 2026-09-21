@@ -55,7 +55,7 @@ function GenericLookupTableCategoriesPane(props: {
     getValues,
     setValue,
   }, helper => {
-    const columns: EG2.EditableGrid2Column<GridRow>[] = []
+    const columns: EG2.EditableGridColumn<GridRow>[] = []
 
     // 物理名（カテゴリのXML要素名）
     columns.push(helper.text('物理名', 'name', {
@@ -161,7 +161,7 @@ function GenericLookupTableCategoriesPane(props: {
         <UI.Button outline mini icon={Icon.ChevronUpIcon} onClick={handleMoveUp}>上に移動(Alt + ↑)</UI.Button>
         <UI.Button outline mini icon={Icon.ChevronDownIcon} onClick={handleMoveDown}>下に移動(Alt + ↓)</UI.Button>
       </div>
-      <EG2.EditableGrid2
+      <EG2.EditableGrid
         {...editableGrid2Props}
         striped
         className="flex-1 w-full border-y border-r border-gray-300"

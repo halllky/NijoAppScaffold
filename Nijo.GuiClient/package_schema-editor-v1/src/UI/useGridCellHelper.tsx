@@ -1,6 +1,6 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
-import { EditableGrid2Column, EditableGrid2LeafColumn, EditableGrid2Props, EditableGrid2Ref, EditableGridCellEditor, EditableGridCellEditorProps, EditableGridCellEditorRef } from "@halllky/editable-grid"
+import { EditableGridColumn, EditableGridLeafColumn, EditableGridProps, EditableGridRef, EditableGridRowUpdate, EditableGridCellEditor, EditableGridCellEditorProps, EditableGridCellEditorRef } from "@halllky/editable-grid"
 import { createTextCellHelper } from "./GridCell.Text"
 import { createCheckBoxCellHelper } from "./GridCell.CheckBox"
 import { createButtonCellHelper } from "./GridCell.Button"
@@ -9,7 +9,7 @@ import { createComboBoxCellHelper } from "./GridCell.TypeComboBox"
 import { createElementNameCellHelper } from "./GridCell.ElementName"
 
 /**
- * EditableGrid2 を react-hook-form の useFieldArray と組み合わせて使用する際の
+ * EditableGrid を react-hook-form の useFieldArray と組み合わせて使用する際の
  * 定型的な処理をまとめたカスタムフック。
  *
  * このフックをバイパスして直接列定義を指定してもよいが、こちらを使うと楽。
@@ -33,22 +33,22 @@ export function useFieldArrayForEditableGrid2<
   // react-hook-form
   const { getValues, setValue, skipFirstRow, ...fieldArrayProps } = formProps
   const fieldArrayReturn = ReactHookForm.useFieldArray<TField, TArrayPath, TKeyName>(fieldArrayProps)
+  const control = formProps.control as ReactHookForm.Control<ReactHookForm.FieldValues>
 
   // 列定義
-  const gridRef = React.useRef<EditableGrid2Ref<TRow>>(null)
+  const gridRef = React.useRef<EditableGridRef<TRow>>(null)
   const helper = React.useMemo((): ColumnDefHelper<TRow> => {
     const get = getValues as ReactHookForm.UseFormGetValues<ReactHookForm.FieldValues>
     const set = setValue as ReactHookForm.UseFormSetValue<ReactHookForm.FieldValues>
-    const ctl = formProps.control as ReactHookForm.Control<ReactHookForm.FieldValues>
     return {
-      text: createTextCellHelper(get, set, ctl, fieldArrayProps.name, skipFirstRow),
-      checkBox: createCheckBoxCellHelper(get, set, ctl, fieldArrayProps.name, skipFirstRow),
-      button: createButtonCellHelper(get, ctl, fieldArrayProps.name, skipFirstRow, gridRef),
-      dropdown: createDropdownCellHelper(get, set, ctl, fieldArrayProps.name, skipFirstRow),
-      elementName: createElementNameCellHelper(get, set, ctl, fieldArrayProps.name, skipFirstRow),
-      typeComboBox: createComboBoxCellHelper(get, set, ctl, fieldArrayProps.name, skipFirstRow),
+      text: createTextCellHelper(get, set, control, fieldArrayProps.name, skipFirstRow),
+      checkBox: createCheckBoxCellHelper(get, set, control, fieldArrayProps.name, skipFirstRow),
+      button: createButtonCellHelper(get, control, fieldArrayProps.name, skipFirstRow, gridRef),
+      dropdown: createDropdownCellHelper(get, set, control, fieldArrayProps.name, skipFirstRow),
+      elementName: createElementNameCellHelper(get, set, control, fieldArrayProps.name, skipFirstRow),
+      typeComboBox: createComboBoxCellHelper(get, set, control, fieldArrayProps.name, skipFirstRow),
     }
-  }, [getValues, setValue, formProps.control, fieldArrayProps.name, skipFirstRow])
+  }, [getValues, setValue, control, fieldArrayProps.name, skipFirstRow])
 
   const data = React.useMemo(() => {
     return skipFirstRow
@@ -56,20 +56,53 @@ export function useFieldArrayForEditableGrid2<
       : fieldArrayReturn.fields
   }, [fieldArrayReturn.fields, skipFirstRow])
 
-  // EditableGrid2 の props
-  const editableGrid2Props: EditableGrid2Props<TRow> & { ref: React.RefObject<EditableGrid2Ref<TRow> | null> } = {
+  // 行のキー
+  const keyName = fieldArrayProps.keyName ?? "id"
+  const rowKeys = React.useMemo(() => {
+    return data.map(row => (row as Record<string, string>)[keyName])
+  }, [data, keyName])
+
+  // 行の最新の値。fields には編集後の値が入っていないため、getValues から取得する。
+  const getLatestRowObject = React.useCallback((index: number): TRow => {
+    return skipFirstRow
+      ? getValues(`${fieldArrayProps.name}.${index + 1}` as ReactHookForm.Path<TField>)
+      : getValues(`${fieldArrayProps.name}.${index}` as ReactHookForm.Path<TField>)
+  }, [getValues, fieldArrayProps.name, skipFirstRow])
+
+  // react-hook-form の値が変わったことをグリッドに通知する。
+  const subscribe = React.useCallback((onChange: () => void) => {
+    return control._subscribe({
+      name: fieldArrayProps.name,
+      formState: { values: true },
+      callback: onChange,
+    })
+  }, [control, fieldArrayProps.name])
+
+  // グリッドの操作（編集確定・貼り付け・Delete）による変更を react-hook-form に反映する。
+  const onRowsChange = React.useCallback((updates: EditableGridRowUpdate<TRow>[]) => {
+    for (const { rowIndex, row } of updates) {
+      const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
+      setValue(
+        `${fieldArrayProps.name}.${fieldRowIndex}` as ReactHookForm.Path<TField>,
+        row as ReactHookForm.PathValue<TField, ReactHookForm.Path<TField>>,
+        { shouldDirty: true }
+      )
+    }
+  }, [setValue, fieldArrayProps.name, skipFirstRow])
+
+  const columns = React.useMemo(
+    () => getColumnDef(helper),
+    [helper, ...getColumnDefDependencies]
+  )
+
+  // EditableGrid の props
+  const editableGrid2Props: EditableGridProps<TRow> & { ref: React.RefObject<EditableGridRef<TRow> | null> } = {
     ref: gridRef,
-    data,
-    columns: [
-      () => getColumnDef(helper),
-      [helper, ...getColumnDefDependencies]
-    ],
-    getRowId: row => (row as Record<string, string>)[fieldArrayProps.keyName ?? "id"],
-    getLatestRowObject: index => {
-      return skipFirstRow
-        ? getValues(`${fieldArrayProps.name}.${index + 1}` as ReactHookForm.Path<TField>)
-        : getValues(`${fieldArrayProps.name}.${index}` as ReactHookForm.Path<TField>)
-    },
+    rowKeys,
+    getLatestRowObject,
+    subscribe,
+    onRowsChange,
+    columns,
   }
 
   return {
@@ -86,16 +119,16 @@ export type UseFieldArrayForEditableGrid2Return<
 > = {
   /** useFieldArray の返り値 */
   fieldArrayReturn: ReactHookForm.UseFieldArrayReturn<TField, TArrayPath, TKeyName>
-  /** EditableGrid2 の引数。スプレッド構文でそのまま渡すこと */
-  editableGrid2Props: EditableGrid2Props<ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName>>
-  /** グリッドの参照オブジェクト。EditableGrid2Ref 型として使用可能 */
-  gridRef: React.RefObject<EditableGrid2Ref<ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName>>>
+  /** EditableGrid の引数。スプレッド構文でそのまま渡すこと */
+  editableGrid2Props: EditableGridProps<ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName>>
+  /** グリッドの参照オブジェクト。EditableGridRef 型として使用可能 */
+  gridRef: React.RefObject<EditableGridRef<ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName>>>
 }
 
 //#region 列定義ヘルパー
 
-/** EditableGrid2 標準の列定義処理にヘルパー関数を追加したもの */
-export type GetColumnDefWithHelper<TRow> = (helper: ColumnDefHelper<TRow>) => EditableGrid2Column<TRow>[]
+/** EditableGrid 標準の列定義処理にヘルパー関数を追加したもの */
+export type GetColumnDefWithHelper<TRow> = (helper: ColumnDefHelper<TRow>) => EditableGridColumn<TRow>[]
 
 /** 列定義ヘルパー */
 export type ColumnDefHelper<TRow> = {

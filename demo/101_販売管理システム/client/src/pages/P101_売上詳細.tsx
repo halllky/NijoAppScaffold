@@ -285,7 +285,7 @@ function P101_売上詳細(props: {
             {/* 明細欄。行単位のメッセージはグリッドの各行のメッセージ列に表示されるが、
                 明細欄全体（配列自体）に対するメッセージはここに表示する。 */}
             <DetailMessage.Of name="売上詳細の売上明細" control={control} />
-            <Grid.EG2.EditableGrid2
+            <Grid.EG2.EditableGrid
               {...editableGrid2Props}
               isReadOnly={row => !!row.existsInDatabase}
               getRowClassName={row => row.区分 === '取消' ? 'text-rose-700' : ''}

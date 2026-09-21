@@ -64,7 +64,7 @@ function UIComponentCatalog() {
 
   const [loadingVisible, setLoadingVisible] = useState(false)
 
-  // EditableGrid2（読み取り専用）example data
+  // EditableGrid（読み取り専用）example data
   type TableRow = { id: number, name: string, price: number, category: string }
   const tableRows: TableRow[] = React.useMemo(() => Array.from({ length: 20 }).flatMap((_, i) => [
     { id: i * 10 + 1, name: "商品A", price: 1000, category: "食品" },
@@ -81,8 +81,10 @@ function UIComponentCatalog() {
       <span className="px-2 py-1 bg-gray-200 rounded text-xs">{row.category}</span>
     ), { defaultWidth: 100, getValueForCopy: row => row.category }),
   ], [])
+  const tableRowKeys = React.useMemo(() => tableRows.map((_, index) => index.toString()), [tableRows])
+  const getLatestTableRowObject = React.useCallback((index: number) => tableRows[index], [tableRows])
 
-  // EditableGrid2（編集可能）example data
+  // EditableGrid（編集可能）example data
   type EditableRow = {
     name: string
     price: string
@@ -330,13 +332,13 @@ function UIComponentCatalog() {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold mb-4 border-b">EditableGrid2（読み取り専用）</h2>
+            <h2 className="text-xl font-bold mb-4 border-b">EditableGrid（読み取り専用）</h2>
             <div className="space-y-2">
               <div className="p-4 border rounded">
-                <Grid.EG2.EditableGrid2
-                  data={tableRows}
-                  columns={[() => readOnlyColumns, []]}
-                  getRowId={(_, index) => index.toString()}
+                <Grid.EG2.EditableGrid
+                  rowKeys={tableRowKeys}
+                  getLatestRowObject={getLatestTableRowObject}
+                  columns={readOnlyColumns}
                   striped
                   showCheckBox
                   className="w-full h-60 resize border border-gray-700"
@@ -349,7 +351,7 @@ function UIComponentCatalog() {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold mb-4 border-b">EditableGrid2（編集可能）</h2>
+            <h2 className="text-xl font-bold mb-4 border-b">EditableGrid（編集可能）</h2>
             <div className="space-y-2">
               <div className="p-4 border rounded space-y-2">
                 <div className="flex flex-wrap gap-2">
@@ -365,7 +367,7 @@ function UIComponentCatalog() {
                     選択した行を削除
                   </Button>
                 </div>
-                <Grid.EG2.EditableGrid2
+                <Grid.EG2.EditableGrid
                   {...editableGrid2Props}
                   showCheckBox
                   striped

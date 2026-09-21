@@ -62,8 +62,8 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
     setValue,
   }, helper => {
 
-    const renderBodyWithValidation = (columnId: keyof GridRow): EG2.EditableGrid2BodyRenderer<GridRow> => ({ context }) => {
-      const watchedRow = ReactHookForm.useWatch({ name: `customAttributes.${context.row.index}`, control })
+    const renderBodyWithValidation = (columnId: keyof GridRow): EG2.EditableGridBodyRenderer<GridRow> => ({ rowIndex }) => {
+      const watchedRow = ReactHookForm.useWatch({ name: `customAttributes.${rowIndex}`, control })
       const { hasError } = useFieldValidationError(watchedRow.uniqueId)
       return (
         <div className={`flex-1 inline-flex text-left truncate px-1 ${hasError ? 'bg-amber-300/50' : ''}`}>
@@ -80,33 +80,35 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
       helper.dropdown("タイプ", "type", ATTR_TYPES.map(type => ({ value: type, text: type })), { defaultWidth: 100, renderBody: renderBodyWithValidation("type") }),
       helper.checkBox("バリデーション", "isValidation", { defaultWidth: 110 }),
       {
+        columnId: "enumValues",
         renderHeader: () => "Enum値",
         defaultWidth: 200,
         isReadOnly: row => row.type !== 'Enum',
-        renderBody: ({ context }) => {
-          const watchedRow = ReactHookForm.useWatch({ name: `customAttributes.${context.row.index}`, control })
+        renderBody: ({ rowIndex }) => {
+          const watchedRow = ReactHookForm.useWatch({ name: `customAttributes.${rowIndex}`, control })
           const { hasError } = useFieldValidationError(watchedRow.uniqueId)
           if (watchedRow.type !== 'Enum') return null
           return (
             <div className={`flex items-center justify-between w-full h-full px-1 ${hasError ? 'bg-amber-300/50' : ''}`}>
               <span className="truncate">{watchedRow.enumValues?.join(", ")}</span>
-              <Input.IconButton mini icon={Icon.PencilIcon} onClick={() => setEditingEnumValuesIndex(context.row.index)} />
+              <Input.IconButton mini icon={Icon.PencilIcon} onClick={() => setEditingEnumValuesIndex(rowIndex)} />
             </div>
           )
         }
       },
       {
+        columnId: "availableModels",
         defaultWidth: 200,
         renderHeader: () => "利用可能モデル",
-        renderBody: ({ context }) => {
-          const watchedRow = ReactHookForm.useWatch({ name: `customAttributes.${context.row.index}`, control })
+        renderBody: ({ rowIndex }) => {
+          const watchedRow = ReactHookForm.useWatch({ name: `customAttributes.${rowIndex}`, control })
           const { hasError } = useFieldValidationError(watchedRow.uniqueId)
           const rowModels = watchedRow.availableModels
           const label = rowModels.map(m => availableModelOptions.find(am => am.id === m)?.label ?? m).join(", ")
           return (
             <div className={`flex items-center justify-between w-full h-full px-1 ${hasError ? 'bg-amber-300/50' : ''}`}>
               <span className="truncate">{label}</span>
-              <Input.IconButton mini icon={Icon.PencilIcon} onClick={() => setEditingAvailableModelsIndex(context.row.index)} />
+              <Input.IconButton mini icon={Icon.PencilIcon} onClick={() => setEditingAvailableModelsIndex(rowIndex)} />
             </div>
           )
         }
@@ -161,7 +163,7 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
         <li>タイプ: {ATTR_TYPES.join(", ")} から選択</li>
       </ul>
 
-      <EG2.EditableGrid2
+      <EG2.EditableGrid
         {...editableGrid2Props}
         className="flex-1 h-[240px] resize-y border border-gray-600"
       />
@@ -236,10 +238,8 @@ const AvailableModelsDialog = ({ options, initialSelection, onSave, onClose }: {
 const EnumValuesDialog = ({ initialValues, onSave, onClose }: { initialValues: string[], onSave: (values: string[]) => void, onClose: () => void }) => {
   type EnumRow = { id: string, value: string }
   const [rows, setRows] = React.useState<EnumRow[]>(() => initialValues.map((v, i) => ({ id: `row-${i}`, value: v })))
-  const rowsRef = React.useRef(rows)
-  rowsRef.current = rows
 
-  const gridRef = React.useRef<EG2.EditableGrid2Ref<EnumRow>>(null)
+  const gridRef = React.useRef<EG2.EditableGridRef<EnumRow>>(null)
 
   const handleAdd = () => {
     setRows([...rows, { id: UUID.generate(), value: '' }])
@@ -252,6 +252,29 @@ const EnumValuesDialog = ({ initialValues, onSave, onClose }: { initialValues: s
     setRows(rows.filter((_, i) => !indexes.has(i)))
   }
 
+  const rowKeys = React.useMemo(() => rows.map(row => row.id), [rows])
+  const getLatestRowObject = React.useCallback((index: number) => rows[index], [rows])
+  const handleRowsChange = React.useCallback((updates: EG2.EditableGridRowUpdate<EnumRow>[]) => {
+    setRows(prev => {
+      const next = [...prev]
+      for (const { rowIndex, row } of updates) next[rowIndex] = row
+      return next
+    })
+  }, [])
+  const columns = React.useMemo((): EG2.EditableGridColumn<EnumRow>[] => [{
+    columnId: "value",
+    renderHeader: () => "Value",
+    getValuesForRender: row => [row.value],
+    renderBody: ({ deps: [value] }) => (
+      <span className="px-1 py-px">
+        {value}
+      </span>
+    ),
+    editor: UI.TextCellEditor,
+    cellToText: row => row.value,
+    textToCell: (row, text) => ({ ...row, value: text }),
+  }], [])
+
   return (
     <ModalDialog open className="w-[500px] h-[400px]">
       <div className="flex flex-col h-full gap-2 p-4">
@@ -259,25 +282,13 @@ const EnumValuesDialog = ({ initialValues, onSave, onClose }: { initialValues: s
           <Input.IconButton outline mini icon={Icon.PlusIcon} onClick={handleAdd}>追加</Input.IconButton>
           <Input.IconButton outline mini icon={Icon.TrashIcon} onClick={handleDelete}>削除</Input.IconButton>
         </div>
-        <EG2.EditableGrid2
+        <EG2.EditableGrid
           ref={gridRef}
-          data={rows}
+          rowKeys={rowKeys}
+          getLatestRowObject={getLatestRowObject}
+          onRowsChange={handleRowsChange}
+          columns={columns}
           className="flex-1"
-          columns={[() => [{
-            renderHeader: () => "Value",
-            renderBody: ({ context }) => (
-              <span className="px-1 py-px">
-                {rowsRef.current[context.row.index].value}
-              </span>
-            ),
-            editor: UI.TextCellEditor,
-            getValueForEditor: ({ rowIndex }) => rowsRef.current[rowIndex].value,
-            setValueFromEditor: ({ rowIndex, value }) => setRows(rows => {
-              const newRows = [...rows]
-              newRows[rowIndex] = { ...newRows[rowIndex], value }
-              return newRows
-            }),
-          }], []]}
         />
         <div className="flex justify-end gap-2 mt-2">
           <Input.IconButton onClick={onClose}>キャンセル</Input.IconButton>

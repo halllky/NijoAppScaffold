@@ -6,25 +6,28 @@ import { useFieldValidationError } from "../ProjectPage/useValidation"
 import { EditingProject } from "../backend"
 import { useMentionSuggestions } from "./useMentionSuggestions"
 import { JumpToElementContext } from "../ProjectPage/useJumpToElement"
+import { setFieldByPath } from "./setFieldByPath"
 
 export type CreateTextCellFunction = <TRow>(
   header: string,
   key: ReactHookForm.Path<TRow>,
-  options?: Partial<EG2.EditableGrid2LeafColumn<TRow>> & {
+  options?: Omit<Partial<EG2.EditableGridLeafColumn<TRow>>, 'wrap'> & {
     format?: (value: unknown) => string
     parse?: (value: string) => unknown
     /** メンション使用可能かどうか */
     mentionAvailable?: boolean
+    /** 折り返し表示するかどうか */
+    wrap?: boolean
     /** バリデーションエラーがあるときにセル背景色を変えるための設定 */
     validationErrorSettings?: [
       getXmlElementUniqueId: (row: TRow) => string | null | undefined,
       attributeName?: string
     ]
   }
-) => EG2.EditableGrid2LeafColumn<TRow>
+) => EG2.EditableGridLeafColumn<TRow>
 
 /**
- * EditableGrid2 のテキスト列
+ * EditableGrid のテキスト列
  */
 export function createTextCellHelper(
   getValues: ReactHookForm.UseFormGetValues<ReactHookForm.FieldValues>,
@@ -34,54 +37,53 @@ export function createTextCellHelper(
   skipFirstRow: boolean | undefined,
 ): CreateTextCellFunction {
 
-  return (header, key, options) => ({
-    editor: options?.mentionAvailable
-      ? MentionableCellEditor
-      : TextCellEditor,
-    renderHeader: () => (
-      <div className="px-1 py-px truncate text-sm text-gray-700">
-        {header}
-      </div>
-    ),
-    renderBody: ({ context }) => {
-      const fieldRowIndex = skipFirstRow ? context.row.index + 1 : context.row.index
-      const value: string | null | undefined = ReactHookForm.useWatch({ name: `${arrayName}.${fieldRowIndex}.${key}`, control })
-      const { hasError, errorMessages } = useFieldValidationError(options?.validationErrorSettings?.[0]?.(context.row.original), options?.validationErrorSettings?.[1])
-      const jumpToElement = React.useContext(JumpToElementContext)
+  return (header, key, options) => {
+    const { format, parse, mentionAvailable, wrap, validationErrorSettings, ...restOptions } = options ?? {}
 
-      return options?.mentionAvailable ? (
-        <MentionableTextareaReadOnly
-          title={errorMessages.join('\n')}
-          onClickMention={part => jumpToElement?.(part.targetId)}
-          className={`w-full px-1 ${options?.wrap ? 'whitespace-pre-wrap' : 'truncate'} ${hasError ? 'bg-amber-300/50' : ''}`}
-        >
-          {value ?? undefined}
-        </MentionableTextareaReadOnly>
-      ) : (
-        <div
-          title={errorMessages.join('\n')}
-          className={`w-full px-1 ${options?.wrap ? 'whitespace-pre-wrap' : 'truncate'} ${hasError ? 'bg-amber-300/50' : ''}`}
-        >
-          {options?.format?.(value) ?? value}
+    return {
+      columnId: key as string,
+      editor: mentionAvailable
+        ? MentionableCellEditor
+        : TextCellEditor,
+      renderHeader: () => (
+        <div className="px-1 py-px truncate text-sm text-gray-700">
+          {header}
         </div>
-      )
-    },
-    getValueForEditor: ({ rowIndex }) => {
-      const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
-      const val = getValues(`${arrayName}.${fieldRowIndex}.${key}`)
-      return options?.format?.(val) ?? val?.toString() ?? ''
-    },
-    setValueFromEditor: ({ rowIndex, value }) => {
-      const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
-      const val = options?.parse?.(value) ?? value
-      setValue(
-        `${arrayName}.${fieldRowIndex}.${key}`,
-        val as ReactHookForm.PathValue<ReactHookForm.FieldValues, typeof key>,
-        { shouldDirty: true }
-      )
-    },
-    ...options,
-  })
+      ),
+      renderBody: ({ rowIndex, getRow }) => {
+        const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
+        const value: string | null | undefined = ReactHookForm.useWatch({ name: `${arrayName}.${fieldRowIndex}.${key}`, control })
+        const { hasError, errorMessages } = useFieldValidationError(validationErrorSettings?.[0]?.(getRow()), validationErrorSettings?.[1])
+        const jumpToElement = React.useContext(JumpToElementContext)
+
+        return mentionAvailable ? (
+          <MentionableTextareaReadOnly
+            title={errorMessages.join('\n')}
+            onClickMention={part => jumpToElement?.(part.targetId)}
+            className={`w-full px-1 ${wrap ? 'whitespace-pre-wrap' : 'truncate'} ${hasError ? 'bg-amber-300/50' : ''}`}
+          >
+            {value ?? undefined}
+          </MentionableTextareaReadOnly>
+        ) : (
+          <div
+            title={errorMessages.join('\n')}
+            className={`w-full px-1 ${wrap ? 'whitespace-pre-wrap' : 'truncate'} ${hasError ? 'bg-amber-300/50' : ''}`}
+          >
+            {format?.(value) ?? value}
+          </div>
+        )
+      },
+      cellToText: row => {
+        const val = ReactHookForm.get(row, key)
+        return format?.(val) ?? val?.toString() ?? ''
+      },
+      textToCell: (row, text) => {
+        const val = parse?.(text) ?? text
+        return setFieldByPath(row, key as string, val)
+      },
+      ...restOptions,
+    }
+  }
 }
 
 /**
@@ -110,7 +112,6 @@ export const TextCellEditor: EG2.EditableGridCellEditor = React.forwardRef(funct
   }
 
   React.useImperativeHandle(ref, () => ({
-    blur: () => refInput.current?.blur(),
     getCurrentValue: () => refInput.current?.value ?? '',
     setValueAndSelectAll: (v, timing) => {
       setValue(v)

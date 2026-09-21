@@ -1,4 +1,4 @@
-// EditableGrid2 本体・共通型はサブパス経由で再エクスポート
+// EditableGrid 本体・共通型はサブパス経由で再エクスポート
 export * as EG2 from "@halllky/editable-grid"
 
 export * from "./readOnlyColumns"

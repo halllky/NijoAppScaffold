@@ -5,11 +5,12 @@ import * as EG2 from "@halllky/editable-grid"
 import { useSchemaCandidates } from "../ProjectPage/SchemaCandidatesContext"
 import { ATTR_TYPE, EditingMember, EditingMemberType } from "../backend"
 import { useFieldValidationError } from "../ProjectPage/useValidation"
+import { setFieldByPath } from "./setFieldByPath"
 
 export type CreateComboBoxCellFunction = <TRow>(
   header: string,
-  options?: Partial<EG2.EditableGrid2LeafColumn<TRow>>
-) => EG2.EditableGrid2LeafColumn<TRow>
+  options?: Partial<EG2.EditableGridLeafColumn<TRow>>
+) => EG2.EditableGridLeafColumn<TRow>
 
 /**
  * {@link EditingMemberType} を、種類コンボボックスが扱うフラットな文字列に変換する。
@@ -57,13 +58,14 @@ export function createComboBoxCellHelper(
 
   return (header, options) => {
     return {
+      columnId: "type",
       renderHeader: () => (
         <div className="px-1 py-px truncate text-sm text-gray-700">
           {header}
         </div>
       ),
-      renderBody: ({ context }) => {
-        const fieldRowIndex = skipFirstRow ? context.row.index + 1 : context.row.index
+      renderBody: ({ rowIndex }) => {
+        const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
         const rowData: EditingMember = ReactHookForm.useWatch({ control, name: `${arrayName}.${fieldRowIndex}` })
         const { hasError, errorMessages } = useFieldValidationError(rowData.uniqueId, ATTR_TYPE)
         const text = memberTypeToText(rowData.type)
@@ -90,26 +92,18 @@ export function createComboBoxCellHelper(
         )
       },
       editor: TypeComboEditor,
-      getValueForEditor: ({ rowIndex }) => {
-        const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
-        const type: EditingMemberType | undefined = getValues(`${arrayName}.${fieldRowIndex}.type`)
+      cellToText: row => {
+        const type: EditingMemberType | undefined = (row as EditingMember).type
         return type ? memberTypeToText(type) : ''
       },
-      setValueFromEditor: ({ rowIndex, value }) => {
-        const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
-        setValue(
-          `${arrayName}.${fieldRowIndex}.type`,
-          textToMemberType(value) as ReactHookForm.PathValue<ReactHookForm.FieldValues, 'type'>,
-          { shouldDirty: true }
-        )
-      },
+      textToCell: (row, text) => setFieldByPath(row, 'type', textToMemberType(text)),
       onCellKeyDown: ({ event, requestEditStart }) => {
         const alt = event.altKey || event.metaKey
         const upDown = event.key === 'ArrowUp' || event.key === 'ArrowDown'
         // 文字入力でも編集開始したいので、シングルキャラクターなどのチェックも入れたほうが親切だが、
         // 最低限 Dropdown と合わせるなら Enter or Alt+Arrow で開始。
         // ただし ComboBox なので任意のキー入力で編集開始してほしい場合が多い。
-        // ここでは Dropdown に合わせつつ、任意の文字キー入力は EditableGrid2 のデフォルト挙動に任せる。
+        // ここでは Dropdown に合わせつつ、任意の文字キー入力は EditableGrid のデフォルト挙動に任せる。
         if (event.key === 'Enter' || (alt && upDown)) {
           requestEditStart()
           event.preventDefault()
@@ -272,7 +266,7 @@ const TypeComboEditor: EG2.EditableGridCellEditor = React.forwardRef((props, ref
               key={item.value}
               className={`px-1 py-px cursor-pointer border-b border-gray-100 last:border-none ${index === selectedIndex ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
               onClick={() => props.requestCommit(item.value)}
-              onMouseDown={e => e.stopPropagation()} // EditableGrid2 が外側クリックで編集終了扱いにしないようにする
+              onMouseDown={e => e.stopPropagation()} // EditableGrid が外側クリックで編集終了扱いにしないようにする
               onMouseMove={() => setSelectedIndex(index)}
             >
               {item.value}

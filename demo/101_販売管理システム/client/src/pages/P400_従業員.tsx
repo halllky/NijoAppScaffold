@@ -217,7 +217,7 @@ function EmployeeGrid({ methods }: { methods: UseFormReturn<従業員一括更�
       <div>
         <Button outline mini onClick={handleAdd}>＋ 行追加</Button>
       </div>
-      <Grid.EG2.EditableGrid2
+      <Grid.EG2.EditableGrid
         {...editableGrid2Props}
         // 論理削除された行はグリッド全体を読み取り専用にする（削除・復元ボタン自体は disableIfReadOnly を付けていないため操作可能）
         isReadOnly={row => row.willBeDeleted === true}

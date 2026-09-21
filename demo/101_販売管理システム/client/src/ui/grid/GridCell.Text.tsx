@@ -10,7 +10,7 @@ import * as EG2 from "@halllky/editable-grid"
  * maxLength ごとにモジュールスコープでキャッシュすることで識別子を安定させる。
  *
  * 単一行・複数行のどちらも同じ textarea ベースのエディタを使う
- * （EditableGrid2 側の wrap:true 指定でサイズの伸び方が変わるだけで、
+ * （折り返しの有無はセルの表示側のスタイルで決まるため、
  * 表示・編集コンポーネント自体を分ける必要はない）。
  */
 const textEditorCache = new Map<number | undefined, EG2.EditableGridCellEditor>()

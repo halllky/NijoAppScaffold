@@ -2,22 +2,23 @@ import React from "react"
 import * as ReactHookForm from "react-hook-form"
 import * as EG2 from "@halllky/editable-grid"
 import { useFieldValidationError } from "../ProjectPage/useValidation"
+import { setFieldByPath } from "./setFieldByPath"
 
 export type CreateDropdownCellFunction = <TRow>(
   header: string,
   key: ReactHookForm.Path<TRow>,
   candidateValues: { value: string, text: string }[],
-  options?: Partial<EG2.EditableGrid2LeafColumn<TRow>> & {
+  options?: Partial<EG2.EditableGridLeafColumn<TRow>> & {
     /** バリデーションエラーがあるときにセル背景色を変えるための設定 */
     validationErrorSettings?: [
       getXmlElementUniqueId: (row: TRow) => string | null | undefined,
       attributeName?: string
     ]
   }
-) => EG2.EditableGrid2LeafColumn<TRow>
+) => EG2.EditableGridLeafColumn<TRow>
 
 /**
- * EditableGrid2 のドロップダウン列
+ * EditableGrid のドロップダウン列
  */
 export function createDropdownCellHelper(
   getValues: ReactHookForm.UseFormGetValues<ReactHookForm.FieldValues>,
@@ -28,18 +29,20 @@ export function createDropdownCellHelper(
 ): CreateDropdownCellFunction {
 
   return (header, key, candidateValues, options) => {
+    const { validationErrorSettings, ...restOptions } = options ?? {}
 
     return {
+      columnId: key as string,
       renderHeader: () => (
         <div className="px-1 py-px truncate text-sm text-gray-700">
           {header}
         </div>
       ),
-      renderBody: ({ context }) => {
-        const fieldRowIndex = skipFirstRow ? context.row.index + 1 : context.row.index
+      renderBody: ({ rowIndex, getRow }) => {
+        const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
         const value = ReactHookForm.useWatch({ control, name: `${arrayName}.${fieldRowIndex}.${key}` })
         const text = candidateValues.find(o => o.value === value)?.text ?? (value as string)
-        const { hasError, errorMessages } = useFieldValidationError(options?.validationErrorSettings?.[0]?.(context.row.original), options?.validationErrorSettings?.[1])
+        const { hasError, errorMessages } = useFieldValidationError(validationErrorSettings?.[0]?.(getRow()), validationErrorSettings?.[1])
 
         return (
           <div
@@ -51,19 +54,11 @@ export function createDropdownCellHelper(
         )
       },
       editor: createEditor(candidateValues),
-      getValueForEditor: ({ rowIndex }) => {
-        const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
-        const val: string | null | undefined = getValues(`${arrayName}.${fieldRowIndex}.${key}`)
+      cellToText: row => {
+        const val: string | null | undefined = ReactHookForm.get(row, key)
         return val ?? ''
       },
-      setValueFromEditor: ({ rowIndex, value }) => {
-        const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
-        setValue(
-          `${arrayName}.${fieldRowIndex}.${key}`,
-          value as ReactHookForm.PathValue<ReactHookForm.FieldValues, typeof key>,
-          { shouldDirty: true }
-        )
-      },
+      textToCell: (row, text) => setFieldByPath(row, key as string, text),
       onCellKeyDown: ({ event, requestEditStart }) => {
         const alt = event.altKey || event.metaKey
         const upDown = event.key === 'ArrowUp' || event.key === 'ArrowDown'
@@ -72,7 +67,7 @@ export function createDropdownCellHelper(
           event.preventDefault()
         }
       },
-      ...options,
+      ...restOptions,
     }
   }
 }

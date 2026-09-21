@@ -248,7 +248,7 @@ function P201_入荷詳細(props: {
             {/* 明細欄。行単位のメッセージはグリッドの各行のメッセージ列に表示されるが、
                 明細欄全体（配列自体）に対するメッセージはここに表示する。 */}
             <DetailMessage.Of name="入荷商品一覧" control={control} />
-            <Grid.EG2.EditableGrid2
+            <Grid.EG2.EditableGrid
               {...editableGrid2Props}
               className="flex-1 min-h-32 border border-gray-300"
             />

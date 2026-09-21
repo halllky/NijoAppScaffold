@@ -47,7 +47,7 @@ export type DefineSearchDialogProps<
    */
   getSearchResultGridColumns: (
     dialogProps: TDialogProps,
-  ) => Grid.EG2.EditableGrid2Column<TSearchResultRefTarget>[]
+  ) => Grid.EG2.EditableGridColumn<TSearchResultRefTarget>[]
   /**
    * 検索処理関数
    */
@@ -197,12 +197,15 @@ export function defineSearchDialog<
     // onSelect は呼び出し元から都度新しい関数が渡される可能性があるため、
     // useEvent で識別子を安定させて列定義の再生成を防ぐ
     const stableOnSelect = useEvent((item: TSearchResultRefTarget) => onSelect(item))
-    const getColumns = React.useCallback(() => [
+    const columns = React.useMemo(() => [
       Grid.interactiveColumn<TSearchResultRefTarget>("選択", row => (
         <Button mini onClick={() => stableOnSelect(row)}>選択</Button>
       ), { defaultWidth: 64, disableResizing: true, isFixed: true }),
       ...def.getSearchResultGridColumns(dialogProps),
     ], [dialogProps, stableOnSelect])
+
+    const rowKeys = React.useMemo(() => searchResults.map((_, index) => index.toString()), [searchResults])
+    const getLatestRowObject = React.useCallback((index: number) => searchResults[index], [searchResults])
 
     const totalPages = Math.ceil(totalCount / pageSize)
     const canPrev = pageIndex > 0
@@ -264,10 +267,10 @@ export function defineSearchDialog<
             </div>
           </div>
 
-          <Grid.EG2.EditableGrid2
-            data={searchResults}
-            columns={[getColumns, [getColumns]]}
-            getRowId={(_, index) => index.toString()}
+          <Grid.EG2.EditableGrid
+            rowKeys={rowKeys}
+            getLatestRowObject={getLatestRowObject}
+            columns={columns}
             striped
             clearSelectionOnBlur
             className="flex-1 border border-gray-300 min-w-full"

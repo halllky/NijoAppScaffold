@@ -34,7 +34,7 @@ export type SearchPageBaseProps<
   renderSearchCondition: (form: ReactHookForm.UseFormReturn<TCondition>) => React.ReactNode
   /** 検索結果エリアのグリッドの列定義 */
   defineSearchResultColumns: [
-    () => Grid.EG2.EditableGrid2Column<TItem>[],
+    () => Grid.EG2.EditableGridColumn<TItem>[],
     deps: React.DependencyList
   ]
   /** 並び順コンボボックスの選択肢 */
@@ -187,6 +187,12 @@ export function SearchPageBase<
   const canPrev = pageIndex > 0
   const canNext = pageIndex < totalPages - 1
 
+  // グリッドの列定義・行キー
+  const [getColumnsFn, columnDeps] = props.defineSearchResultColumns
+  const columns = React.useMemo(getColumnsFn, columnDeps)
+  const rowKeys = React.useMemo(() => items.map((_, index) => index.toString()), [items])
+  const getLatestRowObject = React.useCallback((index: number) => items[index], [items])
+
   const handleClear = useEvent(() => {
     const initial = {
       ...props.createInitialCondition(),
@@ -288,10 +294,10 @@ export function SearchPageBase<
                   />
                 </div>
 
-                <Grid.EG2.EditableGrid2
-                  data={items}
-                  columns={props.defineSearchResultColumns}
-                  getRowId={(_, index) => index.toString()}
+                <Grid.EG2.EditableGrid
+                  rowKeys={rowKeys}
+                  getLatestRowObject={getLatestRowObject}
+                  columns={columns}
                   striped
                   clearSelectionOnBlur
                   className="flex-1 border border-gray-600"

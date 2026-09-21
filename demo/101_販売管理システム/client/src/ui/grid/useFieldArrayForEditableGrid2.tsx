@@ -6,9 +6,10 @@ import * as DetailMessage from "../../app/DetailMessageContext"
 import { getTextCellEditor } from "./GridCell.Text"
 import { getNumericCellEditor, normalizeNumericString, type NumericCellEditorOptions } from "./GridCell.Numeric"
 import { getEnumCellEditor, startEnumEditOnKeyDown } from "./GridCell.Enum"
+import { setFieldByPath } from "./setFieldByPath"
 
 /**
- * EditableGrid2 を react-hook-form の useFieldArray と組み合わせて使用する際の
+ * EditableGrid を react-hook-form の useFieldArray と組み合わせて使用する際の
  * 定型的な処理をまとめたカスタムフック。
  *
  * `@halllky/editable-grid` の同名フックのプロジェクト固有フォーク。
@@ -18,10 +19,8 @@ import { getEnumCellEditor, startEnumEditOnKeyDown } from "./GridCell.Enum"
  * ネストパス対応はこのアプリ固有の事情なので上流には入れていない。
  *
  * 値の最新化は上流と同じく `getLatestRowObject` に任せる。
- * セル編集の確定時に独自の forceUpdate は呼ばない
- * （グリッドは編集状態の遷移で再描画されるうえ、renderBody 内の useWatch が値の変化を拾うため不要）。
- * ただし button ヘルパーだけは上流同様 forceUpdate を呼ぶ。ボタンの onClick は任意のコールバックであり、
- * RHF の setValue を経由しない変更を行う可能性があるため。
+ * グリッドの操作（編集確定・貼り付け・Delete）による変更は `onRowsChange` 経由で
+ * react-hook-form の `subscribe` と連動して反映される（上流の react-hook-form 統合と同じ作法）。
  */
 export function useFieldArrayForEditableGrid2<
   TField extends ReactHookForm.FieldValues,
@@ -39,25 +38,53 @@ export function useFieldArrayForEditableGrid2<
 
   const { getValues, setValue, ...fieldArrayProps } = formProps
   const fieldArrayReturn = ReactHookForm.useFieldArray<TField, TArrayPath, TKeyName>(fieldArrayProps)
+  const control = fieldArrayProps.control as ReactHookForm.Control<ReactHookForm.FieldValues>
 
-  const gridRef = React.useRef<EG2.EditableGrid2Ref<TRow>>(null)
+  const gridRef = React.useRef<EG2.EditableGridRef<TRow>>(null)
   const helper = useColumnDefHelper<TField, TArrayPath, TKeyName>(
     fieldArrayProps.control,
     getValues,
     setValue,
     fieldArrayProps.name,
-    gridRef,
   )
-  const getColumns = React.useCallback(() => {
+  const columns = React.useMemo(() => {
     return getColumnDef(helper)
   }, [helper, ...getColumnDefDependencies])
 
-  const editableGrid2Props: EG2.EditableGrid2Props<TRow> & { ref: React.RefObject<EG2.EditableGrid2Ref<TRow> | null> } = {
+  const keyName = fieldArrayProps.keyName ?? "id"
+  const rowKeys = React.useMemo(() => {
+    return fieldArrayReturn.fields.map(row => (row as Record<string, string>)[keyName])
+  }, [fieldArrayReturn.fields, keyName])
+
+  const getLatestRowObject = React.useCallback((index: number): TRow => {
+    return getValues(`${fieldArrayProps.name}.${index}` as ReactHookForm.Path<TField>)
+  }, [getValues, fieldArrayProps.name])
+
+  const subscribe = React.useCallback((onChange: () => void) => {
+    return control._subscribe({
+      name: fieldArrayProps.name,
+      formState: { values: true },
+      callback: onChange,
+    })
+  }, [control, fieldArrayProps.name])
+
+  const onRowsChange = React.useCallback((updates: EG2.EditableGridRowUpdate<TRow>[]) => {
+    for (const { rowIndex, row } of updates) {
+      setValue(
+        `${fieldArrayProps.name}.${rowIndex}` as ReactHookForm.Path<TField>,
+        row as ReactHookForm.PathValue<TField, ReactHookForm.Path<TField>>,
+        { shouldDirty: true },
+      )
+    }
+  }, [setValue, fieldArrayProps.name])
+
+  const editableGrid2Props: EG2.EditableGridProps<TRow> & { ref: React.RefObject<EG2.EditableGridRef<TRow> | null> } = {
     ref: gridRef,
-    data: fieldArrayReturn.fields,
-    columns: [getColumns, [getColumns]],
-    getRowId: row => (row as Record<string, string>)[fieldArrayProps.keyName ?? "id"],
-    getLatestRowObject: index => getValues(`${fieldArrayProps.name}.${index}` as ReactHookForm.Path<TField>),
+    rowKeys,
+    getLatestRowObject,
+    subscribe,
+    onRowsChange,
+    columns,
   }
 
   return { fieldArrayReturn, editableGrid2Props, gridRef }
@@ -69,13 +96,13 @@ export type UseFieldArrayForEditableGrid2Return<
   TKeyName extends string
 > = {
   fieldArrayReturn: ReactHookForm.UseFieldArrayReturn<TField, TArrayPath, TKeyName>
-  editableGrid2Props: EG2.EditableGrid2Props<ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName>>
-  gridRef: React.RefObject<EG2.EditableGrid2Ref<ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName>>>
+  editableGrid2Props: EG2.EditableGridProps<ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName>>
+  gridRef: React.RefObject<EG2.EditableGridRef<ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName>>>
 }
 
 //#region 列定義ヘルパー
 
-export type GetColumnDefWithHelper<TRow> = (helper: ColumnDefHelper<TRow>) => EG2.EditableGrid2Column<TRow>[]
+export type GetColumnDefWithHelper<TRow> = (helper: ColumnDefHelper<TRow>) => EG2.EditableGridColumn<TRow>[]
 
 /** 列定義ヘルパー */
 export type ColumnDefHelper<TRow> = {
@@ -84,58 +111,60 @@ export type ColumnDefHelper<TRow> = {
   text: (
     header: string,
     path: ReactHookForm.Path<TRow>,
-    options?: Partial<EG2.EditableGrid2LeafColumn<TRow>> & {
+    options?: Omit<Partial<EG2.EditableGridLeafColumn<TRow>>, 'wrap'> & {
       /** maxLengthOf() の戻り値をそのまま渡せる */
       maxLength?: number
       /** 複数行入力。wrap が既定で true になる */
       multiline?: boolean
+      /** 折り返し表示するかどうか */
+      wrap?: boolean
       format?: (value: unknown) => string
       parse?: (value: string) => unknown
       /** 行の内容に応じてセルのclassNameを変える場合。指定すると行全体をwatchする */
       getCellClassName?: (row: TRow) => string
     }
-  ) => EG2.EditableGrid2LeafColumn<TRow>
+  ) => EG2.EditableGridLeafColumn<TRow>
 
   /** 数値型。numericPropsOf() の戻り値をそのままスプレッドできる */
   numeric: (
     header: string,
     path: ReactHookForm.Path<TRow>,
-    options?: Partial<EG2.EditableGrid2LeafColumn<TRow>> & NumericCellEditorOptions & {
+    options?: Partial<EG2.EditableGridLeafColumn<TRow>> & NumericCellEditorOptions & {
       suffix?: string
       getCellClassName?: (row: TRow) => string
     }
-  ) => EG2.EditableGrid2LeafColumn<TRow>
+  ) => EG2.EditableGridLeafColumn<TRow>
 
   /** 列挙型（ドロップダウン） */
   enumeration: <T extends keyof AutoGenerated.EnumTypeMap>(
     header: string,
     path: ReactHookForm.Path<TRow>,
     enumType: T,
-    options?: Partial<EG2.EditableGrid2LeafColumn<TRow>>
-  ) => EG2.EditableGrid2LeafColumn<TRow>
+    options?: Partial<EG2.EditableGridLeafColumn<TRow>>
+  ) => EG2.EditableGridLeafColumn<TRow>
 
   /** チェックボックス */
   checkBox: (
     header: string,
     path: ReactHookForm.Path<TRow>,
-    options?: Partial<EG2.EditableGrid2LeafColumn<TRow>>
-  ) => EG2.EditableGrid2LeafColumn<TRow>
+    options?: Partial<EG2.EditableGridLeafColumn<TRow>>
+  ) => EG2.EditableGridLeafColumn<TRow>
 
   /** ボタン */
   button: (
     text: (row: TRow, rowIndex: number) => React.ReactNode,
     onClick: (row: TRow, rowIndex: number) => void,
-    options?: Partial<EG2.EditableGrid2LeafColumn<TRow>> & {
+    options?: Partial<EG2.EditableGridLeafColumn<TRow>> & {
       /** trueを返す行ではボタンを表示しない */
       hidden?: (row: TRow) => boolean
       disableIfReadOnly?: boolean
     }
-  ) => EG2.EditableGrid2LeafColumn<TRow>
+  ) => EG2.EditableGridLeafColumn<TRow>
 
   /** 行単位のメッセージ列。name は `${arrayName}.${rowIndex}` を内部で組み立てる */
   detailMessage: (
-    options?: Partial<EG2.EditableGrid2LeafColumn<TRow>>
-  ) => EG2.EditableGrid2LeafColumn<TRow>
+    options?: Partial<EG2.EditableGridLeafColumn<TRow>>
+  ) => EG2.EditableGridLeafColumn<TRow>
 }
 
 /** 列定義ヘルパーの実装 */
@@ -148,7 +177,6 @@ function useColumnDefHelper<
   getValues: ReactHookForm.UseFormGetValues<TField>,
   setValue: ReactHookForm.UseFormSetValue<TField>,
   arrayName: TArrayPath,
-  gridRef: React.RefObject<EG2.EditableGrid2Ref<ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName>> | null>
 ): ColumnDefHelper<ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName>> {
 
   type TRow = ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName>
@@ -156,102 +184,88 @@ function useColumnDefHelper<
   return React.useMemo(() => ({
 
     //#region ヘルパー: 文字列型
-    text: (header, path, options) => ({
-      editor: getTextCellEditor(options?.maxLength),
-      wrap: options?.multiline ?? options?.wrap,
-      renderHeader: () => (
-        <div className="px-1 py-px truncate text-gray-700">{header}</div>
-      ),
-      renderBody: ({ context }) => (
-        <RowFieldCell
-          control={control}
-          name={`${arrayName}.${context.row.index}.${path}` as ReactHookForm.Path<TField>}
-          rowName={`${arrayName}.${context.row.index}` as ReactHookForm.Path<TField>}
-          wrap={options?.multiline ?? options?.wrap}
-          format={options?.format}
-          getCellClassName={options?.getCellClassName as ((row: ReactHookForm.FieldValues) => string) | undefined}
-        />
-      ),
-      getValueForEditor: ({ rowIndex }) => {
-        const val = getValues(`${arrayName}.${rowIndex}.${path}` as ReactHookForm.Path<TField>) as unknown
-        return options?.format?.(val) ?? val?.toString() ?? ''
-      },
-      setValueFromEditor: ({ rowIndex, value }) => {
-        const val = options?.parse?.(value) ?? value
-        setValue(
-          `${arrayName}.${rowIndex}.${path}` as ReactHookForm.Path<TField>,
-          val as ReactHookForm.PathValue<TField, ReactHookForm.Path<TField>>,
-          { shouldDirty: true },
-        )
-      },
-      ...options,
-    }),
+    text: (header, path, options) => {
+      const { maxLength, multiline, wrap, format, parse, getCellClassName, ...restOptions } = options ?? {}
+      const doWrap = multiline ?? wrap
+      return {
+        columnId: path as string,
+        editor: getTextCellEditor(maxLength),
+        renderHeader: () => (
+          <div className="px-1 py-px truncate text-gray-700">{header}</div>
+        ),
+        renderBody: ({ rowIndex }) => (
+          <RowFieldCell
+            control={control}
+            name={`${arrayName}.${rowIndex}.${path}` as ReactHookForm.Path<TField>}
+            rowName={`${arrayName}.${rowIndex}` as ReactHookForm.Path<TField>}
+            wrap={doWrap}
+            format={format}
+            getCellClassName={getCellClassName as ((row: ReactHookForm.FieldValues) => string) | undefined}
+          />
+        ),
+        cellToText: row => {
+          const val = ReactHookForm.get(row, path) as unknown
+          return format?.(val) ?? val?.toString() ?? ''
+        },
+        textToCell: (row, text) => {
+          const val = parse?.(text) ?? text
+          return setFieldByPath(row, path as string, val)
+        },
+        ...restOptions,
+      }
+    },
     //#endregion ヘルパー: 文字列型
 
     //#region ヘルパー: 数値型
     numeric: (header, path, options) => {
-      const numericOptions: NumericCellEditorOptions = {
-        integerDigit: options?.integerDigit,
-        decimalDigit: options?.decimalDigit,
-        commaSeparated: options?.commaSeparated,
-      }
+      const { integerDigit, decimalDigit, commaSeparated, suffix, getCellClassName, ...restOptions } = options ?? {}
+      const numericOptions: NumericCellEditorOptions = { integerDigit, decimalDigit, commaSeparated }
       return {
+        columnId: path as string,
         editor: getNumericCellEditor(numericOptions),
         renderHeader: () => (
           <div className="px-1 py-px truncate text-gray-700">{header}</div>
         ),
-        renderBody: ({ context }) => (
+        renderBody: ({ rowIndex }) => (
           <RowFieldCell
             control={control}
-            name={`${arrayName}.${context.row.index}.${path}` as ReactHookForm.Path<TField>}
-            rowName={`${arrayName}.${context.row.index}` as ReactHookForm.Path<TField>}
+            name={`${arrayName}.${rowIndex}.${path}` as ReactHookForm.Path<TField>}
+            rowName={`${arrayName}.${rowIndex}` as ReactHookForm.Path<TField>}
             align="right"
-            format={(v: unknown) => formatNumericDisplay(v, options?.commaSeparated, options?.suffix)}
-            getCellClassName={options?.getCellClassName as ((row: ReactHookForm.FieldValues) => string) | undefined}
+            format={(v: unknown) => formatNumericDisplay(v, commaSeparated, suffix)}
+            getCellClassName={getCellClassName as ((row: ReactHookForm.FieldValues) => string) | undefined}
           />
         ),
-        getValueForEditor: ({ rowIndex }) => {
-          const val = getValues(`${arrayName}.${rowIndex}.${path}` as ReactHookForm.Path<TField>) as unknown
+        cellToText: row => {
+          const val = ReactHookForm.get(row, path) as unknown
           return val === null || val === undefined ? '' : String(val)
         },
-        setValueFromEditor: ({ rowIndex, value }) => {
-          const normalized = normalizeNumericString(value, numericOptions)
-          setValue(
-            `${arrayName}.${rowIndex}.${path}` as ReactHookForm.Path<TField>,
-            (normalized === '' ? null : normalized) as ReactHookForm.PathValue<TField, ReactHookForm.Path<TField>>,
-            { shouldDirty: true },
-          )
+        textToCell: (row, text) => {
+          const normalized = normalizeNumericString(text, numericOptions)
+          return setFieldByPath(row, path as string, normalized === '' ? null : normalized)
         },
-        ...options,
+        ...restOptions,
       }
     },
     //#endregion ヘルパー: 数値型
 
     //#region ヘルパー: 列挙型
     enumeration: (header, path, enumType, options) => ({
+      columnId: path as string,
       editor: getEnumCellEditor(enumType),
       renderHeader: () => (
         <div className="px-1 py-px truncate text-gray-700">{header}</div>
       ),
-      renderBody: ({ context }) => {
-        const value = ReactHookForm.useWatch({ control, name: `${arrayName}.${context.row.index}.${path}` as ReactHookForm.Path<TField> })
+      renderBody: ({ rowIndex }) => {
+        const value = ReactHookForm.useWatch({ control, name: `${arrayName}.${rowIndex}.${path}` as ReactHookForm.Path<TField> })
         return (
           <div className="px-1 py-px truncate">
             {value as React.ReactNode}
           </div>
         )
       },
-      getValueForEditor: ({ rowIndex }) => {
-        const val = getValues(`${arrayName}.${rowIndex}.${path}` as ReactHookForm.Path<TField>) as unknown
-        return (val as string) ?? ''
-      },
-      setValueFromEditor: ({ rowIndex, value }) => {
-        setValue(
-          `${arrayName}.${rowIndex}.${path}` as ReactHookForm.Path<TField>,
-          value as ReactHookForm.PathValue<TField, ReactHookForm.Path<TField>>,
-          { shouldDirty: true },
-        )
-      },
+      cellToText: row => (ReactHookForm.get(row, path) as string) ?? '',
+      textToCell: (row, text) => setFieldByPath(row, path as string, text),
       onCellKeyDown: startEnumEditOnKeyDown,
       ...options,
     }),
@@ -259,18 +273,19 @@ function useColumnDefHelper<
 
     //#region ヘルパー: チェックボックス
     checkBox: (header, path, options) => ({
+      columnId: path as string,
       renderHeader: () => (
         <div className="px-1 py-px truncate text-gray-700">{header}</div>
       ),
-      renderBody: ({ context, isReadOnly }) => {
-        const value = ReactHookForm.useWatch({ control, name: `${arrayName}.${context.row.index}.${path}` as ReactHookForm.Path<TField> })
+      renderBody: ({ rowIndex, isReadOnly }) => {
+        const value = ReactHookForm.useWatch({ control, name: `${arrayName}.${rowIndex}.${path}` as ReactHookForm.Path<TField> })
         return (
           <label className={`flex items-center justify-center h-full w-full ${isReadOnly ? '' : 'cursor-pointer'}`}>
             <input
               type="checkbox"
               checked={!!value}
               onChange={e => setValue(
-                `${arrayName}.${context.row.index}.${path}` as ReactHookForm.Path<TField>,
+                `${arrayName}.${rowIndex}.${path}` as ReactHookForm.Path<TField>,
                 e.target.checked as ReactHookForm.PathValue<TField, ReactHookForm.Path<TField>>,
                 { shouldDirty: true },
               )}
@@ -291,63 +306,66 @@ function useColumnDefHelper<
           )
         }
       },
-      getValueForEditor: ({ rowIndex }) => {
-        const val = getValues(`${arrayName}.${rowIndex}.${path}` as ReactHookForm.Path<TField>) as boolean | undefined
+      cellToText: row => {
+        const val = ReactHookForm.get(row, path) as boolean | undefined
         return val ? 'true' : 'false'
+      },
+      textToCell: (row, text) => {
+        const blnValue = [true, 1, 'true', '1', 'yes'].includes(text.toLowerCase())
+        return setFieldByPath(row, path as string, blnValue)
       },
       ...options,
     }),
     //#endregion ヘルパー: チェックボックス
 
     //#region ヘルパー: ボタン
-    button: (text, onClick, options) => ({
-      renderHeader: () => null,
-      disableResizing: true,
-      renderBody: ({ context, isReadOnly }) => (
-        <RowWatcher
-          control={control}
-          name={`${arrayName}.${context.row.index}` as ReactHookForm.Path<TField>}
-          render={(row: TRow) => {
-            if (options?.hidden?.(row)) return null
-            return (
-              <button type="button"
-                onClick={() => {
-                  onClick(row, context.row.index)
-                  // ボタンの onClick は任意のコールバックであり、RHF の setValue を経由しない変更を行う可能性があるため
-                  // グリッドを明示的に再描画する（他のヘルパーの setValueFromEditor では不要。上流と同じ扱い）
-                  gridRef.current?.forceUpdate()
-                }}
-                disabled={options?.disableIfReadOnly === true && isReadOnly}
-                onMouseDown={e => e.stopPropagation()}
-                className="w-full h-full text-xs text-white bg-teal-700 border border-white disabled:opacity-50"
-              >
-                {text(row, context.row.index)}
-              </button>
-            )
-          }}
-        />
-      ),
-      ...options,
-    }),
+    button: (text, onClick, options) => {
+      const { hidden, disableIfReadOnly, columnId, ...restOptions } = options ?? {}
+      return {
+        columnId: columnId ?? "button",
+        renderHeader: () => null,
+        disableResizing: true,
+        renderBody: ({ rowIndex, isReadOnly }) => (
+          <RowWatcher
+            control={control}
+            name={`${arrayName}.${rowIndex}` as ReactHookForm.Path<TField>}
+            render={(row: TRow) => {
+              if (hidden?.(row)) return null
+              return (
+                <button type="button"
+                  onClick={() => onClick(row, rowIndex)}
+                  disabled={disableIfReadOnly === true && isReadOnly}
+                  onMouseDown={e => e.stopPropagation()}
+                  className="w-full h-full text-xs text-white bg-teal-700 border border-white disabled:opacity-50"
+                >
+                  {text(row, rowIndex)}
+                </button>
+              )
+            }}
+          />
+        ),
+        ...restOptions,
+      }
+    },
     //#endregion ヘルパー: ボタン
 
     //#region ヘルパー: メッセージ列
     detailMessage: (options) => ({
+      columnId: "detailMessage",
       renderHeader: () => null,
-      renderBody: ({ context }) => (
+      renderBody: ({ rowIndex }) => (
         <DetailMessage.Of
-          name={`${arrayName}.${context.row.index}` as ReactHookForm.FieldPath<TField>}
+          name={`${arrayName}.${rowIndex}` as ReactHookForm.FieldPath<TField>}
           includeDescendants
           control={control as ReactHookForm.Control<TField>}
           className="px-1 py-px"
         />
       ),
-      wrap: true,
       ...options,
     }),
     //#endregion ヘルパー: メッセージ列
 
-  }), [control, getValues, setValue, arrayName, gridRef]) as ColumnDefHelper<TRow>
+  }), [control, getValues, setValue, arrayName]) as ColumnDefHelper<TRow>
 }
 
 /** 数値項目の表示用フォーマット（3桁カンマ区切り・接尾辞つき） */

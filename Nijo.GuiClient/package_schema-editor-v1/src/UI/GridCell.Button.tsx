@@ -1,29 +1,30 @@
 import * as ReactHookForm from "react-hook-form"
-import { EditableGrid2LeafColumn, EditableGrid2Ref } from "@halllky/editable-grid"
+import { EditableGridLeafColumn, EditableGridRef } from "@halllky/editable-grid"
 
 export type CreateButtonCellFunction = <TRow>(
   text: (row: TRow, rowIndex: number) => React.ReactNode,
   onClick: (row: TRow, rowIndex: number) => void,
-  options?: Partial<EditableGrid2LeafColumn<TRow>> & {
+  options?: Partial<EditableGridLeafColumn<TRow>> & {
     disableIfReadOnly?: boolean
   }
-) => EditableGrid2LeafColumn<TRow>
+) => EditableGridLeafColumn<TRow>
 
 /**
- * EditableGrid2 のボタン列
+ * EditableGrid のボタン列
  */
 export function createButtonCellHelper(
   getValues: ReactHookForm.UseFormGetValues<ReactHookForm.FieldValues>,
   control: ReactHookForm.Control<ReactHookForm.FieldValues>,
   arrayName: string,
   skipFirstRow: boolean | undefined,
-  gridRef: React.RefObject<EditableGrid2Ref<ReactHookForm.FieldValues> | null>,
+  gridRef: React.RefObject<EditableGridRef<ReactHookForm.FieldValues> | null>,
 ): CreateButtonCellFunction {
 
   return (text, onClick, options) => ({
+    columnId: "button",
     renderHeader: () => null,
-    renderBody: ({ context, isReadOnly }) => {
-      const fieldRowIndex = skipFirstRow ? context.row.index + 1 : context.row.index
+    renderBody: ({ rowIndex, isReadOnly }) => {
+      const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
       const row = ReactHookForm.useWatch({ control, name: `${arrayName}.${fieldRowIndex}` })
 
       return (
@@ -31,7 +32,6 @@ export function createButtonCellHelper(
           onClick={() => {
             const current = getValues(`${arrayName}.${fieldRowIndex}`)
             onClick(current, fieldRowIndex)
-            gridRef.current?.forceUpdate()
           }}
           disabled={options?.disableIfReadOnly === true && isReadOnly}
           className="w-full h-full text-sm text-white bg-teal-700 border border-white"

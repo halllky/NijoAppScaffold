@@ -54,8 +54,8 @@ export function useUniqueConstraintsColumns(
   // 列定義。
   // この変数が変わるとグリッド全体の列定義が更新されてしまうため、
   // ユニーク制約の数が変わったとき以外は同じオブジェクトを返すようにする。
-  const uniqueConstraintColumns = React.useMemo((): EG2.EditableGrid2Column<GridRow> => {
-    const columns: EG2.EditableGrid2LeafColumn<GridRow>[] = []
+  const uniqueConstraintColumns = React.useMemo((): EG2.EditableGridColumn<GridRow> => {
+    const columns: EG2.EditableGridLeafColumn<GridRow>[] = []
     const constraintCount = uniqueConstraintsMaxLength + 1
 
     for (let i = 0; i < constraintCount; i++) {
@@ -67,22 +67,22 @@ export function useUniqueConstraintsColumns(
             {i + 1}
           </div>
         ),
-        renderBody: ({ context }) => (
+        renderBody: ({ rowIndex }) => (
           <UniqueConstraintCell
-            rowIndex={context.row.index}
+            rowIndex={rowIndex}
             columnIndex={i}
           />
         ),
-        getValueForEditor: ({ row }) => {
+        cellToText: row => {
           const container = findContainer(getValues, rootPath, membersPath, row.uniqueId)
           if (!container) return ''
           const constraints = container.uniqueConstraints ?? []
           const indexInConstraint = constraints[i]?.memberUniqueIds.indexOf(row.uniqueId) ?? -1
           return indexInConstraint >= 0 ? String(indexInConstraint + 1) : ''
         },
-        setValueFromEditor: ({ row, value }) => {
+        textToCell: (row, value) => {
           const container = findContainer(getValues, rootPath, membersPath, row.uniqueId)
-          if (!container) return
+          if (!container) return row
 
           let numValue = parseInt(value, 10)
           if (value.trim() === '') {
@@ -106,19 +106,22 @@ export function useUniqueConstraintsColumns(
           } else {
             setValue(`${membersPath}.${container.memberIndex}.uniqueConstraints`, currentConstraints, { shouldDirty: true })
           }
+
+          return row
         },
         defaultWidth: i === uniqueConstraintsMaxLength ? 112 : 24,
       })
     }
 
     return {
+      columnId: "unique-constraint-group",
       renderHeader: () => (
         <div className="px-1 py-px truncate text-sm text-gray-700">
           ユニーク制約
         </div>
       ),
       columns,
-    } satisfies EG2.EditableGrid2GroupColumn<GridRow>
+    } satisfies EG2.EditableGridGroupColumn<GridRow>
   }, [uniqueConstraintsMaxLength, getValues, setValue, rootPath, membersPath])
 
   return {

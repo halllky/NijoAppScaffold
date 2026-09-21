@@ -4,14 +4,15 @@ import * as EG2 from "@halllky/editable-grid"
 import { TextCellEditor } from "./GridCell.Text"
 import { EditingMember } from "../backend"
 import { useFieldValidationError } from "../ProjectPage/useValidation"
+import { setFieldByPath } from "./setFieldByPath"
 
 export type CreateElementNameCellFunction = <TRow>(
   header: string,
-  options?: Partial<EG2.EditableGrid2LeafColumn<TRow>>
-) => EG2.EditableGrid2LeafColumn<TRow>
+  options?: Partial<EG2.EditableGridLeafColumn<TRow>>
+) => EG2.EditableGridLeafColumn<TRow>
 
 /**
- * EditableGrid2 の要素名列（インデント付き）
+ * EditableGrid の要素名列（インデント付き）
  */
 export function createElementNameCellHelper(
   getValues: ReactHookForm.UseFormGetValues<ReactHookForm.FieldValues>,
@@ -22,6 +23,7 @@ export function createElementNameCellHelper(
 ): CreateElementNameCellFunction {
 
   return (header, options) => ({
+    columnId: "elementName",
     editor: TextCellEditor,
     defaultWidth: 220,
     isFixed: true,
@@ -33,8 +35,8 @@ export function createElementNameCellHelper(
     renderHeaderPlaceholder: () => (
       <div className="border-l border-gray-300" />
     ),
-    renderBody: ({ context }) => {
-      const fieldRowIndex = skipFirstRow ? context.row.index + 1 : context.row.index
+    renderBody: ({ rowIndex }) => {
+      const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
       const rowData: EditingMember = ReactHookForm.useWatch({ name: `${arrayName}.${fieldRowIndex}`, control })
       const { hasError, errorMessages } = useFieldValidationError(rowData.uniqueId)
       const bgColor = hasError ? 'bg-amber-300/50' : ''
@@ -64,19 +66,8 @@ export function createElementNameCellHelper(
         </div>
       )
     },
-    getValueForEditor: ({ rowIndex }) => {
-      const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
-      const val = getValues(`${arrayName}.${fieldRowIndex}.physicalName`)
-      return val?.toString() ?? ''
-    },
-    setValueFromEditor: ({ rowIndex, value }) => {
-      const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
-      setValue(
-        `${arrayName}.${fieldRowIndex}.physicalName`,
-        value,
-        { shouldDirty: true }
-      )
-    },
+    cellToText: row => (row as EditingMember).physicalName?.toString() ?? '',
+    textToCell: (row, text) => setFieldByPath(row, 'physicalName', text),
     ...options,
   })
 }

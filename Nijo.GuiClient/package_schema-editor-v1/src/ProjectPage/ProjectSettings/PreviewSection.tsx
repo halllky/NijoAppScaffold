@@ -109,7 +109,7 @@ export const PreviewSection: React.FC<{
           <Input.IconButton outline mini icon={Icon.TrashIcon} onClick={handleDeleteRow}>削除</Input.IconButton>
         </div>
       )}>
-        <EG2.EditableGrid2
+        <EG2.EditableGrid
           {...editableGrid2Props}
           className="flex-1 h-[200px] resize-y border border-gray-600"
         />
