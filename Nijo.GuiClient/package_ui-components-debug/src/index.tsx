@@ -2,6 +2,7 @@ import * as React from "react"
 import * as ReactRouter from "react-router-dom"
 import FormLayoutPatternsDebugging from "./FormLayoutPatternsDebugging"
 import GraphView2Debugging from "./GraphView2Debugging"
+import GraphView3Debugging from "./GraphView3Debugging"
 import ReactContextDebugging from "./ReactContextDebugging"
 
 export default function () {
@@ -66,6 +67,11 @@ export const getDebuggingPages = (): { groupName: string, links: (ReactRouter.Ro
         path: '/graph-view-2/001',
         label: 'GraphView2 基本機能',
         element: <GraphView2Debugging />,
+      },
+      {
+        path: '/graph-view-3/001',
+        label: 'GraphView3 (React Flow) 基本機能',
+        element: <GraphView3Debugging />,
       },
       {
         path: '/react-context/001',
