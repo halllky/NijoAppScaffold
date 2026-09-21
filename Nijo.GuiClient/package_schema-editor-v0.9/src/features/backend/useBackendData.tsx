@@ -1,8 +1,8 @@
 import React from "react"
-import type { InitialLoadData } from "./types"
+import { toEditingProject, type EditingProject } from "./editingProject"
 import { loadProject } from "./api"
 
-type BackendDataContextType = LoadState<InitialLoadData> & {
+type BackendDataContextType = LoadState<EditingProject> & {
   /** 再読み込みを要求 */
   reload: () => void
 }
@@ -20,7 +20,7 @@ const BackendDataContext = React.createContext<BackendDataContextType | undefine
  */
 export function BackendDataContextProvider({ children }: { children?: React.ReactNode }) {
   // 読み込み後データ
-  const [state, setState] = React.useState<LoadState<InitialLoadData>>({ state: "loading" })
+  const [state, setState] = React.useState<LoadState<EditingProject>>({ state: "loading" })
 
   // 読み込み
   const [reloadKey, executeReload] = React.useReducer((value: number) => value + 1, 0)
@@ -32,7 +32,7 @@ export function BackendDataContextProvider({ children }: { children?: React.Reac
         const res = await loadProject(abortController.signal)
         if (abortController.signal.aborted) return;
         if (!res.ok) throw new Error(res.error)
-        setState({ state: "ready", data: res.value })
+        setState({ state: "ready", data: toEditingProject(res.value) })
       } catch (err) {
         if (abortController.signal.aborted) return;
         setState({ state: "error", error: `データの読み込みでエラーが発生しました (${err instanceof Error ? err.message : String(err)})` })

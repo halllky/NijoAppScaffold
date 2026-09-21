@@ -1,7 +1,8 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
 import { Button, NowLoading } from "../ui"
-import { useBackendData, type InitialLoadData } from "../features/backend"
+import { useBackendData, type EditingProject } from "../features/backend"
+import { DynamicAndStaticEnumPane } from "./DynamicAndStaticEnum"
 
 /**
  * プロジェクト画面。
@@ -36,7 +37,7 @@ export default function ProjectPage() {
  * プロジェクト画面（読み込み完了後）
  */
 function AfterLoaded({ defaultValues }: {
-  defaultValues: InitialLoadData
+  defaultValues: EditingProject
 }) {
 
   const useFormReturn = ReactHookForm.useForm({ defaultValues })
@@ -68,6 +69,13 @@ function AfterLoaded({ defaultValues }: {
             <span className="text-xs">(Ctrl + S)</span>
           </Button>
         </nav>
+
+        {/* タブの中身 */}
+        <div className="flex-1 min-h-0 pt-1">
+          {selectedTab === "区分定義" && (
+            <DynamicAndStaticEnumPane />
+          )}
+        </div>
 
       </div>
     </ReactHookForm.FormProvider>

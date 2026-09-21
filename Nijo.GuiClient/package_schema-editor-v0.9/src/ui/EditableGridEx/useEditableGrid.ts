@@ -1,13 +1,16 @@
 import * as ReactHookForm from "react-hook-form"
-import { createColumnHelper, type EditableGridColumn, type EditableGridProps, type EditableGridRowUpdate } from "@halllky/editable-grid"
+import { createColumnHelper, type EditableGridColumn, type EditableGridProps, type EditableGridRef, type EditableGridRowUpdate } from "@halllky/editable-grid"
 import React from "react"
 import { createTextCellHelper, type CreateTextCellFunction } from "./createTextCellHelper"
 import { createCheckBoxCellHelper, type CreateCheckBoxCellFunction } from "./createCheckBoxCellHelper"
+import { attachRowOperationKeys, useRowOperations, type RowOperations } from "./useRowOperations"
 
 /**
  * `@halllky/editable-grid` の定義を楽にするための標準のラッパー。
  *
  * 行追加、行削除、行移動をデフォルトでサポートする。
+ * これらはグリッドのセル選択範囲の行に対して、キーボード操作 (Ctrl + Enter, Shift + Delete, Alt + ↑↓)
+ * または戻り値の rowOperations の関数の呼び出しによって行う。
  */
 export function useEditableGrid<
   TField extends ReactHookForm.FieldValues,
@@ -21,6 +24,8 @@ export function useEditableGrid<
   defineColumns: DefineColumns<TField, TArrayPath>,
   /** 列定義の依存配列。ルールは useMemo のそれと同じ */
   defineColumnsDeps: React.DependencyList,
+  /** オプション */
+  options: UseEditableGridOptions<ReactHookForm.FieldArray<TField, TArrayPath>>,
 ): UseEditableGridReturn<TField, TArrayPath> {
 
   type TRow = ReactHookForm.FieldArray<TField, TArrayPath>
@@ -29,6 +34,11 @@ export function useEditableGrid<
 
   const useFieldArrayReturn = ReactHookForm.useFieldArray({ control, name })
   const { fields } = useFieldArrayReturn
+
+  const gridRef = React.useRef<EditableGridRef<TRow>>(null)
+
+  // 行の追加・削除・並べ替え
+  const { handleCellKeyDown, ...rowOperations } = useRowOperations(useFieldArrayReturn, gridRef, options.createNewRow)
 
   const [
     rowKeys, // fields の id を順序通りの配列にしたもの
@@ -54,8 +64,8 @@ export function useEditableGrid<
       text: createTextCellHelper(),
       checkbox: createCheckBoxCellHelper(getValues, setValue, name, getRowIndexByKeyRef),
     }
-    return defineColumns(helper)
-  }, [getValues, setValue, name, getRowIndexByKeyRef, ...defineColumnsDeps])
+    return attachRowOperationKeys(defineColumns(helper), handleCellKeyDown)
+  }, [getValues, setValue, name, getRowIndexByKeyRef, handleCellKeyDown, ...defineColumnsDeps])
 
   /** レンダリング等に使われる行データ取得関数 */
   const getLatestRowObject = React.useCallback((_: unknown, rowKey: string) => {
@@ -89,12 +99,14 @@ export function useEditableGrid<
 
   return {
     editableGridProps: {
+      ref: gridRef,
       rowKeys,
       columns,
       getLatestRowObject,
       onRowsChange,
       subscribe: subscribeRows,
     },
+    rowOperations,
     useFieldArrayReturn,
   }
 }
@@ -113,7 +125,7 @@ export type DefineColumns<
 /**
  * `useEditableGrid` の引数の列定義関数で使えるヘルパー関数の型
  */
-type ColumnHelper<TRow> = ReturnType<typeof createColumnHelper<TRow>> & {
+export type ColumnHelper<TRow> = ReturnType<typeof createColumnHelper<TRow>> & {
   /** テキスト列 */
   text: CreateTextCellFunction
   /** チェックボックス列 */
@@ -123,8 +135,9 @@ type ColumnHelper<TRow> = ReturnType<typeof createColumnHelper<TRow>> & {
 /**
  * `useEditableGrid` のオプション
  */
-export type UseEditableGridOptions = {
-
+export type UseEditableGridOptions<TRow> = {
+  /** 行追加時に挿入する行を作成する。追加のたびに呼ばれる */
+  createNewRow: () => TRow
 }
 
 /**
@@ -138,7 +151,11 @@ export type UseEditableGridReturn<
   editableGridProps: Pick<
     EditableGridProps<ReactHookForm.FieldArray<TField, TArrayPath>>,
     "rowKeys" | "getLatestRowObject" | "columns" | "onRowsChange" | "subscribe"
-  >
+  > & {
+    ref: React.RefObject<EditableGridRef<ReactHookForm.FieldArray<TField, TArrayPath>> | null>
+  }
+  /** 行の追加・削除・並べ替え。ボタン等のグリッド外の操作から行う場合に使用 */
+  rowOperations: RowOperations
   /** 呼び出し側で useFieldArray の戻り値を使いたい場合に使用 */
   useFieldArrayReturn: ReactHookForm.UseFieldArrayReturn<TField, TArrayPath>
 }

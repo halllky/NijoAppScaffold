@@ -5,7 +5,8 @@ import * as EG2 from "@halllky/editable-grid"
 export type CreateTextCellFunction = <TRow>(
   path: ReactHookForm.Path<TRow>,
   header: string,
-  options?: Omit<Partial<EG2.EditableGridLeafColumn<TRow>>, 'columnId'> & {
+  // グリッド側の wrap は廃止済みで never 型のため除外し、このヘルパー独自の wrap で置き換える
+  options?: Omit<Partial<EG2.EditableGridLeafColumn<TRow>>, 'columnId' | 'wrap'> & {
     format?: (value: unknown) => string
     parse?: (value: string) => unknown
     /** 折り返し表示するかどうか */

@@ -88,7 +88,7 @@ export type InitialLoadData = {
 
 /** 検証・保存時にクライアントからサーバーへ送るデータ（C# の ClientRequest） */
 export type ClientRequest = {
-  config: Config
+  config?: Config | null
   aggregates: SchemaNode[]
 }
 
