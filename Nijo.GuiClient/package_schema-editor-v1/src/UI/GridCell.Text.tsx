@@ -1,6 +1,6 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
-import * as EG2 from "@halllky/react-editable-grid"
+import * as EG2 from "@halllky/editable-grid"
 import { MentionableTextarea, MentionableTextareaReadOnly } from "./Mention"
 import { useFieldValidationError } from "../ProjectPage/useValidation"
 import { EditingProject } from "../backend"

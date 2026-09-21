@@ -15,7 +15,8 @@ namespace Demo101TemplateBuilder;
 /// 通ることを確認するテストを用意している。
 /// </para>
 /// </summary>
-public static class Demo101TemplatePruner {
+public static class Demo101TemplatePruner
+{
 
     /// <summary>DataStructures直下の要素でUniqueIdがこれに合致するものを削除する</summary>
     private static readonly HashSet<string> REMOVE_DATA_STRUCTURE_IDS = [
@@ -94,7 +95,8 @@ public static class Demo101TemplatePruner {
     /// <paramref name="workDir"/> に展開されたデモ101のソース一式から、
     /// 販売管理業務固有の部分を削除する。
     /// </summary>
-    public static void Prune(string workDir) {
+    public static void Prune(string workDir)
+    {
         PruneNijoXml(Path.Combine(workDir, "nijo.xml"));
         DeleteUnneededPaths(workDir);
         EditSourceReferences(workDir);
@@ -104,7 +106,8 @@ public static class Demo101TemplatePruner {
     // 1. nijo.xml から販売管理業務固有の定義を削除する
     // ============================================================
 
-    private static void PruneNijoXml(string xmlPath) {
+    private static void PruneNijoXml(string xmlPath)
+    {
         var doc = XDocument.Load(xmlPath);
         var root = doc.Root ?? throw new InvalidOperationException($"ルート要素が見つかりません: {xmlPath}");
 
@@ -113,29 +116,36 @@ public static class Demo101TemplatePruner {
         RemoveChildrenByUniqueId(root.Element("StaticEnums"), REMOVE_ENUM_IDS);
 
         var customAttributes = root.Element("CustomAttributes");
-        if (customAttributes != null) {
-            foreach (var el in customAttributes.Elements().ToArray()) {
+        if (customAttributes != null)
+        {
+            foreach (var el in customAttributes.Elements().ToArray())
+            {
                 const string PREFIX = "Custom-";
                 if (!el.Name.LocalName.StartsWith(PREFIX)) continue;
                 var id = el.Name.LocalName[PREFIX.Length..];
-                if (REMOVE_CUSTOM_ATTRIBUTE_IDS.Contains(id)) {
+                if (REMOVE_CUSTOM_ATTRIBUTE_IDS.Contains(id))
+                {
                     RemoveWithPrecedingComment(el);
                 }
             }
         }
 
-        using var writer = XmlWriter.Create(xmlPath, new XmlWriterSettings {
+        using var writer = XmlWriter.Create(xmlPath, new XmlWriterSettings
+        {
             Indent = true,
             Encoding = new UTF8Encoding(false),
         });
         doc.Save(writer);
     }
 
-    private static void RemoveChildrenByUniqueId(XElement? section, HashSet<string> ids) {
+    private static void RemoveChildrenByUniqueId(XElement? section, HashSet<string> ids)
+    {
         if (section == null) return;
-        foreach (var el in section.Elements().ToArray()) {
+        foreach (var el in section.Elements().ToArray())
+        {
             var uniqueId = (string?)el.Attribute("UniqueId");
-            if (uniqueId != null && ids.Contains(uniqueId)) {
+            if (uniqueId != null && ids.Contains(uniqueId))
+            {
                 RemoveWithPrecedingComment(el);
             }
         }
@@ -144,8 +154,10 @@ public static class Demo101TemplatePruner {
     /// <summary>
     /// 要素を削除する。その要素の説明になっている直前のXMLコメントがあれば、それもあわせて削除する。
     /// </summary>
-    private static void RemoveWithPrecedingComment(XElement el) {
-        if (el.PreviousNode is XComment comment) {
+    private static void RemoveWithPrecedingComment(XElement el)
+    {
+        if (el.PreviousNode is XComment comment)
+        {
             comment.Remove();
         }
         el.Remove();
@@ -155,14 +167,21 @@ public static class Demo101TemplatePruner {
     // 2. 業務固有のフォルダ・ファイルを削除する
     // ============================================================
 
-    private static void DeleteUnneededPaths(string workDir) {
-        foreach (var relativePath in DELETE_PATHS) {
+    private static void DeleteUnneededPaths(string workDir)
+    {
+        foreach (var relativePath in DELETE_PATHS)
+        {
             var target = Path.Combine(workDir, relativePath);
-            if (Directory.Exists(target)) {
+            if (Directory.Exists(target))
+            {
                 Directory.Delete(target, recursive: true);
-            } else if (File.Exists(target)) {
+            }
+            else if (File.Exists(target))
+            {
                 File.Delete(target);
-            } else {
+            }
+            else
+            {
                 throw new InvalidOperationException($"削除対象が見つかりません（デモ101の構造が変わった可能性があります）: {relativePath}");
             }
         }
@@ -172,7 +191,8 @@ public static class Demo101TemplatePruner {
     // 3. 業務固有のコードへの参照が残るファイルを編集する
     // ============================================================
 
-    private static void EditSourceReferences(string workDir) {
+    private static void EditSourceReferences(string workDir)
+    {
         EditCoreConfigureServices(workDir);
         EditCoreOverridedApplicationService(workDir);
         EditCoreRuntimeSetting(workDir);
@@ -189,7 +209,8 @@ public static class Demo101TemplatePruner {
     /// ファイル内の <paramref name="oldText"/> を <paramref name="newText"/> に置換する。
     /// 見つからない場合（＝デモ101側の構造が変わり、この置換内容が古くなった場合）は例外を送出する。
     /// </summary>
-    private static void ReplaceExactlyOnce(string filePath, string oldText, string newText) {
+    private static void ReplaceExactlyOnce(string filePath, string oldText, string newText)
+    {
         // ファイルの改行コード（CRLF/LF）は .gitattributes によりファイル種別ごとに異なるため、
         // 比較・置換は LF に正規化した状態で行い、書き戻す際に元の改行コードへ戻す。
         var original = File.ReadAllText(filePath);
@@ -199,10 +220,12 @@ public static class Demo101TemplatePruner {
         var replacement = newText.Replace("\r\n", "\n");
 
         var firstIndex = text.IndexOf(old, StringComparison.Ordinal);
-        if (firstIndex < 0) {
+        if (firstIndex < 0)
+        {
             throw new InvalidOperationException($"置換対象の文字列が見つかりませんでした: {filePath}\n---\n{old}\n---");
         }
-        if (text.IndexOf(old, firstIndex + old.Length, StringComparison.Ordinal) >= 0) {
+        if (text.IndexOf(old, firstIndex + old.Length, StringComparison.Ordinal) >= 0)
+        {
             throw new InvalidOperationException($"置換対象の文字列が複数箇所で見つかりました（一意に特定できません）: {filePath}");
         }
 
@@ -211,7 +234,8 @@ public static class Demo101TemplatePruner {
         File.WriteAllText(filePath, result, new UTF8Encoding(false));
     }
 
-    private static void EditCoreConfigureServices(string workDir) {
+    private static void EditCoreConfigureServices(string workDir)
+    {
         var path = Path.Combine(workDir, "Core/ConfigureServices.cs");
 
         ReplaceExactlyOnce(
@@ -248,7 +272,8 @@ public static class Demo101TemplatePruner {
             """);
     }
 
-    private static void EditCoreOverridedApplicationService(string workDir) {
+    private static void EditCoreOverridedApplicationService(string workDir)
+    {
         var path = Path.Combine(workDir, "Core/OverridedApplicationService.cs");
 
         ReplaceExactlyOnce(
@@ -308,7 +333,8 @@ public static class Demo101TemplatePruner {
             """);
     }
 
-    private static void EditCoreOverridedDbContext(string workDir) {
+    private static void EditCoreOverridedDbContext(string workDir)
+    {
         var path = Path.Combine(workDir, "Core/OverridedDbContext.cs");
 
         // "sequence" 型の項目（商品SEQ・売上SEQ）はテンプレートには含めないため、
@@ -333,7 +359,8 @@ public static class Demo101TemplatePruner {
             """);
     }
 
-    private static void EditCoreRuntimeSetting(string workDir) {
+    private static void EditCoreRuntimeSetting(string workDir)
+    {
         var path = Path.Combine(workDir, "Core/RuntimeSetting.cs");
 
         ReplaceExactlyOnce(
@@ -354,9 +381,11 @@ public static class Demo101TemplatePruner {
             """);
     }
 
-    private static void ReplaceOverridedDummyDataGenerator(string workDir) {
+    private static void ReplaceOverridedDummyDataGenerator(string workDir)
+    {
         var path = Path.Combine(workDir, "Core/OverridedDummyDataGenerator.cs");
-        if (!File.Exists(path)) {
+        if (!File.Exists(path))
+        {
             throw new InvalidOperationException($"ファイルが見つかりません（デモ101の構造が変わった可能性があります）: {path}");
         }
 
@@ -421,7 +450,8 @@ public static class Demo101TemplatePruner {
         File.WriteAllText(path, content.Replace("\r\n", "\n").Replace("\n", "\r\n"), new UTF8Encoding(false));
     }
 
-    private static void EditClientRoutes(string workDir) {
+    private static void EditClientRoutes(string workDir)
+    {
         var path = Path.Combine(workDir, "client/src/routes.tsx");
 
         ReplaceExactlyOnce(
@@ -498,7 +528,8 @@ public static class Demo101TemplatePruner {
             """);
     }
 
-    private static void EditClientUiComponentCatalog(string workDir) {
+    private static void EditClientUiComponentCatalog(string workDir)
+    {
         var path = Path.Combine(workDir, "client/src/debug-rooms/UIコンポーネントカタログ.tsx");
 
         ReplaceExactlyOnce(
@@ -596,7 +627,8 @@ public static class Demo101TemplatePruner {
             """);
     }
 
-    private static void EditClientDebugMenu(string workDir) {
+    private static void EditClientDebugMenu(string workDir)
+    {
         var path = Path.Combine(workDir, "client/src/debug-rooms/デバッグメニュー.tsx");
 
         ReplaceExactlyOnce(
@@ -633,7 +665,8 @@ public static class Demo101TemplatePruner {
     /// また @nijo/ui-components への参照（ER図デバッグ画面用）はそのデバッグ画面自体が
     /// テンプレートから削除されるため不要になる。
     /// </summary>
-    private static void EditClientTailwindConfig(string workDir) {
+    private static void EditClientTailwindConfig(string workDir)
+    {
         var path = Path.Combine(workDir, "client/tailwind.config.ts");
 
         ReplaceExactlyOnce(
@@ -643,14 +676,10 @@ public static class Demo101TemplatePruner {
                 "./src/**/*.{js,ts,jsx,tsx}",
                 // 依存先パッケージ（ui-components）のファイルも監視対象に含める
                 "../../../Nijo.GuiClient/package_ui-components/src/**/*.{js,ts,jsx,tsx}",
-                // 依存先パッケージ（react-editable-grid）のビルド済みファイルも監視対象に含める
-                "../../../node_modules/@halllky/react-editable-grid/dist/**/*.js",
             """,
             """
                 "./index.html",
                 "./src/**/*.{js,ts,jsx,tsx}",
-                // 依存先パッケージ（react-editable-grid）のビルド済みファイルも監視対象に含める
-                "./node_modules/@halllky/react-editable-grid/dist/**/*.js",
             """);
     }
 
@@ -660,7 +689,8 @@ public static class Demo101TemplatePruner {
     /// テンプレートとして単体で展開されたときに動作するよう、実際に使用しているパッケージを明記する。
     /// バージョンはこのモノレポのルート package.json に合わせている。
     /// </summary>
-    private static void ReplaceClientPackageJson(string workDir) {
+    private static void ReplaceClientPackageJson(string workDir)
+    {
         var path = Path.Combine(workDir, "client/package.json");
 
         var content = """
@@ -678,7 +708,7 @@ public static class Demo101TemplatePruner {
                 "test:run": "vitest run"
               },
               "dependencies": {
-                "@halllky/react-editable-grid": "git+ssh://git@github.com/halllky/react-editable-grid.git#v0.1.0",
+                "@halllky/editable-grid": "github:halllky/editable-grid#v0.9.0",
                 "@heroicons/react": "^2.2.0",
                 "@tanstack/react-table": "^8.21.3",
                 "@tanstack/react-virtual": "^3.14.2",
