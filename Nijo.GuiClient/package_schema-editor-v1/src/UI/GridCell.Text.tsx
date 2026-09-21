@@ -147,6 +147,7 @@ export const MentionableCellEditor: EG2.EditableGridCellEditor = React.forwardRe
   requestCancel,
   requestCommit,
   style,
+  isEditing,
 }, ref) => {
 
   const { getValues } = ReactHookForm.useFormContext<EditingProject>()
@@ -185,7 +186,11 @@ export const MentionableCellEditor: EG2.EditableGridCellEditor = React.forwardRe
       value={value ?? ''}
       onChange={setValue}
       onKeyDown={handleKeyDown}
-      style={style}
+      // グリッドが渡す height はセルそのものの高さ。
+      // そのまま適用すると複数行入力しても1行分の高さのままなので、minHeight に読み替えて下方向に伸びられるようにする。
+      // 非編集時に読み替えないのは、エディタが編集中でなくてもDOM上に存在しフォーカス移動先セルの値を保持しており、
+      // 伸ばすと不可視のエディタがグリッドのスクロール範囲を広げてしまうため。
+      style={isEditing ? { ...style, height: undefined, minHeight: style.height } : style}
       className="bg-white border border-gray-700 [&_textarea]:px-[3px] mt-[-1px]"
     />
   )

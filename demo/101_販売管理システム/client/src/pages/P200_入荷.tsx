@@ -73,14 +73,14 @@ function P200_入荷() {
             to={getLinkUrlToP201入荷詳細(row.入荷ID)}>
             詳細
           </Link>
-        ), { defaultWidth: 60, disableResizing: true, isFixed: true }),
-        Grid.textColumn<入荷一覧DisplayData>('入荷ID', row => row.入荷ID, { defaultWidth: 180 }),
-        Grid.textColumn<入荷一覧DisplayData>('入荷日時', row => row.入荷日時),
-        Grid.textColumn<入荷一覧DisplayData>('担当者', row => row.担当者.従業員番号, { defaultWidth: 96 }),
-        Grid.textColumn<入荷一覧DisplayData>('', row => row.担当者.氏名, { defaultWidth: 144 }),
-        Grid.numericColumn<入荷一覧DisplayData>('明細件数', row => row.明細件数, { defaultWidth: 96 }),
-        Grid.numericColumn<入荷一覧DisplayData>('入荷数量合計', row => row.入荷数量合計, { defaultWidth: 120, suffix: '個' }),
-        Grid.textColumn<入荷一覧DisplayData>('備考', row => row.備考, { defaultWidth: 300 }),
+        ), { columnId: '詳細リンク', defaultWidth: 60, disableResizing: true, isFixed: true }),
+        Grid.textColumn<入荷一覧DisplayData>('入荷ID', row => row.入荷ID, { columnId: '入荷ID', defaultWidth: 180 }),
+        Grid.textColumn<入荷一覧DisplayData>('入荷日時', row => row.入荷日時, { columnId: '入荷日時' }),
+        Grid.textColumn<入荷一覧DisplayData>('担当者', row => row.担当者.従業員番号, { columnId: '担当者.従業員番号', defaultWidth: 96 }),
+        Grid.textColumn<入荷一覧DisplayData>('', row => row.担当者.氏名, { columnId: '担当者.氏名', defaultWidth: 144 }),
+        Grid.numericColumn<入荷一覧DisplayData>('明細件数', row => row.明細件数, { columnId: '明細件数', defaultWidth: 96 }),
+        Grid.numericColumn<入荷一覧DisplayData>('入荷数量合計', row => row.入荷数量合計, { columnId: '入荷数量合計', defaultWidth: 120, suffix: '個' }),
+        Grid.textColumn<入荷一覧DisplayData>('備考', row => row.備考, { columnId: '備考', defaultWidth: 300 }),
       ], []]}
     />
   )

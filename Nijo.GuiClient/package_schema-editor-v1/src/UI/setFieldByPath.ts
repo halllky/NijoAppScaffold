@@ -9,6 +9,11 @@ export function setFieldByPath<TRow>(row: TRow, path: string, value: unknown): T
   const keys = path.split('.')
   let target = clone
   for (let i = 0; i < keys.length - 1; i++) {
+    // 途中のオブジェクトが未作成（ref未選択など）の場合はここで作る。
+    // 作らないと target が undefined になり、末端への代入で例外になる。
+    if (target[keys[i]] === null || target[keys[i]] === undefined) {
+      target[keys[i]] = {}
+    }
     target = target[keys[i]]
   }
   target[keys[keys.length - 1]] = value

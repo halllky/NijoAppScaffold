@@ -34,7 +34,7 @@ export function SingleConstantEditor({ index, formMethods }: {
   index: number
   formMethods: ReactHookForm.UseFormReturn<EditingProject>
 }) {
-  const { control, getValues, setValue, register } = formMethods
+  const { control, getValues, setValue, register, subscribe } = formMethods
 
   // ルート要素（定数定義ブロック自体）の名前
   const rootNamePath = `constants.${index}.physicalName` as const
@@ -60,6 +60,7 @@ export function SingleConstantEditor({ index, formMethods }: {
     control,
     getValues,
     setValue,
+    subscribe,
   }, helper => {
     const columns: EG2.EditableGridColumn<any>[] = []
 

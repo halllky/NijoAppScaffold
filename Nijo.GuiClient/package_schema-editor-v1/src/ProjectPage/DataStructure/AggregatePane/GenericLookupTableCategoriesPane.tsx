@@ -23,7 +23,7 @@ function GenericLookupTableCategoriesPane(props: {
   formMethods: ReactHookForm.UseFormReturn<EditingProject>
   className?: string
 }) {
-  const { rootLocation, formMethods: { control, getValues, setValue }, className } = props
+  const { rootLocation, formMethods: { control, getValues, setValue, subscribe }, className } = props
   const rootPath = `${rootLocation.list}.${rootLocation.index}` as const
   const categoriesPath = `${rootPath}.genericLookupTable.categories` as const
 
@@ -54,6 +54,7 @@ function GenericLookupTableCategoriesPane(props: {
     control,
     getValues,
     setValue,
+    subscribe,
   }, helper => {
     const columns: EG2.EditableGridColumn<GridRow>[] = []
 

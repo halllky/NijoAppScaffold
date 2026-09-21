@@ -71,7 +71,11 @@ export function getTextCellEditor(maxLength: number | undefined): EG2.EditableGr
         spellCheck={false}
         autoComplete="off"
         className="px-[3px] resize-none field-sizing-content outline-none border border-black bg-white"
-        style={style}
+        // グリッドが渡す height はセルそのものの高さ。
+        // そのまま適用すると複数行入力しても1行分の高さのままなので、minHeight に読み替えて下方向に伸びられるようにする。
+        // 非編集時に読み替えないのは、エディタが編集中でなくてもDOM上に存在しフォーカス移動先セルの値を保持しており、
+        // 伸ばすと不可視のエディタがグリッドのスクロール範囲を広げてしまうため。
+        style={isEditing ? { ...style, height: undefined, minHeight: style.height } : style}
       />
     )
   })

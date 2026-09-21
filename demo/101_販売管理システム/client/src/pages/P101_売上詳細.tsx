@@ -78,7 +78,7 @@ function P101_売上詳細(props: {
   const formMethods = ReactHookForm.useForm<売上詳細DisplayData>({
     defaultValues: loaderData,
   })
-  const { register, control, getValues, setValue, reset } = formMethods
+  const { register, control, getValues, setValue, reset, subscribe } = formMethods
   const { revalidate } = useRevalidator()
   const navigate = ReactRouter.useNavigate()
   const [saving, setSaving] = React.useState(false)
@@ -96,7 +96,7 @@ function P101_売上詳細(props: {
     fieldArrayReturn: { append, remove },
     editableGrid2Props,
   } = Grid.useFieldArrayForEditableGrid2(
-    { name: "売上詳細の売上明細", control, getValues, setValue },
+    { name: "売上詳細の売上明細", control, getValues, setValue, subscribe },
     helper => [
       helper.enumeration("区分", "区分", "売上明細区分", { defaultWidth: 80 }),
       helper.text("商品コード", "商品.外部システム側ID", { defaultWidth: 140, maxLength: maxLen商品コード }),

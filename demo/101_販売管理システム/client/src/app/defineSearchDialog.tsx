@@ -200,7 +200,7 @@ export function defineSearchDialog<
     const columns = React.useMemo(() => [
       Grid.interactiveColumn<TSearchResultRefTarget>("選択", row => (
         <Button mini onClick={() => stableOnSelect(row)}>選択</Button>
-      ), { defaultWidth: 64, disableResizing: true, isFixed: true }),
+      ), { columnId: '選択ボタン', defaultWidth: 64, disableResizing: true, isFixed: true }),
       ...def.getSearchResultGridColumns(dialogProps),
     ], [dialogProps, stableOnSelect])
 

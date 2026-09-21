@@ -74,14 +74,14 @@ function P100_売上() {
             to={getLinkUrlToP101売上詳細(row.売上SEQ)}>
             詳細
           </Link>
-        ), { defaultWidth: 60, disableResizing: true, isFixed: true }),
-        Grid.textColumn<売上一覧DisplayData>('売上SEQ', row => row.売上SEQ),
-        Grid.textColumn<売上一覧DisplayData>('売上日時', row => row.売上日時),
-        Grid.textColumn<売上一覧DisplayData>('担当者', row => row.担当者.従業員番号, { defaultWidth: 96 }),
-        Grid.textColumn<売上一覧DisplayData>('', row => row.担当者.氏名, { defaultWidth: 144 }),
-        Grid.numericColumn<売上一覧DisplayData>('売上総額(税込)', row => row.合計金額, { defaultWidth: 136, suffix: '円' }),
-        Grid.numericColumn<売上一覧DisplayData>('売上数量合計', row => row.売上数量合計, { defaultWidth: 120, suffix: '個' }),
-        Grid.textColumn<売上一覧DisplayData>('備考', row => row.備考, { defaultWidth: 300 }),
+        ), { columnId: '詳細リンク', defaultWidth: 60, disableResizing: true, isFixed: true }),
+        Grid.textColumn<売上一覧DisplayData>('売上SEQ', row => row.売上SEQ, { columnId: '売上SEQ' }),
+        Grid.textColumn<売上一覧DisplayData>('売上日時', row => row.売上日時, { columnId: '売上日時' }),
+        Grid.textColumn<売上一覧DisplayData>('担当者', row => row.担当者.従業員番号, { columnId: '担当者.従業員番号', defaultWidth: 96 }),
+        Grid.textColumn<売上一覧DisplayData>('', row => row.担当者.氏名, { columnId: '担当者.氏名', defaultWidth: 144 }),
+        Grid.numericColumn<売上一覧DisplayData>('売上総額(税込)', row => row.合計金額, { columnId: '合計金額', defaultWidth: 136, suffix: '円' }),
+        Grid.numericColumn<売上一覧DisplayData>('売上数量合計', row => row.売上数量合計, { columnId: '売上数量合計', defaultWidth: 120, suffix: '個' }),
+        Grid.textColumn<売上一覧DisplayData>('備考', row => row.備考, { columnId: '備考', defaultWidth: 300 }),
       ], []]}
     />
   )

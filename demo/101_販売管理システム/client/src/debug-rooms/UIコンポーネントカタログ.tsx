@@ -74,12 +74,12 @@ function UIComponentCatalog() {
     { id: i * 10 + 5, name: "商品E", price: 300, category: "食品" },
   ]), [])
   const readOnlyColumns = React.useMemo(() => [
-    Grid.textColumn<TableRow>("ID", row => row.id, { defaultWidth: 60 }),
-    Grid.textColumn<TableRow>("商品名", row => row.name),
-    Grid.numericColumn<TableRow>("価格", row => row.price, { defaultWidth: 100, suffix: "円" }),
+    Grid.textColumn<TableRow>("ID", row => row.id, { columnId: "id", defaultWidth: 60 }),
+    Grid.textColumn<TableRow>("商品名", row => row.name, { columnId: "name" }),
+    Grid.numericColumn<TableRow>("価格", row => row.price, { columnId: "price", defaultWidth: 100, suffix: "円" }),
     Grid.customColumn<TableRow>("カテゴリ", row => (
       <span className="px-2 py-1 bg-gray-200 rounded text-xs">{row.category}</span>
-    ), { defaultWidth: 100, getValueForCopy: row => row.category }),
+    ), { columnId: "category", defaultWidth: 100, getValueForCopy: row => row.category }),
   ], [])
   const tableRowKeys = React.useMemo(() => tableRows.map((_, index) => index.toString()), [tableRows])
   const getLatestTableRowObject = React.useCallback((index: number) => tableRows[index], [tableRows])
@@ -118,6 +118,7 @@ function UIComponentCatalog() {
       control: editableGridForm.control,
       getValues: editableGridForm.getValues,
       setValue: editableGridForm.setValue,
+      subscribe: editableGridForm.subscribe,
     },
     helper => [
       helper.text("商品名", "name", { defaultWidth: 160 }),

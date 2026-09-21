@@ -1,5 +1,5 @@
 import * as ReactHookForm from "react-hook-form"
-import { EditableGridLeafColumn, EditableGridRef } from "@halllky/editable-grid"
+import { EditableGridLeafColumn } from "@halllky/editable-grid"
 
 export type CreateButtonCellFunction = <TRow>(
   text: (row: TRow, rowIndex: number) => React.ReactNode,
@@ -17,7 +17,6 @@ export function createButtonCellHelper(
   control: ReactHookForm.Control<ReactHookForm.FieldValues>,
   arrayName: string,
   skipFirstRow: boolean | undefined,
-  gridRef: React.RefObject<EditableGridRef<ReactHookForm.FieldValues> | null>,
 ): CreateButtonCellFunction {
 
   return (text, onClick, options) => ({

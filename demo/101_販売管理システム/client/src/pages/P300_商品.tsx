@@ -76,12 +76,12 @@ function P300_商品() {
               to={`/shohin/${row.商品SEQ}`}>
               詳細
             </Link>
-          ), { defaultWidth: 60, disableResizing: true, isFixed: true }),
-          Grid.textColumn<商品一覧DisplayData>('外部システム側ID', row => row.外部システム側ID, { defaultWidth: 152 }),
-          Grid.textColumn<商品一覧DisplayData>('商品名', row => row.商品名, { defaultWidth: 300 }),
-          Grid.numericColumn<商品一覧DisplayData>('売値単価(税抜)', row => row.売値単価_税抜, { defaultWidth: 140, suffix: '円' }),
-          Grid.textColumn<商品一覧DisplayData>('消費税区分', row => row.消費税区分, { defaultWidth: 120 }),
-          Grid.numericColumn<商品一覧DisplayData>('在庫数', row => row.在庫数),
+          ), { columnId: '詳細リンク', defaultWidth: 60, disableResizing: true, isFixed: true }),
+          Grid.textColumn<商品一覧DisplayData>('外部システム側ID', row => row.外部システム側ID, { columnId: '外部システム側ID', defaultWidth: 152 }),
+          Grid.textColumn<商品一覧DisplayData>('商品名', row => row.商品名, { columnId: '商品名', defaultWidth: 300 }),
+          Grid.numericColumn<商品一覧DisplayData>('売値単価(税抜)', row => row.売値単価_税抜, { columnId: '売値単価_税抜', defaultWidth: 140, suffix: '円' }),
+          Grid.textColumn<商品一覧DisplayData>('消費税区分', row => row.消費税区分, { columnId: '消費税区分', defaultWidth: 120 }),
+          Grid.numericColumn<商品一覧DisplayData>('在庫数', row => row.在庫数, { columnId: '在庫数' }),
           Grid.interactiveColumn<商品一覧DisplayData>('', row => (
             <Button outline mini
               onClick={() => {
@@ -94,7 +94,7 @@ function P300_商品() {
             >
               在庫調整
             </Button>
-          ), { defaultWidth: 96, disableResizing: true }),
+          ), { columnId: '在庫調整ボタン', defaultWidth: 96, disableResizing: true }),
         ], []]}
       />
       {

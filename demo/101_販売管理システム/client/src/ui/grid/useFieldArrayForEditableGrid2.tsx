@@ -30,15 +30,16 @@ export function useFieldArrayForEditableGrid2<
   formProps: ReactHookForm.UseFieldArrayProps<TField, TArrayPath, TKeyName> & {
     getValues: ReactHookForm.UseFormGetValues<TField>
     setValue: ReactHookForm.UseFormSetValue<TField>
+    /** useForm の戻り値の subscribe。グリッド外からの値の変更をグリッドに伝えるために使う */
+    subscribe: ReactHookForm.UseFormSubscribe<TField>
   },
   getColumnDef: GetColumnDefWithHelper<ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName>>,
   getColumnDefDependencies: React.DependencyList,
 ) {
   type TRow = ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName>
 
-  const { getValues, setValue, ...fieldArrayProps } = formProps
+  const { getValues, setValue, subscribe: formSubscribe, ...fieldArrayProps } = formProps
   const fieldArrayReturn = ReactHookForm.useFieldArray<TField, TArrayPath, TKeyName>(fieldArrayProps)
-  const control = fieldArrayProps.control as ReactHookForm.Control<ReactHookForm.FieldValues>
 
   const gridRef = React.useRef<EG2.EditableGridRef<TRow>>(null)
   const helper = useColumnDefHelper<TField, TArrayPath, TKeyName>(
@@ -61,12 +62,12 @@ export function useFieldArrayForEditableGrid2<
   }, [getValues, fieldArrayProps.name])
 
   const subscribe = React.useCallback((onChange: () => void) => {
-    return control._subscribe({
-      name: fieldArrayProps.name,
+    return formSubscribe({
+      name: fieldArrayProps.name as ReactHookForm.FieldPath<TField>,
       formState: { values: true },
       callback: onChange,
     })
-  }, [control, fieldArrayProps.name])
+  }, [formSubscribe, fieldArrayProps.name])
 
   const onRowsChange = React.useCallback((updates: EG2.EditableGridRowUpdate<TRow>[]) => {
     for (const { rowIndex, row } of updates) {

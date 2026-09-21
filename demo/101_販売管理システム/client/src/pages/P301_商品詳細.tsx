@@ -108,9 +108,9 @@ function P301_商品詳細() {
   const pageTitle = `商品詳細: ${product.商品名}`
 
   const historyColumns = React.useMemo(() => [
-    Grid.textColumn<商品在庫増減履歴DisplayData>('日時', row => row.日時 ? dayjs(row.日時).format('YYYY-MM-DD HH:mm') : '', { defaultWidth: 150 }),
-    Grid.textColumn<商品在庫増減履歴DisplayData>('事由', row => row.事由, { defaultWidth: 140 }),
-    Grid.numericColumn<商品在庫増減履歴DisplayData>('増減数', row => row.増減数, { defaultWidth: 100 }),
+    Grid.textColumn<商品在庫増減履歴DisplayData>('日時', row => row.日時 ? dayjs(row.日時).format('YYYY-MM-DD HH:mm') : '', { columnId: '日時', defaultWidth: 150 }),
+    Grid.textColumn<商品在庫増減履歴DisplayData>('事由', row => row.事由, { columnId: '事由', defaultWidth: 140 }),
+    Grid.numericColumn<商品在庫増減履歴DisplayData>('増減数', row => row.増減数, { columnId: '増減数', defaultWidth: 100 }),
     Grid.interactiveColumn<商品在庫増減履歴DisplayData>('関連伝票', row => (
       <div className="flex flex-wrap gap-4 items-start">
         {/* 入荷へのリンク */}
@@ -134,7 +134,7 @@ function P301_商品詳細() {
           </Link>
         ))}
       </div>
-    ), { defaultWidth: 320, wrap: true }),
+    ), { columnId: '関連伝票', defaultWidth: 320, wrap: true }),
   ], [])
   const historyRowKeys = React.useMemo(() => history.map((_, index) => index.toString()), [history])
   const getLatestHistoryRowObject = React.useCallback((index: number) => history[index], [history])

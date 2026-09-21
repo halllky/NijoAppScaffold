@@ -19,7 +19,7 @@ export const PreviewSection: React.FC<{
   formMethods: ReactHookForm.UseFormReturn<EditingProject>
   projectDir: string | null
 }> = ({ formMethods, projectDir }) => {
-  const { control, register, getValues, setValue } = formMethods
+  const { control, register, getValues, setValue, subscribe } = formMethods
 
   // プレビュープロセスの起動・停止・ログ取得
   const { processes, logs, start, stop, isBusy, error } = usePreview(projectDir)
@@ -34,6 +34,7 @@ export const PreviewSection: React.FC<{
     control,
     getValues,
     setValue,
+    subscribe,
   }, helper => [
     helper.text("名前", "name", { defaultWidth: 90 }),
     helper.text("作業ディレクトリ", "process.cwd", { defaultWidth: 100 }),

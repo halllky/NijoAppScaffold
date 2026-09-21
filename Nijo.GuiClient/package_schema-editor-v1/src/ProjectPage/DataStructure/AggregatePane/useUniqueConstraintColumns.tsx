@@ -80,6 +80,18 @@ export function useUniqueConstraintsColumns(
           const indexInConstraint = constraints[i]?.memberUniqueIds.indexOf(row.uniqueId) ?? -1
           return indexInConstraint >= 0 ? String(indexInConstraint + 1) : ''
         },
+        // この列は textToCell の中で setValue している。
+        // ユニーク制約の並び順を持っているのはこの行ではなくコンテナ（直近の親メンバー、無ければルート）側であり、
+        // 「この行の値をこう変える」という形の textToCell の戻り値では表現できないため。
+        // 行自体は変わらないので引数の row をそのまま返す。
+        // グリッドは textToCell が引数と同じ参照を返した場合その行を変更なしとして扱うため、
+        // この列だけが変わったときは onRowsChange が呼ばれない。
+        //
+        // 副作用があることによる既知の制約:
+        // グリッドは1回の操作（貼り付け等）の更新内容を組み立て終わってから onRowsChange で行を書き戻す。
+        // ここでの setValue はそれより前に走るため、コンテナがこのグリッド内の別の行で、
+        // かつその行も同じ貼り付け範囲に含まれている場合、
+        // 組み立て前に読み取られた行オブジェクトで上書きされて制約の変更が巻き戻る。
         textToCell: (row, value) => {
           const container = findContainer(getValues, rootPath, membersPath, row.uniqueId)
           if (!container) return row

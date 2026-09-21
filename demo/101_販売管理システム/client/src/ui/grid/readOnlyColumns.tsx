@@ -4,17 +4,27 @@ import { formatNumber } from "./formatNumber"
 
 /**
  * 読み取り専用列で指定できるオプション。
- * renderHeader / renderBody / editor / cellToText / textToCell は
+ * renderHeader / getValuesForRender / renderBody / editor / cellToText / textToCell は
  * 各ビルダー関数が組み立てるため、呼び出し側からは指定できない。
+ *
+ * columnId は必須。ヘッダは ReactNode で一意性を保証できないため、
+ * ヘッダから自動生成せず呼び出し側で明示的に指定する
+ * （グリッド内で重複すると EditableGrid が例外を送出する）。
  */
 export type ReadOnlyColumnOptions<TRow> = Omit<
   EG2.EditableGridLeafColumn<TRow>,
-  'renderHeader' | 'renderBody' | 'editor' | 'cellToText' | 'textToCell' | 'columnId' | 'wrap'
+  'renderHeader' | 'getValuesForRender' | 'renderBody' | 'editor' | 'cellToText' | 'textToCell' | 'wrap'
 > & {
-  columnId?: string
   /** 折り返し表示するかどうか */
   wrap?: boolean
 }
+
+/** 折り返しの有無に応じたセル本体のクラス名 */
+const cellClassName = (wrap: boolean | undefined, extra?: string) => [
+  "w-full px-1 py-px",
+  wrap ? "whitespace-pre-wrap break-words" : "truncate",
+  extra,
+].filter(Boolean).join(" ")
 
 /**
  * 文字列表示列。
@@ -24,22 +34,19 @@ export type ReadOnlyColumnOptions<TRow> = Omit<
 export function textColumn<TRow>(
   header: React.ReactNode,
   getValue: (row: TRow) => string | number | null | undefined,
-  options?: ReadOnlyColumnOptions<TRow>,
-): EG2.EditableGridLeafColumn<TRow> {
-  const { columnId, wrap, ...rest } = options ?? {}
+  options: ReadOnlyColumnOptions<TRow>,
+): EG2.EditableGridLeafColumn<TRow, readonly [string | number]> {
+  const { wrap, ...rest } = options
   return {
-    columnId: columnId ?? String(header),
     renderHeader: () => (
       <div className="px-1 py-px truncate text-gray-700">{header}</div>
     ),
-    renderBody: ({ getRow }) => {
-      const value = getValue(getRow()) ?? ''
-      return wrap ? (
-        <div className="w-full px-1 py-px whitespace-pre-wrap">{value}</div>
-      ) : (
-        <div className="w-full px-1 py-px truncate" title={String(value)}>{value}</div>
-      )
-    },
+    getValuesForRender: row => [getValue(row) ?? ''],
+    renderBody: ({ deps: [value] }) => wrap ? (
+      <div className={cellClassName(true)}>{value}</div>
+    ) : (
+      <div className={cellClassName(false)} title={String(value)}>{value}</div>
+    ),
     cellToText: row => String(getValue(row) ?? ''),
     ...rest,
   }
@@ -49,17 +56,17 @@ export function textColumn<TRow>(
 export function numericColumn<TRow>(
   header: React.ReactNode,
   getValue: (row: TRow) => unknown,
-  options?: ReadOnlyColumnOptions<TRow> & { suffix?: string },
-): EG2.EditableGridLeafColumn<TRow> {
-  const { suffix, columnId, wrap: _wrap, ...rest } = options ?? {}
+  options: ReadOnlyColumnOptions<TRow> & { suffix?: string },
+): EG2.EditableGridLeafColumn<TRow, readonly [string]> {
+  const { suffix, wrap, ...rest } = options
   return {
-    columnId: columnId ?? String(header),
     renderHeader: () => (
       <div className="px-1 py-px truncate text-gray-700">{header}</div>
     ),
-    renderBody: ({ getRow }) => (
-      <div className="w-full px-1 py-px truncate text-right">
-        {formatNumber(getValue(getRow()), suffix)}
+    getValuesForRender: row => [formatNumber(getValue(row), suffix)],
+    renderBody: ({ deps: [value] }) => (
+      <div className={cellClassName(wrap, "text-right")}>
+        {value}
       </div>
     ),
     cellToText: row => formatNumber(getValue(row), suffix),
@@ -71,16 +78,16 @@ export function numericColumn<TRow>(
 export function customColumn<TRow>(
   header: React.ReactNode,
   render: (row: TRow) => React.ReactNode,
-  options?: ReadOnlyColumnOptions<TRow> & { getValueForCopy?: (row: TRow) => string },
-): EG2.EditableGridLeafColumn<TRow> {
-  const { getValueForCopy, columnId, wrap: _wrap, ...rest } = options ?? {}
+  options: ReadOnlyColumnOptions<TRow> & { getValueForCopy?: (row: TRow) => string },
+): EG2.EditableGridLeafColumn<TRow, readonly [TRow]> {
+  const { getValueForCopy, wrap, ...rest } = options
   return {
-    columnId: columnId ?? String(header),
     renderHeader: () => (
       <div className="px-1 py-px truncate text-gray-700">{header}</div>
     ),
-    renderBody: ({ getRow }) => (
-      <div className="w-full px-1 py-px truncate">{render(getRow())}</div>
+    getValuesForRender: row => [row],
+    renderBody: ({ deps: [row] }) => (
+      <div className={cellClassName(wrap)}>{render(row)}</div>
     ),
     cellToText: row => getValueForCopy?.(row) ?? '',
     ...rest,
@@ -95,20 +102,20 @@ export function customColumn<TRow>(
 export function interactiveColumn<TRow>(
   header: React.ReactNode,
   render: (row: TRow) => React.ReactNode,
-  options?: ReadOnlyColumnOptions<TRow> & { getValueForCopy?: (row: TRow) => string },
-): EG2.EditableGridLeafColumn<TRow> {
-  const { getValueForCopy, columnId, wrap: _wrap, ...rest } = options ?? {}
+  options: ReadOnlyColumnOptions<TRow> & { getValueForCopy?: (row: TRow) => string },
+): EG2.EditableGridLeafColumn<TRow, readonly [TRow]> {
+  const { getValueForCopy, wrap, ...rest } = options
   return {
-    columnId: columnId ?? String(header),
     renderHeader: () => (
       <div className="px-1 py-px truncate text-gray-700">{header}</div>
     ),
-    renderBody: ({ getRow }) => (
+    getValuesForRender: row => [row],
+    renderBody: ({ deps: [row] }) => (
       <div
-        className="w-full h-full px-1 py-px flex items-center gap-1"
+        className={`w-full h-full px-1 py-px flex gap-1 ${wrap ? 'flex-wrap items-start' : 'items-center'}`}
         onMouseDown={e => e.stopPropagation()}
       >
-        {render(getRow())}
+        {render(row)}
       </div>
     ),
     cellToText: row => getValueForCopy?.(row) ?? '',

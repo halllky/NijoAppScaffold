@@ -44,7 +44,7 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
   formMethods,
   elementRef,
 }) => {
-  const { control, getValues, setValue } = formMethods
+  const { control, getValues, setValue, subscribe } = formMethods
   const { models } = useSchemaEditorRule()
   const availableModelOptions = React.useMemo(() => models.map(m => ({
     id: m.schemaName,
@@ -60,6 +60,7 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
     control,
     getValues,
     setValue,
+    subscribe,
   }, helper => {
 
     const renderBodyWithValidation = (columnId: keyof GridRow): EG2.EditableGridBodyRenderer<GridRow> => ({ rowIndex }) => {

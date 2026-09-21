@@ -68,7 +68,7 @@ function SingleEnumEditor({ index, formMethods }: {
   index: number
   formMethods: ReactHookForm.UseFormReturn<EditingProject>
 }) {
-  const { register, control, getValues, setValue } = formMethods
+  const { register, control, getValues, setValue, subscribe } = formMethods
 
   // ルート要素（区分定義自体）の名前
   const rootNamePath = `staticEnums.${index}.physicalName` as const
@@ -93,6 +93,7 @@ function SingleEnumEditor({ index, formMethods }: {
     control,
     getValues,
     setValue,
+    subscribe,
   }, helper => {
     const columns: EG2.EditableGridColumn<any>[] = []
 

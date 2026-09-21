@@ -22,6 +22,8 @@ export function useFieldArrayForEditableGrid2<
   formProps: ReactHookForm.UseFieldArrayProps<TField, TArrayPath, TKeyName> & {
     getValues: ReactHookForm.UseFormGetValues<TField>
     setValue: ReactHookForm.UseFormSetValue<TField>
+    /** useForm の戻り値の subscribe。グリッド外からの値の変更をグリッドに伝えるために使う */
+    subscribe: ReactHookForm.UseFormSubscribe<TField>
     /** 子孫集約編集グリッドの場合、先頭の1行はルート集約なので、それをスキップする */
     skipFirstRow?: boolean
   },
@@ -31,7 +33,7 @@ export function useFieldArrayForEditableGrid2<
   type TRow = ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName>
 
   // react-hook-form
-  const { getValues, setValue, skipFirstRow, ...fieldArrayProps } = formProps
+  const { getValues, setValue, subscribe: formSubscribe, skipFirstRow, ...fieldArrayProps } = formProps
   const fieldArrayReturn = ReactHookForm.useFieldArray<TField, TArrayPath, TKeyName>(fieldArrayProps)
   const control = formProps.control as ReactHookForm.Control<ReactHookForm.FieldValues>
 
@@ -43,7 +45,7 @@ export function useFieldArrayForEditableGrid2<
     return {
       text: createTextCellHelper(get, set, control, fieldArrayProps.name, skipFirstRow),
       checkBox: createCheckBoxCellHelper(get, set, control, fieldArrayProps.name, skipFirstRow),
-      button: createButtonCellHelper(get, control, fieldArrayProps.name, skipFirstRow, gridRef),
+      button: createButtonCellHelper(get, control, fieldArrayProps.name, skipFirstRow),
       dropdown: createDropdownCellHelper(get, set, control, fieldArrayProps.name, skipFirstRow),
       elementName: createElementNameCellHelper(get, set, control, fieldArrayProps.name, skipFirstRow),
       typeComboBox: createComboBoxCellHelper(get, set, control, fieldArrayProps.name, skipFirstRow),
@@ -71,12 +73,12 @@ export function useFieldArrayForEditableGrid2<
 
   // react-hook-form の値が変わったことをグリッドに通知する。
   const subscribe = React.useCallback((onChange: () => void) => {
-    return control._subscribe({
-      name: fieldArrayProps.name,
+    return formSubscribe({
+      name: fieldArrayProps.name as ReactHookForm.FieldPath<TField>,
       formState: { values: true },
       callback: onChange,
     })
-  }, [control, fieldArrayProps.name])
+  }, [formSubscribe, fieldArrayProps.name])
 
   // グリッドの操作（編集確定・貼り付け・Delete）による変更を react-hook-form に反映する。
   const onRowsChange = React.useCallback((updates: EditableGridRowUpdate<TRow>[]) => {

@@ -79,7 +79,7 @@ function P201_入荷詳細(props: {
   const formMethods = ReactHookForm.useForm<入荷詳細DisplayData>({
     defaultValues: loaderData,
   })
-  const { register, control, getValues, setValue, reset } = formMethods
+  const { register, control, getValues, setValue, reset, subscribe } = formMethods
   const { isDirty } = formMethods.formState
 
   const maxLen商品コード = maxLengthOf("入荷詳細", "入荷商品一覧.0.商品.外部システム側ID")
@@ -95,7 +95,7 @@ function P201_入荷詳細(props: {
     fieldArrayReturn: { append, remove },
     editableGrid2Props,
   } = Grid.useFieldArrayForEditableGrid2(
-    { name: "入荷商品一覧", control, getValues, setValue },
+    { name: "入荷商品一覧", control, getValues, setValue, subscribe },
     helper => [
       helper.text("商品コード", "商品.外部システム側ID", { defaultWidth: 140, maxLength: maxLen商品コード }),
       helper.text("商品名", "商品.商品名", { defaultWidth: 256, isReadOnly: true }),

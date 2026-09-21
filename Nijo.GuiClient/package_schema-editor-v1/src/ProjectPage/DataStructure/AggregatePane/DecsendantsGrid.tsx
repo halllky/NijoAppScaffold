@@ -36,7 +36,7 @@ function DecsendantsGrid(props: {
 
   const {
     rootLocation,
-    formMethods: { control, getValues, setValue },
+    formMethods: { control, getValues, setValue, subscribe },
     className,
   } = props
 
@@ -57,6 +57,7 @@ function DecsendantsGrid(props: {
     control,
     getValues,
     setValue,
+    subscribe,
   }, helper => {
     const columns: EG2.EditableGridColumn<GridRowType>[] = []
 

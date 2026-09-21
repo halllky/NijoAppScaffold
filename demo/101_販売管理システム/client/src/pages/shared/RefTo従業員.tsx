@@ -63,8 +63,8 @@ export const [
 
   // 検索結果グリッドの列定義
   getSearchResultGridColumns: () => [
-    Grid.textColumn<従業員RefRefTarget>('従業員番号', row => row.従業員番号, { defaultWidth: 120 }),
-    Grid.textColumn<従業員RefRefTarget>('氏名', row => row.氏名, { defaultWidth: 200 }),
+    Grid.textColumn<従業員RefRefTarget>('従業員番号', row => row.従業員番号, { columnId: '従業員番号', defaultWidth: 120 }),
+    Grid.textColumn<従業員RefRefTarget>('氏名', row => row.氏名, { columnId: '氏名', defaultWidth: 200 }),
   ],
 
   // 検索条件欄のレンダリング

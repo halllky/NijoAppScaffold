@@ -176,6 +176,7 @@ function EmployeeGrid({ methods }: { methods: UseFormReturn<従業員一括更�
       control: methods.control,
       getValues: methods.getValues,
       setValue: methods.setValue,
+      subscribe: methods.subscribe,
     },
     helper => [
       // 操作列（削除・復元）。既にDBにある行は論理削除（willBeDeletedフラグ）、新規行は物理削除。
