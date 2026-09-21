@@ -1,8 +1,25 @@
 # nijo-schema-editor (for old version)
 
+## 環境構築
+
+全体的に .net 10 だがold版だけは .net 9 で動いている。
+10しか入っていない場合は9をインストールする。以下は VSCode Dev Container 用。
+
+```sh
+sudo apt-get update \
+    && apt-get install -y wget \
+    && wget https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh \
+    && chmod +x /tmp/dotnet-install.sh \
+    && /tmp/dotnet-install.sh --channel 9.0 --install-dir /usr/share/dotnet \
+    && rm /tmp/dotnet-install.sh \
+    && rm -rf /var/lib/apt/lists/*
+```
+
 ## デバッグ
 
 バックエンドに nijo.exe のGUIサービス（実態はローカルホストに立つ単なるHTTPサーバー）を起動しておく。
+（VSCodeの場合は Run Task の "Nijo > old版(バックエンド)" から）
+
 それと並行してフロントエンド側（このパッケージ）は `npm run dev` コマンドで Node.js (Vite) によるWebサーバーを別ポートに起動する。
 
 なお、バックとフロントで別々のポートにサーバーが立つ（クロスオリジン）ことになるが、

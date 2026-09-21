@@ -98,10 +98,6 @@ namespace Nijo {
                 ["-p", "--port"],
                 description: "スキーマ定義編集アプリケーションが実行されるポートを明示的に指定します。");
 
-            var noBrowser = new Option<bool>(
-                ["-n", "--no-browser"],
-                description: "スキーマ定義編集アプリケーションの開始時に自動的にブラウザを開くのを防ぎます。");
-
             var timeout = new Option<int?>(
                 ["-t", "--timeout"],
                 description: "TypeScriptやC#のビルドのタイムアウト時間。単位は秒。");
@@ -206,26 +202,13 @@ namespace Nijo {
             var ui = new Command(
                 name: "ui",
                 description: $"スキーマ定義をGUIで編集します。")
-                { path, port, noBrowser };
-            ui.SetHandler(async (path, port, noBrowser) => {
+                { path, port };
+            ui.SetHandler(async (path, port) => {
                 var project = GeneratedProject.Open(path, serviceProvider);
                 var editor = new NijoUi(project);
                 var app = editor.CreateApp();
-
-                var url = $"https://localhost:{port ?? 5000}";
-
-                // ブラウザを開く
-                if (!noBrowser) {
-                    Process.Start(new ProcessStartInfo {
-                        FileName = url,
-                        UseShellExecute = true,
-                    });
-                }
-
-                // アプリケーション起動
-                await app.RunAsync(url);
-
-            }, path, port, noBrowser);
+                await app.RunAsync();
+            }, path, port);
             rootCommand.AddCommand(ui);
 
             var kbn = new Command(

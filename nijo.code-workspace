@@ -20,6 +20,10 @@
       "path": "Nijo.GuiClient/package_schema-editor-v1"
     },
     {
+      "name": "Nijo_GUI (v0.9)",
+      "path": "Nijo.GuiClient/package_schema-editor-v0.9"
+    },
+    {
       "name": "Nijo_Template",
       "path": "Nijo.NewProjectTemplate"
     },
@@ -220,7 +224,24 @@
           "cwd": "${workspaceFolder:ワークスペース全体}"
         },
         "command": "npm run test:ci && dotnet test ${workspaceFolder:ワークスペース全体}/Nijo.IntegrationTest/Nijo.IntegrationTest.csproj"
-      }
+      },
+      {
+        "label": "Nijo > old版(バックエンド)",
+        "type": "shell",
+        "command": "dotnet",
+        "options": {
+          "cwd": "${workspaceFolder:ワークスペース全体}/nijo-old（移植前）"
+        },
+        "args": [
+          "run",
+          "--launch-profile",
+          "http",
+          "--",
+          "ui",
+          "${workspaceFolder:Nijo_GUI (v0.9)}/動作確認用ダミープロジェクト",
+        ],
+        "problemMatcher": [],
+      },
     ],
     "inputs": [
       {

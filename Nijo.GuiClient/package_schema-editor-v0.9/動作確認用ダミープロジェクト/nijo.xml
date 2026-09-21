@@ -1,0 +1,118 @@
+<LegacyApp UseWijmo="True"
+            DisableLocalRepository="True"
+            UseBatchUpdateVersion2="True"
+            DbContextName="MyDbContext"
+            CreateUserDbColumnName="REG_MAN_CD"
+            UpdateUserDbColumnName="UP_MAN_CD"
+            CreateAtDbColumnName="REG_DT"
+            UpdateAtDbColumnName="UP_DT"
+            CreatedAtDbColumnName="REG_DT"
+            UpdatedAtDbColumnName="UP_DT"
+            VersionDbColumnName="UP_VERSION"
+            VFormRefItemIsNotWide="True"
+            VFormThreshold="600"
+            MaxFileSizeMB="10"
+            MaxTotalFileSizeMB="10"
+            AttachmentFileExtensions="doc;docx;xls;xlsx;pdf">
+
+  <申請区分種別 is="dynamic-enum-type:application-kind" DisplayName="申請区分種別" />
+
+  <申請区分マスタ is="write-model-2 generate-default-read-model is-dynamic-enum-write-model force-generate-refto-modules"
+            LatinName="application_kind_master"
+            DisplayName="申請区分マスタ">
+    <内部キー is="seq:APP_KIND_SEQ key" />
+    <種別 is="word required" />
+    <値CD is="word required" />
+    <表示名称 is="word required name" />
+  </申請区分マスタ>
+
+  <取引状態 is="enum" DisplayName="取引状態">
+    <未処理 key="0" />
+    <処理済 key="1" />
+    <取消 key="2" />
+  </取引状態>
+
+  <取引先コード is="value-object" DisplayName="取引先コード" LatinName="customer_code" />
+
+  <取引先マスタ is="write-model-2 generate-default-read-model force-generate-refto-modules"
+          DbName="M_CUSTOMER"
+          LatinName="customer_master"
+          DisplayName="取引先マスタ">
+    <取引先ID is="int:9 key" DbName="CUSTOMER_ID" />
+    <取引先コード is="取引先コード search-behavior:前方一致 character-type:HalfWidthAlphaNum name" />
+    <取引先名 is="word max-length:100 required" />
+    <有効開始日 is="date" />
+    <最終更新日時 is="datetime hidden" />
+    <取引履歴 is="children required">
+      <履歴ID is="int:9 key" />
+      <変更月 is="year-month" />
+      <変更理由 is="sentence wide" />
+      <確認済 is="bool" />
+    </取引履歴>
+  </取引先マスタ>
+
+  <取引先照会 is="read-model-2 readonly customize-batch-update-read-models force-generate-refto-modules"
+          LatinName="customer_query"
+          DisplayName="取引先照会">
+    <取引先ID is="int:9 key" />
+    <取引先コード is="取引先コード search-behavior:前方一致 name" />
+    <取引先名 is="word max-length:100 required" />
+    <有効開始日 is="date" />
+    <照会履歴 is="children has-lifecycle required">
+      <履歴ID is="int:9 key" />
+      <変更月 is="year-month" />
+      <変更理由 is="sentence wide" />
+      <確認済 is="bool" />
+      <検索専用フラグ is="search-condition-only-bool" />
+      <検索専用メモ is="word search-condition-only" />
+    </照会履歴>
+  </取引先照会>
+
+  <受注 is="write-model-2 generate-default-read-model"
+      DbName="T_ORDER"
+      LatinName="order_entry"
+      DisplayName="受注">
+    <受注ID is="int:9 key" DbName="ORDER_ID" />
+    <受注番号 is="word max-length:20 required character-type:HalfWidthAlphaNum name" />
+    <取引先 is="ref-to:取引先マスタ" />
+    <申請区分 is="ref-to:申請区分マスタ dynamic-enum-type-physical-name:申請区分種別" />
+    <状態 is="取引状態 combo" />
+    <公開状態 is="取引状態 radio hidden" />
+    <金額 is="decimal:12,2 not-negative required" />
+    <件数 is="int:9 not-negative" />
+    <受付日 is="date" />
+    <受付日時 is="datetime" />
+    <識別子 is="uuid" />
+    <添付資料 is="file" />
+    <バイナリ is="bytearray" />
+    <備考 is="sentence wide" />
+    <明細 is="children required">
+      <明細ID is="int:9 key" />
+      <商品名 is="word max-length:100 required" />
+      <数量 is="int:9 not-negative required" />
+      <単価 is="decimal:9,2 not-negative" />
+      <取引状態 is="取引状態" />
+    </明細>
+    <配送 is="child">
+      <配送先名 is="word max-length:100" />
+      <配送先住所 is="sentence wide" />
+    </配送>
+  </受注>
+
+  <受注検索 is="read-model-2 force-generate-refto-modules"
+        LatinName="order_query"
+        DisplayName="受注検索">
+    <受注検索ID is="int:9 key" />
+    <取引先 is="ref-to:取引先照会 grid-combo" />
+    <受注番号 is="word search-behavior:部分一致" />
+    <取引先コード is="取引先コード search-behavior:完全一致" />
+    <受付開始 is="date search-condition-only" />
+    <完了のみ is="search-condition-only-bool" />
+  </受注検索>
+
+  <受注登録 is="command" DisplayName="受注登録コマンド">
+    <受付担当 is="word required" />
+    <一時保存 is="bool" />
+    <実行理由 is="sentence wide" />
+  </受注登録>
+</LegacyApp>

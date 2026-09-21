@@ -45,19 +45,8 @@ namespace Nijo.Runtime {
         internal WebApplication CreateApp() {
             var builder = WebApplication.CreateBuilder();
 
-            // React側のデバッグのためにポートが異なっていてもアクセスできるようにする
-            const string CORS_POLICY_NAME = "AllowAll";
-            builder.Services.AddCors(options => {
-                options.AddPolicy(CORS_POLICY_NAME, builder => {
-                    builder.AllowAnyOrigin()
-                           .AllowAnyMethod()
-                           .AllowAnyHeader();
-                });
-            });
-
             var app = builder.Build();
             app.UseRouting();
-            app.UseCors(CORS_POLICY_NAME);
 
             // ルートにアクセスされた場合、GUI設定プロジェクトのビルド後html（js, css がすべて1つのhtmlファイル内にバンドルされているもの）を返す。
             app.MapGet("/", async context => {
@@ -77,7 +66,7 @@ namespace Nijo.Runtime {
             });
 
             // 画面初期表示時データ読み込み処理
-            app.MapGet("/load", async context => {
+            app.MapGet("/api/load", async context => {
                 var schema = MutableSchema.FromXmlDocument(_project.SchemaXmlPath);
 
                 context.Response.ContentType = "application/json";
@@ -93,7 +82,7 @@ namespace Nijo.Runtime {
             });
 
             // mermaid.js によるグラフ表示
-            app.MapPost("/mermaid", async context => {
+            app.MapPost("/api/mermaid", async context => {
                 try {
                     var schema = await MutableSchema.FromHttpRequest(context.Request.Body);
                     var onlyRoot = context.Request.Query.ContainsKey("only-root");
@@ -197,7 +186,7 @@ namespace Nijo.Runtime {
             });
 
             // 編集中のバリデーション
-            app.MapPost("/validate", async context => {
+            app.MapPost("/api/validate", async context => {
                 try {
                     var schema = await MutableSchema.FromHttpRequest(context.Request.Body);
                     var errors = ValidationError.ToErrorObjectJson(schema.CollectVaridationErrors());
@@ -211,7 +200,7 @@ namespace Nijo.Runtime {
                 }
             });
 
-            app.MapPost("/save", async context => {
+            app.MapPost("/api/save", async context => {
                 try {
                     // バリデーション
                     var schema = await MutableSchema.FromHttpRequest(context.Request.Body);
@@ -1989,7 +1978,7 @@ namespace Nijo.Runtime {
             Key = "children", // <= この値はTypeScript側でref-toの参照先として使用可能な集約の判定に使っているので変更時は注意
             DisplayName = "Children",
             HelpText = $$"""
-                親1件に対する複数件の子要素。 
+                親1件に対する複数件の子要素。
                 """,
             FindMatchingIsAttribute = (depth, isAttr) => {
                 if (depth == 0) return null;
