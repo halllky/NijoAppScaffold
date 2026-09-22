@@ -8,7 +8,7 @@ import {
   NODE_TYPE_WRITE_READ_MODEL,
   type EditingSchemaNode,
   type RootAggregateDef,
-} from "../../features/backend"
+} from "../backend"
 
 /** ダイアグラムに表示するルート集約のモデルの種類 */
 export type ModelKind = "write" | "read" | "write-read" | "command"

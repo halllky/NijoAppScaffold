@@ -1,4 +1,4 @@
-import type { ModelKind } from "./aggregateTree"
+import type { ModelKind } from "../../features/diagram"
 
 /** モデルの種類ごとの配色。エッジの色にも使う */
 export const MODEL_COLORS: { [key in ModelKind]: {

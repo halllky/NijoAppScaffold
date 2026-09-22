@@ -5,12 +5,11 @@ import { ArrowPathIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline"
 import { Button } from "../../ui"
 import { createNewSchemaNode, type EditingProject } from "../../features/backend"
 import { AggregatePane } from "../AggregatePane"
-import { buildAggregateTree, type DiagramReference, type DiagramSelection } from "./aggregateTree"
+import { buildAggregateTree, useNodeLayout, type DiagramReference, type DiagramSelection } from "../../features/diagram"
 import { AggregateNode, type AggregateFlowNode } from "./AggregateNode"
 import { FloatingEdge, type FloatingFlowEdge } from "./FloatingEdge"
 import { MODEL_COLORS } from "./modelColors"
 import { NewRootAggregateDialog } from "./NewRootAggregateDialog"
-import { useNodeLayout } from "./useNodeLayout"
 
 /**
  * React Flow を使って nijo.xml の Write Model / Read Model / Command Model を

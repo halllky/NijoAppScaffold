@@ -1,6 +1,6 @@
 import React from "react"
 import { Handle, Position, useUpdateNodeInternals, type Node, type NodeProps } from "@xyflow/react"
-import type { DiagramAggregate, DiagramSelection } from "./aggregateTree"
+import type { DiagramAggregate, DiagramSelection } from "../../features/diagram"
 import { MODEL_COLORS } from "./modelColors"
 
 /** ダイアグラム上のルート集約1個分のノード */

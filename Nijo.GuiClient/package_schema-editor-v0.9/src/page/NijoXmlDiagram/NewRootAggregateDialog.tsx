@@ -8,7 +8,7 @@ import {
   NODE_TYPE_WRITE_READ_MODEL,
   type EditingProject,
 } from "../../features/backend"
-import { getModelKind } from "./aggregateTree"
+import { getModelKind } from "../../features/diagram"
 import { MODEL_COLORS } from "./modelColors"
 
 /**

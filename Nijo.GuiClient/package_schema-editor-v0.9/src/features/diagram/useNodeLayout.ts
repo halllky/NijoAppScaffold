@@ -1,7 +1,7 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
 import type { Dimensions, Node, NodeChange, XYPosition } from "@xyflow/react"
-import type { EditingProject } from "../../features/backend"
+import type { EditingProject } from "../backend"
 import type { DiagramAggregate, DiagramReference, ModelKind } from "./aggregateTree"
 
 /**
