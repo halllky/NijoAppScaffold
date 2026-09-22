@@ -38,8 +38,8 @@ export function useRowOperations<
   useFieldArrayReturn: ReactHookForm.UseFieldArrayReturn<TField, TArrayPath>,
   /** 操作対象の行を決めるために使うグリッドの参照 */
   gridRef: React.RefObject<EditableGridRef<ReactHookForm.FieldArray<TField, TArrayPath>> | null>,
-  /** 行追加時に挿入する行を作成する。追加のたびに呼ばれる */
-  createNewRow: () => ReactHookForm.FieldArray<TField, TArrayPath>,
+  /** 行追加時に挿入する行を作成する。追加のたびに呼ばれる。引数は挿入位置の直前の選択行（未選択の場合は undefined） */
+  createNewRow: (previousRow: ReactHookForm.FieldArray<TField, TArrayPath> | undefined) => ReactHookForm.FieldArray<TField, TArrayPath>,
 ): RowOperations & {
   /** 行操作のキーボード操作を受け付けるハンドラ。全列の onCellKeyDown に設定すること */
   handleCellKeyDown: CellKeyDownHandler<ReactHookForm.FieldArray<TField, TArrayPath>>
@@ -71,7 +71,7 @@ export function useRowOperations<
       ? rowCountRef.current
       : selectedRows[selectedRows.length - 1].rowIndex + 1
 
-    insert(insertAt, createNewRowRef.current(), { shouldFocus: false })
+    insert(insertAt, createNewRowRef.current(selectedRows.at(-1)?.row), { shouldFocus: false })
     rangeToSelectRef.current = [insertAt, insertAt]
   }, [gridRef, insert])
 

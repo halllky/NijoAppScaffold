@@ -3,6 +3,7 @@ import * as ReactHookForm from "react-hook-form"
 import { Button, NowLoading } from "../ui"
 import { useBackendData, type EditingProject } from "../features/backend"
 import { DynamicAndStaticEnumPane } from "./DynamicAndStaticEnum"
+import { NijoXmlDiagram } from "./NijoXmlDiagram"
 
 /**
  * プロジェクト画面。
@@ -72,6 +73,9 @@ function AfterLoaded({ defaultValues }: {
 
         {/* タブの中身 */}
         <div className="flex-1 min-h-0 pt-1">
+          {selectedTab === "Write/Read/Command" && (
+            <NijoXmlDiagram />
+          )}
           {selectedTab === "区分定義" && (
             <DynamicAndStaticEnumPane />
           )}

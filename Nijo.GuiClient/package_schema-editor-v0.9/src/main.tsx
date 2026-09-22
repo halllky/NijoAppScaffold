@@ -4,6 +4,7 @@ import { BackendDataContextProvider } from "./features/backend"
 import ProjectPage from "./page/ProjectPage"
 
 import "allotment/dist/style.css"
+import "@xyflow/react/dist/style.css"
 import "./index.css"
 
 createRoot(document.getElementById("root")!).render(

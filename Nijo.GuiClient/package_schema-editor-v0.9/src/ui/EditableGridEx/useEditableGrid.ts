@@ -136,8 +136,8 @@ export type ColumnHelper<TRow> = ReturnType<typeof createColumnHelper<TRow>> & {
  * `useEditableGrid` のオプション
  */
 export type UseEditableGridOptions<TRow> = {
-  /** 行追加時に挿入する行を作成する。追加のたびに呼ばれる */
-  createNewRow: () => TRow
+  /** 行追加時に挿入する行を作成する。追加のたびに呼ばれる。引数は挿入位置の直前の選択行（未選択の場合は undefined） */
+  createNewRow: (previousRow: TRow | undefined) => TRow
 }
 
 /**
