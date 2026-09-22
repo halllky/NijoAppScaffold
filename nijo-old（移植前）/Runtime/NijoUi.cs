@@ -16,6 +16,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
@@ -1147,11 +1148,25 @@ namespace Nijo.Runtime {
             }
 
             /// <summary>
-            /// ファイル保存時のJSONの設定。
-            /// ファイルはgit管理される想定のため、ノードの位置の変更が行単位の差分として見えるよう改行とインデントを入れる。
+            /// ファイル保存時のJSONの設定
             /// </summary>
             private static readonly JsonSerializerOptions _fileJsonSerializerOptions = new(StringExtension.JsonSerializerOptions) {
+                // ファイルはgit管理される想定のため、ノードの位置の変更が行単位の差分として見えるよう改行とインデントを入れる
                 WriteIndented = true,
+                // 保存のたびに順番が変わらないようにそろえる
+                TypeInfoResolver = new DefaultJsonTypeInfoResolver {
+                    Modifiers = {
+                        typeInfo => {
+                            if (typeInfo.Kind != JsonTypeInfoKind.Object) return;
+
+                            // プロパティを名前順（アルファベット順）に並び替えて、Orderプロパティを再設定する
+                            var properties = typeInfo.Properties.OrderBy(p => p.Name).ToList();
+                            for (int i = 0; i < properties.Count; i++) {
+                                properties[i].Order = i;
+                            }
+                        },
+                    },
+                },
             };
 
             private static string GetFilePath(string entryXmlFilePath) {
