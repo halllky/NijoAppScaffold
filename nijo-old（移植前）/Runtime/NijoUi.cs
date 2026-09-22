@@ -1389,7 +1389,8 @@ namespace Nijo.Runtime {
                     && !string.IsNullOrWhiteSpace(node.TypeDetail)
                     && int.TryParse(node.TypeDetail!.Split(',', StringSplitOptions.RemoveEmptyEntries)[0], out var intEnumValue)) {
 
-                    el.SetAttributeValue(AppSchemaXml.ENUM_VALUE_KEY, intEnumValue);
+                    // 「DisplayName空」を消さないよう、整数部分だけでなく文字列全体を書き戻す
+                    el.SetAttributeValue(AppSchemaXml.ENUM_VALUE_KEY, node.TypeDetail.Trim());
                 }
 
                 // 型以外のis属性
