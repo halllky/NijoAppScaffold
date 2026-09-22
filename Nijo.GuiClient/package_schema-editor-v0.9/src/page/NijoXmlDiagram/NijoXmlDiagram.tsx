@@ -122,12 +122,7 @@ export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onDraggingCh
         onNodeDragStop={() => onDraggingChanged?.(false)}
         onSelectionDragStart={() => onDraggingChanged?.(true)}
         onSelectionDragStop={() => onDraggingChanged?.(false)}
-        // 左ドラッグは範囲選択、中・右ドラッグは画面の移動。
-        // ノードが多くなるとまとめて動かす操作の方が頻繁になるため、範囲選択を左ドラッグに割り当てている
-        selectionOnDrag
-        panOnDrag={PAN_ON_DRAG_BUTTONS}
         selectionMode={SelectionMode.Partial}
-        // 未選択のノードをドラッグしただけで選択状態が変わらないよう、選択はクリックに限る
         selectNodesOnDrag={false}
         nodesConnectable={false}
         deleteKeyCode={null}
@@ -167,9 +162,6 @@ export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onDraggingCh
 const NODE_TYPES = { aggregate: AggregateNode }
 /** ダイアグラムのエッジの種類 */
 const EDGE_TYPES = { floating: FloatingEdge }
-
-/** 画面の移動に使うマウスボタン（中・右） */
-const PAN_ON_DRAG_BUTTONS = [1, 2]
 
 /** 初期表示範囲の調整。集約が少ないときに等倍を超えて拡大されないようにする */
 const FIT_VIEW_OPTIONS = { maxZoom: 1 }
