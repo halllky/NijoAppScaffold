@@ -1,6 +1,6 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
-import type { EditingProject } from "../../features/backend"
+import { MULTI_VIEW_DETAIL_LINK_BEHAVIORS, type EditingProject } from "../../features/backend"
 import { ValueObjectEditor } from "./ValueObjectEditor"
 
 /**
@@ -126,12 +126,6 @@ export function AppSettingsPane() {
     </div>
   )
 }
-
-/** 一覧画面の詳細リンクの挙動の選択肢 */
-const MULTI_VIEW_DETAIL_LINK_BEHAVIORS = [
-  { value: "navigateToEditMode", displayName: "編集モードの詳細画面に遷移する" },
-  { value: "navigateToReadOnlyMode", displayName: "読み取り専用モードの詳細画面に遷移する" },
-] as const
 
 /** 設定項目を「ラベル / 入力欄 / 説明」の3列に揃えて並べる */
 function SettingTable({ children }: {

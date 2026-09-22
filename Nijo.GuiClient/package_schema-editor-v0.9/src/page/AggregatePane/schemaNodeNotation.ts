@@ -1,5 +1,7 @@
 import {
   NODE_TYPE_PREFIX_REF_TO,
+  NODE_TYPE_PREFIX_ENUM,
+  NODE_TYPE_PREFIX_VALUE_OBJECT,
   type EditingProject,
   type EditingSchemaNode,
 } from "../../features/backend"
@@ -11,11 +13,6 @@ import {
 // - 通常の種類: `word`, `int:9` のように「種類のキー:種類の詳細」
 // - 集約への参照: `ref-to:受注/明細` のように、参照先の集約の名前をルートから順にスラッシュで繋げたもの
 // - 静的区分・値オブジェクト: その区分・値オブジェクトの名前そのもの
-
-/** 静的区分を指す種類の接頭辞。後ろに静的区分のルート要素の uniqueId が続く */
-const NODE_TYPE_PREFIX_ENUM = "enum:"
-/** 値オブジェクトを指す種類の接頭辞。後ろに値オブジェクトのルート要素の uniqueId が続く */
-const NODE_TYPE_PREFIX_VALUE_OBJECT = "value-object:"
 
 /**
  * ノードの種類を文字列にする。

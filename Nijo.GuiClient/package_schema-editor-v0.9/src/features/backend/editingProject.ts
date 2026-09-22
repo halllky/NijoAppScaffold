@@ -2,7 +2,19 @@
 // サーバー側はすべてのノードを深さ付きのフラットな配列で扱うが、
 // 画面側では編集単位ごとに配列を分けておいた方がグリッド等にそのままバインドできて扱いやすいため、ここで組み替える。
 
-import type { ClientRequest, Config, GraphLayout, InitialLoadData, OptionalAttributeDef, OptionalAttributeValue, SchemaNode, SchemaNodeTypeDef } from "./types"
+import {
+  NODE_TYPE_STATIC_ENUM,
+  NODE_TYPE_DYNAMIC_ENUM_TYPE,
+  NODE_TYPE_VALUE_OBJECT,
+  type ClientRequest,
+  type Config,
+  type GraphLayout,
+  type InitialLoadData,
+  type OptionalAttributeDef,
+  type OptionalAttributeValue,
+  type SchemaNode,
+  type SchemaNodeTypeDef,
+} from "./types"
 
 /** 画面上で編集するプロジェクトのデータ */
 export type EditingProject = {
@@ -58,35 +70,6 @@ export type StaticEnumDef = {
    */
   values: EditingSchemaNode[]
 }
-
-/** 静的区分のルート要素の種類 */
-export const NODE_TYPE_STATIC_ENUM = "enum"
-/** 動的区分の種類のルート要素の種類 */
-export const NODE_TYPE_DYNAMIC_ENUM_TYPE = "dynamic-enum-type"
-
-/** Write Model のルート要素の種類 */
-export const NODE_TYPE_WRITE_MODEL = "write-model-2"
-/** Read Model のルート要素の種類 */
-export const NODE_TYPE_READ_MODEL = "read-model-2"
-/** Write Model と Read Model の両方を兼ねるルート要素の種類 */
-export const NODE_TYPE_WRITE_READ_MODEL = "write-model-2 generate-default-read-model"
-/** Command Model のルート要素の種類 */
-export const NODE_TYPE_COMMAND_MODEL = "command"
-/** 値オブジェクトのルート要素の種類 */
-export const NODE_TYPE_VALUE_OBJECT = "value-object"
-/** 親と1対1の関係を持つ子集約の種類 */
-export const NODE_TYPE_CHILD = "child"
-/** 親と1対多の関係を持つ子集約の種類 */
-export const NODE_TYPE_CHILDREN = "children"
-
-/**
- * 他の集約への参照を表すメンバーの種類の接頭辞。
- * 種類の値はこの接頭辞の後ろに参照先ノードの uniqueId が続く形になる。
- */
-export const NODE_TYPE_PREFIX_REF_TO = "ref-to:"
-
-/** 物理名のオプショナル属性のキー。未指定の場合は displayName から物理名が決まる */
-export const ATTR_KEY_PHYSICAL_NAME = "physical-name"
 
 /**
  * サーバーから受け取ったデータを画面上で編集するためのデータ構造に変換する。
