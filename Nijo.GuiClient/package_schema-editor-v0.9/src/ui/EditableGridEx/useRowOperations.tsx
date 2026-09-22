@@ -16,6 +16,9 @@ export type RowOperations = {
   moveSelectedRows: (offset: -1 | 1) => void
 }
 
+/** 行の追加・削除・並べ替えのいずれを行ったか */
+export type RowRearrangement = "insert" | "remove" | "move"
+
 /** 列定義の onCellKeyDown に設定するハンドラ */
 export type CellKeyDownHandler<TRow> = NonNullable<EditableGridLeafColumn<TRow>["onCellKeyDown"]>
 
@@ -24,6 +27,7 @@ export type CellKeyDownHandler<TRow> = NonNullable<EditableGridLeafColumn<TRow>[
  *
  * 操作の対象はグリッドのセル選択範囲に含まれる行。
  * 操作後は、操作した結果の位置の行が選択される。
+ * 配列を書き換えた後で、どの操作を行ったかが通知される。
  *
  * キーボード操作は以下。
  * - Ctrl + Enter: 行追加
@@ -40,6 +44,8 @@ export function useRowOperations<
   gridRef: React.RefObject<EditableGridRef<ReactHookForm.FieldArray<TField, TArrayPath>> | null>,
   /** 行追加時に挿入する行を作成する。追加のたびに呼ばれる。引数は挿入位置の直前の選択行（未選択の場合は undefined） */
   createNewRow: (previousRow: ReactHookForm.FieldArray<TField, TArrayPath> | undefined) => ReactHookForm.FieldArray<TField, TArrayPath>,
+  /** 行の追加・削除・並べ替えによって配列を書き換えた後に呼ばれる */
+  onRowsRearranged: (kind: RowRearrangement) => void,
 ): RowOperations & {
   /** 行操作のキーボード操作を受け付けるハンドラ。全列の onCellKeyDown に設定すること */
   handleCellKeyDown: CellKeyDownHandler<ReactHookForm.FieldArray<TField, TArrayPath>>
@@ -51,6 +57,8 @@ export function useRowOperations<
   // これらを行操作の関数の依存に含めると、関数の参照が変わるたびにそれを使う列定義も作り直されてしまう
   const createNewRowRef = React.useRef(createNewRow)
   createNewRowRef.current = createNewRow
+  const onRowsRearrangedRef = React.useRef(onRowsRearranged)
+  onRowsRearrangedRef.current = onRowsRearranged
   const rowCountRef = React.useRef(fields.length)
   rowCountRef.current = fields.length
 
@@ -72,6 +80,7 @@ export function useRowOperations<
       : selectedRows[selectedRows.length - 1].rowIndex + 1
 
     insert(insertAt, createNewRowRef.current(selectedRows.at(-1)?.row), { shouldFocus: false })
+    onRowsRearrangedRef.current("insert")
     rangeToSelectRef.current = [insertAt, insertAt]
   }, [gridRef, insert])
 
@@ -80,6 +89,7 @@ export function useRowOperations<
     if (selectedRows.length === 0) return
 
     remove(selectedRows.map(({ rowIndex }) => rowIndex))
+    onRowsRearrangedRef.current("remove")
 
     // 削除された行は選択できないため、その位置に繰り上がってきた行を選択する
     if (rowCountRef.current > selectedRows.length) {
@@ -102,6 +112,7 @@ export function useRowOperations<
     } else {
       move(end + 1, start)
     }
+    onRowsRearrangedRef.current("move")
     rangeToSelectRef.current = [start + offset, end + offset]
   }, [gridRef, move])
 

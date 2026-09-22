@@ -2,7 +2,7 @@ import React from "react"
 import * as ReactHookForm from "react-hook-form"
 import { EditableGrid } from "@halllky/editable-grid"
 import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon, XMarkIcon } from "@heroicons/react/24/outline"
-import { Button, RowOperationButtons, useEditableGrid } from "../../ui"
+import { Button, RowOperationButtons, useEditableGrid, type GridRowsChange } from "../../ui"
 import {
   ATTR_KEY_PHYSICAL_NAME,
   createNewSchemaNode,
@@ -11,7 +11,9 @@ import {
   NODE_TYPE_WRITE_MODEL,
   NODE_TYPE_WRITE_READ_MODEL,
   type EditingProject,
+  type EditingSchemaNode,
 } from "../../features/backend"
+import { isMemberChangeAffectingDiagram, useNotifyDiagramStructureChanged } from "../../features/diagram"
 import { formatNodeType, parseNodeType } from "./schemaNodeNotation"
 import { defineOptionalAttrColumns } from "./optionalAttrColumns"
 import { OptionalAttrsForm } from "./OptionalAttrsForm"
@@ -25,6 +27,7 @@ import { OptionalAttrsForm } from "./OptionalAttrsForm"
  * インデントは Tab / Shift + Tab またはボタンで上げ下げする。
  *
  * 編集対象のデータは親のフォームのコンテキストから取得する。
+ * ダイアグラムの構成に影響する編集を行った場合は、ダイアグラムの構成のコンテキストへ通知する。
  * 表示するルート集約を切り替える場合は、グリッドの状態を持ち越さないよう key を変えて作り直すこと。
  */
 export function AggregatePane({ rootIndex, focusedMemberId, onClose }: {
@@ -40,6 +43,19 @@ export function AggregatePane({ rootIndex, focusedMemberId, onClose }: {
   const { control, register, getValues, setValue } = useFormReturn
   const rootPath = `rootAggregates.${rootIndex}.root` as const
   const membersPath = `rootAggregates.${rootIndex}.members` as const
+
+  // ダイアグラムの構成に影響する編集の通知
+  const notifyStructureChanged = useNotifyDiagramStructureChanged()
+
+  /**
+   * グリッドでのメンバーの変更のうち、ダイアグラムの構成に影響するものを通知する。
+   * 追加直後の行は種類が未設定で、ダイアグラムに現れないため通知しない。
+   */
+  const handleMembersChanged = (change: GridRowsChange<EditingSchemaNode>) => {
+    if (change.kind === "insert") return
+    if (change.kind === "update" && !change.rows.some(({ before, after }) => isMemberChangeAffectingDiagram(before, after))) return
+    notifyStructureChanged()
+  }
 
   // オプショナル属性の一覧と入力形式はサーバー側の定義が正
   const attrDefs = ReactHookForm.useWatch({ control, name: "optionalAttributes" })
@@ -78,6 +94,7 @@ export function AggregatePane({ rootIndex, focusedMemberId, onClose }: {
   ], [getValues, attrDefs], {
     // 選択行の兄弟として追加する
     createNewRow: previousRow => createNewSchemaNode(previousRow?.depth ?? 1),
+    onRowsChanged: handleMembersChanged,
   })
 
   // ダイアグラムで選択された子集約の行を、グリッドの選択状態に同期させる
@@ -95,6 +112,7 @@ export function AggregatePane({ rootIndex, focusedMemberId, onClose }: {
   const changeIndent = (offset: 1 | -1) => {
     const selectedRows = gridRef.current?.getSelectedRows() ?? []
     const depths = getValues(membersPath).map(m => m.depth)
+    let changed = false
     for (const { rowIndex } of selectedRows) {
       const maxDepth = rowIndex === 0 ? 1 : depths[rowIndex - 1] + 1
       const depth = Math.min(Math.max(depths[rowIndex] + offset, 1), maxDepth)
@@ -102,7 +120,9 @@ export function AggregatePane({ rootIndex, focusedMemberId, onClose }: {
 
       depths[rowIndex] = depth
       setValue(`${membersPath}.${rowIndex}.depth`, depth, { shouldDirty: true })
+      changed = true
     }
+    if (changed) notifyStructureChanged()
   }
 
   const handleKeyDown: React.KeyboardEventHandler = e => {
@@ -126,7 +146,7 @@ export function AggregatePane({ rootIndex, focusedMemberId, onClose }: {
       <div className="flex items-center gap-1">
         {/* ルート集約名 */}
         <input
-          {...register(`${rootPath}.displayName`)}
+          {...register(`${rootPath}.displayName`, { onChange: notifyStructureChanged })}
           placeholder="ルート集約の名前"
           spellCheck={false}
           autoComplete="off"
@@ -135,7 +155,7 @@ export function AggregatePane({ rootIndex, focusedMemberId, onClose }: {
 
         {/* ルート集約のモデル */}
         <select
-          {...register(`${rootPath}.type`)}
+          {...register(`${rootPath}.type`, { onChange: notifyStructureChanged })}
           id={`${rootPath}.type`}
           className="justify-self-start px-1 border border-gray-300"
         >

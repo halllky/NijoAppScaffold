@@ -4,7 +4,7 @@ import React from "react"
 import { createTextCellHelper, type CreateTextCellFunction } from "./createTextCellHelper"
 import { createCheckBoxCellHelper, type CreateCheckBoxCellFunction } from "./createCheckBoxCellHelper"
 import { createDropdownCellHelper, type CreateDropdownCellFunction } from "./createDropdownCellHelper"
-import { attachRowOperationKeys, useRowOperations, type RowOperations } from "./useRowOperations"
+import { attachRowOperationKeys, useRowOperations, type RowOperations, type RowRearrangement } from "./useRowOperations"
 
 /**
  * `@halllky/editable-grid` の定義を楽にするための標準のラッパー。
@@ -38,8 +38,21 @@ export function useEditableGrid<
 
   const gridRef = React.useRef<EditableGridRef<TRow>>(null)
 
+  // グリッド上の操作による変更の通知先。
+  // 通知先を関数の依存に含めると、呼び出し側の再描画のたびに列定義まで作り直されてしまうため ref で参照する
+  const onRowsChangedRef = React.useRef(options.onRowsChanged)
+  onRowsChangedRef.current = options.onRowsChanged
+
   // 行の追加・削除・並べ替え
-  const { handleCellKeyDown, ...rowOperations } = useRowOperations(useFieldArrayReturn, gridRef, options.createNewRow)
+  const handleRowsRearranged = React.useCallback((kind: RowRearrangement) => {
+    onRowsChangedRef.current?.({ kind })
+  }, [])
+  const { handleCellKeyDown, ...rowOperations } = useRowOperations(
+    useFieldArrayReturn,
+    gridRef,
+    options.createNewRow,
+    handleRowsRearranged
+  )
 
   const [
     rowKeys, // fields の id を順序通りの配列にしたもの
@@ -78,16 +91,17 @@ export function useEditableGrid<
 
   /** 行変更確定時イベント */
   const onRowsChange = React.useCallback((updates: EditableGridRowUpdate<TRow>[]) => {
+    const rows: { before: TRow, after: TRow }[] = []
     for (const { rowKey, row } of updates) {
       // フィルタリングの可能性を考慮し、 rowKey からインデックスを引き当てる
       const rowIndex = rowIndexMapByKey.get(rowKey)
+      const path = `${name}.${rowIndex}` as ReactHookForm.Path<TField>
 
-      setValue(
-        `${name}.${rowIndex}` as ReactHookForm.Path<TField>,
-        row as ReactHookForm.PathValue<TField, ReactHookForm.Path<TField>>
-      )
+      rows.push({ before: getValues(path) as TRow, after: row })
+      setValue(path, row as ReactHookForm.PathValue<TField, ReactHookForm.Path<TField>>)
     }
-  }, [setValue, name, rowIndexMapByKey])
+    onRowsChangedRef.current?.({ kind: "update", rows })
+  }, [getValues, setValue, name, rowIndexMapByKey])
 
   // useForm 側でバインド対象の配列に何か変更があったときに
   // それを EditableGrid に伝えて描画範囲内のセルを再レンダリングさせる
@@ -142,6 +156,25 @@ export type ColumnHelper<TRow> = ReturnType<typeof createColumnHelper<TRow>> & {
 export type UseEditableGridOptions<TRow> = {
   /** 行追加時に挿入する行を作成する。追加のたびに呼ばれる。引数は挿入位置の直前の選択行（未選択の場合は undefined） */
   createNewRow: (previousRow: TRow | undefined) => TRow
+  /**
+   * グリッド上の操作によって配列を書き換えた後に呼ばれる。
+   * グリッドの外で配列を書き換えた場合は呼ばれない。
+   * 未指定の場合は何もしない。
+   */
+  onRowsChanged?: (change: GridRowsChange<TRow>) => void
+}
+
+/**
+ * グリッド上の操作による配列の変更の内容
+ */
+export type GridRowsChange<TRow> = {
+  /** セルの編集や貼り付けによる、既存の行の内容の変更 */
+  kind: "update"
+  /** 変更された行それぞれの、変更前と変更後の内容 */
+  rows: { before: TRow, after: TRow }[]
+} | {
+  /** 行の追加・削除・並べ替え */
+  kind: RowRearrangement
 }
 
 /**

@@ -5,7 +5,13 @@ import { ArrowPathIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline"
 import { Button } from "../../ui"
 import { createNewSchemaNode, type EditingProject } from "../../features/backend"
 import { AggregatePane } from "../AggregatePane"
-import { buildAggregateTree, useNodeLayout, type DiagramReference, type DiagramSelection } from "../../features/diagram"
+import {
+  useDiagramStructure,
+  useNodeLayout,
+  useNotifyDiagramStructureChanged,
+  type DiagramReference,
+  type DiagramSelection,
+} from "../../features/diagram"
 import { AggregateNode, type AggregateFlowNode } from "./AggregateNode"
 import { FloatingEdge, type FloatingFlowEdge } from "./FloatingEdge"
 import { MODEL_COLORS } from "./modelColors"
@@ -23,21 +29,23 @@ import { NewRootAggregateDialog } from "./NewRootAggregateDialog"
  */
 export function NijoXmlDiagram() {
 
-  const { control } = ReactHookForm.useFormContext<EditingProject>()
-  const rootAggregates = ReactHookForm.useWatch({ control, name: "rootAggregates" })
+  const { control, getValues } = ReactHookForm.useFormContext<EditingProject>()
 
   // ルート集約の追加・削除
   const { append, remove } = ReactHookForm.useFieldArray({ control, name: "rootAggregates" })
 
   // 表示対象の集約のツリーと集約間の参照
-  const { roots, references } = React.useMemo(() => buildAggregateTree(rootAggregates), [rootAggregates])
+  const { roots, references } = useDiagramStructure()
+  const notifyStructureChanged = useNotifyDiagramStructureChanged()
 
   // 選択中の集約（ルート集約・child・children のいずれか）
   const [selection, setSelection] = React.useState<DiagramSelection | null>(null)
   const selectedId = selection?.uniqueId ?? null
+  // ルート集約の並び順はルート集約の追加・削除でしか変わらず、そのときは構成の変更の通知によって再描画されるため、
+  // ここでフォームの値を直接読んでも古い値にならない
   const selectedRootIndex = selection === null
     ? -1
-    : rootAggregates.findIndex(r => r.root.uniqueId === selection.rootId)
+    : getValues("rootAggregates").findIndex(r => r.root.uniqueId === selection.rootId)
 
   // ノードの位置と大きさ
   const { positions, measured, handleNodesChange, resetLayout } = useNodeLayout(roots, references)
@@ -61,6 +69,7 @@ export function NijoXmlDiagram() {
   const handleCreateRoot = (displayName: string, type: string) => {
     const root = { ...createNewSchemaNode(0, type), displayName }
     append({ root, members: [] })
+    notifyStructureChanged()
     setSelection({ rootId: root.uniqueId, uniqueId: root.uniqueId })
     setIsNewRootDialogOpen(false)
   }
@@ -68,11 +77,12 @@ export function NijoXmlDiagram() {
   /** 選択中の集約が属するルート集約を、子孫ごと削除する */
   const handleRemoveRoot = () => {
     if (selection === null || selectedRootIndex === -1) return
-    const name = rootAggregates[selectedRootIndex].root.displayName || "(名前未設定)"
+    const name = getValues(`rootAggregates.${selectedRootIndex}.root.displayName`) || "(名前未設定)"
     if (!window.confirm(`ルート集約「${name}」を削除しますか？`)) return
 
     setSelection(null)
     remove(selectedRootIndex)
+    notifyStructureChanged()
   }
 
   return (

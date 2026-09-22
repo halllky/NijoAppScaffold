@@ -51,15 +51,20 @@ export type DiagramReference = {
   memberNames: string[]
 }
 
+/** ダイアグラムの構成。表示対象の集約のツリーと集約間の参照 */
+export type DiagramStructure = {
+  /** 表示対象のルート集約。子孫の child, children はその中に包含される */
+  roots: DiagramAggregate[]
+  /** 集約間の参照 */
+  references: DiagramReference[]
+}
+
 /**
  * ルート要素ごとの定義から、ダイアグラムに表示する集約のツリーと集約間の参照を組み立てる。
  * Write Model, Read Model, Command Model 以外のルート要素とその子孫は対象外。
  * child, children は何段でも入れ子にでき、それぞれ直近の表示対象の祖先に包含される。
  */
-export function buildAggregateTree(rootAggregates: RootAggregateDef[]): {
-  roots: DiagramAggregate[]
-  references: DiagramReference[]
-} {
+export function buildAggregateTree(rootAggregates: RootAggregateDef[]): DiagramStructure {
   const roots: DiagramAggregate[] = []
   const aggregateById = new Map<string, DiagramAggregate>()
   const refMembers: { owner: DiagramAggregate, member: EditingSchemaNode, targetId: string }[] = []
@@ -110,6 +115,24 @@ export function buildAggregateTree(rootAggregates: RootAggregateDef[]): {
   }
 
   return { roots, references: Array.from(referenceByKey.values()) }
+}
+
+/**
+ * メンバー1個の内容の変更が、ダイアグラムの構成に影響するかどうかを判定する。
+ * メンバーの追加・削除・並べ替えは判定の対象外。
+ * インデントの変更は、後続のメンバーがどの集約に包含されるかを変えうるため、常に影響ありとみなす。
+ */
+export function isMemberChangeAffectingDiagram(before: EditingSchemaNode, after: EditingSchemaNode): boolean {
+  if (before.depth !== after.depth) return true
+  if (!isShownInDiagram(before) && !isShownInDiagram(after)) return false
+  return before.type !== after.type || before.displayName !== after.displayName
+}
+
+/** ダイアグラム上に集約または参照として現れるメンバーかどうか */
+function isShownInDiagram(member: EditingSchemaNode): boolean {
+  return member.type === NODE_TYPE_CHILD
+    || member.type === NODE_TYPE_CHILDREN
+    || member.type?.startsWith(NODE_TYPE_PREFIX_REF_TO) === true
 }
 
 /**
