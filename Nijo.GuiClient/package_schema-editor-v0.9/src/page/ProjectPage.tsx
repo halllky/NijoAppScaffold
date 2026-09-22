@@ -54,13 +54,14 @@ function AfterLoaded({ defaultValues }: {
 
   // ダイアグラムで選択中のルート集約の uniqueId
   const [selectedRootIds, setSelectedRootIds] = React.useState<ReadonlySet<string>>(new Set())
-  // 編集欄に表示するルート集約が、ルート集約の一覧の何番目か。複数選択中は表示しない。
+  // 編集欄に表示するルート集約の uniqueId。ダイアグラムのノードをダブルクリックすると開く
+  const [openedRootId, setOpenedRootId] = React.useState<string>()
+  // 編集欄に表示するルート集約が、ルート集約の一覧の何番目か。削除済みの場合は -1 になり、編集欄を表示しない。
   // ルート集約の並び順はルート集約の追加・削除でしか変わらず、そのときはダイアグラムの選択状態も変わって再描画されるため、
   // ここでフォームの値を直接読んでも古い値にならない
-  const [selectedRootId] = selectedRootIds.size === 1 ? selectedRootIds : []
-  const selectedRootIndex = selectedRootId === undefined
+  const openedRootIndex = openedRootId === undefined
     ? -1
-    : getValues("rootAggregates").findIndex(r => r.root.uniqueId === selectedRootId)
+    : getValues("rootAggregates").findIndex(r => r.root.uniqueId === openedRootId)
 
   // ダイアグラムのノードをドラッグ中かどうか
   const [isDiagramDragging, setIsDiagramDragging] = React.useState(false)
@@ -140,21 +141,22 @@ function AfterLoaded({ defaultValues }: {
                       <NijoXmlDiagram
                         selectedIds={selectedRootIds}
                         onSelectedIdsChanged={setSelectedRootIds}
+                        onOpenRequested={setOpenedRootId}
                         onDraggingChanged={setIsDiagramDragging}
                       />
                     </div>
                   </Allotment.Pane>
 
-                  {/* 選択中のルート集約の編集欄。
+                  {/* ダブルクリックで開いたルート集約の編集欄。
                       ノードをまとめて動かすときに邪魔にならないようドラッグ中は隠す。
                       隠している間もグリッドのスクロール位置や選択行が失われないよう、アンマウントせずに Activity で隠している */}
-                  <Allotment.Pane preferredSize="50%" minSize={320} visible={selectedRootIndex !== -1 && !isDiagramDragging}>
-                    {selectedRootIndex !== -1 && (
+                  <Allotment.Pane preferredSize="50%" minSize={320} visible={openedRootIndex !== -1 && !isDiagramDragging}>
+                    {openedRootIndex !== -1 && (
                       <React.Activity mode={isDiagramDragging ? "hidden" : "visible"}>
                         <AggregatePane
-                          key={selectedRootId}
-                          rootIndex={selectedRootIndex}
-                          onClose={() => setSelectedRootIds(new Set())}
+                          key={openedRootId}
+                          rootIndex={openedRootIndex}
+                          onClose={() => setOpenedRootId(undefined)}
                         />
                       </React.Activity>
                     )}

@@ -20,11 +20,13 @@ import { NewRootAggregateDialog } from "./NewRootAggregateDialog"
  * React Flow を使って nijo.xml の Write Model / Read Model / Command Model を
  * ダイアグラムとして表示するコンポーネント。
  */
-export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onDraggingChanged }: {
+export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onOpenRequested, onDraggingChanged }: {
   /** 選択中のルート集約の uniqueId */
   selectedIds: ReadonlySet<string>
   /** ルート集約の選択状態が変わったときに、変化後の選択中のルート集約の uniqueId を伴って呼ばれる */
   onSelectedIdsChanged: (selectedIds: ReadonlySet<string>) => void
+  /** ノードがダブルクリックされたときと、ルート集約を追加したときに、そのルート集約の uniqueId を伴って呼ばれる */
+  onOpenRequested: (rootId: string) => void
   /** ノードのドラッグを始めたとき (true) と終えたとき (false) に呼ばれる。未指定の場合は何もしない */
   onDraggingChanged?: (dragging: boolean) => void
 }) {
@@ -67,7 +69,7 @@ export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onDraggingCh
     measured: measured[root.node.uniqueId],
     selected: selectedIds.has(root.node.uniqueId),
     // 不透明度はライブラリがノードの外側の要素に反映するため、ノードの中身を描画し直さずに済む
-    style: hitRootIds && !hitRootIds.has(root.node.uniqueId) ? NOT_HIT_NODE_STYLE : undefined,
+    style: isNodeDimmed(root.node.uniqueId, selectedIds, hitRootIds) ? DIMMED_NODE_STYLE : undefined,
     data: { aggregate: root },
   })), [roots, positions, measured, selectedIds, hitRootIds])
 
@@ -104,6 +106,7 @@ export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onDraggingCh
     append({ root, members: [] })
     notifyStructureChanged()
     onSelectedIdsChanged(new Set([root.uniqueId]))
+    onOpenRequested(root.uniqueId)
     setIsNewRootDialogOpen(false)
   }
 
@@ -131,6 +134,7 @@ export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onDraggingCh
         nodeTypes={NODE_TYPES}
         edgeTypes={EDGE_TYPES}
         onNodesChange={handleNodesChange}
+        onNodeDoubleClick={(_, node) => onOpenRequested(node.id)}
         // ドラッグ開始/終了イベントは、ノードを直接ドラッグした場合と、
         // 範囲選択後に表示される選択範囲の枠をドラッグした場合とで別のイベントになる
         onNodeDragStart={() => onDraggingChanged?.(true)}
@@ -138,6 +142,7 @@ export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onDraggingCh
         onSelectionDragStart={() => onDraggingChanged?.(true)}
         onSelectionDragStop={() => onDraggingChanged?.(false)}
         selectionMode={SelectionMode.Partial}
+        multiSelectionKeyCode={MULTI_SELECTION_KEY_CODE}
         selectNodesOnDrag={false}
         nodesConnectable={false}
         deleteKeyCode={null}
@@ -150,7 +155,7 @@ export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onDraggingCh
       </ReactFlow>}
 
       {/* 操作。
-          右側は選択中のルート集約の編集欄が重なって隠れることがあるため、左上にまとめている */}
+          右側は開いたルート集約の編集欄が重なって隠れることがあるため、左上にまとめている */}
       <div className="absolute top-1 left-1 flex items-start gap-1">
         {/* ボタン */}
         <div className="flex flex-col gap-1">
@@ -185,8 +190,21 @@ const NODE_TYPES = { aggregate: AggregateNode }
 /** ダイアグラムのエッジの種類 */
 const EDGE_TYPES = { floating: FloatingEdge }
 
-/** 検索にヒットしなかったノードのスタイル。ヒットしたノードを目立たせるために薄くする */
-const NOT_HIT_NODE_STYLE: React.CSSProperties = { opacity: 0.2 }
+/** 既存の選択を維持したままクリックしたノードを選択に追加・除外するキー */
+const MULTI_SELECTION_KEY_CODE = ["Shift", "Control", "Meta"]
+
+/** 薄く表示するノードのスタイル。選択中または検索にヒットしたノードを目立たせるために、それ以外を薄くする */
+const DIMMED_NODE_STYLE: React.CSSProperties = { opacity: 0.2 }
+
+/**
+ * ノードを薄く表示するかどうか。
+ * 何か選択中のときは、選択中のノード以外を薄くする。検索よりも選択を優先し、検索中でも選択中のノードは薄くしない。
+ * 何も選択していないときは、検索中であれば、検索にヒットしなかったノードを薄くする。
+ */
+function isNodeDimmed(rootId: string, selectedIds: ReadonlySet<string>, hitRootIds: ReadonlySet<string> | undefined): boolean {
+  if (selectedIds.size > 0) return !selectedIds.has(rootId)
+  return hitRootIds !== undefined && !hitRootIds.has(rootId)
+}
 
 /** 初期表示範囲の調整。集約が少ないときに等倍を超えて拡大されないようにする */
 const FIT_VIEW_OPTIONS = { maxZoom: 1 }
@@ -194,14 +212,17 @@ const FIT_VIEW_OPTIONS = { maxZoom: 1 }
 /**
  * 集約間の参照をダイアグラムのエッジに変換する。
  * 選択中のルート集約（その子孫を含む）に接続するエッジは強調表示する。
- * 検索中は、両端とも検索にヒットしなかったエッジを薄く表示する。
+ * 何か選択中のときは、両端とも選択中でないエッジを薄く表示する。
+ * 何も選択していないときは、検索中であれば、両端のどちらかが検索にヒットしなかったエッジを薄く表示する。
  * エッジ自体は選択できない。
  */
 function toEdge(ref: DiagramReference, selectedIds: ReadonlySet<string>, hitRootIds: ReadonlySet<string> | undefined): FloatingFlowEdge {
   const { source, target, memberNames } = ref
   const color = MODEL_COLORS[source.model].stroke
   const highlighted = selectedIds.has(source.rootId) || selectedIds.has(target.rootId)
-  const dimmed = hitRootIds !== undefined && (!hitRootIds.has(source.rootId) || !hitRootIds.has(target.rootId))
+  const dimmed = selectedIds.size > 0
+    ? !highlighted
+    : hitRootIds !== undefined && (!hitRootIds.has(source.rootId) || !hitRootIds.has(target.rootId))
   const label = memberNames.length === 1
     ? memberNames[0]
     : `${memberNames[0]}など計${memberNames.length}件の参照`

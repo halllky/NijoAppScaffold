@@ -56,6 +56,25 @@ export function DiagramSearchBox({ onHitRootIdsChanged, className }: {
     search(next)
   }
 
+  /**
+   * フォーカスしたときに検索文字列を全選択する。別の文字列ですぐに検索し直せるようにするため。
+   * マウスでクリックしてフォーカスした場合は、そのままだとマウスボタンを離したときにブラウザが選択を解除してしまうため、
+   * フォーカス直後のマウスアップだけ既定の動作を止める
+   */
+  const selectOnMouseUpRef = React.useRef(false)
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.currentTarget.select()
+    selectOnMouseUpRef.current = true
+  }
+  const handleMouseDown = (e: React.MouseEvent<HTMLInputElement>) => {
+    // フォーカス済みの状態でのクリックはカーソル位置の移動なので止めない
+    if (document.activeElement === e.currentTarget) selectOnMouseUpRef.current = false
+  }
+  const handleMouseUp = (e: React.MouseEvent<HTMLInputElement>) => {
+    if (selectOnMouseUpRef.current) e.preventDefault()
+    selectOnMouseUpRef.current = false
+  }
+
   /** Enter キーで検索する。IME の変換確定の Enter では検索しない */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.nativeEvent.isComposing) search(condition)
@@ -83,6 +102,9 @@ export function DiagramSearchBox({ onHitRootIdsChanged, className }: {
         value={condition.text}
         onChange={e => handleTextChange(e.target.value)}
         onKeyDown={handleKeyDown}
+        onFocus={handleFocus}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
         placeholder="検索"
         className="flex-1 min-w-0 py-px text-sm outline-none"
       />
