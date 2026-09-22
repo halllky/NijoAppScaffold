@@ -1,14 +1,15 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
 import { Background, Controls, MarkerType, ReactFlow } from "@xyflow/react"
-import { ArrowPathIcon } from "@heroicons/react/24/outline"
+import { ArrowPathIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline"
 import { Button } from "../../ui"
-import type { EditingProject } from "../../features/backend"
+import { createNewSchemaNode, type EditingProject } from "../../features/backend"
 import { AggregatePane } from "../AggregatePane"
 import { buildAggregateTree, type DiagramReference, type DiagramSelection } from "./aggregateTree"
 import { AggregateNode, type AggregateFlowNode } from "./AggregateNode"
 import { FloatingEdge, type FloatingFlowEdge } from "./FloatingEdge"
 import { MODEL_COLORS } from "./modelColors"
+import { NewRootAggregateDialog } from "./NewRootAggregateDialog"
 import { useNodeLayout } from "./useNodeLayout"
 
 /**
@@ -18,12 +19,16 @@ import { useNodeLayout } from "./useNodeLayout"
  * モデルを選択することができ、選択されたもののルート集約の編集欄が表示される。
  * ダイアグラムのノードはドラッグで自由に動かせる。
  * ダイアグラムのエッジは集約間の参照関係（ref-to:）によって自動的に算出される。
+ * ルート集約の追加と、選択中の集約が属するルート集約の削除もここから行う。
  * 表示対象のデータは親のフォームのコンテキストから取得する。
  */
 export function NijoXmlDiagram() {
 
   const { control, getValues } = ReactHookForm.useFormContext<EditingProject>()
   const rootAggregates = ReactHookForm.useWatch({ control, name: "rootAggregates" })
+
+  // ルート集約の追加・削除
+  const { append, remove } = ReactHookForm.useFieldArray({ control, name: "rootAggregates" })
 
   // 表示対象の集約のツリーと集約間の参照
   const { roots, references } = React.useMemo(() => buildAggregateTree(rootAggregates), [rootAggregates])
@@ -53,6 +58,27 @@ export function NijoXmlDiagram() {
   // エッジ
   const edges = React.useMemo(() => references.map(ref => toEdge(ref, selectedId)), [references, selectedId])
 
+  // ルート集約追加ダイアログ
+  const [isNewRootDialogOpen, setIsNewRootDialogOpen] = React.useState(false)
+
+  /** ルート集約を追加し、そのまま編集できるよう選択状態にする */
+  const handleCreateRoot = (displayName: string, type: string) => {
+    const root = { ...createNewSchemaNode(0, type), displayName }
+    append({ root, members: [] })
+    setSelection({ rootId: root.uniqueId, uniqueId: root.uniqueId })
+    setIsNewRootDialogOpen(false)
+  }
+
+  /** 選択中の集約が属するルート集約を、子孫ごと削除する */
+  const handleRemoveRoot = () => {
+    if (selection === null || selectedRootIndex === -1) return
+    const name = rootAggregates[selectedRootIndex].root.displayName || "(名前未設定)"
+    if (!window.confirm(`ルート集約「${name}」を削除しますか？`)) return
+
+    setSelection(null)
+    remove(selectedRootIndex)
+  }
+
   return (
     // 分割ペインは初回描画時に大きさが決まっておらず、ダイアグラムの初期表示範囲の調整が狂うため使っていない
     <div className="w-full h-full flex">
@@ -80,12 +106,26 @@ export function NijoXmlDiagram() {
         </ReactFlow>
 
         {/* 操作 */}
-        <div className="absolute top-1 left-1 flex gap-1">
+        <div className="absolute top-1 left-1 flex flex-col gap-1">
+          <Button Icon={PlusIcon} border className="bg-white" onClick={() => setIsNewRootDialogOpen(true)}>
+            ルート集約を追加
+          </Button>
+          <Button Icon={TrashIcon} border className="bg-white" onClick={handleRemoveRoot} disabled={selectedRootIndex === -1}>
+            選択中のルート集約を削除
+          </Button>
           <Button Icon={ArrowPathIcon} border className="bg-white" onClick={resetLayout}>
             自動配置に戻す
           </Button>
         </div>
       </div>
+
+      {/* ルート集約追加ダイアログ */}
+      {isNewRootDialogOpen && (
+        <NewRootAggregateDialog
+          onCreate={handleCreateRoot}
+          onClose={() => setIsNewRootDialogOpen(false)}
+        />
+      )}
 
       {/* 選択中のルート集約の編集欄 */}
       {selection !== null && selectedRootIndex !== -1 && (

@@ -68,7 +68,7 @@ export function Button(props: {
 
   // 本体ボタンとサイドボタンで共通のクラス
   const buttonClassName = [
-    'flex items-center justify-center gap-1 px-2 py-1 text-sm whitespace-nowrap select-none border cursor-pointer',
+    'flex items-center justify-center gap-1 px-1 py-px text-sm whitespace-nowrap select-none border cursor-pointer',
     'disabled:opacity-50 disabled:cursor-not-allowed',
     fill
       ? `text-white bg-sky-600 enabled:hover:bg-sky-700 ${border ? 'border-sky-800' : 'border-transparent'}`
@@ -119,7 +119,7 @@ export function Button(props: {
         // 周囲のUIより手前に表示させるために z-index を指定している。
         // 中の要素がクリックされたら、その操作は呼び出し側に任せてメニューを閉じる。
         <div
-          className="absolute right-0 top-full z-50 mt-1 min-w-full w-max flex flex-col py-1 bg-white border border-gray-300 rounded shadow-md"
+          className="absolute right-0 top-full z-50 mt-1 min-w-full w-max flex flex-col py-px bg-white border border-gray-300 rounded shadow-md"
           onClick={() => setDropdownOpen(false)}
         >
           {sideButton.map((item, i) => (

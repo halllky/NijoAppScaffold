@@ -116,7 +116,7 @@ export function buildAggregateTree(rootAggregates: RootAggregateDef[]): {
  * ルート要素の種類からモデルの種類を判定する。
  * ダイアグラムの表示対象でない種類の場合は undefined を返す。
  */
-function getModelKind(type: string | null | undefined): ModelKind | undefined {
+export function getModelKind(type: string | null | undefined): ModelKind | undefined {
   switch (type) {
     case NODE_TYPE_WRITE_MODEL: return "write"
     case NODE_TYPE_READ_MODEL: return "read"
