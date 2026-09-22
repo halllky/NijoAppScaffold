@@ -58,11 +58,6 @@ export function useNodeLayout(roots: DiagramAggregate[], references: DiagramRefe
     if (Object.keys(resized).length > 0) setMeasured(prev => ({ ...prev, ...resized }))
   }
 
-  /** 動かしたノードの位置をすべて破棄し、自動配置に戻す */
-  const resetLayout = () => {
-    setValue("graphLayout", {}, { shouldDirty: true })
-  }
-
   return {
     /** ノードの位置。キーはルート集約の uniqueId。ドラッグ中のノードはドラッグを始める前の位置のままで、ドラッグ中は変化しない */
     positions,
@@ -71,7 +66,6 @@ export function useNodeLayout(roots: DiagramAggregate[], references: DiagramRefe
     /** 計測済みのノードの大きさ。キーはルート集約の uniqueId。未計測のノードは含まれない */
     measured,
     handleNodesChange,
-    resetLayout,
   }
 }
 

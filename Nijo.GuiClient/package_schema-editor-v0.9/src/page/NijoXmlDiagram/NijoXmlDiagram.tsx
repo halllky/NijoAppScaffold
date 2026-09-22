@@ -1,7 +1,7 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
 import { Background, Controls, MarkerType, ReactFlow, SelectionMode, type NodeChange } from "@xyflow/react"
-import { ArrowPathIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline"
+import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline"
 import { Button } from "../../ui"
 import { createNewSchemaNode, type EditingProject } from "../../features/backend"
 import {
@@ -41,7 +41,7 @@ export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onOpenReques
   const notifyStructureChanged = useNotifyDiagramStructureChanged()
 
   // ノードの位置と大きさ
-  const { positions, draggingPositions, measured, handleNodesChange: handleLayoutChange, resetLayout } = useNodeLayout(roots, references)
+  const { positions, draggingPositions, measured, handleNodesChange: handleLayoutChange } = useNodeLayout(roots, references)
 
   /** ノードの位置・大きさの変化と、選択状態の変化を反映する */
   const handleNodesChange = (changes: NodeChange<AggregateFlowNode>[]) => {
@@ -165,9 +165,6 @@ export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onOpenReques
           </Button>
           <Button Icon={TrashIcon} border className="bg-white" onClick={handleRemoveRoot} disabled={selectedIds.size !== 1}>
             選択中のルート集約を削除
-          </Button>
-          <Button Icon={ArrowPathIcon} border className="bg-white" onClick={resetLayout}>
-            自動配置に戻す
           </Button>
         </div>
 
