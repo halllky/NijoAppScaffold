@@ -62,7 +62,7 @@ function AggregateBox({ aggregate, isRoot, selectedId, onSelect }: {
     <div
       onClick={handleClick}
       className={[
-        "relative flex flex-col min-w-32 border rounded",
+        "relative flex flex-col min-w-32 border",
         isRoot ? `${colors.rootBox} shadow` : colors.childBox,
         isSelected ? "outline-3 outline-amber-400" : "",
       ].join(" ")}
@@ -72,13 +72,13 @@ function AggregateBox({ aggregate, isRoot, selectedId, onSelect }: {
       <Handle type="target" position={Position.Right} id={node.uniqueId} isConnectable={false} style={BOX_HANDLE_STYLE} />
 
       {/* 集約名 */}
-      <div className={`px-2 py-1 whitespace-nowrap rounded-t-[3px] ${isRoot ? `font-bold ${colors.rootHeader}` : `text-sm ${colors.childHeader}`}`}>
+      <div className={`px-1 py-px whitespace-nowrap text-sm ${isRoot ? `${colors.rootHeader}` : `${colors.childHeader}`}`}>
         {node.displayName || "(名前未設定)"}
       </div>
 
       {/* 子集約 */}
       {children.length > 0 && (
-        <div className="flex flex-col gap-2 p-2">
+        <div className="flex flex-col gap-1 p-1">
           {children.map(child => (
             <AggregateBox
               key={child.node.uniqueId}
