@@ -1,7 +1,8 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
 import { Button, NowLoading } from "../ui"
-import { useBackendData, type EditingProject } from "../features/backend"
+import { useBackendData, type EditingProject, type ValidationErrorMap } from "../features/backend"
+import { AppSettingsPane } from "./AppSettings"
 import { DynamicAndStaticEnumPane } from "./DynamicAndStaticEnum"
 import { NijoXmlDiagram } from "./NijoXmlDiagram"
 
@@ -42,12 +43,39 @@ function AfterLoaded({ defaultValues }: {
 }) {
 
   const useFormReturn = ReactHookForm.useForm({ defaultValues })
+  const { getValues, reset } = useFormReturn
 
   // タブ
   const [selectedTab, setSelectedTab] = React.useState<typeof PROJECT_PAGE_TAB[number]>("Write/Read/Command")
 
-  // 保存モード
+  // 保存
+  const { save } = useBackendData()
   const [saveMode, setSaveMode] = React.useState<typeof SAVE_MODE[number]>("保存")
+  const [saveState, setSaveState] = React.useState<SaveState>({ saving: false })
+
+  const handleSave = React.useCallback(async () => {
+    setSaveState({ saving: true })
+    const project = getValues()
+    const result = await save(project, saveMode === "保存してコード再生成")
+    if (!result.ok) {
+      setSaveState({ saving: false, error: result.error, validationErrors: result.validationErrors })
+      return
+    }
+    // 保存した内容を新しい初期値にして、未保存の変更が無い状態に戻す
+    reset(project)
+    setSaveState({ saving: false })
+  }, [save, saveMode, getValues, reset])
+
+  // Ctrl + S での保存。フォームの外で押された場合にも効くようブラウザ全体で待ち受ける
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "s" || !(e.ctrlKey || e.metaKey)) return
+      e.preventDefault() // 呼ばないとブラウザの保存ダイアログが開く
+      handleSave()
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [handleSave])
 
   return (
     <ReactHookForm.FormProvider {...useFormReturn}>
@@ -61,7 +89,7 @@ function AfterLoaded({ defaultValues }: {
 
           <div className="flex-1"></div>
 
-          <Button fill className="py-1" sideButton={SAVE_MODE.map(mode => (
+          <Button fill className="py-1" loading={saveState.saving} onClick={handleSave} sideButton={SAVE_MODE.map(mode => (
             <Button onClick={() => setSaveMode(mode)} className="justify-start">
               {mode}
             </Button>
@@ -71,6 +99,9 @@ function AfterLoaded({ defaultValues }: {
           </Button>
         </nav>
 
+        {/* 保存に失敗した場合のみ表示されるエラー欄 */}
+        <SaveErrorMessage saveState={saveState} />
+
         {/* タブの中身 */}
         <div className="flex-1 min-h-0 pt-1">
           {selectedTab === "Write/Read/Command" && (
@@ -79,10 +110,64 @@ function AfterLoaded({ defaultValues }: {
           {selectedTab === "区分定義" && (
             <DynamicAndStaticEnumPane />
           )}
+          {selectedTab === "基本設定" && (
+            <AppSettingsPane />
+          )}
         </div>
 
       </div>
     </ReactHookForm.FormProvider>
+  )
+}
+
+/** 保存処理の状態 */
+type SaveState = {
+  saving: boolean
+  /** 保存に失敗した場合のエラーメッセージ */
+  error?: string
+  /** 入力内容の誤りによって保存できなかった場合のエラー内容 */
+  validationErrors?: ValidationErrorMap
+}
+
+/**
+ * 保存に失敗した場合のエラー欄。
+ * バリデーションエラーはノードの uniqueId で送られてくるため、画面上の名前に読み替えて表示する。
+ */
+function SaveErrorMessage({ saveState }: {
+  saveState: SaveState
+}) {
+
+  const { getValues } = ReactHookForm.useFormContext<EditingProject>()
+
+  if (!saveState.error && !saveState.validationErrors) return null
+
+  const project = getValues()
+  const displayNames = new Map<string, string>()
+  for (const { root, members } of project.rootAggregates) {
+    displayNames.set(root.uniqueId, root.displayName)
+    for (const member of members) displayNames.set(member.uniqueId, `${root.displayName}/${member.displayName}`)
+  }
+  for (const { root, values } of project.staticEnums) {
+    displayNames.set(root.uniqueId, root.displayName)
+    for (const value of values) displayNames.set(value.uniqueId, `${root.displayName}/${value.displayName}`)
+  }
+  for (const node of project.dynamicEnumTypes) displayNames.set(node.uniqueId, node.displayName)
+  for (const node of project.valueObjects) displayNames.set(node.uniqueId, node.displayName)
+
+  const messages = Object.entries(saveState.validationErrors ?? {}).flatMap(([uniqueId, errors]) => {
+    const displayName = displayNames.get(uniqueId) ?? uniqueId
+    return Object.values(errors).flat().map(message => `${displayName}: ${message}`)
+  })
+
+  return (
+    <div className="flex flex-col gap-1 px-2 py-1 text-sm text-rose-700 bg-rose-50 border-b border-rose-200">
+      {saveState.error && (
+        <span className="whitespace-pre-wrap">{saveState.error}</span>
+      )}
+      {messages.map((message, i) => (
+        <span key={i}>{message}</span>
+      ))}
+    </div>
   )
 }
 

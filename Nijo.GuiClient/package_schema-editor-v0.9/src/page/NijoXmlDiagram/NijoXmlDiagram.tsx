@@ -24,7 +24,7 @@ import { useNodeLayout } from "./useNodeLayout"
  */
 export function NijoXmlDiagram() {
 
-  const { control, getValues } = ReactHookForm.useFormContext<EditingProject>()
+  const { control } = ReactHookForm.useFormContext<EditingProject>()
   const rootAggregates = ReactHookForm.useWatch({ control, name: "rootAggregates" })
 
   // ルート集約の追加・削除
@@ -40,11 +40,8 @@ export function NijoXmlDiagram() {
     ? -1
     : rootAggregates.findIndex(r => r.root.uniqueId === selection.rootId)
 
-  // ノードの位置と大きさ。編集中のスキーマ定義ごとに位置を保存する
-  const { positions, measured, handleNodesChange, handleNodeDragStop, resetLayout } = useNodeLayout(
-    roots,
-    references,
-    `nijo-xml-diagram-positions::${getValues("editingXmlFilePath") ?? ""}`)
+  // ノードの位置と大きさ
+  const { positions, measured, handleNodesChange, resetLayout } = useNodeLayout(roots, references)
 
   // ノード
   const nodes = React.useMemo((): AggregateFlowNode[] => roots.map(root => ({
@@ -91,7 +88,6 @@ export function NijoXmlDiagram() {
           nodeTypes={NODE_TYPES}
           edgeTypes={EDGE_TYPES}
           onNodesChange={handleNodesChange}
-          onNodeDragStop={handleNodeDragStop}
           onPaneClick={() => setSelection(null)}
           // 選択状態はライブラリに任せず、入れ子の子集約も含めて自前で管理する
           elementsSelectable={false}

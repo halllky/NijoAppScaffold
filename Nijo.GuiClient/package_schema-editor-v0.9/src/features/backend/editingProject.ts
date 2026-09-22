@@ -2,21 +2,25 @@
 // サーバー側はすべてのノードを深さ付きのフラットな配列で扱うが、
 // 画面側では編集単位ごとに配列を分けておいた方がグリッド等にそのままバインドできて扱いやすいため、ここで組み替える。
 
-import type { ClientRequest, Config, InitialLoadData, OptionalAttributeDef, OptionalAttributeValue, SchemaNode, SchemaNodeTypeDef } from "./types"
+import type { ClientRequest, Config, GraphLayout, InitialLoadData, OptionalAttributeDef, OptionalAttributeValue, SchemaNode, SchemaNodeTypeDef } from "./types"
 
 /** 画面上で編集するプロジェクトのデータ */
 export type EditingProject = {
   projectRoot?: string | null
   editingXmlFilePath?: string | null
-  config?: Config | null
-  /** 区分定義以外のルート要素とその子孫 */
+  config: Config
+  /** 区分定義・値オブジェクト以外のルート要素とその子孫 */
   rootAggregates: RootAggregateDef[]
   /** 静的区分（列挙体）の定義 */
   staticEnums: StaticEnumDef[]
   /** 動的区分（区分マスタ）の種類。いずれも子要素を持たないルート要素 */
   dynamicEnumTypes: EditingSchemaNode[]
+  /** 値オブジェクトの定義。いずれも子要素を持たないルート要素 */
+  valueObjects: EditingSchemaNode[]
   aggregateOrMemberTypes: SchemaNodeTypeDef[]
   optionalAttributes: OptionalAttributeDef[]
+  /** ダイアグラム上で位置を動かしたルート集約のノードの位置 */
+  graphLayout: GraphLayout
 }
 
 /**
@@ -26,9 +30,10 @@ export type EditingProject = {
 export type EditingSchemaNode = Omit<SchemaNode, "attrValues"> & {
   /**
    * オプショナル属性の値。キーは属性のキー。
-   * キーが存在すればその属性が指定されていることを表す。真偽値型の属性の値は空文字。
+   * 真偽値型の属性は true または false、それ以外の属性は文字列。
+   * キーが存在しない場合、または値が false か空文字の場合は指定なしを表す。
    */
-  attrs: { [key: string]: string }
+  attrs: { [key: string]: string | boolean }
 }
 
 /** 区分定義以外のルート要素1個分の定義 */
@@ -87,17 +92,23 @@ export const ATTR_KEY_PHYSICAL_NAME = "physical-name"
  * サーバーから受け取ったデータを画面上で編集するためのデータ構造に変換する。
  */
 export function toEditingProject(data: InitialLoadData): EditingProject {
+  const optionalAttributes = data.optionalAttributes ?? []
+  const attrDefs = new Map(optionalAttributes.map(def => [def.key, def]))
+
   const rootAggregates: RootAggregateDef[] = []
   const staticEnums: StaticEnumDef[] = []
   const dynamicEnumTypes: EditingSchemaNode[] = []
+  const valueObjects: EditingSchemaNode[] = []
 
   // ルート要素ごとに、その種類に応じた振り分け先へ子孫ごと移す
-  const nodes = (data.aggregates ?? []).map(toEditingSchemaNode)
+  const nodes = (data.aggregates ?? []).map(node => toEditingSchemaNode(node, attrDefs))
   for (const [root, ...descendants] of splitByRoot(nodes)) {
     if (root.type === NODE_TYPE_STATIC_ENUM) {
       staticEnums.push({ root, values: descendants })
     } else if (root.type === NODE_TYPE_DYNAMIC_ENUM_TYPE) {
       dynamicEnumTypes.push(root)
+    } else if (root.type === NODE_TYPE_VALUE_OBJECT) {
+      valueObjects.push(root)
     } else {
       rootAggregates.push({ root, members: descendants })
     }
@@ -106,38 +117,68 @@ export function toEditingProject(data: InitialLoadData): EditingProject {
   return {
     projectRoot: data.projectRoot,
     editingXmlFilePath: data.editingXmlFilePath,
-    config: data.config,
+    config: data.config ?? createDefaultConfig(),
     rootAggregates,
     staticEnums,
     dynamicEnumTypes,
+    valueObjects,
     aggregateOrMemberTypes: data.aggregateOrMemberTypes ?? [],
-    optionalAttributes: data.optionalAttributes ?? [],
+    optionalAttributes,
+    graphLayout: data.graphLayout ?? {},
   }
 }
 
 /**
  * 画面上で編集したデータをサーバーに送るデータ構造に変換する。
- * ルート要素の並び順は、集約、静的区分、動的区分の種類の順になる。
+ * ルート要素の並び順は、集約、静的区分、動的区分の種類、値オブジェクトの順になる。
  * 画面上の編集操作によって深さの連続性が崩れている場合、ここで補正する。
  */
 export function toClientRequest(project: EditingProject): ClientRequest {
-  const attrDefs = new Map(project.optionalAttributes.map(def => [def.key, def]))
-  const toServer = (node: EditingSchemaNode) => toSchemaNode(node, attrDefs)
-
   return {
     config: project.config,
     aggregates: [
       ...project.rootAggregates.flatMap(({ root, members }) => [
-        toServer({ ...root, depth: 0 }),
-        ...normalizeDepths(members).map(toServer),
+        toSchemaNode({ ...root, depth: 0 }),
+        ...normalizeDepths(members).map(toSchemaNode),
       ]),
-      // 区分定義のノードの深さは画面上のデータ構造によって決まるため、ここで確定させる
+      // 区分定義・値オブジェクトのノードの深さは画面上のデータ構造によって決まるため、ここで確定させる
       ...project.staticEnums.flatMap(({ root, values }) => [
-        toServer({ ...root, depth: 0 }),
-        ...values.map(value => toServer({ ...value, depth: 1 })),
+        toSchemaNode({ ...root, depth: 0 }),
+        ...values.map(value => toSchemaNode({ ...value, depth: 1 })),
       ]),
-      ...project.dynamicEnumTypes.map(node => toServer({ ...node, depth: 0 })),
+      ...project.dynamicEnumTypes.map(node => toSchemaNode({ ...node, depth: 0 })),
+      ...project.valueObjects.map(node => toSchemaNode({ ...node, depth: 0 })),
     ],
+    graphLayout: project.graphLayout,
+  }
+}
+
+/**
+ * 設定が読み込めなかった場合に使う、スキーマ定義のルート要素の設定の既定値。
+ * 既定値はサーバー側の設定クラスのものと合わせている。
+ */
+function createDefaultConfig(): Config {
+  return {
+    RootNamespace: "",
+    GenerateUnusedRefToModules: false,
+    DbContextName: "MyDbContext",
+    CreateUserDbColumnName: null,
+    UpdateUserDbColumnName: null,
+    CreatedAtDbColumnName: null,
+    UpdatedAtDbColumnName: null,
+    VersionDbColumnName: null,
+    MaxFileSizeMB: null,
+    MaxTotalFileSizeMB: null,
+    AttachmentFileExtensions: null,
+    DisableLocalRepository: false,
+    UseBatchUpdateVersion2: false,
+    ButtonColor: null,
+    UseWijmo: false,
+    VFormRefItemIsNotWide: false,
+    MultiViewDetailLinkBehavior: "navigateToEditMode",
+    VFormMaxColumnCount: null,
+    VFormMaxMemberCount: null,
+    VFormThreshold: null,
   }
 }
 
@@ -156,11 +197,13 @@ export function createNewSchemaNode(depth: number, type?: string): EditingSchema
 
 /**
  * サーバー側のノードを画面上で編集するノードに変換する。
+ * 真偽値型の属性は、値を持たないことで指定ありを表すサーバー側の形式から、画面上で扱いやすい真偽値に置き換える。
  */
-function toEditingSchemaNode({ attrValues, ...rest }: SchemaNode): EditingSchemaNode {
+function toEditingSchemaNode({ attrValues, ...rest }: SchemaNode, attrDefs: Map<string, OptionalAttributeDef>): EditingSchemaNode {
   const attrs: EditingSchemaNode["attrs"] = {}
   for (const { key, value } of attrValues ?? []) {
-    if (key) attrs[key] = value ?? ""
+    if (!key) continue
+    attrs[key] = attrDefs.get(key)?.type === "boolean" ? true : value ?? ""
   }
   return { ...rest, attrs }
 }
@@ -169,13 +212,12 @@ function toEditingSchemaNode({ attrValues, ...rest }: SchemaNode): EditingSchema
  * 画面上で編集したノードをサーバー側のノードに変換する。
  * 値が空の文字列型・数値型の属性は、画面上で値が消されたものとみなして指定なしにする。
  */
-function toSchemaNode({ attrs, ...rest }: EditingSchemaNode, attrDefs: Map<string, OptionalAttributeDef>): SchemaNode {
+function toSchemaNode({ attrs, ...rest }: EditingSchemaNode): SchemaNode {
   const attrValues: OptionalAttributeValue[] = []
   for (const [key, value] of Object.entries(attrs)) {
-    const isBoolean = attrDefs.get(key)?.type === "boolean"
-    if (value.trim() === "") {
-      if (isBoolean) attrValues.push({ key, value: null })
-    } else {
+    if (typeof value === "boolean") {
+      if (value) attrValues.push({ key, value: null })
+    } else if (value.trim() !== "") {
       attrValues.push({ key, value })
     }
   }

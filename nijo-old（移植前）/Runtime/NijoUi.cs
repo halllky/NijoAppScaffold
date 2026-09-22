@@ -78,13 +78,15 @@ namespace Nijo.Runtime {
                     Nodes = schema.ToList(),
                     SchemaNodeTypes = NODE_TYPE.Values.ToList(),
                     OptionalAttributes = ATTR_DEF.Values.ToList(),
+                    GraphLayout = GraphLayout.LoadFromFile(_project.SchemaXmlPath, schema),
                 }.ConvertToJson());
             });
 
             // mermaid.js によるグラフ表示
             app.MapPost("/api/mermaid", async context => {
                 try {
-                    var schema = await MutableSchema.FromHttpRequest(context.Request.Body);
+                    var request = await ClientRequest.ReadFrom(context.Request.Body);
+                    var schema = MutableSchema.FromClientRequest(request);
                     var onlyRoot = context.Request.Query.ContainsKey("only-root");
 
                     // グラフ中のノードのIDは整数の連番
@@ -188,7 +190,8 @@ namespace Nijo.Runtime {
             // 編集中のバリデーション
             app.MapPost("/api/validate", async context => {
                 try {
-                    var schema = await MutableSchema.FromHttpRequest(context.Request.Body);
+                    var request = await ClientRequest.ReadFrom(context.Request.Body);
+                    var schema = MutableSchema.FromClientRequest(request);
                     var errors = ValidationError.ToErrorObjectJson(schema.CollectVaridationErrors());
 
                     context.Response.ContentType = "application/json";
@@ -203,7 +206,8 @@ namespace Nijo.Runtime {
             app.MapPost("/api/save", async context => {
                 try {
                     // バリデーション
-                    var schema = await MutableSchema.FromHttpRequest(context.Request.Body);
+                    var request = await ClientRequest.ReadFrom(context.Request.Body);
+                    var schema = MutableSchema.FromClientRequest(request);
                     var errors = schema.CollectVaridationErrors().ToArray();
                     if (errors.Length > 0) {
                         context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
@@ -215,6 +219,7 @@ namespace Nijo.Runtime {
 
                     // 保存
                     schema.Save(_project.SchemaXmlPath);
+                    GraphLayout.SaveToFile(_project.SchemaXmlPath, schema, request.GraphLayout);
 
                     // コード自動生成かけなおし
                     if (context.Request.Query.ContainsKey("build")) {
@@ -241,14 +246,10 @@ namespace Nijo.Runtime {
 
             #region 入出力
             /// <summary>
-            /// HTTPリクエストボディから <see cref="MutableSchema"/> のインスタンスを作成
+            /// クライアントから送られてきたデータから <see cref="MutableSchema"/> のインスタンスを作成
             /// </summary>
-            public static async Task<MutableSchema> FromHttpRequest(Stream httpRequestBody) {
-                using var sr = new StreamReader(httpRequestBody);
-                var json = await sr.ReadToEndAsync();
-                var obj = json.ParseAsJson<ClientRequest>();
-
-                return new MutableSchema(obj.Config!, obj.Nodes ?? []);
+            public static MutableSchema FromClientRequest(ClientRequest request) {
+                return new MutableSchema(request.Config!, request.Nodes ?? []);
             }
             /// <summary>
             /// XMLドキュメントから <see cref="MutableSchema"/> のインスタンスを作成
@@ -1056,6 +1057,8 @@ namespace Nijo.Runtime {
             public List<SchemaNodeTypeDef>? SchemaNodeTypes { get; set; }
             [JsonPropertyName("optionalAttributes")]
             public List<OptionalAttributeDef>? OptionalAttributes { get; set; }
+            [JsonPropertyName("graphLayout")]
+            public Dictionary<string, NodePosition>? GraphLayout { get; set; }
         }
         /// <summary>
         /// クライアントからサーバーへ送るデータ
@@ -1065,6 +1068,87 @@ namespace Nijo.Runtime {
             public Config? Config { get; set; }
             [JsonPropertyName("aggregates")]
             public List<MutableSchemaNode>? Nodes { get; set; }
+            [JsonPropertyName("graphLayout")]
+            public Dictionary<string, NodePosition>? GraphLayout { get; set; }
+
+            /// <summary>
+            /// HTTPリクエストボディを読み取ります。
+            /// </summary>
+            public static async Task<ClientRequest> ReadFrom(Stream httpRequestBody) {
+                using var sr = new StreamReader(httpRequestBody);
+                var json = await sr.ReadToEndAsync();
+                return json.ParseAsJson<ClientRequest>();
+            }
+        }
+
+        /// <summary>
+        /// ダイアグラム上のノードの位置
+        /// </summary>
+        private class NodePosition {
+            [JsonPropertyName("x")]
+            public double X { get; set; }
+            [JsonPropertyName("y")]
+            public double Y { get; set; }
+        }
+
+        /// <summary>
+        /// ダイアグラム上のルート集約のノードの位置を保存するファイル。
+        /// スキーマ定義のXMLと同じディレクトリに置かれる。
+        ///
+        /// ノードの識別子として <see cref="MutableSchemaNode.UniqueId"/> は使えない。
+        /// あれは実行中しか有効でない値であり、次回起動時には異なる値になるため。
+        /// 代わりにルート要素の物理名を用いる（物理名の重複はバリデーションで禁止されている）。
+        /// </summary>
+        private class GraphLayout {
+            [JsonPropertyName("nodePositions")]
+            public Dictionary<string, NodePosition>? NodePositions { get; set; }
+
+            /// <summary>
+            /// ファイルを読み込み、ノードの位置を <see cref="MutableSchemaNode.UniqueId"/> で引けるようにして返します。
+            /// ファイルが存在しない場合や内容が壊れている場合は空を返します。
+            /// </summary>
+            public static Dictionary<string, NodePosition> LoadFromFile(string entryXmlFilePath, MutableSchema schema) {
+                var filePath = GetFilePath(entryXmlFilePath);
+                if (!File.Exists(filePath)) return [];
+
+                GraphLayout? layout;
+                try {
+                    layout = File.ReadAllText(filePath).ParseAsJson<GraphLayout>();
+                } catch (Exception) {
+                    // レイアウトは無くても画面自体は使えるため、読み込めない場合は自動配置に任せる
+                    return [];
+                }
+                if (layout?.NodePositions == null) return [];
+
+                var positions = new Dictionary<string, NodePosition>();
+                foreach (var rootNode in schema.RootNodes()) {
+                    if (layout.NodePositions.TryGetValue(rootNode.GetPhysicalName(), out var position)) {
+                        positions[rootNode.UniqueId] = position;
+                    }
+                }
+                return positions;
+            }
+
+            /// <summary>
+            /// <see cref="MutableSchemaNode.UniqueId"/> で引けるノードの位置をファイルに保存します。
+            /// </summary>
+            public static void SaveToFile(string entryXmlFilePath, MutableSchema schema, IReadOnlyDictionary<string, NodePosition>? positions) {
+                var nodePositions = new Dictionary<string, NodePosition>();
+                foreach (var rootNode in schema.RootNodes()) {
+                    if (positions?.TryGetValue(rootNode.UniqueId, out var position) == true) {
+                        nodePositions[rootNode.GetPhysicalName()] = position;
+                    }
+                }
+
+                var layout = new GraphLayout { NodePositions = nodePositions };
+                File.WriteAllText(GetFilePath(entryXmlFilePath), layout.ConvertToJson(), new UTF8Encoding(false, false));
+            }
+
+            private static string GetFilePath(string entryXmlFilePath) {
+                var directory = Path.GetDirectoryName(entryXmlFilePath);
+                var fileName = $"{Path.GetFileNameWithoutExtension(entryXmlFilePath)}.graphLayout.json";
+                return directory == null ? fileName : Path.Combine(directory, fileName);
+            }
         }
 
         /// <summary>
@@ -1638,6 +1722,11 @@ namespace Nijo.Runtime {
             public string? HelpText { get; set; }
             [JsonPropertyName("type")]
             public E_OptionalAttributeType? Type { get; set; }
+            /// <summary>
+            /// <see cref="E_OptionalAttributeType.Select"/> の場合の選択肢。
+            /// </summary>
+            [JsonPropertyName("selectOptions")]
+            public string[]? SelectOptions { get; set; }
 
             public const string PHYSICAL_NAME = "physical-name";
             public const string DB_NAME = "db-name";
@@ -1663,6 +1752,8 @@ namespace Nijo.Runtime {
             String,
             Number,
             Boolean,
+            /// <summary>決まった選択肢の中から選ぶもの。選択肢は <see cref="OptionalAttributeDef.SelectOptions"/></summary>
+            Select,
         }
 
         /// <summary>
@@ -2538,13 +2629,16 @@ namespace Nijo.Runtime {
             },
         };
 
+        /// <summary>検索時の挙動としてとりうる値</summary>
+        private static readonly string[] SEARCH_BEHAVIORS = ["前方一致", "後方一致", "完全一致", "部分一致", "範囲検索"];
         private static OptionalAttributeDef SearchBehavior => new OptionalAttributeDef {
             Key = "search-behavior",
             DisplayName = "検索時の挙動",
-            Type = E_OptionalAttributeType.String,
+            Type = E_OptionalAttributeType.Select,
+            SelectOptions = SEARCH_BEHAVIORS,
             HelpText = $$"""
                 検索時の挙動。単語型でのみ使用可能。
-                「前方一致」「後方一致」「完全一致」「部分一致」「範囲検索」のいずれかを指定してください。
+                「{{SEARCH_BEHAVIORS.Join("」「")}}」のいずれかを指定してください。
                 """,
             Validate = (value, node, schema, errors) => {
                 if (string.IsNullOrWhiteSpace(value)) return;
@@ -2553,9 +2647,8 @@ namespace Nijo.Runtime {
                     errors.Add("この属性は単語型か値オブジェクト型にのみ設定できます。");
                     return;
                 }
-                var behaviors = new[] { "前方一致", "後方一致", "完全一致", "部分一致", "範囲検索" };
-                if (!behaviors.Contains(value)) {
-                    errors.Add($"{behaviors.Select(x => $"\"{x}\"").Join(", ")}のいずれかを入力してください。");
+                if (!SEARCH_BEHAVIORS.Contains(value)) {
+                    errors.Add($"{SEARCH_BEHAVIORS.Select(x => $"\"{x}\"").Join(", ")}のいずれかを入力してください。");
                 }
             },
             EditAggregateMemberOption = (value, node, schema, opt) => {

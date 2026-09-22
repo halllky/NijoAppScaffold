@@ -1,22 +1,26 @@
 import React from "react"
-import type { Dimensions, Node, NodeChange, OnNodeDrag, XYPosition } from "@xyflow/react"
+import * as ReactHookForm from "react-hook-form"
+import type { Dimensions, Node, NodeChange, XYPosition } from "@xyflow/react"
+import type { EditingProject } from "../../features/backend"
 import type { DiagramAggregate, DiagramReference, ModelKind } from "./aggregateTree"
 
 /**
  * ダイアグラム上のルート集約のノードの位置と大きさを管理する。
  *
- * ユーザーがドラッグして動かしたノードの位置はブラウザに保存され、次回表示時にも復元される。
+ * ユーザーがドラッグして動かしたノードの位置はフォームの編集内容の一部として保持されるため、
+ * 保存操作によって他の編集内容と一緒に永続化される。
  * 一度も動かしていないノードは、参照される側が左、参照する側が右に来るよう列に分けて自動配置される。
  * 自動配置は描画後に計測された各ノードの大きさに追従する。
  *
  * @param roots ダイアグラムに表示するルート集約
  * @param references 集約間の参照。自動配置の列の決定に使う
- * @param storageKey ノードの位置の保存先を区別するキー。編集対象のスキーマ定義ごとに異なる値を指定する
  */
-export function useNodeLayout(roots: DiagramAggregate[], references: DiagramReference[], storageKey: string) {
+export function useNodeLayout(roots: DiagramAggregate[], references: DiagramReference[]) {
+
+  const { control, setValue } = ReactHookForm.useFormContext<EditingProject>()
 
   // ユーザーがドラッグして動かしたノードの位置
-  const [movedPositions, setMovedPositions] = React.useState(() => loadPositions(storageKey))
+  const movedPositions = ReactHookForm.useWatch({ control, name: "graphLayout" })
 
   // 描画後に計測されたノードの大きさ。
   // ライブラリはノードの大きさが指定されていないノードを未計測とみなすため、ここで保持して毎回渡す必要がある
@@ -38,24 +42,13 @@ export function useNodeLayout(roots: DiagramAggregate[], references: DiagramRefe
         resized[change.id] = change.dimensions
       }
     }
-    if (Object.keys(moved).length > 0) setMovedPositions(prev => ({ ...prev, ...moved }))
+    if (Object.keys(moved).length > 0) setValue("graphLayout", { ...movedPositions, ...moved }, { shouldDirty: true })
     if (Object.keys(resized).length > 0) setMeasured(prev => ({ ...prev, ...resized }))
-  }
-
-  /** ドラッグ終了時、動かしたノードの位置をブラウザに保存する */
-  const handleNodeDragStop: OnNodeDrag = (_event, _node, draggedNodes) => {
-    // 直前のドラッグ中の位置の変化がまだ state に反映されていない可能性があるため、
-    // ドラッグ終了時点のノードの位置を正として保存する
-    const next = { ...movedPositions }
-    for (const node of draggedNodes) next[node.id] = node.position
-    setMovedPositions(next)
-    savePositions(storageKey, next)
   }
 
   /** 動かしたノードの位置をすべて破棄し、自動配置に戻す */
   const resetLayout = () => {
-    setMovedPositions({})
-    savePositions(storageKey, {})
+    setValue("graphLayout", {}, { shouldDirty: true })
   }
 
   return {
@@ -64,7 +57,6 @@ export function useNodeLayout(roots: DiagramAggregate[], references: DiagramRefe
     /** 計測済みのノードの大きさ。キーはルート集約の uniqueId。未計測のノードは含まれない */
     measured,
     handleNodesChange,
-    handleNodeDragStop,
     resetLayout,
   }
 }
@@ -160,23 +152,4 @@ function splitIntoColumns(roots: DiagramAggregate[], references: DiagramReferenc
 /** 未計測のノードの高さを、包含している子集約の数から見積もる */
 function estimateHeight(aggregate: DiagramAggregate): number {
   return ESTIMATED_HEADER_HEIGHT + aggregate.children.reduce((sum, child) => sum + estimateHeight(child), 0)
-}
-
-/** ブラウザに保存されたノードの位置を読み込む。保存されていない場合や読み込めない場合は空 */
-function loadPositions(storageKey: string): { [id: string]: XYPosition } {
-  try {
-    const json = window.localStorage.getItem(storageKey)
-    return json ? JSON.parse(json) : {}
-  } catch {
-    return {}
-  }
-}
-
-/** ノードの位置をブラウザに保存する。保存できない環境では何もしない */
-function savePositions(storageKey: string, positions: { [id: string]: XYPosition }) {
-  try {
-    window.localStorage.setItem(storageKey, JSON.stringify(positions))
-  } catch {
-    // 保存できなくても画面上の位置は保持されているため、動作に支障はない
-  }
 }

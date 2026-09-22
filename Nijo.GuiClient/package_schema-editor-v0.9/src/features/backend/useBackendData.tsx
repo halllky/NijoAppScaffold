@@ -1,10 +1,17 @@
 import React from "react"
-import { toEditingProject, type EditingProject } from "./editingProject"
-import { loadProject } from "./api"
+import { toClientRequest, toEditingProject, type EditingProject } from "./editingProject"
+import { loadProject, saveProject } from "./api"
+import type { SaveResult } from "./types"
 
 type BackendDataContextType = LoadState<EditingProject> & {
   /** 再読み込みを要求 */
   reload: () => void
+  /**
+   * 編集中の内容をサーバーに送って保存する。
+   * サーバー側でバリデーションエラーが検出された場合は保存されず、そのエラー内容が結果に含まれる。
+   * @param build true の場合、保存後にコード自動生成をかけなおす
+   */
+  save: (project: EditingProject, build: boolean) => Promise<SaveResult>
 }
 
 type LoadState<T> =
@@ -42,11 +49,17 @@ export function BackendDataContextProvider({ children }: { children?: React.Reac
     return () => abortController.abort()
   }, [reloadKey])
 
+  // 保存
+  const save = React.useCallback((project: EditingProject, build: boolean) => {
+    return saveProject(toClientRequest(project), build)
+  }, [])
+
   // コンテキストの値
   const contextValue = React.useMemo((): BackendDataContextType => ({
     ...state,
     reload: executeReload,
-  }), [state, executeReload])
+    save,
+  }), [state, executeReload, save])
 
   return (
     <BackendDataContext.Provider value={contextValue}>

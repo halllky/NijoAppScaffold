@@ -8,13 +8,13 @@ import {
   createNewSchemaNode,
   NODE_TYPE_COMMAND_MODEL,
   NODE_TYPE_READ_MODEL,
-  NODE_TYPE_VALUE_OBJECT,
   NODE_TYPE_WRITE_MODEL,
   NODE_TYPE_WRITE_READ_MODEL,
   type EditingProject,
-  type EditingSchemaNode,
 } from "../../features/backend"
-import { formatAttrs, formatNodeType, parseAttrs, parseNodeType } from "./schemaNodeNotation"
+import { formatNodeType, parseNodeType } from "./schemaNodeNotation"
+import { defineOptionalAttrColumns } from "./optionalAttrColumns"
+import { OptionalAttrsForm } from "./OptionalAttrsForm"
 
 /**
  * ルート集約1個分の編集欄。
@@ -40,6 +40,9 @@ export function AggregatePane({ rootIndex, focusedMemberId, onClose }: {
   const { control, register, getValues, setValue } = useFormReturn
   const rootPath = `rootAggregates.${rootIndex}.root` as const
   const membersPath = `rootAggregates.${rootIndex}.members` as const
+
+  // オプショナル属性の一覧と入力形式はサーバー側の定義が正
+  const attrDefs = ReactHookForm.useWatch({ control, name: "optionalAttributes" })
 
   // メンバーのグリッド
   const { editableGridProps, rowOperations } = useEditableGrid(useFormReturn, membersPath, col => [
@@ -67,20 +70,12 @@ export function AggregatePane({ rootIndex, focusedMemberId, onClose }: {
     col.text(`attrs.${ATTR_KEY_PHYSICAL_NAME}`, "物理名", {
       defaultWidth: 160,
     }),
-    col.text("attrs", "属性", {
-      defaultWidth: 240,
-      getValuesForRender: row => [formatAttrs(row.attrs)],
-      renderBody: ({ deps: [text] }) => (
-        <div className="w-full px-1 text-sm truncate">{text as string}</div>
-      ),
-      cellToText: row => formatAttrs(row.attrs),
-      textToCell: (row, text) => ({ ...window.structuredClone(row), attrs: parseAttrs(text, row.attrs) }),
-    }),
+    ...defineOptionalAttrColumns(col, attrDefs),
     col.text("comment", "コメント", {
       defaultWidth: 320,
       wrap: true,
     }),
-  ], [getValues], {
+  ], [getValues, attrDefs], {
     // 選択行の兄弟として追加する
     createNewRow: previousRow => createNewSchemaNode(previousRow?.depth ?? 1),
   })
@@ -129,6 +124,7 @@ export function AggregatePane({ rootIndex, focusedMemberId, onClose }: {
 
       {/* ルート集約の名前と閉じるボタン */}
       <div className="flex items-center gap-1">
+        {/* ルート集約名 */}
         <input
           {...register(`${rootPath}.displayName`)}
           placeholder="ルート集約の名前"
@@ -136,14 +132,8 @@ export function AggregatePane({ rootIndex, focusedMemberId, onClose }: {
           autoComplete="off"
           className="flex-1 min-w-0 px-1 font-bold border border-gray-300"
         />
-        <Button Icon={XMarkIcon} hideText onClick={onClose}>
-          閉じる
-        </Button>
-      </div>
 
-      {/* ルート集約の設定 */}
-      <div className="grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-1 text-sm">
-        <label htmlFor={`${rootPath}.type`} className="text-gray-600">種類</label>
+        {/* ルート集約のモデル */}
         <select
           {...register(`${rootPath}.type`)}
           id={`${rootPath}.type`}
@@ -154,6 +144,13 @@ export function AggregatePane({ rootIndex, focusedMemberId, onClose }: {
           ))}
         </select>
 
+        <Button Icon={XMarkIcon} hideText onClick={onClose}>
+          閉じる
+        </Button>
+      </div>
+
+      {/* ルート集約の設定 */}
+      <div className="grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-1 text-sm">
         <label htmlFor={`${rootPath}.attrs.${ATTR_KEY_PHYSICAL_NAME}`} className="text-gray-600">物理名</label>
         <input
           {...register(`${rootPath}.attrs.${ATTR_KEY_PHYSICAL_NAME}`)}
@@ -164,9 +161,6 @@ export function AggregatePane({ rootIndex, focusedMemberId, onClose }: {
           className="px-1 border border-gray-300"
         />
 
-        <label htmlFor={`${rootPath}.attrs`} className="text-gray-600">属性</label>
-        <RootAttrsInput id={`${rootPath}.attrs`} rootPath={rootPath} />
-
         <label htmlFor={`${rootPath}.comment`} className="self-start text-gray-600">コメント</label>
         <textarea
           {...register(`${rootPath}.comment`)}
@@ -175,6 +169,8 @@ export function AggregatePane({ rootIndex, focusedMemberId, onClose }: {
           autoComplete="off"
           className="px-1 field-sizing-content resize-none border border-gray-300"
         />
+
+        <OptionalAttrsForm path={rootPath} />
       </div>
 
       {/* メンバーの操作 */}
@@ -200,13 +196,12 @@ export function AggregatePane({ rootIndex, focusedMemberId, onClose }: {
   )
 }
 
-/** ルート集約に設定できる種類。区分定義は専用の画面で編集するため含まない */
+/** ルート集約に設定できる種類。区分定義と値オブジェクトは専用の画面で編集するため含まない */
 const ROOT_TYPES = [
   NODE_TYPE_WRITE_MODEL,
   NODE_TYPE_WRITE_READ_MODEL,
   NODE_TYPE_READ_MODEL,
   NODE_TYPE_COMMAND_MODEL,
-  NODE_TYPE_VALUE_OBJECT,
 ]
 
 /** メンバーの名前のセル。インデントの深さだけ字下げし、親子関係を縦線で表す */
@@ -225,37 +220,5 @@ function MemberNameCell({ displayName, depth }: {
         {displayName}
       </span>
     </div>
-  )
-}
-
-/**
- * ルート集約のオプショナル属性の入力欄。属性はグリッドと同じ書き方の文字列で入力する。
- * 入力途中の文字列を解釈するとスペースが消えてしまうため、フォーカスが外れたときに確定させる。
- */
-function RootAttrsInput({ id, rootPath }: {
-  id: string
-  rootPath: `rootAggregates.${number}.root`
-}) {
-  const { control, getValues, setValue } = ReactHookForm.useFormContext<EditingProject>()
-  const attrs = ReactHookForm.useWatch({ control, name: `${rootPath}.attrs` })
-  const text = formatAttrs(attrs)
-
-  const handleBlur: React.FocusEventHandler<HTMLInputElement> = e => {
-    const current: EditingSchemaNode["attrs"] = getValues(`${rootPath}.attrs`)
-    setValue(`${rootPath}.attrs`, parseAttrs(e.target.value, current), { shouldDirty: true })
-  }
-
-  return (
-    <input
-      // 確定済みの値が変わったら入力欄の内容を作り直す
-      key={text}
-      id={id}
-      defaultValue={text}
-      onBlur={handleBlur}
-      placeholder="例: readonly force-generate-refto-modules"
-      spellCheck={false}
-      autoComplete="off"
-      className="px-1 border border-gray-300"
-    />
   )
 }

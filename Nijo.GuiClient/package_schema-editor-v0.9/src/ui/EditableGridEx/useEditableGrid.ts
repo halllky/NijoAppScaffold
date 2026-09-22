@@ -3,6 +3,7 @@ import { createColumnHelper, type EditableGridColumn, type EditableGridProps, ty
 import React from "react"
 import { createTextCellHelper, type CreateTextCellFunction } from "./createTextCellHelper"
 import { createCheckBoxCellHelper, type CreateCheckBoxCellFunction } from "./createCheckBoxCellHelper"
+import { createDropdownCellHelper, type CreateDropdownCellFunction } from "./createDropdownCellHelper"
 import { attachRowOperationKeys, useRowOperations, type RowOperations } from "./useRowOperations"
 
 /**
@@ -63,6 +64,7 @@ export function useEditableGrid<
       ...createColumnHelper<TRow>(),
       text: createTextCellHelper(),
       checkbox: createCheckBoxCellHelper(getValues, setValue, name, getRowIndexByKeyRef),
+      dropdown: createDropdownCellHelper(),
     }
     return attachRowOperationKeys(defineColumns(helper), handleCellKeyDown)
   }, [getValues, setValue, name, getRowIndexByKeyRef, handleCellKeyDown, ...defineColumnsDeps])
@@ -130,6 +132,8 @@ export type ColumnHelper<TRow> = ReturnType<typeof createColumnHelper<TRow>> & {
   text: CreateTextCellFunction
   /** チェックボックス列 */
   checkbox: CreateCheckBoxCellFunction
+  /** ドロップダウン列 */
+  dropdown: CreateDropdownCellFunction
 }
 
 /**

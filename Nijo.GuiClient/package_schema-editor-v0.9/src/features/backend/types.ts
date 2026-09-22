@@ -73,7 +73,23 @@ export type OptionalAttributeDef = {
   key: string
   displayName?: string | null
   helpText?: string | null
-  type?: 'string' | 'number' | 'boolean' | null
+  type?: 'string' | 'number' | 'boolean' | 'select' | null
+  /** 種類が 'select' の場合の選択肢 */
+  selectOptions?: string[] | null
+}
+
+/** ダイアグラム上のノードの位置 */
+export type NodePosition = {
+  x: number
+  y: number
+}
+
+/**
+ * ダイアグラム上のルート集約のノードの位置。キーはノードの uniqueId。
+ * 位置を動かしていないノードは含まれない。
+ */
+export type GraphLayout = {
+  [uniqueId: string]: NodePosition
 }
 
 /** 画面初期表示時にサーバーから受け取るデータ（C# の InitialLoadData） */
@@ -84,12 +100,14 @@ export type InitialLoadData = {
   aggregates?: SchemaNode[] | null
   aggregateOrMemberTypes?: SchemaNodeTypeDef[] | null
   optionalAttributes?: OptionalAttributeDef[] | null
+  graphLayout?: GraphLayout | null
 }
 
 /** 検証・保存時にクライアントからサーバーへ送るデータ（C# の ClientRequest） */
 export type ClientRequest = {
   config?: Config | null
   aggregates: SchemaNode[]
+  graphLayout: GraphLayout
 }
 
 /**
