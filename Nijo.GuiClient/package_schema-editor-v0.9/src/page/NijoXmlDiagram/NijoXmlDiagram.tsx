@@ -10,6 +10,7 @@ import {
   useNotifyDiagramStructureChanged,
   type DiagramReference,
 } from "../../features/diagram"
+import { DiagramSearchBox } from "../../features/diagram-searching"
 import { AggregateNode, type AggregateFlowNode } from "./AggregateNode"
 import { FloatingEdge, type FloatingFlowEdge } from "./FloatingEdge"
 import { MODEL_COLORS } from "./modelColors"
@@ -18,12 +19,6 @@ import { NewRootAggregateDialog } from "./NewRootAggregateDialog"
 /**
  * React Flow を使って nijo.xml の Write Model / Read Model / Command Model を
  * ダイアグラムとして表示するコンポーネント。
- * ルート集約をノードとし、その子孫の child, children はノードの中に包含して表示する。
- * ルート集約を選択することができる。選択状態は呼び出し側で保持する。
- * ダイアグラムのノードはドラッグで自由に動かせる。範囲選択した複数のノードをまとめて動かすこともできる。
- * ダイアグラムのエッジは集約間の参照関係（ref-to:）によって自動的に算出される。
- * ルート集約の追加と、選択中のルート集約の削除もここから行う。
- * 表示対象のデータは親のフォームのコンテキストから取得する。
  */
 export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onDraggingChanged }: {
   /** 選択中のルート集約の uniqueId */
@@ -60,6 +55,9 @@ export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onDraggingCh
     onSelectedIdsChanged(next)
   }
 
+  // 検索にヒットしたルート集約の uniqueId。検索していないときは undefined
+  const [hitRootIds, setHitRootIds] = React.useState<ReadonlySet<string>>()
+
   // ドラッグを始める前の位置で組み立てたノード。
   // ドラッグ中は作り直さず同じオブジェクトのままにして、動かしていないノードをライブラリに変化していないと判断させる
   const settledNodes = React.useMemo((): AggregateFlowNode[] => roots.map(root => ({
@@ -68,8 +66,10 @@ export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onDraggingCh
     position: positions[root.node.uniqueId],
     measured: measured[root.node.uniqueId],
     selected: selectedIds.has(root.node.uniqueId),
+    // 不透明度はライブラリがノードの外側の要素に反映するため、ノードの中身を描画し直さずに済む
+    style: hitRootIds && !hitRootIds.has(root.node.uniqueId) ? NOT_HIT_NODE_STYLE : undefined,
     data: { aggregate: root },
-  })), [roots, positions, measured, selectedIds])
+  })), [roots, positions, measured, selectedIds, hitRootIds])
 
   // ノード。ほぼ settledNodes と同じだが、ドラッグ中のノードだけ位置が差し替わる。
   const nodes = React.useMemo(() => settledNodes.map(node => {
@@ -78,7 +78,7 @@ export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onDraggingCh
   }), [settledNodes, draggingPositions])
 
   // エッジ
-  const edges = React.useMemo(() => references.map(ref => toEdge(ref, selectedIds)), [references, selectedIds])
+  const edges = React.useMemo(() => references.map(ref => toEdge(ref, selectedIds, hitRootIds)), [references, selectedIds, hitRootIds])
 
   // 描画先の大きさ。
   // 分割ペインの中に置かれた場合など、初回描画時にはまだ大きさが決まっていないことがある。
@@ -149,17 +149,24 @@ export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onDraggingCh
         <Controls showInteractive={false} />
       </ReactFlow>}
 
-      {/* 操作 */}
-      <div className="absolute top-1 left-1 flex flex-col gap-1">
-        <Button Icon={PlusIcon} border className="bg-white" onClick={() => setIsNewRootDialogOpen(true)}>
-          ルート集約を追加
-        </Button>
-        <Button Icon={TrashIcon} border className="bg-white" onClick={handleRemoveRoot} disabled={selectedIds.size !== 1}>
-          選択中のルート集約を削除
-        </Button>
-        <Button Icon={ArrowPathIcon} border className="bg-white" onClick={resetLayout}>
-          自動配置に戻す
-        </Button>
+      {/* 操作。
+          右側は選択中のルート集約の編集欄が重なって隠れることがあるため、左上にまとめている */}
+      <div className="absolute top-1 left-1 flex items-start gap-1">
+        {/* ボタン */}
+        <div className="flex flex-col gap-1">
+          <Button Icon={PlusIcon} border className="bg-white" onClick={() => setIsNewRootDialogOpen(true)}>
+            ルート集約を追加
+          </Button>
+          <Button Icon={TrashIcon} border className="bg-white" onClick={handleRemoveRoot} disabled={selectedIds.size !== 1}>
+            選択中のルート集約を削除
+          </Button>
+          <Button Icon={ArrowPathIcon} border className="bg-white" onClick={resetLayout}>
+            自動配置に戻す
+          </Button>
+        </div>
+
+        {/* 検索 */}
+        <DiagramSearchBox onHitRootIdsChanged={setHitRootIds} />
       </div>
 
       {/* ルート集約追加ダイアログ */}
@@ -178,18 +185,23 @@ const NODE_TYPES = { aggregate: AggregateNode }
 /** ダイアグラムのエッジの種類 */
 const EDGE_TYPES = { floating: FloatingEdge }
 
+/** 検索にヒットしなかったノードのスタイル。ヒットしたノードを目立たせるために薄くする */
+const NOT_HIT_NODE_STYLE: React.CSSProperties = { opacity: 0.2 }
+
 /** 初期表示範囲の調整。集約が少ないときに等倍を超えて拡大されないようにする */
 const FIT_VIEW_OPTIONS = { maxZoom: 1 }
 
 /**
  * 集約間の参照をダイアグラムのエッジに変換する。
  * 選択中のルート集約（その子孫を含む）に接続するエッジは強調表示する。
+ * 検索中は、両端とも検索にヒットしなかったエッジを薄く表示する。
  * エッジ自体は選択できない。
  */
-function toEdge(ref: DiagramReference, selectedIds: ReadonlySet<string>): FloatingFlowEdge {
+function toEdge(ref: DiagramReference, selectedIds: ReadonlySet<string>, hitRootIds: ReadonlySet<string> | undefined): FloatingFlowEdge {
   const { source, target, memberNames } = ref
   const color = MODEL_COLORS[source.model].stroke
   const highlighted = selectedIds.has(source.rootId) || selectedIds.has(target.rootId)
+  const dimmed = hitRootIds !== undefined && (!hitRootIds.has(source.rootId) || !hitRootIds.has(target.rootId))
   const label = memberNames.length === 1
     ? memberNames[0]
     : `${memberNames[0]}など計${memberNames.length}件の参照`
@@ -208,6 +220,6 @@ function toEdge(ref: DiagramReference, selectedIds: ReadonlySet<string>): Floati
     zIndex: connectsToChild ? 1000 : undefined,
     selectable: false,
     markerEnd: { type: MarkerType.ArrowClosed, color },
-    data: { label, color, highlighted },
+    data: { label, color, highlighted, dimmed },
   }
 }

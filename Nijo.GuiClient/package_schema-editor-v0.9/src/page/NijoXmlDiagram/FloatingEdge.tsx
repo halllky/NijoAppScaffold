@@ -11,6 +11,8 @@ export type FloatingFlowEdge = Edge<{
   color: string
   /** 強調表示するかどうか */
   highlighted: boolean
+  /** 目立たないよう薄く表示するかどうか */
+  dimmed: boolean
 }, "floating">
 
 /**
@@ -39,6 +41,7 @@ export function FloatingEdge({ id, source, target, sourceHandleId, targetHandleI
   })
 
   const color = data?.color
+  const opacity = data?.dimmed ? DIMMED_OPACITY : undefined
   return (
     <>
       {/* 線本体 */}
@@ -46,7 +49,7 @@ export function FloatingEdge({ id, source, target, sourceHandleId, targetHandleI
         id={id}
         path={path}
         markerEnd={markerEnd}
-        style={{ stroke: color, strokeWidth: data?.highlighted ? 2.5 : 1.5 }}
+        style={{ stroke: color, strokeWidth: data?.highlighted ? 2.5 : 1.5, opacity }}
       />
 
       {/* 線の中央のラベル。React Flow の仕組み上、HTMLとして線とは別の層に描画される */}
@@ -58,6 +61,7 @@ export function FloatingEdge({ id, source, target, sourceHandleId, targetHandleI
             style={{
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
               color,
+              opacity,
               fontWeight: data.highlighted ? "bold" : undefined,
             }}
           >
@@ -70,6 +74,9 @@ export function FloatingEdge({ id, source, target, sourceHandleId, targetHandleI
 }
 
 // -------------------------------------
+
+/** 薄く表示する場合の不透明度 */
+const DIMMED_OPACITY = 0.2
 
 /** ダイアグラム座標系での矩形 */
 type Rect = { x: number, y: number, width: number, height: number }
