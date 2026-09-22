@@ -155,8 +155,9 @@ export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onOpenReques
       </ReactFlow>}
 
       {/* 操作。
-          右側は開いたルート集約の編集欄が重なって隠れることがあるため、左上にまとめている */}
-      <div className="absolute top-1 left-1 flex items-start gap-1">
+          右側は開いたルート集約の編集欄が重なって隠れることがあるため、左上にまとめている。
+          ボタン列と検索欄の高さの差でできる隙間でもダイアグラムを操作できるよう、この枠自体はポインターイベントを透過させる */}
+      <div className="absolute top-1 left-1 flex items-start gap-1 pointer-events-none *:pointer-events-auto">
         {/* ボタン */}
         <div className="flex flex-col gap-1">
           <Button Icon={PlusIcon} border className="bg-white" onClick={() => setIsNewRootDialogOpen(true)}>
@@ -198,12 +199,11 @@ const DIMMED_NODE_STYLE: React.CSSProperties = { opacity: 0.2 }
 
 /**
  * ノードを薄く表示するかどうか。
- * 何か選択中のときは、選択中のノード以外を薄くする。検索よりも選択を優先し、検索中でも選択中のノードは薄くしない。
- * 何も選択していないときは、検索中であれば、検索にヒットしなかったノードを薄くする。
+ * 何か選択中か検索中のときに、選択中でも検索にヒットしてもいないノードを薄くする。
  */
 function isNodeDimmed(rootId: string, selectedIds: ReadonlySet<string>, hitRootIds: ReadonlySet<string> | undefined): boolean {
-  if (selectedIds.size > 0) return !selectedIds.has(rootId)
-  return hitRootIds !== undefined && !hitRootIds.has(rootId)
+  if (selectedIds.size === 0 && hitRootIds === undefined) return false
+  return !selectedIds.has(rootId) && !hitRootIds?.has(rootId)
 }
 
 /** 初期表示範囲の調整。集約が少ないときに等倍を超えて拡大されないようにする */
@@ -212,17 +212,17 @@ const FIT_VIEW_OPTIONS = { maxZoom: 1 }
 /**
  * 集約間の参照をダイアグラムのエッジに変換する。
  * 選択中のルート集約（その子孫を含む）に接続するエッジは強調表示する。
- * 何か選択中のときは、両端とも選択中でないエッジを薄く表示する。
- * 何も選択していないときは、検索中であれば、両端のどちらかが検索にヒットしなかったエッジを薄く表示する。
+ * 何か選択中か検索中のときは、以下のどちらにも当てはまらないエッジを薄く表示する。
+ * - 両端のどちらかが選択中
+ * - 両端とも検索にヒットした
  * エッジ自体は選択できない。
  */
 function toEdge(ref: DiagramReference, selectedIds: ReadonlySet<string>, hitRootIds: ReadonlySet<string> | undefined): FloatingFlowEdge {
   const { source, target, memberNames } = ref
   const color = MODEL_COLORS[source.model].stroke
   const highlighted = selectedIds.has(source.rootId) || selectedIds.has(target.rootId)
-  const dimmed = selectedIds.size > 0
-    ? !highlighted
-    : hitRootIds !== undefined && (!hitRootIds.has(source.rootId) || !hitRootIds.has(target.rootId))
+  const bothHit = hitRootIds !== undefined && hitRootIds.has(source.rootId) && hitRootIds.has(target.rootId)
+  const dimmed = (selectedIds.size > 0 || hitRootIds !== undefined) && !highlighted && !bothHit
   const label = memberNames.length === 1
     ? memberNames[0]
     : `${memberNames[0]}など計${memberNames.length}件の参照`

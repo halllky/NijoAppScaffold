@@ -13,6 +13,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -1141,8 +1142,17 @@ namespace Nijo.Runtime {
                 }
 
                 var layout = new GraphLayout { NodePositions = nodePositions };
-                File.WriteAllText(GetFilePath(entryXmlFilePath), layout.ConvertToJson(), new UTF8Encoding(false, false));
+                var json = JsonSerializer.Serialize(layout, _fileJsonSerializerOptions);
+                File.WriteAllText(GetFilePath(entryXmlFilePath), json, new UTF8Encoding(false, false));
             }
+
+            /// <summary>
+            /// ファイル保存時のJSONの設定。
+            /// ファイルはgit管理される想定のため、ノードの位置の変更が行単位の差分として見えるよう改行とインデントを入れる。
+            /// </summary>
+            private static readonly JsonSerializerOptions _fileJsonSerializerOptions = new(StringExtension.JsonSerializerOptions) {
+                WriteIndented = true,
+            };
 
             private static string GetFilePath(string entryXmlFilePath) {
                 var directory = Path.GetDirectoryName(entryXmlFilePath);
