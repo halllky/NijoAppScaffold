@@ -157,19 +157,25 @@ export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onOpenReques
       {/* 操作。
           右側は開いたルート集約の編集欄が重なって隠れることがあるため、左上にまとめている。
           ボタン列と検索欄の高さの差でできる隙間でもダイアグラムを操作できるよう、この枠自体はポインターイベントを透過させる */}
-      <div className="absolute top-1 left-1 flex items-start gap-1 pointer-events-none *:pointer-events-auto">
-        {/* ボタン */}
-        <div className="flex flex-col gap-1">
-          <Button Icon={PlusIcon} border className="bg-white" onClick={() => setIsNewRootDialogOpen(true)}>
-            ルート集約を追加
-          </Button>
-          <Button Icon={TrashIcon} border className="bg-white" onClick={handleRemoveRoot} disabled={selectedIds.size !== 1}>
-            選択中のルート集約を削除
-          </Button>
-        </div>
+      <div className="absolute top-1 left-1 flex flex-col items-start gap-1 pointer-events-none *:pointer-events-auto">
+        <span className="text-xs select-none">
+          ドラッグでアイテムを移動できます。ダブルクリックでアイテムの詳細が表示されます。
+        </span>
 
-        {/* 検索 */}
-        <DiagramSearchBox onHitRootIdsChanged={setHitRootIds} />
+        <div className="flex gap-1 items-start">
+          {/* ボタン */}
+          <div className="flex flex-col gap-1">
+            <Button Icon={PlusIcon} border className="bg-white" onClick={() => setIsNewRootDialogOpen(true)}>
+              ルート集約を追加
+            </Button>
+            <Button Icon={TrashIcon} border className="bg-white" onClick={handleRemoveRoot} disabled={selectedIds.size !== 1}>
+              選択中のルート集約を削除
+            </Button>
+          </div>
+
+          {/* 検索 */}
+          <DiagramSearchBox onHitRootIdsChanged={setHitRootIds} />
+        </div>
       </div>
 
       {/* ルート集約追加ダイアログ */}

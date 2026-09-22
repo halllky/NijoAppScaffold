@@ -135,9 +135,11 @@ function AfterLoaded({ defaultValues }: {
 
                   {/* ダイアグラム。
                       ドラッグ中に右の編集欄を隠してもダイアグラム自体の大きさが変わらないよう、常に分割ペイン全体の幅で描画し、ペインの幅ではみ出た部分を隠している。
-                      React Flow はドラッグ開始時のダイアグラムの大きさで画面端の自動スクロールを判定するため、ドラッグ中に大きさが変わると、画面端でない位置で勝手にスクロールしてしまう */}
+                      React Flow はドラッグ開始時のダイアグラムの大きさで画面端の自動スクロールを判定するため、ドラッグ中に大きさが変わると、画面端でない位置で勝手にスクロールしてしまう。
+                      ダイアグラム上のどこかを押したら編集欄を閉じる。
+                      ダイアグラムの背景を押したときはライブラリがイベントの伝播を止めてしまうため、キャプチャフェーズで受け取っている */}
                   <Allotment.Pane priority={LayoutPriority.High} minSize={240}>
-                    <div className="w-[100cqw] h-full">
+                    <div className="w-[100cqw] h-full" onPointerDownCapture={() => setOpenedRootId(undefined)}>
                       <NijoXmlDiagram
                         selectedIds={selectedRootIds}
                         onSelectedIdsChanged={setSelectedRootIds}
