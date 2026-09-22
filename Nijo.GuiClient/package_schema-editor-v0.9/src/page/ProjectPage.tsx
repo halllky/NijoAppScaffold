@@ -7,6 +7,7 @@ import { AggregatePane } from "./AggregatePane"
 import { AppSettingsPane } from "./AppSettings"
 import { DynamicAndStaticEnumPane } from "./DynamicAndStaticEnum"
 import { NijoXmlDiagram } from "./NijoXmlDiagram"
+import { XMarkIcon } from "@heroicons/react/24/outline"
 
 /**
  * プロジェクト画面。
@@ -81,6 +82,12 @@ function AfterLoaded({ defaultValues }: {
     setSaveState({ saving: false })
   }, [save, saveMode, getValues, reset])
 
+  // 保存時エラークリア
+  const clearSaveState = () => {
+    if (saveState.saving) return;
+    setSaveState({ saving: false })
+  }
+
   // Ctrl + S での保存。フォームの外で押された場合にも効くようブラウザ全体で待ち受ける
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -115,7 +122,7 @@ function AfterLoaded({ defaultValues }: {
         </nav>
 
         {/* 保存に失敗した場合のみ表示されるエラー欄 */}
-        <SaveErrorMessage saveState={saveState} />
+        <SaveErrorMessage saveState={saveState} onDeleteClicked={clearSaveState} />
 
         {/* タブの中身 */}
         <div className="flex-1 min-h-0 pt-1">
@@ -176,8 +183,9 @@ type SaveState = {
  * 保存に失敗した場合のエラー欄。
  * バリデーションエラーはノードの uniqueId で送られてくるため、画面上の名前に読み替えて表示する。
  */
-function SaveErrorMessage({ saveState }: {
+function SaveErrorMessage({ saveState, onDeleteClicked }: {
   saveState: SaveState
+  onDeleteClicked: () => void
 }) {
 
   const { getValues } = ReactHookForm.useFormContext<EditingProject>()
@@ -203,13 +211,19 @@ function SaveErrorMessage({ saveState }: {
   })
 
   return (
-    <div className="flex flex-col gap-1 px-2 py-1 text-sm text-rose-700 bg-rose-50 border-b border-rose-200">
-      {saveState.error && (
-        <span className="whitespace-pre-wrap">{saveState.error}</span>
-      )}
-      {messages.map((message, i) => (
-        <span key={i}>{message}</span>
-      ))}
+    <div className="relative overflow-hidden max-h-24 text-xs text-rose-700 bg-rose-50 border-b border-rose-200">
+      <div className="h-full w-full flex flex-col gap-1 px-2 py-1 overflow-y-auto">
+        {saveState.error && (
+          <span className="whitespace-pre-wrap">{saveState.error}</span>
+        )}
+        {messages.map((message, i) => (
+          <span key={i}>{message}</span>
+        ))}
+      </div>
+
+      <button type="button" onClick={onDeleteClicked} className="absolute top-1 right-1 w-5 h-5 cursor-pointer">
+        <XMarkIcon />
+      </button>
     </div>
   )
 }
