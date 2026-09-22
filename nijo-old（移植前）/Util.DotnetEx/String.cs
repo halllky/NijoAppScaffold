@@ -78,17 +78,20 @@ namespace Nijo.Util.DotnetEx {
         public static string ConvertToJson<T>(this T obj) {
             return JsonSerializer.Serialize(obj, JsonSerializerOptions);
         }
-        public static JsonSerializerOptions JsonSerializerOptions {
-            get {
-                if (_cachedOptions == null) {
-                    _cachedOptions = new JsonSerializerOptions();
-                    _cachedOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
-                    _cachedOptions.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All);
-                }
-                return _cachedOptions;
-            }
-        }
-        private static JsonSerializerOptions? _cachedOptions;
+        /// <summary>
+        /// JSONの相互変換に用いる設定。
+        ///
+        /// 設定を全て与え終わってから公開されるよう、静的フィールドの初期化子で組み立てている。
+        /// 設定の一部だけが与えられた状態のインスタンスがシリアライズに使われると、
+        /// そのインスタンスは以後変更できなくなり、残りの設定が永久に反映されなくなるため。
+        /// </summary>
+        public static JsonSerializerOptions JsonSerializerOptions => _jsonSerializerOptions;
+        private static readonly JsonSerializerOptions _jsonSerializerOptions = new() {
+            // 列挙体はその値の名前でやりとりする
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+            // 日本語がUnicodeエスケープされるのを防ぐ
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All),
+        };
     }
 }
 
