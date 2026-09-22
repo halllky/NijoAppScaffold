@@ -9,6 +9,7 @@ import type { DiagramAggregate, DiagramReference, ModelKind } from "./aggregateT
  *
  * ユーザーがドラッグして動かしたノードの位置はフォームの編集内容の一部として保持されるため、
  * 保存操作によって他の編集内容と一緒に永続化される。
+ * ドラッグ中の位置はフォームとは別に保持し、ドラッグを終えたときにまとめてフォームへ書き込む。
  * 一度も動かしていないノードは、参照される側が左、参照する側が右に来るよう列に分けて自動配置される。
  * 自動配置は描画後に計測された各ノードの大きさに追従する。
  *
@@ -26,23 +27,34 @@ export function useNodeLayout(roots: DiagramAggregate[], references: DiagramRefe
   // ライブラリはノードの大きさが指定されていないノードを未計測とみなすため、ここで保持して毎回渡す必要がある
   const [measured, setMeasured] = React.useState<{ [id: string]: Dimensions }>({})
 
-  // 各ノードの位置
+  // ドラッグ中のノードの位置。
+  // フォームの値の書き換えはフォーム全体の複製を伴い重いため、ドラッグ中の毎フレームには行わない
+  const [draggingPositions, setDraggingPositions] = React.useState<{ [id: string]: XYPosition }>({})
+
+  // 各ノードの位置。ドラッグ中のノードはドラッグを始める前の位置のまま。ドラッグ中は変化しない
   const positions = React.useMemo(() => {
     return arrangeNotMovedNodes(roots, references, movedPositions, measured)
   }, [roots, references, movedPositions, measured])
 
-  /** ドラッグ中の位置の変化と、描画後の大きさの計測結果を反映する */
+  /** 位置の変化と、描画後の大きさの計測結果を反映する */
   const handleNodesChange = (changes: NodeChange<Node>[]) => {
+    const dragging: { [id: string]: XYPosition } = {}
     const moved: { [id: string]: XYPosition } = {}
     const resized: { [id: string]: Dimensions } = {}
     for (const change of changes) {
       if (change.type === "position" && change.position) {
-        moved[change.id] = change.position
+        // ドラッグを終えたときや、キーボードで動かしたときは dragging が付かない
+        if (change.dragging) dragging[change.id] = change.position
+        else moved[change.id] = change.position
       } else if (change.type === "dimensions" && change.dimensions) {
         resized[change.id] = change.dimensions
       }
     }
-    if (Object.keys(moved).length > 0) setValue("graphLayout", { ...movedPositions, ...moved }, { shouldDirty: true })
+    if (Object.keys(dragging).length > 0) setDraggingPositions(prev => ({ ...prev, ...dragging }))
+    if (Object.keys(moved).length > 0) {
+      setValue("graphLayout", { ...movedPositions, ...moved }, { shouldDirty: true })
+      setDraggingPositions({})
+    }
     if (Object.keys(resized).length > 0) setMeasured(prev => ({ ...prev, ...resized }))
   }
 
@@ -52,8 +64,10 @@ export function useNodeLayout(roots: DiagramAggregate[], references: DiagramRefe
   }
 
   return {
-    /** ノードの位置。キーはルート集約の uniqueId */
+    /** ノードの位置。キーはルート集約の uniqueId。ドラッグ中のノードはドラッグを始める前の位置のままで、ドラッグ中は変化しない */
     positions,
+    /** ドラッグ中のノードの位置。キーはルート集約の uniqueId。ドラッグ中でなければ空 */
+    draggingPositions,
     /** 計測済みのノードの大きさ。キーはルート集約の uniqueId。未計測のノードは含まれない */
     measured,
     handleNodesChange,

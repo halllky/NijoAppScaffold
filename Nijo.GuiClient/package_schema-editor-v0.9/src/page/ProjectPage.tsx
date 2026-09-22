@@ -3,6 +3,7 @@ import * as ReactHookForm from "react-hook-form"
 import { Button, NowLoading } from "../ui"
 import { useBackendData, type EditingProject, type ValidationErrorMap } from "../features/backend"
 import { DiagramStructureProvider } from "../features/diagram"
+import { AggregatePane } from "./AggregatePane"
 import { AppSettingsPane } from "./AppSettings"
 import { DynamicAndStaticEnumPane } from "./DynamicAndStaticEnum"
 import { NijoXmlDiagram } from "./NijoXmlDiagram"
@@ -48,6 +49,19 @@ function AfterLoaded({ defaultValues }: {
 
   // タブ
   const [selectedTab, setSelectedTab] = React.useState<typeof PROJECT_PAGE_TAB[number]>("Write/Read/Command")
+
+  // ダイアグラムで選択中のルート集約の uniqueId
+  const [selectedRootIds, setSelectedRootIds] = React.useState<ReadonlySet<string>>(new Set())
+  // 編集欄に表示するルート集約が、ルート集約の一覧の何番目か。複数選択中は表示しない。
+  // ルート集約の並び順はルート集約の追加・削除でしか変わらず、そのときはダイアグラムの選択状態も変わって再描画されるため、
+  // ここでフォームの値を直接読んでも古い値にならない
+  const [selectedRootId] = selectedRootIds.size === 1 ? selectedRootIds : []
+  const selectedRootIndex = selectedRootId === undefined
+    ? -1
+    : getValues("rootAggregates").findIndex(r => r.root.uniqueId === selectedRootId)
+
+  // ダイアグラムのノードをドラッグ中かどうか
+  const [isDiagramDragging, setIsDiagramDragging] = React.useState(false)
 
   // 保存
   const { save } = useBackendData()
@@ -107,7 +121,33 @@ function AfterLoaded({ defaultValues }: {
         <div className="flex-1 min-h-0 pt-1">
           {selectedTab === "Write/Read/Command" && (
             <DiagramStructureProvider>
-              <NijoXmlDiagram />
+              {/* 分割ペインは初回描画時に大きさが決まっておらず、ダイアグラムの初期表示範囲の調整が狂うため使っていない */}
+              <div className="w-full h-full flex">
+
+                {/* ダイアグラム */}
+                <div className="flex-1 min-w-0 h-full">
+                  <NijoXmlDiagram
+                    selectedIds={selectedRootIds}
+                    onSelectedIdsChanged={setSelectedRootIds}
+                    onDraggingChanged={setIsDiagramDragging}
+                  />
+                </div>
+
+                {/* 選択中のルート集約の編集欄。
+                    ノードをまとめて動かすときに邪魔にならないようドラッグ中は隠す。
+                    隠している間もグリッドのスクロール位置や選択行が失われないよう、アンマウントせずに Activity で隠している */}
+                {selectedRootIndex !== -1 && (
+                  <React.Activity mode={isDiagramDragging ? "hidden" : "visible"}>
+                    <div className="w-1/2 min-w-80 h-full">
+                      <AggregatePane
+                        key={selectedRootId}
+                        rootIndex={selectedRootIndex}
+                        onClose={() => setSelectedRootIds(new Set())}
+                      />
+                    </div>
+                  </React.Activity>
+                )}
+              </div>
             </DiagramStructureProvider>
           )}
           {selectedTab === "区分定義" && (

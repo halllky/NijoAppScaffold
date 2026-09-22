@@ -11,12 +11,14 @@ export type AggregateFlowNode = Node<{
 /**
  * ルート集約をノードとして表示する。
  * 子孫の child, children はノードの中に入れ子の箱として包含して表示する。
- * モデルの種類は色で表し、文字では表示しない。
  *
  * エッジが入れ子の箱それぞれに接続できるよう、箱ごとに集約の uniqueId をIDとするハンドルを持つ。
  * ハンドルは箱全体に重ねてあり、エッジ側はハンドルの範囲を箱の外周として扱える。
+ *
+ * ノードをまとめて動かす際、動かしているノードの数だけ毎フレーム再描画されるのを避けるためメモ化している。
+ * ノードの位置はライブラリが外側の要素に反映するため、位置が変わっただけではこの中身を描画し直す必要は無い。
  */
-export function AggregateNode({ id, data, selected }: NodeProps<AggregateFlowNode>) {
+export const AggregateNode = React.memo(function AggregateNode({ id, data, selected }: NodeProps<AggregateFlowNode>) {
 
   // ライブラリが保持しているハンドルの範囲を、入れ子の箱の構成の変化に同期させる。
   // ライブラリはノード全体の大きさが変わったときにしかハンドルの範囲を計測し直さないため、
@@ -34,7 +36,13 @@ export function AggregateNode({ id, data, selected }: NodeProps<AggregateFlowNod
       selected={selected}
     />
   )
-}
+}, (prev, next) => {
+  // 位置やドラッグ中かどうかなど、他の props はこのコンポーネントの描画内容に影響しないため比較しない。
+  // data はノードを組み立て直すたびに別のオブジェクトになるため、中身の aggregate で比較する
+  return prev.id === next.id
+    && prev.data.aggregate === next.data.aggregate
+    && prev.selected === next.selected
+})
 
 /** 集約1個分の箱。子集約を再帰的に包含する */
 function AggregateBox({ aggregate, isRoot, selected }: {

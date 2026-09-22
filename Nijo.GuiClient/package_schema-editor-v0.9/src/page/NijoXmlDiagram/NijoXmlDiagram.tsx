@@ -4,7 +4,6 @@ import { Background, Controls, MarkerType, ReactFlow, SelectionMode, type NodeCh
 import { ArrowPathIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline"
 import { Button } from "../../ui"
 import { createNewSchemaNode, type EditingProject } from "../../features/backend"
-import { AggregatePane } from "../AggregatePane"
 import {
   useDiagramStructure,
   useNodeLayout,
@@ -20,13 +19,20 @@ import { NewRootAggregateDialog } from "./NewRootAggregateDialog"
  * React Flow を使って nijo.xml の Write Model / Read Model / Command Model を
  * ダイアグラムとして表示するコンポーネント。
  * ルート集約をノードとし、その子孫の child, children はノードの中に包含して表示する。
- * ルート集約を選択することができ、1個だけ選択されている場合はその編集欄が表示される。
+ * ルート集約を選択することができる。選択状態は呼び出し側で保持する。
  * ダイアグラムのノードはドラッグで自由に動かせる。範囲選択した複数のノードをまとめて動かすこともできる。
  * ダイアグラムのエッジは集約間の参照関係（ref-to:）によって自動的に算出される。
- * ルート集約の追加と、選択中の集約が属するルート集約の削除もここから行う。
+ * ルート集約の追加と、選択中のルート集約の削除もここから行う。
  * 表示対象のデータは親のフォームのコンテキストから取得する。
  */
-export function NijoXmlDiagram() {
+export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onDraggingChanged }: {
+  /** 選択中のルート集約の uniqueId */
+  selectedIds: ReadonlySet<string>
+  /** ルート集約の選択状態が変わったときに、変化後の選択中のルート集約の uniqueId を伴って呼ばれる */
+  onSelectedIdsChanged: (selectedIds: ReadonlySet<string>) => void
+  /** ノードのドラッグを始めたとき (true) と終えたとき (false) に呼ばれる。未指定の場合は何もしない */
+  onDraggingChanged?: (dragging: boolean) => void
+}) {
 
   const { control, getValues } = ReactHookForm.useFormContext<EditingProject>()
 
@@ -37,19 +43,8 @@ export function NijoXmlDiagram() {
   const { roots, references } = useDiagramStructure()
   const notifyStructureChanged = useNotifyDiagramStructureChanged()
 
-  // 選択中のルート集約の uniqueId。
-  // ノードの一覧はこのコンポーネントが組み立て直すため、ライブラリの選択状態はここで保持して毎回渡す必要がある
-  const [selectedIds, setSelectedIds] = React.useState<ReadonlySet<string>>(new Set())
-  // 編集欄に表示するルート集約。複数選択中は表示しない
-  const selectedRootId = selectedIds.size === 1 ? selectedIds.values().next().value! : null
-  // ルート集約の並び順はルート集約の追加・削除でしか変わらず、そのときは構成の変更の通知によって再描画されるため、
-  // ここでフォームの値を直接読んでも古い値にならない
-  const selectedRootIndex = selectedRootId === null
-    ? -1
-    : getValues("rootAggregates").findIndex(r => r.root.uniqueId === selectedRootId)
-
   // ノードの位置と大きさ
-  const { positions, measured, handleNodesChange: handleLayoutChange, resetLayout } = useNodeLayout(roots, references)
+  const { positions, draggingPositions, measured, handleNodesChange: handleLayoutChange, resetLayout } = useNodeLayout(roots, references)
 
   /** ノードの位置・大きさの変化と、選択状態の変化を反映する */
   const handleNodesChange = (changes: NodeChange<AggregateFlowNode>[]) => {
@@ -57,18 +52,17 @@ export function NijoXmlDiagram() {
 
     const selectChanges = changes.filter(change => change.type === "select")
     if (selectChanges.length === 0) return
-    setSelectedIds(prev => {
-      const next = new Set(prev)
-      for (const { id, selected } of selectChanges) {
-        if (selected) next.add(id)
-        else next.delete(id)
-      }
-      return next
-    })
+    const next = new Set(selectedIds)
+    for (const { id, selected } of selectChanges) {
+      if (selected) next.add(id)
+      else next.delete(id)
+    }
+    onSelectedIdsChanged(next)
   }
 
-  // ノード
-  const nodes = React.useMemo((): AggregateFlowNode[] => roots.map(root => ({
+  // ドラッグを始める前の位置で組み立てたノード。
+  // ドラッグ中は作り直さず同じオブジェクトのままにして、動かしていないノードをライブラリに変化していないと判断させる
+  const settledNodes = React.useMemo((): AggregateFlowNode[] => roots.map(root => ({
     id: root.node.uniqueId,
     type: "aggregate",
     position: positions[root.node.uniqueId],
@@ -76,6 +70,12 @@ export function NijoXmlDiagram() {
     selected: selectedIds.has(root.node.uniqueId),
     data: { aggregate: root },
   })), [roots, positions, measured, selectedIds])
+
+  // ノード。ほぼ settledNodes と同じだが、ドラッグ中のノードだけ位置が差し替わる。
+  const nodes = React.useMemo(() => settledNodes.map(node => {
+    const draggingPosition = draggingPositions[node.id]
+    return draggingPosition ? { ...node, position: draggingPosition } : node
+  }), [settledNodes, draggingPositions])
 
   // エッジ
   const edges = React.useMemo(() => references.map(ref => toEdge(ref, selectedIds)), [references, selectedIds])
@@ -88,62 +88,68 @@ export function NijoXmlDiagram() {
     const root = { ...createNewSchemaNode(0, type), displayName }
     append({ root, members: [] })
     notifyStructureChanged()
-    setSelectedIds(new Set([root.uniqueId]))
+    onSelectedIdsChanged(new Set([root.uniqueId]))
     setIsNewRootDialogOpen(false)
   }
 
   /** 選択中のルート集約を、子孫ごと削除する */
   const handleRemoveRoot = () => {
-    if (selectedRootIndex === -1) return
-    const name = getValues(`rootAggregates.${selectedRootIndex}.root.displayName`) || "(名前未設定)"
+    if (selectedIds.size !== 1) return
+    const [selectedId] = selectedIds
+    const rootIndex = getValues("rootAggregates").findIndex(r => r.root.uniqueId === selectedId)
+    if (rootIndex === -1) return
+    const name = getValues(`rootAggregates.${rootIndex}.root.displayName`) || "(名前未設定)"
     if (!window.confirm(`ルート集約「${name}」を削除しますか？`)) return
 
-    setSelectedIds(new Set())
-    remove(selectedRootIndex)
+    onSelectedIdsChanged(new Set())
+    remove(rootIndex)
     notifyStructureChanged()
   }
 
   return (
-    // 分割ペインは初回描画時に大きさが決まっておらず、ダイアグラムの初期表示範囲の調整が狂うため使っていない
-    <div className="w-full h-full flex">
+    <div className="relative w-full h-full">
 
       {/* ダイアグラム */}
-      <div className="relative flex-1 min-w-0 h-full">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={NODE_TYPES}
-          edgeTypes={EDGE_TYPES}
-          onNodesChange={handleNodesChange}
-          // 左ドラッグは範囲選択、中・右ドラッグは画面の移動。
-          // ノードが多くなるとまとめて動かす操作の方が頻繁になるため、範囲選択を左ドラッグに割り当てている
-          selectionOnDrag
-          panOnDrag={PAN_ON_DRAG_BUTTONS}
-          selectionMode={SelectionMode.Partial}
-          // 未選択のノードをドラッグしただけで選択されると、編集欄が開いてドラッグ中に画面の幅が変わってしまうため、選択はクリックに限る
-          selectNodesOnDrag={false}
-          nodesConnectable={false}
-          deleteKeyCode={null}
-          minZoom={0.1}
-          fitView
-          fitViewOptions={FIT_VIEW_OPTIONS}
-        >
-          <Background />
-          <Controls showInteractive={false} />
-        </ReactFlow>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={NODE_TYPES}
+        edgeTypes={EDGE_TYPES}
+        onNodesChange={handleNodesChange}
+        // ドラッグ開始/終了イベントは、ノードを直接ドラッグした場合と、
+        // 範囲選択後に表示される選択範囲の枠をドラッグした場合とで別のイベントになる
+        onNodeDragStart={() => onDraggingChanged?.(true)}
+        onNodeDragStop={() => onDraggingChanged?.(false)}
+        onSelectionDragStart={() => onDraggingChanged?.(true)}
+        onSelectionDragStop={() => onDraggingChanged?.(false)}
+        // 左ドラッグは範囲選択、中・右ドラッグは画面の移動。
+        // ノードが多くなるとまとめて動かす操作の方が頻繁になるため、範囲選択を左ドラッグに割り当てている
+        selectionOnDrag
+        panOnDrag={PAN_ON_DRAG_BUTTONS}
+        selectionMode={SelectionMode.Partial}
+        // 未選択のノードをドラッグしただけで選択状態が変わらないよう、選択はクリックに限る
+        selectNodesOnDrag={false}
+        nodesConnectable={false}
+        deleteKeyCode={null}
+        minZoom={0.1}
+        fitView
+        fitViewOptions={FIT_VIEW_OPTIONS}
+      >
+        <Background />
+        <Controls showInteractive={false} />
+      </ReactFlow>
 
-        {/* 操作 */}
-        <div className="absolute top-1 left-1 flex flex-col gap-1">
-          <Button Icon={PlusIcon} border className="bg-white" onClick={() => setIsNewRootDialogOpen(true)}>
-            ルート集約を追加
-          </Button>
-          <Button Icon={TrashIcon} border className="bg-white" onClick={handleRemoveRoot} disabled={selectedRootIndex === -1}>
-            選択中のルート集約を削除
-          </Button>
-          <Button Icon={ArrowPathIcon} border className="bg-white" onClick={resetLayout}>
-            自動配置に戻す
-          </Button>
-        </div>
+      {/* 操作 */}
+      <div className="absolute top-1 left-1 flex flex-col gap-1">
+        <Button Icon={PlusIcon} border className="bg-white" onClick={() => setIsNewRootDialogOpen(true)}>
+          ルート集約を追加
+        </Button>
+        <Button Icon={TrashIcon} border className="bg-white" onClick={handleRemoveRoot} disabled={selectedIds.size !== 1}>
+          選択中のルート集約を削除
+        </Button>
+        <Button Icon={ArrowPathIcon} border className="bg-white" onClick={resetLayout}>
+          自動配置に戻す
+        </Button>
       </div>
 
       {/* ルート集約追加ダイアログ */}
@@ -152,17 +158,6 @@ export function NijoXmlDiagram() {
           onCreate={handleCreateRoot}
           onClose={() => setIsNewRootDialogOpen(false)}
         />
-      )}
-
-      {/* 選択中のルート集約の編集欄 */}
-      {selectedRootIndex !== -1 && (
-        <div className="w-1/2 min-w-80 h-full">
-          <AggregatePane
-            key={selectedRootId}
-            rootIndex={selectedRootIndex}
-            onClose={() => setSelectedIds(new Set())}
-          />
-        </div>
       )}
     </div>
   )
