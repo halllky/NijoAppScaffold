@@ -23,7 +23,7 @@ export function OptionalAttrsForm({ path }: {
       </summary>
 
       {/* 属性ごとの入力欄 */}
-      <div className="max-h-64 overflow-y-auto grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-1 pt-1 pl-4 bg-gray-100">
+      <div className="max-h-64 overflow-y-auto grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-1 p-1 bg-gray-100 border border-gray-300">
         {attrDefs.filter(def => def.key !== ATTR_KEY_PHYSICAL_NAME).map(def => {
           const attrPath = `${path}.attrs.${def.key}` as ReactHookForm.Path<EditingProject>
           const id = `${path}.attrs.${def.key}`

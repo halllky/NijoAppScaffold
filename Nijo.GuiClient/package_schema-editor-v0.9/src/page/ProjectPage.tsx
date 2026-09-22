@@ -1,5 +1,6 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
+import { Allotment, LayoutPriority } from "allotment"
 import { Button, NowLoading } from "../ui"
 import { useBackendData, type EditingProject, type ValidationErrorMap } from "../features/backend"
 import { DiagramStructureProvider } from "../features/diagram"
@@ -128,32 +129,37 @@ function AfterLoaded({ defaultValues }: {
         <div className="flex-1 min-h-0 pt-1">
           {selectedTab === "Write/Read/Command" && (
             <DiagramStructureProvider>
-              {/* 分割ペインは初回描画時に大きさが決まっておらず、ダイアグラムの初期表示範囲の調整が狂うため使っていない */}
-              <div className="w-full h-full flex">
+              <div className="@container w-full h-full">
+                <Allotment proportionalLayout={false} separator={false}>
 
-                {/* ダイアグラム */}
-                <div className="flex-1 min-w-0 h-full">
-                  <NijoXmlDiagram
-                    selectedIds={selectedRootIds}
-                    onSelectedIdsChanged={setSelectedRootIds}
-                    onDraggingChanged={setIsDiagramDragging}
-                  />
-                </div>
-
-                {/* 選択中のルート集約の編集欄。
-                    ノードをまとめて動かすときに邪魔にならないようドラッグ中は隠す。
-                    隠している間もグリッドのスクロール位置や選択行が失われないよう、アンマウントせずに Activity で隠している */}
-                {selectedRootIndex !== -1 && (
-                  <React.Activity mode={isDiagramDragging ? "hidden" : "visible"}>
-                    <div className="w-1/2 min-w-80 h-full">
-                      <AggregatePane
-                        key={selectedRootId}
-                        rootIndex={selectedRootIndex}
-                        onClose={() => setSelectedRootIds(new Set())}
+                  {/* ダイアグラム。
+                      ドラッグ中に右の編集欄を隠してもダイアグラム自体の大きさが変わらないよう、常に分割ペイン全体の幅で描画し、ペインの幅ではみ出た部分を隠している。
+                      React Flow はドラッグ開始時のダイアグラムの大きさで画面端の自動スクロールを判定するため、ドラッグ中に大きさが変わると、画面端でない位置で勝手にスクロールしてしまう */}
+                  <Allotment.Pane priority={LayoutPriority.High} minSize={240}>
+                    <div className="w-[100cqw] h-full">
+                      <NijoXmlDiagram
+                        selectedIds={selectedRootIds}
+                        onSelectedIdsChanged={setSelectedRootIds}
+                        onDraggingChanged={setIsDiagramDragging}
                       />
                     </div>
-                  </React.Activity>
-                )}
+                  </Allotment.Pane>
+
+                  {/* 選択中のルート集約の編集欄。
+                      ノードをまとめて動かすときに邪魔にならないようドラッグ中は隠す。
+                      隠している間もグリッドのスクロール位置や選択行が失われないよう、アンマウントせずに Activity で隠している */}
+                  <Allotment.Pane preferredSize="50%" minSize={320} visible={selectedRootIndex !== -1 && !isDiagramDragging}>
+                    {selectedRootIndex !== -1 && (
+                      <React.Activity mode={isDiagramDragging ? "hidden" : "visible"}>
+                        <AggregatePane
+                          key={selectedRootId}
+                          rootIndex={selectedRootIndex}
+                          onClose={() => setSelectedRootIds(new Set())}
+                        />
+                      </React.Activity>
+                    )}
+                  </Allotment.Pane>
+                </Allotment>
               </div>
             </DiagramStructureProvider>
           )}

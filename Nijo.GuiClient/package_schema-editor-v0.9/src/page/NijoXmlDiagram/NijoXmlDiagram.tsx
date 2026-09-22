@@ -80,6 +80,21 @@ export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onDraggingCh
   // エッジ
   const edges = React.useMemo(() => references.map(ref => toEdge(ref, selectedIds)), [references, selectedIds])
 
+  // 描画先の大きさ。
+  // 分割ペインの中に置かれた場合など、初回描画時にはまだ大きさが決まっていないことがある。
+  // 大きさが 0 のまま React Flow を描画すると初期表示範囲の調整 (fitView) が狂うため、大きさが決まるまで描画しない
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  const [hasSize, setHasSize] = React.useState(false)
+  React.useLayoutEffect(() => {
+    const container = containerRef.current
+    if (!container || hasSize) return
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry.contentRect.width > 0 && entry.contentRect.height > 0) setHasSize(true)
+    })
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [hasSize])
+
   // ルート集約追加ダイアログ
   const [isNewRootDialogOpen, setIsNewRootDialogOpen] = React.useState(false)
 
@@ -107,10 +122,10 @@ export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onDraggingCh
   }
 
   return (
-    <div className="relative w-full h-full">
+    <div ref={containerRef} className="relative w-full h-full">
 
       {/* ダイアグラム */}
-      <ReactFlow
+      {hasSize && <ReactFlow
         nodes={nodes}
         edges={edges}
         nodeTypes={NODE_TYPES}
@@ -132,7 +147,7 @@ export function NijoXmlDiagram({ selectedIds, onSelectedIdsChanged, onDraggingCh
       >
         <Background />
         <Controls showInteractive={false} />
-      </ReactFlow>
+      </ReactFlow>}
 
       {/* 操作 */}
       <div className="absolute top-1 left-1 flex flex-col gap-1">

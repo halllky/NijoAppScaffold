@@ -132,7 +132,7 @@ export function AggregatePane({ rootIndex, onClose }: {
   })), [nodeTypes])
 
   return (
-    <div className="w-full h-full flex flex-col gap-1 p-1 bg-white border-l border-gray-300">
+    <div className="w-full h-full flex flex-col gap-1 p-1 bg-white border-l border-t border-gray-400">
 
       {/* ルート集約の名前と閉じるボタン */}
       <div className="flex items-center gap-1">
