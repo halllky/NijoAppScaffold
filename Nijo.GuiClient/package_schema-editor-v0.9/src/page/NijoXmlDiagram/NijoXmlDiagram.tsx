@@ -1,6 +1,6 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
-import { Background, Controls, MarkerType, ReactFlow } from "@xyflow/react"
+import { Background, Controls, MarkerType, ReactFlow, SelectionMode, type NodeChange } from "@xyflow/react"
 import { ArrowPathIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline"
 import { Button } from "../../ui"
 import { createNewSchemaNode, type EditingProject } from "../../features/backend"
@@ -10,7 +10,6 @@ import {
   useNodeLayout,
   useNotifyDiagramStructureChanged,
   type DiagramReference,
-  type DiagramSelection,
 } from "../../features/diagram"
 import { AggregateNode, type AggregateFlowNode } from "./AggregateNode"
 import { FloatingEdge, type FloatingFlowEdge } from "./FloatingEdge"
@@ -21,8 +20,8 @@ import { NewRootAggregateDialog } from "./NewRootAggregateDialog"
  * React Flow を使って nijo.xml の Write Model / Read Model / Command Model を
  * ダイアグラムとして表示するコンポーネント。
  * ルート集約をノードとし、その子孫の child, children はノードの中に包含して表示する。
- * モデルを選択することができ、選択されたもののルート集約の編集欄が表示される。
- * ダイアグラムのノードはドラッグで自由に動かせる。
+ * ルート集約を選択することができ、1個だけ選択されている場合はその編集欄が表示される。
+ * ダイアグラムのノードはドラッグで自由に動かせる。範囲選択した複数のノードをまとめて動かすこともできる。
  * ダイアグラムのエッジは集約間の参照関係（ref-to:）によって自動的に算出される。
  * ルート集約の追加と、選択中の集約が属するルート集約の削除もここから行う。
  * 表示対象のデータは親のフォームのコンテキストから取得する。
@@ -38,17 +37,35 @@ export function NijoXmlDiagram() {
   const { roots, references } = useDiagramStructure()
   const notifyStructureChanged = useNotifyDiagramStructureChanged()
 
-  // 選択中の集約（ルート集約・child・children のいずれか）
-  const [selection, setSelection] = React.useState<DiagramSelection | null>(null)
-  const selectedId = selection?.uniqueId ?? null
+  // 選択中のルート集約の uniqueId。
+  // ノードの一覧はこのコンポーネントが組み立て直すため、ライブラリの選択状態はここで保持して毎回渡す必要がある
+  const [selectedIds, setSelectedIds] = React.useState<ReadonlySet<string>>(new Set())
+  // 編集欄に表示するルート集約。複数選択中は表示しない
+  const selectedRootId = selectedIds.size === 1 ? selectedIds.values().next().value! : null
   // ルート集約の並び順はルート集約の追加・削除でしか変わらず、そのときは構成の変更の通知によって再描画されるため、
   // ここでフォームの値を直接読んでも古い値にならない
-  const selectedRootIndex = selection === null
+  const selectedRootIndex = selectedRootId === null
     ? -1
-    : getValues("rootAggregates").findIndex(r => r.root.uniqueId === selection.rootId)
+    : getValues("rootAggregates").findIndex(r => r.root.uniqueId === selectedRootId)
 
   // ノードの位置と大きさ
-  const { positions, measured, handleNodesChange, resetLayout } = useNodeLayout(roots, references)
+  const { positions, measured, handleNodesChange: handleLayoutChange, resetLayout } = useNodeLayout(roots, references)
+
+  /** ノードの位置・大きさの変化と、選択状態の変化を反映する */
+  const handleNodesChange = (changes: NodeChange<AggregateFlowNode>[]) => {
+    handleLayoutChange(changes)
+
+    const selectChanges = changes.filter(change => change.type === "select")
+    if (selectChanges.length === 0) return
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      for (const { id, selected } of selectChanges) {
+        if (selected) next.add(id)
+        else next.delete(id)
+      }
+      return next
+    })
+  }
 
   // ノード
   const nodes = React.useMemo((): AggregateFlowNode[] => roots.map(root => ({
@@ -56,11 +73,12 @@ export function NijoXmlDiagram() {
     type: "aggregate",
     position: positions[root.node.uniqueId],
     measured: measured[root.node.uniqueId],
-    data: { aggregate: root, selectedId, onSelect: setSelection },
-  })), [roots, positions, measured, selectedId])
+    selected: selectedIds.has(root.node.uniqueId),
+    data: { aggregate: root },
+  })), [roots, positions, measured, selectedIds])
 
   // エッジ
-  const edges = React.useMemo(() => references.map(ref => toEdge(ref, selectedId)), [references, selectedId])
+  const edges = React.useMemo(() => references.map(ref => toEdge(ref, selectedIds)), [references, selectedIds])
 
   // ルート集約追加ダイアログ
   const [isNewRootDialogOpen, setIsNewRootDialogOpen] = React.useState(false)
@@ -70,17 +88,17 @@ export function NijoXmlDiagram() {
     const root = { ...createNewSchemaNode(0, type), displayName }
     append({ root, members: [] })
     notifyStructureChanged()
-    setSelection({ rootId: root.uniqueId, uniqueId: root.uniqueId })
+    setSelectedIds(new Set([root.uniqueId]))
     setIsNewRootDialogOpen(false)
   }
 
-  /** 選択中の集約が属するルート集約を、子孫ごと削除する */
+  /** 選択中のルート集約を、子孫ごと削除する */
   const handleRemoveRoot = () => {
-    if (selection === null || selectedRootIndex === -1) return
+    if (selectedRootIndex === -1) return
     const name = getValues(`rootAggregates.${selectedRootIndex}.root.displayName`) || "(名前未設定)"
     if (!window.confirm(`ルート集約「${name}」を削除しますか？`)) return
 
-    setSelection(null)
+    setSelectedIds(new Set())
     remove(selectedRootIndex)
     notifyStructureChanged()
   }
@@ -97,9 +115,13 @@ export function NijoXmlDiagram() {
           nodeTypes={NODE_TYPES}
           edgeTypes={EDGE_TYPES}
           onNodesChange={handleNodesChange}
-          onPaneClick={() => setSelection(null)}
-          // 選択状態はライブラリに任せず、入れ子の子集約も含めて自前で管理する
-          elementsSelectable={false}
+          // 左ドラッグは範囲選択、中・右ドラッグは画面の移動。
+          // ノードが多くなるとまとめて動かす操作の方が頻繁になるため、範囲選択を左ドラッグに割り当てている
+          selectionOnDrag
+          panOnDrag={PAN_ON_DRAG_BUTTONS}
+          selectionMode={SelectionMode.Partial}
+          // 未選択のノードをドラッグしただけで選択されると、編集欄が開いてドラッグ中に画面の幅が変わってしまうため、選択はクリックに限る
+          selectNodesOnDrag={false}
           nodesConnectable={false}
           deleteKeyCode={null}
           minZoom={0.1}
@@ -133,13 +155,12 @@ export function NijoXmlDiagram() {
       )}
 
       {/* 選択中のルート集約の編集欄 */}
-      {selection !== null && selectedRootIndex !== -1 && (
+      {selectedRootIndex !== -1 && (
         <div className="w-1/2 min-w-80 h-full">
           <AggregatePane
-            key={selection.rootId}
+            key={selectedRootId}
             rootIndex={selectedRootIndex}
-            focusedMemberId={selection.uniqueId}
-            onClose={() => setSelection(null)}
+            onClose={() => setSelectedIds(new Set())}
           />
         </div>
       )}
@@ -152,17 +173,21 @@ const NODE_TYPES = { aggregate: AggregateNode }
 /** ダイアグラムのエッジの種類 */
 const EDGE_TYPES = { floating: FloatingEdge }
 
+/** 画面の移動に使うマウスボタン（中・右） */
+const PAN_ON_DRAG_BUTTONS = [1, 2]
+
 /** 初期表示範囲の調整。集約が少ないときに等倍を超えて拡大されないようにする */
 const FIT_VIEW_OPTIONS = { maxZoom: 1 }
 
 /**
  * 集約間の参照をダイアグラムのエッジに変換する。
- * 選択中の集約に接続するエッジは強調表示する。
+ * 選択中のルート集約（その子孫を含む）に接続するエッジは強調表示する。
+ * エッジ自体は選択できない。
  */
-function toEdge(ref: DiagramReference, selectedId: string | null): FloatingFlowEdge {
+function toEdge(ref: DiagramReference, selectedIds: ReadonlySet<string>): FloatingFlowEdge {
   const { source, target, memberNames } = ref
   const color = MODEL_COLORS[source.model].stroke
-  const highlighted = source.node.uniqueId === selectedId || target.node.uniqueId === selectedId
+  const highlighted = selectedIds.has(source.rootId) || selectedIds.has(target.rootId)
   const label = memberNames.length === 1
     ? memberNames[0]
     : `${memberNames[0]}など計${memberNames.length}件の参照`
@@ -179,6 +204,7 @@ function toEdge(ref: DiagramReference, selectedId: string | null): FloatingFlowE
     target: target.rootId,
     targetHandle: target.node.uniqueId,
     zIndex: connectsToChild ? 1000 : undefined,
+    selectable: false,
     markerEnd: { type: MarkerType.ArrowClosed, color },
     data: { label, color, highlighted },
   }

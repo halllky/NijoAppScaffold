@@ -30,11 +30,9 @@ import { OptionalAttrsForm } from "./OptionalAttrsForm"
  * ダイアグラムの構成に影響する編集を行った場合は、ダイアグラムの構成のコンテキストへ通知する。
  * 表示するルート集約を切り替える場合は、グリッドの状態を持ち越さないよう key を変えて作り直すこと。
  */
-export function AggregatePane({ rootIndex, focusedMemberId, onClose }: {
+export function AggregatePane({ rootIndex, onClose }: {
   /** 編集するルート集約が、ルート集約の一覧の何番目か */
   rootIndex: number
-  /** グリッド上で選択状態にするメンバーの uniqueId。未指定またはルート集約自身の場合は何も選択しない */
-  focusedMemberId?: string
   /** 閉じるボタンが押されたときに呼ばれる。閉じる処理は呼び出し側で実装する */
   onClose: () => void
 }) {
@@ -97,13 +95,7 @@ export function AggregatePane({ rootIndex, focusedMemberId, onClose }: {
     onRowsChanged: handleMembersChanged,
   })
 
-  // ダイアグラムで選択された子集約の行を、グリッドの選択状態に同期させる
   const { ref: gridRef, ...restGridProps } = editableGridProps
-  React.useEffect(() => {
-    if (focusedMemberId === undefined) return
-    const rowIndex = getValues(membersPath).findIndex(m => m.uniqueId === focusedMemberId)
-    if (rowIndex !== -1) gridRef.current?.selectRow(rowIndex, rowIndex)
-  }, [focusedMemberId, getValues, membersPath, gridRef])
 
   /**
    * 選択行のインデントを上げる (1) または下げる (-1)。

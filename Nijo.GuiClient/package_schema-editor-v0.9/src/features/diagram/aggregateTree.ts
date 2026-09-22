@@ -28,17 +28,6 @@ export type DiagramAggregate = {
 }
 
 /**
- * ダイアグラム上で選択された集約。
- * 子孫の集約が選択された場合も、そのルート集約が分かるようにしている。
- */
-export type DiagramSelection = {
-  /** 選択された集約が属するルート集約の uniqueId */
-  rootId: string
-  /** 選択された集約（ルート集約・child・children のいずれか）の uniqueId */
-  uniqueId: string
-}
-
-/**
  * 集約から集約への参照（ref-to）。
  * 参照元と参照先の組み合わせが同じ参照は1件にまとめられる。
  */

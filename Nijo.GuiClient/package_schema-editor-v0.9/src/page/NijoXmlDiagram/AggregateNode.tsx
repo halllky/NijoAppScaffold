@@ -1,15 +1,11 @@
 import React from "react"
 import { Handle, Position, useUpdateNodeInternals, type Node, type NodeProps } from "@xyflow/react"
-import type { DiagramAggregate, DiagramSelection } from "../../features/diagram"
+import type { DiagramAggregate } from "../../features/diagram"
 import { MODEL_COLORS } from "./modelColors"
 
 /** ダイアグラム上のルート集約1個分のノード */
 export type AggregateFlowNode = Node<{
   aggregate: DiagramAggregate
-  /** 選択中の集約の uniqueId。未選択の場合は null */
-  selectedId: string | null
-  /** 集約（ルート集約・child・children のいずれか）がクリックされたときに呼ばれる */
-  onSelect: (selection: DiagramSelection) => void
 }, "aggregate">
 
 /**
@@ -20,7 +16,7 @@ export type AggregateFlowNode = Node<{
  * エッジが入れ子の箱それぞれに接続できるよう、箱ごとに集約の uniqueId をIDとするハンドルを持つ。
  * ハンドルは箱全体に重ねてあり、エッジ側はハンドルの範囲を箱の外周として扱える。
  */
-export function AggregateNode({ id, data }: NodeProps<AggregateFlowNode>) {
+export function AggregateNode({ id, data, selected }: NodeProps<AggregateFlowNode>) {
 
   // ライブラリが保持しているハンドルの範囲を、入れ子の箱の構成の変化に同期させる。
   // ライブラリはノード全体の大きさが変わったときにしかハンドルの範囲を計測し直さないため、
@@ -35,36 +31,26 @@ export function AggregateNode({ id, data }: NodeProps<AggregateFlowNode>) {
     <AggregateBox
       aggregate={data.aggregate}
       isRoot
-      selectedId={data.selectedId}
-      onSelect={data.onSelect}
+      selected={selected}
     />
   )
 }
 
 /** 集約1個分の箱。子集約を再帰的に包含する */
-function AggregateBox({ aggregate, isRoot, selectedId, onSelect }: {
+function AggregateBox({ aggregate, isRoot, selected }: {
   aggregate: DiagramAggregate
   isRoot?: boolean
-  selectedId: string | null
-  onSelect: (selection: DiagramSelection) => void
+  selected?: boolean
 }) {
-  const { node, rootId, model, children } = aggregate
+  const { node, model, children } = aggregate
   const colors = MODEL_COLORS[model]
-  const isSelected = node.uniqueId === selectedId
-
-  const handleClick = (e: React.MouseEvent) => {
-    // 入れ子になった外側の箱が選択されてしまわないようにする
-    e.stopPropagation()
-    onSelect({ rootId, uniqueId: node.uniqueId })
-  }
 
   return (
     <div
-      onClick={handleClick}
       className={[
         "relative flex flex-col min-w-32 border",
         isRoot ? `${colors.rootBox} shadow` : colors.childBox,
-        isSelected ? "outline-3 outline-amber-400" : "",
+        selected ? "outline-3 outline-amber-400" : "",
       ].join(" ")}
     >
       {/* エッジの接続範囲 */}
@@ -83,8 +69,6 @@ function AggregateBox({ aggregate, isRoot, selectedId, onSelect }: {
             <AggregateBox
               key={child.node.uniqueId}
               aggregate={child}
-              selectedId={selectedId}
-              onSelect={onSelect}
             />
           ))}
         </div>
