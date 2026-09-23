@@ -29,13 +29,13 @@ namespace Nijo {
                 e.Cancel = true;
             };
 
-            var rootCommand = DefineCommand();
-            var config = new CommandLineConfiguration(rootCommand) {
-                EnableDefaultExceptionHandler = false,
-            };
-
             try {
-                return await config.InvokeAsync(args, cancellationTokenSource.Token);
+                return await DefineCommand()
+                    .Parse(args)
+                    .InvokeAsync(new InvocationConfiguration {
+                        EnableDefaultExceptionHandler = false,
+                    }, cancellationTokenSource.Token);
+
             } catch (OperationCanceledException) {
                 Console.Error.WriteLine("キャンセルされました。");
                 return 1;
