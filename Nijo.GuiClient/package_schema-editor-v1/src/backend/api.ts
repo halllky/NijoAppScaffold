@@ -1,4 +1,3 @@
-import { SERVER_DOMAIN } from "../main"
 import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../routing"
 import { EditingProject, SchemaEditorRule, ValidationErrorMap } from "./types"
 
@@ -18,7 +17,7 @@ export type ActionResult =
 export const loadProject = async (projectDir: string | null, signal: AbortSignal): Promise<LoadResult<EditingProject>> => {
   try {
     const response = await fetch(
-      `${SERVER_DOMAIN}/nijo-api/load?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`,
+      `/nijo-api/load?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`,
       { signal },
     )
     if (!response.ok) {
@@ -37,7 +36,7 @@ export const loadProject = async (projectDir: string | null, signal: AbortSignal
  */
 export const loadSchemaRule = async (signal: AbortSignal): Promise<LoadResult<SchemaEditorRule>> => {
   try {
-    const response = await fetch(`${SERVER_DOMAIN}/nijo-api/schema-rule`, { signal })
+    const response = await fetch(`/nijo-api/schema-rule`, { signal })
     if (!response.ok) {
       return { ok: false, error: await describeErrorResponse(response, '読み込みに失敗しました') }
     }
@@ -54,7 +53,7 @@ export const loadSchemaRule = async (signal: AbortSignal): Promise<LoadResult<Sc
  */
 export const saveProject = async (projectDir: string | null, project: EditingProject): Promise<ActionResult> => {
   try {
-    const response = await fetch(`${SERVER_DOMAIN}/nijo-api/save?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
+    const response = await fetch(`/nijo-api/save?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(project),
@@ -75,7 +74,7 @@ export const saveProject = async (projectDir: string | null, project: EditingPro
  */
 export const validateProject = async (projectDir: string | null, project: EditingProject, signal: AbortSignal): Promise<LoadResult<ValidationErrorMap>> => {
   try {
-    const response = await fetch(`${SERVER_DOMAIN}/nijo-api/validate?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
+    const response = await fetch(`/nijo-api/validate?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(project),
@@ -101,7 +100,7 @@ export const validateProject = async (projectDir: string | null, project: Editin
  */
 export const generateCode = async (projectDir: string | null): Promise<ActionResult> => {
   try {
-    const response = await fetch(`${SERVER_DOMAIN}/nijo-api/generate?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
+    const response = await fetch(`/nijo-api/generate?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     })
@@ -126,7 +125,7 @@ export const fetchTypeCandidates = async (
   try {
     // SERVER_DOMAIN は本番ビルドでは空文字（同一オリジンへの相対パス）になるため、
     // ベースURLを要求する `new URL()` ではなく文字列連結でURLを組み立てる。
-    const response = await fetch(`${SERVER_DOMAIN}/nijo-api/types?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
+    const response = await fetch(`/nijo-api/types?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(project),

@@ -89,19 +89,8 @@ public class NijoWebService : IDisposable {
             options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
         });
 
-        // React側のデバッグのためにポートが異なっていてもアクセスできるようにする
-        const string CORS_POLICY_NAME = "AllowAll";
-        builder.Services.AddCors(options => {
-            options.AddPolicy(CORS_POLICY_NAME, builder => {
-                builder.AllowAnyOrigin()
-                       .AllowAnyMethod()
-                       .AllowAnyHeader();
-            });
-        });
-
         var app = builder.Build();
         app.UseRouting();
-        app.UseCors(CORS_POLICY_NAME);
 
         // スキーマ編集エンドポイント
         var schemaEditor = new SchemaEditor.SchemaEditorEndpoints(this);

@@ -21,5 +21,12 @@ export default defineConfig({
   server: {
     port: 5176,
     strictPort: true,
+
+    // バックエンド側は別プロセスで ASP.NET Core が動いているのでプロキシする。
+    // Nijo/Properties/launchSettings.json のうち
+    // Task/NijoServeデバッグ.bat で指定されているプロファイルのポート番号とあわせること。
+    proxy: {
+      '/nijo-api': { target: 'http://localhost:5001' },
+    },
   }
 })
