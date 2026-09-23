@@ -2,12 +2,12 @@ import React from "react"
 import * as ReactHookForm from "react-hook-form"
 import {
   Background, Controls, MarkerType, ReactFlow, ReactFlowProvider, SelectionMode, useReactFlow,
-  type EdgeTypes, type NodeChange, type NodeTypes,
+  type EdgeTypes, type NodeChange, type NodeMouseHandler, type NodeTypes, type OnMoveEnd,
 } from "@xyflow/react"
 import { EditingProject } from "../../../backend"
 import { MODEL_COLORS } from "../../../UI/modelColors"
 import { useDiagramStructure } from "./DiagramStructureContext"
-import { useNodeLayout } from "./useNodeLayout"
+import { useDiagramNodes } from "./useDiagramNodes"
 import { useDiagramPanZoomSaving } from "./useDiagramPanZoomSaving"
 import { AggregateNode, type AggregateFlowNode } from "./AggregateNode"
 import { FloatingEdge, type FloatingFlowEdge } from "./FloatingEdge"
@@ -22,6 +22,9 @@ export type DiagramRef = {
 /**
  * スキーマ定義ダイアグラム。
  * React Flow の機能はこのプロバイダの内側でしか使えないため、中身を別のコンポーネントに分けている。
+ *
+ * ノードの操作に対するコールバックは、ライブラリによって全ノードに配られる。
+ * 参照が変わると全ノードが描画し直されるため、呼び出し側で関数の同一性を保つこと。
  */
 export function Diagram(props: {
   formMethods: ReactHookForm.UseFormReturn<EditingProject>
@@ -31,7 +34,7 @@ export function Diagram(props: {
   onSelectedIdsChanged: (selectedIds: ReadonlySet<string>) => void
   /** 検索にヒットしたルート集約の uniqueId。検索していないときは undefined */
   hitRootIds?: ReadonlySet<string>
-  /** ノードがダブルクリックされたときに、そのルート集約の uniqueId を伴って呼ばれる */
+  /** ノードがダブルクリックされたときに、そのルート集約の uniqueId を伴って呼ばれる。毎回同じ関数を渡すこと */
   onOpenRequested: (rootAggregateUniqueId: string) => void
   /** ノードのドラッグを始めたとき (true) と終えたとき (false) に呼ばれる。未指定の場合は何もしない */
   onDraggingChanged?: (dragging: boolean) => void
@@ -65,15 +68,15 @@ function DiagramCanvas(props: {
   // 表示対象の集約のツリーと集約間の関連
   const { roots, references } = useDiagramStructure()
 
-  // ノードの位置と大きさ
-  const { positions, draggingPositions, measured, handleNodesChange: handleLayoutChange } = useNodeLayout(props.formMethods, roots, references)
+  // ノード（位置・大きさ・選択状態・強調表示）
+  const { nodes, handleNodesChange: handleNodeChange } = useDiagramNodes(props.formMethods, roots, references, props.selectedIds, props.hitRootIds)
 
   // パン、ズームの保存
   const { defaultViewport, handleViewportChanged } = useDiagramPanZoomSaving()
 
-  /** ノードの位置・大きさの変化と、選択状態の変化を反映する */
-  const handleNodesChange = (changes: NodeChange<AggregateFlowNode>[]) => {
-    handleLayoutChange(changes)
+  /** ノードの変化を反映し、選択状態の変化を呼び出し元に知らせる */
+  const handleNodesChange = React.useCallback((changes: NodeChange<AggregateFlowNode>[]) => {
+    handleNodeChange(changes)
 
     const selectChanges = changes.filter(change => change.type === "select")
     if (selectChanges.length === 0) return
@@ -83,26 +86,23 @@ function DiagramCanvas(props: {
       else next.delete(id)
     }
     props.onSelectedIdsChanged(next)
-  }
+  }, [handleNodeChange, props.selectedIds, props.onSelectedIdsChanged])
 
-  // ドラッグを始める前の位置で組み立てたノード。
-  // ドラッグ中は作り直さず同じオブジェクトのままにして、動かしていないノードをライブラリに変化していないと判断させる
-  const settledNodes = React.useMemo((): AggregateFlowNode[] => roots.map(root => ({
-    id: root.node.uniqueId,
-    type: "aggregate",
-    position: positions[root.node.uniqueId] ?? { x: 0, y: 0 },
-    measured: measured[root.node.uniqueId],
-    selected: props.selectedIds.has(root.node.uniqueId),
-    // 不透明度はライブラリがノードの外側の要素に反映するため、ノードの中身を描画し直さずに済む
-    style: isNodeDimmed(root.node.uniqueId, props.selectedIds, props.hitRootIds) ? DIMMED_NODE_STYLE : undefined,
-    data: { aggregate: root },
-  })), [roots, positions, measured, props.selectedIds, props.hitRootIds])
+  const handleNodeDoubleClick: NodeMouseHandler<AggregateFlowNode> = React.useCallback((_, node) => {
+    props.onOpenRequested(node.id)
+  }, [props.onOpenRequested])
 
-  // ノード。ほぼ settledNodes と同じだが、ドラッグ中のノードだけ位置が差し替わる。
-  const nodes = React.useMemo(() => settledNodes.map(node => {
-    const draggingPosition = draggingPositions[node.id]
-    return draggingPosition ? { ...node, position: draggingPosition } : node
-  }), [settledNodes, draggingPositions])
+  const handleDragStart = React.useCallback(() => {
+    props.onDraggingChanged?.(true)
+  }, [props.onDraggingChanged])
+
+  const handleDragStop = React.useCallback(() => {
+    props.onDraggingChanged?.(false)
+  }, [props.onDraggingChanged])
+
+  const handleMoveEnd: OnMoveEnd = React.useCallback((_, viewport) => {
+    handleViewportChanged(viewport)
+  }, [handleViewportChanged])
 
   // エッジ
   const edges = React.useMemo(() => references.map(ref => toEdge(ref, props.selectedIds, props.hitRootIds)), [references, props.selectedIds, props.hitRootIds])
@@ -146,14 +146,14 @@ function DiagramCanvas(props: {
         nodeTypes={NODE_TYPES}
         edgeTypes={EDGE_TYPES}
         onNodesChange={handleNodesChange}
-        onNodeDoubleClick={(_, node) => props.onOpenRequested(node.id)}
+        onNodeDoubleClick={handleNodeDoubleClick}
         // ドラッグ開始/終了イベントは、ノードを直接ドラッグした場合と、
         // 範囲選択後に表示される選択範囲の枠をドラッグした場合とで別のイベントになる
-        onNodeDragStart={() => props.onDraggingChanged?.(true)}
-        onNodeDragStop={() => props.onDraggingChanged?.(false)}
-        onSelectionDragStart={() => props.onDraggingChanged?.(true)}
-        onSelectionDragStop={() => props.onDraggingChanged?.(false)}
-        onMoveEnd={(_, viewport) => handleViewportChanged(viewport)}
+        onNodeDragStart={handleDragStart}
+        onNodeDragStop={handleDragStop}
+        onSelectionDragStart={handleDragStart}
+        onSelectionDragStop={handleDragStop}
+        onMoveEnd={handleMoveEnd}
         selectionMode={SelectionMode.Partial}
         multiSelectionKeyCode={MULTI_SELECTION_KEY_CODE}
         selectNodesOnDrag={false}
@@ -192,20 +192,8 @@ const FIT_VIEW_OPTIONS = { maxZoom: 1 }
 /** ルート集約を表示領域の中央に移動する際のアニメーション時間(ms) */
 const PAN_DURATION_MS = 300
 
-/** 薄く表示するノードのスタイル。選択中または検索にヒットしたノードを目立たせるために、それ以外を薄くする */
-const DIMMED_NODE_STYLE: React.CSSProperties = { opacity: 0.2 }
-
 /** モデル種別の配色が無い場合の既定のエッジの色 */
 const DEFAULT_STROKE_COLOR = "#4b5563" // gray-600
-
-/**
- * ノードを薄く表示するかどうか。
- * 何か選択中か検索中のときに、選択中でも検索にヒットしてもいないノードを薄くする。
- */
-function isNodeDimmed(rootId: string, selectedIds: ReadonlySet<string>, hitRootIds: ReadonlySet<string> | undefined): boolean {
-  if (selectedIds.size === 0 && hitRootIds === undefined) return false
-  return !selectedIds.has(rootId) && !hitRootIds?.has(rootId)
-}
 
 /**
  * 集約間の関連をダイアグラムのエッジに変換する。

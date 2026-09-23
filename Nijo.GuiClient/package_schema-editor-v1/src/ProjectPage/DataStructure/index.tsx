@@ -92,6 +92,11 @@ function DataStructureTabBody({ visible, formMethods, dataStructureRef, diagramR
     }
   }, [formMethods, diagramRef])
 
+  /** ダイアグラムのノードがダブルクリックされたときに編集ペインを開く */
+  const handleOpenRequested = React.useCallback((rootAggregateUniqueId: string) => {
+    openRootAggregate(rootAggregateUniqueId, false)
+  }, [openRootAggregate])
+
   React.useImperativeHandle(dataStructureRef, () => ({
     selectRootAggregate: id => {
       if (!id) {
@@ -183,7 +188,7 @@ function DataStructureTabBody({ visible, formMethods, dataStructureRef, diagramR
               selectedIds={selectedRootIds}
               onSelectedIdsChanged={setSelectedRootIds}
               hitRootIds={hitRootIds}
-              onOpenRequested={id => openRootAggregate(id, false)}
+              onOpenRequested={handleOpenRequested}
               onDraggingChanged={setIsDiagramDragging}
               diagramRef={diagramRef}
               className="h-full w-full"

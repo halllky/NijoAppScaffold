@@ -28,9 +28,9 @@ export function useDiagramPanZoomSaving() {
   stateRef.current.save = save
 
   // ダイアグラム操作時の表示位置の変更をrefに退避しておく
-  const handleViewportChanged = (viewport: Viewport) => {
+  const handleViewportChanged = React.useCallback((viewport: Viewport) => {
     stateRef.current.viewport = viewport
-  }
+  }, [])
 
   // 画面アンロード時に一度だけ保存処理が実行されるようにする
   React.useEffect(() => {
