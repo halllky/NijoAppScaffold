@@ -3,7 +3,7 @@ import {
   ATTR_PARAMETER, ATTR_RETURN_VALUE, MODEL_COMMAND,
 } from "../../../backend"
 import { parseAsMentionText } from "../../../UI/Mention"
-import { asTree } from "../../../asTree"
+import { asTree, TreeHelper } from "../../../asTree"
 
 /**
  * ダイアグラムに表示する集約。ルート集約、child、children のいずれか。
@@ -64,8 +64,6 @@ export function buildDiagramStructure(project: EditingProject): DiagramStructure
     aggregateByElementId.set(root.uniqueId, rootAgg)
 
     const tree = asTree(root.members, m => m.uniqueId)
-    const getChildrenOf = (owner: EditingRootAggregate | EditingMember): EditingMember[] =>
-      'indent' in owner ? tree.getChildren(owner) : root.members.filter(m => m.indent === 1)
 
     // 集約1個分の関連・子孫を収集する。owner は root か child/children のみ（それ以外は表示対象外のため呼ばれない）
     const walk = (ownerNode: EditingRootAggregate | EditingMember, ownerAgg: DiagramAggregate) => {
@@ -74,7 +72,7 @@ export function buildDiagramStructure(project: EditingProject): DiagramStructure
         collectParamReturnEdges(ownerNode, ownerAgg.node.uniqueId, physicalNameToId, rawEdges)
       }
 
-      for (const member of getChildrenOf(ownerNode)) {
+      for (const member of getDirectChildren(root, tree, ownerNode)) {
         // 既定では直近の表示対象祖先（ownerAgg）に属するとみなす。child/children の場合は後で自分自身に上書きする
         aggregateByElementId.set(member.uniqueId, ownerAgg)
 
@@ -109,18 +107,22 @@ export function buildDiagramStructure(project: EditingProject): DiagramStructure
  */
 export function isMemberChangeAffectingDiagram(before: EditingMember, after: EditingMember): boolean {
   if (before.indent !== after.indent) return true
-  if (before.physicalName !== after.physicalName) return true
   if (isMemberTypeChangeAffectingDiagram(before.type, after.type)) return true
-  if (!sameStringArray(getMentionTargets(before.comment), getMentionTargets(after.comment))) return true
-  if (before.attributes[ATTR_PARAMETER] !== after.attributes[ATTR_PARAMETER]) return true
-  if (before.attributes[ATTR_RETURN_VALUE] !== after.attributes[ATTR_RETURN_VALUE]) return true
-  return false
+  return commonAttrsAffectDiagram(before, after)
 }
 
 /** ルート集約自身の内容の変更が、ダイアグラムの構成に影響するかどうかを判定する */
 export function isRootChangeAffectingDiagram(before: EditingRootAggregate, after: EditingRootAggregate): boolean {
-  if (before.physicalName !== after.physicalName) return true
   if (before.model !== after.model) return true
+  return commonAttrsAffectDiagram(before, after)
+}
+
+/** メンバー・ルート集約に共通する項目（物理名・コメント中のメンション・引数/戻り値属性）の変更が、ダイアグラムの構成に影響するかどうかを判定する */
+function commonAttrsAffectDiagram(
+  before: { physicalName?: string | null; comment?: string | null; attributes: Record<string, EditingAttributeValue> },
+  after: { physicalName?: string | null; comment?: string | null; attributes: Record<string, EditingAttributeValue> },
+): boolean {
+  if (before.physicalName !== after.physicalName) return true
   if (!sameStringArray(getMentionTargets(before.comment), getMentionTargets(after.comment))) return true
   if (before.attributes[ATTR_PARAMETER] !== after.attributes[ATTR_PARAMETER]) return true
   if (before.attributes[ATTR_RETURN_VALUE] !== after.attributes[ATTR_RETURN_VALUE]) return true
@@ -128,6 +130,18 @@ export function isRootChangeAffectingDiagram(before: EditingRootAggregate, after
 }
 
 // -------------------------------------
+
+/**
+ * ルート集約自身、または members 中の要素（child/children）の直下の子を取得する。
+ * ルート集約自身は tree（members のインデント木）の外側にあるため、indent === 1 の要素を直接抜き出す。
+ */
+function getDirectChildren(
+  root: EditingRootAggregate,
+  tree: TreeHelper<EditingMember, string>,
+  owner: EditingRootAggregate | EditingMember,
+): EditingMember[] {
+  return 'indent' in owner ? tree.getChildren(owner) : root.members.filter(m => m.indent === 1)
+}
 
 /** ref-to パスの区切り文字。物理名に含まれえない制御文字を使う */
 const REF_PATH_SEPARATOR = '\u0000'
@@ -156,8 +170,7 @@ function buildRefToPathIndex(dataStructures: EditingRootAggregate[]): Map<string
 
     const tree = asTree(root.members, m => m.uniqueId)
     const walk = (owner: EditingRootAggregate | EditingMember, ownerPathKey: string) => {
-      const candidates = 'indent' in owner ? tree.getChildren(owner) : root.members.filter(m => m.indent === 1)
-      for (const candidate of candidates) {
+      for (const candidate of getDirectChildren(root, tree, owner)) {
         if (!candidate.physicalName) continue
         const pathKey = `${ownerPathKey}${REF_PATH_SEPARATOR}${candidate.physicalName}`
         if (!index.has(pathKey)) index.set(pathKey, candidate.uniqueId)

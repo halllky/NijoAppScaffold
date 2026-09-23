@@ -1,3 +1,4 @@
+import React from "react"
 import {
   BaseEdge, EdgeLabelRenderer, getStraightPath, useInternalNode,
   type Edge, type EdgeProps, type InternalNode, type XYPosition,
@@ -24,8 +25,12 @@ export type FloatingFlowEdge = Edge<{
  * 集約の箱はノードの中に入れ子になっている場合があるため、ノード全体ではなく
  * エッジの sourceHandle, targetHandle で指定されたハンドルの範囲を箱の外周とみなす。
  * ハンドルが見つからない場合はノード全体を箱とみなす。
+ *
+ * 検索・選択状態の変化のたびに全エッジの data オブジェクトが作り直されるため、
+ * 無関係なエッジまでジオメトリを再計算し直すのを避けるためメモ化している。
+ * 接続先ノードの位置は useInternalNode の内部購読によりメモ化とは無関係に反映される。
  */
-export function FloatingEdge({ id, source, target, sourceHandleId, targetHandleId, markerEnd, data }: EdgeProps<FloatingFlowEdge>) {
+export const FloatingEdge = React.memo(function FloatingEdge({ id, source, target, sourceHandleId, targetHandleId, markerEnd, data }: EdgeProps<FloatingFlowEdge>) {
   const sourceNode = useInternalNode(source)
   const targetNode = useInternalNode(target)
   if (!sourceNode || !targetNode) return null
@@ -78,7 +83,19 @@ export function FloatingEdge({ id, source, target, sourceHandleId, targetHandleI
       )}
     </>
   )
-}
+}, (prev, next) => {
+  return prev.id === next.id
+    && prev.source === next.source
+    && prev.target === next.target
+    && prev.sourceHandleId === next.sourceHandleId
+    && prev.targetHandleId === next.targetHandleId
+    && prev.markerEnd === next.markerEnd
+    && prev.data?.label === next.data?.label
+    && prev.data?.color === next.data?.color
+    && prev.data?.highlighted === next.data?.highlighted
+    && prev.data?.dimmed === next.data?.dimmed
+    && prev.data?.dashed === next.data?.dashed
+})
 
 // -------------------------------------
 

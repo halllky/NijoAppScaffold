@@ -62,7 +62,6 @@ function DataStructureTabBody({ visible, formMethods, dataStructureRef, diagramR
 
   // 編集ペインに表示中のルート集約
   const [rootLocation, setRootLocation] = React.useState<RootAggregateLocation | undefined>(undefined)
-  const [aggPaneVisible, setAggPaneVisible] = React.useState(false)
   const aggPaneOrientation = personalSettings.aggPaneOrientation ?? 'horizontal'
   const handleSwitchAggPaneOrientation = React.useCallback(() => {
     savePersonalSettings('aggPaneOrientation', aggPaneOrientation === 'horizontal' ? 'vertical' : 'horizontal')
@@ -78,7 +77,6 @@ function DataStructureTabBody({ visible, formMethods, dataStructureRef, diagramR
     const location = findRootAggregateLocation(formMethods.getValues(), rootOrDescendantUniqueId)
     if (!location) return
     setRootLocation(location)
-    setAggPaneVisible(true)
 
     if (scroll) {
       window.setTimeout(() => {
@@ -98,7 +96,6 @@ function DataStructureTabBody({ visible, formMethods, dataStructureRef, diagramR
     selectRootAggregate: id => {
       if (!id) {
         setRootLocation(undefined)
-        setAggPaneVisible(false)
         return
       }
       openRootAggregate(id, true)
@@ -108,16 +105,16 @@ function DataStructureTabBody({ visible, formMethods, dataStructureRef, diagramR
   /** ダイアグラムの背景など、何もない場所を押したら編集ペインを閉じる */
   const handleClosePane = () => {
     setRootLocation(undefined)
-    setAggPaneVisible(false)
   }
 
   // 新規ルート集約作成ダイアログ
   const dataStructuresArray = ReactHookForm.useFieldArray({ name: "dataStructures", control: formMethods.control })
   const commandsArray = ReactHookForm.useFieldArray({ name: "commands", control: formMethods.control })
+  const getArrayFor = (list: RootAggregateLocation['list']) => list === 'dataStructures' ? dataStructuresArray : commandsArray
   const [isNewRootDialogOpen, setIsNewRootDialogOpen] = React.useState(false)
   const handleRegisterNewRoot = (name: string, modelType: string) => {
     const list: RootAggregateLocation['list'] = modelType === MODEL_COMMAND ? 'commands' : 'dataStructures'
-    const targetArray = list === 'dataStructures' ? dataStructuresArray : commandsArray
+    const targetArray = getArrayFor(list)
     const newUniqueId = UUID.generate()
     const newRoot: EditingRootAggregate = {
       uniqueId: newUniqueId,
@@ -139,12 +136,10 @@ function DataStructureTabBody({ visible, formMethods, dataStructureRef, diagramR
   /** 編集ペインに表示中のルート集約を、子孫ごと削除する */
   const handleDeleteOpenRootAggregate = React.useCallback(() => {
     if (rootLocation !== undefined) {
-      if (rootLocation.list === 'dataStructures') dataStructuresArray.remove(rootLocation.index)
-      else commandsArray.remove(rootLocation.index)
+      getArrayFor(rootLocation.list).remove(rootLocation.index)
       notifyStructureChanged()
     }
     setRootLocation(undefined)
-    setAggPaneVisible(false)
   }, [dataStructuresArray, commandsArray, rootLocation, notifyStructureChanged])
 
   /** ダイアグラムで選択中のルート集約を、子孫ごと削除する */
@@ -158,14 +153,12 @@ function DataStructureTabBody({ visible, formMethods, dataStructureRef, diagramR
     if (!window.confirm(`ルート集約「${name}」を削除しますか？`)) return
 
     setSelectedRootIds(new Set())
-    if (location.list === 'dataStructures') dataStructuresArray.remove(location.index)
-    else commandsArray.remove(location.index)
+    getArrayFor(location.list).remove(location.index)
     notifyStructureChanged()
 
     // 削除したルート集約が編集ペインに表示中だった場合は閉じる
     if (rootLocation?.list === location.list && rootLocation.index === location.index) {
       setRootLocation(undefined)
-      setAggPaneVisible(false)
     }
   }
 
@@ -228,7 +221,7 @@ function DataStructureTabBody({ visible, formMethods, dataStructureRef, diagramR
       {/* ルート集約編集ペイン。
           ノードをまとめて動かすときに邪魔にならないようドラッグ中は隠す。
           隠している間もグリッドのスクロール位置や選択行が失われないよう、アンマウントせずに Activity で隠している */}
-      <Allotment.Pane preferredSize="50%" visible={aggPaneVisible && !isDiagramDragging}>
+      <Allotment.Pane preferredSize="50%" visible={rootLocation !== undefined && !isDiagramDragging}>
         {rootLocation !== undefined && (
           <React.Activity mode={isDiagramDragging ? "hidden" : "visible"}>
             <AggregatePane

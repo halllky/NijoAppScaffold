@@ -34,10 +34,13 @@ export function useNodeLayout(formMethods: ReactHookForm.UseFormReturn<EditingPr
   // フォームの値の書き換えはフォーム全体の複製を伴い重いため、ドラッグ中の毎フレームには行わない
   const [draggingPositions, setDraggingPositions] = React.useState<{ [id: string]: XYPosition }>({})
 
+  // 自動配置の列。ノードの大きさの計測結果には依存しないため、大きさが変わるたびに列分けをやり直さないよう別のメモにしている
+  const columns = React.useMemo(() => splitIntoColumns(roots, references), [roots, references])
+
   // 各ノードの位置。ドラッグ中のノードはドラッグを始める前の位置のまま。ドラッグ中は変化しない
   const positions = React.useMemo(() => {
-    return arrangeNotMovedNodes(roots, references, movedPositions, measured)
-  }, [roots, references, movedPositions, measured])
+    return arrangeNotMovedNodes(columns, movedPositions, measured)
+  }, [columns, movedPositions, measured])
 
   /** 位置の変化と、描画後の大きさの計測結果を反映する */
   const handleNodesChange = (changes: NodeChange<Node>[]) => {
@@ -92,15 +95,14 @@ const ESTIMATED_HEADER_HEIGHT = 40
  * 自動配置の位置は、どのノードを動かしたかに関係なく、全ノードを並べた場合の位置になる。
  */
 function arrangeNotMovedNodes(
-  roots: DiagramAggregate[],
-  references: DiagramReference[],
+  columns: DiagramAggregate[][],
   movedPositions: { [id: string]: XYPosition },
   measured: { [id: string]: Dimensions },
 ): { [id: string]: XYPosition } {
   const positions: { [id: string]: XYPosition } = {}
   let columnX = 0
 
-  for (const columnRoots of splitIntoColumns(roots, references)) {
+  for (const columnRoots of columns) {
     let y = 0
     let columnWidth = 0
 

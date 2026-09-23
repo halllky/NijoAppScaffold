@@ -24,7 +24,7 @@ export const AggregateNode = React.memo(function AggregateNode({ id, data, selec
   // ライブラリはノード全体の大きさが変わったときにしかハンドルの範囲を計測し直さないため、
   // ノードの大きさが変わらずに中の箱の配置だけが変わった場合に備えている
   const updateNodeInternals = useUpdateNodeInternals()
-  const structureKey = getStructureKey(data.aggregate)
+  const structureKey = React.useMemo(() => getStructureKey(data.aggregate), [data.aggregate])
   React.useEffect(() => {
     updateNodeInternals(id)
   }, [id, structureKey, updateNodeInternals])

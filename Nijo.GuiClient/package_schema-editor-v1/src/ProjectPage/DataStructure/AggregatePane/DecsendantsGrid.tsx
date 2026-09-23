@@ -58,7 +58,7 @@ function DecsendantsGrid(props: {
   }
 
   const {
-    fieldArrayReturn: { insert, remove, move, update },
+    fieldArrayReturn: { insert: rawInsert, remove: rawRemove, move: rawMove, update },
     editableGrid2Props,
     gridRef,
   } = UI.useFieldArrayForEditableGrid2({
@@ -146,6 +146,12 @@ function DecsendantsGrid(props: {
     return columns
   }, [attributeDefs, rootModelType, customAttributes, uniqueConstraintColumns])
 
+  // 行の追加・削除・移動は必ずダイアグラムの構成に影響しうるため、変更操作にまとめて通知を紐づける
+  // （indent の変更は update() を使うが、複数行への一括適用時に1回だけ通知したいため、呼び出し側で個別に notifyStructureChanged() を呼ぶ）
+  const insert: typeof rawInsert = (...args) => { rawInsert(...args); notifyStructureChanged() }
+  const remove: typeof rawRemove = (...args) => { rawRemove(...args); notifyStructureChanged() }
+  const move: typeof rawMove = (...args) => { rawMove(...args); notifyStructureChanged() }
+
   // Handlers
   const handleInsertRow = () => {
     const selectedRows = gridRef.current?.getSelectedRows()
@@ -158,7 +164,6 @@ function DecsendantsGrid(props: {
       const insertRows = Array.from({ length: count }, () => newEmptyMember(indent))
       insert(insertPosition, insertRows)
     }
-    notifyStructureChanged()
 
     // グリッド未選択なら行選択
     window.setTimeout(() => {
@@ -178,7 +183,6 @@ function DecsendantsGrid(props: {
       const insertRows = Array.from({ length: count }, () => newEmptyMember(indent))
       insert(insertPosition, insertRows)
     }
-    notifyStructureChanged()
 
     // グリッド未選択なら行選択
     window.setTimeout(() => {
@@ -192,7 +196,6 @@ function DecsendantsGrid(props: {
     if (!selectedRows || selectedRows.length === 0) return
     const removedIndexes = selectedRows.map(row => row.rowIndex)
     remove(removedIndexes)
-    notifyStructureChanged()
   }
 
   const handleMoveUp = () => {
@@ -203,7 +206,6 @@ function DecsendantsGrid(props: {
     if (startRow <= 0) return
 
     move(startRow - 1, endRow)
-    notifyStructureChanged()
 
     // Restore selection
     gridRef.current?.selectRow(selectedRows[0].rowIndex - 1, selectedRows[0].rowIndex + selectedRows.length - 2)
@@ -217,7 +219,6 @@ function DecsendantsGrid(props: {
     if (endRow >= getValues(membersPath).length - 1) return
 
     move(endRow + 1, startRow)
-    notifyStructureChanged()
 
     gridRef.current?.selectRow(selectedRows[0].rowIndex + 1, selectedRows[0].rowIndex + selectedRows.length)
   }
