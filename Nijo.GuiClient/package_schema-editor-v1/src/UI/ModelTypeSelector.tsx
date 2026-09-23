@@ -1,14 +1,13 @@
 import React from "react"
 import { MODEL_DATA, MODEL_QUERY, MODEL_COMMAND, MODEL_STRUCTURE } from "../backend"
 import { DropdownSelector } from "@nijo/ui-components"
+import { MODEL_COLORS } from "./modelColors"
 
 /** モデル種類の選択肢 */
 type ModelTypeOption = {
   value: string
   displayName: string
   description: string
-  nameTextColor: string
-  descriptionTextColor: string
 }
 
 /** モデル種類の選択肢定義 */
@@ -17,29 +16,21 @@ const MODEL_TYPE_OPTIONS: ModelTypeOption[] = [
     value: MODEL_DATA,
     displayName: "Data Model",
     description: "永続化されるデータ。EFCoreの構造定義、自動生成可能なエラーチェック、楽観的排他制御の基本機能が自動生成されます。",
-    nameTextColor: "text-orange-600",
-    descriptionTextColor: "text-orange-500",
   },
   {
     value: MODEL_QUERY,
     displayName: "Query Model",
     description: "データの検索や照会に特化したモデル。一覧検索処理が自動生成されます。",
-    nameTextColor: "text-emerald-600",
-    descriptionTextColor: "text-emerald-500",
   },
   {
     value: MODEL_COMMAND,
     displayName: "Command Model",
     description: "引数を受け取り戻り値を返す処理。Webサーバー・クライアント間で常に同期された型定義を提供します。",
-    nameTextColor: "text-sky-600",
-    descriptionTextColor: "text-sky-500",
   },
   {
     value: MODEL_STRUCTURE,
     displayName: "Structure Model",
     description: "構造体。Webサーバー・クライアント間で常に同期されているべき構造を定義します。",
-    nameTextColor: "text-gray-600",
-    descriptionTextColor: "text-gray-500",
   }
 ]
 
@@ -68,16 +59,16 @@ export function ModelTypeSelector({
       {MODEL_TYPE_OPTIONS.map(option => [
         option.value,
         (
-          <span className={`select-none ${option.nameTextColor}`}>
+          <span className={`select-none ${MODEL_COLORS[option.value].nameText}`}>
             {option.displayName}
           </span>
         ),
         (
           <div key={option.value} className="p-1">
-            <div className={`font-semibold mb-1 ${option.nameTextColor}`}>
+            <div className={`font-semibold mb-1 ${MODEL_COLORS[option.value].nameText}`}>
               {option.displayName}
             </div>
-            <div className={`text-xs leading-relaxed ${option.descriptionTextColor}`}>
+            <div className={`text-xs leading-relaxed ${MODEL_COLORS[option.value].descriptionText}`}>
               {option.description}
             </div>
           </div>
@@ -125,10 +116,10 @@ export function ModelTypeRadioButtonGroup({
             className="mt-1"
           />
           <div>
-            <div className={`font-bold ${option.nameTextColor}`}>
+            <div className={`font-bold ${MODEL_COLORS[option.value].nameText}`}>
               {option.displayName}
             </div>
-            <div className={`text-xs mt-1 leading-snug ${option.descriptionTextColor}`}>
+            <div className={`text-xs mt-1 leading-snug ${MODEL_COLORS[option.value].descriptionText}`}>
               {option.description}
             </div>
           </div>

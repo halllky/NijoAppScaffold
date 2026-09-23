@@ -1,5 +1,3 @@
-import { GraphViewProps, Node, Edge } from "@nijo/ui-components/layout/GraphView2"
-
 /**
  * サーバーとやり取りする、編集中のプロジェクト全体のデータ。
  * GET /nijo-api/load のレスポンス、POST /nijo-api/save 等のリクエストボディとして使う。
@@ -116,9 +114,8 @@ export type EditingCustomAttribute = {
  */
 export type EditingSchemaGraphViewState = {
   schemaDefinition: {
-    nodes: { [id: string]: Node }
-    edges: Edge[]
-    nodePositions: GraphViewProps['defaultNodePositions']
+    /** ルート集約のノードの位置。キーはルート集約の UniqueId */
+    nodePositions: { [uniqueId: string]: { x: number, y: number } }
   }
 }
 

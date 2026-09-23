@@ -69,9 +69,8 @@ export default function ProjectPage({ defaultValues, schemaRule }: {
     setNowSaving(true)
 
     // データは随時setValueで更新されているため単にgetValuesで取得。
-    // パフォーマンスの最適化のため、ダイアグラムのノード位置はこの時点で収集する
+    // ダイアグラムのノード位置もドラッグ終了時に随時フォームへ書き込まれているため、ここで別途収集する必要はない
     const currentValues = window.structuredClone(getValues())
-    currentValues.graphViewState = diagramRef.current?.getGraphDataSet() ?? null
 
     const saveResult = await saveProject(projectDir, currentValues)
     if (!saveResult.ok) {

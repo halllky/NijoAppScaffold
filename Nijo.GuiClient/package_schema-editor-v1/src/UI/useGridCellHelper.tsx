@@ -26,6 +26,8 @@ export function useFieldArrayForEditableGrid2<
     subscribe: ReactHookForm.UseFormSubscribe<TField>
     /** 子孫集約編集グリッドの場合、先頭の1行はルート集約なので、それをスキップする */
     skipFirstRow?: boolean
+    /** セル編集・貼り付け・Deleteキーによる行の内容の変更を反映した直後に、変更前後の行を伴って呼ばれる。未指定の場合は何もしない */
+    onRowsChanged?: (changes: { before: ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName>, after: ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName> }[]) => void
   },
   getColumnDef: GetColumnDefWithHelper<ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName>>,
   getColumnDefDependencies: React.DependencyList
@@ -33,7 +35,7 @@ export function useFieldArrayForEditableGrid2<
   type TRow = ReactHookForm.FieldArrayWithId<TField, TArrayPath, TKeyName>
 
   // react-hook-form
-  const { getValues, setValue, subscribe: formSubscribe, skipFirstRow, ...fieldArrayProps } = formProps
+  const { getValues, setValue, subscribe: formSubscribe, skipFirstRow, onRowsChanged, ...fieldArrayProps } = formProps
   const fieldArrayReturn = ReactHookForm.useFieldArray<TField, TArrayPath, TKeyName>(fieldArrayProps)
   const control = formProps.control as ReactHookForm.Control<ReactHookForm.FieldValues>
 
@@ -81,16 +83,21 @@ export function useFieldArrayForEditableGrid2<
   }, [formSubscribe, fieldArrayProps.name])
 
   // グリッドの操作（編集確定・貼り付け・Delete）による変更を react-hook-form に反映する。
+  // 呼び出し側が変更前後の行を必要とする場合に備え、反映前の値を getValues から取っておく
   const onRowsChange = React.useCallback((updates: EditableGridRowUpdate<TRow>[]) => {
+    const changes: { before: TRow, after: TRow }[] = []
     for (const { rowIndex, row } of updates) {
       const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
+      const path = `${fieldArrayProps.name}.${fieldRowIndex}` as ReactHookForm.Path<TField>
+      if (onRowsChanged) changes.push({ before: getValues(path) as TRow, after: row })
       setValue(
-        `${fieldArrayProps.name}.${fieldRowIndex}` as ReactHookForm.Path<TField>,
+        path,
         row as ReactHookForm.PathValue<TField, ReactHookForm.Path<TField>>,
         { shouldDirty: true }
       )
     }
-  }, [setValue, fieldArrayProps.name, skipFirstRow])
+    if (changes.length > 0) onRowsChanged?.(changes)
+  }, [getValues, setValue, fieldArrayProps.name, skipFirstRow, onRowsChanged])
 
   const columns = React.useMemo(
     () => getColumnDef(helper),

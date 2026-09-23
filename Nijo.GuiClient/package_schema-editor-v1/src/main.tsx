@@ -6,6 +6,7 @@ import { PersonalSettingsProvider } from "./PersonalSettings"
 
 import "./main.css"
 import "allotment/dist/style.css"
+import "@xyflow/react/dist/style.css"
 import { CtrlSProvider } from "./UI/useCtrlS"
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

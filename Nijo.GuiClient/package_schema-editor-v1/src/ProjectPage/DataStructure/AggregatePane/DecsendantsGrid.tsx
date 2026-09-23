@@ -11,6 +11,7 @@ import * as UI from '../../../UI'
 import { usePersonalSettings } from "../../../PersonalSettings"
 import { useSchemaEditorRule } from "../../SchemaEditorRuleContext"
 import { RootAggregateLocation } from "../../rootAggregateLocation"
+import { useNotifyDiagramStructureChanged, isMemberChangeAffectingDiagram } from "../Diagram"
 import { UniqueConstraintsContext, useUniqueConstraintsColumns } from "./useUniqueConstraintColumns"
 
 /** グリッドに新しい行を挿入するときの初期値 */
@@ -48,6 +49,14 @@ function DecsendantsGrid(props: {
 
   const { uniqueConstraintColumns, contextValue: uniqueConstraintsContextValue } = useUniqueConstraintsColumns(control, getValues, setValue, rootLocation)
 
+  // ダイアグラムの構成に影響する編集の通知
+  const notifyStructureChanged = useNotifyDiagramStructureChanged()
+  const handleGridRowsChanged = (changes: { before: GridRowType, after: GridRowType }[]) => {
+    if (changes.some(({ before, after }) => isMemberChangeAffectingDiagram(before, after))) {
+      notifyStructureChanged()
+    }
+  }
+
   const {
     fieldArrayReturn: { insert, remove, move, update },
     editableGrid2Props,
@@ -58,6 +67,7 @@ function DecsendantsGrid(props: {
     getValues,
     setValue,
     subscribe,
+    onRowsChanged: handleGridRowsChanged,
   }, helper => {
     const columns: EG2.EditableGridColumn<GridRowType>[] = []
 
@@ -148,6 +158,7 @@ function DecsendantsGrid(props: {
       const insertRows = Array.from({ length: count }, () => newEmptyMember(indent))
       insert(insertPosition, insertRows)
     }
+    notifyStructureChanged()
 
     // グリッド未選択なら行選択
     window.setTimeout(() => {
@@ -167,6 +178,7 @@ function DecsendantsGrid(props: {
       const insertRows = Array.from({ length: count }, () => newEmptyMember(indent))
       insert(insertPosition, insertRows)
     }
+    notifyStructureChanged()
 
     // グリッド未選択なら行選択
     window.setTimeout(() => {
@@ -180,6 +192,7 @@ function DecsendantsGrid(props: {
     if (!selectedRows || selectedRows.length === 0) return
     const removedIndexes = selectedRows.map(row => row.rowIndex)
     remove(removedIndexes)
+    notifyStructureChanged()
   }
 
   const handleMoveUp = () => {
@@ -190,6 +203,7 @@ function DecsendantsGrid(props: {
     if (startRow <= 0) return
 
     move(startRow - 1, endRow)
+    notifyStructureChanged()
 
     // Restore selection
     gridRef.current?.selectRow(selectedRows[0].rowIndex - 1, selectedRows[0].rowIndex + selectedRows.length - 2)
@@ -203,24 +217,27 @@ function DecsendantsGrid(props: {
     if (endRow >= getValues(membersPath).length - 1) return
 
     move(endRow + 1, startRow)
+    notifyStructureChanged()
 
     gridRef.current?.selectRow(selectedRows[0].rowIndex + 1, selectedRows[0].rowIndex + selectedRows.length)
   }
 
   const handleIndentDown = () => {
     const selectedRows = gridRef.current?.getSelectedRows()
-    if (!selectedRows) return
+    if (!selectedRows || selectedRows.length === 0) return
     for (const x of selectedRows) {
       update(x.rowIndex, { ...x.row, indent: Math.max(1, x.row.indent - 1) })
     }
+    notifyStructureChanged()
   }
 
   const handleIndentUp = () => {
     const selectedRows = gridRef.current?.getSelectedRows()
-    if (!selectedRows) return
+    if (!selectedRows || selectedRows.length === 0) return
     for (const x of selectedRows) {
       update(x.rowIndex, { ...x.row, indent: x.row.indent + 1 })
     }
+    notifyStructureChanged()
   }
 
   // Key handlers

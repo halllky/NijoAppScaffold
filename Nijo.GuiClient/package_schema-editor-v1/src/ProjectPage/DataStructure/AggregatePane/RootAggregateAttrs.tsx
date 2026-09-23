@@ -1,8 +1,9 @@
 import * as ReactHookForm from "react-hook-form"
 import * as UI from "../../../UI"
-import { EditingProject, isAttributeAvailable, NODE_TYPE_ROOT_AGGREGATE } from "../../../backend"
+import { ATTR_PARAMETER, ATTR_RETURN_VALUE, EditingProject, isAttributeAvailable, NODE_TYPE_ROOT_AGGREGATE } from "../../../backend"
 import { useSchemaEditorRule } from "../../SchemaEditorRuleContext"
 import { RootAggregateLocation } from "../../rootAggregateLocation"
+import { isRootChangeAffectingDiagram, useNotifyDiagramStructureChanged } from "../Diagram"
 
 /**
  * ルート集約の属性（コメント + 既定の属性 + カスタム属性）
@@ -22,6 +23,13 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
 
   const getMentionSuggestions = UI.useMentionSuggestions(getValues)
 
+  // ダイアグラムの構成に影響する編集の通知
+  const notifyStructureChanged = useNotifyDiagramStructureChanged()
+  /** コメント中のメンション対象が変わったときだけ通知する。単なる文字の追記では通知しない */
+  const handleCommentChange = (newComment: string) => {
+    if (root && isRootChangeAffectingDiagram(root, { ...root, comment: newComment })) notifyStructureChanged()
+  }
+
   return (
     <div className={`flex flex-col gap-1 ${className ?? ''}`}>
 
@@ -34,6 +42,10 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
             <UI.MentionableTextarea
               {...field}
               value={field.value ?? undefined}
+              onChange={value => {
+                field.onChange(value)
+                handleCommentChange(value)
+              }}
               getSuggestions={getMentionSuggestions}
               className="w-full"
               placeholder="コメントを入力..."
@@ -74,7 +86,7 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
 
                 ) : (
                   <UI.WordTextBox
-                    {...register(path)}
+                    {...register(path, isDiagramLinkAttr(attrDef.attributeName) ? { onChange: notifyStructureChanged } : undefined)}
                     className="px-1"
                   />
                 )}
@@ -124,6 +136,10 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
     </div>
   )
 }
+
+/** ダイアグラム上の関連（コマンドモデルの引数・戻り値のエッジ）の元になる属性かどうか */
+const isDiagramLinkAttr = (attributeName: string): boolean =>
+  attributeName === ATTR_PARAMETER || attributeName === ATTR_RETURN_VALUE
 
 const AttributeRow = ({ label, children }: { label: string, children: React.ReactNode }) => {
   return (

@@ -8,6 +8,7 @@ import DecsendantsGrid from "./DecsendantsGrid";
 import RootAggregateAttrs from "./RootAggregateAttrs";
 import GenericLookupTableCategoriesPane from "./GenericLookupTableCategoriesPane";
 import { RootAggregateLocation } from "../../rootAggregateLocation";
+import { useNotifyDiagramStructureChanged } from "../Diagram";
 
 /**
  * ルート集約1個分の編集ペイン
@@ -34,6 +35,9 @@ function AggregatePane(props: {
 
   const rootPath = `${rootLocation.list}.${rootLocation.index}` as const
 
+  // ダイアグラムの構成に影響する編集の通知
+  const notifyStructureChanged = useNotifyDiagramStructureChanged()
+
   const handleDelete = () => {
     const physicalName = getValues(`${rootPath}.physicalName`)
     if (!confirm(`「${physicalName}」を削除しますか？`)) return
@@ -51,6 +55,7 @@ function AggregatePane(props: {
 
     if (newList === rootLocation.list) {
       setValue(`${rootPath}.model`, newModel, { shouldDirty: true })
+      notifyStructureChanged()
       return
     }
 
@@ -63,6 +68,7 @@ function AggregatePane(props: {
 
     if (rootLocation.list === 'dataStructures') dataStructuresFieldArray.remove(rootLocation.index)
     else commandsFieldArray.remove(rootLocation.index)
+    notifyStructureChanged()
 
     onRootLocationChanged?.({ list: newList, index: newIndex })
   }
@@ -88,7 +94,7 @@ function AggregatePane(props: {
         {/* ルート集約名 */}
         {/* TODO: GUI上ではDisplayNameを編集し、LocalNameへの変換はサーバー側で行うようにする */}
         <UI.WordTextBox
-          {...register(`${rootPath}.physicalName`)}
+          {...register(`${rootPath}.physicalName`, { onChange: notifyStructureChanged })}
           className="flex-1 font-bold"
         />
 

@@ -8,6 +8,7 @@
     "build": "tsc && vite build"
   },
   "dependencies": {
-    "@nijo/ui-components": "file:../package_ui-components"
+    "@nijo/ui-components": "file:../package_ui-components",
+    "@xyflow/react": "^12.11.6"
   }
 }
