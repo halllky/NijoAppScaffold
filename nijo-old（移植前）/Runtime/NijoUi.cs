@@ -63,25 +63,27 @@ namespace Nijo.Runtime {
                 using var reader = new StreamReader(stream);
                 var html = await reader.ReadToEndAsync();
 
-                context.Response.ContentType = "text/html";
-                await context.Response.WriteAsync(html);
+                // 画面初期表示時データをHTMLに埋め込んで返す。
+                // 読み込みに失敗した場合は埋め込まない。GUIアプリ側が改めて読み込みを要求し、そのエラーを画面に表示するため。
+                string? initialLoadData;
+                try {
+                    initialLoadData = LoadInitialData().ConvertToJson();
+                } catch {
+                    initialLoadData = null;
+                }
+
+                // HTML中のmeta要素よりも前に日本語を含むデータが来るため、文字コードはHTTPヘッダで明示する
+                context.Response.ContentType = "text/html; charset=utf-8";
+                await context.Response.WriteAsync(initialLoadData == null
+                    ? html
+                    : EmbedInitialData(html, initialLoadData));
             });
 
-            // 画面初期表示時データ読み込み処理
+            // 画面初期表示時データ読み込み処理。
+            // 通常の初期表示ではHTMLに埋め込まれたデータが使われるため、この処理が使われるのは再読み込み時のみ。
             app.MapGet("/api/load", async context => {
-                var schema = MutableSchema.FromXmlDocument(_project.SchemaXmlPath);
-
                 context.Response.ContentType = "application/json";
-                await context.Response.WriteAsync(new InitialLoadData {
-                    // このプロパティ名やデータの内容はGUIアプリ側の InitialLoadData の型と合わせる必要がある
-                    ProjectRoot = _project.SolutionRoot,
-                    EditingXmlFilePath = _project.SchemaXmlPath,
-                    Config = schema.Config,
-                    Nodes = schema.ToList(),
-                    SchemaNodeTypes = NODE_TYPE.Values.ToList(),
-                    OptionalAttributes = ATTR_DEF.Values.ToList(),
-                    GraphLayout = GraphLayout.LoadFromFile(_project.SchemaXmlPath, schema),
-                }.ConvertToJson());
+                await context.Response.WriteAsync(LoadInitialData().ConvertToJson());
             });
 
             // mermaid.js によるグラフ表示
@@ -239,6 +241,44 @@ namespace Nijo.Runtime {
 
             return app;
         }
+
+        /// <summary>
+        /// 画面初期表示時に必要なデータを編集対象XMLから読み込みます。
+        /// </summary>
+        private InitialLoadData LoadInitialData() {
+            var schema = MutableSchema.FromXmlDocument(_project.SchemaXmlPath);
+
+            return new InitialLoadData {
+                // このプロパティ名やデータの内容はGUIアプリ側の InitialLoadData の型と合わせる必要がある
+                ProjectRoot = _project.SolutionRoot,
+                EditingXmlFilePath = _project.SchemaXmlPath,
+                Config = schema.Config,
+                Nodes = schema.ToList(),
+                SchemaNodeTypes = NODE_TYPE.Values.ToList(),
+                OptionalAttributes = ATTR_DEF.Values.ToList(),
+                GraphLayout = GraphLayout.LoadFromFile(_project.SchemaXmlPath, schema),
+            };
+        }
+
+        /// <summary>
+        /// GUI設定プロジェクトのHTMLに <see cref="InitialLoadData"/> のJSONを埋め込みます。
+        /// GUIアプリ側はこの要素があればそれを初期表示に使い、サーバーへの読み込み要求を省略する。
+        /// </summary>
+        private static string EmbedInitialData(string html, string json) {
+            var script = $"""<script id="{INITIAL_DATA_ELEMENT_ID}" type="application/json">{json}</script>""";
+
+            // 最初に現れるhead開始タグはスクリプトより前にあるため、確実に本物のhead要素である
+            const string HEAD_START_TAG = "<head>";
+            var index = html.IndexOf(HEAD_START_TAG, StringComparison.OrdinalIgnoreCase);
+            if (index == -1) throw new InvalidOperationException("GUI設定プロジェクトのビルド結果のHTMLにhead要素が見つかりません。");
+
+            return html.Insert(index + HEAD_START_TAG.Length, script);
+        }
+
+        /// <summary>
+        /// 画面初期表示時データが埋め込まれたHTML要素のID。この値はGUIアプリ側と合わせる必要がある。
+        /// </summary>
+        private const string INITIAL_DATA_ELEMENT_ID = "nijo-initial-data";
 
         /// <summary>
         /// 深さの情報だけを持っている <see cref="MutableSchemaNode"/> の一覧に対して、

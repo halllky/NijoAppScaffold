@@ -1,6 +1,7 @@
 import React from "react"
-import { toClientRequest, toEditingProject, type EditingProject } from "./editingProject"
+import { toClientRequest, toEditingProject, toInitialLoadData, type EditingProject } from "./editingProject"
 import { loadProject, saveProject } from "./api"
+import { readEmbeddedInitialData, updateEmbeddedInitialData } from "./embeddedInitialData"
 import type { SaveResult } from "./types"
 
 type BackendDataContextType = LoadState<EditingProject> & {
@@ -36,10 +37,16 @@ export function BackendDataContextProvider({ children }: { children?: React.Reac
     const load = async () => {
       setState({ state: "loading" })
       try {
-        const res = await loadProject(abortController.signal)
-        if (abortController.signal.aborted) return;
-        if (!res.ok) throw new Error(res.error)
-        setState({ state: "ready", data: toEditingProject(res.value) })
+        // 画面初期表示時のデータはHTMLに埋め込まれてくるため、サーバーへの問い合わせが発生するのは再読み込み時のみ
+        let data = readEmbeddedInitialData()
+        if (data === undefined) {
+          const res = await loadProject(abortController.signal)
+          if (abortController.signal.aborted) return;
+          if (!res.ok) throw new Error(res.error)
+          data = res.value
+          updateEmbeddedInitialData(data)
+        }
+        setState({ state: "ready", data: toEditingProject(data) })
       } catch (err) {
         if (abortController.signal.aborted) return;
         setState({ state: "error", error: `データの読み込みでエラーが発生しました (${err instanceof Error ? err.message : String(err)})` })
@@ -50,8 +57,10 @@ export function BackendDataContextProvider({ children }: { children?: React.Reac
   }, [reloadKey])
 
   // 保存
-  const save = React.useCallback((project: EditingProject, build: boolean) => {
-    return saveProject(toClientRequest(project), build)
+  const save = React.useCallback(async (project: EditingProject, build: boolean) => {
+    const result = await saveProject(toClientRequest(project), build)
+    if (result.ok) updateEmbeddedInitialData(toInitialLoadData(project))
+    return result
   }, [])
 
   // コンテキストの値

@@ -137,6 +137,23 @@ export function toClientRequest(project: EditingProject): ClientRequest {
 }
 
 /**
+ * 画面上で編集したデータを画面初期表示時と同じデータ構造に変換する。
+ * toEditingProject の逆変換。
+ */
+export function toInitialLoadData(project: EditingProject): InitialLoadData {
+  const { config, aggregates, graphLayout } = toClientRequest(project)
+  return {
+    projectRoot: project.projectRoot,
+    editingXmlFilePath: project.editingXmlFilePath,
+    config,
+    aggregates,
+    aggregateOrMemberTypes: project.aggregateOrMemberTypes,
+    optionalAttributes: project.optionalAttributes,
+    graphLayout,
+  }
+}
+
+/**
  * 設定が読み込めなかった場合に使う、スキーマ定義のルート要素の設定の既定値。
  * 既定値はサーバー側の設定クラスのものと合わせている。
  */
