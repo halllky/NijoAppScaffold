@@ -31,7 +31,7 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
   }
 
   return (
-    <div className={`flex flex-col gap-1 ${className ?? ''}`}>
+    <div className={`flex flex-col gap-1 text-sm ${className ?? ''}`}>
 
       {/* ルート集約のコメント */}
       <ReactHookForm.Controller
@@ -69,7 +69,7 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
                 {attrDef.type === 'EnumSelect' ? (
                   <select
                     {...register(path)}
-                    className="border border-gray-700 bg-white px-1 py-px text-sm"
+                    className="border border-gray-700 bg-white px-1 py-px"
                   >
                     <option value=""></option>
                     {attrDef.typeEnumValues?.map(opt => (
@@ -108,7 +108,7 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
                 {customAttr.type === 'Enum' ? (
                   <select
                     {...register(path)}
-                    className="border border-gray-700 bg-white px-1 py-px text-sm"
+                    className="border border-gray-700 bg-white px-1 py-px"
                   >
                     <option value=""></option>
                     {customAttr.enumValues.map(opt => (
@@ -144,8 +144,10 @@ const isDiagramLinkAttr = (attributeName: string): boolean =>
 const AttributeRow = ({ label, children }: { label: string, children: React.ReactNode }) => {
   return (
     <div className="flex items-center gap-2 w-full">
-      <div className="basis-32 text-right text-sm text-gray-700 shrink-0" title={label}>
-        {label}
+      <div className="basis-32 flex justify-end text-gray-700 shrink-0 select-none" title={label}>
+        <span>
+          {label}
+        </span>
       </div>
       <div className="flex-1 min-w-0">
         {children}

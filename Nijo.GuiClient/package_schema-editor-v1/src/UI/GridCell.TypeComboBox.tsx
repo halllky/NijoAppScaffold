@@ -78,13 +78,13 @@ export function createComboBoxCellHelper(
         return (
           <div
             title={errorMessages.join('\n')}
-            className={`w-full self-start flex items-center gap-2 px-1 truncate ${hasError ? 'bg-amber-300/50' : ''}`}
+            className={`w-full text-sm self-start flex items-center gap-2 px-1 truncate ${hasError ? 'bg-amber-300/50' : ''}`}
           >
             <span className="truncate">
               {text}
             </span>
             {displayText && displayText !== text && (
-              <span className="flex-1 text-gray-400 text-sm truncate">
+              <span className="flex-1 text-gray-400 truncate">
                 {displayText}
               </span>
             )}
@@ -238,7 +238,7 @@ const TypeComboEditor: EG2.EditableGridCellEditor = React.forwardRef((props, ref
   }
 
   return (
-    <div style={props.style} ref={wrapperRef} className="relative">
+    <div style={props.style} ref={wrapperRef} className="relative text-sm">
       <input
         ref={inputRef}
         value={value}
@@ -254,11 +254,11 @@ const TypeComboEditor: EG2.EditableGridCellEditor = React.forwardRef((props, ref
           className="fixed bg-white border border-gray-700 overflow-auto shadow-lg list-none p-0 m-0 text-left"
         >
           {isLoading && filteredItems.length === 0 && (
-            <li className="p-2 text-gray-500 text-sm">検索中...</li>
+            <li className="p-2 text-gray-500">検索中...</li>
           )}
 
           {filteredItems.length === 0 && !isLoading && (
-            <li className="p-2 text-gray-500 text-sm">該当なし</li>
+            <li className="p-2 text-gray-500">該当なし</li>
           )}
 
           {filteredItems.map((item, index) => (
@@ -271,7 +271,7 @@ const TypeComboEditor: EG2.EditableGridCellEditor = React.forwardRef((props, ref
             >
               {item.value}
               {item.text !== item.value && (
-                <span className="text-gray-400 text-sm ml-2">
+                <span className="text-gray-400 ml-2">
                   {item.text}
                 </span>
               )}

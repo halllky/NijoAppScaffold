@@ -195,22 +195,20 @@ function DataStructureTabBody({ visible, formMethods, dataStructureRef, diagramR
             >
               {/* 操作説明 */}
               <span className="text-xs select-none">
-                ドラッグでアイテムを移動できます。ダブルクリックでアイテムの詳細が表示されます。
+                ダブルクリックでアイテムの詳細が表示されます。
               </span>
 
-              <div className="flex gap-1 items-start">
-                {/* ボタン */}
-                <div className="flex flex-col gap-1">
-                  <Button icon={PlusIcon} fill onClick={() => setIsNewRootDialogOpen(true)}>
-                    新規作成
-                  </Button>
-                  <Button icon={TrashIcon} outline onClick={handleDeleteSelectedRootAggregate} disabled={selectedRootIds.size !== 1}>
-                    選択中のルート集約を削除
-                  </Button>
-                </div>
+              {/* 検索 */}
+              <DiagramSearchBox formMethods={formMethods} onHitRootIdsChanged={setHitRootIds} />
 
-                {/* 検索 */}
-                <DiagramSearchBox formMethods={formMethods} onHitRootIdsChanged={setHitRootIds} />
+              {/* ボタン */}
+              <div className="flex flex-col gap-1">
+                <Button icon={PlusIcon} fill onClick={() => setIsNewRootDialogOpen(true)}>
+                  新規作成
+                </Button>
+                <Button icon={TrashIcon} outline onClick={handleDeleteSelectedRootAggregate} disabled={selectedRootIds.size !== 1}>
+                  選択中のルート集約を削除
+                </Button>
               </div>
 
               <NewRootAddDialog

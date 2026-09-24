@@ -60,14 +60,14 @@ export function createTextCellHelper(
           <MentionableTextareaReadOnly
             title={errorMessages.join('\n')}
             onClickMention={part => jumpToElement?.(part.targetId)}
-            className={`w-full px-1 ${wrap ? 'whitespace-pre-wrap' : 'truncate'} ${hasError ? 'bg-amber-300/50' : ''}`}
+            className={`w-full px-1 text-sm ${wrap ? 'whitespace-pre-wrap' : 'truncate'} ${hasError ? 'bg-amber-300/50' : ''}`}
           >
             {value ?? undefined}
           </MentionableTextareaReadOnly>
         ) : (
           <div
             title={errorMessages.join('\n')}
-            className={`w-full px-1 ${wrap ? 'whitespace-pre-wrap' : 'truncate'} ${hasError ? 'bg-amber-300/50' : ''}`}
+            className={`w-full px-1 text-sm ${wrap ? 'whitespace-pre-wrap' : 'truncate'} ${hasError ? 'bg-amber-300/50' : ''}`}
           >
             {format?.(value) ?? value}
           </div>
@@ -125,7 +125,7 @@ export const TextCellEditor: EG2.EditableGridCellEditor = React.forwardRef(funct
   return (
     <label
       style={style}
-      className="px-[3px] resize-none border border-black bg-white"
+      className="px-[3px] text-sm resize-none border border-black bg-white"
     >
       <input
         ref={refInput}
@@ -134,7 +134,7 @@ export const TextCellEditor: EG2.EditableGridCellEditor = React.forwardRef(funct
         onKeyDown={handleKeyDown}
         spellCheck={false}
         autoComplete="off"
-        className="block mt-[-1px] w-full field-sizing-content outline-none"
+        className="block mt-[-1px] text-sm w-full field-sizing-content outline-none"
       />
     </label>
   )
@@ -191,7 +191,7 @@ export const MentionableCellEditor: EG2.EditableGridCellEditor = React.forwardRe
       // 非編集時に読み替えないのは、エディタが編集中でなくてもDOM上に存在しフォーカス移動先セルの値を保持しており、
       // 伸ばすと不可視のエディタがグリッドのスクロール範囲を広げてしまうため。
       style={isEditing ? { ...style, height: undefined, minHeight: style.height } : style}
-      className="bg-white border border-gray-700 [&_textarea]:px-[3px] mt-[-1px]"
+      className="text-sm bg-white border border-gray-700 [&_textarea]:px-[3px] mt-[-1px]"
     />
   )
 })

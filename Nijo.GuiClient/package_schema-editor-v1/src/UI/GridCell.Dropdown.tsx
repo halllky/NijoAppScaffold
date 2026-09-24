@@ -47,7 +47,7 @@ export function createDropdownCellHelper(
         return (
           <div
             title={errorMessages.join('\n')}
-            className={`w-full px-1 truncate ${hasError ? 'bg-amber-300/50' : ''}`}
+            className={`w-full px-1 text-sm truncate ${hasError ? 'bg-amber-300/50' : ''}`}
           >
             {text}
           </div>
@@ -119,15 +119,15 @@ function createEditor(candidateValues: { value: string, text: string }[]): EG2.E
           onChange={handleChange}
           onClick={handleClick}
           onKeyDown={handleKeyDown}
-          className="w-full border border-black outline-none bg-white"
+          className="w-full text-sm border border-black outline-none bg-white"
         >
           {/* 空行 */}
-          <option value="" className="text-sm">
+          <option value="">
             &nbsp;
           </option>
 
           {candidateValues.map(c => (
-            <option key={c.value} value={c.value} className="text-sm">
+            <option key={c.value} value={c.value}>
               {c.text}
             </option>
           ))}

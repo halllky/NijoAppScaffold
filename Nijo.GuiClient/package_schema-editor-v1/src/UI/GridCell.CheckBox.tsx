@@ -45,7 +45,7 @@ export function createCheckBoxCellHelper(
         return (
           <label
             title={errorMessages.join('\n')}
-            className={`self-start block h-full w-full px-1 ${isReadOnly ? '' : 'cursor-pointer'} ${hasError ? 'bg-amber-300/50' : ''}`}
+            className={`self-start block text-sm h-full w-full px-1 ${isReadOnly ? '' : 'cursor-pointer'} ${hasError ? 'bg-amber-300/50' : ''}`}
           >
             <input
               type="checkbox"

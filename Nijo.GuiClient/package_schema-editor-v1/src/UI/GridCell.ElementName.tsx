@@ -28,12 +28,12 @@ export function createElementNameCellHelper(
     defaultWidth: 220,
     isFixed: true,
     renderHeader: () => (
-      <div className="border-l border-gray-300">
+      <div className="text-sm border-l border-gray-300">
         {header}
       </div>
     ),
     renderHeaderPlaceholder: () => (
-      <div className="border-l border-gray-300" />
+      <div className="text-sm border-l border-gray-300" />
     ),
     renderBody: ({ rowIndex }) => {
       const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
@@ -43,10 +43,10 @@ export function createElementNameCellHelper(
       const tooltip = errorMessages.join('\n')
 
       return (
-        <div className={`px-1 flex-1 flex flex-col w-full ${bgColor}`} title={tooltip}>
+        <div className={`px-1 flex-1 flex flex-col text-sm w-full ${bgColor}`} title={tooltip}>
 
           {/* インデント + 名前 */}
-          <div className="flex text-left overflow-hidden">
+          <div className="flex text-left basis-[24px] overflow-hidden">
             {Array.from({ length: Math.max(0, rowData.indent - 1) }).map((_, i) => (
               <div key={i} className="basis-[20px] shrink-0 relative leading-none border-l border-gray-300" />
             ))}

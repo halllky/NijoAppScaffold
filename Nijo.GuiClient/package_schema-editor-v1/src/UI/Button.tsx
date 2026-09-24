@@ -67,7 +67,7 @@ export function Button({
   const layoutStyle = `flex items-center justify-center gap-1 ${inline ? 'inline-flex' : 'flex'} ${iconRight ? 'flex-row-reverse' : 'flex-row'}`
 
   // サイズ
-  const sizeStyle = mini ? 'px-2 py-0.5 text-xs' : 'px-4 py-1.5 text-sm'
+  const sizeStyle = mini ? 'px-1 py-px text-xs' : 'px-2 py-0.5 text-sm'
 
   // 見た目（塗りつぶし、枠線など）
   let appearanceStyle = ""

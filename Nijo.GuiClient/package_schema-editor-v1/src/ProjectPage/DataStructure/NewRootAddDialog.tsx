@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ModalDialog } from "@nijo/ui-components";
-import { Button, ModelTypeRadioButtonGroup, WordTextBox } from "../../UI";
+import { Button, MODEL_COLORS, MODEL_TYPE_OPTIONS, ModelTypeRadioButtonGroup, WordTextBox } from "../../UI";
 import { MODEL_DATA } from "../../backend";
 
 /**
@@ -30,33 +30,27 @@ export function NewRootAddDialog({ open, onClose, onRegister }: {
     onRegister(name, modelType)
   }
 
+  const handleSelectModelType = (selected: string) => {
+    setModelType(selected)
+    setStep(2)
+  }
+
   return (
     <ModalDialog open={open} onOutsideClick={onClose} className="w-[500px] shadow-lg rounded flex flex-col bg-white">
       {/* ヘッダー */}
-      <h2 className="text-lg font-bold text-gray-700 px-5 py-1">新しいデータ構造を作成</h2>
+      <h2 className="text-lg font-bold text-gray-700 px-5 py-1 select-none">新規作成</h2>
 
       <div className="px-5 py-1">
         {step === 1 && (
-          <form
-            className="flex flex-col gap-4 animate-fadeIn"
-            onSubmit={(e) => {
-              e.preventDefault()
-              setStep(2)
-            }}
-          >
+          <div className="flex flex-col gap-4 animate-fadeIn">
             <div>
-              <ModelTypeRadioButtonGroup
-                value={modelType}
-                onChange={setModelType}
-                autoFocus
-              />
+              <ModelTypeRadioButtonGroup onChange={handleSelectModelType} />
             </div>
 
             <div className="flex justify-end gap-2 mt-2">
               <Button onClick={onClose} outline>キャンセル</Button>
-              <Button submit fill>次へ</Button>
             </div>
-          </form>
+          </div>
         )}
 
         {step === 2 && (
@@ -67,6 +61,17 @@ export function NewRootAddDialog({ open, onClose, onRegister }: {
               handleRegister()
             }}
           >
+            {/* 選択されたモデル */}
+            <div className="flex flex-col items-start gap-1 transition-colors text-left">
+              <div className={`font-bold ${MODEL_COLORS[modelType].nameText}`}>
+                {MODEL_TYPE_OPTIONS[modelType].displayName}
+              </div>
+              <div className={`text-xs mt-1 leading-snug ${MODEL_COLORS[modelType].descriptionText}`}>
+                {MODEL_TYPE_OPTIONS[modelType].description}
+              </div>
+            </div>
+
+            {/* 集約名 */}
             <div>
               <label className="text-sm font-bold text-gray-600 mb-1 block">名前</label>
               <WordTextBox

@@ -5,41 +5,36 @@ import { MODEL_COLORS } from "./modelColors"
 
 /** モデル種類の選択肢 */
 type ModelTypeOption = {
-  value: string
   displayName: string
   description: string
 }
 
 /** モデル種類の選択肢定義 */
-const MODEL_TYPE_OPTIONS: ModelTypeOption[] = [
-  {
-    value: MODEL_DATA,
+export const MODEL_TYPE_OPTIONS: { [key: string]: ModelTypeOption } = {
+  [MODEL_DATA]: {
     displayName: "Data Model",
     description: "永続化されるデータ。EFCoreの構造定義、自動生成可能なエラーチェック、楽観的排他制御の基本機能が自動生成されます。",
   },
-  {
-    value: MODEL_QUERY,
+  [MODEL_QUERY]: {
     displayName: "Query Model",
     description: "データの検索や照会に特化したモデル。一覧検索処理が自動生成されます。",
   },
-  {
-    value: MODEL_COMMAND,
+  [MODEL_COMMAND]: {
     displayName: "Command Model",
     description: "引数を受け取り戻り値を返す処理。Webサーバー・クライアント間で常に同期された型定義を提供します。",
   },
-  {
-    value: MODEL_STRUCTURE,
+  [MODEL_STRUCTURE]: {
     displayName: "Structure Model",
     description: "構造体。Webサーバー・クライアント間で常に同期されているべき構造を定義します。",
-  }
-]
+  },
+}
 
 type ModelTypeSelectorForSchemaProps = {
   value?: string
   onChange: (value: string) => void
   className?: string
   autoFocus?: boolean
-  onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>
+  onKeyDown?: React.KeyboardEventHandler<HTMLButtonElement>
 }
 
 /**
@@ -56,19 +51,19 @@ export function ModelTypeSelector({
       onChange={onChange}
       className={className}
     >
-      {MODEL_TYPE_OPTIONS.map(option => [
-        option.value,
+      {Object.entries(MODEL_TYPE_OPTIONS).map(([value, option]) => [
+        value,
         (
-          <span className={`select-none ${MODEL_COLORS[option.value].nameText}`}>
+          <span className={`select-none ${MODEL_COLORS[value].nameText}`}>
             {option.displayName}
           </span>
         ),
         (
-          <div key={option.value} className="p-1">
-            <div className={`font-semibold mb-1 ${MODEL_COLORS[option.value].nameText}`}>
+          <div key={value} className="p-1">
+            <div className={`font-semibold mb-1 ${MODEL_COLORS[value].nameText}`}>
               {option.displayName}
             </div>
-            <div className={`text-xs leading-relaxed ${MODEL_COLORS[option.value].descriptionText}`}>
+            <div className={`text-xs leading-relaxed ${MODEL_COLORS[value].descriptionText}`}>
               {option.description}
             </div>
           </div>
@@ -81,49 +76,32 @@ export function ModelTypeSelector({
 /**
  * ルート集約のモデルの型を選択するラジオボタン
  */
-export function ModelTypeRadioButtonGroup({
-  value,
-  onChange,
-  autoFocus,
-  className,
-  onKeyDown,
-}: ModelTypeSelectorForSchemaProps) {
+export function ModelTypeRadioButtonGroup({ onChange }: {
+  onChange: (value: string) => void
+}) {
 
   React.useEffect(() => {
-    if (autoFocus) {
-      const firstRadio = document.querySelector<HTMLInputElement>('input[name="modelType"]')
-      firstRadio?.focus()
-    }
-  }, [autoFocus])
+    const firstButton = document.querySelector<HTMLButtonElement>('button[name="modelType"]')
+    firstButton?.focus()
+  }, [])
 
   return (
-    <div className={`flex flex-col gap-2 ${className ?? ''}`}>
-      {MODEL_TYPE_OPTIONS.map(option => (
-        <label
-          key={option.value}
-          className={`
-            flex items-start gap-3 p-3 rounded border cursor-pointer transition-colors
-            ${value === option.value ? 'bg-blue-50 border-blue-400 ring-1 ring-blue-400' : 'bg-white border-gray-200 hover:bg-gray-50'}
-          `}
+    <div className="flex flex-col gap-2">
+      {Object.entries(MODEL_TYPE_OPTIONS).map(([value, option]) => (
+        <button
+          key={value}
+          type="button"
+          name="modelType"
+          onClick={() => onChange(value)}
+          className="flex flex-col items-start gap-1 p-2 rounded border cursor-pointer transition-colors text-left bg-white border-gray-200 hover:bg-gray-50"
         >
-          <input
-            type="radio"
-            name="modelType"
-            value={option.value}
-            checked={value === option.value}
-            onChange={() => onChange(option.value)}
-            onKeyDown={onKeyDown}
-            className="mt-1"
-          />
-          <div>
-            <div className={`font-bold ${MODEL_COLORS[option.value].nameText}`}>
-              {option.displayName}
-            </div>
-            <div className={`text-xs mt-1 leading-snug ${MODEL_COLORS[option.value].descriptionText}`}>
-              {option.description}
-            </div>
+          <div className={`font-bold ${MODEL_COLORS[value].nameText}`}>
+            {option.displayName}
           </div>
-        </label>
+          <div className={`text-xs mt-1 leading-snug ${MODEL_COLORS[value].descriptionText}`}>
+            {option.description}
+          </div>
+        </button>
       ))}
     </div>
   )
