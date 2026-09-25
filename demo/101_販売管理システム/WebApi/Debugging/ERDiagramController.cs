@@ -1,6 +1,8 @@
+#if DEBUG
+
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -10,6 +12,7 @@ namespace MyApp.WebApi.Debugging;
 
 [ApiController]
 [Route("api/debug/er-diagram")]
+[AllowAnonymous]
 public class ERDiagramController : ControllerBase {
 
     private const string SAVE_FILE_NAME = "ERDiagram.layout.json";
@@ -215,3 +218,5 @@ public class ERDiagramController : ControllerBase {
         public string? TargetEndShape { get; set; }
     }
 }
+
+#endif

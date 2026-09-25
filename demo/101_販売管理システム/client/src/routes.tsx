@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom"
+import { createBrowserRouter, Outlet } from "react-router-dom"
 import * as Icon from "@heroicons/react/24/solid"
 import { RootLayout } from "./app/RootLayout"
 import * as DetailMessageContext from "./app/DetailMessageContext"
@@ -27,6 +27,7 @@ const navigationItems = [
 ]
 
 export const router = createBrowserRouter([
+  // 業務画面
   {
     element: (
       <DetailMessageContext.Provider>
@@ -43,8 +44,6 @@ export const router = createBrowserRouter([
       </DetailMessageContext.Provider>
     ),
     children: [
-
-      // 業務画面
       P000,
       P002,
       P100,
@@ -54,14 +53,21 @@ export const router = createBrowserRouter([
       ...P101,
       ...P201,
       P301,
-
-      // デバッグ用画面（開発環境でのみ表示）
-      ...(!import.meta.env.DEV ? [] : [
-        UIComponentCatalog,
-        ER図,
-      ]),
     ],
     // loader などでエラーが発生した場合に表示するエラーページ
     errorElement: <ErrorPage />,
   },
+
+  // デバッグ用画面（開発環境でのみ表示）
+  ...(!import.meta.env.DEV ? [] : [{
+    element: (
+      <DetailMessageContext.Provider>
+        <Outlet />
+      </DetailMessageContext.Provider>
+    ),
+    children: [
+      UIComponentCatalog,
+      ER図,
+    ]
+  }]),
 ])
