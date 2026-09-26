@@ -1,7 +1,7 @@
 import React from "react"
 import { Link } from "react-router-dom"
 import * as UIコンポーネントカタログ from "./UIコンポーネントカタログ"
-import * as ER図 from "./ER図"
+import * as DbViewer from "./db-viewer/DbViewer"
 import { callAspNetCoreApiAsync } from "../example/callAspNetCoreApiAsync"
 import { Button } from "../ui/Button"
 import { useLoginLogout } from "../app/useLoginLogout"
@@ -46,8 +46,8 @@ export default function デバッグメニュー() {
         <Link to={UIコンポーネントカタログ.URL} className="text-blue-600 underline">
           UIコンポーネントカタログへ移動
         </Link>
-        <Link to={ER図.URL} className="text-blue-600 underline">
-          ER図へ移動
+        <Link to={DbViewer.URL} className="text-blue-600 underline">
+          DBビューアへ移動
         </Link>
         <Button fill loading={processing} onClick={handleRecreateDatabase}>
           データベース再作成

@@ -81,10 +81,6 @@ public static class Demo101TemplatePruner
         "client/src/pages/P300_商品.tsx",
         "client/src/pages/P301_商品詳細.tsx",
         "client/src/pages/shared/StockAdjustmentDialog.tsx",
-        // ER図デバッグ画面は @nijo/ui-components （このモノレポ内でのみ解決できるパッケージ）に依存しており、
-        // 単体で展開されるテンプレートではビルドできないため削除する。
-        "client/src/debug-rooms/ER図.tsx",
-        "WebApi/Debugging/ERDiagramController.cs",
         // テンプレートには列挙体を1つも含まないため、列挙体の存在を前提にしたこれらのコンポーネントは型エラーになる。
         // UIコンポーネントカタログでの参照も削除済みで他に利用箇所がないため削除する。
         "client/src/app/EnumSelection.tsx",
@@ -200,8 +196,6 @@ public static class Demo101TemplatePruner
         ReplaceOverridedDummyDataGenerator(workDir);
         EditClientRoutes(workDir);
         EditClientUiComponentCatalog(workDir);
-        EditClientDebugMenu(workDir);
-        EditClientTailwindConfig(workDir);
         ReplaceClientPackageJson(workDir);
     }
 
@@ -467,13 +461,14 @@ public static class Demo101TemplatePruner
             import P201 from "./pages/P201_入荷詳細"
             import P301 from "./pages/P301_商品詳細"
             import UIComponentCatalog from "./debug-rooms/UIコンポーネントカタログ"
-            import ER図 from "./debug-rooms/ER図"
+            import DbViewer from "./debug-rooms/db-viewer/DbViewer"
             """,
             """
             import P000, * as P000Module from "./pages/P000_トップページ"
             import P002, * as P002Module from "./pages/P002_ログアウト"
             import P400, * as P400Module from "./pages/P400_従業員"
             import UIComponentCatalog from "./debug-rooms/UIコンポーネントカタログ"
+            import DbViewer from "./debug-rooms/db-viewer/DbViewer"
             """);
 
         // ルートナビゲーションに表示する業務画面は routes.tsx が合成する（RootLayout は props で受け取るだけ）。
@@ -497,19 +492,6 @@ public static class Demo101TemplatePruner
         ReplaceExactlyOnce(
             path,
             """
-                    UIComponentCatalog,
-                    ER図,
-                  ]),
-            """,
-            """
-                    UIComponentCatalog,
-                  ]),
-            """);
-
-        ReplaceExactlyOnce(
-            path,
-            """
-                  // 業務画面
                   P000,
                   P002,
                   P100,
@@ -521,7 +503,6 @@ public static class Demo101TemplatePruner
                   P301,
             """,
             """
-                  // 業務画面
                   P000,
                   P002,
                   P400,
@@ -627,65 +608,9 @@ public static class Demo101TemplatePruner
             """);
     }
 
-    private static void EditClientDebugMenu(string workDir)
-    {
-        var path = Path.Combine(workDir, "client/src/debug-rooms/デバッグメニュー.tsx");
-
-        ReplaceExactlyOnce(
-            path,
-            """
-            import * as UIコンポーネントカタログ from "./UIコンポーネントカタログ"
-            import * as ER図 from "./ER図"
-            """,
-            """
-            import * as UIコンポーネントカタログ from "./UIコンポーネントカタログ"
-            """);
-
-        ReplaceExactlyOnce(
-            path,
-            """
-                    <Link to={UIコンポーネントカタログ.URL} className="text-blue-600 underline">
-                      UIコンポーネントカタログへ移動
-                    </Link>
-                    <Link to={ER図.URL} className="text-blue-600 underline">
-                      ER図へ移動
-                    </Link>
-            """,
-            """
-                    <Link to={UIコンポーネントカタログ.URL} className="text-blue-600 underline">
-                      UIコンポーネントカタログへ移動
-                    </Link>
-            """);
-    }
-
-    /// <summary>
-    /// デモ101の client/tailwind.config.ts は、このモノレポ内での相対パスで依存先パッケージの
-    /// ファイルを監視対象に含めている。テンプレートとして単体で展開されると client/ 自体が
-    /// 独立した npm パッケージ（node_modules は client/ 直下）になるため、パスを合わせる。
-    /// また @nijo/ui-components への参照（ER図デバッグ画面用）はそのデバッグ画面自体が
-    /// テンプレートから削除されるため不要になる。
-    /// </summary>
-    private static void EditClientTailwindConfig(string workDir)
-    {
-        var path = Path.Combine(workDir, "client/tailwind.config.ts");
-
-        ReplaceExactlyOnce(
-            path,
-            """
-                "./index.html",
-                "./src/**/*.{js,ts,jsx,tsx}",
-                // 依存先パッケージ（ui-components）のファイルも監視対象に含める
-                "../../../Nijo.GuiClient/package_ui-components/src/**/*.{js,ts,jsx,tsx}",
-            """,
-            """
-                "./index.html",
-                "./src/**/*.{js,ts,jsx,tsx}",
-            """);
-    }
-
     /// <summary>
     /// デモ101の client/package.json は、このモノレポの npm workspaces の一員として
-    /// ルートの node_modules に依存関係をホイスティングしているため依存関係の記載がない。
+    /// ルートの node_modules に依存関係をホイスティングしているため、依存関係の大半が記載されていない。
     /// テンプレートとして単体で展開されたときに動作するよう、実際に使用しているパッケージを明記する。
     /// バージョンはこのモノレポのルート package.json に合わせている。
     /// </summary>
@@ -712,6 +637,7 @@ public static class Demo101TemplatePruner
                 "@heroicons/react": "^2.2.0",
                 "@tanstack/react-table": "^8.21.3",
                 "@tanstack/react-virtual": "^3.14.2",
+                "@xyflow/react": "^12.11.6",
                 "allotment": "^1.20.5",
                 "react": "^19.2.7",
                 "react-dom": "^19.2.7",

@@ -1,0 +1,120 @@
+{
+  "subjectAreas": [
+    {
+      "id": "d36450b2-b014-4ab6-9c59-3bcd311c84bc",
+      "name": "トラン系",
+      "tableAttributes": [
+        "logicalName",
+        "physicalName"
+      ],
+      "columnAttributes": [
+        "isPrimaryKey",
+        "logicalName",
+        "physicalName",
+        "type",
+        "isNotNull"
+      ],
+      "tables": [
+        {
+          "tableName": "入荷",
+          "position": {
+            "x": 276.0000000000001,
+            "y": -2
+          },
+          "collapsed": false,
+          "size": {
+            "width": 490,
+            "height": 274
+          }
+        },
+        {
+          "tableName": "入荷明細",
+          "position": {
+            "x": 686.0000000000002,
+            "y": 415.9999999999999
+          },
+          "collapsed": false,
+          "neighborPositions": {
+            "商品": {
+              "x": 458,
+              "y": -16
+            }
+          }
+        },
+        {
+          "tableName": "売上",
+          "position": {
+            "x": 348.0000000000002,
+            "y": 1743.9999999999998
+          },
+          "collapsed": false
+        },
+        {
+          "tableName": "売上明細",
+          "position": {
+            "x": 286.00000000000034,
+            "y": 1286
+          },
+          "collapsed": false
+        },
+        {
+          "tableName": "引当明細",
+          "position": {
+            "x": 30.311660561660574,
+            "y": 924.0694953194953
+          },
+          "collapsed": false,
+          "size": {
+            "width": 508,
+            "height": 273
+          }
+        },
+        {
+          "tableName": "在庫調整",
+          "position": {
+            "x": 1064.0000000000002,
+            "y": 1508
+          },
+          "collapsed": false,
+          "neighborPositions": {
+            "従業員": {
+              "x": 475.9999999999998,
+              "y": 148
+            }
+          }
+        },
+        {
+          "tableName": "在庫調整引当明細",
+          "position": {
+            "x": 936,
+            "y": 990
+          },
+          "collapsed": false
+        }
+      ],
+      "dataPreviews": [
+        {
+          "id": "ffe6447a-9325-4c18-9d82-a1c2c2388970",
+          "tableName": "引当明細",
+          "where": "",
+          "orderBy": "",
+          "pageSize": 50,
+          "position": {
+            "x": -783.8406729709238,
+            "y": 1257.7728261359882
+          },
+          "collapsed": false,
+          "size": {
+            "width": 984,
+            "height": 498
+          }
+        }
+      ],
+      "viewport": {
+        "x": 275.9999999999999,
+        "y": 314.5,
+        "zoom": 1
+      }
+    }
+  ]
+}

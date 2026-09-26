@@ -27,16 +27,7 @@
     /* React */
     "jsx": "react-jsx",
     "resolveJsonModule": true,
-    "isolatedModules": true,
-    /* Alias */
-    "paths": {
-      "@nijo/ui-components": [
-        "../../../Nijo.GuiClient/package_ui-components/src"
-      ],
-      "@nijo/ui-components/*": [
-        "../../../Nijo.GuiClient/package_ui-components/src/*"
-      ]
-    }
+    "isolatedModules": true
   },
   "include": [
     "src"

@@ -7,6 +7,9 @@ import "./style.css"
 // Allotment
 import "allotment/dist/style.css"
 
+// React Flow
+import "@xyflow/react/dist/style.css"
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <RouterProvider router={router} />

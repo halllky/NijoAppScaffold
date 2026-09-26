@@ -12,7 +12,7 @@ import P101 from "./pages/P101_売上詳細"
 import P201 from "./pages/P201_入荷詳細"
 import P301 from "./pages/P301_商品詳細"
 import UIComponentCatalog from "./debug-rooms/UIコンポーネントカタログ"
-import ER図 from "./debug-rooms/ER図"
+import DbViewer from "./debug-rooms/db-viewer/DbViewer"
 import { P001_ログイン } from "./pages/P001_ログイン"
 import { LoginUserProvider } from "./app/useLoginLogout"
 import { ErrorPage } from "./app/ErrorPage"
@@ -67,7 +67,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       UIComponentCatalog,
-      ER図,
+      DbViewer,
     ]
   }]),
 ])
