@@ -1,4 +1,115 @@
 {
+  "allTablesArea": {
+    "id": "all-tables",
+    "name": "全てのテーブル",
+    "tableAttributes": [
+      "logicalName",
+      "physicalName"
+    ],
+    "columnAttributes": [
+      "isPrimaryKey",
+      "logicalName",
+      "physicalName",
+      "type",
+      "isNotNull"
+    ],
+    "tables": [
+      {
+        "tableName": "セッション",
+        "position": {
+          "x": 509.1561096634264,
+          "y": 207.66142655203183
+        },
+        "collapsed": false,
+        "size": {
+          "width": 504,
+          "height": 254
+        }
+      },
+      {
+        "tableName": "入荷",
+        "position": {
+          "x": 916.1166961480147,
+          "y": -348.35008844404416
+        },
+        "collapsed": false
+      },
+      {
+        "tableName": "入荷明細",
+        "position": {
+          "x": 1510.273462067443,
+          "y": -382.3274171464462
+        },
+        "collapsed": false
+      },
+      {
+        "tableName": "商品",
+        "position": {
+          "x": 2241.659050707253,
+          "y": 44.86326896627842
+        },
+        "collapsed": false
+      },
+      {
+        "tableName": "在庫調整",
+        "position": {
+          "x": 1671.750442220221,
+          "y": 159.25975334049792
+        },
+        "collapsed": false
+      },
+      {
+        "tableName": "在庫調整引当明細",
+        "position": {
+          "x": 1137.794025157861,
+          "y": 164.14762676813166
+        },
+        "collapsed": false,
+        "size": {
+          "width": 486,
+          "height": 267
+        }
+      },
+      {
+        "tableName": "売上",
+        "position": {
+          "x": 2254.4759237433555,
+          "y": 507.2196835690844
+        },
+        "collapsed": false
+      },
+      {
+        "tableName": "売上明細",
+        "position": {
+          "x": 2803.769420696506,
+          "y": 483.46854117517205
+        },
+        "collapsed": false
+      },
+      {
+        "tableName": "引当明細",
+        "position": {
+          "x": 2504.4260146469537,
+          "y": -281.31740124081404
+        },
+        "collapsed": false
+      },
+      {
+        "tableName": "従業員",
+        "position": {
+          "x": 805.2780316430915,
+          "y": 520.9434085091059
+        },
+        "collapsed": false
+      }
+    ],
+    "dataPreviews": [],
+    "viewport": {
+      "x": -201.98230239162683,
+      "y": 315.3447235238606,
+      "zoom": 0.5381106053558715
+    }
+  },
   "subjectAreas": [
     {
       "id": "d36450b2-b014-4ab6-9c59-3bcd311c84bc",
@@ -18,13 +129,19 @@
         {
           "tableName": "入荷",
           "position": {
-            "x": 276.0000000000001,
-            "y": -2
+            "x": 163.8418275843041,
+            "y": 420.24253144732614
           },
           "collapsed": false,
           "size": {
             "width": 490,
-            "height": 274
+            "height": 204
+          },
+          "neighborPositions": {
+            "従業員": {
+              "x": 315.1275918824249,
+              "y": -54.099824341688645
+            }
           }
         },
         {
@@ -39,80 +156,99 @@
               "x": 458,
               "y": -16
             }
+          },
+          "size": {
+            "width": 494,
+            "height": 319
           }
         },
         {
           "tableName": "売上",
           "position": {
-            "x": 348.0000000000002,
-            "y": 1743.9999999999998
+            "x": -291.87381461384246,
+            "y": 1083.603865712626
           },
-          "collapsed": false
+          "collapsed": false,
+          "neighborPositions": {
+            "従業員": {
+              "x": 256.7957817409743,
+              "y": -47.50228478782424
+            }
+          },
+          "size": {
+            "width": 494,
+            "height": 185
+          }
         },
         {
           "tableName": "売上明細",
           "position": {
-            "x": 286.00000000000034,
-            "y": 1286
+            "x": 266.81722312294903,
+            "y": 1081.1536028400474
           },
-          "collapsed": false
+          "collapsed": false,
+          "neighborPositions": {
+            "商品": {
+              "x": 371.8259050881022,
+              "y": -60.20695487755006
+            }
+          },
+          "size": {
+            "width": 492,
+            "height": 230
+          }
         },
         {
           "tableName": "引当明細",
           "position": {
-            "x": 30.311660561660574,
-            "y": 924.0694953194953
+            "x": 396.3038189065036,
+            "y": 787.7457828690085
           },
           "collapsed": false,
           "size": {
-            "width": 508,
-            "height": 273
+            "width": 493,
+            "height": 188
           }
         },
         {
           "tableName": "在庫調整",
           "position": {
-            "x": 1064.0000000000002,
-            "y": 1508
+            "x": 842.4347975625203,
+            "y": 1072.6421789009266
           },
           "collapsed": false,
           "neighborPositions": {
             "従業員": {
-              "x": 475.9999999999998,
-              "y": 148
+              "x": 268.83725800865545,
+              "y": -59.16274199134432
+            },
+            "商品": {
+              "x": 167.0692438084177,
+              "y": -85.76801420023799
             }
+          },
+          "size": {
+            "width": 489,
+            "height": 261
           }
         },
         {
           "tableName": "在庫調整引当明細",
           "position": {
-            "x": 936,
-            "y": 990
-          },
-          "collapsed": false
-        }
-      ],
-      "dataPreviews": [
-        {
-          "id": "ffe6447a-9325-4c18-9d82-a1c2c2388970",
-          "tableName": "引当明細",
-          "where": "",
-          "orderBy": "",
-          "pageSize": 50,
-          "position": {
-            "x": -783.8406729709238,
-            "y": 1257.7728261359882
+            "x": 1358.5357650667313,
+            "y": 1068.4868194777653
           },
           "collapsed": false,
           "size": {
-            "width": 984,
-            "height": 498
+            "width": 489,
+            "height": 158
           }
         }
       ],
+      "dataPreviews": [],
       "viewport": {
-        "x": 275.9999999999999,
-        "y": 314.5,
+        "x": 388.15817241569584,
+        "y": -72.7425314473262,
         "zoom": 1
       }
     }

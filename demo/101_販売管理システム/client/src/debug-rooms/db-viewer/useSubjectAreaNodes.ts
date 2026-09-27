@@ -167,6 +167,8 @@ function buildNodes(
 /**
  * テーブル間の関連とデータプレビューの対象テーブルを示すエッジを組み立てる。
  * 外部キーのエッジは依存側から主側へ向かう矢印になる。
+ * 見た目の指定はモジュール定数を共有する。エッジはメモ化されており、
+ * エッジを組み立て直すたびに新しいオブジェクトを渡すと全エッジが描画し直されるため。
  */
 function buildEdges(
   relations: TableRelation[],
@@ -189,8 +191,8 @@ function buildEdges(
       source,
       target,
       selectable: false,
-      markerEnd: { type: MarkerType.ArrowClosed, color: toNeighbor ? NEIGHBOR_EDGE_COLOR : EDGE_COLOR },
-      style: { stroke: toNeighbor ? NEIGHBOR_EDGE_COLOR : EDGE_COLOR, strokeWidth: 1.5 },
+      markerEnd: toNeighbor ? NEIGHBOR_EDGE_MARKER : EDGE_MARKER,
+      style: toNeighbor ? NEIGHBOR_EDGE_STYLE : EDGE_STYLE,
     })
   }
 
@@ -202,8 +204,8 @@ function buildEdges(
       source: getDataPreviewNodeId(preview.id),
       target: getTableNodeId(preview.tableName),
       selectable: false,
-      style: { stroke: PREVIEW_EDGE_COLOR, strokeWidth: 1.5 },
-      data: { dashed: true },
+      style: PREVIEW_EDGE_STYLE,
+      data: PREVIEW_EDGE_DATA,
     })
   }
 
@@ -294,7 +296,14 @@ const NEIGHBOR_STEP_Y = 40
 const DEFAULT_PREVIEW_SIZE = { width: 640, height: 360 }
 /** データプレビューのノードの重なり順 */
 const PREVIEW_Z_INDEX = 1000
-/** エッジの色 */
+/** 選択テーブル同士のエッジの見た目 */
 const EDGE_COLOR = "#0369a1" // sky-700
+const EDGE_STYLE: React.CSSProperties = { stroke: EDGE_COLOR, strokeWidth: 1.5 }
+const EDGE_MARKER = { type: MarkerType.ArrowClosed, color: EDGE_COLOR }
+/** 隣接テーブルとのエッジの見た目 */
 const NEIGHBOR_EDGE_COLOR = "#9ca3af" // gray-400
-const PREVIEW_EDGE_COLOR = "#047857" // emerald-700
+const NEIGHBOR_EDGE_STYLE: React.CSSProperties = { stroke: NEIGHBOR_EDGE_COLOR, strokeWidth: 1.5 }
+const NEIGHBOR_EDGE_MARKER = { type: MarkerType.ArrowClosed, color: NEIGHBOR_EDGE_COLOR }
+/** データプレビューとその対象テーブルを結ぶエッジの見た目 */
+const PREVIEW_EDGE_STYLE: React.CSSProperties = { stroke: "#047857" /* emerald-700 */, strokeWidth: 1.5 }
+const PREVIEW_EDGE_DATA = { dashed: true }

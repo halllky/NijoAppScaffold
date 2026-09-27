@@ -5,44 +5,56 @@ import { Button } from "../../ui/Button"
 import { CheckBox } from "../../ui/CheckBox"
 import { matchesTableKeyword, type DbSchema } from "./DbSchema"
 import {
-  addTableToArea, removeTableFromArea, COLUMN_ATTRIBUTE_LABELS, TABLE_ATTRIBUTE_LABELS,
+  addTableToArea, isAllTablesArea, removeTableFromArea, COLUMN_ATTRIBUTE_LABELS, TABLE_ATTRIBUTE_LABELS,
   type ColumnAttribute, type SubjectArea, type TableAttribute,
 } from "./DbViewerSettings"
 
 /**
  * サブジェクトエリアの設定ダイアログ。
  * 名前、表示するテーブル、ノードに表示する属性とその順番を設定する。
- * 変更はその場で onChangeArea により通知され、ダイアログを閉じる前から図に反映される。
- * ダイアログの開閉とサブジェクトエリアの削除の実処理は呼び出し側で行う。
+ * 全テーブルのサブジェクトエリアでは、名前と表示するテーブルは変更できず、削除もできない。
+ *
+ * 変更はダイアログの中の下書きにだけ反映され、保存ボタンが押されたときに onSave で通知される。
+ * 保存ボタン以外で閉じた場合、下書きは破棄される。
+ * ダイアログの開閉、保存・削除の実処理は呼び出し側で行う。
  */
-export function SubjectAreaSettingsDialog({ schema, area, onChangeArea, onTablesAdded, onDelete, onClose }: {
+export function SubjectAreaSettingsDialog({ schema, area, isNew, onSave, onDelete, onClose }: {
   schema: DbSchema
+  /** 設定するサブジェクトエリアの、ダイアログを開いた時点の設定。下書きの初期値になる */
   area: SubjectArea
-  onChangeArea: (updater: (area: SubjectArea) => SubjectArea) => void
-  /** 表示するテーブルが追加されたときに、onChangeArea の後で、追加されたテーブルの物理名を伴って呼ばれる */
-  onTablesAdded: (tableNames: string[]) => void
+  /** まだ作成されていないサブジェクトエリアの場合は true。削除ボタンを表示しない */
+  isNew: boolean
+  /** 保存ボタンが押されたときに、下書きを伴って呼ばれる */
+  onSave: (area: SubjectArea) => void
   /** 削除ボタンが押され、確認に同意されたときに呼ばれる */
   onDelete: () => void
   onClose: () => void
 }) {
+  // 下書き。ダイアログは開くたびに作り直されるため、開いた時点の設定が初期値になる
+  const [draft, setDraft] = React.useState(area)
   const [keyword, setKeyword] = React.useState("")
 
-  const selectedTableNames = new Set(area.tables.map(table => table.tableName))
+  const isAllTables = isAllTablesArea(area)
+  const selectedTableNames = new Set(draft.tables.map(table => table.tableName))
   const filteredTables = schema.tables.filter(table => matchesTableKeyword(table, keyword))
 
   //#region イベント
 
   const handleToggleTable = (tableName: string, checked: boolean) => {
-    onChangeArea(prev => checked ? addTableToArea(prev, tableName) : removeTableFromArea(prev, tableName))
-    if (checked) onTablesAdded([tableName])
+    setDraft(prev => checked ? addTableToArea(prev, tableName) : removeTableFromArea(prev, tableName))
   }
 
   /** 絞り込まれているテーブルをまとめて選択・解除する */
   const handleToggleFilteredTables = (checked: boolean) => {
-    onChangeArea(prev => filteredTables.reduce(
+    setDraft(prev => filteredTables.reduce(
       (acc, table) => checked ? addTableToArea(acc, table.tableName) : removeTableFromArea(acc, table.tableName),
       prev))
-    if (checked) onTablesAdded(filteredTables.map(table => table.tableName).filter(tableName => !selectedTableNames.has(tableName)))
+  }
+
+  /** 下書きを破棄して閉じる。下書きに変更がある場合は確認する */
+  const handleCancel = () => {
+    if (draft !== area && !confirm("変更内容を破棄して閉じますか？")) return
+    onClose()
   }
 
   const handleDelete = () => {
@@ -53,77 +65,90 @@ export function SubjectAreaSettingsDialog({ schema, area, onChangeArea, onTables
   //#endregion イベント
 
   return (
-    <Modal isOpen onClose={onClose} title="サブジェクトエリアの設定" widthClass="w-full max-w-4xl" className="h-full">
+    <Modal isOpen onClose={handleCancel} title="サブジェクトエリアの設定" widthClass="w-full max-w-4xl" className="h-full">
       <div className="flex-1 min-h-0 flex flex-col gap-3 p-4 overflow-hidden">
 
         {/* 名前 */}
         <label className="flex items-center gap-2">
           <span className="flex-none w-20 text-sm text-gray-500">名前</span>
-          <input
-            value={area.name}
-            onChange={e => onChangeArea(prev => ({ ...prev, name: e.target.value }))}
-            className="flex-1 px-1 border border-gray-300 rounded-sm"
-          />
+          {isAllTables ? (
+            <span className="flex-1 px-1">{draft.name}</span>
+          ) : (
+            <input
+              value={draft.name}
+              onChange={e => setDraft(prev => ({ ...prev, name: e.target.value }))}
+              className="flex-1 px-1 border border-gray-300 rounded-sm"
+            />
+          )}
         </label>
 
         <div className="flex-1 min-h-0 flex gap-4">
           {/* 表示するテーブル */}
-          <section className="flex-1 min-w-0 flex flex-col gap-1">
-            <h3 className="text-sm font-bold">表示するテーブル（{area.tables.length}件選択中）</h3>
-            <div className="flex items-center gap-2">
-              <label className="flex-1 flex items-center gap-1 px-1 border border-gray-300 rounded-sm">
-                <input
-                  type="search"
-                  value={keyword}
-                  onChange={e => setKeyword(e.target.value)}
-                  placeholder="テーブル名で絞り込み"
-                  spellCheck={false}
-                  className="flex-1 min-w-0 py-0.5 outline-none"
-                />
-                <MagnifyingGlassIcon className="flex-none w-4 h-4 text-gray-400" />
-              </label>
-              <Button mini outline onClick={() => handleToggleFilteredTables(true)}>全選択</Button>
-              <Button mini outline onClick={() => handleToggleFilteredTables(false)}>全解除</Button>
-            </div>
-            <ul className="flex-1 min-h-0 overflow-y-auto border border-gray-200 rounded-sm p-1">
-              {filteredTables.map(table => (
-                <li key={table.tableName}>
-                  <CheckBox
-                    checked={selectedTableNames.has(table.tableName)}
-                    onChange={e => handleToggleTable(table.tableName, e.target.checked)}
-                  >
-                    {table.logicalName}
-                    {table.logicalName !== table.tableName && (
-                      <span className="ml-1 text-xs text-gray-400">{table.tableName}</span>
-                    )}
-                  </CheckBox>
-                </li>
-              ))}
-            </ul>
-          </section>
+          {isAllTables ? (
+            <section className="flex-1 min-w-0 text-sm text-gray-500">
+              このサブジェクトエリアにはDB定義の全テーブルが表示されます。
+            </section>
+          ) : (
+            <section className="flex-1 min-w-0 flex flex-col gap-1">
+              <h3 className="text-sm font-bold">表示するテーブル（{draft.tables.length}件選択中）</h3>
+              <div className="flex items-center gap-2">
+                <label className="flex-1 flex items-center gap-1 px-1 border border-gray-300 rounded-sm">
+                  <input
+                    type="search"
+                    value={keyword}
+                    onChange={e => setKeyword(e.target.value)}
+                    placeholder="テーブル名で絞り込み"
+                    spellCheck={false}
+                    className="flex-1 min-w-0 py-0.5 outline-none"
+                  />
+                  <MagnifyingGlassIcon className="flex-none w-4 h-4 text-gray-400" />
+                </label>
+                <Button mini outline onClick={() => handleToggleFilteredTables(true)}>全選択</Button>
+                <Button mini outline onClick={() => handleToggleFilteredTables(false)}>全解除</Button>
+              </div>
+              <ul className="flex-1 min-h-0 overflow-y-auto border border-gray-200 rounded-sm p-1">
+                {filteredTables.map(table => (
+                  <li key={table.tableName}>
+                    <CheckBox
+                      checked={selectedTableNames.has(table.tableName)}
+                      onChange={e => handleToggleTable(table.tableName, e.target.checked)}
+                    >
+                      {table.logicalName}
+                      {table.logicalName !== table.tableName && (
+                        <span className="ml-1 text-xs text-gray-400">{table.tableName}</span>
+                      )}
+                    </CheckBox>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {/* ノードに表示する属性 */}
           <section className="flex-none w-64 flex flex-col gap-3 overflow-y-auto">
             <AttributeOrderEditor<TableAttribute>
               title="テーブルの属性"
               labels={TABLE_ATTRIBUTE_LABELS}
-              value={area.tableAttributes}
-              onChange={tableAttributes => onChangeArea(prev => ({ ...prev, tableAttributes }))}
+              value={draft.tableAttributes}
+              onChange={tableAttributes => setDraft(prev => ({ ...prev, tableAttributes }))}
             />
             <AttributeOrderEditor<ColumnAttribute>
               title="カラムの属性"
               labels={COLUMN_ATTRIBUTE_LABELS}
-              value={area.columnAttributes}
-              onChange={columnAttributes => onChangeArea(prev => ({ ...prev, columnAttributes }))}
+              value={draft.columnAttributes}
+              onChange={columnAttributes => setDraft(prev => ({ ...prev, columnAttributes }))}
             />
           </section>
         </div>
 
         {/* フッター */}
         <div className="flex items-center gap-2">
-          <Button outline icon={TrashIcon} onClick={handleDelete} className="text-red-700">このサブジェクトエリアを削除</Button>
+          {!isNew && !isAllTables && (
+            <Button outline icon={TrashIcon} onClick={handleDelete} className="text-red-700">このサブジェクトエリアを削除</Button>
+          )}
           <div className="flex-1" />
-          <Button fill onClick={onClose}>閉じる</Button>
+          <Button outline onClick={handleCancel}>キャンセル</Button>
+          <Button fill onClick={() => onSave(draft)}>保存</Button>
         </div>
       </div>
     </Modal>

@@ -1,9 +1,9 @@
 import React from "react"
 import {
   Background, Controls, ReactFlow, ReactFlowProvider, useNodesInitialized, useReactFlow,
-  type EdgeTypes, type NodeMouseHandler, type NodeTypes, type OnMoveEnd, type ResizeParams,
+  type EdgeTypes, type NodeMouseHandler, type NodeTypes, type OnMoveEnd, type ResizeParams, type Viewport,
 } from "@xyflow/react"
-import { Cog6ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid"
+import { ArrowPathIcon, Cog6ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid"
 import { Button } from "../../ui/Button"
 import type { DbSchema, TableRelation } from "./DbSchema"
 import { createDataPreview, findMissingTableNames, type DataPreview, type SubjectArea } from "./DbViewerSettings"
@@ -20,25 +20,36 @@ export type FocusRequest = {
   seq: number
 }
 
-/**
- * 1つのサブジェクトエリアのER図。
- * テーブルのノードをダブルクリックすると、そのテーブルのデータプレビューを開く。
- * ノードの配置・大きさ・折り畳み状態・表示範囲の変更は、すべて onChangeArea でサブジェクトエリアの設定として通知される。
- *
- * 別のサブジェクトエリアを表示する場合は、保存されている表示範囲を適用し直すため key を変えて作り直すこと。
- */
-export function SubjectAreaCanvas(props: {
+type SubjectAreaCanvasProps = {
   schema: DbSchema
   /** DB定義に含まれる全テーブル間の関連 */
   relations: TableRelation[]
   area: SubjectArea
   /** サブジェクトエリアの設定を変更する。参照を安定させること */
   onChangeArea: (updater: (area: SubjectArea) => SubjectArea) => void
+  /** 最初に表示する表示範囲。未指定の場合は全体が収まるよう表示する。作り直されるまでは最初の値だけが使われる */
+  initialViewport: Viewport | undefined
+  /** パン・ズームを終えたときに、その時点の表示範囲を伴って呼ばれる */
+  onViewportChanged: (viewport: Viewport) => void
   /** 未指定または前回と同じ要求の場合は何もしない */
   focusRequest: FocusRequest | null
   /** 設定ボタンが押されたときに呼ばれる */
   onOpenSettings: () => void
-}) {
+  /** 再読み込みボタンが押されたときに呼ばれる */
+  onReload: () => void
+  /** 再読み込み中は再読み込みボタンを押せなくする */
+  reloading: boolean
+}
+
+/**
+ * 1つのサブジェクトエリアのER図。
+ * テーブルのノードをダブルクリックすると、そのテーブルのデータプレビューを開く。
+ * ノードの配置・大きさ・折り畳み状態の変更は onChangeArea でサブジェクトエリアの設定として通知される。
+ * 表示範囲の変更は、パン・ズームのたびに設定を変更して画面全体を描画し直さないよう、onViewportChanged で別に通知される。
+ *
+ * 別のサブジェクトエリアを表示する場合や読み込み直した場合は、表示範囲を適用し直すため key を変えて作り直すこと。
+ */
+export function SubjectAreaCanvas(props: SubjectAreaCanvasProps) {
   return (
     <ReactFlowProvider>
       <SubjectAreaCanvasInner {...props} />
@@ -49,14 +60,9 @@ export function SubjectAreaCanvas(props: {
 // -------------------------------------
 
 /** {@link SubjectAreaCanvas} の中身。React Flow の機能はプロバイダの内側でしか使えないため分けている */
-function SubjectAreaCanvasInner({ schema, relations, area, onChangeArea, focusRequest, onOpenSettings }: {
-  schema: DbSchema
-  relations: TableRelation[]
-  area: SubjectArea
-  onChangeArea: (updater: (area: SubjectArea) => SubjectArea) => void
-  focusRequest: FocusRequest | null
-  onOpenSettings: () => void
-}) {
+function SubjectAreaCanvasInner({
+  schema, relations, area, onChangeArea, initialViewport, onViewportChanged, focusRequest, onOpenSettings, onReload, reloading,
+}: SubjectAreaCanvasProps) {
   // ノードの中の操作
   const actions = useNodeActions(onChangeArea)
   // ノードとエッジ
@@ -81,10 +87,9 @@ function SubjectAreaCanvasInner({ schema, relations, area, onChangeArea, focusRe
     onChangeArea(prev => ({ ...prev, dataPreviews: [...prev.dataPreviews, preview] }))
   }, [reactFlow, onChangeArea])
 
-  /** パン・ズームを終えたときに表示範囲を保存する */
   const handleMoveEnd: OnMoveEnd = React.useCallback((_, viewport) => {
-    onChangeArea(prev => ({ ...prev, viewport }))
-  }, [onChangeArea])
+    onViewportChanged(viewport)
+  }, [onViewportChanged])
 
   //#endregion イベント
 
@@ -139,8 +144,8 @@ function SubjectAreaCanvasInner({ schema, relations, area, onChangeArea, focusRe
           deleteKeyCode={null}
           zoomOnDoubleClick={false}
           minZoom={0.1}
-          defaultViewport={area.viewport}
-          fitView={!area.viewport}
+          defaultViewport={initialViewport}
+          fitView={!initialViewport}
           fitViewOptions={FIT_VIEW_OPTIONS}
         >
           <Background />
@@ -154,6 +159,7 @@ function SubjectAreaCanvasInner({ schema, relations, area, onChangeArea, focusRe
         <div className="flex items-center gap-2 px-2 py-1 bg-white/90 border border-gray-300 rounded-sm">
           <span className="font-bold">{area.name}</span>
           <Button mini outline icon={Cog6ToothIcon} onClick={onOpenSettings}>設定</Button>
+          <Button mini outline icon={ArrowPathIcon} onClick={onReload} loading={reloading}>再読み込み</Button>
         </div>
 
         {/* DB定義に存在しないテーブルの警告 */}

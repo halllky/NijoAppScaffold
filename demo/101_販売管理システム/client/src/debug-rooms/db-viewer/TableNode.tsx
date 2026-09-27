@@ -5,6 +5,7 @@ import * as Grid from "../../ui/grid"
 import type { DbSchemaColumn, DbSchemaTable } from "./DbSchema"
 import { COLUMN_ATTRIBUTE_LABELS, type ColumnAttribute, type TableAttribute } from "./DbViewerSettings"
 import { FloatingEdgeHandles } from "./FloatingEdge"
+import { memoizeFlowNode } from "./memoizeFlowNode"
 
 /** サブジェクトエリアに表示するよう選択されたテーブルのノード */
 export type TableFlowNode = Node<{
@@ -27,7 +28,7 @@ export type TableFlowNode = Node<{
  * カラム一覧の上ではグリッドの操作（セル選択・スクロール・列幅変更）が優先される。
  * 選択中かつ展開中のときだけ、外周をドラッグして大きさを変えられる。
  */
-export function TableNode({ data, selected }: NodeProps<TableFlowNode>) {
+export const TableNode = memoizeFlowNode(function TableNode({ data, selected }: NodeProps<TableFlowNode>) {
   const { table, tableAttributes, columnAttributes, collapsed, onToggleCollapsed, onResized } = data
 
   // カラム一覧のグリッドの列定義と行
@@ -85,7 +86,7 @@ export function TableNode({ data, selected }: NodeProps<TableFlowNode>) {
       )}
     </div>
   )
-}
+})
 
 // -------------------------------------
 

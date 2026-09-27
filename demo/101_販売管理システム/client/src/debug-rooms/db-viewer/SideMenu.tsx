@@ -5,20 +5,21 @@ import type { SubjectArea } from "./DbViewerSettings"
 
 /**
  * DBビューアのサイドメニュー。
- * 全テーブルの一覧と、サブジェクトエリアごとのテーブルの一覧を、それぞれテーブル名で絞り込めるツリーとして表示する。
+ * 全テーブルのサブジェクトエリアと、利用者が作成したサブジェクトエリアのテーブルの一覧を、
+ * それぞれテーブル名で絞り込めるツリーとして表示する。
  * サブジェクトエリアの中身はここでは編集しない。
  */
-export function SideMenu({ schema, subjectAreas, currentAreaId, tablesInCurrentArea, onSelectArea, onSelectTable, onAddArea }: {
+export function SideMenu({ schema, allTablesArea, subjectAreas, currentAreaId, onSelectArea, onSelectTable, onAddArea }: {
   schema: DbSchema
+  /** 全テーブルのサブジェクトエリア。一覧にはDB定義の全テーブルが並ぶ */
+  allTablesArea: SubjectArea
   subjectAreas: SubjectArea[]
-  /** 表示中のサブジェクトエリアのID。無い場合は undefined */
-  currentAreaId: string | undefined
-  /** 表示中のサブジェクトエリアの図の中にノードとして存在するテーブルの物理名 */
-  tablesInCurrentArea: ReadonlySet<string>
+  /** 表示中のサブジェクトエリアのID */
+  currentAreaId: string
   /** サブジェクトエリアの名前がクリックされたときに呼ばれる */
   onSelectArea: (areaId: string) => void
-  /** テーブル名がクリックされたときに呼ばれる。全テーブルの一覧の中でクリックされた場合、areaId は undefined */
-  onSelectTable: (areaId: string | undefined, tableName: string) => void
+  /** テーブル名がクリックされたときに、そのテーブルが並んでいたサブジェクトエリアのIDを伴って呼ばれる */
+  onSelectTable: (areaId: string, tableName: string) => void
   /** 新規追加ボタンが押されたときに呼ばれる */
   onAddArea: () => void
 }) {
@@ -28,14 +29,11 @@ export function SideMenu({ schema, subjectAreas, currentAreaId, tablesInCurrentA
     <nav className="flex flex-col h-full overflow-y-auto bg-gray-50 text-sm select-none">
       {/* 全てのテーブル */}
       <SideMenuGroup
-        title="全てのテーブル"
-        items={schema.tables.map(table => ({
-          tableName: table.tableName,
-          table,
-          // 表示中のサブジェクトエリアに無いテーブルはフォーカスできない
-          disabledReason: tablesInCurrentArea.has(table.tableName) ? undefined : "表示中のサブジェクトエリアに含まれていません",
-        }))}
-        onSelectTable={tableName => onSelectTable(undefined, tableName)}
+        title={allTablesArea.name}
+        isCurrent={allTablesArea.id === currentAreaId}
+        onClickTitle={() => onSelectArea(allTablesArea.id)}
+        items={schema.tables.map(table => ({ tableName: table.tableName, table, disabledReason: undefined }))}
+        onSelectTable={tableName => onSelectTable(allTablesArea.id, tableName)}
       />
 
       {/* サブジェクトエリアごと */}
@@ -85,9 +83,8 @@ type SideMenuItem = {
 function SideMenuGroup({ title, isCurrent, onClickTitle, items, onSelectTable }: {
   title: string
   /** 表示中のサブジェクトエリアのグループかどうか */
-  isCurrent?: boolean
-  /** 未指定の場合、見出しをクリックしても開閉するだけ */
-  onClickTitle?: () => void
+  isCurrent: boolean
+  onClickTitle: () => void
   items: SideMenuItem[]
   onSelectTable: (tableName: string) => void
 }) {
@@ -107,8 +104,8 @@ function SideMenuGroup({ title, isCurrent, onClickTitle, items, onSelectTable }:
         </button>
         <button
           type="button"
-          onClick={onClickTitle ?? (() => setExpanded(!expanded))}
-          className={`flex-1 min-w-0 truncate text-left font-bold cursor-pointer ${onClickTitle ? "hover:text-sky-700" : ""}`}
+          onClick={onClickTitle}
+          className="flex-1 min-w-0 truncate text-left font-bold cursor-pointer hover:text-sky-700"
           title={title}
         >
           {title}

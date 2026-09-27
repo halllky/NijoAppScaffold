@@ -1,5 +1,5 @@
 import { UUID } from "uuidjs"
-import { listNeighbors, type DbSchema, type TableRelation } from "./DbSchema"
+import type { DbSchema } from "./DbSchema"
 
 /**
  * DBビューアの画面の設定。
@@ -7,6 +7,12 @@ import { listNeighbors, type DbSchema, type TableRelation } from "./DbSchema"
  * サーバーは中身を解釈しないため、構造はこの型だけが定義する。
  */
 export type DbViewerSettings = {
+  /**
+   * DB定義の全テーブルを表示するサブジェクトエリア。常に1個存在する。
+   * 一般のサブジェクトエリアと異なり、削除・改名・表示するテーブルの選択はできない。
+   */
+  allTablesArea: SubjectArea
+  /** 利用者が作成したサブジェクトエリア */
   subjectAreas: SubjectArea[]
 }
 
@@ -100,23 +106,68 @@ export const DEFAULT_PAGE_SIZE = 50
 export function parseSettings(saved: unknown): DbViewerSettings {
   const raw = (saved ?? {}) as Partial<DbViewerSettings>
   return {
-    subjectAreas: (raw.subjectAreas ?? []).map(area => ({
-      ...area,
-      tableAttributes: area.tableAttributes ?? DEFAULT_TABLE_ATTRIBUTES,
-      columnAttributes: area.columnAttributes ?? DEFAULT_COLUMN_ATTRIBUTES,
-      tables: (area.tables ?? []).map(table => ({
-        ...table,
-        position: table.position ?? { x: 0, y: 0 },
-        collapsed: table.collapsed ?? false,
-      })),
-      dataPreviews: (area.dataPreviews ?? []).map(preview => ({
-        ...preview,
-        where: preview.where ?? "",
-        orderBy: preview.orderBy ?? "",
-        pageSize: preview.pageSize ?? DEFAULT_PAGE_SIZE,
-        position: preview.position ?? { x: 0, y: 0 },
-        collapsed: preview.collapsed ?? false,
-      })),
+    // 全テーブルのサブジェクトエリアの ID と名前は固定。JSON が手で書き換えられていても元に戻す
+    allTablesArea: { ...parseArea(raw.allTablesArea ?? {}), id: ALL_TABLES_AREA_ID, name: ALL_TABLES_AREA_NAME },
+    subjectAreas: (raw.subjectAreas ?? []).map(parseArea),
+  }
+}
+
+/** 全テーブルのサブジェクトエリアの ID */
+export const ALL_TABLES_AREA_ID = "all-tables"
+/** 全テーブルのサブジェクトエリアの名前 */
+const ALL_TABLES_AREA_NAME = "全てのテーブル"
+
+/** 全テーブルのサブジェクトエリアかどうか */
+export function isAllTablesArea(area: SubjectArea): boolean {
+  return area.id === ALL_TABLES_AREA_ID
+}
+
+/** 指定の ID のサブジェクトエリア。全テーブルのサブジェクトエリアも対象。無い場合は undefined */
+export function findArea(settings: DbViewerSettings, areaId: string): SubjectArea | undefined {
+  return areaId === ALL_TABLES_AREA_ID
+    ? settings.allTablesArea
+    : settings.subjectAreas.find(area => area.id === areaId)
+}
+
+/**
+ * 指定の ID のサブジェクトエリアを変更した設定を返す。全テーブルのサブジェクトエリアも対象。
+ * 該当するサブジェクトエリアが無い場合は何もしない。
+ */
+export function updateArea(settings: DbViewerSettings, areaId: string, updater: (area: SubjectArea) => SubjectArea): DbViewerSettings {
+  if (areaId === ALL_TABLES_AREA_ID) {
+    return { ...settings, allTablesArea: updater(settings.allTablesArea) }
+  }
+  return { ...settings, subjectAreas: settings.subjectAreas.map(area => area.id === areaId ? updater(area) : area) }
+}
+
+/**
+ * 全テーブルのサブジェクトエリアに、DB定義の全テーブルが揃うよう、まだ配置が保存されていないテーブルを補ったものを返す。
+ * 補ったテーブルは自動配置される。補うものが無い場合は引数のサブジェクトエリアをそのまま返す。
+ */
+export function withAllTables(area: SubjectArea, schema: DbSchema): SubjectArea {
+  return schema.tables.reduce((acc, table) => addTableToArea(acc, table.tableName), area)
+}
+
+/** JSON から読み込んだサブジェクトエリア1個の欠けている項目を既定値で補う */
+function parseArea(area: Partial<SubjectArea>): SubjectArea {
+  return {
+    ...area,
+    id: area.id ?? UUID.generate(),
+    name: area.name ?? "",
+    tableAttributes: area.tableAttributes ?? DEFAULT_TABLE_ATTRIBUTES,
+    columnAttributes: area.columnAttributes ?? DEFAULT_COLUMN_ATTRIBUTES,
+    tables: (area.tables ?? []).map(table => ({
+      ...table,
+      position: table.position ?? { x: 0, y: 0 },
+      collapsed: table.collapsed ?? false,
+    })),
+    dataPreviews: (area.dataPreviews ?? []).map(preview => ({
+      ...preview,
+      where: preview.where ?? "",
+      orderBy: preview.orderBy ?? "",
+      pageSize: preview.pageSize ?? DEFAULT_PAGE_SIZE,
+      position: preview.position ?? { x: 0, y: 0 },
+      collapsed: preview.collapsed ?? false,
     })),
   }
 }
@@ -179,21 +230,6 @@ export function findMissingTableNames(area: SubjectArea, schema: DbSchema): stri
     ...area.dataPreviews.map(preview => preview.tableName),
   ]
   return Array.from(new Set(referenced.filter(tableName => !existing.has(tableName))))
-}
-
-/**
- * サブジェクトエリアの図の中にノードとして表示されるテーブルの物理名。
- * 選択されたテーブルと、それに直接つながるテーブルからなる。DB定義に存在しないテーブルは含まない。
- */
-export function listTablesShownIn(area: SubjectArea, schema: DbSchema, relations: TableRelation[]): Set<string> {
-  const existing = new Set(schema.tables.map(table => table.tableName))
-  const shown = new Set<string>()
-  for (const { tableName } of area.tables) {
-    if (!existing.has(tableName)) continue
-    shown.add(tableName)
-    for (const neighbor of listNeighbors(relations, tableName)) shown.add(neighbor)
-  }
-  return shown
 }
 
 /** テーブルを追加したときに自動で並べる格子の列数と間隔 */

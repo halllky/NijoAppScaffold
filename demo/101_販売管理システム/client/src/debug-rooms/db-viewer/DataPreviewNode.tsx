@@ -6,6 +6,7 @@ import { Button } from "../../ui/Button"
 import { Pager } from "../../ui/Pager"
 import type { DataPreview } from "./DbViewerSettings"
 import { FloatingEdgeHandles } from "./FloatingEdge"
+import { memoizeFlowNode } from "./memoizeFlowNode"
 import { useTableData, type TableDataConditions } from "./useTableData"
 
 /** テーブルの中身を表示するフローティングウィンドウのノード */
@@ -27,7 +28,7 @@ export type DataPreviewFlowNode = Node<{
  * 入力中の条件は検索するまで確定しない。確定した条件は onChange で呼び出し側に渡される。
  * 折り畳むと条件の入力欄だけが隠れ、結果の表示は残る。
  */
-export function DataPreviewNode({ data, selected }: NodeProps<DataPreviewFlowNode>) {
+export const DataPreviewNode = memoizeFlowNode(function DataPreviewNode({ data, selected }: NodeProps<DataPreviewFlowNode>) {
   const { preview, tableLabel, onChange, onClose, onResized } = data
 
   // テーブルの中身
@@ -160,7 +161,7 @@ export function DataPreviewNode({ data, selected }: NodeProps<DataPreviewFlowNod
       )}
     </div>
   )
-}
+})
 
 // -------------------------------------
 

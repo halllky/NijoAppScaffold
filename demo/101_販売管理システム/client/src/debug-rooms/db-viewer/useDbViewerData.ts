@@ -1,132 +1,150 @@
 import React from "react"
 import { callAspNetCoreApiAsync } from "../../example/callAspNetCoreApiAsync"
 import type { DbSchema } from "./DbSchema"
-import { parseSettings, type DbViewerSettings } from "./DbViewerSettings"
-
-/** 設定の保存の状況 */
-export type SaveStatus = "idle" | "waiting" | "saving" | "saved" | "failed"
+import { findArea, parseSettings, updateArea, type DbViewerSettings, type SubjectArea } from "./DbViewerSettings"
 
 /**
- * DB定義と画面の設定をサーバーから読み込み、設定の変更をサーバーへ保存する。
+ * DB定義と画面の設定をサーバーから読み込み、明示的に指示されたときにだけ設定をサーバーへ保存する。
  *
- * 設定の変更は {@link updateSettings} で行う。変更は即座に画面に反映され、
- * 保存は短時間に連続した変更をまとめてから行う（ドラッグやパンのたびにファイルを書き換えないため）。
- * 保存待ちのままこのフックが破棄された場合は、その時点で保存する。
+ * 設定の変更は {@link updateSettings} で行う。変更は画面上の作業中の設定にだけ反映され、
+ * {@link saveAsync} が呼ばれるまでサーバーには保存されない。
  */
 export function useDbViewerData() {
 
   const [schema, setSchema] = React.useState<DbSchema | null>(null)
   const [settings, setSettings] = React.useState<DbViewerSettings | null>(null)
   const [settingsFilePath, setSettingsFilePath] = React.useState("")
+  const [isDirty, setIsDirty] = React.useState(false)
   const [loading, setLoading] = React.useState(true)
-  const [loadError, setLoadError] = React.useState<string | null>(null)
-  const [saveStatus, setSaveStatus] = React.useState<SaveStatus>("idle")
-  const [saveError, setSaveError] = React.useState<string | null>(null)
+  const [saving, setSaving] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
 
-  // 連続した更新が直前の更新の結果に基づけるよう、描画を待たずに最新の設定を参照するためのもの
+  // 保存の通信中に設定が変更されたかどうかを、保存完了時に判定するために最新の設定を保持する
   const latestSettingsRef = React.useRef<DbViewerSettings | null>(null)
-  const saveTimerRef = React.useRef<number | null>(null)
-
-  /** 保存待ちの設定をすぐに保存する */
-  const saveNowAsync = React.useCallback(async () => {
-    if (saveTimerRef.current !== null) {
-      window.clearTimeout(saveTimerRef.current)
-      saveTimerRef.current = null
-    }
-    const snapshot = latestSettingsRef.current
-    if (!snapshot) return
-
-    setSaveStatus("saving")
-    try {
-      const response = await callAspNetCoreApiAsync("/api/debug/db-viewer/settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(snapshot),
-      })
-      if (!response.ok) throw new Error(await response.text() || "設定の保存に失敗しました。")
-      setSaveStatus("saved")
-      setSaveError(null)
-    } catch (error) {
-      console.error(error)
-      setSaveStatus("failed")
-      setSaveError(toMessage(error))
-    }
-  }, [])
-
-  /** DB定義と設定を読み込み直す。保存待ちの変更は破棄する */
-  const reloadAsync = React.useCallback(async () => {
-    if (saveTimerRef.current !== null) {
-      window.clearTimeout(saveTimerRef.current)
-      saveTimerRef.current = null
-    }
-    setLoading(true)
-    setLoadError(null)
-    try {
-      const [schemaResponse, settingsResponse] = await Promise.all([
-        callAspNetCoreApiAsync("/api/debug/db-viewer/schema", { method: "GET" }),
-        callAspNetCoreApiAsync("/api/debug/db-viewer/settings", { method: "GET" }),
-      ])
-      if (!schemaResponse.ok) throw new Error(await schemaResponse.text() || "DB定義の取得に失敗しました。")
-      if (!settingsResponse.ok) throw new Error(await settingsResponse.text() || "設定の取得に失敗しました。")
-
-      const nextSchema: DbSchema = await schemaResponse.json()
-      const { settings: savedSettings, filePath }: { settings: unknown, filePath: string } = await settingsResponse.json()
-      const nextSettings = parseSettings(savedSettings)
-
-      latestSettingsRef.current = nextSettings
-      setSchema(nextSchema)
-      setSettings(nextSettings)
-      setSettingsFilePath(filePath)
-      setSaveStatus("idle")
-    } catch (error) {
-      console.error(error)
-      setLoadError(toMessage(error))
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  const replaceSettings = (next: DbViewerSettings | null) => {
+    latestSettingsRef.current = next
+    setSettings(next)
+  }
 
   /**
-   * 設定を変更する。変更は即座に画面に反映され、少し待ってからサーバーに保存される。
+   * 作業中の設定を変更する。変更は未保存の状態になる。
    * 読み込みが終わる前は何もしない。
    */
   const updateSettings = React.useCallback((updater: (prev: DbViewerSettings) => DbViewerSettings) => {
     const prev = latestSettingsRef.current
     if (!prev) return
     const next = updater(prev)
-    if (next === prev) return
-
     latestSettingsRef.current = next
     setSettings(next)
+    setIsDirty(true)
+  }, [])
 
-    if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current)
-    setSaveStatus("waiting")
-    saveTimerRef.current = window.setTimeout(() => void saveNowAsync(), SAVE_DELAY_MS)
-  }, [saveNowAsync])
+  /**
+   * 作業中の設定をサーバーに保存する。
+   * 表示範囲は画面の再描画を避けるため作業中の設定の外で記録されているので、ここで引数として受け取り設定に含める。
+   */
+  const saveAsync = async (viewports: ReadonlyMap<string, SubjectArea["viewport"]>) => {
+    const current = latestSettingsRef.current
+    if (!current) return
+    const next = Array.from(viewports).reduce(
+      (acc, [areaId, viewport]) => updateArea(acc, areaId, area => ({ ...area, viewport })),
+      current)
 
-  // サーバーとの同期: 画面を開いたときに読み込み、閉じるときに保存待ちの変更を保存する
-  React.useEffect(() => {
-    void reloadAsync()
-    return () => {
-      if (saveTimerRef.current !== null) void saveNowAsync()
+    setSaving(true)
+    try {
+      const response = await callAspNetCoreApiAsync("/api/debug/db-viewer/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(next),
+      })
+      if (!response.ok) throw new Error(await response.text() || "設定の保存に失敗しました。")
+      // 通信中に変更された場合、その変更は未保存のまま残す
+      if (latestSettingsRef.current === current) {
+        replaceSettings(next)
+        setIsDirty(false)
+      }
+      setError(null)
+    } catch (saveError) {
+      console.error(saveError)
+      setError(toMessage(saveError))
+    } finally {
+      setSaving(false)
     }
-  }, [reloadAsync, saveNowAsync])
+  }
+
+  /**
+   * DB定義と、指定のサブジェクトエリアの保存済みの設定を読み込み直す。
+   * そのサブジェクトエリアの未保存の変更は破棄されるが、他のサブジェクトエリアの未保存の変更は残る。
+   * サーバーに保存されていないサブジェクトエリアの場合はエラーとし、何も変更しない。
+   * 読み込み直せたかどうかを返す。
+   */
+  const reloadAreaAsync = async (areaId: string): Promise<boolean> => {
+    setLoading(true)
+    try {
+      const { schema: nextSchema, settings: savedSettings } = await fetchSchemaAndSettingsAsync()
+      const savedArea = findArea(savedSettings, areaId)
+      if (!savedArea) throw new Error("このサブジェクトエリアはまだ保存されていないため、読み込み直せません。")
+
+      setSchema(nextSchema)
+      if (latestSettingsRef.current) replaceSettings(updateArea(latestSettingsRef.current, areaId, () => savedArea))
+      setError(null)
+      return true
+    } catch (reloadError) {
+      console.error(reloadError)
+      setError(toMessage(reloadError))
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // サーバーとの同期: 画面を開いたときに読み込む
+  React.useEffect(() => {
+    let ignore = false
+    fetchSchemaAndSettingsAsync().then(result => {
+      if (ignore) return
+      setSchema(result.schema)
+      replaceSettings(result.settings)
+      setSettingsFilePath(result.filePath)
+    }).catch(loadError => {
+      if (ignore) return
+      console.error(loadError)
+      setError(toMessage(loadError))
+    }).finally(() => {
+      if (!ignore) setLoading(false)
+    })
+    return () => { ignore = true }
+  }, [])
 
   return {
     schema,
     settings,
     settingsFilePath,
+    isDirty,
     loading,
-    loadError,
-    saveStatus,
-    saveError,
-    reloadAsync,
+    saving,
+    error,
     updateSettings,
+    saveAsync,
+    reloadAreaAsync,
   }
 }
 
-/** 連続した変更をまとめる待ち時間(ms) */
-const SAVE_DELAY_MS = 800
+// -------------------------------------
+
+/** DB定義と保存済みの設定をサーバーから取得する */
+async function fetchSchemaAndSettingsAsync(): Promise<{ schema: DbSchema, settings: DbViewerSettings, filePath: string }> {
+  const [schemaResponse, settingsResponse] = await Promise.all([
+    callAspNetCoreApiAsync("/api/debug/db-viewer/schema", { method: "GET" }),
+    callAspNetCoreApiAsync("/api/debug/db-viewer/settings", { method: "GET" }),
+  ])
+  if (!schemaResponse.ok) throw new Error(await schemaResponse.text() || "DB定義の取得に失敗しました。")
+  if (!settingsResponse.ok) throw new Error(await settingsResponse.text() || "設定の取得に失敗しました。")
+
+  const schema: DbSchema = await schemaResponse.json()
+  const { settings, filePath }: { settings: unknown, filePath: string } = await settingsResponse.json()
+  return { schema, settings: parseSettings(settings), filePath }
+}
 
 function toMessage(error: unknown): string {
   return error instanceof Error ? error.message : `不明なエラー(${error})`
