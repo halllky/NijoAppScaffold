@@ -143,7 +143,6 @@ export const DataPreviewNode = memoizeFlowNode(function DataPreviewNode({ data, 
           getLatestRowObject={getLatestRowObject}
           columns={gridColumns}
           isReadOnly
-          striped
           className="flex-1"
         />
       </div>

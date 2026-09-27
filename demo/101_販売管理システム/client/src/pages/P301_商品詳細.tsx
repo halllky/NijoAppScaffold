@@ -179,7 +179,6 @@ function P301_商品詳細() {
               rowKeys={historyRowKeys}
               getLatestRowObject={getLatestHistoryRowObject}
               columns={historyColumns}
-              striped
               className="flex-1 border border-gray-300"
             />
           </div>

@@ -271,7 +271,6 @@ export function defineSearchDialog<
             rowKeys={rowKeys}
             getLatestRowObject={getLatestRowObject}
             columns={columns}
-            striped
             clearSelectionOnBlur
             className="flex-1 border border-gray-300 min-w-full"
           />

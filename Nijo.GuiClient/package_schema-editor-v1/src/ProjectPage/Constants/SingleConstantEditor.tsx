@@ -238,7 +238,6 @@ export function SingleConstantEditor({ index, formMethods }: {
 
         <EG2.EditableGrid
           {...editableGrid2Props}
-          striped
           className="w-full min-h-36 border border-gray-700"
         />
       </div>

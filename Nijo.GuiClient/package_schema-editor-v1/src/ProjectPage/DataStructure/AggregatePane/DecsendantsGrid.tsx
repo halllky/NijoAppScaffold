@@ -284,7 +284,6 @@ function DecsendantsGrid(props: {
       <UniqueConstraintsContext.Provider value={uniqueConstraintsContextValue}>
         <EG2.EditableGrid
           {...editableGrid2Props}
-          striped
           className="flex-1 w-full border-y border-r border-gray-300"
         />
       </UniqueConstraintsContext.Provider>

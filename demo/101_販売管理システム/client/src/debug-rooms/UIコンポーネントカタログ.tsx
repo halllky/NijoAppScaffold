@@ -340,7 +340,6 @@ function UIComponentCatalog() {
                   rowKeys={tableRowKeys}
                   getLatestRowObject={getLatestTableRowObject}
                   columns={readOnlyColumns}
-                  striped
                   showCheckBox
                   className="w-full h-60 resize border border-gray-700"
                 />
@@ -371,7 +370,6 @@ function UIComponentCatalog() {
                 <Grid.EG2.EditableGrid
                   {...editableGrid2Props}
                   showCheckBox
-                  striped
                   clearSelectionOnBlur
                   getRowClassName={row => row.active ? "" : "opacity-50"}
                   className="w-full h-72 resize border border-gray-700"
