@@ -1,6 +1,4 @@
 import React, { useState } from "react"
-import * as ReactRouter from "react-router-dom"
-import { useNavigate } from "react-router-dom"
 import { useForm, Controller } from "react-hook-form"
 import { PageBase } from "../app/PageBase"
 import * as Grid from "../ui/grid"
@@ -23,21 +21,7 @@ const SampleIcon = ({ className }: { className?: string }) => (
   </svg>
 )
 
-export const URL = "/ui-component-catalog"
-
-export function useNavigateToUIComponentCatalog() {
-  const navigate = useNavigate()
-  return React.useCallback(() => {
-    navigate(URL)
-  }, [navigate])
-}
-
-export default {
-  path: URL,
-  element: <UIComponentCatalog />,
-} satisfies ReactRouter.RouteObject
-
-function UIComponentCatalog() {
+export default function UIComponentCatalog() {
   // 各入力コンポーネントの状態管理用state
   type FormData = {
     checkBoxValue: boolean
@@ -138,7 +122,7 @@ function UIComponentCatalog() {
       browserTitle="UIコンポーネントカタログ"
       header={<PageTitle>UIコンポーネントカタログ</PageTitle>}
       contents={
-        <div className="p-4 space-y-8 pb-20">
+        <div className="py-4 space-y-8 pb-20">
           <section>
             <h2 className="text-xl font-bold mb-4 border-b">Button</h2>
             <div className="space-y-4 p-4 border rounded">

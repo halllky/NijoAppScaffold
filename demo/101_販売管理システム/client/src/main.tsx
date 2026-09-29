@@ -1,17 +1,20 @@
 import React from "react"
 import ReactDOM from "react-dom/client"
-import { RouterProvider } from "react-router-dom"
-import { router } from "./routes"
+import { createBrowserRouter, RouterProvider } from "react-router-dom"
+import routes from "./routes"
+import App from "./App"
+
+// CSS の読み込み
 import "./style.css"
-
-// Allotment
 import "allotment/dist/style.css"
-
-// React Flow
 import "@xyflow/react/dist/style.css"
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+// HTML のルート要素に React をレンダリングする
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <RouterProvider router={createBrowserRouter([{
+      element: <App />,
+      children: routes,
+    }])} />
   </React.StrictMode>,
 )

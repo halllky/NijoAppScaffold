@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useRef, useState } from "react"
 import * as Icon from "@heroicons/react/24/solid"
+import { useOutsideClick } from "./useOutsideClick"
 
 export type MultiSelectProps<T> = {
   /** 選択された値の配列 */
@@ -40,17 +41,7 @@ export function MultiSelect<T>(props: MultiSelectProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   // クリック外で閉じる処理
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [])
+  useOutsideClick(containerRef, () => setIsOpen(false))
 
   const handleToggle = () => {
     if (!disabled) {

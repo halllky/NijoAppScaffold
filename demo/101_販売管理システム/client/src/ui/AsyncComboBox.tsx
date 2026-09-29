@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from "react"
 import { WordTextBox, WordTextBoxProps } from "./WordTextBox"
+import { useOutsideClick } from "./useOutsideClick"
 
 export type AsyncComboBoxProps<T> = Omit<WordTextBoxProps, 'value' | 'onChange'> & {
   value?: string
@@ -28,17 +29,7 @@ export function AsyncComboBox<T>(props: AsyncComboBoxProps<T>) {
   }, [value])
 
   // 外側クリックで閉じる
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [])
+  useOutsideClick(wrapperRef, () => setIsOpen(false))
 
   // 検索実行（デバウンス）
   useEffect(() => {

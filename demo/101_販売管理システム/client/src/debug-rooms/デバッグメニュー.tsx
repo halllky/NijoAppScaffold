@@ -1,22 +1,55 @@
 import React from "react"
+import ReactDOM from "react-dom"
 import { Link } from "react-router-dom"
-import * as UIコンポーネントカタログ from "./UIコンポーネントカタログ"
 import * as DbViewer from "./db-viewer/DbViewer"
 import { callAspNetCoreApiAsync } from "../example/callAspNetCoreApiAsync"
 import { Button } from "../ui/Button"
 import { useLoginLogout } from "../app/useLoginLogout"
+import { useOutsideClick } from "../ui/useOutsideClick"
 
-export default function デバッグメニュー() {
+/**
+ * デバッグメニューを開くボタン
+ */
+export default function DebugMenuButton() {
+  const [show, setShow] = React.useState(false)
+
+  return (
+    <>
+      <button
+        type="button"
+        className="px-2 py-px text-xs rounded-lg border cursor-pointer select-none"
+        onClick={() => setShow(true)}
+      >
+        デバッグメニュー
+      </button>
+
+      {show && (
+        ReactDOM.createPortal((
+          <DebugMenu requestClose={() => setShow(false)} />
+        ), document.body,)
+      )}
+    </>
+  )
+}
+
+/**
+ * デバッグメニュー
+ */
+function DebugMenu({ requestClose }: { requestClose: () => void }) {
   // 開発環境でのみ表示
   if (!import.meta.env.DEV) return null
+
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  useOutsideClick(containerRef, requestClose)
 
   const [processing, setProcessing] = React.useState(false)
   const { logoutAsync } = useLoginLogout()
   const handleRecreateDatabase = async () => {
     if (processing) return
     setProcessing(true)
-    if (!confirm("データベースを削除して再作成しますか？\n※この操作は取り消せません。")) return
     try {
+      if (!confirm("データベースを削除して再作成しますか？\n※この操作は取り消せません。")) return
+
       // ログイン情報も消えるので一旦ログアウト
       await logoutAsync()
 
@@ -36,23 +69,19 @@ export default function デバッグメニュー() {
   }
 
   return (
-    <div className="flex flex-col gap-2 p-2 bg-white border border-gray-300 rounded">
-      <h2 className="text-lg font-bold">デバッグメニュー</h2>
-      <span className="text-sm text-gray-500">
-        開発環境でのみ表示されるデバッグ用メニューです。
-      </span>
-      <hr className="border-gray-300" />
-      <div className="space-y-2 flex flex-col items-start">
-        <Link to={UIコンポーネントカタログ.URL} className="text-blue-600 underline">
-          UIコンポーネントカタログへ移動
-        </Link>
-        <Link to={DbViewer.URL} className="text-blue-600 underline">
-          DBビューアへ移動
-        </Link>
-        <Button fill loading={processing} onClick={handleRecreateDatabase}>
-          データベース再作成
-        </Button>
-      </div>
+    <div
+      ref={containerRef}
+      className="fixed top-12 right-1 min-w-96 flex flex-col items-start gap-2 p-2 bg-white border border-gray-300 rounded drop-shadow-lg"
+    >
+      <Link to="/dev/ui-components" onClick={requestClose} className="text-blue-600 underline">
+        UIコンポーネントカタログ
+      </Link>
+      <Link to={DbViewer.URL} onClick={requestClose} className="text-blue-600 underline">
+        DBビューアへ移動
+      </Link>
+      <Button fill loading={processing} onClick={handleRecreateDatabase}>
+        データベース再作成
+      </Button>
     </div>
   )
 }
