@@ -9,25 +9,19 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
-using Nijo.Parts.Common;
 
-namespace Nijo.CodeGenerating {
+namespace Nijo.Parts.Common {
     /// <summary>
     /// 機能単位などではなく集約単位でソースコードが記載されるファイル
     /// </summary>
-    public class SourceFileByAggregate {
+    public class SourceFileByAggregate(
+        RootAggregate rootAggregate,
+        [CallerFilePath] string? callerFilePath = null,
+        [CallerMemberName] string? callerMemberName = null) {
 
-        public SourceFileByAggregate(
-            RootAggregate rootAggregate,
-            [CallerFilePath] string? callerFilePath = null,
-            [CallerMemberName] string? callerMemberName = null) {
-            _rootAggregate = rootAggregate;
-            _callerFilePath = callerFilePath;
-            _callerMemberName = callerMemberName;
-        }
-        private readonly RootAggregate _rootAggregate;
-        private readonly string? _callerFilePath;
-        private readonly string? _callerMemberName;
+        private readonly RootAggregate _rootAggregate = rootAggregate;
+        private readonly string? _callerFilePath = callerFilePath;
+        private readonly string? _callerMemberName = callerMemberName;
 
         private class CoreLibrarySourceCodeItem {
             public string SourceCode { get; set; } = string.Empty;
@@ -251,9 +245,6 @@ namespace Nijo.CodeGenerating {
             }
 
             return $$"""
-                import React from "react"
-                import * as ReactRouter from "react-router-dom"
-                import { UUID } from "uuidjs"
                 import * as Util from "./util"
                 import * as EnumDefs from "./{{Path.GetFileNameWithoutExtension(EnumFile.TS_FILENAME)}}"
                 {{refToModules.SelectTextTemplate(modules => $$"""
