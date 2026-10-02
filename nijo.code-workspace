@@ -71,7 +71,6 @@
       "titleBar.activeBackground": "#492818",
       "titleBar.inactiveBackground": "#492818",
       "titleBar.activeForeground": "#cccccc",
-      "activityBar.foreground": "#cccccc",
       "statusBar.background": "#492818",
       "statusBar.inactiveBackground": "#492818",
       "statusBar.foreground": "#cccccc"
