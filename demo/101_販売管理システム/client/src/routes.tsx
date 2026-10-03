@@ -14,6 +14,7 @@ import { P001_ログイン } from "./pages/P001_ログイン"
 import { ErrorPage } from "./app/ErrorPage"
 
 const UIコンポーネントカタログ = React.lazy(() => import("./debug-rooms/UIコンポーネントカタログ"))
+const UI2カタログ = React.lazy(() => import("./debug-rooms/ui2/UI2カタログ"))
 
 /**
  * React Router ルーティング定義。
@@ -56,6 +57,14 @@ export default [
           element: (
             <React.Suspense>
               <UIコンポーネントカタログ />
+            </React.Suspense>
+          )
+        } satisfies RouteObject,
+        {
+          path: "/dev/ui2",
+          element: (
+            <React.Suspense>
+              <UI2カタログ />
             </React.Suspense>
           )
         } satisfies RouteObject,

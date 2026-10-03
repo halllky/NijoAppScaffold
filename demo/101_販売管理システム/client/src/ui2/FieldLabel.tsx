@@ -1,0 +1,39 @@
+import * as RHF from "react-hook-form"
+import type { FormBinding } from "./FormBinding"
+
+export type FieldLabelProps<TValues extends RHF.FieldValues> = {
+  /** ラベルを付ける項目。表示名・ヘルプテキスト・メッセージはこの項目のものが使われる */
+  name: RHF.Path<TValues>
+  /**
+   * ラベルと children を縦に並べるなら true。未指定の場合は横並び。
+   * 縦並びの場合はエラーメッセージがラベルの下に、横並びの場合は children の下に表示される。
+   */
+  vertical?: boolean
+  /**
+   * 必須マークを付けるかどうか。未指定の場合は付けない。
+   * 基準はデータ構造上必須か否かではなく、ユーザーが入力する必要があるかどうか。
+   * 例えばプログラム上で自動的に採番される項目は、データ構造上必須でもユーザーは入力する必要がない。
+   */
+  isRequired?: boolean
+  /** ラベル文字列の右側に追加で表示する内容 */
+  afterLabel?: React.ReactNode
+  /** 入力欄など、ラベルを付ける対象 */
+  children?: React.ReactNode
+  className?: string
+}
+
+/**
+ * 特定の項目のラベル。以下を表示する。
+ *
+ * - 表示名（メタデータの表示用名称）
+ * - 必須マーク
+ * - ヘルプテキスト（メタデータのコメント。アイコンにマウスを乗せると表示される）
+ * - この項目に対するメッセージ。react-hook-form の検証エラーとサーバーから返されたメッセージの両方。複数ある場合はすべて表示する。
+ *
+ * このラベルを表示した項目のメッセージは、RootErrors には表示されない。
+ */
+export function FieldLabel<TValues extends RHF.FieldValues>(props: FieldLabelProps<TValues> & {
+  binding: FormBinding<TValues>
+}): React.ReactNode {
+  throw new Error('not implemented')
+}
