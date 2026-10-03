@@ -106,12 +106,12 @@ function SearchCondition({ register, control, setFocus }: UseFormReturn<売上�
           render={({ field: { name, value, onChange, onBlur, ref } }) => (
             <div className="flex items-center gap-2" onBlur={onBlur}>
               <NumericTextBox name={`${name}.from`} ref={ref}
-                {...numericPropsOf("売上一覧", "売上SEQ")}
+                {...numericPropsOf(売上一覧.metadata.searchCondition, "売上SEQ")}
                 value={value?.from ?? ""}
                 onChange={e => onChange({ ...value, from: e.target.value })} />
               <span>～</span>
               <NumericTextBox name={`${name}.to`}
-                {...numericPropsOf("売上一覧", "売上SEQ")}
+                {...numericPropsOf(売上一覧.metadata.searchCondition, "売上SEQ")}
                 value={value?.to ?? ""}
                 onChange={e => onChange({ ...value, to: e.target.value })} />
             </div>
@@ -156,12 +156,12 @@ function SearchCondition({ register, control, setFocus }: UseFormReturn<売上�
           render={({ field: { name, value, onChange, onBlur, ref } }) => (
             <div className="flex items-center gap-2" onBlur={onBlur}>
               <NumericTextBox name={`${name}.from`} ref={ref}
-                {...numericPropsOf("売上一覧", "合計金額")}
+                {...numericPropsOf(売上一覧.metadata.searchCondition, "合計金額")}
                 value={value?.from ?? ""}
                 onChange={e => onChange({ ...value, from: e.target.value })} />
               <span>～</span>
               <NumericTextBox name={`${name}.to`}
-                {...numericPropsOf("売上一覧", "合計金額")}
+                {...numericPropsOf(売上一覧.metadata.searchCondition, "合計金額")}
                 value={value?.to ?? ""}
                 onChange={e => onChange({ ...value, to: e.target.value })} />
             </div>
@@ -175,12 +175,12 @@ function SearchCondition({ register, control, setFocus }: UseFormReturn<売上�
           render={({ field: { name, value, onChange, onBlur, ref } }) => (
             <div className="flex items-center gap-2" onBlur={onBlur}>
               <NumericTextBox name={`${name}.from`} ref={ref}
-                {...numericPropsOf("売上一覧", "売上数量合計")}
+                {...numericPropsOf(売上一覧.metadata.searchCondition, "売上数量合計")}
                 value={value?.from ?? ""}
                 onChange={e => onChange({ ...value, from: e.target.value })} />
               <span>～</span>
               <NumericTextBox name={`${name}.to`}
-                {...numericPropsOf("売上一覧", "売上数量合計")}
+                {...numericPropsOf(売上一覧.metadata.searchCondition, "売上数量合計")}
                 value={value?.to ?? ""}
                 onChange={e => onChange({ ...value, to: e.target.value })} />
             </div>

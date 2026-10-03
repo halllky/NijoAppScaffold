@@ -82,10 +82,10 @@ export function StockAdjustmentDialog({ isOpen, onClose, onSuccess, product }: P
             <DetailMessage.Rest className="col-span-2" />
 
             <FormLabel className="text-right">増減数</FormLabel>
-            <NumericTextBox {...register("増減数")} {...numericPropsOf("在庫調整Parameter", "増減数")} />
+            <NumericTextBox {...register("増減数")} {...numericPropsOf(在庫調整Parameter.metadata.displayData, "増減数")} />
 
             <FormLabel className="text-right">絶対数</FormLabel>
-            <NumericTextBox {...register("絶対数")} {...numericPropsOf("在庫調整Parameter", "絶対数")} />
+            <NumericTextBox {...register("絶対数")} {...numericPropsOf(在庫調整Parameter.metadata.displayData, "絶対数")} />
 
             <FormLabel className="text-right">在庫調整理由</FormLabel>
             <DescriptionTextArea {...register("在庫調整理由")} />

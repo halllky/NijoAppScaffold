@@ -83,9 +83,9 @@ function P101_売上詳細(props: {
   const navigate = ReactRouter.useNavigate()
   const [saving, setSaving] = React.useState(false)
 
-  const maxLen商品コード = maxLengthOf("売上詳細", "売上詳細の売上明細.0.商品.外部システム側ID")
-  const numProps数量 = numericPropsOf("売上詳細", "売上詳細の売上明細.0.売上数量")
-  const numProps手修正 = numericPropsOf("売上詳細", "売上詳細の売上明細.0.売上総額_税込_手修正")
+  const maxLen商品コード = maxLengthOf(売上詳細.metadata.displayData, "売上詳細の売上明細.0.商品.外部システム側ID")
+  const numProps数量 = numericPropsOf(売上詳細.metadata.displayData, "売上詳細の売上明細.0.売上数量")
+  const numProps手修正 = numericPropsOf(売上詳細.metadata.displayData, "売上詳細の売上明細.0.売上総額_税込_手修正")
 
   // 列定義（下の useFieldArrayForEditableGrid2 呼び出しの中）から remove を呼べるようにするための ref。
   // 同一文の中で自分自身の戻り値（remove）を参照すると型推論が循環してしまうため、

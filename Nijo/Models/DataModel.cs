@@ -265,9 +265,6 @@ namespace Nijo.Models {
             // データ型: ほかの集約から参照されるときのキー
             aggregateFile.AddCSharpClass(KeyClass.KeyClassEntry.RenderClassDeclaringRecursively(rootAggregate, ctx), "Class_KeyClass");
 
-            // 定数: メタデータ
-            ctx.Use<MetadataForPage>().Add(rootAggregate);
-
             // カスタムロジック用モジュール
             ctx.Use<CommandQueryMappings>().AddDataModel(rootAggregate);
 

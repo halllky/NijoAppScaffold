@@ -299,10 +299,8 @@ namespace Nijo.Models {
             ctx.Use<CommandQueryMappings>()
                 .AddQueryModel(rootAggregate);
 
-            // 定数: メタデータ ※DataModelの場合は全く同じ値になるので割愛
-            if (!rootAggregate.GenerateDefaultQueryModel) {
-                ctx.Use<MetadataForPage>().Add(rootAggregate);
-            }
+            // 定数: メタデータ
+            aggregateFile.AddTypeScriptFunction(AggregateMetadata.RenderTsConstant(rootAggregate, displayData, searchCondition.FilterRoot, ctx));
         }
 
         public void GenerateCode(CodeRenderingContext ctx) {

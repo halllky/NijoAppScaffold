@@ -128,9 +128,6 @@ namespace Nijo.Models {
             // カスタムロジック用モジュール
             ctx.Use<CommandQueryMappings>().AddCommandModel(rootAggregate);
 
-            // 定数: メタデータ（新仕様ではルート集約のみ）
-            ctx.Use<MetadataForPage>().Add(rootAggregate);
-
             aggregateFile.ExecuteRendering(ctx);
         }
 

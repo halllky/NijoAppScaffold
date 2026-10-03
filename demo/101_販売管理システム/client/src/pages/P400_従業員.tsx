@@ -132,7 +132,7 @@ function P400_従業員() {
             <div className="flex gap-4 items-end">
               <div>
                 <FormLabel>氏名</FormLabel>
-                <WordTextBox {...searchRegister("filter.氏名")} maxLength={maxLengthOf("従業員マスタ", "氏名")} />
+                <WordTextBox {...searchRegister("filter.氏名")} maxLength={maxLengthOf(従業員マスタ.metadata.searchCondition, "氏名")} />
               </div>
               <div>
                 <Button outline onClick={handleSearchSubmit(onSearch)}>検索</Button>
@@ -151,8 +151,8 @@ function P400_従業員() {
 }
 
 function EmployeeGrid({ methods }: { methods: UseFormReturn<従業員一括更新Parameter.DisplayData> }) {
-  const maxLen従業員番号 = maxLengthOf("従業員マスタ", "従業員番号")
-  const maxLen氏名 = maxLengthOf("従業員マスタ", "氏名")
+  const maxLen従業員番号 = maxLengthOf(従業員マスタ.metadata.displayData, "従業員番号")
+  const maxLen氏名 = maxLengthOf(従業員マスタ.metadata.displayData, "氏名")
 
   // 列定義（下の useFieldArrayForEditableGrid2 呼び出しの中）から remove を呼べるようにするための ref。
   // 同一文の中で自分自身の戻り値（remove）を参照すると型推論が循環してしまうため、

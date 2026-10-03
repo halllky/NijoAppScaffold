@@ -285,7 +285,7 @@ namespace Nijo {
             // スキーマ定義にかかわらず必ず生成されるモジュールの登録
             ctx.Use<ApplicationService>();
             ctx.Use<EnumFile>();
-            ctx.Use<MetadataForPage>();
+            ctx.Use<AggregateMetadata>();
             ctx.CoreLibrary(dir => {
                 dir.Directory("Util", utilDir => {
                     utilDir.Generate(NijoAttr.RenderDeclaration(ctx));

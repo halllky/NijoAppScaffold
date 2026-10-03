@@ -130,12 +130,12 @@ function SearchCondition({ register, control, setFocus }: UseFormReturn<商品�
           render={({ field: { name, value, onChange, onBlur, ref } }) => (
             <div className="flex items-center gap-2" onBlur={onBlur}>
               <WordTextBox name={`${name}.from`} ref={ref}
-                maxLength={maxLengthOf("商品一覧", "外部システム側ID")}
+                maxLength={maxLengthOf(商品一覧.metadata.searchCondition, "外部システム側ID")}
                 value={value?.from ?? ""}
                 onChange={e => onChange({ ...value, from: e.target.value })} />
               <span>～</span>
               <WordTextBox name={`${name}.to`}
-                maxLength={maxLengthOf("商品一覧", "外部システム側ID")}
+                maxLength={maxLengthOf(商品一覧.metadata.searchCondition, "外部システム側ID")}
                 value={value?.to ?? ""}
                 onChange={e => onChange({ ...value, to: e.target.value })} />
             </div>
@@ -143,7 +143,7 @@ function SearchCondition({ register, control, setFocus }: UseFormReturn<商品�
         />
 
         <FormLabel className="text-right">商品名</FormLabel>
-        <WordTextBox {...register("filter.商品名")} maxLength={maxLengthOf("商品一覧", "商品名")} />
+        <WordTextBox {...register("filter.商品名")} maxLength={maxLengthOf(商品一覧.metadata.searchCondition, "商品名")} />
       </div>
 
       {/* 右列 */}
@@ -156,12 +156,12 @@ function SearchCondition({ register, control, setFocus }: UseFormReturn<商品�
           render={({ field: { name, value, onChange, onBlur, ref } }) => (
             <div className="flex items-center gap-2" onBlur={onBlur}>
               <NumericTextBox name={`${name}.from`} ref={ref}
-                {...numericPropsOf("商品一覧", "売値単価_税抜")}
+                {...numericPropsOf(商品一覧.metadata.searchCondition, "売値単価_税抜")}
                 value={value?.from ?? ""}
                 onChange={e => onChange({ ...value, from: e.target.value })} />
               <span>～</span>
               <NumericTextBox name={`${name}.to`}
-                {...numericPropsOf("商品一覧", "売値単価_税抜")}
+                {...numericPropsOf(商品一覧.metadata.searchCondition, "売値単価_税抜")}
                 value={value?.to ?? ""}
                 onChange={e => onChange({ ...value, to: e.target.value })} />
             </div>
@@ -178,12 +178,12 @@ function SearchCondition({ register, control, setFocus }: UseFormReturn<商品�
           render={({ field: { name, value, onChange, onBlur, ref } }) => (
             <div className="flex items-center gap-2" onBlur={onBlur}>
               <NumericTextBox name={`${name}.from`} ref={ref}
-                {...numericPropsOf("商品一覧", "在庫数")}
+                {...numericPropsOf(商品一覧.metadata.searchCondition, "在庫数")}
                 value={value?.from ?? ""}
                 onChange={e => onChange({ ...value, from: e.target.value })} />
               <span>～</span>
               <NumericTextBox name={`${name}.to`}
-                {...numericPropsOf("商品一覧", "在庫数")}
+                {...numericPropsOf(商品一覧.metadata.searchCondition, "在庫数")}
                 value={value?.to ?? ""}
                 onChange={e => onChange({ ...value, to: e.target.value })} />
             </div>

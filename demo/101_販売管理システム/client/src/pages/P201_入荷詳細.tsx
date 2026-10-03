@@ -82,9 +82,9 @@ function P201_入荷詳細(props: {
   const { register, control, getValues, setValue, reset, subscribe } = formMethods
   const { isDirty } = formMethods.formState
 
-  const maxLen商品コード = maxLengthOf("入荷詳細", "入荷商品一覧.0.商品.外部システム側ID")
-  const numProps数量 = numericPropsOf("入荷詳細", "入荷商品一覧.0.数量")
-  const numProps単価 = numericPropsOf("入荷詳細", "入荷商品一覧.0.仕入単価_税抜")
+  const maxLen商品コード = maxLengthOf(入荷詳細.metadata.displayData, "入荷商品一覧.0.商品.外部システム側ID")
+  const numProps数量 = numericPropsOf(入荷詳細.metadata.displayData, "入荷商品一覧.0.数量")
+  const numProps単価 = numericPropsOf(入荷詳細.metadata.displayData, "入荷商品一覧.0.仕入単価_税抜")
 
   // 列定義（下の useFieldArrayForEditableGrid2 呼び出しの中）から remove を呼べるようにするための ref。
   // 同一文の中で自分自身の戻り値（remove）を参照すると型推論が循環してしまうため、

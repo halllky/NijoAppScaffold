@@ -101,9 +101,10 @@ namespace Nijo.Models {
             // プレゼンテーション層での編集用のオブジェクト等を生成する。
             var refferdAsParameter = rootAggregate.EnumerateCommandModelsRefferingAsParameter().Any();
             var refferdAsReturnValue = rootAggregate.EnumerateCommandModelsRefferingAsReturnValue().Any();
+            StructureDisplayData? displayData = null;
             if (refferdAsParameter || refferdAsReturnValue) {
                 // 画面表示用データ
-                var displayData = new StructureDisplayData(rootAggregate);
+                displayData = new StructureDisplayData(rootAggregate);
                 aggregateFile.AddCSharpClass(StructureDisplayData.RenderCSharpRecursively(rootAggregate, ctx), "Class_DisplayData");
                 aggregateFile.AddTypeScriptTypeDef(StructureDisplayData.RenderTypeScriptRecursively(rootAggregate, ctx));
                 aggregateFile.AddTypeScriptFunction(EditablePresentationObject.RenderTsNewObjectFunctionRecursively(displayData, ctx));
@@ -120,7 +121,7 @@ namespace Nijo.Models {
             ctx.Use<CommandQueryMappings>().AddStructureModel(rootAggregate);
 
             // 定数: メタデータ
-            ctx.Use<MetadataForPage>().Add(rootAggregate);
+            aggregateFile.AddTypeScriptFunction(AggregateMetadata.RenderTsConstant(rootAggregate, displayData, null, ctx));
 
             aggregateFile.ExecuteRendering(ctx);
         }

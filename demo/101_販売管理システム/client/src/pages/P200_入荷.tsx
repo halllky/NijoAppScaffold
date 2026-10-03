@@ -99,7 +99,7 @@ function SearchCondition({ register, control, setFocus }: UseFormReturn<入荷�
       <div className="grid grid-cols-[112px_360px] gap-2">
 
         <FormLabel className="text-right">入荷ID</FormLabel>
-        <WordTextBox {...register("filter.入荷ID")} maxLength={maxLengthOf("入荷一覧", "入荷ID")} />
+        <WordTextBox {...register("filter.入荷ID")} maxLength={maxLengthOf(入荷一覧.metadata.searchCondition, "入荷ID")} />
 
         <FormLabel className="text-right">入荷日時</FormLabel>
         <Controller
@@ -139,12 +139,12 @@ function SearchCondition({ register, control, setFocus }: UseFormReturn<入荷�
           render={({ field: { name, value, onChange, onBlur, ref } }) => (
             <div className="flex items-center gap-2" onBlur={onBlur}>
               <NumericTextBox name={`${name}.from`} ref={ref}
-                {...numericPropsOf("入荷一覧", "明細件数")}
+                {...numericPropsOf(入荷一覧.metadata.searchCondition, "明細件数")}
                 value={value?.from ?? ""}
                 onChange={e => onChange({ ...value, from: e.target.value })} />
               <span>～</span>
               <NumericTextBox name={`${name}.to`}
-                {...numericPropsOf("入荷一覧", "明細件数")}
+                {...numericPropsOf(入荷一覧.metadata.searchCondition, "明細件数")}
                 value={value?.to ?? ""}
                 onChange={e => onChange({ ...value, to: e.target.value })} />
             </div>
@@ -158,12 +158,12 @@ function SearchCondition({ register, control, setFocus }: UseFormReturn<入荷�
           render={({ field: { name, value, onChange, onBlur, ref } }) => (
             <div className="flex items-center gap-2" onBlur={onBlur}>
               <NumericTextBox name={`${name}.from`} ref={ref}
-                {...numericPropsOf("入荷一覧", "入荷数量合計")}
+                {...numericPropsOf(入荷一覧.metadata.searchCondition, "入荷数量合計")}
                 value={value?.from ?? ""}
                 onChange={e => onChange({ ...value, from: e.target.value })} />
               <span>～</span>
               <NumericTextBox name={`${name}.to`}
-                {...numericPropsOf("入荷一覧", "入荷数量合計")}
+                {...numericPropsOf(入荷一覧.metadata.searchCondition, "入荷数量合計")}
                 value={value?.to ?? ""}
                 onChange={e => onChange({ ...value, to: e.target.value })} />
             </div>

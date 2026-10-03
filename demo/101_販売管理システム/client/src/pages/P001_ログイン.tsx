@@ -65,7 +65,7 @@ export function P001_ログイン(props: {
           <div className="flex gap-4">
             <FormLabel className="basis-24 shrink-0">従業員番号</FormLabel>
             <div className="flex-1">
-              <WordTextBox {...register("従業員番号")} maxLength={maxLengthOf("ログインParameter", "従業員番号")} className="w-full" />
+              <WordTextBox {...register("従業員番号")} maxLength={maxLengthOf(ログインParameter.metadata.displayData, "従業員番号")} className="w-full" />
               <DetailMessage.Of name="従業員番号" control={control} />
             </div>
           </div>
@@ -73,7 +73,7 @@ export function P001_ログイン(props: {
           <div className="flex gap-4">
             <FormLabel className="basis-24 shrink-0">パスワード</FormLabel>
             <div className="flex-1">
-              <WordTextBox {...register("パスワード")} type="password" maxLength={maxLengthOf("ログインParameter", "パスワード")} className="w-full" />
+              <WordTextBox {...register("パスワード")} type="password" maxLength={maxLengthOf(ログインParameter.metadata.displayData, "パスワード")} className="w-full" />
               <DetailMessage.Of name="パスワード" control={control} />
             </div>
           </div>
