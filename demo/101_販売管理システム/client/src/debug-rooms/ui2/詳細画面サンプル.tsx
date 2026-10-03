@@ -35,7 +35,6 @@ function DisplayDataFormSample() {
 
   // 動作確認用の切り替え
   const [isReadOnly, setIsReadOnly] = React.useState(false)
-  const [hidesCompletedRows, setHidesCompletedRows] = React.useState(false)
   const [validValues, setValidValues] = React.useState<サンプル伝票.DisplayData>()
   const [selectedEmployees, setSelectedEmployees] = React.useState<unknown>()
 
@@ -51,9 +50,10 @@ function DisplayDataFormSample() {
   } = useDisplayDataForm(サンプル伝票, {
     defaultValues: loadSampleDisplayData,
   })
-  const { control, getValues, handleSubmit } = formMethods
+  const { control, getValues, setValue, handleSubmit } = formMethods
 
-  // 明細の行の追加・削除。グリッドはこれらの手段を持たないので useFieldArray を併用する
+  // 明細の行の追加・削除。グリッドはこれらの手段を持たないので useFieldArray を併用する。
+  // 新規追加した行は配列から取り除き、DBに存在する行は削除フラグを立てるだけにする（保存時に削除される）
   const { append: appendDetailRow, remove: removeDetailRow } = RHF.useFieldArray({ control, name: '明細' })
   const handleAddDetailRow = () => {
     appendDetailRow(サンプル伝票.createNewDisplayData_明細())
@@ -61,25 +61,29 @@ function DisplayDataFormSample() {
   // グリッドが渡す行の位置は絞り込み後の画面上の位置なので、配列インデックスは instanceId から求める
   const handleRemoveDetailRow = useEvent((instanceId: string) => {
     const index = getValues('明細').findIndex(row => row.instanceId === instanceId)
-    if (index !== -1) removeDetailRow(index)
+    if (index === -1) return
+    if (getValues(`明細.${index}.existsInDatabase`)) {
+      setValue(`明細.${index}.willBeDeleted`, true, { shouldDirty: true })
+    } else {
+      removeDetailRow(index)
+    }
   })
 
-  // 明細のグリッド。完了した明細を隠すかどうかで表示する行が変わるので deps に含める
+  // 明細のグリッド。削除フラグの立った行は表示しない。
+  // 完了した明細は、完了を外せるよう完了の列だけ残して、セル単位で読み取り専用にする。削除ボタンも読み取り専用に従って消える
   const [detailGridProps, detailRowMessages] = useEditableGrid('明細', {
     columns: col => [
-      col.text('品名', { defaultWidth: 160 }),
-      col.numeric('数量', { defaultWidth: 80 }),
-      col.numeric('単価', { header: '単価（税抜）', defaultWidth: 120 }),
-      col.date('納期', { defaultWidth: 120 }),
+      col.text('品名', { defaultWidth: 160, isReadOnly: row => row.完了 === true }),
+      col.numeric('数量', { defaultWidth: 80, isReadOnly: row => row.完了 === true }),
+      col.numeric('単価', { header: '単価（税抜）', defaultWidth: 120, isReadOnly: row => row.完了 === true }),
+      col.date('納期', { defaultWidth: 120, isReadOnly: row => row.完了 === true }),
       col.checkBox('完了', { defaultWidth: 56 }),
-      col.refTo('検品者', { params: { 退職者を含む: false }, defaultWidth: 200 }),
-      col.textArea('備考', { defaultWidth: 240, wrap: true }),
-      deleteButtonColumn(handleRemoveDetailRow),
+      col.refTo('検品者', { params: { 退職者を含む: false }, defaultWidth: 200, isReadOnly: row => row.完了 === true }),
+      col.textArea('備考', { defaultWidth: 240, wrap: true, isReadOnly: row => row.完了 === true }),
+      { ...deleteButtonColumn(handleRemoveDetailRow), isReadOnly: row => row.完了 === true },
     ],
-    rows: hidesCompletedRows
-      ? rows => rows.filter(row => !row.完了)
-      : undefined,
-  }, [hidesCompletedRows])
+    rows: rows => rows.filter(row => !row.willBeDeleted),
+  }, [])
 
   // 検索ダイアログを外部参照の入力欄を介さずに直接開く。複数選択の動作確認用
   const { selectMany: selectEmployees } = 従業員検索ダイアログ.useOpen()
@@ -107,9 +111,6 @@ function DisplayDataFormSample() {
       <div className="flex flex-wrap items-center gap-4 p-2 bg-gray-100 rounded">
         <CheckBox checked={isReadOnly} onChange={e => setIsReadOnly(e.target.checked)}>
           読み取り専用
-        </CheckBox>
-        <CheckBox checked={hidesCompletedRows} onChange={e => setHidesCompletedRows(e.target.checked)}>
-          完了した明細を隠す
         </CheckBox>
         <Button outline mini onClick={handleSimulateServerError}>
           サーバーエラーを模擬
