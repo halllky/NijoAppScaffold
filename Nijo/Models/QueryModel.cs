@@ -227,19 +227,11 @@ namespace Nijo.Models {
             aggregateFile.AddTypeScriptTypeDef(SearchCondition.Entry.RenderTypeScriptRecursively(rootAggregate, ctx));
             aggregateFile.AddTypeScriptTypeDef(searchCondition.RenderTypeScriptSortableMemberType());
             aggregateFile.AddTypeScriptFunction(searchCondition.RenderNewObjectFunction());
-            aggregateFile.AddTypeScriptFunction(searchCondition.RenderPkAssignFunction());
 
             // データ型: 検索条件メッセージ
             var searchConditionMessages = new SearchConditionMessageContainer(rootAggregate);
             aggregateFile.AddCSharpClass(SearchConditionMessageContainer.RenderCSharpRecursively(rootAggregate), "Class_SearchConditionMessage");
             ctx.Use<MessageContainer.BaseClass>().Register(searchConditionMessages.CsClassName, searchConditionMessages.CsClassName);
-
-            // 処理: 検索条件クラスのURL変換
-            // - URL => TS
-            // - TS => URL
-            var urlConversion = new SearchConditionUrlConversion(searchCondition);
-            aggregateFile.AddTypeScriptFunction(urlConversion.ConvertUrlToTypeScript(ctx));
-            aggregateFile.AddTypeScriptFunction(urlConversion.ConvertTypeScriptToUrl(ctx));
 
             // データ型: 検索結果クラス
             // ※ ビューにマッピングされる場合はSearchResultのEFCoreエンティティも生成する

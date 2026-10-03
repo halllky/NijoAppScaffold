@@ -27,11 +27,6 @@ namespace Nijo.Models.QueryModelModules {
                 && member.XElement.Attribute(BasicNodeOptions.StringSearchBehavior.AttributeName)?.Value == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_RANGE;
         }
 
-        private static bool IsRangeFilter(ValueMember member) {
-            return IsStringRangeSearch(member)
-                || (member.Type.SearchBehavior != null && Regex.IsMatch(member.Type.SearchBehavior.FilterTsTypeName, @"\{.*from.*to.*\}"));
-        }
-
         /// <summary>
         /// 検索条件オブジェクトのエントリー。
         /// フィルタ、ソート、ページングの属性を持つ。
@@ -233,53 +228,6 @@ namespace Nijo.Models.QueryModelModules {
                     """;
             }
             #endregion TypeScript側のオブジェクト新規作成関数
-
-
-            #region 主キーアサイン関数
-            internal string PkAssignFunctionName => "assignSearchConditionKeys";
-            internal string RenderPkAssignFunction() {
-                var keys = _entryAggregate
-                    .GetKeyVMs()
-                    .Where(vm => !vm.IsHardCodedPrimaryKey) // ハードコードされる主キーは検索条件に現れないので
-                    .ToArray();
-                var dataProperties = new Variable("obj", this)
-                    .Create1To1PropertiesRecursively()
-                    .ToDictionary(p => p.Metadata.SchemaPathNode.ToMappingKey());
-
-                return $$"""
-                    /** {{_entryAggregate.DisplayName}}の主キーを設定します。 */
-                    export function {{PkAssignFunctionName}}(obj: {{TsTypeName}}, keys: [{{keys.Select(k => $"{k.PhysicalName}: {k.Type.TsTypeName} | null | undefined").Join(", ")}}]): void {
-                      if (keys.length !== {{keys.Length}}) {
-                        console.error(`主キーの数が一致しません。個数は{{keys.Length}}であるべきところ${keys.length}個です。`);
-                        return
-                      }
-                    {{keys.SelectTextTemplate((k, i) => $$"""
-                      {{WithIndent(RenderMember(k, i))}}
-                    """)}}
-                    }
-                    """;
-
-                string RenderMember(ValueMember vm, int index) {
-                    // 数値ならNumberにかける
-                    var value = vm.Type.TsTypeName == "number"
-                        ? $"Number(keys[{index}])"
-                        : $"keys[{index}]";
-
-                    // 範囲検索の場合はfrom, to 両方に代入する
-                    if (IsRangeFilter(vm)) {
-                        return $$"""
-                            {{dataProperties[vm.ToMappingKey()].GetJoinedPathFromInstance(E_CsTs.TypeScript, ".")}} = { from: {{value}}, to: {{value}} }
-                            """;
-
-                    } else {
-                        return $$"""
-                            {{dataProperties[vm.ToMappingKey()].GetJoinedPathFromInstance(E_CsTs.TypeScript, ".")}} = {{value}}
-                            """;
-                    }
-                }
-            }
-
-            #endregion 主キーアサイン関数
         }
 
 

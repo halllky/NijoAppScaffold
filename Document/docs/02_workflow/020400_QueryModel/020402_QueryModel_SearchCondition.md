@@ -125,31 +125,6 @@ protected override void ValidateSearchCondition(
 }
 ```
 
-## URL パラメータ変換（ブックマーク可能な検索 URL）
-
-検索条件は URL クエリパラメータに変換できます。これにより、検索状態をブックマークや URL 共有できます。
-
-| URL パラメータ | 内容                                        |
-| -------------- | ------------------------------------------- |
-| `f`            | Filter オブジェクトの JSON（URLエンコード） |
-| `s`            | Sort 配列の JSON                            |
-| `t`            | Take（ページサイズ）                        |
-| `p`            | Skip（ページオフセット）                    |
-
-TypeScript の変換関数は自動生成されます。
-
-```typescript
-// 検索条件 → URL パラメータ
-const params = new URLSearchParams()
-toQueryParameterOfOrderQuery(condition, params)
-router.push(`/orders?${params.toString()}`)
-
-// URL パラメータ → 検索条件（ページロード時）
-const condition = parseQueryParameterAsOrderQuery(
-  new URLSearchParams(window.location.search)
-)
-```
-
 ## TypeScript での型情報
 
 検索処理のエンドポイントとパラメータ型は、自動生成された `LoadFeature` ネームスペースで確認できます。
