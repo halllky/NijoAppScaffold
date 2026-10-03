@@ -22,5 +22,7 @@ export type MessageListProps = {
  * クライアント側エラーとサーバー側メッセージは、呼び出し元が合わせたうえで渡すこと。
  */
 export function MessageList({ messages, className }: MessageListProps): React.ReactNode {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }

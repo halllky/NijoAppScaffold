@@ -21,6 +21,8 @@ export type EnumSelectionProps<TValues extends RHF.FieldValues> = InputPropsBase
 
 /** 列挙体の選択欄（フォーム用）。ドロップダウンで1つ選ぶ */
 export function EnumSelection<TValues extends RHF.FieldValues>(props: WithFormBinding<EnumSelectionProps<TValues>, TValues>): React.ReactNode {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }
 
@@ -36,6 +38,8 @@ export function enumColumn<TRow>(
   path: RHF.Path<TRow>,
   options?: EnumColumnOptions<TRow>,
 ): EG2.EditableGridLeafColumn<TRow> {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }
 
@@ -45,6 +49,8 @@ export function enumColumn<TRow>(
 
 /** メタデータから選択肢を求める。列挙体でない場合は例外を投げる */
 function enumOptionsOf(member: AggregateMetadata.Member): readonly string[] {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }
 

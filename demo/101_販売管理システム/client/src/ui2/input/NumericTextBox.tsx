@@ -13,7 +13,8 @@ import type { ColumnOptionsBase, InputPropsBase, WithFormBinding } from "./Input
  *   総合桁数・小数部桁数の指定が無い場合は値の型から決める（整数・シーケンスは小数部なし、年は整数部4桁など）。
  * - 金額項目は接尾辞「円」、数量項目は接尾辞「個」を付け、いずれも3桁カンマ区切りで表示する。どちらでもない項目には付けない。
  * - 数値として解釈できない文字の入力は受け付けない。全角数字・全角記号は半角に読み替える。
- * - 桁数を超える部分は切り捨てる。貼り付けの場合も同じ。
+ * - 桁数を超える値は切り捨てず、そのまま保持してクライアント側エラーにする。貼り付けの場合も同じ。
+ *   整数部の切り捨ては値そのものを変えてしまい、ユーザーが気付かないまま誤った値が保存されるおそれがあるため。
  * - 3桁カンマ区切りは表示上だけのもので、フォームの値にはカンマを含めない。
  * - 検索条件のフォームでは、範囲指定（下限〜上限）の2つの入力欄になる。
  */
@@ -27,6 +28,8 @@ export type NumericTextBoxProps<TValues extends RHF.FieldValues> = InputPropsBas
 
 /** 数値の入力欄（フォーム用） */
 export function NumericTextBox<TValues extends RHF.FieldValues>(props: WithFormBinding<NumericTextBoxProps<TValues>, TValues>): React.ReactNode {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }
 
@@ -42,6 +45,8 @@ export function numericColumn<TRow>(
   path: RHF.Path<TRow>,
   options?: NumericColumnOptions<TRow>,
 ): EG2.EditableGridLeafColumn<TRow> {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }
 
@@ -63,16 +68,29 @@ type NumericFormat = {
 
 /** メタデータから数値の書式を求める */
 function numericFormatOf(member: AggregateMetadata.Member): NumericFormat {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }
 
-/** 値の確定時の正規化。全角を半角に読み替え、カンマを除き、桁数を超える部分を切り捨てる */
-function normalizeNumeric(value: string, format: NumericFormat): string {
+/** 値の確定時の正規化。全角を半角に読み替え、カンマを除く。桁数の超過はここでは扱わない */
+function normalizeNumeric(value: string): string {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
+  throw new Error('not implemented')
+}
+
+/** 桁数の検証。整数部か小数部が桁数を超えていればエラーメッセージを、超えていなければ undefined を返す */
+function validateNumericDigits(value: string, format: NumericFormat): string | undefined {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }
 
 /** 表示用の文字列にする。カンマ区切りと接尾辞を付ける */
 function formatNumeric(value: string | null | undefined, format: NumericFormat): string {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }
 

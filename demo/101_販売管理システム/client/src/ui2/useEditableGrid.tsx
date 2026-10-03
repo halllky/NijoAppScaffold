@@ -9,20 +9,40 @@ import type { GridColumnHelper } from "./input/bindInputs"
 export type GridRow<TValues extends RHF.FieldValues, TArrayPath extends RHF.ArrayPath<TValues>>
   = RHF.FieldArray<TValues, TArrayPath> & { instanceId: string }
 
-export type UseEditableGridOptions<TRow> = {
+/** グリッドの行と列の定義 */
+export type UseEditableGridOptions<
+  TValues extends RHF.FieldValues,
+  TTable extends AggregateMetadata.Table,
+  TArrayPath extends RHF.ArrayPath<TValues>,
+> = {
+  /** 列定義。引数の列定義ヘルパーを使うと、見出しと入力制約がメタデータから決まる */
+  columns: (col: GridColumnHelper<GridRow<TValues, TArrayPath>, TTable, TArrayPath>) => EG2.EditableGridColumn<GridRow<TValues, TArrayPath>>[]
   /**
    * 画面に表示する行を絞り込み・並び替えて返す関数。
    * 引数の配列は最新の値のコピーなので、破壊的変更（sort など）をしてよい。
    * 未指定の場合は全行を配列の順に表示する。
    */
-  selectDisplayRows?: (rows: TRow[]) => TRow[]
+  rows?: (rows: GridRow<TValues, TArrayPath>[]) => GridRow<TValues, TArrayPath>[]
 }
 
 /**
+ * useEditableGrid の戻り値。
+ * 1つ目は EditableGrid にスプレッドする props、2つ目はグリッドの各行に対するメッセージの一覧。
+ */
+export type UseEditableGridReturn<TRow> = readonly [
+  gridProps: EG2.EditableGridProps<TRow>,
+  rowMessages: React.ReactNode,
+]
+
+/**
  * フォーム内の配列を EditableGrid で編集するためのフック。
- * 戻り値の props を EditableGrid にスプレッドして使う。
- * getColumns が画面側の値を参照する場合はそれを deps に列挙すること。
+ * 戻り値の1つ目を EditableGrid にスプレッドし、2つ目をグリッドの近くに置いて使う。
  *
+ * ## deps
+ * options の columns と rows が画面側の値を参照する場合は、それを deps に列挙すること。
+ * deps は行と列の両方の定義にかかる。どちらかの定義が変わった場合は、グリッド全体を再描画する。
+ *
+ * ## 行の操作
  * このフックが扱うのはグリッドとフォームの値の橋渡しだけで、行の追加・削除・並べ替えの手段は提供しない。
  * それらが必要な場合は同じ配列に対して react-hook-form の useFieldArray を併用すること。
  * フォームの値の変更は購読を通じてグリッドに反映されるので、useFieldArray の操作はそのまま画面に反映される。
@@ -30,16 +50,36 @@ export type UseEditableGridOptions<TRow> = {
  * 行は instanceId で識別する（グリッドの rowKey = instanceId）。行を複製する場合は instanceId を新しく振り直すこと。
  * グリッドが渡す rowIndex は画面上の位置であり、絞り込み・並び替えをすると配列の添字と一致しない。
  * useFieldArray の remove や swap など配列の添字を受け取る操作には、rowKey から求めた添字を渡すこと。
+ *
+ * ## 読み取り専用
+ * グリッド全体を読み取り専用にする場合は、EditableGrid の props で指定する。
+ *
+ * ## メッセージ
+ * 各行とその子孫の項目に対するメッセージ（クライアント側エラーとサーバー側メッセージの両方）は、戻り値の2つ目の一覧に表示される。
+ * 列のある項目に対するメッセージは、その一覧に加えてセルにも表示される。
+ * 配列そのものに対するメッセージはこの一覧には含めない。配列の項目の FieldLabel などに表示される。
+ *
+ * 一覧の書式は、行ごとに1行で、行の位置に続けてその行のメッセージを並べる。
+ * ```
+ * 1行目 数量: 在庫が不足しています。 単価: 必須です。
+ * 3行目 品名: 同じ品名の明細が既にあります。
+ * 非表示行 数量: 在庫が不足しています。
+ * ```
+ * - 行の位置は、画面上の表示位置（1始まり）。配列の添字ではない。
+ * - rows で表示されていない行は、行の位置の代わりに「非表示行」と示す。
+ *   ユーザーは非表示の行を直接直せないので、利用側は、非表示にする行にメッセージが出ないよう気を付けること。
+ * - 各メッセージの前には、その項目のメタデータの表示用名称を付ける。行そのものに対するメッセージには付けない。
+ * - メッセージが1件も無い場合は何も描画しない。
+ * - メッセージの変化はこの一覧が自分で購読して描画し直す。メッセージが変わっても、このフックを呼んだコンポーネントは再描画されない。
  */
 export type BoundUseEditableGrid<
   TValues extends RHF.FieldValues,
   TTable extends AggregateMetadata.Table = AggregateMetadata.Table,
 > = <TArrayPath extends RHF.ArrayPath<TValues>>(
   name: TArrayPath,
-  getColumns: (col: GridColumnHelper<GridRow<TValues, TArrayPath>, TTable, TArrayPath>) => EG2.EditableGridColumn<GridRow<TValues, TArrayPath>>[],
+  options: UseEditableGridOptions<TValues, TTable, TArrayPath>,
   deps: React.DependencyList,
-  options?: UseEditableGridOptions<GridRow<TValues, TArrayPath>>,
-) => EG2.EditableGridProps<GridRow<TValues, TArrayPath>>
+) => UseEditableGridReturn<GridRow<TValues, TArrayPath>>
 
 /**
  * BoundUseEditableGrid の実体。
@@ -52,9 +92,10 @@ export function useEditableGrid<
 >(
   binding: FormBinding<TValues>,
   name: TArrayPath,
-  getColumns: (col: GridColumnHelper<GridRow<TValues, TArrayPath>, TTable, TArrayPath>) => EG2.EditableGridColumn<GridRow<TValues, TArrayPath>>[],
+  options: UseEditableGridOptions<TValues, TTable, TArrayPath>,
   deps: React.DependencyList,
-  options?: UseEditableGridOptions<GridRow<TValues, TArrayPath>>,
-): EG2.EditableGridProps<GridRow<TValues, TArrayPath>> {
+): UseEditableGridReturn<GridRow<TValues, TArrayPath>> {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }

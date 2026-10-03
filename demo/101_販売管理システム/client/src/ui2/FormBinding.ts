@@ -4,12 +4,19 @@ import type { Messages } from "./MessageList"
 
 /**
  * 入力コンポーネント・FieldLabel・RootErrors・グリッドの列が、フォームと結びつくための情報。
- * useDisplayDataForm / useSearchConditionForm が作り、各コンポーネントに渡す。
  * ui2 フォルダ内部でのみ使用する。画面側はこの型を意識しない。
  *
  * TValues は、各コンポーネントの name の起点となるオブジェクトの型。
  * 画面表示用データのフォームではフォーム全体の値、検索条件のフォームでは絞り込み条件のオブジェクトになる。
  * name をメタデータの表のキーと同じ形にそろえるため、起点をフォーム全体の値とは限らないものにしている。
+ *
+ * ## 参照の不変性
+ * このオブジェクトはフォーム1つにつき1回だけ作り、以後は参照を変えない。
+ * 画面側が使う入力コンポーネントは、このオブジェクトを受け取ってコンポーネントの関数を組み立てる形で作られる。
+ * そのため、このオブジェクトの参照が変わるとコンポーネントの関数も作り直され、React からは別のコンポーネントに置き換わったように見える。
+ * すると入力欄はいったん破棄されて新しく作られるので、入力途中の内容やフォーカスが失われてしまう。
+ * そのため、時間とともに変わる値（メッセージなど）をプロパティとして直接持たせてはならない。
+ * 変わる値は、最新の値を ref から読む関数として持たせ、変化を画面に反映する必要があるものは購読の手段を併せて持たせる。
  */
 export type FormBinding<TValues extends RHF.FieldValues> = {
   /**
@@ -25,8 +32,6 @@ export type FormBinding<TValues extends RHF.FieldValues> = {
   formMethods: RHF.UseFormReturn<RHF.FieldValues>
   /** 項目の表示名や入力制約を引くための表 */
   metadata: AggregateMetadata.Table
-  /** フォーム全体を読み取り専用にするかどうか */
-  isReadOnly: boolean
   /** name を、フォーム全体の値から見たパスに変換する */
   toFormPath: (name: RHF.Path<TValues>) => string
   /**
@@ -39,7 +44,13 @@ export type FormBinding<TValues extends RHF.FieldValues> = {
 
   //#region メッセージ
   /**
-   * 指定した表示領域に表示すべきメッセージを返す。
+   * メッセージが変わったときに呼ばれる関数を登録する。戻り値は登録解除の関数。
+   * メッセージを表示するコンポーネントは、これと getMessages / getUnboundMessages を useSyncExternalStore で組み合わせて使う。
+   * クライアント側エラーの変化と、サーバー側メッセージの変化と、表示領域の登録・解除のいずれでも呼ばれる。
+   */
+  subscribeMessages: (onChange: () => void) => () => void
+  /**
+   * 指定した表示領域に表示すべきメッセージを、呼び出した時点の最新の状態から求めて返す。
    * 対象は registerMessageArea で登録した範囲のうち、より内側の表示領域が無い項目に対するもの。
    *
    * - クライアント側エラー: react-hook-form の formState.errors のうち、範囲内の項目に対するもの。errors にだけ入る。
@@ -47,7 +58,7 @@ export type FormBinding<TValues extends RHF.FieldValues> = {
    */
   getMessages: (formPath: string) => Messages
   /**
-   * どの表示領域の範囲にも入らないメッセージを返す。
+   * どの表示領域の範囲にも入らないメッセージを、呼び出した時点の最新の状態から求めて返す。
    *
    * - クライアント側エラー: formState.errors.root と、表示領域が無い項目に対する検証エラー。
    * - サーバー側メッセージ: フォームのルートに対するものと、表示領域が無い項目に対するもの。
@@ -84,5 +95,7 @@ export type GridBinding = {
  * 該当する項目が無い場合は例外を投げる。
  */
 export function findMemberMetadata(table: AggregateMetadata.Table, path: string): AggregateMetadata.Member {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }

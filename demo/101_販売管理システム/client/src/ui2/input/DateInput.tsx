@@ -20,6 +20,8 @@ export type DateInputProps<TValues extends RHF.FieldValues> = InputPropsBase<TVa
 
 /** 日付・日時・年月の入力欄（フォーム用）。基本的にはブラウザのネイティブな入力コントロールの仕様に従う */
 export function DateInput<TValues extends RHF.FieldValues>(props: WithFormBinding<DateInputProps<TValues>, TValues>): React.ReactNode {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }
 
@@ -35,6 +37,8 @@ export function dateColumn<TRow>(
   path: RHF.Path<TRow>,
   options?: DateColumnOptions<TRow>,
 ): EG2.EditableGridLeafColumn<TRow> {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }
 
@@ -47,11 +51,15 @@ type DateKind = 'date' | 'datetime' | 'yearmonth'
 
 /** メタデータから入力する値の種類を求める。日付系の型でない場合は例外を投げる */
 function dateKindOf(member: AggregateMetadata.Member): DateKind {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }
 
 /** 値の確定時の正規化。解釈できない値は空文字にする */
 function normalizeDate(value: string, kind: DateKind): string {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }
 

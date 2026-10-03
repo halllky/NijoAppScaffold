@@ -55,7 +55,7 @@ export const metadata = {
     '従業員番号': {
       kind: 'value', parent: null, isOutsideTree: false, uniqueId: 'mock-1001',
       type: 'word', displayName: '従業員番号',
-      maxLength: 8,
+      customMaxLength: 8,
     },
     '氏名': {
       kind: 'value', parent: null, isOutsideTree: false, uniqueId: 'mock-1002',

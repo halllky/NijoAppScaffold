@@ -50,7 +50,6 @@ function DisplayDataFormSample() {
     clearServerMessages,
   } = useDisplayDataForm(サンプル伝票, {
     defaultValues: loadSampleDisplayData,
-    isReadOnly,
   })
   const { control, getValues, handleSubmit } = formMethods
 
@@ -65,21 +64,22 @@ function DisplayDataFormSample() {
     if (index !== -1) removeDetailRow(index)
   })
 
-  // 明細のグリッド
-  const detailGridProps = useEditableGrid('明細', col => [
-    col.text('品名', { defaultWidth: 160 }),
-    col.numeric('数量', { defaultWidth: 80 }),
-    col.numeric('単価', { header: '単価（税抜）', defaultWidth: 120 }),
-    col.date('納期', { defaultWidth: 120 }),
-    col.checkBox('完了', { defaultWidth: 56 }),
-    col.refTo('検品者', { params: { 退職者を含む: false }, defaultWidth: 200 }),
-    col.textArea('備考', { defaultWidth: 240, wrap: true }),
-    deleteButtonColumn(handleRemoveDetailRow),
-  ], [], {
-    selectDisplayRows: hidesCompletedRows
+  // 明細のグリッド。完了した明細を隠すかどうかで表示する行が変わるので deps に含める
+  const [detailGridProps, detailRowMessages] = useEditableGrid('明細', {
+    columns: col => [
+      col.text('品名', { defaultWidth: 160 }),
+      col.numeric('数量', { defaultWidth: 80 }),
+      col.numeric('単価', { header: '単価（税抜）', defaultWidth: 120 }),
+      col.date('納期', { defaultWidth: 120 }),
+      col.checkBox('完了', { defaultWidth: 56 }),
+      col.refTo('検品者', { params: { 退職者を含む: false }, defaultWidth: 200 }),
+      col.textArea('備考', { defaultWidth: 240, wrap: true }),
+      deleteButtonColumn(handleRemoveDetailRow),
+    ],
+    rows: hidesCompletedRows
       ? rows => rows.filter(row => !row.完了)
       : undefined,
-  })
+  }, [hidesCompletedRows])
 
   // 検索ダイアログを外部参照の入力欄を介さずに直接開く。複数選択の動作確認用
   const { selectMany: selectEmployees } = 従業員検索ダイアログ.useOpen()
@@ -127,28 +127,29 @@ function DisplayDataFormSample() {
         {/* どの項目にも表示されないメッセージ */}
         <RootErrors />
 
-        {/* ヘッダ部。項目の意味のまとまりごとに列を分ける */}
+        {/* ヘッダ部。項目の意味のまとまりごとに列を分ける。読み取り専用は入力コンポーネントごとに指定する */}
         <FieldGroup title="基本情報">
           {/* 伝票の識別と担当 */}
           <FieldColumn>
-            <FieldLabel name="伝票番号" isRequired>
-              <Input.TextBox name="伝票番号" className="w-32" />
+            {/* 必須マークは表示だけなので、未入力のチェックは rules で別に指定する */}
+            <FieldLabel name="伝票番号" requiredMark>
+              <Input.TextBox name="伝票番号" className="w-32" isReadOnly={isReadOnly} rules={{ required: true }} />
             </FieldLabel>
-            <FieldLabel name="件名" isRequired>
-              <Input.TextBox name="件名" />
+            <FieldLabel name="件名" requiredMark>
+              <Input.TextBox name="件名" isReadOnly={isReadOnly} rules={{ required: true }} />
             </FieldLabel>
-            <FieldLabel name="担当者" isRequired>
-              <Input.RefTo name="担当者" params={{ 退職者を含む: false }} />
+            <FieldLabel name="担当者" requiredMark>
+              <Input.RefTo name="担当者" params={{ 退職者を含む: false }} isReadOnly={isReadOnly} />
             </FieldLabel>
           </FieldColumn>
 
           {/* 日付 */}
           <FieldColumn>
-            <FieldLabel name="伝票日付" isRequired>
-              <Input.DateInput name="伝票日付" />
+            <FieldLabel name="伝票日付" requiredMark>
+              <Input.DateInput name="伝票日付" isReadOnly={isReadOnly} rules={{ required: true }} />
             </FieldLabel>
             <FieldLabel name="計上年月">
-              <Input.DateInput name="計上年月" />
+              <Input.DateInput name="計上年月" isReadOnly={isReadOnly} />
             </FieldLabel>
             <FieldLabel name="登録日時">
               <Input.DateInput name="登録日時" isReadOnly />
@@ -160,21 +161,22 @@ function DisplayDataFormSample() {
             <FieldLabel name="合計金額" afterLabel={<span className="text-xs text-gray-500 self-center">自動計算</span>}>
               <Input.NumericTextBox name="合計金額" isReadOnly />
             </FieldLabel>
+            {/* メタデータに無い業務上の制約は rules の validate で追加する */}
             <FieldLabel name="税率">
-              <Input.NumericTextBox name="税率" className="w-24" />
+              <Input.NumericTextBox name="税率" className="w-24" isReadOnly={isReadOnly} rules={{ validate: validateTaxRate }} />
             </FieldLabel>
             <FieldLabel name="確定済み">
-              <Input.CheckBox name="確定済み">確定する</Input.CheckBox>
+              <Input.CheckBox name="確定済み" isReadOnly={isReadOnly}>確定する</Input.CheckBox>
             </FieldLabel>
           </FieldColumn>
 
           {/* FieldGroup の直下に置いた項目は横幅いっぱいに表示される */}
           <FieldLabel name="備考" vertical>
-            <Input.TextArea name="備考" className="min-h-16 max-h-48" />
+            <Input.TextArea name="備考" className="min-h-16 max-h-48" isReadOnly={isReadOnly} />
           </FieldLabel>
         </FieldGroup>
 
-        {/* 明細部。明細全体に対するメッセージはラベルの下に、各セルに対するメッセージはセルに表示される */}
+        {/* 明細部。明細全体に対するメッセージはラベルの下に、各行に対するメッセージはグリッドの下の一覧とセルに表示される */}
         <FieldLabel
           name="明細"
           vertical
@@ -187,6 +189,8 @@ function DisplayDataFormSample() {
             isReadOnly={isReadOnly}
             className="h-64 resize-y border border-gray-700"
           />
+          {/* 明細の各行に対するメッセージ */}
+          {detailRowMessages}
         </FieldLabel>
 
         {/* フッタ */}
@@ -226,6 +230,12 @@ function deleteButtonColumn(
       </div>
     ),
   }
+}
+
+/** 税率の業務上の制約。メタデータの桁数の範囲内でも、100% を超える値は受け付けない */
+function validateTaxRate(value: unknown): string | undefined {
+  if (typeof value === 'string' && value !== '' && Number(value) > 100) return '税率は100以下で入力してください。'
+  return undefined
 }
 
 /** 既存データの読み込みを模擬する */

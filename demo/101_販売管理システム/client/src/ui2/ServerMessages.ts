@@ -36,6 +36,8 @@ export function toServerMessages(
   detail: PresentationContextDetail | null | undefined,
   values: RHF.FieldValues,
 ): ServerMessages {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }
 
@@ -50,5 +52,7 @@ export function pickServerMessages(
   values: RHF.FieldValues,
   includesDescendants: boolean,
 ): Messages {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }

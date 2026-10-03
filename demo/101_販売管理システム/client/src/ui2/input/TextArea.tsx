@@ -24,6 +24,8 @@ export type TextAreaProps<TValues extends RHF.FieldValues> = InputPropsBase<TVal
 
 /** 文章の入力欄（フォーム用）。内容の行数に合わせて高さが伸びる。上限は className の max-height で指定する */
 export function TextArea<TValues extends RHF.FieldValues>(props: WithFormBinding<TextAreaProps<TValues>, TValues>): React.ReactNode {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }
 
@@ -42,6 +44,8 @@ export function textAreaColumn<TRow>(
   path: RHF.Path<TRow>,
   options?: TextAreaColumnOptions<TRow>,
 ): EG2.EditableGridLeafColumn<TRow> {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }
 
@@ -49,13 +53,20 @@ export function textAreaColumn<TRow>(
 
 //#region フォームとグリッドで共有する仕様
 
-/** メタデータから最大長を求める。制限が無い場合は undefined */
+/**
+ * メタデータから最大長を求める。制限が無い場合は undefined。
+ * ノードオプションの最大長はデータベースの桁数の定義に使うものなので見ず、画面制御用のカスタム属性の最大長を使う。
+ */
 function maxLengthOf(member: AggregateMetadata.Member): number | undefined {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }
 
 /** 値の確定時の正規化 */
 function normalizeDescription(value: string, maxLength: number | undefined): string {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }
 

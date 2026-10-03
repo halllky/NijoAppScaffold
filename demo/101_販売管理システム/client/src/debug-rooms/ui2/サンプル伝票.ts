@@ -158,12 +158,12 @@ export const metadata = {
     '伝票番号': {
       kind: 'value', parent: null, isOutsideTree: false, uniqueId: 'mock-0002',
       type: 'word', displayName: '伝票番号', comment: '業務上の識別番号。英数字10桁',
-      isNotNull: true, maxLength: 10,
+      isNotNull: true, customMaxLength: 10,
     },
     '件名': {
       kind: 'value', parent: null, isOutsideTree: false, uniqueId: 'mock-0003',
       type: 'word', displayName: '件名',
-      isNotNull: true, maxLength: 40,
+      isNotNull: true, customMaxLength: 40,
     },
     '伝票日付': {
       kind: 'value', parent: null, isOutsideTree: false, uniqueId: 'mock-0004',
@@ -200,7 +200,7 @@ export const metadata = {
     '担当者.従業員番号': {
       kind: 'value', parent: '担当者', isOutsideTree: true, uniqueId: 'mock-1001',
       type: 'word', displayName: '従業員番号',
-      isKey: true, maxLength: 8,
+      isKey: true, customMaxLength: 8,
     },
     '担当者.氏名': {
       kind: 'value', parent: '担当者', isOutsideTree: true, uniqueId: 'mock-1002',
@@ -209,7 +209,7 @@ export const metadata = {
     '備考': {
       kind: 'value', parent: null, isOutsideTree: false, uniqueId: 'mock-0013',
       type: 'description', displayName: '備考',
-      maxLength: 400,
+      customMaxLength: 400,
     },
     'Version': {
       kind: 'value', parent: null, isOutsideTree: false, uniqueId: 'mock-0014',
@@ -223,7 +223,7 @@ export const metadata = {
     '明細.品名': {
       kind: 'value', parent: '明細', isOutsideTree: false, uniqueId: 'mock-0101',
       type: 'word', displayName: '品名',
-      isNotNull: true, maxLength: 20,
+      isNotNull: true, customMaxLength: 20,
     },
     '明細.数量': {
       kind: 'value', parent: '明細', isOutsideTree: false, uniqueId: 'mock-0102',
@@ -251,7 +251,7 @@ export const metadata = {
     '明細.検品者.従業員番号': {
       kind: 'value', parent: '明細.検品者', isOutsideTree: true, uniqueId: 'mock-1001',
       type: 'word', displayName: '従業員番号',
-      maxLength: 8,
+      customMaxLength: 8,
     },
     '明細.検品者.氏名': {
       kind: 'value', parent: '明細.検品者', isOutsideTree: true, uniqueId: 'mock-1002',
@@ -266,7 +266,7 @@ export const metadata = {
     '伝票番号': {
       kind: 'value', parent: null, isOutsideTree: false, uniqueId: 'mock-0002',
       type: 'word', displayName: '伝票番号',
-      maxLength: 10,
+      customMaxLength: 10,
     },
     '件名': {
       kind: 'value', parent: null, isOutsideTree: false, uniqueId: 'mock-0003',
@@ -293,7 +293,7 @@ export const metadata = {
     '担当者.従業員番号': {
       kind: 'value', parent: '担当者', isOutsideTree: true, uniqueId: 'mock-1001',
       type: 'word', displayName: '従業員番号',
-      maxLength: 8,
+      customMaxLength: 8,
     },
     '担当者.氏名': {
       kind: 'value', parent: '担当者', isOutsideTree: true, uniqueId: 'mock-1002',

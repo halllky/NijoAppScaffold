@@ -9,14 +9,16 @@ export {
   type SearchDialogDefinition,
   type SearchDialogRefFieldDefinition,
   type SearchDialogConditionProps,
+  type SearchDialogSearchResult,
   type SearchDialog,
   type OpenSearchDialog,
   type FindByCodeResult,
 } from "./search-dialog/defineSearchDialog"
 export type { SearchDialogRegistry, SearchDialogParamsProp, RefToParamsProp } from "./search-dialog/SearchDialogRegistry"
 export { SearchDialogHost, type SearchDialogHostProps } from "./search-dialog/SearchDialogHost"
-export type { GridRow, UseEditableGridOptions, BoundUseEditableGrid } from "./useEditableGrid"
+export type { GridRow, UseEditableGridOptions, UseEditableGridReturn, BoundUseEditableGrid } from "./useEditableGrid"
 export type { BoundInputs, GridColumnHelper } from "./input/bindInputs"
+export type { InputRules } from "./input/InputProps"
 export type { FieldLabelProps } from "./FieldLabel"
 export type { RootErrorsProps } from "./RootErrors"
 export type { Messages } from "./MessageList"

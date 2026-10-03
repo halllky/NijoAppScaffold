@@ -17,11 +17,33 @@ export type InputPropsBase<TValues extends RHF.FieldValues> = {
    */
   name: RHF.Path<TValues>
   /**
-   * 読み取り専用にするかどうか。
-   * 未指定の場合はフォーム全体の設定に従う。true の場合、枠と背景色を消して値だけを表示する。
+   * 読み取り専用にするかどうか。未指定の場合は false。
+   * true の場合、枠と背景色を消して値だけを表示する。
    */
   isReadOnly?: boolean
+  /**
+   * メタデータから組み立てる検証ルールに追加する検証ルール。両方が適用される。
+   * 未指定の場合はメタデータから組み立てる検証ルールだけが適用される。
+   */
+  rules?: InputRules
   className?: string
+}
+
+/**
+ * 入力コンポーネントに追加する検証ルール。
+ * 検証エラーはクライアント側エラーとして、その項目のメッセージの表示領域に表示される。
+ */
+export type InputRules = {
+  /**
+   * 未入力をエラーにするかどうか。未指定の場合は false。
+   * FieldLabel の必須マークとは連動しないので、必須マークが必要ならそちらにも指定すること。
+   */
+  required?: boolean
+  /**
+   * 独自の検証。エラーならメッセージを、エラーでなければ undefined を返す。
+   * value はこの項目の現在の値。
+   */
+  validate?: (value: unknown) => string | undefined
 }
 
 /** フォーム用の入力コンポーネントの実体が受け取る props。画面側からはフックが返す Input 経由で使うため、binding は意識しない */

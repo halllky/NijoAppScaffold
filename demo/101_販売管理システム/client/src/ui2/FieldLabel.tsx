@@ -14,7 +14,7 @@ export type FieldLabelProps<TValues extends RHF.FieldValues> = {
    * 基準はデータ構造上必須か否かではなく、ユーザーが入力する必要があるかどうか。
    * 例えばプログラム上で自動的に採番される項目は、データ構造上必須でもユーザーは入力する必要がない。
    */
-  isRequired?: boolean
+  requiredMark?: boolean
   /** ラベル文字列の右側に追加で表示する内容。行追加ボタンなど */
   afterLabel?: React.ReactNode
   /**
@@ -45,5 +45,7 @@ export type FieldLabelProps<TValues extends RHF.FieldValues> = {
 export function FieldLabel<TValues extends RHF.FieldValues>(props: FieldLabelProps<TValues> & {
   binding: FormBinding<TValues>
 }): React.ReactNode {
+  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
+  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
   throw new Error('not implemented')
 }
