@@ -2,6 +2,7 @@ using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.Common;
 using Nijo.Parts.CSharp;
+using Nijo.Parts.JavaScript;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -161,8 +162,9 @@ namespace Nijo.Models.QueryModelModules {
             internal Entry(AggregateBase aggregate) : base(aggregate) { }
 
             public override string CsClassName => $"{base.Aggregate.PhysicalName}RefTarget";
-            public override string TsTypeName => $"{base.Aggregate.PhysicalName}RefTarget";
+            public override string TsTypeName => TypeScriptAggregateModule.GetExportName(base.Aggregate, "RefTarget");
             string IPresentationLayerStructure.CsClassName => CsClassName;
+            AggregateBase ICreatablePresentationLayerStructure.Aggregate => base.Aggregate;
 
             #region TypeScript側オブジェクト新規作成関数
             public string TsNewObjectFunction => $"createNew{TsTypeName}";
@@ -182,7 +184,9 @@ namespace Nijo.Models.QueryModelModules {
             internal string RenderTypeScriptObjectCreationFunction(CodeRenderingContext ctx) {
                 return $$"""
                     /** {{CsClassName}}を新規作成します。 */
-                    export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({{RenderTsNewObjectFunctionBody()}})
+                    export function {{TsNewObjectFunction}}(): {{TsTypeName}} {
+                      return {{WithIndent(RenderTsNewObjectFunctionBody(), "  ")}}
+                    }
                     """;
             }
             public string RenderTsNewObjectFunctionBody() {
@@ -279,9 +283,10 @@ namespace Nijo.Models.QueryModelModules {
 
             string IPresentationLayerStructure.IMember.RenderDeclaringTypeScript() {
                 var refTo = new Entry(_member.RefTo);
+                var refToTsTypeName = new TypeScriptAggregateModule(_member.RefTo).QualifyFrom(_member.Owner, refTo.TsTypeName);
 
                 return $$"""
-                    {{PhysicalName}}: {{refTo.TsTypeName}}
+                    {{PhysicalName}}: {{refToTsTypeName}}
                     """;
             }
         }

@@ -1,4 +1,5 @@
 using Nijo.CodeGenerating;
+using Nijo.Parts.JavaScript;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.Common;
 using Nijo.Parts.CSharp;
@@ -32,34 +33,37 @@ namespace Nijo.Models.CommandModelModules {
                 return new {
                     EscapedPhysicalName = rootAggregate.PhysicalName.Replace("'", "\\'"),
                     Endpoint = controller.GetActionNameForClient(CONTROLLER_ACTION_EXECUTE),
-                    ParamType = rootAggregate.GetParameterStructure()?.TsTypeName ?? "Record<string, never> // 引数なし",
-                    ReturnType = rootAggregate.GetReturnValueStructure()?.TsTypeName ?? "Record<string, never> // 戻り値なし",
+                    ParamType = QualifyTsTypeName(rootAggregate.GetParameterStructure()) ?? "Record<string, never> // 引数なし",
+                    ReturnType = QualifyTsTypeName(rootAggregate.GetReturnValueStructure()) ?? "Record<string, never> // 戻り値なし",
                 };
             }).ToArray();
 
+            static string? QualifyTsTypeName(ICreatablePresentationLayerStructure? structure) {
+                return structure == null
+                    ? null
+                    : new TypeScriptAggregateModule(structure.Aggregate).Qualify(structure.TsTypeName);
+            }
+
             return $$"""
-                /** コマンド起動処理 */
-                export namespace ExecuteFeature {
-                  /** コマンドの実行エンドポイントの一覧 */
-                  export const Endpoint: { [key in {{CommandQueryMappings.COMMAND_MODEL_TYPE}}]: string } = {
+                /** コマンドの実行エンドポイントの一覧 */
+                export const Endpoint: { [key in {{CommandQueryMappings.COMMAND_MODEL_TYPE}}]: string } = {
                 {{items.SelectTextTemplate(x => $$"""
-                    '{{x.EscapedPhysicalName}}': '{{x.Endpoint}}',
+                  '{{x.EscapedPhysicalName}}': '{{x.Endpoint}}',
                 """)}}
-                  }
+                }
 
-                  /** コマンドのパラメータ型の一覧 */
-                  export interface ParamType {
+                /** コマンドのパラメータ型の一覧 */
+                export interface ParamType {
                 {{items.SelectTextTemplate(x => $$"""
-                    '{{x.EscapedPhysicalName}}': {{x.ParamType}}
+                  '{{x.EscapedPhysicalName}}': {{x.ParamType}}
                 """)}}
-                  }
+                }
 
-                  /** コマンドのサーバーからの戻り値の型の一覧 */
-                  export interface ReturnType {
+                /** コマンドのサーバーからの戻り値の型の一覧 */
+                export interface ReturnType {
                 {{items.SelectTextTemplate(x => $$"""
-                    '{{x.EscapedPhysicalName}}': {{x.ReturnType}}
+                  '{{x.EscapedPhysicalName}}': {{x.ReturnType}}
                 """)}}
-                  }
                 }
                 """;
         }

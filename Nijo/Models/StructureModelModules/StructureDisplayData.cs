@@ -3,6 +3,7 @@ using System.Linq;
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.Common;
+using Nijo.Parts.JavaScript;
 
 namespace Nijo.Models.StructureModelModules;
 
@@ -14,7 +15,7 @@ internal class StructureDisplayData : EditablePresentationObject {
     internal StructureDisplayData(AggregateBase aggregate) : base(aggregate) { }
 
     internal override string CsClassName => $"{Aggregate.PhysicalName}DisplayData";
-    internal override string TsTypeName => $"{Aggregate.PhysicalName}DisplayData";
+    internal override string TsTypeName => TypeScriptAggregateModule.GetExportName(Aggregate, "DisplayData");
 
     internal override bool HasVersion => false;
     #region レンダリング

@@ -2,6 +2,7 @@ using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Models.DataModelModules;
 using Nijo.Parts.Common;
+using Nijo.Parts.JavaScript;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -20,7 +21,7 @@ namespace Nijo.Models.QueryModelModules {
         /// <summary>C#クラス名</summary>
         internal override string CsClassName => $"{Aggregate.PhysicalName}DisplayData";
         /// <summary>TypeScript型名</summary>
-        internal override string TsTypeName => $"{Aggregate.PhysicalName}DisplayData";
+        internal override string TsTypeName => TypeScriptAggregateModule.GetExportName(Aggregate, "DisplayData");
 
         /// <summary>楽観排他制御用のバージョンを持つかどうか</summary>
         internal override bool HasVersion => Aggregate is RootAggregate rootAggregate

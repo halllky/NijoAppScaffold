@@ -1,6 +1,7 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.Common;
+using Nijo.Parts.JavaScript;
 using Nijo.SchemaParsing;
 using Nijo.Models.ConstantModelModules;
 using System;
@@ -70,7 +71,9 @@ namespace Nijo.Models {
 
             // JavaScript/TypeScript定数の生成
             ctx.ReactProject(dir => {
-                dir.Generate(constantDef.RenderTypeScript(ctx));
+                dir.Directory(TypeScriptAggregateModule.DIRECTORY, modelsDir => {
+                    modelsDir.Generate(constantDef.RenderTypeScript(ctx));
+                });
             });
         }
 

@@ -22,7 +22,7 @@ internal class DeepEqualFunction {
 
     private readonly EditablePresentationObject _displayData;
 
-    internal string FunctionName => $"deepEqual{_displayData.Aggregate.PhysicalName}";
+    internal string FunctionName => "deepEqual";
 
     internal const string JSDOC = $$"""
         /**
@@ -54,11 +54,9 @@ internal class DeepEqualFunction {
 
         void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
             ctx.ReactProject(dir => {
-                dir.Directory("util", utilDir => {
-                    utilDir.Generate(new SourceFile() {
-                        FileName = $"{TYPENAME}.ts",
-                        Contents = RenderOptionType(ctx),
-                    });
+                dir.Generate(new SourceFile() {
+                    FileName = $"{TYPENAME}.ts",
+                    Contents = RenderOptionType(ctx),
                 });
             });
         }
@@ -81,7 +79,7 @@ internal class DeepEqualFunction {
                         return new {
                             DisplayName = "値オブジェクト",
                             TypeIdentifier = TYPE_VALUE_OBJECT,
-                            TsTypeName = t.TsTypeName.Split('.').Last(),
+                            t.TsTypeName,
                         };
                     } else {
                         return new {
@@ -101,19 +99,21 @@ internal class DeepEqualFunction {
                 })
                 .ToArray();
 
-            // voTypeNames はグルーピング後の valueMemberTypePhysicalNames から取得すると
+            // valueObjects はグルーピング後の valueMemberTypePhysicalNames から取得すると
             // 2個以上あるとき TsTypeName が結合文字列になって import文などが壊れるため、
             // グルーピング前のスキーマから個別に取得する
-            var voTypeNames = ctx.SchemaParser
+            var valueObjects = ctx.SchemaParser
                 .GetValueMemberTypes()
-                .Where(t => t is ValueMemberTypes.ValueObjectMember)
-                .Select(t => t.TsTypeName.Split('.').Last())
+                .OfType<ValueMemberTypes.ValueObjectMember>()
+                .ToArray();
+            var voTypeNames = valueObjects
+                .Select(t => t.TypePhysicalName)
                 .ToArray();
 
             return $$"""
-                import * as EnumDefs from "../enum-defs"
-                {{voTypeNames.SelectTextTemplate(t => $$"""
-                import { {{t}} } from "./{{t}}"
+                import * as EnumDefs from "./enum-defs"
+                {{valueObjects.SelectTextTemplate(vo => $$"""
+                {{vo.TsModule.RenderImportFromRoot(typeOnly: true)}}
                 """)}}
 
                 export interface DeepEqualValueMemberTypeMap {

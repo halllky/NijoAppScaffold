@@ -34,6 +34,8 @@ public interface IPresentationLayerStructure {
 /// <see cref="IPresentationLayerStructure"/> かつ新規オブジェクト作成関数がレンダリングされるもの
 /// </summary>
 public interface ICreatablePresentationLayerStructure : IPresentationLayerStructure {
+    /// <summary>この構造体が定義される集約</summary>
+    ImmutableSchema.AggregateBase Aggregate { get; }
     /// <summary>TypeScriptの新規オブジェクト作成関数の名前</summary>
     string TsNewObjectFunction { get; }
     /// <summary>TypeScriptの新規オブジェクト作成関数のリテラル部分をレンダリングします。</summary>

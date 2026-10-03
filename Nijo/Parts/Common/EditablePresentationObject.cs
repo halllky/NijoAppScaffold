@@ -5,6 +5,7 @@ using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Models.QueryModelModules;
 using Nijo.Parts.CSharp;
+using Nijo.Parts.JavaScript;
 using Nijo.SchemaParsing;
 
 namespace Nijo.Parts.Common;
@@ -44,6 +45,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         Aggregate = aggregate;
     }
     internal AggregateBase Aggregate { get; }
+    AggregateBase ICreatablePresentationLayerStructure.Aggregate => Aggregate;
 
     /// <summary>C#クラス名</summary>
     internal abstract string CsClassName { get; }
@@ -268,20 +270,23 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         public string RenderTsDeclaration() {
             return $$"""
                 {{Member.XElement.RenderXmlCommentOrJsDoc(E_CsTs.TypeScript)}}
-                {{PropertyName}}: {{RefEntry.TsTypeName}}
+                {{PropertyName}}: {{RefEntryTsTypeName}}
                 """;
         }
 
         public string RenderNewObjectCreation() {
-            return $"{RefEntry.TsNewObjectFunction}()";
+            return $"{new TypeScriptAggregateModule(Member.RefTo).QualifyFrom(Member.Owner, RefEntry.TsNewObjectFunction)}()";
         }
+
+        /// <summary>このメンバーを保持する集約のモジュールから見た参照先の型名</summary>
+        private string RefEntryTsTypeName => new TypeScriptAggregateModule(Member.RefTo).QualifyFrom(Member.Owner, RefEntry.TsTypeName);
 
         ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
         bool IInstanceStructurePropertyMetadata.IsArray => false;
         string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PropertyName;
         string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp
             ? RefEntry.CsClassName
-            : RefEntry.TsTypeName;
+            : RefEntryTsTypeName;
         IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => RefEntry.GetMembers();
     }
     #endregion ValueMember or RefTo
@@ -313,7 +318,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
     private string RenderTypeScriptObjectCreationFunction(CodeRenderingContext ctx) {
         return $$"""
             /** {{Aggregate.DisplayName}}の画面表示用データの新しいインスタンスを作成します。 */
-            export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => {
+            export function {{TsNewObjectFunction}}(): {{TsTypeName}} {
               // タイムスタンプ(ミリ秒) + ランダム文字列 で一意のIDを生成
               function generateRandomUniqueId(): string {
                 return [
@@ -358,7 +363,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         internal string PhysicalName => Aggregate.PhysicalName;
         internal string DisplayName => Aggregate.DisplayName;
         internal override string CsClassName => $"{Aggregate.PhysicalName}DisplayData";
-        internal override string TsTypeName => $"{Aggregate.PhysicalName}DisplayData";
+        internal override string TsTypeName => TypeScriptAggregateModule.GetExportName(Aggregate, "DisplayData");
         internal abstract string CsClassNameAsMember { get; }
         internal abstract string TsTypeNameAsMember { get; }
         internal override bool HasVersion => Aggregate is RootAggregate;

@@ -25,7 +25,7 @@ namespace Nijo.Models.QueryModelModules {
         internal string ConvertUrlToTypeScript(CodeRenderingContext ctx) {
             return $$"""
                 /** クエリパラメータを解釈して画面初期表示時検索条件オブジェクトを返します。 */
-                export const {{ParseQueryParameter}} = (urlSearch: string): {{_searchCondition.TsTypeName}} => {
+                export function {{ParseQueryParameter}}(urlSearch: string): {{_searchCondition.TsTypeName}} {
                   const searchCondition = {{_searchCondition.TsNewObjectFunction}}()
                   if (!urlSearch) return searchCondition
 
@@ -47,7 +47,7 @@ namespace Nijo.Models.QueryModelModules {
         internal string ConvertTypeScriptToUrl(CodeRenderingContext ctx) {
             return $$"""
                 /** 画面初期表示時検索条件オブジェクトをクエリパラメータに変換します。結果は第2引数のオブジェクト内に格納されます。 */
-                export const {{ToQueryParameter}} = (searchCondition: {{_searchCondition.TsTypeName}}, searchParams: URLSearchParams): void => {
+                export function {{ToQueryParameter}}(searchCondition: {{_searchCondition.TsTypeName}}, searchParams: URLSearchParams): void {
                   searchParams.append('{{URL_FILTER}}', JSON.stringify(searchCondition.{{SearchCondition.Entry.FILTER_TS}}))
                   if (searchCondition.{{SearchCondition.Entry.SORT_TS}} && searchCondition.{{SearchCondition.Entry.SORT_TS}}.length > 0) searchParams.append('{{URL_SORT}}', JSON.stringify(searchCondition.{{SearchCondition.Entry.SORT_TS}}))
                   if (searchCondition.{{SearchCondition.Entry.TAKE_TS}} !== undefined && searchCondition.{{SearchCondition.Entry.TAKE_TS}} !== null) searchParams.append('{{URL_TAKE}}', searchCondition.{{SearchCondition.Entry.TAKE_TS}})

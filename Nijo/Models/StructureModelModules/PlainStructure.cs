@@ -4,6 +4,7 @@ using System.Linq;
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
+using Nijo.Parts.JavaScript;
 
 namespace Nijo.Models.StructureModelModules;
 
@@ -15,9 +16,10 @@ internal class PlainStructure : IInstancePropertyOwnerMetadata, ICreatablePresen
     internal PlainStructure(RootAggregate aggregate) { Aggregate = aggregate; }
     protected PlainStructure(AggregateBase aggregate) { Aggregate = aggregate; }
     internal AggregateBase Aggregate { get; }
+    AggregateBase ICreatablePresentationLayerStructure.Aggregate => Aggregate;
 
     public virtual string CsClassName => Aggregate.PhysicalName;
-    public virtual string TsTypeName => Aggregate.PhysicalName;
+    public string TsTypeName => TypeScriptAggregateModule.GetExportName(Aggregate, "Structure");
 
     /// <summary>
     /// TypeScriptの新規オブジェクト作成関数の名前
@@ -88,7 +90,9 @@ internal class PlainStructure : IInstancePropertyOwnerMetadata, ICreatablePresen
     private string RenderTypeScriptObjectCreationFunction(CodeRenderingContext ctx) {
         return $$"""
             /** {{Aggregate.DisplayName}}の構造体の新しいインスタンスを作成します。 */
-            export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({{RenderTsNewObjectFunctionBody()}})
+            export function {{TsNewObjectFunction}}(): {{TsTypeName}} {
+              return {{WithIndent(RenderTsNewObjectFunctionBody(), "  ")}}
+            }
             """;
     }
     public string RenderTsNewObjectFunctionBody() {
@@ -106,7 +110,7 @@ internal class PlainStructure : IInstancePropertyOwnerMetadata, ICreatablePresen
                     """;
             } else if (member is StructureRefToMember refTo) {
                 return $$"""
-                    {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{refTo.GetTargetStructure().TsNewObjectFunction}}(),
+                    {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{refTo.GetTargetTsNewObjectFunction()}}(),
                     """;
             } else if (member is StructureDescendantMember s) {
                 var initializer = s.IsArray ? "[]" : $"{s.RenderTsNewObjectFunctionBody()}";
@@ -194,7 +198,7 @@ internal class PlainStructure : IInstancePropertyOwnerMetadata, ICreatablePresen
                     """;
             } else if (member is StructureRefToMember refTo) {
                 return $$"""
-                    {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{refTo.GetTargetStructure().TsTypeName}}
+                    {{member.GetPropertyName(E_CsTs.TypeScript)}}: {{refTo.GetTargetTsTypeName()}}
                     """;
             } else if (member is StructureDescendantMember s) {
                 return $$"""
@@ -238,6 +242,14 @@ internal class StructureRefToMember : IInstanceStructurePropertyMetadata {
                 : new StructureDescendantMember(_refToMember.RefTo),
         };
     }
+    /// <summary>このメンバーを保持する集約のモジュールから見た参照先の型名</summary>
+    internal string GetTargetTsTypeName() {
+        return new TypeScriptAggregateModule(_refToMember.RefTo).QualifyFrom(_refToMember.Owner, GetTargetStructure().TsTypeName);
+    }
+    /// <summary>このメンバーを保持する集約のモジュールから見た参照先の新規オブジェクト作成関数名</summary>
+    internal string GetTargetTsNewObjectFunction() {
+        return new TypeScriptAggregateModule(_refToMember.RefTo).QualifyFrom(_refToMember.Owner, GetTargetStructure().TsNewObjectFunction);
+    }
 
     ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => _refToMember;
     bool IInstanceStructurePropertyMetadata.IsArray => false;
@@ -245,7 +257,7 @@ internal class StructureRefToMember : IInstanceStructurePropertyMetadata {
     string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) {
         return csts == E_CsTs.CSharp
             ? GetTargetStructure().CsClassName
-            : GetTargetStructure().TsTypeName;
+            : GetTargetTsTypeName();
     }
     IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() {
         return GetTargetStructure().GetMembers();
@@ -263,7 +275,6 @@ internal class StructureDescendantMember : PlainStructure, IInstanceStructurePro
     }
 
     public override string CsClassName => $"{Aggregate.GetRoot().PhysicalName}_{Aggregate.PhysicalName}";
-    public override string TsTypeName => $"{Aggregate.GetRoot().PhysicalName}_{Aggregate.PhysicalName}";
 
     public bool IsArray => Aggregate is ChildrenAggregate;
     string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp ? CsClassName : TsTypeName;

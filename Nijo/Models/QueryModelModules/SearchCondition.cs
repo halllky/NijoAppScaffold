@@ -1,6 +1,7 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
+using Nijo.Parts.JavaScript;
 using Nijo.Util.DotnetEx;
 using Nijo.SchemaParsing;
 using System;
@@ -42,16 +43,17 @@ namespace Nijo.Models.QueryModelModules {
             }
             private readonly RootAggregate _entryAggregate;
             internal RootAggregate EntryAggregate => _entryAggregate;
+            AggregateBase ICreatablePresentationLayerStructure.Aggregate => _entryAggregate;
 
             internal virtual string CsClassName => $"{_entryAggregate.PhysicalName}SearchCondition";
-            internal virtual string TsTypeName => $"{_entryAggregate.PhysicalName}SearchCondition";
+            internal virtual string TsTypeName => "SearchCondition";
             string IPresentationLayerStructure.CsClassName => CsClassName;
             string IPresentationLayerStructure.TsTypeName => TsTypeName;
 
             /// <summary>フィルタリング</summary>
             internal Filter FilterRoot { get; }
 
-            internal string TypeScriptSortableMemberType => $"SortableMemberOf{_entryAggregate.PhysicalName}";
+            internal string TypeScriptSortableMemberType => "SortableMember";
             internal string GetTypeScriptSortableMemberType => $"get{TypeScriptSortableMemberType}";
 
             internal const string FILTER_CS = "Filter";
@@ -161,11 +163,13 @@ namespace Nijo.Models.QueryModelModules {
                     """)}}
 
                     /** {{_entryAggregate.DisplayName}}のメンバーのうちソート可能なものを文字列で返します。 */
-                    export const {{GetTypeScriptSortableMemberType}} = (): {{TypeScriptSortableMemberType}}[] => [
+                    export function {{GetTypeScriptSortableMemberType}}(): {{TypeScriptSortableMemberType}}[] {
+                      return [
                     {{sortableMembers.SelectTextTemplate(m => $$"""
-                      '{{m.GetLiteral().Replace("'", "\\'")}}',
+                        '{{m.GetLiteral().Replace("'", "\\'")}}',
                     """)}}
-                    ]
+                      ]
+                    }
                     """;
             }
 
@@ -211,7 +215,9 @@ namespace Nijo.Models.QueryModelModules {
             internal string RenderNewObjectFunction() {
                 return $$"""
                     /** {{_entryAggregate.DisplayName}}の検索条件クラスの空オブジェクトを作成して返します。 */
-                    export const {{TsNewObjectFunction}} = (): {{TsTypeName}} => ({{RenderTsNewObjectFunctionBody()}})
+                    export function {{TsNewObjectFunction}}(): {{TsTypeName}} {
+                      return {{WithIndent(RenderTsNewObjectFunctionBody(), "  ")}}
+                    }
                     """;
             }
             public string RenderTsNewObjectFunctionBody() {
@@ -230,7 +236,7 @@ namespace Nijo.Models.QueryModelModules {
 
 
             #region 主キーアサイン関数
-            internal string PkAssignFunctionName => $"assign{_entryAggregate.PhysicalName}SearchConditionKeys";
+            internal string PkAssignFunctionName => "assignSearchConditionKeys";
             internal string RenderPkAssignFunction() {
                 var keys = _entryAggregate
                     .GetKeyVMs()
@@ -242,7 +248,7 @@ namespace Nijo.Models.QueryModelModules {
 
                 return $$"""
                     /** {{_entryAggregate.DisplayName}}の主キーを設定します。 */
-                    export const {{PkAssignFunctionName}} = (obj: {{TsTypeName}}, keys: [{{keys.Select(k => $"{k.PhysicalName}: {k.Type.TsTypeName} | null | undefined").Join(", ")}}]) => {
+                    export function {{PkAssignFunctionName}}(obj: {{TsTypeName}}, keys: [{{keys.Select(k => $"{k.PhysicalName}: {k.Type.TsTypeName} | null | undefined").Join(", ")}}]): void {
                       if (keys.length !== {{keys.Length}}) {
                         console.error(`主キーの数が一致しません。個数は{{keys.Length}}であるべきところ${keys.length}個です。`);
                         return
@@ -289,7 +295,7 @@ namespace Nijo.Models.QueryModelModules {
             private readonly AggregateBase _aggregate;
 
             internal virtual string CsClassName => $"{_aggregate.PhysicalName}SearchConditionFilter";
-            internal virtual string TsTypeName => $"{_aggregate.PhysicalName}SearchConditionFilter";
+            internal virtual string TsTypeName => TypeScriptAggregateModule.GetExportName(_aggregate, "SearchConditionFilter");
 
             bool IInstanceStructurePropertyMetadata.IsArray => false;
             string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp ? CsClassName : TsTypeName;
@@ -518,7 +524,10 @@ namespace Nijo.Models.QueryModelModules {
             }
 
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => _rm.PhysicalName;
-            string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp ? RefToFilter.CsClassName : RefToFilter.TsTypeName;
+            string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp ? RefToFilter.CsClassName : RefToFilterTsTypeName;
+
+            /// <summary>このメンバーを保持する集約のモジュールから見た参照先のフィルターの型名</summary>
+            private string RefToFilterTsTypeName => new TypeScriptAggregateModule(_rm.RefTo).QualifyFrom(_rm.Owner, RefToFilter.TsTypeName);
 
             string IFilterMember.RenderCSharpDeclaring(CodeRenderingContext ctx) {
                 return $$"""
@@ -528,7 +537,7 @@ namespace Nijo.Models.QueryModelModules {
             }
             string IFilterMember.RenderTypeScriptDeclaring() {
                 return $$"""
-                    {{_rm.PhysicalName}}: {{RefToFilter.TsTypeName}}
+                    {{_rm.PhysicalName}}: {{RefToFilterTsTypeName}}
                     """;
             }
             string IFilterMember.RenderTsNewObjectFunctionValue() {

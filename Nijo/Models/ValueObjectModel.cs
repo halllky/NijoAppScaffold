@@ -1,6 +1,7 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.Common;
+using Nijo.Parts.JavaScript;
 using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
@@ -37,8 +38,8 @@ namespace Nijo.Models {
 
             // TypeScript定義の生成
             ctx.ReactProject(dir => {
-                dir.Directory("util", utilDir => {
-                    utilDir.Generate(RenderTypeScript(rootAggregate));
+                dir.Directory(TypeScriptAggregateModule.DIRECTORY, modelsDir => {
+                    modelsDir.Generate(RenderTypeScript(rootAggregate));
                 });
             });
         }
@@ -126,7 +127,7 @@ namespace Nijo.Models {
             var aggregateName = rootAggregate.PhysicalName;
 
             return new SourceFile {
-                FileName = $"{rootAggregate.PhysicalName}.ts",
+                FileName = $"{new TypeScriptAggregateModule(rootAggregate).FileNameWithoutExtension}.ts",
                 Contents = $$"""
                     /**
                      * {{rootAggregate.DisplayName}}。

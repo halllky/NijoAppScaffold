@@ -326,10 +326,8 @@ namespace Nijo.Models {
                 });
             });
             ctx.ReactProject(dir => {
-                dir.Directory("util", utilDir => {
-                    utilDir.Generate(SearchCondition.Entry.RenderTsBaseType()); // 検索条件の基底型
-                    utilDir.Generate(SearchProcessingReturn.RenderTypeScript()); // 一覧検索の戻り値の型
-                });
+                dir.Generate(SearchCondition.Entry.RenderTsBaseType()); // 検索条件の基底型
+                dir.Generate(SearchProcessingReturn.RenderTypeScript()); // 一覧検索の戻り値の型
             });
         }
     }

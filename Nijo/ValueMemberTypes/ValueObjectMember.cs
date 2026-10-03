@@ -2,6 +2,7 @@ using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Models;
 using Nijo.Models.QueryModelModules;
+using Nijo.Parts.JavaScript;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
@@ -22,7 +23,7 @@ internal class ValueObjectMember : IValueMemberType {
     string IValueMemberType.SchemaTypeName => _ctx.GetPhysicalName(_xElement);
     string IValueMemberType.CsDomainTypeName => _ctx.GetPhysicalName(_xElement);
     string IValueMemberType.CsPrimitiveTypeName => "string";
-    string IValueMemberType.TsTypeName => $"Util.{_ctx.GetPhysicalName(_xElement)}";
+    string IValueMemberType.TsTypeName => TsModule.Qualify(_ctx.GetPhysicalName(_xElement));
     string IValueMemberType.DisplayName => "値オブジェクト型";
 
     string IValueMemberType.RenderSpecificationMarkdown() {
@@ -42,6 +43,9 @@ internal class ValueObjectMember : IValueMemberType {
         _xElement = xElement;
         _ctx = ctx;
     }
+
+    /// <summary>この値オブジェクトの型が定義される TypeScript のモジュール</summary>
+    internal TypeScriptAggregateModule TsModule => new(_ctx.ToAggregateBase(_xElement, null));
 
     void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
         // 値オブジェクト型の検証

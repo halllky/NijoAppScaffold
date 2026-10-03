@@ -1,4 +1,5 @@
 using Nijo.CodeGenerating;
+using Nijo.Parts.JavaScript;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.Common;
 using Nijo.Parts.CSharp;
@@ -38,34 +39,31 @@ namespace Nijo.Models.QueryModelModules {
                 return new {
                     EscapedPhysicalName = refEntry.Aggregate.RefEntryName,
                     Endpoint = controller.GetActionNameForClient(searchProcess.ControllerActionLoad),
-                    ParamType = searchCondition.TsTypeName,
-                    ReturnType = $"Util.{SearchProcessingReturn.TYPE_TS}<{refEntry.TsTypeName}>",
+                    ParamType = new TypeScriptAggregateModule(rootAggregate).Qualify(searchCondition.TsTypeName),
+                    ReturnType = $"Util.{SearchProcessingReturn.TYPE_TS}<{new TypeScriptAggregateModule(rootAggregate).Qualify(refEntry.TsTypeName)}>",
                 };
             }).ToArray();
 
             return $$"""
-                /** 参照検索処理 */
-                export namespace LoadRefFeature {
-                  /** 参照検索処理のURLエンドポイントの一覧 */
-                  export const Endpoint: { [key in {{CommandQueryMappings.REFERED_QUERY_MODEL_TYPE}}]: string } = {
+                /** 参照検索処理のURLエンドポイントの一覧 */
+                export const Endpoint: { [key in {{CommandQueryMappings.REFERED_QUERY_MODEL_TYPE}}]: string } = {
                 {{items.SelectTextTemplate(x => $$"""
-                    '{{x.EscapedPhysicalName}}': '{{x.Endpoint}}',
+                  '{{x.EscapedPhysicalName}}': '{{x.Endpoint}}',
                 """)}}
-                  }
+                }
 
-                  /** 参照検索処理のパラメータ型の一覧 */
-                  export interface ParamType {
+                /** 参照検索処理のパラメータ型の一覧 */
+                export interface ParamType {
                 {{items.SelectTextTemplate(x => $$"""
-                    '{{x.EscapedPhysicalName}}': {{x.ParamType}}
+                  '{{x.EscapedPhysicalName}}': {{x.ParamType}}
                 """)}}
-                  }
+                }
 
-                  /** 参照検索処理の処理結果の型の一覧 */
-                  export interface ReturnType {
+                /** 参照検索処理の処理結果の型の一覧 */
+                export interface ReturnType {
                 {{items.SelectTextTemplate(x => $$"""
-                    '{{x.EscapedPhysicalName}}': {{x.ReturnType}}
+                  '{{x.EscapedPhysicalName}}': {{x.ReturnType}}
                 """)}}
-                  }
                 }
                 """;
         }

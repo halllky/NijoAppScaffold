@@ -1,6 +1,7 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
+using Nijo.Parts.JavaScript;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -114,9 +115,11 @@ namespace Nijo.Parts.Common {
             });
             ctx.ReactProject(dir => {
                 if (_typeScriptTypeDef.Count > 0 || _typeScriptFunctions.Count > 0) {
-                    dir.Generate(new SourceFile(_callerFilePath, _callerMemberName) {
-                        FileName = $"{_rootAggregate.PhysicalName.ToFileNameSafe()}.ts",
-                        Contents = RenderNodeJs(ctx),
+                    dir.Directory(TypeScriptAggregateModule.DIRECTORY, modelsDir => {
+                        modelsDir.Generate(new SourceFile(_callerFilePath, _callerMemberName) {
+                            FileName = $"{new TypeScriptAggregateModule(_rootAggregate).FileNameWithoutExtension}.ts",
+                            Contents = RenderNodeJs(ctx),
+                        });
                     });
                 }
             });
@@ -195,60 +198,36 @@ namespace Nijo.Parts.Common {
                 """;
         }
         private string RenderNodeJs(CodeRenderingContext ctx) {
-            // 1つ隣のref-toはimportする必要がある
-            var refTos = _rootAggregate
-                .EnumerateThisAndDescendants()
+            var thisModule = new TypeScriptAggregateModule(_rootAggregate);
+            var tree = _rootAggregate.EnumerateThisAndDescendants().ToArray();
+
+            // 外部参照先の集約のモジュール
+            var refToModules = tree
                 .SelectMany(agg => agg.GetMembers())
                 .OfType<RefToMember>()
-                .Select(@ref => @ref.RefTo)
-                .Distinct()
-                .GroupBy(agg => agg.GetRoot());
+                .Select(@ref => new TypeScriptAggregateModule(@ref.RefTo))
+                .Where(module => module.ImportAlias != thisModule.ImportAlias)
+                .DistinctBy(module => module.ImportAlias)
+                .OrderBy(module => module.ImportAlias);
 
-            var refToModules = new Dictionary<string, List<string>>();
-            foreach (var group in refTos) {
-                var fileName = $"./{group.Key.PhysicalName}";
-                var modules = new List<string>();
-
-                // DisplayData（Ref）
-                if (group.Key.Model is Models.StructureModel) {
-                    var plainStructure = new Models.StructureModelModules.PlainStructure(group.Key);
-                    modules.Add(plainStructure.TsTypeName);
-                    modules.Add(plainStructure.TsNewObjectFunction);
-
-                } else {
-                    var refEntries = group.Select(agg => new Models.QueryModelModules.DisplayDataRef.Entry(agg));
-                    foreach (var refEntry in refEntries) {
-                        modules.Add(refEntry.TsTypeName);
-                        modules.Add(refEntry.TsNewObjectFunction);
-                    }
-
-                    // DisplayData
-                    foreach (var agg in group) {
-                        var displayData = new Models.QueryModelModules.DisplayData(agg);
-                        modules.Add(displayData.TsTypeName);
-                        modules.Add(displayData.TsNewObjectFunction);
-                    }
-
-                    // SearchCondition
-                    var searchConditionList = group
-                        .Select(agg => agg.GetRoot())
-                        .Distinct()
-                        .Select(agg => new Models.QueryModelModules.SearchCondition.Entry(agg));
-                    foreach (var searchCondition in searchConditionList) {
-                        modules.Add(searchCondition.TsTypeName);
-                        modules.Add(searchCondition.FilterRoot.TsTypeName);
-                        modules.Add(searchCondition.TsNewObjectFunction);
-                    }
-                }
-
-                refToModules.Add(fileName, modules);
-            }
+            // 値オブジェクトのモジュール
+            var valueObjectModules = tree
+                .SelectMany(agg => agg.GetMembers())
+                .OfType<ValueMember>()
+                .Select(vm => vm.Type)
+                .OfType<ValueMemberTypes.ValueObjectMember>()
+                .Select(vo => vo.TsModule)
+                .DistinctBy(module => module.ImportAlias)
+                .OrderBy(module => module.ImportAlias);
 
             return $$"""
-                import * as Util from "./util"
-                import * as EnumDefs from "./{{Path.GetFileNameWithoutExtension(EnumFile.TS_FILENAME)}}"
-                {{refToModules.SelectTextTemplate(modules => $$"""
-                import { {{modules.Value.Join(", ")}} } from "{{modules.Key}}"
+                import type * as Util from ".."
+                import * as EnumDefs from "../{{Path.GetFileNameWithoutExtension(EnumFile.TS_FILENAME)}}"
+                {{refToModules.SelectTextTemplate(module => $$"""
+                {{module.RenderImportFromSibling()}}
+                """)}}
+                {{valueObjectModules.SelectTextTemplate(module => $$"""
+                {{module.RenderImportFromSibling(typeOnly: true)}}
                 """)}}
 
                 //#region 型定義
