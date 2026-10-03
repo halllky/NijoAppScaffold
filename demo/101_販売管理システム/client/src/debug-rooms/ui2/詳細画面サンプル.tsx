@@ -6,9 +6,10 @@ import { PageBase } from "../../app/PageBase"
 import { PageTitle } from "../../ui/PageTitle"
 import { Button } from "../../ui/Button"
 import { CheckBox } from "../../ui/CheckBox"
-import { FieldGroup, SearchDialogHost, useDisplayDataForm, type GridRow } from "../../ui2"
+import { FieldColumn, FieldGroup, SearchDialogHost, useDisplayDataForm, type GridRow } from "../../ui2"
 import { ValuesPreview } from "./ValuesPreview"
 import { 従業員検索ダイアログ } from "./従業員検索ダイアログ"
+import { 検索ダイアログ一覧 } from "./検索ダイアログ一覧"
 import * as サンプル伝票 from "./サンプル伝票"
 
 /**
@@ -18,8 +19,8 @@ import * as サンプル伝票 from "./サンプル伝票"
  */
 export default function DisplayDataFormSamplePage() {
   return (
-    // 検索ダイアログの描画先。実際のアプリケーションではルートに置くが、この画面だけで完結させるためここに置く
-    <SearchDialogHost>
+    // 検索ダイアログの描画先と対応表。実際のアプリケーションではルートに置くが、この画面だけで完結させるためここに置く
+    <SearchDialogHost dialogs={検索ダイアログ一覧}>
       <PageBase
         browserTitle="UI2 詳細画面サンプル"
         header={<PageTitle>UI2 詳細画面サンプル</PageTitle>}
@@ -71,7 +72,7 @@ function DisplayDataFormSample() {
     col.numeric('単価', { header: '単価（税抜）', defaultWidth: 120 }),
     col.date('納期', { defaultWidth: 120 }),
     col.checkBox('完了', { defaultWidth: 56 }),
-    col.refTo('検品者', { dialog: 従業員検索ダイアログ, params: { 退職者を含む: false }, defaultWidth: 200 }),
+    col.refTo('検品者', { params: { 退職者を含む: false }, defaultWidth: 200 }),
     col.textArea('備考', { defaultWidth: 240, wrap: true }),
     deleteButtonColumn(handleRemoveDetailRow),
   ], [], {
@@ -126,36 +127,49 @@ function DisplayDataFormSample() {
         {/* どの項目にも表示されないメッセージ */}
         <RootErrors />
 
-        {/* ヘッダ部 */}
+        {/* ヘッダ部。項目の意味のまとまりごとに列を分ける */}
         <FieldGroup title="基本情報">
-          <FieldLabel name="伝票番号" isRequired>
-            <Input.TextBox name="伝票番号" className="w-32" />
-          </FieldLabel>
-          <FieldLabel name="件名" isRequired>
-            <Input.TextBox name="件名" />
-          </FieldLabel>
-          <FieldLabel name="伝票日付" isRequired>
-            <Input.DateInput name="伝票日付" />
-          </FieldLabel>
-          <FieldLabel name="計上年月">
-            <Input.DateInput name="計上年月" />
-          </FieldLabel>
-          <FieldLabel name="担当者" isRequired>
-            <Input.RefTo name="担当者" dialog={従業員検索ダイアログ} params={{ 退職者を含む: false }} />
-          </FieldLabel>
-          <FieldLabel name="登録日時">
-            <Input.DateInput name="登録日時" isReadOnly />
-          </FieldLabel>
-          <FieldLabel name="合計金額" afterLabel={<span className="text-xs text-gray-500 self-center">自動計算</span>}>
-            <Input.NumericTextBox name="合計金額" isReadOnly />
-          </FieldLabel>
-          <FieldLabel name="税率">
-            <Input.NumericTextBox name="税率" className="w-24" />
-          </FieldLabel>
-          <FieldLabel name="確定済み">
-            <Input.CheckBox name="確定済み">確定する</Input.CheckBox>
-          </FieldLabel>
-          <FieldLabel name="備考" vertical wide>
+          {/* 伝票の識別と担当 */}
+          <FieldColumn>
+            <FieldLabel name="伝票番号" isRequired>
+              <Input.TextBox name="伝票番号" className="w-32" />
+            </FieldLabel>
+            <FieldLabel name="件名" isRequired>
+              <Input.TextBox name="件名" />
+            </FieldLabel>
+            <FieldLabel name="担当者" isRequired>
+              <Input.RefTo name="担当者" params={{ 退職者を含む: false }} />
+            </FieldLabel>
+          </FieldColumn>
+
+          {/* 日付 */}
+          <FieldColumn>
+            <FieldLabel name="伝票日付" isRequired>
+              <Input.DateInput name="伝票日付" />
+            </FieldLabel>
+            <FieldLabel name="計上年月">
+              <Input.DateInput name="計上年月" />
+            </FieldLabel>
+            <FieldLabel name="登録日時">
+              <Input.DateInput name="登録日時" isReadOnly />
+            </FieldLabel>
+          </FieldColumn>
+
+          {/* 金額と状態 */}
+          <FieldColumn>
+            <FieldLabel name="合計金額" afterLabel={<span className="text-xs text-gray-500 self-center">自動計算</span>}>
+              <Input.NumericTextBox name="合計金額" isReadOnly />
+            </FieldLabel>
+            <FieldLabel name="税率">
+              <Input.NumericTextBox name="税率" className="w-24" />
+            </FieldLabel>
+            <FieldLabel name="確定済み">
+              <Input.CheckBox name="確定済み">確定する</Input.CheckBox>
+            </FieldLabel>
+          </FieldColumn>
+
+          {/* FieldGroup の直下に置いた項目は横幅いっぱいに表示される */}
+          <FieldLabel name="備考" vertical>
             <Input.TextArea name="備考" className="min-h-16 max-h-48" />
           </FieldLabel>
         </FieldGroup>

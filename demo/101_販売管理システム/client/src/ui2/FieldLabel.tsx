@@ -10,11 +10,6 @@ export type FieldLabelProps<TValues extends RHF.FieldValues> = {
    */
   vertical?: boolean
   /**
-   * FieldGroup の中で、横幅いっぱいに表示するかどうか。未指定の場合は1列分の幅。
-   * FieldGroup の外に置いた場合は効果が無い。
-   */
-  wide?: boolean
-  /**
    * 必須マークを付けるかどうか。未指定の場合は付けない。
    * 基準はデータ構造上必須か否かではなく、ユーザーが入力する必要があるかどうか。
    * 例えばプログラム上で自動的に採番される項目は、データ構造上必須でもユーザーは入力する必要がない。
@@ -44,7 +39,8 @@ export type FieldLabelProps<TValues extends RHF.FieldValues> = {
  * label 要素の中には操作可能な要素を1つしか置けないが、children にはグリッドなど複数の操作可能な要素を置けるようにするため。
  * ラベルと入力欄の対応付けは htmlFor と id で行う。
  *
- * 項目の配置（何列に並べるか、ラベルの幅をそろえるか）はこのコンポーネントでは決めない。FieldGroup が決める。
+ * 項目の配置（どの列に並べるか、横幅いっぱいに表示するか、ラベルの幅をそろえるか）はこのコンポーネントでは決めない。
+ * FieldGroup と FieldColumn のどこに置くかで決まる。
  */
 export function FieldLabel<TValues extends RHF.FieldValues>(props: FieldLabelProps<TValues> & {
   binding: FormBinding<TValues>

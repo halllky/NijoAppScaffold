@@ -2,9 +2,9 @@ import React from "react"
 import { PageBase } from "../../app/PageBase"
 import { PageTitle } from "../../ui/PageTitle"
 import { Button } from "../../ui/Button"
-import { FieldGroup, SearchDialogHost, useSearchConditionForm } from "../../ui2"
+import { FieldColumn, FieldGroup, SearchDialogHost, useSearchConditionForm } from "../../ui2"
 import { ValuesPreview } from "./ValuesPreview"
-import { 従業員検索ダイアログ } from "./従業員検索ダイアログ"
+import { 検索ダイアログ一覧 } from "./検索ダイアログ一覧"
 import * as サンプル伝票 from "./サンプル伝票"
 
 /**
@@ -14,8 +14,8 @@ import * as サンプル伝票 from "./サンプル伝票"
  */
 export default function SearchConditionFormSamplePage() {
   return (
-    // 検索ダイアログの描画先。実際のアプリケーションではルートに置くが、この画面だけで完結させるためここに置く
-    <SearchDialogHost>
+    // 検索ダイアログの描画先と対応表。実際のアプリケーションではルートに置くが、この画面だけで完結させるためここに置く
+    <SearchDialogHost dialogs={検索ダイアログ一覧}>
       <PageBase
         browserTitle="UI2 一覧検索サンプル"
         header={<PageTitle>UI2 一覧検索サンプル</PageTitle>}
@@ -77,29 +77,40 @@ function SearchConditionFormSample() {
 
         {/* 検索条件欄。数値・日付は範囲指定、真偽値は「該当する/しない」になる */}
         <FieldGroup>
-          <FieldLabel name="伝票番号">
-            <Input.TextBox name="伝票番号" className="w-32" />
-          </FieldLabel>
-          <FieldLabel name="件名">
-            <Input.TextBox name="件名" />
-          </FieldLabel>
-          <FieldLabel name="伝票日付">
-            <Input.DateInput name="伝票日付" />
-          </FieldLabel>
-          <FieldLabel name="合計金額">
-            <Input.NumericTextBox name="合計金額" />
-          </FieldLabel>
-          <FieldLabel name="確定済み">
-            <Input.CheckBox name="確定済み" />
-          </FieldLabel>
-          {/* 外部参照。コードと名称のどちらも手入力でき、検索ダイアログで選ぶこともできる */}
-          <FieldLabel name="担当者">
-            <Input.RefTo name="担当者" dialog={従業員検索ダイアログ} params={{ 退職者を含む: true }} />
-          </FieldLabel>
-          {/* 文章の項目も、検索条件では1行の入力欄になる */}
-          <FieldLabel name="備考">
-            <Input.TextArea name="備考" />
-          </FieldLabel>
+          {/* 伝票の内容 */}
+          <FieldColumn>
+            <FieldLabel name="伝票番号">
+              <Input.TextBox name="伝票番号" className="w-32" />
+            </FieldLabel>
+            <FieldLabel name="件名">
+              <Input.TextBox name="件名" />
+            </FieldLabel>
+            {/* 文章の項目も、検索条件では1行の入力欄になる */}
+            <FieldLabel name="備考">
+              <Input.TextArea name="備考" />
+            </FieldLabel>
+          </FieldColumn>
+
+          {/* 日付と金額 */}
+          <FieldColumn>
+            <FieldLabel name="伝票日付">
+              <Input.DateInput name="伝票日付" />
+            </FieldLabel>
+            <FieldLabel name="合計金額">
+              <Input.NumericTextBox name="合計金額" />
+            </FieldLabel>
+          </FieldColumn>
+
+          {/* 状態と担当 */}
+          <FieldColumn>
+            <FieldLabel name="確定済み">
+              <Input.CheckBox name="確定済み" />
+            </FieldLabel>
+            {/* 外部参照。コードと名称のどちらも手入力でき、検索ダイアログで選ぶこともできる */}
+            <FieldLabel name="担当者">
+              <Input.RefTo name="担当者" params={{ 退職者を含む: true }} />
+            </FieldLabel>
+          </FieldColumn>
         </FieldGroup>
 
         {/* 検索・クリア */}

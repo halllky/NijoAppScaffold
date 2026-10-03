@@ -3,7 +3,7 @@
 
 export * from "./useDisplayDataForm"
 export * from "./useSearchConditionForm"
-export { FieldGroup, type FieldGroupProps } from "./FieldGroup"
+export { FieldGroup, FieldColumn, type FieldGroupProps, type FieldColumnProps } from "./FieldGroup"
 export {
   defineSearchDialog,
   type SearchDialogDefinition,
@@ -11,7 +11,9 @@ export {
   type SearchDialogConditionProps,
   type SearchDialog,
   type OpenSearchDialog,
+  type FindByCodeResult,
 } from "./search-dialog/defineSearchDialog"
+export type { SearchDialogRegistry, SearchDialogParamsProp, RefToParamsProp } from "./search-dialog/SearchDialogRegistry"
 export { SearchDialogHost, type SearchDialogHostProps } from "./search-dialog/SearchDialogHost"
 export type { GridRow, UseEditableGridOptions, BoundUseEditableGrid } from "./useEditableGrid"
 export type { BoundInputs, GridColumnHelper } from "./input/bindInputs"
@@ -24,4 +26,4 @@ export type { NumericTextBoxProps, NumericColumnOptions } from "./input/NumericT
 export type { DateInputProps, DateColumnOptions } from "./input/DateInput"
 export type { CheckBoxProps, CheckBoxColumnOptions } from "./input/CheckBox"
 export type { EnumSelectionProps, EnumColumnOptions } from "./input/EnumSelection"
-export type { RefToProps, RefToColumnOptions, SearchDialogParamsProp } from "./input/RefTo"
+export type { RefToProps, RefToColumnOptions } from "./input/RefTo"

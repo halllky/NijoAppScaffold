@@ -57,8 +57,9 @@ export type SearchDialogRefFieldDefinition<TSearchCondition extends SearchCondit
   /** 入力欄に名称として表示する値の、アイテムから見たパス */
   namePath: RHF.Path<TItem>
   /**
-   * 手入力されたコードで検索するときの検索条件。
-   * 検索結果がちょうど1件ならそれを選んだものとする。
+   * 画面表示用データの入力欄で、手入力されたコードを照合するときの検索条件。
+   * 検索結果がちょうど1件ならそれを選んだものとし、2件以上ならエラーとする。
+   * 検索条件のフォームの入力欄ではコードの照合を行わないので呼ばれない。
    */
   createConditionFromCode: (code: string, params: TOpenParams) => TSearchCondition
   /**
@@ -90,12 +91,23 @@ export type SearchDialog<TItem, TOpenParams = void> = {
     codePath: RHF.Path<TItem>
     /** 入力欄に名称として表示する値の、アイテムから見たパス */
     namePath: RHF.Path<TItem>
-    /** コードで検索し、ちょうど1件見つかればそれを返す。見つからないか2件以上見つかった場合は undefined */
-    findByCode: (code: string, params: TOpenParams, signal?: AbortSignal) => Promise<TItem | undefined>
+    /** 手入力されたコードを照合する */
+    findByCode: (code: string, params: TOpenParams, signal?: AbortSignal) => Promise<FindByCodeResult<TItem>>
     /** 選んだアイテムを、検索条件のフォームで外部参照の絞り込み条件として使える形に変換する */
     toFilter: (item: TItem) => RHF.FieldValues
   }
 }
+
+/** コードの照合結果 */
+export type FindByCodeResult<TItem>
+  /** ちょうど1件見つかった */
+  = { type: 'found', item: TItem }
+  /** 見つからなかった */
+  | { type: 'not-found' }
+  /** 2件以上見つかった。通常はコードが一意になるよう検索条件を定義するので、定義の誤り */
+  | { type: 'ambiguous', count: number }
+  /** 検索処理がエラーを返したか、中断された */
+  | Exclude<ComplexPostResult<never>, { type: 'ok' }>
 
 /**
  * 検索ダイアログを開く関数。
@@ -123,7 +135,8 @@ type OpenArgs<TOpenParams> = [TOpenParams] extends [void] ? [] : [params: TOpenP
  * ## 呼び出し方と戻り値の受け取り方
  * - useOpen が返す selectOne / selectMany を呼ぶとダイアログが開く。
  *   戻り値の Promise は、ユーザーが選択を確定するか、選ばずに閉じたときに解決する。
- * - 外部参照の入力欄からは、入力コンポーネントの RefTo と列定義ヘルパーの refTo を通して使う。
+ * - 外部参照の入力欄（入力コンポーネントの RefTo と列定義ヘルパーの refTo）は、
+ *   SearchDialogRegistry の対応表から検索ダイアログを引いて使う。画面側で検索ダイアログを指定する必要はない。
  *
  * ## 検索
  * - ダイアログを開くと、初期の検索条件ですぐに検索する。
