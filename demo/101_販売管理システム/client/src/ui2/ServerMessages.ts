@@ -1,5 +1,6 @@
 import * as RHF from "react-hook-form"
 import type { PresentationContextDetail } from "../app/DetailMessageContext"
+import type { LocatedMessages } from "./FormMessages"
 import type { Messages } from "./MessageList"
 
 /*
@@ -36,23 +37,85 @@ export function toServerMessages(
   detail: PresentationContextDetail | null | undefined,
   values: RHF.FieldValues,
 ): ServerMessages {
-  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
-  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
-  throw new Error('not implemented')
+  const result: ServerMessages = {}
+
+  const visit = (node: PresentationContextDetail, value: unknown, ownerKey: string, relativePath: string) => {
+    // instanceId を持つオブジェクトに入ったら、そこを新たなオーナーにする
+    const instanceId = instanceIdOf(value)
+    if (instanceId !== undefined) {
+      ownerKey = instanceId
+      relativePath = ''
+    }
+
+    const errors = node.error ?? []
+    const warnings = node.warn ?? []
+    const informations = node.info ?? []
+    if (errors.length > 0 || warnings.length > 0 || informations.length > 0) {
+      const owner = result[ownerKey] ??= {}
+      const messages = owner[relativePath] ??= { errors: [], warnings: [], informations: [] }
+      messages.errors.push(...errors)
+      messages.warnings.push(...warnings)
+      messages.informations.push(...informations)
+    }
+
+    for (const [key, child] of Object.entries(node.children ?? {})) {
+      const childValue = typeof value === 'object' && value !== null
+        ? (value as Record<string, unknown>)[key]
+        : undefined
+      visit(child, childValue, ownerKey, relativePath === '' ? key : `${relativePath}.${key}`)
+    }
+  }
+
+  if (detail) visit(detail, values, FORM_ROOT_KEY, '')
+  return result
 }
 
 /**
- * フォーム全体から見たパスに対応するメッセージを ServerMessages から取り出す。
- * values には現在のフォームの値を渡す。パス上の配列のインデックスを instanceId に読み替えるのに使う。
- * includesDescendants が true の場合は子孫の項目に対するメッセージも含める。
+ * ServerMessages の各メッセージの項目を、現在のフォームの値の上での位置（フォーム全体から見たパス）に読み替える。
+ * values には現在のフォームの値を渡す。
+ * オーナーの instanceId を持つオブジェクトが現在の値に無い場合（行が削除された場合など）、そのメッセージは含めない。
  */
-export function pickServerMessages(
+export function locateServerMessages(
   serverMessages: ServerMessages,
-  formPath: string,
   values: RHF.FieldValues,
-  includesDescendants: boolean,
-): Messages {
-  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
-  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
-  throw new Error('not implemented')
+): LocatedMessages[] {
+  const ownerKeys = Object.keys(serverMessages)
+  if (ownerKeys.length === 0) return []
+
+  const ownerPaths = collectInstancePaths(values)
+  const result: LocatedMessages[] = []
+  for (const ownerKey of ownerKeys) {
+    const ownerPath = ownerPaths.get(ownerKey) ?? (ownerKey === FORM_ROOT_KEY ? '' : undefined)
+    if (ownerPath === undefined) continue
+
+    for (const [relativePath, messages] of Object.entries(serverMessages[ownerKey])) {
+      const formPath = ownerPath === '' ? relativePath
+        : relativePath === '' ? ownerPath
+          : `${ownerPath}.${relativePath}`
+      result.push({ formPath, messages })
+    }
+  }
+  return result
+}
+
+/** 値の中の、instanceId を持つオブジェクトの位置を集める。キーは instanceId、値はフォーム全体から見たパス */
+function collectInstancePaths(values: RHF.FieldValues): Map<string, string> {
+  const result = new Map<string, string>()
+  const visit = (value: unknown, path: string) => {
+    if (typeof value !== 'object' || value === null) return
+    const instanceId = instanceIdOf(value)
+    if (instanceId !== undefined) result.set(instanceId, path)
+    for (const [key, child] of Object.entries(value)) {
+      visit(child, path === '' ? key : `${path}.${key}`)
+    }
+  }
+  visit(values, '')
+  return result
+}
+
+/** 値が instanceId を持つオブジェクトならその instanceId を、そうでなければ undefined を返す */
+function instanceIdOf(value: unknown): string | undefined {
+  if (typeof value !== 'object' || value === null) return undefined
+  const instanceId = (value as { instanceId?: unknown }).instanceId
+  return typeof instanceId === 'string' && instanceId !== '' ? instanceId : undefined
 }

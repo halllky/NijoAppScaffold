@@ -1,5 +1,9 @@
+import React from "react"
 import * as RHF from "react-hook-form"
-import type { FormBinding } from "./FormBinding"
+import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline"
+import { findMemberMetadata, type FormBinding } from "./FormBinding"
+import { useIsInFieldColumn } from "./FieldGroup"
+import { MessageList } from "./MessageList"
 
 export type FieldLabelProps<TValues extends RHF.FieldValues> = {
   /** ラベルを付ける項目。表示名・ヘルプテキスト・メッセージはこの項目のものが使われる */
@@ -45,7 +49,58 @@ export type FieldLabelProps<TValues extends RHF.FieldValues> = {
 export function FieldLabel<TValues extends RHF.FieldValues>(props: FieldLabelProps<TValues> & {
   binding: FormBinding<TValues>
 }): React.ReactNode {
-  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
-  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
-  throw new Error('not implemented')
+  const { binding, name, vertical, requiredMark, afterLabel, children } = props
+  const formPath = binding.toFormPath(name)
+  const member = findMemberMetadata(binding.metadata, name)
+  const isInFieldColumn = useIsInFieldColumn()
+
+  // この項目とその子孫を、メッセージの表示領域として登録する
+  React.useEffect(() => {
+    return binding.registerMessageArea(formPath, { includesDescendants: true })
+  }, [binding, formPath])
+  const messages = React.useSyncExternalStore(binding.subscribeMessages, () => binding.getMessages(formPath))
+
+  // FieldColumn の中では、FieldColumn のグリッドの1行になる。ラベル部分の幅を同じ列の中でそろえるため
+  const layoutClassName = vertical
+    ? (isInFieldColumn ? 'col-span-2 flex flex-col gap-px' : 'flex flex-col gap-px')
+    : (isInFieldColumn ? 'col-span-2 grid grid-cols-subgrid items-start' : 'grid grid-cols-[max-content_minmax(0,1fr)] gap-x-2 items-start')
+
+  const labelPart = (
+    <div className="flex flex-wrap items-center gap-1 min-h-6">
+      {/* 表示名 */}
+      <label htmlFor={binding.toElementId(formPath)} className="text-sm text-gray-700 select-none">
+        {member.displayNameIsEmpty ? '' : member.displayName}
+      </label>
+      {/* 必須マーク */}
+      {requiredMark && (
+        <span className="text-rose-600 text-xs select-none" title="必須">*</span>
+      )}
+      {/* ヘルプテキスト */}
+      {member.comment && (
+        <span title={member.comment} className="text-gray-400 cursor-help">
+          <QuestionMarkCircleIcon className="w-4 h-4" />
+        </span>
+      )}
+      {/* ラベルの右側に追加で表示する内容 */}
+      {afterLabel}
+    </div>
+  )
+
+  return vertical ? (
+    <div className={layoutClassName}>
+      {labelPart}
+      {/* 縦並びではメッセージはラベルの下 */}
+      <MessageList messages={messages} />
+      {children}
+    </div>
+  ) : (
+    <div className={layoutClassName}>
+      {labelPart}
+      <div className="flex flex-col gap-px min-w-0">
+        {children}
+        {/* 横並びではメッセージは children の下 */}
+        <MessageList messages={messages} />
+      </div>
+    </div>
+  )
 }

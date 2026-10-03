@@ -1,3 +1,5 @@
+import React from "react"
+
 export type FieldGroupProps = {
   /** 見出し。未指定の場合は見出しを表示しない */
   title?: React.ReactNode
@@ -21,9 +23,36 @@ export type FieldGroupProps = {
  * フォームとは結びつかないので、どのフォームの FieldLabel を並べてもよい。
  */
 export function FieldGroup(props: FieldGroupProps): React.ReactNode {
-  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
-  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
-  throw new Error('not implemented')
+  const sections = splitIntoSections(props.children)
+
+  return (
+    <section className={`flex flex-col gap-2 ${props.className ?? ''}`}>
+      {/* 見出し */}
+      {props.title && (
+        <h3 className="font-bold text-gray-700 border-b border-gray-300 select-none">
+          {props.title}
+        </h3>
+      )}
+
+      {/* 列の並びと、横幅いっぱいの項目 */}
+      {sections.map(section => section.kind === 'columns' ? (
+        // 列の並び。全列を横に並べられる幅があれば横に、無ければすべて縦に積む。
+        // 途中で折り返すと鏡面N字の読み順が崩れるため、各列の flex-basis を
+        // 「全列を並べるのに必要な幅 − 実際の幅」の大きな倍数にして、全列横並びか全列縦積みのどちらかにしかならないようにしている
+        <div
+          key={section.key}
+          className="flex flex-wrap gap-x-8 gap-y-1"
+          style={{ '--field-group-threshold': `${section.columns.length * COLUMN_MIN_WIDTH_REM}rem` } as React.CSSProperties}
+        >
+          {section.columns}
+        </div>
+      ) : (
+        <React.Fragment key={section.key}>
+          {section.item}
+        </React.Fragment>
+      ))}
+    </section>
+  )
 }
 
 export type FieldColumnProps = {
@@ -36,7 +65,57 @@ export type FieldColumnProps = {
  * FieldGroup の直下に置くこと。それ以外の場所に置いた場合の配置は保証しない。
  */
 export function FieldColumn(props: FieldColumnProps): React.ReactNode {
-  // 実装時の注意: ui フォルダと、ui フォルダに依存するモジュールには依存せず、ui2 単独で実装すること。
-  // ui フォルダは ui2 の動作が安定したら削除するので、依存していると削除時に巻き込まれるため。
-  throw new Error('not implemented')
+  return (
+    // ラベル部分の幅を列の中でそろえるため、列自体をラベルと中身の2列のグリッドにし、各 FieldLabel はその行になる
+    <div className="grow min-w-0 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-2 gap-y-1 content-start" style={COLUMN_STYLE}>
+      <FieldColumnContext.Provider value={true}>
+        {props.children}
+      </FieldColumnContext.Provider>
+    </div>
+  )
+}
+
+/**
+ * ui2 フォルダ内部でのみ使用する。
+ * FieldColumn の中かどうかを返す。中なら、FieldLabel は FieldColumn のグリッドの1行として配置される。
+ */
+export function useIsInFieldColumn(): boolean {
+  return React.useContext(FieldColumnContext)
+}
+
+const FieldColumnContext = React.createContext(false)
+
+/** 1列の最小の幅。列の数とこの幅の積より FieldGroup が狭いと、列を縦に積む */
+const COLUMN_MIN_WIDTH_REM = 20
+
+/**
+ * 列の flex-basis。FieldGroup が全列を並べるのに必要な幅より広ければ負（= 0 扱い）になって全列が等幅で横に並び、
+ * 狭ければ非常に大きくなって各列が1行を占める
+ */
+const COLUMN_STYLE: React.CSSProperties = {
+  flexBasis: 'calc((var(--field-group-threshold) - 100%) * 999)',
+}
+
+/** FieldGroup の直下の要素の区切り */
+type Section
+  = { kind: 'columns', key: React.Key, columns: React.ReactElement[] }
+  | { kind: 'full-width', key: React.Key, item: React.ReactNode }
+
+/** FieldGroup の直下の要素を、FieldColumn が連続する区間と、横幅いっぱいに表示する要素とに分ける */
+function splitIntoSections(children: React.ReactNode): Section[] {
+  const sections: Section[] = []
+  React.Children.toArray(children).forEach((child, index) => {
+    const key = React.isValidElement(child) && child.key !== null ? child.key : index
+    const last = sections[sections.length - 1]
+    if (React.isValidElement(child) && child.type === FieldColumn) {
+      if (last?.kind === 'columns') {
+        last.columns.push(child)
+      } else {
+        sections.push({ kind: 'columns', key, columns: [child] })
+      }
+    } else {
+      sections.push({ kind: 'full-width', key, item: child })
+    }
+  })
+  return sections
 }
