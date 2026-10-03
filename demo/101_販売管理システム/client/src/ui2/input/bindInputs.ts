@@ -7,6 +7,7 @@ import type { NumericTextBoxProps, NumericColumnOptions } from "./NumericTextBox
 import type { DateInputProps, DateColumnOptions } from "./DateInput"
 import type { CheckBoxProps, CheckBoxColumnOptions } from "./CheckBox"
 import type { EnumSelectionProps, EnumColumnOptions } from "./EnumSelection"
+import type { RefToProps, RefToColumnOptions } from "./RefTo"
 
 /**
  * フォームと結びついた入力コンポーネントの一式。
@@ -26,6 +27,8 @@ export type BoundInputs<TValues extends RHF.FieldValues> = {
   CheckBox: (props: CheckBoxProps<TValues>) => React.ReactNode
   /** 列挙体 */
   EnumSelection: (props: EnumSelectionProps<TValues>) => React.ReactNode
+  /** 外部参照。参照先のデータは検索ダイアログで選ぶ */
+  RefTo: <TItem, TOpenParams = void>(props: RefToProps<TValues, TItem, TOpenParams>) => React.ReactNode
 }
 
 /**
@@ -55,6 +58,8 @@ export type GridColumnHelper<TRow> = {
   checkBox: (path: RHF.Path<TRow>, options?: CheckBoxColumnOptions<TRow>) => EG2.EditableGridLeafColumn<TRow>
   /** 列挙体の列 */
   enumeration: (path: RHF.Path<TRow>, options?: EnumColumnOptions<TRow>) => EG2.EditableGridLeafColumn<TRow>
+  /** 外部参照の列。参照先のデータは検索ダイアログで選ぶ */
+  refTo: <TItem, TOpenParams = void>(path: RHF.Path<TRow>, options: RefToColumnOptions<TRow, TItem, TOpenParams>) => EG2.EditableGridLeafColumn<TRow>
 }
 
 /** 列定義ヘルパーをグリッドと結びつける */

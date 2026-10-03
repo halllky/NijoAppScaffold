@@ -5,6 +5,10 @@ import type { FormBinding } from "../FormBinding"
 /**
  * フォーム用の入力コンポーネントに共通の props。
  * 入力制約（最大長・桁数など）はメタデータから決まるので、props では指定しない。
+ *
+ * フォーム用の入力コンポーネントは、メッセージを自分では表示しない。
+ * 項目に対するメッセージ（クライアント側エラー・サーバー側メッセージとも）は、それを囲む FieldLabel か RootErrors に表示される。
+ * 入力欄の HTML 要素には、FieldLabel のラベルと対応付けるための id が付く。
  */
 export type InputPropsBase<TValues extends RHF.FieldValues> = {
   /**
@@ -28,6 +32,9 @@ export type WithFormBinding<TProps, TValues extends RHF.FieldValues> = TProps & 
 /**
  * EditableGrid の列定義ヘルパーに共通のオプション。
  * セルの描画・編集・コピー&ペーストの処理はヘルパーが決めるので、ここでは指定できない。
+ *
+ * 列定義ヘルパーで作った列のセルは、そのセルの項目に対するメッセージを表示する。
+ * クライアント側エラーとサーバー側メッセージの両方が対象。
  */
 export type ColumnOptionsBase<TRow> = Omit<
   Partial<EG2.EditableGridLeafColumn<TRow>>,

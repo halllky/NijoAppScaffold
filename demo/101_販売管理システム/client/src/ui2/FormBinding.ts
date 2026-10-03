@@ -30,21 +30,36 @@ export type FormBinding<TValues extends RHF.FieldValues> = {
   /** name を、フォーム全体の値から見たパスに変換する */
   toFormPath: (name: RHF.Path<TValues>) => string
   /**
-   * フォーム全体から見たパスに対して表示すべきメッセージを返す。
-   * react-hook-form の検証エラーと、サーバーから返されたメッセージの両方を含む。
+   * フォーム全体から見たパスを、その項目の入力欄の HTML 要素の id に変換する。
+   * FieldLabel の label 要素の htmlFor と、入力コンポーネントの入力欄の id の両方がこれを使うことで、
+   * ラベルのクリックで入力欄にフォーカスが移る。
+   * 同じ画面に複数のフォームがあっても重複しないよう、フォームごとに異なる接頭辞が付く。
+   */
+  toElementId: (formPath: string) => string
+
+  //#region メッセージ
+  /**
+   * 指定した表示領域に表示すべきメッセージを返す。
+   * 対象は registerMessageArea で登録した範囲のうち、より内側の表示領域が無い項目に対するもの。
+   *
+   * - クライアント側エラー: react-hook-form の formState.errors のうち、範囲内の項目に対するもの。errors にだけ入る。
+   * - サーバー側メッセージ: setServerMessages で受け取ったもののうち、範囲内の項目に対するもの。エラー・警告・情報のすべて。
    */
   getMessages: (formPath: string) => Messages
   /**
-   * どの項目の脇にも表示されないメッセージを返す。
-   * ルートに対するメッセージと、画面上に表示領域が無い項目に対するメッセージが該当する。
+   * どの表示領域の範囲にも入らないメッセージを返す。
+   *
+   * - クライアント側エラー: formState.errors.root と、表示領域が無い項目に対する検証エラー。
+   * - サーバー側メッセージ: フォームのルートに対するものと、表示領域が無い項目に対するもの。
    */
   getUnboundMessages: () => Messages
   /**
-   * 画面上にメッセージの表示領域があることを登録する。
-   * 登録されていない項目のメッセージは getUnboundMessages の対象になる。
-   * 戻り値は登録解除の関数。アンマウント時に呼ぶこと。
+   * 画面上にメッセージの表示領域があることを登録する。戻り値は登録解除の関数。アンマウント時に呼ぶこと。
+   * includesDescendants が true の場合、その項目の子孫に対するメッセージも、より内側の表示領域が無ければここに表示する。
+   * クライアント側エラーとサーバー側メッセージのどちらにも同じ範囲が適用される。
    */
-  registerMessageArea: (formPath: string) => () => void
+  registerMessageArea: (formPath: string, options: { includesDescendants: boolean }) => () => void
+  //#endregion メッセージ
 }
 
 /**
@@ -57,7 +72,7 @@ export type GridBinding = {
   /** 配列の、フォーム全体の値から見たパス */
   arrayPath: string
   /**
-   * 行キー（instanceId）から配列の添字を求める。
+   * 行キー（instanceId）から配列のインデックスを求める。
    * 削除済みの行を問い合わせられることがあるため、見つからない場合は undefined を返す。
    */
   findRowIndex: (rowKey: string) => number | undefined
@@ -65,7 +80,7 @@ export type GridBinding = {
 
 /**
  * メタデータの表から項目の定義を引く。
- * path には、配列の添字（半角数字だけの部分）や検索条件の範囲指定の末尾（from / to）を含めてよい。これらは読み飛ばす。
+ * path には、配列のインデックス（半角数字だけの部分）や検索条件の範囲指定の末尾（from / to）を含めてよい。これらは読み飛ばす。
  * 該当する項目が無い場合は例外を投げる。
  */
 export function findMemberMetadata(table: AggregateMetadata.Table, path: string): AggregateMetadata.Member {

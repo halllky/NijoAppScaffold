@@ -76,8 +76,11 @@ function DebugMenu({ requestClose }: { requestClose: () => void }) {
       <Link to="/dev/ui-components" onClick={requestClose} className="text-blue-600 underline">
         UIコンポーネントカタログ
       </Link>
-      <Link to="/dev/ui2" onClick={requestClose} className="text-blue-600 underline">
-        UI2カタログ
+      <Link to="/dev/ui2/display-data" onClick={requestClose} className="text-blue-600 underline">
+        UI2 詳細画面サンプル
+      </Link>
+      <Link to="/dev/ui2/search-condition" onClick={requestClose} className="text-blue-600 underline">
+        UI2 一覧検索サンプル
       </Link>
       <Link to={DbViewer.URL} onClick={requestClose} className="text-blue-600 underline">
         DBビューアへ移動

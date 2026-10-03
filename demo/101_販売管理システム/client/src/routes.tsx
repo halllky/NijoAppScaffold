@@ -14,7 +14,8 @@ import { P001_ログイン } from "./pages/P001_ログイン"
 import { ErrorPage } from "./app/ErrorPage"
 
 const UIコンポーネントカタログ = React.lazy(() => import("./debug-rooms/UIコンポーネントカタログ"))
-const UI2カタログ = React.lazy(() => import("./debug-rooms/ui2/UI2カタログ"))
+const UI2詳細画面サンプル = React.lazy(() => import("./debug-rooms/ui2/詳細画面サンプル"))
+const UI2一覧検索サンプル = React.lazy(() => import("./debug-rooms/ui2/一覧検索サンプル"))
 
 /**
  * React Router ルーティング定義。
@@ -61,10 +62,18 @@ export default [
           )
         } satisfies RouteObject,
         {
-          path: "/dev/ui2",
+          path: "/dev/ui2/display-data",
           element: (
             <React.Suspense>
-              <UI2カタログ />
+              <UI2詳細画面サンプル />
+            </React.Suspense>
+          )
+        } satisfies RouteObject,
+        {
+          path: "/dev/ui2/search-condition",
+          element: (
+            <React.Suspense>
+              <UI2一覧検索サンプル />
             </React.Suspense>
           )
         } satisfies RouteObject,
