@@ -145,6 +145,103 @@ public class WithIndentのテスト {
         }));
     }
 
+    [Test]
+    public void インデント文字列指定版WithIndentの内側で文字列版WithIndentを使ってもインデントが重複しない() {
+        var grandChild = $$"""
+            X: '',
+            Y: '',
+            """;
+
+        var child = $$"""
+            A: '',
+            B: {
+              {{WithIndent(grandChild)}}
+            },
+            """;
+
+        var body = $$"""
+            {
+              {{WithIndent(child)}}
+            }
+            """;
+
+        var lines = RenderLines($$"""
+            function f() {
+              return {{WithIndent(body, "  ")}}
+            }
+            """);
+
+        Assert.That(lines[^9..], Is.EqualTo(new[] {
+            "function f() {",
+            "  return {",
+            "    A: '',",
+            "    B: {",
+            "      X: '',",
+            "      Y: '',",
+            "    },",
+            "  }",
+            "}",
+        }));
+    }
+
+    [Test]
+    public void IEnumerable版インデント文字列指定版WithIndentで複数要素を同じ幅でインデントできる() {
+        var items = new[] {
+            $$"""
+                [
+                  1,
+                ]
+                """,
+            $$"""
+                [
+                  2,
+                ]
+                """,
+        };
+
+        var lines = RenderLines($$"""
+            const x = {{WithIndent(items, "          ")}}
+            """);
+
+        Assert.That(lines[^6..], Is.EqualTo(new[] {
+            "const x = [",
+            "            1,",
+            "          ]",
+            "          [",
+            "            2,",
+            "          ]",
+        }));
+    }
+
+    [Test]
+    public void 同じ行で開始されるWithIndentが重なってもインデントが重複しない() {
+        var items = new[] {
+            WithIndent($$"""
+                A1();
+                A2();
+                """),
+            WithIndent($$"""
+                B1();
+                B2();
+                """),
+        };
+
+        var lines = RenderLines($$"""
+            void Example() {
+                {{WithIndent(items)}}
+            }
+            """);
+
+        Assert.That(lines[^6..], Is.EqualTo(new[] {
+            "void Example() {",
+            "    A1();",
+            "    A2();",
+            "    B1();",
+            "    B2();",
+            "}",
+        }));
+    }
+
     private static string[] RenderLines(string contents) {
         var filePath = Path.Combine(Path.GetTempPath(), $"{Path.GetRandomFileName()}.cs");
         try {

@@ -90,12 +90,6 @@ namespace Nijo.CodeGenerating {
                 return string.Empty;
             }
 
-            // すでに WithIndent によってインデントマーカーが付与されている場合は、重複してマーカーを付与しない
-            if (content.StartsWith(INDENT_START_MARKER, StringComparison.Ordinal)
-                && content.EndsWith(INDENT_END_MARKER, StringComparison.Ordinal)) {
-                return content;
-            }
-
             return $"{INDENT_START_MARKER}{content}{INDENT_END_MARKER}";
         }
 
@@ -105,16 +99,19 @@ namespace Nijo.CodeGenerating {
         /// 左側が半角スペースだけで済む場合は 1 引数版を優先します。
         /// </summary>
         internal static string WithIndent(IEnumerable<string> content, string indent) {
-            return content
-                .Select(x => WithIndent(x, indent))
-                .Join(Environment.NewLine + indent);
+            return WithIndent(content.Join(Environment.NewLine), indent);
         }
 
         /// <inheritdoc cref="WithIndent(IEnumerable{string}, string)"/>
         internal static string WithIndent(string content, string indent) {
-            return content
-                .Split(Environment.NewLine)
-                .Join(Environment.NewLine + indent);
+            if (content == string.Empty) {
+                return string.Empty;
+            }
+            if (indent.Contains('\n') || indent.Contains('\r')) {
+                throw new ArgumentException("インデント文字列に改行を含めることはできません。", nameof(indent));
+            }
+
+            return $"{EXPLICIT_INDENT_START_MARKER}{indent}{EXPLICIT_INDENT_DELIMITER}{content}{INDENT_END_MARKER}";
         }
 
         /// <summary>
@@ -123,9 +120,20 @@ namespace Nijo.CodeGenerating {
         internal static string INDENT_START_MARKER = "\0\0\0\0\0\0\0\0\0\0\u0001";
 
         /// <summary>
-        /// <see cref="WithIndent(IEnumerable{string})"/> と <see cref="WithIndent(string)"/> の終了位置を表すマーカーです。
+        /// WithIndent の各オーバーロードに共通の終了位置を表すマーカーです。
         /// </summary>
         internal static string INDENT_END_MARKER = "\0\0\0\0\0\0\0\0\0\0\u0002";
+
+        /// <summary>
+        /// <see cref="WithIndent(IEnumerable{string}, string)"/> と <see cref="WithIndent(string, string)"/> の開始位置を表すマーカーです。
+        /// このマーカーと <see cref="EXPLICIT_INDENT_DELIMITER"/> の間にインデント文字列が入ります。
+        /// </summary>
+        internal static string EXPLICIT_INDENT_START_MARKER = "\0\0\0\0\0\0\0\0\0\0\u0003";
+
+        /// <summary>
+        /// <see cref="EXPLICIT_INDENT_START_MARKER"/> に続くインデント文字列の終わりを表すマーカーです。
+        /// </summary>
+        internal static string EXPLICIT_INDENT_DELIMITER = "\0\0\0\0\0\0\0\0\0\0\u0004";
 
         /// <summary>
         /// この文字列が存在する行はファイルにレンダリングされない。
