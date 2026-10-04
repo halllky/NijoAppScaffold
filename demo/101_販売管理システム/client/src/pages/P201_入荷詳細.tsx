@@ -164,17 +164,9 @@ function P201_入荷詳細(props: {
         if (result.type === 'ok') {
           replaceMessages(result.detail)
 
-          // 保存されたデータでリセットして isDirty を false にする。
-          // reset による State 更新が反映され、ブロックが解除されるのを待ってから遷移する
+          // 保存されたデータでリセットして isDirty を false にしてから遷移する。リセットしないと離脱確認が出る
           reset(result.returnValue)
-          const waitAndNavigate = () => {
-            if (formMethods.formState.isDirty) {
-              window.setTimeout(waitAndNavigate, 10)
-            } else {
-              navigate(getLinkUrlToP201入荷詳細(result.returnValue.入荷ID))
-            }
-          }
-          waitAndNavigate()
+          navigate(getLinkUrlToP201入荷詳細(result.returnValue.入荷ID))
 
         } else if (result.type === 'canceled') {
           // 何もしない

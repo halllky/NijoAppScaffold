@@ -103,6 +103,8 @@ function DisplayDataFormSample() {
   return (
     <PageBase
       browserTitle="UI2 詳細画面サンプル"
+      // 編集中に画面から離れようとしたら確認を出す。画面遷移・ブラウザの戻る・リロード・タブを閉じる操作が対象
+      isDirty={formMethods.formState.isDirty}
       header={(
         <>
           <PageTitle>UI2 詳細画面サンプル</PageTitle>

@@ -199,17 +199,9 @@ function P101_売上詳細(props: {
         if (result.type === 'ok') {
           replaceMessages(result.detail)
 
-          // 保存されたデータでリセットして isDirty を false にする。
-          // reset による State 更新が反映され、ブロックが解除されるのを待ってから遷移する
+          // 保存されたデータでリセットして isDirty を false にしてから遷移する。リセットしないと離脱確認が出る
           reset(result.returnValue)
-          const waitAndNavigate = () => {
-            if (formMethods.formState.isDirty) {
-              window.setTimeout(waitAndNavigate, 10)
-            } else {
-              navigate(getLinkUrlToP101売上詳細(result.returnValue.売上SEQ))
-            }
-          }
-          waitAndNavigate()
+          navigate(getLinkUrlToP101売上詳細(result.returnValue.売上SEQ))
 
         } else if (result.type === 'canceled') {
           // 何もしない
