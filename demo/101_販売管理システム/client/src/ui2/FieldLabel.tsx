@@ -95,7 +95,7 @@ export function FieldLabel<TValues extends RHF.FieldValues>(props: FieldLabelPro
       <div className="flex justify-end" style={LABEL_PART_WIDTH_STYLE}>
         {labelPart}
       </div>
-      <div className="flex flex-col gap-px min-w-0">
+      <div className="flex flex-col items-start gap-px min-w-0">
         {children}
         {/* 横並びではメッセージは children の下 */}
         <MessageList messages={messages} />

@@ -73,6 +73,7 @@ function DisplayDataFormSample() {
       col.numeric('数量', { defaultWidth: 80, isReadOnly: row => row.完了 === true }),
       col.numeric('単価', { header: '単価（税抜）', defaultWidth: 120, isReadOnly: row => row.完了 === true }),
       col.date('納期', { defaultWidth: 120, isReadOnly: row => row.完了 === true }),
+      col.enumeration('優先度', { defaultWidth: 80, isReadOnly: row => row.完了 === true }),
       col.checkBox('完了', { defaultWidth: 56 }),
       col.refTo('検品者', { params: { 退職者を含む: false }, defaultWidth: 200, isReadOnly: row => row.完了 === true }),
       col.textArea('備考', { defaultWidth: 240, wrap: true, isReadOnly: row => row.完了 === true }),
@@ -172,6 +173,10 @@ function DisplayDataFormSample() {
                 <FieldLabel name="税率">
                   <Input.NumericTextBox name="税率" className="w-24" isReadOnly={isReadOnly} rules={{ validate: validateTaxRate }} />
                 </FieldLabel>
+                {/* 列挙体。先頭の空の選択肢で未選択に戻せる */}
+                <FieldLabel name="優先度">
+                  <Input.EnumSelection name="優先度" isReadOnly={isReadOnly} />
+                </FieldLabel>
                 <FieldLabel name="確定済み">
                   <Input.CheckBox name="確定済み" isReadOnly={isReadOnly}>確定する</Input.CheckBox>
                 </FieldLabel>
@@ -269,15 +274,16 @@ async function loadSampleDisplayData(): Promise<サンプル伝票.DisplayData> 
   data.合計金額 = '128000'
   data.税率 = '10.00'
   data.確定済み = false
+  data.優先度 = '至急'
   data.担当者 = { 従業員番号: 'E0001', 氏名: '山田 太郎' }
   data.備考 = '複数行の文章を入力できる。\n2行目。'
   data.Version = '1'
   data.existsInDatabase = true
   data.willBeChanged = false
   data.明細 = [
-    { 品名: 'りんご', 数量: '10', 単価: '120.00', 納期: '2026-10-10', 完了: true, 検品者: { 従業員番号: 'E0002', 氏名: '佐藤 花子' }, 備考: '' },
-    { 品名: 'みかん', 数量: '200', 単価: '45.50', 納期: '2026-10-15', 完了: false, 検品者: {}, 備考: '箱入り' },
-    { 品名: 'ぶどう', 数量: '5', 単価: '980.00', 納期: '', 完了: false, 検品者: {}, 備考: '納期未定。\n入荷次第連絡する。' },
+    { 品名: 'りんご', 数量: '10', 単価: '120.00', 納期: '2026-10-10', 完了: true, 優先度: '通常', 検品者: { 従業員番号: 'E0002', 氏名: '佐藤 花子' }, 備考: '' },
+    { 品名: 'みかん', 数量: '200', 単価: '45.50', 納期: '2026-10-15', 完了: false, 優先度: '至急', 検品者: {}, 備考: '箱入り' },
+    { 品名: 'ぶどう', 数量: '5', 単価: '980.00', 納期: '', 完了: false, 優先度: null, 検品者: {}, 備考: '納期未定。\n入荷次第連絡する。' },
   ].map(values => ({
     ...サンプル伝票.createNewDisplayData_明細(),
     ...values,

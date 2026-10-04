@@ -127,6 +127,7 @@ export function checkBoxColumn<TRow>(
         <span>
           <input
             type="checkbox"
+            tabIndex={-1}
             checked={value === true}
             onChange={() => toggle(rowKey)}
             disabled={isReadOnly}

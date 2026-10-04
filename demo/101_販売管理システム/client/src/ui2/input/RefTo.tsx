@@ -167,7 +167,7 @@ function RefToForDisplayData({ formMethods, formPath, dialog, params, isReadOnly
         <SearchButton onClick={handleOpenDialog} />
       )}
       {/* 名称。表示だけ */}
-      <span className={`flex-1 min-w-0 min-h-6 px-1 py-px truncate ${isReadOnly ? '' : 'bg-gray-100 text-gray-700'}`}>
+      <span className={`flex-1 min-w-0 min-h-6 px-1 py-px truncate select-all ${isReadOnly ? '' : 'text-gray-700'}`}>
         {typeof refName === 'string' ? refName : ''}
       </span>
     </div>
@@ -250,7 +250,6 @@ function SearchButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       title="検索"
-      tabIndex={-1}
       onClick={onClick}
       className="flex-none p-0.5 rounded text-teal-700 hover:bg-gray-100 cursor-pointer"
     >

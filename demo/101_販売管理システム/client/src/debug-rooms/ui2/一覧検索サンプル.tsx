@@ -80,7 +80,7 @@ function SearchConditionFormSample() {
             {/* どの項目にも表示されないメッセージ */}
             <RootErrors />
 
-            {/* 検索条件欄。数値・日付は範囲指定、真偽値は「該当する/しない」になる */}
+            {/* 検索条件欄。数値・日付は範囲指定、真偽値は「該当する/しない」、列挙体は選択肢ごとのチェックボックスになる */}
             <FieldGroup labelWidth="5rem">
               {/* 伝票の内容 */}
               <FieldColumn>
@@ -110,6 +110,10 @@ function SearchConditionFormSample() {
               <FieldColumn>
                 <FieldLabel name="確定済み">
                   <Input.CheckBox name="確定済み" />
+                </FieldLabel>
+                {/* 列挙体。チェックした値のいずれかに一致するものに絞り込む */}
+                <FieldLabel name="優先度">
+                  <Input.EnumSelection name="優先度" />
                 </FieldLabel>
                 {/* 外部参照。コードと名称のどちらも手入力でき、検索ダイアログで選ぶこともできる */}
                 <FieldLabel name="担当者">

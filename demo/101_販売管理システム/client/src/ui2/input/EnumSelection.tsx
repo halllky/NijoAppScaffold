@@ -89,7 +89,7 @@ function EnumDropDown({ formPath, control, rules, options, isReadOnly, className
       value={value}
       onChange={e => field.onChange(e.target.value)}
       onBlur={field.onBlur}
-      className={`block px-1 py-px outline-none ${inputFrameClassName(false)} ${className ?? ''}`}
+      className={`block px-1 py-px ${inputFrameClassName(false)} ${className ?? ''}`}
     >
       {/* 未選択 */}
       <option value=""></option>
@@ -152,6 +152,14 @@ export function enumColumn<TRow>(
       const trimmed = text.trim()
       return trimmed === '' || enumOptions.includes(trimmed) ? { value: trimmed } : undefined
     },
+    onCellKeyDown: ({ event, requestEditStart }) => {
+      // Alt+↑↓ はドロップダウンを開くキー操作。編集中でないエディタのドロップダウンが開くと、選んでも確定できないので、
+      // ブラウザの既定の動作を止めて、編集を開始してから開く。読み取り専用のセルでは編集が始まらないので何も開かない
+      if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+        event.preventDefault()
+        requestEditStart()
+      }
+    },
   })
 }
 
@@ -172,13 +180,14 @@ function getEnumCellEditor(enumType: string, options: readonly string[]): EG2.Ed
       setValueAndSelectAll: (nextValue, timing) => {
         // キー入力による編集開始では入力された文字が渡されるので、選択肢に無ければ元の値のままにする
         if (timing !== 'edit-start' || nextValue === '' || options.includes(nextValue)) setValue(nextValue)
-        if (timing === 'edit-start') {
-          // 編集中の表示に切り替わってからでないとドロップダウンを開けないため、少し待つ
-          setTimeout(() => {
-            selectRef.current?.focus()
-            try { selectRef.current?.showPicker() } catch { /* ユーザー操作の直後でない場合は開けないので、選択欄の表示だけにする */ }
-          }, 0)
-        }
+        // グリッドはアクティブな間エディタがフォーカスを持つ前提で、フォーカスを持たせるのはエディタの役目。
+        // 他の列からこの列へ選択が移るとエディタがマウントし直されてフォーカスが外れるので、編集開始時に限らずフォーカスする。
+        // 編集中の表示に切り替わってからでないとドロップダウンを開けないため、少し待つ
+        setTimeout(() => {
+          selectRef.current?.focus()
+          if (timing !== 'edit-start') return
+          try { selectRef.current?.showPicker() } catch { /* ユーザー操作の直後でない場合は開けないので、選択欄の表示だけにする */ }
+        }, 0)
       },
       getDomElement: () => selectRef.current,
     }), [])
