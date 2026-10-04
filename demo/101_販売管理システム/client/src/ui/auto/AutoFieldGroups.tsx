@@ -8,14 +8,16 @@ import { displayPathOf, valueInputKindOf, type TableEntry } from "./metadataTabl
 /**
  * 項目を、親（構造体のルート・外部参照・子集約）ごとの FieldGroup に分けて並べる。ui フォルダ内部でのみ使用する。
  *
- * - 親が構造体のルートの項目は見出し無し、それ以外は親の位置を見出しにする。
+ * - 親が ownerPath（未指定の場合は構造体のルート）の項目は見出し無し、それ以外は親の位置を見出しにする。
  *   ラベルには項目自身の表示用名称しか出ないので、どの外部参照の項目かを見出しで示すため。
  * - FieldGroup の中は、項目が多ければ2列に分ける。意味の切れ目は分からないので、前半と後半で機械的に分ける。
  * - 各項目の描画は renderField に任せる。
  */
-export function AutoFieldGroups({ table, entries, renderField }: {
+export function AutoFieldGroups({ table, ownerPath, entries, renderField }: {
   /** 項目の表示名と親子関係を引く表 */
   table: AggregateMetadata.Table
+  /** 並べる項目が属する構造体のパス。この直下の項目は見出し無しで並ぶ。未指定の場合は構造体のルート */
+  ownerPath?: string | null
   /** 並べる項目。この順に並ぶ */
   entries: TableEntry[]
   /** 1項目分の描画。FieldLabel で囲んだものを返すこと */
@@ -27,7 +29,7 @@ export function AutoFieldGroups({ table, entries, renderField }: {
     <div className="flex flex-col gap-4">
       {groups.map(group => (
         // 親ごとの枠
-        <FieldGroup key={group.parentPath ?? ''} title={group.parentPath === null ? undefined : displayPathOf(table, group.parentPath)}>
+        <FieldGroup key={group.parentPath ?? ''} title={group.parentPath === null || group.parentPath === ownerPath ? undefined : displayPathOf(table, group.parentPath)}>
           {splitIntoColumns(group.entries).map((column, columnIndex) => (
             // 列
             <FieldColumn key={columnIndex}>

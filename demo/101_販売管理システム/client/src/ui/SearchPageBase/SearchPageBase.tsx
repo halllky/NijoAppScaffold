@@ -60,6 +60,11 @@ export type SearchPageBaseProps<TSearchCondition extends PageableSearchCondition
     () => EG2.EditableGridColumn<TItem>[],
     deps: React.DependencyList
   ]
+  /**
+   * 検索条件欄・検索結果欄の右に並べるペイン。検索結果の行の詳細の表示などに使う。
+   * null・undefined・false の場合はペインを表示しない。ペインの中身と、ペインを閉じる手段は利用側で用意する。
+   */
+  sidePane?: React.ReactNode
   /** 並び順コンボボックスの選択肢。未指定の場合はコンボボックスを表示しない */
   sortOptions?: SortComboItem<SortableMemberOf<TSearchCondition>>[]
   /**
@@ -92,6 +97,7 @@ export type SearchPageBaseProps<TSearchCondition extends PageableSearchCondition
  * - 検索条件フォームの作成（useSearchConditionForm）
  * - 検索条件フォームのレイアウト
  * - 検索結果一覧のレイアウト
+ * - 右のペインの中身と開閉
  * - サーバー側の検索処理の呼び出し方
  * - 初期検索条件やソート選択肢などの設定値の提供
  */
@@ -266,77 +272,89 @@ export function SearchPageBase<TSearchCondition extends PageableSearchCondition,
         </>
       )}
       contents={(
-        <Allotment vertical
-          defaultSizes={[props.searchConditionDefaultSize ?? 200, 999]}
-          proportionalLayout={false} // ページサイズ変更時に検索結果欄だけ伸縮するようにするため
+        <Allotment
+          proportionalLayout={false} // ページサイズ変更時に検索条件欄・検索結果欄だけ伸縮するようにするため
           className="pb-1"
         >
-
-          {/* 検索条件欄。検証はブラウザに任せず react-hook-form の検証ルールで行う */}
-          <Allotment.Pane snap minSize={50} visible={searchConditionVisible} className="pb-1">
-            <form
-              ref={formRef}
-              id={formId}
-              noValidate
-              className="h-full overflow-auto flex flex-col gap-2 py-1"
-              onSubmit={handleSearch}
+          {/* 検索条件欄・検索結果欄 */}
+          <Allotment.Pane priority={LayoutPriority.High}>
+            <Allotment vertical
+              defaultSizes={[props.searchConditionDefaultSize ?? 200, 999]}
+              proportionalLayout={false} // ページサイズ変更時に検索結果欄だけ伸縮するようにするため
             >
-              {/* どの項目にも表示されないメッセージ */}
-              <RootErrors />
 
-              {props.searchCondition}
-            </form>
-          </Allotment.Pane>
+              {/* 検索条件欄。検証はブラウザに任せず react-hook-form の検証ルールで行う */}
+              <Allotment.Pane snap minSize={50} visible={searchConditionVisible} className="pb-1">
+                <form
+                  ref={formRef}
+                  id={formId}
+                  noValidate
+                  className="h-full overflow-auto flex flex-col gap-2 py-1"
+                  onSubmit={handleSearch}
+                >
+                  {/* どの項目にも表示されないメッセージ */}
+                  <RootErrors />
 
-          {/* 件数表示、ソート順指定、検索結果欄 */}
-          <Allotment.Pane
-            priority={LayoutPriority.High} // ページサイズ変更時に検索結果欄だけ伸縮する
-            className="relative"
-          >
-            <div className="h-full flex flex-col">
+                  {props.searchCondition}
+                </form>
+              </Allotment.Pane>
 
-              <div className="flex flex-wrap items-center py-1">
-                {/* 件数表示 */}
-                <div className="min-w-48 text-sm text-gray-600">
-                  {isSearching && (
-                    <>検索中...</>
-                  )}
-                  {!isSearching && totalCount > 0 && (
-                    <>
-                      全{totalCount}件中 {pageIndex * pageSize + 1} - {Math.min((pageIndex + 1) * pageSize, totalCount)} 件を表示
-                    </>
-                  )}
-                  {!isSearching && totalCount === 0 && (
-                    <>全0件</>
-                  )}
+              {/* 件数表示、ソート順指定、検索結果欄 */}
+              <Allotment.Pane
+                priority={LayoutPriority.High} // ページサイズ変更時に検索結果欄だけ伸縮する
+                className="relative"
+              >
+                <div className="h-full flex flex-col">
+
+                  <div className="flex flex-wrap items-center py-1">
+                    {/* 件数表示 */}
+                    <div className="min-w-48 text-sm text-gray-600">
+                      {isSearching && (
+                        <>検索中...</>
+                      )}
+                      {!isSearching && totalCount > 0 && (
+                        <>
+                          全{totalCount}件中 {pageIndex * pageSize + 1} - {Math.min((pageIndex + 1) * pageSize, totalCount)} 件を表示
+                        </>
+                      )}
+                      {!isSearching && totalCount === 0 && (
+                        <>全0件</>
+                      )}
+                    </div>
+
+                    <div className="basis-4"></div>
+
+                    {/* ソート順指定 */}
+                    <SortDropdown
+                      className="ml-2 min-w-[200px]"
+                      sortOptions={props.sortOptions}
+                      value={sort ?? []}
+                      onChange={handleSortChange}
+                    />
+                  </div>
+
+                  {/* 検索結果 */}
+                  <EG2.EditableGrid
+                    rowKeys={rowKeys}
+                    getLatestRowObject={getLatestRowObject}
+                    columns={columns}
+                    clearSelectionOnBlur
+                    className="flex-1 border border-gray-600"
+                  />
                 </div>
 
-                <div className="basis-4"></div>
+                {isSearching && (
+                  <NowLoading opacity={0} />
+                )}
+              </Allotment.Pane>
 
-                {/* ソート順指定 */}
-                <SortDropdown
-                  className="ml-2 min-w-[200px]"
-                  sortOptions={props.sortOptions}
-                  value={sort ?? []}
-                  onChange={handleSortChange}
-                />
-              </div>
-
-              {/* 検索結果 */}
-              <EG2.EditableGrid
-                rowKeys={rowKeys}
-                getLatestRowObject={getLatestRowObject}
-                columns={columns}
-                clearSelectionOnBlur
-                className="flex-1 border border-gray-600"
-              />
-            </div>
-
-            {isSearching && (
-              <NowLoading opacity={0} />
-            )}
+            </Allotment>
           </Allotment.Pane>
 
+          {/* 右のペイン */}
+          <Allotment.Pane visible={!!props.sidePane} preferredSize={SIDE_PANE_DEFAULT_SIZE} minSize={200}>
+            {props.sidePane}
+          </Allotment.Pane>
         </Allotment>
       )}
       footer={(
@@ -355,6 +373,9 @@ export function SearchPageBase<TSearchCondition extends PageableSearchCondition,
 }
 
 const EMPTY_ITEMS: unknown[] = []
+
+/** 右のペインを開いたときの幅（ピクセル） */
+const SIDE_PANE_DEFAULT_SIZE = 480
 
 /** URLで1ページの件数が指定されていないときの、1ページの件数 */
 const DEFAULT_PAGE_SIZE = 20

@@ -26,104 +26,140 @@ export type AutoDisplayDataFieldsProps = {
  * - 値項目は、値の型に合った入力欄になる。子集約（1対1）の中の値項目も同じ。
  * - 外部参照は、コードの手入力と検索ダイアログで選ぶ入力欄になる。検索ダイアログは SearchDialogHost に登録されたものが使われる。
  *   参照先の項目は、コードと名称のほかは表示しない。
- * - 子配列は、行の追加・削除ができるグリッドになる。グリッドには、子配列の直下（子集約の中を含む）の値項目と外部参照が列として並ぶ。
- *   子配列の中の子配列はグリッドに収まらないので表示しない。
- * - 項目の並びはメタデータの表の順で、親（子集約）ごとに見出しを付けて分ける。子配列のグリッドはその後に並ぶ。並びや幅は調整できない。
+ * - 子配列は、行の追加・削除ができる一覧になる。一覧の形は、子配列の中にさらに子配列があるかどうかで変わる。
+ *   - 無い場合: グリッド。子配列の直下（子集約の中を含む）の値項目と外部参照が列として並ぶ。
+ *   - ある場合: 行ごとの枠を縦に並べ、枠の中にその行の入力欄をこの部品と同じ規則で並べる。入れ子の子配列はグリッドに収まらないため。
+ * - 項目の並びはメタデータの表の順で、親（子集約）ごとに見出しを付けて分ける。子配列の一覧はその後に並ぶ。並びや幅は調整できない。
  *   調整したい場合はこの部品を使わず、入力欄を個別に組み立てること。
  *
  * 入力値の検証は、メタデータから決まる入力制約のほかは行わない。
  */
 export function AutoDisplayDataFields(props: AutoDisplayDataFieldsProps): React.ReactNode {
   const { table, form, isReadOnly } = props
+  return (
+    <AutoStructureFields table={table} ownerPath={null} instancePath="" form={form} isReadOnly={isReadOnly} />
+  )
+}
+
+/** 構造体1つ分（データ全体、または子配列の1行）の入力欄と、その中の子配列の一覧 */
+function AutoStructureFields({ table, ownerPath, instancePath, form, isReadOnly }: {
+  table: AggregateMetadata.Table
+  /** 構造体のメタデータ上のパス。データ全体の場合は null、子配列の1行の場合は子配列のパス */
+  ownerPath: string | null
+  /** 構造体のフォーム上のパス。子配列の1行の場合は配列の添字を含む。データ全体の場合は空文字 */
+  instancePath: string
+  form: AutoDisplayDataFieldsProps['form']
+  isReadOnly: boolean | undefined
+}) {
   const { Input, FieldLabel } = form
 
   // 子配列や外部参照の境界を越えずに辿れる、値項目と外部参照と子配列
   const { fieldEntries, childrenEntries } = React.useMemo(() => {
-    const reachable = entriesOf(table).filter(({ member }) => isReachableOnlyThroughChild(table, member, null))
+    const reachable = entriesOf(table).filter(({ member }) => isReachableOnlyThroughChild(table, member, ownerPath))
     return {
       fieldEntries: reachable.filter(({ member }) => member.kind === 'ref' || (member.kind === 'value' && valueInputKindOf(member) !== undefined)),
-      childrenEntries: reachable.filter(({ member }) => member.kind === 'children'),
+      childrenEntries: reachable
+        .filter(({ member }) => member.kind === 'children')
+        .map(entry => ({ ...entry, hasNestedChildren: hasNestedChildren(table, entry.path) })),
     }
-  }, [table])
+  }, [table, ownerPath])
 
   return (
     <div className="flex flex-col gap-4">
       {/* 値項目と外部参照 */}
       <AutoFieldGroups
         table={table}
+        ownerPath={ownerPath}
         entries={fieldEntries}
-        renderField={({ path, member }) => (
-          <FieldLabel name={path}>
-            {member.kind === 'ref' ? (
-              <Input.RefTo name={path} isReadOnly={isReadOnly} />
-            ) : (
-              <AutoValueInput Input={Input} name={path} member={member as AggregateMetadata.Value} isReadOnly={isReadOnly} />
-            )}
-          </FieldLabel>
-        )}
+        renderField={({ path, member }) => {
+          const name = toInstanceMemberPath(path, ownerPath, instancePath)
+          return (
+            <FieldLabel name={name}>
+              {member.kind === 'ref' ? (
+                <Input.RefTo name={name} isReadOnly={isReadOnly} />
+              ) : (
+                <AutoValueInput Input={Input} name={name} member={member as AggregateMetadata.Value} isReadOnly={isReadOnly} />
+              )}
+            </FieldLabel>
+          )
+        }}
       />
 
       {/* 子配列 */}
-      {childrenEntries.map(({ path }) => (
-        <AutoChildrenGrid key={path} table={table} arrayPath={path} form={form} isReadOnly={isReadOnly} />
+      {childrenEntries.map(({ path, hasNestedChildren }) => hasNestedChildren ? (
+        <AutoChildrenForms
+          key={path}
+          table={table}
+          arrayPath={path}
+          arrayInstancePath={toInstanceMemberPath(path, ownerPath, instancePath)}
+          form={form}
+          isReadOnly={isReadOnly}
+        />
+      ) : (
+        <AutoChildrenGrid
+          key={path}
+          table={table}
+          arrayPath={path}
+          arrayInstancePath={toInstanceMemberPath(path, ownerPath, instancePath)}
+          form={form}
+          isReadOnly={isReadOnly}
+        />
       ))}
     </div>
   )
 }
 
-/** 子配列1つ分のグリッドと、行の追加・削除 */
-function AutoChildrenGrid({ table, arrayPath, form, isReadOnly }: {
+/** 子配列1つ分の一覧が共通で受け取る props */
+type AutoChildrenProps = {
   table: AggregateMetadata.Table
+  /** 子配列のメタデータ上のパス */
   arrayPath: string
+  /** 子配列のフォーム上のパス。外側の子配列の添字を含む */
+  arrayInstancePath: string
   form: AutoDisplayDataFieldsProps['form']
   isReadOnly: boolean | undefined
-}) {
+}
+
+/** 子配列1つ分のグリッドと、行の追加・削除。子配列の中に子配列が無い場合に使う */
+function AutoChildrenGrid({ table, arrayPath, arrayInstancePath, form, isReadOnly }: AutoChildrenProps) {
   const { formMethods, FieldLabel, useEditableGrid } = form
 
-  // 子配列の直下（子集約の中を含む）の列と、グリッドに収まらない入れ子の子配列があるかどうか
-  const { columnEntries, hasNestedChildren } = React.useMemo(() => {
-    const reachable = entriesOf(table).filter(({ member }) => isReachableOnlyThroughChild(table, member, arrayPath))
-    return {
-      columnEntries: reachable.filter(({ member }) => member.kind === 'ref' || (member.kind === 'value' && valueInputKindOf(member) !== undefined)),
-      hasNestedChildren: reachable.some(({ member }) => member.kind === 'children'),
-    }
-  }, [table, arrayPath])
+  // 子配列の直下（子集約の中を含む）の列
+  const columnEntries = React.useMemo(() => entriesOf(table).filter(({ member }) =>
+    isReachableOnlyThroughChild(table, member, arrayPath)
+    && (member.kind === 'ref' || (member.kind === 'value' && valueInputKindOf(member) !== undefined))), [table, arrayPath])
 
   // 行の追加・削除。グリッドはこれらの手段を持たないので useFieldArray を併用する
-  const { append, remove } = RHF.useFieldArray({ control: formMethods.control, name: arrayPath })
+  const { append, remove } = RHF.useFieldArray({ control: formMethods.control, name: arrayInstancePath })
   const handleAddRow = () => {
-    // 新しい行の値は未入力のままにする。行の識別に使う instanceId だけ発番する
-    append({ instanceId: UUID.generate() }, { shouldFocus: false })
+    append(createNewRow(), { shouldFocus: false })
   }
   // グリッドが渡す行の位置は画面上の位置なので、配列インデックスは instanceId から求める
   const handleRemoveRow = useEvent((rowKey: string) => {
-    const rows = (formMethods.getValues(arrayPath) ?? []) as DisplayDataBase[]
+    const rows = (formMethods.getValues(arrayInstancePath) ?? []) as DisplayDataBase[]
     const index = rows.findIndex(row => row.instanceId === rowKey)
     if (index !== -1) remove(index)
   })
 
   // グリッド
-  const [gridProps, rowMessages] = useEditableGrid(arrayPath, {
+  const [gridProps, rowMessages] = useEditableGrid(arrayInstancePath, {
     columns: col => [
       ...columnEntries.flatMap(entry => toColumn(col, arrayPath, entry)),
       ...(isReadOnly ? [] : [col.button('削除', (_, rowKey) => handleRemoveRow(rowKey), { defaultWidth: 64, disableResizing: true })]),
     ],
-  }, [columnEntries, isReadOnly])
+  }, [columnEntries, arrayPath, isReadOnly])
 
   return (
     <div className="flex flex-col gap-1">
       {/* 子配列全体に対するメッセージはラベルの下に、各行に対するメッセージはその下の一覧とセルに表示される */}
       <FieldLabel
-        name={arrayPath}
+        name={arrayInstancePath}
         vertical
         afterLabel={!isReadOnly && (
           <Button mini outline onClick={handleAddRow}>行追加</Button>
         )}
       >
         {rowMessages}
-        {hasNestedChildren && (
-          <span className="text-sm text-gray-500">この明細の中の明細は表示できません。</span>
-        )}
       </FieldLabel>
 
       {/* 明細のグリッド */}
@@ -132,6 +168,57 @@ function AutoChildrenGrid({ table, arrayPath, form, isReadOnly }: {
         isReadOnly={isReadOnly}
         className="h-64 border border-gray-300"
       />
+    </div>
+  )
+}
+
+/** 子配列1つ分の、行ごとの入れ子のフォームと、行の追加・削除。子配列の中に子配列がある場合に使う */
+function AutoChildrenForms({ table, arrayPath, arrayInstancePath, form, isReadOnly }: AutoChildrenProps) {
+  const { formMethods, FieldLabel } = form
+
+  // 行の一覧と追加・削除
+  const { fields, append, remove } = RHF.useFieldArray({ control: formMethods.control, name: arrayInstancePath })
+  const handleAddRow = () => {
+    append(createNewRow(), { shouldFocus: false })
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      {/* 子配列全体と各行そのものに対するメッセージはラベルの下に、各行の項目に対するメッセージはその項目に表示される */}
+      <FieldLabel
+        name={arrayInstancePath}
+        vertical
+        afterLabel={!isReadOnly && (
+          <Button mini outline onClick={handleAddRow}>行追加</Button>
+        )}
+      />
+
+      {/* 行が無いことの表示。枠が1つも無いと、一覧の終わりがどこか分かりにくいため */}
+      {fields.length === 0 && (
+        <span className="text-sm text-gray-500 select-none">行がありません。</span>
+      )}
+
+      {/* 行ごとの枠 */}
+      {fields.map((field, index) => (
+        <div key={field.id} className="flex flex-col gap-2 p-2 border border-gray-300">
+          {/* 行の位置と削除ボタン */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500 select-none">{index + 1}行目</span>
+            {!isReadOnly && (
+              <Button mini outline onClick={() => remove(index)}>削除</Button>
+            )}
+          </div>
+
+          {/* 行の入力欄 */}
+          <AutoStructureFields
+            table={table}
+            ownerPath={arrayPath}
+            instancePath={`${arrayInstancePath}.${index}`}
+            form={form}
+            isReadOnly={isReadOnly}
+          />
+        </div>
+      ))}
     </div>
   )
 }
@@ -155,4 +242,22 @@ function toColumn(
     case 'enum': return [col.enumeration(rowPath)]
     case undefined: return []
   }
+}
+
+/** 子配列の中（子集約の中を含む）に、さらに子配列があるかどうか */
+function hasNestedChildren(table: AggregateMetadata.Table, arrayPath: string): boolean {
+  return entriesOf(table).some(({ member }) => member.kind === 'children' && isReachableOnlyThroughChild(table, member, arrayPath))
+}
+
+/**
+ * 構造体の中の項目の、メタデータ上のパスをフォーム上のパスに変換する。
+ * メタデータ上のパスは配列の添字を含まないので、構造体までの部分をフォーム上のパスに置き換える。
+ */
+function toInstanceMemberPath(path: string, ownerPath: string | null, instancePath: string): string {
+  return ownerPath === null ? path : `${instancePath}${path.slice(ownerPath.length)}`
+}
+
+/** 追加する行の値。未入力のままにし、行の識別に使う instanceId だけ発番する */
+function createNewRow(): DisplayDataBase {
+  return { instanceId: UUID.generate() }
 }
