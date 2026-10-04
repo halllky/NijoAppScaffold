@@ -16,11 +16,7 @@ export default function SearchConditionFormSamplePage() {
   return (
     // 検索ダイアログの描画先と対応表。実際のアプリケーションではルートに置くが、この画面だけで完結させるためここに置く
     <SearchDialogHost dialogs={検索ダイアログ一覧}>
-      <PageBase
-        browserTitle="UI2 一覧検索サンプル"
-        header={<PageTitle>UI2 一覧検索サンプル</PageTitle>}
-        contents={<SearchConditionFormSample />}
-      />
+      <SearchConditionFormSample />
     </SearchDialogHost>
   )
 }
@@ -61,68 +57,78 @@ function SearchConditionFormSample() {
   }
 
   return (
-    <div className="py-4 pb-20 flex flex-col gap-4">
+    <PageBase
+      browserTitle="UI2 一覧検索サンプル"
+      header={(
+        <>
+          <PageTitle>UI2 一覧検索サンプル</PageTitle>
 
-      {/* 動作確認用の操作 */}
-      <div className="flex flex-wrap items-center gap-4 p-2 bg-gray-100 rounded">
-        <Button outline mini onClick={handleSimulateServerError}>
-          サーバーエラーを模擬
-        </Button>
-      </div>
+          <div className="basis-4"></div>
 
-      {/* 検証はブラウザに任せず react-hook-form の検証ルールで行う。検索条件欄での Enter で検索できるよう、送信は form の submit で行う */}
-      <form noValidate onSubmit={handleSearch} className="flex flex-col gap-4">
+          {/* 動作確認用の操作 */}
+          <Button outline mini onClick={handleSimulateServerError}>
+            サーバーエラーを模擬
+          </Button>
+        </>
+      )}
+      contents={(
+        <div className="flex flex-col gap-4">
 
-        {/* どの項目にも表示されないメッセージ */}
-        <RootErrors />
+          {/* 検証はブラウザに任せず react-hook-form の検証ルールで行う。検索条件欄での Enter で検索できるよう、送信は form の submit で行う */}
+          <form noValidate onSubmit={handleSearch} className="flex flex-col gap-4">
 
-        {/* 検索条件欄。数値・日付は範囲指定、真偽値は「該当する/しない」になる */}
-        <FieldGroup labelWidth="5rem">
-          {/* 伝票の内容 */}
-          <FieldColumn>
-            <FieldLabel name="伝票番号">
-              <Input.TextBox name="伝票番号" className="w-32" />
-            </FieldLabel>
-            <FieldLabel name="件名">
-              <Input.TextBox name="件名" />
-            </FieldLabel>
-            {/* 文章の項目も、検索条件では1行の入力欄になる */}
-            <FieldLabel name="備考">
-              <Input.TextArea name="備考" />
-            </FieldLabel>
-          </FieldColumn>
+            {/* どの項目にも表示されないメッセージ */}
+            <RootErrors />
 
-          {/* 日付と金額 */}
-          <FieldColumn>
-            <FieldLabel name="伝票日付">
-              <Input.DateInput name="伝票日付" />
-            </FieldLabel>
-            <FieldLabel name="合計金額">
-              <Input.NumericTextBox name="合計金額" />
-            </FieldLabel>
-          </FieldColumn>
+            {/* 検索条件欄。数値・日付は範囲指定、真偽値は「該当する/しない」になる */}
+            <FieldGroup labelWidth="5rem">
+              {/* 伝票の内容 */}
+              <FieldColumn>
+                <FieldLabel name="伝票番号">
+                  <Input.TextBox name="伝票番号" className="w-32" />
+                </FieldLabel>
+                <FieldLabel name="件名">
+                  <Input.TextBox name="件名" />
+                </FieldLabel>
+                {/* 文章の項目も、検索条件では1行の入力欄になる */}
+                <FieldLabel name="備考">
+                  <Input.TextArea name="備考" />
+                </FieldLabel>
+              </FieldColumn>
 
-          {/* 状態と担当 */}
-          <FieldColumn>
-            <FieldLabel name="確定済み">
-              <Input.CheckBox name="確定済み" />
-            </FieldLabel>
-            {/* 外部参照。コードと名称のどちらも手入力でき、検索ダイアログで選ぶこともできる */}
-            <FieldLabel name="担当者">
-              <Input.RefTo name="担当者" params={{ 退職者を含む: true }} />
-            </FieldLabel>
-          </FieldColumn>
-        </FieldGroup>
+              {/* 日付と金額 */}
+              <FieldColumn>
+                <FieldLabel name="伝票日付">
+                  <Input.DateInput name="伝票日付" />
+                </FieldLabel>
+                <FieldLabel name="合計金額">
+                  <Input.NumericTextBox name="合計金額" />
+                </FieldLabel>
+              </FieldColumn>
 
-        {/* 検索・クリア */}
-        <div className="flex justify-end gap-2">
-          <Button outline onClick={handleClear}>クリア</Button>
-          <Button submit fill>検索</Button>
+              {/* 状態と担当 */}
+              <FieldColumn>
+                <FieldLabel name="確定済み">
+                  <Input.CheckBox name="確定済み" />
+                </FieldLabel>
+                {/* 外部参照。コードと名称のどちらも手入力でき、検索ダイアログで選ぶこともできる */}
+                <FieldLabel name="担当者">
+                  <Input.RefTo name="担当者" params={{ 退職者を含む: true }} />
+                </FieldLabel>
+              </FieldColumn>
+            </FieldGroup>
+
+            {/* 検索・クリア */}
+            <div className="flex justify-end gap-2">
+              <Button outline onClick={handleClear}>クリア</Button>
+              <Button submit fill>検索</Button>
+            </div>
+          </form>
+
+          {/* 動作確認用の値の表示 */}
+          <ValuesPreview title="検索ボタンで送信された値" values={searchedCondition} />
         </div>
-      </form>
-
-      {/* 動作確認用の値の表示 */}
-      <ValuesPreview title="検索ボタンで送信された値" values={searchedCondition} />
-    </div>
+      )}
+    />
   )
 }

@@ -40,19 +40,19 @@ export function PageBase(props: PageBaseProps) {
 
       {/* ヘッダ */}
       {props.header && (
-        <header className="flex flex-wrap items-center px-8 py-1 gap-4">
+        <header className="flex flex-wrap items-center px-8 py-1 gap-4 bg-gray-50">
           {props.header}
         </header>
       )}
 
       {/* コンテンツ */}
-      <div className={`flex-grow flex flex-col px-8 ${props.className ?? ''}`}>
+      <div className={`flex-grow flex flex-col px-8 bg-gray-50 ${props.className ?? ''}`}>
         {props.contents}
       </div>
 
       {/* フッター */}
       {props.footer && (
-        <footer className="px-8 py-1 border-t border-gray-300 flex items-center justify-between bg-gray-50">
+        <footer className="px-8 py-1 border-t border-gray-300 bg-gray-50 flex items-center justify-between bg-gray-50">
           {props.footer}
         </footer>
       )}

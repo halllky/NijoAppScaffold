@@ -21,11 +21,7 @@ export default function DisplayDataFormSamplePage() {
   return (
     // 検索ダイアログの描画先と対応表。実際のアプリケーションではルートに置くが、この画面だけで完結させるためここに置く
     <SearchDialogHost dialogs={検索ダイアログ一覧}>
-      <PageBase
-        browserTitle="UI2 詳細画面サンプル"
-        header={<PageTitle>UI2 詳細画面サンプル</PageTitle>}
-        contents={<DisplayDataFormSample />}
-      />
+      <DisplayDataFormSample />
     </SearchDialogHost>
   )
 }
@@ -105,109 +101,118 @@ function DisplayDataFormSample() {
   const currentValues = RHF.useWatch({ control })
 
   return (
-    <div className="py-4 pb-20 flex flex-col gap-4">
+    <PageBase
+      browserTitle="UI2 詳細画面サンプル"
+      header={(
+        <>
+          <PageTitle>UI2 詳細画面サンプル</PageTitle>
 
-      {/* 動作確認用の操作 */}
-      <div className="flex flex-wrap items-center gap-4 p-2 bg-gray-100 rounded">
-        <CheckBox checked={isReadOnly} onChange={e => setIsReadOnly(e.target.checked)}>
-          読み取り専用
-        </CheckBox>
-        <Button outline mini onClick={handleSimulateServerError}>
-          サーバーエラーを模擬
-        </Button>
-        <Button outline mini onClick={clearServerMessages}>
-          サーバーのメッセージを消す
-        </Button>
-        <Button outline mini onClick={handleSelectEmployees}>
-          検索ダイアログで複数選択
-        </Button>
-      </div>
+          <div className="basis-4"></div>
 
-      {/* 検証はブラウザに任せず react-hook-form の検証ルールで行う。入力欄での Enter で登録が実行されないよう、Enter による送信は止める */}
-      <form noValidate onSubmit={handleValidate} onKeyDown={preventSubmitByEnter} className="flex flex-col gap-4">
+          {/* 動作確認用の操作 */}
+          <CheckBox checked={isReadOnly} onChange={e => setIsReadOnly(e.target.checked)}>
+            読み取り専用
+          </CheckBox>
+          <Button outline mini onClick={handleSimulateServerError}>
+            サーバーエラーを模擬
+          </Button>
+          <Button outline mini onClick={clearServerMessages}>
+            サーバーのメッセージを消す
+          </Button>
+          <Button outline mini onClick={handleSelectEmployees}>
+            検索ダイアログで複数選択
+          </Button>
+        </>
+      )}
+      contents={(
+        <div className="pb-20 flex flex-col gap-4">
+          {/* 検証はブラウザに任せず react-hook-form の検証ルールで行う。入力欄での Enter で登録が実行されないよう、Enter による送信は止める */}
+          <form noValidate onSubmit={handleValidate} onKeyDown={preventSubmitByEnter} className="flex flex-col gap-4">
 
-        {/* どの項目にも表示されないメッセージ */}
-        <RootErrors />
+            {/* どの項目にも表示されないメッセージ */}
+            <RootErrors />
 
-        {/* ヘッダ部。項目の意味のまとまりごとに列を分ける。読み取り専用は入力コンポーネントごとに指定する */}
-        <FieldGroup title="基本情報" labelWidth="5.5rem">
-          {/* 伝票の識別と担当 */}
-          <FieldColumn>
-            {/* 必須マークは表示だけなので、未入力のチェックは rules で別に指定する */}
-            <FieldLabel name="伝票番号" requiredMark>
-              <Input.TextBox name="伝票番号" className="w-32" isReadOnly={isReadOnly} rules={{ required: true }} />
-            </FieldLabel>
-            <FieldLabel name="件名" requiredMark>
-              <Input.TextBox name="件名" isReadOnly={isReadOnly} rules={{ required: true }} />
-            </FieldLabel>
-            <FieldLabel name="担当者" requiredMark>
-              <Input.RefTo name="担当者" params={{ 退職者を含む: false }} isReadOnly={isReadOnly} />
-            </FieldLabel>
-          </FieldColumn>
+            {/* ヘッダ部。項目の意味のまとまりごとに列を分ける。読み取り専用は入力コンポーネントごとに指定する */}
+            <FieldGroup title="基本情報" labelWidth="5.5rem">
+              {/* 伝票の識別と担当 */}
+              <FieldColumn>
+                {/* 必須マークは表示だけなので、未入力のチェックは rules で別に指定する */}
+                <FieldLabel name="伝票番号" requiredMark>
+                  <Input.TextBox name="伝票番号" className="w-32" isReadOnly={isReadOnly} rules={{ required: true }} />
+                </FieldLabel>
+                <FieldLabel name="件名" requiredMark>
+                  <Input.TextBox name="件名" isReadOnly={isReadOnly} rules={{ required: true }} />
+                </FieldLabel>
+                <FieldLabel name="担当者" requiredMark>
+                  <Input.RefTo name="担当者" params={{ 退職者を含む: false }} isReadOnly={isReadOnly} />
+                </FieldLabel>
+              </FieldColumn>
 
-          {/* 日付 */}
-          <FieldColumn>
-            <FieldLabel name="伝票日付" requiredMark>
-              <Input.DateInput name="伝票日付" isReadOnly={isReadOnly} rules={{ required: true }} />
-            </FieldLabel>
-            <FieldLabel name="計上年月">
-              <Input.DateInput name="計上年月" isReadOnly={isReadOnly} />
-            </FieldLabel>
-            <FieldLabel name="登録日時">
-              <Input.DateInput name="登録日時" isReadOnly />
-            </FieldLabel>
-          </FieldColumn>
+              {/* 日付 */}
+              <FieldColumn>
+                <FieldLabel name="伝票日付" requiredMark>
+                  <Input.DateInput name="伝票日付" isReadOnly={isReadOnly} rules={{ required: true }} />
+                </FieldLabel>
+                <FieldLabel name="計上年月">
+                  <Input.DateInput name="計上年月" isReadOnly={isReadOnly} />
+                </FieldLabel>
+                <FieldLabel name="登録日時">
+                  <Input.DateInput name="登録日時" isReadOnly />
+                </FieldLabel>
+              </FieldColumn>
 
-          {/* 金額と状態 */}
-          <FieldColumn>
-            <FieldLabel name="合計金額" afterLabel={<span className="text-xs text-gray-500 self-center">自動計算</span>}>
-              <Input.NumericTextBox name="合計金額" isReadOnly />
-            </FieldLabel>
-            {/* メタデータに無い業務上の制約は rules の validate で追加する */}
-            <FieldLabel name="税率">
-              <Input.NumericTextBox name="税率" className="w-24" isReadOnly={isReadOnly} rules={{ validate: validateTaxRate }} />
-            </FieldLabel>
-            <FieldLabel name="確定済み">
-              <Input.CheckBox name="確定済み" isReadOnly={isReadOnly}>確定する</Input.CheckBox>
-            </FieldLabel>
-          </FieldColumn>
+              {/* 金額と状態 */}
+              <FieldColumn>
+                <FieldLabel name="合計金額" afterLabel={<span className="text-xs text-gray-500 self-center">自動計算</span>}>
+                  <Input.NumericTextBox name="合計金額" isReadOnly />
+                </FieldLabel>
+                {/* メタデータに無い業務上の制約は rules の validate で追加する */}
+                <FieldLabel name="税率">
+                  <Input.NumericTextBox name="税率" className="w-24" isReadOnly={isReadOnly} rules={{ validate: validateTaxRate }} />
+                </FieldLabel>
+                <FieldLabel name="確定済み">
+                  <Input.CheckBox name="確定済み" isReadOnly={isReadOnly}>確定する</Input.CheckBox>
+                </FieldLabel>
+              </FieldColumn>
 
-          {/* FieldGroup の直下に置いた項目は横幅いっぱいに表示される */}
-          <FieldLabel name="備考" vertical>
-            <Input.TextArea name="備考" className="min-h-16 max-h-48" isReadOnly={isReadOnly} />
-          </FieldLabel>
-        </FieldGroup>
+              {/* FieldGroup の直下に置いた項目は横幅いっぱいに表示される */}
+              <FieldLabel name="備考" vertical>
+                <Input.TextArea name="備考" className="min-h-16 max-h-48" isReadOnly={isReadOnly} />
+              </FieldLabel>
+            </FieldGroup>
 
-        {/* 明細部。明細全体に対するメッセージはラベルの下に、各行に対するメッセージはグリッドの下の一覧とセルに表示される */}
-        <FieldLabel
-          name="明細"
-          vertical
-          afterLabel={!isReadOnly && (
-            <Button mini outline onClick={handleAddDetailRow}>行追加</Button>
-          )}
-        >
-          {/* 明細の各行に対するメッセージ */}
-          {detailRowMessages}
-          <EditableGrid
-            {...detailGridProps}
-            isReadOnly={isReadOnly}
-            className="h-64 resize-y border border-gray-700"
-          />
-        </FieldLabel>
+            {/* 明細部。明細全体に対するメッセージはラベルの下に、各行に対するメッセージはグリッドの下の一覧とセルに表示される */}
+            <FieldLabel
+              name="明細"
+              vertical
+              afterLabel={!isReadOnly && (
+                <Button mini outline onClick={handleAddDetailRow}>行追加</Button>
+              )}
+            >
+              {/* 明細の各行に対するメッセージ */}
+              {detailRowMessages}
+              <EditableGrid
+                {...detailGridProps}
+                isReadOnly={isReadOnly}
+                className="h-64 resize-y border border-gray-700"
+              />
+            </FieldLabel>
 
-        {/* フッタ */}
-        <div className="flex justify-end">
-          <Button submit fill>検証</Button>
+            {/* フッタ */}
+            <div className="flex justify-end">
+              <Button submit fill>検証</Button>
+            </div>
+          </form>
+
+          {/* 動作確認用の値の表示 */}
+          <div className="grid grid-cols-3 gap-4">
+            <ValuesPreview title="現在の値" values={currentValues} />
+            <ValuesPreview title="検証を通過した値" values={validValues} />
+            <ValuesPreview title="検索ダイアログで複数選択した値" values={selectedEmployees} />
+          </div>
         </div>
-      </form>
-
-      {/* 動作確認用の値の表示 */}
-      <div className="grid grid-cols-3 gap-4">
-        <ValuesPreview title="現在の値" values={currentValues} />
-        <ValuesPreview title="検証を通過した値" values={validValues} />
-        <ValuesPreview title="検索ダイアログで複数選択した値" values={selectedEmployees} />
-      </div>
-    </div>
+      )}
+    />
   )
 }
 
