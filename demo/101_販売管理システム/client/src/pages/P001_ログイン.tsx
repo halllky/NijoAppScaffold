@@ -25,7 +25,7 @@ export function P001_ログイン(props: {
   const { formMethods, Input, FieldLabel, RootErrors, setServerMessages } = useDisplayDataForm(ログインParameter, {
     defaultValues: createInitialValues(),
   })
-  const { setFocus, handleSubmit } = formMethods
+  const { setFocus, handleSubmit, formState: { isSubmitting } } = formMethods
 
   // 初期表示時、またはログアウト後。ログイン画面が表示されたら従業員番号の入力欄にフォーカスする
   React.useEffect(() => {
@@ -35,12 +35,8 @@ export function P001_ログイン(props: {
   }, [initializing, loginUser, setFocus])
 
   // ログイン実行。失敗した場合はサーバーから返されたメッセージを表示する
-  const [processing, setProcessing] = React.useState(false)
   const onSubmit = useEvent(async (data: ログインParameter.DisplayData) => {
-    if (processing) return
-    setProcessing(true)
     setServerMessages(await loginAsync(data))
-    setProcessing(false)
   })
 
   // 初期化中の場合は何も表示しない
@@ -71,10 +67,10 @@ export function P001_ログイン(props: {
           </FieldGroup>
 
           {/* ログインボタン */}
-          <Button submit fill className="justify-center mt-4">ログイン</Button>
+          <Button submit fill disabled={isSubmitting} className="justify-center mt-4">ログイン</Button>
         </form>
 
-        {processing && <NowLoading />}
+        {isSubmitting && <NowLoading />}
       </div>
     </div>
   )

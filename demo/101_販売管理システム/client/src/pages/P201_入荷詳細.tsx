@@ -71,7 +71,15 @@ function P201_入荷詳細(props: {
 
   // フォーム
   const {
-    formMethods,
+    formMethods: {
+      control,
+      getValues,
+      setValue,
+      reset,
+      handleSubmit,
+      subscribe,
+      formState: { isDirty, isSubmitting },
+    },
     Input,
     FieldLabel,
     RootErrors,
@@ -80,26 +88,26 @@ function P201_入荷詳細(props: {
   } = useDisplayDataForm(入荷詳細, {
     defaultValues: initialValues,
   })
-  const { control, getValues, setValue, reset, handleSubmit, formState: { isDirty, isSubmitting } } = formMethods
 
   // ルーターがデータを読み込み直したら（保存後の再読み込みなど）、フォームの内容をそのデータに置き換える
   React.useEffect(() => {
     reset(initialValues)
   }, [initialValues, reset])
 
-  // 商品を選んだ行のうち、消費税区分が未入力のものには商品の消費税区分を入れる。
-  // 外部参照のセルには値の変更を受け取る手段が無いため、フォームの値の変化を購読して行う
-  React.useEffect(() => formMethods.subscribe({
+  // 新しく追加した行のうち、商品を選んで消費税区分が未入力のものには商品の消費税区分を入れる。
+  // 外部参照のセルには値の変更を受け取る手段が無いため、フォームの値の変化を購読して行う。
+  // DBに保存済みの行は対象外にする（読み込んだだけで編集中扱いになり、離脱確認が出てしまうため）
+  React.useEffect(() => subscribe({
     name: '入荷商品一覧',
     formState: { values: true },
-    callback: () => {
-      getValues('入荷商品一覧').forEach((row, index) => {
-        if (!row.消費税区分 && row.商品.消費税区分) {
+    callback: (data) => {
+      data.values.入荷商品一覧.forEach((row, index) => {
+        if (!row.existsInDatabase && !row.消費税区分 && row.商品.消費税区分) {
           setValue(`入荷商品一覧.${index}.消費税区分`, row.商品.消費税区分, { shouldDirty: true })
         }
       })
     },
-  }), [formMethods, getValues, setValue])
+  }), [subscribe, setValue])
 
   // 明細の行の追加・削除。グリッドはこれらの手段を持たないので useFieldArray を併用する
   const { append: appendDetailRow, remove: removeDetailRow } = RHF.useFieldArray({ control, name: '入荷商品一覧' })
