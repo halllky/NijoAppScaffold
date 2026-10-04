@@ -4,7 +4,7 @@ import {
   type EdgeTypes, type NodeMouseHandler, type NodeTypes, type OnMoveEnd, type ResizeParams, type Viewport,
 } from "@xyflow/react"
 import { ArrowPathIcon, Cog6ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid"
-import { Button } from "../../ui/Button"
+import { Button } from "../../ui"
 import type { DbSchema, TableRelation } from "./DbSchema"
 import { createDataPreview, findMissingTableNames, type DataPreview, type SubjectArea } from "./DbViewerSettings"
 import { useSubjectAreaNodes, type SubjectAreaFlowNode, type SubjectAreaNodeActions } from "./useSubjectAreaNodes"

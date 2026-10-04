@@ -1,7 +1,8 @@
 import React from "react"
+import * as EG2 from "@halllky/editable-grid"
 import { NodeResizer, type Node, type NodeProps, type ResizeParams } from "@xyflow/react"
 import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid"
-import * as Grid from "../../ui/grid"
+import { ReadOnlyColumn } from "../../ui"
 import type { DbSchemaColumn, DbSchemaTable } from "./DbSchema"
 import { COLUMN_ATTRIBUTE_LABELS, type ColumnAttribute, type TableAttribute } from "./DbViewerSettings"
 import { FloatingEdgeHandles } from "./FloatingEdge"
@@ -75,7 +76,7 @@ export const TableNode = memoizeFlowNode(function TableNode({ data, selected }: 
       {/* カラム一覧。nodrag/nowheel はグリッド上のドラッグやホイールをキャンバスのパン・ズームとして扱わせないための指定 */}
       {!collapsed && (
         <div className="nodrag nowheel flex-1 min-h-0 flex cursor-default">
-          <Grid.EG2.EditableGrid
+          <EG2.EditableGrid
             rowKeys={rowKeys}
             getLatestRowObject={getLatestRowObject}
             columns={gridColumns}
@@ -109,17 +110,17 @@ function TableAttributeText({ table, attribute, isFirst }: {
 }
 
 /** カラムの属性1個分のグリッドの列定義 */
-function toGridColumn(attribute: ColumnAttribute): Grid.EG2.EditableGridColumn<DbSchemaColumn> {
+function toGridColumn(attribute: ColumnAttribute): EG2.EditableGridColumn<DbSchemaColumn> {
   const header = COLUMN_ATTRIBUTE_LABELS[attribute]
   const options = { columnId: attribute, defaultWidth: COLUMN_WIDTHS[attribute] }
   switch (attribute) {
-    case "isPrimaryKey": return Grid.textColumn<DbSchemaColumn>(header, column => column.isPrimaryKey ? "○" : "", options)
-    case "logicalName": return Grid.textColumn<DbSchemaColumn>(header, column => column.logicalName, options)
-    case "physicalName": return Grid.textColumn<DbSchemaColumn>(header, column => column.physicalName, options)
-    case "type": return Grid.textColumn<DbSchemaColumn>(header, column => column.type, options)
-    case "isNotNull": return Grid.textColumn<DbSchemaColumn>(header, column => column.isNotNull ? "○" : "", options)
-    case "isUnique": return Grid.textColumn<DbSchemaColumn>(header, column => column.isUnique ? "○" : "", options)
-    case "comment": return Grid.textColumn<DbSchemaColumn>(header, column => column.comment, options)
+    case "isPrimaryKey": return ReadOnlyColumn.text<DbSchemaColumn>(header, column => column.isPrimaryKey ? "○" : "", options)
+    case "logicalName": return ReadOnlyColumn.text<DbSchemaColumn>(header, column => column.logicalName, options)
+    case "physicalName": return ReadOnlyColumn.text<DbSchemaColumn>(header, column => column.physicalName, options)
+    case "type": return ReadOnlyColumn.text<DbSchemaColumn>(header, column => column.type, options)
+    case "isNotNull": return ReadOnlyColumn.text<DbSchemaColumn>(header, column => column.isNotNull ? "○" : "", options)
+    case "isUnique": return ReadOnlyColumn.text<DbSchemaColumn>(header, column => column.isUnique ? "○" : "", options)
+    case "comment": return ReadOnlyColumn.text<DbSchemaColumn>(header, column => column.comment, options)
   }
 }
 

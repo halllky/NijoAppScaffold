@@ -1,19 +1,7 @@
-import React from "react"
 import * as ReactRouter from "react-router-dom"
-import { useNavigate } from "react-router-dom"
-import { PageBase } from "../app/PageBase"
+import { PageBase } from "../ui"
 
 export const URL = "/"
-
-/**
- * P000_トップページ へ遷移するためのフック
- */
-export function useNavigateToP000トップページ() {
-  const navigate = useNavigate()
-  return React.useCallback(() => {
-    navigate(URL)
-  }, [navigate])
-}
 
 /**
  * ルーティング定義
@@ -21,7 +9,6 @@ export function useNavigateToP000トップページ() {
 export default {
   path: URL,
   element: <P000_トップページ />,
-  loader: undefined, // 画面初期表示時の読み込み処理がある場合はここで定義
 } satisfies ReactRouter.RouteObject
 
 /**
@@ -32,7 +19,6 @@ function P000_トップページ() {
     <PageBase
       browserTitle="販売管理システム"
       className="bg-gray-100"
-    >
-    </PageBase>
+    />
   )
 }

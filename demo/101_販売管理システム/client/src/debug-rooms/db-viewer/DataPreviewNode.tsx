@@ -1,9 +1,8 @@
 import React from "react"
+import * as EG2 from "@halllky/editable-grid"
 import { NodeResizer, type Node, type NodeProps, type ResizeParams } from "@xyflow/react"
 import { ArrowPathIcon, ChevronDownIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/solid"
-import * as Grid from "../../ui/grid"
-import { Button } from "../../ui/Button"
-import { Pager } from "../../ui/Pager"
+import { Button, Pager, ReadOnlyColumn } from "../../ui"
 import type { DataPreview } from "./DbViewerSettings"
 import { FloatingEdgeHandles } from "./FloatingEdge"
 import { memoizeFlowNode } from "./memoizeFlowNode"
@@ -138,7 +137,7 @@ export const DataPreviewNode = memoizeFlowNode(function DataPreviewNode({ data, 
 
       {/* 結果。nodrag/nowheel はグリッド上のドラッグやホイールをキャンバスのパン・ズームとして扱わせないための指定 */}
       <div className="nodrag nowheel flex-1 min-h-0 flex cursor-default">
-        <Grid.EG2.EditableGrid
+        <EG2.EditableGrid
           rowKeys={rowKeys}
           getLatestRowObject={getLatestRowObject}
           columns={gridColumns}
@@ -168,8 +167,8 @@ export const DataPreviewNode = memoizeFlowNode(function DataPreviewNode({ data, 
 type ResultRow = (string | null)[]
 
 /** 結果の列1個分のグリッドの列定義。NULL は空文字と区別できるよう表示する */
-function toGridColumn(columnName: string, index: number): Grid.EG2.EditableGridColumn<ResultRow> {
-  return Grid.customColumn<ResultRow>(
+function toGridColumn(columnName: string, index: number): EG2.EditableGridColumn<ResultRow> {
+  return ReadOnlyColumn.custom<ResultRow>(
     columnName,
     row => row[index] === null ? <span className="text-gray-400 italic">NULL</span> : row[index],
     {

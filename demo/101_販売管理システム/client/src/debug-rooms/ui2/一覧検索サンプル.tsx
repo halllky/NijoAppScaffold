@@ -1,7 +1,5 @@
 import React from "react"
-import { CheckBox } from "../../ui/CheckBox"
-import * as Grid from "../../ui/grid"
-import { FieldColumn, FieldGroup, SearchDialogHost, SearchPageBase, useSearchConditionForm, type SearchResult, type SortComboItem } from "../../ui2"
+import { FieldColumn, FieldGroup, SearchDialogHost, SearchPageBase, useSearchConditionForm, type SearchResult, type SortComboItem, CheckBox, ReadOnlyColumn } from "../../ui"
 import { 検索ダイアログ一覧 } from "./検索ダイアログ一覧"
 import * as サンプル伝票 from "./サンプル伝票"
 
@@ -88,15 +86,15 @@ function SearchConditionFormSample() {
         </FieldGroup>
       )}
       defineSearchResultColumns={[() => [
-        Grid.textColumn<サンプル伝票.DisplayData>('伝票番号', row => row.伝票番号, { columnId: '伝票番号', defaultWidth: 112 }),
-        Grid.textColumn<サンプル伝票.DisplayData>('件名', row => row.件名, { columnId: '件名', defaultWidth: 200 }),
-        Grid.textColumn<サンプル伝票.DisplayData>('伝票日付', row => row.伝票日付, { columnId: '伝票日付', defaultWidth: 112 }),
-        Grid.numericColumn<サンプル伝票.DisplayData>('合計金額', row => row.合計金額, { columnId: '合計金額', defaultWidth: 120, suffix: '円' }),
-        Grid.textColumn<サンプル伝票.DisplayData>('確定済み', row => row.確定済み ? '確定' : '', { columnId: '確定済み', defaultWidth: 80 }),
-        Grid.textColumn<サンプル伝票.DisplayData>('優先度', row => row.優先度, { columnId: '優先度', defaultWidth: 80 }),
-        Grid.textColumn<サンプル伝票.DisplayData>('担当者', row => row.担当者.従業員番号, { columnId: '担当者.従業員番号', defaultWidth: 96 }),
-        Grid.textColumn<サンプル伝票.DisplayData>('', row => row.担当者.氏名, { columnId: '担当者.氏名', defaultWidth: 120 }),
-        Grid.textColumn<サンプル伝票.DisplayData>('備考', row => row.備考, { columnId: '備考', defaultWidth: 240 }),
+        ReadOnlyColumn.text<サンプル伝票.DisplayData>('伝票番号', row => row.伝票番号, { columnId: '伝票番号', defaultWidth: 112 }),
+        ReadOnlyColumn.text<サンプル伝票.DisplayData>('件名', row => row.件名, { columnId: '件名', defaultWidth: 200 }),
+        ReadOnlyColumn.text<サンプル伝票.DisplayData>('伝票日付', row => row.伝票日付, { columnId: '伝票日付', defaultWidth: 112 }),
+        ReadOnlyColumn.numeric<サンプル伝票.DisplayData>('合計金額', row => row.合計金額, { columnId: '合計金額', defaultWidth: 120, suffix: '円' }),
+        ReadOnlyColumn.text<サンプル伝票.DisplayData>('確定済み', row => row.確定済み ? '確定' : '', { columnId: '確定済み', defaultWidth: 80 }),
+        ReadOnlyColumn.text<サンプル伝票.DisplayData>('優先度', row => row.優先度, { columnId: '優先度', defaultWidth: 80 }),
+        ReadOnlyColumn.text<サンプル伝票.DisplayData>('担当者', row => row.担当者.従業員番号, { columnId: '担当者.従業員番号', defaultWidth: 96 }),
+        ReadOnlyColumn.text<サンプル伝票.DisplayData>('', row => row.担当者.氏名, { columnId: '担当者.氏名', defaultWidth: 120 }),
+        ReadOnlyColumn.text<サンプル伝票.DisplayData>('備考', row => row.備考, { columnId: '備考', defaultWidth: 240 }),
       ], []]}
     />
   )

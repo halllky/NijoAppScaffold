@@ -1,12 +1,9 @@
 import React from "react"
 import { Outlet, Link, useNavigation } from "react-router-dom"
 import * as Icon from "@heroicons/react/24/solid"
-import { NowLoading } from "./ui/NowLoading"
-import { useLoginLogout } from "./app/useLoginLogout"
+import { LoginUserProvider, NowLoading, useLoginLogout } from "./ui"
 import * as P000Module from "./pages/P000_トップページ"
 import * as P002Module from "./pages/P002_ログアウト"
-import * as DetailMessageContext from "./app/DetailMessageContext"
-import { LoginUserProvider } from "./app/useLoginLogout"
 import { navigationItems } from "./navigationItems"
 import DebugMenuButton from "./debug-rooms/デバッグメニュー"
 
@@ -16,11 +13,9 @@ import DebugMenuButton from "./debug-rooms/デバッグメニュー"
  */
 export default function App() {
   return (
-    <DetailMessageContext.Provider>
-      <LoginUserProvider>
-        <RootLayout />
-      </LoginUserProvider>
-    </DetailMessageContext.Provider >
+    <LoginUserProvider>
+      <RootLayout />
+    </LoginUserProvider>
   )
 }
 

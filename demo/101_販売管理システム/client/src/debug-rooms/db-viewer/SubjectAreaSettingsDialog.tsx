@@ -1,8 +1,6 @@
 import React from "react"
 import { ArrowDownIcon, ArrowUpIcon, MagnifyingGlassIcon, TrashIcon } from "@heroicons/react/24/solid"
-import { Modal } from "../../ui/Modal"
-import { Button } from "../../ui/Button"
-import { CheckBox } from "../../ui/CheckBox"
+import { Button, CheckBox, Modal } from "../../ui"
 import { matchesTableKeyword, type DbSchema } from "./DbSchema"
 import {
   addTableToArea, isAllTablesArea, removeTableFromArea, COLUMN_ATTRIBUTE_LABELS, TABLE_ATTRIBUTE_LABELS,

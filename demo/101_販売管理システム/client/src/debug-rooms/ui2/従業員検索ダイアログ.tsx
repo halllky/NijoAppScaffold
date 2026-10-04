@@ -1,5 +1,4 @@
-import * as Grid from "../../ui/grid"
-import { defineSearchDialog, FieldColumn, FieldGroup, type SearchResult } from "../../ui2"
+import { defineSearchDialog, FieldColumn, FieldGroup, type SearchResult, ReadOnlyColumn } from "../../ui"
 import * as サンプル従業員 from "./サンプル従業員"
 
 /** 従業員検索ダイアログを開くときのパラメータ */
@@ -45,8 +44,8 @@ export const 従業員検索ダイアログ = defineSearchDialog<サンプル従
 
   // 検索結果欄
   getResultColumns: () => [
-    Grid.textColumn<サンプル従業員.RefTarget>('従業員番号', row => row.従業員番号, { columnId: '従業員番号', defaultWidth: 120 }),
-    Grid.textColumn<サンプル従業員.RefTarget>('氏名', row => row.氏名, { columnId: '氏名', defaultWidth: 200 }),
+    ReadOnlyColumn.text<サンプル従業員.RefTarget>('従業員番号', row => row.従業員番号, { columnId: '従業員番号', defaultWidth: 120 }),
+    ReadOnlyColumn.text<サンプル従業員.RefTarget>('氏名', row => row.氏名, { columnId: '氏名', defaultWidth: 200 }),
   ],
 
   // 検索処理。実際のアプリケーションではここでサーバー側の検索処理を呼ぶ

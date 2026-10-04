@@ -19,7 +19,7 @@ export const 検索ダイアログ一覧 = {
 
 // 外部参照の入力欄が、項目の name から検索ダイアログとそのパラメータの型を決められるよう、対応表の型を登録する
 type 検索ダイアログ一覧 = typeof 検索ダイアログ一覧
-declare module "../../ui2/search-dialog/SearchDialogRegistry" {
+declare module "../../ui/search-dialog/SearchDialogRegistry" {
   interface SearchDialogRegistry extends 検索ダイアログ一覧 { }
 }
 

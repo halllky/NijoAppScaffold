@@ -3,10 +3,7 @@ import * as ReactRouter from "react-router-dom"
 import { Link } from "react-router-dom"
 import { Allotment, LayoutPriority } from "allotment"
 import type { Viewport } from "@xyflow/react"
-import { Button } from "../../ui/Button"
-import { NowLoading } from "../../ui/NowLoading"
-import { PageTitle } from "../../ui/PageTitle"
-import { PageBase } from "../../app/PageBase"
+import { Button, NowLoading, PageTitle, PageBase } from "../../ui"
 import { listRelations } from "./DbSchema"
 import {
   ALL_TABLES_AREA_ID, createSubjectArea, findArea, isAllTablesArea, updateArea, withAllTables,
