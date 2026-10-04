@@ -40,7 +40,6 @@ export function NumericTextBox<TValues extends RHF.FieldValues>(props: WithFormB
   if (binding.kind === 'display-data') {
     return (
       <NumericInput
-        id={binding.toElementId(formPath)}
         formPath={formPath}
         control={binding.formMethods.control}
         rules={toRegisterRules({ rules, validators: [validateDigits] })}
@@ -58,7 +57,6 @@ export function NumericTextBox<TValues extends RHF.FieldValues>(props: WithFormB
     <div className={`flex items-center gap-1 ${className ?? ''}`}>
       {/* 下限 */}
       <NumericInput
-        id={binding.toElementId(formPath)}
         formPath={`${formPath}.from`}
         control={binding.formMethods.control}
         rules={toRegisterRules({
@@ -96,8 +94,7 @@ export function NumericTextBox<TValues extends RHF.FieldValues>(props: WithFormB
  * IME で変換中の全角文字を半角に読み替えると変換が壊れるため、入力中の文字列はフォームの値と別にしている。
  * Enter キーでも反映するのは、Enter キーによるフォームの送信で入力中の値が送信されるようにするため。
  */
-function NumericInput({ id, formPath, control, rules, format, isReadOnly, placeholder, className }: {
-  id?: string
+function NumericInput({ formPath, control, rules, format, isReadOnly, placeholder, className }: {
   formPath: string
   control: RHF.Control<RHF.FieldValues>
   rules: Pick<RHF.RegisterOptions, 'validate'>
@@ -147,7 +144,6 @@ function NumericInput({ id, formPath, control, rules, format, isReadOnly, placeh
     <div className={`inline-flex items-center px-1 py-px ${inputFrameClassName(isReadOnly)} ${className ?? ''}`}>
       <input
         type="text"
-        id={id}
         ref={field.ref}
         name={field.name}
         inputMode={format.decimalDigit > 0 ? 'decimal' : 'numeric'}

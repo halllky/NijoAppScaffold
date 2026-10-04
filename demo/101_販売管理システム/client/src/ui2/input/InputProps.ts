@@ -10,7 +10,6 @@ import type { FormBinding } from "../FormBinding"
  *
  * フォーム用の入力コンポーネントは、メッセージを自分では表示しない。
  * 項目に対するメッセージ（クライアント側エラー・サーバー側メッセージとも）は、それを囲む FieldLabel か RootErrors に表示される。
- * 入力欄の HTML 要素には、FieldLabel のラベルと対応付けるための id が付く。
  */
 export type InputPropsBase<TValues extends RHF.FieldValues> = {
   /**

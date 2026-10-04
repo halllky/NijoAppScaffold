@@ -23,7 +23,6 @@ export type FieldLabelProps<TValues extends RHF.FieldValues> = {
   afterLabel?: React.ReactNode
   /**
    * ラベルを付ける対象。入力コンポーネントに限らず、グリッドなど何を置いてもよい。
-   * name と同じ項目の入力コンポーネントがあれば、ラベルのクリックでそこにフォーカスが移る。
    */
   children?: React.ReactNode
 }
@@ -38,10 +37,6 @@ export type FieldLabelProps<TValues extends RHF.FieldValues> = {
  *   クライアント側エラー（react-hook-form の検証エラー）とサーバー側メッセージの両方。複数ある場合はすべて表示する。
  *
  * ここに表示したメッセージは RootErrors には表示されない。
- *
- * 外枠は label 要素ではなく、表示名の部分だけが label 要素になる。
- * label 要素の中には操作可能な要素を1つしか置けないが、children にはグリッドなど複数の操作可能な要素を置けるようにするため。
- * ラベルと入力欄の対応付けは htmlFor と id で行う。
  *
  * 項目の配置（どの列に並べるか、横幅いっぱいに表示するか、ラベルの幅をそろえるか）はこのコンポーネントでは決めない。
  * FieldGroup と FieldColumn のどこに置くかで決まる。
@@ -75,9 +70,9 @@ export function FieldLabel<TValues extends RHF.FieldValues>(props: FieldLabelPro
         </span>
       )}
       {/* 表示名 */}
-      <label htmlFor={binding.toElementId(formPath)} className={`text-sm text-gray-700 select-none ${vertical ? '' : 'min-w-0 text-right break-words'}`}>
+      <span className={`text-sm text-gray-700 select-none ${vertical ? '' : 'min-w-0 text-right break-words'}`}>
         {member.displayNameIsEmpty ? '' : member.displayName}
-      </label>
+      </span>
       {/* 必須マーク */}
       {requiredMark && (
         <span className="text-rose-600 text-xs select-none" title="必須">*</span>

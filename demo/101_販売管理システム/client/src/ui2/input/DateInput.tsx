@@ -30,7 +30,6 @@ export function DateInput<TValues extends RHF.FieldValues>(props: WithFormBindin
   if (binding.kind === 'display-data') {
     return (
       <NativeDateInput
-        id={binding.toElementId(formPath)}
         formPath={formPath}
         control={binding.formMethods.control}
         ruleParams={{ rules }}
@@ -46,7 +45,6 @@ export function DateInput<TValues extends RHF.FieldValues>(props: WithFormBindin
     <div className={`flex flex-wrap items-center gap-1 ${className ?? ''}`}>
       {/* 開始 */}
       <NativeDateInput
-        id={binding.toElementId(formPath)}
         formPath={`${formPath}.from`}
         control={binding.formMethods.control}
         ruleParams={{
@@ -76,8 +74,7 @@ export function DateInput<TValues extends RHF.FieldValues>(props: WithFormBindin
  * ネイティブの入力欄はその場合の値を空文字として渡すので、そのままでは入力が黙って捨てられてしまうため。
  * この検証はブラウザの検証機能には任せない（フォームの検証はすべて react-hook-form の検証ルールで行う）。
  */
-function NativeDateInput({ id, formPath, control, ruleParams, kind, isReadOnly, className }: {
-  id?: string
+function NativeDateInput({ formPath, control, ruleParams, kind, isReadOnly, className }: {
   formPath: string
   control: RHF.Control<RHF.FieldValues>
   /** 検証ルールの組み立てに使う。解釈できない入力の検証はこのコンポーネントが足す */
@@ -101,7 +98,6 @@ function NativeDateInput({ id, formPath, control, ruleParams, kind, isReadOnly, 
   return (
     <input
       type={kind === 'date' ? 'date' : kind === 'datetime' ? 'datetime-local' : 'month'}
-      id={id}
       ref={element => {
         inputRef.current = element
         field.ref(element)

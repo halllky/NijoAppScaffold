@@ -76,7 +76,6 @@ export function RefTo<
   const commonProps = {
     formMethods: binding.formMethods,
     formPath,
-    elementId: binding.toElementId(formPath),
     dialog,
     params,
     isReadOnly,
@@ -92,8 +91,6 @@ export function RefTo<
 type RefToBodyProps = {
   formMethods: RHF.UseFormReturn<RHF.FieldValues>
   formPath: string
-  /** コードの入力欄の id。FieldLabel のラベルと対応付ける */
-  elementId: string
   dialog: SearchDialog<RHF.FieldValues, unknown>
   params: unknown
   isReadOnly: boolean | undefined
@@ -102,7 +99,7 @@ type RefToBodyProps = {
 }
 
 /** 画面表示用データの外部参照の入力欄。コードを手入力したら照合する */
-function RefToForDisplayData({ formMethods, formPath, elementId, dialog, params, isReadOnly, rules, className }: RefToBodyProps) {
+function RefToForDisplayData({ formMethods, formPath, dialog, params, isReadOnly, rules, className }: RefToBodyProps) {
   const openDialogInHost = useOpenDialogInHost()
   const [codeMatching] = React.useState(() => createCodeMatching(dialog, formMethods))
 
@@ -153,7 +150,6 @@ function RefToForDisplayData({ formMethods, formPath, elementId, dialog, params,
       {/* コード */}
       <input
         type="text"
-        id={elementId}
         ref={field.ref}
         name={`${field.name}.${dialog.refField.codePath}`}
         value={draftCode ?? code}
@@ -179,7 +175,7 @@ function RefToForDisplayData({ formMethods, formPath, elementId, dialog, params,
 }
 
 /** 検索条件の外部参照の入力欄。コードも名称も手入力した値がそのまま絞り込み条件になる */
-function RefToForSearchCondition({ formMethods, formPath, elementId, dialog, params, isReadOnly, rules, className }: RefToBodyProps) {
+function RefToForSearchCondition({ formMethods, formPath, dialog, params, isReadOnly, rules, className }: RefToBodyProps) {
   const openDialogInHost = useOpenDialogInHost()
 
   const handleOpenDialog = async () => {
@@ -192,7 +188,6 @@ function RefToForSearchCondition({ formMethods, formPath, elementId, dialog, par
     <div className={`flex items-center gap-1 ${className ?? ''}`}>
       {/* コード。項目全体に対する検証はここに付ける */}
       <FilterTextInput
-        id={elementId}
         formPath={`${formPath}.${dialog.refField.codePath}`}
         control={formMethods.control}
         rules={toRegisterRules({ rules, itemValueOf: (_, formValues) => RHF.get(formValues, formPath) })}
@@ -216,8 +211,7 @@ function RefToForSearchCondition({ formMethods, formPath, elementId, dialog, par
 }
 
 /** 検索条件のコードか名称の入力欄。フォーカスアウト時に前後の空白を削除し、Unicode正規化（NFKC）を行う */
-function FilterTextInput({ id, formPath, control, rules, isReadOnly, className }: {
-  id?: string
+function FilterTextInput({ formPath, control, rules, isReadOnly, className }: {
   formPath: string
   control: RHF.Control<RHF.FieldValues>
   rules: Pick<RHF.RegisterOptions, 'validate'>
@@ -236,7 +230,6 @@ function FilterTextInput({ id, formPath, control, rules, isReadOnly, className }
   return (
     <input
       type="text"
-      id={id}
       ref={field.ref}
       name={field.name}
       value={typeof field.value === 'string' ? field.value : ''}

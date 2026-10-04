@@ -32,7 +32,6 @@ export function EnumSelection<TValues extends RHF.FieldValues>(props: WithFormBi
   if (binding.kind === 'display-data') {
     return (
       <EnumDropDown
-        id={binding.toElementId(formPath)}
         formPath={formPath}
         control={binding.formMethods.control}
         rules={toRegisterRules({ rules })}
@@ -49,7 +48,6 @@ export function EnumSelection<TValues extends RHF.FieldValues>(props: WithFormBi
       {options.map((option, index) => (
         <EnumOptionCheckBox
           key={option}
-          id={index === 0 ? binding.toElementId(formPath) : undefined}
           formPath={`${formPath}.${option}`}
           control={binding.formMethods.control}
           rules={index === 0
@@ -65,8 +63,7 @@ export function EnumSelection<TValues extends RHF.FieldValues>(props: WithFormBi
 }
 
 /** ドロップダウン */
-function EnumDropDown({ id, formPath, control, rules, options, isReadOnly, className }: {
-  id: string
+function EnumDropDown({ formPath, control, rules, options, isReadOnly, className }: {
   formPath: string
   control: RHF.Control<RHF.FieldValues>
   rules: Pick<RHF.RegisterOptions, 'validate'>
@@ -80,14 +77,13 @@ function EnumDropDown({ id, formPath, control, rules, options, isReadOnly, class
   // select 要素には readOnly 属性が効かないので、読み取り専用のときは値だけを表示する
   if (isReadOnly) {
     return (
-      <span id={id} className={`block px-1 py-px min-h-6 ${inputFrameClassName(true)} ${className ?? ''}`}>
+      <span className={`block px-1 py-px min-h-6 ${inputFrameClassName(true)} ${className ?? ''}`}>
         {value}
       </span>
     )
   }
   return (
     <select
-      id={id}
       ref={field.ref}
       name={field.name}
       value={value}
@@ -106,8 +102,7 @@ function EnumDropDown({ id, formPath, control, rules, options, isReadOnly, class
 }
 
 /** 検索条件の、選択肢1つ分のチェックボックス */
-function EnumOptionCheckBox({ id, formPath, control, rules, isReadOnly, children }: {
-  id?: string
+function EnumOptionCheckBox({ formPath, control, rules, isReadOnly, children }: {
   formPath: string
   control: RHF.Control<RHF.FieldValues>
   rules: Pick<RHF.RegisterOptions, 'validate'>
@@ -120,7 +115,6 @@ function EnumOptionCheckBox({ id, formPath, control, rules, isReadOnly, children
     <label className={`inline-flex items-center gap-1 select-none ${isReadOnly ? '' : 'cursor-pointer'}`}>
       <input
         type="checkbox"
-        id={id}
         ref={field.ref}
         name={field.name}
         checked={field.value === true}

@@ -39,13 +39,6 @@ export type FormBinding<TValues extends RHF.FieldValues> = {
   metadata: AggregateMetadata.Table
   /** name を、フォーム全体の値から見たパスに変換する */
   toFormPath: (name: RHF.Path<TValues>) => string
-  /**
-   * フォーム全体から見たパスを、その項目の入力欄の HTML 要素の id に変換する。
-   * FieldLabel の label 要素の htmlFor と、入力コンポーネントの入力欄の id の両方がこれを使うことで、
-   * ラベルのクリックで入力欄にフォーカスが移る。
-   * 同じ画面に複数のフォームがあっても重複しないよう、フォームごとに異なる接頭辞が付く。
-   */
-  toElementId: (formPath: string) => string
 
   //#region メッセージ
   /**
@@ -151,8 +144,6 @@ export function useFormBinding<TValues extends RHF.FieldValues>(params: {
   setServerMessages: (detail: PresentationContextDetail | null | undefined) => void
   clearServerMessages: () => void
 } {
-  const elementIdPrefix = React.useId()
-
   // メッセージの保持と振り分け
   const [formMessages] = React.useState(() => createFormMessages({
     getValues: () => params.formMethods.getValues(),
@@ -175,7 +166,6 @@ export function useFormBinding<TValues extends RHF.FieldValues>(params: {
       formMethods: params.formMethods,
       metadata,
       toFormPath: name => nameRoot === '' ? name : `${nameRoot}.${name}`,
-      toElementId: formPath => `${elementIdPrefix}${formPath}`,
       subscribeMessages: formMessages.subscribe,
       getMessages: formMessages.getMessages,
       getUnboundMessages: formMessages.getUnboundMessages,

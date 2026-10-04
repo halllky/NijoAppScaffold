@@ -46,7 +46,6 @@ export function TextBox<TValues extends RHF.FieldValues>(props: WithFormBinding<
   return (
     <input
       type="text"
-      id={binding.toElementId(formPath)}
       ref={field.ref}
       name={field.name}
       value={field.value ?? ''}

@@ -44,7 +44,6 @@ export function TextArea<TValues extends RHF.FieldValues>(props: WithFormBinding
   }
 
   const commonProps = {
-    id: binding.toElementId(formPath),
     name: field.name,
     value: field.value ?? '',
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => field.onChange(e.target.value),

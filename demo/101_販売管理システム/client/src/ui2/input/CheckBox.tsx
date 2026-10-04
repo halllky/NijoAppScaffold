@@ -34,7 +34,6 @@ export function CheckBox<TValues extends RHF.FieldValues>(props: WithFormBinding
     return (
       <div className={`flex items-center min-h-6 ${className ?? ''}`}>
         <SingleCheckBox
-          id={binding.toElementId(formPath)}
           formPath={formPath}
           control={binding.formMethods.control}
           rules={toRegisterRules({ rules })}
@@ -50,7 +49,6 @@ export function CheckBox<TValues extends RHF.FieldValues>(props: WithFormBinding
   return (
     <div className={`flex flex-wrap items-center gap-x-3 min-h-6 ${className ?? ''}`}>
       <SingleCheckBox
-        id={binding.toElementId(formPath)}
         formPath={`${formPath}.trueのみ`}
         control={binding.formMethods.control}
         rules={toRegisterRules({ rules, itemValueOf: (_, formValues) => RHF.get(formValues, formPath) })}
@@ -71,8 +69,7 @@ export function CheckBox<TValues extends RHF.FieldValues>(props: WithFormBinding
 }
 
 /** 1つのチェックボックスと、その右側の文字列 */
-function SingleCheckBox({ id, formPath, control, rules, isReadOnly, children }: {
-  id?: string
+function SingleCheckBox({ formPath, control, rules, isReadOnly, children }: {
   formPath: string
   control: RHF.Control<RHF.FieldValues>
   rules: Pick<RHF.RegisterOptions, 'validate'>
@@ -85,7 +82,6 @@ function SingleCheckBox({ id, formPath, control, rules, isReadOnly, children }: 
     <label className={`inline-flex items-center gap-1 select-none ${isReadOnly ? '' : 'cursor-pointer'}`}>
       <input
         type="checkbox"
-        id={id}
         ref={field.ref}
         name={field.name}
         checked={field.value === true}
