@@ -33,12 +33,19 @@ export type { RefToProps, RefToColumnOptions } from "./input/RefTo"
 export type { ButtonColumnOptions } from "./input/ButtonColumn"
 export type { PresentationContextDetail } from "./ServerMessages"
 
+// メタデータから機械的に組み立てる画面部品
+export { AutoSearchConditionFields, type AutoSearchConditionFieldsProps } from "./auto/AutoSearchConditionFields"
+export { AutoDisplayDataFields, type AutoDisplayDataFieldsProps } from "./auto/AutoDisplayDataFields"
+export { autoResultColumns } from "./auto/autoResultColumns"
+export { defineAutoSearchDialog, type AutoSearchDialogDefinition } from "./auto/defineAutoSearchDialog"
+
 // 画面の枠とログイン
 export { PageBase, type PageBaseProps } from "./PageBase"
 export { ErrorPage } from "./ErrorPage"
 export { useLoginLogout, LoginUserProvider } from "./useLoginLogout"
 
 // フォームと結びつかない部品
+export { Breadcrumb, type BreadcrumbItem } from "./parts/Breadcrumb"
 export { Button } from "./parts/Button"
 export { CheckBox } from "./parts/CheckBox"
 export { Modal } from "./parts/Modal"

@@ -164,8 +164,8 @@ function maxLengthOf(member: AggregateMetadata.Member): number | undefined {
     : undefined
 }
 
-/** メタデータの検索挙動のうち、範囲指定を表す値 */
-const STRING_SEARCH_BEHAVIOR_RANGE = 'Range'
+/** メタデータの検索挙動のうち、範囲指定を表す値。ui フォルダ内部でのみ使用する */
+export const STRING_SEARCH_BEHAVIOR_RANGE = 'Range'
 
 /** 検索条件の範囲指定の値 */
 type WordRange = { from?: string | null, to?: string | null }

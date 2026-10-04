@@ -9,6 +9,9 @@ import P400 from "./pages/P400_従業員"
 import P101 from "./pages/P101_売上詳細"
 import P201 from "./pages/P201_入荷詳細"
 import P301 from "./pages/P301_商品詳細"
+import AutoIndex from "./pages/auto/自動生成画面一覧"
+import AutoSearch from "./pages/auto/自動一覧検索画面"
+import AutoCommand from "./pages/auto/自動コマンド実行画面"
 import DbViewer from "./debug-rooms/db-viewer/DbViewer"
 import { P001_ログイン } from "./pages/P001_ログイン"
 import { 検索ダイアログ一覧 } from "./pages/shared/検索ダイアログ一覧"
@@ -43,6 +46,10 @@ export default [
       ...P101,
       ...P201,
       P301,
+      // メタデータから組み立てた画面
+      AutoIndex,
+      AutoSearch,
+      AutoCommand,
     ],
     // loader などでエラーが発生した場合に表示するエラーページ
     errorElement: <ErrorPage />,

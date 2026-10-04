@@ -44,10 +44,11 @@ export type RefToParamsProp<TTable extends AggregateMetadata.Table, TPath extend
   ? RefToParamsPropOfMember<TTable[RemoveArrayIndex<TPath>], RemoveArrayIndex<TPath>>
   : { params: `${TPath} はメタデータにありません` }
 
+// 対応表の値が省略可能なプロパティとして登録されていても、パラメータの型を決められるよう undefined を除く
 type RefToParamsPropOfMember<TMember, TKey extends string>
   = TMember extends { kind: 'ref', refTo: infer TRefTo extends string }
   ? TRefTo extends keyof SearchDialogRegistry
-  ? SearchDialogRegistry[TRefTo] extends SearchDialog<any, infer TOpenParams>
+  ? NonNullable<SearchDialogRegistry[TRefTo]> extends SearchDialog<any, infer TOpenParams>
   ? SearchDialogParamsProp<TOpenParams>
   : never
   : { params: `${TRefTo} の検索ダイアログが SearchDialogRegistry に登録されていません` }

@@ -25,10 +25,10 @@ internal class AggregateMetadata : IMultiAggregateSourceFile {
     /// <summary>集約ごとのソースファイルに出力される定数の名前</summary>
     internal const string CONST_NAME = "metadata";
 
-    private const string NAMESPACE = "AggregateMetadata";
+    internal const string NAMESPACE = "AggregateMetadata";
     private const string TYPE_ENTRY = "Entry";
     private const string TYPE_ROOT = "Root";
-    private const string TYPE_TABLE = "Table";
+    internal const string TYPE_TABLE = "Table";
     private const string TYPE_MEMBER = "Member";
     private const string TYPE_VALUE = "Value";
     private const string TYPE_REF = "Ref";

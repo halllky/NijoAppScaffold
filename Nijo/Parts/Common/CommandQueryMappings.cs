@@ -178,6 +178,20 @@ namespace Nijo.Parts.Common {
                 return new TypeScriptAggregateModule(aggregate).Qualify(exportName);
             }
 
+            // メタデータの対応表の値の型
+            const string TS_METADATA_TABLE = $"Util.{AggregateMetadata.NAMESPACE}.{AggregateMetadata.TYPE_TABLE}";
+            const string TS_QUERY_MODEL_METADATA = $$"""{ displayData: {{TS_METADATA_TABLE}}, searchCondition: {{TS_METADATA_TABLE}} }""";
+            const string TS_COMMAND_STRUCTURE_METADATA = $$"""{ kind: 'display-data', entry: { displayData: {{TS_METADATA_TABLE}} } } | { kind: 'search-condition', entry: { searchCondition: {{TS_METADATA_TABLE}} } } | null""";
+
+            // CommandModel の引数・戻り値の構造体のメタデータ。検索条件とそれ以外とで、使うメタデータの表が異なる
+            static string RenderCommandStructureMetadata(ICreatablePresentationLayerStructure? structure) {
+                return structure switch {
+                    null => "null",
+                    SearchCondition.Entry => $"{{ kind: 'search-condition', entry: {Q(structure.Aggregate, AggregateMetadata.CONST_NAME)} }}",
+                    _ => $"{{ kind: 'display-data', entry: {Q(structure.Aggregate, AggregateMetadata.CONST_NAME)} }}",
+                };
+            }
+
             // Data,Command,Queryの種類の一覧
             yield return new SourceFile {
                 FileName = $"{TS_MODEL_TYPES}.ts",
@@ -321,6 +335,7 @@ namespace Nijo.Parts.Common {
             yield return new SourceFile {
                 FileName = $"{TS_REF_TARGET}.ts",
                 Contents = $$"""
+                    import type * as Util from "./index"
                     {{RenderTsModelTypesImport(REFERED_QUERY_MODEL_TYPE)}}
                     {{RenderImports(referedRefEntires.Select(x => x.Aggregate), false)}}
 
@@ -336,6 +351,15 @@ namespace Nijo.Parts.Common {
                       '{{refEntry.Aggregate.RefEntryName}}': {{Q(refEntry.Aggregate, refEntry.TsNewObjectFunction)}},
                     """)}}
                     }
+                    /**
+                     * 参照先のクエリモデルのメタデータ。
+                     * 子孫集約への参照は、メタデータの表のキーがルート集約から見たパスになっていて参照先から見たパスと一致しないため含まない。
+                     */
+                    export const metadata: { [K in {{REFERED_QUERY_MODEL_TYPE}}]?: {{TS_QUERY_MODEL_METADATA}} } = {
+                    {{referedRefEntires.Where(refEntry => refEntry.Aggregate is RootAggregate).SelectTextTemplate(refEntry => $$"""
+                      '{{refEntry.Aggregate.RefEntryName}}': {{Q(refEntry.Aggregate, AggregateMetadata.CONST_NAME)}},
+                    """)}}
+                    }
                     """,
             };
 
@@ -343,6 +367,7 @@ namespace Nijo.Parts.Common {
             yield return new SourceFile {
                 FileName = $"{TS_SEARCH_CONDITION}.ts",
                 Contents = $$"""
+                    import type * as Util from "./index"
                     {{RenderTsModelTypesImport(QUERY_MODEL_TYPE)}}
                     {{RenderImports(queryModelsOrderByDataFlow, false)}}
 
@@ -370,6 +395,12 @@ namespace Nijo.Parts.Common {
                       '{{agg.PhysicalName}}': {{Q(agg, new SearchCondition.Entry(agg).GetTypeScriptSortableMemberType)}},
                     """)}}
                     }
+                    /** クエリモデルのメタデータ */
+                    export const metadata: { [K in {{QUERY_MODEL_TYPE}}]: {{TS_QUERY_MODEL_METADATA}} } = {
+                    {{queryModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
+                      '{{agg.PhysicalName}}': {{Q(agg, AggregateMetadata.CONST_NAME)}},
+                    """)}}
+                    }
                     """,
             };
 
@@ -377,6 +408,7 @@ namespace Nijo.Parts.Common {
             yield return new SourceFile {
                 FileName = $"{TS_COMMAND_PARAM}.ts",
                 Contents = $$"""
+                    import type * as Util from "./index"
                     {{RenderTsModelTypesImport(COMMAND_MODEL_TYPE)}}
                     {{RenderImports(commandParams.Where(x => x.Structure != null).Select(x => x.Structure!.Aggregate), false)}}
 
@@ -392,6 +424,15 @@ namespace Nijo.Parts.Common {
                       '{{x.Aggregate.PhysicalName}}': {{(x.Structure == null ? "() => ({ /* 引数なし */ })" : Q(x.Structure.Aggregate, x.Structure.TsNewObjectFunction))}},
                     """)}}
                     }
+                    /**
+                     * Commandパラメータのメタデータ。引数なしの場合は null。
+                     * 引数が検索条件の場合は検索条件の表を、それ以外の場合は画面表示用データの表を持つ。
+                     */
+                    export const metadata: { [K in {{COMMAND_MODEL_TYPE}}]: {{TS_COMMAND_STRUCTURE_METADATA}} } = {
+                    {{commandParams.SelectTextTemplate(x => $$"""
+                      '{{x.Aggregate.PhysicalName}}': {{RenderCommandStructureMetadata(x.Structure)}},
+                    """)}}
+                    }
                     """,
             };
 
@@ -399,6 +440,7 @@ namespace Nijo.Parts.Common {
             yield return new SourceFile {
                 FileName = $"{TS_COMMAND_RETURN_VALUE}.ts",
                 Contents = $$"""
+                    import type * as Util from "./index"
                     {{RenderTsModelTypesImport(COMMAND_MODEL_TYPE)}}
                     {{RenderImports(commandReturnValues.Where(x => x.Structure != null).Select(x => x.Structure!.Aggregate), false)}}
 
@@ -412,6 +454,15 @@ namespace Nijo.Parts.Common {
                     export const create: { [K in {{COMMAND_MODEL_TYPE}}]: (() => TypeMap[K]) } = {
                     {{commandReturnValues.SelectTextTemplate(x => $$"""
                       '{{x.Aggregate.PhysicalName}}': {{(x.Structure == null ? "() => ({ /* 戻り値なし */ })" : Q(x.Structure.Aggregate, x.Structure.TsNewObjectFunction))}},
+                    """)}}
+                    }
+                    /**
+                     * Command戻り値のメタデータ。戻り値なしの場合は null。
+                     * 戻り値が検索条件の場合は検索条件の表を、それ以外の場合は画面表示用データの表を持つ。
+                     */
+                    export const metadata: { [K in {{COMMAND_MODEL_TYPE}}]: {{TS_COMMAND_STRUCTURE_METADATA}} } = {
+                    {{commandReturnValues.SelectTextTemplate(x => $$"""
+                      '{{x.Aggregate.PhysicalName}}': {{RenderCommandStructureMetadata(x.Structure)}},
                     """)}}
                     }
                     """,
