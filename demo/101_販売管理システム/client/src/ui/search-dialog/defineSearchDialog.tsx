@@ -4,10 +4,10 @@ import useEvent from "react-use-event-hook"
 import * as RHF from "react-hook-form"
 import * as EG2 from "@halllky/editable-grid"
 import { ChevronDownIcon, ChevronRightIcon, MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline"
-import { usePagedSearch, type SearchResult } from "../usePagedSearch"
-import { useSearchConditionForm, type SearchConditionBase, type SearchConditionModule, type UseSearchConditionFormReturn } from "../useSearchConditionForm"
+import { usePagedSearch, type SearchResult } from "../search/usePagedSearch"
+import { useSearchConditionForm, type SearchConditionBase, type SearchConditionModule, type UseSearchConditionFormReturn } from "../form/useSearchConditionForm"
 import { useOpenDialogInHost, type OpenDialogInHost } from "./SearchDialogHost"
-import { buttonColumn } from "../input/ButtonColumn"
+import { buttonColumn } from "../grid/ButtonColumn"
 
 /**
  * 検索ダイアログの定義。検索ダイアログごとに異なる部分だけをここで指定する。

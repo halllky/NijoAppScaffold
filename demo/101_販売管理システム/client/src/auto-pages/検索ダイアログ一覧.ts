@@ -20,10 +20,7 @@ import { callComplexPostEndpointAsync } from "../example/callComplexPostEndpoint
  */
 export interface 個別検索ダイアログ一覧 { }
 
-/**
- * 外部参照先の名前の接頭辞。
- * 対応表はモジュールの読み込み時に組み立てるので、そこで使う定数はその前に初期化されるよう、対応表より前に置く。
- */
+/** 外部参照先の名前の接頭辞 */
 const REF_TO_PREFIX = 'ref-to:'
 
 /**

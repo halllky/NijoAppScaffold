@@ -1,7 +1,8 @@
 import React from "react"
 import * as ReactRouter from "react-router-dom"
 import { useNavigate } from "react-router-dom"
-import { NowLoading, useLoginLogout } from "../ui"
+import { NowLoading } from "../ui"
+import { useLoginLogout } from "../useLoginLogout"
 
 export const URL = "/logout"
 

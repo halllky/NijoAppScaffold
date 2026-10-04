@@ -1,15 +1,12 @@
-import React from "react"
 import { Outlet, RouteObject } from "react-router-dom"
 import AutoIndex from "./auto-pages/自動生成画面一覧"
 import AutoSearch from "./auto-pages/自動一覧検索画面"
 import AutoCommand from "./auto-pages/自動コマンド実行画面"
 import { 検索ダイアログ一覧 } from "./auto-pages/検索ダイアログ一覧"
 import DbViewer from "./debug-rooms/db-viewer/DbViewer"
+import UiSamples from "./debug-rooms/ui"
 import { P001_ログイン } from "./pages/P001_ログイン"
 import { ErrorPage, SearchDialogHost } from "./ui"
-
-const UI2詳細画面サンプル = React.lazy(() => import("./debug-rooms/ui2/詳細画面サンプル"))
-const UI2一覧検索サンプル = React.lazy(() => import("./debug-rooms/ui2/一覧検索サンプル"))
 
 /**
  * React Router ルーティング定義。
@@ -17,8 +14,7 @@ const UI2一覧検索サンプル = React.lazy(() => import("./debug-rooms/ui2/�
  */
 export default [
   // 業務画面のルーティング定義。
-  // RootLayout の中に表示される。ログインしていない場合はログイン画面が表示される。
-  // 外部参照の入力欄が開く検索ダイアログは、業務画面全体を囲む SearchDialogHost の中に描画される。
+  // ログインしていない場合はログイン画面が表示される。
   {
     element: (
       <P001_ログイン>
@@ -47,22 +43,8 @@ export default [
         <Outlet />
       ),
       children: [
-        {
-          path: "/dev/ui2/display-data",
-          element: (
-            <React.Suspense>
-              <UI2詳細画面サンプル />
-            </React.Suspense>
-          )
-        } satisfies RouteObject,
-        {
-          path: "/dev/ui2/search-condition",
-          element: (
-            <React.Suspense>
-              <UI2一覧検索サンプル />
-            </React.Suspense>
-          )
-        } satisfies RouteObject,
+        // ui の部品の動作確認画面
+        ...UiSamples,
         DbViewer,
       ]
     },

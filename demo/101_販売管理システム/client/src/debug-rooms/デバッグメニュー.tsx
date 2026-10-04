@@ -2,9 +2,11 @@ import React from "react"
 import ReactDOM from "react-dom"
 import { Link } from "react-router-dom"
 import * as DbViewer from "./db-viewer/DbViewer"
+import { 一覧検索サンプルURL, 詳細画面サンプルURL } from "./ui"
 import { URL as AutoIndexUrl } from "../auto-pages/自動生成画面一覧"
 import { callAspNetCoreApiAsync } from "../example/callAspNetCoreApiAsync"
-import { Button, useLoginLogout, useOutsideClick } from "../ui"
+import { Button, useOutsideClick } from "../ui"
+import { useLoginLogout } from "../useLoginLogout"
 
 /**
  * デバッグメニューを開くボタン
@@ -72,11 +74,11 @@ function DebugMenu({ requestClose }: { requestClose: () => void }) {
       ref={containerRef}
       className="fixed top-12 right-1 min-w-96 flex flex-col items-start gap-2 p-2 bg-white border border-gray-300 rounded drop-shadow-lg"
     >
-      <Link to="/dev/ui2/display-data" onClick={requestClose} className="text-blue-600 underline">
-        UI2 詳細画面サンプル
+      <Link to={詳細画面サンプルURL} onClick={requestClose} className="text-blue-600 underline">
+        UI 詳細画面サンプル
       </Link>
-      <Link to="/dev/ui2/search-condition" onClick={requestClose} className="text-blue-600 underline">
-        UI2 一覧検索サンプル
+      <Link to={一覧検索サンプルURL} onClick={requestClose} className="text-blue-600 underline">
+        UI 一覧検索サンプル
       </Link>
       <Link to={AutoIndexUrl} onClick={requestClose} className="text-blue-600 underline">
         自動生成画面の一覧
