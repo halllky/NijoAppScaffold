@@ -3,13 +3,14 @@
 
 export * from "./useDisplayDataForm"
 export * from "./useSearchConditionForm"
+export { SearchPageBase, type SearchPageBaseProps, type SortComboItem } from "./SearchPageBase/SearchPageBase"
+export type { SearchResult } from "./usePagedSearch"
 export { FieldGroup, FieldColumn, type FieldGroupProps, type FieldColumnProps } from "./FieldGroup"
 export {
   defineSearchDialog,
   type SearchDialogDefinition,
   type SearchDialogRefFieldDefinition,
   type SearchDialogConditionProps,
-  type SearchDialogSearchResult,
   type SearchDialog,
   type OpenSearchDialog,
   type FindByCodeResult,

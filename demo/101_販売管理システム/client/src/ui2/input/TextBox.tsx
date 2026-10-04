@@ -13,7 +13,8 @@ import { createTextCellEditor, defineCellColumn, findCellMemberMetadata } from "
  * - 値の確定時（フォームはフォーカスアウト、グリッドはセル編集の確定と貼り付け）に、
  *   前後の空白を削除し、Unicode正規化（NFKC）を行う。最大長を超える部分は切り捨てる。
  * - スペルチェックとオートコンプリートは無効。
- * - 検索条件のフォームでも外観と挙動は変わらない。一致方法（部分一致など）はサーバー側が決める。
+ * - 検索条件のフォームで、メタデータの検索挙動が範囲指定の項目は、範囲指定（下限〜上限）の2つの入力欄になる。
+ *   それ以外の項目は1つの入力欄で、一致方法（部分一致など）はサーバー側が決める。
  */
 
 //#region フォーム用
@@ -30,11 +31,64 @@ export function TextBox<TValues extends RHF.FieldValues>(props: WithFormBinding<
   const member = assertValueMember(findMemberMetadata(binding.metadata, name), name, 'TextBox', isWordMember)
   const maxLength = maxLengthOf(member)
 
-  const { field } = RHF.useController({
-    name: formPath,
-    control: binding.formMethods.control,
-    rules: toRegisterRules({ rules }),
-  })
+  // 画面表示用データと、範囲指定でない検索条件では1つの入力欄
+  if (binding.kind === 'display-data' || member.stringSearchBehavior !== STRING_SEARCH_BEHAVIOR_RANGE) {
+    return (
+      <WordInput
+        formPath={formPath}
+        control={binding.formMethods.control}
+        rules={toRegisterRules({ rules })}
+        maxLength={maxLength}
+        isReadOnly={isReadOnly}
+        placeholder={placeholder}
+        className={className}
+      />
+    )
+  }
+
+  // 範囲指定の検索条件。範囲全体に対する検証は下限の入力欄に付ける
+  return (
+    <div className={`flex items-center gap-1 ${className ?? ''}`}>
+      {/* 下限 */}
+      <WordInput
+        formPath={`${formPath}.from`}
+        control={binding.formMethods.control}
+        rules={toRegisterRules({
+          rules,
+          itemValueOf: (_, formValues) => RHF.get(formValues, formPath),
+          validators: [range => validateWordRange(range as WordRange | undefined)],
+        })}
+        maxLength={maxLength}
+        isReadOnly={isReadOnly}
+        placeholder={placeholder}
+        className="flex-1 min-w-0"
+      />
+      <span className="select-none">～</span>
+      {/* 上限 */}
+      <WordInput
+        formPath={`${formPath}.to`}
+        control={binding.formMethods.control}
+        rules={toRegisterRules({ rules: undefined })}
+        maxLength={maxLength}
+        isReadOnly={isReadOnly}
+        placeholder={placeholder}
+        className="flex-1 min-w-0"
+      />
+    </div>
+  )
+}
+
+/** 1つの単語の入力欄。フォーカスアウト時に値を正規化する */
+function WordInput({ formPath, control, rules, maxLength, isReadOnly, placeholder, className }: {
+  formPath: string
+  control: RHF.Control<RHF.FieldValues>
+  rules: Pick<RHF.RegisterOptions, 'validate'>
+  maxLength: number | undefined
+  isReadOnly: boolean | undefined
+  placeholder: string | undefined
+  className?: string
+}) {
+  const { field } = RHF.useController({ name: formPath, control, rules })
   const selectAllOnFocus = useSelectAllOnFocus()
 
   const handleBlur: React.FocusEventHandler<HTMLInputElement> = e => {
@@ -104,6 +158,20 @@ function maxLengthOf(member: AggregateMetadata.Member): number | undefined {
   return member.customMaxLength !== undefined && member.customMaxLength > 0
     ? member.customMaxLength
     : undefined
+}
+
+/** メタデータの検索挙動のうち、範囲指定を表す値 */
+const STRING_SEARCH_BEHAVIOR_RANGE = 'Range'
+
+/** 検索条件の範囲指定の値 */
+type WordRange = { from?: string | null, to?: string | null }
+
+/** 範囲指定の下限が上限を超えていればエラーメッセージを返す。大小は文字コードの順で比べる */
+function validateWordRange(range: WordRange | undefined): string | undefined {
+  const from = range?.from ?? ''
+  const to = range?.to ?? ''
+  if (from === '' || to === '') return undefined
+  return from > to ? '下限が上限を超えています。' : undefined
 }
 
 /** 値の確定時の正規化 */

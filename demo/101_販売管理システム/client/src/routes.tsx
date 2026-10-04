@@ -12,6 +12,11 @@ import P301 from "./pages/P301_商品詳細"
 import DbViewer from "./debug-rooms/db-viewer/DbViewer"
 import { P001_ログイン } from "./pages/P001_ログイン"
 import { ErrorPage } from "./app/ErrorPage"
+import P100v2 from "./pages2/P100_売上"
+import P200v2 from "./pages2/P200_入荷"
+import P300v2 from "./pages2/P300_商品"
+import { 検索ダイアログ一覧 } from "./pages2/shared/検索ダイアログ一覧"
+import { SearchDialogHost } from "./ui2"
 
 const UIコンポーネントカタログ = React.lazy(() => import("./debug-rooms/UIコンポーネントカタログ"))
 const UI2詳細画面サンプル = React.lazy(() => import("./debug-rooms/ui2/詳細画面サンプル"))
@@ -40,6 +45,20 @@ export default [
       ...P101,
       ...P201,
       P301,
+
+      // ui2 で作り直した一覧検索画面。安定稼働までは既存の画面と別のURLで並行して置く
+      {
+        element: (
+          <SearchDialogHost dialogs={検索ダイアログ一覧}>
+            <Outlet />
+          </SearchDialogHost>
+        ),
+        children: [
+          P100v2,
+          P200v2,
+          P300v2,
+        ],
+      },
     ],
     // loader などでエラーが発生した場合に表示するエラーページ
     errorElement: <ErrorPage />,

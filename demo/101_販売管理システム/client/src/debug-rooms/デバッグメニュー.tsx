@@ -6,6 +6,9 @@ import { callAspNetCoreApiAsync } from "../example/callAspNetCoreApiAsync"
 import { Button } from "../ui/Button"
 import { useLoginLogout } from "../app/useLoginLogout"
 import { useOutsideClick } from "../ui/useOutsideClick"
+import { URL as P100v2URL } from "../pages2/P100_売上"
+import { URL as P200v2URL } from "../pages2/P200_入荷"
+import { URL as P300v2URL } from "../pages2/P300_商品"
 
 /**
  * デバッグメニューを開くボタン
@@ -81,6 +84,15 @@ function DebugMenu({ requestClose }: { requestClose: () => void }) {
       </Link>
       <Link to="/dev/ui2/search-condition" onClick={requestClose} className="text-blue-600 underline">
         UI2 一覧検索サンプル
+      </Link>
+      <Link to={P100v2URL} onClick={requestClose} className="text-blue-600 underline">
+        UI2版 売上
+      </Link>
+      <Link to={P200v2URL} onClick={requestClose} className="text-blue-600 underline">
+        UI2版 入荷
+      </Link>
+      <Link to={P300v2URL} onClick={requestClose} className="text-blue-600 underline">
+        UI2版 商品
       </Link>
       <Link to={DbViewer.URL} onClick={requestClose} className="text-blue-600 underline">
         DBビューアへ移動

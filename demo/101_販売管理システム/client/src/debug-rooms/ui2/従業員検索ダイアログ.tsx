@@ -1,5 +1,5 @@
 import * as Grid from "../../ui/grid"
-import { defineSearchDialog, FieldColumn, FieldGroup, type SearchDialogSearchResult } from "../../ui2"
+import { defineSearchDialog, FieldColumn, FieldGroup, type SearchResult } from "../../ui2"
 import * as サンプル従業員 from "./サンプル従業員"
 
 /** 従業員検索ダイアログを開くときのパラメータ */
@@ -75,7 +75,7 @@ export const 従業員検索ダイアログ = defineSearchDialog<サンプル従
 async function searchOnMockServer(
   condition: サンプル従業員.SearchCondition,
   signal: AbortSignal,
-): Promise<SearchDialogSearchResult<サンプル従業員.RefTarget>> {
+): Promise<SearchResult<サンプル従業員.RefTarget>> {
   await new Promise(resolve => setTimeout(resolve, 300))
   if (signal.aborted) return { type: 'canceled' }
 
