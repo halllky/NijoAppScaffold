@@ -56,7 +56,7 @@ export function defineCellColumn<TRow>(
     ...rest,
     columnId: columnId ?? path,
     renderHeader: () => (
-      <div className="px-1 truncate select-none" title={headerText}>
+      <div className="px-1 text-sm truncate select-none" title={headerText}>
         {headerText}
       </div>
     ),
@@ -66,7 +66,7 @@ export function defineCellColumn<TRow>(
       getCellMessages(binding, rowKey, path),
     ] as const,
     renderBody: ({ deps: [value, messages], rowKey, isReadOnly }) => (
-      <CellFrame messages={messages} alignRight={cell.alignRight} wrap={cell.wrap}>
+      <CellFrame messages={messages} isReadOnly={isReadOnly} alignRight={cell.alignRight} wrap={cell.wrap}>
         {cell.render({ value, rowKey, isReadOnly })}
       </CellFrame>
     ),
@@ -108,9 +108,13 @@ function getCellMessages(binding: GridBinding, rowKey: string, path: string): Me
 
 const NO_MESSAGES: Messages = { errors: [], warnings: [], informations: [] }
 
-/** セルの外枠。メッセージがあれば色で示し、マウスを乗せると内容を表示する */
-function CellFrame({ messages, alignRight, wrap, children }: {
+/**
+ * セルの外枠。メッセージがあれば色で示し、マウスを乗せると内容を表示する。
+ * 編集できるセルは、どこが入力できるか分かるよう背景を白にする。
+ */
+function CellFrame({ messages, isReadOnly, alignRight, wrap, children }: {
   messages: Messages
+  isReadOnly: boolean
   alignRight?: boolean
   wrap?: boolean
   children?: React.ReactNode
@@ -118,7 +122,7 @@ function CellFrame({ messages, alignRight, wrap, children }: {
   const messageClassName = messages.errors.length > 0 ? 'bg-rose-100 outline outline-rose-500 -outline-offset-1'
     : messages.warnings.length > 0 ? 'bg-amber-100 outline outline-amber-500 -outline-offset-1'
       : messages.informations.length > 0 ? 'bg-sky-100'
-        : ''
+        : isReadOnly ? '' : 'bg-white'
   const title = hasMessages(messages)
     ? [...messages.errors, ...messages.warnings, ...messages.informations].join('\n')
     : undefined
@@ -126,7 +130,9 @@ function CellFrame({ messages, alignRight, wrap, children }: {
   return (
     <div
       title={title}
-      className={`w-full min-h-full px-1 ${wrap ? 'whitespace-pre-wrap break-all' : 'truncate'} ${alignRight ? 'text-right' : ''} ${messageClassName}`}
+      // セルは横並びの flex なので、flex-1 で幅を、既定の stretch で高さをセルいっぱいにする。
+      // セルエディタの枠線と文字の縦位置をそろえるため、同じ太さの透明な枠線を付ける
+      className={`flex-1 min-w-0 px-1 text-sm border border-transparent ${wrap ? 'whitespace-pre-wrap break-all' : 'truncate'} ${alignRight ? 'text-right' : ''} ${messageClassName}`}
     >
       {children}
     </div>
@@ -139,27 +145,28 @@ function CellFrame({ messages, alignRight, wrap, children }: {
  * 文字列を手入力するセルエディタを作る。モジュールのトップレベルで作り、参照を使い回すこと。
  *
  * - Enter で確定、Escape で取り消す。multiline の場合は Shift+Enter で改行する。
- * - filterInput を指定した場合、入力のたびに入力中の文字列を渡し、undefined が返ったらその入力を受け付けない。
- *   IME で変換中の文字列は変換の確定まで渡さない。
+ * - inputFilter を指定した場合、入力できる文字を制限する。制限の仕方は TextInputFilter を参照。
  * - 値の正規化はここでは行わない。列の fromText で行う。
  */
 export function createTextCellEditor(params: {
   multiline: boolean
-  filterInput?: (text: string) => string | undefined
+  inputFilter?: TextInputFilter
+  /** 右寄せにするなら true */
+  alignRight?: boolean
 }): EG2.EditableGridCellEditor {
-  const { multiline, filterInput } = params
+  const { multiline, inputFilter, alignRight } = params
 
   return React.forwardRef(function TextCellEditor({ style, isEditing, requestCommit, requestCancel }, ref) {
     const [value, setValue] = React.useState('')
     const textareaRef = React.useRef<HTMLTextAreaElement>(null)
 
-    const acceptInput = (text: string, isComposing: boolean) => {
-      if (isComposing || !filterInput) {
+    const handleChange = (text: string, isComposing: boolean) => {
+      if (isComposing || !inputFilter) {
         setValue(text)
         return
       }
-      const filtered = filterInput(text)
-      if (filtered !== undefined) setValue(filtered)
+      const accepted = inputFilter.accept(text)
+      if (accepted !== undefined) setValue(accepted)
     }
 
     const handleKeyDown: React.KeyboardEventHandler<HTMLTextAreaElement> = e => {
@@ -178,7 +185,8 @@ export function createTextCellEditor(params: {
     React.useImperativeHandle(ref, () => ({
       getCurrentValue: () => textareaRef.current?.value ?? '',
       setValueAndSelectAll: (nextValue, timing) => {
-        setValue(filterInput?.(nextValue) ?? nextValue)
+        // キー入力による編集開始では、入力できない文字が渡されることがある
+        setValue(inputFilter ? inputFilter.sanitize(nextValue) : nextValue)
         // キー入力による編集開始では入力された1文字が渡されるので、全選択すると次の入力で消えてしまう。そのため編集開始時は選択しない
         if (timing !== 'edit-start') setTimeout(() => textareaRef.current?.select(), 0)
       },
@@ -189,18 +197,30 @@ export function createTextCellEditor(params: {
       <textarea
         ref={textareaRef}
         value={value}
-        onChange={e => acceptInput(e.target.value, (e.nativeEvent as InputEvent).isComposing)}
-        onCompositionEnd={e => acceptInput(e.currentTarget.value, false)}
+        onChange={e => handleChange(e.target.value, (e.nativeEvent as InputEvent).isComposing)}
+        onCompositionEnd={e => { if (inputFilter) setValue(inputFilter.sanitize(e.currentTarget.value)) }}
         onKeyDown={handleKeyDown}
         spellCheck={false}
         autoComplete="off"
-        className="px-1 resize-none field-sizing-content outline-none border border-black bg-white"
+        className={`px-1 text-sm resize-none field-sizing-content outline-none border border-black bg-white ${alignRight ? 'text-right' : ''}`}
         // グリッドが渡す height はセルそのものの高さ。複数行を入力したときに下へ伸びられるよう、編集中は minHeight に読み替える。
         // 編集中でないときに読み替えないのは、不可視のエディタが伸びてグリッドのスクロール範囲を広げてしまうため
         style={isEditing ? { ...style, height: undefined, minHeight: style.height } : style}
       />
     )
   })
+}
+
+/**
+ * 入力できる文字の制限。フォームの入力欄とセルエディタで同じものを使い、操作性をそろえる。
+ * IME で変換中の文字列は制限せずそのまま表示し、変換の確定時に sanitize で入力できない文字を取り除く。
+ * 変換の途中で制限すると変換が壊れるため。
+ */
+export type TextInputFilter = {
+  /** キー入力や貼り付けの後の文字列を受け付けるなら、受け付ける形にして返す。受け付けないなら undefined を返し、入力前の文字列のままにする */
+  accept: (text: string) => string | undefined
+  /** 入力できない文字を取り除く。IME の変換の確定時と、キー入力による編集開始時に使う */
+  sanitize: (text: string) => string
 }
 
 //#endregion セルエディタ

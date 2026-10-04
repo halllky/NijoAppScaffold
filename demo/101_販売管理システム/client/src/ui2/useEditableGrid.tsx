@@ -253,8 +253,8 @@ function GridRowMessages({ form, arrayPath, allRowKeys, visibleRowKeys }: {
     <ul className="flex flex-col text-xs">
       {lines.map(({ rowKey, label, messages }) => (
         <li key={rowKey} className="flex flex-wrap gap-x-2">
-          {/* 行の位置 */}
-          <span className="text-gray-700 select-none">{label}</span>
+          {/* 行の位置。行の先頭のメッセージと同じ色にする */}
+          <span className={`select-none ${firstMessageColor(messages)}`}>{label}</span>
           {/* エラー・警告・情報 */}
           {messages.errors.map((message, index) => (
             <span key={`error-${index}`} className="text-rose-700">{message}</span>
@@ -269,6 +269,13 @@ function GridRowMessages({ form, arrayPath, allRowKeys, visibleRowKeys }: {
       ))}
     </ul>
   )
+}
+
+/** 一覧の1行で先頭に表示するメッセージの文字色。エラー・警告・情報の順に表示するので、最初にあるものの色になる */
+function firstMessageColor(messages: Messages): string {
+  if (messages.errors.length > 0) return 'text-rose-700'
+  if (messages.warnings.length > 0) return 'text-amber-700'
+  return 'text-sky-700'
 }
 
 /** メッセージの一覧の1行 */

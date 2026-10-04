@@ -7,7 +7,7 @@ import { findMemberMetadata, type GridBinding } from "../FormBinding"
 import type { FindByCodeResult, SearchDialog } from "../search-dialog/defineSearchDialog"
 import { useFindSearchDialog, useOpenDialogInHost } from "../search-dialog/SearchDialogHost"
 import type { RefToParamsProp } from "../search-dialog/SearchDialogRegistry"
-import { attachColumnRules, inputFrameClassName, toRegisterRules, type ColumnOptionsBase, type InputPropsBase, type InputRules, type WithFormBinding } from "./InputProps"
+import { attachColumnRules, inputFrameClassName, toRegisterRules, type ColumnOptionsBase, type InputPropsBase, type InputRules, type WithFormBinding, useSelectAllOnFocus } from "./InputProps"
 import { createTextCellEditor, defineCellColumn, findCellMemberMetadata, toCellFormPath } from "./GridCell"
 
 /*
@@ -118,19 +118,25 @@ function RefToForDisplayData({ formMethods, formPath, elementId, dialog, params,
   const code = codeOf(dialog, field.value)
   const refName = RHF.get(field.value, dialog.refField.namePath)
 
-  // 入力中のコード。入力中の1文字ごとに照合しないよう、フォーカスアウトまではフォームの値に反映しない。入力中でなければ undefined
+  // 入力中のコード。入力中の1文字ごとに照合しないよう、フォーカスアウトか Enter キーまではフォームの値に反映しない。入力中でなければ undefined。
+  // Enter キーでも反映するのは、Enter キーによるフォームの送信で入力中のコードが照合・送信されるようにするため
   const [draftCode, setDraftCode] = React.useState<string>()
+  const selectAllOnFocus = useSelectAllOnFocus()
 
+  const commitDraftCode = () => {
+    if (draftCode === undefined) return
+    const nextCode = draftCode.trim().normalize('NFKC')
+    setDraftCode(undefined)
+    if (nextCode === code) return
+    field.onChange(nextCode === '' ? emptyRefValue(dialog) : withCode(dialog, field.value, nextCode))
+    // 照合は検証ルールの中で行うので、検証を実行して照合を始める。コードを空にした場合は前回のエラーを消すために検証する
+    formMethods.trigger(formPath)
+  }
+  const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = e => {
+    if (e.key === 'Enter' && !e.nativeEvent.isComposing) commitDraftCode()
+  }
   const handleBlur = () => {
-    if (draftCode !== undefined) {
-      const nextCode = draftCode.trim().normalize('NFKC')
-      setDraftCode(undefined)
-      if (nextCode !== code) {
-        field.onChange(nextCode === '' ? emptyRefValue(dialog) : withCode(dialog, field.value, nextCode))
-        // 照合は検証ルールの中で行うので、検証を実行して照合を始める。コードを空にした場合は前回のエラーを消すために検証する
-        formMethods.trigger(formPath)
-      }
-    }
+    commitDraftCode()
     field.onBlur()
   }
 
@@ -152,7 +158,9 @@ function RefToForDisplayData({ formMethods, formPath, elementId, dialog, params,
         name={`${field.name}.${dialog.refField.codePath}`}
         value={draftCode ?? code}
         onChange={e => setDraftCode(e.target.value)}
+        onKeyDown={handleKeyDown}
         onBlur={handleBlur}
+        {...selectAllOnFocus}
         readOnly={isReadOnly}
         spellCheck={false}
         autoComplete="off"
@@ -217,6 +225,7 @@ function FilterTextInput({ id, formPath, control, rules, isReadOnly, className }
   className?: string
 }) {
   const { field } = RHF.useController({ name: formPath, control, rules })
+  const selectAllOnFocus = useSelectAllOnFocus()
 
   const handleBlur: React.FocusEventHandler<HTMLInputElement> = e => {
     const normalized = e.target.value.trim().normalize('NFKC')
@@ -233,6 +242,7 @@ function FilterTextInput({ id, formPath, control, rules, isReadOnly, className }
       value={typeof field.value === 'string' ? field.value : ''}
       onChange={e => field.onChange(e.target.value)}
       onBlur={handleBlur}
+      {...selectAllOnFocus}
       readOnly={isReadOnly}
       spellCheck={false}
       autoComplete="off"

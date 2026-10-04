@@ -65,8 +65,9 @@ export function FieldLabel<TValues extends RHF.FieldValues>(props: FieldLabelPro
     ? (isInFieldColumn ? 'col-span-2 flex flex-col gap-px' : 'flex flex-col gap-px')
     : (isInFieldColumn ? 'col-span-2 grid grid-cols-subgrid items-start' : 'grid grid-cols-[max-content_minmax(0,1fr)] gap-x-2 items-start')
 
+  // 横並びでは表示名が長くても入力項目を押しつぶさないよう、ラベル部分の幅を固定し、収まらない表示名は折り返す
   const labelPart = (
-    <div className="flex flex-wrap items-center gap-1 min-h-6">
+    <div className={`flex flex-wrap items-center gap-1 min-h-6 ${vertical ? '' : 'justify-end min-w-0'}`}>
       {/* ヘルプテキスト */}
       {member.comment && (
         <span title={member.comment} className="text-gray-400 cursor-help">
@@ -74,7 +75,7 @@ export function FieldLabel<TValues extends RHF.FieldValues>(props: FieldLabelPro
         </span>
       )}
       {/* 表示名 */}
-      <label htmlFor={binding.toElementId(formPath)} className="text-sm text-gray-700 select-none">
+      <label htmlFor={binding.toElementId(formPath)} className={`text-sm text-gray-700 select-none ${vertical ? '' : 'min-w-0 text-right break-words'}`}>
         {member.displayNameIsEmpty ? '' : member.displayName}
       </label>
       {/* 必須マーク */}
@@ -96,7 +97,7 @@ export function FieldLabel<TValues extends RHF.FieldValues>(props: FieldLabelPro
   ) : (
     // 左にラベル、右に入力項目とメッセージが並ぶレイアウト
     <div className={layoutClassName}>
-      <div className="flex justify-end">
+      <div className={`flex justify-end ${HORIZONTAL_LABEL_WIDTH}`}>
         {labelPart}
       </div>
       <div className="flex flex-col gap-px min-w-0">
@@ -107,3 +108,6 @@ export function FieldLabel<TValues extends RHF.FieldValues>(props: FieldLabelPro
     </div>
   )
 }
+
+/** 横並びのときのラベル部分の幅 */
+const HORIZONTAL_LABEL_WIDTH = 'w-28'

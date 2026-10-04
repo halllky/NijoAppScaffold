@@ -204,7 +204,7 @@ function getEnumCellEditor(enumType: string, options: readonly string[]): EG2.Ed
               e.preventDefault()
             }
           }}
-          className="w-full h-full outline-none border border-black bg-white"
+          className="w-full h-full text-sm outline-none border border-black bg-white"
         >
           {/* 未選択 */}
           <option value=""></option>

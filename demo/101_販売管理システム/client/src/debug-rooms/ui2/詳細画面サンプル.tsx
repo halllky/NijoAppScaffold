@@ -223,7 +223,7 @@ function deleteButtonColumn(
     disableResizing: true,
     renderHeader: () => null,
     renderBody: ({ rowKey, isReadOnly }) => !isReadOnly && (
-      <div className="flex justify-center">
+      <div className="flex-1 flex justify-center bg-white">
         {/* ボタンのクリックでセルが選択されないよう、mousedown の伝播を止める */}
         <Button mini underline onMouseDown={e => e.stopPropagation()} onClick={() => onDelete(rowKey)}>
           削除
