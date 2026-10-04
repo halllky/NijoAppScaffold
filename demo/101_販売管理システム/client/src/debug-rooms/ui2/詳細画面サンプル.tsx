@@ -185,13 +185,13 @@ function DisplayDataFormSample() {
             <Button mini outline onClick={handleAddDetailRow}>行追加</Button>
           )}
         >
+          {/* 明細の各行に対するメッセージ */}
+          {detailRowMessages}
           <EditableGrid
             {...detailGridProps}
             isReadOnly={isReadOnly}
             className="h-64 resize-y border border-gray-700"
           />
-          {/* 明細の各行に対するメッセージ */}
-          {detailRowMessages}
         </FieldLabel>
 
         {/* フッタ */}

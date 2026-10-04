@@ -25,7 +25,7 @@ export function MessageList({ messages, className }: MessageListProps): React.Re
   if (!hasMessages(messages)) return null
 
   return (
-    <ul className={`flex flex-col text-sm ${className ?? ''}`}>
+    <ul className={`flex flex-col text-xs ${className ?? ''}`}>
       {/* エラー */}
       {messages.errors.map((message, index) => (
         <li key={`error-${index}`} className="text-rose-700">{message}</li>

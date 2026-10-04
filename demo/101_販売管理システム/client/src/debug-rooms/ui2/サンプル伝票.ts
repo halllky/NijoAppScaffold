@@ -181,7 +181,7 @@ export const metadata = {
     '合計金額': {
       kind: 'value', parent: null, isOutsideTree: false, uniqueId: 'mock-0007',
       type: 'int', displayName: '合計金額', comment: '明細の数量×単価の合計',
-      totalDigit: 12,
+      totalDigit: 12, isCurrency: true,
     },
     '税率': {
       kind: 'value', parent: null, isOutsideTree: false, uniqueId: 'mock-0008',
@@ -233,7 +233,7 @@ export const metadata = {
     '明細.単価': {
       kind: 'value', parent: '明細', isOutsideTree: false, uniqueId: 'mock-0103',
       type: 'decimal', displayName: '単価', comment: '税抜',
-      totalDigit: 10, decimalPlace: 2,
+      totalDigit: 10, decimalPlace: 2, isCurrency: true,
     },
     '明細.納期': {
       kind: 'value', parent: '明細', isOutsideTree: false, uniqueId: 'mock-0104',
@@ -279,7 +279,7 @@ export const metadata = {
     '合計金額': {
       kind: 'value', parent: null, isOutsideTree: false, uniqueId: 'mock-0007',
       type: 'int', displayName: '合計金額',
-      totalDigit: 12,
+      totalDigit: 12, isCurrency: true,
     },
     '確定済み': {
       kind: 'value', parent: null, isOutsideTree: false, uniqueId: 'mock-0009',

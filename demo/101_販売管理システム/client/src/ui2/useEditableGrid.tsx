@@ -250,7 +250,7 @@ function GridRowMessages({ form, arrayPath, allRowKeys, visibleRowKeys }: {
   if (lines.length === 0) return null
 
   return (
-    <ul className="flex flex-col text-sm">
+    <ul className="flex flex-col text-xs">
       {lines.map(({ rowKey, label, messages }) => (
         <li key={rowKey} className="flex flex-wrap gap-x-2">
           {/* 行の位置 */}

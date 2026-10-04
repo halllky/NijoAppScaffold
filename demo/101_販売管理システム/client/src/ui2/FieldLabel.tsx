@@ -67,6 +67,12 @@ export function FieldLabel<TValues extends RHF.FieldValues>(props: FieldLabelPro
 
   const labelPart = (
     <div className="flex flex-wrap items-center gap-1 min-h-6">
+      {/* ヘルプテキスト */}
+      {member.comment && (
+        <span title={member.comment} className="text-gray-400 cursor-help">
+          <QuestionMarkCircleIcon className="w-4 h-4" />
+        </span>
+      )}
       {/* 表示名 */}
       <label htmlFor={binding.toElementId(formPath)} className="text-sm text-gray-700 select-none">
         {member.displayNameIsEmpty ? '' : member.displayName}
@@ -75,27 +81,24 @@ export function FieldLabel<TValues extends RHF.FieldValues>(props: FieldLabelPro
       {requiredMark && (
         <span className="text-rose-600 text-xs select-none" title="必須">*</span>
       )}
-      {/* ヘルプテキスト */}
-      {member.comment && (
-        <span title={member.comment} className="text-gray-400 cursor-help">
-          <QuestionMarkCircleIcon className="w-4 h-4" />
-        </span>
-      )}
       {/* ラベルの右側に追加で表示する内容 */}
       {afterLabel}
     </div>
   )
 
   return vertical ? (
+    // ラベル、メッセージ、入力項目が上から順に並ぶレイアウト
     <div className={layoutClassName}>
       {labelPart}
-      {/* 縦並びではメッセージはラベルの下 */}
       <MessageList messages={messages} />
       {children}
     </div>
   ) : (
+    // 左にラベル、右に入力項目とメッセージが並ぶレイアウト
     <div className={layoutClassName}>
-      {labelPart}
+      <div className="flex justify-end">
+        {labelPart}
+      </div>
       <div className="flex flex-col gap-px min-w-0">
         {children}
         {/* 横並びではメッセージは children の下 */}
