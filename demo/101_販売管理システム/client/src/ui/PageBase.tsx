@@ -36,7 +36,7 @@ export function PageBase(props: PageBaseProps) {
 
       {/* ヘッダ */}
       {props.header && (
-        <header className="flex flex-wrap items-center px-8 py-1 gap-4 bg-gray-50">
+        <header className="min-h-10 flex flex-wrap items-center px-8 py-1 gap-4 bg-gray-50">
           {props.header}
         </header>
       )}

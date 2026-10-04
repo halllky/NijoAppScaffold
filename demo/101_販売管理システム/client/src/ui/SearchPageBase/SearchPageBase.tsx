@@ -165,6 +165,7 @@ export function SearchPageBase<TSearchCondition extends PageableSearchCondition,
   // 検索ボタンが押されたとき、またはフォーム内でEnterされたときの処理。
   // 検索条件欄で入力された内容で、1ページ目に戻る条件で検索を実行する。
   const handleSearch = handleSubmit(condition => {
+    setSearchConditionVisible(false)
     applyConditionToUrl({
       ...condition,
       skip: '0',
@@ -206,6 +207,7 @@ export function SearchPageBase<TSearchCondition extends PageableSearchCondition,
     reset(initial)
     clearServerMessages()
     applyConditionToUrl(initial)
+    setSearchConditionVisible(true)
     props.onCleared?.(initial)
   }
 
@@ -240,9 +242,10 @@ export function SearchPageBase<TSearchCondition extends PageableSearchCondition,
               className="flex-1 flex items-center gap-1 cursor-pointer select-none"
               onClick={() => setSearchConditionVisible(prev => !prev)}
             >
-              {searchConditionVisible ? (
+              {!props.breadcrumb && searchConditionVisible && (
                 <Icon.ChevronDownIcon className="w-4 h-4" />
-              ) : (
+              )}
+              {!props.breadcrumb && !searchConditionVisible && (
                 <Icon.ChevronRightIcon className="w-4 h-4" />
               )}
               <PageTitle>
@@ -265,7 +268,6 @@ export function SearchPageBase<TSearchCondition extends PageableSearchCondition,
       contents={(
         <Allotment vertical
           defaultSizes={[props.searchConditionDefaultSize ?? 200, 999]}
-          separator={false}
           proportionalLayout={false} // ページサイズ変更時に検索結果欄だけ伸縮するようにするため
           className="pb-1"
         >
