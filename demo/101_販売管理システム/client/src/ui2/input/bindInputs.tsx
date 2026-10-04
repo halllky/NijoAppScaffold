@@ -9,6 +9,7 @@ import { DateInput, dateColumn, type DateInputProps, type DateColumnOptions } fr
 import { CheckBox, checkBoxColumn, type CheckBoxProps, type CheckBoxColumnOptions } from "./CheckBox"
 import { EnumSelection, enumColumn, type EnumSelectionProps, type EnumColumnOptions } from "./EnumSelection"
 import { RefTo, refToColumn, type RefToProps, type RefToColumnOptions } from "./RefTo"
+import { buttonColumn, type ButtonColumnOptions } from "./ButtonColumn"
 
 /**
  * フォームと結びついた入力コンポーネントの一式。
@@ -93,6 +94,13 @@ export type GridColumnHelper<
     path: TPath,
     ...options: OptionalIfNoRequiredProps<RefToColumnOptions<TRow, TTable, `${TArrayPath}.${TPath}`>>
   ) => EG2.EditableGridLeafColumn<TRow>
+  /**
+   * 各行にボタンを1つ置く列。項目とは結びつかない。
+   * onClick には、クリックした時点の行の最新の値と、行キーが渡される。
+   * セルを選んだ状態での Enter かスペースキーも、ボタンのクリックと同じ。
+   * 未指定の場合、読み取り専用のセルではボタンを表示しない。表示する場合は options の showWhenReadOnly を指定する。
+   */
+  button: (text: string, onClick: (row: TRow, rowKey: string) => void, options?: ButtonColumnOptions<TRow>) => EG2.EditableGridLeafColumn<TRow>
 }
 
 /** 列定義ヘルパーをグリッドと結びつける */
@@ -109,6 +117,7 @@ export function createGridColumnHelper<
     checkBox: (path, options) => checkBoxColumn(binding, path, options),
     enumeration: (path, options) => enumColumn(binding, path, options),
     refTo: (path, ...options) => refToColumn(binding, path, options[0]),
+    button: (text, onClick, options) => buttonColumn(text, onClick, options),
   }
 }
 

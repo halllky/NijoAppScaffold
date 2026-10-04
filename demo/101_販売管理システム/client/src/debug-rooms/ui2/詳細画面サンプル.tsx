@@ -1,12 +1,12 @@
 import React from "react"
 import * as RHF from "react-hook-form"
 import useEvent from "react-use-event-hook"
-import { EditableGrid, type EditableGridLeafColumn } from "@halllky/editable-grid"
+import { EditableGrid } from "@halllky/editable-grid"
 import { PageBase } from "../../app/PageBase"
 import { PageTitle } from "../../ui/PageTitle"
 import { Button } from "../../ui/Button"
 import { CheckBox } from "../../ui/CheckBox"
-import { FieldColumn, FieldGroup, SearchDialogHost, useDisplayDataForm, type GridRow } from "../../ui2"
+import { FieldColumn, FieldGroup, SearchDialogHost, useDisplayDataForm } from "../../ui2"
 import { ValuesPreview } from "./ValuesPreview"
 import { 従業員検索ダイアログ } from "./従業員検索ダイアログ"
 import { 検索ダイアログ一覧 } from "./検索ダイアログ一覧"
@@ -77,7 +77,7 @@ function DisplayDataFormSample() {
       col.checkBox('完了', { defaultWidth: 56 }),
       col.refTo('検品者', { params: { 退職者を含む: false }, defaultWidth: 200, isReadOnly: row => row.完了 === true }),
       col.textArea('備考', { defaultWidth: 240, wrap: true, isReadOnly: row => row.完了 === true }),
-      { ...deleteButtonColumn(handleRemoveDetailRow), isReadOnly: row => row.完了 === true },
+      col.button('削除', (_, rowKey) => handleRemoveDetailRow(rowKey), { defaultWidth: 56, isReadOnly: row => row.完了 === true }),
     ],
     rows: rows => rows.filter(row => !row.willBeDeleted),
   }, [])
@@ -221,29 +221,6 @@ function DisplayDataFormSample() {
       )}
     />
   )
-}
-
-/**
- * 明細の行を削除するボタンの列。
- * 列定義ヘルパーにない列も、EditableGrid の列定義をそのまま書けば並べられることの確認を兼ねる。
- */
-function deleteButtonColumn(
-  onDelete: (instanceId: string) => void,
-): EditableGridLeafColumn<GridRow<サンプル伝票.DisplayData, '明細'>> {
-  return {
-    columnId: 'delete',
-    defaultWidth: 56,
-    disableResizing: true,
-    renderHeader: () => null,
-    renderBody: ({ rowKey, isReadOnly }) => !isReadOnly && (
-      <div className="flex-1 flex justify-center bg-white">
-        {/* ボタンのクリックでセルが選択されないよう、mousedown の伝播を止める */}
-        <Button mini underline onMouseDown={e => e.stopPropagation()} onClick={() => onDelete(rowKey)}>
-          削除
-        </Button>
-      </div>
-    ),
-  }
 }
 
 /**
