@@ -57,3 +57,15 @@ export const 従業員検索ダイアログ = defineSearchDialog<従業員Ref.Se
     }),
   },
 })
+
+/** 検索ダイアログの対応表に登録する内容 */
+export const searchDialogs = {
+  'ref-to:従業員Ref': 従業員検索ダイアログ,
+}
+
+// 外部参照の入力欄がこの検索ダイアログのパラメータの型を決められるよう、対応表の型に登録する
+declare module "../../auto-pages/検索ダイアログ一覧" {
+  interface 個別検索ダイアログ一覧 {
+    'ref-to:従業員Ref': typeof 従業員検索ダイアログ
+  }
+}

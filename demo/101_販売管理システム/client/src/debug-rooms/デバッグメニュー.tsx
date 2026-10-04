@@ -2,7 +2,7 @@ import React from "react"
 import ReactDOM from "react-dom"
 import { Link } from "react-router-dom"
 import * as DbViewer from "./db-viewer/DbViewer"
-import { URL as AutoIndexUrl } from "../pages/auto/自動生成画面一覧"
+import { URL as AutoIndexUrl } from "../auto-pages/自動生成画面一覧"
 import { callAspNetCoreApiAsync } from "../example/callAspNetCoreApiAsync"
 import { Button, useLoginLogout, useOutsideClick } from "../ui"
 

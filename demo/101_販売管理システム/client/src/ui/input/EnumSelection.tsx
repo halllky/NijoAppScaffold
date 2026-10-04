@@ -237,7 +237,11 @@ const enumCellEditors = new Map<string, EG2.EditableGridCellEditor>()
 /** メタデータから選択肢を求める。列挙体でない場合は例外を投げる */
 function enumOptionsOf(member: AggregateMetadata.Member, path?: string): readonly string[] {
   const value = assertValueMember(member, path ?? '', 'EnumSelection', m => m.enumType !== undefined)
-  return EnumValueMap[value.enumType!]()
+  // 列挙体の種類はスキーマ定義ごとに異なり、1つも無い場合は種類の型が never になって引けないので、文字列で引ける型に広げる
+  const enumValueMap: Partial<Record<string, () => readonly string[]>> = EnumValueMap
+  const getOptions = enumValueMap[value.enumType!]
+  if (getOptions === undefined) throw new Error(`列挙体 ${value.enumType} の選択肢がありません。`)
+  return getOptions()
 }
 
 //#endregion フォームとグリッドで共有する仕様

@@ -10,7 +10,12 @@ namespace Demo101TemplateBuilder;
 /// 販売管理業務固有の部分（商品・入荷・売上・在庫調整など）を削除する処理。
 /// </para>
 /// <para>
-/// デモ101の nijo.xml やソースコードに機能追加・構造変更があった場合、このクラスの更新が必要になる可能性がある。
+/// ここで行うのは nijo.xml の定義の削除と、それに依存するフォルダ・ファイルの削除だけである。
+/// ソースコードの書き換えは行わない。デモ101側は、業務固有の部分をフォルダ・ファイル単位で削除しても
+/// 残りのソースがそのままコンパイルできる構造になっている（業務画面の自己登録、partial による分割など）。
+/// </para>
+/// <para>
+/// デモ101の nijo.xml やフォルダ構造に変更があった場合、このクラスの更新が必要になる可能性がある。
 /// そのため <c>Nijo.IntegrationTest</c> にこのクラスを実行したうえで dotnet build / npm run tsc が
 /// 通ることを確認するテストを用意している。
 /// </para>
@@ -74,18 +79,32 @@ public static class Demo101TemplatePruner
         "Core/在庫調整",
         "Core/売上",
         "Core/外部システム/商品管理システム",
-        "client/src/pages/P100_売上.tsx",
-        "client/src/pages/P101_売上詳細.tsx",
-        "client/src/pages/P200_入荷.tsx",
-        "client/src/pages/P201_入荷詳細.tsx",
-        "client/src/pages/P300_商品.tsx",
-        "client/src/pages/P301_商品詳細.tsx",
-        "client/src/pages/shared/StockAdjustmentDialog.tsx",
-        // テンプレートには列挙体を1つも含まないため、列挙体の存在を前提にしたこれらのコンポーネントは型エラーになる。
-        // UIコンポーネントカタログでの参照も削除済みで他に利用箇所がないため削除する。
-        "client/src/app/EnumSelection.tsx",
-        "client/src/app/EnumSearchCondition.tsx",
+        // nijo.xml から削除したカスタム属性・sequence 型の項目に対応する override
+        "Core/カスタム属性/0以上のみ.cs",
+        "Core/OverridedDbContext.Sequence.cs",
+        "Core/OverridedDummyDataGenerator.販売管理.cs",
+        // 業務テーブルを含むDBスキーマに依存するもの。
+        // マイグレーションは、テンプレートを使い始めるときに利用者が改めて作成する。
+        "Core/Migrations",
+        "nijo.viewState.json",
+        "nijo.dbViewer.json",
     ];
+
+    /// <summary>画面のフォルダ。<see cref="KEEP_PAGES"/> 以外はすべて業務画面として削除する。</summary>
+    private const string PAGES_DIR = "client/src/pages";
+
+    /// <summary><see cref="PAGES_DIR"/> 配下で、テンプレートに残す画面</summary>
+    private static readonly string[] KEEP_PAGES = [
+        "P000_トップページ.tsx",
+        "P001_ログイン.tsx",
+        "P002_ログアウト.tsx",
+    ];
+
+    /// <summary>
+    /// マイグレーションSQLのフォルダ。マイグレーション1回分ごとのSQL（ファイル名が数字で始まるもの）を削除する。
+    /// マイグレーションの都度作り直されるSQL（ファイル名が数字以外で始まるもの）は、DBスキーマに依存しないので残す。
+    /// </summary>
+    private const string MIGRATIONS_SCRIPT_DIR = "Core/MigrationsScript";
 
     /// <summary>
     /// <paramref name="workDir"/> に展開されたデモ101のソース一式から、
@@ -95,7 +114,8 @@ public static class Demo101TemplatePruner
     {
         PruneNijoXml(Path.Combine(workDir, "nijo.xml"));
         DeleteUnneededPaths(workDir);
-        EditSourceReferences(workDir);
+        DeleteBusinessPages(workDir);
+        DeleteMigrationScripts(workDir);
     }
 
     // ============================================================
@@ -175,6 +195,7 @@ public static class Demo101TemplatePruner
             else if (File.Exists(target))
             {
                 File.Delete(target);
+                DeleteDirectoryIfEmpty(Path.GetDirectoryName(target)!);
             }
             else
             {
@@ -184,487 +205,57 @@ public static class Demo101TemplatePruner
     }
 
     // ============================================================
-    // 3. 業務固有のコードへの参照が残るファイルを編集する
+    // 3. 業務画面を削除する
     // ============================================================
 
-    private static void EditSourceReferences(string workDir)
+    private static void DeleteBusinessPages(string workDir)
     {
-        EditCoreConfigureServices(workDir);
-        EditCoreOverridedApplicationService(workDir);
-        EditCoreRuntimeSetting(workDir);
-        EditCoreOverridedDbContext(workDir);
-        ReplaceOverridedDummyDataGenerator(workDir);
-        EditClientRoutes(workDir);
-        EditClientUiComponentCatalog(workDir);
-        ReplaceClientPackageJson(workDir);
-    }
-
-    /// <summary>
-    /// ファイル内の <paramref name="oldText"/> を <paramref name="newText"/> に置換する。
-    /// 見つからない場合（＝デモ101側の構造が変わり、この置換内容が古くなった場合）は例外を送出する。
-    /// </summary>
-    private static void ReplaceExactlyOnce(string filePath, string oldText, string newText)
-    {
-        // ファイルの改行コード（CRLF/LF）は .gitattributes によりファイル種別ごとに異なるため、
-        // 比較・置換は LF に正規化した状態で行い、書き戻す際に元の改行コードへ戻す。
-        var original = File.ReadAllText(filePath);
-        var usesCrlf = original.Contains('\r');
-        var text = original.Replace("\r\n", "\n");
-        var old = oldText.Replace("\r\n", "\n");
-        var replacement = newText.Replace("\r\n", "\n");
-
-        var firstIndex = text.IndexOf(old, StringComparison.Ordinal);
-        if (firstIndex < 0)
+        var pagesDir = Path.Combine(workDir, PAGES_DIR);
+        foreach (var keep in KEEP_PAGES)
         {
-            throw new InvalidOperationException($"置換対象の文字列が見つかりませんでした: {filePath}\n---\n{old}\n---");
-        }
-        if (text.IndexOf(old, firstIndex + old.Length, StringComparison.Ordinal) >= 0)
-        {
-            throw new InvalidOperationException($"置換対象の文字列が複数箇所で見つかりました（一意に特定できません）: {filePath}");
-        }
-
-        var result = text.Replace(old, replacement);
-        if (usesCrlf) result = result.Replace("\n", "\r\n");
-        File.WriteAllText(filePath, result, new UTF8Encoding(false));
-    }
-
-    private static void EditCoreConfigureServices(string workDir)
-    {
-        var path = Path.Combine(workDir, "Core/ConfigureServices.cs");
-
-        ReplaceExactlyOnce(
-            path,
-            """
-            using Microsoft.Extensions.DependencyInjection;
-            using MyApp.Core.外部システム.商品管理システム;
-            using NLog.Extensions.Logging;
-            """,
-            """
-            using Microsoft.Extensions.DependencyInjection;
-            using NLog.Extensions.Logging;
-            """);
-
-        ReplaceExactlyOnce(
-            path,
-            """
-                    // ログ設定
-                    LogSettings.ConfigureServices(services, myAppSection, basePath);
-
-                    // 商品管理システムの設定をバインド。
-                    // appsettings.json の設定に従い、モック/実際の外部システムクラスを切り替える。
-                    if (myAppSection.GetValue<bool>($"{nameof(RuntimeSetting.商品管理システム)}:{nameof(商品管理システムSettings.UseMock)}")) {
-                        services.AddTransient<I商品管理システム, 商品管理システムMock>();
-                    } else {
-                        services.AddTransient<I商品管理システム, 商品管理システム本番>();
-                    }
-                }
-            """,
-            """
-                    // ログ設定
-                    LogSettings.ConfigureServices(services, myAppSection, basePath);
-                }
-            """);
-    }
-
-    private static void EditCoreOverridedApplicationService(string workDir)
-    {
-        var path = Path.Combine(workDir, "Core/OverridedApplicationService.cs");
-
-        ReplaceExactlyOnce(
-            path,
-            """
-            using Microsoft.Extensions.DependencyInjection;
-            using MyApp.Core.外部システム;
-            using MyApp.Core.外部システム.商品管理システム;
-            using System;
-            using System.Reflection;
-            using System.Text.Json;
-            using System.Threading.Tasks;
-            """,
-            """
-            using Microsoft.Extensions.DependencyInjection;
-            using MyApp.Core.外部システム;
-            using System;
-            using System.Text.Json;
-            using System.Threading.Tasks;
-            """);
-
-        ReplaceExactlyOnce(
-            path,
-            """
-                /// <summary>
-                /// 商品管理システムインターフェース。
-                /// </summary>
-                public I商品管理システム 商品管理システム => _cached商品管理システム ??= ServiceProvider.GetRequiredService<I商品管理システム>();
-                private I商品管理システム? _cached商品管理システム;
-
-                /// <summary>
-                /// 外部リソース更新用のトランザクションを開始する。
-                /// </summary>
-            """,
-            """
-                /// <summary>
-                /// 外部リソース更新用のトランザクションを開始する。
-                /// </summary>
-            """);
-
-        // "0以上のみ" カスタム属性（NotNegativeバリデーション）はテンプレートには含めないため、
-        // それに対応するオーバーライドメソッドも不要になる。
-        ReplaceExactlyOnce(
-            path,
-            """
-
-                public override string? ValidateNotNegative(decimal? value, PropertyInfo propertyInfo) {
-                    if (value.HasValue && value.Value < 0m) {
-                        return "負の値は許可されていません。";
-                    }
-                    return null;
-                }
-            }
-            """,
-            """
-            }
-            """);
-    }
-
-    private static void EditCoreOverridedDbContext(string workDir)
-    {
-        var path = Path.Combine(workDir, "Core/OverridedDbContext.cs");
-
-        // "sequence" 型の項目（商品SEQ・売上SEQ）はテンプレートには含めないため、
-        // それに対応するオーバーライドメソッドも不要になる。
-        ReplaceExactlyOnce(
-            path,
-            """
-
-                protected override void ConfigureSequenceMember(
-                    Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder,
-                    Microsoft.EntityFrameworkCore.Metadata.Builders.EntityTypeBuilder entity,
-                    Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<int?> property,
-                    string sequenceName) {
-
-                    // SQLite の場合（SQLiteにはシーケンスがないため、AUTO_INCREMENTを使用）
-                    property.HasAnnotation("Sqlite:Autoincrement", true);
-                }
-            }
-            """,
-            """
-            }
-            """);
-    }
-
-    private static void EditCoreRuntimeSetting(string workDir)
-    {
-        var path = Path.Combine(workDir, "Core/RuntimeSetting.cs");
-
-        ReplaceExactlyOnce(
-            path,
-            """
-
-                #region 外部システム連携設定
-                /// <summary>
-                /// 商品管理システム連携設定
-                /// </summary>
-                public Core.外部システム.商品管理システム.商品管理システムSettings 商品管理システム { get; set; } = new();
-                #endregion 外部システム連携設定
-            }
-            """,
-            """
-
-            }
-            """);
-    }
-
-    private static void ReplaceOverridedDummyDataGenerator(string workDir)
-    {
-        var path = Path.Combine(workDir, "Core/OverridedDummyDataGenerator.cs");
-        if (!File.Exists(path))
-        {
-            throw new InvalidOperationException($"ファイルが見つかりません（デモ101の構造が変わった可能性があります）: {path}");
-        }
-
-        var content = """
-            #if DEBUG
-
-            namespace MyApp;
-
-            /// <summary>
-            /// デバッグ用のダミーデータ生成。
-            /// DbContext を直接使ってマスタデータを登録します。
-            /// </summary>
-            public class OverridedDummyDataGenerator {
-
-                public OverridedDummyDataGenerator(Func<IMessageSetter, IPresentationContext<MessageSetter>> createPresentationContext) {
-                    _createPresentationContext = createPresentationContext;
-                }
-                protected readonly Func<IMessageSetter, IPresentationContext<MessageSetter>> _createPresentationContext;
-
-                public const string ADMIN_USER_ID = "admin";
-                public const string DUMMY_USER_PASSWORD = "password123";
-
-                public virtual async Task<IMessageSetter> GenerateAsync(AutoGeneratedApplicationService applicationService) {
-                    var db = applicationService.DbContext;
-
-                    // 従業員: 管理者
-                    var adminSalt = OverridedApplicationService.GenerateSalt();
-                    db.従業員DbSet.Add(new 従業員DbEntity {
-                        従業員番号 = ADMIN_USER_ID,
-                        氏名 = "デモ用ユーザー",
-                        パスワード = OverridedApplicationService.ComputeHash(DUMMY_USER_PASSWORD, adminSalt),
-                        SALT = adminSalt,
-                        入荷担当 = true,
-                        販売担当 = true,
-                        システム管理者 = true,
-                        Version = 0,
-                    });
-                    // 従業員: その他
-                    for (var i = 1; i <= 10; i++) {
-                        var s = OverridedApplicationService.GenerateSalt();
-                        db.従業員DbSet.Add(new 従業員DbEntity {
-                            従業員番号 = $"user{i:000}",
-                            氏名 = $"ユーザー{i:000}",
-                            パスワード = OverridedApplicationService.ComputeHash(DUMMY_USER_PASSWORD, s),
-                            SALT = s,
-                            入荷担当 = i % 2 == 0,
-                            販売担当 = i % 3 == 0,
-                            システム管理者 = false,
-                            Version = 0,
-                        });
-                    }
-                    await db.SaveChangesAsync();
-
-                    return new MessageSetter([], new());
-                }
-            }
-
-            #endif
-
-            """;
-        // *.cs は .gitattributes で eol=crlf のため、改行コードを合わせる
-        File.WriteAllText(path, content.Replace("\r\n", "\n").Replace("\n", "\r\n"), new UTF8Encoding(false));
-    }
-
-    private static void EditClientRoutes(string workDir)
-    {
-        var path = Path.Combine(workDir, "client/src/routes.tsx");
-
-        ReplaceExactlyOnce(
-            path,
-            """
-            import P000, * as P000Module from "./pages/P000_トップページ"
-            import P002, * as P002Module from "./pages/P002_ログアウト"
-            import P100, * as P100Module from "./pages/P100_売上"
-            import P200, * as P200Module from "./pages/P200_入荷"
-            import P300, * as P300Module from "./pages/P300_商品"
-            import P400, * as P400Module from "./pages/P400_従業員"
-            import P101 from "./pages/P101_売上詳細"
-            import P201 from "./pages/P201_入荷詳細"
-            import P301 from "./pages/P301_商品詳細"
-            import UIComponentCatalog from "./debug-rooms/UIコンポーネントカタログ"
-            import DbViewer from "./debug-rooms/db-viewer/DbViewer"
-            """,
-            """
-            import P000, * as P000Module from "./pages/P000_トップページ"
-            import P002, * as P002Module from "./pages/P002_ログアウト"
-            import P400, * as P400Module from "./pages/P400_従業員"
-            import UIComponentCatalog from "./debug-rooms/UIコンポーネントカタログ"
-            import DbViewer from "./debug-rooms/db-viewer/DbViewer"
-            """);
-
-        // ルートナビゲーションに表示する業務画面は routes.tsx が合成する（RootLayout は props で受け取るだけ）。
-        // 売上・入荷・商品はテンプレートに含めないため、ナビゲーション項目からも除く。
-        ReplaceExactlyOnce(
-            path,
-            """
-            const navigationItems = [
-              { to: P100Module.URL, label: "売上", icon: Icon.CurrencyYenIcon },
-              { to: P200Module.URL, label: "入荷", icon: Icon.TruckIcon },
-              { to: P300Module.URL, label: "商品", icon: Icon.CubeIcon },
-              { to: P400Module.URL, label: "従業員", icon: Icon.UserGroupIcon },
-            ]
-            """,
-            """
-            const navigationItems = [
-              { to: P400Module.URL, label: "従業員", icon: Icon.UserGroupIcon },
-            ]
-            """);
-
-        ReplaceExactlyOnce(
-            path,
-            """
-                  P000,
-                  P002,
-                  P100,
-                  P200,
-                  P300,
-                  P400,
-                  ...P101,
-                  ...P201,
-                  P301,
-            """,
-            """
-                  P000,
-                  P002,
-                  P400,
-            """);
-    }
-
-    private static void EditClientUiComponentCatalog(string workDir)
-    {
-        var path = Path.Combine(workDir, "client/src/debug-rooms/UIコンポーネントカタログ.tsx");
-
-        ReplaceExactlyOnce(
-            path,
-            """
-            import { EnumSelection } from "../app/EnumSelection"
-            import { EnumSearchCondition } from "../app/EnumSearchCondition"
-            import { NumericTextBox } from "../ui/NumericTextBox"
-            import { WordTextBox } from "../ui/WordTextBox"
-            import { Button } from "../ui/Button"
-            import { NowLoading } from "../ui/NowLoading"
-            import * as EnumDefs from "../__autoGenerated/enum-defs"
-            """,
-            """
-            import { NumericTextBox } from "../ui/NumericTextBox"
-            import { WordTextBox } from "../ui/WordTextBox"
-            import { Button } from "../ui/Button"
-            import { NowLoading } from "../ui/NowLoading"
-            """);
-
-        ReplaceExactlyOnce(
-            path,
-            """
-                descValue: string
-                enumValue: EnumDefs.売上明細区分 | null
-                numValue: string
-                wordValue: string
-                enumSearchConditionValue: EnumDefs.消費税区分SearchCondition
-              }
-            """,
-            """
-                descValue: string
-                numValue: string
-                wordValue: string
-              }
-            """);
-
-        ReplaceExactlyOnce(
-            path,
-            """
-                  descValue: "",
-                  enumValue: null,
-                  numValue: "",
-                  wordValue: "",
-                  enumSearchConditionValue: {},
-                }
-            """,
-            """
-                  descValue: "",
-                  numValue: "",
-                  wordValue: "",
-                }
-            """);
-
-        ReplaceExactlyOnce(
-            path,
-            """
-                          {/* EnumSelection */}
-                          <div className="space-y-2">
-                            <h3 className="font-bold">EnumSelection</h3>
-                            <div className="p-4 border rounded">
-                              <FormLabel>売上明細区分</FormLabel>
-                              <Controller
-                                control={control}
-                                name="enumValue"
-                                render={({ field }) => (
-                                  <EnumSelection
-                                    type="売上明細区分"
-                                    {...field}
-                                  />
-                                )}
-                              />
-                              <div className="text-sm text-gray-500 mt-2">Value: {values.enumValue}</div>
-                            </div>
-                          </div>
-
-                          {/* EnumSearchCondition */}
-                          <div className="space-y-2">
-                            <h3 className="font-bold">EnumSearchCondition</h3>
-                            <div className="p-4 border rounded">
-                              <FormLabel>消費税区分</FormLabel>
-                              <EnumSearchCondition
-                                control={control}
-                                name="enumSearchConditionValue"
-                                type="消費税区分"
-                              />
-                              <div className="text-sm text-gray-500 mt-2">Value: {JSON.stringify(values.enumSearchConditionValue)}</div>
-                            </div>
-                          </div>
-
-                          {/* NumericTextBox */}
-            """,
-            """
-                          {/* NumericTextBox */}
-            """);
-    }
-
-    /// <summary>
-    /// デモ101の client/package.json は、このモノレポの npm workspaces の一員として
-    /// ルートの node_modules に依存関係をホイスティングしているため、依存関係の大半が記載されていない。
-    /// テンプレートとして単体で展開されたときに動作するよう、実際に使用しているパッケージを明記する。
-    /// バージョンはこのモノレポのルート package.json に合わせている。
-    /// </summary>
-    private static void ReplaceClientPackageJson(string workDir)
-    {
-        var path = Path.Combine(workDir, "client/package.json");
-
-        var content = """
+            if (!File.Exists(Path.Combine(pagesDir, keep)))
             {
-              "name": "my-app",
-              "private": true,
-              "version": "0.0.0",
-              "type": "module",
-              "scripts": {
-                "dev": "vite --port 5173 --host",
-                "build": "tsc && vite build",
-                "preview": "vite preview",
-                "tsc": "tsc --noEmit",
-                "test": "vitest",
-                "test:run": "vitest run"
-              },
-              "dependencies": {
-                "@halllky/editable-grid": "github:halllky/editable-grid#v0.9.0",
-                "@heroicons/react": "^2.2.0",
-                "@tanstack/react-table": "^8.21.3",
-                "@tanstack/react-virtual": "^3.14.2",
-                "@xyflow/react": "^12.11.6",
-                "allotment": "^1.20.5",
-                "react": "^19.2.7",
-                "react-dom": "^19.2.7",
-                "react-hook-form": "^7.79.0",
-                "react-router-dom": "^7.17.0",
-                "react-use-event-hook": "^0.9.6",
-                "uuidjs": "^5.1.0"
-              },
-              "devDependencies": {
-                "@tailwindcss/vite": "^4.3.1",
-                "@types/react": "^19.2.17",
-                "@types/react-dom": "^19.2.3",
-                "@vitejs/plugin-react-swc": "^3.11.0",
-                "tailwindcss": "^4.3.1",
-                "typescript": "~5.9.3",
-                "vite": "^7.3.5",
-                "vite-plugin-singlefile": "^2.3.3",
-                "vitest": "^3.2.6"
-              }
+                throw new InvalidOperationException($"テンプレートに残す画面が見つかりません（デモ101の構造が変わった可能性があります）: {PAGES_DIR}/{keep}");
             }
+        }
 
-            """;
-        File.WriteAllText(path, content, new UTF8Encoding(false));
+        foreach (var dir in Directory.GetDirectories(pagesDir))
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+        foreach (var file in Directory.GetFiles(pagesDir))
+        {
+            if (KEEP_PAGES.Contains(Path.GetFileName(file))) continue;
+            File.Delete(file);
+        }
+    }
 
-        // package.json の内容が変わるため、モノレポ内で使われていた古い package-lock.json は破棄する。
-        // 新規プロジェクトを開いた後、最初の npm install で作り直される。
-        var lockPath = Path.Combine(workDir, "client/package-lock.json");
-        if (File.Exists(lockPath)) File.Delete(lockPath);
+    // ============================================================
+    // 4. マイグレーションSQLを削除する
+    // ============================================================
+
+    private static void DeleteMigrationScripts(string workDir)
+    {
+        var scriptDir = Path.Combine(workDir, MIGRATIONS_SCRIPT_DIR);
+        if (!Directory.Exists(scriptDir))
+        {
+            throw new InvalidOperationException($"マイグレーションSQLのフォルダが見つかりません（デモ101の構造が変わった可能性があります）: {MIGRATIONS_SCRIPT_DIR}");
+        }
+
+        foreach (var file in Directory.GetFiles(scriptDir, "*.sql"))
+        {
+            if (char.IsAsciiDigit(Path.GetFileName(file)[0]))
+            {
+                File.Delete(file);
+            }
+        }
+    }
+
+    private static void DeleteDirectoryIfEmpty(string dir)
+    {
+        if (!Directory.EnumerateFileSystemEntries(dir).Any())
+        {
+            Directory.Delete(dir);
+        }
     }
 }

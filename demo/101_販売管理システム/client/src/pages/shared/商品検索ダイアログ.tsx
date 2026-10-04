@@ -59,3 +59,15 @@ export const 商品検索ダイアログ = defineSearchDialog<商品.SearchCondi
     }),
   },
 })
+
+/** 検索ダイアログの対応表に登録する内容 */
+export const searchDialogs = {
+  'ref-to:商品': 商品検索ダイアログ,
+}
+
+// 外部参照の入力欄がこの検索ダイアログのパラメータの型を決められるよう、対応表の型に登録する
+declare module "../../auto-pages/検索ダイアログ一覧" {
+  interface 個別検索ダイアログ一覧 {
+    'ref-to:商品': typeof 商品検索ダイアログ
+  }
+}

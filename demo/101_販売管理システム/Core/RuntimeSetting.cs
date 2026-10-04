@@ -9,7 +9,7 @@ namespace MyApp;
 /// <summary>
 /// 実行時設定。 appsettings.json から読み込まれた設定値を使う。
 /// </summary>
-public class RuntimeSetting {
+public partial class RuntimeSetting {
 
     /// <summary>
     /// appsettings.json には NLog の設定なども含まれているので
@@ -64,11 +64,4 @@ public class RuntimeSetting {
         return profile;
     }
     #endregion データベース接続
-
-    #region 外部システム連携設定
-    /// <summary>
-    /// 商品管理システム連携設定
-    /// </summary>
-    public Core.外部システム.商品管理システム.商品管理システムSettings 商品管理システム { get; set; } = new();
-    #endregion 外部システム連携設定
 }

@@ -1,9 +1,3 @@
-import * as Icon from "@heroicons/react/24/solid"
-import * as P100Module from "./pages/P100_売上"
-import * as P200Module from "./pages/P200_入荷"
-import * as P300Module from "./pages/P300_商品"
-import * as P400Module from "./pages/P400_従業員"
-
 export type RootNavigationItem = {
   to: string
   label: string
@@ -11,11 +5,14 @@ export type RootNavigationItem = {
 }
 
 /**
- * ルートナビゲーションに表示する画面の一覧
+ * ルートナビゲーションに表示する画面の一覧。
+ * 業務画面のフォルダ直下のモジュールが export する navigationItem を、ファイル名の順に並べたもの。
  */
-export const navigationItems = [
-  { to: P100Module.URL, label: "売上", icon: Icon.CurrencyYenIcon },
-  { to: P200Module.URL, label: "入荷", icon: Icon.TruckIcon },
-  { to: P300Module.URL, label: "商品", icon: Icon.CubeIcon },
-  { to: P400Module.URL, label: "従業員", icon: Icon.UserGroupIcon },
-] satisfies RootNavigationItem[]
+export const navigationItems: RootNavigationItem[] = collectNavigationItems()
+
+function collectNavigationItems(): RootNavigationItem[] {
+  const modules = import.meta.glob<{ navigationItem?: RootNavigationItem }>("./pages/*.tsx", { eager: true })
+  return Object.entries(modules)
+    .sort(([pathA], [pathB]) => pathA < pathB ? -1 : pathA > pathB ? 1 : 0)
+    .flatMap(([, module]) => module.navigationItem ?? [])
+}

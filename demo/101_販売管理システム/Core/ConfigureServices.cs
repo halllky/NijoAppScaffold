@@ -2,7 +2,6 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using MyApp.Core.外部システム.商品管理システム;
 using NLog.Extensions.Logging;
 
 namespace MyApp;
@@ -59,12 +58,15 @@ partial class OverridedApplicationService {
         // ログ設定
         LogSettings.ConfigureServices(services, myAppSection, basePath);
 
-        // 商品管理システムの設定をバインド。
-        // appsettings.json の設定に従い、モック/実際の外部システムクラスを切り替える。
-        if (myAppSection.GetValue<bool>($"{nameof(RuntimeSetting.商品管理システム)}:{nameof(商品管理システムSettings.UseMock)}")) {
-            services.AddTransient<I商品管理システム, 商品管理システムMock>();
-        } else {
-            services.AddTransient<I商品管理システム, 商品管理システム本番>();
-        }
+        // 外部システム連携
+        Configure外部システム(services, settings);
     }
+
+    /// <summary>
+    /// 外部システム連携に必要なサービスをDIコンテナに登録する。
+    /// 連携する外部システムが無い場合は実装しなくてよい（実装が無ければ呼び出しごと取り除かれる）。
+    /// </summary>
+    /// <param name="services">DIコンテナ</param>
+    /// <param name="settings">実行時設定</param>
+    static partial void Configure外部システム(IServiceCollection services, RuntimeSetting settings);
 }
