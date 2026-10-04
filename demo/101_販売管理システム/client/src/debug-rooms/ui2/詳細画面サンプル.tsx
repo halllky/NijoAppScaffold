@@ -123,13 +123,14 @@ function DisplayDataFormSample() {
         </Button>
       </div>
 
-      <form onSubmit={handleValidate} className="flex flex-col gap-4">
+      {/* 検証はブラウザに任せず react-hook-form の検証ルールで行う。入力欄での Enter で登録が実行されないよう、Enter による送信は止める */}
+      <form noValidate onSubmit={handleValidate} onKeyDown={preventSubmitByEnter} className="flex flex-col gap-4">
 
         {/* どの項目にも表示されないメッセージ */}
         <RootErrors />
 
         {/* ヘッダ部。項目の意味のまとまりごとに列を分ける。読み取り専用は入力コンポーネントごとに指定する */}
-        <FieldGroup title="基本情報">
+        <FieldGroup title="基本情報" labelWidth="5.5rem">
           {/* 伝票の識別と担当 */}
           <FieldColumn>
             {/* 必須マークは表示だけなので、未入力のチェックは rules で別に指定する */}
@@ -231,6 +232,16 @@ function deleteButtonColumn(
       </div>
     ),
   }
+}
+
+/**
+ * 入力欄での Enter によるフォームの送信を止める。送信はボタンのクリックだけで行う。
+ * 入力欄自身の Enter の処理（入力中の値の確定など）は、この処理より先に入力欄で行われる。
+ * 文章の入力欄の改行と、ボタンでの Enter（ボタンのクリック）は止めない。IME の変換の確定も止めない。
+ */
+function preventSubmitByEnter(e: React.KeyboardEvent<HTMLFormElement>) {
+  if (e.key !== 'Enter' || e.nativeEvent.isComposing) return
+  if (e.target instanceof HTMLInputElement) e.preventDefault()
 }
 
 /** 税率の業務上の制約。メタデータの桁数の範囲内でも、100% を超える値は受け付けない */

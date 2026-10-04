@@ -460,7 +460,8 @@ function SearchDialogView<TSearchCondition extends SearchConditionBase, TItem, T
 
         {/* 検索条件欄 */}
         {!isConditionCollapsed && (
-          <form onSubmit={handleSearch} className="flex flex-col gap-2 px-4 py-2 border-b border-gray-200">
+          // 検証はブラウザに任せず react-hook-form の検証ルールで行う
+          <form noValidate onSubmit={handleSearch} className="flex flex-col gap-2 px-4 py-2 border-b border-gray-200">
             <RootErrors />
             <definition.SearchCondition Input={Input} FieldLabel={FieldLabel} formMethods={formMethods} params={params} />
             {/* 検索・クリア */}

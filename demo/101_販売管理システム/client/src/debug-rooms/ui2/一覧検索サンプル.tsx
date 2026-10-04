@@ -70,13 +70,14 @@ function SearchConditionFormSample() {
         </Button>
       </div>
 
-      <form onSubmit={handleSearch} className="flex flex-col gap-4">
+      {/* 検証はブラウザに任せず react-hook-form の検証ルールで行う。検索条件欄での Enter で検索できるよう、送信は form の submit で行う */}
+      <form noValidate onSubmit={handleSearch} className="flex flex-col gap-4">
 
         {/* どの項目にも表示されないメッセージ */}
         <RootErrors />
 
         {/* 検索条件欄。数値・日付は範囲指定、真偽値は「該当する/しない」になる */}
-        <FieldGroup>
+        <FieldGroup labelWidth="5rem">
           {/* 伝票の内容 */}
           <FieldColumn>
             <FieldLabel name="伝票番号">

@@ -199,9 +199,13 @@ function getEnumCellEditor(enumType: string, options: readonly string[]): EG2.Ed
             if (isEditing) requestCommit(e.target.value)
           }}
           onKeyDown={e => {
-            if (isEditing && e.key === 'Escape') {
+            if (!isEditing) return
+            if (e.key === 'Escape') {
               requestCancel()
               e.preventDefault()
+            } else if (e.key === 'Tab') {
+              // フォーカスが次の要素へ移ってもセルが編集中のまま残らないよう、確定する
+              requestCommit(e.currentTarget.value)
             }
           }}
           className="w-full h-full text-sm outline-none border border-black bg-white"

@@ -2,7 +2,7 @@ import React from "react"
 import * as RHF from "react-hook-form"
 import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline"
 import { findMemberMetadata, type FormBinding } from "./FormBinding"
-import { useIsInFieldColumn } from "./FieldGroup"
+import { LABEL_PART_WIDTH_STYLE, useIsInFieldColumn } from "./FieldGroup"
 import { MessageList } from "./MessageList"
 
 export type FieldLabelProps<TValues extends RHF.FieldValues> = {
@@ -97,7 +97,7 @@ export function FieldLabel<TValues extends RHF.FieldValues>(props: FieldLabelPro
   ) : (
     // 左にラベル、右に入力項目とメッセージが並ぶレイアウト
     <div className={layoutClassName}>
-      <div className={`flex justify-end ${HORIZONTAL_LABEL_WIDTH}`}>
+      <div className="flex justify-end" style={LABEL_PART_WIDTH_STYLE}>
         {labelPart}
       </div>
       <div className="flex flex-col gap-px min-w-0">
@@ -108,6 +108,3 @@ export function FieldLabel<TValues extends RHF.FieldValues>(props: FieldLabelPro
     </div>
   )
 }
-
-/** 横並びのときのラベル部分の幅 */
-const HORIZONTAL_LABEL_WIDTH = 'w-28'

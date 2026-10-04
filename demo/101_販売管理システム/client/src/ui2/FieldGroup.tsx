@@ -5,6 +5,12 @@ export type FieldGroupProps = {
   title?: React.ReactNode
   /** FieldColumn と、横幅いっぱいに表示する FieldLabel */
   children?: React.ReactNode
+  /**
+   * 横並びの FieldLabel のラベル部分の幅。CSS の長さで指定する（例: `'8rem'`）。
+   * この中のすべての列と、横幅いっぱいに表示する FieldLabel に適用される。FieldColumn で指定した場合はその列だけそちらが優先される。
+   * 未指定の場合は既定の幅になる。
+   */
+  labelWidth?: string
   /** 外側の余白の調整用。項目の配置はこのコンポーネントが決めるので、ここで grid などを指定しないこと */
   className?: string
 }
@@ -17,7 +23,9 @@ export type FieldGroupProps = {
  *   左から右へ並べて折り返す Z字の順は、目線が行ごとに左右へ往復して読みにくいため採らない。
  * - どこで次の列に移るかは自動では決めない。項目の意味の切れ目で区切れるよう、利用側が FieldColumn で列を分ける。
  * - FieldGroup の直下に置いた FieldLabel は、横幅いっぱいに表示する。FieldColumn の並びはそこで区切られ、その下から新しく並び始める。
- * - 列の幅はすべて等しい。横並びの FieldLabel のラベル部分の幅は、同じ列の中でそろえる。
+ * - 列の幅はすべて等しい。
+ * - 横並びの FieldLabel のラベル部分の幅は FieldLabel ごとには決めず、FieldGroup か FieldColumn の labelWidth で決める。
+ *   縦に並ぶ FieldLabel 同士でラベルの幅がそろっていないと読みにくいため。最適な幅は画面ごとに異なるので画面側で指定できるようにしている。
  * - 画面の幅が足りず列を横に並べられない場合は、列を縦に積む。左の列が上になるので、鏡面N字と同じ読み順のまま1列になる。
  *
  * フォームとは結びつかないので、どのフォームの FieldLabel を並べてもよい。
@@ -26,7 +34,7 @@ export function FieldGroup(props: FieldGroupProps): React.ReactNode {
   const sections = splitIntoSections(props.children)
 
   return (
-    <section className={`flex flex-col gap-2 ${props.className ?? ''}`}>
+    <section className={`flex flex-col gap-2 ${props.className ?? ''}`} style={labelWidthStyle(props.labelWidth)}>
       {/* 見出し */}
       {props.title && (
         <h3 className="font-bold text-gray-700 border-b border-gray-300 select-none">
@@ -58,6 +66,11 @@ export function FieldGroup(props: FieldGroupProps): React.ReactNode {
 export type FieldColumnProps = {
   /** この列に上から順に並べる FieldLabel */
   children?: React.ReactNode
+  /**
+   * この列の、横並びの FieldLabel のラベル部分の幅。CSS の長さで指定する（例: `'8rem'`）。
+   * 未指定の場合は FieldGroup の labelWidth、それも無ければ既定の幅になる。
+   */
+  labelWidth?: string
 }
 
 /**
@@ -66,8 +79,8 @@ export type FieldColumnProps = {
  */
 export function FieldColumn(props: FieldColumnProps): React.ReactNode {
   return (
-    // ラベル部分の幅を列の中でそろえるため、列自体をラベルと中身の2列のグリッドにし、各 FieldLabel はその行になる
-    <div className="grow min-w-0 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-2 gap-y-1 content-start" style={COLUMN_STYLE}>
+    // 列自体をラベルと中身の2列のグリッドにし、各 FieldLabel はその行になる
+    <div className="grow min-w-0 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-2 gap-y-1 content-start" style={{ ...COLUMN_STYLE, ...labelWidthStyle(props.labelWidth) }}>
       <FieldColumnContext.Provider value={true}>
         {props.children}
       </FieldColumnContext.Provider>
@@ -84,6 +97,24 @@ export function useIsInFieldColumn(): boolean {
 }
 
 const FieldColumnContext = React.createContext(false)
+
+/**
+ * ui2 フォルダ内部でのみ使用する。
+ * 横並びの FieldLabel のラベル部分に付けるスタイル。囲んでいる FieldGroup・FieldColumn の labelWidth の幅になる。
+ */
+export const LABEL_PART_WIDTH_STYLE: React.CSSProperties = {
+  width: 'var(--field-label-width, 7rem)',
+}
+
+/**
+ * labelWidth を、中の FieldLabel に CSS 変数で伝えるスタイル。未指定なら何もしない。
+ * CSS 変数は内側の要素に引き継がれ、より内側で指定したものが優先されるので、FieldColumn の指定が FieldGroup の指定より優先される
+ */
+function labelWidthStyle(labelWidth: string | undefined): React.CSSProperties | undefined {
+  return labelWidth === undefined
+    ? undefined
+    : { '--field-label-width': labelWidth } as React.CSSProperties
+}
 
 /** 1列の最小の幅。列の数とこの幅の積より FieldGroup が狭いと、列を縦に積む */
 const COLUMN_MIN_WIDTH_REM = 20

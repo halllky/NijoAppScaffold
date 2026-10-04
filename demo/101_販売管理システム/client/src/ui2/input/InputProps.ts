@@ -89,10 +89,18 @@ export function toRegisterRules(params: {
   rules: InputRules | undefined
   validators?: FieldValidator[]
   itemValueOf?: (fieldValue: unknown, formValues: RHF.FieldValues) => unknown
+  /**
+   * 入力欄に、値として解釈できない入力が残っていればエラーメッセージを返す。他のどの検証よりも先に評価する。
+   * 入力途中の日付のように、フォームの値としては空になっていても入力欄には何かが入っていることがあり、
+   * それを未入力のエラーとして示すと利用者が混乱するため。
+   */
+  checkUnparsableInput?: () => string | undefined
 }): Pick<RHF.RegisterOptions, 'validate'> {
-  const { rules, validators = [], itemValueOf = value => value } = params
+  const { rules, validators = [], itemValueOf = value => value, checkUnparsableInput } = params
   return {
     validate: async (fieldValue, formValues) => {
+      const unparsable = checkUnparsableInput?.()
+      if (unparsable !== undefined) return unparsable
       const value = itemValueOf(fieldValue, formValues)
       if (rules?.required && isEmptyValue(value)) return '必須です。'
       for (const validator of validators) {

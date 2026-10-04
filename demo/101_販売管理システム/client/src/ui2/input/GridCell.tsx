@@ -145,6 +145,7 @@ function CellFrame({ messages, isReadOnly, alignRight, wrap, children }: {
  * 文字列を手入力するセルエディタを作る。モジュールのトップレベルで作り、参照を使い回すこと。
  *
  * - Enter で確定、Escape で取り消す。multiline の場合は Shift+Enter で改行する。
+ * - Tab でも確定する。フォーカスはそのまま次の要素へ移る。確定しないと、エディタからフォーカスが離れても編集中のまま残ってしまうため。
  * - inputFilter を指定した場合、入力できる文字を制限する。制限の仕方は TextInputFilter を参照。
  * - 値の正規化はここでは行わない。列の fromText で行う。
  */
@@ -176,6 +177,8 @@ export function createTextCellEditor(params: {
         if (multiline && e.shiftKey) return
         requestCommit(textareaRef.current?.value ?? value)
         e.preventDefault()
+      } else if (e.key === 'Tab') {
+        requestCommit(textareaRef.current?.value ?? value)
       } else if (e.key === 'Escape') {
         requestCancel()
         e.preventDefault()
