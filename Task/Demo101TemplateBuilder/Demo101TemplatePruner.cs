@@ -66,7 +66,7 @@ public static class Demo101TemplatePruner
     /// CustomAttributes直下の要素（タグ名 "Custom-&lt;UniqueId&gt;"）でこれに合致するものを削除する。
     /// "金額項目"(IsCurrency)・"数量"(IsQuantity) はどの項目にも使用されなくなるが、
     /// 汎用的な書式指定として今後利用者が自分の項目に付与できるように定義自体は残す
-    /// （削除すると client/src/app/fieldMetadata.ts が参照する生成後の型からプロパティが消え、コンパイルエラーになる）。
+    /// （削除すると生成後のメタデータの型からプロパティが消え、それを参照している client/src/ui がコンパイルエラーになる）。
     /// </summary>
     private static readonly HashSet<string> REMOVE_CUSTOM_ATTRIBUTE_IDS = [
         "0f2d701d-f481-42d4-8dfb-5296c1b40246", // 0以上のみ
