@@ -161,6 +161,9 @@
           }
         },
         "problemMatcher": [],
+        "dependsOn": [
+          "Nijo > ソース最新化"
+        ],
         "command": "./${input:demoFolder}/Task/DEBUG.sh"
       },
       {
