@@ -71,9 +71,12 @@ export function FieldLabel<TValues extends RHF.FieldValues>(props: FieldLabelPro
         </Tooltip>
       )}
       {/* 表示名 */}
-      <span className={`text-sm text-gray-700 select-none ${vertical ? '' : 'min-w-0 text-right break-words'}`}>
-        {member.displayNameIsEmpty ? '' : member.displayName}
-      </span>
+      <div className={`inline-flex items-center text-gray-700 select-none ${vertical ? '' : 'min-w-0 text-right break-words'}`}>
+        <span className="text-xs">
+          {member.displayNameIsEmpty ? '' : member.displayName}
+        </span>
+        &nbsp;
+      </div>
       {/* 必須マーク */}
       {requiredMark && (
         <span className="text-rose-600 text-xs select-none" title="必須">*</span>
