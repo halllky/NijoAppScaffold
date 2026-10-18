@@ -83,7 +83,7 @@ description: client（React）の画面を実装・修正するときに使う�
 ## 項目の並べ方
 
 ```tsx
-<FieldGroup labelWidth="6rem">
+<FieldGroup>
   {/* 意味のまとまりごとに列を分ける */}
   <FieldColumn>
     <FieldLabel name="受付日" requiredMark>
@@ -104,7 +104,7 @@ description: client（React）の画面を実装・修正するときに使う�
 ```
 
 - 項目は `FieldLabel` で囲む。表示名・ヘルプ・その項目のメッセージは `FieldLabel` が表示するので、ラベル文字列を画面に直書きしない。
-- 並びは `FieldGroup` と `FieldColumn` で決める。列の区切りは項目の意味の切れ目に置く。ラベル幅は `labelWidth` でそろえる。
+- 並びは `FieldGroup` と `FieldColumn` で決める。列の区切りは項目の意味の切れ目に置く。
 - 入力欄は項目の型に合ったものを使う。合わないものを使うと描画時に例外になる。
 
   | 項目の型 | フォームの入力欄 | グリッドの列 |

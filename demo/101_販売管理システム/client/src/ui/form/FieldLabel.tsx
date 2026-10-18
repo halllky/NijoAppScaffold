@@ -2,7 +2,7 @@ import React from "react"
 import * as RHF from "react-hook-form"
 import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline"
 import { findMemberMetadata, type FormBinding } from "./FormBinding"
-import { LABEL_PART_WIDTH_STYLE, useIsInFieldColumn } from "./FieldGroup"
+import { useFieldLabelLayout } from "./FieldGroup"
 import { MessageList } from "../message/MessageList"
 import { Tooltip } from "../overlay/Tooltip"
 
@@ -39,8 +39,8 @@ export type FieldLabelProps<TValues extends RHF.FieldValues> = {
  *
  * ここに表示したメッセージは RootErrors には表示されない。
  *
- * 項目の配置（どの列に並べるか、横幅いっぱいに表示するか、ラベルの幅をそろえるか）はこのコンポーネントでは決めない。
- * FieldGroup と FieldColumn のどこに置くかで決まる。
+ * 項目の配置（どの列に並べるか、横幅いっぱいに表示するか、ラベルの幅）はこのコンポーネントでは決めない。
+ * FieldGroup と FieldColumn のどこに置くかで決まる。FieldGroup の外に置いた場合、横並びのラベル部分は表示名の長さなりの幅になる。
  */
 export function FieldLabel<TValues extends RHF.FieldValues>(props: FieldLabelProps<TValues> & {
   binding: FormBinding<TValues>
@@ -48,7 +48,7 @@ export function FieldLabel<TValues extends RHF.FieldValues>(props: FieldLabelPro
   const { binding, name, vertical, requiredMark, afterLabel, children } = props
   const formPath = binding.toFormPath(name)
   const member = findMemberMetadata(binding.metadata, name)
-  const isInFieldColumn = useIsInFieldColumn()
+  const { isInFieldColumn, labelPartProps } = useFieldLabelLayout()
 
   // この項目とその子孫を、メッセージの表示領域として登録する
   React.useEffect(() => {
@@ -56,14 +56,14 @@ export function FieldLabel<TValues extends RHF.FieldValues>(props: FieldLabelPro
   }, [binding, formPath])
   const messages = React.useSyncExternalStore(binding.subscribeMessages, () => binding.getMessages(formPath))
 
-  // FieldColumn の中では、FieldColumn のグリッドの1行になる。ラベル部分の幅を同じ列の中でそろえるため
+  // FieldColumn の中では、FieldColumn のグリッドの1行になる。ラベル部分の幅は、FieldGroup がそろえた幅（CSS 変数）になる
   const layoutClassName = vertical
     ? (isInFieldColumn ? 'col-span-2 flex flex-col gap-px' : 'flex flex-col gap-px')
-    : (isInFieldColumn ? 'col-span-2 grid grid-cols-subgrid items-start' : 'grid grid-cols-[max-content_minmax(0,1fr)] gap-x-2 items-start')
+    : (isInFieldColumn ? 'col-span-2 grid grid-cols-subgrid items-start' : 'grid grid-cols-[var(--field-label-width,max-content)_minmax(0,1fr)] gap-x-2 items-start')
 
-  // 横並びでは表示名が長くても入力項目を押しつぶさないよう、ラベル部分の幅を固定し、収まらない表示名は折り返す
+  // 横並びでは、ラベル部分の幅を FieldGroup に測らせてそろえる。上限を超える表示名は折り返す
   const labelPart = (
-    <div className={`flex flex-wrap items-center gap-1 min-h-6 ${vertical ? '' : 'justify-end min-w-0'}`}>
+    <div className={`flex flex-wrap items-center gap-1 min-h-6 ${vertical ? '' : 'justify-end'}`} {...(vertical ? undefined : labelPartProps)}>
       {/* ヘルプテキスト */}
       {member.comment && (
         <Tooltip content={member.comment} className="text-gray-400 cursor-help">
@@ -93,10 +93,11 @@ export function FieldLabel<TValues extends RHF.FieldValues>(props: FieldLabelPro
   ) : (
     // 左にラベル、右に入力項目とメッセージが並ぶレイアウト
     <div className={layoutClassName}>
-      <div className="flex justify-end" style={LABEL_PART_WIDTH_STYLE}>
+      <div className="flex justify-end">
         {labelPart}
       </div>
-      <div className="flex flex-col items-start gap-px min-w-0">
+      {/* 中身は値部分の幅を超えないようにする。超えると隣の列に重なるため */}
+      <div className="flex flex-col items-start gap-px min-w-0 *:max-w-full">
         {children}
         {/* 横並びではメッセージは children の下 */}
         <MessageList messages={messages} />

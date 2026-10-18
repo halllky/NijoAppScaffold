@@ -47,7 +47,7 @@ function P300_商品() {
         createInitialCondition={createInitialCondition}
         search={(condition, signal) => callComplexPostEndpointAsync('商品一覧', condition, { ignoreConfirm: true, signal })}
         searchCondition={(
-          <FieldGroup labelWidth="10rem">
+          <FieldGroup>
             {/* 商品の識別 */}
             <FieldColumn>
               <FieldLabel name="外部システム側ID">

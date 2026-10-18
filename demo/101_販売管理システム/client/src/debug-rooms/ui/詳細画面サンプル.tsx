@@ -131,7 +131,7 @@ function DisplayDataFormSample() {
             <RootErrors />
 
             {/* ヘッダ部。項目の意味のまとまりごとに列を分ける。読み取り専用は入力コンポーネントごとに指定する */}
-            <FieldGroup title="基本情報" labelWidth="5.5rem">
+            <FieldGroup title="基本情報">
               {/* 伝票の識別と担当 */}
               <FieldColumn>
                 {/* 必須マークは表示だけなので、未入力のチェックは rules で別に指定する */}

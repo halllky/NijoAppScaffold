@@ -56,7 +56,7 @@ export function P001_ログイン(props: {
           <RootErrors />
 
           {/* 入力欄 */}
-          <FieldGroup labelWidth="6rem">
+          <FieldGroup>
             <FieldColumn>
               <FieldLabel name="従業員番号">
                 <Input.TextBox name="従業員番号" className="w-full" />

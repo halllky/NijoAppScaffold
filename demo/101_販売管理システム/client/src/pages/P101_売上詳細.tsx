@@ -218,7 +218,7 @@ function P101_売上詳細(props: {
           <RootErrors />
 
           {/* ヘッダ部 */}
-          <FieldGroup labelWidth="5rem">
+          <FieldGroup>
             <FieldColumn>
               <FieldLabel name="売上日時">
                 <Input.DateInput name="売上日時" />

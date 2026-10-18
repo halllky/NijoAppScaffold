@@ -45,7 +45,7 @@ function P100_売上() {
         </Link>
       )}
       searchCondition={(
-        <FieldGroup labelWidth="7rem">
+        <FieldGroup>
           {/* 売上の識別と担当 */}
           <FieldColumn>
             <FieldLabel name="売上SEQ">

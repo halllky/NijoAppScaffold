@@ -194,7 +194,7 @@ function P201_入荷詳細(props: {
           <RootErrors />
 
           {/* ヘッダ部 */}
-          <FieldGroup labelWidth="5rem">
+          <FieldGroup>
             <FieldColumn>
               <FieldLabel name="入荷日時">
                 <Input.DateInput name="入荷日時" />

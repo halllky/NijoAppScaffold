@@ -52,7 +52,7 @@ export function 在庫調整ダイアログ(props: {
         <RootErrors />
 
         {/* 調整対象の商品と、調整内容 */}
-        <FieldGroup labelWidth="8rem">
+        <FieldGroup>
           <FieldColumn>
             <FieldLabel name="商品.外部システム側ID">
               <Input.TextBox name="商品.外部システム側ID" isReadOnly />

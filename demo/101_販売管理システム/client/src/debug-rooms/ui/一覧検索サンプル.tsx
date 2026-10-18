@@ -44,7 +44,7 @@ function SearchConditionFormSample() {
       )}
       searchCondition={(
         // 検索条件欄。数値・日付は範囲指定、真偽値は「該当する/しない」、列挙体は選択肢ごとのチェックボックスになる
-        <FieldGroup labelWidth="5rem">
+        <FieldGroup>
           {/* 伝票の内容 */}
           <FieldColumn>
             <FieldLabel name="伝票番号">

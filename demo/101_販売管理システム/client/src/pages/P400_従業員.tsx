@@ -135,7 +135,7 @@ function P400_従業員() {
           <form noValidate onSubmit={handleSearch} className="border p-2 rounded bg-gray-50 flex flex-col gap-2">
             <searchForm.RootErrors />
             <div className="flex gap-4 items-end">
-              <FieldGroup labelWidth="4rem" className="flex-1">
+              <FieldGroup className="flex-1">
                 <FieldColumn>
                   <searchForm.FieldLabel name="氏名">
                     <searchForm.Input.TextBox name="氏名" />

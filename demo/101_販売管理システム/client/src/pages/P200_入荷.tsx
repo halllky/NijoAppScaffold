@@ -45,7 +45,7 @@ function P200_入荷() {
         </Link>
       )}
       searchCondition={(
-        <FieldGroup labelWidth="7rem">
+        <FieldGroup>
           {/* 入荷の識別と担当 */}
           <FieldColumn>
             <FieldLabel name="入荷ID">
