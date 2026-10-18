@@ -26,7 +26,7 @@ export function AutoFieldGroups({ table, ownerPath, entries, renderField }: {
   const groups = groupByParent(entries)
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col items-start gap-4">
       {groups.map(group => (
         // 親ごとの枠
         <FieldGroup key={group.parentPath ?? ''} title={group.parentPath === null || group.parentPath === ownerPath ? undefined : displayPathOf(table, group.parentPath)}>
