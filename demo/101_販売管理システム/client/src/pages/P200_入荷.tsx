@@ -74,13 +74,7 @@ function P200_入荷() {
         </FieldGroup>
       )}
       defineSearchResultColumns={[() => [
-        ReadOnlyColumn.interactive<入荷一覧.DisplayData>('', row => (
-          <Link
-            className="text-sky-600 underline"
-            to={getLinkUrlToP201入荷詳細(row.入荷ID)}>
-            詳細
-          </Link>
-        ), { columnId: '詳細リンク', defaultWidth: 60, disableResizing: true, isFixed: true }),
+        ReadOnlyColumn.link<入荷一覧.DisplayData>(row => [{ text: '詳細', to: getLinkUrlToP201入荷詳細(row.入荷ID) }], { columnId: '詳細リンク', defaultWidth: 60, disableResizing: true, isFixed: true }),
         ReadOnlyColumn.text<入荷一覧.DisplayData>('入荷ID', row => row.入荷ID, { columnId: '入荷ID', defaultWidth: 180 }),
         ReadOnlyColumn.text<入荷一覧.DisplayData>('入荷日時', row => row.入荷日時, { columnId: '入荷日時' }),
         ReadOnlyColumn.text<入荷一覧.DisplayData>('担当者', row => row.担当者.従業員番号, { columnId: '担当者.従業員番号', defaultWidth: 96 }),

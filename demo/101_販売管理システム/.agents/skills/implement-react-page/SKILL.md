@@ -166,10 +166,8 @@ function 〇〇一覧画面() {
         </FieldGroup>
       )}
       defineSearchResultColumns={[() => [
-        // 詳細画面へのリンク。クリックでセルが選択されないよう interactive を使う
-        ReadOnlyColumn.interactive<〇〇一覧.DisplayData>('', row => (
-          <Link to={getLinkUrlTo〇〇詳細(row.〇〇ID)} className="text-sky-600 underline">詳細</Link>
-        ), { columnId: '詳細リンク', defaultWidth: 60, isFixed: true }),
+        // 詳細画面へのリンク
+        ReadOnlyColumn.link<〇〇一覧.DisplayData>(row => [{ text: '詳細', to: getLinkUrlTo〇〇詳細(row.〇〇ID) }], { columnId: '詳細リンク', defaultWidth: 60, isFixed: true }),
         ReadOnlyColumn.text<〇〇一覧.DisplayData>('名称', row => row.名称, { columnId: '名称' }),
         ReadOnlyColumn.numeric<〇〇一覧.DisplayData>('金額', row => row.金額, { columnId: '金額', suffix: '円' }),
       ], []]}
@@ -186,7 +184,8 @@ function createInitialCondition(): 〇〇一覧.SearchCondition {
 }
 ```
 
-- 検索結果の列は `ReadOnlyColumn` の `text` / `numeric` / `custom` / `interactive` で定義する。`columnId` は必須で、グリッド内で重複させない。
+- 検索結果の列は `ReadOnlyColumn` の `text` / `numeric` / `custom` / `button` / `link` で定義する。`columnId` は必須で、グリッド内で重複させない（`button` だけはボタンの文言から決まるので省略できる）。
+- 検索結果のグリッドは読み取り専用なので、`ReadOnlyColumn.button` には `showWhenReadOnly: true` を付けないとボタンが表示されない。
 - 行の詳細をその場で見せたい場合は `sidePane` を使う。
 
 ### 詳細編集画面（1 件を読み込んで編集・保存する）
@@ -311,4 +310,4 @@ const [gridProps, rowMessages] = useEditableGrid('明細', {
 
 - スタイルは Tailwind のユーティリティクラスを直接書く。ボタンは `Button`（`fill` / `outline` / `mini` など）を使い、画面ごとに色を作らない。
 - 画面内リンクは react-router-dom の `Link` を使う（`<a href>` だと画面全体が読み込み直される）。
-- グリッドのセルの中にリンクやボタンを置くときは `ReadOnlyColumn.interactive` か `col.button` を使う。自作するとクリックでセルの選択が始まってしまう。
+- グリッドのセルの中にボタンやリンクを置くときは、フォームと結びついたグリッドでは `col.button`、それ以外のグリッドでは `ReadOnlyColumn.button` / `ReadOnlyColumn.link` を使う。`col.button` と `ReadOnlyColumn.button` は実装が共通で、見た目とキー操作（セルを選んで Enter でボタン・リンクを起動）がそろう。`custom` の中に自作すると、クリックでセルの選択が始まってしまううえキー操作もできない。

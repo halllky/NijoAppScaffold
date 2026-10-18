@@ -167,7 +167,10 @@ function RefToForDisplayData({ formMethods, formPath, dialog, params, isReadOnly
         <SearchButton onClick={handleOpenDialog} />
       )}
       {/* 名称。表示だけ */}
-      <span className={`flex-1 min-w-0 min-h-6 px-1 py-px truncate select-all ${isReadOnly ? '' : 'text-gray-700'}`}>
+      <span
+        title={typeof refName === 'string' ? refName : ''}
+        className={`flex-1 min-w-0 min-h-6 px-1 py-px truncate select-all ${isReadOnly ? '' : 'text-gray-700'}`}
+      >
         {typeof refName === 'string' ? refName : ''}
       </span>
     </div>

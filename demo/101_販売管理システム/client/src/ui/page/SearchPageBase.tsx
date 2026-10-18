@@ -338,6 +338,7 @@ export function SearchPageBase<TSearchCondition extends PageableSearchCondition,
                     rowKeys={rowKeys}
                     getLatestRowObject={getLatestRowObject}
                     columns={columns}
+                    isReadOnly
                     clearSelectionOnBlur
                     className="flex-1 border border-gray-600"
                   />

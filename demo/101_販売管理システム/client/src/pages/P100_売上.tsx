@@ -74,13 +74,7 @@ function P100_売上() {
         </FieldGroup>
       )}
       defineSearchResultColumns={[() => [
-        ReadOnlyColumn.interactive<売上一覧.DisplayData>('', row => (
-          <Link
-            className="text-sky-600 underline"
-            to={getLinkUrlToP101売上詳細(row.売上SEQ)}>
-            詳細
-          </Link>
-        ), { columnId: '詳細リンク', defaultWidth: 60, disableResizing: true, isFixed: true }),
+        ReadOnlyColumn.link<売上一覧.DisplayData>(row => [{ text: '詳細', to: getLinkUrlToP101売上詳細(row.売上SEQ) }], { columnId: '詳細リンク', defaultWidth: 60, disableResizing: true, isFixed: true }),
         ReadOnlyColumn.text<売上一覧.DisplayData>('売上SEQ', row => row.売上SEQ, { columnId: '売上SEQ' }),
         ReadOnlyColumn.text<売上一覧.DisplayData>('売上日時', row => row.売上日時, { columnId: '売上日時' }),
         ReadOnlyColumn.text<売上一覧.DisplayData>('担当者', row => row.担当者.従業員番号, { columnId: '担当者.従業員番号', defaultWidth: 96 }),

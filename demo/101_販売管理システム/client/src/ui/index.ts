@@ -66,5 +66,5 @@ export { useOutsideClick } from "./overlay/useOutsideClick"
 
 // フォームと結びつかない一覧表示
 export * as ReadOnlyColumn from "./grid/ReadOnlyColumn"
-export type { ButtonColumnOptions } from "./grid/ButtonColumn"
+export type { ButtonColumnOptions, LinkColumnOptions, GridLink } from "./grid/ClickableColumn"
 export { Pager } from "./grid/Pager"

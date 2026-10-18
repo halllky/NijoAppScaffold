@@ -7,7 +7,7 @@ import { ChevronDownIcon, ChevronRightIcon, MagnifyingGlassIcon, XMarkIcon } fro
 import { usePagedSearch, type SearchResult } from "../search/usePagedSearch"
 import { useSearchConditionForm, type SearchConditionBase, type SearchConditionModule, type UseSearchConditionFormReturn } from "../form/useSearchConditionForm"
 import { useOpenDialogInHost, type OpenDialogInHost } from "./SearchDialogHost"
-import { buttonColumn } from "../grid/ButtonColumn"
+import { buttonColumn } from "../grid/ClickableColumn"
 
 /**
  * 検索ダイアログの定義。検索ダイアログごとに異なる部分だけをここで指定する。

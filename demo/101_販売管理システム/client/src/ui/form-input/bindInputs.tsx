@@ -9,7 +9,7 @@ import { DateInput, dateColumn, type DateInputProps, type DateColumnOptions } fr
 import { CheckBox, checkBoxColumn, type CheckBoxProps, type CheckBoxColumnOptions } from "./CheckBox"
 import { EnumSelection, enumColumn, type EnumSelectionProps, type EnumColumnOptions } from "./EnumSelection"
 import { RefTo, refToColumn, type RefToProps, type RefToColumnOptions } from "./RefTo"
-import { buttonColumn, type ButtonColumnOptions } from "../grid/ButtonColumn"
+import { buttonColumn, type ButtonColumnOptions } from "../grid/ClickableColumn"
 
 /**
  * フォームと結びついた入力コンポーネントの一式。

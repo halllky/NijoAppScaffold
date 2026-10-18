@@ -1,6 +1,6 @@
 import React from "react"
 import * as ReactRouter from "react-router-dom"
-import { Link, useSearchParams } from "react-router-dom"
+import { useSearchParams } from "react-router-dom"
 import { EditableGrid } from "@halllky/editable-grid"
 import dayjs from "dayjs"
 import { Button, PageBase, Pager, ReadOnlyColumn } from "../ui"
@@ -101,30 +101,11 @@ function P301_商品詳細() {
     ReadOnlyColumn.text<商品在庫増減履歴.DisplayData>('日時', row => row.日時 ? dayjs(row.日時).format('YYYY-MM-DD HH:mm') : '', { columnId: '日時', defaultWidth: 150 }),
     ReadOnlyColumn.text<商品在庫増減履歴.DisplayData>('事由', row => row.事由, { columnId: '事由', defaultWidth: 140 }),
     ReadOnlyColumn.numeric<商品在庫増減履歴.DisplayData>('増減数', row => row.増減数, { columnId: '増減数', defaultWidth: 100 }),
-    ReadOnlyColumn.interactive<商品在庫増減履歴.DisplayData>('関連伝票', row => (
-      <div className="flex flex-wrap gap-4 items-start">
-        {/* 入荷へのリンク */}
-        {row.増減履歴引当元売上一覧.length === 0 && row.入荷ID && (
-          <Link
-            to={getLinkUrlToP201入荷詳細(row.入荷ID)}
-            className="text-blue-600 hover:underline flex items-center gap-1"
-          >
-            <span>入荷 No.{row.入荷ID}</span>
-          </Link>
-        )}
-
-        {/* 売上へのリンク */}
-        {row.増減履歴引当元売上一覧.map((sales, j) => (
-          <Link
-            key={j}
-            to={getLinkUrlToP101売上詳細(sales.売上SEQ)}
-            className="text-blue-600 hover:underline flex items-center gap-1"
-          >
-            <span>売上 No.{sales.売上SEQ}</span>
-          </Link>
-        ))}
-      </div>
-    ), { columnId: '関連伝票', defaultWidth: 320, wrap: true }),
+    // 関連伝票へのリンク。売上に引き当てられた増減なら引当元の売上、そうでなければ入荷
+    ReadOnlyColumn.link<商品在庫増減履歴.DisplayData>(row => row.増減履歴引当元売上一覧.length > 0
+      ? row.増減履歴引当元売上一覧.map(sales => ({ text: `売上 No.${sales.売上SEQ}`, to: getLinkUrlToP101売上詳細(sales.売上SEQ) }))
+      : row.入荷ID ? [{ text: `入荷 No.${row.入荷ID}`, to: getLinkUrlToP201入荷詳細(row.入荷ID) }] : [],
+      { columnId: '関連伝票', header: '関連伝票', defaultWidth: 320, wrap: true }),
   ], [])
   const historyRowKeys = React.useMemo(() => history.map((_, index) => index.toString()), [history])
   const getLatestHistoryRowObject = React.useCallback((index: number) => history[index], [history])
@@ -171,6 +152,7 @@ function P301_商品詳細() {
               rowKeys={historyRowKeys}
               getLatestRowObject={getLatestHistoryRowObject}
               columns={historyColumns}
+              isReadOnly
               className="flex-1 border border-gray-300"
             />
           </div>

@@ -5,7 +5,11 @@ import * as EG2 from "@halllky/editable-grid"
  * EditableGrid の読み取り専用列の定義。
  * フォームと結びつかないデータ（検索結果や履歴など）をグリッドに表示するときに使う。
  * フォームの配列を編集するグリッドの列は、フォームと結びついた列定義ヘルパーを使うこと。
+ *
+ * ボタンやリンクの列は、フォームと結びついたグリッドと共通の実装を button / link として公開している。
  */
+
+export { buttonColumn as button, linkColumn as link } from "./ClickableColumn"
 
 /**
  * 読み取り専用列で指定できるオプション。
@@ -84,7 +88,10 @@ export function numeric<TRow>(
   }
 }
 
-/** 任意の ReactNode を描画する列 */
+/**
+ * 任意の ReactNode を描画する列。
+ * クリックして操作する要素を置く場合は、この列ではなく button / link を使うこと。
+ */
 export function custom<TRow>(
   header: React.ReactNode,
   render: (row: TRow) => React.ReactNode,
@@ -101,38 +108,6 @@ export function custom<TRow>(
     getValuesForRender: row => [row],
     renderBody: ({ deps: [row] }) => (
       <div className={cellClassName(wrap)}>{render(row)}</div>
-    ),
-    cellToText: row => getValueForCopy?.(row) ?? '',
-    ...rest,
-  }
-}
-
-/**
- * リンクやボタンなど、クリック可能な要素を含む列。
- * mouseDown の伝播を止めることで、その要素をクリックしてもグリッドのセル選択が発生しないようにする
- * （EditableGridColumn の renderBody のドキュメントコメントで要求されている作法）。
- */
-export function interactive<TRow>(
-  header: React.ReactNode,
-  render: (row: TRow) => React.ReactNode,
-  options: ReadOnlyColumnOptions<TRow> & {
-    /** Ctrl+C でコピーされる文字列。未指定の場合は空文字 */
-    getValueForCopy?: (row: TRow) => string
-  },
-): EG2.EditableGridLeafColumn<TRow, readonly [TRow]> {
-  const { getValueForCopy, wrap, ...rest } = options
-  return {
-    renderHeader: () => (
-      <div className="px-1 text-sm truncate select-none">{header}</div>
-    ),
-    getValuesForRender: row => [row],
-    renderBody: ({ deps: [row] }) => (
-      <div
-        className={`w-full h-full px-1 py-px text-sm flex gap-1 ${wrap ? 'flex-wrap items-start' : 'items-center'}`}
-        onMouseDown={e => e.stopPropagation()}
-      >
-        {render(row)}
-      </div>
     ),
     cellToText: row => getValueForCopy?.(row) ?? '',
     ...rest,
