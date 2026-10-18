@@ -26,7 +26,7 @@ function 自動生成画面一覧() {
         <PageTitle>自動生成画面</PageTitle>
       )}
       contents={(
-        <div className="h-full overflow-auto flex flex-wrap items-start gap-12 px-8 py-4">
+        <div className="h-full overflow-auto flex flex-wrap items-start gap-12 py-4">
 
           {/* 一覧検索画面 */}
           <section className="flex flex-col gap-1">

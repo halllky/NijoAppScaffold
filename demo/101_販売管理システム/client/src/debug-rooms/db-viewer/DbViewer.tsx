@@ -1,6 +1,5 @@
 import React from "react"
 import * as ReactRouter from "react-router-dom"
-import { Link } from "react-router-dom"
 import { Allotment, LayoutPriority } from "allotment"
 import type { Viewport } from "@xyflow/react"
 import { Button, NowLoading, PageTitle, PageBase } from "../../ui"
@@ -129,9 +128,6 @@ function DbViewer() {
       header={(
         <>
           <PageTitle>DBビューア</PageTitle>
-          <Link to="/" className="text-sm text-teal-700 underline">
-            デバッグメニューへ戻る
-          </Link>
 
           {/* 保存 */}
           <div className="ml-auto flex items-center gap-2" title={settingsFilePath}>

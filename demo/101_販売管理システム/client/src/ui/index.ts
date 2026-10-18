@@ -61,6 +61,7 @@ export { MultiSelect } from "./input/MultiSelect"
 // 重ね表示
 export { Modal } from "./overlay/Modal"
 export { NowLoading } from "./overlay/NowLoading"
+export { Tooltip } from "./overlay/Tooltip"
 export { useOutsideClick } from "./overlay/useOutsideClick"
 
 // フォームと結びつかない一覧表示

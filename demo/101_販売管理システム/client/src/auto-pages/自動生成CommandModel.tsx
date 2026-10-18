@@ -181,7 +181,7 @@ function CommandPageLayout({ commandModel, isDirty, returnValueSection, children
         </div>
       )}
       contents={(
-        <div className="h-full overflow-auto flex flex-col gap-6 px-8 py-4">
+        <div className="h-full overflow-auto flex flex-col gap-6">
           {/* パラメータ */}
           <section className="flex flex-col gap-2">
             <SectionTitle>パラメータ</SectionTitle>

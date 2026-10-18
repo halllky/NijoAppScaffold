@@ -4,6 +4,7 @@ import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline"
 import { findMemberMetadata, type FormBinding } from "./FormBinding"
 import { LABEL_PART_WIDTH_STYLE, useIsInFieldColumn } from "./FieldGroup"
 import { MessageList } from "../message/MessageList"
+import { Tooltip } from "../overlay/Tooltip"
 
 export type FieldLabelProps<TValues extends RHF.FieldValues> = {
   /** ラベルを付ける項目。表示名・ヘルプテキスト・メッセージはこの項目のものが使われる */
@@ -32,7 +33,7 @@ export type FieldLabelProps<TValues extends RHF.FieldValues> = {
  *
  * - 表示名（メタデータの表示用名称）
  * - 必須マーク
- * - ヘルプテキスト（メタデータのコメント。アイコンにマウスを乗せると表示される）
+ * - ヘルプテキスト（メタデータのコメント。アイコンにマウスを乗せるかフォーカスすると吹き出しで表示される）
  * - この項目とその子孫に対するメッセージ。ただし、より内側に表示領域（別の FieldLabel やグリッドのセル）がある項目のものは除く。
  *   クライアント側エラー（react-hook-form の検証エラー）とサーバー側メッセージの両方。複数ある場合はすべて表示する。
  *
@@ -65,9 +66,9 @@ export function FieldLabel<TValues extends RHF.FieldValues>(props: FieldLabelPro
     <div className={`flex flex-wrap items-center gap-1 min-h-6 ${vertical ? '' : 'justify-end min-w-0'}`}>
       {/* ヘルプテキスト */}
       {member.comment && (
-        <span title={member.comment} className="text-gray-400 cursor-help">
+        <Tooltip content={member.comment} className="text-gray-400 cursor-help">
           <QuestionMarkCircleIcon className="w-4 h-4" />
-        </span>
+        </Tooltip>
       )}
       {/* 表示名 */}
       <span className={`text-sm text-gray-700 select-none ${vertical ? '' : 'min-w-0 text-right break-words'}`}>
