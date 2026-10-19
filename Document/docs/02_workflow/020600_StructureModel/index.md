@@ -8,7 +8,7 @@ sidebar_position: 6
 サーバーとクライアントで共有するデータ構造を定義します。
 DataModel のような DB 永続化やキーは不要で、**単純なデータクラスとして C# と TypeScript の定義だけを生成**します。
 
-スキーマ定義ファイル (`nijo.xml`) での指定方法: `Type="structure-model"`
+スキーマ定義ファイル (`nijo.xml`) での指定方法: `DataStructures` セクションのルート集約に `IsStored` も `IsQueryable` も指定しません。
 
 ## 自動生成されるモジュール
 
@@ -33,14 +33,14 @@ StructureModel は **DB とは関係ない任意のデータ構造** を定義�
 
 ```xml
 <!-- 単純な構造 -->
-<MailSendParam Type="structure-model" DisplayName="メール送信パラメータ">
+<MailSendParam DisplayName="メール送信パラメータ">
   <ToAddress   IsNotNull="true" DisplayName="宛先" />
   <Subject     IsNotNull="true" DisplayName="件名" />
   <Body        IsNotNull="true" DisplayName="本文" />
 </MailSendParam>
 
 <!-- ネストした構造（Child / Children も使用可能） -->
-<OrderForm Type="structure-model" DisplayName="受注フォーム">
+<OrderForm DisplayName="受注フォーム">
   <OrderDate  IsNotNull="true" DisplayName="受注日" />
   <CustomerId IsNotNull="true" DisplayName="得意先コード" />
   <Details Type="children" DisplayName="明細">

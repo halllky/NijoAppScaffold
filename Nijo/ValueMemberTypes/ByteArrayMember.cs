@@ -1,6 +1,5 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
-using Nijo.Models;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
@@ -27,22 +26,17 @@ internal class ByteArrayMember : IValueMemberType {
         return $$"""
             バイナリデータを格納する型です。
             ファイル、画像、暗号化データなどのバイナリ情報に適しています。
-            DataModelでのみ定義できます。
+            IsStored 属性のみが指定されたデータ構造でのみ定義できます。
             """;
     }
 
     void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
-        // バイト配列型はDataModelにしか定義できない
-        var isNotDataModel = context.TryGetModel(element, out var model) && model is not DataModel;
+        // バイト配列を画面や帳票で用いることはできないため、永続化されるが検索されないデータ構造にしか定義できない
+        if (!element.IsStored()) {
+            addError(element, $"バイト配列を画面や帳票で用いることはできないため、{SchemaTypeName}は{BasicNodeOptions.IsStored.AttributeName}属性が指定されたデータ構造にしか定義できません。");
 
-        var root = element.AncestorsAndSelf().Reverse().Skip(1).FirstOrDefault();
-        var generateDefaultQueryModel = root != null && context.GetOptions(root).Contains(BasicNodeOptions.GenerateDefaultQueryModel);
-
-        if (isNotDataModel) {
-            addError(element, $"バイト配列を画面や帳票で用いることはできないため、{SchemaTypeName}は{nameof(DataModel)}にしか定義できません。");
-
-        } else if (generateDefaultQueryModel) {
-            addError(element, $"バイト配列を画面や帳票で用いることはできないため、{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}が指定された集約に{SchemaTypeName}を使用することはできません。");
+        } else if (element.IsQueryable()) {
+            addError(element, $"バイト配列を画面や帳票で用いることはできないため、{BasicNodeOptions.IsQueryable.AttributeName}属性が指定されたデータ構造に{SchemaTypeName}を使用することはできません。");
         }
     }
 

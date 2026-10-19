@@ -240,24 +240,49 @@ internal static class BasicNodeOptions {
     };
 
 
-    #region DataModel用
-    internal static NodeOption GenerateDefaultQueryModel = new() {
-        AttributeName = "GenerateDefaultQueryModel",
-        DisplayName = "DataModelと全く同じ型のQueryModelを生成するかどうか",
+    #region DataStructuresセクション用
+    internal static NodeOption IsStored = new() {
+        AttributeName = "IsStored",
+        DisplayName = "永続化する",
         Type = E_NodeOptionType.Boolean,
         HelpText = $$"""
-            きわめて単純なマスタデータなど、データベース上のデータ構造と
-            それを表示・編集する画面のデータ構造が完全一致する場合、
-            この項目を指定するとDataModelと全く同じ型のQueryModelのモジュールが生成される。
+            このデータ構造がデータベースに永続化されることを表します。
+            RDBMSのテーブル定義やEntity Framework Coreのエンティティ、新規登録・更新・削除処理が生成されます。
+            {{nameof(IsQueryable)}} と同時に指定した場合、テーブルと全く同じ形の検索処理や画面表示用データも生成されます。
+            これはきわめて単純なマスタデータなど、データベース上のデータ構造とそれを表示・編集する画面のデータ構造が完全一致する場合を想定しています。
             """,
         IsAvailable = (model, nodeType) => {
-            // データモデルのルート集約のみ許可
-            return model is DataModel && nodeType == E_NodeType.RootAggregate;
+            // モデル自体がこの属性によって決まるため、DataStructuresセクションのモデルであればどれでも許可
+            return (model is DataModel || model is QueryModel || model is StructureModel)
+                && nodeType == E_NodeType.RootAggregate;
         },
         ValidateOthers = ctx => {
             // IsAvailableで基本的な判定は完了しているため、追加の検証は不要
         },
     };
+    internal static NodeOption IsQueryable = new() {
+        AttributeName = "IsQueryable",
+        DisplayName = "検索可能",
+        Type = E_NodeOptionType.Boolean,
+        HelpText = $$"""
+            このデータ構造が画面や帳票から検索・照会されることを表します。
+            検索条件、検索処理、画面表示用データなどが生成されます。
+            {{nameof(IsStored)}} が指定されていない場合、各項目をどのテーブルから取得するかを定義する処理は手動で実装する必要があります。
+            {{nameof(IsStored)}} と同時に指定した場合の挙動は {{nameof(IsStored)}} の説明を参照してください。
+            """,
+        IsAvailable = (model, nodeType) => {
+            // モデル自体がこの属性によって決まるため、DataStructuresセクションのモデルであればどれでも許可
+            return (model is DataModel || model is QueryModel || model is StructureModel)
+                && nodeType == E_NodeType.RootAggregate;
+        },
+        ValidateOthers = ctx => {
+            // IsAvailableで基本的な判定は完了しているため、追加の検証は不要
+        },
+    };
+    #endregion DataStructuresセクション用
+
+
+    #region DataModel用
     internal static NodeOption UseSoftDelete = new() {
         AttributeName = "UseSoftDelete",
         DisplayName = "論理削除を行う",
@@ -524,15 +549,10 @@ internal static class BasicNodeOptions {
                 && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
-            // DataModel の場合は GenerateDefaultQueryModel が指定されている場合のみ許可
-            if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model) && model is DataModel) {
-                var root = ctx.XElement.GetRootAggregateElement();
-                var generateDefaultQueryModel = root.Attribute(GenerateDefaultQueryModel!.AttributeName);
-
-                if (generateDefaultQueryModel == null) {
-                    ctx.AddError("検索処理が自動生成されないDataModelのため指定できません。");
-                    return;
-                }
+            // 検索処理が生成されないデータ構造には指定不可
+            if (!ctx.XElement.IsQueryable()) {
+                ctx.AddError($"{IsQueryable.AttributeName} 属性が指定されていないため指定できません。");
+                return;
             }
 
             // 文字列型の値メンバーにのみ指定可能

@@ -30,7 +30,7 @@ public class OrderQueryDisplayData {
 
     // --- 以下はフレームワーク用フィールド ---
 
-    // DataModel に GenerateDefaultQueryModel="true" が指定された場合のみ存在
+    // IsStored="True" と IsQueryable="True" が両方指定された場合のみ存在
     public int? Version { get; set; }
 
     // 編集状態フラグ
@@ -42,17 +42,17 @@ public class OrderQueryDisplayData {
 
 ### Version フィールド
 
-`Version` フィールドは、DataModel に `GenerateDefaultQueryModel="true"` を指定したときのみ生成されます。
+`Version` フィールドは、`IsStored="True"` と `IsQueryable="True"` を両方指定したときのみ生成されます。
 楽観排他制御（更新時の競合検出）に使用します。
 
 ```xml
 <!-- この場合は Version あり -->
-<Order Type="data-model" GenerateDefaultQueryModel="true" DisplayName="受注">
+<Order IsStored="True" IsQueryable="True" DisplayName="受注">
   ...
 </Order>
 
 <!-- この場合は Version なし -->
-<OrderSummary Type="query-model" DisplayName="受注サマリ">
+<OrderSummary IsQueryable="True" DisplayName="受注サマリ">
   ...
 </OrderSummary>
 ```

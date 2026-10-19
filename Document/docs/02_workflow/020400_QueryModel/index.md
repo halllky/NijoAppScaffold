@@ -8,7 +8,8 @@ sidebar_position: 4
 一覧検索処理に特化したデータモデルです。
 フィルタリング・ソート・ページングの処理が自動生成され、アプリケーションは検索条件オブジェクトを渡すだけで検索結果を取得できます。
 
-スキーマ定義ファイル (`nijo.xml`) での指定方法: `Type="query-model"`
+スキーマ定義ファイル (`nijo.xml`) での指定方法: `DataStructures` セクションのルート集約に `IsQueryable="True"` を指定します。
+`IsStored="True"` と同時に指定した場合は、[DataModel](../020300_DataModel/index.md) と全く同じ形の QueryModel になります。
 
 ## 自動生成されるモジュール
 
@@ -47,7 +48,7 @@ QueryModel に `ref-to` を定義すると、参照先の属性で絞り込め�
 ## 基本的な XML 定義例
 
 ```xml
-<OrderQuery Type="query-model" DisplayName="受注一覧">
+<OrderQuery IsQueryable="True" DisplayName="受注一覧">
   <OrderId     IsKey="true"  DisplayName="受注番号" />
   <OrderDate   IsNotNull="true" DisplayName="受注日" />
   <CustomerRef Type="ref-to:Customer" DisplayName="得意先" />

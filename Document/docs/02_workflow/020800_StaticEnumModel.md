@@ -76,7 +76,7 @@ C# の enum の `key` 整数値はシリアライズ時に変換され、TypeScr
 静的区分値は他のモデルの属性型として使用できます。
 
 ```xml
-<Order Type="data-model" DisplayName="受注">
+<Order IsStored="True" DisplayName="受注">
   <OrderId   IsKey="true"                 DisplayName="受注番号" />
   <!-- Status 属性の型を静的区分値 OrderStatus にする -->
   <Status    Type="enum:OrderStatus"      DisplayName="ステータス" />

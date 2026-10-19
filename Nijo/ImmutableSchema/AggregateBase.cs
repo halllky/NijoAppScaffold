@@ -380,14 +380,16 @@ namespace Nijo.ImmutableSchema {
             : base(xElement, ctx, previous) { }
 
         public bool IsView => XElement.Attribute(BasicNodeOptions.MapToView.AttributeName) != null;
+        /// <summary>永続化されるデータ構造かどうか（IsStored 属性）</summary>
+        public bool IsStored => XElement.IsStored();
+        /// <summary>検索可能なデータ構造かどうか（IsQueryable 属性）</summary>
+        public bool IsQueryable => XElement.IsQueryable();
         public IModel Model => _ctx.TryGetModel(XElement, out var model) ? model : throw new InvalidOperationException($"ありえない: {XElement}");
         public bool UseSoftDelete => XElement.Attribute(BasicNodeOptions.UseSoftDelete.AttributeName) != null;
 
         public override AggregateBase AsEntry() {
             return new RootAggregate(XElement, _ctx, null);
         }
-
-        public bool GenerateDefaultQueryModel => XElement.Attribute(BasicNodeOptions.GenerateDefaultQueryModel.AttributeName) != null;
 
         #region このCommandModelの引数・戻り値の集約を返す
         /// <summary>

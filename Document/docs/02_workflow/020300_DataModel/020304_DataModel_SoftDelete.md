@@ -38,7 +38,7 @@ DataModel のルート集約に `UseSoftDelete="true"` を追加します。
 
 ```xml
 <!-- UseSoftDelete を付与するだけで論理削除に切り替わる -->
-<Order Type="data-model" UseSoftDelete="true" DisplayName="受注">
+<Order IsStored="True" UseSoftDelete="true" DisplayName="受注">
   <OrderId   IsKey="true"    DisplayName="受注番号" />
   <OrderDate IsNotNull="true" DisplayName="受注日" />
 </Order>

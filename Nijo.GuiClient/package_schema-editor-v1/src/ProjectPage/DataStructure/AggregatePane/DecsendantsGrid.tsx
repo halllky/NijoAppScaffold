@@ -5,6 +5,7 @@ import * as EG2 from "@halllky/editable-grid"
 import { UUID } from "uuidjs"
 import {
   EditingProject, EditingMember, isAttributeAvailable, ATTR_UNIQUE_CONSTRAINTS,
+  ATTR_IS_STORED, ATTR_IS_QUERYABLE, getRootModelType, isCustomAttributeAvailable,
   NODE_TYPE_CHILD_AGGREGATE, NODE_TYPE_CHILDREN_AGGREGATE, NODE_TYPE_VALUE_MEMBER, NODE_TYPE_REF,
 } from "../../../backend"
 import * as UI from '../../../UI'
@@ -41,11 +42,20 @@ function DecsendantsGrid(props: {
     className,
   } = props
 
-  const membersPath = `${rootLocation.list}.${rootLocation.index}.members` as const
+  const rootPath = `${rootLocation.list}.${rootLocation.index}` as const
+  const membersPath = `${rootPath}.members` as const
 
   const { attributeDefs } = useSchemaEditorRule()
   const customAttributes = ReactHookForm.useWatch({ name: "customAttributes", control }) ?? []
-  const rootModelType = ReactHookForm.useWatch({ name: `${rootLocation.list}.${rootLocation.index}.model`, control })
+  const [rootModel, rootIsStored, rootIsQueryable] = ReactHookForm.useWatch({
+    name: [`${rootPath}.model`, `${rootPath}.attributes.${ATTR_IS_STORED}`, `${rootPath}.attributes.${ATTR_IS_QUERYABLE}`],
+    control,
+  })
+  const rootModelSource = React.useMemo(() => ({
+    model: rootModel,
+    attributes: { [ATTR_IS_STORED]: rootIsStored ?? null, [ATTR_IS_QUERYABLE]: rootIsQueryable ?? null },
+  }), [rootModel, rootIsStored, rootIsQueryable])
+  const rootModelType = getRootModelType(rootModelSource)
 
   const { uniqueConstraintColumns, contextValue: uniqueConstraintsContextValue } = useUniqueConstraintsColumns(control, getValues, setValue, rootLocation)
 
@@ -88,7 +98,7 @@ function DecsendantsGrid(props: {
 
     // モデルの既定の属性
     for (const attrDef of attributeDefs) {
-      if (!rootModelType || !isAttributeAvailable(attrDef, rootModelType, [
+      if (!isAttributeAvailable(attrDef, rootModelType, [
         NODE_TYPE_CHILD_AGGREGATE,
         NODE_TYPE_CHILDREN_AGGREGATE,
         NODE_TYPE_VALUE_MEMBER,
@@ -120,7 +130,7 @@ function DecsendantsGrid(props: {
 
     // カスタム属性
     for (const customAttr of customAttributes) {
-      if (!rootModelType || !customAttr.availableModels.includes(rootModelType)) continue;
+      if (!isCustomAttributeAvailable(customAttr, rootModelSource)) continue;
 
       if (customAttr.type === 'Enum') {
         const ddlOptions = customAttr.enumValues.map(opt => ({ value: opt, text: opt }))
@@ -144,7 +154,7 @@ function DecsendantsGrid(props: {
     }
 
     return columns
-  }, [attributeDefs, rootModelType, customAttributes, uniqueConstraintColumns])
+  }, [attributeDefs, rootModelType, rootModelSource, customAttributes, uniqueConstraintColumns])
 
   // 行の追加・削除・移動は必ずダイアグラムの構成に影響しうるため、変更操作にまとめて通知を紐づける
   // （indent の変更は update() を使うが、複数行への一括適用時に1回だけ通知したいため、呼び出し側で個別に notifyStructureChanged() を呼ぶ）

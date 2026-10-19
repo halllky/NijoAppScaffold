@@ -268,8 +268,8 @@ namespace Nijo.Models {
             // カスタムロジック用モジュール
             ctx.Use<CommandQueryMappings>().AddDataModel(rootAggregate);
 
-            // QueryModelと全く同じ型の場合はそれぞれのモデルのソースも生成
-            if (rootAggregate.GenerateDefaultQueryModel) {
+            // 検索可能な場合はQueryModelと全く同じ型のソースも生成
+            if (rootAggregate.IsQueryable) {
                 QueryModel.GenerateCode(ctx, rootAggregate, aggregateFile);
             }
 
@@ -300,9 +300,9 @@ namespace Nijo.Models {
                     validator.MsgTemplate);
             }
 
-            // QueryModel と全く同じ型の場合はQueryModelのソースも生成
+            // 検索可能な場合はQueryModelのソースも生成
             var rootAggregates = ctx.Schema.GetRootAggregates().ToArray();
-            if (rootAggregates.Any(root => root.GenerateDefaultQueryModel)
+            if (rootAggregates.Any(root => root.Model is DataModel && root.IsQueryable)
              && rootAggregates.All(root => root.Model is not QueryModel)) {
                 QueryModel.GenerateQueryModelCommonModules(ctx);
             }

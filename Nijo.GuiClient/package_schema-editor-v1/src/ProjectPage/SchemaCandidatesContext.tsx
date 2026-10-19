@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import * as ReactHookForm from 'react-hook-form';
 import * as ReactRouter from 'react-router-dom';
-import { EditingProject } from '../backend';
+import { EditingProject, getRootModelType } from '../backend';
 import { fetchTypeCandidates } from '../backend/api';
 import { NIJOUI_CLIENT_ROUTE_PARAMS } from '../routing';
 
@@ -73,7 +73,7 @@ export const SchemaCandidatesProvider = ({ watch, children }: {
     const newTriggerValue = [
       roots.length,
       ...roots.flatMap(root => [
-        root.model,
+        getRootModelType(root),
         root.physicalName,
         ...root.members
           .filter(m => m.type.kind === 'child' || m.type.kind === 'children')

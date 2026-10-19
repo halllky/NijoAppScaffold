@@ -150,7 +150,8 @@ export function createNewSearchCondition(): SearchCondition {
 export const metadata = {
   root: {
     kind: 'root',
-    model: 'query-model',
+    isStored: false,
+    isQueryable: true,
     uniqueId: 'mock-0000',
     displayName: 'サンプル伝票',
     comment: 'ui の動作確認用のデータ構造。',

@@ -20,7 +20,7 @@
 ルート集約に `MapToView="true"` を追加します。
 
 ```xml
-<SalesSummary Type="query-model" MapToView="true" DisplayName="売上サマリ">
+<SalesSummary IsQueryable="True" MapToView="true" DisplayName="売上サマリ">
   <SalesDate IsKey="true"  DisplayName="売上日" />
   <StoreId   IsKey="true"  DisplayName="店舗コード" />
   <TotalSales             DisplayName="売上合計" />

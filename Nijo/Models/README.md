@@ -20,6 +20,10 @@ IModelのクラスは、それと対応する `...ModelModules` フォルダの�
 ### モデルタイプ
 詳細は各ファイルを参照してください。
 
+DataModel, QueryModel, StructureModel は `DataStructures` セクションに定義され、ルート集約の `IsStored`, `IsQueryable` 属性の組み合わせで決まります（[DataStructureModels](../SchemaParsing/DataStructureModels.cs)）。
+`IsStored` が指定されていれば DataModel（`IsQueryable` も指定されていれば QueryModel と全く同じ型のモジュールも生成される）、`IsQueryable` のみなら QueryModel、どちらも無ければ StructureModel です。
+それ以外のモデルは各セクションのルート集約の Type 属性で指定します。
+
 - [DataModel](./DataModel.md) : 永続化されるデータモデルを表します。RDBMSのテーブル定義やEntity Framework Coreの設定が生成されます。
 - [QueryModel](./QueryModel.md) : 画面や帳票に表示されるデータを表します。検索条件のオブジェクト定義や検索処理が生成されます。
 - [CommandModel](./CommandModel.md) : ユーザーの操作などによって実行されるコマンドを表します。APIエンドポイントやバリデーション処理が生成されます。

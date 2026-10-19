@@ -45,7 +45,8 @@ export function createNewSearchCondition(): SearchCondition {
 export const metadata = {
   root: {
     kind: 'root',
-    model: 'query-model',
+    isStored: false,
+    isQueryable: true,
     uniqueId: 'mock-1000',
     displayName: 'サンプル従業員',
     comment: 'ui の検索ダイアログの動作確認用のデータ構造。',

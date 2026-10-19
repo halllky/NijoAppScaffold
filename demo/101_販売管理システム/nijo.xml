@@ -6,8 +6,8 @@
     <!--入荷・販売の対象となる商品マスタデータ。
 このシステムで登録せず、外部システムから日次で連携される。-->
     <商品
-      GenerateDefaultQueryModel="True"
-      Type="data-model"
+      IsQueryable="True"
+      IsStored="True"
       UniqueConstraints="f5f225fa-eddd-4cca-ae58-b408e1b34100;"
       UniqueId="a1b2c3d4-e5f6-4a1b-8c2d-3e4f5a6b7c8d">
       <!--このシステムにおける識別番号。非表示-->
@@ -40,7 +40,7 @@
     <!--入荷1回分の情報。
 どこに入荷したかというロケーションに関する情報は、デモとして複雑になりすぎてしまうのを防ぐため、敢えて持っていない。1つの店舗内部で運用されるシステムの想定として見てほしい。-->
     <入荷
-      Type="data-model"
+      IsStored="True"
       UniqueId="e5f6a1b2-c3d4-4e5f-2a6b-7c8d9e0f1a2b">
       <!--UUID-->
       <入荷ID
@@ -63,7 +63,7 @@
     <!--売上1回分のデータ。
 toCの取引のため相手方（顧客）の情報は含んでいない。-->
     <売上
-      Type="data-model"
+      IsStored="True"
       UniqueId="f6a1b2c3-d4e5-4f2a-9b3c-4d5e6f7a8b9c">
       <売上SEQ
         IsKey="True"
@@ -129,7 +129,6 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
     </売上>
     <!--入荷詳細画面のデータ構造。-->
     <入荷詳細
-      Type="structure-model"
       UniqueId="bf2453f1-2a89-4209-ab79-00d526fd15a9">
       <!--非表示。UUID。自動採番-->
       <入荷ID
@@ -180,7 +179,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       </入荷商品一覧>
     </入荷詳細>
     <従業員
-      Type="data-model"
+      IsStored="True"
       UniqueId="659bf33a-c624-4e67-96a9-460809d70995">
       <従業員番号
         IsKey="True"
@@ -219,7 +218,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
     </従業員>
     <!--画面UI上では @[従業員](659bf33a-c624-4e67-96a9-460809d70995) への参照が各所に登場するところ、アプリケーションのパフォーマンスの最適化のために必要最低限の項目のみ保持した参照用データ。-->
     <従業員Ref
-      Type="query-model"
+      IsQueryable="True"
       UniqueId="7e844312-66b4-4693-b8eb-c4d3a4dd2565">
       <従業員番号
         StringSearchBehavior="Exact"
@@ -233,7 +232,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
 このテーブルが入荷テーブルとは別のDataModelになっているのがこのシステムの肝。
     もし一緒のDataTableにした場合、複数の売上が、同じタイミングで、同じ入荷の別々の明細を引き当てたとき、入荷の残数量を更新するための排他制御が発生するため、売上の更新が必要以上に失敗するケースが増えてしまう。本当に排他制御にかけられるべきなのは、複数の売上が同じ入荷明細から同時に残数量を減らそうとしたときだけなので、そうなるようにDataModelの境界が区切られている。-->
     <入荷明細
-      Type="data-model"
+      IsStored="True"
       UniqueId="a5e5b615-6cc1-4a50-8cc7-fe910dca543b">
       <!--UUID。一度の入荷で同じ商品を複数別々で登録したいケースのためにこちらをキーにしている。-->
       <入荷明細ID
@@ -275,7 +274,6 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
         UniqueId="f8aed3e7-9985-4db4-affe-db366711cfba" />
     </入荷明細>
     <パスワード再発行Parameter
-      Type="structure-model"
       UniqueId="ca0a28e1-6792-4d8b-ad9e-4a373ba190fc">
       <対象者
         RefToObject="RefTarget"
@@ -284,7 +282,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
     </パスワード再発行Parameter>
     <!--@[従業員](659bf33a-c624-4e67-96a9-460809d70995) のマスタ画面表示用データ。-->
     <従業員マスタ
-      Type="query-model"
+      IsQueryable="True"
       UniqueId="7508f4ed-a9ba-4c3d-b258-eb328affebdc">
       <従業員番号
         StringSearchBehavior="Exact"
@@ -311,7 +309,6 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
         UniqueId="8d4bc54f-4621-426d-bbd1-82624c07dc62" />
     </従業員マスタ>
     <従業員一括更新Parameter
-      Type="structure-model"
       UniqueId="28bf1f9e-8b77-4a78-938d-e29578c44da3">
       <更新対象従業員一覧
         Type="children"
@@ -324,7 +321,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
     </従業員一括更新Parameter>
     <!--@[売上](f6a1b2c3-d4e5-4f2a-9b3c-4d5e6f7a8b9c) の一覧検索画面のデータ構造。-->
     <売上一覧
-      Type="query-model"
+      IsQueryable="True"
       UniqueId="d0929a1e-1490-42c3-a728-d740c85ff7b7">
       <売上SEQ
         Type="int"
@@ -350,7 +347,6 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
     <!--売上詳細画面のデータ構造。
 @[売上](f6a1b2c3-d4e5-4f2a-9b3c-4d5e6f7a8b9c) DataModel と異なり、入荷明細の引当に関する情報を持っていないのが重要。これはつまり、売上詳細画面を操作するユーザーにとってその商品の在庫引当がどの入荷に対して行われるかは入力項目ではなく、引当はシステム内部で自動的に判定されることを意味する。-->
     <売上詳細
-      Type="structure-model"
       UniqueId="2352e942-65b1-47fe-ac3b-0c49bd4e295f">
       <!--シーケンス。画面上に表示する。-->
       <売上SEQ
@@ -405,7 +401,6 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       </売上明細>
     </売上詳細>
     <売上詳細画面初期表示Parameter
-      Type="structure-model"
       UniqueId="0d252a96-0dd0-45eb-af33-e761419117c7">
       <新規登録モード
         Type="bool"
@@ -416,7 +411,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
     </売上詳細画面初期表示Parameter>
     <!--@[入荷](e5f6a1b2-c3d4-4e5f-2a6b-7c8d9e0f1a2b) の一覧検索画面のデータ構造。-->
     <入荷一覧
-      Type="query-model"
+      IsQueryable="True"
       UniqueId="ca790c30-db44-4439-9452-2a1310a901bb">
       <!--UUID-->
       <入荷ID
@@ -444,7 +439,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
     <!--@[商品](a1b2c3d4-e5f6-4a1b-8c2d-3e4f5a6b7c8d) の一覧検索画面のデータ構造。 @[入荷明細](a5e5b615-6cc1-4a50-8cc7-fe910dca543b) を参照し、現在の在庫数も一覧する。
 商品マスタはこのシステム上では編集できない。閲覧のみ。-->
     <商品一覧
-      Type="query-model"
+      IsQueryable="True"
       UniqueId="cf33b04a-b6a2-4559-b98c-563ddcc76394">
       <!--非表示-->
       <商品SEQ
@@ -471,7 +466,6 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
     <!--在庫調整の入力パラメータ。
 棚卸など商品の絶対数を正とする場合は絶対数を、返品や破損など増減数で調整する場合は増減数を指定する。-->
     <在庫調整Parameter
-      Type="structure-model"
       UniqueId="2555dc15-3ed7-48cb-9e78-0e7b09de86a3">
       <商品
         RefToObject="RefTarget"
@@ -493,7 +487,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
 増加方向の調整の場合、このレコードに紐づく新しい入荷明細レコードが生まれる。
 減少方向の調整の場合、入荷明細の残数量からの減算を行い、どの入荷明細から減じたかを記録する引当明細を記録する。-->
     <在庫調整
-      Type="data-model"
+      IsStored="True"
       UniqueId="4a1fa98c-1503-4d77-8161-e0e2f5f2fd1d">
       <!--UUID。非表示-->
       <在庫調整ID
@@ -543,7 +537,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
 その商品の在庫がどう変動したかを新しい順に表示する。
 @[引当明細](a1b2c3d4-e5f6-4a9b-6c0d-1e2f3a4b5c6d) @[入荷明細](a5e5b615-6cc1-4a50-8cc7-fe910dca543b) @[在庫調整引当明細](93c13d8d-23ba-44d5-b1ca-694c45efeb2b) を組み合わせる。-->
     <商品在庫増減履歴
-      Type="query-model"
+      IsQueryable="True"
       UniqueId="9604df00-d30a-4033-affd-6d2d625558fa">
       <!--非表示-->
       <商品SEQ
@@ -585,7 +579,6 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       </増減履歴引当元売上一覧>
     </商品在庫増減履歴>
     <ログインParameter
-      Type="structure-model"
       UniqueId="a775c249-a449-4700-a33a-262ca6c820f3">
       <従業員番号
         Custom-c582bb2e-804e-4136-93f0-85139aaa675f="100"
@@ -598,7 +591,6 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
         UniqueId="5619b3a0-f402-4bc5-ab03-8edc1baa2a6a" />
     </ログインParameter>
     <パスワード変更Parameter
-      Type="structure-model"
       UniqueId="da5e2ba7-864b-4d23-852b-1a4c6f525f98">
       <新しいパスワード
         Custom-4d868e55-06d6-44eb-aa97-901f39dd1782="True"
@@ -615,7 +607,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
 Webアプリケーションなので明示的にログアウトしない限りはレコードは残り続ける。
 最終ログイン時刻から一定時間が経過したものはクリーンナップで削除される。-->
     <セッション
-      Type="data-model"
+      IsStored="True"
       UniqueId="72d0c66e-b523-4dd1-b8a0-8384368fe38b">
       <!--ログインの瞬間にAPサーバーで発番される値。Set-Cookieでクライアント側に返され、以降のHTTPリクエストではCookieのヘッダに挿入される。APサーバーは当該ヘッダとこのテーブルのセッションキーを突合し、ユーザーを識別する。-->
       <セッションキー
@@ -634,14 +626,12 @@ Webアプリケーションなので明示的にログアウトしない限り�
         UniqueId="5d444ec0-10f7-4fbb-8bd1-8331feac1b66" />
     </セッション>
     <入荷詳細画面初期表示Parameter
-      Type="structure-model"
       UniqueId="c766195e-c279-4a50-84bb-fcbf46ac9798">
       <入荷ID
         Type="word"
         UniqueId="feae908b-6766-4d7c-9781-43caebe0feee" />
     </入荷詳細画面初期表示Parameter>
     <ログインユーザー情報
-      Type="structure-model"
       UniqueId="f594d8ac-f7ff-44ca-878f-fcbfd1e79ee1">
       <従業員番号
         Type="word"
@@ -663,7 +653,6 @@ Webアプリケーションなので明示的にログアウトしない限り�
     </ログインユーザー情報>
     <!--新規登録完了後の編集画面への遷移に使用する-->
     <売上新規登録ReturnValue
-      Type="structure-model"
       UniqueId="7c3fe519-2692-4465-b151-9884cc73cdb7">
       <売上SEQ
         Type="int"
@@ -671,7 +660,6 @@ Webアプリケーションなので明示的にログアウトしない限り�
     </売上新規登録ReturnValue>
     <!--新規登録完了後の編集画面への遷移に使用する-->
     <入荷登録ReturnValue
-      Type="structure-model"
       UniqueId="da3c0330-ac57-43ce-8cba-212da1053aab">
       <入荷ID
         Type="word"
@@ -801,32 +789,32 @@ ASP.NET Core のサービスワーカーとして登録される定期処理。-
   <CustomAttributes>
     <!--DataModelのMaxLengthはDB桁数定義にのみ使用される。こちらは画面制御で使用。-->
     <Custom-c582bb2e-804e-4136-93f0-85139aaa675f
-      AvailableModels="data-model,query-model,command-model,structure-model,enum,value-object"
+      AvailableModels="stored,queryable,command-model,structure,enum,value-object"
       DisplayName="最大長"
       PhysicalName="CustomMaxLength"
       Type="Decimal" />
     <!--その数値項目が金額を表すかどうか。画面上で3桁カンマ区切りで表示されたり、サフィックスに「円」がついたりする。-->
     <Custom-e543a1e3-a539-459b-86ce-a17686043d59
-      AvailableModels="data-model,query-model,command-model,structure-model,enum,value-object"
+      AvailableModels="stored,queryable,command-model,structure,enum,value-object"
       DisplayName="金額項目"
       PhysicalName="IsCurrency"
       Type="Boolean" />
     <!--その数値項目が数量を表すか否か。画面上でサフィックスに「個」がつく。-->
     <Custom-beceba92-faf8-49eb-a987-ff0d53889d64
-      AvailableModels="data-model,query-model,command-model,structure-model,enum,value-object"
+      AvailableModels="stored,queryable,command-model,structure,enum,value-object"
       DisplayName="数量"
       PhysicalName="IsQuantity"
       Type="Boolean" />
     <!--その数値項目が負の数で登録されようとしたときにエラーとする。-->
     <Custom-0f2d701d-f481-42d4-8dfb-5296c1b40246
-      AvailableModels="data-model,query-model,command-model,structure-model,enum,value-object"
+      AvailableModels="stored,queryable,command-model,structure,enum,value-object"
       DisplayName="0以上のみ"
       IsValidation="True"
       PhysicalName="NotNegative"
       Type="Boolean" />
     <!--ログ出力時に値をそのまま出さずにマスキングさせる。パスワードなどに指定する。-->
     <Custom-4d868e55-06d6-44eb-aa97-901f39dd1782
-      AvailableModels="data-model,query-model,command-model,structure-model,enum,value-object"
+      AvailableModels="stored,queryable,command-model,structure,enum,value-object"
       DisplayName="マスキング"
       PhysicalName="Masking"
       Type="Boolean" />

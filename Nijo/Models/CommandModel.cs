@@ -90,20 +90,18 @@ namespace Nijo.Models {
                 }
 
                 // 参照先モデルの種類チェック
-                var targetModelType = targetModel.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
+                var isStored = targetModel.IsStored();
+                var isQueryable = targetModel.IsQueryable();
 
                 if (string.IsNullOrEmpty(refToObject)) {
-                    // 構造体モデルの場合
-                    if (targetModelType != StructureModel.SCHEMA_NAME) {
-                        addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」は構造体モデルではありません。");
+                    // 構造体の場合
+                    if (isStored || isQueryable) {
+                        addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」は{BasicNodeOptions.IsStored.AttributeName}属性も{BasicNodeOptions.IsQueryable.AttributeName}属性も指定されていないデータ構造ではありません。");
                     }
                 } else {
-                    // クエリモデルの場合
-                    var isQueryModel = targetModelType == QueryModel.NODE_TYPE;
-                    var isGDQM = targetModel.HasGenerateDefaultQueryModelAttribute();
-
-                    if (!isQueryModel && !isGDQM) {
-                        addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」はクエリモデルまたは{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデルではありません。");
+                    // 検索可能なデータ構造の場合
+                    if (!isQueryable) {
+                        addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」は{BasicNodeOptions.IsQueryable.AttributeName}属性が指定されたデータ構造ではありません。");
                         return;
                     }
 

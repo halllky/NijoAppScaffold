@@ -71,8 +71,8 @@ namespace Nijo.Models.QueryModelModules {
         /// 楽観排他用のバージョンを持つかどうか
         /// </summary>
         public bool HasVersionColumn => Aggregate is RootAggregate rootAggregate
-                                     && rootAggregate.Model is DataModel
-                                     && rootAggregate.GenerateDefaultQueryModel;
+                                     && rootAggregate.IsStored
+                                     && rootAggregate.IsQueryable;
         public bool HasTimestampColumns => false;
 
         public string CsClassName => $"{Aggregate.PhysicalName}SearchResult";

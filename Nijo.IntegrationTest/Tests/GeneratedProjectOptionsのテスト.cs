@@ -15,7 +15,7 @@ public class GeneratedProjectOptionsのテスト {
               <DataStructures>
 
                 <!-- Web クライアント側、サーバー側両方に何かしら生成されるようなデータを定義する -->
-                <Data1 Type="data-model" GenerateDefaultQueryModel="True">
+                <Data1 IsStored="True" IsQueryable="True">
                   <Id Type="int" IsKey="True" />
                   <Name Type="word" />
                 </Data1>

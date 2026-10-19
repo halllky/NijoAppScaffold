@@ -38,7 +38,7 @@ DB への保存（SaveChanges）
 | `IsNotNull="true"` | DataModel の ValueMember / ref-to      | 必須入力 + DB NOT NULL 制約         |
 
 ```xml
-<Order Type="data-model" DisplayName="受注">
+<Order IsStored="True" DisplayName="受注">
   <OrderId     IsKey="true"     DisplayName="受注番号" />   <!-- 必須 -->
   <CustomerRef Type="ref-to:Customer" IsNotNull="true" DisplayName="得意先" />  <!-- 必須 -->
   <Note        DisplayName="備考" />                         <!-- 任意 -->
@@ -71,7 +71,7 @@ if (dbEntity.Quantity == null) {
 文字列項目に付与します。DB のカラム長制約も同時に生成されます。
 
 ```xml
-<Customer Type="data-model" DisplayName="得意先">
+<Customer IsStored="True" DisplayName="得意先">
   <CustomerId IsKey="true"                DisplayName="得意先コード" />
   <Name       IsNotNull="true" MaxLength="100" DisplayName="得意先名" />
   <Phone      MaxLength="20"              DisplayName="電話番号" />

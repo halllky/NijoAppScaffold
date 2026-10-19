@@ -48,7 +48,7 @@ XML で定義した各項目は以下のルールでテーブルカラムにマ�
 **XML 定義例:**
 
 ```xml
-<Product Type="data-model" DisplayName="商品">
+<Product IsStored="True" DisplayName="商品">
   <ProductId   IsKey="true"    DisplayName="商品コード" />
   <Name        IsNotNull="true" DisplayName="商品名" />
   <CategoryRef Type="ref-to:Category" IsNotNull="true" DisplayName="カテゴリ" />
@@ -95,7 +95,7 @@ public partial class ProductDbEntity {
 子が存在しない場合（`null` の場合）はレコード自体が存在しません。
 
 ```xml
-<Order Type="data-model" DisplayName="受注">
+<Order IsStored="True" DisplayName="受注">
   <OrderId IsKey="true" DisplayName="受注番号" />
 
   <!-- Child: 受注ヘッダと1対1で対応する配送情報 -->
@@ -113,7 +113,7 @@ public partial class ProductDbEntity {
 親テーブルのキーを含む複合主キーになります。
 
 ```xml
-<Order Type="data-model" DisplayName="受注">
+<Order IsStored="True" DisplayName="受注">
   <OrderId IsKey="true" DisplayName="受注番号" />
 
   <OrderDetails Type="children" DisplayName="受注明細">
@@ -182,7 +182,7 @@ EF Core のナビゲーションプロパティが自動生成されます。
 `DbName` 属性を指定することで変更できます。
 
 ```xml
-<Order Type="data-model" DbName="ORDER_MASTER" DisplayName="受注">
+<Order IsStored="True" DbName="ORDER_MASTER" DisplayName="受注">
   <OrderId IsKey="true" DbName="ORDER_NO" DisplayName="受注番号" />
 </Order>
 ```

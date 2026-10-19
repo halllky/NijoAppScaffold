@@ -4,8 +4,8 @@
   RootNamespace="MyApp">
   <DataStructures>
     <社員
-      GenerateDefaultQueryModel="True"
-      Type="data-model"
+      IsQueryable="True"
+      IsStored="True"
       UniqueId="1956b3f6-a6e5-493c-b87a-e86933c7b45f">
       <!--入社時に発行される一意なID-->
       <社員ID
@@ -25,8 +25,8 @@
         UniqueId="6a19d6bf-64d3-4edc-ba43-762ab2edada8" />
     </社員>
     <部署
-      GenerateDefaultQueryModel="True"
-      Type="data-model"
+      IsQueryable="True"
+      IsStored="True"
       UseSoftDelete="True"
       UniqueId="4c96eb60-249d-414c-8e3e-4b5a981fa8c6">
       <部署ID
@@ -78,8 +78,8 @@
 ビューはデータモデルから ref-to で外部参照することができる。
 テーブルからテーブルへの ref-to と異なり、外部キー制約は張られない。-->
     <事業所
+      IsQueryable="True"
       MapToView="True"
-      Type="query-model"
       UniqueId="0112870a-b512-4b7c-a464-db9a254a4250">
       <!--ビュー内部でハードコードする。-->
       <事業所ID
@@ -93,8 +93,8 @@
     </事業所>
     <!--非主キーのユニーク制約の外部参照の例-->
     <旧システム部署情報
-      GenerateDefaultQueryModel="True"
-      Type="data-model"
+      IsQueryable="True"
+      IsStored="True"
       UniqueId="202ad425-e9b6-4e28-9984-0f401d445ec1">
       <旧システムコード
         IsKey="True"
@@ -107,9 +107,9 @@
     </旧システム部署情報>
     <!--汎用参照テーブル（GenericLookupTable）の定義例-->
     <汎用マスタ
-      GenerateDefaultQueryModel="True"
       IsGenericLookupTable="True"
-      Type="data-model"
+      IsQueryable="True"
+      IsStored="True"
       UniqueId="5fa9afef-8d6c-4999-bf57-09d56c39de14">
       <汎用種別
         IsHardCodedPrimaryKey="True"

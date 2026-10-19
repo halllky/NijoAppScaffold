@@ -32,7 +32,10 @@ export type EditingRootAggregate = {
   /** XML要素のローカル名。 */
   physicalName?: string | null
   comment?: string | null
-  /** ルート集約の種類（data-model, query-model, enum など）。値は {@link EditingProject} と一緒に返る SchemaEditorRule.models で列挙される。 */
+  /**
+   * Type属性の値（command-model, enum など）。
+   * dataStructures のルート集約では常に null。そのモデル種別は {@link getRootModelType} で求める。
+   */
   model?: string | null
   /** Type・UniqueId・UniqueConstraints を除いた属性。 */
   attributes: Record<string, EditingAttributeValue>
@@ -176,15 +179,11 @@ export type PreviewLogIncrement = {
  * GET /nijo-api/schema-rule のレスポンス。編集対象ではないため {@link EditingProject} とは別に取得する。
  */
 export type SchemaEditorRule = {
-  models: ModelDef[]
+  /** カスタム属性の availableModels に指定できる値の一覧 */
+  availableModelCandidates: string[]
   attributeDefs: AttributeDef[]
   valueMemberTypes: ValueMemberTypeDef[]
   projectOptionPropertyInfos: ProjectOptionPropertyInfo[]
-}
-
-/** ルート集約の種類（data-model, query-model, enum など）。 */
-export type ModelDef = {
-  schemaName: string
 }
 
 /** 値メンバーの種類のスキーマ定義編集画面GUI上でのデータ構造。 */
@@ -248,6 +247,8 @@ export const ATTR_CONSTANT_TYPE = 'ConstantType'
 export const ATTR_CONSTANT_VALUE = 'ConstantValue'
 export const ATTR_IS_GENERIC_LOOKUP_TABLE = 'IsGenericLookupTable'
 export const ATTR_IS_HARD_CODED_PRIMARY_KEY = 'IsHardCodedPrimaryKey'
+export const ATTR_IS_STORED = 'IsStored'
+export const ATTR_IS_QUERYABLE = 'IsQueryable'
 
 // 定数の種類（ConstantType属性の値）
 export const CONSTANT_TYPE_CHILD = 'child'
@@ -256,7 +257,9 @@ export const CONSTANT_TYPE_INT = 'int'
 export const CONSTANT_TYPE_DECIMAL = 'decimal'
 export const CONSTANT_TYPE_TEMPLATE = 'template'
 
-// ルート集約のモデル種別（EditingRootAggregate.model の値）
+// ルート集約のモデル種別（AttributeDef.availableElements[].model の値）。
+// dataStructures のルート集約は IsStored, IsQueryable 属性の組み合わせで MODEL_DATA, MODEL_QUERY, MODEL_STRUCTURE のいずれかになる（getRootModelType 参照）。
+// それ以外のルート集約は EditingRootAggregate.model の値がそのままモデル種別になる。
 export const MODEL_DATA = 'data-model'
 export const MODEL_QUERY = 'query-model'
 export const MODEL_COMMAND = 'command-model'
@@ -273,6 +276,41 @@ export const NODE_TYPE_VALUE_MEMBER = 'ValueMember'
 export const NODE_TYPE_REF = 'Ref'
 export const NODE_TYPE_STATIC_ENUM_VALUE = 'StaticEnumValue'
 export const NODE_TYPE_UNKNOWN = 'Unknown'
+
+// カスタム属性の availableModels のうち、dataStructures のルート集約を対象とする値
+export const AVAILABLE_FOR_STORED = 'stored'
+export const AVAILABLE_FOR_QUERYABLE = 'queryable'
+export const AVAILABLE_FOR_STRUCTURE = 'structure'
+
+/** モデル種別の判定に必要なルート集約の情報 */
+type RootModelSource = Pick<EditingRootAggregate, 'model' | 'attributes'>
+
+/**
+ * ルート集約のモデル種別を返す。
+ * dataStructures のルート集約は IsStored が指定されていれば MODEL_DATA、IsQueryable のみ指定されていれば MODEL_QUERY、
+ * いずれも指定されていなければ MODEL_STRUCTURE になる。
+ */
+export const getRootModelType = (root: RootModelSource): string => {
+  if (root.model) return root.model
+  if (root.attributes[ATTR_IS_STORED] === true) return MODEL_DATA
+  if (root.attributes[ATTR_IS_QUERYABLE] === true) return MODEL_QUERY
+  return MODEL_STRUCTURE
+}
+
+/**
+ * カスタム属性が、指定されたルート集約とその子孫で利用可能かを判定する。
+ * IsStored, IsQueryable が両方指定されたデータ構造の場合、availableModels に stored, queryable のいずれかが含まれていれば利用可能。
+ */
+export const isCustomAttributeAvailable = (customAttr: EditingCustomAttribute, root: RootModelSource): boolean => {
+  if (root.model) return customAttr.availableModels.includes(root.model)
+
+  const isStored = root.attributes[ATTR_IS_STORED] === true
+  const isQueryable = root.attributes[ATTR_IS_QUERYABLE] === true
+  if (isStored && customAttr.availableModels.includes(AVAILABLE_FOR_STORED)) return true
+  if (isQueryable && customAttr.availableModels.includes(AVAILABLE_FOR_QUERYABLE)) return true
+  if (!isStored && !isQueryable && customAttr.availableModels.includes(AVAILABLE_FOR_STRUCTURE)) return true
+  return false
+}
 
 /**
  * 指定された属性が、指定されたモデル種別・ノード種別の組み合わせで利用可能かを判定する。

@@ -8,7 +8,8 @@ sidebar_position: 3
 アプリケーションに永続化されるデータの形を表します。
 RDBMSのテーブル定義を、**トランザクションの境界ごとにまとめたもの**です。
 
-スキーマ定義ファイル (`nijo.xml`) での指定方法: `Type="data-model"`
+スキーマ定義ファイル (`nijo.xml`) での指定方法: `DataStructures` セクションのルート集約に `IsStored="True"` を指定します。
+`IsQueryable="True"` も同時に指定すると、DataModel と全く同じ形の [QueryModel](../020400_QueryModel/index.md) のモジュールも生成されます。
 
 ## 自動生成されるモジュール
 
@@ -52,7 +53,7 @@ DataModel は **楽観排他制御がかかるべき単位** で1つ定義しま
 
 ```xml
 <!-- 受注データモデル -->
-<Order Type="data-model" DisplayName="受注">
+<Order IsStored="True" DisplayName="受注">
   <OrderId     IsKey="true"  DisplayName="受注番号" />
   <OrderDate   IsNotNull="true" DisplayName="受注日" />
   <CustomerRef Type="ref-to:Customer" IsNotNull="true" DisplayName="得意先" />

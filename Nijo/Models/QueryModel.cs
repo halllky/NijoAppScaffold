@@ -18,8 +18,7 @@ namespace Nijo.Models {
     /// <see cref="DataModel"/> を変換して人間や外部システムが閲覧するための形に直した情報の形。
     /// </summary>
     internal class QueryModel : IModel {
-        internal const string NODE_TYPE = "query-model";
-        public string SchemaName => NODE_TYPE;
+        public string SchemaName => "query-model";
 
         public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
             // キーと ref-to のチェック
@@ -146,13 +145,9 @@ namespace Nijo.Models {
                     continue;
                 }
 
-                // 参照先がクエリモデルまたはGDQMデータモデルか確認
-                var refToType = refToRoot.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
-                var isQueryModel = refToType == "query-model";
-                var isGDQM = refToRoot.HasGenerateDefaultQueryModelAttribute();
-
-                if (!isQueryModel && !isGDQM) {
-                    addError(refElement, "クエリモデルの集約からは、クエリモデルまたはGenerateDefaultQueryModel属性が付与されたデータモデルの集約しか参照できません。");
+                // 参照先が検索可能なデータ構造か確認
+                if (!refToRoot.IsQueryable()) {
+                    addError(refElement, $"{BasicNodeOptions.IsQueryable.AttributeName}属性が指定されたデータ構造からは、同じく{BasicNodeOptions.IsQueryable.AttributeName}属性が指定されたデータ構造しか参照できません。");
                 }
             }
 

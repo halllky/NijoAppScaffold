@@ -1,6 +1,6 @@
 import {
   EditingProject, EditingRootAggregate, EditingMember, EditingMemberType, EditingAttributeValue,
-  ATTR_PARAMETER, ATTR_RETURN_VALUE, MODEL_COMMAND,
+  ATTR_PARAMETER, ATTR_RETURN_VALUE, MODEL_COMMAND, getRootModelType,
 } from "../../../backend"
 import { parseAsMentionText } from "../../../UI/Mention"
 import { asTree, TreeHelper } from "../../../asTree"
@@ -58,7 +58,7 @@ export function buildDiagramStructure(project: EditingProject): DiagramStructure
   const rawEdges: RawEdge[] = []
 
   for (const root of [...project.dataStructures, ...project.commands]) {
-    const model = root.model ?? ''
+    const model = getRootModelType(root)
     const rootAgg: DiagramAggregate = { node: root, rootId: root.uniqueId, model, children: [] }
     roots.push(rootAgg)
     aggregateByElementId.set(root.uniqueId, rootAgg)
@@ -113,7 +113,7 @@ export function isMemberChangeAffectingDiagram(before: EditingMember, after: Edi
 
 /** ルート集約自身の内容の変更が、ダイアグラムの構成に影響するかどうかを判定する */
 export function isRootChangeAffectingDiagram(before: EditingRootAggregate, after: EditingRootAggregate): boolean {
-  if (before.model !== after.model) return true
+  if (getRootModelType(before) !== getRootModelType(after)) return true
   return commonAttrsAffectDiagram(before, after)
 }
 

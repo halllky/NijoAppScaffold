@@ -115,7 +115,7 @@ ValueObject は他のモデルの属性型として使用できます。
 <CustomerId Type="value-object" DisplayName="得意先コード" />
 
 <!-- DataModel でキーとして使用 -->
-<Customer Type="data-model" DisplayName="得意先">
+<Customer IsStored="True" DisplayName="得意先">
   <Id   IsKey="true" Type="value-object:CustomerId" DisplayName="得意先コード" />
   <Name IsNotNull="true"                             DisplayName="得意先名" />
 </Customer>

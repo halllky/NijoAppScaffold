@@ -11,8 +11,9 @@ namespace Nijo.WebService.SchemaEditor;
 /// 編集対象ではないため、編集中のプロジェクトの内容（<see cref="EditingProject"/>）とは別に取得する。
 /// </summary>
 public class SchemaEditorRule {
-    [JsonPropertyName("models")]
-    public List<ModelDef> Models { get; set; } = [];
+    /// <summary>カスタム属性の AvailableModels に指定できる値の一覧</summary>
+    [JsonPropertyName("availableModelCandidates")]
+    public List<string> AvailableModelCandidates { get; set; } = [];
     [JsonPropertyName("attributeDefs")]
     public List<AttributeDef> AttributeDefs { get; set; } = [];
     [JsonPropertyName("valueMemberTypes")]
@@ -22,7 +23,7 @@ public class SchemaEditorRule {
 
     internal static SchemaEditorRule FromSchemaParseRule(SchemaParseRule rule) {
         return new SchemaEditorRule {
-            Models = rule.Models.Select(m => new ModelDef { SchemaName = m.SchemaName }).ToList(),
+            AvailableModelCandidates = NijoXmlCustomAttribute.GetAvailableModelCandidates(rule).ToList(),
             AttributeDefs = AttributeDef.FromSchemaParseRule(rule),
             ValueMemberTypes = rule.ValueMemberTypes.Select(vmt => new ValueMemberTypeDef {
                 SchemaTypeName = vmt.SchemaTypeName,
@@ -31,12 +32,6 @@ public class SchemaEditorRule {
             ProjectOptionPropertyInfos = GeneratedProjectOptions.GetPropertyInfos().ToList(),
         };
     }
-}
-
-/// <summary>ルート集約の種類（data-model, query-model, enum など）。</summary>
-public class ModelDef {
-    [JsonPropertyName("schemaName")]
-    public string SchemaName { get; set; } = "";
 }
 
 /// <summary><see cref="Nijo.ImmutableSchema.IValueMemberType"/> のスキーマ定義編集画面GUI上でのデータ構造。</summary>
@@ -73,7 +68,7 @@ public class AttributeDef {
         return rule.NodeOptions.Select(opt => {
             // 各モデル × 各ノード種別の組み合わせについて、この属性が使用可能かチェックする
             var availableElements = new List<AvailableElement>();
-            foreach (var model in rule.Models) {
+            foreach (var model in rule.GetAllModels()) {
                 foreach (var nodeType in System.Enum.GetValues<E_NodeType>()) {
                     if (opt.IsAvailable(model, nodeType)) {
                         availableElements.Add(new AvailableElement {

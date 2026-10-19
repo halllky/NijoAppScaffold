@@ -4,7 +4,11 @@ import * as ReactHookForm from "react-hook-form"
 import * as Icon from "@heroicons/react/24/outline"
 import { ModalDialog } from "@nijo/ui-components/layout"
 import * as Input from "@nijo/ui-components/input"
-import { EditingProject, EditingCustomAttribute } from "../../backend"
+import {
+  EditingProject, EditingCustomAttribute,
+  AVAILABLE_FOR_STORED, AVAILABLE_FOR_QUERYABLE, AVAILABLE_FOR_STRUCTURE,
+  MODEL_COMMAND, MODEL_STATIC_ENUM, MODEL_VALUE_OBJECT, MODEL_CONSTANT,
+} from "../../backend"
 import { UUID } from "uuidjs"
 import FormLayout from "@nijo/ui-components/layout/FormLayout"
 import { useFieldValidationError, useValidationErrorMessages } from "../useValidation"
@@ -26,15 +30,15 @@ const ATTR_TYPES: NonNullable<EditingCustomAttribute['type']>[] = [
   'Decimal',
 ]
 
-/** モデルの物理名 → GUI上の表示ラベル。無いモデルは物理名をそのまま表示する。 */
+/** availableModels の値 → GUI上の表示ラベル。無いものは値をそのまま表示する。 */
 const MODEL_LABELS: Record<string, string> = {
-  'data-model': 'Data Model',
-  'query-model': 'Query Model',
-  'command-model': 'Command Model',
-  'structure-model': 'Structure Model',
-  'enum': 'Enum',
-  'value-object': 'Value Object',
-  'constant-model': 'Constant Model',
+  [AVAILABLE_FOR_STORED]: 'Stored',
+  [AVAILABLE_FOR_QUERYABLE]: 'Queryable',
+  [AVAILABLE_FOR_STRUCTURE]: 'Structure',
+  [MODEL_COMMAND]: 'Command Model',
+  [MODEL_STATIC_ENUM]: 'Enum',
+  [MODEL_VALUE_OBJECT]: 'Value Object',
+  [MODEL_CONSTANT]: 'Constant Model',
 }
 
 /**
@@ -45,11 +49,11 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
   elementRef,
 }) => {
   const { control, getValues, setValue, subscribe } = formMethods
-  const { models } = useSchemaEditorRule()
-  const availableModelOptions = React.useMemo(() => models.map(m => ({
-    id: m.schemaName,
-    label: MODEL_LABELS[m.schemaName] ?? m.schemaName,
-  })), [models])
+  const { availableModelCandidates } = useSchemaEditorRule()
+  const availableModelOptions = React.useMemo(() => availableModelCandidates.map(value => ({
+    id: value,
+    label: MODEL_LABELS[value] ?? value,
+  })), [availableModelCandidates])
 
   const {
     gridRef,
@@ -125,7 +129,7 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
       displayName: '',
       type: 'String',
       isValidation: false,
-      availableModels: models.map(m => m.schemaName),
+      availableModels: [...availableModelCandidates],
       enumValues: [],
     }
     append(newAttr)

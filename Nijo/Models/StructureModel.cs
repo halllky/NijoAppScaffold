@@ -15,8 +15,7 @@ namespace Nijo.Models {
     /// サーバー(C#)とクライアント(TypeScript)の双方で共有するための入れ子可能なオブジェクトの定義を生成する。
     /// </summary>
     internal class StructureModel : IModel {
-        internal const string SCHEMA_NAME = "structure-model";
-        public string SchemaName => SCHEMA_NAME;
+        public string SchemaName => "structure-model";
 
         public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
             // 外部参照のチェック
@@ -51,25 +50,23 @@ namespace Nijo.Models {
                     continue;
                 }
 
-                // 参照先がクエリモデル、GDQMデータモデル、またはStructureModelか確認
-                var refToType = refToRoot.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
-                var isQueryModel = refToType == QueryModel.NODE_TYPE;
-                var isGDQM = refToRoot.HasGenerateDefaultQueryModelAttribute();
-                var isStructureModel = refToType == SCHEMA_NAME;
+                // 参照先が検索可能なデータ構造、または構造体か確認
+                var isQueryable = refToRoot.IsQueryable();
+                var isStructure = !refToRoot.IsStored() && !isQueryable;
 
-                if (!isQueryModel && !isGDQM && !isStructureModel) {
-                    addError(refElement, $"StructureModelの集約からは、クエリモデル、{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデル、またはStructureModelの集約しか参照できません。");
+                if (!isQueryable && !isStructure) {
+                    addError(refElement, $"{BasicNodeOptions.IsStored.AttributeName}属性も{BasicNodeOptions.IsQueryable.AttributeName}属性も指定されていないデータ構造からは、{BasicNodeOptions.IsQueryable.AttributeName}属性が指定されたデータ構造、または{BasicNodeOptions.IsStored.AttributeName}属性も{BasicNodeOptions.IsQueryable.AttributeName}属性も指定されていないデータ構造しか参照できません。");
                     continue;
                 }
 
-                // クエリモデルまたはGDQMデータモデルを参照する場合はRefToObjectの指定が必須
+                // 検索可能なデータ構造を参照する場合はRefToObjectの指定が必須
                 var refToObject = refElement.Attribute(BasicNodeOptions.RefToObject.AttributeName);
-                if ((isQueryModel || isGDQM) && refToObject == null) {
-                    addError(refElement, $"StructureModelからクエリモデルを外部参照する場合、{BasicNodeOptions.RefToObject.AttributeName}属性を指定する必要があります。");
+                if (isQueryable && refToObject == null) {
+                    addError(refElement, $"{BasicNodeOptions.IsQueryable.AttributeName}属性が指定されたデータ構造を外部参照する場合、{BasicNodeOptions.RefToObject.AttributeName}属性を指定する必要があります。");
                 }
 
                 // RefToObjectの値が不正かチェック
-                if ((isQueryModel || isGDQM)
+                if (isQueryable
                         && refToObject != null
                         && !BasicNodeOptions.AvailableFromStructureToQuery.Contains(refToObject.Value)) {
                     addError(refElement, $"{BasicNodeOptions.RefToObject.AttributeName}属性の値は {string.Join(" または ", BasicNodeOptions.AvailableFromStructureToQuery)} のいずれかを指定してください。");

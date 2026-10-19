@@ -9,7 +9,7 @@ QueryModel に `ref-to` を定義すると、参照先の属性を使った絞�
 ## 基本的な使い方
 
 ```xml
-<OrderQuery Type="query-model" DisplayName="受注一覧">
+<OrderQuery IsQueryable="True" DisplayName="受注一覧">
   <OrderId   IsKey="true"  DisplayName="受注番号" />
   <OrderDate               DisplayName="受注日" />
 
@@ -62,7 +62,7 @@ public class CustomerDisplayDataRef {
 参照先が Root ではなく Children / Child の場合、親への参照が `Parent` という名前で表れます。
 
 ```xml
-<OrderQuery Type="query-model" DisplayName="受注一覧">
+<OrderQuery IsQueryable="True" DisplayName="受注一覧">
   <!-- OrderDetail（受注明細）への参照 -->
   <DetailRef Type="ref-to:Order/OrderDetails" DisplayName="明細参照" />
 </OrderQuery>
@@ -77,12 +77,12 @@ ref-to の数が増えると、発行される SQL の JOIN 数も増えます�
 
 ```xml
 <!-- 受注一覧用（担当者の氏名だけが必要） -->
-<OrderQuery Type="query-model" DisplayName="受注一覧">
+<OrderQuery IsQueryable="True" DisplayName="受注一覧">
   <AssigneeRef Type="ref-to:EmployeeLite" DisplayName="担当者" />
 </OrderQuery>
 
 <!-- 軽量な従業員 QueryModel（ID と氏名のみ） -->
-<EmployeeLite Type="query-model" DisplayName="従業員（軽量）">
+<EmployeeLite IsQueryable="True" DisplayName="従業員（軽量）">
   <EmployeeId   IsKey="true" DisplayName="従業員番号" />
   <EmployeeName             DisplayName="氏名" />
 </EmployeeLite>

@@ -60,7 +60,7 @@ const condition: OrderQuerySearchCondition = {
 `OnlySearchCondition="true"` を付与した属性は、検索条件にのみ現れ、検索結果（DisplayData）には表示されません。
 
 ```xml
-<OrderQuery Type="query-model" DisplayName="受注一覧">
+<OrderQuery IsQueryable="True" DisplayName="受注一覧">
   <OrderId   IsKey="true"                  DisplayName="受注番号" />
   <OrderDate IsNotNull="true"              DisplayName="受注日" />
   <!-- 検索条件専用。一覧には表示されない -->

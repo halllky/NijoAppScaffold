@@ -25,8 +25,8 @@ namespace Nijo.Models.QueryModelModules {
 
         /// <summary>楽観排他制御用のバージョンを持つかどうか</summary>
         internal override bool HasVersion => Aggregate is RootAggregate rootAggregate
-                                          && rootAggregate.Model is DataModel
-                                          && rootAggregate.GenerateDefaultQueryModel;
+                                          && rootAggregate.IsStored
+                                          && rootAggregate.IsQueryable;
 
 
         #region レンダリング

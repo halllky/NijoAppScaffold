@@ -1,6 +1,6 @@
 import * as ReactHookForm from "react-hook-form"
 import * as UI from "../../../UI"
-import { ATTR_PARAMETER, ATTR_RETURN_VALUE, EditingProject, isAttributeAvailable, NODE_TYPE_ROOT_AGGREGATE } from "../../../backend"
+import { ATTR_IS_QUERYABLE, ATTR_IS_STORED, ATTR_PARAMETER, ATTR_RETURN_VALUE, EditingProject, getRootModelType, isAttributeAvailable, isCustomAttributeAvailable, NODE_TYPE_ROOT_AGGREGATE } from "../../../backend"
 import { useSchemaEditorRule } from "../../SchemaEditorRuleContext"
 import { RootAggregateLocation } from "../../rootAggregateLocation"
 import { isRootChangeAffectingDiagram, useNotifyDiagramStructureChanged } from "../Diagram"
@@ -19,7 +19,7 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
 
   const rootPath = `${rootLocation.list}.${rootLocation.index}` as const
   const root = ReactHookForm.useWatch({ name: rootPath, control })
-  const rootModelType = root?.model
+  const rootModelType = root ? getRootModelType(root) : undefined
 
   const getMentionSuggestions = UI.useMentionSuggestions(getValues)
 
@@ -61,6 +61,7 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
         <div className="basis-96 flex flex-col gap-1">
           {attributeDefs.map(attrDef => {
             if (!rootModelType || !isAttributeAvailable(attrDef, rootModelType, [NODE_TYPE_ROOT_AGGREGATE])) return null
+            if (isModelSelectionAttr(attrDef.attributeName)) return null
 
             const path = `${rootPath}.attributes.${attrDef.attributeName}` as const
 
@@ -98,7 +99,7 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
         {/* カスタム属性 */}
         <div className="flex-1 flex flex-col gap-1">
           {customAttributes.map(customAttr => {
-            if (!rootModelType || !customAttr.availableModels.includes(rootModelType)) return null
+            if (!root || !isCustomAttributeAvailable(customAttr, root)) return null
 
             const path = `${rootPath}.attributes.${customAttr.uniqueId}` as const
             const userLabel = customAttr.displayName ?? customAttr.physicalName
@@ -136,6 +137,10 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
     </div>
   )
 }
+
+/** モデル種別を決める属性かどうか。ヘッダのモデル種別の選択欄で編集するので、属性欄には表示しない */
+const isModelSelectionAttr = (attributeName: string): boolean =>
+  attributeName === ATTR_IS_STORED || attributeName === ATTR_IS_QUERYABLE
 
 /** ダイアグラム上の関連（コマンドモデルの引数・戻り値のエッジ）の元になる属性かどうか */
 const isDiagramLinkAttr = (attributeName: string): boolean =>

@@ -29,7 +29,7 @@ StructureModel 名を `Parameter` 属性に指定すると、単純な `Form` �
 
 ```xml
 <!-- StructureModel の定義 -->
-<受注登録Form Type="structure-model" DisplayName="受注登録フォーム">
+<受注登録Form DisplayName="受注登録フォーム">
   <OrderDate  IsNotNull="true" DisplayName="受注日" />
   <CustomerId IsNotNull="true" DisplayName="得意先コード" />
   <Details Type="children" DisplayName="明細">

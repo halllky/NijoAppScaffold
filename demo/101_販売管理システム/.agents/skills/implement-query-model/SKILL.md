@@ -1,6 +1,6 @@
 ---
 name: implement-query-model
-description: nijo.xml で Type="query-model" として定義されているモデルから自動生成されたコードの理解や、ジェネレーションギャップパターンの手動実装部分を実装・修正するときに使う。
+description: nijo.xml で IsQueryable="True" が指定されているデータ構造から自動生成されたコードの理解や、ジェネレーションギャップパターンの手動実装部分を実装・修正するときに使う。
 ---
 
 # クエリモデルの実装

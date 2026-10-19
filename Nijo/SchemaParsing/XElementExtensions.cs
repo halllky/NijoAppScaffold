@@ -149,11 +149,25 @@ internal static class SchemaParseContextExtensions {
     }
 
     /// <summary>
-    /// 要素またはその親のルート集約にGenerateDefaultQueryModel属性が付与されているかを確認します
+    /// 要素のルート集約が DataStructures セクションに定義されているかを返します
     /// </summary>
-    internal static bool HasGenerateDefaultQueryModelAttribute(this XElement element) {
-        var rootElement = element.GetRootAggregateElement();
-        var gdqmAttr = rootElement.Attribute(BasicNodeOptions.GenerateDefaultQueryModel.AttributeName)?.Value;
-        return !string.IsNullOrEmpty(gdqmAttr) && gdqmAttr.Equals("True", StringComparison.OrdinalIgnoreCase);
+    internal static bool IsInDataStructuresSection(this XElement element) {
+        return element.GetRootAggregateElement().Parent?.Name.LocalName == SchemaParseContext.SECTION_DATA_STRUCTURES;
+    }
+
+    /// <summary>
+    /// 要素のルート集約が、永続化されるデータ構造（IsStored 属性が付与されたもの）かを返します
+    /// </summary>
+    internal static bool IsStored(this XElement element) {
+        return element.IsInDataStructuresSection()
+            && element.GetRootAggregateElement().Attribute(BasicNodeOptions.IsStored.AttributeName) != null;
+    }
+
+    /// <summary>
+    /// 要素のルート集約が、検索可能なデータ構造（IsQueryable 属性が付与されたもの）かを返します
+    /// </summary>
+    internal static bool IsQueryable(this XElement element) {
+        return element.IsInDataStructuresSection()
+            && element.GetRootAggregateElement().Attribute(BasicNodeOptions.IsQueryable.AttributeName) != null;
     }
 }

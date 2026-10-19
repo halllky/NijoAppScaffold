@@ -57,9 +57,6 @@ internal class AggregateMetadata : IMultiAggregateSourceFile {
 
     #region 型定義
     private static SourceFile RenderTypeScriptType(CodeRenderingContext ctx) {
-        var modelNames = ctx.SchemaParser.Models
-            .Select(m => $"'{m.Key}'")
-            .ToArray();
         var valueObjectTypes = ctx.SchemaParser.GetValueObjectMembers().Values.ToArray();
         var valueObjectLiteral = valueObjectTypes.Length == 0
             ? "never"
@@ -85,8 +82,10 @@ internal class AggregateMetadata : IMultiAggregateSourceFile {
                   /** ルート集約のメタデータ */
                   export type {{TYPE_ROOT}} = {{TYPE_NODE_OPTIONS}} & {
                     kind: '{{KIND_ROOT}}'
-                    /** このルート集約のモデル */
-                    model: {{(modelNames.Length == 0 ? "never" : modelNames.Join(" | "))}}
+                    /** 永続化されるデータ構造かどうか */
+                    {{BasicNodeOptions.IsStored.AttributeName.ToCamelCase()}}: boolean
+                    /** 検索可能なデータ構造かどうか */
+                    {{BasicNodeOptions.IsQueryable.AttributeName.ToCamelCase()}}: boolean
                     /** XMLスキーマ上でこの要素を示す一意なID */
                     uniqueId: string
                     /** ルート集約直下のメンバーの物理名 */
@@ -186,7 +185,8 @@ internal class AggregateMetadata : IMultiAggregateSourceFile {
             export const {{CONST_NAME}} = {
               root: {
                 kind: '{{KIND_ROOT}}',
-                model: '{{root.Model.SchemaName}}',
+                {{BasicNodeOptions.IsStored.AttributeName.ToCamelCase()}}: {{(root.IsStored ? "true" : "false")}},
+                {{BasicNodeOptions.IsQueryable.AttributeName.ToCamelCase()}}: {{(root.IsQueryable ? "true" : "false")}},
                 uniqueId: {{ToTsString(root.XElement.Attribute(SchemaParseContext.ATTR_UNIQUE_ID)?.Value ?? string.Empty)}},
             {{RenderNodeOptions(root.XElement, ctx).SelectTextTemplate(source => $$"""
                 {{WithIndent(source)}}
@@ -349,7 +349,7 @@ internal class AggregateMetadata : IMultiAggregateSourceFile {
     /// <returns>TypeScriptのプロパティ定義文字列</returns>
     private static IEnumerable<string> RenderNodeOptions(XElement xElement, CodeRenderingContext ctx) {
 
-        var options = ctx.SchemaParser.GetOptions(xElement);
+        var options = ctx.SchemaParser.GetOptions(xElement).Where(IsRenderedAsNodeOption);
 
         // DisplayName だけは未定義の場合は物理名を採用する。
         // メタデータを用いたカスタマイズ処理でDisplayNameの使用頻度が高いため。
@@ -420,7 +420,7 @@ internal class AggregateMetadata : IMultiAggregateSourceFile {
     /// TypeScript型定義で使用するNodeOptionの型情報を動的に生成します
     /// </summary>
     private static IEnumerable<string> RenderNodeOptionTypes(CodeRenderingContext ctx) {
-        var nodeOptions = ctx.SchemaParser.GetAllNodeOptions();
+        var nodeOptions = ctx.SchemaParser.GetAllNodeOptions().Where(IsRenderedAsNodeOption);
 
         // コメントはXMLの属性ではないので別途宣言している
         yield return $$"""
@@ -463,6 +463,15 @@ internal class AggregateMetadata : IMultiAggregateSourceFile {
                 {{customAttribute.PhysicalName.ToCamelCase()}}?: {{tsType}}
                 """;
         }
+    }
+
+    /// <summary>
+    /// ノードオプションとして動的にレンダリングするかどうか。
+    /// IsStored, IsQueryable はルート集約のメタデータの必須プロパティとして別途レンダリングするので除外する。
+    /// </summary>
+    private static bool IsRenderedAsNodeOption(NodeOption option) {
+        return option != BasicNodeOptions.IsStored
+            && option != BasicNodeOptions.IsQueryable;
     }
     #endregion オプション項目の動的レンダリング
 }

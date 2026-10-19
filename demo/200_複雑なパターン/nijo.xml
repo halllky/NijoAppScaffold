@@ -4,9 +4,9 @@
   RootNamespace="MyApp">
   <DataStructures>
     <医療機器マスタ
-      GenerateDefaultQueryModel="True"
+      IsQueryable="True"
+      IsStored="True"
       LatinName="Medical Equipment Master"
-      Type="data-model"
       UniqueId="8d569c4e-e43a-45be-b1f2-e2ce0ea98dcc">
       <機器ID
         DbName="PRODUCT_ID"
@@ -140,10 +140,10 @@
         </在庫状況履歴>
       </在庫情報>
     </医療機器マスタ>
-    <!-- GDQMでない複雑なデータ構造を持つデータモデル -->
+    <!-- IsQueryable でない複雑なデータ構造を持つデータモデル -->
     <診療履歴
+      IsStored="True"
       LatinName="Treatment History"
-      Type="data-model"
       UniqueId="696c1fb8-79e6-4150-bf7a-0d7ac70a49aa">
       <診療ID
         DbName="ORDER_ID"
@@ -306,9 +306,9 @@
       </紹介状情報>
     </診療履歴>
     <患者マスタ
-      GenerateDefaultQueryModel="True"
+      IsQueryable="True"
+      IsStored="True"
       LatinName="Patient Master"
-      Type="data-model"
       UniqueId="908d0556-71a2-4d56-849a-2bdf202e050b">
       <患者ID
         DbName="CUSTOMER_ID"
@@ -415,8 +415,8 @@
     </患者マスタ>
     <!-- 主キーが外部参照1個だけから構成されるデータモデル -->
     <医療従事者プロフィール
+      IsStored="True"
       LatinName="Medical Staff Profile"
-      Type="data-model"
       UniqueId="cdff7488-fbe7-4086-a00e-627764605bc7">
       <医療従事者
         DbName="EMPLOYEE_ID"
@@ -460,8 +460,8 @@
     </医療従事者プロフィール>
     <!-- 主キーが外部参照複数個から構成されるデータモデル -->
     <勤務スケジュール
+      IsStored="True"
       LatinName="Work Schedule"
-      Type="data-model"
       UniqueId="6643e2c0-7d6b-4d0d-8e66-efcc2403cda7">
       <医療従事者
         DbName="EMPLOYEE_ID"
@@ -500,9 +500,9 @@
     </勤務スケジュール>
     <!-- ref-toがさらにref-toを持つパターン（診察・予約連鎖） -->
     <予約
-      GenerateDefaultQueryModel="True"
+      IsQueryable="True"
+      IsStored="True"
       LatinName="Reservation"
-      Type="data-model"
       UniqueId="43c8b062-8c44-4453-8398-2abd7cd35302">
       <予約ID
         DbName="RESERVATION_ID"
@@ -536,8 +536,8 @@
         UniqueId="a421be49-f46b-4071-8823-4948f73fb0a8" />
     </予約>
     <診察記録
+      IsStored="True"
       LatinName="Medical Examination"
-      Type="data-model"
       UniqueId="639e360d-6409-46a6-b4de-079d2cf2d0b1">
       <予約
         DbName="RESERVATION_ID"
@@ -608,9 +608,9 @@
     </診察記録>
     <診療収益分析
       DbName="V_診療収益分析"
+      IsQueryable="True"
       LatinName="Medical Revenue Analysis"
       MapToView="True"
-      Type="query-model"
       UniqueId="9442b4d0-b48e-45b1-ab23-597ad74b1058">
       <!--例: "2025/04"-->
       <年月
@@ -689,7 +689,6 @@
       </時間帯別収益>
     </診療収益分析>
     <簡易診療登録Parameter
-      Type="structure-model"
       UniqueId="d34cea5d-f605-4b35-afa6-f8c67ddc9ffc">
       <患者ID
         Type="word"
@@ -707,7 +706,6 @@
       </使用機器一覧>
     </簡易診療登録Parameter>
     <簡易診療登録ReturnValue
-      Type="structure-model"
       UniqueId="84698423-0012-40d2-9722-29a88b92c583">
       <処理結果
         Type="description"
@@ -717,7 +715,6 @@
         UniqueId="32fd284a-a305-4083-bb9b-ba4a88d6ff3c" />
     </簡易診療登録ReturnValue>
     <医療機器管理Parameter
-      Type="structure-model"
       UniqueId="76755f0b-6020-4d24-bdcc-d4a3120bfef0">
       <担当者
         RefToObject="DisplayData"
@@ -773,7 +770,6 @@
         UniqueId="632b0c5b-524d-47c9-a8e3-72ab6d60f83a" />
     </医療機器管理Parameter>
     <医療機器管理ReturnValue
-      Type="structure-model"
       UniqueId="e906b965-c7a7-4605-9491-0af60db4f4bf">
       <処理結果
         Type="word"
@@ -830,9 +826,9 @@
     <!-- 部署と医療従事者の年度ごとの所属関係（year型の使用） -->
     <診療科
       DbName="BUSHO"
-      GenerateDefaultQueryModel="True"
+      IsQueryable="True"
+      IsStored="True"
       LatinName="Medical Department"
-      Type="data-model"
       UniqueId="8977ab28-8f27-4acf-882a-61eea645aeba">
       <診療科コード
         DbName="BUSHO_CD"
@@ -850,8 +846,8 @@
     </診療科>
     <医療従事者マスタ
       DbName="EMPLOYEE"
-      GenerateDefaultQueryModel="True"
-      Type="data-model"
+      IsQueryable="True"
+      IsStored="True"
       UniqueId="6822cfa1-31a5-400b-a950-165c2e7a10db">
       <医療従事者ID
         DbName="ID"
@@ -903,8 +899,8 @@
     </医療従事者マスタ>
     <!-- その他必要なエンティティ定義 -->
     <機器分類マスタ
-      GenerateDefaultQueryModel="True"
-      Type="data-model"
+      IsQueryable="True"
+      IsStored="True"
       UniqueId="a0606f83-9804-4ff7-b219-8699850f784a">
       <機器分類ID
         DbName="CATEGORY_ID"
@@ -919,8 +915,8 @@
         UniqueId="b53f5f41-8069-4cf1-891e-03ed52e84f84" />
     </機器分類マスタ>
     <供給業者マスタ
-      GenerateDefaultQueryModel="True"
-      Type="data-model"
+      IsQueryable="True"
+      IsStored="True"
       UniqueId="1f8e6b71-8167-4381-94fc-cfdc49dc7cdb">
       <供給業者ID
         DbName="SUPPLIER_ID"
@@ -950,8 +946,8 @@
         UniqueId="826969ef-5974-49ab-a973-ee4b075c487d" />
     </供給業者マスタ>
     <保管庫マスタ
-      GenerateDefaultQueryModel="True"
-      Type="data-model"
+      IsQueryable="True"
+      IsStored="True"
       UniqueId="2e2bbe87-8951-46a1-a838-92c879daa4f0">
       <保管庫ID
         DbName="WAREHOUSE_ID"
@@ -996,8 +992,8 @@
         UniqueId="2bc1dd2a-76ef-4901-8013-b1c9cc367a6a" />
     </保管庫マスタ>
     <診療科マスタ
-      GenerateDefaultQueryModel="True"
-      Type="data-model"
+      IsQueryable="True"
+      IsStored="True"
       UniqueId="be9d0172-ba9d-40cf-bd11-4a8c5eaaca8d">
       <診療科ID
         DbName="STORE_ID"
@@ -1063,9 +1059,9 @@
     </診療科マスタ>
     <!-- Childrenへの参照をキーに含むデータモデル -->
     <機器点検報告
-      GenerateDefaultQueryModel="True"
+      IsQueryable="True"
+      IsStored="True"
       LatinName="Equipment Inspection Report"
-      Type="data-model"
       UniqueId="97a49474-33d6-4279-918b-4794ada7d823">
       <対象機器
         DbName="INVENTORY_REF"
@@ -1136,9 +1132,9 @@
     </機器点検報告>
     <!-- Childrenへの参照をキーに含むデータモデルのChildrenへの参照をキーに含むデータモデル -->
     <措置結果
-      GenerateDefaultQueryModel="True"
+      IsQueryable="True"
+      IsStored="True"
       LatinName="Action Result"
-      Type="data-model"
       UniqueId="1097486f-9616-40f0-bde6-a29b2f540f8f">
       <対象措置
         DbName="ACTION_REF"
@@ -1225,7 +1221,6 @@
     <!-- ログインユーザー情報の構造体定義 -->
     <ログインユーザー情報
       LatinName="Login User Information"
-      Type="structure-model"
       UniqueId="e8f20d1d-9f4e-4f9c-9f4e-1d9f4e9f4e1d">
       <!-- ユーザー基本情報 -->
       <ユーザーID
@@ -1345,9 +1340,9 @@
     <!-- ビューにマッピングされるクエリモデル（キーあり、Childrenあり、ref-toあり） -->
     <機器分類別在庫集計ビュー
       DbName="V_INVENTORY_BY_CATEGORY"
+      IsQueryable="True"
       LatinName="Inventory By Category View"
       MapToView="True"
-      Type="query-model"
       UniqueId="view-inventory-by-category-001">
       <機器分類
         DbName="CATEGORY"
@@ -1388,9 +1383,9 @@
     <!-- キーなしのビュー（Child/Childrenなし） -->
     <診療科別患者統計ビュー
       DbName="V_PATIENT_STATS_BY_DEPT"
+      IsQueryable="True"
       LatinName="Patient Statistics By Department View"
       MapToView="True"
-      Type="query-model"
       UniqueId="view-patient-stats-by-dept-001">
       <診療科コード
         DbName="DEPT_CODE"
@@ -1932,7 +1927,7 @@
   </Constants>
   <CustomAttributes>
     <Custom-6cdcdbfc-28f8-46e3-95aa-7d2c71820d60
-      AvailableModels="data-model,query-model,command-model,structure-model,enum,value-object"
+      AvailableModels="stored,queryable,command-model,structure,enum,value-object"
       DisplayName="利用可能文字"
       IsValidation="True"
       PhysicalName="AvailableCharacter"

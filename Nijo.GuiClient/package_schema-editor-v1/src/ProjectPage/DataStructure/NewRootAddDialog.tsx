@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ModalDialog } from "@nijo/ui-components";
-import { Button, MODEL_COLORS, MODEL_TYPE_OPTIONS, ModelTypeRadioButtonGroup, WordTextBox } from "../../UI";
-import { MODEL_DATA } from "../../backend";
+import { Button, DataStructureFlags, DataStructureFlagsCheckBoxes, ROOT_KIND_DATA_STRUCTURE, ROOT_KIND_OPTIONS, RootKind, RootKindRadioButtonGroup, WordTextBox } from "../../UI";
 
 /**
  * 新しいルート集約追加ダイアログ
@@ -9,29 +8,32 @@ import { MODEL_DATA } from "../../backend";
 export function NewRootAddDialog({ open, onClose, onRegister }: {
   open: boolean
   onClose: () => void
-  onRegister: (name: string, modelType: string) => void
+  /** flags は rootKind がデータ構造の場合のみ意味を持つ */
+  onRegister: (name: string, rootKind: RootKind, flags: DataStructureFlags) => void
 }) {
 
   const [step, setStep] = useState<1 | 2>(1)
   const [name, setName] = useState("")
-  const [modelType, setModelType] = useState(MODEL_DATA)
+  const [rootKind, setRootKind] = useState<RootKind>(ROOT_KIND_DATA_STRUCTURE)
+  const [flags, setFlags] = useState<DataStructureFlags>(DEFAULT_FLAGS)
 
   // ダイアログが開かれたときに状態をリセット
   useEffect(() => {
     if (open) {
       setStep(1)
       setName("")
-      setModelType(MODEL_DATA)
+      setRootKind(ROOT_KIND_DATA_STRUCTURE)
+      setFlags(DEFAULT_FLAGS)
     }
   }, [open])
 
   const handleRegister = () => {
     if (!name) return
-    onRegister(name, modelType)
+    onRegister(name, rootKind, flags)
   }
 
-  const handleSelectModelType = (selected: string) => {
-    setModelType(selected)
+  const handleSelectRootKind = (selected: RootKind) => {
+    setRootKind(selected)
     setStep(2)
   }
 
@@ -44,7 +46,7 @@ export function NewRootAddDialog({ open, onClose, onRegister }: {
         {step === 1 && (
           <div className="flex flex-col gap-4 animate-fadeIn">
             <div>
-              <ModelTypeRadioButtonGroup onChange={handleSelectModelType} />
+              <RootKindRadioButtonGroup onChange={handleSelectRootKind} />
             </div>
 
             <div className="flex justify-end gap-2 mt-2">
@@ -61,15 +63,20 @@ export function NewRootAddDialog({ open, onClose, onRegister }: {
               handleRegister()
             }}
           >
-            {/* 選択されたモデル */}
+            {/* 選択された種類 */}
             <div className="flex flex-col items-start gap-1 transition-colors text-left">
-              <div className={`font-bold ${MODEL_COLORS[modelType].nameText}`}>
-                {MODEL_TYPE_OPTIONS[modelType].displayName}
+              <div className={`font-bold ${ROOT_KIND_OPTIONS[rootKind].colors.nameText}`}>
+                {ROOT_KIND_OPTIONS[rootKind].displayName}
               </div>
-              <div className={`text-xs mt-1 leading-snug ${MODEL_COLORS[modelType].descriptionText}`}>
-                {MODEL_TYPE_OPTIONS[modelType].description}
+              <div className={`text-xs mt-1 leading-snug ${ROOT_KIND_OPTIONS[rootKind].colors.descriptionText}`}>
+                {ROOT_KIND_OPTIONS[rootKind].description}
               </div>
             </div>
+
+            {/* データ構造の IsStored, IsQueryable 属性 */}
+            {rootKind === ROOT_KIND_DATA_STRUCTURE && (
+              <DataStructureFlagsCheckBoxes value={flags} onChange={setFlags} showDescription />
+            )}
 
             {/* 集約名 */}
             <div>
@@ -92,3 +99,6 @@ export function NewRootAddDialog({ open, onClose, onRegister }: {
     </ModalDialog>
   )
 }
+
+/** 新規作成時の IsStored, IsQueryable 属性の初期値 */
+const DEFAULT_FLAGS: DataStructureFlags = { isStored: true, isQueryable: false }

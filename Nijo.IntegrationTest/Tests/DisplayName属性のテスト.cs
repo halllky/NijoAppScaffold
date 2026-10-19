@@ -15,7 +15,7 @@ public class DisplayName属性のテスト {
         using var project = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
-                <Data1 Type="data-model" DisplayNameIsEmpty="True">
+                <Data1 IsStored="True" DisplayNameIsEmpty="True">
                   <Id Type="int" IsKey="True" DisplayNameIsEmpty="True" />
                   <Name Type="word" />
                 </Data1>
@@ -43,7 +43,7 @@ public class DisplayName属性のテスト {
         using var project = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
-                <Data1 Type="data-model" DisplayName="表示名" DisplayNameIsEmpty="True">
+                <Data1 IsStored="True" DisplayName="表示名" DisplayNameIsEmpty="True">
                   <Id Type="int" IsKey="True" />
                 </Data1>
               </DataStructures>

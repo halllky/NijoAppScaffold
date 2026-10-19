@@ -19,9 +19,14 @@ namespace Nijo.SchemaParsing;
 /// </summary>
 public class SchemaParseRule {
     /// <summary>
-    /// ルート集約の種類
+    /// Type 属性で指定されるルート集約の種類。
+    /// DataStructures セクション以外のセクションに定義されるルート集約が対象。
     /// </summary>
     public required IModel[] Models { get; init; }
+    /// <summary>
+    /// DataStructures セクションに定義されるルート集約の種類。
+    /// </summary>
+    public required DataStructureModels DataStructureModels { get; init; }
     /// <summary>
     /// 値メンバーの種類
     /// </summary>
@@ -37,12 +42,9 @@ public class SchemaParseRule {
     /// </summary>
     public static SchemaParseRule Default() {
         var models = new IModel[] {
-            new DataModel(),
-            new QueryModel(),
             new CommandModel(),
             new StaticEnumModel(),
             new ValueObjectModel(),
-            new StructureModel(),
             new ConstantModel(),
         };
         var valueMemberTypes = new IValueMemberType[] {
@@ -69,7 +71,8 @@ public class SchemaParseRule {
             BasicNodeOptions.LatinName,
             BasicNodeOptions.IsKey,
             BasicNodeOptions.IsNotNull,
-            BasicNodeOptions.GenerateDefaultQueryModel,
+            BasicNodeOptions.IsStored,
+            BasicNodeOptions.IsQueryable,
             BasicNodeOptions.UseSoftDelete,
             BasicNodeOptions.UniqueConstraints,
             BasicNodeOptions.IsGenericLookupTable,
@@ -90,6 +93,7 @@ public class SchemaParseRule {
         };
         return new() {
             Models = models,
+            DataStructureModels = new(),
             ValueMemberTypes = valueMemberTypes,
             NodeOptions = nodeOptions,
         };
@@ -103,7 +107,7 @@ public class SchemaParseRule {
         // スキーマ定義名重複チェック
         var appearedName = new HashSet<string>();
         var duplicates = new HashSet<string>();
-        foreach (var name in Models.Select(m => m.SchemaName).Concat(ValueMemberTypes.Select(t => t.SchemaTypeName))) {
+        foreach (var name in GetAllModels().Select(m => m.SchemaName).Concat(ValueMemberTypes.Select(t => t.SchemaTypeName))) {
             if (appearedName.Contains(name)) {
                 duplicates.Add(name);
             } else {
@@ -127,6 +131,13 @@ public class SchemaParseRule {
         if (NodeOptions.Any(opt => opt.AttributeName == SchemaParseContext.ATTR_NODE_TYPE)) {
             throw new InvalidOperationException($"{SchemaParseContext.ATTR_NODE_TYPE} という名前のオプション属性は定義できません。");
         }
+    }
+
+    /// <summary>
+    /// このルールで定義されているすべてのモデルを列挙します。
+    /// </summary>
+    public IEnumerable<IModel> GetAllModels() {
+        return DataStructureModels.All.Concat(Models);
     }
 
     /// <summary>

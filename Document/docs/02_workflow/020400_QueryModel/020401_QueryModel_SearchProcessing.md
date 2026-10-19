@@ -67,8 +67,8 @@ protected override IQueryable<OrderQuerySearchResult> CreateQuerySource(
 }
 ```
 
-:::note GenerateDefaultQueryModel="true" のとき
-`GenerateDefaultQueryModel="true"` を DataModel に指定した場合、DataModel と構造が完全一致する QueryModel が生成され、`CreateQuerySource` の実装も自動生成されます。この場合は開発者の実装は不要です。
+:::note IsStored="True" と IsQueryable="True" を両方指定したとき
+`IsStored="True"` と `IsQueryable="True"` を両方指定した場合、DataModel と構造が完全一致する QueryModel が生成され、`CreateQuerySource` の実装も自動生成されます。この場合は開発者の実装は不要です。
 :::
 
 ### DB View を使う場合（MapToView="true"）

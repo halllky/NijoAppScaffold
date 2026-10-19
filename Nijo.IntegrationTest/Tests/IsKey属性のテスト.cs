@@ -10,7 +10,7 @@ public class IsKey属性のテスト {
         using var project1 = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
-                <Data1 Type="data-model">
+                <Data1 IsStored="True">
                   <Id Type="int" IsKey="True" />
                   <Name Type="word" />
                 </Data1>
@@ -25,7 +25,7 @@ public class IsKey属性のテスト {
         using var project2 = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
-                <Data2 Type="data-model">
+                <Data2 IsStored="True">
                   <Id Type="int" />
                   <Name Type="word" />
                 </Data2>
@@ -42,7 +42,7 @@ public class IsKey属性のテスト {
         using var project1 = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
-                <Data1 Type="data-model">
+                <Data1 IsStored="True">
                   <Id Type="int" IsKey="True" />
                   <Children Type="children">
                     <ChildId Type="int" IsKey="True" />
@@ -58,7 +58,7 @@ public class IsKey属性のテスト {
         using var project2 = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
-                <Data2 Type="data-model">
+                <Data2 IsStored="True">
                   <Id Type="int" IsKey="True" />
                   <Children Type="children">
                     <ChildId Type="int" />
@@ -80,7 +80,7 @@ public class IsKey属性のテスト {
         using var project = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
-                <Data1 Type="data-model">
+                <Data1 IsStored="True">
                   <Id Type="int" IsKey="True" />
                   <ChildEntry Type="child">
                     <ChildId Type="int" IsKey="True" />
@@ -106,7 +106,7 @@ public class IsKey属性のテスト {
         using var project1 = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
-                <Query1 Type="query-model" MapToView="True">
+                <Query1 IsQueryable="True" MapToView="True">
                   <Id Type="int" IsKey="True" />
                   <Children Type="children">
                      <ChildId Type="int" IsKey="True" />
@@ -121,7 +121,7 @@ public class IsKey属性のテスト {
         using var project2 = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
-                <Query2 Type="query-model" MapToView="True">
+                <Query2 IsQueryable="True" MapToView="True">
                   <Id Type="int" />
                   <Children Type="children">
                      <ChildId Type="int" IsKey="True" />
@@ -137,7 +137,7 @@ public class IsKey属性のテスト {
         using var project3 = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
-                <Query3 Type="query-model" MapToView="True">
+                <Query3 IsQueryable="True" MapToView="True">
                   <Id Type="int" IsKey="True" />
                   <Children Type="children">
                      <ChildId Type="int" />
@@ -155,7 +155,7 @@ public class IsKey属性のテスト {
         using var project = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
-                <Query1 Type="query-model" MapToView="True">
+                <Query1 IsQueryable="True" MapToView="True">
                   <Id Type="int" IsKey="True" />
                   <ChildEntry Type="child">
                      <ChildId Type="int" IsKey="True" />
@@ -175,7 +175,7 @@ public class IsKey属性のテスト {
         using var project1 = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
-                <Query1 Type="query-model">
+                <Query1 IsQueryable="True">
                   <Id Type="int" IsKey="True" />
                 </Query1>
               </DataStructures>
@@ -192,7 +192,7 @@ public class IsKey属性のテスト {
         using var project2 = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
-                <Query2 Type="query-model">
+                <Query2 IsQueryable="True">
                   <Children Type="children">
                      <ChildId Type="int" IsKey="True" />
                   </Children>
@@ -211,7 +211,7 @@ public class IsKey属性のテスト {
         using var project = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
-                <Struct1 Type="structure-model">
+                <Struct1>
                   <Id Type="int" IsKey="True" />
                 </Struct1>
               </DataStructures>

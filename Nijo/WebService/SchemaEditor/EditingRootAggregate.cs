@@ -22,7 +22,10 @@ public class EditingRootAggregate {
     public string? PhysicalName { get; set; }
     [JsonPropertyName("comment")]
     public string? Comment { get; set; }
-    /// <summary>Type属性の値（data-model, query-model, enum など）。</summary>
+    /// <summary>
+    /// Type属性の値（command-model, enum など）。
+    /// DataStructures セクションのルート集約では null。そのモデルは <see cref="Attributes"/> の IsStored, IsQueryable で表される。
+    /// </summary>
     [JsonPropertyName("model")]
     public string? Model { get; set; }
     /// <summary>Type・UniqueId・UniqueConstraints を除いた属性。</summary>

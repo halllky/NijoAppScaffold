@@ -1,7 +1,7 @@
 import React from "react";
 import * as ReactHookForm from "react-hook-form"
 import * as Icon from "@heroicons/react/24/outline"
-import { ATTR_IS_GENERIC_LOOKUP_TABLE, EditingProject, MODEL_COMMAND } from "../../../backend";
+import { ATTR_IS_GENERIC_LOOKUP_TABLE, ATTR_IS_QUERYABLE, ATTR_IS_STORED, EditingProject, MODEL_COMMAND } from "../../../backend";
 import * as UI from "../../../UI"
 import { Allotment, LayoutPriority } from "allotment";
 import DecsendantsGrid from "./DecsendantsGrid";
@@ -18,7 +18,7 @@ function AggregatePane(props: {
   formMethods: ReactHookForm.UseFormReturn<EditingProject>
   className?: string
   onRequestDelete?: () => void
-  /** モデル種別の変更でルート集約が dataStructures ⇔ commands 間を移動したときに呼ばれる */
+  /** ルート集約の種類の変更でルート集約が dataStructures ⇔ commands 間を移動したときに呼ばれる */
   onRootLocationChanged?: (newLocation: RootAggregateLocation) => void
   orientation?: 'horizontal' | 'vertical'
   onSwitchOrientation?: () => void
@@ -44,23 +44,20 @@ function AggregatePane(props: {
     onRequestDelete?.()
   }
 
-  const rootAggregateModelType = ReactHookForm.useWatch({ name: `${rootPath}.model`, control })
   const isGenericLookupTable = ReactHookForm.useWatch({ name: `${rootPath}.attributes.${ATTR_IS_GENERIC_LOOKUP_TABLE}`, control }) === true
 
-  // モデル種別の変更。dataStructures と commands をまたぐ場合は配列間の移動になる。
+  // ルート集約の種類の変更。dataStructures と commands の間の配列間の移動になる。
+  const rootKind: UI.RootKind = rootLocation.list === 'commands' ? MODEL_COMMAND : UI.ROOT_KIND_DATA_STRUCTURE
   const dataStructuresFieldArray = ReactHookForm.useFieldArray({ name: 'dataStructures', control })
   const commandsFieldArray = ReactHookForm.useFieldArray({ name: 'commands', control })
-  const handleModelChange = (newModel: string) => {
-    const newList: RootAggregateLocation['list'] = newModel === MODEL_COMMAND ? 'commands' : 'dataStructures'
+  const handleRootKindChange = (newKind: UI.RootKind) => {
+    if (newKind === rootKind) return
 
-    if (newList === rootLocation.list) {
-      setValue(`${rootPath}.model`, newModel, { shouldDirty: true })
-      notifyStructureChanged()
-      return
-    }
-
+    const newList: RootAggregateLocation['list'] = newKind === MODEL_COMMAND ? 'commands' : 'dataStructures'
     const current = getValues(rootPath)
-    const updated = { ...current, model: newModel }
+    const updated = newKind === MODEL_COMMAND
+      ? { ...current, model: MODEL_COMMAND, attributes: omitDataStructureFlags(current.attributes) }
+      : { ...current, model: null } // データ構造のモデル種別は IsStored, IsQueryable 属性で表すので model は持たない
     const newIndex = getValues(newList).length
 
     if (newList === 'dataStructures') dataStructuresFieldArray.append(updated)
@@ -71,6 +68,17 @@ function AggregatePane(props: {
     notifyStructureChanged()
 
     onRootLocationChanged?.({ list: newList, index: newIndex })
+  }
+
+  // データ構造の IsStored, IsQueryable 属性の変更
+  const [isStored, isQueryable] = ReactHookForm.useWatch({
+    name: [`${rootPath}.attributes.${ATTR_IS_STORED}`, `${rootPath}.attributes.${ATTR_IS_QUERYABLE}`],
+    control,
+  })
+  const handleDataStructureFlagsChange = (flags: UI.DataStructureFlags) => {
+    setValue(`${rootPath}.attributes.${ATTR_IS_STORED}`, flags.isStored, { shouldDirty: true })
+    setValue(`${rootPath}.attributes.${ATTR_IS_QUERYABLE}`, flags.isQueryable, { shouldDirty: true })
+    notifyStructureChanged()
   }
 
   return (
@@ -98,12 +106,19 @@ function AggregatePane(props: {
           className="flex-1 font-bold"
         />
 
-        {/* モデル */}
-        <UI.ModelTypeSelector
-          value={rootAggregateModelType ?? undefined}
-          onChange={handleModelChange}
+        {/* ルート集約の種類 */}
+        <UI.RootKindSelector
+          value={rootKind}
+          onChange={handleRootKindChange}
           className="min-w-48"
         />
+        {rootKind === UI.ROOT_KIND_DATA_STRUCTURE && (
+          <UI.DataStructureFlagsCheckBoxes
+            value={{ isStored: isStored === true, isQueryable: isQueryable === true }}
+            onChange={handleDataStructureFlagsChange}
+            className="px-1"
+          />
+        )}
 
         {/* 削除ボタン */}
         <UI.Button icon={Icon.TrashIcon} mini hideText onClick={handleDelete}>
@@ -162,3 +177,9 @@ function AggregatePane(props: {
 }
 
 export default React.memo(AggregatePane)
+
+/** コマンドには指定できない IsStored, IsQueryable 属性を取り除く */
+const omitDataStructureFlags = (attributes: EditingProject['dataStructures'][number]['attributes']) => {
+  const { [ATTR_IS_STORED]: _isStored, [ATTR_IS_QUERYABLE]: _isQueryable, ...rest } = attributes
+  return rest
+}

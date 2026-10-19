@@ -31,7 +31,7 @@ public class SchemaParseContext {
         // GetDisplayName を呼び出すために、XDocument にこのコンテキストをアノテーションとして付与する。
         Document.AddAnnotation(this);
 
-        Models = rule.Models.ToDictionary(m => m.SchemaName);
+        _modelsBySchemaName = rule.Models.ToDictionary(m => m.SchemaName);
         _rule = rule;
         _valueMemberTypes = rule.ValueMemberTypes.ToDictionary(m => m.SchemaTypeName);
         _elementCountByLocalName = new Lazy<IReadOnlyDictionary<string, int>>(() => Document
@@ -45,14 +45,16 @@ public class SchemaParseContext {
 
     public XDocument Document { get; }
     public GeneratedProjectOptions ProjectOptions { get; }
-    public IReadOnlyDictionary<string, IModel> Models { get; }
+    /// <summary>Type 属性で指定されるモデル。キーは Type 属性の値</summary>
+    private readonly IReadOnlyDictionary<string, IModel> _modelsBySchemaName;
     private readonly SchemaParseRule _rule;
     private readonly IReadOnlyDictionary<string, IValueMemberType> _valueMemberTypes;
     /// <summary>enum, value-object を除いた値型の一覧</summary>
     public IEnumerable<IValueMemberType> ValueMemberTypes => _rule.ValueMemberTypes;
 
     /// <summary>
-    /// nijo.xml のルート要素直下の要素のうち、データ構造をもつモデル（Data Model, Query Model, Structure Model）が格納されるXML要素の名前
+    /// nijo.xml のルート要素直下の要素のうち、データ構造をもつモデル（Data Model, Query Model, Structure Model）が格納されるXML要素の名前。
+    /// このセクションのルート集約のモデルは IsStored, IsQueryable 属性の組み合わせで決まる（<see cref="DataStructureModels"/>）。
     /// </summary>
     internal const string SECTION_DATA_STRUCTURES = "DataStructures";
     /// <summary>
@@ -285,12 +287,16 @@ public class SchemaParseContext {
             return false;
 
         }
+        if (root.IsInDataStructuresSection()) {
+            model = _rule.DataStructureModels.Resolve(root);
+            return true;
+        }
         var modelName = root.Attribute(ATTR_NODE_TYPE)?.Value;
         if (modelName == null) {
             model = null;
             return false;
         }
-        return Models.TryGetValue(modelName, out model);
+        return _modelsBySchemaName.TryGetValue(modelName, out model);
     }
     /// <summary>
     /// ルート集約や子集約を表すXML要素を <see cref="AggregateBase"/> のインスタンスに変換します。
@@ -542,11 +548,13 @@ public class SchemaParseContext {
 
                 // ルート集約の場合
                 case E_NodeType.RootAggregate:
-                    var model = Models.GetValueOrDefault(typeAttrValue);
-                    if (model == null) {
-                        attributeErrors.Add((el, ATTR_NODE_TYPE, $"{ATTR_NODE_TYPE}属性でモデルが指定されていません。使用できる値は {Models.Keys.Join(", ")} です。"));
-                    } else {
-                        // モデル単位の検証
+                    // このセクションのモデルは IsStored, IsQueryable 属性で決まり、Type 属性は使わない
+                    if (el.Attribute(ATTR_NODE_TYPE) != null) {
+                        attributeErrors.Add((el, ATTR_NODE_TYPE, $"{SECTION_DATA_STRUCTURES} セクションのルート集約には {ATTR_NODE_TYPE} 属性を指定できません。"));
+                    }
+
+                    // モデル単位の検証
+                    if (TryGetModel(el, out var model)) {
                         model.Validate(el, this, (el, err) => errorsList.Add((el, err)));
                     }
                     break;
@@ -632,8 +640,8 @@ public class SchemaParseContext {
                 // カスタム属性
                 else if (customAttributesByUniqueId.TryGetValue(attrName, out var customAttr)) {
                     if (hasModel) {
-                        if (!customAttr.AvailableModels.Contains(optModel!.SchemaName)) {
-                            attributeErrors.Add((el, attrName, $"カスタム属性 '{customAttr.PhysicalName}' はモデル '{optModel!.SchemaName}' では使用できません。"));
+                        if (!customAttr.IsAvailableFor(el, optModel!)) {
+                            attributeErrors.Add((el, attrName, $"カスタム属性 '{customAttr.PhysicalName}' はこの要素では使用できません。"));
                         } else {
                             foreach (var error in customAttr.ValidateModelElement(el)) {
                                 attributeErrors.Add((el, attrName, error));
@@ -709,76 +717,60 @@ public class SchemaParseContext {
         }
 
         // モデルの種類に基づく参照制約チェック
+        var storedAttr = BasicNodeOptions.IsStored.AttributeName;
+        var queryableAttr = BasicNodeOptions.IsQueryable.AttributeName;
+        var refToIsStored = refTo.IsStored();
+        var refToIsQueryable = refTo.IsQueryable();
+        var refToIsView = refToRoot.Attribute(BasicNodeOptions.MapToView.AttributeName) != null;
+
         if (TryGetModel(refElement, out var model)) {
             if (model is DataModel) {
-                // データモデルからはデータモデルの集約、
-                // またはビューにマッピングされるクエリモデルしか参照できない
-                if (TryGetModel(refTo, out var refToModel)
-                    && refToModel is not DataModel
-                    && (refToModel is not QueryModel || refToRoot.Attribute(BasicNodeOptions.MapToView.AttributeName) == null)) {
-                    errorMessage = "データモデルの集約からはデータモデルの集約またはビューにマッピングされるクエリモデルしか参照できません。";
+                // 永続化されるデータ構造からは、永続化されるデータ構造またはビューにマッピングされるデータ構造しか参照できない
+                if (!refToIsStored && !(refToIsQueryable && refToIsView)) {
+                    errorMessage = $"{storedAttr}属性が指定されたデータ構造からは、{storedAttr}属性が指定されたデータ構造、またはビューにマッピングされるデータ構造しか参照できません。";
                     return false;
                 }
 
-                // GDQM -> 非GDQM の参照を禁止。RefTargetなどが生成されないので
-                if (rootElement.HasGenerateDefaultQueryModelAttribute()
-                    && TryGetModel(refTo, out var refToDataModel)
-                    && refToDataModel is DataModel
-                    && !refToRoot.HasGenerateDefaultQueryModelAttribute()) {
-                    errorMessage = $"{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデルの集約からは、同じく{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデルの集約しか参照できません。";
+                // 検索可能かつ永続化されるデータ構造から、検索可能でない永続化されるデータ構造への参照を禁止。RefTargetなどが生成されないので
+                if (rootElement.IsQueryable() && refToIsStored && !refToIsQueryable) {
+                    errorMessage = $"{storedAttr}属性と{queryableAttr}属性が両方指定されたデータ構造からは、{storedAttr}属性のみが指定されたデータ構造を参照できません。";
                     return false;
                 }
             } else if (model is QueryModel) {
-                // クエリモデルからはクエリモデルの集約しか参照できない
-                if (TryGetModel(refTo, out var refToModel) && !(refToModel is QueryModel)) {
-                    // GenerateDefaultQueryModelの値をより厳密に検証
-                    var isGDQM = refTo.HasGenerateDefaultQueryModelAttribute();
-
-                    if (!isGDQM) {
-                        errorMessage = $"クエリモデルの集約からはクエリモデルの集約または{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデルしか参照できません。";
-                        return false;
-                    }
+                // 検索可能なデータ構造からは検索可能なデータ構造しか参照できない
+                if (!refToIsQueryable) {
+                    errorMessage = $"{queryableAttr}属性が指定されたデータ構造からは、同じく{queryableAttr}属性が指定されたデータ構造しか参照できません。";
+                    return false;
                 }
 
-                // クエリモデルで循環参照を定義することはできない
+                // 循環参照を定義することはできない
                 if (HasCircularReference(refElement, refTo)) {
-                    errorMessage = "クエリモデルで循環参照を定義することはできません。";
+                    errorMessage = $"{queryableAttr}属性が指定されたデータ構造で循環参照を定義することはできません。";
                     return false;
                 }
             } else if (model is CommandModel) {
-                // コマンドモデルからはクエリモデルの集約しか参照できない
-                if (TryGetModel(refTo, out var refToModel) && !(refToModel is QueryModel)) {
-                    // GenerateDefaultQueryModelの値をより厳密に検証
-                    var isGDQM = refTo.HasGenerateDefaultQueryModelAttribute();
-
-                    if (!isGDQM) {
-                        errorMessage = $"コマンドモデルの集約からはクエリモデルの集約または{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデルしか参照できません。";
-                        return false;
-                    }
+                // コマンドモデルからは検索可能なデータ構造しか参照できない
+                if (!refToIsQueryable) {
+                    errorMessage = $"コマンドモデルの集約からは{queryableAttr}属性が指定されたデータ構造しか参照できません。";
+                    return false;
                 }
 
                 // RefToObjectの指定がないとエラー
                 if (refElement.Attribute(BasicNodeOptions.RefToObject.AttributeName) == null) {
-                    errorMessage = $"コマンドモデルからクエリモデルを外部参照する場合、{BasicNodeOptions.RefToObject.AttributeName}属性を指定する必要があります。";
+                    errorMessage = $"コマンドモデルから外部参照する場合、{BasicNodeOptions.RefToObject.AttributeName}属性を指定する必要があります。";
                     return false;
                 }
             } else if (model is StructureModel) {
-                // StructureModelからはクエリモデル、GDQMデータモデル、またはStructureModelの集約しか参照できない
-                if (TryGetModel(refTo, out var refToModel)) {
-                    var isQueryModel = refToModel is QueryModel;
-                    var isGDQM = refTo.HasGenerateDefaultQueryModelAttribute();
-                    var isStructureModel = refToModel is StructureModel;
+                // 構造体からは、検索可能なデータ構造または構造体しか参照できない
+                if (refToIsStored && !refToIsQueryable) {
+                    errorMessage = $"{storedAttr}属性も{queryableAttr}属性も指定されていないデータ構造からは、{queryableAttr}属性が指定されたデータ構造、または{storedAttr}属性も{queryableAttr}属性も指定されていないデータ構造しか参照できません。";
+                    return false;
+                }
 
-                    if (!isQueryModel && !isGDQM && !isStructureModel) {
-                        errorMessage = $"StructureModelの集約からはクエリモデル、{BasicNodeOptions.GenerateDefaultQueryModel.AttributeName}属性が付与されたデータモデル、またはStructureModelの集約しか参照できません。";
-                        return false;
-                    }
-
-                    // クエリモデルまたはGDQMデータモデルを参照する場合はRefToObjectの指定が必須
-                    if ((isQueryModel || isGDQM) && refElement.Attribute(BasicNodeOptions.RefToObject.AttributeName) == null) {
-                        errorMessage = $"StructureModelからクエリモデルを外部参照する場合、{BasicNodeOptions.RefToObject.AttributeName}属性を指定する必要があります。";
-                        return false;
-                    }
+                // 検索可能なデータ構造を参照する場合はRefToObjectの指定が必須
+                if (refToIsQueryable && refElement.Attribute(BasicNodeOptions.RefToObject.AttributeName) == null) {
+                    errorMessage = $"{queryableAttr}属性が指定されたデータ構造を外部参照する場合、{BasicNodeOptions.RefToObject.AttributeName}属性を指定する必要があります。";
+                    return false;
                 }
             }
         }
