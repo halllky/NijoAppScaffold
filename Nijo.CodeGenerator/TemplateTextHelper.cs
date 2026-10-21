@@ -47,6 +47,10 @@ namespace Nijo.CodeGenerator {
             return this;
         }
 
+        /// <summary>
+        /// 条件に合致した分岐のテンプレート片を返します。
+        /// どの分岐にも合致しなかった場合、その行はファイルにレンダリングされません。
+        /// </summary>
         public override string ToString() {
             if (_evaluated) {
                 _stringBuilder.Append(SKIP_MARKER);
@@ -142,6 +146,9 @@ namespace Nijo.CodeGenerator {
         /// </summary>
         public const string SKIP_MARKER = "\0\0\0\0\0\0\0\0\0\0\0"; // 通常のソースコード上に現れなさそうな文字列であれば何でもよい
     }
+    /// <summary>
+    /// テンプレート文字列の中で反復処理を記述するための拡張メソッド
+    /// </summary>
     public static class TemplateTextHelperExtensions {
         /// <summary>
         /// Render 系メソッドの中で、複数要素に対して縦方向にテンプレート片を反復するときに使う。
@@ -152,14 +159,14 @@ namespace Nijo.CodeGenerator {
         public static string SelectTextTemplate<T>(this IEnumerable<T> values, Func<T, string> selector) {
             var sourceCode = string.Join(Environment.NewLine, values.Select(selector));
             return sourceCode == string.Empty
-                ? SKIP_MARKER
+                ? TemplateTextHelper.SKIP_MARKER
                 : sourceCode;
         }
         /// <inheritdoc cref="SelectTextTemplate{T}(IEnumerable{T}, Func{T, string})"/>
         public static string SelectTextTemplate<T>(this IEnumerable<T> values, Func<T, int, string> selector) {
             var sourceCode = string.Join(Environment.NewLine, values.Select(selector));
             return sourceCode == string.Empty
-                ? SKIP_MARKER
+                ? TemplateTextHelper.SKIP_MARKER
                 : sourceCode;
         }
     }

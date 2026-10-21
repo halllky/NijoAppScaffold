@@ -55,6 +55,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo101.Management", "demo\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo200.Management", "demo\200_複雑なパターン\Management\Demo200.Management.csproj", "{7DB14CD8-96BC-73F6-A867-3B59FB25F4B1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nijo.CodeGenerator", "Nijo.CodeGenerator\Nijo.CodeGenerator.csproj", "{817686C2-06C4-471B-A0FF-135BF9ED43FF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -329,6 +331,18 @@ Global
 		{7DB14CD8-96BC-73F6-A867-3B59FB25F4B1}.Release|x64.Build.0 = Release|Any CPU
 		{7DB14CD8-96BC-73F6-A867-3B59FB25F4B1}.Release|x86.ActiveCfg = Release|Any CPU
 		{7DB14CD8-96BC-73F6-A867-3B59FB25F4B1}.Release|x86.Build.0 = Release|Any CPU
+		{817686C2-06C4-471B-A0FF-135BF9ED43FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{817686C2-06C4-471B-A0FF-135BF9ED43FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{817686C2-06C4-471B-A0FF-135BF9ED43FF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{817686C2-06C4-471B-A0FF-135BF9ED43FF}.Debug|x64.Build.0 = Debug|Any CPU
+		{817686C2-06C4-471B-A0FF-135BF9ED43FF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{817686C2-06C4-471B-A0FF-135BF9ED43FF}.Debug|x86.Build.0 = Debug|Any CPU
+		{817686C2-06C4-471B-A0FF-135BF9ED43FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{817686C2-06C4-471B-A0FF-135BF9ED43FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{817686C2-06C4-471B-A0FF-135BF9ED43FF}.Release|x64.ActiveCfg = Release|Any CPU
+		{817686C2-06C4-471B-A0FF-135BF9ED43FF}.Release|x64.Build.0 = Release|Any CPU
+		{817686C2-06C4-471B-A0FF-135BF9ED43FF}.Release|x86.ActiveCfg = Release|Any CPU
+		{817686C2-06C4-471B-A0FF-135BF9ED43FF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

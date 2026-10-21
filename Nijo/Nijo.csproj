@@ -18,6 +18,9 @@
     <PackageReference Include="System.CommandLine" Version="2.0.12" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Nijo.CodeGenerator\Nijo.CodeGenerator.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <None Update="AspNetMvc\AggregatePartialViewTemplate.tt">
       <Generator>TextTemplatingFilePreprocessor</Generator>
       <LastGenOutput>AggregatePartialViewTemplate.cs</LastGenOutput>

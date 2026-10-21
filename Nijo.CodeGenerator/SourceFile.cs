@@ -79,7 +79,7 @@ namespace Nijo.CodeGenerator {
         }
 
         /// <summary>
-        /// <see cref="TemplateTextHelper.WithIndent"/> の仕組みを実現するための仕組み。
+        /// <see cref="TemplateTextHelper.WithIndent(string)"/> などの仕組みを実現するための仕組み。
         /// インデントスタックを更新します。
         /// 1引数版のインデント開始マーカーが見つかったら、インデント計測起点からマーカーまでの文字列をスタックに積みます。
         /// インデント計測起点は、この行の中で開始されてまだ終了していない直近の開始マーカーの直後で、無ければ行頭です。
