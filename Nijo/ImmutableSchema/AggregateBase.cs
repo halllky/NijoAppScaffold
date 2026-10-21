@@ -384,7 +384,6 @@ namespace Nijo.ImmutableSchema {
         public bool IsStored => XElement.IsStored();
         /// <summary>検索可能なデータ構造かどうか（IsQueryable 属性）</summary>
         public bool IsQueryable => XElement.IsQueryable();
-        public IModel Model => _ctx.TryGetModel(XElement, out var model) ? model : throw new InvalidOperationException($"ありえない: {XElement}");
         public bool UseSoftDelete => XElement.Attribute(BasicNodeOptions.UseSoftDelete.AttributeName) != null;
 
         public override AggregateBase AsEntry() {
@@ -397,7 +396,7 @@ namespace Nijo.ImmutableSchema {
         /// このルート集約がCommandModelでない場合は例外。
         /// </summary>
         public ICreatablePresentationLayerStructure? GetParameterStructure() {
-            if (Model is not Models.CommandModel) throw new InvalidOperationException($"{PhysicalName}はCommandModelでない");
+            if (!XElement.TryGetRootAggregateKind(out var kind) || kind != E_RootAggregateKind.Command) throw new InvalidOperationException($"{PhysicalName}はCommandModelでない");
             var parameter = XElement.Attribute(BasicNodeOptions.Parameter.AttributeName);
             return parameter == null ? null : GetTargetStructure(parameter, true);
         }
@@ -406,7 +405,7 @@ namespace Nijo.ImmutableSchema {
         /// このルート集約がCommandModelでない場合は例外。
         /// </summary>
         public ICreatablePresentationLayerStructure? GetReturnValueStructure() {
-            if (Model is not Models.CommandModel) throw new InvalidOperationException($"{PhysicalName}はCommandModelでない");
+            if (!XElement.TryGetRootAggregateKind(out var kind) || kind != E_RootAggregateKind.Command) throw new InvalidOperationException($"{PhysicalName}はCommandModelでない");
             var returnValue = XElement.Attribute(BasicNodeOptions.ReturnValue.AttributeName);
             return returnValue == null ? null : GetTargetStructure(returnValue, false);
         }

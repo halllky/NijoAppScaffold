@@ -179,13 +179,13 @@ namespace Nijo.CodeGenerating {
             lock (_orderByDfLock) {
                 if (_rootAggregateOrderCache == null) {
                     _rootAggregateOrderCache = new();
-                    var allRootAggregates = Schema.GetRootAggregates().ToList();
+                    var dataStructures = Schema.GetDataStructures().ToList();
 
-                    // 1) DataModel（外部参照の依存関係に基づく順序）
+                    // 1) 永続化されるデータ構造（外部参照の依存関係に基づく順序）
                     // 列挙するたびにこのリストから集約をクリアしていき、
                     // このリストから全ての集約が無くなったら列挙完了
-                    var rest = allRootAggregates
-                        .Where(root => root.Model is Models.DataModel)
+                    var rest = dataStructures
+                        .Where(root => root.IsStored)
                         .Select(root => new {
                             root,
                             refTargets = root
@@ -221,32 +221,11 @@ namespace Nijo.CodeGenerating {
                         indexForDataModels = 0;
                     }
 
-                    // 2) DataModel 以外は XML 上の登場順
-                    var nonDataRoots = allRootAggregates
-                        .Where(root => root.Model is not Models.DataModel)
-                        .ToDictionary(root => root.XElement);
-
-                    var dataStrucures = SchemaParser.Document.Root
-                        ?.Element(SchemaParseContext.SECTION_DATA_STRUCTURES)
-                        ?.Elements()
-                        ?? [];
-                    var commands = SchemaParser.Document.Root
-                        ?.Element(SchemaParseContext.SECTION_COMMANDS)
-                        ?.Elements()
-                        ?? [];
-
-                    foreach (var element in dataStrucures) {
-                        var root = nonDataRoots.GetValueOrDefault(element);
-                        if (root == null) continue;
-                        if (_rootAggregateOrderCache.ContainsKey(root)) continue;
-
-                        _rootAggregateOrderCache.Add(root, _rootAggregateOrderCache.Count);
-                    }
-                    foreach (var element in commands) {
-                        var root = nonDataRoots.GetValueOrDefault(element);
-                        if (root == null) continue;
-                        if (_rootAggregateOrderCache.ContainsKey(root)) continue;
-
+                    // 2) 永続化されないデータ構造、コマンドの順に、それぞれスキーマ定義上の登場順
+                    var notStoredRoots = dataStructures
+                        .Where(root => !root.IsStored)
+                        .Concat(Schema.GetCommands());
+                    foreach (var root in notStoredRoots) {
                         _rootAggregateOrderCache.Add(root, _rootAggregateOrderCache.Count);
                     }
                 }

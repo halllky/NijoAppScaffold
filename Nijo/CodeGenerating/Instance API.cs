@@ -12,7 +12,7 @@ namespace Nijo.CodeGenerating;
 
 /// <summary>
 /// 自動生成されるソースコード上に表れる構造体のメタ情報。
-/// 具体的には <see cref="IModel"/> の中でソースコードの生成に用いられるモジュールがこれに該当する。
+/// 具体的には Models フォルダの各モデルの中でソースコードの生成に用いられるモジュールがこれに該当する。
 /// </summary>
 public interface IInstancePropertyOwnerMetadata {
     IEnumerable<IInstancePropertyMetadata> GetMembers();

@@ -11,111 +11,16 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 
 namespace Nijo.Models {
-    internal class CommandModel : IModel {
-        public string SchemaName => "command-model";
-
-        public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
-            // コマンドモデルの物理名を取得
-            var rootAggregateName = context.GetPhysicalName(rootAggregateElement);
-            if (string.IsNullOrEmpty(rootAggregateName)) {
-                addError(rootAggregateElement, "コマンドモデルの物理名が指定されていません。");
-                return;
-            }
-
-            // 新仕様：コマンドモデルは子孫XML要素を定義できない
-            var childElements = rootAggregateElement.Elements();
-            if (childElements.Any()) {
-                addError(rootAggregateElement, $"コマンドモデルのルート集約は子孫XML要素を定義できません。引数と戻り値の型は{BasicNodeOptions.Parameter.AttributeName}属性と{BasicNodeOptions.ReturnValue.AttributeName}属性で指定してください。");
-            }
-
-            // Parameter属性の検証
-            var parameterAttr = rootAggregateElement.Attribute(BasicNodeOptions.Parameter.AttributeName)?.Value;
-            if (!string.IsNullOrEmpty(parameterAttr)) {
-                ValidateTypeSpecification(parameterAttr, "Parameter", rootAggregateElement, context, addError);
-            }
-
-            // ReturnValue属性の検証
-            var returnValueAttr = rootAggregateElement.Attribute(BasicNodeOptions.ReturnValue.AttributeName)?.Value;
-            if (!string.IsNullOrEmpty(returnValueAttr)) {
-                ValidateTypeSpecification(returnValueAttr, "ReturnValue", rootAggregateElement, context, addError);
-            }
-
-            // コマンドモデルの集約には主キー属性を定義できない
-            ValidateNoKeyAttributes(rootAggregateElement, context, addError);
-        }
+    /// <summary>
+    /// コマンドモデル。
+    /// 引数を受け取り戻り値を返す処理。Webサーバー・クライアント間で常に同期された型定義を提供する。
+    /// </summary>
+    internal static class CommandModel {
 
         /// <summary>
-        /// コマンドモデルでは主キー属性を定義できないことをチェックします
+        /// ルート集約1個と対応するソースコードを生成します。
         /// </summary>
-        private void ValidateNoKeyAttributes(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
-            // すべての集約（ルート集約、子集約、子配列）をチェック
-            var allAggregates = rootAggregateElement.DescendantsAndSelf()
-                .Where(el => el == rootAggregateElement ||
-                            el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILD ||
-                            el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILDREN);
-
-            foreach (var aggregate in allAggregates) {
-                var membersWithKey = aggregate.Elements()
-                    .Where(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null).ToList();
-
-                if (membersWithKey.Any()) {
-                    addError(aggregate, "コマンドモデルの集約には主キー属性を定義できません。");
-                    foreach (var member in membersWithKey) {
-                        addError(member, "コマンドモデルのメンバーに主キー属性を定義することはできません。");
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Parameter属性またはReturnValue属性の型指定を検証します
-        /// </summary>
-        private void ValidateTypeSpecification(string typeSpec, string attributeName, XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
-            try {
-                var (modelName, refToObject) = CommandModelExtensions.ParseTypeSpecification(typeSpec);
-
-                if (string.IsNullOrEmpty(modelName)) {
-                    addError(rootAggregateElement, $"{attributeName}属性の値が不正です: {typeSpec}");
-                    return;
-                }
-
-                // 参照先モデルの存在確認
-                var targetModel = context.Document.Root
-                    ?.Element(SchemaParseContext.SECTION_DATA_STRUCTURES)
-                    ?.Elements()
-                    .FirstOrDefault(e => context.GetPhysicalName(e) == modelName);
-                if (targetModel == null) {
-                    addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」が見つからないか、ルート集約ではありません。");
-                    return;
-                }
-
-                // 参照先モデルの種類チェック
-                var isStored = targetModel.IsStored();
-                var isQueryable = targetModel.IsQueryable();
-
-                if (string.IsNullOrEmpty(refToObject)) {
-                    // 構造体の場合
-                    if (isStored || isQueryable) {
-                        addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」は{BasicNodeOptions.IsStored.AttributeName}属性も{BasicNodeOptions.IsQueryable.AttributeName}属性も指定されていないデータ構造ではありません。");
-                    }
-                } else {
-                    // 検索可能なデータ構造の場合
-                    if (!isQueryable) {
-                        addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」は{BasicNodeOptions.IsQueryable.AttributeName}属性が指定されたデータ構造ではありません。");
-                        return;
-                    }
-
-                    // RefToObjectの値チェック
-                    if (!BasicNodeOptions.AvailableFromCommandToQuery.ContainsKey(refToObject)) {
-                        addError(rootAggregateElement, $"{attributeName}属性のRefToObject指定「{refToObject}」は無効です。{string.Join(" または ", BasicNodeOptions.AvailableFromCommandToQuery.Keys)}のいずれかを指定してください。");
-                    }
-                }
-            } catch (ArgumentException ex) {
-                addError(rootAggregateElement, $"{attributeName}属性の値が不正です: {ex.Message}");
-            }
-        }
-
-        public void GenerateCode(CodeRenderingContext ctx, RootAggregate rootAggregate) {
+        internal static void Render(CodeRenderingContext ctx, RootAggregate rootAggregate) {
             var aggregateFile = new SourceFileByAggregate(rootAggregate);
 
             // 処理: TypeScript用マッピング、Webエンドポイント、本処理抽象メソッド
@@ -127,31 +32,6 @@ namespace Nijo.Models {
             ctx.Use<CommandQueryMappings>().AddCommandModel(rootAggregate);
 
             aggregateFile.ExecuteRendering(ctx);
-        }
-
-        public void GenerateCode(CodeRenderingContext ctx) {
-            // 特になし
-        }
-    }
-
-
-    internal static class CommandModelExtensions {
-
-        internal static (string? ModelName, string? RefToObject) ParseTypeSpecification(string? typeSpec) {
-            if (string.IsNullOrEmpty(typeSpec)) {
-                return (null, null);
-            }
-
-            var parts = typeSpec.Split(':');
-            if (parts.Length == 1) {
-                // 構造体モデルの場合
-                return (parts[0], null);
-            } else if (parts.Length == 2) {
-                // クエリモデルの場合
-                return (parts[0], parts[1]);
-            }
-
-            throw new ArgumentException($"Invalid type specification: {typeSpec}");
         }
     }
 }

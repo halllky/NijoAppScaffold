@@ -50,8 +50,8 @@ namespace Nijo.ValueMemberTypes {
         void IValueMemberType.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
             // シーケンスが1個以上定義されている場合、シーケンス採番の構文をユーザーに定義させる
             var hasSequence = ctx.Schema
-                .GetRootAggregates()
-                .Where(root => root.Model is Models.DataModel)
+                .GetDataStructures()
+                .Where(root => root.IsStored)
                 .SelectMany(root => root.EnumerateThisAndDescendants())
                 .SelectMany(agg => agg.GetMembers())
                 .Any(member => member is ValueMember vm && vm.Type is SequenceMember);

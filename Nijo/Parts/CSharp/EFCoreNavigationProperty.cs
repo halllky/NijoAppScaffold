@@ -32,8 +32,8 @@ internal abstract class NavigationProperty {
     /// </summary>
     protected static IEFCoreEntity GetConcreteClass(AggregateBase aggregate, bool isDeletedTable) {
         var root = aggregate.GetRoot();
-        if (root.Model is Models.QueryModel && root.IsView) {
-            // QueryModelのビューの場合はSearchResultを返す
+        if (root.IsView) {
+            // ビューの場合はSearchResultを返す
             if (aggregate is RootAggregate rootAgg) {
                 return new Models.QueryModelModules.SearchResult(rootAgg);
             } else if (aggregate is ChildrenAggregate children) {

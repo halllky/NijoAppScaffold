@@ -23,7 +23,7 @@ public class SchemaEditorRule {
 
     internal static SchemaEditorRule FromSchemaParseRule(SchemaParseRule rule) {
         return new SchemaEditorRule {
-            AvailableModelCandidates = NijoXmlCustomAttribute.GetAvailableModelCandidates(rule).ToList(),
+            AvailableModelCandidates = NijoXmlCustomAttribute.GetAvailableModelCandidates().ToList(),
             AttributeDefs = AttributeDef.FromSchemaParseRule(rule),
             ValueMemberTypes = rule.ValueMemberTypes.Select(vmt => new ValueMemberTypeDef {
                 SchemaTypeName = vmt.SchemaTypeName,
@@ -66,13 +66,13 @@ public class AttributeDef {
 
     internal static List<AttributeDef> FromSchemaParseRule(SchemaParseRule rule) {
         return rule.NodeOptions.Select(opt => {
-            // 各モデル × 各ノード種別の組み合わせについて、この属性が使用可能かチェックする
+            // 各ルート集約の種類 × 各ノード種別の組み合わせについて、この属性が使用可能かチェックする
             var availableElements = new List<AvailableElement>();
-            foreach (var model in rule.GetAllModels()) {
+            foreach (var kind in System.Enum.GetValues<E_RootAggregateKind>()) {
                 foreach (var nodeType in System.Enum.GetValues<E_NodeType>()) {
-                    if (opt.IsAvailable(model, nodeType)) {
+                    if (opt.IsAvailable(kind, nodeType)) {
                         availableElements.Add(new AvailableElement {
-                            Model = model.SchemaName,
+                            Model = kind.ToSchemaName(),
                             NodeType = nodeType.ToString(),
                         });
                     }

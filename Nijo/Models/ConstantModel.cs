@@ -18,44 +18,12 @@ namespace Nijo.Models {
     /// string, int, decimal, テンプレート文字列（引数を受け取って文字列を返す関数）の4種類の定数を定義できる。
     /// Type="child"によってネストされた定数も定義可能。
     /// </summary>
-    internal class ConstantModel : IModel {
-        internal const string SCHEMA_NAME = "constant-model";
+    internal static class ConstantModel {
 
-        public string SchemaName => SCHEMA_NAME;
-
-        public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
-            ValidateConstants(rootAggregateElement, addError);
-
-            void ValidateConstants(XElement element, Action<XElement, string> addError) {
-                foreach (var constantElement in element.Elements()) {
-                    var constantType = constantElement.Attribute(BasicNodeOptions.ConstantType.AttributeName)?.Value;
-
-                    if (constantType == ConstantValueDef.CONSTTYPE_CHILD) {
-                        // 子要素（ネストされた定数グループ）の場合は再帰的にバリデーション
-                        ValidateConstants(constantElement, addError);
-                    } else {
-                        // 定数要素のバリデーション
-                        ValidateConstantElement(constantElement, addError);
-                    }
-                }
-            }
-        }
-
-        private void ValidateConstantElement(XElement constantElement, Action<XElement, string> addError) {
-            // 定数名の妥当性チェック（有効な識別子かどうか）
-            var constantName = constantElement.Name.LocalName;
-            if (!IsValidIdentifier(constantName)) {
-                addError(constantElement, $"定数名「{constantName}」は有効な識別子ではありません。");
-            }
-        }
-
-        private bool IsValidIdentifier(string name) {
-            if (string.IsNullOrEmpty(name)) return false;
-            if (!char.IsLetter(name[0]) && name[0] != '_') return false;
-            return name.All(c => char.IsLetterOrDigit(c) || c == '_');
-        }
-
-        public void GenerateCode(CodeRenderingContext ctx, RootAggregate rootAggregate) {
+        /// <summary>
+        /// ルート集約1個と対応するソースコードを生成します。
+        /// </summary>
+        internal static void Render(CodeRenderingContext ctx, RootAggregate rootAggregate) {
             var parser = new ConstantDefParser(((ISchemaPathNode)rootAggregate).XElement, ctx.SchemaParser);
 
             // データ型: 定数クラス
@@ -77,8 +45,5 @@ namespace Nijo.Models {
             });
         }
 
-        public void GenerateCode(CodeRenderingContext ctx) {
-            // 特になし
-        }
     }
 }

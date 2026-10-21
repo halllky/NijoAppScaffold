@@ -1,5 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,10 +35,10 @@ public class NodeOption {
     /// </summary>
     public string[]? TypeEnumValues { get; init; }
     /// <summary>
-    /// この属性が特定のモデル・ノード種別の組み合わせで利用可能かどうかを判定する。
+    /// この属性が特定のルート集約の種類・ノード種別の組み合わせで利用可能かどうかを判定する。
     /// GUI上での属性入力欄の活性制御に使用される。
     /// </summary>
-    public required Func<IModel, E_NodeType, bool> IsAvailable { get; init; }
+    public required Func<E_RootAggregateKind, E_NodeType, bool> IsAvailable { get; init; }
     /// <summary>
     /// この属性に対する入力検証のうち、IsAvailableでは判定できない複雑な検証。
     /// 保存時にサーバー側で実行される。
@@ -88,7 +87,7 @@ internal static class BasicNodeOptions {
             ソースコード上にあらわれる物理名とは別に表示用名称を設けたい場合に指定してください。
             表示用名称に改行を含めることはできません。
             """,
-        IsAvailable = (model, nodeType) => {
+        IsAvailable = (kind, nodeType) => {
             return true;
         },
         ValidateOthers = ctx => {
@@ -105,7 +104,7 @@ internal static class BasicNodeOptions {
             表示用名称を明示的に空文字にしたい場合に指定してください。
             {{DisplayName.AttributeName}} 属性と同時に指定することはできません。
             """,
-        IsAvailable = (model, nodeType) => {
+        IsAvailable = (kind, nodeType) => {
             return true;
         },
         ValidateOthers = ctx => {
@@ -126,12 +125,12 @@ internal static class BasicNodeOptions {
             ここで指定する値に改行を含めることはできません。
             複数の集約で同じテーブル名を指定することはできません。
             """,
-        IsAvailable = (model, nodeType) => {
-            return model is DataModel || model is QueryModel;
+        IsAvailable = (kind, nodeType) => {
+            return kind == E_RootAggregateKind.Stored || kind == E_RootAggregateKind.QueryableOnly;
         },
         ValidateOthers = ctx => {
             // QueryModelの場合はビューにマッピングされる場合のみ指定可能
-            if (ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model) && model is QueryModel) {
+            if (ctx.XElement.TryGetRootAggregateKind(out var kind) && kind == E_RootAggregateKind.QueryableOnly) {
                 var root = ctx.XElement.GetRootAggregateElement();
                 var mapToView = root.Attribute(MapToView!.AttributeName);
 
@@ -152,7 +151,7 @@ internal static class BasicNodeOptions {
             既定では集約を表す一意な文字列から生成されたハッシュ値が用いられます。
             ここで指定する値に改行を含めることはできません。
             """,
-        IsAvailable = (model, nodeType) => {
+        IsAvailable = (kind, nodeType) => {
             return true;
         },
         ValidateOthers = ctx => {
@@ -175,14 +174,14 @@ internal static class BasicNodeOptions {
             DisplayDataの主キーアサイン関数にのみ影響する。
             （カスタマイズ処理でURLとDisplayDataの間のデータのやり取りに使用する想定）
             """,
-        IsAvailable = (model, nodeType) => {
-            return (model is DataModel
-                 || model is QueryModel)
+        IsAvailable = (kind, nodeType) => {
+            return (kind == E_RootAggregateKind.Stored
+                 || kind == E_RootAggregateKind.QueryableOnly)
                  && (nodeType == E_NodeType.ValueMember
                   || nodeType == E_NodeType.Ref);
         },
         ValidateOthers = ctx => {
-            if (!ctx.SchemaParseContext.TryGetModel(ctx.XElement, out var model)) return;
+            if (!ctx.XElement.TryGetRootAggregateKind(out var kind)) return;
 
             var owner = ctx.XElement.Parent;
             if (owner == null) return;
@@ -190,17 +189,17 @@ internal static class BasicNodeOptions {
             var ownerType = ctx.SchemaParseContext.GetNodeType(owner);
 
             // データモデルの子集約には付与不可
-            if (model is DataModel && ownerType == E_NodeType.ChildAggregate) {
+            if (kind == E_RootAggregateKind.Stored && ownerType == E_NodeType.ChildAggregate) {
                 ctx.AddError("データモデルの子集約にはキーを指定できません。");
             }
 
             // クエリモデルの子集約には付与不可
-            if (model is QueryModel && ownerType == E_NodeType.ChildAggregate) {
+            if (kind == E_RootAggregateKind.QueryableOnly && ownerType == E_NodeType.ChildAggregate) {
                 ctx.AddError("クエリモデルの子集約にはキーを指定できません。");
             }
 
             // クエリモデルの子配列は、ビューにマッピングされない場合は付与不可
-            if (model is QueryModel && ownerType == E_NodeType.ChildrenAggregate) {
+            if (kind == E_RootAggregateKind.QueryableOnly && ownerType == E_NodeType.ChildrenAggregate) {
                 var root = ctx.XElement.GetRootAggregateElement();
                 var mapToView = root.Attribute(MapToView!.AttributeName);
 
@@ -210,7 +209,7 @@ internal static class BasicNodeOptions {
             }
 
             // クエリモデルのルート集約は、ビューにマッピングされない場合は付与不可
-            if (model is QueryModel && ownerType == E_NodeType.RootAggregate) {
+            if (kind == E_RootAggregateKind.QueryableOnly && ownerType == E_NodeType.RootAggregate) {
                 var root = ctx.XElement.GetRootAggregateElement();
                 var mapToView = root.Attribute(MapToView!.AttributeName);
 
@@ -229,8 +228,8 @@ internal static class BasicNodeOptions {
             RDBMS 上で NOT NULL 制約がつくことを表します。
             また、新規登録処理や更新処理でアプリケーション側で必須入力チェック処理が行われるようになります。
             """,
-        IsAvailable = (model, nodeType) => {
-            return model is DataModel
+        IsAvailable = (kind, nodeType) => {
+            return kind == E_RootAggregateKind.Stored
                 && (nodeType == E_NodeType.ValueMember
                  || nodeType == E_NodeType.Ref);
         },
@@ -251,9 +250,9 @@ internal static class BasicNodeOptions {
             {{nameof(IsQueryable)}} と同時に指定した場合、テーブルと全く同じ形の検索処理や画面表示用データも生成されます。
             これはきわめて単純なマスタデータなど、データベース上のデータ構造とそれを表示・編集する画面のデータ構造が完全一致する場合を想定しています。
             """,
-        IsAvailable = (model, nodeType) => {
-            // モデル自体がこの属性によって決まるため、DataStructuresセクションのモデルであればどれでも許可
-            return (model is DataModel || model is QueryModel || model is StructureModel)
+        IsAvailable = (kind, nodeType) => {
+            // ルート集約の種類自体がこの属性によって決まるため、DataStructuresセクションのルート集約であればどれでも許可
+            return (kind == E_RootAggregateKind.Stored || kind == E_RootAggregateKind.QueryableOnly || kind == E_RootAggregateKind.Structure)
                 && nodeType == E_NodeType.RootAggregate;
         },
         ValidateOthers = ctx => {
@@ -270,9 +269,9 @@ internal static class BasicNodeOptions {
             {{nameof(IsStored)}} が指定されていない場合、各項目をどのテーブルから取得するかを定義する処理は手動で実装する必要があります。
             {{nameof(IsStored)}} と同時に指定した場合の挙動は {{nameof(IsStored)}} の説明を参照してください。
             """,
-        IsAvailable = (model, nodeType) => {
-            // モデル自体がこの属性によって決まるため、DataStructuresセクションのモデルであればどれでも許可
-            return (model is DataModel || model is QueryModel || model is StructureModel)
+        IsAvailable = (kind, nodeType) => {
+            // ルート集約の種類自体がこの属性によって決まるため、DataStructuresセクションのルート集約であればどれでも許可
+            return (kind == E_RootAggregateKind.Stored || kind == E_RootAggregateKind.QueryableOnly || kind == E_RootAggregateKind.Structure)
                 && nodeType == E_NodeType.RootAggregate;
         },
         ValidateOthers = ctx => {
@@ -295,9 +294,9 @@ internal static class BasicNodeOptions {
             単に削除前と同じ値でINSERTするだけか、といった仕様はケースバイケースで異なり、
             コード生成で一律に対応するのが難しいためです。
             """,
-        IsAvailable = (model, nodeType) => {
+        IsAvailable = (kind, nodeType) => {
             // データモデルのルート集約のみ許可
-            return model is DataModel && nodeType == E_NodeType.RootAggregate;
+            return kind == E_RootAggregateKind.Stored && nodeType == E_NodeType.RootAggregate;
         },
         ValidateOthers = ctx => {
             // IsAvailableで基本的な判定は完了しているため、追加の検証は不要
@@ -314,8 +313,8 @@ internal static class BasicNodeOptions {
             例: "xxxx;yyyy;zzzz;" と指定した場合、Xの列、Yの列、Zの列それぞれにユニーク制約がつきます。
             例: "xxxx,yyyy;zzzz;" と指定した場合、Xの列とYの列の組み合わせと、Zの列にユニーク制約がつきます。
             """,
-        IsAvailable = (model, nodeType) => {
-            return model is DataModel
+        IsAvailable = (kind, nodeType) => {
+            return kind == E_RootAggregateKind.Stored
                 && (nodeType == E_NodeType.RootAggregate
                 || nodeType == E_NodeType.ChildAggregate
                 || nodeType == E_NodeType.ChildrenAggregate);
@@ -414,9 +413,9 @@ internal static class BasicNodeOptions {
             残りの主キーが動的に登録されていきます。
             通常の列挙体（区分値がシステム運用中に変わらないもの）はこれではなくEnumで定義してください。
             """,
-        IsAvailable = (model, nodeType) => {
+        IsAvailable = (kind, nodeType) => {
             // データモデルのルート集約のみ許可
-            return model is DataModel && nodeType == E_NodeType.RootAggregate;
+            return kind == E_RootAggregateKind.Stored && nodeType == E_NodeType.RootAggregate;
         },
         ValidateOthers = ctx => {
             // IsAvailableで基本的な判定は完了しているため、追加の検証は不要
@@ -431,9 +430,9 @@ internal static class BasicNodeOptions {
             この属性が指定される項目は {{nameof(IsKey)}} が指定されている必要があります。
             """,
         Type = E_NodeOptionType.Boolean,
-        IsAvailable = (model, nodeType) => {
+        IsAvailable = (kind, nodeType) => {
             // データモデルのValueMemberにのみ適用可能
-            return model is DataModel && nodeType == E_NodeType.ValueMember;
+            return kind == E_RootAggregateKind.Stored && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
             // IsGenericLookupTable と組み合わせて使う必要がある
@@ -469,8 +468,8 @@ internal static class BasicNodeOptions {
             例えば「Countries」「Strategies」などのカテゴリ名を指定します。
             参照先テーブルの {{nameof(IsGenericLookupTable)}} 属性と組み合わせて使います。
             """,
-        IsAvailable = (model, nodeType) => {
-            return model is DataModel && nodeType == E_NodeType.Ref;
+        IsAvailable = (kind, nodeType) => {
+            return kind == E_RootAggregateKind.Stored && nodeType == E_NodeType.Ref;
         },
         ValidateOthers = ctx => {
             // 参照先が汎用参照テーブルでなければエラー
@@ -500,9 +499,9 @@ internal static class BasicNodeOptions {
             指定した場合、Entity Framework CoreのToView()を使用してビューにマッピングされるEFCoreEntityが生成されます。
             ビュー定義自体はソースコード生成の対象外となり、手動で作成する必要があります。
             """,
-        IsAvailable = (model, nodeType) => {
+        IsAvailable = (kind, nodeType) => {
             // クエリモデルのルート集約のみ許可
-            return model is QueryModel && nodeType == E_NodeType.RootAggregate;
+            return kind == E_RootAggregateKind.QueryableOnly && nodeType == E_NodeType.RootAggregate;
         },
         ValidateOthers = ctx => {
             // IsAvailableで基本的な判定は完了しているため、追加の検証は不要
@@ -517,9 +516,9 @@ internal static class BasicNodeOptions {
             検索条件のみに生成される属性は処理の挙動の指示にのみ使われる想定です。
             例: 「退職後1年以上経過している人のみ抽出」のような、検索条件の絞り込みにのみ必要な属性。
             """,
-        IsAvailable = (model, nodeType) => {
+        IsAvailable = (kind, nodeType) => {
             // QueryModelのValueMemberのみ許可
-            return model is QueryModel && nodeType == E_NodeType.ValueMember;
+            return kind == E_RootAggregateKind.QueryableOnly && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
             // IsAvailableで基本的な判定は完了しているため、追加の検証は不要
@@ -544,8 +543,8 @@ internal static class BasicNodeOptions {
             - {{STRING_SEARCH_BEHAVIOR_EXACT}}: 完全一致
             - {{STRING_SEARCH_BEHAVIOR_RANGE}}: 範囲検索（辞書順で以上・以下）
             """,
-        IsAvailable = (model, nodeType) => {
-            return (model is QueryModel || model is DataModel)
+        IsAvailable = (kind, nodeType) => {
+            return (kind == E_RootAggregateKind.QueryableOnly || kind == E_RootAggregateKind.Stored)
                 && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
@@ -605,9 +604,9 @@ internal static class BasicNodeOptions {
             - クエリモデルのルート集約名 + {{string.Join(" または ", AvailableFromCommandToQuery.Keys)}}
             指定しなかった場合は引数なしのコマンドとみなされます。
             """,
-        IsAvailable = (model, nodeType) => {
+        IsAvailable = (kind, nodeType) => {
             // コマンドモデルのルート集約のみ許可
-            return model is CommandModel && nodeType == E_NodeType.RootAggregate;
+            return kind == E_RootAggregateKind.Command && nodeType == E_NodeType.RootAggregate;
         },
         ValidateOthers = ctx => {
             // 値未指定は不正
@@ -649,9 +648,9 @@ internal static class BasicNodeOptions {
             - クエリモデルのルート集約名 + {{string.Join(" または ", AvailableFromCommandToQuery.Keys.Select(key => $":{key}"))}}
             指定しなかった場合は戻り値なしのコマンドとみなされます。
             """,
-        IsAvailable = (model, nodeType) => {
+        IsAvailable = (kind, nodeType) => {
             // コマンドモデルのルート集約のみ許可
-            return model is CommandModel && nodeType == E_NodeType.RootAggregate;
+            return kind == E_RootAggregateKind.Command && nodeType == E_NodeType.RootAggregate;
         },
         ValidateOthers = ctx => {
             // 値未指定は不正
@@ -707,9 +706,9 @@ internal static class BasicNodeOptions {
             その2種のうちどちらを参照するかの指定。
             {{string.Join(", ", AvailableFromStructureToQuery.Select(key => $"\"{key}\""))}}のみ指定可能。
             """,
-        IsAvailable = (model, nodeType) => {
+        IsAvailable = (kind, nodeType) => {
             // CommandModelまたはStructureModelの外部参照のみ許可
-            return (model is CommandModel || model is StructureModel)
+            return (kind == E_RootAggregateKind.Command || kind == E_RootAggregateKind.Structure)
                 && nodeType == E_NodeType.Ref;
         },
         ValidateOthers = ctx => {
@@ -729,8 +728,8 @@ internal static class BasicNodeOptions {
         HelpText = $$"""
             RDBMS上での文字列項目の最大長。整数で指定してください。
             """,
-        IsAvailable = (model, nodeType) => {
-            return model is DataModel
+        IsAvailable = (kind, nodeType) => {
+            return kind == E_RootAggregateKind.Stored
                 && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
@@ -747,10 +746,10 @@ internal static class BasicNodeOptions {
         HelpText = $$"""
             数値系属性の整数部桁数 + 小数部桁数
             """,
-        IsAvailable = (model, nodeType) => {
-            return (model is DataModel
-                 || model is QueryModel
-                 || model is CommandModel)
+        IsAvailable = (kind, nodeType) => {
+            return (kind == E_RootAggregateKind.Stored
+                 || kind == E_RootAggregateKind.QueryableOnly
+                 || kind == E_RootAggregateKind.Command)
                  && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
@@ -767,10 +766,10 @@ internal static class BasicNodeOptions {
         HelpText = $$"""
             数値系属性の小数部桁数
             """,
-        IsAvailable = (model, nodeType) => {
-            return (model is DataModel
-                 || model is QueryModel
-                 || model is CommandModel)
+        IsAvailable = (kind, nodeType) => {
+            return (kind == E_RootAggregateKind.Stored
+                 || kind == E_RootAggregateKind.QueryableOnly
+                 || kind == E_RootAggregateKind.Command)
                  && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
@@ -787,8 +786,8 @@ internal static class BasicNodeOptions {
         HelpText = $$"""
             シーケンス物理名
             """,
-        IsAvailable = (model, nodeType) => {
-            return model is DataModel && nodeType == E_NodeType.ValueMember;
+        IsAvailable = (kind, nodeType) => {
+            return kind == E_RootAggregateKind.Stored && nodeType == E_NodeType.ValueMember;
         },
         ValidateOthers = ctx => {
             // 特に制約なし
@@ -806,8 +805,8 @@ internal static class BasicNodeOptions {
             定数の型を指定します。
             string（文字列）、int（整数）、decimal（小数）、template（テンプレート文字列）、child（ネストされた定数グループ）のいずれかを指定してください。
             """,
-        IsAvailable = (model, nodeType) => {
-            return model is ConstantModel;
+        IsAvailable = (kind, nodeType) => {
+            return kind == E_RootAggregateKind.Constant;
         },
         ValidateOthers = ctx => {
             var validTypes = new[] {
@@ -862,8 +861,8 @@ internal static class BasicNodeOptions {
             定数の値を指定します。
             型に応じて適切な形式で指定してください。
             """,
-        IsAvailable = (model, nodeType) => {
-            return model is ConstantModel;
+        IsAvailable = (kind, nodeType) => {
+            return kind == E_RootAggregateKind.Constant;
         },
         ValidateOthers = ctx => {
             // 値の妥当性チェックはConstantTypeで実施

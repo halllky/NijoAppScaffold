@@ -108,7 +108,7 @@ public class NijoXmlCustomAttribute {
     /// <summary>
     /// このカスタム属性が使用可能なモデルの一覧。
     /// DataStructures セクションのルート集約は <see cref="AVAILABLE_FOR_STORED"/> などの条件で、
-    /// それ以外のセクションのルート集約はモデルのスキーマ定義上での名前で指定する。
+    /// それ以外のセクションのルート集約はその種類のスキーマ定義上での名前（<see cref="RootAggregateKindExtensions.ToSchemaName"/>）で指定する。
     /// nijo.xml 上ではXML要素の属性としてカンマ区切りで記載される。
     /// </summary>
     public string[] AvailableModels { get; set; } = [];
@@ -122,12 +122,12 @@ public class NijoXmlCustomAttribute {
     /// <summary>
     /// <see cref="AvailableModels"/> に指定できる値を列挙します。
     /// </summary>
-    internal static IEnumerable<string> GetAvailableModelCandidates(SchemaParseRule rule) {
+    internal static IEnumerable<string> GetAvailableModelCandidates() {
         yield return AVAILABLE_FOR_STORED;
         yield return AVAILABLE_FOR_QUERYABLE;
         yield return AVAILABLE_FOR_STRUCTURE;
-        foreach (var model in rule.Models) {
-            yield return model.SchemaName;
+        foreach (var kind in RootAggregateKindExtensions.TYPE_ATTRIBUTE_KINDS) {
+            yield return kind.ToSchemaName();
         }
     }
 
@@ -136,12 +136,12 @@ public class NijoXmlCustomAttribute {
     /// IsStored, IsQueryable 属性が両方指定されたデータ構造の場合、
     /// <see cref="AVAILABLE_FOR_STORED"/>, <see cref="AVAILABLE_FOR_QUERYABLE"/> のいずれかが指定されていれば使用可能。
     /// </summary>
-    internal bool IsAvailableFor(XElement xElement, IModel model) {
-        return EnumerateAvailableModelKeys(xElement, model).Any(AvailableModels.Contains);
+    internal bool IsAvailableFor(XElement xElement, E_RootAggregateKind kind) {
+        return EnumerateAvailableModelKeys(xElement, kind).Any(AvailableModels.Contains);
 
-        static IEnumerable<string> EnumerateAvailableModelKeys(XElement xElement, IModel model) {
+        static IEnumerable<string> EnumerateAvailableModelKeys(XElement xElement, E_RootAggregateKind kind) {
             if (!xElement.IsInDataStructuresSection()) {
-                yield return model.SchemaName;
+                yield return kind.ToSchemaName();
                 yield break;
             }
 
@@ -200,7 +200,7 @@ public class NijoXmlCustomAttribute {
         }
 
         // 使用できない値が指定されていないかチェック
-        var candidates = GetAvailableModelCandidates(rule).ToArray();
+        var candidates = GetAvailableModelCandidates().ToArray();
         foreach (var modelName in AvailableModels) {
             if (!candidates.Contains(modelName)) {
                 yield return $"カスタム属性 '{PhysicalName}' の {nameof(AvailableModels)} に、不正な値 '{modelName}' が指定されています。指定できる値は {candidates.Join(", ")} です。";

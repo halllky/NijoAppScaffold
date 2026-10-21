@@ -24,7 +24,7 @@ internal class DisplayDataMessageContainer : MessageContainer.Setter {
         // この集約がデータモデルの場合、登録更新削除処理で使われるメッセージの入れ物のインタフェースを実装する
         // ただしビューの場合はSaveCommandが生成されないため実装しない
         if (_aggregate.GetRoot() is RootAggregate root
-            && root.Model is DataModel
+            && root.IsStored
             && !root.IsView) {
             var saveCommandMessage = new SaveCommandMessageContainer(_aggregate);
             yield return saveCommandMessage.InterfaceName;
@@ -60,7 +60,7 @@ internal class DisplayDataMessageContainer : MessageContainer.Setter {
         // この集約がデータモデルでないのであれば関係なし
         // ビューの場合もSaveCommandが生成されないため関係なし
         if (_aggregate.GetRoot() is not RootAggregate root) return SKIP_MARKER;
-        if (root.Model is not DataModel) return SKIP_MARKER;
+        if (!root.IsStored) return SKIP_MARKER;
         if (root.IsView) return SKIP_MARKER;
 
         var saveCommandMessage = new SaveCommandMessageContainer(_aggregate);

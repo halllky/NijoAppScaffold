@@ -15,6 +15,10 @@
 3. バリデーションチェック
 4. 内部モデルへの変換
 
+## ルート集約の種類
+ルート集約の種類（[E_RootAggregateKind](./E_RootAggregateKind.cs)）によって、指定できる属性や検証内容が異なります。
+種類ごとの検証は [RootAggregateValidation](./RootAggregateValidation/) フォルダにあります。
+
 ## 関連コンポーネント
 
 - [`../Models/`](../Models/): 変換先の内部モデル定義

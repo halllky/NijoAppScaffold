@@ -1,6 +1,4 @@
-using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
-using Nijo.Models;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -19,15 +17,6 @@ namespace Nijo.SchemaParsing;
 /// </summary>
 public class SchemaParseRule {
     /// <summary>
-    /// Type 属性で指定されるルート集約の種類。
-    /// DataStructures セクション以外のセクションに定義されるルート集約が対象。
-    /// </summary>
-    public required IModel[] Models { get; init; }
-    /// <summary>
-    /// DataStructures セクションに定義されるルート集約の種類。
-    /// </summary>
-    public required DataStructureModels DataStructureModels { get; init; }
-    /// <summary>
     /// 値メンバーの種類
     /// </summary>
     public required IValueMemberType[] ValueMemberTypes { get; init; }
@@ -41,12 +30,6 @@ public class SchemaParseRule {
     /// 既定の型解釈ルール
     /// </summary>
     public static SchemaParseRule Default() {
-        var models = new IModel[] {
-            new CommandModel(),
-            new StaticEnumModel(),
-            new ValueObjectModel(),
-            new ConstantModel(),
-        };
         var valueMemberTypes = new IValueMemberType[] {
             // 文字列系
             new ValueMemberTypes.Word(),
@@ -92,8 +75,6 @@ public class SchemaParseRule {
             BasicNodeOptions.StringSearchBehavior,
         };
         return new() {
-            Models = models,
-            DataStructureModels = new(),
             ValueMemberTypes = valueMemberTypes,
             NodeOptions = nodeOptions,
         };
@@ -107,7 +88,8 @@ public class SchemaParseRule {
         // スキーマ定義名重複チェック
         var appearedName = new HashSet<string>();
         var duplicates = new HashSet<string>();
-        foreach (var name in GetAllModels().Select(m => m.SchemaName).Concat(ValueMemberTypes.Select(t => t.SchemaTypeName))) {
+        var rootAggregateKindNames = Enum.GetValues<E_RootAggregateKind>().Select(kind => kind.ToSchemaName());
+        foreach (var name in rootAggregateKindNames.Concat(ValueMemberTypes.Select(t => t.SchemaTypeName))) {
             if (appearedName.Contains(name)) {
                 duplicates.Add(name);
             } else {
@@ -133,17 +115,4 @@ public class SchemaParseRule {
         }
     }
 
-    /// <summary>
-    /// このルールで定義されているすべてのモデルを列挙します。
-    /// </summary>
-    public IEnumerable<IModel> GetAllModels() {
-        return DataStructureModels.All.Concat(Models);
-    }
-
-    /// <summary>
-    /// 特定のモデル・ノード種別の組み合わせで使用可能なオプショナル属性を列挙します。
-    /// </summary>
-    public IEnumerable<NodeOption> GetAvailableOptionsFor(IModel model, E_NodeType nodeType) {
-        return NodeOptions.Where(opt => opt.IsAvailable(model, nodeType));
-    }
 }

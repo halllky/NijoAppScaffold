@@ -51,12 +51,12 @@ internal class ValueObjectTypesMd {
 
             ## 静的区分型（`当該種類名`）
 
-            スキーマ定義で `{{EnumDefParser.SCHEMA_NAME}}` モデルとして定義された種類をメンバー型として使用できます。
+            スキーマ定義で `{{E_RootAggregateKind.StaticEnum.ToSchemaName()}}` モデルとして定義された種類をメンバー型として使用できます。
             {{SchemaParseContext.ATTR_NODE_TYPE}} 属性には当該種類の物理名を指定してください。
 
             ## 値オブジェクト型（`当該値オブジェクト名`）
 
-            スキーマ定義で `{{ValueObjectModel.SCHEMA_NAME}}` モデルとして定義された値オブジェクトをメンバー型として使用できます。
+            スキーマ定義で `{{E_RootAggregateKind.ValueObject.ToSchemaName()}}` モデルとして定義された値オブジェクトをメンバー型として使用できます。
             {{SchemaParseContext.ATTR_NODE_TYPE}} 属性には当該値オブジェクトの物理名を指定してください。
 
             """;

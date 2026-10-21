@@ -17,17 +17,13 @@ namespace Nijo.Models {
     /// 識別子や複合値を表すためのオブジェクト。
     /// 主に集約のキーとして使用される。
     /// </summary>
-    internal class ValueObjectModel : IModel {
-        internal const string SCHEMA_NAME = "value-object";
+    internal static class ValueObjectModel {
         internal const string JSON_CONVERTER_NAME = "JsonConverter";
 
-        public string SchemaName => SCHEMA_NAME;
-
-        public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
-            // 特に検証ロジックなし
-        }
-
-        public void GenerateCode(CodeRenderingContext ctx, RootAggregate rootAggregate) {
+        /// <summary>
+        /// ルート集約1個と対応するソースコードを生成します。
+        /// </summary>
+        internal static void Render(CodeRenderingContext ctx, RootAggregate rootAggregate) {
             // 値オブジェクトクラスの生成
             ctx.CoreLibrary(dir => {
                 dir.Generate(RenderCSharp(rootAggregate, ctx));
@@ -137,10 +133,6 @@ namespace Nijo.Models {
                     export type {{aggregateName}} = string & { readonly __brand: unique symbol }
                     """,
             };
-        }
-
-        public void GenerateCode(CodeRenderingContext ctx) {
-            // 特になし
         }
 
         /// <summary>

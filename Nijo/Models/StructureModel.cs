@@ -13,78 +13,14 @@ namespace Nijo.Models {
     /// <summary>
     /// 単純な構造体モデル。
     /// サーバー(C#)とクライアント(TypeScript)の双方で共有するための入れ子可能なオブジェクトの定義を生成する。
+    /// IsStored 属性も IsQueryable 属性も指定されていないデータ構造から生成される。
     /// </summary>
-    internal class StructureModel : IModel {
-        public string SchemaName => "structure-model";
-
-        public void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
-            // 外部参照のチェック
-            ValidateRefTo(rootAggregateElement, context, addError);
-        }
+    internal static class StructureModel {
 
         /// <summary>
-        /// StructureModelの外部参照をチェックします
+        /// ルート集約1個と対応するソースコードを生成します。
         /// </summary>
-        private void ValidateRefTo(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
-            // 自身を起点とするすべての外部参照を取得
-            var refElements = rootAggregateElement
-                .Descendants()
-                .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value?.StartsWith(SchemaParseContext.NODE_TYPE_REFTO + ":") == true)
-                .ToList();
-
-            if (!refElements.Any()) return;
-
-            foreach (var refElement in refElements) {
-                var refTo = context.FindRefTo(refElement);
-                if (refTo == null) {
-                    addError(refElement, $"参照先の要素が見つかりません: {refElement.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value}");
-                    continue;
-                }
-
-                // 自身のツリーの集約を参照していないかチェック
-                var rootElement = refElement.GetRootAggregateElement();
-                var refToRoot = refTo.GetRootAggregateElement();
-
-                if (rootElement == refToRoot) {
-                    addError(refElement, "自身のツリーの集約を参照することはできません。");
-                    continue;
-                }
-
-                // 参照先が検索可能なデータ構造、または構造体か確認
-                var isQueryable = refToRoot.IsQueryable();
-                var isStructure = !refToRoot.IsStored() && !isQueryable;
-
-                if (!isQueryable && !isStructure) {
-                    addError(refElement, $"{BasicNodeOptions.IsStored.AttributeName}属性も{BasicNodeOptions.IsQueryable.AttributeName}属性も指定されていないデータ構造からは、{BasicNodeOptions.IsQueryable.AttributeName}属性が指定されたデータ構造、または{BasicNodeOptions.IsStored.AttributeName}属性も{BasicNodeOptions.IsQueryable.AttributeName}属性も指定されていないデータ構造しか参照できません。");
-                    continue;
-                }
-
-                // 検索可能なデータ構造を参照する場合はRefToObjectの指定が必須
-                var refToObject = refElement.Attribute(BasicNodeOptions.RefToObject.AttributeName);
-                if (isQueryable && refToObject == null) {
-                    addError(refElement, $"{BasicNodeOptions.IsQueryable.AttributeName}属性が指定されたデータ構造を外部参照する場合、{BasicNodeOptions.RefToObject.AttributeName}属性を指定する必要があります。");
-                }
-
-                // RefToObjectの値が不正かチェック
-                if (isQueryable
-                        && refToObject != null
-                        && !BasicNodeOptions.AvailableFromStructureToQuery.Contains(refToObject.Value)) {
-                    addError(refElement, $"{BasicNodeOptions.RefToObject.AttributeName}属性の値は {string.Join(" または ", BasicNodeOptions.AvailableFromStructureToQuery)} のいずれかを指定してください。");
-                }
-
-                // 検索条件を参照する場合はルート集約のみ参照可能
-                if (refToObject?.Value == BasicNodeOptions.REF_TO_OBJECT_SEARCH_CONDITION
-                        && refTo != refToRoot) {
-                    addError(refElement, $"検索条件を参照する場合はルート集約のみ指定可能です。");
-                }
-
-                // StructureModelを参照する場合はRefToObjectの指定は不要（指定されていても無視）
-            }
-        }
-
-        public void GenerateCode(CodeRenderingContext ctx, RootAggregate rootAggregate) {
-            var aggregateFile = new SourceFileByAggregate(rootAggregate);
-
+        internal static void Render(CodeRenderingContext ctx, RootAggregate rootAggregate, SourceFileByAggregate aggregateFile) {
             // C# クラス定義（ルートと子孫）
             aggregateFile.AddCSharpClass(PlainStructure.RenderCSharpRecursively(rootAggregate, ctx), "Class_Structure");
 
@@ -119,11 +55,12 @@ namespace Nijo.Models {
 
             // 定数: メタデータ
             aggregateFile.AddTypeScriptFunction(AggregateMetadata.RenderTsConstant(rootAggregate, displayData, null, ctx));
-
-            aggregateFile.ExecuteRendering(ctx);
         }
 
-        public void GenerateCode(CodeRenderingContext ctx) {
+        /// <summary>
+        /// すべての構造体で共通して使われる、ルート集約1個と対応しないソースコードを生成します。
+        /// </summary>
+        internal static void RenderCommonModules(CodeRenderingContext ctx) {
             ctx.Use<DeepEqualFunction.OptionType>();
         }
     }

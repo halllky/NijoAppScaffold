@@ -45,8 +45,8 @@ namespace Nijo.Parts.CSharp {
                 // 更新は常にルート集約の単位
                 if (Aggregate is not RootAggregate rootAggregate) return false;
 
-                // QueryModelのビューの場合は読み取り専用のためバージョンカラムは不要
-                if (rootAggregate.Model is QueryModel && rootAggregate.IsView) return false;
+                // ビューの場合は読み取り専用のためバージョンカラムは不要
+                if (rootAggregate.IsView) return false;
 
                 return true;
             }
@@ -202,9 +202,7 @@ namespace Nijo.Parts.CSharp {
             foreach (var refFrom in Aggregate.GetRefFroms()) {
                 // DBの実体をもたないクエリモデルやコマンドモデルから参照された場合はナビゲーションプロパティを張らない
                 var refFromRoot = refFrom.Owner.GetRoot();
-                var hasDbEntity = refFromRoot.Model is DataModel
-                               || refFromRoot.Model is QueryModel
-                               && refFromRoot.IsView;
+                var hasDbEntity = refFromRoot.IsStored || refFromRoot.IsView;
 
                 if (hasDbEntity) {
                     yield return new NavigationProperty.NavigationOfRef(refFrom);

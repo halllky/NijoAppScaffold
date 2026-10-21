@@ -27,7 +27,7 @@ public class DisplayName属性のテスト {
         Assert.That(errors, Is.Empty);
 
         var schema = await BuildSchemaAsync(project.Project.SchemaXmlPath);
-        var rootAggregate = schema.GetRootAggregates().Single(root => root.PhysicalName == "Data1");
+        var rootAggregate = schema.GetDataStructures().Single(root => root.PhysicalName == "Data1");
         var idMember = rootAggregate.GetMembers().OfType<ValueMember>().Single(member => member.PhysicalName == "Id");
         var nameMember = rootAggregate.GetMembers().OfType<ValueMember>().Single(member => member.PhysicalName == "Name");
 
@@ -73,7 +73,7 @@ public class DisplayName属性のテスト {
         Assert.That(errors, Is.Empty);
 
         var schema = await BuildSchemaAsync(project.Project.SchemaXmlPath);
-        var staticEnum = schema.GetRootAggregates().Single(root => root.PhysicalName == "Status");
+        var staticEnum = schema.GetStaticEnums().Single(root => root.PhysicalName == "Status");
         var open = staticEnum.GetMembers().OfType<StaticEnumValueDef>().Single(member => member.PhysicalName == "Open");
         var closed = staticEnum.GetMembers().OfType<StaticEnumValueDef>().Single(member => member.PhysicalName == "Closed");
 

@@ -207,9 +207,7 @@ namespace Nijo.Models.QueryModelModules {
                     foreach (var refFrom in Aggregate.GetRefFroms()) {
                         // DBの実体をもたないクエリモデルやコマンドモデルから参照された場合はナビゲーションプロパティを張らない
                         var refFromRoot = refFrom.Owner.GetRoot();
-                        var hasDbEntity = refFromRoot.Model is DataModel
-                                       || refFromRoot.Model is QueryModel
-                                       && refFromRoot.IsView;
+                        var hasDbEntity = refFromRoot.IsStored || refFromRoot.IsView;
 
                         if (hasDbEntity) {
                             yield return new SearchResultRefFromMember(refFrom);

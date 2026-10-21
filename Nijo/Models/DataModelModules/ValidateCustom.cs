@@ -103,8 +103,8 @@ namespace Nijo.Models.DataModelModules {
 
             // 上記カスタム属性を利用している ValueMember を型ごとにグルーピング
             var grouped = ctx.Schema
-                .GetRootAggregates()
-                .Where(agg => agg.Model is DataModel)
+                .GetDataStructures()
+                .Where(agg => agg.IsStored)
                 .SelectMany(agg => agg.EnumerateThisAndDescendants())
                 .SelectMany(agg => agg.GetMembers())
                 .OfType<ValueMember>()

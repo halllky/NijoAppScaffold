@@ -177,7 +177,7 @@ namespace Nijo.Models.QueryModelModules {
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}}のデータベースへの問い合わせデータ構造（SQLで言うSELECT句とFROM句）を定義する
                 /// </summary>
-                {{If(_rootAggregate.Model is DataModel, () => $$"""
+                {{If(_rootAggregate.IsStored, () => $$"""
                 {{RenderDataModelQuerySource(ctx)}}
                 """).ElseIf(_rootAggregate.IsView, () => $$"""
                 {{RenderQueryModelViewQuerySource(ctx)}}
