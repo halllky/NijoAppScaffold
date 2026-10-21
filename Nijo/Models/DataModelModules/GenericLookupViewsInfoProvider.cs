@@ -13,7 +13,7 @@ namespace Nijo.Models.DataModelModules;
 /// 全汎用参照テーブルのビュー情報を集約し、
 /// DbContext に GetGeneralLookupViewsInfo() 静的メソッドを追加する。
 /// </summary>
-internal class GenericLookupViewsInfoProvider : IMultiAggregateSourceFile {
+internal class GenericLookupViewsInfoProvider : ISharedSourceFile<CodeRenderingContext> {
 
     private readonly Lock _lock = new();
     private readonly List<(RootAggregate Root, GenericLookupTableParser.GenericLookupTableCategory[] Categories)> _tables = [];
@@ -26,12 +26,12 @@ internal class GenericLookupViewsInfoProvider : IMultiAggregateSourceFile {
         }
     }
 
-    void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
+    void ISharedSourceFile<CodeRenderingContext>.RegisterDependencies(CodeRenderingContext ctx) {
         // DbContextクラスに静的メソッドとインターフェースを追加
         ctx.Use<DbContextClass>().AddAdditionalMethod(RenderViewsInfoMethod());
     }
 
-    void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
+    void ISharedSourceFile<CodeRenderingContext>.Render(CodeRenderingContext ctx) {
         // 追加コードはすべて RegisterDependencies で AddAdditionalMethod 済み
     }
 

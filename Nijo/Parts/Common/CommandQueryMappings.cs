@@ -15,7 +15,7 @@ namespace Nijo.Parts.Common {
     /// JavaScript向けには、QueryModelやCommandModelの種類を表す文字列をキーにしてそれと対応するオブジェクトや関数を返すマッピング定義。
     /// C#向けには、QueryModelやCommandModelの種類を表すenum。
     /// </summary>
-    internal class CommandQueryMappings : IMultiAggregateSourceFile {
+    internal class CommandQueryMappings : ISharedSourceFile<CodeRenderingContext> {
 
         /// <summary>
         /// JavaScript用: DataModelの型名のリテラル型
@@ -57,12 +57,12 @@ namespace Nijo.Parts.Common {
         private readonly List<RootAggregate> _dataModels = [];
         private readonly List<RootAggregate> _structureModels = [];
 
-        void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
+        void ISharedSourceFile<CodeRenderingContext>.RegisterDependencies(CodeRenderingContext ctx) {
             // ディープイコールのオプション型に依存しているので
             ctx.Use<DeepEqualFunction.OptionType>();
         }
 
-        void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
+        void ISharedSourceFile<CodeRenderingContext>.Render(CodeRenderingContext ctx) {
             ctx.CoreLibrary(dir => {
                 dir.Directory("Util", utilDir => {
                     utilDir.Generate(RenderCSharp(ctx));

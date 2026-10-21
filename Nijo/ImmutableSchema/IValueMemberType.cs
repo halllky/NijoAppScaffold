@@ -62,7 +62,7 @@ namespace Nijo.ImmutableSchema {
         /// <summary>
         /// 型に由来する生成ソースがある場合はここで登録する
         /// </summary>
-        void RegisterDependencies(IMultiAggregateSourceFileManager ctx);
+        void RegisterDependencies(CodeRenderingContext ctx);
         /// <summary>
         /// 型に由来する生成ソースがある場合はここでレンダリングする
         /// </summary>

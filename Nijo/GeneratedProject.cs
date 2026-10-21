@@ -253,48 +253,12 @@ namespace Nijo {
                 return false;
             }
 
-            using var ctx = new CodeRenderingContext(this, parseContext.ProjectOptions, renderingOptions, parseContext, immutableSchema);
+            var ctx = new CodeRenderingContext(this, parseContext.ProjectOptions, renderingOptions, parseContext, immutableSchema);
 
             logger.LogInformation("ソース自動生成開始");
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
             AppScaffold.GenerateCode(ctx, logger);
-
-            // IMultiAggregateSourceFile が別の IMultiAggregateSourceFile に依存することがあるので、
-            // すべて漏らさず確実に依存関係を登録させる。
-            // ソース自動生成中で一度でも登場した IMultiAggregateSourceFile それぞれ必ず1回ずつ依存関係登録メソッドを呼ぶ
-            var handled = new HashSet<IMultiAggregateSourceFile>();
-            while (true) {
-                var appeared = ctx.GetMultiAggregateSourceFiles();
-                var unhandled = appeared.Where(src => !handled.Contains(src)).ToArray();
-
-                if (unhandled.Length == 0) {
-                    break; // 全ての IMultiAggregateSourceFile の依存関係登録メソッドが呼ばれたら終了
-                }
-                foreach (var src in unhandled) {
-                    src.RegisterDependencies(ctx);
-                    handled.Add(src);
-                }
-            }
-
-            // 以降は IMultiAggregateSourceFile の新規登録不可
-            ctx.StopUseMultiAggregateSourceFiles();
-
-            // IMultiAggregateSourceFile のレンダリング実行
-            foreach (var src in ctx.GetMultiAggregateSourceFiles()) {
-                logger.LogInformation("レンダリング開始: {name}", src.GetType().Name);
-                try {
-                    src.Render(ctx);
-                } catch (Exception ex) {
-                    throw new InvalidOperationException($"{src.GetType().Name}のレンダリングで例外が発生", ex);
-                }
-            }
-
-            AppScaffold.GenerateCodeAfterAll(ctx);
-
-            // 生成されていないファイルやディレクトリを削除
-            logger.LogInformation("不要ファイル削除開始");
-            ctx.CleanUnhandledFilesAndDirectories();
 
             stopwatch.Stop();
             logger.LogInformation("ソース自動生成終了 ({elapsed}ms)", stopwatch.ElapsedMilliseconds);

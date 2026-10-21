@@ -88,7 +88,7 @@ internal class Word : IValueMemberType {
             && vm.SchemaPathNode.XElement.Attribute(BasicNodeOptions.StringSearchBehavior.AttributeName)?.Value == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_RANGE;
     }
 
-    void IValueMemberType.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
+    void IValueMemberType.RegisterDependencies(CodeRenderingContext ctx) {
         // 特になし
     }
 

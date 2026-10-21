@@ -12,7 +12,7 @@ namespace Nijo.Parts.Common {
     /// <summary>
     /// 区分値の定義がレンダリングされるファイル
     /// </summary>
-    internal class EnumFile : IMultiAggregateSourceFile {
+    internal class EnumFile : ISharedSourceFile<CodeRenderingContext> {
 
         internal const string TS_FILENAME = "enum-defs.ts";
         internal const string TS_TYPE_MAP = "EnumTypeMap";
@@ -42,11 +42,11 @@ namespace Nijo.Parts.Common {
             }
         }
 
-        void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
+        void ISharedSourceFile<CodeRenderingContext>.RegisterDependencies(CodeRenderingContext ctx) {
             // 特になし
         }
 
-        void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
+        void ISharedSourceFile<CodeRenderingContext>.Render(CodeRenderingContext ctx) {
 
             ctx.CoreLibrary(dir => {
                 dir.Generate(new SourceFile {

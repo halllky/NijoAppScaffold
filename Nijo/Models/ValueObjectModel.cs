@@ -138,7 +138,7 @@ namespace Nijo.Models {
         /// <summary>
         /// JSONコンバーター
         /// </summary>
-        public class ValueObjectJsonConverter : IMultiAggregateSourceFile {
+        public class ValueObjectJsonConverter : ISharedSourceFile<CodeRenderingContext> {
 
             private readonly List<string> _converterClassNames = [];
             private readonly Lock _lock = new();
@@ -149,11 +149,11 @@ namespace Nijo.Models {
                 }
             }
 
-            void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
+            void ISharedSourceFile<CodeRenderingContext>.RegisterDependencies(CodeRenderingContext ctx) {
                 // 特になし
             }
 
-            void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
+            void ISharedSourceFile<CodeRenderingContext>.Render(CodeRenderingContext ctx) {
                 ctx.CoreLibrary(dir => {
                     dir.Directory("Util", efcoreDir => {
                         efcoreDir.Generate(Render(ctx));

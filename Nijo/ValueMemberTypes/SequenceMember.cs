@@ -47,7 +47,7 @@ namespace Nijo.ValueMemberTypes {
         };
 
 
-        void IValueMemberType.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
+        void IValueMemberType.RegisterDependencies(CodeRenderingContext ctx) {
             // シーケンスが1個以上定義されている場合、シーケンス採番の構文をユーザーに定義させる
             var hasSequence = ctx.Schema
                 .GetDataStructures()

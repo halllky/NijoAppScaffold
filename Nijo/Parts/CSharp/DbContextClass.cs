@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using System.Threading;
 
 namespace Nijo.Parts.CSharp {
-    public class DbContextClass : IMultiAggregateSourceFile {
+    public class DbContextClass : ISharedSourceFile<CodeRenderingContext> {
 
         private readonly List<IEFCoreEntity> _efCoreEntities = [];
         private readonly List<string> _additionalMethods = [];
@@ -27,14 +27,14 @@ namespace Nijo.Parts.CSharp {
             }
         }
 
-        void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
+        void ISharedSourceFile<CodeRenderingContext>.RegisterDependencies(CodeRenderingContext ctx) {
             // 汎用参照テーブル用のビュー情報提供メソッド。
             // Nijoの空テンプレートにこのメソッドの使用例を含めるため、
             // スキーマ定義に汎用参照テーブルが存在するか否かにかかわらずメソッドを生成する。
             ctx.Use<Models.DataModelModules.GenericLookupViewsInfoProvider>();
         }
 
-        void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
+        void ISharedSourceFile<CodeRenderingContext>.Render(CodeRenderingContext ctx) {
             ctx.CoreLibrary(dir => {
                 dir.Directory("Util", efcoreDir => {
                     efcoreDir.Generate(Render(ctx));

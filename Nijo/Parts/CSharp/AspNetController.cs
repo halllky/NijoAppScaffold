@@ -64,8 +64,8 @@ namespace Nijo.Parts.CSharp {
         /// <summary>
         /// Controller 共通ハンドラーのインターフェース定義を生成する。
         /// </summary>
-        internal class HandlerInterfaceFile : IMultiAggregateSourceFile {
-            public void RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
+        internal class HandlerInterfaceFile : ISharedSourceFile<CodeRenderingContext> {
+            public void RegisterDependencies(CodeRenderingContext ctx) {
                 // 特になし
             }
 

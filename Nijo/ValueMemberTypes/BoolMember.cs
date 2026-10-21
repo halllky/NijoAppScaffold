@@ -70,7 +70,7 @@ internal class BoolMember : IValueMemberType {
         }
     };
 
-    void IValueMemberType.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
+    void IValueMemberType.RegisterDependencies(CodeRenderingContext ctx) {
         // 特になし
     }
 

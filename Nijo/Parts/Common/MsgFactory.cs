@@ -14,7 +14,7 @@ namespace Nijo.Parts.Common {
     /// 自動生成されるコードの中で必要となる、ユーザーに見せるメッセージ。
     /// 具体的な文言は環境により異なるため、DIで注入したものを使用する。
     /// </summary>
-    public partial class MsgFactory : IMultiAggregateSourceFile {
+    public partial class MsgFactory : ISharedSourceFile<CodeRenderingContext> {
         /// <summary>
         /// C#側はアプリケーションサービスにこの名前のプロパティが存在するのでそれ経由で使用する。
         /// </summary>
@@ -100,7 +100,7 @@ namespace Nijo.Parts.Common {
         #endregion Add
 
 
-        void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
+        void ISharedSourceFile<CodeRenderingContext>.RegisterDependencies(CodeRenderingContext ctx) {
             ctx.Use<ApplicationService>().Add($$"""
                 /// <summary>
                 /// ユーザーに見せるメッセージの文言を返します。
@@ -110,7 +110,7 @@ namespace Nijo.Parts.Common {
                 """);
         }
 
-        void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
+        void ISharedSourceFile<CodeRenderingContext>.Render(CodeRenderingContext ctx) {
             var messagesOrderById = _messages.Values.OrderBy(m => m.Id).ToArray();
 
             // C#側定数

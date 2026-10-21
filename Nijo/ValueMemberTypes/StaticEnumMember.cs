@@ -81,7 +81,7 @@ namespace Nijo.ValueMemberTypes {
             // 追加の検証が必要な場合はここに実装します
         }
 
-        void IValueMemberType.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
+        void IValueMemberType.RegisterDependencies(CodeRenderingContext ctx) {
             // 特になし
         }
         void IValueMemberType.RenderStaticSources(CodeRenderingContext ctx) {

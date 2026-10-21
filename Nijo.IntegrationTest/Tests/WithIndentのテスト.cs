@@ -1,5 +1,5 @@
-using Nijo.CodeGenerating;
-using static Nijo.CodeGenerating.TemplateTextHelper;
+using Nijo.CodeGenerator;
+using static Nijo.CodeGenerator.TemplateTextHelper;
 using NUnit.Framework;
 
 namespace Nijo.IntegrationTest.Tests;

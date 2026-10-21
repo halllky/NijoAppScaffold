@@ -42,7 +42,7 @@ internal class ByteArrayMember : IValueMemberType {
 
     ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => null; // バイト配列に対する検索は提供しない
 
-    void IValueMemberType.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
+    void IValueMemberType.RegisterDependencies(CodeRenderingContext ctx) {
         // 特になし
     }
 

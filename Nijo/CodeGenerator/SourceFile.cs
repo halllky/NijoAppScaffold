@@ -5,8 +5,9 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using static Nijo.CodeGenerator.TemplateTextHelper;
 
-namespace Nijo.CodeGenerating {
+namespace Nijo.CodeGenerator {
     /// <summary>
     /// 自動生成されるソースコードのファイル1個分
     /// </summary>

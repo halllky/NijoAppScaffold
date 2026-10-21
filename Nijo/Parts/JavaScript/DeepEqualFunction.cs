@@ -46,13 +46,13 @@ internal class DeepEqualFunction {
          */
         """;
 
-    internal class OptionType : IMultiAggregateSourceFile {
+    internal class OptionType : ISharedSourceFile<CodeRenderingContext> {
         internal const string TYPENAME = "DisplayDataDeepEqualOption";
-        void IMultiAggregateSourceFile.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
+        void ISharedSourceFile<CodeRenderingContext>.RegisterDependencies(CodeRenderingContext ctx) {
             // 特になし
         }
 
-        void IMultiAggregateSourceFile.Render(CodeRenderingContext ctx) {
+        void ISharedSourceFile<CodeRenderingContext>.Render(CodeRenderingContext ctx) {
             ctx.ReactProject(dir => {
                 dir.Generate(new SourceFile() {
                     FileName = $"{TYPENAME}.ts",

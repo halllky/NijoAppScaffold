@@ -45,7 +45,7 @@ internal class DateMember : IValueMemberType {
         RenderFiltering = ctx => RangeSearchRenderer.RenderRangeSearchFiltering(ctx),
     };
 
-    void IValueMemberType.RegisterDependencies(IMultiAggregateSourceFileManager ctx) {
+    void IValueMemberType.RegisterDependencies(CodeRenderingContext ctx) {
         // 特になし
     }
 
