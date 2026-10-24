@@ -4,7 +4,7 @@
 
 # バリデーション
 
-DataModel の属性に特定の XML 属性を付与することで、新規登録・更新処理の中でバリデーションが自動的に生成されます。
+永続化されるデータ構造の属性に特定の XML 属性を付与することで、新規登録・更新処理の中でバリデーションが自動的に生成されます。
 また、DB レベルの制約も同時に付与されます。
 
 ## バリデーションが実行されるタイミング
@@ -35,7 +35,7 @@ DB への保存（SaveChanges）
 | XML 属性           | 適用対象                               | 説明                                |
 | ------------------ | -------------------------------------- | ----------------------------------- |
 | `IsKey="true"`     | Root・Children の ValueMember / ref-to | 主キー。必須入力 + DB NOT NULL 制約 |
-| `IsNotNull="true"` | DataModel の ValueMember / ref-to      | 必須入力 + DB NOT NULL 制約         |
+| `IsNotNull="true"` | 永続化されるデータ構造の ValueMember / ref-to      | 必須入力 + DB NOT NULL 制約         |
 
 ```xml
 <Order IsStored="True" DisplayName="受注">
@@ -129,7 +129,7 @@ if (dbEntity.UnitPrice != null && (
 `ref-to` で汎用参照テーブル（`IsGenericLookupTable="true"`）を参照している場合、
 指定された区分値がテーブルに存在するかどうかのチェックが自動生成されます。
 
-詳細は [汎用参照テーブル](./020306_DataModel_GenericLookupTable.md) を参照してください。
+詳細は [汎用参照テーブル](../../020700_Constants/020703_GenericLookupTable.md) を参照してください。
 
 ---
 
@@ -157,8 +157,8 @@ public override void OnBeforeCreateOrder(
 ```
 
 :::note どこに書くか
-- **このデータモデルが関係するどのユースケースからの更新でも守られるべきルール** → `OnBefore{集約名}` フックに実装
-- **特定のユースケースでのみ適用されるルール** → `CommandModel` の処理の中に実装
+- **このデータ構造が関係するどのユースケースからの更新でも守られるべきルール** → `OnBefore{集約名}` フックに実装
+- **特定のユースケースでのみ適用されるルール** → コマンドの処理の中に実装
 :::
 
 ## バリデーションエラーのメッセージ構造

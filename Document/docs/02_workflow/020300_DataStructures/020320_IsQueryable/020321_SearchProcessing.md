@@ -4,7 +4,7 @@
 
 # 一覧検索処理
 
-QueryModel の中核となる検索処理の実装方法を説明します。
+検索可能なデータ構造の中核となる検索処理の実装方法を説明します。
 `CreateQuerySource` でクエリの基盤を定義し、フレームワークが WHERE 句・ORDER BY 句・ページングを自動付加します。
 
 ## 処理の全体フロー
@@ -38,13 +38,13 @@ LoadAsync()  ← 検索処理本体（フレームワーク固定）
 SQL の **FROM 句と SELECT 句**に相当します。
 
 ```csharp
-// 生成されるスタブ（通常の QueryModel）
+// 生成されるスタブ（MapToView を指定しない場合）
 protected abstract IQueryable<OrderQuerySearchResult> CreateQuerySource(
     OrderQuerySearchCondition searchCondition,
     IPresentationContext<OrderQuerySearchConditionMessages> context);
 ```
 
-### 実装例：DataModel から射影する
+### 実装例：永続化されるデータ構造から射影する
 
 ```csharp
 protected override IQueryable<OrderQuerySearchResult> CreateQuerySource(
@@ -68,14 +68,14 @@ protected override IQueryable<OrderQuerySearchResult> CreateQuerySource(
 ```
 
 :::note IsStored="True" と IsQueryable="True" を両方指定したとき
-`IsStored="True"` と `IsQueryable="True"` を両方指定した場合、DataModel と構造が完全一致する QueryModel が生成され、`CreateQuerySource` の実装も自動生成されます。この場合は開発者の実装は不要です。
+`IsStored="True"` と `IsQueryable="True"` を両方指定した場合、テーブルと構造が完全一致する検索処理が生成され、`CreateQuerySource` の実装も自動生成されます。この場合は開発者の実装は不要です。
 :::
 
 ### DB View を使う場合（MapToView="true"）
 
 `MapToView="true"` のときは `CreateQuerySource` の実装は不要です。
 フレームワークが DbContext 上の View エンティティを直接参照します。
-詳細は [DB View マッピング](./020404_QueryModel_DbView.md) を参照してください。
+詳細は [DB View マッピング](./020324_MapToView.md) を参照してください。
 
 ---
 

@@ -3,12 +3,12 @@ draft: true
 sidebar_position: 9
 ---
 
-# ValueObjectModel（値オブジェクト）
+# 値オブジェクト（ValueObjects）
 
 識別子や特殊な値を **専用の型**として定義します。
 `string` の代わりに専用型を使うことで、異なる種類の文字列を誤って代入したときにコンパイルエラーで気づけます。
 
-スキーマ定義ファイル (`nijo.xml`) での指定方法: `Type="value-object"`
+スキーマ定義ファイル (`nijo.xml`) での指定方法: `ValueObjects` セクションにルート集約を定義します。
 
 ## なぜ string ではなく ValueObject を使うか
 
@@ -106,15 +106,15 @@ var restored = JsonSerializer.Deserialize<Order>(json);
 // → restored.CustomerId は CustomerId 型のまま
 ```
 
-## DataModel での使用方法
+## 永続化されるデータ構造での使用方法
 
-ValueObject は他のモデルの属性型として使用できます。
+ValueObject はデータ構造などのメンバーの型として使用できます。
 
 ```xml
 <!-- ValueObject の定義 -->
 <CustomerId DisplayName="得意先コード" />
 
-<!-- DataModel でキーとして使用 -->
+<!-- 永続化されるデータ構造でキーとして使用 -->
 <Customer IsStored="True" DisplayName="得意先">
   <Id   IsKey="true" Type="value-object:CustomerId" DisplayName="得意先コード" />
   <Name IsNotNull="true"                             DisplayName="得意先名" />

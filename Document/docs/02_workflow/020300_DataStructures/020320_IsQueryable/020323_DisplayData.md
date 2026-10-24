@@ -5,7 +5,7 @@ sidebar_label: 検索結果
 
 # 検索結果（DisplayData）
 
-QueryModel の検索処理は、内部的に **SearchResult** と **DisplayData** という2つのクラスを経由して結果を返します。
+検索可能なデータ構造の検索処理は、内部的に **SearchResult** と **DisplayData** という2つのクラスを経由して結果を返します。
 
 ## SearchResult と DisplayData の役割分担
 

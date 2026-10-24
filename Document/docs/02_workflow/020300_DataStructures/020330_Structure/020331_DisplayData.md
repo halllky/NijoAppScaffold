@@ -4,7 +4,7 @@
 
 # StructureDisplayData
 
-StructureModel を **CommandModel の引数**として使用する場合、単純な C# クラスではなく `{Name}DisplayData` クラスが生成されます。
+構造体を **コマンドの引数**として使用する場合、単純な C# クラスではなく `{Name}DisplayData` クラスが生成されます。
 
 ## PlainStructure と StructureDisplayData の違い
 
@@ -12,7 +12,7 @@ StructureModel を **CommandModel の引数**として使用する場合、単�
 | --------------- | -------------- | ----------------------------------- |
 | クラス名        | `{Name}`       | `{Name}DisplayData`                 |
 | TypeScript 型名 | `{Name}`       | `{Name}DisplayData`                 |
-| 生成タイミング  | 常に生成       | CommandModel の引数に指定されたとき |
+| 生成タイミング  | 常に生成       | コマンドの引数に指定されたとき |
 | 削除フラグ      | なし           | Children に `WillBeDeleted` あり    |
 | 編集管理        | なし           | あり                                |
 
@@ -40,7 +40,7 @@ public partial class OrderFormDisplayDataDetails {
 ```
 
 `Version` フィールドは `HasVersion = false` のため生成されません。
-（StructureModel は DB 永続化がないため楽観排他制御は不要）
+（構造体は DB 永続化がないため楽観排他制御は不要）
 
 ## TypeScript での使用
 

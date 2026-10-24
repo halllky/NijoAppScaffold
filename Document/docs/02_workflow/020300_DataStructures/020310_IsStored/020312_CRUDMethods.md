@@ -4,7 +4,7 @@
 
 # CRUD メソッド
 
-DataModel の定義から、新規登録・更新・物理削除の3種類のメソッドが自動生成されます。
+永続化されるデータ構造の定義から、新規登録・更新・物理削除の3種類のメソッドが自動生成されます。
 これらのメソッドは Application Service クラスのメソッドとして生成されます。
 
 ## 生成されるメソッド一覧
@@ -71,7 +71,7 @@ public virtual async Task<DataModelSaveResult<OrderDbEntity>> CreateOrderAsync(
 ### 呼び出し例
 
 ```csharp
-// CommandModel の Execute メソッドの中で呼び出す
+// コマンドの Execute メソッドの中で呼び出す
 await DbContext.Database.BeginTransactionAsync();
 
 var command = new OrderCreateCommand {
@@ -202,7 +202,7 @@ public virtual void OnBeforeDeleteOrder(
 
 :::note 特定ユースケースのみのバリデーション
 特定のユースケースのみに適用されるバリデーションは、このフックではなく、
-呼び出し元の CommandModel の処理の中で実装してください。
+呼び出し元のコマンドの処理の中で実装してください。
 :::
 
 ### OnAfter（保存後フック）
@@ -258,13 +258,13 @@ if (result.IsError(out var errorReason)) {
 
 :::warning トランザクションは呼び出し元で管理する
 これらのメソッド自体はトランザクションを開始・コミット・ロールバックしません。
-呼び出し元の CommandModel の処理内で `DbContext.Database.BeginTransactionAsync()` を実行してください。
+呼び出し元のコマンドの処理内で `DbContext.Database.BeginTransactionAsync()` を実行してください。
 
 トランザクション未開始の状態でこれらのメソッドを呼び出すと `InvalidOperationException` がスローされます。
 :::
 
 ```csharp
-// CommandModel の Execute メソッドでの典型的なトランザクション管理
+// コマンドの Execute メソッドでの典型的なトランザクション管理
 await using var transaction = await DbContext.Database.BeginTransactionAsync();
 
 var createResult = await CreateOrderAsync(createCmd, context);

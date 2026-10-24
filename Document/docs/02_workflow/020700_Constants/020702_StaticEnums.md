@@ -1,6 +1,6 @@
 ---
 draft: true
-sidebar_position: 8
+sidebar_position: 2
 ---
 
 # 静的区分値（StaticEnum）
@@ -8,7 +8,7 @@ sidebar_position: 8
 値がソースコード上にハードコードされる区分値です。
 C# は `enum`、TypeScript はリテラル型（Union 型）として生成されます。
 
-スキーマ定義ファイル (`nijo.xml`) での指定方法: `<enum name="...">` 要素
+スキーマ定義ファイル (`nijo.xml`) での指定方法: `StaticEnums` セクションにルート集約を定義します。
 
 ## 汎用参照テーブルとの使い分け
 
@@ -19,7 +19,7 @@ C# は `enum`、TypeScript はリテラル型（Union 型）として生成さ�
 | 型安全性 | C# enum / TS リテラル型で保証      | 文字列のみ                           |
 | 用途     | 変わらない区分（性別・ステータス） | 頻繁に変わる選択肢（部門・カテゴリ） |
 
-詳細は [汎用参照テーブル](./020300_DataModel/020306_DataModel_GenericLookupTable.md) を参照してください。
+詳細は [汎用参照テーブル](./020703_GenericLookupTable.md) を参照してください。
 
 ## XML での定義
 
@@ -71,9 +71,9 @@ export type OrderStatus = '準備中' | '発送済み' | '配達完了' | 'キ�
 TypeScript 側では **表示名（`desc` 属性）の文字列リテラル**が型として使用されます。
 C# の enum の `key` 整数値はシリアライズ時に変換され、TypeScript 側では表示名文字列で扱います。
 
-## DataModel / QueryModel での使用
+## IsStored / IsQueryable 属性 での使用
 
-静的区分値は他のモデルの属性型として使用できます。
+静的区分値はデータ構造などのメンバーの型として使用できます。
 
 ```xml
 <Order IsStored="True" DisplayName="受注">
@@ -87,7 +87,7 @@ DB には `key` の整数値が保存されます。C# の enum と自動でマ�
 
 ## StaticEnumSearchCondition — チェックボックス形式の検索条件
 
-QueryModel で静的区分値型の属性を使うと、**チェックボックス形式の検索条件クラス**が自動生成されます。
+検索可能なデータ構造で静的区分値型の属性を使うと、**チェックボックス形式の検索条件クラス**が自動生成されます。
 
 ### 生成される C# クラス
 

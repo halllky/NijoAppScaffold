@@ -1,12 +1,12 @@
 ---
-sidebar_label: 構造体モデル
-sidebar_position: 6
+sidebar_label: 構造体（属性なし）
+sidebar_position: 3
 ---
 
-# StructureModel（構造体モデル）
+# 構造体（IsStored も IsQueryable も指定しないデータ構造）
 
 サーバーとクライアントで共有するデータ構造を定義します。
-DataModel のような DB 永続化やキーは不要で、**単純なデータクラスとして C# と TypeScript の定義だけを生成**します。
+DB 永続化やキーは不要で、**単純なデータクラスとして C# と TypeScript の定義だけを生成**します。
 
 スキーマ定義ファイル (`nijo.xml`) での指定方法: `DataStructures` セクションのルート集約に `IsStored` も `IsQueryable` も指定しません。
 
@@ -17,17 +17,17 @@ DataModel のような DB 永続化やキーは不要で、**単純なデータ�
 | C# クラス                                   | `{PhysicalName}` クラス（サフィックスなし）                    |
 | TypeScript 型                               | `{PhysicalName}` 型                                            |
 | TypeScript ファクトリ関数                   | `createNew{PhysicalName}()`                                    |
-| StructureDisplayData（CommandModel 引数時） | [StructureDisplayData](./020601_StructureModel_DisplayData.md) |
+| StructureDisplayData（コマンドの引数時）    | [StructureDisplayData](./020331_DisplayData.md)                |
 
-## DataModel / QueryModel との使い分け
+## IsStored, IsQueryable 属性を指定する場合との使い分け
 
-| モデル             | DB 永続化            | キー | 用途                                               |
-| ------------------ | -------------------- | ---- | -------------------------------------------------- |
-| **DataModel**      | あり                 | 必須 | 登録・更新・削除するマスタ・トランザクションデータ |
-| **QueryModel**     | なし（読み取り専用） | あり | 一覧検索・フィルタリング                           |
-| **StructureModel** | なし                 | 不要 | CommandModel の入出力・画面間のデータ転送          |
+| 属性                     | DB 永続化            | キー | 用途                                               |
+| ------------------------ | -------------------- | ---- | -------------------------------------------------- |
+| **IsStored**             | あり                 | 必須 | 登録・更新・削除するマスタ・トランザクションデータ |
+| **IsQueryable**          | なし（読み取り専用） | あり | 一覧検索・フィルタリング                           |
+| **なし（構造体）**       | なし                 | 不要 | コマンドの入出力・画面間のデータ転送               |
 
-StructureModel は **DB とは関係ない任意のデータ構造** を定義するときに使います。
+構造体は **DB とは関係ない任意のデータ構造** を定義するときに使います。
 
 ## XML 定義例
 
@@ -96,12 +96,12 @@ export const createNewOrderForm = (): OrderForm => ({
 `createNew{Name}()` 関数は、すべてのフィールドが初期化された空のオブジェクトを返します。
 TypeScript で新規フォームデータを作成するときに使います。
 
-## StructureModel を CommandModel の引数にする場合
+## 構造体をコマンドの引数にする場合
 
-StructureModel を CommandModel の引数として使用すると、単純なクラスではなく `{Name}DisplayData` が生成されます。
+構造体をコマンドの引数として使用すると、単純なクラスではなく `{Name}DisplayData` が生成されます。
 `DisplayData` には画面編集のための削除フラグや変更管理の仕組みが追加されています。
 
-詳細は [StructureDisplayData](./020601_StructureModel_DisplayData.md) を参照してください。
+詳細は [StructureDisplayData](./020331_DisplayData.md) を参照してください。
 
 ## 制約
 

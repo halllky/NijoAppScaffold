@@ -4,7 +4,7 @@
 
 # EF Core エンティティ定義
 
-DataModel の定義から、Entity Framework Core（EF Core）を通したデータベース定義が自動生成されます。
+永続化されるデータ構造の定義から、Entity Framework Core（EF Core）を通したデータベース定義が自動生成されます。
 このページでは、生成される C# クラスの構造と、DB スキーマへの対応を説明します。
 
 ## 生成されるもの
@@ -28,7 +28,7 @@ DataModel の定義から、Entity Framework Core（EF Core）を通したデー
 | `Version`       | `int?`      | 楽観排他制御用のバージョン番号（Root のみ） |
 
 `Version` は Root 集約にのみ付与されます。Child・Children のエンティティには付与されません。
-また、QueryModel のビュー（`MapToView="true"`）にはバージョン列は生成されません。
+また、検索可能なデータ構造のビュー（`MapToView="true"`）にはバージョン列は生成されません。
 
 ### カラムのマッピングルール
 

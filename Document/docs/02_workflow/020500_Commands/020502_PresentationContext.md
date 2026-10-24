@@ -5,7 +5,7 @@ sidebar_label: IPresentationContext
 
 # IPresentationContext
 
-`IPresentationContext` は、CommandModel の `Execute{Name}Async` メソッドに渡される「処理文脈」オブジェクトです。
+`IPresentationContext` は、コマンドの `Execute{Name}Async` メソッドに渡される「処理文脈」オブジェクトです。
 **エラーメッセージの管理**、**戻り値のセット**、**検証専用モードの制御**という3つの役割を担います。
 
 
@@ -74,7 +74,7 @@ if (context.Messages.HasError()) return;
 ## ValidationOnly（2フェーズ検証）
 
 保存前にユーザーへ「本当に実行しますか？」という確認を求めたい場面があります。
-このために、CommandModel の呼び出しは内部的に2フェーズで実行されることがあります。
+このために、コマンドの呼び出しは内部的に2フェーズで実行されることがあります。
 
 - **フェーズ1（`ValidationOnly = true`）**: バリデーションのみ実行し、問題がなければ確認メッセージを積む。実際の保存はしない。
 - **フェーズ2（`ValidationOnly = false`）**: ユーザーが確認した後に実際の保存処理を実行する。
@@ -143,7 +143,7 @@ await tran.CommitAsync();
 
 ## トランザクションとの組み合わせパターン
 
-`context` は [DataModel のCRUD メソッド](../020300_DataModel/020302_DataModel_CRUDMethods.md) （`CreateXxxAsync` / `UpdateXxxAsync` など）にもそのまま渡します。
+`context` は [永続化されるデータ構造の CRUD メソッド](../020300_DataStructures/020310_IsStored/020312_CRUDMethods.md) （`CreateXxxAsync` / `UpdateXxxAsync` など）にもそのまま渡します。
 CRUD メソッド内でエラーが起きた場合、エラーメッセージは CRUD メソッド内で自動的に `context.Messages` へ設定されます。
 
 ```csharp

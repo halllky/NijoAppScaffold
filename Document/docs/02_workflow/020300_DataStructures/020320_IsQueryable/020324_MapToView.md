@@ -8,7 +8,7 @@
 
 ## 使いどころ
 
-通常の QueryModel は `CreateQuerySource` メソッドで DataModel から IQueryable を組み立てます。
+MapToView を指定しない場合は `CreateQuerySource` メソッドで、永続化されるデータ構造から IQueryable を組み立てます。
 以下のケースでは DB View へのマッピングが有効です。
 
 - 複数テーブルを JOIN した集計結果（売上合計、在庫数など）が必要な場合
@@ -66,7 +66,7 @@ View の作成・更新は `migrationBuilder.Sql("CREATE VIEW ...")` を使っ�
 
 ## `MapToView="true"` のときの動作の違い
 
-| 項目                  | 通常の QueryModel    | MapToView="true"                   |
+| 項目                  | MapToView を指定しない場合 | MapToView="true"                   |
 | --------------------- | -------------------- | ---------------------------------- |
 | `CreateQuerySource`   | 開発者が実装（必須） | 不要（呼ばれない）                 |
 | EF Core エンティティ  | `HasKey()` あり      | `HasNoKey()` キーレス              |
@@ -75,4 +75,4 @@ View の作成・更新は `migrationBuilder.Sql("CREATE VIEW ...")` を使っ�
 | `AppendOrderByClause` | 有効                 | 有効                               |
 | `OnAfterLoaded`       | 有効                 | 有効                               |
 
-WHERE / ORDER BY は自動的に View に対してかかるため、フィルタリング・ソートは通常の QueryModel と同じように動作します。
+WHERE / ORDER BY は自動的に View に対してかかるため、フィルタリング・ソートは MapToView を指定しない場合と同じように動作します。

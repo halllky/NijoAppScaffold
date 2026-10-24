@@ -4,7 +4,7 @@
 
 # 検索条件
 
-QueryModel の定義から、検索条件を表す `{Name}SearchCondition` クラスが自動生成されます。
+検索可能なデータ構造の定義から、検索条件を表す `{Name}SearchCondition` クラスが自動生成されます。
 文字列の部分一致・数値の範囲検索・ソート・ページングが標準で対応しています。
 
 ## SearchCondition クラスの構造

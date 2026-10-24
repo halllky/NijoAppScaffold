@@ -1,16 +1,16 @@
 ---
-sidebar_label: 定数モデル
+sidebar_label: 定数（Constants）
 draft: true
-sidebar_position: 7
+sidebar_position: 1
 ---
 
-# ConstantModel（定数モデル）
+# 定数（Constants）
 
-定数モデルは、C#とJavaScript/TypeScriptで常に値が同期される定数のソースコードを生成するためのモデルです。
+`Constants` セクションには、C#とJavaScript/TypeScriptで常に値が同期される定数を定義します。
 
 ## 概要
 
-定数モデルを使用することで、以下のメリットがあります：
+`Constants` セクションに定数を定義することで、以下のメリットがあります：
 
 - **型安全性**: 定数値をハードコードする代わりに、型安全な定数として定義できます
 - **同期性**: C#とJavaScript/TypeScript間で定数値が自動的に同期されます

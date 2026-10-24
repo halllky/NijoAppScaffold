@@ -1,36 +1,36 @@
 ---
-sidebar_label: データモデル
-sidebar_position: 3
+sidebar_label: IsStored（永続化）
+sidebar_position: 1
 ---
 
-# DataModel（データモデル）
+# IsStored（永続化）
 
-アプリケーションに永続化されるデータの形を表します。
-RDBMSのテーブル定義を、**トランザクションの境界ごとにまとめたもの**です。
+データ構造がデータベースに永続化されることを表す属性です。
+IsStored 属性が指定されたデータ構造は、RDBMSのテーブル定義を **トランザクションの境界ごとにまとめたもの** になります。
 
 スキーマ定義ファイル (`nijo.xml`) での指定方法: `DataStructures` セクションのルート集約に `IsStored="True"` を指定します。
-`IsQueryable="True"` も同時に指定すると、DataModel と全く同じ形の [QueryModel](../020400_QueryModel/index.md) のモジュールも生成されます。
+`IsQueryable="True"` も同時に指定すると、テーブルと全く同じ形の[検索処理](../020320_IsQueryable/index.md)も生成されます。
 
 ## 自動生成されるモジュール
 
-DataModel の定義1個から、以下のモジュールが自動生成されます。
+IsStored 属性が指定されたデータ構造1個から、以下のモジュールが自動生成されます。
 
 | モジュール                                       | 詳細ページ                                                         |
 | ------------------------------------------------ | ------------------------------------------------------------------ |
-| EF Core エンティティクラス・DbContext 設定       | [EF Core エンティティ定義](./020301_DataModel_EFCoreEntity.md)     |
-| CRUD メソッド（新規登録・更新・物理削除）        | [CRUD メソッド](./020302_DataModel_CRUDMethods.md)                 |
-| 入力バリデーション（必須・最大長・文字種・桁数） | [バリデーション属性リファレンス](./020303_DataModel_Validators.md) |
-| 論理削除メソッド（オプション）                   | [論理削除](./020304_DataModel_SoftDelete.md)                       |
-| 汎用参照テーブル（オプション）                   | [汎用参照テーブル](./020306_DataModel_GenericLookupTable.md)       |
+| EF Core エンティティクラス・DbContext 設定       | [EF Core エンティティ定義](./020311_EFCoreEntity.md)     |
+| CRUD メソッド（新規登録・更新・物理削除）        | [CRUD メソッド](./020312_CRUDMethods.md)                 |
+| 入力バリデーション（必須・最大長・文字種・桁数） | [バリデーション属性リファレンス](./020313_Validators.md) |
+| 論理削除メソッド（UseSoftDelete 属性）           | [論理削除](./020314_UseSoftDelete.md)                    |
+| 汎用参照テーブル（IsGenericLookupTable 属性）    | [汎用参照テーブル](../../020700_Constants/020703_GenericLookupTable.md) |
 
 ## 設計指針
 
 ### データのまとまりとライフサイクル
 
-DataModel は **楽観排他制御がかかるべき単位** で1つ定義します。
+IsStored 属性が指定されたデータ構造は **楽観排他制御がかかるべき単位** で1つ定義します。
 
 例えば「受注」と「受注明細」は通常セットで扱われ、明細だけが単独で存在することはありません。
-この場合、「受注」をルートとする1つの DataModel として定義し、「受注明細」はその子要素（Children）として定義します。
+この場合、「受注」をルートとする1つのデータ構造として定義し、「受注明細」はその子要素（Children）として定義します。
 
 ### 集約の種類
 
@@ -46,13 +46,13 @@ DataModel は **楽観排他制御がかかるべき単位** で1つ定義しま
 
 ### 参照関係
 
-他の DataModel への参照（`ref-to`）は RDB の **外部キー制約** として実装されます。
+IsStored 属性が指定された他のデータ構造への参照（`ref-to`）は RDB の **外部キー制約** として実装されます。
 参照項目に `IsKey` を付与することで「識別関係（Identifying Relationship）」を表現できます。
 
 ## 基本的な XML 定義例
 
 ```xml
-<!-- 受注データモデル -->
+<!-- 受注 -->
 <Order IsStored="True" DisplayName="受注">
   <OrderId     IsKey="true"  DisplayName="受注番号" />
   <OrderDate   IsNotNull="true" DisplayName="受注日" />
