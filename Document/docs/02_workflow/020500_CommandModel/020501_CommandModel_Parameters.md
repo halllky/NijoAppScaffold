@@ -40,7 +40,7 @@ StructureModel 名を `Parameter` 属性に指定すると、単純な `Form` �
 </受注登録Form>
 
 <!-- CommandModel で参照（Parameter はXML属性で指定する） -->
-<受注登録 Type="command-model" DisplayName="受注登録" Parameter="受注登録Form" />
+<受注登録 DisplayName="受注登録" Parameter="受注登録Form" />
 ```
 
 生成される Execute メソッドのシグネチャ:
@@ -53,7 +53,7 @@ public abstract Task Execute受注登録Async(
 ### パターン2: QueryModel の SearchCondition を引数にする
 
 ```xml
-<受注一括処理 Type="command-model" DisplayName="受注一括処理"
+<受注一括処理 DisplayName="受注一括処理"
              Parameter="OrderQuery:SearchCondition" />
 ```
 
@@ -67,7 +67,7 @@ public abstract Task Execute受注一括処理Async(
 ### パターン3: QueryModel の DisplayData を戻り値にする
 
 ```xml
-<受注詳細取得 Type="command-model" DisplayName="受注詳細取得"
+<受注詳細取得 DisplayName="受注詳細取得"
              Parameter="受注検索キー"
              ReturnValue="受注詳細Query:DisplayData" />
 ```
@@ -83,7 +83,7 @@ public abstract Task Execute受注詳細取得Async(
 ### パターン4: 引数なし・戻り値なし
 
 ```xml
-<月次集計 Type="command-model" DisplayName="月次集計実行">
+<月次集計 DisplayName="月次集計実行">
 </月次集計>
 ```
 

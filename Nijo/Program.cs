@@ -113,7 +113,7 @@ namespace Nijo {
                 Description = "出力先ディレクトリのパス",
                 Required = true,
             };
-            var generateReference = new Command("generate-reference", "各モデルで利用可能なNodeOptionのHelpTextを.mdファイルとして出力します。") { outOption };
+            var generateReference = new Command("generate-reference", "nijo.xml に指定できる各属性の説明を.mdファイルとして出力します。") { outOption };
             generateReference.SetAction(parseResult => GenerateReference(parseResult.GetValue(outOption)!));
             rootCommand.Add(generateReference);
 

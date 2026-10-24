@@ -7,7 +7,6 @@ import * as Input from "@nijo/ui-components/input"
 import {
   EditingProject, EditingCustomAttribute,
   AVAILABLE_FOR_STORED, AVAILABLE_FOR_QUERYABLE, AVAILABLE_FOR_STRUCTURE,
-  MODEL_COMMAND, MODEL_STATIC_ENUM, MODEL_VALUE_OBJECT, MODEL_CONSTANT,
 } from "../../backend"
 import { UUID } from "uuidjs"
 import FormLayout from "@nijo/ui-components/layout/FormLayout"
@@ -30,15 +29,15 @@ const ATTR_TYPES: NonNullable<EditingCustomAttribute['type']>[] = [
   'Decimal',
 ]
 
-/** availableModels の値 → GUI上の表示ラベル。無いものは値をそのまま表示する。 */
-const MODEL_LABELS: Record<string, string> = {
+/** availableFor の値 → GUI上の表示ラベル。無いものは値をそのまま表示する。 */
+const AVAILABLE_FOR_LABELS: Record<string, string> = {
   [AVAILABLE_FOR_STORED]: 'Stored',
   [AVAILABLE_FOR_QUERYABLE]: 'Queryable',
   [AVAILABLE_FOR_STRUCTURE]: 'Structure',
-  [MODEL_COMMAND]: 'Command Model',
-  [MODEL_STATIC_ENUM]: 'Enum',
-  [MODEL_VALUE_OBJECT]: 'Value Object',
-  [MODEL_CONSTANT]: 'Constant Model',
+  'command': 'Command',
+  'static-enum': 'Enum',
+  'value-object': 'Value Object',
+  'constant': 'Constant',
 }
 
 /**
@@ -49,11 +48,11 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
   elementRef,
 }) => {
   const { control, getValues, setValue, subscribe } = formMethods
-  const { availableModelCandidates } = useSchemaEditorRule()
-  const availableModelOptions = React.useMemo(() => availableModelCandidates.map(value => ({
+  const { availableForCandidates } = useSchemaEditorRule()
+  const availableForOptions = React.useMemo(() => availableForCandidates.map(value => ({
     id: value,
-    label: MODEL_LABELS[value] ?? value,
-  })), [availableModelCandidates])
+    label: AVAILABLE_FOR_LABELS[value] ?? value,
+  })), [availableForCandidates])
 
   const {
     gridRef,
@@ -102,25 +101,24 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
         }
       },
       {
-        columnId: "availableModels",
+        columnId: "availableFor",
         defaultWidth: 200,
-        renderHeader: () => "利用可能モデル",
+        renderHeader: () => "指定可能な場所",
         renderBody: ({ rowIndex }) => {
           const watchedRow = ReactHookForm.useWatch({ name: `customAttributes.${rowIndex}`, control })
           const { hasError } = useFieldValidationError(watchedRow.uniqueId)
-          const rowModels = watchedRow.availableModels
-          const label = rowModels.map(m => availableModelOptions.find(am => am.id === m)?.label ?? m).join(", ")
+          const label = watchedRow.availableFor.map(value => availableForOptions.find(option => option.id === value)?.label ?? value).join(", ")
           return (
             <div className={`flex items-center justify-between w-full h-full px-1 ${hasError ? 'bg-amber-300/50' : ''}`}>
               <span className="truncate">{label}</span>
-              <Input.IconButton mini icon={Icon.PencilIcon} onClick={() => setEditingAvailableModelsIndex(rowIndex)} />
+              <Input.IconButton mini icon={Icon.PencilIcon} onClick={() => setEditingAvailableForIndex(rowIndex)} />
             </div>
           )
         }
       },
       helper.text("コメント", "comment", { wrap: true, defaultWidth: 200, renderBody: renderBodyWithValidation("comment") }),
     ]
-  }, [availableModelOptions])
+  }, [availableForOptions])
 
   const handleAddRow = useEvent(() => {
     const newAttr: EditingCustomAttribute = {
@@ -129,7 +127,7 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
       displayName: '',
       type: 'String',
       isValidation: false,
-      availableModels: [...availableModelCandidates],
+      availableFor: [...availableForCandidates],
       enumValues: [],
     }
     append(newAttr)
@@ -141,7 +139,7 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
     remove(selection.map(x => x.rowIndex))
   })
 
-  const [editingAvailableModelsIndex, setEditingAvailableModelsIndex] = React.useState<number | null>(null)
+  const [editingAvailableForIndex, setEditingAvailableForIndex] = React.useState<number | null>(null)
   const [editingEnumValuesIndex, setEditingEnumValuesIndex] = React.useState<number | null>(null)
 
   const validationResultList = useValidationErrorMessages()
@@ -181,15 +179,15 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
         </ul>
       )}
 
-      {editingAvailableModelsIndex !== null && (
-        <AvailableModelsDialog
-          options={availableModelOptions}
-          initialSelection={customAttributes[editingAvailableModelsIndex].availableModels}
-          onSave={(selectedModels) => {
-            setValue(`customAttributes.${editingAvailableModelsIndex}.availableModels`, selectedModels, { shouldDirty: true })
-            setEditingAvailableModelsIndex(null)
+      {editingAvailableForIndex !== null && (
+        <AvailableForDialog
+          options={availableForOptions}
+          initialSelection={customAttributes[editingAvailableForIndex].availableFor}
+          onSave={(selected) => {
+            setValue(`customAttributes.${editingAvailableForIndex}.availableFor`, selected, { shouldDirty: true })
+            setEditingAvailableForIndex(null)
           }}
-          onClose={() => setEditingAvailableModelsIndex(null)}
+          onClose={() => setEditingAvailableForIndex(null)}
         />
       )}
 
@@ -207,10 +205,10 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
   )
 }
 
-const AvailableModelsDialog = ({ options, initialSelection, onSave, onClose }: {
+const AvailableForDialog = ({ options, initialSelection, onSave, onClose }: {
   options: { id: string, label: string }[]
   initialSelection: string[]
-  onSave: (models: string[]) => void
+  onSave: (selected: string[]) => void
   onClose: () => void
 }) => {
   const [selection, setSelection] = React.useState(new Set(initialSelection))
@@ -225,10 +223,10 @@ const AvailableModelsDialog = ({ options, initialSelection, onSave, onClose }: {
   return (
     <ModalDialog open className="w-[400px]">
       <div className="p-4 flex flex-col gap-2">
-        {options.map(model => (
-          <label key={model.id} className="flex items-center gap-2">
-            <input type="checkbox" checked={selection.has(model.id)} onChange={() => toggle(model.id)} />
-            {model.label}
+        {options.map(option => (
+          <label key={option.id} className="flex items-center gap-2">
+            <input type="checkbox" checked={selection.has(option.id)} onChange={() => toggle(option.id)} />
+            {option.label}
           </label>
         ))}
         <div className="flex justify-end gap-2 mt-4">

@@ -3,7 +3,7 @@
  * GET /nijo-api/load のレスポンス、POST /nijo-api/save 等のリクエストボディとして使う。
  * C#側の EditingProject.cs に対応する。
  * nijo.xml の書式（属性値の区切り文字・"True"文字列など）はサーバー側で吸収済みであり、
- * この型はNijoのスキーマ概念（モデル種別・メンバー種別など）だけを表す。
+ * この型はNijoのスキーマ概念（セクション・メンバー種別など）だけを表す。
  */
 export type EditingProject = {
   dataStructures: EditingRootAggregate[]
@@ -32,12 +32,7 @@ export type EditingRootAggregate = {
   /** XML要素のローカル名。 */
   physicalName?: string | null
   comment?: string | null
-  /**
-   * Type属性の値（command-model, enum など）。
-   * dataStructures のルート集約では常に null。そのモデル種別は {@link getRootModelType} で求める。
-   */
-  model?: string | null
-  /** Type・UniqueId・UniqueConstraints を除いた属性。 */
+  /** UniqueId・UniqueConstraints を除いた属性。 */
   attributes: Record<string, EditingAttributeValue>
   uniqueConstraints: EditingUniqueConstraint[]
   /** IsGenericLookupTable が指定されたルート集約のみ値を持つ。 */
@@ -104,7 +99,7 @@ export type EditingCustomAttribute = {
   displayName?: string | null
   comment?: string | null
   isValidation: boolean
-  availableModels: string[]
+  availableFor: string[]
   type?: 'Boolean' | 'Decimal' | 'Enum' | 'String' | null
   enumValues: string[]
 }
@@ -179,8 +174,8 @@ export type PreviewLogIncrement = {
  * GET /nijo-api/schema-rule のレスポンス。編集対象ではないため {@link EditingProject} とは別に取得する。
  */
 export type SchemaEditorRule = {
-  /** カスタム属性の availableModels に指定できる値の一覧 */
-  availableModelCandidates: string[]
+  /** カスタム属性の availableFor に指定できる値の一覧 */
+  availableForCandidates: string[]
   attributeDefs: AttributeDef[]
   valueMemberTypes: ValueMemberTypeDef[]
   projectOptionPropertyInfos: ProjectOptionPropertyInfo[]
@@ -257,17 +252,6 @@ export const CONSTANT_TYPE_INT = 'int'
 export const CONSTANT_TYPE_DECIMAL = 'decimal'
 export const CONSTANT_TYPE_TEMPLATE = 'template'
 
-// ルート集約のモデル種別（AttributeDef.availableElements[].model の値）。
-// dataStructures のルート集約は IsStored, IsQueryable 属性の組み合わせで MODEL_DATA, MODEL_QUERY, MODEL_STRUCTURE のいずれかになる（getRootModelType 参照）。
-// それ以外のルート集約は EditingRootAggregate.model の値がそのままモデル種別になる。
-export const MODEL_DATA = 'data-model'
-export const MODEL_QUERY = 'query-model'
-export const MODEL_COMMAND = 'command-model'
-export const MODEL_STRUCTURE = 'structure-model'
-export const MODEL_STATIC_ENUM = 'enum'
-export const MODEL_VALUE_OBJECT = 'value-object'
-export const MODEL_CONSTANT = 'constant-model'
-
 // ノード種別（C#のE_NodeTypeに対応。AttributeDef.availableElements[].nodeType の値）
 export const NODE_TYPE_ROOT_AGGREGATE = 'RootAggregate'
 export const NODE_TYPE_CHILD_AGGREGATE = 'ChildAggregate'
@@ -277,39 +261,41 @@ export const NODE_TYPE_REF = 'Ref'
 export const NODE_TYPE_STATIC_ENUM_VALUE = 'StaticEnumValue'
 export const NODE_TYPE_UNKNOWN = 'Unknown'
 
-// カスタム属性の availableModels のうち、dataStructures のルート集約を対象とする値
+// カスタム属性の availableFor の値。dataStructures のルート集約は IsStored, IsQueryable の有無で、それ以外はセクションで指定する
 export const AVAILABLE_FOR_STORED = 'stored'
 export const AVAILABLE_FOR_QUERYABLE = 'queryable'
 export const AVAILABLE_FOR_STRUCTURE = 'structure'
-
-/** モデル種別の判定に必要なルート集約の情報 */
-type RootModelSource = Pick<EditingRootAggregate, 'model' | 'attributes'>
-
-/**
- * ルート集約のモデル種別を返す。
- * dataStructures のルート集約は IsStored が指定されていれば MODEL_DATA、IsQueryable のみ指定されていれば MODEL_QUERY、
- * いずれも指定されていなければ MODEL_STRUCTURE になる。
- */
-export const getRootModelType = (root: RootModelSource): string => {
-  if (root.model) return root.model
-  if (root.attributes[ATTR_IS_STORED] === true) return MODEL_DATA
-  if (root.attributes[ATTR_IS_QUERYABLE] === true) return MODEL_QUERY
-  return MODEL_STRUCTURE
+const AVAILABLE_FOR_SECTIONS: Record<Exclude<SectionName, 'dataStructures'>, string> = {
+  commands: 'command',
+  staticEnums: 'static-enum',
+  valueObjects: 'value-object',
+  constants: 'constant',
 }
 
 /**
- * カスタム属性が、指定されたルート集約とその子孫で利用可能かを判定する。
- * IsStored, IsQueryable が両方指定されたデータ構造の場合、availableModels に stored, queryable のいずれかが含まれていれば利用可能。
+ * カスタム属性が、指定された場所に指定可能かを判定する。
+ * IsStored, IsQueryable が両方指定されたデータ構造の場合、availableFor に stored, queryable のいずれかが含まれていれば利用可能。
  */
-export const isCustomAttributeAvailable = (customAttr: EditingCustomAttribute, root: RootModelSource): boolean => {
-  if (root.model) return customAttr.availableModels.includes(root.model)
-
-  const isStored = root.attributes[ATTR_IS_STORED] === true
-  const isQueryable = root.attributes[ATTR_IS_QUERYABLE] === true
-  if (isStored && customAttr.availableModels.includes(AVAILABLE_FOR_STORED)) return true
-  if (isQueryable && customAttr.availableModels.includes(AVAILABLE_FOR_QUERYABLE)) return true
-  if (!isStored && !isQueryable && customAttr.availableModels.includes(AVAILABLE_FOR_STRUCTURE)) return true
+export const isCustomAttributeAvailable = (customAttr: EditingCustomAttribute, target: AttributeTarget): boolean => {
+  if (target.section !== 'dataStructures') return customAttr.availableFor.includes(AVAILABLE_FOR_SECTIONS[target.section])
+  if (target.isStored && customAttr.availableFor.includes(AVAILABLE_FOR_STORED)) return true
+  if (target.isQueryable && customAttr.availableFor.includes(AVAILABLE_FOR_QUERYABLE)) return true
+  if (!target.isStored && !target.isQueryable && customAttr.availableFor.includes(AVAILABLE_FOR_STRUCTURE)) return true
   return false
+}
+
+/**
+ * ダイアグラムなどでルート集約を色分けするときの区分。
+ * IsStored, IsQueryable が両方指定されたデータ構造は stored として扱う。
+ */
+export type RootAggregateAppearance = 'stored' | 'queryable' | 'structure' | 'command'
+
+/** ルート集約を色分けするときの区分を返す */
+export const getRootAggregateAppearance = (section: 'dataStructures' | 'commands', root: Pick<EditingRootAggregate, 'attributes'>): RootAggregateAppearance => {
+  if (section === 'commands') return 'command'
+  if (root.attributes[ATTR_IS_STORED] === true) return 'stored'
+  if (root.attributes[ATTR_IS_QUERYABLE] === true) return 'queryable'
+  return 'structure'
 }
 
 /** ルート集約が定義されるセクション。EditingProject のプロパティ名と一致する。 */

@@ -23,13 +23,7 @@ public class EditingRootAggregate {
     public string? PhysicalName { get; set; }
     [JsonPropertyName("comment")]
     public string? Comment { get; set; }
-    /// <summary>
-    /// Type属性の値（command-model, enum など）。
-    /// DataStructures セクションのルート集約では null。そのモデルは <see cref="Attributes"/> の IsStored, IsQueryable で表される。
-    /// </summary>
-    [JsonPropertyName("model")]
-    public string? Model { get; set; }
-    /// <summary>Type・UniqueId・UniqueConstraints を除いた属性。</summary>
+    /// <summary>UniqueId・UniqueConstraints を除いた属性。</summary>
     [JsonPropertyName("attributes")]
     public Dictionary<string, JsonNode?> Attributes { get; set; } = new();
     [JsonPropertyName("uniqueConstraints")]
@@ -77,7 +71,6 @@ public class EditingRootAggregate {
             Comment = rootElement.PreviousNode is XComment xComment && !string.IsNullOrWhiteSpace(xComment.Value)
                 ? xComment.Value
                 : null,
-            Model = rootElement.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value,
             Attributes = attributes,
             UniqueConstraints = uniqueConstraints,
             GenericLookupTable = genericLookupTable,
@@ -115,7 +108,6 @@ public class EditingRootAggregate {
         onXmlElementCreated(xRoot, UniqueId);
 
         var rootAttributePairs = new List<KeyValuePair<string, string>>();
-        if (!string.IsNullOrWhiteSpace(Model)) rootAttributePairs.Add(new(SchemaParseContext.ATTR_NODE_TYPE, Model));
         foreach (var (name, value) in Attributes) {
             var xmlValue = attributeTypes.ToXmlValue(name, value);
             if (xmlValue != null) rootAttributePairs.Add(new(name, xmlValue));

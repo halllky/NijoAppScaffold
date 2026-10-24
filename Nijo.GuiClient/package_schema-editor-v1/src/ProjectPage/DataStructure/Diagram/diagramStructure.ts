@@ -1,6 +1,7 @@
 import {
   EditingProject, EditingRootAggregate, EditingMember, EditingMemberType, EditingAttributeValue,
-  ATTR_PARAMETER, ATTR_RETURN_VALUE, MODEL_COMMAND, getRootModelType,
+  ATTR_PARAMETER, ATTR_RETURN_VALUE, ATTR_IS_STORED, ATTR_IS_QUERYABLE,
+  RootAggregateAppearance, getRootAggregateAppearance,
 } from "../../../backend"
 import { parseAsMentionText } from "../../../UI/Mention"
 import { asTree, TreeHelper } from "../../../asTree"
@@ -13,8 +14,8 @@ export type DiagramAggregate = {
   node: EditingRootAggregate | EditingMember
   /** この集約が属するルート集約の uniqueId。ルート集約自身の場合は自身の uniqueId */
   rootId: string
-  /** この集約が属するルート集約のモデル種別 */
-  model: string
+  /** この集約が属するルート集約の区分 */
+  appearance: RootAggregateAppearance
   /** 直下に包含される child, children */
   children: DiagramAggregate[]
 }
@@ -52,14 +53,18 @@ export function buildDiagramStructure(project: EditingProject): DiagramStructure
 
   // ref-to の参照先解決用の索引（データ構造のみが対象）
   const refToIndex = buildRefToPathIndex(project.dataStructures)
-  // コマンドモデルの引数・戻り値属性の物理名解決用の索引（全種別のルート集約が対象）
+  // コマンドの引数・戻り値属性の物理名解決用の索引（全セクションのルート集約が対象）
   const physicalNameToId = buildPhysicalNameIndex(project)
 
   const rawEdges: RawEdge[] = []
 
-  for (const root of [...project.dataStructures, ...project.commands]) {
-    const model = getRootModelType(root)
-    const rootAgg: DiagramAggregate = { node: root, rootId: root.uniqueId, model, children: [] }
+  const sectionRoots = [
+    ...project.dataStructures.map(root => ({ root, section: 'dataStructures' as const })),
+    ...project.commands.map(root => ({ root, section: 'commands' as const })),
+  ]
+  for (const { root, section } of sectionRoots) {
+    const appearance = getRootAggregateAppearance(section, root)
+    const rootAgg: DiagramAggregate = { node: root, rootId: root.uniqueId, appearance, children: [] }
     roots.push(rootAgg)
     aggregateByElementId.set(root.uniqueId, rootAgg)
 
@@ -68,7 +73,7 @@ export function buildDiagramStructure(project: EditingProject): DiagramStructure
     // 集約1個分の関連・子孫を収集する。owner は root か child/children のみ（それ以外は表示対象外のため呼ばれない）
     const walk = (ownerNode: EditingRootAggregate | EditingMember, ownerAgg: DiagramAggregate) => {
       collectMentionEdges(ownerNode.comment, ownerAgg.node.uniqueId, rawEdges)
-      if (model === MODEL_COMMAND) {
+      if (appearance === 'command') {
         collectParamReturnEdges(ownerNode, ownerAgg.node.uniqueId, physicalNameToId, rawEdges)
       }
 
@@ -84,7 +89,7 @@ export function buildDiagramStructure(project: EditingProject): DiagramStructure
         }
 
         if (member.type.kind === 'child' || member.type.kind === 'children') {
-          const memberAgg: DiagramAggregate = { node: member, rootId: root.uniqueId, model, children: [] }
+          const memberAgg: DiagramAggregate = { node: member, rootId: root.uniqueId, appearance, children: [] }
           ownerAgg.children.push(memberAgg)
           aggregateByElementId.set(member.uniqueId, memberAgg)
           walk(member, memberAgg)
@@ -113,7 +118,8 @@ export function isMemberChangeAffectingDiagram(before: EditingMember, after: Edi
 
 /** ルート集約自身の内容の変更が、ダイアグラムの構成に影響するかどうかを判定する */
 export function isRootChangeAffectingDiagram(before: EditingRootAggregate, after: EditingRootAggregate): boolean {
-  if (getRootModelType(before) !== getRootModelType(after)) return true
+  if (before.attributes[ATTR_IS_STORED] !== after.attributes[ATTR_IS_STORED]) return true
+  if (before.attributes[ATTR_IS_QUERYABLE] !== after.attributes[ATTR_IS_QUERYABLE]) return true
   return commonAttrsAffectDiagram(before, after)
 }
 
@@ -184,7 +190,7 @@ function buildRefToPathIndex(dataStructures: EditingRootAggregate[]): Map<string
 }
 
 /**
- * 物理名から要素の uniqueId を引く索引を組み立てる。コマンドモデルの引数・戻り値属性の解決に使う。
+ * 物理名から要素の uniqueId を引く索引を組み立てる。コマンドの引数・戻り値属性の解決に使う。
  * 対象は dataStructures, commands, staticEnums, valueObjects, constants の全ルート集約・全メンバー。
  * 同じ物理名の要素が複数ある場合は、並び順で先に現れた方を採用する。
  */
@@ -220,7 +226,7 @@ function collectMentionEdges(comment: string | null | undefined, sourceId: strin
 }
 
 /**
- * コマンドモデルの引数・戻り値属性が指す要素を関連として収集する。
+ * コマンドの引数・戻り値属性が指す要素を関連として収集する。
  * 属性値は「物理名」または「物理名:付加情報」（QueryModelを参照する場合の表示データ名など）の書式。
  */
 function collectParamReturnEdges(

@@ -112,8 +112,7 @@ public class SchemaParseRule {
         // スキーマ定義名重複チェック
         var appearedName = new HashSet<string>();
         var duplicates = new HashSet<string>();
-        var rootTypeNames = Enum.GetValues<E_Section>().Select(section => section.GetRootTypeAttributeValue()).OfType<string>();
-        foreach (var name in rootTypeNames.Concat(ValueMemberTypes.Select(t => t.SchemaTypeName))) {
+        foreach (var name in ValueMemberTypes.Select(t => t.SchemaTypeName)) {
             if (appearedName.Contains(name)) {
                 duplicates.Add(name);
             } else {

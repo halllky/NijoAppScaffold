@@ -57,7 +57,7 @@ internal sealed class IsQueryableOption : FeatureOption {
                     var hasKey = el.Elements().Any(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null);
 
                     if (!hasKey) {
-                        addError(el, "Child/Childrenがあるビューにマッピングされるクエリモデルにはキーが必要です。");
+                        addError(el, "Child/Childrenがあるビューにマッピングされるデータ構造にはキーが必要です。");
                     }
                 }
             }
@@ -87,7 +87,7 @@ internal sealed class IsQueryableOption : FeatureOption {
                 var membersWithKey = childAggregate.Elements()
                     .Where(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null).ToList();
                 if (membersWithKey.Any()) {
-                    addError(childAggregate, "クエリモデルの子集約には主キー属性を付与することができません。");
+                    addError(childAggregate, $"{IsQueryableOption.ATTRIBUTE_NAME}属性のみが指定されたデータ構造の子集約には主キー属性を付与することができません。");
                     foreach (var member in membersWithKey) {
                         addError(member, "この子集約のメンバーに主キー属性を付与することはできません。");
                     }
@@ -101,7 +101,7 @@ internal sealed class IsQueryableOption : FeatureOption {
                 var membersWithKey = childrenAggregate.Elements()
                     .Where(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null).ToList();
                 if (membersWithKey.Any()) {
-                    addError(childrenAggregate, "クエリモデルの子配列には主キー属性を付与することができません。");
+                    addError(childrenAggregate, $"{IsQueryableOption.ATTRIBUTE_NAME}属性のみが指定されたデータ構造の子配列には主キー属性を付与することができません。");
                     foreach (var member in membersWithKey) {
                         addError(member, "この子配列のメンバーに主キー属性を付与することはできません。");
                     }
@@ -251,7 +251,7 @@ internal sealed class IsQueryableOption : FeatureOption {
 
         // 循環参照チェック
         if (HasCircularReferences(rootAggregateElement, context)) {
-            addError(rootAggregateElement, "クエリモデルで循環参照を定義することはできません。");
+            addError(rootAggregateElement, $"{IsQueryableOption.ATTRIBUTE_NAME}属性のみが指定されたデータ構造で循環参照を定義することはできません。");
         }
     }
 

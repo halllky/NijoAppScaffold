@@ -674,56 +674,46 @@ Webアプリケーションなので明示的にログアウトしない限り�
     <入荷登録
       Parameter="入荷詳細"
       ReturnValue="入荷登録ReturnValue"
-      Type="command-model"
       UniqueId="c2a6e537-f471-4512-ae2b-d4a38017604e" />
     <!--日次で実行される、外部システム（商品管理システム）からデータを受け取ってこのシステムの
     @[商品](a1b2c3d4-e5f6-4a1b-8c2d-3e4f5a6b7c8d) マスタにマージする処理。任意のタイミングでキックすることも可能。
 ASP.NET Core のサービスワーカーとして登録される。-->
     <商品データ取込
-      Type="command-model"
       UniqueId="6cb9f1e7-afb0-4197-be66-d9779315026c" />
     <!--パスワード認証でのログイン。-->
     <ログイン
       Parameter="ログインParameter"
       ReturnValue="ログインユーザー情報"
-      Type="command-model"
       UniqueId="af387361-2401-4308-9e04-8e5973f39426" />
     <ログアウト
-      Type="command-model"
       UniqueId="8877c58b-260a-4de3-a007-ce73d1d222b3" />
     <!--パスワード紛失の際のため、対象者のパスワードを
     "pass" に更新する。
 システム管理者のみ使用可能。-->
     <パスワード再発行
       Parameter="パスワード再発行Parameter"
-      Type="command-model"
       UniqueId="abbe87d5-69df-45a0-9166-1b05f08de613" />
     <!--従業員マスタの一括更新処理。システム管理者のみ利用可能。-->
     <従業員一括更新
       Parameter="従業員一括更新Parameter"
-      Type="command-model"
       UniqueId="5388c52e-2932-4226-bf5b-734ae8a50112" />
     <!--売上データを新規登録する。
 在庫引当計算もこの中で行われる。-->
     <売上新規登録
       Parameter="売上詳細"
       ReturnValue="売上新規登録ReturnValue"
-      Type="command-model"
       UniqueId="e4e427ae-7a2d-468b-864e-6536dbb0a47a" />
     <売上詳細画面初期表示
       Parameter="売上詳細画面初期表示Parameter"
       ReturnValue="売上詳細"
-      Type="command-model"
       UniqueId="590f0ad0-92c9-4281-82f7-6f8c0d04de1d" />
     <!--一度登録された売上を修正する。-->
     <売上修正
       Parameter="売上詳細"
-      Type="command-model"
       UniqueId="271203a5-7b54-449b-a443-92019f7f1035" />
     <!--入力ミスの修正が主な用途。-->
     <入荷修正
       Parameter="入荷詳細"
-      Type="command-model"
       UniqueId="6eae3b9e-64ab-49a6-bb26-1738a31561c7" />
     <!--棚卸しによる差異の修正、破損による廃棄、返品の受入などで利用する。
 @[在庫調整](4a1fa98c-1503-4d77-8161-e0e2f5f2fd1d) データを登録し、
@@ -732,38 +722,31 @@ ASP.NET Core のサービスワーカーとして登録される。-->
 商品一覧画面、商品詳細画面から呼び出される。-->
     <在庫調整登録
       Parameter="在庫調整Parameter"
-      Type="command-model"
       UniqueId="23aacfdc-c4d5-499f-891e-999542dc5258" />
     <!--ログインユーザー自身が自分のパスワードを変更する。-->
     <パスワード変更
       Parameter="パスワード変更Parameter"
-      Type="command-model"
       UniqueId="c6feafdf-b973-4196-afa1-111eb9638087" />
     <!--古いセッションキーの削除を行う。
 ASP.NET Core のサービスワーカーとして登録される定期処理。-->
     <クリーンナップ
-      Type="command-model"
       UniqueId="eadf411b-2c47-483f-b0a8-fc52c9486adc" />
     <入荷詳細画面初期表示
       Parameter="入荷詳細画面初期表示Parameter"
       ReturnValue="入荷詳細"
-      Type="command-model"
       UniqueId="d8cff664-d1a8-43c8-ac5e-cc1b2a8fb400" />
     <!--画面上での金額のリアルタイム入力時と保存時とで金額計算ロジックに齟齬が出ないようにするため、計算処理をC#側に一元化するためのコマンド。DBとのやり取りは行わず、メモリ上で計算だけを行なってクライアント側に結果を返す。-->
     <売上金額シミュレート
       Parameter="売上詳細"
       ReturnValue="売上詳細"
-      Type="command-model"
       UniqueId="00556384-1f6d-4596-89d6-2cd1a9094ea5" />
     <!--ブラウザのあるタブでログインし、その後別のタブで多重起動したとき、Cookieとサーバー側にはログイン状態が残っているが、新しいタブのJavaScriptには残っていないので、サーバー側に問い合わせてログイン中ならその情報を受け取る。-->
     <ログイン状態確認
       ReturnValue="ログインユーザー情報"
-      Type="command-model"
       UniqueId="87def3ce-18a3-4ad1-9ab1-bf0ad3c80763" />
   </Commands>
   <StaticEnums>
     <消費税区分
-      Type="enum"
       UniqueId="e4a132f9-580e-477f-abf3-9359c92a643a">
       <非課税
         key="0"
@@ -776,7 +759,6 @@ ASP.NET Core のサービスワーカーとして登録される定期処理。-
         UniqueId="5c03c698-1999-4512-bd36-6e61b394a717" />
     </消費税区分>
     <売上明細区分
-      Type="enum"
       UniqueId="724ac342-ebd2-4a0b-bb75-5bd174cd5f60">
       <売上
         key="0"
@@ -789,32 +771,32 @@ ASP.NET Core のサービスワーカーとして登録される定期処理。-
   <CustomAttributes>
     <!--DataModelのMaxLengthはDB桁数定義にのみ使用される。こちらは画面制御で使用。-->
     <Custom-c582bb2e-804e-4136-93f0-85139aaa675f
-      AvailableModels="stored,queryable,command-model,structure,enum,value-object"
+      AvailableFor="stored,queryable,command,structure,static-enum,value-object"
       DisplayName="最大長"
       PhysicalName="CustomMaxLength"
       Type="Decimal" />
     <!--その数値項目が金額を表すかどうか。画面上で3桁カンマ区切りで表示されたり、サフィックスに「円」がついたりする。-->
     <Custom-e543a1e3-a539-459b-86ce-a17686043d59
-      AvailableModels="stored,queryable,command-model,structure,enum,value-object"
+      AvailableFor="stored,queryable,command,structure,static-enum,value-object"
       DisplayName="金額項目"
       PhysicalName="IsCurrency"
       Type="Boolean" />
     <!--その数値項目が数量を表すか否か。画面上でサフィックスに「個」がつく。-->
     <Custom-beceba92-faf8-49eb-a987-ff0d53889d64
-      AvailableModels="stored,queryable,command-model,structure,enum,value-object"
+      AvailableFor="stored,queryable,command,structure,static-enum,value-object"
       DisplayName="数量"
       PhysicalName="IsQuantity"
       Type="Boolean" />
     <!--その数値項目が負の数で登録されようとしたときにエラーとする。-->
     <Custom-0f2d701d-f481-42d4-8dfb-5296c1b40246
-      AvailableModels="stored,queryable,command-model,structure,enum,value-object"
+      AvailableFor="stored,queryable,command,structure,static-enum,value-object"
       DisplayName="0以上のみ"
       IsValidation="True"
       PhysicalName="NotNegative"
       Type="Boolean" />
     <!--ログ出力時に値をそのまま出さずにマスキングさせる。パスワードなどに指定する。-->
     <Custom-4d868e55-06d6-44eb-aa97-901f39dd1782
-      AvailableModels="stored,queryable,command-model,structure,enum,value-object"
+      AvailableFor="stored,queryable,command,structure,static-enum,value-object"
       DisplayName="マスキング"
       PhysicalName="Masking"
       Type="Boolean" />

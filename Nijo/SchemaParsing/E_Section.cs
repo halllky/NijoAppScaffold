@@ -34,18 +34,6 @@ internal static class SectionExtensions {
     };
 
     /// <summary>
-    /// DataStructures セクション以外のセクションのルート集約に指定される Type 属性の値
-    /// </summary>
-    internal static string? GetRootTypeAttributeValue(this E_Section section) => section switch {
-        E_Section.DataStructures => null,
-        E_Section.Commands => "command-model",
-        E_Section.StaticEnums => "enum",
-        E_Section.ValueObjects => "value-object",
-        E_Section.Constants => "constant-model",
-        _ => throw new System.ArgumentOutOfRangeException(nameof(section)),
-    };
-
-    /// <summary>
     /// XML要素が属するルート集約が、どのセクションに定義されているかを返します。
     /// </summary>
     internal static bool TryGetSection(this XElement xElement, out E_Section section) {

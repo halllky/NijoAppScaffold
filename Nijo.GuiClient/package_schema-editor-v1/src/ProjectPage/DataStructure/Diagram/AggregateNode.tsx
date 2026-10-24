@@ -1,6 +1,6 @@
 import React from "react"
 import { Handle, Position, useUpdateNodeInternals, type Node, type NodeProps } from "@xyflow/react"
-import { MODEL_COLORS } from "../../../UI/modelColors"
+import { ROOT_AGGREGATE_COLORS } from "../../../UI/rootAggregateColors"
 import type { DiagramAggregate } from "./diagramStructure"
 
 /** ダイアグラム上のルート集約1個分のノード */
@@ -50,8 +50,8 @@ function AggregateBox({ aggregate, isRoot, selected }: {
   isRoot?: boolean
   selected?: boolean
 }) {
-  const { node, model, children } = aggregate
-  const colors = MODEL_COLORS[model]
+  const { node, appearance, children } = aggregate
+  const colors = ROOT_AGGREGATE_COLORS[appearance]
 
   return (
     <div

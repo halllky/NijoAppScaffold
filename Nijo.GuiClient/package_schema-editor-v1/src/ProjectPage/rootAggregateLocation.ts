@@ -2,7 +2,7 @@ import { EditingProject } from "../backend"
 
 /**
  * データ構造タブが扱うルート集約（dataStructures・commands のいずれか）の位置。
- * ルート集約はモデル種別ごとに別配列に分かれているため、単純な数値インデックスだけでは位置を特定できない。
+ * ルート集約はセクションごとに別配列に分かれているため、単純な数値インデックスだけでは位置を特定できない。
  */
 export type RootAggregateLocation = {
   list: 'dataStructures' | 'commands'

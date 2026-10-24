@@ -23,14 +23,14 @@ internal sealed class CommandsSection : Section {
         // コマンドモデルの物理名を取得
         var rootAggregateName = context.GetPhysicalName(rootAggregateElement);
         if (string.IsNullOrEmpty(rootAggregateName)) {
-            addError(rootAggregateElement, "コマンドモデルの物理名が指定されていません。");
+            addError(rootAggregateElement, "コマンドの物理名が指定されていません。");
             return;
         }
 
         // コマンドモデルは子孫XML要素を定義できない
         var childElements = rootAggregateElement.Elements();
         if (childElements.Any()) {
-            addError(rootAggregateElement, $"コマンドモデルのルート集約は子孫XML要素を定義できません。引数と戻り値の型は{ParameterOption.ATTRIBUTE_NAME}属性と{ReturnValueOption.ATTRIBUTE_NAME}属性で指定してください。");
+            addError(rootAggregateElement, $"コマンドのルート集約は子孫XML要素を定義できません。引数と戻り値の型は{ParameterOption.ATTRIBUTE_NAME}属性と{ReturnValueOption.ATTRIBUTE_NAME}属性で指定してください。");
         }
 
         // Parameter属性の検証
@@ -82,9 +82,9 @@ internal sealed class CommandsSection : Section {
                 .Where(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null).ToList();
 
             if (membersWithKey.Any()) {
-                addError(aggregate, "コマンドモデルの集約には主キー属性を定義できません。");
+                addError(aggregate, "コマンドの集約には主キー属性を定義できません。");
                 foreach (var member in membersWithKey) {
-                    addError(member, "コマンドモデルのメンバーに主キー属性を定義することはできません。");
+                    addError(member, "コマンドのメンバーに主キー属性を定義することはできません。");
                 }
             }
         }
@@ -108,7 +108,7 @@ internal sealed class CommandsSection : Section {
                 ?.Elements()
                 .FirstOrDefault(e => context.GetPhysicalName(e) == modelName);
             if (targetModel == null) {
-                addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」が見つからないか、ルート集約ではありません。");
+                addError(rootAggregateElement, $"{attributeName}属性で指定されたデータ構造「{modelName}」が見つからないか、ルート集約ではありません。");
                 return;
             }
 
@@ -119,12 +119,12 @@ internal sealed class CommandsSection : Section {
             if (string.IsNullOrEmpty(refToObject)) {
                 // 構造体の場合
                 if (isStored || isQueryable) {
-                    addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」は{IsStoredOption.ATTRIBUTE_NAME}属性も{IsQueryableOption.ATTRIBUTE_NAME}属性も指定されていないデータ構造ではありません。");
+                    addError(rootAggregateElement, $"{attributeName}属性で指定されたデータ構造「{modelName}」は{IsStoredOption.ATTRIBUTE_NAME}属性も{IsQueryableOption.ATTRIBUTE_NAME}属性も指定されていないデータ構造ではありません。");
                 }
             } else {
                 // 検索可能なデータ構造の場合
                 if (!isQueryable) {
-                    addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」は{IsQueryableOption.ATTRIBUTE_NAME}属性が指定されたデータ構造ではありません。");
+                    addError(rootAggregateElement, $"{attributeName}属性で指定されたデータ構造「{modelName}」は{IsQueryableOption.ATTRIBUTE_NAME}属性が指定されたデータ構造ではありません。");
                     return;
                 }
 

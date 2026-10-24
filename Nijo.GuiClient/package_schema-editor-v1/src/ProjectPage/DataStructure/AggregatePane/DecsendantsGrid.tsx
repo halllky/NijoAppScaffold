@@ -47,15 +47,13 @@ function DecsendantsGrid(props: {
 
   const { attributeDefs } = useSchemaEditorRule()
   const customAttributes = ReactHookForm.useWatch({ name: "customAttributes", control }) ?? []
-  const [rootModel, rootIsStored, rootIsQueryable] = ReactHookForm.useWatch({
-    name: [`${rootPath}.model`, `${rootPath}.attributes.${ATTR_IS_STORED}`, `${rootPath}.attributes.${ATTR_IS_QUERYABLE}`],
+  const [rootIsStored, rootIsQueryable] = ReactHookForm.useWatch({
+    name: [`${rootPath}.attributes.${ATTR_IS_STORED}`, `${rootPath}.attributes.${ATTR_IS_QUERYABLE}`],
     control,
   })
-  const rootModelSource = React.useMemo(() => ({
-    model: rootModel,
+  const attributeTarget = React.useMemo(() => getAttributeTarget(rootLocation.list, {
     attributes: { [ATTR_IS_STORED]: rootIsStored ?? null, [ATTR_IS_QUERYABLE]: rootIsQueryable ?? null },
-  }), [rootModel, rootIsStored, rootIsQueryable])
-  const attributeTarget = React.useMemo(() => getAttributeTarget(rootLocation.list, rootModelSource), [rootLocation.list, rootModelSource])
+  }), [rootLocation.list, rootIsStored, rootIsQueryable])
 
   const { uniqueConstraintColumns, contextValue: uniqueConstraintsContextValue } = useUniqueConstraintsColumns(control, getValues, setValue, rootLocation)
 
@@ -96,7 +94,7 @@ function DecsendantsGrid(props: {
       wrap: true,
     }))
 
-    // モデルの既定の属性
+    // 既定の属性
     for (const attrDef of attributeDefs) {
       if (!isAttributeAvailable(attrDef, attributeTarget, [
         NODE_TYPE_CHILD_AGGREGATE,
@@ -130,7 +128,7 @@ function DecsendantsGrid(props: {
 
     // カスタム属性
     for (const customAttr of customAttributes) {
-      if (!isCustomAttributeAvailable(customAttr, rootModelSource)) continue;
+      if (!isCustomAttributeAvailable(customAttr, attributeTarget)) continue;
 
       if (customAttr.type === 'Enum') {
         const ddlOptions = customAttr.enumValues.map(opt => ({ value: opt, text: opt }))
@@ -154,7 +152,7 @@ function DecsendantsGrid(props: {
     }
 
     return columns
-  }, [attributeDefs, attributeTarget, rootModelSource, customAttributes, uniqueConstraintColumns])
+  }, [attributeDefs, attributeTarget, customAttributes, uniqueConstraintColumns])
 
   // 行の追加・削除・移動は必ずダイアグラムの構成に影響しうるため、変更操作にまとめて通知を紐づける
   // （indent の変更は update() を使うが、複数行への一括適用時に1回だけ通知したいため、呼び出し側で個別に notifyStructureChanged() を呼ぶ）

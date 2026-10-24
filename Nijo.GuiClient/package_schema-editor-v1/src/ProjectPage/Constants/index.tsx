@@ -5,7 +5,6 @@ import { UUID } from "uuidjs"
 import {
   EditingProject,
   EditingRootAggregate,
-  MODEL_CONSTANT,
 } from "../../backend"
 import * as UI from '../../UI'
 import { SingleConstantEditor } from "./SingleConstantEditor"
@@ -28,7 +27,6 @@ function ConstantsGrid(props: {
     const newConstant: EditingRootAggregate = {
       uniqueId: UUID.generate(),
       physicalName: "",
-      model: MODEL_CONSTANT,
       attributes: {},
       uniqueConstraints: [],
       members: [],

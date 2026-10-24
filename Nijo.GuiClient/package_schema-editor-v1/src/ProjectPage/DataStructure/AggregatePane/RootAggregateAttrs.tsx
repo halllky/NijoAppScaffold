@@ -57,7 +57,7 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
       {/* 属性欄（レスポンシブ2カラムレイアウト） */}
       <div className="flex flex-wrap gap-1">
 
-        {/* モデルの既定の属性 */}
+        {/* 既定の属性 */}
         <div className="basis-96 flex flex-col gap-1">
           {attributeDefs.map(attrDef => {
             if (!attributeTarget || !isAttributeAvailable(attrDef, attributeTarget, [NODE_TYPE_ROOT_AGGREGATE])) return null
@@ -99,7 +99,7 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
         {/* カスタム属性 */}
         <div className="flex-1 flex flex-col gap-1">
           {customAttributes.map(customAttr => {
-            if (!root || !isCustomAttributeAvailable(customAttr, root)) return null
+            if (!attributeTarget || !isCustomAttributeAvailable(customAttr, attributeTarget)) return null
 
             const path = `${rootPath}.attributes.${customAttr.uniqueId}` as const
             const userLabel = customAttr.displayName ?? customAttr.physicalName
@@ -138,11 +138,11 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
   )
 }
 
-/** モデル種別を決める属性かどうか。ヘッダのモデル種別の選択欄で編集するので、属性欄には表示しない */
+/** IsStored, IsQueryable 属性かどうか。ヘッダの種類の選択欄で編集するので、属性欄には表示しない */
 const isModelSelectionAttr = (attributeName: string): boolean =>
   attributeName === ATTR_IS_STORED || attributeName === ATTR_IS_QUERYABLE
 
-/** ダイアグラム上の関連（コマンドモデルの引数・戻り値のエッジ）の元になる属性かどうか */
+/** ダイアグラム上の関連（コマンドの引数・戻り値のエッジ）の元になる属性かどうか */
 const isDiagramLinkAttr = (attributeName: string): boolean =>
   attributeName === ATTR_PARAMETER || attributeName === ATTR_RETURN_VALUE
 

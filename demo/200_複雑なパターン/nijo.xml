@@ -1419,24 +1419,20 @@
       LatinName="Simple Treatment Registration"
       Parameter="簡易診療登録Parameter"
       ReturnValue="簡易診療登録ReturnValue"
-      Type="command-model"
       UniqueId="4d167764-687c-4db8-9f3f-13fe7d287b73" />
     <!-- コマンドモデル -->
     <医療機器管理
       LatinName="Medical Equipment Management"
       Parameter="医療機器管理Parameter"
       ReturnValue="医療機器管理ReturnValue"
-      Type="command-model"
       UniqueId="394d98d6-d461-4873-a6a0-9de128fbe1cc" />
     <!--引数・戻り値ともに存在しないコマンドモデルの例。
 \←コメントにバックスラッシュがあるときのテスト-->
     <アプリケーション死活監視
-      Type="command-model"
       UniqueId="ef0fb518-440b-4cd1-81e9-707ccab1a63b" />
   </Commands>
   <StaticEnums>
     <権限レベル
-      Type="enum"
       UniqueId="b987b96d-1b02-440d-8c5f-ccd75a827b18">
       <管理者
         DisplayName="管理者"
@@ -1449,7 +1445,6 @@
     </権限レベル>
     <!-- 列挙型定義 (DisplayName属性の追加) -->
     <payment_type
-      Type="enum"
       UniqueId="96f25472-5c51-4297-bd2f-43d7568f0785">
       <現金
         DisplayName="現金決済"
@@ -1473,7 +1468,6 @@
         UniqueId="1cd1288c-0aff-4565-b60a-ad25f61c48da" />
     </payment_type>
     <payment_status
-      Type="enum"
       UniqueId="6c2b97ca-114e-44e5-86f1-57211ca57576">
       <未払い
         DisplayName="未払い"
@@ -1493,7 +1487,6 @@
         UniqueId="3eb850fe-9bf8-47c1-8338-a9edf3e1188a" />
     </payment_status>
     <card_type
-      Type="enum"
       UniqueId="845f998b-a0ca-4aeb-89dc-fb2981f7fbbf">
       <VISA
         DisplayName="VISA Card"
@@ -1517,7 +1510,6 @@
         UniqueId="053ab7cd-3a50-4f4d-8d4e-e51220785a7c" />
     </card_type>
     <shipping_method
-      Type="enum"
       UniqueId="fed958ed-d394-48b3-a881-9a1aaa742804">
       <紹介状送付
         DisplayName="紹介状郵送"
@@ -1533,7 +1525,6 @@
         UniqueId="a8e4a641-73a5-40c2-8a23-37ff7a530887" />
     </shipping_method>
     <shipping_status
-      Type="enum"
       UniqueId="0dec31a4-263b-4404-ab27-e5d7e8f675f3">
       <準備中
         DisplayName="準備中"
@@ -1553,7 +1544,6 @@
         UniqueId="a1658c6b-b756-4d8a-aef1-90b150f4c286" />
     </shipping_status>
     <gender_type
-      Type="enum"
       UniqueId="33b58f30-d993-4368-b7eb-7a39f232154c">
       <男性
         DisplayName="男性"
@@ -1573,7 +1563,6 @@
         UniqueId="a59238c6-1213-42c6-bc89-f9473b8319ce" />
     </gender_type>
     <member_rank
-      Type="enum"
       UniqueId="7a343f84-3fe5-4ff9-b372-0d387015abe0">
       <一般
         DisplayName="一般患者"
@@ -1593,7 +1582,6 @@
         UniqueId="e6cf4fa3-e97a-471d-9f01-d3d864111eec" />
     </member_rank>
     <position_type
-      Type="enum"
       UniqueId="244ef3b6-9b40-4c1d-95b9-c8e32d9dd36b">
       <一般社員
         DisplayName="看護師"
@@ -1617,7 +1605,6 @@
         UniqueId="4250bf40-5a44-46a2-a7e7-c244ff48fabd" />
     </position_type>
     <reservation_type
-      Type="enum"
       UniqueId="fe3549b2-d597-4107-98b2-751e898a57ae">
       <初診
         DisplayName="初診（しょしん）"
@@ -1634,7 +1621,6 @@
     </reservation_type>
     <!-- 機器点検報告用の列挙型 -->
     <action_type
-      Type="enum"
       UniqueId="7fe71c2e-95f9-495b-9079-52a4cb44133e">
       <補充
         DisplayName="機器補充"
@@ -1658,7 +1644,6 @@
         UniqueId="ff904ca8-e807-4361-93b7-c8f4ee408f73" />
     </action_type>
     <status_type
-      Type="enum"
       UniqueId="f828dfe1-4514-4947-a8ec-4e219e6c06a0">
       <未実施
         DisplayName="未実施"
@@ -1679,7 +1664,6 @@
     </status_type>
     <!-- 措置結果用の列挙型 -->
     <result_status
-      Type="enum"
       UniqueId="2d2d2fc8-d63f-498a-b173-ceb31e4c1f79">
       <成功
         DisplayName="成功"
@@ -1699,7 +1683,6 @@
         UniqueId="05482da1-1c14-4532-97a1-556268116792" />
     </result_status>
     <document_type
-      Type="enum"
       UniqueId="00f7fd0a-8e3b-40ca-b3ee-47448236bfe9">
       <写真
         DisplayName="写真"
@@ -1726,14 +1709,12 @@
   <ValueObjects>
     <!-- value-objectタイプの定義 -->
     <医療従事者ID型
-      Type="value-object"
       UniqueId="56d02127-62d2-4d5c-9a8d-bcf5150c7123" />
   </ValueObjects>
   <Constants>
     <!-- アプリケーション設定の定数定義 -->
     <ApplicationSettings
       DisplayName="アプリケーション設定"
-      Type="constant-model"
       UniqueId="const-app-settings-001">
       <!-- クライアント側のトップページの表示に利用。 -->
       <AppName
@@ -1876,7 +1857,6 @@
     <!-- システムメッセージの定数定義 -->
     <SystemMessages
       DisplayName="システムメッセージ"
-      Type="constant-model"
       UniqueId="const-system-messages-001">
       <!-- 患者管理関連 -->
       <PatientNotFound
@@ -1927,7 +1907,7 @@
   </Constants>
   <CustomAttributes>
     <Custom-6cdcdbfc-28f8-46e3-95aa-7d2c71820d60
-      AvailableModels="stored,queryable,command-model,structure,enum,value-object"
+      AvailableFor="stored,queryable,command,structure,static-enum,value-object"
       DisplayName="利用可能文字"
       IsValidation="True"
       PhysicalName="AvailableCharacter"

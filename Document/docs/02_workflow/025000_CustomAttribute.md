@@ -27,7 +27,7 @@ sidebar_position: 8
   <CustomAttributes>
     <!--ログ出力時に値をそのまま出さずにマスキングさせる。パスワードなどに指定する。-->
     <Custom-4d868e55-06d6-44eb-aa97-901f39dd1782
-      AvailableModels="stored,queryable,structure,command-model,enum,value-object"
+      AvailableFor="stored,queryable,structure,command,static-enum,value-object"
       DisplayName="マスキング"
       PhysicalName="Masking"
       Type="Boolean" />

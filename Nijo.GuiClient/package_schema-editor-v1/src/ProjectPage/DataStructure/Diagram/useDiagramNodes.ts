@@ -1,7 +1,7 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
 import { applyNodeChanges, type NodeChange, type XYPosition } from "@xyflow/react"
-import { EditingProject, MODEL_DATA, MODEL_QUERY, MODEL_COMMAND, MODEL_STRUCTURE } from "../../../backend"
+import { EditingProject, RootAggregateAppearance } from "../../../backend"
 import type { AggregateFlowNode } from "./AggregateNode"
 import type { DiagramAggregate, DiagramReference } from "./diagramStructure"
 
@@ -232,7 +232,7 @@ function splitIntoColumns(roots: DiagramAggregate[], references: DiagramReferenc
   }
   return columns
     .filter(column => column !== undefined)
-    .map(column => [...column].sort((a, b) => MODEL_ORDER.indexOf(a.model) - MODEL_ORDER.indexOf(b.model)))
+    .map(column => [...column].sort((a, b) => APPEARANCE_ORDER.indexOf(a.appearance) - APPEARANCE_ORDER.indexOf(b.appearance)))
 }
 
 /** 未計測のノードの高さを、包含している子集約の数から見積もる */
@@ -243,8 +243,8 @@ function estimateHeight(aggregate: DiagramAggregate): number {
 /** 薄く表示するノードのスタイル。選択中または検索にヒットしたノードを目立たせるために、それ以外を薄くする */
 const DIMMED_NODE_STYLE: React.CSSProperties = { opacity: 0.2 }
 
-/** 自動配置の際の、同じ列の中でのモデルの種類の並び順（上から） */
-const MODEL_ORDER = [MODEL_DATA, MODEL_QUERY, MODEL_COMMAND, MODEL_STRUCTURE]
+/** 自動配置の際の、同じ列の中でのルート集約の区分の並び順（上から） */
+const APPEARANCE_ORDER: RootAggregateAppearance[] = ['stored', 'queryable', 'command', 'structure']
 /** 自動配置の際のノード同士の間隔 */
 const GAP_X = 160
 const GAP_Y = 40

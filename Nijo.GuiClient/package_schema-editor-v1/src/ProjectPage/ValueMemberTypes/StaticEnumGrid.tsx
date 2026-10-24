@@ -3,7 +3,7 @@ import * as ReactHookForm from "react-hook-form"
 import * as Icon from "@heroicons/react/24/solid"
 import * as EG2 from "@halllky/editable-grid"
 import { UUID } from "uuidjs"
-import { EditingProject, EditingRootAggregate, EditingMember, MODEL_STATIC_ENUM } from "../../backend"
+import { EditingProject, EditingRootAggregate, EditingMember } from "../../backend"
 import * as UI from '../../UI'
 
 /** グリッドに新しい行を挿入するときの初期値。静的区分の値にType属性は無いのでkindは常にunknown。 */
@@ -34,7 +34,6 @@ export default function StaticEnumGrid(props: {
     const newEnum: EditingRootAggregate = {
       uniqueId: UUID.generate(),
       physicalName: "",
-      model: MODEL_STATIC_ENUM,
       attributes: {},
       uniqueConstraints: [],
       members: [],

@@ -71,7 +71,7 @@ public class IsKey属性のテスト {
 
         var messages = errors2.SelectMany(e => e.OwnErrors).ToArray();
 
-        Assert.That(messages, Does.Contain("キーが指定されていません。").Or.Contain("データモデルの子配列は必ず1個以上の主キーを持たなければなりません。"));
+        Assert.That(messages, Does.Contain("キーが指定されていません。").Or.Contain("IsStored属性が指定されたデータ構造の子配列は必ず1個以上の主キーを持たなければなりません。"));
     }
 
     [Test]
@@ -97,7 +97,7 @@ public class IsKey属性のテスト {
             .ToArray();
 
         Assert.That(messages,
-            Does.Contain("データモデルの子集約には主キー属性を付与することができません。").Or.Contain("データモデルの子集約にはキーを指定できません。"));
+            Does.Contain("IsStored属性が指定されたデータ構造の子集約には主キー属性を付与することができません。").Or.Contain("IsStored属性が指定されたデータ構造の子集約にはキーを指定できません。"));
     }
 
     [Test]
@@ -131,7 +131,7 @@ public class IsKey属性のテスト {
             </NijoAppScaffold>
             """);
         var errors = await project2.EnumerateValidationErrorsAsync();
-        Assert.That(errors.SelectMany(e => e.OwnErrors), Does.Contain("Child/Childrenがあるビューにマッピングされるクエリモデルにはキーが必要です。"));
+        Assert.That(errors.SelectMany(e => e.OwnErrors), Does.Contain("Child/Childrenがあるビューにマッピングされるデータ構造にはキーが必要です。"));
 
         // 異常系：Childrenにキーなし
         using var project3 = await NijoTestUtil.CreateNewProjectAsync($$"""
@@ -147,7 +147,7 @@ public class IsKey属性のテスト {
             </NijoAppScaffold>
             """);
         errors = await project3.EnumerateValidationErrorsAsync();
-        Assert.That(errors.SelectMany(e => e.OwnErrors), Does.Contain("Child/Childrenがあるビューにマッピングされるクエリモデルにはキーが必要です。"));
+        Assert.That(errors.SelectMany(e => e.OwnErrors), Does.Contain("Child/Childrenがあるビューにマッピングされるデータ構造にはキーが必要です。"));
     }
 
     [Test]
@@ -166,7 +166,7 @@ public class IsKey属性のテスト {
             """);
         var errors = await project.EnumerateValidationErrorsAsync();
         var allErrors = errors.SelectMany(e => e.AttributeErrors.Values.SelectMany(v => v));
-        Assert.That(allErrors, Does.Contain("クエリモデルの子集約にはキーを指定できません。"));
+        Assert.That(allErrors, Does.Contain("IsQueryable属性のみが指定されたデータ構造の子集約にはキーを指定できません。"));
     }
 
     [Test]
@@ -186,7 +186,7 @@ public class IsKey属性のテスト {
             return e.OwnErrors.Concat(e.AttributeErrors.Values.SelectMany(v => v));
         });
 
-        Assert.That(allErrors1, Does.Contain("クエリモデルのルート集約で、ビューにマッピングされない場合はキーを指定できません。"));
+        Assert.That(allErrors1, Does.Contain("IsQueryable属性のみが指定されたデータ構造のルート集約には、ビューにマッピングされない場合はキーを指定できません。"));
 
         // Childrenにキー指定
         using var project2 = await NijoTestUtil.CreateNewProjectAsync($$"""
@@ -202,7 +202,7 @@ public class IsKey属性のテスト {
             """);
         var errors2 = await project2.EnumerateValidationErrorsAsync();
         var allErrors2 = errors2.SelectMany(e => e.AttributeErrors.Values.SelectMany(v => v));
-        Assert.That(allErrors2, Does.Contain("クエリモデルの子配列で、ビューにマッピングされない場合はキーを指定できません。"));
+        Assert.That(allErrors2, Does.Contain("IsQueryable属性のみが指定されたデータ構造の子配列には、ビューにマッピングされない場合はキーを指定できません。"));
     }
 
     [Test]

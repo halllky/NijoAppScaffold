@@ -38,7 +38,7 @@ internal sealed class IsKeyOption : NodeOption {
 
         // 永続化されるデータ構造の子集約には付与不可
         if (ctx.Target.IsStored && ownerType == E_NodeType.ChildAggregate) {
-            ctx.AddError("データモデルの子集約にはキーを指定できません。");
+            ctx.AddError($"{IsStoredOption.ATTRIBUTE_NAME}属性が指定されたデータ構造の子集約にはキーを指定できません。");
         }
 
         if (!ctx.Target.IsStored && ctx.Target.IsQueryable) {
@@ -46,14 +46,14 @@ internal sealed class IsKeyOption : NodeOption {
 
             // 子集約には付与不可
             if (ownerType == E_NodeType.ChildAggregate) {
-                ctx.AddError("クエリモデルの子集約にはキーを指定できません。");
+                ctx.AddError($"{IsQueryableOption.ATTRIBUTE_NAME}属性のみが指定されたデータ構造の子集約にはキーを指定できません。");
             }
             // 子配列とルート集約は、ビューにマッピングされない場合は付与不可
             if (ownerType == E_NodeType.ChildrenAggregate && !isView) {
-                ctx.AddError("クエリモデルの子配列で、ビューにマッピングされない場合はキーを指定できません。");
+                ctx.AddError($"{IsQueryableOption.ATTRIBUTE_NAME}属性のみが指定されたデータ構造の子配列には、ビューにマッピングされない場合はキーを指定できません。");
             }
             if (ownerType == E_NodeType.RootAggregate && !isView) {
-                ctx.AddError("クエリモデルのルート集約で、ビューにマッピングされない場合はキーを指定できません。");
+                ctx.AddError($"{IsQueryableOption.ATTRIBUTE_NAME}属性のみが指定されたデータ構造のルート集約には、ビューにマッピングされない場合はキーを指定できません。");
             }
         }
     }

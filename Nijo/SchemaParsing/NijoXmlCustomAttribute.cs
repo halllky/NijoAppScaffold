@@ -10,7 +10,7 @@ using Nijo.Util.DotnetEx;
 namespace Nijo.SchemaParsing;
 
 /// <summary>
-/// nijo.xml 内の、データモデルやコマンドモデルなどのXML要素の属性に指定できる任意の属性。
+/// nijo.xml 内の、データ構造やコマンドなどのXML要素に指定できる任意の属性。
 /// この属性定義自体が nijo.xml 内に記述される。
 /// このクラス自体は nijo serve のGUI上での表示に利用される。
 /// </summary>
@@ -29,7 +29,7 @@ public class NijoXmlCustomAttribute {
                     : string.Empty,
                 IsValidation = bool.TryParse(xElement.Attribute(nameof(IsValidation))?.Value, out var isValidation)
                     && isValidation,
-                AvailableModels = xElement.Attribute(nameof(AvailableModels))?.Value
+                AvailableFor = xElement.Attribute(nameof(AvailableFor))?.Value
                     .Split(',')
                     .ToArray()
                     ?? [],
@@ -59,8 +59,8 @@ public class NijoXmlCustomAttribute {
         if (IsValidation) {
             xElement.SetAttributeValue(nameof(IsValidation), "True");
         }
-        if (AvailableModels.Length > 0) {
-            xElement.SetAttributeValue(nameof(AvailableModels), string.Join(",", AvailableModels));
+        if (AvailableFor.Length > 0) {
+            xElement.SetAttributeValue(nameof(AvailableFor), string.Join(",", AvailableFor));
         }
         if (Type != null) {
             xElement.SetAttributeValue(nameof(Type), Type.ToString());
@@ -106,31 +106,41 @@ public class NijoXmlCustomAttribute {
     public bool IsValidation { get; set; }
 
     /// <summary>
-    /// このカスタム属性が使用可能なモデルの一覧。
-    /// DataStructures セクションのルート集約は <see cref="AVAILABLE_FOR_STORED"/> などの条件で、
-    /// それ以外のセクションのルート集約はその種類のスキーマ定義上での名前（<see cref="SectionExtensions.GetRootTypeAttributeValue"/>）で指定する。
+    /// このカスタム属性を指定できるルート集約の一覧。
+    /// DataStructures セクションのルート集約は IsStored, IsQueryable 属性の有無で、それ以外はルート集約が属するセクションで指定する。
     /// nijo.xml 上ではXML要素の属性としてカンマ区切りで記載される。
     /// </summary>
-    public string[] AvailableModels { get; set; } = [];
-    /// <summary><see cref="AvailableModels"/> の値。IsStored 属性が指定されたデータ構造で使用可能。</summary>
+    public string[] AvailableFor { get; set; } = [];
+    /// <summary><see cref="AvailableFor"/> の値。IsStored 属性が指定されたデータ構造で使用可能。</summary>
     internal const string AVAILABLE_FOR_STORED = "stored";
-    /// <summary><see cref="AvailableModels"/> の値。IsQueryable 属性が指定されたデータ構造で使用可能。</summary>
+    /// <summary><see cref="AvailableFor"/> の値。IsQueryable 属性が指定されたデータ構造で使用可能。</summary>
     internal const string AVAILABLE_FOR_QUERYABLE = "queryable";
-    /// <summary><see cref="AvailableModels"/> の値。IsStored, IsQueryable 属性がいずれも指定されていないデータ構造で使用可能。</summary>
+    /// <summary><see cref="AvailableFor"/> の値。IsStored, IsQueryable 属性がいずれも指定されていないデータ構造で使用可能。</summary>
     internal const string AVAILABLE_FOR_STRUCTURE = "structure";
 
     /// <summary>
-    /// <see cref="AvailableModels"/> に指定できる値を列挙します。
+    /// <see cref="AvailableFor"/> に指定できる値を列挙します。
     /// </summary>
-    internal static IEnumerable<string> GetAvailableModelCandidates() {
+    internal static IEnumerable<string> GetAvailableForCandidates() {
         yield return AVAILABLE_FOR_STORED;
         yield return AVAILABLE_FOR_QUERYABLE;
         yield return AVAILABLE_FOR_STRUCTURE;
         foreach (var section in Enum.GetValues<E_Section>()) {
-            var typeName = section.GetRootTypeAttributeValue();
-            if (typeName != null) yield return typeName;
+            var value = ToAvailableForValue(section);
+            if (value != null) yield return value;
         }
     }
+    /// <summary>
+    /// DataStructures セクション以外のセクションのルート集約を指定するときの <see cref="AvailableFor"/> の値
+    /// </summary>
+    private static string? ToAvailableForValue(E_Section section) => section switch {
+        E_Section.DataStructures => null,
+        E_Section.Commands => "command",
+        E_Section.StaticEnums => "static-enum",
+        E_Section.ValueObjects => "value-object",
+        E_Section.Constants => "constant",
+        _ => throw new ArgumentOutOfRangeException(nameof(section)),
+    };
 
     /// <summary>
     /// このカスタム属性が、引数のXML要素に使用可能かどうかを返します。
@@ -138,12 +148,12 @@ public class NijoXmlCustomAttribute {
     /// <see cref="AVAILABLE_FOR_STORED"/>, <see cref="AVAILABLE_FOR_QUERYABLE"/> のいずれかが指定されていれば使用可能。
     /// </summary>
     internal bool IsAvailableFor(NodeOptionTarget target) {
-        return EnumerateAvailableModelKeys(target).Any(AvailableModels.Contains);
+        return EnumerateAvailableForValues(target).Any(AvailableFor.Contains);
 
-        static IEnumerable<string> EnumerateAvailableModelKeys(NodeOptionTarget target) {
+        static IEnumerable<string> EnumerateAvailableForValues(NodeOptionTarget target) {
             if (target.Section != E_Section.DataStructures) {
-                var typeName = target.Section.GetRootTypeAttributeValue();
-                if (typeName != null) yield return typeName;
+                var value = ToAvailableForValue(target.Section);
+                if (value != null) yield return value;
                 yield break;
             }
 
@@ -180,8 +190,8 @@ public class NijoXmlCustomAttribute {
         if (Type == null) {
             yield return $"カスタム属性 '{PhysicalName}' の {nameof(Type)} は必須です。有効な型を指定してください。";
         }
-        if (AvailableModels.Length == 0) {
-            yield return $"カスタム属性 '{PhysicalName}' の {nameof(AvailableModels)} は必須です。少なくとも1つ以上のモデルのモデル名を指定してください。";
+        if (AvailableFor.Length == 0) {
+            yield return $"カスタム属性 '{PhysicalName}' の {nameof(AvailableFor)} は必須です。少なくとも1つ以上指定してください。";
         }
 
         // 属性名は重複不可
@@ -200,10 +210,10 @@ public class NijoXmlCustomAttribute {
         }
 
         // 使用できない値が指定されていないかチェック
-        var candidates = GetAvailableModelCandidates().ToArray();
-        foreach (var modelName in AvailableModels) {
-            if (!candidates.Contains(modelName)) {
-                yield return $"カスタム属性 '{PhysicalName}' の {nameof(AvailableModels)} に、不正な値 '{modelName}' が指定されています。指定できる値は {candidates.Join(", ")} です。";
+        var candidates = GetAvailableForCandidates().ToArray();
+        foreach (var value in AvailableFor) {
+            if (!candidates.Contains(value)) {
+                yield return $"カスタム属性 '{PhysicalName}' の {nameof(AvailableFor)} に、不正な値 '{value}' が指定されています。指定できる値は {candidates.Join(", ")} です。";
             }
         }
 

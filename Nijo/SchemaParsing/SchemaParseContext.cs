@@ -462,7 +462,7 @@ public class SchemaParseContext {
         foreach (var root in rootAggregates) {
             var rootName = GetPhysicalName(root);
             if (rootPhysicalNames.TryGetValue(rootName, out var existingRoot)) {
-                errorsList.Add((root, $"ルート集約の物理名'{rootName}'が重複しています。モデルをまたいでの重複はできません。"));
+                errorsList.Add((root, $"ルート集約の物理名'{rootName}'が重複しています。セクションをまたいでの重複もできません。"));
             } else {
                 rootPhysicalNames[rootName] = root;
             }
@@ -470,6 +470,10 @@ public class SchemaParseContext {
 
         // セクションごとに定められたルート集約単位の検証
         foreach (var root in rootAggregates) {
+            // ルート集約の種類は属するセクションと IsStored, IsQueryable 属性で決まるため、Type 属性は使わない
+            if (root.Attribute(ATTR_NODE_TYPE) != null) {
+                attributeErrors.Add((root, ATTR_NODE_TYPE, $"ルート集約には {ATTR_NODE_TYPE} 属性を指定できません。"));
+            }
             if (root.TryGetSection(out var section)) {
                 _rule.Sections
                     .Single(s => s.Kind == section)
@@ -530,20 +534,12 @@ public class SchemaParseContext {
                     }
                     break;
 
-                // ルート集約の場合
-                case E_NodeType.RootAggregate:
-                    // このセクションのルート集約の種類は IsStored, IsQueryable 属性で決まり、Type 属性は使わない
-                    if (el.Attribute(ATTR_NODE_TYPE) != null) {
-                        attributeErrors.Add((el, ATTR_NODE_TYPE, $"{SECTION_DATA_STRUCTURES} セクションのルート集約には {ATTR_NODE_TYPE} 属性を指定できません。"));
-                    }
-                    break;
-
                 // Child
                 case E_NodeType.ChildAggregate:
                     // 主キー属性のチェック
                     if (el.Elements().Any(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null)) {
                         if (el.IsStored()) {
-                            errorsList.Add((el, $"データモデルの子集約には主キー属性を付与することができません。"));
+                            errorsList.Add((el, $"{IsStoredOption.ATTRIBUTE_NAME}属性が指定されたデータ構造の子集約には主キー属性を付与することができません。"));
                         }
                     }
                     break;
@@ -553,7 +549,7 @@ public class SchemaParseContext {
                     // データモデルの子配列は必ず1個以上の主キーが必要
                     if (el.IsStored()) {
                         if (el.Elements().All(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) == null)) {
-                            errorsList.Add((el, "データモデルの子配列は必ず1個以上の主キーを持たなければなりません。"));
+                            errorsList.Add((el, $"{IsStoredOption.ATTRIBUTE_NAME}属性が指定されたデータ構造の子配列は必ず1個以上の主キーを持たなければなりません。"));
                         }
                     }
                     break;
@@ -731,13 +727,13 @@ public class SchemaParseContext {
             } else if (section == E_Section.Commands) {
                 // コマンドモデルからは検索可能なデータ構造しか参照できない
                 if (!refToIsQueryable) {
-                    errorMessage = $"コマンドモデルの集約からは{queryableAttr}属性が指定されたデータ構造しか参照できません。";
+                    errorMessage = $"コマンドの集約からは{queryableAttr}属性が指定されたデータ構造しか参照できません。";
                     return false;
                 }
 
                 // RefToObjectの指定がないとエラー
                 if (refElement.Attribute(RefToObjectOption.ATTRIBUTE_NAME) == null) {
-                    errorMessage = $"コマンドモデルから外部参照する場合、{RefToObjectOption.ATTRIBUTE_NAME}属性を指定する必要があります。";
+                    errorMessage = $"コマンドから外部参照する場合、{RefToObjectOption.ATTRIBUTE_NAME}属性を指定する必要があります。";
                     return false;
                 }
             } else if (section == E_Section.DataStructures) {

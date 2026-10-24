@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import * as ReactHookForm from 'react-hook-form';
 import * as ReactRouter from 'react-router-dom';
-import { EditingProject, getRootModelType } from '../backend';
+import { ATTR_IS_QUERYABLE, ATTR_IS_STORED, EditingProject } from '../backend';
 import { fetchTypeCandidates } from '../backend/api';
 import { NIJOUI_CLIENT_ROUTE_PARAMS } from '../routing';
 
@@ -65,15 +65,17 @@ export const SchemaCandidatesProvider = ({ watch, children }: {
 
   // 処理の最適化のため、以下のいずれかの情報が変わった時のみ候補のリロードをトリガーする
   // * ルート集約（データ構造・コマンド）の数
-  // * ルート集約のいずれかのモデルの種類・名前
+  // * ルート集約のいずれかの IsStored, IsQueryable 属性・名前
   // * ルート集約直下の child, children いずれかの名前
   const [triggerValue, setTriggerValue] = useState<unknown[]>([]);
   React.useEffect(() => {
     const roots = [...(watchedValues.dataStructures ?? []), ...(watchedValues.commands ?? [])];
     const newTriggerValue = [
-      roots.length,
+      watchedValues.dataStructures?.length ?? 0,
+      watchedValues.commands?.length ?? 0,
       ...roots.flatMap(root => [
-        getRootModelType(root),
+        root.attributes[ATTR_IS_STORED],
+        root.attributes[ATTR_IS_QUERYABLE],
         root.physicalName,
         ...root.members
           .filter(m => m.type.kind === 'child' || m.type.kind === 'children')

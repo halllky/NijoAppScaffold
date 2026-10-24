@@ -11,9 +11,9 @@ namespace Nijo.WebService.SchemaEditor;
 /// 編集対象ではないため、編集中のプロジェクトの内容（<see cref="EditingProject"/>）とは別に取得する。
 /// </summary>
 public class SchemaEditorRule {
-    /// <summary>カスタム属性の AvailableModels に指定できる値の一覧</summary>
-    [JsonPropertyName("availableModelCandidates")]
-    public List<string> AvailableModelCandidates { get; set; } = [];
+    /// <summary>カスタム属性の AvailableFor に指定できる値の一覧</summary>
+    [JsonPropertyName("availableForCandidates")]
+    public List<string> AvailableForCandidates { get; set; } = [];
     [JsonPropertyName("attributeDefs")]
     public List<AttributeDef> AttributeDefs { get; set; } = [];
     [JsonPropertyName("valueMemberTypes")]
@@ -23,7 +23,7 @@ public class SchemaEditorRule {
 
     internal static SchemaEditorRule FromSchemaParseRule(SchemaParseRule rule) {
         return new SchemaEditorRule {
-            AvailableModelCandidates = NijoXmlCustomAttribute.GetAvailableModelCandidates().ToList(),
+            AvailableForCandidates = NijoXmlCustomAttribute.GetAvailableForCandidates().ToList(),
             AttributeDefs = AttributeDef.FromSchemaParseRule(rule),
             ValueMemberTypes = rule.ValueMemberTypes.Select(vmt => new ValueMemberTypeDef {
                 SchemaTypeName = vmt.SchemaTypeName,

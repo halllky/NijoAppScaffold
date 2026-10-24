@@ -5,7 +5,7 @@ import {
   type EdgeTypes, type NodeChange, type NodeMouseHandler, type NodeTypes, type OnMoveEnd,
 } from "@xyflow/react"
 import { EditingProject } from "../../../backend"
-import { MODEL_COLORS } from "../../../UI/modelColors"
+import { ROOT_AGGREGATE_COLORS } from "../../../UI/rootAggregateColors"
 import { useDiagramStructure } from "./DiagramStructureContext"
 import { useDiagramNodes } from "./useDiagramNodes"
 import { useDiagramPanZoomSaving } from "./useDiagramPanZoomSaving"
@@ -192,7 +192,7 @@ const FIT_VIEW_OPTIONS = { maxZoom: 1 }
 /** ルート集約を表示領域の中央に移動する際のアニメーション時間(ms) */
 const PAN_DURATION_MS = 300
 
-/** モデル種別の配色が無い場合の既定のエッジの色 */
+/** ルート集約の区分の配色が無い場合の既定のエッジの色 */
 const DEFAULT_STROKE_COLOR = "#4b5563" // gray-600
 
 /**
@@ -205,7 +205,7 @@ const DEFAULT_STROKE_COLOR = "#4b5563" // gray-600
  */
 function toEdge(ref: DiagramReference, selectedIds: ReadonlySet<string>, hitRootIds: ReadonlySet<string> | undefined): FloatingFlowEdge {
   const { source, target, labels, containsMention } = ref
-  const color = MODEL_COLORS[source.model]?.stroke ?? DEFAULT_STROKE_COLOR
+  const color = ROOT_AGGREGATE_COLORS[source.appearance]?.stroke ?? DEFAULT_STROKE_COLOR
   const highlighted = selectedIds.has(source.rootId) || selectedIds.has(target.rootId)
   const bothHit = hitRootIds !== undefined && hitRootIds.has(source.rootId) && hitRootIds.has(target.rootId)
   const dimmed = (selectedIds.size > 0 || hitRootIds !== undefined) && !highlighted && !bothHit

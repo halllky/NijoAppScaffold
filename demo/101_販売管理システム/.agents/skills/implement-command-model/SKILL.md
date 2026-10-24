@@ -1,6 +1,6 @@
 ---
 name: implement-command-model
-description: nijo.xml で Type="command-model" として定義した処理を C# で実装・修正するときに使う。
+description: nijo.xml で として定義した処理を C# で実装・修正するときに使う。
 ---
 
 # コマンドモデルの実装

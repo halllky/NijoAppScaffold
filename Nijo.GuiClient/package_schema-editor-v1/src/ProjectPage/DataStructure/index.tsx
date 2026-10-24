@@ -3,8 +3,8 @@ import React from "react";
 import * as ReactHookForm from "react-hook-form"
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { usePersonalSettings } from "../../PersonalSettings";
-import { ATTR_IS_QUERYABLE, ATTR_IS_STORED, EditingProject, EditingRootAggregate, MODEL_COMMAND } from "../../backend";
-import { Button, DataStructureFlags, RootKind } from "../../UI";
+import { ATTR_IS_QUERYABLE, ATTR_IS_STORED, EditingProject, EditingRootAggregate } from "../../backend";
+import { Button, DataStructureFlags, ROOT_KIND_COMMAND, RootKind } from "../../UI";
 import { Diagram, DiagramRef, DiagramStructureProvider, useNotifyDiagramStructureChanged } from "./Diagram";
 import { DiagramSearchBox } from "./diagram-searching";
 import AggregatePane from "./AggregatePane";
@@ -118,14 +118,12 @@ function DataStructureTabBody({ visible, formMethods, dataStructureRef, diagramR
   const getArrayFor = (list: RootAggregateLocation['list']) => list === 'dataStructures' ? dataStructuresArray : commandsArray
   const [isNewRootDialogOpen, setIsNewRootDialogOpen] = React.useState(false)
   const handleRegisterNewRoot = (name: string, rootKind: RootKind, flags: DataStructureFlags) => {
-    const isCommand = rootKind === MODEL_COMMAND
+    const isCommand = rootKind === ROOT_KIND_COMMAND
     const targetArray = getArrayFor(isCommand ? 'commands' : 'dataStructures')
     const newUniqueId = UUID.generate()
     const newRoot: EditingRootAggregate = {
       uniqueId: newUniqueId,
       physicalName: name,
-      // データ構造のモデル種別は IsStored, IsQueryable 属性で表すので model は持たない
-      model: isCommand ? MODEL_COMMAND : null,
       attributes: isCommand ? {} : { [ATTR_IS_STORED]: flags.isStored, [ATTR_IS_QUERYABLE]: flags.isQueryable },
       uniqueConstraints: [],
       members: [],

@@ -38,7 +38,7 @@ sidebar_position: 7
 
 ```xml
 <!-- 定数です。 -->
-<MyConstants Type="constant-model">
+<MyConstants>
   <!-- エラーメッセージの基本的フォーマット。 -->
   <ErrorMessage ConstantType="template" ConstantValue="エラーが発生しました: {0}" DisplayName="エラーメッセージ" />
 </MyConstants>
@@ -79,7 +79,7 @@ export const MyConstants = {
 ### 基本的な定数定義
 
 ```xml
-<MyConstants Type="constant-model" DisplayName="アプリケーション定数">
+<MyConstants DisplayName="アプリケーション定数">
   <!-- クライアント側のトップページの表示に利用。 -->
   <AppName ConstantType="string" ConstantValue="MyApplication" DisplayName="アプリケーション名" />
   <!-- csprojファイルのバージョン番号と合わせること。 -->
@@ -93,7 +93,7 @@ export const MyConstants = {
 
 ```xml
 <!-- アプリケーション設定の定数定義 -->
-<MyConstants Type="constant-model" DisplayName="アプリケーション設定">
+<MyConstants DisplayName="アプリケーション設定">
   <Database ConstantType="child" DisplayName="データベース設定">
     <ConnectionTimeout ConstantType="int" ConstantValue="30" DisplayName="接続タイムアウト" />
     <CommandTimeout ConstantType="int" ConstantValue="60" DisplayName="コマンドタイムアウト" />

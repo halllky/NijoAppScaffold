@@ -53,7 +53,7 @@ internal sealed class IsStoredOption : FeatureOption {
         foreach (var child in childAggregates) {
             var membersWithKey = child.Elements().Where(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null).ToList();
             if (membersWithKey.Count != 0) {
-                addError(child, "データモデルの子集約には主キー属性を付与することができません。");
+                addError(child, $"{IsStoredOption.ATTRIBUTE_NAME}属性が指定されたデータ構造の子集約には主キー属性を付与することができません。");
                 foreach (var member in membersWithKey) {
                     addError(member, "この子集約のメンバーに主キー属性を付与することはできません。");
                 }

@@ -1,7 +1,7 @@
 import React from "react";
 import * as ReactHookForm from "react-hook-form"
 import * as Icon from "@heroicons/react/24/outline"
-import { ATTR_IS_GENERIC_LOOKUP_TABLE, ATTR_IS_QUERYABLE, ATTR_IS_STORED, EditingProject, MODEL_COMMAND } from "../../../backend";
+import { ATTR_IS_GENERIC_LOOKUP_TABLE, ATTR_IS_QUERYABLE, ATTR_IS_STORED, EditingProject } from "../../../backend";
 import * as UI from "../../../UI"
 import { Allotment, LayoutPriority } from "allotment";
 import DecsendantsGrid from "./DecsendantsGrid";
@@ -47,17 +47,17 @@ function AggregatePane(props: {
   const isGenericLookupTable = ReactHookForm.useWatch({ name: `${rootPath}.attributes.${ATTR_IS_GENERIC_LOOKUP_TABLE}`, control }) === true
 
   // ルート集約の種類の変更。dataStructures と commands の間の配列間の移動になる。
-  const rootKind: UI.RootKind = rootLocation.list === 'commands' ? MODEL_COMMAND : UI.ROOT_KIND_DATA_STRUCTURE
+  const rootKind: UI.RootKind = rootLocation.list === 'commands' ? UI.ROOT_KIND_COMMAND : UI.ROOT_KIND_DATA_STRUCTURE
   const dataStructuresFieldArray = ReactHookForm.useFieldArray({ name: 'dataStructures', control })
   const commandsFieldArray = ReactHookForm.useFieldArray({ name: 'commands', control })
   const handleRootKindChange = (newKind: UI.RootKind) => {
     if (newKind === rootKind) return
 
-    const newList: RootAggregateLocation['list'] = newKind === MODEL_COMMAND ? 'commands' : 'dataStructures'
+    const newList: RootAggregateLocation['list'] = newKind === UI.ROOT_KIND_COMMAND ? 'commands' : 'dataStructures'
     const current = getValues(rootPath)
-    const updated = newKind === MODEL_COMMAND
-      ? { ...current, model: MODEL_COMMAND, attributes: omitDataStructureFlags(current.attributes) }
-      : { ...current, model: null } // データ構造のモデル種別は IsStored, IsQueryable 属性で表すので model は持たない
+    const updated = newKind === UI.ROOT_KIND_COMMAND
+      ? { ...current, attributes: omitDataStructureFlags(current.attributes) }
+      : current
     const newIndex = getValues(newList).length
 
     if (newList === 'dataStructures') dataStructuresFieldArray.append(updated)

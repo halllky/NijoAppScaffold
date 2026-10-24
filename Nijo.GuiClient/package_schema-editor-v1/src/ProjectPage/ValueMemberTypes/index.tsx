@@ -168,7 +168,7 @@ function ValueMemberTypes(props: {
                 </li>
                 <li>
                   <strong className="mr-2">静的区分:</strong>
-                  モデル全体で共有する選択肢。
+                  スキーマ定義全体で共有する選択肢。
                 </li>
               </ul>
 

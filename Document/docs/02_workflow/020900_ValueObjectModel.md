@@ -30,8 +30,8 @@ customerId = productId;  // ← コンパイルエラー！
 
 ```xml
 <!-- シンプルな値オブジェクト -->
-<CustomerId Type="value-object" DisplayName="得意先コード" />
-<ProductId  Type="value-object" DisplayName="商品コード" />
+<CustomerId DisplayName="得意先コード" />
+<ProductId  DisplayName="商品コード" />
 ```
 
 ValueObject はメンバーを持ちません（常に単一の文字列値を包む型です）。
@@ -112,7 +112,7 @@ ValueObject は他のモデルの属性型として使用できます。
 
 ```xml
 <!-- ValueObject の定義 -->
-<CustomerId Type="value-object" DisplayName="得意先コード" />
+<CustomerId DisplayName="得意先コード" />
 
 <!-- DataModel でキーとして使用 -->
 <Customer IsStored="True" DisplayName="得意先">

@@ -5,7 +5,7 @@ namespace Nijo.IntegrationTest.Tests;
 public class IsStoredとIsQueryable属性のテスト {
 
     [Test]
-    public async Task DataStructuresのルート集約にType属性を指定するとエラーになること() {
+    public async Task ルート集約にType属性を指定するとエラーになること() {
         using var project = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
@@ -13,11 +13,16 @@ public class IsStoredとIsQueryable属性のテスト {
                   <Id Type="int" IsKey="True" />
                 </Data1>
               </DataStructures>
+              <Commands>
+                <Command1 Type="command-model" />
+              </Commands>
             </NijoAppScaffold>
             """);
         var errors = await project.EnumerateValidationErrorsAsync();
-        var messages = errors.SelectMany(e => e.AttributeErrors.GetValueOrDefault("Type") ?? []);
-        Assert.That(messages, Does.Contain("DataStructures セクションのルート集約には Type 属性を指定できません。"));
+        var erroredElements = errors
+            .Where(e => (e.AttributeErrors.GetValueOrDefault("Type") ?? []).Contains("ルート集約には Type 属性を指定できません。"))
+            .Select(e => e.XElement.Name.LocalName);
+        Assert.That(erroredElements, Is.EquivalentTo(new[] { "Data1", "Command1" }));
     }
 
     [Test]
@@ -37,7 +42,7 @@ public class IsStoredとIsQueryable属性のテスト {
     }
 
     [Test]
-    public async Task カスタム属性のAvailableModelsに指定できない値を指定するとエラーになること() {
+    public async Task カスタム属性のAvailableForに指定できない値を指定するとエラーになること() {
         using var project = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <DataStructures>
@@ -46,13 +51,13 @@ public class IsStoredとIsQueryable属性のテスト {
                 </Data1>
               </DataStructures>
               <CustomAttributes>
-                <Custom-1 AvailableModels="data-model" PhysicalName="IsCurrency" Type="Boolean" />
+                <Custom-1 AvailableFor="data-model" PhysicalName="IsCurrency" Type="Boolean" />
               </CustomAttributes>
             </NijoAppScaffold>
             """);
         var errors = await project.EnumerateValidationErrorsAsync();
         var messages = errors.SelectMany(e => e.OwnErrors);
-        Assert.That(messages, Has.Some.StartsWith("カスタム属性 'IsCurrency' の AvailableModels に、不正な値 'data-model' が指定されています。"));
+        Assert.That(messages, Has.Some.StartsWith("カスタム属性 'IsCurrency' の AvailableFor に、不正な値 'data-model' が指定されています。"));
     }
 
     [Test]
@@ -69,7 +74,7 @@ public class IsStoredとIsQueryable属性のテスト {
                 </Query1>
               </DataStructures>
               <CustomAttributes>
-                <Custom-1 AvailableModels="queryable" PhysicalName="IsCurrency" Type="Boolean" />
+                <Custom-1 AvailableFor="queryable" PhysicalName="IsCurrency" Type="Boolean" />
               </CustomAttributes>
             </NijoAppScaffold>
             """);
@@ -87,7 +92,7 @@ public class IsStoredとIsQueryable属性のテスト {
                 </Struct1>
               </DataStructures>
               <CustomAttributes>
-                <Custom-1 AvailableModels="queryable" PhysicalName="IsCurrency" Type="Boolean" />
+                <Custom-1 AvailableFor="queryable" PhysicalName="IsCurrency" Type="Boolean" />
               </CustomAttributes>
             </NijoAppScaffold>
             """);

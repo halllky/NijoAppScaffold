@@ -69,10 +69,10 @@ public override async Task Execute受注登録Async(
 
 ```xml
 <!-- 引数と戻り値あり（Parameter・ReturnValue はXML属性で指定する） -->
-<受注登録 Type="command-model" DisplayName="受注登録"
+<受注登録 DisplayName="受注登録"
           Parameter="受注登録Form"
           ReturnValue="受注詳細Query:DisplayData" />
 
 <!-- 引数なし・戻り値なし -->
-<月次集計 Type="command-model" DisplayName="月次集計実行" />
+<月次集計 DisplayName="月次集計実行" />
 ```

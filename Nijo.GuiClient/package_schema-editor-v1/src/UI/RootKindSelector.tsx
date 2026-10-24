@@ -1,16 +1,17 @@
 import React from "react"
-import { MODEL_COMMAND, MODEL_STRUCTURE } from "../backend"
 import { DropdownSelector } from "@nijo/ui-components"
-import { MODEL_COLORS } from "./modelColors"
+import { ROOT_AGGREGATE_COLORS } from "./rootAggregateColors"
 
 /** ルート集約の種類（データ構造・コマンド）のうち、データ構造を表す値 */
 export const ROOT_KIND_DATA_STRUCTURE = 'data-structure'
+/** ルート集約の種類（データ構造・コマンド）のうち、コマンドを表す値 */
+export const ROOT_KIND_COMMAND = 'command'
 
 /**
  * ルート集約の種類。データ構造かコマンドか。
- * データ構造のモデル種別はさらに IsStored, IsQueryable 属性の組み合わせで決まる（{@link DataStructureFlags}）。
+ * データ構造から何が生成されるかはさらに IsStored, IsQueryable 属性の組み合わせで決まる（{@link DataStructureFlags}）。
  */
-export type RootKind = typeof ROOT_KIND_DATA_STRUCTURE | typeof MODEL_COMMAND
+export type RootKind = typeof ROOT_KIND_DATA_STRUCTURE | typeof ROOT_KIND_COMMAND
 
 /** データ構造の IsStored, IsQueryable 属性の値 */
 export type DataStructureFlags = {
@@ -22,7 +23,7 @@ export type DataStructureFlags = {
 type RootKindOption = {
   displayName: string
   description: string
-  colors: typeof MODEL_COLORS[string]
+  colors: typeof ROOT_AGGREGATE_COLORS[keyof typeof ROOT_AGGREGATE_COLORS]
 }
 
 /** ルート集約の種類の選択肢定義 */
@@ -30,12 +31,12 @@ export const ROOT_KIND_OPTIONS: Record<RootKind, RootKindOption> = {
   [ROOT_KIND_DATA_STRUCTURE]: {
     displayName: "Data Structure",
     description: "データの構造。永続化するか、検索可能にするかを選べます。どちらも選ばない場合は、Webサーバー・クライアント間で常に同期されているべき構造体になります。",
-    colors: MODEL_COLORS[MODEL_STRUCTURE],
+    colors: ROOT_AGGREGATE_COLORS.structure,
   },
-  [MODEL_COMMAND]: {
-    displayName: "Command Model",
+  [ROOT_KIND_COMMAND]: {
+    displayName: "Command",
     description: "引数を受け取り戻り値を返す処理。Webサーバー・クライアント間で常に同期された型定義を提供します。",
-    colors: MODEL_COLORS[MODEL_COMMAND],
+    colors: ROOT_AGGREGATE_COLORS.command,
   },
 }
 

@@ -61,7 +61,7 @@ public class DisplayName属性のテスト {
         using var project = await NijoTestUtil.CreateNewProjectAsync($$"""
             <NijoAppScaffold>
               <StaticEnums>
-                <Status Type="enum">
+                <Status>
                   <Open key="1" DisplayNameIsEmpty="True" />
                   <Closed key="2" DisplayName="完了" />
                 </Status>
