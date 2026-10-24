@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace Nijo.ImmutableSchema {
+namespace Nijo.DataStructures.Aggregates {
     /// <summary>
     /// 集約のメンバー。
     /// xxxID, xxx名, xxx日付, ... などの単一の値、

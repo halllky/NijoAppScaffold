@@ -11,8 +11,9 @@ using Nijo.DataStructures.IsGenericLookupTable;
 using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.IsStored;
 using Nijo.DataStructures.Members;
+using Nijo.DataStructures.ValueMemberTypes;
 
-namespace Nijo.ImmutableSchema {
+namespace Nijo.DataStructures.Aggregates {
     /// <summary>
     /// 集約のメンバーのうち、xxxID, xxx名, xxx日付, ... などのような単一の値。
     /// </summary>

@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Xml.Linq;
+using Nijo.DataStructures.Aggregates;
 
 namespace Nijo.CodeGenerating {
     /// <summary>

@@ -1,5 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
@@ -10,7 +9,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Nijo.StaticEnums;
 
-namespace Nijo.ValueMemberTypes {
+namespace Nijo.DataStructures.ValueMemberTypes {
     /// <summary>
     /// 列挙体型のメンバー
     /// </summary>

@@ -11,7 +11,7 @@ using Nijo.DataStructures.IsGenericLookupTable;
 using Nijo.DataStructures.IsStored;
 using Nijo.DataStructures.Members;
 
-namespace Nijo.ImmutableSchema {
+namespace Nijo.DataStructures.Aggregates {
     /// <summary>
     /// 集約のメンバーのうち、外部参照。
     /// </summary>

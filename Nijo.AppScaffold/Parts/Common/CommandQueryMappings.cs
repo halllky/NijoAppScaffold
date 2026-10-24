@@ -9,6 +9,7 @@ using System.Threading;
 using Nijo.Commands;
 using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.Structure;
+using Nijo.DataStructures.Aggregates;
 
 namespace Nijo.Parts.Common {
     /// <summary>

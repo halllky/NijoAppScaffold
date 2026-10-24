@@ -1,6 +1,5 @@
 using Nijo.CodeGenerating;
 using Nijo.DataStructures.IsGenericLookupTable;
-using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
 using Nijo.Parts.Common;
 using Nijo.SchemaParsing;
@@ -9,6 +8,7 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
 using System;
+using Nijo.DataStructures.Aggregates;
 
 namespace Nijo.DataStructures.IsStored;
 

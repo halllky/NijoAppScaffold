@@ -1,5 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
 using Nijo.Parts.JavaScript;
 using Nijo.Util.DotnetEx;
@@ -8,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures.ValueMemberTypes;
 
 namespace Nijo.DataStructures.IsQueryable {
 
@@ -23,7 +24,7 @@ namespace Nijo.DataStructures.IsQueryable {
         internal const string DESC_SUFFIX = "（降順）";
 
         private static bool IsStringRangeSearch(ValueMember member) {
-            return member.Type is ValueMemberTypes.Word or ValueMemberTypes.Description or ValueMemberTypes.ValueObjectMember
+            return member.Type is Word or Description or ValueObjectMember
                 && member.XElement.Attribute(StringSearchBehaviorOption.ATTRIBUTE_NAME)?.Value == StringSearchBehaviorOption.RANGE;
         }
 

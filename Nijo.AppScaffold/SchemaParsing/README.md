@@ -24,4 +24,4 @@ XML要素に指定できる属性は [NodeOption](./NodeOption.cs) の派生ク�
 ## 関連コンポーネント
 
 - [`../Models/`](../Models/): 変換先の内部モデル定義
-- [`../ImmutableSchema/`](../ImmutableSchema/): 不変なスキーマ定義
+- [`../ImmutableSchema/`](../ImmutableSchema/), [`../DataStructures/Aggregates/`](../DataStructures/Aggregates/): 不変なスキーマ定義

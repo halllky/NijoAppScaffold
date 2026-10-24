@@ -1,7 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.DataStructures.IsStored;
 using Nijo.DataStructures.Members;
-using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
 using Nijo.Parts.Common;
 using Nijo.Parts.JavaScript;
@@ -10,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using System;
+using Nijo.DataStructures.Aggregates;
 
 namespace Nijo.DataStructures.IsQueryable;
 

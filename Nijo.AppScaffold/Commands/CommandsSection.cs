@@ -2,7 +2,6 @@ using Nijo.CodeGenerating;
 using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.IsStored;
 using Nijo.DataStructures.Members;
-using Nijo.ImmutableSchema;
 using Nijo.Parts.Common;
 using Nijo.SchemaParsing;
 using System.Collections.Generic;

@@ -5,6 +5,7 @@ using Nijo.ImmutableSchema;
 using Nijo.StaticEnums;
 using Nijo.SchemaParsing;
 using NUnit.Framework;
+using Nijo.DataStructures.Aggregates;
 
 namespace Nijo.IntegrationTest.Tests;
 

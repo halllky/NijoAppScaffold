@@ -1,5 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using Nijo.Parts.CSharp;
@@ -11,8 +10,9 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Nijo.DataStructures.IsStored;
 using Nijo.DataStructures.IsQueryable;
+using Nijo.DataStructures.Aggregates;
 
-namespace Nijo.ValueMemberTypes {
+namespace Nijo.DataStructures.ValueMemberTypes {
     /// <summary>
     /// シーケンス。RDBMS登録時にデータベース側で採番処理がなされる整数型。
     /// </summary>

@@ -1,4 +1,3 @@
-using Nijo.ImmutableSchema;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -20,6 +19,7 @@ using Nijo.DataStructures.UseSoftDelete;
 using Nijo.SchemaParsing.CommonOptions;
 using Nijo.StaticEnums;
 using Nijo.ValueObjects;
+using Nijo.DataStructures.ValueMemberTypes;
 
 namespace Nijo.SchemaParsing;
 
@@ -48,20 +48,20 @@ public class SchemaParseRule {
     public static SchemaParseRule Default() {
         var valueMemberTypes = new IValueMemberType[] {
             // 文字列系
-            new ValueMemberTypes.Word(),
-            new ValueMemberTypes.Description(),
+            new Word(),
+            new Description(),
             // 数値系
-            new ValueMemberTypes.IntMember(),
-            new ValueMemberTypes.DecimalMember(),
-            new ValueMemberTypes.SequenceMember(),
+            new IntMember(),
+            new DecimalMember(),
+            new SequenceMember(),
             // 日付系
-            new ValueMemberTypes.DateTimeMember(),
-            new ValueMemberTypes.DateMember(),
-            new ValueMemberTypes.YearMonthMember(),
-            new ValueMemberTypes.YearMember(),
+            new DateTimeMember(),
+            new DateMember(),
+            new YearMonthMember(),
+            new YearMember(),
             // その他
-            new ValueMemberTypes.BoolMember(),
-            new ValueMemberTypes.ByteArrayMember(),
+            new BoolMember(),
+            new ByteArrayMember(),
         };
         var nodeOptions = new NodeOption[] {
             new DisplayNameOption(),

@@ -24,8 +24,7 @@
   - [`StaticEnums/`](./StaticEnums/): 静的区分
   - [`ValueObjects/`](./ValueObjects/): 値オブジェクト
   - [`Constants/`](./Constants/): 定数
-- [`ImmutableSchema/`](./ImmutableSchema/README.md): XMLスキーマの解析が通った後の、XMLスキーマが確定していることを前提とした各種クラス。コードの自動生成ではここにある各種クラスが利用されます。
-- [`ValueMemberTypes/`](./ValueMemberTypes/README.md): 値型メンバーの型定義。単語型、整数型、日付型、日付時刻型など。
+- [`ImmutableSchema/`](./ImmutableSchema/README.md): XMLスキーマの解析が通った後の、XMLスキーマが確定していることを前提とした、全セクションに共通する各種クラス。
 - [`Parts/`](./Parts/): 特定のセクションや属性に由来するモジュールではなく、生成後のソースに由来するモジュール。C#のORMであるEntity Framework CoreのDbContext, Node.js の.envファイル、NUnitのテスト定義など。
 - [`Util.DotnetEx/`](./Util.DotnetEx/): .NET関連のユーティリティ。ここにある機能はコード自動生成処理でのみ参照されます。
 

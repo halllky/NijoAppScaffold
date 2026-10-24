@@ -1,10 +1,10 @@
 using System;
 using System.Linq;
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.Parts.Common;
 using Nijo.Parts.JavaScript;
 using Nijo.DataStructures.IsQueryable;
+using Nijo.DataStructures.Aggregates;
 
 namespace Nijo.DataStructures.Structure;
 

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.SchemaParsing;
 
 namespace Nijo.Parts.CSharp;

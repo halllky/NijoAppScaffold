@@ -1,5 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.Parts.Common;
 using Nijo.Parts.CSharp;
 using Nijo.Parts.JavaScript;
@@ -10,6 +9,8 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures.ValueMemberTypes;
 
 namespace Nijo.DataStructures.IsQueryable {
     /// <summary>

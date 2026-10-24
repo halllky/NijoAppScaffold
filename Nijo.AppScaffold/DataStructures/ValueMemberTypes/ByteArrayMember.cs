@@ -1,5 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
@@ -11,7 +10,7 @@ using System.Xml.Linq;
 using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.IsStored;
 
-namespace Nijo.ValueMemberTypes;
+namespace Nijo.DataStructures.ValueMemberTypes;
 
 /// <summary>
 /// バイト配列型

@@ -1,9 +1,9 @@
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.Parts.Common;
 using Nijo.SchemaParsing;
 using System;
 using System.Xml.Linq;
+using Nijo.DataStructures.Aggregates;
 
 namespace Nijo.DataStructures;
 

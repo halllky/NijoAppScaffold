@@ -1,5 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
@@ -9,6 +8,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Nijo.DataStructures.IsGenericLookupTable;
+using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures.ValueMemberTypes;
 
 namespace Nijo.DataStructures.IsQueryable {
     /// <summary>

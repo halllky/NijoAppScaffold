@@ -1,5 +1,6 @@
 
 using System.Collections.Generic;
+using Nijo.DataStructures.Aggregates;
 
 namespace Nijo.CodeGenerating;
 
@@ -35,7 +36,7 @@ public interface IPresentationLayerStructure {
 /// </summary>
 public interface ICreatablePresentationLayerStructure : IPresentationLayerStructure {
     /// <summary>この構造体が定義される集約</summary>
-    ImmutableSchema.AggregateBase Aggregate { get; }
+    AggregateBase Aggregate { get; }
     /// <summary>TypeScriptの新規オブジェクト作成関数の名前</summary>
     string TsNewObjectFunction { get; }
     /// <summary>TypeScriptの新規オブジェクト作成関数のリテラル部分をレンダリングします。</summary>

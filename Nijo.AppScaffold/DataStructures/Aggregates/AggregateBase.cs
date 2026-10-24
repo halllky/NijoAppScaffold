@@ -12,8 +12,9 @@ using System.Xml.XPath;
 using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.IsStored;
 using Nijo.DataStructures.UseSoftDelete;
+using Nijo.ImmutableSchema;
 
-namespace Nijo.ImmutableSchema {
+namespace Nijo.DataStructures.Aggregates {
     /// <summary>
     /// スキーマ定義の集約。
     /// 集約ルート, Child, Children のいずれか。

@@ -1,13 +1,12 @@
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
 using Nijo.Util.DotnetEx;
-using Nijo.ValueMemberTypes;
 using Nijo.Parts.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Nijo.DataStructures.Aggregates;
 
 namespace Nijo.DataStructures.IsStored {
     /// <summary>

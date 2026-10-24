@@ -1,6 +1,7 @@
 using Nijo.SchemaParsing;
 using System;
 using System.Linq;
+using Nijo.DataStructures.ValueMemberTypes;
 
 namespace Nijo.DataStructures.IsQueryable;
 
@@ -30,9 +31,9 @@ internal sealed class StringSearchBehaviorOption : NodeOption {
     public override void Validate(NodeOptionValidateContext ctx) {
         // 文字列型の値メンバーにのみ指定可能
         if (!ctx.SchemaParseContext.TryResolveMemberType(ctx.XElement, out var valueMemberType)
-            || valueMemberType is not ValueMemberTypes.Word
-            && valueMemberType is not ValueMemberTypes.Description
-            && valueMemberType is not ValueMemberTypes.ValueObjectMember) {
+            || valueMemberType is not Word
+            && valueMemberType is not Description
+            && valueMemberType is not ValueObjectMember) {
             ctx.AddError("この属性は文字列型の値メンバーにのみ指定可能です。");
             return;
         }

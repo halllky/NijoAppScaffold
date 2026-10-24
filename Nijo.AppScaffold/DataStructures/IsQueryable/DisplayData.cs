@@ -1,5 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.Parts.Common;
 using Nijo.Parts.JavaScript;
 using Nijo.Util.DotnetEx;
@@ -8,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Nijo.DataStructures.Aggregates;
 
 namespace Nijo.DataStructures.IsQueryable {
     /// <summary>

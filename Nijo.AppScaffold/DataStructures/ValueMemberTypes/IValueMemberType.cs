@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Nijo.DataStructures.IsQueryable;
 
-namespace Nijo.ImmutableSchema {
+namespace Nijo.DataStructures.ValueMemberTypes {
     /// <summary>
     /// 値メンバーの種類。
     /// 単語型、日付型、整数型、…など
@@ -125,7 +125,7 @@ namespace Nijo.ImmutableSchema {
 }
 
 namespace Nijo {
-    using Nijo.ImmutableSchema;
+    using Nijo.DataStructures.ValueMemberTypes;
 
     internal static class IValueMemberTypeExtension {
 

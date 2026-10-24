@@ -10,6 +10,8 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures.ValueMemberTypes;
 
 namespace Nijo.Parts.Common {
     /// <summary>
@@ -218,7 +220,7 @@ namespace Nijo.Parts.Common {
                 .SelectMany(agg => agg.GetMembers())
                 .OfType<ValueMember>()
                 .Select(vm => vm.Type)
-                .OfType<ValueMemberTypes.ValueObjectMember>()
+                .OfType<ValueObjectMember>()
                 .Select(vo => vo.TsModule)
                 .DistinctBy(module => module.ImportAlias)
                 .OrderBy(module => module.ImportAlias);

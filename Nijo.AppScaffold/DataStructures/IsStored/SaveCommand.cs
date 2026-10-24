@@ -1,14 +1,14 @@
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
 using Nijo.Util.DotnetEx;
-using Nijo.ValueMemberTypes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures.ValueMemberTypes;
 
 namespace Nijo.DataStructures.IsStored {
     /// <summary>

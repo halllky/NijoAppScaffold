@@ -1,11 +1,12 @@
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.Parts.Common;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures.ValueMemberTypes;
 
 namespace Nijo.DataStructures.IsStored {
     /// <summary>
@@ -30,7 +31,7 @@ namespace Nijo.DataStructures.IsStored {
                 .EnumerateThisAndDescendants()
                 .SelectMany(agg => agg.GetMembers())
                 .Any(m => m is ValueMember vm
-                       && vm.Type is ValueMemberTypes.SequenceMember
+                       && vm.Type is SequenceMember
                        && (vm.IsKey || vm.IsNotNull));
         }
 
@@ -51,7 +52,7 @@ namespace Nijo.DataStructures.IsStored {
             var sb = new StringBuilder();
 
             // シーケンスの場合、新規登録時はnullチェックをスキップする
-            if (vm.Type is ValueMemberTypes.SequenceMember) {
+            if (vm.Type is SequenceMember) {
                 sb.Append($"!{IS_CREATE} && ");
             }
 

@@ -1,6 +1,5 @@
 using Nijo.CodeGenerating;
 using Nijo.Parts.JavaScript;
-using Nijo.ImmutableSchema;
 using Nijo.Parts.Common;
 using Nijo.Parts.CSharp;
 using System;
@@ -9,6 +8,7 @@ using System.Linq;
 using Nijo.Util.DotnetEx;
 using Microsoft.AspNetCore.Mvc;
 using System.Xml.Linq;
+using Nijo.DataStructures.Aggregates;
 
 namespace Nijo.DataStructures.IsQueryable {
     internal class SearchProcessingRefs {

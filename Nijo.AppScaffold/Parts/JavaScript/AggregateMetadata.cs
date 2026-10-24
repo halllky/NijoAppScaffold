@@ -1,7 +1,5 @@
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.Util.DotnetEx;
-using Nijo.ValueMemberTypes;
 using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
@@ -13,6 +11,8 @@ using Nijo.Parts.Common;
 using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.IsStored;
 using Nijo.SchemaParsing.CommonOptions;
+using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures.ValueMemberTypes;
 
 namespace Nijo.Parts.JavaScript;
 

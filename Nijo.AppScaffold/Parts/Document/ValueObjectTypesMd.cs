@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.SchemaParsing;
+using Nijo.DataStructures.ValueMemberTypes;
 
 /// <summary>
 /// 値メンバー型の詳細な外部仕様を説明するマークダウンドキュメントを生成する。

@@ -3,7 +3,6 @@ using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.IsStored;
 using Nijo.DataStructures.Members;
 using Nijo.DataStructures.Structure;
-using Nijo.ImmutableSchema;
 using Nijo.Parts.Common;
 using Nijo.Parts.JavaScript;
 using Nijo.SchemaParsing;
@@ -12,6 +11,7 @@ using System.Linq;
 using System.Xml.Linq;
 using System;
 using Nijo.Commands;
+using Nijo.DataStructures.Aggregates;
 
 namespace Nijo.DataStructures;
 

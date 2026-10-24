@@ -3,10 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.Parts.Common;
 using Nijo.Util.DotnetEx;
 using Nijo.DataStructures.IsQueryable;
+using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures.ValueMemberTypes;
 
 namespace Nijo.Parts.JavaScript;
 
@@ -67,15 +68,15 @@ internal class DeepEqualFunction {
 
             var valueMemberTypePhysicalNames = ctx.SchemaParser
                 .GetValueMemberTypes()
-                .Where(t => t is not ValueMemberTypes.ByteArrayMember)
+                .Where(t => t is not ByteArrayMember)
                 .Select(t => {
-                    if (t is ValueMemberTypes.StaticEnumMember staticEnum) {
+                    if (t is StaticEnumMember staticEnum) {
                         return new {
                             DisplayName = "列挙体",
                             TypeIdentifier = TYPE_ENUM,
                             t.TsTypeName,
                         };
-                    } else if (t is ValueMemberTypes.ValueObjectMember valueObject) {
+                    } else if (t is ValueObjectMember valueObject) {
                         return new {
                             DisplayName = "値オブジェクト",
                             TypeIdentifier = TYPE_VALUE_OBJECT,
@@ -104,7 +105,7 @@ internal class DeepEqualFunction {
             // グルーピング前のスキーマから個別に取得する
             var valueObjects = ctx.SchemaParser
                 .GetValueMemberTypes()
-                .OfType<ValueMemberTypes.ValueObjectMember>()
+                .OfType<ValueObjectMember>()
                 .ToArray();
             var voTypeNames = valueObjects
                 .Select(t => t.TypePhysicalName)
@@ -331,13 +332,13 @@ internal class DeepEqualFunction {
                         .GetJoinedPathFromRoot(right.Name, E_CsTs.TypeScript, "?.");
 
                     var valueTypeName = valueMember.Type switch {
-                        ValueMemberTypes.StaticEnumMember => "Enum",
-                        ValueMemberTypes.ValueObjectMember => "ValueObject",
+                        StaticEnumMember => "Enum",
+                        ValueObjectMember => "ValueObject",
                         _ => valueMember.Type.TypePhysicalName,
                     };
                     var valueTypeAdditionalInfo = valueMember.Type switch {
-                        ValueMemberTypes.StaticEnumMember => $", '{valueMember.Type.TsTypeName.Split('.').Last()}'",
-                        ValueMemberTypes.ValueObjectMember => $", undefined, '{valueMember.Type.TsTypeName.Split('.').Last()}'",
+                        StaticEnumMember => $", '{valueMember.Type.TsTypeName.Split('.').Last()}'",
+                        ValueObjectMember => $", undefined, '{valueMember.Type.TsTypeName.Split('.').Last()}'",
                         _ => "",
                     };
 

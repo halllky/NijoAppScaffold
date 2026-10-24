@@ -1,6 +1,5 @@
 using Nijo.CodeGenerating;
 using Nijo.Parts.JavaScript;
-using Nijo.ImmutableSchema;
 using Nijo.Parts.Common;
 using Nijo.Parts.CSharp;
 using System;

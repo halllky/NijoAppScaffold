@@ -1,6 +1,7 @@
 using System.Linq;
 using Nijo.ImmutableSchema;
 using Nijo.Util.DotnetEx;
+using Nijo.DataStructures.Aggregates;
 
 namespace Nijo.Parts.JavaScript;
 

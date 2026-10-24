@@ -1,5 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
@@ -11,7 +10,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Nijo.DataStructures.IsQueryable;
 
-namespace Nijo.ValueMemberTypes;
+namespace Nijo.DataStructures.ValueMemberTypes;
 
 /// <summary>
 /// 年型

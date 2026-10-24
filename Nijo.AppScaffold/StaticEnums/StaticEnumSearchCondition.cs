@@ -1,6 +1,5 @@
 using Nijo.CodeGenerating;
 using Nijo.SchemaParsing;
-using Nijo.ImmutableSchema;
 using System;
 using System.Collections.Generic;
 using System.Linq;

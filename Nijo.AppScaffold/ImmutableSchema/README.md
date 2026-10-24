@@ -35,27 +35,19 @@ UI表示名、データベース物理名、C#/TypeScript型名など、コー�
 
 ## 主要な構成要素と役割
 
+このフォルダには、全セクションに共通するものだけを置きます。
+データ構造の集約のツリー（ルート集約、Child, Children、値メンバー、外部参照）は [DataStructures/Aggregates](../DataStructures/Aggregates/) にあります。
+
 ### ApplicationSchema
-アプリケーション全体のスキーマ定義のエントリーポイント。XMLドキュメントからルート集約を列挙し、スキーマ全体の情報にアクセスするためのAPIを提供します。
+アプリケーション全体のスキーマ定義のエントリーポイント。セクションごとにルート要素を列挙します。
 
-### スキーマの構成要素
-大きく分けて集約と集約メンバーから成る。
+### ISectionRoot
+いずれかのセクションの直下に定義されたルート要素。物理名・表示名など、全セクションのルート要素に共通する情報をもちます。
 
-#### **AggregateBase**: 集約
-集約メンバーを保有するコンテナ。
-
-- **RootAggregate**: ルート集約（アプリケーションの主要エンティティ）
-- **ChildAggregate**: 単一子集約。「親 : 子 = 1 : (0 or 1)」の多重度を持つ子集約
-- **ChildrenAggregate**: 配列子集約。「親 : 子 = 1 : N」の多重度を持つ子集約
-
-#### **IAggregateMember**: 集約のメンバー
-集約に保有される項目。
-
-- **ValueMember**: 単一値メンバー（ID、名前、日付等）。種類を表すインターフェースが **IValueMemberType**
-- **IRelationalMember**: 子集約や参照先集約を持つメンバーのインターフェース
-  - **ChildAggregate**: 前述の通り
-  - **ChildrenAggregate**: 前述の通り
-  - **RefToMember**: 他の集約への外部参照メンバー
+- **RootAggregate**（DataStructures）: データ構造のルート集約。子孫やメンバーのツリー構造をもつ
+- **SectionRoot**: DataStructures 以外のセクションのルート要素。ツリー構造をもたない
+  - **CommandRoot**（Commands）: 引数・戻り値の型をもつ
+  - **StaticEnumRoot**（StaticEnums）: 区分の値をもつ
 
 ## 他の機能との関係
 - [SchemaParsing](../SchemaParsing/README.md): 不変スキーマの前工程。

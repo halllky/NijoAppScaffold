@@ -3,7 +3,6 @@ using Nijo.CodeGenerating;
 using Nijo.Parts.CSharp;
 using Nijo.Parts.JavaScript;
 using Nijo.SchemaParsing;
-using Nijo.ImmutableSchema;
 using Nijo.Parts.Common;
 using System;
 using System.Collections.Generic;
@@ -19,6 +18,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO.Compression;
 using System.Reflection;
 using Nijo.WebService.Previewing;
+using Nijo.DataStructures.ValueMemberTypes;
 
 namespace Nijo {
     /// <summary>

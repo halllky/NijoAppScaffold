@@ -1,5 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
@@ -8,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Nijo.DataStructures.IsGenericLookupTable;
+using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures.ValueMemberTypes;
 
 namespace Nijo.Parts.CSharp {
     /// <summary>
@@ -462,7 +463,7 @@ namespace Nijo.Parts.CSharp {
         /// </summary>
         internal class DeletedUuidColumn : EFCoreEntityColumn {
             internal override ValueMember? Member => null;
-            internal override IValueMemberType MemberType => new ValueMemberTypes.Word();
+            internal override IValueMemberType MemberType => new Word();
             internal override string CsType => "Guid";
             internal override string PhysicalName => DELETED_UUID;
             internal override string DisplayName => "論理削除UUID";

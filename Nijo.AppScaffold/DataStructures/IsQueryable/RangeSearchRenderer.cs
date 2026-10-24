@@ -1,8 +1,8 @@
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Linq;
+using Nijo.DataStructures.ValueMemberTypes;
 
 namespace Nijo.DataStructures.IsQueryable {
     /// <summary>

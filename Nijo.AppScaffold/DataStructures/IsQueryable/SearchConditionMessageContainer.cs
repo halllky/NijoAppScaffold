@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Components.Rendering;
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.Parts.CSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Nijo.DataStructures.Aggregates;
 
 namespace Nijo.DataStructures.IsQueryable {
     /// <summary>

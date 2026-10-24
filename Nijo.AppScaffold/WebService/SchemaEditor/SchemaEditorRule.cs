@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using Nijo.CodeGenerating;
 using Nijo.SchemaParsing;
+using Nijo.DataStructures.ValueMemberTypes;
 
 namespace Nijo.WebService.SchemaEditor;
 
@@ -34,7 +35,7 @@ public class SchemaEditorRule {
     }
 }
 
-/// <summary><see cref="Nijo.ImmutableSchema.IValueMemberType"/> のスキーマ定義編集画面GUI上でのデータ構造。</summary>
+/// <summary><see cref="IValueMemberType"/> のスキーマ定義編集画面GUI上でのデータ構造。</summary>
 public class ValueMemberTypeDef {
     [JsonPropertyName("schemaTypeName")]
     public string SchemaTypeName { get; set; } = "";

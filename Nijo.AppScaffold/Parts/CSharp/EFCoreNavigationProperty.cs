@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -9,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Nijo.DataStructures.IsGenericLookupTable;
 using Nijo.DataStructures.IsQueryable;
+using Nijo.DataStructures.Aggregates;
 
 namespace Nijo.Parts.CSharp;
 

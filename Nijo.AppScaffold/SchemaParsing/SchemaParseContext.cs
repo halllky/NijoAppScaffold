@@ -16,6 +16,8 @@ using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.IsStored;
 using Nijo.DataStructures.Members;
 using Nijo.SchemaParsing.CommonOptions;
+using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures.ValueMemberTypes;
 
 namespace Nijo.SchemaParsing;
 
@@ -304,11 +306,11 @@ public class SchemaParseContext {
     /// このスキーマで定義されている静的区分の種類を返します。
     /// </summary>
     /// <returns></returns>
-    internal IReadOnlyDictionary<string, ValueMemberTypes.StaticEnumMember> GetStaticEnumMembers() {
+    internal IReadOnlyDictionary<string, StaticEnumMember> GetStaticEnumMembers() {
         return Document.Root
             ?.Element(SECTION_STATIC_ENUMS)
             ?.Elements()
-            .ToDictionary(GetPhysicalName, el => new ValueMemberTypes.StaticEnumMember(el, this))
+            .ToDictionary(GetPhysicalName, el => new StaticEnumMember(el, this))
             ?? [];
     }
 
@@ -316,11 +318,11 @@ public class SchemaParseContext {
     /// このスキーマで定義されている値オブジェクト型を返します。
     /// </summary>
     /// <returns></returns>
-    internal IReadOnlyDictionary<string, ValueMemberTypes.ValueObjectMember> GetValueObjectMembers() {
+    internal IReadOnlyDictionary<string, ValueObjectMember> GetValueObjectMembers() {
         return Document.Root
             ?.Element(SECTION_VALUE_OBJECTS)
             ?.Elements()
-            .ToDictionary(GetPhysicalName, el => new ValueMemberTypes.ValueObjectMember(el, this))
+            .ToDictionary(GetPhysicalName, el => new ValueObjectMember(el, this))
             ?? [];
     }
 

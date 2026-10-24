@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Nijo.DataStructures.IsQueryable;
 
-namespace Nijo.ValueMemberTypes;
+namespace Nijo.DataStructures.ValueMemberTypes;
 
 /// <summary>
 /// 値オブジェクト型

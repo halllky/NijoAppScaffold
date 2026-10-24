@@ -12,5 +12,7 @@ nijo.xml の `DataStructures` セクションに定義されるデータ構造�
 - [IsGenericLookupTable](./IsGenericLookupTable/) : IsStored のテーブルを、システムの運用中に値が追加削除されうる区分値（動的な定数）を格納する汎用参照テーブルにします。
 - [Structure](./Structure/) : IsStored も IsQueryable も指定されていないデータ構造は、Webサーバーとクライアントの間で共有される構造体になります。
 - [Members](./Members/) : 特定の機能に属さない、データ構造のメンバーに指定する属性。
+- [Aggregates](./Aggregates/) : スキーマ定義の解析が通った後の、データ構造の集約のツリー（ルート集約、Child, Children、値メンバー、外部参照）。
+- [ValueMemberTypes](./ValueMemberTypes/README.md) : 値メンバーの型。単語型、整数型、日付型、静的区分、値オブジェクトなど。
 
 どの属性を持つルート集約に対してどの順番でソースコードが生成されるかは [DataStructuresSection](./DataStructuresSection.cs) にあります。
