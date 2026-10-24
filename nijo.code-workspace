@@ -12,7 +12,11 @@
       "path": "."
     },
     {
-      "name": "Nijo",
+      "name": "Nijo.CodeGenerator",
+      "path": "Nijo.CodeGenerator"
+    },
+    {
+      "name": "Nijo.AppScaffold",
       "path": "Nijo"
     },
     {
