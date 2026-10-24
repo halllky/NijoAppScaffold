@@ -14,22 +14,20 @@ namespace Nijo.StaticEnums {
     /// </summary>
     internal class StaticEnumDef {
 
-        internal StaticEnumDef(EnumDefParser parser, RootAggregate rootAggregate) {
+        internal StaticEnumDef(EnumDefParser parser, StaticEnumRoot rootAggregate) {
             _parser = parser;
             _rootAggregate = rootAggregate;
         }
 
         private readonly EnumDefParser _parser;
-        private readonly RootAggregate _rootAggregate;
+        private readonly StaticEnumRoot _rootAggregate;
 
         internal string DisplayName => _parser.DisplayName;
         internal string CsEnumName => _parser.CsEnumName;
         internal string TsTypeName => _parser.TsTypeName;
 
         internal IEnumerable<StaticEnumValueDef> GetValues() {
-            return _rootAggregate
-                .GetMembers()
-                .Cast<StaticEnumValueDef>();
+            return _rootAggregate.GetValues();
         }
 
         internal string RenderCSharp() {

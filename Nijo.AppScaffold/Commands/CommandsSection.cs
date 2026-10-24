@@ -53,7 +53,7 @@ internal sealed class CommandsSection : Section {
         RenderEach(ctx, ctx.Schema.GetCommands(), rootAggregate => RenderRootAggregate(ctx, rootAggregate));
     }
 
-    private static void RenderRootAggregate(CodeRenderingContext ctx, RootAggregate rootAggregate) {
+    private static void RenderRootAggregate(CodeRenderingContext ctx, CommandRoot rootAggregate) {
         var aggregateFile = new SourceFileByAggregate(rootAggregate);
 
         // 処理: TypeScript用マッピング、Webエンドポイント、本処理抽象メソッド

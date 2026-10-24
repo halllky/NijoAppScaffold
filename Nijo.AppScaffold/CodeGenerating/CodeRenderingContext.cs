@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Xml.Linq;
 
 namespace Nijo.CodeGenerating {
     /// <summary>
@@ -77,10 +78,11 @@ namespace Nijo.CodeGenerating {
         #region ToOrderedByDataFlow
         private readonly Lock _orderByDfLock = new();
         /// <summary>
-        /// このルート集約の、ref-toによる外部参照の関係性に従った、
+        /// このルート要素の、ref-toによる外部参照の関係性に従った、
         /// 参照される方を先、参照する方を後、としたときの順番。
+        /// 永続化されるデータ構造、それ以外のデータ構造、コマンドの順に並ぶ。
         /// </summary>
-        public int GetIndexOfDataFlow(RootAggregate rootAggregate) {
+        public int GetIndexOfDataFlow(ISectionRoot root) {
             lock (_orderByDfLock) {
                 if (_rootAggregateOrderCache == null) {
                     _rootAggregateOrderCache = new();
@@ -120,7 +122,7 @@ namespace Nijo.CodeGenerating {
                         }
 
                         // 参照先集約が無い == nextは現在のrestの中で最上流の集約
-                        _rootAggregateOrderCache.Add(next.root, _rootAggregateOrderCache.Count);
+                        _rootAggregateOrderCache.Add(next.root.XElement, _rootAggregateOrderCache.Count);
 
                         rest.Remove(next);
                         indexForDataModels = 0;
@@ -129,29 +131,30 @@ namespace Nijo.CodeGenerating {
                     // 2) 永続化されないデータ構造、コマンドの順に、それぞれスキーマ定義上の登場順
                     var notStoredRoots = dataStructures
                         .Where(root => !root.IsStored)
-                        .Concat(Schema.GetCommands());
-                    foreach (var root in notStoredRoots) {
-                        _rootAggregateOrderCache.Add(root, _rootAggregateOrderCache.Count);
+                        .Select(root => root.XElement)
+                        .Concat(Schema.GetCommands().Select(command => command.XElement));
+                    foreach (var element in notStoredRoots) {
+                        _rootAggregateOrderCache.Add(element, _rootAggregateOrderCache.Count);
                     }
                 }
-                return _rootAggregateOrderCache[rootAggregate];
+                return _rootAggregateOrderCache[root.XElement];
             }
         }
-        private Dictionary<RootAggregate, int>? _rootAggregateOrderCache;
+        private Dictionary<XElement, int>? _rootAggregateOrderCache;
         #endregion ToOrderedByDataFlow
     }
 
     public static class CodeRenderingContextExtensions {
         /// <inheritdoc cref="CodeRenderingContext.GetIndexOfDataFlow"/>
-        public static int GetIndexOfDataFlow(this RootAggregate rootAggregate, CodeRenderingContext ctx) {
-            return ctx.GetIndexOfDataFlow(rootAggregate);
+        public static int GetIndexOfDataFlow(this ISectionRoot root, CodeRenderingContext ctx) {
+            return ctx.GetIndexOfDataFlow(root);
         }
         /// <summary>
-        /// ルート集約を、ref-toによる外部参照の関係性に従い、
+        /// ルート要素を、ref-toによる外部参照の関係性に従い、
         /// 参照される方を先、参照する方を後、とする順番に並び替えた新しいインスタンスを返します。
         /// </summary>
-        public static IEnumerable<RootAggregate> OrderByDataFlow(this IEnumerable<RootAggregate> rootAggregates, CodeRenderingContext ctx) {
-            return rootAggregates.OrderBy(r => ctx.GetIndexOfDataFlow(r));
+        public static IEnumerable<T> OrderByDataFlow<T>(this IEnumerable<T> roots, CodeRenderingContext ctx) where T : ISectionRoot {
+            return roots.OrderBy(r => ctx.GetIndexOfDataFlow(r));
         }
     }
 }

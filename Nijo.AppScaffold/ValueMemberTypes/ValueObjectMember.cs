@@ -44,7 +44,7 @@ internal class ValueObjectMember : IValueMemberType {
     }
 
     /// <summary>この値オブジェクトの型が定義される TypeScript のモジュール</summary>
-    internal TypeScriptAggregateModule TsModule => new(_ctx.ToAggregateBase(_xElement, null));
+    internal TypeScriptAggregateModule TsModule => new(new SectionRoot(_xElement, _ctx));
 
     void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
         // 値オブジェクト型の検証

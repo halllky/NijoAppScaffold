@@ -40,8 +40,8 @@ internal sealed class ConstantsSection : Section {
         RenderEach(ctx, ctx.Schema.GetConstants(), rootAggregate => RenderRootAggregate(ctx, rootAggregate));
     }
 
-    private static void RenderRootAggregate(CodeRenderingContext ctx, RootAggregate rootAggregate) {
-        var parser = new ConstantDefParser(((ISchemaPathNode)rootAggregate).XElement, ctx.SchemaParser);
+    private static void RenderRootAggregate(CodeRenderingContext ctx, SectionRoot rootAggregate) {
+        var parser = new ConstantDefParser(rootAggregate.XElement, ctx.SchemaParser);
 
         // データ型: 定数クラス
         var constantDef = new ConstantDef(parser);

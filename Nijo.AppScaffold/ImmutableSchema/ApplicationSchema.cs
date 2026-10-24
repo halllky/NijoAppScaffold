@@ -1,4 +1,6 @@
+using Nijo.Commands;
 using Nijo.SchemaParsing;
+using Nijo.StaticEnums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,47 +24,35 @@ public class ApplicationSchema {
     /// データ構造（IsStored, IsQueryable 属性の有無を問わない）のルート集約を、スキーマ定義上の登場順に返します。
     /// </summary>
     public IEnumerable<RootAggregate> GetDataStructures() {
-        return GetRootAggregates(E_Section.DataStructures);
+        return GetRootElements(E_Section.DataStructures).Select(el => (RootAggregate)_parseContext.ToAggregateBase(el, null));
     }
     /// <summary>
-    /// コマンドのルート集約を、スキーマ定義上の登場順に返します。
+    /// コマンドを、スキーマ定義上の登場順に返します。
     /// </summary>
-    public IEnumerable<RootAggregate> GetCommands() {
-        return GetRootAggregates(E_Section.Commands);
+    public IEnumerable<CommandRoot> GetCommands() {
+        return GetRootElements(E_Section.Commands).Select(el => new CommandRoot(el, _parseContext));
     }
     /// <summary>
-    /// 静的区分のルート集約を、スキーマ定義上の登場順に返します。
+    /// 静的区分の種類を、スキーマ定義上の登場順に返します。
     /// </summary>
-    public IEnumerable<RootAggregate> GetStaticEnums() {
-        return GetRootAggregates(E_Section.StaticEnums);
+    public IEnumerable<StaticEnumRoot> GetStaticEnums() {
+        return GetRootElements(E_Section.StaticEnums).Select(el => new StaticEnumRoot(el, _parseContext));
     }
     /// <summary>
-    /// 値オブジェクトのルート集約を、スキーマ定義上の登場順に返します。
+    /// 値オブジェクトを、スキーマ定義上の登場順に返します。
     /// </summary>
-    public IEnumerable<RootAggregate> GetValueObjects() {
-        return GetRootAggregates(E_Section.ValueObjects);
+    public IEnumerable<SectionRoot> GetValueObjects() {
+        return GetRootElements(E_Section.ValueObjects).Select(el => new SectionRoot(el, _parseContext));
     }
     /// <summary>
-    /// 定数のルート集約を、スキーマ定義上の登場順に返します。
+    /// 定数のグループを、スキーマ定義上の登場順に返します。
     /// </summary>
-    public IEnumerable<RootAggregate> GetConstants() {
-        return GetRootAggregates(E_Section.Constants);
+    public IEnumerable<SectionRoot> GetConstants() {
+        return GetRootElements(E_Section.Constants).Select(el => new SectionRoot(el, _parseContext));
     }
 
-    private IEnumerable<RootAggregate> GetRootAggregates(E_Section section) {
-        var rootAggregateElements = _xDocument
-            .Root
-            ?.Element(section.ToXmlElementName())
-            ?.Elements()
-            ?? [];
-
-        foreach (var xElement in rootAggregateElements) {
-            var aggregate = _parseContext.ToAggregateBase(xElement, null);
-            if (aggregate is not RootAggregate rootAggregate) {
-                throw new InvalidOperationException();
-            }
-            yield return rootAggregate;
-        }
+    private IEnumerable<XElement> GetRootElements(E_Section section) {
+        return _xDocument.Root?.Element(section.ToXmlElementName())?.Elements() ?? [];
     }
 
 }

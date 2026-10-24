@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using System;
+using Nijo.Commands;
 
 namespace Nijo.DataStructures;
 
@@ -93,8 +94,8 @@ internal sealed class DataStructuresSection : Section {
 
         // この構造体がいずれかのコマンドの引数or戻り値として参照されている場合、
         // プレゼンテーション層での編集用のオブジェクト等を生成する。
-        var refferdAsParameter = rootAggregate.EnumerateCommandModelsRefferingAsParameter().Any();
-        var refferdAsReturnValue = rootAggregate.EnumerateCommandModelsRefferingAsReturnValue().Any();
+        var refferdAsParameter = CommandRoot.IsReferredAsParameter(rootAggregate);
+        var refferdAsReturnValue = CommandRoot.IsReferredAsReturnValue(rootAggregate);
         StructureDisplayData? displayData = null;
         if (refferdAsParameter || refferdAsReturnValue) {
             // 画面表示用データ

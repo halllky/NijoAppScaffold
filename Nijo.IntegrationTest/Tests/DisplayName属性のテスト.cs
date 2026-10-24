@@ -74,8 +74,8 @@ public class DisplayName属性のテスト {
 
         var schema = await BuildSchemaAsync(project.Project.SchemaXmlPath);
         var staticEnum = schema.GetStaticEnums().Single(root => root.PhysicalName == "Status");
-        var open = staticEnum.GetMembers().OfType<StaticEnumValueDef>().Single(member => member.PhysicalName == "Open");
-        var closed = staticEnum.GetMembers().OfType<StaticEnumValueDef>().Single(member => member.PhysicalName == "Closed");
+        var open = staticEnum.GetValues().Single(value => value.PhysicalName == "Open");
+        var closed = staticEnum.GetValues().Single(value => value.PhysicalName == "Closed");
 
         Assert.Multiple(() => {
             Assert.That(open.DisplayName, Is.EqualTo(string.Empty));

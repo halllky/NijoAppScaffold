@@ -283,7 +283,7 @@ namespace Nijo.DataStructures.IsQueryable {
 
             string IPresentationLayerStructure.IMember.RenderDeclaringTypeScript() {
                 var refTo = new Entry(_member.RefTo);
-                var refToTsTypeName = new TypeScriptAggregateModule(_member.RefTo).QualifyFrom(_member.Owner, refTo.TsTypeName);
+                var refToTsTypeName = new TypeScriptAggregateModule(_member.RefTo.GetRoot()).QualifyFrom(_member.Owner, refTo.TsTypeName);
 
                 return $$"""
                     {{PhysicalName}}: {{refToTsTypeName}}

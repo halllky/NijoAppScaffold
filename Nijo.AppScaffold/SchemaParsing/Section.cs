@@ -31,7 +31,7 @@ internal abstract class Section {
     /// <summary>
     /// ルート集約ごとのソースコード生成処理を並列で実行します。
     /// </summary>
-    protected static void RenderEach(CodeRenderingContext ctx, IEnumerable<RootAggregate> rootAggregates, Action<RootAggregate> render) {
+    protected static void RenderEach<T>(CodeRenderingContext ctx, IEnumerable<T> rootAggregates, Action<T> render) where T : ISectionRoot {
         var parallelOptions = new ParallelOptions {
             MaxDegreeOfParallelism = Math.Min(Environment.ProcessorCount, 4),
         };

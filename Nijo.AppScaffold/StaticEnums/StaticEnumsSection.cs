@@ -49,9 +49,9 @@ internal sealed class StaticEnumsSection : Section {
         ctx.Use<EnumFile>();
     }
 
-    private static void RenderRootAggregate(CodeRenderingContext ctx, RootAggregate rootAggregate) {
+    private static void RenderRootAggregate(CodeRenderingContext ctx, StaticEnumRoot rootAggregate) {
         var enumFile = ctx.Use<EnumFile>();
-        var parser = new EnumDefParser(((ISchemaPathNode)rootAggregate).XElement, ctx.SchemaParser);
+        var parser = new EnumDefParser(rootAggregate.XElement, ctx.SchemaParser);
 
         // データ型: enum, リテラル型定義
         var staticEnum = new StaticEnumDef(parser, rootAggregate);

@@ -13,14 +13,14 @@ using System.IO;
 
 namespace Nijo.Parts.Common {
     /// <summary>
-    /// 機能単位などではなく集約単位でソースコードが記載されるファイル
+    /// 機能単位などではなくルート要素単位でソースコードが記載されるファイル
     /// </summary>
     public class SourceFileByAggregate(
-        RootAggregate rootAggregate,
+        ISectionRoot rootAggregate,
         [CallerFilePath] string? callerFilePath = null,
         [CallerMemberName] string? callerMemberName = null) {
 
-        private readonly RootAggregate _rootAggregate = rootAggregate;
+        private readonly ISectionRoot _rootAggregate = rootAggregate;
         private readonly string? _callerFilePath = callerFilePath;
         private readonly string? _callerMemberName = callerMemberName;
 
@@ -199,13 +199,16 @@ namespace Nijo.Parts.Common {
         }
         private string RenderNodeJs(CodeRenderingContext ctx) {
             var thisModule = new TypeScriptAggregateModule(_rootAggregate);
-            var tree = _rootAggregate.EnumerateThisAndDescendants().ToArray();
+            // データ構造のルート集約以外のルート要素はメンバーをもたないため、import するモジュールも無い
+            var tree = _rootAggregate is RootAggregate rootAggregate
+                ? rootAggregate.EnumerateThisAndDescendants().ToArray()
+                : [];
 
             // 外部参照先の集約のモジュール
             var refToModules = tree
                 .SelectMany(agg => agg.GetMembers())
                 .OfType<RefToMember>()
-                .Select(@ref => new TypeScriptAggregateModule(@ref.RefTo))
+                .Select(@ref => new TypeScriptAggregateModule(@ref.RefTo.GetRoot()))
                 .Where(module => module.ImportAlias != thisModule.ImportAlias)
                 .DistinctBy(module => module.ImportAlias)
                 .OrderBy(module => module.ImportAlias);

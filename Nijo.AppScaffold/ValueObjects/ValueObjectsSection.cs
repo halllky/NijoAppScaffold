@@ -28,7 +28,7 @@ namespace Nijo.ValueObjects {
             ctx.Use<ValueObjectJsonConverter>();
         }
 
-        private static void RenderValueObject(CodeRenderingContext ctx, RootAggregate rootAggregate) {
+        private static void RenderValueObject(CodeRenderingContext ctx, SectionRoot rootAggregate) {
             // 値オブジェクトクラスの生成
             ctx.CoreLibrary(dir => {
                 dir.Generate(RenderCSharp(rootAggregate, ctx));
@@ -45,7 +45,7 @@ namespace Nijo.ValueObjects {
             });
         }
 
-        private static SourceFile RenderCSharp(RootAggregate rootAggregate, CodeRenderingContext ctx) {
+        private static SourceFile RenderCSharp(SectionRoot rootAggregate, CodeRenderingContext ctx) {
             var aggregateName = rootAggregate.PhysicalName;
 
             return new SourceFile {
@@ -124,7 +124,7 @@ namespace Nijo.ValueObjects {
             };
         }
 
-        private static SourceFile RenderTypeScript(RootAggregate rootAggregate) {
+        private static SourceFile RenderTypeScript(SectionRoot rootAggregate) {
             var aggregateName = rootAggregate.PhysicalName;
 
             return new SourceFile {

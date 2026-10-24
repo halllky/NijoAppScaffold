@@ -54,7 +54,7 @@ namespace Nijo.Parts.Common {
 
         private readonly Lock _lock = new();
         private readonly List<RootAggregate> _queryModels = [];
-        private readonly List<RootAggregate> _commandModels = [];
+        private readonly List<CommandRoot> _commandModels = [];
         private readonly List<RootAggregate> _dataModels = [];
         private readonly List<RootAggregate> _structureModels = [];
 
@@ -77,7 +77,7 @@ namespace Nijo.Parts.Common {
         }
 
         private SourceFile RenderCSharp(CodeRenderingContext ctx) {
-            var values = _queryModels.Concat(_commandModels).OrderByDataFlow(ctx);
+            var values = _queryModels.Cast<ISectionRoot>().Concat(_commandModels).OrderByDataFlow(ctx);
 
             return new SourceFile {
                 FileName = "E_CommandQueryType.cs",
@@ -150,8 +150,8 @@ namespace Nijo.Parts.Common {
 
             // コマンド のパラメータまたは戻り値に指定されている 構造体 の型名
             var parameterStructureModels = structureModelsOrderByDataFlow
-                .Where(x => x.EnumerateCommandModelsRefferingAsParameter().Any()
-                         || x.EnumerateCommandModelsRefferingAsReturnValue().Any())
+                .Where(x => CommandRoot.IsReferredAsParameter(x)
+                         || CommandRoot.IsReferredAsReturnValue(x))
                 .ToArray();
 
             // Ref関連モジュールは他の集約から参照されているもののみ使用可能
@@ -170,13 +170,13 @@ namespace Nijo.Parts.Common {
             // 集約ごとのモジュールのimport文
             static string RenderImports(IEnumerable<AggregateBase> aggregates, bool typeOnly) {
                 return aggregates
-                    .Select(agg => new TypeScriptAggregateModule(agg))
+                    .Select(agg => new TypeScriptAggregateModule(agg.GetRoot()))
                     .DistinctBy(module => module.ImportAlias)
                     .OrderBy(module => module.ImportAlias)
                     .SelectTextTemplate(module => module.RenderImportFromRoot(typeOnly));
             }
             static string Q(AggregateBase aggregate, string exportName) {
-                return new TypeScriptAggregateModule(aggregate).Qualify(exportName);
+                return new TypeScriptAggregateModule(aggregate.GetRoot()).Qualify(exportName);
             }
 
             // メタデータの対応表の値の型
@@ -591,7 +591,7 @@ namespace Nijo.Parts.Common {
                 return this;
             }
         }
-        internal CommandQueryMappings AddCommandModel(RootAggregate rootAggregate) {
+        internal CommandQueryMappings AddCommandModel(CommandRoot rootAggregate) {
             lock (_lock) {
                 _commandModels.Add(rootAggregate);
                 return this;

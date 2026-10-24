@@ -245,11 +245,11 @@ internal class StructureRefToMember : IInstanceStructurePropertyMetadata {
     }
     /// <summary>このメンバーを保持する集約のモジュールから見た参照先の型名</summary>
     internal string GetTargetTsTypeName() {
-        return new TypeScriptAggregateModule(_refToMember.RefTo).QualifyFrom(_refToMember.Owner, GetTargetStructure().TsTypeName);
+        return new TypeScriptAggregateModule(_refToMember.RefTo.GetRoot()).QualifyFrom(_refToMember.Owner, GetTargetStructure().TsTypeName);
     }
     /// <summary>このメンバーを保持する集約のモジュールから見た参照先の新規オブジェクト作成関数名</summary>
     internal string GetTargetTsNewObjectFunction() {
-        return new TypeScriptAggregateModule(_refToMember.RefTo).QualifyFrom(_refToMember.Owner, GetTargetStructure().TsNewObjectFunction);
+        return new TypeScriptAggregateModule(_refToMember.RefTo.GetRoot()).QualifyFrom(_refToMember.Owner, GetTargetStructure().TsNewObjectFunction);
     }
 
     ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => _refToMember;

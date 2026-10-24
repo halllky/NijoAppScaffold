@@ -10,10 +10,10 @@ namespace Nijo.Parts.JavaScript;
 /// モジュール内で export されるシンボルの名前にはルート集約の名前を含めない。
 /// </summary>
 internal class TypeScriptAggregateModule {
-    internal TypeScriptAggregateModule(AggregateBase aggregate) {
-        _rootAggregate = aggregate.GetRoot();
+    internal TypeScriptAggregateModule(ISectionRoot root) {
+        _rootAggregate = root;
     }
-    private readonly RootAggregate _rootAggregate;
+    private readonly ISectionRoot _rootAggregate;
 
     /// <summary>このモジュールが出力されるディレクトリの名前</summary>
     internal const string DIRECTORY = "models";
@@ -47,7 +47,7 @@ internal class TypeScriptAggregateModule {
     /// 同じモジュール内からの参照であれば修飾しません。
     /// </summary>
     internal string QualifyFrom(AggregateBase referrer, string exportName) {
-        return referrer.GetRoot() == _rootAggregate
+        return referrer.GetRoot().XElement == _rootAggregate.XElement
             ? exportName
             : Qualify(exportName);
     }

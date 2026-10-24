@@ -475,7 +475,7 @@ namespace Nijo.DataStructures.IsQueryable {
             string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp ? RefToFilter.CsClassName : RefToFilterTsTypeName;
 
             /// <summary>このメンバーを保持する集約のモジュールから見た参照先のフィルターの型名</summary>
-            private string RefToFilterTsTypeName => new TypeScriptAggregateModule(_rm.RefTo).QualifyFrom(_rm.Owner, RefToFilter.TsTypeName);
+            private string RefToFilterTsTypeName => new TypeScriptAggregateModule(_rm.RefTo.GetRoot()).QualifyFrom(_rm.Owner, RefToFilter.TsTypeName);
 
             string IFilterMember.RenderCSharpDeclaring(CodeRenderingContext ctx) {
                 return $$"""

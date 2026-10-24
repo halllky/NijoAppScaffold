@@ -16,10 +16,10 @@ namespace Nijo.Commands {
     /// コマンド処理
     /// </summary>
     internal class CommandProcessing {
-        internal CommandProcessing(RootAggregate aggregate) {
-            _rootAggregate = aggregate;
+        internal CommandProcessing(CommandRoot command) {
+            _rootAggregate = command;
         }
-        private readonly RootAggregate _rootAggregate;
+        private readonly CommandRoot _rootAggregate;
 
 
         private const string CONTROLLER_ACTION_EXECUTE = "execute";
@@ -27,7 +27,7 @@ namespace Nijo.Commands {
 
 
         #region TypeScript用
-        internal static string RenderTsTypeMap(IEnumerable<RootAggregate> commandModels) {
+        internal static string RenderTsTypeMap(IEnumerable<CommandRoot> commandModels) {
 
             var items = commandModels.Select(rootAggregate => {
                 var controller = new AspNetController(rootAggregate);
@@ -43,7 +43,7 @@ namespace Nijo.Commands {
             static string? QualifyTsTypeName(ICreatablePresentationLayerStructure? structure) {
                 return structure == null
                     ? null
-                    : new TypeScriptAggregateModule(structure.Aggregate).Qualify(structure.TsTypeName);
+                    : new TypeScriptAggregateModule(structure.Aggregate.GetRoot()).Qualify(structure.TsTypeName);
             }
 
             return $$"""

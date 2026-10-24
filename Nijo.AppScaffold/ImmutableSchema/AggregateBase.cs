@@ -9,12 +9,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using System.Xml.XPath;
-using Nijo.Commands;
 using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.IsStored;
 using Nijo.DataStructures.UseSoftDelete;
-using Nijo.DataStructures.Structure;
-using Nijo.StaticEnums;
 
 namespace Nijo.ImmutableSchema {
     /// <summary>
@@ -83,7 +80,6 @@ namespace Nijo.ImmutableSchema {
                             E_NodeType.ChildrenAggregate => new ChildrenAggregate(el, _ctx, this),
                             E_NodeType.Ref => new RefToMember(el, _ctx, this),
                             E_NodeType.ValueMember => new ValueMember(el, _ctx, this),
-                            E_NodeType.StaticEnumValue => new StaticEnumValueDef(el, _ctx, this),
                             _ => throw new InvalidOperationException($"メンバーでない種類: {nodeType}（{el}）"),
                         };
                     })
@@ -379,9 +375,9 @@ namespace Nijo.ImmutableSchema {
     }
 
     /// <summary>
-    /// 集約ルート
+    /// データ構造のルート集約
     /// </summary>
-    public class RootAggregate : AggregateBase {
+    public class RootAggregate : AggregateBase, ISectionRoot {
         internal RootAggregate(XElement xElement, SchemaParseContext ctx, ISchemaPathNode? previous)
             : base(xElement, ctx, previous) { }
 
@@ -395,105 +391,6 @@ namespace Nijo.ImmutableSchema {
         public override AggregateBase AsEntry() {
             return new RootAggregate(XElement, _ctx, null);
         }
-
-        #region このCommandModelの引数・戻り値の集約を返す
-        /// <summary>
-        /// このコマンドの引数の構造体を返します。
-        /// このルート集約がコマンドでない場合は例外。
-        /// </summary>
-        public ICreatablePresentationLayerStructure? GetParameterStructure() {
-            if (!XElement.TryGetSection(out var section) || section != E_Section.Commands) throw new InvalidOperationException($"{PhysicalName}はCommandModelでない");
-            var parameter = XElement.Attribute(ParameterOption.ATTRIBUTE_NAME);
-            return parameter == null ? null : GetTargetStructure(parameter, true);
-        }
-        /// <summary>
-        /// このコマンドの戻り値の構造体を返します。
-        /// このルート集約がコマンドでない場合は例外。
-        /// </summary>
-        public ICreatablePresentationLayerStructure? GetReturnValueStructure() {
-            if (!XElement.TryGetSection(out var section) || section != E_Section.Commands) throw new InvalidOperationException($"{PhysicalName}はCommandModelでない");
-            var returnValue = XElement.Attribute(ReturnValueOption.ATTRIBUTE_NAME);
-            return returnValue == null ? null : GetTargetStructure(returnValue, false);
-        }
-
-        /// <summary>
-        /// このルート集約を <see cref="ParameterOption"/> に指定しているコマンドを列挙します。
-        /// </summary>
-        public IEnumerable<RootAggregate> EnumerateCommandModelsRefferingAsParameter() {
-            var commandModelElements = _ctx.Document.Root
-                ?.Element(SchemaParseContext.SECTION_COMMANDS)
-                ?.Elements()
-                ?? [];
-
-            foreach (var rootElement in commandModelElements) {
-                var parameterAttr = rootElement.Attribute(ParameterOption.ATTRIBUTE_NAME);
-                if (parameterAttr == null) {
-                    continue;
-                }
-
-                // Parameter属性の値を解析
-                var splitted = parameterAttr.Value.Split(':');
-                var parameterTargetName = splitted[0];
-
-                // このルート集約がParameter属性で指定されている場合
-                if (parameterTargetName == PhysicalName) {
-                    yield return (RootAggregate)_ctx.ToAggregateBase(rootElement, null);
-                }
-            }
-        }
-
-        /// <summary>
-        /// このルート集約を <see cref="ReturnValueOption"/> に指定しているコマンドを列挙します。
-        /// </summary>
-        public IEnumerable<RootAggregate> EnumerateCommandModelsRefferingAsReturnValue() {
-            var commandModelElements = _ctx.Document.Root
-                ?.Element(SchemaParseContext.SECTION_COMMANDS)
-                ?.Elements()
-                ?? [];
-
-            foreach (var rootElement in commandModelElements) {
-                var returnValueAttr = rootElement.Attribute(ReturnValueOption.ATTRIBUTE_NAME);
-                if (returnValueAttr == null) {
-                    continue;
-                }
-
-                // ReturnValue属性の値を解析
-                var splitted = returnValueAttr.Value.Split(':');
-                var returnValueTargetName = splitted[0];
-
-                // このルート集約がReturnValue属性で指定されている場合
-                if (returnValueTargetName == PhysicalName) {
-                    yield return (RootAggregate)_ctx.ToAggregateBase(rootElement, null);
-                }
-            }
-        }
-
-        private ICreatablePresentationLayerStructure GetTargetStructure(XAttribute attribute, bool isParameter) {
-            var splitted = attribute.Value.Split(':');
-            var targetPhysicalName = splitted[0];
-            var targetXElement = _ctx.Document.Root
-                ?.Element(SchemaParseContext.SECTION_DATA_STRUCTURES)
-                ?.Element(targetPhysicalName)
-                ?? throw new InvalidOperationException($"対象の集約が見つかりません: {targetPhysicalName}");
-
-            var targetRootAggregate = (RootAggregate)_ctx.ToAggregateBase(targetXElement, null);
-            if (splitted.Length == 1) {
-                // コマンドの典型的な利用シーンとして「詳細画面の初期表示データ取得」があるので
-                // 戻り値であっても常にDisplayDataを返したほうがよいのか？うーん…
-                // return isParameter
-                //     ? new StructureDisplayData(targetRootAggregate)
-                //     : new PlainStructure(targetRootAggregate);
-
-                return new StructureDisplayData(targetRootAggregate);
-
-            } else if (CommandTypeSpecificationOption.AvailableFromCommandToQuery.TryGetValue(splitted[1], out var factory)) {
-                return factory(targetRootAggregate);
-
-            } else {
-                throw new InvalidOperationException($"不正な参照先の種類: {splitted[1]}");
-            }
-        }
-        #endregion このCommandModelの引数・戻り値の集約を返す
     }
 
     /// <summary>

@@ -11,11 +11,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Nijo.Parts.CSharp {
     public class AspNetController {
-        public AspNetController(RootAggregate rootAggregate) {
+        public AspNetController(ISectionRoot rootAggregate) {
             _rootAggregate = rootAggregate;
         }
 
-        private readonly RootAggregate _rootAggregate;
+        private readonly ISectionRoot _rootAggregate;
 
         /// <summary>
         /// 自動生成される Controller が継承するベースクラス名。

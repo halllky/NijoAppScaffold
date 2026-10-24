@@ -276,11 +276,11 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         }
 
         public string RenderNewObjectCreation() {
-            return $"{new TypeScriptAggregateModule(Member.RefTo).QualifyFrom(Member.Owner, RefEntry.TsNewObjectFunction)}()";
+            return $"{new TypeScriptAggregateModule(Member.RefTo.GetRoot()).QualifyFrom(Member.Owner, RefEntry.TsNewObjectFunction)}()";
         }
 
         /// <summary>このメンバーを保持する集約のモジュールから見た参照先の型名</summary>
-        private string RefEntryTsTypeName => new TypeScriptAggregateModule(Member.RefTo).QualifyFrom(Member.Owner, RefEntry.TsTypeName);
+        private string RefEntryTsTypeName => new TypeScriptAggregateModule(Member.RefTo.GetRoot()).QualifyFrom(Member.Owner, RefEntry.TsTypeName);
 
         ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
         bool IInstanceStructurePropertyMetadata.IsArray => false;
