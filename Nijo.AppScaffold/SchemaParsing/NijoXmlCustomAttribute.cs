@@ -1,0 +1,277 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json.Serialization;
+using System.Xml.Linq;
+using Nijo.CodeGenerating;
+using Nijo.Util.DotnetEx;
+
+namespace Nijo.SchemaParsing;
+
+/// <summary>
+/// nijo.xml 内の、データ構造やコマンドなどのXML要素に指定できる任意の属性。
+/// この属性定義自体が nijo.xml 内に記述される。
+/// このクラス自体は nijo serve のGUI上での表示に利用される。
+/// </summary>
+public class NijoXmlCustomAttribute {
+
+    internal static IEnumerable<NijoXmlCustomAttribute> FromXDocument(XDocument xDocument) {
+
+        foreach (var xElement in xDocument.Root?.Element(SchemaParseContext.SECTION_CUSTOM_ATTRIBUTES)?.Elements() ?? []) {
+
+            yield return new NijoXmlCustomAttribute {
+                UniqueId = xElement.Name.LocalName,
+                PhysicalName = xElement.Attribute(nameof(PhysicalName))?.Value,
+                DisplayName = xElement.Attribute(nameof(DisplayName))?.Value,
+                Comment = xElement.PreviousNode is XComment commentNode
+                    ? commentNode.Value.Trim()
+                    : string.Empty,
+                IsValidation = bool.TryParse(xElement.Attribute(nameof(IsValidation))?.Value, out var isValidation)
+                    && isValidation,
+                AvailableFor = xElement.Attribute(nameof(AvailableFor))?.Value
+                    .Split(',')
+                    .ToArray()
+                    ?? [],
+                Type = Enum.TryParse<E_Type>(xElement.Attribute(nameof(Type))?.Value, out var parsedType)
+                    ? parsedType
+                    : null,
+                EnumValues = xElement
+                    .Elements(ENUM_VALUE_OPTION_NAME)
+                    .Select(el => el.Value)
+                    .ToArray(),
+            };
+        }
+    }
+
+    /// <summary>
+    /// このインスタンスを XComment, XElement に変換する。
+    /// </summary>
+    internal IEnumerable<XNode> ToXNodes() {
+        var xElement = new XElement(UniqueId ?? throw new InvalidOperationException("カスタム属性の UniqueId が設定されていません。"));
+
+        if (!string.IsNullOrWhiteSpace(PhysicalName)) {
+            xElement.SetAttributeValue(nameof(PhysicalName), PhysicalName);
+        }
+        if (!string.IsNullOrWhiteSpace(DisplayName)) {
+            xElement.SetAttributeValue(nameof(DisplayName), DisplayName);
+        }
+        if (IsValidation) {
+            xElement.SetAttributeValue(nameof(IsValidation), "True");
+        }
+        if (AvailableFor.Length > 0) {
+            xElement.SetAttributeValue(nameof(AvailableFor), string.Join(",", AvailableFor));
+        }
+        if (Type != null) {
+            xElement.SetAttributeValue(nameof(Type), Type.ToString());
+        }
+        foreach (var enumValue in EnumValues) {
+            xElement.Add(new XElement(ENUM_VALUE_OPTION_NAME, enumValue));
+        }
+
+        if (!string.IsNullOrWhiteSpace(Comment)) {
+            yield return new XComment(Comment);
+        }
+        yield return xElement;
+    }
+
+    /// <summary>
+    /// カスタム属性の一意な識別子。
+    /// GUI上でほかの属性と物理名が重複する場合の考慮。
+    /// </summary>
+    public string? UniqueId { get; set; }
+
+    /// <summary>
+    /// カスタム属性のXML要素上での名前。
+    /// ほかの属性と重複する場合はエラー。
+    /// </summary>
+    public string? PhysicalName { get; set; }
+    /// <summary>
+    /// カスタム属性の表示名。
+    /// nijo serve のGUI上ではこちらの名称が表示される。
+    /// </summary>
+    public string? DisplayName { get; set; }
+    /// <summary>
+    /// カスタム属性の説明。
+    /// 主として、どういったルールで値を指定すればよいかの説明に利用されることを想定している。
+    /// nijo.xml 上では、属性定義要素の直前にXMLコメントとして記述される。
+    /// </summary>
+    public string? Comment { get; set; }
+
+    /// <summary>
+    /// このカスタム属性がバリデーション用途に使用されるかどうか。
+    /// true の場合、入力検証のためのカスタムバリデーターが生成される。
+    /// </summary>
+    [JsonConverter(typeof(JsonStringBooleanConverter))]
+    public bool IsValidation { get; set; }
+
+    /// <summary>
+    /// このカスタム属性を指定できるルート集約の一覧。
+    /// DataStructures セクションのルート集約は IsStored, IsQueryable 属性の有無で、それ以外はルート集約が属するセクションで指定する。
+    /// nijo.xml 上ではXML要素の属性としてカンマ区切りで記載される。
+    /// </summary>
+    public string[] AvailableFor { get; set; } = [];
+    /// <summary><see cref="AvailableFor"/> の値。IsStored 属性が指定されたデータ構造で使用可能。</summary>
+    internal const string AVAILABLE_FOR_STORED = "stored";
+    /// <summary><see cref="AvailableFor"/> の値。IsQueryable 属性が指定されたデータ構造で使用可能。</summary>
+    internal const string AVAILABLE_FOR_QUERYABLE = "queryable";
+    /// <summary><see cref="AvailableFor"/> の値。IsStored, IsQueryable 属性がいずれも指定されていないデータ構造で使用可能。</summary>
+    internal const string AVAILABLE_FOR_STRUCTURE = "structure";
+
+    /// <summary>
+    /// <see cref="AvailableFor"/> に指定できる値を列挙します。
+    /// </summary>
+    internal static IEnumerable<string> GetAvailableForCandidates() {
+        yield return AVAILABLE_FOR_STORED;
+        yield return AVAILABLE_FOR_QUERYABLE;
+        yield return AVAILABLE_FOR_STRUCTURE;
+        foreach (var section in Enum.GetValues<E_Section>()) {
+            var value = ToAvailableForValue(section);
+            if (value != null) yield return value;
+        }
+    }
+    /// <summary>
+    /// DataStructures セクション以外のセクションのルート集約を指定するときの <see cref="AvailableFor"/> の値
+    /// </summary>
+    private static string? ToAvailableForValue(E_Section section) => section switch {
+        E_Section.DataStructures => null,
+        E_Section.Commands => "command",
+        E_Section.StaticEnums => "static-enum",
+        E_Section.ValueObjects => "value-object",
+        E_Section.Constants => "constant",
+        _ => throw new ArgumentOutOfRangeException(nameof(section)),
+    };
+
+    /// <summary>
+    /// このカスタム属性が、引数のXML要素に使用可能かどうかを返します。
+    /// IsStored, IsQueryable 属性が両方指定されたデータ構造の場合、
+    /// <see cref="AVAILABLE_FOR_STORED"/>, <see cref="AVAILABLE_FOR_QUERYABLE"/> のいずれかが指定されていれば使用可能。
+    /// </summary>
+    internal bool IsAvailableFor(NodeOptionTarget target) {
+        return EnumerateAvailableForValues(target).Any(AvailableFor.Contains);
+
+        static IEnumerable<string> EnumerateAvailableForValues(NodeOptionTarget target) {
+            if (target.Section != E_Section.DataStructures) {
+                var value = ToAvailableForValue(target.Section);
+                if (value != null) yield return value;
+                yield break;
+            }
+
+            if (target.IsStored) yield return AVAILABLE_FOR_STORED;
+            if (target.IsQueryable) yield return AVAILABLE_FOR_QUERYABLE;
+            if (target.IsStructure) yield return AVAILABLE_FOR_STRUCTURE;
+        }
+    }
+
+    /// <summary>
+    /// カスタム属性の値の型。
+    /// </summary>
+    public E_Type? Type { get; set; } = null;
+    /// <summary>
+    /// <see cref="Type"/> が Enum の場合は必須。
+    /// この属性に列挙可能な値を返す。
+    /// nijo.xml 上では、カスタム属性の Elements として定義される。
+    /// </summary>
+    public string[] EnumValues { get; set; } = [];
+    private const string ENUM_VALUE_OPTION_NAME = "Option";
+
+    /// <summary>
+    /// スキーマ定義の検証時に実行される。
+    /// このカスタム属性定義自体を検証する。
+    /// </summary>
+    internal IEnumerable<string> ValidateThis(SchemaParseContext context, SchemaParseRule rule) {
+        // 必須項目チェック
+        if (string.IsNullOrWhiteSpace(UniqueId)) {
+            yield return $"カスタム属性の {nameof(UniqueId)} は必須です。空白以外の値を指定してください。";
+        }
+        if (string.IsNullOrWhiteSpace(PhysicalName)) {
+            yield return $"カスタム属性の {nameof(PhysicalName)} は必須です。空白以外の値を指定してください。";
+        }
+        if (Type == null) {
+            yield return $"カスタム属性 '{PhysicalName}' の {nameof(Type)} は必須です。有効な型を指定してください。";
+        }
+        if (AvailableFor.Length == 0) {
+            yield return $"カスタム属性 '{PhysicalName}' の {nameof(AvailableFor)} は必須です。少なくとも1つ以上指定してください。";
+        }
+
+        // 属性名は重複不可
+        var duplicateNodeOptions = rule.NodeOptions
+            .Where(opt => opt.AttributeName == PhysicalName)
+            .ToArray();
+        var duplicateCustomAttributes = context.Document.Root
+            ?.Element(SchemaParseContext.SECTION_CUSTOM_ATTRIBUTES)
+            ?.Elements()
+            .Where(attr => attr.Name.LocalName != UniqueId
+                        && attr.Attribute(nameof(PhysicalName))?.Value == PhysicalName)
+            .ToArray()
+            ?? [];
+        if (duplicateNodeOptions.Length > 0 || duplicateCustomAttributes.Length > 0) {
+            yield return $"カスタム属性の {nameof(PhysicalName)} '{PhysicalName}' は既に使用されています。ほかの属性と重複しない名称を指定してください。";
+        }
+
+        // 使用できない値が指定されていないかチェック
+        var candidates = GetAvailableForCandidates().ToArray();
+        foreach (var value in AvailableFor) {
+            if (!candidates.Contains(value)) {
+                yield return $"カスタム属性 '{PhysicalName}' の {nameof(AvailableFor)} に、不正な値 '{value}' が指定されています。指定できる値は {candidates.Join(", ")} です。";
+            }
+        }
+
+        // 種類が列挙体の場合、オプションが1個以上存在することをチェック。
+        // 逆にそれ以外の場合はオプションが存在しないことをチェック。
+        if (Type == E_Type.Enum) {
+            if (EnumValues.Length == 0) {
+                yield return $"カスタム属性 '{PhysicalName}' の種類が '{nameof(E_Type.Enum)}' に設定されていますが、列挙可能な値が1個も定義されていません。少なくとも1個以上の値を {nameof(EnumValues)} 要素内に定義してください。";
+            }
+        } else {
+            if (EnumValues.Length != 0) {
+                yield return $"カスタム属性 '{PhysicalName}' の種類が '{Type}' に設定されていますが、列挙可能な値が定義されています。列挙体以外の種類の場合、列挙可能な値を定義することはできません。";
+            }
+        }
+    }
+
+    /// <summary>
+    /// スキーマ定義の検証時に実行される。
+    /// データ構造などのXML要素にこの属性が存在する場合に、その値の妥当性を検証し、エラーがあればそれを列挙して返す。
+    /// </summary>
+    internal IEnumerable<string> ValidateModelElement(XElement xElement) {
+        if (string.IsNullOrEmpty(UniqueId)) throw new InvalidOperationException("カスタム属性の AttributeName が設定されていません。");
+
+        var attr = xElement.Attribute(UniqueId);
+        if (attr == null) {
+            yield break;
+        }
+
+        var value = attr.Value;
+        switch (Type) {
+            case E_Type.Boolean:
+                // 属性が存在する場合は常にTrueとみなすため、値の妥当性チェックは不要
+                break;
+            case E_Type.Decimal:
+                if (!decimal.TryParse(value, out var _)) {
+                    yield return $"属性 '{PhysicalName}' の値 '{value}' は不正です。Decimal型の値を指定してください。";
+                }
+                break;
+            case E_Type.Enum:
+                if (!EnumValues.Contains(value)) {
+                    yield return $"属性 '{PhysicalName}' の値 '{value}' は不正です。有効な値は {string.Join(", ", EnumValues)} です。";
+                }
+                break;
+            case E_Type.String:
+                // 文字列型は常に有効
+                break;
+        }
+    }
+
+    /// <summary>
+    /// カスタム属性の値の型
+    /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum E_Type {
+        /// <summary>XML要素に属性が存在するなら常にTrueとみなす。値は見ない。</summary>
+        Boolean,
+        Decimal,
+        Enum,
+        String,
+    }
+}

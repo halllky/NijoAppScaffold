@@ -32,7 +32,7 @@ localhost 側の実装方針（iframe + postMessage ブリッジ、生成コー�
 
 | 対象                      | 現状                                                                                                                                                                                              |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| エディタの配信            | `Nijo/WebService/NijoWebService.cs` が単一 HTML を埋め込みリソースとして返す。dev 時 `localhost:5176` / serve 時 `localhost:5001`。**API は `/nijo-api/*` 配下**（`/nijo-api/load` 等。2.2 参照） |
+| エディタの配信            | `Nijo.AppScaffold/WebService/NijoWebService.cs` が単一 HTML を埋め込みリソースとして返す。dev 時 `localhost:5176` / serve 時 `localhost:5001`。**API は `/nijo-api/*` 配下**（`/nijo-api/load` 等。2.2 参照） |
 | 生成アプリのデバッグ入口  | `client` → `vite --port 5173 --host`（変更なし）。**`vite.config.ts` の `server.proxy` が `/api/*` を ASP.NET Core (`:5290`) へ転送**するため、ブラウザは常に `localhost:5173` のみを見る         |
 | 生成アプリの API 呼び出し | `callAspNetCoreApiAsync.ts` は環境分岐を持たない。常にルート相対パス（`/api/...`）で `fetch`、`credentials: 'same-origin'`                                                                        |
 | 生成アプリの CORS 設定    | `WebApi/Program.cs` の開発用 CORS 設定は撤去済み（同一オリジンのため不要）                                                                                                                        |
@@ -52,7 +52,7 @@ fly.io 環境では、以下 2 つの理由により**オリジンを統一し�
 
 生成アプリ側の `callAspNetCoreApiAsync` は既にルート相対 `/api/...` に統一済みのため、
 fly.io 側で追加の環境変数分岐（`VITE_API_BASE` 等）は**不要**。
-必要なのは `Nijo/WebService/NijoWebService.cs` 側の振り分けのみ。
+必要なのは `Nijo.AppScaffold/WebService/NijoWebService.cs` 側の振り分けのみ。
 
 ### 2.1 単一オリジンへの振り分け
 
@@ -86,12 +86,12 @@ iframe 内のページが `/preview/` 配下で配信されていても、`fetch
    ただしこれは `callAspNetCoreApiAsync` に再び環境分岐を持ち込むことになり、
    本タスクで撤去した「サーバー URL の環境差異」が iframe 埋め込みのためだけに復活する。**非推奨。**
 
-**1. を実施済み。** `Nijo/WebService/SchemaEditor/SchemaEditorEndpoints.cs` がスキーマ編集 API を
+**1. を実施済み。** `Nijo.AppScaffold/WebService/SchemaEditor/SchemaEditorEndpoints.cs` がスキーマ編集 API を
 `/nijo-api/load`, `/nijo-api/save`, `/nijo-api/validate`, `/nijo-api/generate`, `/nijo-api/types`,
 `/nijo-api/schema-rule` として、`PreviewEndpointHandlers` がプレビュープロセス管理 API を
 `/nijo-api/preview/start`, `/nijo-api/preview/stop`, `/nijo-api/preview/state` として提供しており、
 `NijoWebService` は `/api/*` を一切使用していない。ルート直下の `/api/*` は生成アプリ専用として完全に空いている。
-旧 `Nijo/WebService/SchemaEditor`（`/api/load` 等の実装）は削除済み。
+旧 `Nijo.AppScaffold/WebService/SchemaEditor`（`/api/load` 等の実装）は削除済み。
 
 ### 2.3 vite.config.ts 側の追加設定（fly.io 用）
 
@@ -216,7 +216,7 @@ HMR が即時に効くのは **React 層だけ**。スキーマ変更に伴う C
 1. ~~オリジン統一（生成アプリ側）~~ **実施済み** — `callAspNetCoreApiAsync` のルート相対化、
    `vite.config.ts` の `server.proxy`、`Program.cs` の CORS 撤去。テンプレート・全 demo に反映済み。
 2. ~~エディタ側 API の名前空間退避~~ **実施済み**（2.2）— `/nijo-api/*` へ移行し、旧 `/api/load` 等
-   （`Nijo/WebService/SchemaEditor`）は削除済み。
+   （`Nijo.AppScaffold/WebService/SchemaEditor`）は削除済み。
 3. **生成のアトミック化 + 直列化** — 共有環境における品質の土台
 4. iframe + postMessage ブリッジ + `data-nijo-node` 注入（localhost 側の実装）
 5. `NijoWebService` の `/preview/*` `/api/*` 振り分け（2.1）

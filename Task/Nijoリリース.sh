@@ -106,7 +106,7 @@ popd > /dev/null
 # 「Nijo > デモ > スキーマ定義編集」タスクがこの publish フォルダの nijo を実行する。
 if [ "$ARCHIVE_RELEASE_ZIP" == "0" ]; then
   echo "デモ編集用のビルドを開始します。"
-  dotnet publish "$NIJO_ROOT/Nijo/Nijo.csproj" -c Release -o "$NIJO_ROOT/Nijo/bin/Release/net10.0/publish"
+  dotnet publish "$NIJO_ROOT/Nijo.AppScaffold/Nijo.AppScaffold.csproj" -c Release -o "$NIJO_ROOT/Nijo.AppScaffold/bin/Release/net10.0/publish"
   if [ $? -ne 0 ]; then
     echo "ビルドに失敗しました。"
     exit 1
@@ -116,13 +116,13 @@ fi
 
 # GitHub配置用：win/osx をそれぞれRID別に発行する
 echo "ビルドを開始します。"
-dotnet publish "$NIJO_ROOT/Nijo/Nijo.csproj" -p:PublishProfile=FOR_GITHUB_RELEASE_WINDOWS
+dotnet publish "$NIJO_ROOT/Nijo.AppScaffold/Nijo.AppScaffold.csproj" -p:PublishProfile=FOR_GITHUB_RELEASE_WINDOWS
 if [ $? -ne 0 ]; then
   echo "ビルドに失敗しました。"
   exit 1
 fi
 
-dotnet publish "$NIJO_ROOT/Nijo/Nijo.csproj" -p:PublishProfile=FOR_GITHUB_RELEASE_OSX
+dotnet publish "$NIJO_ROOT/Nijo.AppScaffold/Nijo.AppScaffold.csproj" -p:PublishProfile=FOR_GITHUB_RELEASE_OSX
 if [ $? -ne 0 ]; then
   echo "ビルドに失敗しました。"
   exit 1
@@ -130,11 +130,11 @@ fi
 
 # 圧縮
 # zipコマンドを使用
-pushd "$NIJO_ROOT/Nijo/bin/Release/net10.0/publish-win" > /dev/null
+pushd "$NIJO_ROOT/Nijo.AppScaffold/bin/Release/net10.0/publish-win" > /dev/null
 zip -r "$NIJO_ROOT/temp_release/release-$RELEASE_VERSION-win.zip" .
 popd > /dev/null
 
-pushd "$NIJO_ROOT/Nijo/bin/Release/net10.0/publish-osx" > /dev/null
+pushd "$NIJO_ROOT/Nijo.AppScaffold/bin/Release/net10.0/publish-osx" > /dev/null
 zip -r "$NIJO_ROOT/temp_release/release-$RELEASE_VERSION-osx.zip" .
 popd > /dev/null
 

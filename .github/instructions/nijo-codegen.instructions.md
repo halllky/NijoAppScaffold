@@ -1,5 +1,5 @@
 ---
-applyTo: "Nijo/**/*.cs"
+applyTo: "Nijo.AppScaffold/**/*.cs"
 description: "Nijo の全コード生成で raw string, SelectTextTemplate, If, WithIndent を強制する"
 ---
 
@@ -27,7 +27,7 @@ description: "Nijo の全コード生成で raw string, SelectTextTemplate, If, 
 * 同じ集約からレンダリングされるとあるオブジェクトから別のオブジェクトへの変換処理
 * EFCore のエンティティ、検索条件オブジェクト、画面表示用オブジェクトなど生成後のクラス特有の事情
 
-これは基本的に [Instance API](../../Nijo/CodeGenerating/Instance API.cs) を用いて生成物に対応するメタデータ構造を先に作る必要がある。
+これは基本的に [Instance API](../../Nijo.AppScaffold/CodeGenerating/Instance API.cs) を用いて生成物に対応するメタデータ構造を先に作る必要がある。
 
 基本的な考え方は以下。
 
@@ -51,6 +51,6 @@ description: "Nijo の全コード生成で raw string, SelectTextTemplate, If, 
 
 既存実装例は多いが、主に以下を参照。
 
-* [SaveCommand](../../Nijo/DataStructures/IsStored/SaveCommand.cs)
-* [EFCoreEntity](../../Nijo/Parts/CSharp/EFCoreEntity.cs)
-* [SearchCondition](../../Nijo/DataStructures/IsQueryable/SearchCondition.cs)
+* [SaveCommand](../../Nijo.AppScaffold/DataStructures/IsStored/SaveCommand.cs)
+* [EFCoreEntity](../../Nijo.AppScaffold/Parts/CSharp/EFCoreEntity.cs)
+* [SearchCondition](../../Nijo.AppScaffold/DataStructures/IsQueryable/SearchCondition.cs)

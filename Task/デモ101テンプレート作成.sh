@@ -21,7 +21,7 @@ fi
 #   4. 削除後のフォルダをzip化する
 #
 # 出力される demo101-template.zip のリソース名は、
-# Nijo/GeneratedProject.cs の Templates ディクショナリで定義されているものと対応している。
+# Nijo.AppScaffold/GeneratedProject.cs の Templates ディクショナリで定義されているものと対応している。
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 NIJO_ROOT="$SCRIPT_DIR/.."

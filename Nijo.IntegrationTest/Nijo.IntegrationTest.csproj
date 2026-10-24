@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Nijo\Nijo.csproj" />
+    <ProjectReference Include="..\Nijo.AppScaffold\Nijo.AppScaffold.csproj" />
   </ItemGroup>
 
   <ItemGroup>

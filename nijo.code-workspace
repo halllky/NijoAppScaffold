@@ -17,7 +17,7 @@
     },
     {
       "name": "Nijo.AppScaffold",
-      "path": "Nijo"
+      "path": "Nijo.AppScaffold"
     },
     {
       "name": "Nijo_GUI",
@@ -161,7 +161,7 @@
         "options": {
           "cwd": "${workspaceFolder:ワークスペース全体}/demo",
           "env": {
-            "NIJO_CLI_PATH": "${workspaceFolder:ワークスペース全体}/Nijo/bin/Debug/net10.0/nijo"
+            "NIJO_CLI_PATH": "${workspaceFolder:ワークスペース全体}/Nijo.AppScaffold/bin/Debug/net10.0/nijo"
           }
         },
         "problemMatcher": [],
@@ -175,7 +175,7 @@
         "detail": "デモのnijo.xmlを編集する。「Nijo > リリース」で発行したときのものが使われる",
         "type": "shell",
         "options": {
-          "cwd": "${workspaceFolder:ワークスペース全体}/Nijo/bin/Release/net10.0/publish"
+          "cwd": "${workspaceFolder:ワークスペース全体}/Nijo.AppScaffold/bin/Release/net10.0/publish"
         },
         "args": [
           "serve",
@@ -191,7 +191,7 @@
         "options": {
           "cwd": "${workspaceFolder:ワークスペース全体}/demo",
           "env": {
-            "NIJO_CLI_PATH": "${workspaceFolder:ワークスペース全体}/Nijo/bin/Debug/net10.0/nijo"
+            "NIJO_CLI_PATH": "${workspaceFolder:ワークスペース全体}/Nijo.AppScaffold/bin/Debug/net10.0/nijo"
           }
         },
         "problemMatcher": [],
@@ -213,7 +213,7 @@
       {
         "label": "dotnet build Nijo",
         "type": "shell",
-        "command": "dotnet build ${workspaceFolder:ワークスペース全体}/Nijo/Nijo.csproj",
+        "command": "dotnet build ${workspaceFolder:ワークスペース全体}/Nijo.AppScaffold/Nijo.AppScaffold.csproj",
         "problemMatcher": []
       },
       {
@@ -277,7 +277,7 @@
         "name": "000 基本的なDataModelの例 - コード生成",
         "type": "coreclr",
         "request": "launch",
-        "program": "${workspaceFolder:NijoAppScaffold}/Nijo/bin/Debug/net10.0/nijo",
+        "program": "${workspaceFolder:NijoAppScaffold}/Nijo.AppScaffold/bin/Debug/net10.0/nijo",
         "args": [
           "generate"
         ],

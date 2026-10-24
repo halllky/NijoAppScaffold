@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-NIJO_DIR="$SCRIPT_DIR/../../Nijo"
+NIJO_DIR="$SCRIPT_DIR/../../Nijo.AppScaffold"
 DOC_DIR="$SCRIPT_DIR/.."
 
 # Nijo最新化

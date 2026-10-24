@@ -3,7 +3,7 @@
 # XMLスキーマ定義編集UIのデバッグ開始コマンド
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-BACKEND_PROJECT="$SCRIPT_DIR/../Nijo"
+BACKEND_PROJECT="$SCRIPT_DIR/../Nijo.AppScaffold"
 FRONTEND_ROOT="$SCRIPT_DIR/../Nijo.GuiClient/package_schema-editor-v1"
 
 # dotnet watch と npm run dev を並行実行

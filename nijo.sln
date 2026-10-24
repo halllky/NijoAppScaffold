@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nijo", "Nijo\Nijo.csproj", "{11C9DBC1-98DE-41E0-86EC-BB773FADAB71}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nijo.AppScaffold", "Nijo.AppScaffold\Nijo.AppScaffold.csproj", "{11C9DBC1-98DE-41E0-86EC-BB773FADAB71}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nijo.IntegrationTest", "Nijo.IntegrationTest\Nijo.IntegrationTest.csproj", "{B5566556-5C4C-4891-B3F9-69AB0D1F3F53}"
 EndProject
