@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using System.Xml;
 using System.Xml.Linq;
 using Nijo.SchemaParsing;
+using Nijo.DataStructures.IsStored;
 
 namespace Nijo.WebService.SchemaEditor;
 
@@ -54,7 +55,7 @@ public class EditingRootAggregate {
         foreach (var attr in rootElement.Attributes()) {
             var name = attr.Name.LocalName;
             if (name == SchemaParseContext.ATTR_NODE_TYPE || name == SchemaParseContext.ATTR_UNIQUE_ID) continue;
-            if (name == BasicNodeOptions.UniqueConstraints.AttributeName) {
+            if (name == UniqueConstraintsOption.ATTRIBUTE_NAME) {
                 uniqueConstraints = EditingUniqueConstraint.FromAttributeValue(attr.Value);
                 continue;
             }
@@ -120,7 +121,7 @@ public class EditingRootAggregate {
             if (xmlValue != null) rootAttributePairs.Add(new(name, xmlValue));
         }
         var uniqueConstraintsValue = EditingUniqueConstraint.ToAttributeValue(UniqueConstraints);
-        if (uniqueConstraintsValue != null) rootAttributePairs.Add(new(BasicNodeOptions.UniqueConstraints.AttributeName, uniqueConstraintsValue));
+        if (uniqueConstraintsValue != null) rootAttributePairs.Add(new(UniqueConstraintsOption.ATTRIBUTE_NAME, uniqueConstraintsValue));
         rootAttributePairs.Add(new(SchemaParseContext.ATTR_UNIQUE_ID, UniqueId));
         EditingAttributeTypes.ApplyAttributesInOrder(xRoot, rootAttributePairs);
 

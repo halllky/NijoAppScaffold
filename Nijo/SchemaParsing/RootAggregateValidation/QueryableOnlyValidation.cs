@@ -2,16 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
+using Nijo.DataStructures.IsQueryable;
+using Nijo.DataStructures.Members;
 
 namespace Nijo.SchemaParsing.RootAggregateValidation;
 
 /// <summary>
-/// <see cref="E_RootAggregateKind.QueryableOnly"/> のルート集約の検証
+/// IsQueryable 属性のみが指定されたデータ構造のルート集約の検証
 /// </summary>
 internal static class QueryableOnlyValidation {
     internal static void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
         // キーと ref-to のチェック
-        var isView = rootAggregateElement.Attribute(BasicNodeOptions.MapToView.AttributeName) != null;
+        var isView = rootAggregateElement.Attribute(MapToViewOption.ATTRIBUTE_NAME) != null;
 
         if (isView) {
             // ビューの場合でもChildrenがある場合はキーが必要
@@ -27,7 +29,7 @@ internal static class QueryableOnlyValidation {
                     .Where(el => el.Parent?.Parent == el.Document?.Root
                               || el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILDREN);
                 foreach (var el in rootAndChildren) {
-                    var hasKey = el.Elements().Any(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null);
+                    var hasKey = el.Elements().Any(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null);
 
                     if (!hasKey) {
                         addError(el, "Child/Childrenがあるビューにマッピングされるクエリモデルにはキーが必要です。");
@@ -38,7 +40,7 @@ internal static class QueryableOnlyValidation {
             // キーなしのビューからのref-toを禁止
             var hasAnyKey = rootAggregateElement
                 .DescendantsAndSelf()
-                .Any(el => el.Elements().Any(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null));
+                .Any(el => el.Elements().Any(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null));
 
             if (!hasAnyKey) {
                 // 自身と子孫のすべてにキーがない場合、ref-toをチェック
@@ -58,7 +60,7 @@ internal static class QueryableOnlyValidation {
                 .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILD);
             foreach (var childAggregate in childAggregates) {
                 var membersWithKey = childAggregate.Elements()
-                    .Where(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null).ToList();
+                    .Where(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null).ToList();
                 if (membersWithKey.Any()) {
                     addError(childAggregate, "クエリモデルの子集約には主キー属性を付与することができません。");
                     foreach (var member in membersWithKey) {
@@ -72,7 +74,7 @@ internal static class QueryableOnlyValidation {
                 .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILDREN);
             foreach (var childrenAggregate in childrenAggregates) {
                 var membersWithKey = childrenAggregate.Elements()
-                    .Where(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null).ToList();
+                    .Where(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null).ToList();
                 if (membersWithKey.Any()) {
                     addError(childrenAggregate, "クエリモデルの子配列には主キー属性を付与することができません。");
                     foreach (var member in membersWithKey) {
@@ -116,7 +118,7 @@ internal static class QueryableOnlyValidation {
 
             // 参照先が検索可能なデータ構造か確認
             if (!refToRoot.IsQueryable()) {
-                addError(refElement, $"{BasicNodeOptions.IsQueryable.AttributeName}属性が指定されたデータ構造からは、同じく{BasicNodeOptions.IsQueryable.AttributeName}属性が指定されたデータ構造しか参照できません。");
+                addError(refElement, $"{IsQueryableOption.ATTRIBUTE_NAME}属性が指定されたデータ構造からは、同じく{IsQueryableOption.ATTRIBUTE_NAME}属性が指定されたデータ構造しか参照できません。");
             }
         }
 

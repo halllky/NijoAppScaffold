@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Nijo.DataStructures.IsQueryable;
 
 namespace Nijo.ValueMemberTypes;
 
@@ -54,15 +55,15 @@ internal class Word : IValueMemberType {
             var queryOwnerFullPath = queryFullPath.SkipLast(1);
 
             var searchBehavior = ctx.Query.Metadata is IInstanceValuePropertyMetadata vm
-                && vm.SchemaPathNode.XElement.Attribute(BasicNodeOptions.StringSearchBehavior.AttributeName)?.Value is string s
+                && vm.SchemaPathNode.XElement.Attribute(StringSearchBehaviorOption.ATTRIBUTE_NAME)?.Value is string s
                 ? s
-                : BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL;
+                : StringSearchBehaviorOption.PARTIAL;
 
             string GetComparison(string target) {
                 return searchBehavior switch {
-                    BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT => $"{target} == trimmed",
-                    BasicNodeOptions.STRING_SEARCH_BEHAVIOR_FORWARD => $"Microsoft.EntityFrameworkCore.EF.Functions.Like({target}, $\"{{escaped}}%\", \"\\\\\")",
-                    BasicNodeOptions.STRING_SEARCH_BEHAVIOR_BACKWARD => $"Microsoft.EntityFrameworkCore.EF.Functions.Like({target}, $\"%{{escaped}}\", \"\\\\\")",
+                    StringSearchBehaviorOption.EXACT => $"{target} == trimmed",
+                    StringSearchBehaviorOption.FORWARD => $"Microsoft.EntityFrameworkCore.EF.Functions.Like({target}, $\"{{escaped}}%\", \"\\\\\")",
+                    StringSearchBehaviorOption.BACKWARD => $"Microsoft.EntityFrameworkCore.EF.Functions.Like({target}, $\"%{{escaped}}\", \"\\\\\")",
                     _ => $"Microsoft.EntityFrameworkCore.EF.Functions.Like({target}, $\"%{{escaped}}%\", \"\\\\\")",
                 };
             }
@@ -70,7 +71,7 @@ internal class Word : IValueMemberType {
             return $$"""
                 if (!string.IsNullOrWhiteSpace({{fullpathNullable}})) {
                     var trimmed = {{fullpathNotNull}}!.Trim();
-                {{If(searchBehavior != BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT, () => $$"""
+                {{If(searchBehavior != StringSearchBehaviorOption.EXACT, () => $$"""
                     var escaped = trimmed.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
                 """)}}
                 {{If(isMany, () => $$"""
@@ -85,7 +86,7 @@ internal class Word : IValueMemberType {
 
     private static bool IsRangeSearch(FilterStatementRenderingContext ctx) {
         return ctx.Query.Metadata is IInstanceValuePropertyMetadata vm
-            && vm.SchemaPathNode.XElement.Attribute(BasicNodeOptions.StringSearchBehavior.AttributeName)?.Value == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_RANGE;
+            && vm.SchemaPathNode.XElement.Attribute(StringSearchBehaviorOption.ATTRIBUTE_NAME)?.Value == StringSearchBehaviorOption.RANGE;
     }
 
     void IValueMemberType.RegisterDependencies(CodeRenderingContext ctx) {

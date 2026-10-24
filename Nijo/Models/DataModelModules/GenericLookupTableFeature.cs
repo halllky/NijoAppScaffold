@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Nijo.DataStructures.IsGenericLookupTable;
 
 namespace Nijo.Models.DataModelModules;
 
@@ -30,7 +31,7 @@ internal static class GenericLookupTableFeature {
         SourceFileByAggregate aggregateFile) {
 
         // 汎用参照テーブルでなければスキップ
-        if (rootAggregate.XElement.Attribute(BasicNodeOptions.IsGenericLookupTable.AttributeName) == null) return;
+        if (rootAggregate.XElement.Attribute(IsGenericLookupTableOption.ATTRIBUTE_NAME) == null) return;
 
         var parser = new GenericLookupTableParser(ctx.SchemaParser);
         var categories = parser.GetCategoriesOf(rootAggregate).ToArray();

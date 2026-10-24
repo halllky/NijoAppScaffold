@@ -11,6 +11,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Nijo.Parts.Common;
+using Nijo.DataStructures.IsQueryable;
+using Nijo.DataStructures.IsStored;
+using Nijo.SchemaParsing.CommonOptions;
 
 namespace Nijo.Parts.JavaScript;
 
@@ -83,9 +86,9 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
                   export type {{TYPE_ROOT}} = {{TYPE_NODE_OPTIONS}} & {
                     kind: '{{KIND_ROOT}}'
                     /** 永続化されるデータ構造かどうか */
-                    {{BasicNodeOptions.IsStored.AttributeName.ToCamelCase()}}: boolean
+                    {{IsStoredOption.ATTRIBUTE_NAME.ToCamelCase()}}: boolean
                     /** 検索可能なデータ構造かどうか */
-                    {{BasicNodeOptions.IsQueryable.AttributeName.ToCamelCase()}}: boolean
+                    {{IsQueryableOption.ATTRIBUTE_NAME.ToCamelCase()}}: boolean
                     /** XMLスキーマ上でこの要素を示す一意なID */
                     uniqueId: string
                     /** ルート集約直下のメンバーの物理名 */
@@ -185,8 +188,8 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
             export const {{CONST_NAME}} = {
               root: {
                 kind: '{{KIND_ROOT}}',
-                {{BasicNodeOptions.IsStored.AttributeName.ToCamelCase()}}: {{(root.IsStored ? "true" : "false")}},
-                {{BasicNodeOptions.IsQueryable.AttributeName.ToCamelCase()}}: {{(root.IsQueryable ? "true" : "false")}},
+                {{IsStoredOption.ATTRIBUTE_NAME.ToCamelCase()}}: {{(root.IsStored ? "true" : "false")}},
+                {{IsQueryableOption.ATTRIBUTE_NAME.ToCamelCase()}}: {{(root.IsQueryable ? "true" : "false")}},
                 uniqueId: {{ToTsString(root.XElement.Attribute(SchemaParseContext.ATTR_UNIQUE_ID)?.Value ?? string.Empty)}},
             {{RenderNodeOptions(root.XElement, ctx).SelectTextTemplate(source => $$"""
                 {{WithIndent(source)}}
@@ -353,13 +356,13 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
 
         // DisplayName だけは未定義の場合は物理名を採用する。
         // メタデータを用いたカスタマイズ処理でDisplayNameの使用頻度が高いため。
-        if (options.Any(o => o.AttributeName == BasicNodeOptions.DisplayNameIsEmpty.AttributeName)) {
+        if (options.Any(o => o.AttributeName == DisplayNameIsEmptyOption.ATTRIBUTE_NAME)) {
             yield return $$"""
-                {{BasicNodeOptions.DisplayName.AttributeName.ToCamelCase()}}: '',
+                {{DisplayNameOption.ATTRIBUTE_NAME.ToCamelCase()}}: '',
                 """;
-        } else if (!options.Any(o => o.AttributeName == BasicNodeOptions.DisplayName.AttributeName)) {
+        } else if (!options.Any(o => o.AttributeName == DisplayNameOption.ATTRIBUTE_NAME)) {
             yield return $$"""
-                {{BasicNodeOptions.DisplayName.AttributeName.ToCamelCase()}}: '{{ctx.SchemaParser.GetPhysicalName(xElement)}}',
+                {{DisplayNameOption.ATTRIBUTE_NAME.ToCamelCase()}}: '{{ctx.SchemaParser.GetPhysicalName(xElement)}}',
                 """;
         }
 
@@ -437,7 +440,7 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
             };
 
             // DisplayName だけは必ずレンダリングされる
-            var isOptional = option.AttributeName != BasicNodeOptions.DisplayName.AttributeName;
+            var isOptional = option.AttributeName != DisplayNameOption.ATTRIBUTE_NAME;
 
             yield return $$"""
                 /** {{option.DisplayName}} */
@@ -470,8 +473,8 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
     /// IsStored, IsQueryable はルート集約のメタデータの必須プロパティとして別途レンダリングするので除外する。
     /// </summary>
     private static bool IsRenderedAsNodeOption(NodeOption option) {
-        return option != BasicNodeOptions.IsStored
-            && option != BasicNodeOptions.IsQueryable;
+        return option is not IsStoredOption
+            && option is not IsQueryableOption;
     }
     #endregion オプション項目の動的レンダリング
 }

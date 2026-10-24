@@ -9,6 +9,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using System.Xml.XPath;
+using Nijo.Commands;
+using Nijo.DataStructures.IsQueryable;
+using Nijo.DataStructures.IsStored;
+using Nijo.DataStructures.UseSoftDelete;
 
 namespace Nijo.ImmutableSchema {
     /// <summary>
@@ -128,7 +132,7 @@ namespace Nijo.ImmutableSchema {
         /// この集約に定義されているユニーク制約を列挙します。
         /// </summary>
         public IEnumerable<UniqueConstraint> GetUniqueConstraints() {
-            var attr = XElement.Attribute(BasicNodeOptions.UniqueConstraints.AttributeName)?.Value;
+            var attr = XElement.Attribute(UniqueConstraintsOption.ATTRIBUTE_NAME)?.Value;
             if (string.IsNullOrWhiteSpace(attr)) yield break;
 
             var membersByUniqueId = GetMembers()
@@ -379,12 +383,12 @@ namespace Nijo.ImmutableSchema {
         internal RootAggregate(XElement xElement, SchemaParseContext ctx, ISchemaPathNode? previous)
             : base(xElement, ctx, previous) { }
 
-        public bool IsView => XElement.Attribute(BasicNodeOptions.MapToView.AttributeName) != null;
+        public bool IsView => XElement.Attribute(MapToViewOption.ATTRIBUTE_NAME) != null;
         /// <summary>永続化されるデータ構造かどうか（IsStored 属性）</summary>
         public bool IsStored => XElement.IsStored();
         /// <summary>検索可能なデータ構造かどうか（IsQueryable 属性）</summary>
         public bool IsQueryable => XElement.IsQueryable();
-        public bool UseSoftDelete => XElement.Attribute(BasicNodeOptions.UseSoftDelete.AttributeName) != null;
+        public bool UseSoftDelete => XElement.Attribute(UseSoftDeleteOption.ATTRIBUTE_NAME) != null;
 
         public override AggregateBase AsEntry() {
             return new RootAggregate(XElement, _ctx, null);
@@ -396,8 +400,8 @@ namespace Nijo.ImmutableSchema {
         /// このルート集約がCommandModelでない場合は例外。
         /// </summary>
         public ICreatablePresentationLayerStructure? GetParameterStructure() {
-            if (!XElement.TryGetRootAggregateKind(out var kind) || kind != E_RootAggregateKind.Command) throw new InvalidOperationException($"{PhysicalName}はCommandModelでない");
-            var parameter = XElement.Attribute(BasicNodeOptions.Parameter.AttributeName);
+            if (!XElement.TryGetSection(out var section) || section != E_Section.Commands) throw new InvalidOperationException($"{PhysicalName}はCommandModelでない");
+            var parameter = XElement.Attribute(ParameterOption.ATTRIBUTE_NAME);
             return parameter == null ? null : GetTargetStructure(parameter, true);
         }
         /// <summary>
@@ -405,13 +409,13 @@ namespace Nijo.ImmutableSchema {
         /// このルート集約がCommandModelでない場合は例外。
         /// </summary>
         public ICreatablePresentationLayerStructure? GetReturnValueStructure() {
-            if (!XElement.TryGetRootAggregateKind(out var kind) || kind != E_RootAggregateKind.Command) throw new InvalidOperationException($"{PhysicalName}はCommandModelでない");
-            var returnValue = XElement.Attribute(BasicNodeOptions.ReturnValue.AttributeName);
+            if (!XElement.TryGetSection(out var section) || section != E_Section.Commands) throw new InvalidOperationException($"{PhysicalName}はCommandModelでない");
+            var returnValue = XElement.Attribute(ReturnValueOption.ATTRIBUTE_NAME);
             return returnValue == null ? null : GetTargetStructure(returnValue, false);
         }
 
         /// <summary>
-        /// このルート集約をBasicNodeOptions.Parameterに指定しているコマンドモデルを列挙します。
+        /// このルート集約を <see cref="ParameterOption"/> に指定しているコマンドを列挙します。
         /// </summary>
         public IEnumerable<RootAggregate> EnumerateCommandModelsRefferingAsParameter() {
             var commandModelElements = _ctx.Document.Root
@@ -420,7 +424,7 @@ namespace Nijo.ImmutableSchema {
                 ?? [];
 
             foreach (var rootElement in commandModelElements) {
-                var parameterAttr = rootElement.Attribute(BasicNodeOptions.Parameter.AttributeName);
+                var parameterAttr = rootElement.Attribute(ParameterOption.ATTRIBUTE_NAME);
                 if (parameterAttr == null) {
                     continue;
                 }
@@ -437,7 +441,7 @@ namespace Nijo.ImmutableSchema {
         }
 
         /// <summary>
-        /// このルート集約を <see cref="BasicNodeOptions.ReturnValue"/> に指定しているコマンドモデルを列挙します。
+        /// このルート集約を <see cref="ReturnValueOption"/> に指定しているコマンドモデルを列挙します。
         /// </summary>
         public IEnumerable<RootAggregate> EnumerateCommandModelsRefferingAsReturnValue() {
             var commandModelElements = _ctx.Document.Root
@@ -446,7 +450,7 @@ namespace Nijo.ImmutableSchema {
                 ?? [];
 
             foreach (var rootElement in commandModelElements) {
-                var returnValueAttr = rootElement.Attribute(BasicNodeOptions.ReturnValue.AttributeName);
+                var returnValueAttr = rootElement.Attribute(ReturnValueOption.ATTRIBUTE_NAME);
                 if (returnValueAttr == null) {
                     continue;
                 }
@@ -480,7 +484,7 @@ namespace Nijo.ImmutableSchema {
 
                 return new Models.StructureModelModules.StructureDisplayData(targetRootAggregate);
 
-            } else if (BasicNodeOptions.AvailableFromCommandToQuery.TryGetValue(splitted[1], out var factory)) {
+            } else if (CommandTypeSpecificationOption.AvailableFromCommandToQuery.TryGetValue(splitted[1], out var factory)) {
                 return factory(targetRootAggregate);
 
             } else {

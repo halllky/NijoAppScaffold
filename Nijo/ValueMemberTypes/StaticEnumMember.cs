@@ -43,7 +43,7 @@ namespace Nijo.ValueMemberTypes {
                 ステータス、カテゴリ、区分などの固定選択肢データに適しています。
                 検索時は複数の選択肢を同時に指定できます。
 
-                予め nijo.xml で区分の種類を `{{E_RootAggregateKind.StaticEnum.ToSchemaName()}}` モデルとして定義しておく必要があります。
+                予め nijo.xml で区分の種類を `{{E_Section.StaticEnums.GetRootTypeAttributeValue()}}` モデルとして定義しておく必要があります。
                 """;
         }
 

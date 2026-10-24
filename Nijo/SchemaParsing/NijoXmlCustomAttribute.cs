@@ -108,7 +108,7 @@ public class NijoXmlCustomAttribute {
     /// <summary>
     /// このカスタム属性が使用可能なモデルの一覧。
     /// DataStructures セクションのルート集約は <see cref="AVAILABLE_FOR_STORED"/> などの条件で、
-    /// それ以外のセクションのルート集約はその種類のスキーマ定義上での名前（<see cref="RootAggregateKindExtensions.ToSchemaName"/>）で指定する。
+    /// それ以外のセクションのルート集約はその種類のスキーマ定義上での名前（<see cref="SectionExtensions.GetRootTypeAttributeValue"/>）で指定する。
     /// nijo.xml 上ではXML要素の属性としてカンマ区切りで記載される。
     /// </summary>
     public string[] AvailableModels { get; set; } = [];
@@ -126,8 +126,9 @@ public class NijoXmlCustomAttribute {
         yield return AVAILABLE_FOR_STORED;
         yield return AVAILABLE_FOR_QUERYABLE;
         yield return AVAILABLE_FOR_STRUCTURE;
-        foreach (var kind in RootAggregateKindExtensions.TYPE_ATTRIBUTE_KINDS) {
-            yield return kind.ToSchemaName();
+        foreach (var section in Enum.GetValues<E_Section>()) {
+            var typeName = section.GetRootTypeAttributeValue();
+            if (typeName != null) yield return typeName;
         }
     }
 
@@ -136,20 +137,19 @@ public class NijoXmlCustomAttribute {
     /// IsStored, IsQueryable 属性が両方指定されたデータ構造の場合、
     /// <see cref="AVAILABLE_FOR_STORED"/>, <see cref="AVAILABLE_FOR_QUERYABLE"/> のいずれかが指定されていれば使用可能。
     /// </summary>
-    internal bool IsAvailableFor(XElement xElement, E_RootAggregateKind kind) {
-        return EnumerateAvailableModelKeys(xElement, kind).Any(AvailableModels.Contains);
+    internal bool IsAvailableFor(NodeOptionTarget target) {
+        return EnumerateAvailableModelKeys(target).Any(AvailableModels.Contains);
 
-        static IEnumerable<string> EnumerateAvailableModelKeys(XElement xElement, E_RootAggregateKind kind) {
-            if (!xElement.IsInDataStructuresSection()) {
-                yield return kind.ToSchemaName();
+        static IEnumerable<string> EnumerateAvailableModelKeys(NodeOptionTarget target) {
+            if (target.Section != E_Section.DataStructures) {
+                var typeName = target.Section.GetRootTypeAttributeValue();
+                if (typeName != null) yield return typeName;
                 yield break;
             }
 
-            var isStored = xElement.IsStored();
-            var isQueryable = xElement.IsQueryable();
-            if (isStored) yield return AVAILABLE_FOR_STORED;
-            if (isQueryable) yield return AVAILABLE_FOR_QUERYABLE;
-            if (!isStored && !isQueryable) yield return AVAILABLE_FOR_STRUCTURE;
+            if (target.IsStored) yield return AVAILABLE_FOR_STORED;
+            if (target.IsQueryable) yield return AVAILABLE_FOR_QUERYABLE;
+            if (target.IsStructure) yield return AVAILABLE_FOR_STRUCTURE;
         }
     }
 

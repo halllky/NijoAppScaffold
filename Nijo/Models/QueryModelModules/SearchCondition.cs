@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Nijo.DataStructures.IsQueryable;
 
 namespace Nijo.Models.QueryModelModules {
 
@@ -24,7 +25,7 @@ namespace Nijo.Models.QueryModelModules {
 
         private static bool IsStringRangeSearch(ValueMember member) {
             return member.Type is ValueMemberTypes.Word or ValueMemberTypes.Description or ValueMemberTypes.ValueObjectMember
-                && member.XElement.Attribute(BasicNodeOptions.StringSearchBehavior.AttributeName)?.Value == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_RANGE;
+                && member.XElement.Attribute(StringSearchBehaviorOption.ATTRIBUTE_NAME)?.Value == StringSearchBehaviorOption.RANGE;
         }
 
         /// <summary>

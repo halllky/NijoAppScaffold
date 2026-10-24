@@ -16,7 +16,7 @@ nijo.xmlのルート要素直下のXML要素は、その種類によりどうい
 ### モデルタイプ
 詳細は各ファイルを参照してください。
 
-DataModel, QueryModel, StructureModel は `DataStructures` セクションに定義され、ルート集約の `IsStored`, `IsQueryable` 属性の組み合わせで決まります（[E_RootAggregateKind](../SchemaParsing/E_RootAggregateKind.cs)）。
+DataModel, QueryModel, StructureModel は `DataStructures` セクションに定義され、ルート集約の `IsStored`, `IsQueryable` 属性の組み合わせで決まります。
 `IsStored` が指定されていれば DataModel（`IsQueryable` も指定されていれば QueryModel と全く同じ型のモジュールも生成される）、`IsQueryable` のみなら QueryModel、どちらも無ければ StructureModel です。
 それ以外のモデルは各セクションのルート集約の Type 属性で指定します。
 

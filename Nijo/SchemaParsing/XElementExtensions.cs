@@ -6,6 +6,10 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Xml.Linq;
 using System.Xml.XPath;
+using Nijo.DataStructures.IsQueryable;
+using Nijo.DataStructures.IsStored;
+using Nijo.DataStructures.Members;
+using Nijo.SchemaParsing.CommonOptions;
 
 namespace Nijo.SchemaParsing;
 
@@ -22,22 +26,22 @@ internal static class SchemaParseContextExtensions {
             return parseContext.GetDisplayName(xElement);
         }
 
-        if (xElement.Attribute(BasicNodeOptions.DisplayNameIsEmpty.AttributeName) != null) {
+        if (xElement.Attribute(DisplayNameIsEmptyOption.ATTRIBUTE_NAME) != null) {
             return string.Empty;
         }
-        return xElement.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? xElement.Name.LocalName;
+        return xElement.Attribute(DisplayNameOption.ATTRIBUTE_NAME)?.Value ?? xElement.Name.LocalName;
     }
     /// <summary>
     /// DB名
     /// </summary>
     internal static string GetDbName(this XElement xElement) {
-        return xElement.Attribute(BasicNodeOptions.DbName.AttributeName)?.Value ?? xElement.Name.LocalName;
+        return xElement.Attribute(DbNameOption.ATTRIBUTE_NAME)?.Value ?? xElement.Name.LocalName;
     }
     /// <summary>
     /// ラテン名
     /// </summary>
     internal static string GetLatinName(this XElement xElement) {
-        return xElement.Attribute(BasicNodeOptions.LatinName.AttributeName)?.Value ?? xElement.Name.LocalName.ToHashedString();
+        return xElement.Attribute(LatinNameOption.ATTRIBUTE_NAME)?.Value ?? xElement.Name.LocalName.ToHashedString();
     }
     /// <summary>
     /// このXElementの直前にXCommentがあればそのテキストを返し、なければ空文字列を返します。
@@ -160,7 +164,7 @@ internal static class SchemaParseContextExtensions {
     /// </summary>
     internal static bool IsStored(this XElement element) {
         return element.IsInDataStructuresSection()
-            && element.GetRootAggregateElement().Attribute(BasicNodeOptions.IsStored.AttributeName) != null;
+            && element.GetRootAggregateElement().Attribute(IsStoredOption.ATTRIBUTE_NAME) != null;
     }
 
     /// <summary>
@@ -168,6 +172,6 @@ internal static class SchemaParseContextExtensions {
     /// </summary>
     internal static bool IsQueryable(this XElement element) {
         return element.IsInDataStructuresSection()
-            && element.GetRootAggregateElement().Attribute(BasicNodeOptions.IsQueryable.AttributeName) != null;
+            && element.GetRootAggregateElement().Attribute(IsQueryableOption.ATTRIBUTE_NAME) != null;
     }
 }

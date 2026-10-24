@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using System.Xml.Linq;
 using Nijo.SchemaParsing;
+using Nijo.SchemaParsing.CommonOptions;
 
 namespace Nijo.WebService.SchemaEditor;
 
@@ -30,7 +31,7 @@ public class EditingGenericLookupTable {
             foreach (var categoryElement in categoriesElement.Elements()) {
                 var category = new EditingGenericLookupTableCategory {
                     Name = categoryElement.Name.LocalName,
-                    DisplayName = categoryElement.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value
+                    DisplayName = categoryElement.Attribute(DisplayNameOption.ATTRIBUTE_NAME)?.Value
                         ?? categoryElement.Name.LocalName,
                 };
                 foreach (var keyElement in categoryElement.Elements(GenericLookupTableParser.KEY)) {
@@ -59,7 +60,7 @@ public class EditingGenericLookupTable {
                 if (string.IsNullOrEmpty(category.Name)) continue;
                 var categoryElement = new XElement(category.Name);
                 if (!string.IsNullOrEmpty(category.DisplayName)) {
-                    categoryElement.SetAttributeValue(BasicNodeOptions.DisplayName.AttributeName, category.DisplayName);
+                    categoryElement.SetAttributeValue(DisplayNameOption.ATTRIBUTE_NAME, category.DisplayName);
                 }
                 foreach (var (uniqueId, value) in category.HardCodedKeyValues) {
                     var keyElement = new XElement(GenericLookupTableParser.KEY);

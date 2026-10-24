@@ -22,41 +22,38 @@ public class ApplicationSchema {
     /// データ構造（IsStored, IsQueryable 属性の有無を問わない）のルート集約を、スキーマ定義上の登場順に返します。
     /// </summary>
     public IEnumerable<RootAggregate> GetDataStructures() {
-        return GetRootAggregates(E_RootAggregateKind.Stored, E_RootAggregateKind.QueryableOnly, E_RootAggregateKind.Structure);
+        return GetRootAggregates(E_Section.DataStructures);
     }
     /// <summary>
     /// コマンドのルート集約を、スキーマ定義上の登場順に返します。
     /// </summary>
     public IEnumerable<RootAggregate> GetCommands() {
-        return GetRootAggregates(E_RootAggregateKind.Command);
+        return GetRootAggregates(E_Section.Commands);
     }
     /// <summary>
     /// 静的区分のルート集約を、スキーマ定義上の登場順に返します。
     /// </summary>
     public IEnumerable<RootAggregate> GetStaticEnums() {
-        return GetRootAggregates(E_RootAggregateKind.StaticEnum);
+        return GetRootAggregates(E_Section.StaticEnums);
     }
     /// <summary>
     /// 値オブジェクトのルート集約を、スキーマ定義上の登場順に返します。
     /// </summary>
     public IEnumerable<RootAggregate> GetValueObjects() {
-        return GetRootAggregates(E_RootAggregateKind.ValueObject);
+        return GetRootAggregates(E_Section.ValueObjects);
     }
     /// <summary>
     /// 定数のルート集約を、スキーマ定義上の登場順に返します。
     /// </summary>
     public IEnumerable<RootAggregate> GetConstants() {
-        return GetRootAggregates(E_RootAggregateKind.Constant);
+        return GetRootAggregates(E_Section.Constants);
     }
 
-    private IEnumerable<RootAggregate> GetRootAggregates(params E_RootAggregateKind[] kinds) {
+    private IEnumerable<RootAggregate> GetRootAggregates(E_Section section) {
         var rootAggregateElements = _xDocument
             .Root
+            ?.Element(section.ToXmlElementName())
             ?.Elements()
-            .Where(el => el.Name.LocalName != SchemaParseContext.SECTION_CUSTOM_ATTRIBUTES
-                      && el.Name.LocalName != SchemaParseContext.SECTION_GENERIC_LOOKUP_TABLES)
-            .SelectMany(el => el.Elements())
-            .Where(el => el.TryGetRootAggregateKind(out var kind) && kinds.Contains(kind))
             ?? [];
 
         foreach (var xElement in rootAggregateElements) {

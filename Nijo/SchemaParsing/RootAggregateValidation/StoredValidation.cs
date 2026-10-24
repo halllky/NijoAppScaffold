@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
+using Nijo.DataStructures.IsGenericLookupTable;
+using Nijo.DataStructures.IsStored;
+using Nijo.DataStructures.Members;
 
 namespace Nijo.SchemaParsing.RootAggregateValidation;
 
 /// <summary>
-/// <see cref="E_RootAggregateKind.Stored"/> のルート集約の検証
+/// IsStored 属性が指定されたデータ構造のルート集約の検証
 /// </summary>
 internal static class StoredValidation {
     internal static void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
@@ -16,7 +19,7 @@ internal static class StoredValidation {
             .Where(el => el.Parent?.Parent == el.Document?.Root
                       || el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILDREN);
         foreach (var el in rootAndChildren) {
-            var hasKey = el.Elements().Any(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null);
+            var hasKey = el.Elements().Any(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null);
 
             if (!hasKey) {
                 addError(el, "キーが指定されていません。");
@@ -28,7 +31,7 @@ internal static class StoredValidation {
             .Descendants()
             .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILD);
         foreach (var child in childAggregates) {
-            var membersWithKey = child.Elements().Where(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null).ToList();
+            var membersWithKey = child.Elements().Where(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null).ToList();
             if (membersWithKey.Count != 0) {
                 addError(child, "データモデルの子集約には主キー属性を付与することができません。");
                 foreach (var member in membersWithKey) {
@@ -43,12 +46,12 @@ internal static class StoredValidation {
         // 汎用参照テーブルのチェック。
         // * 主キーのうち1個以上はハードコードされる主キーでなければならない
         // * 主キーのうち1個以上はハードコードされない主キーでなければならない
-        if (rootAggregateElement.Attribute(BasicNodeOptions.IsGenericLookupTable.AttributeName) != null) {
+        if (rootAggregateElement.Attribute(IsGenericLookupTableOption.ATTRIBUTE_NAME) != null) {
             var keyMembers = rootAggregateElement.Elements()
-                .Where(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null)
+                .Where(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null)
                 .ToList();
-            var hasHardCodedKey = keyMembers.Any(m => m.Attribute(BasicNodeOptions.IsHardCodedPrimaryKey.AttributeName) != null);
-            var hasNonHardCodedKey = keyMembers.Any(m => m.Attribute(BasicNodeOptions.IsHardCodedPrimaryKey.AttributeName) == null);
+            var hasHardCodedKey = keyMembers.Any(m => m.Attribute(IsHardCodedPrimaryKeyOption.ATTRIBUTE_NAME) != null);
+            var hasNonHardCodedKey = keyMembers.Any(m => m.Attribute(IsHardCodedPrimaryKeyOption.ATTRIBUTE_NAME) == null);
 
             if (!hasHardCodedKey) {
                 addError(rootAggregateElement, "汎用参照テーブルの主キーのうち、少なくとも1個はハードコードされる主キーでなければなりません。");
@@ -93,10 +96,10 @@ internal static class StoredValidation {
             if (sourceRoot == targetRoot) continue;
 
             // 必須属性かどうか
-            bool isRequired = refElement.Attribute(BasicNodeOptions.IsNotNull.AttributeName) != null;
+            bool isRequired = refElement.Attribute(IsNotNullOption.ATTRIBUTE_NAME) != null;
 
             // 主キーかどうか
-            bool isKey = refElement.Attribute(BasicNodeOptions.IsKey.AttributeName) != null;
+            bool isKey = refElement.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null;
 
             // キーまたは必須の場合のみグラフに追加
             if (isKey || isRequired) {

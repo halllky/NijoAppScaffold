@@ -7,6 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Nijo.DataStructures.IsGenericLookupTable;
+using Nijo.DataStructures.IsStored;
+using Nijo.DataStructures.Members;
 
 namespace Nijo.ImmutableSchema {
     /// <summary>
@@ -58,21 +61,21 @@ namespace Nijo.ImmutableSchema {
 
         #region モデル毎に定義される属性
         /// <summary>キー属性か否か</summary>
-        public bool IsKey => XElement.Attribute(BasicNodeOptions.IsKey.AttributeName) != null;
+        public bool IsKey => XElement.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null;
         /// <summary>必須か否か</summary>
-        public bool IsNotNull => XElement.Attribute(BasicNodeOptions.IsNotNull.AttributeName) != null;
+        public bool IsNotNull => XElement.Attribute(IsNotNullOption.ATTRIBUTE_NAME) != null;
         /// <summary>
         /// 汎用参照テーブルへの参照において参照するカテゴリ名。
         /// 汎用参照テーブル以外への参照の場合は null。
         /// </summary>
-        public string? Category => XElement.Attribute(BasicNodeOptions.GenericLookupCategory.AttributeName)?.Value;
+        public string? Category => XElement.Attribute(GenericLookupCategoryOption.ATTRIBUTE_NAME)?.Value;
 
         /// <summary>
         /// StructureModelがQueryModelを参照する際の、そのクエリモデルのどのモジュールを参照するかの指定。
         /// </summary>
-        public E_RefToObject? RefToObject => XElement.Attribute(BasicNodeOptions.RefToObject.AttributeName)?.Value switch {
-            BasicNodeOptions.REF_TO_OBJECT_DISPLAY_DATA => E_RefToObject.DisplayData,
-            BasicNodeOptions.REF_TO_OBJECT_REF_TARGET => E_RefToObject.RefTarget,
+        public E_RefToObject? RefToObject => XElement.Attribute(RefToObjectOption.ATTRIBUTE_NAME)?.Value switch {
+            RefToObjectOption.REF_TO_OBJECT_DISPLAY_DATA => E_RefToObject.DisplayData,
+            RefToObjectOption.REF_TO_OBJECT_REF_TARGET => E_RefToObject.RefTarget,
             null => null,
             _ => throw new InvalidOperationException(),
         };

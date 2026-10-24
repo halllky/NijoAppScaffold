@@ -5,7 +5,7 @@ import * as EG2 from "@halllky/editable-grid"
 import { UUID } from "uuidjs"
 import {
   EditingProject, EditingMember, isAttributeAvailable, ATTR_UNIQUE_CONSTRAINTS,
-  ATTR_IS_STORED, ATTR_IS_QUERYABLE, getRootModelType, isCustomAttributeAvailable,
+  ATTR_IS_STORED, ATTR_IS_QUERYABLE, getAttributeTarget, isCustomAttributeAvailable,
   NODE_TYPE_CHILD_AGGREGATE, NODE_TYPE_CHILDREN_AGGREGATE, NODE_TYPE_VALUE_MEMBER, NODE_TYPE_REF,
 } from "../../../backend"
 import * as UI from '../../../UI'
@@ -55,7 +55,7 @@ function DecsendantsGrid(props: {
     model: rootModel,
     attributes: { [ATTR_IS_STORED]: rootIsStored ?? null, [ATTR_IS_QUERYABLE]: rootIsQueryable ?? null },
   }), [rootModel, rootIsStored, rootIsQueryable])
-  const rootModelType = getRootModelType(rootModelSource)
+  const attributeTarget = React.useMemo(() => getAttributeTarget(rootLocation.list, rootModelSource), [rootLocation.list, rootModelSource])
 
   const { uniqueConstraintColumns, contextValue: uniqueConstraintsContextValue } = useUniqueConstraintsColumns(control, getValues, setValue, rootLocation)
 
@@ -98,7 +98,7 @@ function DecsendantsGrid(props: {
 
     // モデルの既定の属性
     for (const attrDef of attributeDefs) {
-      if (!isAttributeAvailable(attrDef, rootModelType, [
+      if (!isAttributeAvailable(attrDef, attributeTarget, [
         NODE_TYPE_CHILD_AGGREGATE,
         NODE_TYPE_CHILDREN_AGGREGATE,
         NODE_TYPE_VALUE_MEMBER,
@@ -154,7 +154,7 @@ function DecsendantsGrid(props: {
     }
 
     return columns
-  }, [attributeDefs, rootModelType, rootModelSource, customAttributes, uniqueConstraintColumns])
+  }, [attributeDefs, attributeTarget, rootModelSource, customAttributes, uniqueConstraintColumns])
 
   // 行の追加・削除・移動は必ずダイアグラムの構成に影響しうるため、変更操作にまとめて通知を紐づける
   // （indent の変更は update() を使うが、複数行への一括適用時に1回だけ通知したいため、呼び出し側で個別に notifyStructureChanged() を呼ぶ）

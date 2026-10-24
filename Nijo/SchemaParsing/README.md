@@ -15,9 +15,11 @@
 3. バリデーションチェック
 4. 内部モデルへの変換
 
-## ルート集約の種類
-ルート集約の種類（[E_RootAggregateKind](./E_RootAggregateKind.cs)）によって、指定できる属性や検証内容が異なります。
-種類ごとの検証は [RootAggregateValidation](./RootAggregateValidation/) フォルダにあります。
+## 属性
+XML要素に指定できる属性は [NodeOption](./NodeOption.cs) の派生クラスとして1属性1クラスで定義されます。
+属性がどこに指定できるかは、ルート集約が属するセクション（[E_Section](./E_Section.cs)）と、そのルート集約の IsStored, IsQueryable 属性の有無の組み合わせで決まります。
+全セクション共通の属性は [CommonOptions](./CommonOptions/) に、それ以外の属性はそれを使うセクションや機能のフォルダにあります。
+セクションごとのルート集約単位の検証は [RootAggregateValidation](./RootAggregateValidation/) フォルダにあります。
 
 ## 関連コンポーネント
 

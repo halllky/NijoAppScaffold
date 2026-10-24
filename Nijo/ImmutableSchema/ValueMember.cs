@@ -7,6 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Nijo.DataStructures.IsGenericLookupTable;
+using Nijo.DataStructures.IsQueryable;
+using Nijo.DataStructures.IsStored;
+using Nijo.DataStructures.Members;
 
 namespace Nijo.ImmutableSchema {
     /// <summary>
@@ -46,21 +50,21 @@ namespace Nijo.ImmutableSchema {
 
         #region メンバー毎に定義される制約
         /// <summary>キー属性か否か</summary>
-        public bool IsKey => XElement.Attribute(BasicNodeOptions.IsKey.AttributeName) != null;
+        public bool IsKey => XElement.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null;
         /// <summary>必須か否か</summary>
-        public bool IsNotNull => XElement.Attribute(BasicNodeOptions.IsNotNull.AttributeName) != null;
+        public bool IsNotNull => XElement.Attribute(IsNotNullOption.ATTRIBUTE_NAME) != null;
         /// <summary>汎用参照テーブルのハードコードされる主キーか否か</summary>
-        public bool IsHardCodedPrimaryKey => XElement.Attribute(BasicNodeOptions.IsHardCodedPrimaryKey.AttributeName) != null;
+        public bool IsHardCodedPrimaryKey => XElement.Attribute(IsHardCodedPrimaryKeyOption.ATTRIBUTE_NAME) != null;
         /// <summary>文字列系属性の最大長</summary>
-        public int? MaxLength => int.TryParse(XElement.Attribute(BasicNodeOptions.MaxLength.AttributeName)?.Value, out var v) ? v : null;
+        public int? MaxLength => int.TryParse(XElement.Attribute(MaxLengthOption.ATTRIBUTE_NAME)?.Value, out var v) ? v : null;
         /// <summary>数値系属性の整数部桁数 + 小数部桁数</summary>
-        public int? TotalDigit => int.TryParse(XElement.Attribute(BasicNodeOptions.TotalDigit.AttributeName)?.Value, out var v) ? v : null;
+        public int? TotalDigit => int.TryParse(XElement.Attribute(TotalDigitOption.ATTRIBUTE_NAME)?.Value, out var v) ? v : null;
         /// <summary>数値系属性の小数部桁数</summary>
-        public int? DecimalPlace => int.TryParse(XElement.Attribute(BasicNodeOptions.DecimalPlace.AttributeName)?.Value, out var v) ? v : null;
+        public int? DecimalPlace => int.TryParse(XElement.Attribute(DecimalPlaceOption.ATTRIBUTE_NAME)?.Value, out var v) ? v : null;
         /// <summary>シーケンス物理名</summary>
-        public string? SequenceName => XElement.Attribute(BasicNodeOptions.SequenceName.AttributeName)?.Value;
+        public string? SequenceName => XElement.Attribute(SequenceNameOption.ATTRIBUTE_NAME)?.Value;
         /// <summary>検索条件にのみレンダリングされるか否か</summary>
-        public bool OnlySearchCondition => XElement.Attribute(BasicNodeOptions.OnlySearchCondition.AttributeName) != null;
+        public bool OnlySearchCondition => XElement.Attribute(OnlySearchConditionOption.ATTRIBUTE_NAME) != null;
         #endregion メンバー毎に定義される制約
 
         #region 等価比較

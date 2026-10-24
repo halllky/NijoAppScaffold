@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
+using Nijo.DataStructures.IsGenericLookupTable;
 
 namespace Nijo.Models.DataModelModules {
 
@@ -87,7 +88,7 @@ namespace Nijo.Models.DataModelModules {
                     .ToArray();
 
                 var isGenericLookupTable = rootAggregate.XElement
-                    .Attribute(SchemaParsing.BasicNodeOptions.IsGenericLookupTable.AttributeName) != null;
+                    .Attribute(IsGenericLookupTableOption.ATTRIBUTE_NAME) != null;
 
                 // キーのエントリー。以下いずれかの場合のみレンダリングする
                 // - その集約がほかの集約から参照されている場合

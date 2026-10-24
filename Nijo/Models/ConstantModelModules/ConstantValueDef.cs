@@ -7,7 +7,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using static Nijo.SchemaParsing.BasicNodeOptions;
+using Nijo.Constants;
+using Nijo.SchemaParsing.CommonOptions;
 
 namespace Nijo.Models.ConstantModelModules {
     /// <summary>
@@ -26,9 +27,9 @@ namespace Nijo.Models.ConstantModelModules {
             _schemaParser = schemaParser;
 
             Name = element.Name.LocalName;
-            Type = element.Attribute(ConstantType.AttributeName)?.Value ?? CONSTTYPE_STRING;
-            Value = element.Attribute(ConstantValue.AttributeName)?.Value ?? string.Empty;
-            DisplayName = element.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? Name;
+            Type = element.Attribute(ConstantTypeOption.ATTRIBUTE_NAME)?.Value ?? CONSTTYPE_STRING;
+            Value = element.Attribute(ConstantValueOption.ATTRIBUTE_NAME)?.Value ?? string.Empty;
+            DisplayName = element.Attribute(DisplayNameOption.ATTRIBUTE_NAME)?.Value ?? Name;
 
             // テンプレート文字列の場合、{0}, {1}, ... から自動的に引数を判定
             if (Type == CONSTTYPE_TEMPLATE) {

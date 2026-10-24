@@ -7,7 +7,7 @@ using Nijo.Models.StaticEnumModelModules;
 namespace Nijo.SchemaParsing.RootAggregateValidation;
 
 /// <summary>
-/// <see cref="E_RootAggregateKind.StaticEnum"/> のルート集約の検証
+/// StaticEnums セクションのルート集約の検証
 /// </summary>
 internal static class StaticEnumValidation {
     internal static void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {

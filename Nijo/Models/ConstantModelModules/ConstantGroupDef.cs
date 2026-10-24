@@ -5,7 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using static Nijo.SchemaParsing.BasicNodeOptions;
+using Nijo.Constants;
+using Nijo.SchemaParsing.CommonOptions;
 
 namespace Nijo.Models.ConstantModelModules {
     /// <summary>
@@ -18,7 +19,7 @@ namespace Nijo.Models.ConstantModelModules {
             _schemaParser = schemaParser;
 
             Name = element.Name.LocalName;
-            DisplayName = element.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? Name;
+            DisplayName = element.Attribute(DisplayNameOption.ATTRIBUTE_NAME)?.Value ?? Name;
         }
 
         private readonly XElement _element;
@@ -44,7 +45,7 @@ namespace Nijo.Models.ConstantModelModules {
         /// </summary>
         internal IEnumerable<ConstantValueDef> GetDirectConstants() {
             foreach (var child in _element.Elements()) {
-                var constantType = child.Attribute(ConstantType.AttributeName)?.Value;
+                var constantType = child.Attribute(ConstantTypeOption.ATTRIBUTE_NAME)?.Value;
 
                 if (constantType != ConstantValueDef.CONSTTYPE_CHILD) {
                     // 定数要素
@@ -59,7 +60,7 @@ namespace Nijo.Models.ConstantModelModules {
         /// </summary>
         internal IEnumerable<ConstantGroupDef> GetDirectChildGroups() {
             foreach (var child in _element.Elements()) {
-                var constantType = child.Attribute(ConstantType.AttributeName)?.Value;
+                var constantType = child.Attribute(ConstantTypeOption.ATTRIBUTE_NAME)?.Value;
 
                 if (constantType == ConstantValueDef.CONSTTYPE_CHILD) {
                     var childPath = $"{Path}.{child.Name.LocalName}";

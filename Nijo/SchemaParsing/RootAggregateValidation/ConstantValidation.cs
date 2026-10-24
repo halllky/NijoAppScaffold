@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using Nijo.Models.ConstantModelModules;
+using Nijo.Constants;
 
 namespace Nijo.SchemaParsing.RootAggregateValidation;
 
 /// <summary>
-/// <see cref="E_RootAggregateKind.Constant"/> のルート集約の検証
+/// Constants セクションのルート集約の検証
 /// </summary>
 internal static class ConstantValidation {
     internal static void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
@@ -15,7 +16,7 @@ internal static class ConstantValidation {
 
         void ValidateConstants(XElement element, Action<XElement, string> addError) {
             foreach (var constantElement in element.Elements()) {
-                var constantType = constantElement.Attribute(BasicNodeOptions.ConstantType.AttributeName)?.Value;
+                var constantType = constantElement.Attribute(ConstantTypeOption.ATTRIBUTE_NAME)?.Value;
 
                 if (constantType == ConstantValueDef.CONSTTYPE_CHILD) {
                     // 子要素（ネストされた定数グループ）の場合は再帰的にバリデーション

@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Nijo.DataStructures.IsQueryable;
 
 namespace Nijo.ValueMemberTypes;
 
@@ -32,7 +33,7 @@ internal class ValueObjectMember : IValueMemberType {
             通常の文字列型よりも特別な意味を持った値（「○○コード」など）を表現するのに適しています。
             検索時の挙動は完全一致・部分一致・前方一致・後方一致・範囲検索から選択可能です。
 
-            予め nijo.xml で値オブジェクトの種類を `{{E_RootAggregateKind.ValueObject.ToSchemaName()}}` モデルとして定義しておく必要があります。
+            予め nijo.xml で値オブジェクトの種類を `{{E_Section.ValueObjects.GetRootTypeAttributeValue()}}` モデルとして定義しておく必要があります。
             """;
     }
 
@@ -69,15 +70,15 @@ internal class ValueObjectMember : IValueMemberType {
             var queryOwnerFullPath = queryFullPath.SkipLast(1);
 
             var searchBehavior = ctx.Query.Metadata is IInstanceValuePropertyMetadata vm
-                && vm.SchemaPathNode.XElement.Attribute(BasicNodeOptions.StringSearchBehavior.AttributeName)?.Value is string s
+                && vm.SchemaPathNode.XElement.Attribute(StringSearchBehaviorOption.ATTRIBUTE_NAME)?.Value is string s
                 ? s
-                : BasicNodeOptions.STRING_SEARCH_BEHAVIOR_PARTIAL;
+                : StringSearchBehaviorOption.PARTIAL;
 
             string GetComparison(string target) {
                 return searchBehavior switch {
-                    BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT => $"{target} == trimmed",
-                    BasicNodeOptions.STRING_SEARCH_BEHAVIOR_FORWARD => $"Microsoft.EntityFrameworkCore.EF.Functions.Like((string){target}, $\"{{escaped}}%\", \"\\\\\")",
-                    BasicNodeOptions.STRING_SEARCH_BEHAVIOR_BACKWARD => $"Microsoft.EntityFrameworkCore.EF.Functions.Like((string){target}, $\"%{{escaped}}\", \"\\\\\")",
+                    StringSearchBehaviorOption.EXACT => $"{target} == trimmed",
+                    StringSearchBehaviorOption.FORWARD => $"Microsoft.EntityFrameworkCore.EF.Functions.Like((string){target}, $\"{{escaped}}%\", \"\\\\\")",
+                    StringSearchBehaviorOption.BACKWARD => $"Microsoft.EntityFrameworkCore.EF.Functions.Like((string){target}, $\"%{{escaped}}\", \"\\\\\")",
                     _ => $"Microsoft.EntityFrameworkCore.EF.Functions.Like((string){target}, $\"%{{escaped}}%\", \"\\\\\")",
                 };
             }
@@ -85,7 +86,7 @@ internal class ValueObjectMember : IValueMemberType {
             return $$"""
                 if (!string.IsNullOrWhiteSpace({{fullpathNullable}})) {
                     var trimmed = {{fullpathNotNull}}!.Trim();
-                {{If(searchBehavior != BasicNodeOptions.STRING_SEARCH_BEHAVIOR_EXACT, () => $$"""
+                {{If(searchBehavior != StringSearchBehaviorOption.EXACT, () => $$"""
                     var escaped = trimmed.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
                 """)}}
                 {{If(isMany, () => $$"""
@@ -100,7 +101,7 @@ internal class ValueObjectMember : IValueMemberType {
 
     private static bool IsRangeSearch(FilterStatementRenderingContext ctx) {
         return ctx.Query.Metadata is IInstanceValuePropertyMetadata vm
-            && vm.SchemaPathNode.XElement.Attribute(BasicNodeOptions.StringSearchBehavior.AttributeName)?.Value == BasicNodeOptions.STRING_SEARCH_BEHAVIOR_RANGE;
+            && vm.SchemaPathNode.XElement.Attribute(StringSearchBehaviorOption.ATTRIBUTE_NAME)?.Value == StringSearchBehaviorOption.RANGE;
     }
 
     void IValueMemberType.RegisterDependencies(CodeRenderingContext ctx) {

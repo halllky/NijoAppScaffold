@@ -2,11 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
+using Nijo.Commands;
+using Nijo.DataStructures.IsQueryable;
+using Nijo.DataStructures.IsStored;
+using Nijo.DataStructures.Members;
 
 namespace Nijo.SchemaParsing.RootAggregateValidation;
 
 /// <summary>
-/// <see cref="E_RootAggregateKind.Command"/> のルート集約の検証
+/// Commands セクションのルート集約の検証
 /// </summary>
 internal static class CommandValidation {
     internal static void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
@@ -20,17 +24,17 @@ internal static class CommandValidation {
         // コマンドモデルは子孫XML要素を定義できない
         var childElements = rootAggregateElement.Elements();
         if (childElements.Any()) {
-            addError(rootAggregateElement, $"コマンドモデルのルート集約は子孫XML要素を定義できません。引数と戻り値の型は{BasicNodeOptions.Parameter.AttributeName}属性と{BasicNodeOptions.ReturnValue.AttributeName}属性で指定してください。");
+            addError(rootAggregateElement, $"コマンドモデルのルート集約は子孫XML要素を定義できません。引数と戻り値の型は{ParameterOption.ATTRIBUTE_NAME}属性と{ReturnValueOption.ATTRIBUTE_NAME}属性で指定してください。");
         }
 
         // Parameter属性の検証
-        var parameterAttr = rootAggregateElement.Attribute(BasicNodeOptions.Parameter.AttributeName)?.Value;
+        var parameterAttr = rootAggregateElement.Attribute(ParameterOption.ATTRIBUTE_NAME)?.Value;
         if (!string.IsNullOrEmpty(parameterAttr)) {
             ValidateTypeSpecification(parameterAttr, "Parameter", rootAggregateElement, context, addError);
         }
 
         // ReturnValue属性の検証
-        var returnValueAttr = rootAggregateElement.Attribute(BasicNodeOptions.ReturnValue.AttributeName)?.Value;
+        var returnValueAttr = rootAggregateElement.Attribute(ReturnValueOption.ATTRIBUTE_NAME)?.Value;
         if (!string.IsNullOrEmpty(returnValueAttr)) {
             ValidateTypeSpecification(returnValueAttr, "ReturnValue", rootAggregateElement, context, addError);
         }
@@ -51,7 +55,7 @@ internal static class CommandValidation {
 
         foreach (var aggregate in allAggregates) {
             var membersWithKey = aggregate.Elements()
-                .Where(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null).ToList();
+                .Where(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null).ToList();
 
             if (membersWithKey.Any()) {
                 addError(aggregate, "コマンドモデルの集約には主キー属性を定義できません。");
@@ -91,18 +95,18 @@ internal static class CommandValidation {
             if (string.IsNullOrEmpty(refToObject)) {
                 // 構造体の場合
                 if (isStored || isQueryable) {
-                    addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」は{BasicNodeOptions.IsStored.AttributeName}属性も{BasicNodeOptions.IsQueryable.AttributeName}属性も指定されていないデータ構造ではありません。");
+                    addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」は{IsStoredOption.ATTRIBUTE_NAME}属性も{IsQueryableOption.ATTRIBUTE_NAME}属性も指定されていないデータ構造ではありません。");
                 }
             } else {
                 // 検索可能なデータ構造の場合
                 if (!isQueryable) {
-                    addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」は{BasicNodeOptions.IsQueryable.AttributeName}属性が指定されたデータ構造ではありません。");
+                    addError(rootAggregateElement, $"{attributeName}属性で指定されたモデル「{modelName}」は{IsQueryableOption.ATTRIBUTE_NAME}属性が指定されたデータ構造ではありません。");
                     return;
                 }
 
                 // RefToObjectの値チェック
-                if (!BasicNodeOptions.AvailableFromCommandToQuery.ContainsKey(refToObject)) {
-                    addError(rootAggregateElement, $"{attributeName}属性のRefToObject指定「{refToObject}」は無効です。{string.Join(" または ", BasicNodeOptions.AvailableFromCommandToQuery.Keys)}のいずれかを指定してください。");
+                if (!CommandTypeSpecificationOption.AvailableFromCommandToQuery.ContainsKey(refToObject)) {
+                    addError(rootAggregateElement, $"{attributeName}属性のRefToObject指定「{refToObject}」は無効です。{string.Join(" または ", CommandTypeSpecificationOption.AvailableFromCommandToQuery.Keys)}のいずれかを指定してください。");
                 }
             }
         } catch (ArgumentException ex) {

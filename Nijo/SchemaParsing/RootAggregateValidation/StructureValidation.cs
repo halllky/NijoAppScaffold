@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
+using Nijo.DataStructures.IsQueryable;
+using Nijo.DataStructures.IsStored;
+using Nijo.DataStructures.Members;
 
 namespace Nijo.SchemaParsing.RootAggregateValidation;
 
 /// <summary>
-/// <see cref="E_RootAggregateKind.Structure"/> のルート集約の検証
+/// IsStored 属性も IsQueryable 属性も指定されていないデータ構造のルート集約の検証
 /// </summary>
 internal static class StructureValidation {
     internal static void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
@@ -47,25 +50,25 @@ internal static class StructureValidation {
             var isStructure = !refToRoot.IsStored() && !isQueryable;
 
             if (!isQueryable && !isStructure) {
-                addError(refElement, $"{BasicNodeOptions.IsStored.AttributeName}属性も{BasicNodeOptions.IsQueryable.AttributeName}属性も指定されていないデータ構造からは、{BasicNodeOptions.IsQueryable.AttributeName}属性が指定されたデータ構造、または{BasicNodeOptions.IsStored.AttributeName}属性も{BasicNodeOptions.IsQueryable.AttributeName}属性も指定されていないデータ構造しか参照できません。");
+                addError(refElement, $"{IsStoredOption.ATTRIBUTE_NAME}属性も{IsQueryableOption.ATTRIBUTE_NAME}属性も指定されていないデータ構造からは、{IsQueryableOption.ATTRIBUTE_NAME}属性が指定されたデータ構造、または{IsStoredOption.ATTRIBUTE_NAME}属性も{IsQueryableOption.ATTRIBUTE_NAME}属性も指定されていないデータ構造しか参照できません。");
                 continue;
             }
 
             // 検索可能なデータ構造を参照する場合はRefToObjectの指定が必須
-            var refToObject = refElement.Attribute(BasicNodeOptions.RefToObject.AttributeName);
+            var refToObject = refElement.Attribute(RefToObjectOption.ATTRIBUTE_NAME);
             if (isQueryable && refToObject == null) {
-                addError(refElement, $"{BasicNodeOptions.IsQueryable.AttributeName}属性が指定されたデータ構造を外部参照する場合、{BasicNodeOptions.RefToObject.AttributeName}属性を指定する必要があります。");
+                addError(refElement, $"{IsQueryableOption.ATTRIBUTE_NAME}属性が指定されたデータ構造を外部参照する場合、{RefToObjectOption.ATTRIBUTE_NAME}属性を指定する必要があります。");
             }
 
             // RefToObjectの値が不正かチェック
             if (isQueryable
                     && refToObject != null
-                    && !BasicNodeOptions.AvailableFromStructureToQuery.Contains(refToObject.Value)) {
-                addError(refElement, $"{BasicNodeOptions.RefToObject.AttributeName}属性の値は {string.Join(" または ", BasicNodeOptions.AvailableFromStructureToQuery)} のいずれかを指定してください。");
+                    && !RefToObjectOption.AvailableFromStructureToQuery.Contains(refToObject.Value)) {
+                addError(refElement, $"{RefToObjectOption.ATTRIBUTE_NAME}属性の値は {string.Join(" または ", RefToObjectOption.AvailableFromStructureToQuery)} のいずれかを指定してください。");
             }
 
             // 検索条件を参照する場合はルート集約のみ参照可能
-            if (refToObject?.Value == BasicNodeOptions.REF_TO_OBJECT_SEARCH_CONDITION
+            if (refToObject?.Value == RefToObjectOption.REF_TO_OBJECT_SEARCH_CONDITION
                     && refTo != refToRoot) {
                 addError(refElement, $"検索条件を参照する場合はルート集約のみ指定可能です。");
             }

@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Nijo.DataStructures.IsStored;
 
 namespace Nijo.ValueMemberTypes {
     /// <summary>
@@ -33,7 +34,7 @@ namespace Nijo.ValueMemberTypes {
         }
 
         void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
-            var sequenceName = element.Attribute(BasicNodeOptions.SequenceName.AttributeName);
+            var sequenceName = element.Attribute(SequenceNameOption.ATTRIBUTE_NAME);
             if (sequenceName is null || string.IsNullOrWhiteSpace(sequenceName.Value)) {
                 addError(element, "シーケンス名が指定されていません。");
             }

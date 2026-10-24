@@ -13,6 +13,10 @@ using System.Xml.XPath;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using Nijo.DataStructures.IsQueryable;
+using Nijo.DataStructures.IsStored;
+using Nijo.DataStructures.Members;
+using Nijo.SchemaParsing.CommonOptions;
 
 namespace Nijo.SchemaParsing;
 
@@ -51,7 +55,7 @@ public class SchemaParseContext {
 
     /// <summary>
     /// nijo.xml のルート要素直下の要素のうち、データ構造が格納されるXML要素の名前。
-    /// このセクションのルート集約の種類は IsStored, IsQueryable 属性の組み合わせで決まる（<see cref="E_RootAggregateKind"/>）。
+    /// このセクションのルート集約からどういったソースコードが生成されるかは IsStored, IsQueryable 属性の組み合わせで決まる。
     /// </summary>
     internal const string SECTION_DATA_STRUCTURES = "DataStructures";
     /// <summary>
@@ -114,11 +118,11 @@ public class SchemaParseContext {
     /// </summary>
     internal string GetDisplayName(XElement xElement) {
         return _displayNameCache.GetOrAdd(xElement, el => {
-            if (el.Attribute(BasicNodeOptions.DisplayNameIsEmpty.AttributeName) != null) {
+            if (el.Attribute(DisplayNameIsEmptyOption.ATTRIBUTE_NAME) != null) {
                 return string.Empty;
             }
 
-            return el.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? el.Name.LocalName;
+            return el.Attribute(DisplayNameOption.ATTRIBUTE_NAME)?.Value ?? el.Name.LocalName;
         });
     }
     private readonly ConcurrentDictionary<XElement, string> _displayNameCache = new();
@@ -463,10 +467,10 @@ public class SchemaParseContext {
             }
         }
 
-        // ルート集約の種類ごとの検証
+        // セクションごとに定められたルート集約単位の検証
         foreach (var root in rootAggregates) {
-            if (root.TryGetRootAggregateKind(out var kind)) {
-                ValidateRootAggregate(root, kind, (el, err) => errorsList.Add((el, err)));
+            if (root.TryGetSection(out var section)) {
+                ValidateRootAggregate(root, section, (el, err) => errorsList.Add((el, err)));
             }
         }
 
@@ -534,7 +538,7 @@ public class SchemaParseContext {
                 // Child
                 case E_NodeType.ChildAggregate:
                     // 主キー属性のチェック
-                    if (el.Elements().Any(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) != null)) {
+                    if (el.Elements().Any(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null)) {
                         if (el.IsStored()) {
                             errorsList.Add((el, $"データモデルの子集約には主キー属性を付与することができません。"));
                         }
@@ -545,7 +549,7 @@ public class SchemaParseContext {
                 case E_NodeType.ChildrenAggregate:
                     // データモデルの子配列は必ず1個以上の主キーが必要
                     if (el.IsStored()) {
-                        if (el.Elements().All(member => member.Attribute(BasicNodeOptions.IsKey.AttributeName) == null)) {
+                        if (el.Elements().All(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) == null)) {
                             errorsList.Add((el, "データモデルの子配列は必ず1個以上の主キーを持たなければなりません。"));
                         }
                     }
@@ -583,7 +587,7 @@ public class SchemaParseContext {
                 if (attr.IsNamespaceDeclaration) continue;
 
                 var attrName = attr.Name.LocalName;
-                var hasKind = el.TryGetRootAggregateKind(out var kind);
+                var hasTarget = NodeOptionTarget.TryCreate(el, nodeType, out var target);
 
                 // 特殊な属性
                 if (attrName == ATTR_NODE_TYPE || attrName == ATTR_UNIQUE_ID) {
@@ -593,17 +597,16 @@ public class SchemaParseContext {
                 // 既定の属性
                 else if (nodeOptionsByName.TryGetValue(attrName, out var opt)) {
 
-                    // ルート集約の種類とノード種別の組み合わせで利用可能かチェック
-                    if (hasKind && !opt.IsAvailable(kind, nodeType)) {
+                    if (!hasTarget) continue;
+
+                    if (!opt.IsAvailable(target)) {
                         attributeErrors.Add((el, attrName, $"この属性はこの要素には指定できません。"));
                         continue; // 指定不可な属性なので、それ以上の検証はスキップ
                     }
-
-                    // 複雑な検証ロジック
-                    opt.ValidateOthers(new() {
+                    opt.Validate(new() {
                         Value = attr.Value,
                         XElement = el,
-                        NodeType = nodeType,
+                        Target = target,
                         AddError = err => attributeErrors.Add((el, attrName, err)),
                         SchemaParseContext = this,
                     });
@@ -611,8 +614,8 @@ public class SchemaParseContext {
 
                 // カスタム属性
                 else if (customAttributesByUniqueId.TryGetValue(attrName, out var customAttr)) {
-                    if (hasKind) {
-                        if (!customAttr.IsAvailableFor(el, kind)) {
+                    if (hasTarget) {
+                        if (!customAttr.IsAvailableFor(target)) {
                             attributeErrors.Add((el, attrName, $"カスタム属性 '{customAttr.PhysicalName}' はこの要素では使用できません。"));
                         } else {
                             foreach (var error in customAttr.ValidateModelElement(el)) {
@@ -657,17 +660,21 @@ public class SchemaParseContext {
     }
 
     /// <summary>
-    /// ルート集約の種類ごとに定められた検証を行います
+    /// セクションごとに定められたルート集約単位の検証を行います
     /// </summary>
-    private void ValidateRootAggregate(XElement rootAggregateElement, E_RootAggregateKind kind, Action<XElement, string> addError) {
-        switch (kind) {
-            case E_RootAggregateKind.Stored: StoredValidation.Validate(rootAggregateElement, this, addError); break;
-            case E_RootAggregateKind.QueryableOnly: QueryableOnlyValidation.Validate(rootAggregateElement, this, addError); break;
-            case E_RootAggregateKind.Structure: StructureValidation.Validate(rootAggregateElement, this, addError); break;
-            case E_RootAggregateKind.Command: CommandValidation.Validate(rootAggregateElement, this, addError); break;
-            case E_RootAggregateKind.StaticEnum: StaticEnumValidation.Validate(rootAggregateElement, this, addError); break;
-            case E_RootAggregateKind.Constant: ConstantValidation.Validate(rootAggregateElement, this, addError); break;
-            case E_RootAggregateKind.ValueObject: break;
+    private void ValidateRootAggregate(XElement rootAggregateElement, E_Section section, Action<XElement, string> addError) {
+        switch (section) {
+            case E_Section.DataStructures:
+                var isStored = rootAggregateElement.IsStored();
+                var isQueryable = rootAggregateElement.IsQueryable();
+                if (isStored) StoredValidation.Validate(rootAggregateElement, this, addError);
+                else if (isQueryable) QueryableOnlyValidation.Validate(rootAggregateElement, this, addError);
+                else StructureValidation.Validate(rootAggregateElement, this, addError);
+                break;
+            case E_Section.Commands: CommandValidation.Validate(rootAggregateElement, this, addError); break;
+            case E_Section.StaticEnums: StaticEnumValidation.Validate(rootAggregateElement, this, addError); break;
+            case E_Section.Constants: ConstantValidation.Validate(rootAggregateElement, this, addError); break;
+            case E_Section.ValueObjects: break;
         }
     }
 
@@ -704,14 +711,16 @@ public class SchemaParseContext {
         }
 
         // ルート集約の種類に基づく参照制約チェック
-        var storedAttr = BasicNodeOptions.IsStored.AttributeName;
-        var queryableAttr = BasicNodeOptions.IsQueryable.AttributeName;
+        var storedAttr = IsStoredOption.ATTRIBUTE_NAME;
+        var queryableAttr = IsQueryableOption.ATTRIBUTE_NAME;
         var refToIsStored = refTo.IsStored();
         var refToIsQueryable = refTo.IsQueryable();
-        var refToIsView = refToRoot.Attribute(BasicNodeOptions.MapToView.AttributeName) != null;
+        var refToIsView = refToRoot.Attribute(MapToViewOption.ATTRIBUTE_NAME) != null;
 
-        if (refElement.TryGetRootAggregateKind(out var kind)) {
-            if (kind == E_RootAggregateKind.Stored) {
+        if (refElement.TryGetSection(out var section)) {
+            var isStored = rootElement.IsStored();
+            var isQueryable = rootElement.IsQueryable();
+            if (isStored) {
                 // 永続化されるデータ構造からは、永続化されるデータ構造またはビューにマッピングされるデータ構造しか参照できない
                 if (!refToIsStored && !(refToIsQueryable && refToIsView)) {
                     errorMessage = $"{storedAttr}属性が指定されたデータ構造からは、{storedAttr}属性が指定されたデータ構造、またはビューにマッピングされるデータ構造しか参照できません。";
@@ -719,11 +728,11 @@ public class SchemaParseContext {
                 }
 
                 // 検索可能かつ永続化されるデータ構造から、検索可能でない永続化されるデータ構造への参照を禁止。RefTargetなどが生成されないので
-                if (rootElement.IsQueryable() && refToIsStored && !refToIsQueryable) {
+                if (isQueryable && refToIsStored && !refToIsQueryable) {
                     errorMessage = $"{storedAttr}属性と{queryableAttr}属性が両方指定されたデータ構造からは、{storedAttr}属性のみが指定されたデータ構造を参照できません。";
                     return false;
                 }
-            } else if (kind == E_RootAggregateKind.QueryableOnly) {
+            } else if (isQueryable) {
                 // 検索可能なデータ構造からは検索可能なデータ構造しか参照できない
                 if (!refToIsQueryable) {
                     errorMessage = $"{queryableAttr}属性が指定されたデータ構造からは、同じく{queryableAttr}属性が指定されたデータ構造しか参照できません。";
@@ -735,7 +744,7 @@ public class SchemaParseContext {
                     errorMessage = $"{queryableAttr}属性が指定されたデータ構造で循環参照を定義することはできません。";
                     return false;
                 }
-            } else if (kind == E_RootAggregateKind.Command) {
+            } else if (section == E_Section.Commands) {
                 // コマンドモデルからは検索可能なデータ構造しか参照できない
                 if (!refToIsQueryable) {
                     errorMessage = $"コマンドモデルの集約からは{queryableAttr}属性が指定されたデータ構造しか参照できません。";
@@ -743,11 +752,11 @@ public class SchemaParseContext {
                 }
 
                 // RefToObjectの指定がないとエラー
-                if (refElement.Attribute(BasicNodeOptions.RefToObject.AttributeName) == null) {
-                    errorMessage = $"コマンドモデルから外部参照する場合、{BasicNodeOptions.RefToObject.AttributeName}属性を指定する必要があります。";
+                if (refElement.Attribute(RefToObjectOption.ATTRIBUTE_NAME) == null) {
+                    errorMessage = $"コマンドモデルから外部参照する場合、{RefToObjectOption.ATTRIBUTE_NAME}属性を指定する必要があります。";
                     return false;
                 }
-            } else if (kind == E_RootAggregateKind.Structure) {
+            } else if (section == E_Section.DataStructures) {
                 // 構造体からは、検索可能なデータ構造または構造体しか参照できない
                 if (refToIsStored && !refToIsQueryable) {
                     errorMessage = $"{storedAttr}属性も{queryableAttr}属性も指定されていないデータ構造からは、{queryableAttr}属性が指定されたデータ構造、または{storedAttr}属性も{queryableAttr}属性も指定されていないデータ構造しか参照できません。";
@@ -755,8 +764,8 @@ public class SchemaParseContext {
                 }
 
                 // 検索可能なデータ構造を参照する場合はRefToObjectの指定が必須
-                if (refToIsQueryable && refElement.Attribute(BasicNodeOptions.RefToObject.AttributeName) == null) {
-                    errorMessage = $"{queryableAttr}属性が指定されたデータ構造を外部参照する場合、{BasicNodeOptions.RefToObject.AttributeName}属性を指定する必要があります。";
+                if (refToIsQueryable && refElement.Attribute(RefToObjectOption.ATTRIBUTE_NAME) == null) {
+                    errorMessage = $"{queryableAttr}属性が指定されたデータ構造を外部参照する場合、{RefToObjectOption.ATTRIBUTE_NAME}属性を指定する必要があります。";
                     return false;
                 }
             }

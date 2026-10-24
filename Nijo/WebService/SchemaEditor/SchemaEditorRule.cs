@@ -43,7 +43,7 @@ public class ValueMemberTypeDef {
 }
 
 /// <summary>
-/// nijo.xml のXML要素1個に定義できる属性の型定義。ほぼ <see cref="Nijo.SchemaParsing.NodeOption"/> と同じ。
+/// nijo.xml のXML要素1個に定義できる属性の型定義。ほぼ <see cref="NodeOption"/> と同じ。
 /// </summary>
 public class AttributeDef {
     [JsonPropertyName("attributeName")]
@@ -57,27 +57,33 @@ public class AttributeDef {
     [JsonPropertyName("typeEnumValues")]
     public string[]? TypeEnumValues { get; set; }
 
+    /// <summary>
+    /// この属性が指定可能な場所1個分。<see cref="NodeOptionTarget"/> と対応する。
+    /// </summary>
     public class AvailableElement {
-        [JsonPropertyName("model")]
-        public string Model { get; set; } = "";
+        /// <summary><see cref="EditingProject"/> 上でのセクションの名前</summary>
+        [JsonPropertyName("section")]
+        public string Section { get; set; } = "";
+        [JsonPropertyName("isStored")]
+        public bool IsStored { get; set; }
+        [JsonPropertyName("isQueryable")]
+        public bool IsQueryable { get; set; }
         [JsonPropertyName("nodeType")]
         public string NodeType { get; set; } = "";
     }
 
     internal static List<AttributeDef> FromSchemaParseRule(SchemaParseRule rule) {
         return rule.NodeOptions.Select(opt => {
-            // 各ルート集約の種類 × 各ノード種別の組み合わせについて、この属性が使用可能かチェックする
-            var availableElements = new List<AvailableElement>();
-            foreach (var kind in System.Enum.GetValues<E_RootAggregateKind>()) {
-                foreach (var nodeType in System.Enum.GetValues<E_NodeType>()) {
-                    if (opt.IsAvailable(kind, nodeType)) {
-                        availableElements.Add(new AvailableElement {
-                            Model = kind.ToSchemaName(),
-                            NodeType = nodeType.ToString(),
-                        });
-                    }
-                }
-            }
+            var availableElements = NodeOptionTarget
+                .EnumerateAll()
+                .Where(opt.IsAvailable)
+                .Select(target => new AvailableElement {
+                    Section = ToEditingProjectSectionName(target.Section),
+                    IsStored = target.IsStored,
+                    IsQueryable = target.IsQueryable,
+                    NodeType = target.NodeType.ToString(),
+                })
+                .ToList();
 
             return new AttributeDef {
                 AttributeName = opt.AttributeName,
@@ -88,4 +94,13 @@ public class AttributeDef {
             };
         }).ToList();
     }
+
+    private static string ToEditingProjectSectionName(E_Section section) => section switch {
+        E_Section.DataStructures => "dataStructures",
+        E_Section.Commands => "commands",
+        E_Section.StaticEnums => "staticEnums",
+        E_Section.ValueObjects => "valueObjects",
+        E_Section.Constants => "constants",
+        _ => throw new System.ArgumentOutOfRangeException(nameof(section)),
+    };
 }

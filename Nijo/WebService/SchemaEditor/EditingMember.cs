@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using System.Xml;
 using System.Xml.Linq;
 using Nijo.SchemaParsing;
+using Nijo.DataStructures.IsStored;
 
 namespace Nijo.WebService.SchemaEditor;
 
@@ -44,7 +45,7 @@ public class EditingMember {
         foreach (var attr in element.Attributes()) {
             var name = attr.Name.LocalName;
             if (name == SchemaParseContext.ATTR_NODE_TYPE || name == SchemaParseContext.ATTR_UNIQUE_ID) continue;
-            if (name == BasicNodeOptions.UniqueConstraints.AttributeName) {
+            if (name == UniqueConstraintsOption.ATTRIBUTE_NAME) {
                 uniqueConstraints = EditingUniqueConstraint.FromAttributeValue(attr.Value);
                 continue;
             }
@@ -105,7 +106,7 @@ public class EditingMember {
         }
 
         var uniqueConstraintsValue = EditingUniqueConstraint.ToAttributeValue(UniqueConstraints);
-        if (uniqueConstraintsValue != null) attributePairs.Add(new(BasicNodeOptions.UniqueConstraints.AttributeName, uniqueConstraintsValue));
+        if (uniqueConstraintsValue != null) attributePairs.Add(new(UniqueConstraintsOption.ATTRIBUTE_NAME, uniqueConstraintsValue));
 
         attributePairs.Add(new(SchemaParseContext.ATTR_UNIQUE_ID, UniqueId));
 

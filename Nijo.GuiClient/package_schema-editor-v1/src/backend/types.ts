@@ -198,8 +198,8 @@ export type AttributeDef = {
   attributeName: string
   /** この属性の画面表示上の名称。 */
   displayName: string
-  /** この属性が使用可能なモデルとノード種別の組み合わせの配列。 */
-  availableElements: { model: string, nodeType: string }[]
+  /** この属性が指定可能な場所の一覧。 */
+  availableElements: (AttributeTarget & { nodeType: string })[]
   type: 'Boolean' | 'String' | 'Integer' | 'EnumSelect'
   /** typeが"EnumSelect"の場合のみ使用される、選択肢の候補。 */
   typeEnumValues?: string[] | null
@@ -312,10 +312,35 @@ export const isCustomAttributeAvailable = (customAttr: EditingCustomAttribute, r
   return false
 }
 
+/** ルート集約が定義されるセクション。EditingProject のプロパティ名と一致する。 */
+export type SectionName = 'dataStructures' | 'commands' | 'staticEnums' | 'valueObjects' | 'constants'
+
 /**
- * 指定された属性が、指定されたモデル種別・ノード種別の組み合わせで利用可能かを判定する。
+ * 属性が指定される場所のうち、ノード種別を除いたもの。
+ * isStored, isQueryable は dataStructures セクション以外では常に false。
  */
-export const isAttributeAvailable = (attr: AttributeDef, modelType: string, nodeTypes: string[]): boolean => {
-  if (!modelType) return false
-  return attr.availableElements.some(ae => ae.model === modelType && nodeTypes.includes(ae.nodeType))
+export type AttributeTarget = {
+  section: SectionName
+  isStored: boolean
+  isQueryable: boolean
+}
+
+/** ルート集約とその子孫に属性が指定されるときの場所を返す。 */
+export const getAttributeTarget = (section: SectionName, root: Pick<EditingRootAggregate, 'attributes'>): AttributeTarget => {
+  const isDataStructure = section === 'dataStructures'
+  return {
+    section,
+    isStored: isDataStructure && root.attributes[ATTR_IS_STORED] === true,
+    isQueryable: isDataStructure && root.attributes[ATTR_IS_QUERYABLE] === true,
+  }
+}
+
+/**
+ * 指定された属性が、指定された場所のいずれかのノード種別で利用可能かを判定する。
+ */
+export const isAttributeAvailable = (attr: AttributeDef, target: AttributeTarget, nodeTypes: string[]): boolean => {
+  return attr.availableElements.some(ae => ae.section === target.section
+    && ae.isStored === target.isStored
+    && ae.isQueryable === target.isQueryable
+    && nodeTypes.includes(ae.nodeType))
 }

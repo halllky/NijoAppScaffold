@@ -6,7 +6,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using static Nijo.SchemaParsing.BasicNodeOptions;
+using Nijo.Constants;
+using Nijo.SchemaParsing.CommonOptions;
 
 namespace Nijo.Models.ConstantModelModules;
 
@@ -17,7 +18,7 @@ internal class ConstantDefParser {
     internal ConstantDefParser(XElement rootAggregateElement, SchemaParseContext schemaParser) {
         _rootAggregateElement = rootAggregateElement;
         _schemaParser = schemaParser;
-        DisplayName = rootAggregateElement.Attribute(BasicNodeOptions.DisplayName.AttributeName)?.Value ?? rootAggregateElement.Name.LocalName;
+        DisplayName = rootAggregateElement.Attribute(DisplayNameOption.ATTRIBUTE_NAME)?.Value ?? rootAggregateElement.Name.LocalName;
         PhysicalName = _schemaParser.GetPhysicalName(rootAggregateElement);
     }
 
@@ -39,7 +40,7 @@ internal class ConstantDefParser {
 
     private IEnumerable<ConstantValueDef> GetConstantsRecursive(XElement element, string parentPath) {
         foreach (var child in element.Elements()) {
-            var constantType = child.Attribute(ConstantType.AttributeName)?.Value;
+            var constantType = child.Attribute(ConstantTypeOption.ATTRIBUTE_NAME)?.Value;
             var currentPath = string.IsNullOrEmpty(parentPath)
                 ? child.Name.LocalName
                 : $"{parentPath}.{child.Name.LocalName}";
@@ -65,7 +66,7 @@ internal class ConstantDefParser {
 
     private IEnumerable<ConstantGroupDef> GetConstantGroupsRecursive(XElement element, string parentPath) {
         foreach (var child in element.Elements()) {
-            var constantType = child.Attribute(ConstantType.AttributeName)?.Value;
+            var constantType = child.Attribute(ConstantTypeOption.ATTRIBUTE_NAME)?.Value;
 
             if (constantType == ConstantValueDef.CONSTTYPE_CHILD) {
                 var currentPath = string.IsNullOrEmpty(parentPath)

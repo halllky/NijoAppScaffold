@@ -9,6 +9,14 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Nijo.Commands;
+using Nijo.Constants;
+using Nijo.DataStructures.IsGenericLookupTable;
+using Nijo.DataStructures.IsQueryable;
+using Nijo.DataStructures.IsStored;
+using Nijo.DataStructures.Members;
+using Nijo.DataStructures.UseSoftDelete;
+using Nijo.SchemaParsing.CommonOptions;
 
 namespace Nijo.SchemaParsing;
 
@@ -48,31 +56,31 @@ public class SchemaParseRule {
             new ValueMemberTypes.ByteArrayMember(),
         };
         var nodeOptions = new NodeOption[] {
-            BasicNodeOptions.DisplayName,
-            BasicNodeOptions.DisplayNameIsEmpty,
-            BasicNodeOptions.DbName,
-            BasicNodeOptions.LatinName,
-            BasicNodeOptions.IsKey,
-            BasicNodeOptions.IsNotNull,
-            BasicNodeOptions.IsStored,
-            BasicNodeOptions.IsQueryable,
-            BasicNodeOptions.UseSoftDelete,
-            BasicNodeOptions.UniqueConstraints,
-            BasicNodeOptions.IsGenericLookupTable,
-            BasicNodeOptions.IsHardCodedPrimaryKey,
-            BasicNodeOptions.GenericLookupCategory,
-            BasicNodeOptions.MapToView,
-            BasicNodeOptions.OnlySearchCondition,
-            BasicNodeOptions.Parameter,
-            BasicNodeOptions.ReturnValue,
-            BasicNodeOptions.RefToObject,
-            BasicNodeOptions.MaxLength,
-            BasicNodeOptions.TotalDigit,
-            BasicNodeOptions.DecimalPlace,
-            BasicNodeOptions.SequenceName,
-            BasicNodeOptions.ConstantType,
-            BasicNodeOptions.ConstantValue,
-            BasicNodeOptions.StringSearchBehavior,
+            new DisplayNameOption(),
+            new DisplayNameIsEmptyOption(),
+            new DbNameOption(),
+            new LatinNameOption(),
+            new IsKeyOption(),
+            new IsNotNullOption(),
+            new IsStoredOption(),
+            new IsQueryableOption(),
+            new UseSoftDeleteOption(),
+            new UniqueConstraintsOption(),
+            new IsGenericLookupTableOption(),
+            new IsHardCodedPrimaryKeyOption(),
+            new GenericLookupCategoryOption(),
+            new MapToViewOption(),
+            new OnlySearchConditionOption(),
+            new ParameterOption(),
+            new ReturnValueOption(),
+            new RefToObjectOption(),
+            new MaxLengthOption(),
+            new TotalDigitOption(),
+            new DecimalPlaceOption(),
+            new SequenceNameOption(),
+            new ConstantTypeOption(),
+            new ConstantValueOption(),
+            new StringSearchBehaviorOption(),
         };
         return new() {
             ValueMemberTypes = valueMemberTypes,
@@ -88,8 +96,8 @@ public class SchemaParseRule {
         // スキーマ定義名重複チェック
         var appearedName = new HashSet<string>();
         var duplicates = new HashSet<string>();
-        var rootAggregateKindNames = Enum.GetValues<E_RootAggregateKind>().Select(kind => kind.ToSchemaName());
-        foreach (var name in rootAggregateKindNames.Concat(ValueMemberTypes.Select(t => t.SchemaTypeName))) {
+        var rootTypeNames = Enum.GetValues<E_Section>().Select(section => section.GetRootTypeAttributeValue()).OfType<string>();
+        foreach (var name in rootTypeNames.Concat(ValueMemberTypes.Select(t => t.SchemaTypeName))) {
             if (appearedName.Contains(name)) {
                 duplicates.Add(name);
             } else {

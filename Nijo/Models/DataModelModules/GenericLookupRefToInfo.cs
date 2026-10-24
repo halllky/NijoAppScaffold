@@ -3,6 +3,7 @@ using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Nijo.DataStructures.IsGenericLookupTable;
 
 namespace Nijo.Models.DataModelModules;
 
@@ -18,7 +19,7 @@ internal static class GenericLookupRefToInfo {
         }
 
         var root = refTo.RefTo.GetRoot();
-        if (root.XElement.Attribute(BasicNodeOptions.IsGenericLookupTable.AttributeName) == null) {
+        if (root.XElement.Attribute(IsGenericLookupTableOption.ATTRIBUTE_NAME) == null) {
             info = default!;
             return false;
         }

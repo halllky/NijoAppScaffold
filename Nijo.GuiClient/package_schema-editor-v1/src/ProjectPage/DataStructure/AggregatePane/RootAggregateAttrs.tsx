@@ -1,6 +1,6 @@
 import * as ReactHookForm from "react-hook-form"
 import * as UI from "../../../UI"
-import { ATTR_IS_QUERYABLE, ATTR_IS_STORED, ATTR_PARAMETER, ATTR_RETURN_VALUE, EditingProject, getRootModelType, isAttributeAvailable, isCustomAttributeAvailable, NODE_TYPE_ROOT_AGGREGATE } from "../../../backend"
+import { ATTR_IS_QUERYABLE, ATTR_IS_STORED, ATTR_PARAMETER, ATTR_RETURN_VALUE, EditingProject, getAttributeTarget, isAttributeAvailable, isCustomAttributeAvailable, NODE_TYPE_ROOT_AGGREGATE } from "../../../backend"
 import { useSchemaEditorRule } from "../../SchemaEditorRuleContext"
 import { RootAggregateLocation } from "../../rootAggregateLocation"
 import { isRootChangeAffectingDiagram, useNotifyDiagramStructureChanged } from "../Diagram"
@@ -19,7 +19,7 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
 
   const rootPath = `${rootLocation.list}.${rootLocation.index}` as const
   const root = ReactHookForm.useWatch({ name: rootPath, control })
-  const rootModelType = root ? getRootModelType(root) : undefined
+  const attributeTarget = root ? getAttributeTarget(rootLocation.list, root) : undefined
 
   const getMentionSuggestions = UI.useMentionSuggestions(getValues)
 
@@ -60,7 +60,7 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
         {/* モデルの既定の属性 */}
         <div className="basis-96 flex flex-col gap-1">
           {attributeDefs.map(attrDef => {
-            if (!rootModelType || !isAttributeAvailable(attrDef, rootModelType, [NODE_TYPE_ROOT_AGGREGATE])) return null
+            if (!attributeTarget || !isAttributeAvailable(attrDef, attributeTarget, [NODE_TYPE_ROOT_AGGREGATE])) return null
             if (isModelSelectionAttr(attrDef.attributeName)) return null
 
             const path = `${rootPath}.attributes.${attrDef.attributeName}` as const

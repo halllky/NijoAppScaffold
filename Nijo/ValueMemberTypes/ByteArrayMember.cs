@@ -8,6 +8,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Nijo.DataStructures.IsQueryable;
+using Nijo.DataStructures.IsStored;
 
 namespace Nijo.ValueMemberTypes;
 
@@ -33,10 +35,10 @@ internal class ByteArrayMember : IValueMemberType {
     void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
         // バイト配列を画面や帳票で用いることはできないため、永続化されるが検索されないデータ構造にしか定義できない
         if (!element.IsStored()) {
-            addError(element, $"バイト配列を画面や帳票で用いることはできないため、{SchemaTypeName}は{BasicNodeOptions.IsStored.AttributeName}属性が指定されたデータ構造にしか定義できません。");
+            addError(element, $"バイト配列を画面や帳票で用いることはできないため、{SchemaTypeName}は{IsStoredOption.ATTRIBUTE_NAME}属性が指定されたデータ構造にしか定義できません。");
 
         } else if (element.IsQueryable()) {
-            addError(element, $"バイト配列を画面や帳票で用いることはできないため、{BasicNodeOptions.IsQueryable.AttributeName}属性が指定されたデータ構造に{SchemaTypeName}を使用することはできません。");
+            addError(element, $"バイト配列を画面や帳票で用いることはできないため、{IsQueryableOption.ATTRIBUTE_NAME}属性が指定されたデータ構造に{SchemaTypeName}を使用することはできません。");
         }
     }
 
