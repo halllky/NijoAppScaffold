@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
-using Nijo.Models.QueryModelModules;
 using Nijo.Parts.CSharp;
 using Nijo.Parts.JavaScript;
 using Nijo.SchemaParsing;
+using Nijo.DataStructures.IsQueryable;
+using Nijo.DataStructures.Structure;
 
 namespace Nijo.Parts.Common;
 
@@ -243,7 +244,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
             } else if (!refToRoot.IsStored && !refToRoot.IsQueryable) {
                 // Structure => Structure
                 if (refTo.RefTo is not RootAggregate refToRootAggregate) throw new InvalidOperationException("ありえない");
-                RefEntry = new Models.StructureModelModules.PlainStructure(refToRootAggregate);
+                RefEntry = new PlainStructure(refToRootAggregate);
 
             } else {
                 // Structure => Query

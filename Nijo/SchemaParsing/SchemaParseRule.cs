@@ -11,19 +11,27 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Nijo.Commands;
 using Nijo.Constants;
+using Nijo.DataStructures;
 using Nijo.DataStructures.IsGenericLookupTable;
 using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.IsStored;
 using Nijo.DataStructures.Members;
 using Nijo.DataStructures.UseSoftDelete;
 using Nijo.SchemaParsing.CommonOptions;
+using Nijo.StaticEnums;
+using Nijo.ValueObjects;
 
 namespace Nijo.SchemaParsing;
 
 /// <summary>
-/// XMLスキーマ解釈ルール
+/// nijo.xml の定義。
+/// どういったセクション・属性・値の型が存在し、それぞれからどういったソースコードが生成されるかの一覧。
 /// </summary>
 public class SchemaParseRule {
+    /// <summary>
+    /// セクションの種類。ソースコードはこの順番で生成される。
+    /// </summary>
+    internal Section[] Sections { get; init; } = [];
     /// <summary>
     /// 値メンバーの種類
     /// </summary>
@@ -82,7 +90,15 @@ public class SchemaParseRule {
             new ConstantValueOption(),
             new StringSearchBehaviorOption(),
         };
+        var sections = new Section[] {
+            new DataStructuresSection(nodeOptions.OfType<FeatureOption>()),
+            new CommandsSection(),
+            new StaticEnumsSection(),
+            new ValueObjectsSection(),
+            new ConstantsSection(),
+        };
         return new() {
+            Sections = sections,
             ValueMemberTypes = valueMemberTypes,
             NodeOptions = nodeOptions,
         };

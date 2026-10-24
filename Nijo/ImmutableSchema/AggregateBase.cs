@@ -13,6 +13,8 @@ using Nijo.Commands;
 using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.IsStored;
 using Nijo.DataStructures.UseSoftDelete;
+using Nijo.DataStructures.Structure;
+using Nijo.StaticEnums;
 
 namespace Nijo.ImmutableSchema {
     /// <summary>
@@ -81,7 +83,7 @@ namespace Nijo.ImmutableSchema {
                             E_NodeType.ChildrenAggregate => new ChildrenAggregate(el, _ctx, this),
                             E_NodeType.Ref => new RefToMember(el, _ctx, this),
                             E_NodeType.ValueMember => new ValueMember(el, _ctx, this),
-                            E_NodeType.StaticEnumValue => new Models.StaticEnumModelModules.StaticEnumValueDef(el, _ctx, this),
+                            E_NodeType.StaticEnumValue => new StaticEnumValueDef(el, _ctx, this),
                             _ => throw new InvalidOperationException($"メンバーでない種類: {nodeType}（{el}）"),
                         };
                     })
@@ -479,10 +481,10 @@ namespace Nijo.ImmutableSchema {
                 // コマンドモデルの典型的な利用シーンとして「詳細画面の初期表示データ取得」があるので
                 // 戻り値であっても常にDisplayDataを返したほうがよいのか？うーん…
                 // return isParameter
-                //     ? new Models.StructureModelModules.StructureDisplayData(targetRootAggregate)
-                //     : new Models.StructureModelModules.PlainStructure(targetRootAggregate);
+                //     ? new StructureDisplayData(targetRootAggregate)
+                //     : new PlainStructure(targetRootAggregate);
 
-                return new Models.StructureModelModules.StructureDisplayData(targetRootAggregate);
+                return new StructureDisplayData(targetRootAggregate);
 
             } else if (CommandTypeSpecificationOption.AvailableFromCommandToQuery.TryGetValue(splitted[1], out var factory)) {
                 return factory(targetRootAggregate);

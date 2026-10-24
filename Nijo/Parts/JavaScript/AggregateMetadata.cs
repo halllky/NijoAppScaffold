@@ -3,7 +3,6 @@ using Nijo.ImmutableSchema;
 using Nijo.Util.DotnetEx;
 using Nijo.ValueMemberTypes;
 using Nijo.SchemaParsing;
-using Nijo.Models.QueryModelModules;
 using System;
 using System.Collections.Generic;
 using System.Linq;

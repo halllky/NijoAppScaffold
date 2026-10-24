@@ -1,6 +1,5 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
-using Nijo.Models.QueryModelModules;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using Nijo.Parts.CSharp;
@@ -11,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Nijo.DataStructures.IsStored;
+using Nijo.DataStructures.IsQueryable;
 
 namespace Nijo.ValueMemberTypes {
     /// <summary>

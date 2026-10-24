@@ -2,7 +2,7 @@ using System.Linq;
 using System.Xml.Linq;
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
-using Nijo.Models.StaticEnumModelModules;
+using Nijo.StaticEnums;
 using Nijo.SchemaParsing;
 using NUnit.Framework;
 

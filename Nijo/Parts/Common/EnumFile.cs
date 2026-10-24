@@ -1,5 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.Models.StaticEnumModelModules;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -7,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Nijo.StaticEnums;
 
 namespace Nijo.Parts.Common {
     /// <summary>

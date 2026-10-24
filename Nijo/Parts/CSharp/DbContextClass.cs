@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
+using Nijo.DataStructures.IsGenericLookupTable;
 
 namespace Nijo.Parts.CSharp {
     public class DbContextClass : ISharedSourceFile<CodeRenderingContext> {
@@ -31,7 +32,7 @@ namespace Nijo.Parts.CSharp {
             // 汎用参照テーブル用のビュー情報提供メソッド。
             // Nijoの空テンプレートにこのメソッドの使用例を含めるため、
             // スキーマ定義に汎用参照テーブルが存在するか否かにかかわらずメソッドを生成する。
-            ctx.Use<Models.DataModelModules.GenericLookupViewsInfoProvider>();
+            ctx.Use<GenericLookupViewsInfoProvider>();
         }
 
         void ISharedSourceFile<CodeRenderingContext>.Render(CodeRenderingContext ctx) {

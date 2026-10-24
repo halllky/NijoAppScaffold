@@ -1,7 +1,5 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
-using Nijo.Models;
-using Nijo.Models.QueryModelModules;
 using Nijo.Parts.JavaScript;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;

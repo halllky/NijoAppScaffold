@@ -1,7 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.Util.DotnetEx;
-using Nijo.SchemaParsing.RootAggregateValidation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -52,6 +51,8 @@ public class SchemaParseContext {
     private readonly IReadOnlyDictionary<string, IValueMemberType> _valueMemberTypes;
     /// <summary>enum, value-object を除いた値型の一覧</summary>
     public IEnumerable<IValueMemberType> ValueMemberTypes => _rule.ValueMemberTypes;
+    /// <inheritdoc cref="SchemaParseRule.Sections"/>
+    internal IEnumerable<Section> Sections => _rule.Sections;
 
     /// <summary>
     /// nijo.xml のルート要素直下の要素のうち、データ構造が格納されるXML要素の名前。
@@ -470,7 +471,9 @@ public class SchemaParseContext {
         // セクションごとに定められたルート集約単位の検証
         foreach (var root in rootAggregates) {
             if (root.TryGetSection(out var section)) {
-                ValidateRootAggregate(root, section, (el, err) => errorsList.Add((el, err)));
+                _rule.Sections
+                    .Single(s => s.Kind == section)
+                    .Validate(root, this, (el, err) => errorsList.Add((el, err)));
             }
         }
 
@@ -657,25 +660,6 @@ public class SchemaParseContext {
                 }))
             .ToArray();
         return errors.Length == 0;
-    }
-
-    /// <summary>
-    /// セクションごとに定められたルート集約単位の検証を行います
-    /// </summary>
-    private void ValidateRootAggregate(XElement rootAggregateElement, E_Section section, Action<XElement, string> addError) {
-        switch (section) {
-            case E_Section.DataStructures:
-                var isStored = rootAggregateElement.IsStored();
-                var isQueryable = rootAggregateElement.IsQueryable();
-                if (isStored) StoredValidation.Validate(rootAggregateElement, this, addError);
-                else if (isQueryable) QueryableOnlyValidation.Validate(rootAggregateElement, this, addError);
-                else StructureValidation.Validate(rootAggregateElement, this, addError);
-                break;
-            case E_Section.Commands: CommandValidation.Validate(rootAggregateElement, this, addError); break;
-            case E_Section.StaticEnums: StaticEnumValidation.Validate(rootAggregateElement, this, addError); break;
-            case E_Section.Constants: ConstantValidation.Validate(rootAggregateElement, this, addError); break;
-            case E_Section.ValueObjects: break;
-        }
     }
 
     /// <summary>

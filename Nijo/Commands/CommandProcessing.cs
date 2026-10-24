@@ -1,0 +1,149 @@
+using Nijo.CodeGenerating;
+using Nijo.Parts.JavaScript;
+using Nijo.ImmutableSchema;
+using Nijo.Parts.Common;
+using Nijo.Parts.CSharp;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.AspNetCore.Mvc;
+using Nijo.Util.DotnetEx;
+using Nijo.DataStructures.IsQueryable;
+using Nijo.DataStructures.Structure;
+
+namespace Nijo.Commands {
+    /// <summary>
+    /// コマンド処理
+    /// </summary>
+    internal class CommandProcessing {
+        internal CommandProcessing(RootAggregate aggregate) {
+            _rootAggregate = aggregate;
+        }
+        private readonly RootAggregate _rootAggregate;
+
+
+        private const string CONTROLLER_ACTION_EXECUTE = "execute";
+        private string ExecuteMethodName => $"Execute{_rootAggregate.PhysicalName}Async";
+
+
+        #region TypeScript用
+        internal static string RenderTsTypeMap(IEnumerable<RootAggregate> commandModels) {
+
+            var items = commandModels.Select(rootAggregate => {
+                var controller = new AspNetController(rootAggregate);
+
+                return new {
+                    EscapedPhysicalName = rootAggregate.PhysicalName.Replace("'", "\\'"),
+                    Endpoint = controller.GetActionNameForClient(CONTROLLER_ACTION_EXECUTE),
+                    ParamType = QualifyTsTypeName(rootAggregate.GetParameterStructure()) ?? "Record<string, never> // 引数なし",
+                    ReturnType = QualifyTsTypeName(rootAggregate.GetReturnValueStructure()) ?? "Record<string, never> // 戻り値なし",
+                };
+            }).ToArray();
+
+            static string? QualifyTsTypeName(ICreatablePresentationLayerStructure? structure) {
+                return structure == null
+                    ? null
+                    : new TypeScriptAggregateModule(structure.Aggregate).Qualify(structure.TsTypeName);
+            }
+
+            return $$"""
+                /** コマンドの実行エンドポイントの一覧 */
+                export const Endpoint: { [key in {{CommandQueryMappings.COMMAND_MODEL_TYPE}}]: string } = {
+                {{items.SelectTextTemplate(x => $$"""
+                  '{{x.EscapedPhysicalName}}': '{{x.Endpoint}}',
+                """)}}
+                }
+
+                /** コマンドのパラメータ型の一覧 */
+                export interface ParamType {
+                {{items.SelectTextTemplate(x => $$"""
+                  '{{x.EscapedPhysicalName}}': {{x.ParamType}}
+                """)}}
+                }
+
+                /** コマンドのサーバーからの戻り値の型の一覧 */
+                export interface ReturnType {
+                {{items.SelectTextTemplate(x => $$"""
+                  '{{x.EscapedPhysicalName}}': {{x.ReturnType}}
+                """)}}
+                }
+                """;
+        }
+        #endregion TypeScript用
+
+        internal string RenderAspNetCoreControllerAction(CodeRenderingContext ctx) {
+            var paramStructure = _rootAggregate.GetParameterStructure();
+            var returnStructure = _rootAggregate.GetReturnValueStructure();
+
+            var paramMessageType = paramStructure switch {
+                StructureDisplayData structureDisplayData => new StructureDisplayDataMessageContainer(structureDisplayData.Aggregate).CsClassName,
+                DisplayData displayData => new DisplayDataMessageContainer(displayData.Aggregate).CsClassName,
+                SearchCondition.Entry searchCondition => new SearchConditionMessageContainer(searchCondition.EntryAggregate).CsClassName,
+                _ => MessageContainer.SETTER_CLASS,
+            };
+
+            // 戻り値
+            var toActionResultArgs = new List<string>();
+            if (returnStructure == null) {
+                toActionResultArgs.Add("null");
+            } else {
+                toActionResultArgs.Add("context.ReturnValue");
+            }
+            toActionResultArgs.Add("context");
+
+            // Handle の型引数
+            var handleGenericArgs = new List<string>();
+            if (paramStructure != null) {
+                handleGenericArgs.Add(paramStructure.CsClassName);
+            }
+            if (returnStructure != null) {
+                handleGenericArgs.Add(returnStructure.CsClassName);
+            }
+            handleGenericArgs.Add(paramMessageType);
+
+            return $$"""
+                /// <summary>
+                /// {{_rootAggregate.DisplayName}}のWebからの実行用のエンドポイント
+                /// </summary>
+                [HttpPost("{{CONTROLLER_ACTION_EXECUTE}}")]
+                public async Task<IActionResult> Execute() {
+                    return await {{AspNetController.CONTROLLER_HANDLER_FIELD}}.{{AspNetController.HANDLE_METHOD}}<{{handleGenericArgs.Join(", ")}}>(this, _applicationService.{{ExecuteMethodName}});
+                }
+                """;
+        }
+
+        internal string RenderAppSrvMethods(CodeRenderingContext ctx) {
+            var paramStructure = _rootAggregate.GetParameterStructure();
+            var returnStructure = _rootAggregate.GetReturnValueStructure();
+            var paramMessageTypeName = paramStructure switch {
+                StructureDisplayData structureDisplayData => new StructureDisplayDataMessageContainer(structureDisplayData.Aggregate).CsClassName,
+                DisplayData displayData => new DisplayDataMessageContainer(displayData.Aggregate).CsClassName,
+                SearchCondition.Entry searchCondition => new SearchConditionMessageContainer(searchCondition.EntryAggregate).CsClassName,
+                _ => MessageContainer.SETTER_CLASS,
+            };
+
+            var arguments = new List<string>();
+
+            // 第1引数
+            if (paramStructure != null) {
+                arguments.Add($"{paramStructure.CsClassName} param");
+            }
+
+            // 第2引数
+            if (returnStructure == null) {
+                arguments.Add($"{PresentationContext.INTERFACE}<{paramMessageTypeName}> context");
+            } else {
+                arguments.Add($"{PresentationContext.INTERFACE_WITH_RETURN_VALUE}<{returnStructure.CsClassName}, {paramMessageTypeName}> context");
+            }
+
+            return $$"""
+                /// <summary>
+                /// {{_rootAggregate.DisplayName}}処理実行
+                /// </summary>
+                /// <param name="param">処理パラメータ</param>
+                /// <param name="context">実行時コンテキスト。エラーメッセージを保持したり、起動時オプションを持っていたりする。</param>
+                public abstract Task {{ExecuteMethodName}}({{arguments.Join(", ")}});
+                """;
+        }
+    }
+}

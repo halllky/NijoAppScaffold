@@ -1,13 +1,14 @@
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
-using Nijo.Models.CommandModelModules;
-using Nijo.Models.QueryModelModules;
 using Nijo.Parts.JavaScript;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Nijo.Commands;
+using Nijo.DataStructures.IsQueryable;
+using Nijo.DataStructures.Structure;
 
 namespace Nijo.Parts.Common {
     /// <summary>
@@ -513,13 +514,13 @@ namespace Nijo.Parts.Common {
                     /** StructureModel型一覧 */
                     export interface TypeMap {
                     {{structureModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                      '{{agg.PhysicalName}}': {{Q(agg, new Models.StructureModelModules.PlainStructure(agg).TsTypeName)}}
+                      '{{agg.PhysicalName}}': {{Q(agg, new PlainStructure(agg).TsTypeName)}}
                     """)}}
                     }
                     /** StructureModel新規作成関数 */
                     export const create: { [K in {{STRUCTURE_MODEL_TYPE}}]: (() => TypeMap[K]) } = {
                     {{structureModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                      '{{agg.PhysicalName}}': {{Q(agg, new Models.StructureModelModules.PlainStructure(agg).TsNewObjectFunction)}},
+                      '{{agg.PhysicalName}}': {{Q(agg, new PlainStructure(agg).TsNewObjectFunction)}},
                     """)}}
                     }
                     """,
@@ -535,13 +536,13 @@ namespace Nijo.Parts.Common {
                     /** StructureModel型一覧 */
                     export interface TypeMap {
                     {{parameterStructureModels.SelectTextTemplate(agg => $$"""
-                      '{{agg.PhysicalName}}': {{Q(agg, new Models.StructureModelModules.StructureDisplayData(agg).TsTypeName)}}
+                      '{{agg.PhysicalName}}': {{Q(agg, new StructureDisplayData(agg).TsTypeName)}}
                     """)}}
                     }
                     /** StructureModel新規作成関数 */
                     export const create: { [K in {{STRUCTURE_MODEL_DISPLAY_DATA_TYPE}}]: (() => TypeMap[K]) } = {
                     {{parameterStructureModels.SelectTextTemplate(agg => $$"""
-                      '{{agg.PhysicalName}}': {{Q(agg, new Models.StructureModelModules.StructureDisplayData(agg).TsNewObjectFunction)}},
+                      '{{agg.PhysicalName}}': {{Q(agg, new StructureDisplayData(agg).TsNewObjectFunction)}},
                     """)}}
                     }
                     """,
@@ -577,7 +578,7 @@ namespace Nijo.Parts.Common {
                       '{{agg.PhysicalName}}': {{Q(agg, new DeepEqualFunction(new DisplayData(agg)).FunctionName)}},
                     """)}}
                     {{parameterStructureModels.SelectTextTemplate(agg => $$"""
-                      '{{agg.PhysicalName}}': {{Q(agg, new DeepEqualFunction(new Models.StructureModelModules.StructureDisplayData(agg)).FunctionName)}},
+                      '{{agg.PhysicalName}}': {{Q(agg, new DeepEqualFunction(new StructureDisplayData(agg)).FunctionName)}},
                     """)}}
                     }
                     """,

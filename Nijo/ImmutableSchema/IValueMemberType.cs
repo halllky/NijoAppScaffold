@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Nijo.DataStructures.IsQueryable;
 
 namespace Nijo.ImmutableSchema {
     /// <summary>
@@ -111,11 +112,11 @@ namespace Nijo.ImmutableSchema {
     /// </summary>
     public class FilterStatementRenderingContext {
         /// <summary>
-        /// <see cref="Models.QueryModelModules.SearchResult"/> の変数の情報
+        /// <see cref="SearchResult"/> の変数の情報
         /// </summary>
         public required InstanceValueProperty Query { get; init; }
         /// <summary>
-        /// <see cref="Models.QueryModelModules.SearchCondition.Filter"/> の変数の情報
+        /// <see cref="SearchCondition.Filter"/> の変数の情報
         /// </summary>
         public required InstanceValueProperty SearchCondition { get; init; }
         /// <inheritdoc cref="CodeGenerating.CodeRenderingContext"/>

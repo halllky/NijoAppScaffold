@@ -2,13 +2,13 @@ using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
-using Nijo.Models.StaticEnumModelModules;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Nijo.StaticEnums;
 
 namespace Nijo.ValueMemberTypes {
     /// <summary>

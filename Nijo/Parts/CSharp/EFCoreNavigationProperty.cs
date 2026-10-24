@@ -1,13 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
-using Nijo.Models.DataModelModules;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Nijo.DataStructures.IsGenericLookupTable;
+using Nijo.DataStructures.IsQueryable;
 
 namespace Nijo.Parts.CSharp;
 
@@ -35,9 +36,9 @@ internal abstract class NavigationProperty {
         if (root.IsView) {
             // ビューの場合はSearchResultを返す
             if (aggregate is RootAggregate rootAgg) {
-                return new Models.QueryModelModules.SearchResult(rootAgg);
+                return new SearchResult(rootAgg);
             } else if (aggregate is ChildrenAggregate children) {
-                return new Models.QueryModelModules.SearchResult.SearchResultChildrenMember(children, false);
+                return new SearchResult.SearchResultChildrenMember(children, false);
             } else {
                 throw new InvalidOperationException("SearchResultのナビゲーションプロパティの集約が不正です");
             }

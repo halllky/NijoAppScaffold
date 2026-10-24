@@ -51,6 +51,6 @@ description: "Nijo の全コード生成で raw string, SelectTextTemplate, If, 
 
 既存実装例は多いが、主に以下を参照。
 
-* [SaveCommand](../../Nijo/Models/DataModelModules/SaveCommand.cs)
+* [SaveCommand](../../Nijo/DataStructures/IsStored/SaveCommand.cs)
 * [EFCoreEntity](../../Nijo/Parts/CSharp/EFCoreEntity.cs)
-* [SearchCondition](../../Nijo/Models/QueryModelModules/SearchCondition.cs)
+* [SearchCondition](../../Nijo/DataStructures/IsQueryable/SearchCondition.cs)

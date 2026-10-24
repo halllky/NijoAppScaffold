@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Nijo.CodeGenerating;
 using Nijo.ImmutableSchema;
-using Nijo.Models.QueryModelModules;
 using Nijo.Parts.Common;
 using Nijo.Util.DotnetEx;
+using Nijo.DataStructures.IsQueryable;
 
 namespace Nijo.Parts.JavaScript;
 

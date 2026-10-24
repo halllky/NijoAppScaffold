@@ -1,4 +1,6 @@
 using Nijo.Parts.CSharp;
+using Nijo.DataStructures.IsQueryable;
+using Nijo.DataStructures.IsStored;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -85,24 +87,24 @@ namespace Nijo.CodeGenerating {
         public required string DbContextName { get; init; }
 
         /// <summary>DBカラム名（作成者）</summary>
-        [Description($"【省略可能】{nameof(Models.DataModel)}から生成されるRDBMS上の各テーブルに付される、そのレコードの新規登録者を表すカラムの物理名")]
+        [Description($"【省略可能】{IsStoredOption.ATTRIBUTE_NAME}属性が指定されたデータ構造から生成されるRDBMS上の各テーブルに付される、そのレコードの新規登録者を表すカラムの物理名")]
         public required string CreateUserDbColumnName { get; init; }
         /// <summary>DBカラム名（更新者）</summary>
-        [Description($"【省略可能】{nameof(Models.DataModel)}から生成されるRDBMS上の各テーブルに付される、そのレコードの最終更新者を表すカラムの物理名")]
+        [Description($"【省略可能】{IsStoredOption.ATTRIBUTE_NAME}属性が指定されたデータ構造から生成されるRDBMS上の各テーブルに付される、そのレコードの最終更新者を表すカラムの物理名")]
         public required string UpdateUserDbColumnName { get; init; }
         /// <summary>DBカラム名（作成時刻）</summary>
-        [Description($"【省略可能】{nameof(Models.DataModel)}から生成されるRDBMS上の各テーブルに付される、そのレコードの新規登録時刻を表すカラムの物理名")]
+        [Description($"【省略可能】{IsStoredOption.ATTRIBUTE_NAME}属性が指定されたデータ構造から生成されるRDBMS上の各テーブルに付される、そのレコードの新規登録時刻を表すカラムの物理名")]
         public required string CreatedAtDbColumnName { get; init; }
         /// <summary>DBカラム名（更新時刻）</summary>
-        [Description($"【省略可能】 {nameof(Models.DataModel)}から生成されるRDBMS上の各テーブルに付される、そのレコードの最終更新時刻を表すカラムの物理名")]
+        [Description($"【省略可能】{IsStoredOption.ATTRIBUTE_NAME}属性が指定されたデータ構造から生成されるRDBMS上の各テーブルに付される、そのレコードの最終更新時刻を表すカラムの物理名")]
         public required string UpdatedAtDbColumnName { get; init; }
         /// <summary>DBカラム名（楽観排他用バージョン）</summary>
-        [Description($"【省略可能】 {nameof(Models.DataModel)}から生成されるRDBMS上の集約ルートテーブルに付される、楽観排他制御用のバージョンのカラムの物理名")]
+        [Description($"【省略可能】{IsStoredOption.ATTRIBUTE_NAME}属性が指定されたデータ構造から生成されるRDBMS上の集約ルートテーブルに付される、楽観排他制御用のバージョンのカラムの物理名")]
         public required string VersionDbColumnName { get; init; }
 
         /// <summary>参照先の子孫要素を含めたデータを表示するかどうか</summary>
         [Description(
-            $"【省略可能】{nameof(Models.QueryModel)}から生成される画面表示用オブジェクトのうち、外部参照の、親と1対多の関係にある子孫要素を表示するかどうか。" +
+            $"【省略可能】{IsQueryableOption.ATTRIBUTE_NAME}属性が指定されたデータ構造から生成される画面表示用オブジェクトのうち、外部参照の、親と1対多の関係にある子孫要素を表示するかどうか。" +
             $"SQLが複雑になりすぎて性能に問題が出たり、EFCoreがそのようなクエリを生成できなかったりするため、既定では表示しないようにしている。")]
         public required bool GenerateRefToChildrenDisplayData { get; init; }
 
