@@ -112,6 +112,9 @@ export function useFieldArrayForEditableGrid2<
     subscribe,
     onRowsChange,
     columns,
+    // 改行のあるセルが描画範囲外に出ると横スクロールしたときに
+    // 行の縦幅が変わって見づらいのでその行のカラムはすべて表示する
+    columnOverscan: Infinity,
   }
 
   return {
