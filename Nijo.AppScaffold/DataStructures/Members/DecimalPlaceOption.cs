@@ -18,7 +18,7 @@ internal sealed class DecimalPlaceOption : NodeOption {
         """;
 
     public override bool IsAvailable(NodeOptionTarget target) {
-        return (target.IsStored || target.IsQueryable || target.Section == E_Section.Commands)
+        return (target.IsStored || target.IsQueryable)
             && target.NodeType == E_NodeType.ValueMember;
     }
 

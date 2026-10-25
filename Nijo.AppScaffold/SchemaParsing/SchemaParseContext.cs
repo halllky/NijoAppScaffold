@@ -88,18 +88,6 @@ public class SchemaParseContext {
     internal const string SECTION_GENERIC_LOOKUP_TABLES = "GenericLookupTableCategories";
 
     /// <summary>
-    /// nijo.xml のルート要素直下のセクション名を、XMLに記載される順序で列挙する。
-    /// </summary>
-    internal static IEnumerable<string> GetAllSectionNames() {
-        yield return SECTION_DATA_STRUCTURES;
-        yield return SECTION_COMMANDS;
-        yield return SECTION_STATIC_ENUMS;
-        yield return SECTION_VALUE_OBJECTS;
-        yield return SECTION_CONSTANTS;
-        yield return SECTION_CUSTOM_ATTRIBUTES;
-    }
-
-    /// <summary>
     /// 要素を一意に識別するための属性名。
     /// GUI上で新たに作成されて以降決して変更されない前提。
     /// </summary>
@@ -109,13 +97,6 @@ public class SchemaParseContext {
     internal const string NODE_TYPE_CHILD = "child";
     internal const string NODE_TYPE_CHILDREN = "children";
     internal const string NODE_TYPE_REFTO = "ref-to";
-
-    internal sealed class OriginalTypeAnnotation {
-        internal OriginalTypeAnnotation(string typeName) {
-            TypeName = typeName;
-        }
-        internal string TypeName { get; }
-    }
 
     /// <summary>
     /// 物理名。スキーマ内での物理名の衝突を考慮した値を返す。
@@ -204,7 +185,6 @@ public class SchemaParseContext {
 
 
     #region オプション属性
-    private const string IS_DYNAMIC_ENUM_MODEL = "dynamic-enum";
     /// <summary>
     /// XML要素に定義されているオプション属性を返します。
     /// </summary>
@@ -380,15 +360,6 @@ public class SchemaParseContext {
 
 
     #region 検証
-    /// <summary>
-    /// <see cref="TryBuildSchema"/> の仕様をレンダリングする。ドキュメント用。
-    /// </summary>
-    internal static string RenderValidationSpecificationMarkdown() {
-        return $$"""
-            - 複数のルート集約の間で物理名が重複していてはいけません。
-            - 同じ親に属するメンバーで同じ物理名が重複していてはいけません。
-            """;
-    }
     /// <summary>
     /// XMLドキュメントがスキーマ定義として不正な状態を持たないかを検証し、
     /// 検証に成功した場合はアプリケーションスキーマのインスタンスを返します。

@@ -82,7 +82,7 @@ public class AttributeDef {
                 .EnumerateAll()
                 .Where(opt.IsAvailable)
                 .Select(target => new AvailableElement {
-                    Section = ToEditingProjectSectionName(target.Section),
+                    Section = EditingProject.ToJsonPropertyName(target.Section),
                     IsStored = target.IsStored,
                     IsQueryable = target.IsQueryable,
                     NodeType = target.NodeType.ToString(),
@@ -99,13 +99,4 @@ public class AttributeDef {
             };
         }).ToList();
     }
-
-    private static string ToEditingProjectSectionName(E_Section section) => section switch {
-        E_Section.DataStructures => "dataStructures",
-        E_Section.Commands => "commands",
-        E_Section.StaticEnums => "staticEnums",
-        E_Section.ValueObjects => "valueObjects",
-        E_Section.Constants => "constants",
-        _ => throw new System.ArgumentOutOfRangeException(nameof(section)),
-    };
 }

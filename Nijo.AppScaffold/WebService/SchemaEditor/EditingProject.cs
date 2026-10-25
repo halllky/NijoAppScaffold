@@ -21,15 +21,15 @@ namespace Nijo.WebService.SchemaEditor;
 /// ファイル仕様変更と画面仕様変更の両方に強くする。
 /// </summary>
 public class EditingProject {
-    [JsonPropertyName("dataStructures")]
+    [JsonPropertyName(JSON_DATA_STRUCTURES)]
     public List<EditingRootAggregate> DataStructures { get; set; } = [];
-    [JsonPropertyName("commands")]
+    [JsonPropertyName(JSON_COMMANDS)]
     public List<EditingRootAggregate> Commands { get; set; } = [];
-    [JsonPropertyName("staticEnums")]
+    [JsonPropertyName(JSON_STATIC_ENUMS)]
     public List<EditingRootAggregate> StaticEnums { get; set; } = [];
-    [JsonPropertyName("valueObjects")]
+    [JsonPropertyName(JSON_VALUE_OBJECTS)]
     public List<EditingRootAggregate> ValueObjects { get; set; } = [];
-    [JsonPropertyName("constants")]
+    [JsonPropertyName(JSON_CONSTANTS)]
     public List<EditingRootAggregate> Constants { get; set; } = [];
     [JsonPropertyName("customAttributes")]
     public List<NijoXmlCustomAttribute> CustomAttributes { get; set; } = [];
@@ -42,6 +42,35 @@ public class EditingProject {
     /// <summary>生成後アプリのデバッグ起動設定（nijo.preview.jsonの内容）</summary>
     [JsonPropertyName("previewSetting")]
     public PreviewSetting PreviewSetting { get; set; } = new();
+
+    private const string JSON_DATA_STRUCTURES = "dataStructures";
+    private const string JSON_COMMANDS = "commands";
+    private const string JSON_STATIC_ENUMS = "staticEnums";
+    private const string JSON_VALUE_OBJECTS = "valueObjects";
+    private const string JSON_CONSTANTS = "constants";
+
+    /// <summary>
+    /// セクションに定義されたルート集約が格納されるプロパティの、JSON上での名前を返します。
+    /// </summary>
+    internal static string ToJsonPropertyName(E_Section section) => section switch {
+        E_Section.DataStructures => JSON_DATA_STRUCTURES,
+        E_Section.Commands => JSON_COMMANDS,
+        E_Section.StaticEnums => JSON_STATIC_ENUMS,
+        E_Section.ValueObjects => JSON_VALUE_OBJECTS,
+        E_Section.Constants => JSON_CONSTANTS,
+        _ => throw new ArgumentOutOfRangeException(nameof(section)),
+    };
+    /// <summary>
+    /// セクションに定義されたルート集約の一覧を返します。
+    /// </summary>
+    private List<EditingRootAggregate> GetRootAggregates(E_Section section) => section switch {
+        E_Section.DataStructures => DataStructures,
+        E_Section.Commands => Commands,
+        E_Section.StaticEnums => StaticEnums,
+        E_Section.ValueObjects => ValueObjects,
+        E_Section.Constants => Constants,
+        _ => throw new ArgumentOutOfRangeException(nameof(section)),
+    };
 
     /// <summary>
     /// nijo.xml から <see cref="EditingProject"/> を作る。
@@ -60,8 +89,8 @@ public class EditingProject {
             .Concat(xDocument.Root?.Element(SchemaParseContext.SECTION_VALUE_OBJECTS)?.Elements().Select(el => el.Name.LocalName) ?? [])
             .ToHashSet();
 
-        List<EditingRootAggregate> ParseSection(string sectionName) {
-            return xDocument.Root?.Element(sectionName)?.Elements()
+        List<EditingRootAggregate> ParseSection(E_Section section) {
+            return xDocument.Root?.Element(section.ToXmlElementName())?.Elements()
                 .Select(el => EditingRootAggregate.FromXElement(
                     el,
                     attributeTypes,
@@ -70,15 +99,14 @@ public class EditingProject {
                 .ToList() ?? [];
         }
 
-        return new EditingProject {
-            DataStructures = ParseSection(SchemaParseContext.SECTION_DATA_STRUCTURES),
-            Commands = ParseSection(SchemaParseContext.SECTION_COMMANDS),
-            StaticEnums = ParseSection(SchemaParseContext.SECTION_STATIC_ENUMS),
-            ValueObjects = ParseSection(SchemaParseContext.SECTION_VALUE_OBJECTS),
-            Constants = ParseSection(SchemaParseContext.SECTION_CONSTANTS),
+        var project = new EditingProject {
             CustomAttributes = customAttributes,
             ProjectOptions = GeneratedProjectOptions.Parse(xDocument, false).GetCurrentValues(),
         };
+        foreach (var section in Enum.GetValues<E_Section>()) {
+            project.GetRootAggregates(section).AddRange(ParseSection(section));
+        }
+        return project;
     }
 
     /// <summary>
@@ -103,7 +131,10 @@ public class EditingProject {
         var attributeTypes = new EditingAttributeTypes(rule, CustomAttributes);
 
         var sections = new Dictionary<string, XElement>();
-        foreach (var sectionName in SchemaParseContext.GetAllSectionNames()) {
+        var sectionNames = Enum.GetValues<E_Section>()
+            .Select(section => section.ToXmlElementName())
+            .Append(SchemaParseContext.SECTION_CUSTOM_ATTRIBUTES);
+        foreach (var sectionName in sectionNames) {
             var section = new XElement(sectionName);
             sections[sectionName] = section;
             xDocument.Root.Add(section);
@@ -130,11 +161,9 @@ public class EditingProject {
                 }
             }
         }
-        AddRootAggregates(SchemaParseContext.SECTION_DATA_STRUCTURES, DataStructures);
-        AddRootAggregates(SchemaParseContext.SECTION_COMMANDS, Commands);
-        AddRootAggregates(SchemaParseContext.SECTION_STATIC_ENUMS, StaticEnums);
-        AddRootAggregates(SchemaParseContext.SECTION_VALUE_OBJECTS, ValueObjects);
-        AddRootAggregates(SchemaParseContext.SECTION_CONSTANTS, Constants);
+        foreach (var section in Enum.GetValues<E_Section>()) {
+            AddRootAggregates(section.ToXmlElementName(), GetRootAggregates(section));
+        }
 
         // カスタム属性
         var customAttributesSection = sections[SchemaParseContext.SECTION_CUSTOM_ATTRIBUTES];

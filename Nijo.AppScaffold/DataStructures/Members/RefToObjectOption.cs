@@ -25,8 +25,7 @@ internal sealed class RefToObjectOption : NodeOption {
         """;
 
     public override bool IsAvailable(NodeOptionTarget target) {
-        return (target.Section == E_Section.Commands || target.IsStructure)
-            && target.NodeType == E_NodeType.Ref;
+        return target.IsStructure && target.NodeType == E_NodeType.Ref;
     }
 
     public override void Validate(NodeOptionValidateContext ctx) {

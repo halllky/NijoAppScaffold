@@ -30,8 +30,6 @@ public enum E_NodeType {
     /// <summary>外部参照（ref-to）</summary>
     Ref = AggregateMember | RelationMember | 1 << 7,
 
-    /// <summary>静的区分の種類</summary>
-    StaticEnumType = RootAggregate | 1 << 8,
     /// <summary>静的区分の値</summary>
     StaticEnumValue = 1 << 9,
 
