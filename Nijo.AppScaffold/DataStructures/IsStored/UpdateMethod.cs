@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures;
 
 namespace Nijo.DataStructures.IsStored {
     /// <summary>

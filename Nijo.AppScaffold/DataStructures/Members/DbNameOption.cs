@@ -1,6 +1,7 @@
 using Nijo.DataStructures.IsQueryable;
 using Nijo.SchemaParsing;
 using System;
+using System.Xml.Linq;
 using System.Linq;
 
 namespace Nijo.DataStructures.Members;
@@ -34,5 +35,12 @@ internal sealed class DbNameOption : NodeOption {
 
         // 改行不可
         if (ctx.Value.Contains('\n')) ctx.AddError("改行を含めることはできません。");
+    }
+
+    /// <summary>
+    /// データベースのテーブル名またはカラム名。この属性が指定されていない場合は物理名をそのまま用いる。
+    /// </summary>
+    internal static string GetDbName(XElement xElement) {
+        return xElement.Attribute(ATTRIBUTE_NAME)?.Value ?? xElement.Name.LocalName;
     }
 }

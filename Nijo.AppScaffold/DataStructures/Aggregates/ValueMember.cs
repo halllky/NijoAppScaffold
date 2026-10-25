@@ -1,6 +1,5 @@
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
-using Nijo.CodeGenerating;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +11,8 @@ using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.IsStored;
 using Nijo.DataStructures.Members;
 using Nijo.DataStructures.ValueMemberTypes;
+using Nijo.DataStructures;
+using Nijo.CodeGenerating;
 
 namespace Nijo.DataStructures.Aggregates {
     /// <summary>
@@ -30,7 +31,7 @@ namespace Nijo.DataStructures.Aggregates {
 
         public string PhysicalName => _ctx.GetPhysicalName(XElement);
         public string DisplayName => _ctx.GetDisplayName(XElement);
-        public string DbName => XElement.GetDbName();
+        public string DbName => DbNameOption.GetDbName(XElement);
         public decimal Order => XElement.ElementsBeforeSelf().Count();
 
         public AggregateBase Owner {

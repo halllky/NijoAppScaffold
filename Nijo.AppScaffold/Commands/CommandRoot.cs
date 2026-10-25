@@ -1,4 +1,3 @@
-using Nijo.CodeGenerating;
 using Nijo.DataStructures.Structure;
 using Nijo.ImmutableSchema;
 using Nijo.SchemaParsing;
@@ -7,6 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures;
+using Nijo.CodeGenerating;
 
 namespace Nijo.Commands;
 

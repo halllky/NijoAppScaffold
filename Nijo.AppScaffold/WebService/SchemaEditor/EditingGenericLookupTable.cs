@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using System.Xml.Linq;
 using Nijo.SchemaParsing;
 using Nijo.SchemaParsing.CommonOptions;
+using Nijo.DataStructures.IsGenericLookupTable;
 
 namespace Nijo.WebService.SchemaEditor;
 

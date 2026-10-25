@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Nijo.DataStructures.IsStored;
 using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures;
 
 namespace Nijo.DataStructures.UseSoftDelete {
     /// <summary>

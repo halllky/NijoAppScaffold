@@ -1,8 +1,9 @@
 
 using System.Collections.Generic;
 using Nijo.DataStructures.Aggregates;
+using Nijo.CodeGenerating;
 
-namespace Nijo.CodeGenerating;
+namespace Nijo.DataStructures;
 
 /// <summary>
 /// C# と TypeScript の両方で登場する構造体。

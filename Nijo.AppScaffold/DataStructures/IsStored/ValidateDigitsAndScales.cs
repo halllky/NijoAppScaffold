@@ -2,6 +2,7 @@ using Nijo.CodeGenerating;
 using Nijo.Parts.Common;
 using System;
 using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures;
 
 namespace Nijo.DataStructures.IsStored {
     /// <summary>

@@ -58,7 +58,7 @@ internal sealed class DataStructuresSection : Section {
             .Where(root => root.IsStored())
             .SelectMany(root => root.DescendantsAndSelf())
             .Where(el => context.GetNodeType(el).HasFlag(E_NodeType.Aggregate))
-            .GroupBy(el => el.GetDbName());
+            .GroupBy(el => DbNameOption.GetDbName(el));
         foreach (var group in tableNameGroups) {
             if (group.Count() == 1) continue;
             foreach (var el in group) {

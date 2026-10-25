@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Nijo.CodeGenerating;
 using Nijo.Parts.JavaScript;
-using Nijo.SchemaParsing;
 using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.Structure;
 using Nijo.DataStructures.Aggregates;
 using Nijo.DataStructures.ValueMemberTypes;
+using Nijo.SchemaParsing;
 
 namespace Nijo.DataStructures;
 

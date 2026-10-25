@@ -9,6 +9,7 @@ using Nijo.Util.DotnetEx;
 using Microsoft.AspNetCore.Mvc;
 using System.Xml.Linq;
 using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures;
 
 namespace Nijo.DataStructures.IsQueryable {
     internal class SearchProcessingRefs {

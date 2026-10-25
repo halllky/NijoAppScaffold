@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Nijo.DataStructures.IsQueryable;
+using Nijo.DataStructures;
 
 namespace Nijo.DataStructures.ValueMemberTypes {
     /// <summary>

@@ -1,12 +1,13 @@
 using Nijo.Util.DotnetEx;
-using Nijo.CodeGenerating;
-using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Nijo.DataStructures;
+using Nijo.CodeGenerating;
+using Nijo.SchemaParsing;
 
 namespace Nijo.DataStructures.Aggregates {
     /// <summary>

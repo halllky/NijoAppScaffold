@@ -4,8 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Nijo.DataStructures.ValueMemberTypes;
+using Nijo.CodeGenerating;
 
-namespace Nijo.CodeGenerating;
+namespace Nijo.DataStructures;
 
 // ------------------------------------------
 // メタデータの抽象度の世界（EFCoreEntityやDisplayDataはこのレベル）

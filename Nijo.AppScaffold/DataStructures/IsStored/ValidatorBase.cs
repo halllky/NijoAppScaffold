@@ -8,6 +8,7 @@ using System.Collections;
 using System.Linq;
 using System;
 using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures;
 
 namespace Nijo.DataStructures.IsStored;
 

@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures;
 
 namespace Nijo.DataStructures.Structure {
     /// <summary>

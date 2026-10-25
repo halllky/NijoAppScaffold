@@ -1,3 +1,4 @@
+using Nijo.ImmutableSchema;
 using Nijo.CodeGenerating;
 using Nijo.Util.DotnetEx;
 using System;
@@ -45,7 +46,7 @@ namespace Nijo.DataStructures.IsStored {
 
         private SourceFile Render(CodeRenderingContext ctx) {
             var efCoreEntitiesOrderByDataFlow = _efCoreEntities
-                .OrderBy(e => e.Aggregate.GetRoot().GetIndexOfDataFlow(ctx))
+                .OrderBy(e => e.Aggregate.GetRoot().GetIndexOfDataFlow(ctx.Schema))
                 .ThenBy(e => e.Aggregate.GetOrderInTree())
                 .ToArray();
 

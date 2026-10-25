@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Nijo.Util.DotnetEx;
 using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.Structure;
+using Nijo.DataStructures;
 
 namespace Nijo.Commands {
     /// <summary>

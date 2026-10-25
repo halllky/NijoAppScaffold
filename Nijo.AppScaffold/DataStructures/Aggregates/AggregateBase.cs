@@ -1,4 +1,3 @@
-using Nijo.CodeGenerating;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
@@ -13,6 +12,9 @@ using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.IsStored;
 using Nijo.DataStructures.UseSoftDelete;
 using Nijo.ImmutableSchema;
+using Nijo.DataStructures;
+using Nijo.CodeGenerating;
+using Nijo.DataStructures.Members;
 
 namespace Nijo.DataStructures.Aggregates {
     /// <summary>
@@ -44,7 +46,7 @@ namespace Nijo.DataStructures.Aggregates {
         /// <summary>
         /// データベーステーブル名
         /// </summary>
-        public string DbName => XElement.GetDbName();
+        public string DbName => DbNameOption.GetDbName(XElement);
         /// <summary>
         /// ラテン語名
         /// </summary>

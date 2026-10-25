@@ -5,8 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Nijo.SchemaParsing;
 
-namespace Nijo.SchemaParsing {
+namespace Nijo.StaticEnums {
     /// <summary>
     /// スキーマ定義の列挙体定義を解釈する。
     /// スキーマ編集時とコード自動生成時の両方から利用される。

@@ -1,11 +1,11 @@
-using Nijo.CodeGenerating;
-using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Nijo.CodeGenerating;
+using Nijo.SchemaParsing;
 
 namespace Nijo.StaticEnums {
     /// <summary>

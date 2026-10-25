@@ -9,9 +9,8 @@
 - **`GeneratedProjectOptions`**: 生成されるプロジェクトの設定オプション
 - **`CodeRenderingOptions`**: コード生成処理のオプション
 
-### ソースコード内部に登場する変数の抽象
-- **`Instance API`**: 生成されるソースコード上のインスタンス構造を抽象化
-- **`IPresentationLayerStructure`**: C#とTypeScriptの両方に登場する構造体
-- **`ISchemaPathNode`**: スキーマ定義のパス構造を管理するインターフェース
-- **`SchemaNodeIdentity`**: マッピング処理でスキーマノードを一意に識別
+### ソースコードのレンダリングの補助
+- **`XmlCommentRendering`**: nijo.xml に書かれたコメントを、生成されるソースコード上のコメントとしてレンダリングする
+
+データ構造から生成されるソースコード上のインスタンス構造の抽象（Instance API、IPresentationLayerStructure、ISchemaPathNode、SchemaNodeIdentity）は [DataStructures](../DataStructures/) にあります。
 

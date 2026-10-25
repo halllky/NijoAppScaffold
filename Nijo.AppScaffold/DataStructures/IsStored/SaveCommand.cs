@@ -500,7 +500,7 @@ namespace Nijo.DataStructures.IsStored {
     }
 }
 
-namespace Nijo.CodeGenerating {
+namespace Nijo.DataStructures {
     using Nijo.DataStructures.IsStored;
     partial class SchemaPathNodeExtensions {
 

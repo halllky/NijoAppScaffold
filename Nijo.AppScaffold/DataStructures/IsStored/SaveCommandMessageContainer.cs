@@ -1,4 +1,3 @@
-using Nijo.CodeGenerating;
 using Nijo.Parts.CSharp;
 using System;
 using System.Collections.Generic;
@@ -6,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Nijo.DataStructures.Aggregates;
+using Nijo.CodeGenerating;
 
 namespace Nijo.DataStructures.IsStored {
     internal class SaveCommandMessageContainer : MessageContainer.Setter {
@@ -100,7 +100,7 @@ namespace Nijo.DataStructures.IsStored {
     }
 }
 
-namespace Nijo.CodeGenerating {
+namespace Nijo.DataStructures {
     using Nijo.DataStructures.IsStored;
 
     partial class SchemaPathNodeExtensions {

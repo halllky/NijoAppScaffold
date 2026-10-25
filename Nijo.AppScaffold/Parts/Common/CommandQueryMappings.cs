@@ -79,7 +79,7 @@ namespace Nijo.Parts.Common {
         }
 
         private SourceFile RenderCSharp(CodeRenderingContext ctx) {
-            var values = _queryModels.Cast<ISectionRoot>().Concat(_commandModels).OrderByDataFlow(ctx);
+            var values = _queryModels.Cast<ISectionRoot>().Concat(_commandModels).OrderByDataFlow(ctx.Schema);
 
             return new SourceFile {
                 FileName = "E_CommandQueryType.cs",
@@ -138,15 +138,15 @@ namespace Nijo.Parts.Common {
 
         private IEnumerable<SourceFile> RenderTypeScript(CodeRenderingContext ctx) {
 
-            var dataModelsOrderByDataFlow = _dataModels.OrderByDataFlow(ctx).ToArray();
-            var queryModelsOrderByDataFlow = _queryModels.OrderByDataFlow(ctx).ToArray();
-            var commandModelsOrderByDataFlow = _commandModels.OrderByDataFlow(ctx).ToArray();
-            var structureModelsOrderByDataFlow = _structureModels.OrderByDataFlow(ctx).ToArray();
+            var dataModelsOrderByDataFlow = _dataModels.OrderByDataFlow(ctx.Schema).ToArray();
+            var queryModelsOrderByDataFlow = _queryModels.OrderByDataFlow(ctx.Schema).ToArray();
+            var commandModelsOrderByDataFlow = _commandModels.OrderByDataFlow(ctx.Schema).ToArray();
+            var structureModelsOrderByDataFlow = _structureModels.OrderByDataFlow(ctx.Schema).ToArray();
 
             // 検索可能なデータ構造のルート集約だけでなくツリー全部
             var queryModelAggregateTypes = queryModelsOrderByDataFlow
                 .SelectMany(x => x.EnumerateThisAndDescendants())
-                .OrderBy(x => x.GetRoot().GetIndexOfDataFlow(ctx))
+                .OrderBy(x => x.GetRoot().GetIndexOfDataFlow(ctx.Schema))
                 .ThenBy(x => x.GetOrderInTree())
                 .ToArray();
 

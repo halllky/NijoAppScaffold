@@ -1,12 +1,12 @@
-using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Nijo.SchemaParsing;
 
-namespace Nijo.CodeGenerating {
+namespace Nijo.DataStructures {
     /// <summary>
     /// 辿ってきた経路のノードになりうるオブジェクト
     /// </summary>

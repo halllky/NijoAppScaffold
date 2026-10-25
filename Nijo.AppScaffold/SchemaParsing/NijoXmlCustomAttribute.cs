@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Xml.Linq;
-using Nijo.CodeGenerating;
 using Nijo.Util.DotnetEx;
+using Nijo.CodeGenerating;
 
 namespace Nijo.SchemaParsing;
 

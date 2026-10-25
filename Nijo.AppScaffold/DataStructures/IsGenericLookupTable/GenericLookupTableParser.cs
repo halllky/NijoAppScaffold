@@ -1,11 +1,13 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Nijo.DataStructures.Aggregates;
+using Nijo.SchemaParsing;
 
-namespace Nijo.SchemaParsing;
+namespace Nijo.DataStructures.IsGenericLookupTable;
 
 /// <summary>
 /// 汎用参照テーブルのスキーマ定義を解釈するクラス。
@@ -42,21 +44,56 @@ internal class GenericLookupTableParser {
     }
 
     /// <summary>
-    /// nijo.xml の <see cref="SECTION_NAME"/> セクションの内容が正しいか検査します。
-    /// 結果はエラーメッセージとしてGUI側に構造体などで返します。詳細は <see cref="SchemaParseContext"/> のバリデーションの仕様に従います。
-    /// </summary>
-    internal void ValidateCategoriesSection(/* TODO */) {
-        throw new NotImplementedException(); // TODO
-    }
-
-    /// <summary>
     /// 指定の永続化されるデータ構造のルート集約に対応する <see cref="SECTION_NAME"/> セクションの内容を解釈して、汎用参照テーブルのカテゴリの一覧を返します。
     /// </summary>
     internal IEnumerable<GenericLookupTableCategory> GetCategoriesOf(RootAggregate rootAggregate) {
         var uniqueId = rootAggregate.XElement.Attribute(SchemaParseContext.ATTR_UNIQUE_ID)?.Value;
         if (string.IsNullOrEmpty(uniqueId)) return Array.Empty<GenericLookupTableCategory>();
 
-        return _ctx.GetGenericLookupTableCategories(uniqueId);
+        var categoriesByUniqueId = CategoriesCache.GetValue(_ctx, ParseCategories);
+        return categoriesByUniqueId.GetValueOrDefault(uniqueId) ?? [];
+    }
+
+    /// <summary>
+    /// <see cref="SECTION_NAME"/> セクションの解釈結果。
+    /// 汎用参照テーブルのコード生成の中で何度も参照されるため、スキーマ定義（<see cref="SchemaParseContext"/>）ごとに1回だけ解釈する。
+    /// </summary>
+    private static readonly ConditionalWeakTable<SchemaParseContext, IReadOnlyDictionary<string, IReadOnlyList<GenericLookupTableCategory>>> CategoriesCache = new();
+
+    private static IReadOnlyDictionary<string, IReadOnlyList<GenericLookupTableCategory>> ParseCategories(SchemaParseContext ctx) {
+        var categoriesByUniqueId = new Dictionary<string, IReadOnlyList<GenericLookupTableCategory>>(StringComparer.Ordinal);
+        var section = ctx.Document.Root?.Element(SECTION_NAME);
+        if (section == null) return categoriesByUniqueId;
+
+        foreach (var categoriesElement in section.Elements(CATEGORIES)) {
+            var uniqueId = categoriesElement.Attribute(FOR)?.Value;
+            if (string.IsNullOrEmpty(uniqueId)) continue;
+
+            var categories = new List<GenericLookupTableCategory>();
+            foreach (var categoryElement in categoriesElement.Elements()) {
+                var keys = new List<GenericLookupTableCategory.HardCodedKeyEntry>();
+                foreach (var keyElement in categoryElement.Elements(KEY)) {
+                    var keyFor = keyElement.Attribute(FOR)?.Value;
+                    var keyValue = keyElement.Attribute(KEY_VALUE)?.Value;
+                    if (!string.IsNullOrEmpty(keyFor) && keyValue != null) {
+                        keys.Add(new GenericLookupTableCategory.HardCodedKeyEntry {
+                            UniqueId = keyFor,
+                            Value = keyValue,
+                        });
+                    }
+                }
+
+                categories.Add(new GenericLookupTableCategory {
+                    Name = categoryElement.Name.LocalName,
+                    DisplayName = ctx.GetDisplayName(categoryElement),
+                    HardCodedKeys = keys,
+                });
+            }
+
+            categoriesByUniqueId.TryAdd(uniqueId, categories);
+        }
+
+        return categoriesByUniqueId;
     }
 
     /// <summary>
