@@ -17,14 +17,14 @@ namespace Nijo.StaticEnums {
         internal const string TS_TYPE_MAP = "EnumTypeMap";
         internal const string TS_VALUE_MAP = "EnumValueMap";
 
-        private readonly List<StaticEnumDef> _staticEnumDefs = [];
+        private readonly List<StaticEnumRoot> _staticEnums = [];
         private readonly List<string> _csSourceCode = [];
         private readonly List<string> _tsSourceCode = [];
         private readonly Lock _lock = new();
 
-        internal EnumFile Register(StaticEnumDef staticEnumDef) {
+        internal EnumFile Register(StaticEnumRoot staticEnum) {
             lock (_lock) {
-                _staticEnumDefs.Add(staticEnumDef);
+                _staticEnums.Add(staticEnum);
                 return this;
             }
         }
@@ -64,7 +64,7 @@ namespace Nijo.StaticEnums {
             });
 
             ctx.ReactProject(dir => {
-                var defOrderByName = _staticEnumDefs.OrderBy(def => def.TsTypeName).ToArray();
+                var defOrderByName = _staticEnums.OrderBy(def => def.TsTypeName).ToArray();
 
                 dir.Generate(new SourceFile {
                     FileName = TS_FILENAME,

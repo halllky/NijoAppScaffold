@@ -12,15 +12,13 @@ namespace Nijo.StaticEnums {
     /// </summary>
     internal class StaticEnumSearchCondition {
 
-        internal StaticEnumSearchCondition(StaticEnumDef staticEnum, EnumDefParser parser) {
+        internal StaticEnumSearchCondition(StaticEnumRoot staticEnum) {
             _staticEnum = staticEnum;
-            _parser = parser;
         }
 
-        private readonly StaticEnumDef _staticEnum;
-        private readonly EnumDefParser _parser;
-        internal string CsClassName => _parser.CsSearchConditionClassName;
-        internal string TsTypeName => _parser.CsSearchConditionClassName;
+        private readonly StaticEnumRoot _staticEnum;
+        internal string CsClassName => _staticEnum.CsSearchConditionClassName;
+        internal string TsTypeName => _staticEnum.CsSearchConditionClassName;
 
         internal const string ANY_CHECKED = "AnyChecked";
 

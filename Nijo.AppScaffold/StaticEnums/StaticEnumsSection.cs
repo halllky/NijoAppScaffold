@@ -40,16 +40,14 @@ internal sealed class StaticEnumsSection : Section {
 
     private static void RenderRootAggregate(CodeRenderingContext ctx, StaticEnumRoot rootAggregate) {
         var enumFile = ctx.Use<EnumFile>();
-        var parser = new EnumDefParser(rootAggregate.XElement, ctx.Schema);
 
         // データ型: enum, リテラル型定義
-        var staticEnum = new StaticEnumDef(parser, rootAggregate);
-        enumFile.Register(staticEnum);
-        enumFile.AddCSharpSource(staticEnum.RenderCSharp());
-        enumFile.AddTypeScriptSource(staticEnum.RenderTypeScript());
+        enumFile.Register(rootAggregate);
+        enumFile.AddCSharpSource(rootAggregate.RenderCSharp());
+        enumFile.AddTypeScriptSource(rootAggregate.RenderTypeScript());
 
         // データ型: 検索条件オブジェクト
-        var searchCondition = new StaticEnumSearchCondition(staticEnum, parser);
+        var searchCondition = new StaticEnumSearchCondition(rootAggregate);
         enumFile.AddCSharpSource(searchCondition.RenderCSharp());
         enumFile.AddTypeScriptSource(searchCondition.RenderTypeScript());
     }

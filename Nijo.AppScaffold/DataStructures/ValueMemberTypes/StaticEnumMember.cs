@@ -17,18 +17,17 @@ namespace Nijo.DataStructures.ValueMemberTypes {
 
         internal StaticEnumMember(XElement el, SchemaParseContext ctx) {
             _xElement = el;
-            _parser = new EnumDefParser(el, ctx);
+            _staticEnum = new StaticEnumRoot(el, ctx);
         }
 
         private readonly XElement _xElement;
-        /// <inheritdoc cref="EnumDefParser"/>
-        private readonly EnumDefParser _parser;
+        private readonly StaticEnumRoot _staticEnum;
 
         public string TypePhysicalName => _xElement.Name.LocalName;
         public string SchemaTypeName => _xElement.Name.LocalName;
-        public string CsDomainTypeName => _parser.CsEnumName;
-        public string CsPrimitiveTypeName => _parser.CsEnumName;
-        public string TsTypeName => $"EnumDefs.{_parser.TsTypeName}";
+        public string CsDomainTypeName => _staticEnum.CsEnumName;
+        public string CsPrimitiveTypeName => _staticEnum.CsEnumName;
+        public string TsTypeName => $"EnumDefs.{_staticEnum.TsTypeName}";
         public string DisplayName => "列挙型";
 
         string IValueMemberType.RenderSpecificationMarkdown() {
@@ -42,9 +41,9 @@ namespace Nijo.DataStructures.ValueMemberTypes {
         }
 
         ValueMemberSearchBehavior? IValueMemberType.SearchBehavior => new() {
-            FilterCsTypeName = _parser.CsSearchConditionClassName,
-            FilterTsTypeName = _parser.RenderTsSearchConditionType(),
-            RenderTsNewObjectFunctionValue = () => _parser.RenderTsSearchConditionInitializer(),
+            FilterCsTypeName = _staticEnum.CsSearchConditionClassName,
+            FilterTsTypeName = _staticEnum.RenderTsSearchConditionType(),
+            RenderTsNewObjectFunctionValue = () => _staticEnum.RenderTsSearchConditionInitializer(),
             RenderFiltering = ctx => {
                 var query = ctx.Query.Root.Name;
                 var fullpathNullable = ctx.SearchCondition.GetJoinedPathFromInstance(E_CsTs.CSharp, "?.");
@@ -56,7 +55,7 @@ namespace Nijo.DataStructures.ValueMemberTypes {
                 return $$"""
                     if ({{fullpathNullable}}?.{{StaticEnumSearchCondition.ANY_CHECKED}}() == true) {
                         var array = new List<{{CsPrimitiveTypeName}}>();
-                    {{_parser.GetItemPhysicalNames().SelectTextTemplate(physicalName => $$"""
+                    {{_staticEnum.GetValues().Select(v => v.PhysicalName).SelectTextTemplate(physicalName => $$"""
                         if ({{fullpathNotNull}}!.{{physicalName}}) array.Add({{CsPrimitiveTypeName}}.{{physicalName}});
                     """)}}
                     {{If(isMany, () => $$"""
@@ -70,9 +69,7 @@ namespace Nijo.DataStructures.ValueMemberTypes {
         };
 
         void IValueMemberType.Validate(XElement element, SchemaParseContext context, Action<XElement, string> addError) {
-            // 列挙型の定義が正しいことを検証
-            // EnumDefParserは既に初期化時に基本的な検証を行っているため、
-            // 追加の検証が必要な場合はここに実装します
+            // 静的区分の定義の検証は StaticEnums セクションが行う
         }
 
         void IValueMemberType.RegisterDependencies(CodeRenderingContext ctx) {
@@ -83,7 +80,7 @@ namespace Nijo.DataStructures.ValueMemberTypes {
         }
 
         string IValueMemberType.RenderCreateDummyDataValueBody(CodeRenderingContext ctx) {
-            var count = _parser.GetItemPhysicalNames().Count();
+            var count = _staticEnum.GetValues().Count();
 
             if (count == 0) {
                 return $$"""
@@ -91,9 +88,9 @@ namespace Nijo.DataStructures.ValueMemberTypes {
                     """;
             } else {
                 return $$"""
-                    return member.IsKey && Enum.GetValues<{{_parser.CsEnumName}}>().Length > 0
-                        ? Enum.GetValues<{{_parser.CsEnumName}}>()[context.GetNextSequence() % Enum.GetValues<{{_parser.CsEnumName}}>().Length]
-                        : Enum.GetValues<{{_parser.CsEnumName}}>().ElementAt(context.Random.Next(0, {{count - 1}}));
+                    return member.IsKey && Enum.GetValues<{{_staticEnum.CsEnumName}}>().Length > 0
+                        ? Enum.GetValues<{{_staticEnum.CsEnumName}}>()[context.GetNextSequence() % Enum.GetValues<{{_staticEnum.CsEnumName}}>().Length]
+                        : Enum.GetValues<{{_staticEnum.CsEnumName}}>().ElementAt(context.Random.Next(0, {{count - 1}}));
                     """;
             }
         }
