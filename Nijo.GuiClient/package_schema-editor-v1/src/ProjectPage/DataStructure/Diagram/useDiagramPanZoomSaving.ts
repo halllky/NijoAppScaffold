@@ -45,9 +45,9 @@ export function useDiagramPanZoomSaving() {
       })
     }
 
-    window.addEventListener("unload", executeSave)
+    window.addEventListener("pagehide", executeSave)
     return () => {
-      window.removeEventListener("unload", executeSave)
+      window.removeEventListener("pagehide", executeSave)
       executeSave()
     }
   }, [/* 依存配列なし */])
