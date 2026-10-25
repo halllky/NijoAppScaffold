@@ -18,20 +18,15 @@ internal sealed class ConstantsSection : Section {
 
     public override void Validate(IReadOnlyList<XElement> rootAggregateElements, SchemaParseContext context, SchemaValidationErrors errors) {
         foreach (var rootAggregateElement in rootAggregateElements) {
-            ValidateConstants(rootAggregateElement, errors.Add);
+            ValidateGroup(new ConstantGroupDef(rootAggregateElement));
         }
 
-        void ValidateConstants(XElement element, Action<XElement, string> addError) {
-            foreach (var constantElement in element.Elements()) {
-                var constantType = constantElement.Attribute(ConstantTypeOption.ATTRIBUTE_NAME)?.Value;
-
-                if (constantType == ConstantValueDef.CONSTTYPE_CHILD) {
-                    // 子要素（ネストされた定数グループ）の場合は再帰的にバリデーション
-                    ValidateConstants(constantElement, addError);
-                } else {
-                    // 定数要素のバリデーション
-                    ValidateConstantElement(constantElement, addError);
-                }
+        void ValidateGroup(ConstantGroupDef group) {
+            foreach (var constant in group.GetConstants()) {
+                ValidateConstantElement(constant.Element, errors.Add);
+            }
+            foreach (var childGroup in group.GetChildGroups()) {
+                ValidateGroup(childGroup);
             }
         }
     }
@@ -41,23 +36,27 @@ internal sealed class ConstantsSection : Section {
     }
 
     private static void RenderRootAggregate(CodeRenderingContext ctx, SectionRoot rootAggregate) {
-        var parser = new ConstantDefParser(rootAggregate.XElement, ctx.Schema);
-
-        // データ型: 定数クラス
-        var constantDef = new ConstantDef(parser);
+        var constants = new ConstantGroupDef(rootAggregate.XElement);
 
         // C#定数クラスの生成
         ctx.CoreLibrary(dir => {
             dir.Generate(new SourceFile {
-                FileName = $"{constantDef.CsClassName}.cs",
-                Contents = constantDef.RenderCSharp(ctx)
+                FileName = $"{rootAggregate.PhysicalName}.cs",
+                Contents = $$"""
+                    namespace {{ctx.Config.RootNamespace}};
+
+                    {{constants.RenderCSharpClass()}}
+                    """,
             });
         });
 
         // JavaScript/TypeScript定数の生成
         ctx.ReactProject(dir => {
             dir.Directory(TypeScriptAggregateModule.DIRECTORY, modelsDir => {
-                modelsDir.Generate(constantDef.RenderTypeScript(ctx));
+                modelsDir.Generate(new SourceFile {
+                    FileName = $"{rootAggregate.PhysicalName}.ts",
+                    Contents = constants.RenderTypeScriptObject(isRoot: true),
+                });
             });
         });
     }

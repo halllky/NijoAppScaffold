@@ -7,7 +7,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Nijo.SchemaParsing.CommonOptions;
 
 namespace Nijo.Constants {
     /// <summary>
@@ -20,15 +19,12 @@ namespace Nijo.Constants {
         internal const string CONSTTYPE_DECIMAL = "decimal";
         internal const string CONSTTYPE_TEMPLATE = "template";
 
-        internal ConstantValueDef(XElement element, string path, SchemaParseContext schemaParser) {
+        internal ConstantValueDef(XElement element) {
             _element = element;
-            Path = path;
-            _schemaParser = schemaParser;
 
             Name = element.Name.LocalName;
             Type = element.Attribute(ConstantTypeOption.ATTRIBUTE_NAME)?.Value ?? CONSTTYPE_STRING;
             Value = element.Attribute(ConstantValueOption.ATTRIBUTE_NAME)?.Value ?? string.Empty;
-            DisplayName = element.Attribute(DisplayNameOption.ATTRIBUTE_NAME)?.Value ?? Name;
 
             // テンプレート文字列の場合、{0}, {1}, ... から自動的に引数を判定
             if (Type == CONSTTYPE_TEMPLATE) {
@@ -39,15 +35,12 @@ namespace Nijo.Constants {
         }
 
         private readonly XElement _element;
-        private readonly SchemaParseContext _schemaParser;
         internal XElement Element => _element;
 
         internal string Name { get; }
-        internal string Path { get; }
         internal string Type { get; }
         internal string Value { get; }
         internal string[] TemplateParams { get; }
-        internal string DisplayName { get; }
 
         /// <summary>
         /// C#用の定数名を取得（ドキュメントに合わせて元の名前をそのまま使用）
@@ -62,7 +55,7 @@ namespace Nijo.Constants {
         /// <summary>
         /// C#用の値を取得
         /// </summary>
-        internal string GetCSharpValue() {
+        private string GetCSharpValue() {
             return Type switch {
                 CONSTTYPE_STRING => $"\"{Value.Replace("\"", "\\\"")}\"",
                 CONSTTYPE_INT => Value,
@@ -75,7 +68,7 @@ namespace Nijo.Constants {
         /// <summary>
         /// TypeScript用の値を取得
         /// </summary>
-        internal string GetTypeScriptValue() {
+        private string GetTypeScriptValue() {
             return Type switch {
                 CONSTTYPE_STRING => $"'{Value.Replace("'", "\\'")}'",
                 CONSTTYPE_INT => Value,
@@ -83,6 +76,31 @@ namespace Nijo.Constants {
                 CONSTTYPE_TEMPLATE => $"'{Value.Replace("'", "\\'")}'", // テンプレート文字列も文字列として定義
                 _ => $"'{Value.Replace("'", "\\'")}'",
             };
+        }
+
+        /// <summary>
+        /// C#の定数宣言をレンダリングします。
+        /// </summary>
+        internal string RenderCSharpDeclaration() {
+            var csType = Type switch {
+                CONSTTYPE_INT => "int",
+                CONSTTYPE_DECIMAL => "decimal",
+                _ => "string",
+            };
+            return $$"""
+                {{Element.RenderXmlCommentOrJsDoc(E_CsTs.CSharp)}}
+                public const {{csType}} {{CsConstantName}} = {{GetCSharpValue()}};
+                """;
+        }
+
+        /// <summary>
+        /// TypeScriptのオブジェクトのプロパティとしての定数宣言をレンダリングします。
+        /// </summary>
+        internal string RenderTypeScriptDeclaration() {
+            return $$"""
+                {{Element.RenderXmlCommentOrJsDoc(E_CsTs.TypeScript)}}
+                {{TsConstantName}}: {{GetTypeScriptValue()}},
+                """;
         }
 
         /// <summary>

@@ -1,71 +1,83 @@
-using Nijo.SchemaParsing;
-using System;
+using Nijo.CodeGenerating;
+using Nijo.Util.DotnetEx;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Linq;
-using Nijo.SchemaParsing.CommonOptions;
 
-namespace Nijo.Constants {
+namespace Nijo.Constants;
+
+/// <summary>
+/// 定数のグループ。Constants セクション直下のルート要素と、その中で入れ子になったグループ
+/// （<see cref="ConstantTypeOption"/> が <see cref="ConstantValueDef.CONSTTYPE_CHILD"/> のもの）のいずれか。
+/// C#では静的クラスとして、TypeScriptではオブジェクトとして表れる。
+/// </summary>
+internal class ConstantGroupDef {
+    internal ConstantGroupDef(XElement element) {
+        Element = element;
+    }
+
+    internal XElement Element { get; }
+    /// <summary>C#のクラス名、TypeScriptのオブジェクト名</summary>
+    internal string Name => Element.Name.LocalName;
+
     /// <summary>
-    /// ネストされた定数グループの定義
+    /// このグループの直下に定義された定数を、スキーマ定義上の登場順に返します。
     /// </summary>
-    internal class ConstantGroupDef {
-        internal ConstantGroupDef(XElement element, string path, SchemaParseContext schemaParser) {
-            _element = element;
-            Path = path;
-            _schemaParser = schemaParser;
+    internal IEnumerable<ConstantValueDef> GetConstants() {
+        return Element.Elements().Where(el => !IsGroup(el)).Select(el => new ConstantValueDef(el));
+    }
+    /// <summary>
+    /// このグループの直下に定義されたグループを、スキーマ定義上の登場順に返します。
+    /// </summary>
+    internal IEnumerable<ConstantGroupDef> GetChildGroups() {
+        return Element.Elements().Where(IsGroup).Select(el => new ConstantGroupDef(el));
+    }
+    private static bool IsGroup(XElement element) {
+        return element.Attribute(ConstantTypeOption.ATTRIBUTE_NAME)?.Value == ConstantValueDef.CONSTTYPE_CHILD;
+    }
 
-            Name = element.Name.LocalName;
-            DisplayName = element.Attribute(DisplayNameOption.ATTRIBUTE_NAME)?.Value ?? Name;
-        }
+    /// <summary>
+    /// このグループを C# の静的クラスとしてレンダリングします。
+    /// </summary>
+    internal string RenderCSharpClass() {
+        var constants = GetConstants().ToArray();
 
-        private readonly XElement _element;
-        private readonly SchemaParseContext _schemaParser;
-
-        internal string Name { get; }
-        internal string Path { get; }
-        internal string DisplayName { get; }
-        internal XElement Element => _element;
-
-        /// <summary>
-        /// C#用のクラス名を取得
-        /// </summary>
-        internal string CsClassName => Path.Replace('.', '_');
-
-        /// <summary>
-        /// TypeScript用のオブジェクト名を取得
-        /// </summary>
-        internal string TsObjectName => Path.Replace('.', '_');
-
-        /// <summary>
-        /// このグループ内の直接の定数を取得
-        /// </summary>
-        internal IEnumerable<ConstantValueDef> GetDirectConstants() {
-            foreach (var child in _element.Elements()) {
-                var constantType = child.Attribute(ConstantTypeOption.ATTRIBUTE_NAME)?.Value;
-
-                if (constantType != ConstantValueDef.CONSTTYPE_CHILD) {
-                    // 定数要素
-                    var constantPath = $"{Path}.{child.Name.LocalName}";
-                    yield return new ConstantValueDef(child, constantPath, _schemaParser);
-                }
+        return $$"""
+            {{Element.RenderXmlCommentOrJsDoc(E_CsTs.CSharp)}}
+            public static class {{Name}} {
+            {{constants.Where(c => c.Type != ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
+                {{WithIndent(constant.RenderCSharpDeclaration())}}
+            """)}}
+            {{constants.Where(c => c.Type == ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
+                {{WithIndent(constant.RenderCSharpTemplateFunction())}}
+            """)}}
+            {{GetChildGroups().SelectTextTemplate(group => $$"""
+                {{WithIndent(group.RenderCSharpClass())}}
+            """)}}
             }
-        }
+            """;
+    }
 
-        /// <summary>
-        /// このグループ内の直接の子グループを取得
-        /// </summary>
-        internal IEnumerable<ConstantGroupDef> GetDirectChildGroups() {
-            foreach (var child in _element.Elements()) {
-                var constantType = child.Attribute(ConstantTypeOption.ATTRIBUTE_NAME)?.Value;
+    /// <summary>
+    /// このグループを TypeScript のオブジェクトとしてレンダリングします。
+    /// </summary>
+    /// <param name="isRoot">ルート要素の場合は export される定数として、入れ子のグループの場合は親オブジェクトのプロパティとしてレンダリングされる</param>
+    internal string RenderTypeScriptObject(bool isRoot) {
+        var constants = GetConstants().ToArray();
 
-                if (constantType == ConstantValueDef.CONSTTYPE_CHILD) {
-                    var childPath = $"{Path}.{child.Name.LocalName}";
-                    yield return new ConstantGroupDef(child, childPath, _schemaParser);
-                }
-            }
-        }
+        return $$"""
+            {{Element.RenderXmlCommentOrJsDoc(E_CsTs.TypeScript)}}
+            {{(isRoot ? $"export const {Name} = {{" : $"{Name}: {{")}}
+            {{constants.Where(c => c.Type != ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
+              {{WithIndent(constant.RenderTypeScriptDeclaration())}}
+            """)}}
+            {{constants.Where(c => c.Type == ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
+              {{WithIndent(constant.RenderTypeScriptTemplateFunction())}}
+            """)}}
+            {{GetChildGroups().SelectTextTemplate(group => $$"""
+              {{WithIndent(group.RenderTypeScriptObject(false))}}
+            """)}}
+            {{(isRoot ? "} as const" : "},")}}
+            """;
     }
 }
