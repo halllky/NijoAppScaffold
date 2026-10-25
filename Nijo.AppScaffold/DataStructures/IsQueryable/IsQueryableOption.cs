@@ -84,7 +84,7 @@ internal sealed class IsQueryableOption : FeatureOption {
         ValidateRefTo(rootAggregateElement, context, errors);
     }
 
-    public override void Render(CodeRenderingContext ctx, RootAggregate rootAggregate, SourceFileByAggregate aggregateFile) {
+    public override void Render(CodeRenderingContext ctx, RootAggregate rootAggregate, SourceFileBySectionRoot aggregateFile) {
         // データ型: 検索条件クラス
         // - CS
         // - TS

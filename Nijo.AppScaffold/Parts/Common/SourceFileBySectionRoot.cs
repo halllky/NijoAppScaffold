@@ -10,20 +10,18 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
-using Nijo.DataStructures.Aggregates;
-using Nijo.DataStructures.ValueMemberTypes;
 using Nijo.StaticEnums;
 
 namespace Nijo.Parts.Common {
     /// <summary>
     /// 機能単位などではなくルート要素単位でソースコードが記載されるファイル
     /// </summary>
-    public class SourceFileByAggregate(
-        ISectionRoot rootAggregate,
+    public class SourceFileBySectionRoot(
+        ISectionRoot root,
         [CallerFilePath] string? callerFilePath = null,
         [CallerMemberName] string? callerMemberName = null) {
 
-        private readonly ISectionRoot _rootAggregate = rootAggregate;
+        private readonly ISectionRoot _root = root;
         private readonly string? _callerFilePath = callerFilePath;
         private readonly string? _callerMemberName = callerMemberName;
 
@@ -41,6 +39,8 @@ namespace Nijo.Parts.Common {
         private readonly List<string> _webApiControllerAction = [];
         private readonly List<string> _typeScriptTypeDef = [];
         private readonly List<string> _typeScriptFunctions = [];
+        private readonly List<TypeScriptAggregateModule> _typeScriptImports = [];
+        private readonly List<TypeScriptAggregateModule> _typeScriptTypeOnlyImports = [];
 
         public void AddAppSrvMethod(string sourceCode, string? fileName = null) {
             _appSrvMethods.Add(new CoreLibrarySourceCodeItem { SourceCode = sourceCode, FileName = fileName });
@@ -57,6 +57,13 @@ namespace Nijo.Parts.Common {
         public void AddTypeScriptFunction(string sourceCode) {
             _typeScriptFunctions.Add(sourceCode);
         }
+        /// <summary>
+        /// TypeScript のモジュールが読み込む別のモジュールを追加します。
+        /// </summary>
+        /// <param name="typeOnly">型定義のみを読み込む場合は true</param>
+        internal void AddTypeScriptImport(TypeScriptAggregateModule module, bool typeOnly = false) {
+            (typeOnly ? _typeScriptTypeOnlyImports : _typeScriptImports).Add(module);
+        }
 
         public void ExecuteRendering(CodeRenderingContext ctx) {
 
@@ -68,7 +75,7 @@ namespace Nijo.Parts.Common {
                 // デフォルトファイル
                 if (defaultAppSrvMethods.Count > 0 || defaultCSharpClass.Count > 0) {
                     dir.Generate(new SourceFile(_callerFilePath, _callerMemberName) {
-                        FileName = $"{_rootAggregate.PhysicalName.ToFileNameSafe()}.cs",
+                        FileName = $"{_root.PhysicalName.ToFileNameSafe()}.cs",
                         Contents = RenderCoreLibrary(ctx, defaultAppSrvMethods, defaultCSharpClass),
                     });
                 }
@@ -99,7 +106,7 @@ namespace Nijo.Parts.Common {
                         CSharpClass = g.SelectMany(x => x.CSharpClass).ToList()
                     });
 
-                dir.Directory(_rootAggregate.PhysicalName.ToFileNameSafe(), aggregateDir => {
+                dir.Directory(_root.PhysicalName.ToFileNameSafe(), aggregateDir => {
                     foreach (var fileGroup in fileGroups) {
                         aggregateDir.Generate(new SourceFile(_callerFilePath, _callerMemberName) {
                             FileName = $"{fileGroup.FileName}.cs",
@@ -111,7 +118,7 @@ namespace Nijo.Parts.Common {
             ctx.WebapiProject(dir => {
                 if (_webApiControllerAction.Count > 0) {
                     dir.Generate(new SourceFile(_callerFilePath, _callerMemberName) {
-                        FileName = $"{_rootAggregate.PhysicalName.ToFileNameSafe()}.cs",
+                        FileName = $"{_root.PhysicalName.ToFileNameSafe()}.cs",
                         Contents = RenderWebapi(ctx),
                     });
                 }
@@ -120,7 +127,7 @@ namespace Nijo.Parts.Common {
                 if (_typeScriptTypeDef.Count > 0 || _typeScriptFunctions.Count > 0) {
                     dir.Directory(TypeScriptAggregateModule.DIRECTORY, modelsDir => {
                         modelsDir.Generate(new SourceFile(_callerFilePath, _callerMemberName) {
-                            FileName = $"{new TypeScriptAggregateModule(_rootAggregate).FileNameWithoutExtension}.ts",
+                            FileName = $"{new TypeScriptAggregateModule(_root).FileNameWithoutExtension}.ts",
                             Contents = RenderNodeJs(ctx),
                         });
                     });
@@ -164,7 +171,7 @@ namespace Nijo.Parts.Common {
         }
 
         private string RenderWebapi(CodeRenderingContext ctx) {
-            var controller = new AspNetController(_rootAggregate);
+            var controller = new AspNetController(_root);
 
             return $$"""
                 using System;
@@ -180,7 +187,7 @@ namespace Nijo.Parts.Common {
                 namespace {{ctx.Config.RootNamespace}};
 
                 /// <summary>
-                /// {{_rootAggregate.DisplayName}}に関する Web API 操作を提供する ASP.NET Core のコントローラー
+                /// {{_root.DisplayName}}に関する Web API 操作を提供する ASP.NET Core のコントローラー
                 /// </summary>
                 [ApiController]
                 [Route("{{controller.Route}}")]
@@ -201,38 +208,19 @@ namespace Nijo.Parts.Common {
                 """;
         }
         private string RenderNodeJs(CodeRenderingContext ctx) {
-            var thisModule = new TypeScriptAggregateModule(_rootAggregate);
-            // データ構造のルート集約以外のルート要素はメンバーをもたないため、import するモジュールも無い
-            var tree = _rootAggregate is RootAggregate rootAggregate
-                ? rootAggregate.EnumerateThisAndDescendants().ToArray()
-                : [];
-
-            // 外部参照先の集約のモジュール
-            var refToModules = tree
-                .SelectMany(agg => agg.GetMembers())
-                .OfType<RefToMember>()
-                .Select(@ref => new TypeScriptAggregateModule(@ref.RefTo.GetRoot()))
+            var thisModule = new TypeScriptAggregateModule(_root);
+            IEnumerable<TypeScriptAggregateModule> Normalize(IEnumerable<TypeScriptAggregateModule> modules) => modules
                 .Where(module => module.ImportAlias != thisModule.ImportAlias)
-                .DistinctBy(module => module.ImportAlias)
-                .OrderBy(module => module.ImportAlias);
-
-            // 値オブジェクトのモジュール
-            var valueObjectModules = tree
-                .SelectMany(agg => agg.GetMembers())
-                .OfType<ValueMember>()
-                .Select(vm => vm.Type)
-                .OfType<ValueObjectMember>()
-                .Select(vo => vo.TsModule)
                 .DistinctBy(module => module.ImportAlias)
                 .OrderBy(module => module.ImportAlias);
 
             return $$"""
                 import type * as Util from ".."
                 import * as EnumDefs from "../{{Path.GetFileNameWithoutExtension(EnumFile.TS_FILENAME)}}"
-                {{refToModules.SelectTextTemplate(module => $$"""
+                {{Normalize(_typeScriptImports).SelectTextTemplate(module => $$"""
                 {{module.RenderImportFromSibling()}}
                 """)}}
-                {{valueObjectModules.SelectTextTemplate(module => $$"""
+                {{Normalize(_typeScriptTypeOnlyImports).SelectTextTemplate(module => $$"""
                 {{module.RenderImportFromSibling(typeOnly: true)}}
                 """)}}
 

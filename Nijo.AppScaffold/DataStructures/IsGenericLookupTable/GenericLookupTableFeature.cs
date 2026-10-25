@@ -27,7 +27,7 @@ internal static class GenericLookupTableFeature {
     internal static void GenerateCode(
         CodeRenderingContext ctx,
         RootAggregate rootAggregate,
-        SourceFileByAggregate aggregateFile) {
+        SourceFileBySectionRoot aggregateFile) {
 
         // 汎用参照テーブルでなければスキップ
         if (rootAggregate.XElement.Attribute(IsGenericLookupTableOption.ATTRIBUTE_NAME) == null) return;

@@ -30,7 +30,7 @@ internal sealed class UseSoftDeleteOption : FeatureOption {
         return target.IsStored && target.NodeType == E_NodeType.RootAggregate;
     }
 
-    public override void Render(CodeRenderingContext ctx, RootAggregate rootAggregate, SourceFileByAggregate aggregateFile) {
+    public override void Render(CodeRenderingContext ctx, RootAggregate rootAggregate, SourceFileBySectionRoot aggregateFile) {
         // データ型: 削除された行の移動先テーブルの EFCore Entity
         var deletedEfCoreEntity = new EFCoreEntity(rootAggregate, isDeletedTable: true);
         aggregateFile.AddCSharpClass(EFCoreEntity.RenderClassDeclaring(deletedEfCoreEntity, ctx), "Class_EFCoreEntity_Deleted");

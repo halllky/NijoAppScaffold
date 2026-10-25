@@ -72,7 +72,7 @@ internal sealed class IsStoredOption : FeatureOption {
         }
     }
 
-    public override void Render(CodeRenderingContext ctx, RootAggregate rootAggregate, SourceFileByAggregate aggregateFile) {
+    public override void Render(CodeRenderingContext ctx, RootAggregate rootAggregate, SourceFileBySectionRoot aggregateFile) {
         // データ型: EFCore Entity
         var efCoreEntity = new EFCoreEntity(rootAggregate);
         aggregateFile.AddCSharpClass(EFCoreEntity.RenderClassDeclaring(efCoreEntity, ctx), "Class_EFCoreEntity");

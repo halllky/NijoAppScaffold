@@ -47,7 +47,7 @@ internal sealed class IsGenericLookupTableOption : FeatureOption {
         }
     }
 
-    public override void Render(CodeRenderingContext ctx, RootAggregate rootAggregate, SourceFileByAggregate aggregateFile) {
+    public override void Render(CodeRenderingContext ctx, RootAggregate rootAggregate, SourceFileBySectionRoot aggregateFile) {
         GenericLookupTableFeature.GenerateCode(ctx, rootAggregate, aggregateFile);
     }
 }

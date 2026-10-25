@@ -29,16 +29,16 @@ internal sealed class CommandsSection : Section {
     }
 
     private static void RenderRootAggregate(CodeRenderingContext ctx, CommandRoot rootAggregate) {
-        var aggregateFile = new SourceFileByAggregate(rootAggregate);
+        var sourceFile = new SourceFileBySectionRoot(rootAggregate);
 
         // 処理: TypeScript用マッピング、Webエンドポイント、本処理抽象メソッド
         var commandProcessing = new CommandProcessing(rootAggregate);
-        aggregateFile.AddWebapiControllerAction(commandProcessing.RenderAspNetCoreControllerAction(ctx));
-        aggregateFile.AddAppSrvMethod(commandProcessing.RenderAppSrvMethods(ctx), "コマンド処理");
+        sourceFile.AddWebapiControllerAction(commandProcessing.RenderAspNetCoreControllerAction(ctx));
+        sourceFile.AddAppSrvMethod(commandProcessing.RenderAppSrvMethods(ctx), "コマンド処理");
 
         // カスタムロジック用モジュール
         ctx.Use<CommandQueryMappings>().AddCommandModel(rootAggregate);
 
-        aggregateFile.ExecuteRendering(ctx);
+        sourceFile.ExecuteRendering(ctx);
     }
 }

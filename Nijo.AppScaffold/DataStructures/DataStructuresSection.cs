@@ -11,6 +11,8 @@ using System.Xml.Linq;
 using System;
 using Nijo.Commands;
 using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures.ValueMemberTypes;
+using Nijo.Parts.JavaScript;
 
 namespace Nijo.DataStructures;
 
@@ -114,13 +116,14 @@ internal sealed class DataStructuresSection : Section {
         var rootAggregates = ctx.Schema.GetDataStructures().ToArray();
 
         RenderEach(ctx, rootAggregates, rootAggregate => {
-            var aggregateFile = new SourceFileByAggregate(rootAggregate);
+            var aggregateFile = new SourceFileBySectionRoot(rootAggregate);
             foreach (var feature in GetFeaturesOf(rootAggregate.XElement)) {
                 feature.Render(ctx, rootAggregate, aggregateFile);
             }
             if (IsStructure(rootAggregate.XElement)) {
                 RenderStructure(ctx, rootAggregate, aggregateFile);
             }
+            AddTypeScriptImports(rootAggregate, aggregateFile);
             aggregateFile.ExecuteRendering(ctx);
         });
 
@@ -174,10 +177,26 @@ internal sealed class DataStructuresSection : Section {
     }
 
     /// <summary>
+    /// ルート集約1個と対応する TypeScript のモジュールが、外部参照先の集約と値オブジェクトのモジュールを読み込むようにします。
+    /// </summary>
+    private static void AddTypeScriptImports(RootAggregate rootAggregate, SourceFileBySectionRoot aggregateFile) {
+        var members = rootAggregate
+            .EnumerateThisAndDescendants()
+            .SelectMany(agg => agg.GetMembers())
+            .ToArray();
+        foreach (var @ref in members.OfType<RefToMember>()) {
+            aggregateFile.AddTypeScriptImport(new TypeScriptAggregateModule(@ref.RefTo.GetRoot()));
+        }
+        foreach (var vo in members.OfType<ValueMember>().Select(vm => vm.Type).OfType<ValueObjectMember>()) {
+            aggregateFile.AddTypeScriptImport(vo.TsModule, typeOnly: true);
+        }
+    }
+
+    /// <summary>
     /// IsStored 属性も IsQueryable 属性も指定されていないデータ構造のルート集約1個と対応するソースコードを生成します。
     /// サーバー(C#)とクライアント(TypeScript)の双方で共有するための入れ子可能なオブジェクトの定義が生成されます。
     /// </summary>
-    private static void RenderStructure(CodeRenderingContext ctx, RootAggregate rootAggregate, SourceFileByAggregate aggregateFile) {
+    private static void RenderStructure(CodeRenderingContext ctx, RootAggregate rootAggregate, SourceFileBySectionRoot aggregateFile) {
         // C# クラス定義（ルートと子孫）
         aggregateFile.AddCSharpClass(PlainStructure.RenderCSharpRecursively(rootAggregate, ctx), "Class_Structure");
 

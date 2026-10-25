@@ -21,7 +21,7 @@ internal abstract class FeatureOption : NodeOption {
     /// <summary>
     /// この属性が指定されたルート集約1個と対応するソースコードを生成します。
     /// </summary>
-    public abstract void Render(CodeRenderingContext ctx, RootAggregate rootAggregate, SourceFileByAggregate aggregateFile);
+    public abstract void Render(CodeRenderingContext ctx, RootAggregate rootAggregate, SourceFileBySectionRoot aggregateFile);
 
     /// <summary>
     /// この属性が指定されたルート集約が1個以上存在する場合に1回だけ呼ばれ、ルート集約1個と対応しないソースコードを生成します。
