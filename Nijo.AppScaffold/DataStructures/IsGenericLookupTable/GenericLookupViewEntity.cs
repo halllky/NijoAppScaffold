@@ -5,8 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures.IsStored;
 
-namespace Nijo.Parts.CSharp;
+namespace Nijo.DataStructures.IsGenericLookupTable;
 
 /// <summary>
 /// 汎用参照テーブルのカテゴリごとのビューに対応するEFCoreエンティティ。

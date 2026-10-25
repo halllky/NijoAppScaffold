@@ -7,14 +7,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Nijo.Parts.Common;
 using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.IsStored;
 using Nijo.SchemaParsing.CommonOptions;
 using Nijo.DataStructures.Aggregates;
 using Nijo.DataStructures.ValueMemberTypes;
+using Nijo.StaticEnums;
 
-namespace Nijo.Parts.JavaScript;
+namespace Nijo.DataStructures;
 
 /// <summary>
 /// nijo.xml の定義をほぼそのまま TypeScript の定数としてレンダリングする。

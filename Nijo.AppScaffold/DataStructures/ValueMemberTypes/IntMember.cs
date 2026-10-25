@@ -1,5 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.Parts.CSharp;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System;

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using Nijo.DataStructures.IsGenericLookupTable;
 
-namespace Nijo.Parts.CSharp {
+namespace Nijo.DataStructures.IsStored {
     public class DbContextClass : ISharedSourceFile<CodeRenderingContext> {
 
         private readonly List<IEFCoreEntity> _efCoreEntities = [];

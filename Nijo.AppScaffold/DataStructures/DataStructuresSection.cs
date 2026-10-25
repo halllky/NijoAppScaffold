@@ -4,7 +4,6 @@ using Nijo.DataStructures.IsStored;
 using Nijo.DataStructures.Members;
 using Nijo.DataStructures.Structure;
 using Nijo.Parts.Common;
-using Nijo.Parts.JavaScript;
 using Nijo.SchemaParsing;
 using System.Collections.Generic;
 using System.Linq;
@@ -62,6 +61,22 @@ internal sealed class DataStructuresSection : Section {
         }
         if (rootAggregates.Any(root => IsStructure(root.XElement))) {
             ctx.Use<DeepEqualFunction.OptionType>();
+        }
+
+        // データ構造が1個も無くても生成されるソースコード
+        ctx.Use<AggregateMetadata>();
+        ctx.Use<DbContextClass>();
+        ctx.CoreLibrary(dir => {
+            dir.Directory("Util", utilDir => {
+                utilDir.Generate(NijoAttr.RenderDeclaration(ctx));
+                utilDir.Generate(FromTo.Render(ctx));
+            });
+        });
+
+        // 値メンバーの型ごとのソースコード
+        foreach (var vmType in ctx.SchemaParser.GetValueMemberTypes()) {
+            vmType.RegisterDependencies(ctx);
+            vmType.RenderStaticSources(ctx);
         }
     }
 

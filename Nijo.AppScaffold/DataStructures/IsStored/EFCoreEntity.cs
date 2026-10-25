@@ -9,8 +9,9 @@ using System.Threading.Tasks;
 using Nijo.DataStructures.IsGenericLookupTable;
 using Nijo.DataStructures.Aggregates;
 using Nijo.DataStructures.ValueMemberTypes;
+using Nijo.DataStructures;
 
-namespace Nijo.Parts.CSharp {
+namespace Nijo.DataStructures.IsStored {
     /// <summary>
     /// Entity Framework Core のエンティティ
     /// </summary>

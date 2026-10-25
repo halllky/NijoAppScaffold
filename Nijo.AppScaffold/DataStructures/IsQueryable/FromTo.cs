@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Nijo.Parts.CSharp {
+namespace Nijo.DataStructures.IsQueryable {
     /// <summary>
     /// 範囲検索の検索条件
     /// </summary>

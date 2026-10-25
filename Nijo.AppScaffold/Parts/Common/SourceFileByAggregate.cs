@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.IO;
 using Nijo.DataStructures.Aggregates;
 using Nijo.DataStructures.ValueMemberTypes;
+using Nijo.StaticEnums;
 
 namespace Nijo.Parts.Common {
     /// <summary>

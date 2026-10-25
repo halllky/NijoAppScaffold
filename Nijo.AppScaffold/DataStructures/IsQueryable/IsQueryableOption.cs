@@ -3,13 +3,13 @@ using Nijo.DataStructures.IsStored;
 using Nijo.DataStructures.Members;
 using Nijo.Parts.CSharp;
 using Nijo.Parts.Common;
-using Nijo.Parts.JavaScript;
 using Nijo.SchemaParsing;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using System;
 using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures;
 
 namespace Nijo.DataStructures.IsQueryable;
 

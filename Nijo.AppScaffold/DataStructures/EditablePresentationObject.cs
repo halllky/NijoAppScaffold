@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Nijo.CodeGenerating;
-using Nijo.Parts.CSharp;
 using Nijo.Parts.JavaScript;
 using Nijo.SchemaParsing;
 using Nijo.DataStructures.IsQueryable;
@@ -10,7 +9,7 @@ using Nijo.DataStructures.Structure;
 using Nijo.DataStructures.Aggregates;
 using Nijo.DataStructures.ValueMemberTypes;
 
-namespace Nijo.Parts.Common;
+namespace Nijo.DataStructures;
 
 /// <summary>
 /// ユーザーが画面上で編集するオブジェクトをレンダリングするための基底クラス。

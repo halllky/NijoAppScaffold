@@ -1,11 +1,11 @@
 using Nijo.CodeGenerating;
-using Nijo.Parts.CSharp;
 using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures.IsStored;
 
 namespace Nijo.DataStructures.IsGenericLookupTable;
 

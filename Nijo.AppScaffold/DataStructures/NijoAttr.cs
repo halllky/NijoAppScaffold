@@ -5,7 +5,7 @@ using System.Xml.Linq;
 using Nijo.CodeGenerating;
 using Nijo.SchemaParsing;
 
-namespace Nijo.Parts.CSharp;
+namespace Nijo.DataStructures;
 
 /// <summary>
 /// nijo.xml で定義されている属性情報を、

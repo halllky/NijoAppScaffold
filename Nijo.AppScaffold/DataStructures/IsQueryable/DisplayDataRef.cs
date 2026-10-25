@@ -1,6 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.Parts.Common;
-using Nijo.Parts.CSharp;
 using Nijo.Parts.JavaScript;
 using Nijo.Util.DotnetEx;
 using System;
@@ -8,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Nijo.DataStructures.Aggregates;
 using Nijo.DataStructures.ValueMemberTypes;
+using Nijo.DataStructures;
 
 namespace Nijo.DataStructures.IsQueryable {
     /// <summary>

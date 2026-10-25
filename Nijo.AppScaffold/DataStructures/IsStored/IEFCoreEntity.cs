@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Nijo.DataStructures.Aggregates;
 
-namespace Nijo.Parts.CSharp;
+namespace Nijo.DataStructures.IsStored;
 
 /// <summary>
 /// Entity Framework Core のエンティティとして扱われるクラスのインターフェース

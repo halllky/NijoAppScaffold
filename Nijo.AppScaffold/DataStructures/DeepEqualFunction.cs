@@ -3,13 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Nijo.CodeGenerating;
-using Nijo.Parts.Common;
 using Nijo.Util.DotnetEx;
 using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.Aggregates;
 using Nijo.DataStructures.ValueMemberTypes;
 
-namespace Nijo.Parts.JavaScript;
+namespace Nijo.DataStructures;
 
 /// <summary>
 /// 編集画面の離脱チェックなどに用いられるディープイコール関数と、

@@ -1,5 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.Parts.CSharp;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -9,6 +8,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Nijo.DataStructures.Aggregates;
 using Nijo.DataStructures.ValueMemberTypes;
+using Nijo.DataStructures;
 
 namespace Nijo.DataStructures.IsStored {
     /// <summary>

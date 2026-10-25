@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Nijo.DataStructures.Aggregates;
 using Nijo.DataStructures.ValueMemberTypes;
+using Nijo.DataStructures;
+using Nijo.DataStructures.IsStored;
 
 namespace Nijo.DataStructures.IsQueryable {
     /// <summary>

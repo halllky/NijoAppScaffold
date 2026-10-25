@@ -1,10 +1,10 @@
 using Nijo.CodeGenerating;
-using Nijo.Parts.CSharp;
 using Nijo.Parts.Common;
 using Nijo.SchemaParsing;
 using System.Linq;
 using System;
 using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures.IsStored;
 
 namespace Nijo.DataStructures.UseSoftDelete;
 

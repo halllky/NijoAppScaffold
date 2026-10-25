@@ -6,9 +6,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Nijo.StaticEnums;
 
-namespace Nijo.Parts.Common {
+namespace Nijo.StaticEnums {
     /// <summary>
     /// 区分値の定義がレンダリングされるファイル
     /// </summary>

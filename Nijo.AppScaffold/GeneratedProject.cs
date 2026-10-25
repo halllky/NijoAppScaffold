@@ -282,24 +282,14 @@ namespace Nijo {
         /// </summary>
         private static void RenderApplicationFoundation(CodeRenderingContext ctx) {
             ctx.Use<ApplicationService>();
-            ctx.Use<AggregateMetadata>();
             ctx.Use<MessageContainer.BaseClass>();
             ctx.Use<CommandQueryMappings>();
             ctx.Use<AspNetController.HandlerInterfaceFile>();
-            ctx.Use<DbContextClass>();
             ctx.CoreLibrary(dir => {
                 dir.Directory("Util", utilDir => {
-                    utilDir.Generate(NijoAttr.RenderDeclaration(ctx));
                     utilDir.Generate(PresentationContext.RenderStaticCore(ctx));
-                    utilDir.Generate(FromTo.Render(ctx));
                 });
             });
-
-            // 値メンバーの型ごとのソースコード
-            foreach (var vmType in ctx.SchemaParser.GetValueMemberTypes()) {
-                vmType.RegisterDependencies(ctx);
-                vmType.RenderStaticSources(ctx);
-            }
         }
     }
 }

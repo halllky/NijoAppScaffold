@@ -10,7 +10,7 @@ using Nijo.DataStructures.IsGenericLookupTable;
 using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.Aggregates;
 
-namespace Nijo.Parts.CSharp;
+namespace Nijo.DataStructures.IsStored;
 
 /// <summary>
 /// EFCoreのナビゲーションプロパティ

@@ -1,6 +1,5 @@
 using Nijo.CodeGenerating;
 using Nijo.DataStructures.IsGenericLookupTable;
-using Nijo.Parts.CSharp;
 using Nijo.Parts.Common;
 using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;

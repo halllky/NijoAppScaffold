@@ -1,4 +1,3 @@
-using Nijo.Parts.CSharp;
 using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.IsStored;
 using System;

@@ -10,6 +10,7 @@ using Nijo.Commands;
 using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.Structure;
 using Nijo.DataStructures.Aggregates;
+using Nijo.DataStructures;
 
 namespace Nijo.Parts.Common {
     /// <summary>
