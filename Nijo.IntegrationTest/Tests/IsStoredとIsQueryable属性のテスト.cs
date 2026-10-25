@@ -103,4 +103,61 @@ public class IsStoredとIsQueryable属性のテスト {
             .Select(x => x.LocalName);
         Assert.That(messages, Is.EquivalentTo(new[] { "Data1", "Struct1" }));
     }
+
+    [Test]
+    public async Task DataStructures以外のセクションでも属性の利用可否と値が検証されること() {
+        using var project = await NijoTestUtil.CreateNewProjectAsync($$"""
+            <NijoAppScaffold>
+              <Commands>
+                <Command1 IsKey="True" />
+              </Commands>
+              <StaticEnums>
+                <Status>
+                  <Open key="abc" />
+                </Status>
+              </StaticEnums>
+              <Constants>
+                <Group1>
+                  <Const1 ConstantType="bogus" ConstantValue="x" />
+                </Group1>
+              </Constants>
+            </NijoAppScaffold>
+            """);
+        var errors = await project.EnumerateValidationErrorsAsync();
+        var attributeErrors = errors
+            .SelectMany(e => e.AttributeErrors.Select(ae => $"{e.XElement.Name.LocalName}.{ae.Key}"))
+            .ToArray();
+        Assert.That(attributeErrors, Is.EquivalentTo(new[] { "Command1.IsKey", "Open.key", "Const1.ConstantType" }));
+    }
+
+    [Test]
+    public async Task 同じ規則の違反で同じエラーが重複して報告されないこと() {
+        using var project = await NijoTestUtil.CreateNewProjectAsync($$"""
+            <NijoAppScaffold>
+              <DataStructures>
+                <Stored1 IsStored="True">
+                  <Id Type="int" IsKey="True" />
+                  <Children1 Type="children">
+                    <Y Type="int" />
+                  </Children1>
+                </Stored1>
+                <Query1 IsQueryable="True">
+                  <Ref1 Type="ref-to:Stored1" />
+                </Query1>
+                <Struct1>
+                  <Ref2 Type="ref-to:Stored1" />
+                </Struct1>
+              </DataStructures>
+            </NijoAppScaffold>
+            """);
+        var errors = await project.EnumerateValidationErrorsAsync();
+        Assert.Multiple(() => {
+            foreach (var error in errors) {
+                var messages = error.OwnErrors.Concat(error.AttributeErrors.SelectMany(ae => ae.Value)).ToArray();
+                Assert.That(messages, Is.Unique, error.XElement.Name.LocalName);
+                Assert.That(messages, Has.Length.EqualTo(1), error.XElement.Name.LocalName);
+            }
+        });
+        Assert.That(errors.Select(e => e.XElement.Name.LocalName), Is.EquivalentTo(new[] { "Children1", "Ref1", "Ref2" }));
+    }
 }

@@ -71,7 +71,7 @@ public class IsKey属性のテスト {
 
         var messages = errors2.SelectMany(e => e.OwnErrors).ToArray();
 
-        Assert.That(messages, Does.Contain("キーが指定されていません。").Or.Contain("IsStored属性が指定されたデータ構造の子配列は必ず1個以上の主キーを持たなければなりません。"));
+        Assert.That(messages, Is.EquivalentTo(new[] { "キーが指定されていません。" }));
     }
 
     [Test]
@@ -96,8 +96,7 @@ public class IsKey属性のテスト {
             .Concat(errors.SelectMany(e => e.AttributeErrors.SelectMany(ae => ae.Value)))
             .ToArray();
 
-        Assert.That(messages,
-            Does.Contain("IsStored属性が指定されたデータ構造の子集約には主キー属性を付与することができません。").Or.Contain("IsStored属性が指定されたデータ構造の子集約にはキーを指定できません。"));
+        Assert.That(messages, Is.EquivalentTo(new[] { "IsStored属性が指定されたデータ構造の子集約にはキーを指定できません。" }));
     }
 
     [Test]

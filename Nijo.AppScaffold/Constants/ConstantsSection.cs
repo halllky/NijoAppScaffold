@@ -17,8 +17,10 @@ namespace Nijo.Constants;
 internal sealed class ConstantsSection : Section {
     public override E_Section Kind => E_Section.Constants;
 
-    public override void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
-        ValidateConstants(rootAggregateElement, addError);
+    public override void Validate(IReadOnlyList<XElement> rootAggregateElements, SchemaParseContext context, SchemaValidationErrors errors) {
+        foreach (var rootAggregateElement in rootAggregateElements) {
+            ValidateConstants(rootAggregateElement, errors.Add);
+        }
 
         void ValidateConstants(XElement element, Action<XElement, string> addError) {
             foreach (var constantElement in element.Elements()) {

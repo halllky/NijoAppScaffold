@@ -89,6 +89,7 @@ public class SchemaParseRule {
             new ConstantTypeOption(),
             new ConstantValueOption(),
             new StringSearchBehaviorOption(),
+            new StaticEnumKeyOption(),
         };
         var sections = new Section[] {
             new DataStructuresSection(nodeOptions.OfType<FeatureOption>()),

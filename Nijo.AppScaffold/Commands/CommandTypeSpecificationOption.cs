@@ -1,5 +1,6 @@
 using Nijo.CodeGenerating;
 using Nijo.SchemaParsing;
+using Nijo.DataStructures.IsStored;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,29 +25,29 @@ internal abstract class CommandTypeSpecificationOption : NodeOption {
     };
 
     protected static void ValidateTypeSpecification(NodeOptionValidateContext ctx) {
-        // 値未指定は不正
-        var splitted = ctx.Value.Split(':', StringSplitOptions.RemoveEmptyEntries);
-        var targetPhysicalName = splitted.FirstOrDefault();
-        if (string.IsNullOrWhiteSpace(targetPhysicalName)) {
-            ctx.AddError("参照先が未指定です。");
+        if (!CommandTypeSpecification.TryParse(ctx.Value, out var specification)) {
+            ctx.AddError("値が不正です。「データ構造名」または「データ構造名:種類」の形式で指定してください。");
             return;
         }
 
-        // コロンが含まれるならその後ろは参照可能なオブジェクトの種類のみ
-        var targetType = splitted.Skip(1).FirstOrDefault();
-        if (!string.IsNullOrWhiteSpace(targetType) &&
-            !AvailableFromCommandToQuery.ContainsKey(targetType)) {
+        if (specification.ObjectKind != null && !AvailableFromCommandToQuery.ContainsKey(specification.ObjectKind)) {
             ctx.AddError($"参照先の種類は {string.Join(" または ", AvailableFromCommandToQuery.Keys)} のみ指定できます。");
             return;
         }
 
-        // 参照先の存在確認
-        var targetElement = ctx.SchemaParseContext.Document
-            .Root
+        var target = ctx.SchemaParseContext.Document.Root
             ?.Element(SchemaParseContext.SECTION_DATA_STRUCTURES)
-            ?.Element(targetPhysicalName);
-        if (targetElement == null) {
-            ctx.AddError($"参照先の集約が見つかりません。物理名: {targetPhysicalName}");
+            ?.Element(specification.DataStructureName);
+        if (target == null) {
+            ctx.AddError($"参照先の集約が見つかりません。物理名: {specification.DataStructureName}");
+            return;
+        }
+
+        // 種類を省略した場合は構造体、種類を指定した場合は検索可能なデータ構造でなければならない
+        if (specification.ObjectKind == null && (target.IsStored() || target.IsQueryable())) {
+            ctx.AddError($"データ構造「{specification.DataStructureName}」は{IsStoredOption.ATTRIBUTE_NAME}属性も{IsQueryableOption.ATTRIBUTE_NAME}属性も指定されていないデータ構造ではありません。");
+        } else if (specification.ObjectKind != null && !target.IsQueryable()) {
+            ctx.AddError($"データ構造「{specification.DataStructureName}」は{IsQueryableOption.ATTRIBUTE_NAME}属性が指定されたデータ構造ではありません。");
         }
     }
 }

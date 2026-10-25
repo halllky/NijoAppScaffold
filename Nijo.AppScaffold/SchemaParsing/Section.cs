@@ -18,9 +18,10 @@ internal abstract class Section {
     public abstract E_Section Kind { get; }
 
     /// <summary>
-    /// このセクションに定義されたルート集約1個に対する検証を行います。
+    /// このセクションに定義されたルート集約とその子孫に対する、このセクション固有の検証を行います。
+    /// 属性単位の検証と、全セクションに共通する検証は、このメソッドの外で行われます。
     /// </summary>
-    public virtual void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) { }
+    public virtual void Validate(IReadOnlyList<XElement> rootAggregateElements, SchemaParseContext context, SchemaValidationErrors errors) { }
 
     /// <summary>
     /// このセクションに定義されたルート集約からソースコードを生成します。

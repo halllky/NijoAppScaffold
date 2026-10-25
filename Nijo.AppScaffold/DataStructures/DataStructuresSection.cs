@@ -30,12 +30,83 @@ internal sealed class DataStructuresSection : Section {
 
     public override E_Section Kind => E_Section.DataStructures;
 
-    public override void Validate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
-        foreach (var feature in GetFeaturesOf(rootAggregateElement)) {
-            feature.ValidateRootAggregate(rootAggregateElement, context, addError);
+    public override void Validate(IReadOnlyList<XElement> rootAggregateElements, SchemaParseContext context, SchemaValidationErrors errors) {
+        ValidateTableNames(rootAggregateElements, context, errors);
+
+        foreach (var rootAggregateElement in rootAggregateElements) {
+            foreach (var aggregate in rootAggregateElement.DescendantsAndSelf().Where(el => context.GetNodeType(el).HasFlag(E_NodeType.Aggregate))) {
+                ValidateMemberNames(aggregate, context, errors);
+            }
+            foreach (var member in rootAggregateElement.Descendants()) {
+                ValidateNodeType(member, context, errors);
+            }
+
+            foreach (var feature in GetFeaturesOf(rootAggregateElement)) {
+                feature.ValidateRootAggregate(rootAggregateElement, context, errors);
+            }
+            if (IsStructure(rootAggregateElement)) {
+                ValidateStructureRefTo(rootAggregateElement, context, errors);
+            }
         }
-        if (IsStructure(rootAggregateElement)) {
-            ValidateStructureRefTo(rootAggregateElement, context, addError);
+    }
+
+    /// <summary>
+    /// 永続化されるデータ構造のテーブル名は、データ構造全体で一意でなければならない
+    /// </summary>
+    private static void ValidateTableNames(IEnumerable<XElement> rootAggregateElements, SchemaParseContext context, SchemaValidationErrors errors) {
+        var tableNameGroups = rootAggregateElements
+            .Where(root => root.IsStored())
+            .SelectMany(root => root.DescendantsAndSelf())
+            .Where(el => context.GetNodeType(el).HasFlag(E_NodeType.Aggregate))
+            .GroupBy(el => el.GetDbName());
+        foreach (var group in tableNameGroups) {
+            if (group.Count() == 1) continue;
+            foreach (var el in group) {
+                errors.Add(el, $"同じテーブル名'{group.Key}'を複数の集約で定義することはできません。");
+            }
+        }
+    }
+
+    /// <summary>
+    /// 同じ集約の直下のメンバー同士で物理名が重複していてはならない
+    /// </summary>
+    private static void ValidateMemberNames(XElement aggregate, SchemaParseContext context, SchemaValidationErrors errors) {
+        var appeared = new HashSet<string>();
+        foreach (var member in aggregate.Elements()) {
+            var physicalName = context.GetPhysicalName(member);
+            if (!appeared.Add(physicalName)) {
+                errors.Add(member, $"同じ親の下で物理名'{physicalName}'が重複しています。");
+            }
+        }
+    }
+
+    /// <summary>
+    /// ルート集約の子孫のXML要素が、集約・値メンバー・外部参照のいずれかとして解釈できるかを検証します。
+    /// </summary>
+    private static void ValidateNodeType(XElement member, SchemaParseContext context, SchemaValidationErrors errors) {
+        switch (context.GetNodeType(member)) {
+            case E_NodeType.ValueMember:
+                if (context.TryResolveMemberType(member, out var vmType)) {
+                    vmType.Validate(member, context, errors.Add);
+                }
+                break;
+
+            case E_NodeType.Ref:
+                var typeAttrValue = member.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
+                var refTo = context.FindRefTo(member);
+                if (refTo == null) {
+                    errors.Add(member, $"参照先が見つかりません: {typeAttrValue}");
+                } else if (refTo.GetRootAggregateElement() == member.GetRootAggregateElement()) {
+                    errors.Add(member, "自身のツリーの集約を参照することはできません。");
+                }
+                break;
+
+            case E_NodeType.Unknown:
+                var typeName = member.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value;
+                errors.AddAttributeError(member, SchemaParseContext.ATTR_NODE_TYPE, string.IsNullOrEmpty(typeName)
+                    ? $"ノードの種類が不明です。{SchemaParseContext.ATTR_NODE_TYPE}属性が指定されているか確認してください。"
+                    : $"ノードの種類 '{typeName}' は有効ではありません。");
+                break;
         }
     }
 
@@ -78,6 +149,15 @@ internal sealed class DataStructuresSection : Section {
             vmType.RegisterDependencies(ctx);
             vmType.RenderStaticSources(ctx);
         }
+    }
+
+    /// <summary>
+    /// 引数の属性が、データ構造のいずれかの場所に指定できるかどうかを返します。
+    /// </summary>
+    internal static bool IsAvailableInDataStructures(NodeOption option) {
+        return NodeOptionTarget
+            .EnumerateAll()
+            .Any(target => target.Section == E_Section.DataStructures && option.IsAvailable(target));
     }
 
     /// <summary>
@@ -135,62 +215,22 @@ internal sealed class DataStructuresSection : Section {
     }
 
     /// <summary>
-    /// IsStored 属性も IsQueryable 属性も指定されていないデータ構造の外部参照をチェックします
+    /// IsStored 属性も IsQueryable 属性も指定されていないデータ構造からの外部参照の制約を検証します。
     /// </summary>
-    private static void ValidateStructureRefTo(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
-        // 自身を起点とするすべての外部参照を取得
-        var refElements = rootAggregateElement
-            .Descendants()
-            .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value?.StartsWith(SchemaParseContext.NODE_TYPE_REFTO + ":") == true)
-            .ToList();
+    private static void ValidateStructureRefTo(XElement rootAggregateElement, SchemaParseContext context, SchemaValidationErrors errors) {
+        foreach (var (refElement, _, refToRoot) in context.EnumerateRefsToOtherTrees(rootAggregateElement)) {
+            var refToIsQueryable = refToRoot.IsQueryable();
 
-        if (!refElements.Any()) return;
-
-        foreach (var refElement in refElements) {
-            var refTo = context.FindRefTo(refElement);
-            if (refTo == null) {
-                addError(refElement, $"参照先の要素が見つかりません: {refElement.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value}");
+            // 検索可能なデータ構造または構造体しか参照できない
+            if (refToRoot.IsStored() && !refToIsQueryable) {
+                errors.Add(refElement, $"{IsStoredOption.ATTRIBUTE_NAME}属性も{IsQueryableOption.ATTRIBUTE_NAME}属性も指定されていないデータ構造からは、{IsQueryableOption.ATTRIBUTE_NAME}属性が指定されたデータ構造、または{IsStoredOption.ATTRIBUTE_NAME}属性も{IsQueryableOption.ATTRIBUTE_NAME}属性も指定されていないデータ構造しか参照できません。");
                 continue;
             }
 
-            // 自身のツリーの集約を参照していないかチェック
-            var rootElement = refElement.GetRootAggregateElement();
-            var refToRoot = refTo.GetRootAggregateElement();
-
-            if (rootElement == refToRoot) {
-                addError(refElement, "自身のツリーの集約を参照することはできません。");
-                continue;
+            // 検索可能なデータ構造からはどのオブジェクトを参照するかが一意に決まらないため、明示が必要
+            if (refToIsQueryable && refElement.Attribute(RefToObjectOption.ATTRIBUTE_NAME) == null) {
+                errors.Add(refElement, $"{IsQueryableOption.ATTRIBUTE_NAME}属性が指定されたデータ構造を外部参照する場合、{RefToObjectOption.ATTRIBUTE_NAME}属性を指定する必要があります。");
             }
-
-            // 参照先が検索可能なデータ構造、または構造体か確認
-            var isQueryable = refToRoot.IsQueryable();
-            var isStructure = !refToRoot.IsStored() && !isQueryable;
-
-            if (!isQueryable && !isStructure) {
-                addError(refElement, $"{IsStoredOption.ATTRIBUTE_NAME}属性も{IsQueryableOption.ATTRIBUTE_NAME}属性も指定されていないデータ構造からは、{IsQueryableOption.ATTRIBUTE_NAME}属性が指定されたデータ構造、または{IsStoredOption.ATTRIBUTE_NAME}属性も{IsQueryableOption.ATTRIBUTE_NAME}属性も指定されていないデータ構造しか参照できません。");
-                continue;
-            }
-
-            // 検索可能なデータ構造を参照する場合はRefToObjectの指定が必須
-            var refToObject = refElement.Attribute(RefToObjectOption.ATTRIBUTE_NAME);
-            if (isQueryable && refToObject == null) {
-                addError(refElement, $"{IsQueryableOption.ATTRIBUTE_NAME}属性が指定されたデータ構造を外部参照する場合、{RefToObjectOption.ATTRIBUTE_NAME}属性を指定する必要があります。");
-            }
-
-            // RefToObjectの値が不正かチェック
-            if (isQueryable
-                    && refToObject != null
-                    && !RefToObjectOption.AvailableFromStructureToQuery.Contains(refToObject.Value)) {
-                addError(refElement, $"{RefToObjectOption.ATTRIBUTE_NAME}属性の値は {string.Join(" または ", RefToObjectOption.AvailableFromStructureToQuery)} のいずれかを指定してください。");
-            }
-
-            // 検索条件を参照する場合はルート集約のみ参照可能
-            if (refToObject?.Value == RefToObjectOption.REF_TO_OBJECT_SEARCH_CONDITION
-                    && refTo != refToRoot) {
-                addError(refElement, $"検索条件を参照する場合はルート集約のみ指定可能です。");
-            }
-
-            // 構造体を参照する場合はRefToObjectの指定は不要（指定されていても無視）
         }
     }
 }

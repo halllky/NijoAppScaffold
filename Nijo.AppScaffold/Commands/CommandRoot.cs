@@ -33,15 +33,16 @@ public sealed class CommandRoot : SectionRoot {
     }
 
     private ICreatablePresentationLayerStructure GetTargetStructure(XAttribute attribute) {
-        var splitted = attribute.Value.Split(':');
-        var targetPhysicalName = splitted[0];
+        if (!CommandTypeSpecification.TryParse(attribute.Value, out var specification)) {
+            throw new InvalidOperationException($"不正な型指定: {attribute.Value}");
+        }
         var targetXElement = _ctx.Document.Root
             ?.Element(SchemaParseContext.SECTION_DATA_STRUCTURES)
-            ?.Element(targetPhysicalName)
-            ?? throw new InvalidOperationException($"対象の集約が見つかりません: {targetPhysicalName}");
+            ?.Element(specification.DataStructureName)
+            ?? throw new InvalidOperationException($"対象の集約が見つかりません: {specification.DataStructureName}");
 
         var targetRootAggregate = (RootAggregate)_ctx.ToAggregateBase(targetXElement, null);
-        if (splitted.Length == 1) {
+        if (specification.ObjectKind == null) {
             // コマンドの典型的な利用シーンとして「詳細画面の初期表示データ取得」があるので
             // 戻り値であっても常にDisplayDataを返したほうがよいのか？うーん…
             // return isParameter
@@ -50,11 +51,11 @@ public sealed class CommandRoot : SectionRoot {
 
             return new StructureDisplayData(targetRootAggregate);
 
-        } else if (CommandTypeSpecificationOption.AvailableFromCommandToQuery.TryGetValue(splitted[1], out var factory)) {
+        } else if (CommandTypeSpecificationOption.AvailableFromCommandToQuery.TryGetValue(specification.ObjectKind, out var factory)) {
             return factory(targetRootAggregate);
 
         } else {
-            throw new InvalidOperationException($"不正な参照先の種類: {splitted[1]}");
+            throw new InvalidOperationException($"不正な参照先の種類: {specification.ObjectKind}");
         }
     }
 
@@ -75,6 +76,7 @@ public sealed class CommandRoot : SectionRoot {
             ?.Element(SchemaParseContext.SECTION_COMMANDS)
             ?.Elements()
             ?? [];
-        return commandElements.Any(command => command.Attribute(attributeName)?.Value.Split(':')[0] == dataStructure.PhysicalName);
+        return commandElements.Any(command => CommandTypeSpecification.TryParse(command.Attribute(attributeName)?.Value, out var specification)
+                                           && specification.DataStructureName == dataStructure.PhysicalName);
     }
 }

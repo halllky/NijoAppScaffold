@@ -422,7 +422,7 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
     /// TypeScript型定義で使用するNodeOptionの型情報を動的に生成します
     /// </summary>
     private static IEnumerable<string> RenderNodeOptionTypes(CodeRenderingContext ctx) {
-        var nodeOptions = ctx.SchemaParser.GetAllNodeOptions().Where(IsRenderedAsNodeOption);
+        var nodeOptions = ctx.SchemaParser.GetAllNodeOptions().Where(DataStructuresSection.IsAvailableInDataStructures).Where(IsRenderedAsNodeOption);
 
         // コメントはXMLの属性ではないので別途宣言している
         yield return $$"""

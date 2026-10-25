@@ -12,9 +12,6 @@ using System.Xml.XPath;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
-using Nijo.DataStructures.IsQueryable;
-using Nijo.DataStructures.IsStored;
-using Nijo.DataStructures.Members;
 using Nijo.SchemaParsing.CommonOptions;
 using Nijo.DataStructures.Aggregates;
 using Nijo.DataStructures.ValueMemberTypes;
@@ -37,6 +34,12 @@ public class SchemaParseContext {
         Document.AddAnnotation(this);
 
         _rule = rule;
+        _nodeOptionsByName = new(() => rule.NodeOptions.ToDictionary(opt => opt.AttributeName));
+        _customAttributesByUniqueId = new(() => NijoXmlCustomAttribute
+            .FromXDocument(Document)
+            .Where(attr => !string.IsNullOrWhiteSpace(attr.UniqueId))
+            .GroupBy(attr => attr.UniqueId!)
+            .ToDictionary(group => group.Key, group => group.First()));
         _valueMemberTypes = rule.ValueMemberTypes.ToDictionary(m => m.SchemaTypeName);
         _elementCountByLocalName = new Lazy<IReadOnlyDictionary<string, int>>(() => Document
             .Descendants()
@@ -385,7 +388,9 @@ public class SchemaParseContext {
     /// </summary>
     internal XElement? FindRefTo(XElement xElement) {
         var type = xElement.Attribute(ATTR_NODE_TYPE) ?? throw new InvalidOperationException();
-        var xPath = $"//{SECTION_DATA_STRUCTURES}/{type.Value.Split(':')[1]}";
+        var splitted = type.Value.Split(':');
+        if (splitted.Length < 2) return null;
+        var xPath = $"//{SECTION_DATA_STRUCTURES}/{splitted[1]}";
         return _refToCache.GetOrAdd(xPath, path => {
             return Document.Root?.XPathSelectElement(path);
         });
@@ -398,6 +403,20 @@ public class SchemaParseContext {
             var fullPath = string.Join("/", el.AncestorsAndSelf().Reverse().Skip(2).Select(GetPhysicalName));
             return Document.XPathSelectElements($"//{SECTION_DATA_STRUCTURES}//*[@{ATTR_NODE_TYPE}='{NODE_TYPE_REFTO}:{fullPath}']")?.ToArray() ?? [];
         });
+    }
+    /// <summary>
+    /// ルート集約とその子孫に定義された外部参照のうち、参照先が存在し、かつ自身のツリー以外を指しているものを列挙します。
+    /// 参照先が存在しない外部参照や自身のツリーを指す外部参照は、それ自体が検証エラーになるため含めません。
+    /// </summary>
+    internal IEnumerable<(XElement RefElement, XElement RefTo, XElement RefToRoot)> EnumerateRefsToOtherTrees(XElement rootAggregateElement) {
+        foreach (var refElement in rootAggregateElement.Descendants()) {
+            if (GetNodeType(refElement) != E_NodeType.Ref) continue;
+            var refTo = FindRefTo(refElement);
+            if (refTo == null) continue;
+            var refToRoot = refTo.GetRootAggregateElement();
+            if (refToRoot == rootAggregateElement) continue;
+            yield return (refElement, refTo, refToRoot);
+        }
     }
     private readonly ConcurrentDictionary<string, XElement?> _refToCache = new();
     private readonly ConcurrentDictionary<XElement, IReadOnlyCollection<XElement>> _refFromCache = new();
@@ -424,375 +443,107 @@ public class SchemaParseContext {
     /// <returns>スキーマの作成に成功したかどうか</returns>
     public bool TryBuildSchema(XDocument xDocument, out ApplicationSchema schema, out ValidationError[] errors) {
         schema = new ApplicationSchema(xDocument, this);
-        var errorsList = new List<(XElement, string ErrorMessage)>();
-        var attributeErrors = new List<(XElement, string AttributeName, string ErrorMessage)>();
+        var validationErrors = new SchemaValidationErrors();
 
-        // カスタム属性の定義の検証
-        var customAttributeElements = xDocument.Root?.Element(SECTION_CUSTOM_ATTRIBUTES)?.Elements().ToArray() ?? [];
-        var customAttributes = NijoXmlCustomAttribute.FromXDocument(xDocument).ToArray();
-        var nodeOptionsByName = _rule.NodeOptions.ToDictionary(opt => opt.AttributeName);
-        var customAttributesByUniqueId = customAttributes
-            .Where(attr => !string.IsNullOrWhiteSpace(attr.UniqueId))
-            .GroupBy(attr => attr.UniqueId!)
-            .ToDictionary(group => group.Key, group => group.First());
-        if (customAttributeElements.Length == customAttributes.Length) {
-            for (int i = 0; i < customAttributes.Length; i++) {
-                var attr = customAttributes[i];
-                var el = customAttributeElements[i];
-                foreach (var error in attr.ValidateThis(this, _rule)) {
-                    errorsList.Add((el, error));
-                }
-            }
+        ValidateCustomAttributeDefinitions(xDocument, validationErrors);
 
-            foreach (var attr in customAttributes.Where(a => a.IsValidation)) {
-                if (string.IsNullOrWhiteSpace(attr.PhysicalName)) continue;
-                if (!attr.PhysicalName.IsCSharpSafe()) {
-                    var el = customAttributeElements.FirstOrDefault(e => e.Name.LocalName == attr.UniqueId) ?? xDocument.Root ?? new XElement("root");
-                    errorsList.Add((el, $"カスタム属性 '{attr.PhysicalName}' の {nameof(attr.PhysicalName)} はC#の識別子として不正です。英数字とアンダースコアのみを使用し、先頭は英字またはアンダースコアにしてください。"));
-                }
-            }
-        }
+        var rootsBySection = Enum.GetValues<E_Section>().ToDictionary(
+            section => section,
+            section => (IReadOnlyList<XElement>)(xDocument.Root?.Element(section.ToXmlElementName())?.Elements().ToArray() ?? []));
 
-        // ルート集約の物理名の衝突チェック
-        var rootAggregates = xDocument.Root
-            ?.Elements()
-            .Where(el => el.Name.LocalName != SECTION_CUSTOM_ATTRIBUTES)
-            .SelectMany(el => el.Elements())
-            ?? [];
-        var rootPhysicalNames = new Dictionary<string, XElement>();
-
-        foreach (var root in rootAggregates) {
+        // ルート集約の物理名はセクションをまたいで一意でなければならない
+        var rootPhysicalNames = new HashSet<string>();
+        foreach (var root in rootsBySection.Values.SelectMany(roots => roots)) {
             var rootName = GetPhysicalName(root);
-            if (rootPhysicalNames.TryGetValue(rootName, out var existingRoot)) {
-                errorsList.Add((root, $"ルート集約の物理名'{rootName}'が重複しています。セクションをまたいでの重複もできません。"));
-            } else {
-                rootPhysicalNames[rootName] = root;
+            if (!rootPhysicalNames.Add(rootName)) {
+                validationErrors.Add(root, $"ルート集約の物理名'{rootName}'が重複しています。セクションをまたいでの重複もできません。");
             }
-        }
 
-        // セクションごとに定められたルート集約単位の検証
-        foreach (var root in rootAggregates) {
             // ルート集約の種類は属するセクションと IsStored, IsQueryable 属性で決まるため、Type 属性は使わない
             if (root.Attribute(ATTR_NODE_TYPE) != null) {
-                attributeErrors.Add((root, ATTR_NODE_TYPE, $"ルート集約には {ATTR_NODE_TYPE} 属性を指定できません。"));
-            }
-            if (root.TryGetSection(out var section)) {
-                _rule.Sections
-                    .Single(s => s.Kind == section)
-                    .Validate(root, this, (el, err) => errorsList.Add((el, err)));
+                validationErrors.AddAttributeError(root, ATTR_NODE_TYPE, $"ルート集約には {ATTR_NODE_TYPE} 属性を指定できません。");
             }
         }
 
-        // 同じテーブル名を複数の集約で定義することはできない
-        var tableNameGroups = xDocument.Root
-            ?.Element(SECTION_DATA_STRUCTURES)
-            ?.DescendantsAndSelf()
-            .Where(el => GetNodeType(el).HasFlag(E_NodeType.Aggregate)
-                      && el.IsStored())
-            .GroupBy(el => el.GetDbName())
-            ?? [];
-        foreach (var group in tableNameGroups) {
-            if (group.Count() == 1) continue;
-            foreach (var el in group) {
-                errorsList.Add((el, $"同じテーブル名'{group.Key}'を複数の集約で定義することはできません。"));
-            }
+        // セクション固有の検証
+        foreach (var section in _rule.Sections) {
+            section.Validate(rootsBySection[section.Kind], this, validationErrors);
         }
 
-        // 同じ親のメンバー同士での物理名の重複チェック
-        var targetElements = xDocument.Root
-            ?.Element(SECTION_DATA_STRUCTURES)
-            ?.Elements()
-            .SelectMany(el => el.DescendantsAndSelf())
-            ?? [];
-        foreach (var el in targetElements) {
-
-            var nodeType = GetNodeType(el);
-            var typeAttrValue = el.Attribute(ATTR_NODE_TYPE)?.Value ?? string.Empty;
-
-            var elParent = el.Parent;
-            if (elParent != null && elParent.Parent != el.Document?.Root) {
-                var siblings = elParent.Elements().ToList();
-                var siblingPhysicalNames = new Dictionary<string, XElement>();
-
-                foreach (var sibling in siblings) {
-                    var physicalName = GetPhysicalName(sibling);
-                    if (siblingPhysicalNames.TryGetValue(physicalName, out var existingSibling) && existingSibling != sibling) {
-                        errorsList.Add((sibling, $"同じ親の下で物理名'{physicalName}'が重複しています。"));
-                    } else {
-                        siblingPhysicalNames[physicalName] = sibling;
-                    }
-                }
-            }
-
-            // ノードの種類に基づくチェック
-            switch (nodeType) {
-
-                // ノードの種類が不明な場合
-                case E_NodeType.Unknown:
-                    if (string.IsNullOrEmpty(typeAttrValue)) {
-                        attributeErrors.Add((el, ATTR_NODE_TYPE, $"ノードの種類が不明です。{ATTR_NODE_TYPE}属性が指定されているか確認してください。"));
-                    } else {
-                        attributeErrors.Add((el, ATTR_NODE_TYPE, $"ノードの種類 '{typeAttrValue}' は有効ではありません。"));
-                    }
-                    break;
-
-                // Child
-                case E_NodeType.ChildAggregate:
-                    // 主キー属性のチェック
-                    if (el.Elements().Any(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null)) {
-                        if (el.IsStored()) {
-                            errorsList.Add((el, $"{IsStoredOption.ATTRIBUTE_NAME}属性が指定されたデータ構造の子集約には主キー属性を付与することができません。"));
-                        }
-                    }
-                    break;
-
-                // Children
-                case E_NodeType.ChildrenAggregate:
-                    // 永続化されるデータ構造の子配列は必ず1個以上の主キーが必要
-                    if (el.IsStored()) {
-                        if (el.Elements().All(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) == null)) {
-                            errorsList.Add((el, $"{IsStoredOption.ATTRIBUTE_NAME}属性が指定されたデータ構造の子配列は必ず1個以上の主キーを持たなければなりません。"));
-                        }
-                    }
-                    break;
-
-                // ValueMember単位の検証
-                case E_NodeType.ValueMember:
-                    if (TryResolveMemberType(el, out var vmType)) {
-                        vmType.Validate(el, this, (el, err) => errorsList.Add((el, err)));
-                    } else {
-                        attributeErrors.Add((el, ATTR_NODE_TYPE, $"種類'{el.Attribute(ATTR_NODE_TYPE)?.Value}'を特定できません。"));
-                    }
-                    break;
-
-                case E_NodeType.Ref:
-                    // 外部参照のチェック
-                    if (!ValidateRefTo(el, out var refError)) {
-                        errorsList.Add((el, refError));
-                    }
-                    break;
-
-                case E_NodeType.StaticEnumType:
-                    break;
-
-                case E_NodeType.StaticEnumValue:
-                    break;
-
-                default:
-                    break;
-            }
-
-            // 属性に基づくチェック
-            foreach (var attr in el.Attributes()) {
-                // 名前空間宣言はスキーマのルールで定義された属性ではないのでスキップ
-                if (attr.IsNamespaceDeclaration) continue;
-
-                var attrName = attr.Name.LocalName;
-                var hasTarget = NodeOptionTarget.TryCreate(el, nodeType, out var target);
-
-                // 特殊な属性
-                if (attrName == ATTR_NODE_TYPE || attrName == ATTR_UNIQUE_ID) {
-                    // チェック対象外
-                }
-
-                // 既定の属性
-                else if (nodeOptionsByName.TryGetValue(attrName, out var opt)) {
-
-                    if (!hasTarget) continue;
-
-                    if (!opt.IsAvailable(target)) {
-                        attributeErrors.Add((el, attrName, $"この属性はこの要素には指定できません。"));
-                        continue; // 指定不可な属性なので、それ以上の検証はスキップ
-                    }
-                    opt.Validate(new() {
-                        Value = attr.Value,
-                        XElement = el,
-                        Target = target,
-                        AddError = err => attributeErrors.Add((el, attrName, err)),
-                        SchemaParseContext = this,
-                    });
-                }
-
-                // カスタム属性
-                else if (customAttributesByUniqueId.TryGetValue(attrName, out var customAttr)) {
-                    if (hasTarget) {
-                        if (!customAttr.IsAvailableFor(target)) {
-                            attributeErrors.Add((el, attrName, $"カスタム属性 '{customAttr.PhysicalName}' はこの要素では使用できません。"));
-                        } else {
-                            foreach (var error in customAttr.ValidateModelElement(el)) {
-                                attributeErrors.Add((el, attrName, error));
-                            }
-                        }
-                    }
-                }
-
-                // 定義されていない属性
-                else {
-                    attributeErrors.Add((el, attrName, "この属性は定義されていません。"));
-                }
-            }
+        // 属性単位の検証
+        foreach (var element in rootsBySection.Values.SelectMany(roots => roots).SelectMany(root => root.DescendantsAndSelf())) {
+            ValidateAttributes(element, validationErrors);
         }
 
-        // エラーをXML要素ごとにまとめる
-        errors = errorsList
-            .GroupBy(x => x.Item1)
-            .Select(x => new ValidationError {
-                XElement = x.Key,
-                OwnErrors = x.Select(y => y.ErrorMessage).ToArray(),
-                AttributeErrors = attributeErrors
-                    .Where(y => y.Item1 == x.Key)
-                    .GroupBy(y => y.AttributeName)
-                    .ToDictionary(y => y.Key, y => y.Select(z => z.ErrorMessage).ToArray()),
-            })
-            .Concat(attributeErrors // attributeErrors にしかエラーがない要素も拾い上げる
-                .Select(x => x.Item1)
-                .Distinct()
-                .Where(x => !errorsList.Any(y => y.Item1 == x)) // errorsList に含まれない要素のみを対象とする
-                .Select(x => new ValidationError {
-                    XElement = x,
-                    OwnErrors = Array.Empty<string>(), // errorsList にはないので空配列
-                    AttributeErrors = attributeErrors
-                        .Where(y => y.Item1 == x)
-                        .GroupBy(y => y.AttributeName)
-                        .ToDictionary(y => y.Key, y => y.Select(z => z.ErrorMessage).ToArray()),
-                }))
-            .ToArray();
+        errors = validationErrors.ToArray();
         return errors.Length == 0;
     }
 
     /// <summary>
-    /// 外部参照のバリデーションを行います
+    /// CustomAttributes セクションに定義されたカスタム属性の定義自体を検証します。
     /// </summary>
-    /// <param name="refElement">チェック対象のref-to要素</param>
-    /// <param name="errorMessage">エラーメッセージ（エラーがある場合）</param>
-    /// <returns>バリデーションが成功したかどうか</returns>
-    private bool ValidateRefTo(XElement refElement, out string errorMessage) {
-        errorMessage = string.Empty;
+    private void ValidateCustomAttributeDefinitions(XDocument xDocument, SchemaValidationErrors errors) {
+        var customAttributeElements = xDocument.Root?.Element(SECTION_CUSTOM_ATTRIBUTES)?.Elements().ToArray() ?? [];
+        var customAttributes = NijoXmlCustomAttribute.FromXDocument(xDocument).ToArray();
+        if (customAttributeElements.Length != customAttributes.Length) return;
 
-        // ref-to:の後ろの部分を取得
-        var typeAttr = refElement.Attribute(ATTR_NODE_TYPE);
-        if (typeAttr == null || !typeAttr.Value.StartsWith(NODE_TYPE_REFTO + ":")) {
-            errorMessage = $"ref-to要素のType属性が正しくありません: {typeAttr?.Value}";
-            return false;
-        }
-
-        // 参照先の要素を見つける
-        var refTo = FindRefTo(refElement);
-        if (refTo == null) {
-            errorMessage = $"参照先が見つかりません: {typeAttr.Value}";
-            return false;
-        }
-
-        // 自身のツリーの集約を参照していないかチェック
-        var rootElement = refElement.GetRootAggregateElement();
-        var refToRoot = refTo.GetRootAggregateElement();
-
-        if (rootElement == refToRoot) {
-            errorMessage = "自身のツリーの集約を参照することはできません。";
-            return false;
-        }
-
-        // ルート集約の種類に基づく参照制約チェック
-        var storedAttr = IsStoredOption.ATTRIBUTE_NAME;
-        var queryableAttr = IsQueryableOption.ATTRIBUTE_NAME;
-        var refToIsStored = refTo.IsStored();
-        var refToIsQueryable = refTo.IsQueryable();
-        var refToIsView = refToRoot.Attribute(MapToViewOption.ATTRIBUTE_NAME) != null;
-
-        if (refElement.TryGetSection(out var section)) {
-            var isStored = rootElement.IsStored();
-            var isQueryable = rootElement.IsQueryable();
-            if (isStored) {
-                // 永続化されるデータ構造からは、永続化されるデータ構造またはビューにマッピングされるデータ構造しか参照できない
-                if (!refToIsStored && !(refToIsQueryable && refToIsView)) {
-                    errorMessage = $"{storedAttr}属性が指定されたデータ構造からは、{storedAttr}属性が指定されたデータ構造、またはビューにマッピングされるデータ構造しか参照できません。";
-                    return false;
-                }
-
-                // 検索可能かつ永続化されるデータ構造から、検索可能でない永続化されるデータ構造への参照を禁止。RefTargetなどが生成されないので
-                if (isQueryable && refToIsStored && !refToIsQueryable) {
-                    errorMessage = $"{storedAttr}属性と{queryableAttr}属性が両方指定されたデータ構造からは、{storedAttr}属性のみが指定されたデータ構造を参照できません。";
-                    return false;
-                }
-            } else if (isQueryable) {
-                // 検索可能なデータ構造からは検索可能なデータ構造しか参照できない
-                if (!refToIsQueryable) {
-                    errorMessage = $"{queryableAttr}属性が指定されたデータ構造からは、同じく{queryableAttr}属性が指定されたデータ構造しか参照できません。";
-                    return false;
-                }
-
-                // 循環参照を定義することはできない
-                if (HasCircularReference(refElement, refTo)) {
-                    errorMessage = $"{queryableAttr}属性が指定されたデータ構造で循環参照を定義することはできません。";
-                    return false;
-                }
-            } else if (section == E_Section.Commands) {
-                // コマンドからは検索可能なデータ構造しか参照できない
-                if (!refToIsQueryable) {
-                    errorMessage = $"コマンドの集約からは{queryableAttr}属性が指定されたデータ構造しか参照できません。";
-                    return false;
-                }
-
-                // RefToObjectの指定がないとエラー
-                if (refElement.Attribute(RefToObjectOption.ATTRIBUTE_NAME) == null) {
-                    errorMessage = $"コマンドから外部参照する場合、{RefToObjectOption.ATTRIBUTE_NAME}属性を指定する必要があります。";
-                    return false;
-                }
-            } else if (section == E_Section.DataStructures) {
-                // 構造体からは、検索可能なデータ構造または構造体しか参照できない
-                if (refToIsStored && !refToIsQueryable) {
-                    errorMessage = $"{storedAttr}属性も{queryableAttr}属性も指定されていないデータ構造からは、{queryableAttr}属性が指定されたデータ構造、または{storedAttr}属性も{queryableAttr}属性も指定されていないデータ構造しか参照できません。";
-                    return false;
-                }
-
-                // 検索可能なデータ構造を参照する場合はRefToObjectの指定が必須
-                if (refToIsQueryable && refElement.Attribute(RefToObjectOption.ATTRIBUTE_NAME) == null) {
-                    errorMessage = $"{queryableAttr}属性が指定されたデータ構造を外部参照する場合、{RefToObjectOption.ATTRIBUTE_NAME}属性を指定する必要があります。";
-                    return false;
-                }
+        for (int i = 0; i < customAttributes.Length; i++) {
+            foreach (var error in customAttributes[i].ValidateThis(this, _rule)) {
+                errors.Add(customAttributeElements[i], error);
             }
         }
 
-        return true;
+        foreach (var attr in customAttributes.Where(a => a.IsValidation)) {
+            if (string.IsNullOrWhiteSpace(attr.PhysicalName)) continue;
+            if (!attr.PhysicalName.IsCSharpSafe()) {
+                var el = customAttributeElements.FirstOrDefault(e => e.Name.LocalName == attr.UniqueId) ?? xDocument.Root ?? new XElement("root");
+                errors.Add(el, $"カスタム属性 '{attr.PhysicalName}' の {nameof(attr.PhysicalName)} はC#の識別子として不正です。英数字とアンダースコアのみを使用し、先頭は英字またはアンダースコアにしてください。");
+            }
+        }
     }
 
     /// <summary>
-    /// 循環参照をチェックします
+    /// XML要素に指定されている属性それぞれについて、その場所に指定可能か、値が妥当かを検証します。
     /// </summary>
-    /// <param name="source">参照元要素</param>
-    /// <param name="target">参照先要素</param>
-    /// <returns>循環参照がある場合true</returns>
-    private bool HasCircularReference(XElement source, XElement target) {
-        var visited = new HashSet<XElement>();
-        var queue = new Queue<XElement>();
+    private void ValidateAttributes(XElement element, SchemaValidationErrors errors) {
+        if (!NodeOptionTarget.TryCreate(element, GetNodeType(element), out var target)) return;
 
-        queue.Enqueue(target);
+        foreach (var attr in element.Attributes()) {
+            // 名前空間宣言はスキーマのルールで定義された属性ではないのでスキップ
+            if (attr.IsNamespaceDeclaration) continue;
 
-        while (queue.Count > 0) {
-            var current = queue.Dequeue();
+            var attrName = attr.Name.LocalName;
+            if (attrName == ATTR_NODE_TYPE || attrName == ATTR_UNIQUE_ID) continue;
 
-            if (!visited.Add(current)) {
-                continue;
-            }
-
-            // 参照を探す
-            foreach (var el in current.Descendants()) {
-                var typeAttr = el.Attribute(ATTR_NODE_TYPE);
-                if (typeAttr != null && typeAttr.Value.StartsWith(NODE_TYPE_REFTO + ":")) {
-                    var refTo = FindRefTo(el);
-                    if (refTo != null) {
-                        if (refTo == source) {
-                            // 循環参照発見
-                            return true;
-                        }
-                        queue.Enqueue(refTo);
-                    }
+            if (_nodeOptionsByName.Value.TryGetValue(attrName, out var opt)) {
+                if (!opt.IsAvailable(target)) {
+                    errors.AddAttributeError(element, attrName, "この属性はこの要素には指定できません。");
+                    continue;
                 }
+                opt.Validate(new() {
+                    Value = attr.Value,
+                    XElement = element,
+                    Target = target,
+                    AddError = err => errors.AddAttributeError(element, attrName, err),
+                    SchemaParseContext = this,
+                });
+
+            } else if (_customAttributesByUniqueId.Value.TryGetValue(attrName, out var customAttr)) {
+                if (!customAttr.IsAvailableFor(target)) {
+                    errors.AddAttributeError(element, attrName, $"カスタム属性 '{customAttr.PhysicalName}' はこの要素では使用できません。");
+                    continue;
+                }
+                foreach (var error in customAttr.ValidateModelElement(element)) {
+                    errors.AddAttributeError(element, attrName, error);
+                }
+
+            } else {
+                errors.AddAttributeError(element, attrName, "この属性は定義されていません。");
             }
         }
-
-        return false;
     }
+    private readonly Lazy<Dictionary<string, NodeOption>> _nodeOptionsByName;
+    private readonly Lazy<Dictionary<string, NijoXmlCustomAttribute>> _customAttributesByUniqueId;
 
     public class ValidationError {
         public required XElement XElement { get; init; }

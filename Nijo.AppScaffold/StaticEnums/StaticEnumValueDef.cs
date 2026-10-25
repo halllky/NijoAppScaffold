@@ -13,8 +13,6 @@ namespace Nijo.StaticEnums {
     /// </summary>
     internal class StaticEnumValueDef {
 
-        internal const string ATTR_KEY = "key";
-
         internal StaticEnumValueDef(XElement xElement, SchemaParseContext ctx) {
             _xElement = xElement;
             _ctx = ctx;
@@ -24,6 +22,6 @@ namespace Nijo.StaticEnums {
 
         public string PhysicalName => _ctx.GetPhysicalName(_xElement);
         public string DisplayName => _xElement.GetDisplayName();
-        public int EnumValue => int.Parse(_xElement.Attribute(ATTR_KEY)?.Value ?? throw new InvalidOperationException());
+        public int EnumValue => int.Parse(_xElement.Attribute(StaticEnumKeyOption.ATTRIBUTE_NAME)?.Value ?? throw new InvalidOperationException());
     }
 }

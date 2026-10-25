@@ -33,11 +33,11 @@ internal sealed class IsQueryableOption : FeatureOption {
         return target.Section == E_Section.DataStructures && target.NodeType == E_NodeType.RootAggregate;
     }
 
-    public override void ValidateRootAggregate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
+    public override void ValidateRootAggregate(XElement rootAggregateElement, SchemaParseContext context, SchemaValidationErrors errors) {
         // IsStored 属性と同時に指定された場合、データ構造の形はデータベース上のテーブルと同じになるため、IsStored 属性の側の検証に従う
         if (rootAggregateElement.IsStored()) return;
 
-        // キーと ref-to のチェック
+        // ビューにマッピングされる場合のキーと ref-to のチェック。キーを指定できる場所は IsKey 属性の側で検証する
         var isView = rootAggregateElement.Attribute(MapToViewOption.ATTRIBUTE_NAME) != null;
 
         if (isView) {
@@ -57,7 +57,7 @@ internal sealed class IsQueryableOption : FeatureOption {
                     var hasKey = el.Elements().Any(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null);
 
                     if (!hasKey) {
-                        addError(el, "Child/Childrenがあるビューにマッピングされるデータ構造にはキーが必要です。");
+                        errors.Add(el, "Child/Childrenがあるビューにマッピングされるデータ構造にはキーが必要です。");
                     }
                 }
             }
@@ -75,42 +75,13 @@ internal sealed class IsQueryableOption : FeatureOption {
                     .ToList();
 
                 foreach (var refToMember in refToMembers) {
-                    addError(refToMember, "キーが定義されていないビューからは他の集約を参照(ref-to)できません。EF Coreの制約により、キーレスエンティティからのナビゲーションプロパティはサポートされていません。");
-                }
-            }
-        } else {
-            // MapToViewが指定されていない通常の検索可能なデータ構造の場合は子集約・子配列への主キー属性を禁止
-            // 子集約には主キー属性を付与できない
-            var childAggregates = rootAggregateElement.Descendants()
-                .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILD);
-            foreach (var childAggregate in childAggregates) {
-                var membersWithKey = childAggregate.Elements()
-                    .Where(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null).ToList();
-                if (membersWithKey.Any()) {
-                    addError(childAggregate, $"{IsQueryableOption.ATTRIBUTE_NAME}属性のみが指定されたデータ構造の子集約には主キー属性を付与することができません。");
-                    foreach (var member in membersWithKey) {
-                        addError(member, "この子集約のメンバーに主キー属性を付与することはできません。");
-                    }
-                }
-            }
-
-            // 子配列には主キー属性を付与できない
-            var childrenAggregates = rootAggregateElement.Descendants()
-                .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILDREN);
-            foreach (var childrenAggregate in childrenAggregates) {
-                var membersWithKey = childrenAggregate.Elements()
-                    .Where(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null).ToList();
-                if (membersWithKey.Any()) {
-                    addError(childrenAggregate, $"{IsQueryableOption.ATTRIBUTE_NAME}属性のみが指定されたデータ構造の子配列には主キー属性を付与することができません。");
-                    foreach (var member in membersWithKey) {
-                        addError(member, "この子配列のメンバーに主キー属性を付与することはできません。");
-                    }
+                    errors.Add(refToMember, "キーが定義されていないビューからは他の集約を参照(ref-to)できません。EF Coreの制約により、キーレスエンティティからのナビゲーションプロパティはサポートされていません。");
                 }
             }
         }
 
         // 外部参照のチェック
-        ValidateRefTo(rootAggregateElement, context, addError);
+        ValidateRefTo(rootAggregateElement, context, errors);
     }
 
     public override void Render(CodeRenderingContext ctx, RootAggregate rootAggregate, SourceFileByAggregate aggregateFile) {
@@ -218,40 +189,15 @@ internal sealed class IsQueryableOption : FeatureOption {
     /// <summary>
     /// IsQueryable 属性のみが指定されたデータ構造の外部参照をチェックします
     /// </summary>
-    private static void ValidateRefTo(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
-        // 自身を起点とするすべての外部参照を取得
-        var refElements = rootAggregateElement
-            .Descendants()
-            .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value?.StartsWith("ref-to:") == true)
-            .ToList();
-
-        if (!refElements.Any()) return;
-
-        foreach (var refElement in refElements) {
-            var refTo = context.FindRefTo(refElement);
-            if (refTo == null) {
-                addError(refElement, $"参照先の要素が見つかりません: {refElement.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value}");
-                continue;
-            }
-
-            // 自身のツリーの集約を参照していないかチェック
-            var rootElement = refElement.GetRootAggregateElement();
-            var refToRoot = refTo.GetRootAggregateElement();
-
-            if (rootElement == refToRoot) {
-                addError(refElement, "自身のツリーの集約を参照することはできません。");
-                continue;
-            }
-
-            // 参照先が検索可能なデータ構造か確認
+    private static void ValidateRefTo(XElement rootAggregateElement, SchemaParseContext context, SchemaValidationErrors errors) {
+        foreach (var (refElement, _, refToRoot) in context.EnumerateRefsToOtherTrees(rootAggregateElement)) {
             if (!refToRoot.IsQueryable()) {
-                addError(refElement, $"{IsQueryableOption.ATTRIBUTE_NAME}属性が指定されたデータ構造からは、同じく{IsQueryableOption.ATTRIBUTE_NAME}属性が指定されたデータ構造しか参照できません。");
+                errors.Add(refElement, $"{ATTRIBUTE_NAME}属性が指定されたデータ構造からは、同じく{ATTRIBUTE_NAME}属性が指定されたデータ構造しか参照できません。");
             }
         }
 
-        // 循環参照チェック
         if (HasCircularReferences(rootAggregateElement, context)) {
-            addError(rootAggregateElement, $"{IsQueryableOption.ATTRIBUTE_NAME}属性のみが指定されたデータ構造で循環参照を定義することはできません。");
+            errors.Add(rootAggregateElement, $"{ATTRIBUTE_NAME}属性のみが指定されたデータ構造で循環参照を定義することはできません。");
         }
     }
 

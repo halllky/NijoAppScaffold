@@ -32,36 +32,44 @@ internal sealed class IsStoredOption : FeatureOption {
         return target.Section == E_Section.DataStructures && target.NodeType == E_NodeType.RootAggregate;
     }
 
-    public override void ValidateRootAggregate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
-        // ルートとChildrenはキー必須
+    public override void ValidateRootAggregate(XElement rootAggregateElement, SchemaParseContext context, SchemaValidationErrors errors) {
+        // ルートとChildrenはキー必須。子集約にキーを指定できないことは IsKey 属性の側で検証する
         var rootAndChildren = rootAggregateElement
             .DescendantsAndSelf()
-            .Where(el => el.Parent?.Parent == el.Document?.Root
-                      || el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILDREN);
+            .Where(el => el == rootAggregateElement || context.GetNodeType(el) == E_NodeType.ChildrenAggregate);
         foreach (var el in rootAndChildren) {
-            var hasKey = el.Elements().Any(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null);
-
-            if (!hasKey) {
-                addError(el, "キーが指定されていません。");
+            if (!el.Elements().Any(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null)) {
+                errors.Add(el, "キーが指定されていません。");
             }
         }
 
-        // 子集約に主キー属性がないことを確認
-        var childAggregates = rootAggregateElement
-            .Descendants()
-            .Where(el => el.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value == SchemaParseContext.NODE_TYPE_CHILD);
-        foreach (var child in childAggregates) {
-            var membersWithKey = child.Elements().Where(member => member.Attribute(IsKeyOption.ATTRIBUTE_NAME) != null).ToList();
-            if (membersWithKey.Count != 0) {
-                addError(child, $"{IsStoredOption.ATTRIBUTE_NAME}属性が指定されたデータ構造の子集約には主キー属性を付与することができません。");
-                foreach (var member in membersWithKey) {
-                    addError(member, "この子集約のメンバーに主キー属性を付与することはできません。");
-                }
-            }
-        }
+        ValidateRefTo(rootAggregateElement, context, errors);
 
         // 循環参照のチェック（主キーや必須制約による閉路が生じないか）
-        ValidateCircularReferences(rootAggregateElement, context, addError);
+        ValidateCircularReferences(rootAggregateElement, context, errors.Add);
+    }
+
+    /// <summary>
+    /// 永続化されるデータ構造からの外部参照の制約を検証します。
+    /// </summary>
+    private static void ValidateRefTo(XElement rootAggregateElement, SchemaParseContext context, SchemaValidationErrors errors) {
+        var isQueryable = rootAggregateElement.IsQueryable();
+        foreach (var (refElement, _, refToRoot) in context.EnumerateRefsToOtherTrees(rootAggregateElement)) {
+            var refToIsStored = refToRoot.IsStored();
+            var refToIsQueryable = refToRoot.IsQueryable();
+            var refToIsView = refToRoot.Attribute(MapToViewOption.ATTRIBUTE_NAME) != null;
+
+            // 永続化されるデータ構造からは、永続化されるデータ構造またはビューにマッピングされるデータ構造しか参照できない
+            if (!refToIsStored && !(refToIsQueryable && refToIsView)) {
+                errors.Add(refElement, $"{ATTRIBUTE_NAME}属性が指定されたデータ構造からは、{ATTRIBUTE_NAME}属性が指定されたデータ構造、またはビューにマッピングされるデータ構造しか参照できません。");
+                continue;
+            }
+
+            // 検索可能かつ永続化されるデータ構造から、検索可能でない永続化されるデータ構造への参照を禁止。RefTargetなどが生成されないので
+            if (isQueryable && refToIsStored && !refToIsQueryable) {
+                errors.Add(refElement, $"{ATTRIBUTE_NAME}属性と{IsQueryableOption.ATTRIBUTE_NAME}属性が両方指定されたデータ構造からは、{ATTRIBUTE_NAME}属性のみが指定されたデータ構造を参照できません。");
+            }
+        }
     }
 
     public override void Render(CodeRenderingContext ctx, RootAggregate rootAggregate, SourceFileByAggregate aggregateFile) {

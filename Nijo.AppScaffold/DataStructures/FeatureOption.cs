@@ -16,7 +16,7 @@ internal abstract class FeatureOption : NodeOption {
     /// <summary>
     /// この属性が指定されたルート集約1個に対する検証を行います。
     /// </summary>
-    public virtual void ValidateRootAggregate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) { }
+    public virtual void ValidateRootAggregate(XElement rootAggregateElement, SchemaParseContext context, SchemaValidationErrors errors) { }
 
     /// <summary>
     /// この属性が指定されたルート集約1個と対応するソースコードを生成します。

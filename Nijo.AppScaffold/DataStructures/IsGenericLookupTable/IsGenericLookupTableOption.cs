@@ -30,7 +30,7 @@ internal sealed class IsGenericLookupTableOption : FeatureOption {
         return target.IsStored && target.NodeType == E_NodeType.RootAggregate;
     }
 
-    public override void ValidateRootAggregate(XElement rootAggregateElement, SchemaParseContext context, Action<XElement, string> addError) {
+    public override void ValidateRootAggregate(XElement rootAggregateElement, SchemaParseContext context, SchemaValidationErrors errors) {
         // * 主キーのうち1個以上はハードコードされる主キーでなければならない
         // * 主キーのうち1個以上はハードコードされない主キーでなければならない
         var keyMembers = rootAggregateElement.Elements()
@@ -40,10 +40,10 @@ internal sealed class IsGenericLookupTableOption : FeatureOption {
         var hasNonHardCodedKey = keyMembers.Any(m => m.Attribute(IsHardCodedPrimaryKeyOption.ATTRIBUTE_NAME) == null);
 
         if (!hasHardCodedKey) {
-            addError(rootAggregateElement, "汎用参照テーブルの主キーのうち、少なくとも1個はハードコードされる主キーでなければなりません。");
+            errors.Add(rootAggregateElement, "汎用参照テーブルの主キーのうち、少なくとも1個はハードコードされる主キーでなければなりません。");
         }
         if (!hasNonHardCodedKey) {
-            addError(rootAggregateElement, "汎用参照テーブルの主キーのうち、少なくとも1個はハードコードされない主キーでなければなりません。");
+            errors.Add(rootAggregateElement, "汎用参照テーブルの主キーのうち、少なくとも1個はハードコードされない主キーでなければなりません。");
         }
     }
 
