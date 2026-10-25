@@ -64,9 +64,13 @@ export function createCheckBoxCellHelper(
           </label>
         )
       },
-      onCellKeyDown: ({ rowIndex, event }) => {
+      onCellKeyDown: ({ row, rowIndex, rowKey, event }) => {
         if (event.key === ' ' || event.code === 'Space') {
           event.preventDefault()
+
+          // グリッドはキー入力をセルの読み取り専用の判定に関わらず渡してくるので、ここで判定する
+          const { isReadOnly } = restOptions
+          if (isReadOnly === true || typeof isReadOnly === 'function' && isReadOnly(row, rowIndex, rowKey)) return
 
           const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
           const current = getValues(`${arrayName}.${fieldRowIndex}.${key}`)

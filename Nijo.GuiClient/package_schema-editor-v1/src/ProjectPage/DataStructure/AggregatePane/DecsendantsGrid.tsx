@@ -7,6 +7,7 @@ import {
   EditingProject, EditingMember, isAttributeAvailable, ATTR_UNIQUE_CONSTRAINTS,
   ATTR_IS_STORED, ATTR_IS_QUERYABLE, getAttributeTarget, isCustomAttributeAvailable,
   NODE_TYPE_CHILD_AGGREGATE, NODE_TYPE_CHILDREN_AGGREGATE, NODE_TYPE_VALUE_MEMBER, NODE_TYPE_REF,
+  getMemberNodeType,
 } from "../../../backend"
 import * as UI from '../../../UI'
 import { usePersonalSettings } from "../../../PersonalSettings"
@@ -105,26 +106,34 @@ function DecsendantsGrid(props: {
 
       if (attrDef.attributeName === ATTR_UNIQUE_CONSTRAINTS) {
         columns.push(uniqueConstraintColumns)
+        continue
+      }
 
-      } else if (attrDef.type === 'EnumSelect') {
+      // その行の種類（子集約・値メンバーなど）では指定できない属性は読み取り専用にする
+      const isReadOnly = (row: GridRowType) => !isAttributeAvailable(attrDef, attributeTarget, [getMemberNodeType(row.type)])
+
+      if (attrDef.type === 'EnumSelect') {
         const ddlOptions = (attrDef.typeEnumValues ?? [])
           .map(opt => ({ value: opt, text: opt }))
         columns.push(helper.dropdown(attrDef.displayName, `attributes.${attrDef.attributeName}`, ddlOptions, {
           defaultWidth: 120,
           headerTooltip: attrDef.helpText,
           validationErrorSettings: [row => row.uniqueId, attrDef.attributeName],
+          isReadOnly,
         }))
       } else if (attrDef.type === 'Boolean') {
         columns.push(helper.checkBox(attrDef.displayName, `attributes.${attrDef.attributeName}`, {
           defaultWidth: 120,
           headerTooltip: attrDef.helpText,
           validationErrorSettings: [row => row.uniqueId, attrDef.attributeName],
+          isReadOnly,
         }))
       } else {
         columns.push(helper.text(attrDef.displayName, `attributes.${attrDef.attributeName}`, {
           defaultWidth: 120,
           headerTooltip: attrDef.helpText,
           validationErrorSettings: [row => row.uniqueId, attrDef.attributeName],
+          isReadOnly,
         }))
       }
     }

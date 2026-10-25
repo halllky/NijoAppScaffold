@@ -323,6 +323,17 @@ export const getAttributeTarget = (section: SectionName, root: Pick<EditingRootA
   }
 }
 
+/** メンバーの種類に対応するノード種別を返す。 */
+export const getMemberNodeType = (type: EditingMemberType): string => {
+  switch (type.kind) {
+    case 'child': return NODE_TYPE_CHILD_AGGREGATE
+    case 'children': return NODE_TYPE_CHILDREN_AGGREGATE
+    case 'ref-to': return NODE_TYPE_REF
+    case 'value': return NODE_TYPE_VALUE_MEMBER
+    case 'unknown': return NODE_TYPE_UNKNOWN
+  }
+}
+
 /**
  * 指定された属性が、指定された場所のいずれかのノード種別で利用可能かを判定する。
  */
