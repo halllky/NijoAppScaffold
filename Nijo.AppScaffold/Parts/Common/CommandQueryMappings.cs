@@ -17,8 +17,9 @@ namespace Nijo.Parts.Common {
     /// カスタマイズ用のマッピングモジュール。
     /// JavaScript向けには、検索可能なデータ構造やコマンドの種類を表す文字列をキーにしてそれと対応するオブジェクトや関数を返すマッピング定義。
     /// C#向けには、検索可能なデータ構造やコマンドの種類を表すenum。
+    /// 特定のセクションや属性にしか関係しない対応表のモジュールは、その持ち主のフォルダの partial クラスでレンダリングする。
     /// </summary>
-    internal class CommandQueryMappings : ISharedSourceFile<CodeRenderingContext> {
+    internal partial class CommandQueryMappings : ISharedSourceFile<CodeRenderingContext> {
 
         /// <summary>
         /// JavaScript用: 永続化されるデータ構造の型名のリテラル型
@@ -136,64 +137,30 @@ namespace Nijo.Parts.Common {
             return $"import type {{ {modules.Join(", ")} }} from \"./{TS_MODEL_TYPES}\"";
         }
 
+        /// <summary>
+        /// メタデータの対応表の値の型
+        /// </summary>
+        private const string TS_METADATA_TABLE = $"Util.{AggregateMetadata.NAMESPACE}.{AggregateMetadata.TYPE_TABLE}";
+
+        /// <summary>
+        /// 集約ごとのモジュールのimport文
+        /// </summary>
+        private static string RenderImports(IEnumerable<AggregateBase> aggregates, bool typeOnly) {
+            return aggregates
+                .Select(agg => new TypeScriptAggregateModule(agg.GetRoot()))
+                .DistinctBy(module => module.ImportAlias)
+                .OrderBy(module => module.ImportAlias)
+                .SelectTextTemplate(module => module.RenderImportFromRoot(typeOnly));
+        }
+        /// <summary>
+        /// 集約ごとのモジュールのシンボルを、そのモジュールの別名で修飾した名前
+        /// </summary>
+        private static string Q(AggregateBase aggregate, string exportName) {
+            return new TypeScriptAggregateModule(aggregate.GetRoot()).Qualify(exportName);
+        }
+
         private IEnumerable<SourceFile> RenderTypeScript(CodeRenderingContext ctx) {
-
-            var dataModelsOrderByDataFlow = _dataModels.OrderByDataFlow(ctx.Schema).ToArray();
-            var queryModelsOrderByDataFlow = _queryModels.OrderByDataFlow(ctx.Schema).ToArray();
-            var commandModelsOrderByDataFlow = _commandModels.OrderByDataFlow(ctx.Schema).ToArray();
-            var structureModelsOrderByDataFlow = _structureModels.OrderByDataFlow(ctx.Schema).ToArray();
-
-            // 検索可能なデータ構造のルート集約だけでなくツリー全部
-            var queryModelAggregateTypes = queryModelsOrderByDataFlow
-                .SelectMany(x => x.EnumerateThisAndDescendants())
-                .OrderBy(x => x.GetRoot().GetIndexOfDataFlow(ctx.Schema))
-                .ThenBy(x => x.GetOrderInTree())
-                .ToArray();
-
-            // コマンド のパラメータまたは戻り値に指定されている 構造体 の型名
-            var parameterStructureModels = structureModelsOrderByDataFlow
-                .Where(x => CommandRoot.IsReferredAsParameter(x)
-                         || CommandRoot.IsReferredAsReturnValue(x))
-                .ToArray();
-
-            // Ref関連モジュールは他の集約から参照されているもののみ使用可能
-            var referedRefEntires = queryModelsOrderByDataFlow
-                .SelectMany(rootAggregate => DisplayDataRef.GetReferedMembersRecursively(rootAggregate).Entries)
-                .ToArray();
-
-            // コマンド のパラメータと戻り値
-            var commandParams = commandModelsOrderByDataFlow
-                .Select(agg => (Aggregate: agg, Structure: agg.GetParameterStructure()))
-                .ToArray();
-            var commandReturnValues = commandModelsOrderByDataFlow
-                .Select(agg => (Aggregate: agg, Structure: agg.GetReturnValueStructure()))
-                .ToArray();
-
-            // 集約ごとのモジュールのimport文
-            static string RenderImports(IEnumerable<AggregateBase> aggregates, bool typeOnly) {
-                return aggregates
-                    .Select(agg => new TypeScriptAggregateModule(agg.GetRoot()))
-                    .DistinctBy(module => module.ImportAlias)
-                    .OrderBy(module => module.ImportAlias)
-                    .SelectTextTemplate(module => module.RenderImportFromRoot(typeOnly));
-            }
-            static string Q(AggregateBase aggregate, string exportName) {
-                return new TypeScriptAggregateModule(aggregate.GetRoot()).Qualify(exportName);
-            }
-
-            // メタデータの対応表の値の型
-            const string TS_METADATA_TABLE = $"Util.{AggregateMetadata.NAMESPACE}.{AggregateMetadata.TYPE_TABLE}";
-            const string TS_QUERY_MODEL_METADATA = $$"""{ displayData: {{TS_METADATA_TABLE}}, searchCondition: {{TS_METADATA_TABLE}} }""";
-            const string TS_COMMAND_STRUCTURE_METADATA = $$"""{ kind: 'display-data', entry: { displayData: {{TS_METADATA_TABLE}} } } | { kind: 'search-condition', entry: { searchCondition: {{TS_METADATA_TABLE}} } } | null""";
-
-            // コマンド の引数・戻り値の構造体のメタデータ。検索条件とそれ以外とで、使うメタデータの表が異なる
-            static string RenderCommandStructureMetadata(ICreatablePresentationLayerStructure? structure) {
-                return structure switch {
-                    null => "null",
-                    SearchCondition.Entry => $"{{ kind: 'search-condition', entry: {Q(structure.Aggregate, AggregateMetadata.CONST_NAME)} }}",
-                    _ => $"{{ kind: 'display-data', entry: {Q(structure.Aggregate, AggregateMetadata.CONST_NAME)} }}",
-                };
-            }
+            var targets = new RenderingTargets(ctx, _dataModels, _queryModels, _commandModels, _structureModels);
 
             // Data,Command,Queryの種類の一覧
             yield return new SourceFile {
@@ -201,38 +168,38 @@ namespace Nijo.Parts.Common {
                 Contents = $$"""
                     /** DataModelの種類の一覧。ルート集約のみ。 */
                     export type {{DATA_MODEL_TYPE}}
-                    {{If(dataModelsOrderByDataFlow.Length == 0, () => $$"""
+                    {{If(targets.DataModels.Length == 0, () => $$"""
                       = never
                     """).Else(() => $$"""
-                    {{dataModelsOrderByDataFlow.SelectTextTemplate((agg, i) => $$"""
+                    {{targets.DataModels.SelectTextTemplate((agg, i) => $$"""
                       {{(i == 0 ? "=" : "|")}} '{{agg.PhysicalName}}'
                     """)}}
                     """)}}
 
                     /** QueryModelの種類の一覧。ルート集約のみ。 */
                     export type {{QUERY_MODEL_TYPE}}
-                    {{If(queryModelsOrderByDataFlow.Length == 0, () => $$"""
+                    {{If(targets.QueryModels.Length == 0, () => $$"""
                       = never
                     """).Else(() => $$"""
-                    {{queryModelsOrderByDataFlow.SelectTextTemplate((agg, i) => $$"""
+                    {{targets.QueryModels.SelectTextTemplate((agg, i) => $$"""
                       {{(i == 0 ? "=" : "|")}} '{{agg.PhysicalName}}'
                     """)}}
                     """)}}
 
                     /** QueryModelのルート集約, Child, Children の集約名。 */
                     export type {{QUERY_MODEL_TYPE_ALL}}
-                    {{If(queryModelAggregateTypes.Length == 0, () => $$"""
+                    {{If(targets.QueryModelAggregates.Length == 0, () => $$"""
                       = never
                     """).Else(() => $$"""
-                    {{queryModelAggregateTypes.SelectTextTemplate((agg, i) => $$"""
+                    {{targets.QueryModelAggregates.SelectTextTemplate((agg, i) => $$"""
                       {{(i == 0 ? "=" : "|")}} '{{agg.EnumerateThisAndAncestors().Select(x => x.PhysicalName).Join("/")}}'
                     """)}}
                     """)}}
 
                     /** ほかの集約から参照されているQueryModelの種類の一覧 */
                     export type {{REFERED_QUERY_MODEL_TYPE}}
-                    {{If(referedRefEntires.Length > 0, () => $$"""
-                    {{referedRefEntires.OrderBy(x => x.CsClassName).SelectTextTemplate((refEntry, i) => $$"""
+                    {{If(targets.ReferedRefEntries.Length > 0, () => $$"""
+                    {{targets.ReferedRefEntries.OrderBy(x => x.CsClassName).SelectTextTemplate((refEntry, i) => $$"""
                       {{(i == 0 ? "=" : "|")}} '{{refEntry.Aggregate.RefEntryName}}'
                     """)}}
                     """).Else(() => $$"""
@@ -241,30 +208,30 @@ namespace Nijo.Parts.Common {
 
                     /** CommandModelの種類の一覧 */
                     export type {{COMMAND_MODEL_TYPE}}
-                    {{If(commandModelsOrderByDataFlow.Length == 0, () => $$"""
+                    {{If(targets.CommandModels.Length == 0, () => $$"""
                       = never
                     """).Else(() => $$"""
-                    {{commandModelsOrderByDataFlow.SelectTextTemplate((agg, i) => $$"""
+                    {{targets.CommandModels.SelectTextTemplate((agg, i) => $$"""
                       {{(i == 0 ? "=" : "|")}} '{{agg.PhysicalName}}'
                     """)}}
                     """)}}
 
                     /** StructureModelの種類の一覧 */
                     export type {{STRUCTURE_MODEL_TYPE}}
-                    {{If(structureModelsOrderByDataFlow.Length == 0, () => $$"""
+                    {{If(targets.StructureModels.Length == 0, () => $$"""
                       = never
                     """).Else(() => $$"""
-                    {{structureModelsOrderByDataFlow.SelectTextTemplate((agg, i) => $$"""
+                    {{targets.StructureModels.SelectTextTemplate((agg, i) => $$"""
                       {{(i == 0 ? "=" : "|")}} '{{agg.PhysicalName}}'
                     """)}}
                     """)}}
 
                     /** StructureModelの編集用データの種類の一覧 */
                     export type {{STRUCTURE_MODEL_DISPLAY_DATA_TYPE}}
-                    {{If(parameterStructureModels.Length == 0, () => $$"""
+                    {{If(targets.ParameterStructureModels.Length == 0, () => $$"""
                       = never
                     """).Else(() => $$"""
-                    {{parameterStructureModels.SelectTextTemplate((agg, i) => $$"""
+                    {{targets.ParameterStructureModels.SelectTextTemplate((agg, i) => $$"""
                       {{(i == 0 ? "=" : "|")}} '{{agg.PhysicalName}}'
                     """)}}
                     """)}}
@@ -272,7 +239,7 @@ namespace Nijo.Parts.Common {
                     /** DataModelの種類の一覧を文字列として返します。 */
                     export function getDataModelTypeList(): {{DATA_MODEL_TYPE}}[] {
                       return [
-                    {{dataModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
+                    {{targets.DataModels.SelectTextTemplate(agg => $$"""
                         '{{agg.PhysicalName}}',
                     """)}}
                       ]
@@ -281,7 +248,7 @@ namespace Nijo.Parts.Common {
                     /** QueryModelの種類の一覧を文字列として返します。 */
                     export function getQueryModelTypeList(): {{QUERY_MODEL_TYPE}}[] {
                       return [
-                    {{queryModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
+                    {{targets.QueryModels.SelectTextTemplate(agg => $$"""
                         '{{agg.PhysicalName}}',
                     """)}}
                       ]
@@ -290,7 +257,7 @@ namespace Nijo.Parts.Common {
                     /** CommandModelの種類の一覧を文字列として返します。 */
                     export function getCommandModelTypeList(): {{COMMAND_MODEL_TYPE}}[] {
                       return [
-                    {{commandModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
+                    {{targets.CommandModels.SelectTextTemplate(agg => $$"""
                         '{{agg.PhysicalName}}',
                     """)}}
                       ]
@@ -299,7 +266,7 @@ namespace Nijo.Parts.Common {
                     /** StructureModelの種類の一覧を文字列として返します。 */
                     export function getStructureModelTypeList(): {{STRUCTURE_MODEL_TYPE}}[] {
                       return [
-                    {{structureModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
+                    {{targets.StructureModels.SelectTextTemplate(agg => $$"""
                         '{{agg.PhysicalName}}',
                     """)}}
                       ]
@@ -312,243 +279,9 @@ namespace Nijo.Parts.Common {
                     """,
             };
 
-            // 画面表示用データ
-            yield return new SourceFile {
-                FileName = $"{TS_DISPLAY_DATA}.ts",
-                Contents = $$"""
-                    {{RenderTsModelTypesImport(QUERY_MODEL_TYPE_ALL)}}
-                    {{RenderImports(queryModelsOrderByDataFlow, false)}}
-
-                    /** DisplayData型一覧 */
-                    export interface TypeMap {
-                    {{queryModelAggregateTypes.SelectTextTemplate(agg => $$"""
-                      '{{agg.EnumerateThisAndAncestors().Select(x => x.PhysicalName).Join("/")}}': {{Q(agg, new DisplayData(agg).TsTypeName)}}
-                    """)}}
-                    }
-                    /** DisplayData新規作成関数 */
-                    export const create: { [K in {{QUERY_MODEL_TYPE_ALL}}]: (() => TypeMap[K]) } = {
-                    {{queryModelAggregateTypes.SelectTextTemplate(agg => $$"""
-                      '{{agg.EnumerateThisAndAncestors().Select(x => x.PhysicalName).Join("/")}}': {{Q(agg, new DisplayData(agg).TsNewObjectFunction)}},
-                    """)}}
-                    }
-                    """,
-            };
-
-            // 画面表示用データ（外部参照）
-            yield return new SourceFile {
-                FileName = $"{TS_REF_TARGET}.ts",
-                Contents = $$"""
-                    import type * as Util from "./index"
-                    {{RenderTsModelTypesImport(REFERED_QUERY_MODEL_TYPE)}}
-                    {{RenderImports(referedRefEntires.Select(x => x.Aggregate), false)}}
-
-                    /** RefTarget型一覧 */
-                    export interface TypeMap {
-                    {{referedRefEntires.SelectTextTemplate(refEntry => $$"""
-                      '{{refEntry.Aggregate.RefEntryName}}': {{Q(refEntry.Aggregate, refEntry.TsTypeName)}}
-                    """)}}
-                    }
-                    /** RefTarget新規作成関数 */
-                    export const create: { [K in {{REFERED_QUERY_MODEL_TYPE}}]: (() => TypeMap[K]) } = {
-                    {{referedRefEntires.SelectTextTemplate(refEntry => $$"""
-                      '{{refEntry.Aggregate.RefEntryName}}': {{Q(refEntry.Aggregate, refEntry.TsNewObjectFunction)}},
-                    """)}}
-                    }
-                    /**
-                     * 参照先のクエリモデルのメタデータ。
-                     * 子孫集約への参照は、メタデータの表のキーがルート集約から見たパスになっていて参照先から見たパスと一致しないため含まない。
-                     */
-                    export const metadata: { [K in {{REFERED_QUERY_MODEL_TYPE}}]?: {{TS_QUERY_MODEL_METADATA}} } = {
-                    {{referedRefEntires.Where(refEntry => refEntry.Aggregate is RootAggregate).SelectTextTemplate(refEntry => $$"""
-                      '{{refEntry.Aggregate.RefEntryName}}': {{Q(refEntry.Aggregate, AggregateMetadata.CONST_NAME)}},
-                    """)}}
-                    }
-                    """,
-            };
-
-            // 検索条件
-            yield return new SourceFile {
-                FileName = $"{TS_SEARCH_CONDITION}.ts",
-                Contents = $$"""
-                    import type * as Util from "./index"
-                    {{RenderTsModelTypesImport(QUERY_MODEL_TYPE)}}
-                    {{RenderImports(queryModelsOrderByDataFlow, false)}}
-
-                    /** SearchCondition型一覧 */
-                    export interface TypeMap {
-                    {{queryModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                      '{{agg.PhysicalName}}': {{Q(agg, new SearchCondition.Entry(agg).TsTypeName)}}
-                    """)}}
-                    }
-                    /** SearchCondition新規作成関数 */
-                    export const create: { [K in {{QUERY_MODEL_TYPE}}]: (() => TypeMap[K]) } = {
-                    {{queryModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                      '{{agg.PhysicalName}}': {{Q(agg, new SearchCondition.Entry(agg).TsNewObjectFunction)}},
-                    """)}}
-                    }
-                    /** ソート可能メンバーの型（「昇順」「降順」抜き） */
-                    export interface SortableMemberTypeMap {
-                    {{queryModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                      '{{agg.PhysicalName}}': {{Q(agg, new SearchCondition.Entry(agg).TypeScriptSortableMemberType)}}
-                    """)}}
-                    }
-                    /** ソート可能メンバー一覧取得関数 */
-                    export const getSortableMembers: { [K in {{QUERY_MODEL_TYPE}}]: (() => string[]) } = {
-                    {{queryModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                      '{{agg.PhysicalName}}': {{Q(agg, new SearchCondition.Entry(agg).GetTypeScriptSortableMemberType)}},
-                    """)}}
-                    }
-                    /** クエリモデルのメタデータ */
-                    export const metadata: { [K in {{QUERY_MODEL_TYPE}}]: {{TS_QUERY_MODEL_METADATA}} } = {
-                    {{queryModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                      '{{agg.PhysicalName}}': {{Q(agg, AggregateMetadata.CONST_NAME)}},
-                    """)}}
-                    }
-                    """,
-            };
-
-            // Commandパラメータ
-            yield return new SourceFile {
-                FileName = $"{TS_COMMAND_PARAM}.ts",
-                Contents = $$"""
-                    import type * as Util from "./index"
-                    {{RenderTsModelTypesImport(COMMAND_MODEL_TYPE)}}
-                    {{RenderImports(commandParams.Where(x => x.Structure != null).Select(x => x.Structure!.Aggregate), false)}}
-
-                    /** Commandパラメータ型一覧 */
-                    export interface TypeMap {
-                    {{commandParams.SelectTextTemplate(x => $$"""
-                      '{{x.Aggregate.PhysicalName}}': {{(x.Structure == null ? "Record<string, never> // 引数なし" : Q(x.Structure.Aggregate, x.Structure.TsTypeName))}}
-                    """)}}
-                    }
-                    /** Commandパラメータ新規作成関数 */
-                    export const create: { [K in {{COMMAND_MODEL_TYPE}}]: (() => TypeMap[K]) } = {
-                    {{commandParams.SelectTextTemplate(x => $$"""
-                      '{{x.Aggregate.PhysicalName}}': {{(x.Structure == null ? "() => ({ /* 引数なし */ })" : Q(x.Structure.Aggregate, x.Structure.TsNewObjectFunction))}},
-                    """)}}
-                    }
-                    /**
-                     * Commandパラメータのメタデータ。引数なしの場合は null。
-                     * 引数が検索条件の場合は検索条件の表を、それ以外の場合は画面表示用データの表を持つ。
-                     */
-                    export const metadata: { [K in {{COMMAND_MODEL_TYPE}}]: {{TS_COMMAND_STRUCTURE_METADATA}} } = {
-                    {{commandParams.SelectTextTemplate(x => $$"""
-                      '{{x.Aggregate.PhysicalName}}': {{RenderCommandStructureMetadata(x.Structure)}},
-                    """)}}
-                    }
-                    """,
-            };
-
-            // Command戻り値
-            yield return new SourceFile {
-                FileName = $"{TS_COMMAND_RETURN_VALUE}.ts",
-                Contents = $$"""
-                    import type * as Util from "./index"
-                    {{RenderTsModelTypesImport(COMMAND_MODEL_TYPE)}}
-                    {{RenderImports(commandReturnValues.Where(x => x.Structure != null).Select(x => x.Structure!.Aggregate), false)}}
-
-                    /** Command戻り値型一覧 */
-                    export interface TypeMap {
-                    {{commandReturnValues.SelectTextTemplate(x => $$"""
-                      '{{x.Aggregate.PhysicalName}}': {{(x.Structure == null ? "Record<string, never> // 戻り値なし" : Q(x.Structure.Aggregate, x.Structure.TsTypeName))}}
-                    """)}}
-                    }
-                    /** Command戻り値新規作成関数 */
-                    export const create: { [K in {{COMMAND_MODEL_TYPE}}]: (() => TypeMap[K]) } = {
-                    {{commandReturnValues.SelectTextTemplate(x => $$"""
-                      '{{x.Aggregate.PhysicalName}}': {{(x.Structure == null ? "() => ({ /* 戻り値なし */ })" : Q(x.Structure.Aggregate, x.Structure.TsNewObjectFunction))}},
-                    """)}}
-                    }
-                    /**
-                     * Command戻り値のメタデータ。戻り値なしの場合は null。
-                     * 戻り値が検索条件の場合は検索条件の表を、それ以外の場合は画面表示用データの表を持つ。
-                     */
-                    export const metadata: { [K in {{COMMAND_MODEL_TYPE}}]: {{TS_COMMAND_STRUCTURE_METADATA}} } = {
-                    {{commandReturnValues.SelectTextTemplate(x => $$"""
-                      '{{x.Aggregate.PhysicalName}}': {{RenderCommandStructureMetadata(x.Structure)}},
-                    """)}}
-                    }
-                    """,
-            };
-
-            // 一覧検索処理
-            yield return new SourceFile {
-                FileName = $"{TS_LOAD_FEATURE}.ts",
-                Contents = $$"""
-                    import type * as Util from "./index"
-                    {{RenderTsModelTypesImport(QUERY_MODEL_TYPE)}}
-                    {{RenderImports(queryModelsOrderByDataFlow, true)}}
-
-                    {{SearchProcessing.RenderTsTypeMap(queryModelsOrderByDataFlow)}}
-                    """,
-            };
-
-            // 参照検索処理
-            yield return new SourceFile {
-                FileName = $"{TS_LOAD_REF_FEATURE}.ts",
-                Contents = $$"""
-                    import type * as Util from "./index"
-                    {{RenderTsModelTypesImport(REFERED_QUERY_MODEL_TYPE)}}
-                    {{RenderImports(referedRefEntires.Select(x => x.Aggregate), true)}}
-
-                    {{SearchProcessingRefs.RenderTsTypeMap(referedRefEntires)}}
-                    """,
-            };
-
-            // コマンド起動処理
-            yield return new SourceFile {
-                FileName = $"{TS_EXECUTE_FEATURE}.ts",
-                Contents = $$"""
-                    {{RenderTsModelTypesImport(COMMAND_MODEL_TYPE)}}
-                    {{RenderImports(commandParams.Concat(commandReturnValues).Where(x => x.Structure != null).Select(x => x.Structure!.Aggregate), true)}}
-
-                    {{CommandProcessing.RenderTsTypeMap(commandModelsOrderByDataFlow)}}
-                    """,
-            };
-
-            // 構造体
-            yield return new SourceFile {
-                FileName = $"{TS_STRUCTURE_MODEL}.ts",
-                Contents = $$"""
-                    {{RenderTsModelTypesImport(STRUCTURE_MODEL_TYPE)}}
-                    {{RenderImports(structureModelsOrderByDataFlow, false)}}
-
-                    /** StructureModel型一覧 */
-                    export interface TypeMap {
-                    {{structureModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                      '{{agg.PhysicalName}}': {{Q(agg, new PlainStructure(agg).TsTypeName)}}
-                    """)}}
-                    }
-                    /** StructureModel新規作成関数 */
-                    export const create: { [K in {{STRUCTURE_MODEL_TYPE}}]: (() => TypeMap[K]) } = {
-                    {{structureModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
-                      '{{agg.PhysicalName}}': {{Q(agg, new PlainStructure(agg).TsNewObjectFunction)}},
-                    """)}}
-                    }
-                    """,
-            };
-
-            // 構造体（編集用）
-            yield return new SourceFile {
-                FileName = $"{TS_STRUCTURE_MODEL_DISPLAY_DATA}.ts",
-                Contents = $$"""
-                    {{RenderTsModelTypesImport(STRUCTURE_MODEL_DISPLAY_DATA_TYPE)}}
-                    {{RenderImports(parameterStructureModels, false)}}
-
-                    /** StructureModel型一覧 */
-                    export interface TypeMap {
-                    {{parameterStructureModels.SelectTextTemplate(agg => $$"""
-                      '{{agg.PhysicalName}}': {{Q(agg, new StructureDisplayData(agg).TsTypeName)}}
-                    """)}}
-                    }
-                    /** StructureModel新規作成関数 */
-                    export const create: { [K in {{STRUCTURE_MODEL_DISPLAY_DATA_TYPE}}]: (() => TypeMap[K]) } = {
-                    {{parameterStructureModels.SelectTextTemplate(agg => $$"""
-                      '{{agg.PhysicalName}}': {{Q(agg, new StructureDisplayData(agg).TsNewObjectFunction)}},
-                    """)}}
-                    }
-                    """,
-            };
+            foreach (var sourceFile in RenderQueryModelModules(targets)) yield return sourceFile;
+            foreach (var sourceFile in RenderCommandModelModules(targets)) yield return sourceFile;
+            foreach (var sourceFile in RenderStructureModelModules(targets)) yield return sourceFile;
 
             // ディープイコール関数
             yield return new SourceFile {
@@ -558,7 +291,7 @@ namespace Nijo.Parts.Common {
                     {{RenderTsModelTypesImport(QUERY_MODEL_TYPE, STRUCTURE_MODEL_DISPLAY_DATA_TYPE)}}
                     import type * as {{TsNamespaceModules[TS_DISPLAY_DATA]}} from "./{{TS_DISPLAY_DATA}}"
                     import type * as {{TsNamespaceModules[TS_STRUCTURE_MODEL_DISPLAY_DATA]}} from "./{{TS_STRUCTURE_MODEL_DISPLAY_DATA}}"
-                    {{RenderImports(queryModelsOrderByDataFlow.Concat(parameterStructureModels), false)}}
+                    {{RenderImports(targets.QueryModels.Concat(targets.ParameterStructureModels), false)}}
 
                     {{DeepEqualFunction.JSDOC}}
                     export const deepEqualFunction: {
@@ -576,10 +309,10 @@ namespace Nijo.Parts.Common {
                         option?: Util.{{DeepEqualFunction.OptionType.TYPENAME}}
                       ) => boolean
                     } = {
-                    {{queryModelsOrderByDataFlow.SelectTextTemplate(agg => $$"""
+                    {{targets.QueryModels.SelectTextTemplate(agg => $$"""
                       '{{agg.PhysicalName}}': {{Q(agg, new DeepEqualFunction(new DisplayData(agg)).FunctionName)}},
                     """)}}
-                    {{parameterStructureModels.SelectTextTemplate(agg => $$"""
+                    {{targets.ParameterStructureModels.SelectTextTemplate(agg => $$"""
                       '{{agg.PhysicalName}}': {{Q(agg, new DeepEqualFunction(new StructureDisplayData(agg)).FunctionName)}},
                     """)}}
                     }
@@ -587,6 +320,45 @@ namespace Nijo.Parts.Common {
             };
         }
 
+        /// <summary>
+        /// 対応表に載せるルート集約などを、データの流れの順に並べたもの
+        /// </summary>
+        private sealed class RenderingTargets {
+            internal RenderingTargets(CodeRenderingContext ctx, IEnumerable<RootAggregate> dataModels, IEnumerable<RootAggregate> queryModels, IEnumerable<CommandRoot> commandModels, IEnumerable<RootAggregate> structureModels) {
+                DataModels = dataModels.OrderByDataFlow(ctx.Schema).ToArray();
+                QueryModels = queryModels.OrderByDataFlow(ctx.Schema).ToArray();
+                CommandModels = commandModels.OrderByDataFlow(ctx.Schema).ToArray();
+                StructureModels = structureModels.OrderByDataFlow(ctx.Schema).ToArray();
+
+                QueryModelAggregates = QueryModels
+                    .SelectMany(x => x.EnumerateThisAndDescendants())
+                    .OrderBy(x => x.GetRoot().GetIndexOfDataFlow(ctx.Schema))
+                    .ThenBy(x => x.GetOrderInTree())
+                    .ToArray();
+                ParameterStructureModels = StructureModels
+                    .Where(x => CommandRoot.IsReferredAsParameter(x)
+                             || CommandRoot.IsReferredAsReturnValue(x))
+                    .ToArray();
+                ReferedRefEntries = QueryModels
+                    .SelectMany(rootAggregate => DisplayDataRef.GetReferedMembersRecursively(rootAggregate).Entries)
+                    .ToArray();
+            }
+
+            /// <summary>永続化されるデータ構造</summary>
+            internal RootAggregate[] DataModels { get; }
+            /// <summary>検索可能なデータ構造</summary>
+            internal RootAggregate[] QueryModels { get; }
+            /// <summary>コマンド</summary>
+            internal CommandRoot[] CommandModels { get; }
+            /// <summary>構造体</summary>
+            internal RootAggregate[] StructureModels { get; }
+            /// <summary>検索可能なデータ構造のルート集約だけでなくツリー全部</summary>
+            internal AggregateBase[] QueryModelAggregates { get; }
+            /// <summary>コマンド のパラメータまたは戻り値に指定されている 構造体</summary>
+            internal RootAggregate[] ParameterStructureModels { get; }
+            /// <summary>Ref関連モジュールは他の集約から参照されているもののみ使用可能</summary>
+            internal DisplayDataRef.Entry[] ReferedRefEntries { get; }
+        }
         internal CommandQueryMappings AddQueryModel(RootAggregate rootAggregate) {
             lock (_lock) {
                 _queryModels.Add(rootAggregate);
