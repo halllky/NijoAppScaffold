@@ -123,7 +123,7 @@ public class NijoTestUtil {
                 var renderingOptions = new CodeGenerating.CodeRenderingOptions {
                     AllowNotImplemented = false,
                 };
-                return Project.GenerateCode(parseContext, renderingOptions, Logger);
+                return Project.GenerateCode(parseContext, renderingOptions, Logger, out _);
             } catch (Exception ex) {
                 Logger.LogError(ex, "GenerateCodeAsyncで例外が発生しました。");
                 throw;

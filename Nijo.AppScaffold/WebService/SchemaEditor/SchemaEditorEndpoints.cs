@@ -173,38 +173,27 @@ internal class SchemaEditorEndpoints {
                 return;
             }
 
-            var xDocumentToSave = XDocument.Load(project.SchemaXmlPath);
-            var rule = SchemaParseRule.Default();
+            var xDocument = XDocument.Load(project.SchemaXmlPath);
+            var parseContext = new SchemaParseContext(xDocument, SchemaParseRule.Default(), GeneratedProjectOptions.Parse(xDocument, true));
+            var renderingOptions = new CodeRenderingOptions { AllowNotImplemented = false };
+            var logger = context.RequestServices.GetRequiredService<ILogger<NijoWebService>>();
 
-            // バリデーション (validate相当)
-            var schemaParseContextForValidation = new SchemaParseContext(xDocumentToSave, rule, GeneratedProjectOptions.Parse(xDocumentToSave, true));
-            if (!schemaParseContextForValidation.TryBuildSchema(schemaParseContextForValidation.Document, out var _, out var errors)) {
+            // スキーマ定義にエラーがある場合はソースコードは生成されない
+            if (!project.GenerateCode(parseContext, renderingOptions, logger, out var errors)) {
                 var reactErrorObject = ValidationErrorMap.FromValidationErrors(errors, new Dictionary<XElement, string>());
                 context.Response.StatusCode = (int)HttpStatusCode.Accepted;
                 await context.WriteJsonAsync(reactErrorObject, cancellationToken: context.RequestAborted);
                 return;
             }
 
-            // コード生成処理 (エラーがなければ実行)
-            var generationParseContext = new SchemaParseContext(xDocumentToSave, rule, GeneratedProjectOptions.Parse(xDocumentToSave, true));
-            var renderingOptions = new CodeRenderingOptions { AllowNotImplemented = false };
+            // コード再生成が成功したので、restartOnGenerateCode が true のプレビュープロセスを再起動する
+            var previewSetting = PreviewSetting.Load(project);
+            _webService.GetPreview(project).RestartAfterCodeGenerating(previewSetting, logger);
 
-            var logger = context.RequestServices.GetRequiredService<ILogger<NijoWebService>>();
-            if (project.GenerateCode(generationParseContext, renderingOptions, logger)) {
-                // コード再生成が成功したので、restartOnGenerateCode が true のプレビュープロセスを再起動する
-                var previewSetting = PreviewSetting.Load(project);
-                _webService.GetPreview(project).RestartAfterCodeGenerating(previewSetting, logger);
-
-                context.Response.StatusCode = StatusCodes.Status200OK;
-                await context.WriteJsonAsync(
-                    "Code generation successful.",
-                    cancellationToken: context.RequestAborted);
-            } else {
-                await context.WriteErrorAsync(
-                    (int)HttpStatusCode.InternalServerError,
-                    "Code generation failed. Check server logs for details.",
-                    context.RequestAborted);
-            }
+            context.Response.StatusCode = StatusCodes.Status200OK;
+            await context.WriteJsonAsync(
+                "Code generation successful.",
+                cancellationToken: context.RequestAborted);
 
         } catch (Exception ex) {
             await Console.Error.WriteLineAsync(ex.ToString());

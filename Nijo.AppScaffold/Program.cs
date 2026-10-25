@@ -222,7 +222,7 @@ namespace Nijo {
                     AllowNotImplemented = allowNotImplemented,
                 };
 
-                return project.GenerateCode(parseContext, renderingOptions, logger) ? 0 : 1;
+                return project.GenerateCode(parseContext, renderingOptions, logger, out _) ? 0 : 1;
             };
         }
 

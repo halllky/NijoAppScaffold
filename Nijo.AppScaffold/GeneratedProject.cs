@@ -202,53 +202,23 @@ namespace Nijo {
         public bool ValidateSchema(SchemaParseContext parseContext, ILogger logger) {
             var success = parseContext.TryBuildSchema(parseContext.Document, out var _, out var errors);
 
-            // エラー内容表示
             if (!success) {
                 logger.LogError("スキーマ定義にエラーがあります。");
+                LogValidationErrors(errors, logger);
             }
-            foreach (var err in errors) {
-                var path = err.XElement
-                    .AncestorsAndSelf()
-                    .Reverse()
-                    .Skip(1)
-                    .Select(el => el.Name.LocalName)
-                    .Join("/");
-
-                var errorMessages = err.OwnErrors
-                    .Concat(err.AttributeErrors.SelectMany(x => x.Value, (p, v) => $"[{p.Key}] {v}"))
-                    .ToArray();
-                var summary = errorMessages.Length >= 2
-                    ? $"{errorMessages.Length}件のエラー（{errorMessages.Join(", ")}）"
-                    : errorMessages.Single();
-                logger.LogError("  * {path}: {summary}", path, summary);
-            }
-
             return success;
         }
 
         /// <summary>
         /// コード自動生成を実行します。
+        /// スキーマ定義にエラーがある場合はソースコードを生成せず false を返します。
         /// </summary>
-        internal bool GenerateCode(SchemaParseContext parseContext, CodeRenderingOptions renderingOptions, ILogger logger) {
+        /// <param name="errors">スキーマ定義のエラー</param>
+        internal bool GenerateCode(SchemaParseContext parseContext, CodeRenderingOptions renderingOptions, ILogger logger, out SchemaParseContext.ValidationError[] errors) {
             // スキーマ定義のコレクションを作成
-            if (!parseContext.TryBuildSchema(parseContext.Document, out var immutableSchema, out var errors)) {
+            if (!parseContext.TryBuildSchema(parseContext.Document, out var immutableSchema, out errors)) {
                 logger.LogError("スキーマ定義にエラーがあります。エラーがある状態でソースコードの自動生成を行なうことはできません。");
-                foreach (var err in errors) {
-                    var path = err.XElement
-                        .AncestorsAndSelf()
-                        .Reverse()
-                        .Skip(1)
-                        .Select(el => el.Name.LocalName)
-                        .Join("/");
-
-                    var errorMessages = err.OwnErrors
-                        .Concat(err.AttributeErrors.SelectMany(x => x.Value, (p, v) => $"[{p.Key}] {v}"))
-                        .ToArray();
-                    var summary = errorMessages.Length >= 2
-                        ? $"{errorMessages.Length}件のエラー（{errorMessages.Join(", ")}）"
-                        : errorMessages.Single();
-                    logger.LogError("  * {path}: {summary}", path, summary);
-                }
+                LogValidationErrors(errors, logger);
                 return false;
             }
 
@@ -268,6 +238,28 @@ namespace Nijo {
             logger.LogInformation("ソース自動生成終了 ({elapsed}ms)", stopwatch.ElapsedMilliseconds);
 
             return true;
+        }
+
+        /// <summary>
+        /// スキーマ定義のエラーを、エラーのあったXML要素ごとに1行ずつログに出力します。
+        /// </summary>
+        private static void LogValidationErrors(IEnumerable<SchemaParseContext.ValidationError> errors, ILogger logger) {
+            foreach (var err in errors) {
+                var path = err.XElement
+                    .AncestorsAndSelf()
+                    .Reverse()
+                    .Skip(1)
+                    .Select(el => el.Name.LocalName)
+                    .Join("/");
+
+                var errorMessages = err.OwnErrors
+                    .Concat(err.AttributeErrors.SelectMany(x => x.Value, (p, v) => $"[{p.Key}] {v}"))
+                    .ToArray();
+                var summary = errorMessages.Length >= 2
+                    ? $"{errorMessages.Length}件のエラー（{errorMessages.Join(", ")}）"
+                    : errorMessages.Single();
+                logger.LogError("  * {path}: {summary}", path, summary);
+            }
         }
 
         /// <summary>

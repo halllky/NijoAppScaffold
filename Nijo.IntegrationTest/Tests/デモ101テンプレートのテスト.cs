@@ -52,7 +52,7 @@ public class デモ101テンプレートのテスト {
             var renderingOptions = new CodeGenerating.CodeRenderingOptions { AllowNotImplemented = false };
 
             Assert.That(project.ValidateSchema(parseContext, logger), Is.True, "デモ101テンプレートのnijo.xmlにスキーマ定義エラーがあります。");
-            Assert.That(project.GenerateCode(parseContext, renderingOptions, logger), Is.True, "デモ101テンプレートに対するソースコード自動生成に失敗しました。");
+            Assert.That(project.GenerateCode(parseContext, renderingOptions, logger, out _), Is.True, "デモ101テンプレートに対するソースコード自動生成に失敗しました。");
 
             // 4-a. dotnet build
             var slnPath = Directory.GetFiles(extractedRoot, "*.sln").SingleOrDefault();
