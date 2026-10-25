@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Xml.Linq;
 
 namespace Nijo.SchemaParsing;
@@ -25,13 +26,20 @@ internal static class SectionExtensions {
     /// nijo.xml 上でのセクションのXML要素名
     /// </summary>
     internal static string ToXmlElementName(this E_Section section) => section switch {
-        E_Section.DataStructures => SchemaParseContext.SECTION_DATA_STRUCTURES,
-        E_Section.Commands => SchemaParseContext.SECTION_COMMANDS,
-        E_Section.StaticEnums => SchemaParseContext.SECTION_STATIC_ENUMS,
-        E_Section.ValueObjects => SchemaParseContext.SECTION_VALUE_OBJECTS,
-        E_Section.Constants => SchemaParseContext.SECTION_CONSTANTS,
+        E_Section.DataStructures => "DataStructures",
+        E_Section.Commands => "Commands",
+        E_Section.StaticEnums => "StaticEnums",
+        E_Section.ValueObjects => "ValueObjects",
+        E_Section.Constants => "Constants",
         _ => throw new System.ArgumentOutOfRangeException(nameof(section)),
     };
+
+    /// <summary>
+    /// セクションの直下に定義されたルート要素を、スキーマ定義上の登場順に返します。
+    /// </summary>
+    internal static IEnumerable<XElement> GetRootElements(this XDocument xDocument, E_Section section) {
+        return xDocument.Root?.Element(section.ToXmlElementName())?.Elements() ?? [];
+    }
 
     /// <summary>
     /// XML要素が属するルート集約が、どのセクションに定義されているかを返します。

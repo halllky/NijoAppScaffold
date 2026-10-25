@@ -1,5 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.Parts.JavaScript;
 using Nijo.SchemaParsing;
 using System.Collections.Generic;
@@ -42,7 +41,7 @@ internal sealed class ConstantsSection : Section {
     }
 
     private static void RenderRootAggregate(CodeRenderingContext ctx, SectionRoot rootAggregate) {
-        var parser = new ConstantDefParser(rootAggregate.XElement, ctx.SchemaParser);
+        var parser = new ConstantDefParser(rootAggregate.XElement, ctx.Schema);
 
         // データ型: 定数クラス
         var constantDef = new ConstantDef(parser);

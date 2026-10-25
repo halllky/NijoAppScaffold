@@ -1,4 +1,4 @@
-using Nijo.ImmutableSchema;
+using Nijo.SchemaParsing;
 using Nijo.CodeGenerating;
 using Nijo.Util.DotnetEx;
 using System;

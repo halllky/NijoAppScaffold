@@ -17,14 +17,13 @@
 ここでは特に重要な各フォルダの役割を記載します。
 
 - [`CodeGenerating/`](./CodeGenerating/README.md): ソースコード生成処理の実装を容易にするための各種機能を提供します。
-- [`SchemaParsing/`](./SchemaParsing/README.md): nijo.xmlのXML要素の解析に関する機能を提供します。
+- [`SchemaParsing/`](./SchemaParsing/README.md): nijo.xmlのXML要素の解析と検証、およびソースコードの生成処理から参照されるスキーマ定義（`SchemaParseContext`）を提供します。
 - nijo.xml のセクションごとのフォルダ: そのセクションのルート集約の検証と、そこからどういったソースコードが生成されるかを定義します。
   - [`DataStructures/`](./DataStructures/README.md): データ構造。IsStored, IsQueryable などの属性ごとにフォルダが分かれます。
   - [`Commands/`](./Commands/): コマンド
   - [`StaticEnums/`](./StaticEnums/): 静的区分
   - [`ValueObjects/`](./ValueObjects/): 値オブジェクト
   - [`Constants/`](./Constants/): 定数
-- [`ImmutableSchema/`](./ImmutableSchema/README.md): XMLスキーマの解析が通った後の、XMLスキーマが確定していることを前提とした、全セクションに共通する各種クラス。
 - [`Parts/`](./Parts/): 特定のセクションや属性に由来するモジュールではなく、生成後のソースに由来するモジュール。C#のORMであるEntity Framework CoreのDbContext, Node.js の.envファイル、NUnitのテスト定義など。
 - [`Util.DotnetEx/`](./Util.DotnetEx/): .NET関連のユーティリティ。ここにある機能はコード自動生成処理でのみ参照されます。
 

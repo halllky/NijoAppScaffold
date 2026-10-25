@@ -85,12 +85,12 @@ public class EditingProject {
         // 既定の値メンバー型と合わせて EditingMemberType の判別に使う。
         var knownValueTypeNames = rule.ValueMemberTypes
             .Select(t => t.SchemaTypeName)
-            .Concat(xDocument.Root?.Element(SchemaParseContext.SECTION_STATIC_ENUMS)?.Elements().Select(el => el.Name.LocalName) ?? [])
-            .Concat(xDocument.Root?.Element(SchemaParseContext.SECTION_VALUE_OBJECTS)?.Elements().Select(el => el.Name.LocalName) ?? [])
+            .Concat(xDocument.GetRootElements(E_Section.StaticEnums).Select(el => el.Name.LocalName))
+            .Concat(xDocument.GetRootElements(E_Section.ValueObjects).Select(el => el.Name.LocalName))
             .ToHashSet();
 
         List<EditingRootAggregate> ParseSection(E_Section section) {
-            return xDocument.Root?.Element(section.ToXmlElementName())?.Elements()
+            return xDocument.GetRootElements(section)
                 .Select(el => EditingRootAggregate.FromXElement(
                     el,
                     attributeTypes,

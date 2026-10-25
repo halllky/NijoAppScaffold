@@ -98,7 +98,7 @@ internal class SchemaEditorEndpoints {
 
             // スキーマ定義として正しいか検証
             var schemaParseContext = new SchemaParseContext(xDocument, rule, GeneratedProjectOptions.Parse(xDocument, true));
-            if (!schemaParseContext.TryBuildSchema(schemaParseContext.Document, out var _, out var schemaErrors)) {
+            if (!schemaParseContext.TryValidate(out var schemaErrors)) {
                 var reactErrorObject = ValidationErrorMap.FromValidationErrors(schemaErrors, uuidToXmlElement);
                 context.Response.StatusCode = (int)HttpStatusCode.Accepted;
                 await context.WriteJsonAsync(reactErrorObject, cancellationToken: context.RequestAborted);
@@ -239,13 +239,10 @@ internal class SchemaEditorEndpoints {
                 }
             }
 
-            var dataStructures = xDocument.Root?.Element(SchemaParseContext.SECTION_DATA_STRUCTURES);
-            if (dataStructures != null) {
-                foreach (var element in dataStructures.Elements()) {
-                    var name = element.Name.LocalName;
-                    var value = $"{SchemaParseContext.NODE_TYPE_REFTO}:{name}";
-                    candidates.Add(KeyValuePair.Create(value, value));
-                }
+            foreach (var element in xDocument.GetRootElements(E_Section.DataStructures)) {
+                var name = element.Name.LocalName;
+                var value = $"{SchemaParseContext.NODE_TYPE_REFTO}:{name}";
+                candidates.Add(KeyValuePair.Create(value, value));
             }
 
             var result = candidates

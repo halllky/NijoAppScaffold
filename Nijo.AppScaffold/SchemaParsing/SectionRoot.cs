@@ -1,7 +1,6 @@
-using Nijo.SchemaParsing;
 using System.Xml.Linq;
 
-namespace Nijo.ImmutableSchema;
+namespace Nijo.SchemaParsing;
 
 /// <summary>
 /// DataStructures セクション以外のセクションの直下に定義されたルート要素。

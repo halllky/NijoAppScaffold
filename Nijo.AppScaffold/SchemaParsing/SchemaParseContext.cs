@@ -1,5 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -15,6 +14,9 @@ using System.Collections.Concurrent;
 using Nijo.DataStructures.Aggregates;
 using Nijo.DataStructures.ValueMemberTypes;
 using Nijo.DataStructures;
+using Nijo.Commands;
+using Nijo.StaticEnums;
+using System.Threading;
 
 namespace Nijo.SchemaParsing;
 
@@ -37,16 +39,10 @@ public class SchemaParseContext {
             .GroupBy(attr => attr.UniqueId!)
             .ToDictionary(group => group.Key, group => group.First()));
         _valueMemberTypes = rule.ValueMemberTypes.ToDictionary(m => m.SchemaTypeName);
-        _staticEnumMembers = new(() => Document.Root
-            ?.Element(SECTION_STATIC_ENUMS)
-            ?.Elements()
-            .ToDictionary(GetPhysicalName, el => new StaticEnumMember(el, this))
-            ?? []);
-        _valueObjectMembers = new(() => Document.Root
-            ?.Element(SECTION_VALUE_OBJECTS)
-            ?.Elements()
-            .ToDictionary(GetPhysicalName, el => new ValueObjectMember(el, this))
-            ?? []);
+        _staticEnumMembers = new(() => GetRootElements(E_Section.StaticEnums)
+            .ToDictionary(GetPhysicalName, el => new StaticEnumMember(el, this)));
+        _valueObjectMembers = new(() => GetRootElements(E_Section.ValueObjects)
+            .ToDictionary(GetPhysicalName, el => new ValueObjectMember(el, this)));
         _elementCountByLocalName = new Lazy<IReadOnlyDictionary<string, int>>(() => Document
             .Descendants()
             .GroupBy(el => el.Name.LocalName)
@@ -62,27 +58,6 @@ public class SchemaParseContext {
     /// <inheritdoc cref="SchemaParseRule.Sections"/>
     internal IEnumerable<Section> Sections => _rule.Sections;
 
-    /// <summary>
-    /// nijo.xml のルート要素直下の要素のうち、データ構造が格納されるXML要素の名前。
-    /// このセクションのルート集約からどういったソースコードが生成されるかは IsStored, IsQueryable 属性の組み合わせで決まる。
-    /// </summary>
-    internal const string SECTION_DATA_STRUCTURES = "DataStructures";
-    /// <summary>
-    /// nijo.xml のルート要素直下の要素のうち、 Command Model が格納されるXML要素の名前
-    /// </summary>
-    internal const string SECTION_COMMANDS = "Commands";
-    /// <summary>
-    /// nijo.xml のルート要素直下の要素のうち、静的区分が格納されるXML要素の名前
-    /// </summary>
-    internal const string SECTION_STATIC_ENUMS = "StaticEnums";
-    /// <summary>
-    /// nijo.xml のルート要素直下の要素のうち、値オブジェクトが格納されるXML要素の名前
-    /// </summary>
-    internal const string SECTION_VALUE_OBJECTS = "ValueObjects";
-    /// <summary>
-    /// nijo.xml のルート要素直下の要素のうち、定数が格納されるXML要素の名前
-    /// </summary>
-    internal const string SECTION_CONSTANTS = "Constants";
     /// <summary>
     /// nijo.xml のルート要素直下の要素のうち、カスタム属性が格納されるXML要素の名前
     /// </summary>
@@ -150,7 +125,7 @@ public class SchemaParseContext {
             var xElementParent = el.Parent;
             if (xElementParent != null
                 && xElementParent.Parent?.Parent == Document.Root
-                && xElementParent.Parent?.Name.LocalName == SECTION_STATIC_ENUMS) {
+                && xElementParent.Parent?.Name.LocalName == E_Section.StaticEnums.ToXmlElementName()) {
                 return E_NodeType.StaticEnumValue;
             }
 
@@ -304,7 +279,7 @@ public class SchemaParseContext {
         var type = xElement.Attribute(ATTR_NODE_TYPE) ?? throw new InvalidOperationException();
         var splitted = type.Value.Split(':');
         if (splitted.Length < 2) return null;
-        var xPath = $"//{SECTION_DATA_STRUCTURES}/{splitted[1]}";
+        var xPath = $"//{E_Section.DataStructures.ToXmlElementName()}/{splitted[1]}";
         return _refToCache.GetOrAdd(xPath, path => {
             return Document.Root?.XPathSelectElement(path);
         });
@@ -315,7 +290,7 @@ public class SchemaParseContext {
     internal IEnumerable<XElement> FindRefFrom(XElement xElement) {
         return _refFromCache.GetOrAdd(xElement, el => {
             var fullPath = string.Join("/", el.AncestorsAndSelf().Reverse().Skip(2).Select(GetPhysicalName));
-            return Document.XPathSelectElements($"//{SECTION_DATA_STRUCTURES}//*[@{ATTR_NODE_TYPE}='{NODE_TYPE_REFTO}:{fullPath}']")?.ToArray() ?? [];
+            return Document.XPathSelectElements($"//{E_Section.DataStructures.ToXmlElementName()}//*[@{ATTR_NODE_TYPE}='{NODE_TYPE_REFTO}:{fullPath}']")?.ToArray() ?? [];
         });
     }
     /// <summary>
@@ -337,24 +312,128 @@ public class SchemaParseContext {
     #endregion RefTo
 
 
+    #region ルート要素
+    /// <summary>
+    /// データ構造（IsStored, IsQueryable 属性の有無を問わない）のルート集約を、スキーマ定義上の登場順に返します。
+    /// </summary>
+    public IEnumerable<RootAggregate> GetDataStructures() {
+        return GetRootElements(E_Section.DataStructures).Select(el => (RootAggregate)ToAggregateBase(el, null));
+    }
+    /// <summary>
+    /// コマンドを、スキーマ定義上の登場順に返します。
+    /// </summary>
+    public IEnumerable<CommandRoot> GetCommands() {
+        return GetRootElements(E_Section.Commands).Select(el => new CommandRoot(el, this));
+    }
+    /// <summary>
+    /// 静的区分の種類を、スキーマ定義上の登場順に返します。
+    /// </summary>
+    public IEnumerable<StaticEnumRoot> GetStaticEnums() {
+        return GetRootElements(E_Section.StaticEnums).Select(el => new StaticEnumRoot(el, this));
+    }
+    /// <summary>
+    /// 値オブジェクトを、スキーマ定義上の登場順に返します。
+    /// </summary>
+    public IEnumerable<SectionRoot> GetValueObjects() {
+        return GetRootElements(E_Section.ValueObjects).Select(el => new SectionRoot(el, this));
+    }
+    /// <summary>
+    /// 定数のグループを、スキーマ定義上の登場順に返します。
+    /// </summary>
+    public IEnumerable<SectionRoot> GetConstants() {
+        return GetRootElements(E_Section.Constants).Select(el => new SectionRoot(el, this));
+    }
+
+    /// <summary>
+    /// セクションの直下に定義されたルート要素を、スキーマ定義上の登場順に返します。
+    /// </summary>
+    internal IEnumerable<XElement> GetRootElements(E_Section section) {
+        return Document.GetRootElements(section);
+    }
+
+    private readonly Lock _orderByDfLock = new();
+    /// <summary>
+    /// このルート要素の、ref-toによる外部参照の関係性に従った、
+    /// 参照される方を先、参照する方を後、としたときの順番。
+    /// 永続化されるデータ構造、それ以外のデータ構造、コマンドの順に並ぶ。
+    /// </summary>
+    public int GetIndexOfDataFlow(ISectionRoot root) {
+        lock (_orderByDfLock) {
+            if (_rootAggregateOrderCache == null) {
+                _rootAggregateOrderCache = new();
+                var dataStructures = GetDataStructures().ToList();
+
+                // 1) 永続化されるデータ構造（外部参照の依存関係に基づく順序）
+                // 列挙するたびにこのリストから集約をクリアしていき、
+                // このリストから全ての集約が無くなったら列挙完了
+                var rest = dataStructures
+                    .Where(root => root.IsStored)
+                    .Select(root => new {
+                        root,
+                        refTargets = root
+                            .EnumerateThisAndDescendants()
+                            .SelectMany(agg => agg.GetMembers())
+                            .OfType<RefToMember>()
+                            .Select(refTo => refTo.RefTo.GetRoot())
+                            .ToHashSet(),
+                    })
+                    .ToList();
+
+                var indexForDataModels = 0;
+                while (true) {
+                    if (rest.Count == 0) break;
+
+                    var next = rest[indexForDataModels];
+
+                    // 参照先集約が未処理ならば後回し
+                    var notEnumerated = rest.Where(agg => next.refTargets.Contains(agg.root));
+                    if (notEnumerated.Any()) {
+                        // 集約間の循環参照が存在するなどの場合は無限ループが発生するので例外。
+                        // なお循環参照はスキーマ作成時にエラーとする想定
+                        if (indexForDataModels + 1 >= rest.Count) throw new InvalidOperationException("集約間のデータの流れを決定できません。");
+
+                        indexForDataModels++;
+                        continue;
+                    }
+
+                    // 参照先集約が無い == nextは現在のrestの中で最上流の集約
+                    _rootAggregateOrderCache.Add(next.root.XElement, _rootAggregateOrderCache.Count);
+
+                    rest.Remove(next);
+                    indexForDataModels = 0;
+                }
+
+                // 2) 永続化されないデータ構造、コマンドの順に、それぞれスキーマ定義上の登場順
+                var notStoredRoots = dataStructures
+                    .Where(root => !root.IsStored)
+                    .Select(root => root.XElement)
+                    .Concat(GetCommands().Select(command => command.XElement));
+                foreach (var element in notStoredRoots) {
+                    _rootAggregateOrderCache.Add(element, _rootAggregateOrderCache.Count);
+                }
+            }
+            return _rootAggregateOrderCache[root.XElement];
+        }
+    }
+    private Dictionary<XElement, int>? _rootAggregateOrderCache;
+    #endregion ルート要素
+
+
     #region 検証
     /// <summary>
-    /// XMLドキュメントがスキーマ定義として不正な状態を持たないかを検証し、
-    /// 検証に成功した場合はアプリケーションスキーマのインスタンスを返します。
+    /// XMLドキュメントがスキーマ定義として不正な状態を持たないかを検証します。
+    /// ソースコードの生成は、検証に成功したスキーマ定義に対してのみ行えます。
     /// </summary>
-    /// <param name="xDocument">XMLドキュメント</param>
-    /// <param name="schema">作成完了後のスキーマ</param>
     /// <param name="errors">エラー</param>
-    /// <returns>スキーマの作成に成功したかどうか</returns>
-    public bool TryBuildSchema(XDocument xDocument, out ApplicationSchema schema, out ValidationError[] errors) {
-        schema = new ApplicationSchema(xDocument, this);
+    /// <returns>検証に成功したかどうか</returns>
+    public bool TryValidate(out ValidationError[] errors) {
         var validationErrors = new SchemaValidationErrors();
 
-        ValidateCustomAttributeDefinitions(xDocument, validationErrors);
+        ValidateCustomAttributeDefinitions(validationErrors);
 
         var rootsBySection = Enum.GetValues<E_Section>().ToDictionary(
             section => section,
-            section => (IReadOnlyList<XElement>)(xDocument.Root?.Element(section.ToXmlElementName())?.Elements().ToArray() ?? []));
+            section => (IReadOnlyList<XElement>)GetRootElements(section).ToArray());
 
         // ルート集約の物理名はセクションをまたいで一意でなければならない
         var rootPhysicalNames = new HashSet<string>();
@@ -387,12 +466,12 @@ public class SchemaParseContext {
     /// <summary>
     /// CustomAttributes セクションに定義されたカスタム属性の定義自体を検証します。
     /// </summary>
-    private void ValidateCustomAttributeDefinitions(XDocument xDocument, SchemaValidationErrors errors) {
-        var customAttributeElements = xDocument.Root?.Element(SECTION_CUSTOM_ATTRIBUTES)?.Elements().ToArray() ?? [];
-        var customAttributes = NijoXmlCustomAttribute.FromXDocument(xDocument).ToArray();
-        if (customAttributeElements.Length != customAttributes.Length) return;
+    private void ValidateCustomAttributeDefinitions(SchemaValidationErrors errors) {
+        var customAttributeElements = Document.Root?.Element(SECTION_CUSTOM_ATTRIBUTES)?.Elements().ToArray() ?? [];
+        var customAttributes = CustomAttributes;
+        if (customAttributeElements.Length != customAttributes.Count) return;
 
-        for (int i = 0; i < customAttributes.Length; i++) {
+        for (int i = 0; i < customAttributes.Count; i++) {
             foreach (var error in customAttributes[i].ValidateThis(this, _rule)) {
                 errors.Add(customAttributeElements[i], error);
             }
@@ -401,7 +480,7 @@ public class SchemaParseContext {
         foreach (var attr in customAttributes.Where(a => a.IsValidation)) {
             if (string.IsNullOrWhiteSpace(attr.PhysicalName)) continue;
             if (!attr.PhysicalName.IsCSharpSafe()) {
-                var el = customAttributeElements.FirstOrDefault(e => e.Name.LocalName == attr.UniqueId) ?? xDocument.Root ?? new XElement("root");
+                var el = customAttributeElements.FirstOrDefault(e => e.Name.LocalName == attr.UniqueId) ?? Document.Root ?? new XElement("root");
                 errors.Add(el, $"カスタム属性 '{attr.PhysicalName}' の {nameof(attr.PhysicalName)} はC#の識別子として不正です。英数字とアンダースコアのみを使用し、先頭は英字またはアンダースコアにしてください。");
             }
         }

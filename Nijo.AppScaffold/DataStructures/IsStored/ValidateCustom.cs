@@ -92,7 +92,7 @@ namespace Nijo.DataStructures.IsStored {
         internal static void RegisterApplicationServiceHooks(CodeRenderingContext ctx) {
 
             // nijo.xml で定義されているカスタム属性の一覧
-            var customAttributes = ctx.SchemaParser.CustomAttributes
+            var customAttributes = ctx.Schema.CustomAttributes
                 .Where(attr => attr.IsValidation
                             && !string.IsNullOrWhiteSpace(attr.UniqueId)
                             && !string.IsNullOrWhiteSpace(attr.PhysicalName))

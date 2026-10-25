@@ -1,5 +1,5 @@
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
+using Nijo.SchemaParsing;
 using Nijo.Parts.JavaScript;
 using Nijo.Util.DotnetEx;
 using System;

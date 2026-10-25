@@ -32,7 +32,7 @@ internal static class GenericLookupTableFeature {
         // 汎用参照テーブルでなければスキップ
         if (rootAggregate.XElement.Attribute(IsGenericLookupTableOption.ATTRIBUTE_NAME) == null) return;
 
-        var parser = new GenericLookupTableParser(ctx.SchemaParser);
+        var parser = new GenericLookupTableParser(ctx.Schema);
         var categories = parser.GetCategoriesOf(rootAggregate).ToArray();
 
         if (categories.Length == 0) return;

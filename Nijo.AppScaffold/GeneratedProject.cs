@@ -200,7 +200,7 @@ namespace Nijo {
         /// スキーマ定義の検証を行ないます。
         /// </summary>
         public bool ValidateSchema(SchemaParseContext parseContext, ILogger logger) {
-            var success = parseContext.TryBuildSchema(parseContext.Document, out var _, out var errors);
+            var success = parseContext.TryValidate(out var errors);
 
             if (!success) {
                 logger.LogError("スキーマ定義にエラーがあります。");
@@ -216,13 +216,13 @@ namespace Nijo {
         /// <param name="errors">スキーマ定義のエラー</param>
         internal bool GenerateCode(SchemaParseContext parseContext, CodeRenderingOptions renderingOptions, ILogger logger, out SchemaParseContext.ValidationError[] errors) {
             // スキーマ定義のコレクションを作成
-            if (!parseContext.TryBuildSchema(parseContext.Document, out var immutableSchema, out errors)) {
+            if (!parseContext.TryValidate(out errors)) {
                 logger.LogError("スキーマ定義にエラーがあります。エラーがある状態でソースコードの自動生成を行なうことはできません。");
                 LogValidationErrors(errors, logger);
                 return false;
             }
 
-            var ctx = new CodeRenderingContext(this, parseContext.ProjectOptions, renderingOptions, parseContext, immutableSchema, logger);
+            var ctx = new CodeRenderingContext(this, renderingOptions, parseContext, logger);
 
             logger.LogInformation("ソース自動生成開始");
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();

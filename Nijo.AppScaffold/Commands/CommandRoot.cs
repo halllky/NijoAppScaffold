@@ -1,5 +1,4 @@
 using Nijo.DataStructures.Structure;
-using Nijo.ImmutableSchema;
 using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
@@ -37,9 +36,8 @@ public sealed class CommandRoot : SectionRoot {
         if (!CommandTypeSpecification.TryParse(attribute.Value, out var specification)) {
             throw new InvalidOperationException($"不正な型指定: {attribute.Value}");
         }
-        var targetXElement = _ctx.Document.Root
-            ?.Element(SchemaParseContext.SECTION_DATA_STRUCTURES)
-            ?.Element(specification.DataStructureName)
+        var targetXElement = _ctx.GetRootElements(E_Section.DataStructures)
+            .SingleOrDefault(el => el.Name.LocalName == specification.DataStructureName)
             ?? throw new InvalidOperationException($"対象の集約が見つかりません: {specification.DataStructureName}");
 
         var targetRootAggregate = (RootAggregate)_ctx.ToAggregateBase(targetXElement, null);
@@ -67,10 +65,7 @@ public sealed class CommandRoot : SectionRoot {
         return IsReferredBy(dataStructure, ReturnValueOption.ATTRIBUTE_NAME);
     }
     private static bool IsReferredBy(RootAggregate dataStructure, string attributeName) {
-        var commandElements = dataStructure.XElement.Document?.Root
-            ?.Element(SchemaParseContext.SECTION_COMMANDS)
-            ?.Elements()
-            ?? [];
+        var commandElements = dataStructure.XElement.Document?.GetRootElements(E_Section.Commands) ?? [];
         return commandElements.Any(command => CommandTypeSpecification.TryParse(command.Attribute(attributeName)?.Value, out var specification)
                                            && specification.DataStructureName == dataStructure.PhysicalName);
     }

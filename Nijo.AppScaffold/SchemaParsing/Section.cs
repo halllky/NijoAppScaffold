@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;

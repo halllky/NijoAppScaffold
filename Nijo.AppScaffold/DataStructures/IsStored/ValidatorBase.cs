@@ -25,7 +25,7 @@ public abstract class ValidatorBase {
         yield return new ValidateMaxLength();
         yield return new ValidateDigitsAndScales();
 
-        var customValidationAttributes = ctx.SchemaParser.CustomAttributes
+        var customValidationAttributes = ctx.Schema.CustomAttributes
             .Where(attr => attr.IsValidation
                         && !string.IsNullOrWhiteSpace(attr.UniqueId)
                         && !string.IsNullOrWhiteSpace(attr.PhysicalName));

@@ -19,9 +19,8 @@
 XML要素に指定できる属性は [NodeOption](./NodeOption.cs) の派生クラスとして1属性1クラスで定義されます。
 属性がどこに指定できるかは、ルート集約が属するセクション（[E_Section](./E_Section.cs)）と、そのルート集約の IsStored, IsQueryable 属性の有無の組み合わせで決まります。
 全セクション共通の属性は [CommonOptions](./CommonOptions/) に、それ以外の属性はそれを使うセクションや機能のフォルダにあります。
-セクションごとのルート集約単位の検証は [RootAggregateValidation](./RootAggregateValidation/) フォルダにあります。
+セクションごとのルート集約単位の検証は、各セクションの [Section](./Section.cs) の派生クラスが行います。
 
 ## 関連コンポーネント
 
-- [`../Models/`](../Models/): 変換先の内部モデル定義
-- [`../ImmutableSchema/`](../ImmutableSchema/), [`../DataStructures/Aggregates/`](../DataStructures/Aggregates/): 不変なスキーマ定義
+- [`../DataStructures/Aggregates/`](../DataStructures/Aggregates/): データ構造のルート集約とそのメンバーのツリー

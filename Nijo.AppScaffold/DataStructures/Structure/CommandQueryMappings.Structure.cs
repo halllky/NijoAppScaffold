@@ -2,7 +2,7 @@ using Nijo.CodeGenerating;
 using Nijo.DataStructures;
 using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.Structure;
-using Nijo.ImmutableSchema;
+using Nijo.SchemaParsing;
 using Nijo.Parts.JavaScript;
 using Nijo.Util.DotnetEx;
 using System;

@@ -36,9 +36,8 @@ internal abstract class CommandTypeSpecificationOption : NodeOption {
             return;
         }
 
-        var target = ctx.SchemaParseContext.Document.Root
-            ?.Element(SchemaParseContext.SECTION_DATA_STRUCTURES)
-            ?.Element(specification.DataStructureName);
+        var target = ctx.SchemaParseContext.GetRootElements(E_Section.DataStructures)
+            .SingleOrDefault(el => el.Name.LocalName == specification.DataStructureName);
         if (target == null) {
             ctx.AddError($"参照先の集約が見つかりません。物理名: {specification.DataStructureName}");
             return;

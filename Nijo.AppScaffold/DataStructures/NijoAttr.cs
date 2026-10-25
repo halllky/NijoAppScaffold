@@ -30,8 +30,8 @@ internal static class NijoAttr {
     /// nijo.xml で定義されている各項目の属性値をC#のクラス定義やプロパティ定義の前にレンダリングする。
     /// </summary>
     internal static string RenderAttributeValues(CodeRenderingContext ctx, ISchemaPathNode node) {
-        var basicNodeOptions = ctx.SchemaParser.GetOptions(node.XElement).ToArray();
-        var customAttributes = ctx.SchemaParser.GetCustomAttributes(node.XElement).ToArray();
+        var basicNodeOptions = ctx.Schema.GetOptions(node.XElement).ToArray();
+        var customAttributes = ctx.Schema.GetCustomAttributes(node.XElement).ToArray();
 
         if (basicNodeOptions.Length == 0 && customAttributes.Length == 0) {
             return SKIP_MARKER;
@@ -66,10 +66,10 @@ internal static class NijoAttr {
     /// </summary>
     internal static SourceFile RenderDeclaration(CodeRenderingContext ctx) {
         // 既定のオプション
-        var basicNodeOptions = ctx.SchemaParser.NodeOptions.Where(DataStructuresSection.IsAvailableInDataStructures);
+        var basicNodeOptions = ctx.Schema.NodeOptions.Where(DataStructuresSection.IsAvailableInDataStructures);
 
         // カスタム属性
-        var allCustomAttributes = ctx.SchemaParser.CustomAttributes;
+        var allCustomAttributes = ctx.Schema.CustomAttributes;
 
         return new() {
             FileName = "NijoAttr.cs",

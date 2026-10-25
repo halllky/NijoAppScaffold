@@ -1,5 +1,5 @@
 using System.Linq;
-using Nijo.ImmutableSchema;
+using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using Nijo.DataStructures.Aggregates;
 

@@ -67,7 +67,7 @@ internal static class SchemaParseContextExtensions {
     /// 要素のルート集約が DataStructures セクションに定義されているかを返します
     /// </summary>
     internal static bool IsInDataStructuresSection(this XElement element) {
-        return element.GetRootAggregateElement().Parent?.Name.LocalName == SchemaParseContext.SECTION_DATA_STRUCTURES;
+        return element.TryGetSection(out var section) && section == E_Section.DataStructures;
     }
 
     /// <summary>

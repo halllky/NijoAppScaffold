@@ -103,7 +103,7 @@ public class NijoTestUtil {
                 var rule = SchemaParsing.SchemaParseRule.Default();
                 var parseContext = new SchemaParsing.SchemaParseContext(document, rule, SchemaParsing.GeneratedProjectOptions.Parse(document, true));
 
-                parseContext.TryBuildSchema(document, out var _, out var errors);
+                parseContext.TryValidate(out var errors);
                 return errors;
             } catch (Exception ex) {
                 Logger.LogError(ex, "EnumerateValidationErrorsAsyncで例外が発生しました。");

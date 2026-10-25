@@ -62,7 +62,7 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
 
     #region 型定義
     private static SourceFile RenderTypeScriptType(CodeRenderingContext ctx) {
-        var valueObjectTypes = ctx.SchemaParser.GetValueObjectMembers().Values.ToArray();
+        var valueObjectTypes = ctx.Schema.GetValueObjectMembers().Values.ToArray();
         var valueObjectLiteral = valueObjectTypes.Length == 0
             ? "never"
             : valueObjectTypes.Select(type => $"'{type.TypePhysicalName}'").Join(" | ");
@@ -107,7 +107,7 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
                   export type {{TYPE_VALUE}} = {{TYPE_MEMBER_BASE}} & {
                     kind: '{{KIND_VALUE}}'
                     /** 値の型名。このメンバーが enum または value-ojbect の場合は undefined になる */
-                    type?: {{ctx.SchemaParser.PredefinedValueMemberTypes.Select(t => $"'{t.SchemaTypeName}'").Join(" | ")}}
+                    type?: {{ctx.Schema.PredefinedValueMemberTypes.Select(t => $"'{t.SchemaTypeName}'").Join(" | ")}}
                     /** 列挙体の型名。このメンバーが列挙体の場合のみ */
                     enumType?: keyof EnumDefs.{{EnumFile.TS_TYPE_MAP}}
                     /** 値オブジェクトの型名。このメンバーが値オブジェクトの場合のみ */
@@ -354,7 +354,7 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
     /// <returns>TypeScriptのプロパティ定義文字列</returns>
     private static IEnumerable<string> RenderNodeOptions(XElement xElement, CodeRenderingContext ctx) {
 
-        var options = ctx.SchemaParser.GetOptions(xElement).Where(IsRenderedAsNodeOption);
+        var options = ctx.Schema.GetOptions(xElement).Where(IsRenderedAsNodeOption);
 
         // DisplayName だけは未定義の場合は物理名を採用する。
         // メタデータを用いたカスタマイズ処理でDisplayNameの使用頻度が高いため。
@@ -364,7 +364,7 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
                 """;
         } else if (!options.Any(o => o.AttributeName == DisplayNameOption.ATTRIBUTE_NAME)) {
             yield return $$"""
-                {{DisplayNameOption.ATTRIBUTE_NAME.ToCamelCase()}}: '{{ctx.SchemaParser.GetPhysicalName(xElement)}}',
+                {{DisplayNameOption.ATTRIBUTE_NAME.ToCamelCase()}}: '{{ctx.Schema.GetPhysicalName(xElement)}}',
                 """;
         }
 
@@ -402,7 +402,7 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
         }
 
         // カスタム属性
-        foreach (var customAttribute in ctx.SchemaParser.CustomAttributes) {
+        foreach (var customAttribute in ctx.Schema.CustomAttributes) {
             if (string.IsNullOrWhiteSpace(customAttribute.PhysicalName)) continue;
             if (string.IsNullOrWhiteSpace(customAttribute.UniqueId)) continue;
 
@@ -425,7 +425,7 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
     /// TypeScript型定義で使用するNodeOptionの型情報を動的に生成します
     /// </summary>
     private static IEnumerable<string> RenderNodeOptionTypes(CodeRenderingContext ctx) {
-        var nodeOptions = ctx.SchemaParser.NodeOptions.Where(DataStructuresSection.IsAvailableInDataStructures).Where(IsRenderedAsNodeOption);
+        var nodeOptions = ctx.Schema.NodeOptions.Where(DataStructuresSection.IsAvailableInDataStructures).Where(IsRenderedAsNodeOption);
 
         // コメントはXMLの属性ではないので別途宣言している
         yield return $$"""
@@ -451,7 +451,7 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
         }
 
         // カスタム属性
-        foreach (var customAttribute in ctx.SchemaParser.CustomAttributes) {
+        foreach (var customAttribute in ctx.Schema.CustomAttributes) {
             if (string.IsNullOrWhiteSpace(customAttribute.PhysicalName)) continue;
 
             var tsType = customAttribute.Type switch {

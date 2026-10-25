@@ -11,7 +11,6 @@ using System.Xml.XPath;
 using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.IsStored;
 using Nijo.DataStructures.UseSoftDelete;
-using Nijo.ImmutableSchema;
 using Nijo.DataStructures;
 using Nijo.CodeGenerating;
 using Nijo.DataStructures.Members;

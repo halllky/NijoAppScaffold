@@ -1,7 +1,6 @@
 using System.Linq;
 using System.Xml.Linq;
 using Nijo.CodeGenerating;
-using Nijo.ImmutableSchema;
 using Nijo.StaticEnums;
 using Nijo.SchemaParsing;
 using NUnit.Framework;
@@ -87,15 +86,15 @@ public class DisplayName属性のテスト {
         Assert.That(await project.CheckCompileAsync(), Is.True);
     }
 
-    private static async Task<ApplicationSchema> BuildSchemaAsync(string schemaXmlPath) {
+    private static async Task<SchemaParseContext> BuildSchemaAsync(string schemaXmlPath) {
         await using var stream = File.OpenRead(schemaXmlPath);
         var document = await XDocument.LoadAsync(stream, LoadOptions.None, CancellationToken.None);
         var rule = SchemaParseRule.Default();
         var parseContext = new SchemaParseContext(document, rule, GeneratedProjectOptions.Parse(document, true));
 
-        var success = parseContext.TryBuildSchema(document, out var schema, out var errors);
+        var success = parseContext.TryValidate(out var errors);
         Assert.That(success, Is.True, string.Join(Environment.NewLine, errors.SelectMany(error => error.OwnErrors)));
 
-        return schema;
+        return parseContext;
     }
 }

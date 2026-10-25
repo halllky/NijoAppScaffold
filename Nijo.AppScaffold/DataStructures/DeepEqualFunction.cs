@@ -66,7 +66,7 @@ internal class DeepEqualFunction {
             const string TYPE_ENUM = "Enum";
             const string TYPE_VALUE_OBJECT = "ValueObject";
 
-            var valueMemberTypePhysicalNames = ctx.SchemaParser
+            var valueMemberTypePhysicalNames = ctx.Schema
                 .GetValueMemberTypes()
                 .Where(t => t is not ByteArrayMember)
                 .Select(t => {
@@ -103,7 +103,7 @@ internal class DeepEqualFunction {
             // valueObjects はグルーピング後の valueMemberTypePhysicalNames から取得すると
             // 2個以上あるとき TsTypeName が結合文字列になって import文などが壊れるため、
             // グルーピング前のスキーマから個別に取得する
-            var valueObjects = ctx.SchemaParser
+            var valueObjects = ctx.Schema
                 .GetValueMemberTypes()
                 .OfType<ValueObjectMember>()
                 .ToArray();
@@ -157,7 +157,7 @@ internal class DeepEqualFunction {
 
     internal string Render(CodeRenderingContext ctx) {
 
-        var valueMemberTypePhysicalNames = ctx.SchemaParser
+        var valueMemberTypePhysicalNames = ctx.Schema
             .GetValueMemberTypes()
             .Select(t => new {
                 t.DisplayName,

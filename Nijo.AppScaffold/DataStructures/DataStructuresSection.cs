@@ -148,7 +148,7 @@ internal sealed class DataStructuresSection : Section {
         });
 
         // 値メンバーの型ごとのソースコード
-        foreach (var vmType in ctx.SchemaParser.GetValueMemberTypes()) {
+        foreach (var vmType in ctx.Schema.GetValueMemberTypes()) {
             vmType.RegisterDependencies(ctx);
             vmType.RenderStaticSources(ctx);
         }
