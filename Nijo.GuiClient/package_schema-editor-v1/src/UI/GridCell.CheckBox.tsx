@@ -3,6 +3,7 @@ import * as ReactHookForm from "react-hook-form"
 import * as EG2 from "@halllky/editable-grid"
 import { useFieldValidationError } from "../ProjectPage/useValidation"
 import { setFieldByPath } from "./setFieldByPath"
+import { getGridCellBgClassName } from "./gridCellBackground"
 
 export type CreateCheckBoxCellFunction = <TRow>(
   header: string,
@@ -47,7 +48,7 @@ export function createCheckBoxCellHelper(
         return (
           <label
             title={errorMessages.join('\n')}
-            className={`self-start block text-sm h-full w-full px-1 ${isReadOnly ? '' : 'cursor-pointer'} ${hasError ? 'bg-amber-300/50' : ''}`}
+            className={`self-stretch block text-sm w-full px-1 ${isReadOnly ? '' : 'cursor-pointer'} ${getGridCellBgClassName(isReadOnly, hasError)}`}
           >
             <input
               type="checkbox"

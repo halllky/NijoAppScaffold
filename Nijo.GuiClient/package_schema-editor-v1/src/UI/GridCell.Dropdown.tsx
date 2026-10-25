@@ -3,6 +3,7 @@ import * as ReactHookForm from "react-hook-form"
 import * as EG2 from "@halllky/editable-grid"
 import { useFieldValidationError } from "../ProjectPage/useValidation"
 import { setFieldByPath } from "./setFieldByPath"
+import { getGridCellBgClassName } from "./gridCellBackground"
 
 export type CreateDropdownCellFunction = <TRow>(
   header: string,
@@ -40,7 +41,7 @@ export function createDropdownCellHelper(
           {header}
         </div>
       ),
-      renderBody: ({ rowIndex, getRow }) => {
+      renderBody: ({ rowIndex, getRow, isReadOnly }) => {
         const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
         const value = ReactHookForm.useWatch({ control, name: `${arrayName}.${fieldRowIndex}.${key}` })
         const text = candidateValues.find(o => o.value === value)?.text ?? (value as string)
@@ -49,7 +50,7 @@ export function createDropdownCellHelper(
         return (
           <div
             title={errorMessages.join('\n')}
-            className={`w-full px-1 text-sm truncate ${hasError ? 'bg-amber-300/50' : ''}`}
+            className={`w-full px-1 text-sm truncate ${getGridCellBgClassName(isReadOnly, hasError)}`}
           >
             {text}
           </div>

@@ -7,6 +7,7 @@ import { EditingProject } from "../backend"
 import { useMentionSuggestions } from "./useMentionSuggestions"
 import { JumpToElementContext } from "../ProjectPage/useJumpToElement"
 import { setFieldByPath } from "./setFieldByPath"
+import { getGridCellBgClassName } from "./gridCellBackground"
 
 export type CreateTextCellFunction = <TRow>(
   header: string,
@@ -52,7 +53,7 @@ export function createTextCellHelper(
           {header}
         </div>
       ),
-      renderBody: ({ rowIndex, getRow }) => {
+      renderBody: ({ rowIndex, getRow, isReadOnly }) => {
         const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
         const value: string | null | undefined = ReactHookForm.useWatch({ name: `${arrayName}.${fieldRowIndex}.${key}`, control })
         const { hasError, errorMessages } = useFieldValidationError(validationErrorSettings?.[0]?.(getRow()), validationErrorSettings?.[1])
@@ -62,14 +63,14 @@ export function createTextCellHelper(
           <MentionableTextareaReadOnly
             title={errorMessages.join('\n')}
             onClickMention={part => jumpToElement?.(part.targetId)}
-            className={`w-full px-1 text-sm ${wrap ? 'whitespace-pre-wrap' : 'truncate'} ${hasError ? 'bg-amber-300/50' : ''}`}
+            className={`w-full px-1 text-sm ${wrap ? 'whitespace-pre-wrap' : 'truncate'} ${getGridCellBgClassName(isReadOnly, hasError)}`}
           >
             {value ?? undefined}
           </MentionableTextareaReadOnly>
         ) : (
           <div
             title={errorMessages.join('\n')}
-            className={`w-full px-1 text-sm ${wrap ? 'whitespace-pre-wrap' : 'truncate'} ${hasError ? 'bg-amber-300/50' : ''}`}
+            className={`w-full px-1 text-sm ${wrap ? 'whitespace-pre-wrap' : 'truncate'} ${getGridCellBgClassName(isReadOnly, hasError)}`}
           >
             {format?.(value) ?? value}
           </div>

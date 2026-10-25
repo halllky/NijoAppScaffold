@@ -6,6 +6,7 @@ import { useSchemaCandidates } from "../ProjectPage/SchemaCandidatesContext"
 import { ATTR_TYPE, EditingMember, EditingMemberType } from "../backend"
 import { useFieldValidationError } from "../ProjectPage/useValidation"
 import { setFieldByPath } from "./setFieldByPath"
+import { getGridCellBgClassName } from "./gridCellBackground"
 
 export type CreateComboBoxCellFunction = <TRow>(
   header: string,
@@ -64,7 +65,7 @@ export function createComboBoxCellHelper(
           {header}
         </div>
       ),
-      renderBody: ({ rowIndex }) => {
+      renderBody: ({ rowIndex, isReadOnly }) => {
         const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
         const rowData: EditingMember = ReactHookForm.useWatch({ control, name: `${arrayName}.${fieldRowIndex}` })
         const { hasError, errorMessages } = useFieldValidationError(rowData.uniqueId, ATTR_TYPE)
@@ -78,7 +79,7 @@ export function createComboBoxCellHelper(
         return (
           <div
             title={errorMessages.join('\n')}
-            className={`w-full text-sm self-start flex items-center gap-2 px-1 truncate ${hasError ? 'bg-amber-300/50' : ''}`}
+            className={`w-full text-sm self-stretch flex items-start gap-2 px-1 truncate ${getGridCellBgClassName(isReadOnly, hasError)}`}
           >
             <span className="truncate">
               {text}

@@ -2,7 +2,7 @@ import React from "react"
 import * as ReactHookForm from "react-hook-form"
 import { EditingProject, EditingMember, EditingUniqueConstraint } from "../../../backend"
 import * as EG2 from "@halllky/editable-grid"
-import { TextCellEditor } from "../../../UI"
+import { TextCellEditor, getGridCellBgClassName } from "../../../UI"
 import { asTree, TreeHelper } from "../../../asTree"
 import { RootAggregateLocation } from "../../rootAggregateLocation"
 
@@ -67,10 +67,11 @@ export function useUniqueConstraintsColumns(
             {i + 1}
           </div>
         ),
-        renderBody: ({ rowIndex }) => (
+        renderBody: ({ rowIndex, isReadOnly }) => (
           <UniqueConstraintCell
             rowIndex={rowIndex}
             columnIndex={i}
+            isReadOnly={isReadOnly}
           />
         ),
         cellToText: row => {
@@ -193,13 +194,14 @@ export const UniqueConstraintsContext = React.createContext<UniqueConstraintsCon
 /**
  * ユニーク制約のセルのレンダラー
  */
-function UniqueConstraintCell({ rowIndex, columnIndex }: {
+function UniqueConstraintCell({ rowIndex, columnIndex, isReadOnly }: {
   rowIndex: number
   columnIndex: number
+  isReadOnly: boolean
 }) {
   const { members, treeHelper, rootUniqueId, uniqueConstraintsByContainerId } = React.useContext(UniqueConstraintsContext)
   const row = members[rowIndex]
-  if (!row) return <div className="w-full px-1 truncate" />
+  if (!row) return <div className={`w-full px-1 truncate ${getGridCellBgClassName(isReadOnly)}`} />
 
   const parent = treeHelper.getParent(row)
   const containerId = parent?.uniqueId ?? rootUniqueId
@@ -207,7 +209,7 @@ function UniqueConstraintCell({ rowIndex, columnIndex }: {
   const indexInConstraint = containerConstraints[columnIndex]?.memberUniqueIds.indexOf(row.uniqueId) ?? -1
   const value = indexInConstraint >= 0 ? String(indexInConstraint + 1) : ''
   return (
-    <div className="w-full px-1 truncate">
+    <div className={`w-full px-1 truncate ${getGridCellBgClassName(isReadOnly)}`}>
       {value}
     </div>
   )

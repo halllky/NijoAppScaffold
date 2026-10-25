@@ -100,13 +100,13 @@ function SingleEnumEditor({ index, formMethods }: {
     columns.push(helper.text('値', 'physicalName', {
       defaultWidth: 220,
       isFixed: true,
-      renderBody: ({ rowIndex }) => {
+      renderBody: ({ rowIndex, isReadOnly }) => {
         const value = ReactHookForm.useWatch({
           control,
           name: `${membersPath}.${rowIndex}.physicalName`,
         })
         return (
-          <div className="px-1 w-full truncate">
+          <div className={`px-1 w-full truncate ${UI.getGridCellBgClassName(isReadOnly)}`}>
             {value}
           </div>
         )

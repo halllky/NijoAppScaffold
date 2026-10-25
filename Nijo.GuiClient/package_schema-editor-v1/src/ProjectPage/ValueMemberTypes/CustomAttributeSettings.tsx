@@ -66,11 +66,11 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
     subscribe,
   }, helper => {
 
-    const renderBodyWithValidation = (columnId: keyof GridRow): EG2.EditableGridBodyRenderer<GridRow> => ({ rowIndex }) => {
+    const renderBodyWithValidation = (columnId: keyof GridRow): EG2.EditableGridBodyRenderer<GridRow> => ({ rowIndex, isReadOnly }) => {
       const watchedRow = ReactHookForm.useWatch({ name: `customAttributes.${rowIndex}`, control })
       const { hasError } = useFieldValidationError(watchedRow.uniqueId)
       return (
-        <div className={`flex-1 inline-flex text-left truncate px-1 ${hasError ? 'bg-amber-300/50' : ''}`}>
+        <div className={`flex-1 inline-flex text-left truncate px-1 ${UI.getGridCellBgClassName(isReadOnly, hasError)}`}>
           <span className="flex-1 truncate">
             {ReactHookForm.get(watchedRow, columnId) as string}
           </span>
@@ -88,12 +88,12 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
         renderHeader: () => "Enum値",
         defaultWidth: 200,
         isReadOnly: row => row.type !== 'Enum',
-        renderBody: ({ rowIndex }) => {
+        renderBody: ({ rowIndex, isReadOnly }) => {
           const watchedRow = ReactHookForm.useWatch({ name: `customAttributes.${rowIndex}`, control })
           const { hasError } = useFieldValidationError(watchedRow.uniqueId)
           if (watchedRow.type !== 'Enum') return null
           return (
-            <div className={`flex items-center justify-between w-full h-full px-1 ${hasError ? 'bg-amber-300/50' : ''}`}>
+            <div className={`flex items-center justify-between w-full self-stretch px-1 ${UI.getGridCellBgClassName(isReadOnly, hasError)}`}>
               <span className="truncate">{watchedRow.enumValues?.join(", ")}</span>
               <Input.IconButton mini icon={Icon.PencilIcon} onClick={() => setEditingEnumValuesIndex(rowIndex)} />
             </div>
@@ -104,12 +104,12 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
         columnId: "availableFor",
         defaultWidth: 200,
         renderHeader: () => "指定可能な場所",
-        renderBody: ({ rowIndex }) => {
+        renderBody: ({ rowIndex, isReadOnly }) => {
           const watchedRow = ReactHookForm.useWatch({ name: `customAttributes.${rowIndex}`, control })
           const { hasError } = useFieldValidationError(watchedRow.uniqueId)
           const label = watchedRow.availableFor.map(value => availableForOptions.find(option => option.id === value)?.label ?? value).join(", ")
           return (
-            <div className={`flex items-center justify-between w-full h-full px-1 ${hasError ? 'bg-amber-300/50' : ''}`}>
+            <div className={`flex items-center justify-between w-full self-stretch px-1 ${UI.getGridCellBgClassName(isReadOnly, hasError)}`}>
               <span className="truncate">{label}</span>
               <Input.IconButton mini icon={Icon.PencilIcon} onClick={() => setEditingAvailableForIndex(rowIndex)} />
             </div>
@@ -268,8 +268,8 @@ const EnumValuesDialog = ({ initialValues, onSave, onClose }: { initialValues: s
     columnId: "value",
     renderHeader: () => "Value",
     getValuesForRender: row => [row.value],
-    renderBody: ({ deps: [value] }) => (
-      <span className="px-1 py-px">
+    renderBody: ({ deps: [value], isReadOnly }) => (
+      <span className={`w-full px-1 py-px ${UI.getGridCellBgClassName(isReadOnly)}`}>
         {value}
       </span>
     ),

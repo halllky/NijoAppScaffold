@@ -5,6 +5,7 @@ import { TextCellEditor } from "./GridCell.Text"
 import { EditingMember } from "../backend"
 import { useFieldValidationError } from "../ProjectPage/useValidation"
 import { setFieldByPath } from "./setFieldByPath"
+import { getGridCellBgClassName } from "./gridCellBackground"
 
 export type CreateElementNameCellFunction = <TRow>(
   header: string,
@@ -35,11 +36,11 @@ export function createElementNameCellHelper(
     renderHeaderPlaceholder: () => (
       <div className="text-sm border-l border-gray-300" />
     ),
-    renderBody: ({ rowIndex }) => {
+    renderBody: ({ rowIndex, isReadOnly }) => {
       const fieldRowIndex = skipFirstRow ? rowIndex + 1 : rowIndex
       const rowData: EditingMember = ReactHookForm.useWatch({ name: `${arrayName}.${fieldRowIndex}`, control })
       const { hasError, errorMessages } = useFieldValidationError(rowData.uniqueId)
-      const bgColor = hasError ? 'bg-amber-300/50' : ''
+      const bgColor = getGridCellBgClassName(isReadOnly, hasError)
       const tooltip = errorMessages.join('\n')
 
       return (
