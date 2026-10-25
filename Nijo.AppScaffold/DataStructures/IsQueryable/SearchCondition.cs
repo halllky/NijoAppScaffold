@@ -104,11 +104,15 @@ namespace Nijo.DataStructures.IsQueryable {
 
 
             /// <summary>
+            /// 検索条件の基底型の型定義が記載されるモジュールのファイル名（拡張子なし）
+            /// </summary>
+            internal const string TS_BASE_TYPE_FILE_NAME = "search-condition-base-type";
+            /// <summary>
             /// 検索条件の基底型の型定義をレンダリングします。
             /// </summary>
             internal static SourceFile RenderTsBaseType() {
                 return new SourceFile {
-                    FileName = "search-condition-base-type.ts",
+                    FileName = $"{TS_BASE_TYPE_FILE_NAME}.ts",
                     Contents = $$"""
                         /** 検索条件の基底型 */
                         export type {{TS_BASE_TYPE_NAME}}<TFilter, TSortMember extends string> = {

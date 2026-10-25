@@ -1,3 +1,4 @@
+using Nijo.Parts.JavaScript;
 using Nijo.CodeGenerating;
 using Nijo.Util.DotnetEx;
 using Nijo.SchemaParsing;
@@ -40,6 +41,8 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
     private const string TYPE_NODE_OPTIONS = "NodeOptions";
     private const string TYPE_MEMBER_BASE = "MemberBase";
 
+    private const string TS_FILE_NAME = "aggregate-metadata";
+
     private const string KIND_ROOT = "root";
     private const string KIND_VALUE = "value";
     private const string KIND_REF = "ref";
@@ -48,7 +51,7 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
     private const string KIND_PARENT = "parent";
 
     void ISharedSourceFile<CodeRenderingContext>.RegisterDependencies(CodeRenderingContext ctx) {
-        // 特になし
+        ctx.Use<IndexTs>().AddModule(TS_FILE_NAME);
     }
 
     void ISharedSourceFile<CodeRenderingContext>.Render(CodeRenderingContext ctx) {
@@ -65,7 +68,7 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
             : valueObjectTypes.Select(type => $"'{type.TypePhysicalName}'").Join(" | ");
 
         return new SourceFile {
-            FileName = "aggregate-metadata.ts",
+            FileName = $"{TS_FILE_NAME}.ts",
             Contents = $$"""
                 import * as EnumDefs from "./enum-defs"
 

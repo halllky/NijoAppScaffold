@@ -1,63 +1,74 @@
 using Nijo.CodeGenerating;
-using Nijo.Parts.Common;
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Nijo.StaticEnums;
+using System.Threading;
 
 namespace Nijo.Parts.JavaScript {
     /// <summary>
-    /// TypeScriptの "index.ts" ファイル
+    /// TypeScriptの自動生成ディレクトリ直下の "index.ts" ファイル。
+    /// 自動生成ディレクトリ直下のモジュールのうち index.ts から再エクスポートするものは、そのモジュールを生成する側が登録する。
     /// </summary>
-    internal class IndexTs {
+    internal class IndexTs : ISharedSourceFile<CodeRenderingContext> {
         private const string FILE_NAME = "index.ts";
 
+        private readonly Lock _lock = new();
+        private readonly HashSet<string> _modules = [];
+        private readonly Dictionary<string, string> _namespaceModules = [];
+
         /// <summary>
-        /// TypeScriptの "index.ts" ファイルをレンダリングします。
-        /// 同ディレクトリ内の他のソースファイルが全てレンダリングされた後に呼ばれる必要があります。
+        /// そのまま再エクスポートするモジュールを登録します。
         /// </summary>
-        internal static void Render(DirectorySetupper dir, CodeRenderingContext ctx) {
-            var modules = ctx
-                .GetGeneratedFileNames(dir)
-                .Where(path => Path.GetExtension(path) == ".ts")
-                .Select(path => Path.GetFileName(path))
-                .Where(fileName => fileName != FILE_NAME && fileName != EnumFile.TS_FILENAME)
-                .Select(fileName => Path.GetFileNameWithoutExtension(fileName))
-                .OrderBy(fileName => fileName)
-                .ToArray();
-
-            // "import * as" で読み込んで再エクスポートするもの
-            var namespaceModules = modules
-                .Where(CommandQueryMappings.TsNamespaceModules.ContainsKey)
-                .Select(fileName => (FileName: fileName, Alias: CommandQueryMappings.TsNamespaceModules[fileName]))
-                .ToArray();
-
-            // そのまま再エクスポートするもの
-            var otherModules = modules
-                .Where(fileName => !CommandQueryMappings.TsNamespaceModules.ContainsKey(fileName))
-                .ToArray();
-
-            dir.Generate(new SourceFile {
-                FileName = FILE_NAME,
-                Contents = $$"""
-                    {{otherModules.SelectTextTemplate(fileName => $$"""
-                    export * from "./{{fileName.Replace("\"", "\\\"")}}"
-                    """)}}
-
-                    {{namespaceModules.SelectTextTemplate(x => $$"""
-                    import * as {{x.Alias}} from "./{{x.FileName}}"
-                    """)}}
-                    export {
-                    {{namespaceModules.SelectTextTemplate(x => $$"""
-                      {{x.Alias}},
-                    """)}}
-                    }
-                    """,
-            });
+        /// <param name="fileNameWithoutExtension">自動生成ディレクトリ直下のモジュールのファイル名（拡張子なし）</param>
+        internal IndexTs AddModule(string fileNameWithoutExtension) {
+            lock (_lock) {
+                _modules.Add(fileNameWithoutExtension);
+                return this;
+            }
+        }
+        /// <summary>
+        /// "import * as" で読み込み、別名をつけて再エクスポートするモジュールを登録します。
+        /// </summary>
+        /// <param name="fileNameWithoutExtension">自動生成ディレクトリ直下のモジュールのファイル名（拡張子なし）</param>
+        /// <param name="alias">再エクスポートするときの別名</param>
+        internal IndexTs AddNamespaceModule(string fileNameWithoutExtension, string alias) {
+            lock (_lock) {
+                _namespaceModules[fileNameWithoutExtension] = alias;
+                return this;
+            }
         }
 
+        void ISharedSourceFile<CodeRenderingContext>.RegisterDependencies(CodeRenderingContext ctx) {
+            // 特になし
+        }
+
+        void ISharedSourceFile<CodeRenderingContext>.Render(CodeRenderingContext ctx) {
+            var modules = _modules
+                .OrderBy(fileName => fileName)
+                .ToArray();
+            var namespaceModules = _namespaceModules
+                .OrderBy(x => x.Key)
+                .Select(x => (FileName: x.Key, Alias: x.Value))
+                .ToArray();
+
+            ctx.ReactProject(dir => {
+                dir.Generate(new SourceFile {
+                    FileName = FILE_NAME,
+                    Contents = $$"""
+                        {{modules.SelectTextTemplate(fileName => $$"""
+                        export * from "./{{fileName.Replace("\"", "\\\"")}}"
+                        """)}}
+
+                        {{namespaceModules.SelectTextTemplate(x => $$"""
+                        import * as {{x.Alias}} from "./{{x.FileName}}"
+                        """)}}
+                        export {
+                        {{namespaceModules.SelectTextTemplate(x => $$"""
+                          {{x.Alias}},
+                        """)}}
+                        }
+                        """,
+                });
+            });
+        }
     }
 }

@@ -31,19 +31,13 @@ public abstract class CodeRenderingContext<TSelf> where TSelf : CodeRenderingCon
     /// <param name="define">
     /// ソースコードを生成し、共有ソースファイルの内容を登録する処理。
     /// </param>
-    /// <param name="afterAll">
-    /// 共有ソースファイルを含む他のすべてのファイルが生成された後に実行される処理。
-    /// 同じディレクトリに生成されたファイルの一覧から目次のようなファイルを生成する場合などに使う。
-    /// この中で共有ソースファイルを使用することはできない。
-    /// </param>
-    public void Run(Action<TSelf> define, Action<TSelf>? afterAll = null) {
+    public void Run(Action<TSelf> define) {
         if (_isRun) throw new InvalidOperationException("ソースコード自動生成は1つのインスタンスにつき1回だけ実行できます。");
         _isRun = true;
 
         var self = (TSelf)this;
         define(self);
         RenderSharedSourceFiles(self);
-        afterAll?.Invoke(self);
         _outputFiles.DeleteUnhandled(_managedDirectories);
     }
     private bool _isRun;
@@ -53,13 +47,6 @@ public abstract class CodeRenderingContext<TSelf> where TSelf : CodeRenderingCon
     /// </summary>
     public void Directory(string path, Action<DirectorySetupper> setup) {
         DirectorySetupper.StartSetup(_outputFiles, path, setup);
-    }
-
-    /// <summary>
-    /// 現時点で特定のディレクトリ直下に生成されたファイルの一覧を返します。
-    /// </summary>
-    public IEnumerable<string> GetGeneratedFileNames(DirectorySetupper dir) {
-        return _outputFiles.GetFilesIn(dir.Path);
     }
 
 

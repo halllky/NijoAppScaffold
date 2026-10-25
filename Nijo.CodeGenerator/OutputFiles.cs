@@ -30,15 +30,6 @@ internal sealed class OutputFiles {
     }
 
     /// <summary>
-    /// 特定のディレクトリ直下に生成されたファイルの一覧を返します。
-    /// </summary>
-    internal IEnumerable<string> GetFilesIn(string directory) {
-        lock (_lock) {
-            return _handled.Where(path => directory == Path.GetDirectoryName(path)).ToArray();
-        }
-    }
-
-    /// <summary>
     /// 生成されていないファイルやディレクトリを、指定されたディレクトリの中から削除します。
     /// 指定されたディレクトリ自体は削除しません。
     /// </summary>

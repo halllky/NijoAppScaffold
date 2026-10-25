@@ -1,3 +1,4 @@
+using Nijo.Parts.JavaScript;
 using Nijo.CodeGenerating;
 using Nijo.DataStructures.IsStored;
 using Nijo.DataStructures.Members;
@@ -184,6 +185,9 @@ internal sealed class IsQueryableOption : FeatureOption {
             dir.Generate(SearchCondition.Entry.RenderTsBaseType()); // 検索条件の基底型
             dir.Generate(SearchProcessingReturn.RenderTypeScript()); // 一覧検索の戻り値の型
         });
+        ctx.Use<IndexTs>()
+            .AddModule(SearchCondition.Entry.TS_BASE_TYPE_FILE_NAME)
+            .AddModule(SearchProcessingReturn.TS_FILE_NAME);
     }
 
     /// <summary>

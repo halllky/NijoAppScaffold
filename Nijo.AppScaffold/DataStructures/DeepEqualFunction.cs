@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Nijo.Parts.JavaScript;
 using Nijo.CodeGenerating;
 using Nijo.Util.DotnetEx;
 using Nijo.DataStructures.IsQueryable;
@@ -49,7 +50,7 @@ internal class DeepEqualFunction {
     internal class OptionType : ISharedSourceFile<CodeRenderingContext> {
         internal const string TYPENAME = "DisplayDataDeepEqualOption";
         void ISharedSourceFile<CodeRenderingContext>.RegisterDependencies(CodeRenderingContext ctx) {
-            // 特になし
+            ctx.Use<IndexTs>().AddModule(TYPENAME);
         }
 
         void ISharedSourceFile<CodeRenderingContext>.Render(CodeRenderingContext ctx) {

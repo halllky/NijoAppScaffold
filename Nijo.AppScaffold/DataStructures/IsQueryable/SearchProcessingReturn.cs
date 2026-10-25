@@ -47,11 +47,15 @@ namespace Nijo.DataStructures.IsQueryable {
             };
         }
         /// <summary>
+        /// Load処理の戻り値の型の定義が記載されるモジュールのファイル名（拡張子なし）
+        /// </summary>
+        internal const string TS_FILE_NAME = "load-return-type";
+        /// <summary>
         /// Load処理の戻り値の型の定義をレンダリングします。（TypeScript）
         /// </summary>
         internal static SourceFile RenderTypeScript() {
             return new SourceFile {
-                FileName = "load-return-type.ts",
+                FileName = $"{TS_FILE_NAME}.ts",
                 Contents = $$"""
                     /** 一覧検索処理の戻り値の型 */
                     export type {{TYPE_TS}}<TDisplayData> = {

@@ -64,6 +64,13 @@ namespace Nijo.Parts.Common {
         void ISharedSourceFile<CodeRenderingContext>.RegisterDependencies(CodeRenderingContext ctx) {
             // ディープイコールのオプション型に依存しているので
             ctx.Use<DeepEqualFunction.OptionType>();
+
+            var indexTs = ctx.Use<IndexTs>()
+                .AddModule(TS_MODEL_TYPES)
+                .AddModule(TS_DEEP_EQUAL_FUNCTION);
+            foreach (var (fileName, alias) in TsNamespaceModules) {
+                indexTs.AddNamespaceModule(fileName, alias);
+            }
         }
 
         void ISharedSourceFile<CodeRenderingContext>.Render(CodeRenderingContext ctx) {
@@ -105,7 +112,7 @@ namespace Nijo.Parts.Common {
         /// <summary>
         /// TypeScript側で、このクラスが生成するモジュールのうち "import * as" で読み込んで再エクスポートされるものの、ファイル名（拡張子なし）と別名の一覧。
         /// </summary>
-        internal static IReadOnlyDictionary<string, string> TsNamespaceModules { get; } = new Dictionary<string, string> {
+        private static IReadOnlyDictionary<string, string> TsNamespaceModules { get; } = new Dictionary<string, string> {
             [TS_DISPLAY_DATA] = "DisplayData",
             [TS_REF_TARGET] = "RefTarget",
             [TS_SEARCH_CONDITION] = "SearchCondition",
