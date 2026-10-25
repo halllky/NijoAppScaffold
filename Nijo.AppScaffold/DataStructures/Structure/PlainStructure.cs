@@ -230,13 +230,12 @@ internal class StructureRefToMember : IInstanceStructurePropertyMetadata {
     internal RefToMember RefToMember => _refToMember;
 
     internal ICreatablePresentationLayerStructure GetTargetStructure() {
-        return _refToMember.RefToObject switch {
-            RefToMember.E_RefToObject.DisplayData => new DisplayData(_refToMember.RefTo),
-            RefToMember.E_RefToObject.RefTarget => new DisplayDataRef.Entry(_refToMember.RefTo),
-            _ => _refToMember.RefTo is RootAggregate root
-                ? new PlainStructure(root)
-                : new StructureDescendantMember(_refToMember.RefTo),
-        };
+        if (_refToMember.RefToObject != null) {
+            return QueryableObjectKind.Create(_refToMember.RefToObject, _refToMember.RefTo);
+        }
+        return _refToMember.RefTo is RootAggregate root
+            ? new PlainStructure(root)
+            : new StructureDescendantMember(_refToMember.RefTo);
     }
     /// <summary>このメンバーを保持する集約のモジュールから見た参照先の型名</summary>
     internal string GetTargetTsTypeName() {

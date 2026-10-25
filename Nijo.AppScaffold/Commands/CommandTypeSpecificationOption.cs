@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Nijo.DataStructures.IsQueryable;
-using Nijo.DataStructures.Aggregates;
 using Nijo.DataStructures;
 using Nijo.CodeGenerating;
 
@@ -16,28 +15,18 @@ namespace Nijo.Commands;
 /// </summary>
 internal abstract class CommandTypeSpecificationOption : NodeOption {
 
-    /// <summary>
-    /// コマンドから参照可能な、検索可能なデータ構造のオブジェクトの種類と、そのインスタンス作成処理
-    /// </summary>
-    internal static Dictionary<string, Func<AggregateBase, ICreatablePresentationLayerStructure>> AvailableFromCommandToQuery => new() {
-        { DataStructures.Members.RefToObjectOption.REF_TO_OBJECT_DISPLAY_DATA, aggregate => new DisplayData(aggregate) },
-        { DataStructures.Members.RefToObjectOption.REF_TO_OBJECT_SEARCH_CONDITION, aggregate => new SearchCondition.Entry(aggregate.GetRoot()) },
-        { DataStructures.Members.RefToObjectOption.REF_TO_OBJECT_REF_TARGET, aggregate => new DisplayDataRef.Entry(aggregate) },
-    };
-
     protected static void ValidateTypeSpecification(NodeOptionValidateContext ctx) {
         if (!CommandTypeSpecification.TryParse(ctx.Value, out var specification)) {
             ctx.AddError("値が不正です。「データ構造名」または「データ構造名:種類」の形式で指定してください。");
             return;
         }
 
-        if (specification.ObjectKind != null && !AvailableFromCommandToQuery.ContainsKey(specification.ObjectKind)) {
-            ctx.AddError($"参照先の種類は {string.Join(" または ", AvailableFromCommandToQuery.Keys)} のみ指定できます。");
+        if (specification.ObjectKind != null && !QueryableObjectKind.All.Contains(specification.ObjectKind)) {
+            ctx.AddError($"参照先の種類は {string.Join(" または ", QueryableObjectKind.All)} のみ指定できます。");
             return;
         }
 
-        var target = ctx.SchemaParseContext.GetRootElements(E_Section.DataStructures)
-            .SingleOrDefault(el => el.Name.LocalName == specification.DataStructureName);
+        var target = specification.FindDataStructure(ctx.SchemaParseContext);
         if (target == null) {
             ctx.AddError($"参照先の集約が見つかりません。物理名: {specification.DataStructureName}");
             return;

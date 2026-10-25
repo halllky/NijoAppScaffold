@@ -28,15 +28,11 @@ internal sealed class RefToObjectOption : NodeOption {
         return target.IsStructure && target.NodeType == E_NodeType.Ref;
     }
 
-    internal const string REF_TO_OBJECT_DISPLAY_DATA = "DisplayData";
-    internal const string REF_TO_OBJECT_SEARCH_CONDITION = "SearchCondition";
-    internal const string REF_TO_OBJECT_REF_TARGET = "RefTarget";
-
     /// <summary>
     /// IsStored 属性も IsQueryable 属性も指定されていないデータ構造から参照可能な、検索可能なデータ構造のオブジェクトの種類
     /// </summary>
     internal static List<string> AvailableFromStructureToQuery => [
-        REF_TO_OBJECT_DISPLAY_DATA,
-        REF_TO_OBJECT_REF_TARGET,
+        QueryableObjectKind.DISPLAY_DATA,
+        QueryableObjectKind.REF_TARGET,
     ];
 }

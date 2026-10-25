@@ -248,11 +248,9 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
 
             } else {
                 // Structure => Query
-                RefEntry = refTo.RefToObject switch {
-                    RefToMember.E_RefToObject.DisplayData => new DisplayData(refTo.RefTo),
-                    RefToMember.E_RefToObject.RefTarget => new DisplayDataRef.Entry(refTo.RefTo),
-                    _ => throw new NotImplementedException("ありえない"),
-                };
+                RefEntry = QueryableObjectKind.Create(
+                    refTo.RefToObject ?? throw new InvalidOperationException("構造体から検索可能なデータ構造への参照には参照先オブジェクトの指定が必須"),
+                    refTo.RefTo);
             }
         }
         internal RefToMember Member { get; }

@@ -1,4 +1,3 @@
-using Nijo.DataStructures.Structure;
 using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
@@ -36,20 +35,10 @@ public sealed class CommandRoot : SectionRoot {
         if (!CommandTypeSpecification.TryParse(attribute.Value, out var specification)) {
             throw new InvalidOperationException($"不正な型指定: {attribute.Value}");
         }
-        var targetXElement = _ctx.GetRootElements(E_Section.DataStructures)
-            .SingleOrDefault(el => el.Name.LocalName == specification.DataStructureName)
+        var targetXElement = specification.FindDataStructure(_ctx)
             ?? throw new InvalidOperationException($"対象の集約が見つかりません: {specification.DataStructureName}");
 
-        var targetRootAggregate = (RootAggregate)_ctx.ToAggregateBase(targetXElement, null);
-        if (specification.ObjectKind == null) {
-            return new StructureDisplayData(targetRootAggregate);
-
-        } else if (CommandTypeSpecificationOption.AvailableFromCommandToQuery.TryGetValue(specification.ObjectKind, out var factory)) {
-            return factory(targetRootAggregate);
-
-        } else {
-            throw new InvalidOperationException($"不正な参照先の種類: {specification.ObjectKind}");
-        }
+        return specification.CreateStructure((RootAggregate)_ctx.ToAggregateBase(targetXElement, null));
     }
 
     /// <summary>

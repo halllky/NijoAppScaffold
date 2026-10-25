@@ -72,19 +72,10 @@ namespace Nijo.DataStructures.Aggregates {
         public string? Category => XElement.Attribute(GenericLookupCategoryOption.ATTRIBUTE_NAME)?.Value;
 
         /// <summary>
-        /// 構造体が検索可能なデータ構造を参照する際の、そのデータ構造から生成されるどのモジュールを参照するかの指定。
+        /// 構造体が検索可能なデータ構造を参照する際の、そのデータ構造から生成されるどのオブジェクトを参照するかの指定。
+        /// <see cref="IsQueryable.QueryableObjectKind"/> のいずれか。
         /// </summary>
-        public E_RefToObject? RefToObject => XElement.Attribute(RefToObjectOption.ATTRIBUTE_NAME)?.Value switch {
-            RefToObjectOption.REF_TO_OBJECT_DISPLAY_DATA => E_RefToObject.DisplayData,
-            RefToObjectOption.REF_TO_OBJECT_REF_TARGET => E_RefToObject.RefTarget,
-            null => null,
-            _ => throw new InvalidOperationException(),
-        };
-
-        public enum E_RefToObject {
-            DisplayData,
-            RefTarget,
-        }
+        public string? RefToObject => XElement.Attribute(RefToObjectOption.ATTRIBUTE_NAME)?.Value;
         #endregion モデル毎に定義される属性
 
         #region 等価比較

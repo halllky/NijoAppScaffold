@@ -19,7 +19,7 @@ internal sealed class ReturnValueOption : CommandTypeSpecificationOption {
         コマンドの戻り値の型を指定します。
         以下のいずれかを指定できます:
         - {{IsStoredOption.ATTRIBUTE_NAME}} 属性も {{IsQueryableOption.ATTRIBUTE_NAME}} 属性も指定されていないデータ構造のルート集約名
-        - {{IsQueryableOption.ATTRIBUTE_NAME}} 属性が指定されたデータ構造のルート集約名 + {{string.Join(" または ", AvailableFromCommandToQuery.Keys.Select(key => $":{key}"))}}
+        - {{IsQueryableOption.ATTRIBUTE_NAME}} 属性が指定されたデータ構造のルート集約名 + {{string.Join(" または ", QueryableObjectKind.All.Select(key => $":{key}"))}}
         指定しなかった場合は戻り値なしのコマンドとみなされます。
         """;
 
