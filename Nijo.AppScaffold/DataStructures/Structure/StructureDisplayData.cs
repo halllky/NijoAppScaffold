@@ -16,7 +16,7 @@ internal class StructureDisplayData : EditablePresentationObject {
     internal StructureDisplayData(AggregateBase aggregate) : base(aggregate) { }
 
     internal override string CsClassName => $"{Aggregate.PhysicalName}DisplayData";
-    internal override string TsTypeName => TypeScriptAggregateModule.GetExportName(Aggregate, "DisplayData");
+    internal override string TsTypeName => TypeScriptSectionRootModule.GetExportName(Aggregate, "DisplayData");
 
     internal override bool HasVersion => false;
     #region レンダリング

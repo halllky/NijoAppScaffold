@@ -185,7 +185,7 @@ internal sealed class DataStructuresSection : Section {
             .SelectMany(agg => agg.GetMembers())
             .ToArray();
         foreach (var @ref in members.OfType<RefToMember>()) {
-            aggregateFile.AddTypeScriptImport(new TypeScriptAggregateModule(@ref.RefTo.GetRoot()));
+            aggregateFile.AddTypeScriptImport(new TypeScriptSectionRootModule(@ref.RefTo.GetRoot()));
         }
         foreach (var vo in members.OfType<ValueMember>().Select(vm => vm.Type).OfType<ValueObjectMember>()) {
             aggregateFile.AddTypeScriptImport(vo.TsModule, typeOnly: true);

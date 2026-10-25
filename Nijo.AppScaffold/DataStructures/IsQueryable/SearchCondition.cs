@@ -248,7 +248,7 @@ namespace Nijo.DataStructures.IsQueryable {
             private readonly AggregateBase _aggregate;
 
             internal virtual string CsClassName => $"{_aggregate.PhysicalName}SearchConditionFilter";
-            internal virtual string TsTypeName => TypeScriptAggregateModule.GetExportName(_aggregate, "SearchConditionFilter");
+            internal virtual string TsTypeName => TypeScriptSectionRootModule.GetExportName(_aggregate, "SearchConditionFilter");
 
             bool IInstanceStructurePropertyMetadata.IsArray => false;
             string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp ? CsClassName : TsTypeName;
@@ -474,7 +474,7 @@ namespace Nijo.DataStructures.IsQueryable {
             string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => csts == E_CsTs.CSharp ? RefToFilter.CsClassName : RefToFilterTsTypeName;
 
             /// <summary>このメンバーを保持する集約のモジュールから見た参照先のフィルターの型名</summary>
-            private string RefToFilterTsTypeName => new TypeScriptAggregateModule(_rm.RefTo.GetRoot()).QualifyFrom(_rm.Owner, RefToFilter.TsTypeName);
+            private string RefToFilterTsTypeName => new TypeScriptSectionRootModule(_rm.RefTo.GetRoot()).QualifyFrom(_rm.Owner, RefToFilter.TsTypeName);
 
             string IFilterMember.RenderCSharpDeclaring(CodeRenderingContext ctx) {
                 return $$"""

@@ -162,7 +162,7 @@ namespace Nijo.DataStructures.IsQueryable {
             internal Entry(AggregateBase aggregate) : base(aggregate) { }
 
             public override string CsClassName => $"{base.Aggregate.PhysicalName}RefTarget";
-            public override string TsTypeName => TypeScriptAggregateModule.GetExportName(base.Aggregate, "RefTarget");
+            public override string TsTypeName => TypeScriptSectionRootModule.GetExportName(base.Aggregate, "RefTarget");
             string IPresentationLayerStructure.CsClassName => CsClassName;
             AggregateBase ICreatablePresentationLayerStructure.Aggregate => base.Aggregate;
 
@@ -283,7 +283,7 @@ namespace Nijo.DataStructures.IsQueryable {
 
             string IPresentationLayerStructure.IMember.RenderDeclaringTypeScript() {
                 var refTo = new Entry(_member.RefTo);
-                var refToTsTypeName = new TypeScriptAggregateModule(_member.RefTo.GetRoot()).QualifyFrom(_member.Owner, refTo.TsTypeName);
+                var refToTsTypeName = new TypeScriptSectionRootModule(_member.RefTo.GetRoot()).QualifyFrom(_member.Owner, refTo.TsTypeName);
 
                 return $$"""
                     {{PhysicalName}}: {{refToTsTypeName}}

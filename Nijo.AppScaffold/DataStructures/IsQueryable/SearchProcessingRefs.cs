@@ -39,8 +39,8 @@ namespace Nijo.DataStructures.IsQueryable {
                 return new {
                     EscapedPhysicalName = refEntry.Aggregate.RefEntryName,
                     Endpoint = controller.GetActionNameForClient(searchProcess.ControllerActionLoad),
-                    ParamType = new TypeScriptAggregateModule(rootAggregate).Qualify(searchCondition.TsTypeName),
-                    ReturnType = $"Util.{SearchProcessingReturn.TYPE_TS}<{new TypeScriptAggregateModule(rootAggregate).Qualify(refEntry.TsTypeName)}>",
+                    ParamType = new TypeScriptSectionRootModule(rootAggregate).Qualify(searchCondition.TsTypeName),
+                    ReturnType = $"Util.{SearchProcessingReturn.TYPE_TS}<{new TypeScriptSectionRootModule(rootAggregate).Qualify(refEntry.TsTypeName)}>",
                 };
             }).ToArray();
 

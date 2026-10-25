@@ -44,7 +44,7 @@ namespace Nijo.DataStructures.IsQueryable {
                 var controller = new AspNetController(rootAggregate);
                 var searchCondition = new SearchCondition.Entry(rootAggregate);
                 var displayData = new DisplayData(rootAggregate);
-                var module = new TypeScriptAggregateModule(rootAggregate);
+                var module = new TypeScriptSectionRootModule(rootAggregate);
 
                 return new {
                     EscapedPhysicalName = rootAggregate.PhysicalName.Replace("'", "\\'"),

@@ -274,11 +274,11 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         }
 
         public string RenderNewObjectCreation() {
-            return $"{new TypeScriptAggregateModule(Member.RefTo.GetRoot()).QualifyFrom(Member.Owner, RefEntry.TsNewObjectFunction)}()";
+            return $"{new TypeScriptSectionRootModule(Member.RefTo.GetRoot()).QualifyFrom(Member.Owner, RefEntry.TsNewObjectFunction)}()";
         }
 
         /// <summary>このメンバーを保持する集約のモジュールから見た参照先の型名</summary>
-        private string RefEntryTsTypeName => new TypeScriptAggregateModule(Member.RefTo.GetRoot()).QualifyFrom(Member.Owner, RefEntry.TsTypeName);
+        private string RefEntryTsTypeName => new TypeScriptSectionRootModule(Member.RefTo.GetRoot()).QualifyFrom(Member.Owner, RefEntry.TsTypeName);
 
         ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
         bool IInstanceStructurePropertyMetadata.IsArray => false;
@@ -362,7 +362,7 @@ internal abstract class EditablePresentationObject : IInstancePropertyOwnerMetad
         internal string PhysicalName => Aggregate.PhysicalName;
         internal string DisplayName => Aggregate.DisplayName;
         internal override string CsClassName => $"{Aggregate.PhysicalName}DisplayData";
-        internal override string TsTypeName => TypeScriptAggregateModule.GetExportName(Aggregate, "DisplayData");
+        internal override string TsTypeName => TypeScriptSectionRootModule.GetExportName(Aggregate, "DisplayData");
         internal abstract string CsClassNameAsMember { get; }
         internal abstract string TsTypeNameAsMember { get; }
         internal override bool HasVersion => Aggregate is RootAggregate;

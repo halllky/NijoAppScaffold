@@ -39,8 +39,8 @@ namespace Nijo.Parts.Common {
         private readonly List<string> _webApiControllerAction = [];
         private readonly List<string> _typeScriptTypeDef = [];
         private readonly List<string> _typeScriptFunctions = [];
-        private readonly List<TypeScriptAggregateModule> _typeScriptImports = [];
-        private readonly List<TypeScriptAggregateModule> _typeScriptTypeOnlyImports = [];
+        private readonly List<TypeScriptSectionRootModule> _typeScriptImports = [];
+        private readonly List<TypeScriptSectionRootModule> _typeScriptTypeOnlyImports = [];
 
         public void AddAppSrvMethod(string sourceCode, string? fileName = null) {
             _appSrvMethods.Add(new CoreLibrarySourceCodeItem { SourceCode = sourceCode, FileName = fileName });
@@ -61,7 +61,7 @@ namespace Nijo.Parts.Common {
         /// TypeScript のモジュールが読み込む別のモジュールを追加します。
         /// </summary>
         /// <param name="typeOnly">型定義のみを読み込む場合は true</param>
-        internal void AddTypeScriptImport(TypeScriptAggregateModule module, bool typeOnly = false) {
+        internal void AddTypeScriptImport(TypeScriptSectionRootModule module, bool typeOnly = false) {
             (typeOnly ? _typeScriptTypeOnlyImports : _typeScriptImports).Add(module);
         }
 
@@ -125,9 +125,9 @@ namespace Nijo.Parts.Common {
             });
             ctx.ReactProject(dir => {
                 if (_typeScriptTypeDef.Count > 0 || _typeScriptFunctions.Count > 0) {
-                    dir.Directory(TypeScriptAggregateModule.DIRECTORY, modelsDir => {
+                    dir.Directory(TypeScriptSectionRootModule.DIRECTORY, modelsDir => {
                         modelsDir.Generate(new SourceFile(_callerFilePath, _callerMemberName) {
-                            FileName = $"{new TypeScriptAggregateModule(_root).FileNameWithoutExtension}.ts",
+                            FileName = $"{new TypeScriptSectionRootModule(_root).FileNameWithoutExtension}.ts",
                             Contents = RenderNodeJs(ctx),
                         });
                     });
@@ -208,8 +208,8 @@ namespace Nijo.Parts.Common {
                 """;
         }
         private string RenderNodeJs(CodeRenderingContext ctx) {
-            var thisModule = new TypeScriptAggregateModule(_root);
-            IEnumerable<TypeScriptAggregateModule> Normalize(IEnumerable<TypeScriptAggregateModule> modules) => modules
+            var thisModule = new TypeScriptSectionRootModule(_root);
+            IEnumerable<TypeScriptSectionRootModule> Normalize(IEnumerable<TypeScriptSectionRootModule> modules) => modules
                 .Where(module => module.ImportAlias != thisModule.ImportAlias)
                 .DistinctBy(module => module.ImportAlias)
                 .OrderBy(module => module.ImportAlias);

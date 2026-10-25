@@ -20,7 +20,7 @@ namespace Nijo.DataStructures.IsQueryable {
         /// <summary>C#クラス名</summary>
         internal override string CsClassName => $"{Aggregate.PhysicalName}DisplayData";
         /// <summary>TypeScript型名</summary>
-        internal override string TsTypeName => TypeScriptAggregateModule.GetExportName(Aggregate, "DisplayData");
+        internal override string TsTypeName => TypeScriptSectionRootModule.GetExportName(Aggregate, "DisplayData");
 
         /// <summary>楽観排他制御用のバージョンを持つかどうか</summary>
         internal override bool HasVersion => Aggregate is RootAggregate rootAggregate

@@ -37,7 +37,7 @@ namespace Nijo.ValueObjects {
 
             // TypeScript定義の生成
             ctx.ReactProject(dir => {
-                dir.Directory(TypeScriptAggregateModule.DIRECTORY, modelsDir => {
+                dir.Directory(TypeScriptSectionRootModule.DIRECTORY, modelsDir => {
                     modelsDir.Generate(RenderTypeScript(rootAggregate));
                 });
             });
@@ -126,7 +126,7 @@ namespace Nijo.ValueObjects {
             var aggregateName = rootAggregate.PhysicalName;
 
             return new SourceFile {
-                FileName = $"{new TypeScriptAggregateModule(rootAggregate).FileNameWithoutExtension}.ts",
+                FileName = $"{new TypeScriptSectionRootModule(rootAggregate).FileNameWithoutExtension}.ts",
                 Contents = $$"""
                     /**
                      * {{rootAggregate.DisplayName}}。

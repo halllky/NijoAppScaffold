@@ -52,7 +52,7 @@ internal sealed class ConstantsSection : Section {
 
         // JavaScript/TypeScript定数の生成
         ctx.ReactProject(dir => {
-            dir.Directory(TypeScriptAggregateModule.DIRECTORY, modelsDir => {
+            dir.Directory(TypeScriptSectionRootModule.DIRECTORY, modelsDir => {
                 modelsDir.Generate(new SourceFile {
                     FileName = $"{rootAggregate.PhysicalName}.ts",
                     Contents = constants.RenderTypeScriptObject(isRoot: true),

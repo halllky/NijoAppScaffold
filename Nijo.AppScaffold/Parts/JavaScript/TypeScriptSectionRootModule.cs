@@ -6,23 +6,23 @@ using Nijo.DataStructures.Aggregates;
 namespace Nijo.Parts.JavaScript;
 
 /// <summary>
-/// ルート集約1つにつき1ファイル生成される TypeScript のモジュール。
-/// 利用側では "import * as ルート集約名 from '...'" の形で読み込まれることを前提とし、
-/// モジュール内で export されるシンボルの名前にはルート集約の名前を含めない。
+/// セクションのルート要素（データ構造のルート集約、コマンド、値オブジェクト、定数など）1つにつき1ファイル生成される TypeScript のモジュール。
+/// 利用側では "import * as ルート要素名 from '...'" の形で読み込まれることを前提とし、
+/// モジュール内で export されるシンボルの名前にはルート要素の名前を含めない。
 /// </summary>
-internal class TypeScriptAggregateModule {
-    internal TypeScriptAggregateModule(ISectionRoot root) {
-        _rootAggregate = root;
+internal class TypeScriptSectionRootModule {
+    internal TypeScriptSectionRootModule(ISectionRoot root) {
+        _root = root;
     }
-    private readonly ISectionRoot _rootAggregate;
+    private readonly ISectionRoot _root;
 
     /// <summary>このモジュールが出力されるディレクトリの名前</summary>
     internal const string DIRECTORY = "models";
 
     /// <summary>このモジュールのファイル名（拡張子なし）</summary>
-    internal string FileNameWithoutExtension => _rootAggregate.PhysicalName.ToFileNameSafe();
+    internal string FileNameWithoutExtension => _root.PhysicalName.ToFileNameSafe();
     /// <summary>"import * as" で読み込む際の別名</summary>
-    internal string ImportAlias => _rootAggregate.PhysicalName;
+    internal string ImportAlias => _root.PhysicalName;
 
     /// <summary>
     /// このモジュールを、同じディレクトリに出力される別のモジュールから読み込むimport文をレンダリングします。
@@ -48,7 +48,7 @@ internal class TypeScriptAggregateModule {
     /// 同じモジュール内からの参照であれば修飾しません。
     /// </summary>
     internal string QualifyFrom(AggregateBase referrer, string exportName) {
-        return referrer.GetRoot().XElement == _rootAggregate.XElement
+        return referrer.GetRoot().XElement == _root.XElement
             ? exportName
             : Qualify(exportName);
     }

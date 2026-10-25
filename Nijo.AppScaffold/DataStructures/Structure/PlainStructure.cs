@@ -21,7 +21,7 @@ internal class PlainStructure : IInstancePropertyOwnerMetadata, ICreatablePresen
     AggregateBase ICreatablePresentationLayerStructure.Aggregate => Aggregate;
 
     public virtual string CsClassName => Aggregate.PhysicalName;
-    public string TsTypeName => TypeScriptAggregateModule.GetExportName(Aggregate, "Structure");
+    public string TsTypeName => TypeScriptSectionRootModule.GetExportName(Aggregate, "Structure");
 
     /// <summary>
     /// TypeScriptの新規オブジェクト作成関数の名前
@@ -239,11 +239,11 @@ internal class StructureRefToMember : IInstanceStructurePropertyMetadata {
     }
     /// <summary>このメンバーを保持する集約のモジュールから見た参照先の型名</summary>
     internal string GetTargetTsTypeName() {
-        return new TypeScriptAggregateModule(_refToMember.RefTo.GetRoot()).QualifyFrom(_refToMember.Owner, GetTargetStructure().TsTypeName);
+        return new TypeScriptSectionRootModule(_refToMember.RefTo.GetRoot()).QualifyFrom(_refToMember.Owner, GetTargetStructure().TsTypeName);
     }
     /// <summary>このメンバーを保持する集約のモジュールから見た参照先の新規オブジェクト作成関数名</summary>
     internal string GetTargetTsNewObjectFunction() {
-        return new TypeScriptAggregateModule(_refToMember.RefTo.GetRoot()).QualifyFrom(_refToMember.Owner, GetTargetStructure().TsNewObjectFunction);
+        return new TypeScriptSectionRootModule(_refToMember.RefTo.GetRoot()).QualifyFrom(_refToMember.Owner, GetTargetStructure().TsNewObjectFunction);
     }
 
     ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => _refToMember;

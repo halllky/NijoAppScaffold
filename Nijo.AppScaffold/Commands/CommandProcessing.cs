@@ -43,7 +43,7 @@ namespace Nijo.Commands {
             static string? QualifyTsTypeName(ICreatablePresentationLayerStructure? structure) {
                 return structure == null
                     ? null
-                    : new TypeScriptAggregateModule(structure.Aggregate.GetRoot()).Qualify(structure.TsTypeName);
+                    : new TypeScriptSectionRootModule(structure.Aggregate.GetRoot()).Qualify(structure.TsTypeName);
             }
 
             return $$"""

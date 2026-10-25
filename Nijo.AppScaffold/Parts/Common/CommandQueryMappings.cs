@@ -154,7 +154,7 @@ namespace Nijo.Parts.Common {
         /// </summary>
         private static string RenderImports(IEnumerable<AggregateBase> aggregates, bool typeOnly) {
             return aggregates
-                .Select(agg => new TypeScriptAggregateModule(agg.GetRoot()))
+                .Select(agg => new TypeScriptSectionRootModule(agg.GetRoot()))
                 .DistinctBy(module => module.ImportAlias)
                 .OrderBy(module => module.ImportAlias)
                 .SelectTextTemplate(module => module.RenderImportFromRoot(typeOnly));
@@ -163,7 +163,7 @@ namespace Nijo.Parts.Common {
         /// 集約ごとのモジュールのシンボルを、そのモジュールの別名で修飾した名前
         /// </summary>
         private static string Q(AggregateBase aggregate, string exportName) {
-            return new TypeScriptAggregateModule(aggregate.GetRoot()).Qualify(exportName);
+            return new TypeScriptSectionRootModule(aggregate.GetRoot()).Qualify(exportName);
         }
 
         private IEnumerable<SourceFile> RenderTypeScript(CodeRenderingContext ctx) {
