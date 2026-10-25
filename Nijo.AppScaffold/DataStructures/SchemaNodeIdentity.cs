@@ -63,34 +63,29 @@ public class SchemaNodeIdentity {
 
         xElements.Add(node.XElement);
 
-        var pathForDebug = xElements.Select(el => el.Name.LocalName).Join(" > ");
-        var hashCode = xElements.Aggregate(0, (agg, curr) => HashCode.Combine(agg, curr.GetHashCode()));
-
-        return new SchemaNodeIdentity(pathForDebug, hashCode);
+        return new SchemaNodeIdentity([.. xElements]);
     }
 
-    private SchemaNodeIdentity(string pathForDebug, int hashCode) {
-        _pathForDebug = pathForDebug;
-        _hashCode = hashCode;
+    private SchemaNodeIdentity(XElement[] xElements) {
+        _xElements = xElements;
+        _hashCode = xElements.Aggregate(0, (agg, curr) => HashCode.Combine(agg, curr.GetHashCode()));
     }
 
-    private readonly string _pathForDebug;
+    /// <summary>ref-toのエントリーポイントと末端のXML要素を、エントリーポイントに近い方から順に並べたもの</summary>
+    private readonly XElement[] _xElements;
     private readonly int _hashCode;
 
     public override int GetHashCode() {
         return _hashCode;
     }
     public override bool Equals(object? obj) {
-        if (obj is not SchemaNodeIdentity id) return false;
-        return id._hashCode == this._hashCode;
+        return obj is SchemaNodeIdentity other && _xElements.SequenceEqual(other._xElements);
     }
     public override string ToString() {
-        return _pathForDebug;
+        return _xElements.Select(el => el.Name.LocalName).Join(" > ");
     }
     public static bool operator ==(SchemaNodeIdentity? left, SchemaNodeIdentity? right) {
-        if (left is null && right is null) return true;
-        if (left is null || right is null) return false;
-        return left._hashCode == right._hashCode;
+        return left is null ? right is null : left.Equals(right);
     }
     public static bool operator !=(SchemaNodeIdentity? left, SchemaNodeIdentity? right) {
         return !(left == right);
