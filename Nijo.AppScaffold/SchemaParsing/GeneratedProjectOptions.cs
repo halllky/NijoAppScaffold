@@ -12,15 +12,13 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 
-namespace Nijo.CodeGenerating {
+namespace Nijo.SchemaParsing {
     /// <summary>
-    /// スキーマ定義で設定できるアプリケーション単位のソースコードレンダリング設定。
+    /// スキーマ定義で設定できるアプリケーション単位のソースコードレンダリング設定。nijo.xml のルート要素の属性として記載される。
     /// publicなプロパティにはDescription属性をつけ、そのプロパティの役割を1行で記述すること。
     /// ここでつけられた文言はnijo.xml記載ルールのドキュメントにそのまま表れる。
     /// </summary>
     public class GeneratedProjectOptions {
-
-        internal const string ROOT_ELEMENT_NAME = "NijoAppScaffold";
 
         /// <summary>
         /// デフォルト値を取得するためのコンストラクタ

@@ -48,7 +48,7 @@ public class デモ101テンプレートのテスト {
 
             var xDocument = System.Xml.Linq.XDocument.Load(project!.SchemaXmlPath);
             var rule = SchemaParsing.SchemaParseRule.Default();
-            var parseContext = new SchemaParsing.SchemaParseContext(xDocument, rule, CodeGenerating.GeneratedProjectOptions.Parse(xDocument, true));
+            var parseContext = new SchemaParsing.SchemaParseContext(xDocument, rule, SchemaParsing.GeneratedProjectOptions.Parse(xDocument, true));
             var renderingOptions = new CodeGenerating.CodeRenderingOptions { AllowNotImplemented = false };
 
             Assert.That(project.ValidateSchema(parseContext, logger), Is.True, "デモ101テンプレートのnijo.xmlにスキーマ定義エラーがあります。");

@@ -6,8 +6,9 @@
 
 ### コンテキスト
 - **`CodeRenderingContext`**: スキーマ定義、プロジェクトの設定、C#（クラスライブラリ、ASP.NET Core WebAPI、ユニットテスト）と TypeScript（React.js）それぞれの自動生成フォルダを提供する
-- **`GeneratedProjectOptions`**: 生成されるプロジェクトの設定オプション
 - **`CodeRenderingOptions`**: コード生成処理のオプション
+
+nijo.xml のルート要素の属性に記載されるプロジェクトの設定（`GeneratedProjectOptions`）は [SchemaParsing](../SchemaParsing/) にあります。
 
 ### ソースコードのレンダリングの補助
 - **`XmlCommentRendering`**: nijo.xml に書かれたコメントを、生成されるソースコード上のコメントとしてレンダリングする
