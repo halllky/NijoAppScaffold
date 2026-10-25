@@ -73,19 +73,11 @@ namespace Nijo.Util.DotnetEx {
             }
             return str;
         }
-        public static string ToUrlSafe(this string str) => System.Web.HttpUtility.UrlEncode(str);
         public static string ToKebabCase(this string str) => str.ToLower().Replace(" ", "-");
         public static string ToCamelCase(this string input) {
             if (string.IsNullOrEmpty(input)) return input;
             if (input.Length == 1) return input.ToLowerInvariant();
             return char.ToLowerInvariant(input[0]) + input.Substring(1);
-        }
-        /// <summary>
-        /// aaa-bbb-ccc => AaaBbbCcc
-        /// </summary>
-        public static string KebabCaseToPascalCase(this string str) {
-            if (string.IsNullOrEmpty(str)) return str;
-            return str.Split('-').Select(s => char.ToUpperInvariant(s[0]) + s.Substring(1)).Join("");
         }
         public static string ToHashedString(this string str) {
             byte[] stringBytes = System.Text.Encoding.UTF8.GetBytes(str);
@@ -94,39 +86,6 @@ namespace Nijo.Util.DotnetEx {
             Array.Copy(hashedBytes, 0, guidBytes, 0, 16);
             var guid = new Guid(guidBytes);
             return "x" + guid.ToString().Replace("-", "");
-        }
-
-        /// <summary>
-        /// 半角文字を1、全角文字を2として横幅を算出する。
-        /// </summary>
-        /// <param name="str"></param>
-        /// <returns></returns>
-        public static int CalculateCharacterWidth(this string str) {
-            int totalWidth = 0;
-
-            for (int i = 0; i < str.Length;) {
-                var unicodeCategory = char.GetUnicodeCategory(str, i);
-
-                if (unicodeCategory == UnicodeCategory.Surrogate || char.IsSurrogate(str[i])) {
-                    totalWidth += 2; // サロゲートペア
-                    i += 2;
-
-                } else if (unicodeCategory == UnicodeCategory.OtherSymbol) {
-                    totalWidth += 2; // 絵文字やIVS文字など
-                    i += 2;
-
-                } else if ((str[i] >= 0x3000 && str[i] <= 0xFF60)
-                        || (str[i] >= 0xFFE0 && str[i] <= 0xFFE6)) {
-                    totalWidth += 2; // 一般的な日本語の全角文字や記号
-                    i += 1;
-
-                } else {
-                    totalWidth += 1;
-                    i += 1;
-                }
-            }
-
-            return totalWidth;
         }
     }
 }

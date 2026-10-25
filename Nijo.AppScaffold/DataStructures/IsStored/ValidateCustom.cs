@@ -18,9 +18,6 @@ namespace Nijo.DataStructures.IsStored {
 
         internal const string MSG_ID = "CustomAttributeValidationError";
 
-        private static readonly Lock _registerLock = new();
-        private static readonly HashSet<string> _registeredApplicationServiceMethodSignatures = new();
-
         private readonly NijoXmlCustomAttribute _attribute;
 
         internal ValidateCustom(NijoXmlCustomAttribute attribute) {

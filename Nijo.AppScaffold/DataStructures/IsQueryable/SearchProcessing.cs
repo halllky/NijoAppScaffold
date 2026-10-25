@@ -25,11 +25,7 @@ namespace Nijo.DataStructures.IsQueryable {
         }
         private readonly RootAggregate _rootAggregate;
 
-        internal string ReactHookName => $"use{_rootAggregate.PhysicalName}Loader";
-        internal string ReactHookReturnTypeName => $"Use{_rootAggregate.PhysicalName}LoaderReturn";
-
         private const string CONTROLLER_ACTION_LOAD = "load";
-        internal string ActionEndpoint => $"{CONTROLLER_ACTION_LOAD}";
 
         internal const string VALIDATE_METHOD = "ValidateSearchCondition";
         internal const string LOAD_METHOD = "LoadAsync";

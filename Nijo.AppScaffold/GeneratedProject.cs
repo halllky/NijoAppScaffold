@@ -123,7 +123,6 @@ namespace Nijo {
         public string CoreLibraryRoot => Path.Combine(ProjectRoot, GetConfig().CoreLibraryFolderName);
         public string WebapiProjectRoot => Path.Combine(ProjectRoot, GetConfig().WebapiProjectFolderName);
         public string ReactProjectRoot => Path.Combine(ProjectRoot, GetConfig().ReactProjectFolderName);
-        public string UnitTestProjectRoot => Path.Combine(ProjectRoot, GetConfig().UnitTestProjectFolderName);
 
         /// <summary>
         /// nijo.xml を保存します。保存の度に差分が最小限になるよう、属性を名前順にソートしてから書き込みます。

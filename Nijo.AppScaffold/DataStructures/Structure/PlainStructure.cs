@@ -47,12 +47,6 @@ internal class PlainStructure : IInstancePropertyOwnerMetadata, ICreatablePresen
         }
     }
 
-    internal IEnumerable<StructureDescendantMember> GetDescendants() {
-        foreach (var d in Aggregate.EnumerateDescendants()) {
-            yield return new StructureDescendantMember(d);
-        }
-    }
-
     internal static string RenderCSharpRecursively(RootAggregate rootAggregate, CodeRenderingContext ctx) {
         var descendants = rootAggregate
             .EnumerateDescendants()

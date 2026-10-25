@@ -327,12 +327,6 @@ namespace Nijo.DataStructures.IsQueryable {
                     yield return node.XElement.Name.LocalName; // LocalNameでよいかどうかは不明
                 }
             }
-            /// <summary>
-            /// Refエントリーから引数の集約までのパス
-            /// </summary>
-            internal static IEnumerable<string> GetPathFromRefEntry(DisplayDataRef.Entry refDisplayData) {
-                throw new NotImplementedException();
-            }
             #endregion GetFullPath
 
             #region レンダリング
@@ -569,14 +563,6 @@ namespace Nijo.DataStructures.IsQueryable {
                     .GetPathFromEntry(Member, E_CsTs.CSharp)
                     .Skip(1) // "Filter"という名称を除外
                     .Join(".");
-            }
-            /// <summary>
-            /// '子要素.孫要素.プロパティ名（昇順）' のような並び順候補の文字列の一覧を返します。
-            /// </summary>
-            internal IEnumerable<string> GetLiteralWithAscDesc() {
-                var fullpath = GetLiteral();
-                yield return $"{fullpath}{ASC_SUFFIX}";
-                yield return $"{fullpath}{DESC_SUFFIX}";
             }
         }
     }

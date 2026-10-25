@@ -44,12 +44,6 @@ public sealed class CommandRoot : SectionRoot {
 
         var targetRootAggregate = (RootAggregate)_ctx.ToAggregateBase(targetXElement, null);
         if (specification.ObjectKind == null) {
-            // コマンドの典型的な利用シーンとして「詳細画面の初期表示データ取得」があるので
-            // 戻り値であっても常にDisplayDataを返したほうがよいのか？うーん…
-            // return isParameter
-            //     ? new StructureDisplayData(targetRootAggregate)
-            //     : new PlainStructure(targetRootAggregate);
-
             return new StructureDisplayData(targetRootAggregate);
 
         } else if (CommandTypeSpecificationOption.AvailableFromCommandToQuery.TryGetValue(specification.ObjectKind, out var factory)) {
