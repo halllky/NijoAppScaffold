@@ -3,10 +3,12 @@ using Nijo.SchemaParsing;
 using Nijo.DataStructures.ValueMemberTypes;
 using Nijo.CodeGenerating;
 
+namespace Nijo.Reference;
+
 /// <summary>
 /// 値メンバー型の詳細な外部仕様を説明するマークダウンドキュメントを生成する。
 /// </summary>
-internal class ValueObjectTypesMd {
+internal class ValueMemberTypesMd {
 
     internal static string FILE_NAME_WITHOUT_EXT = "ValueMemberTypes";
 

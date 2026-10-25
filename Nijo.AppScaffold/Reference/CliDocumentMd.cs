@@ -4,6 +4,8 @@ using System.CommandLine;
 using System.Linq;
 using System.Text;
 
+namespace Nijo.Reference;
+
 /// <summary>
 /// コマンドラインインターフェースの仕様を説明するマークダウンドキュメントを生成する。
 /// </summary>

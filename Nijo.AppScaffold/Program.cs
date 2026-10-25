@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Nijo.Util.DotnetEx;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using Nijo.Reference;
 using Nijo.SchemaParsing;
 using System.Xml.Linq;
 using Nijo.CodeGenerating;
@@ -149,7 +150,7 @@ namespace Nijo {
                     return 1;
                 }
 
-                var (success, errorMessage) = GeneratedProject.CreatePhysicalProjectAndInstallDependenciesAsync(projectRoot, templateName, logger);
+                var (success, errorMessage) = GeneratedProject.CreateProjectFromTemplate(projectRoot, templateName);
 
                 if (success) {
                     logger.LogInformation("プロジェクトの作成が完了しました: {projectRoot}", projectRoot);
@@ -249,10 +250,8 @@ namespace Nijo {
             }
 
             // 値メンバー型のドキュメントを生成
-            var schemaContext = new SchemaParseContext(new XDocument(), rule, GeneratedProjectOptions.Parse(null, true));
-            var valueMemberTypes = schemaContext.GetValueMemberTypes().ToArray();
-            var valueMemberTypesPath = Path.Combine(outDirFullPath, ValueObjectTypesMd.FILE_NAME_WITHOUT_EXT + ".md");
-            File.WriteAllText(valueMemberTypesPath, ValueObjectTypesMd.Render(valueMemberTypes), new UTF8Encoding(false, false));
+            var valueMemberTypesPath = Path.Combine(outDirFullPath, ValueMemberTypesMd.FILE_NAME_WITHOUT_EXT + ".md");
+            File.WriteAllText(valueMemberTypesPath, ValueMemberTypesMd.Render(rule.ValueMemberTypes), new UTF8Encoding(false, false));
             logger.LogInformation("ValueMemberTypes.mdファイルを生成しました: {valueMemberTypesPath}", valueMemberTypesPath);
 
             // CLIのドキュメントを生成

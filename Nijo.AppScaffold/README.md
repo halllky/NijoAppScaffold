@@ -25,6 +25,7 @@
   - [`ValueObjects/`](./ValueObjects/): 値オブジェクト
   - [`Constants/`](./Constants/): 定数
 - [`Parts/`](./Parts/): 特定のセクションや属性に由来するモジュールではなく、生成後のソースに由来するモジュール。C#のORMであるEntity Framework CoreのDbContext, Node.js の.envファイル、NUnitのテスト定義など。
+- [`Reference/`](./Reference/): `generate-reference` コマンドで出力される、nijo 自身のリファレンス（値メンバーの型、コマンドラインAPI）のレンダリング。
 - [`Util.DotnetEx/`](./Util.DotnetEx/): .NET関連のユーティリティ。ここにある機能はコード自動生成処理でのみ参照されます。
 
 ## コーディング規約

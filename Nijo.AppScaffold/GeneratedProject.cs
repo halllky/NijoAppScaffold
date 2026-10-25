@@ -44,13 +44,13 @@ namespace Nijo {
             };
 
         /// <summary>
-        /// 物理的なプロジェクトファイルを作成し、依存関係をインストールします。
+        /// このexeに埋め込まれたテンプレートのzipを展開して、新しいプロジェクトのフォルダを作成します。
+        /// 依存パッケージのインストールは行いません。
         /// </summary>
         /// <param name="projectRoot">プロジェクトのルートディレクトリの絶対パス。</param>
         /// <param name="templateName"><see cref="Templates"/> のキー。</param>
-        /// <param name="logger">ロガー。</param>
         /// <returns>成功した場合は true、エラーメッセージ付きで失敗した場合は false。</returns>
-        public static (bool Success, string? ErrorMessage) CreatePhysicalProjectAndInstallDependenciesAsync(string projectRoot, string templateName, ILogger logger) {
+        public static (bool Success, string? ErrorMessage) CreateProjectFromTemplate(string projectRoot, string templateName) {
             try {
                 if (!Templates.TryGetValue(templateName, out var template)) {
                     return (false, $"テンプレート '{templateName}' は存在しません。利用可能なテンプレート: {string.Join(", ", Templates.Keys)}");
