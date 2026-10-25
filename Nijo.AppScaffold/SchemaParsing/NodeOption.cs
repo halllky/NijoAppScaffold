@@ -19,7 +19,7 @@ public abstract class NodeOption {
     /// </summary>
     public abstract string DisplayName { get; }
     /// <summary>
-    /// この属性の説明文
+    /// この属性の説明文。スキーマ編集画面で属性の説明として表示される。
     /// </summary>
     public abstract string HelpText { get; }
     /// <summary>

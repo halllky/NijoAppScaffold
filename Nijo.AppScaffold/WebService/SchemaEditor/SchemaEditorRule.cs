@@ -51,6 +51,9 @@ public class AttributeDef {
     public string AttributeName { get; set; } = "";
     [JsonPropertyName("displayName")]
     public string DisplayName { get; set; } = "";
+    /// <summary>スキーマ編集画面で属性の説明として表示される文言</summary>
+    [JsonPropertyName("helpText")]
+    public string HelpText { get; set; } = "";
     [JsonPropertyName("availableElements")]
     public List<AvailableElement> AvailableElements { get; set; } = [];
     [JsonPropertyName("type"), JsonConverter(typeof(JsonStringEnumConverter))]
@@ -89,6 +92,7 @@ public class AttributeDef {
             return new AttributeDef {
                 AttributeName = opt.AttributeName,
                 DisplayName = opt.DisplayName,
+                HelpText = opt.HelpText,
                 AvailableElements = availableElements,
                 Type = opt.Type,
                 TypeEnumValues = opt.TypeEnumValues,

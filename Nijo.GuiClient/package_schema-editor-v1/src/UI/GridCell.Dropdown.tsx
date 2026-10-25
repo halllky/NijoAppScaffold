@@ -9,6 +9,8 @@ export type CreateDropdownCellFunction = <TRow>(
   key: ReactHookForm.Path<TRow>,
   candidateValues: { value: string, text: string }[],
   options?: Partial<EG2.EditableGridLeafColumn<TRow>> & {
+    /** 列見出しにマウスを乗せたときに表示する説明。未指定の場合は見出しの文言を表示する */
+    headerTooltip?: string
     /** バリデーションエラーがあるときにセル背景色を変えるための設定 */
     validationErrorSettings?: [
       getXmlElementUniqueId: (row: TRow) => string | null | undefined,
@@ -29,12 +31,12 @@ export function createDropdownCellHelper(
 ): CreateDropdownCellFunction {
 
   return (header, key, candidateValues, options) => {
-    const { validationErrorSettings, ...restOptions } = options ?? {}
+    const { validationErrorSettings, headerTooltip, ...restOptions } = options ?? {}
 
     return {
       columnId: key as string,
       renderHeader: () => (
-        <div className="px-1 py-px truncate text-sm text-gray-700">
+        <div className="px-1 py-px truncate text-sm text-gray-700" title={headerTooltip ?? header}>
           {header}
         </div>
       ),

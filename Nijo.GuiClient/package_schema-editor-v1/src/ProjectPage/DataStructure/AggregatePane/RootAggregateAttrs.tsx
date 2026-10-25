@@ -66,7 +66,7 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
             const path = `${rootPath}.attributes.${attrDef.attributeName}` as const
 
             return (
-              <AttributeRow key={attrDef.attributeName} label={attrDef.displayName}>
+              <AttributeRow key={attrDef.attributeName} label={attrDef.displayName} tooltip={attrDef.helpText}>
                 {attrDef.type === 'EnumSelect' ? (
                   <select
                     {...register(path)}
@@ -146,10 +146,13 @@ const isModelSelectionAttr = (attributeName: string): boolean =>
 const isDiagramLinkAttr = (attributeName: string): boolean =>
   attributeName === ATTR_PARAMETER || attributeName === ATTR_RETURN_VALUE
 
-const AttributeRow = ({ label, children }: { label: string, children: React.ReactNode }) => {
+/**
+ * 属性1個分の入力欄。tooltip を指定するとラベルにマウスを乗せたときに表示する（未指定の場合はラベルの文言を表示する）
+ */
+const AttributeRow = ({ label, tooltip, children }: { label: string, tooltip?: string, children: React.ReactNode }) => {
   return (
     <div className="flex items-center gap-2 w-full">
-      <div className="basis-32 flex justify-end text-gray-700 shrink-0 select-none" title={label}>
+      <div className="basis-32 flex justify-end text-gray-700 shrink-0 select-none" title={tooltip ?? label}>
         <span>
           {label}
         </span>

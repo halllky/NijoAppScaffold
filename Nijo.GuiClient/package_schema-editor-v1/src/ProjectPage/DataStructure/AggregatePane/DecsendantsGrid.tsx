@@ -111,16 +111,19 @@ function DecsendantsGrid(props: {
           .map(opt => ({ value: opt, text: opt }))
         columns.push(helper.dropdown(attrDef.displayName, `attributes.${attrDef.attributeName}`, ddlOptions, {
           defaultWidth: 120,
+          headerTooltip: attrDef.helpText,
           validationErrorSettings: [row => row.uniqueId, attrDef.attributeName],
         }))
       } else if (attrDef.type === 'Boolean') {
         columns.push(helper.checkBox(attrDef.displayName, `attributes.${attrDef.attributeName}`, {
           defaultWidth: 120,
+          headerTooltip: attrDef.helpText,
           validationErrorSettings: [row => row.uniqueId, attrDef.attributeName],
         }))
       } else {
         columns.push(helper.text(attrDef.displayName, `attributes.${attrDef.attributeName}`, {
           defaultWidth: 120,
+          headerTooltip: attrDef.helpText,
           validationErrorSettings: [row => row.uniqueId, attrDef.attributeName],
         }))
       }

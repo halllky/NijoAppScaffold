@@ -193,6 +193,8 @@ export type AttributeDef = {
   attributeName: string
   /** この属性の画面表示上の名称。 */
   displayName: string
+  /** この属性の説明文。 */
+  helpText: string
   /** この属性が指定可能な場所の一覧。 */
   availableElements: (AttributeTarget & { nodeType: string })[]
   type: 'Boolean' | 'String' | 'Integer' | 'EnumSelect'

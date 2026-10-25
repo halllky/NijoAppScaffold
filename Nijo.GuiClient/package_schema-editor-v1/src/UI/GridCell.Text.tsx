@@ -18,6 +18,8 @@ export type CreateTextCellFunction = <TRow>(
     mentionAvailable?: boolean
     /** 折り返し表示するかどうか */
     wrap?: boolean
+    /** 列見出しにマウスを乗せたときに表示する説明。未指定の場合は見出しの文言を表示する */
+    headerTooltip?: string
     /** バリデーションエラーがあるときにセル背景色を変えるための設定 */
     validationErrorSettings?: [
       getXmlElementUniqueId: (row: TRow) => string | null | undefined,
@@ -38,7 +40,7 @@ export function createTextCellHelper(
 ): CreateTextCellFunction {
 
   return (header, key, options) => {
-    const { format, parse, mentionAvailable, wrap, validationErrorSettings, ...restOptions } = options ?? {}
+    const { format, parse, mentionAvailable, wrap, validationErrorSettings, headerTooltip, ...restOptions } = options ?? {}
 
     return {
       columnId: key as string,
@@ -46,7 +48,7 @@ export function createTextCellHelper(
         ? MentionableCellEditor
         : TextCellEditor,
       renderHeader: () => (
-        <div className="px-1 py-px truncate text-sm text-gray-700">
+        <div className="px-1 py-px truncate text-sm text-gray-700" title={headerTooltip ?? header}>
           {header}
         </div>
       ),
