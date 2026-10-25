@@ -232,7 +232,6 @@ function DataStructureTabBody({ visible, formMethods, dataStructureRef, diagramR
               formMethods={formMethods}
               className={`h-full w-full border-gray-400 ${aggPaneOrientation === 'vertical' ? 'border-t' : 'border-l'}`}
               onRequestDelete={handleDeleteOpenRootAggregate}
-              onRootLocationChanged={setRootLocation}
               orientation={aggPaneOrientation}
               onSwitchOrientation={handleSwitchAggPaneOrientation}
             />

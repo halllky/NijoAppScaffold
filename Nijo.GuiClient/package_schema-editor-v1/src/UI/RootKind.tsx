@@ -1,5 +1,4 @@
 import React from "react"
-import { DropdownSelector } from "@nijo/ui-components"
 import { ROOT_AGGREGATE_COLORS } from "./rootAggregateColors"
 
 /** ルート集約の種類（データ構造・コマンド）のうち、データ構造を表す値 */
@@ -50,42 +49,6 @@ const DATA_STRUCTURE_FLAG_OPTIONS: { key: keyof DataStructureFlags, displayName:
   displayName: "検索可能",
   description: "画面や帳票から検索・照会されます。一覧検索処理が自動生成されます。",
 }]
-
-/**
- * ルート集約の種類を選択するドロップダウン
- */
-export function RootKindSelector({ value, onChange, className }: {
-  value: RootKind
-  onChange: (value: RootKind) => void
-  className?: string
-}) {
-  return (
-    <DropdownSelector
-      value={value}
-      onChange={v => onChange(v as RootKind)}
-      className={className}
-    >
-      {Object.entries(ROOT_KIND_OPTIONS).map(([value, option]) => [
-        value,
-        (
-          <span className={`select-none ${option.colors.nameText}`}>
-            {option.displayName}
-          </span>
-        ),
-        (
-          <div key={value} className="p-1">
-            <div className={`font-semibold mb-1 ${option.colors.nameText}`}>
-              {option.displayName}
-            </div>
-            <div className={`text-xs leading-relaxed ${option.colors.descriptionText}`}>
-              {option.description}
-            </div>
-          </div>
-        )
-      ])}
-    </DropdownSelector>
-  )
-}
 
 /**
  * ルート集約の種類を選択するラジオボタン

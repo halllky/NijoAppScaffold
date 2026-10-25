@@ -18,8 +18,6 @@ function AggregatePane(props: {
   formMethods: ReactHookForm.UseFormReturn<EditingProject>
   className?: string
   onRequestDelete?: () => void
-  /** ルート集約の種類の変更でルート集約が dataStructures ⇔ commands 間を移動したときに呼ばれる */
-  onRootLocationChanged?: (newLocation: RootAggregateLocation) => void
   orientation?: 'horizontal' | 'vertical'
   onSwitchOrientation?: () => void
 }) {
@@ -28,7 +26,6 @@ function AggregatePane(props: {
     formMethods: { register, getValues, setValue, control },
     className,
     onRequestDelete,
-    onRootLocationChanged,
     orientation,
     onSwitchOrientation,
   } = props
@@ -45,30 +42,6 @@ function AggregatePane(props: {
   }
 
   const isGenericLookupTable = ReactHookForm.useWatch({ name: `${rootPath}.attributes.${ATTR_IS_GENERIC_LOOKUP_TABLE}`, control }) === true
-
-  // ルート集約の種類の変更。dataStructures と commands の間の配列間の移動になる。
-  const rootKind: UI.RootKind = rootLocation.list === 'commands' ? UI.ROOT_KIND_COMMAND : UI.ROOT_KIND_DATA_STRUCTURE
-  const dataStructuresFieldArray = ReactHookForm.useFieldArray({ name: 'dataStructures', control })
-  const commandsFieldArray = ReactHookForm.useFieldArray({ name: 'commands', control })
-  const handleRootKindChange = (newKind: UI.RootKind) => {
-    if (newKind === rootKind) return
-
-    const newList: RootAggregateLocation['list'] = newKind === UI.ROOT_KIND_COMMAND ? 'commands' : 'dataStructures'
-    const current = getValues(rootPath)
-    const updated = newKind === UI.ROOT_KIND_COMMAND
-      ? { ...current, attributes: omitDataStructureFlags(current.attributes) }
-      : current
-    const newIndex = getValues(newList).length
-
-    if (newList === 'dataStructures') dataStructuresFieldArray.append(updated)
-    else commandsFieldArray.append(updated)
-
-    if (rootLocation.list === 'dataStructures') dataStructuresFieldArray.remove(rootLocation.index)
-    else commandsFieldArray.remove(rootLocation.index)
-    notifyStructureChanged()
-
-    onRootLocationChanged?.({ list: newList, index: newIndex })
-  }
 
   // データ構造の IsStored, IsQueryable 属性の変更
   const [isStored, isQueryable] = ReactHookForm.useWatch({
@@ -106,13 +79,8 @@ function AggregatePane(props: {
           className="flex-1 font-bold"
         />
 
-        {/* ルート集約の種類 */}
-        <UI.RootKindSelector
-          value={rootKind}
-          onChange={handleRootKindChange}
-          className="min-w-48"
-        />
-        {rootKind === UI.ROOT_KIND_DATA_STRUCTURE && (
+        {/* データ構造の IsStored, IsQueryable 属性 */}
+        {rootLocation.list === 'dataStructures' && (
           <UI.DataStructureFlagsCheckBoxes
             value={{ isStored: isStored === true, isQueryable: isQueryable === true }}
             onChange={handleDataStructureFlagsChange}
@@ -178,8 +146,3 @@ function AggregatePane(props: {
 
 export default React.memo(AggregatePane)
 
-/** コマンドには指定できない IsStored, IsQueryable 属性を取り除く */
-const omitDataStructureFlags = (attributes: EditingProject['dataStructures'][number]['attributes']) => {
-  const { [ATTR_IS_STORED]: _isStored, [ATTR_IS_QUERYABLE]: _isQueryable, ...rest } = attributes
-  return rest
-}
