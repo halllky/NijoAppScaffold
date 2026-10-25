@@ -32,40 +32,19 @@ namespace Nijo.CodeGenerator {
         /// <summary>生成されるファイルの内容</summary>
         public required string Contents { get; init; }
 
-        internal void Render(string filepath) {
-
-            // 出力ファイルの形式を決める
-            var ext = Path.GetExtension(filepath).ToLower();
-            var encoding = ext == ".cs" || ext == ".sql"
-                ? Encoding.UTF8 // With BOM
-                : new UTF8Encoding(false);
-            var newLine = ext == ".cs" || ext == ".sql"
-                ? "\r\n"
-                : "\n";
-            var comment = ext switch {
-                ".sql" => "--",
-                ".css" => "",
-                _ => "//",
-            };
-            using var sw = new StreamWriter(filepath, append: false, encoding) {
-                NewLine = newLine,
+        internal void Render(string filepath, SourceFileFormat format) {
+            using var sw = new StreamWriter(new OverwriteIfChangedStream(filepath), format.Encoding) {
+                NewLine = format.NewLine,
             };
 
-            // ファイル先頭の注意書き
-            if (ext != ".md") {
-                sw.WriteLine($$"""
-                    {{(ext == ".css" ? "/*" : "")}}
-                    {{comment}} このファイルは自動生成されました。このファイルの内容を直接書き換えても、次回の自動生成処理で上書きされるのでご注意ください。
-                    {{(CallerFilePath != null ? $"{comment} ※ このファイルを生成したクラス  : {Path.GetFileName(CallerFilePath)}" : "")}}
-                    {{(CallerMemberName != null ? $"{comment} ※ このファイルを生成したメソッド: {CallerMemberName}" : "")}}
-                    {{(ext == ".css" ? "*/" : "")}}
-                    """.ReplaceLineEndings(newLine));
+            if (format.Header != null) {
+                sw.WriteLine(format.Header.ReplaceLineEndings(format.NewLine));
             }
 
             // WithIndent 用のスタック
             var indentStack = new Stack<string>();
 
-            foreach (var rawLine in Contents.Split(["\r\n", "\n"], StringSplitOptions.None)) {
+            foreach (var rawLine in EnumerateLines(Contents)) {
                 var containsSkipMarker = rawLine.Contains(SKIP_MARKER);
                 var currentIndent = string.Concat(indentStack.Reverse());
                 var line = RemoveMarkers(rawLine);
@@ -75,6 +54,24 @@ namespace Nijo.CodeGenerator {
                     sw.WriteLine(currentIndent + line);
                 }
                 UpdateIndentStack(indentStack, rawLine);
+            }
+        }
+
+        /// <summary>
+        /// 文字列を "\r\n" または "\n" で区切って1行ずつ返します。
+        /// 巨大なファイルでも全行分の配列を作らずに済むよう、1行ずつ切り出す。
+        /// </summary>
+        private static IEnumerable<string> EnumerateLines(string text) {
+            var start = 0;
+            while (true) {
+                var lf = text.IndexOf('\n', start);
+                if (lf < 0) {
+                    yield return text[start..];
+                    yield break;
+                }
+                var end = lf > start && text[lf - 1] == '\r' ? lf - 1 : lf;
+                yield return text[start..end];
+                start = lf + 1;
             }
         }
 

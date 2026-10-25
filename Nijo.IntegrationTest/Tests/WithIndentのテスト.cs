@@ -1,6 +1,7 @@
 using Nijo.CodeGenerator;
 using static Nijo.CodeGenerator.TemplateTextHelper;
 using NUnit.Framework;
+using System.Text;
 
 namespace Nijo.IntegrationTest.Tests;
 
@@ -248,7 +249,7 @@ public class WithIndentのテスト {
             new SourceFile {
                 FileName = Path.GetFileName(filePath),
                 Contents = contents,
-            }.Render(filePath);
+            }.Render(filePath, new SourceFileFormat { Encoding = new UTF8Encoding(false), NewLine = "\n" });
 
             return File.ReadAllLines(filePath);
         } finally {

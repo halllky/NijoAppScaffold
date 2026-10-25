@@ -9,7 +9,7 @@ namespace Nijo.CodeGenerator;
 /// ソースコード自動生成のコンテキスト。
 /// どのような入力からどのようなソースコードを生成するかは関知せず、
 /// ファイルの出力、共有ソースファイルの管理、生成されなかった既存ファイルの削除のみを担う。
-/// 生成処理が参照する情報（入力データや出力先のルールなど）は派生クラスで定義する。
+/// 生成処理が参照する情報（入力データや出力先のルールなど）や、出力ファイルの形式は派生クラスで定義する。
 /// </summary>
 /// <typeparam name="TSelf">派生クラス自身の型。共有ソースファイルが派生クラスの情報を参照できるようにするために用いる。</typeparam>
 public abstract class CodeRenderingContext<TSelf> where TSelf : CodeRenderingContext<TSelf> {
@@ -46,8 +46,13 @@ public abstract class CodeRenderingContext<TSelf> where TSelf : CodeRenderingCon
     /// 指定されたディレクトリにファイルやディレクトリを生成します。
     /// </summary>
     public void Directory(string path, Action<DirectorySetupper> setup) {
-        DirectorySetupper.StartSetup(_outputFiles, path, setup);
+        DirectorySetupper.StartSetup(_outputFiles, GetFormat, path, setup);
     }
+
+    /// <summary>
+    /// ファイルをどのような形式（文字コード、改行コード、ファイル先頭の注意書きなど）で出力するかを決めます。
+    /// </summary>
+    protected abstract SourceFileFormat GetFormat(SourceFile sourceFile);
 
 
     #region 共有ソースファイル

@@ -6,12 +6,14 @@
 - ディレクトリ構造の入れ子に沿ったファイルの出力
 - 生成処理のあちこちから内容が登録される共有ソースファイルの管理
 - 生成されなかった既存ファイルの自動削除
+- 内容に変更がないファイルの更新スキップ（ファイル変更を監視するツールを無駄に反応させないため）
 
 ## 主な型
 - **`CodeRenderingContext<TSelf>`**: コード生成のコンテキストの基底クラス。利用側はこれを継承し、生成処理が参照する情報を定義する
 - **`ISharedSourceFile<TContext>`**: 生成処理のあちこちから内容が登録され、最後に1回だけレンダリングされるソースファイル
 - **`DirectorySetupper`**: 生成先のディレクトリ構造を直感的に記述するためのクラス
 - **`SourceFile`**: 生成される個別ソースファイル
+- **`SourceFileFormat`**: 生成されるファイルの出力形式（文字コード、改行コード、先頭の注意書き）
 - **`TemplateTextHelper`**: 条件分岐や反復処理を含むテンプレート文字列の記述を支援
 
 ## 使い方
@@ -24,6 +26,10 @@ class MyContext : CodeRenderingContext<MyContext> {
     }
     public string OutDir { get; }
     public MyInput Input { get; }
+
+    protected override SourceFileFormat GetFormat(SourceFile sourceFile) {
+        return new SourceFileFormat { Encoding = new UTF8Encoding(false), NewLine = "\n" };
+    }
 }
 
 var ctx = new MyContext(outDir, input);
