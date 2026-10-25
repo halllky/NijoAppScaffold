@@ -85,7 +85,7 @@ internal class GenericLookupTableParser {
 
                 categories.Add(new GenericLookupTableCategory {
                     Name = categoryElement.Name.LocalName,
-                    DisplayName = ctx.GetDisplayName(categoryElement),
+                    DisplayName = categoryElement.GetDisplayName(),
                     HardCodedKeys = keys,
                 });
             }

@@ -107,7 +107,7 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
                   export type {{TYPE_VALUE}} = {{TYPE_MEMBER_BASE}} & {
                     kind: '{{KIND_VALUE}}'
                     /** 値の型名。このメンバーが enum または value-ojbect の場合は undefined になる */
-                    type?: {{ctx.SchemaParser.ValueMemberTypes.Select(t => $"'{t.SchemaTypeName}'").Join(" | ")}}
+                    type?: {{ctx.SchemaParser.PredefinedValueMemberTypes.Select(t => $"'{t.SchemaTypeName}'").Join(" | ")}}
                     /** 列挙体の型名。このメンバーが列挙体の場合のみ */
                     enumType?: keyof EnumDefs.{{EnumFile.TS_TYPE_MAP}}
                     /** 値オブジェクトの型名。このメンバーが値オブジェクトの場合のみ */
@@ -402,7 +402,7 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
         }
 
         // カスタム属性
-        foreach (var customAttribute in NijoXmlCustomAttribute.FromXDocument(ctx.SchemaParser.Document)) {
+        foreach (var customAttribute in ctx.SchemaParser.CustomAttributes) {
             if (string.IsNullOrWhiteSpace(customAttribute.PhysicalName)) continue;
             if (string.IsNullOrWhiteSpace(customAttribute.UniqueId)) continue;
 
@@ -425,7 +425,7 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
     /// TypeScript型定義で使用するNodeOptionの型情報を動的に生成します
     /// </summary>
     private static IEnumerable<string> RenderNodeOptionTypes(CodeRenderingContext ctx) {
-        var nodeOptions = ctx.SchemaParser.GetAllNodeOptions().Where(DataStructuresSection.IsAvailableInDataStructures).Where(IsRenderedAsNodeOption);
+        var nodeOptions = ctx.SchemaParser.NodeOptions.Where(DataStructuresSection.IsAvailableInDataStructures).Where(IsRenderedAsNodeOption);
 
         // コメントはXMLの属性ではないので別途宣言している
         yield return $$"""
@@ -451,7 +451,7 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
         }
 
         // カスタム属性
-        foreach (var customAttribute in NijoXmlCustomAttribute.FromXDocument(ctx.SchemaParser.Document)) {
+        foreach (var customAttribute in ctx.SchemaParser.CustomAttributes) {
             if (string.IsNullOrWhiteSpace(customAttribute.PhysicalName)) continue;
 
             var tsType = customAttribute.Type switch {

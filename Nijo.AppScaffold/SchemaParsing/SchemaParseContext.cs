@@ -12,7 +12,6 @@ using System.Xml.XPath;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
-using Nijo.SchemaParsing.CommonOptions;
 using Nijo.DataStructures.Aggregates;
 using Nijo.DataStructures.ValueMemberTypes;
 using Nijo.DataStructures;
@@ -30,18 +29,24 @@ public class SchemaParseContext {
         Document = xDocument;
         ProjectOptions = projectOptions;
 
-        // 拡張メソッドの方の GetDisplayName からこのコンテキストの
-        // GetDisplayName を呼び出すために、XDocument にこのコンテキストをアノテーションとして付与する。
-        Document.AddAnnotation(this);
-
         _rule = rule;
         _nodeOptionsByName = new(() => rule.NodeOptions.ToDictionary(opt => opt.AttributeName));
-        _customAttributesByUniqueId = new(() => NijoXmlCustomAttribute
-            .FromXDocument(Document)
+        _customAttributes = new(() => NijoXmlCustomAttribute.FromXDocument(Document).ToArray());
+        _customAttributesByUniqueId = new(() => CustomAttributes
             .Where(attr => !string.IsNullOrWhiteSpace(attr.UniqueId))
             .GroupBy(attr => attr.UniqueId!)
             .ToDictionary(group => group.Key, group => group.First()));
         _valueMemberTypes = rule.ValueMemberTypes.ToDictionary(m => m.SchemaTypeName);
+        _staticEnumMembers = new(() => Document.Root
+            ?.Element(SECTION_STATIC_ENUMS)
+            ?.Elements()
+            .ToDictionary(GetPhysicalName, el => new StaticEnumMember(el, this))
+            ?? []);
+        _valueObjectMembers = new(() => Document.Root
+            ?.Element(SECTION_VALUE_OBJECTS)
+            ?.Elements()
+            .ToDictionary(GetPhysicalName, el => new ValueObjectMember(el, this))
+            ?? []);
         _elementCountByLocalName = new Lazy<IReadOnlyDictionary<string, int>>(() => Document
             .Descendants()
             .GroupBy(el => el.Name.LocalName)
@@ -52,8 +57,8 @@ public class SchemaParseContext {
     public GeneratedProjectOptions ProjectOptions { get; }
     private readonly SchemaParseRule _rule;
     private readonly IReadOnlyDictionary<string, IValueMemberType> _valueMemberTypes;
-    /// <summary>enum, value-object を除いた値型の一覧</summary>
-    public IEnumerable<IValueMemberType> ValueMemberTypes => _rule.ValueMemberTypes;
+    /// <summary>単語型など予め登録された値型の一覧。静的区分と値オブジェクトは含まない。</summary>
+    public IEnumerable<IValueMemberType> PredefinedValueMemberTypes => _rule.ValueMemberTypes;
     /// <inheritdoc cref="SchemaParseRule.Sections"/>
     internal IEnumerable<Section> Sections => _rule.Sections;
 
@@ -97,21 +102,6 @@ public class SchemaParseContext {
     internal const string NODE_TYPE_CHILD = "child";
     internal const string NODE_TYPE_CHILDREN = "children";
     internal const string NODE_TYPE_REFTO = "ref-to";
-
-    /// <summary>
-    /// 物理名。スキーマ内での物理名の衝突を考慮した値を返す。
-    /// </summary>
-    internal string GetDisplayName(XElement xElement) {
-        return _displayNameCache.GetOrAdd(xElement, el => {
-            if (el.Attribute(DisplayNameIsEmptyOption.ATTRIBUTE_NAME) != null) {
-                return string.Empty;
-            }
-
-            return el.Attribute(DisplayNameOption.ATTRIBUTE_NAME)?.Value ?? el.Name.LocalName;
-        });
-    }
-    private readonly ConcurrentDictionary<XElement, string> _displayNameCache = new();
-
 
     /// <summary>
     /// 物理名。スキーマ内での物理名の衝突を考慮した値を返す。
@@ -193,29 +183,27 @@ public class SchemaParseContext {
         return _rule.NodeOptions.Where(opt => attrs.Contains(opt.AttributeName));
     }
     /// <summary>
-    /// このルールで定義されているすべてのNodeOptionを返します。
+    /// このルールで定義されているすべてのオプション属性
     /// </summary>
-    public IEnumerable<NodeOption> GetAllNodeOptions() {
-        foreach (var opt in _rule.NodeOptions) {
-            yield return opt;
-        }
-    }
+    public IEnumerable<NodeOption> NodeOptions => _rule.NodeOptions;
+
+    /// <summary>
+    /// CustomAttributes セクションに定義されているカスタム属性の一覧
+    /// </summary>
+    internal IReadOnlyList<NijoXmlCustomAttribute> CustomAttributes => _customAttributes.Value;
+    private readonly Lazy<NijoXmlCustomAttribute[]> _customAttributes;
 
     /// <summary>
     /// XML要素に定義されているカスタム属性を返します。
     /// </summary>
     public IEnumerable<NijoXmlCustomAttribute> GetCustomAttributes(XElement xElement) {
-        var attrDefs = _customAttributesCache ??= NijoXmlCustomAttribute
-            .FromXDocument(Document)
-            .ToArray();
         var specifiedAttrCustomIds = xElement
             .Attributes()
             .Select(attr => attr.Name.LocalName)
             .ToHashSet();
-        return attrDefs
+        return CustomAttributes
             .Where(def => specifiedAttrCustomIds.Contains(def.UniqueId!));
     }
-    private NijoXmlCustomAttribute[]? _customAttributesCache;
     #endregion オプション属性
 
 
@@ -245,25 +233,15 @@ public class SchemaParseContext {
     /// このスキーマで定義されている静的区分の種類を返します。
     /// </summary>
     /// <returns></returns>
-    internal IReadOnlyDictionary<string, StaticEnumMember> GetStaticEnumMembers() {
-        return Document.Root
-            ?.Element(SECTION_STATIC_ENUMS)
-            ?.Elements()
-            .ToDictionary(GetPhysicalName, el => new StaticEnumMember(el, this))
-            ?? [];
-    }
+    internal IReadOnlyDictionary<string, StaticEnumMember> GetStaticEnumMembers() => _staticEnumMembers.Value;
+    private readonly Lazy<Dictionary<string, StaticEnumMember>> _staticEnumMembers;
 
     /// <summary>
     /// このスキーマで定義されている値オブジェクト型を返します。
     /// </summary>
     /// <returns></returns>
-    internal IReadOnlyDictionary<string, ValueObjectMember> GetValueObjectMembers() {
-        return Document.Root
-            ?.Element(SECTION_VALUE_OBJECTS)
-            ?.Elements()
-            .ToDictionary(GetPhysicalName, el => new ValueObjectMember(el, this))
-            ?? [];
-    }
+    internal IReadOnlyDictionary<string, ValueObjectMember> GetValueObjectMembers() => _valueObjectMembers.Value;
+    private readonly Lazy<Dictionary<string, ValueObjectMember>> _valueObjectMembers;
 
     /// <summary>
     /// スキーマ解釈ルールとしてあらかじめ定められた値種別および静的区分の種類の一覧を返します。

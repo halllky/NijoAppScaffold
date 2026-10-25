@@ -30,7 +30,7 @@ namespace Nijo.DataStructures.Aggregates {
         public ISchemaPathNode? PreviousNode { get; }
 
         public string PhysicalName => _ctx.GetPhysicalName(XElement);
-        public string DisplayName => _ctx.GetDisplayName(XElement);
+        public string DisplayName => XElement.GetDisplayName();
         public string DbName => DbNameOption.GetDbName(XElement);
         public decimal Order => XElement.ElementsBeforeSelf().Count();
 

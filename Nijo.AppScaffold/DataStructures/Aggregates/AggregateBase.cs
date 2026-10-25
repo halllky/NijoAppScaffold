@@ -42,7 +42,7 @@ namespace Nijo.DataStructures.Aggregates {
         /// <summary>
         /// 表示用名称
         /// </summary>
-        public string DisplayName => _ctx.GetDisplayName(XElement);
+        public string DisplayName => XElement.GetDisplayName();
         /// <summary>
         /// データベーステーブル名
         /// </summary>

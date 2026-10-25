@@ -16,7 +16,7 @@ public class SectionRoot : ISectionRoot {
     private protected readonly SchemaParseContext _ctx;
 
     public string PhysicalName => _ctx.GetPhysicalName(XElement);
-    public string DisplayName => _ctx.GetDisplayName(XElement);
+    public string DisplayName => XElement.GetDisplayName();
     public string LatinName => XElement.GetLatinName();
 
     public override int GetHashCode() => XElement.GetHashCode();

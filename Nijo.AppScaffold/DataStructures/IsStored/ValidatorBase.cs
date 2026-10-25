@@ -25,8 +25,7 @@ public abstract class ValidatorBase {
         yield return new ValidateMaxLength();
         yield return new ValidateDigitsAndScales();
 
-        var customValidationAttributes = NijoXmlCustomAttribute
-            .FromXDocument(ctx.SchemaParser.Document)
+        var customValidationAttributes = ctx.SchemaParser.CustomAttributes
             .Where(attr => attr.IsValidation
                         && !string.IsNullOrWhiteSpace(attr.UniqueId)
                         && !string.IsNullOrWhiteSpace(attr.PhysicalName));

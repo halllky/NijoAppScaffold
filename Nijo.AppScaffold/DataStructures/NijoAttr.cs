@@ -66,10 +66,10 @@ internal static class NijoAttr {
     /// </summary>
     internal static SourceFile RenderDeclaration(CodeRenderingContext ctx) {
         // 既定のオプション
-        var basicNodeOptions = ctx.SchemaParser.GetAllNodeOptions().Where(DataStructuresSection.IsAvailableInDataStructures);
+        var basicNodeOptions = ctx.SchemaParser.NodeOptions.Where(DataStructuresSection.IsAvailableInDataStructures);
 
         // カスタム属性
-        var allCustomAttributes = NijoXmlCustomAttribute.FromXDocument(ctx.SchemaParser.Document);
+        var allCustomAttributes = ctx.SchemaParser.CustomAttributes;
 
         return new() {
             FileName = "NijoAttr.cs",
