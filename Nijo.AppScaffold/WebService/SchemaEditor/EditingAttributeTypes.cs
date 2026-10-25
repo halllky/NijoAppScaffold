@@ -94,14 +94,4 @@ internal class EditingAttributeTypes {
         }
         return null;
     }
-
-    /// <summary>
-    /// 属性を名前の昇順（Ordinal）でXML要素にセットする。
-    /// 保存の度に無関係な属性順の差分が生じないよう、常に同じ順序で書き込む。
-    /// </summary>
-    internal static void ApplyAttributesInOrder(XElement element, IEnumerable<KeyValuePair<string, string>> attributePairs) {
-        foreach (var (name, value) in attributePairs.OrderBy(p => p.Key, StringComparer.Ordinal)) {
-            element.SetAttributeValue(name, value);
-        }
-    }
 }

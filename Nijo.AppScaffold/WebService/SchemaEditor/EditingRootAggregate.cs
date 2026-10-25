@@ -107,15 +107,11 @@ public class EditingRootAggregate {
         }
         onXmlElementCreated(xRoot, UniqueId);
 
-        var rootAttributePairs = new List<KeyValuePair<string, string>>();
         foreach (var (name, value) in Attributes) {
-            var xmlValue = attributeTypes.ToXmlValue(name, value);
-            if (xmlValue != null) rootAttributePairs.Add(new(name, xmlValue));
+            xRoot.SetAttributeValue(name, attributeTypes.ToXmlValue(name, value));
         }
-        var uniqueConstraintsValue = EditingUniqueConstraint.ToAttributeValue(UniqueConstraints);
-        if (uniqueConstraintsValue != null) rootAttributePairs.Add(new(UniqueConstraintsOption.ATTRIBUTE_NAME, uniqueConstraintsValue));
-        rootAttributePairs.Add(new(SchemaParseContext.ATTR_UNIQUE_ID, UniqueId));
-        EditingAttributeTypes.ApplyAttributesInOrder(xRoot, rootAttributePairs);
+        xRoot.SetAttributeValue(UniqueConstraintsOption.ATTRIBUTE_NAME, EditingUniqueConstraint.ToAttributeValue(UniqueConstraints));
+        xRoot.SetAttributeValue(SchemaParseContext.ATTR_UNIQUE_ID, UniqueId);
 
         // インデントスタック法でメンバーの親子関係を復元する。
         // スタックの各段は「そのインデント以下の子孫を受け入れられる直近の要素」を表す。

@@ -95,22 +95,15 @@ public class EditingMember {
 
         if (!string.IsNullOrWhiteSpace(Value)) xElement.SetValue(Value);
 
-        var attributePairs = new List<KeyValuePair<string, string>>();
-
         var typeValue = Type.ToAttributeValue();
-        if (!string.IsNullOrWhiteSpace(typeValue)) attributePairs.Add(new(SchemaParseContext.ATTR_NODE_TYPE, typeValue));
+        if (!string.IsNullOrWhiteSpace(typeValue)) xElement.SetAttributeValue(SchemaParseContext.ATTR_NODE_TYPE, typeValue);
 
         foreach (var (name, value) in Attributes) {
-            var xmlValue = attributeTypes.ToXmlValue(name, value);
-            if (xmlValue != null) attributePairs.Add(new(name, xmlValue));
+            xElement.SetAttributeValue(name, attributeTypes.ToXmlValue(name, value));
         }
 
-        var uniqueConstraintsValue = EditingUniqueConstraint.ToAttributeValue(UniqueConstraints);
-        if (uniqueConstraintsValue != null) attributePairs.Add(new(UniqueConstraintsOption.ATTRIBUTE_NAME, uniqueConstraintsValue));
-
-        attributePairs.Add(new(SchemaParseContext.ATTR_UNIQUE_ID, UniqueId));
-
-        EditingAttributeTypes.ApplyAttributesInOrder(xElement, attributePairs);
+        xElement.SetAttributeValue(UniqueConstraintsOption.ATTRIBUTE_NAME, EditingUniqueConstraint.ToAttributeValue(UniqueConstraints));
+        xElement.SetAttributeValue(SchemaParseContext.ATTR_UNIQUE_ID, UniqueId);
         return true;
     }
 }
