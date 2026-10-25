@@ -27,7 +27,8 @@ public abstract class NodeOption {
     /// </summary>
     public abstract E_NodeOptionType Type { get; }
     /// <summary>
-    /// <see cref="Type"/> が列挙体の場合のみに使用される、選択肢の候補
+    /// <see cref="Type"/> が列挙体の場合のみに使用される、選択肢の候補。
+    /// 値がこの候補のいずれかであるかの検証は、各属性の <see cref="Validate"/> より前に共通で行われる。
     /// </summary>
     public virtual string[]? TypeEnumValues => null;
 

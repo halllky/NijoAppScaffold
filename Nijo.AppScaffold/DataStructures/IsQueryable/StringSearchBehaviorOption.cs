@@ -35,12 +35,6 @@ internal sealed class StringSearchBehaviorOption : NodeOption {
             && valueMemberType is not Description
             && valueMemberType is not ValueObjectMember) {
             ctx.AddError("この属性は文字列型の値メンバーにのみ指定可能です。");
-            return;
-        }
-
-        // 指定可能な値の確認
-        if (!ALL_VALUES.Contains(ctx.Value)) {
-            ctx.AddError($"検索挙動には {string.Join(", ", ALL_VALUES)} のいずれかを指定してください。");
         }
     }
 

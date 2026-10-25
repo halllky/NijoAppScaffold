@@ -12,7 +12,14 @@ internal sealed class ConstantTypeOption : NodeOption {
 
     public override string AttributeName => ATTRIBUTE_NAME;
     public override string DisplayName => "定数の型";
-    public override E_NodeOptionType Type => E_NodeOptionType.String;
+    public override E_NodeOptionType Type => E_NodeOptionType.EnumSelect;
+    public override string[]? TypeEnumValues => [
+        ConstantValueDef.CONSTTYPE_STRING,
+        ConstantValueDef.CONSTTYPE_INT,
+        ConstantValueDef.CONSTTYPE_DECIMAL,
+        ConstantValueDef.CONSTTYPE_TEMPLATE,
+        ConstantValueDef.CONSTTYPE_CHILD,
+    ];
     public override string HelpText => $$"""
         定数の型を指定します。
         string（文字列）、int（整数）、decimal（小数）、template（テンプレート文字列）、child（ネストされた定数グループ）のいずれかを指定してください。
@@ -23,18 +30,6 @@ internal sealed class ConstantTypeOption : NodeOption {
     }
 
     public override void Validate(NodeOptionValidateContext ctx) {
-        var validTypes = new[] {
-            ConstantValueDef.CONSTTYPE_STRING,
-            ConstantValueDef.CONSTTYPE_INT,
-            ConstantValueDef.CONSTTYPE_DECIMAL,
-            ConstantValueDef.CONSTTYPE_TEMPLATE,
-            ConstantValueDef.CONSTTYPE_CHILD,
-        };
-        if (!validTypes.Contains(ctx.Value)) {
-            ctx.AddError($"type属性の値「{ctx.Value}」は無効です。{string.Join(", ", validTypes)} のいずれかを指定してください。");
-            return;
-        }
-
         // child型の場合はConstantValue属性は不要
         if (ctx.Value == ConstantValueDef.CONSTTYPE_CHILD) {
             return;

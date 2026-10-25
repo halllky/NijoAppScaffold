@@ -28,12 +28,6 @@ internal sealed class RefToObjectOption : NodeOption {
         return target.IsStructure && target.NodeType == E_NodeType.Ref;
     }
 
-    public override void Validate(NodeOptionValidateContext ctx) {
-        if (!AvailableFromStructureToQuery.Contains(ctx.Value)) {
-            ctx.AddError($"{string.Join(" または ", AvailableFromStructureToQuery)}のみ指定可能です。");
-        }
-    }
-
     internal const string REF_TO_OBJECT_DISPLAY_DATA = "DisplayData";
     internal const string REF_TO_OBJECT_SEARCH_CONDITION = "SearchCondition";
     internal const string REF_TO_OBJECT_REF_TARGET = "RefTarget";

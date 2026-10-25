@@ -504,6 +504,10 @@ public class SchemaParseContext {
                     errors.AddAttributeError(element, attrName, "この属性はこの要素には指定できません。");
                     continue;
                 }
+                if (opt.Type == E_NodeOptionType.EnumSelect && opt.TypeEnumValues?.Contains(attr.Value) != true) {
+                    errors.AddAttributeError(element, attrName, $"{string.Join(", ", opt.TypeEnumValues ?? [])} のいずれかを指定してください。");
+                    continue;
+                }
                 opt.Validate(new() {
                     Value = attr.Value,
                     XElement = element,
