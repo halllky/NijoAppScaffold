@@ -459,28 +459,41 @@ public static partial class CodeGeneratingHelperExtensions {
     /// <summary>
     /// 大元の変数より後ろのパスをフラットな配列にして返す。
     /// <see cref="InstancePropertyPath"/> を使う軽量列挙向けのオーバーロード。
+    /// メモリ上のオブジェクトの走査に使う想定で、配列の要素から辿った単一のプロパティが null の場合、その先の要素は結果に含まれない。
+    /// null 条件演算子を含みうるため、式ツリーの中では使えない。
+    /// 末尾が単一のプロパティの場合、結果の配列に null が含まれうる。
     /// </summary>
     public static string[] GetFlattenArrayPath(this InstancePropertyPath path, E_CsTs csts, out bool isMany) {
         var flattened = new List<string>();
         isMany = false;
+        var elementMayBeNull = false;
 
         foreach (var segment in path.Segments) {
+            var propertyName = segment.Metadata.GetPropertyName(csts);
+
             if (segment.Metadata is IInstanceStructurePropertyMetadata structMeta && structMeta.IsArray) {
-                if (isMany) {
+                if (!isMany) {
+                    flattened.Add(propertyName);
+                } else if (elementMayBeNull) {
                     flattened.Add(csts == E_CsTs.CSharp
-                        ? $"SelectMany(x => x.{segment.Metadata.GetPropertyName(csts)})"
-                        : $"flatMap(x => x.{segment.Metadata.GetPropertyName(csts)})");
+                        ? $"SelectMany(x => x?.{propertyName} ?? [])"
+                        : $"flatMap(x => x?.{propertyName} ?? [])");
                 } else {
-                    flattened.Add(segment.Metadata.GetPropertyName(csts));
+                    flattened.Add(csts == E_CsTs.CSharp
+                        ? $"SelectMany(x => x.{propertyName})"
+                        : $"flatMap(x => x.{propertyName})");
                 }
 
                 isMany = true;
+                elementMayBeNull = false;
             } else if (isMany) {
+                var member = elementMayBeNull ? $"x?.{propertyName}" : $"x.{propertyName}";
                 flattened.Add(csts == E_CsTs.CSharp
-                    ? $"Select(x => x.{segment.Metadata.GetPropertyName(csts)})"
-                    : $"map(x => x.{segment.Metadata.GetPropertyName(csts)})");
+                    ? $"Select(x => {member})"
+                    : $"map(x => {member})");
+                elementMayBeNull = true;
             } else {
-                flattened.Add(segment.Metadata.GetPropertyName(csts));
+                flattened.Add(propertyName);
             }
         }
 

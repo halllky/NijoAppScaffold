@@ -140,6 +140,95 @@
         </在庫状況履歴>
       </在庫情報>
     </医療機器マスタ>
+    <!-- 子孫集約が多段に入れ子になったデータモデル。Children の中の Children の中の Children と、Children の中の Child の中の Children を持つ -->
+    <保守計画
+      IsStored="True"
+      UseSoftDelete="True"
+      LatinName="Maintenance Plan"
+      UniqueId="9d389663-389a-4495-8c5e-fc6c5a56122f">
+      <保守計画ID
+        DbName="PLAN_ID"
+        IsKey="True"
+        IsNotNull="True"
+        MaxLength="20"
+        Type="word"
+        UniqueId="babb2d84-07e0-4807-bc22-b76e5bdf0eee" />
+      <計画名
+        DbName="PLAN_NAME"
+        MaxLength="100"
+        Type="word"
+        UniqueId="23d246fa-abb1-48f7-b4dc-207690e60338" />
+      <作業工程
+        DbName="PROCESS"
+        Type="children"
+        UniqueId="ebc4c3fc-7774-4041-aff5-831e1e1d4130">
+        <工程番号
+          DbName="PROCESS_NO"
+          IsKey="True"
+          Type="int"
+          UniqueId="3fa74fc0-e093-4987-b774-7e0952dd7dd8" />
+        <工程名
+          DbName="PROCESS_NAME"
+          MaxLength="100"
+          Type="word"
+          UniqueId="8fbf4e89-2048-46ca-aaaf-10b47e76c4d1" />
+        <作業手順
+          DbName="PROCEDURE"
+          Type="children"
+          UniqueId="d4fea16f-e314-48cb-b333-f596432879e3">
+          <手順番号
+            DbName="PROCEDURE_NO"
+            IsKey="True"
+            Type="int"
+            UniqueId="e75c5a05-678e-490b-9041-1b79112e95b3" />
+          <手順内容
+            DbName="PROCEDURE_TEXT"
+            MaxLength="1000"
+            Type="description"
+            UniqueId="53465dbc-8af7-452b-ac84-0b3468a482d6" />
+          <確認項目
+            DbName="CHECK_ITEM"
+            Type="children"
+            UniqueId="3c7910b1-9d38-4a0d-ba45-85aab910dd8c">
+            <確認項目番号
+              DbName="CHECK_ITEM_NO"
+              IsKey="True"
+              Type="int"
+              UniqueId="08ae8f98-106f-4079-a1f5-32e044572247" />
+            <確認内容
+              DbName="CHECK_TEXT"
+              MaxLength="100"
+              Type="word"
+              UniqueId="ec4534e6-5d7b-44b3-950f-82977739f09a" />
+          </確認項目>
+        </作業手順>
+        <作業体制
+          DbName="WORK_TEAM"
+          Type="child"
+          UniqueId="d12c50f5-7a8c-4baa-b809-07e6342a144a">
+          <責任者名
+            DbName="LEADER_NAME"
+            MaxLength="50"
+            Type="word"
+            UniqueId="c4889675-9c3c-4456-bedd-4d8b0f93284d" />
+          <作業者
+            DbName="WORKER"
+            Type="children"
+            UniqueId="9c889471-d250-47b1-8e9a-d03648ae69f4">
+            <作業者番号
+              DbName="WORKER_NO"
+              IsKey="True"
+              Type="int"
+              UniqueId="0802002d-a55e-4ead-a165-94ea6f54f14c" />
+            <作業者名
+              DbName="WORKER_NAME"
+              MaxLength="50"
+              Type="word"
+              UniqueId="ec7aa96e-6863-4656-80f3-ac50276aedd2" />
+          </作業者>
+        </作業体制>
+      </作業工程>
+    </保守計画>
     <!-- IsQueryable でない複雑なデータ構造を持つデータモデル -->
     <診療履歴
       IsStored="True"
