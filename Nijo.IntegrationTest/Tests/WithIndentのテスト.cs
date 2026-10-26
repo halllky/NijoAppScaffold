@@ -243,6 +243,42 @@ public class WithIndentのテスト {
         }));
     }
 
+    [Test]
+    public void 空のWithIndentだけの行はレンダリングされない() {
+        var lines = RenderLines($$"""
+            void Example() {
+                Before();
+                {{WithIndent(Array.Empty<string>())}}
+                {{WithIndent(string.Empty)}}
+                {{WithIndent(Array.Empty<string>(), "    ")}}
+                {{WithIndent(string.Empty, "    ")}}
+                After();
+            }
+            """);
+
+        Assert.That(lines[^4..], Is.EqualTo(new[] {
+            "void Example() {",
+            "    Before();",
+            "    After();",
+            "}",
+        }));
+    }
+
+    [Test]
+    public void 空のWithIndentでも同じ行に他の記述があればその行はレンダリングされる() {
+        var lines = RenderLines($$"""
+            void Example() {
+                Call({{WithIndent(Array.Empty<string>())}});
+            }
+            """);
+
+        Assert.That(lines[^3..], Is.EqualTo(new[] {
+            "void Example() {",
+            "    Call();",
+            "}",
+        }));
+    }
+
     private static string[] RenderLines(string contents) {
         var filePath = Path.Combine(Path.GetTempPath(), $"{Path.GetRandomFileName()}.cs");
         try {

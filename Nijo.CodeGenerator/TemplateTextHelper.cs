@@ -67,12 +67,13 @@ namespace Nijo.CodeGenerator {
         /// この呼び出しの左側には半角スペースだけを置き、その幅が Render 時に 2 行目以降へ適用される。
         /// 左側にキーワードや記号など半角スペース以外を置く必要がある場合は 2 引数版を使うこと。
         /// content 側は原則としてインデント 0 から組み立て、さらに深いネストは WithIndent を重ねて表現すること。
+        /// content が空の場合、その行に他の記述が無ければ行ごとレンダリングされない。
         /// </summary>
         /// <param name="content">レンダリング対象のソースコード</param>
         public static string WithIndent(IEnumerable<string> content) {
             using var enumerator = content.GetEnumerator();
             if (!enumerator.MoveNext()) {
-                return string.Empty;
+                return SKIP_MARKER;
             }
 
             var stringBuilder = new StringBuilder();
@@ -89,7 +90,7 @@ namespace Nijo.CodeGenerator {
         /// <inheritdoc cref="WithIndent(IEnumerable{string})"/>
         public static string WithIndent(string content) {
             if (content == string.Empty) {
-                return string.Empty;
+                return SKIP_MARKER;
             }
 
             return $"{INDENT_START_MARKER}{content}{INDENT_END_MARKER}";
@@ -99,6 +100,7 @@ namespace Nijo.CodeGenerator {
         /// 明示的に指定したインデント文字列で 2 行目以降をインデントします。
         /// raw string の補間位置の左側に空白以外の文字列を置く必要がある場合に使います。
         /// 左側が半角スペースだけで済む場合は 1 引数版を優先します。
+        /// content が空の場合、その行に他の記述が無ければ行ごとレンダリングされない。
         /// </summary>
         public static string WithIndent(IEnumerable<string> content, string indent) {
             return WithIndent(string.Join(Environment.NewLine, content), indent);
@@ -107,7 +109,7 @@ namespace Nijo.CodeGenerator {
         /// <inheritdoc cref="WithIndent(IEnumerable{string}, string)"/>
         public static string WithIndent(string content, string indent) {
             if (content == string.Empty) {
-                return string.Empty;
+                return SKIP_MARKER;
             }
             if (indent.Contains('\n') || indent.Contains('\r')) {
                 throw new ArgumentException("インデント文字列に改行を含めることはできません。", nameof(indent));

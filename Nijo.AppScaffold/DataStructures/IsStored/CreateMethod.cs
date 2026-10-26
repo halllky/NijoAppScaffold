@@ -62,6 +62,12 @@ namespace Nijo.DataStructures.IsStored {
                     dbEntity.{{EFCoreEntity.UPDATED_AT}} = {{ApplicationService.CURRENT_TIME}};
                     dbEntity.{{EFCoreEntity.CREATE_USER}} = {{ApplicationService.CURRENT_USER}};
                     dbEntity.{{EFCoreEntity.UPDATE_USER}} = {{ApplicationService.CURRENT_USER}};
+                    {{WithIndent(UpdateMethod.RenderForEachDescendant(_rootAggregate, variablePathInfo, "dbEntity", "new", entity => $$"""
+                    {{entity}}.{{EFCoreEntity.CREATED_AT}} = {{ApplicationService.CURRENT_TIME}};
+                    {{entity}}.{{EFCoreEntity.UPDATED_AT}} = {{ApplicationService.CURRENT_TIME}};
+                    {{entity}}.{{EFCoreEntity.CREATE_USER}} = {{ApplicationService.CURRENT_USER}};
+                    {{entity}}.{{EFCoreEntity.UPDATE_USER}} = {{ApplicationService.CURRENT_USER}};
+                    """))}}
 
                     // 更新前処理。入力検証や自動補完項目の設定を行なう。
                 {{ValidatorBase.EnumerateAll(ctx).SelectTextTemplate(validator => $$"""
@@ -95,9 +101,9 @@ namespace Nijo.DataStructures.IsStored {
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(dbEntity).State = EntityState.Detached;
-                {{UpdateMethod.RenderDescendantDetaching(_rootAggregate, variablePathInfo, "dbEntity").SelectTextTemplate(source => $$"""
-                        {{WithIndent(source)}}
-                """)}}
+                        {{WithIndent(UpdateMethod.RenderForEachDescendant(_rootAggregate, variablePathInfo, "dbEntity", "after", entity => $$"""
+                        DbContext.Entry({{entity}}).State = EntityState.Detached;
+                        """))}}
 
                         messages.AddError({{MsgFactory.MSG}}.{{UpdateMethod.ERR_ID_UNKNOWN}}(ex.Message));
                         Log.LogError(ex, "新規作成中にエラーが発生しました。");
@@ -112,9 +118,9 @@ namespace Nijo.DataStructures.IsStored {
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(dbEntity).State = EntityState.Detached;
-                {{UpdateMethod.RenderDescendantDetaching(_rootAggregate, variablePathInfo, "dbEntity").SelectTextTemplate(source => $$"""
-                        {{WithIndent(source)}}
-                """)}}
+                        {{WithIndent(UpdateMethod.RenderForEachDescendant(_rootAggregate, variablePathInfo, "dbEntity", "after", entity => $$"""
+                        DbContext.Entry({{entity}}).State = EntityState.Detached;
+                        """))}}
 
                         // セーブポイント解放
                         await DbContext.Database.CurrentTransaction.ReleaseSavepointAsync(SAVE_POINT).ConfigureAwait(false);

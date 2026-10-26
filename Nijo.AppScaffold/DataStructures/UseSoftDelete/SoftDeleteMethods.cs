@@ -150,9 +150,9 @@ namespace Nijo.DataStructures.UseSoftDelete {
                         await DbContext.Database.CurrentTransaction.RollbackToSavepointAsync(SAVE_POINT).ConfigureAwait(false);
 
                         DbContext.Entry(dbEntity).State = EntityState.Detached;
-                {{UpdateMethod.RenderDescendantDetaching(_rootAggregate, variablePathInfo, "dbEntity").SelectTextTemplate(source => $$"""
-                        {{WithIndent(source)}}
-                """)}}
+                        {{WithIndent(UpdateMethod.RenderForEachDescendant(_rootAggregate, variablePathInfo, "dbEntity", "after", entity => $$"""
+                        DbContext.Entry({{entity}}).State = EntityState.Detached;
+                        """))}}
                         foreach (var inserted in insertedSoftDeleteEntities) {
                             DbContext.Entry(inserted).State = EntityState.Detached;
                         }
@@ -175,9 +175,9 @@ namespace Nijo.DataStructures.UseSoftDelete {
                         await {{OnAfterMethodName}}(dbEntity, messages, context);
 
                         DbContext.Entry(dbEntity).State = EntityState.Detached;
-                {{UpdateMethod.RenderDescendantDetaching(_rootAggregate, variablePathInfo, "dbEntity").SelectTextTemplate(source => $$"""
-                        {{WithIndent(source)}}
-                """)}}
+                        {{WithIndent(UpdateMethod.RenderForEachDescendant(_rootAggregate, variablePathInfo, "dbEntity", "after", entity => $$"""
+                        DbContext.Entry({{entity}}).State = EntityState.Detached;
+                        """))}}
                         foreach (var inserted in insertedSoftDeleteEntities) {
                             DbContext.Entry(inserted).State = EntityState.Detached;
                         }

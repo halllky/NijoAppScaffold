@@ -166,9 +166,9 @@ namespace Nijo.DataStructures.IsStored {
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(afterDbEntity).State = EntityState.Detached;
-                {{RenderDescendantDetaching(_rootAggregate, variablePathInfo, "afterDbEntity").SelectTextTemplate(source => $$"""
-                        {{WithIndent(source)}}
-                """)}}
+                        {{WithIndent(RenderForEachDescendant(_rootAggregate, variablePathInfo, "afterDbEntity", "after", entity => $$"""
+                        DbContext.Entry({{entity}}).State = EntityState.Detached;
+                        """))}}
 
                         if (ex is DbUpdateConcurrencyException) {
                             messages.AddError({{MsgFactory.MSG}}.{{ERR_CONCURRENCY}}());
@@ -189,9 +189,9 @@ namespace Nijo.DataStructures.IsStored {
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(afterDbEntity).State = EntityState.Detached;
-                {{RenderDescendantDetaching(_rootAggregate, variablePathInfo, "afterDbEntity").SelectTextTemplate(source => $$"""
-                        {{WithIndent(source)}}
-                """)}}
+                        {{WithIndent(RenderForEachDescendant(_rootAggregate, variablePathInfo, "afterDbEntity", "after", entity => $$"""
+                        DbContext.Entry({{entity}}).State = EntityState.Detached;
+                        """))}}
 
                         // セーブポイント解放
                         await DbContext.Database.CurrentTransaction.ReleaseSavepointAsync(SAVE_POINT).ConfigureAwait(false);
@@ -252,6 +252,77 @@ namespace Nijo.DataStructures.IsStored {
                 """;
         }
 
+        /// <summary>
+        /// 子孫要素をDbContextにアタッチし、あわせて監査列を設定するソースをレンダリングする。
+        /// </summary>
+        private static IEnumerable<string> RenderDescendantAttaching(RootAggregate rootAggregate, IReadOnlyDictionary<SchemaNodeIdentity, InstancePropertyPath> variablePathInfo) {
+            var descendantDbEntities = rootAggregate.EnumerateDescendants().ToArray();
+
+            for (int i = 0; i < descendantDbEntities.Length; i++) {
+                var descAggregate = descendantDbEntities[i];
+                var descDbEntity = new EFCoreEntity(descAggregate);
+                var tempBefore = $"before{descAggregate.PhysicalName}_{i}";
+                var tempAfter = $"after{descAggregate.PhysicalName}_{i}";
+
+                // ChangeState変更。Child型の場合は、オプショナル（親テーブル1に対しChildは0または1）の考慮を行う。
+                // 1. 子テーブルが元々存在し、更新後も存在する場合 → UPDATE
+                // 2. 子テーブルが元々存在せず、更新後に存在する場合 → INSERT
+                // 3. 子テーブルが元々存在するが、更新後に存在しない場合 → DELETE
+                var arrayPath = variablePathInfo[descAggregate.ToMappingKey()].GetFlattenArrayPath(E_CsTs.CSharp, out var isMany);
+                if (isMany) {
+                    yield return $$"""
+                        var {{tempBefore}} = beforeDbEntity.{{arrayPath.Join("?.")}}?.OfType<{{descDbEntity.CsClassName}}>() ?? [];
+                        var {{tempAfter}} = afterDbEntity.{{arrayPath.Join("?.")}}?.OfType<{{descDbEntity.CsClassName}}>() ?? [];
+                        foreach (var a in {{tempAfter}}) {
+                            var b = {{tempBefore}}.SingleOrDefault(b => b.{{EFCoreEntity.KEYEQUALS}}(a));
+                            if (b == null) {
+                                a.{{EFCoreEntity.CREATED_AT}} = {{ApplicationService.CURRENT_TIME}};
+                                a.{{EFCoreEntity.UPDATED_AT}} = {{ApplicationService.CURRENT_TIME}};
+                                a.{{EFCoreEntity.CREATE_USER}} = {{ApplicationService.CURRENT_USER}};
+                                a.{{EFCoreEntity.UPDATE_USER}} = {{ApplicationService.CURRENT_USER}};
+                                DbContext.Entry(a).State = EntityState.Added; // 子テーブルが元々存在せず、更新後に存在する場合 → INSERT
+                            } else {
+                                a.{{EFCoreEntity.CREATED_AT}} = b.{{EFCoreEntity.CREATED_AT}};
+                                a.{{EFCoreEntity.UPDATED_AT}} = {{ApplicationService.CURRENT_TIME}};
+                                a.{{EFCoreEntity.CREATE_USER}} = b.{{EFCoreEntity.CREATE_USER}};
+                                a.{{EFCoreEntity.UPDATE_USER}} = {{ApplicationService.CURRENT_USER}};
+                                DbContext.Entry(a).State = EntityState.Modified; // 子テーブルが元々存在し、更新後も存在する場合 → UPDATE
+                            }
+                        }
+                        foreach (var b in {{tempBefore}}) {
+                            var a = {{tempAfter}}.SingleOrDefault(a => a.{{EFCoreEntity.KEYEQUALS}}(b));
+                            if (a == null) {
+                                DbContext.Entry(b).State = EntityState.Deleted; // 子テーブルが元々存在するが、更新後に存在しない場合 → DELETE
+                            }
+                        }
+                        """;
+
+                } else {
+                    yield return $$"""
+                        var {{tempBefore}} = beforeDbEntity.{{arrayPath.Join("?.")}};
+                        var {{tempAfter}} = afterDbEntity.{{arrayPath.Join("?.")}};
+                        if ({{tempAfter}} != null) {
+                            if ({{tempBefore}} != null) {
+                                {{tempAfter}}.{{EFCoreEntity.CREATED_AT}} = {{tempBefore}}.{{EFCoreEntity.CREATED_AT}};
+                                {{tempAfter}}.{{EFCoreEntity.UPDATED_AT}} = {{ApplicationService.CURRENT_TIME}};
+                                {{tempAfter}}.{{EFCoreEntity.CREATE_USER}} = {{tempBefore}}.{{EFCoreEntity.CREATE_USER}};
+                                {{tempAfter}}.{{EFCoreEntity.UPDATE_USER}} = {{ApplicationService.CURRENT_USER}};
+                                DbContext.Entry({{tempAfter}}).State = EntityState.Modified; // 子テーブルが元々存在し、更新後も存在する場合 → UPDATE
+                            } else {
+                                {{tempAfter}}.{{EFCoreEntity.CREATED_AT}} = {{ApplicationService.CURRENT_TIME}};
+                                {{tempAfter}}.{{EFCoreEntity.UPDATED_AT}} = {{ApplicationService.CURRENT_TIME}};
+                                {{tempAfter}}.{{EFCoreEntity.CREATE_USER}} = {{ApplicationService.CURRENT_USER}};
+                                {{tempAfter}}.{{EFCoreEntity.UPDATE_USER}} = {{ApplicationService.CURRENT_USER}};
+                                DbContext.Entry({{tempAfter}}).State = EntityState.Added; // 子テーブルが元々存在せず、更新後に存在する場合 → INSERT
+                            }
+                        } else if ({{tempBefore}} != null) {
+                            DbContext.Entry({{tempBefore}}).State = EntityState.Deleted; // 子テーブルが元々存在するが、更新後に存在しない場合 → DELETE
+                        }
+                        """;
+                }
+            }
+        }
+
 
         #region Create/Update/Deleleで共通
         internal const string ERR_ID_UNKNOWN = "UnknownUpdateError";
@@ -276,83 +347,31 @@ namespace Nijo.DataStructures.IsStored {
         }
 
         /// <summary>
-        /// 子孫要素をDbContextにアタッチするソースをレンダリングする。
+        /// 子孫要素のエンティティそれぞれに対して同じ処理を行うソースをレンダリングする。
+        /// 子孫要素は階層の深さにかかわらずループを入れ子にせず列挙され、存在しない（null の）子孫要素は処理されない。
         /// </summary>
-        internal static IEnumerable<string> RenderDescendantAttaching(RootAggregate rootAggregate, IReadOnlyDictionary<SchemaNodeIdentity, InstancePropertyPath> variablePathInfo) {
+        /// <param name="tempVarPrefix">子孫要素を受ける一時変数名の接頭辞。一時変数はレンダリング結果の挿入先のスコープに宣言されるため、同じメソッド内の他の変数と衝突しないものを指定すること。</param>
+        /// <param name="renderStatement">エンティティを表す式を受け取り、それに対する処理をレンダリングする。式は子孫要素の多重度によって一時変数にもループ変数にもなるため、特定の変数名を前提にしないこと。</param>
+        internal static IEnumerable<string> RenderForEachDescendant(RootAggregate rootAggregate, IReadOnlyDictionary<SchemaNodeIdentity, InstancePropertyPath> variablePathInfo, string rootEntityName, string tempVarPrefix, Func<string, string> renderStatement) {
             var descendantDbEntities = rootAggregate.EnumerateDescendants().ToArray();
 
             for (int i = 0; i < descendantDbEntities.Length; i++) {
                 var descAggregate = descendantDbEntities[i];
                 var descDbEntity = new EFCoreEntity(descAggregate);
-                var tempBefore = $"before{descAggregate.PhysicalName}_{i}";
-                var tempAfter = $"after{descAggregate.PhysicalName}_{i}";
-
-                // ChangeState変更。Child型の場合は、オプショナル（親テーブル1に対しChildは0または1）の考慮を行う。
-                // 1. 子テーブルが元々存在し、更新後も存在する場合 → UPDATE
-                // 2. 子テーブルが元々存在せず、更新後に存在する場合 → INSERT
-                // 3. 子テーブルが元々存在するが、更新後に存在しない場合 → DELETE
-                var arrayPath = variablePathInfo[descAggregate.ToMappingKey()].GetFlattenArrayPath(E_CsTs.CSharp, out var isMany);
-                if (isMany) {
-                    yield return $$"""
-                        var {{tempBefore}} = beforeDbEntity.{{arrayPath.Join("?.")}}?.OfType<{{descDbEntity.CsClassName}}>() ?? [];
-                        var {{tempAfter}} = afterDbEntity.{{arrayPath.Join("?.")}}?.OfType<{{descDbEntity.CsClassName}}>() ?? [];
-                        foreach (var a in {{tempAfter}}) {
-                            var b = {{tempBefore}}.SingleOrDefault(b => b.{{EFCoreEntity.KEYEQUALS}}(a));
-                            if (b == null) {
-                                DbContext.Entry(a).State = EntityState.Added; // 子テーブルが元々存在せず、更新後に存在する場合 → INSERT
-                            } else {
-                                DbContext.Entry(a).State = EntityState.Modified; // 子テーブルが元々存在し、更新後も存在する場合 → UPDATE
-                            }
-                        }
-                        foreach (var b in {{tempBefore}}) {
-                            var a = {{tempAfter}}.SingleOrDefault(a => a.{{EFCoreEntity.KEYEQUALS}}(b));
-                            if (a == null) {
-                                DbContext.Entry(b).State = EntityState.Deleted; // 子テーブルが元々存在するが、更新後に存在しない場合 → DELETE
-                            }
-                        }
-                        """;
-
-                } else {
-                    yield return $$"""
-                        var {{tempBefore}} = beforeDbEntity.{{arrayPath.Join("?.")}};
-                        var {{tempAfter}} = afterDbEntity.{{arrayPath.Join("?.")}};
-                        if ({{tempAfter}} != null) {
-                            if ({{tempBefore}} != null) {
-                                DbContext.Entry({{tempAfter}}).State = EntityState.Modified; // 子テーブルが元々存在し、更新後も存在する場合 → UPDATE
-                            } else {
-                                DbContext.Entry({{tempAfter}}).State = EntityState.Added; // 子テーブルが元々存在せず、更新後に存在する場合 → INSERT
-                            }
-                        } else if ({{tempBefore}} != null) {
-                            DbContext.Entry({{tempBefore}}).State = EntityState.Deleted; // 子テーブルが元々存在するが、更新後に存在しない場合 → DELETE
-                        }
-                        """;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 子孫要素の EntityState を全てDetachにしていくソースをレンダリングする。
-        /// </summary>
-        internal static IEnumerable<string> RenderDescendantDetaching(RootAggregate rootAggregate, IReadOnlyDictionary<SchemaNodeIdentity, InstancePropertyPath> variablePathInfo, string rootEntityName) {
-            var descendantDbEntities = rootAggregate.EnumerateDescendants().ToArray();
-
-            for (int i = 0; i < descendantDbEntities.Length; i++) {
-                var descAggregate = descendantDbEntities[i];
-                var descDbEntity = new EFCoreEntity(descAggregate);
-                var temp = $"after{descAggregate.PhysicalName}_{i}";
+                var temp = $"{tempVarPrefix}{descAggregate.PhysicalName}_{i}";
                 var arrayPath = variablePathInfo[descAggregate.ToMappingKey()].GetFlattenArrayPath(E_CsTs.CSharp, out var isMany);
                 if (isMany) {
                     yield return $$"""
                         var {{temp}} = {{rootEntityName}}.{{arrayPath.Join("?.")}}?.OfType<{{descDbEntity.CsClassName}}>() ?? [];
                         foreach (var a in {{temp}}) {
-                            DbContext.Entry(a).State = EntityState.Detached;
+                            {{WithIndent(renderStatement("a"))}}
                         }
                         """;
                 } else {
                     yield return $$"""
                         var {{temp}} = {{rootEntityName}}.{{arrayPath.Join("?.")}};
                         if ({{temp}} != null) {
-                            DbContext.Entry({{temp}}).State = EntityState.Detached;
+                            {{WithIndent(renderStatement(temp))}}
                         }
                         """;
                 }

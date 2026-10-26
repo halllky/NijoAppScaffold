@@ -137,9 +137,9 @@ namespace Nijo.DataStructures.IsStored {
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(dbEntity).State = EntityState.Detached;
-                {{UpdateMethod.RenderDescendantDetaching(_rootAggregate, variablePathInfo, "dbEntity").SelectTextTemplate(source => $$"""
-                        {{WithIndent(source)}}
-                """)}}
+                        {{WithIndent(UpdateMethod.RenderForEachDescendant(_rootAggregate, variablePathInfo, "dbEntity", "after", entity => $$"""
+                        DbContext.Entry({{entity}}).State = EntityState.Detached;
+                        """))}}
 
                         if (ex is DbUpdateConcurrencyException) {
                             messages.AddError({{MsgFactory.MSG}}.{{UpdateMethod.ERR_CONCURRENCY}}());
@@ -160,9 +160,9 @@ namespace Nijo.DataStructures.IsStored {
 
                         // 後続処理に影響が出るのを防ぐためエンティティを解放
                         DbContext.Entry(dbEntity).State = EntityState.Detached;
-                {{UpdateMethod.RenderDescendantDetaching(_rootAggregate, variablePathInfo, "dbEntity").SelectTextTemplate(source => $$"""
-                        {{WithIndent(source)}}
-                """)}}
+                        {{WithIndent(UpdateMethod.RenderForEachDescendant(_rootAggregate, variablePathInfo, "dbEntity", "after", entity => $$"""
+                        DbContext.Entry({{entity}}).State = EntityState.Detached;
+                        """))}}
 
                         // セーブポイント解放
                         await DbContext.Database.CurrentTransaction.ReleaseSavepointAsync(SAVE_POINT).ConfigureAwait(false);
