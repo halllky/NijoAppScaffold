@@ -4,7 +4,7 @@
 
 # UseSoftDelete（論理削除）
 
-通常の `Delete` メソッドはデータをテーブルから物理的に削除します（`DELETE FROM ...`）。
+通常の[削除コマンド](./020312_CRUDMethods.md)はデータをテーブルから物理的に削除します（`DELETE FROM ...`）。
 `UseSoftDelete` オプションを有効にすると、削除処理が**論理削除**に切り替わります。
 
 ## 論理削除の仕組み
@@ -29,7 +29,7 @@
 ```
 
 :::warning 削除フラグ
-テーブルに論理削除フラグを持たせる形式を採用したい場合、特別な仕組みは特に存在しないため、単に各データ構造に削除フラグを定義し、自動生成される物理削除メソッドや論理削除メソッドを使わず更新メソッドで更新してください。
+テーブルに論理削除フラグを持たせる形式を採用したい場合、特別な仕組みは特に存在しないため、単に各データ構造に削除フラグを定義し、削除コマンドを使わず更新コマンドで更新してください。
 :::
 
 ## XML での有効化方法
@@ -51,16 +51,12 @@ Child / Children には指定できません（ルートが論理削除される
 
 ## 生成されるもの
 
-`UseSoftDelete="true"` を付与すると、`Delete{集約名}Async` が `SoftDelete{集約名}Async` に**置き換わります**。
-物理削除メソッドは生成されません。
+`UseSoftDelete="true"` を付与すると、削除コマンドの動作が論理削除に**切り替わります**。呼び出し側のコードは物理削除の場合と同じです。
 
-| 生成されるもの                          | 説明                                    |
-| --------------------------------------- | --------------------------------------- |
-| `{集約名}DeletedDbEntity` クラス        | 削除済みデータ用の EF Core エンティティ |
-| `{集約名}DeletedDbSet`                  | 削除済みテーブルの DbSet                |
-| `SoftDelete{集約名}Async` メソッド      | 論理削除を実行するメソッド              |
-| `OnBeforeSoftDelete{集約名}` フック     | 論理削除前の処理（オーバーライド可）    |
-| `OnAfterSoftDelete{集約名}Async` フック | 論理削除後の処理（オーバーライド可）    |
+| 生成されるもの                   | 説明                                    |
+| -------------------------------- | --------------------------------------- |
+| `{集約名}DeletedDbEntity` クラス | 削除済みデータ用の EF Core エンティティ |
+| `{集約名}DeletedDbSet`           | 削除済みテーブルの DbSet                |
 
 ## 削除済みテーブルの構造
 
@@ -75,34 +71,37 @@ Child / Children には指定できません（ルートが論理削除される
 元テーブルのキー（例: `OrderId`）は主キーではなくなり、NULL 許容カラムとして保持されます。
 `DeletedUuid` が新しい主キーになります。これにより、同じ `OrderId` のデータを削除→復元→再削除しても重複なく記録できます。
 
-## SoftDelete メソッドの呼び出し
+## 論理削除の実行
 
-メソッドシグネチャと挙動は物理削除の `Delete{集約名}Async` とほぼ同じです。
+いったん読み込んでから削除コマンドに変換して保存します。集約全体を退避テーブルへ移送するので、読み込みが必要です。
 
 ```csharp
-var key = new OrderUpdateOrDeleteKey {
+var loaded = await DbContext.LoadForEditOrderAsync(new OrderKeyWithVersion(originalVersion) {
     OrderId = "ORD-001",
-    Version = originalVersion,
-};
+});
+if (loaded == null) { ... }
 
-var result = await SoftDeleteOrderAsync(key, context);
-if (!result.IsSuccess) {
-    await transaction.RollbackAsync();
+var deleteCommand = loaded.ToDeleteCommand();
+deleteCommand.GetValidationErrors().CopyTo(context.Messages);
+if (context.Messages.HasError() || context.ValidationOnly) return;
+
+await using var tran = await DbContext.BeginTransactionAsync();
+
+var result = await DbContext.TrySaveAsync(deleteCommand);
+if (!result.Success) {
+    result.Errors.CopyTo(context.Messages);
     return;
 }
+
+await tran.CommitAsync();
 ```
 
 ## 処理の流れ
 
-1. キーが空でないかチェック
-2. 元テーブルから対象データを取得（なければエラー）
-3. `OnBeforeSoftDelete{集約名}` フックを呼び出し
-4. エラーがある、または `ValidationOnly` の場合は中断
-5. SAVEPOINT を作成
-6. 削除済みエンティティ（`{集約名}DeletedDbEntity`）を生成して `INSERT`
-7. 元テーブルから行を `DELETE`（楽観排他チェックあり）
-8. `OnAfterSoftDelete{集約名}Async` フックを呼び出し
-9. SAVEPOINT を解放
+`TrySaveAsync` の中で次の順に処理されます。
+
+1. 削除済みエンティティ（`{集約名}DeletedDbEntity`）を子孫ごと生成して `INSERT`
+2. 元テーブルから行を子孫ごと `DELETE`（楽観排他チェックあり）
 
 ## 復元処理について
 

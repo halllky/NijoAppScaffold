@@ -121,7 +121,7 @@ public override async Task Execute売上修正Async(
 
 ```csharp
 // 入荷登録の例: 発番した入荷ID を戻り値として返す
-if (!context.ValidationOnly && headerResult.IsSaveCompleted() && !hasErrorInDetail) {
+if (!context.ValidationOnly && headerResult.Success && !hasErrorInDetail) {
     await tran.CommitAsync();
     context.ReturnValue.入荷ID = newId;               // コミット後にセット
     context.Messages.AddInfo("入荷登録が完了しました。");
@@ -143,29 +143,43 @@ await tran.CommitAsync();
 
 ## トランザクションとの組み合わせパターン
 
-`context` は [永続化されるデータ構造の CRUD メソッド](../020300_DataStructures/020310_IsStored/020312_CRUDMethods.md) （`CreateXxxAsync` / `UpdateXxxAsync` など）にもそのまま渡します。
-CRUD メソッド内でエラーが起きた場合、エラーメッセージは CRUD メソッド内で自動的に `context.Messages` へ設定されます。
+[登録・更新・削除](../020300_DataStructures/020310_IsStored/020312_CRUDMethods.md) の部品は `context` を受け取りません。
+検証結果や保存結果のメッセージは、コマンドの処理の中で `CopyTo` により `context.Messages` へ移します。
 
 ```csharp
+// 検証
+var header = DbContext.StartCreating入荷();
+header.入荷ID = newId;
+header.GetValidationErrors().CopyTo(context.Messages);
+
+var details = new List<入荷明細CreateCommand>();
+for (var i = 0; i < param.入荷商品一覧.Count; i++) {
+    var detail = DbContext.StartCreating入荷明細();
+    // ...
+    detail.GetValidationErrors().CopyTo(context.Messages.入荷商品一覧[i]);
+    details.Add(detail);
+}
+
+if (context.Messages.HasError() || context.ValidationOnly) return;
+
+// 保存。コミットせずに return するだけでロールバックされる
 await using var tran = await BeginTransactionAsync();
 
-var result = await Create入荷Async(new() { ... }, context);
-
-// IsSaveCompleted() が false のとき、エラーメッセージはすでに設定済み
-// コミットせずに return するだけでロールバックされる
-if (!result.IsSaveCompleted()) return;
-
-// 明細も同じトランザクション内で処理
-for (var i = 0; i < param.入荷商品一覧.Count; i++) {
-    var detailResult = await Create入荷明細Async(new() { ... }, context, context.Messages.入荷商品一覧[i]);
-    if (!detailResult.IsSaveCompleted()) hasError = true;
+var headerResult = await DbContext.TrySaveAsync(header);
+if (!headerResult.Success) {
+    headerResult.Errors.CopyTo(context.Messages);
+    return;
 }
 
-if (!hasError) {
-    await tran.CommitAsync();
-    context.ReturnValue.入荷ID = newId;
-    context.Messages.AddInfo("入荷登録が完了しました。");
+var detailResult = await DbContext.TrySaveAsync(details);
+if (!detailResult.Success) {
+    detailResult.Errors.CopyTo(context.Messages);
+    return;
 }
+
+await tran.CommitAsync();
+context.ReturnValue.入荷ID = newId;
+context.Messages.AddInfo("入荷登録が完了しました。");
 ```
 
 ---
