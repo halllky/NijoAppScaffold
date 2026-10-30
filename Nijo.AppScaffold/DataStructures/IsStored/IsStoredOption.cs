@@ -87,6 +87,9 @@ internal sealed class IsStoredOption : FeatureOption {
         ctx.Use<MessageContainer.BaseClass>()
             .Register(saveCommandMessage.CsClassName, saveCommandMessage.CsClassName);
 
+        // 処理: コマンドの入手
+        aggregateFile.AddCSharpClass(LoadForEdit.Render(rootAggregate, ctx), "LoadForEdit");
+
         // データ型: コマンドの読み込みやほかの集約からの参照に使われるキー
         aggregateFile.AddCSharpClass(KeyClass.KeyClassEntry.RenderClassDeclaringRecursively(rootAggregate, ctx), "Class_KeyClass");
 
