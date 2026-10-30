@@ -83,6 +83,7 @@ public static class Demo101TemplatePruner
         "Core/カスタム属性/0以上のみ.cs",
         "Core/OverridedDbContext.Sequence.cs",
         "Core/OverridedDummyDataGenerator.販売管理.cs",
+        "UnitTest/Tests/シーケンスを持つデータの保存.cs",
         // 業務テーブルを含むDBスキーマに依存するもの。
         // マイグレーションは、テンプレートを使い始めるときに利用者が改めて作成する。
         "Core/Migrations",
