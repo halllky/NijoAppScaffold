@@ -13,52 +13,40 @@ public class 論理削除処理 {
     [Category("DB接続あり（更新あり）")]
     public async Task 部署の論理削除でDeletedテーブルに移送される() {
         var scope = TestUtilImpl.Instance.CreateScope("論理削除処理");
-        var presentationContext = new PresentationContextInUnitTest {
-            ValidationOnly = false,
-            Confirms = [],
-            Messages = MessageSetter.GetImpl<IMessageSetter>([], new()),
-        };
+        var db = scope.App.DbContext;
 
-        await using var transaction = await scope.App.DbContext.Database.BeginTransactionAsync();
+        await using var transaction = await db.BeginTransactionAsync();
 
         const string legacyCode = "DEL-001";
         const int departmentId = 301;
 
-        var legacyResult = await scope.App.Create旧システム部署情報Async(new() {
-            旧システムコード = legacyCode,
-            名称 = "論理削除用旧システム部署",
-        }, presentationContext);
-        Assert.That(legacyResult.IsSaveCompleted(), Is.True, presentationContext.BuildFailureMessage("旧システム部署情報の作成に失敗しました。"));
+        var legacy = db.StartCreating旧システム部署情報();
+        legacy.旧システムコード = legacyCode;
+        legacy.名称 = "論理削除用旧システム部署";
+        (await db.TrySaveAsync(legacy)).AssertSucceeded();
 
-        var createResult = await scope.App.Create部署Async(new() {
-            部署ID = departmentId,
-            部署名 = "論理削除対象部署",
-            事業所 = new() { 事業所ID = "1" },
-            課 = [new() {
-                コード = "DEL-SEC",
-                旧システムコード = new() { 旧システムコード = legacyCode },
-                課名称 = "論理削除対象課",
-                係 = [
-                    new() { 連番 = 1, 係名称 = "係A", 勤怠管理区分 = null },
-                    new() { 連番 = 2, 係名称 = "係B", 勤怠管理区分 = null },
-                ],
-            }],
-        }, presentationContext);
-        Assert.That(createResult.IsSaveCompleted(out var savedEntity), Is.True, presentationContext.BuildFailureMessage("部署の作成に失敗しました。"));
-        Assert.That(savedEntity, Is.Not.Null, "登録結果にDbEntityがありません。");
-        Assert.That(savedEntity?.Version, Is.Not.Null, "登録結果のバージョンが取得できません。");
+        var department = db.StartCreating部署();
+        department.部署ID = departmentId;
+        department.部署名 = "論理削除対象部署";
+        department.事業所 = new() { 事業所ID = "1" };
+        department.課 = [new() {
+            コード = "DEL-SEC",
+            旧システムコード = new() { 旧システムコード = legacyCode },
+            課名称 = "論理削除対象課",
+            係 = [
+                new() { 連番 = 1, 係名称 = "係A", 勤怠管理区分 = null },
+                new() { 連番 = 2, 係名称 = "係B", 勤怠管理区分 = null },
+            ],
+        }];
+        var saved = (await db.TrySaveAsync(department)).AssertSucceeded();
 
-        var deleteResult = await scope.App.SoftDelete部署Async(new() {
-            部署ID = departmentId,
-            Version = savedEntity?.Version,
-        }, presentationContext);
-        Assert.That(deleteResult.IsSaveCompleted(out var _), Is.True, presentationContext.BuildFailureMessage("論理削除が失敗しました。"));
+        (await db.TrySaveAsync(saved.ToDeleteCommand())).AssertSucceeded();
 
-        Assert.That(await scope.App.DbContext.部署DbSet.AnyAsync(x => x.部署ID == departmentId), Is.False, "論理削除後も部署が残っています。");
-        Assert.That(await scope.App.DbContext.課DbSet.AnyAsync(x => x.Parent_部署ID == departmentId), Is.False, "論理削除後も課が残っています。");
-        Assert.That(await scope.App.DbContext.係DbSet.AnyAsync(x => x.Parent_Parent_部署ID == departmentId), Is.False, "論理削除後も係が残っています。");
+        Assert.That(await db.部署DbSet.AnyAsync(x => x.部署ID == departmentId), Is.False, "論理削除後も部署が残っています。");
+        Assert.That(await db.課DbSet.AnyAsync(x => x.Parent_部署ID == departmentId), Is.False, "論理削除後も課が残っています。");
+        Assert.That(await db.係DbSet.AnyAsync(x => x.Parent_Parent_部署ID == departmentId), Is.False, "論理削除後も係が残っています。");
 
-        var deletedDepartment = await scope.App.DbContext.部署DeletedDbSet
+        var deletedDepartment = await db.部署DeletedDbSet
             .Include(x => x.課)
             .ThenInclude(x => x.係)
             .SingleAsync(x => x.部署ID == departmentId);
