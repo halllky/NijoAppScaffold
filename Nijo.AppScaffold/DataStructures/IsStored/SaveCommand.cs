@@ -217,6 +217,18 @@ namespace Nijo.DataStructures.IsStored {
                                 }).ToList() ?? [],
                                 """;
 
+                        } else if (sp is SaveCommandChildMember) {
+                            // Child が存在しないデータをそのまま保存したときに空の Child が登録されないようにする
+                            var childPath = rigthMembers.TryGetValue(sp.SchemaPathNode.ToMappingKey(), out var source)
+                                ? $"{source.Root.Name}.{source.GetPathFromInstance().Select(p => p.Metadata.GetPropertyName(E_CsTs.CSharp)).Join("?.")}"
+                                : throw new InvalidOperationException($"右辺にChildのXElementが無い: {sp.DisplayName}");
+
+                            yield return $$"""
+                                {{member.GetPropertyName(E_CsTs.CSharp)}} = {{childPath}} == null ? null : new() {
+                                    {{WithIndent(EnumerateMembers(sp, right, rigthMembers))}}
+                                },
+                                """;
+
                         } else {
                             yield return $$"""
                                 {{member.GetPropertyName(E_CsTs.CSharp)}} = new() {
