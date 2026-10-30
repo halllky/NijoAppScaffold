@@ -23,7 +23,7 @@ internal sealed class IsStoredOption : FeatureOption {
     public override E_NodeOptionType Type => E_NodeOptionType.Boolean;
     public override string HelpText => $$"""
         このデータ構造がデータベースに永続化されることを表します。
-        RDBMSのテーブル定義やEntity Framework Coreのエンティティ、新規登録・更新・削除処理が生成されます。
+        RDBMSのテーブル定義やEntity Framework Coreのエンティティ、新規登録・更新・削除に使うコマンドが生成されます。
         {{IsQueryableOption.ATTRIBUTE_NAME}} と同時に指定した場合、テーブルと全く同じ形の検索処理や画面表示用データも生成されます。
         これはきわめて単純なマスタデータなど、データベース上のデータ構造とそれを表示・編集する画面のデータ構造が完全一致する場合を想定しています。
         """;
@@ -88,16 +88,7 @@ internal sealed class IsStoredOption : FeatureOption {
             .Register(saveCommandMessage.InterfaceName, saveCommandMessage.CsClassName)
             .Register(saveCommandMessage.CsClassName, saveCommandMessage.CsClassName);
 
-        // 処理: 自動生成されるバリデーションエラーチェック
-        aggregateFile.AddAppSrvMethod($$"""
-            #region 自動生成されるバリデーション処理
-            {{ValidatorBase.EnumerateAll(ctx).SelectTextTemplate(validator => $$"""
-            {{validator.RenderDeclaring(rootAggregate, ctx)}}
-            """)}}
-            #endregion 自動生成されるバリデーション処理
-            """, "バリデーション処理");
-
-        // データ型: ほかの集約から参照されるときのキー
+        // データ型: コマンドの読み込みやほかの集約からの参照に使われるキー
         aggregateFile.AddCSharpClass(KeyClass.KeyClassEntry.RenderClassDeclaringRecursively(rootAggregate, ctx), "Class_KeyClass");
 
         // カスタムロジック用モジュール
@@ -119,7 +110,7 @@ internal sealed class IsStoredOption : FeatureOption {
         }
 
         // カスタム属性による入力検証のフック
-        ValidateCustom.RegisterApplicationServiceHooks(ctx);
+        ValidateCustom.RegisterDbContextHooks(ctx);
     }
 
     /// <summary>

@@ -48,9 +48,6 @@ namespace Nijo.DataStructures.IsStored {
             ISchemaPathNode SaveCommand.ISaveCommandMember.Member => _aggregate;
             public virtual string PhysicalName => _aggregate.PhysicalName;
             public virtual string DisplayName => _aggregate.DisplayName;
-            public string CsCreateType => ClassName;
-            public string CsUpdateType => ClassName;
-            public string CsDeleteType => ClassName;
 
             /// <summary>
             /// コマンドの読み込みと同一性の判定に使うキーを返します。
@@ -383,7 +380,7 @@ namespace Nijo.DataStructures.IsStored {
                 } else {
                     var createCommand = new SaveCommand(root, SaveCommand.E_Type.Create);
                     rootCreateCommandMetadata = createCommand;
-                    argClassName = createCommand.CsClassNameCreate;
+                    argClassName = createCommand.CsClassName;
                     argVarName = "createCommand";
                 }
 
@@ -605,9 +602,6 @@ namespace Nijo.DataStructures.IsStored {
             public string GetTypeName(E_CsTs csts) => Member.Type.CsDomainTypeName;
 
             ISchemaPathNode SaveCommand.ISaveCommandMember.Member => Member;
-            string SaveCommand.ISaveCommandMember.CsCreateType => GetTypeName(E_CsTs.CSharp);
-            string SaveCommand.ISaveCommandMember.CsUpdateType => GetTypeName(E_CsTs.CSharp);
-            string SaveCommand.ISaveCommandMember.CsDeleteType => GetTypeName(E_CsTs.CSharp);
         }
         /// <summary>
         /// キー情報の中に出てくる他の集約のキー
@@ -634,9 +628,6 @@ namespace Nijo.DataStructures.IsStored {
             string IKeyClassStructure.ClassName => MemberKeyClassEntry.ClassName;
 
             ISchemaPathNode SaveCommand.ISaveCommandMember.Member => Member;
-            string SaveCommand.ISaveCommandMember.CsCreateType => GetTypeName(E_CsTs.CSharp);
-            string SaveCommand.ISaveCommandMember.CsUpdateType => GetTypeName(E_CsTs.CSharp);
-            string SaveCommand.ISaveCommandMember.CsDeleteType => GetTypeName(E_CsTs.CSharp);
 
             public IEnumerable<IKeyClassMember> GetOwnMembers() {
                 var p = Member.RefTo.GetParent();

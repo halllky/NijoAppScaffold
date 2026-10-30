@@ -1,4 +1,5 @@
 using Nijo.CodeGenerating;
+using Nijo.Parts.CSharp;
 using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,9 @@ using Nijo.DataStructures;
 
 namespace Nijo.DataStructures.IsStored {
     /// <summary>
-    /// 永続化されるデータ構造の登録更新処理の引数
+    /// 永続化されるデータ構造の新規登録・更新・削除の内容を表すコマンド。
+    /// ルート集約のコマンドはバリデーションと変更追跡の開始の機能を持ち、DbContextからのみインスタンス化できる。
+    /// 子孫集約のコマンドは単なる入れ物であり、<c>new()</c> で作成できる。
     /// </summary>
     internal class SaveCommand : IInstancePropertyOwnerMetadata {
 
@@ -22,53 +25,62 @@ namespace Nijo.DataStructures.IsStored {
         }
         internal AggregateBase Aggregate { get; }
 
-        internal enum E_Type { Create, Update, UpdOrDelKey }
+        internal enum E_Type { Create, Update }
         internal E_Type Type { get; }
 
         internal string CsClassName => Type switch {
             E_Type.Create => $"{Aggregate.PhysicalName}CreateCommand",
             E_Type.Update => $"{Aggregate.PhysicalName}UpdateCommand",
-            E_Type.UpdOrDelKey => $"{Aggregate.PhysicalName}UpdateOrDeleteKey",
             _ => throw new InvalidOperationException(),
         };
-        internal string CsClassNameCreate => CsClassName;
-        internal string CsClassNameUpdate => CsClassName;
-        internal string CsClassNameDelete => CsClassName;
+        /// <summary>新規登録・更新・削除のコマンドの基底クラス</summary>
+        internal string CsBaseClassName => $"{Aggregate.PhysicalName}SaveCommand";
+        /// <summary>削除コマンド</summary>
+        internal string CsDeleteClassName => $"{Aggregate.PhysicalName}DeleteCommand";
 
-        /// <summary>
-        /// 楽観排他のバージョン。UpdateOrDeleteKeyの場合のみ使用
-        /// </summary>
-        internal const string VERSION = "Version";
         internal const string TO_DBENTITY = "ToDbEntity";
         internal const string FROM_DBENTITY = "FromDbEntity";
+        internal const string START_TRACKING_CORE = "StartTrackingCore";
+        internal const string GET_CURRENT_ENTITY = "GetCurrentEntity";
+        internal const string GET_VALIDATION_ERRORS = "GetValidationErrors";
+        internal const string TO_DELETE_COMMAND = "ToDeleteCommand";
+
+        internal const string FIELD_DBCONTEXT = "_dbContext";
+        internal const string FIELD_LOADED = "_loaded";
+        internal const string FIELD_EXPECTED_VERSION = "_expectedVersion";
+        internal const string FIELD_SAVED_ENTITY = "_savedEntity";
 
         /// <summary>
         /// 新規・更新・削除のすべてのコマンドを、子孫要素の分も含めて再帰的にレンダリングします。
         /// </summary>
         internal static string RenderAll(RootAggregate rootAggregate, CodeRenderingContext ctx) {
 
-            var tree = rootAggregate.EnumerateThisAndDescendants().ToArray();
+            var descendants = rootAggregate.EnumerateDescendants().ToArray();
+            var createCommand = new SaveCommand(rootAggregate, E_Type.Create);
+            var updateCommand = new SaveCommand(rootAggregate, E_Type.Update);
 
             return $$"""
-                #region 新規登録時引数
-                {{tree.SelectTextTemplate(agg => $$"""
-                {{new SaveCommand(agg, E_Type.Create).RenderCreateCommandDeclaring(ctx)}}
+                {{createCommand.RenderBaseClass(ctx)}}
+
+                #region 新規登録コマンド
+                {{createCommand.RenderRootCreateCommand(ctx)}}
+                {{descendants.SelectTextTemplate(agg => $$"""
+                {{new SaveCommand(agg, E_Type.Create).RenderDescendantCommand(ctx)}}
                 """)}}
-                #endregion 新規登録時引数
+                #endregion 新規登録コマンド
 
 
-                #region 更新時引数
-                {{tree.SelectTextTemplate(agg => $$"""
-                {{new SaveCommand(agg, E_Type.Update).RenderUpdateCommandDeclaring(ctx)}}
+                #region 更新コマンド
+                {{updateCommand.RenderRootUpdateCommand(ctx)}}
+                {{descendants.SelectTextTemplate(agg => $$"""
+                {{new SaveCommand(agg, E_Type.Update).RenderDescendantCommand(ctx)}}
                 """)}}
-                #endregion 更新時引数
+                #endregion 更新コマンド
 
 
-                #region 物理削除時引数
-                {{tree.SelectTextTemplate(agg => $$"""
-                {{new SaveCommand(agg, E_Type.UpdOrDelKey).RenderDeleteCommandDeclaring(ctx)}}
-                """)}}
-                #endregion 物理削除時引数
+                #region 削除コマンド
+                {{createCommand.RenderRootDeleteCommand(ctx)}}
+                #endregion 削除コマンド
                 """;
         }
 
@@ -76,22 +88,10 @@ namespace Nijo.DataStructures.IsStored {
         /// メンバーを列挙する。ValueMember, Ref, Child, Children すべて含む
         /// </summary>
         internal IEnumerable<ISaveCommandMember> GetMembers() {
-            return Type switch {
-                E_Type.Create => GetCreateCommandMembers(),
-                E_Type.Update => GetUpdateCommandMembers(),
-                E_Type.UpdOrDelKey => GetDeleteCommandMembers(),
-                _ => throw new NotImplementedException(),
-            };
-        }
-        IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => GetMembers();
-
-
-        #region CREATE
-        private IEnumerable<ISaveCommandMember> GetCreateCommandMembers() {
             foreach (var member in Aggregate.GetMembers()) {
                 if (member is ValueMember vm) {
                     // 新規登録時に自動採番されるものは新規登録メンバー中に含めない
-                    if (vm.Type is SequenceMember) continue;
+                    if (Type == E_Type.Create && vm.Type is SequenceMember) continue;
 
                     yield return new SaveCommandValueMember(vm);
 
@@ -106,20 +106,147 @@ namespace Nijo.DataStructures.IsStored {
                 }
             }
         }
-        private string RenderCreateCommandDeclaring(CodeRenderingContext ctx) {
+        IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => GetMembers();
+
+
+        #region 基底クラス
+        private string RenderBaseClass(CodeRenderingContext ctx) {
+            var efCoreEntity = new EFCoreEntity(Aggregate);
+            var messages = new SaveCommandMessageContainer(Aggregate);
+            var key = KeyClass.KeyClassEntry.ForLoading((RootAggregate)Aggregate);
+            var updateCommand = new SaveCommand(Aggregate, E_Type.Update);
+
+            var entityProps = new Variable("entity", efCoreEntity)
+                .CreateProperties()
+                .ToArray();
+            var keysForLog = Aggregate
+                .GetKeyVMs()
+                .Select(vm => new {
+                    DisplayName = vm.DisplayName.Replace("\"", "\\\""),
+                    EntityPath = entityProps
+                        .Single(x => x.Metadata.SchemaPathNode.ToMappingKey() == vm.ToMappingKey())
+                        .GetJoinedPathFromInstance(E_CsTs.CSharp, "?."),
+                })
+                .ToArray();
+
             return $$"""
                 /// <summary>
-                /// {{Aggregate.DisplayName}} の新規登録コマンド引数
+                /// {{Aggregate.DisplayName}} の新規登録・更新・削除コマンドの基底クラス。
+                /// 一度保存処理にかけたインスタンスは再度使用できません。
+                /// </summary>
+                public abstract class {{CsBaseClassName}} : {{SaveCommandContract.INTERFACE}}<{{updateCommand.CsClassName}}> {
+                    private protected {{CsBaseClassName}}({{ctx.Config.DbContextName}} dbContext) {
+                        {{FIELD_DBCONTEXT}} = dbContext;
+                    }
+                    private protected readonly {{ctx.Config.DbContextName}} {{FIELD_DBCONTEXT}};
+                    /// <summary>変更追跡の対象となった、保存後の内容をもつエンティティ。削除の場合は設定されない。</summary>
+                    private protected {{efCoreEntity.CsClassName}}? {{FIELD_SAVED_ENTITY}};
+                    private bool _trackingStarted;
+
+                    /// <summary>ユーザーに見せるメッセージの文言</summary>
+                    private protected {{Parts.Common.MsgFactory.CS_INTERFACE}} {{Parts.Common.MsgFactory.MSG}} => {{FIELD_DBCONTEXT}}.{{Parts.Common.MsgFactory.MSG}};
+
+                    /// <summary>
+                    /// このコマンドの現在の状態に対するバリデーションエラーを返します。
+                    /// 必須チェックなどスキーマ定義から自動生成されるチェックと楽観排他のバージョンの食い違いのチェックが行なわれます。
+                    /// このメソッドはコマンドの状態を変更しません。
+                    /// </summary>
+                    public abstract {{messages.CsClassName}} {{GET_VALIDATION_ERRORS}}();
+
+                    /// <summary>変更追跡を開始する。変更追跡を開始するエンティティは状態を変更する前に引数のリストに追加すること。</summary>
+                    private protected abstract void {{START_TRACKING_CORE}}(List<object> tracked);
+                    /// <summary>このコマンドの現在の内容を表すエンティティを返す。</summary>
+                    private protected abstract {{efCoreEntity.CsClassName}} {{GET_CURRENT_ENTITY}}();
+                    /// <summary>ログに出力する操作の種類</summary>
+                    private protected abstract string OperationNameForLog { get; }
+
+                    {{Parts.CSharp.MessageContainer.SETTER_CLASS}} {{SaveCommandContract.INTERFACE}}.GetValidationErrors() => {{GET_VALIDATION_ERRORS}}();
+
+                    IReadOnlyList<object> {{SaveCommandContract.INTERFACE}}.StartTracking() {
+                        if (_trackingStarted) throw new InvalidOperationException("一度保存処理にかけたコマンドは再度使用できません。");
+                        _trackingStarted = true;
+
+                        var tracked = new List<object>();
+                        try {
+                            {{START_TRACKING_CORE}}(tracked);
+                        } catch {
+                            foreach (var entity in tracked) {
+                                {{FIELD_DBCONTEXT}}.Entry(entity).State = EntityState.Detached;
+                            }
+                            throw;
+                        }
+                        return tracked;
+                    }
+
+                    object? {{SaveCommandContract.INTERFACE}}.GetKeyForDuplicateCheck() => GetKeyForDuplicateCheckCore();
+                    /// <summary>同一の保存処理の中でのキー重複の検出に使うキーを返す。</summary>
+                    private protected virtual object? GetKeyForDuplicateCheckCore() {
+                        return {{key.ClassName}}.{{SaveCommand.FROM_DBENTITY}}({{GET_CURRENT_ENTITY}}());
+                    }
+
+                    JsonNode {{SaveCommandContract.INTERFACE}}.ToLogJson() {
+                        var entity = {{GET_CURRENT_ENTITY}}();
+                        return new JsonObject {
+                            ["集約"] = "{{Aggregate.DisplayName.Replace("\"", "\\\"")}}",
+                            ["操作"] = OperationNameForLog,
+                            ["キー"] = new JsonObject {
+                {{keysForLog.SelectTextTemplate(k => $$"""
+                                ["{{k.DisplayName}}"] = JsonValue.Create({{k.EntityPath}}),
+                """)}}
+                            },
+                        };
+                    }
+
+                    {{updateCommand.CsClassName}}? {{SaveCommandContract.INTERFACE}}<{{updateCommand.CsClassName}}>.ToSavedCommand() {
+                        if ({{FIELD_SAVED_ENTITY}} == null) return null;
+                        return {{updateCommand.CsClassName}}.{{FROM_DBENTITY}}({{FIELD_DBCONTEXT}}, {{FIELD_SAVED_ENTITY}}, {{FIELD_SAVED_ENTITY}}.{{EFCoreEntity.VERSION}}!.Value);
+                    }
+                }
+                """;
+        }
+        #endregion 基底クラス
+
+
+        #region CREATE
+        private string RenderRootCreateCommand(CodeRenderingContext ctx) {
+            var efCoreEntity = new EFCoreEntity(Aggregate);
+            var messages = new SaveCommandMessageContainer(Aggregate);
+            var hasKeyNumberedOnSave = Aggregate
+                .GetMembers()
+                .Any(m => m is ValueMember vm && vm.IsKey && vm.Type is SequenceMember);
+
+            return $$"""
+                /// <summary>
+                /// {{Aggregate.DisplayName}} の新規登録コマンド
                 /// </summary>
                 {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
-                public partial class {{CsClassNameCreate}} {
+                public partial class {{CsClassName}} : {{CsBaseClassName}} {
+                    internal {{CsClassName}}({{ctx.Config.DbContextName}} dbContext) : base(dbContext) {
+                    }
+
                 {{GetMembers().SelectTextTemplate(m => $$"""
                     {{WithIndent(m.RenderDeclaring(ctx))}}
                 """)}}
-                {{If(Aggregate is RootAggregate, () => $$"""
 
                     {{WithIndent(RenderToDbEntity(isCreate: true))}}
+                    private protected override {{efCoreEntity.CsClassName}} {{GET_CURRENT_ENTITY}}() => {{FIELD_SAVED_ENTITY}} ?? {{TO_DBENTITY}}();
+                    private protected override string OperationNameForLog => "新規登録";
+                {{If(hasKeyNumberedOnSave, () => $$"""
+                    private protected override object? GetKeyForDuplicateCheckCore() => null; // キーは保存時に採番される
                 """)}}
+
+                    /// <inheritdoc />
+                    public override {{messages.CsClassName}} {{GET_VALIDATION_ERRORS}}() {
+                        var messages = new {{messages.CsClassName}}([], new());
+                {{ValidatorBase.EnumerateAll(ctx).SelectTextTemplate(validator => $$"""
+                        {{validator.MethodName}}(messages);
+                """)}}
+                        return messages;
+                    }
+
+                    {{WithIndent(RenderValidators(ctx))}}
+
+                    {{WithIndent(SaveCommandTracking.RenderCreate((RootAggregate)Aggregate))}}
                 }
                 """;
         }
@@ -127,24 +254,9 @@ namespace Nijo.DataStructures.IsStored {
 
 
         #region UPDATE
-        private IEnumerable<ISaveCommandMember> GetUpdateCommandMembers() {
-            foreach (var member in Aggregate.GetMembers()) {
-                if (member is ValueMember vm) {
-                    yield return new SaveCommandValueMember(vm);
-
-                } else if (member is RefToMember rm) {
-                    yield return new SaveCommandRefMember(rm);
-
-                } else if (member is ChildAggregate child) {
-                    yield return new SaveCommandChildMember(child, Type);
-
-                } else if (member is ChildrenAggregate children) {
-                    yield return new SaveCommandChildrenMember(children, Type);
-                }
-            }
-        }
-        private string RenderUpdateCommandDeclaring(CodeRenderingContext ctx) {
+        private string RenderRootUpdateCommand(CodeRenderingContext ctx) {
             var efCoreEntity = new EFCoreEntity(Aggregate);
+            var messages = new SaveCommandMessageContainer(Aggregate);
             var right = new Variable("dbEntity", efCoreEntity);
             var dict = right
                  .Create1To1PropertiesRecursively()
@@ -160,25 +272,57 @@ namespace Nijo.DataStructures.IsStored {
 
             return $$"""
                 /// <summary>
-                /// {{Aggregate.DisplayName}} の更新コマンド引数
+                /// {{Aggregate.DisplayName}} の更新コマンド
                 /// </summary>
                 {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
-                public partial class {{CsClassNameUpdate}} {
+                public partial class {{CsClassName}} : {{CsBaseClassName}} {
+                    private {{CsClassName}}({{ctx.Config.DbContextName}} dbContext, {{efCoreEntity.CsClassName}} loaded, int expectedVersion) : base(dbContext) {
+                        {{FIELD_LOADED}} = loaded;
+                        {{FIELD_EXPECTED_VERSION}} = expectedVersion;
+                    }
+                    /// <summary>読み込み時点のデータ</summary>
+                    private readonly {{efCoreEntity.CsClassName}} {{FIELD_LOADED}};
+                    /// <summary>楽観排他制御で期待するバージョン。画面からの更新の場合は画面表示時のバージョン。</summary>
+                    private readonly int {{FIELD_EXPECTED_VERSION}};
+
                 {{GetMembers().SelectTextTemplate(m => $$"""
                     {{WithIndent(m.RenderDeclaring(ctx))}}
                 """)}}
-                {{If(Aggregate is RootAggregate, () => $$"""
+
+                    /// <summary>
+                    /// このコマンドと同じデータの削除コマンドを返します。
+                    /// 論理削除の場合は集約全体が必要になるため、削除するときもいったん読み込んでからこのメソッドで変換します。
+                    /// </summary>
+                    public {{CsDeleteClassName}} {{TO_DELETE_COMMAND}}() => new({{FIELD_DBCONTEXT}}, {{FIELD_LOADED}}, {{FIELD_EXPECTED_VERSION}});
+
                     {{WithIndent(RenderToDbEntity(isCreate: false))}}
+                    private protected override {{efCoreEntity.CsClassName}} {{GET_CURRENT_ENTITY}}() => {{FIELD_SAVED_ENTITY}} ?? {{TO_DBENTITY}}();
+                    private protected override string OperationNameForLog => "更新";
 
                     /// <summary>
                     /// Entity Framework Core のエンティティからこのクラスのインスタンスを作成します。
                     /// </summary>
-                    public static {{CsClassNameUpdate}} {{FROM_DBENTITY}}({{efCoreEntity.CsClassName}} dbEntity) {
-                        return new() {
+                    internal static {{CsClassName}} {{FROM_DBENTITY}}({{ctx.Config.DbContextName}} dbContext, {{efCoreEntity.CsClassName}} dbEntity, int expectedVersion) {
+                        return new(dbContext, dbEntity, expectedVersion) {
                             {{WithIndent(EnumerateMembers(this, right, dict))}}
                         };
                     }
+
+                    /// <inheritdoc />
+                    public override {{messages.CsClassName}} {{GET_VALIDATION_ERRORS}}() {
+                        var messages = new {{messages.CsClassName}}([], new());
+                        if ({{FIELD_LOADED}}.{{EFCoreEntity.VERSION}} != {{FIELD_EXPECTED_VERSION}}) {
+                            messages.AddError({{Parts.Common.MsgFactory.MSG}}.{{SaveCommandContract.ERR_CONCURRENCY}}());
+                        }
+                {{ValidatorBase.EnumerateAll(ctx).SelectTextTemplate(validator => $$"""
+                        {{validator.MethodName}}(messages);
                 """)}}
+                        return messages;
+                    }
+
+                    {{WithIndent(RenderValidators(ctx))}}
+
+                    {{WithIndent(SaveCommandTracking.RenderUpdate((RootAggregate)Aggregate))}}
                 }
                 """;
 
@@ -244,52 +388,84 @@ namespace Nijo.DataStructures.IsStored {
 
 
         #region DELETE
-        private IEnumerable<ISaveCommandMember> GetDeleteCommandMembers() {
-            foreach (var member in Aggregate.GetMembers()) {
-                if (member is ValueMember vm) {
-                    if (!vm.IsKey) continue;
-
-                    yield return new SaveCommandValueMember(vm);
-
-                } else if (member is RefToMember rm) {
-                    if (!rm.IsKey) continue;
-
-                    yield return new SaveCommandRefMember(rm);
-                }
-            }
-        }
-        private string RenderDeleteCommandDeclaring(CodeRenderingContext ctx) {
+        private string RenderRootDeleteCommand(CodeRenderingContext ctx) {
             var efCoreEntity = new EFCoreEntity(Aggregate);
+            var messages = new SaveCommandMessageContainer(Aggregate);
+            var updateCommand = new SaveCommand(Aggregate, E_Type.Update);
 
             return $$"""
                 /// <summary>
-                /// {{Aggregate.DisplayName}} の物理削除コマンド引数。キーとバージョンのみを持つ。
+                /// {{Aggregate.DisplayName}} の削除コマンド
                 /// </summary>
-                public partial class {{CsClassNameDelete}} {
-                {{GetMembers().SelectTextTemplate(m => $$"""
-                    {{WithIndent(m.RenderDeclaring(ctx))}}
-                """)}}
-                {{If(Aggregate is RootAggregate, () => $$"""
-                    /// <summary>
-                    /// 楽観排他制御用のバージョン。
-                    /// GUIでの更新の場合は更新時ではなく画面表示時のバージョンを指定してください。
-                    /// </summary>
-                    public required int? {{VERSION}} { get; set; }
-                """)}}
+                public partial class {{CsDeleteClassName}} : {{CsBaseClassName}}, {{SaveCommandContract.INTERFACE_DELETE}}<{{updateCommand.CsClassName}}> {
+                    internal {{CsDeleteClassName}}({{ctx.Config.DbContextName}} dbContext, {{efCoreEntity.CsClassName}} loaded, int expectedVersion) : base(dbContext) {
+                        {{FIELD_LOADED}} = loaded;
+                        {{FIELD_EXPECTED_VERSION}} = expectedVersion;
+                    }
+                    /// <summary>読み込み時点のデータ</summary>
+                    private readonly {{efCoreEntity.CsClassName}} {{FIELD_LOADED}};
+                    /// <summary>楽観排他制御で期待するバージョン。画面からの削除の場合は画面表示時のバージョン。</summary>
+                    private readonly int {{FIELD_EXPECTED_VERSION}};
+
+                    private protected override {{efCoreEntity.CsClassName}} {{GET_CURRENT_ENTITY}}() => {{FIELD_LOADED}};
+                    private protected override string OperationNameForLog => "削除";
+
+                    /// <inheritdoc />
+                    public override {{messages.CsClassName}} {{GET_VALIDATION_ERRORS}}() {
+                        var messages = new {{messages.CsClassName}}([], new());
+                        if ({{FIELD_LOADED}}.{{EFCoreEntity.VERSION}} != {{FIELD_EXPECTED_VERSION}}) {
+                            messages.AddError({{Parts.Common.MsgFactory.MSG}}.{{SaveCommandContract.ERR_CONCURRENCY}}());
+                        }
+                        return messages;
+                    }
+
+                    {{WithIndent(SaveCommandTracking.RenderDelete((RootAggregate)Aggregate, ctx))}}
                 }
                 """;
         }
         #endregion DELETE
 
 
+        /// <summary>
+        /// 子孫集約のコマンド。単なる値の入れ物。
+        /// </summary>
+        private string RenderDescendantCommand(CodeRenderingContext ctx) {
+            var comment = Type == E_Type.Create ? "新規登録" : "更新";
+
+            return $$"""
+                /// <summary>
+                /// {{Aggregate.DisplayName}} の{{comment}}コマンド
+                /// </summary>
+                {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
+                public partial class {{CsClassName}} {
+                {{GetMembers().SelectTextTemplate(m => $$"""
+                    {{WithIndent(m.RenderDeclaring(ctx))}}
+                """)}}
+                }
+                """;
+        }
+
+        private string RenderValidators(CodeRenderingContext ctx) {
+            return $$"""
+                #region 自動生成されるバリデーション処理
+                {{ValidatorBase.EnumerateAll(ctx).SelectTextTemplate(validator => $$"""
+                {{validator.RenderDeclaring(this, ctx)}}
+                """)}}
+                #endregion 自動生成されるバリデーション処理
+                """;
+        }
+
+
         #region メンバー
+        /// <summary>
+        /// ルート集約のコマンドはDbContextが作成した後でプロパティを設定する使い方をするのでrequiredにしない。
+        /// </summary>
+        private static string RenderRequiredModifier(AggregateBase owner) => owner is RootAggregate ? "" : "required ";
+
         internal interface ISaveCommandMember : IInstancePropertyMetadata {
             bool IsKey { get; }
             ISchemaPathNode Member { get; }
             string PhysicalName { get; }
-            string CsCreateType { get; }
-            string CsUpdateType { get; }
-            string CsDeleteType { get; }
 
             string RenderDeclaring(CodeRenderingContext ctx);
         }
@@ -305,9 +481,6 @@ namespace Nijo.DataStructures.IsStored {
 
             public string PhysicalName => Member.PhysicalName;
             public string DisplayName => Member.DisplayName;
-            public string CsCreateType => Member.Type.CsDomainTypeName;
-            public string CsUpdateType => Member.Type.CsDomainTypeName;
-            public string CsDeleteType => Member.Type.CsDomainTypeName;
 
             public bool IsKey => Member.IsKey;
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
@@ -318,7 +491,7 @@ namespace Nijo.DataStructures.IsStored {
                 return $$"""
                     /// <summary>{{DisplayName}}</summary>
                     {{NijoAttr.RenderAttributeValues(ctx, Member)}}
-                    public required {{Member.Type.CsDomainTypeName}}? {{PhysicalName}} { get; set; }
+                    public {{RenderRequiredModifier(Member.Owner)}}{{Member.Type.CsDomainTypeName}}? {{PhysicalName}} { get; set; }
                     """;
             }
         }
@@ -336,9 +509,6 @@ namespace Nijo.DataStructures.IsStored {
             bool ISaveCommandMember.IsKey => Member.IsKey;
             ISchemaPathNode ISaveCommandMember.Member => Member;
             string ISaveCommandMember.PhysicalName => Member.PhysicalName;
-            string ISaveCommandMember.CsCreateType => RefEntry.ClassName;
-            string ISaveCommandMember.CsUpdateType => RefEntry.ClassName;
-            string ISaveCommandMember.CsDeleteType => RefEntry.ClassName;
 
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Member;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => Member.PhysicalName;
@@ -352,7 +522,7 @@ namespace Nijo.DataStructures.IsStored {
                 return $$"""
                     /// <summary>{{Member.DisplayName}}</summary>
                     {{NijoAttr.RenderAttributeValues(ctx, Member)}}
-                    public required {{RefEntry.ClassName}}? {{Member.PhysicalName}} { get; set; }
+                    public {{RenderRequiredModifier(Member.Owner)}}{{RefEntry.ClassName}}? {{Member.PhysicalName}} { get; set; }
                     """;
             }
         }
@@ -365,9 +535,6 @@ namespace Nijo.DataStructures.IsStored {
             ISchemaPathNode ISaveCommandMember.Member => (IAggregateMember)Aggregate;
             public string PhysicalName => Aggregate.PhysicalName;
             public string DisplayName => Aggregate.DisplayName;
-            public string CsCreateType => new SaveCommand(Aggregate, SaveCommand.E_Type.Create).CsClassNameCreate;
-            public string CsUpdateType => new SaveCommand(Aggregate, SaveCommand.E_Type.Update).CsClassNameUpdate;
-            public string CsDeleteType => new SaveCommand(Aggregate, SaveCommand.E_Type.UpdOrDelKey).CsClassNameDelete;
 
             bool ISaveCommandMember.IsKey => false;
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => Aggregate;
@@ -376,16 +543,10 @@ namespace Nijo.DataStructures.IsStored {
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
 
             string ISaveCommandMember.RenderDeclaring(CodeRenderingContext ctx) {
-                var className = Type switch {
-                    E_Type.Create => CsCreateType,
-                    E_Type.Update => CsUpdateType,
-                    E_Type.UpdOrDelKey => CsDeleteType,
-                    _ => throw new NotImplementedException(),
-                };
                 return $$"""
                     /// <summary>{{DisplayName}}</summary>
                     {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
-                    public required {{className}}? {{PhysicalName}} { get; set; }
+                    public {{RenderRequiredModifier(Aggregate.GetParent()!)}}{{CsClassName}}? {{PhysicalName}} { get; set; }
                     """;
             }
         }
@@ -399,9 +560,6 @@ namespace Nijo.DataStructures.IsStored {
             ISchemaPathNode ISaveCommandMember.Member => (IAggregateMember)base.Aggregate;
             public string PhysicalName => base.Aggregate.PhysicalName;
             public string DisplayName => base.Aggregate.DisplayName;
-            public string CsCreateType => $"List<{new SaveCommand(base.Aggregate, E_Type.Create).CsClassName}>";
-            public string CsUpdateType => $"List<{new SaveCommand(base.Aggregate, E_Type.Update).CsClassName}>";
-            public string CsDeleteType => $"List<{new SaveCommand(base.Aggregate, E_Type.UpdOrDelKey).CsClassName}>";
 
             bool ISaveCommandMember.IsKey => false;
             ISchemaPathNode IInstancePropertyMetadata.SchemaPathNode => base.Aggregate;
@@ -410,16 +568,11 @@ namespace Nijo.DataStructures.IsStored {
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
 
             string ISaveCommandMember.RenderDeclaring(CodeRenderingContext ctx) {
-                var className = Type switch {
-                    E_Type.Create => CsCreateType,
-                    E_Type.Update => CsUpdateType,
-                    E_Type.UpdOrDelKey => CsDeleteType,
-                    _ => throw new NotImplementedException(),
-                };
+                var parent = base.Aggregate.GetParent()!;
                 return $$"""
                     /// <summary>{{DisplayName}}</summary>
                     {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
-                    public required {{className}} {{PhysicalName}} { get; set; }
+                    public {{RenderRequiredModifier(parent)}}List<{{CsClassName}}> {{PhysicalName}} { get; set; }{{(parent is RootAggregate ? " = [];" : "")}}
                     """;
             }
         }
@@ -439,7 +592,7 @@ namespace Nijo.DataStructures.IsStored {
                 /// <summary>
                 /// このインスタンスを Entity Framework Core のエンティティに変換します。
                 /// </summary>
-                public {{efCoreEntity.CsClassName}} {{TO_DBENTITY}}() {
+                internal {{efCoreEntity.CsClassName}} {{TO_DBENTITY}}() {
                     return new {{efCoreEntity.CsClassName}} {
                         {{WithIndent(RenderToDbEntityBody(efCoreEntity, rootInstance, rightDictOfRootInstance))}}
                 {{If(isCreate, () => $$"""
@@ -574,8 +727,8 @@ namespace Nijo.DataStructures {
                         if (isOutOfEntryTree) throw new InvalidOperationException("参照先のキーの中では親から子へ辿るパターンは無い");
 
                         var childMemberPhysicalName = curr switch {
-                            ChildAggregate child => new SaveCommand.SaveCommandChildMember(child, SaveCommand.E_Type.Create).PhysicalName, // CUD全部名前同じなのでCにしている
-                            ChildrenAggregate children => new SaveCommand.SaveCommandChildrenMember(children, SaveCommand.E_Type.Create).PhysicalName, // CUD全部名前同じなのでCにしている
+                            ChildAggregate child => new SaveCommand.SaveCommandChildMember(child, SaveCommand.E_Type.Create).PhysicalName, // CreateとUpdateで名前同じなのでCにしている
+                            ChildrenAggregate children => new SaveCommand.SaveCommandChildrenMember(children, SaveCommand.E_Type.Create).PhysicalName, // CreateとUpdateで名前同じなのでCにしている
                             _ => throw new InvalidOperationException("ありえない"),
                         };
                         yield return childMemberPhysicalName;

@@ -4,9 +4,7 @@ using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Nijo.DataStructures.Aggregates;
-using Nijo.DataStructures.ValueMemberTypes;
 using Nijo.DataStructures;
 
 namespace Nijo.DataStructures.IsStored {
@@ -17,78 +15,41 @@ namespace Nijo.DataStructures.IsStored {
 
         internal const string METHOD_NAME = "ValidateRequired";
         private const string MSG_ID_REQUIRED = "RequiredError";
-        private const string IS_CREATE = "isCreate";
 
         public override string CommentName => "必須入力チェック";
         public override string MethodName => METHOD_NAME;
         public override string MsgId => MSG_ID_REQUIRED;
         public override string MsgTemplate => "{0} を入力してください。";
 
-        /// <summary>
-        /// 必須のシーケンス属性が存在するか
-        /// </summary>
-        private static bool HasRequiredSequence(RootAggregate rootAggregate) {
-            return rootAggregate
-                .EnumerateThisAndDescendants()
-                .SelectMany(agg => agg.GetMembers())
-                .Any(m => m is ValueMember vm
-                       && vm.Type is SequenceMember
-                       && (vm.IsKey || vm.IsNotNull));
-        }
-
-        protected override IEnumerable<AdditionalArgs> GetAdditionalMethodArgs(RootAggregate rootAggregate) {
-            // シーケンスがある場合、新規登録時にシーケンスのnullチェックを割愛する必要がある
-            if (HasRequiredSequence(rootAggregate)) {
-                yield return new() {
-                    Type = "bool",
-                    Name = IS_CREATE,
-                    Comment = "新規登録時かどうかを示すフラグ",
-                };
-            }
-        }
-
         protected override ValidateStatement? GetIfStatement(ValueMember vm, IInstanceProperty prop, CodeRenderingContext ctx) {
             if (!vm.IsKey && !vm.IsNotNull) return null;
 
-            var sb = new StringBuilder();
-
-            // シーケンスの場合、新規登録時はnullチェックをスキップする
-            if (vm.Type is SequenceMember) {
-                sb.Append($"!{IS_CREATE} && ");
-            }
-
-            // stringなら IsNullOrWhiteSpace で判定。それ以外は単に != null で判定
-            if (vm.Type.CsPrimitiveTypeName == "string") {
-                sb.Append($"string.IsNullOrWhiteSpace({prop.GetJoinedPathFromInstance(E_CsTs.CSharp)})");
-            } else {
-                sb.Append($"{prop.GetJoinedPathFromInstance(E_CsTs.CSharp)} == null");
-            }
-
             return new ValidateStatement {
-                If = sb.ToString(),
+                If = RenderIsEmpty(prop, "."),
                 RenderErrorMessage = $$"""
                     {{MsgFactory.MSG}}.{{MSG_ID_REQUIRED}}("{{vm.DisplayName.Replace("\"", "\\\"")}}")
                     """,
             };
         }
 
-        protected override ValidateStatement? GetIfStatement(RefToMember refTo, IEnumerable<IInstanceProperty> fkProps, CodeRenderingContext ctx) {
+        protected override ValidateStatement? GetIfStatement(RefToMember refTo, IEnumerable<IInstanceProperty> keyProps, CodeRenderingContext ctx) {
             if (!refTo.IsKey && !refTo.IsNotNull) return null;
 
-            var conditions = fkProps.Select(prop => {
-                if (prop.Metadata is IInstanceValuePropertyMetadata vm && vm.Type.CsPrimitiveTypeName == "string") {
-                    return $"string.IsNullOrWhiteSpace({prop.GetJoinedPathFromInstance(E_CsTs.CSharp)})";
-                } else {
-                    return $"{prop.GetJoinedPathFromInstance(E_CsTs.CSharp)} == null";
-                }
-            });
-
             return new ValidateStatement {
-                If = conditions.Join(" || "),
+                If = keyProps.Select(prop => RenderIsEmpty(prop, "?.")).Join(" || "),
                 RenderErrorMessage = $$"""
                     {{MsgFactory.MSG}}.{{MSG_ID_REQUIRED}}("{{refTo.DisplayName.Replace("\"", "\\\"")}}")
                     """,
             };
+        }
+
+        /// <summary>
+        /// stringなら IsNullOrWhiteSpace で判定。それ以外は単に == null で判定
+        /// </summary>
+        private static string RenderIsEmpty(IInstanceProperty prop, string nullableSeparator) {
+            return ((IInstanceValuePropertyMetadata)prop.Metadata).Type.CsPrimitiveTypeName == "string"
+                ? $"string.IsNullOrWhiteSpace({RenderPrimitiveValue(prop, nullableSeparator)})"
+                : $"{prop.GetJoinedPathFromInstance(E_CsTs.CSharp, nullableSeparator)} == null";
         }
     }
 }
