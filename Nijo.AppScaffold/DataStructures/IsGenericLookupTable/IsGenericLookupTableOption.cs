@@ -78,8 +78,8 @@ internal sealed class IsGenericLookupTableOption : FeatureOption {
             ctx.Use<DbContextClass>().AddEntities([viewEntity]);
         }
 
-        // ○○Util クラスをアプリケーションサービスに追加
-        ctx.Use<ApplicationService>().Add(RenderUtilProperty(rootAggregate));
+        // ○○Util クラスをDbContextに追加
+        ctx.Use<DbContextClass>().AddAdditionalMethod(RenderUtilProperty(rootAggregate));
         ctx.CoreLibrary(dir => {
             dir.Directory("Util", utilDir => {
                 utilDir.Generate(new() {
@@ -110,7 +110,7 @@ internal sealed class IsGenericLookupTableOption : FeatureOption {
             /// '{{rootAggregate.DisplayName}}' の汎用参照テーブルユーティリティ。
             /// カテゴリごとのハードコード値取得とデータソース取得を提供します。
             /// </summary>
-            public {{utilClassName}} {{rootAggregate.PhysicalName}}Util => {{fieldName}} ??= new {{utilClassName}}(this.DbContext);
+            public {{utilClassName}} {{rootAggregate.PhysicalName}}Util => {{fieldName}} ??= new {{utilClassName}}(this);
             private {{utilClassName}}? {{fieldName}};
             #endregion 汎用参照テーブル '{{rootAggregate.DisplayName}}' ユーティリティ
             """;

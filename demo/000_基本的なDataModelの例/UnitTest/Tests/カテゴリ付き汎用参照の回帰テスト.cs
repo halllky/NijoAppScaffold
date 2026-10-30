@@ -130,7 +130,7 @@ public class カテゴリ付き汎用参照の回帰テスト {
         string displayName) {
 
         var createResult = await scope.App.Create汎用マスタAsync(new() {
-            汎用種別 = scope.App.汎用マスタUtil
+            汎用種別 = scope.App.DbContext.汎用マスタUtil
                 .GetAllCategories()
                 .Single(category => category.PhysicalName == categoryName)
                 .汎用種別,

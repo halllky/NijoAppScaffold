@@ -50,7 +50,7 @@ namespace Nijo.DataStructures.IsGenericLookupTable {
                 })
                 .Join("\r\n|| ");
 
-            var utilExpression = $"{info.RootAggregate.PhysicalName}Util.{info.Category.Name}";
+            var utilExpression = $"DbContext.{info.RootAggregate.PhysicalName}Util.{info.Category.Name}";
             var existsExpression = keyConditions.Length == 0
                 ? $"{utilExpression}.Any()"
                 : $"{utilExpression}.Any(candidate => {keyConditions.Join("\r\n&& ")})";

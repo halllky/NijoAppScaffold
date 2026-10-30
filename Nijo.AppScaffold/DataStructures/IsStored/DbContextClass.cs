@@ -92,7 +92,7 @@ namespace Nijo.DataStructures.IsStored {
                     """)}}
                             ];
                         }
-                    {{_additionalMethods.SelectTextTemplate(method => $$"""
+                    {{_additionalMethods.OrderBy(method => method).SelectTextTemplate(method => $$"""
 
                         {{WithIndent(method)}}
                     """)}}
