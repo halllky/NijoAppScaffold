@@ -292,6 +292,13 @@ namespace Nijo.Parts.CSharp {
                             /// この項目に対して現在追加されているメッセージを取得します。
                             /// </summary>
                             IReadOnlyMessageContainer? GetState();
+
+                            /// <summary>
+                            /// この項目およびその子孫のメッセージを、引数のオブジェクトの同名のパスにコピーします。
+                            /// 引数のオブジェクトとこのオブジェクトで項目の階層が異なる場合、対応する階層のオブジェクトを引数に渡してください。
+                            /// 階層が異なるものを渡すと、エラーは追加されるものの画面の項目には表示されなくなります。
+                            /// </summary>
+                            void CopyTo({{SETTER_INTERFACE}} target);
                         }
                         /// <inheritdoc cref="{{SETTER_INTERFACE}}">
                         public interface {{SETTER_INTERFACE_LIST}}<out T> : {{SETTER_INTERFACE}}, IReadOnlyList<T> where T : {{SETTER_INTERFACE}} {
@@ -329,6 +336,21 @@ namespace Nijo.Parts.CSharp {
                             /// </summary>
                             public IReadOnlyMessageContainer? GetState() {
                                 return _underlyingContext.Find(_path);
+                            }
+
+                            /// <inheritdoc cref="{{SETTER_INTERFACE}}.CopyTo"/>
+                            public void CopyTo({{SETTER_INTERFACE}} target) {
+                                var state = GetState();
+                                if (state == null) return;
+                                if (target is not {{SETTER_CLASS}} targetSetter) throw new ArgumentException($"{target.GetType().Name} にはコピーできません。", nameof(target));
+
+                                var depth = _path.Count();
+                                foreach (var node in state.DescendantsAndSelf()) {
+                                    string[] path = [.. targetSetter._path, .. node.Path.Skip(depth)];
+                                    foreach (var message in node.Errors) targetSetter._underlyingContext.AddError(path, message);
+                                    foreach (var message in node.Warns) targetSetter._underlyingContext.AddWarn(path, message);
+                                    foreach (var message in node.Infos) targetSetter._underlyingContext.AddInfo(path, message);
+                                }
                             }
 
                             /// <summary>
