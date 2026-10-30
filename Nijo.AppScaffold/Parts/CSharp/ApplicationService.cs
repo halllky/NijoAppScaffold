@@ -1,4 +1,5 @@
 using Nijo.CodeGenerating;
+using Nijo.DataStructures.IsStored;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -62,26 +63,11 @@ namespace Nijo.Parts.CSharp {
                         public ILogger Log => _logger ??= ServiceProvider.GetRequiredService<ILogger<{{ABSTRACT_CLASS}}>>();
                         private ILogger? _logger;
 
-                        /// <summary>
-                        /// <para>
-                        /// 現在時刻。データ更新時の更新時刻の記録などに使用。
-                        /// <see cref="DateTime.Now"/> を使ってしまうと現在時刻に依存する処理のテストが困難になるので、基本的にはこのプロパティを使うこと。
-                        /// </para>
-                        /// <para>
-                        /// 同一のリクエストの中では、たとえ実時刻に多少のずれがあったとしてもすべて同じ時刻（リクエスト開始時点の時刻）になる。
-                        /// 理由は、例えば深夜0時前後の処理で処置の途中で日付が変わることでロジックに影響が出る、などといった事象を防ぐため。
-                        /// </para>
-                        /// <para>
-                        /// ちなみにログ出力の時刻にはこのプロパティが用いられず、正確な現在時刻が出力される。
-                        /// </para>
-                        /// </summary>
-                        public virtual DateTime {{CURRENT_TIME}} => _currentTime ??= DateTime.Now;
-                        private DateTime? _currentTime;
+                        /// <inheritdoc cref="{{SaveCommandContract.AUDIT_INFO_INTERFACE}}.CurrentTime"/>
+                        public DateTime CurrentTime => ServiceProvider.GetRequiredService<{{SaveCommandContract.AUDIT_INFO_INTERFACE}}>().CurrentTime;
 
-                        /// <summary>
-                        /// 現在操作中のユーザーの名前。データ更新時の更新者の記録などに使用。
-                        /// </summary>
-                        public virtual string {{CURRENT_USER}} => "UNDEFINED";
+                        /// <inheritdoc cref="{{SaveCommandContract.AUDIT_INFO_INTERFACE}}.CurrentUser"/>
+                        public string CurrentUser => ServiceProvider.GetRequiredService<{{SaveCommandContract.AUDIT_INFO_INTERFACE}}>().CurrentUser;
 
                         /// <summary>
                         /// ログ出力用にオブジェクトをシリアライズする。
