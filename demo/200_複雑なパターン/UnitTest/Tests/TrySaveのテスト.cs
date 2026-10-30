@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using MyApp.Debugging;
 
 namespace MyApp.UnitTest;
@@ -267,6 +268,65 @@ partial class DB接続あり_更新あり {
             Assert.That(result.FailureKind, Is.EqualTo(SaveFailureKind.UniqueConstraint));
             Assert.That(db.ChangeTracker.Entries(), Is.Empty);
         });
+    }
+
+    [Test]
+    public async Task 運用担当者への通知が不要な失敗ではErrorログが出ない() {
+        var logs = new ErrorLogCollector();
+        var scope = TestUtilImpl.Instance.CreateScope(
+            nameof(運用担当者への通知が不要な失敗ではErrorログが出ない),
+            services => services.AddLogging(logging => logging.AddProvider(logs)));
+        var db = scope.App.DbContext;
+        await using var tran = await db.BeginTransactionAsync();
+        (await db.TrySaveAsync(Create機器分類(db, "C1"))).AssertSucceeded();
+
+        // 一意制約違反
+        var unique = await db.TrySaveAsync(Create機器分類(db, "C1"));
+        Assert.That(unique.FailureKind, Is.EqualTo(SaveFailureKind.UniqueConstraint));
+
+        // 楽観排他エラー
+        var loaded = await db.LoadForEdit機器分類マスタAsync(new 機器分類マスタKeyWithVersion(0) { 機器分類ID = "C1" });
+        await db.機器分類マスタDbSet.ExecuteUpdateAsync(x => x.SetProperty(e => e.Version, 5));
+        var concurrency = await db.TrySaveAsync(loaded!);
+        Assert.That(concurrency.FailureKind, Is.EqualTo(SaveFailureKind.Concurrency));
+
+        Assert.That(logs.Messages, Is.Empty);
+    }
+
+    [Test]
+    public async Task 運用担当者への通知が必要な失敗ではErrorログが出る() {
+        var logs = new ErrorLogCollector();
+        var scope = TestUtilImpl.Instance.CreateScope(
+            nameof(運用担当者への通知が必要な失敗ではErrorログが出る),
+            services => services.AddLogging(logging => logging.AddProvider(logs)));
+        var db = scope.App.DbContext;
+        await using var tran = await db.BeginTransactionAsync();
+
+        // 外部キー制約違反
+        var schedule = db.StartCreating勤務スケジュール();
+        schedule.医療従事者 = new() { 医療従事者ID = (医療従事者ID型?)"NOTHING" };
+        schedule.診療科 = new() { 診療科ID = "NOTHING" };
+        schedule.日付 = new DateOnly(2030, 1, 2);
+        var result = await db.TrySaveAsync(schedule);
+
+        Assert.Multiple(() => {
+            Assert.That(result.FailureKind, Is.EqualTo(SaveFailureKind.DatabaseError));
+            Assert.That(logs.Messages, Is.Not.Empty);
+        });
+    }
+
+    /// <summary>Error レベル以上のログを収集する</summary>
+    private sealed class ErrorLogCollector : ILoggerProvider, ILogger {
+        private readonly System.Collections.Concurrent.ConcurrentQueue<string> _messages = new();
+        public IReadOnlyCollection<string> Messages => _messages;
+
+        public ILogger CreateLogger(string categoryName) => this;
+        public void Dispose() { }
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(LogLevel logLevel) => logLevel >= LogLevel.Error;
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) {
+            if (IsEnabled(logLevel)) _messages.Enqueue(formatter(state, exception));
+        }
     }
 
     [Test]
