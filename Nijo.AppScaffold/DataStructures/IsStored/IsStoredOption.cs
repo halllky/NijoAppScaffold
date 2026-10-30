@@ -88,21 +88,6 @@ internal sealed class IsStoredOption : FeatureOption {
             .Register(saveCommandMessage.InterfaceName, saveCommandMessage.CsClassName)
             .Register(saveCommandMessage.CsClassName, saveCommandMessage.CsClassName);
 
-        // 処理: 新規登録、更新
-        var descendantStructurePaths = efCoreEntity
-            .CreateStructurePathsRecursively()
-            .ToDictionary(x => x.Metadata.SchemaPathNode.ToMappingKey());
-        var create = new CreateMethod(rootAggregate);
-        var update = new UpdateMethod(rootAggregate);
-        aggregateFile.AddAppSrvMethod(create.Render(ctx, descendantStructurePaths), "新規登録処理");
-        aggregateFile.AddAppSrvMethod(update.Render(ctx, descendantStructurePaths), "更新処理");
-
-        // 処理: 物理削除。論理削除する場合の削除処理は UseSoftDelete 属性が生成する
-        if (!rootAggregate.UseSoftDelete) {
-            var delete = new DeleteMethod(rootAggregate);
-            aggregateFile.AddAppSrvMethod(delete.Render(ctx, descendantStructurePaths), "物理削除処理");
-        }
-
         // 処理: 自動生成されるバリデーションエラーチェック
         aggregateFile.AddAppSrvMethod($$"""
             #region 自動生成されるバリデーション処理
@@ -120,16 +105,6 @@ internal sealed class IsStoredOption : FeatureOption {
     }
 
     public override void RenderCommon(CodeRenderingContext ctx) {
-        // 保存処理の結果クラス
-        ctx.CoreLibrary(dir => {
-            dir.Directory("Util", utilDir => {
-                utilDir.Generate(DataModelSaveResult.Render(ctx));
-            });
-        });
-
-        // メッセージコンテナ
-        UpdateMethod.RegisterCommonParts(ctx);
-
         // バリデーターチェック違反時のメッセージ
         var msgFactory = ctx.Use<MsgFactory>();
         var validatorsForMessage = ValidatorBase.EnumerateAll(ctx)

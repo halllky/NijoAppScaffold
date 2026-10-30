@@ -36,7 +36,7 @@ namespace Nijo.DataStructures.IsStored {
             // スキーマ定義に汎用参照テーブルが存在するか否かにかかわらずメソッドを生成する。
             ctx.Use<GenericLookupViewsInfoProvider>();
 
-            ctx.Use<MsgFactory>();
+            SaveCommandContract.RegisterMessages(ctx);
         }
 
         void ISharedSourceFile<CodeRenderingContext>.Render(CodeRenderingContext ctx) {

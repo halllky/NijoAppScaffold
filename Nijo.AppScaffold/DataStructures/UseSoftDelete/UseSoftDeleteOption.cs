@@ -35,12 +35,5 @@ internal sealed class UseSoftDeleteOption : FeatureOption {
         var deletedEfCoreEntity = new EFCoreEntity(rootAggregate, isDeletedTable: true);
         aggregateFile.AddCSharpClass(EFCoreEntity.RenderClassDeclaring(deletedEfCoreEntity, ctx), "Class_EFCoreEntity_Deleted");
         ctx.Use<DbContextClass>().AddEntities(deletedEfCoreEntity.EnumerateThisAndDescendants());
-
-        // 処理: 論理削除
-        var descendantStructurePaths = new EFCoreEntity(rootAggregate)
-            .CreateStructurePathsRecursively()
-            .ToDictionary(x => x.Metadata.SchemaPathNode.ToMappingKey());
-        var softDelete = new SoftDeleteMethods(rootAggregate);
-        aggregateFile.AddAppSrvMethod(softDelete.Render(ctx, descendantStructurePaths), "論理削除処理");
     }
 }

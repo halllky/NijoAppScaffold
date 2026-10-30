@@ -90,22 +90,5 @@ namespace Nijo.DataStructures.IsStored {
                     """,
             };
         }
-
-        internal override string RenderCaller(object caller, RootAggregate rootAggregate, string dbEntityInstanceName, string messageInstanceName) {
-            var hasSequence = HasRequiredSequence(rootAggregate);
-            if (hasSequence && caller is CreateMethod) {
-                return $$"""
-                    {{MethodName}}({{dbEntityInstanceName}}, {{messageInstanceName}}, {{IS_CREATE}}: true)
-                    """;
-            } else if (hasSequence) {
-                return $$"""
-                    {{MethodName}}({{dbEntityInstanceName}}, {{messageInstanceName}}, {{IS_CREATE}}: false)
-                    """;
-            } else {
-                return $$"""
-                    {{MethodName}}({{dbEntityInstanceName}}, {{messageInstanceName}})
-                    """;
-            }
-        }
     }
 }
