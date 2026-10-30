@@ -85,7 +85,6 @@ internal sealed class IsStoredOption : FeatureOption {
         var saveCommandMessage = new SaveCommandMessageContainer(rootAggregate);
         aggregateFile.AddCSharpClass(SaveCommandMessageContainer.RenderTree(rootAggregate), "Class_SaveCommandMessage");
         ctx.Use<MessageContainer.BaseClass>()
-            .Register(saveCommandMessage.InterfaceName, saveCommandMessage.CsClassName)
             .Register(saveCommandMessage.CsClassName, saveCommandMessage.CsClassName);
 
         // データ型: コマンドの読み込みやほかの集約からの参照に使われるキー

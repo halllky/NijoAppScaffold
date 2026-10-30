@@ -12,20 +12,11 @@ namespace Nijo.DataStructures.IsStored {
         public SaveCommandMessageContainer(AggregateBase aggregate) : base(aggregate) {
         }
 
-        /// <summary>
-        /// 永続化されるデータ構造の場合、ユーザーに対して永続化されるデータ構造の型ではなく検索可能なデータ構造やコマンドの型で通知する必要があるケースがあるため
-        /// 永続化されるデータ構造型のインターフェースを実装した検索可能なデータ構造のメッセージコンテナを使用することがある。
-        /// </summary>
-        internal string InterfaceName => $"I{_aggregate.PhysicalName}SaveCommandMessages";
         internal override string CsClassName => $"{_aggregate.PhysicalName}SaveCommandMessages";
-
-        protected override IEnumerable<string> GetCsClassImplements() {
-            yield return InterfaceName;
-        }
 
         protected override IEnumerable<MessageContainer.IMember> GetMembers() {
             // SaveCommandと同じデータ型になるのでSaveCommandの処理を流用する。
-            // Updateを使っているのは、Create, Update, Delete のうちUpdateが最も多くの項目を持っているため
+            // Updateを使っているのは、Create, Update のうちUpdateの方が多くの項目を持っているため
             return new SaveCommand(_aggregate, SaveCommand.E_Type.Update)
                 .GetMembers()
                 .Select(m => new MessageContainerMemberImpl {
@@ -35,11 +26,6 @@ namespace Nijo.DataStructures.IsStored {
                     NestedObject = m.Member switch {
                         ChildAggregate child => new SaveCommandMessageContainer(child),
                         ChildrenAggregate children => new SaveCommandMessageContainer(children),
-                        _ => null,
-                    },
-                    CsType = m.Member switch {
-                        ChildAggregate child => new SaveCommandMessageContainer(child).InterfaceName,
-                        ChildrenAggregate children => $"{MessageContainer.SETTER_INTERFACE_LIST}<{new SaveCommandMessageContainer(children).InterfaceName}>",
                         _ => null,
                     },
                 });
@@ -56,31 +42,9 @@ namespace Nijo.DataStructures.IsStored {
             return $$"""
                 #region 登録更新の過程で発生したメッセージの入れ物クラス
                 {{tree.SelectTextTemplate(container => $$"""
-                {{container.RenderInterface()}}
-                """)}}
-                {{tree.SelectTextTemplate(container => $$"""
                 {{container.RenderCSharp()}}
                 """)}}
                 #endregion 登録更新の過程で発生したメッセージの入れ物クラス
-                """;
-        }
-        private string RenderInterface() {
-            return $$"""
-                /// <summary>
-                /// {{_aggregate.DisplayName}} のデータ構造と対応したメッセージの入れ物
-                /// </summary>
-                public interface {{InterfaceName}} : {{MessageContainer.SETTER_INTERFACE}} {
-                {{GetMembers().Cast<MessageContainerMemberImpl>().SelectTextTemplate(m => $$"""
-                    /// <summary>{{m.DisplayName}}に対して発生したメッセージの入れ物</summary>
-                {{If(m.NestedObject == null, () => $$"""
-                    {{MessageContainer.SETTER_INTERFACE}} {{m.PhysicalName}} { get; }
-                """).ElseIf(m.IsArray, () => $$"""
-                    {{MessageContainer.SETTER_INTERFACE_LIST}}<{{m.NestedObject?.InterfaceName}}> {{m.PhysicalName}} { get; }
-                """).Else(() => $$"""
-                    {{m.NestedObject?.InterfaceName}} {{m.PhysicalName}} { get; }
-                """)}}
-                """)}}
-                }
                 """;
         }
         #endregion レンダリング
@@ -91,7 +55,7 @@ namespace Nijo.DataStructures.IsStored {
             public required bool IsArray { get; set; }
             public required SaveCommandMessageContainer? NestedObject { get; set; }
             MessageContainer.Setter? MessageContainer.IMember.NestedObject => NestedObject;
-            public string? CsType { get; set; }
+            public string? CsType => null;
 
             public IEnumerable<string> GetPathSinceParent() {
                 yield return PhysicalName;
@@ -166,8 +130,8 @@ namespace Nijo.DataStructures {
                         if (isOutOfEntryTree) throw new InvalidOperationException("参照先のキーの中では親から子へ辿るパターンは無い");
 
                         var childMemberPhysicalName = curr switch {
-                            ChildAggregate child => new SaveCommand.SaveCommandChildMember(child, SaveCommand.E_Type.Create).PhysicalName, // CUD全部名前同じなのでCにしている
-                            ChildrenAggregate children => new SaveCommand.SaveCommandChildrenMember(children, SaveCommand.E_Type.Create).PhysicalName, // CUD全部名前同じなのでCにしている
+                            ChildAggregate child => new SaveCommand.SaveCommandChildMember(child, SaveCommand.E_Type.Create).PhysicalName, // CreateとUpdateで名前同じなのでCにしている
+                            ChildrenAggregate children => new SaveCommand.SaveCommandChildrenMember(children, SaveCommand.E_Type.Create).PhysicalName, // CreateとUpdateで名前同じなのでCにしている
                             _ => throw new InvalidOperationException("ありえない"),
                         };
                         yield return childMemberPhysicalName;
