@@ -352,6 +352,10 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       <売上SEQ
         Type="int"
         UniqueId="1067685c-ca3e-424d-82ca-2b8045464fb5" />
+      <!--楽観排他用-->
+      <Version
+        Type="int"
+        UniqueId="7f1b8f4e-3a55-4f0e-9d3c-5a1c2e8b6d17" />
       <売上日時
         Type="datetime"
         UniqueId="5fe83afc-073e-490f-932d-5eefad3b0c85" />

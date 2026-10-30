@@ -5,7 +5,7 @@ partial class OverridedApplicationService {
 
     // 売上とその明細テーブルがどこから新規登録される場合であっても
     // 絶対に整合していなければならない内容を記述する。
-    public override void OnBeforeCreate売上(売上CreateCommand command, I売上SaveCommandMessages messages, IPresentationContext context) {
+    private static void Validate売上新規(売上CreateCommand command, 売上SaveCommandMessages messages) {
         // 明細は必ず1件以上
         if (command.売上の売上明細.Count == 0) {
             messages.売上の売上明細.AddError("売上明細は1件以上必要です。");
@@ -37,10 +37,10 @@ partial class OverridedApplicationService {
 
     // 売上とその明細テーブルがどこから更新される場合であっても
     // 絶対に整合していなければならない内容を記述する。
-    public override void OnBeforeUpdate売上(売上UpdateCommand command, 売上DbEntity oldValue, I売上SaveCommandMessages messages, IPresentationContext context) {
+    private static void Validate売上修正(売上UpdateCommand command, IReadOnlyList<売上明細の更新前の値> before, 売上SaveCommandMessages messages) {
 
         // 既存の明細は在庫引当済みのため削除できない
-        var deleted = oldValue.売上の売上明細
+        var deleted = before
             .Where(d => !command.売上の売上明細.Any(nd => nd.明細ID == d.明細ID));
         if (deleted.Any()) {
             messages.売上の売上明細.AddError("在庫引当済みのため、既存の明細を削除することはできません。取消明細を追加して調整してください。");
@@ -49,7 +49,7 @@ partial class OverridedApplicationService {
         // 明細単位のチェック
         for (var i = 0; i < command.売上の売上明細.Count; i++) {
             var newDetail = command.売上の売上明細[i];
-            var oldDetail = oldValue.売上の売上明細.SingleOrDefault(d => d.明細ID == newDetail.明細ID);
+            var oldDetail = before.SingleOrDefault(d => d.明細ID == newDetail.明細ID);
 
             if (oldDetail == null) {
 
@@ -72,7 +72,7 @@ partial class OverridedApplicationService {
                 if (newDetail.区分 != oldDetail.区分)
                     messages.売上の売上明細[i].区分.AddError($"在庫引当済みのため変更できません。新しい明細を追加して調整してください。");
 
-                if (newDetail.商品?.商品SEQ != oldDetail.商品_商品SEQ)
+                if (newDetail.商品?.商品SEQ != oldDetail.商品SEQ)
                     messages.売上の売上明細[i].商品.AddError($"在庫引当済みのため変更できません。新しい明細を追加して調整してください。");
 
                 if (newDetail.売上数量 != oldDetail.売上数量)
@@ -83,4 +83,9 @@ partial class OverridedApplicationService {
             }
         }
     }
+
+    /// <summary>
+    /// 更新コマンドを書き換える前の売上明細の値を控えたもの
+    /// </summary>
+    private sealed record 売上明細の更新前の値(string? 明細ID, 売上明細区分? 区分, int? 商品SEQ, int? 売上数量, int? 売上総額_税込);
 }

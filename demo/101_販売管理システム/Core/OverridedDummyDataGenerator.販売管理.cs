@@ -181,6 +181,7 @@ partial class OverridedDummyDataGenerator {
 
                 await applicationService.Execute売上修正Async(new() {
                     売上SEQ = lastSales.売上SEQ,
+                    Version = lastSales.Version,
                     売上日時 = lastSales.売上日時,
                     担当者 = adminUserRef,
                     備考 = lastSales.備考 + " (修正済み)",

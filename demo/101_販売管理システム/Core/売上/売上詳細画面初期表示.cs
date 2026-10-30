@@ -39,6 +39,7 @@ partial class OverridedApplicationService {
 
         var returnValue = new 売上詳細DisplayData() {
             売上SEQ = entity.売上SEQ,
+            Version = entity.Version,
             売上日時 = entity.売上日時,
             担当者 = new() {
                 従業員番号 = entity.担当者?.従業員番号,
