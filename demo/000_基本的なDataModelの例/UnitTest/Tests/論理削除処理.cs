@@ -23,7 +23,7 @@ public class 論理削除処理 {
         var legacy = db.StartCreating旧システム部署情報();
         legacy.旧システムコード = legacyCode;
         legacy.名称 = "論理削除用旧システム部署";
-        (await db.TrySaveAsync(legacy)).AssertSucceeded();
+        (await db.TrySaveAsync(legacy.AssertValid())).AssertSucceeded();
 
         var department = db.StartCreating部署();
         department.部署ID = departmentId;
@@ -38,9 +38,9 @@ public class 論理削除処理 {
                 new() { 連番 = 2, 係名称 = "係B", 勤怠管理区分 = null },
             ],
         }];
-        var saved = (await db.TrySaveAsync(department)).AssertSucceeded();
+        var saved = (await db.TrySaveAsync(department.AssertValid())).AssertSucceeded();
 
-        (await db.TrySaveAsync(saved.ToDeleteCommand())).AssertSucceeded();
+        (await db.TrySaveAsync(saved.ToDeleteCommand().AssertValid())).AssertSucceeded();
 
         Assert.That(await db.部署DbSet.AnyAsync(x => x.部署ID == departmentId), Is.False, "論理削除後も部署が残っています。");
         Assert.That(await db.課DbSet.AnyAsync(x => x.Parent_部署ID == departmentId), Is.False, "論理削除後も課が残っています。");

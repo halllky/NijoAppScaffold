@@ -94,6 +94,6 @@ public class テーブルからビューへの参照 {
             課名称 = sectionName,
             係 = [],
         }];
-        (await db.TrySaveAsync(department)).AssertSucceeded();
+        (await db.TrySaveAsync(department.AssertValid())).AssertSucceeded();
     }
 }

@@ -41,7 +41,7 @@ public class ユニーク制約のテスト {
         var legacy = db.StartCreating旧システム部署情報();
         legacy.旧システムコード = "LEGACY-001";
         legacy.名称 = "旧システム部署A";
-        (await db.TrySaveAsync(legacy)).AssertSucceeded();
+        (await db.TrySaveAsync(legacy.AssertValid())).AssertSucceeded();
 
         var firstDepartment = db.StartCreating部署();
         firstDepartment.部署ID = 1;
@@ -53,7 +53,7 @@ public class ユニーク制約のテスト {
             課名称 = "第一課",
             係 = [],
         }];
-        (await db.TrySaveAsync(firstDepartment)).AssertSucceeded();
+        (await db.TrySaveAsync(firstDepartment.AssertValid())).AssertSucceeded();
 
         var duplicateDepartment = db.StartCreating部署();
         duplicateDepartment.部署ID = 2;
@@ -65,7 +65,7 @@ public class ユニーク制約のテスト {
             課名称 = "第二課",
             係 = [],
         }];
-        var duplicateResult = await db.TrySaveAsync(duplicateDepartment);
+        var duplicateResult = await db.TrySaveAsync(duplicateDepartment.AssertValid());
 
         Assert.That(duplicateResult.Success, Is.False, "ユニーク制約違反でエラーになっていません。");
         Assert.That(duplicateResult.FailureKind, Is.EqualTo(SaveFailureKind.UniqueConstraint));
@@ -89,7 +89,7 @@ public class ユニーク制約のテスト {
         var legacy = db.StartCreating旧システム部署情報();
         legacy.旧システムコード = legacyCode;
         legacy.名称 = "ナビ用旧システム部署";
-        (await db.TrySaveAsync(legacy)).AssertSucceeded();
+        (await db.TrySaveAsync(legacy.AssertValid())).AssertSucceeded();
 
         var department = db.StartCreating部署();
         department.部署ID = departmentId;
@@ -101,7 +101,7 @@ public class ユニーク制約のテスト {
             課名称 = "ナビゲーション課",
             係 = [],
         }];
-        (await db.TrySaveAsync(department)).AssertSucceeded();
+        (await db.TrySaveAsync(department.AssertValid())).AssertSucceeded();
 
         await transaction.CommitAsync();
 

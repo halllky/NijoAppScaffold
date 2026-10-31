@@ -72,14 +72,12 @@ public class カテゴリ付き汎用参照の回帰テスト {
         employee.所属部署 = null;
         employee.契約種別 = new() { 区分値 = sharedCode };
 
-        var messages = employee.GetValidationErrors();
+        var isValid = employee.TryValidate(out var validated, out var messages);
 
+        Assert.That(isValid, Is.False, "カテゴリ不一致の区分値が検証エラーとして扱われていません。");
+        Assert.That(validated, Is.Null);
         Assert.That(messages.契約種別.HasError(), Is.True, "契約種別にエラーが付与されていません。");
         Assert.That(messages.GetAllMessages(), Has.Some.Contains("契約種別: 契約種別 に指定された区分値が存在しません。"));
-
-        var saveResult = await db.TrySaveAsync(employee);
-        Assert.That(saveResult.Success, Is.False, "カテゴリ不一致の区分値が保存エラーとして扱われていません。");
-        Assert.That(saveResult.FailureKind, Is.EqualTo(SaveFailureKind.ProgrammingError));
     }
 
     [Test]
@@ -108,11 +106,11 @@ public class カテゴリ付き汎用参照の回帰テスト {
             }],
         }];
 
-        var messages = department.GetValidationErrors();
+        department.TryValidate(out _, out var messages);
 
         Assert.That(messages.HasError(), Is.False, "保存可能な内容なのにエラーがあります。");
         Assert.That(messages.課[0].係[0].勤怠管理区分.HasError(), Is.False, "勤怠管理区分にエラーがあります。");
-        (await db.TrySaveAsync(department)).AssertSucceeded();
+        (await db.TrySaveAsync(department.AssertValid())).AssertSucceeded();
     }
 
     private static void AssertRefColumns(Type type, string valueColumnName, string hardCodedColumnName) {
@@ -134,6 +132,6 @@ public class カテゴリ付き汎用参照の回帰テスト {
         genericLookup.区分値 = code;
         genericLookup.表示名称 = displayName;
 
-        (await db.TrySaveAsync(genericLookup)).AssertSucceeded();
+        (await db.TrySaveAsync(genericLookup.AssertValid())).AssertSucceeded();
     }
 }
