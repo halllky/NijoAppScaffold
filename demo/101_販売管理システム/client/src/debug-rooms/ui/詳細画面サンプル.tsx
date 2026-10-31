@@ -269,7 +269,7 @@ async function loadSampleDisplayData(): Promise<サンプル伝票.DisplayData> 
   data.明細 = [
     { 品名: 'りんご', 数量: '10', 単価: '120.00', 納期: '2026-10-10', 完了: true, 優先度: '通常', 検品者: { 従業員番号: 'E0002', 氏名: '佐藤 花子' }, 備考: '' },
     { 品名: 'みかん', 数量: '200', 単価: '45.50', 納期: '2026-10-15', 完了: false, 優先度: '至急', 検品者: {}, 備考: '箱入り' },
-    { 品名: 'ぶどう', 数量: '5', 単価: '980.00', 納期: '', 完了: false, 優先度: null, 検品者: {}, 備考: '納期未定。\n入荷次第連絡する。' },
+    { 品名: 'ぶどう', 数量: '5', 単価: '980.00', 納期: '', 完了: false, 優先度: null, 検品者: {}, 備考: '納期未定。\n確定次第連絡する。' },
   ].map(values => ({
     ...サンプル伝票.createNewDisplayData_明細(),
     ...values,
@@ -296,7 +296,7 @@ function createSampleServerMessages(values: サンプル伝票.DisplayData) {
         warn: ['明細が10行を超えると承認が必要になります。'],
         children: Object.fromEntries(values.明細.slice(0, 2).map((_, index) => [
           index.toString(),
-          { children: { 数量: { error: ['在庫が不足しています。'] } } },
+          { children: { 数量: { error: ['上限を超えています。'] } } },
         ])),
       },
     },

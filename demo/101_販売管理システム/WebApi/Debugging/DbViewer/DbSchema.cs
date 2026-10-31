@@ -40,7 +40,7 @@ public class DbSchema {
         var isView = entityType.GetTableName() == null;
         var tableName = entityType.GetTableName() ?? entityType.GetViewName()!;
 
-        // "入荷DbEntity" → "入荷"
+        // "従業員DbEntity" → "従業員"
         var clrName = entityType.ClrType.Name;
         var logicalName = clrName.EndsWith("DbEntity") ? clrName[..^"DbEntity".Length] : clrName;
 

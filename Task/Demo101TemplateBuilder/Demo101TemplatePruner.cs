@@ -15,61 +15,59 @@ namespace Demo101TemplateBuilder;
 /// 残りのソースがそのままコンパイルできる構造になっている（業務画面の自己登録、partial による分割など）。
 /// </para>
 /// <para>
-/// デモ101の nijo.xml やフォルダ構造に変更があった場合、このクラスの更新が必要になる可能性がある。
-/// そのため <c>Nijo.IntegrationTest</c> にこのクラスを実行したうえで dotnet build / npm run tsc が
-/// 通ることを確認するテストを用意している。
+/// nijo.xml の定義と画面は、テンプレートに残すものを列挙し、それ以外はすべて削除する。
+/// デモ101に業務を足しても消し忘れが起きず、基盤を足して列挙し忘れた場合はコンパイルエラーで気付ける。
+/// <c>Nijo.IntegrationTest</c> にこのクラスを実行したうえでビルドとテストが通ることを確認するテストを用意している。
 /// </para>
 /// </summary>
 public static class Demo101TemplatePruner
 {
 
-    /// <summary>DataStructures直下の要素でUniqueIdがこれに合致するものを削除する</summary>
-    private static readonly HashSet<string> REMOVE_DATA_STRUCTURE_IDS = [
-        "a1b2c3d4-e5f6-4a1b-8c2d-3e4f5a6b7c8d", // 商品
-        "e5f6a1b2-c3d4-4e5f-2a6b-7c8d9e0f1a2b", // 入荷
-        "f6a1b2c3-d4e5-4f2a-9b3c-4d5e6f7a8b9c", // 売上
-        "bf2453f1-2a89-4209-ab79-00d526fd15a9", // 入荷詳細
-        "a5e5b615-6cc1-4a50-8cc7-fe910dca543b", // 入荷明細
-        "d0929a1e-1490-42c3-a728-d740c85ff7b7", // 売上一覧
-        "2352e942-65b1-47fe-ac3b-0c49bd4e295f", // 売上詳細
-        "0d252a96-0dd0-45eb-af33-e761419117c7", // 売上詳細画面初期表示Parameter
-        "ca790c30-db44-4439-9452-2a1310a901bb", // 入荷一覧
-        "cf33b04a-b6a2-4559-b98c-563ddcc76394", // 商品一覧
-        "2555dc15-3ed7-48cb-9e78-0e7b09de86a3", // 在庫調整Parameter
-        "4a1fa98c-1503-4d77-8161-e0e2f5f2fd1d", // 在庫調整
-        "9604df00-d30a-4033-affd-6d2d625558fa", // 商品在庫増減履歴
-        "c766195e-c279-4a50-84bb-fcbf46ac9798", // 入荷詳細画面初期表示Parameter
-        "7c3fe519-2692-4465-b151-9884cc73cdb7", // 売上新規登録ReturnValue
-        "da3c0330-ac57-43ce-8cba-212da1053aab", // 入荷登録ReturnValue
+    /// <summary>テンプレートに残す、DataStructures直下の要素のUniqueId</summary>
+    private static readonly HashSet<string> KEEP_DATA_STRUCTURE_IDS = [
+        "659bf33a-c624-4e67-96a9-460809d70995", // 従業員
+        "7e844312-66b4-4693-b8eb-c4d3a4dd2565", // 従業員Ref
+        "7508f4ed-a9ba-4c3d-b258-eb328affebdc", // 従業員マスタ
+        "28bf1f9e-8b77-4a78-938d-e29578c44da3", // 従業員一括更新Parameter
+        "ca0a28e1-6792-4d8b-ad9e-4a373ba190fc", // パスワード再発行Parameter
+        "da5e2ba7-864b-4d23-852b-1a4c6f525f98", // パスワード変更Parameter
+        "a775c249-a449-4700-a33a-262ca6c820f3", // ログインParameter
+        "f594d8ac-f7ff-44ca-878f-fcbfd1e79ee1", // ログインユーザー情報
+        "72d0c66e-b523-4dd1-b8a0-8384368fe38b", // セッション
     ];
 
-    /// <summary>Commands直下の要素でUniqueIdがこれに合致するものを削除する</summary>
-    private static readonly HashSet<string> REMOVE_COMMAND_IDS = [
-        "c2a6e537-f471-4512-ae2b-d4a38017604e", // 入荷登録
-        "6cb9f1e7-afb0-4197-be66-d9779315026c", // 商品データ取込
-        "e4e427ae-7a2d-468b-864e-6536dbb0a47a", // 売上新規登録
-        "590f0ad0-92c9-4281-82f7-6f8c0d04de1d", // 売上詳細画面初期表示
-        "271203a5-7b54-449b-a443-92019f7f1035", // 売上修正
-        "6eae3b9e-64ab-49a6-bb26-1738a31561c7", // 入荷修正
-        "23aacfdc-c4d5-499f-891e-999542dc5258", // 在庫調整登録
-        "d8cff664-d1a8-43c8-ac5e-cc1b2a8fb400", // 入荷詳細画面初期表示
-        "00556384-1f6d-4596-89d6-2cd1a9094ea5", // 売上金額シミュレート
+    /// <summary>テンプレートに残す、Commands直下の要素のUniqueId</summary>
+    private static readonly HashSet<string> KEEP_COMMAND_IDS = [
+        "af387361-2401-4308-9e04-8e5973f39426", // ログイン
+        "8877c58b-260a-4de3-a007-ce73d1d222b3", // ログアウト
+        "87def3ce-18a3-4ad1-9ab1-bf0ad3c80763", // ログイン状態確認
+        "c6feafdf-b973-4196-afa1-111eb9638087", // パスワード変更
+        "abbe87d5-69df-45a0-9166-1b05f08de613", // パスワード再発行
+        "5388c52e-2932-4226-bf5b-734ae8a50112", // 従業員一括更新
+        "eadf411b-2c47-483f-b0a8-fc52c9486adc", // クリーンナップ
     ];
 
-    /// <summary>StaticEnums直下の要素でUniqueIdがこれに合致するものを削除する</summary>
-    private static readonly HashSet<string> REMOVE_ENUM_IDS = [
-        "e4a132f9-580e-477f-abf3-9359c92a643a", // 消費税区分
-        "724ac342-ebd2-4a0b-bb75-5bd174cd5f60", // 売上明細区分
+    private const string PERMISSION_ENUM_ID = "d3d0cb8d-23a2-4b86-a85e-b8965284c824"; // 権限区分
+
+    /// <summary>テンプレートに残す、StaticEnums直下の要素のUniqueId</summary>
+    private static readonly HashSet<string> KEEP_ENUM_IDS = [PERMISSION_ENUM_ID];
+
+    /// <summary>テンプレートに残す、権限区分の値のUniqueId。業務ごとの権限区分は案件で足す</summary>
+    private static readonly HashSet<string> KEEP_PERMISSION_VALUE_IDS = [
+        "95e18962-7298-442c-97a1-20d00de5c5bd", // システム管理者
     ];
 
     /// <summary>
-    /// CustomAttributes直下の要素（タグ名 "Custom-&lt;UniqueId&gt;"）でこれに合致するものを削除する。
+    /// テンプレートに残す、CustomAttributes直下の要素（タグ名 "Custom-&lt;UniqueId&gt;"）のUniqueId。
     /// "金額項目"(IsCurrency)・"数量"(IsQuantity) はどの項目にも使用されなくなるが、
     /// 汎用的な書式指定として今後利用者が自分の項目に付与できるように定義自体は残す
     /// （削除すると生成後のメタデータの型からプロパティが消え、それを参照している client/src/ui がコンパイルエラーになる）。
     /// </summary>
-    private static readonly HashSet<string> REMOVE_CUSTOM_ATTRIBUTE_IDS = [
-        "0f2d701d-f481-42d4-8dfb-5296c1b40246", // 0以上のみ
+    private static readonly HashSet<string> KEEP_CUSTOM_ATTRIBUTE_IDS = [
+        "c582bb2e-804e-4136-93f0-85139aaa675f", // 最大長
+        "e543a1e3-a539-459b-86ce-a17686043d59", // 金額項目
+        "beceba92-faf8-49eb-a987-ff0d53889d64", // 数量
+        "4d868e55-06d6-44eb-aa97-901f39dd1782", // マスキング
     ];
 
     /// <summary>テンプレートに不要なフォルダ・ファイル</summary>
@@ -94,6 +92,8 @@ public static class Demo101TemplatePruner
         "P000_トップページ.tsx",
         "P001_ログイン.tsx",
         "P002_ログアウト.tsx",
+        "P400_従業員.tsx",
+        "shared/従業員検索ダイアログ.tsx",
     ];
 
     /// <summary>
@@ -108,7 +108,7 @@ public static class Demo101TemplatePruner
     }
 
     // ============================================================
-    // 1. nijo.xml から販売管理業務固有の定義を削除する
+    // nijo.xml から販売管理業務固有の定義を削除する
     // ============================================================
 
     private static void PruneNijoXml(string xmlPath)
@@ -116,24 +116,19 @@ public static class Demo101TemplatePruner
         var doc = XDocument.Load(xmlPath);
         var root = doc.Root ?? throw new InvalidOperationException($"ルート要素が見つかりません: {xmlPath}");
 
-        RemoveChildrenByUniqueId(root.Element("DataStructures"), REMOVE_DATA_STRUCTURE_IDS);
-        RemoveChildrenByUniqueId(root.Element("Commands"), REMOVE_COMMAND_IDS);
-        RemoveChildrenByUniqueId(root.Element("StaticEnums"), REMOVE_ENUM_IDS);
+        var uniqueIdOf = (XElement el) => (string?)el.Attribute("UniqueId");
+        KeepOnly(root.Element("DataStructures"), KEEP_DATA_STRUCTURE_IDS, uniqueIdOf);
+        KeepOnly(root.Element("Commands"), KEEP_COMMAND_IDS, uniqueIdOf);
+        KeepOnly(root.Element("StaticEnums"), KEEP_ENUM_IDS, uniqueIdOf);
+        KeepOnly(
+            root.Element("StaticEnums")?.Elements().SingleOrDefault(el => uniqueIdOf(el) == PERMISSION_ENUM_ID),
+            KEEP_PERMISSION_VALUE_IDS,
+            uniqueIdOf);
 
-        var customAttributes = root.Element("CustomAttributes");
-        if (customAttributes != null)
-        {
-            foreach (var el in customAttributes.Elements().ToArray())
-            {
-                const string PREFIX = "Custom-";
-                if (!el.Name.LocalName.StartsWith(PREFIX)) continue;
-                var id = el.Name.LocalName[PREFIX.Length..];
-                if (REMOVE_CUSTOM_ATTRIBUTE_IDS.Contains(id))
-                {
-                    RemoveWithPrecedingComment(el);
-                }
-            }
-        }
+        const string CUSTOM_ATTRIBUTE_PREFIX = "Custom-";
+        KeepOnly(root.Element("CustomAttributes"), KEEP_CUSTOM_ATTRIBUTE_IDS, el => el.Name.LocalName.StartsWith(CUSTOM_ATTRIBUTE_PREFIX)
+            ? el.Name.LocalName[CUSTOM_ATTRIBUTE_PREFIX.Length..]
+            : null);
 
         // nijo が保存するときと同じ書式にする。違うと利用者が最初に保存したときファイル全体が差分になるため
         using (var writer = XmlWriter.Create(xmlPath, new XmlWriterSettings
@@ -149,13 +144,23 @@ public static class Demo101TemplatePruner
         File.AppendAllText(xmlPath, "\n");
     }
 
-    private static void RemoveChildrenByUniqueId(XElement? section, HashSet<string> ids)
+    /// <summary>
+    /// <paramref name="section"/> の子要素のうち、<paramref name="keepIds"/> に合致しないものをすべて削除する。
+    /// </summary>
+    private static void KeepOnly(XElement? section, HashSet<string> keepIds, Func<XElement, string?> idOf)
     {
-        if (section == null) return;
-        foreach (var el in section.Elements().ToArray())
+        var children = section?.Elements().ToArray() ?? [];
+
+        var missing = keepIds.Except(children.Select(idOf).OfType<string>()).ToArray();
+        if (missing.Length > 0)
         {
-            var uniqueId = (string?)el.Attribute("UniqueId");
-            if (uniqueId != null && ids.Contains(uniqueId))
+            throw new InvalidOperationException($"テンプレートに残す定義が見つかりません（デモ101の構造が変わった可能性があります）: {string.Join(", ", missing)}");
+        }
+
+        foreach (var el in children)
+        {
+            var id = idOf(el);
+            if (id == null || !keepIds.Contains(id))
             {
                 RemoveWithPrecedingComment(el);
             }
@@ -175,7 +180,7 @@ public static class Demo101TemplatePruner
     }
 
     // ============================================================
-    // 2. 業務固有のフォルダ・ファイルを削除する
+    // 業務固有のフォルダ・ファイルを削除する
     // ============================================================
 
     private static void DeleteUnneededPaths(string workDir)
@@ -200,7 +205,7 @@ public static class Demo101TemplatePruner
     }
 
     // ============================================================
-    // 3. 業務画面を削除する
+    // 業務画面を削除する
     // ============================================================
 
     private static void DeleteBusinessPages(string workDir)
@@ -214,14 +219,13 @@ public static class Demo101TemplatePruner
             }
         }
 
-        foreach (var dir in Directory.GetDirectories(pagesDir))
+        foreach (var file in Directory.GetFiles(pagesDir, "*", SearchOption.AllDirectories))
         {
-            Directory.Delete(dir, recursive: true);
-        }
-        foreach (var file in Directory.GetFiles(pagesDir))
-        {
-            if (KEEP_PAGES.Contains(Path.GetFileName(file))) continue;
+            // macOS のファイルシステムではファイル名の濁点が分解されていることがあるので正規化して比較する
+            var relativePath = Path.GetRelativePath(pagesDir, file).Replace('\\', '/').Normalize();
+            if (KEEP_PAGES.Contains(relativePath)) continue;
             File.Delete(file);
+            DeleteDirectoryIfEmpty(Path.GetDirectoryName(file)!);
         }
     }
 

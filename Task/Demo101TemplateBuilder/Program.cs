@@ -5,6 +5,7 @@ if (args.Length != 1) {
 
 try {
     Demo101TemplateBuilder.Demo101TemplatePruner.Prune(args[0]);
+    Demo101TemplateBuilder.Demo101TemplateNaming.ResetToDefaultName(args[0]);
     return 0;
 } catch (Exception ex) {
     Console.Error.WriteLine(ex.ToString());

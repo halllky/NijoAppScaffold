@@ -1,0 +1,22 @@
+using MyApp;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace MyApp.UnitTest;
+
+partial class DB接続あり_更新あり {
+
+    [Test]
+    [Category("DB接続あり（更新あり）")]
+    public async Task ダミーデータ作成処理が成功するか() {
+        var scope = TestUtilImpl.Instance.CreateScope("ダミーデータ作成処理が成功するか");
+
+        var generator = new OverridedDummyDataGenerator();
+        await generator.GenerateAsync(scope.App);
+
+        Assert.Pass();
+    }
+}

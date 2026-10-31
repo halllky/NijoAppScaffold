@@ -14,11 +14,11 @@ fi
 # 基本的な機能があらかじめそろった新規プロジェクトテンプレート（demo101-template.zip）を作成する。
 #
 # 処理内容:
-#   1. git archive でデモ101のソース一式をzip化する
-#   2. 解凍する
-#   3. 販売管理業務固有の部分（nijo.xml の定義と、それに依存するフォルダ・ファイル）を削除する
-#      （削除対象は Demo101TemplateBuilder 内にハードコードされている）
-#   4. 削除後のフォルダをzip化する
+#   - git archive でデモ101のソース一式を展開する
+#   - 販売管理業務固有の部分（nijo.xml の定義と、それに依存するフォルダ・ファイル）を削除し、
+#     デモ101固有の名前を既定の名前に戻す（Demo101TemplateBuilder）
+#   - 残ったデータ構造の初期マイグレーションと、client のロックファイルを作成する
+#   - 作業で作られた一時ファイルを取り除き、フォルダをzip化する
 #
 # 出力される demo101-template.zip のリソース名は、
 # Nijo.AppScaffold/GeneratedProject.cs の Templates ディクショナリで定義されているものと対応している。
@@ -26,6 +26,8 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 NIJO_ROOT="$SCRIPT_DIR/.."
 DEMO_DIR="demo/101_販売管理システム"
+
+NIJO_EXE_PATH="$(cd "$NIJO_ROOT" && pwd)/Nijo.AppScaffold/bin/Debug/net10.0/nijo"
 
 OUT_DIR="$NIJO_ROOT/temp_release"
 ARCHIVE_ZIP="$OUT_DIR/demo101-template-src.zip"
@@ -36,6 +38,9 @@ echo "出力先を初期化します。"
 mkdir -p "$OUT_DIR"
 rm -f "$ARCHIVE_ZIP" "$FINAL_ZIP"
 rm -rf "$WORK_DIR"
+
+echo "初期マイグレーションの作成に使う nijo をビルドします。"
+dotnet build "$NIJO_ROOT/Nijo.AppScaffold" -c Debug
 
 echo "デモ101のソース一式を圧縮します: $DEMO_DIR"
 git -C "$NIJO_ROOT" archive HEAD:"$DEMO_DIR" --format=zip -o "$ARCHIVE_ZIP"
@@ -56,12 +61,28 @@ else
   unzip -q "$ARCHIVE_ZIP" -d "$WORK_DIR"
 fi
 
-echo "販売管理業務固有の部分を削除します。"
+echo "販売管理業務固有の部分を削除し、名前を既定の名前に戻します。"
 dotnet run --project "$SCRIPT_DIR/Demo101TemplateBuilder/Demo101TemplateBuilder.csproj" -- "$WORK_DIR"
 if [ $? -ne 0 ]; then
   echo "販売管理業務固有の部分の削除に失敗しました。"
   exit 1
 fi
+
+echo "初期マイグレーションを作成します。"
+printf '00000_Init\n' | NIJO_CLI_PATH="$NIJO_EXE_PATH" bash "$WORK_DIR/Task/ADD_MIGRATION.sh"
+if ! ls "$WORK_DIR/Core/Migrations/"*_00000_Init.cs > /dev/null 2>&1; then
+  echo "初期マイグレーションの作成に失敗しました。"
+  exit 1
+fi
+
+echo "client のロックファイルを作成します。"
+(cd "$WORK_DIR/client" && npm install --package-lock-only)
+
+echo "一時ファイルを取り除きます。"
+# git init するのは、テンプレートの .gitignore に従ってビルド結果や自動生成されたソースを消すためだけである
+git -C "$WORK_DIR" init -q
+git -C "$WORK_DIR" clean -fdXq
+rm -rf "$WORK_DIR/.git"
 
 echo "テンプレートを圧縮します: $FINAL_ZIP"
 (cd "$WORK_DIR" && zip -r -q "$FINAL_ZIP" .)

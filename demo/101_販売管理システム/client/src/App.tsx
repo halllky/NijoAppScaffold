@@ -6,6 +6,7 @@ import { LoginUserProvider, useLoginLogout } from "./useLoginLogout"
 import * as P000Module from "./pages/P000_トップページ"
 import * as P002Module from "./pages/P002_ログアウト"
 import { navigationItems } from "./navigationItems"
+import { APP_NAME } from "./appName"
 import DebugMenuButton from "./debug-rooms/デバッグメニュー"
 
 /**
@@ -39,7 +40,7 @@ function RootLayout() {
         <ul className="flex flex-wrap gap-x-8 items-center">
           <li className="shrink-0">
             <RootNavigationLink to={P000Module.URL} className="text-lg font-bold mr-4">
-              販売管理システム
+              {APP_NAME}
             </RootNavigationLink>
           </li>
           {loginUser && navigationItems.map(item => (

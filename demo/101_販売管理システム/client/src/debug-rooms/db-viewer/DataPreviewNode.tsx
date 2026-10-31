@@ -115,11 +115,11 @@ export const DataPreviewNode = memoizeFlowNode(function DataPreviewNode({ data, 
         <form onSubmit={handleSearch} className="nodrag flex flex-col gap-1 px-2 py-1 border-b border-gray-200 text-sm">
           <label className="flex items-center gap-1">
             <span className="flex-none w-16 text-xs text-gray-500">WHERE</span>
-            <input ref={whereRef} defaultValue={preview.where} placeholder="例: 商品SEQ > 3" spellCheck={false} className="flex-1 min-w-0 px-1 border border-gray-300 rounded-sm font-mono" />
+            <input ref={whereRef} defaultValue={preview.where} placeholder="例: Version > 3" spellCheck={false} className="flex-1 min-w-0 px-1 border border-gray-300 rounded-sm font-mono" />
           </label>
           <label className="flex items-center gap-1">
             <span className="flex-none w-16 text-xs text-gray-500">ORDER BY</span>
-            <input ref={orderByRef} defaultValue={preview.orderBy} placeholder="例: 商品名 DESC" spellCheck={false} className="flex-1 min-w-0 px-1 border border-gray-300 rounded-sm font-mono" />
+            <input ref={orderByRef} defaultValue={preview.orderBy} placeholder="例: 氏名 DESC" spellCheck={false} className="flex-1 min-w-0 px-1 border border-gray-300 rounded-sm font-mono" />
             <select ref={pageSizeRef} defaultValue={preview.pageSize} className="flex-none px-1 border border-gray-300 rounded-sm" title="1ページあたりの件数">
               {PAGE_SIZE_OPTIONS.map(size => <option key={size} value={size}>{size}件</option>)}
             </select>
