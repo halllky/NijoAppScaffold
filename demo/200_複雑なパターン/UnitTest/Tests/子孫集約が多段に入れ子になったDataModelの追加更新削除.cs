@@ -43,7 +43,7 @@ partial class DB接続あり_更新あり {
                 作業体制 = null,
             },
         ];
-        var created = (await db.TrySaveAsync(plan)).AssertSucceeded();
+        var created = (await db.TrySaveAsync(plan.AssertValid())).AssertSucceeded();
 
         // 作業体制の有無を入れ替えて更新
         created.作業工程[0].作業体制 = null;
@@ -51,14 +51,14 @@ partial class DB接続あり_更新あり {
             責任者名 = "責任者B",
             作業者 = [new() { 作業者番号 = 1, 作業者名 = "作業者B" }],
         };
-        var updated = (await db.TrySaveAsync(created)).AssertSucceeded();
+        var updated = (await db.TrySaveAsync(created.AssertValid())).AssertSucceeded();
         Assert.Multiple(() => {
             Assert.That(scope.App.DbContext.作業体制DbSet.Single().Parent_工程番号, Is.EqualTo(2));
             Assert.That(scope.App.DbContext.作業者DbSet.Single().作業者名, Is.EqualTo("作業者B"));
         });
 
         // 論理削除
-        (await db.TrySaveAsync(updated.ToDeleteCommand())).AssertSucceeded();
+        (await db.TrySaveAsync(updated.ToDeleteCommand().AssertValid())).AssertSucceeded();
         Assert.Multiple(() => {
             Assert.That(scope.App.DbContext.保守計画DbSet.Any(), Is.False);
             Assert.That(scope.App.DbContext.作業工程DbSet.Any(), Is.False);

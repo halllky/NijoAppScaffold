@@ -78,7 +78,7 @@ partial class DB接続あり_更新あり {
                     }
                 }
             };
-            (await scope.App.DbContext.TrySaveAsync(data)).AssertSucceeded();
+            (await scope.App.DbContext.TrySaveAsync(data.AssertValid())).AssertSucceeded();
             await tran.CommitAsync();
         }
 
@@ -149,7 +149,7 @@ partial class DB接続あり_更新あり {
                     }
                 }
             };
-            (await scope.App.DbContext.TrySaveAsync(data)).AssertSucceeded();
+            (await scope.App.DbContext.TrySaveAsync(data.AssertValid())).AssertSucceeded();
             await tran.CommitAsync();
         }
 
@@ -211,7 +211,7 @@ partial class DB接続あり_更新あり {
                     在庫状況履歴 = new List<在庫状況履歴UpdateCommand>() // 履歴を空にして削除
                 }
             };
-            (await scope.App.DbContext.TrySaveAsync(data)).AssertSucceeded();
+            (await scope.App.DbContext.TrySaveAsync(data.AssertValid())).AssertSucceeded();
             await tran.CommitAsync();
         }
 
@@ -273,7 +273,7 @@ partial class DB接続あり_更新あり {
                     },
                 },
             };
-            (await scope.App.DbContext.TrySaveAsync(data)).AssertSucceeded();
+            (await scope.App.DbContext.TrySaveAsync(data.AssertValid())).AssertSucceeded();
             await tran.CommitAsync();
         }
 
@@ -306,7 +306,7 @@ partial class DB接続あり_更新あり {
             data.供給業者 = new() { 供給業者ID = supplier1.供給業者ID };
             data.機器詳細 = null; // 機器詳細を削除
             data.在庫情報 = new List<在庫情報UpdateCommand>(); // 在庫情報を空にして削除
-            (await scope.App.DbContext.TrySaveAsync(data)).AssertSucceeded();
+            (await scope.App.DbContext.TrySaveAsync(data.AssertValid())).AssertSucceeded();
             await tran.CommitAsync();
         }
 

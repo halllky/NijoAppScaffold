@@ -32,7 +32,7 @@ partial class DB接続あり_更新あり {
         // 1回のSQLあたりのキーの数の上限である100件を超える件数を用意する
         const int COUNT = 230;
         await using (var tran = await db.Database.BeginTransactionAsync()) {
-            (await db.TrySaveAsync(Enumerable.Range(0, COUNT).Select(i => Create機器分類(db, $"C{i}")).ToArray())).AssertSucceeded();
+            (await db.TrySaveAsync(Enumerable.Range(0, COUNT).Select(i => Create機器分類(db, $"C{i}").AssertValid()).ToArray())).AssertSucceeded();
             await tran.CommitAsync();
         }
 
@@ -62,13 +62,13 @@ partial class DB接続あり_更新あり {
             var department = db.StartCreating診療科マスタ();
             department.診療科ID = DEPARTMENT_ID;
             department.診療科名 = "内科";
-            (await db.TrySaveAsync(department)).AssertSucceeded();
+            (await db.TrySaveAsync(department.AssertValid())).AssertSucceeded();
 
             var schedule = db.StartCreating勤務スケジュール();
             schedule.医療従事者 = new() { 医療従事者ID = (医療従事者ID型?)employee.医療従事者ID };
             schedule.診療科 = new() { 診療科ID = DEPARTMENT_ID };
             schedule.日付 = date;
-            (await db.TrySaveAsync(schedule)).AssertSucceeded();
+            (await db.TrySaveAsync(schedule.AssertValid())).AssertSucceeded();
             await tran.CommitAsync();
         }
 
@@ -89,8 +89,8 @@ partial class DB接続あり_更新あり {
     public async Task 任意の条件で子孫ごと読み込める() {
         var db = TestUtilImpl.Instance.CreateScope(nameof(任意の条件で子孫ごと読み込める)).App.DbContext;
         await using (var tran = await db.Database.BeginTransactionAsync()) {
-            (await db.TrySaveAsync(Create保守計画(db, "PLAN1"))).AssertSucceeded();
-            (await db.TrySaveAsync(Create保守計画(db, "PLAN2"))).AssertSucceeded();
+            (await db.TrySaveAsync(Create保守計画(db, "PLAN1").AssertValid())).AssertSucceeded();
+            (await db.TrySaveAsync(Create保守計画(db, "PLAN2").AssertValid())).AssertSucceeded();
             await tran.CommitAsync();
         }
 
@@ -110,15 +110,17 @@ partial class DB接続あり_更新あり {
     public async Task 読み込み時点でバージョンが食い違っていれば検証エラーになる() {
         var db = TestUtilImpl.Instance.CreateScope(nameof(読み込み時点でバージョンが食い違っていれば検証エラーになる)).App.DbContext;
         await using (var tran = await db.Database.BeginTransactionAsync()) {
-            (await db.TrySaveAsync(Create機器分類(db, "C1"))).AssertSucceeded();
+            (await db.TrySaveAsync(Create機器分類(db, "C1").AssertValid())).AssertSucceeded();
             await tran.CommitAsync();
         }
 
         var loaded = await db.LoadForEdit機器分類マスタAsync(new 機器分類マスタKeyWithVersion(99) { 機器分類ID = "C1" });
 
         Assert.Multiple(() => {
-            Assert.That(loaded!.GetValidationErrors().HasError(), Is.True);
-            Assert.That(loaded.ToDeleteCommand().GetValidationErrors().HasError(), Is.True);
+            Assert.That(loaded!.TryValidate(out _, out var updateErrors), Is.False);
+            Assert.That(updateErrors.HasError(), Is.True);
+            Assert.That(loaded.ToDeleteCommand().TryValidate(out _, out var deleteErrors), Is.False);
+            Assert.That(deleteErrors.HasError(), Is.True);
         });
     }
 
@@ -131,12 +133,13 @@ partial class DB接続あり_更新あり {
         reservation.予約ID = "R1";
         reservation.予約日時 = DateTime.Now;
         reservation.患者 = null;
-        Assert.That(reservation.GetValidationErrors().患者.HasError(), Is.True);
+        reservation.TryValidate(out _, out var reservationErrors);
+        Assert.That(reservationErrors.患者.HasError(), Is.True);
 
         // Children の2行目の項目
         var plan = Create保守計画(db, "PLAN1");
         plan.作業工程[1].工程名 = new string('あ', 101);
-        var planErrors = plan.GetValidationErrors();
+        plan.TryValidate(out _, out var planErrors);
         Assert.Multiple(() => {
             Assert.That(planErrors.作業工程[0].工程名.HasError(), Is.False);
             Assert.That(planErrors.作業工程[1].工程名.HasError(), Is.True);
@@ -146,7 +149,8 @@ partial class DB接続あり_更新あり {
         var employee = db.StartCreating医療従事者マスタ();
         employee.医療従事者ID = null;
         employee.氏名 = "氏名";
-        Assert.That(employee.GetValidationErrors().医療従事者ID.HasError(), Is.True);
+        employee.TryValidate(out _, out var employeeErrors);
+        Assert.That(employeeErrors.医療従事者ID.HasError(), Is.True);
 
         // 検証はコマンドの状態を変更しない
         Assert.That(plan.作業工程[1].工程名, Has.Length.EqualTo(101));
@@ -166,9 +170,11 @@ partial class DB接続あり_更新あり {
         department.診療科名 = "内科";
         department.診療科マスタの住所 = new() { 郵便番号 = "XYZ", 都道府県 = null, 市区町村 = null, 番地建物名 = null };
 
+        warehouse.TryValidate(out _, out var warehouseErrors);
+        department.TryValidate(out _, out var departmentErrors);
         Assert.Multiple(() => {
-            Assert.That(warehouse.GetValidationErrors().保管庫マスタの住所.郵便番号.HasError(), Is.True);
-            Assert.That(department.GetValidationErrors().診療科マスタの住所.郵便番号.HasError(), Is.True);
+            Assert.That(warehouseErrors.保管庫マスタの住所.郵便番号.HasError(), Is.True);
+            Assert.That(departmentErrors.診療科マスタの住所.郵便番号.HasError(), Is.True);
         });
     }
     #endregion 検証
@@ -179,7 +185,7 @@ partial class DB接続あり_更新あり {
     public async Task 一括保存の結果は引数の順番と対応し削除は含まれない() {
         var db = TestUtilImpl.Instance.CreateScope(nameof(一括保存の結果は引数の順番と対応し削除は含まれない)).App.DbContext;
         await using var tran = await db.Database.BeginTransactionAsync();
-        (await db.TrySaveAsync([Create機器分類(db, "UPD"), Create機器分類(db, "DEL")])).AssertSucceeded();
+        (await db.TrySaveAsync([Create機器分類(db, "UPD").AssertValid(), Create機器分類(db, "DEL").AssertValid()])).AssertSucceeded();
 
         var loaded = await db.LoadForEdit機器分類マスタAsync([
             new 機器分類マスタKeyWithVersion(0) { 機器分類ID = "UPD" },
@@ -188,15 +194,15 @@ partial class DB接続あり_更新あり {
         var update = loaded[new() { 機器分類ID = "UPD" }];
         update.機器分類名 = "更新後";
 
-        var saved = (await db.TrySaveAsync<機器分類マスタUpdateCommand>(new 機器分類マスタSaveCommand[] {
-            Create機器分類(db, "NEW"),
-            loaded[new() { 機器分類ID = "DEL" }].ToDeleteCommand(),
-            update,
+        var saved = (await db.TrySaveAsync<機器分類マスタUpdateCommand>(new ValidatedCommand<機器分類マスタUpdateCommand>[] {
+            Create機器分類(db, "NEW").AssertValid(),
+            loaded[new() { 機器分類ID = "DEL" }].ToDeleteCommand().AssertValid(),
+            update.AssertValid(),
         })).AssertSucceeded();
 
         Assert.Multiple(async () => {
             Assert.That(saved.Select(x => x.機器分類ID), Is.EqualTo(new[] { "NEW", "UPD" }));
-            Assert.That(saved[1], Is.Not.SameAs(update), "引数とは別のインスタンスが返ること");
+            Assert.That(saved[1], Is.Not.SameAs(update), "検証前のコマンドとは別のインスタンスが返ること");
             Assert.That(saved[1].機器分類名, Is.EqualTo("更新後"));
             Assert.That(await db.機器分類マスタDbSet.AnyAsync(x => x.機器分類ID == "DEL"), Is.False);
         });
@@ -207,11 +213,11 @@ partial class DB接続あり_更新あり {
         var db = TestUtilImpl.Instance.CreateScope(nameof(保存後のコマンドは別の更新にそのまま使える)).App.DbContext;
         await using var tran = await db.Database.BeginTransactionAsync();
 
-        var saved = (await db.TrySaveAsync(Create保守計画(db, "PLAN1"))).AssertSucceeded();
+        var saved = (await db.TrySaveAsync(Create保守計画(db, "PLAN1").AssertValid())).AssertSucceeded();
         saved.計画名 = "1回目の更新";
-        var saved2 = (await db.TrySaveAsync(saved)).AssertSucceeded();
+        var saved2 = (await db.TrySaveAsync(saved.AssertValid())).AssertSucceeded();
         saved2.計画名 = "2回目の更新";
-        (await db.TrySaveAsync(saved2)).AssertSucceeded();
+        (await db.TrySaveAsync(saved2.AssertValid())).AssertSucceeded();
 
         var entity = await db.保守計画DbSet.SingleAsync();
         Assert.Multiple(() => {
@@ -227,7 +233,7 @@ partial class DB接続あり_更新あり {
     public async Task 読み込み後に他者が更新すると楽観排他エラーになる() {
         var db = TestUtilImpl.Instance.CreateScope(nameof(読み込み後に他者が更新すると楽観排他エラーになる)).App.DbContext;
         await using var tran = await db.Database.BeginTransactionAsync();
-        (await db.TrySaveAsync(Create機器分類(db, "C1"))).AssertSucceeded();
+        (await db.TrySaveAsync(Create機器分類(db, "C1").AssertValid())).AssertSucceeded();
 
         // キーで読み込んだ場合も任意の条件で読み込んだ場合も排他が効く
         var byKey = await db.LoadForEdit機器分類マスタAsync(new 機器分類マスタKeyWithVersion(0) { 機器分類ID = "C1" });
@@ -235,9 +241,9 @@ partial class DB接続あり_更新あり {
         await db.機器分類マスタDbSet.ExecuteUpdateAsync(x => x.SetProperty(e => e.Version, 5));
 
         byKey!.機器分類名 = "更新";
-        var byKeyResult = await db.TrySaveAsync(byKey);
+        var byKeyResult = await db.TrySaveAsync(byKey.AssertValid());
         byQuery.機器分類名 = "更新";
-        var byQueryResult = await db.TrySaveAsync(byQuery);
+        var byQueryResult = await db.TrySaveAsync(byQuery.AssertValid());
 
         Assert.Multiple(() => {
             Assert.That(byKeyResult.FailureKind, Is.EqualTo(SaveFailureKind.Concurrency));
@@ -250,9 +256,9 @@ partial class DB接続あり_更新あり {
     public async Task 既存データとのキー重複は一意制約違反になる() {
         var db = TestUtilImpl.Instance.CreateScope(nameof(既存データとのキー重複は一意制約違反になる)).App.DbContext;
         await using var tran = await db.Database.BeginTransactionAsync();
-        (await db.TrySaveAsync(Create機器分類(db, "C1"))).AssertSucceeded();
+        (await db.TrySaveAsync(Create機器分類(db, "C1").AssertValid())).AssertSucceeded();
 
-        var result = await db.TrySaveAsync(Create機器分類(db, "C1"));
+        var result = await db.TrySaveAsync(Create機器分類(db, "C1").AssertValid());
 
         Assert.That(result.FailureKind, Is.EqualTo(SaveFailureKind.UniqueConstraint));
     }
@@ -262,7 +268,7 @@ partial class DB接続あり_更新あり {
         var db = TestUtilImpl.Instance.CreateScope(nameof(同時に保存するコマンド同士のキー重複は一意制約違反になる)).App.DbContext;
         await using var tran = await db.Database.BeginTransactionAsync();
 
-        var result = await db.TrySaveAsync([Create機器分類(db, "C1"), Create機器分類(db, "C1")]);
+        var result = await db.TrySaveAsync([Create機器分類(db, "C1").AssertValid(), Create機器分類(db, "C1").AssertValid()]);
 
         Assert.Multiple(() => {
             Assert.That(result.FailureKind, Is.EqualTo(SaveFailureKind.UniqueConstraint));
@@ -278,16 +284,16 @@ partial class DB接続あり_更新あり {
             services => services.AddLogging(logging => logging.AddProvider(logs)));
         var db = scope.App.DbContext;
         await using var tran = await db.Database.BeginTransactionAsync();
-        (await db.TrySaveAsync(Create機器分類(db, "C1"))).AssertSucceeded();
+        (await db.TrySaveAsync(Create機器分類(db, "C1").AssertValid())).AssertSucceeded();
 
         // 一意制約違反
-        var unique = await db.TrySaveAsync(Create機器分類(db, "C1"));
+        var unique = await db.TrySaveAsync(Create機器分類(db, "C1").AssertValid());
         Assert.That(unique.FailureKind, Is.EqualTo(SaveFailureKind.UniqueConstraint));
 
         // 楽観排他エラー
         var loaded = await db.LoadForEdit機器分類マスタAsync(new 機器分類マスタKeyWithVersion(0) { 機器分類ID = "C1" });
         await db.機器分類マスタDbSet.ExecuteUpdateAsync(x => x.SetProperty(e => e.Version, 5));
-        var concurrency = await db.TrySaveAsync(loaded!);
+        var concurrency = await db.TrySaveAsync(loaded!.AssertValid());
         Assert.That(concurrency.FailureKind, Is.EqualTo(SaveFailureKind.Concurrency));
 
         Assert.That(logs.Messages, Is.Empty);
@@ -307,7 +313,7 @@ partial class DB接続あり_更新あり {
         schedule.医療従事者 = new() { 医療従事者ID = (医療従事者ID型?)"NOTHING" };
         schedule.診療科 = new() { 診療科ID = "NOTHING" };
         schedule.日付 = new DateOnly(2030, 1, 2);
-        var result = await db.TrySaveAsync(schedule);
+        var result = await db.TrySaveAsync(schedule.AssertValid());
 
         Assert.Multiple(() => {
             Assert.That(result.FailureKind, Is.EqualTo(SaveFailureKind.DatabaseError));
@@ -335,25 +341,9 @@ partial class DB接続あり_更新あり {
         await using var tran = await db.Database.BeginTransactionAsync();
         db.機器分類マスタDbSet.Add(new 機器分類マスタDbEntity { 機器分類ID = "OTHER", Version = 0 });
 
-        var result = await db.TrySaveAsync(Create機器分類(db, "C1"));
+        var result = await db.TrySaveAsync(Create機器分類(db, "C1").AssertValid());
 
         Assert.That(result.FailureKind, Is.EqualTo(SaveFailureKind.ProgrammingError));
-    }
-
-    [Test]
-    public async Task 検証を通っていないコマンドの保存はプログラム誤りになる() {
-        var db = TestUtilImpl.Instance.CreateScope(nameof(検証を通っていないコマンドの保存はプログラム誤りになる)).App.DbContext;
-        await using var tran = await db.Database.BeginTransactionAsync();
-        var command = Create機器分類(db, "C1");
-        command.機器分類名 = new string('あ', 51);
-
-        var result = await db.TrySaveAsync(command);
-
-        Assert.Multiple(() => {
-            Assert.That(result.FailureKind, Is.EqualTo(SaveFailureKind.ProgrammingError));
-            Assert.That(result.Errors.HasError(), Is.True);
-            Assert.That(() => result.Updated, Throws.InvalidOperationException);
-        });
     }
 
     [Test]
@@ -361,12 +351,14 @@ partial class DB接続あり_更新あり {
         var db = TestUtilImpl.Instance.CreateScope(nameof(成功しても失敗しても変更追跡が残らない)).App.DbContext;
         await using var tran = await db.Database.BeginTransactionAsync();
 
-        (await db.TrySaveAsync(Create保守計画(db, "PLAN1"))).AssertSucceeded();
+        (await db.TrySaveAsync(Create保守計画(db, "PLAN1").AssertValid())).AssertSucceeded();
         Assert.That(db.ChangeTracker.Entries(), Is.Empty);
 
-        var failed = await db.TrySaveAsync(Create保守計画(db, "PLAN1"));
+        var failed = await db.TrySaveAsync(Create保守計画(db, "PLAN1").AssertValid());
         Assert.Multiple(() => {
             Assert.That(failed.Success, Is.False);
+            Assert.That(failed.Errors.HasError(), Is.True);
+            Assert.That(() => failed.Updated, Throws.InvalidOperationException);
             Assert.That(db.ChangeTracker.Entries(), Is.Empty);
         });
     }
@@ -376,16 +368,18 @@ partial class DB接続あり_更新あり {
         var db = TestUtilImpl.Instance.CreateScope(nameof(一度保存処理にかけたコマンドは再度使用できない)).App.DbContext;
         await using var tran = await db.Database.BeginTransactionAsync();
         var command = Create機器分類(db, "C1");
-        (await db.TrySaveAsync(command)).AssertSucceeded();
+        var validated = command.AssertValid();
+        (await db.TrySaveAsync(validated)).AssertSucceeded();
 
-        Assert.ThrowsAsync<InvalidOperationException>(async () => await db.TrySaveAsync(command));
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await db.TrySaveAsync(validated));
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await db.TrySaveAsync(command.AssertValid()), "検証し直して別の検証済みコマンドを作っても再度使用できないこと");
     }
 
     [Test]
     public void トランザクションを開始せずに保存すると例外になる() {
         var db = TestUtilImpl.Instance.CreateScope(nameof(トランザクションを開始せずに保存すると例外になる)).App.DbContext;
 
-        Assert.ThrowsAsync<InvalidOperationException>(async () => await db.TrySaveAsync(Create機器分類(db, "C1")));
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await db.TrySaveAsync(Create機器分類(db, "C1").AssertValid()));
     }
     #endregion 失敗の分類
 
@@ -396,13 +390,13 @@ partial class DB接続あり_更新あり {
         var db = TestUtilImpl.Instance.CreateScope(nameof(同一トランザクション内で失敗したあとも後続の保存をコミットできる)).App.DbContext;
 
         await using (var tran = await db.Database.BeginTransactionAsync()) {
-            (await db.TrySaveAsync(Create機器分類(db, "C1"))).AssertSucceeded();
+            (await db.TrySaveAsync(Create機器分類(db, "C1").AssertValid())).AssertSucceeded();
 
             // SQL発行時点で失敗させる
-            var failed = await db.TrySaveAsync(Create機器分類(db, "C1"));
+            var failed = await db.TrySaveAsync(Create機器分類(db, "C1").AssertValid());
             Assert.That(failed.Success, Is.False);
 
-            (await db.TrySaveAsync(Create機器分類(db, "C2"))).AssertSucceeded();
+            (await db.TrySaveAsync(Create機器分類(db, "C2").AssertValid())).AssertSucceeded();
             await tran.CommitAsync();
         }
 
@@ -415,7 +409,7 @@ partial class DB接続あり_更新あり {
         var db = TestUtilImpl.Instance.CreateScope(nameof(コミットしなければロールバックされる)).App.DbContext;
 
         await using (var tran = await db.Database.BeginTransactionAsync()) {
-            (await db.TrySaveAsync(Create機器分類(db, "C1"))).AssertSucceeded();
+            (await db.TrySaveAsync(Create機器分類(db, "C1").AssertValid())).AssertSucceeded();
         }
 
         Assert.That(await db.機器分類マスタDbSet.AnyAsync(), Is.False);
@@ -433,7 +427,7 @@ partial class DB接続あり_更新あり {
         var db = scope.App.DbContext;
         await using var tran = await db.Database.BeginTransactionAsync();
 
-        var created = (await db.TrySaveAsync(Create保守計画(db, "PLAN1"))).AssertSucceeded();
+        var created = (await db.TrySaveAsync(Create保守計画(db, "PLAN1").AssertValid())).AssertSucceeded();
 
         audit.CurrentTime = new DateTime(2030, 2, 2);
         audit.CurrentUser = "更新者";
@@ -441,7 +435,7 @@ partial class DB接続あり_更新あり {
         created.作業工程[0].工程名 = "更新された工程";
         created.作業工程.RemoveAt(1);
         created.作業工程.Add(new() { 工程番号 = 3, 工程名 = "追加された工程", 作業手順 = [], 作業体制 = null });
-        var updated = (await db.TrySaveAsync(created)).AssertSucceeded();
+        var updated = (await db.TrySaveAsync(created.AssertValid())).AssertSucceeded();
 
         var root = await db.保守計画DbSet.SingleAsync();
         var existing = await db.作業工程DbSet.SingleAsync(x => x.工程番号 == 1);
@@ -465,14 +459,14 @@ partial class DB接続あり_更新あり {
         await using var tran = await db.Database.BeginTransactionAsync();
 
         var plan = Create保守計画(db, "PLAN1");
-        (await db.TrySaveAsync(plan)).AssertSucceeded();
+        (await db.TrySaveAsync(plan.AssertValid())).AssertSucceeded();
         Assert.That(await db.作業体制DbSet.CountAsync(), Is.EqualTo(1));
 
         var loaded = await db.LoadForEdit保守計画Async(new 保守計画KeyWithVersion(0) { 保守計画ID = "PLAN1" });
         Assert.That(loaded!.作業工程.Single(x => x.工程番号 == 2).作業体制, Is.Null);
 
         loaded.計画名 = "更新";
-        (await db.TrySaveAsync(loaded)).AssertSucceeded();
+        (await db.TrySaveAsync(loaded.AssertValid())).AssertSucceeded();
 
         Assert.That(await db.作業体制DbSet.CountAsync(), Is.EqualTo(1));
     }
@@ -485,10 +479,10 @@ partial class DB接続あり_更新あり {
             services => services.AddScoped<IAuditInfo>(_ => audit));
         var db = scope.App.DbContext;
         await using var tran = await db.Database.BeginTransactionAsync();
-        (await db.TrySaveAsync(Create保守計画(db, "PLAN1"))).AssertSucceeded();
+        (await db.TrySaveAsync(Create保守計画(db, "PLAN1").AssertValid())).AssertSucceeded();
 
         var loaded = await db.LoadForEdit保守計画Async(new 保守計画KeyWithVersion(0) { 保守計画ID = "PLAN1" });
-        (await db.TrySaveAsync(loaded!.ToDeleteCommand())).AssertSucceeded();
+        (await db.TrySaveAsync(loaded!.ToDeleteCommand().AssertValid())).AssertSucceeded();
 
         var deleted = await db.保守計画DeletedDbSet.SingleAsync();
         Assert.Multiple(async () => {
