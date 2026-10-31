@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using MyApp.Core.Authorization;
 
 namespace MyApp;
 
@@ -11,7 +12,8 @@ public class AuditInfo : IAuditInfo {
     /// <summary>ログインユーザーがいない処理（ログイン処理そのものなど）で記録する名前</summary>
     public const string NO_LOGIN_USER = "SYSTEM";
 
-    // DbContext がこのクラスに依存しているので、コンストラクタでは ApplicationService を受け取れない（循環依存になる）
+    // DbContext がこのクラスに依存していて LoginUserProvider は DbContext に依存しているので、
+    // コンストラクタでは LoginUserProvider を受け取れない（循環依存になる）
     public AuditInfo(IServiceProvider serviceProvider) {
         _serviceProvider = serviceProvider;
     }
@@ -22,5 +24,9 @@ public class AuditInfo : IAuditInfo {
     private DateTime? _currentTime;
 
     /// <inheritdoc />
-    public string CurrentUser => _serviceProvider.GetRequiredService<OverridedApplicationService>().LoginUser?.従業員番号 ?? NO_LOGIN_USER;
+    public string CurrentUser => _serviceProvider
+        .GetRequiredService<LoginUserProvider>()
+        .GetLoginUser()
+        ?.従業員番号
+        ?? NO_LOGIN_USER;
 }

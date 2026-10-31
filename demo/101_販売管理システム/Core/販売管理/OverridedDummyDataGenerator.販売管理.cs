@@ -1,6 +1,8 @@
 #if DEBUG
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using MyApp.Core.Authorization;
 
 namespace MyApp;
 
@@ -46,15 +48,12 @@ partial class OverridedDummyDataGenerator {
         await db.SaveChangesAsync();
 
         // この後の処理には入荷や売上の権限を持ったユーザーでログインしておく必要がある。
-        // 通常のログイン処理を通すとHTTPヘッダのCookieを参照してしまうので、リフレクションで無理矢理書き換える
-        var loginUserCache = typeof(OverridedApplicationService).GetField("_loginUserCache", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
-        var isLoginUserLoaded = typeof(OverridedApplicationService).GetField("_isLoginUserLoaded", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
-        loginUserCache.SetValue(applicationService, new Core.Authorization.LoginUser {
+        // 通常のログイン処理を通すとHTTPヘッダのCookieを参照してしまうので、ログインユーザーを直接指定する
+        applicationService.ServiceProvider.GetRequiredService<LoginUserProvider>().SetLoginUserForDummyData(new LoginUser {
             従業員番号 = ADMIN_USER_ID,
-            氏名 = DUMMY_USER_PASSWORD,
+            氏名 = "DUMMY",
             権限 = [権限区分.システム管理者],
         });
-        isLoginUserLoaded.SetValue(applicationService, true);
 
         var allItems = await db.商品DbSet.ToListAsync();
         var adminUser = await db.従業員DbSet.SingleAsync(e => e.従業員番号 == ADMIN_USER_ID);

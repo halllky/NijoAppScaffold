@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MyApp.Core.Authorization;
 using NLog.Extensions.Logging;
 
 namespace MyApp;
@@ -56,6 +57,9 @@ partial class OverridedApplicationService {
             // データの保存処理は変更追跡オフが前提
             options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
         });
+
+        // ログインユーザー
+        services.AddScoped<LoginUserProvider>();
 
         // ログ設定
         LogSettings.ConfigureServices(services, myAppSection, basePath);
