@@ -11,9 +11,9 @@ public class 商品管理システムSettings {
     /// </summary>
     public bool UseMock { get; set; } = true;
     /// <summary>
-    /// モックJSONデータのパス。相対パスの場合はカレントディレクトリからの相対パス。
+    /// モックJSONデータのパス。相対パスの場合は <see cref="RuntimeSetting.LogDirectory"/> からの相対パス。
     /// </summary>
-    public string MockJsonPath { get; set; } = "../WebApi.Log/商品管理システム（モック）.json";
+    public string MockJsonPath { get; set; } = "商品管理システム（モック）.json";
     /// <summary>
     /// 本番環境用の接続文字列
     /// （このアプリはデモなので未使用。あくまで本番用の設定を加える場合はどうすべきかをイメージしやすくするための例）

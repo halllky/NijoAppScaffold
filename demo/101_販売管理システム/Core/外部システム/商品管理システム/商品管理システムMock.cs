@@ -12,16 +12,7 @@ public class 商品管理システムMock : I商品管理システム {
     private readonly OverridedApplicationService _app;
 
     public IEnumerable<ProductImportData> Enumerate商品データ() {
-        // 設定ファイルからモックデータのパスを取得
-        var mockDataPath = _app.Settings.商品管理システム.MockJsonPath;
-        if (string.IsNullOrWhiteSpace(mockDataPath)) {
-            throw new InvalidOperationException("商品データ取込のモックデータパスが設定されていません。");
-        }
-
-        // パスが相対パスの場合は絶対パスに変換
-        if (!Path.IsPathRooted(mockDataPath)) {
-            mockDataPath = Path.Combine(Directory.GetCurrentDirectory(), mockDataPath);
-        }
+        var mockDataPath = ResolveMockJsonPath();
 
         // モックファイルが無い場合はサンプルを作成
         if (!File.Exists(mockDataPath)) {
@@ -67,16 +58,7 @@ public class 商品管理システムMock : I商品管理システム {
         }
 
         _app.CurrentTransaction.Prepare($"商品管理システム（モック） 在庫数更新 ID={externalProductId}", async cancellationToken => {
-            // 設定ファイルからモックデータのパスを取得
-            var mockDataPath = _app.Settings.商品管理システム.MockJsonPath;
-            if (string.IsNullOrWhiteSpace(mockDataPath)) {
-                throw new InvalidOperationException("商品データ取込のモックデータパスが設定されていません。");
-            }
-
-            // パスが相対パスの場合は絶対パスに変換
-            if (!Path.IsPathRooted(mockDataPath)) {
-                mockDataPath = Path.Combine(Directory.GetCurrentDirectory(), mockDataPath);
-            }
+            var mockDataPath = ResolveMockJsonPath();
 
             // ファイルが無い場合は新規作成
             if (!File.Exists(mockDataPath)) {
@@ -138,6 +120,27 @@ public class 商品管理システムMock : I商品管理システム {
                 }
             }
         });
+    }
+
+    /// <summary>
+    /// 設定ファイルからモックJSONデータの絶対パスを取得する。
+    /// 格納先のフォルダが無い場合は作成する。
+    /// </summary>
+    private string ResolveMockJsonPath() {
+        var mockDataPath = _app.Settings.商品管理システム.MockJsonPath;
+        if (string.IsNullOrWhiteSpace(mockDataPath)) {
+            throw new InvalidOperationException("商品データ取込のモックデータパスが設定されていません。");
+        }
+
+        // 相対パスの場合はログ出力先ディレクトリを基準とする。
+        // ユニットテストではログ出力先がテストケースごとに分かれるため、モックデータもテストケースごとに独立する。
+        if (!Path.IsPathRooted(mockDataPath)) {
+            mockDataPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), _app.Settings.LogDirectory, mockDataPath));
+        }
+
+        Directory.CreateDirectory(Path.GetDirectoryName(mockDataPath)!);
+
+        return mockDataPath;
     }
 
     private class MockJsonDataType {
