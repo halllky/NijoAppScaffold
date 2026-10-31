@@ -671,7 +671,7 @@ namespace Nijo.DataStructures.IsStored {
 
             return $$"""
                 /// <summary>
-                /// このインスタンスを Entity Framework Core のエンティティに変換します。
+                /// このインスタンスの現時点の値を、このインスタンスと参照を共有しない Entity Framework Core のエンティティに変換します。
                 /// </summary>
                 internal {{efCoreEntity.CsClassName}} {{TO_DBENTITY}}() {
                     return new {{efCoreEntity.CsClassName}} {
@@ -692,8 +692,11 @@ namespace Nijo.DataStructures.IsStored {
                     var sourcePath = mappingKey != null && rigthMembers.TryGetValue(mappingKey, out var source)
                         ? $"{source.Root.Name}.{source.GetPathFromInstance().Select(p => p.Metadata.GetPropertyName(E_CsTs.CSharp)).Join("?.")}"
                         : "null";
+                    var copyArray = col.MemberType.CsPrimitiveTypeName == "byte[]" && sourcePath != "null"
+                        ? "?.ToArray()"
+                        : "";
                     yield return $$"""
-                        {{col.PhysicalName}} = {{col.MemberType.RenderCastToPrimitiveType()}}{{sourcePath}},
+                        {{col.PhysicalName}} = {{col.MemberType.RenderCastToPrimitiveType()}}{{sourcePath}}{{copyArray}},
                         """;
                 }
 
