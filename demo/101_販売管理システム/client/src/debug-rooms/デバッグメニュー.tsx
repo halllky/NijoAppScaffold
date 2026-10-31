@@ -4,7 +4,7 @@ import { Link } from "react-router-dom"
 import * as DbViewer from "./db-viewer/DbViewer"
 import { 一覧検索サンプルURL, 詳細画面サンプルURL } from "./ui"
 import { URL as AutoIndexUrl } from "../auto-pages/自動生成画面一覧"
-import { callAspNetCoreApiAsync } from "../example/callAspNetCoreApiAsync"
+import { callAspNetCoreApiAsync } from "../base/callAspNetCoreApiAsync"
 import { Button, useOutsideClick } from "../ui"
 import { useLoginLogout } from "../useLoginLogout"
 
@@ -54,7 +54,7 @@ function DebugMenu({ requestClose }: { requestClose: () => void }) {
       // ログイン情報も消えるので一旦ログアウト
       await logoutAsync()
 
-      const res = await callAspNetCoreApiAsync('/api/example/destroy-and-recreate-database', { method: 'POST' })
+      const res = await callAspNetCoreApiAsync('/api/debug/destroy-and-recreate-database', { method: 'POST' })
       if (res.ok) {
         alert("データベースを再作成しました。")
       } else {

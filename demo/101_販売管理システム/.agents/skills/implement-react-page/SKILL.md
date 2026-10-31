@@ -60,7 +60,7 @@ description: client（React）の画面を実装・修正するときに使う�
 
 ## サーバーは callComplexPostEndpointAsync で呼ぶ
 
-一覧検索・外部参照の検索・コマンド実行は、すべて `example/callComplexPostEndpointAsync` を通す。第 1 引数はクエリモデル名・`ref-to:{参照先}`・コマンドモデル名で、引数と戻り値の型はそこから決まる。
+一覧検索・外部参照の検索・コマンド実行は、すべて `base/callComplexPostEndpointAsync` を通す。第 1 引数はクエリモデル名・`ref-to:{参照先}`・コマンドモデル名で、引数と戻り値の型はそこから決まる。
 
 - 戻り値の `type` は 3 通り。
   - `ok`: 成功。`returnValue` に戻り値、`detail` に警告・情報メッセージが入っていることがある。
@@ -69,7 +69,7 @@ description: client（React）の画面を実装・修正するときに使う�
 - 「〜しますがよろしいですか？」の確認はこの関数が行う。画面で `window.confirm` を自作しない。
   読み取りだけの呼び出し（検索・初期表示）には `{ ignoreConfirm: true }` を付け、更新するコマンドには付けない。
 - 中断できる呼び出し（検索、入力に追従する再計算）には `signal` を渡す。
-- 編集したデータを送る前に `example/toWillBeChangedApplied(読み込んだ時点の値, 現在の値, モデル.deepEqual)` を通す。
+- 編集したデータを送る前に `base/toWillBeChangedApplied(読み込んだ時点の値, 現在の値, モデル.deepEqual)` を通す。
   変更された行にだけ `willBeChanged` が立ち、サーバー側はそれを見て更新対象を決める。比較の基準は、保存し直した後ではなく**画面が読み込んだ時点の値**にする。
 
 ## 業務ルールはサーバーに置く

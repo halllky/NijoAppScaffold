@@ -1,5 +1,5 @@
 import React from "react"
-import { callAspNetCoreApiAsync } from "../../example/callAspNetCoreApiAsync"
+import { callAspNetCoreApiAsync } from "../../base/callAspNetCoreApiAsync"
 import type { DbSchema } from "./DbSchema"
 import { findArea, parseSettings, updateArea, type DbViewerSettings, type SubjectArea } from "./DbViewerSettings"
 

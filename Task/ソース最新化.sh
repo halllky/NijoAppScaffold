@@ -21,7 +21,7 @@ for d in "$SCRIPT_DIR/../demo/"*; do
         "$NIJO_EXE_PATH" generate "$TARGET_ROOT"
 
         # React
-        rsync -av --delete-excluded --exclude={".*","example.ts"} "$SOURCE_ROOT/client/src/example/" "$TARGET_ROOT/client/src/example/"
+        rsync -av --delete-excluded --exclude=".*" "$SOURCE_ROOT/client/src/base/" "$TARGET_ROOT/client/src/base/"
 
         # Core
         cp "$SOURCE_ROOT/Core/JsonSerializerExtensions.cs" "$TARGET_ROOT/Core/JsonSerializerExtensions.cs"

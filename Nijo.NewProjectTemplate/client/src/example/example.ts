@@ -1,4 +1,4 @@
-import { callAspNetCoreApiAsync } from './callAspNetCoreApiAsync'
+import { callAspNetCoreApiAsync } from '../base/callAspNetCoreApiAsync'
 
 // 自動生成されたエンドポイントを呼び出す例
 export default function example() {

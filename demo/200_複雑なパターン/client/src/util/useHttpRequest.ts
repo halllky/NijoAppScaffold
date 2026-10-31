@@ -1,5 +1,5 @@
 import React from "react"
-import { callAspNetCoreApiAsync } from "../example/callAspNetCoreApiAsync"
+import { callAspNetCoreApiAsync } from "../base/callAspNetCoreApiAsync"
 
 /**
  * バックエンドへのリクエストを行なう。

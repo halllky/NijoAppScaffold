@@ -1,6 +1,6 @@
 import './style.css'
 import myAppLogo from '/my-app.svg'
-import { callAspNetCoreApiAsync } from './example/callAspNetCoreApiAsync'
+import { callAspNetCoreApiAsync } from './base/callAspNetCoreApiAsync'
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div>
@@ -39,7 +39,7 @@ const recreateDbButton = document.querySelector<HTMLButtonElement>('#recreate-db
 recreateDbButton.addEventListener('click', async () => {
   try {
     apiResponse.textContent = 'DB再作成中...'
-    const response = await callAspNetCoreApiAsync('/api/example/destroy-and-recreate-database', {
+    const response = await callAspNetCoreApiAsync('/api/debug/destroy-and-recreate-database', {
       method: 'POST'
     })
     if (response.ok) {
