@@ -21,7 +21,7 @@ namespace Nijo.DataStructures.IsStored {
         protected override ValidateStatement? GetIfStatement(ValueMember vm, IInstanceProperty prop, CodeRenderingContext ctx) {
             if (vm.TotalDigit == null) return null;
 
-            var path = prop.GetJoinedPathFromInstance(E_CsTs.CSharp);
+            var path = RenderPrimitiveValue(prop);
 
             if (vm.Type.CsPrimitiveTypeName == "int" || vm.Type.CsPrimitiveTypeName == "long") {
                 var maxInt = 1L;

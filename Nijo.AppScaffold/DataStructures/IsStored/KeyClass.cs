@@ -39,16 +39,17 @@ namespace Nijo.DataStructures.IsStored {
             /// </summary>
             private readonly GenericLookupRefToInfo.Info? _genericLookupInfo;
 
-            public string ClassName => $"{_aggregate.PhysicalName}Key";
+            public string ClassName => _genericLookupInfo == null
+                ? $"{_aggregate.PhysicalName}Key"
+                : $"{_aggregate.PhysicalName}PartialKey";
+            /// <summary>このキーと楽観排他制御で期待するバージョンをセットで表すクラスの名前</summary>
+            internal string ClassNameWithVersion => $"{ClassName}WithVersion";
             string IKeyClassMember.GetTypeName(E_CsTs csts) => ClassName;
 
             bool SaveCommand.ISaveCommandMember.IsKey => true;
             ISchemaPathNode SaveCommand.ISaveCommandMember.Member => _aggregate;
             public virtual string PhysicalName => _aggregate.PhysicalName;
             public virtual string DisplayName => _aggregate.DisplayName;
-            public string CsCreateType => ClassName;
-            public string CsUpdateType => ClassName;
-            public string CsDeleteType => ClassName;
 
             public IEnumerable<IKeyClassMember> GetOwnMembers() {
                 var p = _aggregate.GetParent();
@@ -91,9 +92,15 @@ namespace Nijo.DataStructures.IsStored {
                     .Attribute(IsGenericLookupTableOption.ATTRIBUTE_NAME) != null;
 
                 // キーのエントリー。以下いずれかの場合のみレンダリングする
+                // - その集約がコマンドの読み込みに使われるルート集約である場合
                 // - その集約がほかの集約から参照されている場合
                 // - その集約の子がほかの集約から参照されている場合
                 var entries = new Dictionary<string, KeyClassEntry>();
+                KeyClassEntry? keyForLoading = null;
+                if (rootAggregate.IsStored && !rootAggregate.IsView) {
+                    keyForLoading = new KeyClassEntry(rootAggregate);
+                    entries.Add(keyForLoading.ClassName, keyForLoading);
+                }
                 foreach (var agg in tree) {
                     var refToAgg = agg.GetRefFroms().ToArray();
                     var areDecendantsReffered = agg.EnumerateDescendants().Any(desc => desc.GetRefFroms().Any());
@@ -122,14 +129,44 @@ namespace Nijo.DataStructures.IsStored {
                     {{kvp.Value.RenderDeclaring(ctx)}}
 
                     """)}}
+                    {{If(keyForLoading != null, () => $$"""
+                    {{keyForLoading!.RenderWithVersionDeclaring()}}
+
+                    """)}}
                     #endregion キー項目のみのオブジェクト
+                    """;
+            }
+
+            private string RenderWithVersionDeclaring() {
+                return $$"""
+                    /// <summary>
+                    /// {{_aggregate.DisplayName}} のキーと、楽観排他制御で期待するバージョン
+                    /// </summary>
+                    public partial class {{ClassNameWithVersion}} : {{ClassName}} {
+                        /// <param name="version">
+                        /// 楽観排他制御で期待するバージョン。画面からの更新の場合は更新時ではなく画面表示時のバージョンを指定してください。
+                        /// </param>
+                        /// <exception cref="ArgumentNullException">バージョンが null の場合。集約の更新では楽観排他制御が必須です。</exception>
+                        public {{ClassNameWithVersion}}(int? version) {
+                            ArgumentNullException.ThrowIfNull(version);
+                            Version = version.Value;
+                        }
+
+                        /// <summary>楽観排他制御で期待するバージョン</summary>
+                        public int Version { get; }
+                    }
                     """;
             }
 
             protected virtual string RenderDeclaring(CodeRenderingContext ctx) {
                 return $$"""
                     /// <summary>
+                    {{If(_genericLookupInfo == null, () => $$"""
                     /// {{_aggregate.DisplayName}} のキー
+                    """).Else(() => $$"""
+                    /// {{_aggregate.DisplayName}} の主キーのうち、ハードコードされたものを除いた部分。
+                    /// 外部参照に使われる。ハードコードされた主キーの値は参照の定義から一意に決まるので、このクラスは持たない。
+                    """)}}
                     /// </summary>
                     {{NijoAttr.RenderAttributeValues(ctx, _aggregate)}}
                     public partial class {{ClassName}} {
@@ -142,6 +179,46 @@ namespace Nijo.DataStructures.IsStored {
                         {{WithIndent(RenderCovertFromCreateCommand())}}
                         {{WithIndent(RenderConvertFromDbEntity())}}
                         {{WithIndent(RenderConvertFromRootDbEntity())}}
+
+                        {{WithIndent(RenderEquality())}}
+                    }
+                    """;
+            }
+
+            /// <summary>
+            /// 値の等価性。コマンドの読み込み結果の辞書のキーに使われる。
+            /// 値メンバーはプリミティブ型にキャストして比較するので、値オブジェクト側の実装に依存しない。
+            /// </summary>
+            private string RenderEquality() {
+                var conditions = new List<string>();
+                var hashAdds = new List<string>();
+                foreach (var member in GetOwnMembers()) {
+                    if (member is KeyClassValueMember vm) {
+                        var cast = vm.Member.Type.RenderCastToPrimitiveType();
+                        conditions.Add($"{cast}this.{member.PhysicalName} == {cast}other.{member.PhysicalName}");
+                        hashAdds.Add($"hash.Add({cast}this.{member.PhysicalName});");
+                    } else {
+                        conditions.Add($"object.Equals(this.{member.PhysicalName}, other.{member.PhysicalName})");
+                        hashAdds.Add($"hash.Add(this.{member.PhysicalName});");
+                    }
+                }
+
+                return $$"""
+                    /// <inheritdoc />
+                    public override bool Equals(object? obj) {
+                        return obj is {{ClassName}} other
+                    {{conditions.SelectTextTemplate(condition => $$"""
+                            && {{condition}}
+                    """)}}
+                            ;
+                    }
+                    /// <inheritdoc />
+                    public override int GetHashCode() {
+                        var hash = new HashCode();
+                    {{hashAdds.SelectTextTemplate(hashAdd => $$"""
+                        {{hashAdd}}
+                    """)}}
+                        return hash.ToHashCode();
                     }
                     """;
             }
@@ -300,7 +377,7 @@ namespace Nijo.DataStructures.IsStored {
                 } else {
                     var createCommand = new SaveCommand(root, SaveCommand.E_Type.Create);
                     rootCreateCommandMetadata = createCommand;
-                    argClassName = createCommand.CsClassNameCreate;
+                    argClassName = createCommand.CsClassName;
                     argVarName = "createCommand";
                 }
 
@@ -510,9 +587,6 @@ namespace Nijo.DataStructures.IsStored {
             public string GetTypeName(E_CsTs csts) => Member.Type.CsDomainTypeName;
 
             ISchemaPathNode SaveCommand.ISaveCommandMember.Member => Member;
-            string SaveCommand.ISaveCommandMember.CsCreateType => GetTypeName(E_CsTs.CSharp);
-            string SaveCommand.ISaveCommandMember.CsUpdateType => GetTypeName(E_CsTs.CSharp);
-            string SaveCommand.ISaveCommandMember.CsDeleteType => GetTypeName(E_CsTs.CSharp);
         }
         /// <summary>
         /// キー情報の中に出てくる他の集約のキー
@@ -539,9 +613,6 @@ namespace Nijo.DataStructures.IsStored {
             string IKeyClassStructure.ClassName => MemberKeyClassEntry.ClassName;
 
             ISchemaPathNode SaveCommand.ISaveCommandMember.Member => Member;
-            string SaveCommand.ISaveCommandMember.CsCreateType => GetTypeName(E_CsTs.CSharp);
-            string SaveCommand.ISaveCommandMember.CsUpdateType => GetTypeName(E_CsTs.CSharp);
-            string SaveCommand.ISaveCommandMember.CsDeleteType => GetTypeName(E_CsTs.CSharp);
 
             public IEnumerable<IKeyClassMember> GetOwnMembers() {
                 var p = Member.RefTo.GetParent();

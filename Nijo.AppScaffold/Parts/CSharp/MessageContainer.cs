@@ -161,22 +161,23 @@ namespace Nijo.Parts.CSharp {
                         public sealed class {{CONTEXT_CLASS}} {
 
                             #region 外部公開API
-                            /// <summary>エラーメッセージを追加します。</summary>
+                            /// <summary>指定したパスの項目自身にエラーメッセージを追加します。祖先や子孫の項目には追加しません。</summary>
                             public void AddError(IEnumerable<string> path, string message) {
                                 Get(path.ToArray()).Errors.Add(message);
                             }
-                            /// <summary>警告メッセージを追加します。</summary>
+                            /// <summary>指定したパスの項目自身に警告メッセージを追加します。祖先や子孫の項目には追加しません。</summary>
                             public void AddWarn(IEnumerable<string> path, string message) {
                                 Get(path.ToArray()).Warns.Add(message);
                             }
-                            /// <summary>インフォメーションメッセージを追加します。</summary>
+                            /// <summary>指定したパスの項目自身にインフォメーションメッセージを追加します。祖先や子孫の項目には追加しません。</summary>
                             public void AddInfo(IEnumerable<string> path, string message) {
                                 Get(path.ToArray()).Infos.Add(message);
                             }
 
                             /// <summary>
-                            /// 指定したパスのメッセージコンテナを取得します。
-                            /// 対応するメッセージが存在しない場合はnullを返します。
+                            /// 指定したパスの項目のメッセージコンテナを取得します。
+                            /// 戻り値からはその項目の子孫のメッセージも辿れますが、祖先のメッセージは辿れません。
+                            /// その項目と子孫のいずれにもメッセージが存在しない場合はnullを返します。
                             /// </summary>
                             public IReadOnlyMessageContainer? Find(IEnumerable<string> path) {
                                 return _root.Find(path);
@@ -206,8 +207,8 @@ namespace Nijo.Parts.CSharp {
                                     }
                                 }
                                 /// <summary>
-                                /// 指定したパスのメッセージコンテナを取得します。
-                                /// 対応するメッセージが存在しない場合はnullを返します。
+                                /// このオブジェクトを起点に、指定したパスの子孫のメッセージコンテナを取得します。
+                                /// その項目と子孫のいずれにもメッセージが存在しない場合はnullを返します。
                                 /// </summary>
                                 /// <param name="path">このオブジェクトから該当のインスタンスまでのパス</param>
                                 /// <returns>メッセージコンテナ</returns>
@@ -257,15 +258,15 @@ namespace Nijo.Parts.CSharp {
                         public interface IReadOnlyMessageContainer {
                             /// <summary>ルートオブジェクトからこのオブジェクトまでのパス</summary>
                             string[] Path { get; }
-                            /// <summary>エラーメッセージ</summary>
+                            /// <summary>この項目自身のエラーメッセージ。子孫の項目のものは含みません。</summary>
                             IReadOnlyList<string> Errors { get; }
-                            /// <summary>警告メッセージ</summary>
+                            /// <summary>この項目自身の警告メッセージ。子孫の項目のものは含みません。</summary>
                             IReadOnlyList<string> Warns { get; }
-                            /// <summary>インフォメーションメッセージ</summary>
+                            /// <summary>この項目自身のインフォメーションメッセージ。子孫の項目のものは含みません。</summary>
                             IReadOnlyList<string> Infos { get; }
-                            /// <summary>このオブジェクトの直近の子メッセージコンテナ</summary>
+                            /// <summary>このオブジェクトの直近の子メッセージコンテナ。孫以下はそれぞれの子から辿ります。</summary>
                             IReadOnlyDictionary<string, IReadOnlyMessageContainer> Children { get; }
-                            /// <summary>子メッセージコンテナの子孫と自身を列挙</summary>
+                            /// <summary>このオブジェクト自身とそのすべての子孫を列挙します。祖先は含みません。</summary>
                             IEnumerable<IReadOnlyMessageContainer> DescendantsAndSelf();
                         }
 
@@ -275,23 +276,33 @@ namespace Nijo.Parts.CSharp {
                         /// </summary>
                         public interface {{SETTER_INTERFACE}} {
 
-                            /// <summary>エラーメッセージを付加します。</summary>
+                            /// <summary>この項目自身にエラーメッセージを付加します。祖先や子孫の項目には付加しません。</summary>
                             void AddError(string message);
-                            /// <summary>警告メッセージを付加します。</summary>
+                            /// <summary>この項目自身に警告メッセージを付加します。祖先や子孫の項目には付加しません。</summary>
                             void AddWarn(string message);
-                            /// <summary>インフォメーションメッセージを付加します。</summary>
+                            /// <summary>この項目自身にインフォメーションメッセージを付加します。祖先や子孫の項目には付加しません。</summary>
                             void AddInfo(string message);
 
                             /// <summary>
-                            /// このインスタンスを、メッセージコンテナを持つ型にキャストします。
-                            /// このインスタンスが持っているメッセージはすべて引き継がれます。
+                            /// このインスタンスと同じ項目を指す、指定した型のインスタンスを返します。
+                            /// メッセージの実体は共有されるので、祖先・自身・子孫のメッセージはすべて戻り値からも同じパスで参照・追加できます。
                             /// </summary>
                             TMessage As<TMessage>() where TMessage : {{SETTER_INTERFACE}};
 
                             /// <summary>
                             /// この項目に対して現在追加されているメッセージを取得します。
+                            /// 戻り値からはこの項目の子孫のメッセージも辿れますが、祖先のメッセージは辿れません。
+                            /// この項目と子孫のいずれにもメッセージが無い場合はnullを返します。
                             /// </summary>
                             IReadOnlyMessageContainer? GetState();
+
+                            /// <summary>
+                            /// この項目自身とその子孫のメッセージを、引数のオブジェクトの同名のパスにコピーします。祖先のメッセージはコピーしません。
+                            /// この項目自身のメッセージは引数のオブジェクト自身に、子孫のメッセージは引数のオブジェクトの子孫に追加されます。
+                            /// 引数のオブジェクトとこのオブジェクトで項目の階層が異なる場合、対応する階層のオブジェクトを引数に渡してください。
+                            /// 階層が異なるものを渡すと、エラーは追加されるものの画面の項目には表示されなくなります。
+                            /// </summary>
+                            void CopyTo({{SETTER_INTERFACE}} target);
                         }
                         /// <inheritdoc cref="{{SETTER_INTERFACE}}">
                         public interface {{SETTER_INTERFACE_LIST}}<out T> : {{SETTER_INTERFACE}}, IReadOnlyList<T> where T : {{SETTER_INTERFACE}} {
@@ -311,29 +322,40 @@ namespace Nijo.Parts.CSharp {
                             private readonly IEnumerable<string> _path;
                             private readonly {{CONTEXT_CLASS}} _underlyingContext;
 
-                            /// <summary>エラーメッセージを付加します。</summary>
+                            /// <inheritdoc />
                             public virtual void AddError(string message) {
                                 _underlyingContext.AddError(_path, message);
                             }
-                            /// <summary>警告メッセージを付加します。</summary>
+                            /// <inheritdoc />
                             public virtual void AddWarn(string message) {
                                 _underlyingContext.AddWarn(_path, message);
                             }
-                            /// <summary>インフォメーションメッセージを付加します。</summary>
+                            /// <inheritdoc />
                             public virtual void AddInfo(string message) {
                                 _underlyingContext.AddInfo(_path, message);
                             }
 
-                            /// <summary>
-                            /// この項目に対して現在追加されているメッセージを取得します。
-                            /// </summary>
+                            /// <inheritdoc />
                             public IReadOnlyMessageContainer? GetState() {
                                 return _underlyingContext.Find(_path);
                             }
 
-                            /// <summary>
-                            /// このインスタンスを指定した型にキャストして返します。
-                            /// </summary>
+                            /// <inheritdoc />
+                            public void CopyTo({{SETTER_INTERFACE}} target) {
+                                var state = GetState();
+                                if (state == null) return;
+                                if (target is not {{SETTER_CLASS}} targetSetter) throw new ArgumentException($"{target.GetType().Name} にはコピーできません。", nameof(target));
+
+                                var depth = _path.Count();
+                                foreach (var node in state.DescendantsAndSelf()) {
+                                    string[] path = [.. targetSetter._path, .. node.Path.Skip(depth)];
+                                    foreach (var message in node.Errors) targetSetter._underlyingContext.AddError(path, message);
+                                    foreach (var message in node.Warns) targetSetter._underlyingContext.AddWarn(path, message);
+                                    foreach (var message in node.Infos) targetSetter._underlyingContext.AddInfo(path, message);
+                                }
+                            }
+
+                            /// <inheritdoc />
                             public T As<T>() where T : {{SETTER_INTERFACE}} {
                                 return {{GET_IMPL}}<T>(_path, _underlyingContext);
                             }
@@ -375,6 +397,10 @@ namespace Nijo.Parts.CSharp {
                             private readonly Func<int, T> _createItem;
                             private readonly Dictionary<int, T> _items = new();
 
+                            /// <summary>
+                            /// 指定した行のメッセージの入れ物を返します。
+                            /// 行が存在しなければ作成します。作成するだけではメッセージは追加されません。
+                            /// </summary>
                             public T this[int index] {
                                 get {
                                     ArgumentOutOfRangeException.ThrowIfNegative(index);
@@ -389,10 +415,12 @@ namespace Nijo.Parts.CSharp {
                                 }
                             }
 
+                            /// <summary>これまでにアクセスされた行のうち最大の添字に1を足した数。実際のデータの行数やメッセージの件数とは関係ありません。</summary>
                             public int Count => _items.Keys.Count == 0
                                 ? 0
                                 : (_items.Keys.Max() + 1);
 
+                            /// <summary>先頭から、これまでにアクセスされた行のうち最大の添字までの各行を列挙します。</summary>
                             public IEnumerator<T> GetEnumerator() {
                                 if (_items.Count == 0) yield break;
 

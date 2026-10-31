@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using Nijo.DataStructures.IsGenericLookupTable;
+using Nijo.Parts.Common;
 
 namespace Nijo.DataStructures.IsStored {
     public class DbContextClass : ISharedSourceFile<CodeRenderingContext> {
@@ -34,12 +35,17 @@ namespace Nijo.DataStructures.IsStored {
             // Nijoの空テンプレートにこのメソッドの使用例を含めるため、
             // スキーマ定義に汎用参照テーブルが存在するか否かにかかわらずメソッドを生成する。
             ctx.Use<GenericLookupViewsInfoProvider>();
+
+            SaveCommand.RegisterMessages(ctx);
         }
 
         void ISharedSourceFile<CodeRenderingContext>.Render(CodeRenderingContext ctx) {
             ctx.CoreLibrary(dir => {
                 dir.Directory("Util", efcoreDir => {
                     efcoreDir.Generate(Render(ctx));
+                    efcoreDir.Generate(SaveCommand.RenderInterface(ctx));
+                    efcoreDir.Generate(ValidatedCommand.Render(ctx));
+                    efcoreDir.Generate(AuditInfo.Render(ctx));
                 });
             });
         }
@@ -65,9 +71,18 @@ namespace Nijo.DataStructures.IsStored {
                         /// DBコンテキスト。Entity Framework Core の中核的な仕組み。
                         /// </summary>
                         /// <param name="options">EFCoreのオプション</param>
-                        public {{ctx.Config.DbContextName}}(DbContextOptions options) : base(options) {
+                        /// <param name="auditInfo">監査項目に記録する情報</param>
+                        /// <param name="messageFactory">ユーザーに見せるメッセージの文言</param>
+                        public {{ctx.Config.DbContextName}}(DbContextOptions options, {{AuditInfo.INTERFACE}} auditInfo, {{MsgFactory.CS_INTERFACE}} messageFactory) : base(options) {
+                            AuditInfo = auditInfo;
+                            {{MsgFactory.MSG}} = messageFactory;
                         }
                     #pragma warning restore CS8618 // DbSetはEFCore側で自動的に設定されるため問題なし
+
+                        /// <summary>監査項目に記録する情報</summary>
+                        protected internal {{AuditInfo.INTERFACE}} AuditInfo { get; }
+                        /// <summary>ユーザーに見せるメッセージの文言</summary>
+                        protected internal {{MsgFactory.CS_INTERFACE}} {{MsgFactory.MSG}} { get; }
 
                     {{efCoreEntitiesOrderByDataFlow.SelectTextTemplate(entity => $$"""
                         public virtual DbSet<{{entity.CsClassName}}> {{entity.DbSetName}} { get; set; }
@@ -92,7 +107,7 @@ namespace Nijo.DataStructures.IsStored {
                     """)}}
                             ];
                         }
-                    {{_additionalMethods.SelectTextTemplate(method => $$"""
+                    {{_additionalMethods.OrderBy(method => method).SelectTextTemplate(method => $$"""
 
                         {{WithIndent(method)}}
                     """)}}

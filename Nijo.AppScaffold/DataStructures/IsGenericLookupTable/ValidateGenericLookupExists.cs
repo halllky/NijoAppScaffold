@@ -23,34 +23,32 @@ namespace Nijo.DataStructures.IsGenericLookupTable {
 
         protected override ValidateStatement? GetIfStatement(ValueMember vm, IInstanceProperty prop, CodeRenderingContext ctx) => null;
 
-        protected override ValidateStatement? GetIfStatement(RefToMember refTo, IEnumerable<IInstanceProperty> fkProps, CodeRenderingContext ctx) {
+        protected override ValidateStatement? GetIfStatement(RefToMember refTo, IEnumerable<IInstanceProperty> keyProps, CodeRenderingContext ctx) {
             if (!GenericLookupRefToInfo.TryCreate(refTo, out var info)) return null;
 
-            var fkPropByMember = fkProps
-                .Where(prop => prop.Metadata is EFCoreEntity.RefKeyMember)
-                .ToDictionary(
-                    prop => ((EFCoreEntity.RefKeyMember)prop.Metadata).Member,
-                    prop => prop);
+            var keyPropByMember = keyProps.ToDictionary(
+                prop => ((SaveCommand.SaveCommandValueMember)prop.Metadata).Member,
+                prop => prop);
 
             var keyConditions = info.NonHardCodedKeyMembers
                 .Select(member => {
-                    if (!fkPropByMember.TryGetValue(member, out var prop)) {
-                        throw new InvalidOperationException($"外部キー項目が見つかりません: {member.PhysicalName}");
+                    if (!keyPropByMember.TryGetValue(member, out var prop)) {
+                        throw new InvalidOperationException($"キー項目が見つかりません: {member.PhysicalName}");
                     }
-                    return $"candidate.{member.PhysicalName} == {prop.GetJoinedPathFromInstance(E_CsTs.CSharp)}";
+                    return $"candidate.{member.PhysicalName} == {RenderPrimitiveValue(prop, "?.")}";
                 })
                 .ToArray();
 
             var hasAnyValueExpression = info.NonHardCodedKeyMembers
                 .Select(member => {
-                    if (!fkPropByMember.TryGetValue(member, out var prop)) {
-                        throw new InvalidOperationException($"外部キー項目が見つかりません: {member.PhysicalName}");
+                    if (!keyPropByMember.TryGetValue(member, out var prop)) {
+                        throw new InvalidOperationException($"キー項目が見つかりません: {member.PhysicalName}");
                     }
                     return RenderHasValue(prop);
                 })
                 .Join("\r\n|| ");
 
-            var utilExpression = $"{info.RootAggregate.PhysicalName}Util.{info.Category.Name}";
+            var utilExpression = $"{SaveCommand.FIELD_DBCONTEXT}.{info.RootAggregate.PhysicalName}Util.{info.Category.Name}";
             var existsExpression = keyConditions.Length == 0
                 ? $"{utilExpression}.Any()"
                 : $"{utilExpression}.Any(candidate => {keyConditions.Join("\r\n&& ")})";
@@ -64,7 +62,7 @@ namespace Nijo.DataStructures.IsGenericLookupTable {
         }
 
         private static string RenderHasValue(IInstanceProperty prop) {
-            var path = prop.GetJoinedPathFromInstance(E_CsTs.CSharp);
+            var path = RenderPrimitiveValue(prop, "?.");
             return prop.Metadata switch {
                 IInstanceValuePropertyMetadata vm when vm.Type.CsPrimitiveTypeName == "string"
                     => $"!string.IsNullOrWhiteSpace({path})",

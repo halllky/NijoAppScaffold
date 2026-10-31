@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Nijo.DataStructures.IsStored;
 using Nijo.DataStructures.Aggregates;
 
 namespace Nijo.DataStructures.IsQueryable;
@@ -19,17 +18,6 @@ internal class DisplayDataMessageContainer : MessageContainer.Setter {
 
     internal override string CsClassName => $"{_aggregate.PhysicalName}DisplayDataMessages";
     internal override string TsTypeName => $"{_aggregate.PhysicalName}DisplayDataMessages";
-
-    protected override IEnumerable<string> GetCsClassImplements() {
-        // この集約が永続化されるデータ構造の場合、登録更新削除処理で使われるメッセージの入れ物のインタフェースを実装する
-        // ただしビューの場合はSaveCommandが生成されないため実装しない
-        if (_aggregate.GetRoot() is RootAggregate root
-            && root.IsStored
-            && !root.IsView) {
-            var saveCommandMessage = new SaveCommandMessageContainer(_aggregate);
-            yield return saveCommandMessage.InterfaceName;
-        }
-    }
 
     protected override IEnumerable<MessageContainer.IMember> GetMembers() {
         var displayData = new DisplayData(_aggregate);
@@ -51,39 +39,6 @@ internal class DisplayDataMessageContainer : MessageContainer.Setter {
                 IsArray = member.Aggregate is ChildrenAggregate,
             };
         }
-    }
-
-    /// <summary>
-    /// この集約が永続化されるデータ構造の場合、Child, Children のプロパティは明示的にSaveCommandのメンバーにキャストする必要がある
-    /// </summary>
-    protected override string RenderCSharpAdditionalSource() {
-        // この集約が永続化されるデータ構造でないのであれば関係なし
-        // ビューの場合もSaveCommandが生成されないため関係なし
-        if (_aggregate.GetRoot() is not RootAggregate root) return SKIP_MARKER;
-        if (!root.IsStored) return SKIP_MARKER;
-        if (root.IsView) return SKIP_MARKER;
-
-        var saveCommandMessage = new SaveCommandMessageContainer(_aggregate);
-        var childMembers = GetMembers()
-            .Where(member => member.NestedObject != null)
-            .Select(member => {
-                var memberAggregate = ((ContainerMemberImpl)member).NestedObject!._aggregate;
-                var childMsgContainer = new SaveCommandMessageContainer(memberAggregate);
-
-                return new {
-                    member.PhysicalName,
-                    InterfaceName = memberAggregate is ChildrenAggregate
-                        ? $"{MessageContainer.SETTER_INTERFACE_LIST}<{childMsgContainer.InterfaceName}>"
-                        : childMsgContainer.InterfaceName,
-                };
-            });
-
-        return $$"""
-
-            {{childMembers.SelectTextTemplate(member => $$"""
-            {{member.InterfaceName}} {{saveCommandMessage.InterfaceName}}.{{member.PhysicalName}} => this.{{member.PhysicalName}};
-            """)}}
-            """;
     }
 
     private class ContainerMemberImpl : MessageContainer.IMember {

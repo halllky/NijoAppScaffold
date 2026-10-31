@@ -2,291 +2,296 @@
 
 ---
 
-# CRUD メソッド
+# 登録・更新・削除
 
-永続化されるデータ構造の定義から、新規登録・更新・物理削除の3種類のメソッドが自動生成されます。
-これらのメソッドは Application Service クラスのメソッドとして生成されます。
+永続化されるデータ構造の定義から、データを保存するための部品が自動生成されます。
+処理の順序（読み込み → 値の設定 → 検証 → 確認メッセージ → トランザクション → 保存）は、コマンドの `Execute{コマンド名}Async` の中に開発者が明示的に書きます。
 
-## 生成されるメソッド一覧
+| 部品                            | 提供元                                 | 役割                                                 |
+| ------------------------------- | -------------------------------------- | ---------------------------------------------------- |
+| `StartCreating{集約名}()`       | 自動生成（DbContext）                  | 新規登録コマンドの作成                               |
+| `LoadForEdit{集約名}Async(...)` | 自動生成（DbContext）                  | 更新コマンドの読み込み                               |
+| `TryValidate(...)`              | 自動生成（各コマンド）                 | スキーマ定義から導かれる検証と楽観排他のチェック。エラーが無ければ検証済みコマンドを返す |
+| `ToDeleteCommand()`             | 自動生成（更新コマンド）               | 削除コマンドへの変換                                 |
+| `TrySaveAsync(...)`             | `Core/OverridedDbContext.TrySaveAsync.cs` | 保存の実行。**システムごとに書き換える前提の手書き** |
 
-| メソッド名            | 処理     | 引数                                  | 戻り値                                  |
-| --------------------- | -------- | ------------------------------------- | --------------------------------------- |
-| `Create{集約名}Async` | 新規登録 | `{集約名}CreateCommand`               | `DataModelSaveResult<{集約名}DbEntity>` |
-| `Update{集約名}Async` | 更新     | `{集約名}UpdateOrDeleteKey`, 更新関数 | `DataModelSaveResult<{集約名}DbEntity>` |
-| `Delete{集約名}Async` | 物理削除 | `{集約名}UpdateOrDeleteKey`           | `DataModelSaveResult<{集約名}DbEntity>` |
+## 全体の流れ
 
-## SaveCommand クラス
-
-CRUD メソッドの引数には EF Core エンティティクラス（`DbEntity`）ではなく、用途に特化した **SaveCommand クラス**を使います。
-
-### 3種類の SaveCommand
-
-| クラス名                    | 用途                 | 含まれる項目                                 |
-| --------------------------- | -------------------- | -------------------------------------------- |
-| `{集約名}CreateCommand`     | 新規登録             | 全項目（ただしシーケンス自動採番項目は除く） |
-| `{集約名}UpdateCommand`     | 更新時の値           | 全項目                                       |
-| `{集約名}UpdateOrDeleteKey` | 更新・削除対象の特定 | キー項目 + `Version`（楽観排他用）           |
-
-### なぜ DbEntity ではなく SaveCommand を使うのか
-
-`DbEntity` を更新処理の引数に直接使うと、更新すべきでないカラム（ナビゲーションプロパティ等）まで誤って上書きするリスクがあります。
-`SaveCommand` は操作ごとに必要な項目のみを持つため、実装ミスを防ぎます。
-`UpdateCommand` での参照先は、ナビゲーションプロパティではなくキーのみを保持する `{参照名}Key` クラスになります。
-
-### DbEntity との相互変換
-
-`CreateCommand` および `UpdateCommand` には以下のメソッドが生成されます：
+複数行を一括で更新するコマンドの例です。
 
 ```csharp
-// SaveCommand → DbEntity への変換（Createコマンドに生成）
-public OrderDbEntity ToDbEntity() { ... }
+public override async Task Execute売上一括更新Async(売上一括更新DisplayData param, IPresentationContext<売上一括更新Messages> context) {
 
-// DbEntity → UpdateCommand への変換（Updateコマンドに生成）
-public static OrderUpdateCommand FromDbEntity(OrderDbEntity dbEntity) { ... }
-```
+    // 集約単位の読み込み。AsNoTracking で読み込まれる。
+    // Version には更新時ではなく画面表示時の値を渡すこと。
+    var keys = param.Rows
+        .Where(x => x.ExistsInDatabase && (x.WillBeChanged || x.WillBeDeleted))
+        .Select(x => new 売上KeyWithVersion(x.Version) { Id = x.Id });
+    var loaded = await DbContext.LoadForEdit売上Async(keys);
 
-## Create（新規登録）
+    // ループ後にまとめて保存するのでメモリ上に蓄積する
+    var saveCommands = new List<ValidatedCommand<売上UpdateCommand>>();
 
-### メソッドシグネチャ
+    for (var i = 0; i < param.Rows.Count; i++) {
+        var row = param.Rows[i];
+        var message = context.Messages.Rows[i];
 
-```csharp
-public virtual async Task<DataModelSaveResult<OrderDbEntity>> CreateOrderAsync(
-    OrderCreateCommand command,
-    IPresentationContext context,
-    IMessageContainerSetter? messageOwner = null)
-```
+        // 新規
+        if (!row.ExistsInDatabase) {
+            var createCommand = DbContext.StartCreating売上();
+            createCommand.Id = row.Id;
+            createCommand.Amount = row.Amount;
 
-### 処理の流れ
+            if (createCommand.TryValidate(out var validatedCreate, out var createErrors)) {
+                saveCommands.Add(validatedCreate);
+            }
+            createErrors.CopyTo(message);
+            if (createCommand.Amount < 0m) message.AddError("売上は0以上");
+            continue;
+        }
 
-1. `command.ToDbEntity()` でエンティティを生成
-2. `CreatedAt`, `UpdatedAt`, `CreateUser`, `UpdateUser`, `Version = 0` を自動設定
-3. スキーマ定義から自動生成されたバリデーション（必須・最大長・文字種・桁数）を実行
-4. `OnBeforeCreateOrder`（フック）を呼び出し
-5. エラーがある場合は中断して戻る
-6. `context.ValidationOnly == true` の場合は DB への保存を行わず戻る
-7. SAVEPOINT を作成して `DbContext.SaveChangesAsync()` を実行
-8. `OnAfterCreateOrderAsync`（フック）を呼び出し
-9. SAVEPOINT を解放して完了
+        // 変更なし
+        if (!row.WillBeChanged && !row.WillBeDeleted) continue;
 
-### 呼び出し例
+        // 既存データの引当
+        if (!loaded.TryGetValue(new() { Id = row.Id }, out var updateCommand)) {
+            message.AddError(MSG.DataNotFoundError());
+            continue;
+        }
 
-```csharp
-// コマンドの Execute メソッドの中で呼び出す
-await DbContext.Database.BeginTransactionAsync();
+        // 削除
+        if (row.WillBeDeleted) {
+            if (updateCommand.ToDeleteCommand().TryValidate(out var validatedDelete, out var deleteErrors)) {
+                saveCommands.Add(validatedDelete);
+            }
+            deleteErrors.CopyTo(message);
+            continue;
+        }
 
-var command = new OrderCreateCommand {
-    OrderId   = "ORD-001",
-    OrderDate = DateTime.Today,
-    CustomerRef = new CustomerKeyClass { CustomerId = "C001" },
-    OrderDetails = [
-        new OrderDetailCreateCommand { LineNo = 1, ProductId = "P001", Quantity = 5 },
-    ],
-};
+        // 更新
+        updateCommand.Amount = row.Amount;
+        if (updateCommand.TryValidate(out var validatedUpdate, out var updateErrors)) {
+            saveCommands.Add(validatedUpdate);
+        }
+        updateErrors.CopyTo(message);
+    }
 
-var result = await CreateOrderAsync(command, context);
-if (!result.IsSaveCompleted()) {
-    await DbContext.Database.RollbackTransactionAsync();
-    return;
+    // いずれか1件でもエラーなら中断
+    if (context.Messages.HasError()) return;
+
+    // 1巡目はここまで
+    if (context.ValidationOnly) {
+        context.AddConfirm("更新しますか？");
+        return;
+    }
+
+    // トランザクションの範囲はシステムによって異なるので明示的に書く
+    await using var tran = await DbContext.Database.BeginTransactionAsync();
+
+    var result = await DbContext.TrySaveAsync(saveCommands);
+    if (!result.Success) {
+        result.Errors.CopyTo(context.Messages);
+        return; // コミットせずにスコープを抜けるとロールバックされる
+    }
+
+    await tran.CommitAsync();
+    context.Messages.AddInfo("保存しました。");
 }
-
-await DbContext.Database.CommitTransactionAsync();
 ```
 
-## Update（更新）
+## コマンド
 
-### メソッドシグネチャ
+集約ごとに次のクラスが生成されます。
+
+```
+売上CreateCommand … 新規登録
+売上UpdateCommand … 更新
+売上DeleteCommand … 削除
+```
+
+ルート集約のコマンドは `new` できず、次の方法でのみ入手できます。子孫集約のコマンド（`売上明細CreateCommand` など）は単なる値の入れ物であり、`new() { ... }` で作成します。
+
+### 新規登録コマンド
 
 ```csharp
-// 非同期更新関数版
-public virtual async Task<DataModelSaveResult<OrderDbEntity>> UpdateOrderAsync(
-    OrderUpdateOrDeleteKey key,
-    Func<OrderUpdateCommand, Task> updater,
-    IPresentationContext context,
-    IMessageContainerSetter? messageOwner = null)
-
-// 同期更新関数版（内部で非同期版に委譲）
-public virtual Task<DataModelSaveResult<OrderDbEntity>> UpdateOrderAsync(
-    OrderUpdateOrDeleteKey key,
-    Action<OrderUpdateCommand> updater,
-    IPresentationContext context,
-    IMessageContainerSetter? messageOwner = null)
+var command = DbContext.StartCreating売上();
+command.売上日時 = DateTime.Now;
+command.担当者 = new() { 従業員番号 = "E001" };
+command.売上明細 = [
+    new() { 明細ID = "1", 売上数量 = 3 },
+];
 ```
 
-### 処理の流れ
+シーケンス（自動採番）の項目は新規登録コマンドにはありません。保存後のデータから参照します。
 
-1. `key` のキー項目が null でないかチェック（空なら中断）
-2. DB からキーで更新前データを取得（見つからなければエラー）
-3. `UpdateCommand.FromDbEntity(beforeEntity)` で更新前の値を UpdateCommand に変換
-4. `updater` 関数を呼び出し（開発者が更新したい項目を書き換える）
-5. `command.ToDbEntity()` で更新後エンティティを生成
-6. メタデータ（`Version + 1`, `UpdatedAt`, `UpdateUser`）を自動設定
-7. バリデーション実行 → フック実行 → `ValidationOnly` チェック
-8. EF Core の `EntityState.Modified` でアタッチ（Child/Children の子も同様） → SAVEPOINT 作成 → `SaveChangesAsync()`
-9. 楽観排他エラー（`DbUpdateConcurrencyException`）の場合は専用メッセージを返す
-10. 後処理フック実行 → SAVEPOINT 解放
+### 更新コマンド
 
-### 呼び出し例
+読み込み方は3通りあります。いずれも子孫集約ごと `AsNoTracking` で読み込まれます。
 
 ```csharp
-var key = new OrderUpdateOrDeleteKey {
-    OrderId = "ORD-001",
-    Version = originalVersion,  // 画面表示時に取得したバージョンを渡す
-};
+// キーで1件。見つからなければ null
+売上UpdateCommand? command = await DbContext.LoadForEdit売上Async(new 売上KeyWithVersion(param.Version) { 売上SEQ = param.売上SEQ });
 
-var result = await UpdateOrderAsync(key, command => {
-    command.OrderDate = DateTime.Today;
-    // 変更する項目だけ書き換える
-}, context);
+// キーで複数件。見つからなかったものは結果の辞書に含まれない
+IReadOnlyDictionary<売上Key, 売上UpdateCommand> commands = await DbContext.LoadForEdit売上Async(keys);
+
+// 任意の条件。更新開始時点で対象データのキーが分からない更新で使う
+IReadOnlyList<売上UpdateCommand> commands = await DbContext.LoadForEdit売上Async(query => query.Where(x => x.売上日時 < threshold));
 ```
+
+`売上Key` は値で比較されるので、別のインスタンスでも同じ値であれば辞書を引けます。
 
 :::warning バージョンの渡し方
-`Version` には、**画面を初期表示したときに取得したバージョン値**を渡してください。
-更新直前に再取得した最新版を渡してしまうと、楽観排他制御の意味がなくなります。
+`売上KeyWithVersion` のバージョンには、**画面を初期表示したときに取得した値**を渡してください。更新直前に読み直した値を渡すと、利用者が画面を開いている間の他者の更新を黙って上書きしてしまいます。
+
+バージョンに null を渡すと `ArgumentNullException` になります。集約の更新では楽観排他を省略できません。
+
+任意の条件で読み込んだ場合は読み込んだ時点のバージョンが期待値になるので、読み込みから保存までの間に他者が更新すると楽観排他エラーになります。
 :::
 
-### Child / Children の更新ルール
+### 削除コマンド
 
-`Child`（1対1の子集約）と `Children`（1対多の子集約）の更新は、更新前後のレコードをキーで照合して以下のように処理されます：
+削除するときもいったん読み込み、`ToDeleteCommand()` で変換します。
+`UseSoftDelete` が指定された集約では論理削除になり、呼び出し側のコードは変わりません（[UseSoftDelete](./020314_UseSoftDelete.md)）。
 
-- 更新前に存在し、更新後も存在する → `UPDATE`
-- 更新前に存在せず、更新後に存在する → `INSERT`
-- 更新前に存在し、更新後に存在しない → `DELETE`
+### Child / Children の更新
 
-## Delete（物理削除）
+`Child`（1対1の子集約）と `Children`（1対多の子集約）は、読み込み時のデータとキーで照合して保存方法が決まります。
 
-### メソッドシグネチャ
+- 読み込み時に存在し、保存時も存在する → `UPDATE`
+- 読み込み時に存在せず、保存時に存在する → `INSERT`
+- 読み込み時に存在し、保存時に存在しない → `DELETE`
+
+## 検証（TryValidate）
+
+`TryValidate` は [スキーマ定義から自動生成されるチェック](./020313_Validators.md) と、読み込み時点の楽観排他のチェックを行います。
 
 ```csharp
-public virtual async Task<DataModelSaveResult<OrderDbEntity>> DeleteOrderAsync(
-    OrderUpdateOrDeleteKey command,
-    IPresentationContext context,
-    IMessageContainerSetter? messageOwner = null)
+bool TryValidate(out ValidatedCommand<売上UpdateCommand>? validated, out 売上SaveCommandMessages errors);
 ```
 
-物理削除では `UpdateCommand` は不要です。`UpdateOrDeleteKey`（キー + Version）だけを渡します。
+- `errors`: 検証エラー。コマンドと同じ形のメッセージコンテナ。
+- `validated`: エラーが無い場合のみ得られる検証済みコマンド。`TrySaveAsync` はこれだけを受け取るので、検証していないコマンドの保存はコンパイルエラーになります。
 
-### 処理の流れ
+検証済みコマンドは検証時点の値を保持します。検証後にコマンドを書き換えても保存される内容は変わりません。コマンド自身の状態は検証で変更されません。
 
-Update と同様のフロー（キーチェック → データ取得 → フック → SaveChanges → 後処理）ですが、`EntityState.Deleted` をセットして削除します。
-
-## フック（拡張ポイント）
-
-各処理には以下のフックメソッドが自動生成されます。Application Service を継承したクラスでオーバーライドして実装します。
-
-### OnBefore（保存前フック）
+`CopyTo` で画面側のメッセージコンテナへコピーします。**同名のパスにそのままコピーする**ので、項目の階層や名前が違うときは対応する階層を渡してください。
 
 ```csharp
-// 新規登録前
-public virtual void OnBeforeCreateOrder(
-    OrderCreateCommand command,
-    IOrderMessages messages,
-    IPresentationContext context) { }
-
-// 更新前
-public virtual void OnBeforeUpdateOrder(
-    OrderUpdateCommand command,
-    OrderDbEntity oldValue,  // 更新前のデータ
-    IOrderMessages messages,
-    IPresentationContext context) { }
-
-// 物理削除前
-public virtual void OnBeforeDeleteOrder(
-    OrderUpdateOrDeleteKey command,
-    OrderDbEntity oldValue,  // 削除前のデータ
-    IOrderMessages messages,
-    IPresentationContext context) { }
-```
-
-**用途：** どのユースケースから更新が来ても必ず守られなければならないデータの整合性を実装します。
-ここに追加したエラーメッセージがあると保存処理が中断されます。
-
-:::note 特定ユースケースのみのバリデーション
-特定のユースケースのみに適用されるバリデーションは、このフックではなく、
-呼び出し元のコマンドの処理の中で実装してください。
-:::
-
-### OnAfter（保存後フック）
-
-```csharp
-// 新規登録後（SQL発行後、コミット前）
-public virtual Task OnAfterCreateOrderAsync(
-    OrderDbEntity newValue,
-    IOrderMessages messages,
-    IPresentationContext context) => Task.CompletedTask;
-
-// 更新後（SQL発行後、コミット前）
-public virtual Task OnAfterUpdateOrderAsync(
-    OrderDbEntity newValue,
-    OrderDbEntity oldValue,
-    IOrderMessages messages,
-    IPresentationContext context) => Task.CompletedTask;
-
-// 削除後（SQL発行後、コミット前）
-public virtual Task OnAfterDeleteOrderAsync(
-    OrderDbEntity oldValue,
-    IOrderMessages messages,
-    IPresentationContext context) => Task.CompletedTask;
-```
-
-**用途：** リードレプリカへの反映・メッセージ基盤への通知など、データ変更と常に同期が必要な処理を実装します。
-このメソッド内で例外が送出された場合、SAVEPOINT へのロールバックが行われます。
-
-## DataModelSaveResult（戻り値）
-
-```csharp
-// 保存が完了したか（バリデーションのみの場合は false）
-if (result.IsSaveCompleted(out var savedEntity)) {
-    // savedEntity が保存後の DbEntity
+if (command.TryValidate(out var validated, out var errors)) {
+    saveCommands.Add(validated);
 }
 
-// バリデーションエラーが無かったか（保存した場合もバリデーションのみの場合も true）
-if (result.IsValidationOk()) { ... }
+// 画面側は message.従業員.氏名 のように1階層深い場合
+errors.CopyTo(message.従業員);
 
-// エラーが発生したか
-if (result.IsError(out var errorReason)) {
-    switch (errorReason) {
-        case DataModelSaveErrorReason.ValidationError:    // バリデーションエラー
-        case DataModelSaveErrorReason.ConcurrencyError:   // 楽観排他エラー
-        case DataModelSaveErrorReason.AfterSaveError:     // 後処理フックのエラー
-    }
-}
+// 画面側とデータモデルで項目名が違う場合
+errors.入荷数量.CopyTo(message.数量);
 ```
 
-エラーの場合でも例外はスローされません。エラー内容は `messageOwner`（または `context`）に格納されます。
-
-## トランザクション管理
-
-:::warning トランザクションは呼び出し元で管理する
-これらのメソッド自体はトランザクションを開始・コミット・ロールバックしません。
-呼び出し元のコマンドの処理内で `DbContext.Database.BeginTransactionAsync()` を実行してください。
-
-トランザクション未開始の状態でこれらのメソッドを呼び出すと `InvalidOperationException` がスローされます。
-:::
+1件だけを保存する場合は、エラーがあればその場で抜けると `validated` が null でないことをコンパイラが判定できます。
 
 ```csharp
-// コマンドの Execute メソッドでの典型的なトランザクション管理
-await using var transaction = await DbContext.Database.BeginTransactionAsync();
-
-var createResult = await CreateOrderAsync(createCmd, context);
-if (!createResult.IsSaveCompleted()) {
-    await transaction.RollbackAsync();
+if (!command.TryValidate(out var validated, out var errors)) {
+    errors.CopyTo(context.Messages);
     return;
 }
-
-var updateResult = await UpdateCustomerAsync(updateKey, updater, context);
-if (!updateResult.IsSaveCompleted()) {
-    await transaction.RollbackAsync();
-    return;
-}
-
-await transaction.CommitAsync();
 ```
+
+ヘッダと明細のように他の検証も続けてからまとめて抜ける場合は、抜ける箇所で `validated` の null を確認します。
+
+```csharp
+header.TryValidate(out var validatedHeader, out var headerErrors);
+headerErrors.CopyTo(context.Messages);
+// ...明細の検証...
+if (validatedHeader == null || context.Messages.HasError()) return;
+```
+
+## 保存（TrySaveAsync）
+
+`TrySaveAsync` は `Core/OverridedDbContext.TrySaveAsync.cs` に**手書きのコードとして**置かれています。
+保存時に行うべきことはシステムの要件によって大きく異なるので自動生成せず、テンプレートが提供するコードを自由に書き換えられるようにしています。
+
+既定の実装には次のオーバーロードがあります。
+
+```csharp
+Task<SaveResult<売上UpdateCommand>> TrySaveAsync(ValidatedCommand<売上UpdateCommand>);
+Task<SaveResult> TrySaveAsync(ValidatedDeleteCommand<売上UpdateCommand>);
+Task<SaveResult<IList<売上UpdateCommand>>> TrySaveAsync(ValidatedCommand<売上UpdateCommand> の配列やリスト);
+```
+
+既定の実装は次の順に処理します。
+
+1. トランザクションが開始されていなければ例外を送出
+2. `ChangeTracker` に他の変更があれば例外を送出
+3. 同時に保存するコマンド同士でキーが重複していれば失敗
+4. 検証済みコマンドの `StartTracking()` で監査項目を設定して変更追跡を開始
+5. `SaveChangesAsync()` を実行
+6. 変更追跡を終了
+7. 保存後のデータを `result.Updated` として返す
+
+### 保存結果
+
+| 失敗の種類                   | 原因                                                   | ログレベル |
+| ---------------------------- | ------------------------------------------------------ | ---------- |
+| `Concurrency`                | 楽観排他エラー                                         | Warning    |
+| `UniqueConstraint`           | 一意制約違反。他ユーザーとの操作競合の可能性が高い     | Warning    |
+| `DatabaseError`              | その他のデータベースのエラー                           | Error      |
+
+DB 接続エラーなど上記以外は例外がそのまま送出されます。
+
+運用担当者への通知は Error レベルのログとして出力されるので、通知先はログの出力先の設定で制御してください。
+EF Core が既定で Error レベルで出力する DB エラーのログは `OverridedDbContext` で Warning に引き下げているので、一意制約違反などで通知が飛ぶことはありません。
+
+エラーメッセージは項目ごとではなく保存処理全体の単位で `result.Errors` に入ります。キー重複を行単位で見せたいなどの場合は、検証の際に独自に確認してください。
+
+### 保存後のデータ
+
+`result.Updated` は検証前のコマンドとは別の新しい更新コマンドです。保存時に採番されたシーケンスの参照や、続けて別の更新を行なうときに使えます。
+一度 `TrySaveAsync` に渡した検証済みコマンドと、同じコマンドから作成された別の検証済みコマンドは再度使用できません。
+
+```csharp
+var result = await DbContext.TrySaveAsync(validated);
+if (!result.Success) { ... }
+context.ReturnValue.売上SEQ = result.Updated.売上SEQ;
+```
+
+リストを渡した場合、`result.Updated` の順番は引数の順番と対応し、削除されたものは含まれません。
+
+:::note 制約
+- シーケンスが主キーの新規データは、保存前のキーでは `result.Updated` を引き当てられません。順番の対応で引き当ててください。
+- 同じキーの削除と新規登録を同時に行なうことはできません。`TrySaveAsync` を2回に分けて呼んでください。
+- 一部が失敗しても他はコミットしたい場合は、コマンドの数だけ `TrySaveAsync` とコミットを繰り返してください。
+:::
+
+## 全経路で守るべきルール
+
+「このデータは常にこうでなければならない」というルールで、スキーマ定義では表現できないものは、名前付きのメソッドに切り出して各コマンドから呼びます。
+検証メッセージの入れ物（`売上SaveCommandMessages`）に追記すれば `CopyTo` でまとめて画面に渡せます。
+
+```csharp
+command.TryValidate(out var validated, out var errors);
+Validate売上新規(command, errors); // データモデルごとのファイルに定義しておく
+errors.CopyTo(context.Messages);
+
+if (validated == null || context.Messages.HasError()) return;
+```
+
+独自のチェックのエラーは `TryValidate` が返す検証済みコマンドの有無に影響しません。保存を止めるには `context.Messages.HasError()` を確認してください。
+
+保存後に常に行なう処理（外部システムへの通知など）も同様に、`TrySaveAsync` の成功後に明示的に呼びます。
+
+## 監査情報
+
+`CreatedAt`, `UpdatedAt`, `CreateUser`, `UpdateUser` は `TrySaveAsync` の中で自動的に設定されます。
+値は DI コンテナに登録された `IAuditInfo` から取得されます。既定の実装は `Core/AuditInfo.cs` なので、ログインユーザーを記録する場合はこれを書き換えてください。
+テンプレートの `OverridedApplicationService` の `CurrentTime` も同じ値を返します。
 
 ## `ValidationOnly` フラグ
 
-`context.ValidationOnly == true` の場合、バリデーションとフックのみ実行し、DB への保存は行いません。
+Web アプリケーションで「更新しますか？」の確認ダイアログを挟む場合、同じコマンドが2回呼ばれます。
 
-Web アプリケーションで「更新しますか？」の確認ダイアログを挟む場合、次の2巡構成になります：
-
-1. **1巡目**（`ValidationOnly = true`）: エラーチェックのみ実施。問題なければ確認ダイアログを表示。
+1. **1巡目**（`ValidationOnly = true`）: エラーチェックのみ実施。問題なければ確認メッセージを返す。
 2. **2巡目**（`ValidationOnly = false`）: エラーチェック + 実際の DB 保存。
+
+自動生成された部品は `ValidationOnly` を判定しません。冒頭の例のように、`TrySaveAsync` の前で判定して処理を抜けてください。

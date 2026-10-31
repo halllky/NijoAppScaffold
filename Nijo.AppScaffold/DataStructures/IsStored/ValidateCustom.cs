@@ -1,11 +1,9 @@
 using Nijo.CodeGenerating;
 using Nijo.Parts.Common;
-using Nijo.Parts.CSharp;
 using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using Nijo.DataStructures.Aggregates;
 using Nijo.DataStructures;
 
@@ -36,7 +34,7 @@ namespace Nijo.DataStructures.IsStored {
         }
 
         protected override ValidateStatement? GetIfStatement(ValueMember vm, IInstanceProperty prop, CodeRenderingContext ctx) => null;
-        protected override ValidateStatement? GetIfStatement(RefToMember refTo, IEnumerable<IInstanceProperty> fkProps, CodeRenderingContext ctx) => null;
+        protected override ValidateStatement? GetIfStatement(RefToMember refTo, IEnumerable<IInstanceProperty> keyProps, CodeRenderingContext ctx) => null;
 
         protected override IEnumerable<ValidateStatement> GetIfStatements(ValueMember vm, IInstanceProperty prop, CodeRenderingContext ctx) {
             if (string.IsNullOrWhiteSpace(_attribute.UniqueId) || string.IsNullOrWhiteSpace(_attribute.PhysicalName)) yield break;
@@ -46,9 +44,8 @@ namespace Nijo.DataStructures.IsStored {
 
             var declaringTypeName = $"{vm.Owner.PhysicalName}DbEntity";
             var propertyInfoExpr = $"typeof({declaringTypeName}).GetProperty(\"{prop.Metadata.GetPropertyName(E_CsTs.CSharp)}\")!";
-            var valueClrType = GetValueClrType(prop);
             var valueExpr = prop.GetJoinedPathFromInstance(E_CsTs.CSharp);
-            var methodName = GetMethodName(_attribute);
+            var methodName = $"{SaveCommand.FIELD_DBCONTEXT}.{GetMethodName(_attribute)}";
 
             if (_attribute.Type == NijoXmlCustomAttribute.E_Type.Boolean) {
                 var raw = attrNode.Value;
@@ -83,13 +80,14 @@ namespace Nijo.DataStructures.IsStored {
         }
 
         /// <summary>
-        /// アプリケーションサービスに abstract メソッドを登録する。
+        /// DbContext に abstract メソッドを登録する。
+        /// これを1回オーバーライドすれば、このカスタム属性が指定されたすべての集約のコマンドの検証で使われる。
         /// メソッドはこのカスタムバリデータが指定されている ValueMember の種類ごとに作成される。
         /// 例えば数値が0以上であることを保証するカスタム属性「NotNegative」が int と decimal の
         /// メンバーに指定されていた場合、引数の型が int の ValidateNotNegative(int? value, ...) と
         /// 引数の型が decimal の ValidateNotNegative(decimal? value, ...) の2つのメソッドが生成される。
         /// </summary>
-        internal static void RegisterApplicationServiceHooks(CodeRenderingContext ctx) {
+        internal static void RegisterDbContextHooks(CodeRenderingContext ctx) {
 
             // nijo.xml で定義されているカスタム属性の一覧
             var customAttributes = ctx.Schema.CustomAttributes
@@ -117,15 +115,14 @@ namespace Nijo.DataStructures.IsStored {
                     group.Key.CsDomainTypeName,
                 });
 
-            var app = ctx.Use<ApplicationService>();
+            var dbContext = ctx.Use<DbContextClass>();
             foreach (var item in grouped) {
                 var methodName = GetMethodName(item.Attribute);
                 var parameters = item.Attribute.Type == NijoXmlCustomAttribute.E_Type.Boolean
                         ? $"{item.CsDomainTypeName}? value, System.Reflection.PropertyInfo propertyInfo"
                         : $"{item.CsDomainTypeName}? value, string attributeValue, System.Reflection.PropertyInfo propertyInfo";
-                var signatureKey = $"{methodName}({parameters})";
 
-                app.Add($$"""
+                dbContext.AddAdditionalMethod($$"""
                     /// <summary>
                     /// カスタム属性 '{{item.Attribute.PhysicalName}}' 用の入力検証フック。
                     /// null を返すとバリデーションOK、文字列を返すとその内容でエラー登録されます。
@@ -142,15 +139,6 @@ namespace Nijo.DataStructures.IsStored {
         }
 
         private static string GetMethodName(NijoXmlCustomAttribute attr) => $"Validate{attr.PhysicalName}";
-
-        private static string GetValueClrType(IInstanceProperty prop) {
-            var valueType = prop.Metadata switch {
-                EFCoreEntity.EFCoreEntityColumn column when !string.IsNullOrWhiteSpace(column.CsType) => column.CsType,
-                _ => "object",
-            };
-
-            return valueType.EndsWith("?") ? valueType : $"{valueType}?";
-        }
 
         private static string ToLiteral(string? value) {
             if (value == null) return "null";

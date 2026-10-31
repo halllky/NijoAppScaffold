@@ -21,12 +21,12 @@ namespace Nijo.DataStructures.IsStored {
         protected override ValidateStatement? GetIfStatement(ValueMember vm, IInstanceProperty prop, CodeRenderingContext ctx) {
             if (vm.MaxLength == null) return null;
 
-            var path = prop.GetJoinedPathFromInstance(E_CsTs.CSharp);
+            var path = RenderPrimitiveValue(prop);
 
             return new ValidateStatement {
                 If = $$"""
                     !string.IsNullOrEmpty({{path}})
-                    && new System.Globalization.StringInfo({{path}}).LengthInTextElements > {{vm.MaxLength}}
+                    && new System.Globalization.StringInfo({{path}}!).LengthInTextElements > {{vm.MaxLength}}
                     """,
 
                 RenderErrorMessage = $$"""

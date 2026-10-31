@@ -43,14 +43,22 @@ partial class OverridedApplicationService {
         var sessionKey = Guid.NewGuid().ToString();
 
         // セッション保存
-        await using var tran = await BeginTransactionAsync();
-        var result = await CreateセッションAsync(new() {
-            セッションキー = sessionKey,
-            ユーザ = new() { 従業員番号 = employee.従業員番号 },
-            最終ログイン日時 = CurrentTime,
-        }, context);
+        var session = DbContext.StartCreatingセッション();
+        session.セッションキー = sessionKey;
+        session.ユーザ = new() { 従業員番号 = employee.従業員番号 };
+        session.最終ログイン日時 = CurrentTime;
 
-        if (!result.IsSaveCompleted()) {
+        if (!session.TryValidate(out var validated, out var errors)) {
+            errors.CopyTo(context.Messages);
+            return;
+        }
+        if (context.ValidationOnly) return;
+
+        await using var tran = await BeginTransactionAsync();
+
+        var result = await DbContext.TrySaveAsync(validated);
+        if (!result.Success) {
+            result.Errors.CopyTo(context.Messages);
             return;
         }
 

@@ -68,88 +68,90 @@ partial class OverridedApplicationService {
             targetStocks = sortedStocks;
         }
 
-        // 保存処理
-        if (!context.ValidationOnly) {
-            await using var tran = await BeginTransactionAsync();
+        // 在庫調整
+        var adjustmentId = Guid.NewGuid().ToString();
+        var allocationPlan = new List<(入荷明細DbEntity Stock, int Deduct)>();
+        var adjustmentDetails = new List<在庫調整引当明細CreateCommand>();
 
-            var adjustmentId = Guid.NewGuid().ToString();
-            var allocationPlan = new List<(入荷明細DbEntity Stock, int Deduct)>();
-            var adjustmentDetails = new List<在庫調整引当明細CreateCommand>();
+        if (delta < 0) {
+            // 減少：引当計画の作成
+            var needed = -delta;
+            foreach (var stock in targetStocks) {
+                var deduct = Math.Min(stock.残数量!.Value, needed);
 
-            if (delta < 0) {
-                // 減少：引当計画の作成
-                var needed = -delta;
-                foreach (var stock in targetStocks) {
-                    var deduct = Math.Min(stock.残数量!.Value, needed);
+                allocationPlan.Add((stock, deduct));
+                adjustmentDetails.Add(new() {
+                    入荷明細 = new() { 入荷明細ID = stock.入荷明細ID },
+                    引当数 = deduct,
+                });
 
-                    allocationPlan.Add((stock, deduct));
-                    adjustmentDetails.Add(new() {
-                        入荷明細 = new() { 入荷明細ID = stock.入荷明細ID },
-                        引当数 = deduct,
-                    });
-
-                    needed -= deduct;
-                    if (needed == 0) break;
-                }
-            }
-
-            // 在庫調整の登録
-            var adjustmentResult = await Create在庫調整Async(new() {
-                在庫調整ID = adjustmentId,
-                在庫調整日時 = CurrentTime,
-                担当者 = new() { 従業員番号 = LoginUser.従業員番号 },
-                商品 = new() { 商品SEQ = param.商品.商品SEQ },
-                増減数 = param.増減数,
-                絶対数 = param.絶対数,
-                在庫調整理由 = param.在庫調整理由,
-                在庫調整引当明細 = adjustmentDetails,
-            }, context);
-
-            // 在庫調整の登録に失敗した場合は処理中断。
-            // コミットせずにトランザクションのスコープを抜けることでロールバックする。
-            if (!adjustmentResult.IsSaveCompleted()) {
-                return;
-            }
-
-            var hasError = false;
-            if (delta > 0) {
-                // 増加：新しい入荷明細を作成
-                var newStockResult = await Create入荷明細Async(new() {
-                    入荷明細ID = Guid.NewGuid().ToString(),
-                    入荷 = null,
-                    在庫調整 = adjustmentId,
-                    商品 = new() { 商品SEQ = param.商品.商品SEQ },
-                    仕入単価_税抜 = 0, // 在庫調整のため0とする
-                    消費税区分 = 消費税区分.非課税,
-                    入荷数量 = delta,
-                    残数量 = delta,
-                    備考 = $"在庫調整（増加）: {param.在庫調整理由}",
-                }, context);
-
-                if (!newStockResult.IsSaveCompleted()) {
-                    hasError = true;
-                }
-
-            } else {
-                // 減少：既存の入荷明細の更新
-                foreach (var (stock, deduct) in allocationPlan) {
-                    var updateStockResult = await Update入荷明細Async(new() {
-                        入荷明細ID = stock.入荷明細ID,
-                        Version = stock.Version,
-                    }, x => {
-                        x.残数量 -= deduct;
-                    }, context);
-
-                    if (!updateStockResult.IsSaveCompleted()) {
-                        hasError = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!hasError) {
-                await tran.CommitAsync();
+                needed -= deduct;
+                if (needed == 0) break;
             }
         }
+
+        var adjustment = DbContext.StartCreating在庫調整();
+        adjustment.在庫調整ID = adjustmentId;
+        adjustment.在庫調整日時 = CurrentTime;
+        adjustment.担当者 = new() { 従業員番号 = LoginUser.従業員番号 };
+        adjustment.商品 = new() { 商品SEQ = param.商品.商品SEQ };
+        adjustment.増減数 = param.増減数;
+        adjustment.絶対数 = param.絶対数;
+        adjustment.在庫調整理由 = param.在庫調整理由;
+        adjustment.在庫調整引当明細 = adjustmentDetails;
+        adjustment.TryValidate(out var validatedAdjustment, out var adjustmentErrors);
+        adjustmentErrors.CopyTo(context.Messages);
+
+        // 増加：新しい入荷明細を作成
+        ValidatedCommand<入荷明細UpdateCommand>? validatedNewStock = null;
+        if (delta > 0) {
+            var newStock = DbContext.StartCreating入荷明細();
+            newStock.入荷明細ID = Guid.NewGuid().ToString();
+            newStock.入荷 = null;
+            newStock.在庫調整 = adjustmentId;
+            newStock.商品 = new() { 商品SEQ = param.商品.商品SEQ };
+            newStock.仕入単価_税抜 = 0; // 在庫調整のため0とする
+            newStock.消費税区分 = 消費税区分.非課税;
+            newStock.入荷数量 = delta;
+            newStock.残数量 = delta;
+            newStock.備考 = $"在庫調整（増加）: {param.在庫調整理由}";
+            newStock.TryValidate(out validatedNewStock, out var newStockErrors);
+            newStockErrors.CopyTo(context.Messages);
+        }
+
+        // 減少：既存の入荷明細の更新
+        var stockCommands = await LoadForEdit入荷明細の残数量Async(
+            allocationPlan.Select(x => x.Stock),
+            allocationPlan.Select(x => (x.Stock.入荷明細ID!, x.Deduct)),
+            context.Messages);
+
+        if (validatedAdjustment == null || context.Messages.HasError() || context.ValidationOnly) return;
+
+        // 保存処理。
+        // 失敗した場合はコミットせずにトランザクションのスコープを抜けることでロールバックする。
+        await using var tran = await BeginTransactionAsync();
+
+        var adjustmentResult = await DbContext.TrySaveAsync(validatedAdjustment);
+        if (!adjustmentResult.Success) {
+            adjustmentResult.Errors.CopyTo(context.Messages);
+            return;
+        }
+
+        if (validatedNewStock != null) {
+            var newStockResult = await DbContext.TrySaveAsync(validatedNewStock);
+            if (!newStockResult.Success) {
+                newStockResult.Errors.CopyTo(context.Messages);
+                return;
+            }
+        }
+
+        var stockResult = await DbContext.TrySaveAsync(stockCommands);
+        if (!stockResult.Success) {
+            stockResult.Errors.CopyTo(context.Messages);
+            return;
+        }
+        await Notify在庫数量Async([param.商品.商品SEQ]);
+
+        await tran.CommitAsync();
     }
 }

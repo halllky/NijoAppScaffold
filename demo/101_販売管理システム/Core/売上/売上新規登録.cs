@@ -87,6 +87,45 @@ partial class OverridedApplicationService {
         if (context.Messages.HasError()) {
             return;
         }
+
+        // 念のため自動計算分の売上総額を再計算しておく
+        Simulate(param);
+
+        // 売上ヘッダ
+        var command = DbContext.StartCreating売上();
+        command.売上日時 = param.売上日時 ?? CurrentTime;
+        command.担当者 = new() { 従業員番号 = LoginUser.従業員番号 };
+        command.備考 = param.備考;
+        command.売上の売上明細 = allocationPlans.Select(x => new 売上の売上明細CreateCommand {
+            明細ID = Guid.NewGuid().ToString(),
+            商品 = new() { 商品SEQ = x.Detail.商品.商品SEQ },
+            区分 = 売上明細区分.売上,
+            売上数量 = x.Detail.売上数量,
+
+            // 手修正分があればそちらを優先、なければ自動計算分を使用
+            売上総額_税込 = x.Detail.売上総額_税込_手修正 ?? x.Detail.売上総額_税込_自動計算,
+
+            引当明細 = x.Plan.Select(p => new 引当明細CreateCommand {
+                入荷 = new() { 入荷明細ID = p.StockId },
+                引当数量 = p.Deduct,
+            }).ToList(),
+        }).ToList();
+
+        command.TryValidate(out var validated, out var errors);
+        Validate売上新規(command, errors);
+        errors.CopyTo(context.Messages);
+        errors.売上の売上明細.CopyTo(context.Messages.売上詳細の売上明細);
+
+        // 入荷明細の残数量更新
+        // 読込時点から他者による更新がないことを保証するため、stockCacheにあるVersionを使用する。
+        var stockCommands = await LoadForEdit入荷明細の残数量Async(
+            stockCache.Values.SelectMany(x => x),
+            allocationPlans.SelectMany(x => x.Plan),
+            context.Messages);
+
+        if (validated == null || context.Messages.HasError()) {
+            return;
+        }
         if (context.ValidationOnly) {
             context.AddConfirm("登録を確定します。よろしいですか？");
             return;
@@ -95,64 +134,21 @@ partial class OverridedApplicationService {
         // 保存処理
         await using var tran = await BeginTransactionAsync();
 
-        // 念のため自動計算分の売上総額を再計算しておく
-        Simulate(param);
-
-        // 売上ヘッダ作成
-        var result = await Create売上Async(new() {
-            売上日時 = param.売上日時 ?? CurrentTime,
-            担当者 = new() { 従業員番号 = LoginUser.従業員番号 },
-            備考 = param.備考,
-            売上の売上明細 = allocationPlans.Select(x => new 売上の売上明細CreateCommand {
-                明細ID = Guid.NewGuid().ToString(),
-                商品 = new() { 商品SEQ = x.Detail.商品.商品SEQ },
-                区分 = 売上明細区分.売上,
-                売上数量 = x.Detail.売上数量,
-
-                // 手修正分があればそちらを優先、なければ自動計算分を使用
-                売上総額_税込 = x.Detail.売上総額_税込_手修正 ?? x.Detail.売上総額_税込_自動計算,
-
-                引当明細 = x.Plan.Select(p => new 引当明細CreateCommand {
-                    入荷 = new() { 入荷明細ID = p.StockId },
-                    引当数量 = p.Deduct,
-                }).ToList(),
-            }).ToList(),
-        }, context);
-
-        if (!result.IsSaveCompleted(out var savedEntity)) return;
-
-        // 入荷明細の残数量更新
-        // 同じ入荷明細に対して複数回の更新を行うと楽観排他制御エラーになるため、
-        // 入荷明細IDごとに減算数量を集計し、更新処理を1回にまとめる。
-        var stockUpdates = allocationPlans
-            .SelectMany(x => x.Plan)
-            .GroupBy(x => x.StockId)
-            .Select(g => new { StockId = g.Key, Deduct = g.Sum(x => x.Deduct) });
-
-        foreach (var update in stockUpdates) {
-            var stockId = update.StockId;
-            var deduct = update.Deduct;
-
-            // 楽観排他制御のため、stockCacheにあるVersionを使用する。
-            // 読込時点から他者による更新がないことを保証するため、Versionは必須。
-            var stockEntity = stockCache.Values.SelectMany(x => x).FirstOrDefault(x => x.入荷明細ID == stockId);
-            var version = stockEntity?.Version;
-
-            var updateResult = await Update入荷明細Async(new() {
-                入荷明細ID = stockId,
-                Version = version,
-            }, x => {
-                x.残数量 -= deduct;
-            }, context);
-
-            if (!updateResult.IsSaveCompleted()) {
-                // エラーメッセージは Update入荷明細Async 内で設定されるはず
-                return; // トランザクションはコミットされずに終了＝ロールバック
-            }
+        var result = await DbContext.TrySaveAsync(validated);
+        if (!result.Success) {
+            result.Errors.CopyTo(context.Messages);
+            return; // トランザクションはコミットされずに終了＝ロールバック
         }
 
+        var stockResult = await DbContext.TrySaveAsync(stockCommands);
+        if (!stockResult.Success) {
+            stockResult.Errors.CopyTo(context.Messages);
+            return;
+        }
+        await Notify在庫数量Async(stockResult.Updated.Select(x => x.商品?.商品SEQ));
+
         await tran.CommitAsync();
-        context.ReturnValue.売上SEQ = savedEntity.売上SEQ;
+        context.ReturnValue.売上SEQ = result.Updated.売上SEQ;
         context.Messages.AddInfo("売上登録が完了しました。");
     }
 }

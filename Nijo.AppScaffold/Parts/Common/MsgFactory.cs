@@ -16,7 +16,7 @@ namespace Nijo.Parts.Common {
     /// </summary>
     public partial class MsgFactory : ISharedSourceFile<CodeRenderingContext> {
         /// <summary>
-        /// C#側はアプリケーションサービスにこの名前のプロパティが存在するのでそれ経由で使用する。
+        /// C#側はアプリケーションサービスとDbContextにこの名前のプロパティが存在するのでそれ経由で使用する。
         /// </summary>
         public const string MSG = "MSG";
         /// <summary>

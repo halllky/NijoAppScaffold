@@ -18,12 +18,6 @@ partial class DB接続あり_更新あり {
     [Test]
     public async Task Childの追加更新削除が正常に動作するか確認() {
         var scope = TestUtilImpl.Instance.CreateScope(nameof(Childの追加更新削除が正常に動作するか確認));
-        var presentationContext = new PresentationContextInUnitTest<医療機器マスタSaveCommandMessages> {
-            ValidationOnly = false,
-            Messages = MessageSetter.GetImpl<医療機器マスタSaveCommandMessages>([], new()),
-            Confirms = [],
-        };
-
         // 外部キー用に全テーブルデータ作成
         var generator = new OverridedDummyDataGenerator();
         await generator.GenerateAsync(scope.App);
@@ -44,54 +38,51 @@ partial class DB接続あり_更新あり {
             var warehouse1 = scope.App.DbContext.保管庫マスタDbSet.OrderBy(x => x.保管庫ID).First();
             var employee1 = scope.App.DbContext.医療従事者マスタDbSet.OrderBy(x => x.医療従事者ID).First();
 
-            await scope.App.Create医療機器マスタAsync(new() {
-                機器ID = "MED001",
-                機器名 = "テスト医療機器1",
-                単価 = 1000,
-                機器分類 = new() { 機器分類ID = category1.機器分類ID },
-                供給業者 = new() { 供給業者ID = supplier1.供給業者ID },
-                機器詳細 = new() {
-                    機器説明 = "テスト医療機器の説明文",
-                    機器仕様 = new() {
-                        重量 = 500,
-                        サイズ = new() {
-                            幅 = 10,
-                            高さ = 20,
-                            奥行 = 30
-                        }
-                    },
-                    付属品 = new List<付属品CreateCommand> {
-                        new() {
-                            付属品ID = "ACC001",
-                            付属品名 = "取扱説明書",
-                            数量 = 1
-                        }
+            var data = scope.App.DbContext.StartCreating医療機器マスタ();
+            data.機器ID = "MED001";
+            data.機器名 = "テスト医療機器1";
+            data.単価 = 1000;
+            data.機器分類 = new() { 機器分類ID = category1.機器分類ID };
+            data.供給業者 = new() { 供給業者ID = supplier1.供給業者ID };
+            data.機器詳細 = new() {
+                機器説明 = "テスト医療機器の説明文",
+                機器仕様 = new() {
+                    重量 = 500,
+                    サイズ = new() {
+                        幅 = 10,
+                        高さ = 20,
+                        奥行 = 30
                     }
                 },
-                在庫情報 = new List<在庫情報CreateCommand> {
+                付属品 = new List<付属品CreateCommand> {
                     new() {
-                        保管庫 = new() { 保管庫ID = warehouse1.保管庫ID },
-                        在庫数 = 100,
-                        棚卸日時 = DateTime.Now,
-                        在庫状況履歴 = new List<在庫状況履歴CreateCommand> {
-                            new() {
-                                履歴ID = "HIST001",
-                                変更日時 = DateTime.Now.AddDays(-1),
-                                変更前在庫数 = 0,
-                                変更後在庫数 = 100,
-                                担当者 = new() { 医療従事者ID = (医療従事者ID型?)employee1.医療従事者ID }
-                            }
+                        付属品ID = "ACC001",
+                        付属品名 = "取扱説明書",
+                        数量 = 1
+                    }
+                }
+            };
+            data.在庫情報 = new List<在庫情報CreateCommand> {
+                new() {
+                    保管庫 = new() { 保管庫ID = warehouse1.保管庫ID },
+                    在庫数 = 100,
+                    棚卸日時 = DateTime.Now,
+                    在庫状況履歴 = new List<在庫状況履歴CreateCommand> {
+                        new() {
+                            履歴ID = "HIST001",
+                            変更日時 = DateTime.Now.AddDays(-1),
+                            変更前在庫数 = 0,
+                            変更後在庫数 = 100,
+                            担当者 = new() { 医療従事者ID = (医療従事者ID型?)employee1.医療従事者ID }
                         }
                     }
                 }
-            }, presentationContext);
+            };
+            (await scope.App.DbContext.TrySaveAsync(data.AssertValid())).AssertSucceeded();
             await tran.CommitAsync();
         }
 
         Assert.Multiple(() => {
-            // エラーが無いことを確認
-            Assert.That(presentationContext.Messages.HasError(), Is.False, presentationContext.BuildFailureMessage("医療機器マスタの新規登録に失敗しました。"));
-
             // 3テーブルともに登録されていることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
             Assert.That(scope.App.DbContext.機器詳細DbSet.Count(), Is.EqualTo(1));
@@ -112,63 +103,57 @@ partial class DB接続あり_更新あり {
             var warehouse1 = scope.App.DbContext.保管庫マスタDbSet.OrderBy(x => x.保管庫ID).First();
             var employee1 = scope.App.DbContext.医療従事者マスタDbSet.OrderBy(x => x.医療従事者ID).First();
 
-            await scope.App.Update医療機器マスタAsync(new() {
-                機器ID = "MED001",
-                Version = 0,
-            }, data => {
-                data.機器名 = "テスト医療機器1-更新";
-                data.単価 = 1500;
-                data.機器分類 = new() { 機器分類ID = category1.機器分類ID };
-                data.供給業者 = new() { 供給業者ID = supplier1.供給業者ID };
-                data.機器詳細 = new() {
-                    機器説明 = "テスト医療機器の説明文-更新",
-                    機器仕様 = new() {
-                        重量 = 600,
-                        サイズ = new() {
-                            幅 = 15,
-                            高さ = 25,
-                            奥行 = 35
-                        }
-                    },
-                    付属品 = new List<付属品UpdateCommand> {
-                        new() {
-                            付属品ID = "ACC001",
-                            付属品名 = "取扱説明書-更新",
-                            数量 = 2
-                        }
+            var data = await Load医療機器マスタAsync(scope, version: 0);
+            data.機器名 = "テスト医療機器1-更新";
+            data.単価 = 1500;
+            data.機器分類 = new() { 機器分類ID = category1.機器分類ID };
+            data.供給業者 = new() { 供給業者ID = supplier1.供給業者ID };
+            data.機器詳細 = new() {
+                機器説明 = "テスト医療機器の説明文-更新",
+                機器仕様 = new() {
+                    重量 = 600,
+                    サイズ = new() {
+                        幅 = 15,
+                        高さ = 25,
+                        奥行 = 35
                     }
-                };
-                data.在庫情報 = new List<在庫情報UpdateCommand> {
+                },
+                付属品 = new List<付属品UpdateCommand> {
                     new() {
-                        保管庫 = new() { 保管庫ID = warehouse1.保管庫ID },
-                        在庫数 = 150,
-                        棚卸日時 = DateTime.Now,
-                        在庫状況履歴 = new List<在庫状況履歴UpdateCommand> {
-                            new() {
-                                履歴ID = "HIST001",
-                                変更日時 = DateTime.Now.AddDays(-1),
-                                変更前在庫数 = 0,
-                                変更後在庫数 = 100,
-                                担当者 = new() { 医療従事者ID = (医療従事者ID型?)employee1.医療従事者ID }
-                            },
-                            new() {
-                                履歴ID = "HIST002",
-                                変更日時 = DateTime.Now,
-                                変更前在庫数 = 100,
-                                変更後在庫数 = 150,
-                                担当者 = new() { 医療従事者ID = (医療従事者ID型?)employee1.医療従事者ID }
-                            }
+                        付属品ID = "ACC001",
+                        付属品名 = "取扱説明書-更新",
+                        数量 = 2
+                    }
+                }
+            };
+            data.在庫情報 = new List<在庫情報UpdateCommand> {
+                new() {
+                    保管庫 = new() { 保管庫ID = warehouse1.保管庫ID },
+                    在庫数 = 150,
+                    棚卸日時 = DateTime.Now,
+                    在庫状況履歴 = new List<在庫状況履歴UpdateCommand> {
+                        new() {
+                            履歴ID = "HIST001",
+                            変更日時 = DateTime.Now.AddDays(-1),
+                            変更前在庫数 = 0,
+                            変更後在庫数 = 100,
+                            担当者 = new() { 医療従事者ID = (医療従事者ID型?)employee1.医療従事者ID }
+                        },
+                        new() {
+                            履歴ID = "HIST002",
+                            変更日時 = DateTime.Now,
+                            変更前在庫数 = 100,
+                            変更後在庫数 = 150,
+                            担当者 = new() { 医療従事者ID = (医療従事者ID型?)employee1.医療従事者ID }
                         }
                     }
-                };
-            }, presentationContext);
+                }
+            };
+            (await scope.App.DbContext.TrySaveAsync(data.AssertValid())).AssertSucceeded();
             await tran.CommitAsync();
         }
 
         Assert.Multiple(() => {
-            // エラーが無いことを確認
-            Assert.That(presentationContext.Messages.HasError(), Is.False, presentationContext.BuildFailureMessage("医療機器マスタの更新に失敗しました。"));
-
             // 3テーブルともに新しい値に更新されていることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
             var 医療機器マスタ = scope.App.DbContext.医療機器マスタDbSet.First();
@@ -199,44 +184,38 @@ partial class DB接続あり_更新あり {
             var supplier1 = scope.App.DbContext.供給業者マスタDbSet.OrderBy(x => x.供給業者ID).First();
             var warehouse1 = scope.App.DbContext.保管庫マスタDbSet.OrderBy(x => x.保管庫ID).First();
 
-            await scope.App.Update医療機器マスタAsync(new() {
-                機器ID = "MED001",
-                Version = 1,
-            }, data => {
-                data.機器名 = "テスト医療機器1-更新";
-                data.単価 = 1500;
-                data.機器分類 = new() { 機器分類ID = category1.機器分類ID };
-                data.供給業者 = new() { 供給業者ID = supplier1.供給業者ID };
-                data.機器詳細 = new() {
-                    機器説明 = "テスト医療機器の説明文-更新",
-                    機器仕様 = new() {
-                        重量 = 600,
-                        サイズ = null // サイズを削除
-                    },
-                    付属品 = new List<付属品UpdateCommand> {
-                        new() {
-                            付属品ID = "ACC001",
-                            付属品名 = "取扱説明書-更新",
-                            数量 = 2
-                        }
-                    }
-                };
-                data.在庫情報 = new List<在庫情報UpdateCommand> {
+            var data = await Load医療機器マスタAsync(scope, version: 1);
+            data.機器名 = "テスト医療機器1-更新";
+            data.単価 = 1500;
+            data.機器分類 = new() { 機器分類ID = category1.機器分類ID };
+            data.供給業者 = new() { 供給業者ID = supplier1.供給業者ID };
+            data.機器詳細 = new() {
+                機器説明 = "テスト医療機器の説明文-更新",
+                機器仕様 = new() {
+                    重量 = 600,
+                    サイズ = null // サイズを削除
+                },
+                付属品 = new List<付属品UpdateCommand> {
                     new() {
-                        保管庫 = new() { 保管庫ID = warehouse1.保管庫ID },
-                        在庫数 = 150,
-                        棚卸日時 = DateTime.Now,
-                        在庫状況履歴 = new List<在庫状況履歴UpdateCommand>() // 履歴を空にして削除
+                        付属品ID = "ACC001",
+                        付属品名 = "取扱説明書-更新",
+                        数量 = 2
                     }
-                };
-            }, presentationContext);
+                }
+            };
+            data.在庫情報 = new List<在庫情報UpdateCommand> {
+                new() {
+                    保管庫 = new() { 保管庫ID = warehouse1.保管庫ID },
+                    在庫数 = 150,
+                    棚卸日時 = DateTime.Now,
+                    在庫状況履歴 = new List<在庫状況履歴UpdateCommand>() // 履歴を空にして削除
+                }
+            };
+            (await scope.App.DbContext.TrySaveAsync(data.AssertValid())).AssertSucceeded();
             await tran.CommitAsync();
         }
 
         Assert.Multiple(() => {
-            // エラーが無いことを確認
-            Assert.That(presentationContext.Messages.HasError(), Is.False, presentationContext.BuildFailureMessage("医療機器マスタの孫要素削除に失敗しました。"));
-
             // ルートと子が影響なし、孫が消えていることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
             Assert.That(scope.App.DbContext.機器詳細DbSet.Count(), Is.EqualTo(1));
@@ -255,56 +234,50 @@ partial class DB接続あり_更新あり {
             var warehouse1 = scope.App.DbContext.保管庫マスタDbSet.OrderBy(x => x.保管庫ID).First();
             var employee1 = scope.App.DbContext.医療従事者マスタDbSet.OrderBy(x => x.医療従事者ID).First();
 
-            await scope.App.Update医療機器マスタAsync(new() {
-                機器ID = "MED001",
-                Version = 2,
-            }, data => {
-                data.機器名 = "テスト医療機器1-更新";
-                data.単価 = 1500;
-                data.機器分類 = new() { 機器分類ID = category1.機器分類ID };
-                data.供給業者 = new() { 供給業者ID = supplier1.供給業者ID };
-                data.機器詳細 = new() {
-                    機器説明 = "テスト医療機器の説明文-更新",
-                    機器仕様 = new() {
-                        重量 = 600,
-                        サイズ = new() { // サイズを再追加
-                            幅 = 20,
-                            高さ = 30,
-                            奥行 = 40
-                        }
-                    },
-                    付属品 = new List<付属品UpdateCommand> {
-                        new() {
-                            付属品ID = "ACC001",
-                            付属品名 = "取扱説明書-更新",
-                            数量 = 2
-                        }
+            var data = await Load医療機器マスタAsync(scope, version: 2);
+            data.機器名 = "テスト医療機器1-更新";
+            data.単価 = 1500;
+            data.機器分類 = new() { 機器分類ID = category1.機器分類ID };
+            data.供給業者 = new() { 供給業者ID = supplier1.供給業者ID };
+            data.機器詳細 = new() {
+                機器説明 = "テスト医療機器の説明文-更新",
+                機器仕様 = new() {
+                    重量 = 600,
+                    サイズ = new() { // サイズを再追加
+                        幅 = 20,
+                        高さ = 30,
+                        奥行 = 40
                     }
-                };
-                data.在庫情報 = new List<在庫情報UpdateCommand> {
+                },
+                付属品 = new List<付属品UpdateCommand> {
                     new() {
-                        保管庫 = new() { 保管庫ID = warehouse1.保管庫ID },
-                        在庫数 = 150,
-                        棚卸日時 = DateTime.Now,
-                        在庫状況履歴 = new List<在庫状況履歴UpdateCommand> { // 履歴を再追加
-                            new() {
-                                履歴ID = "HIST003",
-                                変更日時 = DateTime.Now,
-                                変更前在庫数 = 150,
-                                変更後在庫数 = 150,
-                                担当者 = new() { 医療従事者ID = (医療従事者ID型?)employee1.医療従事者ID }
-                            },
+                        付属品ID = "ACC001",
+                        付属品名 = "取扱説明書-更新",
+                        数量 = 2
+                    }
+                }
+            };
+            data.在庫情報 = new List<在庫情報UpdateCommand> {
+                new() {
+                    保管庫 = new() { 保管庫ID = warehouse1.保管庫ID },
+                    在庫数 = 150,
+                    棚卸日時 = DateTime.Now,
+                    在庫状況履歴 = new List<在庫状況履歴UpdateCommand> { // 履歴を再追加
+                        new() {
+                            履歴ID = "HIST003",
+                            変更日時 = DateTime.Now,
+                            変更前在庫数 = 150,
+                            変更後在庫数 = 150,
+                            担当者 = new() { 医療従事者ID = (医療従事者ID型?)employee1.医療従事者ID }
                         },
                     },
-                };
-            }, presentationContext);
+                },
+            };
+            (await scope.App.DbContext.TrySaveAsync(data.AssertValid())).AssertSucceeded();
             await tran.CommitAsync();
         }
 
         Assert.Multiple(() => {
-            // エラーが無いことを確認
-            Assert.That(presentationContext.Messages.HasError(), Is.False, presentationContext.BuildFailureMessage("医療機器マスタの孫要素再作成に失敗しました。"));
-
             // 3テーブルすべてデータがあることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
             Assert.That(scope.App.DbContext.機器詳細DbSet.Count(), Is.EqualTo(1));
@@ -326,24 +299,18 @@ partial class DB接続あり_更新あり {
             var category1 = scope.App.DbContext.機器分類マスタDbSet.OrderBy(x => x.機器分類ID).First();
             var supplier1 = scope.App.DbContext.供給業者マスタDbSet.OrderBy(x => x.供給業者ID).First();
 
-            await scope.App.Update医療機器マスタAsync(new() {
-                機器ID = "MED001",
-                Version = 3,
-            }, data => {
-                data.機器名 = "テスト医療機器1-更新";
-                data.単価 = 1500;
-                data.機器分類 = new() { 機器分類ID = category1.機器分類ID };
-                data.供給業者 = new() { 供給業者ID = supplier1.供給業者ID };
-                data.機器詳細 = null; // 機器詳細を削除
-                data.在庫情報 = new List<在庫情報UpdateCommand>(); // 在庫情報を空にして削除
-            }, presentationContext);
+            var data = await Load医療機器マスタAsync(scope, version: 3);
+            data.機器名 = "テスト医療機器1-更新";
+            data.単価 = 1500;
+            data.機器分類 = new() { 機器分類ID = category1.機器分類ID };
+            data.供給業者 = new() { 供給業者ID = supplier1.供給業者ID };
+            data.機器詳細 = null; // 機器詳細を削除
+            data.在庫情報 = new List<在庫情報UpdateCommand>(); // 在庫情報を空にして削除
+            (await scope.App.DbContext.TrySaveAsync(data.AssertValid())).AssertSucceeded();
             await tran.CommitAsync();
         }
 
         Assert.Multiple(() => {
-            // エラーが無いことを確認
-            Assert.That(presentationContext.Messages.HasError(), Is.False, presentationContext.BuildFailureMessage("医療機器マスタの子要素削除に失敗しました。"));
-
             // ルートだけデータが残っていることを確認
             Assert.That(scope.App.DbContext.医療機器マスタDbSet.Count(), Is.EqualTo(1));
             Assert.That(scope.App.DbContext.機器詳細DbSet.Count(), Is.EqualTo(0)); // 機器詳細が削除されたことを確認
@@ -353,6 +320,11 @@ partial class DB接続あり_更新あり {
             Assert.That(scope.App.DbContext.在庫情報DbSet.Count(), Is.EqualTo(0)); // 在庫情報が削除されたことを確認
             Assert.That(scope.App.DbContext.在庫状況履歴DbSet.Count(), Is.EqualTo(0));
         });
+    }
+
+    private static async Task<医療機器マスタUpdateCommand> Load医療機器マスタAsync(TestScopeImpl scope, int version) {
+        var loaded = await scope.App.DbContext.LoadForEdit医療機器マスタAsync(new 医療機器マスタKeyWithVersion(version) { 機器ID = "MED001" });
+        return loaded ?? throw new InvalidOperationException("医療機器マスタが見つかりません。");
     }
 
     /// <summary>

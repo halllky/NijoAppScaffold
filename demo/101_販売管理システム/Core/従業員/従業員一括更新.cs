@@ -11,25 +11,27 @@ partial class OverridedApplicationService {
             return;
         }
 
-        // 一括更新処理。
-        // ここで実装すべきなのは、トランザクションの範囲の定義と、
-        // 画面項目からデータベース項目へのマッピング。
-        var commitedIndex = new HashSet<int>();
+        // 更新・削除の対象を読み込む。
+        // WillBeChanged や WillBeDeleted はJavaScript側でtrueを設定する処理を記述する必要がある。
+        var keys = param.更新対象従業員一覧
+            .Where(x => x.ExistsInDatabase && (x.WillBeChanged || x.WillBeDeleted))
+            .Select(x => new 従業員KeyWithVersion(x.従業員.Version) {
+                従業員番号 = x.従業員.従業員番号,
+            });
+        var loaded = await DbContext.LoadForEdit従業員Async(keys);
+
+        // ループ後にまとめて保存するのでメモリ上に蓄積する
+        var saveCommands = new List<ValidatedCommand<従業員UpdateCommand>>();
+
         for (var i = 0; i < param.更新対象従業員一覧.Count; i++) {
-
-            // サーバーの負荷を考慮し、トランザクションの範囲は従業員1名ずつ
-            await using var tran = await BeginTransactionAsync();
-
             var item = param.更新対象従業員一覧[i];
             var message = context.Messages.更新対象従業員一覧[i];
-            bool success;
 
-            // フラグ項目をもとに、追加・更新・削除のいずれかを実行する。
-            // WillBeChanged や WillBeDeleted はJavaScript側でtrueを設定する処理を記述する必要がある。
+            // 新規追加
             if (!item.ExistsInDatabase) {
 
                 // ユニーク制約によるチェックはかかるものの、
-                // ここでチェックをかけた方がロールバックの挙動が分かりやすくなるので重ねてチェックする
+                // 行単位でエラーを見せるためにここでもチェックする
                 if (param.更新対象従業員一覧.Any(e => e != item && e.従業員.従業員番号 == item.従業員.従業員番号)
                     || await DbContext.従業員DbSet.AnyAsync(e => e.従業員番号 == item.従業員.従業員番号)) {
 
@@ -39,81 +41,77 @@ partial class OverridedApplicationService {
 
                 // 初期パスワード
                 var salt = GenerateSalt();
-                var hash = ComputeHash(INIT_PASSWORD, salt);
 
-                // 新規追加
-                var result = await Create従業員Async(new() {
-                    従業員番号 = item.従業員.従業員番号,
-                    氏名 = item.従業員.氏名,
-                    入荷担当 = item.従業員.入荷担当,
-                    販売担当 = item.従業員.販売担当,
-                    システム管理者 = item.従業員.システム管理者,
-                    パスワード = hash,
-                    SALT = salt,
-                }, context, message);
+                var createCommand = DbContext.StartCreating従業員();
+                createCommand.従業員番号 = item.従業員.従業員番号;
+                createCommand.氏名 = item.従業員.氏名;
+                createCommand.入荷担当 = item.従業員.入荷担当;
+                createCommand.販売担当 = item.従業員.販売担当;
+                createCommand.システム管理者 = item.従業員.システム管理者;
+                createCommand.パスワード = ComputeHash(INIT_PASSWORD, salt);
+                createCommand.SALT = salt;
 
-                success = result.IsSaveCompleted();
-
-            } else if (item.WillBeDeleted) {
-
-                // 削除
-                var result = await Delete従業員Async(new() {
-                    従業員番号 = item.従業員.従業員番号,
-                    Version = item.従業員.Version,
-                }, context, message);
-
-                success = result.IsSaveCompleted();
-
-            } else if (item.WillBeChanged) {
-
-                // 更新
-                var result = await Update従業員Async(new() {
-                    従業員番号 = item.従業員.従業員番号,
-                    Version = item.従業員.Version,
-                }, employee => {
-                    employee.氏名 = item.従業員.氏名;
-                    employee.入荷担当 = item.従業員.入荷担当;
-                    employee.販売担当 = item.従業員.販売担当;
-                    employee.システム管理者 = item.従業員.システム管理者;
-                }, context, message);
-
-                success = result.IsSaveCompleted();
-
-            } else {
-                // 変更なし
+                if (createCommand.TryValidate(out var validatedCreate, out var createErrors)) {
+                    saveCommands.Add(validatedCreate);
+                }
+                createErrors.CopyTo(message.従業員);
                 continue;
             }
 
-            if (!context.ValidationOnly && success) {
-                await tran.CommitAsync();
-                commitedIndex.Add(i);
+            // 変更なし
+            if (!item.WillBeChanged && !item.WillBeDeleted) continue;
+
+            // 既存データの引当
+            if (!loaded.TryGetValue(new() { 従業員番号 = item.従業員.従業員番号 }, out var updateCommand)) {
+                message.AddError(MSG.DataNotFoundError());
+                continue;
             }
+
+            // 削除
+            if (item.WillBeDeleted) {
+                if (updateCommand.ToDeleteCommand().TryValidate(out var validatedDelete, out var deleteErrors)) {
+                    saveCommands.Add(validatedDelete);
+                }
+                deleteErrors.CopyTo(message.従業員);
+                continue;
+            }
+
+            // 更新
+            updateCommand.氏名 = item.従業員.氏名;
+            updateCommand.入荷担当 = item.従業員.入荷担当;
+            updateCommand.販売担当 = item.従業員.販売担当;
+            updateCommand.システム管理者 = item.従業員.システム管理者;
+
+            if (updateCommand.TryValidate(out var validatedUpdate, out var updateErrors)) {
+                saveCommands.Add(validatedUpdate);
+            }
+            updateErrors.CopyTo(message.従業員);
         }
 
-        // 保存後メッセージ。
-        // 一部の更新だけコミットされる場合があるので
-        // 分かりやすさのためにメッセージを詳細に表示する
-        if (!context.ValidationOnly) {
+        // いずれか1件でもエラーなら中断
+        if (context.Messages.HasError()) return;
 
-            if (context.Messages.HasError()) {
-                if (commitedIndex.Count == 0) {
-                    context.Messages.AddError("保存に失敗しました。");
-
-                } else {
-                    context.Messages.AddWarn("保存できなかったデータがあります。");
-                    foreach (var i in commitedIndex) {
-                        context.Messages.更新対象従業員一覧[i].AddInfo("保存しました。");
-                    }
-                }
-
-            } else {
-                if (commitedIndex.Count == 0) {
-                    context.Messages.AddInfo("更新された内容はありません。");
-
-                } else {
-                    context.Messages.AddInfo("保存しました。");
-                }
-            }
+        // 1巡目はここまで
+        if (context.ValidationOnly) {
+            context.AddConfirm("更新しますか？");
+            return;
         }
+
+        if (saveCommands.Count == 0) {
+            context.Messages.AddInfo("更新された内容はありません。");
+            return;
+        }
+
+        // 保存実行。全件まとめて成功か失敗かとする
+        await using var tran = await BeginTransactionAsync();
+
+        var result = await DbContext.TrySaveAsync(saveCommands);
+        if (!result.Success) {
+            result.Errors.CopyTo(context.Messages);
+            return;
+        }
+
+        await tran.CommitAsync();
+        context.Messages.AddInfo("保存しました。");
     }
 }

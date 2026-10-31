@@ -51,13 +51,21 @@ public override async Task Execute受注登録Async(
     受注登録FormDisplayData param,
     IPresentationContext<受注登録FormDisplayDataMessages> context) {
 
-    // トランザクションを開始
+    // IsStored 属性が指定されたデータ構造のコマンドを作成して検証する
+    var command = DbContext.StartCreatingOrder();
+    command.OrderDate = param.OrderDate;
+    if (!command.TryValidate(out var validated, out var errors)) {
+        errors.CopyTo(context.Messages);
+        return;
+    }
+    if (context.ValidationOnly) return;
+
+    // トランザクションの範囲を明示して保存する
     await using var transaction = await DbContext.Database.BeginTransactionAsync();
 
-    // IsStored 属性が指定されたデータ構造の CRUD メソッドを呼び出す
-    var result = await CreateOrderAsync(param.ToCreateCommand(), context);
-    if (!result.IsSaveCompleted()) {
-        await transaction.RollbackAsync();
+    var result = await DbContext.TrySaveAsync(validated);
+    if (!result.Success) {
+        result.Errors.CopyTo(context.Messages);
         return;
     }
 

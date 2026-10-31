@@ -17,14 +17,21 @@ partial class OverridedApplicationService {
             return;
         }
 
-        // 既存データの取得（存在確認とバージョンチェックのため）
-        // Update売上Async 内でも取得されるが、ここでは事前の在庫計算のために必要
-        // また、既存明細のUUIDを知る必要がある（UpdateCommand構築のため）
-        // しかし、Update売上Async の updater に渡される command は FromDbEntity で作られるので、
-        // 既存明細の情報はそこに含まれている。
-        // ここでは在庫計算だけできればよい。
+        // 既存データの読み込み
+        var command = await DbContext.LoadForEdit売上Async(new 売上KeyWithVersion(param.Version) {
+            売上SEQ = param.売上SEQ,
+        });
+        if (command == null) {
+            context.Messages.AddError(MSG.DataNotFoundError());
+            return;
+        }
 
-        var allocationPlans = new List<(売上詳細の売上明細DisplayData Detail, List<(string StockId, int Deduct)> Plan)>();
+        // 整合性チェックに使用するので書き換える前の値を控えておく
+        var before = command.売上の売上明細
+            .Select(x => new 売上明細の更新前の値(x.明細ID, x.区分, x.商品?.商品SEQ, x.売上数量, x.売上総額_税込))
+            .ToArray();
+
+        var allocationPlans = new List<(売上詳細の売上明細DisplayData Detail, int RowIndex, List<(string StockId, int Deduct)> Plan)>();
 
         // 入荷明細のキャッシュ
         var stockCache = new Dictionary<int, List<入荷明細DbEntity>>();
@@ -170,10 +177,51 @@ partial class OverridedApplicationService {
 
             if (message.HasError()) continue;
 
-            allocationPlans.Add((detail, plan));
+            allocationPlans.Add((detail, i, plan));
         }
 
         if (context.Messages.HasError()) {
+            return;
+        }
+
+        // 備考の更新
+        command.備考 = param.備考;
+
+        // 新規明細の追加
+        var addedRows = new List<(int CommandIndex, int RowIndex)>();
+        foreach (var (detail, rowIndex, plan) in allocationPlans) {
+            addedRows.Add((command.売上の売上明細.Count, rowIndex));
+            command.売上の売上明細.Add(new() {
+                明細ID = Guid.NewGuid().ToString(),
+                商品 = new() { 商品SEQ = detail.商品.商品SEQ },
+                区分 = detail.区分,
+                売上数量 = detail.売上数量,
+
+                // 手修正があればそちらを優先
+                売上総額_税込 = detail.売上総額_税込_手修正 ?? detail.売上総額_税込_自動計算,
+
+                引当明細 = plan.Select(p => new 引当明細UpdateCommand {
+                    入荷 = new() { 入荷明細ID = p.StockId },
+                    引当数量 = p.Deduct,
+                }).ToList(),
+            });
+        }
+
+        command.TryValidate(out var validated, out var errors);
+        Validate売上修正(command, before, errors);
+        errors.CopyTo(context.Messages);
+        foreach (var (commandIndex, rowIndex) in addedRows) {
+            errors.売上の売上明細[commandIndex].CopyTo(context.Messages.売上詳細の売上明細[rowIndex]);
+        }
+
+        // 入荷明細の残数量更新
+        // 読込時点から他者による更新がないことを保証するため、stockCacheにあるVersionを使用する。
+        var stockCommands = await LoadForEdit入荷明細の残数量Async(
+            stockCache.Values.SelectMany(x => x),
+            allocationPlans.SelectMany(x => x.Plan),
+            context.Messages);
+
+        if (validated == null || context.Messages.HasError()) {
             return;
         }
         if (context.ValidationOnly) {
@@ -184,52 +232,18 @@ partial class OverridedApplicationService {
         // 保存処理
         await using var tran = await BeginTransactionAsync();
 
-        var updateResult = await Update売上Async(new() {
-            売上SEQ = param.売上SEQ,
-            Version = null,
-        }, command => {
-            // 備考の更新
-            command.備考 = param.備考;
-
-            // 新規明細の追加
-            foreach (var (detail, plan) in allocationPlans) {
-                command.売上の売上明細.Add(new() {
-                    明細ID = Guid.NewGuid().ToString(),
-                    商品 = new() { 商品SEQ = detail.商品.商品SEQ },
-                    区分 = detail.区分,
-                    売上数量 = detail.売上数量,
-
-                    // 手修正があればそちらを優先
-                    売上総額_税込 = detail.売上総額_税込_手修正 ?? detail.売上総額_税込_自動計算,
-
-                    引当明細 = plan.Select(p => new 引当明細UpdateCommand {
-                        入荷 = new() { 入荷明細ID = p.StockId },
-                        引当数量 = p.Deduct,
-                    }).ToList(),
-                });
-            }
-        }, context);
-
-        if (!updateResult.IsSaveCompleted()) return;
-
-        // 入荷明細の残数量更新
-        foreach (var (detail, plan) in allocationPlans) {
-            foreach (var (stockId, deduct) in plan) {
-                var stockEntity = stockCache.Values.SelectMany(x => x).FirstOrDefault(x => x.入荷明細ID == stockId);
-                var version = stockEntity?.Version;
-
-                var updateStockResult = await Update入荷明細Async(new() {
-                    入荷明細ID = stockId,
-                    Version = version,
-                }, x => {
-                    x.残数量 -= deduct; // deductが負の場合は残数量が増える
-                }, context);
-
-                if (!updateStockResult.IsSaveCompleted()) {
-                    return;
-                }
-            }
+        var updateResult = await DbContext.TrySaveAsync(validated);
+        if (!updateResult.Success) {
+            updateResult.Errors.CopyTo(context.Messages);
+            return;
         }
+
+        var stockResult = await DbContext.TrySaveAsync(stockCommands);
+        if (!stockResult.Success) {
+            stockResult.Errors.CopyTo(context.Messages);
+            return;
+        }
+        await Notify在庫数量Async(stockResult.Updated.Select(x => x.商品?.商品SEQ));
 
         await tran.CommitAsync();
         context.Messages.AddInfo("売上修正が完了しました。");

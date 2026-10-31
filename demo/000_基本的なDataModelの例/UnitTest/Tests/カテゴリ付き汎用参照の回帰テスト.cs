@@ -10,23 +10,29 @@ public class カテゴリ付き汎用参照の回帰テスト {
 
     [Test]
     public void 社員と係のコマンドはカテゴリ専用キー型を使う() {
-        Assert.That(typeof(社員CreateCommand).GetProperty("契約種別")?.PropertyType, Is.EqualTo(typeof(汎用マスタKey)));
-        Assert.That(typeof(社員UpdateCommand).GetProperty("契約種別")?.PropertyType, Is.EqualTo(typeof(汎用マスタKey)));
+        Assert.That(typeof(社員CreateCommand).GetProperty("契約種別")?.PropertyType, Is.EqualTo(typeof(汎用マスタPartialKey)));
+        Assert.That(typeof(社員UpdateCommand).GetProperty("契約種別")?.PropertyType, Is.EqualTo(typeof(汎用マスタPartialKey)));
 
-        Assert.That(typeof(係CreateCommand).GetProperty("勤怠管理区分")?.PropertyType, Is.EqualTo(typeof(汎用マスタKey)));
-        Assert.That(typeof(係UpdateCommand).GetProperty("勤怠管理区分")?.PropertyType, Is.EqualTo(typeof(汎用マスタKey)));
+        Assert.That(typeof(係CreateCommand).GetProperty("勤怠管理区分")?.PropertyType, Is.EqualTo(typeof(汎用マスタPartialKey)));
+        Assert.That(typeof(係UpdateCommand).GetProperty("勤怠管理区分")?.PropertyType, Is.EqualTo(typeof(汎用マスタPartialKey)));
     }
 
     [Test]
     public void カテゴリ専用キー型は非ハードコード主キーだけを持つ() {
-        var publicInstanceProperties = typeof(汎用マスタKey)
+        var publicInstanceProperties = typeof(汎用マスタPartialKey)
             .GetProperties()
             .Where(property => property.GetMethod?.IsPublic == true)
             .Select(property => property.Name)
             .OrderBy(name => name)
             .ToArray();
-        Assert.That(publicInstanceProperties, Is.EqualTo(new[] { "区分値" }), $"{typeof(汎用マスタKey).Name} は区分値 だけを持つ想定です。");
-        Assert.That(typeof(汎用マスタKey).GetProperty("汎用種別"), Is.Null, $"{typeof(汎用マスタKey).Name} にハードコード主キーが残っています。");
+        Assert.That(publicInstanceProperties, Is.EqualTo(new[] { "区分値" }), $"{typeof(汎用マスタPartialKey).Name} は区分値 だけを持つ想定です。");
+        Assert.That(typeof(汎用マスタPartialKey).GetProperty("汎用種別"), Is.Null, $"{typeof(汎用マスタPartialKey).Name} にハードコード主キーが残っています。");
+        Assert.That(typeof(汎用マスタPartialKey).GetProperty("区分値"), Is.Not.Null);
+    }
+
+    [Test]
+    public void 主キー全体をもつキー型はハードコード主キーも持つ() {
+        Assert.That(typeof(汎用マスタKey).GetProperty("汎用種別"), Is.Not.Null);
         Assert.That(typeof(汎用マスタKey).GetProperty("区分値"), Is.Not.Null);
     }
 
@@ -53,24 +59,23 @@ public class カテゴリ付き汎用参照の回帰テスト {
     [Category("DB接続あり（更新あり）")]
     public async Task 社員の契約種別は別カテゴリの区分値を拒否する() {
         var scope = TestUtilImpl.Instance.CreateScope("カテゴリ付き汎用参照/社員の契約種別は別カテゴリの区分値を拒否する");
-        var presentationContext = CreatePresentationContext();
+        var db = scope.App.DbContext;
 
-        await using var transaction = await scope.App.DbContext.Database.BeginTransactionAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync();
 
         const string sharedCode = "GL-001";
-        await RegisterGenericLookupAsync(scope, presentationContext, categoryName: "勤怠管理区分", code: sharedCode, displayName: "勤怠管理専用コード");
+        await RegisterGenericLookupAsync(db, categoryName: "勤怠管理区分", code: sharedCode, displayName: "勤怠管理専用コード");
 
-        var createResult = await scope.App.Create社員Async(new() {
-            社員ID = 9001,
-            氏名 = "カテゴリ不一致社員",
-            所属部署 = null,
-            契約種別 = new() { 区分値 = sharedCode },
-        }, presentationContext);
+        var employee = db.StartCreating社員();
+        employee.社員ID = 9001;
+        employee.氏名 = "カテゴリ不一致社員";
+        employee.所属部署 = null;
+        employee.契約種別 = new() { 区分値 = sharedCode };
 
-        var messages = presentationContext.As<I社員SaveCommandMessages>().Messages;
+        var isValid = employee.TryValidate(out var validated, out var messages);
 
-        Assert.That(createResult.IsError(out var reason), Is.True, "カテゴリ不一致の区分値が保存エラーとして扱われていません。");
-        Assert.That(reason, Is.EqualTo(DataModelSaveErrorReason.ValidationError));
+        Assert.That(isValid, Is.False, "カテゴリ不一致の区分値が検証エラーとして扱われていません。");
+        Assert.That(validated, Is.Null);
         Assert.That(messages.契約種別.HasError(), Is.True, "契約種別にエラーが付与されていません。");
         Assert.That(messages.GetAllMessages(), Has.Some.Contains("契約種別: 契約種別 に指定された区分値が存在しません。"));
     }
@@ -79,34 +84,33 @@ public class カテゴリ付き汎用参照の回帰テスト {
     [Category("DB接続あり（更新あり）")]
     public async Task 係の勤怠管理区分はカテゴリ内の区分値なら保存できる() {
         var scope = TestUtilImpl.Instance.CreateScope("カテゴリ付き汎用参照/係の勤怠管理区分はカテゴリ内の区分値なら保存できる");
-        var presentationContext = CreatePresentationContext();
+        var db = scope.App.DbContext;
 
-        await using var transaction = await scope.App.DbContext.Database.BeginTransactionAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync();
 
         const string attendanceCode = "ATT-001";
-        await RegisterGenericLookupAsync(scope, presentationContext, categoryName: "勤怠管理区分", code: attendanceCode, displayName: "通常勤務");
+        await RegisterGenericLookupAsync(db, categoryName: "勤怠管理区分", code: attendanceCode, displayName: "通常勤務");
 
-        var createResult = await scope.App.Create部署Async(new() {
-            部署ID = 9101,
-            部署名 = "勤怠管理区分テスト部署",
-            事業所 = new() { 事業所ID = "1" },
-            課 = [new() {
-                コード = "SEC-GL-001",
-                旧システムコード = new() { 旧システムコード = null },
-                課名称 = "総務課",
-                係 = [new() {
-                    連番 = 1,
-                    係名称 = "第一係",
-                    勤怠管理区分 = new() { 区分値 = attendanceCode },
-                }],
+        var department = db.StartCreating部署();
+        department.部署ID = 9101;
+        department.部署名 = "勤怠管理区分テスト部署";
+        department.事業所 = new() { 事業所ID = "1" };
+        department.課 = [new() {
+            コード = "SEC-GL-001",
+            旧システムコード = new() { 旧システムコード = null },
+            課名称 = "総務課",
+            係 = [new() {
+                連番 = 1,
+                係名称 = "第一係",
+                勤怠管理区分 = new() { 区分値 = attendanceCode },
             }],
-        }, presentationContext);
+        }];
 
-        var messages = presentationContext.As<I部署SaveCommandMessages>().Messages;
+        department.TryValidate(out _, out var messages);
 
-        Assert.That(createResult.IsSaveCompleted(out var _), Is.True, presentationContext.BuildFailureMessage("カテゴリ内の区分値で部署を保存できませんでした。"));
-        Assert.That(messages.HasError(), Is.False, "保存成功時に不要なエラーが残っています。");
-        Assert.That(messages.課[0].係[0].勤怠管理区分.HasError(), Is.False, "勤怠管理区分にエラーが残っています。");
+        Assert.That(messages.HasError(), Is.False, "保存可能な内容なのにエラーがあります。");
+        Assert.That(messages.課[0].係[0].勤怠管理区分.HasError(), Is.False, "勤怠管理区分にエラーがあります。");
+        (await db.TrySaveAsync(department.AssertValid())).AssertSucceeded();
     }
 
     private static void AssertRefColumns(Type type, string valueColumnName, string hardCodedColumnName) {
@@ -114,30 +118,20 @@ public class カテゴリ付き汎用参照の回帰テスト {
         Assert.That(type.GetProperty(hardCodedColumnName), Is.Null, $"{type.Name} に {hardCodedColumnName} が残っています。");
     }
 
-    private static PresentationContextInUnitTest CreatePresentationContext() {
-        return new PresentationContextInUnitTest {
-            ValidationOnly = false,
-            Confirms = [],
-            Messages = MessageSetter.GetImpl<IMessageSetter>([], new()),
-        };
-    }
-
     private static async Task RegisterGenericLookupAsync(
-        TestScopeImpl scope,
-        PresentationContextInUnitTest presentationContext,
+        OverridedDbContext db,
         string categoryName,
         string code,
         string displayName) {
 
-        var createResult = await scope.App.Create汎用マスタAsync(new() {
-            汎用種別 = scope.App.汎用マスタUtil
-                .GetAllCategories()
-                .Single(category => category.PhysicalName == categoryName)
-                .汎用種別,
-            区分値 = code,
-            表示名称 = displayName,
-        }, presentationContext);
+        var genericLookup = db.StartCreating汎用マスタ();
+        genericLookup.汎用種別 = db.汎用マスタUtil
+            .GetAllCategories()
+            .Single(category => category.PhysicalName == categoryName)
+            .汎用種別;
+        genericLookup.区分値 = code;
+        genericLookup.表示名称 = displayName;
 
-        Assert.That(createResult.IsSaveCompleted(out var _), Is.True, presentationContext.BuildFailureMessage($"汎用マスタ '{categoryName}:{code}' の準備に失敗しました。"));
+        (await db.TrySaveAsync(genericLookup.AssertValid())).AssertSucceeded();
     }
 }

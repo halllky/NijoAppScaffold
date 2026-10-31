@@ -16,20 +16,19 @@ partial class OverridedApplicationService {
             return;
         }
 
-        // トランザクションの範囲は入荷ヘッダ更新から入荷明細登録まで
-        await using var tran = await BeginTransactionAsync();
-
-        // ヘッダ更新
-        var updateHeaderResult = await Update入荷Async(new() {
-            入荷ID = param.入荷ID,
-            Version = param.Version,
-        }, header => {
-            header.入荷日時 = param.入荷日時;
-            header.担当者 = new() { 従業員番号 = param.担当者.従業員番号 };
-            header.備考 = param.備考;
-        }, context);
-
-        if (updateHeaderResult.IsError()) return;
+        // ヘッダ
+        var header = await DbContext.LoadForEdit入荷Async(new 入荷KeyWithVersion(param.Version) {
+            入荷ID = id,
+        });
+        if (header == null) {
+            context.Messages.AddError(MSG.DataNotFoundError());
+            return;
+        }
+        header.入荷日時 = param.入荷日時;
+        header.担当者 = new() { 従業員番号 = param.担当者.従業員番号 };
+        header.備考 = param.備考;
+        header.TryValidate(out var validatedHeader, out var headerErrors);
+        headerErrors.CopyTo(context.Messages);
 
         // 既存明細の読み込み
         var existingDetails = await DbContext.入荷明細DbSet
@@ -37,9 +36,17 @@ partial class OverridedApplicationService {
             .Where(x => x.入荷!.入荷ID == id)
             .ToListAsync();
 
+        var loaded = await DbContext.LoadForEdit入荷明細Async(existingDetails.Select(existingItem => new 入荷明細KeyWithVersion(
+            // 画面で表示していた明細は画面表示時のバージョンで排他をかける
+            param.入荷商品一覧.FirstOrDefault(x => x.ExistsInDatabase && x.入荷明細ID == existingItem.入荷明細ID)?.Version ?? existingItem.Version) {
+            入荷明細ID = existingItem.入荷明細ID,
+        }));
+
+        var saveCommands = new List<ValidatedCommand<入荷明細UpdateCommand>>();
+        var changedProducts = new List<int?>();
         var processedIds = new HashSet<string?>();
 
-        // 1. 更新と新規登録
+        // 更新と新規登録
         for (var i = 0; i < param.入荷商品一覧.Count; i++) {
             var inputItem = param.入荷商品一覧[i];
             var message = context.Messages.入荷商品一覧[i];
@@ -48,7 +55,7 @@ partial class OverridedApplicationService {
             if (inputItem.ExistsInDatabase) {
                 // 更新
                 var existingItem = existingDetails.FirstOrDefault(x => x.入荷明細ID == inputId);
-                if (existingItem == null) {
+                if (existingItem == null || !loaded.TryGetValue(new() { 入荷明細ID = inputId }, out var detail)) {
                     message.AddError($"指定された入荷明細が存在しません。(ID: {inputId})");
                     continue;
                 }
@@ -70,36 +77,48 @@ partial class OverridedApplicationService {
 
                 if (message.HasError()) continue;
 
-                // 更新実行
-                await Update入荷明細Async(new() {
-                    入荷明細ID = inputId,
-                    Version = inputItem.Version,
-                }, detail => {
-                    detail.商品 = new() { 商品SEQ = inputItem.商品.商品SEQ };
-                    detail.仕入単価_税抜 = inputItem.仕入単価_税抜;
-                    detail.消費税区分 = inputItem.消費税区分;
-                    detail.入荷数量 = newQuantity;
-                    detail.残数量 = newQuantity - usedQuantity;
-                    detail.備考 = inputItem.備考;
-                }, context, message);
+                detail.商品 = new() { 商品SEQ = inputItem.商品.商品SEQ };
+                detail.仕入単価_税抜 = inputItem.仕入単価_税抜;
+                detail.消費税区分 = inputItem.消費税区分;
+                detail.入荷数量 = newQuantity;
+                detail.残数量 = newQuantity - usedQuantity;
+                detail.備考 = inputItem.備考;
+
+                if (detail.TryValidate(out var validated, out var errors)) {
+                    saveCommands.Add(validated);
+                }
+                errors.CopyTo(message);
+                errors.入荷数量.CopyTo(message.数量);
+
+                // 在庫数量が変化した場合は商品管理システムへの通知が必要
+                if (detail.残数量 != existingItem.残数量) {
+                    changedProducts.Add(detail.商品?.商品SEQ);
+                }
 
             } else {
                 // 新規登録
-                await Create入荷明細Async(new() {
-                    入荷明細ID = Guid.NewGuid().ToString(),
-                    入荷 = new() { 入荷ID = id },
-                    在庫調整 = null,
-                    商品 = new() { 商品SEQ = inputItem.商品.商品SEQ },
-                    仕入単価_税抜 = inputItem.仕入単価_税抜,
-                    消費税区分 = inputItem.消費税区分,
-                    入荷数量 = inputItem.数量,
-                    残数量 = inputItem.数量,
-                    備考 = inputItem.備考,
-                }, context, message);
+                var detail = DbContext.StartCreating入荷明細();
+                detail.入荷明細ID = Guid.NewGuid().ToString();
+                detail.入荷 = new() { 入荷ID = id };
+                detail.在庫調整 = null;
+                detail.商品 = new() { 商品SEQ = inputItem.商品.商品SEQ };
+                detail.仕入単価_税抜 = inputItem.仕入単価_税抜;
+                detail.消費税区分 = inputItem.消費税区分;
+                detail.入荷数量 = inputItem.数量;
+                detail.残数量 = inputItem.数量;
+                detail.備考 = inputItem.備考;
+
+                if (detail.TryValidate(out var validated, out var errors)) {
+                    saveCommands.Add(validated);
+                }
+                errors.CopyTo(message);
+                errors.入荷数量.CopyTo(message.数量);
+
+                changedProducts.Add(detail.商品?.商品SEQ);
             }
         }
 
-        // 2. 削除
+        // 削除
         foreach (var existingItem in existingDetails) {
             if (!processedIds.Contains(existingItem.入荷明細ID)) {
                 // 使用済みチェック
@@ -107,23 +126,43 @@ partial class OverridedApplicationService {
                     context.Messages.AddError($"既に出荷引当が行われているため、削除できません。(商品: {existingItem.商品?.商品名})");
                     continue;
                 }
+                if (!loaded.TryGetValue(new() { 入荷明細ID = existingItem.入荷明細ID }, out var detail)) {
+                    context.Messages.AddError(MSG.DataNotFoundError());
+                    continue;
+                }
 
-                await Delete入荷明細Async(new() {
-                    入荷明細ID = existingItem.入荷明細ID,
-                    Version = existingItem.Version,
-                }, context);
+                if (detail.ToDeleteCommand().TryValidate(out var validated, out var errors)) {
+                    saveCommands.Add(validated);
+                }
+                errors.CopyTo(context.Messages);
             }
         }
 
+        if (validatedHeader == null || context.Messages.HasError()) return;
+
         // エラーチェックのみの場合は確認メッセージを返す。
-        if (context.ValidationOnly && !context.Messages.HasError()) {
+        if (context.ValidationOnly) {
             context.AddConfirm("入荷データを修正します。よろしいですか？");
             return;
         }
 
-        if (!context.ValidationOnly && !context.Messages.HasError()) {
-            await tran.CommitAsync();
-            context.Messages.AddInfo("入荷登録が完了しました。");
+        // トランザクションの範囲は入荷ヘッダ更新から入荷明細登録まで
+        await using var tran = await BeginTransactionAsync();
+
+        var headerResult = await DbContext.TrySaveAsync(validatedHeader);
+        if (!headerResult.Success) {
+            headerResult.Errors.CopyTo(context.Messages);
+            return;
         }
+
+        var detailResult = await DbContext.TrySaveAsync(saveCommands);
+        if (!detailResult.Success) {
+            detailResult.Errors.CopyTo(context.Messages);
+            return;
+        }
+        await Notify在庫数量Async(changedProducts);
+
+        await tran.CommitAsync();
+        context.Messages.AddInfo("入荷登録が完了しました。");
     }
 }
