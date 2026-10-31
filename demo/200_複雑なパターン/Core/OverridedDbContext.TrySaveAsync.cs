@@ -44,7 +44,7 @@ partial class OverridedDbContext {
     /// </returns>
     /// <exception cref="InvalidOperationException">トランザクションが開始されていない場合、および使用済みのコマンドを渡した場合</exception>
     public async Task<SaveResult<TUpdateCommand>> TrySaveAsync<TUpdateCommand>(ISaveCommand<TUpdateCommand> command, CancellationToken ct = default) {
-        var result = await TrySaveCoreAsync<TUpdateCommand>([command], ct).ConfigureAwait(false);
+        var result = await TrySaveCoreAsync([command], ct).ConfigureAwait(false);
         return result.Success
             ? SaveResult<TUpdateCommand>.Succeeded(result.Errors, result.Updated[0])
             : SaveResult<TUpdateCommand>.Failed(result.Errors, result.FailureKind);
@@ -61,7 +61,7 @@ partial class OverridedDbContext {
     /// <returns>保存の成否、エラーメッセージ</returns>
     /// <exception cref="InvalidOperationException">トランザクションが開始されていない場合、および使用済みのコマンドを渡した場合</exception>
     public async Task<SaveResult> TrySaveAsync<TUpdateCommand>(IDeleteCommand<TUpdateCommand> command, CancellationToken ct = default) {
-        return await TrySaveCoreAsync<TUpdateCommand>([command], ct).ConfigureAwait(false);
+        return await TrySaveCoreAsync([command], ct).ConfigureAwait(false);
     }
 
     /// <summary>
