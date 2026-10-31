@@ -7,7 +7,7 @@ partial class DB接続あり_更新あり {
     public async Task シーケンスが保存後のコマンドに反映され同時に複数件保存できる() {
         var scope = TestUtilImpl.Instance.CreateScope(nameof(シーケンスが保存後のコマンドに反映され同時に複数件保存できる));
         var db = scope.App.DbContext;
-        await using var tran = await db.BeginTransactionAsync();
+        await using var tran = await db.Database.BeginTransactionAsync();
 
         var first = db.StartCreating商品();
         first.外部システム側ID = "EX-1";

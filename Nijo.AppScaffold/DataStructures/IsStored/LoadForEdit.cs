@@ -15,11 +15,13 @@ internal static class LoadForEdit {
     /// <summary>複数キーで読み込むときの1回のSQLあたりのキーの数の上限。SQLのパラメータ数の上限を超えないようにするためのもの。</summary>
     private const int KEY_CHUNK_SIZE = 100;
 
+    private const string PREDICATE_CLASS = "LoadForEditPredicate";
+
     internal static string Render(RootAggregate rootAggregate, CodeRenderingContext ctx) {
         var dbEntity = new EFCoreEntity(rootAggregate);
         var createCommand = new SaveCommand(rootAggregate, SaveCommand.E_Type.Create);
         var updateCommand = new SaveCommand(rootAggregate, SaveCommand.E_Type.Update);
-        var key = KeyClass.KeyClassEntry.ForLoading(rootAggregate);
+        var key = new KeyClass.KeyClassEntry(rootAggregate);
         var keyWithVersion = key.ClassNameWithVersion;
         var physicalName = rootAggregate.PhysicalName;
 
@@ -100,7 +102,7 @@ internal static class LoadForEdit {
             {{includes.SelectTextTemplate(source => $$"""
                             {{source}}
             """)}}
-                            .Where({{SaveCommandContract.PREDICATE_CLASS}}.AnyOf(predicates))
+                            .Where({{PREDICATE_CLASS}}.AnyOf(predicates))
                             .ToListAsync(ct)
                             .ConfigureAwait(false);
 
@@ -117,7 +119,7 @@ internal static class LoadForEdit {
                 }
 
                 /// <summary>
-                /// {{rootAggregate.DisplayName}} を任意の条件で読み込みます。夜間バッチなど画面を介さない更新で使用します。
+                /// {{rootAggregate.DisplayName}} を任意の条件で読み込みます。更新開始時点で対象データのキーが分からない更新で使用します。
                 /// 変更追跡は行いません。
                 /// 読み込んだ時点のバージョンが楽観排他制御で期待するバージョンになるので、読み込みから保存までの間に他者が更新した場合は楽観排他エラーになります。
                 /// </summary>
@@ -140,5 +142,37 @@ internal static class LoadForEdit {
                 #endregion {{rootAggregate.DisplayName}} のコマンドの入手
             }
             """;
+    }
+
+    /// <summary>
+    /// 複数のキーでの読み込みの検索条件を組み立てる処理をレンダリングします。
+    /// </summary>
+    internal static SourceFile RenderPredicate(CodeRenderingContext ctx) {
+        return new SourceFile {
+            FileName = $"{PREDICATE_CLASS}.cs",
+            Contents = $$"""
+                using System.Linq.Expressions;
+
+                namespace {{ctx.Config.RootNamespace}};
+
+                /// <summary>
+                /// 複数のキーでデータを読み込むときの検索条件を組み立てる。
+                /// </summary>
+                internal static class {{PREDICATE_CLASS}} {
+                    /// <summary>引数の条件のいずれかに一致することを表す条件を返します。</summary>
+                    internal static Expression<Func<T, bool>> AnyOf<T>(IEnumerable<Expression<Func<T, bool>>> predicates) {
+                        var parameter = Expression.Parameter(typeof(T), "e");
+                        var body = predicates
+                            .Select(predicate => new ParameterReplacer(predicate.Parameters[0], parameter).Visit(predicate.Body))
+                            .Aggregate(Expression.OrElse);
+                        return Expression.Lambda<Func<T, bool>>(body, parameter);
+                    }
+
+                    private sealed class ParameterReplacer(ParameterExpression from, ParameterExpression to) : ExpressionVisitor {
+                        protected override Expression VisitParameter(ParameterExpression node) => node == from ? to : node;
+                    }
+                }
+                """,
+        };
     }
 }

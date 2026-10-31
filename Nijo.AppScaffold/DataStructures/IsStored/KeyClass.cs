@@ -39,7 +39,9 @@ namespace Nijo.DataStructures.IsStored {
             /// </summary>
             private readonly GenericLookupRefToInfo.Info? _genericLookupInfo;
 
-            public virtual string ClassName => $"{_aggregate.PhysicalName}Key";
+            public string ClassName => _genericLookupInfo == null
+                ? $"{_aggregate.PhysicalName}Key"
+                : $"{_aggregate.PhysicalName}PartialKey";
             /// <summary>このキーと楽観排他制御で期待するバージョンをセットで表すクラスの名前</summary>
             internal string ClassNameWithVersion => $"{ClassName}WithVersion";
             string IKeyClassMember.GetTypeName(E_CsTs csts) => ClassName;
@@ -48,16 +50,6 @@ namespace Nijo.DataStructures.IsStored {
             ISchemaPathNode SaveCommand.ISaveCommandMember.Member => _aggregate;
             public virtual string PhysicalName => _aggregate.PhysicalName;
             public virtual string DisplayName => _aggregate.DisplayName;
-
-            /// <summary>
-            /// コマンドの読み込みと同一性の判定に使うキーを返します。
-            /// 汎用参照テーブルの場合、参照されるときのキー構造体はハードコードされた主キーを含まないので、主キー全体をもつ別のキー構造体を使います。
-            /// </summary>
-            internal static KeyClassEntry ForLoading(RootAggregate rootAggregate) {
-                return rootAggregate.XElement.Attribute(IsGenericLookupTableOption.ATTRIBUTE_NAME) != null
-                    ? new FullKeyEntry(rootAggregate)
-                    : new KeyClassEntry(rootAggregate);
-            }
 
             public IEnumerable<IKeyClassMember> GetOwnMembers() {
                 var p = _aggregate.GetParent();
@@ -106,7 +98,7 @@ namespace Nijo.DataStructures.IsStored {
                 var entries = new Dictionary<string, KeyClassEntry>();
                 KeyClassEntry? keyForLoading = null;
                 if (rootAggregate.IsStored && !rootAggregate.IsView) {
-                    keyForLoading = ForLoading(rootAggregate);
+                    keyForLoading = new KeyClassEntry(rootAggregate);
                     entries.Add(keyForLoading.ClassName, keyForLoading);
                 }
                 foreach (var agg in tree) {
@@ -169,7 +161,12 @@ namespace Nijo.DataStructures.IsStored {
             protected virtual string RenderDeclaring(CodeRenderingContext ctx) {
                 return $$"""
                     /// <summary>
+                    {{If(_genericLookupInfo == null, () => $$"""
                     /// {{_aggregate.DisplayName}} のキー
+                    """).Else(() => $$"""
+                    /// {{_aggregate.DisplayName}} の主キーのうち、ハードコードされたものを除いた部分。
+                    /// 外部参照に使われる。ハードコードされた主キーの値は参照の定義から一意に決まるので、このクラスは持たない。
+                    """)}}
                     /// </summary>
                     {{NijoAttr.RenderAttributeValues(ctx, _aggregate)}}
                     public partial class {{ClassName}} {
@@ -567,18 +564,6 @@ namespace Nijo.DataStructures.IsStored {
             string IInstanceStructurePropertyMetadata.GetTypeName(E_CsTs csts) => ClassName;
             string IInstancePropertyMetadata.GetPropertyName(E_CsTs csts) => PhysicalName;
             IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => GetOwnMembers();
-        }
-
-
-        /// <summary>
-        /// 汎用参照テーブルの主キー全体をもつキー。
-        /// </summary>
-        private sealed class FullKeyEntry : KeyClassEntry {
-            internal FullKeyEntry(RootAggregate rootAggregate) : base(rootAggregate) {
-                _rootAggregate = rootAggregate;
-            }
-            private readonly RootAggregate _rootAggregate;
-            public override string ClassName => $"{_rootAggregate.PhysicalName}FullKey";
         }
 
 

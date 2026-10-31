@@ -1,5 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.DataStructures.IsStored;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -60,12 +59,6 @@ namespace Nijo.Parts.CSharp {
                         /// </summary>
                         public ILogger Log => _logger ??= ServiceProvider.GetRequiredService<ILogger<{{ABSTRACT_CLASS}}>>();
                         private ILogger? _logger;
-
-                        /// <inheritdoc cref="{{SaveCommandContract.AUDIT_INFO_INTERFACE}}.CurrentTime"/>
-                        public DateTime CurrentTime => ServiceProvider.GetRequiredService<{{SaveCommandContract.AUDIT_INFO_INTERFACE}}>().CurrentTime;
-
-                        /// <inheritdoc cref="{{SaveCommandContract.AUDIT_INFO_INTERFACE}}.CurrentUser"/>
-                        public string CurrentUser => ServiceProvider.GetRequiredService<{{SaveCommandContract.AUDIT_INFO_INTERFACE}}>().CurrentUser;
 
                         /// <summary>
                         /// ログ出力用にオブジェクトをシリアライズする。

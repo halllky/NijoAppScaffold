@@ -36,14 +36,15 @@ namespace Nijo.DataStructures.IsStored {
             // スキーマ定義に汎用参照テーブルが存在するか否かにかかわらずメソッドを生成する。
             ctx.Use<GenericLookupViewsInfoProvider>();
 
-            SaveCommandContract.RegisterMessages(ctx);
+            SaveCommand.RegisterMessages(ctx);
         }
 
         void ISharedSourceFile<CodeRenderingContext>.Render(CodeRenderingContext ctx) {
             ctx.CoreLibrary(dir => {
                 dir.Directory("Util", efcoreDir => {
                     efcoreDir.Generate(Render(ctx));
-                    efcoreDir.Generate(SaveCommandContract.Render(ctx));
+                    efcoreDir.Generate(SaveCommand.RenderInterfaces(ctx));
+                    efcoreDir.Generate(AuditInfo.Render(ctx));
                 });
             });
         }
@@ -71,14 +72,14 @@ namespace Nijo.DataStructures.IsStored {
                         /// <param name="options">EFCoreのオプション</param>
                         /// <param name="auditInfo">監査項目に記録する情報</param>
                         /// <param name="messageFactory">ユーザーに見せるメッセージの文言</param>
-                        public {{ctx.Config.DbContextName}}(DbContextOptions options, {{SaveCommandContract.AUDIT_INFO_INTERFACE}} auditInfo, {{MsgFactory.CS_INTERFACE}} messageFactory) : base(options) {
+                        public {{ctx.Config.DbContextName}}(DbContextOptions options, {{AuditInfo.INTERFACE}} auditInfo, {{MsgFactory.CS_INTERFACE}} messageFactory) : base(options) {
                             AuditInfo = auditInfo;
                             {{MsgFactory.MSG}} = messageFactory;
                         }
                     #pragma warning restore CS8618 // DbSetはEFCore側で自動的に設定されるため問題なし
 
                         /// <summary>監査項目に記録する情報</summary>
-                        protected internal {{SaveCommandContract.AUDIT_INFO_INTERFACE}} AuditInfo { get; }
+                        protected internal {{AuditInfo.INTERFACE}} AuditInfo { get; }
                         /// <summary>ユーザーに見せるメッセージの文言</summary>
                         protected internal {{MsgFactory.CS_INTERFACE}} {{MsgFactory.MSG}} { get; }
 

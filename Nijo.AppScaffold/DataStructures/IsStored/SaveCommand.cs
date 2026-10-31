@@ -50,6 +50,14 @@ namespace Nijo.DataStructures.IsStored {
         internal const string FIELD_EXPECTED_VERSION = "_expectedVersion";
         internal const string FIELD_SAVED_ENTITY = "_savedEntity";
 
+        internal const string INTERFACE = "ISaveCommand";
+        internal const string INTERFACE_DELETE = "IDeleteCommand";
+
+        internal const string ERR_ID_UNKNOWN = "UnknownUpdateError";
+        internal const string ERR_DATA_NOT_FOUND = "DataNotFoundError";
+        internal const string ERR_CONCURRENCY = "ConcurrencyError";
+        internal const string ERR_UNIQUE_CONSTRAINT = "UniqueConstraintError";
+
         /// <summary>
         /// 新規・更新・削除のすべてのコマンドを、子孫要素の分も含めて再帰的にレンダリングします。
         /// </summary>
@@ -109,11 +117,84 @@ namespace Nijo.DataStructures.IsStored {
         IEnumerable<IInstancePropertyMetadata> IInstancePropertyOwnerMetadata.GetMembers() => GetMembers();
 
 
+        #region すべての集約で共通
+        /// <summary>
+        /// 保存処理とコマンドの間で使われるメッセージを登録します。
+        /// スキーマ定義にデータ構造が1個も無くても保存処理のコンパイルが通るように、常に登録されます。
+        /// </summary>
+        internal static void RegisterMessages(CodeRenderingContext ctx) {
+            ctx.Use<Parts.Common.MsgFactory>()
+                .AddMessage(ERR_ID_UNKNOWN,
+                    "登録/更新/削除のタイミングでRDBMS上で何らかのエラーが生じた場合のメッセージ",
+                    "登録処理でエラーが発生しました: {0}")
+                .AddMessage(ERR_DATA_NOT_FOUND,
+                    "更新対象・削除対象のデータがデータベース上で見つからなかったときのメッセージ",
+                    "更新対象のデータが見つかりません。")
+                .AddMessage(ERR_CONCURRENCY,
+                    "楽観排他制御に引っかかったときのメッセージ",
+                    "ほかのユーザーが更新しました。")
+                .AddMessage(ERR_UNIQUE_CONSTRAINT,
+                    "一意制約に違反したときのメッセージ",
+                    "同じ値のデータが既に存在します。");
+        }
+
+        /// <summary>
+        /// コマンドと、アプリケーション側で実装される保存処理との間の取り決めをレンダリングします。
+        /// 保存処理の流れはシステムごとに要件が大きく異なるため自動生成せず、スキーマに依存する部品だけをここで定義します。
+        /// スキーマ定義にデータ構造が1個も無くても保存処理のコンパイルが通るように、常に生成されます。
+        /// </summary>
+        internal static SourceFile RenderInterfaces(CodeRenderingContext ctx) {
+            return new SourceFile {
+                FileName = $"{INTERFACE}.cs",
+                Contents = $$"""
+                    using System.Text.Json.Nodes;
+
+                    namespace {{ctx.Config.RootNamespace}};
+
+                    /// <summary>
+                    /// 保存処理が必要とする、コマンドの機能。
+                    /// 通常の業務ロジックからは使わない。
+                    /// </summary>
+                    public interface {{INTERFACE}} {
+                        /// <summary>このコマンドの現在の状態に対するバリデーションエラーを返します。コマンドの状態は変更しません。</summary>
+                        {{Parts.CSharp.MessageContainer.SETTER_CLASS}} GetValidationErrors();
+                        /// <summary>
+                        /// 監査項目と楽観排他のバージョンを設定し、エンティティの変更追跡を開始します。
+                        /// 1つのコマンドに対して1回しか呼べません。2回目以降は例外を送出します。
+                        /// </summary>
+                        /// <returns>変更追跡を開始したエンティティ。保存後にこれらの変更追跡を終了するのは呼び出し側の責務です。</returns>
+                        IReadOnlyList<object> StartTracking();
+                        /// <summary>同一の保存処理の中でのキー重複の検出に使うキーを返します。保存時に採番されるのでキーが未確定の場合は null を返します。</summary>
+                        object? GetKeyForDuplicateCheck();
+                        /// <summary>ログに出力する情報（集約名、操作の種類、キー）を返します。</summary>
+                        JsonNode ToLogJson();
+                    }
+
+                    /// <inheritdoc cref="{{INTERFACE}}"/>
+                    /// <typeparam name="TUpdateCommand">保存後のデータを表す更新コマンドの型</typeparam>
+                    public interface {{INTERFACE}}<TUpdateCommand> : {{INTERFACE}} {
+                        /// <summary>保存後のデータを表す、このインスタンスとは別の更新コマンドを返します。削除の場合は null を返します。</summary>
+                        TUpdateCommand? ToSavedCommand();
+                    }
+
+                    /// <summary>
+                    /// 削除コマンド。
+                    /// 保存処理の戻り値に保存後のデータが含まれないことを型で表すためにオーバーロードを分けるのに使う。
+                    /// </summary>
+                    /// <typeparam name="TUpdateCommand">削除コマンドと同じ集約の更新コマンドの型</typeparam>
+                    public interface {{INTERFACE_DELETE}}<TUpdateCommand> : {{INTERFACE}}<TUpdateCommand> {
+                    }
+                    """,
+            };
+        }
+        #endregion すべての集約で共通
+
+
         #region 基底クラス
         private string RenderBaseClass(CodeRenderingContext ctx) {
             var efCoreEntity = new EFCoreEntity(Aggregate);
             var messages = new SaveCommandMessageContainer(Aggregate);
-            var key = KeyClass.KeyClassEntry.ForLoading((RootAggregate)Aggregate);
+            var key = new KeyClass.KeyClassEntry(Aggregate);
             var updateCommand = new SaveCommand(Aggregate, E_Type.Update);
 
             var entityProps = new Variable("entity", efCoreEntity)
@@ -134,7 +215,7 @@ namespace Nijo.DataStructures.IsStored {
                 /// {{Aggregate.DisplayName}} の新規登録・更新・削除コマンドの基底クラス。
                 /// 一度保存処理にかけたインスタンスは再度使用できません。
                 /// </summary>
-                public abstract class {{CsBaseClassName}} : {{SaveCommandContract.INTERFACE}}<{{updateCommand.CsClassName}}> {
+                public abstract class {{CsBaseClassName}} : {{INTERFACE}}<{{updateCommand.CsClassName}}> {
                     private protected {{CsBaseClassName}}({{ctx.Config.DbContextName}} dbContext) {
                         {{FIELD_DBCONTEXT}} = dbContext;
                     }
@@ -160,9 +241,9 @@ namespace Nijo.DataStructures.IsStored {
                     /// <summary>ログに出力する操作の種類</summary>
                     private protected abstract string OperationNameForLog { get; }
 
-                    {{Parts.CSharp.MessageContainer.SETTER_CLASS}} {{SaveCommandContract.INTERFACE}}.GetValidationErrors() => {{GET_VALIDATION_ERRORS}}();
+                    {{Parts.CSharp.MessageContainer.SETTER_CLASS}} {{INTERFACE}}.GetValidationErrors() => {{GET_VALIDATION_ERRORS}}();
 
-                    IReadOnlyList<object> {{SaveCommandContract.INTERFACE}}.StartTracking() {
+                    IReadOnlyList<object> {{INTERFACE}}.StartTracking() {
                         if (_trackingStarted) throw new InvalidOperationException("一度保存処理にかけたコマンドは再度使用できません。");
                         _trackingStarted = true;
 
@@ -178,13 +259,13 @@ namespace Nijo.DataStructures.IsStored {
                         return tracked;
                     }
 
-                    object? {{SaveCommandContract.INTERFACE}}.GetKeyForDuplicateCheck() => GetKeyForDuplicateCheckCore();
+                    object? {{INTERFACE}}.GetKeyForDuplicateCheck() => GetKeyForDuplicateCheckCore();
                     /// <summary>同一の保存処理の中でのキー重複の検出に使うキーを返す。</summary>
                     private protected virtual object? GetKeyForDuplicateCheckCore() {
                         return {{key.ClassName}}.{{SaveCommand.FROM_DBENTITY}}({{GET_CURRENT_ENTITY}}());
                     }
 
-                    JsonNode {{SaveCommandContract.INTERFACE}}.ToLogJson() {
+                    JsonNode {{INTERFACE}}.ToLogJson() {
                         var entity = {{GET_CURRENT_ENTITY}}();
                         return new JsonObject {
                             ["集約"] = "{{Aggregate.DisplayName.Replace("\"", "\\\"")}}",
@@ -197,7 +278,7 @@ namespace Nijo.DataStructures.IsStored {
                         };
                     }
 
-                    {{updateCommand.CsClassName}}? {{SaveCommandContract.INTERFACE}}<{{updateCommand.CsClassName}}>.ToSavedCommand() {
+                    {{updateCommand.CsClassName}}? {{INTERFACE}}<{{updateCommand.CsClassName}}>.ToSavedCommand() {
                         if ({{FIELD_SAVED_ENTITY}} == null) return null;
                         return {{updateCommand.CsClassName}}.{{FROM_DBENTITY}}({{FIELD_DBCONTEXT}}, {{FIELD_SAVED_ENTITY}}, {{FIELD_SAVED_ENTITY}}.{{EFCoreEntity.VERSION}}!.Value);
                     }
@@ -312,7 +393,7 @@ namespace Nijo.DataStructures.IsStored {
                     public override {{messages.CsClassName}} {{GET_VALIDATION_ERRORS}}() {
                         var messages = new {{messages.CsClassName}}([], new());
                         if ({{FIELD_LOADED}}.{{EFCoreEntity.VERSION}} != {{FIELD_EXPECTED_VERSION}}) {
-                            messages.AddError({{Parts.Common.MsgFactory.MSG}}.{{SaveCommandContract.ERR_CONCURRENCY}}());
+                            messages.AddError({{Parts.Common.MsgFactory.MSG}}.{{ERR_CONCURRENCY}}());
                         }
                 {{ValidatorBase.EnumerateAll(ctx).SelectTextTemplate(validator => $$"""
                         {{validator.MethodName}}(messages);
@@ -397,7 +478,7 @@ namespace Nijo.DataStructures.IsStored {
                 /// <summary>
                 /// {{Aggregate.DisplayName}} の削除コマンド
                 /// </summary>
-                public partial class {{CsDeleteClassName}} : {{CsBaseClassName}}, {{SaveCommandContract.INTERFACE_DELETE}}<{{updateCommand.CsClassName}}> {
+                public partial class {{CsDeleteClassName}} : {{CsBaseClassName}}, {{INTERFACE_DELETE}}<{{updateCommand.CsClassName}}> {
                     internal {{CsDeleteClassName}}({{ctx.Config.DbContextName}} dbContext, {{efCoreEntity.CsClassName}} loaded, int expectedVersion) : base(dbContext) {
                         {{FIELD_LOADED}} = loaded;
                         {{FIELD_EXPECTED_VERSION}} = expectedVersion;
@@ -414,7 +495,7 @@ namespace Nijo.DataStructures.IsStored {
                     public override {{messages.CsClassName}} {{GET_VALIDATION_ERRORS}}() {
                         var messages = new {{messages.CsClassName}}([], new());
                         if ({{FIELD_LOADED}}.{{EFCoreEntity.VERSION}} != {{FIELD_EXPECTED_VERSION}}) {
-                            messages.AddError({{Parts.Common.MsgFactory.MSG}}.{{SaveCommandContract.ERR_CONCURRENCY}}());
+                            messages.AddError({{Parts.Common.MsgFactory.MSG}}.{{ERR_CONCURRENCY}}());
                         }
                         return messages;
                     }

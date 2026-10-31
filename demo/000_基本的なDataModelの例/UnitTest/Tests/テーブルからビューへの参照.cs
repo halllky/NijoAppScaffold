@@ -14,7 +14,7 @@ public class テーブルからビューへの参照 {
         var scope = TestUtilImpl.Instance.CreateScope("テーブルからビューへの参照/部署起点");
         var db = scope.App.DbContext;
 
-        await using var transaction = await db.BeginTransactionAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync();
 
         const int departmentId = 501;
         const string officeId = "1";
@@ -38,7 +38,7 @@ public class テーブルからビューへの参照 {
         var scope = TestUtilImpl.Instance.CreateScope("テーブルからビューへの参照/ビュー起点");
         var db = scope.App.DbContext;
 
-        await using var transaction = await db.BeginTransactionAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync();
 
         const int departmentId = 502;
         const string officeId = "2";
@@ -64,7 +64,7 @@ public class テーブルからビューへの参照 {
         var scope = TestUtilImpl.Instance.CreateScope("テーブルからビューへの参照/ビュー未登録コード");
         var db = scope.App.DbContext;
 
-        await using var transaction = await db.BeginTransactionAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync();
 
         const int departmentId = 503;
         const string missingOfficeId = "999";

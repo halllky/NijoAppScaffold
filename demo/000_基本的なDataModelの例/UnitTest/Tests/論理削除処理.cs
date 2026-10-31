@@ -15,7 +15,7 @@ public class 論理削除処理 {
         var scope = TestUtilImpl.Instance.CreateScope("論理削除処理");
         var db = scope.App.DbContext;
 
-        await using var transaction = await db.BeginTransactionAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync();
 
         const string legacyCode = "DEL-001";
         const int departmentId = 301;

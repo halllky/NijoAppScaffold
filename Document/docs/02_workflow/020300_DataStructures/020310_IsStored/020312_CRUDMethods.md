@@ -13,8 +13,7 @@
 | `LoadForEdit{集約名}Async(...)` | 自動生成（DbContext）                  | 更新コマンドの読み込み                               |
 | `GetValidationErrors()`         | 自動生成（各コマンド）                 | スキーマ定義から導かれる検証と楽観排他のチェック     |
 | `ToDeleteCommand()`             | 自動生成（更新コマンド）               | 削除コマンドへの変換                                 |
-| `TrySaveAsync(...)`             | `Core/OverridedDbContext.TrySave.cs`   | 保存の実行。**システムごとに書き換える前提の手書き** |
-| `BeginTransactionAsync()`       | `Core/OverridedDbContext.TrySave.cs`   | トランザクションの開始                               |
+| `TrySaveAsync(...)`             | `Core/OverridedDbContext.TrySaveAsync.cs` | 保存の実行。**システムごとに書き換える前提の手書き** |
 
 ## 全体の流れ
 
@@ -83,7 +82,7 @@ public override async Task Execute売上一括更新Async(売上一括更新Disp
     }
 
     // トランザクションの範囲はシステムによって異なるので明示的に書く
-    await using var tran = await DbContext.BeginTransactionAsync();
+    await using var tran = await DbContext.Database.BeginTransactionAsync();
 
     var result = await DbContext.TrySaveAsync(saveCommands);
     if (!result.Success) {
@@ -133,7 +132,7 @@ command.売上明細 = [
 // キーで複数件。見つからなかったものは結果の辞書に含まれない
 IReadOnlyDictionary<売上Key, 売上UpdateCommand> commands = await DbContext.LoadForEdit売上Async(keys);
 
-// 任意の条件。夜間バッチなど画面を介さない更新で使う
+// 任意の条件。更新開始時点で対象データのキーが分からない更新で使う
 IReadOnlyList<売上UpdateCommand> commands = await DbContext.LoadForEdit売上Async(query => query.Where(x => x.売上日時 < threshold));
 ```
 
@@ -179,7 +178,7 @@ errors.入荷数量.CopyTo(message.数量);
 
 ## 保存（TrySaveAsync）
 
-`TrySaveAsync` は `Core/OverridedDbContext.TrySave.cs` に**手書きのコードとして**置かれています。
+`TrySaveAsync` は `Core/OverridedDbContext.TrySaveAsync.cs` に**手書きのコードとして**置かれています。
 保存時に行うべきことはシステムの要件によって大きく異なるので自動生成せず、テンプレートが提供するコードを自由に書き換えられるようにしています。
 
 既定の実装には次のオーバーロードがあります。
@@ -253,7 +252,7 @@ errors.CopyTo(context.Messages);
 
 `CreatedAt`, `UpdatedAt`, `CreateUser`, `UpdateUser` は `TrySaveAsync` の中で自動的に設定されます。
 値は DI コンテナに登録された `IAuditInfo` から取得されます。既定の実装は `Core/AuditInfo.cs` なので、ログインユーザーを記録する場合はこれを書き換えてください。
-アプリケーションサービスの `CurrentTime`, `CurrentUser` も同じ値を返します。
+テンプレートの `OverridedApplicationService` の `CurrentTime` も同じ値を返します。
 
 ## `ValidationOnly` フラグ
 

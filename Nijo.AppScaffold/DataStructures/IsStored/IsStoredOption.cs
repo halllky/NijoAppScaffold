@@ -87,7 +87,7 @@ internal sealed class IsStoredOption : FeatureOption {
         ctx.Use<MessageContainer.BaseClass>()
             .Register(saveCommandMessage.CsClassName, saveCommandMessage.CsClassName);
 
-        // 処理: コマンドの入手
+        // 処理: 更新開始時の読み込み処理
         aggregateFile.AddCSharpClass(LoadForEdit.Render(rootAggregate, ctx), "LoadForEdit");
 
         // データ型: コマンドの読み込みやほかの集約からの参照に使われるキー
@@ -98,6 +98,13 @@ internal sealed class IsStoredOption : FeatureOption {
     }
 
     public override void RenderCommon(CodeRenderingContext ctx) {
+        // 更新開始時の読み込み処理
+        ctx.CoreLibrary(dir => {
+            dir.Directory("Util", utilDir => {
+                utilDir.Generate(LoadForEdit.RenderPredicate(ctx));
+            });
+        });
+
         // バリデーターチェック違反時のメッセージ
         var msgFactory = ctx.Use<MsgFactory>();
         var validatorsForMessage = ValidatorBase.EnumerateAll(ctx)

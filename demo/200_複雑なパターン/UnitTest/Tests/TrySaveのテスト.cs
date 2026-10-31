@@ -31,7 +31,7 @@ partial class DB接続あり_更新あり {
 
         // 1回のSQLあたりのキーの数の上限である100件を超える件数を用意する
         const int COUNT = 230;
-        await using (var tran = await db.BeginTransactionAsync()) {
+        await using (var tran = await db.Database.BeginTransactionAsync()) {
             (await db.TrySaveAsync(Enumerable.Range(0, COUNT).Select(i => Create機器分類(db, $"C{i}")).ToArray())).AssertSucceeded();
             await tran.CommitAsync();
         }
@@ -58,7 +58,7 @@ partial class DB接続あり_更新あり {
         const string DEPARTMENT_ID = "D1";
         var date = new DateOnly(2030, 1, 2);
 
-        await using (var tran = await db.BeginTransactionAsync()) {
+        await using (var tran = await db.Database.BeginTransactionAsync()) {
             var department = db.StartCreating診療科マスタ();
             department.診療科ID = DEPARTMENT_ID;
             department.診療科名 = "内科";
@@ -88,7 +88,7 @@ partial class DB接続あり_更新あり {
     [Test]
     public async Task 任意の条件で子孫ごと読み込める() {
         var db = TestUtilImpl.Instance.CreateScope(nameof(任意の条件で子孫ごと読み込める)).App.DbContext;
-        await using (var tran = await db.BeginTransactionAsync()) {
+        await using (var tran = await db.Database.BeginTransactionAsync()) {
             (await db.TrySaveAsync(Create保守計画(db, "PLAN1"))).AssertSucceeded();
             (await db.TrySaveAsync(Create保守計画(db, "PLAN2"))).AssertSucceeded();
             await tran.CommitAsync();
@@ -109,7 +109,7 @@ partial class DB接続あり_更新あり {
     [Test]
     public async Task 読み込み時点でバージョンが食い違っていれば検証エラーになる() {
         var db = TestUtilImpl.Instance.CreateScope(nameof(読み込み時点でバージョンが食い違っていれば検証エラーになる)).App.DbContext;
-        await using (var tran = await db.BeginTransactionAsync()) {
+        await using (var tran = await db.Database.BeginTransactionAsync()) {
             (await db.TrySaveAsync(Create機器分類(db, "C1"))).AssertSucceeded();
             await tran.CommitAsync();
         }
@@ -178,7 +178,7 @@ partial class DB接続あり_更新あり {
     [Test]
     public async Task 一括保存の結果は引数の順番と対応し削除は含まれない() {
         var db = TestUtilImpl.Instance.CreateScope(nameof(一括保存の結果は引数の順番と対応し削除は含まれない)).App.DbContext;
-        await using var tran = await db.BeginTransactionAsync();
+        await using var tran = await db.Database.BeginTransactionAsync();
         (await db.TrySaveAsync([Create機器分類(db, "UPD"), Create機器分類(db, "DEL")])).AssertSucceeded();
 
         var loaded = await db.LoadForEdit機器分類マスタAsync([
@@ -205,7 +205,7 @@ partial class DB接続あり_更新あり {
     [Test]
     public async Task 保存後のコマンドは別の更新にそのまま使える() {
         var db = TestUtilImpl.Instance.CreateScope(nameof(保存後のコマンドは別の更新にそのまま使える)).App.DbContext;
-        await using var tran = await db.BeginTransactionAsync();
+        await using var tran = await db.Database.BeginTransactionAsync();
 
         var saved = (await db.TrySaveAsync(Create保守計画(db, "PLAN1"))).AssertSucceeded();
         saved.計画名 = "1回目の更新";
@@ -226,7 +226,7 @@ partial class DB接続あり_更新あり {
     [Test]
     public async Task 読み込み後に他者が更新すると楽観排他エラーになる() {
         var db = TestUtilImpl.Instance.CreateScope(nameof(読み込み後に他者が更新すると楽観排他エラーになる)).App.DbContext;
-        await using var tran = await db.BeginTransactionAsync();
+        await using var tran = await db.Database.BeginTransactionAsync();
         (await db.TrySaveAsync(Create機器分類(db, "C1"))).AssertSucceeded();
 
         // キーで読み込んだ場合も任意の条件で読み込んだ場合も排他が効く
@@ -249,7 +249,7 @@ partial class DB接続あり_更新あり {
     [Test]
     public async Task 既存データとのキー重複は一意制約違反になる() {
         var db = TestUtilImpl.Instance.CreateScope(nameof(既存データとのキー重複は一意制約違反になる)).App.DbContext;
-        await using var tran = await db.BeginTransactionAsync();
+        await using var tran = await db.Database.BeginTransactionAsync();
         (await db.TrySaveAsync(Create機器分類(db, "C1"))).AssertSucceeded();
 
         var result = await db.TrySaveAsync(Create機器分類(db, "C1"));
@@ -260,7 +260,7 @@ partial class DB接続あり_更新あり {
     [Test]
     public async Task 同時に保存するコマンド同士のキー重複は一意制約違反になる() {
         var db = TestUtilImpl.Instance.CreateScope(nameof(同時に保存するコマンド同士のキー重複は一意制約違反になる)).App.DbContext;
-        await using var tran = await db.BeginTransactionAsync();
+        await using var tran = await db.Database.BeginTransactionAsync();
 
         var result = await db.TrySaveAsync([Create機器分類(db, "C1"), Create機器分類(db, "C1")]);
 
@@ -277,7 +277,7 @@ partial class DB接続あり_更新あり {
             nameof(運用担当者への通知が不要な失敗ではErrorログが出ない),
             services => services.AddLogging(logging => logging.AddProvider(logs)));
         var db = scope.App.DbContext;
-        await using var tran = await db.BeginTransactionAsync();
+        await using var tran = await db.Database.BeginTransactionAsync();
         (await db.TrySaveAsync(Create機器分類(db, "C1"))).AssertSucceeded();
 
         // 一意制約違反
@@ -300,7 +300,7 @@ partial class DB接続あり_更新あり {
             nameof(運用担当者への通知が必要な失敗ではErrorログが出る),
             services => services.AddLogging(logging => logging.AddProvider(logs)));
         var db = scope.App.DbContext;
-        await using var tran = await db.BeginTransactionAsync();
+        await using var tran = await db.Database.BeginTransactionAsync();
 
         // 外部キー制約違反
         var schedule = db.StartCreating勤務スケジュール();
@@ -332,7 +332,7 @@ partial class DB接続あり_更新あり {
     [Test]
     public async Task 保存処理の前に別の変更があるとプログラム誤りになる() {
         var db = TestUtilImpl.Instance.CreateScope(nameof(保存処理の前に別の変更があるとプログラム誤りになる)).App.DbContext;
-        await using var tran = await db.BeginTransactionAsync();
+        await using var tran = await db.Database.BeginTransactionAsync();
         db.機器分類マスタDbSet.Add(new 機器分類マスタDbEntity { 機器分類ID = "OTHER", Version = 0 });
 
         var result = await db.TrySaveAsync(Create機器分類(db, "C1"));
@@ -343,7 +343,7 @@ partial class DB接続あり_更新あり {
     [Test]
     public async Task 検証を通っていないコマンドの保存はプログラム誤りになる() {
         var db = TestUtilImpl.Instance.CreateScope(nameof(検証を通っていないコマンドの保存はプログラム誤りになる)).App.DbContext;
-        await using var tran = await db.BeginTransactionAsync();
+        await using var tran = await db.Database.BeginTransactionAsync();
         var command = Create機器分類(db, "C1");
         command.機器分類名 = new string('あ', 51);
 
@@ -359,7 +359,7 @@ partial class DB接続あり_更新あり {
     [Test]
     public async Task 成功しても失敗しても変更追跡が残らない() {
         var db = TestUtilImpl.Instance.CreateScope(nameof(成功しても失敗しても変更追跡が残らない)).App.DbContext;
-        await using var tran = await db.BeginTransactionAsync();
+        await using var tran = await db.Database.BeginTransactionAsync();
 
         (await db.TrySaveAsync(Create保守計画(db, "PLAN1"))).AssertSucceeded();
         Assert.That(db.ChangeTracker.Entries(), Is.Empty);
@@ -374,7 +374,7 @@ partial class DB接続あり_更新あり {
     [Test]
     public async Task 一度保存処理にかけたコマンドは再度使用できない() {
         var db = TestUtilImpl.Instance.CreateScope(nameof(一度保存処理にかけたコマンドは再度使用できない)).App.DbContext;
-        await using var tran = await db.BeginTransactionAsync();
+        await using var tran = await db.Database.BeginTransactionAsync();
         var command = Create機器分類(db, "C1");
         (await db.TrySaveAsync(command)).AssertSucceeded();
 
@@ -395,7 +395,7 @@ partial class DB接続あり_更新あり {
     public async Task 同一トランザクション内で失敗したあとも後続の保存をコミットできる() {
         var db = TestUtilImpl.Instance.CreateScope(nameof(同一トランザクション内で失敗したあとも後続の保存をコミットできる)).App.DbContext;
 
-        await using (var tran = await db.BeginTransactionAsync()) {
+        await using (var tran = await db.Database.BeginTransactionAsync()) {
             (await db.TrySaveAsync(Create機器分類(db, "C1"))).AssertSucceeded();
 
             // SQL発行時点で失敗させる
@@ -414,7 +414,7 @@ partial class DB接続あり_更新あり {
     public async Task コミットしなければロールバックされる() {
         var db = TestUtilImpl.Instance.CreateScope(nameof(コミットしなければロールバックされる)).App.DbContext;
 
-        await using (var tran = await db.BeginTransactionAsync()) {
+        await using (var tran = await db.Database.BeginTransactionAsync()) {
             (await db.TrySaveAsync(Create機器分類(db, "C1"))).AssertSucceeded();
         }
 
@@ -431,7 +431,7 @@ partial class DB接続あり_更新あり {
             nameof(子孫の追加更新削除で監査情報が正しく設定される),
             services => services.AddScoped<IAuditInfo>(_ => audit));
         var db = scope.App.DbContext;
-        await using var tran = await db.BeginTransactionAsync();
+        await using var tran = await db.Database.BeginTransactionAsync();
 
         var created = (await db.TrySaveAsync(Create保守計画(db, "PLAN1"))).AssertSucceeded();
 
@@ -462,7 +462,7 @@ partial class DB接続あり_更新あり {
     [Test]
     public async Task 存在しないChildは読み込んで保存しても登録されない() {
         var db = TestUtilImpl.Instance.CreateScope(nameof(存在しないChildは読み込んで保存しても登録されない)).App.DbContext;
-        await using var tran = await db.BeginTransactionAsync();
+        await using var tran = await db.Database.BeginTransactionAsync();
 
         var plan = Create保守計画(db, "PLAN1");
         (await db.TrySaveAsync(plan)).AssertSucceeded();
@@ -484,7 +484,7 @@ partial class DB接続あり_更新あり {
             nameof(論理削除は読み込んだデータを子孫ごと退避テーブルに移送する),
             services => services.AddScoped<IAuditInfo>(_ => audit));
         var db = scope.App.DbContext;
-        await using var tran = await db.BeginTransactionAsync();
+        await using var tran = await db.Database.BeginTransactionAsync();
         (await db.TrySaveAsync(Create保守計画(db, "PLAN1"))).AssertSucceeded();
 
         var loaded = await db.LoadForEdit保守計画Async(new 保守計画KeyWithVersion(0) { 保守計画ID = "PLAN1" });

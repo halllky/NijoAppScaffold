@@ -35,7 +35,7 @@ public class ユニーク制約のテスト {
         var scope = TestUtilImpl.Instance.CreateScope("ユニーク制約のテスト");
         var db = scope.App.DbContext;
 
-        await using var transaction = await db.BeginTransactionAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync();
 
         // 準備
         var legacy = db.StartCreating旧システム部署情報();
@@ -82,7 +82,7 @@ public class ユニーク制約のテスト {
         var scope = TestUtilImpl.Instance.CreateScope("ユニーク制約を含むナビゲーションプロパティのクエリが正しく動作するか");
         var db = scope.App.DbContext;
 
-        await using var transaction = await db.BeginTransactionAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync();
 
         const string legacyCode = "NAV-001";
         const int departmentId = 10;

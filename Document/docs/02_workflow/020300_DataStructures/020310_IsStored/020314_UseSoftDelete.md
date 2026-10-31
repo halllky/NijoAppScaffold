@@ -85,7 +85,7 @@ var deleteCommand = loaded.ToDeleteCommand();
 deleteCommand.GetValidationErrors().CopyTo(context.Messages);
 if (context.Messages.HasError() || context.ValidationOnly) return;
 
-await using var tran = await DbContext.BeginTransactionAsync();
+await using var tran = await DbContext.Database.BeginTransactionAsync();
 
 var result = await DbContext.TrySaveAsync(deleteCommand);
 if (!result.Success) {

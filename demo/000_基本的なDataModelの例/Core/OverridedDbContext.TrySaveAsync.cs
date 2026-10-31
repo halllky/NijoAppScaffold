@@ -2,7 +2,6 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace MyApp;
@@ -15,18 +14,35 @@ namespace MyApp;
 partial class OverridedDbContext {
 
     /// <summary>
-    /// トランザクションを開始します。
-    /// どの範囲を1つのトランザクションとするかはシステムにより異なるので、呼び出し側で明示します。
-    /// コミットせずにスコープを抜けるとロールバックされます。
+    /// 新規登録または更新を、1件保存します。
     /// </summary>
-    public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken ct = default) {
-        return Database.BeginTransactionAsync(ct);
-    }
-
-    /// <summary>
-    /// 新規登録または更新を実行します。
-    /// </summary>
-    /// <returns>保存の成否、エラーメッセージ、保存後のデータ</returns>
+    /// <remarks>
+    /// <para>
+    /// 引数のコマンドの内容の変更追跡を開始して
+    /// <see cref="ISaveCommand.GetValidationErrors"/> と
+    /// <see cref="DbContext.SaveChangesAsync"/> を実行し、
+    /// 成否にかかわらず、終了時に変更追跡を終了します。
+    /// 更新日時や更新者といった監査項目と、更新後の楽観排他のバージョンの指定はこの中で行われます。
+    /// </para>
+    /// <para>
+    /// トランザクションの開始、コミット、ロールバックは行いません。
+    /// 失敗しても同じトランザクションはそのまま使えるので、コミットするか否かは呼び出し側で判断してください。
+    /// </para>
+    /// <para>
+    /// 一度このメソッドの引数に渡したコマンドは、成否にかかわらず再度このメソッドの引数として渡すことはできません。
+    /// </para>
+    /// <para>
+    /// 保存時に発生したエラーは例外ではなく戻り値で失敗を返します。
+    /// エラーメッセージは、どの行で起きたかの捕捉が難しいので、項目ごとではなく保存処理全体の単位で返ります。
+    /// キー重複を行単位で見せたいなどの場合は、このメソッドを呼ぶ前に独自に検証してください。
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// 保存の成否、エラーメッセージ、保存後のデータ。
+    /// 保存後のデータは引数のコマンドとは別のインスタンスです。
+    /// 保存時に採番されたシーケンスの参照や、続けて別の更新を行なうときに使えます。
+    /// </returns>
+    /// <exception cref="InvalidOperationException">トランザクションが開始されていない場合、および使用済みのコマンドを渡した場合</exception>
     public async Task<SaveResult<TUpdateCommand>> TrySaveAsync<TUpdateCommand>(ISaveCommand<TUpdateCommand> command, CancellationToken ct = default) {
         var result = await TrySaveCoreAsync<TUpdateCommand>([command], ct).ConfigureAwait(false);
         return result.Success
@@ -35,21 +51,39 @@ partial class OverridedDbContext {
     }
 
     /// <summary>
-    /// 削除を実行します。
+    /// 削除を、1件保存します。
+    /// 物理削除か論理削除かはスキーマ定義に従います。
     /// </summary>
+    /// <remarks>
+    /// 処理内容と、失敗時や例外時の挙動は新規登録・更新の場合と同じです。
+    /// <inheritdoc cref="TrySaveAsync{TUpdateCommand}(ISaveCommand{TUpdateCommand}, CancellationToken)" path="/remarks/*"/>
+    /// </remarks>
     /// <returns>保存の成否、エラーメッセージ</returns>
+    /// <exception cref="InvalidOperationException">トランザクションが開始されていない場合、および使用済みのコマンドを渡した場合</exception>
     public async Task<SaveResult> TrySaveAsync<TUpdateCommand>(IDeleteCommand<TUpdateCommand> command, CancellationToken ct = default) {
         return await TrySaveCoreAsync<TUpdateCommand>([command], ct).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// 複数のコマンドを一括で保存します。
-    /// 一部が失敗しても他はコミットさせたい場合は、コマンドの数だけループで回してこのメソッドを呼んでください。
+    /// 複数の新規登録・更新・削除を、1回の SaveChangesAsync で一括保存します。
+    /// 1件でも失敗すると、このメソッドによる変更はすべて保存されません。
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// 一部が失敗しても他はコミットさせたい場合は、コマンドの数だけループで回してこのメソッドを呼び、都度コミットしてください。
+    /// </para>
+    /// <para>
+    /// 引数のコマンドの中でキーが重複している場合は <see cref="SaveFailureKind.UniqueConstraint"/> の失敗になります。
+    /// 同じキーの削除と新規登録を同時に行なうこともできないので、その場合はこのメソッドを2回に分けて呼んでください。
+    /// </para>
+    /// 処理内容と、失敗時や例外時の挙動は1件ずつ保存する場合と同じです。
+    /// <inheritdoc cref="TrySaveAsync{TUpdateCommand}(ISaveCommand{TUpdateCommand}, CancellationToken)" path="/remarks/*"/>
+    /// </remarks>
     /// <returns>
     /// 保存の成否、エラーメッセージ、保存後のデータ。
-    /// 保存後のデータの順番は引数の順番と対応します。削除されたものは含まれません。
+    /// 保存後のデータの順番は引数の順番と対応します。削除されたものは含まれないので、削除を含む場合は要素の位置がその分ずれます。
     /// </returns>
+    /// <exception cref="InvalidOperationException">トランザクションが開始されていない場合、および使用済みのコマンドを渡した場合</exception>
     public Task<SaveResult<IList<TUpdateCommand>>> TrySaveAsync<TUpdateCommand>(IReadOnlyList<ISaveCommand<TUpdateCommand>> commands, CancellationToken ct = default) {
         return TrySaveCoreAsync(commands, ct);
     }

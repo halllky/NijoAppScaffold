@@ -14,7 +14,7 @@ partial class DB接続あり_更新あり {
         var scope = TestUtilImpl.Instance.CreateScope(nameof(途中のChildが存在しない行を含む多段の子孫集約の追加更新削除));
         var db = scope.App.DbContext;
 
-        await using var transaction = await db.BeginTransactionAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync();
 
         // 作業体制がある工程とない工程を混在させて新規登録
         var plan = db.StartCreating保守計画();

@@ -10,23 +10,29 @@ public class カテゴリ付き汎用参照の回帰テスト {
 
     [Test]
     public void 社員と係のコマンドはカテゴリ専用キー型を使う() {
-        Assert.That(typeof(社員CreateCommand).GetProperty("契約種別")?.PropertyType, Is.EqualTo(typeof(汎用マスタKey)));
-        Assert.That(typeof(社員UpdateCommand).GetProperty("契約種別")?.PropertyType, Is.EqualTo(typeof(汎用マスタKey)));
+        Assert.That(typeof(社員CreateCommand).GetProperty("契約種別")?.PropertyType, Is.EqualTo(typeof(汎用マスタPartialKey)));
+        Assert.That(typeof(社員UpdateCommand).GetProperty("契約種別")?.PropertyType, Is.EqualTo(typeof(汎用マスタPartialKey)));
 
-        Assert.That(typeof(係CreateCommand).GetProperty("勤怠管理区分")?.PropertyType, Is.EqualTo(typeof(汎用マスタKey)));
-        Assert.That(typeof(係UpdateCommand).GetProperty("勤怠管理区分")?.PropertyType, Is.EqualTo(typeof(汎用マスタKey)));
+        Assert.That(typeof(係CreateCommand).GetProperty("勤怠管理区分")?.PropertyType, Is.EqualTo(typeof(汎用マスタPartialKey)));
+        Assert.That(typeof(係UpdateCommand).GetProperty("勤怠管理区分")?.PropertyType, Is.EqualTo(typeof(汎用マスタPartialKey)));
     }
 
     [Test]
     public void カテゴリ専用キー型は非ハードコード主キーだけを持つ() {
-        var publicInstanceProperties = typeof(汎用マスタKey)
+        var publicInstanceProperties = typeof(汎用マスタPartialKey)
             .GetProperties()
             .Where(property => property.GetMethod?.IsPublic == true)
             .Select(property => property.Name)
             .OrderBy(name => name)
             .ToArray();
-        Assert.That(publicInstanceProperties, Is.EqualTo(new[] { "区分値" }), $"{typeof(汎用マスタKey).Name} は区分値 だけを持つ想定です。");
-        Assert.That(typeof(汎用マスタKey).GetProperty("汎用種別"), Is.Null, $"{typeof(汎用マスタKey).Name} にハードコード主キーが残っています。");
+        Assert.That(publicInstanceProperties, Is.EqualTo(new[] { "区分値" }), $"{typeof(汎用マスタPartialKey).Name} は区分値 だけを持つ想定です。");
+        Assert.That(typeof(汎用マスタPartialKey).GetProperty("汎用種別"), Is.Null, $"{typeof(汎用マスタPartialKey).Name} にハードコード主キーが残っています。");
+        Assert.That(typeof(汎用マスタPartialKey).GetProperty("区分値"), Is.Not.Null);
+    }
+
+    [Test]
+    public void 主キー全体をもつキー型はハードコード主キーも持つ() {
+        Assert.That(typeof(汎用マスタKey).GetProperty("汎用種別"), Is.Not.Null);
         Assert.That(typeof(汎用マスタKey).GetProperty("区分値"), Is.Not.Null);
     }
 
@@ -55,7 +61,7 @@ public class カテゴリ付き汎用参照の回帰テスト {
         var scope = TestUtilImpl.Instance.CreateScope("カテゴリ付き汎用参照/社員の契約種別は別カテゴリの区分値を拒否する");
         var db = scope.App.DbContext;
 
-        await using var transaction = await db.BeginTransactionAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync();
 
         const string sharedCode = "GL-001";
         await RegisterGenericLookupAsync(db, categoryName: "勤怠管理区分", code: sharedCode, displayName: "勤怠管理専用コード");
@@ -82,7 +88,7 @@ public class カテゴリ付き汎用参照の回帰テスト {
         var scope = TestUtilImpl.Instance.CreateScope("カテゴリ付き汎用参照/係の勤怠管理区分はカテゴリ内の区分値なら保存できる");
         var db = scope.App.DbContext;
 
-        await using var transaction = await db.BeginTransactionAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync();
 
         const string attendanceCode = "ATT-001";
         await RegisterGenericLookupAsync(db, categoryName: "勤怠管理区分", code: attendanceCode, displayName: "通常勤務");

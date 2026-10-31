@@ -59,7 +59,7 @@ public override async Task Execute受注登録Async(
     if (context.Messages.HasError() || context.ValidationOnly) return;
 
     // トランザクションの範囲を明示して保存する
-    await using var transaction = await DbContext.BeginTransactionAsync();
+    await using var transaction = await DbContext.Database.BeginTransactionAsync();
 
     var result = await DbContext.TrySaveAsync(command);
     if (!result.Success) {
