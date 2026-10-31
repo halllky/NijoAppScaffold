@@ -223,7 +223,7 @@ Task<SaveResult<IList<売上UpdateCommand>>> TrySaveAsync(ValidatedCommand<売�
 既定の実装は次の順に処理します。
 
 1. トランザクションが開始されていなければ例外を送出
-2. `ChangeTracker` に他の変更があれば失敗
+2. `ChangeTracker` に他の変更があれば例外を送出
 3. 同時に保存するコマンド同士でキーが重複していれば失敗
 4. 検証済みコマンドの `StartTracking()` で監査項目を設定して変更追跡を開始
 5. `SaveChangesAsync()` を実行
@@ -234,7 +234,6 @@ Task<SaveResult<IList<売上UpdateCommand>>> TrySaveAsync(ValidatedCommand<売�
 
 | 失敗の種類                   | 原因                                                   | ログレベル |
 | ---------------------------- | ------------------------------------------------------ | ---------- |
-| `ProgrammingError`           | 手順2 に該当。プログラムの誤り                         | Error      |
 | `Concurrency`                | 楽観排他エラー                                         | Warning    |
 | `UniqueConstraint`           | 一意制約違反。他ユーザーとの操作競合の可能性が高い     | Warning    |
 | `DatabaseError`              | その他のデータベースのエラー                           | Error      |

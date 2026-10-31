@@ -41,7 +41,7 @@ partial class OverridedDbContext {
     /// 保存後のデータは検証前のコマンドとは別のインスタンスです。
     /// 保存時に採番されたシーケンスの参照や、続けて別の更新を行なうときに使えます。
     /// </returns>
-    /// <exception cref="InvalidOperationException">トランザクションが開始されていない場合、および使用済みのコマンドを渡した場合</exception>
+    /// <exception cref="InvalidOperationException">トランザクションが開始されていない場合、保存処理の前に別の変更が行なわれている場合、および使用済みのコマンドを渡した場合</exception>
     public async Task<SaveResult<TUpdateCommand>> TrySaveAsync<TUpdateCommand>(ValidatedCommand<TUpdateCommand> command, CancellationToken ct = default) where TUpdateCommand : class {
         var result = await TrySaveCoreAsync([command], ct).ConfigureAwait(false);
         return result.Success
@@ -58,7 +58,7 @@ partial class OverridedDbContext {
     /// <inheritdoc cref="TrySaveAsync{TUpdateCommand}(ValidatedCommand{TUpdateCommand}, CancellationToken)" path="/remarks/*"/>
     /// </remarks>
     /// <returns>保存の成否、エラーメッセージ</returns>
-    /// <exception cref="InvalidOperationException">トランザクションが開始されていない場合、および使用済みのコマンドを渡した場合</exception>
+    /// <exception cref="InvalidOperationException">トランザクションが開始されていない場合、保存処理の前に別の変更が行なわれている場合、および使用済みのコマンドを渡した場合</exception>
     public async Task<SaveResult> TrySaveAsync<TUpdateCommand>(ValidatedDeleteCommand<TUpdateCommand> command, CancellationToken ct = default) where TUpdateCommand : class {
         return await TrySaveCoreAsync([command], ct).ConfigureAwait(false);
     }
@@ -82,7 +82,7 @@ partial class OverridedDbContext {
     /// 保存の成否、エラーメッセージ、保存後のデータ。
     /// 保存後のデータの順番は引数の順番と対応します。削除されたものは含まれないので、削除を含む場合は要素の位置がその分ずれます。
     /// </returns>
-    /// <exception cref="InvalidOperationException">トランザクションが開始されていない場合、および使用済みのコマンドを渡した場合</exception>
+    /// <exception cref="InvalidOperationException">トランザクションが開始されていない場合、保存処理の前に別の変更が行なわれている場合、および使用済みのコマンドを渡した場合</exception>
     public Task<SaveResult<IList<TUpdateCommand>>> TrySaveAsync<TUpdateCommand>(IReadOnlyList<ValidatedCommand<TUpdateCommand>> commands, CancellationToken ct = default) where TUpdateCommand : class {
         return TrySaveCoreAsync(commands, ct);
     }
@@ -95,11 +95,7 @@ partial class OverridedDbContext {
 
         // このメソッドの外で何らかのエンティティが変更されており、かつまだ SaveChanges が呼ばれていない場合、
         // このメソッドの保存によってそれらも巻き添えで保存されてしまう。そういった変更が無いかを調べる。
-        if (ChangeTracker.HasChanges()) {
-            errors.AddError(MSG.UnknownUpdateError("保存処理の前に別の変更が行なわれています。"));
-            _logger.LogError("保存処理の前に別の変更が行なわれています。");
-            return Fail(SaveFailureKind.ProgrammingError);
-        }
+        if (ChangeTracker.HasChanges()) throw new InvalidOperationException("保存処理の前に別の変更が行なわれています。");
 
         // 引数のコマンド内部でキー重複していないかを調べる。
         // 変更追跡を開始するとEFCoreの例外になってしまうので、その前に検出する
@@ -233,8 +229,6 @@ public sealed class SaveResult<T> : SaveResult {
 /// 保存処理の失敗の種類
 /// </summary>
 public enum SaveFailureKind {
-    /// <summary>プログラムの誤り。保存処理の前に別の変更が行なわれていた場合など。</summary>
-    ProgrammingError,
     /// <summary>楽観排他エラー</summary>
     Concurrency,
     /// <summary>一意制約違反</summary>

@@ -378,14 +378,12 @@ partial class DB接続あり_更新あり {
     }
 
     [Test]
-    public async Task 保存処理の前に別の変更があるとプログラム誤りになる() {
-        var db = TestUtilImpl.Instance.CreateScope(nameof(保存処理の前に別の変更があるとプログラム誤りになる)).App.DbContext;
+    public async Task 保存処理の前に別の変更があると例外になる() {
+        var db = TestUtilImpl.Instance.CreateScope(nameof(保存処理の前に別の変更があると例外になる)).App.DbContext;
         await using var tran = await db.Database.BeginTransactionAsync();
         db.機器分類マスタDbSet.Add(new 機器分類マスタDbEntity { 機器分類ID = "OTHER", Version = 0 });
 
-        var result = await db.TrySaveAsync(Create機器分類(db, "C1").AssertValid());
-
-        Assert.That(result.FailureKind, Is.EqualTo(SaveFailureKind.ProgrammingError));
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await db.TrySaveAsync(Create機器分類(db, "C1").AssertValid()));
     }
 
     [Test]
