@@ -60,13 +60,15 @@ partial class OverridedDbContext {
         var errors = new MessageSetter([], new MessageContainer());
         SaveResult<IList<TUpdateCommand>> Fail(SaveFailureKind kind) => SaveResult<IList<TUpdateCommand>>.Failed(errors, kind);
 
-        // 保存処理以外の変更が保存されてしまうことを防ぐ
+        // このメソッドの外で何らかのエンティティが変更されており、かつまだ SaveChanges が呼ばれていない場合、
+        // このメソッドの保存によってそれらも巻き添えで保存されてしまう。そういった変更が無いかを調べる。
         if (ChangeTracker.HasChanges()) {
             errors.AddError(MSG.UnknownUpdateError("保存処理の前に別の変更が行なわれています。"));
             _logger.LogError("保存処理の前に別の変更が行なわれています。");
             return Fail(SaveFailureKind.ProgrammingError);
         }
 
+        // バリデーションエラーチェックのかけ直し。
         // 利用者向けのエラーはこのメソッドより前に確認されているはずなので、ここでエラーになるのはプログラムの誤り
         foreach (var command in commands) {
             var validationErrors = command.GetValidationErrors();
@@ -81,6 +83,7 @@ partial class OverridedDbContext {
         }
         if (errors.HasError()) return Fail(SaveFailureKind.ProgrammingError);
 
+        // 引数のコマンド内部でキー重複していないかを調べる。
         // 変更追跡を開始するとEFCoreの例外になってしまうので、その前に検出する
         var keys = new HashSet<object>();
         foreach (var command in commands) {
@@ -94,23 +97,29 @@ partial class OverridedDbContext {
 
         var tracked = new List<object>();
         try {
+            // 変更追跡を開始し、更新日時・更新者・更新後楽観排他バージョンを設定する
             foreach (var command in commands) {
                 tracked.AddRange(command.StartTracking());
             }
+
+            // 保存実行
             await SaveChangesAsync(ct).ConfigureAwait(false);
 
         } catch (DbUpdateConcurrencyException ex) {
+            // 楽観排他エラー
             errors.AddError(MSG.ConcurrencyError());
             _logger.LogWarning(ex, "楽観排他エラーが発生しました: {commands}", ToLogString(commands));
             return Fail(SaveFailureKind.Concurrency);
 
         } catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex)) {
-            // 他ユーザーとの操作競合の可能性が高い
+            // 一意制約違反。
+            // 他ユーザーとの操作競合の可能性が高いため、ハンドリング内容は楽観排他に準ずる。
             errors.AddError(MSG.UniqueConstraintError());
             _logger.LogWarning(ex, "一意制約違反が発生しました: {commands}", ToLogString(commands));
             return Fail(SaveFailureKind.UniqueConstraint);
 
         } catch (DbUpdateException ex) {
+            // 一般DBエラー。接続が切れた場合など色々
             errors.AddError(MSG.UnknownUpdateError(ex.Message));
             _logger.LogError(ex, "保存処理でエラーが発生しました: {commands}", ToLogString(commands));
             return Fail(SaveFailureKind.DatabaseError);
@@ -124,6 +133,7 @@ partial class OverridedDbContext {
 
         _logger.LogInformation("データを保存しました: {commands}", ToLogString(commands));
 
+        // 後続処理で使えるようにするために保存後データを返す
         var updated = commands
             .Select(command => command.ToSavedCommand())
             .OfType<TUpdateCommand>()
@@ -133,6 +143,7 @@ partial class OverridedDbContext {
 
     /// <summary>
     /// 一意制約違反か否かを判定します。RDBMSの種類に依存します。
+    /// ここでは SQLite にあわせています。
     /// </summary>
     private static bool IsUniqueConstraintViolation(DbUpdateException ex) {
         const int SQLITE_CONSTRAINT = 19;

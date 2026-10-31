@@ -30,7 +30,9 @@ partial class OverridedApplicationService {
         // 更新。
         // 画面で編集された行ではないので読み込み時点のバージョンで楽観排他をかける。
         var employeeNumber = param.対象者.従業員番号;
-        var employee = (await DbContext.LoadForEdit従業員Async(query => query.Where(x => x.従業員番号 == employeeNumber))).SingleOrDefault();
+        var employee = (await DbContext
+            .LoadForEdit従業員Async(query => query.Where(x => x.従業員番号 == employeeNumber)))
+            .SingleOrDefault();
         if (employee == null) {
             context.Messages.AddError(MSG.DataNotFoundError());
             return;
