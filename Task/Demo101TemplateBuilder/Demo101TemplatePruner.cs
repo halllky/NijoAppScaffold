@@ -79,6 +79,8 @@ public static class Demo101TemplatePruner
         "Core/在庫調整",
         "Core/売上",
         "Core/外部システム/商品管理システム",
+        // 販売管理業務の実装の見本を案内する文書。案内先のファイルがテンプレートでは削除されるため
+        "標準仕様書_参考実装.md",
         // nijo.xml から削除したカスタム属性・sequence 型の項目に対応する override
         "Core/カスタム属性/0以上のみ.cs",
         "Core/OverridedDbContext.Sequence.cs",
