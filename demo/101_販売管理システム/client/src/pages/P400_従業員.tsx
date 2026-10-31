@@ -56,9 +56,10 @@ function P400_従業員() {
   // 検索した時点のデータ。保存時に、どの行が変更されたかを判定するのに使う
   const searchedDataRef = React.useRef(loaderData)
 
-  // 検索実行。編集中の内容は破棄して検索結果に置き換える。
+  // 検索実行。編集中の内容がある場合は、破棄してよいか確認してから検索結果に置き換える。
   // 検索に失敗した場合は、編集中の内容を残したまま検索条件欄にメッセージを表示する
   const handleSearch = searchForm.formMethods.handleSubmit(async condition => {
+    if (isDirty && !window.confirm("編集中の内容があります。検索すると編集内容は破棄されますが、よろしいですか？")) return
     const result = await search従業員(condition)
     searchForm.setServerMessages(result.detail)
     if (result.type !== 'ok') return
