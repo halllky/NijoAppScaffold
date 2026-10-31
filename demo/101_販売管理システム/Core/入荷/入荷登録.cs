@@ -17,7 +17,8 @@ partial class OverridedApplicationService {
         header.入荷日時 = param.入荷日時;
         header.担当者 = new() { 従業員番号 = param.担当者.従業員番号 };
         header.備考 = param.備考;
-        header.GetValidationErrors().CopyTo(context.Messages);
+        header.TryValidate(out var validatedHeader, out var headerErrors);
+        headerErrors.CopyTo(context.Messages);
 
         // 明細は1件以上必須
         if (param.入荷商品一覧.Count == 0) {
@@ -25,7 +26,7 @@ partial class OverridedApplicationService {
         }
 
         // 入荷明細
-        var details = new List<入荷明細CreateCommand>();
+        var details = new List<ValidatedCommand<入荷明細UpdateCommand>>();
         for (var i = 0; i < param.入荷商品一覧.Count; i++) {
             var item = param.入荷商品一覧[i];
             var message = context.Messages.入荷商品一覧[i];
@@ -41,18 +42,19 @@ partial class OverridedApplicationService {
             detail.残数量 = item.数量; // 入荷時は残数量＝入荷数量
             detail.備考 = item.備考;
 
-            var errors = detail.GetValidationErrors();
+            if (detail.TryValidate(out var validated, out var errors)) {
+                details.Add(validated);
+            }
             errors.CopyTo(message);
             errors.入荷数量.CopyTo(message.数量);
-            details.Add(detail);
         }
 
-        if (context.Messages.HasError() || context.ValidationOnly) return;
+        if (validatedHeader == null || context.Messages.HasError() || context.ValidationOnly) return;
 
         // ヘッダと明細で1つのトランザクション
         await using var tran = await BeginTransactionAsync();
 
-        var headerResult = await DbContext.TrySaveAsync(header);
+        var headerResult = await DbContext.TrySaveAsync(validatedHeader);
         if (!headerResult.Success) {
             headerResult.Errors.CopyTo(context.Messages);
             return;
@@ -63,7 +65,7 @@ partial class OverridedApplicationService {
             detailResult.Errors.CopyTo(context.Messages);
             return;
         }
-        await Notify在庫数量Async(details.Select(x => x.商品?.商品SEQ));
+        await Notify在庫数量Async(detailResult.Updated.Select(x => x.商品?.商品SEQ));
 
         await tran.CommitAsync();
         context.ReturnValue.入荷ID = newId;

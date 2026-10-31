@@ -27,7 +27,8 @@ partial class OverridedApplicationService {
         header.入荷日時 = param.入荷日時;
         header.担当者 = new() { 従業員番号 = param.担当者.従業員番号 };
         header.備考 = param.備考;
-        header.GetValidationErrors().CopyTo(context.Messages);
+        header.TryValidate(out var validatedHeader, out var headerErrors);
+        headerErrors.CopyTo(context.Messages);
 
         // 既存明細の読み込み
         var existingDetails = await DbContext.入荷明細DbSet
@@ -41,7 +42,7 @@ partial class OverridedApplicationService {
             入荷明細ID = existingItem.入荷明細ID,
         }));
 
-        var saveCommands = new List<入荷明細SaveCommand>();
+        var saveCommands = new List<ValidatedCommand<入荷明細UpdateCommand>>();
         var changedProducts = new List<int?>();
         var processedIds = new HashSet<string?>();
 
@@ -83,10 +84,11 @@ partial class OverridedApplicationService {
                 detail.残数量 = newQuantity - usedQuantity;
                 detail.備考 = inputItem.備考;
 
-                var errors = detail.GetValidationErrors();
+                if (detail.TryValidate(out var validated, out var errors)) {
+                    saveCommands.Add(validated);
+                }
                 errors.CopyTo(message);
                 errors.入荷数量.CopyTo(message.数量);
-                saveCommands.Add(detail);
 
                 // 在庫数量が変化した場合は商品管理システムへの通知が必要
                 if (detail.残数量 != existingItem.残数量) {
@@ -106,10 +108,11 @@ partial class OverridedApplicationService {
                 detail.残数量 = inputItem.数量;
                 detail.備考 = inputItem.備考;
 
-                var errors = detail.GetValidationErrors();
+                if (detail.TryValidate(out var validated, out var errors)) {
+                    saveCommands.Add(validated);
+                }
                 errors.CopyTo(message);
                 errors.入荷数量.CopyTo(message.数量);
-                saveCommands.Add(detail);
 
                 changedProducts.Add(detail.商品?.商品SEQ);
             }
@@ -128,13 +131,14 @@ partial class OverridedApplicationService {
                     continue;
                 }
 
-                var deleteCommand = detail.ToDeleteCommand();
-                deleteCommand.GetValidationErrors().CopyTo(context.Messages);
-                saveCommands.Add(deleteCommand);
+                if (detail.ToDeleteCommand().TryValidate(out var validated, out var errors)) {
+                    saveCommands.Add(validated);
+                }
+                errors.CopyTo(context.Messages);
             }
         }
 
-        if (context.Messages.HasError()) return;
+        if (validatedHeader == null || context.Messages.HasError()) return;
 
         // エラーチェックのみの場合は確認メッセージを返す。
         if (context.ValidationOnly) {
@@ -145,7 +149,7 @@ partial class OverridedApplicationService {
         // トランザクションの範囲は入荷ヘッダ更新から入荷明細登録まで
         await using var tran = await BeginTransactionAsync();
 
-        var headerResult = await DbContext.TrySaveAsync(header);
+        var headerResult = await DbContext.TrySaveAsync(validatedHeader);
         if (!headerResult.Success) {
             headerResult.Errors.CopyTo(context.Messages);
             return;

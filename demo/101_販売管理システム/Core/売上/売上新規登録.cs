@@ -111,7 +111,7 @@ partial class OverridedApplicationService {
             }).ToList(),
         }).ToList();
 
-        var errors = command.GetValidationErrors();
+        command.TryValidate(out var validated, out var errors);
         Validate売上新規(command, errors);
         errors.CopyTo(context.Messages);
         errors.売上の売上明細.CopyTo(context.Messages.売上詳細の売上明細);
@@ -123,7 +123,7 @@ partial class OverridedApplicationService {
             allocationPlans.SelectMany(x => x.Plan),
             context.Messages);
 
-        if (context.Messages.HasError()) {
+        if (validated == null || context.Messages.HasError()) {
             return;
         }
         if (context.ValidationOnly) {
@@ -134,7 +134,7 @@ partial class OverridedApplicationService {
         // 保存処理
         await using var tran = await BeginTransactionAsync();
 
-        var result = await DbContext.TrySaveAsync(command);
+        var result = await DbContext.TrySaveAsync(validated);
         if (!result.Success) {
             result.Errors.CopyTo(context.Messages);
             return; // トランザクションはコミットされずに終了＝ロールバック
@@ -145,7 +145,7 @@ partial class OverridedApplicationService {
             stockResult.Errors.CopyTo(context.Messages);
             return;
         }
-        await Notify在庫数量Async(stockCommands.Select(x => x.商品?.商品SEQ));
+        await Notify在庫数量Async(stockResult.Updated.Select(x => x.商品?.商品SEQ));
 
         await tran.CommitAsync();
         context.ReturnValue.売上SEQ = result.Updated.売上SEQ;

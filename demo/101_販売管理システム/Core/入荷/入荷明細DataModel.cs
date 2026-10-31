@@ -6,13 +6,13 @@ namespace MyApp;
 partial class OverridedApplicationService {
 
     /// <summary>
-    /// 在庫引当の結果を入荷明細の残数量に反映するためのコマンドを読み込みます。
+    /// 在庫引当の結果を入荷明細の残数量に反映するためのコマンドを読み込んで検証します。
     /// 同じ入荷明細に対して複数回の更新を行うと楽観排他エラーになるため、入荷明細ごとに集計して1コマンドにまとめます。
     /// </summary>
     /// <param name="stocks">在庫引当の計算に使用した入荷明細。読み込み時点からの他者の更新の有無の判定に使うのでバージョンを読み込み済みであること。</param>
     /// <param name="plans">引当内容。負の引当数量は在庫を増やす。</param>
-    /// <param name="messages">読み込めなかった場合のエラーの付与先</param>
-    private async Task<List<入荷明細UpdateCommand>> LoadForEdit入荷明細の残数量Async(
+    /// <param name="messages">読み込めなかった場合と検証エラーの付与先</param>
+    private async Task<List<ValidatedCommand<入荷明細UpdateCommand>>> LoadForEdit入荷明細の残数量Async(
         IEnumerable<入荷明細DbEntity> stocks,
         IEnumerable<(string StockId, int Deduct)> plans,
         IMessageSetter messages) {
@@ -30,15 +30,17 @@ partial class OverridedApplicationService {
 
         var loaded = await DbContext.LoadForEdit入荷明細Async(keys);
 
-        var commands = new List<入荷明細UpdateCommand>();
+        var commands = new List<ValidatedCommand<入荷明細UpdateCommand>>();
         foreach (var key in keys) {
             if (!loaded.TryGetValue(key, out var command)) {
                 messages.AddError(MSG.DataNotFoundError());
                 continue;
             }
             command.残数量 -= deducts[key.入荷明細ID!];
-            command.GetValidationErrors().CopyTo(messages);
-            commands.Add(command);
+            if (command.TryValidate(out var validated, out var errors)) {
+                commands.Add(validated);
+            }
+            errors.CopyTo(messages);
         }
         return commands;
     }

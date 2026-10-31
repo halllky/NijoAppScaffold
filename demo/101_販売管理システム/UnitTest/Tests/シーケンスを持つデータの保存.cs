@@ -17,7 +17,7 @@ partial class DB接続あり_更新あり {
         second.商品名 = "商品2";
 
         // キーが保存時に採番されるので、同時に保存してもキー重複とは扱われない
-        var saved = (await db.TrySaveAsync([first, second])).AssertSucceeded();
+        var saved = (await db.TrySaveAsync([first.AssertValid(), second.AssertValid()])).AssertSucceeded();
 
         Assert.Multiple(() => {
             Assert.That(saved.Select(x => x.外部システム側ID), Is.EqualTo(new[] { "EX-1", "EX-2" }));

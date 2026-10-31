@@ -99,12 +99,13 @@ partial class OverridedApplicationService {
         adjustment.絶対数 = param.絶対数;
         adjustment.在庫調整理由 = param.在庫調整理由;
         adjustment.在庫調整引当明細 = adjustmentDetails;
-        adjustment.GetValidationErrors().CopyTo(context.Messages);
+        adjustment.TryValidate(out var validatedAdjustment, out var adjustmentErrors);
+        adjustmentErrors.CopyTo(context.Messages);
 
         // 増加：新しい入荷明細を作成
-        入荷明細CreateCommand? newStock = null;
+        ValidatedCommand<入荷明細UpdateCommand>? validatedNewStock = null;
         if (delta > 0) {
-            newStock = DbContext.StartCreating入荷明細();
+            var newStock = DbContext.StartCreating入荷明細();
             newStock.入荷明細ID = Guid.NewGuid().ToString();
             newStock.入荷 = null;
             newStock.在庫調整 = adjustmentId;
@@ -114,7 +115,8 @@ partial class OverridedApplicationService {
             newStock.入荷数量 = delta;
             newStock.残数量 = delta;
             newStock.備考 = $"在庫調整（増加）: {param.在庫調整理由}";
-            newStock.GetValidationErrors().CopyTo(context.Messages);
+            newStock.TryValidate(out validatedNewStock, out var newStockErrors);
+            newStockErrors.CopyTo(context.Messages);
         }
 
         // 減少：既存の入荷明細の更新
@@ -123,20 +125,20 @@ partial class OverridedApplicationService {
             allocationPlan.Select(x => (x.Stock.入荷明細ID!, x.Deduct)),
             context.Messages);
 
-        if (context.Messages.HasError() || context.ValidationOnly) return;
+        if (validatedAdjustment == null || context.Messages.HasError() || context.ValidationOnly) return;
 
         // 保存処理。
         // 失敗した場合はコミットせずにトランザクションのスコープを抜けることでロールバックする。
         await using var tran = await BeginTransactionAsync();
 
-        var adjustmentResult = await DbContext.TrySaveAsync(adjustment);
+        var adjustmentResult = await DbContext.TrySaveAsync(validatedAdjustment);
         if (!adjustmentResult.Success) {
             adjustmentResult.Errors.CopyTo(context.Messages);
             return;
         }
 
-        if (newStock != null) {
-            var newStockResult = await DbContext.TrySaveAsync(newStock);
+        if (validatedNewStock != null) {
+            var newStockResult = await DbContext.TrySaveAsync(validatedNewStock);
             if (!newStockResult.Success) {
                 newStockResult.Errors.CopyTo(context.Messages);
                 return;

@@ -207,7 +207,7 @@ partial class OverridedApplicationService {
             });
         }
 
-        var errors = command.GetValidationErrors();
+        command.TryValidate(out var validated, out var errors);
         Validate売上修正(command, before, errors);
         errors.CopyTo(context.Messages);
         foreach (var (commandIndex, rowIndex) in addedRows) {
@@ -221,7 +221,7 @@ partial class OverridedApplicationService {
             allocationPlans.SelectMany(x => x.Plan),
             context.Messages);
 
-        if (context.Messages.HasError()) {
+        if (validated == null || context.Messages.HasError()) {
             return;
         }
         if (context.ValidationOnly) {
@@ -232,7 +232,7 @@ partial class OverridedApplicationService {
         // 保存処理
         await using var tran = await BeginTransactionAsync();
 
-        var updateResult = await DbContext.TrySaveAsync(command);
+        var updateResult = await DbContext.TrySaveAsync(validated);
         if (!updateResult.Success) {
             updateResult.Errors.CopyTo(context.Messages);
             return;
@@ -243,7 +243,7 @@ partial class OverridedApplicationService {
             stockResult.Errors.CopyTo(context.Messages);
             return;
         }
-        await Notify在庫数量Async(stockCommands.Select(x => x.商品?.商品SEQ));
+        await Notify在庫数量Async(stockResult.Updated.Select(x => x.商品?.商品SEQ));
 
         await tran.CommitAsync();
         context.Messages.AddInfo("売上修正が完了しました。");
