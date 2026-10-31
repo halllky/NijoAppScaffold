@@ -1,6 +1,4 @@
-using System.Diagnostics;
 using System.IO.Compression;
-using System.Text;
 using NUnit.Framework;
 
 namespace Nijo.IntegrationTest.Tests;
@@ -20,6 +18,7 @@ namespace Nijo.IntegrationTest.Tests;
 public class デモ101テンプレートのテスト {
 
     [Test]
+    [Explicit("テンプレート全体のビルドと npm install を行うので時間がかかる。リリース時に実行する。")]
     [Category("時間がかかる")]
     public async Task デモ101テンプレート作成スクリプトの実行結果に対してビルドが通るか() {
         var repoRoot = FindRepoRoot();
@@ -91,26 +90,11 @@ public class デモ101テンプレートのテスト {
     }
 
     private static async Task<bool> RunCommandAsync(string fileName, string arguments, string workingDirectory, ConsoleAndContextLogger logger) {
-        var psi = new ProcessStartInfo {
-            FileName = fileName,
-            Arguments = arguments,
-            WorkingDirectory = workingDirectory,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            StandardOutputEncoding = Encoding.UTF8,
-            StandardErrorEncoding = Encoding.UTF8,
-        };
+        var result = await ExternalCommand.RunAsync(fileName, arguments, workingDirectory);
 
-        using var process = Process.Start(psi) ?? throw new InvalidOperationException($"プロセスを開始できませんでした: {fileName} {arguments}");
-        var stdout = await process.StandardOutput.ReadToEndAsync();
-        var stderr = await process.StandardError.ReadToEndAsync();
-        await process.WaitForExitAsync();
+        logger.LogInfo(result.ToLogText());
 
-        logger.LogInfo($"COMMAND: {fileName} {arguments} (cwd={workingDirectory})\nEXIT_CODE: {process.ExitCode}\nSTDOUT:\n{stdout}\nSTDERR:\n{stderr}");
-
-        return process.ExitCode == 0;
+        return result.ExitCode == 0;
     }
 
     /// <summary>

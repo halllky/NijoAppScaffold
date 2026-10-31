@@ -52,7 +52,7 @@ fi
 if [ "$ARCHIVE_RELEASE_ZIP" != "0" ]; then
   echo "デプロイ前のテストを実行します（Node.js / .NET）。"
 
-  echo "[1/2] Node.js (vitest) のテストを実行します。"
+  echo "[1/3] Node.js (vitest) のテストを実行します。"
   pushd "$NIJO_ROOT" > /dev/null
   npm run test:ci
   NODE_TEST_RESULT=$?
@@ -62,10 +62,17 @@ if [ "$ARCHIVE_RELEASE_ZIP" != "0" ]; then
     exit 1
   fi
 
-  echo "[2/2] .NET (Nijo.IntegrationTest) のテストを実行します。"
+  echo "[2/3] .NET (Nijo.IntegrationTest) のテストを実行します。"
   dotnet test "$NIJO_ROOT/Nijo.IntegrationTest/Nijo.IntegrationTest.csproj"
   if [ $? -ne 0 ]; then
     echo ".NET のテストに失敗したため、デプロイを中断します。"
+    exit 1
+  fi
+
+  echo "[3/3] .NET (Nijo.IntegrationTest) の時間がかかるテストを実行します。"
+  dotnet test "$NIJO_ROOT/Nijo.IntegrationTest/Nijo.IntegrationTest.csproj" --no-build --filter "TestCategory=時間がかかる"
+  if [ $? -ne 0 ]; then
+    echo ".NET の時間がかかるテストに失敗したため、デプロイを中断します。"
     exit 1
   fi
 

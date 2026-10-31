@@ -13,6 +13,15 @@ dotnet test --collect:"XPlat Code Coverage"
 dotnet tool install -g dotnet-reportgenerator-globaltool
 ```
 
+## 時間がかかるテストの実行
+
+`時間がかかる` カテゴリのテストは通常のテスト実行には含まれません。リリース時には [Nijoリリース.sh](../Task/Nijoリリース.sh) の中で実行されます。
+単独で実行するには以下のコマンドを使用します。
+
+```cmd
+dotnet test --filter "TestCategory=時間がかかる"
+```
+
 ## 推奨：テストとレポート生成を同時実行
 
 自動生成ファイルの警告を避けるため、以下のコマンドでテスト実行とレポート生成を連続して行うことを推奨します：
