@@ -21,7 +21,7 @@ partial class OverridedApplicationService {
         var loaded = await DbContext.LoadForEdit従業員Async(keys);
 
         // ループ後にまとめて保存するのでメモリ上に蓄積する
-        var saveCommands = new List<従業員SaveCommand>();
+        var saveCommands = new List<ValidatedCommand<従業員UpdateCommand>>();
 
         for (var i = 0; i < param.更新対象従業員一覧.Count; i++) {
             var item = param.更新対象従業員一覧[i];
@@ -51,8 +51,10 @@ partial class OverridedApplicationService {
                 createCommand.パスワード = ComputeHash(INIT_PASSWORD, salt);
                 createCommand.SALT = salt;
 
-                createCommand.GetValidationErrors().CopyTo(message.従業員);
-                saveCommands.Add(createCommand);
+                if (createCommand.TryValidate(out var validatedCreate, out var createErrors)) {
+                    saveCommands.Add(validatedCreate);
+                }
+                createErrors.CopyTo(message.従業員);
                 continue;
             }
 
@@ -67,9 +69,10 @@ partial class OverridedApplicationService {
 
             // 削除
             if (item.WillBeDeleted) {
-                var deleteCommand = updateCommand.ToDeleteCommand();
-                deleteCommand.GetValidationErrors().CopyTo(message.従業員);
-                saveCommands.Add(deleteCommand);
+                if (updateCommand.ToDeleteCommand().TryValidate(out var validatedDelete, out var deleteErrors)) {
+                    saveCommands.Add(validatedDelete);
+                }
+                deleteErrors.CopyTo(message.従業員);
                 continue;
             }
 
@@ -79,8 +82,10 @@ partial class OverridedApplicationService {
             updateCommand.販売担当 = item.従業員.販売担当;
             updateCommand.システム管理者 = item.従業員.システム管理者;
 
-            updateCommand.GetValidationErrors().CopyTo(message.従業員);
-            saveCommands.Add(updateCommand);
+            if (updateCommand.TryValidate(out var validatedUpdate, out var updateErrors)) {
+                saveCommands.Add(validatedUpdate);
+            }
+            updateErrors.CopyTo(message.従業員);
         }
 
         // いずれか1件でもエラーなら中断

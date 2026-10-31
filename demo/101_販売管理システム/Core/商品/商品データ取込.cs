@@ -21,7 +21,8 @@ partial class OverridedApplicationService {
             var loaded = await DbContext.LoadForEdit商品Async(query => query.Where(x => x.外部システム側ID == item.ExternalId));
             var existing = loaded.SingleOrDefault();
 
-            商品SaveCommand command;
+            ValidatedCommand<商品UpdateCommand>? validated;
+            商品SaveCommandMessages errors;
             if (existing == null) {
                 // 新規登録
                 var createCommand = DbContext.StartCreating商品();
@@ -29,24 +30,23 @@ partial class OverridedApplicationService {
                 createCommand.商品名 = item.Name;
                 createCommand.売値単価_税抜 = item.Price;
                 createCommand.消費税区分 = taxType;
-                command = createCommand;
+                createCommand.TryValidate(out validated, out errors);
 
             } else {
                 // 更新
                 existing.商品名 = item.Name;
                 existing.売値単価_税抜 = item.Price;
                 existing.消費税区分 = taxType;
-                command = existing;
+                existing.TryValidate(out validated, out errors);
             }
 
-            var errors = command.GetValidationErrors();
             errors.CopyTo(context.Messages);
-            if (errors.HasError() || context.ValidationOnly) continue;
+            if (validated == null || context.ValidationOnly) continue;
 
             // トランザクションの範囲は商品1件
             await using var tran = await BeginTransactionAsync();
 
-            var result = await DbContext.TrySaveAsync(command);
+            var result = await DbContext.TrySaveAsync(validated);
             if (!result.Success) {
                 result.Errors.CopyTo(context.Messages);
                 continue;
