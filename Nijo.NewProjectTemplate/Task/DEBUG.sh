@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# nijo コマンドの場所。環境変数で指定されていなければパスの通った nijo を使う
+NIJO_CLI_PATH="${NIJO_CLI_PATH:-nijo}"
+
 # Check required tools
 if ! command -v dotnet &> /dev/null; then
     echo "'dotnet' がインストールされていません。公式サイトからインストールしてください。"

@@ -71,6 +71,7 @@ public class ExampleContoller : ControllerBase {
         return NoContent();
     }
 
+#if DEBUG
     /// <summary>
     /// データベースを削除して再作成する。
     /// </summary>
@@ -91,4 +92,5 @@ public class ExampleContoller : ControllerBase {
             return Problem(ex.ToString());
         }
     }
+#endif
 }

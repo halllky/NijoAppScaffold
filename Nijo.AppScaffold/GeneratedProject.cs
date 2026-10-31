@@ -60,7 +60,7 @@ namespace Nijo {
 
                 // git archive したアプリケーションテンプレートを展開する。
                 // アプリケーションテンプレートは埋め込みリソースになっている。
-                // Task/Nijoリリース.bat でビルドしたときのみ埋め込まれる。
+                // Task/Nijoリリース.sh でビルドしたときのみ埋め込まれる。
                 var assembly = Assembly.GetExecutingAssembly();
                 using (var stream = assembly.GetManifestResourceStream(template.ResourceName)) {
                     if (stream == null) {

@@ -8,12 +8,14 @@
 
 ## デモ新規作成時
 
-1. `nijo new <プロジェクト名>` でプロジェクトを作成
+1. `nijo new <プロジェクト名> --template empty-template` でプロジェクトを作成
 2. 不要なファイルを削除
    - README.md
+   - client/package-lock.json
 3. client の package.json の編集
    - nameを変更
    - dependencies, devDependencies を削除。モノレポのルートの設定を援用するので
+   - ただしデモ101は新規プロジェクトテンプレートの元になるので、単体で動くよう依存を残している
 4. [VSCode設定ファイル](../nijo.code-workspace) の `"id": "demoFolder"` の箇所にフォルダ名を追加。VSCode > F1 > Run Task からのデバッグコマンド等で新規追加プロジェクトを選択できるようにする
 5. [VSCode設定ファイル](../nijo.code-workspace) の `"folders"` に新規追加プロジェクトのフォルダを追加（任意）
 6. [モノレポのルートのpackage.json](../package.json) に新規追加プロジェクトのclientフォルダを追加
@@ -75,7 +77,7 @@ dotnet sln nijo.sln add "demo/999_NEW_DEMO/Management/Demo999.Management.csproj"
 
 デモではなく [テンプレプロジェクト側](../Nijo.NewProjectTemplate/) を編集する。デモで見つかった不具合をプロダクトコードにフィードバックするため。
 
-テンプレプロジェクト側を編集後、 [ソース最新化.bat](../Task/ソース最新化.bat) で最新化する。 VSCode の Run Task からこれを実行する形でも可。
+テンプレプロジェクト側を編集後、 [ソース最新化.sh](../Task/ソース最新化.sh) で最新化する。 VSCode の Run Task からこれを実行する形でも可。
 
 ### npmパッケージの新規追加の場合
 

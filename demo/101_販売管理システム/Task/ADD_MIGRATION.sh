@@ -9,6 +9,9 @@ MIGRATION_SCRIPT_DIR="$PROJECT_ROOT/Core/MigrationsScript"
 MANAGEMENT_PROJECT="$PROJECT_ROOT/Management"
 GENERAL_LOOKUP_VIEWS_SQL="$MIGRATION_SCRIPT_DIR/V0000_RecreateGeneralLookupViews.sql"
 
+# nijo コマンドの場所。環境変数で指定されていなければパスの通った nijo を使う
+NIJO_CLI_PATH="${NIJO_CLI_PATH:-nijo}"
+
 # Check required tools
 if ! command -v dotnet-ef &> /dev/null; then
     echo "'dotnet-ef' がインストールされていません。公式サイトからインストールしてください。"

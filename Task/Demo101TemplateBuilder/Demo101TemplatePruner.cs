@@ -89,6 +89,7 @@ public static class Demo101TemplatePruner
         // 業務テーブルを含むDBスキーマに依存するもの。
         // マイグレーションは、テンプレートを使い始めるときに利用者が改めて作成する。
         "Core/Migrations",
+        "Core/MigrationsScript",
         "nijo.viewState.json",
         "nijo.dbViewer.json",
     ];
@@ -104,12 +105,6 @@ public static class Demo101TemplatePruner
     ];
 
     /// <summary>
-    /// マイグレーションSQLのフォルダ。マイグレーション1回分ごとのSQL（ファイル名が数字で始まるもの）を削除する。
-    /// マイグレーションの都度作り直されるSQL（ファイル名が数字以外で始まるもの）は、DBスキーマに依存しないので残す。
-    /// </summary>
-    private const string MIGRATIONS_SCRIPT_DIR = "Core/MigrationsScript";
-
-    /// <summary>
     /// <paramref name="workDir"/> に展開されたデモ101のソース一式から、
     /// 販売管理業務固有の部分を削除する。
     /// </summary>
@@ -118,7 +113,6 @@ public static class Demo101TemplatePruner
         PruneNijoXml(Path.Combine(workDir, "nijo.xml"));
         DeleteUnneededPaths(workDir);
         DeleteBusinessPages(workDir);
-        DeleteMigrationScripts(workDir);
     }
 
     // ============================================================
@@ -149,12 +143,18 @@ public static class Demo101TemplatePruner
             }
         }
 
-        using var writer = XmlWriter.Create(xmlPath, new XmlWriterSettings
+        // nijo が保存するときと同じ書式にする。違うと利用者が最初に保存したときファイル全体が差分になるため
+        using (var writer = XmlWriter.Create(xmlPath, new XmlWriterSettings
         {
             Indent = true,
+            NewLineOnAttributes = true,
             Encoding = new UTF8Encoding(false),
-        });
-        doc.Save(writer);
+            NewLineChars = "\n",
+        }))
+        {
+            doc.Save(writer);
+        }
+        File.AppendAllText(xmlPath, "\n");
     }
 
     private static void RemoveChildrenByUniqueId(XElement? section, HashSet<string> ids)
@@ -230,27 +230,6 @@ public static class Demo101TemplatePruner
         {
             if (KEEP_PAGES.Contains(Path.GetFileName(file))) continue;
             File.Delete(file);
-        }
-    }
-
-    // ============================================================
-    // 4. マイグレーションSQLを削除する
-    // ============================================================
-
-    private static void DeleteMigrationScripts(string workDir)
-    {
-        var scriptDir = Path.Combine(workDir, MIGRATIONS_SCRIPT_DIR);
-        if (!Directory.Exists(scriptDir))
-        {
-            throw new InvalidOperationException($"マイグレーションSQLのフォルダが見つかりません（デモ101の構造が変わった可能性があります）: {MIGRATIONS_SCRIPT_DIR}");
-        }
-
-        foreach (var file in Directory.GetFiles(scriptDir, "*.sql"))
-        {
-            if (char.IsAsciiDigit(Path.GetFileName(file)[0]))
-            {
-                File.Delete(file);
-            }
         }
     }
 

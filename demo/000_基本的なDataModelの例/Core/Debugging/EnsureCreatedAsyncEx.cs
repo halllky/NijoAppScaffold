@@ -15,7 +15,7 @@ public static class DbContextExtensions {
     /// <summary>
     /// データベースを作成し、指定されたフォルダ内のSQLスクリプトを実行します。
     /// マイグレーションSQLが事前にファイルとして存在していることを前提としています。
-    /// マイグレーションSQLはTaskフォルダにある「ADD_MIGRATION.bat」を実行して作成してください（Windowsの場合）。
+    /// マイグレーションSQLはTaskフォルダにある「ADD_MIGRATION.sh」を実行して作成してください。
     /// </summary>
     /// <param name="context">DbContextのインスタンス</param>
     /// <param name="runtimeSetting">実行時設定</param>

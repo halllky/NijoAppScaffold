@@ -10,26 +10,26 @@
 - **dotnet** : 10 以上
 - **dotnet-ef** : 10 以上（標準のマイグレーションバッチを使用する場合のみ必要）
 - **npm** : 10.8.2 以上
-- **nijo** : 最新版
+- **nijo** : 最新版（パスを通す代わりに、環境変数 `NIJO_CLI_PATH` で場所を指定することもできます）
 
 ## 手順
 
-標準ではWindows環境のバッチの実を用意しています。
+デバッグとマイグレーションは bash のスクリプト、リリースは Windows のバッチを用意しています。
 
 ### デバッグ
 
-Task フォルダの `DEBUG.bat` を実行してください。
-このバッチコマンドの内容で不足がある場合は自由に書き換えてください。
+Task フォルダの `DEBUG.sh` を実行してください。
+このスクリプトの内容で不足がある場合は自由に書き換えてください。
 
 ### リリース
 
-Task フォルダの `RELEASE_DEBUG.bat` を実行してください。
+Task フォルダの `RELEASE_BUILD.bat` を実行してください。
 リリースモジュールを配置先のIISの実行フォルダに手動で格納するフローを想定しています。
 実際のリリース環境がこの方法にそぐわない場合、自由に書き換えたり、別途デプロイフローを構築してください。
 
 ### マイグレーション（DB定義更新）
 
-Task フォルダの `ADD_MIGRATION.bat` を実行してください。
+Task フォルダの `ADD_MIGRATION.sh` を実行してください。
 事前に `dotnet-ef` ツールがインストールされている必要があります。
 
 DB定義更新SQLは [MigrationsScript](./Core/MigrationsScript/) フォルダに蓄積されていき、
@@ -47,6 +47,7 @@ DB定義更新SQLは [MigrationsScript](./Core/MigrationsScript/) フォルダ�
 - テストコード
   - **UnitTest** : NUnit を使用したユニットテスト。自動生成されたモジュールを利用して効率的にテストケースを作成することができます。このプロジェクトの利用は必須ではありません。
 - 開発用ツール
+  - **Management** : 自動生成されたC#コードと連携する管理用のコマンドラインアプリケーション。使い方は [Management/README.md](./Management/README.md) を参照してください。
   - **Task** : 開発用ツールが入っているフォルダ。デバッグ開始、リリース、マイグレーションを用意。
 
 ## 参考: このテンプレートを作成した手順
@@ -83,6 +84,6 @@ Rename-Item -Path "my-app" -NewName "client"
 # .editorconfig
 # .gitignore
 # .gitattributes
-# DEBUG.bat
+# DEBUG.sh
 # その他、自動生成はなされないが必要な各種モジュール
 ```
