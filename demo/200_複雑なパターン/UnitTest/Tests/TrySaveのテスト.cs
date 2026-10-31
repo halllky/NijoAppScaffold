@@ -177,6 +177,48 @@ partial class DB接続あり_更新あり {
             Assert.That(departmentErrors.診療科マスタの住所.郵便番号.HasError(), Is.True);
         });
     }
+
+    [Test]
+    public void 検証エラーがあると検証済みコマンドは得られず無ければ得られる() {
+        var db = TestUtilImpl.Instance.CreateScope(nameof(検証エラーがあると検証済みコマンドは得られず無ければ得られる)).App.DbContext;
+
+        var command = Create機器分類(db, "C1");
+        command.機器分類名 = new string('あ', 51);
+        var isValid = command.TryValidate(out var validated, out var errors);
+        Assert.Multiple(() => {
+            Assert.That(isValid, Is.False);
+            Assert.That(validated, Is.Null);
+            Assert.That(errors.機器分類名.HasError(), Is.True);
+        });
+
+        command.機器分類名 = "修正後";
+        var isValid2 = command.TryValidate(out var validated2, out var errors2);
+        Assert.Multiple(() => {
+            Assert.That(isValid2, Is.True);
+            Assert.That(validated2, Is.Not.Null);
+            Assert.That(errors2.HasError(), Is.False);
+        });
+    }
+
+    [Test]
+    public async Task 検証後にコマンドを書き換えても検証時点の値で保存される() {
+        var db = TestUtilImpl.Instance.CreateScope(nameof(検証後にコマンドを書き換えても検証時点の値で保存される)).App.DbContext;
+        await using var tran = await db.Database.BeginTransactionAsync();
+
+        var command = Create保守計画(db, "PLAN1");
+        var validated = command.AssertValid();
+        command.計画名 = "検証後の値";
+        command.作業工程[0].工程名 = "検証後の値";
+        command.作業工程.RemoveAt(1);
+        (await db.TrySaveAsync(validated)).AssertSucceeded();
+
+        var root = await db.保守計画DbSet.SingleAsync();
+        var processes = await db.作業工程DbSet.OrderBy(x => x.工程番号).ToListAsync();
+        Assert.Multiple(() => {
+            Assert.That(root.計画名, Is.EqualTo("定期保守"));
+            Assert.That(processes.Select(x => x.工程名), Is.EqualTo(new[] { "点検", "清掃" }));
+        });
+    }
     #endregion 検証
 
 
