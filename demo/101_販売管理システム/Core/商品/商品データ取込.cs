@@ -8,11 +8,11 @@ partial class OverridedApplicationService {
     public override async Task Execute商品データ取込Async(IPresentationContext<MessageSetter> context) {
 
         foreach (var item in 商品管理システム.Enumerate商品データ()) {
-            Log.LogInformation($"処理開始: {item.Name} ({item.ExternalId})");
+            Log.LogInformation("処理開始: {itemName} ({itemExternalId})", item.Name, item.ExternalId);
 
             // 消費税区分の変換 (文字列 -> Enum)
             if (!Enum.TryParse<消費税区分>(item.TaxType, out var taxType)) {
-                Log.LogWarning($"不正な消費税区分です: {item.TaxType} (商品: {item.Name})");
+                Log.LogWarning("不正な消費税区分です: {itemTaxType} (商品: {itemName})", item.TaxType, item.Name);
                 continue;
             }
 
