@@ -27,9 +27,7 @@ public partial class OverridedDummyDataGenerator {
             氏名 = "デモ用ユーザー",
             パスワード = OverridedApplicationService.ComputeHash(DUMMY_USER_PASSWORD, adminSalt),
             SALT = adminSalt,
-            入荷担当 = true,
-            販売担当 = true,
-            システム管理者 = true,
+            従業員の権限 = [new() { 権限区分 = 権限区分.システム管理者 }],
             Version = 0,
         });
         // 従業員: その他
@@ -40,9 +38,6 @@ public partial class OverridedDummyDataGenerator {
                 氏名 = $"ユーザー{i:000}",
                 パスワード = OverridedApplicationService.ComputeHash(DUMMY_USER_PASSWORD, s),
                 SALT = s,
-                入荷担当 = i % 2 == 0,
-                販売担当 = i % 3 == 0,
-                システム管理者 = false,
                 Version = 0,
             });
         }

@@ -45,9 +45,9 @@ partial class OverridedApplicationService {
                 var createCommand = DbContext.StartCreating従業員();
                 createCommand.従業員番号 = item.従業員.従業員番号;
                 createCommand.氏名 = item.従業員.氏名;
-                createCommand.入荷担当 = item.従業員.入荷担当;
-                createCommand.販売担当 = item.従業員.販売担当;
-                createCommand.システム管理者 = item.従業員.システム管理者;
+                createCommand.従業員の権限 = item.従業員.従業員マスタの権限
+                    .Select(x => new 従業員の権限CreateCommand { 権限区分 = x.権限区分 })
+                    .ToList();
                 createCommand.パスワード = ComputeHash(INIT_PASSWORD, salt);
                 createCommand.SALT = salt;
 
@@ -78,9 +78,9 @@ partial class OverridedApplicationService {
 
             // 更新
             updateCommand.氏名 = item.従業員.氏名;
-            updateCommand.入荷担当 = item.従業員.入荷担当;
-            updateCommand.販売担当 = item.従業員.販売担当;
-            updateCommand.システム管理者 = item.従業員.システム管理者;
+            updateCommand.従業員の権限 = item.従業員.従業員マスタの権限
+                .Select(x => new 従業員の権限UpdateCommand { 権限区分 = x.権限区分 })
+                .ToList();
 
             if (updateCommand.TryValidate(out var validatedUpdate, out var updateErrors)) {
                 saveCommands.Add(validatedUpdate);

@@ -18,6 +18,17 @@ partial class OverridedDummyDataGenerator {
         var db = applicationService.DbContext;
         var rand = new Random(0);
 
+        // 従業員に販売管理業務の権限を割り当てる
+        var userIds = await db.従業員DbSet
+            .Where(e => e.従業員番号 != ADMIN_USER_ID)
+            .OrderBy(e => e.従業員番号)
+            .Select(e => e.従業員番号)
+            .ToListAsync();
+        for (var i = 1; i <= userIds.Count; i++) {
+            if (i % 2 == 0) db.Add(new 従業員の権限DbEntity { Parent_従業員番号 = userIds[i - 1], 権限区分 = 権限区分.入荷担当 });
+            if (i % 3 == 0) db.Add(new 従業員の権限DbEntity { Parent_従業員番号 = userIds[i - 1], 権限区分 = 権限区分.販売担当 });
+        }
+
         // 商品 (50件)
         for (var i = 1; i <= 50; i++) {
             db.商品DbSet.Add(new 商品DbEntity {
@@ -41,9 +52,7 @@ partial class OverridedDummyDataGenerator {
         loginUserCache.SetValue(applicationService, new Core.Authorization.LoginUser {
             従業員番号 = ADMIN_USER_ID,
             氏名 = DUMMY_USER_PASSWORD,
-            Isシステム管理者 = true,
-            CanUse入荷登録 = true,
-            CanUse売上登録 = true,
+            権限 = [権限区分.システム管理者],
         });
         isLoginUserLoaded.SetValue(applicationService, true);
 

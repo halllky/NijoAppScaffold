@@ -15,7 +15,7 @@ namespace MyApp.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.3");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
 
             modelBuilder.Entity("MyApp.セッションDbEntity", b =>
                 {
@@ -578,12 +578,12 @@ namespace MyApp.Migrations
                     b.Property<string>("CreateUser")
                         .HasColumnType("TEXT")
                         .HasColumnName("CreateUser")
-                        .HasColumnOrder(8);
+                        .HasColumnOrder(5);
 
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("TEXT")
                         .HasColumnName("CreatedAt")
-                        .HasColumnOrder(7);
+                        .HasColumnOrder(4);
 
                     b.Property<byte[]>("SALT")
                         .IsRequired()
@@ -594,34 +594,24 @@ namespace MyApp.Migrations
                     b.Property<string>("UpdateUser")
                         .HasColumnType("TEXT")
                         .HasColumnName("UpdateUser")
-                        .HasColumnOrder(10);
+                        .HasColumnOrder(7);
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT")
                         .HasColumnName("UpdatedAt")
-                        .HasColumnOrder(9);
+                        .HasColumnOrder(6);
 
                     b.Property<int>("Version")
                         .IsConcurrencyToken()
                         .HasColumnType("INTEGER")
                         .HasColumnName("Version")
-                        .HasColumnOrder(11);
-
-                    b.Property<bool>("システム管理者")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("システム管理者")
-                        .HasColumnOrder(6);
+                        .HasColumnOrder(8);
 
                     b.Property<byte[]>("パスワード")
                         .IsRequired()
                         .HasColumnType("BLOB")
                         .HasColumnName("パスワード")
                         .HasColumnOrder(2);
-
-                    b.Property<bool>("入荷担当")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("入荷担当")
-                        .HasColumnOrder(4);
 
                     b.Property<string>("氏名")
                         .IsRequired()
@@ -630,15 +620,48 @@ namespace MyApp.Migrations
                         .HasColumnName("氏名")
                         .HasColumnOrder(1);
 
-                    b.Property<bool>("販売担当")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("販売担当")
-                        .HasColumnOrder(5);
-
                     b.HasKey("従業員番号")
                         .HasName("PK_従業員");
 
                     b.ToTable("従業員", (string)null);
+                });
+
+            modelBuilder.Entity("MyApp.従業員の権限DbEntity", b =>
+                {
+                    b.Property<string>("Parent_従業員番号")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Parent_従業員番号")
+                        .HasColumnOrder(0);
+
+                    b.Property<int>("権限区分")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("権限区分")
+                        .HasColumnOrder(1);
+
+                    b.Property<string>("CreateUser")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("CreateUser")
+                        .HasColumnOrder(3);
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("CreatedAt")
+                        .HasColumnOrder(2);
+
+                    b.Property<string>("UpdateUser")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("UpdateUser")
+                        .HasColumnOrder(5);
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("UpdatedAt")
+                        .HasColumnOrder(4);
+
+                    b.HasKey("Parent_従業員番号", "権限区分")
+                        .HasName("PK_権限");
+
+                    b.ToTable("権限", (string)null);
                 });
 
             modelBuilder.Entity("MyApp.セッションDbEntity", b =>
@@ -777,6 +800,17 @@ namespace MyApp.Migrations
                     b.Navigation("入荷");
                 });
 
+            modelBuilder.Entity("MyApp.従業員の権限DbEntity", b =>
+                {
+                    b.HasOne("MyApp.従業員DbEntity", "Parent")
+                        .WithMany("従業員の権限")
+                        .HasForeignKey("Parent_従業員番号")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("FK_従業員_権限");
+
+                    b.Navigation("Parent");
+                });
+
             modelBuilder.Entity("MyApp.入荷DbEntity", b =>
                 {
                     b.Navigation("RefFrom入荷明細_入荷");
@@ -822,6 +856,8 @@ namespace MyApp.Migrations
                     b.Navigation("RefFrom在庫調整_担当者");
 
                     b.Navigation("RefFrom売上_担当者");
+
+                    b.Navigation("従業員の権限");
                 });
 #pragma warning restore 612, 618
         }

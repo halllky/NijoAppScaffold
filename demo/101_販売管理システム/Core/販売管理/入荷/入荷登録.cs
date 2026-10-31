@@ -5,7 +5,7 @@ namespace MyApp;
 partial class OverridedApplicationService {
     public override async Task Execute入荷登録Async(入荷詳細DisplayData param, IPresentationContextWithReturnValue<入荷登録ReturnValueDisplayData, 入荷詳細Messages> context) {
         // 権限チェック
-        if (LoginUser == null || !LoginUser.CanUse入荷登録) {
+        if (LoginUser == null || !LoginUser.Has権限(権限区分.入荷担当)) {
             context.Messages.AddError("入荷担当のみ実行可能です。");
             return;
         }

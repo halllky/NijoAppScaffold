@@ -6,7 +6,7 @@ namespace MyApp;
 partial class OverridedApplicationService {
     public override async Task Execute在庫調整登録Async(在庫調整ParameterDisplayData param, IPresentationContext<在庫調整ParameterMessages> context) {
         // 権限チェック
-        if (LoginUser == null || !LoginUser.CanUse入荷登録) {
+        if (LoginUser == null || !LoginUser.Has権限(権限区分.入荷担当)) {
             context.Messages.AddError("入荷担当のみ実行可能です。");
             return;
         }

@@ -1,16 +1,39 @@
 namespace MyApp.Core.Authorization {
+    /// <summary>
+    /// ログイン中のユーザー。機能を使ってよいかの判定に必要な情報をもつ。
+    /// </summary>
     public class LoginUser {
         public required string 従業員番号 { get; init; }
         public required string 氏名 { get; init; }
-        public required bool Isシステム管理者 { get; init; }
+        public required IReadOnlyCollection<権限区分> 権限 { get; init; }
+
         /// <summary>
-        /// 入荷登録権限があるか、システム管理者ならtrue
+        /// システム管理者ならtrue
         /// </summary>
-        public required bool CanUse入荷登録 { get; init; }
+        public bool Isシステム管理者 => 権限.Contains(権限区分.システム管理者);
+
         /// <summary>
-        /// 売上登録権限があるか、システム管理者ならtrue
+        /// 指定された権限があるか、システム管理者ならtrue
         /// </summary>
-        public required bool CanUse売上登録 { get; init; }
+        public bool Has権限(権限区分 対象) => Isシステム管理者 || 権限.Contains(対象);
+
+        /// <summary>
+        /// 従業員のデータからログインユーザー情報を作る。従業員の権限が読み込まれている必要がある。
+        /// </summary>
+        public static LoginUser From(従業員DbEntity 従業員) => new() {
+            従業員番号 = 従業員.従業員番号 ?? throw new InvalidOperationException(),
+            氏名 = 従業員.氏名 ?? throw new InvalidOperationException(),
+            権限 = 従業員.従業員の権限.Select(x => x.権限区分 ?? throw new InvalidOperationException()).ToArray(),
+        };
+
+        /// <summary>
+        /// JavaScriptで使うログインユーザー情報に変換する。
+        /// </summary>
+        public ログインユーザー情報DisplayData ToDisplayData() => new() {
+            従業員番号 = 従業員番号,
+            氏名 = 氏名,
+            ログインユーザー情報の権限 = 権限.Select(x => new ログインユーザー情報の権限DisplayData { 権限区分 = x }).ToList(),
+        };
     }
 }
 
@@ -42,7 +65,8 @@ namespace MyApp {
 
                 // セッションキーはDBのセッションテーブルにも保存されるので、Cookieの値と突合
                 var dbEntity = DbContext.セッションDbSet
-                    .Include(e => e.ユーザ)
+                    .Include(e => e.ユーザ!)
+                    .ThenInclude(e => e.従業員の権限)
                     .SingleOrDefault(e => e.セッションキー == sessionKey);
 
                 // 有効期限切れや、DBの古いデータが掃除された場合など
@@ -52,13 +76,7 @@ namespace MyApp {
                     return null;
                 }
 
-                _loginUserCache = new LoginUser {
-                    従業員番号 = dbEntity.ユーザ_従業員番号 ?? throw new InvalidOperationException(),
-                    氏名 = dbEntity.ユーザ?.氏名 ?? throw new InvalidOperationException(),
-                    Isシステム管理者 = dbEntity.ユーザ?.システム管理者 ?? false,
-                    CanUse入荷登録 = (dbEntity.ユーザ?.システム管理者 ?? false) || (dbEntity.ユーザ?.入荷担当 ?? false),
-                    CanUse売上登録 = (dbEntity.ユーザ?.システム管理者 ?? false) || (dbEntity.ユーザ?.販売担当 ?? false),
-                };
+                _loginUserCache = LoginUser.From(dbEntity.ユーザ ?? throw new InvalidOperationException());
                 _isLoginUserLoaded = true;
 
                 return _loginUserCache;

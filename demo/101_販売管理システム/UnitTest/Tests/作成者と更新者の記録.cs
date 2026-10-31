@@ -10,7 +10,7 @@ partial class DB接続あり_更新あり {
         var scope = TestUtilImpl.Instance.CreateScope(nameof(作成者と更新者にログインユーザーが記録される));
         var db = scope.App.DbContext;
 
-        db.従業員DbSet.Add(new 従業員DbEntity { 従業員番号 = "LOGIN_USER", 氏名 = "ログインユーザー", パスワード = [1], SALT = [1], 入荷担当 = false, 販売担当 = false, システム管理者 = false, Version = 0 });
+        db.従業員DbSet.Add(new 従業員DbEntity { 従業員番号 = "LOGIN_USER", 氏名 = "ログインユーザー", パスワード = [1], SALT = [1], Version = 0 });
         db.セッションDbSet.Add(new セッションDbEntity {
             セッションキー = TestUtilImpl.SessionKeyProviderInUnitTest.SESSION_KEY,
             ユーザ_従業員番号 = "LOGIN_USER",
@@ -44,9 +44,6 @@ partial class DB接続あり_更新あり {
         command.氏名 = "新しい従業員";
         command.パスワード = [1];
         command.SALT = [1];
-        command.入荷担当 = false;
-        command.販売担当 = false;
-        command.システム管理者 = false;
 
         (await db.TrySaveAsync(command.AssertValid())).AssertSucceeded();
 

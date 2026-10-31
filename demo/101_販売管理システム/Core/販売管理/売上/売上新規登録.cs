@@ -6,7 +6,7 @@ namespace MyApp;
 partial class OverridedApplicationService {
     public override async Task Execute売上新規登録Async(売上詳細DisplayData param, IPresentationContextWithReturnValue<売上新規登録ReturnValueDisplayData, 売上詳細Messages> context) {
         // 権限チェック
-        if (LoginUser == null || !LoginUser.CanUse売上登録) {
+        if (LoginUser == null || !LoginUser.Has権限(権限区分.販売担当)) {
             context.Messages.AddError("販売担当のみ実行可能です。");
             return;
         }

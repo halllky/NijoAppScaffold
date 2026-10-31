@@ -200,21 +200,15 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
         IsNotNull="True"
         Type="bytearray"
         UniqueId="eae146ed-8c0f-484c-8b1a-dfc12ab1987d" />
-      <!--入荷登録機能を利用することができるか否か。-->
-      <入荷担当
-        IsNotNull="True"
-        Type="bool"
-        UniqueId="ae852331-ecd8-4b0e-8c23-915254a350cc" />
-      <!--販売登録機能を利用することができるか否か。-->
-      <販売担当
-        IsNotNull="True"
-        Type="bool"
-        UniqueId="4e11fe49-0e17-47a3-8ed5-5356b4f4535b" />
-      <!--マスタデータを編集することができるか否か。-->
-      <システム管理者
-        IsNotNull="True"
-        Type="bool"
-        UniqueId="7a56056d-0c90-4871-979a-75f86ac07af3" />
+      <!--このユーザーがもつ権限。-->
+      <権限
+        Type="children"
+        UniqueId="7e912678-bd85-440c-ac2d-900e13fa1bf9">
+        <権限区分
+          IsKey="True"
+          Type="権限区分"
+          UniqueId="4792a186-0bfd-4c50-ac3d-acb7dadebb53" />
+      </権限>
     </従業員>
     <!--画面UI上では @[従業員](659bf33a-c624-4e67-96a9-460809d70995) への参照が各所に登場するところ、アプリケーションのパフォーマンスの最適化のために必要最低限の項目のみ保持した参照用データ。-->
     <従業員Ref
@@ -291,18 +285,13 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       <氏名
         Type="word"
         UniqueId="3ea7c1ea-ab69-47a5-9821-f9ad112e65e2" />
-      <!--入荷登録機能を利用することができるか否か。-->
-      <入荷担当
-        Type="bool"
-        UniqueId="95c397c0-b584-46ff-bcb6-8ba0128d0027" />
-      <!--販売登録機能を利用することができるか否か。-->
-      <販売担当
-        Type="bool"
-        UniqueId="b8c62684-aa6c-4b94-8934-7782fc447e97" />
-      <!--マスタデータを編集することができるか否か。-->
-      <システム管理者
-        Type="bool"
-        UniqueId="e722013b-ba56-4663-9f13-7e85e5c5f44f" />
+      <権限
+        Type="children"
+        UniqueId="ac564251-087c-4545-8800-032fdd129fef">
+        <権限区分
+          Type="権限区分"
+          UniqueId="e999e4e8-b28c-47f5-89f8-d68d08aad589" />
+      </権限>
       <!--楽観排他制御用-->
       <Version
         Type="int"
@@ -643,17 +632,13 @@ Webアプリケーションなので明示的にログアウトしない限り�
       <氏名
         Type="word"
         UniqueId="59db479e-8398-429e-928c-53639f6e6f19" />
-      <!--入荷担当またはシステム管理者の場合true-->
-      <入荷機能を利用可能
-        Type="bool"
-        UniqueId="4106ebcf-27da-4886-80ec-2919acdb6877" />
-      <!--販売担当またはシステム管理者の場合true-->
-      <販売機能を利用可能
-        Type="bool"
-        UniqueId="8c487777-69d8-4177-9c0b-0c41277438bb" />
-      <システム管理者
-        Type="bool"
-        UniqueId="72b24b06-ab7e-4267-ac2f-a951cdb6885f" />
+      <権限
+        Type="children"
+        UniqueId="41ff739a-6477-4f0f-bda4-d65e5a7642ed">
+        <権限区分
+          Type="権限区分"
+          UniqueId="d322cef3-4a00-4242-8243-1d72b93c768b" />
+      </権限>
     </ログインユーザー情報>
     <!--新規登録完了後の編集画面への遷移に使用する-->
     <売上新規登録ReturnValue
@@ -750,6 +735,19 @@ ASP.NET Core のサービスワーカーとして登録される定期処理。-
       UniqueId="87def3ce-18a3-4ad1-9ab1-bf0ad3c80763" />
   </Commands>
   <StaticEnums>
+    <!--ユーザーがもつ権限の種類。「システム管理者」はすべての機能を使える。-->
+    <権限区分
+      UniqueId="d3d0cb8d-23a2-4b86-a85e-b8965284c824">
+      <システム管理者
+        key="0"
+        UniqueId="95e18962-7298-442c-97a1-20d00de5c5bd" />
+      <入荷担当
+        key="1"
+        UniqueId="cf2b5195-f88a-4422-9a0e-a00b06a226ef" />
+      <販売担当
+        key="2"
+        UniqueId="33da9d2d-ef69-4a99-912f-18bb6f1bfbb3" />
+    </権限区分>
     <消費税区分
       UniqueId="e4a132f9-580e-477f-abf3-9359c92a643a">
       <非課税

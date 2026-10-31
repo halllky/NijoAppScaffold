@@ -19,6 +19,7 @@ partial class OverridedApplicationService {
 
         // 従業員検索
         var employee = await DbContext.従業員DbSet
+            .Include(e => e.従業員の権限)
             .SingleOrDefaultAsync(e => e.従業員番号 == param.従業員番号);
 
         if (employee == null) {
@@ -67,13 +68,7 @@ partial class OverridedApplicationService {
         sessionKeyProvider.ReturnSessionKeyToClient(sessionKey);
 
         // JavaScriptで使うログインユーザー情報
-        context.ReturnValue = new() {
-            従業員番号 = employee.従業員番号,
-            氏名 = employee.氏名,
-            入荷機能を利用可能 = employee.入荷担当 == true || employee.システム管理者 == true,
-            販売機能を利用可能 = employee.販売担当 == true || employee.システム管理者 == true,
-            システム管理者 = employee.システム管理者 == true,
-        };
+        context.ReturnValue = Core.Authorization.LoginUser.From(employee).ToDisplayData();
 
         await tran.CommitAsync();
     }

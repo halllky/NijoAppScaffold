@@ -17,9 +17,6 @@ partial class DB接続あり_更新あり {
         command.氏名 = "氏名";
         command.パスワード = password;
         command.SALT = [9];
-        command.入荷担当 = false;
-        command.販売担当 = false;
-        command.システム管理者 = false;
 
         var validated = command.AssertValid();
         password[0] = 255;
