@@ -102,5 +102,13 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# dotnet ef の出力はこのリポジトリの書式と異なるので .editorconfig に合わせて整形する。
+# Designer とスナップショットは自動生成扱いなので、指定しないと整形されず改行コードも揃わない
+dotnet format whitespace --folder --include-generated --include Core/Migrations/
+if [ $? -ne 0 ]; then
+    echo "マイグレーションの整形に失敗しました。"
+    exit 1
+fi
+
 echo "マイグレーションの作成が完了しました。"
 popd > /dev/null

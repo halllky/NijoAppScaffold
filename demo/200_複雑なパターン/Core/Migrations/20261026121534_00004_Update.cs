@@ -1,20 +1,16 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Demo200.Migrations
-{
+namespace Demo200.Migrations {
     /// <inheritdoc />
-    public partial class _00004_Update : Migration
-    {
+    public partial class _00004_Update : Migration {
         /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
+        protected override void Up(MigrationBuilder migrationBuilder) {
             migrationBuilder.CreateTable(
                 name: "保守計画",
-                columns: table => new
-                {
+                columns: table => new {
                     PLAN_ID = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
                     PLAN_NAME = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
@@ -23,15 +19,13 @@ namespace Demo200.Migrations
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true),
                     Version = table.Column<int>(type: "INTEGER", nullable: false)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_保守計画", x => x.PLAN_ID);
                 });
 
             migrationBuilder.CreateTable(
                 name: "保守計画_DELETED",
-                columns: table => new
-                {
+                columns: table => new {
                     DeletedUuid = table.Column<Guid>(type: "TEXT", nullable: false),
                     PLAN_ID = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
                     PLAN_NAME = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
@@ -43,15 +37,13 @@ namespace Demo200.Migrations
                     DeletedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     DeletedUser = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_保守計画_DELETED", x => x.DeletedUuid);
                 });
 
             migrationBuilder.CreateTable(
                 name: "PROCESS",
-                columns: table => new
-                {
+                columns: table => new {
                     Parent_PLAN_ID = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
                     PROCESS_NO = table.Column<int>(type: "INTEGER", nullable: false),
                     PROCESS_NAME = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
@@ -60,8 +52,7 @@ namespace Demo200.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_PROCESS", x => new { x.Parent_PLAN_ID, x.PROCESS_NO });
                     table.ForeignKey(
                         name: "FK_保守計画_PROCESS",
@@ -73,8 +64,7 @@ namespace Demo200.Migrations
 
             migrationBuilder.CreateTable(
                 name: "PROCESS_DELETED",
-                columns: table => new
-                {
+                columns: table => new {
                     DeletedUuid = table.Column<Guid>(type: "TEXT", nullable: false),
                     Parent_PLAN_ID = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
                     PROCESS_NO = table.Column<int>(type: "INTEGER", nullable: false),
@@ -84,8 +74,7 @@ namespace Demo200.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_PROCESS_DELETED", x => new { x.DeletedUuid, x.PROCESS_NO });
                     table.ForeignKey(
                         name: "FK_DELETED_保守計画_PROCESS",
@@ -97,8 +86,7 @@ namespace Demo200.Migrations
 
             migrationBuilder.CreateTable(
                 name: "PROCEDURE",
-                columns: table => new
-                {
+                columns: table => new {
                     Parent_Parent_PLAN_ID = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
                     Parent_PROCESS_NO = table.Column<int>(type: "INTEGER", nullable: false),
                     PROCEDURE_NO = table.Column<int>(type: "INTEGER", nullable: false),
@@ -108,8 +96,7 @@ namespace Demo200.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_PROCEDURE", x => new { x.Parent_Parent_PLAN_ID, x.Parent_PROCESS_NO, x.PROCEDURE_NO });
                     table.ForeignKey(
                         name: "FK_PROCESS_PROCEDURE",
@@ -121,8 +108,7 @@ namespace Demo200.Migrations
 
             migrationBuilder.CreateTable(
                 name: "WORK_TEAM",
-                columns: table => new
-                {
+                columns: table => new {
                     Parent_Parent_PLAN_ID = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
                     Parent_PROCESS_NO = table.Column<int>(type: "INTEGER", nullable: false),
                     LEADER_NAME = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
@@ -131,8 +117,7 @@ namespace Demo200.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_WORK_TEAM", x => new { x.Parent_Parent_PLAN_ID, x.Parent_PROCESS_NO });
                     table.ForeignKey(
                         name: "FK_PROCESS_WORK_TEAM",
@@ -144,8 +129,7 @@ namespace Demo200.Migrations
 
             migrationBuilder.CreateTable(
                 name: "PROCEDURE_DELETED",
-                columns: table => new
-                {
+                columns: table => new {
                     DeletedUuid = table.Column<Guid>(type: "TEXT", nullable: false),
                     Parent_Parent_PLAN_ID = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
                     Parent_PROCESS_NO = table.Column<int>(type: "INTEGER", nullable: false),
@@ -156,8 +140,7 @@ namespace Demo200.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_PROCEDURE_DELETED", x => new { x.DeletedUuid, x.Parent_PROCESS_NO, x.PROCEDURE_NO });
                     table.ForeignKey(
                         name: "FK_DELETED_PROCESS_PROCEDURE",
@@ -169,8 +152,7 @@ namespace Demo200.Migrations
 
             migrationBuilder.CreateTable(
                 name: "WORK_TEAM_DELETED",
-                columns: table => new
-                {
+                columns: table => new {
                     DeletedUuid = table.Column<Guid>(type: "TEXT", nullable: false),
                     Parent_Parent_PLAN_ID = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
                     Parent_PROCESS_NO = table.Column<int>(type: "INTEGER", nullable: false),
@@ -180,8 +162,7 @@ namespace Demo200.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_WORK_TEAM_DELETED", x => new { x.DeletedUuid, x.Parent_PROCESS_NO });
                     table.ForeignKey(
                         name: "FK_DELETED_PROCESS_WORK_TEAM",
@@ -193,8 +174,7 @@ namespace Demo200.Migrations
 
             migrationBuilder.CreateTable(
                 name: "CHECK_ITEM",
-                columns: table => new
-                {
+                columns: table => new {
                     Parent_Parent_Parent_PLAN_ID = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
                     Parent_Parent_PROCESS_NO = table.Column<int>(type: "INTEGER", nullable: false),
                     Parent_PROCEDURE_NO = table.Column<int>(type: "INTEGER", nullable: false),
@@ -205,8 +185,7 @@ namespace Demo200.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_CHECK_ITEM", x => new { x.Parent_Parent_Parent_PLAN_ID, x.Parent_Parent_PROCESS_NO, x.Parent_PROCEDURE_NO, x.CHECK_ITEM_NO });
                     table.ForeignKey(
                         name: "FK_PROCEDURE_CHECK_ITEM",
@@ -218,8 +197,7 @@ namespace Demo200.Migrations
 
             migrationBuilder.CreateTable(
                 name: "WORKER",
-                columns: table => new
-                {
+                columns: table => new {
                     Parent_Parent_Parent_PLAN_ID = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
                     Parent_Parent_PROCESS_NO = table.Column<int>(type: "INTEGER", nullable: false),
                     WORKER_NO = table.Column<int>(type: "INTEGER", nullable: false),
@@ -229,8 +207,7 @@ namespace Demo200.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_WORKER", x => new { x.Parent_Parent_Parent_PLAN_ID, x.Parent_Parent_PROCESS_NO, x.WORKER_NO });
                     table.ForeignKey(
                         name: "FK_WORK_TEAM_WORKER",
@@ -242,8 +219,7 @@ namespace Demo200.Migrations
 
             migrationBuilder.CreateTable(
                 name: "CHECK_ITEM_DELETED",
-                columns: table => new
-                {
+                columns: table => new {
                     DeletedUuid = table.Column<Guid>(type: "TEXT", nullable: false),
                     Parent_Parent_Parent_PLAN_ID = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
                     Parent_Parent_PROCESS_NO = table.Column<int>(type: "INTEGER", nullable: false),
@@ -255,8 +231,7 @@ namespace Demo200.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_CHECK_ITEM_DELETED", x => new { x.DeletedUuid, x.Parent_Parent_PROCESS_NO, x.Parent_PROCEDURE_NO, x.CHECK_ITEM_NO });
                     table.ForeignKey(
                         name: "FK_DELETED_PROCEDURE_CHECK_ITEM",
@@ -268,8 +243,7 @@ namespace Demo200.Migrations
 
             migrationBuilder.CreateTable(
                 name: "WORKER_DELETED",
-                columns: table => new
-                {
+                columns: table => new {
                     DeletedUuid = table.Column<Guid>(type: "TEXT", nullable: false),
                     Parent_Parent_Parent_PLAN_ID = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
                     Parent_Parent_PROCESS_NO = table.Column<int>(type: "INTEGER", nullable: false),
@@ -280,8 +254,7 @@ namespace Demo200.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_WORKER_DELETED", x => new { x.DeletedUuid, x.Parent_Parent_PROCESS_NO, x.WORKER_NO });
                     table.ForeignKey(
                         name: "FK_DELETED_WORK_TEAM_WORKER",
@@ -298,8 +271,7 @@ namespace Demo200.Migrations
         }
 
         /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
+        protected override void Down(MigrationBuilder migrationBuilder) {
             migrationBuilder.DropTable(
                 name: "CHECK_ITEM");
 

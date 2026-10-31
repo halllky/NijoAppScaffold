@@ -1,16 +1,13 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Demo101.Migrations
-{
+namespace Demo101.Migrations {
     /// <inheritdoc />
-    public partial class _00004_権限区分 : Migration
-    {
+    public partial class _00004_権限区分 : Migration {
         /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
+        protected override void Up(MigrationBuilder migrationBuilder) {
             migrationBuilder.DropColumn(
                 name: "システム管理者",
                 table: "従業員");
@@ -79,8 +76,7 @@ namespace Demo101.Migrations
 
             migrationBuilder.CreateTable(
                 name: "権限",
-                columns: table => new
-                {
+                columns: table => new {
                     Parent_従業員番号 = table.Column<string>(type: "TEXT", nullable: false),
                     権限区分 = table.Column<int>(type: "INTEGER", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
@@ -88,8 +84,7 @@ namespace Demo101.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_権限", x => new { x.Parent_従業員番号, x.権限区分 });
                     table.ForeignKey(
                         name: "FK_従業員_権限",
@@ -101,8 +96,7 @@ namespace Demo101.Migrations
         }
 
         /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
+        protected override void Down(MigrationBuilder migrationBuilder) {
             migrationBuilder.DropTable(
                 name: "権限");
 

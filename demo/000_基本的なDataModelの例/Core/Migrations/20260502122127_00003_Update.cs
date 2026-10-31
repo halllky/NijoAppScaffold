@@ -1,16 +1,13 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Demo000.Migrations
-{
+namespace Demo000.Migrations {
     /// <inheritdoc />
-    public partial class _00003_Update : Migration
-    {
+    public partial class _00003_Update : Migration {
         /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
+        protected override void Up(MigrationBuilder migrationBuilder) {
             migrationBuilder.AlterColumn<int>(
                 name: "Version",
                 table: "社員",
@@ -200,8 +197,7 @@ namespace Demo000.Migrations
 
             migrationBuilder.CreateTable(
                 name: "汎用マスタ",
-                columns: table => new
-                {
+                columns: table => new {
                     汎用種別 = table.Column<string>(type: "TEXT", nullable: false),
                     区分値 = table.Column<string>(type: "TEXT", nullable: false),
                     表示名称 = table.Column<string>(type: "TEXT", nullable: true),
@@ -211,8 +207,7 @@ namespace Demo000.Migrations
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true),
                     Version = table.Column<int>(type: "INTEGER", nullable: false)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_汎用マスタ", x => new { x.汎用種別, x.区分値 });
                 });
 
@@ -252,8 +247,7 @@ namespace Demo000.Migrations
         }
 
         /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
+        protected override void Down(MigrationBuilder migrationBuilder) {
             migrationBuilder.DropForeignKey(
                 name: "FK_係_汎用マスタ_汎用マスタDbEntity汎用種別_汎用マスタDbEntity区分値",
                 table: "係");

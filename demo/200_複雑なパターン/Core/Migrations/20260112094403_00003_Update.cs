@@ -1,16 +1,13 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Demo200.Migrations
-{
+namespace Demo200.Migrations {
     /// <inheritdoc />
-    public partial class _00003_Update : Migration
-    {
+    public partial class _00003_Update : Migration {
         /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
+        protected override void Up(MigrationBuilder migrationBuilder) {
             migrationBuilder.AlterColumn<string>(
                 name: "患者_CUSTOMER_ID",
                 table: "予約",
@@ -273,8 +270,7 @@ namespace Demo200.Migrations
         }
 
         /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
+        protected override void Down(MigrationBuilder migrationBuilder) {
             migrationBuilder.AlterColumn<string>(
                 name: "患者_CUSTOMER_ID",
                 table: "予約",

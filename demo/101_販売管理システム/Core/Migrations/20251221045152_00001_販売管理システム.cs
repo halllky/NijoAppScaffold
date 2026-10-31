@@ -1,20 +1,16 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Demo101.Migrations
-{
+namespace Demo101.Migrations {
     /// <inheritdoc />
-    public partial class _00001_販売管理システム : Migration
-    {
+    public partial class _00001_販売管理システム : Migration {
         /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
+        protected override void Up(MigrationBuilder migrationBuilder) {
             migrationBuilder.CreateTable(
                 name: "従業員",
-                columns: table => new
-                {
+                columns: table => new {
                     従業員番号 = table.Column<string>(type: "TEXT", nullable: false),
                     氏名 = table.Column<string>(type: "TEXT", nullable: false),
                     パスワード = table.Column<byte[]>(type: "BLOB", nullable: false),
@@ -28,15 +24,13 @@ namespace Demo101.Migrations
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true),
                     Version = table.Column<int>(type: "INTEGER", nullable: false)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_従業員", x => x.従業員番号);
                 });
 
             migrationBuilder.CreateTable(
                 name: "商品",
-                columns: table => new
-                {
+                columns: table => new {
                     商品SEQ = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     外部システム側ID = table.Column<string>(type: "TEXT", nullable: false),
@@ -49,15 +43,13 @@ namespace Demo101.Migrations
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true),
                     Version = table.Column<int>(type: "INTEGER", nullable: false)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_商品", x => x.商品SEQ);
                 });
 
             migrationBuilder.CreateTable(
                 name: "セッション",
-                columns: table => new
-                {
+                columns: table => new {
                     セッションキー = table.Column<string>(type: "TEXT", nullable: false),
                     ユーザ_従業員番号 = table.Column<string>(type: "TEXT", nullable: true),
                     最終ログイン日時 = table.Column<DateTime>(type: "TEXT", nullable: false),
@@ -67,8 +59,7 @@ namespace Demo101.Migrations
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true),
                     Version = table.Column<int>(type: "INTEGER", nullable: false)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_セッション", x => x.セッションキー);
                     table.ForeignKey(
                         name: "FK_従業員_セッション_X809B944",
@@ -79,8 +70,7 @@ namespace Demo101.Migrations
 
             migrationBuilder.CreateTable(
                 name: "入荷",
-                columns: table => new
-                {
+                columns: table => new {
                     入荷ID = table.Column<string>(type: "TEXT", nullable: false),
                     入荷日時 = table.Column<DateTime>(type: "TEXT", nullable: false),
                     担当者_従業員番号 = table.Column<string>(type: "TEXT", nullable: true),
@@ -91,8 +81,7 @@ namespace Demo101.Migrations
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true),
                     Version = table.Column<int>(type: "INTEGER", nullable: false)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_入荷", x => x.入荷ID);
                     table.ForeignKey(
                         name: "FK_従業員_入荷_XB332A41",
@@ -103,8 +92,7 @@ namespace Demo101.Migrations
 
             migrationBuilder.CreateTable(
                 name: "売上",
-                columns: table => new
-                {
+                columns: table => new {
                     売上SEQ = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     売上日時 = table.Column<DateTime>(type: "TEXT", nullable: false),
@@ -116,8 +104,7 @@ namespace Demo101.Migrations
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true),
                     Version = table.Column<int>(type: "INTEGER", nullable: false)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_売上", x => x.売上SEQ);
                     table.ForeignKey(
                         name: "FK_従業員_売上_XB332A41",
@@ -128,8 +115,7 @@ namespace Demo101.Migrations
 
             migrationBuilder.CreateTable(
                 name: "在庫調整",
-                columns: table => new
-                {
+                columns: table => new {
                     在庫調整ID = table.Column<string>(type: "TEXT", nullable: false),
                     在庫調整日時 = table.Column<DateOnly>(type: "TEXT", nullable: false),
                     担当者_従業員番号 = table.Column<string>(type: "TEXT", nullable: true),
@@ -143,8 +129,7 @@ namespace Demo101.Migrations
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true),
                     Version = table.Column<int>(type: "INTEGER", nullable: false)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_在庫調整", x => x.在庫調整ID);
                     table.ForeignKey(
                         name: "FK_商品_在庫調整_X84D8979",
@@ -160,8 +145,7 @@ namespace Demo101.Migrations
 
             migrationBuilder.CreateTable(
                 name: "入荷明細",
-                columns: table => new
-                {
+                columns: table => new {
                     入荷明細ID = table.Column<string>(type: "TEXT", nullable: false),
                     入荷_入荷ID = table.Column<string>(type: "TEXT", nullable: true),
                     在庫調整 = table.Column<string>(type: "TEXT", nullable: true),
@@ -177,8 +161,7 @@ namespace Demo101.Migrations
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true),
                     Version = table.Column<int>(type: "INTEGER", nullable: false)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_入荷明細", x => x.入荷明細ID);
                     table.ForeignKey(
                         name: "FK_入荷_入荷明細_X4913180",
@@ -194,8 +177,7 @@ namespace Demo101.Migrations
 
             migrationBuilder.CreateTable(
                 name: "売上明細",
-                columns: table => new
-                {
+                columns: table => new {
                     Parent_売上SEQ = table.Column<int>(type: "INTEGER", nullable: false),
                     明細ID = table.Column<string>(type: "TEXT", nullable: false),
                     商品_商品SEQ = table.Column<int>(type: "INTEGER", nullable: true),
@@ -208,8 +190,7 @@ namespace Demo101.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_売上明細", x => new { x.Parent_売上SEQ, x.明細ID });
                     table.ForeignKey(
                         name: "FK_商品_売上明細_X84D8979",
@@ -226,8 +207,7 @@ namespace Demo101.Migrations
 
             migrationBuilder.CreateTable(
                 name: "在庫調整引当明細",
-                columns: table => new
-                {
+                columns: table => new {
                     Parent_在庫調整ID = table.Column<string>(type: "TEXT", nullable: false),
                     入荷明細_入荷明細ID = table.Column<string>(type: "TEXT", nullable: false),
                     引当数 = table.Column<int>(type: "INTEGER", nullable: false),
@@ -236,8 +216,7 @@ namespace Demo101.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_在庫調整引当明細", x => new { x.Parent_在庫調整ID, x.入荷明細_入荷明細ID });
                     table.ForeignKey(
                         name: "FK_入荷明細_在庫調整引当明細_X726F99E",
@@ -254,8 +233,7 @@ namespace Demo101.Migrations
 
             migrationBuilder.CreateTable(
                 name: "引当明細",
-                columns: table => new
-                {
+                columns: table => new {
                     Parent_Parent_売上SEQ = table.Column<int>(type: "INTEGER", nullable: false),
                     Parent_明細ID = table.Column<string>(type: "TEXT", nullable: false),
                     入荷_入荷明細ID = table.Column<string>(type: "TEXT", nullable: false),
@@ -265,8 +243,7 @@ namespace Demo101.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_引当明細", x => new { x.Parent_Parent_売上SEQ, x.Parent_明細ID, x.入荷_入荷明細ID });
                     table.ForeignKey(
                         name: "FK_入荷明細_引当明細_X4913180",
@@ -333,8 +310,7 @@ namespace Demo101.Migrations
         }
 
         /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
+        protected override void Down(MigrationBuilder migrationBuilder) {
             migrationBuilder.DropTable(
                 name: "セッション");
 

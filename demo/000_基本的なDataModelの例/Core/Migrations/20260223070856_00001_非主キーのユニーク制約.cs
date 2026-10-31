@@ -1,20 +1,16 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Demo000.Migrations
-{
+namespace Demo000.Migrations {
     /// <inheritdoc />
-    public partial class _00001_非主キーのユニーク制約 : Migration
-    {
+    public partial class _00001_非主キーのユニーク制約 : Migration {
         /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
+        protected override void Up(MigrationBuilder migrationBuilder) {
             migrationBuilder.CreateTable(
                 name: "旧システム部署情報",
-                columns: table => new
-                {
+                columns: table => new {
                     旧システムコード = table.Column<string>(type: "TEXT", nullable: false),
                     名称 = table.Column<string>(type: "TEXT", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
@@ -23,15 +19,13 @@ namespace Demo000.Migrations
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true),
                     Version = table.Column<int>(type: "INTEGER", nullable: false)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_旧システム部署情報", x => x.旧システムコード);
                 });
 
             migrationBuilder.CreateTable(
                 name: "課",
-                columns: table => new
-                {
+                columns: table => new {
                     Parent_部署ID = table.Column<int>(type: "INTEGER", nullable: false),
                     コード = table.Column<string>(type: "TEXT", nullable: false),
                     旧システムコード_旧システムコード = table.Column<string>(type: "TEXT", nullable: true),
@@ -41,8 +35,7 @@ namespace Demo000.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_課", x => new { x.Parent_部署ID, x.コード });
                     table.ForeignKey(
                         name: "FK_旧システム部署情報_課_X93285BC",
@@ -65,8 +58,7 @@ namespace Demo000.Migrations
         }
 
         /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
+        protected override void Down(MigrationBuilder migrationBuilder) {
             migrationBuilder.DropTable(
                 name: "課");
 

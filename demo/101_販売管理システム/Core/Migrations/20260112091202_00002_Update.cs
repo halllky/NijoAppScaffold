@@ -1,16 +1,13 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Demo101.Migrations
-{
+namespace Demo101.Migrations {
     /// <inheritdoc />
-    public partial class _00002_Update : Migration
-    {
+    public partial class _00002_Update : Migration {
         /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
+        protected override void Up(MigrationBuilder migrationBuilder) {
             migrationBuilder.DropColumn(
                 name: "備考",
                 table: "売上明細");
@@ -129,8 +126,7 @@ namespace Demo101.Migrations
         }
 
         /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
+        protected override void Down(MigrationBuilder migrationBuilder) {
             migrationBuilder.AlterColumn<decimal>(
                 name: "売上総額_税込",
                 table: "売上明細",

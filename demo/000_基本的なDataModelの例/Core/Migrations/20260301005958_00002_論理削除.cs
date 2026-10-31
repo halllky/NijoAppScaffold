@@ -1,16 +1,13 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Demo000.Migrations
-{
+namespace Demo000.Migrations {
     /// <inheritdoc />
-    public partial class _00002_論理削除 : Migration
-    {
+    public partial class _00002_論理削除 : Migration {
         /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
+        protected override void Up(MigrationBuilder migrationBuilder) {
             migrationBuilder.AlterColumn<string>(
                 name: "課名称",
                 table: "課",
@@ -23,8 +20,7 @@ namespace Demo000.Migrations
 
             migrationBuilder.CreateTable(
                 name: "係",
-                columns: table => new
-                {
+                columns: table => new {
                     Parent_Parent_部署ID = table.Column<int>(type: "INTEGER", nullable: false),
                     Parent_コード = table.Column<string>(type: "TEXT", nullable: false),
                     連番 = table.Column<int>(type: "INTEGER", nullable: false),
@@ -34,8 +30,7 @@ namespace Demo000.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_係", x => new { x.Parent_Parent_部署ID, x.Parent_コード, x.連番 });
                     table.ForeignKey(
                         name: "FK_課_係",
@@ -47,8 +42,7 @@ namespace Demo000.Migrations
 
             migrationBuilder.CreateTable(
                 name: "部署_DELETED",
-                columns: table => new
-                {
+                columns: table => new {
                     DeletedUuid = table.Column<Guid>(type: "TEXT", nullable: false),
                     部署ID = table.Column<int>(type: "INTEGER", nullable: true),
                     部署名 = table.Column<string>(type: "TEXT", nullable: true),
@@ -61,15 +55,13 @@ namespace Demo000.Migrations
                     DeletedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     DeletedUser = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_部署_DELETED", x => x.DeletedUuid);
                 });
 
             migrationBuilder.CreateTable(
                 name: "課_DELETED",
-                columns: table => new
-                {
+                columns: table => new {
                     DeletedUuid = table.Column<Guid>(type: "TEXT", nullable: false),
                     Parent_部署ID = table.Column<int>(type: "INTEGER", nullable: true),
                     コード = table.Column<string>(type: "TEXT", nullable: false),
@@ -80,8 +72,7 @@ namespace Demo000.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_課_DELETED", x => new { x.DeletedUuid, x.コード });
                     table.ForeignKey(
                         name: "FK_DELETED_部署_課",
@@ -93,8 +84,7 @@ namespace Demo000.Migrations
 
             migrationBuilder.CreateTable(
                 name: "係_DELETED",
-                columns: table => new
-                {
+                columns: table => new {
                     DeletedUuid = table.Column<Guid>(type: "TEXT", nullable: false),
                     Parent_Parent_部署ID = table.Column<int>(type: "INTEGER", nullable: true),
                     Parent_コード = table.Column<string>(type: "TEXT", nullable: false),
@@ -105,8 +95,7 @@ namespace Demo000.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_係_DELETED", x => new { x.DeletedUuid, x.Parent_コード, x.連番 });
                     table.ForeignKey(
                         name: "FK_DELETED_課_係",
@@ -123,8 +112,7 @@ namespace Demo000.Migrations
         }
 
         /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
+        protected override void Down(MigrationBuilder migrationBuilder) {
             migrationBuilder.DropTable(
                 name: "係");
 

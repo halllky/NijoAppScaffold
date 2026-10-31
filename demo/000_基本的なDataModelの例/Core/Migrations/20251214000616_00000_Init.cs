@@ -1,20 +1,16 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Demo000.Migrations
-{
+namespace Demo000.Migrations {
     /// <inheritdoc />
-    public partial class _00000_Init : Migration
-    {
+    public partial class _00000_Init : Migration {
         /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
+        protected override void Up(MigrationBuilder migrationBuilder) {
             migrationBuilder.CreateTable(
                 name: "部署",
-                columns: table => new
-                {
+                columns: table => new {
                     部署ID = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     部署名 = table.Column<string>(type: "TEXT", nullable: false),
@@ -25,15 +21,13 @@ namespace Demo000.Migrations
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true),
                     Version = table.Column<int>(type: "INTEGER", nullable: false)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_部署", x => x.部署ID);
                 });
 
             migrationBuilder.CreateTable(
                 name: "社員",
-                columns: table => new
-                {
+                columns: table => new {
                     社員ID = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     氏名 = table.Column<string>(type: "TEXT", nullable: false),
@@ -44,8 +38,7 @@ namespace Demo000.Migrations
                     UpdateUser = table.Column<string>(type: "TEXT", nullable: true),
                     Version = table.Column<int>(type: "INTEGER", nullable: false)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_社員", x => x.社員ID);
                     table.ForeignKey(
                         name: "FK_部署_社員_XA26A7C4",
@@ -66,8 +59,7 @@ namespace Demo000.Migrations
         }
 
         /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
+        protected override void Down(MigrationBuilder migrationBuilder) {
             migrationBuilder.DropTable(
                 name: "社員");
 
