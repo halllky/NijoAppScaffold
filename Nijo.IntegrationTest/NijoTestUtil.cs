@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Text;
 using System.Xml.Linq;
 using System.Text.RegularExpressions;
@@ -177,51 +176,24 @@ public class NijoTestUtil {
         }
 
         private async Task<bool> RunCommandAsync(string fileName, string arguments, string logFilePath) {
-            var psi = new ProcessStartInfo {
-                FileName = fileName,
-                Arguments = arguments,
-                WorkingDirectory = Project.ProjectRoot,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                StandardOutputEncoding = Encoding.UTF8,
-                StandardErrorEncoding = Encoding.UTF8,
-            };
+            var result = await ExternalCommand.RunAsync(fileName, arguments, Project.ProjectRoot);
 
-            using var process = Process.Start(psi);
-            if (process == null) throw new InvalidOperationException($"プロセスを開始できませんでした: {fileName} {arguments}");
+            await File.WriteAllTextAsync(logFilePath, result.ToLogText(), new UTF8Encoding(false));
 
-            var stdout = await process.StandardOutput.ReadToEndAsync();
-            var stderr = await process.StandardError.ReadToEndAsync();
-            await process.WaitForExitAsync();
-
-            var sb = new StringBuilder();
-            sb.AppendLine($"COMMAND: {fileName} {arguments}");
-            sb.AppendLine($"EXIT_CODE: {process.ExitCode}");
-            sb.AppendLine("--------------------------------------------------");
-            sb.AppendLine("STDOUT:");
-            sb.AppendLine(stdout);
-            sb.AppendLine("--------------------------------------------------");
-            sb.AppendLine("STDERR:");
-            sb.AppendLine(stderr);
-
-            await File.WriteAllTextAsync(logFilePath, sb.ToString(), new UTF8Encoding(false));
-
-            if (process.ExitCode != 0) {
-                var summary = SummarizeCommandFailure(stdout, stderr);
+            if (result.ExitCode != 0) {
+                var summary = SummarizeCommandFailure(result.Stdout, result.Stderr);
                 Logger.LogError(
                     "Command failed: {FileName} {Arguments} (ExitCode: {ExitCode})\nLog: {LogFilePath}\nSummary:\n{Summary}",
                     fileName,
                     arguments,
-                    process.ExitCode,
+                    result.ExitCode,
                     logFilePath,
                     summary);
             } else {
                 Logger.LogInformation("Command success: {FileName} {Arguments}", fileName, arguments);
             }
 
-            return process.ExitCode == 0;
+            return result.ExitCode == 0;
         }
 
         private static string SummarizeCommandFailure(string stdout, string stderr) {

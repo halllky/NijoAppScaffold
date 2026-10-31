@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.IO.Compression;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -20,6 +19,7 @@ namespace Nijo.IntegrationTest.Tests;
 public class 新規プロジェクトテンプレートのテスト {
 
     [Test]
+    [Explicit("テンプレート全体のビルドと npm install を行うので時間がかかる。リリース時に実行する。")]
     [Category("時間がかかる")]
     public async Task 空テンプレートがビルドとテストを通過するか() {
         var repoRoot = FindRepoRoot();
@@ -38,6 +38,7 @@ public class 新規プロジェクトテンプレートのテスト {
     }
 
     [Test]
+    [Explicit("テンプレート全体のビルドと npm install を行うので時間がかかる。リリース時に実行する。")]
     [Category("時間がかかる")]
     public async Task デモ101テンプレートがビルドとテストを通過するか() {
         var repoRoot = FindRepoRoot();
@@ -151,31 +152,11 @@ public class 新規プロジェクトテンプレートのテスト {
     }
 
     private static async Task<bool> RunCommandAsync(string fileName, string arguments, string workingDirectory, ConsoleAndContextLogger logger) {
-        var psi = new ProcessStartInfo {
-            FileName = fileName,
-            Arguments = arguments,
-            WorkingDirectory = workingDirectory,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            StandardOutputEncoding = Encoding.UTF8,
-            StandardErrorEncoding = Encoding.UTF8,
-        };
-        // ビルド後も常駐するプロセスが標準出力を掴んだままだと、コマンドが終わっても出力の読み取りが終わらなくなる
-        psi.Environment["MSBUILDDISABLENODEREUSE"] = "1";
-        psi.Environment["UseSharedCompilation"] = "false";
+        var result = await ExternalCommand.RunAsync(fileName, arguments, workingDirectory);
 
-        using var process = Process.Start(psi) ?? throw new InvalidOperationException($"プロセスを開始できませんでした: {fileName} {arguments}");
-        var stdoutTask = process.StandardOutput.ReadToEndAsync();
-        var stderrTask = process.StandardError.ReadToEndAsync();
-        await process.WaitForExitAsync();
-        var stdout = await stdoutTask;
-        var stderr = await stderrTask;
+        logger.LogInfo(result.ToLogText());
 
-        logger.LogInfo($"COMMAND: {fileName} {arguments} (cwd={workingDirectory})\nEXIT_CODE: {process.ExitCode}\nSTDOUT:\n{stdout}\nSTDERR:\n{stderr}");
-
-        return process.ExitCode == 0;
+        return result.ExitCode == 0;
     }
 
     /// <summary>
