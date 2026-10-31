@@ -150,22 +150,25 @@ await tran.CommitAsync();
 // 検証
 var header = DbContext.StartCreating入荷();
 header.入荷ID = newId;
-header.GetValidationErrors().CopyTo(context.Messages);
+header.TryValidate(out var validatedHeader, out var headerErrors);
+headerErrors.CopyTo(context.Messages);
 
-var details = new List<入荷明細CreateCommand>();
+var details = new List<ValidatedCommand<入荷明細UpdateCommand>>();
 for (var i = 0; i < param.入荷商品一覧.Count; i++) {
     var detail = DbContext.StartCreating入荷明細();
     // ...
-    detail.GetValidationErrors().CopyTo(context.Messages.入荷商品一覧[i]);
-    details.Add(detail);
+    if (detail.TryValidate(out var validated, out var errors)) {
+        details.Add(validated);
+    }
+    errors.CopyTo(context.Messages.入荷商品一覧[i]);
 }
 
-if (context.Messages.HasError() || context.ValidationOnly) return;
+if (validatedHeader == null || context.Messages.HasError() || context.ValidationOnly) return;
 
 // 保存。コミットせずに return するだけでロールバックされる
 await using var tran = await BeginTransactionAsync();
 
-var headerResult = await DbContext.TrySaveAsync(header);
+var headerResult = await DbContext.TrySaveAsync(validatedHeader);
 if (!headerResult.Success) {
     headerResult.Errors.CopyTo(context.Messages);
     return;

@@ -81,13 +81,15 @@ var loaded = await DbContext.LoadForEditOrderAsync(new OrderKeyWithVersion(origi
 });
 if (loaded == null) { ... }
 
-var deleteCommand = loaded.ToDeleteCommand();
-deleteCommand.GetValidationErrors().CopyTo(context.Messages);
-if (context.Messages.HasError() || context.ValidationOnly) return;
+if (!loaded.ToDeleteCommand().TryValidate(out var validated, out var errors)) {
+    errors.CopyTo(context.Messages);
+    return;
+}
+if (context.ValidationOnly) return;
 
 await using var tran = await DbContext.Database.BeginTransactionAsync();
 
-var result = await DbContext.TrySaveAsync(deleteCommand);
+var result = await DbContext.TrySaveAsync(validated);
 if (!result.Success) {
     result.Errors.CopyTo(context.Messages);
     return;

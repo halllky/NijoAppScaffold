@@ -54,14 +54,16 @@ public override async Task Execute受注登録Async(
     // IsStored 属性が指定されたデータ構造のコマンドを作成して検証する
     var command = DbContext.StartCreatingOrder();
     command.OrderDate = param.OrderDate;
-    command.GetValidationErrors().CopyTo(context.Messages);
-
-    if (context.Messages.HasError() || context.ValidationOnly) return;
+    if (!command.TryValidate(out var validated, out var errors)) {
+        errors.CopyTo(context.Messages);
+        return;
+    }
+    if (context.ValidationOnly) return;
 
     // トランザクションの範囲を明示して保存する
     await using var transaction = await DbContext.Database.BeginTransactionAsync();
 
-    var result = await DbContext.TrySaveAsync(command);
+    var result = await DbContext.TrySaveAsync(validated);
     if (!result.Success) {
         result.Errors.CopyTo(context.Messages);
         return;

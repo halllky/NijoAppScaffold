@@ -11,7 +11,7 @@
 | ------------------------------- | -------------------------------------- | ---------------------------------------------------- |
 | `StartCreating{集約名}()`       | 自動生成（DbContext）                  | 新規登録コマンドの作成                               |
 | `LoadForEdit{集約名}Async(...)` | 自動生成（DbContext）                  | 更新コマンドの読み込み                               |
-| `GetValidationErrors()`         | 自動生成（各コマンド）                 | スキーマ定義から導かれる検証と楽観排他のチェック     |
+| `TryValidate(...)`              | 自動生成（各コマンド）                 | スキーマ定義から導かれる検証と楽観排他のチェック。エラーが無ければ検証済みコマンドを返す |
 | `ToDeleteCommand()`             | 自動生成（更新コマンド）               | 削除コマンドへの変換                                 |
 | `TrySaveAsync(...)`             | `Core/OverridedDbContext.TrySaveAsync.cs` | 保存の実行。**システムごとに書き換える前提の手書き** |
 
@@ -30,7 +30,7 @@ public override async Task Execute売上一括更新Async(売上一括更新Disp
     var loaded = await DbContext.LoadForEdit売上Async(keys);
 
     // ループ後にまとめて保存するのでメモリ上に蓄積する
-    var saveCommands = new List<売上SaveCommand>();
+    var saveCommands = new List<ValidatedCommand<売上UpdateCommand>>();
 
     for (var i = 0; i < param.Rows.Count; i++) {
         var row = param.Rows[i];
@@ -42,10 +42,11 @@ public override async Task Execute売上一括更新Async(売上一括更新Disp
             createCommand.Id = row.Id;
             createCommand.Amount = row.Amount;
 
-            createCommand.GetValidationErrors().CopyTo(message);
+            if (createCommand.TryValidate(out var validatedCreate, out var createErrors)) {
+                saveCommands.Add(validatedCreate);
+            }
+            createErrors.CopyTo(message);
             if (createCommand.Amount < 0m) message.AddError("売上は0以上");
-
-            saveCommands.Add(createCommand);
             continue;
         }
 
@@ -60,16 +61,19 @@ public override async Task Execute売上一括更新Async(売上一括更新Disp
 
         // 削除
         if (row.WillBeDeleted) {
-            var deleteCommand = updateCommand.ToDeleteCommand();
-            deleteCommand.GetValidationErrors().CopyTo(message);
-            saveCommands.Add(deleteCommand);
+            if (updateCommand.ToDeleteCommand().TryValidate(out var validatedDelete, out var deleteErrors)) {
+                saveCommands.Add(validatedDelete);
+            }
+            deleteErrors.CopyTo(message);
             continue;
         }
 
         // 更新
         updateCommand.Amount = row.Amount;
-        updateCommand.GetValidationErrors().CopyTo(message);
-        saveCommands.Add(updateCommand);
+        if (updateCommand.TryValidate(out var validatedUpdate, out var updateErrors)) {
+            saveCommands.Add(validatedUpdate);
+        }
+        updateErrors.CopyTo(message);
     }
 
     // いずれか1件でもエラーなら中断
@@ -100,10 +104,9 @@ public override async Task Execute売上一括更新Async(売上一括更新Disp
 集約ごとに次のクラスが生成されます。
 
 ```
-売上SaveCommand（抽象クラス）
-├ 売上CreateCommand … 新規登録
-├ 売上UpdateCommand … 更新
-└ 売上DeleteCommand … 削除
+売上CreateCommand … 新規登録
+売上UpdateCommand … 更新
+売上DeleteCommand … 削除
 ```
 
 ルート集約のコマンドは `new` できず、次の方法でのみ入手できます。子孫集約のコマンド（`売上明細CreateCommand` など）は単なる値の入れ物であり、`new() { ... }` で作成します。
@@ -159,21 +162,49 @@ IReadOnlyList<売上UpdateCommand> commands = await DbContext.LoadForEdit売上A
 - 読み込み時に存在せず、保存時に存在する → `INSERT`
 - 読み込み時に存在し、保存時に存在しない → `DELETE`
 
-## 検証（GetValidationErrors）
+## 検証（TryValidate）
 
-`GetValidationErrors()` は [スキーマ定義から自動生成されるチェック](./020313_Validators.md) と、読み込み時点の楽観排他のチェックを行い、結果をコマンドと同じ形のメッセージコンテナで返します。
-コマンドの状態は変更しません。
+`TryValidate` は [スキーマ定義から自動生成されるチェック](./020313_Validators.md) と、読み込み時点の楽観排他のチェックを行います。
+
+```csharp
+bool TryValidate(out ValidatedCommand<売上UpdateCommand>? validated, out 売上SaveCommandMessages errors);
+```
+
+- `errors`: 検証エラー。コマンドと同じ形のメッセージコンテナ。
+- `validated`: エラーが無い場合のみ得られる検証済みコマンド。`TrySaveAsync` はこれだけを受け取るので、検証していないコマンドの保存はコンパイルエラーになります。
+
+検証済みコマンドは検証時点の値を保持します。検証後にコマンドを書き換えても保存される内容は変わりません。コマンド自身の状態は検証で変更されません。
 
 `CopyTo` で画面側のメッセージコンテナへコピーします。**同名のパスにそのままコピーする**ので、項目の階層や名前が違うときは対応する階層を渡してください。
 
 ```csharp
-var errors = command.GetValidationErrors();
+if (command.TryValidate(out var validated, out var errors)) {
+    saveCommands.Add(validated);
+}
 
 // 画面側は message.従業員.氏名 のように1階層深い場合
 errors.CopyTo(message.従業員);
 
 // 画面側とデータモデルで項目名が違う場合
 errors.入荷数量.CopyTo(message.数量);
+```
+
+1件だけを保存する場合は、エラーがあればその場で抜けると `validated` が null でないことをコンパイラが判定できます。
+
+```csharp
+if (!command.TryValidate(out var validated, out var errors)) {
+    errors.CopyTo(context.Messages);
+    return;
+}
+```
+
+ヘッダと明細のように他の検証も続けてからまとめて抜ける場合は、抜ける箇所で `validated` の null を確認します。
+
+```csharp
+header.TryValidate(out var validatedHeader, out var headerErrors);
+headerErrors.CopyTo(context.Messages);
+// ...明細の検証...
+if (validatedHeader == null || context.Messages.HasError()) return;
 ```
 
 ## 保存（TrySaveAsync）
@@ -184,27 +215,26 @@ errors.入荷数量.CopyTo(message.数量);
 既定の実装には次のオーバーロードがあります。
 
 ```csharp
-Task<SaveResult<売上UpdateCommand>> TrySaveAsync(売上CreateCommand または 売上UpdateCommand);
-Task<SaveResult> TrySaveAsync(売上DeleteCommand);
-Task<SaveResult<IList<売上UpdateCommand>>> TrySaveAsync(売上SaveCommand の配列やリスト);
+Task<SaveResult<売上UpdateCommand>> TrySaveAsync(ValidatedCommand<売上UpdateCommand>);
+Task<SaveResult> TrySaveAsync(ValidatedDeleteCommand<売上UpdateCommand>);
+Task<SaveResult<IList<売上UpdateCommand>>> TrySaveAsync(ValidatedCommand<売上UpdateCommand> の配列やリスト);
 ```
 
 既定の実装は次の順に処理します。
 
 1. トランザクションが開始されていなければ例外を送出
 2. `ChangeTracker` に他の変更があれば失敗
-3. `GetValidationErrors()` でエラーがあれば失敗
-4. 同時に保存するコマンド同士でキーが重複していれば失敗
-5. コマンドの `StartTracking()` で監査項目を設定して変更追跡を開始
-6. `SaveChangesAsync()` を実行
-7. 変更追跡を終了
-8. 保存後のデータを `result.Updated` として返す
+3. 同時に保存するコマンド同士でキーが重複していれば失敗
+4. 検証済みコマンドの `StartTracking()` で監査項目を設定して変更追跡を開始
+5. `SaveChangesAsync()` を実行
+6. 変更追跡を終了
+7. 保存後のデータを `result.Updated` として返す
 
 ### 保存結果
 
 | 失敗の種類                   | 原因                                                   | ログレベル |
 | ---------------------------- | ------------------------------------------------------ | ---------- |
-| `ProgrammingError`           | 手順2, 3 に該当。保存前の検証漏れなどプログラムの誤り  | Error      |
+| `ProgrammingError`           | 手順2 に該当。プログラムの誤り                         | Error      |
 | `Concurrency`                | 楽観排他エラー                                         | Warning    |
 | `UniqueConstraint`           | 一意制約違反。他ユーザーとの操作競合の可能性が高い     | Warning    |
 | `DatabaseError`              | その他のデータベースのエラー                           | Error      |
@@ -214,15 +244,15 @@ DB 接続エラーなど上記以外は例外がそのまま送出されます�
 運用担当者への通知は Error レベルのログとして出力されるので、通知先はログの出力先の設定で制御してください。
 EF Core が既定で Error レベルで出力する DB エラーのログは `OverridedDbContext` で Warning に引き下げているので、一意制約違反などで通知が飛ぶことはありません。
 
-エラーメッセージは項目ごとではなく保存処理全体の単位で `result.Errors` に入ります。キー重複を行単位で見せたいなどの場合は、`TrySaveAsync` の前に独自の検証を行なってください。
+エラーメッセージは項目ごとではなく保存処理全体の単位で `result.Errors` に入ります。キー重複を行単位で見せたいなどの場合は、検証の際に独自に確認してください。
 
 ### 保存後のデータ
 
-`result.Updated` は引数とは別の新しい更新コマンドです。保存時に採番されたシーケンスの参照や、続けて別の更新を行なうときに使えます。
-一度 `TrySaveAsync` に渡したコマンドは再度使用できません。
+`result.Updated` は検証前のコマンドとは別の新しい更新コマンドです。保存時に採番されたシーケンスの参照や、続けて別の更新を行なうときに使えます。
+一度 `TrySaveAsync` に渡した検証済みコマンドと、同じコマンドから作成された別の検証済みコマンドは再度使用できません。
 
 ```csharp
-var result = await DbContext.TrySaveAsync(command);
+var result = await DbContext.TrySaveAsync(validated);
 if (!result.Success) { ... }
 context.ReturnValue.売上SEQ = result.Updated.売上SEQ;
 ```
@@ -241,10 +271,14 @@ context.ReturnValue.売上SEQ = result.Updated.売上SEQ;
 検証メッセージの入れ物（`売上SaveCommandMessages`）に追記すれば `CopyTo` でまとめて画面に渡せます。
 
 ```csharp
-var errors = command.GetValidationErrors();
+command.TryValidate(out var validated, out var errors);
 Validate売上新規(command, errors); // データモデルごとのファイルに定義しておく
 errors.CopyTo(context.Messages);
+
+if (validated == null || context.Messages.HasError()) return;
 ```
+
+独自のチェックのエラーは `TryValidate` が返す検証済みコマンドの有無に影響しません。保存を止めるには `context.Messages.HasError()` を確認してください。
 
 保存後に常に行なう処理（外部システムへの通知など）も同様に、`TrySaveAsync` の成功後に明示的に呼びます。
 

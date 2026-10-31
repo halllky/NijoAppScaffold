@@ -9,12 +9,12 @@
 
 ## バリデーションが実行されるタイミング
 
-バリデーションは[コマンド](./020312_CRUDMethods.md)の `GetValidationErrors()` を呼んだときに実行されます。
+バリデーションは[コマンド](./020312_CRUDMethods.md)の `TryValidate()` を呼んだときに実行されます。
 
 ```
 コマンドの値を設定
 ↓
-GetValidationErrors()【自動バリデーション（このページの内容）】
+TryValidate()【自動バリデーション（このページの内容）】
 ↓
 全経路で守るべきルールや、ユースケース固有のチェック（手動実装）
 ↓
@@ -24,7 +24,7 @@ TrySaveAsync（DB への保存）
 ```
 
 エラー内容は例外ではなく、メッセージコンテナオブジェクトに格納されて返されます。
-`GetValidationErrors()` はコマンドの状態を変更しません。
+`TryValidate()` はコマンドの状態を変更しません。
 
 ## バリデーション属性一覧
 
@@ -135,7 +135,7 @@ if (this.UnitPrice != null && (
 
 ## カスタムバリデーション
 
-スキーマ定義では表現できない複雑なバリデーションは、`GetValidationErrors()` の結果に追記する形で手動実装します。
+スキーマ定義では表現できない複雑なバリデーションは、`TryValidate()` が返すメッセージコンテナに追記する形で手動実装します。
 
 ```csharp
 private static void Validate受注(OrderCreateCommand command, OrderSaveCommandMessages messages) {
@@ -154,9 +154,11 @@ private static void Validate受注(OrderCreateCommand command, OrderSaveCommandM
 ```
 
 ```csharp
-var errors = command.GetValidationErrors();
+command.TryValidate(out var validated, out var errors);
 Validate受注(command, errors);
 errors.CopyTo(context.Messages);
+
+if (validated == null || context.Messages.HasError()) return;
 ```
 
 :::note どこに書くか
