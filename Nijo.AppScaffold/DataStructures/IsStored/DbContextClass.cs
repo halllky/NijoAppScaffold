@@ -43,7 +43,8 @@ namespace Nijo.DataStructures.IsStored {
             ctx.CoreLibrary(dir => {
                 dir.Directory("Util", efcoreDir => {
                     efcoreDir.Generate(Render(ctx));
-                    efcoreDir.Generate(SaveCommand.RenderInterfaces(ctx));
+                    efcoreDir.Generate(SaveCommand.RenderInterface(ctx));
+                    efcoreDir.Generate(ValidatedCommand.Render(ctx));
                     efcoreDir.Generate(AuditInfo.Render(ctx));
                 });
             });

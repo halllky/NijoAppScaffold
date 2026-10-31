@@ -9,11 +9,15 @@ using System.Linq;
 namespace Nijo.DataStructures.IsStored;
 
 /// <summary>
-/// コマンドの内容をもとに監査項目と楽観排他のバージョンを設定し、エンティティの変更追跡を開始する処理。
+/// 検証時点の値をもとに監査項目と楽観排他のバージョンを設定し、エンティティの変更追跡を開始する処理。
 /// </summary>
 internal static class SaveCommandTracking {
 
-    private const string DBCONTEXT = SaveCommand.FIELD_DBCONTEXT;
+    private const string COMMAND = ValidatedCommand.FIELD_COMMAND;
+    private const string SNAPSHOT = ValidatedCommand.FIELD_SNAPSHOT;
+    private const string DBCONTEXT = $"{COMMAND}.{SaveCommand.FIELD_DBCONTEXT}";
+    private const string LOADED = $"{COMMAND}.{SaveCommand.FIELD_LOADED}";
+    private const string EXPECTED_VERSION = $"{COMMAND}.{SaveCommand.FIELD_EXPECTED_VERSION}";
     private const string CURRENT_TIME = $"{DBCONTEXT}.AuditInfo.CurrentTime";
     private const string CURRENT_USER = $"{DBCONTEXT}.AuditInfo.CurrentUser";
 
@@ -22,8 +26,8 @@ internal static class SaveCommandTracking {
         var paths = CreateDescendantPaths(rootAggregate);
 
         return $$"""
-            private protected override void {{SaveCommand.START_TRACKING_CORE}}(List<object> tracked) {
-                var dbEntity = {{SaveCommand.TO_DBENTITY}}();
+            private protected override void {{ValidatedCommand.START_TRACKING_CORE}}(List<object> tracked) {
+                var dbEntity = {{SNAPSHOT}};
                 dbEntity.{{EFCoreEntity.VERSION}} = 0;
                 dbEntity.{{EFCoreEntity.CREATED_AT}} = {{CURRENT_TIME}};
                 dbEntity.{{EFCoreEntity.UPDATED_AT}} = {{CURRENT_TIME}};
@@ -39,7 +43,6 @@ internal static class SaveCommandTracking {
                 """))}}
 
                 {{DBCONTEXT}}.Add(dbEntity);
-                {{SaveCommand.FIELD_SAVED_ENTITY}} = dbEntity;
             }
             """;
     }
@@ -49,10 +52,10 @@ internal static class SaveCommandTracking {
         var paths = CreateDescendantPaths(rootAggregate);
 
         return $$"""
-            private protected override void {{SaveCommand.START_TRACKING_CORE}}(List<object> tracked) {
-                var beforeDbEntity = {{SaveCommand.FIELD_LOADED}};
-                var afterDbEntity = {{SaveCommand.TO_DBENTITY}}();
-                afterDbEntity.{{EFCoreEntity.VERSION}} = {{SaveCommand.FIELD_EXPECTED_VERSION}} + 1;
+            private protected override void {{ValidatedCommand.START_TRACKING_CORE}}(List<object> tracked) {
+                var beforeDbEntity = {{LOADED}};
+                var afterDbEntity = {{SNAPSHOT}};
+                afterDbEntity.{{EFCoreEntity.VERSION}} = {{EXPECTED_VERSION}} + 1;
                 afterDbEntity.{{EFCoreEntity.CREATED_AT}} = beforeDbEntity.{{EFCoreEntity.CREATED_AT}};
                 afterDbEntity.{{EFCoreEntity.UPDATED_AT}} = {{CURRENT_TIME}};
                 afterDbEntity.{{EFCoreEntity.CREATE_USER}} = beforeDbEntity.{{EFCoreEntity.CREATE_USER}};
@@ -61,13 +64,12 @@ internal static class SaveCommandTracking {
                 tracked.Add(afterDbEntity);
                 var entry = {{DBCONTEXT}}.Entry(afterDbEntity);
                 entry.State = EntityState.Modified;
-                entry.Property(e => e.{{EFCoreEntity.VERSION}}).OriginalValue = {{SaveCommand.FIELD_EXPECTED_VERSION}};
+                entry.Property(e => e.{{EFCoreEntity.VERSION}}).OriginalValue = {{EXPECTED_VERSION}};
 
             {{RenderDescendantAttaching(rootAggregate, paths).SelectTextTemplate(source => $$"""
                 {{WithIndent(source)}}
 
             """)}}
-                {{SaveCommand.FIELD_SAVED_ENTITY}} = afterDbEntity;
             }
             """;
     }
@@ -77,8 +79,8 @@ internal static class SaveCommandTracking {
         var paths = CreateDescendantPaths(rootAggregate);
 
         return $$"""
-            private protected override void {{SaveCommand.START_TRACKING_CORE}}(List<object> tracked) {
-                var dbEntity = {{SaveCommand.FIELD_LOADED}};
+            private protected override void {{ValidatedCommand.START_TRACKING_CORE}}(List<object> tracked) {
+                var dbEntity = {{LOADED}};
             {{If(rootAggregate.UseSoftDelete, () => $$"""
 
                 {{WithIndent(DeletedTableInsertion.Render(rootAggregate, "dbEntity", CURRENT_TIME, CURRENT_USER, DBCONTEXT))}}
@@ -87,8 +89,8 @@ internal static class SaveCommandTracking {
                 tracked.Add(dbEntity);
                 var entry = {{DBCONTEXT}}.Entry(dbEntity);
                 entry.State = EntityState.Deleted;
-                entry.Property(e => e.{{EFCoreEntity.VERSION}}).OriginalValue = {{SaveCommand.FIELD_EXPECTED_VERSION}};
-                entry.Property(e => e.{{EFCoreEntity.VERSION}}).CurrentValue = {{SaveCommand.FIELD_EXPECTED_VERSION}};
+                entry.Property(e => e.{{EFCoreEntity.VERSION}}).OriginalValue = {{EXPECTED_VERSION}};
+                entry.Property(e => e.{{EFCoreEntity.VERSION}}).CurrentValue = {{EXPECTED_VERSION}};
                 {{WithIndent(RenderForEachDescendant(rootAggregate, paths, "dbEntity", "deleting", entity => $$"""
                 tracked.Add({{entity}});
                 {{DBCONTEXT}}.Entry({{entity}}).State = EntityState.Deleted;

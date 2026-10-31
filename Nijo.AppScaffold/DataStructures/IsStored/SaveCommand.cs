@@ -14,7 +14,7 @@ using Nijo.DataStructures;
 namespace Nijo.DataStructures.IsStored {
     /// <summary>
     /// 永続化されるデータ構造の新規登録・更新・削除の内容を表すコマンド。
-    /// ルート集約のコマンドはバリデーションと変更追跡の開始の機能を持ち、DbContextからのみインスタンス化できる。
+    /// ルート集約のコマンドは編集できる値とバリデーションの機能を持ち、DbContextからのみインスタンス化できる。
     /// 子孫集約のコマンドは単なる入れ物であり、<c>new()</c> で作成できる。
     /// </summary>
     internal class SaveCommand : IInstancePropertyOwnerMetadata {
@@ -33,25 +33,23 @@ namespace Nijo.DataStructures.IsStored {
             E_Type.Update => $"{Aggregate.PhysicalName}UpdateCommand",
             _ => throw new InvalidOperationException(),
         };
-        /// <summary>新規登録・更新・削除のコマンドの基底クラス</summary>
+        /// <summary>新規登録・更新・削除のコマンドに共通の部品をもつ基底クラス</summary>
         internal string CsBaseClassName => $"{Aggregate.PhysicalName}SaveCommand";
         /// <summary>削除コマンド</summary>
         internal string CsDeleteClassName => $"{Aggregate.PhysicalName}DeleteCommand";
 
         internal const string TO_DBENTITY = "ToDbEntity";
         internal const string FROM_DBENTITY = "FromDbEntity";
-        internal const string START_TRACKING_CORE = "StartTrackingCore";
-        internal const string GET_CURRENT_ENTITY = "GetCurrentEntity";
-        internal const string GET_VALIDATION_ERRORS = "GetValidationErrors";
+        internal const string TRY_VALIDATE = "TryValidate";
         internal const string TO_DELETE_COMMAND = "ToDeleteCommand";
 
         internal const string FIELD_DBCONTEXT = "_dbContext";
         internal const string FIELD_LOADED = "_loaded";
         internal const string FIELD_EXPECTED_VERSION = "_expectedVersion";
-        internal const string FIELD_SAVED_ENTITY = "_savedEntity";
+        internal const string FIELD_USAGE = "_usage";
+        internal const string CREATE_LOG_JSON = "CreateLogJson";
 
         internal const string INTERFACE = "ISaveCommand";
-        internal const string INTERFACE_DELETE = "IDeleteCommand";
 
         internal const string ERR_ID_UNKNOWN = "UnknownUpdateError";
         internal const string ERR_DATA_NOT_FOUND = "DataNotFoundError";
@@ -139,50 +137,38 @@ namespace Nijo.DataStructures.IsStored {
         }
 
         /// <summary>
-        /// コマンドと、アプリケーション側で実装される保存処理との間の取り決めをレンダリングします。
-        /// 保存処理の流れはシステムごとに要件が大きく異なるため自動生成せず、スキーマに依存する部品だけをここで定義します。
+        /// 新規登録・更新・削除のコマンドに共通のインターフェースをレンダリングします。
         /// スキーマ定義にデータ構造が1個も無くても保存処理のコンパイルが通るように、常に生成されます。
         /// </summary>
-        internal static SourceFile RenderInterfaces(CodeRenderingContext ctx) {
+        internal static SourceFile RenderInterface(CodeRenderingContext ctx) {
             return new SourceFile {
                 FileName = $"{INTERFACE}.cs",
                 Contents = $$"""
-                    using System.Text.Json.Nodes;
+                    using System.Diagnostics.CodeAnalysis;
 
                     namespace {{ctx.Config.RootNamespace}};
 
                     /// <summary>
-                    /// 保存処理が必要とする、コマンドの機能。
-                    /// 通常の業務ロジックからは使わない。
+                    /// 新規登録・更新・削除のコマンド。
+                    /// 集約の種類を問わずにコマンドを扱う共通処理を書くときに使う。
                     /// </summary>
-                    public interface {{INTERFACE}} {
-                        /// <summary>このコマンドの現在の状態に対するバリデーションエラーを返します。コマンドの状態は変更しません。</summary>
-                        {{Parts.CSharp.MessageContainer.SETTER_CLASS}} GetValidationErrors();
+                    /// <typeparam name="TValidated">検証済みコマンドの型</typeparam>
+                    /// <typeparam name="TMessages">検証エラーのメッセージの入れ物の型</typeparam>
+                    public interface {{INTERFACE}}<TValidated, TMessages>
+                        where TValidated : {{ValidatedCommand.CLASS_NAME}}
+                        where TMessages : {{Parts.CSharp.MessageContainer.SETTER_CLASS}} {
+
                         /// <summary>
-                        /// 監査項目と楽観排他のバージョンを設定し、エンティティの変更追跡を開始します。
-                        /// 1つのコマンドに対して1回しか呼べません。2回目以降は例外を送出します。
+                        /// このコマンドの現在の値を検証します。このコマンドの状態は変更しません。
+                        /// 必須チェックなどスキーマ定義から自動生成されるチェックと、楽観排他のバージョンの食い違いのチェックが行なわれます。
                         /// </summary>
-                        /// <returns>変更追跡を開始したエンティティ。保存後にこれらの変更追跡を終了するのは呼び出し側の責務です。</returns>
-                        IReadOnlyList<object> StartTracking();
-                        /// <summary>同一の保存処理の中でのキー重複の検出に使うキーを返します。保存時に採番されるのでキーが未確定の場合は null を返します。</summary>
-                        object? GetKeyForDuplicateCheck();
-                        /// <summary>ログに出力する情報（集約名、操作の種類、キー）を返します。</summary>
-                        JsonNode ToLogJson();
-                    }
-
-                    /// <inheritdoc cref="{{INTERFACE}}"/>
-                    /// <typeparam name="TUpdateCommand">保存後のデータを表す更新コマンドの型</typeparam>
-                    public interface {{INTERFACE}}<TUpdateCommand> : {{INTERFACE}} {
-                        /// <summary>保存後のデータを表す、このインスタンスとは別の更新コマンドを返します。削除の場合は null を返します。</summary>
-                        TUpdateCommand? ToSavedCommand();
-                    }
-
-                    /// <summary>
-                    /// 削除コマンド。
-                    /// 保存処理の戻り値に保存後のデータが含まれないことを型で表すためにオーバーロードを分けるのに使う。
-                    /// </summary>
-                    /// <typeparam name="TUpdateCommand">削除コマンドと同じ集約の更新コマンドの型</typeparam>
-                    public interface {{INTERFACE_DELETE}}<TUpdateCommand> : {{INTERFACE}}<TUpdateCommand> {
+                        /// <param name="validated">
+                        /// エラーが無い場合のみ、現時点の値を固定した検証済みコマンド。
+                        /// 以降にこのコマンドを書き換えても影響を受けない。
+                        /// </param>
+                        /// <param name="errors">検証エラー。エラーが無い場合は空。</param>
+                        /// <returns>エラーが無ければ true</returns>
+                        bool {{TRY_VALIDATE}}([NotNullWhen(true)] out TValidated? validated, out TMessages errors);
                     }
                     """,
             };
@@ -193,9 +179,6 @@ namespace Nijo.DataStructures.IsStored {
         #region 基底クラス
         private string RenderBaseClass(CodeRenderingContext ctx) {
             var efCoreEntity = new EFCoreEntity(Aggregate);
-            var messages = new SaveCommandMessageContainer(Aggregate);
-            var key = new KeyClass.KeyClassEntry(Aggregate);
-            var updateCommand = new SaveCommand(Aggregate, E_Type.Update);
 
             var entityProps = new Variable("entity", efCoreEntity)
                 .CreateProperties()
@@ -212,75 +195,29 @@ namespace Nijo.DataStructures.IsStored {
 
             return $$"""
                 /// <summary>
-                /// {{Aggregate.DisplayName}} の新規登録・更新・削除コマンドの基底クラス。
+                /// {{Aggregate.DisplayName}} の新規登録・更新・削除コマンドに共通の部品。
                 /// 一度保存処理にかけたインスタンスは再度使用できません。
                 /// </summary>
-                public abstract class {{CsBaseClassName}} : {{INTERFACE}}<{{updateCommand.CsClassName}}> {
+                public abstract class {{CsBaseClassName}} {
                     private protected {{CsBaseClassName}}({{ctx.Config.DbContextName}} dbContext) {
                         {{FIELD_DBCONTEXT}} = dbContext;
                     }
                     private protected readonly {{ctx.Config.DbContextName}} {{FIELD_DBCONTEXT}};
-                    /// <summary>変更追跡の対象となった、保存後の内容をもつエンティティ。削除の場合は設定されない。</summary>
-                    private protected {{efCoreEntity.CsClassName}}? {{FIELD_SAVED_ENTITY}};
-                    private bool _trackingStarted;
+                    private protected readonly {{ValidatedCommand.USAGE_CLASS_NAME}} {{FIELD_USAGE}} = new();
 
                     /// <summary>ユーザーに見せるメッセージの文言</summary>
                     private protected {{Parts.Common.MsgFactory.CS_INTERFACE}} {{Parts.Common.MsgFactory.MSG}} => {{FIELD_DBCONTEXT}}.{{Parts.Common.MsgFactory.MSG}};
 
-                    /// <summary>
-                    /// このコマンドの現在の状態に対するバリデーションエラーを返します。
-                    /// 必須チェックなどスキーマ定義から自動生成されるチェックと楽観排他のバージョンの食い違いのチェックが行なわれます。
-                    /// このメソッドはコマンドの状態を変更しません。
-                    /// </summary>
-                    public abstract {{messages.CsClassName}} {{GET_VALIDATION_ERRORS}}();
-
-                    /// <summary>変更追跡を開始する。変更追跡を開始するエンティティは状態を変更する前に引数のリストに追加すること。</summary>
-                    private protected abstract void {{START_TRACKING_CORE}}(List<object> tracked);
-                    /// <summary>このコマンドの現在の内容を表すエンティティを返す。</summary>
-                    private protected abstract {{efCoreEntity.CsClassName}} {{GET_CURRENT_ENTITY}}();
-                    /// <summary>ログに出力する操作の種類</summary>
-                    private protected abstract string OperationNameForLog { get; }
-
-                    {{Parts.CSharp.MessageContainer.SETTER_CLASS}} {{INTERFACE}}.GetValidationErrors() => {{GET_VALIDATION_ERRORS}}();
-
-                    IReadOnlyList<object> {{INTERFACE}}.StartTracking() {
-                        if (_trackingStarted) throw new InvalidOperationException("一度保存処理にかけたコマンドは再度使用できません。");
-                        _trackingStarted = true;
-
-                        var tracked = new List<object>();
-                        try {
-                            {{START_TRACKING_CORE}}(tracked);
-                        } catch {
-                            foreach (var entity in tracked) {
-                                {{FIELD_DBCONTEXT}}.Entry(entity).State = EntityState.Detached;
-                            }
-                            throw;
-                        }
-                        return tracked;
-                    }
-
-                    object? {{INTERFACE}}.GetKeyForDuplicateCheck() => GetKeyForDuplicateCheckCore();
-                    /// <summary>同一の保存処理の中でのキー重複の検出に使うキーを返す。</summary>
-                    private protected virtual object? GetKeyForDuplicateCheckCore() {
-                        return {{key.ClassName}}.{{SaveCommand.FROM_DBENTITY}}({{GET_CURRENT_ENTITY}}());
-                    }
-
-                    JsonNode {{INTERFACE}}.ToLogJson() {
-                        var entity = {{GET_CURRENT_ENTITY}}();
+                    private protected static JsonNode {{CREATE_LOG_JSON}}({{efCoreEntity.CsClassName}} entity, string operationName) {
                         return new JsonObject {
                             ["集約"] = "{{Aggregate.DisplayName.Replace("\"", "\\\"")}}",
-                            ["操作"] = OperationNameForLog,
+                            ["操作"] = operationName,
                             ["キー"] = new JsonObject {
                 {{keysForLog.SelectTextTemplate(k => $$"""
                                 ["{{k.DisplayName}}"] = JsonValue.Create({{k.EntityPath}}),
                 """)}}
                             },
                         };
-                    }
-
-                    {{updateCommand.CsClassName}}? {{INTERFACE}}<{{updateCommand.CsClassName}}>.ToSavedCommand() {
-                        if ({{FIELD_SAVED_ENTITY}} == null) return null;
-                        return {{updateCommand.CsClassName}}.{{FROM_DBENTITY}}({{FIELD_DBCONTEXT}}, {{FIELD_SAVED_ENTITY}}, {{FIELD_SAVED_ENTITY}}.{{EFCoreEntity.VERSION}}!.Value);
                     }
                 }
                 """;
@@ -290,18 +227,16 @@ namespace Nijo.DataStructures.IsStored {
 
         #region CREATE
         private string RenderRootCreateCommand(CodeRenderingContext ctx) {
-            var efCoreEntity = new EFCoreEntity(Aggregate);
             var messages = new SaveCommandMessageContainer(Aggregate);
-            var hasKeyNumberedOnSave = Aggregate
-                .GetMembers()
-                .Any(m => m is ValueMember vm && vm.IsKey && vm.Type is SequenceMember);
+            var updateCommand = new SaveCommand(Aggregate, E_Type.Update);
+            var validated = $"{ValidatedCommand.CLASS_NAME}<{updateCommand.CsClassName}>";
 
             return $$"""
                 /// <summary>
                 /// {{Aggregate.DisplayName}} の新規登録コマンド
                 /// </summary>
                 {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
-                public partial class {{CsClassName}} : {{CsBaseClassName}} {
+                public partial class {{CsClassName}} : {{CsBaseClassName}}, {{INTERFACE}}<{{validated}}, {{messages.CsClassName}}> {
                     internal {{CsClassName}}({{ctx.Config.DbContextName}} dbContext) : base(dbContext) {
                     }
 
@@ -310,24 +245,19 @@ namespace Nijo.DataStructures.IsStored {
                 """)}}
 
                     {{WithIndent(RenderToDbEntity(isCreate: true))}}
-                    private protected override {{efCoreEntity.CsClassName}} {{GET_CURRENT_ENTITY}}() => {{FIELD_SAVED_ENTITY}} ?? {{TO_DBENTITY}}();
-                    private protected override string OperationNameForLog => "新規登録";
-                {{If(hasKeyNumberedOnSave, () => $$"""
-                    private protected override object? GetKeyForDuplicateCheckCore() => null; // キーは保存時に採番される
-                """)}}
 
                     /// <inheritdoc />
-                    public override {{messages.CsClassName}} {{GET_VALIDATION_ERRORS}}() {
-                        var messages = new {{messages.CsClassName}}([], new());
+                    public bool {{TRY_VALIDATE}}([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out {{validated}}? validated, out {{messages.CsClassName}} errors) {
+                        errors = new([], new());
                 {{ValidatorBase.EnumerateAll(ctx).SelectTextTemplate(validator => $$"""
-                        {{validator.MethodName}}(messages);
+                        {{validator.MethodName}}(errors);
                 """)}}
-                        return messages;
+                        {{WithIndent(ValidatedCommand.RenderReturnFromTryValidate($"this, {TO_DBENTITY}()"))}}
                     }
 
                     {{WithIndent(RenderValidators(ctx))}}
 
-                    {{WithIndent(SaveCommandTracking.RenderCreate((RootAggregate)Aggregate))}}
+                    {{WithIndent(ValidatedCommand.RenderCreateImpl((RootAggregate)Aggregate))}}
                 }
                 """;
         }
@@ -338,6 +268,7 @@ namespace Nijo.DataStructures.IsStored {
         private string RenderRootUpdateCommand(CodeRenderingContext ctx) {
             var efCoreEntity = new EFCoreEntity(Aggregate);
             var messages = new SaveCommandMessageContainer(Aggregate);
+            var validated = $"{ValidatedCommand.CLASS_NAME}<{CsClassName}>";
             var right = new Variable("dbEntity", efCoreEntity);
             var dict = right
                  .Create1To1PropertiesRecursively()
@@ -356,7 +287,7 @@ namespace Nijo.DataStructures.IsStored {
                 /// {{Aggregate.DisplayName}} の更新コマンド
                 /// </summary>
                 {{NijoAttr.RenderAttributeValues(ctx, Aggregate)}}
-                public partial class {{CsClassName}} : {{CsBaseClassName}} {
+                public partial class {{CsClassName}} : {{CsBaseClassName}}, {{INTERFACE}}<{{validated}}, {{messages.CsClassName}}> {
                     private {{CsClassName}}({{ctx.Config.DbContextName}} dbContext, {{efCoreEntity.CsClassName}} loaded, int expectedVersion) : base(dbContext) {
                         {{FIELD_LOADED}} = loaded;
                         {{FIELD_EXPECTED_VERSION}} = expectedVersion;
@@ -377,8 +308,6 @@ namespace Nijo.DataStructures.IsStored {
                     public {{CsDeleteClassName}} {{TO_DELETE_COMMAND}}() => new({{FIELD_DBCONTEXT}}, {{FIELD_LOADED}}, {{FIELD_EXPECTED_VERSION}});
 
                     {{WithIndent(RenderToDbEntity(isCreate: false))}}
-                    private protected override {{efCoreEntity.CsClassName}} {{GET_CURRENT_ENTITY}}() => {{FIELD_SAVED_ENTITY}} ?? {{TO_DBENTITY}}();
-                    private protected override string OperationNameForLog => "更新";
 
                     /// <summary>
                     /// Entity Framework Core のエンティティからこのクラスのインスタンスを作成します。
@@ -390,20 +319,20 @@ namespace Nijo.DataStructures.IsStored {
                     }
 
                     /// <inheritdoc />
-                    public override {{messages.CsClassName}} {{GET_VALIDATION_ERRORS}}() {
-                        var messages = new {{messages.CsClassName}}([], new());
+                    public bool {{TRY_VALIDATE}}([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out {{validated}}? validated, out {{messages.CsClassName}} errors) {
+                        errors = new([], new());
                         if ({{FIELD_LOADED}}.{{EFCoreEntity.VERSION}} != {{FIELD_EXPECTED_VERSION}}) {
-                            messages.AddError({{Parts.Common.MsgFactory.MSG}}.{{ERR_CONCURRENCY}}());
+                            errors.AddError({{Parts.Common.MsgFactory.MSG}}.{{ERR_CONCURRENCY}}());
                         }
                 {{ValidatorBase.EnumerateAll(ctx).SelectTextTemplate(validator => $$"""
-                        {{validator.MethodName}}(messages);
+                        {{validator.MethodName}}(errors);
                 """)}}
-                        return messages;
+                        {{WithIndent(ValidatedCommand.RenderReturnFromTryValidate($"this, {TO_DBENTITY}()"))}}
                     }
 
                     {{WithIndent(RenderValidators(ctx))}}
 
-                    {{WithIndent(SaveCommandTracking.RenderUpdate((RootAggregate)Aggregate))}}
+                    {{WithIndent(ValidatedCommand.RenderUpdateImpl((RootAggregate)Aggregate))}}
                 }
                 """;
 
@@ -473,12 +402,13 @@ namespace Nijo.DataStructures.IsStored {
             var efCoreEntity = new EFCoreEntity(Aggregate);
             var messages = new SaveCommandMessageContainer(Aggregate);
             var updateCommand = new SaveCommand(Aggregate, E_Type.Update);
+            var validated = $"{ValidatedCommand.DELETE_CLASS_NAME}<{updateCommand.CsClassName}>";
 
             return $$"""
                 /// <summary>
                 /// {{Aggregate.DisplayName}} の削除コマンド
                 /// </summary>
-                public partial class {{CsDeleteClassName}} : {{CsBaseClassName}}, {{INTERFACE_DELETE}}<{{updateCommand.CsClassName}}> {
+                public partial class {{CsDeleteClassName}} : {{CsBaseClassName}}, {{INTERFACE}}<{{validated}}, {{messages.CsClassName}}> {
                     internal {{CsDeleteClassName}}({{ctx.Config.DbContextName}} dbContext, {{efCoreEntity.CsClassName}} loaded, int expectedVersion) : base(dbContext) {
                         {{FIELD_LOADED}} = loaded;
                         {{FIELD_EXPECTED_VERSION}} = expectedVersion;
@@ -488,19 +418,16 @@ namespace Nijo.DataStructures.IsStored {
                     /// <summary>楽観排他制御で期待するバージョン。画面からの削除の場合は画面表示時のバージョン。</summary>
                     private readonly int {{FIELD_EXPECTED_VERSION}};
 
-                    private protected override {{efCoreEntity.CsClassName}} {{GET_CURRENT_ENTITY}}() => {{FIELD_LOADED}};
-                    private protected override string OperationNameForLog => "削除";
-
                     /// <inheritdoc />
-                    public override {{messages.CsClassName}} {{GET_VALIDATION_ERRORS}}() {
-                        var messages = new {{messages.CsClassName}}([], new());
+                    public bool {{TRY_VALIDATE}}([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out {{validated}}? validated, out {{messages.CsClassName}} errors) {
+                        errors = new([], new());
                         if ({{FIELD_LOADED}}.{{EFCoreEntity.VERSION}} != {{FIELD_EXPECTED_VERSION}}) {
-                            messages.AddError({{Parts.Common.MsgFactory.MSG}}.{{ERR_CONCURRENCY}}());
+                            errors.AddError({{Parts.Common.MsgFactory.MSG}}.{{ERR_CONCURRENCY}}());
                         }
-                        return messages;
+                        {{WithIndent(ValidatedCommand.RenderReturnFromTryValidate("this"))}}
                     }
 
-                    {{WithIndent(SaveCommandTracking.RenderDelete((RootAggregate)Aggregate, ctx))}}
+                    {{WithIndent(ValidatedCommand.RenderDeleteImpl((RootAggregate)Aggregate, ctx))}}
                 }
                 """;
         }
@@ -673,7 +600,7 @@ namespace Nijo.DataStructures.IsStored {
                 /// <summary>
                 /// このインスタンスの現時点の値を、このインスタンスと参照を共有しない Entity Framework Core のエンティティに変換します。
                 /// </summary>
-                internal {{efCoreEntity.CsClassName}} {{TO_DBENTITY}}() {
+                private {{efCoreEntity.CsClassName}} {{TO_DBENTITY}}() {
                     return new {{efCoreEntity.CsClassName}} {
                         {{WithIndent(RenderToDbEntityBody(efCoreEntity, rootInstance, rightDictOfRootInstance))}}
                 {{If(isCreate, () => $$"""

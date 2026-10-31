@@ -53,7 +53,7 @@ internal static class LoadForEdit {
                 #region {{rootAggregate.DisplayName}} のコマンドの入手
                 /// <summary>
                 /// {{rootAggregate.DisplayName}} の新規登録を開始します。
-                /// 保存する内容を設定して <see cref="{{createCommand.CsClassName}}.{{SaveCommand.GET_VALIDATION_ERRORS}}"/> で検証し、保存処理に渡してください。
+                /// 保存する内容を設定して <see cref="{{createCommand.CsClassName}}.{{SaveCommand.TRY_VALIDATE}}"/> で検証し、得られた検証済みコマンドを保存処理に渡してください。
                 /// </summary>
                 public {{createCommand.CsClassName}} StartCreating{{physicalName}}() => new(this);
 
