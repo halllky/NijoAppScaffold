@@ -72,22 +72,14 @@ public static class Demo101TemplatePruner
         "0f2d701d-f481-42d4-8dfb-5296c1b40246", // 0以上のみ
     ];
 
-    /// <summary>業務固有のフォルダ・ファイル。テンプレートには不要なので削除する。</summary>
+    /// <summary>テンプレートに不要なフォルダ・ファイル</summary>
     private static readonly string[] DELETE_PATHS = [
-        "Core/入荷",
-        "Core/商品",
-        "Core/在庫調整",
-        "Core/売上",
-        "Core/外部システム/商品管理システム",
+        // 販売管理業務に固有のコードはこれらのフォルダの中に置くことになっている
+        "Core/販売管理",
+        "UnitTest/Tests/販売管理",
         // 販売管理業務の実装の見本を案内する文書。案内先のファイルがテンプレートでは削除されるため
         "標準仕様書_参考実装.md",
-        // nijo.xml から削除したカスタム属性・sequence 型の項目に対応する override
-        "Core/カスタム属性/0以上のみ.cs",
-        "Core/OverridedDbContext.Sequence.cs",
-        "Core/OverridedDummyDataGenerator.販売管理.cs",
-        "UnitTest/Tests/シーケンスを持つデータの保存.cs",
-        // 業務テーブルを含むDBスキーマに依存するもの。
-        // マイグレーションは、テンプレートを使い始めるときに利用者が改めて作成する。
+        // 業務テーブルを含むDBスキーマに依存するもの
         "Core/Migrations",
         "Core/MigrationsScript",
         "nijo.viewState.json",
