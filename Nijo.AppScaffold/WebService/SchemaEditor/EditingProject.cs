@@ -81,20 +81,11 @@ public class EditingProject {
         var attributeTypes = new EditingAttributeTypes(rule, customAttributes);
         var genericLookupTablesByRootUniqueId = EditingGenericLookupTable.FromXDocument(xDocument);
 
-        // 静的区分名・値オブジェクト名はこのプロジェクト固有の「値の種類」なので、
-        // 既定の値メンバー型と合わせて EditingMemberType の判別に使う。
-        var knownValueTypeNames = rule.ValueMemberTypes
-            .Select(t => t.SchemaTypeName)
-            .Concat(xDocument.GetRootElements(E_Section.StaticEnums).Select(el => el.Name.LocalName))
-            .Concat(xDocument.GetRootElements(E_Section.ValueObjects).Select(el => el.Name.LocalName))
-            .ToHashSet();
-
         List<EditingRootAggregate> ParseSection(E_Section section) {
             return xDocument.GetRootElements(section)
                 .Select(el => EditingRootAggregate.FromXElement(
                     el,
                     attributeTypes,
-                    knownValueTypeNames,
                     genericLookupTablesByRootUniqueId.GetValueOrDefault(el.Attribute(SchemaParseContext.ATTR_UNIQUE_ID)?.Value ?? "")))
                 .ToList() ?? [];
         }

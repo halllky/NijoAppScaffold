@@ -15,7 +15,7 @@ export type CreateComboBoxCellFunction = <TRow>(
 
 /**
  * {@link EditingMemberType} を、種類コンボボックスが扱うフラットな文字列に変換する。
- * C#側の EditingMemberType.ToAttributeValue (Nijo/WebService/SchemaEditor/EditingMember.cs) と対になる。
+ * C#側の EditingMemberType.ToAttributeValue と対になる。
  */
 function memberTypeToText(type: EditingMemberType): string {
   switch (type.kind) {
@@ -23,25 +23,21 @@ function memberTypeToText(type: EditingMemberType): string {
     case 'children': return 'children'
     case 'ref-to': return `ref-to:${type.refToPath.join('/')}`
     case 'value': return type.valueTypeName
-    case 'unknown': return type.rawValue ?? ''
+    case 'unknown': return ''
   }
 }
 
 /**
  * 種類コンボボックスに入力されたフラットな文字列を {@link EditingMemberType} に変換する。
  * C#側の EditingMemberType.FromAttributeValue と対になる。
- *
- * "このプロジェクトで定義済みの値の種類名かどうか"（kind:'value' か 'unknown' か）の判定はここでは行わない。
- * どちらの kind でもテキストへの復元結果 (`memberTypeToText`) は同じであり、
- * 保存時にサーバーへ送るXML属性値も同じになるため、判別を誤っても実害が無い。
- * 保存・再読み込みを経ればサーバー側の権威ある判定で上書きされる。
  */
 function textToMemberType(text: string): EditingMemberType {
   const trimmed = text.trim()
+  if (trimmed === '') return { kind: 'unknown' }
   if (trimmed === 'child') return { kind: 'child' }
   if (trimmed === 'children') return { kind: 'children' }
   if (trimmed.startsWith('ref-to:')) return { kind: 'ref-to', refToPath: trimmed.slice('ref-to:'.length).split('/') }
-  return { kind: 'unknown', rawValue: trimmed }
+  return { kind: 'value', valueTypeName: trimmed }
 }
 
 /**

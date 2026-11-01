@@ -39,7 +39,7 @@ public class EditingMember {
     /// <summary>
     /// メンバーを表すXML要素1個から <see cref="EditingMember"/> を作る（子孫は含まない）。
     /// </summary>
-    internal static EditingMember FromXElement(XElement element, int indent, EditingAttributeTypes attributeTypes, IReadOnlySet<string> knownValueTypeNames) {
+    internal static EditingMember FromXElement(XElement element, int indent, EditingAttributeTypes attributeTypes) {
         var attributes = new Dictionary<string, JsonNode?>();
         var uniqueConstraints = new List<EditingUniqueConstraint>();
         foreach (var attr in element.Attributes()) {
@@ -60,7 +60,7 @@ public class EditingMember {
             Comment = element.PreviousNode is XComment xComment && !string.IsNullOrWhiteSpace(xComment.Value)
                 ? xComment.Value
                 : null,
-            Type = EditingMemberType.FromAttributeValue(element.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value, knownValueTypeNames),
+            Type = EditingMemberType.FromAttributeValue(element.Attribute(SchemaParseContext.ATTR_NODE_TYPE)?.Value),
             Attributes = attributes,
             UniqueConstraints = uniqueConstraints,
         };
@@ -110,6 +110,7 @@ public class EditingMember {
 
 /// <summary>
 /// メンバーの種類（Type属性の解釈結果）。nijo.xml の書式（"ref-to:A/B" 等）を判別可能ユニオンに変換したもの。
+/// Type属性が無いメンバーは unknown。値の種類名が実在するかどうかはここでは区別せず、スキーマの入力検証に委ねる。
 /// </summary>
 public class EditingMemberType {
     internal const string KIND_CHILD = "child";
@@ -126,15 +127,11 @@ public class EditingMemberType {
     /// <summary>Kindが"ref-to"の場合の参照先パス。"ref-to:A/B" の "A/B" 部分をスラッシュで分割したもの。</summary>
     [JsonPropertyName("refToPath")]
     public List<string>? RefToPath { get; set; }
-    /// <summary>Kindが"unknown"の場合の元のType属性値。</summary>
-    [JsonPropertyName("rawValue")]
-    public string? RawValue { get; set; }
 
     /// <summary>
     /// Type属性の値を解釈する。
     /// </summary>
-    /// <param name="knownValueTypeNames">このプロジェクトで定義済みの値の種類名（既定の値メンバー型・静的区分名・値オブジェクト名）の集合。</param>
-    internal static EditingMemberType FromAttributeValue(string? typeAttrValue, IReadOnlySet<string> knownValueTypeNames) {
+    internal static EditingMemberType FromAttributeValue(string? typeAttrValue) {
         if (string.IsNullOrEmpty(typeAttrValue)) {
             return new EditingMemberType { Kind = KIND_UNKNOWN };
         }
@@ -153,11 +150,7 @@ public class EditingMemberType {
             };
         }
 
-        if (knownValueTypeNames.Contains(typeAttrValue)) {
-            return new EditingMemberType { Kind = KIND_VALUE, ValueTypeName = typeAttrValue };
-        }
-
-        return new EditingMemberType { Kind = KIND_UNKNOWN, RawValue = typeAttrValue };
+        return new EditingMemberType { Kind = KIND_VALUE, ValueTypeName = typeAttrValue };
     }
 
     /// <summary>Type属性の値に復元する。復元できない場合はnull。</summary>
@@ -167,7 +160,7 @@ public class EditingMemberType {
             KIND_CHILDREN => SchemaParseContext.NODE_TYPE_CHILDREN,
             KIND_REF_TO when RefToPath is { Count: > 0 } => $"{SchemaParseContext.NODE_TYPE_REFTO}:{string.Join("/", RefToPath)}",
             KIND_VALUE => ValueTypeName,
-            _ => RawValue,
+            _ => null,
         };
     }
 }

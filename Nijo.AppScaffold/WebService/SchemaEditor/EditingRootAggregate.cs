@@ -41,7 +41,6 @@ public class EditingRootAggregate {
     internal static EditingRootAggregate FromXElement(
         XElement rootElement,
         EditingAttributeTypes attributeTypes,
-        IReadOnlySet<string> knownValueTypeNames,
         EditingGenericLookupTable? genericLookupTable) {
 
         var attributes = new Dictionary<string, JsonNode?>();
@@ -59,7 +58,7 @@ public class EditingRootAggregate {
         var members = new List<EditingMember>();
         void AddMembersRecursively(XElement element, int indent) {
             foreach (var child in element.Elements()) {
-                members.Add(EditingMember.FromXElement(child, indent, attributeTypes, knownValueTypeNames));
+                members.Add(EditingMember.FromXElement(child, indent, attributeTypes));
                 AddMembersRecursively(child, indent + 1);
             }
         }

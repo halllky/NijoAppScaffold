@@ -63,14 +63,15 @@ export type EditingMember = {
 
 /**
  * メンバーの種類。nijo.xml の Type 属性の書式（"child" | "children" | "ref-to:A/B" | 値の種類名）を
- * 判別可能ユニオンに変換したもの。
+ * 判別可能ユニオンに変換したもの。Type 属性が無いメンバーは unknown。
+ * 値の種類名が実在するかどうかはここでは区別せず、スキーマの入力検証に委ねる。
  */
 export type EditingMemberType =
   | { kind: 'child' }
   | { kind: 'children' }
   | { kind: 'ref-to'; refToPath: string[] }
   | { kind: 'value'; valueTypeName: string }
-  | { kind: 'unknown'; rawValue?: string | null }
+  | { kind: 'unknown' }
 
 /** ユニーク制約1件分（対象メンバーの UniqueId の組み合わせ）。 */
 export type EditingUniqueConstraint = {
