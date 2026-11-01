@@ -8,7 +8,7 @@
 
 ## デモ新規作成時
 
-1. `nijo new <プロジェクト名> --template empty-template` でプロジェクトを作成
+1. `nijo serve このREADME.mdがあるフォルダ` で開かれるGUIから新規プロジェクトを作成
 2. 不要なファイルを削除
    - README.md
    - client/package-lock.json

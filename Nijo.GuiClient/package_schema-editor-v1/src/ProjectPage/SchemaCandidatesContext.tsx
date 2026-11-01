@@ -1,9 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import * as ReactHookForm from 'react-hook-form';
-import * as ReactRouter from 'react-router-dom';
 import { ATTR_IS_QUERYABLE, ATTR_IS_STORED, EditingProject } from '../backend';
 import { fetchTypeCandidates } from '../backend/api';
-import { NIJOUI_CLIENT_ROUTE_PARAMS } from '../routing';
 
 type CandidateItem = { value: string; text: string };
 
@@ -34,10 +32,6 @@ export const SchemaCandidatesProvider = ({ watch, children }: {
     items,
   }), [isLoading, items]);
 
-  // 現在開いているプロジェクトの情報
-  const [searchParams] = ReactRouter.useSearchParams();
-  const projectDir = searchParams.get(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR);
-
   // 候補をリロードする関数。現在のフォームデータを引数に受け取る。
   const reloadCandidates = async (): Promise<void> => {
     abortControllerRef.current?.abort();
@@ -45,7 +39,7 @@ export const SchemaCandidatesProvider = ({ watch, children }: {
     abortControllerRef.current = abortController;
     setIsLoading(true);
     try {
-      const result = await fetchTypeCandidates(projectDir, watchedValues, abortController.signal);
+      const result = await fetchTypeCandidates(watchedValues, abortController.signal);
       if (abortController.signal.aborted) {
         return;
       }

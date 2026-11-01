@@ -27,12 +27,12 @@ internal class PreviewEndpointHandlers {
     /// </summary>
     internal async Task HandleStartPreview(HttpContext context) {
         try {
-            var project = await NijoWebService.OpenProjectOrWriteErrorAsync(context);
+            var project = await _webService.OpenProjectOrWriteErrorAsync(context);
             if (project == null) return;
 
             var setting = PreviewSetting.Load(project);
             var logger = context.RequestServices.GetRequiredService<ILogger<NijoWebService>>();
-            _webService.GetPreview(project).Start(setting, logger);
+            _webService.Preview.Start(setting, logger);
 
             context.Response.StatusCode = StatusCodes.Status200OK;
         } catch (Exception ex) {
@@ -50,11 +50,8 @@ internal class PreviewEndpointHandlers {
     /// </summary>
     internal async Task HandleStopPreview(HttpContext context) {
         try {
-            var project = await NijoWebService.OpenProjectOrWriteErrorAsync(context);
-            if (project == null) return;
-
             var logger = context.RequestServices.GetRequiredService<ILogger<NijoWebService>>();
-            _webService.GetPreview(project).Stop(logger);
+            _webService.Preview.Stop(logger);
 
             context.Response.StatusCode = StatusCodes.Status200OK;
         } catch (Exception ex) {
@@ -72,13 +69,10 @@ internal class PreviewEndpointHandlers {
     /// </summary>
     internal async Task HandleGetPreviewState(HttpContext context) {
         try {
-            var project = await NijoWebService.OpenProjectOrWriteErrorAsync(context);
-            if (project == null) return;
-
             var request = await context.Request.ReadFromJsonAsync<PreviewStateRequest>(context.RequestAborted)
                 ?? new PreviewStateRequest();
 
-            var preview = _webService.GetPreview(project);
+            var preview = _webService.Preview;
             var processes = preview.GetState().Select(state => {
                 var offsets = request.Offsets.GetValueOrDefault(state.Name) ?? new PreviewLogOffsets();
                 return new {

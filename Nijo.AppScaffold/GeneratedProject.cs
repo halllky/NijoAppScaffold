@@ -46,39 +46,63 @@ namespace Nijo {
         /// <summary>
         /// このexeに埋め込まれたテンプレートのzipを展開して、新しいプロジェクトのフォルダを作成します。
         /// 依存パッケージのインストールは行いません。
+        /// 既存のファイルを壊さないよう、既に何かが存在するパスには作成しません。
+        /// 失敗した場合は作成途中のフォルダを残しません。
         /// </summary>
         /// <param name="projectRoot">プロジェクトのルートディレクトリの絶対パス。</param>
         /// <param name="templateName"><see cref="Templates"/> のキー。</param>
         /// <returns>成功した場合は true、エラーメッセージ付きで失敗した場合は false。</returns>
         public static (bool Success, string? ErrorMessage) CreateProjectFromTemplate(string projectRoot, string templateName) {
+            if (!Templates.TryGetValue(templateName, out var template)) {
+                return (false, $"テンプレート '{templateName}' は存在しません。利用可能なテンプレート: {string.Join(", ", Templates.Keys)}");
+            }
+            if (Path.Exists(projectRoot)) {
+                return (false, $"既に同名のファイルまたはフォルダが存在します: {projectRoot}");
+            }
+
             try {
-                if (!Templates.TryGetValue(templateName, out var template)) {
-                    return (false, $"テンプレート '{templateName}' は存在しません。利用可能なテンプレート: {string.Join(", ", Templates.Keys)}");
-                }
-
-                Directory.CreateDirectory(projectRoot);
-
                 // git archive したアプリケーションテンプレートを展開する。
                 // アプリケーションテンプレートは埋め込みリソースになっている。
                 // Task/Nijoリリース.sh でビルドしたときのみ埋め込まれる。
                 var assembly = Assembly.GetExecutingAssembly();
-                using (var stream = assembly.GetManifestResourceStream(template.ResourceName)) {
-                    if (stream == null) {
-                        return (false,
-                            "アプリケーションテンプレートのリソースが見つかりません。" +
-                            "利用可能なリソースは以下です。\n" +
-                            string.Join("\n", assembly.GetManifestResourceNames()));
-                    }
-
-                    using var archive = new ZipArchive(stream);
-                    archive.ExtractToDirectory(projectRoot);
+                using var stream = assembly.GetManifestResourceStream(template.ResourceName);
+                if (stream == null) {
+                    return (false,
+                        "アプリケーションテンプレートのリソースが見つかりません。" +
+                        "利用可能なリソースは以下です。\n" +
+                        string.Join("\n", assembly.GetManifestResourceNames()));
                 }
 
-                return (true, null);
+                return ExtractTemplateArchive(stream, projectRoot);
 
             } catch (Exception ex) {
-                return (false, $"プロジェクト作成中にエラーが発生しました: {ex.Message}");
+                var message = $"プロジェクト作成中にエラーが発生しました: {ex.Message}";
+                try {
+                    if (Directory.Exists(projectRoot)) {
+                        Directory.Delete(projectRoot, recursive: true);
+                    }
+                } catch (Exception deleteException) {
+                    message += $"\n作成途中のフォルダの削除に失敗しました: {projectRoot}, {deleteException.Message}";
+                }
+                return (false, message);
             }
+        }
+
+        /// <summary>
+        /// テンプレートのzipを指定のフォルダに展開します。フォルダが無ければ作成します。
+        /// </summary>
+        /// <returns>成功した場合は true、テンプレートが不正で展開しなかった場合は false。</returns>
+        internal static (bool Success, string? ErrorMessage) ExtractTemplateArchive(Stream zipStream, string projectRoot) {
+            using var archive = new ZipArchive(zipStream);
+
+            // 不正なテンプレートのファイルをユーザーのフォルダにばらまかないよう、書き込む前に確認する
+            if (archive.GetEntry(NIJO_XML) == null) {
+                return (false, $"テンプレートに {NIJO_XML} が含まれていません。テンプレートのzipの作成に失敗している可能性があります。");
+            }
+
+            Directory.CreateDirectory(projectRoot);
+            archive.ExtractToDirectory(projectRoot);
+            return (true, null);
         }
 
         /// <summary>

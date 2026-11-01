@@ -17,12 +17,11 @@ import { usePreview } from "./usePreview"
  */
 export const PreviewSection: React.FC<{
   formMethods: ReactHookForm.UseFormReturn<EditingProject>
-  projectDir: string | null
-}> = ({ formMethods, projectDir }) => {
+}> = ({ formMethods }) => {
   const { control, register, getValues, setValue, subscribe } = formMethods
 
   // プレビュープロセスの起動・停止・ログ取得
-  const { processes, logs, start, stop, isBusy, error } = usePreview(projectDir)
+  const { processes, logs, start, stop, isBusy, error } = usePreview()
 
   // concurrently配列の編集グリッド
   const {

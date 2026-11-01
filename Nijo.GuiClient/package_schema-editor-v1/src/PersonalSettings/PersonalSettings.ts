@@ -9,5 +9,5 @@ export type PersonalSettings = {
   /** ルート集約の詳細を表示するか */
   openDetails?: boolean
   /** データ構造ダイアグラムのパンとズーム */
-  diagramViewPositions?: { [projectDir: string]: { pan: { x: number, y: number }, zoom: number } }
+  diagramViewPositions?: { [projectRoot: string]: { pan: { x: number, y: number }, zoom: number } }
 }

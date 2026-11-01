@@ -30,7 +30,7 @@ internal class SchemaEditorEndpoints {
     /// </summary>
     internal async Task HandleLoad(HttpContext context) {
         try {
-            var project = await NijoWebService.OpenProjectOrWriteErrorAsync(context);
+            var project = await _webService.OpenProjectOrWriteErrorAsync(context);
             if (project == null) {
                 return;
             }
@@ -78,7 +78,7 @@ internal class SchemaEditorEndpoints {
     /// </summary>
     internal async Task HandleValidate(HttpContext context) {
         try {
-            var project = await NijoWebService.OpenProjectOrWriteErrorAsync(context);
+            var project = await _webService.OpenProjectOrWriteErrorAsync(context);
             if (project == null) {
                 return;
             }
@@ -122,7 +122,7 @@ internal class SchemaEditorEndpoints {
     /// </summary>
     internal async Task HandleSave(HttpContext context) {
         try {
-            var project = await NijoWebService.OpenProjectOrWriteErrorAsync(context);
+            var project = await _webService.OpenProjectOrWriteErrorAsync(context);
             if (project == null) {
                 return;
             }
@@ -168,7 +168,7 @@ internal class SchemaEditorEndpoints {
     /// </summary>
     internal async Task HandleGenerate(HttpContext context) {
         try {
-            var project = await NijoWebService.OpenProjectOrWriteErrorAsync(context);
+            var project = await _webService.OpenProjectOrWriteErrorAsync(context);
             if (project == null) {
                 return;
             }
@@ -188,7 +188,7 @@ internal class SchemaEditorEndpoints {
 
             // コード再生成が成功したので、restartOnGenerateCode が true のプレビュープロセスを再起動する
             var previewSetting = PreviewSetting.Load(project);
-            _webService.GetPreview(project).RestartAfterCodeGenerating(previewSetting, logger);
+            _webService.Preview.RestartAfterCodeGenerating(previewSetting, logger);
 
             context.Response.StatusCode = StatusCodes.Status200OK;
             await context.WriteJsonAsync(
@@ -210,7 +210,7 @@ internal class SchemaEditorEndpoints {
     /// </summary>
     internal async Task HandleGetTypes(HttpContext context) {
         try {
-            var project = await NijoWebService.OpenProjectOrWriteErrorAsync(context);
+            var project = await _webService.OpenProjectOrWriteErrorAsync(context);
             if (project == null) {
                 return;
             }

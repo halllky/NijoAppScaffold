@@ -1,8 +1,7 @@
 import React from "react"
-import * as ReactRouter from "react-router-dom"
 import type { Viewport } from "@xyflow/react"
 import { usePersonalSettings } from "../../../PersonalSettings"
-import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../../../routing"
+import { useProjectRoot } from "../../../routing"
 
 /**
  * パン、ズームの保存。頻繁に変更が発生するので、即時保存は行わず、
@@ -10,20 +9,19 @@ import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../../../routing"
  */
 export function useDiagramPanZoomSaving() {
 
-  const [searchParams] = ReactRouter.useSearchParams()
-  const projectDir = searchParams.get(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR)
+  const projectRoot = useProjectRoot()
   const { personalSettings, save } = usePersonalSettings()
 
-  const saved = personalSettings.diagramViewPositions?.[projectDir ?? '']
+  const saved = personalSettings.diagramViewPositions?.[projectRoot]
 
   // 依存配列なしのuseEffect内部で最新の値を参照するため、関連情報をまとめてrefに保持しておく
   const stateRef = React.useRef({
-    projectDir,
+    projectRoot,
     personalSettings,
     save,
     viewport: saved ? { x: saved.pan.x, y: saved.pan.y, zoom: saved.zoom } as Viewport : undefined,
   })
-  stateRef.current.projectDir = projectDir
+  stateRef.current.projectRoot = projectRoot
   stateRef.current.personalSettings = personalSettings
   stateRef.current.save = save
 
@@ -36,12 +34,12 @@ export function useDiagramPanZoomSaving() {
   React.useEffect(() => {
 
     const executeSave = () => {
-      const { projectDir, personalSettings, save, viewport } = stateRef.current
-      if (!projectDir || !viewport) return;
+      const { projectRoot, personalSettings, save, viewport } = stateRef.current
+      if (!viewport) return;
 
       save("diagramViewPositions", {
         ...personalSettings.diagramViewPositions,
-        [projectDir]: { pan: { x: viewport.x, y: viewport.y }, zoom: viewport.zoom },
+        [projectRoot]: { pan: { x: viewport.x, y: viewport.y }, zoom: viewport.zoom },
       })
     }
 

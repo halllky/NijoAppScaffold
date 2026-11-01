@@ -1,12 +1,10 @@
 import React from "react"
-import * as ReactRouter from "react-router-dom"
 import * as ReactHookForm from "react-hook-form"
 import * as Icon from "@heroicons/react/24/solid"
 import * as UI from "../UI"
 import { EditingProject, SchemaEditorRule } from "../backend"
 import { saveProject, generateCode } from "../backend/api"
 import { usePersonalSettings } from "../PersonalSettings"
-import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../routing"
 import DataStructure, { DataStructureTabRef } from "./DataStructure"
 import { SchemaCandidatesProvider } from "./SchemaCandidatesContext"
 import { SchemaEditorRuleProvider } from "./SchemaEditorRuleContext"
@@ -30,10 +28,6 @@ export default function ProjectPage({ defaultValues, schemaRule }: {
   defaultValues: EditingProject
   schemaRule: SchemaEditorRule
 }) {
-
-  // 現在開いているプロジェクトの情報
-  const [searchParams] = ReactRouter.useSearchParams()
-  const projectDir = searchParams.get(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR)
 
   // react-hook-form
   const formMethods = ReactHookForm.useForm<EditingProject>({
@@ -72,7 +66,7 @@ export default function ProjectPage({ defaultValues, schemaRule }: {
     // ダイアグラムのノード位置もドラッグ終了時に随時フォームへ書き込まれているため、ここで別途収集する必要はない
     const currentValues = window.structuredClone(getValues())
 
-    const saveResult = await saveProject(projectDir, currentValues)
+    const saveResult = await saveProject(currentValues)
     if (!saveResult.ok) {
       setSaveError(saveResult.error)
       setNowSaving(false)
@@ -81,7 +75,7 @@ export default function ProjectPage({ defaultValues, schemaRule }: {
 
     // 保存時にコード自動生成をかけ直す設定の場合は続けて実行
     if (personalSettings.autoGenerateCode) {
-      const generateResult = await generateCode(projectDir)
+      const generateResult = await generateCode()
       if (!generateResult.ok) {
         setSaveError(generateResult.error)
         setNowSaving(false)
@@ -113,10 +107,6 @@ export default function ProjectPage({ defaultValues, schemaRule }: {
 
                 {/* ヘッダ */}
                 <header className="shrink-0 flex flex-wrap items-center gap-x-px gap-y-2 py-1 px-1">
-
-                  <ReactRouter.Link to="/" title="プロジェクト選択へ戻る">
-                    <Icon.ChevronLeftIcon className="w-6 h-6 p-1 text-sky-600" />
-                  </ReactRouter.Link>
 
                   {/* プロジェクト名 兼 設定画面 */}
                   <UI.TabHeader
@@ -203,7 +193,7 @@ export default function ProjectPage({ defaultValues, schemaRule }: {
                   )}
 
                   {displayTab === "project-settings" && (
-                    <ProjectSettings formMethods={formMethods} projectDir={projectDir} />
+                    <ProjectSettings formMethods={formMethods} />
                   )}
 
                 </main>

@@ -23,8 +23,7 @@ export default defineConfig({
     strictPort: true,
 
     // バックエンド側は別プロセスで ASP.NET Core が動いているのでプロキシする。
-    // Nijo.AppScaffold/Properties/launchSettings.json のうち
-    // Task/NijoServeデバッグ.sh で指定されているプロファイルのポート番号とあわせること。
+    // Task/NijoServeデバッグ.sh で指定されているポート番号とあわせること。
     proxy: {
       '/nijo-api': { target: 'http://localhost:5001' },
     },

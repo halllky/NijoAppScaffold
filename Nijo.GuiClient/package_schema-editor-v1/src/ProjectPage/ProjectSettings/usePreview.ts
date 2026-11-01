@@ -1,6 +1,5 @@
 import React from "react"
 import useEvent from "react-use-event-hook"
-import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../../routing"
 import { PreviewProcessState } from "../../backend"
 
 /** ログ表示欄に保持する行数の上限。これを超えたら古い行から捨てる */
@@ -13,7 +12,7 @@ type PreviewLogText = { stdout: string, stderr: string }
  * プレビュー（生成後アプリのデバッグプロセス）の起動・停止と、
  * 稼働状態・ログの1秒間隔ポーリングを行う。
  */
-export function usePreview(projectDir: string | null) {
+export function usePreview() {
   const [processes, setProcesses] = React.useState<PreviewProcessState[]>([])
   const [logs, setLogs] = React.useState<Record<string, PreviewLogText>>({})
   const [isBusy, setIsBusy] = React.useState(false)
@@ -23,15 +22,13 @@ export function usePreview(projectDir: string | null) {
   const offsetsRef = React.useRef<Record<string, { stdout: number, stderr: number }>>({})
   const logsRef = React.useRef<Record<string, PreviewLogText>>({})
 
-  const query = `${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`
-
   // サーバー側で稼働しているプレビュープロセス群の状態・ログと1秒間隔で同期する
   React.useEffect(() => {
     let cancelled = false
 
     const poll = async () => {
       try {
-        const res = await fetch(`/nijo-api/preview/state?${query}`, {
+        const res = await fetch(`/nijo-api/preview/state`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ offsets: offsetsRef.current }),
@@ -66,13 +63,13 @@ export function usePreview(projectDir: string | null) {
       cancelled = true
       window.clearInterval(timer)
     }
-  }, [query])
+  }, [])
 
   const start = useEvent(async () => {
     setIsBusy(true)
     setError(undefined)
     try {
-      const res = await fetch(`/nijo-api/preview/start?${query}`, { method: 'POST' })
+      const res = await fetch(`/nijo-api/preview/start`, { method: 'POST' })
       if (!res.ok) setError(await res.text())
     } catch (e) {
       setError(e instanceof Error ? e.message : `不明なエラー(${e})`)
@@ -85,7 +82,7 @@ export function usePreview(projectDir: string | null) {
     setIsBusy(true)
     setError(undefined)
     try {
-      const res = await fetch(`/nijo-api/preview/stop?${query}`, { method: 'POST' })
+      const res = await fetch(`/nijo-api/preview/stop`, { method: 'POST' })
       if (!res.ok) setError(await res.text())
       // 停止直後は次回起動時にログファイルがクリアされるため、既読オフセットも先頭に戻す
       offsetsRef.current = {}

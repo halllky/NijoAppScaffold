@@ -1,9 +1,7 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
-import * as ReactRouter from "react-router-dom"
 import { EditingProject, ValidationErrorMap } from "../backend"
 import { validateProject } from "../backend/api"
-import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../routing"
 
 //#region 内部コンテキスト
 
@@ -103,8 +101,6 @@ export function ValidationContextProvider(props: {
   }), [])
 
   // サーバーへの問い合わせを実行
-  const [searchParams] = ReactRouter.useSearchParams()
-  const projectDir = searchParams.get(NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR)
   React.useEffect(() => {
     if (!isTriggered) return
     if (isValidating) return
@@ -114,7 +110,7 @@ export function ValidationContextProvider(props: {
 
     (async () => {
       try {
-        const result = await validateProject(projectDir, watchedValuesRef.current as EditingProject, new AbortController().signal)
+        const result = await validateProject(watchedValuesRef.current as EditingProject, new AbortController().signal)
         const errors: ValidationErrorMap = result.ok ? result.value : {}
 
         // メッセージ一覧
@@ -144,7 +140,7 @@ export function ValidationContextProvider(props: {
         setIsValidating(false)
       }
     })();
-  }, [isTriggered, isValidating, projectDir])
+  }, [isTriggered, isValidating])
 
   return (
     <ValidationContextInternal.Provider value={contextValue}>

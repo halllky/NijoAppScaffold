@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading;
@@ -44,25 +43,5 @@ internal static class HttpContextExtensions {
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "text/plain";
         await context.Response.WriteAsync(errorMessage, cancellationToken);
-    }
-
-    /// <summary>
-    /// クエリパラメータを取得する。存在しない場合はfalseを返す
-    /// </summary>
-    internal static bool TryGetQueryParameter(
-        this HttpContext context,
-        string parameterName,
-        out string value) {
-
-        var values = context.Request.Query[parameterName];
-        var firstValue = values.FirstOrDefault();
-
-        if (string.IsNullOrEmpty(firstValue)) {
-            value = string.Empty;
-            return false;
-        }
-
-        value = firstValue;
-        return true;
     }
 }

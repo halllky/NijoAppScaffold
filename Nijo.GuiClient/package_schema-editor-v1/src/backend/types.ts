@@ -169,6 +169,19 @@ export type PreviewLogIncrement = {
 
 // ---------------------------------
 
+/** 編集対象のフォルダの状態。GET /nijo-api/serve-target のレスポンス。 */
+export type ServeTarget = {
+  /** 編集対象フォルダの絶対パス */
+  projectRoot: string
+  /** サーバーのOSのパス区切り文字 */
+  directorySeparator: string
+  isNijoProject: boolean
+  /** 新規作成時に選択可能なテンプレート */
+  templates: { name: string, description: string }[]
+}
+
+// ---------------------------------
+
 /**
  * スキーマ編集画面が必要とする、プロジェクトに依存しない固定ルール。
  * GET /nijo-api/schema-rule のレスポンス。編集対象ではないため {@link EditingProject} とは別に取得する。

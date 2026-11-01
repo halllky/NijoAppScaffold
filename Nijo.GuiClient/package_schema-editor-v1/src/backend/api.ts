@@ -1,5 +1,4 @@
-import { NIJOUI_CLIENT_ROUTE_PARAMS } from "../routing"
-import { EditingProject, SchemaEditorRule, ValidationErrorMap } from "./types"
+import { EditingProject, SchemaEditorRule, ServeTarget, ValidationErrorMap } from "./types"
 
 /** データを伴って成功しうる呼び出しの結果。 */
 export type LoadResult<T> =
@@ -12,14 +11,49 @@ export type ActionResult =
   | { ok: false; error?: string }
 
 /**
+ * 編集対象のフォルダの状態を読み込む。
+ */
+export const loadServeTarget = async (signal: AbortSignal): Promise<LoadResult<ServeTarget>> => {
+  try {
+    const response = await fetch(`/nijo-api/serve-target`, { signal })
+    if (!response.ok) {
+      return { ok: false, error: await describeErrorResponse(response, '読み込みに失敗しました') }
+    }
+    const value: ServeTarget = await response.json()
+    return { ok: true, value }
+
+  } catch (error) {
+    return toErrorResult(error)
+  }
+}
+
+/**
+ * 編集対象のフォルダの直下に、指定のテンプレートからプロジェクトを新規作成する。
+ * 成功すると、以降は作成したプロジェクトが編集対象になる。
+ */
+export const createProject = async (projectName: string, templateName: string): Promise<ActionResult> => {
+  try {
+    const response = await fetch(`/nijo-api/create-project`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectName, templateName }),
+    })
+    if (!response.ok) {
+      return { ok: false, error: await describeErrorResponse(response, 'プロジェクトの作成に失敗しました') }
+    }
+    return { ok: true }
+
+  } catch (error) {
+    return toErrorResult(error)
+  }
+}
+
+/**
  * サーバーに問い合わせて nijo.xml の内容とスキーマ編集用の情報を読み込む。
  */
-export const loadProject = async (projectDir: string | null, signal: AbortSignal): Promise<LoadResult<EditingProject>> => {
+export const loadProject = async (signal: AbortSignal): Promise<LoadResult<EditingProject>> => {
   try {
-    const response = await fetch(
-      `/nijo-api/load?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`,
-      { signal },
-    )
+    const response = await fetch(`/nijo-api/load`, { signal })
     if (!response.ok) {
       return { ok: false, error: await describeErrorResponse(response, '読み込みに失敗しました') }
     }
@@ -51,9 +85,9 @@ export const loadSchemaRule = async (signal: AbortSignal): Promise<LoadResult<Sc
 /**
  * 画面上で編集した情報を送信し、サーバー側で nijo.xml の内容を更新する。
  */
-export const saveProject = async (projectDir: string | null, project: EditingProject): Promise<ActionResult> => {
+export const saveProject = async (project: EditingProject): Promise<ActionResult> => {
   try {
-    const response = await fetch(`/nijo-api/save?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
+    const response = await fetch(`/nijo-api/save`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(project),
@@ -72,9 +106,9 @@ export const saveProject = async (projectDir: string | null, project: EditingPro
  * 編集中の内容をサーバーに送って検証する。
  * エラーが1件もない場合は空のマップを返す（検証自体が失敗した場合とは区別される）。
  */
-export const validateProject = async (projectDir: string | null, project: EditingProject, signal: AbortSignal): Promise<LoadResult<ValidationErrorMap>> => {
+export const validateProject = async (project: EditingProject, signal: AbortSignal): Promise<LoadResult<ValidationErrorMap>> => {
   try {
-    const response = await fetch(`/nijo-api/validate?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
+    const response = await fetch(`/nijo-api/validate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(project),
@@ -98,9 +132,9 @@ export const validateProject = async (projectDir: string | null, project: Editin
 /**
  * nijo.xml の内容をもとにソースコードの自動生成を実行する。
  */
-export const generateCode = async (projectDir: string | null): Promise<ActionResult> => {
+export const generateCode = async (): Promise<ActionResult> => {
   try {
-    const response = await fetch(`/nijo-api/generate?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
+    const response = await fetch(`/nijo-api/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     })
@@ -118,14 +152,11 @@ export const generateCode = async (projectDir: string | null): Promise<ActionRes
  * 現在編集中の内容をもとに、XML要素の種類（Type属性）の入力候補を取得する。
  */
 export const fetchTypeCandidates = async (
-  projectDir: string | null,
   project: EditingProject,
   signal: AbortSignal,
 ): Promise<LoadResult<{ value: string, text: string }[]>> => {
   try {
-    // SERVER_DOMAIN は本番ビルドでは空文字（同一オリジンへの相対パス）になるため、
-    // ベースURLを要求する `new URL()` ではなく文字列連結でURLを組み立てる。
-    const response = await fetch(`/nijo-api/types?${NIJOUI_CLIENT_ROUTE_PARAMS.QUERY_PROJECT_DIR}=${encodeURIComponent(projectDir ?? '')}`, {
+    const response = await fetch(`/nijo-api/types`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(project),

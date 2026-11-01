@@ -61,6 +61,12 @@ namespace Nijo {
                 Description = "カレントディレクトリから操作対象のnijoプロジェクトへの相対パス",
             };
 
+            // nijo serve の編集対象フォルダ
+            var serveTarget = new Argument<string?>("project path") {
+                DefaultValueFactory = _ => string.Empty,
+                Description = "カレントディレクトリから編集対象フォルダへの相対パス。未指定の場合はカレントディレクトリが編集対象になる。nijoプロジェクトでないフォルダを指定した場合はブラウザ上でそのフォルダの直下にプロジェクトを新規作成できる。",
+            };
+
             // GUIブラウザを立ち上げない
             var noBrowser = new Option<bool>("--no-browser", "-b") {
                 Description = "GUIブラウザを立ち上げません。",
@@ -101,9 +107,9 @@ namespace Nijo {
             rootCommand.Add(generate);
 
             // GUI用のサービスを展開する
-            var serve = new Command("serve", "GUI用のサービスを展開します。") { path, url, noBrowser };
+            var serve = new Command("serve", "GUI用のサービスを展開します。") { serveTarget, url, noBrowser };
             serve.SetAction((parseResult, ct) => Serve(
-                parseResult.GetValue(path),
+                parseResult.GetValue(serveTarget),
                 parseResult.GetValue(url),
                 parseResult.GetValue(noBrowser),
                 ct));
@@ -145,11 +151,6 @@ namespace Nijo {
                     ? Directory.GetCurrentDirectory()
                     : Path.Combine(Directory.GetCurrentDirectory(), path);
 
-                if (Directory.Exists(projectRoot)) {
-                    logger.LogError("既にプロジェクトが存在します: {projectRoot}", projectRoot);
-                    return 1;
-                }
-
                 var (success, errorMessage) = GeneratedProject.CreateProjectFromTemplate(projectRoot, templateName);
 
                 if (success) {
@@ -157,14 +158,6 @@ namespace Nijo {
                     return 0;
                 } else {
                     logger.LogError(errorMessage ?? "プロジェクトの作成に失敗しました。");
-                    // 作成途中のディレクトリが残っている可能性があるので削除を試みる
-                    if (Directory.Exists(projectRoot)) {
-                        try {
-                            Directory.Delete(projectRoot, recursive: true);
-                        } catch (Exception ex) {
-                            logger.LogWarning($"作成失敗したプロジェクトディレクトリの削除に失敗しました: {projectRoot}, {ex.Message}");
-                        }
-                    }
                     return 1;
                 }
             };
@@ -266,50 +259,47 @@ namespace Nijo {
         /// <summary>
         /// GUI用のサービスを展開する
         /// </summary>
-        private static async Task Serve(string? path, string? optUrl, bool noBrowser, CancellationToken cancellationToken) {
+        /// <param name="path">カレントディレクトリから編集対象フォルダへの相対パス</param>
+        private static async Task<int> Serve(string? path, string? optUrl, bool noBrowser, CancellationToken cancellationToken) {
             var logger = ILoggerExtension.CreateConsoleLogger();
 
+            var projectRoot = Path.TrimEndingDirectorySeparator(
+                Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), path ?? string.Empty)));
+            if (File.Exists(projectRoot)) {
+                logger.LogError("編集対象にはフォルダを指定してください。指定されたパスはファイルです: {projectRoot}", projectRoot);
+                return 1;
+            }
+
             // サービス内容定義
-            using var nijoWebService = new WebService.NijoWebService();
+            using var nijoWebService = new WebService.NijoWebService(projectRoot);
             var app = nijoWebService.BuildWebApplication(logger);
 
             // 起動
             var url = optUrl ?? $"http://localhost:5000";
             logger.LogInformation("GUI用のサービスを起動します: {url}", url);
-
-            // pathが指定されていればそのプロジェクトを開いておき、
-            // ブラウザURLの組み立てと nijo.preview.json の startOnNijoServe 判定に使う
-            string browserUrl = url;
-            GeneratedProject? project = null;
-            if (!string.IsNullOrWhiteSpace(path)) {
-                var projectRoot = Path.Combine(Directory.GetCurrentDirectory(), path);
-                GeneratedProject.TryOpen(projectRoot, out project, out _);
-
-                var param = System.Web.HttpUtility.ParseQueryString(string.Empty);
-                param.Add(WebService.NijoWebService.PROJECT_DIR_PARAMETER, path);
-                browserUrl = $"{url}/?{param}";
-            }
+            logger.LogInformation("編集対象フォルダ: {projectRoot}", projectRoot);
 
             app.Lifetime.ApplicationStarted.Register(() => {
                 // nijo.preview.json で自動起動が有効ならプレビューを開始する
-                if (project != null) {
+                if (GeneratedProject.TryOpen(projectRoot, out var project, out _)) {
                     var previewSetting = PreviewSetting.Load(project);
                     if (previewSetting.StartOnNijoServe) {
-                        nijoWebService.GetPreview(project).Start(previewSetting, logger);
+                        nijoWebService.Preview.Start(previewSetting, logger);
                     }
                 }
 
                 // ブラウザを立ち上げる
                 if (!noBrowser) {
-                    ProcessExtension.OpenBrowser(browserUrl);
+                    ProcessExtension.OpenBrowser(url);
                 }
             });
 
             // アプリケーション終了時（Ctrl+Cを含む）は稼働中のプレビュープロセスを確実に停止する
-            app.Lifetime.ApplicationStopping.Register(() => nijoWebService.StopAllPreviews(logger));
+            app.Lifetime.ApplicationStopping.Register(() => nijoWebService.Preview.Stop(logger));
 
             using var registration = cancellationToken.Register(() => app.Lifetime.StopApplication());
             await app.RunAsync(url);
+            return 0;
         }
     }
 }

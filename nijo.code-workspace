@@ -94,9 +94,12 @@
     "tasks": [
       {
         "label": "Nijo > nijo serve デバッグ",
-        "detail": "nijo serve コマンドで展開されるGUIツール自体のデバッグ",
+        "detail": "選択したデモを編集対象にして、nijo serve コマンドで展開されるGUIツールをデバッグ起動する",
         "type": "shell",
         "problemMatcher": [],
+        "args": [
+          "${workspaceFolder:ワークスペース全体}/demo/${input:demoFolder}"
+        ],
         "options": {
           "cwd": "${workspaceFolder:ワークスペース全体}/Task"
         },
@@ -104,12 +107,9 @@
       },
       {
         "label": "Nijo > リリース",
-        "detail": "GitHub配置用のzip作成、またはデモの編集用の内部向けリリース",
+        "detail": "GitHub配置用のzip作成",
         "type": "shell",
         "problemMatcher": [],
-        "args": [
-          "${input:releaseType}" // GitHub配置用のzipまで作成するなら1を指定
-        ],
         "options": {
           "cwd": "${workspaceFolder:ワークスペース全体}/Task"
         },
@@ -169,20 +169,6 @@
           "Nijo > ソース最新化"
         ],
         "command": "./${input:demoFolder}/Task/DEBUG.sh"
-      },
-      {
-        "label": "Nijo > デモ > スキーマ定義編集",
-        "detail": "デモのnijo.xmlを編集する。「Nijo > リリース」で発行したときのものが使われる",
-        "type": "shell",
-        "options": {
-          "cwd": "${workspaceFolder:ワークスペース全体}/Nijo.AppScaffold/bin/Release/net10.0/publish"
-        },
-        "args": [
-          "serve",
-          "${workspaceFolder:ワークスペース全体}/demo/${input:demoFolder}"
-        ],
-        "problemMatcher": [],
-        "command": "./nijo"
       },
       {
         "label": "Nijo > デモ > マイグレーション",
@@ -247,21 +233,6 @@
         "id": "tempDirectoryName",
         "description": "一時フォルダ名を入力してください",
         "type": "promptString"
-      },
-      {
-        "id": "releaseType",
-        "description": "リリースタイプを選択してください",
-        "type": "pickString",
-        "options": [
-          {
-            "label": "GitHub配置用のリリース",
-            "value": "1"
-          },
-          {
-            "label": "「Nijo > デモ > スキーマ定義編集」で使うための発行",
-            "value": "0"
-          }
-        ]
       }
     ]
   },

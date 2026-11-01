@@ -12,9 +12,8 @@ import { useSchemaEditorRule } from "../SchemaEditorRuleContext";
 /**
  * プロジェクト設定タブの内容
  */
-function ProjectSettings({ formMethods, projectDir }: {
+function ProjectSettings({ formMethods }: {
   formMethods: ReactHookForm.UseFormReturn<EditingProject>
-  projectDir: string | null
 }) {
 
   const { personalSettings, save } = usePersonalSettings()
@@ -51,7 +50,6 @@ function ProjectSettings({ formMethods, projectDir }: {
 
             <PreviewSection
               formMethods={formMethods}
-              projectDir={projectDir}
             />
 
             <FormLayout.Separator />
