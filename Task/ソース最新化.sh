@@ -2,14 +2,14 @@
 set -e
 
 # テンプレートと全デモのソースコード自動生成をかけなおし、
-# テンプレート配布対象.txt に載っているファイルをテンプレートから各デモへコピーする。
+# デモ101テンプレート配布対象.txt に載っているファイルをテンプレートから各デモへコピーする。
 #
 # --check を付けると何も変更せず、配布対象のファイルがテンプレートと全デモで一致しているかだけを調べる。
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SOURCE_ROOT="$SCRIPT_DIR/../Nijo.NewProjectTemplate"
 NIJO_EXE_PATH="$SCRIPT_DIR/../Nijo.AppScaffold/bin/Debug/net10.0/nijo"
-DISTRIBUTION_LIST="$SCRIPT_DIR/テンプレート配布対象.txt"
+DISTRIBUTION_LIST="$SCRIPT_DIR/デモ101テンプレート配布対象.txt"
 
 # 配布対象の一覧からコメントと空行を除いたものを出力する
 list_distribution_targets() {
