@@ -53,7 +53,10 @@ partial class OverridedApplicationService {
             errors.CopyTo(context.Messages);
             return;
         }
-        if (context.ValidationOnly) return;
+
+        // ValidationOnly を無視しているのは意図的。
+        // 「ログインしますか？」は普通は確認しないため。
+        // if (context.ValidationOnly) return;
 
         await using var tran = await BeginTransactionAsync();
 
