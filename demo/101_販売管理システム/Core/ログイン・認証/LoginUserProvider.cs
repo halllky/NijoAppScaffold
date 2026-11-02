@@ -1,17 +1,24 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MyApp.Core.Authorization;
 
 /// <summary>
 /// 現在のログインユーザーを特定する。
+/// データ更新時の作成者・更新者として記録するユーザーもこのクラスが決める。
 /// DIコンテナのスコープ（Webアプリケーションであれば1回のリクエスト）につき1個のインスタンスが作られる。
 /// </summary>
-public class LoginUserProvider {
-    public LoginUserProvider(OverridedDbContext dbContext, ISessionKeyProvider sessionKeyProvider) {
-        _dbContext = dbContext;
+public class LoginUserProvider : ICurrentUser {
+    /// <summary>ログインユーザーがいない処理（ログイン処理そのものなど）で作成者・更新者として記録する名前</summary>
+    public const string NO_LOGIN_USER = "SYSTEM";
+
+    // DbContext は作成者・更新者の記録のためにこのクラスに依存するので、
+    // コンストラクタで DbContext を受け取ると循環依存になる
+    public LoginUserProvider(IServiceProvider serviceProvider, ISessionKeyProvider sessionKeyProvider) {
+        _serviceProvider = serviceProvider;
         _sessionKeyProvider = sessionKeyProvider;
     }
-    private readonly OverridedDbContext _dbContext;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ISessionKeyProvider _sessionKeyProvider;
 
     /// <summary>
@@ -29,6 +36,9 @@ public class LoginUserProvider {
     }
     private LoginUser? _loginUserCache = null;
     private bool _isLoginUserLoaded = false;
+
+    /// <inheritdoc />
+    string ICurrentUser.Name => GetLoginUser()?.従業員番号 ?? NO_LOGIN_USER;
 
 #if DEBUG
     /// <summary>
@@ -49,7 +59,7 @@ public class LoginUserProvider {
         }
 
         // セッションキーはDBのセッションテーブルにも保存されるので、クライアントから送られた値と突合
-        var dbEntity = _dbContext.セッションDbSet
+        var dbEntity = _serviceProvider.GetRequiredService<OverridedDbContext>().セッションDbSet
             .Include(e => e.ユーザ!)
             .ThenInclude(e => e.従業員の権限)
             .SingleOrDefault(e => e.セッションキー == sessionKey);

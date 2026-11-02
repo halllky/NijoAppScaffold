@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MyApp.Core.Authorization;
 
 namespace MyApp.UnitTest;
 
@@ -32,8 +33,8 @@ partial class DB接続あり_更新あり {
 
         var saved = await Save新しい従業員Async(scope.App.DbContext);
 
-        Assert.That(saved.CreateUser, Is.EqualTo(AuditInfo.NO_LOGIN_USER));
-        Assert.That(saved.UpdateUser, Is.EqualTo(AuditInfo.NO_LOGIN_USER));
+        Assert.That(saved.CreateUser, Is.EqualTo(LoginUserProvider.NO_LOGIN_USER));
+        Assert.That(saved.UpdateUser, Is.EqualTo(LoginUserProvider.NO_LOGIN_USER));
     }
 
     private static async Task<従業員DbEntity> Save新しい従業員Async(OverridedDbContext db) {

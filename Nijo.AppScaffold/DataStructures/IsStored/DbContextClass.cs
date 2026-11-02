@@ -13,6 +13,9 @@ using Nijo.Parts.Common;
 namespace Nijo.DataStructures.IsStored {
     public class DbContextClass : ISharedSourceFile<CodeRenderingContext> {
 
+        internal const string CURRENT_TIME = "CurrentTime";
+        internal const string CURRENT_USER = "CurrentUser";
+
         private readonly List<IEFCoreEntity> _efCoreEntities = [];
         private readonly List<string> _additionalMethods = [];
         private readonly Lock _lock = new();
@@ -45,7 +48,8 @@ namespace Nijo.DataStructures.IsStored {
                     efcoreDir.Generate(Render(ctx));
                     efcoreDir.Generate(SaveCommand.RenderInterface(ctx));
                     efcoreDir.Generate(ValidatedCommand.Render(ctx));
-                    efcoreDir.Generate(AuditInfo.Render(ctx));
+                    efcoreDir.Generate(CurrentTime.Render(ctx));
+                    efcoreDir.Generate(CurrentUser.Render(ctx));
                 });
             });
         }
@@ -71,16 +75,20 @@ namespace Nijo.DataStructures.IsStored {
                         /// DBコンテキスト。Entity Framework Core の中核的な仕組み。
                         /// </summary>
                         /// <param name="options">EFCoreのオプション</param>
-                        /// <param name="auditInfo">監査項目に記録する情報</param>
+                        /// <param name="currentTime">現在時刻</param>
+                        /// <param name="currentUser">現在操作中のユーザー</param>
                         /// <param name="messageFactory">ユーザーに見せるメッセージの文言</param>
-                        public {{ctx.Config.DbContextName}}(DbContextOptions options, {{AuditInfo.INTERFACE}} auditInfo, {{MsgFactory.CS_INTERFACE}} messageFactory) : base(options) {
-                            AuditInfo = auditInfo;
+                        public {{ctx.Config.DbContextName}}(DbContextOptions options, {{CurrentTime.INTERFACE}} currentTime, {{CurrentUser.INTERFACE}} currentUser, {{MsgFactory.CS_INTERFACE}} messageFactory) : base(options) {
+                            {{CURRENT_TIME}} = currentTime;
+                            {{CURRENT_USER}} = currentUser;
                             {{MsgFactory.MSG}} = messageFactory;
                         }
                     #pragma warning restore CS8618 // DbSetはEFCore側で自動的に設定されるため問題なし
 
-                        /// <summary>監査項目に記録する情報</summary>
-                        protected internal {{AuditInfo.INTERFACE}} AuditInfo { get; }
+                        /// <summary>現在時刻。監査項目の作成日時・更新日時の記録に使用。</summary>
+                        protected internal {{CurrentTime.INTERFACE}} {{CURRENT_TIME}} { get; }
+                        /// <summary>現在操作中のユーザー。監査項目の作成者・更新者の記録に使用。</summary>
+                        protected internal {{CurrentUser.INTERFACE}} {{CURRENT_USER}} { get; }
                         /// <summary>ユーザーに見せるメッセージの文言</summary>
                         protected internal {{MsgFactory.CS_INTERFACE}} {{MsgFactory.MSG}} { get; }
 

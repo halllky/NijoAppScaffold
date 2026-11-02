@@ -460,17 +460,18 @@ partial class DB接続あり_更新あり {
     #region 子孫と監査情報
     [Test]
     public async Task 子孫の追加更新削除で監査情報が正しく設定される() {
-        var audit = new FixedAuditInfo { CurrentTime = new DateTime(2030, 1, 1), CurrentUser = "作成者" };
+        var time = new FixedCurrentTime { Value = new DateTime(2030, 1, 1) };
+        var user = new FixedCurrentUser { Name = "作成者" };
         var scope = TestUtilImpl.Instance.CreateScope(
             nameof(子孫の追加更新削除で監査情報が正しく設定される),
-            services => services.AddScoped<IAuditInfo>(_ => audit));
+            services => services.AddScoped<ICurrentTime>(_ => time).AddScoped<ICurrentUser>(_ => user));
         var db = scope.App.DbContext;
         await using var tran = await db.Database.BeginTransactionAsync();
 
         var created = (await db.TrySaveAsync(Create保守計画(db, "PLAN1").AssertValid())).AssertSucceeded();
 
-        audit.CurrentTime = new DateTime(2030, 2, 2);
-        audit.CurrentUser = "更新者";
+        time.Value = new DateTime(2030, 2, 2);
+        user.Name = "更新者";
 
         created.作業工程[0].工程名 = "更新された工程";
         created.作業工程.RemoveAt(1);
@@ -513,10 +514,11 @@ partial class DB接続あり_更新あり {
 
     [Test]
     public async Task 論理削除は読み込んだデータを子孫ごと退避テーブルに移送する() {
-        var audit = new FixedAuditInfo { CurrentTime = new DateTime(2030, 3, 3), CurrentUser = "削除者" };
+        var time = new FixedCurrentTime { Value = new DateTime(2030, 3, 3) };
+        var user = new FixedCurrentUser { Name = "削除者" };
         var scope = TestUtilImpl.Instance.CreateScope(
             nameof(論理削除は読み込んだデータを子孫ごと退避テーブルに移送する),
-            services => services.AddScoped<IAuditInfo>(_ => audit));
+            services => services.AddScoped<ICurrentTime>(_ => time).AddScoped<ICurrentUser>(_ => user));
         var db = scope.App.DbContext;
         await using var tran = await db.Database.BeginTransactionAsync();
         (await db.TrySaveAsync(Create保守計画(db, "PLAN1").AssertValid())).AssertSucceeded();
@@ -535,9 +537,11 @@ partial class DB接続あり_更新あり {
         });
     }
 
-    private sealed class FixedAuditInfo : IAuditInfo {
-        public DateTime CurrentTime { get; set; }
-        public string CurrentUser { get; set; } = string.Empty;
+    private sealed class FixedCurrentTime : ICurrentTime {
+        public DateTime Value { get; set; }
+    }
+    private sealed class FixedCurrentUser : ICurrentUser {
+        public string Name { get; set; } = string.Empty;
     }
     #endregion 子孫と監査情報
 

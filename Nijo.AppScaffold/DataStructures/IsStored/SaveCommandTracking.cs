@@ -18,8 +18,8 @@ internal static class SaveCommandTracking {
     private const string DBCONTEXT = $"{COMMAND}.{SaveCommand.FIELD_DBCONTEXT}";
     private const string LOADED = $"{COMMAND}.{SaveCommand.FIELD_LOADED}";
     private const string EXPECTED_VERSION = $"{COMMAND}.{SaveCommand.FIELD_EXPECTED_VERSION}";
-    private const string CURRENT_TIME = $"{DBCONTEXT}.AuditInfo.CurrentTime";
-    private const string CURRENT_USER = $"{DBCONTEXT}.AuditInfo.CurrentUser";
+    private const string CURRENT_TIME = $"{DBCONTEXT}.{DbContextClass.CURRENT_TIME}.{CurrentTime.VALUE}";
+    private const string CURRENT_USER = $"{DBCONTEXT}.{DbContextClass.CURRENT_USER}.{CurrentUser.NAME}";
 
     /// <summary>新規登録</summary>
     internal static string RenderCreate(RootAggregate rootAggregate) {

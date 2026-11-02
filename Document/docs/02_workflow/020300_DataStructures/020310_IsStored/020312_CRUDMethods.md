@@ -284,7 +284,7 @@ if (validated == null || context.Messages.HasError()) return;
 ## 監査情報
 
 `CreatedAt`, `UpdatedAt`, `CreateUser`, `UpdateUser` は `TrySaveAsync` の中で自動的に設定されます。
-値は DI コンテナに登録された `IAuditInfo` から取得されます。既定の実装は `Core/AuditInfo.cs` なので、ログインユーザーを記録する場合はこれを書き換えてください。
+日時は DI コンテナに登録された `ICurrentTime` から、ユーザーは `ICurrentUser` から取得されます。既定の実装はそれぞれ `Core/CurrentTime.cs`, `Core/CurrentUser.cs` なので、ログインユーザーを記録する場合は `Core/CurrentUser.cs` を書き換えてください。
 テンプレートの `OverridedApplicationService` の `CurrentTime` も同じ値を返します。
 
 ## `ValidationOnly` フラグ
