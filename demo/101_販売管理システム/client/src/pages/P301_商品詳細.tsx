@@ -51,9 +51,7 @@ export default {
     historyCondition.sort = ['商品在庫増減履歴.日時（降順）']
     historyCondition.skip = historySkip
     historyCondition.take = PAGING_HISTORY_TAKE.toString()
-    const historyPromise = callComplexPostEndpointAsync('商品在庫増減履歴', historyCondition, {
-      ignoreConfirm: true
-    })
+    const historyPromise = callComplexPostEndpointAsync('商品在庫増減履歴', historyCondition)
 
     const [productResult, historyResult] = await Promise.all([productPromise, historyPromise])
 

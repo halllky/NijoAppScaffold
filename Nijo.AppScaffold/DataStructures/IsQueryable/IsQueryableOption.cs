@@ -130,16 +130,13 @@ internal sealed class IsQueryableOption : FeatureOption {
         ctx.Use<MessageContainer.BaseClass>().Register(displayDataMessages.CsClassName, displayDataMessages.CsClassName);
 
         // 検索処理
-        // - reactは型名マッピングのみ
-        // - ASP.NET Core Controller Action
         // - AppSrv
+        //   - 検索条件の検証
         //   - CreateQuerySource
         //   - AppendWhereClause
         //   - Sort
         //   - Paging
-        // - 以上がload, count それぞれ
         var searchProcessing = new SearchProcessing(rootAggregate);
-        aggregateFile.AddWebapiControllerAction(searchProcessing.RenderAspNetCoreControllerAction(ctx));
         aggregateFile.AddAppSrvMethod(searchProcessing.RenderAppSrvMethods(ctx), "検索処理");
 
         // RefToモジュール
@@ -147,14 +144,17 @@ internal sealed class IsQueryableOption : FeatureOption {
         //   - RefDisplayData
         // - TS側オブジェクト作成関数
         // - 検索処理
-        //   - Reactは型マッピングのみ
-        //   - ASP.NET Core Controller Action
         //   - ApplicationService
         aggregateFile.AddCSharpClass(DisplayDataRef.RenderCSharpRecursively(rootAggregate, ctx), "Class_DisplayDataRef");
         aggregateFile.AddTypeScriptTypeDef(DisplayDataRef.RenderTypeScriptRecursively(rootAggregate, ctx));
         aggregateFile.AddTypeScriptFunction(DisplayDataRef.RenderTypeScriptFunctionsRecursively(rootAggregate, ctx));
         aggregateFile.AddAppSrvMethod(SearchProcessingRefs.RenderAppSrvMethodRecursively(rootAggregate, ctx), "参照検索処理");
-        aggregateFile.AddWebapiControllerAction(SearchProcessingRefs.RenderAspNetCoreControllerActionRecursively(rootAggregate, ctx));
+
+        // 一覧検索と参照検索をクエリ・コマンドの一覧に登録
+        ctx.Use<CommandQueryCatalog>().Add(rootAggregate, [
+            searchProcessing.ToCatalogDefinition(),
+            .. SearchProcessingRefs.ToCatalogDefinitionsRecursively(rootAggregate),
+        ]);
 
         // データ型: ほかの集約から参照されるときのキー
         if (rootAggregate.IsView) {

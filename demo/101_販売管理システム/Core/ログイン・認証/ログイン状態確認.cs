@@ -4,14 +4,13 @@ namespace MyApp;
 
 partial class OverridedApplicationService {
 
-    public override Task Executeログイン状態確認Async(IPresentationContextWithReturnValue<ログインユーザー情報DisplayData, MessageSetter> context) {
+    public override Task<ログインユーザー情報DisplayData?> Executeログイン状態確認Async(MessageSetter messages, IPresentationContext context) {
 
-        if (LoginUser != null) {
-            context.ReturnValue = LoginUser.ToDisplayData();
-        } else {
-            context.Messages.AddError("ログインしていません。");
+        if (LoginUser == null) {
+            messages.AddError("ログインしていません。");
+            return Task.FromResult<ログインユーザー情報DisplayData?>(null);
         }
 
-        return Task.CompletedTask;
+        return Task.FromResult<ログインユーザー情報DisplayData?>(LoginUser.ToDisplayData());
     }
 }

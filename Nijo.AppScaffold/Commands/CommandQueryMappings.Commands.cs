@@ -100,17 +100,6 @@ namespace Nijo.Parts.Common {
                     }
                     """,
             };
-
-            // コマンド起動処理
-            yield return new SourceFile {
-                FileName = $"{TS_EXECUTE_FEATURE}.ts",
-                Contents = $$"""
-                    {{RenderTsModelTypesImport(COMMAND_MODEL_TYPE)}}
-                    {{RenderImports(commandParams.Concat(commandReturnValues).Where(x => x.Structure != null).Select(x => x.Structure!.Aggregate), true)}}
-
-                    {{CommandProcessing.RenderTsTypeMap(targets.CommandModels)}}
-                    """,
-            };
         }
     }
 }

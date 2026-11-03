@@ -6,6 +6,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using MyApp.WebApi.Base;
 
 namespace MyApp.UnitTest;
 
@@ -27,7 +28,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = CommandQueryControllerHandler.ToJsonObject(context.Find([])!);
+        var json = CommandQueryEndpoints.ToJsonObject(context.Find([])!);
 
         // ---------------------
         // Assert
@@ -67,7 +68,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = CommandQueryControllerHandler.ToJsonObject(context.Find([])!);
+        var json = CommandQueryEndpoints.ToJsonObject(context.Find([])!);
 
         // ---------------------
         // Assert
@@ -105,7 +106,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = CommandQueryControllerHandler.ToJsonObject(context.Find([])!);
+        var json = CommandQueryEndpoints.ToJsonObject(context.Find([])!);
         Logout(json);
 
         // ---------------------
@@ -152,7 +153,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = CommandQueryControllerHandler.ToJsonObject(context.Find([])!);
+        var json = CommandQueryEndpoints.ToJsonObject(context.Find([])!);
         Logout(json);
 
         // ---------------------
@@ -187,7 +188,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = CommandQueryControllerHandler.ToJsonObject(context.Find([])!);
+        var json = CommandQueryEndpoints.ToJsonObject(context.Find([])!);
         Logout(json);
 
         // ---------------------
@@ -227,7 +228,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = CommandQueryControllerHandler.ToJsonObject(context.Find([])!);
+        var json = CommandQueryEndpoints.ToJsonObject(context.Find([])!);
         Logout(json);
 
         // ---------------------

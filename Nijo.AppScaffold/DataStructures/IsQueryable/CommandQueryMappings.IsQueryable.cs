@@ -115,30 +115,6 @@ namespace Nijo.Parts.Common {
                     }
                     """,
             };
-
-            // 一覧検索処理
-            yield return new SourceFile {
-                FileName = $"{TS_LOAD_FEATURE}.ts",
-                Contents = $$"""
-                    import type * as Util from "./index"
-                    {{RenderTsModelTypesImport(QUERY_MODEL_TYPE)}}
-                    {{RenderImports(targets.QueryModels, true)}}
-
-                    {{SearchProcessing.RenderTsTypeMap(targets.QueryModels)}}
-                    """,
-            };
-
-            // 参照検索処理
-            yield return new SourceFile {
-                FileName = $"{TS_LOAD_REF_FEATURE}.ts",
-                Contents = $$"""
-                    import type * as Util from "./index"
-                    {{RenderTsModelTypesImport(REFERED_QUERY_MODEL_TYPE)}}
-                    {{RenderImports(targets.ReferedRefEntries.Select(x => x.Aggregate), true)}}
-
-                    {{SearchProcessingRefs.RenderTsTypeMap(targets.ReferedRefEntries)}}
-                    """,
-            };
         }
     }
 }

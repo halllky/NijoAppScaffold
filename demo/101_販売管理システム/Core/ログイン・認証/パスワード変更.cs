@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task Executeパスワード変更Async(パスワード変更ParameterDisplayData param, IPresentationContext<パスワード変更ParameterMessages> context) {
+    public override async Task Executeパスワード変更Async(パスワード変更ParameterDisplayData param, パスワード変更ParameterMessages messages, IPresentationContext context) {
         // ログインチェック
         if (LoginUser == null) {
-            context.Messages.AddError("ログインしていません。");
+            messages.AddError("ログインしていません。");
             return;
         }
 
@@ -15,11 +15,11 @@ partial class OverridedApplicationService {
         var confirmPassword = param.新しいパスワード_確認用;
 
         if (string.IsNullOrWhiteSpace(newPassword)) {
-            context.Messages.新しいパスワード.AddError("新しいパスワードを入力してください。");
+            messages.新しいパスワード.AddError("新しいパスワードを入力してください。");
             return;
         }
         if (newPassword != confirmPassword) {
-            context.Messages.新しいパスワード_確認用.AddError("パスワードが一致しません。");
+            messages.新しいパスワード_確認用.AddError("パスワードが一致しません。");
             return;
         }
 
@@ -34,14 +34,14 @@ partial class OverridedApplicationService {
             .LoadForEdit従業員Async(query => query.Where(x => x.従業員番号 == employeeNumber)))
             .SingleOrDefault();
         if (employee == null) {
-            context.Messages.AddError(MSG.DataNotFoundError());
+            messages.AddError(MSG.DataNotFoundError());
             return;
         }
         employee.SALT = salt;
         employee.パスワード = hash;
 
         if (!employee.TryValidate(out var validated, out var errors)) {
-            errors.CopyTo(context.Messages);
+            errors.CopyTo(messages);
             return;
         }
         if (context.ValidationOnly) return;
@@ -50,7 +50,7 @@ partial class OverridedApplicationService {
 
         var result = await DbContext.TrySaveAsync(validated);
         if (!result.Success) {
-            result.Errors.CopyTo(context.Messages);
+            result.Errors.CopyTo(messages);
             return;
         }
 

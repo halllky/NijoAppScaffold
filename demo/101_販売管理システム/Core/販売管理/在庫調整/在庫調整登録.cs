@@ -4,28 +4,28 @@ using MyApp.Core.Authorization;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task Execute在庫調整登録Async(在庫調整ParameterDisplayData param, IPresentationContext<在庫調整ParameterMessages> context) {
+    public override async Task Execute在庫調整登録Async(在庫調整ParameterDisplayData param, 在庫調整ParameterMessages messages, IPresentationContext context) {
         // 権限チェック
         if (LoginUser == null || !LoginUser.Has権限(権限区分.入荷担当)) {
-            context.Messages.AddError("入荷担当のみ実行可能です。");
+            messages.AddError("入荷担当のみ実行可能です。");
             return;
         }
 
         // 入力チェック: 商品
         // ※ 自動生成されたコードでもチェックされるが、商品のキーがないとこのあとの処理が成り立たないので先にチェックする。
         if (param.商品.商品SEQ == null) {
-            context.Messages.商品.AddError("商品を選択してください。");
+            messages.商品.AddError("商品を選択してください。");
             return;
         }
 
         // 入力チェック: 増減数・絶対数
         // ※ 「どちらか片方のみ」というのは自動生成されたコードでは表現できないので、ここでチェックする。
         if (param.増減数 == null && param.絶対数 == null) {
-            context.Messages.AddError("増減数または絶対数のいずれかを指定してください。");
+            messages.AddError("増減数または絶対数のいずれかを指定してください。");
             return;
         }
         if (param.増減数 != null && param.絶対数 != null) {
-            context.Messages.AddError("増減数と絶対数の両方を指定することはできません。");
+            messages.AddError("増減数と絶対数の両方を指定することはできません。");
             return;
         }
 
@@ -42,7 +42,7 @@ partial class OverridedApplicationService {
         }
 
         if (delta == 0) {
-            context.Messages.AddError("在庫数に変更がありません。");
+            messages.AddError("在庫数に変更がありません。");
             return;
         }
 
@@ -61,7 +61,7 @@ partial class OverridedApplicationService {
 
             var totalAvailable = sortedStocks.Sum(x => x.残数量);
             if (totalAvailable < needed) {
-                context.Messages.AddError($"在庫不足のため減算できません。（現在在庫: {totalAvailable}, 減算指定: {needed}）");
+                messages.AddError($"在庫不足のため減算できません。（現在在庫: {totalAvailable}, 減算指定: {needed}）");
                 return;
             }
 
@@ -100,7 +100,7 @@ partial class OverridedApplicationService {
         adjustment.在庫調整理由 = param.在庫調整理由;
         adjustment.在庫調整引当明細 = adjustmentDetails;
         adjustment.TryValidate(out var validatedAdjustment, out var adjustmentErrors);
-        adjustmentErrors.CopyTo(context.Messages);
+        adjustmentErrors.CopyTo(messages);
 
         // 増加：新しい入荷明細を作成
         ValidatedCommand<入荷明細UpdateCommand>? validatedNewStock = null;
@@ -116,16 +116,16 @@ partial class OverridedApplicationService {
             newStock.残数量 = delta;
             newStock.備考 = $"在庫調整（増加）: {param.在庫調整理由}";
             newStock.TryValidate(out validatedNewStock, out var newStockErrors);
-            newStockErrors.CopyTo(context.Messages);
+            newStockErrors.CopyTo(messages);
         }
 
         // 減少：既存の入荷明細の更新
         var stockCommands = await LoadForEdit入荷明細の残数量Async(
             allocationPlan.Select(x => x.Stock),
             allocationPlan.Select(x => (x.Stock.入荷明細ID!, x.Deduct)),
-            context.Messages);
+            messages);
 
-        if (validatedAdjustment == null || context.Messages.HasError() || context.ValidationOnly) return;
+        if (validatedAdjustment == null || messages.HasError() || context.ValidationOnly) return;
 
         // 保存処理。
         // 失敗した場合はコミットせずにトランザクションのスコープを抜けることでロールバックする。
@@ -133,21 +133,21 @@ partial class OverridedApplicationService {
 
         var adjustmentResult = await DbContext.TrySaveAsync(validatedAdjustment);
         if (!adjustmentResult.Success) {
-            adjustmentResult.Errors.CopyTo(context.Messages);
+            adjustmentResult.Errors.CopyTo(messages);
             return;
         }
 
         if (validatedNewStock != null) {
             var newStockResult = await DbContext.TrySaveAsync(validatedNewStock);
             if (!newStockResult.Success) {
-                newStockResult.Errors.CopyTo(context.Messages);
+                newStockResult.Errors.CopyTo(messages);
                 return;
             }
         }
 
         var stockResult = await DbContext.TrySaveAsync(stockCommands);
         if (!stockResult.Success) {
-            stockResult.Errors.CopyTo(context.Messages);
+            stockResult.Errors.CopyTo(messages);
             return;
         }
         await Notify在庫数量Async([param.商品.商品SEQ]);

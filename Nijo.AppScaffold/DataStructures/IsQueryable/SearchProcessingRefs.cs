@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Nijo.Util.DotnetEx;
-using Microsoft.AspNetCore.Mvc;
 using System.Xml.Linq;
 using Nijo.DataStructures.Aggregates;
 using Nijo.DataStructures;
@@ -19,55 +18,23 @@ namespace Nijo.DataStructures.IsQueryable {
         }
         private AggregateBase _entryAggregate;
 
-        private string ControllerActionLoad => $"load-refs-{_entryAggregate.LatinName.ToKebabCase()}";
+        private string ActionLoad => $"load-refs-{_entryAggregate.LatinName.ToKebabCase()}";
 
         private string ValidateMethod => $"ValidateRefSearchCondition{_entryAggregate.PhysicalName}";
-        internal string LoadMethod => $"LoadRefs{_entryAggregate.PhysicalName}Async";
+        private string LoadMethod => $"LoadRefs{_entryAggregate.PhysicalName}Async";
         private string OnAfterLoadMethod => $"OnAfterLoadedRef{_entryAggregate.PhysicalName}";
         private string ToRefTarget => $"To{_entryAggregate.PhysicalName}RefTarget";
 
 
-        #region TypeScript用
-        internal static string RenderTsTypeMap(IEnumerable<DisplayDataRef.Entry> refEntries) {
-
-            var items = refEntries.Select(refEntry => {
-                var rootAggregate = refEntry.Aggregate.GetRoot();
-                var controller = new AspNetController(rootAggregate);
-                var searchCondition = new SearchCondition.Entry(rootAggregate);
-                var searchProcess = new SearchProcessingRefs(rootAggregate);
-
-                return new {
-                    EscapedPhysicalName = refEntry.Aggregate.RefEntryName,
-                    Endpoint = controller.GetActionNameForClient(searchProcess.ControllerActionLoad),
-                    ParamType = new TypeScriptSectionRootModule(rootAggregate).Qualify(searchCondition.TsTypeName),
-                    ReturnType = $"Util.{SearchProcessingReturn.TYPE_TS}<{new TypeScriptSectionRootModule(rootAggregate).Qualify(refEntry.TsTypeName)}>",
-                };
-            }).ToArray();
-
-            return $$"""
-                /** 参照検索処理のURLエンドポイントの一覧 */
-                export const Endpoint: { [key in {{CommandQueryMappings.REFERED_QUERY_MODEL_TYPE}}]: string } = {
-                {{items.SelectTextTemplate(x => $$"""
-                  '{{x.EscapedPhysicalName}}': '{{x.Endpoint}}',
-                """)}}
-                }
-
-                /** 参照検索処理のパラメータ型の一覧 */
-                export interface ParamType {
-                {{items.SelectTextTemplate(x => $$"""
-                  '{{x.EscapedPhysicalName}}': {{x.ParamType}}
-                """)}}
-                }
-
-                /** 参照検索処理の処理結果の型の一覧 */
-                export interface ReturnType {
-                {{items.SelectTextTemplate(x => $$"""
-                  '{{x.EscapedPhysicalName}}': {{x.ReturnType}}
-                """)}}
-                }
-                """;
+        /// <summary>
+        /// クエリ・コマンドの一覧に載せる、このルート集約とその子孫集約の参照検索処理の定義
+        /// </summary>
+        internal static CommandQueryCatalog.Definition[] ToCatalogDefinitionsRecursively(RootAggregate rootAggregate) {
+            var (entries, _) = DisplayDataRef.GetReferedMembersRecursively(rootAggregate);
+            return entries
+                .Select(e => new SearchProcessingRefs(e.Aggregate).ToCatalogDefinition())
+                .ToArray();
         }
-        #endregion TypeScript用
 
         internal static string RenderAppSrvMethodRecursively(RootAggregate rootAggregate, CodeRenderingContext ctx) {
             var (entries, _) = DisplayDataRef.GetReferedMembersRecursively(rootAggregate);
@@ -80,43 +47,25 @@ namespace Nijo.DataStructures.IsQueryable {
                 """;
         }
 
-        internal static string RenderAspNetCoreControllerActionRecursively(RootAggregate rootAggregate, CodeRenderingContext ctx) {
-            var (entries, _) = DisplayDataRef.GetReferedMembersRecursively(rootAggregate);
-            var searchProcesses = entries.Select(e => new SearchProcessingRefs(e.Aggregate));
-
-            return $$"""
-                {{searchProcesses.SelectTextTemplate(search => $$"""
-                {{search.RenderAspNetCoreControllerAction(ctx)}}
-                """)}}
-                """;
-        }
-
-        internal string RenderAspNetCoreControllerAction(CodeRenderingContext ctx) {
+        private CommandQueryCatalog.Definition ToCatalogDefinition() {
             var root = _entryAggregate.GetRoot();
             var searchCondition = new SearchCondition.Entry(root);
-            var searchConditionMessage = new SearchConditionMessageContainer(root);
-            var returnType = $"{SearchProcessingReturn.TYPE_CS}<{new DisplayDataRef.Entry(_entryAggregate).CsClassName}>";
+            var displayData = new DisplayDataRef.Entry(_entryAggregate);
+            var module = new TypeScriptSectionRootModule(root);
 
-            return $$"""
-                /// <summary>
-                /// {{_entryAggregate.DisplayName}}が他の集約から参照されるときの検索処理のエンドポイント
-                /// </summary>
-                [HttpPost("{{ControllerActionLoad}}")]
-                public async Task<IActionResult> LoadRefs{{_entryAggregate.PhysicalName}}Async() {
-                    return await {{AspNetController.CONTROLLER_HANDLER_FIELD}}.{{AspNetController.HANDLE_METHOD}}<{{searchCondition.CsClassName}}, {{returnType}}, {{searchConditionMessage.CsClassName}}>(this, async (data, context) => {
-                        // エラーチェック
-                        _applicationService.{{ValidateMethod}}(data, context);
-                        if (context.Messages.GetState()?.DescendantsAndSelf().Any(x => x.Errors.Count > 0) == true
-                            || context.ValidationOnly) {
-                            return;
-                        }
-
-                        // 検索処理実行
-                        var returnValue = await _applicationService.{{LoadMethod}}(data, context);
-                        context.ReturnValue = returnValue;
-                    });
-                }
-                """;
+            return new() {
+                Name = _entryAggregate.RefEntryName,
+                DisplayName = $"{_entryAggregate.DisplayName}の参照検索",
+                Path = CommandQueryCatalog.GetPath(root, ActionLoad),
+                IsQuery = true,
+                AppSrvMethodName = LoadMethod,
+                ParameterCsType = searchCondition.CsClassName,
+                ReturnValueCsType = $"{SearchProcessingReturn.TYPE_CS}<{displayData.CsClassName}>",
+                MessagesCsType = new SearchConditionMessageContainer(root).CsClassName,
+                ParameterTsType = module.Qualify(searchCondition.TsTypeName),
+                ReturnValueTsType = $"Util.{SearchProcessingReturn.TYPE_TS}<{module.Qualify(displayData.TsTypeName)}>",
+                TsReferencedAggregates = [root],
+            };
         }
 
         internal string RenderAppSrvMethod(CodeRenderingContext ctx) {
@@ -134,17 +83,26 @@ namespace Nijo.DataStructures.IsQueryable {
                 /// 不正な場合、検索処理自体の実行が中止されます。
                 /// </summary>
                 /// <param name="searchCondition">検索条件</param>
-                /// <param name="context">エラーがある場合はこのオブジェクトの中にエラー内容を追記してください。</param>
-                public virtual void {{ValidateMethod}}({{searchCondition.CsClassName}} searchCondition, {{PresentationContext.INTERFACE}}<{{searchConditionMessage.CsClassName}}> context) {
+                /// <param name="messages">エラーがある場合はこのオブジェクトの中にエラー内容を追記してください。</param>
+                /// <param name="context">この処理を呼び出したプレゼンテーション層から渡される情報</param>
+                public virtual void {{ValidateMethod}}({{searchCondition.CsClassName}} searchCondition, {{searchConditionMessage.CsClassName}} messages, {{PresentationContext.INTERFACE}} context) {
                     // エラーチェックがある場合はこのメソッドをオーバーライドして記述してください。
                     // 既定では通常の検索処理の検証処理を流用します。
-                    this.{{SearchProcessing.VALIDATE_METHOD}}(searchCondition, context);
+                    this.{{SearchProcessing.VALIDATE_METHOD}}(searchCondition, messages, context);
                 }
 
                 /// <summary>
-                /// {{_entryAggregate.DisplayName}}が他の集約から参照されるときの検索を行ないます。
+                /// 検索条件を検証し、問題がなければ{{_entryAggregate.DisplayName}}が他の集約から参照されるときの検索を行ないます。
                 /// </summary>
-                public async Task<{{SearchProcessingReturn.TYPE_CS}}<{{displayData.CsClassName}}>> {{LoadMethod}}({{searchCondition.CsClassName}} searchCondition, {{PresentationContext.INTERFACE}}<{{searchConditionMessage.CsClassName}}> context) {
+                /// <param name="searchCondition">検索条件</param>
+                /// <param name="messages">検索条件に対するエラーなどのメッセージの格納先</param>
+                /// <param name="context">この処理を呼び出したプレゼンテーション層から渡される情報</param>
+                /// <returns>検索結果。検索条件にエラーがある場合は null</returns>
+                public async Task<{{SearchProcessingReturn.TYPE_CS}}<{{displayData.CsClassName}}>?> {{LoadMethod}}({{searchCondition.CsClassName}} searchCondition, {{searchConditionMessage.CsClassName}} messages, {{PresentationContext.INTERFACE}} context) {
+                    // エラーチェック
+                    {{ValidateMethod}}(searchCondition, messages, context);
+                    if (messages.GetState()?.DescendantsAndSelf().Any(x => x.Errors.Count > 0) == true) return null;
+
                     // FROM句, SELECT句
                     var querySource = {{SearchProcessing.CREATE_QUERY_SOURCE}}(searchCondition, context);
 
@@ -197,7 +155,7 @@ namespace Nijo.DataStructures.IsQueryable {
                 /// <summary>
                 /// {{_entryAggregate.DisplayName}}の参照検索の読み込み後処理
                 /// </summary>
-                protected virtual IEnumerable<{{displayData.CsClassName}}> {{OnAfterLoadMethod}}(IEnumerable<{{displayData.CsClassName}}> currentPageItems, {{searchCondition.CsClassName}} searchCondition, {{PresentationContext.INTERFACE}}<{{searchConditionMessage.CsClassName}}> context) {
+                protected virtual IEnumerable<{{displayData.CsClassName}}> {{OnAfterLoadMethod}}(IEnumerable<{{displayData.CsClassName}}> currentPageItems, {{searchCondition.CsClassName}} searchCondition, {{PresentationContext.INTERFACE}} context) {
                     // 読み込み後処理がある場合はここで実装してください。
                     return currentPageItems;
                 }

@@ -156,9 +156,9 @@ private static void Validate受注(OrderCreateCommand command, OrderSaveCommandM
 ```csharp
 command.TryValidate(out var validated, out var errors);
 Validate受注(command, errors);
-errors.CopyTo(context.Messages);
+errors.CopyTo(messages);
 
-if (validated == null || context.Messages.HasError()) return;
+if (validated == null || messages.HasError()) return;
 ```
 
 :::note どこに書くか

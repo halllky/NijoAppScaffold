@@ -2,7 +2,7 @@
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    protected override IQueryable<従業員マスタSearchResult> CreateQuerySource(従業員マスタSearchCondition searchCondition, IPresentationContext<従業員マスタSearchConditionMessages> context) {
+    protected override IQueryable<従業員マスタSearchResult> CreateQuerySource(従業員マスタSearchCondition searchCondition, IPresentationContext context) {
         return DbContext.従業員DbSet.Select(e => new 従業員マスタSearchResult {
             従業員番号 = e.従業員番号,
             氏名 = e.氏名,

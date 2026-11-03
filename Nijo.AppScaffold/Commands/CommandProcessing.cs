@@ -5,7 +5,6 @@ using Nijo.Parts.CSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.AspNetCore.Mvc;
 using Nijo.Util.DotnetEx;
 using Nijo.DataStructures.IsQueryable;
 using Nijo.DataStructures.Structure;
@@ -21,129 +20,83 @@ namespace Nijo.Commands {
         }
         private readonly CommandRoot _rootAggregate;
 
-
-        private const string CONTROLLER_ACTION_EXECUTE = "execute";
+        private const string ACTION_EXECUTE = "execute";
         private string ExecuteMethodName => $"Execute{_rootAggregate.PhysicalName}Async";
 
+        /// <summary>
+        /// クエリ・コマンドの一覧に載せるこのコマンドの定義
+        /// </summary>
+        internal CommandQueryCatalog.Definition ToCatalogDefinition() {
+            var paramStructure = _rootAggregate.GetParameterStructure();
+            var returnStructure = _rootAggregate.GetReturnValueStructure();
 
-        #region TypeScript用
-        internal static string RenderTsTypeMap(IEnumerable<CommandRoot> commandModels) {
-
-            var items = commandModels.Select(rootAggregate => {
-                var controller = new AspNetController(rootAggregate);
-
-                return new {
-                    EscapedPhysicalName = rootAggregate.PhysicalName.Replace("'", "\\'"),
-                    Endpoint = controller.GetActionNameForClient(CONTROLLER_ACTION_EXECUTE),
-                    ParamType = QualifyTsTypeName(rootAggregate.GetParameterStructure()) ?? "Record<string, never> // 引数なし",
-                    ReturnType = QualifyTsTypeName(rootAggregate.GetReturnValueStructure()) ?? "Record<string, never> // 戻り値なし",
-                };
-            }).ToArray();
+            return new() {
+                Name = _rootAggregate.PhysicalName,
+                DisplayName = _rootAggregate.DisplayName,
+                Path = CommandQueryCatalog.GetPath(_rootAggregate, ACTION_EXECUTE),
+                IsQuery = false,
+                AppSrvMethodName = ExecuteMethodName,
+                ParameterCsType = paramStructure?.CsClassName,
+                ReturnValueCsType = returnStructure?.CsClassName,
+                MessagesCsType = GetMessagesCsType(paramStructure),
+                ParameterTsType = QualifyTsTypeName(paramStructure),
+                ReturnValueTsType = QualifyTsTypeName(returnStructure),
+                TsReferencedAggregates = new[] { paramStructure, returnStructure }
+                    .OfType<ICreatablePresentationLayerStructure>()
+                    .Select(structure => structure.Aggregate)
+                    .ToArray(),
+            };
 
             static string? QualifyTsTypeName(ICreatablePresentationLayerStructure? structure) {
                 return structure == null
                     ? null
                     : new TypeScriptSectionRootModule(structure.Aggregate.GetRoot()).Qualify(structure.TsTypeName);
             }
-
-            return $$"""
-                /** コマンドの実行エンドポイントの一覧 */
-                export const Endpoint: { [key in {{CommandQueryMappings.COMMAND_MODEL_TYPE}}]: string } = {
-                {{items.SelectTextTemplate(x => $$"""
-                  '{{x.EscapedPhysicalName}}': '{{x.Endpoint}}',
-                """)}}
-                }
-
-                /** コマンドのパラメータ型の一覧 */
-                export interface ParamType {
-                {{items.SelectTextTemplate(x => $$"""
-                  '{{x.EscapedPhysicalName}}': {{x.ParamType}}
-                """)}}
-                }
-
-                /** コマンドのサーバーからの戻り値の型の一覧 */
-                export interface ReturnType {
-                {{items.SelectTextTemplate(x => $$"""
-                  '{{x.EscapedPhysicalName}}': {{x.ReturnType}}
-                """)}}
-                }
-                """;
-        }
-        #endregion TypeScript用
-
-        internal string RenderAspNetCoreControllerAction(CodeRenderingContext ctx) {
-            var paramStructure = _rootAggregate.GetParameterStructure();
-            var returnStructure = _rootAggregate.GetReturnValueStructure();
-
-            var paramMessageType = paramStructure switch {
-                StructureDisplayData structureDisplayData => new StructureDisplayDataMessageContainer(structureDisplayData.Aggregate).CsClassName,
-                DisplayData displayData => new DisplayDataMessageContainer(displayData.Aggregate).CsClassName,
-                SearchCondition.Entry searchCondition => new SearchConditionMessageContainer(searchCondition.EntryAggregate).CsClassName,
-                _ => MessageContainer.SETTER_CLASS,
-            };
-
-            // 戻り値
-            var toActionResultArgs = new List<string>();
-            if (returnStructure == null) {
-                toActionResultArgs.Add("null");
-            } else {
-                toActionResultArgs.Add("context.ReturnValue");
-            }
-            toActionResultArgs.Add("context");
-
-            // Handle の型引数
-            var handleGenericArgs = new List<string>();
-            if (paramStructure != null) {
-                handleGenericArgs.Add(paramStructure.CsClassName);
-            }
-            if (returnStructure != null) {
-                handleGenericArgs.Add(returnStructure.CsClassName);
-            }
-            handleGenericArgs.Add(paramMessageType);
-
-            return $$"""
-                /// <summary>
-                /// {{_rootAggregate.DisplayName}}のWebからの実行用のエンドポイント
-                /// </summary>
-                [HttpPost("{{CONTROLLER_ACTION_EXECUTE}}")]
-                public async Task<IActionResult> Execute() {
-                    return await {{AspNetController.CONTROLLER_HANDLER_FIELD}}.{{AspNetController.HANDLE_METHOD}}<{{handleGenericArgs.Join(", ")}}>(this, _applicationService.{{ExecuteMethodName}});
-                }
-                """;
         }
 
         internal string RenderAppSrvMethods(CodeRenderingContext ctx) {
             var paramStructure = _rootAggregate.GetParameterStructure();
             var returnStructure = _rootAggregate.GetReturnValueStructure();
-            var paramMessageTypeName = paramStructure switch {
-                StructureDisplayData structureDisplayData => new StructureDisplayDataMessageContainer(structureDisplayData.Aggregate).CsClassName,
-                DisplayData displayData => new DisplayDataMessageContainer(displayData.Aggregate).CsClassName,
-                SearchCondition.Entry searchCondition => new SearchConditionMessageContainer(searchCondition.EntryAggregate).CsClassName,
-                _ => MessageContainer.SETTER_CLASS,
-            };
 
             var arguments = new List<string>();
-
-            // 第1引数
             if (paramStructure != null) {
                 arguments.Add($"{paramStructure.CsClassName} param");
             }
+            arguments.Add($"{GetMessagesCsType(paramStructure)} messages");
+            arguments.Add($"{PresentationContext.INTERFACE} context");
 
-            // 第2引数
-            if (returnStructure == null) {
-                arguments.Add($"{PresentationContext.INTERFACE}<{paramMessageTypeName}> context");
-            } else {
-                arguments.Add($"{PresentationContext.INTERFACE_WITH_RETURN_VALUE}<{returnStructure.CsClassName}, {paramMessageTypeName}> context");
-            }
+            var returnType = returnStructure == null
+                ? "Task"
+                : $"Task<{returnStructure.CsClassName}?>";
 
             return $$"""
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}}処理実行
                 /// </summary>
+                {{If(paramStructure != null, () => $$"""
                 /// <param name="param">処理パラメータ</param>
-                /// <param name="context">実行時コンテキスト。エラーメッセージを保持したり、起動時オプションを持っていたりする。</param>
-                public abstract Task {{ExecuteMethodName}}({{arguments.Join(", ")}});
+                /// <param name="messages">処理パラメータに対するエラーや警告などのメッセージの格納先</param>
+                """).Else(() => $$"""
+                /// <param name="messages">この処理で発生したエラーや警告などのメッセージの格納先</param>
+                """)}}
+                /// <param name="context">この処理を呼び出したプレゼンテーション層から渡される情報</param>
+                {{If(returnStructure != null, () => $$"""
+                /// <returns>処理結果。エラーで処理を中断した場合などは null を返してよい。</returns>
+                """)}}
+                public abstract {{returnType}} {{ExecuteMethodName}}({{arguments.Join(", ")}});
                 """;
+        }
+
+        /// <summary>
+        /// 処理パラメータに対するメッセージの型。メッセージの形はパラメータの形に沿う。
+        /// </summary>
+        private static string GetMessagesCsType(ICreatablePresentationLayerStructure? paramStructure) {
+            return paramStructure switch {
+                StructureDisplayData structureDisplayData => new StructureDisplayDataMessageContainer(structureDisplayData.Aggregate).CsClassName,
+                DisplayData displayData => new DisplayDataMessageContainer(displayData.Aggregate).CsClassName,
+                SearchCondition.Entry searchCondition => new SearchConditionMessageContainer(searchCondition.EntryAggregate).CsClassName,
+                _ => MessageContainer.SETTER_CLASS,
+            };
         }
     }
 }

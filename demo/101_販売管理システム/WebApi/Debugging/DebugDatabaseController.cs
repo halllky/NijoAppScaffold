@@ -26,11 +26,7 @@ public class DebugDatabaseController : ControllerBase {
             await app.DbContext.EnsureCreatedAsyncEx(app.Settings);
 
             // ダミーデータの生成
-            var generator = new OverridedDummyDataGenerator(messages => new PresentationContextInWebApi<MessageSetter> {
-                IgnoreConfirm = true,
-                Messages = messages.As<MessageSetter>(),
-                Confirms = [],
-            });
+            var generator = new OverridedDummyDataGenerator(new PresentationContextInWebApi { IgnoreConfirm = true });
             var result = await generator.GenerateAsync(app);
 
             if (result.HasError()) {

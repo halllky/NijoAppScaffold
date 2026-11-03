@@ -4,10 +4,10 @@ using MyApp.Core.Authorization;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task Execute従業員一括更新Async(従業員一括更新ParameterDisplayData param, IPresentationContext<従業員一括更新ParameterMessages> context) {
+    public override async Task Execute従業員一括更新Async(従業員一括更新ParameterDisplayData param, 従業員一括更新ParameterMessages messages, IPresentationContext context) {
         // 権限チェック
         if (LoginUser == null || !LoginUser.Isシステム管理者) {
-            context.Messages.AddError("システム管理者のみ実行可能です。");
+            messages.AddError("システム管理者のみ実行可能です。");
             return;
         }
 
@@ -25,7 +25,7 @@ partial class OverridedApplicationService {
 
         for (var i = 0; i < param.更新対象従業員一覧.Count; i++) {
             var item = param.更新対象従業員一覧[i];
-            var message = context.Messages.更新対象従業員一覧[i];
+            var message = messages.更新対象従業員一覧[i];
 
             // 新規追加
             if (!item.ExistsInDatabase) {
@@ -89,7 +89,7 @@ partial class OverridedApplicationService {
         }
 
         // いずれか1件でもエラーなら中断
-        if (context.Messages.HasError()) return;
+        if (messages.HasError()) return;
 
         // 1巡目はここまで
         if (context.ValidationOnly) {
@@ -98,7 +98,7 @@ partial class OverridedApplicationService {
         }
 
         if (saveCommands.Count == 0) {
-            context.Messages.AddInfo("更新された内容はありません。");
+            messages.AddInfo("更新された内容はありません。");
             return;
         }
 
@@ -107,11 +107,11 @@ partial class OverridedApplicationService {
 
         var result = await DbContext.TrySaveAsync(saveCommands);
         if (!result.Success) {
-            result.Errors.CopyTo(context.Messages);
+            result.Errors.CopyTo(messages);
             return;
         }
 
         await tran.CommitAsync();
-        context.Messages.AddInfo("保存しました。");
+        messages.AddInfo("保存しました。");
     }
 }

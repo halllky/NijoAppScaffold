@@ -3,11 +3,11 @@ using MyApp.Core.Authorization;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task Execute入荷登録Async(入荷詳細DisplayData param, IPresentationContextWithReturnValue<入荷登録ReturnValueDisplayData, 入荷詳細Messages> context) {
+    public override async Task<入荷登録ReturnValueDisplayData?> Execute入荷登録Async(入荷詳細DisplayData param, 入荷詳細Messages messages, IPresentationContext context) {
         // 権限チェック
         if (LoginUser == null || !LoginUser.Has権限(権限区分.入荷担当)) {
-            context.Messages.AddError("入荷担当のみ実行可能です。");
-            return;
+            messages.AddError("入荷担当のみ実行可能です。");
+            return null;
         }
 
         // 入荷ヘッダ
@@ -18,18 +18,18 @@ partial class OverridedApplicationService {
         header.担当者 = new() { 従業員番号 = param.担当者.従業員番号 };
         header.備考 = param.備考;
         header.TryValidate(out var validatedHeader, out var headerErrors);
-        headerErrors.CopyTo(context.Messages);
+        headerErrors.CopyTo(messages);
 
         // 明細は1件以上必須
         if (param.入荷商品一覧.Count == 0) {
-            context.Messages.入荷商品一覧.AddError("入荷商品を1件以上登録してください。");
+            messages.入荷商品一覧.AddError("入荷商品を1件以上登録してください。");
         }
 
         // 入荷明細
         var details = new List<ValidatedCommand<入荷明細UpdateCommand>>();
         for (var i = 0; i < param.入荷商品一覧.Count; i++) {
             var item = param.入荷商品一覧[i];
-            var message = context.Messages.入荷商品一覧[i];
+            var message = messages.入荷商品一覧[i];
 
             var detail = DbContext.StartCreating入荷明細();
             detail.入荷明細ID = Guid.NewGuid().ToString();
@@ -49,26 +49,26 @@ partial class OverridedApplicationService {
             errors.入荷数量.CopyTo(message.数量);
         }
 
-        if (validatedHeader == null || context.Messages.HasError() || context.ValidationOnly) return;
+        if (validatedHeader == null || messages.HasError() || context.ValidationOnly) return null;
 
         // ヘッダと明細で1つのトランザクション
         await using var tran = await BeginTransactionAsync();
 
         var headerResult = await DbContext.TrySaveAsync(validatedHeader);
         if (!headerResult.Success) {
-            headerResult.Errors.CopyTo(context.Messages);
-            return;
+            headerResult.Errors.CopyTo(messages);
+            return null;
         }
 
         var detailResult = await DbContext.TrySaveAsync(details);
         if (!detailResult.Success) {
-            detailResult.Errors.CopyTo(context.Messages);
-            return;
+            detailResult.Errors.CopyTo(messages);
+            return null;
         }
         await Notify在庫数量Async(detailResult.Updated.Select(x => x.商品?.商品SEQ));
 
         await tran.CommitAsync();
-        context.ReturnValue.入荷ID = newId;
-        context.Messages.AddInfo("入荷登録が完了しました。");
+        messages.AddInfo("入荷登録が完了しました。");
+        return new() { 入荷ID = newId };
     }
 }

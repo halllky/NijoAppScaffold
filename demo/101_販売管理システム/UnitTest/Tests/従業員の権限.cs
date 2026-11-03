@@ -37,11 +37,7 @@ partial class DB接続あり_更新あり {
     [Category("DB接続あり（更新あり）")]
     public async Task 従業員一括更新で権限を追加と削除できる() {
         var scope = TestUtilImpl.Instance.CreateScope(nameof(従業員一括更新で権限を追加と削除できる));
-        await new DummyDataGeneratorInUnitTest(messages => new PresentationContextInUnitTest<MessageSetter> {
-            ValidationOnly = false,
-            Confirms = [],
-            Messages = messages.As<MessageSetter>(),
-        }).GenerateAsync(scope.App);
+        await new DummyDataGeneratorInUnitTest(new PresentationContextInUnitTest { ValidationOnly = false }).GenerateAsync(scope.App);
 
         // 新規追加
         await Execute従業員一括更新Async(scope.App, new 更新対象従業員一覧DisplayData {
@@ -61,13 +57,10 @@ partial class DB接続あり_更新あり {
     }
 
     private static async Task Execute従業員一括更新Async(OverridedApplicationService app, 更新対象従業員一覧DisplayData row) {
-        var context = new PresentationContextInUnitTest<従業員一括更新ParameterMessages> {
-            ValidationOnly = false,
-            Confirms = [],
-            Messages = new 従業員一括更新ParameterMessages([], new()),
-        };
-        await app.Execute従業員一括更新Async(new() { 更新対象従業員一覧 = [row] }, context);
-        Assert.That(context.Messages.HasError(), Is.False, context.BuildFailureMessage("従業員一括更新に失敗しました。"));
+        var messages = new 従業員一括更新ParameterMessages([], new());
+        var context = new PresentationContextInUnitTest { ValidationOnly = false };
+        await app.Execute従業員一括更新Async(new() { 更新対象従業員一覧 = [row] }, messages, context);
+        Assert.That(messages.HasError(), Is.False, context.BuildFailureMessage("従業員一括更新に失敗しました。", messages));
     }
 
     private static async Task<権限区分?[]> Load権限Async(OverridedDbContext db, string 従業員番号) {

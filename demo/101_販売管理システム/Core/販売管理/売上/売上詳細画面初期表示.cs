@@ -4,26 +4,25 @@ using MyApp.Core.Authorization;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task Execute売上詳細画面初期表示Async(売上詳細画面初期表示ParameterDisplayData param, IPresentationContextWithReturnValue<売上詳細DisplayData, 売上詳細画面初期表示ParameterMessages> context) {
+    public override async Task<売上詳細DisplayData?> Execute売上詳細画面初期表示Async(売上詳細画面初期表示ParameterDisplayData param, 売上詳細画面初期表示ParameterMessages messages, IPresentationContext context) {
 
         // 新規登録モード
         if (param.新規登録モード == true) {
-            context.ReturnValue = new() {
+            return new() {
                 売上日時 = CurrentTime,
                 担当者 = new() {
                     従業員番号 = LoginUser?.従業員番号,
                     氏名 = LoginUser?.氏名,
                 },
             };
-            return;
         }
 
         // -----------------------------
         // 以降は既存データ編集モード
 
         if (param.売上SEQ == null) {
-            context.Messages.売上SEQ.AddError("売上SEQが指定されていません。");
-            return;
+            messages.売上SEQ.AddError("売上SEQが指定されていません。");
+            return null;
         }
 
         var entity = await DbContext.売上DbSet
@@ -33,8 +32,8 @@ partial class OverridedApplicationService {
             .FirstOrDefaultAsync(x => x.売上SEQ == param.売上SEQ);
 
         if (entity == null) {
-            context.Messages.AddError("指定された売上データが見つかりません。");
-            return;
+            messages.AddError("指定された売上データが見つかりません。");
+            return null;
         }
 
         var returnValue = new 売上詳細DisplayData() {
@@ -74,6 +73,6 @@ partial class OverridedApplicationService {
             }
         }
 
-        context.ReturnValue = returnValue;
+        return returnValue;
     }
 }

@@ -31,10 +31,10 @@ internal sealed class CommandsSection : Section {
     private static void RenderRootAggregate(CodeRenderingContext ctx, CommandRoot rootAggregate) {
         var sourceFile = new SourceFileBySectionRoot(rootAggregate);
 
-        // 処理: TypeScript用マッピング、Webエンドポイント、本処理抽象メソッド
+        // 処理: 本処理抽象メソッド、クエリ・コマンドの一覧への登録
         var commandProcessing = new CommandProcessing(rootAggregate);
-        sourceFile.AddWebapiControllerAction(commandProcessing.RenderAspNetCoreControllerAction(ctx));
         sourceFile.AddAppSrvMethod(commandProcessing.RenderAppSrvMethods(ctx), "コマンド処理");
+        ctx.Use<CommandQueryCatalog>().Add(rootAggregate, commandProcessing.ToCatalogDefinition());
 
         // カスタムロジック用モジュール
         ctx.Use<CommandQueryMappings>().AddCommandModel(rootAggregate);

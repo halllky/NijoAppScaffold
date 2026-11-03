@@ -47,7 +47,8 @@
 ```csharp
 public abstract Task Execute受注登録Async(
     受注登録FormDisplayData param,
-    IPresentationContext<受注登録FormDisplayDataMessages> context);
+    受注登録FormDisplayDataMessages messages,
+    IPresentationContext context);
 ```
 
 ### パターン2: 検索可能なデータ構造の SearchCondition を引数にする
@@ -61,7 +62,8 @@ public abstract Task Execute受注登録Async(
 ```csharp
 public abstract Task Execute受注一括処理Async(
     OrderQuerySearchCondition param,
-    IPresentationContext<OrderQuerySearchConditionMessages> context);
+    OrderQuerySearchConditionMessages messages,
+    IPresentationContext context);
 ```
 
 ### パターン3: 検索可能なデータ構造の DisplayData を戻り値にする
@@ -74,10 +76,11 @@ public abstract Task Execute受注一括処理Async(
 
 生成される Execute メソッドのシグネチャ:
 ```csharp
-public abstract Task Execute受注詳細取得Async(
+public abstract Task<受注詳細QueryDisplayData?> Execute受注詳細取得Async(
     受注検索キーDisplayData param,
-    IPresentationContextWithReturnValue<受注詳細QueryDisplayData, 受注検索キーDisplayDataMessages> context);
-// context.ReturnValue に 受注詳細QueryDisplayData をセットして返す
+    受注検索キーDisplayDataMessages messages,
+    IPresentationContext context);
+// 受注詳細QueryDisplayData を戻り値として返す
 ```
 
 ### パターン4: 引数なし・戻り値なし
@@ -90,20 +93,21 @@ public abstract Task Execute受注詳細取得Async(
 生成される Execute メソッドのシグネチャ:
 ```csharp
 public abstract Task Execute月次集計Async(
+    MessageSetter messages,
     IPresentationContext context);
 ```
 
 ## TypeScript での型情報
 
-コマンド処理のエンドポイントとパラメータ型は、自動生成された `ExecuteFeature` ネームスペースで確認できます。
+コマンド処理のエンドポイントとパラメータ型は、自動生成された `CommandQuery` ネームスペースで確認できます。クエリ（一覧検索・参照検索）と同じ対応表に、コマンド名をキーにして載っています。
 
 ```typescript
 // エンドポイント URL
-const endpoint = ExecuteFeature.Endpoint['受注登録']
+const endpoint = CommandQuery.Endpoint['受注登録']
 // → "/api/受注登録/execute"
 
 // パラメータ型（型安全な呼び出し）
-const param: ExecuteFeature.ParamType['受注登録'] = {
+const param: CommandQuery.ParamType['受注登録'] = {
   orderDate: "2024-06-01",
   customerId: "C001",
   details: [
@@ -112,5 +116,5 @@ const param: ExecuteFeature.ParamType['受注登録'] = {
 }
 
 // 戻り値の型
-type ReturnVal = ExecuteFeature.ReturnType['受注登録']
+type ReturnVal = CommandQuery.ReturnType['受注登録']
 ```

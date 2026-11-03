@@ -8,11 +8,7 @@ partial class DB接続あり_更新あり {
     [Category("DB接続あり（更新あり）")]
     public async Task ダミーデータの従業員に販売管理業務の権限が割り当てられる() {
         var scope = TestUtilImpl.Instance.CreateScope(nameof(ダミーデータの従業員に販売管理業務の権限が割り当てられる));
-        await new DummyDataGeneratorInUnitTest(messages => new PresentationContextInUnitTest<MessageSetter> {
-            ValidationOnly = false,
-            Confirms = [],
-            Messages = messages.As<MessageSetter>(),
-        }).GenerateAsync(scope.App);
+        await new DummyDataGeneratorInUnitTest(new PresentationContextInUnitTest { ValidationOnly = false }).GenerateAsync(scope.App);
 
         var user006 = await scope.App.DbContext.従業員DbSet
             .Include(e => e.従業員の権限)

@@ -12,10 +12,12 @@ namespace MyApp.UnitTest;
 /// </summary>
 internal class PresentationContextInUnitTest : IPresentationContext, IConfirmablePresentationContext {
     public required bool ValidationOnly { get; init; }
-    public required IMessageSetter Messages { get; init; }
-    public required List<string> Confirms { get; init; }
+    public List<string> Confirms { get; } = [];
 
-    public string BuildFailureMessage(string message) {
+    /// <summary>
+    /// テスト失敗時のメッセージに、この処理で発生した確認メッセージと、引数のメッセージの内容を付加して返します。
+    /// </summary>
+    public string BuildFailureMessage(string message, IMessageSetter messages) {
         var details = new List<string>();
 
         if (Confirms.Count > 0) {
@@ -23,7 +25,7 @@ internal class PresentationContextInUnitTest : IPresentationContext, IConfirmabl
             details.AddRange(Confirms.Select(confirm => $"  - {confirm}"));
         }
 
-        var messageState = Messages.GetState();
+        var messageState = messages.GetState();
         if (messageState is not null) {
             var nodesWithMessages = messageState
                 .DescendantsAndSelf()
@@ -51,40 +53,4 @@ internal class PresentationContextInUnitTest : IPresentationContext, IConfirmabl
             ? message
             : $"{message}{Environment.NewLine}{string.Join(Environment.NewLine, details)}";
     }
-
-    public void AddConfirm(string text) {
-        Confirms.Add(text);
-    }
-    public bool HasConfirm() {
-        return Confirms.Count > 0;
-    }
-
-    public IPresentationContext<T> As<T>() where T : IMessageSetter {
-        return new PresentationContextInUnitTest<T> {
-            Messages = Messages.As<T>(),
-            ValidationOnly = ValidationOnly,
-            Confirms = Confirms,
-        };
-    }
-
-    IPresentationContextWithReturnValue<TReturnValue, TMessage> IPresentationContext.AsWithReturnValue<TReturnValue, TMessage>() {
-        return new PresentationContextInUnitTest<TReturnValue, TMessage> {
-            Messages = Messages.As<TMessage>(),
-            ValidationOnly = ValidationOnly,
-            Confirms = Confirms,
-        };
-    }
-}
-
-/// <inheritdoc cref="PresentationContextInUnitTest"/>
-internal class PresentationContextInUnitTest<TMessage> : PresentationContextInUnitTest, IPresentationContext<TMessage> where TMessage : IMessageSetter {
-    TMessage IPresentationContext<TMessage>.Messages => (TMessage)Messages;
-}
-
-/// <inheritdoc cref="PresentationContextInUnitTest"/>
-internal class PresentationContextInUnitTest<TReturnValue, TMessage> : PresentationContextInUnitTest<TMessage>, IPresentationContextWithReturnValue<TReturnValue, TMessage>
-    where TMessage : IMessageSetter
-    where TReturnValue : new() {
-
-    public TReturnValue ReturnValue { get; set; } = new();
 }

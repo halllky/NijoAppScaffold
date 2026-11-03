@@ -41,7 +41,7 @@ export const 商品検索ダイアログ = defineSearchDialog<商品.SearchCondi
   ],
 
   // 検索処理
-  search: (condition, signal) => callComplexPostEndpointAsync('ref-to:商品', condition, { ignoreConfirm: true, signal }),
+  search: (condition, signal) => callComplexPostEndpointAsync('ref-to:商品', condition, { signal }),
   getItemKey: item => item.商品SEQ ?? '',
 
   // 外部参照の入力欄から使うときの情報

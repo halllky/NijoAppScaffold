@@ -118,9 +118,6 @@ namespace Nijo.Parts.Common {
             [TS_SEARCH_CONDITION] = "SearchCondition",
             [TS_COMMAND_PARAM] = "CommandParam",
             [TS_COMMAND_RETURN_VALUE] = "CommandReturnValue",
-            [TS_LOAD_FEATURE] = "LoadFeature",
-            [TS_LOAD_REF_FEATURE] = "LoadRefFeature",
-            [TS_EXECUTE_FEATURE] = "ExecuteFeature",
             [TS_STRUCTURE_MODEL] = "StructureModel",
             [TS_STRUCTURE_MODEL_DISPLAY_DATA] = "StructureModelDisplayData",
         };
@@ -130,9 +127,6 @@ namespace Nijo.Parts.Common {
         private const string TS_SEARCH_CONDITION = "search-condition";
         private const string TS_COMMAND_PARAM = "command-param";
         private const string TS_COMMAND_RETURN_VALUE = "command-return-value";
-        private const string TS_LOAD_FEATURE = "load-feature";
-        private const string TS_LOAD_REF_FEATURE = "load-ref-feature";
-        private const string TS_EXECUTE_FEATURE = "execute-feature";
         private const string TS_STRUCTURE_MODEL = "structure-model";
         private const string TS_STRUCTURE_MODEL_DISPLAY_DATA = "structure-model-display-data";
         private const string TS_DEEP_EQUAL_FUNCTION = "deep-equal-function";

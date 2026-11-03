@@ -9,17 +9,17 @@ partial class OverridedApplicationService {
     /// </summary>
     private const string INIT_PASSWORD = "pass";
 
-    public override async Task Executeパスワード再発行Async(パスワード再発行ParameterDisplayData param, IPresentationContext<パスワード再発行ParameterMessages> context) {
+    public override async Task Executeパスワード再発行Async(パスワード再発行ParameterDisplayData param, パスワード再発行ParameterMessages messages, IPresentationContext context) {
 
         // 権限チェック
         if (LoginUser == null || !LoginUser.Isシステム管理者) {
-            context.Messages.AddError("システム管理者のみ実行可能です。");
+            messages.AddError("システム管理者のみ実行可能です。");
             return;
         }
 
         // 入力チェック
         if (param.対象者 == null) {
-            context.Messages.対象者.AddError("対象者を選択してください。");
+            messages.対象者.AddError("対象者を選択してください。");
             return;
         }
 
@@ -34,14 +34,14 @@ partial class OverridedApplicationService {
             .LoadForEdit従業員Async(query => query.Where(x => x.従業員番号 == employeeNumber)))
             .SingleOrDefault();
         if (employee == null) {
-            context.Messages.AddError(MSG.DataNotFoundError());
+            messages.AddError(MSG.DataNotFoundError());
             return;
         }
         employee.SALT = salt;
         employee.パスワード = hash;
 
         if (!employee.TryValidate(out var validated, out var errors)) {
-            errors.CopyTo(context.Messages);
+            errors.CopyTo(messages);
             return;
         }
         if (context.ValidationOnly) return;
@@ -50,7 +50,7 @@ partial class OverridedApplicationService {
 
         var result = await DbContext.TrySaveAsync(validated);
         if (!result.Success) {
-            result.Errors.CopyTo(context.Messages);
+            result.Errors.CopyTo(messages);
             return;
         }
 

@@ -20,7 +20,7 @@
 複数行を一括で更新するコマンドの例です。
 
 ```csharp
-public override async Task Execute売上一括更新Async(売上一括更新DisplayData param, IPresentationContext<売上一括更新Messages> context) {
+public override async Task Execute売上一括更新Async(売上一括更新DisplayData param, 売上一括更新Messages messages, IPresentationContext context) {
 
     // 集約単位の読み込み。AsNoTracking で読み込まれる。
     // Version には更新時ではなく画面表示時の値を渡すこと。
@@ -34,7 +34,7 @@ public override async Task Execute売上一括更新Async(売上一括更新Disp
 
     for (var i = 0; i < param.Rows.Count; i++) {
         var row = param.Rows[i];
-        var message = context.Messages.Rows[i];
+        var message = messages.Rows[i];
 
         // 新規
         if (!row.ExistsInDatabase) {
@@ -77,7 +77,7 @@ public override async Task Execute売上一括更新Async(売上一括更新Disp
     }
 
     // いずれか1件でもエラーなら中断
-    if (context.Messages.HasError()) return;
+    if (messages.HasError()) return;
 
     // 1巡目はここまで
     if (context.ValidationOnly) {
@@ -90,12 +90,12 @@ public override async Task Execute売上一括更新Async(売上一括更新Disp
 
     var result = await DbContext.TrySaveAsync(saveCommands);
     if (!result.Success) {
-        result.Errors.CopyTo(context.Messages);
+        result.Errors.CopyTo(messages);
         return; // コミットせずにスコープを抜けるとロールバックされる
     }
 
     await tran.CommitAsync();
-    context.Messages.AddInfo("保存しました。");
+    messages.AddInfo("保存しました。");
 }
 ```
 
@@ -193,7 +193,7 @@ errors.入荷数量.CopyTo(message.数量);
 
 ```csharp
 if (!command.TryValidate(out var validated, out var errors)) {
-    errors.CopyTo(context.Messages);
+    errors.CopyTo(messages);
     return;
 }
 ```
@@ -202,9 +202,9 @@ if (!command.TryValidate(out var validated, out var errors)) {
 
 ```csharp
 header.TryValidate(out var validatedHeader, out var headerErrors);
-headerErrors.CopyTo(context.Messages);
+headerErrors.CopyTo(messages);
 // ...明細の検証...
-if (validatedHeader == null || context.Messages.HasError()) return;
+if (validatedHeader == null || messages.HasError()) return;
 ```
 
 ## 保存（TrySaveAsync）
@@ -253,7 +253,7 @@ EF Core が既定で Error レベルで出力する DB エラーのログは `Ov
 ```csharp
 var result = await DbContext.TrySaveAsync(validated);
 if (!result.Success) { ... }
-context.ReturnValue.売上SEQ = result.Updated.売上SEQ;
+return new() { 売上SEQ = result.Updated.売上SEQ };
 ```
 
 リストを渡した場合、`result.Updated` の順番は引数の順番と対応し、削除されたものは含まれません。
@@ -272,12 +272,12 @@ context.ReturnValue.売上SEQ = result.Updated.売上SEQ;
 ```csharp
 command.TryValidate(out var validated, out var errors);
 Validate売上新規(command, errors); // データモデルごとのファイルに定義しておく
-errors.CopyTo(context.Messages);
+errors.CopyTo(messages);
 
-if (validated == null || context.Messages.HasError()) return;
+if (validated == null || messages.HasError()) return;
 ```
 
-独自のチェックのエラーは `TryValidate` が返す検証済みコマンドの有無に影響しません。保存を止めるには `context.Messages.HasError()` を確認してください。
+独自のチェックのエラーは `TryValidate` が返す検証済みコマンドの有無に影響しません。保存を止めるには `messages.HasError()` を確認してください。
 
 保存後に常に行なう処理（外部システムへの通知など）も同様に、`TrySaveAsync` の成功後に明示的に呼びます。
 

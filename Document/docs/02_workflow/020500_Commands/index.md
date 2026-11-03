@@ -18,7 +18,7 @@ sidebar_position: 5
 | ---------------------------------------------------- | ----------------------------------------------------------- |
 | Execute メソッドのシグネチャ・Web API エンドポイント | このページ参照                                              |
 | 引数・戻り値の型定義（Parameter / ReturnValue）      | [引数・戻り値の型定義](./020501_Parameters.md) |
-| IPresentationContext（エラー管理・戻り値・検証モード） | [IPresentationContext](./020502_PresentationContext.md) |
+| メッセージ・戻り値・IPresentationContext（検証モード） | [IPresentationContext](./020502_PresentationContext.md) |
 
 ## 設計指針
 
@@ -44,18 +44,20 @@ sidebar_position: 5
 // Application Service に生成されるスタブ
 public abstract Task Execute受注登録Async(
     受注登録FormDisplayData param,
-    IPresentationContext<受注登録FormDisplayDataMessages> context);
+    受注登録FormDisplayDataMessages messages,
+    IPresentationContext context);
 
 // 開発者が実装
 public override async Task Execute受注登録Async(
     受注登録FormDisplayData param,
-    IPresentationContext<受注登録FormDisplayDataMessages> context) {
+    受注登録FormDisplayDataMessages messages,
+    IPresentationContext context) {
 
     // IsStored 属性が指定されたデータ構造のコマンドを作成して検証する
     var command = DbContext.StartCreatingOrder();
     command.OrderDate = param.OrderDate;
     if (!command.TryValidate(out var validated, out var errors)) {
-        errors.CopyTo(context.Messages);
+        errors.CopyTo(messages);
         return;
     }
     if (context.ValidationOnly) return;
@@ -65,7 +67,7 @@ public override async Task Execute受注登録Async(
 
     var result = await DbContext.TrySaveAsync(validated);
     if (!result.Success) {
-        result.Errors.CopyTo(context.Messages);
+        result.Errors.CopyTo(messages);
         return;
     }
 

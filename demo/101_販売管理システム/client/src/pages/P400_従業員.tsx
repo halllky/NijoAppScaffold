@@ -234,9 +234,7 @@ async function search従業員(condition: 従業員マスタ.SearchCondition): P
   | { type: 'ok', data: 従業員一括更新Parameter.DisplayData, detail: PresentationContextDetail | undefined }
   | { type: 'error', detail: PresentationContextDetail | undefined }
 > {
-  const result = await callComplexPostEndpointAsync('従業員マスタ', condition, {
-    ignoreConfirm: true,
-  })
+  const result = await callComplexPostEndpointAsync('従業員マスタ', condition)
   if (result.type !== 'ok') {
     return { type: 'error', detail: result.type === 'error' ? result.detail : undefined }
   }

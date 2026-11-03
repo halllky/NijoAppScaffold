@@ -67,7 +67,7 @@ description: client（React）の画面を実装・修正するときに使う�
   - `error`: 入力エラーなど。`detail` を画面のフォームの `setServerMessages` に渡す。
   - `canceled`: 利用者が確認メッセージでキャンセルした、または中断された。何もしない。
 - 「〜しますがよろしいですか？」の確認はこの関数が行う。画面で `window.confirm` を自作しない。
-  読み取りだけの呼び出し（検索・初期表示）には `{ ignoreConfirm: true }` を付け、更新するコマンドには付けない。
+  クエリ（一覧検索・参照検索）は確認を必要としないので何も付けない。読み取りだけのコマンド（初期表示など）には `{ ignoreConfirm: true }` を付け、更新するコマンドには付けない。
 - 中断できる呼び出し（検索、入力に追従する再計算）には `signal` を渡す。
 - 編集したデータを送る前に `base/toWillBeChangedApplied(読み込んだ時点の値, 現在の値, モデル.deepEqual)` を通す。
   変更された行にだけ `willBeChanged` が立ち、サーバー側はそれを見て更新対象を決める。比較の基準は、保存し直した後ではなく**画面が読み込んだ時点の値**にする。
@@ -158,7 +158,7 @@ function 〇〇一覧画面() {
       pageTitle="〇〇"
       sortOptions={SORT_OPTIONS}
       createInitialCondition={createInitialCondition}
-      search={(condition, signal) => callComplexPostEndpointAsync('〇〇一覧', condition, { ignoreConfirm: true, signal })}
+      search={(condition, signal) => callComplexPostEndpointAsync('〇〇一覧', condition, { signal })}
       header={<Link to={getLinkUrlTo〇〇詳細()} className="text-teal-600 underline">新規登録</Link>}
       searchCondition={(
         <FieldGroup>
@@ -197,7 +197,7 @@ export default [
 ] satisfies ReactRouter.RouteObject[]
 ```
 
-1. **読み込み**は React Router の `loader` で行う。初期表示用のコマンドかクエリモデルを `ignoreConfirm: true` で呼び、`ok` でなければ例外を投げる（ルートのエラー画面が表示される）。
+1. **読み込み**は React Router の `loader` で行う。初期表示用のコマンドを `ignoreConfirm: true` で（クエリモデルならオプションなしで）呼び、`ok` でなければ例外を投げる（ルートのエラー画面が表示される）。
    新規登録で初期値の加工が要るなら、それも初期表示コマンドに任せるか、loader の中で行う。
 2. **フォーム**は `useDisplayDataForm(モデル, { defaultValues: loaderData })`。
    保存後の再読み込みなどで loader のデータが変わったらフォームを置き換える effect を置く（ルーターとの同期）。

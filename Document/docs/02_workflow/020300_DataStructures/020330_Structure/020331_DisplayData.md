@@ -65,7 +65,8 @@ export type OrderFormDisplayDataDetails = {
 ```csharp
 public override async Task Execute受注登録Async(
     OrderFormDisplayData param,
-    IPresentationContext<OrderFormDisplayDataMessages> context) {
+    OrderFormDisplayDataMessages messages,
+    IPresentationContext context) {
 
     // Children の WillBeDeleted を見て処理を分岐
     foreach (var detail in param.Details ?? []) {
@@ -95,5 +96,5 @@ Children のメッセージは行番号付きでセットできます。
 
 ```csharp
 // 明細行 0 の ProductId にエラーをセット
-context.Messages.Details?[0]?.ProductId?.AddError("商品コードが存在しません。");
+messages.Details?[0]?.ProductId?.AddError("商品コードが存在しません。");
 ```

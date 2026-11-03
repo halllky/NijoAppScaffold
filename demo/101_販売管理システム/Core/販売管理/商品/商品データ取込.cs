@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task Execute商品データ取込Async(IPresentationContext<MessageSetter> context) {
+    public override async Task Execute商品データ取込Async(MessageSetter messages, IPresentationContext context) {
 
         foreach (var item in 商品管理システム.Enumerate商品データ()) {
             Log.LogInformation("処理開始: {itemName} ({itemExternalId})", item.Name, item.ExternalId);
@@ -40,7 +40,7 @@ partial class OverridedApplicationService {
                 existing.TryValidate(out validated, out errors);
             }
 
-            errors.CopyTo(context.Messages);
+            errors.CopyTo(messages);
             if (validated == null || context.ValidationOnly) continue;
 
             // トランザクションの範囲は商品1件
@@ -48,7 +48,7 @@ partial class OverridedApplicationService {
 
             var result = await DbContext.TrySaveAsync(validated);
             if (!result.Success) {
-                result.Errors.CopyTo(context.Messages);
+                result.Errors.CopyTo(messages);
                 continue;
             }
 

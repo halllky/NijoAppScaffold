@@ -44,7 +44,7 @@ function P300_商品() {
         searchConditionDefaultSize={160}
         sortOptions={SORT_OPTIONS}
         createInitialCondition={createInitialCondition}
-        search={(condition, signal) => callComplexPostEndpointAsync('商品一覧', condition, { ignoreConfirm: true, signal })}
+        search={(condition, signal) => callComplexPostEndpointAsync('商品一覧', condition, { signal })}
         searchCondition={(
           <FieldGroup>
             {/* 商品の識別 */}

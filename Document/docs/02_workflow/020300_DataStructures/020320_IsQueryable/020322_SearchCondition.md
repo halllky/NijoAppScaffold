@@ -127,15 +127,15 @@ protected override void ValidateSearchCondition(
 
 ## TypeScript での型情報
 
-検索処理のエンドポイントとパラメータ型は、自動生成された `LoadFeature` ネームスペースで確認できます。
+検索処理のエンドポイントとパラメータ型は、自動生成された `CommandQuery` ネームスペースで確認できます。
 
 ```typescript
 // エンドポイント URL
-const endpoint = LoadFeature.Endpoint['OrderQuery']
+const endpoint = CommandQuery.Endpoint['OrderQuery']
 // → "/api/order-query/load"
 
 // 型安全な呼び出し
-const params: LoadFeature.ParamType['OrderQuery'] = {
+const params: CommandQuery.ParamType['OrderQuery'] = {
   filter: { orderDateFrom: "2024-01-01" },
   sort: ["OrderDate DESC"],
   take: 20,

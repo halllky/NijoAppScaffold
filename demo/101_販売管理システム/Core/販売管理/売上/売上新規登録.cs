@@ -4,17 +4,17 @@ using MyApp.Core.Authorization;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task Execute売上新規登録Async(売上詳細DisplayData param, IPresentationContextWithReturnValue<売上新規登録ReturnValueDisplayData, 売上詳細Messages> context) {
+    public override async Task<売上新規登録ReturnValueDisplayData?> Execute売上新規登録Async(売上詳細DisplayData param, 売上詳細Messages messages, IPresentationContext context) {
         // 権限チェック
         if (LoginUser == null || !LoginUser.Has権限(権限区分.販売担当)) {
-            context.Messages.AddError("販売担当のみ実行可能です。");
-            return;
+            messages.AddError("販売担当のみ実行可能です。");
+            return null;
         }
 
         // 入力チェック
         if (param.売上詳細の売上明細.Count == 0) {
-            context.Messages.売上詳細の売上明細.AddError("売上明細を1件以上登録してください。");
-            return;
+            messages.売上詳細の売上明細.AddError("売上明細を1件以上登録してください。");
+            return null;
         }
 
         // 在庫引当計算
@@ -27,7 +27,7 @@ partial class OverridedApplicationService {
 
         for (var i = 0; i < param.売上詳細の売上明細.Count; i++) {
             var detail = param.売上詳細の売上明細[i];
-            var message = context.Messages.売上詳細の売上明細[i];
+            var message = messages.売上詳細の売上明細[i];
             var productId = detail.商品.商品SEQ;
             var quantity = detail.売上数量;
 
@@ -84,8 +84,8 @@ partial class OverridedApplicationService {
             allocationPlans.Add((detail, plan));
         }
 
-        if (context.Messages.HasError()) {
-            return;
+        if (messages.HasError()) {
+            return null;
         }
 
         // 念のため自動計算分の売上総額を再計算しておく
@@ -113,22 +113,22 @@ partial class OverridedApplicationService {
 
         command.TryValidate(out var validated, out var errors);
         Validate売上新規(command, errors);
-        errors.CopyTo(context.Messages);
-        errors.売上の売上明細.CopyTo(context.Messages.売上詳細の売上明細);
+        errors.CopyTo(messages);
+        errors.売上の売上明細.CopyTo(messages.売上詳細の売上明細);
 
         // 入荷明細の残数量更新
         // 読込時点から他者による更新がないことを保証するため、stockCacheにあるVersionを使用する。
         var stockCommands = await LoadForEdit入荷明細の残数量Async(
             stockCache.Values.SelectMany(x => x),
             allocationPlans.SelectMany(x => x.Plan),
-            context.Messages);
+            messages);
 
-        if (validated == null || context.Messages.HasError()) {
-            return;
+        if (validated == null || messages.HasError()) {
+            return null;
         }
         if (context.ValidationOnly) {
             context.AddConfirm("登録を確定します。よろしいですか？");
-            return;
+            return null;
         }
 
         // 保存処理
@@ -136,19 +136,19 @@ partial class OverridedApplicationService {
 
         var result = await DbContext.TrySaveAsync(validated);
         if (!result.Success) {
-            result.Errors.CopyTo(context.Messages);
-            return; // トランザクションはコミットされずに終了＝ロールバック
+            result.Errors.CopyTo(messages);
+            return null; // トランザクションはコミットされずに終了＝ロールバック
         }
 
         var stockResult = await DbContext.TrySaveAsync(stockCommands);
         if (!stockResult.Success) {
-            stockResult.Errors.CopyTo(context.Messages);
-            return;
+            stockResult.Errors.CopyTo(messages);
+            return null;
         }
         await Notify在庫数量Async(stockResult.Updated.Select(x => x.商品?.商品SEQ));
 
         await tran.CommitAsync();
-        context.ReturnValue.売上SEQ = result.Updated.売上SEQ;
-        context.Messages.AddInfo("売上登録が完了しました。");
+        messages.AddInfo("売上登録が完了しました。");
+        return new() { 売上SEQ = result.Updated.売上SEQ };
     }
 }

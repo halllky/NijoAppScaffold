@@ -38,7 +38,7 @@ function P100_売上() {
       searchConditionDefaultSize={160}
       sortOptions={SORT_OPTIONS}
       createInitialCondition={createInitialCondition}
-      search={(condition, signal) => callComplexPostEndpointAsync('売上一覧', condition, { ignoreConfirm: true, signal })}
+      search={(condition, signal) => callComplexPostEndpointAsync('売上一覧', condition, { signal })}
       header={(
         <Link to={getLinkUrlToP101売上詳細()} className="text-teal-600 underline">
           新規登録

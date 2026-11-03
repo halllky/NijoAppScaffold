@@ -12,11 +12,10 @@
 ```
 [フロントエンド] POST /api/{集約名}/load
         ↓
-[Controller] Load() アクション
+[プレゼンテーション層] Web の場合は WebApi/Base/CommandQueryEndpoints.cs
         ↓
-ValidateSearchCondition()  ← 検索条件のバリデーション（オーバーライド可）
-        ↓ エラーなし
 LoadAsync()  ← 検索処理本体（フレームワーク固定）
+        ├─ ValidateSearchCondition() ← 検索条件のバリデーション（オーバーライド可）。エラーがあればここで中断
         ├─ CreateQuerySource()      ← FROM句・SELECT句  [開発者実装]
         ├─ AppendWhereClause()      ← WHERE句 [自動生成・オーバーライド可]
         ├─ AppendOrderByClause()    ← ORDER BY句 [自動生成・オーバーライド可]
@@ -28,6 +27,7 @@ LoadAsync()  ← 検索処理本体（フレームワーク固定）
 ```
 
 `LoadAsync` 自体はフレームワークが生成する固定実装です。
+検索条件のバリデーションも `LoadAsync` の中で行われるため、Web、バッチ、単体テストのどこから呼んでも同じ流れになります。
 開発者が必ず実装するのは **`CreateQuerySource`** のみです。
 
 ---
@@ -40,16 +40,14 @@ SQL の **FROM 句と SELECT 句**に相当します。
 ```csharp
 // 生成されるスタブ（MapToView を指定しない場合）
 protected abstract IQueryable<OrderQuerySearchResult> CreateQuerySource(
-    OrderQuerySearchCondition searchCondition,
-    IPresentationContext<OrderQuerySearchConditionMessages> context);
+    OrderQuerySearchCondition searchCondition, IPresentationContext context);
 ```
 
 ### 実装例：永続化されるデータ構造から射影する
 
 ```csharp
 protected override IQueryable<OrderQuerySearchResult> CreateQuerySource(
-    OrderQuerySearchCondition searchCondition,
-    IPresentationContext<OrderQuerySearchConditionMessages> context) {
+    OrderQuerySearchCondition searchCondition, IPresentationContext context) {
 
     return DbContext.Orders
         .Include(o => o.OrderDetails)
@@ -151,8 +149,7 @@ SQL では表現しにくい加工や、外部 API / キャッシュからのデ
 ```csharp
 protected override IEnumerable<OrderQueryDisplayData> OnAfterLoaded(
     IEnumerable<OrderQueryDisplayData> currentPageItems,
-    OrderQuerySearchCondition searchCondition,
-    IPresentationContext<OrderQuerySearchConditionMessages> context) {
+    OrderQuerySearchCondition searchCondition, IPresentationContext context) {
 
     // 例: 外部サービスから配送ステータスを一括取得して補完
     var orderIds = currentPageItems.Select(x => x.OrderId).ToList();
@@ -178,16 +175,17 @@ protected override IEnumerable<OrderQueryDisplayData> OnAfterLoaded(
 ## ValidateSearchCondition — 検索条件のバリデーション（オプション）
 
 検索を実行する前に条件の整合性チェックを行いたい場合にオーバーライドします。
-エラーをセットすると `LoadAsync` の実行がスキップされます。
+エラーをセットすると、`LoadAsync` は検索を行わずに `null` を返します。
 
 ```csharp
 public override void ValidateSearchCondition(
     OrderQuerySearchCondition searchCondition,
-    IPresentationContext<OrderQuerySearchConditionMessages> context) {
+    OrderQuerySearchConditionMessages messages,
+    IPresentationContext context) {
 
     var f = searchCondition.Filter;
     if (f?.OrderDateFrom > f?.OrderDateTo) {
-        context.Messages.Filter?.OrderDateFrom?
+        messages.Filter?.OrderDateFrom?
             .AddError("開始日は終了日以前の日付を指定してください。");
     }
 }
@@ -198,11 +196,11 @@ public override void ValidateSearchCondition(
 ## TypeScript からの呼び出し
 
 ```typescript
-// エンドポイントとパラメータ型は LoadFeature から取得
-const endpoint = LoadFeature.Endpoint['OrderQuery']
+// エンドポイントとパラメータ型は CommandQuery から取得
+const endpoint = CommandQuery.Endpoint['OrderQuery']
 // → POST "/api/order-query/load"
 
-const condition: LoadFeature.ParamType['OrderQuery'] = {
+const condition: CommandQuery.ParamType['OrderQuery'] = {
   filter: {
     customerName: "田中",
     orderDateFrom: "2024-01-01",
@@ -220,6 +218,6 @@ const response = await fetch(endpoint, {
 })
 
 // 戻り値: { items: OrderQueryDisplayData[], totalCount: number }
-const result: LoadFeature.ReturnType['OrderQuery'] = await response.json()
+const result: CommandQuery.ReturnType['OrderQuery'] = await response.json()
 console.log(`${result.totalCount} 件中 ${result.items.length} 件を表示`)
 ```

@@ -4,16 +4,16 @@ using MyApp.Core.Authorization;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task Execute売上修正Async(売上詳細DisplayData param, IPresentationContext<売上詳細Messages> context) {
+    public override async Task Execute売上修正Async(売上詳細DisplayData param, 売上詳細Messages messages, IPresentationContext context) {
         // 権限チェック
         if (LoginUser == null || !LoginUser.Has権限(権限区分.販売担当)) {
-            context.Messages.AddError("販売担当のみ実行可能です。");
+            messages.AddError("販売担当のみ実行可能です。");
             return;
         }
 
         // 入力チェック
         if (param.売上SEQ == null) {
-            context.Messages.AddError("売上SEQが指定されていません。");
+            messages.AddError("売上SEQが指定されていません。");
             return;
         }
 
@@ -22,7 +22,7 @@ partial class OverridedApplicationService {
             売上SEQ = param.売上SEQ,
         });
         if (command == null) {
-            context.Messages.AddError(MSG.DataNotFoundError());
+            messages.AddError(MSG.DataNotFoundError());
             return;
         }
 
@@ -40,7 +40,7 @@ partial class OverridedApplicationService {
         // 新規追加明細の特定と在庫計算
         for (var i = 0; i < param.売上詳細の売上明細.Count; i++) {
             var detail = param.売上詳細の売上明細[i];
-            var message = context.Messages.売上詳細の売上明細[i];
+            var message = messages.売上詳細の売上明細[i];
 
             // 既存明細はスキップ
             if (detail.ExistsInDatabase) {
@@ -180,7 +180,7 @@ partial class OverridedApplicationService {
             allocationPlans.Add((detail, i, plan));
         }
 
-        if (context.Messages.HasError()) {
+        if (messages.HasError()) {
             return;
         }
 
@@ -209,9 +209,9 @@ partial class OverridedApplicationService {
 
         command.TryValidate(out var validated, out var errors);
         Validate売上修正(command, before, errors);
-        errors.CopyTo(context.Messages);
+        errors.CopyTo(messages);
         foreach (var (commandIndex, rowIndex) in addedRows) {
-            errors.売上の売上明細[commandIndex].CopyTo(context.Messages.売上詳細の売上明細[rowIndex]);
+            errors.売上の売上明細[commandIndex].CopyTo(messages.売上詳細の売上明細[rowIndex]);
         }
 
         // 入荷明細の残数量更新
@@ -219,9 +219,9 @@ partial class OverridedApplicationService {
         var stockCommands = await LoadForEdit入荷明細の残数量Async(
             stockCache.Values.SelectMany(x => x),
             allocationPlans.SelectMany(x => x.Plan),
-            context.Messages);
+            messages);
 
-        if (validated == null || context.Messages.HasError()) {
+        if (validated == null || messages.HasError()) {
             return;
         }
         if (context.ValidationOnly) {
@@ -234,18 +234,18 @@ partial class OverridedApplicationService {
 
         var updateResult = await DbContext.TrySaveAsync(validated);
         if (!updateResult.Success) {
-            updateResult.Errors.CopyTo(context.Messages);
+            updateResult.Errors.CopyTo(messages);
             return;
         }
 
         var stockResult = await DbContext.TrySaveAsync(stockCommands);
         if (!stockResult.Success) {
-            stockResult.Errors.CopyTo(context.Messages);
+            stockResult.Errors.CopyTo(messages);
             return;
         }
         await Notify在庫数量Async(stockResult.Updated.Select(x => x.商品?.商品SEQ));
 
         await tran.CommitAsync();
-        context.Messages.AddInfo("売上修正が完了しました。");
+        messages.AddInfo("売上修正が完了しました。");
     }
 }

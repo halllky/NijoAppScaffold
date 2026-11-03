@@ -5,8 +5,25 @@ sidebar_label: IPresentationContext
 
 # IPresentationContext
 
-`IPresentationContext` は、コマンドの `Execute{Name}Async` メソッドに渡される「処理文脈」オブジェクトです。
-**エラーメッセージの管理**、**戻り値のセット**、**検証専用モードの制御**という3つの役割を担います。
+コマンドの `Execute{Name}Async` メソッドは、次の形をしています。
+
+```csharp
+public override async Task<戻り値の型?> Execute{Name}Async(
+    引数の型 param,           // 処理の入力
+    引数のメッセージの型 messages, // 処理の出力のうち、引数の形に沿ったエラー・情報メッセージ
+    IPresentationContext context) // この処理を呼び出したプレゼンテーション層（Web、バッチ、単体テストなど）からの情報
+```
+
+1回の処理の情報は、性質ごとに次のように分かれています。
+
+| 情報 | 受け渡し方 | 形が決まる場所 |
+|---|---|---|
+| 入力 | 引数 `param` | スキーマ定義の `Parameter` 属性 |
+| 戻り値 | メソッドの戻り値（`return`） | スキーマ定義の `ReturnValue` 属性 |
+| エラー・情報メッセージ | 引数 `messages` | 引数の形から決まる |
+| 呼び出し元の情報（検証専用モードなど） | 引数 `context`（`IPresentationContext`） | プレゼンテーション層ごとの実装 |
+
+引数のないコマンドは `param` が無く、`messages` は `MessageSetter` 型になります。戻り値のないコマンドは `Task` を返します。
 
 
 ## Messages（エラー・情報メッセージ）
@@ -16,17 +33,17 @@ sidebar_label: IPresentationContext
 フォーム全体に関わるエラーや、処理完了後の通知メッセージを設定します。
 
 ```csharp
-// 権限がない場合のエラー
+// 権限がない場合のエラー（戻り値のあるコマンドなので null を返して中断）
 if (LoginUser == null || !LoginUser.CanUse入荷登録) {
-    context.Messages.AddError("入荷担当のみ実行可能です。");
-    return;
+    messages.AddError("入荷担当のみ実行可能です。");
+    return null;
 }
 
 // 処理成功後の通知
-context.Messages.AddInfo("入荷登録が完了しました。");
+messages.AddInfo("入荷登録が完了しました。");
 
 // エラーが1件でもあるか確認
-if (context.Messages.HasError()) return;
+if (messages.HasError()) return null;
 ```
 
 ### フィールドレベルのメッセージ
@@ -36,24 +53,24 @@ if (context.Messages.HasError()) return;
 ```csharp
 // ログイン処理の例
 if (string.IsNullOrWhiteSpace(param.従業員番号)) {
-    context.Messages.従業員番号.AddError("従業員番号を入力してください。");
+    messages.従業員番号.AddError("従業員番号を入力してください。");
 }
 if (string.IsNullOrWhiteSpace(param.パスワード)) {
-    context.Messages.パスワード.AddError("パスワードを入力してください。");
+    messages.パスワード.AddError("パスワードを入力してください。");
 }
-if (context.Messages.HasError()) return;
+if (messages.HasError()) return;
 ```
 
 ### コレクション要素のメッセージ
 
 明細行など繰り返し要素の各行にエラーを紐付けます。
-`context.Messages.コレクション名[i]` でその行専用のメッセージコンテナを取得します。
+`messages.コレクション名[i]` でその行専用のメッセージコンテナを取得します。
 
 ```csharp
 // 売上明細の一覧を検証する例
 for (var i = 0; i < param.売上詳細の売上明細.Count; i++) {
     var detail = param.売上詳細の売上明細[i];
-    var message = context.Messages.売上詳細の売上明細[i]; // i 行目のメッセージコンテナ
+    var message = messages.売上詳細の売上明細[i]; // i 行目のメッセージコンテナ
 
     if (detail.商品.商品SEQ == null) {
         message.商品.AddError("商品を選択してください。");
@@ -66,7 +83,7 @@ for (var i = 0; i < param.売上詳細の売上明細.Count; i++) {
 }
 
 // 全行のチェックが終わった後で、エラーがあれば中断
-if (context.Messages.HasError()) return;
+if (messages.HasError()) return;
 ```
 
 ---
@@ -82,16 +99,17 @@ if (context.Messages.HasError()) return;
 ```csharp
 public override async Task Execute売上修正Async(
     売上詳細DisplayData param,
-    IPresentationContext<売上詳細Messages> context) {
+    売上詳細Messages messages,
+    IPresentationContext context) {
 
     // ─── バリデーション ───
     if (param.売上SEQ == null) {
-        context.Messages.AddError("売上SEQが指定されていません。");
+        messages.AddError("売上SEQが指定されていません。");
         return;
     }
     // ... 明細のチェック ...
 
-    if (context.Messages.HasError()) return;
+    if (messages.HasError()) return;
 
     // フェーズ1: 確認メッセージを積んで終了（実際の保存はしない）
     if (context.ValidationOnly) {
@@ -115,43 +133,41 @@ public override async Task Execute売上修正Async(
 
 ---
 
-## ReturnValue（戻り値）
+## 戻り値
 
-`IPresentationContextWithReturnValue` を使う場合、処理が成功した後に `context.ReturnValue` へ返却データをセットします。
+処理結果はメソッドの戻り値として返します。
+エラーで処理を中断する場合や、検証専用モードで処理を終える場合は `null` を返して構いません。
 
 ```csharp
 // 入荷登録の例: 発番した入荷ID を戻り値として返す
-if (!context.ValidationOnly && headerResult.Success && !hasErrorInDetail) {
-    await tran.CommitAsync();
-    context.ReturnValue.入荷ID = newId;               // コミット後にセット
-    context.Messages.AddInfo("入荷登録が完了しました。");
-}
+await tran.CommitAsync();
+messages.AddInfo("入荷登録が完了しました。");
+return new() { 入荷ID = newId };
 ```
 
 ```csharp
-// ログインの例: オブジェクトごと代入する
-context.ReturnValue = new() {
-    従業員番号 = employee.従業員番号,
-    氏名 = employee.氏名,
-    入荷機能を利用可能 = employee.入荷担当 == true,
-    販売機能を利用可能 = employee.販売担当 == true,
-};
+// ログインの例: 権限がなければ null を返して中断する
+if (employee == null) {
+    messages.AddError("従業員番号またはパスワードが違います。");
+    return null;
+}
 await tran.CommitAsync();
+return LoginUser.From(employee).ToDisplayData();
 ```
 
 ---
 
 ## トランザクションとの組み合わせパターン
 
-[登録・更新・削除](../020300_DataStructures/020310_IsStored/020312_CRUDMethods.md) の部品は `context` を受け取りません。
-検証結果や保存結果のメッセージは、コマンドの処理の中で `CopyTo` により `context.Messages` へ移します。
+[登録・更新・削除](../020300_DataStructures/020310_IsStored/020312_CRUDMethods.md) の部品は `messages` を受け取りません。
+検証結果や保存結果のメッセージは、コマンドの処理の中で `CopyTo` により `messages` へ移します。
 
 ```csharp
 // 検証
 var header = DbContext.StartCreating入荷();
 header.入荷ID = newId;
 header.TryValidate(out var validatedHeader, out var headerErrors);
-headerErrors.CopyTo(context.Messages);
+headerErrors.CopyTo(messages);
 
 var details = new List<ValidatedCommand<入荷明細UpdateCommand>>();
 for (var i = 0; i < param.入荷商品一覧.Count; i++) {
@@ -160,29 +176,64 @@ for (var i = 0; i < param.入荷商品一覧.Count; i++) {
     if (detail.TryValidate(out var validated, out var errors)) {
         details.Add(validated);
     }
-    errors.CopyTo(context.Messages.入荷商品一覧[i]);
+    errors.CopyTo(messages.入荷商品一覧[i]);
 }
 
-if (validatedHeader == null || context.Messages.HasError() || context.ValidationOnly) return;
+if (validatedHeader == null || messages.HasError() || context.ValidationOnly) return null;
 
 // 保存。コミットせずに return するだけでロールバックされる
 await using var tran = await BeginTransactionAsync();
 
 var headerResult = await DbContext.TrySaveAsync(validatedHeader);
 if (!headerResult.Success) {
-    headerResult.Errors.CopyTo(context.Messages);
-    return;
+    headerResult.Errors.CopyTo(messages);
+    return null;
 }
 
 var detailResult = await DbContext.TrySaveAsync(details);
 if (!detailResult.Success) {
-    detailResult.Errors.CopyTo(context.Messages);
-    return;
+    detailResult.Errors.CopyTo(messages);
+    return null;
 }
 
 await tran.CommitAsync();
-context.ReturnValue.入荷ID = newId;
-context.Messages.AddInfo("入荷登録が完了しました。");
+messages.AddInfo("入荷登録が完了しました。");
+return new() { 入荷ID = newId };
+```
+
+---
+
+## プレゼンテーション層ごとの実装
+
+`IPresentationContext` はプレゼンテーション層ごとに1クラスずつ実装します。
+Web、バッチ、単体テストは呼び出し元として別物なので、それぞれが持つ情報も別々に設計できます。
+
+| プレゼンテーション層 | 実装クラスの例 | `ValidationOnly` |
+|---|---|---|
+| Web | `PresentationContextInWebApi` | HTTPリクエストの `ignore-confirm` が無い1回目は `true` |
+| 単体テスト | `PresentationContextInUnitTest` | テストケースで指定 |
+| バッチ | アプリ側で実装 | 通常は `false` |
+
+ある処理の中から別のコマンドを呼ぶ場合は、同じ `context` をそのまま渡し、メッセージは呼び出し先の引数の形に変換して渡します。
+
+```csharp
+await applicationService.Execute入荷登録Async(param, messages.As<入荷詳細Messages>(), context);
+```
+
+### Web からの呼び出し
+
+自動生成された `CommandQuery.All` には、スキーマ定義から生成されたすべてのクエリとコマンドが、引数・戻り値・メッセージの型と URL とともに並んでいます。
+テンプレートの `WebApi/Base/CommandQueryEndpoints.cs` は、これを1件ずつ ASP.NET Core の Minimal API のエンドポイントとして登録し、HTTPリクエストと処理の引数・戻り値・メッセージとを変換します。
+変換方法（JSONの形、ステータスコードなど）はアプリ側のコードなので、クライアント側の `callComplexPostEndpointAsync` と整合性がとれていれば自由に変更できます。
+
+```csharp
+// Program.cs
+app.MapCommandQueryEndpoints((commandQuery, endpoint) => {
+    // 処理ごとに異なる設定がある場合はここで行う
+    if (commandQuery.Name is nameof(E_CommandQueryType.ログイン)) {
+        endpoint.AllowAnonymous();
+    }
+});
 ```
 
 ---
@@ -245,7 +296,7 @@ type PresentationContextResponse<T> = {
   detail: DetailMessagesContainer  // フィールドごとのエラー・情報メッセージ
   confirms: string[]               // 確認ダイアログのメッセージ一覧
   toastMessage?: string            // トースト通知メッセージ（別途拡張した例）
-  returnValue: T                   // C# 側の context.ReturnValue
+  returnValue: T                   // C# 側のメソッドの戻り値
 }
 
 // callComplexPostEndpointAsync.ts の抜粋

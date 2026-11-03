@@ -145,7 +145,6 @@ namespace Nijo {
         public string PreviewJsonPath => Path.Combine(ProjectRoot, PreviewSetting.FILE_NAME);
 
         public string CoreLibraryRoot => Path.Combine(ProjectRoot, GetConfig().CoreLibraryFolderName);
-        public string WebapiProjectRoot => Path.Combine(ProjectRoot, GetConfig().WebapiProjectFolderName);
         public string ReactProjectRoot => Path.Combine(ProjectRoot, GetConfig().ReactProjectFolderName);
 
         /// <summary>
@@ -294,7 +293,7 @@ namespace Nijo {
             ctx.Use<MessageContainer.BaseClass>();
             ctx.Use<IndexTs>();
             ctx.Use<CommandQueryMappings>();
-            ctx.Use<AspNetController.HandlerInterfaceFile>();
+            ctx.Use<CommandQueryCatalog>();
             ctx.CoreLibrary(dir => {
                 dir.Directory("Util", utilDir => {
                     utilDir.Generate(PresentationContext.RenderStaticCore(ctx));
