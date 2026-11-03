@@ -1,6 +1,6 @@
 import React from "react"
 import type * as RHF from "react-hook-form"
-import type { SearchDialog } from "./defineSearchDialog"
+import type { FindByCode, SearchDialog } from "./defineSearchDialog"
 import type { SearchDialogRegistry } from "./SearchDialogRegistry"
 
 export type SearchDialogHostProps = {
@@ -42,10 +42,32 @@ export function SearchDialogHost(props: SearchDialogHostProps): React.ReactNode 
   // 入れ子の場合は外側の対応表に内側の対応表を足す
   const outerDialogs = outer?.dialogs
   const dialogs = React.useMemo(() => ({ ...outerDialogs, ...props.dialogs }), [outerDialogs, props.dialogs])
-  const contextValue = React.useMemo(() => ({ dialogs, openDialog }), [dialogs, openDialog])
+
+  // 対応表の各検索ダイアログの、コードを照合する関数。
+  // 照合はグリッドの列のようにフックを呼べない場所からも行うので、ここで検索ダイアログごとにフックを呼んで解決しておく
+  const findByCodesRef = React.useRef(new Map<string, FindByCode<RHF.FieldValues, unknown>>())
+  const registerFindByCode = React.useCallback((refTo: string, findByCode: FindByCode<RHF.FieldValues, unknown>) => {
+    findByCodesRef.current.set(refTo, findByCode)
+  }, [])
+  const findByCode = React.useCallback((refTo: string): FindByCode<RHF.FieldValues, unknown> => (code, params, signal) => {
+    const resolved = findByCodesRef.current.get(refTo)
+    if (!resolved) throw new Error(`${refTo} の検索ダイアログのコードの照合が準備できていません。`)
+    return resolved(code, params, signal)
+  }, [])
+
+  const contextValue = React.useMemo(() => ({ dialogs, openDialog, findByCode }), [dialogs, openDialog, findByCode])
 
   return (
     <SearchDialogHostContext.Provider value={contextValue}>
+      {Object.entries(dialogs).map(([refTo, dialog]) => dialog && (
+        <FindByCodeResolver
+          key={refTo}
+          refTo={refTo}
+          dialog={dialog as SearchDialog<RHF.FieldValues, unknown>}
+          register={registerFindByCode}
+        />
+      ))}
+
       {props.children}
 
       {/* 開いているダイアログ。ダイアログの中から別のダイアログを開けるよう、コンテキストの内側に描画する */}
@@ -79,23 +101,43 @@ export function useOpenDialogInHost(): OpenDialogInHost {
 
 /**
  * ui フォルダ内部でのみ使用する。
+ * SearchDialogHost の対応表から引いた検索ダイアログ。コードの照合は、フックを呼ばずに使えるよう解決済みのものを持つ。
+ */
+export type SearchDialogInHost = SearchDialog<RHF.FieldValues, unknown> & {
+  /** 手入力されたコードを照合する */
+  findByCode: FindByCode<RHF.FieldValues, unknown>
+}
+
+/**
+ * ui フォルダ内部でのみ使用する。
  * 外部参照先（メタデータの refTo）に対応する検索ダイアログを、SearchDialogHost に渡された対応表から引く関数を返す。
  * 対応表に無い場合は、返された関数が例外を投げる。
  */
-export function useFindSearchDialog(): (refTo: string) => SearchDialog<RHF.FieldValues, unknown> {
+export function useFindSearchDialog(): (refTo: string) => SearchDialogInHost {
   const host = React.useContext(SearchDialogHostContext)
-  const dialogs = host?.dialogs
   return React.useCallback((refTo: string) => {
-    if (!dialogs) throw new Error('外部参照の入力欄は SearchDialogHost の中に置いてください。')
-    const dialog = (dialogs as Record<string, SearchDialog<RHF.FieldValues, unknown> | undefined>)[refTo]
+    if (!host) throw new Error('外部参照の入力欄は SearchDialogHost の中に置いてください。')
+    const dialog = (host.dialogs as Record<string, SearchDialog<RHF.FieldValues, unknown> | undefined>)[refTo]
     if (!dialog) throw new Error(`${refTo} の検索ダイアログが SearchDialogHost の対応表にありません。`)
-    return dialog
-  }, [dialogs])
+    return { ...dialog, findByCode: host.findByCode(refTo) }
+  }, [host])
+}
+
+/** 検索ダイアログのコードを照合する関数をフックで作り、SearchDialogHost に登録する。何も描画しない */
+function FindByCodeResolver({ refTo, dialog, register }: {
+  refTo: string
+  dialog: SearchDialog<RHF.FieldValues, unknown>
+  register: (refTo: string, findByCode: FindByCode<RHF.FieldValues, unknown>) => void
+}): React.ReactNode {
+  const findByCode = dialog.refField.useFindByCode()
+  React.useLayoutEffect(() => register(refTo, findByCode), [register, refTo, findByCode])
+  return null
 }
 
 const SearchDialogHostContext = React.createContext<{
   dialogs: Partial<SearchDialogRegistry>
   openDialog: OpenDialogInHost
+  findByCode: (refTo: string) => FindByCode<RHF.FieldValues, unknown>
 } | undefined>(undefined)
 
 const throwHostNotFound: OpenDialogInHost = () => {

@@ -49,7 +49,7 @@ export const 従業員検索ダイアログ = defineSearchDialog<サンプル従
   ],
 
   // 検索処理。実際のアプリケーションではここでサーバー側の検索処理を呼ぶ
-  search: searchOnMockServer,
+  useSearch: () => searchOnMockServer,
   getItemKey: item => item.従業員番号 ?? '',
 
   // 外部参照の入力欄から使うときの情報

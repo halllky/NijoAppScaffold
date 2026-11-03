@@ -36,18 +36,31 @@ export function P001_ログイン(props: {
     }
   }, [initializing, loginUser, setFocus])
 
-  // ログインしていない間に表示しようとした画面の読み込み処理は失敗しているので、ログインしたらやり直す
-  const { revalidate } = ReactRouter.useRevalidator()
-  const wasLoggedOut = React.useRef(false)
+  // ログインしていない間に表示しようとした画面の読み込み処理は失敗しているので、ログインしたら読み込み直してから画面を表示する。
+  // 読み込み直す前に表示すると、ログインしていなかったときの失敗を画面が受け取ってしまう。
+  // 再検証（revalidate）では前回のエラーが残るため、同じ URL へ遷移し直して読み込み直す。
+  // 読み込み直しの完了は、遷移の Promise ではなく画面に反映された location と遷移の状態で判定する。
+  // ルーターの状態は遅れて画面に反映されるため、Promise の完了時点ではまだ前回のエラーが画面から見えている
+  const navigate = ReactRouter.useNavigate()
+  const location = ReactRouter.useLocation()
+  const navigation = ReactRouter.useNavigation()
+  const [needsReload, setNeedsReload] = React.useState(false)
+  const [reloadingFromKey, setReloadingFromKey] = React.useState<string>()
   React.useEffect(() => {
     if (initializing) return
     if (!loginUser) {
-      wasLoggedOut.current = true
-    } else if (wasLoggedOut.current) {
-      wasLoggedOut.current = false
-      revalidate()
+      setNeedsReload(true)
+    } else if (needsReload) {
+      setNeedsReload(false)
+      setReloadingFromKey(location.key)
+      navigate(location, { replace: true })
     }
-  }, [initializing, loginUser, revalidate])
+  }, [initializing, loginUser, needsReload, navigate, location])
+  const isReloaded = reloadingFromKey !== undefined && location.key !== reloadingFromKey && navigation.state === 'idle'
+  React.useEffect(() => {
+    if (isReloaded) setReloadingFromKey(undefined)
+  }, [isReloaded])
+  const isReloading = needsReload || (reloadingFromKey !== undefined && !isReloaded)
 
   // ログイン実行。失敗した場合はサーバーから返されたメッセージを表示する
   const onSubmit = useEvent(async (data: ログインParameter.DisplayData) => {
@@ -89,6 +102,9 @@ export function P001_ログイン(props: {
       </div>
     </div>
   )
+
+  // ログインし直した後、画面の読み込み処理をやり直している間
+  if (isReloading) return <NowLoading />
 
   // ログインしている場合は、子コンポーネントを表示
   return <>{props.children}</>

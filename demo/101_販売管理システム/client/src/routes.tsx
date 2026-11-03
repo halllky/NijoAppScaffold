@@ -1,4 +1,5 @@
-import { Outlet, RouteObject } from "react-router-dom"
+import React from "react"
+import { Outlet, RouteObject, useRouteError } from "react-router-dom"
 import AutoIndex from "./auto-pages/自動生成画面一覧"
 import AutoSearch from "./auto-pages/自動生成QueryModel"
 import AutoCommand from "./auto-pages/自動生成CommandModel"
@@ -7,6 +8,8 @@ import DbViewer from "./debug-rooms/db-viewer/DbViewer"
 import UiSamples from "./debug-rooms/ui"
 import { P001_ログイン } from "./pages/P001_ログイン"
 import { ErrorPage, SearchDialogHost } from "./ui"
+import { ComplexPostError } from "./http/callComplexPostEndpointAsync"
+import { useLoginLogout } from "./useLoginLogout"
 
 /**
  * React Router ルーティング定義。
@@ -34,7 +37,7 @@ export default [
       ],
       // loader などでエラーが発生した場合に表示するエラーページ。
       // ログイン画面の内側に置くことで、ログイン状態が切れていて loader が失敗した場合にはログイン画面を表示させる
-      errorElement: <ErrorPage />,
+      errorElement: <BusinessPageError />,
     }],
   },
 
@@ -53,6 +56,22 @@ export default [
     },
   ]),
 ] satisfies RouteObject[]
+
+/**
+ * 業務画面の loader などでエラーが発生した場合に表示する。
+ * ログイン状態が切れていたために失敗した場合は、エラーページではなくログイン画面に戻す。
+ */
+function BusinessPageError() {
+  const error = useRouteError()
+  const { notifySessionExpired } = useLoginLogout()
+  const isSessionExpired = error instanceof ComplexPostError && error.result.type === 'unauthorized'
+
+  React.useEffect(() => {
+    if (isSessionExpired) notifySessionExpired()
+  }, [isSessionExpired, notifySessionExpired])
+
+  return isSessionExpired ? null : <ErrorPage />
+}
 
 /**
  * 業務画面のフォルダ直下のモジュールが default export するルーティング定義を集める。
