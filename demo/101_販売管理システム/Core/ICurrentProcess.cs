@@ -6,7 +6,7 @@ namespace MyApp;
 /// </summary>
 public interface ICurrentProcess {
     /// <summary>
-    /// 処理名。その処理を人が識別できる名前（LOG-003, DB-002）。
+    /// 処理名。その処理を人が識別できる名前。
     /// </summary>
     string Name { get; }
 }

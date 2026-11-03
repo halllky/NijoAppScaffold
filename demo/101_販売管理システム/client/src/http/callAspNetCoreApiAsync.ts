@@ -21,7 +21,7 @@ export async function callAspNetCoreApiAsync(endpoint: string, init: RequestInit
     ...init,
   })
 
-  // サーバー側でログインしていないと判定された（SES-005）
+  // サーバー側でログインしていないと判定された
   if (response.status === 401) {
     for (const listener of unauthorizedListeners) listener()
   }

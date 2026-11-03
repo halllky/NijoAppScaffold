@@ -36,7 +36,7 @@ export function P001_ログイン(props: {
     }
   }, [initializing, loginUser, setFocus])
 
-  // ログインしていない間に表示しようとした画面の読み込み処理は失敗しているので、ログインしたらやり直す（SES-005, AUTH-006）
+  // ログインしていない間に表示しようとした画面の読み込み処理は失敗しているので、ログインしたらやり直す
   const { revalidate } = ReactRouter.useRevalidator()
   const wasLoggedOut = React.useRef(false)
   React.useEffect(() => {

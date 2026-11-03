@@ -60,7 +60,7 @@ export function LoginUserProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   // サーバー側でログイン状態が切れていた場合（セッションが削除された場合など）は、
-  // クライアント側もログインしていない状態に戻し、ログイン画面を表示させる（SES-005）
+  // クライアント側もログインしていない状態に戻し、ログイン画面を表示させる
   React.useEffect(() => onUnauthorized(() => {
     sessionStorage.removeItem(SESSION_STORAGE_KEY)
     setLoginUser(null)

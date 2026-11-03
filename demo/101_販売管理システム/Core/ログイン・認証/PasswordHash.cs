@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 namespace MyApp.Core.Authorization;
 
 /// <summary>
-/// パスワードを、ユーザーごとに異なる SALT を付けてストレッチングしたハッシュ値（PWD-001）。
+/// パスワードを、ユーザーごとに異なる SALT を付けてストレッチングしたハッシュ値。
 /// 平文のパスワードの代わりに、ハッシュ値と SALT の組を保存する。
 /// </summary>
 internal sealed class PasswordHash {

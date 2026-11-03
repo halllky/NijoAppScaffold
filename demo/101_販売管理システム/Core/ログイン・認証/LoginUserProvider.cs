@@ -39,7 +39,7 @@ public class LoginUserProvider : ICurrentUser {
 
     /// <summary>
     /// 作成者・更新者として記録する名前。
-    /// ログインユーザーがいない処理（ログイン処理そのものやバッチなど）では、その処理の名前を記録する（DB-002）。
+    /// ログインユーザーがいない処理（ログイン処理そのものやバッチなど）では、その処理の名前を記録する。
     /// </summary>
     string ICurrentUser.Name => GetLoginUser()?.従業員番号 ?? _currentProcess.Name;
 
