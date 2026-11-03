@@ -10,26 +10,15 @@ namespace MyApp.WebApi.Base;
 ///
 /// HTTPリクエスト・レスポンスと、処理の引数・戻り値・メッセージとの変換方法は NijoAppScaffold として決まりがあるわけではなく、
 /// クライアント側の呼び出し処理と整合性がとれていればよい。
-/// 以下のような詳細は、アプリケーションの要件に応じて自由に変更してよい。
+/// ここでは以下の最も単純な取り決めにしている。アプリケーションの要件に応じて自由に変更してよい。
 ///
 /// <list type="bullet">
-///   <item>引数や戻り値のJSONシリアライズ/デシリアライズの方法</item>
-///   <item>成功時・失敗時のHTTPステータスコード</item>
-///   <item>エラー時のレスポンス内容</item>
-///   <item>Content-TypeやCORSなどのHTTPヘッダー</item>
+///   <item>リクエスト: 処理の引数を JSON にしたものをリクエストボディで送る（Content-Type: application/json）</item>
+///   <item>レスポンス: 戻り値とメッセージを JSON で返す。ステータスコードは、エラーが無ければ 200、エラーがあれば 422</item>
+///   <item>確認メッセージ（<see cref="CommandQueryContext.Confirms"/>）は扱わない。処理は常に入力チェックと更新を1回で行う</item>
 /// </list>
 /// </summary>
 public static class CommandQueryEndpoints {
-
-    /// <summary>
-    /// クライアント側から送られてくるパラメータは
-    /// Content-Type: multipart/form-data のリクエストボディのこの名前のセクションにJSONで入っている
-    /// </summary>
-    private const string PARAM_DATA = "complex-post-request-body";
-    /// <summary>
-    /// 確認メッセージが承諾された後の本処理を行うHTTPリクエストに付されるクエリパラメータ
-    /// </summary>
-    private const string PARAM_IGNORE_CONFIRM = "ignore-confirm";
 
     /// <summary>
     /// すべてのクエリ・コマンドを HTTP POST のエンドポイントとして登録します。
@@ -66,8 +55,6 @@ public static class CommandQueryEndpoints {
     /// <summary>
     /// 実際のHTTPリクエスト実行時の処理。
     /// HTTPリクエストを処理の引数に変換して処理を実行し、処理結果をHTTPレスポンスに変換する。
-    ///
-    /// HTTPリクエスト・レスポンスのルールは、クライアント側の処理と整合しさえしていればよく、自由に変更可能。
     /// </summary>
     private static async Task<IResult> HandleAsync<TParameter, TReturnValue, TMessages>(CommandQuery<CommandQueryContext, TParameter, TReturnValue, TMessages> commandQuery, HttpContext httpContext)
         where TMessages : IMessageSetter {
@@ -75,59 +62,37 @@ public static class CommandQueryEndpoints {
         var app = httpContext.RequestServices.GetRequiredService<OverridedApplicationService>();
         var jsonOptions = new JsonSerializerOptions().EditDefaultJsonSerializerOptions();
 
-        // ---------------------------------------------------------
         // HTTPリクエストボディを処理の引数に変換する
-        // ---------------------------------------------------------
-        if (!httpContext.Request.HasFormContentType) {
-            app.Log.LogWarning("リクエストの Content-Type が multipart/form-data ではありません。");
-            return Results.BadRequest($"リクエストのContent-Typeは multipart/form-data で、セクション '{PARAM_DATA}' を含んでいる必要があります。");
+        if (!httpContext.Request.HasJsonContentType()) {
+            app.Log.LogWarning("リクエストの Content-Type が application/json ではありません。");
+            return Results.BadRequest("リクエストの Content-Type は application/json である必要があります。");
         }
-        var form = await httpContext.Request.ReadFormAsync(httpContext.RequestAborted);
-        if (!form.TryGetValue(PARAM_DATA, out var dataSection)) {
-            app.Log.LogWarning("リクエストに '{ParamData}' セクションが含まれていません。", PARAM_DATA);
-            return Results.BadRequest($"リクエストのContent-Typeは multipart/form-data で、セクション '{PARAM_DATA}' を含んでいる必要があります。");
-        }
-
         TParameter parameter;
         try {
-            parameter = JsonSerializer.Deserialize<TParameter>(dataSection.ToString(), jsonOptions)
+            parameter = await httpContext.Request.ReadFromJsonAsync<TParameter>(jsonOptions, httpContext.RequestAborted)
                 ?? throw new JsonException("リクエストボディが null です。");
 
-            app.Log.LogDebug("HTTP REQUEST BODY DATA: {DataSection}", app.SerializeForLog(parameter));
+            app.Log.LogDebug("HTTP REQUEST BODY DATA: {Parameter}", app.SerializeForLog(parameter));
 
         } catch (JsonException jsonEx) {
             app.Log.LogWarning(jsonEx, "{ParameterType} 型へのデシリアライズに失敗しました。", typeof(TParameter).FullName);
             return Results.BadRequest($"リクエストの型が不正です。{typeof(TParameter).FullName} 型として認識できません。");
         }
 
-        // ---------------------------------------------------------
         // 処理を実行する
-        // ---------------------------------------------------------
-        var ignoreConfirm = httpContext.Request.Query.TryGetValue(PARAM_IGNORE_CONFIRM, out var strIgnoreConfirm)
-            && bool.TryParse(strIgnoreConfirm, out var blnIgnoreConfirm)
-            && blnIgnoreConfirm;
-        var context = new CommandQueryContext { ValidationOnly = !ignoreConfirm };
+        var context = new CommandQueryContext { ValidationOnly = false };
         var messages = MessageSetter.GetImpl<TMessages>([], new MessageContainer());
 
         var returnValue = await commandQuery.InvokeAsync(app, parameter, messages, context);
 
-        // ---------------------------------------------------------
         // 処理結果をHTTPレスポンスに変換する
-        // ---------------------------------------------------------
-        var responseBody = new JsonObject();
-        if (returnValue != null) {
-            responseBody["returnValue"] = JsonSerializer.SerializeToNode(returnValue, jsonOptions);
-        }
-        responseBody["confirms"] = new JsonArray([.. context.Confirms.Select(text => JsonValue.Create(text))]);
-
         var messageContainer = messages.GetState();
-        responseBody["detail"] = messageContainer == null ? new JsonObject() : ToJsonObject(messageContainer);
-
-        // エラーがある場合、またはコマンドの1回目のリクエスト（入力チェックのみ）の場合は 202 Accepted を返し、
-        // クライアント側に確認メッセージの表示を促す。
-        // クエリはデータを変更しないので確認を必要としない。
-        var statusCode = messages.HasError() || (!commandQuery.IsQuery && !ignoreConfirm)
-            ? HttpStatusCode.Accepted
+        var responseBody = new JsonObject {
+            ["returnValue"] = JsonSerializer.SerializeToNode(returnValue, jsonOptions),
+            ["messages"] = messageContainer == null ? new JsonObject() : ToJsonObject(messageContainer),
+        };
+        var statusCode = messages.HasError()
+            ? HttpStatusCode.UnprocessableEntity
             : HttpStatusCode.OK;
 
         return Results.Content(

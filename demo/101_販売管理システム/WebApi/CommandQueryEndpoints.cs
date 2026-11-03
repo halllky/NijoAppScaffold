@@ -3,13 +3,14 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace MyApp.WebApi.Base;
+namespace MyApp.WebApi;
 
 /// <summary>
 /// 自動生成されたクエリ・コマンド（<see cref="CommandQuery{TCommandQueryContext}.All"/>）を、1件ずつ HTTP エンドポイントとして公開する。
 ///
 /// HTTPリクエスト・レスポンスと、処理の引数・戻り値・メッセージとの変換方法は NijoAppScaffold として決まりがあるわけではなく、
 /// クライアント側の呼び出し処理と整合性がとれていればよい。
+/// ここでは、添付ファイルの送信（multipart/form-data）と、確認メッセージを挟む2回のリクエスト（UI-017）に対応している。
 /// 以下のような詳細は、アプリケーションの要件に応じて自由に変更してよい。
 ///
 /// <list type="bullet">

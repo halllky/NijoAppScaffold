@@ -4,7 +4,7 @@ import { Link } from "react-router-dom"
 import * as DbViewer from "./db-viewer/DbViewer"
 import { 一覧検索サンプルURL, 詳細画面サンプルURL } from "./ui"
 import { URL as AutoIndexUrl } from "../auto-pages/自動生成画面一覧"
-import { callAspNetCoreApiAsync } from "../base/callAspNetCoreApiAsync"
+import { callAspNetCoreApiAsync } from "../http/callAspNetCoreApiAsync"
 import { Button, useOutsideClick } from "../ui"
 import { useLoginLogout } from "../useLoginLogout"
 

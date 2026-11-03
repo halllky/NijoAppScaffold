@@ -80,6 +80,7 @@ dotnet sln nijo.sln add "demo/999_NEW_DEMO/Management/Demo999.Management.csproj"
 | デモ101の業務部 | 販売管理に固有                                       | デモ101                                       | [Demo101TemplatePruner](../Task/Demo101TemplateBuilder/Demo101TemplatePruner.cs) で削除                                                |
 
 配布対象のファイルのコメントにある「自由に書き換えてよい」は、テンプレートから作られた実際のアプリケーションに向けたものである。デモでは上書きされるので、デモ固有の処理が必要なら初期コードに分類を変えるか、`partial` などの拡張点を切ること。
+あるデモだけが配布対象とは別の仕組みを持つ場合は、配布対象の一覧でその行からそのデモを除外する。例えばデモ101は、確認メッセージなどを扱う独自の HTTP の取り決めを持つので、テンプレートの `client/src/base/` と `WebApi/Base/` を受け取らない。
 
 ## デモ編集時
 

@@ -11,9 +11,15 @@ SOURCE_ROOT="$SCRIPT_DIR/../Nijo.NewProjectTemplate"
 NIJO_EXE_PATH="$SCRIPT_DIR/../Nijo.AppScaffold/bin/Debug/net10.0/nijo"
 DISTRIBUTION_LIST="$SCRIPT_DIR/デモ101テンプレート配布対象.txt"
 
-# 配布対象の一覧からコメントと空行を除いたものを出力する
+# 指定されたデモへの配布対象のパスを出力する。
+# 一覧からコメントと空行を除き、そのデモを除外している行（「 !<デモのフォルダ名>」付き）も除く
 list_distribution_targets() {
-    grep -vE '^(#|$)' "$DISTRIBUTION_LIST"
+    local demo_name
+    demo_name="$(basename "$1")"
+    grep -vE '^(#|$)' "$DISTRIBUTION_LIST" | while read -r path excludes; do
+        [[ " $excludes " == *" !$demo_name "* ]] && continue
+        echo "$path"
+    done
 }
 
 # 指定されたデモの配布対象がテンプレートと一致していなければ、その内容を出力して失敗を返す
@@ -22,7 +28,7 @@ check_demo() {
     local result=0
     while IFS= read -r path; do
         diff -rq --exclude=".*" "$SOURCE_ROOT/$path" "$target_root/$path" || result=1
-    done < <(list_distribution_targets)
+    done < <(list_distribution_targets "$target_root")
     return $result
 }
 
@@ -36,7 +42,7 @@ distribute_to_demo() {
             mkdir -p "$(dirname "$target_root/$path")"
             cp "$SOURCE_ROOT/$path" "$target_root/$path"
         fi
-    done < <(list_distribution_targets)
+    done < <(list_distribution_targets "$target_root")
 }
 
 if [ "$1" == "--check" ]; then

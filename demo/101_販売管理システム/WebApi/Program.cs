@@ -2,7 +2,6 @@ using MyApp;
 using MyApp.Core.Authorization;
 using MyApp.WebApi;
 using MyApp.WebApi.Authorization;
-using MyApp.WebApi.Base;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -60,7 +60,7 @@ description: client（React）の画面を実装・修正するときに使う�
 
 ## サーバーは callComplexPostEndpointAsync で呼ぶ
 
-一覧検索・外部参照の検索・コマンド実行は、すべて `base/callComplexPostEndpointAsync` を通す。第 1 引数はクエリモデル名・`ref-to:{参照先}`・コマンドモデル名で、引数と戻り値の型はそこから決まる。
+一覧検索・外部参照の検索・コマンド実行は、すべて `http/callComplexPostEndpointAsync` を通す。第 1 引数はクエリモデル名・`ref-to:{参照先}`・コマンドモデル名で、引数と戻り値の型はそこから決まる。
 
 - 戻り値の `type` は 3 通り。
   - `ok`: 成功。`returnValue` に戻り値、`detail` に警告・情報メッセージが入っていることがある。

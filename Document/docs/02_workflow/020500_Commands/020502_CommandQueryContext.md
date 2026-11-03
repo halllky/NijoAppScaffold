@@ -220,7 +220,7 @@ return new() { 入荷ID = newId };
 
 | 呼び出し元 | `ValidationOnly` | 処理後の `Confirms` |
 |---|---|---|
-| Web | HTTPリクエストに `ignore-confirm` が無い1回目は `true` | レスポンスに詰めてクライアントに確認を求める |
+| Web | テンプレートでは常に `false`。確認を挟む場合は、確認前のリクエストで `true` にする | テンプレートでは扱わない。確認を挟む場合は、レスポンスに詰めてクライアントに確認を求める |
 | 単体テスト | テストケースで指定 | 必要に応じて検証する |
 | バッチ | 通常は `false` | 無視するか、ログに出すか、失敗とするかをバッチ側で決める |
 
@@ -235,7 +235,7 @@ await applicationService.Execute入荷登録Async(param, messages.As<入荷詳�
 
 自動生成された `CommandQuery<CommandQueryContext>.All` には、スキーマ定義から生成されたすべてのクエリとコマンドが、引数・戻り値・メッセージの型と URL とともに並んでいます。
 テンプレートの `WebApi/Base/CommandQueryEndpoints.cs` は、これを1件ずつ ASP.NET Core の Minimal API のエンドポイントとして登録し、HTTPリクエストと処理の引数・戻り値・メッセージ・`CommandQueryContext` とを変換します。
-変換方法（JSONの形、ステータスコードなど）はアプリ側のコードなので、クライアント側の `callComplexPostEndpointAsync` と整合性がとれていれば自由に変更できます。
+クライアント側でこれを呼び出すのは `client/src/base/callCommandQueryAsync.ts` です。
 
 ```csharp
 // Program.cs
@@ -247,7 +247,27 @@ app.MapCommandQueryEndpoints((commandQuery, endpoint) => {
 });
 ```
 
-クライアント側では、ステータスコード `202 Accepted` を「確認待ち」と決めており、利用者が承諾したら `ignore-confirm=true` を付けて2回目のリクエストを送ります。
+テンプレートの変換方法は最も単純なもので、引数を JSON で送り、戻り値とメッセージを JSON で受け取ります。
+エラーのメッセージがあればステータスコードは `422`、無ければ `200` です。確認メッセージは扱わず、処理は常に1回のリクエストで入力チェックから更新まで行います。
+
+```typescript
+const result = await callCommandQueryAsync('受注登録', param)
+if (result.ok) {
+  // result.returnValue が戻り値
+} else {
+  // result.messages にエラーなどのメッセージが入っている
+}
+```
+
+変換方法（JSONの形、ステータスコードなど）はアプリ側のコードなので、サーバー側とクライアント側の整合性がとれていれば自由に変更できます。
+
+#### 確認メッセージを挟む例
+
+デモ101（`demo/101_販売管理システム`）は、テンプレートとは別の変換方法で、添付ファイルの送信と確認メッセージに対応しています。
+サーバー側は `WebApi/CommandQueryEndpoints.cs`、クライアント側は `client/src/http/callComplexPostEndpointAsync.ts` です。
+
+1回目のリクエストは `ValidationOnly = true` で実行し、ステータスコード `202 Accepted` で確認メッセージを返します。
+利用者が承諾したら、クライアントは `ignore-confirm=true` を付けて2回目のリクエストを送り、サーバーはこれを `ValidationOnly = false` で実行します。
 
 ```typescript
 // callComplexPostEndpointAsync.ts の抜粋
@@ -287,12 +307,12 @@ context.ToastMessage = "登録が完了しました。";
 context.RedirectUrl = $"/orders/{savedId}";
 ```
 
-Web から使う場合は、`CommandQueryEndpoints.cs` でレスポンスに詰め、クライアント側のレスポンスの型にも同じフィールドを追加します。
+Web から使う場合は、`CommandQueryEndpoints.cs` でレスポンスに詰め、`callCommandQueryAsync.ts` のレスポンスの型にも同じフィールドを追加します。
 自動生成される部分ではないため、サーバーとクライアントの型の同期は手動で行う必要があります。
 
 ```typescript
-const result = await callComplexPostEndpointAsync('受注登録', param)
-if (result.type === 'ok' && result.toastMessage) {
+const result = await callCommandQueryAsync('受注登録', param)
+if (result.ok && result.toastMessage) {
   showToast(result.toastMessage)
 }
 ```

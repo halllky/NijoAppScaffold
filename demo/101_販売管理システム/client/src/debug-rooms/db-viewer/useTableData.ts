@@ -1,5 +1,5 @@
 import React from "react"
-import { callAspNetCoreApiAsync } from "../../base/callAspNetCoreApiAsync"
+import { callAspNetCoreApiAsync } from "../../http/callAspNetCoreApiAsync"
 
 /** テーブルの中身を取得する条件 */
 export type TableDataConditions = {
