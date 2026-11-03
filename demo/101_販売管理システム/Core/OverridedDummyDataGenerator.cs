@@ -1,5 +1,7 @@
 #if DEBUG
 
+using MyApp.Core.Authorization;
+
 namespace MyApp;
 
 /// <summary>
@@ -22,23 +24,23 @@ public partial class OverridedDummyDataGenerator {
         var db = applicationService.DbContext;
 
         // 従業員: 管理者
-        var adminSalt = OverridedApplicationService.GenerateSalt();
+        var adminPassword = PasswordHash.Create(DUMMY_USER_PASSWORD);
         db.従業員DbSet.Add(new 従業員DbEntity {
             従業員番号 = ADMIN_USER_ID,
             氏名 = "デモ用ユーザー",
-            パスワード = OverridedApplicationService.ComputeHash(DUMMY_USER_PASSWORD, adminSalt),
-            SALT = adminSalt,
+            パスワード = adminPassword.Hash,
+            SALT = adminPassword.Salt,
             従業員の権限 = [new() { 権限区分 = 権限区分.システム管理者 }],
             Version = 0,
         });
         // 従業員: その他
         for (var i = 1; i <= 10; i++) {
-            var s = OverridedApplicationService.GenerateSalt();
+            var password = PasswordHash.Create(DUMMY_USER_PASSWORD);
             db.従業員DbSet.Add(new 従業員DbEntity {
                 従業員番号 = $"user{i:000}",
                 氏名 = $"ユーザー{i:000}",
-                パスワード = OverridedApplicationService.ComputeHash(DUMMY_USER_PASSWORD, s),
-                SALT = s,
+                パスワード = password.Hash,
+                SALT = password.Salt,
                 Version = 0,
             });
         }

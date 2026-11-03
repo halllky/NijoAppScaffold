@@ -39,17 +39,15 @@ partial class OverridedApplicationService {
                     continue;
                 }
 
-                // 初期パスワード
-                var salt = GenerateSalt();
-
                 var createCommand = DbContext.StartCreating従業員();
                 createCommand.従業員番号 = item.従業員.従業員番号;
                 createCommand.氏名 = item.従業員.氏名;
                 createCommand.従業員の権限 = item.従業員.従業員マスタの権限
                     .Select(x => new 従業員の権限CreateCommand { 権限区分 = x.権限区分 })
                     .ToList();
-                createCommand.パスワード = ComputeHash(INIT_PASSWORD, salt);
-                createCommand.SALT = salt;
+                var initPassword = PasswordHash.Create(INIT_PASSWORD);
+                createCommand.パスワード = initPassword.Hash;
+                createCommand.SALT = initPassword.Salt;
 
                 if (createCommand.TryValidate(out var validatedCreate, out var createErrors)) {
                     saveCommands.Add(validatedCreate);

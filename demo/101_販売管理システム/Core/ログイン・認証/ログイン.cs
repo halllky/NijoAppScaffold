@@ -33,9 +33,7 @@ partial class OverridedApplicationService {
             return null;
         }
 
-        var computedHash = ComputeHash(param.パスワード, employee.SALT);
-
-        if (!computedHash.SequenceEqual(employee.パスワード)) {
+        if (!PasswordHash.Verify(param.パスワード, employee.パスワード, employee.SALT)) {
             messages.AddError("従業員番号またはパスワードが間違っています。");
             return null;
         }

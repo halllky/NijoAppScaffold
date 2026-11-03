@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MyApp.Core.Authorization;
 
 namespace MyApp;
 
@@ -24,8 +25,7 @@ partial class OverridedApplicationService {
         }
 
         // パスワードのハッシュ化
-        var salt = GenerateSalt();
-        var hash = ComputeHash(newPassword, salt);
+        var passwordHash = PasswordHash.Create(newPassword);
 
         // 更新。
         // 画面で編集された行ではないので読み込み時点のバージョンで楽観排他をかける。
@@ -37,8 +37,8 @@ partial class OverridedApplicationService {
             messages.AddError(MSG.DataNotFoundError());
             return;
         }
-        employee.SALT = salt;
-        employee.パスワード = hash;
+        employee.パスワード = passwordHash.Hash;
+        employee.SALT = passwordHash.Salt;
 
         if (!employee.TryValidate(out var validated, out var errors)) {
             errors.CopyTo(messages);
