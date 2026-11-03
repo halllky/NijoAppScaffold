@@ -458,13 +458,16 @@ function createCodeMatching(dialog: SearchDialog<RHF.FieldValues, unknown>, form
   // パラメータによって照合の結果が変わりうるので、パラメータも照合済みかどうかの判定に含める
   const keyOf = (code: string, params: unknown) => `${code}\u0000${JSON.stringify(params ?? null)}`
 
-  /** 照合の結果を項目に反映する。見つかったらそれで項目全体を置き換え、見つからなければ名称を空にする */
+  /**
+   * 照合の結果を項目に反映する。見つかったらそれで項目全体を置き換え、見つからなければ名称を空にする。
+   * 照合できなかった場合（検索処理のエラーや中断）は、該当するデータの有無が分からないので何もしない。
+   */
   const applyResult = (formPath: string, code: string, result: FindByCodeResult<RHF.FieldValues>) => {
     const current = formMethods.getValues(formPath)
     if (codeOf(dialog, current) !== code) return
     if (result.type === 'found') {
       formMethods.setValue(formPath, result.item, { shouldDirty: true })
-    } else if (RHF.get(current, dialog.refField.namePath)) {
+    } else if ((result.type === 'not-found' || result.type === 'ambiguous') && RHF.get(current, dialog.refField.namePath)) {
       formMethods.setValue(`${formPath}.${dialog.refField.namePath}`, '', { shouldDirty: true })
     }
   }
@@ -479,9 +482,15 @@ function createCodeMatching(dialog: SearchDialog<RHF.FieldValues, unknown>, form
           .catch((): FindByCodeResult<RHF.FieldValues> => ({ type: 'error', detail: {} }))
           .then(result => {
             applyResult(formPath, code, result)
+            // 照合できなかった結果は記録から外し、次の検証で照合し直す。
+            // 外さないと、ログイン状態が切れていた場合などに、原因が解消してもエラーのままになる
+            if ((result.type === 'error' || result.type === 'canceled') && records.get(formPath) === newRecord) {
+              records.delete(formPath)
+            }
             return result
           })
-        record = { key, result }
+        const newRecord = { key, result }
+        record = newRecord
         records.set(formPath, record)
       }
       return toMatchingError(code, await record.result)
