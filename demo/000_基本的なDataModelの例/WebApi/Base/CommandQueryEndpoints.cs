@@ -22,6 +22,16 @@ namespace MyApp.WebApi.Base;
 public static class CommandQueryEndpoints {
 
     /// <summary>
+    /// クライアント側から送られてくるパラメータは
+    /// Content-Type: multipart/form-data のリクエストボディのこの名前のセクションにJSONで入っている
+    /// </summary>
+    private const string PARAM_DATA = "complex-post-request-body";
+    /// <summary>
+    /// 確認メッセージが承諾された後の本処理を行うHTTPリクエストに付されるクエリパラメータ
+    /// </summary>
+    private const string PARAM_IGNORE_CONFIRM = "ignore-confirm";
+
+    /// <summary>
     /// すべてのクエリ・コマンドを HTTP POST のエンドポイントとして登録します。
     /// </summary>
     /// <param name="configure">
@@ -40,15 +50,8 @@ public static class CommandQueryEndpoints {
     }
 
     /// <summary>
-    /// クライアント側から送られてくるパラメータは
-    /// Content-Type: multipart/form-data のリクエストボディのこの名前のセクションにJSONで入っている
+    /// <see cref="IEndpointRouteBuilder"/> に <see cref="HandleAsync"/> を登録する。
     /// </summary>
-    private const string PARAM_DATA = "complex-post-request-body";
-    /// <summary>
-    /// 確認メッセージが承諾された後の本処理を行うHTTPリクエストに付されるクエリパラメータ
-    /// </summary>
-    private const string PARAM_IGNORE_CONFIRM = "ignore-confirm";
-
     private sealed class EndpointMapping(IEndpointRouteBuilder endpoints) : ICommandQueryVisitor<CommandQueryContext, RouteHandlerBuilder> {
         public RouteHandlerBuilder Visit<TParameter, TReturnValue, TMessages>(CommandQuery<CommandQueryContext, TParameter, TReturnValue, TMessages> commandQuery)
             where TMessages : IMessageSetter {
@@ -61,7 +64,10 @@ public static class CommandQueryEndpoints {
     }
 
     /// <summary>
+    /// 実際のHTTPリクエスト実行時の処理。
     /// HTTPリクエストを処理の引数に変換して処理を実行し、処理結果をHTTPレスポンスに変換する。
+    ///
+    /// HTTPリクエスト・レスポンスのルールは、クライアント側の処理と整合しさえしていればよく、自由に変更可能。
     /// </summary>
     private static async Task<IResult> HandleAsync<TParameter, TReturnValue, TMessages>(CommandQuery<CommandQueryContext, TParameter, TReturnValue, TMessages> commandQuery, HttpContext httpContext)
         where TMessages : IMessageSetter {
