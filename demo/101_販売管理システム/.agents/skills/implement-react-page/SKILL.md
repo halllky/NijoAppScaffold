@@ -58,23 +58,18 @@ description: client（React）の画面を実装・修正するときに使う�
 - デモ101そのものを改修する場合、デモ101から新規プロジェクトテンプレートを作る処理（業務画面と業務固有のフォルダを削除する）の後も `npm run tsc` が通る必要がある。
   業務画面のフォルダの外に業務固有のファイルを足すと、テンプレートにそのファイルが残るか、コンパイルが壊れる。
 
-## サーバーは useComplexPost で呼ぶ
+## サーバーは callComplexPostEndpointAsync で呼ぶ
 
-一覧検索・外部参照の検索・コマンド実行は、コンポーネントの中で `http/useComplexPost` が返す関数を通す。第 1 引数はクエリモデル名・`ref-to:{参照先}`・コマンドモデル名で、引数と戻り値の型はそこから決まる。
-ログイン状態が切れていた場合は、この関数がログイン画面に戻す。
-
-```tsx
-const callComplexPost = useComplexPost()
-const result = await callComplexPost('〇〇登録', values)
-```
+一覧検索・外部参照の検索・コマンド実行は、すべて `http/callComplexPostEndpointAsync` を通す。第 1 引数はクエリモデル名・`ref-to:{参照先}`・コマンドモデル名で、引数と戻り値の型はそこから決まる。
+フックではないので、コンポーネント・loader・検索ダイアログの定義のどこからでも呼べる。
 
 - 戻り値の `type` は 3 通り。
   - `ok`: 成功。`returnValue` に戻り値、`detail` に警告・情報メッセージが入っていることがある。
   - `error`: 入力エラーなど。`detail` を画面のフォームの `setServerMessages` に渡す。
-  - `canceled`: 利用者が確認メッセージでキャンセルした、中断された、またはログイン状態が切れていた。何もしない。
-- フックを呼べない場所では次のものを使う。
-  - React Router の `loader`: `http/callComplexPostEndpointAsync` の `loadComplexPostEndpointAsync`。失敗したら例外を投げ、ルートのエラー画面（ログイン状態が切れていた場合はログイン画面）が表示される。
-  - 検索ダイアログの定義: 検索処理を `useSearch`（検索関数を返すフック）として書き、その中で `useComplexPost` を呼ぶ。
+  - `canceled`: 利用者が確認メッセージでキャンセルした、または中断された。何もしない。
+- ログイン状態が切れていた場合の扱い（利用者に確認してログイン画面に移る）は、サーバーを呼ぶ共通の処理が行うので、画面では何もしなくてよい。
+  利用者がログイン画面に移らずに留まった場合は `error` が返る。
+- React Router の `loader` からは `loadComplexPostEndpointAsync` を使う。成功したら戻り値を返し、失敗したら例外を投げてルートのエラー画面を表示させる。
 - 「〜しますがよろしいですか？」の確認はこの関数が行う。画面で `window.confirm` を自作しない。
   クエリ（一覧検索・参照検索）は確認を必要としないので何も付けない。読み取りだけのコマンド（初期表示など）には `{ ignoreConfirm: true }` を付け、更新するコマンドには付けない。
 - 中断できる呼び出し（検索、入力に追従する再計算）には `signal` を渡す。
@@ -157,8 +152,6 @@ const result = await callComplexPost('〇〇登録', values)
 
 ```tsx
 function 〇〇一覧画面() {
-  const callComplexPost = useComplexPost()
-
   // 検索条件のフォーム
   const form = useSearchConditionForm(〇〇一覧)
   const { Input, FieldLabel } = form
@@ -169,7 +162,7 @@ function 〇〇一覧画面() {
       pageTitle="〇〇"
       sortOptions={SORT_OPTIONS}
       createInitialCondition={createInitialCondition}
-      search={(condition, signal) => callComplexPost('〇〇一覧', condition, { signal })}
+      search={(condition, signal) => callComplexPostEndpointAsync('〇〇一覧', condition, { signal })}
       header={<Link to={getLinkUrlTo〇〇詳細()} className="text-teal-600 underline">新規登録</Link>}
       searchCondition={(
         <FieldGroup>
@@ -219,7 +212,7 @@ export default [
    ```tsx
    const handleSave = handleSubmit(async values => {
      const currentValues = toWillBeChangedApplied(loaderData, values, 〇〇詳細.deepEqual)
-     const result = await callComplexPost('〇〇登録', currentValues)
+     const result = await callComplexPostEndpointAsync('〇〇登録', currentValues)
      if (result.type === 'canceled') return
      setServerMessages(result.detail)
      if (result.type !== 'ok') return

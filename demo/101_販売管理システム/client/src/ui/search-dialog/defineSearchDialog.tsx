@@ -41,13 +41,11 @@ export type SearchDialogDefinition<
    */
   getResultColumns: (params: TOpenParams) => EG2.EditableGridColumn<TItem>[]
   /**
-   * サーバー側の検索処理を呼ぶ関数を返すフック。
-   * サーバー呼び出しにフックが必要な場合（ログイン状態を参照するなど）のためにフックにしている。
-   *
-   * 返す関数の condition の skip と take はダイアログが設定したものになっている。
+   * サーバー側の検索処理を呼ぶ。
+   * condition の skip と take はダイアログが設定したものになっている。
    * signal は、検索中に次の検索が始まったりダイアログが閉じられたりしたときに中断するためのもの。サーバー呼び出しに渡すこと。
    */
-  useSearch: () => (condition: TSearchCondition, signal: AbortSignal) => Promise<SearchResult<TItem>>
+  search: (condition: TSearchCondition, signal: AbortSignal) => Promise<SearchResult<TItem>>
   /**
    * 検索結果のアイテムを一意に識別する文字列を返す。
    * 複数選択で、ページを移動しても選択状態を保つのに使う。
@@ -101,11 +99,8 @@ export type SearchDialog<TItem, TOpenParams = void> = {
     codePath: RHF.Path<TItem>
     /** 入力欄に名称として表示する値の、アイテムから見たパス */
     namePath: RHF.Path<TItem>
-    /**
-     * 手入力されたコードを照合する関数を返すフック。
-     * グリッドの列のようにフックを呼べない場所からは、SearchDialogHost が解決したものを使う。
-     */
-    useFindByCode: () => FindByCode<TItem, TOpenParams>
+    /** 手入力されたコードを照合する */
+    findByCode: (code: string, params: TOpenParams, signal?: AbortSignal) => Promise<FindByCodeResult<TItem>>
     /** 選んだアイテムを、検索条件のフォームで外部参照の絞り込み条件として使える形に変換する */
     toFilter: (item: TItem) => RHF.FieldValues
     /**
@@ -115,9 +110,6 @@ export type SearchDialog<TItem, TOpenParams = void> = {
     selectOne: (openDialogInHost: OpenDialogInHost, params: TOpenParams) => Promise<TItem | undefined>
   }
 }
-
-/** 手入力されたコードを照合する */
-export type FindByCode<TItem, TOpenParams> = (code: string, params: TOpenParams, signal?: AbortSignal) => Promise<FindByCodeResult<TItem>>
 
 /** コードの照合結果 */
 export type FindByCodeResult<TItem>
@@ -207,22 +199,19 @@ export function defineSearchDialog<
     refField: {
       codePath: definition.refField.codePath,
       namePath: definition.refField.namePath,
-      useFindByCode: () => {
-        const search = definition.useSearch()
-        return React.useCallback(async (code, params, signal) => {
-          // 2件以上あるかどうかは総件数で分かるので、2件目までを取得すれば足りる
-          const condition = {
-            ...definition.refField.createConditionFromCode(code, params),
-            skip: '0',
-            take: '2',
-          }
-          const result = await search(condition, signal ?? new AbortController().signal)
-          if (result.type !== 'ok') return result
-          const { currentPageItems, totalCount } = result.returnValue
-          if (totalCount === 0 || currentPageItems.length === 0) return { type: 'not-found' }
-          if (totalCount > 1) return { type: 'ambiguous', count: totalCount }
-          return { type: 'found', item: currentPageItems[0] }
-        }, [search])
+      findByCode: async (code, params, signal) => {
+        // 2件以上あるかどうかは総件数で分かるので、2件目までを取得すれば足りる
+        const condition = {
+          ...definition.refField.createConditionFromCode(code, params),
+          skip: '0',
+          take: '2',
+        }
+        const result = await definition.search(condition, signal ?? new AbortController().signal)
+        if (result.type !== 'ok') return result
+        const { currentPageItems, totalCount } = result.returnValue
+        if (totalCount === 0 || currentPageItems.length === 0) return { type: 'not-found' }
+        if (totalCount > 1) return { type: 'ambiguous', count: totalCount }
+        return { type: 'found', item: currentPageItems[0] }
       },
       toFilter: definition.refField.toFilter,
       selectOne: (openDialogInHost, params) => open(openDialogInHost, 'one', params),
@@ -257,8 +246,7 @@ function SearchDialogView<TSearchCondition extends SearchConditionBase, TItem, T
   const { formMethods, Input, FieldLabel, RootErrors, setServerMessages, clearServerMessages } = conditionForm
 
   // 検索の実行と結果。ページを移動するときは、最後に検索した条件を使う
-  const search = definition.useSearch()
-  const { searched, isSearching, searchPage } = usePagedSearch(search, setServerMessages)
+  const { searched, isSearching, searchPage } = usePagedSearch(definition.search, setServerMessages)
 
   // 複数選択で選ばれているもの。キーはアイテムを一意に識別する文字列
   const [selectedItems, setSelectedItems] = React.useState<ReadonlyMap<string, TItem>>(new Map())

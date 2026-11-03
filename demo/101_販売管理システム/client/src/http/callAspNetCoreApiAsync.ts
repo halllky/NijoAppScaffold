@@ -1,3 +1,5 @@
+import { handleSessionAlive, handleSessionExpired } from "../login/sessionExpiry"
+
 /**
  * サーバー側エンドポイントを呼び出す。
  *
@@ -5,8 +7,10 @@
  * デバッグ時・本番時とも常に自分自身のオリジンに対してルート相対パスでリクエストすればよい。
  * サーバー側の URL を環境ごとに出し分ける必要はない。
  *
- * このほか、認証用のCookieの付加を責務とする。
- * エラーハンドリングは特に行なっていないため呼び出し側で行うこと。
+ * このほか、認証用のCookieの付加と、ログイン状態が切れていた場合の扱いを責務とする。
+ * ログインしていないと応答された場合は、利用者に確認したうえでログイン画面に移る。
+ * 移る場合は、ページが切り替わるまで戻り値の Promise を解決しない（呼び出し元の後続の処理を動かさないため）。
+ * 移らない場合と、それ以外のエラーの場合は、レスポンスをそのまま返すので、エラーハンドリングは呼び出し側で行うこと。
  *
  * @param endpoint URLのオリジン部分を除くパスおよびクエリパラメータ。URIエンコードは呼び出し側で行う。
  * @param init リクエストの初期化情報。HTTPメソッドやボディなど。
@@ -14,10 +18,19 @@
  */
 export async function callAspNetCoreApiAsync(endpoint: string, init: RequestInit): Promise<Response> {
   const url = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
-  return await fetch(url, {
+  const response = await fetch(url, {
     // 認証用のCookieをHTTPヘッダに付加する
     credentials: 'same-origin',
 
     ...init,
   })
+
+  if (response.status !== 401) {
+    handleSessionAlive()
+    return response
+  }
+  if (handleSessionExpired() === 'redirecting') {
+    return new Promise<never>(() => { })
+  }
+  return response
 }

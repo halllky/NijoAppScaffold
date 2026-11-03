@@ -2,24 +2,12 @@ import React from "react"
 import { Outlet, Link, useNavigation } from "react-router-dom"
 import * as Icon from "@heroicons/react/24/solid"
 import { NowLoading } from "./ui"
-import { LoginUserProvider, useLoginLogout } from "./useLoginLogout"
+import { useLoginUser } from "./login/loginUser"
 import * as P000Module from "./pages/P000_トップページ"
 import * as P002Module from "./pages/P002_ログアウト"
 import { navigationItems } from "./navigationItems"
 import { APP_NAME } from "./appName"
 import DebugMenuButton from "./debug-rooms/デバッグメニュー"
-
-/**
- * アプリケーションの一番外枠。
- * アプリケーション全体で用いる React コンテキストのプロバイダー配置を行う。
- */
-export default function App() {
-  return (
-    <LoginUserProvider>
-      <RootLayout />
-    </LoginUserProvider>
-  )
-}
 
 /**
  * アプリケーション全体の枠。
@@ -28,9 +16,9 @@ export default function App() {
  * 業務画面へのリンクとログアウトリンクはログイン後のみ表示する。
  * どの業務画面をナビゲーションに表示するかは呼び出し元が決める。
  */
-function RootLayout() {
+export default function App() {
   const navigation = useNavigation()
-  const { loginUser } = useLoginLogout()
+  const loginUser = useLoginUser()
 
   return (
     <div className="flex flex-col h-full">

@@ -6,7 +6,7 @@ import { 一覧検索サンプルURL, 詳細画面サンプルURL } from "./ui"
 import { URL as AutoIndexUrl } from "../auto-pages/自動生成画面一覧"
 import { callAspNetCoreApiAsync } from "../http/callAspNetCoreApiAsync"
 import { Button, useOutsideClick } from "../ui"
-import { useLoginLogout } from "../useLoginLogout"
+import { logoutAsync } from "../login/loginUser"
 
 /**
  * デバッグメニューを開くボタン
@@ -44,16 +44,15 @@ function DebugMenu({ requestClose }: { requestClose: () => void }) {
   useOutsideClick(containerRef, requestClose)
 
   const [processing, setProcessing] = React.useState(false)
-  const { logoutAsync } = useLoginLogout()
   const handleRecreateDatabase = async () => {
     if (processing) return
+    if (!confirm("データベースを削除して再作成しますか？\n※この操作は取り消せません。")) return
     setProcessing(true)
+
+    // ログイン情報も消えるので一旦ログアウトする。
+    // ログアウトした状態を画面全体に反映するため、再作成の成否にかかわらず最後にページを読み込み直す
+    await logoutAsync()
     try {
-      if (!confirm("データベースを削除して再作成しますか？\n※この操作は取り消せません。")) return
-
-      // ログイン情報も消えるので一旦ログアウト
-      await logoutAsync()
-
       const res = await callAspNetCoreApiAsync('/api/debug/destroy-and-recreate-database', { method: 'POST' })
       if (res.ok) {
         alert("データベースを再作成しました。")
@@ -64,9 +63,8 @@ function DebugMenu({ requestClose }: { requestClose: () => void }) {
     } catch (error) {
       alert("通信エラーが発生しました。")
       console.error(error)
-    } finally {
-      setProcessing(false)
     }
+    window.location.assign("/")
   }
 
   return (
