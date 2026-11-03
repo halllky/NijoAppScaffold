@@ -1,42 +1,29 @@
 import React from "react"
 
-/*
- * ログイン状態が切れていたときの、ログインし直し。
- * サーバーの呼び出し（loader や検索処理など React の外からも呼ばれる）から、ログインし直すためのオーバーレイ（React）を開いて完了を待つ。
- */
-
-/** ログインし直しの結果 */
-export type ReLoginResult
-  /** ログインし直した。同じユーザーでログインしたので、そのまま操作を続けられる */
-  = 'logged-in'
-  /** 利用者がログインし直さなかった */
-  | 'canceled'
+/** ログインし直しの結果。logged-in はページを開いたときと同じユーザーでログインし直したことを表す */
+export type ReLoginResult = 'logged-in' | 'canceled'
 
 /**
- * ログインし直すためのオーバーレイを開き、ログインし直すか、利用者がやめるまで待つ。
- * 複数の呼び出し元から同時に呼ばれても、オーバーレイは1つだけ開き、全員が同じ結果を受け取る。
- * オーバーレイが無い（画面に置かれていない）場合は、すぐに canceled を返す。
+ * ログイン状態が切れていたときに、ログインの入力欄を開き、利用者がログインし直すかやめるまで待つ。
+ * サーバーの呼び出し（loader や検索処理など React の外を含む）から使う。
+ * 入力欄が画面に無い場合は、すぐに canceled を返す。
  */
 export function reLoginAsync(): Promise<ReLoginResult> {
-  return openOverlay?.() ?? Promise.resolve('canceled')
+  return openLoginForm?.() ?? Promise.resolve('canceled')
 }
 
-/**
- * ログインし直すためのオーバーレイが呼ぶ。{@link reLoginAsync} が呼ばれたときに、オーバーレイを開く処理を登録する。
- * 開く処理は、同時に呼ばれた場合に同じ Promise を返すこと。
- */
+/** ログインの入力欄が、{@link reLoginAsync} で開かれるように自身を登録する */
 export function useReLoginOverlayRegistration(open: () => Promise<ReLoginResult>): void {
   React.useEffect(() => {
-    openOverlay = open
+    openLoginForm = open
     return () => {
-      if (openOverlay === open) openOverlay = undefined
+      if (openLoginForm === open) openLoginForm = undefined
     }
   }, [open])
 }
 
 /**
- * ログインし直すためのオーバーレイを開く処理。
- * オーバーレイはページ全体で1つなので、ページ全体で1つだけ持つ。
+ * ログインの入力欄を開く処理。入力欄はページ全体で1つなので、ページ全体で1つだけ持つ。
  * サーバーの呼び出しは React の外からも行われるので、React のコンテキストではなくモジュールの変数にしている。
  */
-let openOverlay: (() => Promise<ReLoginResult>) | undefined
+let openLoginForm: (() => Promise<ReLoginResult>) | undefined
