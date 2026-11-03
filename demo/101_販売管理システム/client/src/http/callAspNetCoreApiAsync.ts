@@ -1,4 +1,4 @@
-import { toLoginUrl } from "../login/loginUrl"
+import { reLoginAsync } from "../login/reLogin"
 
 /**
  * サーバー側エンドポイントを呼び出す。
@@ -8,9 +8,9 @@ import { toLoginUrl } from "../login/loginUrl"
  * サーバー側の URL を環境ごとに出し分ける必要はない。
  *
  * このほか、認証用のCookieの付加と、ログイン状態が切れていた場合の扱いを責務とする。
- * ログインしていないと応答された場合は、ログイン後に元の画面に戻るようにしてログイン画面へ移り始める。
- * 編集中の内容がある画面では、移る前にブラウザが利用者に確認し、断られたらこの画面に留まる。
- * 留まった場合に備えて、レスポンスはどの場合もそのまま返すので、エラーハンドリングは呼び出し側で行うこと。
+ * ログインしていないと応答された場合は、利用者にログインし直してもらい、同じリクエストを送り直してその応答を返す。
+ * 利用者がログインし直さなかった場合は、ログインしていないという応答をそのまま返す。
+ * それ以外のエラーハンドリングは行なっていないため呼び出し側で行うこと。
  *
  * @param endpoint URLのオリジン部分を除くパスおよびクエリパラメータ。URIエンコードは呼び出し側で行う。
  * @param init リクエストの初期化情報。HTTPメソッドやボディなど。
@@ -25,8 +25,8 @@ export async function callAspNetCoreApiAsync(endpoint: string, init: RequestInit
     ...init,
   })
 
-  if (response.status === 401) {
-    window.location.assign(toLoginUrl(window.location.pathname + window.location.search))
+  if (response.status === 401 && await reLoginAsync() === 'logged-in') {
+    return await callAspNetCoreApiAsync(endpoint, init)
   }
   return response
 }
