@@ -9,17 +9,17 @@ namespace MyApp.Core.Authorization;
 /// DIコンテナのスコープ（Webアプリケーションであれば1回のリクエスト）につき1個のインスタンスが作られる。
 /// </summary>
 public class LoginUserProvider : ICurrentUser {
-    /// <summary>ログインユーザーがいない処理（ログイン処理そのものなど）で作成者・更新者として記録する名前</summary>
-    public const string NO_LOGIN_USER = "SYSTEM";
 
     // DbContext は作成者・更新者の記録のためにこのクラスに依存するので、
     // コンストラクタで DbContext を受け取ると循環依存になる
-    public LoginUserProvider(IServiceProvider serviceProvider, ISessionKeyProvider sessionKeyProvider) {
+    public LoginUserProvider(IServiceProvider serviceProvider, ISessionKeyProvider sessionKeyProvider, ICurrentProcess currentProcess) {
         _serviceProvider = serviceProvider;
         _sessionKeyProvider = sessionKeyProvider;
+        _currentProcess = currentProcess;
     }
     private readonly IServiceProvider _serviceProvider;
     private readonly ISessionKeyProvider _sessionKeyProvider;
+    private readonly ICurrentProcess _currentProcess;
 
     /// <summary>
     /// ログインユーザーを返す。ログインしていない場合は null を返す。
@@ -37,8 +37,11 @@ public class LoginUserProvider : ICurrentUser {
     private LoginUser? _loginUserCache = null;
     private bool _isLoginUserLoaded = false;
 
-    /// <inheritdoc />
-    string ICurrentUser.Name => GetLoginUser()?.従業員番号 ?? NO_LOGIN_USER;
+    /// <summary>
+    /// 作成者・更新者として記録する名前。
+    /// ログインユーザーがいない処理（ログイン処理そのものやバッチなど）では、その処理の名前を記録する（DB-002）。
+    /// </summary>
+    string ICurrentUser.Name => GetLoginUser()?.従業員番号 ?? _currentProcess.Name;
 
 #if DEBUG
     /// <summary>

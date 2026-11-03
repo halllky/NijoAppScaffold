@@ -11,12 +11,13 @@ namespace MyApp.WebApi;
 internal class WebLogScopeMiddleware(RequestDelegate next) {
     public async Task InvokeAsync(HttpContext httpContext) {
         var appSrv = httpContext.RequestServices.GetRequiredService<OverridedApplicationService>();
+        var currentProcess = httpContext.RequestServices.GetRequiredService<ICurrentProcess>();
 
         // このスコープのインスタンスが破棄されるまでの間、ログ出力時に以下の情報が常に付与される。
         // ここで設定される情報のキーは NLog の出力設定箇所で指定しているキー名と一致している必要がある。
         using var logScope = appSrv.Log.BeginScope(new Dictionary<string, string?> {
             [OverridedApplicationService.LOG_SCOPEPROP_LOGIN_USERID] = appSrv.LoginUser?.従業員番号,
-            [OverridedApplicationService.LOG_SCOPEPROP_PROCESS_NAME] = httpContext.Request.Path.ToString(),
+            [OverridedApplicationService.LOG_SCOPEPROP_PROCESS_NAME] = currentProcess.Name,
             [OverridedApplicationService.LOG_SCOPEPROP_SCOPE_ID] = Guid.NewGuid().ToString().ToUpper().Replace("-", ""),
         });
 

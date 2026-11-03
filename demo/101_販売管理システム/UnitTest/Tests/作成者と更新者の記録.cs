@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using MyApp.Core.Authorization;
 
 namespace MyApp.UnitTest;
 
@@ -28,13 +27,14 @@ partial class DB接続あり_更新あり {
 
     [Test]
     [Category("DB接続あり（更新あり）")]
-    public async Task ログインユーザーがいなければ作成者と更新者に固定値が記録される() {
-        var scope = TestUtilImpl.Instance.CreateScope(nameof(ログインユーザーがいなければ作成者と更新者に固定値が記録される));
+    public async Task ログインユーザーがいなければ作成者と更新者に処理名が記録される() {
+        var scope = TestUtilImpl.Instance.CreateScope(nameof(ログインユーザーがいなければ作成者と更新者に処理名が記録される));
 
         var saved = await Save新しい従業員Async(scope.App.DbContext);
 
-        Assert.That(saved.CreateUser, Is.EqualTo(LoginUserProvider.NO_LOGIN_USER));
-        Assert.That(saved.UpdateUser, Is.EqualTo(LoginUserProvider.NO_LOGIN_USER));
+        // 単体テストでは、処理名はテストケースの名前になる
+        Assert.That(saved.CreateUser, Is.EqualTo(nameof(ログインユーザーがいなければ作成者と更新者に処理名が記録される)));
+        Assert.That(saved.UpdateUser, Is.EqualTo(nameof(ログインユーザーがいなければ作成者と更新者に処理名が記録される)));
     }
 
     private static async Task<従業員DbEntity> Save新しい従業員Async(OverridedDbContext db) {
