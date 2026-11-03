@@ -15,8 +15,7 @@ using Nijo.DataStructures;
 namespace Nijo.Parts.Common {
     /// <summary>
     /// カスタマイズ用のマッピングモジュール。
-    /// JavaScript向けには、検索可能なデータ構造やコマンドの種類を表す文字列をキーにしてそれと対応するオブジェクトや関数を返すマッピング定義。
-    /// C#向けには、検索可能なデータ構造やコマンドの種類を表すenum。
+    /// JavaScript向けに、検索可能なデータ構造やコマンドの種類を表す文字列をキーにしてそれと対応するオブジェクトや関数を返すマッピング定義。
     /// 特定のセクションや属性にしか関係しない対応表のモジュールは、その持ち主のフォルダの partial クラスでレンダリングする。
     /// </summary>
     internal partial class CommandQueryMappings : ISharedSourceFile<CodeRenderingContext> {
@@ -50,10 +49,6 @@ namespace Nijo.Parts.Common {
         /// JavaScript用: 構造体の編集用データの型名のリテラル型
         /// </summary>
         internal const string STRUCTURE_MODEL_DISPLAY_DATA_TYPE = "StructureModelDisplayDataType";
-        /// <summary>
-        /// C#用: 検索可能なデータ構造, コマンドの種類を表すenum
-        /// </summary>
-        internal const string E_COMMAND_QUERY_TYPE = "E_CommandQueryType";
 
         private readonly Lock _lock = new();
         private readonly List<RootAggregate> _queryModels = [];
@@ -74,39 +69,11 @@ namespace Nijo.Parts.Common {
         }
 
         void ISharedSourceFile<CodeRenderingContext>.Render(CodeRenderingContext ctx) {
-            ctx.CoreLibrary(dir => {
-                dir.Directory("Util", utilDir => {
-                    utilDir.Generate(RenderCSharp(ctx));
-                });
-            });
             ctx.ReactProject(dir => {
                 foreach (var sourceFile in RenderTypeScript(ctx)) {
                     dir.Generate(sourceFile);
                 }
             });
-        }
-
-        private SourceFile RenderCSharp(CodeRenderingContext ctx) {
-            var values = _queryModels.Cast<ISectionRoot>().Concat(_commandModels).OrderByDataFlow(ctx.Schema);
-
-            return new SourceFile {
-                FileName = "E_CommandQueryType.cs",
-                Contents = $$"""
-                    using System.ComponentModel.DataAnnotations;
-
-                    namespace {{ctx.Config.RootNamespace}};
-
-                    /// <summary>
-                    /// CommandModel, QueryModel の種類を表すenum
-                    /// </summary>
-                    public enum {{E_COMMAND_QUERY_TYPE}} {
-                    {{values.SelectTextTemplate(agg => $$"""
-                        [Display(Name = "{{agg.DisplayName.Replace("\"", "\\\"")}}")]
-                        {{agg.PhysicalName}},
-                    """)}}
-                    }
-                    """,
-            };
         }
 
         /// <summary>

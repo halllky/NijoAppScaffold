@@ -240,8 +240,9 @@ await applicationService.Execute入荷登録Async(param, messages.As<入荷詳�
 ```csharp
 // Program.cs
 app.MapCommandQueryEndpoints((commandQuery, endpoint) => {
-    // 処理ごとに異なる設定がある場合はここで行う
-    if (commandQuery.Name is nameof(E_CommandQueryType.ログイン)) {
+    // 処理ごとに異なる設定がある場合はここで行う。
+    // 各処理は CommandQuery<CommandQueryContext> の static プロパティとして生成され、常に同じインスタンスなので参照で比較できる
+    if (commandQuery == CommandQuery<CommandQueryContext>.ログイン) {
         endpoint.AllowAnonymous();
     }
 });

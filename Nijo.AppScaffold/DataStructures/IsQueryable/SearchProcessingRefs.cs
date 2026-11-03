@@ -55,6 +55,7 @@ namespace Nijo.DataStructures.IsQueryable {
 
             return new() {
                 Name = _entryAggregate.RefEntryName,
+                CsPropertyName = $"RefTo{_entryAggregate.PhysicalName}",
                 DisplayName = $"{_entryAggregate.DisplayName}の参照検索",
                 Path = CommandQueryCatalog.GetPath(root, ActionLoad),
                 IsQuery = true,

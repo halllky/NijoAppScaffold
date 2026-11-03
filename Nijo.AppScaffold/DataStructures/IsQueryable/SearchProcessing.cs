@@ -46,6 +46,7 @@ namespace Nijo.DataStructures.IsQueryable {
 
             return new() {
                 Name = _rootAggregate.PhysicalName,
+                CsPropertyName = _rootAggregate.PhysicalName,
                 DisplayName = _rootAggregate.DisplayName,
                 Path = CommandQueryCatalog.GetPath(_rootAggregate, ACTION_LOAD),
                 IsQuery = true,

@@ -32,6 +32,8 @@ namespace Nijo.Parts.Common {
         internal sealed class Definition {
             /// <summary>名前。C# と TypeScript で共通のキー</summary>
             internal required string Name { get; init; }
+            /// <summary>C# でこの処理を参照するときの static プロパティ名</summary>
+            internal required string CsPropertyName { get; init; }
             internal required string DisplayName { get; init; }
             /// <summary>WebAPI として公開する場合のURLのパス</summary>
             internal required string Path { get; init; }
@@ -105,7 +107,8 @@ namespace Nijo.Parts.Common {
 
                     /// <summary>
                     /// スキーマ定義から生成されたクエリまたはコマンド1件。
-                    /// Web、バッチ、単体テストなどの呼び出し元は、 <see cref="All"/> から処理を特定して呼び出す。
+                    /// Web、バッチ、単体テストなどの呼び出し元は、このクラスの static プロパティまたは <see cref="All"/> から処理を特定して呼び出す。
+                    /// 各 static プロパティは常に同じインスタンスを返すので、処理の特定は参照の比較で行える。
                     /// 引数・戻り値・メッセージの型を使った処理は <see cref="Accept"/> で <see cref="{{CS_VISITOR}}{TCommandQueryContext, TResult}"/> に委ねる。
                     /// </summary>
                     /// <typeparam name="{{C}}">クエリ・コマンドの呼び出し1回について、全処理に共通の入出力の型</typeparam>
@@ -134,12 +137,16 @@ namespace Nijo.Parts.Common {
                         /// <summary>戻り値のないコマンドの戻り値の型。インスタンスは作られず、戻り値は常に null になる。</summary>
                         public sealed class {{CS_NO_RETURN_VALUE}} { }
 
+                    {{definitions.SelectTextTemplate(def => $$"""
+                        {{WithIndent(RenderCSharpItem(def))}}
+                    """)}}
+
                         /// <summary>
                         /// すべてのクエリとコマンド
                         /// </summary>
                         public static IReadOnlyList<{{CS_CLASS}}<{{C}}>> All { get; } = [
                     {{definitions.SelectTextTemplate(def => $$"""
-                            {{WithIndent(RenderCSharpItem(def))}}
+                            {{def.CsPropertyName}},
                     """)}}
                         ];
                     }
@@ -183,14 +190,17 @@ namespace Nijo.Parts.Common {
                 ? $"async (app, {parameterName}, messages, context) => {{ await app.{def.AppSrvMethodName}({arguments}); return null; }}"
                 : $"(app, {parameterName}, messages, context) => app.{def.AppSrvMethodName}({arguments})";
 
+            var type = $"{CS_CLASS}<{ApplicationService.CONTEXT_TYPE_PARAMETER}, {parameterType}, {returnValueType}, {def.MessagesCsType}>";
+
             return $$"""
-                new {{CS_CLASS}}<{{ApplicationService.CONTEXT_TYPE_PARAMETER}}, {{parameterType}}, {{returnValueType}}, {{def.MessagesCsType}}> {
+                /// <summary>{{def.DisplayName}}</summary>
+                public static {{type}} {{def.CsPropertyName}} { get; } = new() {
                     Name = "{{def.Name.Replace("\"", "\\\"")}}",
                     DisplayName = "{{def.DisplayName.Replace("\"", "\\\"")}}",
                     Path = "{{def.Path}}",
                     IsQuery = {{(def.IsQuery ? "true" : "false")}},
                     InvokeAsync = {{invoke}},
-                },
+                };
                 """;
         }
 
