@@ -4,7 +4,7 @@ using MyApp.Core.Authorization;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task<売上詳細DisplayData?> Execute売上詳細画面初期表示Async(売上詳細画面初期表示ParameterDisplayData param, 売上詳細画面初期表示ParameterMessages messages, IPresentationContext context) {
+    public override async Task<売上詳細DisplayData?> Execute売上詳細画面初期表示Async(売上詳細画面初期表示ParameterDisplayData param, 売上詳細画面初期表示ParameterMessages messages, CommandQueryContext context) {
 
         // 新規登録モード
         if (param.新規登録モード == true) {

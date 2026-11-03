@@ -294,11 +294,6 @@ namespace Nijo {
             ctx.Use<IndexTs>();
             ctx.Use<CommandQueryMappings>();
             ctx.Use<CommandQueryCatalog>();
-            ctx.CoreLibrary(dir => {
-                dir.Directory("Util", utilDir => {
-                    utilDir.Generate(PresentationContext.RenderStaticCore(ctx));
-                });
-            });
         }
     }
 }

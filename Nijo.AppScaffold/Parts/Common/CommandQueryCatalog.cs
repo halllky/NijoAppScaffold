@@ -96,6 +96,8 @@ namespace Nijo.Parts.Common {
         }
 
         private static SourceFile RenderCSharp(CodeRenderingContext ctx, Definition[] definitions) {
+            const string C = ApplicationService.CONTEXT_TYPE_PARAMETER;
+
             return new SourceFile {
                 FileName = $"{CS_CLASS}.cs",
                 Contents = $$"""
@@ -103,10 +105,11 @@ namespace Nijo.Parts.Common {
 
                     /// <summary>
                     /// スキーマ定義から生成されたクエリまたはコマンド1件。
-                    /// Web、バッチ、単体テストなどのプレゼンテーション層は、 <see cref="All"/> から処理を特定して呼び出す。
-                    /// 引数・戻り値・メッセージの型を使った処理は <see cref="Accept"/> で <see cref="{{CS_VISITOR}}{TResult}"/> に委ねる。
+                    /// Web、バッチ、単体テストなどの呼び出し元は、 <see cref="All"/> から処理を特定して呼び出す。
+                    /// 引数・戻り値・メッセージの型を使った処理は <see cref="Accept"/> で <see cref="{{CS_VISITOR}}{TCommandQueryContext, TResult}"/> に委ねる。
                     /// </summary>
-                    public abstract class {{CS_CLASS}} {
+                    /// <typeparam name="{{C}}">クエリ・コマンドの呼び出し1回について、全処理に共通の入出力の型</typeparam>
+                    public abstract class {{CS_CLASS}}<{{C}}> {
                         private protected {{CS_CLASS}}() { }
 
                         /// <summary>名前。TypeScript 側の型定義のキーと一致する。</summary>
@@ -117,14 +120,14 @@ namespace Nijo.Parts.Common {
                         public required string Path { get; init; }
                         /// <summary>
                         /// クエリなら true、コマンドなら false。
-                        /// クエリはデータを変更しないため、更新前の確認（<see cref="{{PresentationContext.INTERFACE}}.ValidationOnly"/>）を必要としない。
+                        /// クエリはデータを変更しないため、更新前に利用者の確認を求める必要がない。
                         /// </summary>
                         public required bool IsQuery { get; init; }
 
                         /// <summary>
                         /// このインスタンスの引数・戻り値・メッセージの型を型引数にして <paramref name="visitor"/> を呼び出します。
                         /// </summary>
-                        public abstract TResult Accept<TResult>({{CS_VISITOR}}<TResult> visitor);
+                        public abstract TResult Accept<TResult>({{CS_VISITOR}}<{{C}}, TResult> visitor);
 
                         /// <summary>引数のないコマンドの引数の型</summary>
                         public sealed class {{CS_NO_PARAMETER}} { }
@@ -134,33 +137,33 @@ namespace Nijo.Parts.Common {
                         /// <summary>
                         /// すべてのクエリとコマンド
                         /// </summary>
-                        public static IReadOnlyList<{{CS_CLASS}}> All { get; } = [
+                        public static IReadOnlyList<{{CS_CLASS}}<{{C}}>> All { get; } = [
                     {{definitions.SelectTextTemplate(def => $$"""
                             {{WithIndent(RenderCSharpItem(def))}}
                     """)}}
                         ];
                     }
 
-                    /// <inheritdoc cref="{{CS_CLASS}}"/>
+                    /// <inheritdoc cref="{{CS_CLASS}}{TCommandQueryContext}"/>
                     /// <typeparam name="TParameter">引数の型</typeparam>
                     /// <typeparam name="TReturnValue">戻り値の型</typeparam>
                     /// <typeparam name="TMessages">引数に対するメッセージの型</typeparam>
-                    public sealed class {{CS_CLASS}}<TParameter, TReturnValue, TMessages> : {{CS_CLASS}} where TMessages : {{MessageContainer.SETTER_INTERFACE}} {
+                    public sealed class {{CS_CLASS}}<{{C}}, TParameter, TReturnValue, TMessages> : {{CS_CLASS}}<{{C}}> where TMessages : {{MessageContainer.SETTER_INTERFACE}} {
                         /// <summary>
                         /// 処理を実行します。
-                        /// 処理の結果は、戻り値と、引数に対するメッセージ（エラーなど）に格納される。
+                        /// 処理の結果は、戻り値と、引数に対するメッセージ（エラーなど）と、呼び出し1回に共通の入出力に格納される。
                         /// </summary>
-                        public required Func<{{ApplicationService.ABSTRACT_CLASS}}, TParameter, TMessages, {{PresentationContext.INTERFACE}}, Task<TReturnValue?>> InvokeAsync { get; init; }
+                        public required Func<{{ApplicationService.ABSTRACT_CLASS_WITH_TYPE_PARAMETER}}, TParameter, TMessages, {{C}}, Task<TReturnValue?>> InvokeAsync { get; init; }
 
                         /// <inheritdoc/>
-                        public override TResult Accept<TResult>({{CS_VISITOR}}<TResult> visitor) => visitor.Visit(this);
+                        public override TResult Accept<TResult>({{CS_VISITOR}}<{{C}}, TResult> visitor) => visitor.Visit(this);
                     }
 
                     /// <summary>
-                    /// <see cref="{{CS_CLASS}}"/> の引数・戻り値・メッセージの型を使った処理。
+                    /// <see cref="{{CS_CLASS}}{TCommandQueryContext}"/> の引数・戻り値・メッセージの型を使った処理。
                     /// </summary>
-                    public interface {{CS_VISITOR}}<out TResult> {
-                        TResult Visit<TParameter, TReturnValue, TMessages>({{CS_CLASS}}<TParameter, TReturnValue, TMessages> commandQuery)
+                    public interface {{CS_VISITOR}}<{{C}}, out TResult> {
+                        TResult Visit<TParameter, TReturnValue, TMessages>({{CS_CLASS}}<{{C}}, TParameter, TReturnValue, TMessages> commandQuery)
                             where TMessages : {{MessageContainer.SETTER_INTERFACE}};
                     }
                     """,
@@ -168,8 +171,8 @@ namespace Nijo.Parts.Common {
         }
 
         private static string RenderCSharpItem(Definition def) {
-            var parameterType = def.ParameterCsType ?? $"{CS_CLASS}.{CS_NO_PARAMETER}";
-            var returnValueType = def.ReturnValueCsType ?? $"{CS_CLASS}.{CS_NO_RETURN_VALUE}";
+            var parameterType = def.ParameterCsType ?? CS_NO_PARAMETER;
+            var returnValueType = def.ReturnValueCsType ?? CS_NO_RETURN_VALUE;
 
             // 引数や戻り値がない処理も、型引数をそろえて同じ形で呼び出せるようにする
             var parameterName = def.ParameterCsType == null ? "_" : "parameter";
@@ -181,7 +184,7 @@ namespace Nijo.Parts.Common {
                 : $"(app, {parameterName}, messages, context) => app.{def.AppSrvMethodName}({arguments})";
 
             return $$"""
-                new {{CS_CLASS}}<{{parameterType}}, {{returnValueType}}, {{def.MessagesCsType}}> {
+                new {{CS_CLASS}}<{{ApplicationService.CONTEXT_TYPE_PARAMETER}}, {{parameterType}}, {{returnValueType}}, {{def.MessagesCsType}}> {
                     Name = "{{def.Name.Replace("\"", "\\\"")}}",
                     DisplayName = "{{def.DisplayName.Replace("\"", "\\\"")}}",
                     Path = "{{def.Path}}",

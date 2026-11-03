@@ -18,7 +18,7 @@ sidebar_position: 5
 | ---------------------------------------------------- | ----------------------------------------------------------- |
 | Execute メソッドのシグネチャ・Web API エンドポイント | このページ参照                                              |
 | 引数・戻り値の型定義（Parameter / ReturnValue）      | [引数・戻り値の型定義](./020501_Parameters.md) |
-| メッセージ・戻り値・IPresentationContext（検証モード） | [IPresentationContext](./020502_PresentationContext.md) |
+| メッセージ・戻り値・CommandQueryContext（検証モード） | [CommandQueryContext](./020502_CommandQueryContext.md) |
 
 ## 設計指針
 
@@ -41,17 +41,18 @@ sidebar_position: 5
 コマンドの処理本体は `Execute{Name}Async` メソッドに実装します。**必ず開発者が実装する必要があります。**
 
 ```csharp
-// Application Service に生成されるスタブ
+// Application Service に生成されるスタブ。
+// TCommandQueryContext は、アプリケーションが型引数に指定したクラス（テンプレートでは CommandQueryContext）
 public abstract Task Execute受注登録Async(
     受注登録FormDisplayData param,
     受注登録FormDisplayDataMessages messages,
-    IPresentationContext context);
+    TCommandQueryContext context);
 
 // 開発者が実装
 public override async Task Execute受注登録Async(
     受注登録FormDisplayData param,
     受注登録FormDisplayDataMessages messages,
-    IPresentationContext context) {
+    CommandQueryContext context) {
 
     // IsStored 属性が指定されたデータ構造のコマンドを作成して検証する
     var command = DbContext.StartCreatingOrder();

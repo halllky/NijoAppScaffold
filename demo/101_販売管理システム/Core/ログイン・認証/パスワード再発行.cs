@@ -9,7 +9,7 @@ partial class OverridedApplicationService {
     /// </summary>
     private const string INIT_PASSWORD = "pass";
 
-    public override async Task Executeパスワード再発行Async(パスワード再発行ParameterDisplayData param, パスワード再発行ParameterMessages messages, IPresentationContext context) {
+    public override async Task Executeパスワード再発行Async(パスワード再発行ParameterDisplayData param, パスワード再発行ParameterMessages messages, CommandQueryContext context) {
 
         // 権限チェック
         if (LoginUser == null || !LoginUser.Isシステム管理者) {

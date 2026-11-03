@@ -14,7 +14,7 @@ partial class DB接続あり_更新あり {
     public async Task ダミーデータ作成処理が成功するか() {
         var scope = TestUtilImpl.Instance.CreateScope("ダミーデータ作成処理が成功するか");
 
-        var context = new PresentationContextInUnitTest { ValidationOnly = false };
+        var context = new CommandQueryContext { ValidationOnly = false };
         var generator = new DummyDataGeneratorInUnitTest(context);
 
         var result = await generator.GenerateAsync(scope.App);
@@ -22,6 +22,6 @@ partial class DB接続あり_更新あり {
         Assert.That(
             result.HasError(),
             Is.False,
-            context.BuildFailureMessage("ダミーデータの作成に失敗しました。", result));
+            TestFailureMessage.Build("ダミーデータの作成に失敗しました。", context, result));
     }
 }

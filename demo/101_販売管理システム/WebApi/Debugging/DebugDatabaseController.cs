@@ -3,7 +3,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyApp.Debugging;
-using MyApp.WebApi.Base;
 
 namespace MyApp.WebApi.Debugging;
 
@@ -26,7 +25,7 @@ public class DebugDatabaseController : ControllerBase {
             await app.DbContext.EnsureCreatedAsyncEx(app.Settings);
 
             // ダミーデータの生成
-            var generator = new OverridedDummyDataGenerator(new PresentationContextInWebApi { IgnoreConfirm = true });
+            var generator = new OverridedDummyDataGenerator(new CommandQueryContext { ValidationOnly = false });
             var result = await generator.GenerateAsync(app);
 
             if (result.HasError()) {

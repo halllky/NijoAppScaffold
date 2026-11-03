@@ -4,7 +4,7 @@
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    protected override IQueryable<商品一覧SearchResult> CreateQuerySource(商品一覧SearchCondition searchCondition, IPresentationContext context) {
+    protected override IQueryable<商品一覧SearchResult> CreateQuerySource(商品一覧SearchCondition searchCondition, CommandQueryContext context) {
         return DbContext.商品DbSet.Select(e => new 商品一覧SearchResult {
             商品SEQ = e.商品SEQ,
             外部システム側ID = e.外部システム側ID,

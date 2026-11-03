@@ -3,7 +3,7 @@ import { callAspNetCoreApiAsync } from "../base/callAspNetCoreApiAsync"
 
 /**
  * バックエンドへのリクエストを行なう。
- * GETリクエストと、ComplexPost（ASP.NET Core 側のPresentationContextの仕組みと統合されたPOSTリクエスト）の2種類のリクエストをサポートする。
+ * GETリクエストと、ComplexPost（自動生成されたクエリ・コマンドのエンドポイントへのPOSTリクエスト）の2種類のリクエストをサポートする。
  */
 export const useHttpRequest = () => {
 

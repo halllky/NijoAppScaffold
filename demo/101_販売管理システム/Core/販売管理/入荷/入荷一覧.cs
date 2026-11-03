@@ -2,7 +2,7 @@
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    protected override IQueryable<入荷一覧SearchResult> CreateQuerySource(入荷一覧SearchCondition searchCondition, IPresentationContext context) {
+    protected override IQueryable<入荷一覧SearchResult> CreateQuerySource(入荷一覧SearchCondition searchCondition, CommandQueryContext context) {
         return DbContext.入荷DbSet.Select(e => new 入荷一覧SearchResult {
             入荷ID = e.入荷ID,
             入荷日時 = e.入荷日時,

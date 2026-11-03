@@ -4,7 +4,7 @@ using MyApp.Core.Authorization;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task Execute入荷修正Async(入荷詳細DisplayData param, 入荷詳細Messages messages, IPresentationContext context) {
+    public override async Task Execute入荷修正Async(入荷詳細DisplayData param, 入荷詳細Messages messages, CommandQueryContext context) {
         if (LoginUser == null || !LoginUser.Has権限(権限区分.入荷担当)) {
             messages.AddError("入荷担当のみ実行可能です。");
             return;
@@ -142,7 +142,7 @@ partial class OverridedApplicationService {
 
         // エラーチェックのみの場合は確認メッセージを返す。
         if (context.ValidationOnly) {
-            context.AddConfirm("入荷データを修正します。よろしいですか？");
+            context.Confirms.Add("入荷データを修正します。よろしいですか？");
             return;
         }
 

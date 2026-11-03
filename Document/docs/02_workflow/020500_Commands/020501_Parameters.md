@@ -48,7 +48,7 @@
 public abstract Task Execute受注登録Async(
     受注登録FormDisplayData param,
     受注登録FormDisplayDataMessages messages,
-    IPresentationContext context);
+    TCommandQueryContext context);
 ```
 
 ### パターン2: 検索可能なデータ構造の SearchCondition を引数にする
@@ -63,7 +63,7 @@ public abstract Task Execute受注登録Async(
 public abstract Task Execute受注一括処理Async(
     OrderQuerySearchCondition param,
     OrderQuerySearchConditionMessages messages,
-    IPresentationContext context);
+    TCommandQueryContext context);
 ```
 
 ### パターン3: 検索可能なデータ構造の DisplayData を戻り値にする
@@ -79,7 +79,7 @@ public abstract Task Execute受注一括処理Async(
 public abstract Task<受注詳細QueryDisplayData?> Execute受注詳細取得Async(
     受注検索キーDisplayData param,
     受注検索キーDisplayDataMessages messages,
-    IPresentationContext context);
+    TCommandQueryContext context);
 // 受注詳細QueryDisplayData を戻り値として返す
 ```
 
@@ -94,7 +94,7 @@ public abstract Task<受注詳細QueryDisplayData?> Execute受注詳細取得Asy
 ```csharp
 public abstract Task Execute月次集計Async(
     MessageSetter messages,
-    IPresentationContext context);
+    TCommandQueryContext context);
 ```
 
 ## TypeScript での型情報

@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 namespace MyApp.WebApi.Base;
 
 /// <summary>
-/// 自動生成されたクエリ・コマンド（<see cref="CommandQuery.All"/>）を、1件ずつ HTTP エンドポイントとして公開する。
+/// 自動生成されたクエリ・コマンド（<see cref="CommandQuery{TCommandQueryContext}.All"/>）を、1件ずつ HTTP エンドポイントとして公開する。
 ///
 /// HTTPリクエスト・レスポンスと、処理の引数・戻り値・メッセージとの変換方法は NijoAppScaffold として決まりがあるわけではなく、
 /// クライアント側の呼び出し処理と整合性がとれていればよい。
@@ -29,10 +29,10 @@ public static class CommandQueryEndpoints {
     /// 認可の要否など、処理ごとに異なる設定がある場合に使う。
     /// </param>
     /// <returns>全エンドポイント共通の設定（エンドポイントフィルターなど）を追加するためのグループ</returns>
-    public static RouteGroupBuilder MapCommandQueryEndpoints(this IEndpointRouteBuilder endpoints, Action<CommandQuery, RouteHandlerBuilder>? configure = null) {
+    public static RouteGroupBuilder MapCommandQueryEndpoints(this IEndpointRouteBuilder endpoints, Action<CommandQuery<CommandQueryContext>, RouteHandlerBuilder>? configure = null) {
         var group = endpoints.MapGroup("");
         var mapping = new EndpointMapping(group);
-        foreach (var commandQuery in CommandQuery.All) {
+        foreach (var commandQuery in CommandQuery<CommandQueryContext>.All) {
             var endpoint = commandQuery.Accept(mapping);
             configure?.Invoke(commandQuery, endpoint);
         }
@@ -49,8 +49,8 @@ public static class CommandQueryEndpoints {
     /// </summary>
     private const string PARAM_IGNORE_CONFIRM = "ignore-confirm";
 
-    private sealed class EndpointMapping(IEndpointRouteBuilder endpoints) : ICommandQueryVisitor<RouteHandlerBuilder> {
-        public RouteHandlerBuilder Visit<TParameter, TReturnValue, TMessages>(CommandQuery<TParameter, TReturnValue, TMessages> commandQuery)
+    private sealed class EndpointMapping(IEndpointRouteBuilder endpoints) : ICommandQueryVisitor<CommandQueryContext, RouteHandlerBuilder> {
+        public RouteHandlerBuilder Visit<TParameter, TReturnValue, TMessages>(CommandQuery<CommandQueryContext, TParameter, TReturnValue, TMessages> commandQuery)
             where TMessages : IMessageSetter {
             // RequestDelegate を受け取るオーバーロードが選ばれると戻り値の IResult が無視されるため、型を明示する
             Func<HttpContext, Task<IResult>> handler = httpContext => HandleAsync(commandQuery, httpContext);
@@ -63,7 +63,7 @@ public static class CommandQueryEndpoints {
     /// <summary>
     /// HTTPリクエストを処理の引数に変換して処理を実行し、処理結果をHTTPレスポンスに変換する。
     /// </summary>
-    private static async Task<IResult> HandleAsync<TParameter, TReturnValue, TMessages>(CommandQuery<TParameter, TReturnValue, TMessages> commandQuery, HttpContext httpContext)
+    private static async Task<IResult> HandleAsync<TParameter, TReturnValue, TMessages>(CommandQuery<CommandQueryContext, TParameter, TReturnValue, TMessages> commandQuery, HttpContext httpContext)
         where TMessages : IMessageSetter {
 
         var app = httpContext.RequestServices.GetRequiredService<OverridedApplicationService>();
@@ -100,7 +100,7 @@ public static class CommandQueryEndpoints {
         var ignoreConfirm = httpContext.Request.Query.TryGetValue(PARAM_IGNORE_CONFIRM, out var strIgnoreConfirm)
             && bool.TryParse(strIgnoreConfirm, out var blnIgnoreConfirm)
             && blnIgnoreConfirm;
-        var context = new PresentationContextInWebApi { IgnoreConfirm = ignoreConfirm };
+        var context = new CommandQueryContext { ValidationOnly = !ignoreConfirm };
         var messages = MessageSetter.GetImpl<TMessages>([], new MessageContainer());
 
         var returnValue = await commandQuery.InvokeAsync(app, parameter, messages, context);

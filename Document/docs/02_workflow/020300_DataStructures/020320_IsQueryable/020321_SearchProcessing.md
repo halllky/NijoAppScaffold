@@ -12,7 +12,7 @@
 ```
 [フロントエンド] POST /api/{集約名}/load
         ↓
-[プレゼンテーション層] Web の場合は WebApi/Base/CommandQueryEndpoints.cs
+[呼び出し元] Web の場合は WebApi/Base/CommandQueryEndpoints.cs
         ↓
 LoadAsync()  ← 検索処理本体（フレームワーク固定）
         ├─ ValidateSearchCondition() ← 検索条件のバリデーション（オーバーライド可）。エラーがあればここで中断
@@ -40,14 +40,14 @@ SQL の **FROM 句と SELECT 句**に相当します。
 ```csharp
 // 生成されるスタブ（MapToView を指定しない場合）
 protected abstract IQueryable<OrderQuerySearchResult> CreateQuerySource(
-    OrderQuerySearchCondition searchCondition, IPresentationContext context);
+    OrderQuerySearchCondition searchCondition, TCommandQueryContext context);
 ```
 
 ### 実装例：永続化されるデータ構造から射影する
 
 ```csharp
 protected override IQueryable<OrderQuerySearchResult> CreateQuerySource(
-    OrderQuerySearchCondition searchCondition, IPresentationContext context) {
+    OrderQuerySearchCondition searchCondition, CommandQueryContext context) {
 
     return DbContext.Orders
         .Include(o => o.OrderDetails)
@@ -149,7 +149,7 @@ SQL では表現しにくい加工や、外部 API / キャッシュからのデ
 ```csharp
 protected override IEnumerable<OrderQueryDisplayData> OnAfterLoaded(
     IEnumerable<OrderQueryDisplayData> currentPageItems,
-    OrderQuerySearchCondition searchCondition, IPresentationContext context) {
+    OrderQuerySearchCondition searchCondition, CommandQueryContext context) {
 
     // 例: 外部サービスから配送ステータスを一括取得して補完
     var orderIds = currentPageItems.Select(x => x.OrderId).ToList();
@@ -181,7 +181,7 @@ protected override IEnumerable<OrderQueryDisplayData> OnAfterLoaded(
 public override void ValidateSearchCondition(
     OrderQuerySearchCondition searchCondition,
     OrderQuerySearchConditionMessages messages,
-    IPresentationContext context) {
+    CommandQueryContext context) {
 
     var f = searchCondition.Filter;
     if (f?.OrderDateFrom > f?.OrderDateTo) {

@@ -1,7 +1,7 @@
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    protected override IQueryable<売上一覧SearchResult> CreateQuerySource(売上一覧SearchCondition searchCondition, IPresentationContext context) {
+    protected override IQueryable<売上一覧SearchResult> CreateQuerySource(売上一覧SearchCondition searchCondition, CommandQueryContext context) {
         return DbContext.売上DbSet.Select(x => new 売上一覧SearchResult {
             売上SEQ = x.売上SEQ,
             売上日時 = x.売上日時,

@@ -14,12 +14,12 @@
 client/src/base/
 
 # Core
+Core/CommandQueryContext.cs
 Core/Debugging/EnsureCreatedAsyncEx.cs
 Core/JsonSerializerExtensions.cs
 Core/MessageContainerExtension.cs
 Core/MigrationEntryPoint.cs
 Core/OverridedDbContext.TrySaveAsync.cs
-Core/PresentationContextExtensions.cs
 
 # WebApi
 WebApi/Base/
@@ -28,8 +28,8 @@ WebApi/Properties/PublishProfiles/本番用ビルド.pubxml
 
 # UnitTest
 UnitTest/AssemblyInfo.cs
-UnitTest/PresentationContextInUnitTest.cs
 UnitTest/SaveResultAssertion.cs
+UnitTest/TestFailureMessage.cs
 UnitTest/TestUtilImpl.cs
 
 # Management

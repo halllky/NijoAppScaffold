@@ -66,7 +66,7 @@ export type OrderFormDisplayDataDetails = {
 public override async Task Execute受注登録Async(
     OrderFormDisplayData param,
     OrderFormDisplayDataMessages messages,
-    IPresentationContext context) {
+    CommandQueryContext context) {
 
     // Children の WillBeDeleted を見て処理を分岐
     foreach (var detail in param.Details ?? []) {

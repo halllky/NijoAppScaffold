@@ -2,27 +2,23 @@ using MyApp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MyApp.UnitTest;
 
 /// <summary>
-/// <see cref="IPresentationContext"/> のユニットテスト用の実装
+/// クエリ・コマンドを呼び出すテストが失敗したときに表示するメッセージ。
 /// </summary>
-internal class PresentationContextInUnitTest : IPresentationContext, IConfirmablePresentationContext {
-    public required bool ValidationOnly { get; init; }
-    public List<string> Confirms { get; } = [];
+internal static class TestFailureMessage {
 
     /// <summary>
-    /// テスト失敗時のメッセージに、この処理で発生した確認メッセージと、引数のメッセージの内容を付加して返します。
+    /// 失敗の説明に、呼び出しで発生した確認メッセージと、引数に対するメッセージの内容を付加して返します。
     /// </summary>
-    public string BuildFailureMessage(string message, IMessageSetter messages) {
+    public static string Build(string message, CommandQueryContext context, IMessageSetter messages) {
         var details = new List<string>();
 
-        if (Confirms.Count > 0) {
+        if (context.Confirms.Count > 0) {
             details.Add("Confirm:");
-            details.AddRange(Confirms.Select(confirm => $"  - {confirm}"));
+            details.AddRange(context.Confirms.Select(confirm => $"  - {confirm}"));
         }
 
         var messageState = messages.GetState();

@@ -141,7 +141,7 @@ namespace Nijo.Parts.Common {
                 namespace {{ctx.Config.RootNamespace}};
 
                 {{If(appSrvMethods.Count > 0, () => $$"""
-                partial class {{ApplicationService.ABSTRACT_CLASS}} {
+                partial class {{ApplicationService.ABSTRACT_CLASS_WITH_TYPE_PARAMETER}} {
                 {{appSrvMethods.SelectTextTemplate(source => $$"""
 
                     {{WithIndent(source)}}

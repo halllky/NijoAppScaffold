@@ -84,8 +84,8 @@ namespace Nijo.DataStructures.IsQueryable {
                 /// </summary>
                 /// <param name="searchCondition">検索条件</param>
                 /// <param name="messages">エラーがある場合はこのオブジェクトの中にエラー内容を追記してください。</param>
-                /// <param name="context">この処理を呼び出したプレゼンテーション層から渡される情報</param>
-                public virtual void {{ValidateMethod}}({{searchCondition.CsClassName}} searchCondition, {{searchConditionMessage.CsClassName}} messages, {{PresentationContext.INTERFACE}} context) {
+                /// <param name="context">この呼び出しについての、全処理に共通の入出力</param>
+                public virtual void {{ValidateMethod}}({{searchCondition.CsClassName}} searchCondition, {{searchConditionMessage.CsClassName}} messages, {{ApplicationService.CONTEXT_TYPE_PARAMETER}} context) {
                     // エラーチェックがある場合はこのメソッドをオーバーライドして記述してください。
                     // 既定では通常の検索処理の検証処理を流用します。
                     this.{{SearchProcessing.VALIDATE_METHOD}}(searchCondition, messages, context);
@@ -96,9 +96,9 @@ namespace Nijo.DataStructures.IsQueryable {
                 /// </summary>
                 /// <param name="searchCondition">検索条件</param>
                 /// <param name="messages">検索条件に対するエラーなどのメッセージの格納先</param>
-                /// <param name="context">この処理を呼び出したプレゼンテーション層から渡される情報</param>
+                /// <param name="context">この呼び出しについての、全処理に共通の入出力</param>
                 /// <returns>検索結果。検索条件にエラーがある場合は null</returns>
-                public async Task<{{SearchProcessingReturn.TYPE_CS}}<{{displayData.CsClassName}}>?> {{LoadMethod}}({{searchCondition.CsClassName}} searchCondition, {{searchConditionMessage.CsClassName}} messages, {{PresentationContext.INTERFACE}} context) {
+                public async Task<{{SearchProcessingReturn.TYPE_CS}}<{{displayData.CsClassName}}>?> {{LoadMethod}}({{searchCondition.CsClassName}} searchCondition, {{searchConditionMessage.CsClassName}} messages, {{ApplicationService.CONTEXT_TYPE_PARAMETER}} context) {
                     // エラーチェック
                     {{ValidateMethod}}(searchCondition, messages, context);
                     if (messages.GetState()?.DescendantsAndSelf().Any(x => x.Errors.Count > 0) == true) return null;
@@ -155,7 +155,7 @@ namespace Nijo.DataStructures.IsQueryable {
                 /// <summary>
                 /// {{_entryAggregate.DisplayName}}の参照検索の読み込み後処理
                 /// </summary>
-                protected virtual IEnumerable<{{displayData.CsClassName}}> {{OnAfterLoadMethod}}(IEnumerable<{{displayData.CsClassName}}> currentPageItems, {{searchCondition.CsClassName}} searchCondition, {{PresentationContext.INTERFACE}} context) {
+                protected virtual IEnumerable<{{displayData.CsClassName}}> {{OnAfterLoadMethod}}(IEnumerable<{{displayData.CsClassName}}> currentPageItems, {{searchCondition.CsClassName}} searchCondition, {{ApplicationService.CONTEXT_TYPE_PARAMETER}} context) {
                     // 読み込み後処理がある場合はここで実装してください。
                     return currentPageItems;
                 }

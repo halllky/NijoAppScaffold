@@ -63,7 +63,7 @@ namespace Nijo.Commands {
                 arguments.Add($"{paramStructure.CsClassName} param");
             }
             arguments.Add($"{GetMessagesCsType(paramStructure)} messages");
-            arguments.Add($"{PresentationContext.INTERFACE} context");
+            arguments.Add($"{ApplicationService.CONTEXT_TYPE_PARAMETER} context");
 
             var returnType = returnStructure == null
                 ? "Task"
@@ -79,7 +79,7 @@ namespace Nijo.Commands {
                 """).Else(() => $$"""
                 /// <param name="messages">この処理で発生したエラーや警告などのメッセージの格納先</param>
                 """)}}
-                /// <param name="context">この処理を呼び出したプレゼンテーション層から渡される情報</param>
+                /// <param name="context">この呼び出しについての、全処理に共通の入出力</param>
                 {{If(returnStructure != null, () => $$"""
                 /// <returns>処理結果。エラーで処理を中断した場合などは null を返してよい。</returns>
                 """)}}
