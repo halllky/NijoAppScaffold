@@ -1,4 +1,5 @@
 import React from "react"
+import * as ReactRouter from "react-router-dom"
 import useEvent from "react-use-event-hook"
 import { Button, FieldColumn, FieldGroup, NowLoading, PageTitle, useDisplayDataForm } from "../ui"
 import { useLoginLogout } from "../useLoginLogout"
@@ -34,6 +35,19 @@ export function P001_ログイン(props: {
       setFocus("従業員番号")
     }
   }, [initializing, loginUser, setFocus])
+
+  // ログインしていない間に表示しようとした画面の読み込み処理は失敗しているので、ログインしたらやり直す（SES-005, AUTH-006）
+  const { revalidate } = ReactRouter.useRevalidator()
+  const wasLoggedOut = React.useRef(false)
+  React.useEffect(() => {
+    if (initializing) return
+    if (!loginUser) {
+      wasLoggedOut.current = true
+    } else if (wasLoggedOut.current) {
+      wasLoggedOut.current = false
+      revalidate()
+    }
+  }, [initializing, loginUser, revalidate])
 
   // ログイン実行。失敗した場合はサーバーから返されたメッセージを表示する
   const onSubmit = useEvent(async (data: ログインParameter.DisplayData) => {

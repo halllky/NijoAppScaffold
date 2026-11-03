@@ -23,16 +23,19 @@ export default [
         </SearchDialogHost>
       </P001_ログイン>
     ),
-    children: [
-      // 業務画面のフォルダ直下の各画面
-      ...collectPageRoutes(),
-      // メタデータから組み立てた画面
-      AutoIndex,
-      AutoSearch,
-      AutoCommand,
-    ],
-    // loader などでエラーが発生した場合に表示するエラーページ
-    errorElement: <ErrorPage />,
+    children: [{
+      children: [
+        // 業務画面のフォルダ直下の各画面
+        ...collectPageRoutes(),
+        // メタデータから組み立てた画面
+        AutoIndex,
+        AutoSearch,
+        AutoCommand,
+      ],
+      // loader などでエラーが発生した場合に表示するエラーページ。
+      // ログイン画面の内側に置くことで、ログイン状態が切れていて loader が失敗した場合にはログイン画面を表示させる（SES-005）
+      errorElement: <ErrorPage />,
+    }],
   },
 
   // デバッグ用画面。開発環境でのみ表示。

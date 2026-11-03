@@ -14,7 +14,8 @@ public class LoginAuthorizationMiddleware(RequestDelegate next) {
         if (isWebApi && !allowAnonymous) {
             var app = httpContext.RequestServices.GetRequiredService<OverridedApplicationService>();
             if (app.LoginUser == null) {
-                httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+                // ログイン状態が切れたことを呼び出し元が他のエラーと区別できるようにする（SES-005）
+                httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 return;
             }
         }
