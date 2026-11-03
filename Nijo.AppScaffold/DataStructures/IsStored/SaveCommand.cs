@@ -124,7 +124,7 @@ namespace Nijo.DataStructures.IsStored {
             ctx.Use<Parts.Common.MsgFactory>()
                 .AddMessage(ERR_ID_UNKNOWN,
                     "登録/更新/削除のタイミングでRDBMS上で何らかのエラーが生じた場合のメッセージ",
-                    "登録処理でエラーが発生しました: {0}")
+                    "登録処理でエラーが発生しました。")
                 .AddMessage(ERR_DATA_NOT_FOUND,
                     "更新対象・削除対象のデータがデータベース上で見つからなかったときのメッセージ",
                     "更新対象のデータが見つかりません。")

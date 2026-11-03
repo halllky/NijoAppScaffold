@@ -21,9 +21,10 @@ internal class WebExceptionMiddleware(RequestDelegate next) {
 
             if (httpContext.Response.HasStarted) throw;
 
+            // 例外の内容は利用者に見せない（API-004）
             httpContext.Response.Clear();
             httpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-            await httpContext.Response.WriteAsJsonAsync(new { message = $"システムエラーが発生しました（{ex.Message}）" });
+            await httpContext.Response.WriteAsJsonAsync(new { message = "システムエラーが発生しました。" });
         }
     }
 }

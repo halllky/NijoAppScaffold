@@ -133,8 +133,9 @@ partial class OverridedDbContext {
             return Fail(SaveFailureKind.UniqueConstraint);
 
         } catch (DbUpdateException ex) {
-            // 一般DBエラー。接続が切れた場合など色々
-            errors.AddError(MSG.UnknownUpdateError(ex.Message));
+            // 一般DBエラー。接続が切れた場合など色々。
+            // 例外の内容は利用者に見せず、ログにだけ出す
+            errors.AddError(MSG.UnknownUpdateError());
             _logger.LogError(ex, "保存処理でエラーが発生しました: {commands}", ToLogString(commands));
             return Fail(SaveFailureKind.DatabaseError);
 
