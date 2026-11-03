@@ -1,4 +1,4 @@
-import { handleSessionAlive, handleSessionExpired } from "../login/sessionExpiry"
+import { toLoginUrl } from "../login/loginUrl"
 
 /**
  * サーバー側エンドポイントを呼び出す。
@@ -8,9 +8,9 @@ import { handleSessionAlive, handleSessionExpired } from "../login/sessionExpiry
  * サーバー側の URL を環境ごとに出し分ける必要はない。
  *
  * このほか、認証用のCookieの付加と、ログイン状態が切れていた場合の扱いを責務とする。
- * ログインしていないと応答された場合は、利用者に確認したうえでログイン画面に移る。
- * 移る場合は、ページが切り替わるまで戻り値の Promise を解決しない（呼び出し元の後続の処理を動かさないため）。
- * 移らない場合と、それ以外のエラーの場合は、レスポンスをそのまま返すので、エラーハンドリングは呼び出し側で行うこと。
+ * ログインしていないと応答された場合は、ログイン後に元の画面に戻るようにしてログイン画面へ移り始める。
+ * 編集中の内容がある画面では、移る前にブラウザが利用者に確認し、断られたらこの画面に留まる。
+ * 留まった場合に備えて、レスポンスはどの場合もそのまま返すので、エラーハンドリングは呼び出し側で行うこと。
  *
  * @param endpoint URLのオリジン部分を除くパスおよびクエリパラメータ。URIエンコードは呼び出し側で行う。
  * @param init リクエストの初期化情報。HTTPメソッドやボディなど。
@@ -25,12 +25,8 @@ export async function callAspNetCoreApiAsync(endpoint: string, init: RequestInit
     ...init,
   })
 
-  if (response.status !== 401) {
-    handleSessionAlive()
-    return response
-  }
-  if (handleSessionExpired() === 'redirecting') {
-    return new Promise<never>(() => { })
+  if (response.status === 401) {
+    window.location.assign(toLoginUrl(window.location.pathname + window.location.search))
   }
   return response
 }
