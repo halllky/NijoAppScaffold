@@ -7,6 +7,7 @@ using Nijo.Util.DotnetEx;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace Nijo.Parts.Common {
@@ -19,6 +20,7 @@ namespace Nijo.Parts.Common {
     internal sealed class OperationCatalog : ISharedSourceFile<CodeRenderingContext> {
 
         internal const string CS_CLASS = "Operation";
+        internal const string CS_CATALOG = "Operations";
         internal const string CS_VISITOR = "IOperationVisitor";
         internal const string CS_NO_PARAMETER = "NoParameter";
         internal const string CS_NO_RETURN_VALUE = "NoReturnValue";
@@ -99,16 +101,10 @@ namespace Nijo.Parts.Common {
         }
 
         /// <summary>
-        /// 処理ごとの static プロパティ名が、<see cref="CS_CLASS"/> クラス自身のメンバー名や、ほかの処理のプロパティ名と重複していれば例外を投げる。
+        /// 処理ごとの static プロパティ名がほかの処理のプロパティ名と重複していれば例外を投げる。
         /// 重複したまま生成すると、生成されたソースがコンパイルできないため。
         /// </summary>
         private static void ThrowIfCsPropertyNameConflicts(Definition[] definitions) {
-            var reserved = definitions.Where(def => RESERVED_CS_MEMBER_NAMES.Contains(def.CsPropertyName)).ToArray();
-            if (reserved.Length > 0) {
-                throw new InvalidOperationException(
-                    $"次の処理は、C# のプロパティ名が {CS_CLASS} クラスのメンバー名と同じになるため生成できません。物理名を変更してください: " +
-                    reserved.Select(def => $"{def.DisplayName}（{def.CsPropertyName}）").Join(", "));
-            }
             var duplicates = definitions
                 .GroupBy(def => def.CsPropertyName)
                 .Where(group => group.Count() >= 2)
@@ -119,27 +115,29 @@ namespace Nijo.Parts.Common {
                     duplicates.Select(group => $"{group.Key}（{group.Select(def => def.DisplayName).Join(", ")}）").Join("; "));
             }
         }
-        /// <summary>
-        /// <see cref="RenderCSharp"/> で <see cref="CS_CLASS"/> クラスに宣言しているメンバーの名前と、クラス名そのもの、および object のメンバーの名前。
-        /// 処理ごとの static プロパティにはこれらの名前を使えない。<see cref="RenderCSharp"/> のメンバーを変えたらここも合わせること。
-        /// </summary>
-        private static readonly HashSet<string> RESERVED_CS_MEMBER_NAMES = [
-            CS_CLASS, "Name", "DisplayName", "Path", "IsQuery", "Accept", CS_NO_PARAMETER, CS_NO_RETURN_VALUE, "All",
-            nameof(Equals), nameof(GetHashCode), nameof(GetType), nameof(ToString), nameof(ReferenceEquals), nameof(MemberwiseClone),
-        ];
 
         private static SourceFile RenderCSharp(CodeRenderingContext ctx, Definition[] definitions) {
             const string C = ApplicationService.CONTEXT_TYPE_PARAMETER;
+            var ns = ctx.Config.RootNamespace;
+
+            // 処理のプロパティを宣言するクラスとその型引数の名前は利用者が書くことがないので、処理のプロパティ名と重複しないものを選ぶ。
+            // C# ではメンバーに、宣言しているクラスやその型引数と同じ名前を付けられないため
+            var propertyNames = definitions.Select(def => def.CsPropertyName).ToHashSet();
+            string Unique(string name) {
+                while (propertyNames.Contains(name)) name += "_";
+                return name;
+            }
+            var propertiesClass = Unique($"{CS_CATALOG}Base");
+            var propertiesTypeParameter = Unique(C);
 
             return new SourceFile {
                 FileName = $"{CS_CLASS}.cs",
                 Contents = $$"""
-                    namespace {{ctx.Config.RootNamespace}};
+                    namespace {{ns}};
 
                     /// <summary>
                     /// スキーマ定義から生成されたクエリまたはコマンド1件。
-                    /// Web、バッチ、単体テストなどの呼び出し元は、このクラスの static プロパティまたは <see cref="All"/> から処理を特定して呼び出す。
-                    /// 各 static プロパティは常に同じインスタンスを返すので、処理の特定は参照の比較で行える。
+                    /// Web、バッチ、単体テストなどの呼び出し元は、<see cref="{{CS_CATALOG}}{TOperationContext}"/> の static プロパティまたは <see cref="All"/> から処理を特定して呼び出す。
                     /// 引数・戻り値・メッセージの型を使った処理は <see cref="Accept"/> で <see cref="{{CS_VISITOR}}{TOperationContext, TResult}"/> に委ねる。
                     /// </summary>
                     /// <typeparam name="{{C}}">クエリ・コマンドの呼び出し1回について、全処理に共通の入出力の型</typeparam>
@@ -168,18 +166,38 @@ namespace Nijo.Parts.Common {
                         /// <summary>戻り値のないコマンドの戻り値の型。インスタンスは作られず、戻り値は常に null になる。</summary>
                         public sealed class {{CS_NO_RETURN_VALUE}} { }
 
-                    {{definitions.SelectTextTemplate(def => $$"""
-                        {{WithIndent(RenderCSharpItem(def))}}
-                    """)}}
-
                         /// <summary>
                         /// すべてのクエリとコマンド
                         /// </summary>
                         public static IReadOnlyList<{{CS_CLASS}}<{{C}}>> All { get; } = [
                     {{definitions.SelectTextTemplate(def => $$"""
-                            {{def.CsPropertyName}},
+                            global::{{ns}}.{{propertiesClass}}<{{C}}>.{{def.CsPropertyName}},
                     """)}}
                         ];
+                    }
+
+                    /// <summary>
+                    /// スキーマ定義から生成されたクエリとコマンドの一覧。
+                    /// 処理ごとに、処理の物理名をプロパティ名とする static プロパティを持つ。
+                    /// 各プロパティは常に同じインスタンスを返すので、処理の特定は参照の比較で行える。
+                    /// </summary>
+                    /// <typeparam name="{{C}}">クエリ・コマンドの呼び出し1回について、全処理に共通の入出力の型</typeparam>
+                    public abstract class {{CS_CATALOG}}<{{C}}> : {{propertiesClass}}<{{C}}> {
+                        private {{CS_CATALOG}}() { }
+                    }
+
+                    /// <summary>
+                    /// Operations の static プロパティの実体。直接参照せず、Operations を通して参照すること。
+                    /// 処理の物理名がどんな名前でもプロパティにできるよう、ほかのメンバーを持たないこのクラスでプロパティを宣言し、Operations はそれを継承するだけにしている。
+                    /// このクラスと型引数の名前は、処理のプロパティ名と重複しないように生成時に選ばれる。
+                    /// 同じ理由で、プロパティの中で参照する型はすべて global:: から始まる名前で書いている。
+                    /// </summary>
+                    public abstract class {{propertiesClass}}<{{propertiesTypeParameter}}> {
+                        private protected {{propertiesClass}}() { }
+
+                    {{definitions.SelectTextTemplate(def => $$"""
+                        {{WithIndent(RenderCSharpItem(def, ns, propertiesTypeParameter))}}
+                    """)}}
                     }
 
                     /// <inheritdoc cref="{{CS_CLASS}}{TOperationContext}"/>
@@ -208,9 +226,20 @@ namespace Nijo.Parts.Common {
             };
         }
 
-        private static string RenderCSharpItem(Definition def) {
-            var parameterType = def.ParameterCsType ?? CS_NO_PARAMETER;
-            var returnValueType = def.ReturnValueCsType ?? CS_NO_RETURN_VALUE;
+        /// <summary>
+        /// object から継承されるメンバーの名前。処理のプロパティがこれらと同じ名前の場合は new 修飾子を付けて隠す。
+        /// </summary>
+        private static readonly HashSet<string> OBJECT_MEMBER_NAMES = [
+            nameof(Equals), nameof(GetHashCode), nameof(GetType), nameof(ToString), nameof(ReferenceEquals), nameof(MemberwiseClone),
+        ];
+
+        private static string RenderCSharpItem(Definition def, string ns, string contextTypeParameter) {
+            // プロパティ名と同じ名前の型があっても、プロパティではなく型として解釈されるよう、型名は global:: から書く
+            string Qualify(string csType) => Regex.Replace(csType, @"(?<![\w.:])(?=[\p{L}_])", $"global::{ns}.");
+
+            var operationType = $"global::{ns}.{CS_CLASS}<{contextTypeParameter}>";
+            var parameterType = def.ParameterCsType == null ? $"{operationType}.{CS_NO_PARAMETER}" : Qualify(def.ParameterCsType);
+            var returnValueType = def.ReturnValueCsType == null ? $"{operationType}.{CS_NO_RETURN_VALUE}" : Qualify(def.ReturnValueCsType);
 
             // 引数や戻り値がない処理も、型引数をそろえて同じ形で呼び出せるようにする
             var parameterName = def.ParameterCsType == null ? "_" : "parameter";
@@ -221,11 +250,12 @@ namespace Nijo.Parts.Common {
                 ? $"async (app, {parameterName}, messages, context) => {{ await app.{def.AppSrvMethodName}({arguments}); return null; }}"
                 : $"(app, {parameterName}, messages, context) => app.{def.AppSrvMethodName}({arguments})";
 
-            var type = $"{CS_CLASS}<{ApplicationService.CONTEXT_TYPE_PARAMETER}, {parameterType}, {returnValueType}, {def.MessagesCsType}>";
+            var type = $"global::{ns}.{CS_CLASS}<{contextTypeParameter}, {parameterType}, {returnValueType}, {Qualify(def.MessagesCsType)}>";
+            var modifiers = OBJECT_MEMBER_NAMES.Contains(def.CsPropertyName) ? "public static new" : "public static";
 
             return $$"""
                 /// <summary>{{def.DisplayName}}</summary>
-                public static {{type}} {{def.CsPropertyName}} { get; } = new() {
+                {{modifiers}} {{type}} {{def.CsPropertyName}} { get; } = new() {
                     Name = "{{def.Name.Replace("\"", "\\\"")}}",
                     DisplayName = "{{def.DisplayName.Replace("\"", "\\\"")}}",
                     Path = "{{def.Path}}",

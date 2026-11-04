@@ -83,9 +83,9 @@ app.MapDefaultControllerRoute();
 // Nijoにより自動生成されたクエリ・コマンドをHTTPエンドポイントとして公開する。
 // ログイン前に呼ばれる処理はログイン不要とする
 Operation<OperationContext>[] allowAnonymous = [
-    Operation<OperationContext>.ログイン,
-    Operation<OperationContext>.ログアウト,
-    Operation<OperationContext>.ログイン状態確認,
+    Operations<OperationContext>.ログイン,
+    Operations<OperationContext>.ログアウト,
+    Operations<OperationContext>.ログイン状態確認,
 ];
 app.MapOperationEndpoints((operation, endpoint) => {
     if (allowAnonymous.Contains(operation)) {

@@ -241,8 +241,8 @@ await applicationService.Execute入荷登録Async(param, messages.As<入荷詳�
 // Program.cs
 app.MapOperationEndpoints((operation, endpoint) => {
     // 処理ごとに異なる設定がある場合はここで行う。
-    // 各処理は Operation<OperationContext> の static プロパティとして生成され、常に同じインスタンスなので参照で比較できる
-    if (operation == Operation<OperationContext>.ログイン) {
+    // 各処理は Operations<OperationContext> の static プロパティとして生成され、常に同じインスタンスなので参照で比較できる
+    if (operation == Operations<OperationContext>.ログイン) {
         endpoint.AllowAnonymous();
     }
 });
