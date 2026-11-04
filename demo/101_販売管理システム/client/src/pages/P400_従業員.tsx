@@ -26,8 +26,8 @@ export default {
   path: URL,
   element: <P400_従業員 />,
   // 画面を開いたときは、絞り込まずに検索した結果を表示する。検索に失敗した場合は空の一覧を表示する
-  loader: async () => {
-    const result = await callOperationAsync('従業員マスタ', 従業員マスタ.createNewSearchCondition(), { confirmed: true })
+  loader: async ({ request }) => {
+    const result = await callOperationAsync('従業員マスタ', 従業員マスタ.createNewSearchCondition(), { confirmed: true, signal: request.signal })
     return result.type === 'ok' ? to一覧編集データ(result.returnValue.currentPageItems) : 従業員一括更新Parameter.createNewDisplayData()
   },
 } satisfies ReactRouter.RouteObject

@@ -29,20 +29,20 @@ export default [
   {
     path: "/uriage/new",
     element: <P101_売上詳細 mode="new" />,
-    loader: async () => {
+    loader: async ({ request }) => {
       const parameter = 売上詳細画面初期表示Parameter.createNewDisplayData()
       parameter.新規登録モード = true
-      return await loadOperationAsync('売上詳細画面初期表示', parameter)
+      return await loadOperationAsync('売上詳細画面初期表示', parameter, request.signal)
     },
   },
   {
     path: "/uriage/edit/:id",
     element: <P101_売上詳細 mode="edit" />,
-    loader: async ({ params }) => {
+    loader: async ({ params, request }) => {
       const parameter = 売上詳細画面初期表示Parameter.createNewDisplayData()
       parameter.新規登録モード = false
       parameter.売上SEQ = params.id ?? ''
-      return await loadOperationAsync('売上詳細画面初期表示', parameter)
+      return await loadOperationAsync('売上詳細画面初期表示', parameter, request.signal)
     },
   },
 ] satisfies ReactRouter.RouteObject[]

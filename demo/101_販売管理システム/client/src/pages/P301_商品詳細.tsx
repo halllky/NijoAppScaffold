@@ -39,7 +39,7 @@ export default {
     // 商品情報の取得
     const productCondition = 商品一覧.createNewSearchCondition()
     productCondition.filter.商品SEQ = { from: id, to: id }
-    const productPromise = loadOperationAsync('商品一覧', productCondition)
+    const productPromise = loadOperationAsync('商品一覧', productCondition, request.signal)
 
     // 履歴情報の取得
     const url = new URL(request.url)
@@ -49,7 +49,7 @@ export default {
     historyCondition.sort = ['商品在庫増減履歴.日時（降順）']
     historyCondition.skip = historySkip
     historyCondition.take = PAGING_HISTORY_TAKE.toString()
-    const historyPromise = loadOperationAsync('商品在庫増減履歴', historyCondition)
+    const historyPromise = loadOperationAsync('商品在庫増減履歴', historyCondition, request.signal)
 
     const [product, history] = await Promise.all([productPromise, historyPromise])
 

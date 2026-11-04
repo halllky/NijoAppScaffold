@@ -70,6 +70,7 @@ description: client（React）の画面を実装・修正するときに使う�
 - ログイン状態が切れていた場合の扱い（利用者に確認してログイン画面に移る）は、サーバーを呼ぶ共通の処理が行うので、画面では何もしなくてよい。
   利用者がログイン画面に移らずに留まった場合は `error` が返る。
 - React Router の `loader` からは `loadOperationAsync` を使う。成功したら戻り値を返し、失敗したら例外を投げてルートのエラー画面を表示させる。
+  第 3 引数には loader の引数の `request.signal` を渡す。画面遷移が中断されたときに、サーバーの呼び出しも中断するため。
 - 「〜しますがよろしいですか？」の確認はこの関数が行う。画面で `window.confirm` を自作しない。
   クエリ（一覧検索・参照検索）は確認を必要としないので何も付けない。読み取りだけのコマンド（初期表示など）には `{ confirmed: true }` を付け、更新するコマンドには付けない。
 - 中断できる呼び出し（検索、入力に追従する再計算）には `signal` を渡す。
@@ -201,7 +202,7 @@ export default [
 ] satisfies ReactRouter.RouteObject[]
 ```
 
-1. **読み込み**は React Router の `loader` で行う。初期表示用のコマンドを `loadOperationAsync` で呼ぶ（確認メッセージは出ず、失敗したらルートのエラー画面が表示される）。
+1. **読み込み**は React Router の `loader` で行う。初期表示用のコマンドを `loadOperationAsync(名前, 引数, request.signal)` で呼ぶ（確認メッセージは出ず、失敗したらルートのエラー画面が表示される）。
    新規登録で初期値の加工が要るなら、それも初期表示コマンドに任せるか、loader の中で行う。
 2. **フォーム**は `useDisplayDataForm(モデル, { defaultValues: loaderData })`。
    保存後の再読み込みなどで loader のデータが変わったらフォームを置き換える effect を置く（ルーターとの同期）。

@@ -37,10 +37,10 @@ export default [
   {
     path: "/nyuka/edit/:id",
     element: <P201_入荷詳細 mode="edit" />,
-    loader: async ({ params }) => {
+    loader: async ({ params, request }) => {
       const parameter = 入荷詳細画面初期表示Parameter.createNewDisplayData()
       parameter.入荷ID = params.id ?? ''
-      return await loadOperationAsync('入荷詳細画面初期表示', parameter)
+      return await loadOperationAsync('入荷詳細画面初期表示', parameter, request.signal)
     }
   },
 ] satisfies ReactRouter.RouteObject[]
