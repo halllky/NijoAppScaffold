@@ -3,7 +3,6 @@ import { callAspNetCoreApiAsync } from "../base/callAspNetCoreApiAsync"
 
 /**
  * バックエンドへのリクエストを行なう。
- * GETリクエストと、ComplexPost（自動生成されたクエリ・コマンドのエンドポイントへのPOSTリクエスト）の2種類のリクエストをサポートする。
  */
 export const useHttpRequest = () => {
 
@@ -88,17 +87,6 @@ export type HttpRequestResult<TSuccess, TError> = {
   ok: false
 } & TError
 
-/** ComplexPostのエラー */
-export type CompolexPostError = {
-  type: 'canceled'
-} | {
-  type: 'detail'
-  detail: DetailMessagesContainer
-} | {
-  type: 'unknown'
-  message: string
-}
-
 /**
  * 未知のエラーを、画面上に表示できる文字列に変換する。
  */
@@ -139,52 +127,4 @@ const toDisplayErrorText = async (response: Response): Promise<string> => {
   } catch (error) {
     return `HTTP ${response.status} ${response.statusText}`
   }
-}
-
-
-export type ComplexPostOptions = {
-  /** 確認メッセージを表示しない */
-  ignoreConfirm?: true
-  /**
-   * 詳細メッセージのハンドリングを行なう。
-   * 基本的には react-hook-form の `setError` を呼び出す。
-   */
-  handleDetailMessage?: (detail: DetailMessagesContainer) => void
-}
-
-/**
- * 詳細メッセージの型。
- * パラメータの型と同じ構造をもち、フィールドごとにそのフィールドに対するメッセージが格納される。
- */
-export type DetailMessagesContainer = {
-  error?: string[]
-  warn?: string[]
-  info?: string[]
-  children?: { [key: string]: DetailMessagesContainer }
-}
-
-/**
- * エラーメッセージのオブジェクトを展開してstringの配列にする。
- * エラー、警告、情報の別は無視し、すべてエラーとして扱う。
- * 例えば * `{ aaa: { '1': { bbb: { error: ['エラー1'], info: ['情報1'] } } } }` というオブジェクトを
- * [`aaa.1.bbb: エラー1, 情報1`] に変換する。
- */
-export const toFlattenStringList = (detail: DetailMessagesContainer): string[] => {
-  const result: string[] = []
-  const collectMessagesRecursively = (path: string[], messages: DetailMessagesContainer) => {
-    // error, warn, info を全部まとめて表示
-    const allMessages = [...(messages.error ?? []), ...(messages.warn ?? []), ...(messages.info ?? [])]
-    if (allMessages.length > 0) {
-      const prefix = path.length === 0 ? '' : `${path.join('.')}: `
-      result.push(`${prefix}${allMessages.join(', ')}`)
-    }
-
-    if (messages.children) {
-      for (const [key, value] of Object.entries(messages.children)) {
-        collectMessagesRecursively([...path, key], value)
-      }
-    }
-  }
-  collectMessagesRecursively([], detail)
-  return result
 }

@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 namespace MyApp.WebApi;
 
 /// <summary>
-/// 自動生成されたクエリ・コマンド（<see cref="CommandQuery{TCommandQueryContext}.All"/>）を、1件ずつ HTTP エンドポイントとして公開する。
+/// 自動生成されたクエリ・コマンド（<see cref="Operation{TOperationContext}.All"/>）を、1件ずつ HTTP エンドポイントとして公開する。
 ///
 /// HTTPリクエスト・レスポンスと、処理の引数・戻り値・メッセージとの変換方法は NijoAppScaffold として決まりがあるわけではなく、
 /// クライアント側の呼び出し処理と整合性がとれていればよい。
@@ -20,13 +20,13 @@ namespace MyApp.WebApi;
 ///   <item>Content-TypeやCORSなどのHTTPヘッダー</item>
 /// </list>
 /// </summary>
-public static class CommandQueryEndpoints {
+public static class OperationEndpoints {
 
     /// <summary>
     /// クライアント側から送られてくるパラメータは
     /// Content-Type: multipart/form-data のリクエストボディのこの名前のセクションにJSONで入っている
     /// </summary>
-    private const string PARAM_DATA = "complex-post-request-body";
+    private const string FORM_FIELD_PARAMETER = "parameter";
     /// <summary>
     /// 確認メッセージが承諾された後の本処理を行うHTTPリクエストに付されるクエリパラメータ
     /// </summary>
@@ -40,12 +40,12 @@ public static class CommandQueryEndpoints {
     /// 認可の要否など、処理ごとに異なる設定がある場合に使う。
     /// </param>
     /// <returns>全エンドポイント共通の設定（エンドポイントフィルターなど）を追加するためのグループ</returns>
-    public static RouteGroupBuilder MapCommandQueryEndpoints(this IEndpointRouteBuilder endpoints, Action<CommandQuery<CommandQueryContext>, RouteHandlerBuilder>? configure = null) {
+    public static RouteGroupBuilder MapOperationEndpoints(this IEndpointRouteBuilder endpoints, Action<Operation<OperationContext>, RouteHandlerBuilder>? configure = null) {
         var group = endpoints.MapGroup("");
         var mapping = new EndpointMapping(group);
-        foreach (var commandQuery in CommandQuery<CommandQueryContext>.All) {
-            var endpoint = commandQuery.Accept(mapping);
-            configure?.Invoke(commandQuery, endpoint);
+        foreach (var operation in Operation<OperationContext>.All) {
+            var endpoint = operation.Accept(mapping);
+            configure?.Invoke(operation, endpoint);
         }
         return group;
     }
@@ -53,14 +53,14 @@ public static class CommandQueryEndpoints {
     /// <summary>
     /// <see cref="IEndpointRouteBuilder"/> に <see cref="HandleAsync"/> を登録する。
     /// </summary>
-    private sealed class EndpointMapping(IEndpointRouteBuilder endpoints) : ICommandQueryVisitor<CommandQueryContext, RouteHandlerBuilder> {
-        public RouteHandlerBuilder Visit<TParameter, TReturnValue, TMessages>(CommandQuery<CommandQueryContext, TParameter, TReturnValue, TMessages> commandQuery)
+    private sealed class EndpointMapping(IEndpointRouteBuilder endpoints) : IOperationVisitor<OperationContext, RouteHandlerBuilder> {
+        public RouteHandlerBuilder Visit<TParameter, TReturnValue, TMessages>(Operation<OperationContext, TParameter, TReturnValue, TMessages> operation)
             where TMessages : IMessageSetter {
             // RequestDelegate を受け取るオーバーロードが選ばれると戻り値の IResult が無視されるため、型を明示する
-            Func<HttpContext, Task<IResult>> handler = httpContext => HandleAsync(commandQuery, httpContext);
+            Func<HttpContext, Task<IResult>> handler = httpContext => HandleAsync(operation, httpContext);
             return endpoints
-                .MapPost(commandQuery.Path, handler)
-                .WithDisplayName(commandQuery.DisplayName);
+                .MapPost(operation.Path, handler)
+                .WithDisplayName(operation.DisplayName);
         }
     }
 
@@ -70,7 +70,7 @@ public static class CommandQueryEndpoints {
     ///
     /// HTTPリクエスト・レスポンスのルールは、クライアント側の処理と整合しさえしていればよく、自由に変更可能。
     /// </summary>
-    private static async Task<IResult> HandleAsync<TParameter, TReturnValue, TMessages>(CommandQuery<CommandQueryContext, TParameter, TReturnValue, TMessages> commandQuery, HttpContext httpContext)
+    private static async Task<IResult> HandleAsync<TParameter, TReturnValue, TMessages>(Operation<OperationContext, TParameter, TReturnValue, TMessages> operation, HttpContext httpContext)
         where TMessages : IMessageSetter {
 
         var app = httpContext.RequestServices.GetRequiredService<OverridedApplicationService>();
@@ -81,17 +81,17 @@ public static class CommandQueryEndpoints {
         // ---------------------------------------------------------
         if (!httpContext.Request.HasFormContentType) {
             app.Log.LogWarning("リクエストの Content-Type が multipart/form-data ではありません。");
-            return Results.BadRequest($"リクエストのContent-Typeは multipart/form-data で、セクション '{PARAM_DATA}' を含んでいる必要があります。");
+            return Results.BadRequest($"リクエストのContent-Typeは multipart/form-data で、セクション '{FORM_FIELD_PARAMETER}' を含んでいる必要があります。");
         }
         var form = await httpContext.Request.ReadFormAsync(httpContext.RequestAborted);
-        if (!form.TryGetValue(PARAM_DATA, out var dataSection)) {
-            app.Log.LogWarning("リクエストに '{ParamData}' セクションが含まれていません。", PARAM_DATA);
-            return Results.BadRequest($"リクエストのContent-Typeは multipart/form-data で、セクション '{PARAM_DATA}' を含んでいる必要があります。");
+        if (!form.TryGetValue(FORM_FIELD_PARAMETER, out var parameterSection)) {
+            app.Log.LogWarning("リクエストに '{FormFieldParameter}' セクションが含まれていません。", FORM_FIELD_PARAMETER);
+            return Results.BadRequest($"リクエストのContent-Typeは multipart/form-data で、セクション '{FORM_FIELD_PARAMETER}' を含んでいる必要があります。");
         }
 
         TParameter parameter;
         try {
-            parameter = JsonSerializer.Deserialize<TParameter>(dataSection.ToString(), jsonOptions)
+            parameter = JsonSerializer.Deserialize<TParameter>(parameterSection.ToString(), jsonOptions)
                 ?? throw new JsonException("リクエストボディが null です。");
 
             app.Log.LogDebug("HTTP REQUEST BODY DATA: {DataSection}", app.SerializeForLog(parameter));
@@ -107,10 +107,10 @@ public static class CommandQueryEndpoints {
         var ignoreConfirm = httpContext.Request.Query.TryGetValue(PARAM_IGNORE_CONFIRM, out var strIgnoreConfirm)
             && bool.TryParse(strIgnoreConfirm, out var blnIgnoreConfirm)
             && blnIgnoreConfirm;
-        var context = new CommandQueryContext { ValidationOnly = !ignoreConfirm };
+        var context = new OperationContext { ValidationOnly = !ignoreConfirm };
         var messages = MessageSetter.GetImpl<TMessages>([], new MessageContainer());
 
-        var returnValue = await commandQuery.InvokeAsync(app, parameter, messages, context);
+        var returnValue = await operation.InvokeAsync(app, parameter, messages, context);
 
         // ---------------------------------------------------------
         // 処理結果をHTTPレスポンスに変換する
@@ -127,7 +127,7 @@ public static class CommandQueryEndpoints {
         // エラーがある場合、またはコマンドの1回目のリクエスト（入力チェックのみ）の場合は 202 Accepted を返し、
         // クライアント側に確認メッセージの表示を促す。
         // クエリはデータを変更しないので確認を必要としない。
-        var statusCode = messages.HasError() || (!commandQuery.IsQuery && !ignoreConfirm)
+        var statusCode = messages.HasError() || (!operation.IsQuery && !ignoreConfirm)
             ? HttpStatusCode.Accepted
             : HttpStatusCode.OK;
 

@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task ExecuteクリーンナップAsync(MessageSetter messages, CommandQueryContext context) {
+    public override async Task ExecuteクリーンナップAsync(MessageSetter messages, OperationContext context) {
         // 最終ログイン日時から24時間経過したセッションを削除
         var threshold = CurrentTime.AddHours(-24);
 

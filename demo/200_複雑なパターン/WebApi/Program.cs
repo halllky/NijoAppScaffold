@@ -48,7 +48,7 @@ if (app.Environment.IsDevelopment()) {
 app.MapDefaultControllerRoute();
 
 // Nijoにより自動生成されたクエリ・コマンドをHTTPエンドポイントとして公開する
-app.MapCommandQueryEndpoints();
+app.MapOperationEndpoints();
 
 // 存在しないパスへのリクエストは index.html を返すようにし、
 // 実際にどの画面が初期表示されるかは React Router のルーティング設定で制御する。

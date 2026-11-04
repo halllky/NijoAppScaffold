@@ -4,7 +4,7 @@ namespace MyApp;
 
 partial class OverridedApplicationService {
 
-    public override Task<ログインユーザー情報DisplayData?> Executeログイン状態確認Async(MessageSetter messages, CommandQueryContext context) {
+    public override Task<ログインユーザー情報DisplayData?> Executeログイン状態確認Async(MessageSetter messages, OperationContext context) {
 
         if (LoginUser == null) {
             messages.AddError("ログインしていません。");

@@ -12,7 +12,7 @@
 ```
 [フロントエンド] POST /api/{集約名}/load
         ↓
-[呼び出し元] Web の場合は WebApi/Base/CommandQueryEndpoints.cs
+[呼び出し元] Web の場合は WebApi/Base/OperationEndpoints.cs
         ↓
 LoadAsync()  ← 検索処理本体（フレームワーク固定）
         ├─ ValidateSearchCondition() ← 検索条件のバリデーション（オーバーライド可）。エラーがあればここで中断
@@ -40,14 +40,14 @@ SQL の **FROM 句と SELECT 句**に相当します。
 ```csharp
 // 生成されるスタブ（MapToView を指定しない場合）
 protected abstract IQueryable<OrderQuerySearchResult> CreateQuerySource(
-    OrderQuerySearchCondition searchCondition, TCommandQueryContext context);
+    OrderQuerySearchCondition searchCondition, TOperationContext context);
 ```
 
 ### 実装例：永続化されるデータ構造から射影する
 
 ```csharp
 protected override IQueryable<OrderQuerySearchResult> CreateQuerySource(
-    OrderQuerySearchCondition searchCondition, CommandQueryContext context) {
+    OrderQuerySearchCondition searchCondition, OperationContext context) {
 
     return DbContext.Orders
         .Include(o => o.OrderDetails)
@@ -149,7 +149,7 @@ SQL では表現しにくい加工や、外部 API / キャッシュからのデ
 ```csharp
 protected override IEnumerable<OrderQueryDisplayData> OnAfterLoaded(
     IEnumerable<OrderQueryDisplayData> currentPageItems,
-    OrderQuerySearchCondition searchCondition, CommandQueryContext context) {
+    OrderQuerySearchCondition searchCondition, OperationContext context) {
 
     // 例: 外部サービスから配送ステータスを一括取得して補完
     var orderIds = currentPageItems.Select(x => x.OrderId).ToList();
@@ -181,7 +181,7 @@ protected override IEnumerable<OrderQueryDisplayData> OnAfterLoaded(
 public override void ValidateSearchCondition(
     OrderQuerySearchCondition searchCondition,
     OrderQuerySearchConditionMessages messages,
-    CommandQueryContext context) {
+    OperationContext context) {
 
     var f = searchCondition.Filter;
     if (f?.OrderDateFrom > f?.OrderDateTo) {
@@ -196,11 +196,11 @@ public override void ValidateSearchCondition(
 ## TypeScript からの呼び出し
 
 ```typescript
-// エンドポイントとパラメータ型は CommandQuery から取得
-const endpoint = CommandQuery.Endpoint['OrderQuery']
+// エンドポイントとパラメータ型は Operation から取得
+const endpoint = Operation.Endpoint['OrderQuery']
 // → POST "/api/order-query/load"
 
-const condition: CommandQuery.ParamType['OrderQuery'] = {
+const condition: Operation.ParamType['OrderQuery'] = {
   filter: {
     customerName: "田中",
     orderDateFrom: "2024-01-01",
@@ -218,6 +218,6 @@ const response = await fetch(endpoint, {
 })
 
 // 戻り値: { items: OrderQueryDisplayData[], totalCount: number }
-const result: CommandQuery.ReturnType['OrderQuery'] = await response.json()
+const result: Operation.ReturnType['OrderQuery'] = await response.json()
 console.log(`${result.totalCount} 件中 ${result.items.length} 件を表示`)
 ```

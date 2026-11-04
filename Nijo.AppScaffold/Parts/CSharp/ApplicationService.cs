@@ -13,7 +13,7 @@ namespace Nijo.Parts.CSharp {
         /// アプリケーションサービスの型引数。クエリ・コマンドの呼び出し1回について、全処理に共通の入出力の型。
         /// 中身はアプリケーションが定義し、自動生成されるソースはその中身を参照しない。
         /// </summary>
-        public const string CONTEXT_TYPE_PARAMETER = "TCommandQueryContext";
+        public const string CONTEXT_TYPE_PARAMETER = "TOperationContext";
         /// <summary>型引数を含めたアプリケーションサービスの型名</summary>
         public const string ABSTRACT_CLASS_WITH_TYPE_PARAMETER = $"{ABSTRACT_CLASS}<{CONTEXT_TYPE_PARAMETER}>";
 

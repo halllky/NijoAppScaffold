@@ -34,7 +34,7 @@ internal sealed class CommandsSection : Section {
         // 処理: 本処理抽象メソッド、クエリ・コマンドの一覧への登録
         var commandProcessing = new CommandProcessing(rootAggregate);
         sourceFile.AddAppSrvMethod(commandProcessing.RenderAppSrvMethods(ctx), "コマンド処理");
-        ctx.Use<CommandQueryCatalog>().Add(rootAggregate, commandProcessing.ToCatalogDefinition());
+        ctx.Use<OperationCatalog>().Add(rootAggregate, commandProcessing.ToCatalogDefinition());
 
         // カスタムロジック用モジュール
         ctx.Use<CommandQueryMappings>().AddCommandModel(rootAggregate);

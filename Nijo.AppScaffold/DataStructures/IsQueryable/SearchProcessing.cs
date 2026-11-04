@@ -39,7 +39,7 @@ namespace Nijo.DataStructures.IsQueryable {
         /// <summary>
         /// クエリ・コマンドの一覧に載せるこの一覧検索処理の定義
         /// </summary>
-        internal CommandQueryCatalog.Definition ToCatalogDefinition() {
+        internal OperationCatalog.Definition ToCatalogDefinition() {
             var searchCondition = new SearchCondition.Entry(_rootAggregate);
             var displayData = new DisplayData(_rootAggregate);
             var module = new TypeScriptSectionRootModule(_rootAggregate);
@@ -48,7 +48,7 @@ namespace Nijo.DataStructures.IsQueryable {
                 Name = _rootAggregate.PhysicalName,
                 CsPropertyName = _rootAggregate.PhysicalName,
                 DisplayName = _rootAggregate.DisplayName,
-                Path = CommandQueryCatalog.GetPath(_rootAggregate, ACTION_LOAD),
+                Path = OperationCatalog.GetPath(_rootAggregate, ACTION_LOAD),
                 IsQuery = true,
                 AppSrvMethodName = LOAD_METHOD,
                 ParameterCsType = searchCondition.CsClassName,

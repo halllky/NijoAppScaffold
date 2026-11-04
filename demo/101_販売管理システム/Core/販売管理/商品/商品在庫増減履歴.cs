@@ -1,7 +1,7 @@
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    protected override IQueryable<商品在庫増減履歴SearchResult> CreateQuerySource(商品在庫増減履歴SearchCondition searchCondition, CommandQueryContext context) {
+    protected override IQueryable<商品在庫増減履歴SearchResult> CreateQuerySource(商品在庫増減履歴SearchCondition searchCondition, OperationContext context) {
 
         // 入荷による在庫増
         var increaseByReceives = DbContext.入荷明細DbSet

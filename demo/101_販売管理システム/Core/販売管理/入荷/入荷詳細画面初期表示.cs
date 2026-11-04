@@ -4,7 +4,7 @@ namespace MyApp;
 
 partial class OverridedApplicationService {
 
-    public override async Task<入荷詳細DisplayData?> Execute入荷詳細画面初期表示Async(入荷詳細画面初期表示ParameterDisplayData param, 入荷詳細画面初期表示ParameterMessages messages, CommandQueryContext context) {
+    public override async Task<入荷詳細DisplayData?> Execute入荷詳細画面初期表示Async(入荷詳細画面初期表示ParameterDisplayData param, 入荷詳細画面初期表示ParameterMessages messages, OperationContext context) {
         var id = param.入荷ID;
         if (string.IsNullOrEmpty(id)) {
             messages.AddError("入荷IDが指定されていません。");

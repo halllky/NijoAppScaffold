@@ -26,7 +26,7 @@ namespace Nijo.Commands {
         /// <summary>
         /// クエリ・コマンドの一覧に載せるこのコマンドの定義
         /// </summary>
-        internal CommandQueryCatalog.Definition ToCatalogDefinition() {
+        internal OperationCatalog.Definition ToCatalogDefinition() {
             var paramStructure = _rootAggregate.GetParameterStructure();
             var returnStructure = _rootAggregate.GetReturnValueStructure();
 
@@ -34,7 +34,7 @@ namespace Nijo.Commands {
                 Name = _rootAggregate.PhysicalName,
                 CsPropertyName = _rootAggregate.PhysicalName,
                 DisplayName = _rootAggregate.DisplayName,
-                Path = CommandQueryCatalog.GetPath(_rootAggregate, ACTION_EXECUTE),
+                Path = OperationCatalog.GetPath(_rootAggregate, ACTION_EXECUTE),
                 IsQuery = false,
                 AppSrvMethodName = ExecuteMethodName,
                 ParameterCsType = paramStructure?.CsClassName,

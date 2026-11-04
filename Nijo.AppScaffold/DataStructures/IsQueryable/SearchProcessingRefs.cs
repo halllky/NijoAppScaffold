@@ -29,7 +29,7 @@ namespace Nijo.DataStructures.IsQueryable {
         /// <summary>
         /// クエリ・コマンドの一覧に載せる、このルート集約とその子孫集約の参照検索処理の定義
         /// </summary>
-        internal static CommandQueryCatalog.Definition[] ToCatalogDefinitionsRecursively(RootAggregate rootAggregate) {
+        internal static OperationCatalog.Definition[] ToCatalogDefinitionsRecursively(RootAggregate rootAggregate) {
             var (entries, _) = DisplayDataRef.GetReferedMembersRecursively(rootAggregate);
             return entries
                 .Select(e => new SearchProcessingRefs(e.Aggregate).ToCatalogDefinition())
@@ -47,7 +47,7 @@ namespace Nijo.DataStructures.IsQueryable {
                 """;
         }
 
-        private CommandQueryCatalog.Definition ToCatalogDefinition() {
+        private OperationCatalog.Definition ToCatalogDefinition() {
             var root = _entryAggregate.GetRoot();
             var searchCondition = new SearchCondition.Entry(root);
             var displayData = new DisplayDataRef.Entry(_entryAggregate);
@@ -57,7 +57,7 @@ namespace Nijo.DataStructures.IsQueryable {
                 Name = _entryAggregate.RefEntryName,
                 CsPropertyName = $"RefTo{_entryAggregate.PhysicalName}",
                 DisplayName = $"{_entryAggregate.DisplayName}の参照検索",
-                Path = CommandQueryCatalog.GetPath(root, ActionLoad),
+                Path = OperationCatalog.GetPath(root, ActionLoad),
                 IsQuery = true,
                 AppSrvMethodName = LoadMethod,
                 ParameterCsType = searchCondition.CsClassName,

@@ -16,15 +16,15 @@ namespace Nijo.Parts.Common {
     /// TypeScript 側にはそれと同じ名前をキーにした引数・戻り値の型とURLの対応表を生成する。
     /// 同じ定義から両方を生成することで、クライアントとサーバーの型定義やURLのずれを防ぐ。
     /// </summary>
-    internal sealed class CommandQueryCatalog : ISharedSourceFile<CodeRenderingContext> {
+    internal sealed class OperationCatalog : ISharedSourceFile<CodeRenderingContext> {
 
-        internal const string CS_CLASS = "CommandQuery";
-        internal const string CS_VISITOR = "ICommandQueryVisitor";
+        internal const string CS_CLASS = "Operation";
+        internal const string CS_VISITOR = "IOperationVisitor";
         internal const string CS_NO_PARAMETER = "NoParameter";
         internal const string CS_NO_RETURN_VALUE = "NoReturnValue";
 
-        private const string TS_FILE_NAME = "command-query";
-        private const string TS_NAMESPACE = "CommandQuery";
+        private const string TS_FILE_NAME = "operation";
+        private const string TS_NAMESPACE = "Operation";
 
         /// <summary>
         /// クエリまたはコマンド1件の定義。
@@ -70,7 +70,7 @@ namespace Nijo.Parts.Common {
         /// <summary>
         /// ルート要素が持つクエリやコマンドを登録します。
         /// </summary>
-        internal CommandQueryCatalog Add(ISectionRoot root, params Definition[] definitions) {
+        internal OperationCatalog Add(ISectionRoot root, params Definition[] definitions) {
             lock (_lock) {
                 _definitions.Add((root, definitions));
                 return this;
@@ -109,7 +109,7 @@ namespace Nijo.Parts.Common {
                     /// スキーマ定義から生成されたクエリまたはコマンド1件。
                     /// Web、バッチ、単体テストなどの呼び出し元は、このクラスの static プロパティまたは <see cref="All"/> から処理を特定して呼び出す。
                     /// 各 static プロパティは常に同じインスタンスを返すので、処理の特定は参照の比較で行える。
-                    /// 引数・戻り値・メッセージの型を使った処理は <see cref="Accept"/> で <see cref="{{CS_VISITOR}}{TCommandQueryContext, TResult}"/> に委ねる。
+                    /// 引数・戻り値・メッセージの型を使った処理は <see cref="Accept"/> で <see cref="{{CS_VISITOR}}{TOperationContext, TResult}"/> に委ねる。
                     /// </summary>
                     /// <typeparam name="{{C}}">クエリ・コマンドの呼び出し1回について、全処理に共通の入出力の型</typeparam>
                     public abstract class {{CS_CLASS}}<{{C}}> {
@@ -151,7 +151,7 @@ namespace Nijo.Parts.Common {
                         ];
                     }
 
-                    /// <inheritdoc cref="{{CS_CLASS}}{TCommandQueryContext}"/>
+                    /// <inheritdoc cref="{{CS_CLASS}}{TOperationContext}"/>
                     /// <typeparam name="TParameter">引数の型</typeparam>
                     /// <typeparam name="TReturnValue">戻り値の型</typeparam>
                     /// <typeparam name="TMessages">引数に対するメッセージの型</typeparam>
@@ -167,10 +167,10 @@ namespace Nijo.Parts.Common {
                     }
 
                     /// <summary>
-                    /// <see cref="{{CS_CLASS}}{TCommandQueryContext}"/> の引数・戻り値・メッセージの型を使った処理。
+                    /// <see cref="{{CS_CLASS}}{TOperationContext}"/> の引数・戻り値・メッセージの型を使った処理。
                     /// </summary>
                     public interface {{CS_VISITOR}}<{{C}}, out TResult> {
-                        TResult Visit<TParameter, TReturnValue, TMessages>({{CS_CLASS}}<{{C}}, TParameter, TReturnValue, TMessages> commandQuery)
+                        TResult Visit<TParameter, TReturnValue, TMessages>({{CS_CLASS}}<{{C}}, TParameter, TReturnValue, TMessages> operation)
                             where TMessages : {{MessageContainer.SETTER_INTERFACE}};
                     }
                     """,

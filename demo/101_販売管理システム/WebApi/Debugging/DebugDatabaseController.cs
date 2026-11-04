@@ -25,7 +25,7 @@ public class DebugDatabaseController : ControllerBase {
             await app.DbContext.EnsureCreatedAsyncEx(app.Settings);
 
             // ダミーデータの生成
-            var generator = new OverridedDummyDataGenerator(new CommandQueryContext { ValidationOnly = false });
+            var generator = new OverridedDummyDataGenerator(new OperationContext { ValidationOnly = false });
             var result = await generator.GenerateAsync(app);
 
             if (result.HasError()) {

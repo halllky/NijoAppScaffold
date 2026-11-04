@@ -293,7 +293,7 @@ namespace Nijo {
             ctx.Use<MessageContainer.BaseClass>();
             ctx.Use<IndexTs>();
             ctx.Use<CommandQueryMappings>();
-            ctx.Use<CommandQueryCatalog>();
+            ctx.Use<OperationCatalog>();
         }
     }
 }

@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 namespace MyApp.WebApi.Base;
 
 /// <summary>
-/// 自動生成されたクエリ・コマンド（<see cref="CommandQuery{TCommandQueryContext}.All"/>）を、1件ずつ HTTP エンドポイントとして公開する。
+/// 自動生成されたクエリ・コマンド（<see cref="Operation{TOperationContext}.All"/>）を、1件ずつ HTTP エンドポイントとして公開する。
 ///
 /// HTTPリクエスト・レスポンスと、処理の引数・戻り値・メッセージとの変換方法は NijoAppScaffold として決まりがあるわけではなく、
 /// クライアント側の呼び出し処理と整合性がとれていればよい。
@@ -15,10 +15,10 @@ namespace MyApp.WebApi.Base;
 /// <list type="bullet">
 ///   <item>リクエスト: 処理の引数を JSON にしたものをリクエストボディで送る（Content-Type: application/json）</item>
 ///   <item>レスポンス: 戻り値とメッセージを JSON で返す。ステータスコードは、エラーが無ければ 200、エラーがあれば 422</item>
-///   <item>確認メッセージ（<see cref="CommandQueryContext.Confirms"/>）は扱わない。処理は常に入力チェックと更新を1回で行う</item>
+///   <item>確認メッセージ（<see cref="OperationContext.Confirms"/>）は扱わない。処理は常に入力チェックと更新を1回で行う</item>
 /// </list>
 /// </summary>
-public static class CommandQueryEndpoints {
+public static class OperationEndpoints {
 
     /// <summary>
     /// すべてのクエリ・コマンドを HTTP POST のエンドポイントとして登録します。
@@ -28,12 +28,12 @@ public static class CommandQueryEndpoints {
     /// 認可の要否など、処理ごとに異なる設定がある場合に使う。
     /// </param>
     /// <returns>全エンドポイント共通の設定（エンドポイントフィルターなど）を追加するためのグループ</returns>
-    public static RouteGroupBuilder MapCommandQueryEndpoints(this IEndpointRouteBuilder endpoints, Action<CommandQuery<CommandQueryContext>, RouteHandlerBuilder>? configure = null) {
+    public static RouteGroupBuilder MapOperationEndpoints(this IEndpointRouteBuilder endpoints, Action<Operation<OperationContext>, RouteHandlerBuilder>? configure = null) {
         var group = endpoints.MapGroup("");
         var mapping = new EndpointMapping(group);
-        foreach (var commandQuery in CommandQuery<CommandQueryContext>.All) {
-            var endpoint = commandQuery.Accept(mapping);
-            configure?.Invoke(commandQuery, endpoint);
+        foreach (var operation in Operation<OperationContext>.All) {
+            var endpoint = operation.Accept(mapping);
+            configure?.Invoke(operation, endpoint);
         }
         return group;
     }
@@ -41,14 +41,14 @@ public static class CommandQueryEndpoints {
     /// <summary>
     /// <see cref="IEndpointRouteBuilder"/> に <see cref="HandleAsync"/> を登録する。
     /// </summary>
-    private sealed class EndpointMapping(IEndpointRouteBuilder endpoints) : ICommandQueryVisitor<CommandQueryContext, RouteHandlerBuilder> {
-        public RouteHandlerBuilder Visit<TParameter, TReturnValue, TMessages>(CommandQuery<CommandQueryContext, TParameter, TReturnValue, TMessages> commandQuery)
+    private sealed class EndpointMapping(IEndpointRouteBuilder endpoints) : IOperationVisitor<OperationContext, RouteHandlerBuilder> {
+        public RouteHandlerBuilder Visit<TParameter, TReturnValue, TMessages>(Operation<OperationContext, TParameter, TReturnValue, TMessages> operation)
             where TMessages : IMessageSetter {
             // RequestDelegate を受け取るオーバーロードが選ばれると戻り値の IResult が無視されるため、型を明示する
-            Func<HttpContext, Task<IResult>> handler = httpContext => HandleAsync(commandQuery, httpContext);
+            Func<HttpContext, Task<IResult>> handler = httpContext => HandleAsync(operation, httpContext);
             return endpoints
-                .MapPost(commandQuery.Path, handler)
-                .WithDisplayName(commandQuery.DisplayName);
+                .MapPost(operation.Path, handler)
+                .WithDisplayName(operation.DisplayName);
         }
     }
 
@@ -56,7 +56,7 @@ public static class CommandQueryEndpoints {
     /// 実際のHTTPリクエスト実行時の処理。
     /// HTTPリクエストを処理の引数に変換して処理を実行し、処理結果をHTTPレスポンスに変換する。
     /// </summary>
-    private static async Task<IResult> HandleAsync<TParameter, TReturnValue, TMessages>(CommandQuery<CommandQueryContext, TParameter, TReturnValue, TMessages> commandQuery, HttpContext httpContext)
+    private static async Task<IResult> HandleAsync<TParameter, TReturnValue, TMessages>(Operation<OperationContext, TParameter, TReturnValue, TMessages> operation, HttpContext httpContext)
         where TMessages : IMessageSetter {
 
         var app = httpContext.RequestServices.GetRequiredService<OverridedApplicationService>();
@@ -80,10 +80,10 @@ public static class CommandQueryEndpoints {
         }
 
         // 処理を実行する
-        var context = new CommandQueryContext { ValidationOnly = false };
+        var context = new OperationContext { ValidationOnly = false };
         var messages = MessageSetter.GetImpl<TMessages>([], new MessageContainer());
 
-        var returnValue = await commandQuery.InvokeAsync(app, parameter, messages, context);
+        var returnValue = await operation.InvokeAsync(app, parameter, messages, context);
 
         // 処理結果をHTTPレスポンスに変換する
         var messageContainer = messages.GetState();

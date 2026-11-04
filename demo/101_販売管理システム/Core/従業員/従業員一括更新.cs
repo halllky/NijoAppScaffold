@@ -4,7 +4,7 @@ using MyApp.Core.Authorization;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task Execute従業員一括更新Async(従業員一括更新ParameterDisplayData param, 従業員一括更新ParameterMessages messages, CommandQueryContext context) {
+    public override async Task Execute従業員一括更新Async(従業員一括更新ParameterDisplayData param, 従業員一括更新ParameterMessages messages, OperationContext context) {
         // 権限チェック
         if (LoginUser == null || !LoginUser.Isシステム管理者) {
             messages.AddError("システム管理者のみ実行可能です。");

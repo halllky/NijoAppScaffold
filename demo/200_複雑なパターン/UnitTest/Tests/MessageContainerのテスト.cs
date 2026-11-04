@@ -28,7 +28,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = CommandQueryEndpoints.ToJsonObject(context.Find([])!);
+        var json = OperationEndpoints.ToJsonObject(context.Find([])!);
 
         // ---------------------
         // Assert
@@ -68,7 +68,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = CommandQueryEndpoints.ToJsonObject(context.Find([])!);
+        var json = OperationEndpoints.ToJsonObject(context.Find([])!);
 
         // ---------------------
         // Assert
@@ -106,7 +106,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = CommandQueryEndpoints.ToJsonObject(context.Find([])!);
+        var json = OperationEndpoints.ToJsonObject(context.Find([])!);
         Logout(json);
 
         // ---------------------
@@ -153,7 +153,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = CommandQueryEndpoints.ToJsonObject(context.Find([])!);
+        var json = OperationEndpoints.ToJsonObject(context.Find([])!);
         Logout(json);
 
         // ---------------------
@@ -188,7 +188,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = CommandQueryEndpoints.ToJsonObject(context.Find([])!);
+        var json = OperationEndpoints.ToJsonObject(context.Find([])!);
         Logout(json);
 
         // ---------------------
@@ -228,7 +228,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = CommandQueryEndpoints.ToJsonObject(context.Find([])!);
+        var json = OperationEndpoints.ToJsonObject(context.Find([])!);
         Logout(json);
 
         // ---------------------

@@ -16,7 +16,7 @@ DISTRIBUTION_TARGETS=(
     client/src/base/toWillBeChangedApplied.ts
 
     # Core
-    Core/CommandQueryContext.cs
+    Core/OperationContext.cs
     Core/Debugging/EnsureCreatedAsyncEx.cs
     Core/JsonSerializerExtensions.cs
     Core/MessageContainerExtension.cs

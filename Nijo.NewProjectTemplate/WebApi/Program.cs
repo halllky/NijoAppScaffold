@@ -42,7 +42,7 @@ if (app.Environment.IsDevelopment()) {
 app.MapDefaultControllerRoute();
 
 // Nijoにより自動生成されたクエリ・コマンドをHTTPエンドポイントとして公開する
-app.MapCommandQueryEndpoints();
+app.MapOperationEndpoints();
 
 // セキュリティの設定が必要なら追加
 // app.UseHttpsRedirection();

@@ -4,7 +4,7 @@ using MyApp.Core.Authorization;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task Executeパスワード変更Async(パスワード変更ParameterDisplayData param, パスワード変更ParameterMessages messages, CommandQueryContext context) {
+    public override async Task Executeパスワード変更Async(パスワード変更ParameterDisplayData param, パスワード変更ParameterMessages messages, OperationContext context) {
         // ログインチェック
         if (LoginUser == null) {
             messages.AddError("ログインしていません。");

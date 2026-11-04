@@ -48,7 +48,7 @@
 public abstract Task Execute受注登録Async(
     受注登録FormDisplayData param,
     受注登録FormDisplayDataMessages messages,
-    TCommandQueryContext context);
+    TOperationContext context);
 ```
 
 ### パターン2: 検索可能なデータ構造の SearchCondition を引数にする
@@ -63,7 +63,7 @@ public abstract Task Execute受注登録Async(
 public abstract Task Execute受注一括処理Async(
     OrderQuerySearchCondition param,
     OrderQuerySearchConditionMessages messages,
-    TCommandQueryContext context);
+    TOperationContext context);
 ```
 
 ### パターン3: 検索可能なデータ構造の DisplayData を戻り値にする
@@ -79,7 +79,7 @@ public abstract Task Execute受注一括処理Async(
 public abstract Task<受注詳細QueryDisplayData?> Execute受注詳細取得Async(
     受注検索キーDisplayData param,
     受注検索キーDisplayDataMessages messages,
-    TCommandQueryContext context);
+    TOperationContext context);
 // 受注詳細QueryDisplayData を戻り値として返す
 ```
 
@@ -94,20 +94,20 @@ public abstract Task<受注詳細QueryDisplayData?> Execute受注詳細取得Asy
 ```csharp
 public abstract Task Execute月次集計Async(
     MessageSetter messages,
-    TCommandQueryContext context);
+    TOperationContext context);
 ```
 
 ## TypeScript での型情報
 
-コマンド処理のエンドポイントとパラメータ型は、自動生成された `CommandQuery` ネームスペースで確認できます。クエリ（一覧検索・参照検索）と同じ対応表に、コマンド名をキーにして載っています。
+コマンド処理のエンドポイントとパラメータ型は、自動生成された `Operation` ネームスペースで確認できます。クエリ（一覧検索・参照検索）と同じ対応表に、コマンド名をキーにして載っています。
 
 ```typescript
 // エンドポイント URL
-const endpoint = CommandQuery.Endpoint['受注登録']
+const endpoint = Operation.Endpoint['受注登録']
 // → "/api/受注登録/execute"
 
 // パラメータ型（型安全な呼び出し）
-const param: CommandQuery.ParamType['受注登録'] = {
+const param: Operation.ParamType['受注登録'] = {
   orderDate: "2024-06-01",
   customerId: "C001",
   details: [
@@ -116,5 +116,5 @@ const param: CommandQuery.ParamType['受注登録'] = {
 }
 
 // 戻り値の型
-type ReturnVal = CommandQuery.ReturnType['受注登録']
+type ReturnVal = Operation.ReturnType['受注登録']
 ```

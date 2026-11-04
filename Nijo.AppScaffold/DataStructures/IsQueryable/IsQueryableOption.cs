@@ -151,7 +151,7 @@ internal sealed class IsQueryableOption : FeatureOption {
         aggregateFile.AddAppSrvMethod(SearchProcessingRefs.RenderAppSrvMethodRecursively(rootAggregate, ctx), "参照検索処理");
 
         // 一覧検索と参照検索をクエリ・コマンドの一覧に登録
-        ctx.Use<CommandQueryCatalog>().Add(rootAggregate, [
+        ctx.Use<OperationCatalog>().Add(rootAggregate, [
             searchProcessing.ToCatalogDefinition(),
             .. SearchProcessingRefs.ToCatalogDefinitionsRecursively(rootAggregate),
         ]);

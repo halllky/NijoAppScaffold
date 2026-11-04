@@ -69,13 +69,13 @@ app.MapDefaultControllerRoute();
 
 // Nijoにより自動生成されたクエリ・コマンドをHTTPエンドポイントとして公開する。
 // ログイン前に呼ばれる処理はログイン不要とする
-CommandQuery<CommandQueryContext>[] allowAnonymous = [
-    CommandQuery<CommandQueryContext>.ログイン,
-    CommandQuery<CommandQueryContext>.ログアウト,
-    CommandQuery<CommandQueryContext>.ログイン状態確認,
+Operation<OperationContext>[] allowAnonymous = [
+    Operation<OperationContext>.ログイン,
+    Operation<OperationContext>.ログアウト,
+    Operation<OperationContext>.ログイン状態確認,
 ];
-app.MapCommandQueryEndpoints((commandQuery, endpoint) => {
-    if (allowAnonymous.Contains(commandQuery)) {
+app.MapOperationEndpoints((operation, endpoint) => {
+    if (allowAnonymous.Contains(operation)) {
         endpoint.AllowAnonymous();
     }
 });

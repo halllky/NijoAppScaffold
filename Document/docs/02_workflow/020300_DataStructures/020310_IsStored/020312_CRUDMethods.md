@@ -20,7 +20,7 @@
 複数行を一括で更新するコマンドの例です。
 
 ```csharp
-public override async Task Execute売上一括更新Async(売上一括更新DisplayData param, 売上一括更新Messages messages, CommandQueryContext context) {
+public override async Task Execute売上一括更新Async(売上一括更新DisplayData param, 売上一括更新Messages messages, OperationContext context) {
 
     // 集約単位の読み込み。AsNoTracking で読み込まれる。
     // Version には更新時ではなく画面表示時の値を渡すこと。

@@ -76,7 +76,7 @@ Util.SearchProcessingResult<OrderQueryDisplayData>
 | `Items`      | 現在ページの DisplayData の配列              |
 | `TotalCount` | フィルタ後の全件数（ページネーション表示用） |
 
-TypeScript 側では `CommandQuery.ReturnType` で型を参照できます。
+TypeScript 側では `Operation.ReturnType` で型を参照できます。
 
 ## OnAfterLoaded — 検索後の加工処理
 
@@ -112,9 +112,9 @@ protected override async Task OnAfterLoaded(
 
 ```typescript
 // 検索結果の型
-type OrderQueryResult = CommandQuery.ReturnType['OrderQuery']
+type OrderQueryResult = Operation.ReturnType['OrderQuery']
 // → { items: OrderQueryDisplayData[], totalCount: number }
 
 // DisplayData の型
-// CommandQuery.ReturnType から items の要素型として参照可能
+// Operation.ReturnType から items の要素型として参照可能
 ```

@@ -5,7 +5,7 @@ namespace MyApp;
 /// 呼び出し元（Web、バッチ、単体テストなど）が呼び出しのたびに作成して処理に渡し、処理の終了後に中身を読む。
 /// 自動生成されたソースはこのクラスの中身を参照しないので、アプリケーションの要件に応じて自由に変更してよい。
 /// </summary>
-public class CommandQueryContext {
+public class OperationContext {
 
     /// <summary>
     /// コマンドについて、入力チェックのみを行うか、それとも実際の更新処理も行うかを表す。
