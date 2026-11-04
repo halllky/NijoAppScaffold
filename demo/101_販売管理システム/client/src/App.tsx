@@ -5,6 +5,7 @@ import { NowLoading } from "./ui"
 import { useOptionalLoginUser } from "./login/loginUser"
 import * as P000Module from "./pages/P000_トップページ"
 import * as P002Module from "./pages/P002_ログアウト"
+import { P001_ログイン } from "./pages/P001_ログイン"
 import { navigationItems } from "./navigationItems"
 import { APP_NAME } from "./appName"
 import DebugMenuButton from "./debug-rooms/デバッグメニュー"
@@ -65,8 +66,11 @@ export default function App() {
           <NowLoading />
         )}
 
-        {/* routes.tsx で指定した各画面はここに表示される */}
-        <Outlet />
+        {/* routes.tsx で指定した各画面はここに表示される。
+            ログインが必要な画面をログインせずに開こうとした場合は、代わりにログイン画面が表示される */}
+        <P001_ログイン>
+          <Outlet />
+        </P001_ログイン>
       </div>
     </div>
   )
