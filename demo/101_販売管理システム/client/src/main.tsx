@@ -14,7 +14,7 @@ import { callOperationAsync } from "./http/callOperationAsync"
 
 // ログイン状態をサーバーに問い合わせてから、HTML のルート要素に React をレンダリングする。
 // ログイン状態はこのページを開いている間は変わらない
-callOperationAsync('ログイン状態確認', {}, { ignoreConfirm: true })
+callOperationAsync('ログイン状態確認', {}, { confirmed: true })
   .then(result => {
     return result.type !== 'ok' || !result.returnValue
       ? undefined

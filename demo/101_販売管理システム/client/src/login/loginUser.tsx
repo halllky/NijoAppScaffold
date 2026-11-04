@@ -30,7 +30,7 @@ export async function loginAsync(data: ログインParameter.DisplayData): Promi
   | { type: 'ok', user: ログインユーザー情報.DisplayData }
   | { type: 'error', detail: PresentationContextDetail }
 > {
-  const result = await callOperationAsync('ログイン', data, { ignoreConfirm: true })
+  const result = await callOperationAsync('ログイン', data, { confirmed: true })
   if (result.type !== 'ok' || !result.returnValue) {
     return { type: 'error', detail: result.type === 'error' ? result.detail : { error: ['ログインできませんでした。'] } }
   }
@@ -45,7 +45,7 @@ export async function loginAsync(data: ログインParameter.DisplayData): Promi
  * サーバー側の原因で失敗しても、読み込み直したページでログイン状態を問い合わせ直すので、結果は返さない。
  */
 export async function logoutAsync(): Promise<void> {
-  await callOperationAsync('ログアウト', {}, { ignoreConfirm: true })
+  await callOperationAsync('ログアウト', {}, { confirmed: true })
   shareLoginUserId(undefined)
 }
 

@@ -28,9 +28,11 @@ public static class OperationEndpoints {
     /// </summary>
     private const string FORM_FIELD_PARAMETER = "parameter";
     /// <summary>
-    /// 確認メッセージが承諾された後の本処理を行うHTTPリクエストに付されるクエリパラメータ
+    /// 利用者が確認済みであることを表すクエリパラメータ。
+    /// 確認メッセージが承諾された後の本処理を行うHTTPリクエストに付される。
+    /// 付いていなければ、利用者に確認を求める前の入力チェックのみを行う（<see cref="OperationContext.ValidationOnly"/>）。
     /// </summary>
-    private const string PARAM_IGNORE_CONFIRM = "ignore-confirm";
+    private const string QUERY_CONFIRMED = "confirmed";
 
     /// <summary>
     /// すべてのクエリ・コマンドを HTTP POST のエンドポイントとして登録します。
@@ -104,10 +106,11 @@ public static class OperationEndpoints {
         // ---------------------------------------------------------
         // 処理を実行する
         // ---------------------------------------------------------
-        var ignoreConfirm = httpContext.Request.Query.TryGetValue(PARAM_IGNORE_CONFIRM, out var strIgnoreConfirm)
-            && bool.TryParse(strIgnoreConfirm, out var blnIgnoreConfirm)
-            && blnIgnoreConfirm;
-        var context = new OperationContext { ValidationOnly = !ignoreConfirm };
+        // 利用者が確認済みでなければ、入力チェックのみを行う
+        var confirmed = httpContext.Request.Query.TryGetValue(QUERY_CONFIRMED, out var strConfirmed)
+            && bool.TryParse(strConfirmed, out var blnConfirmed)
+            && blnConfirmed;
+        var context = new OperationContext { ValidationOnly = !confirmed };
         var messages = MessageSetter.GetImpl<TMessages>([], new MessageContainer());
 
         var returnValue = await operation.InvokeAsync(app, parameter, messages, context);
@@ -127,7 +130,7 @@ public static class OperationEndpoints {
         // エラーがある場合、またはコマンドの1回目のリクエスト（入力チェックのみ）の場合は 202 Accepted を返し、
         // クライアント側に確認メッセージの表示を促す。
         // クエリはデータを変更しないので確認を必要としない。
-        var statusCode = messages.HasError() || (!operation.IsQuery && !ignoreConfirm)
+        var statusCode = messages.HasError() || (!operation.IsQuery && context.ValidationOnly)
             ? HttpStatusCode.Accepted
             : HttpStatusCode.OK;
 

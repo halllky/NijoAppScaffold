@@ -120,7 +120,7 @@ function P101_売上詳細(props: {
     abortControllerRef.current = new AbortController()
 
     const result = await callOperationAsync('売上金額シミュレート', getValues(), {
-      ignoreConfirm: true,
+      confirmed: true,
       signal: abortControllerRef.current.signal,
     })
     if (result.type !== 'ok') return
