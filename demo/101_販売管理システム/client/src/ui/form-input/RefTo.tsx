@@ -478,20 +478,22 @@ function createCodeMatching(dialog: SearchDialog<RHF.FieldValues, unknown>, form
       const key = keyOf(code, params)
       let record = records.get(formPath)
       if (record?.key !== key) {
-        const result = dialog.refField.findByCode(code, params)
-          .catch((): FindByCodeResult<RHF.FieldValues> => ({ type: 'error', detail: {} }))
-          .then(result => {
-            applyResult(formPath, code, result)
-            // 照合できなかった結果は記録から外し、次の検証で照合し直す。
-            // 外さないと、ログイン状態が切れていた場合などに、原因が解消してもエラーのままになる
-            if ((result.type === 'error' || result.type === 'canceled') && records.get(formPath) === newRecord) {
-              records.delete(formPath)
-            }
-            return result
-          })
-        const newRecord = { key, result }
+        const newRecord = {
+          key,
+          result: dialog.refField.findByCode(code, params)
+            .catch((): FindByCodeResult<RHF.FieldValues> => ({ type: 'error', detail: {} })),
+        }
+        records.set(formPath, newRecord)
         record = newRecord
-        records.set(formPath, record)
+
+        newRecord.result.then(result => {
+          applyResult(formPath, code, result)
+          // 照合できなかった結果は記録から外し、次の検証で照合し直す。
+          // 外さないと、ログイン状態が切れていた場合などに、原因が解消してもエラーのままになる
+          if ((result.type === 'error' || result.type === 'canceled') && records.get(formPath) === newRecord) {
+            records.delete(formPath)
+          }
+        })
       }
       return toMatchingError(code, await record.result)
     },
