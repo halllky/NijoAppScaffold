@@ -1,29 +1,12 @@
 import * as RHF from "react-hook-form"
 import type { LocatedMessages } from "./FormMessages"
 import type { Messages } from "./MessageList"
+import type { OperationMessages } from "../../http/callOperationAsync"
 
 /*
  * サーバー側メッセージの保持と引き当て。
  * クライアント側エラー（react-hook-form の検証エラー）はこのファイルでは扱わない。
  */
-
-/**
- * サーバー側の PresentationContext がクライアント側に返されるときの detail プロパティの構造。
- * エラー、警告、情報メッセージを階層的に保持する。
- */
-export type PresentationContextDetail = {
-  /** この項目に対して発生したエラーメッセージの一覧 */
-  error?: string[]
-  /** この項目に対して発生した警告メッセージの一覧 */
-  warn?: string[]
-  /** この項目に対して発生した情報メッセージの一覧 */
-  info?: string[]
-  /**
-   * 子要素のメッセージ。
-   * 配列（nijo.xmlで言う Type="children"）の場合、オブジェクトのキーは配列のインデックスを表す半角数字。
-   */
-  children?: { [key: string]: PresentationContextDetail }
-}
 
 /**
  * サーバーから返されたメッセージを、画面上の項目と突き合わせやすい形にしたもの。
@@ -51,12 +34,12 @@ export const FORM_ROOT_KEY = ''
  * values にはサーバーに送信したときのフォームの値を渡す。
  */
 export function toServerMessages(
-  detail: PresentationContextDetail | null | undefined,
+  detail: OperationMessages | null | undefined,
   values: RHF.FieldValues,
 ): ServerMessages {
   const result: ServerMessages = {}
 
-  const visit = (node: PresentationContextDetail, value: unknown, ownerKey: string, relativePath: string) => {
+  const visit = (node: OperationMessages, value: unknown, ownerKey: string, relativePath: string) => {
     // instanceId を持つオブジェクトに入ったら、そこを新たなオーナーにする
     const instanceId = instanceIdOf(value)
     if (instanceId !== undefined) {

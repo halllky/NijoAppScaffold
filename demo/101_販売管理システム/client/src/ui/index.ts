@@ -22,7 +22,6 @@ export type { RefToProps, RefToColumnOptions } from "./form-input/RefTo"
 // メッセージ
 export type { RootErrorsProps } from "./message/RootErrors"
 export type { Messages } from "./message/MessageList"
-export type { PresentationContextDetail } from "./message/ServerMessages"
 
 // 検索ダイアログ
 export {

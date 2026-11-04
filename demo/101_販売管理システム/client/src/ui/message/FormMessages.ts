@@ -1,6 +1,7 @@
 import * as RHF from "react-hook-form"
 import type { Messages } from "./MessageList"
-import { locateServerMessages, toServerMessages, type PresentationContextDetail, type ServerMessages } from "./ServerMessages"
+import { locateServerMessages, toServerMessages, type ServerMessages } from "./ServerMessages"
+import type { OperationMessages } from "../../http/callOperationAsync"
 
 /*
  * フォーム1つ分のメッセージの保持と、表示領域への振り分け。
@@ -26,7 +27,7 @@ export type FormMessages = {
   /** react-hook-form のフォームの状態が変わったことを伝える。errors は変化後の検証エラー */
   handleFormStateChange: (errors: RHF.FieldErrors | undefined) => void
   /** サーバー側メッセージを置き換える。values はサーバーに送信したときのフォームの値 */
-  setServerMessages: (detail: PresentationContextDetail | null | undefined, values: RHF.FieldValues) => void
+  setServerMessages: (detail: OperationMessages | null | undefined, values: RHF.FieldValues) => void
   /** サーバー側メッセージをすべて消す */
   clearServerMessages: () => void
 }
