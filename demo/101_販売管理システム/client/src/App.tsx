@@ -1,5 +1,5 @@
 import React from "react"
-import { Outlet, Link, useNavigation } from "react-router-dom"
+import { Outlet, Link, Form, useNavigation } from "react-router-dom"
 import * as Icon from "@heroicons/react/24/solid"
 import { NowLoading } from "./ui"
 import { useOptionalLoginUser } from "./login/loginUser"
@@ -41,9 +41,12 @@ export default function App() {
 
           {loginUser && (
             <li className="shrink-0">
-              <RootNavigationLink to={P002Module.URL} icon={Icon.ArrowRightEndOnRectangleIcon}>
-                ログアウト
-              </RootNavigationLink>
+              <Form method="post" action={P002Module.URL}>
+                <button type="submit" className={`${ROOT_NAVIGATION_ITEM_CLASS} cursor-pointer`}>
+                  <Icon.ArrowRightEndOnRectangleIcon className="w-5 h-5" />
+                  ログアウト
+                </button>
+              </Form>
             </li>
           )}
 
@@ -78,9 +81,12 @@ function RootNavigationLink({ to, children, className, icon }: {
 }) {
   const IconComponent = icon
   return (
-    <Link to={to} className={`hover:text-gray-300 select-none flex items-center gap-1 ${className ?? ''}`}>
+    <Link to={to} className={`${ROOT_NAVIGATION_ITEM_CLASS} ${className ?? ''}`}>
       {IconComponent && <IconComponent className="w-5 h-5" />}
       {children}
     </Link>
   )
 }
+
+/** ルートナビゲーションの項目（リンクとボタン）の見た目 */
+const ROOT_NAVIGATION_ITEM_CLASS = "hover:text-gray-300 select-none flex items-center gap-1"
