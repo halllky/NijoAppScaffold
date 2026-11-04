@@ -225,13 +225,13 @@ function P201_入荷詳細(props: {
 function createInitialValues(
   loaderData: 入荷詳細.DisplayData,
   mode: 'new' | 'edit',
-  loginUser: ログインユーザー情報.DisplayData | undefined,
+  loginUser: ログインユーザー情報.DisplayData,
 ): 入荷詳細.DisplayData {
   if (mode === 'edit') return loaderData
 
   const values = window.structuredClone(loaderData)
   values.入荷日時 = dayjs().format('YYYY-MM-DDTHH:mm')
-  values.担当者.従業員番号 = loginUser?.従業員番号 ?? ''
-  values.担当者.氏名 = loginUser?.氏名 ?? ''
+  values.担当者.従業員番号 = loginUser.従業員番号 ?? ''
+  values.担当者.氏名 = loginUser.氏名 ?? ''
   return values
 }
