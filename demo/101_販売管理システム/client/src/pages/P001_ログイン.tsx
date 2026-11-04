@@ -1,5 +1,4 @@
 import React from "react"
-import { createPortal } from "react-dom"
 import useEvent from "react-use-event-hook"
 import { Button, FieldColumn, FieldGroup, NowLoading, PageTitle, useDisplayDataForm } from "../ui"
 import { loginAsync, useOptionalLoginUser } from "../login/loginUser"
@@ -51,10 +50,25 @@ export function P001_ログイン({ children }: { children: React.ReactNode }) {
   const [isReloading, setIsReloading] = React.useState(false)
   const isShown = !pageLoginUser || pending !== undefined
 
-  // 表示されたら、まだ入力されていない欄にフォーカスする
+  // モーダルダイアログとして開き、背後の画面を操作できないようにする（ブラウザ標準の dialog の振る舞い）。
+  // 開いたら、まだ入力されていない欄にフォーカスする
+  const dialogRef = React.useRef<HTMLDialogElement>(null)
   React.useEffect(() => {
-    if (isShown) setFocus(pageLoginUser ? "パスワード" : "従業員番号")
+    const dialog = dialogRef.current
+    if (!dialog) return
+    if (isShown && !dialog.open) {
+      dialog.showModal()
+      setFocus(pageLoginUser ? "パスワード" : "従業員番号")
+    } else if (!isShown && dialog.open) {
+      dialog.close()
+    }
   }, [isShown, pageLoginUser, setFocus])
+
+  // Esc キーで閉じようとしたとき。ログインし直しの場合はキャンセルと同じ。ページを開いたときのログインは閉じられない
+  const handleCancel = (e: React.SyntheticEvent<HTMLDialogElement>) => {
+    e.preventDefault()
+    if (pageLoginUser) close('canceled')
+  }
 
   // ログイン実行。失敗した場合はサーバーから返されたメッセージを表示する
   const onSubmit = useEvent(async (data: ログインParameter.DisplayData) => {
@@ -73,39 +87,40 @@ export function P001_ログイン({ children }: { children: React.ReactNode }) {
     <>
       {pageLoginUser && children}
 
-      {isShown && createPortal(
-        <div className={`fixed inset-0 z-[100] flex items-center justify-center p-8 ${pageLoginUser ? 'bg-black/50' : 'bg-gray-100'}`}>
-          <div className="relative bg-white p-8 rounded shadow-md w-full max-w-md">
-            <div className="mb-6">
-              <PageTitle>ログイン</PageTitle>
-              {pageLoginUser && (
-                <p className="mt-2 text-sm text-gray-700">
-                  ログイン状態が切れました。ログインし直すと、この画面の操作を続けられます。
-                </p>
-              )}
-            </div>
-            <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-              <RootErrors />
-              <FieldGroup>
-                <FieldColumn>
-                  <FieldLabel name="従業員番号">
-                    <Input.TextBox name="従業員番号" className="w-full" />
-                  </FieldLabel>
-                  <FieldLabel name="パスワード">
-                    <Input.TextBox name="パスワード" masked className="w-full" />
-                  </FieldLabel>
-                </FieldColumn>
-              </FieldGroup>
-              <div className="flex gap-2 mt-4">
-                <Button submit fill disabled={isSubmitting} className="flex-1 justify-center">ログイン</Button>
-                {pageLoginUser && <Button onClick={() => close('canceled')}>キャンセル</Button>}
-              </div>
-            </form>
-            {(isSubmitting || isReloading) && <NowLoading />}
+      <dialog
+        ref={dialogRef}
+        onCancel={handleCancel}
+        className={`m-auto bg-white p-8 rounded shadow-md w-full max-w-md ${pageLoginUser ? 'backdrop:bg-black/50' : 'backdrop:bg-gray-100'}`}
+      >
+        <div className="relative">
+          <div className="mb-6">
+            <PageTitle>ログイン</PageTitle>
+            {pageLoginUser && (
+              <p className="mt-2 text-sm text-gray-700">
+                ログイン状態が切れました。ログインし直すと、この画面の操作を続けられます。
+              </p>
+            )}
           </div>
-        </div>,
-        document.body,
-      )}
+          <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <RootErrors />
+            <FieldGroup>
+              <FieldColumn>
+                <FieldLabel name="従業員番号">
+                  <Input.TextBox name="従業員番号" className="w-full" />
+                </FieldLabel>
+                <FieldLabel name="パスワード">
+                  <Input.TextBox name="パスワード" masked className="w-full" />
+                </FieldLabel>
+              </FieldColumn>
+            </FieldGroup>
+            <div className="flex gap-2 mt-4">
+              <Button submit fill disabled={isSubmitting} className="flex-1 justify-center">ログイン</Button>
+              {pageLoginUser && <Button onClick={() => close('canceled')}>キャンセル</Button>}
+            </div>
+          </form>
+          {(isSubmitting || isReloading) && <NowLoading />}
+        </div>
+      </dialog>
     </>
   )
 }
