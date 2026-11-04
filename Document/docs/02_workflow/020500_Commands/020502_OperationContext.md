@@ -267,14 +267,14 @@ if (result.ok) {
 デモ101（`demo/101_販売管理システム`）は、テンプレートとは別の変換方法で、添付ファイルの送信と確認メッセージに対応しています。
 サーバー側は `WebApi/OperationEndpoints.cs`、クライアント側は `client/src/http/callOperationAsync.ts` です。
 
-1回目のリクエストは `ValidationOnly = true` で実行し、ステータスコード `202 Accepted` で確認メッセージを返します。
+1回目のリクエストは `ValidationOnly = true` で実行し、エラーが無ければ、確認メッセージと「確認が必要」を表す `requiresConfirmation: true` を返します（エラーがあればステータスコード `422`）。
 利用者が承諾したら、クライアントは確認済みを表す `confirmed=true` を付けて2回目のリクエストを送り、サーバーはこれを `ValidationOnly = false` で実行します。
 「確認済み（confirmed）」は画面側の、「入力チェックのみ（ValidationOnly）」は処理側の概念で、サーバーは「確認済みでなければ入力チェックのみ」として両者を対応させます。
 ログインや初期表示のように確認を挟まない呼び出しは、クライアント側のオプション `{ confirmed: true }` で1回目から `confirmed=true` を付けます。
 
 ```typescript
 // callOperationAsync.ts の抜粋
-if (response.status === 202) {
+if (json.requiresConfirmation) {
   const confirmMessage = json.confirms.join('\n') || '処理を確定しますか？'
   if (window.confirm(confirmMessage)) {
     searchParams.set('confirmed', 'true')

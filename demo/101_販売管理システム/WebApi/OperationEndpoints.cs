@@ -126,11 +126,13 @@ public static class OperationEndpoints {
         var messageContainer = messages.GetState();
         responseBody["detail"] = messageContainer == null ? new JsonObject() : ToJsonObject(messageContainer);
 
-        // エラーがある場合、またはコマンドの1回目のリクエスト（入力チェックのみ）の場合は 202 Accepted を返し、
-        // クライアント側に確認メッセージの表示を促す。
+        // コマンドの1回目のリクエスト（入力チェックのみ）でエラーが無ければ、
+        // 利用者に確認メッセージを見せて承諾を得てから、確認済みとして送り直すよう促す。
         // クエリはデータを変更しないので確認を必要としない。
-        var statusCode = messages.HasError() || (!operation.IsQuery && context.ValidationOnly)
-            ? HttpStatusCode.Accepted
+        responseBody["requiresConfirmation"] = !messages.HasError() && !operation.IsQuery && context.ValidationOnly;
+
+        var statusCode = messages.HasError()
+            ? HttpStatusCode.UnprocessableEntity
             : HttpStatusCode.OK;
 
         return Results.Json(responseBody, jsonOptions, statusCode: (int)statusCode);
