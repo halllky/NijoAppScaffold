@@ -34,7 +34,7 @@ export const FORM_ROOT_KEY = ''
  * values にはサーバーに送信したときのフォームの値を渡す。
  */
 export function toServerMessages(
-  detail: OperationMessages | null | undefined,
+  operationMessages: OperationMessages | null | undefined,
   values: RHF.FieldValues,
 ): ServerMessages {
   const result: ServerMessages = {}
@@ -66,7 +66,7 @@ export function toServerMessages(
     }
   }
 
-  if (detail) visit(detail, values, FORM_ROOT_KEY, '')
+  if (operationMessages) visit(operationMessages, values, FORM_ROOT_KEY, '')
   return result
 }
 

@@ -7,12 +7,12 @@ import type { OperationMessages } from "../../http/callOperationAsync"
 /**
  * 画面側から渡される検索処理の結果。
  * サーバー呼び出しの結果を、成功・中断・エラーのいずれかとして返す。
- * detail は、サーバー側メッセージとして検索条件欄に表示される。
+ * messages は、サーバー側メッセージとして検索条件欄に表示される。
  */
 export type SearchResult<TItem>
-  = { type: 'ok', returnValue: LoadReturnType<TItem>, detail?: OperationMessages }
+  = { type: 'ok', returnValue: LoadReturnType<TItem>, messages?: OperationMessages }
   | { type: 'canceled' }
-  | { type: 'error', detail: OperationMessages }
+  | { type: 'error', messages: OperationMessages }
 
 /** 最後に成功した検索。ui フォルダ内部でのみ使用する */
 export type PagedSearchState<TSearchCondition, TItem> = {
@@ -39,7 +39,7 @@ export type PagedSearchState<TSearchCondition, TItem> = {
  */
 export function usePagedSearch<TSearchCondition extends RHF.FieldValues, TItem>(
   search: (condition: TSearchCondition, signal: AbortSignal) => Promise<SearchResult<TItem>>,
-  setServerMessages: (detail: OperationMessages | null | undefined) => void,
+  setServerMessages: (messages: OperationMessages | null | undefined) => void,
 ) {
   const [searched, setSearched] = React.useState<PagedSearchState<TSearchCondition, TItem>>()
   const [isSearching, setIsSearching] = React.useState(false)
@@ -65,7 +65,7 @@ export function usePagedSearch<TSearchCondition extends RHF.FieldValues, TItem>(
       if (abortController.signal.aborted) return
       if (result.type === 'canceled') return
 
-      setServerMessages(result.detail)
+      setServerMessages(result.messages)
       if (result.type === 'ok') {
         setSearched({ condition: conditionForRequest, pageIndex, pageSize, result: result.returnValue })
       }

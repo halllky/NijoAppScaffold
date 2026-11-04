@@ -65,7 +65,7 @@ export type UseSearchConditionFormReturn<
    * 次に setServerMessages か clearServerMessages を呼ぶまで表示され続ける。項目を編集しても消えない。
    * react-hook-form のクライアント側エラーには影響しない。
    */
-  setServerMessages: (detail: OperationMessages | null | undefined) => void
+  setServerMessages: (messages: OperationMessages | null | undefined) => void
   /** サーバーから返されたメッセージをすべて消す。react-hook-form のクライアント側エラーには影響しない */
   clearServerMessages: () => void
   /**

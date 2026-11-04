@@ -97,7 +97,7 @@ async function searchOnMockServer(
         .map(({ 従業員番号, 氏名 }) => ({ 従業員番号, 氏名 })),
       totalCount: hits.length,
     },
-    detail: {},
+    messages: {},
   }
 }
 

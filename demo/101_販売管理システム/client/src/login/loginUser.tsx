@@ -53,11 +53,11 @@ export function useOptionalLoginUser(): ログインユーザー情報.DisplayDa
  */
 export async function loginAsync(data: ログインParameter.DisplayData): Promise<
   | { type: 'ok', user: ログインユーザー情報.DisplayData }
-  | { type: 'error', detail: OperationMessages }
+  | { type: 'error', messages: OperationMessages }
 > {
   const result = await callOperationAsync('ログイン', data, { confirmed: true })
   if (result.type !== 'ok' || !result.returnValue) {
-    return { type: 'error', detail: result.type === 'error' ? result.detail : { error: ['ログインできませんでした。'] } }
+    return { type: 'error', messages: result.type === 'error' ? result.messages : { error: ['ログインできませんでした。'] } }
   }
   const user = { ...ログインユーザー情報.createNewDisplayData(), ...result.returnValue }
   shareLoginUserId(user.従業員番号 ?? undefined)

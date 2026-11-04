@@ -35,7 +35,7 @@ export function 在庫調整ダイアログ(props: {
       onSuccess?.()
       onClose()
     } else if (result.type === 'error') {
-      setServerMessages(result.detail)
+      setServerMessages(result.messages)
     }
   })
 

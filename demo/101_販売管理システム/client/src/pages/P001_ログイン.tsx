@@ -59,7 +59,7 @@ export function P001_ログイン() {
   const onSubmit = useEvent(async (data: ログインParameter.DisplayData) => {
     const result = await loginAsync(data)
     if (result.type === 'error') {
-      setServerMessages(result.detail)
+      setServerMessages(result.messages)
     } else if (pageLoginUser && result.user.従業員番号 === pageLoginUser.従業員番号) {
       close('logged-in')
     } else {

@@ -160,16 +160,16 @@ function P101_売上詳細(props: {
         reset(values)
         navigate(getLinkUrlToP101売上詳細(result.returnValue.売上SEQ))
       } else if (result.type === 'error') {
-        setServerMessages(result.detail)
+        setServerMessages(result.messages)
       }
 
     } else {
       const result = await callOperationAsync('売上修正', currentValues)
       if (result.type === 'ok') {
-        setServerMessages(result.detail)
+        setServerMessages(result.messages)
         revalidate()
       } else if (result.type === 'error') {
-        setServerMessages(result.detail)
+        setServerMessages(result.messages)
       }
     }
   })

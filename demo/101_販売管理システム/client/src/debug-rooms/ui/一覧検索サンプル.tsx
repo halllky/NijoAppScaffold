@@ -129,7 +129,7 @@ async function searchOnMockServer(
   // 画面上に表示領域がある項目と、ルートのそれぞれに対するメッセージを返す
   if (simulatesServerError) return {
     type: 'error',
-    detail: {
+    messages: {
       error: ['検索条件が広すぎます。条件を追加してください。'],
       children: {
         filter: { children: { 伝票日付: { error: ['1年を超える期間は指定できません。'] } } },
@@ -149,7 +149,7 @@ async function searchOnMockServer(
       currentPageItems: hits.slice(skip, skip + take),
       totalCount: hits.length,
     },
-    detail: {},
+    messages: {},
   }
 }
 

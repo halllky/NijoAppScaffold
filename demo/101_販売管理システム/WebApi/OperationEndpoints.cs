@@ -124,7 +124,7 @@ public static class OperationEndpoints {
         responseBody["confirms"] = new JsonArray([.. context.Confirms.Select(text => JsonValue.Create(text))]);
 
         var messageContainer = messages.GetState();
-        responseBody["detail"] = messageContainer == null ? new JsonObject() : ToJsonObject(messageContainer);
+        responseBody["messages"] = messageContainer == null ? new JsonObject() : ToJsonObject(messageContainer);
 
         // コマンドの1回目のリクエスト（入力チェックのみ）でエラーが無ければ、
         // 利用者に確認メッセージを見せて承諾を得てから、確認済みとして送り直すよう促す。

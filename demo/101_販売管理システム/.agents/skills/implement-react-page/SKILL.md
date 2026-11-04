@@ -64,8 +64,8 @@ description: client（React）の画面を実装・修正するときに使う�
 フックではないので、コンポーネント・loader・検索ダイアログの定義のどこからでも呼べる。
 
 - 戻り値の `type` は 3 通り。
-  - `ok`: 成功。`returnValue` に戻り値、`detail` に警告・情報メッセージが入っていることがある。
-  - `error`: 入力エラーなど。`detail` を画面のフォームの `setServerMessages` に渡す。
+  - `ok`: 成功。`returnValue` に戻り値、`messages` に警告・情報メッセージが入っていることがある。
+  - `error`: 入力エラーなど。`messages` を画面のフォームの `setServerMessages` に渡す。
   - `canceled`: 利用者が確認メッセージでキャンセルした、または中断された。何もしない。
 - ログイン状態が切れていた場合の扱い（利用者に確認してログイン画面に移る）は、サーバーを呼ぶ共通の処理が行うので、画面では何もしなくてよい。
   利用者がログイン画面に移らずに留まった場合は `error` が返る。
@@ -134,7 +134,7 @@ description: client（React）の画面を実装・修正するときに使う�
 - フォームごとに `RootErrors` を必ず 1 つ置く。`FieldLabel` もグリッドの列も無い項目へのメッセージはここに集まる。置かないとメッセージが利用者に届かない。
 - メッセージには 2 種類ある。
   - クライアント側エラー: メタデータの入力制約、`rules`、`formMethods.setError`。react-hook-form の検証の仕組みで消える。
-  - サーバー側メッセージ: `setServerMessages(detail)` で表示する。次の `setServerMessages` か `clearServerMessages` まで消えない。
+  - サーバー側メッセージ: `setServerMessages(messages)` で表示する。次の `setServerMessages` か `clearServerMessages` まで消えない。
 - サーバー側メッセージは、**送信したときの値**の `instanceId` で項目と結びつけられる。保存後にフォームの値を置き換える（`reset`）場合は、置き換える前に `setServerMessages` を呼ぶ。
 - メッセージ表示を画面で自作しない。
 
@@ -215,7 +215,7 @@ export default [
      const currentValues = toWillBeChangedApplied(loaderData, values, 〇〇詳細.deepEqual)
      const result = await callOperationAsync('〇〇登録', currentValues)
      if (result.type === 'canceled') return
-     setServerMessages(result.detail)
+     setServerMessages(result.messages)
      if (result.type !== 'ok') return
      // 新規登録: 編集中でない状態に戻してから、登録したデータの編集画面へ遷移する
      reset(values)

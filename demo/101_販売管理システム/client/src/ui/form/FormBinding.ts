@@ -141,7 +141,7 @@ export function useFormBinding<TValues extends RHF.FieldValues>(params: {
   nameRoot: string
 }): {
   binding: FormBinding<TValues>
-  setServerMessages: (detail: OperationMessages | null | undefined) => void
+  setServerMessages: (messages: OperationMessages | null | undefined) => void
   clearServerMessages: () => void
 } {
   // メッセージの保持と振り分け
@@ -174,8 +174,8 @@ export function useFormBinding<TValues extends RHF.FieldValues>(params: {
     }
     return {
       binding,
-      setServerMessages: (detail: OperationMessages | null | undefined) => {
-        formMessages.setServerMessages(detail, params.formMethods.getValues())
+      setServerMessages: (messages: OperationMessages | null | undefined) => {
+        formMessages.setServerMessages(messages, params.formMethods.getValues())
       },
       clearServerMessages: formMessages.clearServerMessages,
     }

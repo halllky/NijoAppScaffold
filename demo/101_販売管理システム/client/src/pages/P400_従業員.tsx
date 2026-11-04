@@ -63,7 +63,7 @@ function P400_従業員() {
     if (isDirty && !window.confirm("編集中の内容があります。検索すると編集内容は破棄されますが、よろしいですか？")) return
     const result = await callOperationAsync('従業員マスタ', condition)
     if (result.type === 'canceled') return
-    searchForm.setServerMessages(result.detail)
+    searchForm.setServerMessages(result.messages)
     if (result.type !== 'ok') return
     const data = to一覧編集データ(result.returnValue.currentPageItems)
     searchedDataRef.current = data
@@ -120,12 +120,12 @@ function P400_従業員() {
     mark権限ChangedRows(searchedDataRef.current, data)
     const result = await callOperationAsync('従業員一括更新', data)
     // サーバーから返されたメッセージは送信した値と突き合わせるので、検索し直してフォームの値を置き換える前に渡す
-    if (result.type === 'ok' || result.type === 'error') setServerMessages(result.detail)
+    if (result.type === 'ok' || result.type === 'error') setServerMessages(result.messages)
     if (result.type !== 'ok') return
 
     const searched = await callOperationAsync('従業員マスタ', searchForm.formMethods.getValues())
     if (searched.type === 'canceled') return
-    searchForm.setServerMessages(searched.detail)
+    searchForm.setServerMessages(searched.messages)
     if (searched.type !== 'ok') return
     const searchedData = to一覧編集データ(searched.returnValue.currentPageItems)
     searchedDataRef.current = searchedData

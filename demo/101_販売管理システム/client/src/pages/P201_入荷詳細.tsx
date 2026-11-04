@@ -136,16 +136,16 @@ function P201_入荷詳細(props: {
         reset(values)
         navigate(getLinkUrlToP201入荷詳細(result.returnValue.入荷ID))
       } else if (result.type === 'error') {
-        setServerMessages(result.detail)
+        setServerMessages(result.messages)
       }
 
     } else {
       const result = await callOperationAsync('入荷修正', values)
       if (result.type === 'ok') {
-        setServerMessages(result.detail)
+        setServerMessages(result.messages)
         revalidate()
       } else if (result.type === 'error') {
-        setServerMessages(result.detail)
+        setServerMessages(result.messages)
       }
     }
   })

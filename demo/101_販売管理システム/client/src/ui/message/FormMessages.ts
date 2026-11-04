@@ -27,7 +27,7 @@ export type FormMessages = {
   /** react-hook-form のフォームの状態が変わったことを伝える。errors は変化後の検証エラー */
   handleFormStateChange: (errors: RHF.FieldErrors | undefined) => void
   /** サーバー側メッセージを置き換える。values はサーバーに送信したときのフォームの値 */
-  setServerMessages: (detail: OperationMessages | null | undefined, values: RHF.FieldValues) => void
+  setServerMessages: (messages: OperationMessages | null | undefined, values: RHF.FieldValues) => void
   /** サーバー側メッセージをすべて消す */
   clearServerMessages: () => void
 }
@@ -99,8 +99,8 @@ export function createFormMessages(params: {
       clientErrors = errors ?? {}
       notifyChange()
     },
-    setServerMessages: (detail, values) => {
-      serverMessages = toServerMessages(detail, values)
+    setServerMessages: (messages, values) => {
+      serverMessages = toServerMessages(messages, values)
       notifyChange()
     },
     clearServerMessages: () => {

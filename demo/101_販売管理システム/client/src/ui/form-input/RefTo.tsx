@@ -481,7 +481,7 @@ function createCodeMatching(dialog: SearchDialog<RHF.FieldValues, unknown>, form
         const newRecord = {
           key,
           result: dialog.refField.findByCode(code, params)
-            .catch((): FindByCodeResult<RHF.FieldValues> => ({ type: 'error', detail: {} })),
+            .catch((): FindByCodeResult<RHF.FieldValues> => ({ type: 'error', messages: {} })),
         }
         records.set(formPath, newRecord)
         record = newRecord
@@ -510,7 +510,7 @@ function toMatchingError(code: string, result: FindByCodeResult<RHF.FieldValues>
     case 'not-found': return `「${code}」に該当するデータがありません。`
     case 'ambiguous': return `「${code}」に該当するデータが${result.count}件あります。`
     case 'canceled': return `「${code}」の照合が中断されました。`
-    case 'error': return result.detail.error?.join(' ') || `「${code}」の照合に失敗しました。`
+    case 'error': return result.messages.error?.join(' ') || `「${code}」の照合に失敗しました。`
   }
 }
 
