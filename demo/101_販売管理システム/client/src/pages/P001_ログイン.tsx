@@ -38,12 +38,13 @@ export function P001_ログイン({ children }: { children: React.ReactNode }) {
     setServerMessages(undefined)
   }
 
-  // ログイン情報のフォーム。パスワードの初期値はデモ用のアカウントのもの
+  // ログイン情報のフォーム。
+  // 開発環境では、動作確認の手間を省くため、ダミーデータの管理者アカウントを入れておく
   const { formMethods, Input, FieldLabel, RootErrors, setServerMessages } = useDisplayDataForm(ログインParameter, {
     defaultValues: {
       ...ログインParameter.createNewDisplayData(),
-      従業員番号: pageLoginUser?.従業員番号 ?? "admin",
-      パスワード: "password123",
+      従業員番号: pageLoginUser?.従業員番号 ?? (import.meta.env.DEV ? "admin" : ""),
+      パスワード: import.meta.env.DEV ? "password123" : "",
     },
   })
   const { setFocus, handleSubmit, formState: { isSubmitting } } = formMethods
