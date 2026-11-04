@@ -86,6 +86,7 @@ namespace Nijo.Parts.Common {
                 .OrderBy(x => x.Root.GetIndexOfDataFlow(ctx.Schema))
                 .SelectMany(x => x.Definitions)
                 .ToArray();
+            ThrowIfCsPropertyNameConflicts(definitions);
 
             ctx.CoreLibrary(dir => {
                 dir.Directory("Util", utilDir => {
@@ -96,6 +97,36 @@ namespace Nijo.Parts.Common {
                 dir.Generate(RenderTypeScript(definitions));
             });
         }
+
+        /// <summary>
+        /// 処理ごとの static プロパティ名が、<see cref="CS_CLASS"/> クラス自身のメンバー名や、ほかの処理のプロパティ名と重複していれば例外を投げる。
+        /// 重複したまま生成すると、生成されたソースがコンパイルできないため。
+        /// </summary>
+        private static void ThrowIfCsPropertyNameConflicts(Definition[] definitions) {
+            var reserved = definitions.Where(def => RESERVED_CS_MEMBER_NAMES.Contains(def.CsPropertyName)).ToArray();
+            if (reserved.Length > 0) {
+                throw new InvalidOperationException(
+                    $"次の処理は、C# のプロパティ名が {CS_CLASS} クラスのメンバー名と同じになるため生成できません。物理名を変更してください: " +
+                    reserved.Select(def => $"{def.DisplayName}（{def.CsPropertyName}）").Join(", "));
+            }
+            var duplicates = definitions
+                .GroupBy(def => def.CsPropertyName)
+                .Where(group => group.Count() >= 2)
+                .ToArray();
+            if (duplicates.Length > 0) {
+                throw new InvalidOperationException(
+                    $"次の処理は、C# のプロパティ名が重複するため生成できません。物理名を変更してください: " +
+                    duplicates.Select(group => $"{group.Key}（{group.Select(def => def.DisplayName).Join(", ")}）").Join("; "));
+            }
+        }
+        /// <summary>
+        /// <see cref="RenderCSharp"/> で <see cref="CS_CLASS"/> クラスに宣言しているメンバーの名前と、クラス名そのもの、および object のメンバーの名前。
+        /// 処理ごとの static プロパティにはこれらの名前を使えない。<see cref="RenderCSharp"/> のメンバーを変えたらここも合わせること。
+        /// </summary>
+        private static readonly HashSet<string> RESERVED_CS_MEMBER_NAMES = [
+            CS_CLASS, "Name", "DisplayName", "Path", "IsQuery", "Accept", CS_NO_PARAMETER, CS_NO_RETURN_VALUE, "All",
+            nameof(Equals), nameof(GetHashCode), nameof(GetType), nameof(ToString), nameof(ReferenceEquals), nameof(MemberwiseClone),
+        ];
 
         private static SourceFile RenderCSharp(CodeRenderingContext ctx, Definition[] definitions) {
             const string C = ApplicationService.CONTEXT_TYPE_PARAMETER;
