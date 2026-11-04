@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -134,11 +133,7 @@ public static class OperationEndpoints {
             ? HttpStatusCode.Accepted
             : HttpStatusCode.OK;
 
-        return Results.Content(
-            JsonSerializer.Serialize(responseBody, jsonOptions),
-            "application/json",
-            Encoding.UTF8,
-            (int)statusCode);
+        return Results.Json(responseBody, jsonOptions, statusCode: (int)statusCode);
     }
 
     /// <summary>
