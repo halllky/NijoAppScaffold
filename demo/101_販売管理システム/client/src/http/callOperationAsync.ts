@@ -185,11 +185,12 @@ const toDisplayErrorText = async (response: Response): Promise<string> => {
 
       if (typeof json === 'string') {
         return json
-      } else if (typeof (json as { message: string }).message === 'string') {
-        return (json as { message: string }).message
-      } else {
-        return bodyText
       }
+      // サーバー側の未処理例外などのエラーレスポンス（ProblemDetails）
+      const problem = json as { title?: unknown, detail?: unknown }
+      if (typeof problem.detail === 'string') return problem.detail
+      if (typeof problem.title === 'string') return problem.title
+      return bodyText
     } catch {
       return bodyText
     }

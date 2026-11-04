@@ -11,6 +11,10 @@ builder.Services.AddHttpContextAccessor();
 // Controller の設定
 builder.Services.AddControllers();
 
+// 未処理例外のログ出力と、統一されたエラーレスポンス（ProblemDetails）の返却
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<WebExceptionHandler>();
+
 // swagger。デバッグのためにこのアプリで定義されているエンドポイントを一覧する
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -39,9 +43,6 @@ if (app.Environment.IsDevelopment()) {
     app.UseSwagger();
     app.UseSwaggerUI();
 
-    // 開発時専用エラーページ
-    app.UseDeveloperExceptionPage();
-
 } else {
     // セキュリティの設定が必要なら追加
     // app.UseHsts();
@@ -61,7 +62,7 @@ if (app.Environment.IsDevelopment()) {
 }
 
 // Controller と自動生成されたクエリ・コマンドのエンドポイントに共通の処理
-app.UseMiddleware<WebExceptionMiddleware>(); // 未処理例外のログ出力とエラーレスポンス返却
+app.UseExceptionHandler(); // 未処理例外のログ出力とエラーレスポンス返却（開発環境でも例外の内容は返さない）
 app.UseMiddleware<WebLogScopeMiddleware>(); // ログ出力用情報設定
 app.UseMiddleware<LoginAuthorizationMiddleware>(); // ログインしていないリクエストを弾く
 
