@@ -1,6 +1,8 @@
 using MyApp;
 using MyApp.Core.Authorization;
 using MyApp.WebApi;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using MyApp.WebApi.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,6 +27,15 @@ OverridedApplicationService.ConfigureServices(builder.Services, basePath);
 
 // ログインユーザーの情報を各業務処理中で簡単に参照できるようにする
 builder.Services.AddScoped<ISessionKeyProvider, SessionProviderInWebApi>();
+
+// 認証・認可。セッションキーの Cookie でログインユーザーを特定し、
+// 個別に AllowAnonymous を指定したもの以外のエンドポイントはログインを必須とする
+builder.Services
+    .AddAuthentication(SessionAuthenticationHandler.SCHEME)
+    .AddScheme<AuthenticationSchemeOptions, SessionAuthenticationHandler>(SessionAuthenticationHandler.SCHEME, null);
+builder.Services.AddAuthorization(options => {
+    options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+});
 
 // ログや作成者・更新者に記録する処理名
 builder.Services.AddScoped<ICurrentProcess, CurrentProcessInWebApi>();
@@ -64,7 +75,8 @@ if (app.Environment.IsDevelopment()) {
 // Controller と自動生成されたクエリ・コマンドのエンドポイントに共通の処理
 app.UseExceptionHandler(); // 未処理例外のログ出力とエラーレスポンス返却（開発環境でも例外の内容は返さない）
 app.UseMiddleware<WebLogScopeMiddleware>(); // ログ出力用情報設定
-app.UseMiddleware<LoginAuthorizationMiddleware>(); // ログインしていないリクエストを弾く
+app.UseAuthentication(); // ログインユーザーの特定
+app.UseAuthorization(); // ログインしていないリクエストを弾く（401）
 
 app.MapDefaultControllerRoute();
 
@@ -85,7 +97,7 @@ app.MapOperationEndpoints((operation, endpoint) => {
 // 実際にどの画面が初期表示されるかは React Router のルーティング設定で制御する。
 // 開発環境ではViteの開発サーバーがHTMLを配信するため、ここでのフォールバックは不要
 if (!app.Environment.IsDevelopment()) {
-    app.MapFallbackToFile("index.html");
+    app.MapFallbackToFile("index.html").AllowAnonymous(); // ログイン画面も含めて画面はこの HTML から始まるので、ログイン不要
 }
 
 // セキュリティの設定が必要なら追加
