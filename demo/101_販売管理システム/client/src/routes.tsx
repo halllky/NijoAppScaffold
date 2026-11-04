@@ -5,8 +5,8 @@ import AutoCommand from "./auto-pages/自動生成CommandModel"
 import { 検索ダイアログ一覧 } from "./auto-pages/検索ダイアログ一覧"
 import DbViewer from "./debug-rooms/db-viewer/DbViewer"
 import UiSamples from "./debug-rooms/ui"
-import { P001_ログイン } from "./pages/P001_ログイン"
 import { ErrorPage, SearchDialogHost } from "./ui"
+import { requireLogin } from "./login/loginUser"
 
 /**
  * React Router ルーティング定義。
@@ -14,28 +14,24 @@ import { ErrorPage, SearchDialogHost } from "./ui"
  */
 export default [
   // 業務画面のルーティング定義。
-  // ログインしていない場合は、業務画面を覆うようにログインの入力欄が表示される。
+  // ログインしていない場合は、読み込み処理を行わず、画面を覆うようにログインの入力欄が表示される。
   {
+    middleware: [requireLogin],
     element: (
-      <P001_ログイン>
-        <SearchDialogHost dialogs={検索ダイアログ一覧}>
-          <Outlet />
-        </SearchDialogHost>
-      </P001_ログイン>
+      <SearchDialogHost dialogs={検索ダイアログ一覧}>
+        <Outlet />
+      </SearchDialogHost>
     ),
-    children: [{
-      children: [
-        // 業務画面のフォルダ直下の各画面
-        ...collectPageRoutes(),
-        // メタデータから組み立てた画面
-        AutoIndex,
-        AutoSearch,
-        AutoCommand,
-      ],
-      // loader などでエラーが発生した場合に表示するエラーページ。
-      // ログインの入力欄が業務画面の外側にあり続けるよう、その内側に置く
-      errorElement: <ErrorPage />,
-    }],
+    children: [
+      // 業務画面のフォルダ直下の各画面
+      ...collectPageRoutes(),
+      // メタデータから組み立てた画面
+      AutoIndex,
+      AutoSearch,
+      AutoCommand,
+    ],
+    // loader などでエラーが発生した場合に表示するエラーページ
+    errorElement: <ErrorPage />,
   },
 
   // デバッグ用画面。開発環境でのみ表示。

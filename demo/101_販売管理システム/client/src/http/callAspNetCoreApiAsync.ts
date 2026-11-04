@@ -1,4 +1,4 @@
-import { reLoginAsync } from "../login/reLogin"
+import { requestLoginAsync } from "../login/loginRequest"
 
 /**
  * サーバー側エンドポイントを呼び出す。
@@ -25,7 +25,7 @@ export async function callAspNetCoreApiAsync(endpoint: string, init: RequestInit
     ...init,
   })
 
-  if (response.status === 401 && await reLoginAsync() === 'logged-in') {
+  if (response.status === 401 && await requestLoginAsync() === 'logged-in') {
     return await callAspNetCoreApiAsync(endpoint, init)
   }
   return response
