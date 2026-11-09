@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Reflection;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -161,7 +162,8 @@ public static class JsonSerializerExtensions {
             if (value == null) {
                 writer.WriteNullValue();
             } else {
-                writer.WriteStringValue(value.Value.ToString("#,##0.#"));
+                // 小数部は丸めずにすべて出力する（decimal の小数部は最大28桁）。末尾の0は出力しない
+                writer.WriteStringValue(value.Value.ToString("#,##0.############################", CultureInfo.InvariantCulture));
             }
         }
     }
@@ -199,7 +201,8 @@ public static class JsonSerializerExtensions {
             if (value == null) {
                 writer.WriteNullValue();
             } else {
-                writer.WriteStringValue(value.ToString());
+                // サーバーの言語設定に左右されないよう、書式を明示する
+                writer.WriteStringValue(value.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
             }
         }
     }
