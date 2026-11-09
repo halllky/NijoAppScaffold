@@ -201,7 +201,8 @@ public static class JsonSerializerExtensions {
             if (value == null) {
                 writer.WriteNullValue();
             } else {
-                writer.WriteStringValue(value.ToString());
+                // サーバーの言語設定に左右されないよう、書式を明示する
+                writer.WriteStringValue(value.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
             }
         }
     }
