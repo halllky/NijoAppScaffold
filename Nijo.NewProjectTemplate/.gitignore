@@ -11,6 +11,9 @@
 # .NETの開発者個人設定
 appsettings.Development.json
 
+# 開発環境のDB（開発者ごとに持つ）
+*.sqlite3
+
 # SQLiteのコミット前の状態が保存される一時ファイル
 *.sqlite3-shm
 *.sqlite3-wal
