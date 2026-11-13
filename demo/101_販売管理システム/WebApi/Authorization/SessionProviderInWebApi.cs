@@ -6,9 +6,11 @@ namespace MyApp.WebApi.Authorization;
 
 public class SessionProviderInWebApi : ISessionKeyProvider {
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IWebHostEnvironment _environment;
 
-    public SessionProviderInWebApi(IHttpContextAccessor httpContextAccessor) {
+    public SessionProviderInWebApi(IHttpContextAccessor httpContextAccessor, IWebHostEnvironment environment) {
         _httpContextAccessor = httpContextAccessor;
+        _environment = environment;
     }
 
     /// <summary>
@@ -26,7 +28,9 @@ public class SessionProviderInWebApi : ISessionKeyProvider {
         httpContext.Response.Cookies.Append(SESSION_ITEM_KEY, sessionKey, new CookieOptions {
             HttpOnly = true, // JavaScript から参照できないようにする
             SameSite = SameSiteMode.Lax, // クロスサイトリクエストフォージェリ(CSRF)対策
-            // Secure = true, // HTTPS 環境の場合は有効化する。デモはHTTP環境なのでコメントアウト
+            // HTTPS で送られたときだけブラウザが返すようにする。
+            // 開発環境は HTTP で動かすので付けない。本番環境は、前段の装置で HTTPS を終端していても、ブラウザから見れば HTTPS なので付けてよい
+            Secure = !_environment.IsDevelopment(),
             Path = "/", // アプリケーション全体で有効にする
             MaxAge = null, // ブラウザ終了時に破棄するセッションCookieとする
         });
