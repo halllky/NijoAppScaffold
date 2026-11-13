@@ -14,9 +14,12 @@ public class SessionProviderInWebApi : ISessionKeyProvider {
     }
 
     /// <summary>
-    /// セッションキーを保存する Cookie のキー名
+    /// セッションキーを保存する Cookie の名前。
+    /// 開発環境以外では頭に __Host- を付け、Secure 属性・Path=/・Domain なしをブラウザに強制させる（サブドメインからの上書きを防ぐ）。
+    /// 開発環境は HTTP で動かし Secure 属性を付けられないので、付けない。
     /// </summary>
-    private const string SESSION_ITEM_KEY = "SessionProviderInWebApi.Session";
+    private string SessionCookieName => _environment.IsDevelopment() ? SESSION_COOKIE_NAME : $"__Host-{SESSION_COOKIE_NAME}";
+    private const string SESSION_COOKIE_NAME = "SessionProviderInWebApi.Session";
 
     void ISessionKeyProvider.ReturnSessionKeyToClient(string sessionKey) {
         var httpContext = _httpContextAccessor.HttpContext;
@@ -25,7 +28,7 @@ public class SessionProviderInWebApi : ISessionKeyProvider {
         }
 
         // ログイン時に発番されたセッションキーを Set-Cookie ヘッダーでクライアントに返す
-        httpContext.Response.Cookies.Append(SESSION_ITEM_KEY, sessionKey, new CookieOptions {
+        httpContext.Response.Cookies.Append(SessionCookieName, sessionKey, new CookieOptions {
             HttpOnly = true, // JavaScript から参照できないようにする
             SameSite = SameSiteMode.Lax, // クロスサイトリクエストフォージェリ(CSRF)対策
             // HTTPS で送られたときだけブラウザが返すようにする。
@@ -44,7 +47,7 @@ public class SessionProviderInWebApi : ISessionKeyProvider {
 
         // ログイン時に発番され、APサーバー側で Set-Cookie で設定されるセッションキーを取得する。
         // クライアント側では、 JavaScript の fetch API で credential: true すると Cookie が送信される。
-        return httpContext.Request.Cookies.TryGetValue(SESSION_ITEM_KEY, out var sessionKey)
+        return httpContext.Request.Cookies.TryGetValue(SessionCookieName, out var sessionKey)
             ? sessionKey
             : null;
     }
@@ -56,8 +59,9 @@ public class SessionProviderInWebApi : ISessionKeyProvider {
         }
 
         // ログアウト時にセッションキーをクリアする
-        httpContext.Response.Cookies.Delete(SESSION_ITEM_KEY, new CookieOptions {
+        httpContext.Response.Cookies.Delete(SessionCookieName, new CookieOptions {
             Path = "/", // Cookie設定時と同じPathを指定すること
+            Secure = !_environment.IsDevelopment(), // __Host- の Cookie は Secure 属性が無いと消す指示もブラウザに無視される
         });
     }
 }

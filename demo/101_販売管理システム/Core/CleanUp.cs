@@ -17,11 +17,12 @@ partial class OverridedApplicationService {
         // 利用者に確認を求める前の入力チェックの段階では、削除しない
         if (context.ValidationOnly) return;
 
-        // 最終ログイン日時から24時間経過したセッションを削除
-        var threshold = CurrentTime.AddHours(-24);
+        // 最後に操作してから有効期限が過ぎたセッションを削除。
+        // 期限が過ぎたセッションはログインユーザーの特定の時点で無効として扱われるので、ここで消すのは古い行の掃除のため
+        var threshold = CurrentTime - Core.Authorization.SessionKey.IdleTimeout;
 
         var deletedCount = await DbContext.セッションDbSet
-            .Where(s => s.最終ログイン日時 < threshold)
+            .Where(s => s.最終操作日時 < threshold)
             .ExecuteDeleteAsync();
 
         Log.LogInformation($"クリーンナップ処理を実行しました。削除されたセッション数: {deletedCount}");

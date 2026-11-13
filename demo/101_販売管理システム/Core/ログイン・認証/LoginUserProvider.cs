@@ -61,16 +61,34 @@ public class LoginUserProvider : ICurrentUser {
             return null;
         }
 
-        // セッションキーはDBのセッションテーブルにも保存されるので、クライアントから送られた値と突合
-        var dbEntity = _serviceProvider.GetRequiredService<OverridedDbContext>().セッションDbSet
+        // DBのセッションテーブルにはセッションキーのハッシュ値が保存されているので、クライアントから送られた値のハッシュ値と突合
+        var storedKey = SessionKey.ToStoredValue(sessionKey);
+        var dbContext = _serviceProvider.GetRequiredService<OverridedDbContext>();
+        var dbEntity = dbContext.セッションDbSet
             .Include(e => e.ユーザ!)
             .ThenInclude(e => e.従業員の権限)
-            .SingleOrDefault(e => e.セッションキー == sessionKey);
+            .SingleOrDefault(e => e.セッションキー == storedKey);
 
-        // 有効期限切れや、DBの古いデータが掃除された場合など
+        // ログアウトした場合や、DBの古いデータが掃除された場合など
         if (dbEntity == null) {
             _sessionKeyProvider.ClearSessionKey();
             return null;
+        }
+
+        // 最後に操作してから一定時間が経っていれば、ログインしていないものとみなす。
+        // セッションの行はここでは消さず、クリーンナップに任せる
+        var now = _serviceProvider.GetRequiredService<ICurrentTime>().Value;
+        if (dbEntity.最終操作日時 == null || dbEntity.最終操作日時 < now - SessionKey.IdleTimeout) {
+            _sessionKeyProvider.ClearSessionKey();
+            return null;
+        }
+
+        // 最終操作日時を更新する。負荷を抑えるため、前回の更新から一定時間が経ったときだけ更新する。
+        // 楽観排他や更新者の記録は不要なので、変更追跡を通さずに直接更新する
+        if (dbEntity.最終操作日時 < now - SessionKey.LastAccessUpdateInterval) {
+            dbContext.セッションDbSet
+                .Where(e => e.セッションキー == storedKey)
+                .ExecuteUpdate(setters => setters.SetProperty(e => e.最終操作日時, now));
         }
 
         return LoginUser.From(dbEntity.ユーザ ?? throw new InvalidOperationException());

@@ -14,9 +14,9 @@ public class DummyDataGeneratorInUnitTest : OverridedDummyDataGenerator {
 
         // テスト用セッションを直接登録
         applicationService.DbContext.セッションDbSet.Add(new セッションDbEntity {
-            セッションキー = TestUtilImpl.SessionKeyProviderInUnitTest.SESSION_KEY,
+            セッションキー = Core.Authorization.SessionKey.ToStoredValue(TestUtilImpl.SessionKeyProviderInUnitTest.SESSION_KEY),
             ユーザ_従業員番号 = ADMIN_USER_ID,
-            最終ログイン日時 = new DateTime(2026, 1, 1),
+            最終操作日時 = DateTime.Now,
             Version = 0,
         });
         await applicationService.DbContext.SaveChangesAsync();

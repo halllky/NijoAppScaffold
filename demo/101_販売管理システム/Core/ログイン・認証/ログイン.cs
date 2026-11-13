@@ -42,13 +42,13 @@ partial class OverridedApplicationService {
         }
 
         // セッションキー発番
-        var sessionKey = Guid.NewGuid().ToString();
+        var sessionKey = Core.Authorization.SessionKey.Generate();
 
         // セッション保存
         var session = DbContext.StartCreatingセッション();
-        session.セッションキー = sessionKey;
+        session.セッションキー = Core.Authorization.SessionKey.ToStoredValue(sessionKey);
         session.ユーザ = new() { 従業員番号 = employee.従業員番号 };
-        session.最終ログイン日時 = CurrentTime;
+        session.最終操作日時 = CurrentTime;
 
         if (!session.TryValidate(out var validated, out var errors)) {
             errors.CopyTo(messages);

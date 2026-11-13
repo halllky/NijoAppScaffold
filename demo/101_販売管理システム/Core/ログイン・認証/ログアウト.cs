@@ -17,8 +17,9 @@ partial class OverridedApplicationService {
 
         // DBセッション削除。
         // 楽観排他などきちっとした検証は不要なのでExecuteDeleteAsyncで直接消す。
+        var storedKey = Core.Authorization.SessionKey.ToStoredValue(sessionKey);
         await DbContext.セッションDbSet
-            .Where(s => s.セッションキー == sessionKey)
+            .Where(s => s.セッションキー == storedKey)
             .ExecuteDeleteAsync();
 
         // クライアント側のセッションキーもクリア

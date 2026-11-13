@@ -54,6 +54,11 @@ partial class OverridedApplicationService {
             return;
         }
 
+        // 再発行前のパスワードでログインしている状態を残さないよう、対象者のセッションをすべて消す
+        await DbContext.セッションDbSet
+            .Where(s => s.ユーザ_従業員番号 == employeeNumber)
+            .ExecuteDeleteAsync();
+
         await tran.CommitAsync();
     }
 }

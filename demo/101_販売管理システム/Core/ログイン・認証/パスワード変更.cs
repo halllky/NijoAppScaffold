@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using MyApp.Core.Authorization;
 
 namespace MyApp;
@@ -53,6 +54,13 @@ partial class OverridedApplicationService {
             result.Errors.CopyTo(messages);
             return;
         }
+
+        // 古いパスワードで別の端末にログインしている状態を残さないよう、この操作をしたセッション以外の本人のセッションを消す
+        var currentSessionKey = ServiceProvider.GetRequiredService<Core.Authorization.ISessionKeyProvider>().GetSessionKey();
+        var currentStoredKey = currentSessionKey == null ? null : Core.Authorization.SessionKey.ToStoredValue(currentSessionKey);
+        await DbContext.セッションDbSet
+            .Where(s => s.ユーザ_従業員番号 == employeeNumber && s.セッションキー != currentStoredKey)
+            .ExecuteDeleteAsync();
 
         await tran.CommitAsync();
     }
