@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.DependencyInjection;
-using MyApp.Core.Authorization;
 
 namespace MyApp;
 
@@ -8,7 +7,7 @@ namespace MyApp;
 /// Entity Framework Core のデザインタイム用 DbContext ファクトリ。
 /// dotnet-ef コマンドがマイグレーション処理を行う際に使用される。
 /// </summary>
-public class MigrationEntryPoint : IDesignTimeDbContextFactory<OverridedDbContext> {
+public partial class MigrationEntryPoint : IDesignTimeDbContextFactory<OverridedDbContext> {
     public OverridedDbContext CreateDbContext(string[] args) {
 
         // DI コンテナの構築。appsettings.json は WebApi のものを流用する
@@ -16,31 +15,16 @@ public class MigrationEntryPoint : IDesignTimeDbContextFactory<OverridedDbContex
         var basePath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "WebApi"));
 
         OverridedApplicationService.ConfigureServices(services, basePath);
-
-        // 呼び出し元ごとに実装するサービス。DbContext が作成者・更新者の記録のために依存している
-        services.AddSingleton<ISessionKeyProvider, SessionKeyProviderInMigration>();
-        services.AddSingleton<ICurrentProcess, CurrentProcessInMigration>();
+        ConfigureServicesスキーマ定義依存(services);
 
         var serviceProvider = services.BuildServiceProvider();
         return serviceProvider.GetRequiredService<OverridedDbContext>();
     }
 
     /// <summary>
-    /// マイグレーションにおける <see cref="ICurrentProcess"/>。
+    /// 呼び出し元（Web、バッチ、単体テスト、マイグレーション）ごとに実装すべきサービスのうち、
+    /// アプリ固有のものをマイグレーション用に登録する。
+    /// 登録すべきものが無ければ実装しなくてよい（実装が無ければ呼び出しごと取り除かれる）。
     /// </summary>
-    private class CurrentProcessInMigration : ICurrentProcess {
-        public string Name => "Migration";
-    }
-
-    /// <summary>
-    /// マイグレーションにおける <see cref="ISessionKeyProvider"/>。
-    /// マイグレーションはログインユーザーのいない処理なので、セッションキーは常に無い。
-    /// </summary>
-    private class SessionKeyProviderInMigration : ISessionKeyProvider {
-        public string? GetSessionKey() => null;
-        public void ClearSessionKey() { }
-        public void ReturnSessionKeyToClient(string sessionKey) {
-            throw new InvalidOperationException("マイグレーション中にログインすることはできません。");
-        }
-    }
+    static partial void ConfigureServicesスキーマ定義依存(IServiceCollection services);
 }
