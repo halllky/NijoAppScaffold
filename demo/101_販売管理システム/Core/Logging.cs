@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using MyApp.NijoAttr;
 using NLog.Extensions.Logging;
 
@@ -22,6 +23,10 @@ internal static class LogSettings {
 
         // NLog を用いたログ設定を Microsoft.Extensions.Logging に統合する
         services.AddLogging(logging => {
+
+            // ログの出力は NLog だけで行う。
+            // ASP.NET Core が既定で登録するコンソールなどへの出力を残すと、NLog のコンソール出力と二重になるので消す
+            logging.ClearProviders();
 
             // ログのファイル出力。
             // 出力先ディレクトリは設定ファイルから取得する
@@ -66,15 +71,17 @@ internal static class LogSettings {
             config.AddTarget(fileTarget);
             config.AddTarget(consoleTarget);
 
-            // EFCore や ASP.NET Core が標準で出力するログはコンソールに出力する。
-            // ただし Warning 以上はファイルにも出力する。Windows のサービスなど、コンソールの出力が残らない動かし方でも、
+            // すべてのログをコンソールに出力する。コンテナなど、コンソールの出力を集める動かし方ではこれを使う。
+            // ファイルには、アプリケーションのログと、EFCore や ASP.NET Core のログのうち Warning 以上を出力する。
+            // Windows のサービスなど、コンソールの出力が残らない動かし方でも、
             // 起動の失敗や DB のエラーを後から調べられるようにするため。
-            // それ以外はファイルに出力。（final: true をつけるとそれ以降のルールは無視される）
+            // （final: true をつけると、そのロガーについてはそれ以降のルールは無視される）
             config.AddRule(NLog.LogLevel.Warn, NLog.LogLevel.Fatal, fileTarget, "Microsoft.EntityFrameworkCore.*");
             config.AddRule(NLog.LogLevel.Warn, NLog.LogLevel.Fatal, fileTarget, "Microsoft.AspNetCore.*");
             config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, consoleTarget, "Microsoft.EntityFrameworkCore.*", final: true);
             config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, consoleTarget, "Microsoft.AspNetCore.*", final: true);
             config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, fileTarget);
+            config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, consoleTarget);
 
             // ファイル出力自体の失敗などは、別途Fatalログとして出力する
             NLog.Common.InternalLogger.LogFile = Path.Combine(logDir, "NLog.Fatal.log");
