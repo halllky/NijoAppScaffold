@@ -52,9 +52,9 @@ namespace MyApp.Migrations {
                     .HasColumnName("ユーザ_従業員番号")
                     .HasColumnOrder(1);
 
-                b.Property<DateTime>("最終ログイン日時")
+                b.Property<DateTime>("最終操作日時")
                     .HasColumnType("TEXT")
-                    .HasColumnName("最終ログイン日時")
+                    .HasColumnName("最終操作日時")
                     .HasColumnOrder(2);
 
                 b.HasKey("セッションキー")
