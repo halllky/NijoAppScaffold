@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using MyApp.Core.Authorization;
 
 namespace MyApp;
@@ -13,6 +14,10 @@ partial class OverridedApplicationService {
         }
 
         // 入力チェック
+        if (string.IsNullOrWhiteSpace(param.現在のパスワード)) {
+            messages.現在のパスワード.AddError("現在のパスワードを入力してください。");
+            return;
+        }
         var newPassword = param.新しいパスワード;
         var confirmPassword = param.新しいパスワード_確認用;
 
@@ -25,12 +30,23 @@ partial class OverridedApplicationService {
             return;
         }
 
+        // 現在のパスワードの照合
+        var employeeNumber = LoginUser.従業員番号;
+        var current = await DbContext.従業員DbSet
+            .AsNoTracking()
+            .SingleOrDefaultAsync(e => e.従業員番号 == employeeNumber);
+        if (current?.パスワード == null
+            || current.SALT == null
+            || PasswordHash.Verify(param.現在のパスワード, current.パスワード, current.SALT) == PasswordHash.VerificationResult.Failed) {
+            messages.現在のパスワード.AddError("現在のパスワードが正しくありません。");
+            return;
+        }
+
         // パスワードのハッシュ化
         var passwordHash = PasswordHash.Create(newPassword);
 
         // 更新。
         // 画面で編集された行ではないので読み込み時点のバージョンで楽観排他をかける。
-        var employeeNumber = LoginUser.従業員番号;
         var employee = (await DbContext
             .LoadForEdit従業員Async(query => query.Where(x => x.従業員番号 == employeeNumber)))
             .SingleOrDefault();
@@ -63,5 +79,6 @@ partial class OverridedApplicationService {
             .ExecuteDeleteAsync();
 
         await tran.CommitAsync();
+        Log.LogInformation("パスワードを変更しました。");
     }
 }
