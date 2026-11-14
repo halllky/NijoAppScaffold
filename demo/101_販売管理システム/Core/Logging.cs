@@ -67,7 +67,11 @@ internal static class LogSettings {
             config.AddTarget(consoleTarget);
 
             // EFCore や ASP.NET Core が標準で出力するログはコンソールに出力する。
+            // ただし Warning 以上はファイルにも出力する。Windows のサービスなど、コンソールの出力が残らない動かし方でも、
+            // 起動の失敗や DB のエラーを後から調べられるようにするため。
             // それ以外はファイルに出力。（final: true をつけるとそれ以降のルールは無視される）
+            config.AddRule(NLog.LogLevel.Warn, NLog.LogLevel.Fatal, fileTarget, "Microsoft.EntityFrameworkCore.*");
+            config.AddRule(NLog.LogLevel.Warn, NLog.LogLevel.Fatal, fileTarget, "Microsoft.AspNetCore.*");
             config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, consoleTarget, "Microsoft.EntityFrameworkCore.*", final: true);
             config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, consoleTarget, "Microsoft.AspNetCore.*", final: true);
             config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, fileTarget);
