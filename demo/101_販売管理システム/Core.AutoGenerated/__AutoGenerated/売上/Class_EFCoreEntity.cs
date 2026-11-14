@@ -1,0 +1,353 @@
+﻿
+// このファイルは自動生成されました。このファイルの内容を直接書き換えても、次回の自動生成処理で上書きされるのでご注意ください。
+// ※ このファイルを生成したクラス  : DataStructuresSection.cs
+// ※ このファイルを生成したメソッド: Render
+
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Logging;
+
+namespace MyApp;
+
+
+#region Entity Framework Core エンティティ定義
+/// <summary>
+/// 売上の Entity Framework Core エンティティ型。RDBMSのテーブル定義と対応。
+/// </summary>
+[NijoAttr.IsStored]
+public partial class 売上DbEntity {
+    /// <summary>売上SEQ</summary>
+    [NijoAttr.IsKey, NijoAttr.SequenceName("URIAGE_SEQ")]
+    public int? 売上SEQ { get; set; }
+    /// <summary>売上日時</summary>
+    [NijoAttr.IsNotNull]
+    public DateTime? 売上日時 { get; set; }
+    /// <summary>従業員番号</summary>
+    [NijoAttr.IsKey]
+    public string? 担当者_従業員番号 { get; set; }
+    /// <summary>備考</summary>
+    public string? 備考 { get; set; }
+    /// <summary>データが新規作成された日時</summary>
+    public DateTime? CreatedAt { get; set; }
+    /// <summary>データが更新された日時</summary>
+    public DateTime? UpdatedAt { get; set; }
+    /// <summary>データを新規作成したユーザー</summary>
+    public string? CreateUser { get; set; }
+    /// <summary>データを更新したユーザー</summary>
+    public string? UpdateUser { get; set; }
+    /// <summary>楽観排他制御用のバージョニング用カラム</summary>
+    public int? Version { get; set; }
+
+    [NijoAttr.IsNotNull]
+    public virtual 従業員DbEntity? 担当者 { get; set; }
+    public virtual ICollection<売上の売上明細DbEntity> 売上の売上明細 { get; set; } = [];
+
+    /// <summary>このオブジェクトと比較対象のオブジェクトの主キーが一致するかを返します。</summary>
+    public bool KeyEquals(売上DbEntity entity) {
+        if (entity.売上SEQ != this.売上SEQ) return false;
+        return true;
+    }
+}
+/// <summary>
+/// 売上明細の Entity Framework Core エンティティ型。RDBMSのテーブル定義と対応。
+/// </summary>
+public partial class 売上の売上明細DbEntity {
+    /// <summary>売上SEQ</summary>
+    [NijoAttr.IsKey, NijoAttr.SequenceName("URIAGE_SEQ")]
+    public int? Parent_売上SEQ { get; set; }
+    /// <summary>明細ID</summary>
+    [NijoAttr.IsKey]
+    public string? 明細ID { get; set; }
+    /// <summary>商品SEQ</summary>
+    [NijoAttr.IsKey, NijoAttr.SequenceName("ITEM_SEQ")]
+    public int? 商品_商品SEQ { get; set; }
+    /// <summary>区分</summary>
+    [NijoAttr.IsNotNull]
+    public 売上明細区分? 区分 { get; set; }
+    /// <summary>売上数量</summary>
+    [NijoAttr.IsNotNull, NijoAttr.IsQuantity]
+    public int? 売上数量 { get; set; }
+    /// <summary>売上総額_税込</summary>
+    [NijoAttr.IsNotNull, NijoAttr.IsCurrency]
+    public int? 売上総額_税込 { get; set; }
+    /// <summary>データが新規作成された日時</summary>
+    public DateTime? CreatedAt { get; set; }
+    /// <summary>データが更新された日時</summary>
+    public DateTime? UpdatedAt { get; set; }
+    /// <summary>データを新規作成したユーザー</summary>
+    public string? CreateUser { get; set; }
+    /// <summary>データを更新したユーザー</summary>
+    public string? UpdateUser { get; set; }
+
+    [NijoAttr.IsStored]
+    public virtual 売上DbEntity? Parent { get; set; }
+    [NijoAttr.IsNotNull]
+    public virtual 商品DbEntity? 商品 { get; set; }
+    public virtual ICollection<引当明細DbEntity> 引当明細 { get; set; } = [];
+
+    /// <summary>このオブジェクトと比較対象のオブジェクトの主キーが一致するかを返します。</summary>
+    public bool KeyEquals(売上の売上明細DbEntity entity) {
+        if (entity.Parent_売上SEQ != this.Parent_売上SEQ) return false;
+        if (entity.明細ID != this.明細ID) return false;
+        return true;
+    }
+}
+/// <summary>
+/// 引当明細の Entity Framework Core エンティティ型。RDBMSのテーブル定義と対応。
+/// </summary>
+public partial class 引当明細DbEntity {
+    /// <summary>売上SEQ</summary>
+    [NijoAttr.IsKey, NijoAttr.SequenceName("URIAGE_SEQ")]
+    public int? Parent_Parent_売上SEQ { get; set; }
+    /// <summary>明細ID</summary>
+    [NijoAttr.IsKey]
+    public string? Parent_明細ID { get; set; }
+    /// <summary>入荷明細ID</summary>
+    [NijoAttr.IsKey]
+    public string? 入荷_入荷明細ID { get; set; }
+    /// <summary>引当数量</summary>
+    [NijoAttr.IsNotNull, NijoAttr.IsQuantity]
+    public int? 引当数量 { get; set; }
+    /// <summary>データが新規作成された日時</summary>
+    public DateTime? CreatedAt { get; set; }
+    /// <summary>データが更新された日時</summary>
+    public DateTime? UpdatedAt { get; set; }
+    /// <summary>データを新規作成したユーザー</summary>
+    public string? CreateUser { get; set; }
+    /// <summary>データを更新したユーザー</summary>
+    public string? UpdateUser { get; set; }
+
+    public virtual 売上の売上明細DbEntity? Parent { get; set; }
+    [NijoAttr.IsKey]
+    public virtual 入荷明細DbEntity? 入荷 { get; set; }
+
+    /// <summary>このオブジェクトと比較対象のオブジェクトの主キーが一致するかを返します。</summary>
+    public bool KeyEquals(引当明細DbEntity entity) {
+        if (entity.Parent_Parent_売上SEQ != this.Parent_Parent_売上SEQ) return false;
+        if (entity.Parent_明細ID != this.Parent_明細ID) return false;
+        if (entity.入荷_入荷明細ID != this.入荷_入荷明細ID) return false;
+        return true;
+    }
+}
+
+partial class AutoGeneratedDbContext {
+    /// <summary>
+    /// テーブルやカラムの詳細を定義します。
+    /// 参考: "Fluent API" （Entity FrameWork Core の仕組み）
+    /// </summary>
+    protected virtual void OnModelCreating売上(ModelBuilder modelBuilder) {
+        modelBuilder.Entity<売上DbEntity>(entity => {
+            entity.ToTable("売上");
+    
+            entity.HasKey(e => new {
+                e.売上SEQ,
+            })
+            .HasName("PK_売上");
+    
+            entity.Property(e => e.売上SEQ)
+                .HasColumnName("売上SEQ")
+                .IsRequired(true)
+                .HasColumnOrder(0);
+            ConfigureSequenceMember(modelBuilder, entity, entity.Property(e => e.売上SEQ), "URIAGE_SEQ");
+    
+            entity.Property(e => e.売上日時)
+                .HasColumnName("売上日時")
+                .IsRequired(true)
+                .HasColumnOrder(1);
+            entity.Property(e => e.担当者_従業員番号)
+                .HasColumnName("担当者_従業員番号")
+                .IsRequired(true)
+                .HasColumnOrder(2);
+            entity.Property(e => e.備考)
+                .HasColumnName("備考")
+                .IsRequired(false)
+                .HasColumnOrder(3);
+            entity.Property(e => e.CreatedAt)
+                .HasColumnName("CreatedAt")
+                .IsRequired(false)
+                .HasColumnOrder(4);
+            entity.Property(e => e.CreateUser)
+                .HasColumnName("CreateUser")
+                .IsRequired(false)
+                .HasColumnOrder(5);
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnName("UpdatedAt")
+                .IsRequired(false)
+                .HasColumnOrder(6);
+            entity.Property(e => e.UpdateUser)
+                .HasColumnName("UpdateUser")
+                .IsRequired(false)
+                .HasColumnOrder(7);
+            entity.Property(e => e.Version)
+                .HasColumnName("Version")
+                .IsRequired(true)
+                .IsConcurrencyToken(true)
+                .HasColumnOrder(8);
+    
+            entity.HasMany(e => e.売上の売上明細)
+                .WithOne(e => e.Parent)
+                .HasForeignKey(e => new {
+                    e.Parent_売上SEQ,
+                })
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_売上_売上明細");
+    
+            entity.HasOne(e => e.担当者)
+                .WithMany(e => e.RefFrom売上_担当者)
+                .HasForeignKey(e => new {
+                    e.担当者_従業員番号,
+                })
+                .OnDelete(DeleteBehavior.NoAction)
+                .HasConstraintName("FK_従業員_売上_XB332A41");
+        });
+    }
+    /// <summary>
+    /// テーブルやカラムの詳細を定義します。
+    /// 参考: "Fluent API" （Entity FrameWork Core の仕組み）
+    /// </summary>
+    protected virtual void OnModelCreating売上の売上明細(ModelBuilder modelBuilder) {
+        modelBuilder.Entity<売上の売上明細DbEntity>(entity => {
+            entity.ToTable("売上明細");
+    
+            entity.HasKey(e => new {
+                e.Parent_売上SEQ,
+                e.明細ID,
+            })
+            .HasName("PK_売上明細");
+    
+            entity.Property(e => e.Parent_売上SEQ)
+                .HasColumnName("Parent_売上SEQ")
+                .IsRequired(true)
+                .HasColumnOrder(0);
+            ConfigureSequenceMember(modelBuilder, entity, entity.Property(e => e.Parent_売上SEQ), "URIAGE_SEQ");
+    
+            entity.Property(e => e.明細ID)
+                .HasColumnName("明細ID")
+                .IsRequired(true)
+                .HasColumnOrder(1);
+            entity.Property(e => e.商品_商品SEQ)
+                .HasColumnName("商品_商品SEQ")
+                .IsRequired(true)
+                .HasColumnOrder(2);
+            ConfigureSequenceMember(modelBuilder, entity, entity.Property(e => e.商品_商品SEQ), "ITEM_SEQ");
+    
+            entity.Property(e => e.区分)
+                .HasColumnName("区分")
+                .IsRequired(true)
+                .HasColumnOrder(3);
+            entity.Property(e => e.売上数量)
+                .HasColumnName("売上数量")
+                .IsRequired(true)
+                .HasColumnOrder(4);
+            entity.Property(e => e.売上総額_税込)
+                .HasColumnName("売上総額_税込")
+                .IsRequired(true)
+                .HasColumnOrder(5);
+            entity.Property(e => e.CreatedAt)
+                .HasColumnName("CreatedAt")
+                .IsRequired(false)
+                .HasColumnOrder(6);
+            entity.Property(e => e.CreateUser)
+                .HasColumnName("CreateUser")
+                .IsRequired(false)
+                .HasColumnOrder(7);
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnName("UpdatedAt")
+                .IsRequired(false)
+                .HasColumnOrder(8);
+            entity.Property(e => e.UpdateUser)
+                .HasColumnName("UpdateUser")
+                .IsRequired(false)
+                .HasColumnOrder(9);
+    
+            entity.HasMany(e => e.引当明細)
+                .WithOne(e => e.Parent)
+                .HasForeignKey(e => new {
+                    e.Parent_Parent_売上SEQ,
+                    e.Parent_明細ID,
+                })
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_売上明細_引当明細");
+    
+            entity.HasOne(e => e.商品)
+                .WithMany(e => e.RefFrom売上の売上明細_商品)
+                .HasForeignKey(e => new {
+                    e.商品_商品SEQ,
+                })
+                .OnDelete(DeleteBehavior.NoAction)
+                .HasConstraintName("FK_商品_売上明細_X84D8979");
+        });
+    }
+    /// <summary>
+    /// テーブルやカラムの詳細を定義します。
+    /// 参考: "Fluent API" （Entity FrameWork Core の仕組み）
+    /// </summary>
+    protected virtual void OnModelCreating引当明細(ModelBuilder modelBuilder) {
+        modelBuilder.Entity<引当明細DbEntity>(entity => {
+            entity.ToTable("引当明細");
+    
+            entity.HasKey(e => new {
+                e.Parent_Parent_売上SEQ,
+                e.Parent_明細ID,
+                e.入荷_入荷明細ID,
+            })
+            .HasName("PK_引当明細");
+    
+            entity.Property(e => e.Parent_Parent_売上SEQ)
+                .HasColumnName("Parent_Parent_売上SEQ")
+                .IsRequired(true)
+                .HasColumnOrder(0);
+            ConfigureSequenceMember(modelBuilder, entity, entity.Property(e => e.Parent_Parent_売上SEQ), "URIAGE_SEQ");
+    
+            entity.Property(e => e.Parent_明細ID)
+                .HasColumnName("Parent_明細ID")
+                .IsRequired(true)
+                .HasColumnOrder(1);
+            entity.Property(e => e.入荷_入荷明細ID)
+                .HasColumnName("入荷_入荷明細ID")
+                .IsRequired(true)
+                .HasColumnOrder(2);
+            entity.Property(e => e.引当数量)
+                .HasColumnName("引当数量")
+                .IsRequired(true)
+                .HasColumnOrder(3);
+            entity.Property(e => e.CreatedAt)
+                .HasColumnName("CreatedAt")
+                .IsRequired(false)
+                .HasColumnOrder(4);
+            entity.Property(e => e.CreateUser)
+                .HasColumnName("CreateUser")
+                .IsRequired(false)
+                .HasColumnOrder(5);
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnName("UpdatedAt")
+                .IsRequired(false)
+                .HasColumnOrder(6);
+            entity.Property(e => e.UpdateUser)
+                .HasColumnName("UpdateUser")
+                .IsRequired(false)
+                .HasColumnOrder(7);
+    
+            entity.HasOne(e => e.入荷)
+                .WithMany(e => e.RefFrom引当明細_入荷)
+                .HasForeignKey(e => new {
+                    e.入荷_入荷明細ID,
+                })
+                .OnDelete(DeleteBehavior.NoAction)
+                .HasConstraintName("FK_入荷明細_引当明細_X4913180");
+        });
+    }
+}
+#endregion Entity Framework Core エンティティ定義
+
