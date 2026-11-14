@@ -16,6 +16,8 @@ import { createTextCellEditor, defineCellColumn, findCellMemberMetadata, type Te
  * - 金額項目は接尾辞「円」、数量項目は接尾辞「個」を付け、いずれも3桁カンマ区切りで表示する。どちらでもない項目には付けない。
  * - 数値として解釈できない文字の入力は受け付けない。全角数字・全角記号は半角に読み替える。
  * - 桁数を超える値は切り捨てず、そのまま保持してクライアント側エラーにする。貼り付けの場合も同じ。
+ * - サーバー側で32ビット整数になる型（整数・シーケンス）は、桁数に加えて32ビット整数の範囲に収まるかも検証する。
+ *   10桁の値の一部は32ビット整数に収まらず、画面の検証を通してもサーバーで変換できないため。
  *   整数部の切り捨ては値そのものを変えてしまい、ユーザーが気付かないまま誤った値が保存されるおそれがあるため。
  * - 3桁カンマ区切りは表示上だけのもので、フォームの値にはカンマを含めない。
  * - 検索条件のフォームでは、範囲指定（下限〜上限）の2つの入力欄になる。
@@ -224,6 +226,8 @@ type NumericFormat = {
   integerDigit: number
   /** 小数部の最大桁数。0 の場合は小数を入力できない */
   decimalDigit: number
+  /** 32ビット整数の範囲に収まるかを検証するかどうか */
+  int32Range: boolean
   /** 3桁カンマ区切りで表示するかどうか */
   commaSeparated: boolean
   /** 接尾辞（単位）。無い場合は undefined */
@@ -250,7 +254,7 @@ function numericFormatOf(member: AggregateMetadata.Member): NumericFormat {
     decimalDigit = member.decimalPlace ?? (member.totalDigit === undefined ? 2 : 0)
     integerDigit = Math.max(totalDigit - decimalDigit, 0)
   } else {
-    // 整数・シーケンス。桁数の指定が無い場合は32ビット整数に収まる桁数
+    // 整数・シーケンス。桁数の指定が無い場合は32ビット整数の最大の桁数。範囲に収まるかは別に検証する（int32Range）
     integerDigit = member.totalDigit ?? 10
     decimalDigit = 0
   }
@@ -259,6 +263,7 @@ function numericFormatOf(member: AggregateMetadata.Member): NumericFormat {
   return {
     integerDigit,
     decimalDigit,
+    int32Range: !(member.kind === 'value' && member.type === 'decimal'),
     commaSeparated: suffix !== undefined,
     suffix,
   }
@@ -287,8 +292,18 @@ function validateNumericDigits(value: string, format: NumericFormat): string | u
       ? '小数は入力できません。'
       : `小数部は${format.decimalDigit}桁以内で入力してください。`
   }
+  if (format.int32Range) {
+    const numberValue = Number(value)
+    if (Number.isFinite(numberValue) && (numberValue < INT32_MIN || numberValue > INT32_MAX)) {
+      return '-2,147,483,648 から 2,147,483,647 までの値を入力してください。'
+    }
+  }
   return undefined
 }
+
+/** 32ビット整数の範囲 */
+const INT32_MIN = -2147483648
+const INT32_MAX = 2147483647
 
 /** 表示用の文字列にする。カンマ区切りと接尾辞を付ける */
 function formatNumeric(value: string | null | undefined, format: NumericFormat): string {
