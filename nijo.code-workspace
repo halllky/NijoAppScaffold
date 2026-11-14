@@ -67,6 +67,9 @@
     "[xml]": {
       "editor.formatOnSave": false
     },
+    "[markdown]": {
+      "editor.formatOnSave": false
+    },
     "files.insertFinalNewline": true,
     "files.trimFinalNewlines": false,
     "markdown.preview.breaks": true,
