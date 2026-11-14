@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.DependencyInjection;
+using MyApp.Core.Authorization;
 
 namespace MyApp;
 
@@ -16,7 +17,30 @@ public class MigrationEntryPoint : IDesignTimeDbContextFactory<OverridedDbContex
 
         OverridedApplicationService.ConfigureServices(services, basePath);
 
+        // 呼び出し元ごとに実装するサービス。DbContext が作成者・更新者の記録のために依存している
+        services.AddSingleton<ISessionKeyProvider, SessionKeyProviderInMigration>();
+        services.AddSingleton<ICurrentProcess, CurrentProcessInMigration>();
+
         var serviceProvider = services.BuildServiceProvider();
         return serviceProvider.GetRequiredService<OverridedDbContext>();
+    }
+
+    /// <summary>
+    /// マイグレーションにおける <see cref="ICurrentProcess"/>。
+    /// </summary>
+    private class CurrentProcessInMigration : ICurrentProcess {
+        public string Name => "Migration";
+    }
+
+    /// <summary>
+    /// マイグレーションにおける <see cref="ISessionKeyProvider"/>。
+    /// マイグレーションはログインユーザーのいない処理なので、セッションキーは常に無い。
+    /// </summary>
+    private class SessionKeyProviderInMigration : ISessionKeyProvider {
+        public string? GetSessionKey() => null;
+        public void ClearSessionKey() { }
+        public void ReturnSessionKeyToClient(string sessionKey) {
+            throw new InvalidOperationException("マイグレーション中にログインすることはできません。");
+        }
     }
 }
