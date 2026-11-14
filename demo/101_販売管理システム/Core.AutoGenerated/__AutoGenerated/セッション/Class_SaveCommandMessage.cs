@@ -27,15 +27,15 @@ public class セッションSaveCommandMessages : MessageSetter {
     public セッションSaveCommandMessages(IEnumerable<string> path, MessageContainer context) : base(path, context) {
         this.セッションキー = new MessageSetter([.. path, "セッションキー"], context);
         this.ユーザ = new MessageSetter([.. path, "ユーザ"], context);
-        this.最終ログイン日時 = new MessageSetter([.. path, "最終ログイン日時"], context);
+        this.最終操作日時 = new MessageSetter([.. path, "最終操作日時"], context);
     }
 
     /// <summary>セッションキーに対して発生したメッセージの入れ物</summary>
     public IMessageSetter セッションキー { get; }
     /// <summary>ユーザに対して発生したメッセージの入れ物</summary>
     public IMessageSetter ユーザ { get; }
-    /// <summary>最終ログイン日時に対して発生したメッセージの入れ物</summary>
-    public IMessageSetter 最終ログイン日時 { get; }
+    /// <summary>最終操作日時に対して発生したメッセージの入れ物</summary>
+    public IMessageSetter 最終操作日時 { get; }
 }
 #endregion 登録更新の過程で発生したメッセージの入れ物クラス
 

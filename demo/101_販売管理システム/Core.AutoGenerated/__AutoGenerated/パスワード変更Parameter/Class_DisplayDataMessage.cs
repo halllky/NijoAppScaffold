@@ -25,10 +25,13 @@ namespace MyApp;
 /// </summary>
 public class パスワード変更ParameterMessages : MessageSetter {
     public パスワード変更ParameterMessages(IEnumerable<string> path, MessageContainer context) : base(path, context) {
+        this.現在のパスワード = new MessageSetter([.. path, "現在のパスワード"], context);
         this.新しいパスワード = new MessageSetter([.. path, "新しいパスワード"], context);
         this.新しいパスワード_確認用 = new MessageSetter([.. path, "新しいパスワード_確認用"], context);
     }
 
+    /// <summary>現在のパスワードに対して発生したメッセージの入れ物</summary>
+    public IMessageSetter 現在のパスワード { get; }
     /// <summary>新しいパスワードに対して発生したメッセージの入れ物</summary>
     public IMessageSetter 新しいパスワード { get; }
     /// <summary>新しいパスワード_確認用に対して発生したメッセージの入れ物</summary>

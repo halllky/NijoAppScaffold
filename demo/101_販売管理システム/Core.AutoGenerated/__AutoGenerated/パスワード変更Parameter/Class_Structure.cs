@@ -25,6 +25,8 @@ namespace MyApp;
 /// </summary>
 public partial class パスワード変更Parameter {
     [NijoAttr.CustomMaxLength("50"), NijoAttr.Masking]
+    public string? 現在のパスワード { get; set; }
+    [NijoAttr.CustomMaxLength("50"), NijoAttr.Masking]
     public string? 新しいパスワード { get; set; }
     [NijoAttr.CustomMaxLength("50"), NijoAttr.Masking]
     public string? 新しいパスワード_確認用 { get; set; }

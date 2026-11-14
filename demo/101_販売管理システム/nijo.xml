@@ -621,7 +621,6 @@ Webアプリケーションなので明示的にログアウトしない限り�
         UniqueId="82da1cd4-c08e-4297-af1d-e27157ba59b0" />
       <!--ログインしたときと、その後の操作のたびに（数分おきに）UPDATEされる-->
       <最終操作日時
-        DbName="最終ログイン日時"
         IsNotNull="True"
         Type="datetime"
         UniqueId="5d444ec0-10f7-4fbb-8bd1-8331feac1b66" />

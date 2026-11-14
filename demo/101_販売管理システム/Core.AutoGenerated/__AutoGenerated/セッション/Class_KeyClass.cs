@@ -26,7 +26,7 @@ namespace MyApp;
 [NijoAttr.IsStored]
 public partial class セッションKey {
     /// <summary>セッションキー</summary>
-    [NijoAttr.IsKey, NijoAttr.IsNotNull]
+    [NijoAttr.IsKey, NijoAttr.IsNotNull, NijoAttr.Masking]
     public required string? セッションキー { get; set; }
 
     /// <summary>

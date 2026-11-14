@@ -54,14 +54,14 @@ public partial class セッションCreateCommand : セッションSaveCommand, 
     }
 
     /// <summary>セッションキー</summary>
-    [NijoAttr.IsKey, NijoAttr.IsNotNull]
+    [NijoAttr.IsKey, NijoAttr.IsNotNull, NijoAttr.Masking]
     public string? セッションキー { get; set; }
     /// <summary>ユーザ</summary>
     [NijoAttr.IsNotNull]
     public 従業員Key? ユーザ { get; set; }
-    /// <summary>最終ログイン日時</summary>
+    /// <summary>最終操作日時</summary>
     [NijoAttr.IsNotNull]
-    public DateTime? 最終ログイン日時 { get; set; }
+    public DateTime? 最終操作日時 { get; set; }
 
     /// <summary>
     /// このインスタンスの現時点の値を、このインスタンスと参照を共有しない Entity Framework Core のエンティティに変換します。
@@ -70,7 +70,7 @@ public partial class セッションCreateCommand : セッションSaveCommand, 
         return new セッションDbEntity {
             セッションキー = this.セッションキー,
             ユーザ_従業員番号 = this.ユーザ?.従業員番号,
-            最終ログイン日時 = this.最終ログイン日時,
+            最終操作日時 = this.最終操作日時,
             Version = 0,
         };
     }
@@ -104,9 +104,9 @@ public partial class セッションCreateCommand : セッションSaveCommand, 
         if (string.IsNullOrWhiteSpace(this.ユーザ?.従業員番号)) {
             messages.ユーザ.AddError(MSG.RequiredError("ユーザ"));
         }
-        // 最終ログイン日時
-        if (this.最終ログイン日時 == null) {
-            messages.最終ログイン日時.AddError(MSG.RequiredError("最終ログイン日時"));
+        // 最終操作日時
+        if (this.最終操作日時 == null) {
+            messages.最終操作日時.AddError(MSG.RequiredError("最終操作日時"));
         }
     }
     /// <summary>
@@ -181,14 +181,14 @@ public partial class セッションUpdateCommand : セッションSaveCommand, 
     private readonly int _expectedVersion;
 
     /// <summary>セッションキー</summary>
-    [NijoAttr.IsKey, NijoAttr.IsNotNull]
+    [NijoAttr.IsKey, NijoAttr.IsNotNull, NijoAttr.Masking]
     public string? セッションキー { get; set; }
     /// <summary>ユーザ</summary>
     [NijoAttr.IsNotNull]
     public 従業員Key? ユーザ { get; set; }
-    /// <summary>最終ログイン日時</summary>
+    /// <summary>最終操作日時</summary>
     [NijoAttr.IsNotNull]
-    public DateTime? 最終ログイン日時 { get; set; }
+    public DateTime? 最終操作日時 { get; set; }
 
     /// <summary>
     /// このコマンドと同じデータの削除コマンドを返します。
@@ -203,7 +203,7 @@ public partial class セッションUpdateCommand : セッションSaveCommand, 
         return new セッションDbEntity {
             セッションキー = this.セッションキー,
             ユーザ_従業員番号 = this.ユーザ?.従業員番号,
-            最終ログイン日時 = this.最終ログイン日時,
+            最終操作日時 = this.最終操作日時,
         };
     }
 
@@ -216,7 +216,7 @@ public partial class セッションUpdateCommand : セッションSaveCommand, 
             ユーザ = new() {
                 従業員番号 = dbEntity.ユーザ_従業員番号,
             },
-            最終ログイン日時 = dbEntity.最終ログイン日時,
+            最終操作日時 = dbEntity.最終操作日時,
         };
     }
 
@@ -252,9 +252,9 @@ public partial class セッションUpdateCommand : セッションSaveCommand, 
         if (string.IsNullOrWhiteSpace(this.ユーザ?.従業員番号)) {
             messages.ユーザ.AddError(MSG.RequiredError("ユーザ"));
         }
-        // 最終ログイン日時
-        if (this.最終ログイン日時 == null) {
-            messages.最終ログイン日時.AddError(MSG.RequiredError("最終ログイン日時"));
+        // 最終操作日時
+        if (this.最終操作日時 == null) {
+            messages.最終操作日時.AddError(MSG.RequiredError("最終操作日時"));
         }
     }
     /// <summary>

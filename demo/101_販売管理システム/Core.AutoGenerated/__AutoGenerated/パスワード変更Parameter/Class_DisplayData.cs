@@ -32,6 +32,11 @@ public partial class パスワード変更ParameterDisplayData {
     [JsonPropertyName("instanceId")]
     public string InstanceId { get; set; } = Guid.NewGuid().ToString();
 
+    /// <summary>
+    /// 本人であることを確かめるために入力させる。席を離れた端末などで、本人以外がパスワードを変えられないようにする
+    /// </summary>
+    [NijoAttr.CustomMaxLength("50"), NijoAttr.Masking]
+    public string? 現在のパスワード { get; set; }
     [NijoAttr.CustomMaxLength("50"), NijoAttr.Masking]
     public string? 新しいパスワード { get; set; }
     [NijoAttr.CustomMaxLength("50"), NijoAttr.Masking]

@@ -10,6 +10,7 @@ import * as EnumDefs from "../enum-defs"
 //#region 構造体定義
 /** パスワード変更Parameterの構造体 */
 export type Structure = {
+  現在のパスワード: string | undefined
   新しいパスワード: string | undefined
   新しいパスワード_確認用: string | undefined
 }
@@ -19,6 +20,7 @@ export type Structure = {
 /** パスワード変更Parameterの構造体の新しいインスタンスを作成します。 */
 export function createNewStructure(): Structure {
   return {
+    現在のパスワード: undefined,
     新しいパスワード: undefined,
     新しいパスワード_確認用: undefined,
   }
@@ -34,6 +36,10 @@ export type DisplayData = {
    * エラーメッセージとの紐づけなどに使用できないため、そういった用途に使用する。
    */
   instanceId: string
+  /**
+   * 本人であることを確かめるために入力させる。席を離れた端末などで、本人以外がパスワードを変えられないようにする
+   */
+  現在のパスワード?: string | null
   新しいパスワード?: string | null
   新しいパスワード_確認用?: string | null
 
@@ -66,6 +72,7 @@ export function createNewDisplayData(): DisplayData {
 
   return {
     instanceId: generateRandomUniqueId(),
+    現在のパスワード: '',
     新しいパスワード: '',
     新しいパスワード_確認用: '',
     existsInDatabase: false,
@@ -112,6 +119,7 @@ export function deepEqual(left: DisplayData, right: DisplayData, option?: Util.D
   // ------ 値比較関数 --------
 
   function areEqualパスワード変更Parameter(left: DisplayData, right: DisplayData, equals: Exclude<Util.DisplayDataDeepEqualOption["compareFunction"], undefined>): boolean {
+    if (!equals('Word', left.現在のパスワード, right.現在のパスワード)) return false;
     if (!equals('Word', left.新しいパスワード, right.新しいパスワード)) return false;
     if (!equals('Word', left.新しいパスワード_確認用, right.新しいパスワード_確認用)) return false;
     if ((left.willBeDeleted ?? false) !== (right.willBeDeleted ?? false)) return false;
@@ -130,9 +138,20 @@ export const metadata = {
     isQueryable: false,
     uniqueId: 'da5e2ba7-864b-4d23-852b-1a4c6f525f98',
     displayName: 'パスワード変更Parameter',
-    members: ['新しいパスワード', '新しいパスワード_確認用'],
+    members: ['現在のパスワード', '新しいパスワード', '新しいパスワード_確認用'],
   },
   displayData: {
+    '現在のパスワード': {
+      kind: 'value',
+      parent: null,
+      isOutsideTree: false,
+      uniqueId: 'ac02ea1f-ae03-4796-8e9c-b6387f70f214',
+      type: 'word',
+      displayName: '現在のパスワード',
+      comment: '本人であることを確かめるために入力させる。席を離れた端末などで、本人以外がパスワードを変えられないようにする',
+      customMaxLength: 50,
+      masking: true,
+    },
     '新しいパスワード': {
       kind: 'value',
       parent: null,
