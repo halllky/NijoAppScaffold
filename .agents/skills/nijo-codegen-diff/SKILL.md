@@ -13,38 +13,25 @@ Nijo の改修が生成物にどう効くかは、Nijo のソースを読むよ�
 - リファクタリング: 生成物が 1 文字も変わっていないこと
 - スキーマ定義（nijo.xml）の属性を変えたときに生成物がどう変わるか
 
-比較対象は `demo/` 配下の全デモの生成物。
-これらは gitignore されているため `git diff` には出ない。必ずこの手順で退避してから比較する。
+比較対象は、テンプレート（`Nijo.NewProjectTemplate`）と `demo/` 配下の全デモの生成物。
+生成物は git 管理しているので、再生成した後の `git diff` がそのまま現新比較になる。
 
 ## 手順
 
-### 1. 改修前の生成物を退避する
+### 1. 比較の起点をそろえる
 
-[scripts/snapshot.sh](scripts/snapshot.sh) を使う。
-自動生成のかけなおしは [Task/ソース最新化.sh](../../../Task/ソース最新化.sh) で行い（Nijo のビルド → テンプレートと全デモの generate）、
-生成物を `temp_ソース現新比較用/<ラベル>/<デモ名>/<サブディレクトリ名>` に退避する。
+改修前に [Task/ソース最新化.sh](../../../Task/ソース最新化.sh) を実行し（Nijo のビルド → テンプレートと全デモの generate）、`git status` で生成物に差分が出ないことを確かめる。
 
-まだ改修していない場合:
-
-```sh
-.agents/skills/nijo-codegen-diff/scripts/snapshot.sh before
-```
-
-すでに作業ツリーを改修してしまっている場合は、git ref を指定する。
-その ref を一時 worktree に展開してそこで生成するので、作業ツリーには触れない（stash 不要）。
-
-```sh
-.agents/skills/nijo-codegen-diff/scripts/snapshot.sh before HEAD
-```
+差分が出た場合は、コミット済みの生成物が今の Nijo の出力と食い違っている。自分の改修とは無関係なので、改修前にその差分だけを別にコミットするか、ユーザーに報告する。
 
 ### 2. 改修する
 
 Nijo のソース、またはデモの nijo.xml を変更する。
 
-### 3. 改修後の生成物を退避する
+### 3. 再生成する
 
 ```sh
-.agents/skills/nijo-codegen-diff/scripts/snapshot.sh after
+Task/ソース最新化.sh
 ```
 
 ビルドエラーや generate のエラーで止まった場合は、直してから再実行する。
@@ -54,14 +41,11 @@ Nijo のソース、またはデモの nijo.xml を変更する。
 まず全体像を把握し、その後で個別のファイルを見る。
 
 ```sh
-cd temp_ソース現新比較用
-git diff --no-index --stat before after          # 変更されたファイルの一覧と行数
-git diff --no-index before after                 # 全差分
-git diff --no-index before/101_販売管理システム after/101_販売管理システム   # デモを絞る
-git diff --no-index -w before after              # 空白差分を無視（インデント以外の変化を見たいとき）
+git diff --stat -- Nijo.NewProjectTemplate demo                  # 変更されたファイルの一覧と行数
+git diff -- Nijo.NewProjectTemplate demo                         # 全差分
+git diff -- demo/101_販売管理システム                             # デモを絞る
+git diff -w -- Nijo.NewProjectTemplate demo                      # 空白差分を無視（インデント以外の変化を見たいとき）
 ```
-
-`git diff --no-index` は差分があると終了コード 1 を返す。エラーではない。差分なしなら何も出力せず 0 を返す。
 
 ## 結果の読み方
 
@@ -73,8 +57,7 @@ git diff --no-index -w before after              # 空白差分を無視（イ�
 
 ## 注意
 
-- ソース最新化.sh はテンプレートプロジェクトの一部ファイルを各デモにコピーするため、デモの git 管理下のファイルに差分が出ることがある。
-  これは比較対象外の副作用なので、`git status` で確認し、自分の作業と無関係なものはユーザーに報告する。
-- 確認のためだけにデモの nijo.xml を書き換えた場合は、作業後に元に戻し、snapshot.sh（ref なし）を再実行して生成物も戻す。
-- ラベルは比較ごとに任意に付けてよい（例: `before`, `after`, `after2`）。同じラベルで再実行すると上書きされる。
-- `temp_ソース現新比較用/` は gitignore 済み。コミット不要。
+- 生成物の差分は、Nijo の改修と同じコミットに含める。生成物だけが古いままコミットされると、次の比較の起点がずれる。
+- ソース最新化.sh はテンプレートプロジェクトの一部ファイルを各デモにコピーするため、生成物以外の手書きのファイルにも差分が出ることがある。
+  自分の作業と無関係なものは、`git status` で確認してユーザーに報告する。
+- 確認のためだけにデモの nijo.xml を書き換えた場合は、作業後に nijo.xml と生成物を `git restore` で元に戻す。

@@ -79,7 +79,8 @@ echo "client のロックファイルを作成します。"
 (cd "$WORK_DIR/client" && npm install --package-lock-only)
 
 echo "一時ファイルを取り除きます。"
-# git init するのは、テンプレートの .gitignore に従ってビルド結果や自動生成されたソースを消すためだけである
+# git init するのは、テンプレートの .gitignore に従ってビルド結果などを消すためだけである。
+# 自動生成されたソースはバージョン管理の対象なので消えず、テンプレートに含まれる
 git -C "$WORK_DIR" init -q
 git -C "$WORK_DIR" clean -fdXq
 rm -rf "$WORK_DIR/.git"

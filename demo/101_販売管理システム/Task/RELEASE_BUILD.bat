@@ -36,25 +36,6 @@ if errorlevel 1 (
     exit /b 1 
 ) 
  
-where nijo >nul 2>&1 
-if errorlevel 1 ( 
-    echo 'nijo' がインストールされていないかパスが通っていません。公式サイトからインストールしてください。 
-    pause 
-    exit /b 1 
-) 
- 
-@rem ------------------------------------ 
-@rem ソースコード自動生成処理のかけなおし 
- 
-pushd %~dp0.. 
-nijo generate 
-if not "%errorlevel%"=="0" ( 
-    echo ソースコード自動生成処理でエラーが発生しました。ビルドを中断します。 
-    pause 
-    exit /b 1 
-) 
-popd 
- 
 @rem ------------------------------------ 
 @rem ASP.NET Core のビルド 
  
@@ -117,10 +98,6 @@ echo.>>%RELEASE_MEMO_FILE%
  
 echo npm バージョン:>>%RELEASE_MEMO_FILE% 
 call npm --version>>%RELEASE_MEMO_FILE% 
-echo.>>%RELEASE_MEMO_FILE% 
- 
-echo nijo バージョン:>>%RELEASE_MEMO_FILE% 
-nijo --version>>%RELEASE_MEMO_FILE% 
 echo.>>%RELEASE_MEMO_FILE% 
  
 @rem ------------------------------------ 
