@@ -65,6 +65,19 @@ partial class OverridedApplicationService {
                 continue;
             }
 
+            // 自分自身の削除と、自分自身のシステム管理者の権限を外すことはできない。
+            // この処理はシステム管理者だけが実行できるので、これによりシステム管理者が1人もいなくなることも防げる
+            if (item.従業員.従業員番号 == LoginUser.従業員番号) {
+                if (item.WillBeDeleted) {
+                    message.AddError("自分自身は削除できません。");
+                    continue;
+                }
+                if (!item.従業員.従業員マスタの権限.Any(x => x.権限区分 == 権限区分.システム管理者)) {
+                    message.AddError("自分自身のシステム管理者の権限は外せません。");
+                    continue;
+                }
+            }
+
             // 削除
             if (item.WillBeDeleted) {
                 if (updateCommand.ToDeleteCommand().TryValidate(out var validatedDelete, out var deleteErrors)) {

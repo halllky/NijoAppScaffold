@@ -25,6 +25,7 @@ partial class OverridedApplicationService {
             .SingleOrDefaultAsync(e => e.従業員番号 == param.従業員番号);
 
         if (employee == null) {
+            Log.LogInformation("ログインに失敗しました（従業員番号が存在しない）。従業員番号: {EmployeeNumber}", param.従業員番号);
             messages.AddError("従業員番号またはパスワードが間違っています。");
             return null;
         }
@@ -37,6 +38,7 @@ partial class OverridedApplicationService {
 
         var verification = PasswordHash.Verify(param.パスワード, employee.パスワード, employee.SALT);
         if (verification == PasswordHash.VerificationResult.Failed) {
+            Log.LogInformation("ログインに失敗しました（パスワードの誤り）。従業員番号: {EmployeeNumber}", param.従業員番号);
             messages.AddError("従業員番号またはパスワードが間違っています。");
             return null;
         }
@@ -77,6 +79,7 @@ partial class OverridedApplicationService {
         sessionKeyProvider.ReturnSessionKeyToClient(sessionKey);
 
         await tran.CommitAsync();
+        Log.LogInformation("ログインしました。従業員番号: {EmployeeNumber}", employee.従業員番号);
 
         // JavaScriptで使うログインユーザー情報
         return Core.Authorization.LoginUser.From(employee).ToDisplayData();

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using MyApp.Core.Authorization;
 
 namespace MyApp;
@@ -60,5 +61,6 @@ partial class OverridedApplicationService {
             .ExecuteDeleteAsync();
 
         await tran.CommitAsync();
+        Log.LogInformation("パスワードを再発行しました。対象の従業員番号: {EmployeeNumber}", employeeNumber);
     }
 }

@@ -3,6 +3,7 @@ using MyApp.Core.Authorization;
 using MyApp.WebApi;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using MyApp.WebApi.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -72,8 +73,39 @@ if (app.Environment.IsDevelopment()) {
     });
 }
 
+// 本番環境の DB にマイグレーションの SQL を流し忘れたまま動かさないよう、起動の時点で検知する。
+// 開発環境では、起動した後にデバッグメニューから DB を作り直すことがあるので、警告にとどめる
+using (var scope = app.Services.CreateScope()) {
+    var dbContext = scope.ServiceProvider.GetRequiredService<OverridedDbContext>();
+    var pendingMigrations = dbContext.Database.GetPendingMigrations().ToArray();
+    if (pendingMigrations.Length > 0) {
+        var message = $"DB に適用されていないマイグレーションがあります: {string.Join(", ", pendingMigrations)}";
+        if (app.Environment.IsDevelopment()) {
+            app.Logger.LogWarning("{Message}", message);
+        } else {
+            throw new InvalidOperationException(message);
+        }
+    }
+}
+
 // Controller と自動生成されたクエリ・コマンドのエンドポイントに共通の処理
 app.UseExceptionHandler(); // 未処理例外のログ出力とエラーレスポンス返却（開発環境でも例外の内容は返さない）
+
+// 他のサイトからの不正なリクエスト（CSRF）の対策として、更新系の HTTP メソッドでは独自のヘッダーを必須にする。
+// 独自のヘッダーは、他のサイトのページからは CORS の許可なしに付けられないため。
+// 開発環境では、API の一覧（Swagger）から呼び出せるよう確かめない
+if (!app.Environment.IsDevelopment()) {
+    app.Use(async (context, next) => {
+        var method = context.Request.Method;
+        var isSafeMethod = HttpMethods.IsGet(method) || HttpMethods.IsHead(method) || HttpMethods.IsOptions(method);
+        if (!isSafeMethod && !context.Request.Headers.ContainsKey("X-Requested-With")) {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            return;
+        }
+        await next(context);
+    });
+}
+
 app.UseMiddleware<WebLogScopeMiddleware>(); // ログ出力用情報設定
 app.UseAuthentication(); // ログインユーザーの特定
 app.UseAuthorization(); // ログインしていないリクエストを弾く（401）

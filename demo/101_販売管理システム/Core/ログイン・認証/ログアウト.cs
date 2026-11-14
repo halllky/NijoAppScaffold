@@ -1,6 +1,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace MyApp;
 
@@ -24,6 +25,8 @@ partial class OverridedApplicationService {
 
         // クライアント側のセッションキーもクリア
         sessionKeyProvider.ClearSessionKey();
+
+        Log.LogInformation("ログアウトしました。");
     }
 
 }

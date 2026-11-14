@@ -25,12 +25,12 @@ internal class WebLogScopeMiddleware(RequestDelegate next) {
         await next(httpContext);
         stopwatch.Stop();
 
-        // パフォーマンス障害の調査などに備えて処理時間をログ出力
-        if (appSrv.Log.IsEnabled(LogLevel.Debug)) {
-            appSrv.Log.LogDebug("{Method} 完了: {Elapsed}ms, Status: {StatusCode}",
-                httpContext.Request.Method,
-                stopwatch.ElapsedMilliseconds,
-                httpContext.Response.StatusCode);
-        }
+        // 本番環境で「遅い」「エラーになった」という問い合わせを調べられるよう、リクエストごとに結果と処理時間をログ出力。
+        // 未処理の例外が起きた場合はここに来ないが、例外は共通の例外処理がログに出力する
+        appSrv.Log.LogInformation("{Method} {Path} 完了: {Elapsed}ms, Status: {StatusCode}",
+            httpContext.Request.Method,
+            httpContext.Request.Path.Value,
+            stopwatch.ElapsedMilliseconds,
+            httpContext.Response.StatusCode);
     }
 }
