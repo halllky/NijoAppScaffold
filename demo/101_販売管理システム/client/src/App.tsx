@@ -75,9 +75,24 @@ export default function App() {
       </div>
 
       {/* 問い合わせや障害のときに、どのバージョンの画面で起きたかを確かめられるよう、画面の隅にバージョンを表示する */}
-      <div className="fixed bottom-0 right-1 text-[10px] text-gray-400 select-text pointer-events-none" title={APP_VERSION}>
-        {APP_VERSION_SHORT}
-      </div>
+      <AppVersion />
+    </div>
+  )
+}
+
+/**
+ * 画面の隅のバージョン。普段は短い形で表示し、クリックすると完全な形（コミットの識別子の全体）に切り替える。
+ * 問い合わせのときに完全な形を伝えられるよう、文字は選択してコピーできる。
+ */
+function AppVersion() {
+  const [showFull, setShowFull] = React.useState(false)
+  return (
+    <div
+      className="fixed bottom-0 right-1 text-[10px] text-gray-400 select-text cursor-pointer"
+      title={APP_VERSION}
+      onClick={() => setShowFull(value => !value)}
+    >
+      {showFull ? APP_VERSION : APP_VERSION_SHORT}
     </div>
   )
 }

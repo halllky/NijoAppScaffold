@@ -144,8 +144,9 @@ try {
 
     app.MapDefaultControllerRoute();
 
-    // サーバーのバージョン。画面のバージョンとの食い違いの確認などに使う
-    app.MapGet("/api/version", () => Results.Json(new { version = AppVersion.Value })).AllowAnonymous();
+    // サーバーのバージョン。画面のバージョンとの食い違いの確認などに使う。
+    // 使っているソフトウェアの版を外に知らせないよう、ログインしていなければ呼べない
+    app.MapGet("/api/version", () => Results.Json(new { version = AppVersion.Value }));
 
     // Nijoにより自動生成されたクエリ・コマンドをHTTPエンドポイントとして公開する。
     // ログイン前に呼ばれる処理はログイン不要とする
