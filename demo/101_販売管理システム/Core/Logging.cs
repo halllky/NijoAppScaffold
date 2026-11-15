@@ -87,7 +87,9 @@ internal static class LogSettings {
             NLog.Common.InternalLogger.LogFile = Path.Combine(logDir, "NLog.Fatal.log");
             NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Fatal;
 
-            logging.AddNLog(config);
+            // DI コンテナができる前（起動の途中）からこの設定でログを出力できるよう、NLog 全体の設定にする
+            NLog.LogManager.Configuration = config;
+            logging.AddNLog();
         });
     }
     #endregion DI設定

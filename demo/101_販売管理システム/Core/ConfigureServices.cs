@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using MyApp.Core.Authorization;
 using NLog.Extensions.Logging;
 
@@ -21,7 +22,8 @@ partial class OverridedApplicationService {
     /// </summary>
     /// <param name="services">DIコンテナ</param>
     /// <param name="basePath">実行時設定ファイルのベースパス（appsettings.jsonのあるフォルダ）</param>
-    public static void ConfigureServices(IServiceCollection services, string basePath) {
+    /// <param name="isDevelopment">開発環境で動かすかどうか</param>
+    public static void ConfigureServices(IServiceCollection services, string basePath, bool isDevelopment) {
         if (!Path.IsPathRooted(basePath)) throw new ArgumentException($"{nameof(basePath)}は絶対パスで指定してください。");
 
         // アプリケーションサービスをDIコンテナに登録
@@ -65,15 +67,22 @@ partial class OverridedApplicationService {
         // ログ設定
         LogSettings.ConfigureServices(services, myAppSection, basePath);
 
-        // 外部システム連携
-        Configure外部システム(services, settings);
+        // 外部システム連携。
+        // DI コンテナができる前なので、設定についてのログは、この場で作るロガーで出力する
+        using var startupLoggerFactory = LoggerFactory.Create(logging => logging.AddNLog());
+        Configure外部システム(services, settings, isDevelopment, startupLoggerFactory.CreateLogger<OverridedApplicationService>());
     }
 
     /// <summary>
     /// 外部システム連携に必要なサービスをDIコンテナに登録する。
+    /// 外部システムごとに、どの実装（本物、モックなど）を使うかを設定から決める。
+    /// その設定が省略されていたら、例外を投げて起動を止める。
+    /// 開発環境以外でモックを使うときは、その外部システムの名前を Warning でログに出力する。
     /// 連携する外部システムが無い場合は実装しなくてよい（実装が無ければ呼び出しごと取り除かれる）。
     /// </summary>
     /// <param name="services">DIコンテナ</param>
     /// <param name="settings">実行時設定</param>
-    static partial void Configure外部システム(IServiceCollection services, RuntimeSetting settings);
+    /// <param name="isDevelopment">開発環境で動かすかどうか</param>
+    /// <param name="logger">設定についてのログの出力先</param>
+    static partial void Configure外部システム(IServiceCollection services, RuntimeSetting settings, bool isDevelopment, ILogger logger);
 }

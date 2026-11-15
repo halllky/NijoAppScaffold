@@ -8,7 +8,6 @@ using MyApp.WebApi.Authorization;
 
 // 起動の途中で例外が起きたときも、その内容をログファイルに残すため、全体を try で囲む。
 // ログの設定が終わる前（設定ファイルの読み込みなど）に起きた例外は、ログファイルには残らず、標準エラー出力にだけ出る
-WebApplication? app = null;
 try {
     var builder = WebApplication.CreateBuilder(args);
 
@@ -31,7 +30,7 @@ try {
 
     // アプリケーションサービス層のDI設定
     var basePath = Path.GetFullPath(builder.Environment.ContentRootPath);
-    OverridedApplicationService.ConfigureServices(builder.Services, basePath);
+    OverridedApplicationService.ConfigureServices(builder.Services, basePath, builder.Environment.IsDevelopment());
 
     // ログインユーザーの情報を各業務処理中で簡単に参照できるようにする
     builder.Services.AddScoped<ISessionKeyProvider, SessionProviderInWebApi>();
@@ -55,7 +54,7 @@ try {
 
     // --------------------------------
 
-    app = builder.Build();
+    var app = builder.Build();
 
     // 静的ファイルやエラーの応答も含め、すべての応答に付けるため、ほかのどの処理よりも先に登録する
     app.UseMiddleware<SecurityHeadersMiddleware>();
@@ -150,7 +149,8 @@ try {
 
 } catch (Exception ex) when (ex is not HostAbortedException) {
     // HostAbortedException は、EF Core のツールなどがホストを途中で止めるときに投げるもので、異常ではない
-    app?.Logger.LogCritical(ex, "アプリケーションが例外で停止しました。");
+    // DI コンテナを作る前に起きた例外も出力できるよう、DI コンテナを介さずに出力する
+    NLog.LogManager.GetCurrentClassLogger().Fatal(ex, "アプリケーションが例外で停止しました。");
     throw;
 
 } finally {

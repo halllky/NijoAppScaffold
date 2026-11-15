@@ -6,10 +6,11 @@ namespace MyApp.Core.外部システム.商品管理システム;
 /// </summary>
 public class 商品管理システムSettings {
     /// <summary>
-    /// モックを使う場合は true。本番環境では false。
+    /// モックを使う場合は true、本番の商品管理システムを使う場合は false。
     /// この値をもとにDIコンテナで登録するクラスを切り替える。
+    /// 省略を許さないので既定値をもたない。省略されていると起動しない。
     /// </summary>
-    public bool UseMock { get; set; } = true;
+    public bool? UseMock { get; set; }
     /// <summary>
     /// モックJSONデータのパス。相対パスの場合は <see cref="RuntimeSetting.LogDirectory"/> からの相対パス。
     /// </summary>

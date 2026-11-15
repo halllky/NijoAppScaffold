@@ -1,4 +1,7 @@
 using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -10,7 +13,7 @@ namespace Demo101TemplateBuilder;
 /// 販売管理業務固有の部分（商品・入荷・売上・在庫調整など）を削除する処理。
 /// </para>
 /// <para>
-/// ここで行うのは nijo.xml の定義の削除と、それに依存するフォルダ・ファイルの削除だけである。
+/// ここで行うのは nijo.xml の定義の削除と、それに依存するフォルダ・ファイルと設定の削除だけである。
 /// ソースコードの書き換えは行わない。デモ101側は、業務固有の部分をフォルダ・ファイル単位で削除しても
 /// 残りのソースがそのままコンパイルできる構造になっている（業務画面の自己登録、partial による分割など）。
 /// </para>
@@ -84,6 +87,17 @@ public static class Demo101TemplatePruner
         "nijo.dbViewer.json",
     ];
 
+    /// <summary>アプリケーションの設定ファイル</summary>
+    private const string APP_SETTINGS_PATH = "WebApi/appsettings.json";
+
+    /// <summary><see cref="APP_SETTINGS_PATH"/> の中の、アプリケーションの設定のセクションの名前</summary>
+    private const string APP_SETTINGS_SECTION = "MyApp";
+
+    /// <summary><see cref="APP_SETTINGS_SECTION"/> の中で、テンプレートに不要な設定</summary>
+    private static readonly string[] DELETE_APP_SETTINGS = [
+        "商品管理システム", // 販売管理業務の外部システム連携
+    ];
+
     /// <summary>画面のフォルダ。<see cref="KEEP_PAGES"/> 以外はすべて業務画面として削除する。</summary>
     private const string PAGES_DIR = "client/src/pages";
 
@@ -104,6 +118,7 @@ public static class Demo101TemplatePruner
     {
         PruneNijoXml(Path.Combine(workDir, "nijo.xml"));
         DeleteUnneededPaths(workDir);
+        DeleteUnneededAppSettings(workDir);
         DeleteBusinessPages(workDir);
     }
 
@@ -202,6 +217,37 @@ public static class Demo101TemplatePruner
                 throw new InvalidOperationException($"削除対象が見つかりません（デモ101の構造が変わった可能性があります）: {relativePath}");
             }
         }
+    }
+
+    // ============================================================
+    // 業務固有の設定を削除する
+    // ============================================================
+
+    private static void DeleteUnneededAppSettings(string workDir)
+    {
+        var path = Path.Combine(workDir, APP_SETTINGS_PATH);
+        var root = JsonNode.Parse(File.ReadAllText(path))?.AsObject()
+            ?? throw new InvalidOperationException($"設定ファイルを読めません: {APP_SETTINGS_PATH}");
+        var section = root[APP_SETTINGS_SECTION]?.AsObject()
+            ?? throw new InvalidOperationException($"設定のセクションが見つかりません（デモ101の構造が変わった可能性があります）: {APP_SETTINGS_SECTION}");
+
+        foreach (var name in DELETE_APP_SETTINGS)
+        {
+            if (!section.Remove(name))
+            {
+                throw new InvalidOperationException($"削除対象の設定が見つかりません（デモ101の構造が変わった可能性があります）: {APP_SETTINGS_SECTION}:{name}");
+            }
+        }
+
+        // デモ101の設定ファイルと同じ書式にする。違うと利用者が最初に編集したときファイル全体が差分になるため
+        var json = root.ToJsonString(new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            IndentSize = 2,
+            NewLine = "\n",
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        });
+        File.WriteAllText(path, json + "\n", new UTF8Encoding(false));
     }
 
     // ============================================================
