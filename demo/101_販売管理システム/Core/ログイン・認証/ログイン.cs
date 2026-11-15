@@ -20,7 +20,7 @@ partial class OverridedApplicationService {
 
         // ログインの失敗が続いたユーザー ID は、パスワードを照合せずに、しばらくの間ログインを受け付けない
         var failureHistory = ServiceProvider.GetRequiredService<LoginFailureHistory>();
-        if (failureHistory.IsBlocked(param.従業員番号, CurrentTime)) {
+        if (failureHistory.IsBlocked(param.従業員番号, DateTime.UtcNow)) {
             Log.LogInformation("ログインを受け付けませんでした（ログインの失敗が続いたため）。従業員番号: {EmployeeNumber}", param.従業員番号);
             messages.AddError("ログインの失敗が続いたため、しばらくの間ログインできません。時間をおいてから、もう一度お試しください。");
             return null;
@@ -101,7 +101,7 @@ partial class OverridedApplicationService {
     /// 他人のユーザー ID で失敗を繰り返されている可能性があり、運用担当者が気付けるようにするため。
     /// </summary>
     private void RecordLoginFailure(LoginFailureHistory failureHistory, string userId) {
-        if (failureHistory.RecordFailure(userId, CurrentTime)) {
+        if (failureHistory.RecordFailure(userId, DateTime.UtcNow)) {
             Log.LogWarning("ログインの失敗が続いたため、この従業員番号のログインを一時的に受け付けません。従業員番号: {EmployeeNumber}", userId);
         }
     }
