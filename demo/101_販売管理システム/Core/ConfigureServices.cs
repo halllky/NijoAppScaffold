@@ -70,12 +70,17 @@ partial class OverridedApplicationService {
         services.AddSingleton<LoginFailureHistory>();
         services.AddScoped<ICurrentUser>(sp => sp.GetRequiredService<LoginUserProvider>());
 
-        // ログ設定
-        LogSettings.ConfigureServices(services, myAppSection, basePath);
+        // ログ設定。Error 以上のログは、エラーの通知で運用担当者にメールで知らせる
+        var errorNotifier = Core.エラーの通知.ErrorNotifier.Create(settings, basePath);
+        services.AddSingleton(errorNotifier);
+        LogSettings.ConfigureServices(services, myAppSection, basePath, errorNotifier);
 
-        // 外部システム連携。
+        // 外部システム連携（エラーの通知のメールも含む）。
         // DI コンテナができる前なので、設定についてのログは、この場で作るロガーで出力する
         using var startupLoggerFactory = LoggerFactory.Create(logging => logging.AddNLog());
+        if (!isDevelopment && settings.ErrorNotification.UseMock == true) {
+            startupLoggerFactory.CreateLogger<OverridedApplicationService>().LogWarning("エラーの通知のメールはモックで動いています。");
+        }
         Configure外部システム(services, settings, isDevelopment, startupLoggerFactory.CreateLogger<OverridedApplicationService>());
     }
 

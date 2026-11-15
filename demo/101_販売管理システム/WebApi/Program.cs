@@ -68,6 +68,10 @@ try {
 
     var app = builder.Build();
 
+    // Error 以上のログのメールでの通知は、短い時間に送る数を抑える。
+    // DB に接続できないときのような横断的なエラーで、大量のメールが届くのを防ぐため
+    app.Services.GetRequiredService<MyApp.Core.エラーの通知.ErrorNotifier>().EnableThrottling();
+
     // 静的ファイルやエラーの応答も含め、すべての応答に付けるため、ほかのどの処理よりも先に登録する
     app.UseMiddleware<SecurityHeadersMiddleware>();
 

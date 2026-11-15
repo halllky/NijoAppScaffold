@@ -65,6 +65,11 @@ public partial class RuntimeSetting {
     }
     #endregion データベース接続
 
+    /// <summary>
+    /// エラーの通知の設定
+    /// </summary>
+    public Core.エラーの通知.ErrorNotificationSettings ErrorNotification { get; set; } = new();
+
     #region タイムゾーン
     /// <summary>
     /// 業務のタイムゾーン。IANA のタイムゾーンの ID（"Asia/Tokyo" など）で指定する。

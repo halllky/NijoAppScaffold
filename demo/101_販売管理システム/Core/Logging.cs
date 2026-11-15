@@ -7,6 +7,7 @@ using System.Text.Json.Serialization.Metadata;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MyApp.Core.エラーの通知;
 using MyApp.NijoAttr;
 using NLog.Extensions.Logging;
 
@@ -14,12 +15,19 @@ namespace MyApp;
 
 internal static class LogSettings {
 
+    /// <summary>
+    /// ログ時刻の書式。サーバーの OS のタイムゾーンの時刻に、そのオフセットを付ける。
+    /// OS のタイムゾーンが業務のタイムゾーンと違っても、データの日時と突き合わせられるようにするため
+    /// </summary>
+    internal const string TIME_LAYOUT = "${date:format=yyyy-MM-dd HH\\:mm\\:ss.ffffzzz}";
+
     #region DI設定
     /// <summary>
     /// <see cref="OverridedApplicationService.ConfigureServices"/> のうちログ出力設定に関する部分。
     /// 処理が多いので別メソッドとして切り出している。
     /// </summary>
-    public static void ConfigureServices(IServiceCollection services, IConfigurationSection myAppSection, string basePath) {
+    /// <param name="errorNotifier">Error 以上のログを渡す、エラーの通知</param>
+    public static void ConfigureServices(IServiceCollection services, IConfigurationSection myAppSection, string basePath, ErrorNotifier errorNotifier) {
 
         // NLog を用いたログ設定を Microsoft.Extensions.Logging に統合する
         services.AddLogging(logging => {
@@ -37,9 +45,7 @@ internal static class LogSettings {
             }
             var fileTarget = new NLog.Targets.FileTarget("logfile") {
                 FileName = Path.Combine(logDir, "${shortdate}.log"),
-                // ログ時刻。サーバーの OS のタイムゾーンの時刻に、そのオフセットを付ける。
-                // OS のタイムゾーンが業務のタイムゾーンと違っても、データの日時と突き合わせられるようにするため
-                Layout = "${date:format=yyyy-MM-dd HH\\:mm\\:ss.ffffzzz}"
+                Layout = TIME_LAYOUT                  // ログ時刻
                        + "\t${uppercase:${level}}" // ログレベル
 
                        // ログインユーザーID（未ログイン時は空文字）
@@ -69,9 +75,17 @@ internal static class LogSettings {
 
             // ----------------
 
+            // エラーの通知。Error 以上のログを運用担当者にメールで知らせる
+            var errorNotificationTarget = new ErrorNotificationTarget(errorNotifier) { Name = "errorNotification" };
+
             var config = new NLog.Config.LoggingConfiguration();
             config.AddTarget(fileTarget);
             config.AddTarget(consoleTarget);
+            config.AddTarget(errorNotificationTarget);
+
+            // Error 以上のログは、フレームワークのものも含めてすべてエラーの通知に渡す。
+            // 下の final: true の規則より先に置かないと、フレームワークのログが渡らない
+            config.AddRule(NLog.LogLevel.Error, NLog.LogLevel.Fatal, errorNotificationTarget);
 
             // すべてのログをコンソールに出力する。コンテナなど、コンソールの出力を集める動かし方ではこれを使う。
             // ファイルには、アプリケーションのログと、EFCore や ASP.NET Core のログのうち Warning 以上を出力する。
