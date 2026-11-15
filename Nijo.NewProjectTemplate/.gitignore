@@ -15,6 +15,9 @@ appsettings.Development.json
 /UnitTest.Log
 /WebApi.Log
 
+# TypeScript の型チェックが作るキャッシュ
+*.tsbuildinfo
+
 # globs
 Makefile.in
 *.userprefs
