@@ -44,6 +44,18 @@ public class ログインの失敗の記録 {
 
     [Test]
     [Category("DB接続なし")]
+    public void ユーザーIDの前後の空白と大文字小文字の違いは同じユーザーIDとして数える() {
+        var history = new LoginFailureHistory();
+        string[] userIds = ["user", "USER", " User ", "user ", "uSeR"];
+        for (var i = 0; i < LoginFailureHistory.MAX_FAILURES; i++) {
+            history.RecordFailure(userIds[i], T0.AddMinutes(i));
+        }
+
+        Assert.That(history.IsBlocked("user", T0.AddMinutes(LoginFailureHistory.MAX_FAILURES)), Is.True);
+    }
+
+    [Test]
+    [Category("DB接続なし")]
     public void 期間より前の失敗は数えない() {
         var history = new LoginFailureHistory();
         history.RecordFailure("USER", T0);

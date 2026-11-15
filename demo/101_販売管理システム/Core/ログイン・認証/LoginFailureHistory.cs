@@ -4,6 +4,8 @@ namespace MyApp.Core.Authorization;
 /// ログインの失敗の記録。入力されたユーザー ID ごとに失敗を数え、
 /// 一定期間に一定回数を超えたユーザー ID のログインを、しばらくの間受け付けないようにする。
 /// 存在しないユーザー ID の失敗も数える。数えないと、受け付けるかどうかでユーザー ID の有無が分かってしまうため。
+/// ユーザー ID は、前後の空白を除き、大文字と小文字を区別せずに数える。
+/// DB の照合順序によっては同じユーザーとしてログインできる書き方の違いで、失敗を別々に数えてしまわないようにするため。
 /// 記録はサーバーのプロセスのメモリーに持つので、再起動で消え、サーバーが複数台のときは台ごとに数える。
 /// IP アドレスごとの制限は行わない。
 /// アプリケーション全体で1個のインスタンスを使う。
@@ -25,7 +27,7 @@ public sealed class LoginFailureHistory {
     /// </summary>
     public bool IsBlocked(string userId, DateTime now) {
         lock (_lock) {
-            return _entries.TryGetValue(userId, out var entry) && entry.BlockedUntil > now;
+            return _entries.TryGetValue(Normalize(userId), out var entry) && entry.BlockedUntil > now;
         }
     }
 
@@ -38,9 +40,10 @@ public sealed class LoginFailureHistory {
         lock (_lock) {
             RemoveExpiredEntries(now);
 
-            if (!_entries.TryGetValue(userId, out var entry)) {
+            var key = Normalize(userId);
+            if (!_entries.TryGetValue(key, out var entry)) {
                 entry = new Entry();
-                _entries[userId] = entry;
+                _entries[key] = entry;
             }
             entry.Failures.Enqueue(now);
             if (entry.Failures.Count < MAX_FAILURES) return false;
@@ -56,9 +59,14 @@ public sealed class LoginFailureHistory {
     /// </summary>
     public void Clear(string userId) {
         lock (_lock) {
-            _entries.Remove(userId);
+            _entries.Remove(Normalize(userId));
         }
     }
+
+    /// <summary>
+    /// 失敗を数える単位にそろえる。
+    /// </summary>
+    private static string Normalize(string userId) => userId.Trim().ToUpperInvariant();
 
     /// <summary>
     /// 失敗を数える期間を過ぎた失敗と、受け付けない期間を過ぎた記録を消す。
