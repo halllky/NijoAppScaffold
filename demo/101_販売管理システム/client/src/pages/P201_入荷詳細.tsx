@@ -81,8 +81,6 @@ function P201_入荷詳細(props: {
     setServerMessages,
   } = useDisplayDataForm(入荷詳細, {
     defaultValues: initialValues,
-    // 読み込み直したデータは、下の reset でフォームに反映される
-    reload: revalidate,
   })
 
   // ルーターがデータを読み込み直したら（保存後の再読み込みなど）、フォームの内容をそのデータに置き換える
@@ -149,8 +147,7 @@ function P201_入荷詳細(props: {
         setServerMessages(result.messages)
         revalidate()
       } else if (result.type === 'error') {
-        // ほかの人が先に更新していた場合は、入力中の内容を残したまま、最新の内容を読み込み直すボタンを出す
-        setServerMessages(result.messages, { concurrencyConflict: result.concurrencyConflict })
+        setServerMessages(result.messages)
       }
     }
   })

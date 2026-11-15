@@ -144,11 +144,6 @@ public static class OperationEndpoints {
         // クエリはデータを変更しないので確認を必要としない。
         responseBody["requiresConfirmation"] = !messages.HasError() && !operation.IsQuery && context.ValidationOnly;
 
-        // 楽観排他のエラーは、画面がほかのエラーと区別して、最新の内容を読み込み直す手段を示せるようにする
-        if (messages.HasError() && app.DbContext.HasConcurrencyConflict) {
-            responseBody["concurrencyConflict"] = true;
-        }
-
         var statusCode = messages.HasError()
             ? HttpStatusCode.UnprocessableEntity
             : HttpStatusCode.OK;

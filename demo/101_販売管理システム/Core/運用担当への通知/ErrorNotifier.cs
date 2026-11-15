@@ -115,7 +115,7 @@ public sealed class ErrorNotifier : IDisposable {
             try {
                 await _sender.SendAsync(ToMail(batch), cancellationToken);
             } catch (Exception ex) when (ex is not OperationCanceledException) {
-                NLog.LogManager.GetLogger(typeof(ErrorNotifier).FullName ?? nameof(ErrorNotifier)).Warn(ex, "エラーの通知のメールを送れませんでした。");
+                NLog.LogManager.GetLogger(typeof(ErrorNotifier).FullName).Warn(ex, "エラーの通知のメールを送れませんでした。");
             }
         }
     }

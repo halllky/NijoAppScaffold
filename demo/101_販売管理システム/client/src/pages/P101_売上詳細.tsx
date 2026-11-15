@@ -69,8 +69,6 @@ function P101_売上詳細(props: {
     setServerMessages,
   } = useDisplayDataForm(売上詳細, {
     defaultValues: loaderData,
-    // 読み込み直したデータは、下の reset でフォームに反映される
-    reload: revalidate,
   })
   const { control, getValues, setValue, reset, handleSubmit, formState: { isDirty, isSubmitting } } = formMethods
 
@@ -173,8 +171,7 @@ function P101_売上詳細(props: {
         setServerMessages(result.messages)
         revalidate()
       } else if (result.type === 'error') {
-        // ほかの人が先に更新していた場合は、入力中の内容を残したまま、最新の内容を読み込み直すボタンを出す
-        setServerMessages(result.messages, { concurrencyConflict: result.concurrencyConflict })
+        setServerMessages(result.messages)
       }
     }
   })
