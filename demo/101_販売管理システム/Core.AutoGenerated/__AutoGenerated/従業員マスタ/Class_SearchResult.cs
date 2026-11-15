@@ -27,7 +27,7 @@ namespace MyApp;
 [NijoAttr.IsQueryable]
 public partial class 従業員マスタSearchResult {
     /// <summary>従業員番号</summary>
-    [NijoAttr.StringSearchBehavior(NijoAttr.StringSearchBehaviorAttribute.E_Value.Exact)]
+    [NijoAttr.StringSearchBehavior(NijoAttr.StringSearchBehaviorAttribute.E_Value.Exact), NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.NFKC)]
     public string? 従業員番号 { get; set; }
     /// <summary>氏名</summary>
     public string? 氏名 { get; set; }

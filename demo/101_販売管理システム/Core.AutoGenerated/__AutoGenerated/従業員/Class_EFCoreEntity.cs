@@ -26,7 +26,7 @@ namespace MyApp;
 [NijoAttr.IsStored]
 public partial class 従業員DbEntity {
     /// <summary>従業員番号</summary>
-    [NijoAttr.IsKey]
+    [NijoAttr.IsKey, NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.NFKC)]
     public string? 従業員番号 { get; set; }
     /// <summary>氏名</summary>
     [NijoAttr.IsNotNull, NijoAttr.MaxLength(100)]
@@ -69,7 +69,7 @@ public partial class 従業員DbEntity {
 /// </summary>
 public partial class 従業員の権限DbEntity {
     /// <summary>従業員番号</summary>
-    [NijoAttr.IsKey]
+    [NijoAttr.IsKey, NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.NFKC)]
     public string? Parent_従業員番号 { get; set; }
     /// <summary>権限区分</summary>
     [NijoAttr.IsKey]

@@ -35,11 +35,11 @@ public partial class パスワード変更ParameterDisplayData {
     /// <summary>
     /// 本人であることを確かめるために入力させる。席を離れた端末などで、本人以外がパスワードを変えられないようにする
     /// </summary>
-    [NijoAttr.CustomMaxLength("50"), NijoAttr.Masking]
+    [NijoAttr.CustomMaxLength("50"), NijoAttr.Masking, NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.正規化しない)]
     public string? 現在のパスワード { get; set; }
-    [NijoAttr.CustomMaxLength("50"), NijoAttr.Masking]
+    [NijoAttr.CustomMaxLength("50"), NijoAttr.Masking, NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.正規化しない)]
     public string? 新しいパスワード { get; set; }
-    [NijoAttr.CustomMaxLength("50"), NijoAttr.Masking]
+    [NijoAttr.CustomMaxLength("50"), NijoAttr.Masking, NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.正規化しない)]
     public string? 新しいパスワード_確認用 { get; set; }
 
     /// <summary>このデータがDBに保存済みかどうか</summary>

@@ -166,7 +166,7 @@ export const metadata = {
     '伝票番号': {
       kind: 'value', parent: null, isOutsideTree: false, uniqueId: 'mock-0002',
       type: 'word', displayName: '伝票番号', comment: '業務上の識別番号。英数字10桁',
-      isNotNull: true, customMaxLength: 10,
+      isNotNull: true, customMaxLength: 10, stringNormalization: 'NFKC',
     },
     '件名': {
       kind: 'value', parent: null, isOutsideTree: false, uniqueId: 'mock-0003',

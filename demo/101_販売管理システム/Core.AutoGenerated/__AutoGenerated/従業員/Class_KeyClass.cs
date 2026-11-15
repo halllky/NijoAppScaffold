@@ -26,7 +26,7 @@ namespace MyApp;
 [NijoAttr.IsStored]
 public partial class 従業員Key {
     /// <summary>従業員番号</summary>
-    [NijoAttr.IsKey]
+    [NijoAttr.IsKey, NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.NFKC)]
     public required string? 従業員番号 { get; set; }
 
     /// <summary>

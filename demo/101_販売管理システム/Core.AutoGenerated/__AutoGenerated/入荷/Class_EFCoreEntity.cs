@@ -32,7 +32,7 @@ public partial class 入荷DbEntity {
     [NijoAttr.IsNotNull]
     public DateTime? 入荷日時 { get; set; }
     /// <summary>従業員番号</summary>
-    [NijoAttr.IsKey]
+    [NijoAttr.IsKey, NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.NFKC)]
     public string? 担当者_従業員番号 { get; set; }
     /// <summary>備考</summary>
     public string? 備考 { get; set; }

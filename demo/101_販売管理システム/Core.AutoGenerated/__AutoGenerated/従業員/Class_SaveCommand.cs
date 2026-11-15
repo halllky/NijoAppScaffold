@@ -54,7 +54,7 @@ public partial class 従業員CreateCommand : 従業員SaveCommand, ISaveCommand
     }
 
     /// <summary>従業員番号</summary>
-    [NijoAttr.IsKey]
+    [NijoAttr.IsKey, NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.NFKC)]
     public string? 従業員番号 { get; set; }
     /// <summary>氏名</summary>
     [NijoAttr.IsNotNull, NijoAttr.MaxLength(100)]
@@ -223,7 +223,7 @@ public partial class 従業員UpdateCommand : 従業員SaveCommand, ISaveCommand
     private readonly int _expectedVersion;
 
     /// <summary>従業員番号</summary>
-    [NijoAttr.IsKey]
+    [NijoAttr.IsKey, NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.NFKC)]
     public string? 従業員番号 { get; set; }
     /// <summary>氏名</summary>
     [NijoAttr.IsNotNull, NijoAttr.MaxLength(100)]

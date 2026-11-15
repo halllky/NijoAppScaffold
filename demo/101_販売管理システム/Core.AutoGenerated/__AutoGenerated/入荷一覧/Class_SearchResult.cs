@@ -32,7 +32,7 @@ public partial class 入荷一覧SearchResult {
     /// <summary>入荷日時</summary>
     public DateTime? 入荷日時 { get; set; }
     /// <summary>従業員番号</summary>
-    [NijoAttr.StringSearchBehavior(NijoAttr.StringSearchBehaviorAttribute.E_Value.Exact)]
+    [NijoAttr.StringSearchBehavior(NijoAttr.StringSearchBehaviorAttribute.E_Value.Exact), NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.NFKC)]
     public string? 担当者_従業員番号 { get; set; }
     /// <summary>氏名</summary>
     public string? 担当者_氏名 { get; set; }

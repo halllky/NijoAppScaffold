@@ -370,3 +370,26 @@ public sealed class MaskingAttribute : System.Attribute {
     public MaskingAttribute() {
     }
 }
+
+/// <summary>
+/// 文字列の正規化
+/// <para>
+/// 画面で文字列を入力したときの正規化。指定しなければ前後の空白だけを削除する。「正規化しない」は前後の空白も削除しない（パスワードなど）。「NFKC」は前後の空白を削除し、Unicode 正規化（NFKC）も行う（全角の英数字を半角にするなど。コードなどに指定する）。
+/// </para>
+/// この Attribute は自動生成後のアプリケーションの共通処理内部でリフレクションを使用して動的な処理を行う際に使われることを想定しています。
+/// 自動生成されたソースコード自体がこの Attribute を使用することはありません。
+/// </summary>
+[AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
+public sealed class StringNormalizationAttribute : System.Attribute {
+    public enum E_Value {
+        正規化しない,
+        NFKC,
+    }
+
+    public E_Value Value { get; }
+
+    /// <inheritdoc cref="StringNormalizationAttribute" />
+    public StringNormalizationAttribute(E_Value value) {
+        Value = value;
+    }
+}

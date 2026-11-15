@@ -233,6 +233,7 @@ export const metadata = {
       type: 'word',
       displayName: '従業員番号',
       stringSearchBehavior: 'Exact',
+      stringNormalization: 'NFKC',
     },
     '担当者.氏名': {
       kind: 'value',
@@ -305,6 +306,7 @@ export const metadata = {
       type: 'word',
       displayName: '従業員番号',
       stringSearchBehavior: 'Exact',
+      stringNormalization: 'NFKC',
     },
     '担当者.氏名': {
       kind: 'value',

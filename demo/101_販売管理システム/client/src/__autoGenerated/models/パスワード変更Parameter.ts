@@ -151,6 +151,7 @@ export const metadata = {
       comment: '本人であることを確かめるために入力させる。席を離れた端末などで、本人以外がパスワードを変えられないようにする',
       customMaxLength: 50,
       masking: true,
+      stringNormalization: '正規化しない',
     },
     '新しいパスワード': {
       kind: 'value',
@@ -161,6 +162,7 @@ export const metadata = {
       displayName: '新しいパスワード',
       customMaxLength: 50,
       masking: true,
+      stringNormalization: '正規化しない',
     },
     '新しいパスワード_確認用': {
       kind: 'value',
@@ -171,6 +173,7 @@ export const metadata = {
       displayName: '新しいパスワード_確認用',
       customMaxLength: 50,
       masking: true,
+      stringNormalization: '正規化しない',
     },
   },
 } as const satisfies Util.AggregateMetadata.Entry

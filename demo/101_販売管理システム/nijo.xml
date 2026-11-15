@@ -182,6 +182,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       IsStored="True"
       UniqueId="659bf33a-c624-4e67-96a9-460809d70995">
       <従業員番号
+        Custom-df2fcd23-6cd1-4320-b03d-fd4b797567da="NFKC"
         IsKey="True"
         Type="word"
         UniqueId="54613353-339e-479b-8c24-7b89a318a5d8" />
@@ -215,6 +216,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       IsQueryable="True"
       UniqueId="7e844312-66b4-4693-b8eb-c4d3a4dd2565">
       <従業員番号
+        Custom-df2fcd23-6cd1-4320-b03d-fd4b797567da="NFKC"
         StringSearchBehavior="Exact"
         Type="word"
         UniqueId="91f94ec3-0cff-4468-84df-dbba8091f1c8" />
@@ -279,6 +281,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       IsQueryable="True"
       UniqueId="7508f4ed-a9ba-4c3d-b258-eb328affebdc">
       <従業員番号
+        Custom-df2fcd23-6cd1-4320-b03d-fd4b797567da="NFKC"
         StringSearchBehavior="Exact"
         Type="word"
         UniqueId="525a40bd-74c1-4c09-aea1-4cc238e05c59" />
@@ -575,11 +578,13 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       UniqueId="a775c249-a449-4700-a33a-262ca6c820f3">
       <従業員番号
         Custom-c582bb2e-804e-4136-93f0-85139aaa675f="100"
+        Custom-df2fcd23-6cd1-4320-b03d-fd4b797567da="NFKC"
         Type="word"
         UniqueId="95019350-3caf-4bb1-be14-01351c4eb17d" />
       <パスワード
         Custom-4d868e55-06d6-44eb-aa97-901f39dd1782="True"
         Custom-c582bb2e-804e-4136-93f0-85139aaa675f="50"
+        Custom-df2fcd23-6cd1-4320-b03d-fd4b797567da="正規化しない"
         Type="word"
         UniqueId="5619b3a0-f402-4bc5-ab03-8edc1baa2a6a" />
     </ログインParameter>
@@ -589,16 +594,19 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
       <現在のパスワード
         Custom-4d868e55-06d6-44eb-aa97-901f39dd1782="True"
         Custom-c582bb2e-804e-4136-93f0-85139aaa675f="50"
+        Custom-df2fcd23-6cd1-4320-b03d-fd4b797567da="正規化しない"
         Type="word"
         UniqueId="ac02ea1f-ae03-4796-8e9c-b6387f70f214" />
       <新しいパスワード
         Custom-4d868e55-06d6-44eb-aa97-901f39dd1782="True"
         Custom-c582bb2e-804e-4136-93f0-85139aaa675f="50"
+        Custom-df2fcd23-6cd1-4320-b03d-fd4b797567da="正規化しない"
         Type="word"
         UniqueId="68322c5b-2976-453b-8e70-a968a946dedf" />
       <新しいパスワード_確認用
         Custom-4d868e55-06d6-44eb-aa97-901f39dd1782="True"
         Custom-c582bb2e-804e-4136-93f0-85139aaa675f="50"
+        Custom-df2fcd23-6cd1-4320-b03d-fd4b797567da="正規化しない"
         Type="word"
         UniqueId="ab05211a-883a-4737-8cba-a10e8345df92" />
     </パスワード変更Parameter>
@@ -821,5 +829,14 @@ ASP.NET Core のサービスワーカーとして登録される。-->
       DisplayName="マスキング"
       PhysicalName="Masking"
       Type="Boolean" />
+    <!--画面で文字列を入力したときの正規化。指定しなければ前後の空白だけを削除する。「正規化しない」は前後の空白も削除しない（パスワードなど）。「NFKC」は前後の空白を削除し、Unicode 正規化（NFKC）も行う（全角の英数字を半角にするなど。コードなどに指定する）。-->
+    <Custom-df2fcd23-6cd1-4320-b03d-fd4b797567da
+      AvailableFor="stored,queryable,command,structure,static-enum,value-object"
+      DisplayName="文字列の正規化"
+      PhysicalName="StringNormalization"
+      Type="Enum">
+      <Option>正規化しない</Option>
+      <Option>NFKC</Option>
+    </Custom-df2fcd23-6cd1-4320-b03d-fd4b797567da>
   </CustomAttributes>
 </NijoAppScaffold>

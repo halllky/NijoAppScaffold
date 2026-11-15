@@ -32,7 +32,7 @@ public partial class 在庫調整DbEntity {
     [NijoAttr.IsNotNull]
     public DateTime? 在庫調整日時 { get; set; }
     /// <summary>従業員番号</summary>
-    [NijoAttr.IsKey]
+    [NijoAttr.IsKey, NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.NFKC)]
     public string? 担当者_従業員番号 { get; set; }
     /// <summary>商品SEQ</summary>
     [NijoAttr.IsKey, NijoAttr.SequenceName("ITEM_SEQ")]

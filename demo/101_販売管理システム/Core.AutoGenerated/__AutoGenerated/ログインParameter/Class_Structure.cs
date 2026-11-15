@@ -24,9 +24,9 @@ namespace MyApp;
 /// ログインParameterの構造体。
 /// </summary>
 public partial class ログインParameter {
-    [NijoAttr.CustomMaxLength("100")]
+    [NijoAttr.CustomMaxLength("100"), NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.NFKC)]
     public string? 従業員番号 { get; set; }
-    [NijoAttr.CustomMaxLength("50"), NijoAttr.Masking]
+    [NijoAttr.CustomMaxLength("50"), NijoAttr.Masking, NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.正規化しない)]
     public string? パスワード { get; set; }
 }
 #endregion 構造体定義

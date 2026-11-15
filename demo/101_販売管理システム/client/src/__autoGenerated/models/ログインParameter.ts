@@ -141,6 +141,7 @@ export const metadata = {
       type: 'word',
       displayName: '従業員番号',
       customMaxLength: 100,
+      stringNormalization: 'NFKC',
     },
     'パスワード': {
       kind: 'value',
@@ -151,6 +152,7 @@ export const metadata = {
       displayName: 'パスワード',
       customMaxLength: 50,
       masking: true,
+      stringNormalization: '正規化しない',
     },
   },
 } as const satisfies Util.AggregateMetadata.Entry

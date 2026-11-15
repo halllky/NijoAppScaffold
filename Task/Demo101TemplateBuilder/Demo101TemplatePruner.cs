@@ -72,6 +72,7 @@ public static class Demo101TemplatePruner
         "e543a1e3-a539-459b-86ce-a17686043d59", // 金額項目
         "beceba92-faf8-49eb-a987-ff0d53889d64", // 数量
         "4d868e55-06d6-44eb-aa97-901f39dd1782", // マスキング
+        "df2fcd23-6cd1-4320-b03d-fd4b797567da", // 文字列の正規化
     ];
 
     /// <summary>テンプレートに不要なフォルダ・ファイル</summary>

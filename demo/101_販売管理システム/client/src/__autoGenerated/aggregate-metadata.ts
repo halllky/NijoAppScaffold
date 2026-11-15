@@ -142,5 +142,7 @@ export namespace AggregateMetadata {
     notNegative?: boolean
     /** マスキング */
     masking?: boolean
+    /** 文字列の正規化 */
+    stringNormalization?: '正規化しない' | 'NFKC'
   }
 }

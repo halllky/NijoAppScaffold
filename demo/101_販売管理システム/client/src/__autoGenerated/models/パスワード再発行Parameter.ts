@@ -148,6 +148,7 @@ export const metadata = {
       type: 'word',
       displayName: '従業員番号',
       stringSearchBehavior: 'Exact',
+      stringNormalization: 'NFKC',
     },
     '対象者.氏名': {
       kind: 'value',

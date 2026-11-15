@@ -245,6 +245,7 @@ export const metadata = {
       type: 'word',
       displayName: '従業員番号',
       stringSearchBehavior: 'Exact',
+      stringNormalization: 'NFKC',
     },
     '更新対象従業員一覧.従業員.氏名': {
       kind: 'value',

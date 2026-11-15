@@ -43,7 +43,7 @@ public partial class 従業員RefSearchCondition {
 #region 検索条件フィルター
 [NijoAttr.IsQueryable]
 public partial class 従業員RefSearchConditionFilter {
-    [NijoAttr.StringSearchBehavior(NijoAttr.StringSearchBehaviorAttribute.E_Value.Exact)]
+    [NijoAttr.StringSearchBehavior(NijoAttr.StringSearchBehaviorAttribute.E_Value.Exact), NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.NFKC)]
     public string? 従業員番号 { get; set; }
     public string? 氏名 { get; set; }
 }

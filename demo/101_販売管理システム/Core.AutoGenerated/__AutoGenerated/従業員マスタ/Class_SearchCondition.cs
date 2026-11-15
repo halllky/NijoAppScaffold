@@ -43,7 +43,7 @@ public partial class 従業員マスタSearchCondition {
 #region 検索条件フィルター
 [NijoAttr.IsQueryable]
 public partial class 従業員マスタSearchConditionFilter {
-    [NijoAttr.StringSearchBehavior(NijoAttr.StringSearchBehaviorAttribute.E_Value.Exact)]
+    [NijoAttr.StringSearchBehavior(NijoAttr.StringSearchBehaviorAttribute.E_Value.Exact), NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.NFKC)]
     public string? 従業員番号 { get; set; }
     public string? 氏名 { get; set; }
     public 従業員マスタの権限SearchConditionFilter 従業員マスタの権限 { get; set; } = new();

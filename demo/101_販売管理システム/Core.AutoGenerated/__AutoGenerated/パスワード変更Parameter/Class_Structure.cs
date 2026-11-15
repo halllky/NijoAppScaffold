@@ -24,11 +24,11 @@ namespace MyApp;
 /// パスワード変更Parameterの構造体。
 /// </summary>
 public partial class パスワード変更Parameter {
-    [NijoAttr.CustomMaxLength("50"), NijoAttr.Masking]
+    [NijoAttr.CustomMaxLength("50"), NijoAttr.Masking, NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.正規化しない)]
     public string? 現在のパスワード { get; set; }
-    [NijoAttr.CustomMaxLength("50"), NijoAttr.Masking]
+    [NijoAttr.CustomMaxLength("50"), NijoAttr.Masking, NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.正規化しない)]
     public string? 新しいパスワード { get; set; }
-    [NijoAttr.CustomMaxLength("50"), NijoAttr.Masking]
+    [NijoAttr.CustomMaxLength("50"), NijoAttr.Masking, NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.正規化しない)]
     public string? 新しいパスワード_確認用 { get; set; }
 }
 #endregion 構造体定義

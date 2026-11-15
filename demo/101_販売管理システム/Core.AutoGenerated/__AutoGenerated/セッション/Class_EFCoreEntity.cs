@@ -29,7 +29,7 @@ public partial class セッションDbEntity {
     [NijoAttr.IsKey, NijoAttr.IsNotNull, NijoAttr.Masking]
     public string? セッションキー { get; set; }
     /// <summary>従業員番号</summary>
-    [NijoAttr.IsKey]
+    [NijoAttr.IsKey, NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.NFKC)]
     public string? ユーザ_従業員番号 { get; set; }
     /// <summary>最終操作日時</summary>
     [NijoAttr.IsNotNull]
