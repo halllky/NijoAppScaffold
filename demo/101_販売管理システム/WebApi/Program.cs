@@ -12,6 +12,9 @@ WebApplication? app = null;
 try {
     var builder = WebApplication.CreateBuilder(args);
 
+    // 使っているソフトウェアを外に知らせないよう、応答に Server ヘッダーを付けない
+    builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
+
     // HttpContextAccessor の登録 (SessionProviderInWebApi, CurrentProcessInWebApi で使用)
     builder.Services.AddHttpContextAccessor();
 
@@ -53,6 +56,9 @@ try {
     // --------------------------------
 
     app = builder.Build();
+
+    // 静的ファイルやエラーの応答も含め、すべての応答に付けるため、ほかのどの処理よりも先に登録する
+    app.UseMiddleware<SecurityHeadersMiddleware>();
 
     if (app.Environment.IsDevelopment()) {
         // swagger。デバッグのためにこのアプリで定義されているエンドポイントを一覧する
