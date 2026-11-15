@@ -30,6 +30,9 @@ try {
     });
     builder.Services.AddExceptionHandler<WebExceptionHandler>();
 
+    // 死活の確認。ロードバランサーや監視から呼ばれる。確認するのは DB への接続だけ
+    builder.Services.AddHealthChecks().AddCheck<DbHealthCheck>("DB");
+
     // swagger。デバッグのためにこのアプリで定義されているエンドポイントを一覧する
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
@@ -67,6 +70,10 @@ try {
 
     // 静的ファイルやエラーの応答も含め、すべての応答に付けるため、ほかのどの処理よりも先に登録する
     app.UseMiddleware<SecurityHeadersMiddleware>();
+
+    // 死活の確認。ログイン不要。
+    // ロードバランサーなどから短い間隔で呼ばれ、リクエストごとのログで埋まってしまうので、ログの情報を付ける処理より先に登録して、ここで応答を返す
+    app.UseHealthChecks("/health");
 
     if (app.Environment.IsDevelopment()) {
         // swagger。デバッグのためにこのアプリで定義されているエンドポイントを一覧する
@@ -131,6 +138,9 @@ try {
 
     app.MapDefaultControllerRoute();
 
+    // サーバーのバージョン。画面のバージョンとの食い違いの確認などに使う
+    app.MapGet("/api/version", () => Results.Json(new { version = AppVersion.Value })).AllowAnonymous();
+
     // Nijoにより自動生成されたクエリ・コマンドをHTTPエンドポイントとして公開する。
     // ログイン前に呼ばれる処理はログイン不要とする
     Operation<OperationContext>[] allowAnonymous = [
@@ -154,6 +164,7 @@ try {
     // セキュリティの設定が必要なら追加
     // app.UseHttpsRedirection();
 
+    app.Logger.LogInformation("起動します。バージョン: {Version}", AppVersion.Value);
     app.Run();
 
 } catch (Exception ex) when (ex is not HostAbortedException) {

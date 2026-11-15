@@ -4,6 +4,9 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- アプリのバージョン番号は、プロジェクトのフォルダの直下の VERSION ファイルに書く。画面のビルドも同じファイルを読む。
+         .NET SDK は、git の管理下でビルドすると、これにコミットの識別子を付けてアセンブリの情報バージョンにする -->
+    <Version>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/../VERSION').Trim())</Version>
   </PropertyGroup>
 
   <ItemGroup>

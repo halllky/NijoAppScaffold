@@ -8,6 +8,7 @@ import * as P002Module from "./pages/P002_ログアウト"
 import { P001_ログイン } from "./pages/P001_ログイン"
 import { navigationItems } from "./navigationItems"
 import { APP_NAME } from "./appName"
+import { APP_VERSION, APP_VERSION_SHORT } from "./appVersion"
 import DebugMenuButton from "./debug-rooms/デバッグメニュー"
 
 /**
@@ -71,6 +72,11 @@ export default function App() {
         <P001_ログイン>
           <Outlet />
         </P001_ログイン>
+      </div>
+
+      {/* 問い合わせや障害のときに、どのバージョンの画面で起きたかを確かめられるよう、画面の隅にバージョンを表示する */}
+      <div className="fixed bottom-0 right-1 text-[10px] text-gray-400 select-text pointer-events-none" title={APP_VERSION}>
+        {APP_VERSION_SHORT}
       </div>
     </div>
   )
