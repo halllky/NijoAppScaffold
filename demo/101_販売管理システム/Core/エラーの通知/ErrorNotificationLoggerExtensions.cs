@@ -14,8 +14,8 @@ public static class ErrorNotificationLoggerExtensions {
     /// 戻り値を破棄するまでの間に出力した Error 以上のログを、既定の宛先に加えて、指定した区分の宛先にも知らせる。
     /// 区分の宛先は設定で決める。設定にない区分は、既定の宛先にだけ知らせる。
     /// <code>
-    /// using (Log.BeginErrorNotificationCategory("商品管理システム")) {
-    ///     Log.LogError(ex, "商品管理システムとの連携に失敗しました。");
+    /// using (Log.BeginErrorNotificationCategory("会計システム")) {
+    ///     Log.LogError(ex, "会計システムとの連携に失敗しました。");
     /// }
     /// </code>
     /// </summary>

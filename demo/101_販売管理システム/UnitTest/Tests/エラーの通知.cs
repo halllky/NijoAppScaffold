@@ -31,11 +31,11 @@ public class エラーの通知 {
     public void 宛先の区分を付けたログは既定の宛先とその区分の宛先に知らせる() {
         var (notifier, sender) = CreateNotifier(new ErrorNotificationSettings {
             DefaultRecipients = ["ops@example.com"],
-            RecipientsByCategory = new() { ["商品管理システム"] = ["product@example.com"] },
+            RecipientsByCategory = new() { ["会計システム"] = ["accounting@example.com"] },
         });
         using (var loggerFactory = CreateLoggerFactory(notifier)) {
             var logger = loggerFactory.CreateLogger("テスト");
-            using (logger.BeginErrorNotificationCategory("商品管理システム")) {
+            using (logger.BeginErrorNotificationCategory("会計システム")) {
                 logger.LogError("区分を付けたログ");
             }
             logger.LogError("区分を付けないログ");
@@ -43,7 +43,7 @@ public class エラーの通知 {
         notifier.Dispose();
 
         var mails = sender.Mails.ToArray();
-        Assert.That(mails.Single(m => m.Body.Contains("区分を付けたログ")).To, Is.EqualTo(new[] { "ops@example.com", "product@example.com" }));
+        Assert.That(mails.Single(m => m.Body.Contains("区分を付けたログ")).To, Is.EqualTo(new[] { "ops@example.com", "accounting@example.com" }));
         Assert.That(mails.Single(m => m.Body.Contains("区分を付けないログ")).To, Is.EqualTo(new[] { "ops@example.com" }));
     }
 
