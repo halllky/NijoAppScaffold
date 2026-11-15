@@ -81,6 +81,7 @@ partial class OverridedDbContext {
     /// <returns>
     /// 保存の成否、エラーメッセージ、保存後のデータ。
     /// 保存後のデータの順番は引数の順番と対応します。削除されたものは含まれないので、削除を含む場合は要素の位置がその分ずれます。
+    /// シーケンスが主キーの新規データは、保存前にはキーが決まっていないので、キーではなく順番で引き当ててください。
     /// </returns>
     /// <exception cref="InvalidOperationException">トランザクションが開始されていない場合、保存処理の前に別の変更が行なわれている場合、および使用済みのコマンドを渡した場合</exception>
     public Task<SaveResult<IList<TUpdateCommand>>> TrySaveAsync<TUpdateCommand>(IReadOnlyList<ValidatedCommand<TUpdateCommand>> commands, CancellationToken ct = default) where TUpdateCommand : class {
