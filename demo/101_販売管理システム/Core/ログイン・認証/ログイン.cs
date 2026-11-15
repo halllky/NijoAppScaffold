@@ -18,6 +18,14 @@ partial class OverridedApplicationService {
             return null;
         }
 
+        // ログインの失敗が続いたユーザー ID は、パスワードを照合せずに、しばらくの間ログインを受け付けない
+        var failureHistory = ServiceProvider.GetRequiredService<LoginFailureHistory>();
+        if (failureHistory.IsBlocked(param.従業員番号, CurrentTime)) {
+            Log.LogInformation("ログインを受け付けませんでした（ログインの失敗が続いたため）。従業員番号: {EmployeeNumber}", param.従業員番号);
+            messages.AddError("ログインの失敗が続いたため、しばらくの間ログインできません。時間をおいてから、もう一度お試しください。");
+            return null;
+        }
+
         // 従業員検索
         var employee = await DbContext.従業員DbSet
             .AsNoTracking()
@@ -26,6 +34,7 @@ partial class OverridedApplicationService {
 
         if (employee == null) {
             Log.LogInformation("ログインに失敗しました（従業員番号が存在しない）。従業員番号: {EmployeeNumber}", param.従業員番号);
+            RecordLoginFailure(failureHistory, param.従業員番号);
             messages.AddError("従業員番号またはパスワードが間違っています。");
             return null;
         }
@@ -39,6 +48,7 @@ partial class OverridedApplicationService {
         var verification = PasswordHash.Verify(param.パスワード, employee.パスワード, employee.SALT);
         if (verification == PasswordHash.VerificationResult.Failed) {
             Log.LogInformation("ログインに失敗しました（パスワードの誤り）。従業員番号: {EmployeeNumber}", param.従業員番号);
+            RecordLoginFailure(failureHistory, param.従業員番号);
             messages.AddError("従業員番号またはパスワードが間違っています。");
             return null;
         }
@@ -79,10 +89,21 @@ partial class OverridedApplicationService {
         sessionKeyProvider.ReturnSessionKeyToClient(sessionKey);
 
         await tran.CommitAsync();
+        failureHistory.Clear(param.従業員番号);
         Log.LogInformation("ログインしました。従業員番号: {EmployeeNumber}", employee.従業員番号);
 
         // JavaScriptで使うログインユーザー情報
         return Core.Authorization.LoginUser.From(employee).ToDisplayData();
+    }
+
+    /// <summary>
+    /// ログインの失敗を記録する。失敗が続いてログインを受け付けない期間が始まったら、Warning でログに出す。
+    /// 他人のユーザー ID で失敗を繰り返されている可能性があり、運用担当者が気付けるようにするため。
+    /// </summary>
+    private void RecordLoginFailure(LoginFailureHistory failureHistory, string userId) {
+        if (failureHistory.RecordFailure(userId, CurrentTime)) {
+            Log.LogWarning("ログインの失敗が続いたため、この従業員番号のログインを一時的に受け付けません。従業員番号: {EmployeeNumber}", userId);
+        }
     }
 
     /// <summary>

@@ -67,6 +67,7 @@ partial class OverridedApplicationService {
 
         // ログインユーザー
         services.AddScoped<LoginUserProvider>();
+        services.AddSingleton<LoginFailureHistory>();
         services.AddScoped<ICurrentUser>(sp => sp.GetRequiredService<LoginUserProvider>());
 
         // ログ設定
