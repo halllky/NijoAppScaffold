@@ -20,14 +20,13 @@ partial class OverridedApplicationService {
     /// <summary>
     /// DIコンテナへのサービス登録を行う。
     /// ログは、ここで作る NLog の LogFactory に出力する。LogFactory は、DIコンテナを破棄したときに閉じる。
+    /// ログを出力する前に DIコンテナからロガーを1つも取り出していない場合は閉じられないが、そのときは LogFactory も何も開いていない。
     /// </summary>
     /// <param name="services">DIコンテナ</param>
     /// <param name="basePath">実行時設定ファイルのベースパス（appsettings.jsonのあるフォルダ）</param>
     /// <param name="isDevelopment">開発環境としての設定構築をするかどうか</param>
     public static void ConfigureServices(IServiceCollection services, string basePath, bool isDevelopment) {
-        var logFactory = new NLog.LogFactory();
-        services.AddSingleton(_ => logFactory); // インスタンスではなく生成処理として登録すると、DIコンテナを破棄したときに閉じられる
-        ConfigureServices(services, basePath, isDevelopment, logFactory);
+        ConfigureServices(services, basePath, isDevelopment, new NLog.LogFactory(), closeLogFactoryOnDispose: true);
     }
 
     /// <summary>
@@ -40,6 +39,11 @@ partial class OverridedApplicationService {
     /// <param name="isDevelopment">開発環境としての設定構築をするかどうか</param>
     /// <param name="logFactory">ログの出力先。呼び出し元が閉じる</param>
     public static void ConfigureServices(IServiceCollection services, string basePath, bool isDevelopment, NLog.LogFactory logFactory) {
+        ConfigureServices(services, basePath, isDevelopment, logFactory, closeLogFactoryOnDispose: false);
+    }
+
+    /// <param name="closeLogFactoryOnDispose">DIコンテナを破棄したときに、ログの出力先も閉じるかどうか</param>
+    private static void ConfigureServices(IServiceCollection services, string basePath, bool isDevelopment, NLog.LogFactory logFactory, bool closeLogFactoryOnDispose) {
         if (!Path.IsPathRooted(basePath)) throw new ArgumentException($"{nameof(basePath)}は絶対パスで指定してください。");
 
         // アプリケーションサービスをDIコンテナに登録
@@ -86,7 +90,7 @@ partial class OverridedApplicationService {
         // ログ設定。Error 以上のログは、エラーの通知で運用担当者にメールで知らせる
         var errorNotifier = Core.運用担当への通知.ErrorNotifier.Create(settings, basePath, logFactory);
         services.AddSingleton(errorNotifier);
-        LogSettings.ConfigureServices(services, myAppSection, basePath, errorNotifier, logFactory);
+        LogSettings.ConfigureServices(services, myAppSection, basePath, errorNotifier, logFactory, closeLogFactoryOnDispose);
 
         // 外部システム連携（エラーの通知のメールも含む）。
         // DI コンテナができる前なので、設定についてのログは、この場で作るロガーで出力する

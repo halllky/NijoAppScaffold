@@ -28,7 +28,8 @@ internal static class LogSettings {
     /// </summary>
     /// <param name="errorNotifier">Error 以上のログを渡す、エラーの通知</param>
     /// <param name="logFactory">ログの設定を行う NLog の LogFactory。NLog 全体の設定は使わない</param>
-    public static void ConfigureServices(IServiceCollection services, IConfigurationSection myAppSection, string basePath, ErrorNotifier errorNotifier, NLog.LogFactory logFactory) {
+    /// <param name="closeLogFactoryOnDispose">DIコンテナを破棄したときに、LogFactory も閉じるかどうか</param>
+    public static void ConfigureServices(IServiceCollection services, IConfigurationSection myAppSection, string basePath, ErrorNotifier errorNotifier, NLog.LogFactory logFactory, bool closeLogFactoryOnDispose) {
 
         // NLog を用いたログ設定を Microsoft.Extensions.Logging に統合する
         services.AddLogging(logging => {
@@ -106,7 +107,8 @@ internal static class LogSettings {
 
             // DI コンテナができる前（起動の途中）からこの設定でログを出力できるよう、この場で LogFactory に設定する
             logFactory.Configuration = config;
-            logging.AddNLog(_ => logFactory);
+            // DIコンテナが作るロガーの提供元は、DIコンテナを破棄したときに破棄される。そのときに LogFactory も閉じるかを指定する
+            logging.AddNLog(new NLogProviderOptions { ShutdownOnDispose = closeLogFactoryOnDispose }, _ => logFactory);
         });
     }
     #endregion DI設定

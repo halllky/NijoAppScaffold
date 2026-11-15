@@ -43,7 +43,6 @@ public sealed class ErrorNotifier : IDisposable {
         _sender = sender;
         _logger = logFactory.GetLogger(typeof(ErrorNotifier).FullName ?? nameof(ErrorNotifier));
         _queue = new ErrorNotificationQueue(MAX_ENTRIES_PER_MAIL);
-        _loop = Task.Run(LoopAsync);
     }
 
     private readonly ErrorNotificationSettings _settings;
@@ -54,7 +53,8 @@ public sealed class ErrorNotifier : IDisposable {
     /// <summary>すぐに送ると決まったが、まだ送っていないメール</summary>
     private readonly List<ErrorNotificationBatch> _ready = [];
     private readonly CancellationTokenSource _stopping = new();
-    private readonly Task _loop;
+    /// <summary>送るスレッド。通知の対象のログを最初に受け取ったときに始める。エラーが起きない間は、タイマーを動かさないため</summary>
+    private Task? _loop;
     private bool _disposed;
 
     /// <summary>
@@ -73,6 +73,7 @@ public sealed class ErrorNotifier : IDisposable {
         lock (_lock) {
             if (_disposed) return;
             _ready.AddRange(_queue.Add(entry, DateTime.UtcNow));
+            _loop ??= Task.Run(LoopAsync);
         }
     }
 
@@ -97,7 +98,7 @@ public sealed class ErrorNotifier : IDisposable {
             _disposed = true;
         }
         _stopping.Cancel();
-        try { _loop.GetAwaiter().GetResult(); } catch (OperationCanceledException) { }
+        try { _loop?.GetAwaiter().GetResult(); } catch (OperationCanceledException) { }
         Flush();
         _stopping.Dispose();
     }

@@ -41,6 +41,12 @@ public partial class TestUtilImpl {
 
     [OneTimeTearDown]
     public void Dispose() {
+        // テストケースごとに作った DI コンテナを破棄し、ログのファイルなどを閉じる。
+        // 閉じないと、テストの実行が終わるまでファイルが開いたままになり、テストの結果のフォルダを消せないことがある
+        while (_providers.TryTake(out var provider)) {
+            provider.Dispose();
+        }
+
         // ログの場所を標準出力に表示する
         TestContext.Out.WriteLine($$"""
             テストが実行されました。ログは以下の場所に出力されました。
@@ -59,6 +65,9 @@ public partial class TestUtilImpl {
     /// テスト実行1回ごとに異なるフォルダが出力される。
     /// </summary>
     private string BaseWorkDirectory { get; set; } = "";
+
+    /// <summary>テストケースごとに作った DI コンテナ。テストは並列に動くので、スレッドセーフな入れ物に控える</summary>
+    private static readonly System.Collections.Concurrent.ConcurrentBag<ServiceProvider> _providers = [];
 
     /// <summary>
     /// テスト用の新しいサービスプロバイダのインスタンスを構成する。
@@ -144,6 +153,7 @@ public partial class TestUtilImpl {
         });
 
         var provider = services.BuildServiceProvider();
+        _providers.Add(provider);
 
         // DB作成
         var dbContext = provider.GetRequiredService<OverridedDbContext>();
