@@ -90,7 +90,7 @@ public class 運用担当への通知 {
 
     private static (ErrorNotifier, FakeSender) CreateNotifier(ErrorNotificationSettings settings) {
         var sender = new FakeSender();
-        return (new ErrorNotifier(settings, sender), sender);
+        return (new ErrorNotifier(settings, sender, new NLog.LogFactory()), sender);
     }
 
     /// <summary>

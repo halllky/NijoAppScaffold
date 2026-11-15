@@ -88,7 +88,8 @@ public partial class TestUtilImpl {
 
         // DI機構
         var services = new ServiceCollection();
-        OverridedApplicationService.ConfigureServices(services, currentTestWorkDirectory);
+        // 単体テストは開発環境の設定を流用して動かすので、開発環境として扱う
+        OverridedApplicationService.ConfigureServices(services, currentTestWorkDirectory, isDevelopment: true);
         ConfigureServicesスキーマ定義依存(services);
 
         // DI機構: ログ

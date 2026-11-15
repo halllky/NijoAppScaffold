@@ -27,7 +27,8 @@ internal static class LogSettings {
     /// 処理が多いので別メソッドとして切り出している。
     /// </summary>
     /// <param name="errorNotifier">Error 以上のログを渡す、エラーの通知</param>
-    public static void ConfigureServices(IServiceCollection services, IConfigurationSection myAppSection, string basePath, ErrorNotifier errorNotifier) {
+    /// <param name="logFactory">ログの設定を行う NLog の LogFactory。NLog 全体の設定は使わない</param>
+    public static void ConfigureServices(IServiceCollection services, IConfigurationSection myAppSection, string basePath, ErrorNotifier errorNotifier, NLog.LogFactory logFactory) {
 
         // NLog を用いたログ設定を Microsoft.Extensions.Logging に統合する
         services.AddLogging(logging => {
@@ -103,9 +104,9 @@ internal static class LogSettings {
             NLog.Common.InternalLogger.LogFile = Path.Combine(logDir, "NLog.Fatal.log");
             NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Fatal;
 
-            // DI コンテナができる前（起動の途中）からこの設定でログを出力できるよう、NLog 全体の設定にする
-            NLog.LogManager.Configuration = config;
-            logging.AddNLog();
+            // DI コンテナができる前（起動の途中）からこの設定でログを出力できるよう、この場で LogFactory に設定する
+            logFactory.Configuration = config;
+            logging.AddNLog(_ => logFactory);
         });
     }
     #endregion DI設定

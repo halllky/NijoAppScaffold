@@ -19,15 +19,30 @@ partial class OverridedApplicationService {
 
     /// <summary>
     /// DIコンテナへのサービス登録を行う。
+    /// ログは、ここで作る NLog の LogFactory に出力する。LogFactory は、DIコンテナを破棄したときに閉じる。
     /// </summary>
     /// <param name="services">DIコンテナ</param>
     /// <param name="basePath">実行時設定ファイルのベースパス（appsettings.jsonのあるフォルダ）</param>
     /// <param name="isDevelopment">
-    /// 開発環境で動かすかどうか。
-    /// 省略すると開発環境として扱う。本番環境で動かす呼び出し元は Web だけで、
-    /// それ以外の呼び出し元（単体テスト、マイグレーション）は開発環境の設定で動かすため。
+    /// 開発環境で動かすかどうか。開発環境でだけ行う設定（外部システムのモックの警告を出さない、など）に使う。
+    /// 渡し忘れたときに本番環境の確認が漏れないよう、省略できない。
     /// </param>
-    public static void ConfigureServices(IServiceCollection services, string basePath, bool isDevelopment = true) {
+    public static void ConfigureServices(IServiceCollection services, string basePath, bool isDevelopment) {
+        var logFactory = new NLog.LogFactory();
+        services.AddSingleton(_ => logFactory); // インスタンスではなく生成処理として登録すると、DIコンテナを破棄したときに閉じられる
+        ConfigureServices(services, basePath, isDevelopment, logFactory);
+    }
+
+    /// <summary>
+    /// DIコンテナへのサービス登録を行う。ログは、呼び出し元が渡した NLog の LogFactory に出力する。
+    /// 起動の途中で例外が起きたときにも同じ LogFactory でログに出せるよう、呼び出し元が LogFactory を作って閉じる場合に使う。
+    /// ログの設定は NLog 全体ではなくこの LogFactory にだけ行うので、同じプロセスで複数の DI コンテナを作っても（並列に動く単体テストなど）互いに影響しない。
+    /// </summary>
+    /// <param name="services">DIコンテナ</param>
+    /// <param name="basePath">実行時設定ファイルのベースパス（appsettings.jsonのあるフォルダ）</param>
+    /// <param name="isDevelopment"><inheritdoc cref="ConfigureServices(IServiceCollection, string, bool)" path="/param[@name='isDevelopment']"/></param>
+    /// <param name="logFactory">ログの出力先。呼び出し元が閉じる</param>
+    public static void ConfigureServices(IServiceCollection services, string basePath, bool isDevelopment, NLog.LogFactory logFactory) {
         if (!Path.IsPathRooted(basePath)) throw new ArgumentException($"{nameof(basePath)}は絶対パスで指定してください。");
 
         // アプリケーションサービスをDIコンテナに登録
@@ -71,13 +86,13 @@ partial class OverridedApplicationService {
         services.AddScoped<ICurrentUser>(sp => sp.GetRequiredService<LoginUserProvider>());
 
         // ログ設定。Error 以上のログは、エラーの通知で運用担当者にメールで知らせる
-        var errorNotifier = Core.運用担当への通知.ErrorNotifier.Create(settings, basePath);
+        var errorNotifier = Core.運用担当への通知.ErrorNotifier.Create(settings, basePath, logFactory);
         services.AddSingleton(errorNotifier);
-        LogSettings.ConfigureServices(services, myAppSection, basePath, errorNotifier);
+        LogSettings.ConfigureServices(services, myAppSection, basePath, errorNotifier, logFactory);
 
         // 外部システム連携（エラーの通知のメールも含む）。
         // DI コンテナができる前なので、設定についてのログは、この場で作るロガーで出力する
-        using var startupLoggerFactory = LoggerFactory.Create(logging => logging.AddNLog());
+        using var startupLoggerFactory = LoggerFactory.Create(logging => logging.AddNLog(_ => logFactory));
         if (!isDevelopment && settings.ErrorNotification.UseMock == true) {
             startupLoggerFactory.CreateLogger<OverridedApplicationService>().LogWarning("エラーの通知のメールはモックで動いています。");
         }

@@ -12,7 +12,7 @@ builder.Services.AddSwaggerGen();
 
 // アプリケーションサービス層のDI設定
 var basePath = Path.GetFullPath(builder.Environment.ContentRootPath);
-OverridedApplicationService.ConfigureServices(builder.Services, basePath);
+OverridedApplicationService.ConfigureServices(builder.Services, basePath, builder.Environment.IsDevelopment());
 
 // HTTPリクエスト・レスポンスで使われるJSONシリアライズ設定を上記DI設定のそれに合わせる
 builder.Services.ConfigureHttpJsonOptions(options => {

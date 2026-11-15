@@ -17,7 +17,8 @@ public sealed class ErrorNotifier : IDisposable {
     /// <summary>
     /// 設定に従って作る。設定を省略していたり、実機を選んでいたりしたら、例外を投げて起動を止める。
     /// </summary>
-    public static ErrorNotifier Create(RuntimeSetting settings, string basePath) {
+    /// <param name="logFactory">送信に失敗したときの Warning の出力先</param>
+    public static ErrorNotifier Create(RuntimeSetting settings, string basePath, NLog.LogFactory logFactory) {
         var notification = settings.ErrorNotification;
         var sender = notification.UseMock switch {
             true => new ErrorMailSenderMock(ResolveMockOutputDirectory(settings, basePath)),
@@ -33,18 +34,21 @@ public sealed class ErrorNotifier : IDisposable {
                 $"設定 {RuntimeSetting.MY_APP_SECTION}:{nameof(RuntimeSetting.ErrorNotification)}:{nameof(ErrorNotificationSettings.UseMock)} がありません。" +
                 $"モックを使うなら true を指定してください。"),
         };
-        return new ErrorNotifier(notification, sender);
+        return new ErrorNotifier(notification, sender, logFactory);
     }
 
-    public ErrorNotifier(ErrorNotificationSettings settings, IErrorMailSender sender) {
+    /// <param name="logFactory">送信に失敗したときの Warning の出力先</param>
+    public ErrorNotifier(ErrorNotificationSettings settings, IErrorMailSender sender, NLog.LogFactory logFactory) {
         _settings = settings;
         _sender = sender;
+        _logger = logFactory.GetLogger(typeof(ErrorNotifier).FullName ?? nameof(ErrorNotifier));
         _queue = new ErrorNotificationQueue(MAX_ENTRIES_PER_MAIL);
         _loop = Task.Run(LoopAsync);
     }
 
     private readonly ErrorNotificationSettings _settings;
     private readonly IErrorMailSender _sender;
+    private readonly NLog.Logger _logger;
     private readonly ErrorNotificationQueue _queue;
     private readonly Lock _lock = new();
     /// <summary>すぐに送ると決まったが、まだ送っていないメール</summary>
@@ -115,7 +119,7 @@ public sealed class ErrorNotifier : IDisposable {
             try {
                 await _sender.SendAsync(ToMail(batch), cancellationToken);
             } catch (Exception ex) when (ex is not OperationCanceledException) {
-                NLog.LogManager.GetLogger(typeof(ErrorNotifier).FullName).Warn(ex, "エラーの通知のメールを送れませんでした。");
+                _logger.Warn(ex, "エラーの通知のメールを送れませんでした。");
             }
         }
     }
