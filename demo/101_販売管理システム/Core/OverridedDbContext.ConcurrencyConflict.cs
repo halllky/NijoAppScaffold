@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace MyApp;
 
 partial class OverridedDbContext {
@@ -7,28 +9,31 @@ partial class OverridedDbContext {
     /// 入力チェックで画面が読み込んだ時点のバージョンとの食い違いが見つかった場合と、保存の時点で追い越された場合の両方を含む。
     /// 画面に返すときに、楽観排他のエラーをほかのエラーと区別するために使う。
     /// </summary>
-    public bool HasConcurrencyConflict => ((ConcurrencyErrorRecorder)MSG).ConcurrencyErrorCreated;
+    public bool HasConcurrencyConflict => ((ConcurrencyErrorRecorder)(object)MSG).ConcurrencyErrorCreated;
 
     /// <summary>
-    /// 楽観排他のエラーのメッセージを作ったかどうかを覚えておく、メッセージの部品。
+    /// 楽観排他のエラーのメッセージを作ったかどうかを覚えておく、メッセージの部品の包み。
     /// 楽観排他のエラーは、自動生成された入力チェックと保存の処理のどちらでも、必ずこのメッセージを作って報告されるので、
-    /// メッセージを作ったことをもって、楽観排他のエラーが起きたとみなす。
-    /// 文言そのものは、元の部品が作る。
+    /// メッセージを作ったことをもって、楽観排他のエラーが起きたとみなす。文言そのものは、包んだ部品が作る。
+    /// メッセージの部品のメンバーは nijo.xml の内容で変わるので、メンバーを個別に書かずに、すべての呼び出しを中継する。
     /// </summary>
-    private sealed class ConcurrencyErrorRecorder(IDisplayMessageFactory inner) : IDisplayMessageFactory {
+    internal class ConcurrencyErrorRecorder : DispatchProxy {
+        private IDisplayMessageFactory _inner = null!;
+
         public bool ConcurrencyErrorCreated { get; private set; }
 
-        public string ConcurrencyError() {
-            ConcurrencyErrorCreated = true;
-            return inner.ConcurrencyError();
+        public static IDisplayMessageFactory Wrap(IDisplayMessageFactory inner) {
+            var proxy = Create<IDisplayMessageFactory, ConcurrencyErrorRecorder>();
+            ((ConcurrencyErrorRecorder)(object)proxy)._inner = inner;
+            return proxy;
         }
-        public string CustomAttributeValidationError(string arg0) => inner.CustomAttributeValidationError(arg0);
-        public string DataNotFoundError() => inner.DataNotFoundError();
-        public string DigitsError(string arg0, string arg1, string arg2) => inner.DigitsError(arg0, arg1, arg2);
-        public string GenericLookupValueNotFound(string arg0) => inner.GenericLookupValueNotFound(arg0);
-        public string MaxLengthError(string arg0, string arg1) => inner.MaxLengthError(arg0, arg1);
-        public string RequiredError(string arg0) => inner.RequiredError(arg0);
-        public string UniqueConstraintError() => inner.UniqueConstraintError();
-        public string UnknownUpdateError() => inner.UnknownUpdateError();
+
+        protected override object? Invoke(MethodInfo? targetMethod, object?[]? args) {
+            ArgumentNullException.ThrowIfNull(targetMethod);
+            if (targetMethod.Name == nameof(IDisplayMessageFactory.ConcurrencyError)) {
+                ConcurrencyErrorCreated = true;
+            }
+            return targetMethod.Invoke(_inner, args);
+        }
     }
 }
