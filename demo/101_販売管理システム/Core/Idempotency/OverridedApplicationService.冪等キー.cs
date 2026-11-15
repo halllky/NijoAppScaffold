@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MyApp.Core.Idempotency;
+using MyApp.Core.外部システム;
 
 namespace MyApp;
 
@@ -17,10 +18,12 @@ partial class OverridedApplicationService {
     /// 同じキーがすでに記録されていれば（同じ操作が処理済みなら）、<see cref="AlreadyExecutedException"/> を投げる。
     /// 記録は業務のデータと同じトランザクションで確定するので、業務の処理が取り消されたときは記録も取り消され、送り直せば処理される。
     /// 冪等キーが渡されていない呼び出し元（単体テスト、バッチなど）では何もしない。
-    /// 1回の呼び出しの中でトランザクションを複数回開始する処理では、最初のトランザクションでだけ記録する。
+    /// 1回の呼び出しの中でトランザクションを複数回開始する処理では、記録したトランザクションがコミットされた後は記録しない。
+    /// 記録したトランザクションが取り消された場合は、次のトランザクションで記録し直す。
     /// </summary>
-    private async Task Record冪等キーAsync() {
-        if (_is冪等キーRecorded) return;
+    /// <param name="transaction">開始したばかりのトランザクション</param>
+    private async Task Record冪等キーAsync(ExternalResourceTransaction transaction) {
+        if (_冪等キーRecordedIn?.IsCommitted == true) return;
         var key = ServiceProvider.GetService<IIdempotencyKeyProvider>()?.Key;
         if (key == null) return;
 
@@ -40,7 +43,8 @@ partial class OverridedApplicationService {
         if (!result.Success) {
             throw new InvalidOperationException($"冪等キーを記録できませんでした: {key}");
         }
-        _is冪等キーRecorded = true;
+        _冪等キーRecordedIn = transaction;
     }
-    private bool _is冪等キーRecorded;
+    /// <summary>冪等キーを記録したトランザクション</summary>
+    private ExternalResourceTransaction? _冪等キーRecordedIn;
 }

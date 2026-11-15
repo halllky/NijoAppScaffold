@@ -55,6 +55,27 @@ partial class DB接続あり_更新あり {
         Assert.That(await scope.App.DbContext.冪等キーDbSet.CountAsync(k => k.キー == "KEY-1"), Is.EqualTo(1));
     }
 
+    [Test]
+    [Category("DB接続あり（更新あり）")]
+    public async Task 同じ呼び出しの中で最初のトランザクションが取り消されたら次のトランザクションで冪等キーを記録する() {
+        var scope = CreateScopeWith冪等キー(nameof(同じ呼び出しの中で最初のトランザクションが取り消されたら次のトランザクションで冪等キーを記録する), "KEY-1");
+
+        await using (var app = NewRequest(scope)) {
+            await using (var first = await app.Value.BeginTransactionAsync()) {
+                // コミットせずに終わる
+            }
+            await using var second = await app.Value.BeginTransactionAsync();
+            await second.CommitAsync();
+        }
+
+        // 2回目のトランザクションで記録されているので、同じキーで送り直すと処理済みになる
+        await using (var app = NewRequest(scope)) {
+            Assert.ThrowsAsync<AlreadyExecutedException>(async () => {
+                await using var tran = await app.Value.BeginTransactionAsync();
+            });
+        }
+    }
+
     /// <summary>
     /// 呼び出し元から常に同じ冪等キーが渡される状態のテスト用スコープを作る。
     /// </summary>

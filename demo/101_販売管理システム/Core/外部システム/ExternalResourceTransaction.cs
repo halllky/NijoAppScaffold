@@ -36,6 +36,11 @@ public class ExternalResourceTransaction : IAsyncDisposable {
     public bool IsCommittedOrRolledBack { get; private set; } = false;
 
     /// <summary>
+    /// DB の変更がコミットされたかどうか。コミットの途中で失敗した場合は false。
+    /// </summary>
+    public bool IsCommitted { get; private set; } = false;
+
+    /// <summary>
     /// 外部リソースの更新を予約する。
     /// 実際に処理が行われるのは <see cref="CommitAsync"/> のタイミング。
     /// </summary>
@@ -125,6 +130,7 @@ public class ExternalResourceTransaction : IAsyncDisposable {
 
         // 外部リソースの更新が1個も無いか、すべて成功した場合はDBトランザクションをコミット
         await _dbTransaction.CommitAsync(cancellationToken);
+        IsCommitted = true;
     }
 
     /// <summary>
