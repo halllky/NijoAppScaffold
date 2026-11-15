@@ -39,6 +39,19 @@ public class ExternalResourceTransaction : IAsyncDisposable {
     /// 外部リソースの更新を予約する。
     /// 実際に処理が行われるのは <see cref="CommitAsync"/> のタイミング。
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// このメソッドは、外部システムのインターフェースの実装の中から呼ぶ。業務処理（コマンド）からは、インターフェースのメソッドを呼ぶだけにする。
+    /// その実装は、トランザクションの外で呼ばれたら例外を投げるようにする。
+    /// </para>
+    /// <para>
+    /// 一時的な失敗に対するリトライは、<paramref name="func"/> の中で行う。
+    /// </para>
+    /// </remarks>
+    /// <param name="resourceNameForLog">
+    /// ログに出す名前。途中で失敗したときに運用担当者が復旧できるよう、どのデータを更新しようとしたか（キーなど）を含める。
+    /// </param>
+    /// <param name="func">外部リソースを更新する処理。</param>
     public void Prepare(string resourceNameForLog, Func<CancellationToken, Task> func) {
         _semaphore.Wait();
         try {
