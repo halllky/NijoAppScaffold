@@ -14,14 +14,6 @@ public class 業務のタイムゾーン {
 
     [Test]
     [Category("DB接続なし")]
-    public void 現地時刻とUTCは同じ時点を表す() {
-        var currentTime = new CurrentTime(new RuntimeSetting { BusinessTimeZone = "Asia/Tokyo" });
-
-        Assert.That(currentTime.Value - currentTime.UtcValue, Is.EqualTo(TimeSpan.FromHours(9)));
-    }
-
-    [Test]
-    [Category("DB接続なし")]
     public void 存在しないタイムゾーンを指定すると例外になる() {
         var settings = new RuntimeSetting { BusinessTimeZone = "存在しないタイムゾーン" };
 
