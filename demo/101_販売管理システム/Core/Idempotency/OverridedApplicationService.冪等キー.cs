@@ -14,14 +14,13 @@ partial class OverridedApplicationService {
     public static readonly TimeSpan 冪等キーの保存期間 = TimeSpan.FromHours(24);
 
     /// <summary>
-    /// 呼び出し元から渡された冪等キーを、開始したばかりのトランザクションの中で記録する。
-    /// 同じキーがすでに記録されていれば（同じ操作が処理済みなら）、<see cref="AlreadyExecutedException"/> を投げる。
-    /// 記録は業務のデータと同じトランザクションで確定するので、業務の処理が取り消されたときは記録も取り消され、送り直せば処理される。
-    /// 冪等キーが渡されていない呼び出し元（単体テスト、バッチなど）では何もしない。
-    /// 1回の呼び出しの中でトランザクションを複数回開始する処理では、記録したトランザクションがコミットされた後は記録しない。
-    /// 記録したトランザクションが取り消された場合は、次のトランザクションで記録し直す。
+    /// 冪等キーを、開始したトランザクションの中で記録する。
+    /// 同じキーが記録済みなら、その操作は処理済みなので、<see cref="AlreadyExecutedException"/> を投げて処理を止める。
+    /// 記録は業務のデータと一緒に確定する。業務の処理が取り消されれば記録も残らないので、送り直せば処理される。
+    /// 冪等キーが渡されていなければ何もしない。
+    /// 同じ呼び出しの中でトランザクションを何度か開始する処理では、記録が確定するまで、開始のたびに記録を試みる。
     /// </summary>
-    /// <param name="transaction">開始したばかりのトランザクション</param>
+    /// <param name="transaction">記録するトランザクション</param>
     private async Task Record冪等キーAsync(ExternalResourceTransaction transaction) {
         if (_冪等キーRecordedIn?.IsCommitted == true) return;
         var key = ServiceProvider.GetService<IIdempotencyKeyProvider>()?.Key;
