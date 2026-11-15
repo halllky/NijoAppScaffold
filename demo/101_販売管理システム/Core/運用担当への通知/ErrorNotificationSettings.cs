@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace MyApp.Core.運用担当への通知;
 
 /// <summary>
@@ -14,18 +16,23 @@ public class ErrorNotificationSettings {
     /// <summary>
     /// モックがメールの代わりにテキストファイルを作るフォルダ。相対パスの場合は <see cref="RuntimeSetting.LogDirectory"/> からの相対パス。
     /// </summary>
-    public string MockOutputDirectory { get; set; } = "エラーの通知（モック）";
+    [Required]
+    public string MockOutputDirectory { get; set; } = string.Empty;
     /// <summary>
-    /// 既定の宛先。すべての通知のメールが届く。
+    /// 既定の宛先。すべての通知のメールが届く。1件以上指定する。
+    /// 誰にも届かない状態で運用するのを防ぐため。設定ファイルの空の配列は省略と同じに扱われる。
     /// </summary>
-    public List<string> DefaultRecipients { get; set; } = [];
+    [Required, MinLength(1)]
+    public List<string> DefaultRecipients { get; set; } = null!;
     /// <summary>
     /// 宛先の区分ごとの宛先。ログを出力するときに宛先の区分を付けた通知は、既定の宛先とその区分の宛先に届く。
+    /// 宛先の区分を使わないなら省略してよい。
     /// </summary>
     public Dictionary<string, List<string>> RecipientsByCategory { get; set; } = [];
     /// <summary>
     /// WebApi で、宛先の区分ごとに送るメールの数を抑える間隔（分）。
     /// この間隔の中で2通目以降になるログは貯めておき、間隔が過ぎたときに1通にまとめて送る。
     /// </summary>
-    public int ThrottleMinutes { get; set; } = 10;
+    [Range(1, int.MaxValue)]
+    public int ThrottleMinutes { get; set; }
 }

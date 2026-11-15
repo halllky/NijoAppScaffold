@@ -1,13 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 
 namespace MyApp;
 
 /// <summary>
 /// 実行時設定。 appsettings.json から読み込まれた設定値を使う。
+/// 項目の既定値はこのクラスに持たず、設定ファイルに書く。
+/// 本番環境の設定ファイルに書き忘れたまま、気付かずにプログラムの既定値で動くのを防ぐため。
+/// 省略できない項目には <see cref="RequiredAttribute"/> などの検証の属性を付け、起動のときに <see cref="Validate"/> で確かめる。
 /// </summary>
 public partial class RuntimeSetting {
 
@@ -20,6 +19,7 @@ public partial class RuntimeSetting {
     /// <summary>
     /// NLogのログ出力先ディレクトリ
     /// </summary>
+    [Required]
     public string LogDirectory { get; set; } = string.Empty;
 
     #region データベース接続
@@ -27,6 +27,7 @@ public partial class RuntimeSetting {
     /// 現在接続しているデータベースのプロファイル。
     /// <see cref="DbProfiles"/> に設定されたものの名前を指定する。
     /// </summary>
+    [Required]
     public string CurrentDbProfileName { get; set; } = string.Empty;
     /// <summary>
     /// 接続先データベース情報の一覧。
@@ -37,6 +38,7 @@ public partial class RuntimeSetting {
     /// <summary>
     /// マイグレーションスクリプトが格納されているフォルダパス
     /// </summary>
+    [Required]
     public string MigrationsScriptFolder { get; set; } = string.Empty;
 
     public class DbProfile {
@@ -75,7 +77,8 @@ public partial class RuntimeSetting {
     /// 業務のタイムゾーン。IANA のタイムゾーンの ID（"Asia/Tokyo" など）で指定する。
     /// 日時は、このタイムゾーンの現地時刻として扱う。現在時刻も、サーバーの OS のタイムゾーンによらず、このタイムゾーンの時刻になる。
     /// </summary>
-    public string BusinessTimeZone { get; set; } = "Asia/Tokyo";
+    [Required]
+    public string BusinessTimeZone { get; set; } = string.Empty;
 
     /// <summary>
     /// 業務のタイムゾーンを返す。
@@ -89,4 +92,26 @@ public partial class RuntimeSetting {
         }
     }
     #endregion タイムゾーン
+
+    /// <summary>
+    /// 省略できない項目が省略されていたり、値が不正だったりしたら、例外を投げる。
+    /// 起動の時点で設定の誤りを知らせるため、DI の設定のときに呼ぶ。
+    /// </summary>
+    public void Validate() {
+        var errors = new List<string>();
+        Collect(this, MY_APP_SECTION, errors);
+        Collect(ErrorNotification, $"{MY_APP_SECTION}:{nameof(ErrorNotification)}", errors);
+        if (errors.Count > 0) {
+            throw new InvalidOperationException($"設定に誤りがあります。{Environment.NewLine}{string.Join(Environment.NewLine, errors)}");
+        }
+        GetBusinessTimeZone();
+
+        static void Collect(object settings, string sectionPath, List<string> errors) {
+            var results = new List<ValidationResult>();
+            Validator.TryValidateObject(settings, new ValidationContext(settings), results, validateAllProperties: true);
+            foreach (var result in results) {
+                errors.Add($"{sectionPath}:{string.Join(", ", result.MemberNames)} が省略されているか、値が不正です。");
+            }
+        }
+    }
 }
