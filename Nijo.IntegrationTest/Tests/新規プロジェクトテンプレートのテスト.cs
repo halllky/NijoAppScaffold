@@ -65,7 +65,7 @@ public class 新規プロジェクトテンプレートのテスト {
     /// <summary>
     /// デモ101テンプレートに販売管理業務やデモ101固有の語が残っていないことを確認する。
     /// Pruner がコンパイルエラーなしに消し忘れたものを検知するためのもの。
-    /// 文書（*.md）はデモ101との関係の説明や例示で販売管理に触れるので対象外とする。
+    /// 文書（*.md）と、文書に載せる図（*.drawio.svg）は、デモ101との関係の説明や例示で販売管理に触れるので対象外とする。
     /// </summary>
     private static void AssertNoDemoSpecificTerms(string zipPath) {
         var forbidden = new Regex("売上|入荷|在庫|商品|販売管理|Demo101|デモ101");
@@ -73,7 +73,7 @@ public class 新規プロジェクトテンプレートのテスト {
 
         using var archive = ZipFile.OpenRead(zipPath);
         foreach (var entry in archive.Entries) {
-            if (entry.FullName.EndsWith('/') || entry.FullName.EndsWith(".md")) continue;
+            if (entry.FullName.EndsWith('/') || entry.FullName.EndsWith(".md") || entry.FullName.EndsWith(".drawio.svg")) continue;
             if (forbidden.IsMatch(entry.FullName.Normalize())) found.Add(entry.FullName);
 
             using var reader = new StreamReader(entry.Open(), Encoding.UTF8);
