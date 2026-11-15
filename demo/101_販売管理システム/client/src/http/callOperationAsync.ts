@@ -186,11 +186,16 @@ const toDisplayErrorText = async (response: Response): Promise<string> => {
       if (typeof json === 'string') {
         return json
       }
-      // サーバー側の未処理例外などのエラーレスポンス（ProblemDetails）
-      const problem = json as { title?: unknown, detail?: unknown }
-      if (typeof problem.detail === 'string') return problem.detail
-      if (typeof problem.title === 'string') return problem.title
-      return bodyText
+      // サーバー側の未処理例外などのエラーレスポンス（ProblemDetails）。
+      // traceId はサーバーのログの処理1回分の識別子と同じ値なので、利用者からの問い合わせでログを探せるよう、問い合わせ番号として見せる
+      const problem = json as { title?: unknown, detail?: unknown, traceId?: unknown }
+      const text = typeof problem.detail === 'string' ? problem.detail
+        : typeof problem.title === 'string' ? problem.title
+          : undefined
+      if (text === undefined) return bodyText
+      return typeof problem.traceId === 'string'
+        ? `${text}（問い合わせ番号: ${problem.traceId}）`
+        : text
     } catch {
       return bodyText
     }

@@ -20,8 +20,14 @@ try {
     // Controller の設定
     builder.Services.AddControllers();
 
-    // 未処理例外のログ出力と、統一されたエラーレスポンス（ProblemDetails）の返却
-    builder.Services.AddProblemDetails();
+    // 未処理例外のログ出力と、統一されたエラーレスポンス（ProblemDetails）の返却。
+    // 利用者からの問い合わせをログと突き合わせられるよう、エラーレスポンスの traceId は、ログの処理1回分の識別子と同じ値にする。
+    // ASP.NET Core が既定で入れる traceId は、分散トレースの識別子が優先され、ログの識別子と一致しないため、ここで上書きする
+    builder.Services.AddProblemDetails(options => {
+        options.CustomizeProblemDetails = context => {
+            context.ProblemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier;
+        };
+    });
     builder.Services.AddExceptionHandler<WebExceptionHandler>();
 
     // swagger。デバッグのためにこのアプリで定義されているエンドポイントを一覧する
@@ -99,6 +105,7 @@ try {
     }
 
     // Controller と自動生成されたクエリ・コマンドのエンドポイントに共通の処理
+    app.UseMiddleware<WebLogScopeMiddleware>(); // ログ出力用情報設定。未処理例外のログにも情報が付くよう、例外処理より外側に置く
     app.UseExceptionHandler(); // 未処理例外のログ出力とエラーレスポンス返却（開発環境でも例外の内容は返さない）
 
     // 他のサイトからの不正なリクエスト（CSRF）の対策として、更新系の HTTP メソッドでは独自のヘッダーを必須にする。
@@ -116,7 +123,6 @@ try {
         });
     }
 
-    app.UseMiddleware<WebLogScopeMiddleware>(); // ログ出力用情報設定
     app.UseAuthentication(); // ログインユーザーの特定
     app.UseAuthorization(); // ログインしていないリクエストを弾く（401）
 
