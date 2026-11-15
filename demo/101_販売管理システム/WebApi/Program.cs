@@ -105,7 +105,7 @@ try {
     }
 
     // Controller と自動生成されたクエリ・コマンドのエンドポイントに共通の処理
-    app.UseMiddleware<WebLogScopeMiddleware>(); // ログ出力用情報設定。未処理例外のログにも情報が付くよう、例外処理より外側に置く
+    app.UseMiddleware<WebLogScopeMiddleware>(); // ログ出力用情報設定。未処理例外のログにも情報が付くよう、例外処理より先に登録する
     app.UseExceptionHandler(); // 未処理例外のログ出力とエラーレスポンス返却（開発環境でも例外の内容は返さない）
 
     // 他のサイトからの不正なリクエスト（CSRF）の対策として、更新系の HTTP メソッドでは独自のヘッダーを必須にする。

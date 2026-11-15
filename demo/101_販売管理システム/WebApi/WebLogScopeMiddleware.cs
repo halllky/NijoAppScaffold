@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Security.Cryptography;
 
 namespace MyApp.WebApi;
 
@@ -9,14 +10,14 @@ namespace MyApp.WebApi;
 /// ユーザー単位でのログ抽出やHTTPリクエスト単位でのログ抽出が可能になる。
 /// 処理1回分の識別子は <see cref="HttpContext.TraceIdentifier"/> にも設定するので、
 /// 同じリクエストの中では、どこからでもログと同じ識別子を参照できる。
-/// 未処理の例外のログにもこれらの情報が付くよう、未処理の例外を扱う共通の処理より外側に置くこと。
+/// 未処理の例外のログにもこれらの情報が付くよう、未処理の例外を扱う共通の処理より先に登録すること。
 /// </summary>
 internal class WebLogScopeMiddleware(RequestDelegate next) {
     public async Task InvokeAsync(HttpContext httpContext) {
         var appSrv = httpContext.RequestServices.GetRequiredService<OverridedApplicationService>();
         var currentProcess = httpContext.RequestServices.GetRequiredService<ICurrentProcess>();
 
-        var scopeId = Guid.NewGuid().ToString("N").ToUpperInvariant();
+        var scopeId = NewScopeId();
         httpContext.TraceIdentifier = scopeId;
 
         // このスコープのインスタンスが破棄されるまでの間、ログ出力時に以下の情報が常に付与される。
@@ -40,8 +41,21 @@ internal class WebLogScopeMiddleware(RequestDelegate next) {
     }
 
     /// <summary>
+    /// 処理1回分の識別子を新しく作る。
+    /// 利用者が問い合わせ番号として口頭でも伝えられるよう、読み違えやすい文字（I・L・O・U）を除いた英大文字と数字の8文字を、
+    /// 4文字ずつハイフンで区切った形にする。
+    /// 約1兆通りなので、すべてのリクエストを通して一意とは限らないが、ログを日時と合わせて探せば、ほかのリクエストと区別できる。
+    /// </summary>
+    private static string NewScopeId() {
+        const string CHARS = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+        var id = RandomNumberGenerator.GetString(CHARS, 8);
+        return $"{id[..4]}-{id[4..]}";
+    }
+
+    /// <summary>
     /// ログインユーザー ID を返す。ログインしていないときや、ログインユーザーの特定に失敗したとき（DB の障害など）は null を返す。
-    /// この処理は未処理の例外を扱う共通の処理より外側にあり、ここで例外が起きると利用者に決まった形のエラーを返せないため、例外を外に出さない。
+    /// この処理は未処理の例外を扱う共通の処理より先に動くので、ここで起きた例外はその処理で扱われず、
+    /// 利用者に決まった形のエラーを返せない。そのため例外を外に出さない。
     /// 失敗の原因の例外は、この後のログインユーザーの特定で改めて起き、未処理の例外としてログに出力される。
     /// </summary>
     private static string? GetLoginUserIdOrNull(OverridedApplicationService appSrv) {
