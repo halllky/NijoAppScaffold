@@ -36,7 +36,7 @@ public class ExternalResourceTransaction : IAsyncDisposable {
     public bool IsCommittedOrRolledBack { get; private set; } = false;
 
     /// <summary>
-    /// DB の変更がコミットされたかどうか。コミットの途中で失敗した場合は false。
+    /// 最後までコミットされたかどうか。コミットの途中で失敗した場合は false。
     /// </summary>
     public bool IsCommitted { get; private set; } = false;
 
