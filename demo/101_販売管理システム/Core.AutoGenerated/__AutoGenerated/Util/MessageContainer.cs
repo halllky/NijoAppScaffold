@@ -239,6 +239,7 @@ public partial class MessageSetter : IMessageSetter {
         if (type == typeof(入荷明細SaveCommandMessages)) return new 入荷明細SaveCommandMessages(path, context);
         if (type == typeof(入荷詳細Messages)) return new 入荷詳細Messages(path, context);
         if (type == typeof(入荷詳細画面初期表示ParameterMessages)) return new 入荷詳細画面初期表示ParameterMessages(path, context);
+        if (type == typeof(冪等キーSaveCommandMessages)) return new 冪等キーSaveCommandMessages(path, context);
         if (type == typeof(商品DisplayDataMessages)) return new 商品DisplayDataMessages(path, context);
         if (type == typeof(商品SaveCommandMessages)) return new 商品SaveCommandMessages(path, context);
         if (type == typeof(商品SearchConditionMessages)) return new 商品SearchConditionMessages(path, context);
@@ -277,6 +278,7 @@ public partial class MessageSetter : IMessageSetter {
             if (itemType == typeof(入荷明細SaveCommandMessages)) return new MessageSetterList<入荷明細SaveCommandMessages>(path, index => new 入荷明細SaveCommandMessages([.. path, index.ToString()], context), context);
             if (itemType == typeof(入荷詳細Messages)) return new MessageSetterList<入荷詳細Messages>(path, index => new 入荷詳細Messages([.. path, index.ToString()], context), context);
             if (itemType == typeof(入荷詳細画面初期表示ParameterMessages)) return new MessageSetterList<入荷詳細画面初期表示ParameterMessages>(path, index => new 入荷詳細画面初期表示ParameterMessages([.. path, index.ToString()], context), context);
+            if (itemType == typeof(冪等キーSaveCommandMessages)) return new MessageSetterList<冪等キーSaveCommandMessages>(path, index => new 冪等キーSaveCommandMessages([.. path, index.ToString()], context), context);
             if (itemType == typeof(商品DisplayDataMessages)) return new MessageSetterList<商品DisplayDataMessages>(path, index => new 商品DisplayDataMessages([.. path, index.ToString()], context), context);
             if (itemType == typeof(商品SaveCommandMessages)) return new MessageSetterList<商品SaveCommandMessages>(path, index => new 商品SaveCommandMessages([.. path, index.ToString()], context), context);
             if (itemType == typeof(商品SearchConditionMessages)) return new MessageSetterList<商品SearchConditionMessages>(path, index => new 商品SearchConditionMessages([.. path, index.ToString()], context), context);

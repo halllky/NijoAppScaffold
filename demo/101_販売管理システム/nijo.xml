@@ -625,6 +625,18 @@ Webアプリケーションなので明示的にログアウトしない限り�
         Type="datetime"
         UniqueId="5d444ec0-10f7-4fbb-8bd1-8331feac1b66" />
     </セッション>
+    <!--更新を伴う処理の呼び出しに付けられた冪等キー。業務のデータと同じトランザクションで記録し、同じキーで二重に処理されるのを防ぐ。
+記録してから一定時間が経過したものは、クリーンナップで削除される。-->
+    <冪等キー
+      IsStored="True"
+      UniqueId="86ea4449-3f7c-4579-aec5-a73a2a38e8d1">
+      <!--クライアントが利用者の操作ごとに発番する値-->
+      <キー
+        IsKey="True"
+        IsNotNull="True"
+        Type="word"
+        UniqueId="c642d428-6201-4d7e-bb1b-b14a34baecde" />
+    </冪等キー>
     <入荷詳細画面初期表示Parameter
       UniqueId="c766195e-c279-4a50-84bb-fcbf46ac9798">
       <入荷ID

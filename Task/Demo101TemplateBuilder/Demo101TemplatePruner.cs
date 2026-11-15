@@ -37,6 +37,7 @@ public static class Demo101TemplatePruner
         "a775c249-a449-4700-a33a-262ca6c820f3", // ログインParameter
         "f594d8ac-f7ff-44ca-878f-fcbfd1e79ee1", // ログインユーザー情報
         "72d0c66e-b523-4dd1-b8a0-8384368fe38b", // セッション
+        "86ea4449-3f7c-4579-aec5-a73a2a38e8d1", // 冪等キー
     ];
 
     /// <summary>テンプレートに残す、Commands直下の要素のUniqueId</summary>

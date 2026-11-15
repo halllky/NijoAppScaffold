@@ -204,6 +204,44 @@ namespace MyApp.Migrations {
                 b.ToTable("入荷明細", (string)null);
             });
 
+            modelBuilder.Entity("MyApp.冪等キーDbEntity", b => {
+                b.Property<string>("キー")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("キー")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(2);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(4);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(3);
+
+                b.Property<int>("Version")
+                    .IsConcurrencyToken()
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("Version")
+                    .HasColumnOrder(5);
+
+                b.HasKey("キー")
+                    .HasName("PK_冪等キー");
+
+                b.ToTable("冪等キー", (string)null);
+            });
+
             modelBuilder.Entity("MyApp.商品DbEntity", b => {
                 b.Property<int>("商品SEQ")
                     .ValueGeneratedOnAdd()

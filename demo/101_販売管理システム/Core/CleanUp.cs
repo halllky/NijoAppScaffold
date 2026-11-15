@@ -25,7 +25,14 @@ partial class OverridedApplicationService {
             .Where(s => s.最終操作日時 < threshold)
             .ExecuteDeleteAsync();
 
-        Log.LogInformation($"クリーンナップ処理を実行しました。削除されたセッション数: {deletedCount}");
+        // 保存期間を過ぎた冪等キーを削除
+        var idempotencyKeyThreshold = CurrentTime - 冪等キーの保存期間;
+        var deletedIdempotencyKeyCount = await DbContext.冪等キーDbSet
+            .Where(k => k.CreatedAt < idempotencyKeyThreshold)
+            .ExecuteDeleteAsync();
+
+        Log.LogInformation("クリーンナップ処理を実行しました。削除されたセッション数: {SessionCount}, 削除された冪等キー数: {IdempotencyKeyCount}",
+            deletedCount, deletedIdempotencyKeyCount);
 
         // 古いログの削除は NLog の設定で自動的に行われるため、ここでは特に処理を実装しない。
     }

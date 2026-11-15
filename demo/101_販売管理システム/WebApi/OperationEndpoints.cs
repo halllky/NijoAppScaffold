@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using MyApp.Core.冪等キー;
 
 namespace MyApp.WebApi;
 
@@ -9,7 +10,8 @@ namespace MyApp.WebApi;
 ///
 /// HTTPリクエスト・レスポンスと、処理の引数・戻り値・メッセージとの変換方法は NijoAppScaffold として決まりがあるわけではなく、
 /// クライアント側の呼び出し処理と整合性がとれていればよい。
-/// ここでは、添付ファイルの送信（multipart/form-data）と、確認メッセージを挟む2回のリクエストに対応している。
+/// ここでは、添付ファイルの送信（multipart/form-data）と、確認メッセージを挟む2回のリクエストと、
+/// 同じ操作が処理済みであること（<see cref="AlreadyExecutedException"/>）の応答に対応している。
 /// 以下のような詳細は、アプリケーションの要件に応じて自由に変更してよい。
 ///
 /// <list type="bullet">
@@ -112,7 +114,18 @@ public static class OperationEndpoints {
         var context = new OperationContext { ValidationOnly = !confirmed };
         var messages = MessageSetter.GetImpl<TMessages>([], new MessageContainer());
 
-        var returnValue = await operation.InvokeAsync(app, parameter, messages, context);
+        TReturnValue? returnValue;
+        try {
+            returnValue = await operation.InvokeAsync(app, parameter, messages, context);
+        } catch (AlreadyExecutedException) {
+            // 同じ操作が処理済み。応答がないまま打ち切られた後に、利用者が操作し直した場合など
+            var alreadyExecuted = new JsonObject {
+                ["messages"] = new JsonObject {
+                    ["error"] = new JsonArray("この操作は、すでに処理されています。画面を読み込み直して、結果を確かめてください。"),
+                },
+            };
+            return Results.Json(alreadyExecuted, jsonOptions, statusCode: (int)HttpStatusCode.UnprocessableEntity);
+        }
 
         // ---------------------------------------------------------
         // 処理結果をHTTPレスポンスに変換する
