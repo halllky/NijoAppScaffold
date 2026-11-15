@@ -11,6 +11,8 @@ import { requestLoginAsync } from "../login/loginRequest"
  * 独自ヘッダーが無い更新系のリクエストは、サーバーが拒否する。
  * ログインしていないと応答された場合は、利用者にログインし直してもらい、同じリクエストを送り直してその応答を返す。
  * 利用者がログインし直さなかった場合は、ログインしていないという応答をそのまま返す。
+ * 1回のリクエストで {@link REQUEST_TIMEOUT_MS} のあいだ応答がなければ打ち切り、名前が 'TimeoutError' の DOMException を送出する。
+ * 打ち切ってもサーバー側の処理は止まらない。
  * それ以外のエラーハンドリングは行なっていないため呼び出し側で行うこと。
  *
  * @param endpoint URLのオリジン部分を除くパスおよびクエリパラメータ。URIエンコードは呼び出し側で行う。
@@ -21,12 +23,14 @@ export async function callAspNetCoreApiAsync(endpoint: string, init: RequestInit
   const url = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
   const headers = new Headers(init.headers)
   headers.set('X-Requested-With', 'XMLHttpRequest')
+  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS)
   const response = await fetch(url, {
     // 認証用のCookieをHTTPヘッダに付加する
     credentials: 'same-origin',
 
     ...init,
     headers,
+    signal: init.signal ? AbortSignal.any([init.signal, timeout]) : timeout,
   })
 
   if (response.status === 401 && await requestLoginAsync() === 'logged-in') {
@@ -34,3 +38,9 @@ export async function callAspNetCoreApiAsync(endpoint: string, init: RequestInit
   }
   return response
 }
+
+/**
+ * 1回のリクエストの応答を待つ時間の上限（ミリ秒）。
+ * 前段の装置（ロードバランサーなど）の多くが60秒前後で接続を切るので、それに合わせている。
+ */
+const REQUEST_TIMEOUT_MS = 60_000
