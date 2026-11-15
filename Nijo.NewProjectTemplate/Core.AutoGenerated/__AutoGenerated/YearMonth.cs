@@ -81,16 +81,6 @@ public readonly struct YearMonth : IComparable<YearMonth>, IEquatable<YearMonth>
     }
 
     /// <summary>
-    /// 現在の年月を取得します
-    /// </summary>
-    public static YearMonth Now => FromDateTime(DateTime.Now);
-
-    /// <summary>
-    /// UTC現在の年月を取得します
-    /// </summary>
-    public static YearMonth UtcNow => FromDateTime(DateTime.UtcNow);
-
-    /// <summary>
     /// 年月をYYYY/MM形式の文字列に変換します
     /// </summary>
     public override string ToString() {

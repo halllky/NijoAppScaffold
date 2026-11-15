@@ -43,6 +43,7 @@ partial class OverridedApplicationService {
             .GetSection(RuntimeSetting.MY_APP_SECTION);
         var settings = new RuntimeSetting();
         myAppSection.Bind(settings);
+        settings.GetBusinessTimeZone(); // 業務のタイムゾーンの設定の誤りを、最初に現在時刻を使う時点ではなく起動の時点で知らせる
         services.AddSingleton(settings);
 
         // DBコンテキスト登録

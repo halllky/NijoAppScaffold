@@ -37,7 +37,9 @@ internal static class LogSettings {
             }
             var fileTarget = new NLog.Targets.FileTarget("logfile") {
                 FileName = Path.Combine(logDir, "${shortdate}.log"),
-                Layout = "${longdate}"             // ログ時刻
+                // ログ時刻。サーバーの OS のタイムゾーンの時刻に、そのオフセットを付ける。
+                // OS のタイムゾーンが業務のタイムゾーンと違っても、データの日時と突き合わせられるようにするため
+                Layout = "${date:format=yyyy-MM-dd HH\\:mm\\:ss.ffffzzz}"
                        + "\t${uppercase:${level}}" // ログレベル
 
                        // ログインユーザーID（未ログイン時は空文字）

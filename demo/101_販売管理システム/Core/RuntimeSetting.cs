@@ -64,4 +64,24 @@ public partial class RuntimeSetting {
         return profile;
     }
     #endregion データベース接続
+
+    #region タイムゾーン
+    /// <summary>
+    /// 業務のタイムゾーン。IANA のタイムゾーンの ID（"Asia/Tokyo" など）で指定する。
+    /// 日時は、このタイムゾーンの現地時刻として扱う。現在時刻も、サーバーの OS のタイムゾーンによらず、このタイムゾーンの時刻になる。
+    /// </summary>
+    public string BusinessTimeZone { get; set; } = "Asia/Tokyo";
+
+    /// <summary>
+    /// 業務のタイムゾーンを返す。
+    /// 設定値が不正な場合は例外を送出します。
+    /// </summary>
+    public TimeZoneInfo GetBusinessTimeZone() {
+        try {
+            return TimeZoneInfo.FindSystemTimeZoneById(BusinessTimeZone);
+        } catch (TimeZoneNotFoundException ex) {
+            throw new InvalidOperationException($"{nameof(BusinessTimeZone)}に指定されたタイムゾーン'{BusinessTimeZone}'が見つかりません。", ex);
+        }
+    }
+    #endregion タイムゾーン
 }
