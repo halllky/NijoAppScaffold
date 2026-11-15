@@ -1,4 +1,4 @@
-namespace MyApp.Core.冪等キー;
+namespace MyApp.Core.Idempotency;
 
 /// <summary>
 /// 同じ冪等キーの操作がすでに処理済みであることを表す例外。

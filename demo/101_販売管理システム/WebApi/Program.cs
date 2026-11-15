@@ -57,7 +57,7 @@ try {
     builder.Services.AddScoped<ICurrentProcess, CurrentProcessInWebApi>();
 
     // 同じ操作が二重に処理されるのを防ぐための冪等キー
-    builder.Services.AddScoped<MyApp.Core.冪等キー.IIdempotencyKeyProvider, IdempotencyKeyProviderInWebApi>();
+    builder.Services.AddScoped<MyApp.Core.Idempotency.IIdempotencyKeyProvider, IdempotencyKeyProviderInWebApi>();
 
     // HTTPリクエスト・レスポンスで使われるJSONシリアライズ設定を上記DI設定のそれに合わせる
     builder.Services.ConfigureHttpJsonOptions(options => {

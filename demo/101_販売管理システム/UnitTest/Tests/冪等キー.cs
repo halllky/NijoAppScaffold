@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using MyApp.Core.冪等キー;
+using MyApp.Core.Idempotency;
 
 namespace MyApp.UnitTest;
 

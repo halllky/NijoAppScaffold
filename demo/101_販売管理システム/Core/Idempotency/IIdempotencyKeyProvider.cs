@@ -1,4 +1,4 @@
-namespace MyApp.Core.冪等キー;
+namespace MyApp.Core.Idempotency;
 
 /// <summary>
 /// 呼び出し元から渡された冪等キー。

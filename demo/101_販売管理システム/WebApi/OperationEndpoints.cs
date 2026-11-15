@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using MyApp.Core.冪等キー;
+using MyApp.Core.Idempotency;
 
 namespace MyApp.WebApi;
 
@@ -119,10 +119,10 @@ public static class OperationEndpoints {
             returnValue = await operation.InvokeAsync(app, parameter, messages, context);
         } catch (AlreadyExecutedException) {
             // 同じ操作が処理済み。応答がないまま打ち切られた後に、利用者が操作し直した場合など
+            var alreadyExecutedMessage = new MessageSetter([], new MessageContainer());
+            alreadyExecutedMessage.AddError("この操作は、すでに処理されています。画面を読み込み直して、結果を確かめてください。");
             var alreadyExecuted = new JsonObject {
-                ["messages"] = new JsonObject {
-                    ["error"] = new JsonArray("この操作は、すでに処理されています。画面を読み込み直して、結果を確かめてください。"),
-                },
+                ["messages"] = ToJsonObject(alreadyExecutedMessage.GetState()!),
             };
             return Results.Json(alreadyExecuted, jsonOptions, statusCode: (int)HttpStatusCode.UnprocessableEntity);
         }

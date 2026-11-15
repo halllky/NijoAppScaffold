@@ -1,4 +1,4 @@
-using MyApp.Core.冪等キー;
+using MyApp.Core.Idempotency;
 
 namespace MyApp.WebApi;
 
