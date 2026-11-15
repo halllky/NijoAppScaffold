@@ -1,4 +1,4 @@
-using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -12,17 +12,13 @@ public class ログの出力先の後始末 {
         var workDirectory = Path.Combine(Path.GetTempPath(), $"{nameof(ログの出力先の後始末)}_{Guid.NewGuid():N}");
         var mockDirectory = Path.Combine(workDirectory, "通知のモック");
         Directory.CreateDirectory(workDirectory);
-        File.WriteAllText(Path.Combine(workDirectory, "appsettings.json"), JsonSerializer.Serialize(new {
-            MyApp = new {
-                LogDirectory = Path.Combine(workDirectory, "Log"),
-                MigrationsScriptFolder = "MigrationsScript",
-                CurrentDbProfileName = "DB",
-                DbProfiles = new[] { new { Name = "DB", ConnStr = $"Data Source={Path.Combine(workDirectory, "db.sqlite3")}" } },
-                BusinessTimeZone = "Asia/Tokyo",
-                ErrorNotification = new { UseMock = true, MockOutputDirectory = mockDirectory, DefaultRecipients = new[] { "ops@example.com" }, ThrottleMinutes = 10 },
-                商品管理システム = new { UseMock = true },
-            },
-        }));
+        // 設定は WebApi のものを使い、ファイルの出力先だけをこのテストのフォルダに差し替える
+        var webApiSettings = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.WorkDirectory, "..", "..", "..", "..", "WebApi", "appsettings.json"));
+        var settings = JsonNode.Parse(File.ReadAllText(webApiSettings))!;
+        var myApp = settings[RuntimeSetting.MY_APP_SECTION]!;
+        myApp[nameof(RuntimeSetting.LogDirectory)] = Path.Combine(workDirectory, "Log");
+        myApp[nameof(RuntimeSetting.ErrorNotification)]![nameof(RuntimeSetting.ErrorNotification.MockOutputDirectory)] = mockDirectory;
+        File.WriteAllText(Path.Combine(workDirectory, "appsettings.json"), settings.ToJsonString());
 
         var services = new ServiceCollection();
         OverridedApplicationService.ConfigureServices(services, workDirectory, isDevelopment: true);
