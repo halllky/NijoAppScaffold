@@ -71,7 +71,7 @@ partial class OverridedApplicationService {
         services.AddScoped<ICurrentUser>(sp => sp.GetRequiredService<LoginUserProvider>());
 
         // ログ設定。Error 以上のログは、エラーの通知で運用担当者にメールで知らせる
-        var errorNotifier = Core.エラーの通知.ErrorNotifier.Create(settings, basePath);
+        var errorNotifier = Core.運用担当への通知.ErrorNotifier.Create(settings, basePath);
         services.AddSingleton(errorNotifier);
         LogSettings.ConfigureServices(services, myAppSection, basePath, errorNotifier);
 

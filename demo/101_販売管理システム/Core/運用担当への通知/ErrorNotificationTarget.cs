@@ -2,7 +2,7 @@ using NLog;
 using NLog.Layouts;
 using NLog.Targets;
 
-namespace MyApp.Core.エラーの通知;
+namespace MyApp.Core.運用担当への通知;
 
 /// <summary>
 /// NLog の出力先のうち、受け取ったログをエラーの通知に渡すもの。

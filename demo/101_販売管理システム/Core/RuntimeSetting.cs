@@ -66,9 +66,9 @@ public partial class RuntimeSetting {
     #endregion データベース接続
 
     /// <summary>
-    /// エラーの通知の設定
+    /// 運用担当へのエラーの通知の設定
     /// </summary>
-    public Core.エラーの通知.ErrorNotificationSettings ErrorNotification { get; set; } = new();
+    public Core.運用担当への通知.ErrorNotificationSettings ErrorNotification { get; set; } = new();
 
     #region タイムゾーン
     /// <summary>

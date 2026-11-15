@@ -1,11 +1,11 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
-using MyApp.Core.エラーの通知;
+using MyApp.Core.運用担当への通知;
 using NLog.Extensions.Logging;
 
 namespace MyApp.UnitTest;
 
-public class エラーの通知 {
+public class 運用担当への通知 {
 
     [Test]
     [Category("DB接続なし")]

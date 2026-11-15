@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace MyApp.Core.エラーの通知;
+namespace MyApp.Core.運用担当への通知;
 
 /// <summary>
 /// Error 以上のログを、運用担当者にメールで知らせる。

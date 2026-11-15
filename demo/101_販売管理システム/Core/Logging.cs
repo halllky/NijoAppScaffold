@@ -7,7 +7,7 @@ using System.Text.Json.Serialization.Metadata;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using MyApp.Core.エラーの通知;
+using MyApp.Core.運用担当への通知;
 using MyApp.NijoAttr;
 using NLog.Extensions.Logging;
 
@@ -83,7 +83,7 @@ internal static class LogSettings {
             config.AddTarget(consoleTarget);
             config.AddTarget(errorNotificationTarget);
 
-            // Error 以上のログは、フレームワークのものも含めてすべてエラーの通知に渡す。
+            // Error 以上のログは、フレームワークのものも含めてすべて運用担当へのエラーの通知に渡す。
             // 下の final: true の規則より先に置かないと、フレームワークのログが渡らない
             config.AddRule(NLog.LogLevel.Error, NLog.LogLevel.Fatal, errorNotificationTarget);
 

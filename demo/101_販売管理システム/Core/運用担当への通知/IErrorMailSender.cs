@@ -1,4 +1,4 @@
-namespace MyApp.Core.エラーの通知;
+namespace MyApp.Core.運用担当への通知;
 
 /// <summary>
 /// エラーの通知のメールを送る部品。実機とモックを設定で切り替える。

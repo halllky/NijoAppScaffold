@@ -1,4 +1,4 @@
-namespace MyApp.Core.エラーの通知;
+namespace MyApp.Core.運用担当への通知;
 
 /// <summary>
 /// エラーの通知のメール1通。

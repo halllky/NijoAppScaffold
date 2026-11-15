@@ -1,4 +1,4 @@
-namespace MyApp.Core.エラーの通知;
+namespace MyApp.Core.運用担当への通知;
 
 /// <summary>
 /// 通知の対象になった、Error 以上のログ1件。

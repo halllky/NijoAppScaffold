@@ -1,4 +1,4 @@
-namespace MyApp.Core.エラーの通知;
+namespace MyApp.Core.運用担当への通知;
 
 /// <summary>
 /// appsettings.json のエラーの通知の設定セクションに対応する設定クラス。

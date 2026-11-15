@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace MyApp.Core.エラーの通知;
+namespace MyApp.Core.運用担当への通知;
 
 /// <summary>
 /// エラーの通知のメールのモック。メールを送る代わりに、宛先・件名・本文を書いたテキストファイルを、1通につき1つ作る。
