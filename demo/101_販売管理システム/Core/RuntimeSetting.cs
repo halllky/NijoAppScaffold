@@ -6,7 +6,7 @@ namespace MyApp;
 /// 実行時設定。 appsettings.json から読み込まれた設定値を使う。
 /// 項目の既定値はこのクラスに持たず、設定ファイルに書く。
 /// 本番環境の設定ファイルに書き忘れたまま、気付かずにプログラムの既定値で動くのを防ぐため。
-/// 省略できない項目には <see cref="RequiredAttribute"/> などの検証の属性を付け、起動のときに <see cref="Validate"/> で確かめる。
+/// 省略できない項目には <see cref="RequiredAttribute"/> などの検証の属性を付け、起動のときに <see cref="ThrowIfInvalid"/> で確かめる。
 /// </summary>
 public partial class RuntimeSetting {
 
@@ -21,6 +21,30 @@ public partial class RuntimeSetting {
     /// </summary>
     [Required]
     public string LogDirectory { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 省略できない項目が省略されていたり、値が不正だったりしたら、例外を投げる。
+    /// 起動の時点で設定の誤りを知らせるため、DI の設定のときに呼ぶ。
+    /// </summary>
+    public void ThrowIfInvalid() {
+        var errors = new List<string>();
+        Collect(this, MY_APP_SECTION, errors);
+        Collect(ErrorNotification, $"{MY_APP_SECTION}:{nameof(ErrorNotification)}", errors);
+        if (errors.Count > 0) {
+            throw new InvalidOperationException($"設定に誤りがあります。{Environment.NewLine}{string.Join(Environment.NewLine, errors)}");
+        }
+
+        // タイムゾーンの妥当性はアノテーションで検査できないので直接呼び出して検証する
+        GetBusinessTimeZone();
+
+        static void Collect(object settings, string sectionPath, List<string> errors) {
+            var results = new List<ValidationResult>();
+            Validator.TryValidateObject(settings, new ValidationContext(settings), results, validateAllProperties: true);
+            foreach (var result in results) {
+                errors.Add($"{sectionPath}:{string.Join(", ", result.MemberNames)} が指定されていないか、値が不正です。");
+            }
+        }
+    }
 
     #region データベース接続
     /// <summary>
@@ -92,26 +116,4 @@ public partial class RuntimeSetting {
         }
     }
     #endregion タイムゾーン
-
-    /// <summary>
-    /// 省略できない項目が省略されていたり、値が不正だったりしたら、例外を投げる。
-    /// 起動の時点で設定の誤りを知らせるため、DI の設定のときに呼ぶ。
-    /// </summary>
-    public void Validate() {
-        var errors = new List<string>();
-        Collect(this, MY_APP_SECTION, errors);
-        Collect(ErrorNotification, $"{MY_APP_SECTION}:{nameof(ErrorNotification)}", errors);
-        if (errors.Count > 0) {
-            throw new InvalidOperationException($"設定に誤りがあります。{Environment.NewLine}{string.Join(Environment.NewLine, errors)}");
-        }
-        GetBusinessTimeZone();
-
-        static void Collect(object settings, string sectionPath, List<string> errors) {
-            var results = new List<ValidationResult>();
-            Validator.TryValidateObject(settings, new ValidationContext(settings), results, validateAllProperties: true);
-            foreach (var result in results) {
-                errors.Add($"{sectionPath}:{string.Join(", ", result.MemberNames)} が省略されているか、値が不正です。");
-            }
-        }
-    }
 }

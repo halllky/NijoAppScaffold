@@ -9,14 +9,14 @@ public class 設定の検証 {
         settings.BusinessTimeZone = "";
         settings.ErrorNotification.ThrottleMinutes = 0;
 
-        var ex = Assert.Throws<InvalidOperationException>(settings.Validate);
+        var ex = Assert.Throws<InvalidOperationException>(settings.ThrowIfInvalid);
         Assert.That(ex!.Message, Does.Contain("MyApp:BusinessTimeZone").And.Contain("MyApp:ErrorNotification:ThrottleMinutes"));
     }
 
     [Test]
     [Category("DB接続なし")]
     public void 省略できない項目がすべてあれば例外にならない() {
-        Assert.DoesNotThrow(CreateValidSettings().Validate);
+        Assert.DoesNotThrow(CreateValidSettings().ThrowIfInvalid);
     }
 
     private static RuntimeSetting CreateValidSettings() => new() {

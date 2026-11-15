@@ -55,7 +55,7 @@ partial class OverridedApplicationService {
             .GetSection(RuntimeSetting.MY_APP_SECTION);
         var settings = new RuntimeSetting();
         myAppSection.Bind(settings);
-        settings.Validate();
+        settings.ThrowIfInvalid();
         services.AddSingleton(settings);
 
         // DBコンテキスト登録
