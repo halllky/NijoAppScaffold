@@ -23,10 +23,7 @@ partial class OverridedApplicationService {
     /// </summary>
     /// <param name="services">DIコンテナ</param>
     /// <param name="basePath">実行時設定ファイルのベースパス（appsettings.jsonのあるフォルダ）</param>
-    /// <param name="isDevelopment">
-    /// 開発環境で動かすかどうか。開発環境でだけ行う設定（外部システムのモックの警告を出さない、など）に使う。
-    /// 渡し忘れたときに本番環境の確認が漏れないよう、省略できない。
-    /// </param>
+    /// <param name="isDevelopment">開発環境としての設定構築をするかどうか</param>
     public static void ConfigureServices(IServiceCollection services, string basePath, bool isDevelopment) {
         var logFactory = new NLog.LogFactory();
         services.AddSingleton(_ => logFactory); // インスタンスではなく生成処理として登録すると、DIコンテナを破棄したときに閉じられる
@@ -40,7 +37,7 @@ partial class OverridedApplicationService {
     /// </summary>
     /// <param name="services">DIコンテナ</param>
     /// <param name="basePath">実行時設定ファイルのベースパス（appsettings.jsonのあるフォルダ）</param>
-    /// <param name="isDevelopment"><inheritdoc cref="ConfigureServices(IServiceCollection, string, bool)" path="/param[@name='isDevelopment']"/></param>
+    /// <param name="isDevelopment">開発環境としての設定構築をするかどうか</param>
     /// <param name="logFactory">ログの出力先。呼び出し元が閉じる</param>
     public static void ConfigureServices(IServiceCollection services, string basePath, bool isDevelopment, NLog.LogFactory logFactory) {
         if (!Path.IsPathRooted(basePath)) throw new ArgumentException($"{nameof(basePath)}は絶対パスで指定してください。");
