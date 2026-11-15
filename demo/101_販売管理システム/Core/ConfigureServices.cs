@@ -22,8 +22,12 @@ partial class OverridedApplicationService {
     /// </summary>
     /// <param name="services">DIコンテナ</param>
     /// <param name="basePath">実行時設定ファイルのベースパス（appsettings.jsonのあるフォルダ）</param>
-    /// <param name="isDevelopment">開発環境で動かすかどうか</param>
-    public static void ConfigureServices(IServiceCollection services, string basePath, bool isDevelopment) {
+    /// <param name="isDevelopment">
+    /// 開発環境で動かすかどうか。
+    /// 省略すると開発環境として扱う。本番環境で動かす呼び出し元は Web だけで、
+    /// それ以外の呼び出し元（単体テスト、マイグレーション）は開発環境の設定で動かすため。
+    /// </param>
+    public static void ConfigureServices(IServiceCollection services, string basePath, bool isDevelopment = true) {
         if (!Path.IsPathRooted(basePath)) throw new ArgumentException($"{nameof(basePath)}は絶対パスで指定してください。");
 
         // アプリケーションサービスをDIコンテナに登録

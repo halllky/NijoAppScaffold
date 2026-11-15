@@ -14,8 +14,7 @@ public partial class MigrationEntryPoint : IDesignTimeDbContextFactory<Overrided
         var services = new ServiceCollection();
         var basePath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "WebApi"));
 
-        // マイグレーションは開発者が開発環境の設定で行うので、開発環境として扱う
-        OverridedApplicationService.ConfigureServices(services, basePath, isDevelopment: true);
+        OverridedApplicationService.ConfigureServices(services, basePath);
         ConfigureServicesスキーマ定義依存(services);
 
         var serviceProvider = services.BuildServiceProvider();
