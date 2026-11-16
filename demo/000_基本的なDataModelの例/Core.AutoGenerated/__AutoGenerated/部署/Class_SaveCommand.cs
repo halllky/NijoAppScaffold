@@ -111,35 +111,36 @@ public partial class 部署CreateCommand : 部署SaveCommand, ISaveCommand<Valid
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(部署SaveCommandMessages messages) {
+        string? errorMessage;
         // 部署ID
-        if (this.部署ID == null) {
-            messages.部署ID.AddError(MSG.RequiredError("部署ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.部署ID, "部署ID")) is not null) {
+            messages.部署ID.AddError(errorMessage);
         }
         // 部署名
-        if (string.IsNullOrWhiteSpace(this.部署名)) {
-            messages.部署名.AddError(MSG.RequiredError("部署名"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.部署名, "部署名")) is not null) {
+            messages.部署名.AddError(errorMessage);
         }
         for (var i = 0; i < this.課.Count; i++) {
             var item = this.課[i];
         
             // コード
-            if (string.IsNullOrWhiteSpace(item.コード)) {
-                messages.課[i].コード.AddError(MSG.RequiredError("コード"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.コード, "コード")) is not null) {
+                messages.課[i].コード.AddError(errorMessage);
             }
             // 課名称
-            if (string.IsNullOrWhiteSpace(item.課名称)) {
-                messages.課[i].課名称.AddError(MSG.RequiredError("課名称"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.課名称, "課名称")) is not null) {
+                messages.課[i].課名称.AddError(errorMessage);
             }
             for (var j = 0; j < item.係.Count; j++) {
                 var item1 = item.係[j];
             
                 // 連番
-                if (item1.連番 == null) {
-                    messages.課[i].係[j].連番.AddError(MSG.RequiredError("連番"));
+                if ((errorMessage = _dbContext.ValidateRequired(item1.連番, "連番")) is not null) {
+                    messages.課[i].係[j].連番.AddError(errorMessage);
                 }
                 // 係名称
-                if (string.IsNullOrWhiteSpace(item1.係名称)) {
-                    messages.課[i].係[j].係名称.AddError(MSG.RequiredError("係名称"));
+                if ((errorMessage = _dbContext.ValidateRequired(item1.係名称, "係名称")) is not null) {
+                    messages.課[i].係[j].係名称.AddError(errorMessage);
                 }
             }
         }
@@ -359,35 +360,36 @@ public partial class 部署UpdateCommand : 部署SaveCommand, ISaveCommand<Valid
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(部署SaveCommandMessages messages) {
+        string? errorMessage;
         // 部署ID
-        if (this.部署ID == null) {
-            messages.部署ID.AddError(MSG.RequiredError("部署ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.部署ID, "部署ID")) is not null) {
+            messages.部署ID.AddError(errorMessage);
         }
         // 部署名
-        if (string.IsNullOrWhiteSpace(this.部署名)) {
-            messages.部署名.AddError(MSG.RequiredError("部署名"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.部署名, "部署名")) is not null) {
+            messages.部署名.AddError(errorMessage);
         }
         for (var i = 0; i < this.課.Count; i++) {
             var item = this.課[i];
         
             // コード
-            if (string.IsNullOrWhiteSpace(item.コード)) {
-                messages.課[i].コード.AddError(MSG.RequiredError("コード"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.コード, "コード")) is not null) {
+                messages.課[i].コード.AddError(errorMessage);
             }
             // 課名称
-            if (string.IsNullOrWhiteSpace(item.課名称)) {
-                messages.課[i].課名称.AddError(MSG.RequiredError("課名称"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.課名称, "課名称")) is not null) {
+                messages.課[i].課名称.AddError(errorMessage);
             }
             for (var j = 0; j < item.係.Count; j++) {
                 var item1 = item.係[j];
             
                 // 連番
-                if (item1.連番 == null) {
-                    messages.課[i].係[j].連番.AddError(MSG.RequiredError("連番"));
+                if ((errorMessage = _dbContext.ValidateRequired(item1.連番, "連番")) is not null) {
+                    messages.課[i].係[j].連番.AddError(errorMessage);
                 }
                 // 係名称
-                if (string.IsNullOrWhiteSpace(item1.係名称)) {
-                    messages.課[i].係[j].係名称.AddError(MSG.RequiredError("係名称"));
+                if ((errorMessage = _dbContext.ValidateRequired(item1.係名称, "係名称")) is not null) {
+                    messages.課[i].係[j].係名称.AddError(errorMessage);
                 }
             }
         }

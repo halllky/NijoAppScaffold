@@ -1,6 +1,6 @@
 using Nijo.CodeGenerating;
-using Nijo.Parts.Common;
 using System;
+using System.Collections.Generic;
 using Nijo.DataStructures.Aggregates;
 using Nijo.DataStructures;
 
@@ -8,7 +8,7 @@ namespace Nijo.DataStructures.IsStored {
     /// <summary>
     /// 数値項目の桁数チェック
     /// </summary>
-    internal class ValidateDigitsAndScales : ValidatorBase {
+    internal class ValidateDigitsAndScales : DbContextHookValidator {
 
         internal const string METHOD_NAME = "ValidateDigitsAndScales";
         private const string MSG_ID_DIGITS = "DigitsError";
@@ -18,51 +18,33 @@ namespace Nijo.DataStructures.IsStored {
         public override string MsgId => MSG_ID_DIGITS;
         public override string MsgTemplate => "{0} は整数部 {1} 桁、小数部 {2} 桁以内で入力してください。";
 
+        internal override IEnumerable<string> RenderHookDeclarations(CodeRenderingContext ctx) {
+            yield return $$"""
+                /// <summary>
+                /// 数値項目の桁数チェック。属性 TotalDigit が付いた項目の登録・更新時に呼ばれる。
+                /// null を返すとチェックOK、文字列を返すとその内容でエラー登録されます。
+                /// </summary>
+                /// <param name="value">チェック対象の値。整数の項目も decimal に変換して渡される</param>
+                /// <param name="totalDigit">属性 TotalDigit の値（整数部と小数部を合わせた桁数）</param>
+                /// <param name="decimalPlace">属性 DecimalPlace の値（小数部の桁数）。整数の項目と、指定がない項目は 0</param>
+                /// <param name="displayName">項目の表示名</param>
+                /// <returns>エラーの場合はメッセージ文字列、正常なら null</returns>
+                public abstract string? {{METHOD_NAME}}(decimal? value, int totalDigit, int decimalPlace, string displayName);
+                """;
+        }
+
         protected override ValidateStatement? GetIfStatement(ValueMember vm, IInstanceProperty prop, CodeRenderingContext ctx) {
             if (vm.TotalDigit == null) return null;
 
-            var path = RenderPrimitiveValue(prop);
+            var decimalPlace = vm.Type.CsPrimitiveTypeName switch {
+                "int" or "long" => 0,
+                "decimal" => vm.DecimalPlace ?? 0,
+                _ => throw new InvalidOperationException($"ValidateDigitsAndScales cannot be applied to type {vm.Type.CsPrimitiveTypeName}."),
+            };
 
-            if (vm.Type.CsPrimitiveTypeName == "int" || vm.Type.CsPrimitiveTypeName == "long") {
-                var maxInt = 1L;
-                for (var i = 0; i < vm.TotalDigit.Value; i++) maxInt *= 10L;
-
-                return new ValidateStatement {
-                    If = $$"""
-                        {{path}} != null && Math.Abs((long){{path}}.Value) >= {{maxInt}}
-                        """,
-                    RenderErrorMessage = $$"""
-                        {{MsgFactory.MSG}}.{{MSG_ID_DIGITS}}("{{vm.DisplayName.Replace("\"", "\\\"")}}", "{{vm.TotalDigit}}", "0")
-                        """,
-                };
-
-            } else if (vm.Type.CsPrimitiveTypeName == "decimal") {
-                var integerDigits = vm.TotalDigit.Value - (vm.DecimalPlace ?? 0);
-                var scaleDigits = vm.DecimalPlace ?? 0;
-
-                // 整数部チェック
-                // 10^n を計算しておく
-                var maxInt = 1m;
-                for (var i = 0; i < integerDigits; i++) maxInt *= 10m;
-
-                // 小数部チェック
-                // 10^n を計算しておく
-                var scaleMulti = 1m;
-                for (var i = 0; i < scaleDigits; i++) scaleMulti *= 10m;
-
-                return new ValidateStatement {
-                    If = $$"""
-                        {{path}} != null && (
-                            Math.Abs(Math.Truncate({{path}}.Value)) >= {{maxInt}}m ||
-                            {{path}}.Value * {{scaleMulti}}m % 1 != 0)
-                        """,
-                    RenderErrorMessage = $$"""
-                        {{MsgFactory.MSG}}.{{MSG_ID_DIGITS}}("{{vm.DisplayName.Replace("\"", "\\\"")}}", "{{integerDigits}}", "{{scaleDigits}}")
-                        """,
-                };
-            } else {
-                throw new InvalidOperationException($"ValidateDigitsAndScales cannot be applied to type {vm.Type.CsPrimitiveTypeName}.");
-            }
+            return CallHooks([
+                RenderHookCall(METHOD_NAME, RenderPrimitiveValue(prop), vm.TotalDigit.Value.ToString(), decimalPlace.ToString(), ToLiteral(vm.DisplayName)),
+            ]);
         }
     }
 }

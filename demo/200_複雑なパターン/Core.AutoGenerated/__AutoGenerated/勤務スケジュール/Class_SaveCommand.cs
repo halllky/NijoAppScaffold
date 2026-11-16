@@ -115,17 +115,18 @@ public partial class 勤務スケジュールCreateCommand : 勤務スケジュ�
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(勤務スケジュールSaveCommandMessages messages) {
+        string? errorMessage;
         // 医療従事者
-        if (string.IsNullOrWhiteSpace(((string?)this.医療従事者?.医療従事者ID))) {
-            messages.医療従事者.AddError(MSG.RequiredError("医療従事者"));
+        if ((errorMessage = _dbContext.ValidateRequired(((string?)this.医療従事者?.医療従事者ID), "医療従事者")) is not null) {
+            messages.医療従事者.AddError(errorMessage);
         }
         // 診療科
-        if (string.IsNullOrWhiteSpace(this.診療科?.診療科ID)) {
-            messages.診療科.AddError(MSG.RequiredError("診療科"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.診療科?.診療科ID, "診療科")) is not null) {
+            messages.診療科.AddError(errorMessage);
         }
         // 日付
-        if (this.日付 == null) {
-            messages.日付.AddError(MSG.RequiredError("日付"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.日付, "日付")) is not null) {
+            messages.日付.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -138,20 +139,18 @@ public partial class 勤務スケジュールCreateCommand : 勤務スケジュ�
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(勤務スケジュールSaveCommandMessages messages) {
+        string? errorMessage;
         // 開始時間
-        if (!string.IsNullOrEmpty(this.開始時間)
-            && new System.Globalization.StringInfo(this.開始時間!).LengthInTextElements > 5) {
-            messages.開始時間.AddError(MSG.MaxLengthError("開始時間", "5"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.開始時間, 5, "開始時間")) is not null) {
+            messages.開始時間.AddError(errorMessage);
         }
         // 終了時間
-        if (!string.IsNullOrEmpty(this.終了時間)
-            && new System.Globalization.StringInfo(this.終了時間!).LengthInTextElements > 5) {
-            messages.終了時間.AddError(MSG.MaxLengthError("終了時間", "5"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.終了時間, 5, "終了時間")) is not null) {
+            messages.終了時間.AddError(errorMessage);
         }
         // 備考
-        if (!string.IsNullOrEmpty(this.備考)
-            && new System.Globalization.StringInfo(this.備考!).LengthInTextElements > 200) {
-            messages.備考.AddError(MSG.MaxLengthError("備考", "200"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.備考, 200, "備考")) is not null) {
+            messages.備考.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -299,17 +298,18 @@ public partial class 勤務スケジュールUpdateCommand : 勤務スケジュ�
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(勤務スケジュールSaveCommandMessages messages) {
+        string? errorMessage;
         // 医療従事者
-        if (string.IsNullOrWhiteSpace(((string?)this.医療従事者?.医療従事者ID))) {
-            messages.医療従事者.AddError(MSG.RequiredError("医療従事者"));
+        if ((errorMessage = _dbContext.ValidateRequired(((string?)this.医療従事者?.医療従事者ID), "医療従事者")) is not null) {
+            messages.医療従事者.AddError(errorMessage);
         }
         // 診療科
-        if (string.IsNullOrWhiteSpace(this.診療科?.診療科ID)) {
-            messages.診療科.AddError(MSG.RequiredError("診療科"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.診療科?.診療科ID, "診療科")) is not null) {
+            messages.診療科.AddError(errorMessage);
         }
         // 日付
-        if (this.日付 == null) {
-            messages.日付.AddError(MSG.RequiredError("日付"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.日付, "日付")) is not null) {
+            messages.日付.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -322,20 +322,18 @@ public partial class 勤務スケジュールUpdateCommand : 勤務スケジュ�
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(勤務スケジュールSaveCommandMessages messages) {
+        string? errorMessage;
         // 開始時間
-        if (!string.IsNullOrEmpty(this.開始時間)
-            && new System.Globalization.StringInfo(this.開始時間!).LengthInTextElements > 5) {
-            messages.開始時間.AddError(MSG.MaxLengthError("開始時間", "5"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.開始時間, 5, "開始時間")) is not null) {
+            messages.開始時間.AddError(errorMessage);
         }
         // 終了時間
-        if (!string.IsNullOrEmpty(this.終了時間)
-            && new System.Globalization.StringInfo(this.終了時間!).LengthInTextElements > 5) {
-            messages.終了時間.AddError(MSG.MaxLengthError("終了時間", "5"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.終了時間, 5, "終了時間")) is not null) {
+            messages.終了時間.AddError(errorMessage);
         }
         // 備考
-        if (!string.IsNullOrEmpty(this.備考)
-            && new System.Globalization.StringInfo(this.備考!).LengthInTextElements > 200) {
-            messages.備考.AddError(MSG.MaxLengthError("備考", "200"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.備考, 200, "備考")) is not null) {
+            messages.備考.AddError(errorMessage);
         }
     }
     /// <summary>

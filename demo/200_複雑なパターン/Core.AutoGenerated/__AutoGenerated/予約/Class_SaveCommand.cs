@@ -109,17 +109,18 @@ public partial class 予約CreateCommand : 予約SaveCommand, ISaveCommand<Valid
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(予約SaveCommandMessages messages) {
+        string? errorMessage;
         // 予約ID
-        if (string.IsNullOrWhiteSpace(this.予約ID)) {
-            messages.予約ID.AddError(MSG.RequiredError("予約ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.予約ID, "予約ID")) is not null) {
+            messages.予約ID.AddError(errorMessage);
         }
         // 予約日時
-        if (this.予約日時 == null) {
-            messages.予約日時.AddError(MSG.RequiredError("予約日時"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.予約日時, "予約日時")) is not null) {
+            messages.予約日時.AddError(errorMessage);
         }
         // 患者
-        if (string.IsNullOrWhiteSpace(this.患者?.患者ID)) {
-            messages.患者.AddError(MSG.RequiredError("患者"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.患者?.患者ID, "患者")) is not null) {
+            messages.患者.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -132,15 +133,14 @@ public partial class 予約CreateCommand : 予約SaveCommand, ISaveCommand<Valid
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(予約SaveCommandMessages messages) {
+        string? errorMessage;
         // 予約ID
-        if (!string.IsNullOrEmpty(this.予約ID)
-            && new System.Globalization.StringInfo(this.予約ID!).LengthInTextElements > 20) {
-            messages.予約ID.AddError(MSG.MaxLengthError("予約ID", "20"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.予約ID, 20, "予約ID")) is not null) {
+            messages.予約ID.AddError(errorMessage);
         }
         // 予約メモ
-        if (!string.IsNullOrEmpty(this.予約メモ)
-            && new System.Globalization.StringInfo(this.予約メモ!).LengthInTextElements > 500) {
-            messages.予約メモ.AddError(MSG.MaxLengthError("予約メモ", "500"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.予約メモ, 500, "予約メモ")) is not null) {
+            messages.予約メモ.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -283,17 +283,18 @@ public partial class 予約UpdateCommand : 予約SaveCommand, ISaveCommand<Valid
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(予約SaveCommandMessages messages) {
+        string? errorMessage;
         // 予約ID
-        if (string.IsNullOrWhiteSpace(this.予約ID)) {
-            messages.予約ID.AddError(MSG.RequiredError("予約ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.予約ID, "予約ID")) is not null) {
+            messages.予約ID.AddError(errorMessage);
         }
         // 予約日時
-        if (this.予約日時 == null) {
-            messages.予約日時.AddError(MSG.RequiredError("予約日時"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.予約日時, "予約日時")) is not null) {
+            messages.予約日時.AddError(errorMessage);
         }
         // 患者
-        if (string.IsNullOrWhiteSpace(this.患者?.患者ID)) {
-            messages.患者.AddError(MSG.RequiredError("患者"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.患者?.患者ID, "患者")) is not null) {
+            messages.患者.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -306,15 +307,14 @@ public partial class 予約UpdateCommand : 予約SaveCommand, ISaveCommand<Valid
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(予約SaveCommandMessages messages) {
+        string? errorMessage;
         // 予約ID
-        if (!string.IsNullOrEmpty(this.予約ID)
-            && new System.Globalization.StringInfo(this.予約ID!).LengthInTextElements > 20) {
-            messages.予約ID.AddError(MSG.MaxLengthError("予約ID", "20"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.予約ID, 20, "予約ID")) is not null) {
+            messages.予約ID.AddError(errorMessage);
         }
         // 予約メモ
-        if (!string.IsNullOrEmpty(this.予約メモ)
-            && new System.Globalization.StringInfo(this.予約メモ!).LengthInTextElements > 500) {
-            messages.予約メモ.AddError(MSG.MaxLengthError("予約メモ", "500"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.予約メモ, 500, "予約メモ")) is not null) {
+            messages.予約メモ.AddError(errorMessage);
         }
     }
     /// <summary>

@@ -22,6 +22,7 @@ DISTRIBUTION_TARGETS=(
     Core/MessageContainerExtension.cs
     Core/MigrationEntryPoint.cs
     Core/OverridedDbContext.TrySaveAsync.cs
+    Core/OverridedDbContext.Validation.cs
 
     # WebApi
     # 自動生成されたクエリ・コマンドのエンドポイント（WebApi/Base/）は、HTTPの取り決めがデモごとに異なるので配布しない

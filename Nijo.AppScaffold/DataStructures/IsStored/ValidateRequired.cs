@@ -1,7 +1,5 @@
 using Nijo.CodeGenerating;
 using Nijo.Parts.Common;
-using Nijo.Util.DotnetEx;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Nijo.DataStructures.Aggregates;
@@ -11,7 +9,7 @@ namespace Nijo.DataStructures.IsStored {
     /// <summary>
     /// 必須入力チェック
     /// </summary>
-    internal class ValidateRequired : ValidatorBase {
+    internal class ValidateRequired : DbContextHookValidator {
 
         internal const string METHOD_NAME = "ValidateRequired";
         private const string MSG_ID_REQUIRED = "RequiredError";
@@ -21,35 +19,32 @@ namespace Nijo.DataStructures.IsStored {
         public override string MsgId => MSG_ID_REQUIRED;
         public override string MsgTemplate => "{0} を入力してください。";
 
+        internal override IEnumerable<string> RenderHookDeclarations(CodeRenderingContext ctx) {
+            yield return $$"""
+                /// <summary>
+                /// 必須入力チェック。属性 IsKey か IsNotNull が付いた項目の登録・更新時に呼ばれる。
+                /// null を返すとチェックOK、文字列を返すとその内容でエラー登録されます。
+                /// </summary>
+                /// <param name="value">チェック対象の値。値オブジェクトは文字列に変換して渡される</param>
+                /// <param name="displayName">項目の表示名</param>
+                /// <returns>エラーの場合はメッセージ文字列、正常なら null</returns>
+                public abstract string? {{METHOD_NAME}}(object? value, string displayName);
+                """;
+        }
+
         protected override ValidateStatement? GetIfStatement(ValueMember vm, IInstanceProperty prop, CodeRenderingContext ctx) {
             if (!vm.IsKey && !vm.IsNotNull) return null;
 
-            return new ValidateStatement {
-                If = RenderIsEmpty(prop, "."),
-                RenderErrorMessage = $$"""
-                    {{MsgFactory.MSG}}.{{MSG_ID_REQUIRED}}("{{vm.DisplayName.Replace("\"", "\\\"")}}")
-                    """,
-            };
+            return CallHooks([
+                RenderHookCall(METHOD_NAME, RenderPrimitiveValue(prop), ToLiteral(vm.DisplayName)),
+            ]);
         }
 
         protected override ValidateStatement? GetIfStatement(RefToMember refTo, IEnumerable<IInstanceProperty> keyProps, CodeRenderingContext ctx) {
             if (!refTo.IsKey && !refTo.IsNotNull) return null;
 
-            return new ValidateStatement {
-                If = keyProps.Select(prop => RenderIsEmpty(prop, "?.")).Join(" || "),
-                RenderErrorMessage = $$"""
-                    {{MsgFactory.MSG}}.{{MSG_ID_REQUIRED}}("{{refTo.DisplayName.Replace("\"", "\\\"")}}")
-                    """,
-            };
-        }
-
-        /// <summary>
-        /// stringなら IsNullOrWhiteSpace で判定。それ以外は単に == null で判定
-        /// </summary>
-        private static string RenderIsEmpty(IInstanceProperty prop, string nullableSeparator) {
-            return ((IInstanceValuePropertyMetadata)prop.Metadata).Type.CsPrimitiveTypeName == "string"
-                ? $"string.IsNullOrWhiteSpace({RenderPrimitiveValue(prop, nullableSeparator)})"
-                : $"{prop.GetJoinedPathFromInstance(E_CsTs.CSharp, nullableSeparator)} == null";
+            return CallHooks(keyProps.Select(prop =>
+                RenderHookCall(METHOD_NAME, RenderPrimitiveValue(prop, "?."), ToLiteral(refTo.DisplayName))));
         }
     }
 }

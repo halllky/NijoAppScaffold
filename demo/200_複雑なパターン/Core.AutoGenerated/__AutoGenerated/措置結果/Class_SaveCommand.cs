@@ -138,32 +138,35 @@ public partial class 措置結果CreateCommand : 措置結果SaveCommand, ISaveC
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(措置結果SaveCommandMessages messages) {
+        string? errorMessage;
         // 対象措置
-        if (string.IsNullOrWhiteSpace(this.対象措置?.機器点検報告?.対象機器?.医療機器マスタ?.機器ID) || string.IsNullOrWhiteSpace(this.対象措置?.機器点検報告?.対象機器?.保管庫?.保管庫ID) || string.IsNullOrWhiteSpace(this.対象措置?.措置ID)) {
-            messages.対象措置.AddError(MSG.RequiredError("対象措置"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.対象措置?.機器点検報告?.対象機器?.医療機器マスタ?.機器ID, "対象措置")
+            ?? _dbContext.ValidateRequired(this.対象措置?.機器点検報告?.対象機器?.保管庫?.保管庫ID, "対象措置")
+            ?? _dbContext.ValidateRequired(this.対象措置?.措置ID, "対象措置")) is not null) {
+            messages.対象措置.AddError(errorMessage);
         }
         // 結果日時
-        if (this.結果日時 == null) {
-            messages.結果日時.AddError(MSG.RequiredError("結果日時"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.結果日時, "結果日時")) is not null) {
+            messages.結果日時.AddError(errorMessage);
         }
         // 結果担当者
-        if (string.IsNullOrWhiteSpace(((string?)this.結果担当者?.医療従事者ID))) {
-            messages.結果担当者.AddError(MSG.RequiredError("結果担当者"));
+        if ((errorMessage = _dbContext.ValidateRequired(((string?)this.結果担当者?.医療従事者ID), "結果担当者")) is not null) {
+            messages.結果担当者.AddError(errorMessage);
         }
         // 結果状態
-        if (this.結果状態 == null) {
-            messages.結果状態.AddError(MSG.RequiredError("結果状態"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.結果状態, "結果状態")) is not null) {
+            messages.結果状態.AddError(errorMessage);
         }
         for (var i = 0; i < this.添付資料.Count; i++) {
             var item = this.添付資料[i];
         
             // 資料ID
-            if (string.IsNullOrWhiteSpace(item.資料ID)) {
-                messages.添付資料[i].資料ID.AddError(MSG.RequiredError("資料ID"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.資料ID, "資料ID")) is not null) {
+                messages.添付資料[i].資料ID.AddError(errorMessage);
             }
             // 資料名
-            if (string.IsNullOrWhiteSpace(item.資料名)) {
-                messages.添付資料[i].資料名.AddError(MSG.RequiredError("資料名"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.資料名, "資料名")) is not null) {
+                messages.添付資料[i].資料名.AddError(errorMessage);
             }
         }
     }
@@ -177,35 +180,31 @@ public partial class 措置結果CreateCommand : 措置結果SaveCommand, ISaveC
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(措置結果SaveCommandMessages messages) {
+        string? errorMessage;
         for (var i = 0; i < this.添付資料.Count; i++) {
             var item = this.添付資料[i];
         
             // 資料ID
-            if (!string.IsNullOrEmpty(item.資料ID)
-                && new System.Globalization.StringInfo(item.資料ID!).LengthInTextElements > 20) {
-                messages.添付資料[i].資料ID.AddError(MSG.MaxLengthError("資料ID", "20"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.資料ID, 20, "資料ID")) is not null) {
+                messages.添付資料[i].資料ID.AddError(errorMessage);
             }
             // 資料名
-            if (!string.IsNullOrEmpty(item.資料名)
-                && new System.Globalization.StringInfo(item.資料名!).LengthInTextElements > 100) {
-                messages.添付資料[i].資料名.AddError(MSG.MaxLengthError("資料名", "100"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.資料名, 100, "資料名")) is not null) {
+                messages.添付資料[i].資料名.AddError(errorMessage);
             }
             // ファイルパス
-            if (!string.IsNullOrEmpty(item.ファイルパス)
-                && new System.Globalization.StringInfo(item.ファイルパス!).LengthInTextElements > 200) {
-                messages.添付資料[i].ファイルパス.AddError(MSG.MaxLengthError("ファイルパス", "200"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.ファイルパス, 200, "ファイルパス")) is not null) {
+                messages.添付資料[i].ファイルパス.AddError(errorMessage);
             }
         }
         // フィードバック
-        if (!string.IsNullOrEmpty(this.フィードバック)
-            && new System.Globalization.StringInfo(this.フィードバック!).LengthInTextElements > 1000) {
-            messages.フィードバック.AddError(MSG.MaxLengthError("フィードバック", "1000"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.フィードバック, 1000, "フィードバック")) is not null) {
+            messages.フィードバック.AddError(errorMessage);
         }
         if (this.次回措置 != null) {
             // 内容
-            if (!string.IsNullOrEmpty(this.次回措置.内容)
-                && new System.Globalization.StringInfo(this.次回措置.内容!).LengthInTextElements > 500) {
-                messages.次回措置.内容.AddError(MSG.MaxLengthError("内容", "500"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.次回措置.内容, 500, "内容")) is not null) {
+                messages.次回措置.内容.AddError(errorMessage);
             }
         }
     }
@@ -456,32 +455,35 @@ public partial class 措置結果UpdateCommand : 措置結果SaveCommand, ISaveC
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(措置結果SaveCommandMessages messages) {
+        string? errorMessage;
         // 対象措置
-        if (string.IsNullOrWhiteSpace(this.対象措置?.機器点検報告?.対象機器?.医療機器マスタ?.機器ID) || string.IsNullOrWhiteSpace(this.対象措置?.機器点検報告?.対象機器?.保管庫?.保管庫ID) || string.IsNullOrWhiteSpace(this.対象措置?.措置ID)) {
-            messages.対象措置.AddError(MSG.RequiredError("対象措置"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.対象措置?.機器点検報告?.対象機器?.医療機器マスタ?.機器ID, "対象措置")
+            ?? _dbContext.ValidateRequired(this.対象措置?.機器点検報告?.対象機器?.保管庫?.保管庫ID, "対象措置")
+            ?? _dbContext.ValidateRequired(this.対象措置?.措置ID, "対象措置")) is not null) {
+            messages.対象措置.AddError(errorMessage);
         }
         // 結果日時
-        if (this.結果日時 == null) {
-            messages.結果日時.AddError(MSG.RequiredError("結果日時"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.結果日時, "結果日時")) is not null) {
+            messages.結果日時.AddError(errorMessage);
         }
         // 結果担当者
-        if (string.IsNullOrWhiteSpace(((string?)this.結果担当者?.医療従事者ID))) {
-            messages.結果担当者.AddError(MSG.RequiredError("結果担当者"));
+        if ((errorMessage = _dbContext.ValidateRequired(((string?)this.結果担当者?.医療従事者ID), "結果担当者")) is not null) {
+            messages.結果担当者.AddError(errorMessage);
         }
         // 結果状態
-        if (this.結果状態 == null) {
-            messages.結果状態.AddError(MSG.RequiredError("結果状態"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.結果状態, "結果状態")) is not null) {
+            messages.結果状態.AddError(errorMessage);
         }
         for (var i = 0; i < this.添付資料.Count; i++) {
             var item = this.添付資料[i];
         
             // 資料ID
-            if (string.IsNullOrWhiteSpace(item.資料ID)) {
-                messages.添付資料[i].資料ID.AddError(MSG.RequiredError("資料ID"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.資料ID, "資料ID")) is not null) {
+                messages.添付資料[i].資料ID.AddError(errorMessage);
             }
             // 資料名
-            if (string.IsNullOrWhiteSpace(item.資料名)) {
-                messages.添付資料[i].資料名.AddError(MSG.RequiredError("資料名"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.資料名, "資料名")) is not null) {
+                messages.添付資料[i].資料名.AddError(errorMessage);
             }
         }
     }
@@ -495,35 +497,31 @@ public partial class 措置結果UpdateCommand : 措置結果SaveCommand, ISaveC
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(措置結果SaveCommandMessages messages) {
+        string? errorMessage;
         for (var i = 0; i < this.添付資料.Count; i++) {
             var item = this.添付資料[i];
         
             // 資料ID
-            if (!string.IsNullOrEmpty(item.資料ID)
-                && new System.Globalization.StringInfo(item.資料ID!).LengthInTextElements > 20) {
-                messages.添付資料[i].資料ID.AddError(MSG.MaxLengthError("資料ID", "20"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.資料ID, 20, "資料ID")) is not null) {
+                messages.添付資料[i].資料ID.AddError(errorMessage);
             }
             // 資料名
-            if (!string.IsNullOrEmpty(item.資料名)
-                && new System.Globalization.StringInfo(item.資料名!).LengthInTextElements > 100) {
-                messages.添付資料[i].資料名.AddError(MSG.MaxLengthError("資料名", "100"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.資料名, 100, "資料名")) is not null) {
+                messages.添付資料[i].資料名.AddError(errorMessage);
             }
             // ファイルパス
-            if (!string.IsNullOrEmpty(item.ファイルパス)
-                && new System.Globalization.StringInfo(item.ファイルパス!).LengthInTextElements > 200) {
-                messages.添付資料[i].ファイルパス.AddError(MSG.MaxLengthError("ファイルパス", "200"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.ファイルパス, 200, "ファイルパス")) is not null) {
+                messages.添付資料[i].ファイルパス.AddError(errorMessage);
             }
         }
         // フィードバック
-        if (!string.IsNullOrEmpty(this.フィードバック)
-            && new System.Globalization.StringInfo(this.フィードバック!).LengthInTextElements > 1000) {
-            messages.フィードバック.AddError(MSG.MaxLengthError("フィードバック", "1000"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.フィードバック, 1000, "フィードバック")) is not null) {
+            messages.フィードバック.AddError(errorMessage);
         }
         if (this.次回措置 != null) {
             // 内容
-            if (!string.IsNullOrEmpty(this.次回措置.内容)
-                && new System.Globalization.StringInfo(this.次回措置.内容!).LengthInTextElements > 500) {
-                messages.次回措置.内容.AddError(MSG.MaxLengthError("内容", "500"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.次回措置.内容, 500, "内容")) is not null) {
+                messages.次回措置.内容.AddError(errorMessage);
             }
         }
     }

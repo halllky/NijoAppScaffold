@@ -125,16 +125,17 @@ public partial class 診察記録CreateCommand : 診察記録SaveCommand, ISaveC
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(診察記録SaveCommandMessages messages) {
+        string? errorMessage;
         // 予約
-        if (string.IsNullOrWhiteSpace(this.予約?.予約ID)) {
-            messages.予約.AddError(MSG.RequiredError("予約"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.予約?.予約ID, "予約")) is not null) {
+            messages.予約.AddError(errorMessage);
         }
         for (var i = 0; i < this.処方薬.Count; i++) {
             var item = this.処方薬[i];
         
             // 薬剤ID
-            if (string.IsNullOrWhiteSpace(item.薬剤ID)) {
-                messages.処方薬[i].薬剤ID.AddError(MSG.RequiredError("薬剤ID"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.薬剤ID, "薬剤ID")) is not null) {
+                messages.処方薬[i].薬剤ID.AddError(errorMessage);
             }
         }
     }
@@ -148,33 +149,29 @@ public partial class 診察記録CreateCommand : 診察記録SaveCommand, ISaveC
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(診察記録SaveCommandMessages messages) {
+        string? errorMessage;
         // 診察メモ
-        if (!string.IsNullOrEmpty(this.診察メモ)
-            && new System.Globalization.StringInfo(this.診察メモ!).LengthInTextElements > 1000) {
-            messages.診察メモ.AddError(MSG.MaxLengthError("診察メモ", "1000"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.診察メモ, 1000, "診察メモ")) is not null) {
+            messages.診察メモ.AddError(errorMessage);
         }
         for (var i = 0; i < this.処方薬.Count; i++) {
             var item = this.処方薬[i];
         
             // 薬剤ID
-            if (!string.IsNullOrEmpty(item.薬剤ID)
-                && new System.Globalization.StringInfo(item.薬剤ID!).LengthInTextElements > 20) {
-                messages.処方薬[i].薬剤ID.AddError(MSG.MaxLengthError("薬剤ID", "20"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.薬剤ID, 20, "薬剤ID")) is not null) {
+                messages.処方薬[i].薬剤ID.AddError(errorMessage);
             }
             // 薬剤名
-            if (!string.IsNullOrEmpty(item.薬剤名)
-                && new System.Globalization.StringInfo(item.薬剤名!).LengthInTextElements > 100) {
-                messages.処方薬[i].薬剤名.AddError(MSG.MaxLengthError("薬剤名", "100"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.薬剤名, 100, "薬剤名")) is not null) {
+                messages.処方薬[i].薬剤名.AddError(errorMessage);
             }
             // 用法
-            if (!string.IsNullOrEmpty(item.用法)
-                && new System.Globalization.StringInfo(item.用法!).LengthInTextElements > 100) {
-                messages.処方薬[i].用法.AddError(MSG.MaxLengthError("用法", "100"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.用法, 100, "用法")) is not null) {
+                messages.処方薬[i].用法.AddError(errorMessage);
             }
             // 備考
-            if (!string.IsNullOrEmpty(item.備考)
-                && new System.Globalization.StringInfo(item.備考!).LengthInTextElements > 200) {
-                messages.処方薬[i].備考.AddError(MSG.MaxLengthError("備考", "200"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.備考, 200, "備考")) is not null) {
+                messages.処方薬[i].備考.AddError(errorMessage);
             }
         }
     }
@@ -182,11 +179,10 @@ public partial class 診察記録CreateCommand : 診察記録SaveCommand, ISaveC
     /// 数値項目の桁数チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateDigitsAndScales(診察記録SaveCommandMessages messages) {
+        string? errorMessage;
         // 体温
-        if (this.体温 != null && (
-                Math.Abs(Math.Truncate(this.体温.Value)) >= 100m ||
-                this.体温.Value * 10m % 1 != 0)) {
-            messages.体温.AddError(MSG.DigitsError("体温", "2", "1"));
+        if ((errorMessage = _dbContext.ValidateDigitsAndScales(this.体温, 3, 1, "体温")) is not null) {
+            messages.体温.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -378,16 +374,17 @@ public partial class 診察記録UpdateCommand : 診察記録SaveCommand, ISaveC
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(診察記録SaveCommandMessages messages) {
+        string? errorMessage;
         // 予約
-        if (string.IsNullOrWhiteSpace(this.予約?.予約ID)) {
-            messages.予約.AddError(MSG.RequiredError("予約"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.予約?.予約ID, "予約")) is not null) {
+            messages.予約.AddError(errorMessage);
         }
         for (var i = 0; i < this.処方薬.Count; i++) {
             var item = this.処方薬[i];
         
             // 薬剤ID
-            if (string.IsNullOrWhiteSpace(item.薬剤ID)) {
-                messages.処方薬[i].薬剤ID.AddError(MSG.RequiredError("薬剤ID"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.薬剤ID, "薬剤ID")) is not null) {
+                messages.処方薬[i].薬剤ID.AddError(errorMessage);
             }
         }
     }
@@ -401,33 +398,29 @@ public partial class 診察記録UpdateCommand : 診察記録SaveCommand, ISaveC
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(診察記録SaveCommandMessages messages) {
+        string? errorMessage;
         // 診察メモ
-        if (!string.IsNullOrEmpty(this.診察メモ)
-            && new System.Globalization.StringInfo(this.診察メモ!).LengthInTextElements > 1000) {
-            messages.診察メモ.AddError(MSG.MaxLengthError("診察メモ", "1000"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.診察メモ, 1000, "診察メモ")) is not null) {
+            messages.診察メモ.AddError(errorMessage);
         }
         for (var i = 0; i < this.処方薬.Count; i++) {
             var item = this.処方薬[i];
         
             // 薬剤ID
-            if (!string.IsNullOrEmpty(item.薬剤ID)
-                && new System.Globalization.StringInfo(item.薬剤ID!).LengthInTextElements > 20) {
-                messages.処方薬[i].薬剤ID.AddError(MSG.MaxLengthError("薬剤ID", "20"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.薬剤ID, 20, "薬剤ID")) is not null) {
+                messages.処方薬[i].薬剤ID.AddError(errorMessage);
             }
             // 薬剤名
-            if (!string.IsNullOrEmpty(item.薬剤名)
-                && new System.Globalization.StringInfo(item.薬剤名!).LengthInTextElements > 100) {
-                messages.処方薬[i].薬剤名.AddError(MSG.MaxLengthError("薬剤名", "100"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.薬剤名, 100, "薬剤名")) is not null) {
+                messages.処方薬[i].薬剤名.AddError(errorMessage);
             }
             // 用法
-            if (!string.IsNullOrEmpty(item.用法)
-                && new System.Globalization.StringInfo(item.用法!).LengthInTextElements > 100) {
-                messages.処方薬[i].用法.AddError(MSG.MaxLengthError("用法", "100"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.用法, 100, "用法")) is not null) {
+                messages.処方薬[i].用法.AddError(errorMessage);
             }
             // 備考
-            if (!string.IsNullOrEmpty(item.備考)
-                && new System.Globalization.StringInfo(item.備考!).LengthInTextElements > 200) {
-                messages.処方薬[i].備考.AddError(MSG.MaxLengthError("備考", "200"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.備考, 200, "備考")) is not null) {
+                messages.処方薬[i].備考.AddError(errorMessage);
             }
         }
     }
@@ -435,11 +428,10 @@ public partial class 診察記録UpdateCommand : 診察記録SaveCommand, ISaveC
     /// 数値項目の桁数チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateDigitsAndScales(診察記録SaveCommandMessages messages) {
+        string? errorMessage;
         // 体温
-        if (this.体温 != null && (
-                Math.Abs(Math.Truncate(this.体温.Value)) >= 100m ||
-                this.体温.Value * 10m % 1 != 0)) {
-            messages.体温.AddError(MSG.DigitsError("体温", "2", "1"));
+        if ((errorMessage = _dbContext.ValidateDigitsAndScales(this.体温, 3, 1, "体温")) is not null) {
+            messages.体温.AddError(errorMessage);
         }
     }
     /// <summary>

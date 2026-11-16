@@ -93,9 +93,10 @@ public partial class 機器分類マスタCreateCommand : 機器分類マスタS
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(機器分類マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 機器分類ID
-        if (string.IsNullOrWhiteSpace(this.機器分類ID)) {
-            messages.機器分類ID.AddError(MSG.RequiredError("機器分類ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.機器分類ID, "機器分類ID")) is not null) {
+            messages.機器分類ID.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -108,15 +109,14 @@ public partial class 機器分類マスタCreateCommand : 機器分類マスタS
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(機器分類マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 機器分類ID
-        if (!string.IsNullOrEmpty(this.機器分類ID)
-            && new System.Globalization.StringInfo(this.機器分類ID!).LengthInTextElements > 10) {
-            messages.機器分類ID.AddError(MSG.MaxLengthError("機器分類ID", "10"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.機器分類ID, 10, "機器分類ID")) is not null) {
+            messages.機器分類ID.AddError(errorMessage);
         }
         // 機器分類名
-        if (!string.IsNullOrEmpty(this.機器分類名)
-            && new System.Globalization.StringInfo(this.機器分類名!).LengthInTextElements > 50) {
-            messages.機器分類名.AddError(MSG.MaxLengthError("機器分類名", "50"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.機器分類名, 50, "機器分類名")) is not null) {
+            messages.機器分類名.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -235,9 +235,10 @@ public partial class 機器分類マスタUpdateCommand : 機器分類マスタS
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(機器分類マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 機器分類ID
-        if (string.IsNullOrWhiteSpace(this.機器分類ID)) {
-            messages.機器分類ID.AddError(MSG.RequiredError("機器分類ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.機器分類ID, "機器分類ID")) is not null) {
+            messages.機器分類ID.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -250,15 +251,14 @@ public partial class 機器分類マスタUpdateCommand : 機器分類マスタS
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(機器分類マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 機器分類ID
-        if (!string.IsNullOrEmpty(this.機器分類ID)
-            && new System.Globalization.StringInfo(this.機器分類ID!).LengthInTextElements > 10) {
-            messages.機器分類ID.AddError(MSG.MaxLengthError("機器分類ID", "10"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.機器分類ID, 10, "機器分類ID")) is not null) {
+            messages.機器分類ID.AddError(errorMessage);
         }
         // 機器分類名
-        if (!string.IsNullOrEmpty(this.機器分類名)
-            && new System.Globalization.StringInfo(this.機器分類名!).LengthInTextElements > 50) {
-            messages.機器分類名.AddError(MSG.MaxLengthError("機器分類名", "50"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.機器分類名, 50, "機器分類名")) is not null) {
+            messages.機器分類名.AddError(errorMessage);
         }
     }
     /// <summary>

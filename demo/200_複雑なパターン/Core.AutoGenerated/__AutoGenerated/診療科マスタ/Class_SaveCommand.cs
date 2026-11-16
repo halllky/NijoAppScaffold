@@ -119,9 +119,10 @@ public partial class 診療科マスタCreateCommand : 診療科マスタSaveCom
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(診療科マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 診療科ID
-        if (string.IsNullOrWhiteSpace(this.診療科ID)) {
-            messages.診療科ID.AddError(MSG.RequiredError("診療科ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.診療科ID, "診療科ID")) is not null) {
+            messages.診療科ID.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -134,53 +135,45 @@ public partial class 診療科マスタCreateCommand : 診療科マスタSaveCom
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(診療科マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 診療科ID
-        if (!string.IsNullOrEmpty(this.診療科ID)
-            && new System.Globalization.StringInfo(this.診療科ID!).LengthInTextElements > 10) {
-            messages.診療科ID.AddError(MSG.MaxLengthError("診療科ID", "10"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.診療科ID, 10, "診療科ID")) is not null) {
+            messages.診療科ID.AddError(errorMessage);
         }
         // 診療科名
-        if (!string.IsNullOrEmpty(this.診療科名)
-            && new System.Globalization.StringInfo(this.診療科名!).LengthInTextElements > 50) {
-            messages.診療科名.AddError(MSG.MaxLengthError("診療科名", "50"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.診療科名, 50, "診療科名")) is not null) {
+            messages.診療科名.AddError(errorMessage);
         }
         // 電話番号
-        if (!string.IsNullOrEmpty(this.電話番号)
-            && new System.Globalization.StringInfo(this.電話番号!).LengthInTextElements > 20) {
-            messages.電話番号.AddError(MSG.MaxLengthError("電話番号", "20"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.電話番号, 20, "電話番号")) is not null) {
+            messages.電話番号.AddError(errorMessage);
         }
         if (this.診療科マスタの住所 != null) {
             // 郵便番号
-            if (!string.IsNullOrEmpty(this.診療科マスタの住所.郵便番号)
-                && new System.Globalization.StringInfo(this.診療科マスタの住所.郵便番号!).LengthInTextElements > 8) {
-                messages.診療科マスタの住所.郵便番号.AddError(MSG.MaxLengthError("郵便番号", "8"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.診療科マスタの住所.郵便番号, 8, "郵便番号")) is not null) {
+                messages.診療科マスタの住所.郵便番号.AddError(errorMessage);
             }
             // 都道府県
-            if (!string.IsNullOrEmpty(this.診療科マスタの住所.都道府県)
-                && new System.Globalization.StringInfo(this.診療科マスタの住所.都道府県!).LengthInTextElements > 10) {
-                messages.診療科マスタの住所.都道府県.AddError(MSG.MaxLengthError("都道府県", "10"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.診療科マスタの住所.都道府県, 10, "都道府県")) is not null) {
+                messages.診療科マスタの住所.都道府県.AddError(errorMessage);
             }
             // 市区町村
-            if (!string.IsNullOrEmpty(this.診療科マスタの住所.市区町村)
-                && new System.Globalization.StringInfo(this.診療科マスタの住所.市区町村!).LengthInTextElements > 20) {
-                messages.診療科マスタの住所.市区町村.AddError(MSG.MaxLengthError("市区町村", "20"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.診療科マスタの住所.市区町村, 20, "市区町村")) is not null) {
+                messages.診療科マスタの住所.市区町村.AddError(errorMessage);
             }
             // 番地建物名
-            if (!string.IsNullOrEmpty(this.診療科マスタの住所.番地建物名)
-                && new System.Globalization.StringInfo(this.診療科マスタの住所.番地建物名!).LengthInTextElements > 100) {
-                messages.診療科マスタの住所.番地建物名.AddError(MSG.MaxLengthError("番地建物名", "100"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.診療科マスタの住所.番地建物名, 100, "番地建物名")) is not null) {
+                messages.診療科マスタの住所.番地建物名.AddError(errorMessage);
             }
         }
         if (this.診療時間 != null) {
             // 開始時間
-            if (!string.IsNullOrEmpty(this.診療時間.開始時間)
-                && new System.Globalization.StringInfo(this.診療時間.開始時間!).LengthInTextElements > 5) {
-                messages.診療時間.開始時間.AddError(MSG.MaxLengthError("開始時間", "5"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.診療時間.開始時間, 5, "開始時間")) is not null) {
+                messages.診療時間.開始時間.AddError(errorMessage);
             }
             // 終了時間
-            if (!string.IsNullOrEmpty(this.診療時間.終了時間)
-                && new System.Globalization.StringInfo(this.診療時間.終了時間!).LengthInTextElements > 5) {
-                messages.診療時間.終了時間.AddError(MSG.MaxLengthError("終了時間", "5"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.診療時間.終了時間, 5, "終了時間")) is not null) {
+                messages.診療時間.終了時間.AddError(errorMessage);
             }
         }
     }
@@ -392,9 +385,10 @@ public partial class 診療科マスタUpdateCommand : 診療科マスタSaveCom
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(診療科マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 診療科ID
-        if (string.IsNullOrWhiteSpace(this.診療科ID)) {
-            messages.診療科ID.AddError(MSG.RequiredError("診療科ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.診療科ID, "診療科ID")) is not null) {
+            messages.診療科ID.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -407,53 +401,45 @@ public partial class 診療科マスタUpdateCommand : 診療科マスタSaveCom
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(診療科マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 診療科ID
-        if (!string.IsNullOrEmpty(this.診療科ID)
-            && new System.Globalization.StringInfo(this.診療科ID!).LengthInTextElements > 10) {
-            messages.診療科ID.AddError(MSG.MaxLengthError("診療科ID", "10"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.診療科ID, 10, "診療科ID")) is not null) {
+            messages.診療科ID.AddError(errorMessage);
         }
         // 診療科名
-        if (!string.IsNullOrEmpty(this.診療科名)
-            && new System.Globalization.StringInfo(this.診療科名!).LengthInTextElements > 50) {
-            messages.診療科名.AddError(MSG.MaxLengthError("診療科名", "50"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.診療科名, 50, "診療科名")) is not null) {
+            messages.診療科名.AddError(errorMessage);
         }
         // 電話番号
-        if (!string.IsNullOrEmpty(this.電話番号)
-            && new System.Globalization.StringInfo(this.電話番号!).LengthInTextElements > 20) {
-            messages.電話番号.AddError(MSG.MaxLengthError("電話番号", "20"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.電話番号, 20, "電話番号")) is not null) {
+            messages.電話番号.AddError(errorMessage);
         }
         if (this.診療科マスタの住所 != null) {
             // 郵便番号
-            if (!string.IsNullOrEmpty(this.診療科マスタの住所.郵便番号)
-                && new System.Globalization.StringInfo(this.診療科マスタの住所.郵便番号!).LengthInTextElements > 8) {
-                messages.診療科マスタの住所.郵便番号.AddError(MSG.MaxLengthError("郵便番号", "8"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.診療科マスタの住所.郵便番号, 8, "郵便番号")) is not null) {
+                messages.診療科マスタの住所.郵便番号.AddError(errorMessage);
             }
             // 都道府県
-            if (!string.IsNullOrEmpty(this.診療科マスタの住所.都道府県)
-                && new System.Globalization.StringInfo(this.診療科マスタの住所.都道府県!).LengthInTextElements > 10) {
-                messages.診療科マスタの住所.都道府県.AddError(MSG.MaxLengthError("都道府県", "10"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.診療科マスタの住所.都道府県, 10, "都道府県")) is not null) {
+                messages.診療科マスタの住所.都道府県.AddError(errorMessage);
             }
             // 市区町村
-            if (!string.IsNullOrEmpty(this.診療科マスタの住所.市区町村)
-                && new System.Globalization.StringInfo(this.診療科マスタの住所.市区町村!).LengthInTextElements > 20) {
-                messages.診療科マスタの住所.市区町村.AddError(MSG.MaxLengthError("市区町村", "20"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.診療科マスタの住所.市区町村, 20, "市区町村")) is not null) {
+                messages.診療科マスタの住所.市区町村.AddError(errorMessage);
             }
             // 番地建物名
-            if (!string.IsNullOrEmpty(this.診療科マスタの住所.番地建物名)
-                && new System.Globalization.StringInfo(this.診療科マスタの住所.番地建物名!).LengthInTextElements > 100) {
-                messages.診療科マスタの住所.番地建物名.AddError(MSG.MaxLengthError("番地建物名", "100"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.診療科マスタの住所.番地建物名, 100, "番地建物名")) is not null) {
+                messages.診療科マスタの住所.番地建物名.AddError(errorMessage);
             }
         }
         if (this.診療時間 != null) {
             // 開始時間
-            if (!string.IsNullOrEmpty(this.診療時間.開始時間)
-                && new System.Globalization.StringInfo(this.診療時間.開始時間!).LengthInTextElements > 5) {
-                messages.診療時間.開始時間.AddError(MSG.MaxLengthError("開始時間", "5"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.診療時間.開始時間, 5, "開始時間")) is not null) {
+                messages.診療時間.開始時間.AddError(errorMessage);
             }
             // 終了時間
-            if (!string.IsNullOrEmpty(this.診療時間.終了時間)
-                && new System.Globalization.StringInfo(this.診療時間.終了時間!).LengthInTextElements > 5) {
-                messages.診療時間.終了時間.AddError(MSG.MaxLengthError("終了時間", "5"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.診療時間.終了時間, 5, "終了時間")) is not null) {
+                messages.診療時間.終了時間.AddError(errorMessage);
             }
         }
     }

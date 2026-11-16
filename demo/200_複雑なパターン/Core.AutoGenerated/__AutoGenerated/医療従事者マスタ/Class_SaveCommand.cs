@@ -116,32 +116,33 @@ public partial class 医療従事者マスタCreateCommand : 医療従事者マ�
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(医療従事者マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 医療従事者ID
-        if (string.IsNullOrWhiteSpace(((string?)this.医療従事者ID))) {
-            messages.医療従事者ID.AddError(MSG.RequiredError("医療従事者ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(((string?)this.医療従事者ID), "医療従事者ID")) is not null) {
+            messages.医療従事者ID.AddError(errorMessage);
         }
         // 氏名
-        if (string.IsNullOrWhiteSpace(this.氏名)) {
-            messages.氏名.AddError(MSG.RequiredError("氏名"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.氏名, "氏名")) is not null) {
+            messages.氏名.AddError(errorMessage);
         }
         for (var i = 0; i < this.所属診療科.Count; i++) {
             var item = this.所属診療科[i];
         
             // 年度
-            if (item.年度 == null) {
-                messages.所属診療科[i].年度.AddError(MSG.RequiredError("年度"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.年度, "年度")) is not null) {
+                messages.所属診療科[i].年度.AddError(errorMessage);
             }
             // 診療科
-            if (string.IsNullOrWhiteSpace(item.診療科?.診療科コード)) {
-                messages.所属診療科[i].診療科.AddError(MSG.RequiredError("診療科"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.診療科?.診療科コード, "診療科")) is not null) {
+                messages.所属診療科[i].診療科.AddError(errorMessage);
             }
         }
         for (var i = 0; i < this.権限.Count; i++) {
             var item = this.権限[i];
         
             // 権限レベル
-            if (item.権限レベル == null) {
-                messages.権限[i].権限レベル.AddError(MSG.RequiredError("権限レベル"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.権限レベル, "権限レベル")) is not null) {
+                messages.権限[i].権限レベル.AddError(errorMessage);
             }
         }
     }
@@ -155,15 +156,14 @@ public partial class 医療従事者マスタCreateCommand : 医療従事者マ�
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(医療従事者マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 氏名
-        if (!string.IsNullOrEmpty(this.氏名)
-            && new System.Globalization.StringInfo(this.氏名!).LengthInTextElements > 40) {
-            messages.氏名.AddError(MSG.MaxLengthError("氏名", "40"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.氏名, 40, "氏名")) is not null) {
+            messages.氏名.AddError(errorMessage);
         }
         // 氏名カナ
-        if (!string.IsNullOrEmpty(this.氏名カナ)
-            && new System.Globalization.StringInfo(this.氏名カナ!).LengthInTextElements > 40) {
-            messages.氏名カナ.AddError(MSG.MaxLengthError("氏名カナ", "40"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.氏名カナ, 40, "氏名カナ")) is not null) {
+            messages.氏名カナ.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -353,32 +353,33 @@ public partial class 医療従事者マスタUpdateCommand : 医療従事者マ�
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(医療従事者マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 医療従事者ID
-        if (string.IsNullOrWhiteSpace(((string?)this.医療従事者ID))) {
-            messages.医療従事者ID.AddError(MSG.RequiredError("医療従事者ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(((string?)this.医療従事者ID), "医療従事者ID")) is not null) {
+            messages.医療従事者ID.AddError(errorMessage);
         }
         // 氏名
-        if (string.IsNullOrWhiteSpace(this.氏名)) {
-            messages.氏名.AddError(MSG.RequiredError("氏名"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.氏名, "氏名")) is not null) {
+            messages.氏名.AddError(errorMessage);
         }
         for (var i = 0; i < this.所属診療科.Count; i++) {
             var item = this.所属診療科[i];
         
             // 年度
-            if (item.年度 == null) {
-                messages.所属診療科[i].年度.AddError(MSG.RequiredError("年度"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.年度, "年度")) is not null) {
+                messages.所属診療科[i].年度.AddError(errorMessage);
             }
             // 診療科
-            if (string.IsNullOrWhiteSpace(item.診療科?.診療科コード)) {
-                messages.所属診療科[i].診療科.AddError(MSG.RequiredError("診療科"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.診療科?.診療科コード, "診療科")) is not null) {
+                messages.所属診療科[i].診療科.AddError(errorMessage);
             }
         }
         for (var i = 0; i < this.権限.Count; i++) {
             var item = this.権限[i];
         
             // 権限レベル
-            if (item.権限レベル == null) {
-                messages.権限[i].権限レベル.AddError(MSG.RequiredError("権限レベル"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.権限レベル, "権限レベル")) is not null) {
+                messages.権限[i].権限レベル.AddError(errorMessage);
             }
         }
     }
@@ -392,15 +393,14 @@ public partial class 医療従事者マスタUpdateCommand : 医療従事者マ�
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(医療従事者マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 氏名
-        if (!string.IsNullOrEmpty(this.氏名)
-            && new System.Globalization.StringInfo(this.氏名!).LengthInTextElements > 40) {
-            messages.氏名.AddError(MSG.MaxLengthError("氏名", "40"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.氏名, 40, "氏名")) is not null) {
+            messages.氏名.AddError(errorMessage);
         }
         // 氏名カナ
-        if (!string.IsNullOrEmpty(this.氏名カナ)
-            && new System.Globalization.StringInfo(this.氏名カナ!).LengthInTextElements > 40) {
-            messages.氏名カナ.AddError(MSG.MaxLengthError("氏名カナ", "40"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.氏名カナ, 40, "氏名カナ")) is not null) {
+            messages.氏名カナ.AddError(errorMessage);
         }
     }
     /// <summary>

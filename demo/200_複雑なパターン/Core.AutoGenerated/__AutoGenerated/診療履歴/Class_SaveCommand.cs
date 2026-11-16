@@ -157,59 +157,60 @@ public partial class 診療履歴CreateCommand : 診療履歴SaveCommand, ISaveC
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(診療履歴SaveCommandMessages messages) {
+        string? errorMessage;
         // 診療ID
-        if (string.IsNullOrWhiteSpace(this.診療ID)) {
-            messages.診療ID.AddError(MSG.RequiredError("診療ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.診療ID, "診療ID")) is not null) {
+            messages.診療ID.AddError(errorMessage);
         }
         // 診療日時
-        if (this.診療日時 == null) {
-            messages.診療日時.AddError(MSG.RequiredError("診療日時"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.診療日時, "診療日時")) is not null) {
+            messages.診療日時.AddError(errorMessage);
         }
         // 患者
-        if (string.IsNullOrWhiteSpace(this.患者?.患者ID)) {
-            messages.患者.AddError(MSG.RequiredError("患者"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.患者?.患者ID, "患者")) is not null) {
+            messages.患者.AddError(errorMessage);
         }
         // 診療科
-        if (string.IsNullOrWhiteSpace(this.診療科?.診療科ID)) {
-            messages.診療科.AddError(MSG.RequiredError("診療科"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.診療科?.診療科ID, "診療科")) is not null) {
+            messages.診療科.AddError(errorMessage);
         }
         for (var i = 0; i < this.処置明細.Count; i++) {
             var item = this.処置明細[i];
         
             // 医療機器
-            if (string.IsNullOrWhiteSpace(item.医療機器?.機器ID)) {
-                messages.処置明細[i].医療機器.AddError(MSG.RequiredError("医療機器"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.医療機器?.機器ID, "医療機器")) is not null) {
+                messages.処置明細[i].医療機器.AddError(errorMessage);
             }
             // 使用数量
-            if (item.使用数量 == null) {
-                messages.処置明細[i].使用数量.AddError(MSG.RequiredError("使用数量"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.使用数量, "使用数量")) is not null) {
+                messages.処置明細[i].使用数量.AddError(errorMessage);
             }
             // 単価
-            if (item.単価 == null) {
-                messages.処置明細[i].単価.AddError(MSG.RequiredError("単価"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.単価, "単価")) is not null) {
+                messages.処置明細[i].単価.AddError(errorMessage);
             }
             // 小計
-            if (item.小計 == null) {
-                messages.処置明細[i].小計.AddError(MSG.RequiredError("小計"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.小計, "小計")) is not null) {
+                messages.処置明細[i].小計.AddError(errorMessage);
             }
         }
         if (this.会計情報 != null) {
             // 支払方法
-            if (this.会計情報.支払方法 == null) {
-                messages.会計情報.支払方法.AddError(MSG.RequiredError("支払方法"));
+            if ((errorMessage = _dbContext.ValidateRequired(this.会計情報.支払方法, "支払方法")) is not null) {
+                messages.会計情報.支払方法.AddError(errorMessage);
             }
         }
         if (this.紹介状情報 != null) {
             // 紹介方法
-            if (this.紹介状情報.紹介方法 == null) {
-                messages.紹介状情報.紹介方法.AddError(MSG.RequiredError("紹介方法"));
+            if ((errorMessage = _dbContext.ValidateRequired(this.紹介状情報.紹介方法, "紹介方法")) is not null) {
+                messages.紹介状情報.紹介方法.AddError(errorMessage);
             }
             for (var j = 0; j < this.紹介状情報.紹介状況.Count; j++) {
                 var item1 = this.紹介状情報.紹介状況[j];
             
                 // ステータス
-                if (item1.ステータス == null) {
-                    messages.紹介状情報.紹介状況[j].ステータス.AddError(MSG.RequiredError("ステータス"));
+                if ((errorMessage = _dbContext.ValidateRequired(item1.ステータス, "ステータス")) is not null) {
+                    messages.紹介状情報.紹介状況[j].ステータス.AddError(errorMessage);
                 }
             }
         }
@@ -224,61 +225,54 @@ public partial class 診療履歴CreateCommand : 診療履歴SaveCommand, ISaveC
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(診療履歴SaveCommandMessages messages) {
+        string? errorMessage;
         // 診療ID
-        if (!string.IsNullOrEmpty(this.診療ID)
-            && new System.Globalization.StringInfo(this.診療ID!).LengthInTextElements > 20) {
-            messages.診療ID.AddError(MSG.MaxLengthError("診療ID", "20"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.診療ID, 20, "診療ID")) is not null) {
+            messages.診療ID.AddError(errorMessage);
         }
         for (var i = 0; i < this.処置明細.Count; i++) {
             var item = this.処置明細[i];
         
             if (item.保険適用情報 != null) {
                 // 保険コード
-                if (!string.IsNullOrEmpty(item.保険適用情報.保険コード)
-                    && new System.Globalization.StringInfo(item.保険適用情報.保険コード!).LengthInTextElements > 10) {
-                    messages.処置明細[i].保険適用情報.保険コード.AddError(MSG.MaxLengthError("保険コード", "10"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(item.保険適用情報.保険コード, 10, "保険コード")) is not null) {
+                    messages.処置明細[i].保険適用情報.保険コード.AddError(errorMessage);
                 }
             }
         }
         if (this.会計情報 != null) {
             if (this.会計情報.カード情報 != null) {
                 // 下4桁
-                if (!string.IsNullOrEmpty(this.会計情報.カード情報.下4桁)
-                    && new System.Globalization.StringInfo(this.会計情報.カード情報.下4桁!).LengthInTextElements > 4) {
-                    messages.会計情報.カード情報.下4桁.AddError(MSG.MaxLengthError("下4桁", "4"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(this.会計情報.カード情報.下4桁, 4, "下4桁")) is not null) {
+                    messages.会計情報.カード情報.下4桁.AddError(errorMessage);
                 }
             }
         }
         if (this.紹介状情報 != null) {
             if (this.紹介状情報.紹介先住所 != null) {
                 // 郵便番号
-                if (!string.IsNullOrEmpty(this.紹介状情報.紹介先住所.郵便番号)
-                    && new System.Globalization.StringInfo(this.紹介状情報.紹介先住所.郵便番号!).LengthInTextElements > 8) {
-                    messages.紹介状情報.紹介先住所.郵便番号.AddError(MSG.MaxLengthError("郵便番号", "8"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(this.紹介状情報.紹介先住所.郵便番号, 8, "郵便番号")) is not null) {
+                    messages.紹介状情報.紹介先住所.郵便番号.AddError(errorMessage);
                 }
                 // 都道府県
-                if (!string.IsNullOrEmpty(this.紹介状情報.紹介先住所.都道府県)
-                    && new System.Globalization.StringInfo(this.紹介状情報.紹介先住所.都道府県!).LengthInTextElements > 10) {
-                    messages.紹介状情報.紹介先住所.都道府県.AddError(MSG.MaxLengthError("都道府県", "10"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(this.紹介状情報.紹介先住所.都道府県, 10, "都道府県")) is not null) {
+                    messages.紹介状情報.紹介先住所.都道府県.AddError(errorMessage);
                 }
                 // 市区町村
-                if (!string.IsNullOrEmpty(this.紹介状情報.紹介先住所.市区町村)
-                    && new System.Globalization.StringInfo(this.紹介状情報.紹介先住所.市区町村!).LengthInTextElements > 20) {
-                    messages.紹介状情報.紹介先住所.市区町村.AddError(MSG.MaxLengthError("市区町村", "20"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(this.紹介状情報.紹介先住所.市区町村, 20, "市区町村")) is not null) {
+                    messages.紹介状情報.紹介先住所.市区町村.AddError(errorMessage);
                 }
                 // 番地建物名
-                if (!string.IsNullOrEmpty(this.紹介状情報.紹介先住所.番地建物名)
-                    && new System.Globalization.StringInfo(this.紹介状情報.紹介先住所.番地建物名!).LengthInTextElements > 100) {
-                    messages.紹介状情報.紹介先住所.番地建物名.AddError(MSG.MaxLengthError("番地建物名", "100"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(this.紹介状情報.紹介先住所.番地建物名, 100, "番地建物名")) is not null) {
+                    messages.紹介状情報.紹介先住所.番地建物名.AddError(errorMessage);
                 }
             }
             for (var j = 0; j < this.紹介状情報.紹介状況.Count; j++) {
                 var item1 = this.紹介状情報.紹介状況[j];
             
                 // 備考
-                if (!string.IsNullOrEmpty(item1.備考)
-                    && new System.Globalization.StringInfo(item1.備考!).LengthInTextElements > 500) {
-                    messages.紹介状情報.紹介状況[j].備考.AddError(MSG.MaxLengthError("備考", "500"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(item1.備考, 500, "備考")) is not null) {
+                    messages.紹介状情報.紹介状況[j].備考.AddError(errorMessage);
                 }
             }
         }
@@ -682,59 +676,60 @@ public partial class 診療履歴UpdateCommand : 診療履歴SaveCommand, ISaveC
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(診療履歴SaveCommandMessages messages) {
+        string? errorMessage;
         // 診療ID
-        if (string.IsNullOrWhiteSpace(this.診療ID)) {
-            messages.診療ID.AddError(MSG.RequiredError("診療ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.診療ID, "診療ID")) is not null) {
+            messages.診療ID.AddError(errorMessage);
         }
         // 診療日時
-        if (this.診療日時 == null) {
-            messages.診療日時.AddError(MSG.RequiredError("診療日時"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.診療日時, "診療日時")) is not null) {
+            messages.診療日時.AddError(errorMessage);
         }
         // 患者
-        if (string.IsNullOrWhiteSpace(this.患者?.患者ID)) {
-            messages.患者.AddError(MSG.RequiredError("患者"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.患者?.患者ID, "患者")) is not null) {
+            messages.患者.AddError(errorMessage);
         }
         // 診療科
-        if (string.IsNullOrWhiteSpace(this.診療科?.診療科ID)) {
-            messages.診療科.AddError(MSG.RequiredError("診療科"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.診療科?.診療科ID, "診療科")) is not null) {
+            messages.診療科.AddError(errorMessage);
         }
         for (var i = 0; i < this.処置明細.Count; i++) {
             var item = this.処置明細[i];
         
             // 医療機器
-            if (string.IsNullOrWhiteSpace(item.医療機器?.機器ID)) {
-                messages.処置明細[i].医療機器.AddError(MSG.RequiredError("医療機器"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.医療機器?.機器ID, "医療機器")) is not null) {
+                messages.処置明細[i].医療機器.AddError(errorMessage);
             }
             // 使用数量
-            if (item.使用数量 == null) {
-                messages.処置明細[i].使用数量.AddError(MSG.RequiredError("使用数量"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.使用数量, "使用数量")) is not null) {
+                messages.処置明細[i].使用数量.AddError(errorMessage);
             }
             // 単価
-            if (item.単価 == null) {
-                messages.処置明細[i].単価.AddError(MSG.RequiredError("単価"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.単価, "単価")) is not null) {
+                messages.処置明細[i].単価.AddError(errorMessage);
             }
             // 小計
-            if (item.小計 == null) {
-                messages.処置明細[i].小計.AddError(MSG.RequiredError("小計"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.小計, "小計")) is not null) {
+                messages.処置明細[i].小計.AddError(errorMessage);
             }
         }
         if (this.会計情報 != null) {
             // 支払方法
-            if (this.会計情報.支払方法 == null) {
-                messages.会計情報.支払方法.AddError(MSG.RequiredError("支払方法"));
+            if ((errorMessage = _dbContext.ValidateRequired(this.会計情報.支払方法, "支払方法")) is not null) {
+                messages.会計情報.支払方法.AddError(errorMessage);
             }
         }
         if (this.紹介状情報 != null) {
             // 紹介方法
-            if (this.紹介状情報.紹介方法 == null) {
-                messages.紹介状情報.紹介方法.AddError(MSG.RequiredError("紹介方法"));
+            if ((errorMessage = _dbContext.ValidateRequired(this.紹介状情報.紹介方法, "紹介方法")) is not null) {
+                messages.紹介状情報.紹介方法.AddError(errorMessage);
             }
             for (var j = 0; j < this.紹介状情報.紹介状況.Count; j++) {
                 var item1 = this.紹介状情報.紹介状況[j];
             
                 // ステータス
-                if (item1.ステータス == null) {
-                    messages.紹介状情報.紹介状況[j].ステータス.AddError(MSG.RequiredError("ステータス"));
+                if ((errorMessage = _dbContext.ValidateRequired(item1.ステータス, "ステータス")) is not null) {
+                    messages.紹介状情報.紹介状況[j].ステータス.AddError(errorMessage);
                 }
             }
         }
@@ -749,61 +744,54 @@ public partial class 診療履歴UpdateCommand : 診療履歴SaveCommand, ISaveC
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(診療履歴SaveCommandMessages messages) {
+        string? errorMessage;
         // 診療ID
-        if (!string.IsNullOrEmpty(this.診療ID)
-            && new System.Globalization.StringInfo(this.診療ID!).LengthInTextElements > 20) {
-            messages.診療ID.AddError(MSG.MaxLengthError("診療ID", "20"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.診療ID, 20, "診療ID")) is not null) {
+            messages.診療ID.AddError(errorMessage);
         }
         for (var i = 0; i < this.処置明細.Count; i++) {
             var item = this.処置明細[i];
         
             if (item.保険適用情報 != null) {
                 // 保険コード
-                if (!string.IsNullOrEmpty(item.保険適用情報.保険コード)
-                    && new System.Globalization.StringInfo(item.保険適用情報.保険コード!).LengthInTextElements > 10) {
-                    messages.処置明細[i].保険適用情報.保険コード.AddError(MSG.MaxLengthError("保険コード", "10"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(item.保険適用情報.保険コード, 10, "保険コード")) is not null) {
+                    messages.処置明細[i].保険適用情報.保険コード.AddError(errorMessage);
                 }
             }
         }
         if (this.会計情報 != null) {
             if (this.会計情報.カード情報 != null) {
                 // 下4桁
-                if (!string.IsNullOrEmpty(this.会計情報.カード情報.下4桁)
-                    && new System.Globalization.StringInfo(this.会計情報.カード情報.下4桁!).LengthInTextElements > 4) {
-                    messages.会計情報.カード情報.下4桁.AddError(MSG.MaxLengthError("下4桁", "4"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(this.会計情報.カード情報.下4桁, 4, "下4桁")) is not null) {
+                    messages.会計情報.カード情報.下4桁.AddError(errorMessage);
                 }
             }
         }
         if (this.紹介状情報 != null) {
             if (this.紹介状情報.紹介先住所 != null) {
                 // 郵便番号
-                if (!string.IsNullOrEmpty(this.紹介状情報.紹介先住所.郵便番号)
-                    && new System.Globalization.StringInfo(this.紹介状情報.紹介先住所.郵便番号!).LengthInTextElements > 8) {
-                    messages.紹介状情報.紹介先住所.郵便番号.AddError(MSG.MaxLengthError("郵便番号", "8"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(this.紹介状情報.紹介先住所.郵便番号, 8, "郵便番号")) is not null) {
+                    messages.紹介状情報.紹介先住所.郵便番号.AddError(errorMessage);
                 }
                 // 都道府県
-                if (!string.IsNullOrEmpty(this.紹介状情報.紹介先住所.都道府県)
-                    && new System.Globalization.StringInfo(this.紹介状情報.紹介先住所.都道府県!).LengthInTextElements > 10) {
-                    messages.紹介状情報.紹介先住所.都道府県.AddError(MSG.MaxLengthError("都道府県", "10"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(this.紹介状情報.紹介先住所.都道府県, 10, "都道府県")) is not null) {
+                    messages.紹介状情報.紹介先住所.都道府県.AddError(errorMessage);
                 }
                 // 市区町村
-                if (!string.IsNullOrEmpty(this.紹介状情報.紹介先住所.市区町村)
-                    && new System.Globalization.StringInfo(this.紹介状情報.紹介先住所.市区町村!).LengthInTextElements > 20) {
-                    messages.紹介状情報.紹介先住所.市区町村.AddError(MSG.MaxLengthError("市区町村", "20"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(this.紹介状情報.紹介先住所.市区町村, 20, "市区町村")) is not null) {
+                    messages.紹介状情報.紹介先住所.市区町村.AddError(errorMessage);
                 }
                 // 番地建物名
-                if (!string.IsNullOrEmpty(this.紹介状情報.紹介先住所.番地建物名)
-                    && new System.Globalization.StringInfo(this.紹介状情報.紹介先住所.番地建物名!).LengthInTextElements > 100) {
-                    messages.紹介状情報.紹介先住所.番地建物名.AddError(MSG.MaxLengthError("番地建物名", "100"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(this.紹介状情報.紹介先住所.番地建物名, 100, "番地建物名")) is not null) {
+                    messages.紹介状情報.紹介先住所.番地建物名.AddError(errorMessage);
                 }
             }
             for (var j = 0; j < this.紹介状情報.紹介状況.Count; j++) {
                 var item1 = this.紹介状情報.紹介状況[j];
             
                 // 備考
-                if (!string.IsNullOrEmpty(item1.備考)
-                    && new System.Globalization.StringInfo(item1.備考!).LengthInTextElements > 500) {
-                    messages.紹介状情報.紹介状況[j].備考.AddError(MSG.MaxLengthError("備考", "500"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(item1.備考, 500, "備考")) is not null) {
+                    messages.紹介状情報.紹介状況[j].備考.AddError(errorMessage);
                 }
             }
         }

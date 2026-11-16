@@ -117,21 +117,22 @@ public partial class 入荷明細CreateCommand : 入荷明細SaveCommand, ISaveC
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(入荷明細SaveCommandMessages messages) {
+        string? errorMessage;
         // 入荷明細ID
-        if (string.IsNullOrWhiteSpace(this.入荷明細ID)) {
-            messages.入荷明細ID.AddError(MSG.RequiredError("入荷明細ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.入荷明細ID, "入荷明細ID")) is not null) {
+            messages.入荷明細ID.AddError(errorMessage);
         }
         // 商品
-        if (this.商品?.商品SEQ == null) {
-            messages.商品.AddError(MSG.RequiredError("商品"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.商品?.商品SEQ, "商品")) is not null) {
+            messages.商品.AddError(errorMessage);
         }
         // 入荷数量
-        if (this.入荷数量 == null) {
-            messages.入荷数量.AddError(MSG.RequiredError("入荷数量"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.入荷数量, "入荷数量")) is not null) {
+            messages.入荷数量.AddError(errorMessage);
         }
         // 残数量
-        if (this.残数量 == null) {
-            messages.残数量.AddError(MSG.RequiredError("残数量"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.残数量, "残数量")) is not null) {
+            messages.残数量.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -297,21 +298,22 @@ public partial class 入荷明細UpdateCommand : 入荷明細SaveCommand, ISaveC
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(入荷明細SaveCommandMessages messages) {
+        string? errorMessage;
         // 入荷明細ID
-        if (string.IsNullOrWhiteSpace(this.入荷明細ID)) {
-            messages.入荷明細ID.AddError(MSG.RequiredError("入荷明細ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.入荷明細ID, "入荷明細ID")) is not null) {
+            messages.入荷明細ID.AddError(errorMessage);
         }
         // 商品
-        if (this.商品?.商品SEQ == null) {
-            messages.商品.AddError(MSG.RequiredError("商品"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.商品?.商品SEQ, "商品")) is not null) {
+            messages.商品.AddError(errorMessage);
         }
         // 入荷数量
-        if (this.入荷数量 == null) {
-            messages.入荷数量.AddError(MSG.RequiredError("入荷数量"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.入荷数量, "入荷数量")) is not null) {
+            messages.入荷数量.AddError(errorMessage);
         }
         // 残数量
-        if (this.残数量 == null) {
-            messages.残数量.AddError(MSG.RequiredError("残数量"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.残数量, "残数量")) is not null) {
+            messages.残数量.AddError(errorMessage);
         }
     }
     /// <summary>
