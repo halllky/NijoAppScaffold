@@ -67,4 +67,3 @@ public class 増減履歴引当元売上一覧DisplayDataMessages : MessageSette
     public IMessageSetter 売上SEQ { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

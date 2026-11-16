@@ -40,4 +40,3 @@ public partial class 旧システム部署情報SearchResult {
     public int Version { get; set; }
 }
 #endregion 検索クエリ型
-

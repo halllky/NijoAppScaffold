@@ -34,4 +34,3 @@ public partial class 在庫調整Parameter {
     public string? 在庫調整理由 { get; set; }
 }
 #endregion 構造体定義
-

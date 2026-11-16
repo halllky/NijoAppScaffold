@@ -38,4 +38,3 @@ public partial class 商品RefTarget {
 }
 
 #endregion 他の集約から参照されるときの画面表示用オブジェクト
-

@@ -97,4 +97,3 @@ public class 次回措置SearchConditionMessages : MessageSetter {
     public IMessageSetter 内容 { get; }
 }
 #endregion 検索条件クラスのデータ構造と対応するメッセージの入れ物クラス
-

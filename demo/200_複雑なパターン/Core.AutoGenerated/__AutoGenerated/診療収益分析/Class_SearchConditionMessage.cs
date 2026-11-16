@@ -114,4 +114,3 @@ public class 時間帯別収益SearchConditionMessages : MessageSetter {
     public IMessageSetter 平均患者単価 { get; }
 }
 #endregion 検索条件クラスのデータ構造と対応するメッセージの入れ物クラス
-

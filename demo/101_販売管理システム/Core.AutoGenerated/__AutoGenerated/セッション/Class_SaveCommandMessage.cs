@@ -39,4 +39,3 @@ public class セッションSaveCommandMessages : MessageSetter {
     public IMessageSetter 最終操作日時 { get; }
 }
 #endregion 登録更新の過程で発生したメッセージの入れ物クラス
-

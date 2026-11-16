@@ -55,4 +55,3 @@ public partial class 増減履歴引当元売上一覧SearchResult {
     public int? 売上SEQ { get; set; }
 }
 #endregion 検索クエリ型
-

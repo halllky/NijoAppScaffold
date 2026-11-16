@@ -65,4 +65,3 @@ public class 増減履歴引当元売上一覧SearchConditionMessages : MessageS
     public IMessageSetter 売上SEQ { get; }
 }
 #endregion 検索条件クラスのデータ構造と対応するメッセージの入れ物クラス
-

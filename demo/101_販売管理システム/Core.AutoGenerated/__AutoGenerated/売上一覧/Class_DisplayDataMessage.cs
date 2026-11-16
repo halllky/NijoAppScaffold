@@ -48,4 +48,3 @@ public class 売上一覧DisplayDataMessages : MessageSetter {
     public IMessageSetter 売上数量合計 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

@@ -46,4 +46,3 @@ public class 更新対象従業員一覧Messages : MessageSetter {
     public 従業員マスタDisplayDataMessages 従業員 { get; }
 }
 #endregion 構造体のコマンド引数用メッセージの入れ物クラス
-

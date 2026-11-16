@@ -86,4 +86,3 @@ public partial class 保管庫別在庫DisplayData {
     public bool WillBeDeleted { get; set; }
 }
 #endregion 画面表示用データ
-

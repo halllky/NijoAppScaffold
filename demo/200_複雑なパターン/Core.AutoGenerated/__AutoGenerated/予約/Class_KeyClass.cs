@@ -86,4 +86,3 @@ public partial class 予約KeyWithVersion : 予約Key {
 }
 
 #endregion キー項目のみのオブジェクト
-

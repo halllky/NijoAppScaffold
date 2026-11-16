@@ -53,4 +53,3 @@ public partial class 社員SearchConditionFilter {
     public 汎用マスタSearchConditionFilter 契約種別 { get; set; } = new();
 }
 #endregion 検索条件フィルター
-

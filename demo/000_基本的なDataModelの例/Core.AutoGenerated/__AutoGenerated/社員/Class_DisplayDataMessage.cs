@@ -42,4 +42,3 @@ public class 社員DisplayDataMessages : MessageSetter {
     public IMessageSetter 契約種別 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

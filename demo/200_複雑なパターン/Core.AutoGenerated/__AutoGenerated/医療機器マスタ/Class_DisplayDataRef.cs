@@ -144,4 +144,3 @@ public partial class 在庫情報RefTargetVia在庫状況履歴 {
 }
 
 #endregion 他の集約から参照されるときの画面表示用オブジェクト
-

@@ -82,4 +82,3 @@ public class 診療時間DisplayDataMessages : MessageSetter {
     public IMessageSetter 終了時間 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

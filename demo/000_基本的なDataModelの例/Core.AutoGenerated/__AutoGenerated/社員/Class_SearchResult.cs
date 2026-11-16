@@ -56,4 +56,3 @@ public partial class 社員SearchResult {
     public int Version { get; set; }
 }
 #endregion 検索クエリ型
-

@@ -45,4 +45,3 @@ public class 供給業者マスタSearchConditionMessages : MessageSetter {
     public IMessageSetter メールアドレス { get; }
 }
 #endregion 検索条件クラスのデータ構造と対応するメッセージの入れ物クラス
-

@@ -36,4 +36,3 @@ public class 事業所DisplayDataMessages : MessageSetter {
     public IMessageSetter 事業所名 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

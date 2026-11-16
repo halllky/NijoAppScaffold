@@ -73,4 +73,3 @@ public partial class ログインユーザー情報の権限DisplayData {
     public bool WillBeDeleted { get; set; }
 }
 #endregion 画面表示用データ
-

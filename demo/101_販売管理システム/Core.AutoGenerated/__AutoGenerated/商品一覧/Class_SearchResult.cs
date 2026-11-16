@@ -43,4 +43,3 @@ public partial class 商品一覧SearchResult {
     public int? 在庫数 { get; set; }
 }
 #endregion 検索クエリ型
-

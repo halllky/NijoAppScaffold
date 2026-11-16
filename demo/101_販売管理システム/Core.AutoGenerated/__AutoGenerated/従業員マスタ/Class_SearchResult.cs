@@ -46,4 +46,3 @@ public partial class 従業員マスタの権限SearchResult {
     public 権限区分? 権限区分 { get; set; }
 }
 #endregion 検索クエリ型
-

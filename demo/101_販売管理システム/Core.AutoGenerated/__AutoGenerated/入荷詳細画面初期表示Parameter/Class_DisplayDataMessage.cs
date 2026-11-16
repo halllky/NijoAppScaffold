@@ -33,4 +33,3 @@ public class 入荷詳細画面初期表示ParameterMessages : MessageSetter {
     public IMessageSetter 入荷ID { get; }
 }
 #endregion 構造体のコマンド引数用メッセージの入れ物クラス
-

@@ -42,4 +42,3 @@ public partial class 汎用マスタSearchResult {
     public int Version { get; set; }
 }
 #endregion 検索クエリ型
-

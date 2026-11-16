@@ -40,4 +40,3 @@ public partial class 機器分類マスタSearchResult {
     public int Version { get; set; }
 }
 #endregion 検索クエリ型
-

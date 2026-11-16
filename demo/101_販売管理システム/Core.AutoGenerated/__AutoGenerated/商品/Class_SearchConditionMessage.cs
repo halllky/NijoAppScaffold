@@ -45,4 +45,3 @@ public class 商品SearchConditionMessages : MessageSetter {
     public IMessageSetter 消費税区分 { get; }
 }
 #endregion 検索条件クラスのデータ構造と対応するメッセージの入れ物クラス
-

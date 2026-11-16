@@ -86,4 +86,3 @@ public partial class 商品KeyWithVersion : 商品Key {
 }
 
 #endregion キー項目のみのオブジェクト
-

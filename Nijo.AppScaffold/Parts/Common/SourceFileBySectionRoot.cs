@@ -145,15 +145,12 @@ namespace Nijo.Parts.Common {
                 {{appSrvMethods.SelectTextTemplate(source => $$"""
 
                     {{WithIndent(source)}}
-
                 """)}}
                 }
-
                 """)}}
                 {{csharpClass.SelectTextTemplate(source => $$"""
 
                 {{WithIndent(source)}}
-
                 """)}}
                 """;
         }

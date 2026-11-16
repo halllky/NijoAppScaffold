@@ -97,4 +97,3 @@ public partial class 患者情報の診療履歴SearchConditionFilter {
     public string? 診療内容 { get; set; }
 }
 #endregion 検索条件フィルター
-

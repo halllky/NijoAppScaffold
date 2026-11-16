@@ -46,4 +46,3 @@ public partial class 入荷登録ReturnValueDisplayData {
     public bool WillBeDeleted { get; set; }
 }
 #endregion 画面表示用データ
-

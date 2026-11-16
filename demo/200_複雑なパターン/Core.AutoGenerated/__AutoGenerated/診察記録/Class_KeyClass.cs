@@ -90,4 +90,3 @@ public partial class 診察記録KeyWithVersion : 診察記録Key {
 }
 
 #endregion キー項目のみのオブジェクト
-

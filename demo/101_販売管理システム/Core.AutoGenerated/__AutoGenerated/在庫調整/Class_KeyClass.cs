@@ -86,4 +86,3 @@ public partial class 在庫調整KeyWithVersion : 在庫調整Key {
 }
 
 #endregion キー項目のみのオブジェクト
-

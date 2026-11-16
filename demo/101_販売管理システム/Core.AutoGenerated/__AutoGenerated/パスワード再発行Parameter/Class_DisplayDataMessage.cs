@@ -33,4 +33,3 @@ public class パスワード再発行ParameterMessages : MessageSetter {
     public IMessageSetter 対象者 { get; }
 }
 #endregion 構造体のコマンド引数用メッセージの入れ物クラス
-

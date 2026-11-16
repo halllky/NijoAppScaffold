@@ -29,4 +29,3 @@ public partial class 売上詳細画面初期表示Parameter {
     public int? 売上SEQ { get; set; }
 }
 #endregion 構造体定義
-

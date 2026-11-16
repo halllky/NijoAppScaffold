@@ -604,4 +604,3 @@ public partial class 機器点検報告DeleteCommand : 機器点検報告SaveCom
     }
 }
 #endregion 削除コマンド
-

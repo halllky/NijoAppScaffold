@@ -49,4 +49,3 @@ public partial class 汎用マスタSearchConditionFilter {
     public string? 表示名称 { get; set; }
 }
 #endregion 検索条件フィルター
-

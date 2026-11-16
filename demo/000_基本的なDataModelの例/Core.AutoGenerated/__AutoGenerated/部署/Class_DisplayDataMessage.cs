@@ -83,4 +83,3 @@ public class 係DisplayDataMessages : MessageSetter {
     public IMessageSetter 勤怠管理区分 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

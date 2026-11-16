@@ -29,4 +29,3 @@ public partial class パスワード再発行Parameter {
     public 従業員RefRefTarget 対象者 { get; set; } = new();
 }
 #endregion 構造体定義
-

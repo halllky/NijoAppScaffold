@@ -39,4 +39,3 @@ public class パスワード変更ParameterMessages : MessageSetter {
     public IMessageSetter 新しいパスワード_確認用 { get; }
 }
 #endregion 構造体のコマンド引数用メッセージの入れ物クラス
-

@@ -89,4 +89,3 @@ public class 引当明細SaveCommandMessages : MessageSetter {
     public IMessageSetter 引当数量 { get; }
 }
 #endregion 登録更新の過程で発生したメッセージの入れ物クラス
-

@@ -46,4 +46,3 @@ public partial class 売上新規登録ReturnValueDisplayData {
     public bool WillBeDeleted { get; set; }
 }
 #endregion 画面表示用データ
-

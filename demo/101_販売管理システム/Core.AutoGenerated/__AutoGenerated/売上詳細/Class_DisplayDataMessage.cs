@@ -79,4 +79,3 @@ public class 売上詳細の売上明細Messages : MessageSetter {
     public IMessageSetter 売上総額_税込_手修正 { get; }
 }
 #endregion 構造体のコマンド引数用メッセージの入れ物クラス
-

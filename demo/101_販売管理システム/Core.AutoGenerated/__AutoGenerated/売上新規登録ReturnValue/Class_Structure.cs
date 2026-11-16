@@ -28,4 +28,3 @@ public partial class 売上新規登録ReturnValue {
     public int? 売上SEQ { get; set; }
 }
 #endregion 構造体定義
-

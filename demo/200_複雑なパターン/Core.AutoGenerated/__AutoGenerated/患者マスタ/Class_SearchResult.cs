@@ -108,4 +108,3 @@ public partial class 患者情報の診療履歴SearchResult {
     public string? 診療内容 { get; set; }
 }
 #endregion 検索クエリ型
-

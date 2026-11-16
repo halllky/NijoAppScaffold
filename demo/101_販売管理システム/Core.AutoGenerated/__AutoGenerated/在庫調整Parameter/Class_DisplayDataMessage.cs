@@ -42,4 +42,3 @@ public class 在庫調整ParameterMessages : MessageSetter {
     public IMessageSetter 在庫調整理由 { get; }
 }
 #endregion 構造体のコマンド引数用メッセージの入れ物クラス
-

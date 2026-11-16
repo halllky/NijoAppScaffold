@@ -363,4 +363,3 @@ public partial class 社員DeleteCommand : 社員SaveCommand, ISaveCommand<Valid
     }
 }
 #endregion 削除コマンド
-

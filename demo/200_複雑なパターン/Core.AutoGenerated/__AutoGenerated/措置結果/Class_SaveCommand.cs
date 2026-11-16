@@ -719,4 +719,3 @@ public partial class 措置結果DeleteCommand : 措置結果SaveCommand, ISaveC
     }
 }
 #endregion 削除コマンド
-

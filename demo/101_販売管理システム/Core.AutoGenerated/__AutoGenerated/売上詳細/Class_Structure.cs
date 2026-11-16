@@ -51,4 +51,3 @@ public partial class 売上詳細_売上詳細の売上明細 {
     public int? 売上総額_税込_手修正 { get; set; }
 }
 #endregion 構造体定義
-

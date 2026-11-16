@@ -86,4 +86,3 @@ public partial class 保管庫マスタKeyWithVersion : 保管庫マスタKey {
 }
 
 #endregion キー項目のみのオブジェクト
-

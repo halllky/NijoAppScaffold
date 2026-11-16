@@ -343,4 +343,3 @@ public partial class 汎用マスタDeleteCommand : 汎用マスタSaveCommand, 
     }
 }
 #endregion 削除コマンド
-

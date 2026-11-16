@@ -36,4 +36,3 @@ public class 旧システム部署情報DisplayDataMessages : MessageSetter {
     public IMessageSetter 名称 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

@@ -45,4 +45,3 @@ public class 商品DisplayDataMessages : MessageSetter {
     public IMessageSetter 消費税区分 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

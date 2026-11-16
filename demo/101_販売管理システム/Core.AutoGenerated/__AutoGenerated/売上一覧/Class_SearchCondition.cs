@@ -54,4 +54,3 @@ public partial class 売上一覧SearchConditionFilter {
     public FromTo<int?>? 売上数量合計 { get; set; }
 }
 #endregion 検索条件フィルター
-

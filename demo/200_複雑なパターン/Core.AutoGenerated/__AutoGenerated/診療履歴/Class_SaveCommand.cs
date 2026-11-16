@@ -1213,4 +1213,3 @@ public partial class 診療履歴DeleteCommand : 診療履歴SaveCommand, ISaveC
     }
 }
 #endregion 削除コマンド
-

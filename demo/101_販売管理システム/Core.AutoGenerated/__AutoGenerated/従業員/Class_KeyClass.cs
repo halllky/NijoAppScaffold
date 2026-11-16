@@ -86,4 +86,3 @@ public partial class 従業員KeyWithVersion : 従業員Key {
 }
 
 #endregion キー項目のみのオブジェクト
-

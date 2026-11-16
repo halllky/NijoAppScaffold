@@ -478,4 +478,3 @@ public partial class 従業員DeleteCommand : 従業員SaveCommand, ISaveCommand
     }
 }
 #endregion 削除コマンド
-

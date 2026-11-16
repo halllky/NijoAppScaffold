@@ -28,4 +28,3 @@ public partial class 入荷詳細画面初期表示Parameter {
     public string? 入荷ID { get; set; }
 }
 #endregion 構造体定義
-

@@ -62,4 +62,3 @@ public class 保管庫別在庫SearchConditionMessages : MessageSetter {
     public IMessageSetter 機器数 { get; }
 }
 #endregion 検索条件クラスのデータ構造と対応するメッセージの入れ物クラス
-

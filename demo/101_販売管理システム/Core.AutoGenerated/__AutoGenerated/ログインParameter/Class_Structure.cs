@@ -31,4 +31,3 @@ public partial class ログインParameter {
     public string? パスワード { get; set; }
 }
 #endregion 構造体定義
-

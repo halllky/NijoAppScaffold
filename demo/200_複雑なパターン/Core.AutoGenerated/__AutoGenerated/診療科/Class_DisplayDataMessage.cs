@@ -36,4 +36,3 @@ public class 診療科DisplayDataMessages : MessageSetter {
     public IMessageSetter 診療科名 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

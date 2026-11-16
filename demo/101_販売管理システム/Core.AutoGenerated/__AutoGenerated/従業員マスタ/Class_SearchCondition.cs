@@ -54,4 +54,3 @@ public partial class 従業員マスタの権限SearchConditionFilter {
     public 権限区分SearchCondition? 権限区分 { get; set; }
 }
 #endregion 検索条件フィルター
-

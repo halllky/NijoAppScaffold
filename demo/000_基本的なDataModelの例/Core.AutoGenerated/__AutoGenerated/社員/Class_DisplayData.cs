@@ -59,4 +59,3 @@ public partial class 社員DisplayData {
     public int? Version { get; set; }
 }
 #endregion 画面表示用データ
-

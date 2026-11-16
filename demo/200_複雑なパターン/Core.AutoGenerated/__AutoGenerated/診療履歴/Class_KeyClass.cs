@@ -86,4 +86,3 @@ public partial class 診療履歴KeyWithVersion : 診療履歴Key {
 }
 
 #endregion キー項目のみのオブジェクト
-

@@ -193,4 +193,3 @@ public partial class 在庫状況履歴SearchResult {
     public DateOnly? 担当者_退職日 { get; set; }
 }
 #endregion 検索クエリ型
-

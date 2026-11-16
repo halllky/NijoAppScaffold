@@ -55,4 +55,3 @@ public partial class 商品SearchConditionFilter {
     public 消費税区分SearchCondition? 消費税区分 { get; set; }
 }
 #endregion 検索条件フィルター
-

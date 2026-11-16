@@ -47,4 +47,3 @@ public partial class パスワード再発行ParameterDisplayData {
     public bool WillBeDeleted { get; set; }
 }
 #endregion 画面表示用データ
-

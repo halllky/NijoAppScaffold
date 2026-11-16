@@ -121,4 +121,3 @@ public partial class 診療時間DisplayData {
     public bool WillBeDeleted { get; set; }
 }
 #endregion 画面表示用データ
-

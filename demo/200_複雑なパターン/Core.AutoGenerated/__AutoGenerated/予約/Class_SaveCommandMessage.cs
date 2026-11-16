@@ -48,4 +48,3 @@ public class 予約SaveCommandMessages : MessageSetter {
     public IMessageSetter 担当医 { get; }
 }
 #endregion 登録更新の過程で発生したメッセージの入れ物クラス
-

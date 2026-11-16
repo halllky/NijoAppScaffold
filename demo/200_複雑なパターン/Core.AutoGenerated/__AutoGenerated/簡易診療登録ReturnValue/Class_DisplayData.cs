@@ -47,4 +47,3 @@ public partial class 簡易診療登録ReturnValueDisplayData {
     public bool WillBeDeleted { get; set; }
 }
 #endregion 画面表示用データ
-

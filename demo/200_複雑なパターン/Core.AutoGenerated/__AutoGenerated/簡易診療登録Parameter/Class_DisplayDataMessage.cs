@@ -52,4 +52,3 @@ public class 使用機器一覧Messages : MessageSetter {
     public IMessageSetter 使用数量 { get; }
 }
 #endregion 構造体のコマンド引数用メッセージの入れ物クラス
-

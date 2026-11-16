@@ -59,4 +59,3 @@ public partial class 医療機器管理Parameter_権限確認 {
     public 医療従事者マスタDisplayData 承認者 { get; set; } = new();
 }
 #endregion 構造体定義
-

@@ -50,4 +50,3 @@ public partial class 診療科SearchConditionFilter {
     public string? 診療科名 { get; set; }
 }
 #endregion 検索条件フィルター
-

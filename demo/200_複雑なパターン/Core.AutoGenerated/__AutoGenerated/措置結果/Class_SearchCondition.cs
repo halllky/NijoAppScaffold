@@ -86,4 +86,3 @@ public partial class 次回措置SearchConditionFilter {
     public string? 内容 { get; set; }
 }
 #endregion 検索条件フィルター
-

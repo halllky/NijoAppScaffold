@@ -96,4 +96,3 @@ public partial class ログインユーザー情報_通知設定一覧 {
     public string? プッシュ通知 { get; set; }
 }
 #endregion 構造体定義
-

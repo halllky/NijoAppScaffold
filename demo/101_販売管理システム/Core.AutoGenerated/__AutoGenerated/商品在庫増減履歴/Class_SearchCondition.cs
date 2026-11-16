@@ -59,4 +59,3 @@ public partial class 増減履歴引当元売上一覧SearchConditionFilter {
     public FromTo<int?>? 売上SEQ { get; set; }
 }
 #endregion 検索条件フィルター
-

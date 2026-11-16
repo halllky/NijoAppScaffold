@@ -86,4 +86,3 @@ public partial class 係SearchResult {
     public string? 勤怠管理区分_表示名称 { get; set; }
 }
 #endregion 検索クエリ型
-

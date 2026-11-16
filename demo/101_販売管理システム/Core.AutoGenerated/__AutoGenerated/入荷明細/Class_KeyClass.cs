@@ -86,4 +86,3 @@ public partial class 入荷明細KeyWithVersion : 入荷明細Key {
 }
 
 #endregion キー項目のみのオブジェクト
-

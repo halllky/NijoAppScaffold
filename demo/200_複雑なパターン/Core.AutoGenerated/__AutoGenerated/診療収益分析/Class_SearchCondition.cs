@@ -84,4 +84,3 @@ public partial class 時間帯別収益SearchConditionFilter {
     public FromTo<int?>? 平均患者単価 { get; set; }
 }
 #endregion 検索条件フィルター
-

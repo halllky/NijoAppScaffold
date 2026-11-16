@@ -70,4 +70,3 @@ public partial class 商品DisplayData {
     public int? Version { get; set; }
 }
 #endregion 画面表示用データ
-

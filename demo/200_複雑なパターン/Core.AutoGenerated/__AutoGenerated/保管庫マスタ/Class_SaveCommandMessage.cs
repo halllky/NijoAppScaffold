@@ -62,4 +62,3 @@ public class 保管庫マスタの住所SaveCommandMessages : MessageSetter {
     public IMessageSetter 番地建物名 { get; }
 }
 #endregion 登録更新の過程で発生したメッセージの入れ物クラス
-

@@ -54,4 +54,3 @@ public partial class パスワード変更ParameterDisplayData {
     public bool WillBeDeleted { get; set; }
 }
 #endregion 画面表示用データ
-

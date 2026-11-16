@@ -86,4 +86,3 @@ public partial class セッションKeyWithVersion : セッションKey {
 }
 
 #endregion キー項目のみのオブジェクト
-

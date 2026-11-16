@@ -61,4 +61,3 @@ public partial class 予約DisplayData {
     public int? Version { get; set; }
 }
 #endregion 画面表示用データ
-

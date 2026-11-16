@@ -48,4 +48,3 @@ public class 予約SearchConditionMessages : MessageSetter {
     public IMessageSetter 担当医 { get; }
 }
 #endregion 検索条件クラスのデータ構造と対応するメッセージの入れ物クラス
-

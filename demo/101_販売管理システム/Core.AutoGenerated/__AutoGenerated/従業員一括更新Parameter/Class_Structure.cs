@@ -35,4 +35,3 @@ public partial class 従業員一括更新Parameter_更新対象従業員一覧 
     public 従業員マスタDisplayData 従業員 { get; set; } = new();
 }
 #endregion 構造体定義
-

@@ -36,4 +36,3 @@ public partial class 簡易診療登録Parameter_使用機器一覧 {
     public int? 使用数量 { get; set; }
 }
 #endregion 構造体定義
-

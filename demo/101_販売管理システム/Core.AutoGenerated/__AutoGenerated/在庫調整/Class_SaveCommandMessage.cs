@@ -70,4 +70,3 @@ public class 在庫調整引当明細SaveCommandMessages : MessageSetter {
     public IMessageSetter 引当数 { get; }
 }
 #endregion 登録更新の過程で発生したメッセージの入れ物クラス
-

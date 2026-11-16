@@ -54,4 +54,3 @@ public partial class 汎用マスタDisplayData {
     public int? Version { get; set; }
 }
 #endregion 画面表示用データ
-

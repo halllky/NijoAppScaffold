@@ -86,4 +86,3 @@ public partial class 機器分類マスタKeyWithVersion : 機器分類マスタ
 }
 
 #endregion キー項目のみのオブジェクト
-

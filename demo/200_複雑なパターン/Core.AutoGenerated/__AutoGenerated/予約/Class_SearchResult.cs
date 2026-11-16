@@ -100,4 +100,3 @@ public partial class 予約SearchResult {
     public int Version { get; set; }
 }
 #endregion 検索クエリ型
-

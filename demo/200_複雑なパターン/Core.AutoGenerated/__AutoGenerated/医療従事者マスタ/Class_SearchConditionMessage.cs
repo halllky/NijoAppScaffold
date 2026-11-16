@@ -73,4 +73,3 @@ public class 権限SearchConditionMessages : MessageSetter {
     public IMessageSetter 権限レベル { get; }
 }
 #endregion 検索条件クラスのデータ構造と対応するメッセージの入れ物クラス
-

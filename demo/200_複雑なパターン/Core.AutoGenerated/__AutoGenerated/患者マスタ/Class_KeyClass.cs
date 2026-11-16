@@ -86,4 +86,3 @@ public partial class 患者マスタKeyWithVersion : 患者マスタKey {
 }
 
 #endregion キー項目のみのオブジェクト
-

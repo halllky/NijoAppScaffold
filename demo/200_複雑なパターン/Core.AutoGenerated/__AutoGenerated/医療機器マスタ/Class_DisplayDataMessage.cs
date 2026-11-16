@@ -165,4 +165,3 @@ public class 在庫状況履歴DisplayDataMessages : MessageSetter {
     public IMessageSetter 担当者 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

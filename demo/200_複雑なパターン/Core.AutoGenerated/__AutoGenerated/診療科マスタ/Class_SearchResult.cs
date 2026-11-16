@@ -83,4 +83,3 @@ public partial class 診療科マスタSearchResult {
     public int Version { get; set; }
 }
 #endregion 検索クエリ型
-

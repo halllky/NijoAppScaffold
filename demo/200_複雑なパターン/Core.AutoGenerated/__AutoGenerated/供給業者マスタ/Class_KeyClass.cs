@@ -86,4 +86,3 @@ public partial class 供給業者マスタKeyWithVersion : 供給業者マスタ
 }
 
 #endregion キー項目のみのオブジェクト
-

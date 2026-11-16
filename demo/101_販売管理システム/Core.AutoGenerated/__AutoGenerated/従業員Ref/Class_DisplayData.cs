@@ -49,4 +49,3 @@ public partial class 従業員RefDisplayData {
     public bool WillBeDeleted { get; set; }
 }
 #endregion 画面表示用データ
-

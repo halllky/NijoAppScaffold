@@ -52,4 +52,3 @@ public partial class 保管庫マスタの住所RefTargetVia保管庫マスタ {
 }
 
 #endregion 他の集約から参照されるときの画面表示用オブジェクト
-

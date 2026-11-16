@@ -39,4 +39,3 @@ public class 汎用マスタSaveCommandMessages : MessageSetter {
     public IMessageSetter 表示名称 { get; }
 }
 #endregion 登録更新の過程で発生したメッセージの入れ物クラス
-

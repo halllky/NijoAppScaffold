@@ -36,4 +36,3 @@ public class 売上詳細画面初期表示ParameterMessages : MessageSetter {
     public IMessageSetter 売上SEQ { get; }
 }
 #endregion 構造体のコマンド引数用メッセージの入れ物クラス
-

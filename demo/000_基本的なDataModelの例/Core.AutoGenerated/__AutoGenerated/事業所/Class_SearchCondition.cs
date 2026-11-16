@@ -49,4 +49,3 @@ public partial class 事業所SearchConditionFilter {
     public string? 事業所名 { get; set; }
 }
 #endregion 検索条件フィルター
-

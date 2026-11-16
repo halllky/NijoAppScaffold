@@ -62,4 +62,3 @@ public partial class 診療収益分析Key {
 }
 
 #endregion キー項目のみのオブジェクト
-

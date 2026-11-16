@@ -82,4 +82,3 @@ public class 対応措置SaveCommandMessages : MessageSetter {
     public IMessageSetter 措置詳細 { get; }
 }
 #endregion 登録更新の過程で発生したメッセージの入れ物クラス
-

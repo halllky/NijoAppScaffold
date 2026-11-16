@@ -67,4 +67,3 @@ public partial class 診療時間RefTargetVia診療科マスタ {
 }
 
 #endregion 他の集約から参照されるときの画面表示用オブジェクト
-

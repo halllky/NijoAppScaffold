@@ -86,4 +86,3 @@ public partial class 診療科KeyWithVersion : 診療科Key {
 }
 
 #endregion キー項目のみのオブジェクト
-

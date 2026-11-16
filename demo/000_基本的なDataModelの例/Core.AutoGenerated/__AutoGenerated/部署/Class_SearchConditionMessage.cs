@@ -79,4 +79,3 @@ public class 係SearchConditionMessages : MessageSetter {
     public IMessageSetter 勤怠管理区分 { get; }
 }
 #endregion 検索条件クラスのデータ構造と対応するメッセージの入れ物クラス
-

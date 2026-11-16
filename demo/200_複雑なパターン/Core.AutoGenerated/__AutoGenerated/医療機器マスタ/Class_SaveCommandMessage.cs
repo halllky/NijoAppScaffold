@@ -165,4 +165,3 @@ public class 在庫状況履歴SaveCommandMessages : MessageSetter {
     public IMessageSetter 担当者 { get; }
 }
 #endregion 登録更新の過程で発生したメッセージの入れ物クラス
-

@@ -76,4 +76,3 @@ public partial class 使用機器一覧DisplayData {
     public bool WillBeDeleted { get; set; }
 }
 #endregion 画面表示用データ
-

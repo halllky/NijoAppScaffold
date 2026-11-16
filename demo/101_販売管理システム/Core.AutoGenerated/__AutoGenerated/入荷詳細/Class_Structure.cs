@@ -49,4 +49,3 @@ public partial class 入荷詳細_入荷商品一覧 {
     public int? Version { get; set; }
 }
 #endregion 構造体定義
-

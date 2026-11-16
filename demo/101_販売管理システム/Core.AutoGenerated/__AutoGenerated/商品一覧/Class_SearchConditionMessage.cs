@@ -48,4 +48,3 @@ public class 商品一覧SearchConditionMessages : MessageSetter {
     public IMessageSetter 在庫数 { get; }
 }
 #endregion 検索条件クラスのデータ構造と対応するメッセージの入れ物クラス
-

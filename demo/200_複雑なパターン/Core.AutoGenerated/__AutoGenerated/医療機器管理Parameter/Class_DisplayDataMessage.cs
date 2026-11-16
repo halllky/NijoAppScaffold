@@ -90,4 +90,3 @@ public class 権限確認Messages : MessageSetter {
     public 医療従事者マスタDisplayDataMessages 承認者 { get; }
 }
 #endregion 構造体のコマンド引数用メッセージの入れ物クラス
-

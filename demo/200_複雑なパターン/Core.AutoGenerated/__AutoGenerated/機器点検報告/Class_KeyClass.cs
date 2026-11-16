@@ -173,4 +173,3 @@ public partial class 機器点検報告KeyWithVersion : 機器点検報告Key {
 }
 
 #endregion キー項目のみのオブジェクト
-

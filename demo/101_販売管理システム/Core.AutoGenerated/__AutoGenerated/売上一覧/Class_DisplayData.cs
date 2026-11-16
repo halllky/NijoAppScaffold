@@ -54,4 +54,3 @@ public partial class 売上一覧DisplayData {
     public bool WillBeDeleted { get; set; }
 }
 #endregion 画面表示用データ
-

@@ -54,4 +54,3 @@ public partial class 事業所Key {
 }
 
 #endregion キー項目のみのオブジェクト
-

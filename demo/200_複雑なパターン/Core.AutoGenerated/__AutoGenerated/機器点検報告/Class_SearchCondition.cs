@@ -77,4 +77,3 @@ public partial class 対応措置SearchConditionFilter {
     public string? 措置詳細 { get; set; }
 }
 #endregion 検索条件フィルター
-

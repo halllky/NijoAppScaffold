@@ -54,4 +54,3 @@ public partial class 入荷一覧SearchConditionFilter {
     public FromTo<int?>? 入荷数量合計 { get; set; }
 }
 #endregion 検索条件フィルター
-

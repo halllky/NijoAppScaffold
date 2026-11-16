@@ -36,4 +36,3 @@ public class ログインParameterMessages : MessageSetter {
     public IMessageSetter パスワード { get; }
 }
 #endregion 構造体のコマンド引数用メッセージの入れ物クラス
-

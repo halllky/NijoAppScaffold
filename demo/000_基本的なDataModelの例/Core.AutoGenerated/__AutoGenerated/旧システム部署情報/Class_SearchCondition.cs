@@ -50,4 +50,3 @@ public partial class 旧システム部署情報SearchConditionFilter {
     public string? 名称 { get; set; }
 }
 #endregion 検索条件フィルター
-

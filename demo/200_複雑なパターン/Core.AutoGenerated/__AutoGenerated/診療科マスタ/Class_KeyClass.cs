@@ -86,4 +86,3 @@ public partial class 診療科マスタKeyWithVersion : 診療科マスタKey {
 }
 
 #endregion キー項目のみのオブジェクト
-

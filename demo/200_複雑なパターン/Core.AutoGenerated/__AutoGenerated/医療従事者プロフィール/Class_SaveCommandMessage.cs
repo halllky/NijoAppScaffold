@@ -64,4 +64,3 @@ public class 医療資格SaveCommandMessages : MessageSetter {
     public IMessageSetter 有効期限 { get; }
 }
 #endregion 登録更新の過程で発生したメッセージの入れ物クラス
-

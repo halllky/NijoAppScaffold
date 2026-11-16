@@ -55,4 +55,3 @@ public class 従業員マスタの権限DisplayDataMessages : MessageSetter {
     public IMessageSetter 権限区分 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

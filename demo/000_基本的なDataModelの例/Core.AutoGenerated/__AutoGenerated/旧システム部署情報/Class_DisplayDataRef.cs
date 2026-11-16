@@ -33,4 +33,3 @@ public partial class 旧システム部署情報RefTarget {
 }
 
 #endregion 他の集約から参照されるときの画面表示用オブジェクト
-

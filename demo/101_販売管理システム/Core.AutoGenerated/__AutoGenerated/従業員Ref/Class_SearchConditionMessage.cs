@@ -36,4 +36,3 @@ public class 従業員RefSearchConditionMessages : MessageSetter {
     public IMessageSetter 氏名 { get; }
 }
 #endregion 検索条件クラスのデータ構造と対応するメッセージの入れ物クラス
-

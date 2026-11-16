@@ -119,4 +119,3 @@ public class 患者情報の診療履歴SaveCommandMessages : MessageSetter {
     public IMessageSetter 診療内容 { get; }
 }
 #endregion 登録更新の過程で発生したメッセージの入れ物クラス
-

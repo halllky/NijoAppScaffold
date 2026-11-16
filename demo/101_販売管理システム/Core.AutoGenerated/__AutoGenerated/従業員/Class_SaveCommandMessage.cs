@@ -58,4 +58,3 @@ public class 従業員の権限SaveCommandMessages : MessageSetter {
     public IMessageSetter 権限区分 { get; }
 }
 #endregion 登録更新の過程で発生したメッセージの入れ物クラス
-

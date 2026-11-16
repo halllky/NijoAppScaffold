@@ -82,4 +82,3 @@ public class 対応措置DisplayDataMessages : MessageSetter {
     public IMessageSetter 措置詳細 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

@@ -78,4 +78,3 @@ public partial class 権限SearchResult {
     public 権限レベル? 権限レベル { get; set; }
 }
 #endregion 検索クエリ型
-

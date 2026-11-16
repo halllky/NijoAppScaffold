@@ -57,4 +57,3 @@ public class 入荷明細SaveCommandMessages : MessageSetter {
     public IMessageSetter 備考 { get; }
 }
 #endregion 登録更新の過程で発生したメッセージの入れ物クラス
-

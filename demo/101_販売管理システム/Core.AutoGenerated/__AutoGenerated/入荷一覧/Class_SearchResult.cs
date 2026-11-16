@@ -46,4 +46,3 @@ public partial class 入荷一覧SearchResult {
     public int? 入荷数量合計 { get; set; }
 }
 #endregion 検索クエリ型
-

@@ -42,4 +42,3 @@ public class 社員SearchConditionMessages : MessageSetter {
     public IMessageSetter 契約種別 { get; }
 }
 #endregion 検索条件クラスのデータ構造と対応するメッセージの入れ物クラス
-

@@ -805,4 +805,3 @@ public partial class 患者マスタDeleteCommand : 患者マスタSaveCommand, 
     }
 }
 #endregion 削除コマンド
-

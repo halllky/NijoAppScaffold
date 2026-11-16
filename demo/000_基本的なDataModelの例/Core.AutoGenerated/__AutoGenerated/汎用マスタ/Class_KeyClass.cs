@@ -141,4 +141,3 @@ public partial class 汎用マスタKeyWithVersion : 汎用マスタKey {
 }
 
 #endregion キー項目のみのオブジェクト
-

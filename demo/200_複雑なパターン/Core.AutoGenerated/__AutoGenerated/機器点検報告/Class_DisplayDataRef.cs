@@ -64,4 +64,3 @@ public partial class 機器点検報告RefTargetVia対応措置 {
 }
 
 #endregion 他の集約から参照されるときの画面表示用オブジェクト
-

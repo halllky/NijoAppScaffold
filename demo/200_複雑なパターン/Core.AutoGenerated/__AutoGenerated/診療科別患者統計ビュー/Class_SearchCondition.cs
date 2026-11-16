@@ -58,4 +58,3 @@ public partial class 診療科別患者統計ビューSearchConditionFilter {
     public FromTo<DateTime?>? 統計日時 { get; set; }
 }
 #endregion 検索条件フィルター
-

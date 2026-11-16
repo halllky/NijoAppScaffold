@@ -22,4 +22,3 @@ namespace MyApp;
 
 #region キー項目のみのオブジェクト
 #endregion キー項目のみのオブジェクト
-

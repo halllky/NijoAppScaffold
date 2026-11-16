@@ -29,4 +29,3 @@ public partial class 簡易診療登録ReturnValue {
     public string? 診療番号 { get; set; }
 }
 #endregion 構造体定義
-

@@ -86,4 +86,3 @@ public partial class 売上KeyWithVersion : 売上Key {
 }
 
 #endregion キー項目のみのオブジェクト
-

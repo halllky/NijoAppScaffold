@@ -110,4 +110,3 @@ public partial class 措置結果KeyWithVersion : 措置結果Key {
 }
 
 #endregion キー項目のみのオブジェクト
-

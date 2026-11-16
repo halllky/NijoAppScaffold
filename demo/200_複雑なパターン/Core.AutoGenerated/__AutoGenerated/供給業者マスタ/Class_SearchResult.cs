@@ -49,4 +49,3 @@ public partial class 供給業者マスタSearchResult {
     public int Version { get; set; }
 }
 #endregion 検索クエリ型
-

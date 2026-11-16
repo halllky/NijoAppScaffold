@@ -99,4 +99,3 @@ public class 次回措置DisplayDataMessages : MessageSetter {
     public IMessageSetter 内容 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

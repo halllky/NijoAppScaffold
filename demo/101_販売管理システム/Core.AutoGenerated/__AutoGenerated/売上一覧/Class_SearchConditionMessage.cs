@@ -48,4 +48,3 @@ public class 売上一覧SearchConditionMessages : MessageSetter {
     public IMessageSetter 売上数量合計 { get; }
 }
 #endregion 検索条件クラスのデータ構造と対応するメッセージの入れ物クラス
-

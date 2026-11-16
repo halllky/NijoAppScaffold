@@ -580,4 +580,3 @@ public partial class 診察記録DeleteCommand : 診察記録SaveCommand, ISaveC
     }
 }
 #endregion 削除コマンド
-

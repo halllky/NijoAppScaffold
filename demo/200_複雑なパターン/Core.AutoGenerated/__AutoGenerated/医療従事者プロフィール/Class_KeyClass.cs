@@ -90,4 +90,3 @@ public partial class 医療従事者プロフィールKeyWithVersion : 医療従
 }
 
 #endregion キー項目のみのオブジェクト
-

@@ -48,4 +48,3 @@ public class 商品一覧DisplayDataMessages : MessageSetter {
     public IMessageSetter 在庫数 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

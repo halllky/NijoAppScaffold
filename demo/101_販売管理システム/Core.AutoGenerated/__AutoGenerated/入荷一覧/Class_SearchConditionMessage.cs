@@ -48,4 +48,3 @@ public class 入荷一覧SearchConditionMessages : MessageSetter {
     public IMessageSetter 入荷数量合計 { get; }
 }
 #endregion 検索条件クラスのデータ構造と対応するメッセージの入れ物クラス
-

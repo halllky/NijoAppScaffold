@@ -36,4 +36,3 @@ public class 機器分類マスタDisplayDataMessages : MessageSetter {
     public IMessageSetter 機器分類名 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

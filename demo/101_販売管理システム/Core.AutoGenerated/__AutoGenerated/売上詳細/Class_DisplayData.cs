@@ -112,4 +112,3 @@ public partial class 売上詳細の売上明細DisplayData {
     public bool WillBeDeleted { get; set; }
 }
 #endregion 画面表示用データ
-

@@ -77,4 +77,3 @@ public class 権限DisplayDataMessages : MessageSetter {
     public IMessageSetter 権限レベル { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

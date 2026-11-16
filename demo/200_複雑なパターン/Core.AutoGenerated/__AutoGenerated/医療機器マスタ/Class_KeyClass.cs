@@ -220,4 +220,3 @@ public partial class 医療機器マスタKeyWithVersion : 医療機器マスタ
 }
 
 #endregion キー項目のみのオブジェクト
-

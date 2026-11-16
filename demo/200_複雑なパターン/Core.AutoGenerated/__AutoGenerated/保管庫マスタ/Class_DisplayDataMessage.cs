@@ -62,4 +62,3 @@ public class 保管庫マスタの住所DisplayDataMessages : MessageSetter {
     public IMessageSetter 番地建物名 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

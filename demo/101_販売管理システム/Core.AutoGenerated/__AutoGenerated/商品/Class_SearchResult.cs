@@ -48,4 +48,3 @@ public partial class 商品SearchResult {
     public int Version { get; set; }
 }
 #endregion 検索クエリ型
-

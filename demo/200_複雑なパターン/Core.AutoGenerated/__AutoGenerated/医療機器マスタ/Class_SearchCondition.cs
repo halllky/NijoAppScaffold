@@ -118,4 +118,3 @@ public partial class 在庫状況履歴SearchConditionFilter {
     public 医療従事者マスタSearchConditionFilter 担当者 { get; set; } = new();
 }
 #endregion 検索条件フィルター
-

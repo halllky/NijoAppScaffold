@@ -33,4 +33,3 @@ public class 冪等キーSaveCommandMessages : MessageSetter {
     public IMessageSetter キー { get; }
 }
 #endregion 登録更新の過程で発生したメッセージの入れ物クラス
-

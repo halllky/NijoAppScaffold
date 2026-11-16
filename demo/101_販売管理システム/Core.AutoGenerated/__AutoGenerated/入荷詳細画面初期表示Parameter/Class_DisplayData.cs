@@ -46,4 +46,3 @@ public partial class 入荷詳細画面初期表示ParameterDisplayData {
     public bool WillBeDeleted { get; set; }
 }
 #endregion 画面表示用データ
-

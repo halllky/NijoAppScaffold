@@ -79,4 +79,3 @@ public class 入荷商品一覧Messages : MessageSetter {
     public IMessageSetter Version { get; }
 }
 #endregion 構造体のコマンド引数用メッセージの入れ物クラス
-

@@ -53,4 +53,3 @@ public class 従業員マスタの権限SearchConditionMessages : MessageSetter 
     public IMessageSetter 権限区分 { get; }
 }
 #endregion 検索条件クラスのデータ構造と対応するメッセージの入れ物クラス
-

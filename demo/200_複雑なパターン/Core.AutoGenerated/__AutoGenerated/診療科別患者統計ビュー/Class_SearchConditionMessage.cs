@@ -48,4 +48,3 @@ public class 診療科別患者統計ビューSearchConditionMessages : MessageS
     public IMessageSetter 統計日時 { get; }
 }
 #endregion 検索条件クラスのデータ構造と対応するメッセージの入れ物クラス
-

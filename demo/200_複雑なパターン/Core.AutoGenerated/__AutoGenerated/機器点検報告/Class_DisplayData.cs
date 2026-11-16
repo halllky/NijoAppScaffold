@@ -101,4 +101,3 @@ public partial class 対応措置DisplayData {
     public bool WillBeDeleted { get; set; }
 }
 #endregion 画面表示用データ
-

@@ -62,4 +62,3 @@ public class 保管庫マスタの住所SearchConditionMessages : MessageSetter 
     public IMessageSetter 番地建物名 { get; }
 }
 #endregion 検索条件クラスのデータ構造と対応するメッセージの入れ物クラス
-

@@ -365,4 +365,3 @@ public partial class 診療科DeleteCommand : 診療科SaveCommand, ISaveCommand
     }
 }
 #endregion 削除コマンド
-

@@ -58,4 +58,3 @@ public partial class 予約SearchConditionFilter {
     public 医療従事者マスタSearchConditionFilter 担当医 { get; set; } = new();
 }
 #endregion 検索条件フィルター
-

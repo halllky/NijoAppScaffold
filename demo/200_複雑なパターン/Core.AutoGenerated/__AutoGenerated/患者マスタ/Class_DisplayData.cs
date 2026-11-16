@@ -163,4 +163,3 @@ public partial class 患者情報の診療履歴DisplayData {
     public bool WillBeDeleted { get; set; }
 }
 #endregion 画面表示用データ
-

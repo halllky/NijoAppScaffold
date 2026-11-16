@@ -36,4 +36,3 @@ public class 機器分類マスタSaveCommandMessages : MessageSetter {
     public IMessageSetter 機器分類名 { get; }
 }
 #endregion 登録更新の過程で発生したメッセージの入れ物クラス
-

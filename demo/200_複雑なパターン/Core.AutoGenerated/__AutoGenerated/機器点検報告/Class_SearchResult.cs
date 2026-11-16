@@ -179,4 +179,3 @@ public partial class 対応措置SearchResult {
     public string? 措置詳細 { get; set; }
 }
 #endregion 検索クエリ型
-

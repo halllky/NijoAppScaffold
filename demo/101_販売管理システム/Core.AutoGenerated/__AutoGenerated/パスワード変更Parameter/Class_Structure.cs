@@ -33,4 +33,3 @@ public partial class パスワード変更Parameter {
     public string? 新しいパスワード_確認用 { get; set; }
 }
 #endregion 構造体定義
-

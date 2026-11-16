@@ -145,4 +145,3 @@ public partial class 医療従事者マスタKeyWithVersion : 医療従事者マ
 }
 
 #endregion キー項目のみのオブジェクト
-

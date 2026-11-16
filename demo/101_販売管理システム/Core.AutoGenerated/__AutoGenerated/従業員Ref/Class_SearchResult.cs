@@ -34,4 +34,3 @@ public partial class 従業員RefSearchResult {
     public string? 氏名 { get; set; }
 }
 #endregion 検索クエリ型
-

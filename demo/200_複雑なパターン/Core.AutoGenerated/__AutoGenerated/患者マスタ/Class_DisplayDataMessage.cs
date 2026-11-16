@@ -119,4 +119,3 @@ public class 患者情報の診療履歴DisplayDataMessages : MessageSetter {
     public IMessageSetter 診療内容 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

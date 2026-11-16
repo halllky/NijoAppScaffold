@@ -36,4 +36,3 @@ public partial class ログインユーザー情報_ログインユーザー情�
     public 権限区分? 権限区分 { get; set; }
 }
 #endregion 構造体定義
-

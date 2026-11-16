@@ -36,4 +36,3 @@ public class 従業員RefDisplayDataMessages : MessageSetter {
     public IMessageSetter 氏名 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

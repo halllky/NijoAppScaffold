@@ -117,4 +117,3 @@ public class 時間帯別収益DisplayDataMessages : MessageSetter {
     public IMessageSetter 平均患者単価 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

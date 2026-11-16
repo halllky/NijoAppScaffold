@@ -89,4 +89,3 @@ public partial class 保管庫マスタの住所DisplayData {
     public bool WillBeDeleted { get; set; }
 }
 #endregion 画面表示用データ
-

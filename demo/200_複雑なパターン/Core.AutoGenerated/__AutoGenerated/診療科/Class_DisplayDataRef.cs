@@ -33,4 +33,3 @@ public partial class 診療科RefTarget {
 }
 
 #endregion 他の集約から参照されるときの画面表示用オブジェクト
-

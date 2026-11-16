@@ -48,4 +48,3 @@ public class 診療科別患者統計ビューDisplayDataMessages : MessageSette
     public IMessageSetter 統計日時 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

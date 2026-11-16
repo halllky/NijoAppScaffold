@@ -633,4 +633,3 @@ public partial class 売上DeleteCommand : 売上SaveCommand, ISaveCommand<Valid
     }
 }
 #endregion 削除コマンド
-

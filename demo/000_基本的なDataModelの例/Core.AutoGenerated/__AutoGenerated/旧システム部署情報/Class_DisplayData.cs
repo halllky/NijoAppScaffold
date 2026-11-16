@@ -53,4 +53,3 @@ public partial class 旧システム部署情報DisplayData {
     public int? Version { get; set; }
 }
 #endregion 画面表示用データ
-

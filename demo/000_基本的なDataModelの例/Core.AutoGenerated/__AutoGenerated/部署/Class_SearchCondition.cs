@@ -70,4 +70,3 @@ public partial class 係SearchConditionFilter {
     public 汎用マスタSearchConditionFilter 勤怠管理区分 { get; set; } = new();
 }
 #endregion 検索条件フィルター
-

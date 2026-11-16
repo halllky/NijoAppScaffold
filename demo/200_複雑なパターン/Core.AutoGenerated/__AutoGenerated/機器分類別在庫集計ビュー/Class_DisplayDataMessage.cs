@@ -64,4 +64,3 @@ public class 保管庫別在庫DisplayDataMessages : MessageSetter {
     public IMessageSetter 機器数 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

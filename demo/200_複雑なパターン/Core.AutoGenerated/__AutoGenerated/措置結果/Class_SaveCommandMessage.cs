@@ -99,4 +99,3 @@ public class 次回措置SaveCommandMessages : MessageSetter {
     public IMessageSetter 内容 { get; }
 }
 #endregion 登録更新の過程で発生したメッセージの入れ物クラス
-

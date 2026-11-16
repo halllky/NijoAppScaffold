@@ -86,4 +86,3 @@ public partial class 入荷KeyWithVersion : 入荷Key {
 }
 
 #endregion キー項目のみのオブジェクト
-

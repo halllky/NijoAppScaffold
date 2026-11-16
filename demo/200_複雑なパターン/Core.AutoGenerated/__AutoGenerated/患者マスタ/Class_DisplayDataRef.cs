@@ -75,4 +75,3 @@ public partial class 患者情報RefTargetVia患者マスタ {
 }
 
 #endregion 他の集約から参照されるときの画面表示用オブジェクト
-

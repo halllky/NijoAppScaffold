@@ -45,4 +45,3 @@ public class 供給業者マスタDisplayDataMessages : MessageSetter {
     public IMessageSetter メールアドレス { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

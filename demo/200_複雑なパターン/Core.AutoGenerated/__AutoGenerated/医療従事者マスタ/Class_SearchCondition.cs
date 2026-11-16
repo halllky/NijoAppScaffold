@@ -70,4 +70,3 @@ public partial class 権限SearchConditionFilter {
     public 権限レベルSearchCondition? 権限レベル { get; set; }
 }
 #endregion 検索条件フィルター
-

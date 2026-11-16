@@ -126,4 +126,3 @@ public class 作業者SaveCommandMessages : MessageSetter {
     public IMessageSetter 作業者名 { get; }
 }
 #endregion 登録更新の過程で発生したメッセージの入れ物クラス
-

@@ -69,4 +69,3 @@ public partial class 保管庫マスタSearchResult {
     public int Version { get; set; }
 }
 #endregion 検索クエリ型
-

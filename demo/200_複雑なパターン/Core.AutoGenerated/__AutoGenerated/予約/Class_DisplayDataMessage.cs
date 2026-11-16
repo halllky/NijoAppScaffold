@@ -48,4 +48,3 @@ public class 予約DisplayDataMessages : MessageSetter {
     public IMessageSetter 担当医 { get; }
 }
 #endregion 画面表示用クラスのデータ構造と対応するメッセージの入れ物クラス
-

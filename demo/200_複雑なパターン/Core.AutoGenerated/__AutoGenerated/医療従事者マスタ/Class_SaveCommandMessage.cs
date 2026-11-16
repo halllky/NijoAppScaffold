@@ -77,4 +77,3 @@ public class 権限SaveCommandMessages : MessageSetter {
     public IMessageSetter 権限レベル { get; }
 }
 #endregion 登録更新の過程で発生したメッセージの入れ物クラス
-

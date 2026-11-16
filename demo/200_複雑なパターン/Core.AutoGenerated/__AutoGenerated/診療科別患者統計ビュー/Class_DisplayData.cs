@@ -58,4 +58,3 @@ public partial class 診療科別患者統計ビューDisplayData {
     public bool WillBeDeleted { get; set; }
 }
 #endregion 画面表示用データ
-

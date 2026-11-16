@@ -53,4 +53,3 @@ public partial class 機器分類マスタDisplayData {
     public int? Version { get; set; }
 }
 #endregion 画面表示用データ
-

@@ -244,4 +244,3 @@ public partial class 添付資料SearchResult {
     public DateTime? 登録日時 { get; set; }
 }
 #endregion 検索クエリ型
-

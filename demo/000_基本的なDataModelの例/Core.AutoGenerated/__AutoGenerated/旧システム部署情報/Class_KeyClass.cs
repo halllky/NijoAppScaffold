@@ -86,4 +86,3 @@ public partial class 旧システム部署情報KeyWithVersion : 旧システム
 }
 
 #endregion キー項目のみのオブジェクト
-

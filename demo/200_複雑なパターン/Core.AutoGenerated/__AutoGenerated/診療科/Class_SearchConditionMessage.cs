@@ -36,4 +36,3 @@ public class 診療科SearchConditionMessages : MessageSetter {
     public IMessageSetter 診療科名 { get; }
 }
 #endregion 検索条件クラスのデータ構造と対応するメッセージの入れ物クラス
-

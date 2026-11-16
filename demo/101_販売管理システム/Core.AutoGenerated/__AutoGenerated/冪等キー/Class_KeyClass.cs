@@ -86,4 +86,3 @@ public partial class 冪等キーKeyWithVersion : 冪等キーKey {
 }
 
 #endregion キー項目のみのオブジェクト
-

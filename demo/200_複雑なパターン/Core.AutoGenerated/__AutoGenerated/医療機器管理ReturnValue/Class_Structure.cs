@@ -60,4 +60,3 @@ public partial class 医療機器管理ReturnValue_承認情報 {
     public string? コメント { get; set; }
 }
 #endregion 構造体定義
-
