@@ -125,30 +125,31 @@ public partial class 保守計画CreateCommand : 保守計画SaveCommand, ISaveC
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(保守計画SaveCommandMessages messages) {
+        string? errorMessage;
         // 保守計画ID
-        if (string.IsNullOrWhiteSpace(this.保守計画ID)) {
-            messages.保守計画ID.AddError(MSG.RequiredError("保守計画ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.保守計画ID, "保守計画ID")) is not null) {
+            messages.保守計画ID.AddError(errorMessage);
         }
         for (var i = 0; i < this.作業工程.Count; i++) {
             var item = this.作業工程[i];
         
             // 工程番号
-            if (item.工程番号 == null) {
-                messages.作業工程[i].工程番号.AddError(MSG.RequiredError("工程番号"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.工程番号, "工程番号")) is not null) {
+                messages.作業工程[i].工程番号.AddError(errorMessage);
             }
             for (var j = 0; j < item.作業手順.Count; j++) {
                 var item1 = item.作業手順[j];
             
                 // 手順番号
-                if (item1.手順番号 == null) {
-                    messages.作業工程[i].作業手順[j].手順番号.AddError(MSG.RequiredError("手順番号"));
+                if ((errorMessage = _dbContext.ValidateRequired(item1.手順番号, "手順番号")) is not null) {
+                    messages.作業工程[i].作業手順[j].手順番号.AddError(errorMessage);
                 }
                 for (var k = 0; k < item1.確認項目.Count; k++) {
                     var item2 = item1.確認項目[k];
                 
                     // 確認項目番号
-                    if (item2.確認項目番号 == null) {
-                        messages.作業工程[i].作業手順[j].確認項目[k].確認項目番号.AddError(MSG.RequiredError("確認項目番号"));
+                    if ((errorMessage = _dbContext.ValidateRequired(item2.確認項目番号, "確認項目番号")) is not null) {
+                        messages.作業工程[i].作業手順[j].確認項目[k].確認項目番号.AddError(errorMessage);
                     }
                 }
             }
@@ -157,8 +158,8 @@ public partial class 保守計画CreateCommand : 保守計画SaveCommand, ISaveC
                     var item2 = item.作業体制.作業者[k];
                 
                     // 作業者番号
-                    if (item2.作業者番号 == null) {
-                        messages.作業工程[i].作業体制.作業者[k].作業者番号.AddError(MSG.RequiredError("作業者番号"));
+                    if ((errorMessage = _dbContext.ValidateRequired(item2.作業者番号, "作業者番号")) is not null) {
+                        messages.作業工程[i].作業体制.作業者[k].作業者番号.AddError(errorMessage);
                     }
                 }
             }
@@ -174,55 +175,49 @@ public partial class 保守計画CreateCommand : 保守計画SaveCommand, ISaveC
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(保守計画SaveCommandMessages messages) {
+        string? errorMessage;
         // 保守計画ID
-        if (!string.IsNullOrEmpty(this.保守計画ID)
-            && new System.Globalization.StringInfo(this.保守計画ID!).LengthInTextElements > 20) {
-            messages.保守計画ID.AddError(MSG.MaxLengthError("保守計画ID", "20"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.保守計画ID, 20, "保守計画ID")) is not null) {
+            messages.保守計画ID.AddError(errorMessage);
         }
         // 計画名
-        if (!string.IsNullOrEmpty(this.計画名)
-            && new System.Globalization.StringInfo(this.計画名!).LengthInTextElements > 100) {
-            messages.計画名.AddError(MSG.MaxLengthError("計画名", "100"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.計画名, 100, "計画名")) is not null) {
+            messages.計画名.AddError(errorMessage);
         }
         for (var i = 0; i < this.作業工程.Count; i++) {
             var item = this.作業工程[i];
         
             // 工程名
-            if (!string.IsNullOrEmpty(item.工程名)
-                && new System.Globalization.StringInfo(item.工程名!).LengthInTextElements > 100) {
-                messages.作業工程[i].工程名.AddError(MSG.MaxLengthError("工程名", "100"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.工程名, 100, "工程名")) is not null) {
+                messages.作業工程[i].工程名.AddError(errorMessage);
             }
             for (var j = 0; j < item.作業手順.Count; j++) {
                 var item1 = item.作業手順[j];
             
                 // 手順内容
-                if (!string.IsNullOrEmpty(item1.手順内容)
-                    && new System.Globalization.StringInfo(item1.手順内容!).LengthInTextElements > 1000) {
-                    messages.作業工程[i].作業手順[j].手順内容.AddError(MSG.MaxLengthError("手順内容", "1000"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(item1.手順内容, 1000, "手順内容")) is not null) {
+                    messages.作業工程[i].作業手順[j].手順内容.AddError(errorMessage);
                 }
                 for (var k = 0; k < item1.確認項目.Count; k++) {
                     var item2 = item1.確認項目[k];
                 
                     // 確認内容
-                    if (!string.IsNullOrEmpty(item2.確認内容)
-                        && new System.Globalization.StringInfo(item2.確認内容!).LengthInTextElements > 100) {
-                        messages.作業工程[i].作業手順[j].確認項目[k].確認内容.AddError(MSG.MaxLengthError("確認内容", "100"));
+                    if ((errorMessage = _dbContext.ValidateMaxLength(item2.確認内容, 100, "確認内容")) is not null) {
+                        messages.作業工程[i].作業手順[j].確認項目[k].確認内容.AddError(errorMessage);
                     }
                 }
             }
             if (item.作業体制 != null) {
                 // 責任者名
-                if (!string.IsNullOrEmpty(item.作業体制.責任者名)
-                    && new System.Globalization.StringInfo(item.作業体制.責任者名!).LengthInTextElements > 50) {
-                    messages.作業工程[i].作業体制.責任者名.AddError(MSG.MaxLengthError("責任者名", "50"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(item.作業体制.責任者名, 50, "責任者名")) is not null) {
+                    messages.作業工程[i].作業体制.責任者名.AddError(errorMessage);
                 }
                 for (var k = 0; k < item.作業体制.作業者.Count; k++) {
                     var item2 = item.作業体制.作業者[k];
                 
                     // 作業者名
-                    if (!string.IsNullOrEmpty(item2.作業者名)
-                        && new System.Globalization.StringInfo(item2.作業者名!).LengthInTextElements > 50) {
-                        messages.作業工程[i].作業体制.作業者[k].作業者名.AddError(MSG.MaxLengthError("作業者名", "50"));
+                    if ((errorMessage = _dbContext.ValidateMaxLength(item2.作業者名, 50, "作業者名")) is not null) {
+                        messages.作業工程[i].作業体制.作業者[k].作業者名.AddError(errorMessage);
                     }
                 }
             }
@@ -504,30 +499,31 @@ public partial class 保守計画UpdateCommand : 保守計画SaveCommand, ISaveC
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(保守計画SaveCommandMessages messages) {
+        string? errorMessage;
         // 保守計画ID
-        if (string.IsNullOrWhiteSpace(this.保守計画ID)) {
-            messages.保守計画ID.AddError(MSG.RequiredError("保守計画ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.保守計画ID, "保守計画ID")) is not null) {
+            messages.保守計画ID.AddError(errorMessage);
         }
         for (var i = 0; i < this.作業工程.Count; i++) {
             var item = this.作業工程[i];
         
             // 工程番号
-            if (item.工程番号 == null) {
-                messages.作業工程[i].工程番号.AddError(MSG.RequiredError("工程番号"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.工程番号, "工程番号")) is not null) {
+                messages.作業工程[i].工程番号.AddError(errorMessage);
             }
             for (var j = 0; j < item.作業手順.Count; j++) {
                 var item1 = item.作業手順[j];
             
                 // 手順番号
-                if (item1.手順番号 == null) {
-                    messages.作業工程[i].作業手順[j].手順番号.AddError(MSG.RequiredError("手順番号"));
+                if ((errorMessage = _dbContext.ValidateRequired(item1.手順番号, "手順番号")) is not null) {
+                    messages.作業工程[i].作業手順[j].手順番号.AddError(errorMessage);
                 }
                 for (var k = 0; k < item1.確認項目.Count; k++) {
                     var item2 = item1.確認項目[k];
                 
                     // 確認項目番号
-                    if (item2.確認項目番号 == null) {
-                        messages.作業工程[i].作業手順[j].確認項目[k].確認項目番号.AddError(MSG.RequiredError("確認項目番号"));
+                    if ((errorMessage = _dbContext.ValidateRequired(item2.確認項目番号, "確認項目番号")) is not null) {
+                        messages.作業工程[i].作業手順[j].確認項目[k].確認項目番号.AddError(errorMessage);
                     }
                 }
             }
@@ -536,8 +532,8 @@ public partial class 保守計画UpdateCommand : 保守計画SaveCommand, ISaveC
                     var item2 = item.作業体制.作業者[k];
                 
                     // 作業者番号
-                    if (item2.作業者番号 == null) {
-                        messages.作業工程[i].作業体制.作業者[k].作業者番号.AddError(MSG.RequiredError("作業者番号"));
+                    if ((errorMessage = _dbContext.ValidateRequired(item2.作業者番号, "作業者番号")) is not null) {
+                        messages.作業工程[i].作業体制.作業者[k].作業者番号.AddError(errorMessage);
                     }
                 }
             }
@@ -553,55 +549,49 @@ public partial class 保守計画UpdateCommand : 保守計画SaveCommand, ISaveC
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(保守計画SaveCommandMessages messages) {
+        string? errorMessage;
         // 保守計画ID
-        if (!string.IsNullOrEmpty(this.保守計画ID)
-            && new System.Globalization.StringInfo(this.保守計画ID!).LengthInTextElements > 20) {
-            messages.保守計画ID.AddError(MSG.MaxLengthError("保守計画ID", "20"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.保守計画ID, 20, "保守計画ID")) is not null) {
+            messages.保守計画ID.AddError(errorMessage);
         }
         // 計画名
-        if (!string.IsNullOrEmpty(this.計画名)
-            && new System.Globalization.StringInfo(this.計画名!).LengthInTextElements > 100) {
-            messages.計画名.AddError(MSG.MaxLengthError("計画名", "100"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.計画名, 100, "計画名")) is not null) {
+            messages.計画名.AddError(errorMessage);
         }
         for (var i = 0; i < this.作業工程.Count; i++) {
             var item = this.作業工程[i];
         
             // 工程名
-            if (!string.IsNullOrEmpty(item.工程名)
-                && new System.Globalization.StringInfo(item.工程名!).LengthInTextElements > 100) {
-                messages.作業工程[i].工程名.AddError(MSG.MaxLengthError("工程名", "100"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.工程名, 100, "工程名")) is not null) {
+                messages.作業工程[i].工程名.AddError(errorMessage);
             }
             for (var j = 0; j < item.作業手順.Count; j++) {
                 var item1 = item.作業手順[j];
             
                 // 手順内容
-                if (!string.IsNullOrEmpty(item1.手順内容)
-                    && new System.Globalization.StringInfo(item1.手順内容!).LengthInTextElements > 1000) {
-                    messages.作業工程[i].作業手順[j].手順内容.AddError(MSG.MaxLengthError("手順内容", "1000"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(item1.手順内容, 1000, "手順内容")) is not null) {
+                    messages.作業工程[i].作業手順[j].手順内容.AddError(errorMessage);
                 }
                 for (var k = 0; k < item1.確認項目.Count; k++) {
                     var item2 = item1.確認項目[k];
                 
                     // 確認内容
-                    if (!string.IsNullOrEmpty(item2.確認内容)
-                        && new System.Globalization.StringInfo(item2.確認内容!).LengthInTextElements > 100) {
-                        messages.作業工程[i].作業手順[j].確認項目[k].確認内容.AddError(MSG.MaxLengthError("確認内容", "100"));
+                    if ((errorMessage = _dbContext.ValidateMaxLength(item2.確認内容, 100, "確認内容")) is not null) {
+                        messages.作業工程[i].作業手順[j].確認項目[k].確認内容.AddError(errorMessage);
                     }
                 }
             }
             if (item.作業体制 != null) {
                 // 責任者名
-                if (!string.IsNullOrEmpty(item.作業体制.責任者名)
-                    && new System.Globalization.StringInfo(item.作業体制.責任者名!).LengthInTextElements > 50) {
-                    messages.作業工程[i].作業体制.責任者名.AddError(MSG.MaxLengthError("責任者名", "50"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(item.作業体制.責任者名, 50, "責任者名")) is not null) {
+                    messages.作業工程[i].作業体制.責任者名.AddError(errorMessage);
                 }
                 for (var k = 0; k < item.作業体制.作業者.Count; k++) {
                     var item2 = item.作業体制.作業者[k];
                 
                     // 作業者名
-                    if (!string.IsNullOrEmpty(item2.作業者名)
-                        && new System.Globalization.StringInfo(item2.作業者名!).LengthInTextElements > 50) {
-                        messages.作業工程[i].作業体制.作業者[k].作業者名.AddError(MSG.MaxLengthError("作業者名", "50"));
+                    if ((errorMessage = _dbContext.ValidateMaxLength(item2.作業者名, 50, "作業者名")) is not null) {
+                        messages.作業工程[i].作業体制.作業者[k].作業者名.AddError(errorMessage);
                     }
                 }
             }

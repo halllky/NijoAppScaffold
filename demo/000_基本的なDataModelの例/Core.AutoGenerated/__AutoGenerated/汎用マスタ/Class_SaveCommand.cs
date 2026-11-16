@@ -96,13 +96,14 @@ public partial class 汎用マスタCreateCommand : 汎用マスタSaveCommand, 
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(汎用マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 汎用種別
-        if (string.IsNullOrWhiteSpace(this.汎用種別)) {
-            messages.汎用種別.AddError(MSG.RequiredError("汎用種別"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.汎用種別, "汎用種別")) is not null) {
+            messages.汎用種別.AddError(errorMessage);
         }
         // 区分値
-        if (string.IsNullOrWhiteSpace(this.区分値)) {
-            messages.区分値.AddError(MSG.RequiredError("区分値"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.区分値, "区分値")) is not null) {
+            messages.区分値.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -230,13 +231,14 @@ public partial class 汎用マスタUpdateCommand : 汎用マスタSaveCommand, 
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(汎用マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 汎用種別
-        if (string.IsNullOrWhiteSpace(this.汎用種別)) {
-            messages.汎用種別.AddError(MSG.RequiredError("汎用種別"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.汎用種別, "汎用種別")) is not null) {
+            messages.汎用種別.AddError(errorMessage);
         }
         // 区分値
-        if (string.IsNullOrWhiteSpace(this.区分値)) {
-            messages.区分値.AddError(MSG.RequiredError("区分値"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.区分値, "区分値")) is not null) {
+            messages.区分値.AddError(errorMessage);
         }
     }
     /// <summary>

@@ -97,17 +97,18 @@ public partial class セッションCreateCommand : セッションSaveCommand, 
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(セッションSaveCommandMessages messages) {
+        string? errorMessage;
         // セッションキー
-        if (string.IsNullOrWhiteSpace(this.セッションキー)) {
-            messages.セッションキー.AddError(MSG.RequiredError("セッションキー"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.セッションキー, "セッションキー")) is not null) {
+            messages.セッションキー.AddError(errorMessage);
         }
         // ユーザ
-        if (string.IsNullOrWhiteSpace(this.ユーザ?.従業員番号)) {
-            messages.ユーザ.AddError(MSG.RequiredError("ユーザ"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.ユーザ?.従業員番号, "ユーザ")) is not null) {
+            messages.ユーザ.AddError(errorMessage);
         }
         // 最終操作日時
-        if (this.最終操作日時 == null) {
-            messages.最終操作日時.AddError(MSG.RequiredError("最終操作日時"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.最終操作日時, "最終操作日時")) is not null) {
+            messages.最終操作日時.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -245,17 +246,18 @@ public partial class セッションUpdateCommand : セッションSaveCommand, 
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(セッションSaveCommandMessages messages) {
+        string? errorMessage;
         // セッションキー
-        if (string.IsNullOrWhiteSpace(this.セッションキー)) {
-            messages.セッションキー.AddError(MSG.RequiredError("セッションキー"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.セッションキー, "セッションキー")) is not null) {
+            messages.セッションキー.AddError(errorMessage);
         }
         // ユーザ
-        if (string.IsNullOrWhiteSpace(this.ユーザ?.従業員番号)) {
-            messages.ユーザ.AddError(MSG.RequiredError("ユーザ"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.ユーザ?.従業員番号, "ユーザ")) is not null) {
+            messages.ユーザ.AddError(errorMessage);
         }
         // 最終操作日時
-        if (this.最終操作日時 == null) {
-            messages.最終操作日時.AddError(MSG.RequiredError("最終操作日時"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.最終操作日時, "最終操作日時")) is not null) {
+            messages.最終操作日時.AddError(errorMessage);
         }
     }
     /// <summary>

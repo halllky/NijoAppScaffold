@@ -110,16 +110,17 @@ public partial class 医療従事者プロフィールCreateCommand : 医療従�
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(医療従事者プロフィールSaveCommandMessages messages) {
+        string? errorMessage;
         // 医療従事者
-        if (string.IsNullOrWhiteSpace(((string?)this.医療従事者?.医療従事者ID))) {
-            messages.医療従事者.AddError(MSG.RequiredError("医療従事者"));
+        if ((errorMessage = _dbContext.ValidateRequired(((string?)this.医療従事者?.医療従事者ID), "医療従事者")) is not null) {
+            messages.医療従事者.AddError(errorMessage);
         }
         for (var i = 0; i < this.医療資格.Count; i++) {
             var item = this.医療資格[i];
         
             // 資格名
-            if (string.IsNullOrWhiteSpace(item.資格名)) {
-                messages.医療資格[i].資格名.AddError(MSG.RequiredError("資格名"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.資格名, "資格名")) is not null) {
+                messages.医療資格[i].資格名.AddError(errorMessage);
             }
         }
     }
@@ -133,28 +134,25 @@ public partial class 医療従事者プロフィールCreateCommand : 医療従�
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(医療従事者プロフィールSaveCommandMessages messages) {
+        string? errorMessage;
         // 写真URL
-        if (!string.IsNullOrEmpty(this.写真URL)
-            && new System.Globalization.StringInfo(this.写真URL!).LengthInTextElements > 200) {
-            messages.写真URL.AddError(MSG.MaxLengthError("写真URL", "200"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.写真URL, 200, "写真URL")) is not null) {
+            messages.写真URL.AddError(errorMessage);
         }
         // 自己紹介
-        if (!string.IsNullOrEmpty(this.自己紹介)
-            && new System.Globalization.StringInfo(this.自己紹介!).LengthInTextElements > 1000) {
-            messages.自己紹介.AddError(MSG.MaxLengthError("自己紹介", "1000"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.自己紹介, 1000, "自己紹介")) is not null) {
+            messages.自己紹介.AddError(errorMessage);
         }
         // 専門分野
-        if (!string.IsNullOrEmpty(this.専門分野)
-            && new System.Globalization.StringInfo(this.専門分野!).LengthInTextElements > 100) {
-            messages.専門分野.AddError(MSG.MaxLengthError("専門分野", "100"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.専門分野, 100, "専門分野")) is not null) {
+            messages.専門分野.AddError(errorMessage);
         }
         for (var i = 0; i < this.医療資格.Count; i++) {
             var item = this.医療資格[i];
         
             // 資格名
-            if (!string.IsNullOrEmpty(item.資格名)
-                && new System.Globalization.StringInfo(item.資格名!).LengthInTextElements > 50) {
-                messages.医療資格[i].資格名.AddError(MSG.MaxLengthError("資格名", "50"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.資格名, 50, "資格名")) is not null) {
+                messages.医療資格[i].資格名.AddError(errorMessage);
             }
         }
     }
@@ -323,16 +321,17 @@ public partial class 医療従事者プロフィールUpdateCommand : 医療従�
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(医療従事者プロフィールSaveCommandMessages messages) {
+        string? errorMessage;
         // 医療従事者
-        if (string.IsNullOrWhiteSpace(((string?)this.医療従事者?.医療従事者ID))) {
-            messages.医療従事者.AddError(MSG.RequiredError("医療従事者"));
+        if ((errorMessage = _dbContext.ValidateRequired(((string?)this.医療従事者?.医療従事者ID), "医療従事者")) is not null) {
+            messages.医療従事者.AddError(errorMessage);
         }
         for (var i = 0; i < this.医療資格.Count; i++) {
             var item = this.医療資格[i];
         
             // 資格名
-            if (string.IsNullOrWhiteSpace(item.資格名)) {
-                messages.医療資格[i].資格名.AddError(MSG.RequiredError("資格名"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.資格名, "資格名")) is not null) {
+                messages.医療資格[i].資格名.AddError(errorMessage);
             }
         }
     }
@@ -346,28 +345,25 @@ public partial class 医療従事者プロフィールUpdateCommand : 医療従�
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(医療従事者プロフィールSaveCommandMessages messages) {
+        string? errorMessage;
         // 写真URL
-        if (!string.IsNullOrEmpty(this.写真URL)
-            && new System.Globalization.StringInfo(this.写真URL!).LengthInTextElements > 200) {
-            messages.写真URL.AddError(MSG.MaxLengthError("写真URL", "200"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.写真URL, 200, "写真URL")) is not null) {
+            messages.写真URL.AddError(errorMessage);
         }
         // 自己紹介
-        if (!string.IsNullOrEmpty(this.自己紹介)
-            && new System.Globalization.StringInfo(this.自己紹介!).LengthInTextElements > 1000) {
-            messages.自己紹介.AddError(MSG.MaxLengthError("自己紹介", "1000"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.自己紹介, 1000, "自己紹介")) is not null) {
+            messages.自己紹介.AddError(errorMessage);
         }
         // 専門分野
-        if (!string.IsNullOrEmpty(this.専門分野)
-            && new System.Globalization.StringInfo(this.専門分野!).LengthInTextElements > 100) {
-            messages.専門分野.AddError(MSG.MaxLengthError("専門分野", "100"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.専門分野, 100, "専門分野")) is not null) {
+            messages.専門分野.AddError(errorMessage);
         }
         for (var i = 0; i < this.医療資格.Count; i++) {
             var item = this.医療資格[i];
         
             // 資格名
-            if (!string.IsNullOrEmpty(item.資格名)
-                && new System.Globalization.StringInfo(item.資格名!).LengthInTextElements > 50) {
-                messages.医療資格[i].資格名.AddError(MSG.MaxLengthError("資格名", "50"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.資格名, 50, "資格名")) is not null) {
+                messages.医療資格[i].資格名.AddError(errorMessage);
             }
         }
     }

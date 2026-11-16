@@ -89,9 +89,10 @@ public partial class 冪等キーCreateCommand : 冪等キーSaveCommand, ISaveC
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(冪等キーSaveCommandMessages messages) {
+        string? errorMessage;
         // キー
-        if (string.IsNullOrWhiteSpace(this.キー)) {
-            messages.キー.AddError(MSG.RequiredError("キー"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.キー, "キー")) is not null) {
+            messages.キー.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -217,9 +218,10 @@ public partial class 冪等キーUpdateCommand : 冪等キーSaveCommand, ISaveC
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(冪等キーSaveCommandMessages messages) {
+        string? errorMessage;
         // キー
-        if (string.IsNullOrWhiteSpace(this.キー)) {
-            messages.キー.AddError(MSG.RequiredError("キー"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.キー, "キー")) is not null) {
+            messages.キー.AddError(errorMessage);
         }
     }
     /// <summary>

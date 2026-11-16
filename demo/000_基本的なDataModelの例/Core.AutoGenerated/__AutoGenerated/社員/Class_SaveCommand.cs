@@ -99,13 +99,14 @@ public partial class 社員CreateCommand : 社員SaveCommand, ISaveCommand<Valid
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(社員SaveCommandMessages messages) {
+        string? errorMessage;
         // 社員ID
-        if (this.社員ID == null) {
-            messages.社員ID.AddError(MSG.RequiredError("社員ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.社員ID, "社員ID")) is not null) {
+            messages.社員ID.AddError(errorMessage);
         }
         // 氏名
-        if (string.IsNullOrWhiteSpace(this.氏名)) {
-            messages.氏名.AddError(MSG.RequiredError("氏名"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.氏名, "氏名")) is not null) {
+            messages.氏名.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -246,13 +247,14 @@ public partial class 社員UpdateCommand : 社員SaveCommand, ISaveCommand<Valid
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(社員SaveCommandMessages messages) {
+        string? errorMessage;
         // 社員ID
-        if (this.社員ID == null) {
-            messages.社員ID.AddError(MSG.RequiredError("社員ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.社員ID, "社員ID")) is not null) {
+            messages.社員ID.AddError(errorMessage);
         }
         // 氏名
-        if (string.IsNullOrWhiteSpace(this.氏名)) {
-            messages.氏名.AddError(MSG.RequiredError("氏名"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.氏名, "氏名")) is not null) {
+            messages.氏名.AddError(errorMessage);
         }
     }
     /// <summary>

@@ -146,29 +146,30 @@ public partial class 医療機器マスタCreateCommand : 医療機器マスタS
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(医療機器マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 機器ID
-        if (string.IsNullOrWhiteSpace(this.機器ID)) {
-            messages.機器ID.AddError(MSG.RequiredError("機器ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.機器ID, "機器ID")) is not null) {
+            messages.機器ID.AddError(errorMessage);
         }
         // 機器名
-        if (string.IsNullOrWhiteSpace(this.機器名)) {
-            messages.機器名.AddError(MSG.RequiredError("機器名"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.機器名, "機器名")) is not null) {
+            messages.機器名.AddError(errorMessage);
         }
         // 単価
-        if (this.単価 == null) {
-            messages.単価.AddError(MSG.RequiredError("単価"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.単価, "単価")) is not null) {
+            messages.単価.AddError(errorMessage);
         }
         // 機器分類
-        if (string.IsNullOrWhiteSpace(this.機器分類?.機器分類ID)) {
-            messages.機器分類.AddError(MSG.RequiredError("機器分類"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.機器分類?.機器分類ID, "機器分類")) is not null) {
+            messages.機器分類.AddError(errorMessage);
         }
         if (this.機器詳細 != null) {
             for (var j = 0; j < this.機器詳細.付属品.Count; j++) {
                 var item1 = this.機器詳細.付属品[j];
             
                 // 付属品ID
-                if (string.IsNullOrWhiteSpace(item1.付属品ID)) {
-                    messages.機器詳細.付属品[j].付属品ID.AddError(MSG.RequiredError("付属品ID"));
+                if ((errorMessage = _dbContext.ValidateRequired(item1.付属品ID, "付属品ID")) is not null) {
+                    messages.機器詳細.付属品[j].付属品ID.AddError(errorMessage);
                 }
             }
         }
@@ -176,15 +177,15 @@ public partial class 医療機器マスタCreateCommand : 医療機器マスタS
             var item = this.在庫情報[i];
         
             // 保管庫
-            if (string.IsNullOrWhiteSpace(item.保管庫?.保管庫ID)) {
-                messages.在庫情報[i].保管庫.AddError(MSG.RequiredError("保管庫"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.保管庫?.保管庫ID, "保管庫")) is not null) {
+                messages.在庫情報[i].保管庫.AddError(errorMessage);
             }
             for (var j = 0; j < item.在庫状況履歴.Count; j++) {
                 var item1 = item.在庫状況履歴[j];
             
                 // 履歴ID
-                if (string.IsNullOrWhiteSpace(item1.履歴ID)) {
-                    messages.在庫情報[i].在庫状況履歴[j].履歴ID.AddError(MSG.RequiredError("履歴ID"));
+                if ((errorMessage = _dbContext.ValidateRequired(item1.履歴ID, "履歴ID")) is not null) {
+                    messages.在庫情報[i].在庫状況履歴[j].履歴ID.AddError(errorMessage);
                 }
             }
         }
@@ -199,34 +200,30 @@ public partial class 医療機器マスタCreateCommand : 医療機器マスタS
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(医療機器マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 機器ID
-        if (!string.IsNullOrEmpty(this.機器ID)
-            && new System.Globalization.StringInfo(this.機器ID!).LengthInTextElements > 20) {
-            messages.機器ID.AddError(MSG.MaxLengthError("機器ID", "20"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.機器ID, 20, "機器ID")) is not null) {
+            messages.機器ID.AddError(errorMessage);
         }
         // 機器名
-        if (!string.IsNullOrEmpty(this.機器名)
-            && new System.Globalization.StringInfo(this.機器名!).LengthInTextElements > 100) {
-            messages.機器名.AddError(MSG.MaxLengthError("機器名", "100"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.機器名, 100, "機器名")) is not null) {
+            messages.機器名.AddError(errorMessage);
         }
         if (this.機器詳細 != null) {
             // 機器説明
-            if (!string.IsNullOrEmpty(this.機器詳細.機器説明)
-                && new System.Globalization.StringInfo(this.機器詳細.機器説明!).LengthInTextElements > 1000) {
-                messages.機器詳細.機器説明.AddError(MSG.MaxLengthError("機器説明", "1000"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.機器詳細.機器説明, 1000, "機器説明")) is not null) {
+                messages.機器詳細.機器説明.AddError(errorMessage);
             }
             for (var j = 0; j < this.機器詳細.付属品.Count; j++) {
                 var item1 = this.機器詳細.付属品[j];
             
                 // 付属品ID
-                if (!string.IsNullOrEmpty(item1.付属品ID)
-                    && new System.Globalization.StringInfo(item1.付属品ID!).LengthInTextElements > 20) {
-                    messages.機器詳細.付属品[j].付属品ID.AddError(MSG.MaxLengthError("付属品ID", "20"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(item1.付属品ID, 20, "付属品ID")) is not null) {
+                    messages.機器詳細.付属品[j].付属品ID.AddError(errorMessage);
                 }
                 // 付属品名
-                if (!string.IsNullOrEmpty(item1.付属品名)
-                    && new System.Globalization.StringInfo(item1.付属品名!).LengthInTextElements > 50) {
-                    messages.機器詳細.付属品[j].付属品名.AddError(MSG.MaxLengthError("付属品名", "50"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(item1.付属品名, 50, "付属品名")) is not null) {
+                    messages.機器詳細.付属品[j].付属品名.AddError(errorMessage);
                 }
             }
         }
@@ -237,9 +234,8 @@ public partial class 医療機器マスタCreateCommand : 医療機器マスタS
                 var item1 = item.在庫状況履歴[j];
             
                 // 履歴ID
-                if (!string.IsNullOrEmpty(item1.履歴ID)
-                    && new System.Globalization.StringInfo(item1.履歴ID!).LengthInTextElements > 36) {
-                    messages.在庫情報[i].在庫状況履歴[j].履歴ID.AddError(MSG.MaxLengthError("履歴ID", "36"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(item1.履歴ID, 36, "履歴ID")) is not null) {
+                    messages.在庫情報[i].在庫状況履歴[j].履歴ID.AddError(errorMessage);
                 }
             }
         }
@@ -248,20 +244,21 @@ public partial class 医療機器マスタCreateCommand : 医療機器マスタS
     /// 数値項目の桁数チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateDigitsAndScales(医療機器マスタSaveCommandMessages messages) {
+        string? errorMessage;
         if (this.機器詳細 != null) {
             if (this.機器詳細.機器仕様 != null) {
                 if (this.機器詳細.機器仕様.サイズ != null) {
                     // 幅
-                    if (this.機器詳細.機器仕様.サイズ.幅 != null && Math.Abs((long)this.機器詳細.機器仕様.サイズ.幅.Value) >= 10000000000000000) {
-                        messages.機器詳細.機器仕様.サイズ.幅.AddError(MSG.DigitsError("幅", "16", "0"));
+                    if ((errorMessage = _dbContext.ValidateDigitsAndScales(this.機器詳細.機器仕様.サイズ.幅, 16, 0, "幅")) is not null) {
+                        messages.機器詳細.機器仕様.サイズ.幅.AddError(errorMessage);
                     }
                     // 高さ
-                    if (this.機器詳細.機器仕様.サイズ.高さ != null && Math.Abs((long)this.機器詳細.機器仕様.サイズ.高さ.Value) >= 10000000000000000) {
-                        messages.機器詳細.機器仕様.サイズ.高さ.AddError(MSG.DigitsError("高さ", "16", "0"));
+                    if ((errorMessage = _dbContext.ValidateDigitsAndScales(this.機器詳細.機器仕様.サイズ.高さ, 16, 0, "高さ")) is not null) {
+                        messages.機器詳細.機器仕様.サイズ.高さ.AddError(errorMessage);
                     }
                     // 奥行
-                    if (this.機器詳細.機器仕様.サイズ.奥行 != null && Math.Abs((long)this.機器詳細.機器仕様.サイズ.奥行.Value) >= 10000000000000000) {
-                        messages.機器詳細.機器仕様.サイズ.奥行.AddError(MSG.DigitsError("奥行", "16", "0"));
+                    if ((errorMessage = _dbContext.ValidateDigitsAndScales(this.機器詳細.機器仕様.サイズ.奥行, 16, 0, "奥行")) is not null) {
+                        messages.機器詳細.機器仕様.サイズ.奥行.AddError(errorMessage);
                     }
                 }
             }
@@ -613,29 +610,30 @@ public partial class 医療機器マスタUpdateCommand : 医療機器マスタS
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(医療機器マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 機器ID
-        if (string.IsNullOrWhiteSpace(this.機器ID)) {
-            messages.機器ID.AddError(MSG.RequiredError("機器ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.機器ID, "機器ID")) is not null) {
+            messages.機器ID.AddError(errorMessage);
         }
         // 機器名
-        if (string.IsNullOrWhiteSpace(this.機器名)) {
-            messages.機器名.AddError(MSG.RequiredError("機器名"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.機器名, "機器名")) is not null) {
+            messages.機器名.AddError(errorMessage);
         }
         // 単価
-        if (this.単価 == null) {
-            messages.単価.AddError(MSG.RequiredError("単価"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.単価, "単価")) is not null) {
+            messages.単価.AddError(errorMessage);
         }
         // 機器分類
-        if (string.IsNullOrWhiteSpace(this.機器分類?.機器分類ID)) {
-            messages.機器分類.AddError(MSG.RequiredError("機器分類"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.機器分類?.機器分類ID, "機器分類")) is not null) {
+            messages.機器分類.AddError(errorMessage);
         }
         if (this.機器詳細 != null) {
             for (var j = 0; j < this.機器詳細.付属品.Count; j++) {
                 var item1 = this.機器詳細.付属品[j];
             
                 // 付属品ID
-                if (string.IsNullOrWhiteSpace(item1.付属品ID)) {
-                    messages.機器詳細.付属品[j].付属品ID.AddError(MSG.RequiredError("付属品ID"));
+                if ((errorMessage = _dbContext.ValidateRequired(item1.付属品ID, "付属品ID")) is not null) {
+                    messages.機器詳細.付属品[j].付属品ID.AddError(errorMessage);
                 }
             }
         }
@@ -643,15 +641,15 @@ public partial class 医療機器マスタUpdateCommand : 医療機器マスタS
             var item = this.在庫情報[i];
         
             // 保管庫
-            if (string.IsNullOrWhiteSpace(item.保管庫?.保管庫ID)) {
-                messages.在庫情報[i].保管庫.AddError(MSG.RequiredError("保管庫"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.保管庫?.保管庫ID, "保管庫")) is not null) {
+                messages.在庫情報[i].保管庫.AddError(errorMessage);
             }
             for (var j = 0; j < item.在庫状況履歴.Count; j++) {
                 var item1 = item.在庫状況履歴[j];
             
                 // 履歴ID
-                if (string.IsNullOrWhiteSpace(item1.履歴ID)) {
-                    messages.在庫情報[i].在庫状況履歴[j].履歴ID.AddError(MSG.RequiredError("履歴ID"));
+                if ((errorMessage = _dbContext.ValidateRequired(item1.履歴ID, "履歴ID")) is not null) {
+                    messages.在庫情報[i].在庫状況履歴[j].履歴ID.AddError(errorMessage);
                 }
             }
         }
@@ -666,34 +664,30 @@ public partial class 医療機器マスタUpdateCommand : 医療機器マスタS
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(医療機器マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 機器ID
-        if (!string.IsNullOrEmpty(this.機器ID)
-            && new System.Globalization.StringInfo(this.機器ID!).LengthInTextElements > 20) {
-            messages.機器ID.AddError(MSG.MaxLengthError("機器ID", "20"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.機器ID, 20, "機器ID")) is not null) {
+            messages.機器ID.AddError(errorMessage);
         }
         // 機器名
-        if (!string.IsNullOrEmpty(this.機器名)
-            && new System.Globalization.StringInfo(this.機器名!).LengthInTextElements > 100) {
-            messages.機器名.AddError(MSG.MaxLengthError("機器名", "100"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.機器名, 100, "機器名")) is not null) {
+            messages.機器名.AddError(errorMessage);
         }
         if (this.機器詳細 != null) {
             // 機器説明
-            if (!string.IsNullOrEmpty(this.機器詳細.機器説明)
-                && new System.Globalization.StringInfo(this.機器詳細.機器説明!).LengthInTextElements > 1000) {
-                messages.機器詳細.機器説明.AddError(MSG.MaxLengthError("機器説明", "1000"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.機器詳細.機器説明, 1000, "機器説明")) is not null) {
+                messages.機器詳細.機器説明.AddError(errorMessage);
             }
             for (var j = 0; j < this.機器詳細.付属品.Count; j++) {
                 var item1 = this.機器詳細.付属品[j];
             
                 // 付属品ID
-                if (!string.IsNullOrEmpty(item1.付属品ID)
-                    && new System.Globalization.StringInfo(item1.付属品ID!).LengthInTextElements > 20) {
-                    messages.機器詳細.付属品[j].付属品ID.AddError(MSG.MaxLengthError("付属品ID", "20"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(item1.付属品ID, 20, "付属品ID")) is not null) {
+                    messages.機器詳細.付属品[j].付属品ID.AddError(errorMessage);
                 }
                 // 付属品名
-                if (!string.IsNullOrEmpty(item1.付属品名)
-                    && new System.Globalization.StringInfo(item1.付属品名!).LengthInTextElements > 50) {
-                    messages.機器詳細.付属品[j].付属品名.AddError(MSG.MaxLengthError("付属品名", "50"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(item1.付属品名, 50, "付属品名")) is not null) {
+                    messages.機器詳細.付属品[j].付属品名.AddError(errorMessage);
                 }
             }
         }
@@ -704,9 +698,8 @@ public partial class 医療機器マスタUpdateCommand : 医療機器マスタS
                 var item1 = item.在庫状況履歴[j];
             
                 // 履歴ID
-                if (!string.IsNullOrEmpty(item1.履歴ID)
-                    && new System.Globalization.StringInfo(item1.履歴ID!).LengthInTextElements > 36) {
-                    messages.在庫情報[i].在庫状況履歴[j].履歴ID.AddError(MSG.MaxLengthError("履歴ID", "36"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(item1.履歴ID, 36, "履歴ID")) is not null) {
+                    messages.在庫情報[i].在庫状況履歴[j].履歴ID.AddError(errorMessage);
                 }
             }
         }
@@ -715,20 +708,21 @@ public partial class 医療機器マスタUpdateCommand : 医療機器マスタS
     /// 数値項目の桁数チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateDigitsAndScales(医療機器マスタSaveCommandMessages messages) {
+        string? errorMessage;
         if (this.機器詳細 != null) {
             if (this.機器詳細.機器仕様 != null) {
                 if (this.機器詳細.機器仕様.サイズ != null) {
                     // 幅
-                    if (this.機器詳細.機器仕様.サイズ.幅 != null && Math.Abs((long)this.機器詳細.機器仕様.サイズ.幅.Value) >= 10000000000000000) {
-                        messages.機器詳細.機器仕様.サイズ.幅.AddError(MSG.DigitsError("幅", "16", "0"));
+                    if ((errorMessage = _dbContext.ValidateDigitsAndScales(this.機器詳細.機器仕様.サイズ.幅, 16, 0, "幅")) is not null) {
+                        messages.機器詳細.機器仕様.サイズ.幅.AddError(errorMessage);
                     }
                     // 高さ
-                    if (this.機器詳細.機器仕様.サイズ.高さ != null && Math.Abs((long)this.機器詳細.機器仕様.サイズ.高さ.Value) >= 10000000000000000) {
-                        messages.機器詳細.機器仕様.サイズ.高さ.AddError(MSG.DigitsError("高さ", "16", "0"));
+                    if ((errorMessage = _dbContext.ValidateDigitsAndScales(this.機器詳細.機器仕様.サイズ.高さ, 16, 0, "高さ")) is not null) {
+                        messages.機器詳細.機器仕様.サイズ.高さ.AddError(errorMessage);
                     }
                     // 奥行
-                    if (this.機器詳細.機器仕様.サイズ.奥行 != null && Math.Abs((long)this.機器詳細.機器仕様.サイズ.奥行.Value) >= 10000000000000000) {
-                        messages.機器詳細.機器仕様.サイズ.奥行.AddError(MSG.DigitsError("奥行", "16", "0"));
+                    if ((errorMessage = _dbContext.ValidateDigitsAndScales(this.機器詳細.機器仕様.サイズ.奥行, 16, 0, "奥行")) is not null) {
+                        messages.機器詳細.機器仕様.サイズ.奥行.AddError(errorMessage);
                     }
                 }
             }

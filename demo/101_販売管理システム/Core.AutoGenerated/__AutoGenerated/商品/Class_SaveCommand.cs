@@ -101,13 +101,14 @@ public partial class 商品CreateCommand : 商品SaveCommand, ISaveCommand<Valid
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(商品SaveCommandMessages messages) {
+        string? errorMessage;
         // 商品コード
-        if (string.IsNullOrWhiteSpace(this.外部システム側ID)) {
-            messages.外部システム側ID.AddError(MSG.RequiredError("商品コード"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.外部システム側ID, "商品コード")) is not null) {
+            messages.外部システム側ID.AddError(errorMessage);
         }
         // 商品名
-        if (string.IsNullOrWhiteSpace(this.商品名)) {
-            messages.商品名.AddError(MSG.RequiredError("商品名"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.商品名, "商品名")) is not null) {
+            messages.商品名.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -256,17 +257,18 @@ public partial class 商品UpdateCommand : 商品SaveCommand, ISaveCommand<Valid
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(商品SaveCommandMessages messages) {
+        string? errorMessage;
         // 商品SEQ
-        if (this.商品SEQ == null) {
-            messages.商品SEQ.AddError(MSG.RequiredError("商品SEQ"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.商品SEQ, "商品SEQ")) is not null) {
+            messages.商品SEQ.AddError(errorMessage);
         }
         // 商品コード
-        if (string.IsNullOrWhiteSpace(this.外部システム側ID)) {
-            messages.外部システム側ID.AddError(MSG.RequiredError("商品コード"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.外部システム側ID, "商品コード")) is not null) {
+            messages.外部システム側ID.AddError(errorMessage);
         }
         // 商品名
-        if (string.IsNullOrWhiteSpace(this.商品名)) {
-            messages.商品名.AddError(MSG.RequiredError("商品名"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.商品名, "商品名")) is not null) {
+            messages.商品名.AddError(errorMessage);
         }
     }
     /// <summary>

@@ -128,28 +128,30 @@ public partial class 機器点検報告CreateCommand : 機器点検報告SaveCom
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(機器点検報告SaveCommandMessages messages) {
+        string? errorMessage;
         // 対象機器
-        if (string.IsNullOrWhiteSpace(this.対象機器?.医療機器マスタ?.機器ID) || string.IsNullOrWhiteSpace(this.対象機器?.保管庫?.保管庫ID)) {
-            messages.対象機器.AddError(MSG.RequiredError("対象機器"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.対象機器?.医療機器マスタ?.機器ID, "対象機器")
+            ?? _dbContext.ValidateRequired(this.対象機器?.保管庫?.保管庫ID, "対象機器")) is not null) {
+            messages.対象機器.AddError(errorMessage);
         }
         // 点検日
-        if (this.点検日 == null) {
-            messages.点検日.AddError(MSG.RequiredError("点検日"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.点検日, "点検日")) is not null) {
+            messages.点検日.AddError(errorMessage);
         }
         // 点検担当者
-        if (string.IsNullOrWhiteSpace(((string?)this.点検担当者?.医療従事者ID))) {
-            messages.点検担当者.AddError(MSG.RequiredError("点検担当者"));
+        if ((errorMessage = _dbContext.ValidateRequired(((string?)this.点検担当者?.医療従事者ID), "点検担当者")) is not null) {
+            messages.点検担当者.AddError(errorMessage);
         }
         // 実地確認数
-        if (this.実地確認数 == null) {
-            messages.実地確認数.AddError(MSG.RequiredError("実地確認数"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.実地確認数, "実地確認数")) is not null) {
+            messages.実地確認数.AddError(errorMessage);
         }
         for (var i = 0; i < this.対応措置.Count; i++) {
             var item = this.対応措置[i];
         
             // 措置ID
-            if (string.IsNullOrWhiteSpace(item.措置ID)) {
-                messages.対応措置[i].措置ID.AddError(MSG.RequiredError("措置ID"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.措置ID, "措置ID")) is not null) {
+                messages.対応措置[i].措置ID.AddError(errorMessage);
             }
         }
     }
@@ -163,28 +165,25 @@ public partial class 機器点検報告CreateCommand : 機器点検報告SaveCom
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(機器点検報告SaveCommandMessages messages) {
+        string? errorMessage;
         // 点検メモ
-        if (!string.IsNullOrEmpty(this.点検メモ)
-            && new System.Globalization.StringInfo(this.点検メモ!).LengthInTextElements > 500) {
-            messages.点検メモ.AddError(MSG.MaxLengthError("点検メモ", "500"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.点検メモ, 500, "点検メモ")) is not null) {
+            messages.点検メモ.AddError(errorMessage);
         }
         // 写真URL
-        if (!string.IsNullOrEmpty(this.写真URL)
-            && new System.Globalization.StringInfo(this.写真URL!).LengthInTextElements > 200) {
-            messages.写真URL.AddError(MSG.MaxLengthError("写真URL", "200"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.写真URL, 200, "写真URL")) is not null) {
+            messages.写真URL.AddError(errorMessage);
         }
         for (var i = 0; i < this.対応措置.Count; i++) {
             var item = this.対応措置[i];
         
             // 措置ID
-            if (!string.IsNullOrEmpty(item.措置ID)
-                && new System.Globalization.StringInfo(item.措置ID!).LengthInTextElements > 20) {
-                messages.対応措置[i].措置ID.AddError(MSG.MaxLengthError("措置ID", "20"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.措置ID, 20, "措置ID")) is not null) {
+                messages.対応措置[i].措置ID.AddError(errorMessage);
             }
             // 措置詳細
-            if (!string.IsNullOrEmpty(item.措置詳細)
-                && new System.Globalization.StringInfo(item.措置詳細!).LengthInTextElements > 500) {
-                messages.対応措置[i].措置詳細.AddError(MSG.MaxLengthError("措置詳細", "500"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.措置詳細, 500, "措置詳細")) is not null) {
+                messages.対応措置[i].措置詳細.AddError(errorMessage);
             }
         }
     }
@@ -394,28 +393,30 @@ public partial class 機器点検報告UpdateCommand : 機器点検報告SaveCom
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(機器点検報告SaveCommandMessages messages) {
+        string? errorMessage;
         // 対象機器
-        if (string.IsNullOrWhiteSpace(this.対象機器?.医療機器マスタ?.機器ID) || string.IsNullOrWhiteSpace(this.対象機器?.保管庫?.保管庫ID)) {
-            messages.対象機器.AddError(MSG.RequiredError("対象機器"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.対象機器?.医療機器マスタ?.機器ID, "対象機器")
+            ?? _dbContext.ValidateRequired(this.対象機器?.保管庫?.保管庫ID, "対象機器")) is not null) {
+            messages.対象機器.AddError(errorMessage);
         }
         // 点検日
-        if (this.点検日 == null) {
-            messages.点検日.AddError(MSG.RequiredError("点検日"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.点検日, "点検日")) is not null) {
+            messages.点検日.AddError(errorMessage);
         }
         // 点検担当者
-        if (string.IsNullOrWhiteSpace(((string?)this.点検担当者?.医療従事者ID))) {
-            messages.点検担当者.AddError(MSG.RequiredError("点検担当者"));
+        if ((errorMessage = _dbContext.ValidateRequired(((string?)this.点検担当者?.医療従事者ID), "点検担当者")) is not null) {
+            messages.点検担当者.AddError(errorMessage);
         }
         // 実地確認数
-        if (this.実地確認数 == null) {
-            messages.実地確認数.AddError(MSG.RequiredError("実地確認数"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.実地確認数, "実地確認数")) is not null) {
+            messages.実地確認数.AddError(errorMessage);
         }
         for (var i = 0; i < this.対応措置.Count; i++) {
             var item = this.対応措置[i];
         
             // 措置ID
-            if (string.IsNullOrWhiteSpace(item.措置ID)) {
-                messages.対応措置[i].措置ID.AddError(MSG.RequiredError("措置ID"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.措置ID, "措置ID")) is not null) {
+                messages.対応措置[i].措置ID.AddError(errorMessage);
             }
         }
     }
@@ -429,28 +430,25 @@ public partial class 機器点検報告UpdateCommand : 機器点検報告SaveCom
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(機器点検報告SaveCommandMessages messages) {
+        string? errorMessage;
         // 点検メモ
-        if (!string.IsNullOrEmpty(this.点検メモ)
-            && new System.Globalization.StringInfo(this.点検メモ!).LengthInTextElements > 500) {
-            messages.点検メモ.AddError(MSG.MaxLengthError("点検メモ", "500"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.点検メモ, 500, "点検メモ")) is not null) {
+            messages.点検メモ.AddError(errorMessage);
         }
         // 写真URL
-        if (!string.IsNullOrEmpty(this.写真URL)
-            && new System.Globalization.StringInfo(this.写真URL!).LengthInTextElements > 200) {
-            messages.写真URL.AddError(MSG.MaxLengthError("写真URL", "200"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.写真URL, 200, "写真URL")) is not null) {
+            messages.写真URL.AddError(errorMessage);
         }
         for (var i = 0; i < this.対応措置.Count; i++) {
             var item = this.対応措置[i];
         
             // 措置ID
-            if (!string.IsNullOrEmpty(item.措置ID)
-                && new System.Globalization.StringInfo(item.措置ID!).LengthInTextElements > 20) {
-                messages.対応措置[i].措置ID.AddError(MSG.MaxLengthError("措置ID", "20"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.措置ID, 20, "措置ID")) is not null) {
+                messages.対応措置[i].措置ID.AddError(errorMessage);
             }
             // 措置詳細
-            if (!string.IsNullOrEmpty(item.措置詳細)
-                && new System.Globalization.StringInfo(item.措置詳細!).LengthInTextElements > 500) {
-                messages.対応措置[i].措置詳細.AddError(MSG.MaxLengthError("措置詳細", "500"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(item.措置詳細, 500, "措置詳細")) is not null) {
+                messages.対応措置[i].措置詳細.AddError(errorMessage);
             }
         }
     }

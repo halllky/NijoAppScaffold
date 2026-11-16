@@ -113,47 +113,48 @@ public partial class 売上CreateCommand : 売上SaveCommand, ISaveCommand<Valid
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(売上SaveCommandMessages messages) {
+        string? errorMessage;
         // 売上日時
-        if (this.売上日時 == null) {
-            messages.売上日時.AddError(MSG.RequiredError("売上日時"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.売上日時, "売上日時")) is not null) {
+            messages.売上日時.AddError(errorMessage);
         }
         // 担当者
-        if (string.IsNullOrWhiteSpace(this.担当者?.従業員番号)) {
-            messages.担当者.AddError(MSG.RequiredError("担当者"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.担当者?.従業員番号, "担当者")) is not null) {
+            messages.担当者.AddError(errorMessage);
         }
         for (var i = 0; i < this.売上の売上明細.Count; i++) {
             var item = this.売上の売上明細[i];
         
             // 明細ID
-            if (string.IsNullOrWhiteSpace(item.明細ID)) {
-                messages.売上の売上明細[i].明細ID.AddError(MSG.RequiredError("明細ID"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.明細ID, "明細ID")) is not null) {
+                messages.売上の売上明細[i].明細ID.AddError(errorMessage);
             }
             // 商品
-            if (item.商品?.商品SEQ == null) {
-                messages.売上の売上明細[i].商品.AddError(MSG.RequiredError("商品"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.商品?.商品SEQ, "商品")) is not null) {
+                messages.売上の売上明細[i].商品.AddError(errorMessage);
             }
             // 区分
-            if (item.区分 == null) {
-                messages.売上の売上明細[i].区分.AddError(MSG.RequiredError("区分"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.区分, "区分")) is not null) {
+                messages.売上の売上明細[i].区分.AddError(errorMessage);
             }
             // 売上数量
-            if (item.売上数量 == null) {
-                messages.売上の売上明細[i].売上数量.AddError(MSG.RequiredError("売上数量"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.売上数量, "売上数量")) is not null) {
+                messages.売上の売上明細[i].売上数量.AddError(errorMessage);
             }
             // 売上総額_税込
-            if (item.売上総額_税込 == null) {
-                messages.売上の売上明細[i].売上総額_税込.AddError(MSG.RequiredError("売上総額_税込"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.売上総額_税込, "売上総額_税込")) is not null) {
+                messages.売上の売上明細[i].売上総額_税込.AddError(errorMessage);
             }
             for (var j = 0; j < item.引当明細.Count; j++) {
                 var item1 = item.引当明細[j];
             
                 // 入荷
-                if (string.IsNullOrWhiteSpace(item1.入荷?.入荷明細ID)) {
-                    messages.売上の売上明細[i].引当明細[j].入荷.AddError(MSG.RequiredError("入荷"));
+                if ((errorMessage = _dbContext.ValidateRequired(item1.入荷?.入荷明細ID, "入荷")) is not null) {
+                    messages.売上の売上明細[i].引当明細[j].入荷.AddError(errorMessage);
                 }
                 // 引当数量
-                if (item1.引当数量 == null) {
-                    messages.売上の売上明細[i].引当明細[j].引当数量.AddError(MSG.RequiredError("引当数量"));
+                if ((errorMessage = _dbContext.ValidateRequired(item1.引当数量, "引当数量")) is not null) {
+                    messages.売上の売上明細[i].引当明細[j].引当数量.AddError(errorMessage);
                 }
             }
         }
@@ -377,51 +378,52 @@ public partial class 売上UpdateCommand : 売上SaveCommand, ISaveCommand<Valid
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(売上SaveCommandMessages messages) {
+        string? errorMessage;
         // 売上SEQ
-        if (this.売上SEQ == null) {
-            messages.売上SEQ.AddError(MSG.RequiredError("売上SEQ"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.売上SEQ, "売上SEQ")) is not null) {
+            messages.売上SEQ.AddError(errorMessage);
         }
         // 売上日時
-        if (this.売上日時 == null) {
-            messages.売上日時.AddError(MSG.RequiredError("売上日時"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.売上日時, "売上日時")) is not null) {
+            messages.売上日時.AddError(errorMessage);
         }
         // 担当者
-        if (string.IsNullOrWhiteSpace(this.担当者?.従業員番号)) {
-            messages.担当者.AddError(MSG.RequiredError("担当者"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.担当者?.従業員番号, "担当者")) is not null) {
+            messages.担当者.AddError(errorMessage);
         }
         for (var i = 0; i < this.売上の売上明細.Count; i++) {
             var item = this.売上の売上明細[i];
         
             // 明細ID
-            if (string.IsNullOrWhiteSpace(item.明細ID)) {
-                messages.売上の売上明細[i].明細ID.AddError(MSG.RequiredError("明細ID"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.明細ID, "明細ID")) is not null) {
+                messages.売上の売上明細[i].明細ID.AddError(errorMessage);
             }
             // 商品
-            if (item.商品?.商品SEQ == null) {
-                messages.売上の売上明細[i].商品.AddError(MSG.RequiredError("商品"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.商品?.商品SEQ, "商品")) is not null) {
+                messages.売上の売上明細[i].商品.AddError(errorMessage);
             }
             // 区分
-            if (item.区分 == null) {
-                messages.売上の売上明細[i].区分.AddError(MSG.RequiredError("区分"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.区分, "区分")) is not null) {
+                messages.売上の売上明細[i].区分.AddError(errorMessage);
             }
             // 売上数量
-            if (item.売上数量 == null) {
-                messages.売上の売上明細[i].売上数量.AddError(MSG.RequiredError("売上数量"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.売上数量, "売上数量")) is not null) {
+                messages.売上の売上明細[i].売上数量.AddError(errorMessage);
             }
             // 売上総額_税込
-            if (item.売上総額_税込 == null) {
-                messages.売上の売上明細[i].売上総額_税込.AddError(MSG.RequiredError("売上総額_税込"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.売上総額_税込, "売上総額_税込")) is not null) {
+                messages.売上の売上明細[i].売上総額_税込.AddError(errorMessage);
             }
             for (var j = 0; j < item.引当明細.Count; j++) {
                 var item1 = item.引当明細[j];
             
                 // 入荷
-                if (string.IsNullOrWhiteSpace(item1.入荷?.入荷明細ID)) {
-                    messages.売上の売上明細[i].引当明細[j].入荷.AddError(MSG.RequiredError("入荷"));
+                if ((errorMessage = _dbContext.ValidateRequired(item1.入荷?.入荷明細ID, "入荷")) is not null) {
+                    messages.売上の売上明細[i].引当明細[j].入荷.AddError(errorMessage);
                 }
                 // 引当数量
-                if (item1.引当数量 == null) {
-                    messages.売上の売上明細[i].引当明細[j].引当数量.AddError(MSG.RequiredError("引当数量"));
+                if ((errorMessage = _dbContext.ValidateRequired(item1.引当数量, "引当数量")) is not null) {
+                    messages.売上の売上明細[i].引当明細[j].引当数量.AddError(errorMessage);
                 }
             }
         }

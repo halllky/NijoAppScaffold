@@ -107,28 +107,29 @@ public partial class 従業員CreateCommand : 従業員SaveCommand, ISaveCommand
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(従業員SaveCommandMessages messages) {
+        string? errorMessage;
         // 従業員番号
-        if (string.IsNullOrWhiteSpace(this.従業員番号)) {
-            messages.従業員番号.AddError(MSG.RequiredError("従業員番号"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.従業員番号, "従業員番号")) is not null) {
+            messages.従業員番号.AddError(errorMessage);
         }
         // 氏名
-        if (string.IsNullOrWhiteSpace(this.氏名)) {
-            messages.氏名.AddError(MSG.RequiredError("氏名"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.氏名, "氏名")) is not null) {
+            messages.氏名.AddError(errorMessage);
         }
         // パスワード
-        if (this.パスワード == null) {
-            messages.パスワード.AddError(MSG.RequiredError("パスワード"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.パスワード, "パスワード")) is not null) {
+            messages.パスワード.AddError(errorMessage);
         }
         // SALT
-        if (this.SALT == null) {
-            messages.SALT.AddError(MSG.RequiredError("SALT"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.SALT, "SALT")) is not null) {
+            messages.SALT.AddError(errorMessage);
         }
         for (var i = 0; i < this.従業員の権限.Count; i++) {
             var item = this.従業員の権限[i];
         
             // 権限区分
-            if (item.権限区分 == null) {
-                messages.従業員の権限[i].権限区分.AddError(MSG.RequiredError("権限区分"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.権限区分, "権限区分")) is not null) {
+                messages.従業員の権限[i].権限区分.AddError(errorMessage);
             }
         }
     }
@@ -142,10 +143,10 @@ public partial class 従業員CreateCommand : 従業員SaveCommand, ISaveCommand
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(従業員SaveCommandMessages messages) {
+        string? errorMessage;
         // 氏名
-        if (!string.IsNullOrEmpty(this.氏名)
-            && new System.Globalization.StringInfo(this.氏名!).LengthInTextElements > 100) {
-            messages.氏名.AddError(MSG.MaxLengthError("氏名", "100"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.氏名, 100, "氏名")) is not null) {
+            messages.氏名.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -299,28 +300,29 @@ public partial class 従業員UpdateCommand : 従業員SaveCommand, ISaveCommand
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(従業員SaveCommandMessages messages) {
+        string? errorMessage;
         // 従業員番号
-        if (string.IsNullOrWhiteSpace(this.従業員番号)) {
-            messages.従業員番号.AddError(MSG.RequiredError("従業員番号"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.従業員番号, "従業員番号")) is not null) {
+            messages.従業員番号.AddError(errorMessage);
         }
         // 氏名
-        if (string.IsNullOrWhiteSpace(this.氏名)) {
-            messages.氏名.AddError(MSG.RequiredError("氏名"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.氏名, "氏名")) is not null) {
+            messages.氏名.AddError(errorMessage);
         }
         // パスワード
-        if (this.パスワード == null) {
-            messages.パスワード.AddError(MSG.RequiredError("パスワード"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.パスワード, "パスワード")) is not null) {
+            messages.パスワード.AddError(errorMessage);
         }
         // SALT
-        if (this.SALT == null) {
-            messages.SALT.AddError(MSG.RequiredError("SALT"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.SALT, "SALT")) is not null) {
+            messages.SALT.AddError(errorMessage);
         }
         for (var i = 0; i < this.従業員の権限.Count; i++) {
             var item = this.従業員の権限[i];
         
             // 権限区分
-            if (item.権限区分 == null) {
-                messages.従業員の権限[i].権限区分.AddError(MSG.RequiredError("権限区分"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.権限区分, "権限区分")) is not null) {
+                messages.従業員の権限[i].権限区分.AddError(errorMessage);
             }
         }
     }
@@ -334,10 +336,10 @@ public partial class 従業員UpdateCommand : 従業員SaveCommand, ISaveCommand
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(従業員SaveCommandMessages messages) {
+        string? errorMessage;
         // 氏名
-        if (!string.IsNullOrEmpty(this.氏名)
-            && new System.Globalization.StringInfo(this.氏名!).LengthInTextElements > 100) {
-            messages.氏名.AddError(MSG.MaxLengthError("氏名", "100"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.氏名, 100, "氏名")) is not null) {
+            messages.氏名.AddError(errorMessage);
         }
     }
     /// <summary>

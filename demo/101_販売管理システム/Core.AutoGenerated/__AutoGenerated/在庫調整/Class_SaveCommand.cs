@@ -118,28 +118,29 @@ public partial class 在庫調整CreateCommand : 在庫調整SaveCommand, ISaveC
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(在庫調整SaveCommandMessages messages) {
+        string? errorMessage;
         // 在庫調整ID
-        if (string.IsNullOrWhiteSpace(this.在庫調整ID)) {
-            messages.在庫調整ID.AddError(MSG.RequiredError("在庫調整ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.在庫調整ID, "在庫調整ID")) is not null) {
+            messages.在庫調整ID.AddError(errorMessage);
         }
         // 在庫調整日時
-        if (this.在庫調整日時 == null) {
-            messages.在庫調整日時.AddError(MSG.RequiredError("在庫調整日時"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.在庫調整日時, "在庫調整日時")) is not null) {
+            messages.在庫調整日時.AddError(errorMessage);
         }
         // 担当者
-        if (string.IsNullOrWhiteSpace(this.担当者?.従業員番号)) {
-            messages.担当者.AddError(MSG.RequiredError("担当者"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.担当者?.従業員番号, "担当者")) is not null) {
+            messages.担当者.AddError(errorMessage);
         }
         for (var i = 0; i < this.在庫調整引当明細.Count; i++) {
             var item = this.在庫調整引当明細[i];
         
             // 入荷明細
-            if (string.IsNullOrWhiteSpace(item.入荷明細?.入荷明細ID)) {
-                messages.在庫調整引当明細[i].入荷明細.AddError(MSG.RequiredError("入荷明細"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.入荷明細?.入荷明細ID, "入荷明細")) is not null) {
+                messages.在庫調整引当明細[i].入荷明細.AddError(errorMessage);
             }
             // 引当数
-            if (item.引当数 == null) {
-                messages.在庫調整引当明細[i].引当数.AddError(MSG.RequiredError("引当数"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.引当数, "引当数")) is not null) {
+                messages.在庫調整引当明細[i].引当数.AddError(errorMessage);
             }
         }
     }
@@ -330,28 +331,29 @@ public partial class 在庫調整UpdateCommand : 在庫調整SaveCommand, ISaveC
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(在庫調整SaveCommandMessages messages) {
+        string? errorMessage;
         // 在庫調整ID
-        if (string.IsNullOrWhiteSpace(this.在庫調整ID)) {
-            messages.在庫調整ID.AddError(MSG.RequiredError("在庫調整ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.在庫調整ID, "在庫調整ID")) is not null) {
+            messages.在庫調整ID.AddError(errorMessage);
         }
         // 在庫調整日時
-        if (this.在庫調整日時 == null) {
-            messages.在庫調整日時.AddError(MSG.RequiredError("在庫調整日時"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.在庫調整日時, "在庫調整日時")) is not null) {
+            messages.在庫調整日時.AddError(errorMessage);
         }
         // 担当者
-        if (string.IsNullOrWhiteSpace(this.担当者?.従業員番号)) {
-            messages.担当者.AddError(MSG.RequiredError("担当者"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.担当者?.従業員番号, "担当者")) is not null) {
+            messages.担当者.AddError(errorMessage);
         }
         for (var i = 0; i < this.在庫調整引当明細.Count; i++) {
             var item = this.在庫調整引当明細[i];
         
             // 入荷明細
-            if (string.IsNullOrWhiteSpace(item.入荷明細?.入荷明細ID)) {
-                messages.在庫調整引当明細[i].入荷明細.AddError(MSG.RequiredError("入荷明細"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.入荷明細?.入荷明細ID, "入荷明細")) is not null) {
+                messages.在庫調整引当明細[i].入荷明細.AddError(errorMessage);
             }
             // 引当数
-            if (item.引当数 == null) {
-                messages.在庫調整引当明細[i].引当数.AddError(MSG.RequiredError("引当数"));
+            if ((errorMessage = _dbContext.ValidateRequired(item.引当数, "引当数")) is not null) {
+                messages.在庫調整引当明細[i].引当数.AddError(errorMessage);
             }
         }
     }

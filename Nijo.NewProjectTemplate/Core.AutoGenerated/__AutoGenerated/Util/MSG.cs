@@ -20,6 +20,22 @@ public interface IDisplayMessageFactory {
     /// </summary>
     string DataNotFoundError();
     /// <summary>
+    /// 入力エラー時メッセージ（数値項目の桁数チェック）
+    /// </summary>
+    string DigitsError(string arg0, string arg1, string arg2);
+    /// <summary>
+    /// 入力エラー時メッセージ（汎用参照テーブル存在チェック）
+    /// </summary>
+    string GenericLookupValueNotFound(string arg0);
+    /// <summary>
+    /// 入力エラー時メッセージ（文字列最大長チェック）
+    /// </summary>
+    string MaxLengthError(string arg0, string arg1);
+    /// <summary>
+    /// 入力エラー時メッセージ（必須入力チェック）
+    /// </summary>
+    string RequiredError(string arg0);
+    /// <summary>
     /// 一意制約に違反したときのメッセージ
     /// </summary>
     string UniqueConstraintError();
@@ -35,6 +51,10 @@ public interface IDisplayMessageFactory {
 public class DefaultMessageFactory : IDisplayMessageFactory {
     public string ConcurrencyError() => $"ほかのユーザーが更新しました。";
     public string DataNotFoundError() => $"更新対象のデータが見つかりません。";
+    public string DigitsError(string arg0, string arg1, string arg2) => $"{arg0} は整数部 {arg1} 桁、小数部 {arg2} 桁以内で入力してください。";
+    public string GenericLookupValueNotFound(string arg0) => $"{arg0} に指定された区分値が存在しません。";
+    public string MaxLengthError(string arg0, string arg1) => $"{arg0} は {arg1} 文字以内で入力してください。";
+    public string RequiredError(string arg0) => $"{arg0} を入力してください。";
     public string UniqueConstraintError() => $"同じ値のデータが既に存在します。";
     public string UnknownUpdateError() => $"登録処理でエラーが発生しました。";
 }

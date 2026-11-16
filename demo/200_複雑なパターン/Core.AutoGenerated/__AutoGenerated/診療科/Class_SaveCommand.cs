@@ -93,13 +93,14 @@ public partial class 診療科CreateCommand : 診療科SaveCommand, ISaveCommand
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(診療科SaveCommandMessages messages) {
+        string? errorMessage;
         // 診療科コード
-        if (string.IsNullOrWhiteSpace(this.診療科コード)) {
-            messages.診療科コード.AddError(MSG.RequiredError("診療科コード"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.診療科コード, "診療科コード")) is not null) {
+            messages.診療科コード.AddError(errorMessage);
         }
         // 診療科名
-        if (string.IsNullOrWhiteSpace(this.診療科名)) {
-            messages.診療科名.AddError(MSG.RequiredError("診療科名"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.診療科名, "診療科名")) is not null) {
+            messages.診療科名.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -112,15 +113,14 @@ public partial class 診療科CreateCommand : 診療科SaveCommand, ISaveCommand
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(診療科SaveCommandMessages messages) {
+        string? errorMessage;
         // 診療科コード
-        if (!string.IsNullOrEmpty(this.診療科コード)
-            && new System.Globalization.StringInfo(this.診療科コード!).LengthInTextElements > 10) {
-            messages.診療科コード.AddError(MSG.MaxLengthError("診療科コード", "10"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.診療科コード, 10, "診療科コード")) is not null) {
+            messages.診療科コード.AddError(errorMessage);
         }
         // 診療科名
-        if (!string.IsNullOrEmpty(this.診療科名)
-            && new System.Globalization.StringInfo(this.診療科名!).LengthInTextElements > 40) {
-            messages.診療科名.AddError(MSG.MaxLengthError("診療科名", "40"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.診療科名, 40, "診療科名")) is not null) {
+            messages.診療科名.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -239,13 +239,14 @@ public partial class 診療科UpdateCommand : 診療科SaveCommand, ISaveCommand
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(診療科SaveCommandMessages messages) {
+        string? errorMessage;
         // 診療科コード
-        if (string.IsNullOrWhiteSpace(this.診療科コード)) {
-            messages.診療科コード.AddError(MSG.RequiredError("診療科コード"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.診療科コード, "診療科コード")) is not null) {
+            messages.診療科コード.AddError(errorMessage);
         }
         // 診療科名
-        if (string.IsNullOrWhiteSpace(this.診療科名)) {
-            messages.診療科名.AddError(MSG.RequiredError("診療科名"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.診療科名, "診療科名")) is not null) {
+            messages.診療科名.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -258,15 +259,14 @@ public partial class 診療科UpdateCommand : 診療科SaveCommand, ISaveCommand
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(診療科SaveCommandMessages messages) {
+        string? errorMessage;
         // 診療科コード
-        if (!string.IsNullOrEmpty(this.診療科コード)
-            && new System.Globalization.StringInfo(this.診療科コード!).LengthInTextElements > 10) {
-            messages.診療科コード.AddError(MSG.MaxLengthError("診療科コード", "10"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.診療科コード, 10, "診療科コード")) is not null) {
+            messages.診療科コード.AddError(errorMessage);
         }
         // 診療科名
-        if (!string.IsNullOrEmpty(this.診療科名)
-            && new System.Globalization.StringInfo(this.診療科名!).LengthInTextElements > 40) {
-            messages.診療科名.AddError(MSG.MaxLengthError("診療科名", "40"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.診療科名, 40, "診療科名")) is not null) {
+            messages.診療科名.AddError(errorMessage);
         }
     }
     /// <summary>

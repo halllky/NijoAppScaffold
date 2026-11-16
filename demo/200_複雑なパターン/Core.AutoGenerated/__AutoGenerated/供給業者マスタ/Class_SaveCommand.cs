@@ -105,9 +105,10 @@ public partial class 供給業者マスタCreateCommand : 供給業者マスタS
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(供給業者マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 供給業者ID
-        if (string.IsNullOrWhiteSpace(this.供給業者ID)) {
-            messages.供給業者ID.AddError(MSG.RequiredError("供給業者ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.供給業者ID, "供給業者ID")) is not null) {
+            messages.供給業者ID.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -120,30 +121,26 @@ public partial class 供給業者マスタCreateCommand : 供給業者マスタS
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(供給業者マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 供給業者ID
-        if (!string.IsNullOrEmpty(this.供給業者ID)
-            && new System.Globalization.StringInfo(this.供給業者ID!).LengthInTextElements > 10) {
-            messages.供給業者ID.AddError(MSG.MaxLengthError("供給業者ID", "10"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.供給業者ID, 10, "供給業者ID")) is not null) {
+            messages.供給業者ID.AddError(errorMessage);
         }
         // 供給業者名
-        if (!string.IsNullOrEmpty(this.供給業者名)
-            && new System.Globalization.StringInfo(this.供給業者名!).LengthInTextElements > 100) {
-            messages.供給業者名.AddError(MSG.MaxLengthError("供給業者名", "100"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.供給業者名, 100, "供給業者名")) is not null) {
+            messages.供給業者名.AddError(errorMessage);
         }
         // 担当者名
-        if (!string.IsNullOrEmpty(this.担当者名)
-            && new System.Globalization.StringInfo(this.担当者名!).LengthInTextElements > 50) {
-            messages.担当者名.AddError(MSG.MaxLengthError("担当者名", "50"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.担当者名, 50, "担当者名")) is not null) {
+            messages.担当者名.AddError(errorMessage);
         }
         // 電話番号
-        if (!string.IsNullOrEmpty(this.電話番号)
-            && new System.Globalization.StringInfo(this.電話番号!).LengthInTextElements > 20) {
-            messages.電話番号.AddError(MSG.MaxLengthError("電話番号", "20"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.電話番号, 20, "電話番号")) is not null) {
+            messages.電話番号.AddError(errorMessage);
         }
         // メールアドレス
-        if (!string.IsNullOrEmpty(this.メールアドレス)
-            && new System.Globalization.StringInfo(this.メールアドレス!).LengthInTextElements > 100) {
-            messages.メールアドレス.AddError(MSG.MaxLengthError("メールアドレス", "100"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.メールアドレス, 100, "メールアドレス")) is not null) {
+            messages.メールアドレス.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -277,9 +274,10 @@ public partial class 供給業者マスタUpdateCommand : 供給業者マスタS
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(供給業者マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 供給業者ID
-        if (string.IsNullOrWhiteSpace(this.供給業者ID)) {
-            messages.供給業者ID.AddError(MSG.RequiredError("供給業者ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.供給業者ID, "供給業者ID")) is not null) {
+            messages.供給業者ID.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -292,30 +290,26 @@ public partial class 供給業者マスタUpdateCommand : 供給業者マスタS
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(供給業者マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 供給業者ID
-        if (!string.IsNullOrEmpty(this.供給業者ID)
-            && new System.Globalization.StringInfo(this.供給業者ID!).LengthInTextElements > 10) {
-            messages.供給業者ID.AddError(MSG.MaxLengthError("供給業者ID", "10"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.供給業者ID, 10, "供給業者ID")) is not null) {
+            messages.供給業者ID.AddError(errorMessage);
         }
         // 供給業者名
-        if (!string.IsNullOrEmpty(this.供給業者名)
-            && new System.Globalization.StringInfo(this.供給業者名!).LengthInTextElements > 100) {
-            messages.供給業者名.AddError(MSG.MaxLengthError("供給業者名", "100"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.供給業者名, 100, "供給業者名")) is not null) {
+            messages.供給業者名.AddError(errorMessage);
         }
         // 担当者名
-        if (!string.IsNullOrEmpty(this.担当者名)
-            && new System.Globalization.StringInfo(this.担当者名!).LengthInTextElements > 50) {
-            messages.担当者名.AddError(MSG.MaxLengthError("担当者名", "50"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.担当者名, 50, "担当者名")) is not null) {
+            messages.担当者名.AddError(errorMessage);
         }
         // 電話番号
-        if (!string.IsNullOrEmpty(this.電話番号)
-            && new System.Globalization.StringInfo(this.電話番号!).LengthInTextElements > 20) {
-            messages.電話番号.AddError(MSG.MaxLengthError("電話番号", "20"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.電話番号, 20, "電話番号")) is not null) {
+            messages.電話番号.AddError(errorMessage);
         }
         // メールアドレス
-        if (!string.IsNullOrEmpty(this.メールアドレス)
-            && new System.Globalization.StringInfo(this.メールアドレス!).LengthInTextElements > 100) {
-            messages.メールアドレス.AddError(MSG.MaxLengthError("メールアドレス", "100"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.メールアドレス, 100, "メールアドレス")) is not null) {
+            messages.メールアドレス.AddError(errorMessage);
         }
     }
     /// <summary>

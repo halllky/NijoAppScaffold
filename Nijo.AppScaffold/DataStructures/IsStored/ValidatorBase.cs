@@ -37,6 +37,27 @@ public abstract class ValidatorBase {
     }
 
     /// <summary>
+    /// 全バリデーターのエラーメッセージと、DbContext のフックを登録します。
+    /// </summary>
+    internal static void RegisterDependencies(CodeRenderingContext ctx, DbContextClass dbContext) {
+        var validators = EnumerateAll(ctx).ToArray();
+
+        var msgFactory = ctx.Use<MsgFactory>();
+        foreach (var validator in validators.DistinctBy(v => v.MsgId)) {
+            msgFactory.AddMessage(
+                validator.MsgId,
+                $"入力エラー時メッセージ（{validator.CommentName}）",
+                validator.MsgTemplate);
+        }
+
+        foreach (var validator in validators.OfType<DbContextHookValidator>()) {
+            foreach (var hook in validator.RenderHookDeclarations(ctx)) {
+                dbContext.AddAdditionalMethod(hook);
+            }
+        }
+    }
+
+    /// <summary>
     /// XMLコメント内にレンダリングされるこのチェック処理の名前
     /// </summary>
     public abstract string CommentName { get; }

@@ -104,22 +104,6 @@ internal sealed class IsStoredOption : FeatureOption {
                 utilDir.Generate(LoadForEdit.RenderPredicate(ctx));
             });
         });
-
-        // バリデーターチェック違反時のメッセージ
-        var msgFactory = ctx.Use<MsgFactory>();
-        var validatorsForMessage = ValidatorBase.EnumerateAll(ctx)
-            .GroupBy(v => v.MsgId)
-            .Select(g => g.First());
-
-        foreach (var validator in validatorsForMessage) {
-            msgFactory.AddMessage(
-                validator.MsgId,
-                $"入力エラー時メッセージ（{validator.CommentName}）",
-                validator.MsgTemplate);
-        }
-
-        // カスタム属性による入力検証のフック
-        ValidateCustom.RegisterDbContextHooks(ctx);
     }
 
     /// <summary>

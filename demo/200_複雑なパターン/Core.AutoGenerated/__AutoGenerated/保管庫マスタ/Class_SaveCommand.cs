@@ -107,9 +107,10 @@ public partial class 保管庫マスタCreateCommand : 保管庫マスタSaveCom
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(保管庫マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 保管庫ID
-        if (string.IsNullOrWhiteSpace(this.保管庫ID)) {
-            messages.保管庫ID.AddError(MSG.RequiredError("保管庫ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.保管庫ID, "保管庫ID")) is not null) {
+            messages.保管庫ID.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -122,36 +123,31 @@ public partial class 保管庫マスタCreateCommand : 保管庫マスタSaveCom
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(保管庫マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 保管庫ID
-        if (!string.IsNullOrEmpty(this.保管庫ID)
-            && new System.Globalization.StringInfo(this.保管庫ID!).LengthInTextElements > 10) {
-            messages.保管庫ID.AddError(MSG.MaxLengthError("保管庫ID", "10"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.保管庫ID, 10, "保管庫ID")) is not null) {
+            messages.保管庫ID.AddError(errorMessage);
         }
         // 保管庫名
-        if (!string.IsNullOrEmpty(this.保管庫名)
-            && new System.Globalization.StringInfo(this.保管庫名!).LengthInTextElements > 50) {
-            messages.保管庫名.AddError(MSG.MaxLengthError("保管庫名", "50"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.保管庫名, 50, "保管庫名")) is not null) {
+            messages.保管庫名.AddError(errorMessage);
         }
         if (this.保管庫マスタの住所 != null) {
             // 郵便番号
-            if (!string.IsNullOrEmpty(this.保管庫マスタの住所.郵便番号)
-                && new System.Globalization.StringInfo(this.保管庫マスタの住所.郵便番号!).LengthInTextElements > 8) {
-                messages.保管庫マスタの住所.郵便番号.AddError(MSG.MaxLengthError("郵便番号", "8"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.保管庫マスタの住所.郵便番号, 8, "郵便番号")) is not null) {
+                messages.保管庫マスタの住所.郵便番号.AddError(errorMessage);
             }
             // 都道府県
-            if (!string.IsNullOrEmpty(this.保管庫マスタの住所.都道府県)
-                && new System.Globalization.StringInfo(this.保管庫マスタの住所.都道府県!).LengthInTextElements > 10) {
-                messages.保管庫マスタの住所.都道府県.AddError(MSG.MaxLengthError("都道府県", "10"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.保管庫マスタの住所.都道府県, 10, "都道府県")) is not null) {
+                messages.保管庫マスタの住所.都道府県.AddError(errorMessage);
             }
             // 市区町村
-            if (!string.IsNullOrEmpty(this.保管庫マスタの住所.市区町村)
-                && new System.Globalization.StringInfo(this.保管庫マスタの住所.市区町村!).LengthInTextElements > 20) {
-                messages.保管庫マスタの住所.市区町村.AddError(MSG.MaxLengthError("市区町村", "20"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.保管庫マスタの住所.市区町村, 20, "市区町村")) is not null) {
+                messages.保管庫マスタの住所.市区町村.AddError(errorMessage);
             }
             // 番地建物名
-            if (!string.IsNullOrEmpty(this.保管庫マスタの住所.番地建物名)
-                && new System.Globalization.StringInfo(this.保管庫マスタの住所.番地建物名!).LengthInTextElements > 100) {
-                messages.保管庫マスタの住所.番地建物名.AddError(MSG.MaxLengthError("番地建物名", "100"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.保管庫マスタの住所.番地建物名, 100, "番地建物名")) is not null) {
+                messages.保管庫マスタの住所.番地建物名.AddError(errorMessage);
             }
         }
     }
@@ -326,9 +322,10 @@ public partial class 保管庫マスタUpdateCommand : 保管庫マスタSaveCom
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(保管庫マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 保管庫ID
-        if (string.IsNullOrWhiteSpace(this.保管庫ID)) {
-            messages.保管庫ID.AddError(MSG.RequiredError("保管庫ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.保管庫ID, "保管庫ID")) is not null) {
+            messages.保管庫ID.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -341,36 +338,31 @@ public partial class 保管庫マスタUpdateCommand : 保管庫マスタSaveCom
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(保管庫マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 保管庫ID
-        if (!string.IsNullOrEmpty(this.保管庫ID)
-            && new System.Globalization.StringInfo(this.保管庫ID!).LengthInTextElements > 10) {
-            messages.保管庫ID.AddError(MSG.MaxLengthError("保管庫ID", "10"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.保管庫ID, 10, "保管庫ID")) is not null) {
+            messages.保管庫ID.AddError(errorMessage);
         }
         // 保管庫名
-        if (!string.IsNullOrEmpty(this.保管庫名)
-            && new System.Globalization.StringInfo(this.保管庫名!).LengthInTextElements > 50) {
-            messages.保管庫名.AddError(MSG.MaxLengthError("保管庫名", "50"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.保管庫名, 50, "保管庫名")) is not null) {
+            messages.保管庫名.AddError(errorMessage);
         }
         if (this.保管庫マスタの住所 != null) {
             // 郵便番号
-            if (!string.IsNullOrEmpty(this.保管庫マスタの住所.郵便番号)
-                && new System.Globalization.StringInfo(this.保管庫マスタの住所.郵便番号!).LengthInTextElements > 8) {
-                messages.保管庫マスタの住所.郵便番号.AddError(MSG.MaxLengthError("郵便番号", "8"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.保管庫マスタの住所.郵便番号, 8, "郵便番号")) is not null) {
+                messages.保管庫マスタの住所.郵便番号.AddError(errorMessage);
             }
             // 都道府県
-            if (!string.IsNullOrEmpty(this.保管庫マスタの住所.都道府県)
-                && new System.Globalization.StringInfo(this.保管庫マスタの住所.都道府県!).LengthInTextElements > 10) {
-                messages.保管庫マスタの住所.都道府県.AddError(MSG.MaxLengthError("都道府県", "10"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.保管庫マスタの住所.都道府県, 10, "都道府県")) is not null) {
+                messages.保管庫マスタの住所.都道府県.AddError(errorMessage);
             }
             // 市区町村
-            if (!string.IsNullOrEmpty(this.保管庫マスタの住所.市区町村)
-                && new System.Globalization.StringInfo(this.保管庫マスタの住所.市区町村!).LengthInTextElements > 20) {
-                messages.保管庫マスタの住所.市区町村.AddError(MSG.MaxLengthError("市区町村", "20"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.保管庫マスタの住所.市区町村, 20, "市区町村")) is not null) {
+                messages.保管庫マスタの住所.市区町村.AddError(errorMessage);
             }
             // 番地建物名
-            if (!string.IsNullOrEmpty(this.保管庫マスタの住所.番地建物名)
-                && new System.Globalization.StringInfo(this.保管庫マスタの住所.番地建物名!).LengthInTextElements > 100) {
-                messages.保管庫マスタの住所.番地建物名.AddError(MSG.MaxLengthError("番地建物名", "100"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.保管庫マスタの住所.番地建物名, 100, "番地建物名")) is not null) {
+                messages.保管庫マスタの住所.番地建物名.AddError(errorMessage);
             }
         }
     }

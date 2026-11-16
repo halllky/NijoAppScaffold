@@ -100,17 +100,18 @@ public partial class 入荷CreateCommand : 入荷SaveCommand, ISaveCommand<Valid
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(入荷SaveCommandMessages messages) {
+        string? errorMessage;
         // 入荷ID
-        if (string.IsNullOrWhiteSpace(this.入荷ID)) {
-            messages.入荷ID.AddError(MSG.RequiredError("入荷ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.入荷ID, "入荷ID")) is not null) {
+            messages.入荷ID.AddError(errorMessage);
         }
         // 入荷日時
-        if (this.入荷日時 == null) {
-            messages.入荷日時.AddError(MSG.RequiredError("入荷日時"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.入荷日時, "入荷日時")) is not null) {
+            messages.入荷日時.AddError(errorMessage);
         }
         // 担当者
-        if (string.IsNullOrWhiteSpace(this.担当者?.従業員番号)) {
-            messages.担当者.AddError(MSG.RequiredError("担当者"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.担当者?.従業員番号, "担当者")) is not null) {
+            messages.担当者.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -252,17 +253,18 @@ public partial class 入荷UpdateCommand : 入荷SaveCommand, ISaveCommand<Valid
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(入荷SaveCommandMessages messages) {
+        string? errorMessage;
         // 入荷ID
-        if (string.IsNullOrWhiteSpace(this.入荷ID)) {
-            messages.入荷ID.AddError(MSG.RequiredError("入荷ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.入荷ID, "入荷ID")) is not null) {
+            messages.入荷ID.AddError(errorMessage);
         }
         // 入荷日時
-        if (this.入荷日時 == null) {
-            messages.入荷日時.AddError(MSG.RequiredError("入荷日時"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.入荷日時, "入荷日時")) is not null) {
+            messages.入荷日時.AddError(errorMessage);
         }
         // 担当者
-        if (string.IsNullOrWhiteSpace(this.担当者?.従業員番号)) {
-            messages.担当者.AddError(MSG.RequiredError("担当者"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.担当者?.従業員番号, "担当者")) is not null) {
+            messages.担当者.AddError(errorMessage);
         }
     }
     /// <summary>

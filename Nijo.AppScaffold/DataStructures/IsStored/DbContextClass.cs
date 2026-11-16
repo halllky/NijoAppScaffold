@@ -40,6 +40,11 @@ namespace Nijo.DataStructures.IsStored {
             ctx.Use<GenericLookupViewsInfoProvider>();
 
             SaveCommand.RegisterMessages(ctx);
+
+            // 入力チェックのメッセージと、チェックの中身を手書きのコードに任せるフック。
+            // 手書きのコードがフックのオーバーライドを常に置いておけるよう、
+            // スキーマ定義に永続化されるデータ構造が存在するか否かにかかわらず生成する。
+            ValidatorBase.RegisterDependencies(ctx, this);
         }
 
         void ISharedSourceFile<CodeRenderingContext>.Render(CodeRenderingContext ctx) {

@@ -139,21 +139,22 @@ public partial class 患者マスタCreateCommand : 患者マスタSaveCommand, 
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(患者マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 患者ID
-        if (string.IsNullOrWhiteSpace(this.患者ID)) {
-            messages.患者ID.AddError(MSG.RequiredError("患者ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.患者ID, "患者ID")) is not null) {
+            messages.患者ID.AddError(errorMessage);
         }
         // 氏名
-        if (string.IsNullOrWhiteSpace(this.氏名)) {
-            messages.氏名.AddError(MSG.RequiredError("氏名"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.氏名, "氏名")) is not null) {
+            messages.氏名.AddError(errorMessage);
         }
         if (this.患者情報 != null) {
             for (var j = 0; j < this.患者情報.患者情報の診療履歴.Count; j++) {
                 var item1 = this.患者情報.患者情報の診療履歴[j];
             
                 // 履歴ID
-                if (string.IsNullOrWhiteSpace(item1.履歴ID)) {
-                    messages.患者情報.患者情報の診療履歴[j].履歴ID.AddError(MSG.RequiredError("履歴ID"));
+                if ((errorMessage = _dbContext.ValidateRequired(item1.履歴ID, "履歴ID")) is not null) {
+                    messages.患者情報.患者情報の診療履歴[j].履歴ID.AddError(errorMessage);
                 }
             }
         }
@@ -168,51 +169,43 @@ public partial class 患者マスタCreateCommand : 患者マスタSaveCommand, 
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(患者マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 患者ID
-        if (!string.IsNullOrEmpty(this.患者ID)
-            && new System.Globalization.StringInfo(this.患者ID!).LengthInTextElements > 20) {
-            messages.患者ID.AddError(MSG.MaxLengthError("患者ID", "20"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.患者ID, 20, "患者ID")) is not null) {
+            messages.患者ID.AddError(errorMessage);
         }
         // 氏名
-        if (!string.IsNullOrEmpty(this.氏名)
-            && new System.Globalization.StringInfo(this.氏名!).LengthInTextElements > 50) {
-            messages.氏名.AddError(MSG.MaxLengthError("氏名", "50"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.氏名, 50, "氏名")) is not null) {
+            messages.氏名.AddError(errorMessage);
         }
         // 氏名カナ
-        if (!string.IsNullOrEmpty(this.氏名カナ)
-            && new System.Globalization.StringInfo(this.氏名カナ!).LengthInTextElements > 50) {
-            messages.氏名カナ.AddError(MSG.MaxLengthError("氏名カナ", "50"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.氏名カナ, 50, "氏名カナ")) is not null) {
+            messages.氏名カナ.AddError(errorMessage);
         }
         // メールアドレス
-        if (!string.IsNullOrEmpty(this.メールアドレス)
-            && new System.Globalization.StringInfo(this.メールアドレス!).LengthInTextElements > 100) {
-            messages.メールアドレス.AddError(MSG.MaxLengthError("メールアドレス", "100"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.メールアドレス, 100, "メールアドレス")) is not null) {
+            messages.メールアドレス.AddError(errorMessage);
         }
         // 電話番号
-        if (!string.IsNullOrEmpty(this.電話番号)
-            && new System.Globalization.StringInfo(this.電話番号!).LengthInTextElements > 20) {
-            messages.電話番号.AddError(MSG.MaxLengthError("電話番号", "20"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.電話番号, 20, "電話番号")) is not null) {
+            messages.電話番号.AddError(errorMessage);
         }
         if (this.患者マスタの住所 != null) {
             // 郵便番号
-            if (!string.IsNullOrEmpty(this.患者マスタの住所.郵便番号)
-                && new System.Globalization.StringInfo(this.患者マスタの住所.郵便番号!).LengthInTextElements > 8) {
-                messages.患者マスタの住所.郵便番号.AddError(MSG.MaxLengthError("郵便番号", "8"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.患者マスタの住所.郵便番号, 8, "郵便番号")) is not null) {
+                messages.患者マスタの住所.郵便番号.AddError(errorMessage);
             }
             // 都道府県
-            if (!string.IsNullOrEmpty(this.患者マスタの住所.都道府県)
-                && new System.Globalization.StringInfo(this.患者マスタの住所.都道府県!).LengthInTextElements > 10) {
-                messages.患者マスタの住所.都道府県.AddError(MSG.MaxLengthError("都道府県", "10"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.患者マスタの住所.都道府県, 10, "都道府県")) is not null) {
+                messages.患者マスタの住所.都道府県.AddError(errorMessage);
             }
             // 市区町村
-            if (!string.IsNullOrEmpty(this.患者マスタの住所.市区町村)
-                && new System.Globalization.StringInfo(this.患者マスタの住所.市区町村!).LengthInTextElements > 20) {
-                messages.患者マスタの住所.市区町村.AddError(MSG.MaxLengthError("市区町村", "20"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.患者マスタの住所.市区町村, 20, "市区町村")) is not null) {
+                messages.患者マスタの住所.市区町村.AddError(errorMessage);
             }
             // 番地建物名
-            if (!string.IsNullOrEmpty(this.患者マスタの住所.番地建物名)
-                && new System.Globalization.StringInfo(this.患者マスタの住所.番地建物名!).LengthInTextElements > 100) {
-                messages.患者マスタの住所.番地建物名.AddError(MSG.MaxLengthError("番地建物名", "100"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.患者マスタの住所.番地建物名, 100, "番地建物名")) is not null) {
+                messages.患者マスタの住所.番地建物名.AddError(errorMessage);
             }
         }
         if (this.患者情報 != null) {
@@ -220,14 +213,12 @@ public partial class 患者マスタCreateCommand : 患者マスタSaveCommand, 
                 var item1 = this.患者情報.患者情報の診療履歴[j];
             
                 // 履歴ID
-                if (!string.IsNullOrEmpty(item1.履歴ID)
-                    && new System.Globalization.StringInfo(item1.履歴ID!).LengthInTextElements > 36) {
-                    messages.患者情報.患者情報の診療履歴[j].履歴ID.AddError(MSG.MaxLengthError("履歴ID", "36"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(item1.履歴ID, 36, "履歴ID")) is not null) {
+                    messages.患者情報.患者情報の診療履歴[j].履歴ID.AddError(errorMessage);
                 }
                 // 診療内容
-                if (!string.IsNullOrEmpty(item1.診療内容)
-                    && new System.Globalization.StringInfo(item1.診療内容!).LengthInTextElements > 100) {
-                    messages.患者情報.患者情報の診療履歴[j].診療内容.AddError(MSG.MaxLengthError("診療内容", "100"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(item1.診療内容, 100, "診療内容")) is not null) {
+                    messages.患者情報.患者情報の診療履歴[j].診療内容.AddError(errorMessage);
                 }
             }
         }
@@ -494,21 +485,22 @@ public partial class 患者マスタUpdateCommand : 患者マスタSaveCommand, 
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(患者マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 患者ID
-        if (string.IsNullOrWhiteSpace(this.患者ID)) {
-            messages.患者ID.AddError(MSG.RequiredError("患者ID"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.患者ID, "患者ID")) is not null) {
+            messages.患者ID.AddError(errorMessage);
         }
         // 氏名
-        if (string.IsNullOrWhiteSpace(this.氏名)) {
-            messages.氏名.AddError(MSG.RequiredError("氏名"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.氏名, "氏名")) is not null) {
+            messages.氏名.AddError(errorMessage);
         }
         if (this.患者情報 != null) {
             for (var j = 0; j < this.患者情報.患者情報の診療履歴.Count; j++) {
                 var item1 = this.患者情報.患者情報の診療履歴[j];
             
                 // 履歴ID
-                if (string.IsNullOrWhiteSpace(item1.履歴ID)) {
-                    messages.患者情報.患者情報の診療履歴[j].履歴ID.AddError(MSG.RequiredError("履歴ID"));
+                if ((errorMessage = _dbContext.ValidateRequired(item1.履歴ID, "履歴ID")) is not null) {
+                    messages.患者情報.患者情報の診療履歴[j].履歴ID.AddError(errorMessage);
                 }
             }
         }
@@ -523,51 +515,43 @@ public partial class 患者マスタUpdateCommand : 患者マスタSaveCommand, 
     /// 文字列最大長チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateMaxLength(患者マスタSaveCommandMessages messages) {
+        string? errorMessage;
         // 患者ID
-        if (!string.IsNullOrEmpty(this.患者ID)
-            && new System.Globalization.StringInfo(this.患者ID!).LengthInTextElements > 20) {
-            messages.患者ID.AddError(MSG.MaxLengthError("患者ID", "20"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.患者ID, 20, "患者ID")) is not null) {
+            messages.患者ID.AddError(errorMessage);
         }
         // 氏名
-        if (!string.IsNullOrEmpty(this.氏名)
-            && new System.Globalization.StringInfo(this.氏名!).LengthInTextElements > 50) {
-            messages.氏名.AddError(MSG.MaxLengthError("氏名", "50"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.氏名, 50, "氏名")) is not null) {
+            messages.氏名.AddError(errorMessage);
         }
         // 氏名カナ
-        if (!string.IsNullOrEmpty(this.氏名カナ)
-            && new System.Globalization.StringInfo(this.氏名カナ!).LengthInTextElements > 50) {
-            messages.氏名カナ.AddError(MSG.MaxLengthError("氏名カナ", "50"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.氏名カナ, 50, "氏名カナ")) is not null) {
+            messages.氏名カナ.AddError(errorMessage);
         }
         // メールアドレス
-        if (!string.IsNullOrEmpty(this.メールアドレス)
-            && new System.Globalization.StringInfo(this.メールアドレス!).LengthInTextElements > 100) {
-            messages.メールアドレス.AddError(MSG.MaxLengthError("メールアドレス", "100"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.メールアドレス, 100, "メールアドレス")) is not null) {
+            messages.メールアドレス.AddError(errorMessage);
         }
         // 電話番号
-        if (!string.IsNullOrEmpty(this.電話番号)
-            && new System.Globalization.StringInfo(this.電話番号!).LengthInTextElements > 20) {
-            messages.電話番号.AddError(MSG.MaxLengthError("電話番号", "20"));
+        if ((errorMessage = _dbContext.ValidateMaxLength(this.電話番号, 20, "電話番号")) is not null) {
+            messages.電話番号.AddError(errorMessage);
         }
         if (this.患者マスタの住所 != null) {
             // 郵便番号
-            if (!string.IsNullOrEmpty(this.患者マスタの住所.郵便番号)
-                && new System.Globalization.StringInfo(this.患者マスタの住所.郵便番号!).LengthInTextElements > 8) {
-                messages.患者マスタの住所.郵便番号.AddError(MSG.MaxLengthError("郵便番号", "8"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.患者マスタの住所.郵便番号, 8, "郵便番号")) is not null) {
+                messages.患者マスタの住所.郵便番号.AddError(errorMessage);
             }
             // 都道府県
-            if (!string.IsNullOrEmpty(this.患者マスタの住所.都道府県)
-                && new System.Globalization.StringInfo(this.患者マスタの住所.都道府県!).LengthInTextElements > 10) {
-                messages.患者マスタの住所.都道府県.AddError(MSG.MaxLengthError("都道府県", "10"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.患者マスタの住所.都道府県, 10, "都道府県")) is not null) {
+                messages.患者マスタの住所.都道府県.AddError(errorMessage);
             }
             // 市区町村
-            if (!string.IsNullOrEmpty(this.患者マスタの住所.市区町村)
-                && new System.Globalization.StringInfo(this.患者マスタの住所.市区町村!).LengthInTextElements > 20) {
-                messages.患者マスタの住所.市区町村.AddError(MSG.MaxLengthError("市区町村", "20"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.患者マスタの住所.市区町村, 20, "市区町村")) is not null) {
+                messages.患者マスタの住所.市区町村.AddError(errorMessage);
             }
             // 番地建物名
-            if (!string.IsNullOrEmpty(this.患者マスタの住所.番地建物名)
-                && new System.Globalization.StringInfo(this.患者マスタの住所.番地建物名!).LengthInTextElements > 100) {
-                messages.患者マスタの住所.番地建物名.AddError(MSG.MaxLengthError("番地建物名", "100"));
+            if ((errorMessage = _dbContext.ValidateMaxLength(this.患者マスタの住所.番地建物名, 100, "番地建物名")) is not null) {
+                messages.患者マスタの住所.番地建物名.AddError(errorMessage);
             }
         }
         if (this.患者情報 != null) {
@@ -575,14 +559,12 @@ public partial class 患者マスタUpdateCommand : 患者マスタSaveCommand, 
                 var item1 = this.患者情報.患者情報の診療履歴[j];
             
                 // 履歴ID
-                if (!string.IsNullOrEmpty(item1.履歴ID)
-                    && new System.Globalization.StringInfo(item1.履歴ID!).LengthInTextElements > 36) {
-                    messages.患者情報.患者情報の診療履歴[j].履歴ID.AddError(MSG.MaxLengthError("履歴ID", "36"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(item1.履歴ID, 36, "履歴ID")) is not null) {
+                    messages.患者情報.患者情報の診療履歴[j].履歴ID.AddError(errorMessage);
                 }
                 // 診療内容
-                if (!string.IsNullOrEmpty(item1.診療内容)
-                    && new System.Globalization.StringInfo(item1.診療内容!).LengthInTextElements > 100) {
-                    messages.患者情報.患者情報の診療履歴[j].診療内容.AddError(MSG.MaxLengthError("診療内容", "100"));
+                if ((errorMessage = _dbContext.ValidateMaxLength(item1.診療内容, 100, "診療内容")) is not null) {
+                    messages.患者情報.患者情報の診療履歴[j].診療内容.AddError(errorMessage);
                 }
             }
         }

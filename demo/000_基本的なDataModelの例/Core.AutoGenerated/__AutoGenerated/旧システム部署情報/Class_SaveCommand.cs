@@ -92,13 +92,14 @@ public partial class 旧システム部署情報CreateCommand : 旧システム�
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(旧システム部署情報SaveCommandMessages messages) {
+        string? errorMessage;
         // 旧システムコード
-        if (string.IsNullOrWhiteSpace(this.旧システムコード)) {
-            messages.旧システムコード.AddError(MSG.RequiredError("旧システムコード"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.旧システムコード, "旧システムコード")) is not null) {
+            messages.旧システムコード.AddError(errorMessage);
         }
         // 名称
-        if (string.IsNullOrWhiteSpace(this.名称)) {
-            messages.名称.AddError(MSG.RequiredError("名称"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.名称, "名称")) is not null) {
+            messages.名称.AddError(errorMessage);
         }
     }
     /// <summary>
@@ -222,13 +223,14 @@ public partial class 旧システム部署情報UpdateCommand : 旧システム�
     /// 必須入力チェック。違反する項目があった場合はその旨が引数のオブジェクト内に追記されます。
     /// </summary>
     private void ValidateRequired(旧システム部署情報SaveCommandMessages messages) {
+        string? errorMessage;
         // 旧システムコード
-        if (string.IsNullOrWhiteSpace(this.旧システムコード)) {
-            messages.旧システムコード.AddError(MSG.RequiredError("旧システムコード"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.旧システムコード, "旧システムコード")) is not null) {
+            messages.旧システムコード.AddError(errorMessage);
         }
         // 名称
-        if (string.IsNullOrWhiteSpace(this.名称)) {
-            messages.名称.AddError(MSG.RequiredError("名称"));
+        if ((errorMessage = _dbContext.ValidateRequired(this.名称, "名称")) is not null) {
+            messages.名称.AddError(errorMessage);
         }
     }
     /// <summary>
