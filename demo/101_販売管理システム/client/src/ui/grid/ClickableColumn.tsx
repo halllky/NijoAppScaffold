@@ -1,5 +1,5 @@
 import React from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import * as EG2 from "@halllky/editable-grid"
 
 /*
@@ -79,6 +79,11 @@ export type GridLink = {
 export type LinkColumnOptions<TRow> = ClickableColumnOptionsBase<TRow> & {
   /** 折り返し表示するかどうか。未指定の場合は折り返さず、はみ出した部分は隠れる */
   wrap?: boolean
+  /**
+   * リンクをたどる前に行う処理。完了を待ってから、成否によらず画面を移動する。
+   * Ctrl+クリックなどで別のタブに開く場合は、完了を待たずにブラウザに任せる。
+   */
+  onBeforeNavigate?: (row: TRow) => Promise<unknown>
 }
 
 /**
@@ -92,7 +97,7 @@ export function linkColumn<TRow>(
   getLinks: (row: TRow) => GridLink[],
   options: LinkColumnOptions<TRow>,
 ): EG2.EditableGridLeafColumn<TRow, readonly string[]> {
-  const { header, wrap, onCellKeyDown, ...rest } = options
+  const { header, wrap, onBeforeNavigate, onCellKeyDown, ...rest } = options
   const firstLinks = new KeyboardClickTargets(['Enter'])
 
   return {
@@ -100,18 +105,16 @@ export function linkColumn<TRow>(
     renderHeader: () => renderHeader(header),
     // renderBody は行の値を受け取れないので、各リンクの文言とリンク先を交互に並べて渡す
     getValuesForRender: row => getLinks(row).flatMap(link => [link.text, link.to]),
-    renderBody: ({ deps, rowKey }) => (
+    renderBody: ({ deps, rowKey, getRow }) => (
       <div className={`h-full w-full px-1 py-px text-sm flex gap-x-3 overflow-hidden ${wrap ? 'flex-wrap items-start' : 'items-center'}`}>
         {pairsOf(deps).map(([text, to], index) => (
-          <Link
+          <GridLinkAnchor
             key={index}
+            text={text}
             to={to}
-            onMouseDown={stopPropagation}
-            ref={index === 0 ? firstLinks.ref(rowKey) : undefined}
-            className="text-sky-600 underline whitespace-nowrap"
-          >
-            {text}
-          </Link>
+            linkRef={index === 0 ? firstLinks.ref(rowKey) : undefined}
+            onBeforeNavigate={onBeforeNavigate && (() => onBeforeNavigate(getRow()))}
+          />
         ))}
       </div>
     ),
@@ -174,6 +177,42 @@ class KeyboardClickTargets {
     }
     if (!event.defaultPrevented) fallback?.(args)
   }
+}
+
+/** リンクの列のセルに置くリンク1つ */
+function GridLinkAnchor({ text, to, linkRef, onBeforeNavigate }: {
+  text: string
+  to: string
+  linkRef: React.Ref<HTMLAnchorElement> | undefined
+  onBeforeNavigate: (() => Promise<unknown>) | undefined
+}) {
+  const navigate = useNavigate()
+
+  const handleClick = async (e: React.MouseEvent) => {
+    if (!onBeforeNavigate) return
+    if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) {
+      void onBeforeNavigate()
+      return
+    }
+    e.preventDefault()
+    try {
+      await onBeforeNavigate()
+    } finally {
+      navigate(to)
+    }
+  }
+
+  return (
+    <Link
+      to={to}
+      onMouseDown={stopPropagation}
+      onClick={handleClick}
+      ref={linkRef}
+      className="text-sky-600 underline whitespace-nowrap"
+    >
+      {text}
+    </Link>
+  )
 }
 
 /** 列見出し。見出しが無い列では何も表示しない */
