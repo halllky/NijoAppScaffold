@@ -1,5 +1,6 @@
 #if DEBUG
 
+using Microsoft.Extensions.DependencyInjection;
 using MyApp.Core.Authorization;
 
 namespace MyApp;
@@ -46,6 +47,14 @@ public partial class OverridedDummyDataGenerator {
         }
         await db.SaveChangesAsync();
 
+        // 通知: 管理者宛て。通知の一覧と未読の件数の表示を、画面で確かめられるようにする
+        var now = applicationService.ServiceProvider.GetRequiredService<ICurrentTime>().Value;
+        db.通知DbSet.AddRange(
+            New管理者宛ての通知("ダミーの未読の通知です。リンク先はありません。", null, 既読日時: null, now.AddMinutes(-1)),
+            New管理者宛ての通知("ダミーの未読の通知です。従業員の画面へのリンクがあります。", "/jugyoin", 既読日時: null, now.AddMinutes(-2)),
+            New管理者宛ての通知("ダミーの既読の通知です。", null, 既読日時: now, now.AddMinutes(-3)));
+        await db.SaveChangesAsync();
+
         var messages = new MessageSetter([], new());
 
         // 業務データ
@@ -57,6 +66,16 @@ public partial class OverridedDummyDataGenerator {
 
         return messages;
     }
+
+    private static 通知DbEntity New管理者宛ての通知(string 本文, string? リンク先, DateTime? 既読日時, DateTime 作成日時) => new() {
+        通知ID = Guid.NewGuid().ToString(),
+        宛先 = ADMIN_USER_ID,
+        本文 = 本文,
+        リンク先 = リンク先,
+        既読日時 = 既読日時,
+        CreatedAt = 作成日時,
+        Version = 0,
+    };
 
     /// <summary>
     /// マスタデータの登録後に実行する、業務データの生成処理を返す。

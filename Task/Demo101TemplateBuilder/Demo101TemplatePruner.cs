@@ -38,6 +38,10 @@ public static class Demo101TemplatePruner
         "f594d8ac-f7ff-44ca-878f-fcbfd1e79ee1", // ログインユーザー情報
         "72d0c66e-b523-4dd1-b8a0-8384368fe38b", // セッション
         "86ea4449-3f7c-4579-aec5-a73a2a38e8d1", // 冪等キー
+        "309fda4b-bae6-445d-ad8c-a0d3ac8995f1", // 通知
+        "beffc950-74ba-48ec-b9fb-407d52c12533", // 通知一覧
+        "67e95f3a-6a95-4ae0-8069-b2fbdc68e430", // 通知既読設定Parameter
+        "4dc11741-328a-488e-a2f5-7fcec5f6b1f2", // 未読通知件数ReturnValue
     ];
 
     /// <summary>テンプレートに残す、Commands直下の要素のUniqueId</summary>
@@ -49,6 +53,9 @@ public static class Demo101TemplatePruner
         "abbe87d5-69df-45a0-9166-1b05f08de613", // パスワード再発行
         "5388c52e-2932-4226-bf5b-734ae8a50112", // 従業員一括更新
         "eadf411b-2c47-483f-b0a8-fc52c9486adc", // クリーンナップ
+        "a5448bce-1ea3-471a-98cd-cf248e5cf4cb", // 通知既読設定
+        "e80781a6-dbe4-47b9-aec7-f163a7e8ac92", // 通知すべて既読
+        "55ffff41-8e50-4da9-b282-b3b082c90ef6", // 未読通知件数
     ];
 
     private const string PERMISSION_ENUM_ID = "d3d0cb8d-23a2-4b86-a85e-b8965284c824"; // 権限区分
@@ -110,6 +117,7 @@ public static class Demo101TemplatePruner
         "P000_トップページ.tsx",
         "P001_ログイン.tsx",
         "P002_ログアウト.tsx",
+        "P003_通知.tsx",
         "P400_従業員.tsx",
         "shared/従業員検索ダイアログ.tsx",
     ];
