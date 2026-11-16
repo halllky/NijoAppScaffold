@@ -688,6 +688,71 @@ namespace MyApp.Migrations {
                 b.ToTable("権限", (string)null);
             });
 
+            modelBuilder.Entity("MyApp.通知DbEntity", b => {
+                b.Property<string>("通知ID")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("通知ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(6);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(8);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(7);
+
+                b.Property<int>("Version")
+                    .IsConcurrencyToken()
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("Version")
+                    .HasColumnOrder(9);
+
+                b.Property<string>("リンク先")
+                    .HasMaxLength(2000)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("リンク先")
+                    .HasColumnOrder(3);
+
+                b.Property<string>("宛先")
+                    .IsRequired()
+                    .HasColumnType("TEXT")
+                    .HasColumnName("宛先")
+                    .HasColumnOrder(1);
+
+                b.Property<DateTime?>("既読日時")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("既読日時")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("本文")
+                    .IsRequired()
+                    .HasMaxLength(1000)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("本文")
+                    .HasColumnOrder(2);
+
+                b.HasKey("通知ID")
+                    .HasName("PK_通知");
+
+                b.HasIndex("宛先", "既読日時")
+                    .HasDatabaseName("IX_通知_宛先_既読日時");
+
+                b.ToTable("通知", (string)null);
+            });
+
             modelBuilder.Entity("MyApp.セッションDbEntity", b => {
                 b.HasOne("MyApp.従業員DbEntity", "ユーザ")
                     .WithMany("RefFromセッション_ユーザ")

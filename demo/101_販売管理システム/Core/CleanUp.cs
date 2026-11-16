@@ -22,8 +22,11 @@ partial class OverridedApplicationService {
             .Where(k => k.CreatedAt < idempotencyKeyThreshold)
             .ExecuteDeleteAsync();
 
-        Log.LogInformation("クリーンナップ処理を実行しました。削除されたセッション数: {SessionCount}, 削除された冪等キー数: {IdempotencyKeyCount}",
-            deletedCount, deletedIdempotencyKeyCount);
+        // 不要になったユーザー宛ての通知を削除
+        var deletedNotificationCount = await Delete不要な通知Async();
+
+        Log.LogInformation("クリーンナップ処理を実行しました。削除されたセッション数: {SessionCount}, 削除された冪等キー数: {IdempotencyKeyCount}, 削除された通知数: {NotificationCount}",
+            deletedCount, deletedIdempotencyKeyCount, deletedNotificationCount);
 
         // 古いログの削除は NLog の設定で自動的に行われるため、ここでは特に処理を実装しない。
     }

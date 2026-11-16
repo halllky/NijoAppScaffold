@@ -658,6 +658,37 @@ Webアプリケーションなので明示的にログアウトしない限り�
         Type="word"
         UniqueId="c642d428-6201-4d7e-bb1b-b14a34baecde" />
     </冪等キー>
+    <!--ユーザー宛ての通知。業務処理やジョブが、業務のデータと同じトランザクションで作る。
+宛先1人につき1行で、既読はユーザーごとに管理する。
+既読になってから一定期間が経ったものと、宛先のユーザーが削除されたものは、クリーンナップで削除される。-->
+    <通知
+      IsStored="True"
+      UniqueId="309fda4b-bae6-445d-ad8c-a0d3ac8995f1">
+      <通知ID
+        IsKey="True"
+        IsNotNull="True"
+        Type="word"
+        UniqueId="dade03e1-3a09-4595-b631-1ff73167f8c0" />
+      <!--宛先のユーザーの従業員番号。ユーザーへの外部参照にしないのは、未読の通知が残っているユーザーも削除できるようにするため。-->
+      <宛先
+        IsNotNull="True"
+        Type="word"
+        UniqueId="0572afde-b7c3-4316-b029-4d1f9e1f7fe1" />
+      <本文
+        IsNotNull="True"
+        MaxLength="1000"
+        Type="description"
+        UniqueId="23b9f7ec-5ce1-4e1c-bb72-c2beba9473a3" />
+      <!--関係する画面の、このアプリケーションの中での URL のパス。-->
+      <リンク先
+        MaxLength="2000"
+        Type="word"
+        UniqueId="31f41eef-6502-4486-b5da-47ae1dee11f4" />
+      <!--空なら未読。-->
+      <既読日時
+        Type="datetime"
+        UniqueId="9e4a7a6b-a7b4-4b0b-8d89-9d864e4f1647" />
+    </通知>
     <入荷詳細画面初期表示Parameter
       UniqueId="c766195e-c279-4a50-84bb-fcbf46ac9798">
       <入荷ID
@@ -777,7 +808,7 @@ ASP.NET Core のサービスワーカーとして登録される。-->
       Custom-7c1f3a2e-5b84-4d0a-9e61-2f8b4c6d1a35="ログインユーザー全員"
       Parameter="パスワード変更Parameter"
       UniqueId="c6feafdf-b973-4196-afa1-111eb9638087" />
-    <!--古いセッションキーの削除を行う。
+    <!--古くなったセッション・冪等キー・通知の削除を行う。
 システム管理者のみ利用可能。定期的に起動する仕組みはまだない。-->
     <クリーンナップ
       Custom-7c1f3a2e-5b84-4d0a-9e61-2f8b4c6d1a35="権限で指定"

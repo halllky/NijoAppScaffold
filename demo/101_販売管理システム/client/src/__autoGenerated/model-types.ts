@@ -14,6 +14,7 @@ export type DataModelType
   | '在庫調整'
   | 'セッション'
   | '冪等キー'
+  | '通知'
 
 /** QueryModelの種類の一覧。ルート集約のみ。 */
 export type QueryModelType
@@ -103,6 +104,7 @@ export function getDataModelTypeList(): DataModelType[] {
     '在庫調整',
     'セッション',
     '冪等キー',
+    '通知',
   ]
 }
 
