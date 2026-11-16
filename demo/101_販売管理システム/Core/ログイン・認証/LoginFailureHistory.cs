@@ -9,7 +9,6 @@ namespace MyApp.Core.Authorization;
 /// 記録はサーバーのプロセスのメモリーに持つので、再起動で消え、サーバーが複数台のときは台ごとに数える。
 /// IP アドレスごとの制限は行わない。
 /// アプリケーション全体で1個のインスタンスを使う。
-/// 時刻は、アプリケーションの現在時刻（業務のタイムゾーンの現地時刻）を渡す。
 /// </summary>
 public sealed class LoginFailureHistory {
 
