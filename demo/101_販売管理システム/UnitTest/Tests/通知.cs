@@ -200,6 +200,7 @@ partial class DB接続あり_更新あり {
     /// </summary>
     private static async Task<ScopedApp> NewRequestAsAsync(TestScopeImpl scope, string 従業員番号) {
         var db = scope.App.DbContext;
+        db.ChangeTracker.Clear(); // それまでの処理（ダミーデータの作成など）が追跡しているセッションと重ならないようにする
         var sessionKey = Core.Authorization.SessionKey.ToStoredValue(TestUtilImpl.SessionKeyProviderInUnitTest.SESSION_KEY);
         await db.セッションDbSet.Where(s => s.セッションキー == sessionKey).ExecuteDeleteAsync();
         db.セッションDbSet.Add(new セッションDbEntity {

@@ -237,8 +237,21 @@ partial class OverridedApplicationService {
             return;
         }
         await Notify在庫数量Async(stockResult.Updated.Select(x => x.商品?.商品SEQ));
+        await Create担当者への売上修正の通知Async(param.売上SEQ.Value, updateResult.Updated.担当者?.従業員番号);
 
         await tran.CommitAsync();
         messages.AddInfo("売上修正が完了しました。");
+    }
+
+    /// <summary>
+    /// 担当者以外の人が売上を修正したら、担当者に知らせる。
+    /// </summary>
+    private async Task Create担当者への売上修正の通知Async(int 売上SEQ, string? 担当者) {
+        if (LoginUser == null || 担当者 == null || 担当者 == LoginUser.従業員番号) return;
+
+        await Create通知Async(
+            [担当者],
+            $"担当の売上 {売上SEQ} が {LoginUser.氏名} さんにより修正されました。",
+            画面のパス.売上詳細(売上SEQ));
     }
 }

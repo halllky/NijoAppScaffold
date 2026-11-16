@@ -145,7 +145,32 @@ partial class OverridedApplicationService {
             return;
         }
         await Notify在庫数量Async([param.商品.商品SEQ]);
+        await Create入荷担当への在庫調整の通知Async(param.商品.商品SEQ.Value, delta);
 
         await tran.CommitAsync();
+    }
+
+    /// <summary>
+    /// 在庫を調整したら、調整した本人以外の、入荷担当の権限をもつ全員に知らせる。
+    /// システム管理者はすべての権限をもつとみなされるが、知らせるのは入荷担当の権限を明示的にもつ人だけにする。
+    /// </summary>
+    private async Task Create入荷担当への在庫調整の通知Async(int 商品SEQ, int 増減数) {
+        if (LoginUser == null) return;
+        var 調整した人 = LoginUser.従業員番号;
+
+        var 宛先一覧 = await DbContext.従業員DbSet
+            .Where(e => e.従業員番号 != 調整した人
+                     && e.従業員の権限.Any(p => p.権限区分 == 権限区分.入荷担当))
+            .Select(e => e.従業員番号!)
+            .ToListAsync();
+        var 商品名 = await DbContext.商品DbSet
+            .Where(x => x.商品SEQ == 商品SEQ)
+            .Select(x => x.商品名)
+            .SingleAsync();
+
+        await Create通知Async(
+            宛先一覧,
+            $"商品「{商品名}」の在庫が {LoginUser.氏名} さんにより調整されました（{増減数:+#;-#}個）。",
+            画面のパス.商品詳細(商品SEQ));
     }
 }
