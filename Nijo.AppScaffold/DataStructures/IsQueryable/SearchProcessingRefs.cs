@@ -80,20 +80,6 @@ namespace Nijo.DataStructures.IsQueryable {
             var isDisplayDataArray = _entryAggregate.EnumerateThisAndAncestors().Any(agg => agg is ChildrenAggregate);
 
             return $$"""
-                #region 参照検索
-                /// <summary>
-                /// {{_entryAggregate.DisplayName}}の検索条件の内容を検証します。
-                /// 不正な場合、検索処理自体の実行が中止されます。
-                /// </summary>
-                /// <param name="searchCondition">検索条件</param>
-                /// <param name="messages">エラーがある場合はこのオブジェクトの中にエラー内容を追記してください。</param>
-                /// <param name="context">この呼び出しについての、全処理に共通の入出力</param>
-                public virtual void {{ValidateMethod}}({{searchCondition.CsClassName}} searchCondition, {{searchConditionMessage.CsClassName}} messages, {{ApplicationService.CONTEXT_TYPE_PARAMETER}} context) {
-                    // エラーチェックがある場合はこのメソッドをオーバーライドして記述してください。
-                    // 既定では通常の検索処理の検証処理を流用します。
-                    this.{{SearchProcessing.VALIDATE_METHOD}}(searchCondition, messages, context);
-                }
-
                 /// <summary>
                 /// 検索条件を検証し、問題がなければ{{_entryAggregate.DisplayName}}が他の集約から参照されるときの検索を行ないます。
                 /// 検索は <see cref="{{OperationCatalog.CS_INTERCEPT}}"/> を通して行われます。
@@ -157,7 +143,22 @@ namespace Nijo.DataStructures.IsQueryable {
                         };
                     });
                 }
+
+                /// <summary>
+                /// {{_entryAggregate.DisplayName}}の検索条件の内容を検証します。
+                /// 不正な場合、検索処理自体の実行が中止されます。
+                /// </summary>
+                /// <param name="searchCondition">検索条件</param>
+                /// <param name="messages">エラーがある場合はこのオブジェクトの中にエラー内容を追記してください。</param>
+                /// <param name="context">この呼び出しについての、全処理に共通の入出力</param>
+                public virtual void {{ValidateMethod}}({{searchCondition.CsClassName}} searchCondition, {{searchConditionMessage.CsClassName}} messages, {{ApplicationService.CONTEXT_TYPE_PARAMETER}} context) {
+                    // エラーチェックがある場合はこのメソッドをオーバーライドして記述してください。
+                    // 既定では通常の検索処理の検証処理を流用します。
+                    this.{{SearchProcessing.VALIDATE_METHOD}}(searchCondition, messages, context);
+                }
+
                 {{RenderConvertToRefTarget()}}
+
                 /// <summary>
                 /// {{_entryAggregate.DisplayName}}の参照検索の読み込み後処理
                 /// </summary>
@@ -165,7 +166,6 @@ namespace Nijo.DataStructures.IsQueryable {
                     // 読み込み後処理がある場合はここで実装してください。
                     return currentPageItems;
                 }
-                #endregion 参照検索
                 """;
         }
 

@@ -69,18 +69,6 @@ namespace Nijo.DataStructures.IsQueryable {
             var displayData = new DisplayData(_rootAggregate);
 
             return $$"""
-                #region 検索
-                /// <summary>
-                /// {{_rootAggregate.DisplayName}}の検索条件の内容を検証します。
-                /// 不正な場合、検索処理自体の実行が中止されます。
-                /// </summary>
-                /// <param name="searchCondition">検索条件</param>
-                /// <param name="messages">エラーがある場合はこのオブジェクトの中にエラー内容を追記してください。</param>
-                /// <param name="context">この呼び出しについての、全処理に共通の入出力</param>
-                public virtual void {{VALIDATE_METHOD}}({{searchCondition.CsClassName}} searchCondition, {{searchConditionMessage.CsClassName}} messages, {{ApplicationService.CONTEXT_TYPE_PARAMETER}} context) {
-                    // エラーチェックがある場合はこのメソッドをオーバーライドして記述してください。
-                }
-
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}}の検索条件を検証し、問題がなければ一覧検索を行ないます。
                 /// 検索は <see cref="{{OperationCatalog.CS_INTERCEPT}}"/> を通して行われます。
@@ -141,6 +129,18 @@ namespace Nijo.DataStructures.IsQueryable {
                         };
                     });
                 }
+
+                /// <summary>
+                /// {{_rootAggregate.DisplayName}}の検索条件の内容を検証します。
+                /// 不正な場合、検索処理自体の実行が中止されます。
+                /// </summary>
+                /// <param name="searchCondition">検索条件</param>
+                /// <param name="messages">エラーがある場合はこのオブジェクトの中にエラー内容を追記してください。</param>
+                /// <param name="context">この呼び出しについての、全処理に共通の入出力</param>
+                public virtual void {{VALIDATE_METHOD}}({{searchCondition.CsClassName}} searchCondition, {{searchConditionMessage.CsClassName}} messages, {{ApplicationService.CONTEXT_TYPE_PARAMETER}} context) {
+                    // エラーチェックがある場合はこのメソッドをオーバーライドして記述してください。
+                }
+
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}}のデータベースへの問い合わせデータ構造（SQLで言うSELECT句とFROM句）を定義する
                 /// </summary>
@@ -155,9 +155,13 @@ namespace Nijo.DataStructures.IsQueryable {
                 """).Else(() => $$"""
                 protected abstract IQueryable<{{searchResult.CsClassName}}> {{CREATE_QUERY_SOURCE}}({{searchCondition.CsClassName}} searchCondition, {{ApplicationService.CONTEXT_TYPE_PARAMETER}} context);
                 """)}}
+
                 {{RenderAppendWhereClause(ctx)}}
+
                 {{RenderAppendOrderByClause()}}
+
                 {{RenderToDisplayData(ctx)}}
+
                 /// <summary>
                 /// {{_rootAggregate.DisplayName}}の一覧検索の読み込み後処理
                 /// </summary>
@@ -165,7 +169,6 @@ namespace Nijo.DataStructures.IsQueryable {
                     // 読み込み後処理がある場合はここで実装してください。
                     return currentPageItems;
                 }
-                #endregion 検索
                 """;
         }
 
