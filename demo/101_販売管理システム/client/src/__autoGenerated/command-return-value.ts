@@ -11,6 +11,7 @@ import * as 入荷登録ReturnValue from "./models/入荷登録ReturnValue"
 import * as 入荷詳細 from "./models/入荷詳細"
 import * as 売上新規登録ReturnValue from "./models/売上新規登録ReturnValue"
 import * as 売上詳細 from "./models/売上詳細"
+import * as 未読通知件数ReturnValue from "./models/未読通知件数ReturnValue"
 
 /** Command戻り値型一覧 */
 export interface TypeMap {
@@ -30,6 +31,9 @@ export interface TypeMap {
   '入荷詳細画面初期表示': 入荷詳細.DisplayData
   '売上金額シミュレート': 売上詳細.DisplayData
   'ログイン状態確認': ログインユーザー情報.DisplayData
+  '通知既読設定': Record<string, never> // 戻り値なし
+  '通知すべて既読': Record<string, never> // 戻り値なし
+  '未読通知件数': 未読通知件数ReturnValue.DisplayData
 }
 /** Command戻り値新規作成関数 */
 export const create: { [K in CommandModelType]: (() => TypeMap[K]) } = {
@@ -49,6 +53,9 @@ export const create: { [K in CommandModelType]: (() => TypeMap[K]) } = {
   '入荷詳細画面初期表示': 入荷詳細.createNewDisplayData,
   '売上金額シミュレート': 売上詳細.createNewDisplayData,
   'ログイン状態確認': ログインユーザー情報.createNewDisplayData,
+  '通知既読設定': () => ({ /* 戻り値なし */ }),
+  '通知すべて既読': () => ({ /* 戻り値なし */ }),
+  '未読通知件数': 未読通知件数ReturnValue.createNewDisplayData,
 }
 /**
  * Command戻り値のメタデータ。戻り値なしの場合は null。
@@ -71,4 +78,7 @@ export const metadata: { [K in CommandModelType]: { kind: 'display-data', entry:
   '入荷詳細画面初期表示': { kind: 'display-data', entry: 入荷詳細.metadata },
   '売上金額シミュレート': { kind: 'display-data', entry: 売上詳細.metadata },
   'ログイン状態確認': { kind: 'display-data', entry: ログインユーザー情報.metadata },
+  '通知既読設定': null,
+  '通知すべて既読': null,
+  '未読通知件数': { kind: 'display-data', entry: 未読通知件数ReturnValue.metadata },
 }

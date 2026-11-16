@@ -15,6 +15,7 @@ import * as 在庫調整Parameter from "./models/在庫調整Parameter"
 import * as 売上詳細 from "./models/売上詳細"
 import * as 売上詳細画面初期表示Parameter from "./models/売上詳細画面初期表示Parameter"
 import * as 従業員一括更新Parameter from "./models/従業員一括更新Parameter"
+import * as 通知既読設定Parameter from "./models/通知既読設定Parameter"
 
 /** Commandパラメータ型一覧 */
 export interface TypeMap {
@@ -34,6 +35,9 @@ export interface TypeMap {
   '入荷詳細画面初期表示': 入荷詳細画面初期表示Parameter.DisplayData
   '売上金額シミュレート': 売上詳細.DisplayData
   'ログイン状態確認': Record<string, never> // 引数なし
+  '通知既読設定': 通知既読設定Parameter.DisplayData
+  '通知すべて既読': Record<string, never> // 引数なし
+  '未読通知件数': Record<string, never> // 引数なし
 }
 /** Commandパラメータ新規作成関数 */
 export const create: { [K in CommandModelType]: (() => TypeMap[K]) } = {
@@ -53,6 +57,9 @@ export const create: { [K in CommandModelType]: (() => TypeMap[K]) } = {
   '入荷詳細画面初期表示': 入荷詳細画面初期表示Parameter.createNewDisplayData,
   '売上金額シミュレート': 売上詳細.createNewDisplayData,
   'ログイン状態確認': () => ({ /* 引数なし */ }),
+  '通知既読設定': 通知既読設定Parameter.createNewDisplayData,
+  '通知すべて既読': () => ({ /* 引数なし */ }),
+  '未読通知件数': () => ({ /* 引数なし */ }),
 }
 /**
  * Commandパラメータのメタデータ。引数なしの場合は null。
@@ -75,4 +82,7 @@ export const metadata: { [K in CommandModelType]: { kind: 'display-data', entry:
   '入荷詳細画面初期表示': { kind: 'display-data', entry: 入荷詳細画面初期表示Parameter.metadata },
   '売上金額シミュレート': { kind: 'display-data', entry: 売上詳細.metadata },
   'ログイン状態確認': null,
+  '通知既読設定': { kind: 'display-data', entry: 通知既読設定Parameter.metadata },
+  '通知すべて既読': null,
+  '未読通知件数': null,
 }

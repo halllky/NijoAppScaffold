@@ -25,6 +25,9 @@ import type * as 売上詳細画面初期表示Parameter from "./models/売上�
 import type * as 従業員Ref from "./models/従業員Ref"
 import type * as 従業員マスタ from "./models/従業員マスタ"
 import type * as 従業員一括更新Parameter from "./models/従業員一括更新Parameter"
+import type * as 未読通知件数ReturnValue from "./models/未読通知件数ReturnValue"
+import type * as 通知一覧 from "./models/通知一覧"
+import type * as 通知既読設定Parameter from "./models/通知既読設定Parameter"
 
 /** クエリとコマンドの名前 */
 export type Name = keyof ParamType
@@ -41,6 +44,7 @@ export const Endpoint: { [K in Name]: string } = {
   '入荷一覧': 'api/xc1d9f5ce6078744ae4e8fe270d2f2c5a/load',
   '商品一覧': 'api/x9a4745f9e55cee71562e84f10ffad340/load',
   '商品在庫増減履歴': 'api/x782009efdef066b92e0cd5c378ca947d/load',
+  '通知一覧': 'api/xed21ff27c5fea031206daca10d14e2c1/load',
   '入荷登録': 'api/xd14f4d89fb2adb0f35190352d52e032d/execute',
   '商品データ取込': 'api/x1da54d663d738b748b77758651bb4522/execute',
   'ログイン': 'api/x7cda55dc0744dd2c61802153d4af8aed/execute',
@@ -57,6 +61,9 @@ export const Endpoint: { [K in Name]: string } = {
   '入荷詳細画面初期表示': 'api/x33aa4a55478ae5999326b0323cc2302c/execute',
   '売上金額シミュレート': 'api/xb272886d5bb6356eac086491d361ba00/execute',
   'ログイン状態確認': 'api/xcc53c1e81a21617ce18a684f4429939b/execute',
+  '通知既読設定': 'api/x695c3ba0a0adc7e5ade749f7e8b504b9/execute',
+  '通知すべて既読': 'api/xd06613ee0b7edd173235ae31b104555f/execute',
+  '未読通知件数': 'api/xbbf08e356d7c7bebd6ee1725085c8ec1/execute',
 }
 
 /** クエリとコマンドの引数の型の一覧 */
@@ -71,6 +78,7 @@ export interface ParamType {
   '入荷一覧': 入荷一覧.SearchCondition
   '商品一覧': 商品一覧.SearchCondition
   '商品在庫増減履歴': 商品在庫増減履歴.SearchCondition
+  '通知一覧': 通知一覧.SearchCondition
   '入荷登録': 入荷詳細.DisplayData
   '商品データ取込': Record<string, never> // 引数なし
   'ログイン': ログインParameter.DisplayData
@@ -87,6 +95,9 @@ export interface ParamType {
   '入荷詳細画面初期表示': 入荷詳細画面初期表示Parameter.DisplayData
   '売上金額シミュレート': 売上詳細.DisplayData
   'ログイン状態確認': Record<string, never> // 引数なし
+  '通知既読設定': 通知既読設定Parameter.DisplayData
+  '通知すべて既読': Record<string, never> // 引数なし
+  '未読通知件数': Record<string, never> // 引数なし
 }
 
 /** クエリとコマンドの戻り値の型の一覧 */
@@ -101,6 +112,7 @@ export interface ReturnType {
   '入荷一覧': Util.LoadReturnType<入荷一覧.DisplayData>
   '商品一覧': Util.LoadReturnType<商品一覧.DisplayData>
   '商品在庫増減履歴': Util.LoadReturnType<商品在庫増減履歴.DisplayData>
+  '通知一覧': Util.LoadReturnType<通知一覧.DisplayData>
   '入荷登録': 入荷登録ReturnValue.DisplayData
   '商品データ取込': Record<string, never> // 戻り値なし
   'ログイン': ログインユーザー情報.DisplayData
@@ -117,6 +129,9 @@ export interface ReturnType {
   '入荷詳細画面初期表示': 入荷詳細.DisplayData
   '売上金額シミュレート': 売上詳細.DisplayData
   'ログイン状態確認': ログインユーザー情報.DisplayData
+  '通知既読設定': Record<string, never> // 戻り値なし
+  '通知すべて既読': Record<string, never> // 戻り値なし
+  '未読通知件数': 未読通知件数ReturnValue.DisplayData
 }
 
 /**
@@ -184,6 +199,11 @@ export const Metadata: { [K in Name]: Metadata } = {
     displayName: '商品在庫増減履歴',
     呼び出し可能な利用者: '権限で指定',
     必要な権限: ['入荷担当', '販売担当'],
+  },
+  '通知一覧': {
+    displayName: '通知一覧',
+    呼び出し可能な利用者: 'ログインユーザー全員',
+    必要な権限: [],
   },
   '入荷登録': {
     displayName: '入荷登録',
@@ -263,6 +283,21 @@ export const Metadata: { [K in Name]: Metadata } = {
   'ログイン状態確認': {
     displayName: 'ログイン状態確認',
     呼び出し可能な利用者: 'ログイン不要',
+    必要な権限: [],
+  },
+  '通知既読設定': {
+    displayName: '通知既読設定',
+    呼び出し可能な利用者: 'ログインユーザー全員',
+    必要な権限: [],
+  },
+  '通知すべて既読': {
+    displayName: '通知すべて既読',
+    呼び出し可能な利用者: 'ログインユーザー全員',
+    必要な権限: [],
+  },
+  '未読通知件数': {
+    displayName: '未読通知件数',
+    呼び出し可能な利用者: 'ログインユーザー全員',
     必要な権限: [],
   },
 }

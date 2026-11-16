@@ -689,6 +689,43 @@ Webアプリケーションなので明示的にログアウトしない限り�
         Type="datetime"
         UniqueId="9e4a7a6b-a7b4-4b0b-8d89-9d864e4f1647" />
     </通知>
+    <!--@[通知](309fda4b-bae6-445d-ad8c-a0d3ac8995f1) の一覧。ログインユーザー宛てのものだけを返す。-->
+    <通知一覧
+      Custom-7c1f3a2e-5b84-4d0a-9e61-2f8b4c6d1a35="ログインユーザー全員"
+      IsQueryable="True"
+      UniqueId="beffc950-74ba-48ec-b9fb-407d52c12533">
+      <通知ID
+        Type="word"
+        UniqueId="6a13f7b3-8f6e-4b70-a153-7b03606ded8d" />
+      <本文
+        Type="description"
+        UniqueId="7163364e-f909-4027-b0b6-88f6bff3abe5" />
+      <リンク先
+        Type="word"
+        UniqueId="496b48dc-7667-4de1-a577-11660fc5b321" />
+      <既読日時
+        Type="datetime"
+        UniqueId="43dc8e05-b3da-4dcb-86c3-0d2c6d9a6b6f" />
+      <作成日時
+        Type="datetime"
+        UniqueId="c476c441-0fbb-439b-b7d5-dd1c27075f1d" />
+    </通知一覧>
+    <通知既読設定Parameter
+      UniqueId="67e95f3a-6a95-4ae0-8069-b2fbdc68e430">
+      <通知ID
+        Type="word"
+        UniqueId="da562d73-d355-45a3-86d6-8f3a9f265617" />
+      <!--true なら既読に、false なら未読にする。-->
+      <既読
+        Type="bool"
+        UniqueId="aff0fac4-e312-4b39-bfce-385ef5ec897e" />
+    </通知既読設定Parameter>
+    <未読通知件数ReturnValue
+      UniqueId="4dc11741-328a-488e-a2f5-7fcec5f6b1f2">
+      <件数
+        Type="int"
+        UniqueId="f1a1ac0a-6ca0-444b-8f90-8b5cb23f7cbe" />
+    </未読通知件数ReturnValue>
     <入荷詳細画面初期表示Parameter
       UniqueId="c766195e-c279-4a50-84bb-fcbf46ac9798">
       <入荷ID
@@ -832,6 +869,20 @@ ASP.NET Core のサービスワーカーとして登録される。-->
       Custom-7c1f3a2e-5b84-4d0a-9e61-2f8b4c6d1a35="ログイン不要"
       ReturnValue="ログインユーザー情報"
       UniqueId="87def3ce-18a3-4ad1-9ab1-bf0ad3c80763" />
+    <!--ログインユーザー宛ての通知を1件、既読または未読にする。取り消しが容易な操作なので、確認を挟まずに呼び出す。-->
+    <通知既読設定
+      Custom-7c1f3a2e-5b84-4d0a-9e61-2f8b4c6d1a35="ログインユーザー全員"
+      Parameter="通知既読設定Parameter"
+      UniqueId="a5448bce-1ea3-471a-98cd-cf248e5cf4cb" />
+    <!--ログインユーザー宛ての未読の通知を、すべて既読にする。-->
+    <通知すべて既読
+      Custom-7c1f3a2e-5b84-4d0a-9e61-2f8b4c6d1a35="ログインユーザー全員"
+      UniqueId="e80781a6-dbe4-47b9-aec7-f163a7e8ac92" />
+    <!--ログインユーザー宛ての未読の通知の件数。画面のナビゲーションに表示するため、画面を移動するたびに呼ばれる。-->
+    <未読通知件数
+      Custom-7c1f3a2e-5b84-4d0a-9e61-2f8b4c6d1a35="ログインユーザー全員"
+      ReturnValue="未読通知件数ReturnValue"
+      UniqueId="55ffff41-8e50-4da9-b282-b3b082c90ef6" />
   </Commands>
   <StaticEnums>
     <!--ユーザーがもつ権限の種類。「システム管理者」はすべての機能を使える。-->

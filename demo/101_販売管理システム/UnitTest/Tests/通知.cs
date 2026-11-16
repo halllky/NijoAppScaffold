@@ -72,13 +72,11 @@ partial class DB接続あり_更新あり {
 
         await Add従業員Async(db, "ADMIN", 権限区分.システム管理者);
         await Add従業員Async(db, "USER_A");
-        db.通知DbSet.AddRange(
+        await Add通知Async(db,
             New通知("保存期間を過ぎた既読", "USER_A", 既読日時: expired),
             New通知("保存期間内の既読", "USER_A", 既読日時: recent),
             New通知("古い未読", "USER_A", 既読日時: null),
             New通知("宛先のいない未読", "DELETED_USER", 既読日時: null));
-        await db.SaveChangesAsync();
-        db.ChangeTracker.Clear();
 
         await using (var request = await NewRequestAsAsync(scope, "ADMIN")) {
             await request.Value.ExecuteクリーンナップAsync(new MessageSetter([], new()), new OperationContext { ValidationOnly = false });
@@ -86,6 +84,99 @@ partial class DB接続あり_更新あり {
 
         var remaining = await db.通知DbSet.Select(n => n.通知ID).ToListAsync();
         Assert.That(remaining, Is.EquivalentTo(new[] { "保存期間内の既読", "古い未読" }));
+    }
+
+    [Test]
+    [Category("DB接続あり（更新あり）")]
+    public async Task 通知一覧はログインユーザー宛ての通知だけを新しい順に返す() {
+        var scope = TestUtilImpl.Instance.CreateScope(nameof(通知一覧はログインユーザー宛ての通知だけを新しい順に返す));
+        await Add従業員Async(scope.App.DbContext, "USER_A");
+        await Add通知Async(scope.App.DbContext,
+            New通知("古い自分宛て", "USER_A", 既読日時: null, 作成日時: new DateTime(2026, 1, 1)),
+            New通知("新しい自分宛て", "USER_A", 既読日時: null, 作成日時: new DateTime(2026, 1, 2)),
+            New通知("他人宛て", "USER_B", 既読日時: null, 作成日時: new DateTime(2026, 1, 3)));
+
+        await using var request = await NewRequestAsAsync(scope, "USER_A");
+        var loaded = await request.Value.LoadAsync(new 通知一覧SearchCondition(), new 通知一覧SearchConditionMessages([], new()), new OperationContext { ValidationOnly = false });
+
+        Assert.That(loaded!.CurrentPageItems.Select(n => n.通知ID), Is.EqualTo(new[] { "新しい自分宛て", "古い自分宛て" }));
+    }
+
+    [Test]
+    [Category("DB接続あり（更新あり）")]
+    public async Task 通知は既読と未読を切り替えられ一覧を見ただけでは既読にならない() {
+        var scope = TestUtilImpl.Instance.CreateScope(nameof(通知は既読と未読を切り替えられ一覧を見ただけでは既読にならない));
+        await Add従業員Async(scope.App.DbContext, "USER_A");
+        await Add通知Async(scope.App.DbContext, New通知("通知", "USER_A", 既読日時: null));
+
+        await using (var request = await NewRequestAsAsync(scope, "USER_A")) {
+            await request.Value.LoadAsync(new 通知一覧SearchCondition(), new 通知一覧SearchConditionMessages([], new()), new OperationContext { ValidationOnly = false });
+        }
+        Assert.That(await Load既読日時Async(scope, "通知"), Is.Null);
+
+        await Execute通知既読設定Async(scope, "USER_A", "通知", 既読: true);
+        Assert.That(await Load既読日時Async(scope, "通知"), Is.Not.Null);
+
+        await Execute通知既読設定Async(scope, "USER_A", "通知", 既読: false);
+        Assert.That(await Load既読日時Async(scope, "通知"), Is.Null);
+    }
+
+    [Test]
+    [Category("DB接続あり（更新あり）")]
+    public async Task 他のユーザー宛ての通知は既読にできない() {
+        var scope = TestUtilImpl.Instance.CreateScope(nameof(他のユーザー宛ての通知は既読にできない));
+        await Add従業員Async(scope.App.DbContext, "USER_A");
+        await Add通知Async(scope.App.DbContext, New通知("他人宛て", "USER_B", 既読日時: null));
+
+        var messages = await Execute通知既読設定Async(scope, "USER_A", "他人宛て", 既読: true);
+
+        Assert.That(messages.HasError(), Is.True);
+        Assert.That(await Load既読日時Async(scope, "他人宛て"), Is.Null);
+    }
+
+    [Test]
+    [Category("DB接続あり（更新あり）")]
+    public async Task すべて既読にすると自分宛ての未読の通知だけが既読になり未読の件数が0になる() {
+        var scope = TestUtilImpl.Instance.CreateScope(nameof(すべて既読にすると自分宛ての未読の通知だけが既読になり未読の件数が0になる));
+        await Add従業員Async(scope.App.DbContext, "USER_A");
+        await Add通知Async(scope.App.DbContext,
+            New通知("自分宛て1", "USER_A", 既読日時: null),
+            New通知("自分宛て2", "USER_A", 既読日時: null),
+            New通知("他人宛て", "USER_B", 既読日時: null));
+
+        await using (var request = await NewRequestAsAsync(scope, "USER_A")) {
+            var before = await request.Value.Execute未読通知件数Async(new MessageSetter([], new()), new OperationContext { ValidationOnly = false });
+            Assert.That(before!.件数, Is.EqualTo(2));
+        }
+        await using (var request = await NewRequestAsAsync(scope, "USER_A")) {
+            var messages = new MessageSetter([], new());
+            var context = new OperationContext { ValidationOnly = false };
+            await request.Value.Execute通知すべて既読Async(messages, context);
+            Assert.That(messages.HasError(), Is.False, TestFailureMessage.Build("すべて既読にできませんでした。", context, messages));
+        }
+        await using (var request = await NewRequestAsAsync(scope, "USER_A")) {
+            var after = await request.Value.Execute未読通知件数Async(new MessageSetter([], new()), new OperationContext { ValidationOnly = false });
+            Assert.That(after!.件数, Is.EqualTo(0));
+        }
+        Assert.That(await Load既読日時Async(scope, "他人宛て"), Is.Null);
+    }
+
+    private static async Task<通知既読設定ParameterMessages> Execute通知既読設定Async(TestScopeImpl scope, string ログインユーザー, string 通知ID, bool 既読) {
+        await using var request = await NewRequestAsAsync(scope, ログインユーザー);
+        var messages = new 通知既読設定ParameterMessages([], new());
+        await request.Value.Execute通知既読設定Async(new() { 通知ID = 通知ID, 既読 = 既読 }, messages, new OperationContext { ValidationOnly = false });
+        return messages;
+    }
+
+    private static async Task<DateTime?> Load既読日時Async(TestScopeImpl scope, string 通知ID) {
+        var notification = await scope.App.DbContext.通知DbSet.AsNoTracking().SingleAsync(n => n.通知ID == 通知ID);
+        return notification.既読日時;
+    }
+
+    private static async Task Add通知Async(OverridedDbContext db, params 通知DbEntity[] notifications) {
+        db.通知DbSet.AddRange(notifications);
+        await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
     }
 
     /// <summary>
@@ -125,11 +216,12 @@ partial class DB接続あり_更新あり {
     /// <summary>
     /// テストの前提となる通知。通知IDには、どの通知かを見分けるための名前を入れる。
     /// </summary>
-    private static 通知DbEntity New通知(string 通知ID, string 宛先, DateTime? 既読日時) => new() {
+    private static 通知DbEntity New通知(string 通知ID, string 宛先, DateTime? 既読日時, DateTime? 作成日時 = null) => new() {
         通知ID = 通知ID,
         宛先 = 宛先,
         本文 = 通知ID,
         既読日時 = 既読日時,
+        CreatedAt = 作成日時,
         Version = 0,
     };
 }

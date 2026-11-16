@@ -12,6 +12,7 @@ import * as 商品在庫増減履歴 from "./models/商品在庫増減履歴"
 import * as 売上一覧 from "./models/売上一覧"
 import * as 従業員Ref from "./models/従業員Ref"
 import * as 従業員マスタ from "./models/従業員マスタ"
+import * as 通知一覧 from "./models/通知一覧"
 
 /** DisplayData型一覧 */
 export interface TypeMap {
@@ -24,6 +25,7 @@ export interface TypeMap {
   '商品一覧': 商品一覧.DisplayData
   '商品在庫増減履歴': 商品在庫増減履歴.DisplayData
   '商品在庫増減履歴/増減履歴引当元売上一覧': 商品在庫増減履歴.DisplayData_増減履歴引当元売上一覧
+  '通知一覧': 通知一覧.DisplayData
 }
 /** DisplayData新規作成関数 */
 export const create: { [K in QueryModelTypeAll]: (() => TypeMap[K]) } = {
@@ -36,4 +38,5 @@ export const create: { [K in QueryModelTypeAll]: (() => TypeMap[K]) } = {
   '商品一覧': 商品一覧.createNewDisplayData,
   '商品在庫増減履歴': 商品在庫増減履歴.createNewDisplayData,
   '商品在庫増減履歴/増減履歴引当元売上一覧': 商品在庫増減履歴.createNewDisplayData_増減履歴引当元売上一覧,
+  '通知一覧': 通知一覧.createNewDisplayData,
 }

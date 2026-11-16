@@ -25,6 +25,7 @@ export type QueryModelType
   | '入荷一覧'
   | '商品一覧'
   | '商品在庫増減履歴'
+  | '通知一覧'
 
 /** QueryModelのルート集約, Child, Children の集約名。 */
 export type QueryModelTypeAll
@@ -37,6 +38,7 @@ export type QueryModelTypeAll
   | '商品一覧'
   | '商品在庫増減履歴'
   | '商品在庫増減履歴/増減履歴引当元売上一覧'
+  | '通知一覧'
 
 /** ほかの集約から参照されているQueryModelの種類の一覧 */
 export type ReferedQueryModelType
@@ -62,6 +64,9 @@ export type CommandModelType
   | '入荷詳細画面初期表示'
   | '売上金額シミュレート'
   | 'ログイン状態確認'
+  | '通知既読設定'
+  | '通知すべて既読'
+  | '未読通知件数'
 
 /** StructureModelの種類の一覧 */
 export type StructureModelType
@@ -73,6 +78,8 @@ export type StructureModelType
   | '在庫調整Parameter'
   | 'ログインParameter'
   | 'パスワード変更Parameter'
+  | '通知既読設定Parameter'
+  | '未読通知件数ReturnValue'
   | '入荷詳細画面初期表示Parameter'
   | 'ログインユーザー情報'
   | '売上新規登録ReturnValue'
@@ -88,6 +95,8 @@ export type StructureModelDisplayDataType
   | '在庫調整Parameter'
   | 'ログインParameter'
   | 'パスワード変更Parameter'
+  | '通知既読設定Parameter'
+  | '未読通知件数ReturnValue'
   | '入荷詳細画面初期表示Parameter'
   | 'ログインユーザー情報'
   | '売上新規登録ReturnValue'
@@ -118,6 +127,7 @@ export function getQueryModelTypeList(): QueryModelType[] {
     '入荷一覧',
     '商品一覧',
     '商品在庫増減履歴',
+    '通知一覧',
   ]
 }
 
@@ -140,6 +150,9 @@ export function getCommandModelTypeList(): CommandModelType[] {
     '入荷詳細画面初期表示',
     '売上金額シミュレート',
     'ログイン状態確認',
+    '通知既読設定',
+    '通知すべて既読',
+    '未読通知件数',
   ]
 }
 
@@ -154,6 +167,8 @@ export function getStructureModelTypeList(): StructureModelType[] {
     '在庫調整Parameter',
     'ログインParameter',
     'パスワード変更Parameter',
+    '通知既読設定Parameter',
+    '未読通知件数ReturnValue',
     '入荷詳細画面初期表示Parameter',
     'ログインユーザー情報',
     '売上新規登録ReturnValue',

@@ -27,6 +27,9 @@ import * as 売上詳細画面初期表示Parameter from "./models/売上詳細�
 import * as 従業員Ref from "./models/従業員Ref"
 import * as 従業員マスタ from "./models/従業員マスタ"
 import * as 従業員一括更新Parameter from "./models/従業員一括更新Parameter"
+import * as 未読通知件数ReturnValue from "./models/未読通知件数ReturnValue"
+import * as 通知一覧 from "./models/通知一覧"
+import * as 通知既読設定Parameter from "./models/通知既読設定Parameter"
 
 /**
  * 2つの画面表示用オブジェクトをディープイコールで比較し、等しい場合はtrueを返す関数。
@@ -69,6 +72,7 @@ export const deepEqualFunction: {
   '入荷一覧': 入荷一覧.deepEqual,
   '商品一覧': 商品一覧.deepEqual,
   '商品在庫増減履歴': 商品在庫増減履歴.deepEqual,
+  '通知一覧': 通知一覧.deepEqual,
   '入荷詳細': 入荷詳細.deepEqual,
   'パスワード再発行Parameter': パスワード再発行Parameter.deepEqual,
   '従業員一括更新Parameter': 従業員一括更新Parameter.deepEqual,
@@ -77,6 +81,8 @@ export const deepEqualFunction: {
   '在庫調整Parameter': 在庫調整Parameter.deepEqual,
   'ログインParameter': ログインParameter.deepEqual,
   'パスワード変更Parameter': パスワード変更Parameter.deepEqual,
+  '通知既読設定Parameter': 通知既読設定Parameter.deepEqual,
+  '未読通知件数ReturnValue': 未読通知件数ReturnValue.deepEqual,
   '入荷詳細画面初期表示Parameter': 入荷詳細画面初期表示Parameter.deepEqual,
   'ログインユーザー情報': ログインユーザー情報.deepEqual,
   '売上新規登録ReturnValue': 売上新規登録ReturnValue.deepEqual,

@@ -17,6 +17,8 @@ import * as 売上新規登録ReturnValue from "./models/売上新規登録Retur
 import * as 売上詳細 from "./models/売上詳細"
 import * as 売上詳細画面初期表示Parameter from "./models/売上詳細画面初期表示Parameter"
 import * as 従業員一括更新Parameter from "./models/従業員一括更新Parameter"
+import * as 未読通知件数ReturnValue from "./models/未読通知件数ReturnValue"
+import * as 通知既読設定Parameter from "./models/通知既読設定Parameter"
 
 /** StructureModel型一覧 */
 export interface TypeMap {
@@ -28,6 +30,8 @@ export interface TypeMap {
   '在庫調整Parameter': 在庫調整Parameter.DisplayData
   'ログインParameter': ログインParameter.DisplayData
   'パスワード変更Parameter': パスワード変更Parameter.DisplayData
+  '通知既読設定Parameter': 通知既読設定Parameter.DisplayData
+  '未読通知件数ReturnValue': 未読通知件数ReturnValue.DisplayData
   '入荷詳細画面初期表示Parameter': 入荷詳細画面初期表示Parameter.DisplayData
   'ログインユーザー情報': ログインユーザー情報.DisplayData
   '売上新規登録ReturnValue': 売上新規登録ReturnValue.DisplayData
@@ -43,6 +47,8 @@ export const create: { [K in StructureModelDisplayDataType]: (() => TypeMap[K]) 
   '在庫調整Parameter': 在庫調整Parameter.createNewDisplayData,
   'ログインParameter': ログインParameter.createNewDisplayData,
   'パスワード変更Parameter': パスワード変更Parameter.createNewDisplayData,
+  '通知既読設定Parameter': 通知既読設定Parameter.createNewDisplayData,
+  '未読通知件数ReturnValue': 未読通知件数ReturnValue.createNewDisplayData,
   '入荷詳細画面初期表示Parameter': 入荷詳細画面初期表示Parameter.createNewDisplayData,
   'ログインユーザー情報': ログインユーザー情報.createNewDisplayData,
   '売上新規登録ReturnValue': 売上新規登録ReturnValue.createNewDisplayData,
