@@ -12,7 +12,7 @@ export const URL = "/uriage"
 /**
  * ルートナビゲーションに表示する項目
  */
-export const navigationItem = { to: URL, label: "売上", icon: Icon.CurrencyYenIcon } satisfies RootNavigationItem
+export const navigationItem = { to: URL, label: "売上", icon: Icon.CurrencyYenIcon, operation: '売上一覧' } satisfies RootNavigationItem
 
 /**
  * ルーティング定義

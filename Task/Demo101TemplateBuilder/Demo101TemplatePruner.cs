@@ -73,6 +73,8 @@ public static class Demo101TemplatePruner
         "beceba92-faf8-49eb-a987-ff0d53889d64", // 数量
         "4d868e55-06d6-44eb-aa97-901f39dd1782", // マスキング
         "df2fcd23-6cd1-4320-b03d-fd4b797567da", // 文字列の正規化
+        "7c1f3a2e-5b84-4d0a-9e61-2f8b4c6d1a35", // 呼び出し可能な利用者
+        "b9d2e4f6-0a13-4c57-8e29-6d4f1b3a7c80", // 必要な権限
     ];
 
     /// <summary>テンプレートに不要なフォルダ・ファイル</summary>

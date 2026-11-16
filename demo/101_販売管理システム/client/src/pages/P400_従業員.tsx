@@ -17,7 +17,7 @@ export const URL = "/jugyoin"
 /**
  * ルートナビゲーションに表示する項目
  */
-export const navigationItem = { to: URL, label: "従業員", icon: Icon.UserGroupIcon } satisfies RootNavigationItem
+export const navigationItem = { to: URL, label: "従業員", icon: Icon.UserGroupIcon, operation: '従業員マスタ' } satisfies RootNavigationItem
 
 /**
  * ルーティング定義

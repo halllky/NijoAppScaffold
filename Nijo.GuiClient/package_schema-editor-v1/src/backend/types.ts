@@ -100,9 +100,15 @@ export type EditingCustomAttribute = {
   displayName?: string | null
   comment?: string | null
   isValidation: boolean
+  /** 値を複数持てるか。Enum, StaticEnum のみ。値はカンマ区切りで持つ */
+  isMultiple: boolean
+  /** availableFor で指定したルート要素に必ず指定しなければならないか */
+  isRequired: boolean
   availableFor: string[]
-  type?: 'Boolean' | 'Decimal' | 'Enum' | 'String' | null
+  type?: 'Boolean' | 'Decimal' | 'Enum' | 'String' | 'StaticEnum' | null
   enumValues: string[]
+  /** type が StaticEnum の場合の、選択肢とする静的区分の物理名 */
+  staticEnumType?: string | null
 }
 
 // ---------------------------------
@@ -298,6 +304,19 @@ export const isCustomAttributeAvailable = (customAttr: EditingCustomAttribute, t
   if (target.isQueryable && customAttr.availableFor.includes(AVAILABLE_FOR_QUERYABLE)) return true
   if (!target.isStored && !target.isQueryable && customAttr.availableFor.includes(AVAILABLE_FOR_STRUCTURE)) return true
   return false
+}
+
+/**
+ * カスタム属性の値の選択肢を返す。選択肢を持たない型の場合は undefined を返す。
+ * StaticEnum の場合は、参照先の静的区分の値の物理名が選択肢になる。
+ */
+export const getCustomAttributeOptions = (customAttr: EditingCustomAttribute, staticEnums: EditingRootAggregate[]): string[] | undefined => {
+  if (customAttr.type === 'Enum') return customAttr.enumValues
+  if (customAttr.type === 'StaticEnum') {
+    const staticEnum = staticEnums.find(root => root.physicalName === customAttr.staticEnumType)
+    return staticEnum?.members.map(member => member.physicalName ?? '') ?? []
+  }
+  return undefined
 }
 
 /**

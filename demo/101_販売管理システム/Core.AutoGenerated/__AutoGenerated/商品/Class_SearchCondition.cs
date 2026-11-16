@@ -24,7 +24,7 @@ namespace MyApp;
 /// <summary>
 /// 商品の一覧検索条件
 /// </summary>
-[NijoAttr.IsStored, NijoAttr.IsQueryable, NijoAttr.UniqueConstraints("f5f225fa-eddd-4cca-ae58-b408e1b34100;")]
+[NijoAttr.IsStored, NijoAttr.IsQueryable, NijoAttr.UniqueConstraints("f5f225fa-eddd-4cca-ae58-b408e1b34100;"), NijoAttr.呼び出し可能な利用者(NijoAttr.呼び出し可能な利用者Attribute.E_Value.権限で指定), NijoAttr.必要な権限(global::MyApp.権限区分.入荷担当, global::MyApp.権限区分.販売担当)]
 public partial class 商品SearchCondition {
     /// <summary>絞り込み条件</summary>
     [JsonPropertyName("filter")]
@@ -42,7 +42,7 @@ public partial class 商品SearchCondition {
 #endregion 検索条件エントリーポイント
 
 #region 検索条件フィルター
-[NijoAttr.IsStored, NijoAttr.IsQueryable, NijoAttr.UniqueConstraints("f5f225fa-eddd-4cca-ae58-b408e1b34100;")]
+[NijoAttr.IsStored, NijoAttr.IsQueryable, NijoAttr.UniqueConstraints("f5f225fa-eddd-4cca-ae58-b408e1b34100;"), NijoAttr.呼び出し可能な利用者(NijoAttr.呼び出し可能な利用者Attribute.E_Value.権限で指定), NijoAttr.必要な権限(global::MyApp.権限区分.入荷担当, global::MyApp.権限区分.販売担当)]
 public partial class 商品SearchConditionFilter {
     [NijoAttr.IsKey, NijoAttr.SequenceName("ITEM_SEQ")]
     public FromTo<int?>? 商品SEQ { get; set; }

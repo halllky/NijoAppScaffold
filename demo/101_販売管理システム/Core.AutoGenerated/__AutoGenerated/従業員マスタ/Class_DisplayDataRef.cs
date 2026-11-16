@@ -24,7 +24,7 @@ namespace MyApp;
 /// <summary>
 /// 従業員マスタが他の集約から外部参照されるときの従業員マスタの型
 /// </summary>
-[NijoAttr.IsQueryable]
+[NijoAttr.IsQueryable, NijoAttr.呼び出し可能な利用者(NijoAttr.呼び出し可能な利用者Attribute.E_Value.権限で指定), NijoAttr.必要な権限(global::MyApp.権限区分.システム管理者)]
 public partial class 従業員マスタRefTarget {
     [NijoAttr.StringSearchBehavior(NijoAttr.StringSearchBehaviorAttribute.E_Value.Exact), NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.NFKC)]
     public string? 従業員番号 { get; set; }

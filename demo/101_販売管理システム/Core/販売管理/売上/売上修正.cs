@@ -1,16 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using MyApp.Core.Authorization;
 
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task Execute売上修正Async(売上詳細DisplayData param, 売上詳細Messages messages, OperationContext context) {
-        // 権限チェック
-        if (LoginUser == null || !LoginUser.Has権限(権限区分.販売担当)) {
-            messages.AddError("販売担当のみ実行可能です。");
-            return;
-        }
-
+    protected override async Task OnExecute売上修正Async(売上詳細DisplayData param, 売上詳細Messages messages, OperationContext context) {
         // 入力チェック
         if (param.売上SEQ == null) {
             messages.AddError("売上SEQが指定されていません。");

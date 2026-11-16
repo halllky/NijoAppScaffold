@@ -5,10 +5,10 @@ sidebar_label: OperationContext
 
 # OperationContext
 
-コマンドの `Execute{Name}Async` メソッドは、次の形をしています。
+コマンドの処理の本体（`OnExecute{Name}Async` メソッド）は、次の形をしています。
 
 ```csharp
-public override async Task<戻り値の型?> Execute{Name}Async(
+protected override async Task<戻り値の型?> OnExecute{Name}Async(
     引数の型 param,                 // 処理の入力
     引数のメッセージの型 messages,   // 処理の出力のうち、引数の形に沿ったエラー・情報メッセージ
     OperationContext context)     // この呼び出しについての、全処理に共通の入出力
@@ -116,7 +116,7 @@ if (messages.HasError()) return;
 - **フェーズ2（`ValidationOnly = false`）**: ユーザーが確認した後に実際の保存処理を実行する。
 
 ```csharp
-public override async Task Execute売上修正Async(
+protected override async Task OnExecute売上修正Async(
     売上詳細DisplayData param,
     売上詳細Messages messages,
     OperationContext context) {
@@ -247,8 +247,8 @@ await applicationService.Execute入荷登録Async(param, messages.As<入荷詳�
 // Program.cs
 app.MapOperationEndpoints((operation, endpoint) => {
     // 処理ごとに異なる設定がある場合はここで行う。
-    // 各処理は Operations<OperationContext> の static プロパティとして生成され、常に同じインスタンスなので参照で比較できる
-    if (operation == Operations<OperationContext>.ログイン) {
+    // 処理は名前（operation.Name）や、nijo.xml で宣言したメタデータ（operation.Metadata）で特定する
+    if (operation.Name == "ログイン") {
         endpoint.AllowAnonymous();
     }
 });

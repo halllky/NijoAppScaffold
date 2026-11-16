@@ -459,6 +459,15 @@ public class SchemaParseContext {
             ValidateAttributes(element, validationErrors);
         }
 
+        // 必須のカスタム属性がルート要素に指定されているかの検証
+        foreach (var root in rootsBySection.Values.SelectMany(roots => roots)) {
+            if (!NodeOptionTarget.TryCreate(root, GetNodeType(root), out var target)) continue;
+            foreach (var customAttribute in CustomAttributes) {
+                var error = customAttribute.ValidateRequired(root, target);
+                if (error != null) validationErrors.Add(root, error);
+            }
+        }
+
         errors = validationErrors.ToArray();
         return errors.Length == 0;
     }
@@ -521,7 +530,7 @@ public class SchemaParseContext {
                     errors.AddAttributeError(element, attrName, $"カスタム属性 '{customAttr.PhysicalName}' はこの要素では使用できません。");
                     continue;
                 }
-                foreach (var error in customAttr.ValidateModelElement(element)) {
+                foreach (var error in customAttr.ValidateModelElement(element, this)) {
                     errors.AddAttributeError(element, attrName, error);
                 }
 

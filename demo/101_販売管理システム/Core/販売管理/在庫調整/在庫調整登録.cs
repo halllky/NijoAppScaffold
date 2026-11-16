@@ -4,13 +4,7 @@ using MyApp.Core.Authorization;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task Execute在庫調整登録Async(在庫調整ParameterDisplayData param, 在庫調整ParameterMessages messages, OperationContext context) {
-        // 権限チェック
-        if (LoginUser == null || !LoginUser.Has権限(権限区分.入荷担当)) {
-            messages.AddError("入荷担当のみ実行可能です。");
-            return;
-        }
-
+    protected override async Task OnExecute在庫調整登録Async(在庫調整ParameterDisplayData param, 在庫調整ParameterMessages messages, OperationContext context) {
         // 入力チェック: 商品
         // ※ 自動生成されたコードでもチェックされるが、商品のキーがないとこのあとの処理が成り立たないので先にチェックする。
         if (param.商品.商品SEQ == null) {

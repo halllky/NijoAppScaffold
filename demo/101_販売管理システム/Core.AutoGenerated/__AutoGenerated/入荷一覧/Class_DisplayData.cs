@@ -24,7 +24,7 @@ namespace MyApp;
 /// <summary>
 /// 入荷一覧の画面表示用データ。
 /// </summary>
-[NijoAttr.IsQueryable]
+[NijoAttr.IsQueryable, NijoAttr.呼び出し可能な利用者(NijoAttr.呼び出し可能な利用者Attribute.E_Value.権限で指定), NijoAttr.必要な権限(global::MyApp.権限区分.入荷担当)]
 public partial class 入荷一覧DisplayData {
     /// <summary>
     /// 画面初期表示から保存までの間でこのインスタンスを識別する番号。

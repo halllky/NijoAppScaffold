@@ -23,6 +23,7 @@ namespace Nijo.DataStructures.IsQueryable {
         private string ValidateMethod => $"ValidateRefSearchCondition{_entryAggregate.PhysicalName}";
         private string LoadMethod => $"LoadRefs{_entryAggregate.PhysicalName}Async";
         private string OnAfterLoadMethod => $"OnAfterLoadedRef{_entryAggregate.PhysicalName}";
+        private string CsInstanceName => OperationCatalog.GetCsInstanceName($"RefTo{_entryAggregate.PhysicalName}");
         private string ToRefTarget => $"To{_entryAggregate.PhysicalName}RefTarget";
 
 
@@ -55,10 +56,11 @@ namespace Nijo.DataStructures.IsQueryable {
 
             return new() {
                 Name = _entryAggregate.RefEntryName,
-                CsPropertyName = $"RefTo{_entryAggregate.PhysicalName}",
+                CsInstanceName = CsInstanceName,
                 DisplayName = $"{_entryAggregate.DisplayName}の参照検索",
                 Path = OperationCatalog.GetPath(root, ActionLoad),
-                IsQuery = true,
+                Kind = OperationCatalog.E_Kind.LoadRefs,
+                MetadataSource = root.XElement,
                 AppSrvMethodName = LoadMethod,
                 ParameterCsType = searchCondition.CsClassName,
                 ReturnValueCsType = $"{SearchProcessingReturn.TYPE_CS}<{displayData.CsClassName}>",
@@ -94,63 +96,66 @@ namespace Nijo.DataStructures.IsQueryable {
 
                 /// <summary>
                 /// 検索条件を検証し、問題がなければ{{_entryAggregate.DisplayName}}が他の集約から参照されるときの検索を行ないます。
+                /// 検索は <see cref="{{OperationCatalog.CS_INTERCEPT}}"/> を通して行われます。
                 /// </summary>
                 /// <param name="searchCondition">検索条件</param>
                 /// <param name="messages">検索条件に対するエラーなどのメッセージの格納先</param>
                 /// <param name="context">この呼び出しについての、全処理に共通の入出力</param>
                 /// <returns>検索結果。検索条件にエラーがある場合は null</returns>
-                public async Task<{{SearchProcessingReturn.TYPE_CS}}<{{displayData.CsClassName}}>?> {{LoadMethod}}({{searchCondition.CsClassName}} searchCondition, {{searchConditionMessage.CsClassName}} messages, {{ApplicationService.CONTEXT_TYPE_PARAMETER}} context) {
-                    // エラーチェック
-                    {{ValidateMethod}}(searchCondition, messages, context);
-                    if (messages.GetState()?.DescendantsAndSelf().Any(x => x.Errors.Count > 0) == true) return null;
+                public Task<{{SearchProcessingReturn.TYPE_CS}}<{{displayData.CsClassName}}>?> {{LoadMethod}}({{searchCondition.CsClassName}} searchCondition, {{searchConditionMessage.CsClassName}} messages, {{ApplicationService.CONTEXT_TYPE_PARAMETER}} context) {
+                    return {{OperationCatalog.CS_INTERCEPT}}({{CsInstanceName}}, searchCondition, messages, context, async () => {
+                        // エラーチェック
+                        {{ValidateMethod}}(searchCondition, messages, context);
+                        if (messages.GetState()?.DescendantsAndSelf().Any(x => x.Errors.Count > 0) == true) return null;
 
-                    // FROM句, SELECT句
-                    var querySource = {{SearchProcessing.CREATE_QUERY_SOURCE}}(searchCondition, context);
+                        // FROM句, SELECT句
+                        var querySource = {{SearchProcessing.CREATE_QUERY_SOURCE}}(searchCondition, context);
 
-                    // 絞り込み(WHERE句)
-                    var filtered = {{SearchProcessing.APPEND_WHERE_CLAUSE}}(querySource, searchCondition);
+                        // 絞り込み(WHERE句)
+                        var filtered = {{SearchProcessing.APPEND_WHERE_CLAUSE}}(querySource, searchCondition);
 
-                    // 並び替え(ORDER BY 句)
-                    var sorted = {{SearchProcessing.APPEND_ORDERBY_CLAUSE}}(filtered, searchCondition);
+                        // 並び替え(ORDER BY 句)
+                        var sorted = {{SearchProcessing.APPEND_ORDERBY_CLAUSE}}(filtered, searchCondition);
 
-                    // ページング(SKIP, TAKE)
-                    var query = sorted;
-                    if (searchCondition.{{SearchCondition.Entry.SKIP_CS}} != null) {
-                        query = query.Skip(searchCondition.{{SearchCondition.Entry.SKIP_CS}}.Value);
-                    }
-                    if (searchCondition.{{SearchCondition.Entry.TAKE_CS}} != null) {
-                        query = query.Take(searchCondition.{{SearchCondition.Entry.TAKE_CS}}.Value);
-                    }
-
-                    // 画面表示用の型への変換
-                    var converted = query.{{(isDisplayDataArray ? "SelectMany" : "Select")}}({{ToRefTarget}}());
-
-                    // 検索処理実行
-                    {{displayData.CsClassName}}[] loaded;
-                    int totalCount;
-                    try {
-                        // トータル件数取得と、ページングされたデータの取得を直列で行う。
-                        // 並列で行うと、DbContextが前の処理の完了前に次の処理を開始したとしてエラーになるリスクがあるのと、
-                        // ネットワークやコネクションの負荷が高まる可能性があるため。
-                        totalCount = await filtered.CountAsync().ConfigureAwait(false);
-                        loaded = await converted.ToArrayAsync().ConfigureAwait(false);
-                    } catch {
-                        Log.LogDebug("{{_entryAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時検索条件: {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(searchCondition));
-                        try {
-                            Log.LogDebug("{{_entryAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時SQL: {data}", query.ToQueryString());
-                        } catch {
-                            Log.LogDebug("{{_entryAggregate.DisplayName.Replace("\"", "\\\"")}} 不具合調査用のSQL変換に失敗しました。");
+                        // ページング(SKIP, TAKE)
+                        var query = sorted;
+                        if (searchCondition.{{SearchCondition.Entry.SKIP_CS}} != null) {
+                            query = query.Skip(searchCondition.{{SearchCondition.Entry.SKIP_CS}}.Value);
                         }
-                        throw;
-                    }
+                        if (searchCondition.{{SearchCondition.Entry.TAKE_CS}} != null) {
+                            query = query.Take(searchCondition.{{SearchCondition.Entry.TAKE_CS}}.Value);
+                        }
 
-                    // C#メモリ上での任意のカスタマイズ処理がある場合はこの中で実施
-                    var currentPageItems = {{OnAfterLoadMethod}}(loaded, searchCondition, context).ToArray();
+                        // 画面表示用の型への変換
+                        var converted = query.{{(isDisplayDataArray ? "SelectMany" : "Select")}}({{ToRefTarget}}());
 
-                    return new() {
-                        {{SearchProcessingReturn.CURRENT_PAGE_ITEMS_CS}} = currentPageItems,
-                        {{SearchProcessingReturn.TOTAL_COUNT_CS}} = totalCount,
-                    };
+                        // 検索処理実行
+                        {{displayData.CsClassName}}[] loaded;
+                        int totalCount;
+                        try {
+                            // トータル件数取得と、ページングされたデータの取得を直列で行う。
+                            // 並列で行うと、DbContextが前の処理の完了前に次の処理を開始したとしてエラーになるリスクがあるのと、
+                            // ネットワークやコネクションの負荷が高まる可能性があるため。
+                            totalCount = await filtered.CountAsync().ConfigureAwait(false);
+                            loaded = await converted.ToArrayAsync().ConfigureAwait(false);
+                        } catch {
+                            Log.LogDebug("{{_entryAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時検索条件: {data}", {{ApplicationService.SERIALIZE_FOR_LOG}}(searchCondition));
+                            try {
+                                Log.LogDebug("{{_entryAggregate.DisplayName.Replace("\"", "\\\"")}} エラー発生時SQL: {data}", query.ToQueryString());
+                            } catch {
+                                Log.LogDebug("{{_entryAggregate.DisplayName.Replace("\"", "\\\"")}} 不具合調査用のSQL変換に失敗しました。");
+                            }
+                            throw;
+                        }
+
+                        // C#メモリ上での任意のカスタマイズ処理がある場合はこの中で実施
+                        var currentPageItems = {{OnAfterLoadMethod}}(loaded, searchCondition, context).ToArray();
+
+                        return new() {
+                            {{SearchProcessingReturn.CURRENT_PAGE_ITEMS_CS}} = currentPageItems,
+                            {{SearchProcessingReturn.TOTAL_COUNT_CS}} = totalCount,
+                        };
+                    });
                 }
                 {{RenderConvertToRefTarget()}}
                 /// <summary>

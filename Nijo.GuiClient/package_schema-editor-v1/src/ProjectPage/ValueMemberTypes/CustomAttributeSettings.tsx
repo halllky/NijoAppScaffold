@@ -27,6 +27,7 @@ const ATTR_TYPES: NonNullable<EditingCustomAttribute['type']>[] = [
   'Boolean',
   'Enum',
   'Decimal',
+  'StaticEnum',
 ]
 
 /** availableFor の値 → GUI上の表示ラベル。無いものは値をそのまま表示する。 */
@@ -49,6 +50,11 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
 }) => {
   const { control, getValues, setValue, subscribe } = formMethods
   const { availableForCandidates } = useSchemaEditorRule()
+  const staticEnums = ReactHookForm.useWatch({ name: "staticEnums", control }) ?? []
+  const staticEnumOptions = React.useMemo(() => staticEnums.map(root => ({
+    value: root.physicalName ?? '',
+    text: root.physicalName ?? '',
+  })), [staticEnums])
   const availableForOptions = React.useMemo(() => availableForCandidates.map(value => ({
     id: value,
     label: AVAILABLE_FOR_LABELS[value] ?? value,
@@ -82,7 +88,10 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
       helper.text("物理名", "physicalName", { defaultWidth: 150, renderBody: renderBodyWithValidation("physicalName") }),
       helper.text("表示名", "displayName", { defaultWidth: 150, renderBody: renderBodyWithValidation("displayName") }),
       helper.dropdown("タイプ", "type", ATTR_TYPES.map(type => ({ value: type, text: type })), { defaultWidth: 100, renderBody: renderBodyWithValidation("type") }),
+      helper.dropdown("静的区分", "staticEnumType", staticEnumOptions, { defaultWidth: 120, isReadOnly: row => row.type !== 'StaticEnum', renderBody: renderBodyWithValidation("staticEnumType") }),
       helper.checkBox("バリデーション", "isValidation", { defaultWidth: 110 }),
+      helper.checkBox("複数値", "isMultiple", { defaultWidth: 70, isReadOnly: row => row.type !== 'Enum' && row.type !== 'StaticEnum' }),
+      helper.checkBox("必須", "isRequired", { defaultWidth: 60, isReadOnly: row => row.type === 'Boolean' }),
       {
         columnId: "enumValues",
         renderHeader: () => "Enum値",
@@ -118,7 +127,7 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
       },
       helper.text("コメント", "comment", { wrap: true, defaultWidth: 200, renderBody: renderBodyWithValidation("comment") }),
     ]
-  }, [availableForOptions])
+  }, [availableForOptions, staticEnumOptions])
 
   const handleAddRow = useEvent(() => {
     const newAttr: EditingCustomAttribute = {
@@ -127,6 +136,8 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
       displayName: '',
       type: 'String',
       isValidation: false,
+      isMultiple: false,
+      isRequired: false,
       availableFor: [...availableForCandidates],
       enumValues: [],
     }
@@ -163,7 +174,9 @@ export const CustomAttributeSettings: React.FC<CustomAttributeSettingsProps> = (
       <ul className="text-xs text-gray-600 mb-1 mx-2 list-disc list-inside">
         <li>物理名: 生成後のソースでの名前。"IsHelpText" などパスカルケースで指定</li>
         <li>表示名: このGUIツール上での表示名</li>
-        <li>タイプ: {ATTR_TYPES.join(", ")} から選択</li>
+        <li>タイプ: {ATTR_TYPES.join(", ")} から選択。StaticEnum は静的区分の値から選ぶ</li>
+        <li>複数値: Enum, StaticEnum で値を複数持てるようにする。値はカンマ区切りで指定</li>
+        <li>必須: 指定可能な場所のルート要素に、値の指定を必須にする</li>
       </ul>
 
       <EG2.EditableGrid

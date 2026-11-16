@@ -269,6 +269,8 @@ export const metadata = {
     uniqueId: '7508f4ed-a9ba-4c3d-b258-eb328affebdc',
     displayName: '従業員マスタ',
     comment: '@[従業員](659bf33a-c624-4e67-96a9-460809d70995) のマスタ画面表示用データ。',
+    呼び出し可能な利用者: '権限で指定',
+    必要な権限: ['システム管理者'],
     members: ['従業員番号', '氏名', '従業員マスタの権限', 'Version'],
   },
   displayData: {

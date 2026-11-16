@@ -1,15 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using MyApp.Core.Authorization;
 
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task Execute入荷修正Async(入荷詳細DisplayData param, 入荷詳細Messages messages, OperationContext context) {
-        if (LoginUser == null || !LoginUser.Has権限(権限区分.入荷担当)) {
-            messages.AddError("入荷担当のみ実行可能です。");
-            return;
-        }
-
+    protected override async Task OnExecute入荷修正Async(入荷詳細DisplayData param, 入荷詳細Messages messages, OperationContext context) {
         var id = param.入荷ID;
         if (string.IsNullOrEmpty(id)) {
             messages.AddError("入荷IDが指定されていません。");

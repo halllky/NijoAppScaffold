@@ -145,5 +145,9 @@ export namespace AggregateMetadata {
     masking?: boolean
     /** 文字列の正規化 */
     stringNormalization?: '正規化しない' | 'NFKC'
+    /** 呼び出し可能な利用者 */
+    呼び出し可能な利用者?: 'ログイン不要' | 'ログインユーザー全員' | '権限で指定' | '内部処理のみ'
+    /** 必要な権限 */
+    必要な権限?: readonly (EnumDefs.権限区分)[]
   }
 }

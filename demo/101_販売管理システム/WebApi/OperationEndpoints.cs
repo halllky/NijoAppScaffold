@@ -1,7 +1,9 @@
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using MyApp.Core.Authorization;
 using MyApp.Core.Idempotency;
+using 呼び出し可能な利用者 = MyApp.NijoAttr.呼び出し可能な利用者Attribute.E_Value;
 
 namespace MyApp.WebApi;
 
@@ -11,7 +13,12 @@ namespace MyApp.WebApi;
 /// HTTPリクエスト・レスポンスと、処理の引数・戻り値・メッセージとの変換方法は NijoAppScaffold として決まりがあるわけではなく、
 /// クライアント側の呼び出し処理と整合性がとれていればよい。
 /// ここでは、添付ファイルの送信（multipart/form-data）と、確認メッセージを挟む2回のリクエストと、
-/// 同じ操作が処理済みであること（<see cref="AlreadyExecutedException"/>）の応答に対応している。
+/// 同じ操作が処理済みであること（<see cref="AlreadyExecutedException"/>）と、
+/// 呼び出す権限が無いこと（<see cref="OperationForbiddenException"/>）の応答に対応している。
+///
+/// どの処理を公開するか、ログインせずに呼び出せるかは、nijo.xml で処理ごとに宣言された「呼び出し可能な利用者」で決まる。
+/// 「内部処理のみ」の処理は公開せず、「ログイン不要」の処理はログインせずに呼び出せる。
+/// それ以外の処理はログインを必須とし、権限の確認は処理の関門（<see cref="OverridedApplicationService.InterceptAsync"/>）で行う。
 /// 以下のような詳細は、アプリケーションの要件に応じて自由に変更してよい。
 ///
 /// <list type="bullet">
@@ -36,19 +43,19 @@ public static class OperationEndpoints {
     private const string QUERY_CONFIRMED = "confirmed";
 
     /// <summary>
-    /// すべてのクエリ・コマンドを HTTP POST のエンドポイントとして登録します。
+    /// 画面から呼び出せるクエリ・コマンドを HTTP POST のエンドポイントとして登録します。
     /// </summary>
-    /// <param name="configure">
-    /// クエリ・コマンドごとのエンドポイントの設定。
-    /// 認可の要否など、処理ごとに異なる設定がある場合に使う。
-    /// </param>
     /// <returns>全エンドポイント共通の設定（エンドポイントフィルターなど）を追加するためのグループ</returns>
-    public static RouteGroupBuilder MapOperationEndpoints(this IEndpointRouteBuilder endpoints, Action<Operation<OperationContext>, RouteHandlerBuilder>? configure = null) {
+    public static RouteGroupBuilder MapOperationEndpoints(this IEndpointRouteBuilder endpoints) {
         var group = endpoints.MapGroup("");
         var mapping = new EndpointMapping(group);
         foreach (var operation in Operation<OperationContext>.All) {
+            if (operation.Metadata.呼び出し可能な利用者 == 呼び出し可能な利用者.内部処理のみ) continue;
+
             var endpoint = operation.Accept(mapping);
-            configure?.Invoke(operation, endpoint);
+            if (operation.Metadata.呼び出し可能な利用者 == 呼び出し可能な利用者.ログイン不要) {
+                endpoint.AllowAnonymous();
+            }
         }
         return group;
     }
@@ -63,7 +70,7 @@ public static class OperationEndpoints {
             Func<HttpContext, Task<IResult>> handler = httpContext => HandleAsync(operation, httpContext);
             return endpoints
                 .MapPost(operation.Path, handler)
-                .WithDisplayName(operation.DisplayName);
+                .WithDisplayName(operation.Metadata.DisplayName);
         }
     }
 
@@ -119,12 +126,11 @@ public static class OperationEndpoints {
             returnValue = await operation.InvokeAsync(app, parameter, messages, context);
         } catch (AlreadyExecutedException) {
             // 同じ操作が処理済み。応答がないまま打ち切られた後に、利用者が操作し直した場合など
-            var alreadyExecutedMessage = new MessageSetter([], new MessageContainer());
-            alreadyExecutedMessage.AddError("この操作は、すでに処理されています。画面を読み込み直して、結果を確かめてください。");
-            var alreadyExecuted = new JsonObject {
-                ["messages"] = ToJsonObject(alreadyExecutedMessage.GetState()!),
-            };
-            return Results.Json(alreadyExecuted, jsonOptions, statusCode: (int)HttpStatusCode.UnprocessableEntity);
+            return ErrorResult("この操作は、すでに処理されています。画面を読み込み直して、結果を確かめてください。", HttpStatusCode.UnprocessableEntity);
+        } catch (OperationForbiddenException ex) {
+            // 呼び出す権限が無い。画面は呼び出せない処理のボタンなどを表示しないので、通常の操作では発生しない
+            app.Log.LogWarning("{Message}", ex.Message);
+            return ErrorResult(ex.Message, HttpStatusCode.Forbidden);
         }
 
         // ---------------------------------------------------------
@@ -142,13 +148,23 @@ public static class OperationEndpoints {
         // コマンドの1回目のリクエスト（入力チェックのみ）でエラーが無ければ、
         // 利用者に確認メッセージを見せて承諾を得てから、確認済みとして送り直すよう促す。
         // クエリはデータを変更しないので確認を必要としない。
-        responseBody["requiresConfirmation"] = !messages.HasError() && !operation.IsQuery && context.ValidationOnly;
+        responseBody["requiresConfirmation"] = !messages.HasError() && operation.Kind == E_OperationKind.Command && context.ValidationOnly;
 
         var statusCode = messages.HasError()
             ? HttpStatusCode.UnprocessableEntity
             : HttpStatusCode.OK;
 
         return Results.Json(responseBody, jsonOptions, statusCode: (int)statusCode);
+
+        // 処理の結果を返せない場合の、エラーメッセージ1件だけのレスポンス
+        IResult ErrorResult(string message, HttpStatusCode statusCode) {
+            var errorMessage = new MessageSetter([], new MessageContainer());
+            errorMessage.AddError(message);
+            var body = new JsonObject {
+                ["messages"] = ToJsonObject(errorMessage.GetState()!),
+            };
+            return Results.Json(body, jsonOptions, statusCode: (int)statusCode);
+        }
     }
 
     /// <summary>

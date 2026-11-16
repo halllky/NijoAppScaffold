@@ -196,6 +196,8 @@ export const metadata = {
     uniqueId: 'ca790c30-db44-4439-9452-2a1310a901bb',
     displayName: '入荷一覧',
     comment: '@[入荷](e5f6a1b2-c3d4-4e5f-2a6b-7c8d9e0f1a2b) の一覧検索画面のデータ構造。',
+    呼び出し可能な利用者: '権限で指定',
+    必要な権限: ['入荷担当'],
     members: ['入荷ID', '入荷日時', '担当者', '備考', '明細件数', '入荷数量合計'],
   },
   displayData: {

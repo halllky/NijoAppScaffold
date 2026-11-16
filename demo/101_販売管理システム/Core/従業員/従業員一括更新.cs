@@ -4,13 +4,7 @@ using MyApp.Core.Authorization;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task Execute従業員一括更新Async(従業員一括更新ParameterDisplayData param, 従業員一括更新ParameterMessages messages, OperationContext context) {
-        // 権限チェック
-        if (LoginUser == null || !LoginUser.Isシステム管理者) {
-            messages.AddError("システム管理者のみ実行可能です。");
-            return;
-        }
-
+    protected override async Task OnExecute従業員一括更新Async(従業員一括更新ParameterDisplayData param, 従業員一括更新ParameterMessages messages, OperationContext context) {
         // 更新・削除の対象を読み込む。
         // WillBeChanged や WillBeDeleted はJavaScript側でtrueを設定する処理を記述する必要がある。
         var keys = param.更新対象従業員一覧

@@ -5,7 +5,7 @@ import * as EG2 from "@halllky/editable-grid"
 import { UUID } from "uuidjs"
 import {
   EditingProject, EditingMember, isAttributeAvailable, ATTR_UNIQUE_CONSTRAINTS,
-  ATTR_IS_STORED, ATTR_IS_QUERYABLE, getAttributeTarget, isCustomAttributeAvailable,
+  ATTR_IS_STORED, ATTR_IS_QUERYABLE, getAttributeTarget, getCustomAttributeOptions, isCustomAttributeAvailable,
   NODE_TYPE_CHILD_AGGREGATE, NODE_TYPE_CHILDREN_AGGREGATE, NODE_TYPE_VALUE_MEMBER, NODE_TYPE_REF,
   getMemberNodeType,
 } from "../../../backend"
@@ -48,6 +48,7 @@ function DecsendantsGrid(props: {
 
   const { attributeDefs } = useSchemaEditorRule()
   const customAttributes = ReactHookForm.useWatch({ name: "customAttributes", control }) ?? []
+  const staticEnums = ReactHookForm.useWatch({ name: "staticEnums", control }) ?? []
   const [rootIsStored, rootIsQueryable] = ReactHookForm.useWatch({
     name: [`${rootPath}.attributes.${ATTR_IS_STORED}`, `${rootPath}.attributes.${ATTR_IS_QUERYABLE}`],
     control,
@@ -142,8 +143,9 @@ function DecsendantsGrid(props: {
     for (const customAttr of customAttributes) {
       if (!isCustomAttributeAvailable(customAttr, attributeTarget)) continue;
 
-      if (customAttr.type === 'Enum') {
-        const ddlOptions = customAttr.enumValues.map(opt => ({ value: opt, text: opt }))
+      const options = getCustomAttributeOptions(customAttr, staticEnums)
+      if (options && !customAttr.isMultiple) {
+        const ddlOptions = options.map(opt => ({ value: opt, text: opt }))
         columns.push(helper.dropdown(customAttr.displayName ?? customAttr.physicalName ?? '', `attributes.${customAttr.uniqueId}`, ddlOptions, {
           defaultWidth: 120,
           validationErrorSettings: [row => row.uniqueId, customAttr.uniqueId ?? undefined],
@@ -164,7 +166,7 @@ function DecsendantsGrid(props: {
     }
 
     return columns
-  }, [attributeDefs, attributeTarget, customAttributes, uniqueConstraintColumns])
+  }, [attributeDefs, attributeTarget, customAttributes, staticEnums, uniqueConstraintColumns])
 
   // 行の追加・削除・移動は必ずダイアグラムの構成に影響しうるため、変更操作にまとめて通知を紐づける
   // （indent の変更は update() を使うが、複数行への一括適用時に1回だけ通知したいため、呼び出し側で個別に notifyStructureChanged() を呼ぶ）

@@ -190,6 +190,8 @@ export const metadata = {
     uniqueId: 'd0929a1e-1490-42c3-a728-d740c85ff7b7',
     displayName: '売上一覧',
     comment: '@[売上](f6a1b2c3-d4e5-4f2a-9b3c-4d5e6f7a8b9c) の一覧検索画面のデータ構造。',
+    呼び出し可能な利用者: '権限で指定',
+    必要な権限: ['販売担当'],
     members: ['売上SEQ', '売上日時', '担当者', '備考', '合計金額', '売上数量合計'],
   },
   displayData: {
