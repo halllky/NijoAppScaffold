@@ -410,9 +410,17 @@ namespace Nijo.DataStructures.IsQueryable {
                 })
                 .ToArray();
 
+            // 最後に並べるキー。検索結果に無いもの（汎用参照テーブルのハードコードされた主キーなど）は使わない
+            var keyPaths = _rootAggregate
+                .GetKeyVMs()
+                .Select(vm => queryVarMembers.GetValueOrDefault(vm.ToMappingKey())?.GetJoinedPathFromInstance(E_CsTs.CSharp, "!."))
+                .OfType<string>()
+                .ToArray();
+
             return $$"""
                 /// <summary>
-                /// {{_rootAggregate.DisplayName}}のクエリに画面で指定された並び順指定（SQLで言うORDER BY句）を付加する
+                /// {{_rootAggregate.DisplayName}}のクエリに画面で指定された並び順指定（SQLで言うORDER BY句）を付加する。
+                /// 指定された並び順の後に、キーで並べる。並び順の値が同じ行が多いと、ページを切り替えたときに行が重複したり抜けたりするため。
                 /// </summary>
                 protected virtual IQueryable<{{searchResult.CsClassName}}> {{APPEND_ORDERBY_CLAUSE}}(IQueryable<{{searchResult.CsClassName}}> query, {{searchCondition.CsClassName}} searchCondition) {
                     IOrderedQueryable<{{searchResult.CsClassName}}>? sorted = null;
@@ -423,7 +431,17 @@ namespace Nijo.DataStructures.IsQueryable {
                             throw new InvalidOperationException($"ソート条件 '{sortOption}' が不正です。");
                         }
                     }
+                {{If(keyPaths.Length == 0, () => $$"""
                     return sorted ?? query;
+                """).Else(() => $$"""
+                    sorted = sorted == null
+                        ? query.OrderBy(e => {{keyPaths[0]}})
+                        : sorted.ThenBy(e => {{keyPaths[0]}});
+                    {{keyPaths.Skip(1).SelectTextTemplate(path => $$"""
+                    sorted = sorted.ThenBy(e => {{path}});
+                    """)}}
+                    return sorted;
+                """)}}
                 }
                 /// <summary>{{APPEND_ORDERBY_CLAUSE}} で使用</summary>
                 private static readonly Dictionary<string, Func<IQueryable<{{searchResult.CsClassName}}>, IOrderedQueryable<{{searchResult.CsClassName}}>?, IOrderedQueryable<{{searchResult.CsClassName}}>>> _{{_rootAggregate.PhysicalName}}SortStrategies = new() {
