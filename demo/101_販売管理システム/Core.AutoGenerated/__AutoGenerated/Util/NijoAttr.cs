@@ -394,3 +394,46 @@ public sealed class StringNormalizationAttribute : System.Attribute {
         Value = value;
     }
 }
+
+/// <summary>
+/// 呼び出し可能な利用者
+/// <para>
+/// 処理（クエリとコマンド）を呼び出せる利用者。「ログイン不要」はログインせずに呼び出せる。「ログインユーザー全員」はログインしていれば誰でも呼び出せる。「権限で指定」は「必要な権限」のいずれかを持つユーザーだけが呼び出せる（システム管理者はすべての権限を持つ）。「内部処理のみ」はバッチなどサーバー内部からだけ呼び出し、画面からは呼び出せない。参照検索は、参照先のクエリモデルの指定を引き継ぐ。
+/// </para>
+/// この Attribute は自動生成後のアプリケーションの共通処理内部でリフレクションを使用して動的な処理を行う際に使われることを想定しています。
+/// 自動生成されたソースコード自体がこの Attribute を使用することはありません。
+/// </summary>
+[AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
+public sealed class 呼び出し可能な利用者Attribute : System.Attribute {
+    public enum E_Value {
+        ログイン不要,
+        ログインユーザー全員,
+        権限で指定,
+        内部処理のみ,
+    }
+
+    public E_Value Value { get; }
+
+    /// <inheritdoc cref="呼び出し可能な利用者Attribute" />
+    public 呼び出し可能な利用者Attribute(E_Value value) {
+        Value = value;
+    }
+}
+
+/// <summary>
+/// 必要な権限
+/// <para>
+/// 「呼び出し可能な利用者」が「権限で指定」の処理を呼び出すのに必要な権限。いずれか1つを持っていれば呼び出せる。
+/// </para>
+/// この Attribute は自動生成後のアプリケーションの共通処理内部でリフレクションを使用して動的な処理を行う際に使われることを想定しています。
+/// 自動生成されたソースコード自体がこの Attribute を使用することはありません。
+/// </summary>
+[AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
+public sealed class 必要な権限Attribute : System.Attribute {
+    public IReadOnlyList<global::MyApp.権限区分> Values { get; }
+
+    /// <inheritdoc cref="必要な権限Attribute" />
+    public 必要な権限Attribute(params global::MyApp.権限区分[] values) {
+        Values = values;
+    }
+}

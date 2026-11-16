@@ -409,14 +409,8 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
             var attributeValue = xElement.Attribute(customAttribute.UniqueId)?.Value;
             if (string.IsNullOrWhiteSpace(attributeValue)) continue;
 
-            var tsValue = customAttribute.Type switch {
-                NijoXmlCustomAttribute.E_Type.Boolean => "true",
-                NijoXmlCustomAttribute.E_Type.Decimal => attributeValue,
-                _ => $"'{attributeValue.Replace("\\", "\\\\").Replace("'", "\\'")}'",
-            };
-
             yield return $$"""
-                {{customAttribute.PhysicalName.ToCamelCase()}}: {{tsValue}},
+                {{customAttribute.PhysicalName.ToCamelCase()}}: {{RenderTsCustomAttributeValue(customAttribute, xElement)}},
                 """;
         }
     }
@@ -454,20 +448,46 @@ internal class AggregateMetadata : ISharedSourceFile<CodeRenderingContext> {
         foreach (var customAttribute in ctx.Schema.CustomAttributes) {
             if (string.IsNullOrWhiteSpace(customAttribute.PhysicalName)) continue;
 
-            var tsType = customAttribute.Type switch {
-                NijoXmlCustomAttribute.E_Type.Boolean => "boolean",
-                NijoXmlCustomAttribute.E_Type.Decimal => "number",
-                NijoXmlCustomAttribute.E_Type.Enum => customAttribute.EnumValues.Length == 0
-                    ? "never"
-                    : customAttribute.EnumValues.Select(v => $"'{v.Replace("'", "\\'")}'").Join(" | "),
-                _ => "string",
-            };
-
             yield return $$"""
                 /** {{customAttribute.DisplayName}} */
-                {{customAttribute.PhysicalName.ToCamelCase()}}?: {{tsType}}
+                {{customAttribute.PhysicalName.ToCamelCase()}}?: {{RenderTsCustomAttributeType(customAttribute)}}
                 """;
         }
+    }
+
+    /// <summary>
+    /// カスタム属性の値の TypeScript の型を返します。
+    /// 静的区分の型は enum-defs モジュールを EnumDefs という名前で import している前提で参照します。
+    /// </summary>
+    internal static string RenderTsCustomAttributeType(NijoXmlCustomAttribute customAttribute) {
+        var itemType = customAttribute.Type switch {
+            NijoXmlCustomAttribute.E_Type.Boolean => "boolean",
+            NijoXmlCustomAttribute.E_Type.Decimal => "number",
+            NijoXmlCustomAttribute.E_Type.Enum => customAttribute.EnumValues.Length == 0
+                ? "never"
+                : customAttribute.EnumValues.Select(v => $"'{v.Replace("'", "\\'")}'").Join(" | "),
+            NijoXmlCustomAttribute.E_Type.StaticEnum => $"EnumDefs.{customAttribute.StaticEnumType}",
+            _ => "string",
+        };
+        return customAttribute.IsMultiple
+            ? $"readonly ({itemType})[]"
+            : itemType;
+    }
+
+    /// <summary>
+    /// XML要素に指定されているカスタム属性の値を、<see cref="RenderTsCustomAttributeType"/> の型の TypeScript の式として返します。
+    /// 属性が指定されていない場合、Boolean は false、値を複数持てる場合は空の配列、それ以外は undefined を返します。
+    /// </summary>
+    internal static string RenderTsCustomAttributeValue(NijoXmlCustomAttribute customAttribute, XElement xElement) {
+        var values = customAttribute.GetValues(xElement);
+        if (customAttribute.Type == NijoXmlCustomAttribute.E_Type.Boolean) return values.Length > 0 ? "true" : "false";
+        if (customAttribute.IsMultiple) return $"[{values.Select(RenderItem).Join(", ")}]";
+        if (values.Length == 0) return "undefined";
+        return RenderItem(values[0]);
+
+        string RenderItem(string value) => customAttribute.Type == NijoXmlCustomAttribute.E_Type.Decimal
+            ? value
+            : $"'{value.Replace("\\", "\\\\").Replace("'", "\\'")}'";
     }
 
     /// <summary>

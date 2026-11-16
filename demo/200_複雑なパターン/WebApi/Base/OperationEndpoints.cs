@@ -47,7 +47,7 @@ public static class OperationEndpoints {
             Func<HttpContext, Task<IResult>> handler = httpContext => HandleAsync(operation, httpContext);
             return endpoints
                 .MapPost(operation.Path, handler)
-                .WithDisplayName(operation.DisplayName);
+                .WithDisplayName(operation.Metadata.DisplayName);
         }
     }
 

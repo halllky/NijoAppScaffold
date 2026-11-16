@@ -4,13 +4,7 @@ using MyApp.Core.Authorization;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task<売上新規登録ReturnValueDisplayData?> Execute売上新規登録Async(売上詳細DisplayData param, 売上詳細Messages messages, OperationContext context) {
-        // 権限チェック
-        if (LoginUser == null || !LoginUser.Has権限(権限区分.販売担当)) {
-            messages.AddError("販売担当のみ実行可能です。");
-            return null;
-        }
-
+    protected override async Task<売上新規登録ReturnValueDisplayData?> OnExecute売上新規登録Async(売上詳細DisplayData param, 売上詳細Messages messages, OperationContext context) {
         // 入力チェック
         if (param.売上詳細の売上明細.Count == 0) {
             messages.売上詳細の売上明細.AddError("売上明細を1件以上登録してください。");

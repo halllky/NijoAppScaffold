@@ -24,7 +24,7 @@ namespace MyApp;
 /// <summary>
 /// 従業員Refの一覧検索条件
 /// </summary>
-[NijoAttr.IsQueryable]
+[NijoAttr.IsQueryable, NijoAttr.呼び出し可能な利用者(NijoAttr.呼び出し可能な利用者Attribute.E_Value.ログインユーザー全員)]
 public partial class 従業員RefSearchCondition {
     /// <summary>絞り込み条件</summary>
     [JsonPropertyName("filter")]
@@ -42,7 +42,7 @@ public partial class 従業員RefSearchCondition {
 #endregion 検索条件エントリーポイント
 
 #region 検索条件フィルター
-[NijoAttr.IsQueryable]
+[NijoAttr.IsQueryable, NijoAttr.呼び出し可能な利用者(NijoAttr.呼び出し可能な利用者Attribute.E_Value.ログインユーザー全員)]
 public partial class 従業員RefSearchConditionFilter {
     [NijoAttr.StringSearchBehavior(NijoAttr.StringSearchBehaviorAttribute.E_Value.Exact), NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.NFKC)]
     public string? 従業員番号 { get; set; }

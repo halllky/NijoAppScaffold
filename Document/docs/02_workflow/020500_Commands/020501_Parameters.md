@@ -43,9 +43,9 @@
 <受注登録 DisplayName="受注登録" Parameter="受注登録Form" />
 ```
 
-生成される Execute メソッドのシグネチャ:
+生成される、処理の本体を実装するメソッドのシグネチャ:
 ```csharp
-public abstract Task Execute受注登録Async(
+protected abstract Task OnExecute受注登録Async(
     受注登録FormDisplayData param,
     受注登録FormDisplayDataMessages messages,
     TOperationContext context);
@@ -58,9 +58,9 @@ public abstract Task Execute受注登録Async(
              Parameter="OrderQuery:SearchCondition" />
 ```
 
-生成される Execute メソッドのシグネチャ:
+生成される、処理の本体を実装するメソッドのシグネチャ:
 ```csharp
-public abstract Task Execute受注一括処理Async(
+protected abstract Task OnExecute受注一括処理Async(
     OrderQuerySearchCondition param,
     OrderQuerySearchConditionMessages messages,
     TOperationContext context);
@@ -74,9 +74,9 @@ public abstract Task Execute受注一括処理Async(
              ReturnValue="受注詳細Query:DisplayData" />
 ```
 
-生成される Execute メソッドのシグネチャ:
+生成される、処理の本体を実装するメソッドのシグネチャ:
 ```csharp
-public abstract Task<受注詳細QueryDisplayData?> Execute受注詳細取得Async(
+protected abstract Task<受注詳細QueryDisplayData?> OnExecute受注詳細取得Async(
     受注検索キーDisplayData param,
     受注検索キーDisplayDataMessages messages,
     TOperationContext context);
@@ -90,9 +90,9 @@ public abstract Task<受注詳細QueryDisplayData?> Execute受注詳細取得Asy
 </月次集計>
 ```
 
-生成される Execute メソッドのシグネチャ:
+生成される、処理の本体を実装するメソッドのシグネチャ:
 ```csharp
-public abstract Task Execute月次集計Async(
+protected abstract Task OnExecute月次集計Async(
     MessageSetter messages,
     TOperationContext context);
 ```

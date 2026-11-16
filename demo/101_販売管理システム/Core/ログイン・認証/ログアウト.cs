@@ -7,7 +7,7 @@ namespace MyApp;
 
 partial class OverridedApplicationService {
 
-    public override async Task ExecuteログアウトAsync(MessageSetter messages, OperationContext context) {
+    protected override async Task OnExecuteログアウトAsync(MessageSetter messages, OperationContext context) {
         // セッションキー取得。
         // ログインしていない場合は何もしない
         var sessionKeyProvider = ServiceProvider.GetRequiredService<Core.Authorization.ISessionKeyProvider>();

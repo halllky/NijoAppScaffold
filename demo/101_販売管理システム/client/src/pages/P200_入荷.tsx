@@ -12,7 +12,7 @@ export const URL = "/nyuka"
 /**
  * ルートナビゲーションに表示する項目
  */
-export const navigationItem = { to: URL, label: "入荷", icon: Icon.TruckIcon } satisfies RootNavigationItem
+export const navigationItem = { to: URL, label: "入荷", icon: Icon.TruckIcon, operation: '入荷一覧' } satisfies RootNavigationItem
 
 /**
  * ルーティング定義

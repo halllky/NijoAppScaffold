@@ -63,7 +63,7 @@ export type OrderFormDisplayDataDetails = {
 ## Execute メソッドでの受け取り方
 
 ```csharp
-public override async Task Execute受注登録Async(
+protected override async Task OnExecute受注登録Async(
     OrderFormDisplayData param,
     OrderFormDisplayDataMessages messages,
     OperationContext context) {

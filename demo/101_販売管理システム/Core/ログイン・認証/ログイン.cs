@@ -7,7 +7,7 @@ using MyApp.Core.Authorization;
 namespace MyApp;
 
 partial class OverridedApplicationService {
-    public override async Task<ログインユーザー情報DisplayData?> ExecuteログインAsync(ログインParameterDisplayData param, ログインParameterMessages messages, OperationContext context) {
+    protected override async Task<ログインユーザー情報DisplayData?> OnExecuteログインAsync(ログインParameterDisplayData param, ログインParameterMessages messages, OperationContext context) {
         // 入力チェック
         if (string.IsNullOrWhiteSpace(param.従業員番号)) {
             messages.従業員番号.AddError("従業員番号を入力してください。");

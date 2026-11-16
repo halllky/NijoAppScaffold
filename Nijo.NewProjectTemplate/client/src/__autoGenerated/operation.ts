@@ -20,3 +20,17 @@ export interface ParamType {
 /** クエリとコマンドの戻り値の型の一覧 */
 export interface ReturnType {
 }
+
+/**
+ * クエリまたはコマンドについて、nijo.xml に定義された情報の型。
+ * クエリモデルとコマンドのルート要素に指定されたカスタム属性がプロパティになる。
+ * 参照検索は、参照先のクエリモデルのルート要素に指定された値を引き継ぐ。
+ */
+export type Metadata = {
+  /** 表示用名称 */
+  displayName: string
+}
+
+/** クエリとコマンドのメタデータの一覧。C# 側の各処理の Metadata と一致する。 */
+export const Metadata: { [K in Name]: Metadata } = {
+}

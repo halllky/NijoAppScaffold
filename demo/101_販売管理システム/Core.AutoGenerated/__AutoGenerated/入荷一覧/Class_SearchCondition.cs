@@ -24,7 +24,7 @@ namespace MyApp;
 /// <summary>
 /// 入荷一覧の一覧検索条件
 /// </summary>
-[NijoAttr.IsQueryable]
+[NijoAttr.IsQueryable, NijoAttr.呼び出し可能な利用者(NijoAttr.呼び出し可能な利用者Attribute.E_Value.権限で指定), NijoAttr.必要な権限(global::MyApp.権限区分.入荷担当)]
 public partial class 入荷一覧SearchCondition {
     /// <summary>絞り込み条件</summary>
     [JsonPropertyName("filter")]
@@ -42,7 +42,7 @@ public partial class 入荷一覧SearchCondition {
 #endregion 検索条件エントリーポイント
 
 #region 検索条件フィルター
-[NijoAttr.IsQueryable]
+[NijoAttr.IsQueryable, NijoAttr.呼び出し可能な利用者(NijoAttr.呼び出し可能な利用者Attribute.E_Value.権限で指定), NijoAttr.必要な権限(global::MyApp.権限区分.入荷担当)]
 public partial class 入荷一覧SearchConditionFilter {
     [NijoAttr.StringSearchBehavior(NijoAttr.StringSearchBehaviorAttribute.E_Value.Exact)]
     public string? 入荷ID { get; set; }

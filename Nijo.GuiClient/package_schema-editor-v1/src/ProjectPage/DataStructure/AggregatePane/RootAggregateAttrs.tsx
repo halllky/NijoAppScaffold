@@ -1,6 +1,6 @@
 import * as ReactHookForm from "react-hook-form"
 import * as UI from "../../../UI"
-import { ATTR_IS_QUERYABLE, ATTR_IS_STORED, ATTR_PARAMETER, ATTR_RETURN_VALUE, EditingProject, getAttributeTarget, isAttributeAvailable, isCustomAttributeAvailable, NODE_TYPE_ROOT_AGGREGATE } from "../../../backend"
+import { ATTR_IS_QUERYABLE, ATTR_IS_STORED, ATTR_PARAMETER, ATTR_RETURN_VALUE, EditingProject, getAttributeTarget, getCustomAttributeOptions, isAttributeAvailable, isCustomAttributeAvailable, NODE_TYPE_ROOT_AGGREGATE } from "../../../backend"
 import { useSchemaEditorRule } from "../../SchemaEditorRuleContext"
 import { RootAggregateLocation } from "../../rootAggregateLocation"
 import { isRootChangeAffectingDiagram, useNotifyDiagramStructureChanged } from "../Diagram"
@@ -16,6 +16,7 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
 
   const { attributeDefs } = useSchemaEditorRule()
   const customAttributes = ReactHookForm.useWatch({ name: "customAttributes", control }) ?? []
+  const staticEnums = ReactHookForm.useWatch({ name: "staticEnums", control }) ?? []
 
   const rootPath = `${rootLocation.list}.${rootLocation.index}` as const
   const root = ReactHookForm.useWatch({ name: rootPath, control })
@@ -103,16 +104,17 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
 
             const path = `${rootPath}.attributes.${customAttr.uniqueId}` as const
             const userLabel = customAttr.displayName ?? customAttr.physicalName
+            const options = getCustomAttributeOptions(customAttr, staticEnums)
 
             return (
-              <AttributeRow key={customAttr.uniqueId} label={userLabel ?? ''}>
-                {customAttr.type === 'Enum' ? (
+              <AttributeRow key={customAttr.uniqueId} label={userLabel ?? ''} tooltip={customAttr.isMultiple && options ? `${userLabel}（カンマ区切りで複数指定: ${options.join(", ")}）` : undefined}>
+                {options && !customAttr.isMultiple ? (
                   <select
                     {...register(path)}
                     className="border border-gray-700 bg-white px-1 py-px"
                   >
                     <option value=""></option>
-                    {customAttr.enumValues.map(opt => (
+                    {options.map(opt => (
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
                   </select>

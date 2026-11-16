@@ -64,7 +64,7 @@ public static class MetadataBasedTestCases {
     /// </summary>
     public static IEnumerable<TestCaseData> 無条件検索テストケース() {
         return Operation<OperationContext>.All
-            .Where(operation => operation.IsQuery)
+            .Where(operation => operation.Kind != E_OperationKind.Command)
             .Select(operation => new TestCaseData(operation.Name, operation.Accept(new UnconditionalSearch()))
                 .SetName($"無条件検索_{operation.Name}"));
     }

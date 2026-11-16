@@ -38,18 +38,27 @@ sidebar_position: 5
 
 ## Execute メソッド
 
-コマンドの処理本体は `Execute{Name}Async` メソッドに実装します。**必ず開発者が実装する必要があります。**
+コマンドごとに、Application Service に次の2つのメソッドが生成されます。
+
+- `Execute{Name}Async`: 呼び出し元（Web、バッチ、単体テスト、ほかの処理）が呼ぶ公開メソッド。関門（後述の「すべての処理に共通の処理（関門）」）を通して `OnExecute{Name}Async` を呼びます。
+- `OnExecute{Name}Async`: 処理の本体。**必ず開発者が実装する必要があります。**
 
 ```csharp
-// Application Service に生成されるスタブ。
+// Application Service に生成されるメソッド。
 // TOperationContext は、アプリケーションが型引数に指定したクラス（テンプレートでは OperationContext）
-public abstract Task Execute受注登録Async(
+public Task Execute受注登録Async(
+    受注登録FormDisplayData param,
+    受注登録FormDisplayDataMessages messages,
+    TOperationContext context) {
+    return InterceptAsync(受注登録Operation, param, messages, context, async () => { await OnExecute受注登録Async(param, messages, context); return null; });
+}
+protected abstract Task OnExecute受注登録Async(
     受注登録FormDisplayData param,
     受注登録FormDisplayDataMessages messages,
     TOperationContext context);
 
 // 開発者が実装
-public override async Task Execute受注登録Async(
+protected override async Task OnExecute受注登録Async(
     受注登録FormDisplayData param,
     受注登録FormDisplayDataMessages messages,
     OperationContext context) {
@@ -75,6 +84,30 @@ public override async Task Execute受注登録Async(
     await transaction.CommitAsync();
 }
 ```
+
+## すべての処理に共通の処理（関門）
+
+コマンドの `Execute{Name}Async` と、クエリの一覧検索（`LoadAsync`）・参照検索（`LoadRefs{Name}Async`）は、どこから呼ばれても必ず Application Service の `InterceptAsync` を通して処理の本体を実行します。
+権限の確認やログなど、処理の種類を問わない共通の処理は、このメソッドをオーバーライドして書きます。既定では何もせずに本体を実行します。
+
+```csharp
+protected override Task<TReturnValue?> InterceptAsync<TParameter, TReturnValue, TMessages>(
+    Operation<OperationContext, TParameter, TReturnValue, TMessages> operation, // 呼び出された処理
+    TParameter parameter,
+    TMessages messages,
+    OperationContext context,
+    Func<Task<TReturnValue?>> invokeAsync) where TReturnValue : default {   // オーバーライドでは where TReturnValue : default が必要
+
+    // operation.Metadata には、nijo.xml でその処理のルート要素に指定したカスタム属性が型付きで入っている
+    if (!CanInvoke(operation.Metadata)) throw new ForbiddenException();
+
+    return invokeAsync(); // 呼ばなければ本体は実行されない
+}
+```
+
+`operation` は `Operation<OperationContext>.All` に並ぶ処理と同じインスタンスで、名前（`Name`）、種類（`Kind`: 一覧検索・参照検索・コマンド）、URL（`Path`）、メタデータ（`Metadata`）を持ちます。
+メタデータについては [カスタム属性](../025000_CustomAttribute.md) の「クエリとコマンドのメタデータ」を参照してください。
+処理の宣言をもとに権限を確かめる例は、デモ101（`demo/101_販売管理システム`）の `Core/ログイン・認証/処理の呼び出し可否.cs` です。
 
 ## 基本的な XML 定義例
 

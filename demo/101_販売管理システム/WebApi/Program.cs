@@ -149,17 +149,8 @@ try {
     app.MapGet("/api/version", () => Results.Json(new { version = AppVersion.Value }));
 
     // Nijoにより自動生成されたクエリ・コマンドをHTTPエンドポイントとして公開する。
-    // ログイン前に呼ばれる処理はログイン不要とする
-    Operation<OperationContext>[] allowAnonymous = [
-        Operations<OperationContext>.ログイン,
-        Operations<OperationContext>.ログアウト,
-        Operations<OperationContext>.ログイン状態確認,
-    ];
-    app.MapOperationEndpoints((operation, endpoint) => {
-        if (allowAnonymous.Contains(operation)) {
-            endpoint.AllowAnonymous();
-        }
-    });
+    // 公開するかどうかとログインの要否は、nijo.xml で処理ごとに宣言された「呼び出し可能な利用者」で決まる
+    app.MapOperationEndpoints();
 
     // 存在しないパスへのリクエストは index.html を返すようにし、
     // 実際にどの画面が初期表示されるかは React Router のルーティング設定で制御する。

@@ -3,6 +3,7 @@ import { Outlet, Link, Form, useNavigation } from "react-router-dom"
 import * as Icon from "@heroicons/react/24/solid"
 import { NowLoading } from "./ui"
 import { useOptionalLoginUser } from "./login/loginUser"
+import { useCanInvoke } from "./login/canInvoke"
 import * as P000Module from "./pages/P000_トップページ"
 import * as P002Module from "./pages/P002_ログアウト"
 import { P001_ログイン } from "./pages/P001_ログイン"
@@ -16,11 +17,12 @@ import DebugMenuButton from "./debug-rooms/デバッグメニュー"
  * 画面全体の外枠のレイアウトを行う。
  *
  * 業務画面へのリンクとログアウトリンクはログイン後のみ表示する。
- * どの業務画面をナビゲーションに表示するかは呼び出し元が決める。
+ * 業務画面へのリンクは、その画面を開くのに呼び出す処理をログインユーザーが呼び出せる場合だけ表示する。
  */
 export default function App() {
   const navigation = useNavigation()
   const loginUser = useOptionalLoginUser()
+  const canInvoke = useCanInvoke()
 
   return (
     <div className="flex flex-col h-full">
@@ -33,7 +35,7 @@ export default function App() {
               {APP_NAME}
             </RootNavigationLink>
           </li>
-          {loginUser && navigationItems.map(item => (
+          {loginUser && navigationItems.filter(item => canInvoke(item.operation)).map(item => (
             <li key={item.to} className="shrink-0">
               <RootNavigationLink to={item.to} icon={item.icon}>{item.label}</RootNavigationLink>
             </li>

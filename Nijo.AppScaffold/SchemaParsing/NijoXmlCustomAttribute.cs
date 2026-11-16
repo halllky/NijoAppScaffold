@@ -29,6 +29,10 @@ public class NijoXmlCustomAttribute {
                     : string.Empty,
                 IsValidation = bool.TryParse(xElement.Attribute(nameof(IsValidation))?.Value, out var isValidation)
                     && isValidation,
+                IsMultiple = bool.TryParse(xElement.Attribute(nameof(IsMultiple))?.Value, out var isMultiple)
+                    && isMultiple,
+                IsRequired = bool.TryParse(xElement.Attribute(nameof(IsRequired))?.Value, out var isRequired)
+                    && isRequired,
                 AvailableFor = xElement.Attribute(nameof(AvailableFor))?.Value
                     .Split(',')
                     .ToArray()
@@ -36,6 +40,7 @@ public class NijoXmlCustomAttribute {
                 Type = Enum.TryParse<E_Type>(xElement.Attribute(nameof(Type))?.Value, out var parsedType)
                     ? parsedType
                     : null,
+                StaticEnumType = xElement.Attribute(nameof(StaticEnumType))?.Value,
                 EnumValues = xElement
                     .Elements(ENUM_VALUE_OPTION_NAME)
                     .Select(el => el.Value)
@@ -59,11 +64,20 @@ public class NijoXmlCustomAttribute {
         if (IsValidation) {
             xElement.SetAttributeValue(nameof(IsValidation), "True");
         }
+        if (IsMultiple) {
+            xElement.SetAttributeValue(nameof(IsMultiple), "True");
+        }
+        if (IsRequired) {
+            xElement.SetAttributeValue(nameof(IsRequired), "True");
+        }
         if (AvailableFor.Length > 0) {
             xElement.SetAttributeValue(nameof(AvailableFor), string.Join(",", AvailableFor));
         }
         if (Type != null) {
             xElement.SetAttributeValue(nameof(Type), Type.ToString());
+        }
+        if (!string.IsNullOrWhiteSpace(StaticEnumType)) {
+            xElement.SetAttributeValue(nameof(StaticEnumType), StaticEnumType);
         }
         foreach (var enumValue in EnumValues) {
             xElement.Add(new XElement(ENUM_VALUE_OPTION_NAME, enumValue));
@@ -104,6 +118,22 @@ public class NijoXmlCustomAttribute {
     /// </summary>
     [JsonConverter(typeof(JsonStringBooleanConverter))]
     public bool IsValidation { get; set; }
+
+    /// <summary>
+    /// このカスタム属性が値を複数持てるかどうか。
+    /// <see cref="Type"/> が <see cref="E_Type.Enum"/> または <see cref="E_Type.StaticEnum"/> の場合のみ指定できる。
+    /// nijo.xml 上では、値をカンマ区切りで記載する。
+    /// </summary>
+    [JsonConverter(typeof(JsonStringBooleanConverter))]
+    public bool IsMultiple { get; set; }
+
+    /// <summary>
+    /// <see cref="AvailableFor"/> で指定したルート要素に、このカスタム属性を必ず指定しなければならないかどうか。
+    /// ルート要素より下の要素（メンバーなど）には影響しない。
+    /// <see cref="Type"/> が <see cref="E_Type.Boolean"/> の場合は、指定しないことが false を表すので指定できない。
+    /// </summary>
+    [JsonConverter(typeof(JsonStringBooleanConverter))]
+    public bool IsRequired { get; set; }
 
     /// <summary>
     /// このカスタム属性を指定できるルート集約の一覧。
@@ -174,6 +204,46 @@ public class NijoXmlCustomAttribute {
     /// </summary>
     public string[] EnumValues { get; set; } = [];
     private const string ENUM_VALUE_OPTION_NAME = "Option";
+    /// <summary>
+    /// <see cref="Type"/> が StaticEnum の場合は必須。
+    /// 値の選択肢とする静的区分の物理名。
+    /// </summary>
+    public string? StaticEnumType { get; set; }
+
+    /// <summary>
+    /// XML要素に指定されているこの属性の値を返します。
+    /// 値を複数持てる場合はカンマで区切った各値を、そうでなければ値そのものを1件だけ返します。
+    /// 属性が指定されていない場合は空を返します。
+    /// </summary>
+    internal string[] GetValues(XElement xElement) {
+        var raw = xElement.Attribute(UniqueId ?? throw new InvalidOperationException("カスタム属性の UniqueId が設定されていません。"))?.Value;
+        if (raw == null) return [];
+        if (!IsMultiple) return [raw];
+        return raw
+            .Split(MULTIPLE_VALUE_SEPARATOR)
+            .Select(value => value.Trim())
+            .Where(value => value != string.Empty)
+            .ToArray();
+    }
+    private const char MULTIPLE_VALUE_SEPARATOR = ',';
+
+    /// <summary>
+    /// 値の選択肢を返します。
+    /// <see cref="Type"/> が Enum の場合は <see cref="EnumValues"/>、StaticEnum の場合は静的区分の値の物理名です。
+    /// それ以外の型や、参照先の静的区分が存在しない場合は空を返します。
+    /// </summary>
+    internal IReadOnlyList<string> GetOptions(SchemaParseContext context) {
+        return Type switch {
+            E_Type.Enum => EnumValues,
+            E_Type.StaticEnum => context.GetStaticEnums()
+                .SingleOrDefault(staticEnum => staticEnum.PhysicalName == StaticEnumType)
+                ?.GetValues()
+                .Select(value => value.PhysicalName)
+                .ToArray()
+                ?? [],
+            _ => [],
+        };
+    }
 
     /// <summary>
     /// スキーマ定義の検証時に実行される。
@@ -228,39 +298,72 @@ public class NijoXmlCustomAttribute {
                 yield return $"カスタム属性 '{PhysicalName}' の種類が '{Type}' に設定されていますが、列挙可能な値が定義されています。列挙体以外の種類の場合、列挙可能な値を定義することはできません。";
             }
         }
+
+        // 種類が静的区分の場合、参照先の静的区分が存在することをチェック。
+        // 逆にそれ以外の場合は参照先が指定されていないことをチェック。
+        if (Type == E_Type.StaticEnum) {
+            if (string.IsNullOrWhiteSpace(StaticEnumType)) {
+                yield return $"カスタム属性 '{PhysicalName}' の種類が '{nameof(E_Type.StaticEnum)}' に設定されていますが、{nameof(StaticEnumType)} が指定されていません。選択肢とする静的区分の物理名を指定してください。";
+            } else if (!context.GetStaticEnums().Any(staticEnum => staticEnum.PhysicalName == StaticEnumType)) {
+                yield return $"カスタム属性 '{PhysicalName}' の {nameof(StaticEnumType)} に指定された静的区分 '{StaticEnumType}' は存在しません。";
+            }
+        } else {
+            if (!string.IsNullOrWhiteSpace(StaticEnumType)) {
+                yield return $"カスタム属性 '{PhysicalName}' の種類が '{Type}' に設定されていますが、{nameof(StaticEnumType)} が指定されています。{nameof(StaticEnumType)} は種類が '{nameof(E_Type.StaticEnum)}' の場合のみ指定できます。";
+            }
+        }
+
+        if (IsMultiple && Type != E_Type.Enum && Type != E_Type.StaticEnum) {
+            yield return $"カスタム属性 '{PhysicalName}' の {nameof(IsMultiple)} は、種類が '{nameof(E_Type.Enum)}' または '{nameof(E_Type.StaticEnum)}' の場合のみ指定できます。";
+        }
+        if (IsRequired && Type == E_Type.Boolean) {
+            yield return $"カスタム属性 '{PhysicalName}' の {nameof(IsRequired)} は、種類が '{nameof(E_Type.Boolean)}' の場合は指定できません。指定しないことが false を表すためです。";
+        }
     }
 
     /// <summary>
     /// スキーマ定義の検証時に実行される。
     /// データ構造などのXML要素にこの属性が存在する場合に、その値の妥当性を検証し、エラーがあればそれを列挙して返す。
     /// </summary>
-    internal IEnumerable<string> ValidateModelElement(XElement xElement) {
+    internal IEnumerable<string> ValidateModelElement(XElement xElement, SchemaParseContext context) {
         if (string.IsNullOrEmpty(UniqueId)) throw new InvalidOperationException("カスタム属性の AttributeName が設定されていません。");
 
-        var attr = xElement.Attribute(UniqueId);
-        if (attr == null) {
+        if (xElement.Attribute(UniqueId) == null) {
             yield break;
         }
 
-        var value = attr.Value;
-        switch (Type) {
-            case E_Type.Boolean:
-                // 属性が存在する場合は常にTrueとみなすため、値の妥当性チェックは不要
-                break;
-            case E_Type.Decimal:
-                if (!decimal.TryParse(value, out var _)) {
-                    yield return $"属性 '{PhysicalName}' の値 '{value}' は不正です。Decimal型の値を指定してください。";
-                }
-                break;
-            case E_Type.Enum:
-                if (!EnumValues.Contains(value)) {
-                    yield return $"属性 '{PhysicalName}' の値 '{value}' は不正です。有効な値は {string.Join(", ", EnumValues)} です。";
-                }
-                break;
-            case E_Type.String:
-                // 文字列型は常に有効
-                break;
+        foreach (var value in GetValues(xElement)) {
+            switch (Type) {
+                case E_Type.Boolean:
+                    // 属性が存在する場合は常にTrueとみなすため、値の妥当性チェックは不要
+                    break;
+                case E_Type.Decimal:
+                    if (!decimal.TryParse(value, out var _)) {
+                        yield return $"属性 '{PhysicalName}' の値 '{value}' は不正です。Decimal型の値を指定してください。";
+                    }
+                    break;
+                case E_Type.Enum:
+                case E_Type.StaticEnum:
+                    var options = GetOptions(context);
+                    if (!options.Contains(value)) {
+                        yield return $"属性 '{PhysicalName}' の値 '{value}' は不正です。有効な値は {string.Join(", ", options)} です。";
+                    }
+                    break;
+                case E_Type.String:
+                    // 文字列型は常に有効
+                    break;
+            }
         }
+    }
+
+    /// <summary>
+    /// スキーマ定義の検証時に実行される。
+    /// このカスタム属性が必須の場合に、引数のルート要素に値が指定されているかを検証し、エラーがあればそれを返す。
+    /// </summary>
+    internal string? ValidateRequired(XElement rootElement, NodeOptionTarget target) {
+        if (!IsRequired || !IsAvailableFor(target)) return null;
+        if (GetValues(rootElement).Any(value => !string.IsNullOrWhiteSpace(value))) return null;
+        return $"カスタム属性 '{DisplayName ?? PhysicalName}' は必須です。値を指定してください。";
     }
 
     /// <summary>
@@ -273,5 +376,7 @@ public class NijoXmlCustomAttribute {
         Decimal,
         Enum,
         String,
+        /// <summary>nijo.xml で定義された静的区分の値。どの静的区分かは <see cref="StaticEnumType"/> で指定する。</summary>
+        StaticEnum,
     }
 }
