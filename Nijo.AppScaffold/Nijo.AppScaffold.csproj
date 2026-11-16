@@ -5,6 +5,9 @@
     <Nullable>enable</Nullable>
     <AssemblyName>nijo</AssemblyName>
     <RootNamespace>Nijo</RootNamespace>
+    <!-- 生成したコードの先頭に書くバージョン。リリースのときは、リリースのスクリプトがリリースするバージョンで上書きする。
+         開発中のビルドではこの値になるので、このリポジトリの中で生成するコードには、コミットのたびに差分が出ない -->
+    <Version>0.0.0-dev</Version>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <WarningLevel>4</WarningLevel>

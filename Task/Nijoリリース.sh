@@ -100,15 +100,16 @@ if [ $? -ne 0 ]; then
 fi
 popd > /dev/null
 
-# win/osx をそれぞれRID別に発行する
+# win/osx をそれぞれRID別に発行する。
+# リリースするバージョンを nijo に埋め込み、nijo が生成するコードの先頭のコメントに書かれるようにする
 echo "ビルドを開始します。"
-dotnet publish "$NIJO_ROOT/Nijo.AppScaffold/Nijo.AppScaffold.csproj" -p:PublishProfile=FOR_GITHUB_RELEASE_WINDOWS
+dotnet publish "$NIJO_ROOT/Nijo.AppScaffold/Nijo.AppScaffold.csproj" -p:PublishProfile=FOR_GITHUB_RELEASE_WINDOWS ${RELEASE_VERSION:+-p:Version=$RELEASE_VERSION}
 if [ $? -ne 0 ]; then
   echo "ビルドに失敗しました。"
   exit 1
 fi
 
-dotnet publish "$NIJO_ROOT/Nijo.AppScaffold/Nijo.AppScaffold.csproj" -p:PublishProfile=FOR_GITHUB_RELEASE_OSX
+dotnet publish "$NIJO_ROOT/Nijo.AppScaffold/Nijo.AppScaffold.csproj" -p:PublishProfile=FOR_GITHUB_RELEASE_OSX ${RELEASE_VERSION:+-p:Version=$RELEASE_VERSION}
 if [ $? -ne 0 ]; then
   echo "ビルドに失敗しました。"
   exit 1

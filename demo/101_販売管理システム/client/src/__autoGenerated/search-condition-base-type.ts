@@ -2,6 +2,7 @@
 // このファイルは自動生成されました。このファイルの内容を直接書き換えても、次回の自動生成処理で上書きされるのでご注意ください。
 // ※ このファイルを生成したクラス  : SearchCondition.cs
 // ※ このファイルを生成したメソッド: RenderTsBaseType
+// ※ このファイルを生成した nijo のバージョン: 0.0.0-dev
 
 /** 検索条件の基底型 */
 export type SearchConditionBaseType<TFilter, TSortMember extends string> = {

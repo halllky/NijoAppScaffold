@@ -2,6 +2,7 @@
 // このファイルは自動生成されました。このファイルの内容を直接書き換えても、次回の自動生成処理で上書きされるのでご注意ください。
 // ※ このファイルを生成したクラス  : ApplicationService.cs
 // ※ このファイルを生成したメソッド: RenderDeclaring
+// ※ このファイルを生成した nijo のバージョン: 0.0.0-dev
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
