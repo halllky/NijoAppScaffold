@@ -2,7 +2,7 @@ namespace MyApp;
 
 partial class OverridedApplicationService {
     protected override async Task OnExecute通知すべて既読Async(MessageSetter messages, OperationContext context) {
-        // 作成者・更新者などを記録するため、DB を直接更新せず、1件ずつ保存の処理に渡す。
+        // 更新者・更新日時などを記録するため、DB を直接更新せず、読み込んだ通知を保存の処理に渡す。
         // 書き込むのは宛先の本人だけなので、ここで読み込んだ時点のバージョンで楽観排他をかける
         var unread = await DbContext.LoadForEdit通知Async(query => Filter自分宛て(query).Where(n => n.既読日時 == null));
 

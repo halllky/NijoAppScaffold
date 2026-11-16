@@ -49,9 +49,9 @@ partial class OverridedApplicationService {
 
     /// <summary>
     /// 通知をログインユーザー宛てのものに絞る。
-    /// 通知の一覧・既読・件数の処理はすべてこれを通し、他のユーザー宛ての通知を見たり変えたりできないようにする。
+    /// 利用者の操作で通知を参照・変更する処理は、他のユーザー宛ての通知を扱わないよう、これで絞ること。
     /// </summary>
-    /// <exception cref="InvalidOperationException">ログインしていない場合。通知の処理はログインしていなければ関門で弾かれるので、起きない</exception>
+    /// <exception cref="InvalidOperationException">ログインしていない場合</exception>
     private IQueryable<通知DbEntity> Filter自分宛て(IQueryable<通知DbEntity> query) {
         var 従業員番号 = LoginUser?.従業員番号 ?? throw new InvalidOperationException("ログインしていない状態で、ログインユーザー宛ての通知が参照されました。");
         return query.Where(n => n.宛先 == 従業員番号);
