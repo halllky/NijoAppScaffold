@@ -199,6 +199,50 @@ partial class DB接続あり_更新あり {
         Assert.DoesNotThrow(() => ジョブキュー.Create(scope.ServiceProvider), "アプリケーションに定義された種類の名前は重複していない");
     }
 
+    [Test]
+    [Category("DB接続あり（更新あり）")]
+    public async Task クリーンナップはログインユーザーのいないジョブとして実行できる() {
+        var scope = TestUtilImpl.Instance.CreateScope(nameof(クリーンナップはログインユーザーのいないジョブとして実行できる));
+        var queue = CreateジョブキューFor(scope, OverridedApplicationService.クリーンナップのジョブ);
+        var id = await RegisterジョブAsAsync(scope, null, OverridedApplicationService.クリーンナップのジョブ);
+
+        await queue.Run次のジョブAsync(CancellationToken.None);
+
+        var job = await Loadジョブ(scope, id);
+        Assert.That(job.状態, Is.EqualTo(ジョブの状態.正常終了), job.結果メッセージ);
+        Assert.That(OverridedApplicationService.クリーンナップのジョブ.予定, Is.Not.Null, "クリーンナップは定期的に実行する");
+    }
+
+    [Test]
+    [Category("DB接続あり（更新あり）")]
+    public async Task クリーンナップは保存期間を過ぎた終わったジョブの記録と作業フォルダを削除する() {
+        var scope = TestUtilImpl.Instance.CreateScope(nameof(クリーンナップは保存期間を過ぎた終わったジョブの記録と作業フォルダを削除する));
+        var app = scope.App;
+        var db = app.DbContext;
+        var expired = app.CurrentTime - OverridedApplicationService.終わったジョブの保存期間 - TimeSpan.FromMinutes(1);
+        var recent = app.CurrentTime - OverridedApplicationService.終わったジョブの保存期間 + TimeSpan.FromMinutes(1);
+        await Add従業員Async(db, "ADMIN", 権限区分.システム管理者);
+        db.ジョブDbSet.AddRange(
+            Newジョブ("保存期間を過ぎた正常終了", ジョブの状態.正常終了, Environment.MachineName, 終了日時: expired),
+            Newジョブ("保存期間を過ぎた異常終了", ジョブの状態.異常終了, Environment.MachineName, 終了日時: expired),
+            Newジョブ("保存期間内の正常終了", ジョブの状態.正常終了, Environment.MachineName, 終了日時: recent),
+            Newジョブ("古い待機", ジョブの状態.待機, null));
+        await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
+        foreach (var id in new[] { "保存期間を過ぎた正常終了", "保存期間内の正常終了", "記録の無いジョブ" }) {
+            Directory.CreateDirectory(Path.Combine(app.Settings.Job.Get作業フォルダ(id), "spool"));
+        }
+
+        await using (var request = await NewRequestAsAsync(scope, "ADMIN")) {
+            await request.Value.ExecuteクリーンナップAsync(new MessageSetter([], new()), new OperationContext { ValidationOnly = false });
+        }
+
+        var remaining = await db.ジョブDbSet.Select(j => j.ジョブID).ToListAsync();
+        Assert.That(remaining, Is.EquivalentTo(new[] { "保存期間内の正常終了", "古い待機" }));
+        var folders = Directory.GetDirectories(app.Settings.Job.WorkDirectory).Select(Path.GetFileName);
+        Assert.That(folders, Is.EquivalentTo(new[] { "保存期間内の正常終了" }));
+    }
+
     private static readonly ジョブの種類 何もしないジョブ = new("何もしないジョブ", (app, job) => Task.CompletedTask);
 
     /// <summary>
@@ -247,12 +291,13 @@ partial class DB接続あり_更新あり {
     /// <summary>
     /// テストの前提となるジョブ。ジョブIDには、どのジョブかを見分けるための名前を入れる。
     /// </summary>
-    private static ジョブDbEntity Newジョブ(string ジョブID, ジョブの状態 状態, string? 実行したサーバー, string? 起動したユーザー = null) => new() {
+    private static ジョブDbEntity Newジョブ(string ジョブID, ジョブの状態 状態, string? 実行したサーバー, string? 起動したユーザー = null, DateTime? 終了日時 = null) => new() {
         ジョブID = ジョブID,
         種類 = 何もしないジョブ.Name,
         状態 = 状態,
         実行したサーバー = 実行したサーバー,
         起動したユーザー = 起動したユーザー,
+        終了日時 = 終了日時,
         Version = 0,
     };
 }

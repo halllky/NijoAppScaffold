@@ -9,6 +9,11 @@ namespace MyApp;
 partial class OverridedApplicationService {
 
     /// <summary>
+    /// 終わったジョブの記録と作業フォルダを残しておく期間。これを過ぎたものはクリーンナップで削除する。
+    /// </summary>
+    public static readonly TimeSpan 終わったジョブの保存期間 = TimeSpan.FromDays(90);
+
+    /// <summary>
     /// ジョブを登録する。登録したジョブは、サーバーのプロセスの中で、登録された順に後から実行される。
     /// 業務のデータと一緒に確定させるため、開始したトランザクションの中で呼ぶこと。業務の処理が取り消されれば、ジョブも登録されない。
     /// ログインユーザーがいれば、画面から起動したジョブとして、そのユーザーを起動したユーザーに記録する。
@@ -163,5 +168,38 @@ partial class OverridedApplicationService {
             .Where(j => j.状態 == ジョブの状態.実行中 && j.実行したサーバー == Environment.MachineName)
             .Select(j => j.ジョブID!)
             .ToArrayAsync();
+    }
+
+    /// <summary>
+    /// クリーンナップで、終わってから保存期間が過ぎたジョブの記録を削除する。
+    /// あわせて、このサーバーの作業フォルダのうち、記録が無くなったジョブのものを削除する。
+    /// 作業フォルダはジョブを実行したサーバーにしかないので、記録を削除したのとは別のサーバーの作業フォルダは、そのサーバーでクリーンナップを実行したときに削除される。
+    /// </summary>
+    /// <returns>削除した記録の件数</returns>
+    private async Task<int> Delete終わったジョブAsync() {
+        var threshold = CurrentTime - 終わったジョブの保存期間;
+        var deletedCount = await DbContext.ジョブDbSet
+            .Where(j => (j.状態 == ジョブの状態.正常終了 || j.状態 == ジョブの状態.異常終了) && j.終了日時 < threshold)
+            .ExecuteDeleteAsync();
+
+        var workDirectory = new DirectoryInfo(Settings.Job.WorkDirectory);
+        if (!workDirectory.Exists) return deletedCount;
+
+        var folderIds = workDirectory.GetDirectories().Select(d => d.Name).ToArray();
+        var existingIds = await DbContext.ジョブDbSet
+            .Where(j => folderIds.Contains(j.ジョブID))
+            .Select(j => j.ジョブID)
+            .ToArrayAsync();
+        foreach (var id in folderIds.Except(existingIds!)) {
+            try {
+                Directory.Delete(Settings.Job.Get作業フォルダ(id), recursive: true);
+            } catch (IOException ex) {
+                // 開いているファイルがあるなど。次回のクリーンナップで改めて削除する
+                Log.LogWarning(ex, "ジョブの作業フォルダを削除できませんでした: {Directory}", id);
+            } catch (UnauthorizedAccessException ex) {
+                Log.LogWarning(ex, "ジョブの作業フォルダを削除できませんでした: {Directory}", id);
+            }
+        }
+        return deletedCount;
     }
 }
