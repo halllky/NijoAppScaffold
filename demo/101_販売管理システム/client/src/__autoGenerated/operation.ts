@@ -6,6 +6,7 @@
 
 import type * as Util from "./index"
 import type * as EnumDefs from "./enum-defs"
+import type * as ジョブ一覧 from "./models/ジョブ一覧"
 import type * as パスワード再発行Parameter from "./models/パスワード再発行Parameter"
 import type * as パスワード変更Parameter from "./models/パスワード変更Parameter"
 import type * as ログインParameter from "./models/ログインParameter"
@@ -45,6 +46,7 @@ export const Endpoint: { [K in Name]: string } = {
   '商品一覧': 'api/x9a4745f9e55cee71562e84f10ffad340/load',
   '商品在庫増減履歴': 'api/x782009efdef066b92e0cd5c378ca947d/load',
   '通知一覧': 'api/xed21ff27c5fea031206daca10d14e2c1/load',
+  'ジョブ一覧': 'api/xf84b596096fa1bba9f67e99464a3c8bd/load',
   '入荷登録': 'api/xd14f4d89fb2adb0f35190352d52e032d/execute',
   '商品データ取込': 'api/x1da54d663d738b748b77758651bb4522/execute',
   'ログイン': 'api/x7cda55dc0744dd2c61802153d4af8aed/execute',
@@ -79,6 +81,7 @@ export interface ParamType {
   '商品一覧': 商品一覧.SearchCondition
   '商品在庫増減履歴': 商品在庫増減履歴.SearchCondition
   '通知一覧': 通知一覧.SearchCondition
+  'ジョブ一覧': ジョブ一覧.SearchCondition
   '入荷登録': 入荷詳細.DisplayData
   '商品データ取込': Record<string, never> // 引数なし
   'ログイン': ログインParameter.DisplayData
@@ -113,6 +116,7 @@ export interface ReturnType {
   '商品一覧': Util.LoadReturnType<商品一覧.DisplayData>
   '商品在庫増減履歴': Util.LoadReturnType<商品在庫増減履歴.DisplayData>
   '通知一覧': Util.LoadReturnType<通知一覧.DisplayData>
+  'ジョブ一覧': Util.LoadReturnType<ジョブ一覧.DisplayData>
   '入荷登録': 入荷登録ReturnValue.DisplayData
   '商品データ取込': Record<string, never> // 戻り値なし
   'ログイン': ログインユーザー情報.DisplayData
@@ -202,6 +206,11 @@ export const Metadata: { [K in Name]: Metadata } = {
   },
   '通知一覧': {
     displayName: '通知一覧',
+    呼び出し可能な利用者: 'ログインユーザー全員',
+    必要な権限: [],
+  },
+  'ジョブ一覧': {
+    displayName: 'ジョブ一覧',
     呼び出し可能な利用者: 'ログインユーザー全員',
     必要な権限: [],
   },

@@ -5,6 +5,7 @@
 // ※ このファイルを生成した nijo のバージョン: 0.0.0-dev
 
 import type { QueryModelTypeAll } from "./model-types"
+import * as ジョブ一覧 from "./models/ジョブ一覧"
 import * as 入荷一覧 from "./models/入荷一覧"
 import * as 商品 from "./models/商品"
 import * as 商品一覧 from "./models/商品一覧"
@@ -26,6 +27,8 @@ export interface TypeMap {
   '商品在庫増減履歴': 商品在庫増減履歴.DisplayData
   '商品在庫増減履歴/増減履歴引当元売上一覧': 商品在庫増減履歴.DisplayData_増減履歴引当元売上一覧
   '通知一覧': 通知一覧.DisplayData
+  'ジョブ一覧': ジョブ一覧.DisplayData
+  'ジョブ一覧/スプールのファイル': ジョブ一覧.DisplayData_スプールのファイル
 }
 /** DisplayData新規作成関数 */
 export const create: { [K in QueryModelTypeAll]: (() => TypeMap[K]) } = {
@@ -39,4 +42,6 @@ export const create: { [K in QueryModelTypeAll]: (() => TypeMap[K]) } = {
   '商品在庫増減履歴': 商品在庫増減履歴.createNewDisplayData,
   '商品在庫増減履歴/増減履歴引当元売上一覧': 商品在庫増減履歴.createNewDisplayData_増減履歴引当元売上一覧,
   '通知一覧': 通知一覧.createNewDisplayData,
+  'ジョブ一覧': ジョブ一覧.createNewDisplayData,
+  'ジョブ一覧/スプールのファイル': ジョブ一覧.createNewDisplayData_スプールのファイル,
 }

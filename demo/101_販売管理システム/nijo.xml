@@ -774,6 +774,45 @@ Webアプリケーションなので明示的にログアウトしない限り�
         Type="description"
         UniqueId="b1063842-48fa-4373-9ec7-8aefd9b94c1f" />
     </ジョブ>
+    <!--@[ジョブ](380ab309-2f96-4bf0-9500-fd759477bdee) の一覧。システム管理者は全員のジョブを、それ以外のユーザーは自分が起動したジョブだけを返す。
+スプールのファイルは、このサーバーで実行したジョブのものだけを返す。-->
+    <ジョブ一覧
+      Custom-7c1f3a2e-5b84-4d0a-9e61-2f8b4c6d1a35="ログインユーザー全員"
+      IsQueryable="True"
+      UniqueId="9b9830f1-bade-476b-a356-9c789a33d6a3">
+      <ジョブID
+        Type="word"
+        UniqueId="25bba41f-cab4-4c08-99e0-138ca2689bb8" />
+      <種類
+        Type="word"
+        UniqueId="99d76af8-b761-41b0-b66f-2f179aadbaf1" />
+      <状態
+        Type="ジョブの状態"
+        UniqueId="178fa453-30e2-42c7-89a2-444cd56b842f" />
+      <起動したユーザー
+        Type="word"
+        UniqueId="875fbeb0-79af-4720-b33e-79f0ffb4f2c2" />
+      <登録日時
+        Type="datetime"
+        UniqueId="1c0ab617-a0de-480f-ad93-e0d9e43ac5b7" />
+      <開始日時
+        Type="datetime"
+        UniqueId="da756181-fb3c-4c9e-9527-e4da7402bcec" />
+      <終了日時
+        Type="datetime"
+        UniqueId="1ed25361-2a02-4db4-930a-13d256d26fb4" />
+      <結果メッセージ
+        Type="description"
+        UniqueId="5d211cf4-fc39-45a8-9eb9-c15c927f919e" />
+      <!--作業フォルダのスプールに置かれたファイル。DB ではなくサーバーのフォルダから読む。-->
+      <スプールのファイル
+        Type="children"
+        UniqueId="4fa27ed9-7afc-47fc-8f8b-894fcc7f5d2f">
+        <ファイル名
+          Type="word"
+          UniqueId="fa1fe58e-f45c-4fd8-9de5-4ab52d2cd7d3" />
+      </スプールのファイル>
+    </ジョブ一覧>
     <入荷詳細画面初期表示Parameter
       UniqueId="c766195e-c279-4a50-84bb-fcbf46ac9798">
       <入荷ID

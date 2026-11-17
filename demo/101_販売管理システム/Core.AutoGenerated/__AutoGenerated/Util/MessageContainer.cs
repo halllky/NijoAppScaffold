@@ -231,6 +231,8 @@ public partial class MessageSetter : IMessageSetter {
         if (type == typeof(IMessageSetter)) return new MessageSetter(path, context);
         if (type == typeof(MessageSetter)) return new MessageSetter(path, context);
         if (type == typeof(ジョブSaveCommandMessages)) return new ジョブSaveCommandMessages(path, context);
+        if (type == typeof(ジョブ一覧DisplayDataMessages)) return new ジョブ一覧DisplayDataMessages(path, context);
+        if (type == typeof(ジョブ一覧SearchConditionMessages)) return new ジョブ一覧SearchConditionMessages(path, context);
         if (type == typeof(セッションSaveCommandMessages)) return new セッションSaveCommandMessages(path, context);
         if (type == typeof(パスワード再発行ParameterMessages)) return new パスワード再発行ParameterMessages(path, context);
         if (type == typeof(パスワード変更ParameterMessages)) return new パスワード変更ParameterMessages(path, context);
@@ -275,6 +277,8 @@ public partial class MessageSetter : IMessageSetter {
             if (itemType == typeof(IMessageSetter)) return new MessageSetterList<IMessageSetter>(path, index => new MessageSetter([.. path, index.ToString()], context), context);
             if (itemType == typeof(MessageSetter)) return new MessageSetterList<MessageSetter>(path, index => new MessageSetter([.. path, index.ToString()], context), context);
             if (itemType == typeof(ジョブSaveCommandMessages)) return new MessageSetterList<ジョブSaveCommandMessages>(path, index => new ジョブSaveCommandMessages([.. path, index.ToString()], context), context);
+            if (itemType == typeof(ジョブ一覧DisplayDataMessages)) return new MessageSetterList<ジョブ一覧DisplayDataMessages>(path, index => new ジョブ一覧DisplayDataMessages([.. path, index.ToString()], context), context);
+            if (itemType == typeof(ジョブ一覧SearchConditionMessages)) return new MessageSetterList<ジョブ一覧SearchConditionMessages>(path, index => new ジョブ一覧SearchConditionMessages([.. path, index.ToString()], context), context);
             if (itemType == typeof(セッションSaveCommandMessages)) return new MessageSetterList<セッションSaveCommandMessages>(path, index => new セッションSaveCommandMessages([.. path, index.ToString()], context), context);
             if (itemType == typeof(パスワード再発行ParameterMessages)) return new MessageSetterList<パスワード再発行ParameterMessages>(path, index => new パスワード再発行ParameterMessages([.. path, index.ToString()], context), context);
             if (itemType == typeof(パスワード変更ParameterMessages)) return new MessageSetterList<パスワード変更ParameterMessages>(path, index => new パスワード変更ParameterMessages([.. path, index.ToString()], context), context);

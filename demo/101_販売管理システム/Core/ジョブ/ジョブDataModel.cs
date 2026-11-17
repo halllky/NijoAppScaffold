@@ -53,6 +53,17 @@ partial class OverridedApplicationService {
     }
 
     /// <summary>
+    /// ジョブをログインユーザーが見てよいものに絞る。システム管理者は全員のジョブを、それ以外のユーザーは自分が起動したジョブだけを見られる。
+    /// 利用者の操作でジョブを参照する処理（一覧、スプールのダウンロード）は、これで絞ること。
+    /// </summary>
+    /// <exception cref="InvalidOperationException">ログインしていない場合</exception>
+    private IQueryable<ジョブDbEntity> Filter見てよいジョブ(IQueryable<ジョブDbEntity> query) {
+        var loginUser = LoginUser ?? throw new InvalidOperationException("ログインしていない状態で、ジョブが参照されました。");
+        if (loginUser.Isシステム管理者) return query;
+        return query.Where(j => j.起動したユーザー == loginUser.従業員番号);
+    }
+
+    /// <summary>
     /// このスコープの中の処理を、そのジョブの処理として実行するようにする。
     /// 画面から起動したジョブは起動したユーザーをログインユーザーとし、定期的なジョブはログインユーザーなしとする。
     /// 作成者・更新者には、ログインユーザーか、いなければジョブの種類を記録する。

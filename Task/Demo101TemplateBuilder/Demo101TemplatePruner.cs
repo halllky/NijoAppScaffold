@@ -43,6 +43,7 @@ public static class Demo101TemplatePruner
         "67e95f3a-6a95-4ae0-8069-b2fbdc68e430", // 通知既読設定Parameter
         "4dc11741-328a-488e-a2f5-7fcec5f6b1f2", // 未読通知件数ReturnValue
         "380ab309-2f96-4bf0-9500-fd759477bdee", // ジョブ
+        "9b9830f1-bade-476b-a356-9c789a33d6a3", // ジョブ一覧
     ];
 
     /// <summary>テンプレートに残す、Commands直下の要素のUniqueId</summary>

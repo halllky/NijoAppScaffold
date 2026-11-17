@@ -6,6 +6,7 @@
 
 import type * as Util from "./index"
 import type { QueryModelType } from "./model-types"
+import * as ジョブ一覧 from "./models/ジョブ一覧"
 import * as 入荷一覧 from "./models/入荷一覧"
 import * as 商品 from "./models/商品"
 import * as 商品一覧 from "./models/商品一覧"
@@ -25,6 +26,7 @@ export interface TypeMap {
   '商品一覧': 商品一覧.SearchCondition
   '商品在庫増減履歴': 商品在庫増減履歴.SearchCondition
   '通知一覧': 通知一覧.SearchCondition
+  'ジョブ一覧': ジョブ一覧.SearchCondition
 }
 /** SearchCondition新規作成関数 */
 export const create: { [K in QueryModelType]: (() => TypeMap[K]) } = {
@@ -36,6 +38,7 @@ export const create: { [K in QueryModelType]: (() => TypeMap[K]) } = {
   '商品一覧': 商品一覧.createNewSearchCondition,
   '商品在庫増減履歴': 商品在庫増減履歴.createNewSearchCondition,
   '通知一覧': 通知一覧.createNewSearchCondition,
+  'ジョブ一覧': ジョブ一覧.createNewSearchCondition,
 }
 /** ソート可能メンバーの型（「昇順」「降順」抜き） */
 export interface SortableMemberTypeMap {
@@ -47,6 +50,7 @@ export interface SortableMemberTypeMap {
   '商品一覧': 商品一覧.SortableMember
   '商品在庫増減履歴': 商品在庫増減履歴.SortableMember
   '通知一覧': 通知一覧.SortableMember
+  'ジョブ一覧': ジョブ一覧.SortableMember
 }
 /** ソート可能メンバー一覧取得関数 */
 export const getSortableMembers: { [K in QueryModelType]: (() => string[]) } = {
@@ -58,6 +62,7 @@ export const getSortableMembers: { [K in QueryModelType]: (() => string[]) } = {
   '商品一覧': 商品一覧.getSortableMember,
   '商品在庫増減履歴': 商品在庫増減履歴.getSortableMember,
   '通知一覧': 通知一覧.getSortableMember,
+  'ジョブ一覧': ジョブ一覧.getSortableMember,
 }
 /** クエリモデルのメタデータ */
 export const metadata: { [K in QueryModelType]: { displayData: Util.AggregateMetadata.Table, searchCondition: Util.AggregateMetadata.Table } } = {
@@ -69,4 +74,5 @@ export const metadata: { [K in QueryModelType]: { displayData: Util.AggregateMet
   '商品一覧': 商品一覧.metadata,
   '商品在庫増減履歴': 商品在庫増減履歴.metadata,
   '通知一覧': 通知一覧.metadata,
+  'ジョブ一覧': ジョブ一覧.metadata,
 }

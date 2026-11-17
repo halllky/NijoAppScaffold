@@ -27,6 +27,7 @@ export type QueryModelType
   | '商品一覧'
   | '商品在庫増減履歴'
   | '通知一覧'
+  | 'ジョブ一覧'
 
 /** QueryModelのルート集約, Child, Children の集約名。 */
 export type QueryModelTypeAll
@@ -40,6 +41,8 @@ export type QueryModelTypeAll
   | '商品在庫増減履歴'
   | '商品在庫増減履歴/増減履歴引当元売上一覧'
   | '通知一覧'
+  | 'ジョブ一覧'
+  | 'ジョブ一覧/スプールのファイル'
 
 /** ほかの集約から参照されているQueryModelの種類の一覧 */
 export type ReferedQueryModelType
@@ -130,6 +133,7 @@ export function getQueryModelTypeList(): QueryModelType[] {
     '商品一覧',
     '商品在庫増減履歴',
     '通知一覧',
+    'ジョブ一覧',
   ]
 }
 

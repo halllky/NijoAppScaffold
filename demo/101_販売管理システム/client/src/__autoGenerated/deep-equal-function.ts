@@ -8,6 +8,7 @@ import type * as Util from "./index"
 import type { QueryModelType, StructureModelDisplayDataType } from "./model-types"
 import type * as DisplayData from "./display-data"
 import type * as StructureModelDisplayData from "./structure-model-display-data"
+import * as ジョブ一覧 from "./models/ジョブ一覧"
 import * as パスワード再発行Parameter from "./models/パスワード再発行Parameter"
 import * as パスワード変更Parameter from "./models/パスワード変更Parameter"
 import * as ログインParameter from "./models/ログインParameter"
@@ -73,6 +74,7 @@ export const deepEqualFunction: {
   '商品一覧': 商品一覧.deepEqual,
   '商品在庫増減履歴': 商品在庫増減履歴.deepEqual,
   '通知一覧': 通知一覧.deepEqual,
+  'ジョブ一覧': ジョブ一覧.deepEqual,
   '入荷詳細': 入荷詳細.deepEqual,
   'パスワード再発行Parameter': パスワード再発行Parameter.deepEqual,
   '従業員一括更新Parameter': 従業員一括更新Parameter.deepEqual,

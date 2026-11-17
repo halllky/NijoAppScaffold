@@ -243,6 +243,58 @@ partial class DB接続あり_更新あり {
         Assert.That(folders, Is.EquivalentTo(new[] { "保存期間内の正常終了" }));
     }
 
+    [Test]
+    [Category("DB接続あり（更新あり）")]
+    public async Task ジョブの一覧は自分が起動したジョブだけを返しシステム管理者には全員のジョブを返す() {
+        var scope = TestUtilImpl.Instance.CreateScope(nameof(ジョブの一覧は自分が起動したジョブだけを返しシステム管理者には全員のジョブを返す));
+        var db = scope.App.DbContext;
+        await Add従業員Async(db, "ADMIN", 権限区分.システム管理者);
+        await Add従業員Async(db, "USER_A");
+        db.ジョブDbSet.AddRange(
+            Newジョブ("USER_Aのジョブ", ジョブの状態.待機, null, 起動したユーザー: "USER_A"),
+            Newジョブ("USER_Bのジョブ", ジョブの状態.待機, null, 起動したユーザー: "USER_B"),
+            Newジョブ("定期的なジョブ", ジョブの状態.待機, null));
+        await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
+
+        Assert.That(await LoadジョブIDsAsync(scope, "USER_A"), Is.EquivalentTo(new[] { "USER_Aのジョブ" }));
+        Assert.That(await LoadジョブIDsAsync(scope, "ADMIN"), Is.EquivalentTo(new[] { "USER_Aのジョブ", "USER_Bのジョブ", "定期的なジョブ" }));
+    }
+
+    [Test]
+    [Category("DB接続あり（更新あり）")]
+    public async Task スプールのファイルは起動したユーザーとシステム管理者だけがダウンロードできる() {
+        var scope = TestUtilImpl.Instance.CreateScope(nameof(スプールのファイルは起動したユーザーとシステム管理者だけがダウンロードできる));
+        var ファイルを作るジョブ = new ジョブの種類("ファイルを作るジョブ", (app, job) => File.WriteAllTextAsync(Path.Combine(job.スプールフォルダ, "結果.csv"), "a,b"));
+        var queue = CreateジョブキューFor(scope, ファイルを作るジョブ);
+        await Add従業員Async(scope.App.DbContext, "ADMIN", 権限区分.システム管理者);
+        await Add従業員Async(scope.App.DbContext, "USER_A");
+        await Add従業員Async(scope.App.DbContext, "USER_B");
+        var id = await RegisterジョブAsAsync(scope, "USER_A", ファイルを作るジョブ);
+        await queue.Run次のジョブAsync(CancellationToken.None);
+
+        Assert.That(await FindスプールのファイルAsAsync(scope, "USER_A", id, "結果.csv"), Is.Not.Null);
+        Assert.That(await FindスプールのファイルAsAsync(scope, "ADMIN", id, "結果.csv"), Is.Not.Null);
+        Assert.That(await FindスプールのファイルAsAsync(scope, "USER_B", id, "結果.csv"), Is.Null, "他のユーザーが起動したジョブのファイルはダウンロードできない");
+        Assert.That(await FindスプールのファイルAsAsync(scope, "USER_A", id, "存在しない.csv"), Is.Null);
+        Assert.That(await FindスプールのファイルAsAsync(scope, "USER_A", id, "../../appsettings.json"), Is.Null, "スプールの外のファイルは指定できない");
+
+        await using var request = await NewRequestAsAsync(scope, "USER_A");
+        var loaded = await request.Value.LoadAsync(new ジョブ一覧SearchCondition(), new ジョブ一覧SearchConditionMessages([], new()), new OperationContext { ValidationOnly = false });
+        Assert.That(loaded!.CurrentPageItems.Single().スプールのファイル.Select(f => f.ファイル名), Is.EqualTo(new[] { "結果.csv" }), "一覧にはスプールのファイルの名前が載る");
+    }
+
+    private static async Task<string[]> LoadジョブIDsAsync(TestScopeImpl scope, string ログインユーザー) {
+        await using var request = await NewRequestAsAsync(scope, ログインユーザー);
+        var loaded = await request.Value.LoadAsync(new ジョブ一覧SearchCondition(), new ジョブ一覧SearchConditionMessages([], new()), new OperationContext { ValidationOnly = false });
+        return loaded!.CurrentPageItems.Select(j => j.ジョブID!).ToArray();
+    }
+
+    private static async Task<string?> FindスプールのファイルAsAsync(TestScopeImpl scope, string ログインユーザー, string ジョブID, string ファイル名) {
+        await using var request = await NewRequestAsAsync(scope, ログインユーザー);
+        return await request.Value.FindスプールのファイルAsync(ジョブID, ファイル名);
+    }
+
     private static readonly ジョブの種類 何もしないジョブ = new("何もしないジョブ", (app, job) => Task.CompletedTask);
 
     /// <summary>
