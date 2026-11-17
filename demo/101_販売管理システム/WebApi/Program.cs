@@ -61,7 +61,7 @@ try {
     // 同じ操作が二重に処理されるのを防ぐための冪等キー
     builder.Services.AddScoped<MyApp.Core.Idempotency.IIdempotencyKeyProvider, IdempotencyKeyProviderInWebApi>();
 
-    // ジョブの実行。サーバーの停止のときに、実行中のジョブが終わるのを待つ時間は設定で決める
+    // ジョブの実行。サーバーの停止時に実行中のジョブの終了を待つ時間は、設定ファイルで指定する
     builder.Services.AddHostedService<JobWorker>();
     builder.Services.AddOptions<HostOptions>().Configure<RuntimeSetting>((options, settings) => {
         options.ShutdownTimeout = TimeSpan.FromSeconds(settings.Job.ShutdownTimeoutSeconds);
@@ -158,7 +158,7 @@ try {
     // 公開するかどうかとログインの要否は、nijo.xml で処理ごとに宣言された「呼び出し可能な利用者」で決まる
     app.MapOperationEndpoints();
 
-    // ジョブのスプールのファイルのダウンロード
+    // ジョブのスプールのファイルをダウンロードするエンドポイント
     app.MapJobSpoolDownload();
 
     // 存在しないパスへのリクエストは index.html を返すようにし、

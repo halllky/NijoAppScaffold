@@ -68,9 +68,9 @@ export function buttonColumn<TRow>(
 export type GridLink = {
   /** リンクの文言 */
   text: string
-  /** リンク先の画面内 URL。download を指定したときは、ダウンロードするファイルのサーバーの URL */
+  /** リンク先の画面内 URL。download を指定した場合は、ダウンロードするファイルのサーバー上の URL */
   to: string
-  /** 指定すると、画面を移動せず、リンク先のファイルをこの名前で保存する */
+  /** 指定すると、画面遷移せず、リンク先のファイルをこの名前でダウンロードする */
   download?: string
 }
 
@@ -105,7 +105,7 @@ export function linkColumn<TRow>(
   return {
     ...rest,
     renderHeader: () => renderHeader(header),
-    // renderBody は行の値を受け取れないので、各リンクの文言・リンク先・保存するファイル名（画面内リンクなら空文字）を順に並べて渡す
+    // renderBody は行の値を受け取れないので、各リンクの文言・リンク先・ダウンロード時のファイル名（画面内リンクなら空文字）を順に並べて渡す
     getValuesForRender: row => getLinks(row).flatMap(link => [link.text, link.to, link.download ?? '']),
     renderBody: ({ deps, rowKey, getRow }) => (
       <div className={`h-full w-full px-1 py-px text-sm flex gap-x-3 overflow-hidden ${wrap ? 'flex-wrap items-start' : 'items-center'}`}>

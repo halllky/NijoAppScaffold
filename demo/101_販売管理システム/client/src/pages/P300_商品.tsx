@@ -39,8 +39,8 @@ function P300_商品() {
   const form = useSearchConditionForm(商品一覧)
   const { Input, FieldLabel, setServerMessages } = form
 
-  // 商品データの取込。時間がかかるので、サーバーはジョブを登録して、取込の終了を待たずに応答を返す。
-  // 登録できたら、取込の進み具合を確かめられるよう、ジョブの一覧を開く
+  // 商品データの取込。時間がかかるので、サーバーはジョブを登録し、取込の完了を待たずに応答を返す。
+  // 登録できたら、取込の状況を確認できるよう、ジョブ一覧画面に遷移する
   const canImport = useCanInvoke()('商品データ取込')
   const callIdempotentOperation = useIdempotentOperation()
   const navigate = ReactRouter.useNavigate()

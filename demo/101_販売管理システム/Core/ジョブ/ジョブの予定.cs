@@ -37,8 +37,8 @@ public sealed class ジョブの予定 {
     private readonly string _説明;
 
     /// <summary>
-    /// 前回確かめた日時より後、今以前に、実行する時刻があるかどうか。
-    /// 前回確かめた日時ちょうどの時刻は前回の確認で実行したものとみなし、今ちょうどの時刻は含める。
+    /// 前回の確認日時より後、現在日時以前に、実行予定の時刻があるかどうか。
+    /// 前回の確認日時ちょうどの予定は前回の確認で実行済みとみなすので含めず、現在日時ちょうどの予定は含める。
     /// </summary>
     public bool Has予定の時刻(DateTime 前回確かめた日時, DateTime 今) {
         for (var date = DateOnly.FromDateTime(前回確かめた日時); date <= DateOnly.FromDateTime(今); date = date.AddDays(1)) {

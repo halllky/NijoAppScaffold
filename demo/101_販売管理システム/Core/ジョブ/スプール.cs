@@ -6,13 +6,13 @@ namespace MyApp;
 partial class OverridedApplicationService {
 
     /// <summary>
-    /// ログインユーザーがダウンロードしてよい、スプールのファイルの絶対パスを返す。
-    /// ダウンロードしてよいのは、ジョブを起動したユーザーとシステム管理者だけ。
-    /// 見てよくないジョブのファイルは、存在しないファイルと同じに扱い、存在することも知らせない。
+    /// ログインユーザーがダウンロードできる、スプールのファイルの絶対パスを返す。
+    /// ダウンロードできるのは、ジョブを起動したユーザーとシステム管理者だけ。
+    /// 権限のないジョブのファイルは、存在しないファイルと同じように扱い、存在すること自体を知らせない。
     /// </summary>
-    /// <param name="ジョブID">ジョブの識別子</param>
-    /// <param name="ファイル名">スプールのフォルダの中のファイル名。フォルダの区切りを含むものは受け付けない</param>
-    /// <returns>ファイルの絶対パス。ダウンロードしてよいファイルが無ければ null</returns>
+    /// <param name="ジョブID">ジョブ ID</param>
+    /// <param name="ファイル名">スプールフォルダ内のファイル名。パスの区切り文字を含むものは受け付けない</param>
+    /// <returns>ファイルの絶対パス。ダウンロードできるファイルが無ければ null</returns>
     /// <exception cref="InvalidOperationException">ログインしていない場合</exception>
     public async Task<string?> FindスプールのファイルAsync(string ジョブID, string ファイル名) {
         if (!Isスプールの中のファイル名(ファイル名)) return null;
@@ -25,7 +25,7 @@ partial class OverridedApplicationService {
     }
 
     /// <summary>
-    /// ジョブのスプールのフォルダにあるファイルの名前を返す。
+    /// ジョブのスプールフォルダにあるファイルの名前を返す。
     /// 作業フォルダはジョブを実行したサーバーにしかないので、別のサーバーで実行したジョブでは空になる。
     /// </summary>
     private IEnumerable<string> Getスプールのファイル名(string ジョブID) {
@@ -40,8 +40,8 @@ partial class OverridedApplicationService {
     }
 
     /// <summary>
-    /// スプールのフォルダの直下のファイルを指す名前かどうか。
-    /// ".." やフォルダの区切りで、スプールの外のファイルを指定されないようにするため。
+    /// スプールフォルダ直下のファイルを指す名前かどうか。
+    /// ".." やパスの区切り文字で、スプールフォルダの外のファイルを指定されるのを防ぐため。
     /// </summary>
     private static bool Isスプールの中のファイル名(string ファイル名) {
         return !string.IsNullOrWhiteSpace(ファイル名)

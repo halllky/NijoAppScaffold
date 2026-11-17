@@ -8,12 +8,12 @@ partial class OverridedApplicationService {
 
     /// <summary>
     /// 外部システム（商品管理システム）から商品データを取り込むジョブ。毎日実行し、画面からも起動できる。
-    /// 取り込んだ結果を、商品ごとに1行の CSV にしてスプールに置く。
+    /// 取込結果は、商品ごとに1行の CSV ファイルとしてスプールに出力する。
     /// </summary>
     public static readonly ジョブの種類 商品データ取込のジョブ = new("商品データ取込", (app, job) => app.Run商品データ取込Async(job), ジョブの予定.毎日(new TimeOnly(2, 0)));
 
     /// <summary>
-    /// 商品データ取込のジョブを登録する。取込の終了は待たずに応答を返す。終わったら通知で知らせる。
+    /// 商品データ取込のジョブを登録する。取込の完了を待たずに応答を返し、完了したら通知で知らせる。
     /// </summary>
     protected override async Task OnExecute商品データ取込Async(MessageSetter messages, OperationContext context) {
         context.Confirms.Add("商品データの取込を開始します。終わったら通知でお知らせします。よろしいですか？");
@@ -25,8 +25,8 @@ partial class OverridedApplicationService {
     }
 
     /// <summary>
-    /// 商品データを取り込む。取り込めない商品があっても残りの商品は取り込み、最後に異常終了とする。
-    /// トランザクションの範囲は商品1件なので、取り込めた商品は異常終了しても取り消されない。
+    /// 商品データを取り込む。取り込めない商品があっても残りの商品の取込は続け、最後に異常終了とする。
+    /// トランザクションは商品1件ごとなので、異常終了しても、取り込めた商品はロールバックされない。
     /// </summary>
     private async Task Run商品データ取込Async(実行中のジョブ job) {
         var results = new List<(Core.外部システム.商品管理システム.ProductImportData Item, string Result)>();
@@ -50,7 +50,7 @@ partial class OverridedApplicationService {
     private const string 取込結果_更新 = "更新";
 
     /// <summary>
-    /// 商品1件を、外部システム側IDで探して、新規登録または更新する。
+    /// 商品1件を、外部システム側IDで検索し、新規登録または更新する。
     /// </summary>
     /// <returns>取込の結果。登録・更新、または取り込めなかった理由</returns>
     private async Task<string> Import商品Async(Core.外部システム.商品管理システム.ProductImportData item) {
@@ -98,7 +98,7 @@ partial class OverridedApplicationService {
     }
 
     /// <summary>
-    /// 取込の結果を CSV に書く。表計算ソフトでそのまま開けるよう、BOM 付きの UTF-8 にする。
+    /// 取込結果を CSV ファイルに出力する。Excel で開いても文字化けしないよう、BOM 付きの UTF-8 にする。
     /// </summary>
     private static async Task Write取込結果Async(string path, IEnumerable<(Core.外部システム.商品管理システム.ProductImportData Item, string Result)> results) {
         var csv = new StringBuilder();

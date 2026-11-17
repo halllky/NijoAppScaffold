@@ -82,7 +82,7 @@ partial class OverridedApplicationService {
             options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
         });
 
-        // ジョブ。登録されたジョブを取り出して実行する
+        // ジョブのキュー。登録されたジョブを取り出して実行する
         services.AddSingleton(Core.ジョブ.ジョブキュー.Create);
 
         // ログインユーザー

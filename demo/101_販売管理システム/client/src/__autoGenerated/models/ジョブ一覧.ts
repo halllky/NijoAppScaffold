@@ -357,7 +357,7 @@ export const metadata = {
       isOutsideTree: false,
       uniqueId: '4fa27ed9-7afc-47fc-8f8b-894fcc7f5d2f',
       displayName: 'スプールのファイル',
-      comment: '作業フォルダのスプールに置かれたファイル。DB ではなくサーバーのフォルダから読む。',
+      comment: 'スプールに出力されたファイル。DB ではなくサーバーのフォルダから取得する。',
       members: ['スプールのファイル.ファイル名'],
     },
     'スプールのファイル.ファイル名': {
@@ -440,7 +440,7 @@ export const metadata = {
       isOutsideTree: false,
       uniqueId: '4fa27ed9-7afc-47fc-8f8b-894fcc7f5d2f',
       displayName: 'スプールのファイル',
-      comment: '作業フォルダのスプールに置かれたファイル。DB ではなくサーバーのフォルダから読む。',
+      comment: 'スプールに出力されたファイル。DB ではなくサーバーのフォルダから取得する。',
       members: ['スプールのファイル.ファイル名'],
     },
     'スプールのファイル.ファイル名': {

@@ -6,7 +6,7 @@ namespace MyApp.Core.ジョブ;
 /// <summary>
 /// ジョブの種類。種類の名前と、ジョブの本体と、定期的に実行する種類ならその予定をもつ。
 /// 種類は <see cref="OverridedApplicationService"/> の public static readonly のフィールドとして定義する。
-/// 業務のフォルダを削除すれば、その業務のジョブの種類も消えるように、種類の一覧をどこかに列挙することはしない。
+/// 業務のフォルダを削除するだけでその業務のジョブの種類も消えるよう、種類の一覧はどこにも列挙しない。
 /// 引数をとる種類は <see cref="ジョブの種類{TArgument}"/> で定義する。
 /// </summary>
 /// <example>
@@ -57,9 +57,9 @@ public class ジョブの種類 {
 }
 
 /// <summary>
-/// 引数をとるジョブの種類。引数は JSON にしてジョブのテーブルに保存し、実行するときに元の型に戻して本体に渡す。
-/// 引数は登録から実行までの間にプログラムが変わっても読めるよう、単純な値だけをもつ型にすること。
-/// 定期的なジョブは引数を渡す者がいないので、この種類では予定を指定できない。
+/// 引数をとるジョブの種類。引数は JSON にシリアライズしてジョブのテーブルに保存し、実行時にデシリアライズして本体に渡す。
+/// 登録から実行までの間にプログラムがバージョンアップされても読み込めるよう、引数の型は単純な値だけをもつ型にすること。
+/// 定期実行のジョブには引数を渡す呼び出し元がいないので、この種類には予定を指定できない。
 /// </summary>
 /// <typeparam name="TArgument">引数の型</typeparam>
 public sealed class ジョブの種類<TArgument> : ジョブの種類 {
@@ -73,7 +73,7 @@ public sealed class ジョブの種類<TArgument> : ジョブの種類 {
     internal override bool Has引数 => true;
 
     /// <summary>
-    /// 引数をジョブのテーブルに保存する形にする。
+    /// 引数をジョブのテーブルに保存する形式にシリアライズする。
     /// </summary>
     internal static string SerializeArgument(TArgument argument) {
         return JsonSerializer.Serialize(argument, JSON_OPTIONS);

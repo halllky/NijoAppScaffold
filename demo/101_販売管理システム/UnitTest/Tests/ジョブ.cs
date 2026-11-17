@@ -298,7 +298,7 @@ partial class DB接続あり_更新あり {
     private static readonly ジョブの種類 何もしないジョブ = new("何もしないジョブ", (app, job) => Task.CompletedTask);
 
     /// <summary>
-    /// テスト用のジョブの種類だけを実行するジョブの列を作る。
+    /// テスト用のジョブの種類だけを扱うジョブキューを作る。
     /// </summary>
     private static ジョブキュー CreateジョブキューFor(TestScopeImpl scope, params ジョブの種類[] 種類) {
         return new(scope.ServiceProvider.GetRequiredService<IServiceScopeFactory>(), NullLogger<ジョブキュー>.Instance, 種類);
@@ -306,7 +306,7 @@ partial class DB接続あり_更新あり {
 
     /// <summary>
     /// 指定した従業員がログインしている状態で、ジョブを登録する。従業員が null ならログインしていない状態で登録する。
-    /// 登録日時を指定すると、登録した後に書き換える。
+    /// 登録日時を指定した場合は、登録後にその日時で上書きする。
     /// </summary>
     private static Task<string> RegisterジョブAsAsync(TestScopeImpl scope, string? 従業員番号, ジョブの種類 種類, DateTime? 登録日時 = null) {
         return RegisterジョブAsAsync(scope, 従業員番号, app => app.RegisterジョブAsync(種類), 登録日時);
@@ -341,7 +341,7 @@ partial class DB接続あり_更新あり {
     }
 
     /// <summary>
-    /// テストの前提となるジョブ。ジョブIDには、どのジョブかを見分けるための名前を入れる。
+    /// テストの前提となるジョブ。ジョブIDには、どのジョブかを識別するための名前を入れる。
     /// </summary>
     private static ジョブDbEntity Newジョブ(string ジョブID, ジョブの状態 状態, string? 実行したサーバー, string? 起動したユーザー = null, DateTime? 終了日時 = null) => new() {
         ジョブID = ジョブID,

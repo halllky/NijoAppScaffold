@@ -15,7 +15,7 @@ partial class OverridedApplicationService {
     }
 
     /// <summary>
-    /// スプールのファイルは DB に無いので、その名前では絞り込めない。
+    /// スプールのファイルは DB に保存していないので、ファイル名では絞り込めない。
     /// </summary>
     public override void ValidateSearchCondition(ジョブ一覧SearchCondition searchCondition, ジョブ一覧SearchConditionMessages messages, OperationContext context) {
         base.ValidateSearchCondition(searchCondition, messages, context);
@@ -38,7 +38,7 @@ partial class OverridedApplicationService {
     }
 
     /// <summary>
-    /// スプールのファイルは DB に無いので、表示するページのジョブについてだけ、サーバーのフォルダから読む。
+    /// スプールのファイルは DB に保存していないので、表示中のページのジョブについてだけ、サーバーのフォルダからファイル名を取得する。
     /// </summary>
     protected override IEnumerable<ジョブ一覧DisplayData> OnAfterLoaded(IEnumerable<ジョブ一覧DisplayData> currentPageItems, ジョブ一覧SearchCondition searchCondition, OperationContext context) {
         foreach (var item in currentPageItems) {

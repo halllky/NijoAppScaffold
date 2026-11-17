@@ -9,17 +9,17 @@ namespace MyApp;
 partial class OverridedApplicationService {
 
     /// <summary>
-    /// 終わったジョブの記録と作業フォルダを残しておく期間。これを過ぎたものはクリーンナップで削除する。
+    /// 終了したジョブの記録と作業フォルダの保存期間。これを過ぎたものはクリーンナップで削除する。
     /// </summary>
     public static readonly TimeSpan 終わったジョブの保存期間 = TimeSpan.FromDays(90);
 
     /// <summary>
-    /// ジョブを登録する。登録したジョブは、サーバーのプロセスの中で、登録された順に後から実行される。
-    /// 業務のデータと一緒に確定させるため、開始したトランザクションの中で呼ぶこと。業務の処理が取り消されれば、ジョブも登録されない。
-    /// ログインユーザーがいれば、画面から起動したジョブとして、そのユーザーを起動したユーザーに記録する。
+    /// ジョブを登録する。登録したジョブは、後からサーバーのプロセス内で登録順に実行される。
+    /// 業務データと一緒に確定させるため、トランザクションの中で呼ぶこと。業務の処理がロールバックされれば、ジョブも登録されない。
+    /// ログインユーザーがいれば画面から起動したジョブとみなし、そのユーザーを起動したユーザーとして記録する。
     /// </summary>
     /// <param name="種類">引数をとらないジョブの種類</param>
-    /// <returns>登録したジョブの識別子</returns>
+    /// <returns>登録したジョブの ID</returns>
     /// <exception cref="InvalidOperationException">トランザクションが開始されていない場合</exception>
     public Task<string> RegisterジョブAsync(ジョブの種類 種類) {
         if (種類.Has引数) throw new ArgumentException($"ジョブの種類「{種類.Name}」には引数を渡してください。", nameof(種類));
@@ -41,7 +41,7 @@ partial class OverridedApplicationService {
         command.状態 = ジョブの状態.待機;
         command.起動したユーザー = LoginUser?.従業員番号;
 
-        // 登録の内容は業務処理のプログラムが決めるので、保存できない内容は利用者の入力ではなくプログラムの誤り
+        // 登録内容は利用者の入力ではなくプログラムが決めるので、保存できない内容はプログラムの誤りとして例外にする
         if (!command.TryValidate(out var validated, out var errors)) {
             throw new InvalidOperationException($"ジョブを登録できません: {string.Join(", ", errors.GetAllMessages())}");
         }
@@ -53,8 +53,8 @@ partial class OverridedApplicationService {
     }
 
     /// <summary>
-    /// ジョブをログインユーザーが見てよいものに絞る。システム管理者は全員のジョブを、それ以外のユーザーは自分が起動したジョブだけを見られる。
-    /// 利用者の操作でジョブを参照する処理（一覧、スプールのダウンロード）は、これで絞ること。
+    /// ジョブを、ログインユーザーに閲覧権限があるものに絞り込む。システム管理者は全員のジョブを、それ以外のユーザーは自分が起動したジョブだけを閲覧できる。
+    /// 利用者の操作でジョブを参照する処理（一覧、スプールのダウンロード）は、必ずこれで絞り込むこと。
     /// </summary>
     /// <exception cref="InvalidOperationException">ログインしていない場合</exception>
     private IQueryable<ジョブDbEntity> Filter見てよいジョブ(IQueryable<ジョブDbEntity> query) {
@@ -64,10 +64,9 @@ partial class OverridedApplicationService {
     }
 
     /// <summary>
-    /// このスコープの中の処理を、そのジョブの処理として実行するようにする。
-    /// 画面から起動したジョブは起動したユーザーをログインユーザーとし、定期的なジョブはログインユーザーなしとする。
-    /// 作成者・更新者には、ログインユーザーか、いなければジョブの種類を記録する。
-    /// 起動したユーザーが削除されていれば、ログインユーザーなしとする。
+    /// この DI スコープ内の処理を、指定したジョブの処理として扱うようにする。
+    /// ログインユーザーは、画面から起動したジョブなら起動したユーザーとし、定期実行のジョブや、起動したユーザーが削除済みの場合はなしとする。
+    /// 作成者・更新者には、ログインユーザーがいればそのユーザーを、いなければジョブの種類を記録する。
     /// </summary>
     internal async Task ActAsジョブAsync(string 種類, string? 起動したユーザー) {
         LoginUser? loginUser = null;
@@ -81,8 +80,8 @@ partial class OverridedApplicationService {
     }
 
     /// <summary>
-    /// 待機中のジョブのうち、最も早く登録されたものを実行中にして返す。
-    /// 他のスレッドや他のサーバーが先に取り出したジョブは、楽観排他で保存に失敗するので、次のジョブを探す。
+    /// 待機中のジョブのうち最も早く登録されたものを、実行中に更新して返す。
+    /// ほかのスレッドやサーバーが先に取り出したジョブは楽観排他エラーで更新に失敗するので、その場合は次のジョブを探す。
     /// </summary>
     /// <returns>取り出したジョブ。待機中のジョブが無ければ null</returns>
     internal async Task<取り出したジョブ?> Take次のジョブAsync() {
@@ -116,10 +115,10 @@ partial class OverridedApplicationService {
     }
 
     /// <summary>
-    /// 取り出したジョブの本体を実行する。作業フォルダとスプールのフォルダは、実行の前に作る。
-    /// 本体が例外を投げたら、Error としてログに出力し、異常終了とする。
+    /// 取り出したジョブの本体を実行する。作業フォルダとスプールフォルダは実行前に作成する。
+    /// 本体が例外を投げたら、Error レベルでログを出力し、異常終了とする。
     /// </summary>
-    /// <returns>終わった状態と、利用者に見せる結果</returns>
+    /// <returns>終了時の状態と、利用者向けの結果のメッセージ</returns>
     internal async Task<(ジョブの状態 状態, string? 結果メッセージ)> Executeジョブの本体Async(取り出したジョブ taken, ジョブの種類 種類, CancellationToken 停止の合図) {
         var job = new 実行中のジョブ(taken.ジョブID, taken.引数, Settings.Job.Get作業フォルダ(taken.ジョブID), 停止の合図);
         try {
@@ -139,7 +138,7 @@ partial class OverridedApplicationService {
 
     /// <summary>
     /// 種類が定義されていないジョブを異常終了とする。
-    /// 登録した後に、その種類を削除したプログラムに入れ替えた場合などに起きる。
+    /// ジョブの登録後に、その種類を削除したバージョンのプログラムをリリースした場合などに起きる。
     /// </summary>
     internal (ジョブの状態 状態, string? 結果メッセージ) Fail定義されていない種類のジョブ(string 種類) {
         Log.LogError("ジョブの種類「{Kind}」が定義されていません。", 種類);
@@ -171,8 +170,8 @@ partial class OverridedApplicationService {
     }
 
     /// <summary>
-    /// このサーバーで実行中のまま残っているジョブの識別子を返す。
-    /// サーバーの起動の時点では、このサーバーで実行中のジョブは無いはずなので、前回の停止で中断されたものである。
+    /// このサーバーで実行中のまま残っているジョブの ID を返す。
+    /// サーバーの起動時点では、このサーバーで実行中のジョブは無いはずなので、これらは前回の停止で中断されたものである。
     /// </summary>
     internal async Task<string[]> Load中断されたジョブAsync() {
         return await DbContext.ジョブDbSet
@@ -182,9 +181,9 @@ partial class OverridedApplicationService {
     }
 
     /// <summary>
-    /// クリーンナップで、終わってから保存期間が過ぎたジョブの記録を削除する。
+    /// 終了から保存期間が過ぎたジョブの記録を削除する。クリーンナップで呼ぶ。
     /// あわせて、このサーバーの作業フォルダのうち、記録が無くなったジョブのものを削除する。
-    /// 作業フォルダはジョブを実行したサーバーにしかないので、記録を削除したのとは別のサーバーの作業フォルダは、そのサーバーでクリーンナップを実行したときに削除される。
+    /// 作業フォルダはジョブを実行したサーバーにしかないので、ほかのサーバーの作業フォルダは、そのサーバーでクリーンナップを実行したときに削除される。
     /// </summary>
     /// <returns>削除した記録の件数</returns>
     private async Task<int> Delete終わったジョブAsync() {
@@ -205,7 +204,7 @@ partial class OverridedApplicationService {
             try {
                 Directory.Delete(Settings.Job.Get作業フォルダ(id), recursive: true);
             } catch (IOException ex) {
-                // 開いているファイルがあるなど。次回のクリーンナップで改めて削除する
+                // 使用中のファイルがある場合など。次回のクリーンナップで改めて削除を試みる
                 Log.LogWarning(ex, "ジョブの作業フォルダを削除できませんでした: {Directory}", id);
             } catch (UnauthorizedAccessException ex) {
                 Log.LogWarning(ex, "ジョブの作業フォルダを削除できませんでした: {Directory}", id);

@@ -3,12 +3,12 @@ using System.ComponentModel.DataAnnotations;
 namespace MyApp.Core.ジョブ;
 
 /// <summary>
-/// appsettings.json のジョブの設定セクションに対応する設定クラス。
+/// appsettings.json のジョブに関する設定。
 /// </summary>
 public class JobSettings {
     /// <summary>
     /// ジョブごとの作業フォルダを作るフォルダ。相対パスの場合は appsettings.json のあるフォルダからの相対パス。
-    /// サーバーが複数台のときも、台ごとのフォルダでよい。作業フォルダは、ジョブを実行した台にだけ作られる。
+    /// サーバーが複数台の場合も、共有フォルダにする必要はない。作業フォルダは、ジョブを実行したサーバーにだけ作られる。
     /// </summary>
     [Required]
     public string WorkDirectory { get; set; } = string.Empty;
@@ -18,8 +18,8 @@ public class JobSettings {
     [Range(1, int.MaxValue)]
     public int MaxConcurrency { get; set; }
     /// <summary>
-    /// サーバーの停止のとき、実行中のジョブに停止を伝えてから、終わるのを待つ時間（秒）。
-    /// 過ぎても終わらないジョブは、次の起動のときに中断として異常終了にする。
+    /// サーバーの停止時に、実行中のジョブをキャンセルしてから終了を待つ時間（秒）。
+    /// この時間内に終わらなかったジョブは、次回の起動時に中断として異常終了にする。
     /// </summary>
     [Range(1, int.MaxValue)]
     public int ShutdownTimeoutSeconds { get; set; }

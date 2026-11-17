@@ -8,7 +8,7 @@ partial class OverridedApplicationService {
 
     /// <summary>
     /// クリーンナップを毎日実行するジョブ。
-    /// ジョブはログインユーザーのいない内部の処理なので、システム管理者だけが呼び出せるコマンドを通さず、処理の本体を直接呼ぶ。
+    /// 定期実行のジョブにはログインユーザーがいないので、システム管理者だけが実行できるコマンドを経由せず、処理の本体を直接呼ぶ。
     /// </summary>
     public static readonly ジョブの種類 クリーンナップのジョブ = new("クリーンナップ", async (app, job) => {
         job.結果メッセージ = await app.RunクリーンナップAsync();
@@ -24,7 +24,7 @@ partial class OverridedApplicationService {
     /// <summary>
     /// 古くなったデータを削除する。
     /// </summary>
-    /// <returns>削除した件数の説明</returns>
+    /// <returns>削除した件数を伝える、利用者向けのメッセージ</returns>
     private async Task<string> RunクリーンナップAsync() {
         // 最後に操作してから有効期限が過ぎたセッションを削除。
         // 期限が過ぎたセッションはログインユーザーの特定の時点で無効として扱われるので、ここで消すのは古い行の掃除のため

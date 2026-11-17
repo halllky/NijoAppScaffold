@@ -5,17 +5,18 @@ using Microsoft.Extensions.Logging;
 namespace MyApp.Core.ジョブ;
 
 /// <summary>
-/// DB に登録されたジョブの列。登録されたジョブを取り出して実行し、定期的なジョブを予定どおりに登録する。
-/// このクラスは処理を自分では繰り返さない。待機中のジョブや予定の時刻を繰り返し確かめるのは、呼び出し元の責務である。
-/// ジョブの取り出し・本体の実行・結果の記録は、それぞれ別の DI スコープ（DB コンテキストと現在時刻が別）で行う。
-/// 本体の失敗が結果の記録に影響しないようにするためと、開始と終了の日時を、それぞれの時点の時刻にするため。
-/// DI コンテナに1つだけ登録する。
+/// DB に登録されたジョブのキュー。登録されたジョブを取り出して実行し、定期実行のジョブを予定どおりに登録する。
+/// このクラスはポーリングをしない。待機中のジョブや予定の時刻を定期的に確認するのは、呼び出し元の責務である。
+/// ジョブの取り出し・本体の実行・結果の記録は、それぞれ別の DI スコープで行う。理由は次の2つ。
+/// 本体が失敗して DbContext に保存されない変更が残っても、結果の記録に影響しないようにするため。
+/// 現在時刻はスコープごとに固定されるので、開始日時と終了日時をそれぞれの時点の時刻にするため。
+/// DI コンテナにはシングルトンで登録する。
 /// </summary>
 public sealed class ジョブキュー {
 
     /// <param name="scopeFactory">ジョブの処理ごとの DI スコープを作る</param>
     /// <param name="logger">ジョブの開始と終了のログの出力先</param>
-    /// <param name="種類">実行できるジョブの種類。ふつうは <see cref="OverridedApplicationService"/> に定義されたすべての種類。単体テストでは、テスト用の種類を渡せる</param>
+    /// <param name="種類">実行できるジョブの種類。通常は <see cref="OverridedApplicationService"/> に定義されたすべての種類。単体テストではテスト用の種類を渡せる</param>
     /// <exception cref="InvalidOperationException">種類の名前が重複している場合</exception>
     public ジョブキュー(IServiceScopeFactory scopeFactory, ILogger<ジョブキュー> logger, IEnumerable<ジョブの種類> 種類) {
         _scopeFactory = scopeFactory;
@@ -29,7 +30,7 @@ public sealed class ジョブキュー {
     }
 
     /// <summary>
-    /// <see cref="OverridedApplicationService"/> に定義されたすべての種類を実行するジョブの列。
+    /// <see cref="OverridedApplicationService"/> に定義されたすべての種類を扱うキューを作る。
     /// </summary>
     public static ジョブキュー Create(IServiceProvider services) => new(
         services.GetRequiredService<IServiceScopeFactory>(),
@@ -42,9 +43,9 @@ public sealed class ジョブキュー {
 
     /// <summary>
     /// 待機中のジョブのうち、最も早く登録されたものを1つ取り出して実行し、結果を記録する。
-    /// 実行の間のログには、処理名としてジョブの種類を、処理1回分の識別子としてジョブの識別子を付ける。
+    /// 実行中のログには、処理名としてジョブの種類を、処理1回分の識別子としてジョブ ID を付ける。
     /// </summary>
-    /// <param name="停止の合図">サーバーの停止の合図。ジョブの本体に渡す</param>
+    /// <param name="停止の合図">サーバーの停止時にキャンセルされるトークン。ジョブの本体に渡す</param>
     /// <returns>ジョブを実行したら true。待機中のジョブが無ければ false</returns>
     public async Task<bool> Run次のジョブAsync(CancellationToken 停止の合図) {
         取り出したジョブ? taken;
@@ -75,8 +76,8 @@ public sealed class ジョブキュー {
     }
 
     /// <summary>
-    /// このサーバーで実行中のまま残っているジョブを、中断として異常終了にする。
-    /// サーバーの起動のときに、ジョブの実行を始める前に呼ぶ。中断したジョブを自動で実行し直すことはしない。
+    /// 前回のサーバーの停止時に実行中のまま残ったジョブを、中断として異常終了にする。
+    /// サーバーの起動時、ジョブの実行を始める前に呼ぶ。中断したジョブの自動での再実行はしない。
     /// </summary>
     public async Task Abort中断されたジョブAsync() {
         string[] ids;
@@ -97,11 +98,11 @@ public sealed class ジョブキュー {
     }
 
     /// <summary>
-    /// 定期的に実行するジョブの種類のうち、前回確かめた日時より後、今以前に予定の時刻があるものを登録する。
-    /// 前回確かめた日時はプロセスのメモリーにだけ持つので、サーバーが止まっていた間の予定は登録されない。
+    /// 定期実行のジョブの種類のうち、前回の確認日時より後、現在日時以前に予定の時刻があるものを登録する。
+    /// 前回の確認日時はプロセスのメモリ上にしか保持しないので、サーバーが停止していた間の予定は登録されない。
     /// </summary>
-    /// <param name="前回確かめた日時">前回これを呼んだときの戻り値。サーバーの起動の後、初めて呼ぶときは null を渡す。そのときは何も登録しない</param>
-    /// <returns>今回確かめた日時。次回の呼び出しに渡す</returns>
+    /// <param name="前回確かめた日時">前回これを呼んだときの戻り値。サーバーの起動後の初回は null を渡す。null のときは何も登録しない</param>
+    /// <returns>今回の確認日時。次回の呼び出しに渡す</returns>
     public async Task<DateTime> Register予定のジョブAsync(DateTime? 前回確かめた日時) {
         DateTime now;
         await using (var scope = _scopeFactory.CreateAsyncScope()) {
@@ -124,7 +125,7 @@ public sealed class ジョブキュー {
     }
 
     /// <summary>
-    /// ジョブの結果を、そのジョブの処理として記録する。
+    /// ジョブの結果を記録する。更新者はそのジョブとして記録する。
     /// </summary>
     private async Task Record結果Async(string ジョブID, string 種類, string? 起動したユーザー, ジョブの状態 状態, string? 結果メッセージ) {
         await using var scope = _scopeFactory.CreateAsyncScope();
@@ -137,6 +138,6 @@ public sealed class ジョブキュー {
 }
 
 /// <summary>
-/// 取り出して実行中にしたジョブ
+/// キューから取り出して実行中にしたジョブ
 /// </summary>
 internal sealed record 取り出したジョブ(string ジョブID, string 種類, string? 引数, string? 起動したユーザー);

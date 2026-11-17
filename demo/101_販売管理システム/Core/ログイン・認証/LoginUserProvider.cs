@@ -44,9 +44,9 @@ public class LoginUserProvider : ICurrentUser {
     string ICurrentUser.Name => GetLoginUser()?.従業員番号 ?? _processName ?? _currentProcess.Name;
 
     /// <summary>
-    /// セッションを介さずに、ログインユーザーと処理名を確定させる。
-    /// 利用者のリクエストの外で、決まったユーザーまたは決まった処理として業務処理を実行するとき（ジョブ、ダミーデータの作成）に使う。
-    /// このスコープの中でログインユーザーを参照する前に呼ぶこと。
+    /// セッションを介さずに、ログインユーザーと処理名を設定する。
+    /// ジョブやダミーデータの作成など、利用者のリクエスト以外をきっかけに業務処理を実行するときに使う。
+    /// この DI スコープ内でログインユーザーを参照する前に呼ぶこと。
     /// </summary>
     /// <param name="loginUser">ログインユーザー。ログインユーザーのいない処理では null</param>
     /// <param name="processName">作成者・更新者として記録する処理名。null なら呼び出し元（<see cref="ICurrentProcess"/>）が決めた処理名を使う</param>
