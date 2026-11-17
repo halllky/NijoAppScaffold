@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom"
 import * as EG2 from "@halllky/editable-grid"
 
 /*
- * EditableGrid の、クリックして操作する要素（ボタン・リンク）を置く列の定義。
+ * EditableGrid の、クリックして操作する要素（ボタン・リンク・チェックボックス）を置く列の定義。
  * 行の値をフォームから読むかどうかに依存しないので、フォームと結びつくグリッドにもそうでないグリッドにも使える。
  *
  * どの列も、要素のクリックでセルが選ばれないようにすることと、セルを選んだ状態でのキー操作で要素を起動できることをそろえている。
@@ -123,9 +123,61 @@ export function linkColumn<TRow>(
   }
 }
 
+/**
+ * チェックボックスの列のオプション。
+ * セルの描画はこの列が決めるので、ここでは指定できない。
+ */
+export type CheckBoxColumnOptions<TRow> = ClickableColumnOptionsBase<TRow> & {
+  /**
+   * セルが読み取り専用のときも操作できるようにするなら true。
+   * 未指定の場合、読み取り専用のセル（グリッド全体・行・セルのいずれの指定によるものも含む）では、状態を表示するだけで操作できない。
+   * グリッドの値ではなく、行が表すデータの状態をその場で変える操作（通知を既読にするなど）は true にする。
+   */
+  enabledWhenReadOnly?: boolean
+}
+
+/**
+ * 各行にチェックボックスを1つ置く列。行のもつオンとオフの状態の表示と、その切り替えの操作を1つにまとめたもの。
+ * チェックの状態は getChecked の戻り値だけで決まり、この列は状態をもたない。
+ * onChange で行のデータを変えて getChecked の戻り値が変われば、表示も変わる。
+ * Space でも切り替えられる。
+ */
+export function checkBoxColumn<TRow>(
+  getChecked: (row: TRow) => boolean,
+  onChange: (row: TRow, checked: boolean, rowKey: string) => void,
+  options: CheckBoxColumnOptions<TRow>,
+): EG2.EditableGridLeafColumn<TRow, readonly [boolean]> {
+  const { header, enabledWhenReadOnly, onCellKeyDown, ...rest } = options
+  const checkBoxes = new KeyboardClickTargets([' '])
+
+  return {
+    defaultWidth: 52,
+    disableResizing: true,
+    ...rest,
+    renderHeader: () => renderHeader(header),
+    getValuesForRender: row => [getChecked(row)],
+    renderBody: ({ deps: [checked], getRow, rowKey, isReadOnly }) => (
+      <div className="h-full w-full flex items-center justify-center">
+        <input
+          type="checkbox"
+          checked={checked}
+          disabled={isReadOnly && !enabledWhenReadOnly}
+          onMouseDown={stopPropagation}
+          onChange={e => onChange(getRow(), e.target.checked, rowKey)}
+          ref={checkBoxes.ref(rowKey)}
+          aria-label={header}
+          className="h-4 w-4 cursor-pointer disabled:cursor-default"
+        />
+      </div>
+    ),
+    cellToText: row => getChecked(row) ? 'TRUE' : 'FALSE',
+    onCellKeyDown: args => checkBoxes.handleCellKeyDown(args, onCellKeyDown),
+  }
+}
+
 // -------------------------------------
 
-/** ボタンの列とリンクの列に共通するオプション */
+/** ボタンの列・リンクの列・チェックボックスの列に共通するオプション */
 type ClickableColumnOptionsBase<TRow> = Omit<
   Partial<EG2.EditableGridLeafColumn<TRow>>,
   'renderHeader' | 'renderBody' | 'getValuesForRender' | 'editor' | 'cellToText' | 'textToCell' | 'wrap'

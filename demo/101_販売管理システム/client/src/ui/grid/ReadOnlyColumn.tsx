@@ -6,10 +6,11 @@ import * as EG2 from "@halllky/editable-grid"
  * フォームと結びつかないデータ（検索結果や履歴など）をグリッドに表示するときに使う。
  * フォームの配列を編集するグリッドの列は、フォームと結びついた列定義ヘルパーを使うこと。
  *
- * ボタンやリンクの列は、フォームと結びついたグリッドと共通の実装を button / link として公開している。
+ * クリックして操作する要素の列（ボタン・リンク・チェックボックス）は、button / link / checkBox として公開している。
+ * ボタンとリンクの列は、フォームと結びついたグリッドと共通の実装である。
  */
 
-export { buttonColumn as button, linkColumn as link } from "./ClickableColumn"
+export { buttonColumn as button, linkColumn as link, checkBoxColumn as checkBox } from "./ClickableColumn"
 
 /**
  * 読み取り専用列で指定できるオプション。
@@ -90,7 +91,7 @@ export function numeric<TRow>(
 
 /**
  * 任意の ReactNode を描画する列。
- * クリックして操作する要素を置く場合は、この列ではなく button / link を使うこと。
+ * クリックして操作する要素を置く場合は、この列ではなく button / link / checkBox を使うこと。
  */
 export function custom<TRow>(
   header: React.ReactNode,

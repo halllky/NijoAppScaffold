@@ -46,8 +46,8 @@ function P003_通知() {
     const result = await callOperationAsync('通知既読設定', param, { confirmed: true })
     if (result.type === 'error') setServerMessages(result.messages)
   }
-  const handleToggle既読 = async (row: 通知一覧.DisplayData) => {
-    await set既読(row, !row.既読日時)
+  const handleSet既読 = async (row: 通知一覧.DisplayData, 既読: boolean) => {
+    await set既読(row, 既読)
     reload()
   }
   const handleすべて既読 = async () => {
@@ -84,11 +84,10 @@ function P003_通知() {
         ReadOnlyColumn.link<通知一覧.DisplayData>(
           row => isアプリケーションの中のパス(row.リンク先) ? [{ text: '開く', to: row.リンク先 }] : [],
           { columnId: 'リンク', defaultWidth: 60, disableResizing: true, isFixed: true, onBeforeNavigate: row => set既読(row, true) }),
-        ReadOnlyColumn.text<通知一覧.DisplayData>('', row => row.既読日時 ? '' : '未読', { columnId: '未読', defaultWidth: 52, disableResizing: true }),
+        // 既読かどうかの表示と切り替えを1つにする。変えるのはグリッドの値ではなく通知の既読なので、読み取り専用のグリッドでも操作できるようにする
+        ReadOnlyColumn.checkBox<通知一覧.DisplayData>(row => !!row.既読日時, (row, 既読) => handleSet既読(row, 既読), { columnId: '既読', header: '既読', enabledWhenReadOnly: true }),
         ReadOnlyColumn.text<通知一覧.DisplayData>('日時', row => row.作成日時, { columnId: '作成日時', defaultWidth: 160 }),
         ReadOnlyColumn.text<通知一覧.DisplayData>('本文', row => row.本文, { columnId: '本文', defaultWidth: 480, wrap: true }),
-        // 値を変える操作だが、変えるのはグリッドの値ではなく通知の既読なので、読み取り専用のグリッドでもボタンを表示する
-        ReadOnlyColumn.button<通知一覧.DisplayData>('既読/未読', handleToggle既読, { defaultWidth: 80, showWhenReadOnly: true }),
       ], [location]]}
     />
   )
