@@ -62,7 +62,7 @@ function P003_通知() {
       pageTitle="通知"
       searchConditionDefaultSize={120}
       search={(condition, signal) => callOperationAsync('通知一覧', condition, { signal })}
-      header={(
+      searchResultActions={(
         <Button outline mini onClick={handleすべて既読}>
           すべて既読にする
         </Button>

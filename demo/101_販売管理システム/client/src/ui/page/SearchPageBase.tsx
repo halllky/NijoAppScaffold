@@ -51,6 +51,11 @@ export type SearchPageBaseProps<TSearchCondition extends PageableSearchCondition
   /** ヘッダー部分のページタイトルの横の部分のレイアウト */
   header?: React.ReactNode
   /**
+   * 検索結果の件数の表示の横に置く、検索結果に対する操作（一覧の全件を対象にするボタンなど）。
+   * 検索条件に対する操作ではないものは、検索・クリアのボタンと並ぶ header ではなく、こちらに置く。
+   */
+  searchResultActions?: React.ReactNode
+  /**
    * 検索条件欄。この欄はformタグの内側に配置されます。
    * 検索ボタン・クリアボタンと、どの項目とも紐づかないメッセージはこのコンポーネントが表示するので、ここには含めない。
    */
@@ -321,6 +326,9 @@ export function SearchPageBase<TSearchCondition extends PageableSearchCondition,
                         <>全0件</>
                       )}
                     </div>
+
+                    {/* 検索結果に対する操作 */}
+                    {props.searchResultActions}
 
                     <div className="basis-4"></div>
 
