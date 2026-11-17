@@ -7,7 +7,6 @@ namespace MyApp.Core.ジョブ;
 /// ジョブの種類。種類の名前と、ジョブの本体と、定期的に実行する種類ならその予定をもつ。
 /// 種類は <see cref="OverridedApplicationService"/> の public static readonly のフィールドとして定義する。
 /// 業務のフォルダを削除すれば、その業務のジョブの種類も消えるように、種類の一覧をどこかに列挙することはしない。
-/// 定義した種類は、ジョブの実行のときに集めて名前で引く（<see cref="ジョブキュー"/>）。
 /// 引数をとる種類は <see cref="ジョブの種類{TArgument}"/> で定義する。
 /// </summary>
 /// <example>
