@@ -68,8 +68,10 @@ export function buttonColumn<TRow>(
 export type GridLink = {
   /** リンクの文言 */
   text: string
-  /** リンク先の画面内 URL */
+  /** リンク先の画面内 URL。download を指定したときは、ダウンロードするファイルのサーバーの URL */
   to: string
+  /** 指定すると、画面を移動せず、リンク先のファイルをこの名前で保存する */
+  download?: string
 }
 
 /**
@@ -87,7 +89,7 @@ export type LinkColumnOptions<TRow> = ClickableColumnOptionsBase<TRow> & {
 }
 
 /**
- * 各行に画面内リンクを置く列。1つのセルにリンクを複数置くこともできる。
+ * 各行に画面内リンクか、ファイルをダウンロードするリンクを置く列。1つのセルにリンクを複数置くこともできる。
  * getLinks が空配列を返した行にはリンクを表示しない。
  * リンクは値を変える操作ではないので、読み取り専用のセルにも表示する。
  * Enter で、セルの先頭のリンクを開く。
@@ -103,11 +105,22 @@ export function linkColumn<TRow>(
   return {
     ...rest,
     renderHeader: () => renderHeader(header),
-    // renderBody は行の値を受け取れないので、各リンクの文言とリンク先を交互に並べて渡す
-    getValuesForRender: row => getLinks(row).flatMap(link => [link.text, link.to]),
+    // renderBody は行の値を受け取れないので、各リンクの文言・リンク先・保存するファイル名（画面内リンクなら空文字）を順に並べて渡す
+    getValuesForRender: row => getLinks(row).flatMap(link => [link.text, link.to, link.download ?? '']),
     renderBody: ({ deps, rowKey, getRow }) => (
       <div className={`h-full w-full px-1 py-px text-sm flex gap-x-3 overflow-hidden ${wrap ? 'flex-wrap items-start' : 'items-center'}`}>
-        {pairsOf(deps).map(([text, to], index) => (
+        {triplesOf(deps).map(([text, to, download], index) => download ? (
+          <a
+            key={index}
+            href={to}
+            download={download}
+            onMouseDown={stopPropagation}
+            ref={index === 0 ? firstLinks.ref(rowKey) : undefined}
+            className="text-sky-600 underline whitespace-nowrap"
+          >
+            {text}
+          </a>
+        ) : (
           <GridLinkAnchor
             key={index}
             text={text}
@@ -281,9 +294,9 @@ function stopPropagation(e: React.MouseEvent) {
   e.stopPropagation()
 }
 
-/** 交互に並んだ値を2つずつの組にする */
-function pairsOf(values: readonly string[]): [string, string][] {
-  const pairs: [string, string][] = []
-  for (let i = 0; i + 1 < values.length; i += 2) pairs.push([values[i], values[i + 1]])
-  return pairs
+/** 順に並んだ値を3つずつの組にする */
+function triplesOf(values: readonly string[]): [string, string, string][] {
+  const triples: [string, string, string][] = []
+  for (let i = 0; i + 2 < values.length; i += 3) triples.push([values[i], values[i + 1], values[i + 2]])
+  return triples
 }

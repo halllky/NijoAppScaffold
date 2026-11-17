@@ -128,6 +128,7 @@ public static class Demo101TemplatePruner
         "P001_ログイン.tsx",
         "P002_ログアウト.tsx",
         "P003_通知.tsx",
+        "P004_ジョブ.tsx",
         "P400_従業員.tsx",
         "shared/従業員検索ダイアログ.tsx",
     ];
