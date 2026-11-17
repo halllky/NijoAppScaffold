@@ -61,6 +61,12 @@ try {
     // 同じ操作が二重に処理されるのを防ぐための冪等キー
     builder.Services.AddScoped<MyApp.Core.Idempotency.IIdempotencyKeyProvider, IdempotencyKeyProviderInWebApi>();
 
+    // ジョブの実行。サーバーの停止のときに、実行中のジョブが終わるのを待つ時間は設定で決める
+    builder.Services.AddHostedService<JobWorker>();
+    builder.Services.AddOptions<HostOptions>().Configure<RuntimeSetting>((options, settings) => {
+        options.ShutdownTimeout = TimeSpan.FromSeconds(settings.Job.ShutdownTimeoutSeconds);
+    });
+
     // HTTPリクエスト・レスポンスで使われるJSONシリアライズ設定を上記DI設定のそれに合わせる
     builder.Services.ConfigureHttpJsonOptions(options => {
         options.SerializerOptions.EditDefaultJsonSerializerOptions();
