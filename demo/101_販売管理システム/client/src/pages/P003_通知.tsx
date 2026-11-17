@@ -62,11 +62,6 @@ function P003_通知() {
       pageTitle="通知"
       searchConditionDefaultSize={120}
       search={(condition, signal) => callOperationAsync('通知一覧', condition, { signal })}
-      searchResultActions={(
-        <Button outline mini onClick={handleすべて既読}>
-          すべて既読にする
-        </Button>
-      )}
       searchCondition={(
         <FieldGroup>
           <FieldColumn>
@@ -79,16 +74,24 @@ function P003_通知() {
           </FieldColumn>
         </FieldGroup>
       )}
+      searchResultActions={(
+        <Button outline mini onClick={handleすべて既読}>
+          すべて既読にする
+        </Button>
+      )}
       defineSearchResultColumns={[() => [
         // リンクをたどったら既読にする。画面を移動するので、検索し直しは要らない
         ReadOnlyColumn.link<通知一覧.DisplayData>(
           row => isアプリケーションの中のパス(row.リンク先) ? [{ text: '開く', to: row.リンク先 }] : [],
           { columnId: 'リンク', defaultWidth: 60, disableResizing: true, isFixed: true, onBeforeNavigate: row => set既読(row, true) }),
-        // 既読かどうかの表示と切り替えを1つにする。変えるのはグリッドの値ではなく通知の既読なので、読み取り専用のグリッドでも操作できるようにする
-        ReadOnlyColumn.checkBox<通知一覧.DisplayData>(row => !!row.既読日時, (row, 既読) => handleSet既読(row, 既読), { columnId: '既読', header: '既読', enabledWhenReadOnly: true }),
+        // 未読かどうか。変えるのはグリッドの値ではなく通知の既読なので、読み取り専用のグリッドでも操作できるようにする
+        ReadOnlyColumn.checkBox<通知一覧.DisplayData>(row => !row.既読日時, (row, 未読) => handleSet既読(row, !未読), { columnId: '未読', header: '未読', enabledWhenReadOnly: true }),
         ReadOnlyColumn.text<通知一覧.DisplayData>('日時', row => row.作成日時, { columnId: '作成日時', defaultWidth: 160 }),
         ReadOnlyColumn.text<通知一覧.DisplayData>('本文', row => row.本文, { columnId: '本文', defaultWidth: 480, wrap: true }),
       ], [location]]}
+      searchResultGridProps={{
+        getRowClassName,
+      }}
     />
   )
 }
@@ -130,4 +133,11 @@ function isアプリケーションの中のパス(path: string | null | undefin
     && path.startsWith('/')
     && !path.startsWith('//')
     && !path.startsWith('/\\')
+}
+
+/**
+ * 未読なら太字にする。
+ */
+function getRowClassName(row: 通知一覧.DisplayData): string {
+  return row.既読日時 ? '' : 'font-bold'
 }

@@ -55,6 +55,8 @@ export type SearchPageBaseProps<TSearchCondition extends PageableSearchCondition
    * 検索条件に対する操作ではないものは、検索・クリアのボタンと並ぶ header ではなく、こちらに置く。
    */
   searchResultActions?: React.ReactNode
+  /** 検索結果のグリッドをカスタマイズしたい場合に使う。基本的に未指定でよい */
+  searchResultGridProps?: Omit<Partial<EG2.EditableGridProps<TItem>>, "rowKeys" | "getLatestRowObject" | "columns">
   /**
    * 検索条件欄。この欄はformタグの内側に配置されます。
    * 検索ボタン・クリアボタンと、どの項目とも紐づかないメッセージはこのコンポーネントが表示するので、ここには含めない。
@@ -349,6 +351,7 @@ export function SearchPageBase<TSearchCondition extends PageableSearchCondition,
                     isReadOnly
                     clearSelectionOnBlur
                     className="flex-1 border border-gray-600"
+                    {...props.searchResultGridProps}
                   />
                 </div>
 
