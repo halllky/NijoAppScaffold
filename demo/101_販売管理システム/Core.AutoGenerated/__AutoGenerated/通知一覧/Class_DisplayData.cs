@@ -36,6 +36,9 @@ public partial class 通知一覧DisplayData {
 
     public string? 通知ID { get; set; }
     public string? 本文 { get; set; }
+    /// <summary>
+    /// データモデル「通知」のリンク先と同じ形式。
+    /// </summary>
     public string? リンク先 { get; set; }
     public DateTime? 既読日時 { get; set; }
     public DateTime? 作成日時 { get; set; }

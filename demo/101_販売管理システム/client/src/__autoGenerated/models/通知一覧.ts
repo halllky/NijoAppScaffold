@@ -50,6 +50,9 @@ export type DisplayData = {
   instanceId: string
   通知ID?: string | null
   本文?: string | null
+  /**
+   * データモデル「通知」のリンク先と同じ形式。
+   */
   リンク先?: string | null
   既読日時?: string | null
   作成日時?: string | null
@@ -203,6 +206,7 @@ export const metadata = {
       uniqueId: '496b48dc-7667-4de1-a577-11660fc5b321',
       type: 'word',
       displayName: 'リンク先',
+      comment: 'データモデル「通知」のリンク先と同じ形式。',
     },
     '既読日時': {
       kind: 'value',
@@ -245,6 +249,7 @@ export const metadata = {
       uniqueId: '496b48dc-7667-4de1-a577-11660fc5b321',
       type: 'word',
       displayName: 'リンク先',
+      comment: 'データモデル「通知」のリンク先と同じ形式。',
     },
     '既読日時': {
       kind: 'value',
