@@ -37,7 +37,7 @@ export default function App() {
           </li>
           {loginUser && navigationItems.filter(item => canInvoke(item.operation)).map(item => (
             <li key={item.to} className="shrink-0">
-              <RootNavigationLink to={item.to} icon={item.icon} badge={item.badge}>{item.label}</RootNavigationLink>
+              <RootNavigationLink to={item.to} icon={item.icon} iconOnly={item.iconOnly} badge={item.badge}>{item.label}</RootNavigationLink>
             </li>
           ))}
 
@@ -100,19 +100,20 @@ function AppVersion() {
 }
 
 /** ルートナビゲーションリンク */
-function RootNavigationLink({ to, children, className, icon, badge }: {
+function RootNavigationLink({ to, children, className, icon, iconOnly, badge }: {
   to: string
-  children: React.ReactNode
+  children: string
   className?: string
   icon?: React.ElementType
+  iconOnly?: boolean
   badge?: React.ComponentType
 }) {
   const IconComponent = icon
   const BadgeComponent = badge
   return (
-    <Link to={to} className={`${ROOT_NAVIGATION_ITEM_CLASS} ${className ?? ''}`}>
+    <Link to={to} title={iconOnly ? children : undefined} className={`${ROOT_NAVIGATION_ITEM_CLASS} ${className ?? ''}`}>
       {IconComponent && <IconComponent className="w-5 h-5" />}
-      {children}
+      <span className={iconOnly ? 'sr-only' : undefined}>{children}</span>
       {BadgeComponent && <BadgeComponent />}
     </Link>
   )

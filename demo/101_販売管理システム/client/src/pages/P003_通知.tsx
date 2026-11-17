@@ -13,7 +13,7 @@ export const URL = "/tsuuchi"
  * ルートナビゲーションに表示する項目。
  * 自分宛ての未読の通知の件数を、項目の横に表示する。
  */
-export const navigationItem = { to: URL, label: "通知", icon: Icon.BellIcon, operation: '通知一覧', badge: 未読件数 } satisfies RootNavigationItem
+export const navigationItem = { to: URL, label: "通知", icon: Icon.BellIcon, iconOnly: true, operation: '通知一覧', badge: 未読件数 } satisfies RootNavigationItem
 
 /**
  * ルーティング定義
@@ -115,7 +115,7 @@ function 未読件数() {
 
   if (!count) return null
   return (
-    <span className="ml-1 min-w-5 px-1.5 rounded-full bg-rose-600 text-xs text-white text-center">
+    <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-rose-600 text-xs text-white">
       {count}
     </span>
   )
