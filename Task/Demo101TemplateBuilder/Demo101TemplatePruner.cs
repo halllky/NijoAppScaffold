@@ -58,6 +58,11 @@ public static class Demo101TemplatePruner
         "55ffff41-8e50-4da9-b282-b3b082c90ef6", // 未読通知件数
     ];
 
+    /// <summary>テンプレートに残す、Constants直下の要素のUniqueId</summary>
+    private static readonly HashSet<string> KEEP_CONSTANT_IDS = [
+        "1a3604ba-4f58-420b-b60b-fe1d8eaf4e1f", // 画面のURL
+    ];
+
     private const string PERMISSION_ENUM_ID = "d3d0cb8d-23a2-4b86-a85e-b8965284c824"; // 権限区分
 
     /// <summary>テンプレートに残す、StaticEnums直下の要素のUniqueId</summary>
@@ -147,6 +152,7 @@ public static class Demo101TemplatePruner
         KeepOnly(root.Element("DataStructures"), KEEP_DATA_STRUCTURE_IDS, uniqueIdOf);
         KeepOnly(root.Element("Commands"), KEEP_COMMAND_IDS, uniqueIdOf);
         KeepOnly(root.Element("StaticEnums"), KEEP_ENUM_IDS, uniqueIdOf);
+        KeepOnly(root.Element("Constants"), KEEP_CONSTANT_IDS, uniqueIdOf);
         KeepOnly(
             root.Element("StaticEnums")?.Elements().SingleOrDefault(el => uniqueIdOf(el) == PERMISSION_ENUM_ID),
             KEEP_PERMISSION_VALUE_IDS,

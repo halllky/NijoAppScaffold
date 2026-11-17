@@ -252,6 +252,6 @@ partial class OverridedApplicationService {
         await Create通知Async(
             [担当者],
             $"担当の売上 {売上SEQ} が {LoginUser.氏名} さんにより修正されました。",
-            画面のパス.売上詳細(売上SEQ));
+            販売管理の画面のURL.売上詳細(売上SEQ.ToString()));
     }
 }
