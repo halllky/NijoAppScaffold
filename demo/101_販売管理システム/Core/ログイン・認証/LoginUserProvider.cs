@@ -41,18 +41,21 @@ public class LoginUserProvider : ICurrentUser {
     /// 作成者・更新者として記録する名前。
     /// ログインユーザーがいない処理（ログイン処理そのものやバッチなど）では、その処理の名前を記録する。
     /// </summary>
-    string ICurrentUser.Name => GetLoginUser()?.従業員番号 ?? _currentProcess.Name;
+    string ICurrentUser.Name => GetLoginUser()?.従業員番号 ?? _processName ?? _currentProcess.Name;
 
-#if DEBUG
     /// <summary>
-    /// セッションを介さずにログインユーザーを確定させる。
-    /// セッションの有無に関係なく特定のユーザーとして処理を実行する必要があるダミーデータ生成処理で使う。
+    /// セッションを介さずに、ログインユーザーと処理名を確定させる。
+    /// 利用者のリクエストの外で、決まったユーザーまたは決まった処理として業務処理を実行するとき（ジョブ、ダミーデータの作成）に使う。
+    /// このスコープの中でログインユーザーを参照する前に呼ぶこと。
     /// </summary>
-    internal void SetLoginUserForDummyData(LoginUser loginUser) {
+    /// <param name="loginUser">ログインユーザー。ログインユーザーのいない処理では null</param>
+    /// <param name="processName">作成者・更新者として記録する処理名。null なら呼び出し元（<see cref="ICurrentProcess"/>）が決めた処理名を使う</param>
+    internal void SetWithoutSession(LoginUser? loginUser, string? processName) {
         _loginUserCache = loginUser;
         _isLoginUserLoaded = true;
+        _processName = processName;
     }
-#endif
+    private string? _processName;
 
     private LoginUser? LoadLoginUser() {
         // ログイン済みならセッションキーは必ず存在する

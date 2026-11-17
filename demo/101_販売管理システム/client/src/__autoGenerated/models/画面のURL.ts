@@ -14,4 +14,8 @@ export const 画面のURL = {
    * P400 従業員
    */
   従業員: '/jugyoin',
+  /**
+   * P004 ジョブ
+   */
+  ジョブ: '/job',
 } as const

@@ -30,6 +30,7 @@ public partial class RuntimeSetting {
         var errors = new List<string>();
         Collect(this, MY_APP_SECTION, errors);
         Collect(ErrorNotification, $"{MY_APP_SECTION}:{nameof(ErrorNotification)}", errors);
+        Collect(Job, $"{MY_APP_SECTION}:{nameof(Job)}", errors);
         if (errors.Count > 0) {
             throw new InvalidOperationException($"設定に誤りがあります。{Environment.NewLine}{string.Join(Environment.NewLine, errors)}");
         }
@@ -95,6 +96,11 @@ public partial class RuntimeSetting {
     /// 運用担当へのエラーの通知の設定
     /// </summary>
     public Core.運用担当への通知.ErrorNotificationSettings ErrorNotification { get; set; } = new();
+
+    /// <summary>
+    /// ジョブの設定
+    /// </summary>
+    public Core.ジョブ.JobSettings Job { get; set; } = new();
 
     #region タイムゾーン
     /// <summary>

@@ -996,6 +996,11 @@ ASP.NET Core のサービスワーカーとして登録される。-->
         ConstantValue="/jugyoin"
         DisplayName="P400 従業員"
         UniqueId="14b43d82-632c-4c70-a0c9-c7e6acedd144" />
+      <ジョブ
+        ConstantType="string"
+        ConstantValue="/job"
+        DisplayName="P004 ジョブ"
+        UniqueId="5b0f450c-fa80-4d21-bb42-a9189de71c25" />
     </画面のURL>
     <!--販売管理の画面のうち、サーバーで URL を組み立てるもの。値の決まりは「画面のURL」と同じ。-->
     <販売管理の画面のURL

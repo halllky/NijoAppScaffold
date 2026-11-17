@@ -16,6 +16,9 @@ appsettings.Development.json
 /UnitTest.Log
 /WebApi.Log
 
+# ジョブの作業フォルダ
+/WebApi.Job
+
 # TypeScript の型チェックが作るキャッシュ
 *.tsbuildinfo
 

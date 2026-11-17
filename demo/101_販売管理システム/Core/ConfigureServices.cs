@@ -60,6 +60,7 @@ partial class OverridedApplicationService {
         var settings = new RuntimeSetting();
         myAppSection.Bind(settings);
         settings.ThrowIfInvalid();
+        settings.Job.ResolvePaths(basePath);
         services.AddSingleton(settings);
 
         // DBコンテキスト登録
@@ -80,6 +81,9 @@ partial class OverridedApplicationService {
             // データの保存処理は変更追跡オフが前提
             options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
         });
+
+        // ジョブ。登録されたジョブを取り出して実行する
+        services.AddSingleton(Core.ジョブ.ジョブキュー.Create);
 
         // ログインユーザー
         services.AddScoped<LoginUserProvider>();

@@ -30,5 +30,10 @@ public class 設定の検証 {
             DefaultRecipients = ["ops@example.com"],
             ThrottleMinutes = 10,
         },
+        Job = new() {
+            WorkDirectory = "Job",
+            MaxConcurrency = 1,
+            ShutdownTimeoutSeconds = 30,
+        },
     };
 }

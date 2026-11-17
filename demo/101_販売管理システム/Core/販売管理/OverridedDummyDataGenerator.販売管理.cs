@@ -50,11 +50,11 @@ partial class OverridedDummyDataGenerator {
 
         // この後の処理には入荷や売上の権限を持ったユーザーでログインしておく必要がある。
         // 通常のログイン処理を通すとHTTPヘッダのCookieを参照してしまうので、ログインユーザーを直接指定する
-        applicationService.ServiceProvider.GetRequiredService<LoginUserProvider>().SetLoginUserForDummyData(new LoginUser {
+        applicationService.ServiceProvider.GetRequiredService<LoginUserProvider>().SetWithoutSession(new LoginUser {
             従業員番号 = ADMIN_USER_ID,
             氏名 = "DUMMY",
             権限 = [権限区分.システム管理者],
-        });
+        }, processName: null);
 
         var allItems = await db.商品DbSet.ToListAsync();
         var adminUser = await db.従業員DbSet.SingleAsync(e => e.従業員番号 == ADMIN_USER_ID);

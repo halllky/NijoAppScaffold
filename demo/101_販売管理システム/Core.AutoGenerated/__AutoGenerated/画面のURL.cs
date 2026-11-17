@@ -16,4 +16,8 @@ public static class 画面のURL {
     /// P400 従業員
     /// </summary>
     public const string 従業員 = "/jugyoin";
+    /// <summary>
+    /// P004 ジョブ
+    /// </summary>
+    public const string ジョブ = "/job";
 }
