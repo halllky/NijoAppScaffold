@@ -9,6 +9,20 @@ using System.ComponentModel.DataAnnotations;
 namespace MyApp;
 
 /// <summary>
+/// ジョブの状態
+/// </summary>
+public enum ジョブの状態 {
+    [Display(Name = "待機")]
+    待機 = 0,
+    [Display(Name = "実行中")]
+    実行中 = 1,
+    [Display(Name = "正常終了")]
+    正常終了 = 2,
+    [Display(Name = "異常終了")]
+    異常終了 = 3,
+}
+
+/// <summary>
 /// 売上明細区分
 /// </summary>
 public enum 売上明細区分 {
@@ -40,6 +54,23 @@ public enum 消費税区分 {
     一般税率 = 1,
     [Display(Name = "軽減税率")]
     軽減税率 = 2,
+}
+
+/// <summary>ジョブの状態の検索条件クラス</summary>
+public class ジョブの状態SearchCondition {
+    public bool 待機 { get; set; }
+    public bool 実行中 { get; set; }
+    public bool 正常終了 { get; set; }
+    public bool 異常終了 { get; set; }
+
+    /// <summary>いずれかの値が選択されているかを返します。</summary>
+    public bool AnyChecked() {
+        if (待機) return true;
+        if (実行中) return true;
+        if (正常終了) return true;
+        if (異常終了) return true;
+        return false;
+    }
 }
 
 /// <summary>売上明細区分の検索条件クラス</summary>

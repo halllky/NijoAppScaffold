@@ -42,6 +42,7 @@ public static class Demo101TemplatePruner
         "beffc950-74ba-48ec-b9fb-407d52c12533", // 通知一覧
         "67e95f3a-6a95-4ae0-8069-b2fbdc68e430", // 通知既読設定Parameter
         "4dc11741-328a-488e-a2f5-7fcec5f6b1f2", // 未読通知件数ReturnValue
+        "380ab309-2f96-4bf0-9500-fd759477bdee", // ジョブ
     ];
 
     /// <summary>テンプレートに残す、Commands直下の要素のUniqueId</summary>
@@ -66,7 +67,10 @@ public static class Demo101TemplatePruner
     private const string PERMISSION_ENUM_ID = "d3d0cb8d-23a2-4b86-a85e-b8965284c824"; // 権限区分
 
     /// <summary>テンプレートに残す、StaticEnums直下の要素のUniqueId</summary>
-    private static readonly HashSet<string> KEEP_ENUM_IDS = [PERMISSION_ENUM_ID];
+    private static readonly HashSet<string> KEEP_ENUM_IDS = [
+        PERMISSION_ENUM_ID,
+        "2088aab1-e03f-4b9b-8cea-8c8c7dbc49fa", // ジョブの状態
+    ];
 
     /// <summary>テンプレートに残す、権限区分の値のUniqueId。業務ごとの権限区分は案件で足す</summary>
     private static readonly HashSet<string> KEEP_PERMISSION_VALUE_IDS = [

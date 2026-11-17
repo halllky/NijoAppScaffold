@@ -6,6 +6,7 @@
 
 /** 列挙体の型マッピング */
 export interface EnumTypeMap {
+  'ジョブの状態': ジョブの状態
   '売上明細区分': 売上明細区分
   '権限区分': 権限区分
   '消費税区分': 消費税区分
@@ -13,9 +14,21 @@ export interface EnumTypeMap {
 
 /** 列挙体の値マッピング */
 export const EnumValueMap: { [K in keyof EnumTypeMap]: () => EnumTypeMap[K][] } = {
+  'ジョブの状態': () => ['待機', '実行中', '正常終了', '異常終了'],
   '売上明細区分': () => ['売上', '取消'],
   '権限区分': () => ['システム管理者', '入荷担当', '販売担当'],
   '消費税区分': () => ['非課税', '一般税率', '軽減税率'],
+}
+
+/** ジョブの状態 */
+export type ジョブの状態 = '待機' | '実行中' | '正常終了' | '異常終了'
+
+/** ジョブの状態の検索条件オブジェクト */
+export type ジョブの状態SearchCondition = {
+  待機?: boolean
+  実行中?: boolean
+  正常終了?: boolean
+  異常終了?: boolean
 }
 
 /** 売上明細区分 */

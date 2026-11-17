@@ -15,6 +15,7 @@ export type DataModelType
   | 'セッション'
   | '冪等キー'
   | '通知'
+  | 'ジョブ'
 
 /** QueryModelの種類の一覧。ルート集約のみ。 */
 export type QueryModelType
@@ -114,6 +115,7 @@ export function getDataModelTypeList(): DataModelType[] {
     'セッション',
     '冪等キー',
     '通知',
+    'ジョブ',
   ]
 }
 

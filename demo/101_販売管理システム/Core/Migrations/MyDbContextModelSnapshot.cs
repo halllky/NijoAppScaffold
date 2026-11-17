@@ -14,6 +14,88 @@ namespace MyApp.Migrations {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
 
+            modelBuilder.Entity("MyApp.ジョブDbEntity", b => {
+                b.Property<string>("ジョブID")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("ジョブID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(10);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(9);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(12);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(11);
+
+                b.Property<int>("Version")
+                    .IsConcurrencyToken()
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("Version")
+                    .HasColumnOrder(13);
+
+                b.Property<string>("実行したサーバー")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("実行したサーバー")
+                    .HasColumnOrder(7);
+
+                b.Property<string>("引数")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("引数")
+                    .HasColumnOrder(2);
+
+                b.Property<int>("状態")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("状態")
+                    .HasColumnOrder(3);
+
+                b.Property<string>("種類")
+                    .IsRequired()
+                    .HasColumnType("TEXT")
+                    .HasColumnName("種類")
+                    .HasColumnOrder(1);
+
+                b.Property<DateTime?>("終了日時")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("終了日時")
+                    .HasColumnOrder(6);
+
+                b.Property<string>("結果メッセージ")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("結果メッセージ")
+                    .HasColumnOrder(8);
+
+                b.Property<string>("起動したユーザー")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("起動したユーザー")
+                    .HasColumnOrder(4);
+
+                b.Property<DateTime?>("開始日時")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("開始日時")
+                    .HasColumnOrder(5);
+
+                b.HasKey("ジョブID")
+                    .HasName("PK_ジョブ");
+
+                b.HasIndex("状態", "CreatedAt")
+                    .HasDatabaseName("IX_ジョブ_状態_登録日時");
+
+                b.ToTable("ジョブ", (string)null);
+            });
+
             modelBuilder.Entity("MyApp.セッションDbEntity", b => {
                 b.Property<string>("セッションキー")
                     .HasColumnType("TEXT")
