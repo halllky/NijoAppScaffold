@@ -26,53 +26,8 @@ sidebar_position: 1
 | `string`   | 文字列定数         | `string`  | `string`         |
 | `int`      | 整数定数           | `int`     | `number`         |
 | `decimal`  | 小数定数           | `decimal` | `number`         |
-| `template` | テンプレート文字列 | 関数      | 関数             |
 
-### テンプレート文字列
-
-`template` 型を使用すると、引数を受け取って文字列を返す関数が生成されます。
-使用できる変数の数は、ConstantValue中に含まれる `{0}` , `{1}` , ... から自動的に判定されます。
-テンプレート文字列中に `{0}` が2回、 `{1}` が1回登場した場合、
-関数の第1引数がそれら2箇所に、第2引数が後者1箇所に適用されます。
-
-
-```xml
-<!-- 定数です。 -->
-<MyConstants>
-  <!-- エラーメッセージの基本的フォーマット。 -->
-  <ErrorMessage ConstantType="template" ConstantValue="エラーが発生しました: {0}" DisplayName="エラーメッセージ" />
-</MyConstants>
-```
-
-これにより以下のようなコードが生成されます：
-
-**C#:**
-```csharp
-/// <summary>
-/// 定数です。
-/// </summary>
-public static class MyConstants {
-    /// <summary>
-    /// エラーメッセージ
-    /// エラーメッセージの基本的フォーマット。
-    /// </summary>
-    public static string ErrorMessage(string arg0) => $"エラーが発生しました: {arg0}";
-}
-```
-
-**TypeScript:**
-```typescript
-/**
- * 定数です。
- */
-export const MyConstants = {
-  /**
-   * エラーメッセージ
-   * エラーメッセージの基本的フォーマット。
-   */
-  ErrorMessage: (arg0: string): string => `エラーが発生しました: ${arg0}`,
-} as const
-```
+値を埋め込んで使う文字列（画面の URL やメッセージなど）は、定数ではなく[テンプレート文字列](./020704_Templates.md)に定義します。
 
 ## XML定義例
 
@@ -101,6 +56,4 @@ export const MyConstants = {
 
   <Messages ConstantType="child" DisplayName="メッセージ">
     <Success ConstantType="string" ConstantValue="正常に処理されました" DisplayName="成功メッセージ" />
-    <!-- コロンの後ろには開発者向けの情報ではなくアプリケーションのユーザーに向けた文字にすること。 -->
-    <Error ConstantType="template" ConstantValue="エラーが発生しました: {0}" DisplayName="エラーメッセージ" />
   </Messages>
