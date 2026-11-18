@@ -10,6 +10,7 @@ import { SchemaCandidatesProvider } from "./SchemaCandidatesContext"
 import { SchemaEditorRuleProvider } from "./SchemaEditorRuleContext"
 import ValueMemberTypes from "./ValueMemberTypes"
 import ConstantsGrid from "./Constants"
+import TemplatesGrid from "./Templates"
 import ProjectSettings from "./ProjectSettings"
 import { DiagramRef } from "./DataStructure/Diagram"
 import { useValidationErrorMessages, ValidationContextProvider } from "./useValidation"
@@ -140,6 +141,12 @@ export default function ProjectPage({ defaultValues, schemaRule }: {
                     定数
                   </UI.TabHeader>
 
+                  <UI.TabHeader isSelected={displayTab === "templates"}
+                    onClick={() => setDisplayTab("templates")}
+                  >
+                    テンプレート文字列
+                  </UI.TabHeader>
+
                   <div className="flex-1"></div>
 
                   {/* 保存時にコード自動生成をかけ直す */}
@@ -192,6 +199,10 @@ export default function ProjectPage({ defaultValues, schemaRule }: {
                     <ConstantsGrid formMethods={formMethods} />
                   )}
 
+                  {displayTab === "templates" && (
+                    <TemplatesGrid formMethods={formMethods} />
+                  )}
+
                   {displayTab === "project-settings" && (
                     <ProjectSettings formMethods={formMethods} />
                   )}
@@ -217,6 +228,7 @@ type TabType =
   | "data-structures" // Data, Query, Command, Structure Model
   | "value-member-types" // 属性種類定義。文字、数値、日付、静的/動的区分、値オブジェクトなどの設定
   | "constants" // 定数定義
+  | "templates" // テンプレート文字列定義
 
 /**
  * エラーメッセージ一覧

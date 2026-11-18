@@ -23,7 +23,7 @@ export function useMentionSuggestions(
     for (const root of [...project.dataStructures, ...project.commands]) {
       targets.push({ uniqueId: root.uniqueId, physicalName: root.physicalName })
     }
-    for (const root of [...project.dataStructures, ...project.commands, ...project.staticEnums, ...project.valueObjects, ...project.constants]) {
+    for (const root of [...project.dataStructures, ...project.commands, ...project.staticEnums, ...project.valueObjects, ...project.constants, ...project.templates]) {
       for (const member of root.members) {
         if (member.type.kind === 'child' || member.type.kind === 'children') {
           targets.push({ uniqueId: member.uniqueId, physicalName: member.physicalName })

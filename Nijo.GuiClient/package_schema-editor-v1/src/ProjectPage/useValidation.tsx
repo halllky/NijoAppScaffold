@@ -221,7 +221,7 @@ function convertToValidationResultListItemList(state: EditingProject, validation
 
   // uniqueIdから、それが属するルート集約の情報とその要素自身の名前を引き当てるための辞書
   const elementMap = new Map<string, { elementName: string, rootAggregateName: string, rootAggregateUniqueId: string }>()
-  for (const roots of [state.dataStructures, state.commands, state.staticEnums, state.valueObjects, state.constants]) {
+  for (const roots of [state.dataStructures, state.commands, state.staticEnums, state.valueObjects, state.constants, state.templates]) {
     for (const root of roots ?? []) {
       const rootInfo = { rootAggregateName: root.physicalName ?? '', rootAggregateUniqueId: root.uniqueId }
       elementMap.set(root.uniqueId, { elementName: root.physicalName ?? '', ...rootInfo })

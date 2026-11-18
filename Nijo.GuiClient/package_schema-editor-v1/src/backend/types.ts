@@ -11,6 +11,7 @@ export type EditingProject = {
   staticEnums: EditingRootAggregate[]
   valueObjects: EditingRootAggregate[]
   constants: EditingRootAggregate[]
+  templates: EditingRootAggregate[]
   customAttributes: EditingCustomAttribute[]
   /** プロジェクト設定の現在値 */
   projectOptions: Record<string, EditingAttributeValue>
@@ -262,6 +263,8 @@ export const ATTR_PARAMETER = 'Parameter'
 export const ATTR_RETURN_VALUE = 'ReturnValue'
 export const ATTR_CONSTANT_TYPE = 'ConstantType'
 export const ATTR_CONSTANT_VALUE = 'ConstantValue'
+export const ATTR_TEMPLATE = 'Template'
+export const ATTR_TEMPLATE_KIND = 'TemplateKind'
 export const ATTR_IS_GENERIC_LOOKUP_TABLE = 'IsGenericLookupTable'
 export const ATTR_IS_HARD_CODED_PRIMARY_KEY = 'IsHardCodedPrimaryKey'
 export const ATTR_IS_STORED = 'IsStored'
@@ -292,6 +295,7 @@ const AVAILABLE_FOR_SECTIONS: Record<Exclude<SectionName, 'dataStructures'>, str
   staticEnums: 'static-enum',
   valueObjects: 'value-object',
   constants: 'constant',
+  templates: 'template',
 }
 
 /**
@@ -334,7 +338,7 @@ export const getRootAggregateAppearance = (section: 'dataStructures' | 'commands
 }
 
 /** ルート集約が定義されるセクション。EditingProject のプロパティ名と一致する。 */
-export type SectionName = 'dataStructures' | 'commands' | 'staticEnums' | 'valueObjects' | 'constants'
+export type SectionName = 'dataStructures' | 'commands' | 'staticEnums' | 'valueObjects' | 'constants' | 'templates'
 
 /**
  * 属性が指定される場所のうち、ノード種別を除いたもの。

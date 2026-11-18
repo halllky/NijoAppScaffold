@@ -191,12 +191,12 @@ function buildRefToPathIndex(dataStructures: EditingRootAggregate[]): Map<string
 
 /**
  * 物理名から要素の uniqueId を引く索引を組み立てる。コマンドの引数・戻り値属性の解決に使う。
- * 対象は dataStructures, commands, staticEnums, valueObjects, constants の全ルート集約・全メンバー。
+ * 対象は dataStructures, commands, staticEnums, valueObjects, constants, templates の全ルート集約・全メンバー。
  * 同じ物理名の要素が複数ある場合は、並び順で先に現れた方を採用する。
  */
 function buildPhysicalNameIndex(project: EditingProject): Map<string, string> {
   const index = new Map<string, string>()
-  const lists = [project.dataStructures, project.commands, project.staticEnums, project.valueObjects, project.constants]
+  const lists = [project.dataStructures, project.commands, project.staticEnums, project.valueObjects, project.constants, project.templates]
 
   for (const list of lists) {
     for (const root of list) {

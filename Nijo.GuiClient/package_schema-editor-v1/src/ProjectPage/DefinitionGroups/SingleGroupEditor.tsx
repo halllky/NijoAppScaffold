@@ -7,17 +7,11 @@ import {
   EditingProject,
   EditingMember,
   ATTR_DISPLAY_NAME,
-  ATTR_CONSTANT_TYPE,
-  ATTR_CONSTANT_VALUE,
-  CONSTANT_TYPE_CHILD,
-  CONSTANT_TYPE_STRING,
-  CONSTANT_TYPE_INT,
-  CONSTANT_TYPE_DECIMAL,
-  CONSTANT_TYPE_TEMPLATE,
 } from "../../backend"
 import * as UI from '../../UI'
+import { DefinitionGroupsSection, DefinitionGroupsSetting } from "./types"
 
-/** グリッドに新しい行を挿入するときの初期値。定数の要素にType属性は無いのでkindは常にunknown。 */
+/** グリッドに新しい行を挿入するときの初期値。定数やテンプレート文字列の要素にType属性は無いのでkindは常にunknown。 */
 const newEmptyMember = (indent: number): EditingMember => ({
   uniqueId: UUID.generate(),
   indent,
@@ -28,26 +22,28 @@ const newEmptyMember = (indent: number): EditingMember => ({
 })
 
 /**
- * 定数のルート集約1個分のエディタ
+ * グループ（ルート集約）1個分のエディタ。ルート自身の名前などの入力欄と、子孫要素を字下げで表すグリッドを持つ。
  */
-export function SingleConstantEditor({ index, formMethods }: {
+export function SingleGroupEditor({ section, setting, index, formMethods }: {
+  section: DefinitionGroupsSection
+  setting: DefinitionGroupsSetting
   index: number
   formMethods: ReactHookForm.UseFormReturn<EditingProject>
 }) {
   const { control, getValues, setValue, register, subscribe } = formMethods
 
-  // ルート要素（定数定義ブロック自体）の名前
-  const rootNamePath = `constants.${index}.physicalName` as const
-  const rootDisplayNamePath = `constants.${index}.attributes.${ATTR_DISPLAY_NAME}` as const
-  const membersPath = `constants.${index}.members` as const
+  // ルート要素（グループ自体）の名前
+  const rootNamePath = `${section}.${index}.physicalName` as const
+  const rootDisplayNamePath = `${section}.${index}.attributes.${ATTR_DISPLAY_NAME}` as const
+  const membersPath = `${section}.${index}.members` as const
 
   // 削除処理
-  const handleDeleteConstant = () => {
-    if (!window.confirm("この定数定義ブロックを削除しますか？")) return
-    const current = getValues("constants")
+  const handleDeleteGroup = () => {
+    if (!window.confirm("このグループを削除しますか？")) return
+    const current = getValues(section)
     const next = [...current]
     next.splice(index, 1)
-    setValue("constants", next)
+    setValue(section, next)
   }
 
   // グリッド設定
@@ -62,41 +58,8 @@ export function SingleConstantEditor({ index, formMethods }: {
     setValue,
     subscribe,
   }, helper => {
-    const columns: EG2.EditableGridColumn<any>[] = []
-
-    // 定義名
-    columns.push(helper.elementName(''))
-
-    // 日本語名
-    columns.push(helper.text('日本語名', `attributes.${ATTR_DISPLAY_NAME}`, {
-      defaultWidth: 200,
-    }))
-
-    // 型
-    columns.push(helper.dropdown('型', `attributes.${ATTR_CONSTANT_TYPE}`, [
-      { value: CONSTANT_TYPE_CHILD, text: '入れ子' },
-      { value: CONSTANT_TYPE_STRING, text: '単純文字列' },
-      { value: CONSTANT_TYPE_TEMPLATE, text: 'テンプレート文字列' },
-      { value: CONSTANT_TYPE_INT, text: '整数' },
-      { value: CONSTANT_TYPE_DECIMAL, text: '実数' },
-    ], {
-      defaultWidth: 100,
-    }))
-
-    // 値
-    columns.push(helper.text('値', `attributes.${ATTR_CONSTANT_VALUE}`, {
-      defaultWidth: 300,
-    }))
-
-    // コメント
-    columns.push(helper.text('コメント', 'comment', {
-      defaultWidth: 400,
-      mentionAvailable: true,
-      wrap: true,
-    }))
-
-    return columns
-  }, [index])
+    return setting.getColumns(helper)
+  }, [index, setting])
 
   // 行操作ハンドラ (StaticEnumGridから流用)
   const watchedFields = ReactHookForm.useWatch({ control, name: membersPath })
@@ -205,15 +168,23 @@ export function SingleConstantEditor({ index, formMethods }: {
         <UI.WordTextBox
           {...register(rootNamePath)}
           className="w-64 border px-1 font-bold"
-          placeholder="定数グループ名 (MyConstants)"
+          placeholder={setting.rootNamePlaceholder}
         />
         <UI.WordTextBox
           {...register(rootDisplayNamePath)}
           className="w-64 border px-1"
-          placeholder="日本語名 (定数)"
+          placeholder="日本語名"
         />
+        {setting.rootAttributes?.map(attr => (
+          <UI.WordTextBox
+            key={attr.attributeName}
+            {...register(`${section}.${index}.attributes.${attr.attributeName}`)}
+            className="w-48 border px-1"
+            placeholder={attr.placeholder}
+          />
+        ))}
         <div className="flex-1"></div>
-        <UI.Button mini hideText icon={Icon.TrashIcon} onClick={handleDeleteConstant}>
+        <UI.Button mini hideText icon={Icon.TrashIcon} onClick={handleDeleteGroup}>
           削除
         </UI.Button>
       </div>

@@ -1,58 +1,55 @@
 import React from "react"
 import * as ReactHookForm from "react-hook-form"
-import * as Icon from "@heroicons/react/24/solid"
-import { UUID } from "uuidjs"
 import {
   EditingProject,
-  EditingRootAggregate,
+  ATTR_DISPLAY_NAME,
+  ATTR_CONSTANT_TYPE,
+  ATTR_CONSTANT_VALUE,
+  CONSTANT_TYPE_CHILD,
+  CONSTANT_TYPE_STRING,
+  CONSTANT_TYPE_INT,
+  CONSTANT_TYPE_DECIMAL,
+  CONSTANT_TYPE_TEMPLATE,
 } from "../../backend"
-import * as UI from '../../UI'
-import { SingleConstantEditor } from "./SingleConstantEditor"
+import { DefinitionGroupsGrid, DefinitionGroupsSetting } from "../DefinitionGroups"
 
 /**
- * 定数定義グリッド
- *
- * 複数の定数定義をリスト形式で表示し、それぞれを編集可能にする。
+ * 定数定義の編集画面
  */
 function ConstantsGrid(props: {
   formMethods: ReactHookForm.UseFormReturn<EditingProject>
 }) {
-  const { control, setValue, getValues } = props.formMethods
-  const constants = ReactHookForm.useWatch({
-    control,
-    name: "constants"
-  }) ?? []
-
-  const handleAddConstant = () => {
-    const newConstant: EditingRootAggregate = {
-      uniqueId: UUID.generate(),
-      physicalName: "",
-      attributes: {},
-      uniqueConstraints: [],
-      members: [],
-    }
-
-    // 末尾に追加
-    const current = getValues("constants") ?? []
-    setValue("constants", [...current, newConstant])
-  }
-
   return (
-    <div className="flex flex-col gap-2 py-2 p-4">
-      {constants.map((constant, index) => (
-        <SingleConstantEditor
-          key={constant.uniqueId ?? index}
-          index={index}
-          formMethods={props.formMethods}
-        />
-      ))}
-      <div>
-        <UI.Button icon={Icon.PlusIcon} onClick={handleAddConstant}>
-          新しい定数定義ブロックを追加
-        </UI.Button>
-      </div>
-    </div>
+    <DefinitionGroupsGrid section="constants" setting={SETTING} formMethods={props.formMethods} />
   )
+}
+
+const SETTING: DefinitionGroupsSetting = {
+  rootNamePlaceholder: "定数グループ名 (MyConstants)",
+  addButtonText: "新しい定数定義ブロックを追加",
+  getColumns: helper => [
+    helper.elementName(''),
+    helper.text('日本語名', `attributes.${ATTR_DISPLAY_NAME}`, {
+      defaultWidth: 200,
+    }),
+    helper.dropdown('型', `attributes.${ATTR_CONSTANT_TYPE}`, [
+      { value: CONSTANT_TYPE_CHILD, text: '入れ子' },
+      { value: CONSTANT_TYPE_STRING, text: '単純文字列' },
+      { value: CONSTANT_TYPE_TEMPLATE, text: 'テンプレート文字列' },
+      { value: CONSTANT_TYPE_INT, text: '整数' },
+      { value: CONSTANT_TYPE_DECIMAL, text: '実数' },
+    ], {
+      defaultWidth: 100,
+    }),
+    helper.text('値', `attributes.${ATTR_CONSTANT_VALUE}`, {
+      defaultWidth: 300,
+    }),
+    helper.text('コメント', 'comment', {
+      defaultWidth: 400,
+      mentionAvailable: true,
+      wrap: true,
+    }),
+  ],
 }
 
 export default React.memo(ConstantsGrid)
