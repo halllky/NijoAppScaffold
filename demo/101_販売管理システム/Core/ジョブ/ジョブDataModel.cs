@@ -164,7 +164,7 @@ partial class OverridedApplicationService {
         }
         if (job.起動したユーザー != null) {
             var 結果 = 状態 == ジョブの状態.正常終了 ? "正常終了しました" : "異常終了しました";
-            await Create通知Async([job.起動したユーザー], $"ジョブ「{job.種類}」が{結果}。", 画面のURL.ジョブ());
+            await Create通知Async([job.起動したユーザー], $"ジョブ「{job.種類}」が{結果}。", PAGES_URL.P004());
         }
         await tran.CommitAsync();
     }
@@ -198,9 +198,9 @@ partial class OverridedApplicationService {
         var folderIds = workDirectory.GetDirectories().Select(d => d.Name).ToArray();
         var existingIds = await DbContext.ジョブDbSet
             .Where(j => folderIds.Contains(j.ジョブID))
-            .Select(j => j.ジョブID)
+            .Select(j => j.ジョブID!)
             .ToArrayAsync();
-        foreach (var id in folderIds.Except(existingIds!)) {
+        foreach (var id in folderIds.Except(existingIds)) {
             try {
                 Directory.Delete(Settings.Job.Get作業フォルダ(id), recursive: true);
             } catch (IOException ex) {

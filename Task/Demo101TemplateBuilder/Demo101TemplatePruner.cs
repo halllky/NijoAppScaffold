@@ -65,7 +65,7 @@ public static class Demo101TemplatePruner
 
     /// <summary>テンプレートに残す、Templates直下の要素のUniqueId</summary>
     private static readonly HashSet<string> KEEP_TEMPLATE_IDS = [
-        "1a3604ba-4f58-420b-b60b-fe1d8eaf4e1f", // 画面のURL
+        "1a3604ba-4f58-420b-b60b-fe1d8eaf4e1f", // PAGES_URL
     ];
 
     private const string PERMISSION_ENUM_ID = "d3d0cb8d-23a2-4b86-a85e-b8965284c824"; // 権限区分

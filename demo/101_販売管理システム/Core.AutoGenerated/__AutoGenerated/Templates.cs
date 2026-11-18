@@ -29,30 +29,36 @@ public interface ITemplateKind {
 /// </example>
 public abstract class Templates<TKind> where TKind : ITemplateKind {
     /// <summary>
+    /// 画面URL一覧
+    /// <para>
     /// 画面の URL。サーバーで組み立てて通知のリンク先に使い、画面のルーティングと他の画面からのリンクもここから組み立てる。サーバーと画面で同じ URL を使うため。
     /// 値はオリジンを除いた、"/" で始まるパス。
+    /// </para>
     /// </summary>
-    public static class 画面のURL {
+    public static class PAGES_URL {
         /// <summary>
         /// P400 従業員
         /// </summary>
-        public static string 従業員() => $"/jugyoin";
+        public static string P400() => $"/jugyoin";
         /// <summary>
-        /// P004 ジョブ
+        /// P004 ジョブ一覧
         /// </summary>
-        public static string ジョブ() => $"/job";
+        public static string P004() => $"/job";
     }
     /// <summary>
-    /// 販売管理の画面の URL。値の決まりは「画面のURL」と同じ。
+    /// 画面URL一覧(デモ101専用)
+    /// <para>
+    /// 販売管理の画面の URL。値の決まりは「PAGES_URL」と同じ。
+    /// </para>
     /// </summary>
-    public static class 販売管理の画面のURL {
+    public static class PAGES_URL_DEMO101 {
         /// <summary>
         /// P101 売上詳細
         /// </summary>
-        public static string 売上詳細(int 売上SEQ) => $"/uriage/edit/{TKind.URL(売上SEQ)}";
+        public static string P101(int 売上SEQ) => $"/uriage/edit/{TKind.URL(売上SEQ)}";
         /// <summary>
         /// P301 商品詳細
         /// </summary>
-        public static string 商品詳細(int 商品SEQ) => $"/shohin/{TKind.URL(商品SEQ)}";
+        public static string P301(int 商品SEQ) => $"/shohin/{TKind.URL(商品SEQ)}";
     }
 }

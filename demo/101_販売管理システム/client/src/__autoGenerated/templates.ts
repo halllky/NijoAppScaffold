@@ -28,31 +28,35 @@ export type TemplateKind = {
  */
 export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind) => ({
   /**
+   * 画面URL一覧
+   *
    * 画面の URL。サーバーで組み立てて通知のリンク先に使い、画面のルーティングと他の画面からのリンクもここから組み立てる。サーバーと画面で同じ URL を使うため。
    * 値はオリジンを除いた、"/" で始まるパス。
    */
-  画面のURL: {
+  PAGES_URL: {
     /**
      * P400 従業員
      */
-    従業員: (): string => `/jugyoin`,
+    P400: (): string => `/jugyoin`,
     /**
-     * P004 ジョブ
+     * P004 ジョブ一覧
      */
-    ジョブ: (): string => `/job`,
+    P004: (): string => `/job`,
   },
   /**
-   * 販売管理の画面の URL。値の決まりは「画面のURL」と同じ。
+   * 画面URL一覧(デモ101専用)
+   *
+   * 販売管理の画面の URL。値の決まりは「PAGES_URL」と同じ。
    */
-  販売管理の画面のURL: {
+  PAGES_URL_DEMO101: {
     /**
      * P101 売上詳細
      */
-    売上詳細: ({ 売上SEQ }: { 売上SEQ: string }): string => `/uriage/edit/${templateKind.URL.int(売上SEQ)}`,
+    P101: ({ 売上SEQ }: { 売上SEQ: string }): string => `/uriage/edit/${templateKind.URL.int(売上SEQ)}`,
     /**
      * P301 商品詳細
      */
-    商品詳細: ({ 商品SEQ }: { 商品SEQ: string }): string => `/shohin/${templateKind.URL.int(商品SEQ)}`,
+    P301: ({ 商品SEQ }: { 商品SEQ: string }): string => `/shohin/${templateKind.URL.int(商品SEQ)}`,
   },
 })
 
@@ -63,30 +67,34 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
  */
 export const TemplatePattern = {
   /**
+   * 画面URL一覧
+   *
    * 画面の URL。サーバーで組み立てて通知のリンク先に使い、画面のルーティングと他の画面からのリンクもここから組み立てる。サーバーと画面で同じ URL を使うため。
    * 値はオリジンを除いた、"/" で始まるパス。
    */
-  画面のURL: {
+  PAGES_URL: {
     /**
      * P400 従業員
      */
-    従業員: (): string => `/jugyoin`,
+    P400: (): string => `/jugyoin`,
     /**
-     * P004 ジョブ
+     * P004 ジョブ一覧
      */
-    ジョブ: (): string => `/job`,
+    P004: (): string => `/job`,
   },
   /**
-   * 販売管理の画面の URL。値の決まりは「画面のURL」と同じ。
+   * 画面URL一覧(デモ101専用)
+   *
+   * 販売管理の画面の URL。値の決まりは「PAGES_URL」と同じ。
    */
-  販売管理の画面のURL: {
+  PAGES_URL_DEMO101: {
     /**
      * P101 売上詳細
      */
-    売上詳細: ({ 売上SEQ }: { 売上SEQ: string }): string => `/uriage/edit/${売上SEQ}`,
+    P101: ({ 売上SEQ }: { 売上SEQ: string }): string => `/uriage/edit/${売上SEQ}`,
     /**
      * P301 商品詳細
      */
-    商品詳細: ({ 商品SEQ }: { 商品SEQ: string }): string => `/shohin/${商品SEQ}`,
+    P301: ({ 商品SEQ }: { 商品SEQ: string }): string => `/shohin/${商品SEQ}`,
   },
 }

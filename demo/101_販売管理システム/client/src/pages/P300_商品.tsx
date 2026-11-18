@@ -11,7 +11,7 @@ import { 在庫調整ダイアログ, toProductRefTarget } from "./shared/在庫
 import type { RootNavigationItem } from "../navigationItems"
 import { useCanInvoke } from "../login/canInvoke"
 
-const { 画面のURL } = テンプレート
+const { PAGES_URL } = テンプレート
 
 export const URL = "/shohin"
 
@@ -50,7 +50,7 @@ function P300_商品() {
     const result = await callIdempotentOperation('商品データ取込', {})
     if (result.type === 'canceled') return
     setServerMessages(result.messages)
-    if (result.type === 'ok') navigate(画面のURL.ジョブ())
+    if (result.type === 'ok') navigate(PAGES_URL.P004())
   }
 
   return (

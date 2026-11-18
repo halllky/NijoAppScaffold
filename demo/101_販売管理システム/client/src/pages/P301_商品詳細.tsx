@@ -14,13 +14,13 @@ import { getLinkUrlToP201入荷詳細 } from "./P201_入荷詳細"
 import { 在庫調整ダイアログ, toProductRefTarget } from "./shared/在庫調整ダイアログ"
 import { useCanInvoke } from "../login/canInvoke"
 
-const { 販売管理の画面のURL } = テンプレート
+const { PAGES_URL_DEMO101 } = テンプレート
 
 /**
  * P301_商品詳細 へ遷移するためのリンクURLを取得する関数
  */
 export function getLinkUrlToP301商品詳細(商品SEQ: string) {
-  return 販売管理の画面のURL.商品詳細({ 商品SEQ })
+  return PAGES_URL_DEMO101.P301({ 商品SEQ })
 }
 
 type LoaderData = {
@@ -35,7 +35,7 @@ const PAGING_HISTORY_TAKE = 20
  * ルーティング定義
  */
 export default {
-  path: TemplatePattern.販売管理の画面のURL.商品詳細({ 商品SEQ: ":id" }),
+  path: TemplatePattern.PAGES_URL_DEMO101.P301({ 商品SEQ: ":id" }),
   element: <P301_商品詳細 />,
   loader: async ({ params, request }) => {
     const id = params.id

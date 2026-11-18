@@ -28,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- nijo.xml のテンプレート文字列のグループを、画面のURL.ジョブ() のように直接書けるようにする -->
+    <!-- nijo.xml のテンプレート文字列のグループを、PAGES_URL.P004() のように直接書けるようにする -->
     <Using Include="MyApp.Templates&lt;MyApp.TemplateKind&gt;" Static="true" />
   </ItemGroup>
 

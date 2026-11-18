@@ -87,7 +87,7 @@ partial class OverridedApplicationService {
         var adjustment = DbContext.StartCreating在庫調整();
         adjustment.在庫調整ID = adjustmentId;
         adjustment.在庫調整日時 = CurrentTime;
-        adjustment.担当者 = new() { 従業員番号 = LoginUser.従業員番号 };
+        adjustment.担当者 = new() { 従業員番号 = LoginUser?.従業員番号 };
         adjustment.商品 = new() { 商品SEQ = param.商品.商品SEQ };
         adjustment.増減数 = param.増減数;
         adjustment.絶対数 = param.絶対数;
@@ -171,6 +171,6 @@ partial class OverridedApplicationService {
         await Create通知Async(
             宛先一覧,
             $"商品「{商品名}」の在庫が {LoginUser.氏名} さんにより調整されました（{増減数:+#;-#}個）。",
-            販売管理の画面のURL.商品詳細(商品SEQ));
+            PAGES_URL_DEMO101.P301(商品SEQ));
     }
 }
