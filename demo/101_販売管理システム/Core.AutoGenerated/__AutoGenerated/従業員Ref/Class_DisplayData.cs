@@ -24,7 +24,7 @@ namespace MyApp;
 /// <summary>
 /// 従業員Refの画面表示用データ。
 /// </summary>
-[NijoAttr.IsQueryable, NijoAttr.呼び出し可能な利用者(NijoAttr.呼び出し可能な利用者Attribute.E_Value.ログインユーザー全員)]
+[NijoAttr.IsQueryable, NijoAttr.OperationAccessLevel(NijoAttr.OperationAccessLevelAttribute.E_Value.ログインユーザー全員)]
 public partial class 従業員RefDisplayData {
     /// <summary>
     /// 画面初期表示から保存までの間でこのインスタンスを識別する番号。

@@ -146,167 +146,167 @@ export interface ReturnType {
 export type Metadata = {
   /** 表示用名称 */
   displayName: string
-  /** 呼び出し可能な利用者 */
-  呼び出し可能な利用者: 'ログイン不要' | 'ログインユーザー全員' | '権限で指定' | '内部処理のみ'
-  /** 必要な権限 */
-  必要な権限: readonly (EnumDefs.権限区分)[]
+  /** 機能公開レベル */
+  operationAccessLevel: 'ログイン不要' | 'ログインユーザー全員' | '権限で指定' | '内部処理のみ'
+  /** 機能利用可能権限 */
+  operationAccessRole: readonly (EnumDefs.権限区分)[]
 }
 
 /** クエリとコマンドのメタデータの一覧。C# 側の各処理の Metadata と一致する。 */
 export const Metadata: { [K in Name]: Metadata } = {
   '商品': {
     displayName: '商品',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['入荷担当', '販売担当'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['入荷担当', '販売担当'],
   },
   'ref-to:商品': {
     displayName: '商品の参照検索',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['入荷担当', '販売担当'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['入荷担当', '販売担当'],
   },
   '従業員Ref': {
     displayName: '従業員Ref',
-    呼び出し可能な利用者: 'ログインユーザー全員',
-    必要な権限: [],
+    operationAccessLevel: 'ログインユーザー全員',
+    operationAccessRole: [],
   },
   'ref-to:従業員Ref': {
     displayName: '従業員Refの参照検索',
-    呼び出し可能な利用者: 'ログインユーザー全員',
-    必要な権限: [],
+    operationAccessLevel: 'ログインユーザー全員',
+    operationAccessRole: [],
   },
   '従業員マスタ': {
     displayName: '従業員マスタ',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['システム管理者'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['システム管理者'],
   },
   'ref-to:従業員マスタ': {
     displayName: '従業員マスタの参照検索',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['システム管理者'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['システム管理者'],
   },
   '売上一覧': {
     displayName: '売上一覧',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['販売担当'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['販売担当'],
   },
   '入荷一覧': {
     displayName: '入荷一覧',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['入荷担当'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['入荷担当'],
   },
   '商品一覧': {
     displayName: '商品一覧',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['入荷担当', '販売担当'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['入荷担当', '販売担当'],
   },
   '商品在庫増減履歴': {
     displayName: '商品在庫増減履歴',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['入荷担当', '販売担当'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['入荷担当', '販売担当'],
   },
   '通知一覧': {
     displayName: '通知一覧',
-    呼び出し可能な利用者: 'ログインユーザー全員',
-    必要な権限: [],
+    operationAccessLevel: 'ログインユーザー全員',
+    operationAccessRole: [],
   },
   'ジョブ一覧': {
     displayName: 'ジョブ一覧',
-    呼び出し可能な利用者: 'ログインユーザー全員',
-    必要な権限: [],
+    operationAccessLevel: 'ログインユーザー全員',
+    operationAccessRole: [],
   },
   '入荷登録': {
     displayName: '入荷登録',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['入荷担当'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['入荷担当'],
   },
   '商品データ取込': {
     displayName: '商品データ取込',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['システム管理者'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['システム管理者'],
   },
   'ログイン': {
     displayName: 'ログイン',
-    呼び出し可能な利用者: 'ログイン不要',
-    必要な権限: [],
+    operationAccessLevel: 'ログイン不要',
+    operationAccessRole: [],
   },
   'ログアウト': {
     displayName: 'ログアウト',
-    呼び出し可能な利用者: 'ログイン不要',
-    必要な権限: [],
+    operationAccessLevel: 'ログイン不要',
+    operationAccessRole: [],
   },
   'パスワード再発行': {
     displayName: 'パスワード再発行',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['システム管理者'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['システム管理者'],
   },
   '従業員一括更新': {
     displayName: '従業員一括更新',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['システム管理者'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['システム管理者'],
   },
   '売上新規登録': {
     displayName: '売上新規登録',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['販売担当'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['販売担当'],
   },
   '売上詳細画面初期表示': {
     displayName: '売上詳細画面初期表示',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['販売担当'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['販売担当'],
   },
   '売上修正': {
     displayName: '売上修正',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['販売担当'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['販売担当'],
   },
   '入荷修正': {
     displayName: '入荷修正',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['入荷担当'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['入荷担当'],
   },
   '在庫調整登録': {
     displayName: '在庫調整登録',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['入荷担当'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['入荷担当'],
   },
   'パスワード変更': {
     displayName: 'パスワード変更',
-    呼び出し可能な利用者: 'ログインユーザー全員',
-    必要な権限: [],
+    operationAccessLevel: 'ログインユーザー全員',
+    operationAccessRole: [],
   },
   'クリーンナップ': {
     displayName: 'クリーンナップ',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['システム管理者'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['システム管理者'],
   },
   '入荷詳細画面初期表示': {
     displayName: '入荷詳細画面初期表示',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['入荷担当'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['入荷担当'],
   },
   '売上金額シミュレート': {
     displayName: '売上金額シミュレート',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['販売担当'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['販売担当'],
   },
   'ログイン状態確認': {
     displayName: 'ログイン状態確認',
-    呼び出し可能な利用者: 'ログイン不要',
-    必要な権限: [],
+    operationAccessLevel: 'ログイン不要',
+    operationAccessRole: [],
   },
   '通知既読設定': {
     displayName: '通知既読設定',
-    呼び出し可能な利用者: 'ログインユーザー全員',
-    必要な権限: [],
+    operationAccessLevel: 'ログインユーザー全員',
+    operationAccessRole: [],
   },
   '通知すべて既読': {
     displayName: '通知すべて既読',
-    呼び出し可能な利用者: 'ログインユーザー全員',
-    必要な権限: [],
+    operationAccessLevel: 'ログインユーザー全員',
+    operationAccessRole: [],
   },
   '未読通知件数': {
     displayName: '未読通知件数',
-    呼び出し可能な利用者: 'ログインユーザー全員',
-    必要な権限: [],
+    operationAccessLevel: 'ログインユーザー全員',
+    operationAccessRole: [],
   },
 }

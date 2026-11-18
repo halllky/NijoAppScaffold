@@ -1,12 +1,12 @@
 using MyApp.Core.Authorization;
-using 呼び出し可能な利用者 = MyApp.NijoAttr.呼び出し可能な利用者Attribute.E_Value;
+using 機能公開レベル = MyApp.NijoAttr.OperationAccessLevelAttribute.E_Value;
 
 namespace MyApp {
     partial class OverridedApplicationService {
 
         /// <summary>
         /// すべてのクエリとコマンドの関門。
-        /// nijo.xml で処理ごとに宣言された「呼び出し可能な利用者」と「必要な権限」をもとに、
+        /// nijo.xml で処理ごとに宣言された「機能公開レベル」と「機能利用可能権限」をもとに、
         /// ログインユーザーがその処理を呼び出してよいかを、処理の本体より前に確かめる。
         /// 呼び出し元（Web、バッチ、単体テスト）を問わず、処理の公開メソッドを呼ぶと必ずここを通る。
         /// </summary>
@@ -38,12 +38,12 @@ namespace MyApp.Core.Authorization {
         /// </summary>
         /// <param name="loginUser">ログインユーザー。ログインしていない場合は null</param>
         public static bool CanBeInvokedBy(this OperationMetadata metadata, LoginUser? loginUser) {
-            return metadata.呼び出し可能な利用者 switch {
-                呼び出し可能な利用者.ログイン不要 => true,
-                呼び出し可能な利用者.内部処理のみ => true,
-                呼び出し可能な利用者.ログインユーザー全員 => loginUser != null,
-                呼び出し可能な利用者.権限で指定 => loginUser != null && metadata.必要な権限.Any(loginUser.Has権限),
-                _ => throw new InvalidOperationException($"不明な値です: {metadata.呼び出し可能な利用者}"),
+            return metadata.OperationAccessLevel switch {
+                機能公開レベル.ログイン不要 => true,
+                機能公開レベル.内部処理のみ => true,
+                機能公開レベル.ログインユーザー全員 => loginUser != null,
+                機能公開レベル.権限で指定 => loginUser != null && metadata.OperationAccessRole.Any(loginUser.Has権限),
+                _ => throw new InvalidOperationException($"不明な値です: {metadata.OperationAccessLevel}"),
             };
         }
     }

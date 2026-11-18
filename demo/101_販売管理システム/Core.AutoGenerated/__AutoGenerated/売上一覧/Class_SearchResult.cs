@@ -25,7 +25,7 @@ namespace MyApp;
 /// 売上一覧の検索結果型。
 /// SQLのSELECT句の形と対応する。
 /// </summary>
-[NijoAttr.IsQueryable, NijoAttr.呼び出し可能な利用者(NijoAttr.呼び出し可能な利用者Attribute.E_Value.権限で指定), NijoAttr.必要な権限(global::MyApp.権限区分.販売担当)]
+[NijoAttr.IsQueryable, NijoAttr.OperationAccessLevel(NijoAttr.OperationAccessLevelAttribute.E_Value.権限で指定), NijoAttr.OperationAccessRole(global::MyApp.権限区分.販売担当)]
 public partial class 売上一覧SearchResult {
     /// <summary>売上SEQ</summary>
     public int? 売上SEQ { get; set; }

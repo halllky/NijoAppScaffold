@@ -24,7 +24,7 @@ namespace MyApp;
 /// <summary>
 /// 従業員Refが他の集約から外部参照されるときの従業員Refの型
 /// </summary>
-[NijoAttr.IsQueryable, NijoAttr.呼び出し可能な利用者(NijoAttr.呼び出し可能な利用者Attribute.E_Value.ログインユーザー全員)]
+[NijoAttr.IsQueryable, NijoAttr.OperationAccessLevel(NijoAttr.OperationAccessLevelAttribute.E_Value.ログインユーザー全員)]
 public partial class 従業員RefRefTarget {
     [NijoAttr.StringSearchBehavior(NijoAttr.StringSearchBehaviorAttribute.E_Value.Exact), NijoAttr.StringNormalization(NijoAttr.StringNormalizationAttribute.E_Value.NFKC)]
     public string? 従業員番号 { get; set; }

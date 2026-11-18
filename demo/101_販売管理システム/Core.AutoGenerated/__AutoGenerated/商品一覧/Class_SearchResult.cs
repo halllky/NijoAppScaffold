@@ -25,7 +25,7 @@ namespace MyApp;
 /// 商品一覧の検索結果型。
 /// SQLのSELECT句の形と対応する。
 /// </summary>
-[NijoAttr.IsQueryable, NijoAttr.呼び出し可能な利用者(NijoAttr.呼び出し可能な利用者Attribute.E_Value.権限で指定), NijoAttr.必要な権限(global::MyApp.権限区分.入荷担当, global::MyApp.権限区分.販売担当)]
+[NijoAttr.IsQueryable, NijoAttr.OperationAccessLevel(NijoAttr.OperationAccessLevelAttribute.E_Value.権限で指定), NijoAttr.OperationAccessRole(global::MyApp.権限区分.入荷担当, global::MyApp.権限区分.販売担当)]
 public partial class 商品一覧SearchResult {
     /// <summary>商品SEQ</summary>
     public int? 商品SEQ { get; set; }

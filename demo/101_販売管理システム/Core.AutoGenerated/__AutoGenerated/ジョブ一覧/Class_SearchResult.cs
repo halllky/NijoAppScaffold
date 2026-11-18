@@ -25,7 +25,7 @@ namespace MyApp;
 /// ジョブ一覧の検索結果型。
 /// SQLのSELECT句の形と対応する。
 /// </summary>
-[NijoAttr.IsQueryable, NijoAttr.呼び出し可能な利用者(NijoAttr.呼び出し可能な利用者Attribute.E_Value.ログインユーザー全員)]
+[NijoAttr.IsQueryable, NijoAttr.OperationAccessLevel(NijoAttr.OperationAccessLevelAttribute.E_Value.ログインユーザー全員)]
 public partial class ジョブ一覧SearchResult {
     /// <summary>ジョブID</summary>
     public string? ジョブID { get; set; }

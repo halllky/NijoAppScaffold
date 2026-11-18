@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using MyApp.Core.Authorization;
 using MyApp.Core.Idempotency;
-using 呼び出し可能な利用者 = MyApp.NijoAttr.呼び出し可能な利用者Attribute.E_Value;
+using 機能公開レベル = MyApp.NijoAttr.OperationAccessLevelAttribute.E_Value;
 
 namespace MyApp.WebApi;
 
@@ -16,7 +16,7 @@ namespace MyApp.WebApi;
 /// 同じ操作が処理済みであること（<see cref="AlreadyExecutedException"/>）と、
 /// 呼び出す権限が無いこと（<see cref="OperationForbiddenException"/>）の応答に対応している。
 ///
-/// どの処理を公開するか、ログインせずに呼び出せるかは、nijo.xml で処理ごとに宣言された「呼び出し可能な利用者」で決まる。
+/// どの処理を公開するか、ログインせずに呼び出せるかは、nijo.xml で処理ごとに宣言された「機能公開レベル」で決まる。
 /// 「内部処理のみ」の処理は公開せず、「ログイン不要」の処理はログインせずに呼び出せる。
 /// それ以外の処理はログインを必須とし、権限の確認は処理の関門（<see cref="OverridedApplicationService.InterceptAsync"/>）で行う。
 /// 以下のような詳細は、アプリケーションの要件に応じて自由に変更してよい。
@@ -50,10 +50,10 @@ public static class OperationEndpoints {
         var group = endpoints.MapGroup("");
         var mapping = new EndpointMapping(group);
         foreach (var operation in Operation<OperationContext>.All) {
-            if (operation.Metadata.呼び出し可能な利用者 == 呼び出し可能な利用者.内部処理のみ) continue;
+            if (operation.Metadata.OperationAccessLevel == 機能公開レベル.内部処理のみ) continue;
 
             var endpoint = operation.Accept(mapping);
-            if (operation.Metadata.呼び出し可能な利用者 == 呼び出し可能な利用者.ログイン不要) {
+            if (operation.Metadata.OperationAccessLevel == 機能公開レベル.ログイン不要) {
                 endpoint.AllowAnonymous();
             }
         }

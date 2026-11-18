@@ -155,7 +155,7 @@ try {
     app.MapGet("/api/version", () => Results.Json(new { version = AppVersion.Value }));
 
     // Nijoにより自動生成されたクエリ・コマンドをHTTPエンドポイントとして公開する。
-    // 公開するかどうかとログインの要否は、nijo.xml で処理ごとに宣言された「呼び出し可能な利用者」で決まる
+    // 公開するかどうかとログインの要否は、nijo.xml で処理ごとに宣言された「機能公開レベル」で決まる
     app.MapOperationEndpoints();
 
     // ジョブのスプールのファイルをダウンロードするエンドポイント

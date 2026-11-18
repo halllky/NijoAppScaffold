@@ -24,7 +24,7 @@ namespace MyApp;
 /// <summary>
 /// ジョブ一覧の一覧検索条件
 /// </summary>
-[NijoAttr.IsQueryable, NijoAttr.呼び出し可能な利用者(NijoAttr.呼び出し可能な利用者Attribute.E_Value.ログインユーザー全員)]
+[NijoAttr.IsQueryable, NijoAttr.OperationAccessLevel(NijoAttr.OperationAccessLevelAttribute.E_Value.ログインユーザー全員)]
 public partial class ジョブ一覧SearchCondition {
     /// <summary>絞り込み条件</summary>
     [JsonPropertyName("filter")]
@@ -42,7 +42,7 @@ public partial class ジョブ一覧SearchCondition {
 #endregion 検索条件エントリーポイント
 
 #region 検索条件フィルター
-[NijoAttr.IsQueryable, NijoAttr.呼び出し可能な利用者(NijoAttr.呼び出し可能な利用者Attribute.E_Value.ログインユーザー全員)]
+[NijoAttr.IsQueryable, NijoAttr.OperationAccessLevel(NijoAttr.OperationAccessLevelAttribute.E_Value.ログインユーザー全員)]
 public partial class ジョブ一覧SearchConditionFilter {
     public string? ジョブID { get; set; }
     public string? 種類 { get; set; }

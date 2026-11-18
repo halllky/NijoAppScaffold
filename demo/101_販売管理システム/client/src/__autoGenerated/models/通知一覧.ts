@@ -179,7 +179,7 @@ export const metadata = {
     uniqueId: 'beffc950-74ba-48ec-b9fb-407d52c12533',
     displayName: '通知一覧',
     comment: '@[通知](309fda4b-bae6-445d-ad8c-a0d3ac8995f1) の一覧。ログインユーザー宛てのものだけを返す。',
-    呼び出し可能な利用者: 'ログインユーザー全員',
+    operationAccessLevel: 'ログインユーザー全員',
     members: ['通知ID', '本文', 'リンク先', '既読日時', '作成日時'],
   },
   displayData: {

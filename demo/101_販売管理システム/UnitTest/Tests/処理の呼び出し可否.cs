@@ -1,5 +1,5 @@
 using MyApp.Core.Authorization;
-using 呼び出し可能な利用者 = MyApp.NijoAttr.呼び出し可能な利用者Attribute.E_Value;
+using 機能公開レベル = MyApp.NijoAttr.OperationAccessLevelAttribute.E_Value;
 
 namespace MyApp.UnitTest;
 
@@ -12,7 +12,7 @@ public partial class 処理の呼び出し可否 {
     [Category("DB接続なし")]
     public void 権限で指定する処理だけが必要な権限を持つ() {
         var inconsistent = Operation<OperationContext>.All
-            .Where(op => (op.Metadata.呼び出し可能な利用者 == 呼び出し可能な利用者.権限で指定) != (op.Metadata.必要な権限.Count > 0))
+            .Where(op => (op.Metadata.OperationAccessLevel == 機能公開レベル.権限で指定) != (op.Metadata.OperationAccessRole.Count > 0))
             .Select(op => op.Name)
             .ToArray();
 
@@ -25,8 +25,8 @@ public partial class 処理の呼び出し可否 {
         var load = GetMetadata("従業員マスタ");
         var loadRefs = GetMetadata("ref-to:従業員マスタ");
 
-        Assert.That(loadRefs.呼び出し可能な利用者, Is.EqualTo(load.呼び出し可能な利用者));
-        Assert.That(loadRefs.必要な権限, Is.EquivalentTo(load.必要な権限));
+        Assert.That(loadRefs.OperationAccessLevel, Is.EqualTo(load.OperationAccessLevel));
+        Assert.That(loadRefs.OperationAccessRole, Is.EquivalentTo(load.OperationAccessRole));
     }
 
     [Test]
@@ -54,13 +54,13 @@ public partial class 処理の呼び出し可否 {
     [Category("DB接続なし")]
     public void ログインしていなければログイン不要の処理だけを呼び出せる() {
         var invokable = Operation<OperationContext>.All
-            .Where(op => op.Metadata.呼び出し可能な利用者 != 呼び出し可能な利用者.内部処理のみ)
+            .Where(op => op.Metadata.OperationAccessLevel != 機能公開レベル.内部処理のみ)
             .Where(op => op.Metadata.CanBeInvokedBy(null))
-            .Select(op => op.Metadata.呼び出し可能な利用者)
+            .Select(op => op.Metadata.OperationAccessLevel)
             .Distinct()
             .ToArray();
 
-        Assert.That(invokable, Is.EqualTo(new[] { 呼び出し可能な利用者.ログイン不要 }));
+        Assert.That(invokable, Is.EqualTo(new[] { 機能公開レベル.ログイン不要 }));
     }
 
     private static OperationMetadata GetMetadata(string name) {

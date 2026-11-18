@@ -1095,24 +1095,24 @@ Webアプリケーションなので明示的にログアウトしない限り�
       <Option>正規化しない</Option>
       <Option>NFKC</Option>
     </Custom-df2fcd23-6cd1-4320-b03d-fd4b797567da>
-    <!--処理（クエリとコマンド）を呼び出せる利用者。「ログイン不要」はログインせずに呼び出せる。「ログインユーザー全員」はログインしていれば誰でも呼び出せる。「権限で指定」は「必要な権限」のいずれかを持つユーザーだけが呼び出せる（システム管理者はすべての権限を持つ）。「内部処理のみ」はバッチなどサーバー内部からだけ呼び出し、画面からは呼び出せない。参照検索は、参照先のクエリモデルの指定を引き継ぐ。-->
+    <!--処理（クエリとコマンド）を呼び出せる利用者。「ログイン不要」はログインせずに呼び出せる。「ログインユーザー全員」はログインしていれば誰でも呼び出せる。「権限で指定」は「機能利用可能権限」のいずれかを持つユーザーだけが呼び出せる（システム管理者はすべての権限を持つ）。「内部処理のみ」はバッチなどサーバー内部からだけ呼び出し、画面からは呼び出せない。参照検索は、参照先のクエリモデルの指定を引き継ぐ。-->
     <Custom-7c1f3a2e-5b84-4d0a-9e61-2f8b4c6d1a35
       AvailableFor="queryable,command"
-      DisplayName="呼び出し可能な利用者"
+      DisplayName="機能公開レベル"
       IsRequired="True"
-      PhysicalName="呼び出し可能な利用者"
+      PhysicalName="OperationAccessLevel"
       Type="Enum">
       <Option>ログイン不要</Option>
       <Option>ログインユーザー全員</Option>
       <Option>権限で指定</Option>
       <Option>内部処理のみ</Option>
     </Custom-7c1f3a2e-5b84-4d0a-9e61-2f8b4c6d1a35>
-    <!--「呼び出し可能な利用者」が「権限で指定」の処理を呼び出すのに必要な権限。いずれか1つを持っていれば呼び出せる。-->
+    <!--「機能公開レベル」が「権限で指定」の処理を呼び出すのに必要な権限。いずれか1つを持っていれば呼び出せる。-->
     <Custom-b9d2e4f6-0a13-4c57-8e29-6d4f1b3a7c80
       AvailableFor="queryable,command"
-      DisplayName="必要な権限"
+      DisplayName="機能利用可能権限"
       IsMultiple="True"
-      PhysicalName="必要な権限"
+      PhysicalName="OperationAccessRole"
       StaticEnumType="権限区分"
       Type="StaticEnum" />
   </CustomAttributes>

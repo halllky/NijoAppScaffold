@@ -213,8 +213,8 @@ export const metadata = {
     displayName: '商品',
     comment: '入荷・販売の対象となる商品マスタデータ。\nこのシステムで登録せず、外部システムから日次で連携される。',
     uniqueConstraints: 'f5f225fa-eddd-4cca-ae58-b408e1b34100;',
-    呼び出し可能な利用者: '権限で指定',
-    必要な権限: ['入荷担当', '販売担当'],
+    operationAccessLevel: '権限で指定',
+    operationAccessRole: ['入荷担当', '販売担当'],
     members: ['商品SEQ', '外部システム側ID', '商品名', '売値単価_税抜', '消費税区分'],
   },
   displayData: {

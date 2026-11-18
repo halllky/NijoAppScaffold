@@ -24,7 +24,7 @@ namespace MyApp;
 /// <summary>
 /// 商品の画面表示用データ。
 /// </summary>
-[NijoAttr.IsStored, NijoAttr.IsQueryable, NijoAttr.UniqueConstraints("f5f225fa-eddd-4cca-ae58-b408e1b34100;"), NijoAttr.呼び出し可能な利用者(NijoAttr.呼び出し可能な利用者Attribute.E_Value.権限で指定), NijoAttr.必要な権限(global::MyApp.権限区分.入荷担当, global::MyApp.権限区分.販売担当)]
+[NijoAttr.IsStored, NijoAttr.IsQueryable, NijoAttr.UniqueConstraints("f5f225fa-eddd-4cca-ae58-b408e1b34100;"), NijoAttr.OperationAccessLevel(NijoAttr.OperationAccessLevelAttribute.E_Value.権限で指定), NijoAttr.OperationAccessRole(global::MyApp.権限区分.入荷担当, global::MyApp.権限区分.販売担当)]
 public partial class 商品DisplayData {
     /// <summary>
     /// 画面初期表示から保存までの間でこのインスタンスを識別する番号。

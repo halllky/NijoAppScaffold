@@ -171,7 +171,7 @@ export const metadata = {
     uniqueId: '7e844312-66b4-4693-b8eb-c4d3a4dd2565',
     displayName: '従業員Ref',
     comment: '画面UI上では @[従業員](659bf33a-c624-4e67-96a9-460809d70995) への参照が各所に登場するところ、アプリケーションのパフォーマンスの最適化のために必要最低限の項目のみ保持した参照用データ。',
-    呼び出し可能な利用者: 'ログインユーザー全員',
+    operationAccessLevel: 'ログインユーザー全員',
     members: ['従業員番号', '氏名'],
   },
   displayData: {

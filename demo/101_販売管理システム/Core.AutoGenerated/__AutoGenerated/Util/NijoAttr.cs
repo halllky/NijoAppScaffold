@@ -396,7 +396,7 @@ public sealed class StringNormalizationAttribute : System.Attribute {
 }
 
 /// <summary>
-/// 呼び出し可能な利用者
+/// 機能公開レベル
 /// <para>
 /// 処理（クエリとコマンド）を呼び出せる利用者。「ログイン不要」はログインせずに呼び出せる。「ログインユーザー全員」はログインしていれば誰でも呼び出せる。「権限で指定」は「必要な権限」のいずれかを持つユーザーだけが呼び出せる（システム管理者はすべての権限を持つ）。「内部処理のみ」はバッチなどサーバー内部からだけ呼び出し、画面からは呼び出せない。参照検索は、参照先のクエリモデルの指定を引き継ぐ。
 /// </para>
@@ -404,7 +404,7 @@ public sealed class StringNormalizationAttribute : System.Attribute {
 /// 自動生成されたソースコード自体がこの Attribute を使用することはありません。
 /// </summary>
 [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
-public sealed class 呼び出し可能な利用者Attribute : System.Attribute {
+public sealed class OperationAccessLevelAttribute : System.Attribute {
     public enum E_Value {
         ログイン不要,
         ログインユーザー全員,
@@ -414,14 +414,14 @@ public sealed class 呼び出し可能な利用者Attribute : System.Attribute {
 
     public E_Value Value { get; }
 
-    /// <inheritdoc cref="呼び出し可能な利用者Attribute" />
-    public 呼び出し可能な利用者Attribute(E_Value value) {
+    /// <inheritdoc cref="OperationAccessLevelAttribute" />
+    public OperationAccessLevelAttribute(E_Value value) {
         Value = value;
     }
 }
 
 /// <summary>
-/// 必要な権限
+/// 機能利用可能権限
 /// <para>
 /// 「呼び出し可能な利用者」が「権限で指定」の処理を呼び出すのに必要な権限。いずれか1つを持っていれば呼び出せる。
 /// </para>
@@ -429,11 +429,11 @@ public sealed class 呼び出し可能な利用者Attribute : System.Attribute {
 /// 自動生成されたソースコード自体がこの Attribute を使用することはありません。
 /// </summary>
 [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
-public sealed class 必要な権限Attribute : System.Attribute {
+public sealed class OperationAccessRoleAttribute : System.Attribute {
     public IReadOnlyList<global::MyApp.権限区分> Values { get; }
 
-    /// <inheritdoc cref="必要な権限Attribute" />
-    public 必要な権限Attribute(params global::MyApp.権限区分[] values) {
+    /// <inheritdoc cref="OperationAccessRoleAttribute" />
+    public OperationAccessRoleAttribute(params global::MyApp.権限区分[] values) {
         Values = values;
     }
 }
