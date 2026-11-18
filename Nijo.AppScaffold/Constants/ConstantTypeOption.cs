@@ -23,7 +23,6 @@ internal sealed class ConstantTypeOption : NodeOption {
     public override string HelpText => $$"""
         定数の型を指定します。
         string（文字列）、int（整数）、decimal（小数）、template（テンプレート文字列）、child（ネストされた定数グループ）のいずれかを指定してください。
-        template の値には、引数を {名前} か {名前:型}（型は string か int）の形で書きます。
         """;
 
     public override bool IsAvailable(NodeOptionTarget target) {
@@ -53,6 +52,9 @@ internal sealed class ConstantTypeOption : NodeOption {
                 if (!decimal.TryParse(valueAttr.Value, out _)) {
                     ctx.AddError($"decimal型の値「{valueAttr.Value}」は有効な小数ではありません。");
                 }
+                break;
+            case ConstantValueDef.CONSTTYPE_TEMPLATE:
+                // テンプレート型の場合、プレースホルダーは自動判定されるため追加チェックは不要
                 break;
         }
     }

@@ -92,7 +92,7 @@ function P300_商品() {
           </FieldGroup>
         )}
         defineSearchResultColumns={[() => [
-          ReadOnlyColumn.link<商品一覧.DisplayData>(row => row.商品SEQ ? [{ text: '詳細', to: getLinkUrlToP301商品詳細(row.商品SEQ) }] : [], { columnId: '詳細リンク', defaultWidth: 60, disableResizing: true, isFixed: true }),
+          ReadOnlyColumn.link<商品一覧.DisplayData>(row => [{ text: '詳細', to: getLinkUrlToP301商品詳細(row.商品SEQ) }], { columnId: '詳細リンク', defaultWidth: 60, disableResizing: true, isFixed: true }),
           ReadOnlyColumn.text<商品一覧.DisplayData>('外部システム側ID', row => row.外部システム側ID, { columnId: '外部システム側ID', defaultWidth: 152 }),
           ReadOnlyColumn.text<商品一覧.DisplayData>('商品名', row => row.商品名, { columnId: '商品名', defaultWidth: 300 }),
           ReadOnlyColumn.numeric<商品一覧.DisplayData>('売値単価(税抜)', row => row.売値単価_税抜, { columnId: '売値単価_税抜', defaultWidth: 140, suffix: '円' }),

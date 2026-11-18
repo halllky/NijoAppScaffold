@@ -66,14 +66,14 @@ public static class ApplicationSettings {
         /// コロンの後ろには開発者向けの情報ではなくアプリケーションのユーザーに向けた文字にすること。
         /// </para>
         /// </summary>
-        public static string Error(string 詳細) => $"エラーが発生しました: {ConstantTemplateKind.文言(詳細)}";
+        public static string Error(string arg0) => $"エラーが発生しました: {arg0}";
         /// <summary>
         /// バリデーションエラー
         /// <para>
         /// プレースホルダーが複数ある場合のテスト
         /// </para>
         /// </summary>
-        public static string ValidationError(string フィールド名, string エラーの種類, string 詳細) => $"{ConstantTemplateKind.文言(フィールド名)}フィールドで{ConstantTemplateKind.文言(エラーの種類)}エラーが発生しました。詳細: {ConstantTemplateKind.文言(詳細)}";
+        public static string ValidationError(string arg0, string arg1, string arg2) => $"{arg0}フィールドで{arg1}エラーが発生しました。詳細: {arg2}";
         /// <summary>
         /// メンテナンスメッセージ
         /// <para>
@@ -96,14 +96,14 @@ public static class ApplicationSettings {
         /// 特殊文字のテスト
         /// </para>
         /// </summary>
-        public static string AuthHeader(string トークン) => $"Bearer {ConstantTemplateKind.文言(トークン)}";
+        public static string AuthHeader(string arg0) => $"Bearer {arg0}";
         /// <summary>
         /// JSONフォーマット
         /// <para>
-        /// 引用符と波括弧そのものを含む文字列、グループのテンプレートの種類の上書きのテスト
+        /// 引用符を含む文字列のテスト
         /// </para>
         /// </summary>
-        public static string JsonFormat(string メッセージ, string 時刻) => $"{{\"message\": \"{ConstantTemplateKind.JSON(メッセージ)}\", \"timestamp\": \"{ConstantTemplateKind.JSON(時刻)}\"}}";
+        public static string JsonFormat(string arg0, string arg1) => $"{{\"message\": \"{arg0}\", \"timestamp\": \"{arg1}\"}}";
     }
     /// <summary>
     /// UI設定

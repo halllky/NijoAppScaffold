@@ -9,7 +9,6 @@ import {
   ATTR_DISPLAY_NAME,
   ATTR_CONSTANT_TYPE,
   ATTR_CONSTANT_VALUE,
-  ATTR_TEMPLATE_KIND,
   CONSTANT_TYPE_CHILD,
   CONSTANT_TYPE_STRING,
   CONSTANT_TYPE_INT,
@@ -40,7 +39,6 @@ export function SingleConstantEditor({ index, formMethods }: {
   // ルート要素（定数定義ブロック自体）の名前
   const rootNamePath = `constants.${index}.physicalName` as const
   const rootDisplayNamePath = `constants.${index}.attributes.${ATTR_DISPLAY_NAME}` as const
-  const rootTemplateKindPath = `constants.${index}.attributes.${ATTR_TEMPLATE_KIND}` as const
   const membersPath = `constants.${index}.members` as const
 
   // 削除処理
@@ -88,11 +86,6 @@ export function SingleConstantEditor({ index, formMethods }: {
     // 値
     columns.push(helper.text('値', `attributes.${ATTR_CONSTANT_VALUE}`, {
       defaultWidth: 300,
-    }))
-
-    // テンプレートの種類。入れ子のグループに指定すると、その中のテンプレート文字列の既定値になる
-    columns.push(helper.text('テンプレートの種類', `attributes.${ATTR_TEMPLATE_KIND}`, {
-      defaultWidth: 120,
     }))
 
     // コメント
@@ -218,11 +211,6 @@ export function SingleConstantEditor({ index, formMethods }: {
           {...register(rootDisplayNamePath)}
           className="w-64 border px-1"
           placeholder="日本語名 (定数)"
-        />
-        <UI.WordTextBox
-          {...register(rootTemplateKindPath)}
-          className="w-48 border px-1"
-          placeholder="テンプレートの種類 (URL)"
         />
         <div className="flex-1"></div>
         <UI.Button mini hideText icon={Icon.TrashIcon} onClick={handleDeleteConstant}>

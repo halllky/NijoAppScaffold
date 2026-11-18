@@ -1850,7 +1850,6 @@
       <Messages
         ConstantType="child"
         DisplayName="メッセージ"
-        TemplateKind="文言"
         UniqueId="const-msg-group-001">
         <Success
           ConstantType="template"
@@ -1860,13 +1859,13 @@
         <!-- コロンの後ろには開発者向けの情報ではなくアプリケーションのユーザーに向けた文字にすること。 -->
         <Error
           ConstantType="template"
-          ConstantValue="エラーが発生しました: {詳細}"
+          ConstantValue="エラーが発生しました: {0}"
           DisplayName="エラーメッセージ"
           UniqueId="const-msg-error-001" />
         <!-- プレースホルダーが複数ある場合のテスト -->
         <ValidationError
           ConstantType="template"
-          ConstantValue="{フィールド名}フィールドで{エラーの種類}エラーが発生しました。詳細: {詳細}"
+          ConstantValue="{0}フィールドで{1}エラーが発生しました。詳細: {2}"
           DisplayName="バリデーションエラー"
           UniqueId="const-msg-validation-001" />
         <!-- プレースホルダーが0個の場合のテスト -->
@@ -1879,7 +1878,6 @@
       <API
         ConstantType="child"
         DisplayName="API設定"
-        TemplateKind="文言"
         UniqueId="const-api-group-001">
         <BaseUrl
           ConstantType="string"
@@ -1889,15 +1887,14 @@
         <!-- 特殊文字のテスト -->
         <AuthHeader
           ConstantType="template"
-          ConstantValue="Bearer {トークン}"
+          ConstantValue="Bearer {0}"
           DisplayName="認証ヘッダー"
           UniqueId="const-api-auth-header-001" />
-        <!-- 引用符と波括弧そのものを含む文字列、グループのテンプレートの種類の上書きのテスト -->
+        <!-- 引用符を含む文字列のテスト -->
         <JsonFormat
           ConstantType="template"
-          ConstantValue="{{&quot;message&quot;: &quot;{メッセージ}&quot;, &quot;timestamp&quot;: &quot;{時刻}&quot;}}"
+          ConstantValue="{&quot;message&quot;: &quot;{0}&quot;, &quot;timestamp&quot;: &quot;{1}&quot;}"
           DisplayName="JSONフォーマット"
-          TemplateKind="JSON"
           UniqueId="const-api-json-format-001" />
       </API>
       <UI
@@ -1949,35 +1946,33 @@
     <!-- システムメッセージの定数定義 -->
     <SystemMessages
       DisplayName="システムメッセージ"
-      TemplateKind="文言"
       UniqueId="const-system-messages-001">
       <!-- 患者管理関連 -->
       <PatientNotFound
         ConstantType="template"
-        ConstantValue="患者ID「{患者ID}」が見つかりません"
+        ConstantValue="患者ID「{0}」が見つかりません"
         DisplayName="患者未発見エラー"
         UniqueId="const-patient-not-found-001" />
       <PatientRegistered
         ConstantType="template"
-        ConstantValue="患者「{患者名}」を正常に登録しました"
+        ConstantValue="患者「{0}」を正常に登録しました"
         DisplayName="患者登録完了"
         UniqueId="const-patient-registered-001" />
       <!-- 機器管理関連 -->
       <EquipmentMaintenance
         ConstantType="template"
-        ConstantValue="機器「{機器名}」のメンテナンスが必要です。最終点検日: {最終点検日}"
+        ConstantValue="機器「{0}」のメンテナンスが必要です。最終点検日: {1}"
         DisplayName="機器メンテナンス通知"
         UniqueId="const-equipment-maintenance-001" />
-      <!-- 整数の引数のテスト -->
       <StockAlert
         ConstantType="template"
-        ConstantValue="在庫不足: {品目名}の残り数量が{残数:int}個です"
+        ConstantValue="在庫不足: {0}の残り数量が{1}個です"
         DisplayName="在庫アラート"
         UniqueId="const-stock-alert-001" />
       <!-- 予約関連 -->
       <ReservationConfirmed
         ConstantType="template"
-        ConstantValue="予約を確定しました。予約番号: {予約番号}、日時: {日時}"
+        ConstantValue="予約を確定しました。予約番号: {0}、日時: {1}"
         DisplayName="予約確認"
         UniqueId="const-reservation-confirmed-001" />
       <ReservationCancelled
@@ -1985,18 +1980,17 @@
         ConstantValue="予約がキャンセルされました"
         DisplayName="予約キャンセル"
         UniqueId="const-reservation-cancelled-001" />
-      <!-- バックティック（`）と、波括弧そのものを含むテンプレート文字列のテスト -->
+      <!-- バックティック（`）を含むテンプレート文字列のテスト -->
       <ScriptTemplate
         ConstantType="template"
-        ConstantValue="console.log(`患者ID: ${{patientId}}, 名前: {名前}`);"
+        ConstantValue="console.log(`患者ID: ${patientId}, 名前: {0}`);"
         DisplayName="スクリプトテンプレート"
         UniqueId="const-script-template-001" />
       <!-- ダブルクォート（"）を含むテンプレート文字列のテスト -->
       <JsonTemplate
         ConstantType="template"
-        ConstantValue="{{&quot;patientName&quot;: &quot;{患者名}&quot;, &quot;status&quot;: &quot;active&quot;}}"
+        ConstantValue="{&quot;patientName&quot;: &quot;{0}&quot;, &quot;status&quot;: &quot;active&quot;}"
         DisplayName="JSONテンプレート"
-        TemplateKind="JSON"
         UniqueId="const-json-template-001" />
     </SystemMessages>
   </Constants>
