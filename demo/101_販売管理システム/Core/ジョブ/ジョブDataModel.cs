@@ -11,7 +11,7 @@ partial class OverridedApplicationService {
     /// <summary>
     /// 終了したジョブの記録と作業フォルダの保存期間。これを過ぎたものはクリーンナップで削除する。
     /// </summary>
-    public static readonly TimeSpan 終わったジョブの保存期間 = TimeSpan.FromDays(90);
+    public static readonly TimeSpan 終了したジョブの保存期間 = TimeSpan.FromDays(90);
 
     /// <summary>
     /// ジョブを登録する。登録したジョブは、後からサーバーのプロセス内で登録順に実行される。
@@ -57,7 +57,7 @@ partial class OverridedApplicationService {
     /// 利用者の操作でジョブを参照する処理（一覧、スプールのダウンロード）は、必ずこれで絞り込むこと。
     /// </summary>
     /// <exception cref="InvalidOperationException">ログインしていない場合</exception>
-    private IQueryable<ジョブDbEntity> Filter見てよいジョブ(IQueryable<ジョブDbEntity> query) {
+    private IQueryable<ジョブDbEntity> Filter閲覧できるジョブ(IQueryable<ジョブDbEntity> query) {
         var loginUser = LoginUser ?? throw new InvalidOperationException("ログインしていない状態で、ジョブが参照されました。");
         if (loginUser.Isシステム管理者) return query;
         return query.Where(j => j.起動したユーザー == loginUser.従業員番号);
@@ -119,14 +119,14 @@ partial class OverridedApplicationService {
     /// 本体が例外を投げたら、Error レベルでログを出力し、異常終了とする。
     /// </summary>
     /// <returns>終了時の状態と、利用者向けの結果のメッセージ</returns>
-    internal async Task<(ジョブの状態 状態, string? 結果メッセージ)> Executeジョブの本体Async(取り出したジョブ taken, ジョブの種類 種類, CancellationToken 停止の合図) {
-        var job = new 実行中のジョブ(taken.ジョブID, taken.引数, Settings.Job.Get作業フォルダ(taken.ジョブID), 停止の合図);
+    internal async Task<(ジョブの状態 状態, string? 結果メッセージ)> Executeジョブの本体Async(取り出したジョブ taken, ジョブの種類 種類, CancellationToken cancellationToken) {
+        var job = new 実行中のジョブ(taken.ジョブID, taken.引数, Settings.Job.Get作業フォルダ(taken.ジョブID), cancellationToken);
         try {
             Directory.CreateDirectory(job.スプールフォルダ);
             await 種類.ExecuteAsync(this, job);
             return (ジョブの状態.正常終了, job.結果メッセージ);
 
-        } catch (Exception ex) when (ex is OperationCanceledException && 停止の合図.IsCancellationRequested) {
+        } catch (Exception ex) when (ex is OperationCanceledException && cancellationToken.IsCancellationRequested) {
             Log.LogError(ex, "サーバーの停止により、ジョブを中断しました。");
             return (ジョブの状態.異常終了, job.結果メッセージ ?? MSG.JobInterruptedResult());
 
@@ -175,7 +175,7 @@ partial class OverridedApplicationService {
     /// このサーバーで実行中のまま残っているジョブの ID を返す。
     /// サーバーの起動時点では、このサーバーで実行中のジョブは無いはずなので、これらは前回の停止で中断されたものである。
     /// </summary>
-    internal async Task<string[]> Load中断されたジョブAsync() {
+    internal async Task<string[]> Load中断されたジョブIDAsync() {
         return await DbContext.ジョブDbSet
             .Where(j => j.状態 == ジョブの状態.実行中 && j.実行したサーバー == Environment.MachineName)
             .Select(j => j.ジョブID!)
@@ -188,8 +188,8 @@ partial class OverridedApplicationService {
     /// 作業フォルダはジョブを実行したサーバーにしかないので、ほかのサーバーの作業フォルダは、そのサーバーでクリーンナップを実行したときに削除される。
     /// </summary>
     /// <returns>削除した記録の件数</returns>
-    private async Task<int> Delete終わったジョブAsync() {
-        var threshold = CurrentTime - 終わったジョブの保存期間;
+    private async Task<int> Delete保存期間を過ぎたジョブAsync() {
+        var threshold = CurrentTime - 終了したジョブの保存期間;
         var deletedCount = await DbContext.ジョブDbSet
             .Where(j => (j.状態 == ジョブの状態.正常終了 || j.状態 == ジョブの状態.異常終了) && j.終了日時 < threshold)
             .ExecuteDeleteAsync();

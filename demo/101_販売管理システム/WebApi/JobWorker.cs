@@ -55,7 +55,7 @@ internal sealed class JobWorker(ジョブキュー queue, RuntimeSetting setting
     /// 定期実行のジョブの予定を確認し続ける。前回の確認日時はメモリ上にだけ保持する。
     /// </summary>
     private async Task RegisterScheduledJobsAsync(CancellationToken stoppingToken) {
-        var failure = new ContinuousFailure(logger, "定期的なジョブを登録できませんでした。");
+        var failure = new ContinuousFailure(logger, "定期実行のジョブを登録できませんでした。");
         DateTime? checkedAt = null;
         while (!stoppingToken.IsCancellationRequested) {
             try {

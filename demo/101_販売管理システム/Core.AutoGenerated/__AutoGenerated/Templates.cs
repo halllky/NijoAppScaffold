@@ -196,7 +196,7 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         /// <summary>
         /// ジョブ中断の結果
         /// <para>
-        /// ジョブの実行中に、サーバーの停止の合図を受け取ったとき
+        /// ジョブの実行中に、サーバーの停止でキャンセルされたとき
         /// </para>
         /// </summary>
         public static string JobInterruptedResult() => $"サーバーの停止により、中断しました。";

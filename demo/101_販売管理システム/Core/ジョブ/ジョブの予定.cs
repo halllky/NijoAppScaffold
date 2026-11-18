@@ -40,11 +40,11 @@ public sealed class ジョブの予定 {
     /// 前回の確認日時より後、現在日時以前に、実行予定の時刻があるかどうか。
     /// 前回の確認日時ちょうどの予定は前回の確認で実行済みとみなすので含めず、現在日時ちょうどの予定は含める。
     /// </summary>
-    public bool Has予定の時刻(DateTime 前回確かめた日時, DateTime 今) {
-        for (var date = DateOnly.FromDateTime(前回確かめた日時); date <= DateOnly.FromDateTime(今); date = date.AddDays(1)) {
+    public bool Has予定の時刻(DateTime 前回の確認日時, DateTime 現在日時) {
+        for (var date = DateOnly.FromDateTime(前回の確認日時); date <= DateOnly.FromDateTime(現在日時); date = date.AddDays(1)) {
             foreach (var time in _時刻) {
                 var scheduled = date.ToDateTime(time);
-                if (前回確かめた日時 < scheduled && scheduled <= 今) return true;
+                if (前回の確認日時 < scheduled && scheduled <= 現在日時) return true;
             }
         }
         return false;

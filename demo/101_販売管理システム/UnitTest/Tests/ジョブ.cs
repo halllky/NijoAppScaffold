@@ -71,8 +71,8 @@ partial class DB接続あり_更新あり {
 
     [Test]
     [Category("DB接続あり（更新あり）")]
-    public async Task ジョブの本体には作業フォルダとスプールのフォルダが作られる() {
-        var scope = TestUtilImpl.Instance.CreateScope(nameof(ジョブの本体には作業フォルダとスプールのフォルダが作られる));
+    public async Task ジョブの本体には作業フォルダとスプールフォルダが作られる() {
+        var scope = TestUtilImpl.Instance.CreateScope(nameof(ジョブの本体には作業フォルダとスプールフォルダが作られる));
         string? spool = null;
         var ファイルを作るジョブ = new ジョブの種類("ファイルを作るジョブ", async (app, job) => {
             spool = job.スプールフォルダ;
@@ -110,12 +110,12 @@ partial class DB接続あり_更新あり {
 
     [Test]
     [Category("DB接続あり（更新あり）")]
-    public async Task サーバーの停止の合図で中断したジョブは異常終了になる() {
-        var scope = TestUtilImpl.Instance.CreateScope(nameof(サーバーの停止の合図で中断したジョブは異常終了になる));
+    public async Task サーバーの停止でキャンセルされたジョブは中断として異常終了になる() {
+        var scope = TestUtilImpl.Instance.CreateScope(nameof(サーバーの停止でキャンセルされたジョブは中断として異常終了になる));
         using var stopping = new CancellationTokenSource();
         var 長いジョブ = new ジョブの種類("長いジョブ", async (app, job) => {
             stopping.Cancel();
-            await Task.Delay(Timeout.Infinite, job.停止の合図);
+            await Task.Delay(Timeout.Infinite, job.CancellationToken);
         });
         var queue = CreateジョブキューFor(scope, 長いジョブ);
         var id = await RegisterジョブAsAsync(scope, null, 長いジョブ);
@@ -174,8 +174,8 @@ partial class DB接続あり_更新あり {
 
     [Test]
     [Category("DB接続あり（更新あり）")]
-    public async Task 定期的なジョブは予定の時刻を過ぎたら起動したユーザーなしで登録される() {
-        var scope = TestUtilImpl.Instance.CreateScope(nameof(定期的なジョブは予定の時刻を過ぎたら起動したユーザーなしで登録される));
+    public async Task 定期実行のジョブは予定の時刻を過ぎたら起動したユーザーなしで登録される() {
+        var scope = TestUtilImpl.Instance.CreateScope(nameof(定期実行のジョブは予定の時刻を過ぎたら起動したユーザーなしで登録される));
         var 毎分のジョブ = new ジョブの種類("毎分のジョブ", (app, job) => Task.CompletedTask, ジョブの予定.間隔(TimeSpan.FromMinutes(1)));
         var queue = CreateジョブキューFor(scope, 毎分のジョブ, 何もしないジョブ);
 
@@ -187,7 +187,7 @@ partial class DB接続あり_更新あり {
         var registered = await scope.App.DbContext.ジョブDbSet.AsNoTracking().ToListAsync();
         Assert.That(registered.Select(j => j.種類), Is.EqualTo(new[] { "毎分のジョブ" }), "予定の時刻を何度過ぎていても、1回だけ登録する");
         Assert.That(registered[0].起動したユーザー, Is.Null);
-        Assert.That(registered[0].CreateUser, Is.EqualTo("毎分のジョブ"), "定期的なジョブの作成者は、ジョブの種類");
+        Assert.That(registered[0].CreateUser, Is.EqualTo("毎分のジョブ"), "定期実行のジョブの作成者は、ジョブの種類");
     }
 
     [Test]
@@ -215,12 +215,12 @@ partial class DB接続あり_更新あり {
 
     [Test]
     [Category("DB接続あり（更新あり）")]
-    public async Task クリーンナップは保存期間を過ぎた終わったジョブの記録と作業フォルダを削除する() {
-        var scope = TestUtilImpl.Instance.CreateScope(nameof(クリーンナップは保存期間を過ぎた終わったジョブの記録と作業フォルダを削除する));
+    public async Task クリーンナップは保存期間を過ぎた終了したジョブの記録と作業フォルダを削除する() {
+        var scope = TestUtilImpl.Instance.CreateScope(nameof(クリーンナップは保存期間を過ぎた終了したジョブの記録と作業フォルダを削除する));
         var app = scope.App;
         var db = app.DbContext;
-        var expired = app.CurrentTime - OverridedApplicationService.終わったジョブの保存期間 - TimeSpan.FromMinutes(1);
-        var recent = app.CurrentTime - OverridedApplicationService.終わったジョブの保存期間 + TimeSpan.FromMinutes(1);
+        var expired = app.CurrentTime - OverridedApplicationService.終了したジョブの保存期間 - TimeSpan.FromMinutes(1);
+        var recent = app.CurrentTime - OverridedApplicationService.終了したジョブの保存期間 + TimeSpan.FromMinutes(1);
         await Add従業員Async(db, "ADMIN", 権限区分.システム管理者);
         db.ジョブDbSet.AddRange(
             Newジョブ("保存期間を過ぎた正常終了", ジョブの状態.正常終了, Environment.MachineName, 終了日時: expired),
@@ -253,12 +253,12 @@ partial class DB接続あり_更新あり {
         db.ジョブDbSet.AddRange(
             Newジョブ("USER_Aのジョブ", ジョブの状態.待機, null, 起動したユーザー: "USER_A"),
             Newジョブ("USER_Bのジョブ", ジョブの状態.待機, null, 起動したユーザー: "USER_B"),
-            Newジョブ("定期的なジョブ", ジョブの状態.待機, null));
+            Newジョブ("定期実行のジョブ", ジョブの状態.待機, null));
         await db.SaveChangesAsync();
         db.ChangeTracker.Clear();
 
         Assert.That(await LoadジョブIDsAsync(scope, "USER_A"), Is.EquivalentTo(new[] { "USER_Aのジョブ" }));
-        Assert.That(await LoadジョブIDsAsync(scope, "ADMIN"), Is.EquivalentTo(new[] { "USER_Aのジョブ", "USER_Bのジョブ", "定期的なジョブ" }));
+        Assert.That(await LoadジョブIDsAsync(scope, "ADMIN"), Is.EquivalentTo(new[] { "USER_Aのジョブ", "USER_Bのジョブ", "定期実行のジョブ" }));
     }
 
     [Test]
@@ -354,15 +354,15 @@ partial class DB接続あり_更新あり {
     };
 }
 
-public class 定期的なジョブの予定 {
+public class 定期実行のジョブの予定 {
 
     [Test]
     [Category("DB接続なし")]
-    public void 毎日の予定は前回確かめた日時より後で今以前に時刻があるかで決まる() {
+    public void 毎日の予定は前回の確認日時より後で今以前に時刻があるかで決まる() {
         var 予定 = ジョブの予定.毎日(new TimeOnly(3, 0));
 
         Assert.That(予定.Has予定の時刻(new(2026, 1, 1, 2, 59, 0), new(2026, 1, 1, 3, 0, 0)), Is.True);
-        Assert.That(予定.Has予定の時刻(new(2026, 1, 1, 3, 0, 0), new(2026, 1, 1, 3, 1, 0)), Is.False, "前回確かめた日時ちょうどの予定は、前回の確認で済んでいる");
+        Assert.That(予定.Has予定の時刻(new(2026, 1, 1, 3, 0, 0), new(2026, 1, 1, 3, 1, 0)), Is.False, "前回の確認日時ちょうどの予定は、前回の確認で済んでいる");
         Assert.That(予定.Has予定の時刻(new(2026, 1, 1, 4, 0, 0), new(2026, 1, 2, 2, 59, 0)), Is.False);
         Assert.That(予定.Has予定の時刻(new(2026, 1, 1, 23, 59, 0), new(2026, 1, 2, 3, 0, 0)), Is.True, "日をまたいでも数える");
     }

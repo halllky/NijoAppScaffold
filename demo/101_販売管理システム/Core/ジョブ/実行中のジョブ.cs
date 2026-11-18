@@ -5,11 +5,11 @@ namespace MyApp.Core.ジョブ;
 /// </summary>
 public sealed class 実行中のジョブ {
 
-    internal 実行中のジョブ(string ジョブID, string? 引数, string 作業フォルダ, CancellationToken 停止の合図) {
+    internal 実行中のジョブ(string ジョブID, string? 引数, string 作業フォルダ, CancellationToken cancellationToken) {
         this.ジョブID = ジョブID;
         this.引数 = 引数;
         this.作業フォルダ = 作業フォルダ;
-        this.停止の合図 = 停止の合図;
+        CancellationToken = cancellationToken;
     }
 
     /// <summary>ジョブ ID</summary>
@@ -31,7 +31,7 @@ public sealed class 実行中のジョブ {
     /// サーバーの停止時にキャンセルされるトークン。キャンセルされたら、なるべく早く処理を打ち切って <see cref="OperationCanceledException"/> を投げること。
     /// 一定時間内に終わらなければ、ジョブは実行中のままプロセスが終了し、次回の起動時に中断として異常終了になる。
     /// </summary>
-    public CancellationToken 停止の合図 { get; }
+    public CancellationToken CancellationToken { get; }
 
     /// <summary>
     /// ジョブ一覧画面に表示する、利用者向けの結果のメッセージ。

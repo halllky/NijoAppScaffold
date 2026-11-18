@@ -2,7 +2,7 @@ namespace MyApp;
 
 partial class OverridedApplicationService {
     protected override IQueryable<ジョブ一覧SearchResult> CreateQuerySource(ジョブ一覧SearchCondition searchCondition, OperationContext context) {
-        return Filter見てよいジョブ(DbContext.ジョブDbSet).Select(j => new ジョブ一覧SearchResult {
+        return Filter閲覧できるジョブ(DbContext.ジョブDbSet).Select(j => new ジョブ一覧SearchResult {
             ジョブID = j.ジョブID,
             種類 = j.種類,
             状態 = j.状態,

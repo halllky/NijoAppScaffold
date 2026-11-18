@@ -189,7 +189,7 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
     /**
      * ジョブ中断の結果
      *
-     * ジョブの実行中に、サーバーの停止の合図を受け取ったとき
+     * ジョブの実行中に、サーバーの停止でキャンセルされたとき
      */
     JobInterruptedResult: (): string => `サーバーの停止により、中断しました。`,
     /**
@@ -541,7 +541,7 @@ export const TemplatePattern = {
     /**
      * ジョブ中断の結果
      *
-     * ジョブの実行中に、サーバーの停止の合図を受け取ったとき
+     * ジョブの実行中に、サーバーの停止でキャンセルされたとき
      */
     JobInterruptedResult: (): string => `サーバーの停止により、中断しました。`,
     /**

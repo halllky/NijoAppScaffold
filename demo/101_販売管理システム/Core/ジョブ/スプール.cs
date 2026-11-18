@@ -15,12 +15,12 @@ partial class OverridedApplicationService {
     /// <returns>ファイルの絶対パス。ダウンロードできるファイルが無ければ null</returns>
     /// <exception cref="InvalidOperationException">ログインしていない場合</exception>
     public async Task<string?> FindスプールのファイルAsync(string ジョブID, string ファイル名) {
-        if (!Isスプールの中のファイル名(ファイル名)) return null;
+        if (!Isスプールフォルダ直下のファイル名(ファイル名)) return null;
 
-        var visible = await Filter見てよいジョブ(DbContext.ジョブDbSet).AnyAsync(j => j.ジョブID == ジョブID);
+        var visible = await Filter閲覧できるジョブ(DbContext.ジョブDbSet).AnyAsync(j => j.ジョブID == ジョブID);
         if (!visible) return null;
 
-        var path = Path.Combine(Getスプールのフォルダ(ジョブID), ファイル名);
+        var path = Path.Combine(Getスプールフォルダ(ジョブID), ファイル名);
         return File.Exists(path) ? path : null;
     }
 
@@ -29,13 +29,13 @@ partial class OverridedApplicationService {
     /// 作業フォルダはジョブを実行したサーバーにしかないので、別のサーバーで実行したジョブでは空になる。
     /// </summary>
     private IEnumerable<string> Getスプールのファイル名(string ジョブID) {
-        var spool = new DirectoryInfo(Getスプールのフォルダ(ジョブID));
+        var spool = new DirectoryInfo(Getスプールフォルダ(ジョブID));
         return spool.Exists
             ? spool.GetFiles().Select(f => f.Name).Order()
             : [];
     }
 
-    private string Getスプールのフォルダ(string ジョブID) {
+    private string Getスプールフォルダ(string ジョブID) {
         return Path.Combine(Settings.Job.Get作業フォルダ(ジョブID), 実行中のジョブ.スプールフォルダの名前);
     }
 
@@ -43,7 +43,7 @@ partial class OverridedApplicationService {
     /// スプールフォルダ直下のファイルを指す名前かどうか。
     /// ".." やパスの区切り文字で、スプールフォルダの外のファイルを指定されるのを防ぐため。
     /// </summary>
-    private static bool Isスプールの中のファイル名(string ファイル名) {
+    private static bool Isスプールフォルダ直下のファイル名(string ファイル名) {
         return !string.IsNullOrWhiteSpace(ファイル名)
             && ファイル名 == Path.GetFileName(ファイル名)
             && ファイル名.IndexOfAny(['/', '\\']) < 0

@@ -44,7 +44,7 @@ partial class OverridedApplicationService {
         var deletedNotificationCount = await Delete不要な通知Async();
 
         // 保存期間を過ぎたジョブの記録と作業フォルダを削除
-        var deletedJobCount = await Delete終わったジョブAsync();
+        var deletedJobCount = await Delete保存期間を過ぎたジョブAsync();
 
         Log.LogInformation("クリーンナップ処理を実行しました。削除されたセッション数: {SessionCount}, 削除された冪等キー数: {IdempotencyKeyCount}, 削除された通知数: {NotificationCount}, 削除されたジョブ数: {JobCount}",
             deletedCount, deletedIdempotencyKeyCount, deletedNotificationCount, deletedJobCount);

@@ -45,9 +45,9 @@ public sealed class ジョブキュー {
     /// 待機中のジョブのうち、最も早く登録されたものを1つ取り出して実行し、結果を記録する。
     /// 実行中のログには、処理名としてジョブの種類を、処理1回分の識別子としてジョブ ID を付ける。
     /// </summary>
-    /// <param name="停止の合図">サーバーの停止時にキャンセルされるトークン。ジョブの本体に渡す</param>
+    /// <param name="cancellationToken">サーバーの停止時にキャンセルされるトークン。ジョブの本体に渡す</param>
     /// <returns>ジョブを実行したら true。待機中のジョブが無ければ false</returns>
-    public async Task<bool> Run次のジョブAsync(CancellationToken 停止の合図) {
+    public async Task<bool> Run次のジョブAsync(CancellationToken cancellationToken) {
         取り出したジョブ? taken;
         await using (var scope = _scopeFactory.CreateAsyncScope()) {
             taken = await App(scope).Take次のジョブAsync();
@@ -66,7 +66,7 @@ public sealed class ジョブキュー {
             var app = App(scope);
             await app.ActAsジョブAsync(taken.種類, taken.起動したユーザー);
             result = _種類.TryGetValue(taken.種類, out var 種類)
-                ? await app.Executeジョブの本体Async(taken, 種類, 停止の合図)
+                ? await app.Executeジョブの本体Async(taken, 種類, cancellationToken)
                 : app.Fail定義されていない種類のジョブ(taken.種類);
         }
         await Record結果Async(taken.ジョブID, taken.種類, taken.起動したユーザー, result.状態, result.結果メッセージ);
@@ -82,7 +82,7 @@ public sealed class ジョブキュー {
     public async Task Abort中断されたジョブAsync() {
         string[] ids;
         await using (var scope = _scopeFactory.CreateAsyncScope()) {
-            ids = await App(scope).Load中断されたジョブAsync();
+            ids = await App(scope).Load中断されたジョブIDAsync();
         }
         foreach (var id in ids) {
             await using var scope = _scopeFactory.CreateAsyncScope();
@@ -101,17 +101,17 @@ public sealed class ジョブキュー {
     /// 定期実行のジョブの種類のうち、前回の確認日時より後、現在日時以前に予定の時刻があるものを登録する。
     /// 前回の確認日時はプロセスのメモリ上にしか保持しないので、サーバーが停止していた間の予定は登録されない。
     /// </summary>
-    /// <param name="前回確かめた日時">前回これを呼んだときの戻り値。サーバーの起動後の初回は null を渡す。null のときは何も登録しない</param>
+    /// <param name="前回の確認日時">前回これを呼んだときの戻り値。サーバーの起動後の初回は null を渡す。null のときは何も登録しない</param>
     /// <returns>今回の確認日時。次回の呼び出しに渡す</returns>
-    public async Task<DateTime> Register予定のジョブAsync(DateTime? 前回確かめた日時) {
+    public async Task<DateTime> Register予定のジョブAsync(DateTime? 前回の確認日時) {
         DateTime now;
         await using (var scope = _scopeFactory.CreateAsyncScope()) {
             now = App(scope).CurrentTime;
         }
-        if (前回確かめた日時 == null) return now;
+        if (前回の確認日時 == null) return now;
 
         foreach (var 種類 in _種類.Values) {
-            if (種類.予定?.Has予定の時刻(前回確かめた日時.Value, now) != true) continue;
+            if (種類.予定?.Has予定の時刻(前回の確認日時.Value, now) != true) continue;
 
             await using var scope = _scopeFactory.CreateAsyncScope();
             var app = App(scope);
@@ -119,7 +119,7 @@ public sealed class ジョブキュー {
             await using var tran = await app.BeginTransactionAsync();
             var id = await app.RegisterジョブAsync(種類);
             await tran.CommitAsync();
-            _logger.LogInformation("定期的なジョブ「{Kind}」（予定: {Schedule}）を登録しました。ジョブID: {JobId}", 種類.Name, 種類.予定, id);
+            _logger.LogInformation("定期実行のジョブ「{Kind}」（予定: {Schedule}）を登録しました。ジョブID: {JobId}", 種類.Name, 種類.予定, id);
         }
         return now;
     }

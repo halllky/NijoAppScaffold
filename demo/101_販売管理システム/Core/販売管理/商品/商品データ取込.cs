@@ -31,7 +31,7 @@ partial class OverridedApplicationService {
     private async Task Run商品データ取込Async(実行中のジョブ job) {
         var results = new List<(Core.外部システム.商品管理システム.ProductImportData Item, string Result)>();
         foreach (var item in 商品管理システム.Enumerate商品データ()) {
-            job.停止の合図.ThrowIfCancellationRequested();
+            job.CancellationToken.ThrowIfCancellationRequested();
             results.Add((item, await Import商品Async(item)));
         }
 
