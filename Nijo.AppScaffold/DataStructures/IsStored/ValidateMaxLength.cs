@@ -10,12 +10,9 @@ namespace Nijo.DataStructures.IsStored {
     internal class ValidateMaxLength : DbContextHookValidator {
 
         internal const string METHOD_NAME = "ValidateMaxLength";
-        private const string MSG_ID_MAX_LENGTH = "MaxLengthError";
 
         public override string CommentName => "文字列最大長チェック";
         public override string MethodName => METHOD_NAME;
-        public override string MsgId => MSG_ID_MAX_LENGTH;
-        public override string MsgTemplate => "{0} は {1} 文字以内で入力してください。";
 
         internal override IEnumerable<string> RenderHookDeclarations(CodeRenderingContext ctx) {
             yield return $$"""

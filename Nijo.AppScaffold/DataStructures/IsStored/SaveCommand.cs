@@ -51,12 +51,8 @@ namespace Nijo.DataStructures.IsStored {
 
         internal const string INTERFACE = "ISaveCommand";
 
-        internal const string ERR_ID_UNKNOWN = "UnknownUpdateError";
-        internal const string ERR_DATA_NOT_FOUND = "DataNotFoundError";
-        internal const string ERR_CONCURRENCY = "ConcurrencyError";
         /// <summary>楽観排他エラーの文言を返す、DbContext のフックの名前</summary>
         private const string CONCURRENCY_MESSAGE_HOOK = "GetConcurrencyErrorMessage";
-        internal const string ERR_UNIQUE_CONSTRAINT = "UniqueConstraintError";
 
         /// <summary>
         /// 新規・更新・削除のすべてのコマンドを、子孫要素の分も含めて再帰的にレンダリングします。
@@ -119,30 +115,16 @@ namespace Nijo.DataStructures.IsStored {
 
         #region すべての集約で共通
         /// <summary>
-        /// 保存処理とコマンドの間で使われるメッセージを登録します。
-        /// スキーマ定義にデータ構造が1個も無くても保存処理のコンパイルが通るように、常に登録されます。
+        /// コマンドが使う、DbContext のフックを登録します。
+        /// 手書きのコードがオーバーライドを常に置いておけるよう、スキーマ定義にデータ構造が1個も無くても登録します。
         /// </summary>
-        internal static void RegisterMessages(CodeRenderingContext ctx, DbContextClass dbContext) {
+        internal static void RegisterHooks(DbContextClass dbContext) {
             dbContext.AddAdditionalMethod($$"""
                 /// <summary>
                 /// 楽観排他エラー（データを読み込んだ後に、ほかのユーザーが同じデータを更新していた）のときに、利用者に見せるメッセージを返します。
                 /// </summary>
                 public abstract string {{CONCURRENCY_MESSAGE_HOOK}}();
                 """);
-
-            ctx.Use<Parts.Common.MsgFactory>()
-                .AddMessage(ERR_ID_UNKNOWN,
-                    "登録/更新/削除のタイミングでRDBMS上で何らかのエラーが生じた場合のメッセージ",
-                    "登録処理でエラーが発生しました。")
-                .AddMessage(ERR_DATA_NOT_FOUND,
-                    "更新対象・削除対象のデータがデータベース上で見つからなかったときのメッセージ",
-                    "更新対象のデータが見つかりません。")
-                .AddMessage(ERR_CONCURRENCY,
-                    "楽観排他制御に引っかかったときのメッセージ",
-                    "ほかのユーザーが更新しました。")
-                .AddMessage(ERR_UNIQUE_CONSTRAINT,
-                    "一意制約に違反したときのメッセージ",
-                    "同じ値のデータが既に存在します。");
         }
 
         /// <summary>
@@ -213,9 +195,6 @@ namespace Nijo.DataStructures.IsStored {
                     }
                     private protected readonly {{ctx.Config.DbContextName}} {{FIELD_DBCONTEXT}};
                     private protected readonly {{ValidatedCommand.USAGE_CLASS_NAME}} {{FIELD_USAGE}} = new();
-
-                    /// <summary>ユーザーに見せるメッセージの文言</summary>
-                    private protected {{Parts.Common.MsgFactory.CS_INTERFACE}} {{Parts.Common.MsgFactory.MSG}} => {{FIELD_DBCONTEXT}}.{{Parts.Common.MsgFactory.MSG}};
 
                     private protected static JsonNode {{CREATE_LOG_JSON}}({{efCoreEntity.CsClassName}} entity, string operationName) {
                         return new JsonObject {

@@ -17,6 +17,11 @@ export type TemplateKind = {
     string: (value: string) => string
     int: (value: string) => string
   }
+  /** 種類「文言」の変換 */
+  文言: {
+    string: (value: string) => string
+    int: (value: string) => string
+  }
 }
 
 /**
@@ -58,6 +63,52 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
      */
     P301: ({ 商品SEQ }: { 商品SEQ: string }): string => `/shohin/${templateKind.URL.int(商品SEQ)}`,
   },
+  /**
+   * メッセージ
+   *
+   * 利用者に見せるメッセージ。名前がメッセージの ID になる。
+   * 入力チェックや保存処理の共通部分で使うもの。業務ごとのメッセージは、別のグループに定義する。
+   */
+  MSG: {
+    /**
+     * 必須入力エラー
+     */
+    RequiredError: ({ 項目名 }: { 項目名: string }): string => `${templateKind.文言.string(項目名)} を入力してください。`,
+    /**
+     * 文字数超過エラー
+     */
+    MaxLengthError: ({ 項目名, 最大文字数 }: { 項目名: string, 最大文字数: string }): string => `${templateKind.文言.string(項目名)} は ${templateKind.文言.int(最大文字数)} 文字以内で入力してください。`,
+    /**
+     * 桁数超過エラー
+     */
+    DigitsError: ({ 項目名, 整数部の桁数, 小数部の桁数 }: { 項目名: string, 整数部の桁数: string, 小数部の桁数: string }): string => `${templateKind.文言.string(項目名)} は整数部 ${templateKind.文言.int(整数部の桁数)} 桁、小数部 ${templateKind.文言.int(小数部の桁数)} 桁以内で入力してください。`,
+    /**
+     * 区分値不在エラー
+     */
+    GenericLookupValueNotFound: ({ 項目名 }: { 項目名: string }): string => `${templateKind.文言.string(項目名)} に指定された区分値が存在しません。`,
+    /**
+     * 楽観排他エラー
+     *
+     * データを読み込んだ後に、ほかのユーザーが同じデータを更新していたとき
+     */
+    ConcurrencyError: (): string => `ほかのユーザーが更新しました。`,
+    /**
+     * データ不在エラー
+     *
+     * 更新対象・削除対象のデータがデータベース上で見つからなかったとき
+     */
+    DataNotFoundError: (): string => `更新対象のデータが見つかりません。`,
+    /**
+     * 一意制約違反エラー
+     */
+    UniqueConstraintError: (): string => `同じ値のデータが既に存在します。`,
+    /**
+     * 保存時エラー
+     *
+     * 登録・更新・削除のときに、データベースで何らかのエラーが起きたとき。エラーの内容は利用者に見せない
+     */
+    UnknownUpdateError: (): string => `登録処理でエラーが発生しました。`,
+  },
 })
 
 /**
@@ -96,5 +147,51 @@ export const TemplatePattern = {
      * P301 商品詳細
      */
     P301: ({ 商品SEQ }: { 商品SEQ: string }): string => `/shohin/${商品SEQ}`,
+  },
+  /**
+   * メッセージ
+   *
+   * 利用者に見せるメッセージ。名前がメッセージの ID になる。
+   * 入力チェックや保存処理の共通部分で使うもの。業務ごとのメッセージは、別のグループに定義する。
+   */
+  MSG: {
+    /**
+     * 必須入力エラー
+     */
+    RequiredError: ({ 項目名 }: { 項目名: string }): string => `${項目名} を入力してください。`,
+    /**
+     * 文字数超過エラー
+     */
+    MaxLengthError: ({ 項目名, 最大文字数 }: { 項目名: string, 最大文字数: string }): string => `${項目名} は ${最大文字数} 文字以内で入力してください。`,
+    /**
+     * 桁数超過エラー
+     */
+    DigitsError: ({ 項目名, 整数部の桁数, 小数部の桁数 }: { 項目名: string, 整数部の桁数: string, 小数部の桁数: string }): string => `${項目名} は整数部 ${整数部の桁数} 桁、小数部 ${小数部の桁数} 桁以内で入力してください。`,
+    /**
+     * 区分値不在エラー
+     */
+    GenericLookupValueNotFound: ({ 項目名 }: { 項目名: string }): string => `${項目名} に指定された区分値が存在しません。`,
+    /**
+     * 楽観排他エラー
+     *
+     * データを読み込んだ後に、ほかのユーザーが同じデータを更新していたとき
+     */
+    ConcurrencyError: (): string => `ほかのユーザーが更新しました。`,
+    /**
+     * データ不在エラー
+     *
+     * 更新対象・削除対象のデータがデータベース上で見つからなかったとき
+     */
+    DataNotFoundError: (): string => `更新対象のデータが見つかりません。`,
+    /**
+     * 一意制約違反エラー
+     */
+    UniqueConstraintError: (): string => `同じ値のデータが既に存在します。`,
+    /**
+     * 保存時エラー
+     *
+     * 登録・更新・削除のときに、データベースで何らかのエラーが起きたとき。エラーの内容は利用者に見せない
+     */
+    UnknownUpdateError: (): string => `登録処理でエラーが発生しました。`,
   },
 }

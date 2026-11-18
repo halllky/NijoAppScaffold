@@ -125,6 +125,50 @@
         UniqueId="062655d6-b3bb-422b-9c9f-1543c83cba6e" />
     </汎用マスタ>
   </DataStructures>
+  <Templates>
+    <!--利用者に見せるメッセージ。名前がメッセージの ID になる。
+入力チェックや保存処理の共通部分で使うもの。業務ごとのメッセージは、別のグループに定義する。-->
+    <MSG
+      DisplayName="メッセージ"
+      TemplateKind="文言"
+      UniqueId="5fd1c5e1-d382-4977-b2f9-9a165cc8207c">
+      <RequiredError
+        DisplayName="必須入力エラー"
+        Template="{項目名} を入力してください。"
+        UniqueId="d2c588e0-b33d-4cda-891c-00c53b3b6707" />
+      <MaxLengthError
+        DisplayName="文字数超過エラー"
+        Template="{項目名} は {最大文字数:int} 文字以内で入力してください。"
+        UniqueId="d4b1bf22-e51e-4878-8440-56d605af2a72" />
+      <DigitsError
+        DisplayName="桁数超過エラー"
+        Template="{項目名} は整数部 {整数部の桁数:int} 桁、小数部 {小数部の桁数:int} 桁以内で入力してください。"
+        UniqueId="283c7e05-56df-44bc-a8fc-c4ff3c64a60b" />
+      <GenericLookupValueNotFound
+        DisplayName="区分値不在エラー"
+        Template="{項目名} に指定された区分値が存在しません。"
+        UniqueId="99e3615b-88e3-4a66-b074-2f56461ec90b" />
+      <!--データを読み込んだ後に、ほかのユーザーが同じデータを更新していたとき-->
+      <ConcurrencyError
+        DisplayName="楽観排他エラー"
+        Template="ほかのユーザーが更新しました。"
+        UniqueId="25095a73-66fc-4b0d-972e-92cdbf00b497" />
+      <!--更新対象・削除対象のデータがデータベース上で見つからなかったとき-->
+      <DataNotFoundError
+        DisplayName="データ不在エラー"
+        Template="更新対象のデータが見つかりません。"
+        UniqueId="efb95fd9-86f7-462e-888b-75b8591307a6" />
+      <UniqueConstraintError
+        DisplayName="一意制約違反エラー"
+        Template="同じ値のデータが既に存在します。"
+        UniqueId="e7eb7aec-d907-4b90-8a4c-dda465d993c0" />
+      <!--登録・更新・削除のときに、データベースで何らかのエラーが起きたとき。エラーの内容は利用者に見せない-->
+      <UnknownUpdateError
+        DisplayName="保存時エラー"
+        Template="登録処理でエラーが発生しました。"
+        UniqueId="4b1898ff-c61f-438a-89d1-eb2d53f6a1d1" />
+    </MSG>
+  </Templates>
   <GenericLookupTableCategories>
     <Categories
       For="5fa9afef-8d6c-4999-bf57-09d56c39de14">

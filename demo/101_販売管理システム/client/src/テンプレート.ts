@@ -14,6 +14,12 @@ export const テンプレート = createTemplates({
     /** 整数は、画面では桁区切りの無い数字の文字列で扱っている */
     int: (value: string) => encodeUrlComponent(value),
   },
+  文言: {
+    /** 利用者に見せる文言に埋め込む値。変換しない */
+    string: (value: string) => value,
+    /** 桁区切りを付けない */
+    int: (value: string) => value,
+  },
 })
 
 /**

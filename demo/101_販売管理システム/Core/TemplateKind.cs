@@ -9,6 +9,15 @@ namespace MyApp;
 /// </summary>
 public sealed class TemplateKind : ITemplateKind {
     /// <summary>
+    /// 利用者に見せる文言に埋め込む値。変換しない。
+    /// </summary>
+    public static string 文言(string value) => value;
+    /// <summary>
+    /// 文言に埋め込む整数。桁区切りを付けない。
+    /// </summary>
+    public static string 文言(int value) => value.ToString(CultureInfo.InvariantCulture);
+
+    /// <summary>
     /// URL のパスやクエリ文字列に埋め込む値。"/" や "?" も含めてパーセントエンコードする。
     /// </summary>
     public static string URL(string value) => Uri.EscapeDataString(value);

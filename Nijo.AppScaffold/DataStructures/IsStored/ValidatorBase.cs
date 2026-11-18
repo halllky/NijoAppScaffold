@@ -37,20 +37,10 @@ public abstract class ValidatorBase {
     }
 
     /// <summary>
-    /// 全バリデーターのエラーメッセージと、DbContext のフックを登録します。
+    /// 全バリデーターの、DbContext のフックを登録します。
     /// </summary>
     internal static void RegisterDependencies(CodeRenderingContext ctx, DbContextClass dbContext) {
-        var validators = EnumerateAll(ctx).ToArray();
-
-        var msgFactory = ctx.Use<MsgFactory>();
-        foreach (var validator in validators.DistinctBy(v => v.MsgId)) {
-            msgFactory.AddMessage(
-                validator.MsgId,
-                $"入力エラー時メッセージ（{validator.CommentName}）",
-                validator.MsgTemplate);
-        }
-
-        foreach (var validator in validators) {
+        foreach (var validator in EnumerateAll(ctx)) {
             foreach (var hook in validator.RenderHookDeclarations(ctx)) {
                 dbContext.AddAdditionalMethod(hook);
             }
@@ -71,14 +61,6 @@ public abstract class ValidatorBase {
     /// レンダリングされるメソッド名
     /// </summary>
     public abstract string MethodName { get; }
-    /// <summary>
-    /// エラーメッセージの識別子。<see cref="MsgFactory.AddMessage"/> に使用されます。
-    /// </summary>
-    public abstract string MsgId { get; }
-    /// <summary>
-    /// エラーメッセージのテンプレート。<see cref="MsgFactory.AddMessage"/> に使用されます。
-    /// </summary>
-    public abstract string MsgTemplate { get; }
 
     #region バリデーション式本体
     /// <summary>
@@ -147,7 +129,7 @@ public abstract class ValidatorBase {
         public Func<string, string>? IfFactory { get; init; }
         /// <summary>
         /// エラーメッセージのレンダリング。
-        /// <see cref="Parts.Common.MsgFactory.MSG"/>.メッセージID("パラメータ") の形で返してください。
+        /// 文言は自動生成されたコードには書かず、DbContext のフックから得る式を返してください。
         /// </summary>
         public string? RenderErrorMessage { get; init; }
         /// <summary>

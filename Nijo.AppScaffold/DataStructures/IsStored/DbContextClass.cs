@@ -39,7 +39,7 @@ namespace Nijo.DataStructures.IsStored {
             // スキーマ定義に汎用参照テーブルが存在するか否かにかかわらずメソッドを生成する。
             ctx.Use<GenericLookupViewsInfoProvider>();
 
-            SaveCommand.RegisterMessages(ctx, this);
+            SaveCommand.RegisterHooks(this);
 
             // 入力チェックのメッセージと、チェックの中身を手書きのコードに任せるフック。
             // 手書きのコードがフックのオーバーライドを常に置いておけるよう、
@@ -82,11 +82,9 @@ namespace Nijo.DataStructures.IsStored {
                         /// <param name="options">EFCoreのオプション</param>
                         /// <param name="currentTime">現在時刻</param>
                         /// <param name="currentUser">現在操作中のユーザー</param>
-                        /// <param name="messageFactory">ユーザーに見せるメッセージの文言</param>
-                        public {{ctx.Config.DbContextName}}(DbContextOptions options, {{CurrentTime.INTERFACE}} currentTime, {{CurrentUser.INTERFACE}} currentUser, {{MsgFactory.CS_INTERFACE}} messageFactory) : base(options) {
+                        public {{ctx.Config.DbContextName}}(DbContextOptions options, {{CurrentTime.INTERFACE}} currentTime, {{CurrentUser.INTERFACE}} currentUser) : base(options) {
                             {{CURRENT_TIME}} = currentTime;
                             {{CURRENT_USER}} = currentUser;
-                            {{MsgFactory.MSG}} = messageFactory;
                         }
                     #pragma warning restore CS8618 // DbSetはEFCore側で自動的に設定されるため問題なし
 
@@ -94,8 +92,6 @@ namespace Nijo.DataStructures.IsStored {
                         protected internal {{CurrentTime.INTERFACE}} {{CURRENT_TIME}} { get; }
                         /// <summary>現在操作中のユーザー。監査項目の作成者・更新者の記録に使用。</summary>
                         protected internal {{CurrentUser.INTERFACE}} {{CURRENT_USER}} { get; }
-                        /// <summary>ユーザーに見せるメッセージの文言</summary>
-                        protected internal {{MsgFactory.CS_INTERFACE}} {{MsgFactory.MSG}} { get; }
 
                     {{efCoreEntitiesOrderByDataFlow.SelectTextTemplate(entity => $$"""
                         public virtual DbSet<{{entity.CsClassName}}> {{entity.DbSetName}} { get; set; }

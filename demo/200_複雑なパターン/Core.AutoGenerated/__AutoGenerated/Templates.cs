@@ -150,4 +150,54 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         /// </summary>
         public static string JsonTemplate(string 患者名) => $"{{\"patientName\": \"{TKind.JSON(患者名)}\", \"status\": \"active\"}}";
     }
+    /// <summary>
+    /// メッセージ
+    /// <para>
+    /// 利用者に見せるメッセージ。名前がメッセージの ID になる。
+    /// 入力チェックや保存処理の共通部分で使うもの。業務ごとのメッセージは、別のグループに定義する。
+    /// </para>
+    /// </summary>
+    public static class MSG {
+        /// <summary>
+        /// 必須入力エラー
+        /// </summary>
+        public static string RequiredError(string 項目名) => $"{TKind.文言(項目名)} を入力してください。";
+        /// <summary>
+        /// 文字数超過エラー
+        /// </summary>
+        public static string MaxLengthError(string 項目名, int 最大文字数) => $"{TKind.文言(項目名)} は {TKind.文言(最大文字数)} 文字以内で入力してください。";
+        /// <summary>
+        /// 桁数超過エラー
+        /// </summary>
+        public static string DigitsError(string 項目名, int 整数部の桁数, int 小数部の桁数) => $"{TKind.文言(項目名)} は整数部 {TKind.文言(整数部の桁数)} 桁、小数部 {TKind.文言(小数部の桁数)} 桁以内で入力してください。";
+        /// <summary>
+        /// 区分値不在エラー
+        /// </summary>
+        public static string GenericLookupValueNotFound(string 項目名) => $"{TKind.文言(項目名)} に指定された区分値が存在しません。";
+        /// <summary>
+        /// 楽観排他エラー
+        /// <para>
+        /// データを読み込んだ後に、ほかのユーザーが同じデータを更新していたとき
+        /// </para>
+        /// </summary>
+        public static string ConcurrencyError() => $"ほかのユーザーが更新しました。";
+        /// <summary>
+        /// データ不在エラー
+        /// <para>
+        /// 更新対象・削除対象のデータがデータベース上で見つからなかったとき
+        /// </para>
+        /// </summary>
+        public static string DataNotFoundError() => $"更新対象のデータが見つかりません。";
+        /// <summary>
+        /// 一意制約違反エラー
+        /// </summary>
+        public static string UniqueConstraintError() => $"同じ値のデータが既に存在します。";
+        /// <summary>
+        /// 保存時エラー
+        /// <para>
+        /// 登録・更新・削除のときに、データベースで何らかのエラーが起きたとき。エラーの内容は利用者に見せない
+        /// </para>
+        /// </summary>
+        public static string UnknownUpdateError() => $"登録処理でエラーが発生しました。";
+    }
 }

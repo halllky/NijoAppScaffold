@@ -12,12 +12,9 @@ namespace Nijo.DataStructures.IsStored {
     internal class ValidateRequired : DbContextHookValidator {
 
         internal const string METHOD_NAME = "ValidateRequired";
-        private const string MSG_ID_REQUIRED = "RequiredError";
 
         public override string CommentName => "必須入力チェック";
         public override string MethodName => METHOD_NAME;
-        public override string MsgId => MSG_ID_REQUIRED;
-        public override string MsgTemplate => "{0} を入力してください。";
 
         internal override IEnumerable<string> RenderHookDeclarations(CodeRenderingContext ctx) {
             yield return $$"""

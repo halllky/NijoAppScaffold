@@ -14,8 +14,6 @@ namespace Nijo.DataStructures.IsStored {
     /// </summary>
     internal class ValidateCustom : DbContextHookValidator {
 
-        internal const string MSG_ID = "CustomAttributeValidationError";
-
         private readonly NijoXmlCustomAttribute _attribute;
 
         internal ValidateCustom(NijoXmlCustomAttribute attribute) {
@@ -24,8 +22,6 @@ namespace Nijo.DataStructures.IsStored {
 
         public override string CommentName => "カスタム属性バリデーション";
         public override string MethodName => $"Validate{_attribute.PhysicalName}";
-        public override string MsgId => MSG_ID;
-        public override string MsgTemplate => "{0}";
 
         /// <summary>
         /// このカスタム属性が指定された項目の型ごとに、フックを1つずつ宣言する。

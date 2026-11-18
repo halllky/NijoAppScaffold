@@ -11,12 +11,9 @@ namespace Nijo.DataStructures.IsStored {
     internal class ValidateDigitsAndScales : DbContextHookValidator {
 
         internal const string METHOD_NAME = "ValidateDigitsAndScales";
-        private const string MSG_ID_DIGITS = "DigitsError";
 
         public override string CommentName => "数値項目の桁数チェック";
         public override string MethodName => METHOD_NAME;
-        public override string MsgId => MSG_ID_DIGITS;
-        public override string MsgTemplate => "{0} は整数部 {1} 桁、小数部 {2} 桁以内で入力してください。";
 
         internal override IEnumerable<string> RenderHookDeclarations(CodeRenderingContext ctx) {
             yield return $$"""

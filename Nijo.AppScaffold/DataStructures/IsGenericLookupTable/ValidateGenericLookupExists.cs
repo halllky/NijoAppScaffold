@@ -14,12 +14,8 @@ namespace Nijo.DataStructures.IsGenericLookupTable {
     /// </summary>
     internal class ValidateGenericLookupExists : ValidatorBase {
 
-        private const string MSG_ID_LOOKUP_NOT_FOUND = "GenericLookupValueNotFound";
-
         public override string CommentName => "汎用参照テーブル存在チェック";
         public override string MethodName => "ValidateGenericLookupExists";
-        public override string MsgId => MSG_ID_LOOKUP_NOT_FOUND;
-        public override string MsgTemplate => "{0} に指定された区分値が存在しません。";
 
         /// <summary>エラーの文言を返す、DbContext のフックの名前</summary>
         private const string MESSAGE_HOOK = "GetGenericLookupValueNotFoundMessage";
