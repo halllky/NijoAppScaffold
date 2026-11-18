@@ -3,7 +3,7 @@ namespace MyApp;
 partial class OverridedApplicationService {
     protected override async Task OnExecute通知既読設定Async(通知既読設定ParameterDisplayData param, 通知既読設定ParameterMessages messages, OperationContext context) {
         if (param.既読 == null) {
-            messages.既読.AddError("既読にするか未読にするかを指定してください。");
+            messages.既読.AddError(MSG.ReadStatusRequiredError());
             return;
         }
 
@@ -13,7 +13,7 @@ partial class OverridedApplicationService {
         var notification = (await DbContext.LoadForEdit通知Async(query => Filter自分宛て(query).Where(n => n.通知ID == notificationId)))
             .SingleOrDefault();
         if (notification == null) {
-            messages.AddError("通知が見つかりません。");
+            messages.AddError(MSG.NotificationNotFoundError());
             return;
         }
 

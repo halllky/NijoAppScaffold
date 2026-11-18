@@ -51,6 +51,6 @@ partial class OverridedApplicationService {
 
         // 古いログの削除は NLog の設定で自動的に行われるため、ここでは特に処理を実装しない。
 
-        return $"セッション {deletedCount} 件、冪等キー {deletedIdempotencyKeyCount} 件、通知 {deletedNotificationCount} 件、ジョブ {deletedJobCount} 件を削除しました。";
+        return MSG.CleanUpResult(deletedCount, deletedIdempotencyKeyCount, deletedNotificationCount, deletedJobCount);
     }
 }

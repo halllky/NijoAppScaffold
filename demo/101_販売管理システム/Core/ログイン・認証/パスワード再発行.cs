@@ -15,7 +15,7 @@ partial class OverridedApplicationService {
 
         // 入力チェック
         if (param.対象者 == null) {
-            messages.対象者.AddError("対象者を選択してください。");
+            messages.対象者.AddError(MSG.SelectRequiredError("対象者"));
             return;
         }
 

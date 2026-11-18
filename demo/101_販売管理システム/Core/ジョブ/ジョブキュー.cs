@@ -93,7 +93,7 @@ public sealed class ジョブキュー {
                 [OverridedApplicationService.LOG_SCOPEPROP_SCOPE_ID] = job.ジョブID,
             });
             _logger.LogError("前回のサーバーの停止のときに実行中だったジョブを、中断として異常終了にします。");
-            await Record結果Async(id, job.種類!, job.起動したユーザー, ジョブの状態.異常終了, "サーバーが停止したため、中断しました。");
+            await Record結果Async(id, job.種類!, job.起動したユーザー, ジョブの状態.異常終了, MSG.JobInterruptedBeforeRestartResult());
         }
     }
 

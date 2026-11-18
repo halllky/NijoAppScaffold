@@ -10,11 +10,11 @@ partial class OverridedApplicationService {
     protected override async Task<ログインユーザー情報DisplayData?> OnExecuteログインAsync(ログインParameterDisplayData param, ログインParameterMessages messages, OperationContext context) {
         // 入力チェック
         if (string.IsNullOrWhiteSpace(param.従業員番号)) {
-            messages.従業員番号.AddError("従業員番号を入力してください。");
+            messages.従業員番号.AddError(MSG.RequiredError("従業員番号"));
             return null;
         }
         if (string.IsNullOrWhiteSpace(param.パスワード)) {
-            messages.パスワード.AddError("パスワードを入力してください。");
+            messages.パスワード.AddError(MSG.RequiredError("パスワード"));
             return null;
         }
 
@@ -22,7 +22,7 @@ partial class OverridedApplicationService {
         var failureHistory = ServiceProvider.GetRequiredService<LoginFailureHistory>();
         if (failureHistory.IsBlocked(param.従業員番号, CurrentTime)) {
             Log.LogInformation("ログインを受け付けませんでした（ログインの失敗が続いたため）。従業員番号: {EmployeeNumber}", param.従業員番号);
-            messages.AddError("ログインの失敗が続いたため、しばらくの間ログインできません。時間をおいてから、もう一度お試しください。");
+            messages.AddError(MSG.LoginLockedError());
             return null;
         }
 
@@ -35,13 +35,13 @@ partial class OverridedApplicationService {
         if (employee == null) {
             Log.LogInformation("ログインに失敗しました（従業員番号が存在しない）。従業員番号: {EmployeeNumber}", param.従業員番号);
             RecordLoginFailure(failureHistory, param.従業員番号);
-            messages.AddError("従業員番号またはパスワードが間違っています。");
+            messages.AddError(MSG.LoginFailedError());
             return null;
         }
 
         // パスワード検証
         if (employee.パスワード == null || employee.SALT == null) {
-            messages.AddError("パスワードが設定されていません。");
+            messages.AddError(MSG.PasswordNotSetError());
             return null;
         }
 
@@ -49,7 +49,7 @@ partial class OverridedApplicationService {
         if (verification == PasswordHash.VerificationResult.Failed) {
             Log.LogInformation("ログインに失敗しました（パスワードの誤り）。従業員番号: {EmployeeNumber}", param.従業員番号);
             RecordLoginFailure(failureHistory, param.従業員番号);
-            messages.AddError("従業員番号またはパスワードが間違っています。");
+            messages.AddError(MSG.LoginFailedError());
             return null;
         }
 

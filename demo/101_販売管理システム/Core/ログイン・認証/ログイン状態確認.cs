@@ -7,7 +7,7 @@ partial class OverridedApplicationService {
     protected override Task<ログインユーザー情報DisplayData?> OnExecuteログイン状態確認Async(MessageSetter messages, OperationContext context) {
 
         if (LoginUser == null) {
-            messages.AddError("ログインしていません。");
+            messages.AddError(MSG.NotLoggedInError());
             return Task.FromResult<ログインユーザー情報DisplayData?>(null);
         }
 

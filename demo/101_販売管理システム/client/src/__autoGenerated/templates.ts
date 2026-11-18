@@ -67,7 +67,7 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
    * メッセージ
    *
    * 利用者に見せるメッセージ。名前がメッセージの ID になる。
-   * 入力チェックや保存処理の共通部分で使うもの。業務ごとのメッセージは、別のグループに定義する。
+   * 入力チェックや保存処理の共通部分と、デモ101 テンプレートに残る機能で使うもの。販売管理のメッセージは MSG_DEMO101 に定義する。
    */
   MSG: {
     /**
@@ -108,6 +108,104 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
      * 登録・更新・削除のときに、データベースで何らかのエラーが起きたとき。エラーの内容は利用者に見せない
      */
     UnknownUpdateError: (): string => `登録処理でエラーが発生しました。`,
+    /**
+     * 未選択エラー
+     */
+    SelectRequiredError: ({ 項目名 }: { 項目名: string }): string => `${templateKind.文言.string(項目名)} を選択してください。`,
+    /**
+     * 未ログインエラー
+     */
+    NotLoggedInError: (): string => `ログインしていません。`,
+    /**
+     * ログイン一時停止
+     */
+    LoginLockedError: (): string => `ログインの失敗が続いたため、しばらくの間ログインできません。時間をおいてから、もう一度お試しください。`,
+    /**
+     * ログイン失敗
+     *
+     * 従業員番号とパスワードのどちらが間違っているかは伝えない
+     */
+    LoginFailedError: (): string => `従業員番号またはパスワードが間違っています。`,
+    /**
+     * パスワード未設定
+     */
+    PasswordNotSetError: (): string => `パスワードが設定されていません。`,
+    /**
+     * パスワード不一致
+     */
+    PasswordConfirmationMismatchError: (): string => `パスワードが一致しません。`,
+    /**
+     * 現在のパスワード誤り
+     */
+    CurrentPasswordIncorrectError: (): string => `現在のパスワードが正しくありません。`,
+    /**
+     * 従業員番号重複
+     */
+    DuplicateEmployeeNumberError: ({ 従業員番号 }: { 従業員番号: string }): string => `従業員番号 '${templateKind.文言.string(従業員番号)}' は既に存在します。`,
+    /**
+     * 自分自身の削除
+     */
+    CannotDeleteSelfError: (): string => `自分自身は削除できません。`,
+    /**
+     * 自分自身の管理者権限の削除
+     */
+    CannotRemoveOwnAdminPermissionError: (): string => `自分自身のシステム管理者の権限は外せません。`,
+    /**
+     * 従業員一括更新の確認
+     */
+    EmployeeUpdateConfirm: (): string => `更新しますか？`,
+    /**
+     * 変更なし
+     */
+    NothingChangedInfo: (): string => `更新された内容はありません。`,
+    /**
+     * 保存完了
+     */
+    SavedInfo: (): string => `保存しました。`,
+    /**
+     * 既読・未読の未指定
+     */
+    ReadStatusRequiredError: (): string => `既読にするか未読にするかを指定してください。`,
+    /**
+     * 通知不在
+     */
+    NotificationNotFoundError: (): string => `通知が見つかりません。`,
+    /**
+     * スプールのファイル名での絞り込み
+     */
+    SpoolFileNameFilterError: (): string => `スプールのファイルの名前では絞り込めません。`,
+    /**
+     * ジョブ正常終了の通知
+     */
+    JobSucceededNotification: ({ ジョブの種類 }: { ジョブの種類: string }): string => `ジョブ「${templateKind.文言.string(ジョブの種類)}」が正常終了しました。`,
+    /**
+     * ジョブ異常終了の通知
+     */
+    JobFailedNotification: ({ ジョブの種類 }: { ジョブの種類: string }): string => `ジョブ「${templateKind.文言.string(ジョブの種類)}」が異常終了しました。`,
+    /**
+     * ジョブ異常終了の結果
+     */
+    JobFailedResult: (): string => `エラーが発生したため、異常終了しました。`,
+    /**
+     * ジョブ中断の結果
+     *
+     * ジョブの実行中に、サーバーの停止の合図を受け取ったとき
+     */
+    JobInterruptedResult: (): string => `サーバーの停止により、中断しました。`,
+    /**
+     * 停止前に実行中だったジョブの結果
+     *
+     * サーバーの起動時に、前回の停止のときに実行中だったジョブを見つけたとき
+     */
+    JobInterruptedBeforeRestartResult: (): string => `サーバーが停止したため、中断しました。`,
+    /**
+     * 未定義の種類のジョブの結果
+     */
+    JobKindUndefinedResult: (): string => `ジョブの種類が定義されていないため、実行できませんでした。`,
+    /**
+     * クリーンナップの結果
+     */
+    CleanUpResult: ({ セッション, 冪等キー, 通知, ジョブ }: { セッション: string, 冪等キー: string, 通知: string, ジョブ: string }): string => `セッション ${templateKind.文言.int(セッション)} 件、冪等キー ${templateKind.文言.int(冪等キー)} 件、通知 ${templateKind.文言.int(通知)} 件、ジョブ ${templateKind.文言.int(ジョブ)} 件を削除しました。`,
   },
 })
 
@@ -152,7 +250,7 @@ export const TemplatePattern = {
    * メッセージ
    *
    * 利用者に見せるメッセージ。名前がメッセージの ID になる。
-   * 入力チェックや保存処理の共通部分で使うもの。業務ごとのメッセージは、別のグループに定義する。
+   * 入力チェックや保存処理の共通部分と、デモ101 テンプレートに残る機能で使うもの。販売管理のメッセージは MSG_DEMO101 に定義する。
    */
   MSG: {
     /**
@@ -193,5 +291,103 @@ export const TemplatePattern = {
      * 登録・更新・削除のときに、データベースで何らかのエラーが起きたとき。エラーの内容は利用者に見せない
      */
     UnknownUpdateError: (): string => `登録処理でエラーが発生しました。`,
+    /**
+     * 未選択エラー
+     */
+    SelectRequiredError: ({ 項目名 }: { 項目名: string }): string => `${項目名} を選択してください。`,
+    /**
+     * 未ログインエラー
+     */
+    NotLoggedInError: (): string => `ログインしていません。`,
+    /**
+     * ログイン一時停止
+     */
+    LoginLockedError: (): string => `ログインの失敗が続いたため、しばらくの間ログインできません。時間をおいてから、もう一度お試しください。`,
+    /**
+     * ログイン失敗
+     *
+     * 従業員番号とパスワードのどちらが間違っているかは伝えない
+     */
+    LoginFailedError: (): string => `従業員番号またはパスワードが間違っています。`,
+    /**
+     * パスワード未設定
+     */
+    PasswordNotSetError: (): string => `パスワードが設定されていません。`,
+    /**
+     * パスワード不一致
+     */
+    PasswordConfirmationMismatchError: (): string => `パスワードが一致しません。`,
+    /**
+     * 現在のパスワード誤り
+     */
+    CurrentPasswordIncorrectError: (): string => `現在のパスワードが正しくありません。`,
+    /**
+     * 従業員番号重複
+     */
+    DuplicateEmployeeNumberError: ({ 従業員番号 }: { 従業員番号: string }): string => `従業員番号 '${従業員番号}' は既に存在します。`,
+    /**
+     * 自分自身の削除
+     */
+    CannotDeleteSelfError: (): string => `自分自身は削除できません。`,
+    /**
+     * 自分自身の管理者権限の削除
+     */
+    CannotRemoveOwnAdminPermissionError: (): string => `自分自身のシステム管理者の権限は外せません。`,
+    /**
+     * 従業員一括更新の確認
+     */
+    EmployeeUpdateConfirm: (): string => `更新しますか？`,
+    /**
+     * 変更なし
+     */
+    NothingChangedInfo: (): string => `更新された内容はありません。`,
+    /**
+     * 保存完了
+     */
+    SavedInfo: (): string => `保存しました。`,
+    /**
+     * 既読・未読の未指定
+     */
+    ReadStatusRequiredError: (): string => `既読にするか未読にするかを指定してください。`,
+    /**
+     * 通知不在
+     */
+    NotificationNotFoundError: (): string => `通知が見つかりません。`,
+    /**
+     * スプールのファイル名での絞り込み
+     */
+    SpoolFileNameFilterError: (): string => `スプールのファイルの名前では絞り込めません。`,
+    /**
+     * ジョブ正常終了の通知
+     */
+    JobSucceededNotification: ({ ジョブの種類 }: { ジョブの種類: string }): string => `ジョブ「${ジョブの種類}」が正常終了しました。`,
+    /**
+     * ジョブ異常終了の通知
+     */
+    JobFailedNotification: ({ ジョブの種類 }: { ジョブの種類: string }): string => `ジョブ「${ジョブの種類}」が異常終了しました。`,
+    /**
+     * ジョブ異常終了の結果
+     */
+    JobFailedResult: (): string => `エラーが発生したため、異常終了しました。`,
+    /**
+     * ジョブ中断の結果
+     *
+     * ジョブの実行中に、サーバーの停止の合図を受け取ったとき
+     */
+    JobInterruptedResult: (): string => `サーバーの停止により、中断しました。`,
+    /**
+     * 停止前に実行中だったジョブの結果
+     *
+     * サーバーの起動時に、前回の停止のときに実行中だったジョブを見つけたとき
+     */
+    JobInterruptedBeforeRestartResult: (): string => `サーバーが停止したため、中断しました。`,
+    /**
+     * 未定義の種類のジョブの結果
+     */
+    JobKindUndefinedResult: (): string => `ジョブの種類が定義されていないため、実行できませんでした。`,
+    /**
+     * クリーンナップの結果
+     */
+    CleanUpResult: ({ セッション, 冪等キー, 通知, ジョブ }: { セッション: string, 冪等キー: string, 通知: string, ジョブ: string }): string => `セッション ${セッション} 件、冪等キー ${冪等キー} 件、通知 ${通知} 件、ジョブ ${ジョブ} 件を削除しました。`,
   },
 }

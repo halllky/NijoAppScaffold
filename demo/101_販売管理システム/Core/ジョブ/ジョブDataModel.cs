@@ -128,11 +128,11 @@ partial class OverridedApplicationService {
 
         } catch (Exception ex) when (ex is OperationCanceledException && 停止の合図.IsCancellationRequested) {
             Log.LogError(ex, "サーバーの停止により、ジョブを中断しました。");
-            return (ジョブの状態.異常終了, job.結果メッセージ ?? "サーバーの停止により、中断しました。");
+            return (ジョブの状態.異常終了, job.結果メッセージ ?? MSG.JobInterruptedResult());
 
         } catch (Exception ex) {
             Log.LogError(ex, "ジョブが異常終了しました。");
-            return (ジョブの状態.異常終了, job.結果メッセージ ?? "エラーが発生したため、異常終了しました。");
+            return (ジョブの状態.異常終了, job.結果メッセージ ?? MSG.JobFailedResult());
         }
     }
 
@@ -142,7 +142,7 @@ partial class OverridedApplicationService {
     /// </summary>
     internal (ジョブの状態 状態, string? 結果メッセージ) Fail定義されていない種類のジョブ(string 種類) {
         Log.LogError("ジョブの種類「{Kind}」が定義されていません。", 種類);
-        return (ジョブの状態.異常終了, "ジョブの種類が定義されていないため、実行できませんでした。");
+        return (ジョブの状態.異常終了, MSG.JobKindUndefinedResult());
     }
 
     /// <summary>
@@ -163,8 +163,10 @@ partial class OverridedApplicationService {
             throw new InvalidOperationException($"ジョブの結果を記録できませんでした: {string.Join(", ", result.Errors.GetAllMessages())}");
         }
         if (job.起動したユーザー != null) {
-            var 結果 = 状態 == ジョブの状態.正常終了 ? "正常終了しました" : "異常終了しました";
-            await Create通知Async([job.起動したユーザー], $"ジョブ「{job.種類}」が{結果}。", PAGES_URL.P004());
+            var 本文 = 状態 == ジョブの状態.正常終了
+                ? MSG.JobSucceededNotification(job.種類!)
+                : MSG.JobFailedNotification(job.種類!);
+            await Create通知Async([job.起動したユーザー], 本文, PAGES_URL.P004());
         }
         await tran.CommitAsync();
     }

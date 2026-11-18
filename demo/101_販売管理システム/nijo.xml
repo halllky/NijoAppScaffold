@@ -1054,7 +1054,7 @@ Webアプリケーションなので明示的にログアウトしない限り�
         UniqueId="d40e7c40-c552-4932-98ea-4eea496694f2" />
     </PAGES_URL_DEMO101>
     <!--利用者に見せるメッセージ。名前がメッセージの ID になる。
-入力チェックや保存処理の共通部分で使うもの。業務ごとのメッセージは、別のグループに定義する。-->
+入力チェックや保存処理の共通部分と、デモ101 テンプレートに残る機能で使うもの。販売管理のメッセージは MSG_DEMO101 に定義する。-->
     <MSG
       DisplayName="メッセージ"
       TemplateKind="文言"
@@ -1094,6 +1094,101 @@ Webアプリケーションなので明示的にログアウトしない限り�
         DisplayName="保存時エラー"
         Template="登録処理でエラーが発生しました。"
         UniqueId="4b1898ff-c61f-438a-89d1-eb2d53f6a1d1" />
+      <SelectRequiredError
+        DisplayName="未選択エラー"
+        Template="{項目名} を選択してください。"
+        UniqueId="5edfdd09-f03c-4841-a751-8ed2a86df9b1" />
+      <NotLoggedInError
+        DisplayName="未ログインエラー"
+        Template="ログインしていません。"
+        UniqueId="ac23716d-b92a-4b92-ac12-04ed306fbdcf" />
+      <LoginLockedError
+        DisplayName="ログイン一時停止"
+        Template="ログインの失敗が続いたため、しばらくの間ログインできません。時間をおいてから、もう一度お試しください。"
+        UniqueId="356834a2-19e7-4825-9ce6-724a342866b2" />
+      <!--従業員番号とパスワードのどちらが間違っているかは伝えない-->
+      <LoginFailedError
+        DisplayName="ログイン失敗"
+        Template="従業員番号またはパスワードが間違っています。"
+        UniqueId="2511d3dd-227c-40f1-806b-9e374176e199" />
+      <PasswordNotSetError
+        DisplayName="パスワード未設定"
+        Template="パスワードが設定されていません。"
+        UniqueId="efd22951-ab70-4779-b4c9-2dd7566c43b4" />
+      <PasswordConfirmationMismatchError
+        DisplayName="パスワード不一致"
+        Template="パスワードが一致しません。"
+        UniqueId="e3a8af02-35bd-4e5a-9ac6-38049069cf0b" />
+      <CurrentPasswordIncorrectError
+        DisplayName="現在のパスワード誤り"
+        Template="現在のパスワードが正しくありません。"
+        UniqueId="d7a9c733-b006-495a-9594-03de8cd5ff47" />
+      <DuplicateEmployeeNumberError
+        DisplayName="従業員番号重複"
+        Template="従業員番号 '{従業員番号}' は既に存在します。"
+        UniqueId="c4d95c25-f1ba-4477-93a0-182cb393420e" />
+      <CannotDeleteSelfError
+        DisplayName="自分自身の削除"
+        Template="自分自身は削除できません。"
+        UniqueId="a96aa3dd-0a5d-461d-8d67-5713172433c8" />
+      <CannotRemoveOwnAdminPermissionError
+        DisplayName="自分自身の管理者権限の削除"
+        Template="自分自身のシステム管理者の権限は外せません。"
+        UniqueId="06f9a6bf-77ba-4045-a2bf-dcde422c17e1" />
+      <EmployeeUpdateConfirm
+        DisplayName="従業員一括更新の確認"
+        Template="更新しますか？"
+        UniqueId="e4260e86-e5ba-4fbe-b9a5-06644f6e0d6e" />
+      <NothingChangedInfo
+        DisplayName="変更なし"
+        Template="更新された内容はありません。"
+        UniqueId="722d9878-2dfb-4ce0-a498-524eb7298ab6" />
+      <SavedInfo
+        DisplayName="保存完了"
+        Template="保存しました。"
+        UniqueId="cda557d5-8029-4960-b518-d3c74a5da992" />
+      <ReadStatusRequiredError
+        DisplayName="既読・未読の未指定"
+        Template="既読にするか未読にするかを指定してください。"
+        UniqueId="874d171e-fb6e-494f-8dff-f9892736aaca" />
+      <NotificationNotFoundError
+        DisplayName="通知不在"
+        Template="通知が見つかりません。"
+        UniqueId="7f1a66ab-fc1e-42b6-8496-af9688c0bd14" />
+      <SpoolFileNameFilterError
+        DisplayName="スプールのファイル名での絞り込み"
+        Template="スプールのファイルの名前では絞り込めません。"
+        UniqueId="4ce2b51e-67d9-440d-9e6d-34e2e351984e" />
+      <JobSucceededNotification
+        DisplayName="ジョブ正常終了の通知"
+        Template="ジョブ「{ジョブの種類}」が正常終了しました。"
+        UniqueId="7309ce83-5635-4e49-9c90-0761e9333dc2" />
+      <JobFailedNotification
+        DisplayName="ジョブ異常終了の通知"
+        Template="ジョブ「{ジョブの種類}」が異常終了しました。"
+        UniqueId="1f6d6ee8-c11b-4b72-becc-7d8f9e94e4d4" />
+      <JobFailedResult
+        DisplayName="ジョブ異常終了の結果"
+        Template="エラーが発生したため、異常終了しました。"
+        UniqueId="249496fe-b974-4e38-a5cb-f053a36c6cc5" />
+      <!--ジョブの実行中に、サーバーの停止の合図を受け取ったとき-->
+      <JobInterruptedResult
+        DisplayName="ジョブ中断の結果"
+        Template="サーバーの停止により、中断しました。"
+        UniqueId="e9d26584-e2de-420e-bc27-6457b94a47cf" />
+      <!--サーバーの起動時に、前回の停止のときに実行中だったジョブを見つけたとき-->
+      <JobInterruptedBeforeRestartResult
+        DisplayName="停止前に実行中だったジョブの結果"
+        Template="サーバーが停止したため、中断しました。"
+        UniqueId="7cbae116-a415-4dc2-932e-74d1b630a107" />
+      <JobKindUndefinedResult
+        DisplayName="未定義の種類のジョブの結果"
+        Template="ジョブの種類が定義されていないため、実行できませんでした。"
+        UniqueId="e177ca46-c989-4090-80f0-672a799bac52" />
+      <CleanUpResult
+        DisplayName="クリーンナップの結果"
+        Template="セッション {セッション:int} 件、冪等キー {冪等キー:int} 件、通知 {通知:int} 件、ジョブ {ジョブ:int} 件を削除しました。"
+        UniqueId="47984bbb-bf0b-47ae-b3e1-452461aa960d" />
     </MSG>
   </Templates>
   <CustomAttributes>

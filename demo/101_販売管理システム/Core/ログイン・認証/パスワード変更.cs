@@ -9,24 +9,24 @@ partial class OverridedApplicationService {
     protected override async Task OnExecuteパスワード変更Async(パスワード変更ParameterDisplayData param, パスワード変更ParameterMessages messages, OperationContext context) {
         // ログインチェック
         if (LoginUser == null) {
-            messages.AddError("ログインしていません。");
+            messages.AddError(MSG.NotLoggedInError());
             return;
         }
 
         // 入力チェック
         if (string.IsNullOrWhiteSpace(param.現在のパスワード)) {
-            messages.現在のパスワード.AddError("現在のパスワードを入力してください。");
+            messages.現在のパスワード.AddError(MSG.RequiredError("現在のパスワード"));
             return;
         }
         var newPassword = param.新しいパスワード;
         var confirmPassword = param.新しいパスワード_確認用;
 
         if (string.IsNullOrWhiteSpace(newPassword)) {
-            messages.新しいパスワード.AddError("新しいパスワードを入力してください。");
+            messages.新しいパスワード.AddError(MSG.RequiredError("新しいパスワード"));
             return;
         }
         if (newPassword != confirmPassword) {
-            messages.新しいパスワード_確認用.AddError("パスワードが一致しません。");
+            messages.新しいパスワード_確認用.AddError(MSG.PasswordConfirmationMismatchError());
             return;
         }
 
@@ -38,7 +38,7 @@ partial class OverridedApplicationService {
         if (current?.パスワード == null
             || current.SALT == null
             || PasswordHash.Verify(param.現在のパスワード, current.パスワード, current.SALT) == PasswordHash.VerificationResult.Failed) {
-            messages.現在のパスワード.AddError("現在のパスワードが正しくありません。");
+            messages.現在のパスワード.AddError(MSG.CurrentPasswordIncorrectError());
             return;
         }
 

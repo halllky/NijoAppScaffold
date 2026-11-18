@@ -29,7 +29,7 @@ partial class OverridedApplicationService {
                 if (param.更新対象従業員一覧.Any(e => e != item && e.従業員.従業員番号 == item.従業員.従業員番号)
                     || await DbContext.従業員DbSet.AnyAsync(e => e.従業員番号 == item.従業員.従業員番号)) {
 
-                    message.従業員.従業員番号.AddError($"従業員番号 '{item.従業員.従業員番号}' は既に存在します。");
+                    message.従業員.従業員番号.AddError(MSG.DuplicateEmployeeNumberError(item.従業員.従業員番号));
                     continue;
                 }
 
@@ -63,11 +63,11 @@ partial class OverridedApplicationService {
             // この処理はシステム管理者だけが実行できるので、これによりシステム管理者が1人もいなくなることも防げる
             if (item.従業員.従業員番号 == LoginUser.従業員番号) {
                 if (item.WillBeDeleted) {
-                    message.AddError("自分自身は削除できません。");
+                    message.AddError(MSG.CannotDeleteSelfError());
                     continue;
                 }
                 if (!item.従業員.従業員マスタの権限.Any(x => x.権限区分 == 権限区分.システム管理者)) {
-                    message.AddError("自分自身のシステム管理者の権限は外せません。");
+                    message.AddError(MSG.CannotRemoveOwnAdminPermissionError());
                     continue;
                 }
             }
@@ -98,12 +98,12 @@ partial class OverridedApplicationService {
 
         // 1巡目はここまで
         if (context.ValidationOnly) {
-            context.Confirms.Add("更新しますか？");
+            context.Confirms.Add(MSG.EmployeeUpdateConfirm());
             return;
         }
 
         if (saveCommands.Count == 0) {
-            messages.AddInfo("更新された内容はありません。");
+            messages.AddInfo(MSG.NothingChangedInfo());
             return;
         }
 
@@ -117,6 +117,6 @@ partial class OverridedApplicationService {
         }
 
         await tran.CommitAsync();
-        messages.AddInfo("保存しました。");
+        messages.AddInfo(MSG.SavedInfo());
     }
 }

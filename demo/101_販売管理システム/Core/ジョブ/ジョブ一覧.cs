@@ -20,7 +20,7 @@ partial class OverridedApplicationService {
     public override void ValidateSearchCondition(ジョブ一覧SearchCondition searchCondition, ジョブ一覧SearchConditionMessages messages, OperationContext context) {
         base.ValidateSearchCondition(searchCondition, messages, context);
         if (!string.IsNullOrWhiteSpace(searchCondition.Filter?.スプールのファイル?.ファイル名)) {
-            messages.AddError("スプールのファイルの名前では絞り込めません。");
+            messages.AddError(MSG.SpoolFileNameFilterError());
         }
     }
 
