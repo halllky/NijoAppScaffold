@@ -1023,40 +1023,37 @@ Webアプリケーションなので明示的にログアウトしない限り�
         UniqueId="d33c7ab5-0cc3-4391-b03a-ed1dfe215763" />
     </ジョブの状態>
   </StaticEnums>
-  <Constants>
-    <!--サーバーで組み立てる、画面の URL。通知のリンク先などに使う。
-画面のルーティングと、他の画面からのリンクも、この値から組み立てる。サーバーと画面で同じ URL を使うため。
-値はオリジンを除いた、"/" で始まるパス。テンプレートの引数は URL エンコードしないので、エンコードが不要な値（数値や GUID など）だけを渡すこと。-->
+  <Templates>
+    <!--画面の URL。サーバーで組み立てて通知のリンク先に使い、画面のルーティングと他の画面からのリンクもここから組み立てる。サーバーと画面で同じ URL を使うため。
+値はオリジンを除いた、"/" で始まるパス。-->
     <画面のURL
       DisplayName="画面のURL"
+      TemplateKind="URL"
       UniqueId="1a3604ba-4f58-420b-b60b-fe1d8eaf4e1f">
       <従業員
-        ConstantType="string"
-        ConstantValue="/jugyoin"
         DisplayName="P400 従業員"
+        Template="/jugyoin"
         UniqueId="14b43d82-632c-4c70-a0c9-c7e6acedd144" />
       <ジョブ
-        ConstantType="string"
-        ConstantValue="/job"
         DisplayName="P004 ジョブ"
+        Template="/job"
         UniqueId="5b0f450c-fa80-4d21-bb42-a9189de71c25" />
     </画面のURL>
-    <!--販売管理の画面のうち、サーバーで URL を組み立てるもの。値の決まりは「画面のURL」と同じ。-->
+    <!--販売管理の画面の URL。値の決まりは「画面のURL」と同じ。-->
     <販売管理の画面のURL
       DisplayName="販売管理の画面のURL"
+      TemplateKind="URL"
       UniqueId="fd83c28f-ad29-4518-a44c-9659fa5d96e7">
       <売上詳細
-        ConstantType="template"
-        ConstantValue="/uriage/edit/{0}"
         DisplayName="P101 売上詳細"
+        Template="/uriage/edit/{売上SEQ:int}"
         UniqueId="39f348ed-c979-433e-a9c5-f8570e1ae456" />
       <商品詳細
-        ConstantType="template"
-        ConstantValue="/shohin/{0}"
         DisplayName="P301 商品詳細"
+        Template="/shohin/{商品SEQ:int}"
         UniqueId="d40e7c40-c552-4932-98ea-4eea496694f2" />
     </販売管理の画面のURL>
-  </Constants>
+  </Templates>
   <CustomAttributes>
     <!--DataModelのMaxLengthはDB桁数定義にのみ使用される。こちらは画面制御で使用。-->
     <Custom-c582bb2e-804e-4136-93f0-85139aaa675f

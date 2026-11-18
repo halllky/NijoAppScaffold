@@ -61,7 +61,10 @@ public static class Demo101TemplatePruner
     ];
 
     /// <summary>テンプレートに残す、Constants直下の要素のUniqueId</summary>
-    private static readonly HashSet<string> KEEP_CONSTANT_IDS = [
+    private static readonly HashSet<string> KEEP_CONSTANT_IDS = [];
+
+    /// <summary>テンプレートに残す、Templates直下の要素のUniqueId</summary>
+    private static readonly HashSet<string> KEEP_TEMPLATE_IDS = [
         "1a3604ba-4f58-420b-b60b-fe1d8eaf4e1f", // 画面のURL
     ];
 
@@ -159,6 +162,7 @@ public static class Demo101TemplatePruner
         KeepOnly(root.Element("Commands"), KEEP_COMMAND_IDS, uniqueIdOf);
         KeepOnly(root.Element("StaticEnums"), KEEP_ENUM_IDS, uniqueIdOf);
         KeepOnly(root.Element("Constants"), KEEP_CONSTANT_IDS, uniqueIdOf);
+        KeepOnly(root.Element("Templates"), KEEP_TEMPLATE_IDS, uniqueIdOf);
         KeepOnly(
             root.Element("StaticEnums")?.Elements().SingleOrDefault(el => uniqueIdOf(el) == PERMISSION_ENUM_ID),
             KEEP_PERMISSION_VALUE_IDS,

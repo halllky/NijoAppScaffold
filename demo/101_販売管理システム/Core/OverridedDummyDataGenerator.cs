@@ -51,7 +51,7 @@ public partial class OverridedDummyDataGenerator {
         var now = applicationService.ServiceProvider.GetRequiredService<ICurrentTime>().Value;
         db.通知DbSet.AddRange(
             New管理者宛ての通知("ダミーの未読の通知です。リンク先はありません。", null, 既読日時: null, now.AddMinutes(-1)),
-            New管理者宛ての通知("ダミーの未読の通知です。従業員の画面へのリンクがあります。", 画面のURL.従業員, 既読日時: null, now.AddMinutes(-2)),
+            New管理者宛ての通知("ダミーの未読の通知です。従業員の画面へのリンクがあります。", テンプレート.画面のURL.従業員(), 既読日時: null, now.AddMinutes(-2)),
             New管理者宛ての通知("ダミーの既読の通知です。", null, 既読日時: now, now.AddMinutes(-3)));
         await db.SaveChangesAsync();
 
