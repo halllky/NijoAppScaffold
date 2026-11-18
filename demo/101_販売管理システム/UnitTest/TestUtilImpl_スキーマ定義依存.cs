@@ -10,6 +10,10 @@ partial class TestUtilImpl {
         services.AddSingleton<ICurrentProcess, CurrentProcessInUnitTest>();
     }
 
+    partial void ConfigureRuntimeSettingsスキーマ定義依存(RuntimeSetting settings, string currentTestWorkDirectory) {
+        settings.Job.WorkDirectory = Path.Combine(currentTestWorkDirectory, "Job");
+    }
+
     /// <summary>
     /// 単体テストにおける <see cref="ICurrentProcess"/>。処理名は実行中のテストケースの名前とする。
     /// </summary>

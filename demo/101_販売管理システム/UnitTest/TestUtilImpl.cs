@@ -138,7 +138,6 @@ public partial class TestUtilImpl {
 
             // ユニットテスト実行毎のログフォルダに出力されるべき項目の書き換え
             settings.LogDirectory = currentTestWorkDirectory; // テストケースごとのディレクトリ
-            settings.Job.WorkDirectory = Path.Combine(currentTestWorkDirectory, "Job");
             settings.CurrentDbProfileName = "SQLITE001";
             settings.MigrationsScriptFolder = Path.Combine(
                 solutionRoot,
@@ -150,6 +149,9 @@ public partial class TestUtilImpl {
                 Name = "SQLITE001",
                 ConnStr = $"Data Source={dbFileName};Pooling=False",
             });
+
+            ConfigureRuntimeSettingsスキーマ定義依存(settings, currentTestWorkDirectory);
+
             return settings;
         });
 
@@ -164,6 +166,7 @@ public partial class TestUtilImpl {
     }
 
     partial void ConfigureServicesスキーマ定義依存(IServiceCollection services);
+    partial void ConfigureRuntimeSettingsスキーマ定義依存(RuntimeSetting settings, string currentTestWorkDirectory);
 
     /// <summary>
     /// テスト用のファイルロガー。ログをテキストファイルに出力する。

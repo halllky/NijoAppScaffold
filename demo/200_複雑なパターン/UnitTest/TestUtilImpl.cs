@@ -149,6 +149,9 @@ public partial class TestUtilImpl {
                 Name = "SQLITE001",
                 ConnStr = $"Data Source={dbFileName};Pooling=False",
             });
+
+            ConfigureRuntimeSettingsスキーマ定義依存(settings, currentTestWorkDirectory);
+
             return settings;
         });
 
@@ -163,6 +166,7 @@ public partial class TestUtilImpl {
     }
 
     partial void ConfigureServicesスキーマ定義依存(IServiceCollection services);
+    partial void ConfigureRuntimeSettingsスキーマ定義依存(RuntimeSetting settings, string currentTestWorkDirectory);
 
     /// <summary>
     /// テスト用のファイルロガー。ログをテキストファイルに出力する。
