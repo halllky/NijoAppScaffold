@@ -29,7 +29,7 @@ export const CtrlSProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // グローバルなキーボードイベントリスナー
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+      if ((event.ctrlKey || event.metaKey) && (event.key === 's' || event.key === 'S')) {
         event.preventDefault()
         // 登録されているすべての保存ハンドラーを実行
         saveHandlersRef.current.forEach(handler => {
