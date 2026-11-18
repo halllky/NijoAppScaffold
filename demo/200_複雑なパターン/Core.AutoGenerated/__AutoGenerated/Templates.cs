@@ -7,16 +7,18 @@
 namespace MyApp;
 
 /// <summary>
-/// テンプレート文字列の種類ごとの、引数を埋め込む前の変換。
-/// 種類は nijo.xml の TemplateKind 属性で指定したもの。
+/// テンプレート文字列の種類ごとの、引数の値を埋め込む文字列にする変換。
+/// 種類は nijo.xml の TemplateKind 属性で指定したもの。引数の型ごとにオーバーロードがある。
 /// 変換の中身は、このインターフェースを実装するクラスに書き、そのクラスを <see cref="Templates{TKind}"/> の型引数に渡す。
 /// サーバーと画面で同じ文字列になるように、TypeScript 側の変換と同じ結果を返すこと。
 /// </summary>
 public interface ITemplateKind {
-    /// <summary>種類「JSON」の引数を埋め込む前の変換</summary>
+    /// <summary>種類「JSON」の、string の引数の変換</summary>
     static abstract string JSON(string value);
-    /// <summary>種類「文言」の引数を埋め込む前の変換</summary>
+    /// <summary>種類「文言」の、string の引数の変換</summary>
     static abstract string 文言(string value);
+    /// <summary>種類「文言」の、int の引数の変換</summary>
+    static abstract string 文言(int value);
 }
 
 /// <summary>
@@ -110,7 +112,7 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         /// 整数の引数のテスト
         /// </para>
         /// </summary>
-        public static string StockAlert(string 品目名, int 残数) => $"在庫不足: {TKind.文言(品目名)}の残り数量が{TKind.文言(残数.ToString(System.Globalization.CultureInfo.InvariantCulture))}個です";
+        public static string StockAlert(string 品目名, int 残数) => $"在庫不足: {TKind.文言(品目名)}の残り数量が{TKind.文言(残数)}個です";
         /// <summary>
         /// 予約確認
         /// <para>

@@ -58,15 +58,7 @@ internal sealed class TemplatesSection : Section {
         var groups = ctx.Schema.GetTemplates().Select(root => new TemplateGroupDef(root.XElement)).ToArray();
         if (groups.Length == 0) return;
 
-        // テンプレート文字列がまだ無いグループに指定された種類も宣言する。
-        // 宣言が無いと、変換の中身だけを先に書いておくことができないため。
-        var kinds = groups
-            .SelectMany(group => group.Element.DescendantsAndSelf())
-            .Select(el => el.Attribute(TemplateKindOption.ATTRIBUTE_NAME)?.Value)
-            .OfType<string>()
-            .Distinct()
-            .Order()
-            .ToArray();
+        var kinds = CollectKinds(groups);
 
         ctx.CoreLibrary(dir => {
             dir.Generate(new SourceFile {
@@ -82,20 +74,51 @@ internal sealed class TemplatesSection : Section {
         });
     }
 
-    private static string RenderCSharp(CodeRenderingContext ctx, TemplateGroupDef[] groups, string[] kinds) {
+    /// <summary>
+    /// 種類ごとに、変換を宣言する引数の型を集めます。
+    /// 宣言するのは、その種類のテンプレート文字列で実際に使われている型と、文字列型。
+    /// テンプレート文字列がまだ無いグループに指定された種類も、文字列型だけは宣言する。
+    /// 宣言が無いと、変換の中身を先に書いておくことができないため。
+    /// </summary>
+    private static KindDeclaration[] CollectKinds(TemplateGroupDef[] groups) {
+        var declaredKinds = groups
+            .SelectMany(group => group.Element.DescendantsAndSelf())
+            .Select(el => el.Attribute(TemplateKindOption.ATTRIBUTE_NAME)?.Value)
+            .OfType<string>();
+        var usedTypes = groups
+            .SelectMany(group => group.GetTemplatesRecursively())
+            .Where(template => template.Kind != null)
+            .SelectMany(template => template.GetParameterTypes().Select(type => (Kind: template.Kind!, Type: type)));
+
+        return declaredKinds
+            .Concat(usedTypes.Select(x => x.Kind))
+            .Distinct()
+            .Order()
+            .Select(kind => new KindDeclaration(kind, usedTypes
+                .Where(x => x.Kind == kind)
+                .Select(x => x.Type)
+                .Prepend(TemplateParameterType.String)
+                .DistinctBy(type => type.Key)
+                .ToArray()))
+            .ToArray();
+    }
+    /// <summary>種類1つ分の変換の宣言</summary>
+    private sealed record KindDeclaration(string Kind, TemplateParameterType[] Types);
+
+    private static string RenderCSharp(CodeRenderingContext ctx, TemplateGroupDef[] groups, KindDeclaration[] kinds) {
         return $$"""
             namespace {{ctx.Config.RootNamespace}};
 
             /// <summary>
-            /// テンプレート文字列の種類ごとの、引数を埋め込む前の変換。
-            /// 種類は nijo.xml の {{TemplateKindOption.ATTRIBUTE_NAME}} 属性で指定したもの。
+            /// テンプレート文字列の種類ごとの、引数の値を埋め込む文字列にする変換。
+            /// 種類は nijo.xml の {{TemplateKindOption.ATTRIBUTE_NAME}} 属性で指定したもの。引数の型ごとにオーバーロードがある。
             /// 変換の中身は、このインターフェースを実装するクラスに書き、そのクラスを <see cref="{{CS_CONTAINER_CLASS}}{{{CS_KIND_TYPE_PARAMETER}}}"/> の型引数に渡す。
             /// サーバーと画面で同じ文字列になるように、TypeScript 側の変換と同じ結果を返すこと。
             /// </summary>
             public interface {{CS_KIND_INTERFACE}} {
-            {{kinds.SelectTextTemplate(kind => $$"""
-                /// <summary>種類「{{kind}}」の引数を埋め込む前の変換</summary>
-                static abstract string {{kind}}(string value);
+            {{kinds.SelectMany(kind => kind.Types.Select(type => (kind.Kind, Type: type))).SelectTextTemplate(x => $$"""
+                /// <summary>種類「{{x.Kind}}」の、{{x.Type.CsType}} の引数の変換</summary>
+                static abstract string {{x.Kind}}({{x.Type.CsType}} value);
             """)}}
             }
 
@@ -115,17 +138,20 @@ internal sealed class TemplatesSection : Section {
             """;
     }
 
-    private static string RenderTypeScript(TemplateGroupDef[] groups, string[] kinds) {
+    private static string RenderTypeScript(TemplateGroupDef[] groups, KindDeclaration[] kinds) {
         return $$"""
             /**
-             * テンプレート文字列の種類ごとの、引数を埋め込む前の変換。
+             * テンプレート文字列の種類ごとの、引数の値を埋め込む文字列にする変換。
              * 種類は nijo.xml の {{TemplateKindOption.ATTRIBUTE_NAME}} 属性で指定したもの。
+             * 引数の型ごとに、C# の型名の名前で変換を持つ。
              * サーバーと画面で同じ文字列になるように、C# 側の変換と同じ結果を返すこと。
              */
             export type {{TS_KIND_TYPE}} = {
             {{kinds.SelectTextTemplate(kind => $$"""
-              /** 種類「{{kind}}」の引数を埋め込む前の変換 */
-              {{kind}}: (value: string) => string
+              /** 種類「{{kind.Kind}}」の変換 */
+              {{kind.Kind}}: {
+                {{WithIndent(kind.Types.Select(type => $"{type.Key}: (value: {type.TsType}) => string").Join("\n"))}}
+              }
             """)}}
             }
 

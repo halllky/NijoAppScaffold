@@ -5,13 +5,17 @@
 // ※ このファイルを生成した nijo のバージョン: 0.0.0-dev
 
 /**
- * テンプレート文字列の種類ごとの、引数を埋め込む前の変換。
+ * テンプレート文字列の種類ごとの、引数の値を埋め込む文字列にする変換。
  * 種類は nijo.xml の TemplateKind 属性で指定したもの。
+ * 引数の型ごとに、C# の型名の名前で変換を持つ。
  * サーバーと画面で同じ文字列になるように、C# 側の変換と同じ結果を返すこと。
  */
 export type TemplateKind = {
-  /** 種類「URL」の引数を埋め込む前の変換 */
-  URL: (value: string) => string
+  /** 種類「URL」の変換 */
+  URL: {
+    string: (value: string) => string
+    int: (value: number) => string
+  }
 }
 
 /**
@@ -41,11 +45,11 @@ export const createTemplates = (templateKind: TemplateKind) => ({
     /**
      * P101 売上詳細
      */
-    売上詳細: ({ 売上SEQ }: { 売上SEQ: number }): string => `/uriage/edit/${templateKind.URL(String(売上SEQ))}`,
+    売上詳細: ({ 売上SEQ }: { 売上SEQ: number }): string => `/uriage/edit/${templateKind.URL.int(売上SEQ)}`,
     /**
      * P301 商品詳細
      */
-    商品詳細: ({ 商品SEQ }: { 商品SEQ: number }): string => `/shohin/${templateKind.URL(String(商品SEQ))}`,
+    商品詳細: ({ 商品SEQ }: { 商品SEQ: number }): string => `/shohin/${templateKind.URL.int(商品SEQ)}`,
   },
 })
 

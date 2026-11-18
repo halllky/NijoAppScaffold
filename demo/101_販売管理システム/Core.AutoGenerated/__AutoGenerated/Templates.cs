@@ -7,14 +7,16 @@
 namespace MyApp;
 
 /// <summary>
-/// テンプレート文字列の種類ごとの、引数を埋め込む前の変換。
-/// 種類は nijo.xml の TemplateKind 属性で指定したもの。
+/// テンプレート文字列の種類ごとの、引数の値を埋め込む文字列にする変換。
+/// 種類は nijo.xml の TemplateKind 属性で指定したもの。引数の型ごとにオーバーロードがある。
 /// 変換の中身は、このインターフェースを実装するクラスに書き、そのクラスを <see cref="Templates{TKind}"/> の型引数に渡す。
 /// サーバーと画面で同じ文字列になるように、TypeScript 側の変換と同じ結果を返すこと。
 /// </summary>
 public interface ITemplateKind {
-    /// <summary>種類「URL」の引数を埋め込む前の変換</summary>
+    /// <summary>種類「URL」の、string の引数の変換</summary>
     static abstract string URL(string value);
+    /// <summary>種類「URL」の、int の引数の変換</summary>
+    static abstract string URL(int value);
 }
 
 /// <summary>
@@ -47,10 +49,10 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         /// <summary>
         /// P101 売上詳細
         /// </summary>
-        public static string 売上詳細(int 売上SEQ) => $"/uriage/edit/{TKind.URL(売上SEQ.ToString(System.Globalization.CultureInfo.InvariantCulture))}";
+        public static string 売上詳細(int 売上SEQ) => $"/uriage/edit/{TKind.URL(売上SEQ)}";
         /// <summary>
         /// P301 商品詳細
         /// </summary>
-        public static string 商品詳細(int 商品SEQ) => $"/shohin/{TKind.URL(商品SEQ.ToString(System.Globalization.CultureInfo.InvariantCulture))}";
+        public static string 商品詳細(int 商品SEQ) => $"/shohin/{TKind.URL(商品SEQ)}";
     }
 }

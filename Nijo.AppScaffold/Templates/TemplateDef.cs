@@ -12,7 +12,8 @@ namespace Nijo.Templates;
 /// テンプレート文字列1個分の定義。
 /// 値の中の {名前} や {名前:型} を引数とし、引数を埋め込んだ文字列を返す関数として生成する。
 /// 波括弧そのものは C# の書式指定文字列と同じく {{ }} と重ねて書く。
-/// 引数の値は、文字列にしたうえでテンプレートの種類（<see cref="TemplateKindOption"/>）ごとの変換を通してから埋め込む。
+/// 引数の値は、テンプレートの種類（<see cref="TemplateKindOption"/>）ごとの変換で文字列にしてから埋め込む。
+/// 変換は種類と引数の型の組み合わせごとにあり、値を文字列にする書式もそこで決まる。
 /// 引数に null は渡せない。
 /// </summary>
 internal sealed class TemplateDef {
@@ -43,6 +44,14 @@ internal sealed class TemplateDef {
     private IEnumerable<Placeholder> Parameters => _parts
         .OfType<Placeholder>()
         .DistinctBy(p => p.Name);
+
+    /// <summary>
+    /// 引数の型を返します。種類ごとの変換を、どの型について宣言するかを決めるのに使う。
+    /// 型の誤りは <see cref="Validate"/> で検出されるので、誤りの無い定義に対してだけ呼ぶこと。
+    /// </summary>
+    internal IEnumerable<TemplateParameterType> GetParameterTypes() {
+        return Parameters.Select(p => PARAM_TYPES[p.Type]);
+    }
 
     /// <summary>
     /// スキーマ定義の誤りを検証します。
@@ -84,7 +93,7 @@ internal sealed class TemplateDef {
                 .Replace("\"", "\\\"")
                 .Replace("{", "{{")
                 .Replace("}", "}}"),
-            Placeholder p => $"{{{kindTypeParameter}.{Kind}({PARAM_TYPES[p.Type].CsToString(p.Name)})}}",
+            Placeholder p => $"{{{kindTypeParameter}.{Kind}({p.Name})}}",
             _ => throw new InvalidOperationException(),
         });
 
@@ -101,7 +110,7 @@ internal sealed class TemplateDef {
     internal string RenderTypeScriptFormat(string kindVariable) {
         return RenderTypeScriptFunction(
             p => PARAM_TYPES[p.Type].TsType,
-            p => $"{kindVariable}.{Kind}({PARAM_TYPES[p.Type].TsToString(p.Name)})");
+            p => $"{kindVariable}.{Kind}.{PARAM_TYPES[p.Type].Key}({p.Name})");
     }
 
     /// <summary>
@@ -170,19 +179,9 @@ internal sealed class TemplateDef {
     #endregion 解析
 
     #region 引数の型
-    /// <summary>
-    /// 引数の型ごとの、C# と TypeScript での型と、文字列にする式。
-    /// 文字列にした結果が C# と TypeScript で一致するようにする。
-    /// </summary>
-    private static readonly IReadOnlyDictionary<string, ParamType> PARAM_TYPES = new Dictionary<string, ParamType> {
-        [PARAM_TYPE_STRING] = new("string", name => name, "string", name => name),
-        [PARAM_TYPE_INT] = new("int", name => $"{name}.ToString(System.Globalization.CultureInfo.InvariantCulture)", "number", name => $"String({name})"),
+    private static readonly IReadOnlyDictionary<string, TemplateParameterType> PARAM_TYPES = new Dictionary<string, TemplateParameterType> {
+        [PARAM_TYPE_STRING] = TemplateParameterType.String,
+        [PARAM_TYPE_INT] = new("int", "number"),
     };
-
-    private sealed record ParamType(
-        string CsType,
-        Func<string, string> CsToString,
-        string TsType,
-        Func<string, string> TsToString);
     #endregion 引数の型
 }
