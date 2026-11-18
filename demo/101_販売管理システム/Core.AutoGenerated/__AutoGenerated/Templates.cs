@@ -69,7 +69,7 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
     /// メッセージ
     /// <para>
     /// 利用者に見せるメッセージ。名前がメッセージの ID になる。
-    /// 入力チェックや保存処理の共通部分と、デモ101 テンプレートに残る機能で使うもの。販売管理のメッセージは MSG_DEMO101 に定義する。
+    /// 入力チェックや保存処理の共通部分と、ログインや通知などの業務によらない機能で使うもの。業務ごとのメッセージは、業務ごとのグループに定義する。
     /// </para>
     /// </summary>
     public static class MSG {
