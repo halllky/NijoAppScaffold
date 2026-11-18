@@ -22,8 +22,6 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
   const root = ReactHookForm.useWatch({ name: rootPath, control })
   const attributeTarget = root ? getAttributeTarget(rootLocation.list, root) : undefined
 
-  const getMentionSuggestions = UI.useMentionSuggestions(getValues)
-
   // ダイアグラムの構成に影響する編集の通知
   const notifyStructureChanged = useNotifyDiagramStructureChanged()
   /** コメント中のメンション対象が変わったときだけ通知する。単なる文字の追記では通知しない */
@@ -35,24 +33,11 @@ export default function RootAggregateAttrs({ rootLocation, formMethods: { getVal
     <div className={`flex flex-col gap-1 text-sm ${className ?? ''}`}>
 
       {/* ルート集約のコメント */}
-      <ReactHookForm.Controller
-        control={control}
-        name={`${rootPath}.comment`}
-        render={({ field }) => (
-          <div className="max-h-64 overflow-auto border border-gray-700 px-1 bg-white">
-            <UI.MentionableTextarea
-              {...field}
-              value={field.value ?? undefined}
-              onChange={value => {
-                field.onChange(value)
-                handleCommentChange(value)
-              }}
-              getSuggestions={getMentionSuggestions}
-              className="w-full"
-              placeholder="コメントを入力..."
-            />
-          </div>
-        )}
+      <UI.RootCommentTextarea
+        section={rootLocation.list}
+        index={rootLocation.index}
+        formMethods={{ control, getValues }}
+        onChange={handleCommentChange}
       />
 
       {/* 属性欄（レスポンシブ2カラムレイアウト） */}

@@ -189,6 +189,8 @@ export function SingleGroupEditor({ section, setting, index, formMethods }: {
         </UI.Button>
       </div>
 
+      <UI.RootCommentTextarea section={section} index={index} formMethods={formMethods} />
+
       <div onKeyDown={handleKeyDown} className="flex flex-col gap-1">
         <div className="flex flex-wrap gap-1 items-center">
           <UI.Button mini outline icon={Icon.PlusIcon} onClick={handleInsertRow}>

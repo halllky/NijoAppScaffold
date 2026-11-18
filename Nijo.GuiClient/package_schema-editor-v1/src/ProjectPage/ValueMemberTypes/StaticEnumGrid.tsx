@@ -204,6 +204,8 @@ function SingleEnumEditor({ index, formMethods }: {
         </UI.Button>
       </div>
 
+      <UI.RootCommentTextarea section="staticEnums" index={index} formMethods={formMethods} />
+
       <div onKeyDown={handleKeyDown} className="flex flex-col gap-1">
         <div className="flex gap-1">
           <UI.Button mini outline icon={Icon.PlusIcon} onClick={handleInsertRow}>
