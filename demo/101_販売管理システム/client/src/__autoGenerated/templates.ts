@@ -23,8 +23,10 @@ export type TemplateKind = {
  * nijo.xml の Templates セクションに定義したテンプレート文字列を返します。
  * 引数の値は、渡された変換を通してから埋め込む。
  * アプリからは、この関数を1回だけ呼んだ結果を export し、それを通して使う。
+ * 宣言されていない変換を余分に渡してもエラーにしない。C# で余分なオーバーロードがあってもエラーにならないのと同じく、
+ * テンプレート文字列の引数で使われなくなった型の変換を、消さずに残しておけるようにするため。
  */
-export const createTemplates = (templateKind: TemplateKind) => ({
+export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind) => ({
   /**
    * 画面の URL。サーバーで組み立てて通知のリンク先に使い、画面のルーティングと他の画面からのリンクもここから組み立てる。サーバーと画面で同じ URL を使うため。
    * 値はオリジンを除いた、"/" で始まるパス。

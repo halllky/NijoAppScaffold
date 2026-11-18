@@ -185,8 +185,10 @@ internal sealed class TemplatesSection : Section {
              * nijo.xml の {{E_Section.Templates.ToXmlElementName()}} セクションに定義したテンプレート文字列を返します。
              * 引数の値は、渡された変換を通してから埋め込む。
              * アプリからは、この関数を1回だけ呼んだ結果を export し、それを通して使う。
+             * 宣言されていない変換を余分に渡してもエラーにしない。C# で余分なオーバーロードがあってもエラーにならないのと同じく、
+             * テンプレート文字列の引数で使われなくなった型の変換を、消さずに残しておけるようにするため。
              */
-            export const {{TS_FACTORY_FUNCTION}} = ({{TS_KIND_VARIABLE}}: {{TS_KIND_TYPE}}) => ({
+            export const {{TS_FACTORY_FUNCTION}} = <TKind extends {{TS_KIND_TYPE}}>({{TS_KIND_VARIABLE}}: TKind) => ({
             {{groups.SelectTextTemplate(group => $$"""
               {{WithIndent(group.RenderTypeScriptFormat(TS_KIND_VARIABLE))}}
             """)}}
