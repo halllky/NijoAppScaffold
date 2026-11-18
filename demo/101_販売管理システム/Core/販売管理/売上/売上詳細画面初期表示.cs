@@ -21,7 +21,7 @@ partial class OverridedApplicationService {
         // 以降は既存データ編集モード
 
         if (param.売上SEQ == null) {
-            messages.売上SEQ.AddError("売上SEQが指定されていません。");
+            messages.売上SEQ.AddError(MSG_DEMO101.NotSpecifiedError("売上SEQ"));
             return null;
         }
 
@@ -32,7 +32,7 @@ partial class OverridedApplicationService {
             .FirstOrDefaultAsync(x => x.売上SEQ == param.売上SEQ);
 
         if (entity == null) {
-            messages.AddError("指定された売上データが見つかりません。");
+            messages.AddError(MSG_DEMO101.SalesNotFoundError());
             return null;
         }
 

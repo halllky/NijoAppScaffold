@@ -10,7 +10,7 @@ partial class OverridedDbContext {
 
     public override string? ValidateNotNegative(decimal? value, PropertyInfo propertyInfo) {
         if (value.HasValue && value.Value < 0m) {
-            return "負の値は許可されていません。";
+            return MSG_DEMO101.NegativeValueError();
         }
         return null;
     }

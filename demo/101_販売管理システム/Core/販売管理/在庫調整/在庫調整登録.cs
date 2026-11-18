@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using MyApp.Core.Authorization;
 
@@ -8,18 +9,18 @@ partial class OverridedApplicationService {
         // 入力チェック: 商品
         // ※ 自動生成されたコードでもチェックされるが、商品のキーがないとこのあとの処理が成り立たないので先にチェックする。
         if (param.商品.商品SEQ == null) {
-            messages.商品.AddError("商品を選択してください。");
+            messages.商品.AddError(MSG.SelectRequiredError("商品"));
             return;
         }
 
         // 入力チェック: 増減数・絶対数
         // ※ 「どちらか片方のみ」というのは自動生成されたコードでは表現できないので、ここでチェックする。
         if (param.増減数 == null && param.絶対数 == null) {
-            messages.AddError("増減数または絶対数のいずれかを指定してください。");
+            messages.AddError(MSG_DEMO101.StockAdjustmentAmountRequiredError());
             return;
         }
         if (param.増減数 != null && param.絶対数 != null) {
-            messages.AddError("増減数と絶対数の両方を指定することはできません。");
+            messages.AddError(MSG_DEMO101.StockAdjustmentAmountConflictError());
             return;
         }
 
@@ -36,7 +37,7 @@ partial class OverridedApplicationService {
         }
 
         if (delta == 0) {
-            messages.AddError("在庫数に変更がありません。");
+            messages.AddError(MSG_DEMO101.StockNotChangedError());
             return;
         }
 
@@ -55,7 +56,7 @@ partial class OverridedApplicationService {
 
             var totalAvailable = sortedStocks.Sum(x => x.残数量);
             if (totalAvailable < needed) {
-                messages.AddError($"在庫不足のため減算できません。（現在在庫: {totalAvailable}, 減算指定: {needed}）");
+                messages.AddError(MSG_DEMO101.InsufficientStockForSubtractionError(totalAvailable.Value, needed));
                 return;
             }
 
@@ -170,7 +171,7 @@ partial class OverridedApplicationService {
 
         await Create通知Async(
             宛先一覧,
-            $"商品「{商品名}」の在庫が {LoginUser.氏名} さんにより調整されました（{増減数:+#;-#}個）。",
+            MSG_DEMO101.StockAdjustedNotification(商品名, LoginUser.氏名, 増減数.ToString("+#;-#", CultureInfo.InvariantCulture)),
             PAGES_URL_DEMO101.P301(商品SEQ));
     }
 }

@@ -6,7 +6,7 @@ partial class OverridedApplicationService {
     protected override async Task OnExecute入荷修正Async(入荷詳細DisplayData param, 入荷詳細Messages messages, OperationContext context) {
         var id = param.入荷ID;
         if (string.IsNullOrEmpty(id)) {
-            messages.AddError("入荷IDが指定されていません。");
+            messages.AddError(MSG_DEMO101.NotSpecifiedError("入荷ID"));
             return;
         }
 
@@ -50,7 +50,7 @@ partial class OverridedApplicationService {
                 // 更新
                 var existingItem = existingDetails.FirstOrDefault(x => x.入荷明細ID == inputId);
                 if (existingItem == null || !loaded.TryGetValue(new() { 入荷明細ID = inputId }, out var detail)) {
-                    message.AddError($"指定された入荷明細が存在しません。(ID: {inputId})");
+                    message.AddError(MSG_DEMO101.ArrivalDetailNotFoundError(inputId));
                     continue;
                 }
                 processedIds.Add(inputId);
@@ -58,7 +58,7 @@ partial class OverridedApplicationService {
                 // 商品変更チェック
                 if (existingItem.商品?.商品SEQ != inputItem.商品.商品SEQ) {
                     if (existingItem.残数量 != existingItem.入荷数量) {
-                        message.商品.AddError("既に出荷引当が行われているため、商品は変更できません。");
+                        message.商品.AddError(MSG_DEMO101.AllocatedArrivalProductChangeError());
                     }
                 }
 
@@ -66,7 +66,7 @@ partial class OverridedApplicationService {
                 var usedQuantity = existingItem.入荷数量 - existingItem.残数量;
                 var newQuantity = inputItem.数量;
                 if (newQuantity < usedQuantity) {
-                    message.数量.AddError($"入荷数量を既に使用されている数量({usedQuantity})未満にすることはできません。");
+                    message.数量.AddError(MSG_DEMO101.ArrivalQuantityBelowUsedError(usedQuantity.Value));
                 }
 
                 if (message.HasError()) continue;
@@ -117,7 +117,7 @@ partial class OverridedApplicationService {
             if (!processedIds.Contains(existingItem.入荷明細ID)) {
                 // 使用済みチェック
                 if (existingItem.残数量 != existingItem.入荷数量) {
-                    messages.AddError($"既に出荷引当が行われているため、削除できません。(商品: {existingItem.商品?.商品名})");
+                    messages.AddError(MSG_DEMO101.AllocatedArrivalDeleteError(existingItem.商品?.商品名 ?? ""));
                     continue;
                 }
                 if (!loaded.TryGetValue(new() { 入荷明細ID = existingItem.入荷明細ID }, out var detail)) {
@@ -136,7 +136,7 @@ partial class OverridedApplicationService {
 
         // エラーチェックのみの場合は確認メッセージを返す。
         if (context.ValidationOnly) {
-            context.Confirms.Add("入荷データを修正します。よろしいですか？");
+            context.Confirms.Add(MSG_DEMO101.ArrivalUpdateConfirm());
             return;
         }
 
@@ -157,6 +157,6 @@ partial class OverridedApplicationService {
         await Notify在庫数量Async(changedProducts);
 
         await tran.CommitAsync();
-        messages.AddInfo("入荷登録が完了しました。");
+        messages.AddInfo(MSG_DEMO101.ArrivalRegisteredInfo());
     }
 }

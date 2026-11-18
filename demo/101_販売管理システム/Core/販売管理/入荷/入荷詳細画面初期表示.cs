@@ -7,7 +7,7 @@ partial class OverridedApplicationService {
     protected override async Task<入荷詳細DisplayData?> OnExecute入荷詳細画面初期表示Async(入荷詳細画面初期表示ParameterDisplayData param, 入荷詳細画面初期表示ParameterMessages messages, OperationContext context) {
         var id = param.入荷ID;
         if (string.IsNullOrEmpty(id)) {
-            messages.AddError("入荷IDが指定されていません。");
+            messages.AddError(MSG_DEMO101.NotSpecifiedError("入荷ID"));
             return null;
         }
 
@@ -18,7 +18,7 @@ partial class OverridedApplicationService {
             .FirstOrDefaultAsync(x => x.入荷ID == id);
 
         if (header == null) {
-            messages.AddError($"入荷データが見つかりません。(ID: {id})");
+            messages.AddError(MSG_DEMO101.ArrivalNotFoundError(id));
             return null;
         }
 

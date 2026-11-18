@@ -6,7 +6,7 @@ partial class OverridedApplicationService {
     protected override async Task OnExecute売上修正Async(売上詳細DisplayData param, 売上詳細Messages messages, OperationContext context) {
         // 入力チェック
         if (param.売上SEQ == null) {
-            messages.AddError("売上SEQが指定されていません。");
+            messages.AddError(MSG_DEMO101.NotSpecifiedError("売上SEQ"));
             return;
         }
 
@@ -39,7 +39,7 @@ partial class OverridedApplicationService {
             if (detail.ExistsInDatabase) {
                 // 編集されていたらエラー
                 if (detail.WillBeChanged || detail.WillBeDeleted) {
-                    message.AddError("既存の売上明細の編集・削除はできません。新規追加のみ可能です。");
+                    message.AddError(MSG_DEMO101.ExistingSalesDetailNotEditableError());
                 }
 
                 continue;
@@ -49,11 +49,11 @@ partial class OverridedApplicationService {
             var quantity = detail.売上数量;
 
             if (productId == null) {
-                message.商品.AddError("商品を選択してください。");
+                message.商品.AddError(MSG.SelectRequiredError("商品"));
                 continue;
             }
             if (quantity == null || quantity == 0) {
-                message.売上数量.AddError("売上数量は0以外の整数を入力してください。");
+                message.売上数量.AddError(MSG_DEMO101.SalesQuantityNonZeroError());
                 continue;
             }
 
@@ -102,7 +102,7 @@ partial class OverridedApplicationService {
                     if (newStocks.Count == 0) {
                         // これ以上在庫がない
                         var totalAvailable = stocksForProduct.Sum(x => currentStockMap.TryGetValue(x.入荷明細ID!, out var value) ? value : 0);
-                        message.売上数量.AddError($"在庫不足です。（現在在庫: {totalAvailable}）");
+                        message.売上数量.AddError(MSG_DEMO101.InsufficientStockError(totalAvailable));
                         break;
                     }
 
@@ -154,7 +154,7 @@ partial class OverridedApplicationService {
                     if (newStocks.Count == 0) {
                         // これ以上戻せる在庫がない
                         var totalReturnable = stocksForProduct.Sum(x => (x.入荷数量 ?? 0) - (currentStockMap.TryGetValue(x.入荷明細ID!, out var value) ? value : 0));
-                        message.売上数量.AddError($"取消可能な在庫引当履歴が不足しています。（取消可能数: {totalReturnable}）");
+                        message.売上数量.AddError(MSG_DEMO101.InsufficientReturnableStockError(totalReturnable));
                         break;
                     }
 
@@ -218,7 +218,7 @@ partial class OverridedApplicationService {
             return;
         }
         if (context.ValidationOnly) {
-            context.Confirms.Add("修正を確定します。よろしいですか？");
+            context.Confirms.Add(MSG_DEMO101.SalesUpdateConfirm());
             return;
         }
 
@@ -240,7 +240,7 @@ partial class OverridedApplicationService {
         await Create担当者への売上修正の通知Async(param.売上SEQ.Value, updateResult.Updated.担当者?.従業員番号);
 
         await tran.CommitAsync();
-        messages.AddInfo("売上修正が完了しました。");
+        messages.AddInfo(MSG_DEMO101.SalesUpdatedInfo());
     }
 
     /// <summary>
@@ -251,7 +251,7 @@ partial class OverridedApplicationService {
 
         await Create通知Async(
             [担当者],
-            $"担当の売上 {売上SEQ} が {LoginUser.氏名} さんにより修正されました。",
+            MSG_DEMO101.SalesUpdatedNotification(売上SEQ, LoginUser.氏名),
             PAGES_URL_DEMO101.P101(売上SEQ));
     }
 }

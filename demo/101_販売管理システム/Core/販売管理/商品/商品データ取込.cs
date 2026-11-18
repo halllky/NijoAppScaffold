@@ -16,7 +16,7 @@ partial class OverridedApplicationService {
     /// 商品データ取込のジョブを登録する。取込の完了を待たずに応答を返し、完了したら通知で知らせる。
     /// </summary>
     protected override async Task OnExecute商品データ取込Async(MessageSetter messages, OperationContext context) {
-        context.Confirms.Add("商品データの取込を開始します。終わったら通知でお知らせします。よろしいですか？");
+        context.Confirms.Add(MSG_DEMO101.ProductImportConfirm());
         if (context.ValidationOnly) return;
 
         await using var tran = await BeginTransactionAsync();
@@ -38,9 +38,9 @@ partial class OverridedApplicationService {
         await Write取込結果Async(Path.Combine(job.スプールフォルダ, "取込結果.csv"), results);
 
         var failedCount = results.Count(r => r.Result != 取込結果_登録 && r.Result != 取込結果_更新);
-        job.結果メッセージ = $"{results.Count} 件のうち、{results.Count - failedCount} 件を取り込みました。" + (failedCount > 0
-            ? $"{failedCount} 件は取り込めませんでした。理由は取込結果のファイルを参照してください。"
-            : "");
+        job.結果メッセージ = failedCount > 0
+            ? MSG_DEMO101.ProductImportPartiallyFailedResult(results.Count, results.Count - failedCount, failedCount)
+            : MSG_DEMO101.ProductImportResult(results.Count, results.Count - failedCount);
         Log.LogInformation("商品データ取込が完了しました。{Message}", job.結果メッセージ);
 
         if (failedCount > 0) throw new InvalidOperationException($"取り込めない商品データがありました。{job.結果メッセージ}");
@@ -59,7 +59,7 @@ partial class OverridedApplicationService {
         // 消費税区分の変換 (文字列 -> Enum)
         if (!Enum.TryParse<消費税区分>(item.TaxType, out var taxType)) {
             Log.LogWarning("不正な消費税区分です: {itemTaxType} (商品: {itemName})", item.TaxType, item.Name);
-            return $"不正な消費税区分です: {item.TaxType}";
+            return MSG_DEMO101.InvalidTaxTypeReason(item.TaxType);
         }
 
         // 外部システムIDで検索。

@@ -7,7 +7,7 @@ partial class OverridedApplicationService {
     protected override async Task<売上新規登録ReturnValueDisplayData?> OnExecute売上新規登録Async(売上詳細DisplayData param, 売上詳細Messages messages, OperationContext context) {
         // 入力チェック
         if (param.売上詳細の売上明細.Count == 0) {
-            messages.売上詳細の売上明細.AddError("売上明細を1件以上登録してください。");
+            messages.売上詳細の売上明細.AddError(MSG_DEMO101.SalesDetailRequiredError());
             return null;
         }
 
@@ -26,11 +26,11 @@ partial class OverridedApplicationService {
             var quantity = detail.売上数量;
 
             if (productId == null) {
-                message.商品.AddError("商品を選択してください。");
+                message.商品.AddError(MSG.SelectRequiredError("商品"));
                 continue;
             }
             if (quantity == null || quantity <= 0) {
-                message.売上数量.AddError("売上数量は1以上の整数を入力してください。");
+                message.売上数量.AddError(MSG_DEMO101.SalesQuantityPositiveError());
                 continue;
             }
 
@@ -54,7 +54,7 @@ partial class OverridedApplicationService {
             var totalAvailable = availableStocks.Sum(x => currentStockMap.TryGetValue(x.入荷明細ID!, out var value) ? value : 0);
 
             if (totalAvailable < quantity) {
-                message.売上数量.AddError($"在庫不足です。（現在在庫: {totalAvailable}）");
+                message.売上数量.AddError(MSG_DEMO101.InsufficientStockError(totalAvailable));
                 continue;
             }
 
@@ -121,7 +121,7 @@ partial class OverridedApplicationService {
             return null;
         }
         if (context.ValidationOnly) {
-            context.Confirms.Add("登録を確定します。よろしいですか？");
+            context.Confirms.Add(MSG_DEMO101.SalesRegisterConfirm());
             return null;
         }
 
@@ -142,7 +142,7 @@ partial class OverridedApplicationService {
         await Notify在庫数量Async(stockResult.Updated.Select(x => x.商品?.商品SEQ));
 
         await tran.CommitAsync();
-        messages.AddInfo("売上登録が完了しました。");
+        messages.AddInfo(MSG_DEMO101.SalesRegisteredInfo());
         return new() { 売上SEQ = result.Updated.売上SEQ };
     }
 }

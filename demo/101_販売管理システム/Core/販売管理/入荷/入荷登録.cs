@@ -15,7 +15,7 @@ partial class OverridedApplicationService {
 
         // 明細は1件以上必須
         if (param.入荷商品一覧.Count == 0) {
-            messages.入荷商品一覧.AddError("入荷商品を1件以上登録してください。");
+            messages.入荷商品一覧.AddError(MSG_DEMO101.ArrivalItemRequiredError());
         }
 
         // 入荷明細
@@ -61,7 +61,7 @@ partial class OverridedApplicationService {
         await Notify在庫数量Async(detailResult.Updated.Select(x => x.商品?.商品SEQ));
 
         await tran.CommitAsync();
-        messages.AddInfo("入荷登録が完了しました。");
+        messages.AddInfo(MSG_DEMO101.ArrivalRegisteredInfo());
         return new() { 入荷ID = newId };
     }
 }

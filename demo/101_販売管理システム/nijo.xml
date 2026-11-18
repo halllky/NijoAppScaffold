@@ -1190,6 +1190,171 @@ Webアプリケーションなので明示的にログアウトしない限り�
         Template="セッション {セッション:int} 件、冪等キー {冪等キー:int} 件、通知 {通知:int} 件、ジョブ {ジョブ:int} 件を削除しました。"
         UniqueId="47984bbb-bf0b-47ae-b3e1-452461aa960d" />
     </MSG>
+    <!--販売管理のメッセージ。値の決まりは「MSG」と同じ。-->
+    <MSG_DEMO101
+      DisplayName="メッセージ(デモ101専用)"
+      TemplateKind="文言"
+      UniqueId="020c4c24-7aee-4480-8fde-6c51ff40ffd5">
+      <NotSpecifiedError
+        DisplayName="未指定エラー"
+        Template="{項目名}が指定されていません。"
+        UniqueId="ecfa0e12-6b46-45f9-98ba-0c6a2a5e9a95" />
+      <SalesNotFoundError
+        DisplayName="売上不在"
+        Template="指定された売上データが見つかりません。"
+        UniqueId="32bc7ea4-4121-4e17-864e-67b8dbc38a48" />
+      <SalesDetailRequiredError
+        DisplayName="売上明細なし（登録）"
+        Template="売上明細を1件以上登録してください。"
+        UniqueId="6a62f65b-8301-4138-b360-4136dc04a0a8" />
+      <SalesDetailMinCountError
+        DisplayName="売上明細なし"
+        Template="売上明細は1件以上必要です。"
+        UniqueId="8d1dee62-389d-41dd-8264-99a5328f6000" />
+      <ExistingSalesDetailNotEditableError
+        DisplayName="既存の売上明細の編集"
+        Template="既存の売上明細の編集・削除はできません。新規追加のみ可能です。"
+        UniqueId="1d30c897-8843-4a0e-a1b7-0df4ed91eacd" />
+      <CancelDetailOnCreateError
+        DisplayName="新規登録時の取消明細"
+        Template="新規登録時に取消明細を追加することはできません。"
+        UniqueId="8b29df0c-4229-47e3-ac23-d4012ff34239" />
+      <SalesQuantityNonZeroError
+        DisplayName="売上数量が0"
+        Template="売上数量は0以外の整数を入力してください。"
+        UniqueId="3d7c015f-c569-4151-bd55-0222ed485572" />
+      <SalesQuantityPositiveError
+        DisplayName="売上数量が1未満"
+        Template="売上数量は1以上の整数を入力してください。"
+        UniqueId="cb7b5cab-7e26-4aa6-a4cf-e5d5a156057e" />
+      <DetailQuantityNegativeError
+        DisplayName="明細の個数が負"
+        Template="明細の個数は0以上でなければなりません。"
+        UniqueId="9ac63a4a-e2f0-40a3-83fd-411a4894621c" />
+      <AmountMustBeZeroError
+        DisplayName="金額が0以外"
+        Template="金額は0のみ指定可能です。"
+        UniqueId="d8288d7a-7255-4c98-a1bd-8fb70738d03a" />
+      <SalesAmountNegativeError
+        DisplayName="売上明細の金額が負"
+        Template="売上明細の金額は0以上でなければなりません。"
+        UniqueId="d814be0f-f003-441f-aca7-161051371a71" />
+      <CancelAmountPositiveError
+        DisplayName="取消明細の金額が正"
+        Template="取消明細の金額は0以下でなければなりません。"
+        UniqueId="e6ed7f82-4f55-478a-9824-12832c260676" />
+      <AllocatedDetailDeleteError
+        DisplayName="在庫引当済みの明細の削除"
+        Template="在庫引当済みのため、既存の明細を削除することはできません。取消明細を追加して調整してください。"
+        UniqueId="284f2a5b-5e51-4744-8eff-04a693a0b778" />
+      <AllocatedDetailChangeError
+        DisplayName="在庫引当済みの明細の変更"
+        Template="在庫引当済みのため変更できません。新しい明細を追加して調整してください。"
+        UniqueId="7ac1189f-9eac-459f-891f-4e0ecfb814e7" />
+      <InsufficientStockError
+        DisplayName="在庫不足"
+        Template="在庫不足です。（現在在庫: {現在在庫:int}）"
+        UniqueId="a02f16bc-36be-45f8-9c03-de57ae9528eb" />
+      <InsufficientReturnableStockError
+        DisplayName="取消可能な在庫引当の不足"
+        Template="取消可能な在庫引当履歴が不足しています。（取消可能数: {取消可能数:int}）"
+        UniqueId="0613a5b6-948c-4f1a-a3a2-4e658c6cc5fc" />
+      <SalesRegisterConfirm
+        DisplayName="売上登録の確認"
+        Template="登録を確定します。よろしいですか？"
+        UniqueId="10b98464-eb7a-4ccc-a739-d31c1b7734f4" />
+      <SalesRegisteredInfo
+        DisplayName="売上登録完了"
+        Template="売上登録が完了しました。"
+        UniqueId="640b738b-b323-40be-bf83-385b93ed8697" />
+      <SalesUpdateConfirm
+        DisplayName="売上修正の確認"
+        Template="修正を確定します。よろしいですか？"
+        UniqueId="bbf00bb5-a903-4638-905b-d42785c3e4e7" />
+      <SalesUpdatedInfo
+        DisplayName="売上修正完了"
+        Template="売上修正が完了しました。"
+        UniqueId="c60fcbd0-c9ef-4cfc-8413-386d88b1616c" />
+      <SalesUpdatedNotification
+        DisplayName="担当の売上の修正の通知"
+        Template="担当の売上 {売上SEQ:int} が {修正者} さんにより修正されました。"
+        UniqueId="7d858b27-4146-4a48-a764-305c5d8cc70a" />
+      <StockAdjustmentAmountRequiredError
+        DisplayName="在庫調整の数量未指定"
+        Template="増減数または絶対数のいずれかを指定してください。"
+        UniqueId="73d9ecbf-5a9a-4268-831a-f6bc1ce09248" />
+      <StockAdjustmentAmountConflictError
+        DisplayName="在庫調整の数量の重複指定"
+        Template="増減数と絶対数の両方を指定することはできません。"
+        UniqueId="c80697fd-30ea-435c-b37e-bfa2185e8ddb" />
+      <StockNotChangedError
+        DisplayName="在庫数の変更なし"
+        Template="在庫数に変更がありません。"
+        UniqueId="68685db3-84b1-4e74-9657-e959699e001a" />
+      <InsufficientStockForSubtractionError
+        DisplayName="減算時の在庫不足"
+        Template="在庫不足のため減算できません。（現在在庫: {現在在庫:int}, 減算指定: {減算指定:int}）"
+        UniqueId="b821a5e8-aee7-4872-9ba2-470dcab9895f" />
+      <!--増減数は、符号を付けて渡す（+3、-2 など）-->
+      <StockAdjustedNotification
+        DisplayName="在庫調整の通知"
+        Template="商品「{商品名}」の在庫が {調整者} さんにより調整されました（{増減数}個）。"
+        UniqueId="26a46c83-a674-4dcc-887e-105c3fd860a4" />
+      <ArrivalItemRequiredError
+        DisplayName="入荷商品なし"
+        Template="入荷商品を1件以上登録してください。"
+        UniqueId="27c008f3-be3f-41f1-883a-ca370c72e5bb" />
+      <ArrivalNotFoundError
+        DisplayName="入荷不在"
+        Template="入荷データが見つかりません。(ID: {入荷ID})"
+        UniqueId="b5d1d11f-fe03-424e-a8a7-6e95703c7a8e" />
+      <ArrivalDetailNotFoundError
+        DisplayName="入荷明細不在"
+        Template="指定された入荷明細が存在しません。(ID: {入荷明細ID})"
+        UniqueId="515bf204-813c-4e0d-88a8-ad4cfae8ca1e" />
+      <AllocatedArrivalProductChangeError
+        DisplayName="出荷引当済みの入荷の商品の変更"
+        Template="既に出荷引当が行われているため、商品は変更できません。"
+        UniqueId="d8fd4f53-1192-42bc-ab8b-3e1b85acd781" />
+      <AllocatedArrivalDeleteError
+        DisplayName="出荷引当済みの入荷の削除"
+        Template="既に出荷引当が行われているため、削除できません。(商品: {商品名})"
+        UniqueId="e34c8e31-abd9-4e75-9986-1ca1b1f68552" />
+      <ArrivalQuantityBelowUsedError
+        DisplayName="使用済みの数量を下回る入荷数量"
+        Template="入荷数量を既に使用されている数量({使用済みの数量:int})未満にすることはできません。"
+        UniqueId="41f86f69-c880-4927-b640-38fba3d06d67" />
+      <ArrivalUpdateConfirm
+        DisplayName="入荷修正の確認"
+        Template="入荷データを修正します。よろしいですか？"
+        UniqueId="93e004e3-ffbf-4a31-ba8f-cb42bb48be3d" />
+      <ArrivalRegisteredInfo
+        DisplayName="入荷登録完了"
+        Template="入荷登録が完了しました。"
+        UniqueId="995abc66-058b-48ef-9427-5d30cbbf06ab" />
+      <ProductImportConfirm
+        DisplayName="商品データ取込の確認"
+        Template="商品データの取込を開始します。終わったら通知でお知らせします。よろしいですか？"
+        UniqueId="8bccf970-5c4e-45a8-91b6-883a882f120d" />
+      <ProductImportResult
+        DisplayName="商品データ取込の結果"
+        Template="{件数:int} 件のうち、{取込件数:int} 件を取り込みました。"
+        UniqueId="f576fdfb-fa2d-4152-8fef-d90faf6bf044" />
+      <ProductImportPartiallyFailedResult
+        DisplayName="商品データ取込の結果（失敗あり）"
+        Template="{件数:int} 件のうち、{取込件数:int} 件を取り込みました。{失敗件数:int} 件は取り込めませんでした。理由は取込結果のファイルを参照してください。"
+        UniqueId="4b565f01-188d-4868-adca-86be400923a8" />
+      <!--商品データ取込の取込結果のファイルに出す、取り込めなかった理由-->
+      <InvalidTaxTypeReason
+        DisplayName="不正な消費税区分"
+        Template="不正な消費税区分です: {消費税区分}"
+        UniqueId="009c6f46-f9bc-4b27-9899-d2875ed8f959" />
+      <!--カスタム属性「0以上のみ」の入力チェック-->
+      <NegativeValueError
+        DisplayName="負の値"
+        Template="負の値は許可されていません。"
+        UniqueId="f49170e8-29a8-4172-95c1-97cbb537e1bb" />
+    </MSG_DEMO101>
   </Templates>
   <CustomAttributes>
     <!--DataModelのMaxLengthはDB桁数定義にのみ使用される。こちらは画面制御で使用。-->
