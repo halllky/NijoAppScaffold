@@ -1039,6 +1039,17 @@ Webアプリケーションなので明示的にログアウトしない限り�
         Template="/job"
         UniqueId="5b0f450c-fa80-4d21-bb42-a9189de71c25" />
     </PAGES_URL>
+    <!--画面から呼ぶ API の URL のうち、自動生成された処理のエンドポイント以外のもの。サーバーのルート定義と画面からの呼び出しで同じ URL を使うため。
+値はオリジンを除いた、"/" で始まるパス。-->
+    <API_URL
+      DisplayName="API URL一覧"
+      TemplateKind="URL"
+      UniqueId="3f08ac33-8cfe-47d4-abf9-67fd2b3dc32c">
+      <JobSpoolFile
+        DisplayName="ジョブのスプールのファイルのダウンロード"
+        Template="/api/job/{ジョブID}/spool/{ファイル名}"
+        UniqueId="9a4801bb-695d-4404-b0f1-a1a0cf1e9384" />
+    </API_URL>
     <!--販売管理の画面の URL。値の決まりは「PAGES_URL」と同じ。-->
     <PAGES_URL_DEMO101
       DisplayName="画面URL一覧(デモ101専用)"

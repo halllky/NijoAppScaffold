@@ -49,6 +49,18 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
     P004: (): string => `/job`,
   },
   /**
+   * API URL一覧
+   *
+   * 画面から呼ぶ API の URL のうち、自動生成された処理のエンドポイント以外のもの。サーバーのルート定義と画面からの呼び出しで同じ URL を使うため。
+   * 値はオリジンを除いた、"/" で始まるパス。
+   */
+  API_URL: {
+    /**
+     * ジョブのスプールのファイルのダウンロード
+     */
+    JobSpoolFile: ({ ジョブID, ファイル名 }: { ジョブID: string, ファイル名: string }): string => `/api/job/${templateKind.URL.string(ジョブID)}/spool/${templateKind.URL.string(ファイル名)}`,
+  },
+  /**
    * 画面URL一覧(デモ101専用)
    *
    * 販売管理の画面の URL。値の決まりは「PAGES_URL」と同じ。
@@ -399,6 +411,18 @@ export const TemplatePattern = {
      * P004 ジョブ一覧
      */
     P004: (): string => `/job`,
+  },
+  /**
+   * API URL一覧
+   *
+   * 画面から呼ぶ API の URL のうち、自動生成された処理のエンドポイント以外のもの。サーバーのルート定義と画面からの呼び出しで同じ URL を使うため。
+   * 値はオリジンを除いた、"/" で始まるパス。
+   */
+  API_URL: {
+    /**
+     * ジョブのスプールのファイルのダウンロード
+     */
+    JobSpoolFile: ({ ジョブID, ファイル名 }: { ジョブID: string, ファイル名: string }): string => `/api/job/${ジョブID}/spool/${ファイル名}`,
   },
   /**
    * 画面URL一覧(デモ101専用)

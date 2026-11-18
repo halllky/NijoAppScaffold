@@ -50,6 +50,19 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         public static string P004() => $"/job";
     }
     /// <summary>
+    /// API URL一覧
+    /// <para>
+    /// 画面から呼ぶ API の URL のうち、自動生成された処理のエンドポイント以外のもの。サーバーのルート定義と画面からの呼び出しで同じ URL を使うため。
+    /// 値はオリジンを除いた、"/" で始まるパス。
+    /// </para>
+    /// </summary>
+    public static class API_URL {
+        /// <summary>
+        /// ジョブのスプールのファイルのダウンロード
+        /// </summary>
+        public static string JobSpoolFile(string ジョブID, string ファイル名) => $"/api/job/{TKind.URL(ジョブID)}/spool/{TKind.URL(ファイル名)}";
+    }
+    /// <summary>
     /// 画面URL一覧(デモ101専用)
     /// <para>
     /// 販売管理の画面の URL。値の決まりは「PAGES_URL」と同じ。

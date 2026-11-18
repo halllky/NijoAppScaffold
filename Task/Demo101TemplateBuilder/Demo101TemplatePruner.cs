@@ -66,6 +66,7 @@ public static class Demo101TemplatePruner
     /// <summary>テンプレートに残す、Templates直下の要素のUniqueId</summary>
     private static readonly HashSet<string> KEEP_TEMPLATE_IDS = [
         "1a3604ba-4f58-420b-b60b-fe1d8eaf4e1f", // PAGES_URL
+        "3f08ac33-8cfe-47d4-abf9-67fd2b3dc32c", // API_URL
         "5fd1c5e1-d382-4977-b2f9-9a165cc8207c", // MSG
     ];
 
