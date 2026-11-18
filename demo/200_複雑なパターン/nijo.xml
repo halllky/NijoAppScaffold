@@ -1981,6 +1981,11 @@
         DisplayName="予約キャンセル"
         Template="予約がキャンセルされました"
         UniqueId="tmpl-reservation-cancelled-001" />
+      <!-- 静的区分と値オブジェクトの引数のテスト。静的区分は C# と TypeScript で表し方が異なる -->
+      <PaymentAccepted
+        DisplayName="支払受付"
+        Template="{支払方法:payment_type}での支払いを受け付けました（担当: {担当者:医療従事者ID型}）"
+        UniqueId="tmpl-payment-accepted-001" />
       <!-- バックティック（`）と、波括弧そのものを含むテンプレート文字列のテスト -->
       <ScriptTemplate
         DisplayName="スクリプトテンプレート"

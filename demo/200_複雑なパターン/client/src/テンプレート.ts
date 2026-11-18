@@ -10,7 +10,10 @@ export const テンプレート = createTemplates({
     /** 変換しない */
     string: value => value,
     /** 3桁ごとに区切る */
-    int: value => new Intl.NumberFormat("ja-JP").format(value),
+    int: value => new Intl.NumberFormat("ja-JP").format(Number(value)),
+    /** 画面では、静的区分は表示名で扱っている */
+    payment_type: value => value,
+    医療従事者ID型: value => value,
   },
   /** JSON の文字列リテラルの中に埋め込む値 */
   JSON: {

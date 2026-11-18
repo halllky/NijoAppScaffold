@@ -1,4 +1,5 @@
 using Nijo.CodeGenerating;
+using Nijo.SchemaParsing;
 using Nijo.Util.DotnetEx;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,9 +13,11 @@ namespace Nijo.Templates;
 /// C# では静的クラスとして、TypeScript ではオブジェクトとして表れる。
 /// </summary>
 internal sealed class TemplateGroupDef {
-    internal TemplateGroupDef(XElement element) {
+    internal TemplateGroupDef(XElement element, SchemaParseContext ctx) {
         Element = element;
+        _ctx = ctx;
     }
+    private readonly SchemaParseContext _ctx;
 
     internal XElement Element { get; }
     /// <summary>C# のクラス名、TypeScript のプロパティ名</summary>
@@ -24,13 +27,13 @@ internal sealed class TemplateGroupDef {
     /// このグループの直下に定義されたテンプレート文字列を、スキーマ定義上の登場順に返します。
     /// </summary>
     internal IEnumerable<TemplateDef> GetTemplates() {
-        return Element.Elements().Where(el => !IsGroup(el)).Select(el => new TemplateDef(el));
+        return Element.Elements().Where(el => !IsGroup(el)).Select(el => new TemplateDef(el, _ctx));
     }
     /// <summary>
     /// このグループの直下に定義されたグループを、スキーマ定義上の登場順に返します。
     /// </summary>
     internal IEnumerable<TemplateGroupDef> GetChildGroups() {
-        return Element.Elements().Where(IsGroup).Select(el => new TemplateGroupDef(el));
+        return Element.Elements().Where(IsGroup).Select(el => new TemplateGroupDef(el, _ctx));
     }
     /// <summary>
     /// このグループとその中の入れ子のグループに定義されたテンプレート文字列を、すべて返します。

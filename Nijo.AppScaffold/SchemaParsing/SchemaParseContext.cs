@@ -245,21 +245,26 @@ public class SchemaParseContext {
             valueMemberType = null!;
             return false;
         }
-
+        return TryResolveMemberType(type.Value, out valueMemberType);
+    }
+    /// <summary>
+    /// nijo.xml で型を指定するときの型名（Type 属性の値）から、値の種別を判別して返します。
+    /// </summary>
+    internal bool TryResolveMemberType(string schemaTypeName, out IValueMemberType valueMemberType) {
         // 単語型など予め登録された型
-        if (_valueMemberTypes.TryGetValue(type.Value, out var vmType)) {
+        if (_valueMemberTypes.TryGetValue(schemaTypeName, out var vmType)) {
             valueMemberType = vmType;
             return true;
         }
 
         // 列挙体
-        if (GetStaticEnumMembers().TryGetValue(type.Value, out var enumMember)) {
+        if (GetStaticEnumMembers().TryGetValue(schemaTypeName, out var enumMember)) {
             valueMemberType = enumMember;
             return true;
         }
 
         // 値オブジェクト型
-        if (GetValueObjectMembers().TryGetValue(type.Value, out var valueObjectMember)) {
+        if (GetValueObjectMembers().TryGetValue(schemaTypeName, out var valueObjectMember)) {
             valueMemberType = valueObjectMember;
             return true;
         }

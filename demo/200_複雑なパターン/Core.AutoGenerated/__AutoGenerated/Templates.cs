@@ -19,6 +19,10 @@ public interface ITemplateKind {
     static abstract string 文言(string value);
     /// <summary>種類「文言」の、int の引数の変換</summary>
     static abstract string 文言(int value);
+    /// <summary>種類「文言」の、payment_type の引数の変換</summary>
+    static abstract string 文言(payment_type value);
+    /// <summary>種類「文言」の、医療従事者ID型 の引数の変換</summary>
+    static abstract string 文言(医療従事者ID型 value);
 }
 
 /// <summary>
@@ -124,6 +128,13 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         /// 予約キャンセル
         /// </summary>
         public static string ReservationCancelled() => $"予約がキャンセルされました";
+        /// <summary>
+        /// 支払受付
+        /// <para>
+        /// 静的区分と値オブジェクトの引数のテスト。静的区分は C# と TypeScript で表し方が異なる
+        /// </para>
+        /// </summary>
+        public static string PaymentAccepted(payment_type 支払方法, 医療従事者ID型 担当者) => $"{TKind.文言(支払方法)}での支払いを受け付けました（担当: {TKind.文言(担当者)}）";
         /// <summary>
         /// スクリプトテンプレート
         /// <para>

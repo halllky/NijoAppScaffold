@@ -13,7 +13,7 @@ internal sealed class TemplateOption : NodeOption {
     public override E_NodeOptionType Type => E_NodeOptionType.String;
     public override string HelpText => $$$"""
         テンプレート文字列を指定します。
-        引数は {名前} か {名前:型}（型は {{{TemplateDef.PARAM_TYPE_STRING}}} か {{{TemplateDef.PARAM_TYPE_INT}}}。省略時は {{{TemplateDef.PARAM_TYPE_STRING}}}）の形で書きます。
+        引数は {名前} か {名前:型} の形で書きます。型はデータ構造のメンバーと同じ型名（word, int, 静的区分や値オブジェクトの名前など）で、省略時は {{{TemplateDef.DEFAULT_PARAM_TYPE}}} です。
         波括弧そのものは {{ }} と重ねて書きます。
         """;
 

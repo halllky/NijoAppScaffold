@@ -18,7 +18,7 @@ import { useCanInvoke } from "../login/canInvoke"
  * P301_商品詳細 へ遷移するためのリンクURLを取得する関数
  */
 export function getLinkUrlToP301商品詳細(商品SEQ: string) {
-  return テンプレート.販売管理の画面のURL.商品詳細({ 商品SEQ: Number(商品SEQ) })
+  return テンプレート.販売管理の画面のURL.商品詳細({ 商品SEQ })
 }
 
 type LoaderData = {

@@ -4,6 +4,7 @@
 // ※ このファイルを生成したメソッド: Render
 // ※ このファイルを生成した nijo のバージョン: 0.0.0-dev
 
+
 /**
  * テンプレート文字列の種類ごとの、引数の値を埋め込む文字列にする変換。
  * 種類は nijo.xml の TemplateKind 属性で指定したもの。
@@ -14,7 +15,7 @@ export type TemplateKind = {
   /** 種類「URL」の変換 */
   URL: {
     string: (value: string) => string
-    int: (value: number) => string
+    int: (value: string) => string
   }
 }
 
@@ -45,11 +46,11 @@ export const createTemplates = (templateKind: TemplateKind) => ({
     /**
      * P101 売上詳細
      */
-    売上詳細: ({ 売上SEQ }: { 売上SEQ: number }): string => `/uriage/edit/${templateKind.URL.int(売上SEQ)}`,
+    売上詳細: ({ 売上SEQ }: { 売上SEQ: string }): string => `/uriage/edit/${templateKind.URL.int(売上SEQ)}`,
     /**
      * P301 商品詳細
      */
-    商品詳細: ({ 商品SEQ }: { 商品SEQ: number }): string => `/shohin/${templateKind.URL.int(商品SEQ)}`,
+    商品詳細: ({ 商品SEQ }: { 商品SEQ: string }): string => `/shohin/${templateKind.URL.int(商品SEQ)}`,
   },
 })
 

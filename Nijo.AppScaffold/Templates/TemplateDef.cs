@@ -1,4 +1,6 @@
 using Nijo.CodeGenerating;
+using Nijo.DataStructures.ValueMemberTypes;
+using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,16 +13,18 @@ namespace Nijo.Templates;
 /// <summary>
 /// テンプレート文字列1個分の定義。
 /// 値の中の {名前} や {名前:型} を引数とし、引数を埋め込んだ文字列を返す関数として生成する。
+/// 型はデータ構造のメンバーと同じ型名で指定する（<see cref="TemplateParameterType"/>）。
 /// 波括弧そのものは C# の書式指定文字列と同じく {{ }} と重ねて書く。
 /// 引数の値は、テンプレートの種類（<see cref="TemplateKindOption"/>）ごとの変換で文字列にしてから埋め込む。
 /// 変換は種類と引数の型の組み合わせごとにあり、値を文字列にする書式もそこで決まる。
 /// 引数に null は渡せない。
 /// </summary>
 internal sealed class TemplateDef {
-    internal const string PARAM_TYPE_STRING = "string";
-    internal const string PARAM_TYPE_INT = "int";
+    /// <summary>引数の型を省略したときの型名</summary>
+    internal const string DEFAULT_PARAM_TYPE = "word";
 
-    internal TemplateDef(XElement element) {
+    internal TemplateDef(XElement element, SchemaParseContext ctx) {
+        _ctx = ctx;
         Element = element;
         Name = element.Name.LocalName;
         Kind = TemplateKindOption.Resolve(element);
@@ -35,6 +39,7 @@ internal sealed class TemplateDef {
     internal string? Kind { get; }
     private string Value { get; }
 
+    private readonly SchemaParseContext _ctx;
     private readonly IReadOnlyList<Part> _parts;
     private readonly bool _hasUnescapedBrace;
 
@@ -50,7 +55,7 @@ internal sealed class TemplateDef {
     /// 型の誤りは <see cref="Validate"/> で検出されるので、誤りの無い定義に対してだけ呼ぶこと。
     /// </summary>
     internal IEnumerable<TemplateParameterType> GetParameterTypes() {
-        return Parameters.Select(p => PARAM_TYPES[p.Type]);
+        return Parameters.Select(GetParameterType);
     }
 
     /// <summary>
@@ -67,8 +72,10 @@ internal sealed class TemplateDef {
             addError("引数は {売上SEQ:int} のように名前で書いてください（{0} のような番号は使えません）。波括弧そのものは {{ }} と重ねて書いてください。");
         }
         foreach (var placeholder in _parts.OfType<Placeholder>()) {
-            if (!PARAM_TYPES.ContainsKey(placeholder.Type)) {
-                addError($"引数「{placeholder.Name}」の型「{placeholder.Type}」は使えません。{string.Join(", ", PARAM_TYPES.Keys)} のいずれかを指定してください。");
+            if (!_ctx.TryResolveMemberType(placeholder.Type, out var valueMemberType)) {
+                addError($"引数「{placeholder.Name}」の型「{placeholder.Type}」は使えません。データ構造のメンバーと同じ型名（word, int, 静的区分や値オブジェクトの名前など）を指定してください。");
+            } else if (valueMemberType is ByteArrayMember) {
+                addError($"引数「{placeholder.Name}」に、バイト配列は使えません。");
             }
         }
         if (Parameters.Any(p => p.Name == TemplatesSection.TS_KIND_VARIABLE)) {
@@ -86,7 +93,7 @@ internal sealed class TemplateDef {
     /// 種類ごとの変換は、テンプレートを入れるクラスの型引数から呼ぶ。
     /// </summary>
     internal string RenderCSharp(string kindTypeParameter) {
-        var parameters = Parameters.Select(p => $"{PARAM_TYPES[p.Type].CsType} {p.Name}");
+        var parameters = Parameters.Select(p => $"{GetParameterType(p).CsType} {p.Name}");
         var body = _parts.Select(part => part switch {
             Literal literal => literal.Text
                 .Replace("\\", "\\\\")
@@ -109,8 +116,8 @@ internal sealed class TemplateDef {
     /// <param name="kindVariable">種類ごとの変換を持つオブジェクトの変数名</param>
     internal string RenderTypeScriptFormat(string kindVariable) {
         return RenderTypeScriptFunction(
-            p => PARAM_TYPES[p.Type].TsType,
-            p => $"{kindVariable}.{Kind}.{PARAM_TYPES[p.Type].Key}({p.Name})");
+            p => GetParameterType(p).TsType,
+            p => $"{kindVariable}.{Kind}.{GetParameterType(p).Key}({p.Name})");
     }
 
     /// <summary>
@@ -161,7 +168,7 @@ internal sealed class TemplateDef {
             } else if (match.Groups["name"].Success) {
                 if (literal.Length > 0) parts.Add(new Literal(literal.ToString()));
                 literal.Clear();
-                var type = match.Groups["type"].Success ? match.Groups["type"].Value : PARAM_TYPE_STRING;
+                var type = match.Groups["type"].Success ? match.Groups["type"].Value : DEFAULT_PARAM_TYPE;
                 parts.Add(new Placeholder(match.Groups["name"].Value, type));
             } else {
                 literal.Append(match.Value);
@@ -178,10 +185,9 @@ internal sealed class TemplateDef {
     private sealed record Placeholder(string Name, string Type) : Part;
     #endregion 解析
 
-    #region 引数の型
-    private static readonly IReadOnlyDictionary<string, TemplateParameterType> PARAM_TYPES = new Dictionary<string, TemplateParameterType> {
-        [PARAM_TYPE_STRING] = TemplateParameterType.String,
-        [PARAM_TYPE_INT] = new("int", "number"),
-    };
-    #endregion 引数の型
+    private TemplateParameterType GetParameterType(Placeholder placeholder) {
+        return _ctx.TryResolveMemberType(placeholder.Type, out var valueMemberType)
+            ? TemplateParameterType.From(valueMemberType)
+            : throw new InvalidOperationException($"引数「{placeholder.Name}」の型「{placeholder.Type}」を解決できません。");
+    }
 }

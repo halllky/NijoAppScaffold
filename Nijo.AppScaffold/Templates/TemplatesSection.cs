@@ -34,7 +34,7 @@ internal sealed class TemplatesSection : Section {
 
     public override void Validate(IReadOnlyList<XElement> rootAggregateElements, SchemaParseContext context, SchemaValidationErrors errors) {
         foreach (var rootAggregateElement in rootAggregateElements) {
-            ValidateGroup(new TemplateGroupDef(rootAggregateElement));
+            ValidateGroup(new TemplateGroupDef(rootAggregateElement, context));
         }
 
         void ValidateGroup(TemplateGroupDef group) {
@@ -55,7 +55,7 @@ internal sealed class TemplatesSection : Section {
     }
 
     public override void Render(CodeRenderingContext ctx) {
-        var groups = ctx.Schema.GetTemplates().Select(root => new TemplateGroupDef(root.XElement)).ToArray();
+        var groups = ctx.Schema.GetTemplates().Select(root => new TemplateGroupDef(root.XElement, ctx.Schema)).ToArray();
         if (groups.Length == 0) return;
 
         var kinds = CollectKinds(groups);
@@ -69,7 +69,7 @@ internal sealed class TemplatesSection : Section {
         ctx.ReactProject(dir => {
             dir.Generate(new SourceFile {
                 FileName = "templates.ts",
-                Contents = RenderTypeScript(groups, kinds),
+                Contents = RenderTypeScript(groups, kinds, CollectTsImports(groups)),
             });
         });
     }
@@ -98,9 +98,17 @@ internal sealed class TemplatesSection : Section {
                 .Where(x => x.Kind == kind)
                 .Select(x => x.Type)
                 .Prepend(TemplateParameterType.String)
-                .DistinctBy(type => type.Key)
+                .GroupBy(type => type.Key)
+                .Select(MergeTsTypes)
                 .ToArray()))
             .ToArray();
+
+        // C# の型が同じでも、TypeScript の型が異なる nijo の型がありうるので、TypeScript 側は和型にする
+        static TemplateParameterType MergeTsTypes(IGrouping<string, TemplateParameterType> sameKey) {
+            var first = sameKey.First();
+            var tsTypes = sameKey.Select(type => type.TsType).Distinct().ToArray();
+            return tsTypes.Length == 1 ? first : first with { TsType = string.Join(" | ", tsTypes) };
+        }
     }
     /// <summary>種類1つ分の変換の宣言</summary>
     private sealed record KindDeclaration(string Kind, TemplateParameterType[] Types);
@@ -138,8 +146,26 @@ internal sealed class TemplatesSection : Section {
             """;
     }
 
-    private static string RenderTypeScript(TemplateGroupDef[] groups, KindDeclaration[] kinds) {
+    /// <summary>
+    /// 引数の型を参照するために必要な import 文を集めます。
+    /// </summary>
+    private static string[] CollectTsImports(TemplateGroupDef[] groups) {
+        return groups
+            .SelectMany(group => group.GetTemplatesRecursively())
+            .SelectMany(template => template.GetParameterTypes())
+            .Select(type => type.TsImport)
+            .OfType<string>()
+            .Distinct()
+            .Order()
+            .ToArray();
+    }
+
+    private static string RenderTypeScript(TemplateGroupDef[] groups, KindDeclaration[] kinds, string[] tsImports) {
         return $$"""
+            {{tsImports.SelectTextTemplate(import => $$"""
+            {{import}}
+            """)}}
+
             /**
              * テンプレート文字列の種類ごとの、引数の値を埋め込む文字列にする変換。
              * 種類は nijo.xml の {{TemplateKindOption.ATTRIBUTE_NAME}} 属性で指定したもの。
