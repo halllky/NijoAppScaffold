@@ -53,36 +53,6 @@ public static class ApplicationSettings {
         public const int MaxConnections = 100;
     }
     /// <summary>
-    /// メッセージ
-    /// </summary>
-    public static class Messages {
-        /// <summary>
-        /// 成功メッセージ
-        /// </summary>
-        public static string Success() => $"正常に処理されました";
-        /// <summary>
-        /// エラーメッセージ
-        /// <para>
-        /// コロンの後ろには開発者向けの情報ではなくアプリケーションのユーザーに向けた文字にすること。
-        /// </para>
-        /// </summary>
-        public static string Error(string arg0) => $"エラーが発生しました: {arg0}";
-        /// <summary>
-        /// バリデーションエラー
-        /// <para>
-        /// プレースホルダーが複数ある場合のテスト
-        /// </para>
-        /// </summary>
-        public static string ValidationError(string arg0, string arg1, string arg2) => $"{arg0}フィールドで{arg1}エラーが発生しました。詳細: {arg2}";
-        /// <summary>
-        /// メンテナンスメッセージ
-        /// <para>
-        /// プレースホルダーが0個の場合のテスト
-        /// </para>
-        /// </summary>
-        public static string SystemMaintenance() => $"システムメンテナンス中です。しばらくお待ちください。";
-    }
-    /// <summary>
     /// API設定
     /// </summary>
     public static class API {
@@ -90,20 +60,6 @@ public static class ApplicationSettings {
         /// APIベースURL
         /// </summary>
         public const string BaseUrl = "https://api.example-medical-test.local.example.com";
-        /// <summary>
-        /// 認証ヘッダー
-        /// <para>
-        /// 特殊文字のテスト
-        /// </para>
-        /// </summary>
-        public static string AuthHeader(string arg0) => $"Bearer {arg0}";
-        /// <summary>
-        /// JSONフォーマット
-        /// <para>
-        /// 引用符を含む文字列のテスト
-        /// </para>
-        /// </summary>
-        public static string JsonFormat(string arg0, string arg1) => $"{{\"message\": \"{arg0}\", \"timestamp\": \"{arg1}\"}}";
     }
     /// <summary>
     /// UI設定
