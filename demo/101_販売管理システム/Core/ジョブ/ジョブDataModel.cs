@@ -164,7 +164,7 @@ partial class OverridedApplicationService {
         }
         if (job.起動したユーザー != null) {
             var 結果 = 状態 == ジョブの状態.正常終了 ? "正常終了しました" : "異常終了しました";
-            await Create通知Async([job.起動したユーザー], $"ジョブ「{job.種類}」が{結果}。", テンプレート.画面のURL.ジョブ());
+            await Create通知Async([job.起動したユーザー], $"ジョブ「{job.種類}」が{結果}。", 画面のURL.ジョブ());
         }
         await tran.CommitAsync();
     }

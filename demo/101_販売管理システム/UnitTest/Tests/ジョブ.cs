@@ -146,7 +146,7 @@ partial class DB接続あり_更新あり {
             "ジョブ「何もしないジョブ」が正常終了しました。",
             "ジョブ「失敗するジョブ」が異常終了しました。",
         }));
-        Assert.That(notifications.Select(n => n.リンク先), Is.All.EqualTo(テンプレート.画面のURL.ジョブ()));
+        Assert.That(notifications.Select(n => n.リンク先), Is.All.EqualTo(画面のURL.ジョブ()));
     }
 
     [Test]

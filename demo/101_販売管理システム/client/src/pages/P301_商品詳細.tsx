@@ -14,11 +14,13 @@ import { getLinkUrlToP201入荷詳細 } from "./P201_入荷詳細"
 import { 在庫調整ダイアログ, toProductRefTarget } from "./shared/在庫調整ダイアログ"
 import { useCanInvoke } from "../login/canInvoke"
 
+const { 販売管理の画面のURL } = テンプレート
+
 /**
  * P301_商品詳細 へ遷移するためのリンクURLを取得する関数
  */
 export function getLinkUrlToP301商品詳細(商品SEQ: string) {
-  return テンプレート.販売管理の画面のURL.商品詳細({ 商品SEQ })
+  return 販売管理の画面のURL.商品詳細({ 商品SEQ })
 }
 
 type LoaderData = {
