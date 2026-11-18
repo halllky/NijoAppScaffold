@@ -278,7 +278,7 @@ public partial class 入荷明細UpdateCommand : 入荷明細SaveCommand, ISaveC
     public bool TryValidate([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out ValidatedCommand<入荷明細UpdateCommand>? validated, out 入荷明細SaveCommandMessages errors) {
         errors = new([], new());
         if (_loaded.Version != _expectedVersion) {
-            errors.AddError(MSG.ConcurrencyError());
+            errors.AddError(_dbContext.GetConcurrencyErrorMessage());
         }
         ValidateRequired(errors);
         ValidateGenericLookupExists(errors);
@@ -394,7 +394,7 @@ public partial class 入荷明細DeleteCommand : 入荷明細SaveCommand, ISaveC
     public bool TryValidate([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out ValidatedDeleteCommand<入荷明細UpdateCommand>? validated, out 入荷明細SaveCommandMessages errors) {
         errors = new([], new());
         if (_loaded.Version != _expectedVersion) {
-            errors.AddError(MSG.ConcurrencyError());
+            errors.AddError(_dbContext.GetConcurrencyErrorMessage());
         }
         if (errors.GetState()?.DescendantsAndSelf().Any(c => c.Errors.Count > 0) == true) {
             validated = null;

@@ -237,7 +237,7 @@ public partial class 商品UpdateCommand : 商品SaveCommand, ISaveCommand<Valid
     public bool TryValidate([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out ValidatedCommand<商品UpdateCommand>? validated, out 商品SaveCommandMessages errors) {
         errors = new([], new());
         if (_loaded.Version != _expectedVersion) {
-            errors.AddError(MSG.ConcurrencyError());
+            errors.AddError(_dbContext.GetConcurrencyErrorMessage());
         }
         ValidateRequired(errors);
         ValidateGenericLookupExists(errors);
@@ -353,7 +353,7 @@ public partial class 商品DeleteCommand : 商品SaveCommand, ISaveCommand<Valid
     public bool TryValidate([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out ValidatedDeleteCommand<商品UpdateCommand>? validated, out 商品SaveCommandMessages errors) {
         errors = new([], new());
         if (_loaded.Version != _expectedVersion) {
-            errors.AddError(MSG.ConcurrencyError());
+            errors.AddError(_dbContext.GetConcurrencyErrorMessage());
         }
         if (errors.GetState()?.DescendantsAndSelf().Any(c => c.Errors.Count > 0) == true) {
             validated = null;

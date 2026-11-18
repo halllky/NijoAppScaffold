@@ -479,7 +479,7 @@ public partial class 保守計画UpdateCommand : 保守計画SaveCommand, ISaveC
     public bool TryValidate([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out ValidatedCommand<保守計画UpdateCommand>? validated, out 保守計画SaveCommandMessages errors) {
         errors = new([], new());
         if (_loaded.Version != _expectedVersion) {
-            errors.AddError(MSG.ConcurrencyError());
+            errors.AddError(_dbContext.GetConcurrencyErrorMessage());
         }
         ValidateRequired(errors);
         ValidateGenericLookupExists(errors);
@@ -867,7 +867,7 @@ public partial class 保守計画DeleteCommand : 保守計画SaveCommand, ISaveC
     public bool TryValidate([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out ValidatedDeleteCommand<保守計画UpdateCommand>? validated, out 保守計画SaveCommandMessages errors) {
         errors = new([], new());
         if (_loaded.Version != _expectedVersion) {
-            errors.AddError(MSG.ConcurrencyError());
+            errors.AddError(_dbContext.GetConcurrencyErrorMessage());
         }
         if (errors.GetState()?.DescendantsAndSelf().Any(c => c.Errors.Count > 0) == true) {
             validated = null;

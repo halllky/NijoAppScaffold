@@ -278,7 +278,7 @@ public partial class 勤務スケジュールUpdateCommand : 勤務スケジュ�
     public bool TryValidate([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out ValidatedCommand<勤務スケジュールUpdateCommand>? validated, out 勤務スケジュールSaveCommandMessages errors) {
         errors = new([], new());
         if (_loaded.Version != _expectedVersion) {
-            errors.AddError(MSG.ConcurrencyError());
+            errors.AddError(_dbContext.GetConcurrencyErrorMessage());
         }
         ValidateRequired(errors);
         ValidateGenericLookupExists(errors);
@@ -402,7 +402,7 @@ public partial class 勤務スケジュールDeleteCommand : 勤務スケジュ�
     public bool TryValidate([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out ValidatedDeleteCommand<勤務スケジュールUpdateCommand>? validated, out 勤務スケジュールSaveCommandMessages errors) {
         errors = new([], new());
         if (_loaded.Version != _expectedVersion) {
-            errors.AddError(MSG.ConcurrencyError());
+            errors.AddError(_dbContext.GetConcurrencyErrorMessage());
         }
         if (errors.GetState()?.DescendantsAndSelf().Any(c => c.Errors.Count > 0) == true) {
             validated = null;

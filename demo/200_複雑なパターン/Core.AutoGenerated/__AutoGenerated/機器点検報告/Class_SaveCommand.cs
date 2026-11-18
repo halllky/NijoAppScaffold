@@ -373,7 +373,7 @@ public partial class 機器点検報告UpdateCommand : 機器点検報告SaveCom
     public bool TryValidate([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out ValidatedCommand<機器点検報告UpdateCommand>? validated, out 機器点検報告SaveCommandMessages errors) {
         errors = new([], new());
         if (_loaded.Version != _expectedVersion) {
-            errors.AddError(MSG.ConcurrencyError());
+            errors.AddError(_dbContext.GetConcurrencyErrorMessage());
         }
         ValidateRequired(errors);
         ValidateGenericLookupExists(errors);
@@ -569,7 +569,7 @@ public partial class 機器点検報告DeleteCommand : 機器点検報告SaveCom
     public bool TryValidate([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out ValidatedDeleteCommand<機器点検報告UpdateCommand>? validated, out 機器点検報告SaveCommandMessages errors) {
         errors = new([], new());
         if (_loaded.Version != _expectedVersion) {
-            errors.AddError(MSG.ConcurrencyError());
+            errors.AddError(_dbContext.GetConcurrencyErrorMessage());
         }
         if (errors.GetState()?.DescendantsAndSelf().Any(c => c.Errors.Count > 0) == true) {
             validated = null;

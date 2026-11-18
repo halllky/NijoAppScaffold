@@ -86,17 +86,9 @@ namespace Nijo.DataStructures.IsStored {
                 yield return CallHooks([RenderHookCall(MethodName, valueExpr, propertyInfoExpr)]);
             } else {
                 var attrValue = attrNode.Value;
-                var attrDisplayName = _attribute.DisplayName ?? _attribute.PhysicalName ?? _attribute.UniqueId ?? string.Empty;
 
-                if (string.IsNullOrWhiteSpace(attrValue)) {
-                    yield return new ValidateStatement {
-                        If = "true",
-                        RenderErrorMessage = $$"""
-                            {{MsgFactory.MSG}}.{{MSG_ID}}("{{vm.DisplayName.Replace("\"", "\\\"")}} のカスタム属性 '{{attrDisplayName.Replace("\"", "\\\"")}}' が設定されていません。")
-                            """,
-                    };
-                    yield break;
-                }
+                // 値が空の場合はスキーマ定義の検証でエラーになるので、ここには来ない
+                if (string.IsNullOrWhiteSpace(attrValue)) yield break;
 
                 yield return CallHooks([RenderHookCall(MethodName, valueExpr, ToLiteral(attrValue), propertyInfoExpr)]);
             }

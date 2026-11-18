@@ -39,7 +39,7 @@ namespace Nijo.DataStructures.IsStored {
             // スキーマ定義に汎用参照テーブルが存在するか否かにかかわらずメソッドを生成する。
             ctx.Use<GenericLookupViewsInfoProvider>();
 
-            SaveCommand.RegisterMessages(ctx);
+            SaveCommand.RegisterMessages(ctx, this);
 
             // 入力チェックのメッセージと、チェックの中身を手書きのコードに任せるフック。
             // 手書きのコードがフックのオーバーライドを常に置いておけるよう、

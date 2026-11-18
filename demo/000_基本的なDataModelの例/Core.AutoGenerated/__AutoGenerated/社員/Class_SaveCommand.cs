@@ -116,7 +116,7 @@ public partial class 社員CreateCommand : 社員SaveCommand, ISaveCommand<Valid
         // 契約種別
         if ((!string.IsNullOrWhiteSpace(this.契約種別?.区分値))
             && !(_dbContext.汎用マスタUtil.契約区分.Any(candidate => candidate.区分値 == this.契約種別?.区分値))) {
-            messages.契約種別.AddError(MSG.GenericLookupValueNotFound("契約種別"));
+            messages.契約種別.AddError(_dbContext.GetGenericLookupValueNotFoundMessage("契約種別"));
         }
     }
     /// <summary>
@@ -228,7 +228,7 @@ public partial class 社員UpdateCommand : 社員SaveCommand, ISaveCommand<Valid
     public bool TryValidate([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out ValidatedCommand<社員UpdateCommand>? validated, out 社員SaveCommandMessages errors) {
         errors = new([], new());
         if (_loaded.Version != _expectedVersion) {
-            errors.AddError(MSG.ConcurrencyError());
+            errors.AddError(_dbContext.GetConcurrencyErrorMessage());
         }
         ValidateRequired(errors);
         ValidateGenericLookupExists(errors);
@@ -264,7 +264,7 @@ public partial class 社員UpdateCommand : 社員SaveCommand, ISaveCommand<Valid
         // 契約種別
         if ((!string.IsNullOrWhiteSpace(this.契約種別?.区分値))
             && !(_dbContext.汎用マスタUtil.契約区分.Any(candidate => candidate.区分値 == this.契約種別?.区分値))) {
-            messages.契約種別.AddError(MSG.GenericLookupValueNotFound("契約種別"));
+            messages.契約種別.AddError(_dbContext.GetGenericLookupValueNotFoundMessage("契約種別"));
         }
     }
     /// <summary>
@@ -333,7 +333,7 @@ public partial class 社員DeleteCommand : 社員SaveCommand, ISaveCommand<Valid
     public bool TryValidate([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out ValidatedDeleteCommand<社員UpdateCommand>? validated, out 社員SaveCommandMessages errors) {
         errors = new([], new());
         if (_loaded.Version != _expectedVersion) {
-            errors.AddError(MSG.ConcurrencyError());
+            errors.AddError(_dbContext.GetConcurrencyErrorMessage());
         }
         if (errors.GetState()?.DescendantsAndSelf().Any(c => c.Errors.Count > 0) == true) {
             validated = null;

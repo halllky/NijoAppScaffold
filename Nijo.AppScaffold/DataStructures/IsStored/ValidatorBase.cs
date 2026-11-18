@@ -50,12 +50,18 @@ public abstract class ValidatorBase {
                 validator.MsgTemplate);
         }
 
-        foreach (var validator in validators.OfType<DbContextHookValidator>()) {
+        foreach (var validator in validators) {
             foreach (var hook in validator.RenderHookDeclarations(ctx)) {
                 dbContext.AddAdditionalMethod(hook);
             }
         }
     }
+
+    /// <summary>
+    /// DbContext に宣言する abstract メソッド（フック）をレンダリングします。
+    /// チェックの中身やエラーの文言を、手書きの DbContext に任せる場合に使う。
+    /// </summary>
+    internal virtual IEnumerable<string> RenderHookDeclarations(CodeRenderingContext ctx) => [];
 
     /// <summary>
     /// XMLコメント内にレンダリングされるこのチェック処理の名前

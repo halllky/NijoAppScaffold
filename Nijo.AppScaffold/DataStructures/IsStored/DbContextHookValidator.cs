@@ -17,7 +17,7 @@ internal abstract class DbContextHookValidator : ValidatorBase {
     /// <summary>
     /// DbContext に宣言するフックの abstract メソッドをレンダリングします。
     /// </summary>
-    internal abstract IEnumerable<string> RenderHookDeclarations(CodeRenderingContext ctx);
+    internal abstract override IEnumerable<string> RenderHookDeclarations(CodeRenderingContext ctx);
 
     protected sealed override IEnumerable<string> RenderMethodHead() {
         yield return $$"""

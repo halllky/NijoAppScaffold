@@ -122,7 +122,7 @@ partial class OverridedDbContext {
 
         } catch (DbUpdateConcurrencyException ex) {
             // 楽観排他エラー
-            errors.AddError(MSG.ConcurrencyError());
+            errors.AddError(GetConcurrencyErrorMessage());
             _logger.LogWarning(ex, "楽観排他エラーが発生しました: {commands}", ToLogString(commands));
             return Fail(SaveFailureKind.Concurrency);
 
@@ -155,6 +155,14 @@ partial class OverridedDbContext {
             .OfType<TUpdateCommand>()
             .ToList();
         return SaveResult<IList<TUpdateCommand>>.Succeeded(errors, updated);
+    }
+
+    /// <summary>
+    /// 楽観排他エラーのメッセージ。
+    /// 保存時の例外のほか、自動生成された更新・削除コマンドが、読み込んだ後のバージョンの変化を検出したときにも使われる。
+    /// </summary>
+    public override string GetConcurrencyErrorMessage() {
+        return MSG.ConcurrencyError();
     }
 
     /// <summary>

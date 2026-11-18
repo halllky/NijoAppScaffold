@@ -54,6 +54,8 @@ namespace Nijo.DataStructures.IsStored {
         internal const string ERR_ID_UNKNOWN = "UnknownUpdateError";
         internal const string ERR_DATA_NOT_FOUND = "DataNotFoundError";
         internal const string ERR_CONCURRENCY = "ConcurrencyError";
+        /// <summary>楽観排他エラーの文言を返す、DbContext のフックの名前</summary>
+        private const string CONCURRENCY_MESSAGE_HOOK = "GetConcurrencyErrorMessage";
         internal const string ERR_UNIQUE_CONSTRAINT = "UniqueConstraintError";
 
         /// <summary>
@@ -120,7 +122,14 @@ namespace Nijo.DataStructures.IsStored {
         /// 保存処理とコマンドの間で使われるメッセージを登録します。
         /// スキーマ定義にデータ構造が1個も無くても保存処理のコンパイルが通るように、常に登録されます。
         /// </summary>
-        internal static void RegisterMessages(CodeRenderingContext ctx) {
+        internal static void RegisterMessages(CodeRenderingContext ctx, DbContextClass dbContext) {
+            dbContext.AddAdditionalMethod($$"""
+                /// <summary>
+                /// 楽観排他エラー（データを読み込んだ後に、ほかのユーザーが同じデータを更新していた）のときに、利用者に見せるメッセージを返します。
+                /// </summary>
+                public abstract string {{CONCURRENCY_MESSAGE_HOOK}}();
+                """);
+
             ctx.Use<Parts.Common.MsgFactory>()
                 .AddMessage(ERR_ID_UNKNOWN,
                     "登録/更新/削除のタイミングでRDBMS上で何らかのエラーが生じた場合のメッセージ",
@@ -322,7 +331,7 @@ namespace Nijo.DataStructures.IsStored {
                     public bool {{TRY_VALIDATE}}([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out {{validated}}? validated, out {{messages.CsClassName}} errors) {
                         errors = new([], new());
                         if ({{FIELD_LOADED}}.{{EFCoreEntity.VERSION}} != {{FIELD_EXPECTED_VERSION}}) {
-                            errors.AddError({{Parts.Common.MsgFactory.MSG}}.{{ERR_CONCURRENCY}}());
+                            errors.AddError({{FIELD_DBCONTEXT}}.{{CONCURRENCY_MESSAGE_HOOK}}());
                         }
                 {{ValidatorBase.EnumerateAll(ctx).SelectTextTemplate(validator => $$"""
                         {{validator.MethodName}}(errors);
@@ -422,7 +431,7 @@ namespace Nijo.DataStructures.IsStored {
                     public bool {{TRY_VALIDATE}}([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out {{validated}}? validated, out {{messages.CsClassName}} errors) {
                         errors = new([], new());
                         if ({{FIELD_LOADED}}.{{EFCoreEntity.VERSION}} != {{FIELD_EXPECTED_VERSION}}) {
-                            errors.AddError({{Parts.Common.MsgFactory.MSG}}.{{ERR_CONCURRENCY}}());
+                            errors.AddError({{FIELD_DBCONTEXT}}.{{CONCURRENCY_MESSAGE_HOOK}}());
                         }
                         {{WithIndent(ValidatedCommand.RenderReturnFromTryValidate("this"))}}
                     }

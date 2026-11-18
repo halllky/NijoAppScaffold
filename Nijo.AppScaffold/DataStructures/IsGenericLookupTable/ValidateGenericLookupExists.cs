@@ -21,6 +21,23 @@ namespace Nijo.DataStructures.IsGenericLookupTable {
         public override string MsgId => MSG_ID_LOOKUP_NOT_FOUND;
         public override string MsgTemplate => "{0} に指定された区分値が存在しません。";
 
+        /// <summary>エラーの文言を返す、DbContext のフックの名前</summary>
+        private const string MESSAGE_HOOK = "GetGenericLookupValueNotFoundMessage";
+
+        /// <summary>
+        /// エラーの文言を手書きの DbContext に任せるフック。
+        /// 手書きのコードがオーバーライドを常に置いておけるよう、汎用参照テーブルが無くても宣言する。
+        /// </summary>
+        internal override IEnumerable<string> RenderHookDeclarations(CodeRenderingContext ctx) {
+            yield return $$"""
+                /// <summary>
+                /// 汎用参照テーブルを参照する項目に、テーブルに存在しない区分値が指定されたときに、利用者に見せるメッセージを返します。
+                /// </summary>
+                /// <param name="displayName">項目の表示名</param>
+                public abstract string {{MESSAGE_HOOK}}(string displayName);
+                """;
+        }
+
         protected override ValidateStatement? GetIfStatement(ValueMember vm, IInstanceProperty prop, CodeRenderingContext ctx) => null;
 
         protected override ValidateStatement? GetIfStatement(RefToMember refTo, IEnumerable<IInstanceProperty> keyProps, CodeRenderingContext ctx) {
@@ -56,7 +73,7 @@ namespace Nijo.DataStructures.IsGenericLookupTable {
             return new ValidateStatement {
                 If = $"({hasAnyValueExpression})\r\n&& !({existsExpression})",
                 RenderErrorMessage = $$"""
-                    {{MsgFactory.MSG}}.{{MSG_ID_LOOKUP_NOT_FOUND}}("{{refTo.DisplayName.Replace("\"", "\\\"")}}")
+                    {{SaveCommand.FIELD_DBCONTEXT}}.{{MESSAGE_HOOK}}("{{refTo.DisplayName.Replace("\"", "\\\"")}}")
                     """,
             };
         }

@@ -158,7 +158,7 @@ public partial class 部署CreateCommand : 部署SaveCommand, ISaveCommand<Valid
                 // 勤怠管理区分
                 if ((!string.IsNullOrWhiteSpace(item1.勤怠管理区分?.区分値))
                     && !(_dbContext.汎用マスタUtil.勤怠管理区分.Any(candidate => candidate.区分値 == item1.勤怠管理区分?.区分値))) {
-                    messages.課[i].係[j].勤怠管理区分.AddError(MSG.GenericLookupValueNotFound("勤怠管理区分"));
+                    messages.課[i].係[j].勤怠管理区分.AddError(_dbContext.GetGenericLookupValueNotFoundMessage("勤怠管理区分"));
                 }
             }
         }
@@ -341,7 +341,7 @@ public partial class 部署UpdateCommand : 部署SaveCommand, ISaveCommand<Valid
     public bool TryValidate([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out ValidatedCommand<部署UpdateCommand>? validated, out 部署SaveCommandMessages errors) {
         errors = new([], new());
         if (_loaded.Version != _expectedVersion) {
-            errors.AddError(MSG.ConcurrencyError());
+            errors.AddError(_dbContext.GetConcurrencyErrorMessage());
         }
         ValidateRequired(errors);
         ValidateGenericLookupExists(errors);
@@ -407,7 +407,7 @@ public partial class 部署UpdateCommand : 部署SaveCommand, ISaveCommand<Valid
                 // 勤怠管理区分
                 if ((!string.IsNullOrWhiteSpace(item1.勤怠管理区分?.区分値))
                     && !(_dbContext.汎用マスタUtil.勤怠管理区分.Any(candidate => candidate.区分値 == item1.勤怠管理区分?.区分値))) {
-                    messages.課[i].係[j].勤怠管理区分.AddError(MSG.GenericLookupValueNotFound("勤怠管理区分"));
+                    messages.課[i].係[j].勤怠管理区分.AddError(_dbContext.GetGenericLookupValueNotFoundMessage("勤怠管理区分"));
                 }
             }
         }
@@ -562,7 +562,7 @@ public partial class 部署DeleteCommand : 部署SaveCommand, ISaveCommand<Valid
     public bool TryValidate([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out ValidatedDeleteCommand<部署UpdateCommand>? validated, out 部署SaveCommandMessages errors) {
         errors = new([], new());
         if (_loaded.Version != _expectedVersion) {
-            errors.AddError(MSG.ConcurrencyError());
+            errors.AddError(_dbContext.GetConcurrencyErrorMessage());
         }
         if (errors.GetState()?.DescendantsAndSelf().Any(c => c.Errors.Count > 0) == true) {
             validated = null;

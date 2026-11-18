@@ -333,6 +333,11 @@ public class NijoXmlCustomAttribute {
             yield break;
         }
 
+        // 入力チェックに使う属性は、値が無いとチェックの内容が決まらない
+        if (IsValidation && Type != E_Type.Boolean && string.IsNullOrWhiteSpace(xElement.Attribute(UniqueId)!.Value)) {
+            yield return $"入力チェックに使う属性 '{PhysicalName}' の値を指定してください。";
+        }
+
         foreach (var value in GetValues(xElement)) {
             switch (Type) {
                 case E_Type.Boolean:

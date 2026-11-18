@@ -55,4 +55,11 @@ partial class OverridedDbContext {
             return result;
         }
     }
+
+    /// <summary>
+    /// 汎用参照テーブルを参照する項目に、テーブルに存在しない区分値が指定されたときのメッセージ。
+    /// </summary>
+    public override string GetGenericLookupValueNotFoundMessage(string displayName) {
+        return MSG.GenericLookupValueNotFound(displayName);
+    }
 }
