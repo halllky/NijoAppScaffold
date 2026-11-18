@@ -13,9 +13,9 @@ public static class 販売管理の画面のURL {
     /// <summary>
     /// P101 売上詳細
     /// </summary>
-    public static string 売上詳細(string arg0) => $"/uriage/edit/{arg0}";
+    public static string 売上詳細(int 売上SEQ) => $"/uriage/edit/{ConstantTemplateKind.URL(売上SEQ.ToString(System.Globalization.CultureInfo.InvariantCulture))}";
     /// <summary>
     /// P301 商品詳細
     /// </summary>
-    public static string 商品詳細(string arg0) => $"/shohin/{arg0}";
+    public static string 商品詳細(int 商品SEQ) => $"/shohin/{ConstantTemplateKind.URL(商品SEQ.ToString(System.Globalization.CultureInfo.InvariantCulture))}";
 }

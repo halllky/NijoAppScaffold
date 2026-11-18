@@ -88,6 +88,7 @@ public class SchemaParseRule {
             new SequenceNameOption(),
             new ConstantTypeOption(),
             new ConstantValueOption(),
+            new TemplateKindOption(),
             new StringSearchBehaviorOption(),
             new StaticEnumKeyOption(),
         };

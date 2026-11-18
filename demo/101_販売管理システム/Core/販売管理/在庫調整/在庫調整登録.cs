@@ -171,6 +171,6 @@ partial class OverridedApplicationService {
         await Create通知Async(
             宛先一覧,
             $"商品「{商品名}」の在庫が {LoginUser.氏名} さんにより調整されました（{増減数:+#;-#}個）。",
-            販売管理の画面のURL.商品詳細(商品SEQ.ToString()));
+            販売管理の画面のURL.商品詳細(商品SEQ));
     }
 }

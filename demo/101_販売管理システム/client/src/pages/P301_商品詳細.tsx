@@ -16,8 +16,8 @@ import { useCanInvoke } from "../login/canInvoke"
 /**
  * P301_商品詳細 へ遷移するためのリンクURLを取得する関数
  */
-export function getLinkUrlToP301商品詳細(商品SEQ: string | null | undefined) {
-  return 販売管理の画面のURL.商品詳細(商品SEQ ?? '')
+export function getLinkUrlToP301商品詳細(商品SEQ: string) {
+  return 販売管理の画面のURL.商品詳細.format({ 商品SEQ: Number(商品SEQ) })
 }
 
 type LoaderData = {
@@ -32,7 +32,7 @@ const PAGING_HISTORY_TAKE = 20
  * ルーティング定義
  */
 export default {
-  path: 販売管理の画面のURL.商品詳細(":id"),
+  path: 販売管理の画面のURL.商品詳細.pattern({ 商品SEQ: ":id" }),
   element: <P301_商品詳細 />,
   loader: async ({ params, request }) => {
     const id = params.id
