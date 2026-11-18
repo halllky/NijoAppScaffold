@@ -50,7 +50,7 @@ partial class OverridedApplicationService {
                 // 更新
                 var existingItem = existingDetails.FirstOrDefault(x => x.入荷明細ID == inputId);
                 if (existingItem == null || !loaded.TryGetValue(new() { 入荷明細ID = inputId }, out var detail)) {
-                    message.AddError(MSG_DEMO101.ArrivalDetailNotFoundError(inputId));
+                    message.AddError(MSG_DEMO101.ArrivalDetailNotFoundError(inputId ?? ""));
                     continue;
                 }
                 processedIds.Add(inputId);

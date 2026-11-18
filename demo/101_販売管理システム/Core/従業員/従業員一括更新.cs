@@ -29,7 +29,7 @@ partial class OverridedApplicationService {
                 if (param.更新対象従業員一覧.Any(e => e != item && e.従業員.従業員番号 == item.従業員.従業員番号)
                     || await DbContext.従業員DbSet.AnyAsync(e => e.従業員番号 == item.従業員.従業員番号)) {
 
-                    message.従業員.従業員番号.AddError(MSG.DuplicateEmployeeNumberError(item.従業員.従業員番号));
+                    message.従業員.従業員番号.AddError(MSG.DuplicateEmployeeNumberError(item.従業員.従業員番号 ?? ""));
                     continue;
                 }
 
