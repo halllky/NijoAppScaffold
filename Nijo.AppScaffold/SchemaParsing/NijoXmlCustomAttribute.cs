@@ -169,6 +169,7 @@ public class NijoXmlCustomAttribute {
         E_Section.StaticEnums => "static-enum",
         E_Section.ValueObjects => "value-object",
         E_Section.Constants => "constant",
+        E_Section.Templates => "template",
         _ => throw new ArgumentOutOfRangeException(nameof(section)),
     };
 

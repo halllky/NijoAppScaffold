@@ -31,6 +31,8 @@ public class EditingProject {
     public List<EditingRootAggregate> ValueObjects { get; set; } = [];
     [JsonPropertyName(JSON_CONSTANTS)]
     public List<EditingRootAggregate> Constants { get; set; } = [];
+    [JsonPropertyName(JSON_TEMPLATES)]
+    public List<EditingRootAggregate> Templates { get; set; } = [];
     [JsonPropertyName("customAttributes")]
     public List<NijoXmlCustomAttribute> CustomAttributes { get; set; } = [];
     [JsonPropertyName("projectOptions")]
@@ -48,6 +50,7 @@ public class EditingProject {
     private const string JSON_STATIC_ENUMS = "staticEnums";
     private const string JSON_VALUE_OBJECTS = "valueObjects";
     private const string JSON_CONSTANTS = "constants";
+    private const string JSON_TEMPLATES = "templates";
 
     /// <summary>
     /// セクションに定義されたルート集約が格納されるプロパティの、JSON上での名前を返します。
@@ -58,6 +61,7 @@ public class EditingProject {
         E_Section.StaticEnums => JSON_STATIC_ENUMS,
         E_Section.ValueObjects => JSON_VALUE_OBJECTS,
         E_Section.Constants => JSON_CONSTANTS,
+        E_Section.Templates => JSON_TEMPLATES,
         _ => throw new ArgumentOutOfRangeException(nameof(section)),
     };
     /// <summary>
@@ -69,6 +73,7 @@ public class EditingProject {
         E_Section.StaticEnums => StaticEnums,
         E_Section.ValueObjects => ValueObjects,
         E_Section.Constants => Constants,
+        E_Section.Templates => Templates,
         _ => throw new ArgumentOutOfRangeException(nameof(section)),
     };
 

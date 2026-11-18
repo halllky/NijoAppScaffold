@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Nijo.Commands;
 using Nijo.Constants;
+using Nijo.Templates;
 using Nijo.DataStructures;
 using Nijo.DataStructures.IsGenericLookupTable;
 using Nijo.DataStructures.IsQueryable;
@@ -88,6 +89,8 @@ public class SchemaParseRule {
             new SequenceNameOption(),
             new ConstantTypeOption(),
             new ConstantValueOption(),
+            new TemplateOption(),
+            new TemplateKindOption(),
             new StringSearchBehaviorOption(),
             new StaticEnumKeyOption(),
         };
@@ -97,6 +100,7 @@ public class SchemaParseRule {
             new StaticEnumsSection(),
             new ValueObjectsSection(),
             new ConstantsSection(),
+            new TemplatesSection(),
         };
         return new() {
             Sections = sections,

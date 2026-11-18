@@ -18,6 +18,8 @@ public enum E_Section {
     ValueObjects,
     /// <summary>定数</summary>
     Constants,
+    /// <summary>テンプレート文字列</summary>
+    Templates,
 }
 
 internal static class SectionExtensions {
@@ -31,6 +33,7 @@ internal static class SectionExtensions {
         E_Section.StaticEnums => "StaticEnums",
         E_Section.ValueObjects => "ValueObjects",
         E_Section.Constants => "Constants",
+        E_Section.Templates => "Templates",
         _ => throw new System.ArgumentOutOfRangeException(nameof(section)),
     };
 

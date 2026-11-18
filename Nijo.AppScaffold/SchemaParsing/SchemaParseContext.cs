@@ -343,6 +343,12 @@ public class SchemaParseContext {
     public IEnumerable<SectionRoot> GetConstants() {
         return GetRootElements(E_Section.Constants).Select(el => new SectionRoot(el, this));
     }
+    /// <summary>
+    /// テンプレート文字列のグループを、スキーマ定義上の登場順に返します。
+    /// </summary>
+    public IEnumerable<SectionRoot> GetTemplates() {
+        return GetRootElements(E_Section.Templates).Select(el => new SectionRoot(el, this));
+    }
 
     /// <summary>
     /// セクションの直下に定義されたルート要素を、スキーマ定義上の登場順に返します。
