@@ -10,8 +10,8 @@ namespace Nijo.Constants;
 
 /// <summary>
 /// Constants セクション。
-/// 定数はC#とJavaScript/TypeScriptで常に値が同期される値で、string, int, decimal,
-/// テンプレート文字列（引数を受け取って文字列を返す関数）の4種類を定義できる。ネストされた定数も定義できる。
+/// 定数はC#とJavaScript/TypeScriptで常に値が同期される値で、string, int, decimal の3種類を定義できる。ネストされた定数も定義できる。
+/// 値を埋め込んで使う文字列は、定数ではなくテンプレート文字列（Templates セクション）に定義する。
 /// </summary>
 internal sealed class ConstantsSection : Section {
     public override E_Section Kind => E_Section.Constants;

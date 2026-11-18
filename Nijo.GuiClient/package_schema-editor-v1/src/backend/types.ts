@@ -275,7 +275,6 @@ export const CONSTANT_TYPE_CHILD = 'child'
 export const CONSTANT_TYPE_STRING = 'string'
 export const CONSTANT_TYPE_INT = 'int'
 export const CONSTANT_TYPE_DECIMAL = 'decimal'
-export const CONSTANT_TYPE_TEMPLATE = 'template'
 
 // ノード種別（C#のE_NodeTypeに対応。AttributeDef.availableElements[].nodeType の値）
 export const NODE_TYPE_ROOT_AGGREGATE = 'RootAggregate'

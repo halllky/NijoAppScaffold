@@ -9,7 +9,6 @@ import {
   CONSTANT_TYPE_STRING,
   CONSTANT_TYPE_INT,
   CONSTANT_TYPE_DECIMAL,
-  CONSTANT_TYPE_TEMPLATE,
 } from "../../backend"
 import { DefinitionGroupsGrid, DefinitionGroupsSetting } from "../DefinitionGroups"
 
@@ -35,7 +34,6 @@ const SETTING: DefinitionGroupsSetting = {
     helper.dropdown('型', `attributes.${ATTR_CONSTANT_TYPE}`, [
       { value: CONSTANT_TYPE_CHILD, text: '入れ子' },
       { value: CONSTANT_TYPE_STRING, text: '単純文字列' },
-      { value: CONSTANT_TYPE_TEMPLATE, text: 'テンプレート文字列' },
       { value: CONSTANT_TYPE_INT, text: '整数' },
       { value: CONSTANT_TYPE_DECIMAL, text: '実数' },
     ], {

@@ -40,16 +40,11 @@ internal class ConstantGroupDef {
     /// このグループを C# の静的クラスとしてレンダリングします。
     /// </summary>
     internal string RenderCSharpClass() {
-        var constants = GetConstants().ToArray();
-
         return $$"""
             {{Element.RenderXmlCommentOrJsDoc(E_CsTs.CSharp)}}
             public static class {{Name}} {
-            {{constants.Where(c => c.Type != ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
+            {{GetConstants().SelectTextTemplate(constant => $$"""
                 {{WithIndent(constant.RenderCSharpDeclaration())}}
-            """)}}
-            {{constants.Where(c => c.Type == ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
-                {{WithIndent(constant.RenderCSharpTemplateFunction())}}
             """)}}
             {{GetChildGroups().SelectTextTemplate(group => $$"""
                 {{WithIndent(group.RenderCSharpClass())}}
@@ -63,16 +58,11 @@ internal class ConstantGroupDef {
     /// </summary>
     /// <param name="isRoot">ルート要素の場合は export される定数として、入れ子のグループの場合は親オブジェクトのプロパティとしてレンダリングされる</param>
     internal string RenderTypeScriptObject(bool isRoot) {
-        var constants = GetConstants().ToArray();
-
         return $$"""
             {{Element.RenderXmlCommentOrJsDoc(E_CsTs.TypeScript)}}
             {{(isRoot ? $"export const {Name} = {{" : $"{Name}: {{")}}
-            {{constants.Where(c => c.Type != ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
+            {{GetConstants().SelectTextTemplate(constant => $$"""
               {{WithIndent(constant.RenderTypeScriptDeclaration())}}
-            """)}}
-            {{constants.Where(c => c.Type == ConstantValueDef.CONSTTYPE_TEMPLATE).SelectTextTemplate(constant => $$"""
-              {{WithIndent(constant.RenderTypeScriptTemplateFunction())}}
             """)}}
             {{GetChildGroups().SelectTextTemplate(group => $$"""
               {{WithIndent(group.RenderTypeScriptObject(false))}}
