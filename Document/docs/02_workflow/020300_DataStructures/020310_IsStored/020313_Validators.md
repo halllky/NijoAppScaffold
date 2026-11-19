@@ -130,7 +130,7 @@ DB の製品が文字列の長さを数える単位（UTF-16 の単位など）�
 partial class OverridedDbContext {
     public override string? ValidateMaxLength(string? value, int maxLength, string displayName) {
         return value?.Length > maxLength
-            ? MSG.MaxLengthError(displayName, maxLength)
+            ? MSG.MaxLengthError(displayName, maxLength.ToString())
             : null;
     }
 }
