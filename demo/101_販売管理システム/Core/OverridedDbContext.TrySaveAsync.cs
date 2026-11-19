@@ -117,6 +117,16 @@ partial class OverridedDbContext {
                 tracked.AddRange(command.StartTracking());
             }
 
+            // 添付されたファイルを確かめ、一時保存や参照なしのファイルを確定の状態にする。
+            // 業務のデータと同じ SaveChanges で保存するので、業務のデータの保存が失敗すればファイルの状態も変わらない
+            var attachments = await Track添付ファイルの確定Async(ct).ConfigureAwait(false);
+            if (attachments == null) {
+                errors.AddError(MSG.AttachmentNotAvailableError());
+                _logger.LogWarning("添付できないファイルが指定されました: {commands}", ToLogString(commands));
+                return Fail(SaveFailureKind.AttachmentNotAvailable);
+            }
+            tracked.AddRange(attachments);
+
             // 保存実行
             await SaveChangesAsync(ct).ConfigureAwait(false);
 
@@ -245,4 +255,6 @@ public enum SaveFailureKind {
     UniqueConstraint,
     /// <summary>その他のデータベースのエラー</summary>
     DatabaseError,
+    /// <summary>存在しないファイルや、他のユーザーが一時保存したファイルが添付されていた</summary>
+    AttachmentNotAvailable,
 }
