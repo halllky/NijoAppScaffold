@@ -173,7 +173,7 @@ export type OperationResult<TSuccess>
 /**
  * 未知のエラーを、画面上に表示できる文字列に変換する。
  */
-const handleUnknownError = (error: unknown): string => {
+export const handleUnknownError = (error: unknown): string => {
   if (error instanceof Error) {
     return error.message
   } else if (typeof error === 'string') {
@@ -186,7 +186,7 @@ const handleUnknownError = (error: unknown): string => {
 /**
  * 未知のレスポンスを、画面上に表示できる文字列に変換する。
  */
-const toDisplayErrorText = async (response: Response): Promise<string> => {
+export const toDisplayErrorText = async (response: Response): Promise<string> => {
   // ok の場合はここに来ないはず
   if (response.ok) {
     return '不明なエラーが発生しました'

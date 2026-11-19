@@ -54,6 +54,7 @@ export { ErrorPage } from "./page/ErrorPage"
 
 // フォームと結びつかない入力部品
 export { Button } from "./input/Button"
+export { AttachmentUploadButton, type AttachmentUploadButtonProps } from "./attachment/AttachmentUploadButton"
 export { CheckBox } from "./input/CheckBox"
 export { MultiSelect } from "./input/MultiSelect"
 
@@ -67,3 +68,6 @@ export { useOutsideClick } from "./overlay/useOutsideClick"
 export * as ReadOnlyColumn from "./grid/ReadOnlyColumn"
 export type { ButtonColumnOptions, LinkColumnOptions, GridLink } from "./grid/ClickableColumn"
 export { Pager } from "./grid/Pager"
+
+// 添付ファイルのダウンロードのリンク
+export { AttachmentLink, toAttachmentGridLinks } from "./attachment/attachmentLink"
