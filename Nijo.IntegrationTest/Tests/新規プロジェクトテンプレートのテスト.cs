@@ -8,7 +8,7 @@ namespace Nijo.IntegrationTest.Tests;
 /// <summary>
 /// <para>
 /// `nijo new` で展開される新規プロジェクトテンプレートが、実際に使い始められる状態であることを確認する。
-/// 自動生成をかけなおしたうえで、ビルド・単体テスト・型チェックを実行する。
+/// 自動生成をかけなおしたうえで、ビルドと型チェックを実行する。デモ101テンプレートは単体テストも実行する。
 /// </para>
 /// <para>
 /// demo101-template は /demo/101_販売管理システム から /Task/デモ101テンプレート作成.sh で作られるので、
@@ -21,7 +21,7 @@ public class 新規プロジェクトテンプレートのテスト {
     [Test]
     [Explicit("テンプレート全体のビルドと npm install を行うので時間がかかる。リリース時に実行する。")]
     [Category("時間がかかる")]
-    public async Task 空テンプレートがビルドとテストを通過するか() {
+    public async Task 空テンプレートがビルドと型チェックを通過するか() {
         var repoRoot = FindRepoRoot();
         var logger = new ConsoleAndContextLogger();
         var zipPath = Path.Combine(NijoTestUtil.BaseDirectory, $"empty-template_{Guid.NewGuid():N}.zip");
@@ -31,7 +31,10 @@ public class 新規プロジェクトテンプレートのテスト {
         Assert.That(archived, Is.True, "空テンプレートの git archive に失敗しました。");
 
         try {
-            await AssertTemplateIsUsableAsync(zipPath, logger);
+            await WithGeneratedTemplateAsync(zipPath, logger, async extractedRoot => {
+                await AssertBuildSucceededAsync(extractedRoot, logger);
+                await AssertTypeCheckSucceededAsync(extractedRoot, logger);
+            });
         } finally {
             File.Delete(zipPath);
         }
@@ -55,7 +58,18 @@ public class 新規プロジェクトテンプレートのテスト {
 
         try {
             AssertNoDemoSpecificTerms(zipPath);
-            await AssertTemplateIsUsableAsync(zipPath, logger);
+            await WithGeneratedTemplateAsync(zipPath, logger, async extractedRoot => {
+                await AssertBuildSucceededAsync(extractedRoot, logger);
+
+                // リリースされるプロジェクトは Release でもビルドできること
+                var releaseBuildOk = await RunCommandAsync("dotnet", "build WebApi -c Release", extractedRoot, logger);
+                Assert.That(releaseBuildOk, Is.True, "テンプレートの WebApi に対する Release ビルドに失敗しました。");
+
+                var dotnetTestOk = await RunCommandAsync("dotnet", "test UnitTest --no-build", extractedRoot, logger);
+                Assert.That(dotnetTestOk, Is.True, "テンプレートの単体テストに失敗しました。");
+
+                await AssertTypeCheckSucceededAsync(extractedRoot, logger);
+            });
         } finally {
             try { Directory.Delete(Path.Combine(repoRoot, "temp_release", "demo101-template-work"), recursive: true); } catch { /* 存在しなければ無視 */ }
             File.Delete(zipPath);
@@ -88,10 +102,10 @@ public class 新規プロジェクトテンプレートのテスト {
     }
 
     /// <summary>
-    /// テンプレートのzipを展開し、自動生成・ビルド・単体テスト・型チェックが通ることを確認する。
-    /// テストが失敗した場合は調査できるよう展開先を残す。
+    /// テンプレートのzipを展開して自動生成をかけなおし、展開先のフォルダに対して確認を行う。
+    /// 確認が失敗した場合は調査できるよう展開先を残す。
     /// </summary>
-    private static async Task AssertTemplateIsUsableAsync(string zipPath, ConsoleAndContextLogger logger) {
+    private static async Task WithGeneratedTemplateAsync(string zipPath, ConsoleAndContextLogger logger, Func<string, Task> assert) {
         var extractedRoot = Path.Combine(NijoTestUtil.BaseDirectory, $"{nameof(新規プロジェクトテンプレートのテスト)}_{Guid.NewGuid():N}");
         Directory.CreateDirectory(extractedRoot);
         using (var archive = ZipFile.OpenRead(zipPath)) {
@@ -99,7 +113,6 @@ public class 新規プロジェクトテンプレートのテスト {
         }
 
         try {
-            // 自動生成
             Assert.That(GeneratedProject.TryOpen(extractedRoot, out var project, out var openError), Is.True, openError);
 
             var xDocument = System.Xml.Linq.XDocument.Load(project!.SchemaXmlPath);
@@ -110,36 +123,34 @@ public class 新規プロジェクトテンプレートのテスト {
             Assert.That(project.ValidateSchema(parseContext, logger), Is.True, "テンプレートのnijo.xmlにスキーマ定義エラーがあります。");
             Assert.That(project.GenerateCode(parseContext, renderingOptions, logger, out _), Is.True, "テンプレートに対するソースコード自動生成に失敗しました。");
 
-            // ビルド
-            var slnPath = Directory.GetFiles(extractedRoot, "*.sln").SingleOrDefault();
-            Assert.That(slnPath, Is.Not.Null, "テンプレート直下に .sln ファイルが見つかりません。");
-
-            var dotnetBuildOk = await RunCommandAsync("dotnet", $"build \"{slnPath}\"", extractedRoot, logger);
-            Assert.That(dotnetBuildOk, Is.True, "テンプレートに対する dotnet build に失敗しました。");
-
-            // リリースされるプロジェクトは Release でもビルドできること
-            var releaseBuildOk = await RunCommandAsync("dotnet", "build WebApi -c Release", extractedRoot, logger);
-            Assert.That(releaseBuildOk, Is.True, "テンプレートの WebApi に対する Release ビルドに失敗しました。");
-
-            // 単体テスト
-            var dotnetTestOk = await RunCommandAsync("dotnet", "test UnitTest --no-build", extractedRoot, logger);
-            Assert.That(dotnetTestOk, Is.True, "テンプレートの単体テストに失敗しました。");
-
-            // 型チェック
-            var clientDir = Path.Combine(extractedRoot, "client");
-            Assert.That(Directory.Exists(clientDir), Is.True, $"client フォルダが見つかりません: {clientDir}");
-
-            var npmInstallOk = await RunCommandAsync("npm", "install", clientDir, logger);
-            Assert.That(npmInstallOk, Is.True, "テンプレートの client に対する npm install に失敗しました。");
-
-            var npmTscOk = await RunCommandAsync("npm", "run tsc", clientDir, logger);
-            Assert.That(npmTscOk, Is.True, "テンプレートの client に対する npm run tsc に失敗しました。");
+            await assert(extractedRoot);
 
         } finally {
             if (TestContext.CurrentContext.Result.Outcome.Status != NUnit.Framework.Interfaces.TestStatus.Failed) {
                 try { Directory.Delete(extractedRoot, recursive: true); } catch { /* ベストエフォート */ }
             }
         }
+    }
+
+    /// <summary>テンプレート直下のソリューションがビルドできることを確認する。</summary>
+    private static async Task AssertBuildSucceededAsync(string extractedRoot, ConsoleAndContextLogger logger) {
+        var slnPath = Directory.GetFiles(extractedRoot, "*.sln").SingleOrDefault();
+        Assert.That(slnPath, Is.Not.Null, "テンプレート直下に .sln ファイルが見つかりません。");
+
+        var dotnetBuildOk = await RunCommandAsync("dotnet", $"build \"{slnPath}\"", extractedRoot, logger);
+        Assert.That(dotnetBuildOk, Is.True, "テンプレートに対する dotnet build に失敗しました。");
+    }
+
+    /// <summary>client フォルダの TypeScript の型チェックが通ることを確認する。</summary>
+    private static async Task AssertTypeCheckSucceededAsync(string extractedRoot, ConsoleAndContextLogger logger) {
+        var clientDir = Path.Combine(extractedRoot, "client");
+        Assert.That(Directory.Exists(clientDir), Is.True, $"client フォルダが見つかりません: {clientDir}");
+
+        var npmInstallOk = await RunCommandAsync("npm", "install", clientDir, logger);
+        Assert.That(npmInstallOk, Is.True, "テンプレートの client に対する npm install に失敗しました。");
+
+        var npmTscOk = await RunCommandAsync("npm", "run tsc", clientDir, logger);
+        Assert.That(npmTscOk, Is.True, "テンプレートの client に対する npm run tsc に失敗しました。");
     }
 
     private static string FindRepoRoot() {

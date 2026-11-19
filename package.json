@@ -14,11 +14,9 @@
   ],
   "scripts": {
     "dev:docs": "npm run start --workspace=Document",
-    "dev:new-project-template": "npm run dev --workspace=Nijo.NewProjectTemplate/client",
     "dev:ui-components": "npm run dev --workspace=Nijo.GuiClient/package_ui-components",
     "dev:ui-components-debug": "npm run dev --workspace=Nijo.GuiClient/package_ui-components-debug",
     "build:docs": "npm run build --workspace=Document",
-    "build:new-project-template": "npm run build --workspace=Nijo.NewProjectTemplate/client",
     "build:schema-editor": "npm run build --workspace=Nijo.GuiClient/package_schema-editor-v1",
     "build:ui-components": "npm run build --workspace=Nijo.GuiClient/package_ui-components",
     "build:ui-components-debug": "npm run build --workspace=Nijo.GuiClient/package_ui-components-debug",

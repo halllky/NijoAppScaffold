@@ -37,7 +37,7 @@ namespace Nijo {
             = new Dictionary<string, (string, string)> {
                 ["empty-template"] = (
                     "empty-template.zip",
-                    "独立してデバッグ可能な必要最低限の構成のみを含む空のテンプレート。"),
+                    "自動生成されたソースと、それをビルド・型チェックするための最小限のプロジェクトだけを含むテンプレート。"),
                 ["demo101"] = (
                     "demo101-template.zip",
                     "GUI・ログ出力・ログイン認証など基本的な機能があらかじめそろった状態のテンプレート（デモ101ベース）。"),
