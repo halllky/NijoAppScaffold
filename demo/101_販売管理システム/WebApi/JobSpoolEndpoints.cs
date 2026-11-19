@@ -12,7 +12,7 @@ public static class JobSpoolEndpoints {
     /// 作業フォルダはジョブを実行したサーバーにしかないので、ほかのサーバーが受けたリクエストも 404 になる。
     /// </summary>
     public static void MapJobSpoolDownload(this IEndpointRouteBuilder endpoints) {
-        var pattern = Templates<RoutePatternTemplateKind>.API_URL.JobSpoolFile("{ジョブID}", "{ファイル名}");
+        var pattern = TemplatePattern.API_URL.JobSpoolFile("{ジョブID}", "{ファイル名}");
         endpoints.MapGet(pattern, async (string ジョブID, string ファイル名, HttpContext httpContext) => {
             var app = httpContext.RequestServices.GetRequiredService<OverridedApplicationService>();
             var path = await app.FindスプールのファイルAsync(ジョブID, ファイル名);
