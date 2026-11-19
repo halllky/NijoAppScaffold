@@ -35,5 +35,10 @@ public class 設定の検証 {
             MaxConcurrency = 1,
             ShutdownTimeoutSeconds = 30,
         },
+        Attachment = new() {
+            StorageDirectory = "Attachment",
+            MaxFileSizeMegabytes = 10,
+            UnreferencedRetentionDays = 90,
+        },
     };
 }

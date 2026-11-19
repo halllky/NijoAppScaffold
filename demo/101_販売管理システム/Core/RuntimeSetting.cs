@@ -31,6 +31,7 @@ public partial class RuntimeSetting {
         Collect(this, MY_APP_SECTION, errors);
         Collect(ErrorNotification, $"{MY_APP_SECTION}:{nameof(ErrorNotification)}", errors);
         Collect(Job, $"{MY_APP_SECTION}:{nameof(Job)}", errors);
+        Collect(Attachment, $"{MY_APP_SECTION}:{nameof(Attachment)}", errors);
         if (errors.Count > 0) {
             throw new InvalidOperationException($"設定に誤りがあります。{Environment.NewLine}{string.Join(Environment.NewLine, errors)}");
         }
@@ -101,6 +102,11 @@ public partial class RuntimeSetting {
     /// ジョブの設定
     /// </summary>
     public Core.ジョブ.JobSettings Job { get; set; } = new();
+
+    /// <summary>
+    /// 添付ファイルの設定
+    /// </summary>
+    public Core.添付ファイル.AttachmentSettings Attachment { get; set; } = new();
 
     #region タイムゾーン
     /// <summary>

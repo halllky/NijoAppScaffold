@@ -12,6 +12,7 @@ partial class TestUtilImpl {
 
     partial void ConfigureRuntimeSettingsスキーマ定義依存(RuntimeSetting settings, string currentTestWorkDirectory) {
         settings.Job.WorkDirectory = Path.Combine(currentTestWorkDirectory, "Job");
+        settings.Attachment.StorageDirectory = Path.Combine(currentTestWorkDirectory, "Attachment");
     }
 
     /// <summary>

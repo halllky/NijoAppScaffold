@@ -61,6 +61,7 @@ partial class OverridedApplicationService {
         myAppSection.Bind(settings);
         settings.ThrowIfInvalid();
         settings.Job.ResolvePaths(basePath);
+        settings.Attachment.ResolvePaths(basePath);
         services.AddSingleton(settings);
 
         // DBコンテキスト登録
@@ -80,6 +81,9 @@ partial class OverridedApplicationService {
             // データの保存処理は変更追跡オフが前提
             options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
         });
+
+        // 添付ファイルの保存先。S3 などに変えるときは、ここで登録する実装を差し替える
+        services.AddScoped<Core.添付ファイル.I添付ファイル保存先>(sp => new Core.添付ファイル.フォルダの添付ファイル保存先(sp.GetRequiredService<RuntimeSetting>().Attachment.StorageDirectory));
 
         // ジョブのキュー。登録されたジョブを取り出して実行する
         services.AddSingleton(Core.ジョブ.ジョブキュー.Create);

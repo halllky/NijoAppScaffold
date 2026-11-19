@@ -19,6 +19,9 @@ appsettings.Development.json
 # ジョブの作業フォルダ
 /WebApi.Job
 
+# 添付ファイルの保存先
+/WebApi.Attachment
+
 # TypeScript の型チェックが作るキャッシュ
 *.tsbuildinfo
 
