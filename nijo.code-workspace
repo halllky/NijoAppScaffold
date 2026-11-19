@@ -145,7 +145,7 @@
       },
       {
         "label": "Nijo > ソース最新化",
-        "detail": "テンプレとデモの自動生成をかけなおし、テンプレの一部ソースを各デモにコピーする",
+        "detail": "テンプレとデモの自動生成をかけなおす",
         "type": "shell",
         "options": {
           "cwd": "${workspaceFolder:ワークスペース全体}/Task"
