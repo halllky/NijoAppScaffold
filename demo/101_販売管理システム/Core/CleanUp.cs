@@ -46,11 +46,14 @@ partial class OverridedApplicationService {
         // 保存期間を過ぎたジョブの記録と作業フォルダを削除
         var deletedJobCount = await Delete保存期間を過ぎたジョブAsync();
 
-        Log.LogInformation("クリーンナップ処理を実行しました。削除されたセッション数: {SessionCount}, 削除された冪等キー数: {IdempotencyKeyCount}, 削除された通知数: {NotificationCount}, 削除されたジョブ数: {JobCount}",
-            deletedCount, deletedIdempotencyKeyCount, deletedNotificationCount, deletedJobCount);
+        // 一時保存のまま期限を過ぎた添付ファイルと、参照されなくなってから一定期間が過ぎた添付ファイルを削除
+        var deletedAttachmentCount = await Delete不要な添付ファイルAsync();
+
+        Log.LogInformation("クリーンナップ処理を実行しました。削除されたセッション数: {SessionCount}, 削除された冪等キー数: {IdempotencyKeyCount}, 削除された通知数: {NotificationCount}, 削除されたジョブ数: {JobCount}, 削除された添付ファイル数: {AttachmentCount}",
+            deletedCount, deletedIdempotencyKeyCount, deletedNotificationCount, deletedJobCount, deletedAttachmentCount);
 
         // 古いログの削除は NLog の設定で自動的に行われるため、ここでは特に処理を実装しない。
 
-        return MSG.CleanUpResult(deletedCount.ToString(), deletedIdempotencyKeyCount.ToString(), deletedNotificationCount.ToString(), deletedJobCount.ToString());
+        return MSG.CleanUpResult(deletedCount.ToString(), deletedIdempotencyKeyCount.ToString(), deletedNotificationCount.ToString(), deletedJobCount.ToString(), deletedAttachmentCount.ToString());
     }
 }

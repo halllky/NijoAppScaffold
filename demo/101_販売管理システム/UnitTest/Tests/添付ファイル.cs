@@ -144,6 +144,54 @@ partial class DB接続あり_更新あり {
         Assert.That(await DownloadAsAsync("USER_A", "NOT_EXISTS"), Is.Null);
     }
 
+    [Test]
+    [Category("DB接続あり（更新あり）")]
+    public async Task クリーンナップは期限を過ぎた一時保存と参照されなくなってから期間が過ぎたファイルを削除する() {
+        var scope = TestUtilImpl.Instance.CreateScope(nameof(クリーンナップは期限を過ぎた一時保存と参照されなくなってから期間が過ぎたファイルを削除する));
+        var app = scope.App;
+        var db = app.DbContext;
+        await Add従業員Async(db, "ADMIN", 権限区分.システム管理者);
+        await Add従業員Async(db, "USER_A");
+
+        var 古い一時保存 = await 一時保存Async(app, "古い一時保存.txt");
+        var 新しい一時保存 = await 一時保存Async(app, "新しい一時保存.txt");
+        var 参照されている = await 一時保存Async(app, "参照されている.txt");
+        var 参照されなくなった = await 一時保存Async(app, "参照されなくなった.txt");
+        var 再び参照された = await 一時保存Async(app, "再び参照された.txt");
+        var 古い参照なし = await 一時保存Async(app, "古い参照なし.txt");
+        await using (var tran = await app.BeginTransactionAsync()) {
+            var result = await Save入荷Async(app, "IN-1", 参照されている, 再び参照された);
+            Assert.That(result.Success, Is.True, string.Join(", ", result.Errors.GetAllMessages()));
+            await tran.CommitAsync();
+        }
+
+        var 一時保存の期限 = app.CurrentTime - OverridedApplicationService.添付ファイルの一時保存の期間;
+        var 参照なしの期限 = app.CurrentTime - TimeSpan.FromDays(app.Settings.Attachment.UnreferencedRetentionDays);
+        await db.添付ファイルDbSet.Where(f => f.識別子 == 古い一時保存).ExecuteUpdateAsync(x => x.SetProperty(f => f.CreatedAt, 一時保存の期限.AddMinutes(-1)));
+        await db.添付ファイルDbSet.Where(f => f.識別子 == 新しい一時保存).ExecuteUpdateAsync(x => x.SetProperty(f => f.CreatedAt, 一時保存の期限.AddMinutes(1)));
+        await db.添付ファイルDbSet.Where(f => f.識別子 == 参照されなくなった).ExecuteUpdateAsync(x => x.SetProperty(f => f.状態, 添付ファイルの状態.確定));
+        await db.添付ファイルDbSet.Where(f => f.識別子 == 再び参照された).ExecuteUpdateAsync(x => x
+            .SetProperty(f => f.状態, 添付ファイルの状態.参照なし)
+            .SetProperty(f => f.参照なし日時, 参照なしの期限.AddMinutes(-1)));
+        await db.添付ファイルDbSet.Where(f => f.識別子 == 古い参照なし).ExecuteUpdateAsync(x => x
+            .SetProperty(f => f.状態, 添付ファイルの状態.参照なし)
+            .SetProperty(f => f.参照なし日時, 参照なしの期限.AddMinutes(-1)));
+
+        await using (var request = await NewRequestAsAsync(scope, "ADMIN")) {
+            await request.Value.ExecuteクリーンナップAsync(new MessageSetter([], new()), new OperationContext { ValidationOnly = false });
+        }
+
+        var remaining = await db.添付ファイルDbSet.AsNoTracking().ToDictionaryAsync(f => f.識別子!, f => f.状態);
+        Assert.That(remaining, Is.EquivalentTo(new Dictionary<string, 添付ファイルの状態?> {
+            [新しい一時保存] = 添付ファイルの状態.一時保存,
+            [参照されている] = 添付ファイルの状態.確定,
+            [参照されなくなった] = 添付ファイルの状態.参照なし,
+            [再び参照された] = 添付ファイルの状態.確定,
+        }));
+        var filesInStorage = Directory.GetFiles(app.Settings.Attachment.StorageDirectory).Select(Path.GetFileName);
+        Assert.That(filesInStorage, Is.EquivalentTo(remaining.Keys), "削除したファイルは保存先からも消える");
+    }
+
     private static MemoryStream ToStream(string text) => new(Encoding.UTF8.GetBytes(text));
 
     /// <summary>

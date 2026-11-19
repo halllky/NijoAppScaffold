@@ -227,7 +227,7 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
     /**
      * クリーンナップの結果
      */
-    CleanUpResult: ({ セッション, 冪等キー, 通知, ジョブ }: { セッション: string, 冪等キー: string, 通知: string, ジョブ: string }): string => `セッション ${templateKind.文言(セッション)} 件、冪等キー ${templateKind.文言(冪等キー)} 件、通知 ${templateKind.文言(通知)} 件、ジョブ ${templateKind.文言(ジョブ)} 件を削除しました。`,
+    CleanUpResult: ({ セッション, 冪等キー, 通知, ジョブ, 添付ファイル }: { セッション: string, 冪等キー: string, 通知: string, ジョブ: string, 添付ファイル: string }): string => `セッション ${templateKind.文言(セッション)} 件、冪等キー ${templateKind.文言(冪等キー)} 件、通知 ${templateKind.文言(通知)} 件、ジョブ ${templateKind.文言(ジョブ)} 件、添付ファイル ${templateKind.文言(添付ファイル)} 件を削除しました。`,
   },
   /**
    * メッセージ(デモ101専用)
@@ -609,7 +609,7 @@ export const TemplatePattern = {
     /**
      * クリーンナップの結果
      */
-    CleanUpResult: ({ セッション, 冪等キー, 通知, ジョブ }: { セッション: string, 冪等キー: string, 通知: string, ジョブ: string }): string => `セッション ${セッション} 件、冪等キー ${冪等キー} 件、通知 ${通知} 件、ジョブ ${ジョブ} 件を削除しました。`,
+    CleanUpResult: ({ セッション, 冪等キー, 通知, ジョブ, 添付ファイル }: { セッション: string, 冪等キー: string, 通知: string, ジョブ: string, 添付ファイル: string }): string => `セッション ${セッション} 件、冪等キー ${冪等キー} 件、通知 ${通知} 件、ジョブ ${ジョブ} 件、添付ファイル ${添付ファイル} 件を削除しました。`,
   },
   /**
    * メッセージ(デモ101専用)

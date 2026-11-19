@@ -69,6 +69,69 @@ partial class OverridedApplicationService {
     }
 
     /// <summary>
+    /// クリーンナップで、添付ファイルを次の順に処理する。
+    /// <list type="number">
+    /// <item>一時保存から一定期間が過ぎたファイルを削除する</item>
+    /// <item>どのデータからも参照されなくなった確定のファイルを参照なしにし、参照なしのファイルのうち再び参照されているものを確定に戻す</item>
+    /// <item>参照なしになってから設定の日数が過ぎたファイルを削除する</item>
+    /// </list>
+    /// </summary>
+    /// <returns>削除したファイルの数</returns>
+    private async Task<int> Delete不要な添付ファイルAsync() {
+        var 一時保存の期限 = CurrentTime - 添付ファイルの一時保存の期間;
+        var 期限切れの一時保存 = await DbContext.添付ファイルDbSet
+            .Where(f => f.状態 == 添付ファイルの状態.一時保存 && f.CreatedAt < 一時保存の期限)
+            .Select(f => f.識別子!)
+            .ToArrayAsync();
+        var deletedCount = await Delete添付ファイルAsync(期限切れの一時保存, 添付ファイルの状態.一時保存);
+
+        var referenced = DbContext.参照されている添付ファイルの識別子();
+        await DbContext.添付ファイルDbSet
+            .Where(f => f.状態 == 添付ファイルの状態.確定 && !referenced.Contains(f.識別子))
+            .ExecuteUpdateAsync(x => x
+                .SetProperty(f => f.状態, 添付ファイルの状態.参照なし)
+                .SetProperty(f => f.参照なし日時, CurrentTime));
+        await DbContext.添付ファイルDbSet
+            .Where(f => f.状態 == 添付ファイルの状態.参照なし && referenced.Contains(f.識別子))
+            .ExecuteUpdateAsync(x => x
+                .SetProperty(f => f.状態, 添付ファイルの状態.確定)
+                .SetProperty(f => f.参照なし日時, (DateTime?)null));
+
+        var 参照なしの期限 = CurrentTime - TimeSpan.FromDays(Settings.Attachment.UnreferencedRetentionDays);
+        var 期限切れの参照なし = await DbContext.添付ファイルDbSet
+            .Where(f => f.状態 == 添付ファイルの状態.参照なし && f.参照なし日時 < 参照なしの期限)
+            .Select(f => f.識別子!)
+            .ToArrayAsync();
+        deletedCount += await Delete添付ファイルAsync(期限切れの参照なし, 添付ファイルの状態.参照なし);
+
+        return deletedCount;
+    }
+
+    /// <summary>
+    /// 管理テーブルの行を消してから、保存先のファイルを消す。
+    /// 探してから消すまでの間にデータに添付されて状態が変わったファイルは、行を消さず、保存先のファイルにも触れない。
+    /// 保存先のファイルを消せなかった場合は、行の無いファイルとして保存先に残る。
+    /// </summary>
+    /// <returns>行を消したファイルの数</returns>
+    private async Task<int> Delete添付ファイルAsync(IEnumerable<string> 識別子一覧, 添付ファイルの状態 状態) {
+        var deletedCount = 0;
+        foreach (var 識別子 in 識別子一覧) {
+            var deleted = await DbContext.添付ファイルDbSet
+                .Where(f => f.識別子 == 識別子 && f.状態 == 状態)
+                .ExecuteDeleteAsync();
+            if (deleted == 0) continue;
+            deletedCount++;
+
+            try {
+                await 添付ファイル保存先.DeleteAsync(識別子, CancellationToken.None);
+            } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+                Log.LogWarning(ex, "添付ファイルを保存先から削除できませんでした: {識別子}", 識別子);
+            }
+        }
+        return deletedCount;
+    }
+
+    /// <summary>
     /// 添付ファイルの中身を読み出す。処理の中でファイルの中身が必要なときに使う。呼び出し元が閉じる。
     /// 状態や権限は確かめないので、利用者にファイルを返すときはダウンロードの処理を使う。
     /// </summary>

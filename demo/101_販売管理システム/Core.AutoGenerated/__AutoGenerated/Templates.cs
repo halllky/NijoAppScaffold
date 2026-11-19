@@ -242,7 +242,7 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         /// <summary>
         /// クリーンナップの結果
         /// </summary>
-        public static string CleanUpResult(string セッション, string 冪等キー, string 通知, string ジョブ) => $"セッション {TKind.文言(セッション)} 件、冪等キー {TKind.文言(冪等キー)} 件、通知 {TKind.文言(通知)} 件、ジョブ {TKind.文言(ジョブ)} 件を削除しました。";
+        public static string CleanUpResult(string セッション, string 冪等キー, string 通知, string ジョブ, string 添付ファイル) => $"セッション {TKind.文言(セッション)} 件、冪等キー {TKind.文言(冪等キー)} 件、通知 {TKind.文言(通知)} 件、ジョブ {TKind.文言(ジョブ)} 件、添付ファイル {TKind.文言(添付ファイル)} 件を削除しました。";
     }
     /// <summary>
     /// メッセージ(デモ101専用)
@@ -640,7 +640,7 @@ public static class TemplatePattern {
         /// <summary>
         /// クリーンナップの結果
         /// </summary>
-        public static string CleanUpResult(string セッション, string 冪等キー, string 通知, string ジョブ) => $"セッション {セッション} 件、冪等キー {冪等キー} 件、通知 {通知} 件、ジョブ {ジョブ} 件を削除しました。";
+        public static string CleanUpResult(string セッション, string 冪等キー, string 通知, string ジョブ, string 添付ファイル) => $"セッション {セッション} 件、冪等キー {冪等キー} 件、通知 {通知} 件、ジョブ {ジョブ} 件、添付ファイル {添付ファイル} 件を削除しました。";
     }
     /// <summary>
     /// メッセージ(デモ101専用)

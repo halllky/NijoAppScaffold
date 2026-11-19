@@ -1,4 +1,6 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace MyApp;
 
@@ -48,5 +50,44 @@ partial class OverridedDbContext {
             entry.Property(f => f.Version).OriginalValue = version;
         }
         return confirmed;
+    }
+
+    /// <summary>
+    /// いずれかのデータから参照されている添付ファイルの識別子。
+    /// 管理テーブルへの外部キーをもつ全テーブルと、それらの論理削除の削除済みテーブルを対象にする。
+    /// テーブルは EF Core のモデルから探すので、添付ファイルを使うデータモデルが増えても、ここを直す必要はない。
+    /// 手書きのテーブルなど、外部キーを張らずに識別子を持つ場所を参照として数えたい場合は、ここに足す。
+    /// </summary>
+    internal IQueryable<string?> 参照されている添付ファイルの識別子() {
+        IQueryable<string?> result = 添付ファイルDbSet.Where(_ => false).Select(f => f.識別子);
+
+        foreach (var entityType in Model.GetEntityTypes()) {
+            foreach (var fk in entityType.GetForeignKeys().Where(fk => fk.PrincipalEntityType.ClrType == typeof(添付ファイルDbEntity))) {
+                var propertyName = fk.Properties.Single().Name;
+                result = result.Concat(SelectColumn(entityType, propertyName));
+
+                // 論理削除の削除済みテーブルには外部キー制約が無いので、元のテーブルと同じ名前の列を見る
+                var deletedType = Model.GetEntityTypes().SingleOrDefault(t => t.ClrType.Name == entityType.ClrType.Name.Replace("DbEntity", "DeletedDbEntity"));
+                if (deletedType?.FindProperty(propertyName) != null) {
+                    result = result.Concat(SelectColumn(deletedType, propertyName));
+                }
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// 型の決まっていないエンティティの、文字列の列1つを取り出すクエリを作る。
+    /// </summary>
+    private IQueryable<string?> SelectColumn(IEntityType entityType, string propertyName) {
+        var set = (IQueryable)typeof(DbContext).GetMethod(nameof(Set), Type.EmptyTypes)!
+            .MakeGenericMethod(entityType.ClrType)
+            .Invoke(this, null)!;
+        var e = Expression.Parameter(entityType.ClrType, "e");
+        var column = Expression.Call(typeof(EF), nameof(EF.Property), [typeof(string)], e, Expression.Constant(propertyName));
+        var select = Expression.Call(typeof(Queryable), nameof(Queryable.Select), [entityType.ClrType, typeof(string)],
+            set.Expression,
+            Expression.Quote(Expression.Lambda(column, e)));
+        return set.Provider.CreateQuery<string?>(select);
     }
 }
