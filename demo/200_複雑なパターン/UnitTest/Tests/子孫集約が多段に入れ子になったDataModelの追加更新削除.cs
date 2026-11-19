@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using MyApp.WebApi.Base;
 
 namespace MyApp.UnitTest;
 

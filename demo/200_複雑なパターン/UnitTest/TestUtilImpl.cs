@@ -1,10 +1,8 @@
+using System.Text;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Console;
 using MyApp.UnitTest;
-using MyApp.Debugging;
 
 namespace MyApp;
 
@@ -15,7 +13,7 @@ namespace MyApp;
 /// それら複数のテストに同じSQLiteファイルを参照させるときに共通の情報を提供する。
 /// </summary>
 [SetUpFixture]
-public partial class TestUtilImpl {
+public class TestUtilImpl {
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     public static TestUtilImpl Instance { get; private set; }
@@ -29,7 +27,7 @@ public partial class TestUtilImpl {
                 "..", // Debug
                 "..", // bin
                 "..", // UnitTest
-                "..", // MyApp.sln があるフォルダ
+                "..", // Demo200.sln があるフォルダ
                 $"UnitTest.Log",
                 $"テスト結果_{DateTime.Now:yyyyMMddHHmmss}_{Guid.NewGuid().ToString().Substring(0, 8)}"))
         };
@@ -71,8 +69,7 @@ public partial class TestUtilImpl {
 
     /// <summary>
     /// テスト用の新しいサービスプロバイダのインスタンスを構成する。
-    /// ワークフォルダの作成も行う。
-    /// データベースの再作成もここで行なう。
+    /// ワークフォルダとデータベースもテストケースごとに新しく作る。
     /// </summary>
     public TestScopeImpl CreateScope(string testCaseName, Action<IServiceCollection>? configureServices = null) {
 
@@ -80,93 +77,46 @@ public partial class TestUtilImpl {
         var currentTestWorkDirectory = Path.Combine(BaseWorkDirectory, testCaseName);
         Directory.CreateDirectory(currentTestWorkDirectory);
 
-        // appsettings.json はWebApiのそれを流用する
-        var webapiDir = Path.Combine(
-            BaseWorkDirectory,
-            "..", // UnitTest.Log
-            "..", // MyApp.sln があるフォルダ
-            "WebApi");
-        var appSettingsJson = Path.Combine(webapiDir, "appsettings.json");
-        var developmentJson = Path.Combine(webapiDir, "appsettings.Development.json");
-        if (File.Exists(appSettingsJson)) {
-            File.Copy(appSettingsJson, Path.Combine(currentTestWorkDirectory, "appsettings.json"));
-        }
-        if (File.Exists(developmentJson)) {
-            File.Copy(developmentJson, Path.Combine(currentTestWorkDirectory, "appsettings.Development.json"));
-        }
-
         // DI機構
         var services = new ServiceCollection();
-        // 単体テストは開発環境の設定を流用して動かすので、開発環境として扱う
-        OverridedApplicationService.ConfigureServices(services, currentTestWorkDirectory, isDevelopment: true);
-        ConfigureServicesスキーマ定義依存(services);
+        var dbFilePath = Path.Combine(currentTestWorkDirectory, "UNITTEST.sqlite3");
+        OverridedApplicationService.ConfigureServices(services, $"Data Source={dbFilePath};Pooling=False");
 
         // DI機構: ログ
         var logFilePath = Path.Combine(currentTestWorkDirectory, "result.log");
         services.AddLogging(logging => {
             logging.SetMinimumLevel(LogLevel.Trace);
-
-            // コンソール出力
-            logging.AddFilter<ConsoleLoggerProvider>((_, level) => level >= LogLevel.Warning);
-            logging.AddConsole();
-
-            // ファイル出力
-            logging.AddFilter<FileLoggerProvider>((_, level) => level != LogLevel.None);
             logging.AddProvider(new FileLoggerProvider(logFilePath));
         });
 
         // DI機構: テストケースごとのカスタマイズ
         configureServices?.Invoke(services);
 
-        // DI機構: 実行時設定
-        services.AddScoped(provider => {
-            var solutionRoot = Path.Combine(
-                Instance.BaseWorkDirectory,
-                "..",  // UnitTest.Log
-                ".."); // MyApp.sln があるフォルダ
-
-            var settings = new RuntimeSetting();
-
-            // appsettings.json から読み取る設定を適用
-            new ConfigurationBuilder()
-                .SetBasePath(currentTestWorkDirectory)
-                .AddJsonFile("appsettings.json", true)
-                .AddJsonFile("appsettings.Development.json", true) // 後にAddされたファイルが優先される
-                .Build()
-                .GetSection(RuntimeSetting.MY_APP_SECTION)
-                .Bind(settings);
-
-            // ユニットテスト実行毎のログフォルダに出力されるべき項目の書き換え
-            settings.LogDirectory = currentTestWorkDirectory; // テストケースごとのディレクトリ
-            settings.CurrentDbProfileName = "SQLITE001";
-            settings.MigrationsScriptFolder = Path.Combine(
-                solutionRoot,
-                "Core",
-                "MigrationsScript");
-
-            var dbFileName = $"./{testCaseName}/UNITTEST.sqlite3";
-            settings.DbProfiles.Add(new() {
-                Name = "SQLITE001",
-                ConnStr = $"Data Source={dbFileName};Pooling=False",
-            });
-
-            ConfigureRuntimeSettingsスキーマ定義依存(settings, currentTestWorkDirectory);
-
-            return settings;
-        });
-
         var provider = services.BuildServiceProvider();
         _providers.Add(provider);
 
-        // DB作成
-        var dbContext = provider.GetRequiredService<OverridedDbContext>();
-        dbContext.EnsureCreatedAsyncEx(provider.GetRequiredService<RuntimeSetting>()).GetAwaiter().GetResult();
+        CreateDatabase(provider.GetRequiredService<OverridedDbContext>());
 
         return new TestScopeImpl(provider, currentTestWorkDirectory);
     }
 
-    partial void ConfigureServicesスキーマ定義依存(IServiceCollection services);
-    partial void ConfigureRuntimeSettingsスキーマ定義依存(RuntimeSetting settings, string currentTestWorkDirectory);
+    /// <summary>
+    /// テーブルを Entity Framework Core のモデルから作り、続けて Core/Views フォルダのビューを作る。
+    /// ビューは別のビューを参照することがあるので、ファイル名の昇順に作る。
+    /// </summary>
+    private void CreateDatabase(OverridedDbContext dbContext) {
+        dbContext.Database.EnsureCreated();
+
+        var viewsFolder = Path.Combine(
+            BaseWorkDirectory,
+            "..", // UnitTest.Log
+            "..", // Demo200.sln があるフォルダ
+            "Core",
+            "Views");
+        foreach (var sqlFile in Directory.GetFiles(viewsFolder, "*.sql").Order()) {
+            dbContext.Database.ExecuteSqlRaw(File.ReadAllText(sqlFile, Encoding.UTF8));
+        }
+    }
 
     /// <summary>
     /// テスト用のファイルロガー。ログをテキストファイルに出力する。

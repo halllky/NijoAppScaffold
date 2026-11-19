@@ -24,7 +24,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Core\Demo200.csproj" />
-    <ProjectReference Include="..\WebApi\Demo200.WebApi.csproj" />
   </ItemGroup>
 
   <ItemGroup>

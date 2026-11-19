@@ -1,6 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using MyApp.Debugging;
-using MyApp.WebApi.Base;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -6,7 +6,6 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using MyApp.WebApi.Base;
 
 namespace MyApp.UnitTest;
 
@@ -28,7 +27,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = OperationEndpoints.ToJsonObject(context.Find([])!);
+        var json = ToJsonObject(context.Find([])!);
 
         // ---------------------
         // Assert
@@ -68,7 +67,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = OperationEndpoints.ToJsonObject(context.Find([])!);
+        var json = ToJsonObject(context.Find([])!);
 
         // ---------------------
         // Assert
@@ -106,7 +105,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = OperationEndpoints.ToJsonObject(context.Find([])!);
+        var json = ToJsonObject(context.Find([])!);
         Logout(json);
 
         // ---------------------
@@ -153,7 +152,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = OperationEndpoints.ToJsonObject(context.Find([])!);
+        var json = ToJsonObject(context.Find([])!);
         Logout(json);
 
         // ---------------------
@@ -188,7 +187,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = OperationEndpoints.ToJsonObject(context.Find([])!);
+        var json = ToJsonObject(context.Find([])!);
         Logout(json);
 
         // ---------------------
@@ -228,7 +227,7 @@ internal class MessageContainerのテスト {
 
         // ---------------------
         // Act
-        var json = OperationEndpoints.ToJsonObject(context.Find([])!);
+        var json = ToJsonObject(context.Find([])!);
         Logout(json);
 
         // ---------------------
@@ -254,6 +253,25 @@ internal class MessageContainerのテスト {
         // インデックス7の要素確認
         Assert.That(付属品Json["children"]!.AsObject().ContainsKey("7"), Is.True, "付属品[7]が存在しません");
         Assert.That((string)付属品Json["children"]!["7"]!["children"]!["数量"]!["warn"]![0]!, Is.EqualTo("数量が標準的ではありません。"));
+    }
+
+    /// <summary>
+    /// メッセージの木構造を、確認しやすいように JSON に変換する。
+    /// 各要素はメッセージがある種類（error, warn, info）と、子要素（children）だけを持つ。
+    /// </summary>
+    private static JsonObject ToJsonObject(IReadOnlyMessageContainer messageContainer) {
+        var result = new JsonObject();
+        if (messageContainer.Errors.Any()) result["error"] = new JsonArray([.. messageContainer.Errors.Select(x => JsonValue.Create(x))]);
+        if (messageContainer.Warns.Any()) result["warn"] = new JsonArray([.. messageContainer.Warns.Select(x => JsonValue.Create(x))]);
+        if (messageContainer.Infos.Any()) result["info"] = new JsonArray([.. messageContainer.Infos.Select(x => JsonValue.Create(x))]);
+
+        var children = new JsonObject();
+        foreach (var child in messageContainer.Children) {
+            children[child.Key] = ToJsonObject(child.Value);
+        }
+        if (children.Count > 0) result["children"] = children;
+
+        return result;
     }
 
     private static void Logout(JsonObject jsonObject) {
