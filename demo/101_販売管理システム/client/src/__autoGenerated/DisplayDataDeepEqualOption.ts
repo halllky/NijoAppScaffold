@@ -33,6 +33,7 @@ export interface DeepEqualValueMemberTypeMap {
     | EnumDefs.消費税区分
     | EnumDefs.売上明細区分
     | EnumDefs.ジョブの状態
+    | EnumDefs.添付ファイルの状態
 }
 
 /**

@@ -27,6 +27,7 @@ import type * as 従業員Ref from "./models/従業員Ref"
 import type * as 従業員マスタ from "./models/従業員マスタ"
 import type * as 従業員一括更新Parameter from "./models/従業員一括更新Parameter"
 import type * as 未読通知件数ReturnValue from "./models/未読通知件数ReturnValue"
+import type * as 添付ファイルRef from "./models/添付ファイルRef"
 import type * as 通知一覧 from "./models/通知一覧"
 import type * as 通知既読設定Parameter from "./models/通知既読設定Parameter"
 
@@ -47,6 +48,7 @@ export const Endpoint: { [K in Name]: string } = {
   '商品在庫増減履歴': 'api/x782009efdef066b92e0cd5c378ca947d/load',
   '通知一覧': 'api/xed21ff27c5fea031206daca10d14e2c1/load',
   'ジョブ一覧': 'api/xf84b596096fa1bba9f67e99464a3c8bd/load',
+  '添付ファイルRef': 'api/x048fa341b32f011852657ad27642c048/load',
   '入荷登録': 'api/xd14f4d89fb2adb0f35190352d52e032d/execute',
   '商品データ取込': 'api/x1da54d663d738b748b77758651bb4522/execute',
   'ログイン': 'api/x7cda55dc0744dd2c61802153d4af8aed/execute',
@@ -82,6 +84,7 @@ export interface ParamType {
   '商品在庫増減履歴': 商品在庫増減履歴.SearchCondition
   '通知一覧': 通知一覧.SearchCondition
   'ジョブ一覧': ジョブ一覧.SearchCondition
+  '添付ファイルRef': 添付ファイルRef.SearchCondition
   '入荷登録': 入荷詳細.DisplayData
   '商品データ取込': Record<string, never> // 引数なし
   'ログイン': ログインParameter.DisplayData
@@ -117,6 +120,7 @@ export interface ReturnType {
   '商品在庫増減履歴': Util.LoadReturnType<商品在庫増減履歴.DisplayData>
   '通知一覧': Util.LoadReturnType<通知一覧.DisplayData>
   'ジョブ一覧': Util.LoadReturnType<ジョブ一覧.DisplayData>
+  '添付ファイルRef': Util.LoadReturnType<添付ファイルRef.DisplayData>
   '入荷登録': 入荷登録ReturnValue.DisplayData
   '商品データ取込': Record<string, never> // 戻り値なし
   'ログイン': ログインユーザー情報.DisplayData
@@ -212,6 +216,11 @@ export const Metadata: { [K in Name]: Metadata } = {
   'ジョブ一覧': {
     displayName: 'ジョブ一覧',
     operationAccessLevel: 'ログインユーザー全員',
+    operationAccessRole: [],
+  },
+  '添付ファイルRef': {
+    displayName: '添付ファイルRef',
+    operationAccessLevel: '内部処理のみ',
     operationAccessRole: [],
   },
   '入荷登録': {

@@ -770,6 +770,73 @@ namespace MyApp.Migrations {
                 b.ToTable("権限", (string)null);
             });
 
+            modelBuilder.Entity("MyApp.添付ファイルDbEntity", b => {
+                b.Property<string>("識別子")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("識別子")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(7);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(6);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(9);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(8);
+
+                b.Property<int>("Version")
+                    .IsConcurrencyToken()
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("Version")
+                    .HasColumnOrder(10);
+
+                b.Property<int>("サイズ")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("サイズ")
+                    .HasColumnOrder(2);
+
+                b.Property<DateTime?>("参照なし日時")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("参照なし日時")
+                    .HasColumnOrder(5);
+
+                b.Property<string>("名前")
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("名前")
+                    .HasColumnOrder(1);
+
+                b.Property<int>("状態")
+                    .HasColumnType("INTEGER")
+                    .HasColumnName("状態")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("種類")
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasColumnType("TEXT")
+                    .HasColumnName("種類")
+                    .HasColumnOrder(3);
+
+                b.HasKey("識別子")
+                    .HasName("PK_添付ファイル");
+
+                b.ToTable("添付ファイル", (string)null);
+            });
+
             modelBuilder.Entity("MyApp.通知DbEntity", b => {
                 b.Property<string>("通知ID")
                     .HasColumnType("TEXT")

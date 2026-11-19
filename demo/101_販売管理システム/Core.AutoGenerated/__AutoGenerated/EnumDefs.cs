@@ -56,6 +56,18 @@ public enum 消費税区分 {
     軽減税率 = 2,
 }
 
+/// <summary>
+/// 添付ファイルの状態
+/// </summary>
+public enum 添付ファイルの状態 {
+    [Display(Name = "一時保存")]
+    一時保存 = 0,
+    [Display(Name = "確定")]
+    確定 = 1,
+    [Display(Name = "参照なし")]
+    参照なし = 2,
+}
+
 /// <summary>ジョブの状態の検索条件クラス</summary>
 public class ジョブの状態SearchCondition {
     public bool 待機 { get; set; }
@@ -112,6 +124,21 @@ public class 消費税区分SearchCondition {
         if (非課税) return true;
         if (一般税率) return true;
         if (軽減税率) return true;
+        return false;
+    }
+}
+
+/// <summary>添付ファイルの状態の検索条件クラス</summary>
+public class 添付ファイルの状態SearchCondition {
+    public bool 一時保存 { get; set; }
+    public bool 確定 { get; set; }
+    public bool 参照なし { get; set; }
+
+    /// <summary>いずれかの値が選択されているかを返します。</summary>
+    public bool AnyChecked() {
+        if (一時保存) return true;
+        if (確定) return true;
+        if (参照なし) return true;
         return false;
     }
 }

@@ -813,6 +813,64 @@ Webアプリケーションなので明示的にログアウトしない限り�
           UniqueId="fa1fe58e-f45c-4fd8-9de5-4ab52d2cd7d3" />
       </スプールのファイル>
     </ジョブ一覧>
+    <!--添付ファイルの管理テーブル。アップロードされたファイル1件につき1行。ファイルの中身はもたず、保存先に置く。
+業務のデータは、この行を ref-to で参照してファイルを添付する。名前やサイズは業務のテーブルにもたず、ここから取る。
+一時保存したユーザーと日時は、作成者と作成日時の列で分かる。-->
+    <添付ファイル
+      IsStored="True"
+      UniqueId="5ce0a960-5dfa-4ae8-ad75-23bb12a8ed6d">
+      <!--推測できない値。保存先でのファイルの名前にも使う。-->
+      <識別子
+        IsKey="True"
+        IsNotNull="True"
+        Type="word"
+        UniqueId="5162057b-131a-4b18-91bd-81e5bb6625ae" />
+      <!--アップロードされたときのファイル名。ダウンロードのときのファイル名になる。-->
+      <名前
+        IsNotNull="True"
+        MaxLength="255"
+        Type="word"
+        UniqueId="627d7674-0a1c-47e1-85b6-3ca10a983573" />
+      <!--バイト数-->
+      <サイズ
+        IsNotNull="True"
+        Type="int"
+        UniqueId="09b148a5-7ee6-4154-8285-ada47d8b8044" />
+      <!--Content-Type。アップロードのときにブラウザが送ってきた値をそのまま記録する。-->
+      <種類
+        IsNotNull="True"
+        MaxLength="255"
+        Type="word"
+        UniqueId="fd214f3e-15a1-4102-a380-52fa6a5dbb5c" />
+      <状態
+        IsNotNull="True"
+        Type="添付ファイルの状態"
+        UniqueId="1cad5953-3dd4-44c3-b510-782099c20faf" />
+      <!--参照なしになった日時。ファイルを削除するまでの期間は、ここから数える。-->
+      <参照なし日時
+        Type="datetime"
+        UniqueId="008ee893-40e9-4824-ab51-f60e5a7ee7fd" />
+    </添付ファイル>
+    <!--画面のデータとコマンドの引数から @[添付ファイル](5ce0a960-5dfa-4ae8-ad75-23bb12a8ed6d) を参照するときの参照先。
+単独で検索させると他人のファイルの名前まで見えるので、画面からは呼べないようにしている。-->
+    <添付ファイルRef
+      Custom-7c1f3a2e-5b84-4d0a-9e61-2f8b4c6d1a35="内部処理のみ"
+      IsQueryable="True"
+      UniqueId="0aeb194b-3f9f-44f5-87af-a5366c7f3789">
+      <識別子
+        StringSearchBehavior="Exact"
+        Type="word"
+        UniqueId="201f61a2-2816-400d-8297-936521a057c1" />
+      <名前
+        Type="word"
+        UniqueId="e6003b6b-f7c7-422c-8d9c-823d4cd55e74" />
+      <サイズ
+        Type="int"
+        UniqueId="f6767376-4ba4-422c-801b-59a97c8d9c4d" />
+      <種類
+        Type="word"
+        UniqueId="5739ba3c-a233-4523-acc9-0247b54f2a7a" />
+    </添付ファイルRef>
     <入荷詳細画面初期表示Parameter
       UniqueId="c766195e-c279-4a50-84bb-fcbf46ac9798">
       <入荷ID
@@ -1022,6 +1080,22 @@ Webアプリケーションなので明示的にログアウトしない限り�
         key="3"
         UniqueId="d33c7ab5-0cc3-4391-b03a-ed1dfe215763" />
     </ジョブの状態>
+    <!--@[添付ファイル](5ce0a960-5dfa-4ae8-ad75-23bb12a8ed6d) の状態-->
+    <添付ファイルの状態
+      UniqueId="e523bf40-c8fb-49bb-9db1-27b0688e17e1">
+      <!--アップロードされたが、まだどのデータにも保存されていない。一時保存から24時間が過ぎるとクリーンナップで削除される。-->
+      <一時保存
+        key="0"
+        UniqueId="d40502f1-9286-4f98-9a21-c333ae24f035" />
+      <!--データに添付されている。-->
+      <確定
+        key="1"
+        UniqueId="2e73b137-a687-44b2-aa4f-9e4796acca01" />
+      <!--どのデータからも参照されなくなった。ダウンロードできない。一定期間が過ぎるとクリーンナップで削除される。-->
+      <参照なし
+        key="2"
+        UniqueId="c6ef46e7-97a3-4640-a54f-52688eb0d3f4" />
+    </添付ファイルの状態>
   </StaticEnums>
   <Templates>
     <!--画面の URL。サーバーで組み立てて通知のリンク先に使い、画面のルーティングと他の画面からのリンクもここから組み立てる。サーバーと画面で同じ URL を使うため。
@@ -1049,6 +1123,14 @@ Webアプリケーションなので明示的にログアウトしない限り�
         DisplayName="ジョブのスプールのファイルのダウンロード"
         Template="/api/job/{ジョブID}/spool/{ファイル名}"
         UniqueId="9a4801bb-695d-4404-b0f1-a1a0cf1e9384" />
+      <AttachmentUpload
+        DisplayName="添付ファイルの一時保存"
+        Template="/api/attachment"
+        UniqueId="7a29120a-cca0-455a-aa9e-90e0fed2f8bd" />
+      <AttachmentDownload
+        DisplayName="添付ファイルのダウンロード"
+        Template="/api/attachment/{識別子}"
+        UniqueId="ebb9059e-6cf8-4b7c-bd93-0e15cc784789" />
     </API_URL>
     <!--販売管理の画面の URL。値の決まりは「PAGES_URL」と同じ。-->
     <PAGES_URL_DEMO101
@@ -1178,6 +1260,15 @@ Webアプリケーションなので明示的にログアウトしない限り�
         DisplayName="ジョブ異常終了の通知"
         Template="ジョブ「{ジョブの種類}」が異常終了しました。"
         UniqueId="1f6d6ee8-c11b-4b72-becc-7d8f9e94e4d4" />
+      <!--データに添付しようとしたファイルが、存在しないか、他のユーザーが一時保存したものだったとき-->
+      <AttachmentNotAvailableError
+        DisplayName="添付できないファイルのエラー"
+        Template="添付できないファイルが指定されています。ファイルを選び直してください。"
+        UniqueId="3344709e-2f6f-4ae7-bc3f-d462814300b9" />
+      <AttachmentTooLargeError
+        DisplayName="添付ファイルのサイズ超過エラー"
+        Template="ファイルのサイズが上限（{上限}）を超えています。"
+        UniqueId="ac180d2d-c785-44cc-a963-f68d99a44e27" />
       <JobFailedResult
         DisplayName="ジョブ異常終了の結果"
         Template="エラーが発生したため、異常終了しました。"

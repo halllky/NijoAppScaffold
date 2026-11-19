@@ -13,6 +13,7 @@ import * as 商品在庫増減履歴 from "./models/商品在庫増減履歴"
 import * as 売上一覧 from "./models/売上一覧"
 import * as 従業員Ref from "./models/従業員Ref"
 import * as 従業員マスタ from "./models/従業員マスタ"
+import * as 添付ファイルRef from "./models/添付ファイルRef"
 import * as 通知一覧 from "./models/通知一覧"
 
 /** DisplayData型一覧 */
@@ -29,6 +30,7 @@ export interface TypeMap {
   '通知一覧': 通知一覧.DisplayData
   'ジョブ一覧': ジョブ一覧.DisplayData
   'ジョブ一覧/スプールのファイル': ジョブ一覧.DisplayData_スプールのファイル
+  '添付ファイルRef': 添付ファイルRef.DisplayData
 }
 /** DisplayData新規作成関数 */
 export const create: { [K in QueryModelTypeAll]: (() => TypeMap[K]) } = {
@@ -44,4 +46,5 @@ export const create: { [K in QueryModelTypeAll]: (() => TypeMap[K]) } = {
   '通知一覧': 通知一覧.createNewDisplayData,
   'ジョブ一覧': ジョブ一覧.createNewDisplayData,
   'ジョブ一覧/スプールのファイル': ジョブ一覧.createNewDisplayData_スプールのファイル,
+  '添付ファイルRef': 添付ファイルRef.createNewDisplayData,
 }

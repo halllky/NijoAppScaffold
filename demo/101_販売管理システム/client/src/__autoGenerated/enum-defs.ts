@@ -10,6 +10,7 @@ export interface EnumTypeMap {
   '売上明細区分': 売上明細区分
   '権限区分': 権限区分
   '消費税区分': 消費税区分
+  '添付ファイルの状態': 添付ファイルの状態
 }
 
 /** 列挙体の値マッピング */
@@ -18,6 +19,7 @@ export const EnumValueMap: { [K in keyof EnumTypeMap]: () => EnumTypeMap[K][] } 
   '売上明細区分': () => ['売上', '取消'],
   '権限区分': () => ['システム管理者', '入荷担当', '販売担当'],
   '消費税区分': () => ['非課税', '一般税率', '軽減税率'],
+  '添付ファイルの状態': () => ['一時保存', '確定', '参照なし'],
 }
 
 /** ジョブの状態 */
@@ -58,5 +60,15 @@ export type 消費税区分SearchCondition = {
   非課税?: boolean
   一般税率?: boolean
   軽減税率?: boolean
+}
+
+/** 添付ファイルの状態 */
+export type 添付ファイルの状態 = '一時保存' | '確定' | '参照なし'
+
+/** 添付ファイルの状態の検索条件オブジェクト */
+export type 添付ファイルの状態SearchCondition = {
+  一時保存?: boolean
+  確定?: boolean
+  参照なし?: boolean
 }
 

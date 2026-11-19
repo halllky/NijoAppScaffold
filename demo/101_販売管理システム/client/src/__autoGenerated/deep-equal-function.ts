@@ -29,6 +29,7 @@ import * as 従業員Ref from "./models/従業員Ref"
 import * as 従業員マスタ from "./models/従業員マスタ"
 import * as 従業員一括更新Parameter from "./models/従業員一括更新Parameter"
 import * as 未読通知件数ReturnValue from "./models/未読通知件数ReturnValue"
+import * as 添付ファイルRef from "./models/添付ファイルRef"
 import * as 通知一覧 from "./models/通知一覧"
 import * as 通知既読設定Parameter from "./models/通知既読設定Parameter"
 
@@ -75,6 +76,7 @@ export const deepEqualFunction: {
   '商品在庫増減履歴': 商品在庫増減履歴.deepEqual,
   '通知一覧': 通知一覧.deepEqual,
   'ジョブ一覧': ジョブ一覧.deepEqual,
+  '添付ファイルRef': 添付ファイルRef.deepEqual,
   '入荷詳細': 入荷詳細.deepEqual,
   'パスワード再発行Parameter': パスワード再発行Parameter.deepEqual,
   '従業員一括更新Parameter': 従業員一括更新Parameter.deepEqual,

@@ -57,6 +57,14 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         /// ジョブのスプールのファイルのダウンロード
         /// </summary>
         public static string JobSpoolFile(string ジョブID, string ファイル名) => $"/api/job/{TKind.URL(ジョブID)}/spool/{TKind.URL(ファイル名)}";
+        /// <summary>
+        /// 添付ファイルの一時保存
+        /// </summary>
+        public static string AttachmentUpload() => $"/api/attachment";
+        /// <summary>
+        /// 添付ファイルのダウンロード
+        /// </summary>
+        public static string AttachmentDownload(string 識別子) => $"/api/attachment/{TKind.URL(識別子)}";
     }
     /// <summary>
     /// 画面URL一覧(デモ101専用)
@@ -198,6 +206,17 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         /// ジョブ異常終了の通知
         /// </summary>
         public static string JobFailedNotification(string ジョブの種類) => $"ジョブ「{TKind.文言(ジョブの種類)}」が異常終了しました。";
+        /// <summary>
+        /// 添付できないファイルのエラー
+        /// <para>
+        /// データに添付しようとしたファイルが、存在しないか、他のユーザーが一時保存したものだったとき
+        /// </para>
+        /// </summary>
+        public static string AttachmentNotAvailableError() => $"添付できないファイルが指定されています。ファイルを選び直してください。";
+        /// <summary>
+        /// 添付ファイルのサイズ超過エラー
+        /// </summary>
+        public static string AttachmentTooLargeError(string 上限) => $"ファイルのサイズが上限（{TKind.文言(上限)}）を超えています。";
         /// <summary>
         /// ジョブ異常終了の結果
         /// </summary>
@@ -436,6 +455,14 @@ public static class TemplatePattern {
         /// ジョブのスプールのファイルのダウンロード
         /// </summary>
         public static string JobSpoolFile(string ジョブID, string ファイル名) => $"/api/job/{ジョブID}/spool/{ファイル名}";
+        /// <summary>
+        /// 添付ファイルの一時保存
+        /// </summary>
+        public static string AttachmentUpload() => $"/api/attachment";
+        /// <summary>
+        /// 添付ファイルのダウンロード
+        /// </summary>
+        public static string AttachmentDownload(string 識別子) => $"/api/attachment/{識別子}";
     }
     /// <summary>
     /// 画面URL一覧(デモ101専用)
@@ -577,6 +604,17 @@ public static class TemplatePattern {
         /// ジョブ異常終了の通知
         /// </summary>
         public static string JobFailedNotification(string ジョブの種類) => $"ジョブ「{ジョブの種類}」が異常終了しました。";
+        /// <summary>
+        /// 添付できないファイルのエラー
+        /// <para>
+        /// データに添付しようとしたファイルが、存在しないか、他のユーザーが一時保存したものだったとき
+        /// </para>
+        /// </summary>
+        public static string AttachmentNotAvailableError() => $"添付できないファイルが指定されています。ファイルを選び直してください。";
+        /// <summary>
+        /// 添付ファイルのサイズ超過エラー
+        /// </summary>
+        public static string AttachmentTooLargeError(string 上限) => $"ファイルのサイズが上限（{上限}）を超えています。";
         /// <summary>
         /// ジョブ異常終了の結果
         /// </summary>

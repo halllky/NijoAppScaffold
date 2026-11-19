@@ -51,6 +51,14 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
      * ジョブのスプールのファイルのダウンロード
      */
     JobSpoolFile: ({ ジョブID, ファイル名 }: { ジョブID: string, ファイル名: string }): string => `/api/job/${templateKind.URL(ジョブID)}/spool/${templateKind.URL(ファイル名)}`,
+    /**
+     * 添付ファイルの一時保存
+     */
+    AttachmentUpload: (): string => `/api/attachment`,
+    /**
+     * 添付ファイルのダウンロード
+     */
+    AttachmentDownload: ({ 識別子 }: { 識別子: string }): string => `/api/attachment/${templateKind.URL(識別子)}`,
   },
   /**
    * 画面URL一覧(デモ101専用)
@@ -186,6 +194,16 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
      * ジョブ異常終了の通知
      */
     JobFailedNotification: ({ ジョブの種類 }: { ジョブの種類: string }): string => `ジョブ「${templateKind.文言(ジョブの種類)}」が異常終了しました。`,
+    /**
+     * 添付できないファイルのエラー
+     *
+     * データに添付しようとしたファイルが、存在しないか、他のユーザーが一時保存したものだったとき
+     */
+    AttachmentNotAvailableError: (): string => `添付できないファイルが指定されています。ファイルを選び直してください。`,
+    /**
+     * 添付ファイルのサイズ超過エラー
+     */
+    AttachmentTooLargeError: ({ 上限 }: { 上限: string }): string => `ファイルのサイズが上限（${templateKind.文言(上限)}）を超えています。`,
     /**
      * ジョブ異常終了の結果
      */
@@ -415,6 +433,14 @@ export const TemplatePattern = {
      * ジョブのスプールのファイルのダウンロード
      */
     JobSpoolFile: ({ ジョブID, ファイル名 }: { ジョブID: string, ファイル名: string }): string => `/api/job/${ジョブID}/spool/${ファイル名}`,
+    /**
+     * 添付ファイルの一時保存
+     */
+    AttachmentUpload: (): string => `/api/attachment`,
+    /**
+     * 添付ファイルのダウンロード
+     */
+    AttachmentDownload: ({ 識別子 }: { 識別子: string }): string => `/api/attachment/${識別子}`,
   },
   /**
    * 画面URL一覧(デモ101専用)
@@ -550,6 +576,16 @@ export const TemplatePattern = {
      * ジョブ異常終了の通知
      */
     JobFailedNotification: ({ ジョブの種類 }: { ジョブの種類: string }): string => `ジョブ「${ジョブの種類}」が異常終了しました。`,
+    /**
+     * 添付できないファイルのエラー
+     *
+     * データに添付しようとしたファイルが、存在しないか、他のユーザーが一時保存したものだったとき
+     */
+    AttachmentNotAvailableError: (): string => `添付できないファイルが指定されています。ファイルを選び直してください。`,
+    /**
+     * 添付ファイルのサイズ超過エラー
+     */
+    AttachmentTooLargeError: ({ 上限 }: { 上限: string }): string => `ファイルのサイズが上限（${上限}）を超えています。`,
     /**
      * ジョブ異常終了の結果
      */

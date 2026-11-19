@@ -264,6 +264,9 @@ public partial class MessageSetter : IMessageSetter {
         if (type == typeof(従業員マスタDisplayDataMessages)) return new 従業員マスタDisplayDataMessages(path, context);
         if (type == typeof(従業員マスタSearchConditionMessages)) return new 従業員マスタSearchConditionMessages(path, context);
         if (type == typeof(従業員一括更新ParameterMessages)) return new 従業員一括更新ParameterMessages(path, context);
+        if (type == typeof(添付ファイルRefDisplayDataMessages)) return new 添付ファイルRefDisplayDataMessages(path, context);
+        if (type == typeof(添付ファイルRefSearchConditionMessages)) return new 添付ファイルRefSearchConditionMessages(path, context);
+        if (type == typeof(添付ファイルSaveCommandMessages)) return new 添付ファイルSaveCommandMessages(path, context);
         if (type == typeof(通知SaveCommandMessages)) return new 通知SaveCommandMessages(path, context);
         if (type == typeof(通知一覧DisplayDataMessages)) return new 通知一覧DisplayDataMessages(path, context);
         if (type == typeof(通知一覧SearchConditionMessages)) return new 通知一覧SearchConditionMessages(path, context);
@@ -310,6 +313,9 @@ public partial class MessageSetter : IMessageSetter {
             if (itemType == typeof(従業員マスタDisplayDataMessages)) return new MessageSetterList<従業員マスタDisplayDataMessages>(path, index => new 従業員マスタDisplayDataMessages([.. path, index.ToString()], context), context);
             if (itemType == typeof(従業員マスタSearchConditionMessages)) return new MessageSetterList<従業員マスタSearchConditionMessages>(path, index => new 従業員マスタSearchConditionMessages([.. path, index.ToString()], context), context);
             if (itemType == typeof(従業員一括更新ParameterMessages)) return new MessageSetterList<従業員一括更新ParameterMessages>(path, index => new 従業員一括更新ParameterMessages([.. path, index.ToString()], context), context);
+            if (itemType == typeof(添付ファイルRefDisplayDataMessages)) return new MessageSetterList<添付ファイルRefDisplayDataMessages>(path, index => new 添付ファイルRefDisplayDataMessages([.. path, index.ToString()], context), context);
+            if (itemType == typeof(添付ファイルRefSearchConditionMessages)) return new MessageSetterList<添付ファイルRefSearchConditionMessages>(path, index => new 添付ファイルRefSearchConditionMessages([.. path, index.ToString()], context), context);
+            if (itemType == typeof(添付ファイルSaveCommandMessages)) return new MessageSetterList<添付ファイルSaveCommandMessages>(path, index => new 添付ファイルSaveCommandMessages([.. path, index.ToString()], context), context);
             if (itemType == typeof(通知SaveCommandMessages)) return new MessageSetterList<通知SaveCommandMessages>(path, index => new 通知SaveCommandMessages([.. path, index.ToString()], context), context);
             if (itemType == typeof(通知一覧DisplayDataMessages)) return new MessageSetterList<通知一覧DisplayDataMessages>(path, index => new 通知一覧DisplayDataMessages([.. path, index.ToString()], context), context);
             if (itemType == typeof(通知一覧SearchConditionMessages)) return new MessageSetterList<通知一覧SearchConditionMessages>(path, index => new 通知一覧SearchConditionMessages([.. path, index.ToString()], context), context);
