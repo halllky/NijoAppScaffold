@@ -99,6 +99,7 @@ public partial class 入荷商品一覧DisplayData {
 /// <summary>
 /// 添付書類の画面表示用データ。
 /// </summary>
+[NijoAttr.DisplayName("添付書類")]
 public partial class 入荷詳細の添付書類DisplayData {
     /// <summary>
     /// 画面初期表示から保存までの間でこのインスタンスを識別する番号。

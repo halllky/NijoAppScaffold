@@ -32,6 +32,7 @@ public partial class 入荷詳細 {
     public string? 備考 { get; set; }
     public int? Version { get; set; }
     public List<入荷詳細_入荷商品一覧> 入荷商品一覧 { get; set; } = new();
+    [NijoAttr.DisplayName("添付書類")]
     public List<入荷詳細_入荷詳細の添付書類> 入荷詳細の添付書類 { get; set; } = new();
 }
 /// <summary>
@@ -52,6 +53,7 @@ public partial class 入荷詳細_入荷商品一覧 {
 /// <summary>
 /// 添付書類の構造体。
 /// </summary>
+[NijoAttr.DisplayName("添付書類")]
 public partial class 入荷詳細_入荷詳細の添付書類 {
     public string? 添付書類ID { get; set; }
     [NijoAttr.RefToObject(NijoAttr.RefToObjectAttribute.E_Value.RefTarget)]

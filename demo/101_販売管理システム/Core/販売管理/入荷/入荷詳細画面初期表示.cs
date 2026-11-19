@@ -13,6 +13,8 @@ partial class OverridedApplicationService {
 
         var header = await DbContext.入荷DbSet
             .Include(x => x.担当者)
+            .Include(x => x.入荷の添付書類)
+            .ThenInclude(x => x.ファイル)
             .Include(x => x.RefFrom入荷明細_入荷)
             .ThenInclude(x => x.商品)
             .FirstOrDefaultAsync(x => x.入荷ID == id);
@@ -47,6 +49,21 @@ partial class OverridedApplicationService {
                 Version = detail.Version,
                 ExistsInDatabase = true,
             }).ToList(),
+            // 添付した順に並べる。同じ保存で添付したものは、ファイル名の順にする
+            入荷詳細の添付書類 = header.入荷の添付書類
+                .OrderBy(x => x.CreatedAt)
+                .ThenBy(x => x.ファイル?.名前)
+                .Select(x => new 入荷詳細の添付書類DisplayData {
+                    添付書類ID = x.添付書類ID,
+                    ファイル = new() {
+                        識別子 = x.ファイル?.識別子,
+                        名前 = x.ファイル?.名前,
+                        サイズ = x.ファイル?.サイズ,
+                        種類 = x.ファイル?.種類,
+                    },
+                    備考 = x.備考,
+                    ExistsInDatabase = true,
+                }).ToList(),
         };
     }
 }

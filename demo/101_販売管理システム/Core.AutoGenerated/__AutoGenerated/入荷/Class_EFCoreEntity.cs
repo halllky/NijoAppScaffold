@@ -50,6 +50,7 @@ public partial class 入荷DbEntity {
 
     [NijoAttr.IsNotNull]
     public virtual 従業員DbEntity? 担当者 { get; set; }
+    [NijoAttr.DisplayName("添付書類")]
     public virtual ICollection<入荷の添付書類DbEntity> 入荷の添付書類 { get; set; } = [];
     public virtual ICollection<入荷明細DbEntity> RefFrom入荷明細_入荷 { get; set; } = [];
 
@@ -62,6 +63,7 @@ public partial class 入荷DbEntity {
 /// <summary>
 /// 添付書類の Entity Framework Core エンティティ型。RDBMSのテーブル定義と対応。
 /// </summary>
+[NijoAttr.DisplayName("添付書類")]
 public partial class 入荷の添付書類DbEntity {
     /// <summary>入荷ID</summary>
     [NijoAttr.IsKey, NijoAttr.SequenceName("IN_STOCK_SEQ")]

@@ -10,6 +10,12 @@ partial class OverridedApplicationService {
         header.入荷日時 = param.入荷日時;
         header.担当者 = new() { 従業員番号 = param.担当者.従業員番号 };
         header.備考 = param.備考;
+        // 添付書類。ファイルは画面で選んだ時点で一時保存されており、ここで保存すると確定する
+        header.入荷の添付書類 = param.入荷詳細の添付書類.Select(x => new 入荷の添付書類CreateCommand {
+            添付書類ID = Guid.NewGuid().ToString(),
+            ファイル = new() { 識別子 = x.ファイル.識別子 },
+            備考 = x.備考,
+        }).ToList();
         header.TryValidate(out var validatedHeader, out var headerErrors);
         headerErrors.CopyTo(messages);
 

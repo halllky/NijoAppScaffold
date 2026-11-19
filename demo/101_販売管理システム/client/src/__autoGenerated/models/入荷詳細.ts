@@ -583,7 +583,7 @@ export const metadata = {
       parent: null,
       isOutsideTree: false,
       uniqueId: 'c5017c1b-6651-472b-9d2f-e47185b7fd3b',
-      displayName: '入荷詳細の添付書類',
+      displayName: '添付書類',
       members: ['入荷詳細の添付書類.添付書類ID', '入荷詳細の添付書類.ファイル', '入荷詳細の添付書類.備考'],
     },
     '入荷詳細の添付書類.添付書類ID': {

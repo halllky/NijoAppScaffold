@@ -63,6 +63,7 @@
         UniqueId="12de8c59-0dbc-4b62-b049-b1f484c23990" />
       <!--納品書や検品の写真など、入荷に添付するファイル。何の書類かは決まっていないので、備考に書く。-->
       <添付書類
+        DisplayName="添付書類"
         Type="children"
         UniqueId="3d0f44c5-1a3a-4f25-b31b-2fa3bfed615e">
         <!--UUID-->
@@ -197,6 +198,7 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
           UniqueId="20723b0e-a1c3-4ab5-956c-867f0518aa30" />
       </入荷商品一覧>
       <添付書類
+        DisplayName="添付書類"
         Type="children"
         UniqueId="c5017c1b-6651-472b-9d2f-e47185b7fd3b">
         <!--非表示。UUID。新しく添付した行では空-->

@@ -63,6 +63,7 @@ public partial class 入荷CreateCommand : 入荷SaveCommand, ISaveCommand<Valid
     /// <summary>備考</summary>
     public string? 備考 { get; set; }
     /// <summary>添付書類</summary>
+    [NijoAttr.DisplayName("添付書類")]
     public List<入荷の添付書類CreateCommand> 入荷の添付書類 { get; set; } = [];
 
     /// <summary>
@@ -195,6 +196,7 @@ public partial class 入荷CreateCommand : 入荷SaveCommand, ISaveCommand<Valid
 /// <summary>
 /// 添付書類 の新規登録コマンド
 /// </summary>
+[NijoAttr.DisplayName("添付書類")]
 public partial class 入荷の添付書類CreateCommand {
     /// <summary>添付書類ID</summary>
     [NijoAttr.IsKey]
@@ -235,6 +237,7 @@ public partial class 入荷UpdateCommand : 入荷SaveCommand, ISaveCommand<Valid
     /// <summary>備考</summary>
     public string? 備考 { get; set; }
     /// <summary>添付書類</summary>
+    [NijoAttr.DisplayName("添付書類")]
     public List<入荷の添付書類UpdateCommand> 入荷の添付書類 { get; set; } = [];
 
     /// <summary>
@@ -419,6 +422,7 @@ public partial class 入荷UpdateCommand : 入荷SaveCommand, ISaveCommand<Valid
 /// <summary>
 /// 添付書類 の更新コマンド
 /// </summary>
+[NijoAttr.DisplayName("添付書類")]
 public partial class 入荷の添付書類UpdateCommand {
     /// <summary>添付書類ID</summary>
     [NijoAttr.IsKey]
