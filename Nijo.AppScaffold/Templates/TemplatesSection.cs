@@ -27,8 +27,8 @@ internal sealed class TemplatesSection : Section {
     internal const string TS_KIND_TYPE = "TemplateKind";
     /// <summary>TypeScript の、種類ごとの変換を受け取ってテンプレート文字列を返す関数の名前</summary>
     internal const string TS_FACTORY_FUNCTION = "createTemplates";
-    /// <summary>TypeScript の、引数の位置に渡された文字列をそのまま置く関数を集めたオブジェクトの名前</summary>
-    internal const string TS_PATTERN_OBJECT = "TemplatePattern";
+    /// <summary>C# のクラスと TypeScript のオブジェクトの名前。引数の位置に渡された文字列をそのまま置く関数を集めたもの</summary>
+    internal const string PATTERN_CONTAINER = "TemplatePattern";
     /// <summary>TypeScript の、種類ごとの変換を受け取る引数の名前。テンプレート文字列の引数と同じ名前にはできない</summary>
     internal const string TS_KIND_VARIABLE = "templateKind";
 
@@ -133,14 +133,26 @@ internal sealed class TemplatesSection : Section {
             /// <summary>
             /// nijo.xml の {{E_Section.Templates.ToXmlElementName()}} セクションに定義したテンプレート文字列。
             /// 引数の値は、型引数に渡したクラスの変換を通してから埋め込む。
-            /// アプリからは、型引数を決めた派生クラスを1つ定義し、それを通して使う。
+            /// アプリからは、型引数を決めたこのクラスを using static し、グループのクラスを直接参照して使う。
             /// </summary>
             /// <example>
-            /// public abstract class テンプレート : {{CS_CONTAINER_CLASS}}&lt;TemplateKind&gt;;
+            /// global using static MyApp.{{CS_CONTAINER_CLASS}}&lt;MyApp.TemplateKind&gt;;
             /// </example>
             public abstract class {{CS_CONTAINER_CLASS}}<{{CS_KIND_TYPE_PARAMETER}}> where {{CS_KIND_TYPE_PARAMETER}} : {{CS_KIND_INTERFACE}} {
             {{groups.SelectTextTemplate(group => $$"""
                 {{WithIndent(group.RenderCSharp(CS_KIND_TYPE_PARAMETER))}}
+            """)}}
+            }
+
+            /// <summary>
+            /// nijo.xml の {{E_Section.Templates.ToXmlElementName()}} セクションに定義したテンプレート文字列の、
+            /// 引数の位置に渡された文字列を変換せずにそのまま置くメソッド。引数はすべて文字列で受け取る。
+            /// ASP.NET Core のルート定義（"/api/job/{jobId}"）のように、引数の位置に値以外のものを置くときに使う。
+            /// 変換しないので、利用者が入力した値など、任意の値を渡す用途には使わないこと。
+            /// </summary>
+            public static class {{PATTERN_CONTAINER}} {
+            {{groups.SelectTextTemplate(group => $$"""
+                {{WithIndent(group.RenderCSharpPattern())}}
             """)}}
             }
             """;
@@ -199,7 +211,7 @@ internal sealed class TemplatesSection : Section {
              * 引数の位置に渡された文字列を変換せずにそのまま置く関数。
              * React Router のルート定義（"/uriage/edit/:id"）のように、引数の位置に値以外のものを置くときに使う。
              */
-            export const {{TS_PATTERN_OBJECT}} = {
+            export const {{PATTERN_CONTAINER}} = {
             {{groups.SelectTextTemplate(group => $$"""
               {{WithIndent(group.RenderTypeScriptPattern())}}
             """)}}

@@ -46,6 +46,23 @@ internal sealed class TemplateGroupDef {
     }
 
     /// <summary>
+    /// 引数の位置に渡された文字列をそのまま置くメソッドを持つ、C# の静的クラスとしてレンダリングします。
+    /// </summary>
+    internal string RenderCSharpPattern() {
+        return $$"""
+            {{Element.RenderXmlCommentOrJsDoc(E_CsTs.CSharp)}}
+            public static class {{Name}} {
+            {{GetTemplates().SelectTextTemplate(template => $$"""
+                {{WithIndent(template.RenderCSharpPattern())}}
+            """)}}
+            {{GetChildGroups().SelectTextTemplate(group => $$"""
+                {{WithIndent(group.RenderCSharpPattern())}}
+            """)}}
+            }
+            """;
+    }
+
+    /// <summary>
     /// C# の静的クラスとしてレンダリングします。
     /// </summary>
     internal string RenderCSharp(string kindTypeParameter) {

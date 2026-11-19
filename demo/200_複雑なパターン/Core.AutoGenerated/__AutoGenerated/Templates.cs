@@ -28,10 +28,10 @@ public interface ITemplateKind {
 /// <summary>
 /// nijo.xml の Templates セクションに定義したテンプレート文字列。
 /// 引数の値は、型引数に渡したクラスの変換を通してから埋め込む。
-/// アプリからは、型引数を決めた派生クラスを1つ定義し、それを通して使う。
+/// アプリからは、型引数を決めたこのクラスを using static し、グループのクラスを直接参照して使う。
 /// </summary>
 /// <example>
-/// public abstract class テンプレート : Templates&lt;TemplateKind&gt;;
+/// global using static MyApp.Templates&lt;MyApp.TemplateKind&gt;;
 /// </example>
 public abstract class Templates<TKind> where TKind : ITemplateKind {
     /// <summary>
@@ -174,6 +174,181 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         /// 区分値不在エラー
         /// </summary>
         public static string GenericLookupValueNotFound(string 項目名) => $"{TKind.文言(項目名)} に指定された区分値が存在しません。";
+        /// <summary>
+        /// 楽観排他エラー
+        /// <para>
+        /// データを読み込んだ後に、ほかのユーザーが同じデータを更新していたとき
+        /// </para>
+        /// </summary>
+        public static string ConcurrencyError() => $"ほかのユーザーが更新しました。";
+        /// <summary>
+        /// データ不在エラー
+        /// <para>
+        /// 更新対象・削除対象のデータがデータベース上で見つからなかったとき
+        /// </para>
+        /// </summary>
+        public static string DataNotFoundError() => $"更新対象のデータが見つかりません。";
+        /// <summary>
+        /// 一意制約違反エラー
+        /// </summary>
+        public static string UniqueConstraintError() => $"同じ値のデータが既に存在します。";
+        /// <summary>
+        /// 保存時エラー
+        /// <para>
+        /// 登録・更新・削除のときに、データベースで何らかのエラーが起きたとき。エラーの内容は利用者に見せない
+        /// </para>
+        /// </summary>
+        public static string UnknownUpdateError() => $"登録処理でエラーが発生しました。";
+    }
+}
+
+/// <summary>
+/// nijo.xml の Templates セクションに定義したテンプレート文字列の、
+/// 引数の位置に渡された文字列を変換せずにそのまま置くメソッド。引数はすべて文字列で受け取る。
+/// ASP.NET Core のルート定義（"/api/job/{jobId}"）のように、引数の位置に値以外のものを置くときに使う。
+/// 変換しないので、利用者が入力した値など、任意の値を渡す用途には使わないこと。
+/// </summary>
+public static class TemplatePattern {
+    /// <summary>
+    /// アプリケーションのテンプレート文字列
+    /// <para>
+    /// アプリケーションのテンプレート文字列。入れ子のグループのテスト
+    /// </para>
+    /// </summary>
+    public static class ApplicationTemplates {
+        /// <summary>
+        /// メッセージ
+        /// </summary>
+        public static class Messages {
+            /// <summary>
+            /// 成功メッセージ
+            /// <para>
+            /// 引数が0個の場合のテスト
+            /// </para>
+            /// </summary>
+            public static string Success() => $"正常に処理されました";
+            /// <summary>
+            /// エラーメッセージ
+            /// <para>
+            /// コロンの後ろには開発者向けの情報ではなくアプリケーションのユーザーに向けた文字にすること。
+            /// </para>
+            /// </summary>
+            public static string Error(string 詳細) => $"エラーが発生しました: {詳細}";
+            /// <summary>
+            /// バリデーションエラー
+            /// <para>
+            /// 引数が複数ある場合のテスト
+            /// </para>
+            /// </summary>
+            public static string ValidationError(string フィールド名, string エラーの種類, string 詳細) => $"{フィールド名}フィールドで{エラーの種類}エラーが発生しました。詳細: {詳細}";
+            /// <summary>
+            /// メンテナンスメッセージ
+            /// </summary>
+            public static string SystemMaintenance() => $"システムメンテナンス中です。しばらくお待ちください。";
+        }
+        public static class API {
+            /// <summary>
+            /// 認証ヘッダー
+            /// </summary>
+            public static string AuthHeader(string トークン) => $"Bearer {トークン}";
+            /// <summary>
+            /// JSONフォーマット
+            /// <para>
+            /// 引用符と波括弧そのものを含む文字列、外側のグループのテンプレートの種類の上書きのテスト
+            /// </para>
+            /// </summary>
+            public static string JsonFormat(string メッセージ, string 時刻) => $"{{\"message\": \"{メッセージ}\", \"timestamp\": \"{時刻}\"}}";
+        }
+    }
+    /// <summary>
+    /// システムメッセージ
+    /// <para>
+    /// システムメッセージ
+    /// </para>
+    /// </summary>
+    public static class SystemMessages {
+        /// <summary>
+        /// 患者未発見エラー
+        /// <para>
+        /// 患者管理関連
+        /// </para>
+        /// </summary>
+        public static string PatientNotFound(string 患者ID) => $"患者ID「{患者ID}」が見つかりません";
+        /// <summary>
+        /// 患者登録完了
+        /// </summary>
+        public static string PatientRegistered(string 患者名) => $"患者「{患者名}」を正常に登録しました";
+        /// <summary>
+        /// 機器メンテナンス通知
+        /// <para>
+        /// 機器管理関連
+        /// </para>
+        /// </summary>
+        public static string EquipmentMaintenance(string 機器名, string 最終点検日) => $"機器「{機器名}」のメンテナンスが必要です。最終点検日: {最終点検日}";
+        /// <summary>
+        /// 在庫アラート
+        /// <para>
+        /// 整数の引数のテスト
+        /// </para>
+        /// </summary>
+        public static string StockAlert(string 品目名, string 残数) => $"在庫不足: {品目名}の残り数量が{残数}個です";
+        /// <summary>
+        /// 予約確認
+        /// <para>
+        /// 予約関連。同じ引数を2回使う場合のテスト
+        /// </para>
+        /// </summary>
+        public static string ReservationConfirmed(string 予約番号, string 日時) => $"予約を確定しました。予約番号: {予約番号}、日時: {日時}（予約番号 {予約番号} は控えておいてください）";
+        /// <summary>
+        /// 予約キャンセル
+        /// </summary>
+        public static string ReservationCancelled() => $"予約がキャンセルされました";
+        /// <summary>
+        /// 支払受付
+        /// <para>
+        /// 静的区分と値オブジェクトの引数のテスト。静的区分は C# と TypeScript で表し方が異なる
+        /// </para>
+        /// </summary>
+        public static string PaymentAccepted(string 支払方法, string 担当者) => $"{支払方法}での支払いを受け付けました（担当: {担当者}）";
+        /// <summary>
+        /// スクリプトテンプレート
+        /// <para>
+        /// バックティック（`）と、波括弧そのものを含むテンプレート文字列のテスト
+        /// </para>
+        /// </summary>
+        public static string ScriptTemplate(string 名前) => $"console.log(`患者ID: ${{patientId}}, 名前: {名前}`);";
+        /// <summary>
+        /// JSONテンプレート
+        /// <para>
+        /// ダブルクォート（"）を含むテンプレート文字列のテスト
+        /// </para>
+        /// </summary>
+        public static string JsonTemplate(string 患者名) => $"{{\"patientName\": \"{患者名}\", \"status\": \"active\"}}";
+    }
+    /// <summary>
+    /// メッセージ
+    /// <para>
+    /// 利用者に見せるメッセージ。名前がメッセージの ID になる。
+    /// 入力チェックや保存処理の共通部分で使うもの。業務ごとのメッセージは、別のグループに定義する。
+    /// </para>
+    /// </summary>
+    public static class MSG {
+        /// <summary>
+        /// 必須入力エラー
+        /// </summary>
+        public static string RequiredError(string 項目名) => $"{項目名} を入力してください。";
+        /// <summary>
+        /// 文字数超過エラー
+        /// </summary>
+        public static string MaxLengthError(string 項目名, string 最大文字数) => $"{項目名} は {最大文字数} 文字以内で入力してください。";
+        /// <summary>
+        /// 桁数超過エラー
+        /// </summary>
+        public static string DigitsError(string 項目名, string 整数部の桁数, string 小数部の桁数) => $"{項目名} は整数部 {整数部の桁数} 桁、小数部 {小数部の桁数} 桁以内で入力してください。";
+        /// <summary>
+        /// 区分値不在エラー
+        /// </summary>
+        public static string GenericLookupValueNotFound(string 項目名) => $"{項目名} に指定された区分値が存在しません。";
         /// <summary>
         /// 楽観排他エラー
         /// <para>

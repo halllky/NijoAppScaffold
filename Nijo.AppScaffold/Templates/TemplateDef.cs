@@ -93,14 +93,28 @@ internal sealed class TemplateDef {
     /// 種類ごとの変換は、テンプレートを入れるクラスの型引数から呼ぶ。
     /// </summary>
     internal string RenderCSharp(string kindTypeParameter) {
-        var parameters = Parameters.Select(p => $"{GetParameterType(p).CsType} {p.Name}");
+        return RenderCSharpMethod(
+            p => GetParameterType(p).CsType,
+            p => $"{kindTypeParameter}.{Kind}({p.Name})");
+    }
+
+    /// <summary>
+    /// 引数の位置に、渡された文字列を変換せずにそのまま置く、C# の静的メソッドをレンダリングします。
+    /// ASP.NET Core のルート定義（"/api/job/{jobId}"）のように、引数の位置に値以外のものを置くときに使う。
+    /// </summary>
+    internal string RenderCSharpPattern() {
+        return RenderCSharpMethod(_ => "string", p => p.Name);
+    }
+
+    private string RenderCSharpMethod(Func<Placeholder, string> getParamType, Func<Placeholder, string> renderEmbedded) {
+        var parameters = Parameters.Select(p => $"{getParamType(p)} {p.Name}");
         var body = _parts.Select(part => part switch {
             Literal literal => literal.Text
                 .Replace("\\", "\\\\")
                 .Replace("\"", "\\\"")
                 .Replace("{", "{{")
                 .Replace("}", "}}"),
-            Placeholder p => $"{{{kindTypeParameter}.{Kind}({p.Name})}}",
+            Placeholder p => $"{{{renderEmbedded(p)}}}",
             _ => throw new InvalidOperationException(),
         });
 
