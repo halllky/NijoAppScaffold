@@ -12,7 +12,7 @@ namespace MyApp.WebApi;
 ///
 /// HTTPリクエスト・レスポンスと、処理の引数・戻り値・メッセージとの変換方法は NijoAppScaffold として決まりがあるわけではなく、
 /// クライアント側の呼び出し処理と整合性がとれていればよい。
-/// ここでは、添付ファイルの送信（multipart/form-data）と、確認メッセージを挟む2回のリクエストと、
+/// ここでは、引数を JSON で受け取り、確認メッセージを挟む2回のリクエストと、
 /// 同じ操作が処理済みであること（<see cref="AlreadyExecutedException"/>）と、
 /// 呼び出す権限が無いこと（<see cref="OperationForbiddenException"/>）の応答に対応している。
 ///
@@ -30,11 +30,6 @@ namespace MyApp.WebApi;
 /// </summary>
 public static class OperationEndpoints {
 
-    /// <summary>
-    /// クライアント側から送られてくるパラメータは
-    /// Content-Type: multipart/form-data のリクエストボディのこの名前のセクションにJSONで入っている
-    /// </summary>
-    private const string FORM_FIELD_PARAMETER = "parameter";
     /// <summary>
     /// 利用者が確認済みであることを表すクエリパラメータ。
     /// 確認メッセージが承諾された後の本処理を行うHTTPリクエストに付される。
@@ -89,19 +84,15 @@ public static class OperationEndpoints {
         // ---------------------------------------------------------
         // HTTPリクエストボディを処理の引数に変換する
         // ---------------------------------------------------------
-        if (!httpContext.Request.HasFormContentType) {
-            app.Log.LogWarning("リクエストの Content-Type が multipart/form-data ではありません。");
-            return Results.BadRequest($"リクエストのContent-Typeは multipart/form-data で、セクション '{FORM_FIELD_PARAMETER}' を含んでいる必要があります。");
-        }
-        var form = await httpContext.Request.ReadFormAsync(httpContext.RequestAborted);
-        if (!form.TryGetValue(FORM_FIELD_PARAMETER, out var parameterSection)) {
-            app.Log.LogWarning("リクエストに '{FormFieldParameter}' セクションが含まれていません。", FORM_FIELD_PARAMETER);
-            return Results.BadRequest($"リクエストのContent-Typeは multipart/form-data で、セクション '{FORM_FIELD_PARAMETER}' を含んでいる必要があります。");
+        // 添付ファイルは事前に一時保存の API で送られ、引数には識別子だけが入っているので、引数は JSON だけで受け取る
+        if (!httpContext.Request.HasJsonContentType()) {
+            app.Log.LogWarning("リクエストの Content-Type が application/json ではありません。");
+            return Results.BadRequest("リクエストの Content-Type は application/json である必要があります。");
         }
 
         TParameter parameter;
         try {
-            parameter = JsonSerializer.Deserialize<TParameter>(parameterSection.ToString(), jsonOptions)
+            parameter = await JsonSerializer.DeserializeAsync<TParameter>(httpContext.Request.Body, jsonOptions, httpContext.RequestAborted)
                 ?? throw new JsonException("リクエストボディが null です。");
 
             app.Log.LogDebug("HTTP REQUEST BODY DATA: {DataSection}", app.SerializeForLog(parameter));
