@@ -203,6 +203,56 @@ namespace MyApp.Migrations {
                 b.ToTable("入荷", (string)null);
             });
 
+            modelBuilder.Entity("MyApp.入荷の添付書類DbEntity", b => {
+                b.Property<string>("Parent_入荷ID")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("Parent_入荷ID")
+                    .HasColumnOrder(0);
+
+                b.Property<string>("添付書類ID")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("添付書類ID")
+                    .HasColumnOrder(1);
+
+                b.Property<string>("CreateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreateUser")
+                    .HasColumnOrder(5);
+
+                b.Property<DateTime?>("CreatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("CreatedAt")
+                    .HasColumnOrder(4);
+
+                b.Property<string>("UpdateUser")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdateUser")
+                    .HasColumnOrder(7);
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("UpdatedAt")
+                    .HasColumnOrder(6);
+
+                b.Property<string>("ファイル_識別子")
+                    .IsRequired()
+                    .HasColumnType("TEXT")
+                    .HasColumnName("ファイル_識別子")
+                    .HasColumnOrder(2);
+
+                b.Property<string>("備考")
+                    .HasColumnType("TEXT")
+                    .HasColumnName("備考")
+                    .HasColumnOrder(3);
+
+                b.HasKey("Parent_入荷ID", "添付書類ID")
+                    .HasName("PK_添付書類");
+
+                b.HasIndex("ファイル_識別子");
+
+                b.ToTable("添付書類", (string)null);
+            });
+
             modelBuilder.Entity("MyApp.入荷明細DbEntity", b => {
                 b.Property<string>("入荷明細ID")
                     .HasColumnType("TEXT")
@@ -924,6 +974,25 @@ namespace MyApp.Migrations {
                 b.Navigation("担当者");
             });
 
+            modelBuilder.Entity("MyApp.入荷の添付書類DbEntity", b => {
+                b.HasOne("MyApp.入荷DbEntity", "Parent")
+                    .WithMany("入荷の添付書類")
+                    .HasForeignKey("Parent_入荷ID")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_入荷_添付書類");
+
+                b.HasOne("MyApp.添付ファイルDbEntity", "ファイル")
+                    .WithMany("RefFrom入荷の添付書類_ファイル")
+                    .HasForeignKey("ファイル_識別子")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_添付ファイル_添付書類_XF12EBE1");
+
+                b.Navigation("Parent");
+
+                b.Navigation("ファイル");
+            });
+
             modelBuilder.Entity("MyApp.入荷明細DbEntity", b => {
                 b.HasOne("MyApp.入荷DbEntity", "入荷")
                     .WithMany("RefFrom入荷明細_入荷")
@@ -1042,6 +1111,8 @@ namespace MyApp.Migrations {
 
             modelBuilder.Entity("MyApp.入荷DbEntity", b => {
                 b.Navigation("RefFrom入荷明細_入荷");
+
+                b.Navigation("入荷の添付書類");
             });
 
             modelBuilder.Entity("MyApp.入荷明細DbEntity", b => {
@@ -1080,6 +1151,10 @@ namespace MyApp.Migrations {
                 b.Navigation("RefFrom売上_担当者");
 
                 b.Navigation("従業員の権限");
+            });
+
+            modelBuilder.Entity("MyApp.添付ファイルDbEntity", b => {
+                b.Navigation("RefFrom入荷の添付書類_ファイル");
             });
 #pragma warning restore 612, 618
         }

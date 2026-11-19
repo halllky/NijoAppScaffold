@@ -8,6 +8,7 @@ import type * as Util from ".."
 import * as EnumDefs from "../enum-defs"
 import * as 商品 from "./商品"
 import * as 従業員Ref from "./従業員Ref"
+import * as 添付ファイルRef from "./添付ファイルRef"
 
 //#region 型定義
 //#region 構造体定義
@@ -19,6 +20,7 @@ export type Structure = {
   備考: string | undefined
   Version: string | undefined
   入荷商品一覧: Structure_入荷商品一覧[]
+  入荷詳細の添付書類: Structure_入荷詳細の添付書類[]
 }
 /** 入荷商品一覧の構造体 */
 export type Structure_入荷商品一覧 = {
@@ -29,6 +31,12 @@ export type Structure_入荷商品一覧 = {
   消費税区分: EnumDefs.消費税区分 | undefined
   備考: string | undefined
   Version: string | undefined
+}
+/** 添付書類の構造体 */
+export type Structure_入荷詳細の添付書類 = {
+  添付書類ID: string | undefined
+  ファイル: 添付ファイルRef.RefTarget
+  備考: string | undefined
 }
 //#endregion 構造体定義
 
@@ -42,6 +50,7 @@ export function createNewStructure(): Structure {
     備考: undefined,
     Version: undefined,
     入荷商品一覧: [],
+    入荷詳細の添付書類: [],
   }
 }
 /** 入荷商品一覧の構造体の新しいインスタンスを作成します。 */
@@ -54,6 +63,14 @@ export function createNewStructure_入荷商品一覧(): Structure_入荷商品�
     消費税区分: undefined,
     備考: undefined,
     Version: undefined,
+  }
+}
+/** 添付書類の構造体の新しいインスタンスを作成します。 */
+export function createNewStructure_入荷詳細の添付書類(): Structure_入荷詳細の添付書類 {
+  return {
+    添付書類ID: undefined,
+    ファイル: 添付ファイルRef.createNewRefTarget(),
+    備考: undefined,
   }
 }
 //#endregion 構造体新規作成用関数
@@ -80,6 +97,8 @@ export type DisplayData = {
   Version?: string | null
   /** 入荷商品一覧 */
   入荷商品一覧: DisplayData_入荷商品一覧[]
+  /** 添付書類 */
+  入荷詳細の添付書類: DisplayData_入荷詳細の添付書類[]
 
   /** このデータがDBに保存済みかどうか */
   existsInDatabase: boolean
@@ -106,6 +125,28 @@ export type DisplayData_入荷商品一覧 = {
    * 楽観排他用
    */
   Version?: string | null
+
+  /** このデータがDBに保存済みかどうか */
+  existsInDatabase: boolean
+  /** このデータに更新がかかっているかどうか */
+  willBeChanged: boolean
+  /** このデータが更新確定時に削除されるかどうか */
+  willBeDeleted: boolean
+}
+/** 添付書類の画面表示用データ。 */
+export type DisplayData_入荷詳細の添付書類 = {
+  /**
+   * 画面初期表示から保存までの間でこのインスタンスを識別する番号。
+   * GUIでのでの利用を想定している。例えば通常の主キーはデータベース保存前は未定義であり
+   * エラーメッセージとの紐づけなどに使用できないため、そういった用途に使用する。
+   */
+  instanceId: string
+  /**
+   * 非表示。UUID。新しく添付した行では空
+   */
+  添付書類ID?: string | null
+  ファイル: 添付ファイルRef.RefTarget
+  備考?: string | null
 
   /** このデータがDBに保存済みかどうか */
   existsInDatabase: boolean
@@ -145,6 +186,7 @@ export function createNewDisplayData(): DisplayData {
     willBeChanged: true,
     willBeDeleted: false,
     入荷商品一覧: [],
+    入荷詳細の添付書類: [],
   }
 }
 /** 入荷商品一覧の画面表示用データの新しいインスタンスを作成します。 */
@@ -169,6 +211,29 @@ export function createNewDisplayData_入荷商品一覧(): DisplayData_入荷商
     消費税区分: null,
     備考: '',
     Version: '',
+    existsInDatabase: false,
+    willBeChanged: true,
+    willBeDeleted: false,
+  }
+}
+/** 添付書類の画面表示用データの新しいインスタンスを作成します。 */
+export function createNewDisplayData_入荷詳細の添付書類(): DisplayData_入荷詳細の添付書類 {
+  // タイムスタンプ(ミリ秒) + ランダム文字列 で一意のIDを生成
+  function generateRandomUniqueId(): string {
+    return [
+      Date.now().toString(36).substring(0, 8),
+      Math.random().toString(36).substring(2, 6),
+      Math.random().toString(36).substring(2, 6),
+      Math.random().toString(36).substring(2, 6),
+      Math.random().toString(36).replace('.', ''),
+    ].join('-')
+  }
+
+  return {
+    instanceId: generateRandomUniqueId(),
+    添付書類ID: '',
+    ファイル: 添付ファイルRef.createNewRefTarget(),
+    備考: '',
     existsInDatabase: false,
     willBeChanged: true,
     willBeDeleted: false,
@@ -240,6 +305,39 @@ export function deepEqual(left: DisplayData, right: DisplayData, option?: Util.D
       areEqual = false;
     }
   }
+  
+  // 添付書類 の等価比較
+  // 以下いずれかに該当すれば変更ありと判定
+  // * 配列の長さが変わっている
+  // * 要素の並び替えが発生している（instanceId 基準）
+  // * 配列の要素を instanceId で突合しそれぞれの値を比較
+  const leftIds2 = left.入荷詳細の添付書類?.map(x => x.instanceId) ?? [];
+  const rightIds2 = right.入荷詳細の添付書類?.map(x => x.instanceId) ?? [];
+  if (leftIds2.length !== rightIds2.length) {
+    areEqual = false;
+  } else {
+    for (let i = 0; i < leftIds2.length; i++) {
+      if (leftIds2[i] !== rightIds2[i]) {
+        areEqual = false;
+        break;
+      }
+    }
+  }
+  
+  const leftDict2 = new Map(left.入荷詳細の添付書類?.map(x => [x.instanceId, x]) ?? []);
+  const rightDict2 = new Map(right.入荷詳細の添付書類?.map(x => [x.instanceId, x]) ?? []);
+  for (const instanceId2 of Array.from(new Set([...leftIds2, ...rightIds2]))) {
+    const x2 = leftDict2.get(instanceId2);
+    const y2 = rightDict2.get(instanceId2);
+    if (!x2 && y2 && option?.setRightObjectWillBeChanged) y2.willBeChanged = true;
+    if (!x2 || !y2) continue;
+    if (areEqual入荷詳細の添付書類(x2, y2, compareFunction)) {
+      if (option?.setRightObjectWillBeChanged) y2.willBeChanged = false;
+    } else {
+      if (option?.setRightObjectWillBeChanged) y2.willBeChanged = true;
+      areEqual = false;
+    }
+  }
 
   return areEqual;
 
@@ -271,6 +369,17 @@ export function deepEqual(left: DisplayData, right: DisplayData, option?: Util.D
     if ((left.willBeDeleted ?? false) !== (right.willBeDeleted ?? false)) return false;
     return true;
   }
+
+  function areEqual入荷詳細の添付書類(left: DisplayData_入荷詳細の添付書類, right: DisplayData_入荷詳細の添付書類, equals: Exclude<Util.DisplayDataDeepEqualOption["compareFunction"], undefined>): boolean {
+    if (!equals('Word', left.添付書類ID, right.添付書類ID)) return false;
+    if (!equals('Word', left.ファイル?.識別子, right.ファイル?.識別子)) return false;
+    if (!equals('Word', left.ファイル?.名前, right.ファイル?.名前)) return false;
+    if (!equals('Integer', left.ファイル?.サイズ, right.ファイル?.サイズ)) return false;
+    if (!equals('Word', left.ファイル?.種類, right.ファイル?.種類)) return false;
+    if (!equals('Word', left.備考, right.備考)) return false;
+    if ((left.willBeDeleted ?? false) !== (right.willBeDeleted ?? false)) return false;
+    return true;
+  }
 }
 //#endregion ディープイコール関数
 
@@ -285,7 +394,7 @@ export const metadata = {
     uniqueId: 'bf2453f1-2a89-4209-ab79-00d526fd15a9',
     displayName: '入荷詳細',
     comment: '入荷詳細画面のデータ構造。',
-    members: ['入荷ID', '入荷日時', '担当者', '備考', 'Version', '入荷商品一覧'],
+    members: ['入荷ID', '入荷日時', '担当者', '備考', 'Version', '入荷商品一覧', '入荷詳細の添付書類'],
   },
   displayData: {
     '入荷ID': {
@@ -468,6 +577,74 @@ export const metadata = {
       type: 'int',
       displayName: 'Version',
       comment: '楽観排他用',
+    },
+    '入荷詳細の添付書類': {
+      kind: 'children',
+      parent: null,
+      isOutsideTree: false,
+      uniqueId: 'c5017c1b-6651-472b-9d2f-e47185b7fd3b',
+      displayName: '入荷詳細の添付書類',
+      members: ['入荷詳細の添付書類.添付書類ID', '入荷詳細の添付書類.ファイル', '入荷詳細の添付書類.備考'],
+    },
+    '入荷詳細の添付書類.添付書類ID': {
+      kind: 'value',
+      parent: '入荷詳細の添付書類',
+      isOutsideTree: false,
+      uniqueId: '631597bc-b158-43a3-beb3-e0353819e0e6',
+      type: 'word',
+      displayName: '添付書類ID',
+      comment: '非表示。UUID。新しく添付した行では空',
+    },
+    '入荷詳細の添付書類.ファイル': {
+      kind: 'ref',
+      parent: '入荷詳細の添付書類',
+      isOutsideTree: false,
+      uniqueId: 'ce5e0863-6de6-4852-bd57-2f696cef2c09',
+      refTo: 'ref-to:添付ファイルRef',
+      displayName: 'ファイル',
+      refToObject: 'RefTarget',
+      members: ['入荷詳細の添付書類.ファイル.識別子', '入荷詳細の添付書類.ファイル.名前', '入荷詳細の添付書類.ファイル.サイズ', '入荷詳細の添付書類.ファイル.種類'],
+    },
+    '入荷詳細の添付書類.ファイル.識別子': {
+      kind: 'value',
+      parent: '入荷詳細の添付書類.ファイル',
+      isOutsideTree: true,
+      uniqueId: '201f61a2-2816-400d-8297-936521a057c1',
+      type: 'word',
+      displayName: '識別子',
+      stringSearchBehavior: 'Exact',
+    },
+    '入荷詳細の添付書類.ファイル.名前': {
+      kind: 'value',
+      parent: '入荷詳細の添付書類.ファイル',
+      isOutsideTree: true,
+      uniqueId: 'e6003b6b-f7c7-422c-8d9c-823d4cd55e74',
+      type: 'word',
+      displayName: '名前',
+    },
+    '入荷詳細の添付書類.ファイル.サイズ': {
+      kind: 'value',
+      parent: '入荷詳細の添付書類.ファイル',
+      isOutsideTree: true,
+      uniqueId: 'f6767376-4ba4-422c-801b-59a97c8d9c4d',
+      type: 'int',
+      displayName: 'サイズ',
+    },
+    '入荷詳細の添付書類.ファイル.種類': {
+      kind: 'value',
+      parent: '入荷詳細の添付書類.ファイル',
+      isOutsideTree: true,
+      uniqueId: '5739ba3c-a233-4523-acc9-0247b54f2a7a',
+      type: 'word',
+      displayName: '種類',
+    },
+    '入荷詳細の添付書類.備考': {
+      kind: 'value',
+      parent: '入荷詳細の添付書類',
+      isOutsideTree: false,
+      uniqueId: '1cffa914-040b-48d4-ab23-99767a160434',
+      type: 'word',
+      displayName: '備考',
     },
   },
 } as const satisfies Util.AggregateMetadata.Entry

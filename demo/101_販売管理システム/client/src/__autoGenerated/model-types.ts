@@ -8,15 +8,15 @@
 export type DataModelType
   = '商品'
   | '従業員'
-  | '入荷'
-  | '入荷明細'
-  | '売上'
-  | '在庫調整'
   | 'セッション'
   | '冪等キー'
   | '通知'
   | 'ジョブ'
   | '添付ファイル'
+  | '入荷'
+  | '入荷明細'
+  | '売上'
+  | '在庫調整'
 
 /** QueryModelの種類の一覧。ルート集約のみ。 */
 export type QueryModelType
@@ -52,6 +52,7 @@ export type ReferedQueryModelType
   = 'ref-to:商品'
   | 'ref-to:従業員Ref'
   | 'ref-to:従業員マスタ'
+  | 'ref-to:添付ファイルRef'
 
 /** CommandModelの種類の一覧 */
 export type CommandModelType
@@ -114,15 +115,15 @@ export function getDataModelTypeList(): DataModelType[] {
   return [
     '商品',
     '従業員',
-    '入荷',
-    '入荷明細',
-    '売上',
-    '在庫調整',
     'セッション',
     '冪等キー',
     '通知',
     'ジョブ',
     '添付ファイル',
+    '入荷',
+    '入荷明細',
+    '売上',
+    '在庫調整',
   ]
 }
 

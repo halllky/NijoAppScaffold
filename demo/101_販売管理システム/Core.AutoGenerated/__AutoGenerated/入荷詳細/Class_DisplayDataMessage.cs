@@ -34,6 +34,9 @@ public class 入荷詳細Messages : MessageSetter {
         this.入荷商品一覧 = new MessageSetterList<入荷商品一覧Messages>([.. path, "入荷商品一覧"], rowIndex => {
             return new 入荷商品一覧Messages([.. path, "入荷商品一覧", rowIndex.ToString()], context);
         }, context);
+        this.入荷詳細の添付書類 = new MessageSetterList<入荷詳細の添付書類Messages>([.. path, "入荷詳細の添付書類"], rowIndex => {
+            return new 入荷詳細の添付書類Messages([.. path, "入荷詳細の添付書類", rowIndex.ToString()], context);
+        }, context);
     }
 
     /// <summary>入荷IDに対して発生したメッセージの入れ物</summary>
@@ -48,6 +51,8 @@ public class 入荷詳細Messages : MessageSetter {
     public IMessageSetter Version { get; }
     /// <summary>入荷商品一覧に対して発生したメッセージの入れ物</summary>
     public IMessageSetterList<入荷商品一覧Messages> 入荷商品一覧 { get; }
+    /// <summary>入荷詳細の添付書類に対して発生したメッセージの入れ物</summary>
+    public IMessageSetterList<入荷詳細の添付書類Messages> 入荷詳細の添付書類 { get; }
 }
 /// <summary>
 /// 入荷商品一覧 のデータ構造と対応したメッセージの入れ物
@@ -77,5 +82,22 @@ public class 入荷商品一覧Messages : MessageSetter {
     public IMessageSetter 備考 { get; }
     /// <summary>Versionに対して発生したメッセージの入れ物</summary>
     public IMessageSetter Version { get; }
+}
+/// <summary>
+/// 添付書類 のデータ構造と対応したメッセージの入れ物
+/// </summary>
+public class 入荷詳細の添付書類Messages : MessageSetter {
+    public 入荷詳細の添付書類Messages(IEnumerable<string> path, MessageContainer context) : base(path, context) {
+        this.添付書類ID = new MessageSetter([.. path, "添付書類ID"], context);
+        this.ファイル = new MessageSetter([.. path, "ファイル"], context);
+        this.備考 = new MessageSetter([.. path, "備考"], context);
+    }
+
+    /// <summary>添付書類IDに対して発生したメッセージの入れ物</summary>
+    public IMessageSetter 添付書類ID { get; }
+    /// <summary>ファイルに対して発生したメッセージの入れ物</summary>
+    public IMessageSetter ファイル { get; }
+    /// <summary>備考に対して発生したメッセージの入れ物</summary>
+    public IMessageSetter 備考 { get; }
 }
 #endregion 構造体のコマンド引数用メッセージの入れ物クラス

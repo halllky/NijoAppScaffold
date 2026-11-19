@@ -61,6 +61,23 @@
       <備考
         Type="description"
         UniqueId="12de8c59-0dbc-4b62-b049-b1f484c23990" />
+      <!--納品書や検品の写真など、入荷に添付するファイル。何の書類かは決まっていないので、備考に書く。-->
+      <添付書類
+        Type="children"
+        UniqueId="3d0f44c5-1a3a-4f25-b31b-2fa3bfed615e">
+        <!--UUID-->
+        <添付書類ID
+          IsKey="True"
+          Type="word"
+          UniqueId="a91390b4-54d4-4503-9997-e40f95a0f697" />
+        <ファイル
+          IsNotNull="True"
+          Type="ref-to:添付ファイル"
+          UniqueId="5c813b85-a863-4dba-b56f-c2f7ceb98c04" />
+        <備考
+          Type="word"
+          UniqueId="716b5f41-2922-4bf5-aeb3-cdf08816b46c" />
+      </添付書類>
     </入荷>
     <!--売上1回分のデータ。
 toCの取引のため相手方（顧客）の情報は含んでいない。-->
@@ -179,6 +196,21 @@ toCの取引のため相手方（顧客）の情報は含んでいない。-->
           Type="int"
           UniqueId="20723b0e-a1c3-4ab5-956c-867f0518aa30" />
       </入荷商品一覧>
+      <添付書類
+        Type="children"
+        UniqueId="c5017c1b-6651-472b-9d2f-e47185b7fd3b">
+        <!--非表示。UUID。新しく添付した行では空-->
+        <添付書類ID
+          Type="word"
+          UniqueId="631597bc-b158-43a3-beb3-e0353819e0e6" />
+        <ファイル
+          RefToObject="RefTarget"
+          Type="ref-to:添付ファイルRef"
+          UniqueId="ce5e0863-6de6-4852-bd57-2f696cef2c09" />
+        <備考
+          Type="word"
+          UniqueId="1cffa914-040b-48d4-ab23-99767a160434" />
+      </添付書類>
     </入荷詳細>
     <従業員
       IsStored="True"

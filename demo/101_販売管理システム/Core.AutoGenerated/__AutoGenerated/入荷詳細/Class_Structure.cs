@@ -32,6 +32,7 @@ public partial class 入荷詳細 {
     public string? 備考 { get; set; }
     public int? Version { get; set; }
     public List<入荷詳細_入荷商品一覧> 入荷商品一覧 { get; set; } = new();
+    public List<入荷詳細_入荷詳細の添付書類> 入荷詳細の添付書類 { get; set; } = new();
 }
 /// <summary>
 /// 入荷商品一覧の構造体。
@@ -47,5 +48,14 @@ public partial class 入荷詳細_入荷商品一覧 {
     public 消費税区分? 消費税区分 { get; set; }
     public string? 備考 { get; set; }
     public int? Version { get; set; }
+}
+/// <summary>
+/// 添付書類の構造体。
+/// </summary>
+public partial class 入荷詳細_入荷詳細の添付書類 {
+    public string? 添付書類ID { get; set; }
+    [NijoAttr.RefToObject(NijoAttr.RefToObjectAttribute.E_Value.RefTarget)]
+    public 添付ファイルRefRefTarget ファイル { get; set; } = new();
+    public string? 備考 { get; set; }
 }
 #endregion 構造体定義

@@ -30,6 +30,9 @@ public class 入荷SaveCommandMessages : MessageSetter {
         this.入荷日時 = new MessageSetter([.. path, "入荷日時"], context);
         this.担当者 = new MessageSetter([.. path, "担当者"], context);
         this.備考 = new MessageSetter([.. path, "備考"], context);
+        this.入荷の添付書類 = new MessageSetterList<入荷の添付書類SaveCommandMessages>([.. path, "入荷の添付書類"], rowIndex => {
+            return new 入荷の添付書類SaveCommandMessages([.. path, "入荷の添付書類", rowIndex.ToString()], context);
+        }, context);
     }
 
     /// <summary>入荷IDに対して発生したメッセージの入れ物</summary>
@@ -38,6 +41,25 @@ public class 入荷SaveCommandMessages : MessageSetter {
     public IMessageSetter 入荷日時 { get; }
     /// <summary>担当者に対して発生したメッセージの入れ物</summary>
     public IMessageSetter 担当者 { get; }
+    /// <summary>備考に対して発生したメッセージの入れ物</summary>
+    public IMessageSetter 備考 { get; }
+    /// <summary>添付書類に対して発生したメッセージの入れ物</summary>
+    public IMessageSetterList<入荷の添付書類SaveCommandMessages> 入荷の添付書類 { get; }
+}
+/// <summary>
+/// 添付書類 のデータ構造と対応したメッセージの入れ物
+/// </summary>
+public class 入荷の添付書類SaveCommandMessages : MessageSetter {
+    public 入荷の添付書類SaveCommandMessages(IEnumerable<string> path, MessageContainer context) : base(path, context) {
+        this.添付書類ID = new MessageSetter([.. path, "添付書類ID"], context);
+        this.ファイル = new MessageSetter([.. path, "ファイル"], context);
+        this.備考 = new MessageSetter([.. path, "備考"], context);
+    }
+
+    /// <summary>添付書類IDに対して発生したメッセージの入れ物</summary>
+    public IMessageSetter 添付書類ID { get; }
+    /// <summary>ファイルに対して発生したメッセージの入れ物</summary>
+    public IMessageSetter ファイル { get; }
     /// <summary>備考に対して発生したメッセージの入れ物</summary>
     public IMessageSetter 備考 { get; }
 }

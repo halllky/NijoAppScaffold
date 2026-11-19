@@ -62,6 +62,8 @@ public partial class 入荷CreateCommand : 入荷SaveCommand, ISaveCommand<Valid
     public 従業員Key? 担当者 { get; set; }
     /// <summary>備考</summary>
     public string? 備考 { get; set; }
+    /// <summary>添付書類</summary>
+    public List<入荷の添付書類CreateCommand> 入荷の添付書類 { get; set; } = [];
 
     /// <summary>
     /// このインスタンスの現時点の値を、このインスタンスと参照を共有しない Entity Framework Core のエンティティに変換します。
@@ -72,6 +74,12 @@ public partial class 入荷CreateCommand : 入荷SaveCommand, ISaveCommand<Valid
             入荷日時 = this.入荷日時,
             担当者_従業員番号 = this.担当者?.従業員番号,
             備考 = this.備考,
+            入荷の添付書類 = this.入荷の添付書類?.Select(x => new 入荷の添付書類DbEntity {
+                Parent_入荷ID = this.入荷ID,
+                添付書類ID = x.添付書類ID,
+                ファイル_識別子 = x.ファイル?.識別子,
+                備考 = x.備考,
+            }).ToHashSet() ?? [],
             Version = 0,
         };
     }
@@ -109,6 +117,18 @@ public partial class 入荷CreateCommand : 入荷SaveCommand, ISaveCommand<Valid
         // 担当者
         if ((errorMessage = _dbContext.ValidateRequired(this.担当者?.従業員番号, "担当者")) is not null) {
             messages.担当者.AddError(errorMessage);
+        }
+        for (var i = 0; i < this.入荷の添付書類.Count; i++) {
+            var item = this.入荷の添付書類[i];
+        
+            // 添付書類ID
+            if ((errorMessage = _dbContext.ValidateRequired(item.添付書類ID, "添付書類ID")) is not null) {
+                messages.入荷の添付書類[i].添付書類ID.AddError(errorMessage);
+            }
+            // ファイル
+            if ((errorMessage = _dbContext.ValidateRequired(item.ファイル?.識別子, "ファイル")) is not null) {
+                messages.入荷の添付書類[i].ファイル.AddError(errorMessage);
+            }
         }
     }
     /// <summary>
@@ -159,10 +179,31 @@ public partial class 入荷CreateCommand : 入荷SaveCommand, ISaveCommand<Valid
             dbEntity.CreateUser = _command._dbContext.CurrentUser.Name;
             dbEntity.UpdateUser = _command._dbContext.CurrentUser.Name;
             tracked.Add(dbEntity);
+            var new入荷の添付書類_0 = dbEntity.入荷の添付書類?.OfType<入荷の添付書類DbEntity>() ?? [];
+            foreach (var a in new入荷の添付書類_0) {
+                a.CreatedAt = _command._dbContext.CurrentTime.Value;
+                a.UpdatedAt = _command._dbContext.CurrentTime.Value;
+                a.CreateUser = _command._dbContext.CurrentUser.Name;
+                a.UpdateUser = _command._dbContext.CurrentUser.Name;
+                tracked.Add(a);
+            }
         
             _command._dbContext.Add(dbEntity);
         }
     }
+}
+/// <summary>
+/// 添付書類 の新規登録コマンド
+/// </summary>
+public partial class 入荷の添付書類CreateCommand {
+    /// <summary>添付書類ID</summary>
+    [NijoAttr.IsKey]
+    public required string? 添付書類ID { get; set; }
+    /// <summary>ファイル</summary>
+    [NijoAttr.IsNotNull]
+    public required 添付ファイルKey? ファイル { get; set; }
+    /// <summary>備考</summary>
+    public required string? 備考 { get; set; }
 }
 #endregion 新規登録コマンド
 
@@ -193,6 +234,8 @@ public partial class 入荷UpdateCommand : 入荷SaveCommand, ISaveCommand<Valid
     public 従業員Key? 担当者 { get; set; }
     /// <summary>備考</summary>
     public string? 備考 { get; set; }
+    /// <summary>添付書類</summary>
+    public List<入荷の添付書類UpdateCommand> 入荷の添付書類 { get; set; } = [];
 
     /// <summary>
     /// このコマンドと同じデータの削除コマンドを返します。
@@ -209,6 +252,12 @@ public partial class 入荷UpdateCommand : 入荷SaveCommand, ISaveCommand<Valid
             入荷日時 = this.入荷日時,
             担当者_従業員番号 = this.担当者?.従業員番号,
             備考 = this.備考,
+            入荷の添付書類 = this.入荷の添付書類?.Select(x => new 入荷の添付書類DbEntity {
+                Parent_入荷ID = this.入荷ID,
+                添付書類ID = x.添付書類ID,
+                ファイル_識別子 = x.ファイル?.識別子,
+                備考 = x.備考,
+            }).ToHashSet() ?? [],
         };
     }
 
@@ -223,6 +272,13 @@ public partial class 入荷UpdateCommand : 入荷SaveCommand, ISaveCommand<Valid
                 従業員番号 = dbEntity.担当者_従業員番号,
             },
             備考 = dbEntity.備考,
+            入荷の添付書類 = dbEntity.入荷の添付書類?.Select(x => new 入荷の添付書類UpdateCommand() {
+                添付書類ID = x.添付書類ID,
+                ファイル = new() {
+                    識別子 = x.ファイル_識別子,
+                },
+                備考 = x.備考,
+            }).ToList() ?? [],
         };
     }
 
@@ -262,6 +318,18 @@ public partial class 入荷UpdateCommand : 入荷SaveCommand, ISaveCommand<Valid
         // 担当者
         if ((errorMessage = _dbContext.ValidateRequired(this.担当者?.従業員番号, "担当者")) is not null) {
             messages.担当者.AddError(errorMessage);
+        }
+        for (var i = 0; i < this.入荷の添付書類.Count; i++) {
+            var item = this.入荷の添付書類[i];
+        
+            // 添付書類ID
+            if ((errorMessage = _dbContext.ValidateRequired(item.添付書類ID, "添付書類ID")) is not null) {
+                messages.入荷の添付書類[i].添付書類ID.AddError(errorMessage);
+            }
+            // ファイル
+            if ((errorMessage = _dbContext.ValidateRequired(item.ファイル?.識別子, "ファイル")) is not null) {
+                messages.入荷の添付書類[i].ファイル.AddError(errorMessage);
+            }
         }
     }
     /// <summary>
@@ -318,8 +386,48 @@ public partial class 入荷UpdateCommand : 入荷SaveCommand, ISaveCommand<Valid
             entry.State = EntityState.Modified;
             entry.Property(e => e.Version).OriginalValue = _command._expectedVersion;
         
+            var before入荷の添付書類_0 = beforeDbEntity.入荷の添付書類?.OfType<入荷の添付書類DbEntity>() ?? [];
+            var after入荷の添付書類_0 = afterDbEntity.入荷の添付書類?.OfType<入荷の添付書類DbEntity>() ?? [];
+            foreach (var a in after入荷の添付書類_0) {
+                var b = before入荷の添付書類_0.SingleOrDefault(b => b.KeyEquals(a));
+                tracked.Add(a);
+                if (b == null) {
+                    a.CreatedAt = _command._dbContext.CurrentTime.Value;
+                    a.UpdatedAt = _command._dbContext.CurrentTime.Value;
+                    a.CreateUser = _command._dbContext.CurrentUser.Name;
+                    a.UpdateUser = _command._dbContext.CurrentUser.Name;
+                    _command._dbContext.Entry(a).State = EntityState.Added; // 子テーブルが元々存在せず、更新後に存在する場合 → INSERT
+                } else {
+                    a.CreatedAt = b.CreatedAt;
+                    a.UpdatedAt = _command._dbContext.CurrentTime.Value;
+                    a.CreateUser = b.CreateUser;
+                    a.UpdateUser = _command._dbContext.CurrentUser.Name;
+                    _command._dbContext.Entry(a).State = EntityState.Modified; // 子テーブルが元々存在し、更新後も存在する場合 → UPDATE
+                }
+            }
+            foreach (var b in before入荷の添付書類_0) {
+                var a = after入荷の添付書類_0.SingleOrDefault(a => a.KeyEquals(b));
+                if (a == null) {
+                    tracked.Add(b);
+                    _command._dbContext.Entry(b).State = EntityState.Deleted; // 子テーブルが元々存在するが、更新後に存在しない場合 → DELETE
+                }
+            }
+        
         }
     }
+}
+/// <summary>
+/// 添付書類 の更新コマンド
+/// </summary>
+public partial class 入荷の添付書類UpdateCommand {
+    /// <summary>添付書類ID</summary>
+    [NijoAttr.IsKey]
+    public required string? 添付書類ID { get; set; }
+    /// <summary>ファイル</summary>
+    [NijoAttr.IsNotNull]
+    public required 添付ファイルKey? ファイル { get; set; }
+    /// <summary>備考</summary>
+    public required string? 備考 { get; set; }
 }
 #endregion 更新コマンド
 
@@ -368,6 +476,11 @@ public partial class 入荷DeleteCommand : 入荷SaveCommand, ISaveCommand<Valid
             entry.State = EntityState.Deleted;
             entry.Property(e => e.Version).OriginalValue = _command._expectedVersion;
             entry.Property(e => e.Version).CurrentValue = _command._expectedVersion;
+            var deleting入荷の添付書類_0 = dbEntity.入荷の添付書類?.OfType<入荷の添付書類DbEntity>() ?? [];
+            foreach (var a in deleting入荷の添付書類_0) {
+                tracked.Add(a);
+                _command._dbContext.Entry(a).State = EntityState.Deleted;
+            }
         }
     }
 }

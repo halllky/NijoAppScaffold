@@ -47,6 +47,8 @@ public partial class 入荷詳細DisplayData {
     public int? Version { get; set; }
     [JsonPropertyName("入荷商品一覧")]
     public List<入荷商品一覧DisplayData> 入荷商品一覧 { get; set; } = new();
+    [JsonPropertyName("入荷詳細の添付書類")]
+    public List<入荷詳細の添付書類DisplayData> 入荷詳細の添付書類 { get; set; } = new();
 
     /// <summary>このデータがDBに保存済みかどうか</summary>
     [JsonPropertyName("existsInDatabase")]
@@ -83,6 +85,36 @@ public partial class 入荷商品一覧DisplayData {
     /// 楽観排他用
     /// </summary>
     public int? Version { get; set; }
+
+    /// <summary>このデータがDBに保存済みかどうか</summary>
+    [JsonPropertyName("existsInDatabase")]
+    public bool ExistsInDatabase { get; set; }
+    /// <summary>このデータに更新がかかっているかどうか</summary>
+    [JsonPropertyName("willBeChanged")]
+    public bool WillBeChanged { get; set; }
+    /// <summary>このデータが更新確定時に削除されるかどうか</summary>
+    [JsonPropertyName("willBeDeleted")]
+    public bool WillBeDeleted { get; set; }
+}
+/// <summary>
+/// 添付書類の画面表示用データ。
+/// </summary>
+public partial class 入荷詳細の添付書類DisplayData {
+    /// <summary>
+    /// 画面初期表示から保存までの間でこのインスタンスを識別する番号。
+    /// GUIでのでの利用を想定している。例えば通常の主キーはデータベース保存前は未定義であり
+    /// エラーメッセージとの紐づけなどに使用できないため、そういった用途に使用する。
+    /// </summary>
+    [JsonPropertyName("instanceId")]
+    public string InstanceId { get; set; } = Guid.NewGuid().ToString();
+
+    /// <summary>
+    /// 非表示。UUID。新しく添付した行では空
+    /// </summary>
+    public string? 添付書類ID { get; set; }
+    [NijoAttr.RefToObject(NijoAttr.RefToObjectAttribute.E_Value.RefTarget)]
+    public 添付ファイルRefRefTarget ファイル { get; set; } = new();
+    public string? 備考 { get; set; }
 
     /// <summary>このデータがDBに保存済みかどうか</summary>
     [JsonPropertyName("existsInDatabase")]

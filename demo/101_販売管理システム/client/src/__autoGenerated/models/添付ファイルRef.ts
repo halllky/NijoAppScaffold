@@ -60,6 +60,16 @@ export type DisplayData = {
 //#endregion 画面表示用データ
 
 //#region 他の集約から参照されるときの画面表示用オブジェクト
+/**
+ * 添付ファイルRefが他の集約から外部参照されるときの添付ファイルRefの型
+ */
+export type RefTarget = {
+  識別子?: string
+  名前?: string
+  サイズ?: string
+  種類?: string
+}
+
 //#endregion 他の集約から参照されるときの画面表示用オブジェクト
 
 //#endregion 型定義
@@ -156,6 +166,16 @@ export function deepEqual(left: DisplayData, right: DisplayData, option?: Util.D
 //#endregion ディープイコール関数
 
 //#region 他の集約から参照されるときの画面表示用オブジェクトの新規作成関数
+/** 添付ファイルRefRefTargetを新規作成します。 */
+export function createNewRefTarget(): RefTarget {
+  return {
+    識別子: undefined,
+    名前: undefined,
+    サイズ: undefined,
+    種類: undefined,
+  }
+}
+
 //#endregion 他の集約から参照されるときの画面表示用オブジェクトの新規作成関数
 
 //#region メタデータ

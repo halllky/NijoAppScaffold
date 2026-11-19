@@ -9,18 +9,21 @@ import type { ReferedQueryModelType } from "./model-types"
 import * as 商品 from "./models/商品"
 import * as 従業員Ref from "./models/従業員Ref"
 import * as 従業員マスタ from "./models/従業員マスタ"
+import * as 添付ファイルRef from "./models/添付ファイルRef"
 
 /** RefTarget型一覧 */
 export interface TypeMap {
   'ref-to:商品': 商品.RefTarget
   'ref-to:従業員Ref': 従業員Ref.RefTarget
   'ref-to:従業員マスタ': 従業員マスタ.RefTarget
+  'ref-to:添付ファイルRef': 添付ファイルRef.RefTarget
 }
 /** RefTarget新規作成関数 */
 export const create: { [K in ReferedQueryModelType]: (() => TypeMap[K]) } = {
   'ref-to:商品': 商品.createNewRefTarget,
   'ref-to:従業員Ref': 従業員Ref.createNewRefTarget,
   'ref-to:従業員マスタ': 従業員マスタ.createNewRefTarget,
+  'ref-to:添付ファイルRef': 添付ファイルRef.createNewRefTarget,
 }
 /**
  * 参照先のクエリモデルのメタデータ。
@@ -30,4 +33,5 @@ export const metadata: { [K in ReferedQueryModelType]?: { displayData: Util.Aggr
   'ref-to:商品': 商品.metadata,
   'ref-to:従業員Ref': 従業員Ref.metadata,
   'ref-to:従業員マスタ': 従業員マスタ.metadata,
+  'ref-to:添付ファイルRef': 添付ファイルRef.metadata,
 }

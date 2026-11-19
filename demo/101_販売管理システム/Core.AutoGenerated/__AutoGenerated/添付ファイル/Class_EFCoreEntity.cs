@@ -54,6 +54,8 @@ public partial class 添付ファイルDbEntity {
     /// <summary>楽観排他制御用のバージョニング用カラム</summary>
     public int? Version { get; set; }
 
+    [NijoAttr.IsNotNull]
+    public virtual ICollection<入荷の添付書類DbEntity> RefFrom入荷の添付書類_ファイル { get; set; } = [];
 
     /// <summary>このオブジェクトと比較対象のオブジェクトの主キーが一致するかを返します。</summary>
     public bool KeyEquals(添付ファイルDbEntity entity) {

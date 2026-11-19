@@ -49,6 +49,7 @@ export const Endpoint: { [K in Name]: string } = {
   '通知一覧': 'api/xed21ff27c5fea031206daca10d14e2c1/load',
   'ジョブ一覧': 'api/xf84b596096fa1bba9f67e99464a3c8bd/load',
   '添付ファイルRef': 'api/x048fa341b32f011852657ad27642c048/load',
+  'ref-to:添付ファイルRef': 'api/x048fa341b32f011852657ad27642c048/load-refs-x048fa341b32f011852657ad27642c048',
   '入荷登録': 'api/xd14f4d89fb2adb0f35190352d52e032d/execute',
   '商品データ取込': 'api/x1da54d663d738b748b77758651bb4522/execute',
   'ログイン': 'api/x7cda55dc0744dd2c61802153d4af8aed/execute',
@@ -85,6 +86,7 @@ export interface ParamType {
   '通知一覧': 通知一覧.SearchCondition
   'ジョブ一覧': ジョブ一覧.SearchCondition
   '添付ファイルRef': 添付ファイルRef.SearchCondition
+  'ref-to:添付ファイルRef': 添付ファイルRef.SearchCondition
   '入荷登録': 入荷詳細.DisplayData
   '商品データ取込': Record<string, never> // 引数なし
   'ログイン': ログインParameter.DisplayData
@@ -121,6 +123,7 @@ export interface ReturnType {
   '通知一覧': Util.LoadReturnType<通知一覧.DisplayData>
   'ジョブ一覧': Util.LoadReturnType<ジョブ一覧.DisplayData>
   '添付ファイルRef': Util.LoadReturnType<添付ファイルRef.DisplayData>
+  'ref-to:添付ファイルRef': Util.LoadReturnType<添付ファイルRef.RefTarget>
   '入荷登録': 入荷登録ReturnValue.DisplayData
   '商品データ取込': Record<string, never> // 戻り値なし
   'ログイン': ログインユーザー情報.DisplayData
@@ -220,6 +223,11 @@ export const Metadata: { [K in Name]: Metadata } = {
   },
   '添付ファイルRef': {
     displayName: '添付ファイルRef',
+    operationAccessLevel: '内部処理のみ',
+    operationAccessRole: [],
+  },
+  'ref-to:添付ファイルRef': {
+    displayName: '添付ファイルRefの参照検索',
     operationAccessLevel: '内部処理のみ',
     operationAccessRole: [],
   },
