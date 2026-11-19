@@ -112,6 +112,38 @@ partial class DB接続あり_更新あり {
         Assert.That(await Get状態Async(app, 確定済み), Is.EqualTo(添付ファイルの状態.確定));
     }
 
+    [Test]
+    [Category("DB接続あり（更新あり）")]
+    public async Task 確定したファイルは誰でも一時保存のファイルは本人だけがダウンロードでき参照なしのファイルは誰もダウンロードできない() {
+        var scope = TestUtilImpl.Instance.CreateScope(nameof(確定したファイルは誰でも一時保存のファイルは本人だけがダウンロードでき参照なしのファイルは誰もダウンロードできない));
+        var db = scope.App.DbContext;
+        await Add従業員Async(db, "USER_A");
+        await Add従業員Async(db, "USER_B");
+
+        string 確定, 一時保存, 参照なし;
+        await using (var request = await NewRequestAsAsync(scope, "USER_A")) {
+            確定 = await 一時保存Async(request.Value, "確定.txt");
+            一時保存 = await 一時保存Async(request.Value, "一時保存.txt");
+            参照なし = await 一時保存Async(request.Value, "参照なし.txt");
+        }
+        await db.添付ファイルDbSet.Where(f => f.識別子 == 確定).ExecuteUpdateAsync(x => x.SetProperty(f => f.状態, 添付ファイルの状態.確定));
+        await db.添付ファイルDbSet.Where(f => f.識別子 == 参照なし).ExecuteUpdateAsync(x => x.SetProperty(f => f.状態, 添付ファイルの状態.参照なし));
+
+        async Task<string?> DownloadAsAsync(string 従業員番号, string 識別子) {
+            await using var request = await NewRequestAsAsync(scope, 従業員番号);
+            var file = await request.Value.Findダウンロードできる添付ファイルAsync(識別子);
+            if (file == null) return null;
+            await using var content = file.中身;
+            return $"{file.名前}:{await new StreamReader(content).ReadToEndAsync()}";
+        }
+
+        Assert.That(await DownloadAsAsync("USER_B", 確定), Is.EqualTo("確定.txt:確定.txt"));
+        Assert.That(await DownloadAsAsync("USER_A", 一時保存), Is.EqualTo("一時保存.txt:一時保存.txt"));
+        Assert.That(await DownloadAsAsync("USER_B", 一時保存), Is.Null);
+        Assert.That(await DownloadAsAsync("USER_A", 参照なし), Is.Null);
+        Assert.That(await DownloadAsAsync("USER_A", "NOT_EXISTS"), Is.Null);
+    }
+
     private static MemoryStream ToStream(string text) => new(Encoding.UTF8.GetBytes(text));
 
     /// <summary>

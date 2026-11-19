@@ -1,5 +1,7 @@
 using System.Security.Cryptography;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using MyApp.Core.添付ファイル;
 
 namespace MyApp;
@@ -77,6 +79,41 @@ partial class OverridedApplicationService {
     }
 
     /// <summary>
+    /// ログインユーザーがダウンロードできる添付ファイルを探す。
+    /// 確定したファイルは誰でも、一時保存のファイルは一時保存したユーザーだけがダウンロードできる。参照なしのファイルはダウンロードできない。
+    /// ダウンロードできないファイルは、存在しないファイルと同じように扱い、存在すること自体を知らせない。
+    /// </summary>
+    /// <returns>ダウンロードできるファイルが無ければ null。中身は呼び出し元が閉じる</returns>
+    public async Task<ダウンロードする添付ファイル?> Findダウンロードできる添付ファイルAsync(string 識別子, CancellationToken ct = default) {
+        var file = await DbContext.添付ファイルDbSet.SingleOrDefaultAsync(f => f.識別子 == 識別子, ct);
+        if (file == null) return null;
+
+        var ダウンロードできる = file.状態 switch {
+            添付ファイルの状態.確定 => true,
+            添付ファイルの状態.一時保存 => LoginUser != null && file.CreateUser == LoginUser.従業員番号,
+            _ => false,
+        };
+        if (!ダウンロードできる) return null;
+        if (!await 添付ファイルをダウンロードしてよいかAsync(file)) return null;
+
+        var 中身 = await 添付ファイル保存先.OpenReadAsync(識別子, ct);
+        if (中身 == null) {
+            Log.LogWarning("管理テーブルに行がある添付ファイルが、保存先にありません: {識別子}", 識別子);
+            return null;
+        }
+        return new ダウンロードする添付ファイル(中身, file.名前!, file.種類!);
+    }
+
+    /// <summary>
+    /// 案件ごとの、ダウンロードしてよいかの確認。既定では確認しない。
+    /// 「そのファイルが添付されたデータを見る権限があるか」で判断する場合は、ここで、そのファイルを参照しているテーブルを検索する。
+    /// その場合は、データに添付できるファイルも同じ条件で絞ること。絞らないと、自分のデータに添付してからダウンロードできてしまう。
+    /// </summary>
+    private Task<bool> 添付ファイルをダウンロードしてよいかAsync(添付ファイルDbEntity file) {
+        return Task.FromResult(true);
+    }
+
+    /// <summary>
     /// パスからファイル名の部分を取り出す。古いブラウザは "C:\fakepath\a.txt" のようにパスを付けて送ってくるので、
     /// サーバーの OS によらず "/" と "\" の両方を区切りとして扱う。
     /// </summary>
@@ -124,3 +161,8 @@ partial class OverridedApplicationService {
 /// 一時保存したファイルの情報。画面は、これを入力中のデータに入れ、処理を呼ぶときに識別子を送る。
 /// </summary>
 public sealed record 一時保存した添付ファイル(string 識別子, string 名前, int サイズ, string 種類);
+
+/// <summary>
+/// ダウンロードするファイルの中身と、応答に付ける名前と種類。中身は受け取った側が閉じる。
+/// </summary>
+public sealed record ダウンロードする添付ファイル(Stream 中身, string 名前, string 種類);
