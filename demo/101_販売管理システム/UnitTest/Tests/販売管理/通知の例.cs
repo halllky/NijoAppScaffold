@@ -16,7 +16,7 @@ partial class DB接続あり_更新あり {
 
         var notifications = await scope.App.DbContext.通知DbSet.AsNoTracking().ToListAsync();
         Assert.That(notifications.Select(n => n.宛先), Is.EqualTo(new[] { sales.担当者_従業員番号 }));
-        Assert.That(notifications[0].リンク先, Is.EqualTo(PAGES_URL_DEMO101.P101(sales.売上SEQ!.Value)));
+        Assert.That(notifications[0].リンク先, Is.EqualTo(PAGES_URL_DEMO101.P101(sales.売上SEQ!.Value.ToString())));
     }
 
     [Test]
@@ -58,7 +58,7 @@ partial class DB接続あり_更新あり {
         var notifications = await db.通知DbSet.AsNoTracking().ToListAsync();
         Assert.That(入荷担当, Is.Not.Empty);
         Assert.That(notifications.Select(n => n.宛先), Is.EquivalentTo(入荷担当));
-        Assert.That(notifications.Select(n => n.リンク先).Distinct(), Is.EqualTo(new[] { PAGES_URL_DEMO101.P301(product.商品SEQ!.Value) }));
+        Assert.That(notifications.Select(n => n.リンク先).Distinct(), Is.EqualTo(new[] { PAGES_URL_DEMO101.P301(product.商品SEQ!.Value.ToString()) }));
     }
 
     /// <summary>

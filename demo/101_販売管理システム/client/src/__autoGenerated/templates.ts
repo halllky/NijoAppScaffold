@@ -4,32 +4,24 @@
 // ※ このファイルを生成したメソッド: Render
 // ※ このファイルを生成した nijo のバージョン: 0.0.0-dev
 
-
 /**
- * テンプレート文字列の種類ごとの、引数の値を埋め込む文字列にする変換。
+ * テンプレート文字列の種類ごとの、引数の値を埋め込む前の変換（エスケープなど）。
  * 種類は nijo.xml の TemplateKind 属性で指定したもの。
- * 引数の型ごとに、C# の型名の名前で変換を持つ。
  * サーバーと画面で同じ文字列になるように、C# 側の変換と同じ結果を返すこと。
  */
 export type TemplateKind = {
   /** 種類「URL」の変換 */
-  URL: {
-    string: (value: string) => string
-    int: (value: string) => string
-  }
+  URL: (value: string) => string
   /** 種類「文言」の変換 */
-  文言: {
-    string: (value: string) => string
-    int: (value: string) => string
-  }
+  文言: (value: string) => string
 }
 
 /**
  * nijo.xml の Templates セクションに定義したテンプレート文字列を返します。
  * 引数の値は、渡された変換を通してから埋め込む。
  * アプリからは、この関数を1回だけ呼んだ結果を export し、それを通して使う。
- * 宣言されていない変換を余分に渡してもエラーにしない。C# で余分なオーバーロードがあってもエラーにならないのと同じく、
- * テンプレート文字列の引数で使われなくなった型の変換を、消さずに残しておけるようにするため。
+ * 宣言されていない変換を余分に渡してもエラーにしない。C# で余分なメソッドがあってもエラーにならないのと同じく、
+ * nijo.xml から無くなった種類の変換を、消さずに残しておけるようにするため。
  */
 export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind) => ({
   /**
@@ -58,7 +50,7 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
     /**
      * ジョブのスプールのファイルのダウンロード
      */
-    JobSpoolFile: ({ ジョブID, ファイル名 }: { ジョブID: string, ファイル名: string }): string => `/api/job/${templateKind.URL.string(ジョブID)}/spool/${templateKind.URL.string(ファイル名)}`,
+    JobSpoolFile: ({ ジョブID, ファイル名 }: { ジョブID: string, ファイル名: string }): string => `/api/job/${templateKind.URL(ジョブID)}/spool/${templateKind.URL(ファイル名)}`,
   },
   /**
    * 画面URL一覧(デモ101専用)
@@ -69,11 +61,11 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
     /**
      * P101 売上詳細
      */
-    P101: ({ 売上SEQ }: { 売上SEQ: string }): string => `/uriage/edit/${templateKind.URL.int(売上SEQ)}`,
+    P101: ({ 売上SEQ }: { 売上SEQ: string }): string => `/uriage/edit/${templateKind.URL(売上SEQ)}`,
     /**
      * P301 商品詳細
      */
-    P301: ({ 商品SEQ }: { 商品SEQ: string }): string => `/shohin/${templateKind.URL.int(商品SEQ)}`,
+    P301: ({ 商品SEQ }: { 商品SEQ: string }): string => `/shohin/${templateKind.URL(商品SEQ)}`,
   },
   /**
    * メッセージ
@@ -85,19 +77,19 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
     /**
      * 必須入力エラー
      */
-    RequiredError: ({ 項目名 }: { 項目名: string }): string => `${templateKind.文言.string(項目名)} を入力してください。`,
+    RequiredError: ({ 項目名 }: { 項目名: string }): string => `${templateKind.文言(項目名)} を入力してください。`,
     /**
      * 文字数超過エラー
      */
-    MaxLengthError: ({ 項目名, 最大文字数 }: { 項目名: string, 最大文字数: string }): string => `${templateKind.文言.string(項目名)} は ${templateKind.文言.int(最大文字数)} 文字以内で入力してください。`,
+    MaxLengthError: ({ 項目名, 最大文字数 }: { 項目名: string, 最大文字数: string }): string => `${templateKind.文言(項目名)} は ${templateKind.文言(最大文字数)} 文字以内で入力してください。`,
     /**
      * 桁数超過エラー
      */
-    DigitsError: ({ 項目名, 整数部の桁数, 小数部の桁数 }: { 項目名: string, 整数部の桁数: string, 小数部の桁数: string }): string => `${templateKind.文言.string(項目名)} は整数部 ${templateKind.文言.int(整数部の桁数)} 桁、小数部 ${templateKind.文言.int(小数部の桁数)} 桁以内で入力してください。`,
+    DigitsError: ({ 項目名, 整数部の桁数, 小数部の桁数 }: { 項目名: string, 整数部の桁数: string, 小数部の桁数: string }): string => `${templateKind.文言(項目名)} は整数部 ${templateKind.文言(整数部の桁数)} 桁、小数部 ${templateKind.文言(小数部の桁数)} 桁以内で入力してください。`,
     /**
      * 区分値不在エラー
      */
-    GenericLookupValueNotFound: ({ 項目名 }: { 項目名: string }): string => `${templateKind.文言.string(項目名)} に指定された区分値が存在しません。`,
+    GenericLookupValueNotFound: ({ 項目名 }: { 項目名: string }): string => `${templateKind.文言(項目名)} に指定された区分値が存在しません。`,
     /**
      * 楽観排他エラー
      *
@@ -123,7 +115,7 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
     /**
      * 未選択エラー
      */
-    SelectRequiredError: ({ 項目名 }: { 項目名: string }): string => `${templateKind.文言.string(項目名)} を選択してください。`,
+    SelectRequiredError: ({ 項目名 }: { 項目名: string }): string => `${templateKind.文言(項目名)} を選択してください。`,
     /**
      * 未ログインエラー
      */
@@ -153,7 +145,7 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
     /**
      * 従業員番号重複
      */
-    DuplicateEmployeeNumberError: ({ 従業員番号 }: { 従業員番号: string }): string => `従業員番号 '${templateKind.文言.string(従業員番号)}' は既に存在します。`,
+    DuplicateEmployeeNumberError: ({ 従業員番号 }: { 従業員番号: string }): string => `従業員番号 '${templateKind.文言(従業員番号)}' は既に存在します。`,
     /**
      * 自分自身の削除
      */
@@ -189,11 +181,11 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
     /**
      * ジョブ正常終了の通知
      */
-    JobSucceededNotification: ({ ジョブの種類 }: { ジョブの種類: string }): string => `ジョブ「${templateKind.文言.string(ジョブの種類)}」が正常終了しました。`,
+    JobSucceededNotification: ({ ジョブの種類 }: { ジョブの種類: string }): string => `ジョブ「${templateKind.文言(ジョブの種類)}」が正常終了しました。`,
     /**
      * ジョブ異常終了の通知
      */
-    JobFailedNotification: ({ ジョブの種類 }: { ジョブの種類: string }): string => `ジョブ「${templateKind.文言.string(ジョブの種類)}」が異常終了しました。`,
+    JobFailedNotification: ({ ジョブの種類 }: { ジョブの種類: string }): string => `ジョブ「${templateKind.文言(ジョブの種類)}」が異常終了しました。`,
     /**
      * ジョブ異常終了の結果
      */
@@ -217,7 +209,7 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
     /**
      * クリーンナップの結果
      */
-    CleanUpResult: ({ セッション, 冪等キー, 通知, ジョブ }: { セッション: string, 冪等キー: string, 通知: string, ジョブ: string }): string => `セッション ${templateKind.文言.int(セッション)} 件、冪等キー ${templateKind.文言.int(冪等キー)} 件、通知 ${templateKind.文言.int(通知)} 件、ジョブ ${templateKind.文言.int(ジョブ)} 件を削除しました。`,
+    CleanUpResult: ({ セッション, 冪等キー, 通知, ジョブ }: { セッション: string, 冪等キー: string, 通知: string, ジョブ: string }): string => `セッション ${templateKind.文言(セッション)} 件、冪等キー ${templateKind.文言(冪等キー)} 件、通知 ${templateKind.文言(通知)} 件、ジョブ ${templateKind.文言(ジョブ)} 件を削除しました。`,
   },
   /**
    * メッセージ(デモ101専用)
@@ -228,7 +220,7 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
     /**
      * 未指定エラー
      */
-    NotSpecifiedError: ({ 項目名 }: { 項目名: string }): string => `${templateKind.文言.string(項目名)}が指定されていません。`,
+    NotSpecifiedError: ({ 項目名 }: { 項目名: string }): string => `${templateKind.文言(項目名)}が指定されていません。`,
     /**
      * 売上不在
      */
@@ -284,11 +276,11 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
     /**
      * 在庫不足
      */
-    InsufficientStockError: ({ 現在在庫 }: { 現在在庫: string }): string => `在庫不足です。（現在在庫: ${templateKind.文言.int(現在在庫)}）`,
+    InsufficientStockError: ({ 現在在庫 }: { 現在在庫: string }): string => `在庫不足です。（現在在庫: ${templateKind.文言(現在在庫)}）`,
     /**
      * 取消可能な在庫引当の不足
      */
-    InsufficientReturnableStockError: ({ 取消可能数 }: { 取消可能数: string }): string => `取消可能な在庫引当履歴が不足しています。（取消可能数: ${templateKind.文言.int(取消可能数)}）`,
+    InsufficientReturnableStockError: ({ 取消可能数 }: { 取消可能数: string }): string => `取消可能な在庫引当履歴が不足しています。（取消可能数: ${templateKind.文言(取消可能数)}）`,
     /**
      * 売上登録の確認
      */
@@ -308,7 +300,7 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
     /**
      * 担当の売上の修正の通知
      */
-    SalesUpdatedNotification: ({ 売上SEQ, 修正者 }: { 売上SEQ: string, 修正者: string }): string => `担当の売上 ${templateKind.文言.int(売上SEQ)} が ${templateKind.文言.string(修正者)} さんにより修正されました。`,
+    SalesUpdatedNotification: ({ 売上SEQ, 修正者 }: { 売上SEQ: string, 修正者: string }): string => `担当の売上 ${templateKind.文言(売上SEQ)} が ${templateKind.文言(修正者)} さんにより修正されました。`,
     /**
      * 在庫調整の数量未指定
      */
@@ -324,13 +316,13 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
     /**
      * 減算時の在庫不足
      */
-    InsufficientStockForSubtractionError: ({ 現在在庫, 減算指定 }: { 現在在庫: string, 減算指定: string }): string => `在庫不足のため減算できません。（現在在庫: ${templateKind.文言.int(現在在庫)}, 減算指定: ${templateKind.文言.int(減算指定)}）`,
+    InsufficientStockForSubtractionError: ({ 現在在庫, 減算指定 }: { 現在在庫: string, 減算指定: string }): string => `在庫不足のため減算できません。（現在在庫: ${templateKind.文言(現在在庫)}, 減算指定: ${templateKind.文言(減算指定)}）`,
     /**
      * 在庫調整の通知
      *
      * 増減数は、符号を付けて渡す（+3、-2 など）
      */
-    StockAdjustedNotification: ({ 商品名, 調整者, 増減数 }: { 商品名: string, 調整者: string, 増減数: string }): string => `商品「${templateKind.文言.string(商品名)}」の在庫が ${templateKind.文言.string(調整者)} さんにより調整されました（${templateKind.文言.string(増減数)}個）。`,
+    StockAdjustedNotification: ({ 商品名, 調整者, 増減数 }: { 商品名: string, 調整者: string, 増減数: string }): string => `商品「${templateKind.文言(商品名)}」の在庫が ${templateKind.文言(調整者)} さんにより調整されました（${templateKind.文言(増減数)}個）。`,
     /**
      * 入荷商品なし
      */
@@ -338,11 +330,11 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
     /**
      * 入荷不在
      */
-    ArrivalNotFoundError: ({ 入荷ID }: { 入荷ID: string }): string => `入荷データが見つかりません。(ID: ${templateKind.文言.string(入荷ID)})`,
+    ArrivalNotFoundError: ({ 入荷ID }: { 入荷ID: string }): string => `入荷データが見つかりません。(ID: ${templateKind.文言(入荷ID)})`,
     /**
      * 入荷明細不在
      */
-    ArrivalDetailNotFoundError: ({ 入荷明細ID }: { 入荷明細ID: string }): string => `指定された入荷明細が存在しません。(ID: ${templateKind.文言.string(入荷明細ID)})`,
+    ArrivalDetailNotFoundError: ({ 入荷明細ID }: { 入荷明細ID: string }): string => `指定された入荷明細が存在しません。(ID: ${templateKind.文言(入荷明細ID)})`,
     /**
      * 出荷引当済みの入荷の商品の変更
      */
@@ -350,11 +342,11 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
     /**
      * 出荷引当済みの入荷の削除
      */
-    AllocatedArrivalDeleteError: ({ 商品名 }: { 商品名: string }): string => `既に出荷引当が行われているため、削除できません。(商品: ${templateKind.文言.string(商品名)})`,
+    AllocatedArrivalDeleteError: ({ 商品名 }: { 商品名: string }): string => `既に出荷引当が行われているため、削除できません。(商品: ${templateKind.文言(商品名)})`,
     /**
      * 使用済みの数量を下回る入荷数量
      */
-    ArrivalQuantityBelowUsedError: ({ 使用済みの数量 }: { 使用済みの数量: string }): string => `入荷数量を既に使用されている数量(${templateKind.文言.int(使用済みの数量)})未満にすることはできません。`,
+    ArrivalQuantityBelowUsedError: ({ 使用済みの数量 }: { 使用済みの数量: string }): string => `入荷数量を既に使用されている数量(${templateKind.文言(使用済みの数量)})未満にすることはできません。`,
     /**
      * 入荷修正の確認
      */
@@ -370,17 +362,17 @@ export const createTemplates = <TKind extends TemplateKind>(templateKind: TKind)
     /**
      * 商品データ取込の結果
      */
-    ProductImportResult: ({ 件数, 取込件数 }: { 件数: string, 取込件数: string }): string => `${templateKind.文言.int(件数)} 件のうち、${templateKind.文言.int(取込件数)} 件を取り込みました。`,
+    ProductImportResult: ({ 件数, 取込件数 }: { 件数: string, 取込件数: string }): string => `${templateKind.文言(件数)} 件のうち、${templateKind.文言(取込件数)} 件を取り込みました。`,
     /**
      * 商品データ取込の結果（失敗あり）
      */
-    ProductImportPartiallyFailedResult: ({ 件数, 取込件数, 失敗件数 }: { 件数: string, 取込件数: string, 失敗件数: string }): string => `${templateKind.文言.int(件数)} 件のうち、${templateKind.文言.int(取込件数)} 件を取り込みました。${templateKind.文言.int(失敗件数)} 件は取り込めませんでした。理由は取込結果のファイルを参照してください。`,
+    ProductImportPartiallyFailedResult: ({ 件数, 取込件数, 失敗件数 }: { 件数: string, 取込件数: string, 失敗件数: string }): string => `${templateKind.文言(件数)} 件のうち、${templateKind.文言(取込件数)} 件を取り込みました。${templateKind.文言(失敗件数)} 件は取り込めませんでした。理由は取込結果のファイルを参照してください。`,
     /**
      * 不正な消費税区分
      *
      * 商品データ取込の取込結果のファイルに出す、取り込めなかった理由
      */
-    InvalidTaxTypeReason: ({ 消費税区分 }: { 消費税区分: string }): string => `不正な消費税区分です: ${templateKind.文言.string(消費税区分)}`,
+    InvalidTaxTypeReason: ({ 消費税区分 }: { 消費税区分: string }): string => `不正な消費税区分です: ${templateKind.文言(消費税区分)}`,
     /**
      * 負の値
      *

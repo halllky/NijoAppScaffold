@@ -51,6 +51,6 @@ partial class OverridedApplicationService {
 
         // 古いログの削除は NLog の設定で自動的に行われるため、ここでは特に処理を実装しない。
 
-        return MSG.CleanUpResult(deletedCount, deletedIdempotencyKeyCount, deletedNotificationCount, deletedJobCount);
+        return MSG.CleanUpResult(deletedCount.ToString(), deletedIdempotencyKeyCount.ToString(), deletedNotificationCount.ToString(), deletedJobCount.ToString());
     }
 }

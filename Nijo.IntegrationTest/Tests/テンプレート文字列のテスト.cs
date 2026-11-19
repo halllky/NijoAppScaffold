@@ -11,11 +11,10 @@ public class テンプレート文字列のテスト {
             <NijoAppScaffold>
               <Templates>
                 <画面のURL TemplateKind="URL">
-                  <売上詳細 Template="/uriage/{売上SEQ:int}?tab={タブ}" />
+                  <売上詳細 Template="/uriage/{売上SEQ}?tab={タブ}" />
                   <JSONの例 Template="{{&quot;name&quot;: &quot;{名前}&quot;}}" TemplateKind="JSON" />
-                  <日付の例 Template="/uriage?date={売上日:date}&amp;from={from:datetime}" />
                   <入れ子 TemplateKind="文言">
-                    <商品詳細 Template="商品 {商品SEQ:int} の詳細" />
+                    <商品詳細 Template="商品 {商品SEQ} の詳細" />
                   </入れ子>
                 </画面のURL>
               </Templates>
@@ -26,11 +25,9 @@ public class テンプレート文字列のテスト {
         Assert.That(errors.SelectMany(GetMessages), Is.Empty);
     }
 
-    [TestCase("/uriage/{0}", "名前で書いてください", TestName = "番号で書いた引数はエラー")]
-    [TestCase("{\"name\": \"{名前}\"}", "名前で書いてください", TestName = "重ねていない波括弧はエラー")]
-    [TestCase("/uriage/{売上SEQ:unknown}", "型「unknown」は使えません", TestName = "未知の型はエラー")]
-    [TestCase("/uriage/{添付:bytearray}", "バイト配列は使えません", TestName = "バイト配列はエラー")]
-    [TestCase("/uriage/{売上SEQ:int}/{売上SEQ}", "異なる型が指定されています", TestName = "同じ引数に異なる型はエラー")]
+    [TestCase("/uriage/{0}", "名前だけで書いてください", TestName = "番号で書いた引数はエラー")]
+    [TestCase("{\"name\": \"{名前}\"}", "名前だけで書いてください", TestName = "重ねていない波括弧はエラー")]
+    [TestCase("/uriage/{売上SEQ:int}", "名前だけで書いてください", TestName = "型を指定した引数はエラー")]
     [TestCase("/uriage/{templateKind}", "引数の名前に「templateKind」は使えません", TestName = "予約された引数名はエラー")]
     public async Task テンプレートの書き方の誤りがエラーになること(string template, string expectedMessage) {
         using var project = await NijoTestUtil.CreateNewProjectAsync($$"""
@@ -53,7 +50,7 @@ public class テンプレート文字列のテスト {
             <NijoAppScaffold>
               <Templates>
                 <画面のURL>
-                  <売上詳細 Template="/uriage/{売上SEQ:int}" />
+                  <売上詳細 Template="/uriage/{売上SEQ}" />
                 </画面のURL>
               </Templates>
             </NijoAppScaffold>
@@ -69,7 +66,7 @@ public class テンプレート文字列のテスト {
             <NijoAppScaffold>
               <Templates>
                 <画面のURL TemplateKind="URL" Template="/uriage">
-                  <売上詳細 Template="/uriage/{売上SEQ:int}" />
+                  <売上詳細 Template="/uriage/{売上SEQ}" />
                 </画面のURL>
               </Templates>
             </NijoAppScaffold>

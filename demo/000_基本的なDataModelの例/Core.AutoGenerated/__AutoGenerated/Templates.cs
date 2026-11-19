@@ -7,16 +7,14 @@
 namespace MyApp;
 
 /// <summary>
-/// テンプレート文字列の種類ごとの、引数の値を埋め込む文字列にする変換。
-/// 種類は nijo.xml の TemplateKind 属性で指定したもの。引数の型ごとにオーバーロードがある。
+/// テンプレート文字列の種類ごとの、引数の値を埋め込む前の変換（エスケープなど）。
+/// 種類は nijo.xml の TemplateKind 属性で指定したもの。
 /// 変換の中身は、このインターフェースを実装するクラスに書き、そのクラスを <see cref="Templates{TKind}"/> の型引数に渡す。
 /// サーバーと画面で同じ文字列になるように、TypeScript 側の変換と同じ結果を返すこと。
 /// </summary>
 public interface ITemplateKind {
-    /// <summary>種類「文言」の、string の引数の変換</summary>
+    /// <summary>種類「文言」の変換</summary>
     static abstract string 文言(string value);
-    /// <summary>種類「文言」の、int の引数の変換</summary>
-    static abstract string 文言(int value);
 }
 
 /// <summary>
@@ -43,11 +41,11 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         /// <summary>
         /// 文字数超過エラー
         /// </summary>
-        public static string MaxLengthError(string 項目名, int 最大文字数) => $"{TKind.文言(項目名)} は {TKind.文言(最大文字数)} 文字以内で入力してください。";
+        public static string MaxLengthError(string 項目名, string 最大文字数) => $"{TKind.文言(項目名)} は {TKind.文言(最大文字数)} 文字以内で入力してください。";
         /// <summary>
         /// 桁数超過エラー
         /// </summary>
-        public static string DigitsError(string 項目名, int 整数部の桁数, int 小数部の桁数) => $"{TKind.文言(項目名)} は整数部 {TKind.文言(整数部の桁数)} 桁、小数部 {TKind.文言(小数部の桁数)} 桁以内で入力してください。";
+        public static string DigitsError(string 項目名, string 整数部の桁数, string 小数部の桁数) => $"{TKind.文言(項目名)} は整数部 {TKind.文言(整数部の桁数)} 桁、小数部 {TKind.文言(小数部の桁数)} 桁以内で入力してください。";
         /// <summary>
         /// 区分値不在エラー
         /// </summary>

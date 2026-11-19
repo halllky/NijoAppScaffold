@@ -56,7 +56,7 @@ partial class OverridedApplicationService {
 
             var totalAvailable = sortedStocks.Sum(x => x.残数量);
             if (totalAvailable < needed) {
-                messages.AddError(MSG_DEMO101.InsufficientStockForSubtractionError(totalAvailable.Value, needed));
+                messages.AddError(MSG_DEMO101.InsufficientStockForSubtractionError(totalAvailable.Value.ToString(), needed.ToString()));
                 return;
             }
 
@@ -172,6 +172,6 @@ partial class OverridedApplicationService {
         await Create通知Async(
             宛先一覧,
             MSG_DEMO101.StockAdjustedNotification(商品名 ?? "", LoginUser.氏名, 増減数.ToString("+#;-#", CultureInfo.InvariantCulture)),
-            PAGES_URL_DEMO101.P301(商品SEQ));
+            PAGES_URL_DEMO101.P301(商品SEQ.ToString()));
     }
 }

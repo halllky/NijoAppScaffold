@@ -54,7 +54,7 @@ partial class OverridedApplicationService {
             var totalAvailable = availableStocks.Sum(x => currentStockMap.TryGetValue(x.入荷明細ID!, out var value) ? value : 0);
 
             if (totalAvailable < quantity) {
-                message.売上数量.AddError(MSG_DEMO101.InsufficientStockError(totalAvailable));
+                message.売上数量.AddError(MSG_DEMO101.InsufficientStockError(totalAvailable.ToString()));
                 continue;
             }
 

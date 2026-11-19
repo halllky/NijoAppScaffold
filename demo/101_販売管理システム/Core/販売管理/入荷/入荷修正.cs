@@ -66,7 +66,7 @@ partial class OverridedApplicationService {
                 var usedQuantity = existingItem.入荷数量 - existingItem.残数量;
                 var newQuantity = inputItem.数量;
                 if (newQuantity < usedQuantity) {
-                    message.数量.AddError(MSG_DEMO101.ArrivalQuantityBelowUsedError(usedQuantity.Value));
+                    message.数量.AddError(MSG_DEMO101.ArrivalQuantityBelowUsedError(usedQuantity.Value.ToString()));
                 }
 
                 if (message.HasError()) continue;

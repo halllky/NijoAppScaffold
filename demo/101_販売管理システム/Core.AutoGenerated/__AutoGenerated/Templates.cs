@@ -7,20 +7,16 @@
 namespace MyApp;
 
 /// <summary>
-/// テンプレート文字列の種類ごとの、引数の値を埋め込む文字列にする変換。
-/// 種類は nijo.xml の TemplateKind 属性で指定したもの。引数の型ごとにオーバーロードがある。
+/// テンプレート文字列の種類ごとの、引数の値を埋め込む前の変換（エスケープなど）。
+/// 種類は nijo.xml の TemplateKind 属性で指定したもの。
 /// 変換の中身は、このインターフェースを実装するクラスに書き、そのクラスを <see cref="Templates{TKind}"/> の型引数に渡す。
 /// サーバーと画面で同じ文字列になるように、TypeScript 側の変換と同じ結果を返すこと。
 /// </summary>
 public interface ITemplateKind {
-    /// <summary>種類「URL」の、string の引数の変換</summary>
+    /// <summary>種類「URL」の変換</summary>
     static abstract string URL(string value);
-    /// <summary>種類「URL」の、int の引数の変換</summary>
-    static abstract string URL(int value);
-    /// <summary>種類「文言」の、string の引数の変換</summary>
+    /// <summary>種類「文言」の変換</summary>
     static abstract string 文言(string value);
-    /// <summary>種類「文言」の、int の引数の変換</summary>
-    static abstract string 文言(int value);
 }
 
 /// <summary>
@@ -72,11 +68,11 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         /// <summary>
         /// P101 売上詳細
         /// </summary>
-        public static string P101(int 売上SEQ) => $"/uriage/edit/{TKind.URL(売上SEQ)}";
+        public static string P101(string 売上SEQ) => $"/uriage/edit/{TKind.URL(売上SEQ)}";
         /// <summary>
         /// P301 商品詳細
         /// </summary>
-        public static string P301(int 商品SEQ) => $"/shohin/{TKind.URL(商品SEQ)}";
+        public static string P301(string 商品SEQ) => $"/shohin/{TKind.URL(商品SEQ)}";
     }
     /// <summary>
     /// メッセージ
@@ -93,11 +89,11 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         /// <summary>
         /// 文字数超過エラー
         /// </summary>
-        public static string MaxLengthError(string 項目名, int 最大文字数) => $"{TKind.文言(項目名)} は {TKind.文言(最大文字数)} 文字以内で入力してください。";
+        public static string MaxLengthError(string 項目名, string 最大文字数) => $"{TKind.文言(項目名)} は {TKind.文言(最大文字数)} 文字以内で入力してください。";
         /// <summary>
         /// 桁数超過エラー
         /// </summary>
-        public static string DigitsError(string 項目名, int 整数部の桁数, int 小数部の桁数) => $"{TKind.文言(項目名)} は整数部 {TKind.文言(整数部の桁数)} 桁、小数部 {TKind.文言(小数部の桁数)} 桁以内で入力してください。";
+        public static string DigitsError(string 項目名, string 整数部の桁数, string 小数部の桁数) => $"{TKind.文言(項目名)} は整数部 {TKind.文言(整数部の桁数)} 桁、小数部 {TKind.文言(小数部の桁数)} 桁以内で入力してください。";
         /// <summary>
         /// 区分値不在エラー
         /// </summary>
@@ -227,7 +223,7 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         /// <summary>
         /// クリーンナップの結果
         /// </summary>
-        public static string CleanUpResult(int セッション, int 冪等キー, int 通知, int ジョブ) => $"セッション {TKind.文言(セッション)} 件、冪等キー {TKind.文言(冪等キー)} 件、通知 {TKind.文言(通知)} 件、ジョブ {TKind.文言(ジョブ)} 件を削除しました。";
+        public static string CleanUpResult(string セッション, string 冪等キー, string 通知, string ジョブ) => $"セッション {TKind.文言(セッション)} 件、冪等キー {TKind.文言(冪等キー)} 件、通知 {TKind.文言(通知)} 件、ジョブ {TKind.文言(ジョブ)} 件を削除しました。";
     }
     /// <summary>
     /// メッセージ(デモ101専用)
@@ -295,11 +291,11 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         /// <summary>
         /// 在庫不足
         /// </summary>
-        public static string InsufficientStockError(int 現在在庫) => $"在庫不足です。（現在在庫: {TKind.文言(現在在庫)}）";
+        public static string InsufficientStockError(string 現在在庫) => $"在庫不足です。（現在在庫: {TKind.文言(現在在庫)}）";
         /// <summary>
         /// 取消可能な在庫引当の不足
         /// </summary>
-        public static string InsufficientReturnableStockError(int 取消可能数) => $"取消可能な在庫引当履歴が不足しています。（取消可能数: {TKind.文言(取消可能数)}）";
+        public static string InsufficientReturnableStockError(string 取消可能数) => $"取消可能な在庫引当履歴が不足しています。（取消可能数: {TKind.文言(取消可能数)}）";
         /// <summary>
         /// 売上登録の確認
         /// </summary>
@@ -319,7 +315,7 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         /// <summary>
         /// 担当の売上の修正の通知
         /// </summary>
-        public static string SalesUpdatedNotification(int 売上SEQ, string 修正者) => $"担当の売上 {TKind.文言(売上SEQ)} が {TKind.文言(修正者)} さんにより修正されました。";
+        public static string SalesUpdatedNotification(string 売上SEQ, string 修正者) => $"担当の売上 {TKind.文言(売上SEQ)} が {TKind.文言(修正者)} さんにより修正されました。";
         /// <summary>
         /// 在庫調整の数量未指定
         /// </summary>
@@ -335,7 +331,7 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         /// <summary>
         /// 減算時の在庫不足
         /// </summary>
-        public static string InsufficientStockForSubtractionError(int 現在在庫, int 減算指定) => $"在庫不足のため減算できません。（現在在庫: {TKind.文言(現在在庫)}, 減算指定: {TKind.文言(減算指定)}）";
+        public static string InsufficientStockForSubtractionError(string 現在在庫, string 減算指定) => $"在庫不足のため減算できません。（現在在庫: {TKind.文言(現在在庫)}, 減算指定: {TKind.文言(減算指定)}）";
         /// <summary>
         /// 在庫調整の通知
         /// <para>
@@ -366,7 +362,7 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         /// <summary>
         /// 使用済みの数量を下回る入荷数量
         /// </summary>
-        public static string ArrivalQuantityBelowUsedError(int 使用済みの数量) => $"入荷数量を既に使用されている数量({TKind.文言(使用済みの数量)})未満にすることはできません。";
+        public static string ArrivalQuantityBelowUsedError(string 使用済みの数量) => $"入荷数量を既に使用されている数量({TKind.文言(使用済みの数量)})未満にすることはできません。";
         /// <summary>
         /// 入荷修正の確認
         /// </summary>
@@ -382,11 +378,11 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         /// <summary>
         /// 商品データ取込の結果
         /// </summary>
-        public static string ProductImportResult(int 件数, int 取込件数) => $"{TKind.文言(件数)} 件のうち、{TKind.文言(取込件数)} 件を取り込みました。";
+        public static string ProductImportResult(string 件数, string 取込件数) => $"{TKind.文言(件数)} 件のうち、{TKind.文言(取込件数)} 件を取り込みました。";
         /// <summary>
         /// 商品データ取込の結果（失敗あり）
         /// </summary>
-        public static string ProductImportPartiallyFailedResult(int 件数, int 取込件数, int 失敗件数) => $"{TKind.文言(件数)} 件のうち、{TKind.文言(取込件数)} 件を取り込みました。{TKind.文言(失敗件数)} 件は取り込めませんでした。理由は取込結果のファイルを参照してください。";
+        public static string ProductImportPartiallyFailedResult(string 件数, string 取込件数, string 失敗件数) => $"{TKind.文言(件数)} 件のうち、{TKind.文言(取込件数)} 件を取り込みました。{TKind.文言(失敗件数)} 件は取り込めませんでした。理由は取込結果のファイルを参照してください。";
         /// <summary>
         /// 不正な消費税区分
         /// <para>

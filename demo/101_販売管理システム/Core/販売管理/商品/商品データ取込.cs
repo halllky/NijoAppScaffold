@@ -39,8 +39,8 @@ partial class OverridedApplicationService {
 
         var failedCount = results.Count(r => r.Result != 取込結果_登録 && r.Result != 取込結果_更新);
         job.結果メッセージ = failedCount > 0
-            ? MSG_DEMO101.ProductImportPartiallyFailedResult(results.Count, results.Count - failedCount, failedCount)
-            : MSG_DEMO101.ProductImportResult(results.Count, results.Count - failedCount);
+            ? MSG_DEMO101.ProductImportPartiallyFailedResult(results.Count.ToString(), (results.Count - failedCount).ToString(), failedCount.ToString())
+            : MSG_DEMO101.ProductImportResult(results.Count.ToString(), (results.Count - failedCount).ToString());
         Log.LogInformation("商品データ取込が完了しました。{Message}", job.結果メッセージ);
 
         if (failedCount > 0) throw new InvalidOperationException($"取り込めない商品データがありました。{job.結果メッセージ}");

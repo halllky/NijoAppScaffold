@@ -1057,11 +1057,11 @@ Webアプリケーションなので明示的にログアウトしない限り�
       UniqueId="fd83c28f-ad29-4518-a44c-9659fa5d96e7">
       <P101
         DisplayName="P101 売上詳細"
-        Template="/uriage/edit/{売上SEQ:int}"
+        Template="/uriage/edit/{売上SEQ}"
         UniqueId="39f348ed-c979-433e-a9c5-f8570e1ae456" />
       <P301
         DisplayName="P301 商品詳細"
-        Template="/shohin/{商品SEQ:int}"
+        Template="/shohin/{商品SEQ}"
         UniqueId="d40e7c40-c552-4932-98ea-4eea496694f2" />
     </PAGES_URL_DEMO101>
     <!--利用者に見せるメッセージ。名前がメッセージの ID になる。
@@ -1076,11 +1076,11 @@ Webアプリケーションなので明示的にログアウトしない限り�
         UniqueId="d2c588e0-b33d-4cda-891c-00c53b3b6707" />
       <MaxLengthError
         DisplayName="文字数超過エラー"
-        Template="{項目名} は {最大文字数:int} 文字以内で入力してください。"
+        Template="{項目名} は {最大文字数} 文字以内で入力してください。"
         UniqueId="d4b1bf22-e51e-4878-8440-56d605af2a72" />
       <DigitsError
         DisplayName="桁数超過エラー"
-        Template="{項目名} は整数部 {整数部の桁数:int} 桁、小数部 {小数部の桁数:int} 桁以内で入力してください。"
+        Template="{項目名} は整数部 {整数部の桁数} 桁、小数部 {小数部の桁数} 桁以内で入力してください。"
         UniqueId="283c7e05-56df-44bc-a8fc-c4ff3c64a60b" />
       <GenericLookupValueNotFound
         DisplayName="区分値不在エラー"
@@ -1198,7 +1198,7 @@ Webアプリケーションなので明示的にログアウトしない限り�
         UniqueId="e177ca46-c989-4090-80f0-672a799bac52" />
       <CleanUpResult
         DisplayName="クリーンナップの結果"
-        Template="セッション {セッション:int} 件、冪等キー {冪等キー:int} 件、通知 {通知:int} 件、ジョブ {ジョブ:int} 件を削除しました。"
+        Template="セッション {セッション} 件、冪等キー {冪等キー} 件、通知 {通知} 件、ジョブ {ジョブ} 件を削除しました。"
         UniqueId="47984bbb-bf0b-47ae-b3e1-452461aa960d" />
     </MSG>
     <!--販売管理のメッセージ。値の決まりは「MSG」と同じ。-->
@@ -1264,11 +1264,11 @@ Webアプリケーションなので明示的にログアウトしない限り�
         UniqueId="7ac1189f-9eac-459f-891f-4e0ecfb814e7" />
       <InsufficientStockError
         DisplayName="在庫不足"
-        Template="在庫不足です。（現在在庫: {現在在庫:int}）"
+        Template="在庫不足です。（現在在庫: {現在在庫}）"
         UniqueId="a02f16bc-36be-45f8-9c03-de57ae9528eb" />
       <InsufficientReturnableStockError
         DisplayName="取消可能な在庫引当の不足"
-        Template="取消可能な在庫引当履歴が不足しています。（取消可能数: {取消可能数:int}）"
+        Template="取消可能な在庫引当履歴が不足しています。（取消可能数: {取消可能数}）"
         UniqueId="0613a5b6-948c-4f1a-a3a2-4e658c6cc5fc" />
       <SalesRegisterConfirm
         DisplayName="売上登録の確認"
@@ -1288,7 +1288,7 @@ Webアプリケーションなので明示的にログアウトしない限り�
         UniqueId="c60fcbd0-c9ef-4cfc-8413-386d88b1616c" />
       <SalesUpdatedNotification
         DisplayName="担当の売上の修正の通知"
-        Template="担当の売上 {売上SEQ:int} が {修正者} さんにより修正されました。"
+        Template="担当の売上 {売上SEQ} が {修正者} さんにより修正されました。"
         UniqueId="7d858b27-4146-4a48-a764-305c5d8cc70a" />
       <StockAdjustmentAmountRequiredError
         DisplayName="在庫調整の数量未指定"
@@ -1304,7 +1304,7 @@ Webアプリケーションなので明示的にログアウトしない限り�
         UniqueId="68685db3-84b1-4e74-9657-e959699e001a" />
       <InsufficientStockForSubtractionError
         DisplayName="減算時の在庫不足"
-        Template="在庫不足のため減算できません。（現在在庫: {現在在庫:int}, 減算指定: {減算指定:int}）"
+        Template="在庫不足のため減算できません。（現在在庫: {現在在庫}, 減算指定: {減算指定}）"
         UniqueId="b821a5e8-aee7-4872-9ba2-470dcab9895f" />
       <!--増減数は、符号を付けて渡す（+3、-2 など）-->
       <StockAdjustedNotification
@@ -1333,7 +1333,7 @@ Webアプリケーションなので明示的にログアウトしない限り�
         UniqueId="e34c8e31-abd9-4e75-9986-1ca1b1f68552" />
       <ArrivalQuantityBelowUsedError
         DisplayName="使用済みの数量を下回る入荷数量"
-        Template="入荷数量を既に使用されている数量({使用済みの数量:int})未満にすることはできません。"
+        Template="入荷数量を既に使用されている数量({使用済みの数量})未満にすることはできません。"
         UniqueId="41f86f69-c880-4927-b640-38fba3d06d67" />
       <ArrivalUpdateConfirm
         DisplayName="入荷修正の確認"
@@ -1349,11 +1349,11 @@ Webアプリケーションなので明示的にログアウトしない限り�
         UniqueId="8bccf970-5c4e-45a8-91b6-883a882f120d" />
       <ProductImportResult
         DisplayName="商品データ取込の結果"
-        Template="{件数:int} 件のうち、{取込件数:int} 件を取り込みました。"
+        Template="{件数} 件のうち、{取込件数} 件を取り込みました。"
         UniqueId="f576fdfb-fa2d-4152-8fef-d90faf6bf044" />
       <ProductImportPartiallyFailedResult
         DisplayName="商品データ取込の結果（失敗あり）"
-        Template="{件数:int} 件のうち、{取込件数:int} 件を取り込みました。{失敗件数:int} 件は取り込めませんでした。理由は取込結果のファイルを参照してください。"
+        Template="{件数} 件のうち、{取込件数} 件を取り込みました。{失敗件数} 件は取り込めませんでした。理由は取込結果のファイルを参照してください。"
         UniqueId="4b565f01-188d-4868-adca-86be400923a8" />
       <!--商品データ取込の取込結果のファイルに出す、取り込めなかった理由-->
       <InvalidTaxTypeReason

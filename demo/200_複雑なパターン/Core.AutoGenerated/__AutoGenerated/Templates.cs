@@ -7,22 +7,16 @@
 namespace MyApp;
 
 /// <summary>
-/// テンプレート文字列の種類ごとの、引数の値を埋め込む文字列にする変換。
-/// 種類は nijo.xml の TemplateKind 属性で指定したもの。引数の型ごとにオーバーロードがある。
+/// テンプレート文字列の種類ごとの、引数の値を埋め込む前の変換（エスケープなど）。
+/// 種類は nijo.xml の TemplateKind 属性で指定したもの。
 /// 変換の中身は、このインターフェースを実装するクラスに書き、そのクラスを <see cref="Templates{TKind}"/> の型引数に渡す。
 /// サーバーと画面で同じ文字列になるように、TypeScript 側の変換と同じ結果を返すこと。
 /// </summary>
 public interface ITemplateKind {
-    /// <summary>種類「JSON」の、string の引数の変換</summary>
+    /// <summary>種類「JSON」の変換</summary>
     static abstract string JSON(string value);
-    /// <summary>種類「文言」の、string の引数の変換</summary>
+    /// <summary>種類「文言」の変換</summary>
     static abstract string 文言(string value);
-    /// <summary>種類「文言」の、int の引数の変換</summary>
-    static abstract string 文言(int value);
-    /// <summary>種類「文言」の、payment_type の引数の変換</summary>
-    static abstract string 文言(payment_type value);
-    /// <summary>種類「文言」の、医療従事者ID型 の引数の変換</summary>
-    static abstract string 文言(医療従事者ID型 value);
 }
 
 /// <summary>
@@ -112,11 +106,8 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         public static string EquipmentMaintenance(string 機器名, string 最終点検日) => $"機器「{TKind.文言(機器名)}」のメンテナンスが必要です。最終点検日: {TKind.文言(最終点検日)}";
         /// <summary>
         /// 在庫アラート
-        /// <para>
-        /// 整数の引数のテスト
-        /// </para>
         /// </summary>
-        public static string StockAlert(string 品目名, int 残数) => $"在庫不足: {TKind.文言(品目名)}の残り数量が{TKind.文言(残数)}個です";
+        public static string StockAlert(string 品目名, string 残数) => $"在庫不足: {TKind.文言(品目名)}の残り数量が{TKind.文言(残数)}個です";
         /// <summary>
         /// 予約確認
         /// <para>
@@ -130,11 +121,8 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         public static string ReservationCancelled() => $"予約がキャンセルされました";
         /// <summary>
         /// 支払受付
-        /// <para>
-        /// 静的区分と値オブジェクトの引数のテスト。静的区分は C# と TypeScript で表し方が異なる
-        /// </para>
         /// </summary>
-        public static string PaymentAccepted(payment_type 支払方法, 医療従事者ID型 担当者) => $"{TKind.文言(支払方法)}での支払いを受け付けました（担当: {TKind.文言(担当者)}）";
+        public static string PaymentAccepted(string 支払方法, string 担当者) => $"{TKind.文言(支払方法)}での支払いを受け付けました（担当: {TKind.文言(担当者)}）";
         /// <summary>
         /// スクリプトテンプレート
         /// <para>
@@ -165,11 +153,11 @@ public abstract class Templates<TKind> where TKind : ITemplateKind {
         /// <summary>
         /// 文字数超過エラー
         /// </summary>
-        public static string MaxLengthError(string 項目名, int 最大文字数) => $"{TKind.文言(項目名)} は {TKind.文言(最大文字数)} 文字以内で入力してください。";
+        public static string MaxLengthError(string 項目名, string 最大文字数) => $"{TKind.文言(項目名)} は {TKind.文言(最大文字数)} 文字以内で入力してください。";
         /// <summary>
         /// 桁数超過エラー
         /// </summary>
-        public static string DigitsError(string 項目名, int 整数部の桁数, int 小数部の桁数) => $"{TKind.文言(項目名)} は整数部 {TKind.文言(整数部の桁数)} 桁、小数部 {TKind.文言(小数部の桁数)} 桁以内で入力してください。";
+        public static string DigitsError(string 項目名, string 整数部の桁数, string 小数部の桁数) => $"{TKind.文言(項目名)} は整数部 {TKind.文言(整数部の桁数)} 桁、小数部 {TKind.文言(小数部の桁数)} 桁以内で入力してください。";
         /// <summary>
         /// 区分値不在エラー
         /// </summary>
@@ -287,9 +275,6 @@ public static class TemplatePattern {
         public static string EquipmentMaintenance(string 機器名, string 最終点検日) => $"機器「{機器名}」のメンテナンスが必要です。最終点検日: {最終点検日}";
         /// <summary>
         /// 在庫アラート
-        /// <para>
-        /// 整数の引数のテスト
-        /// </para>
         /// </summary>
         public static string StockAlert(string 品目名, string 残数) => $"在庫不足: {品目名}の残り数量が{残数}個です";
         /// <summary>
@@ -305,9 +290,6 @@ public static class TemplatePattern {
         public static string ReservationCancelled() => $"予約がキャンセルされました";
         /// <summary>
         /// 支払受付
-        /// <para>
-        /// 静的区分と値オブジェクトの引数のテスト。静的区分は C# と TypeScript で表し方が異なる
-        /// </para>
         /// </summary>
         public static string PaymentAccepted(string 支払方法, string 担当者) => $"{支払方法}での支払いを受け付けました（担当: {担当者}）";
         /// <summary>

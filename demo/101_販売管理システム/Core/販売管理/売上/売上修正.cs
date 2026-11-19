@@ -102,7 +102,7 @@ partial class OverridedApplicationService {
                     if (newStocks.Count == 0) {
                         // これ以上在庫がない
                         var totalAvailable = stocksForProduct.Sum(x => currentStockMap.TryGetValue(x.入荷明細ID!, out var value) ? value : 0);
-                        message.売上数量.AddError(MSG_DEMO101.InsufficientStockError(totalAvailable));
+                        message.売上数量.AddError(MSG_DEMO101.InsufficientStockError(totalAvailable.ToString()));
                         break;
                     }
 
@@ -154,7 +154,7 @@ partial class OverridedApplicationService {
                     if (newStocks.Count == 0) {
                         // これ以上戻せる在庫がない
                         var totalReturnable = stocksForProduct.Sum(x => (x.入荷数量 ?? 0) - (currentStockMap.TryGetValue(x.入荷明細ID!, out var value) ? value : 0));
-                        message.売上数量.AddError(MSG_DEMO101.InsufficientReturnableStockError(totalReturnable));
+                        message.売上数量.AddError(MSG_DEMO101.InsufficientReturnableStockError(totalReturnable.ToString()));
                         break;
                     }
 
@@ -251,7 +251,7 @@ partial class OverridedApplicationService {
 
         await Create通知Async(
             [担当者],
-            MSG_DEMO101.SalesUpdatedNotification(売上SEQ, LoginUser.氏名),
-            PAGES_URL_DEMO101.P101(売上SEQ));
+            MSG_DEMO101.SalesUpdatedNotification(売上SEQ.ToString(), LoginUser.氏名),
+            PAGES_URL_DEMO101.P101(売上SEQ.ToString()));
     }
 }

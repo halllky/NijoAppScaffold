@@ -30,7 +30,7 @@ partial class OverridedDbContext {
         if (string.IsNullOrEmpty(value)) return null;
 
         return new StringInfo(value).LengthInTextElements > maxLength
-            ? MSG.MaxLengthError(displayName, maxLength)
+            ? MSG.MaxLengthError(displayName, maxLength.ToString())
             : null;
     }
 
@@ -46,7 +46,7 @@ partial class OverridedDbContext {
         var isDecimalPartOver = Math.Round(value.Value, decimalPlace) != value.Value;
 
         return isIntegerPartOver || isDecimalPartOver
-            ? MSG.DigitsError(displayName, integerDigits, decimalPlace)
+            ? MSG.DigitsError(displayName, integerDigits.ToString(), decimalPlace.ToString())
             : null;
 
         static decimal Pow10(int exponent) {

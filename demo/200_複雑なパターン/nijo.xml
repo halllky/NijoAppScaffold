@@ -1967,10 +1967,9 @@
         DisplayName="機器メンテナンス通知"
         Template="機器「{機器名}」のメンテナンスが必要です。最終点検日: {最終点検日}"
         UniqueId="tmpl-equipment-maintenance-001" />
-      <!-- 整数の引数のテスト -->
       <StockAlert
         DisplayName="在庫アラート"
-        Template="在庫不足: {品目名}の残り数量が{残数:int}個です"
+        Template="在庫不足: {品目名}の残り数量が{残数}個です"
         UniqueId="tmpl-stock-alert-001" />
       <!-- 予約関連。同じ引数を2回使う場合のテスト -->
       <ReservationConfirmed
@@ -1981,10 +1980,9 @@
         DisplayName="予約キャンセル"
         Template="予約がキャンセルされました"
         UniqueId="tmpl-reservation-cancelled-001" />
-      <!-- 静的区分と値オブジェクトの引数のテスト。静的区分は C# と TypeScript で表し方が異なる -->
       <PaymentAccepted
         DisplayName="支払受付"
-        Template="{支払方法:payment_type}での支払いを受け付けました（担当: {担当者:医療従事者ID型}）"
+        Template="{支払方法}での支払いを受け付けました（担当: {担当者}）"
         UniqueId="tmpl-payment-accepted-001" />
       <!-- バックティック（`）と、波括弧そのものを含むテンプレート文字列のテスト -->
       <ScriptTemplate
@@ -2010,11 +2008,11 @@
         UniqueId="d2c588e0-b33d-4cda-891c-00c53b3b6707" />
       <MaxLengthError
         DisplayName="文字数超過エラー"
-        Template="{項目名} は {最大文字数:int} 文字以内で入力してください。"
+        Template="{項目名} は {最大文字数} 文字以内で入力してください。"
         UniqueId="d4b1bf22-e51e-4878-8440-56d605af2a72" />
       <DigitsError
         DisplayName="桁数超過エラー"
-        Template="{項目名} は整数部 {整数部の桁数:int} 桁、小数部 {小数部の桁数:int} 桁以内で入力してください。"
+        Template="{項目名} は整数部 {整数部の桁数} 桁、小数部 {小数部の桁数} 桁以内で入力してください。"
         UniqueId="283c7e05-56df-44bc-a8fc-c4ff3c64a60b" />
       <GenericLookupValueNotFound
         DisplayName="区分値不在エラー"

@@ -34,7 +34,7 @@ internal sealed class TemplatesSection : Section {
 
     public override void Validate(IReadOnlyList<XElement> rootAggregateElements, SchemaParseContext context, SchemaValidationErrors errors) {
         foreach (var rootAggregateElement in rootAggregateElements) {
-            ValidateGroup(new TemplateGroupDef(rootAggregateElement, context));
+            ValidateGroup(new TemplateGroupDef(rootAggregateElement));
         }
 
         void ValidateGroup(TemplateGroupDef group) {
@@ -55,7 +55,7 @@ internal sealed class TemplatesSection : Section {
     }
 
     public override void Render(CodeRenderingContext ctx) {
-        var groups = ctx.Schema.GetTemplates().Select(root => new TemplateGroupDef(root.XElement, ctx.Schema)).ToArray();
+        var groups = ctx.Schema.GetTemplates().Select(root => new TemplateGroupDef(root.XElement)).ToArray();
         if (groups.Length == 0) return;
 
         var kinds = CollectKinds(groups);
@@ -69,64 +69,39 @@ internal sealed class TemplatesSection : Section {
         ctx.ReactProject(dir => {
             dir.Generate(new SourceFile {
                 FileName = "templates.ts",
-                Contents = RenderTypeScript(groups, kinds, CollectTsImports(groups)),
+                Contents = RenderTypeScript(groups, kinds),
             });
         });
     }
 
     /// <summary>
-    /// 種類ごとに、変換を宣言する引数の型を集めます。
-    /// 宣言するのは、その種類のテンプレート文字列で実際に使われている型と、文字列型。
-    /// テンプレート文字列がまだ無いグループに指定された種類も、文字列型だけは宣言する。
-    /// 宣言が無いと、変換の中身を先に書いておくことができないため。
+    /// 変換を宣言する種類を集めます。
+    /// テンプレート文字列がまだ無いグループに指定された種類も宣言する。宣言が無いと、変換の中身を先に書いておくことができないため。
     /// </summary>
-    private static KindDeclaration[] CollectKinds(TemplateGroupDef[] groups) {
-        var declaredKinds = groups
+    private static string[] CollectKinds(TemplateGroupDef[] groups) {
+        return groups
             .SelectMany(group => group.Element.DescendantsAndSelf())
             .Select(el => el.Attribute(TemplateKindOption.ATTRIBUTE_NAME)?.Value)
-            .OfType<string>();
-        var usedTypes = groups
-            .SelectMany(group => group.GetTemplatesRecursively())
-            .Where(template => template.Kind != null)
-            .SelectMany(template => template.GetParameterTypes().Select(type => (Kind: template.Kind!, Type: type)));
-
-        return declaredKinds
-            .Concat(usedTypes.Select(x => x.Kind))
+            .OfType<string>()
             .Distinct()
             .Order()
-            .Select(kind => new KindDeclaration(kind, usedTypes
-                .Where(x => x.Kind == kind)
-                .Select(x => x.Type)
-                .Prepend(TemplateParameterType.String)
-                .GroupBy(type => type.Key)
-                .Select(MergeTsTypes)
-                .ToArray()))
             .ToArray();
-
-        // C# の型が同じでも、TypeScript の型が異なる nijo の型がありうるので、TypeScript 側は和型にする
-        static TemplateParameterType MergeTsTypes(IGrouping<string, TemplateParameterType> sameKey) {
-            var first = sameKey.First();
-            var tsTypes = sameKey.Select(type => type.TsType).Distinct().ToArray();
-            return tsTypes.Length == 1 ? first : first with { TsType = string.Join(" | ", tsTypes) };
-        }
     }
-    /// <summary>種類1つ分の変換の宣言</summary>
-    private sealed record KindDeclaration(string Kind, TemplateParameterType[] Types);
 
-    private static string RenderCSharp(CodeRenderingContext ctx, TemplateGroupDef[] groups, KindDeclaration[] kinds) {
+    private static string RenderCSharp(CodeRenderingContext ctx, TemplateGroupDef[] groups, string[] kinds) {
         return $$"""
             namespace {{ctx.Config.RootNamespace}};
 
             /// <summary>
-            /// テンプレート文字列の種類ごとの、引数の値を埋め込む文字列にする変換。
-            /// 種類は nijo.xml の {{TemplateKindOption.ATTRIBUTE_NAME}} 属性で指定したもの。引数の型ごとにオーバーロードがある。
+            /// テンプレート文字列の種類ごとの、引数の値を埋め込む前の変換（エスケープなど）。
+            /// 種類は nijo.xml の {{TemplateKindOption.ATTRIBUTE_NAME}} 属性で指定したもの。
             /// 変換の中身は、このインターフェースを実装するクラスに書き、そのクラスを <see cref="{{CS_CONTAINER_CLASS}}{{{CS_KIND_TYPE_PARAMETER}}}"/> の型引数に渡す。
             /// サーバーと画面で同じ文字列になるように、TypeScript 側の変換と同じ結果を返すこと。
             /// </summary>
             public interface {{CS_KIND_INTERFACE}} {
-            {{kinds.SelectMany(kind => kind.Types.Select(type => (kind.Kind, Type: type))).SelectTextTemplate(x => $$"""
-                /// <summary>種類「{{x.Kind}}」の、{{x.Type.CsType}} の引数の変換</summary>
-                static abstract string {{x.Kind}}({{x.Type.CsType}} value);
+            {{kinds.SelectTextTemplate(kind => $$"""
+                /// <summary>種類「{{kind}}」の変換</summary>
+                static abstract string {{kind}}(string value);
             """)}}
             }
 
@@ -158,38 +133,17 @@ internal sealed class TemplatesSection : Section {
             """;
     }
 
-    /// <summary>
-    /// 引数の型を参照するために必要な import 文を集めます。
-    /// </summary>
-    private static string[] CollectTsImports(TemplateGroupDef[] groups) {
-        return groups
-            .SelectMany(group => group.GetTemplatesRecursively())
-            .SelectMany(template => template.GetParameterTypes())
-            .Select(type => type.TsImport)
-            .OfType<string>()
-            .Distinct()
-            .Order()
-            .ToArray();
-    }
-
-    private static string RenderTypeScript(TemplateGroupDef[] groups, KindDeclaration[] kinds, string[] tsImports) {
+    private static string RenderTypeScript(TemplateGroupDef[] groups, string[] kinds) {
         return $$"""
-            {{tsImports.SelectTextTemplate(import => $$"""
-            {{import}}
-            """)}}
-
             /**
-             * テンプレート文字列の種類ごとの、引数の値を埋め込む文字列にする変換。
+             * テンプレート文字列の種類ごとの、引数の値を埋め込む前の変換（エスケープなど）。
              * 種類は nijo.xml の {{TemplateKindOption.ATTRIBUTE_NAME}} 属性で指定したもの。
-             * 引数の型ごとに、C# の型名の名前で変換を持つ。
              * サーバーと画面で同じ文字列になるように、C# 側の変換と同じ結果を返すこと。
              */
             export type {{TS_KIND_TYPE}} = {
             {{kinds.SelectTextTemplate(kind => $$"""
-              /** 種類「{{kind.Kind}}」の変換 */
-              {{kind.Kind}}: {
-                {{WithIndent(kind.Types.Select(type => $"{type.Key}: (value: {type.TsType}) => string").Join("\n"))}}
-              }
+              /** 種類「{{kind}}」の変換 */
+              {{kind}}: (value: string) => string
             """)}}
             }
 
@@ -197,8 +151,8 @@ internal sealed class TemplatesSection : Section {
              * nijo.xml の {{E_Section.Templates.ToXmlElementName()}} セクションに定義したテンプレート文字列を返します。
              * 引数の値は、渡された変換を通してから埋め込む。
              * アプリからは、この関数を1回だけ呼んだ結果を export し、それを通して使う。
-             * 宣言されていない変換を余分に渡してもエラーにしない。C# で余分なオーバーロードがあってもエラーにならないのと同じく、
-             * テンプレート文字列の引数で使われなくなった型の変換を、消さずに残しておけるようにするため。
+             * 宣言されていない変換を余分に渡してもエラーにしない。C# で余分なメソッドがあってもエラーにならないのと同じく、
+             * nijo.xml から無くなった種類の変換を、消さずに残しておけるようにするため。
              */
             export const {{TS_FACTORY_FUNCTION}} = <TKind extends {{TS_KIND_TYPE}}>({{TS_KIND_VARIABLE}}: TKind) => ({
             {{groups.SelectTextTemplate(group => $$"""

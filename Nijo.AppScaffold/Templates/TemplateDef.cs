@@ -1,6 +1,4 @@
 using Nijo.CodeGenerating;
-using Nijo.DataStructures.ValueMemberTypes;
-using Nijo.SchemaParsing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,24 +10,20 @@ namespace Nijo.Templates;
 
 /// <summary>
 /// テンプレート文字列1個分の定義。
-/// 値の中の {名前} や {名前:型} を引数とし、引数を埋め込んだ文字列を返す関数として生成する。
-/// 型はデータ構造のメンバーと同じ型名で指定する（<see cref="TemplateParameterType"/>）。
+/// 値の中の {名前} を引数とし、引数を埋め込んだ文字列を返す関数として生成する。
 /// 波括弧そのものは C# の書式指定文字列と同じく {{ }} と重ねて書く。
-/// 引数の値は、テンプレートの種類（<see cref="TemplateKindOption"/>）ごとの変換で文字列にしてから埋め込む。
-/// 変換は種類と引数の型の組み合わせごとにあり、値を文字列にする書式もそこで決まる。
-/// 引数に null は渡せない。
+/// 引数はすべて文字列で、null は渡せない。値をどう見せるか（書式）と、値が無いときにどうするかは、呼び出し側が決める。
+/// 引数の値は、テンプレートの種類（<see cref="TemplateKindOption"/>）の変換を通してから埋め込む。
+/// 変換の中身（エスケープなど）はアプリ側に書くので、nijo は埋め込み先の文法について何も知らない。
 /// </summary>
 internal sealed class TemplateDef {
-    /// <summary>引数の型を省略したときの型名</summary>
-    internal const string DEFAULT_PARAM_TYPE = "word";
 
-    internal TemplateDef(XElement element, SchemaParseContext ctx) {
-        _ctx = ctx;
+    internal TemplateDef(XElement element) {
         Element = element;
         Name = element.Name.LocalName;
         Kind = TemplateKindOption.Resolve(element);
-        Value = element.Attribute(TemplateOption.ATTRIBUTE_NAME)?.Value ?? string.Empty;
-        (_parts, _hasUnescapedBrace) = Parse(Value);
+        var value = element.Attribute(TemplateOption.ATTRIBUTE_NAME)?.Value ?? string.Empty;
+        (_parts, _hasInvalidBrace) = Parse(value);
     }
 
     internal XElement Element { get; }
@@ -37,26 +31,17 @@ internal sealed class TemplateDef {
     internal string Name { get; }
     /// <summary>テンプレートの種類。自身にも祖先のグループにも指定が無ければ null</summary>
     internal string? Kind { get; }
-    private string Value { get; }
 
-    private readonly SchemaParseContext _ctx;
     private readonly IReadOnlyList<Part> _parts;
-    private readonly bool _hasUnescapedBrace;
+    private readonly bool _hasInvalidBrace;
 
     /// <summary>
-    /// 引数。同じ名前の引数が複数回登場するテンプレートでも、引数は1個になる。登場順に並ぶ。
+    /// 引数の名前。同じ名前の引数が複数回登場するテンプレートでも、引数は1個になる。登場順に並ぶ。
     /// </summary>
-    private IEnumerable<Placeholder> Parameters => _parts
+    private IEnumerable<string> Parameters => _parts
         .OfType<Placeholder>()
-        .DistinctBy(p => p.Name);
-
-    /// <summary>
-    /// 引数の型を返します。種類ごとの変換を、どの型について宣言するかを決めるのに使う。
-    /// 型の誤りは <see cref="Validate"/> で検出されるので、誤りの無い定義に対してだけ呼ぶこと。
-    /// </summary>
-    internal IEnumerable<TemplateParameterType> GetParameterTypes() {
-        return Parameters.Select(GetParameterType);
-    }
+        .Select(p => p.Name)
+        .Distinct();
 
     /// <summary>
     /// スキーマ定義の誤りを検証します。
@@ -68,34 +53,20 @@ internal sealed class TemplateDef {
         if (Kind == null) {
             addError($"自身かその親のグループに {TemplateKindOption.ATTRIBUTE_NAME} 属性を指定してください。");
         }
-        if (_hasUnescapedBrace) {
-            addError("引数は {売上SEQ:int} のように名前で書いてください（{0} のような番号は使えません）。波括弧そのものは {{ }} と重ねて書いてください。");
+        if (_hasInvalidBrace) {
+            addError("引数は {売上SEQ} のように名前だけで書いてください（{0} のような番号や、型の指定は書けません）。波括弧そのものは {{ }} と重ねて書いてください。");
         }
-        foreach (var placeholder in _parts.OfType<Placeholder>()) {
-            if (!_ctx.TryResolveMemberType(placeholder.Type, out var valueMemberType)) {
-                addError($"引数「{placeholder.Name}」の型「{placeholder.Type}」は使えません。データ構造のメンバーと同じ型名（word, int, 静的区分や値オブジェクトの名前など）を指定してください。");
-            } else if (valueMemberType is ByteArrayMember) {
-                addError($"引数「{placeholder.Name}」に、バイト配列は使えません。");
-            }
-        }
-        if (Parameters.Any(p => p.Name == TemplatesSection.TS_KIND_VARIABLE)) {
+        if (Parameters.Contains(TemplatesSection.TS_KIND_VARIABLE)) {
             addError($"引数の名前に「{TemplatesSection.TS_KIND_VARIABLE}」は使えません。");
-        }
-        foreach (var group in _parts.OfType<Placeholder>().GroupBy(p => p.Name)) {
-            if (group.Select(p => p.Type).Distinct().Count() > 1) {
-                addError($"引数「{group.Key}」に、異なる型が指定されています。");
-            }
         }
     }
 
     /// <summary>
     /// 引数を埋め込んだ文字列を返す、C# の静的メソッドをレンダリングします。
-    /// 種類ごとの変換は、テンプレートを入れるクラスの型引数から呼ぶ。
+    /// 種類の変換は、テンプレートを入れるクラスの型引数から呼ぶ。
     /// </summary>
     internal string RenderCSharp(string kindTypeParameter) {
-        return RenderCSharpMethod(
-            p => GetParameterType(p).CsType,
-            p => $"{kindTypeParameter}.{Kind}({p.Name})");
+        return RenderCSharpMethod(name => $"{kindTypeParameter}.{Kind}({name})");
     }
 
     /// <summary>
@@ -103,35 +74,32 @@ internal sealed class TemplateDef {
     /// ASP.NET Core のルート定義（"/api/job/{jobId}"）のように、引数の位置に値以外のものを置くときに使う。
     /// </summary>
     internal string RenderCSharpPattern() {
-        return RenderCSharpMethod(_ => "string", p => p.Name);
+        return RenderCSharpMethod(name => name);
     }
 
-    private string RenderCSharpMethod(Func<Placeholder, string> getParamType, Func<Placeholder, string> renderEmbedded) {
-        var parameters = Parameters.Select(p => $"{getParamType(p)} {p.Name}");
+    private string RenderCSharpMethod(Func<string, string> renderEmbedded) {
         var body = _parts.Select(part => part switch {
             Literal literal => literal.Text
                 .Replace("\\", "\\\\")
                 .Replace("\"", "\\\"")
                 .Replace("{", "{{")
                 .Replace("}", "}}"),
-            Placeholder p => $"{{{renderEmbedded(p)}}}",
+            Placeholder p => $"{{{renderEmbedded(p.Name)}}}",
             _ => throw new InvalidOperationException(),
         });
 
         return $$"""
             {{Element.RenderXmlCommentOrJsDoc(E_CsTs.CSharp)}}
-            public static string {{Name}}({{string.Join(", ", parameters)}}) => $"{{string.Concat(body)}}";
+            public static string {{Name}}({{string.Join(", ", Parameters.Select(name => $"string {name}"))}}) => $"{{string.Concat(body)}}";
             """;
     }
 
     /// <summary>
     /// 引数を埋め込んだ文字列を返す、TypeScript の関数をレンダリングします。
     /// </summary>
-    /// <param name="kindVariable">種類ごとの変換を持つオブジェクトの変数名</param>
+    /// <param name="kindVariable">種類の変換を持つオブジェクトの変数名</param>
     internal string RenderTypeScriptFormat(string kindVariable) {
-        return RenderTypeScriptFunction(
-            p => GetParameterType(p).TsType,
-            p => $"{kindVariable}.{Kind}.{GetParameterType(p).Key}({p.Name})");
+        return RenderTypeScriptFunction(name => $"{kindVariable}.{Kind}({name})");
     }
 
     /// <summary>
@@ -139,20 +107,20 @@ internal sealed class TemplateDef {
     /// React Router のルート定義（"/uriage/edit/:id"）のように、引数の位置に値以外のものを置くときに使う。
     /// </summary>
     internal string RenderTypeScriptPattern() {
-        return RenderTypeScriptFunction(_ => "string", p => p.Name);
+        return RenderTypeScriptFunction(name => name);
     }
 
-    private string RenderTypeScriptFunction(Func<Placeholder, string> getParamType, Func<Placeholder, string> renderEmbedded) {
+    private string RenderTypeScriptFunction(Func<string, string> renderEmbedded) {
         var parameters = Parameters.ToArray();
         var args = parameters.Length == 0
             ? ""
-            : $"{{ {string.Join(", ", parameters.Select(p => p.Name))} }}: {{ {string.Join(", ", parameters.Select(p => $"{p.Name}: {getParamType(p)}"))} }}";
+            : $"{{ {string.Join(", ", parameters)} }}: {{ {string.Join(", ", parameters.Select(name => $"{name}: string"))} }}";
         var body = _parts.Select(part => part switch {
             Literal literal => literal.Text
                 .Replace("\\", "\\\\")
                 .Replace("`", "\\`")
                 .Replace("$", "\\$"),
-            Placeholder p => $"${{{renderEmbedded(p)}}}",
+            Placeholder p => $"${{{renderEmbedded(p.Name)}}}",
             _ => throw new InvalidOperationException(),
         });
 
@@ -164,14 +132,14 @@ internal sealed class TemplateDef {
 
     #region 解析
     /// <summary>
-    /// 値を先頭から区切る。{{ と }} は波括弧そのもの、{名前} と {名前:型} は引数、それ以外の波括弧は誤り。
+    /// 値を先頭から区切る。{{ と }} は波括弧そのもの、{名前} は引数、それ以外の波括弧は誤り。
     /// </summary>
-    private static readonly Regex TOKEN = new(@"\{\{|\}\}|\{(?<name>[\p{L}_][\p{L}\p{Nd}_]*)(:(?<type>[^{}]*))?\}|[{}]");
+    private static readonly Regex TOKEN = new(@"\{\{|\}\}|\{(?<name>[\p{L}_][\p{L}\p{Nd}_]*)\}|[{}]");
 
-    private static (IReadOnlyList<Part> Parts, bool HasUnescapedBrace) Parse(string value) {
+    private static (IReadOnlyList<Part> Parts, bool HasInvalidBrace) Parse(string value) {
         var parts = new List<Part>();
         var literal = new StringBuilder();
-        var hasUnescapedBrace = false;
+        var hasInvalidBrace = false;
         var position = 0;
         foreach (Match match in TOKEN.Matches(value)) {
             literal.Append(value[position..match.Index]);
@@ -182,26 +150,19 @@ internal sealed class TemplateDef {
             } else if (match.Groups["name"].Success) {
                 if (literal.Length > 0) parts.Add(new Literal(literal.ToString()));
                 literal.Clear();
-                var type = match.Groups["type"].Success ? match.Groups["type"].Value : DEFAULT_PARAM_TYPE;
-                parts.Add(new Placeholder(match.Groups["name"].Value, type));
+                parts.Add(new Placeholder(match.Groups["name"].Value));
             } else {
                 literal.Append(match.Value);
-                hasUnescapedBrace = true;
+                hasInvalidBrace = true;
             }
         }
         literal.Append(value[position..]);
         if (literal.Length > 0) parts.Add(new Literal(literal.ToString()));
-        return (parts, hasUnescapedBrace);
+        return (parts, hasInvalidBrace);
     }
 
     private abstract record Part;
     private sealed record Literal(string Text) : Part;
-    private sealed record Placeholder(string Name, string Type) : Part;
+    private sealed record Placeholder(string Name) : Part;
     #endregion 解析
-
-    private TemplateParameterType GetParameterType(Placeholder placeholder) {
-        return _ctx.TryResolveMemberType(placeholder.Type, out var valueMemberType)
-            ? TemplateParameterType.From(valueMemberType)
-            : throw new InvalidOperationException($"引数「{placeholder.Name}」の型「{placeholder.Type}」を解決できません。");
-    }
 }
