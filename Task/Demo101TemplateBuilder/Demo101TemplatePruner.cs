@@ -44,6 +44,8 @@ public static class Demo101TemplatePruner
         "4dc11741-328a-488e-a2f5-7fcec5f6b1f2", // 未読通知件数ReturnValue
         "380ab309-2f96-4bf0-9500-fd759477bdee", // ジョブ
         "9b9830f1-bade-476b-a356-9c789a33d6a3", // ジョブ一覧
+        "5ce0a960-5dfa-4ae8-ad75-23bb12a8ed6d", // 添付ファイル
+        "0aeb194b-3f9f-44f5-87af-a5366c7f3789", // 添付ファイルRef
     ];
 
     /// <summary>テンプレートに残す、Commands直下の要素のUniqueId</summary>
@@ -76,6 +78,7 @@ public static class Demo101TemplatePruner
     private static readonly HashSet<string> KEEP_ENUM_IDS = [
         PERMISSION_ENUM_ID,
         "2088aab1-e03f-4b9b-8cea-8c8c7dbc49fa", // ジョブの状態
+        "e523bf40-c8fb-49bb-9db1-27b0688e17e1", // 添付ファイルの状態
     ];
 
     /// <summary>テンプレートに残す、権限区分の値のUniqueId。業務ごとの権限区分は案件で足す</summary>
