@@ -44,10 +44,6 @@
       "path": "temp_ソース現新比較用"
     },
     {
-      "name": "DEMO_000_基本的なDataModelの例",
-      "path": "demo/000_基本的なDataModelの例"
-    },
-    {
       "name": "DEMO_101_販売管理システム",
       "path": "demo/101_販売管理システム"
     },
@@ -227,7 +223,6 @@
         "type": "pickString",
         "options": [
           // demo 直下のフォルダの名前をここに記載
-          "000_基本的なDataModelの例",
           "101_販売管理システム",
           "200_複雑なパターン"
         ]
@@ -246,19 +241,6 @@
         "name": ".NET Core Attach",
         "type": "coreclr",
         "request": "attach"
-      },
-      {
-        "name": "000 基本的なDataModelの例 - コード生成",
-        "type": "coreclr",
-        "request": "launch",
-        "program": "${workspaceFolder:NijoAppScaffold}/Nijo.AppScaffold/bin/Debug/net10.0/nijo",
-        "args": [
-          "generate"
-        ],
-        "cwd": "${workspaceFolder:DEMO 000 基本的なDataModelの例}",
-        "stopAtEntry": false,
-        "console": "internalConsole",
-        "preLaunchTask": "dotnet build Nijo"
       }
     ],
     "compounds": []
