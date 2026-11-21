@@ -4,7 +4,7 @@
 
 ## 必要なもの
 
-- .NET SDK と Node.js（バージョンは標準仕様書 2.1）
+- .NET SDK と Node.js（バージョンは標準仕様書 1.4）
 - nijo のコマンドラインツール（nijo の配布元から入手する）。パスを通すか、環境変数 `NIJO_CLI_PATH` にそのパスを設定する。以降の `$NIJO_CLI_PATH` は nijo のコマンドを指す。
 - 手順のスクリプトを動かすための bash。Windows では bash が動く環境を用意する。
 - マイグレーションを作る場合は `dotnet-ef`
