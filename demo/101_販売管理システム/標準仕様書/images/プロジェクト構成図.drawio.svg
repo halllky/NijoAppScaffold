@@ -81,13 +81,13 @@
                                     <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe flex-start; width: 1px; height: 1px; padding-top: 29px; margin-left: 47px;">
                                         <div style="box-sizing: border-box; font-size: 0; text-align: left; color: #52514e; ">
                                             <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: light-dark(#52514e, #a7a7a4); line-height: 1.2; pointer-events: all; white-space: nowrap; ">
-                                                案件ごとに一から作成するコード
+                                                派生アプリケーションごとに一から作成するコード
                                             </div>
                                         </div>
                                     </div>
                                 </foreignObject>
                                 <text x="47" y="33" fill="#52514e" font-family="Helvetica" font-size="12px" style="fill: light-dark(rgb(82, 81, 78), rgb(167, 167, 164));">
-                                    案件ごとに一から作成するコード
+                                    派生アプリケーションごとに一から作成するコード
                                 </text>
                             </switch>
                         </g>

@@ -81,7 +81,7 @@ public static class Demo101TemplatePruner
         "e523bf40-c8fb-49bb-9db1-27b0688e17e1", // 添付ファイルの状態
     ];
 
-    /// <summary>テンプレートに残す、権限区分の値のUniqueId。業務ごとの権限区分は案件で足す</summary>
+    /// <summary>テンプレートに残す、権限区分の値のUniqueId。業務ごとの権限区分は派生アプリケーションで足す</summary>
     private static readonly HashSet<string> KEEP_PERMISSION_VALUE_IDS = [
         "95e18962-7298-442c-97a1-20d00de5c5bd", // システム管理者
     ];

@@ -23,7 +23,7 @@ public sealed class ErrorNotifier : IDisposable {
         var sender = notification.UseMock switch {
             true => new ErrorMailSenderMock(ResolveMockOutputDirectory(settings, basePath)),
 
-            // 実機の送信の方法（ライブラリ、メールサーバー）は案件で決める。
+            // 実機の送信の方法（ライブラリ、メールサーバー）は派生アプリケーションで決める。
             // 実機を選んだまま、気付かずにメールが届かない状態で運用するのを防ぐため、起動を止める
             false => throw new InvalidOperationException(
                 $"設定 {RuntimeSetting.MY_APP_SECTION}:{nameof(RuntimeSetting.ErrorNotification)}:{nameof(ErrorNotificationSettings.UseMock)} に false が指定されていますが、" +

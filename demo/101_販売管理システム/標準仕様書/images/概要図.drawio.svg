@@ -56,13 +56,13 @@
                                     <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe flex-start; width: 1px; height: 1px; padding-top: 11px; margin-left: 219px;">
                                         <div style="box-sizing: border-box; font-size: 0; text-align: left; color: #52514e; ">
                                             <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: light-dark(#52514e, #a7a7a4); line-height: 1.2; pointer-events: all; white-space: nowrap; ">
-                                                案件で足す部分
+                                                派生アプリケーションで足す部分
                                             </div>
                                         </div>
                                     </div>
                                 </foreignObject>
                                 <text x="219" y="15" fill="#52514e" font-family="Helvetica" font-size="12px" style="fill: light-dark(rgb(82, 81, 78), rgb(167, 167, 164));">
-                                    案件で足す部分
+                                    派生アプリケーションで足す部分
                                 </text>
                             </switch>
                         </g>
@@ -143,7 +143,7 @@
                                         <div style="box-sizing: border-box; font-size: 0; text-align: center; color: #0b0b0b; ">
                                             <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: light-dark(#0b0b0b, #e4e4e4); line-height: 1.2; pointer-events: all; white-space: normal; word-wrap: normal; ">
                                                 <b style="font-size:15px">
-                                                    案件ごとのアプリケーション
+                                                    派生アプリケーション
                                                 </b>
                                                 <br/>
                                                 <span style="font-size: 11px; color: light-dark(rgb(82, 81, 78), rgb(167, 167, 164));">
@@ -155,7 +155,7 @@
                                 </foreignObject>
                                 <text x="565" y="73" fill="#0b0b0b" font-family="Helvetica" font-size="12px" text-anchor="middle" style="fill: light-dark(rgb(11, 11, 11), rgb(228, 228, 228));">
                                     <tspan x="565" y="73">
-                                        案件ごとのアプリケーション
+                                        派生アプリケーション
                                     </tspan>
                                     <tspan x="565" y="87">
                                         テンプレートをコピーして作る
@@ -229,13 +229,13 @@
                                     <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe flex-start; width: 1px; height: 1px; padding-top: 141px; margin-left: 443px;">
                                         <div style="box-sizing: border-box; font-size: 0; text-align: left; color: #0b0b0b; ">
                                             <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: light-dark(#0b0b0b, #e4e4e4); line-height: 1.2; pointer-events: all; font-weight: bold; white-space: nowrap; ">
-                                                （案件のフォルダ）/
+                                                （派生アプリケーションのフォルダ）/
                                             </div>
                                         </div>
                                     </div>
                                 </foreignObject>
                                 <text x="443" y="145" fill="#0b0b0b" font-family="Helvetica" font-size="12px" font-weight="bold" style="fill: light-dark(rgb(11, 11, 11), rgb(228, 228, 228));">
-                                    （案件のフォルダ）/
+                                    （派生アプリケーションのフォルダ）/
                                 </text>
                             </switch>
                         </g>
@@ -308,13 +308,13 @@
                                     <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe flex-end; width: 1px; height: 1px; padding-top: 171px; margin-left: 713px;">
                                         <div style="box-sizing: border-box; font-size: 0; text-align: right; color: #52514e; ">
                                             <div style="display: inline-block; font-size: 11px; font-family: Helvetica; color: light-dark(#52514e, #a7a7a4); line-height: 1.2; pointer-events: all; white-space: nowrap; ">
-                                                案件のデータ構造に書き換えて使う
+                                                派生アプリケーションのデータ構造に書き換えて使う
                                             </div>
                                         </div>
                                     </div>
                                 </foreignObject>
                                 <text x="713" y="174" fill="#52514e" font-family="Helvetica" font-size="11px" text-anchor="end" style="fill: light-dark(rgb(82, 81, 78), rgb(167, 167, 164));">
-                                    案件のデータ構造に書き換えて使う
+                                    派生アプリケーションのデータ構造に書き換えて使う
                                 </text>
                             </switch>
                         </g>
@@ -787,13 +787,13 @@
                                     <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe flex-start; width: 1px; height: 1px; padding-top: 381px; margin-left: 495px;">
                                         <div style="box-sizing: border-box; font-size: 0; text-align: left; color: #0b0b0b; ">
                                             <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: light-dark(#0b0b0b, #e4e4e4); line-height: 1.2; pointer-events: all; white-space: nowrap; ">
-                                                （案件の業務）/
+                                                （派生アプリケーションの業務）/
                                             </div>
                                         </div>
                                     </div>
                                 </foreignObject>
                                 <text x="495" y="385" fill="#0b0b0b" font-family="Helvetica" font-size="12px" style="fill: light-dark(rgb(11, 11, 11), rgb(228, 228, 228));">
-                                    （案件の業務）/
+                                    （派生アプリケーションの業務）/
                                 </text>
                             </switch>
                         </g>
@@ -1141,13 +1141,13 @@
                                     <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe flex-start; width: 1px; height: 1px; padding-top: 561px; margin-left: 495px;">
                                         <div style="box-sizing: border-box; font-size: 0; text-align: left; color: #0b0b0b; ">
                                             <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: light-dark(#0b0b0b, #e4e4e4); line-height: 1.2; pointer-events: all; white-space: nowrap; ">
-                                                pages/（案件の画面）
+                                                pages/（派生アプリケーションの画面）
                                             </div>
                                         </div>
                                     </div>
                                 </foreignObject>
                                 <text x="495" y="565" fill="#0b0b0b" font-family="Helvetica" font-size="12px" style="fill: light-dark(rgb(11, 11, 11), rgb(228, 228, 228));">
-                                    pages/（案件の画面）
+                                    pages/（派生アプリケーションの画面）
                                 </text>
                             </switch>
                         </g>
